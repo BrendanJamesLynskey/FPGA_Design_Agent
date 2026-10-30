@@ -1,0 +1,136 @@
+# Structured spec for T1 (the shape the agent's clarify step will produce).
+# Hand-written for F0A from spec.md. model.py is written from this file alone.
+schema: fpga-design-agent/spec/v0
+name: t1_dimmer_counter
+title: LED dimmer and push-button counter
+source: spec.md
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_dimmer_counter_top
+design_id: 0x54314443          # "T1DC"
+
+clocks:
+  - name: sys_clk
+    port: CLK100MHZ
+    freq_mhz: 100
+    source: board oscillator (pin E3)
+    note: the only clock; no MMCM is needed
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock, two edges later)
+  effect: every register returns to its reset value (listed under registers)
+
+parameters:                    # values for the board build; tests may shrink the time constants
+  CLKS_PER_BIT: 868            # UART 115200 baud at 100 MHz (shell)
+  TIMEOUT_CYCLES: 100000       # shell frame timeout, 1 ms
+  DEBOUNCE_CYCLES: 1000000     # 10 ms
+  PWM_PRESCALE: 4              # PWM phase advances every 4 clocks: period 1024 clocks = 10.24 us (97.7 kHz)
+  REFRESH_BITS: 17             # each display digit is lit for 2^17 clocks = 1.31 ms; 8 digits = 10.5 ms (95 Hz)
+
+ports:
+  - {name: CLK100MHZ,    dir: in,  width: 1,  pins: [E3],  iostandard: LVCMOS33}
+  - {name: CPU_RESETN,   dir: in,  width: 1,  pins: [C12], iostandard: LVCMOS33, async: true}
+  - {name: BTNU,         dir: in,  width: 1,  pins: [M18], iostandard: LVCMOS33, async: true, note: count up}
+  - {name: BTND,         dir: in,  width: 1,  pins: [P18], iostandard: LVCMOS33, async: true, note: count down}
+  - {name: BTNC,         dir: in,  width: 1,  pins: [N17], iostandard: LVCMOS33, async: true, note: clear}
+  - name: SW
+    dir: in
+    width: 16
+    pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10]   # SW[0] first
+    iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}                 # bank 34 is 1.8 V
+    async: true
+  - name: LED
+    dir: out
+    width: 16
+    pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11]
+    iostandard: LVCMOS33
+  - {name: CA, dir: out, width: 1, pins: [T10], iostandard: LVCMOS33, note: segment a, active low}
+  - {name: CB, dir: out, width: 1, pins: [R10], iostandard: LVCMOS33, note: segment b, active low}
+  - {name: CC, dir: out, width: 1, pins: [K16], iostandard: LVCMOS33, note: segment c, active low}
+  - {name: CD, dir: out, width: 1, pins: [K13], iostandard: LVCMOS33, note: segment d, active low}
+  - {name: CE, dir: out, width: 1, pins: [P15], iostandard: LVCMOS33, note: segment e, active low}
+  - {name: CF, dir: out, width: 1, pins: [T11], iostandard: LVCMOS33, note: segment f, active low}
+  - {name: CG, dir: out, width: 1, pins: [L18], iostandard: LVCMOS33, note: segment g, active low}
+  - {name: DP, dir: out, width: 1, pins: [H15], iostandard: LVCMOS33, note: decimal point, active low, always off}
+  - name: AN
+    dir: out
+    width: 8
+    pins: [J17, J18, T9, J14, P14, T14, K2, U13]     # AN[0] (rightmost digit) first
+    iostandard: LVCMOS33
+    note: digit anodes, active low
+  - {name: UART_TXD_IN,  dir: in,  width: 1, pins: [C4], iostandard: LVCMOS33, async: true, note: host to FPGA}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33, note: FPGA to host}
+
+behaviour:
+  counter:
+    - COUNT is 16 bits and wraps modulo 65536 in both directions.
+    - A debounced press of BTNC sets COUNT to 0; of BTNU adds 1; of BTND subtracts 1.
+    - If several presses land on the same clock, only the highest priority acts - clear, then up, then down.
+    - A shell write to COUNT on the same clock as a press wins; the press still counts in PRESSES.
+  debounce:
+    - Each button is synchronised (two flops), then debounced. The debounced level changes only after the
+      synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; any shorter difference is
+      ignored and restarts the count.
+    - A press is a 0 -> 1 change of the debounced level. A release makes no press.
+  pwm:
+    - DUTY_EFF = SW[7:0] (synchronised) if CTRL.DUTY_SRC = 1, else the DUTY register.
+    - A phase counter (8 bits) advances once every PWM_PRESCALE clocks and wraps at 256.
+    - The LEDs are lit while phase < DUTY_EFF, so over one PWM period LED[i] is on for exactly
+      DUTY_EFF x PWM_PRESCALE of the 256 x PWM_PRESCALE clocks if COUNT[i] = 1, and never if COUNT[i] = 0.
+    - DUTY_EFF = 0 is fully off; 255 is on 255/256 of the time. Brightness is linear in DUTY_EFF (no gamma).
+  display:
+    - Digits are numbered 0 (rightmost, AN[0]) to 7 (leftmost, AN[7]). They are lit one at a time, in order
+      0, 1, ..., 7, each for 2^REFRESH_BITS clocks; while digit k is lit, AN[k] = 0 and every other AN = 1.
+    - Digits 0-3 show COUNT[3:0], COUNT[7:4], COUNT[11:8], COUNT[15:12] in hex.
+    - Digits 6 and 7 show DUTY_EFF[3:0] and DUTY_EFF[7:4] in hex.
+    - Digits 4 and 5 are blank - all AN stay 1 during their slots.
+    - If CTRL.DISPLAY_EN = 0, every AN is 1 at all times.
+    - Segments CA..CG are active low; DP is always 1 (off).
+    - "Hex glyphs (segments lit, a-g): 0 abcdef, 1 bc, 2 abdeg, 3 abcdg, 4 bcfg, 5 acdfg, 6 acdefg, 7 abc,
+      8 abcdefg, 9 abcdfg, A abcefg, b cdefg, C adef, d bcdeg, E adefg, F aefg."
+
+registers:                     # in the shell window: absolute address = 0x80 + offset
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: COUNT,   access: RW, reset: 0x0000, bits: "[15:0] counter; write sets it; [31:16] read 0"}
+    - {offset: 0x01, name: DUTY,    access: RW, reset: 0x40,   bits: "[7:0] PWM duty when DUTY_SRC = 0; [31:8] read 0"}
+    - {offset: 0x02, name: CTRL,    access: RW, reset: 0x2,    bits: "[0] DUTY_SRC (1 = switches SW[7:0]); [1] DISPLAY_EN; [31:2] read 0"}
+    - {offset: 0x03, name: INPUTS,  access: RO, reset: null,   bits: "[15:0] SW (synchronised); [16] BTNU, [17] BTND, [18] BTNC (debounced levels)"}
+    - {offset: 0x04, name: PRESSES, access: RO, reset: 0,      bits: "[7:0] up presses, [15:8] down, [23:16] clear; each wraps at 256"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored (the shell still answers OK)
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    button_to_count: "2 (sync) + DEBOUNCE_CYCLES + 1 clocks (10.00 ms at the board parameters)"
+    register_write_to_led: "within one PWM period after the write"
+  throughput: not applicable (control design)
+  async_inputs: buttons, switches, CPU_RESETN and UART RX are asynchronous - synchronised in RTL, false-pathed in XDC
+  outputs: LEDs, display and UART TX are slow, registered outputs - no output timing requirement (false-pathed)
+
+resources_expected: "well under 1 % of the XC7A100T: a few hundred LUTs and FFs, no BRAM, no DSP"
+
+assumptions:
+  - assumption: the debounce time is 10 ms.
+    reason: the spec says "however bouncy"; 10 ms covers typical tactile switch bounce (1-5 ms) with margin and is
+      far below a deliberate press.
+  - assumption: PWM at about 98 kHz (1024 clocks a period), 8-bit linear duty.
+    reason: the spec's "should not flicker" needs well above ~200 Hz; 8 bits matches the 8 brightness switches.
+  - assumption: display refresh 95 Hz over 8 digits.
+    reason: above the ~60 Hz flicker threshold, slow enough for the display's drivers.
+  - assumption: the brightness digits show the effective duty (switches or register, whichever is selected).
+    reason: the spec says "the current brightness setting"; showing the one in use is what a tester expects.
+  - assumption: down from 0 wraps to 0xFFFF.
+    reason: the spec says it wraps at both ends.
+  - assumption: the LEDs show COUNT gated by the PWM (lit LEDs are COUNT's 1 bits, all at the same brightness).
+    reason: the spec says the 16 LEDs show the counter in binary and their brightness is adjustable.
+  - assumption: writes to read-only window registers are ignored silently.
+    reason: the shell protocol never reports errors for the design's window.
+
+open_questions:
+  - question: should brightness follow a gamma curve so equal steps look equal?
+    default: no, linear (recorded as an assumption; easy to change in the PWM compare).
+  - question: should holding a button auto-repeat?
+    default: no; one press, one step.

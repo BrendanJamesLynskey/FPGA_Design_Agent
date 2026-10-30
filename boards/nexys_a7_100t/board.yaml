@@ -1,0 +1,37 @@
+# Nexys A7-100T (Digilent; formerly Nexys 4 DDR)
+name: nexys_a7_100t
+vendor: Digilent
+part: xc7a100tcsg324-1          # Artix-7 XC7A100T, CSG324 package, speed grade -1
+master_xdc: Nexys-A7-100T-Master.xdc
+master_xdc_source:
+  repo: https://github.com/Digilent/digilent-xdc
+  commit: c8644a9fe31cc803789643124545d56b3bef4600
+  file: Nexys-A7-100T-Master.xdc
+  licence: MIT (LICENSE-digilent-xdc.txt, copied from the same commit)
+clock:
+  port: CLK100MHZ
+  pin: E3
+  freq_mhz: 100
+reset:
+  port: CPU_RESETN
+  pin: C12
+  polarity: active_low
+uart:                             # FTDI FT2232HQ, channel B; names are from the host's side
+  fpga_rx: {port: UART_TXD_IN, pin: C4}
+  fpga_tx: {port: UART_RXD_OUT, pin: D4}
+  flow_control: none used (UART_CTS D3, UART_RTS E5 left unconnected)
+  default_baud: 115200
+iostandards:
+  default: LVCMOS33
+  exceptions:
+    - {ports: ["SW[8]", "SW[9]"], iostandard: LVCMOS18, reason: bank 34 is powered at 1.8 V}
+config:
+  cfgbvs: VCCO
+  config_voltage: 3.3
+jtag:
+  interface: FTDI FT2232HQ channel A on the USB-JTAG/UART micro-USB port (J6, "PROG UART")
+  notes:
+    - one USB cable carries both JTAG (channel A) and the UART (channel B, usually /dev/ttyUSB1 on Linux)
+    - program by the cable's serial number (hw_server lists it as Digilent/<serial>), never "the first target"
+    - Linux needs Digilent's cable udev rules installed once, as root (Vivado's install_drivers script) - brief 02
+    - flash (QSPI) is never written without the owner's explicit yes
