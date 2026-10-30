@@ -66,7 +66,10 @@ def markdown(name: str, res: dict[str, dict]) -> str:
     row("build stamp", lambda x: x["run"]["build_stamp"])
     row("Vivado wall time (s)", lambda x: x["run"]["wall_s"])
     row("Vivado peak RSS (MiB)", lambda x: x["run"]["vivado_peak_rss_mib"])
-    row("scope peak memory (MiB)", lambda x: x["run"]["scope_memory_peak_mib"])
+    row("scope peak anonymous memory, all processes (MiB)", lambda x: x["run"].get("scope_anon_peak_mib"))
+    row("scope peak charged memory incl. page cache (MiB)", lambda x: x["run"]["scope_memory_peak_mib"])
+    row("scope peak swap (MiB)", lambda x: x["run"].get("scope_swap_peak_mib"))
+    row("times the 6 GB cap was reached / OOM kills", lambda x: f"{x['run'].get('scope_cap_hits')} / {x['run'].get('scope_oom_kills')}")
     if "base" in res and "ila" in res:
         ub, ui = res["base"]["gates"]["utilization"], res["ila"]["gates"]["utilization"]
         L += ["", "## ILA cost (ila - base)", "", "| Resource | base | ila | cost |", "|---|---|---|---|"]
@@ -74,9 +77,12 @@ def markdown(name: str, res: dict[str, dict]) -> str:
                          ("bram_tile", "BRAM tiles"), ("dsp", "DSP48E1"), ("bufg", "BUFGs")):
             b, i = ub.get(k, 0), ui.get(k, 0)
             L.append(f"| {label} | {b} | {i} | {round(i - b, 1)} |")
-    L += ["", "Power is Vivado's vectorless estimate (default toggle rates), not a board measurement. The scope's "
-          "peak memory is the cgroup's `memory.peak` sampled every 2 s (it includes page cache charged to the "
-          "scope); the peak RSS is the Vivado process's own, from `/usr/bin/time -v`.", ""]
+    L += ["", "Power is Vivado's vectorless estimate (default toggle rates), not a board measurement.", "",
+          "Memory: the peak RSS is the largest single Vivado process (`/usr/bin/time -v`). The scope figures come "
+          "from the build's cgroup, sampled every 2 s: anonymous memory summed over every process in it (the ILA "
+          "build starts helper Vivado processes to synthesise the debug cores), and the charged total, which also "
+          "counts page cache. When the charged total reaches the 6 GB cap the kernel reclaims cache first; a build "
+          "is at risk only if anonymous memory approaches the cap or an OOM kill is recorded.", ""]
     return "\n".join(L)
 
 

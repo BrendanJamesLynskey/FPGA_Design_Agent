@@ -9,8 +9,10 @@
 #   2. writes build/<variant>/inputs.tcl (flow/prepare.py);
 #   3. runs Vivado in batch mode in a transient systemd scope capped at
 #      MemoryMax=6G, under nice 15, with general.maxThreads 1 (set in build.tcl);
-#   4. records wall time, the Vivado process's peak RSS (/usr/bin/time -v) and
-#      the scope's peak memory (cgroup memory.peak, polled) in run.json;
+#   4. records wall time, the Vivado process's peak RSS (/usr/bin/time -v) and,
+#      from the scope's cgroup (polled every 2 s), its peak charged memory
+#      (memory.peak, page cache included), its peak anonymous memory (all
+#      processes), its peak swap, and how often the cap was hit, in run.json;
 #   5. runs the gates (flow/gates.py) into gates.json.
 # Variants run one after the other, never together. Logs: designs/<name>/build/<variant>/.
 set -euo pipefail
@@ -69,8 +71,11 @@ run_variant() {
       "$VIVADO" -mode batch -nojournal -log "$out/vivado.log" \
       -source "$ROOT/flow/build.tcl" -tclargs "$out/inputs.tcl" >"$out/stdout.txt" 2>&1) &
   local pid=$!
-  # Poll the scope's cgroup for its peak memory while Vivado runs
-  local peak=0 cg="" v
+  # Poll the scope's cgroup while Vivado runs: memory.peak (all charged memory,
+  # page cache included), the largest anonymous total (memory.stat anon: the
+  # processes' own memory, summed over every process in the scope), and
+  # memory.events (max = times the cap was hit and reclaim ran; oom_kill)
+  local peak=0 anon=0 swap=0 hits=0 ooms=0 cg="" v a
   while kill -0 "$pid" 2>/dev/null; do
     if [ -z "$cg" ]; then
       cg="$(systemctl --user show -p ControlGroup --value "$unit.scope" 2>/dev/null || true)"
@@ -78,6 +83,14 @@ run_variant() {
     if [ -n "$cg" ] && [ -r "/sys/fs/cgroup$cg/memory.peak" ]; then
       v="$(cat "/sys/fs/cgroup$cg/memory.peak" 2>/dev/null || echo 0)"
       [ "$v" -gt "$peak" ] && peak="$v"
+      a="$(awk '$1 == "anon" {print $2}' "/sys/fs/cgroup$cg/memory.stat" 2>/dev/null || echo 0)"
+      [ -n "$a" ] && [ "$a" -gt "$anon" ] && anon="$a"
+      v="$(cat "/sys/fs/cgroup$cg/memory.swap.peak" 2>/dev/null || echo 0)"
+      [ "$v" -gt "$swap" ] && swap="$v"
+      v="$(awk '$1 == "max" {print $2}' "/sys/fs/cgroup$cg/memory.events" 2>/dev/null || echo 0)"
+      [ -n "$v" ] && hits="$v"
+      v="$(awk '$1 == "oom_kill" {print $2}' "/sys/fs/cgroup$cg/memory.events" 2>/dev/null || echo 0)"
+      [ -n "$v" ] && ooms="$v"
     fi
     sleep 2
   done
@@ -85,10 +98,11 @@ run_variant() {
   wait "$pid" || rc=$?
   t_end="$(date +%s.%N)"
 
-  "$PY" - "$out" "$rc" "$t_start" "$t_end" "$peak" "$MEM_MAX" "$REL" "$variant" "$VIVADO" <<'EOF'
+  "$PY" - "$out" "$rc" "$t_start" "$t_end" "$peak" "$MEM_MAX" "$REL" "$variant" "$VIVADO" \
+      "$anon" "$swap" "$hits" "$ooms" <<'EOF'
 import json, re, subprocess, sys
 from pathlib import Path
-out, rc, t0, t1, peak, cap, rel, variant, vivado = sys.argv[1:]
+out, rc, t0, t1, peak, cap, rel, variant, vivado, anon, swap, hits, ooms = sys.argv[1:]
 out = Path(out)
 t = (out / "time.txt").read_text() if (out / "time.txt").exists() else ""
 m = re.search(r"Maximum resident set size \(kbytes\): (\d+)", t)
@@ -104,6 +118,9 @@ run = {
     "wall_s": round(float(t1) - float(t0), 1),
     "vivado_peak_rss_mib": round(int(m.group(1)) / 1024) if m else None,
     "scope_memory_peak_mib": round(int(peak) / 2**20) if int(peak) else None,
+    "scope_anon_peak_mib": round(int(anon) / 2**20) if int(anon) else None,
+    "scope_swap_peak_mib": round(int(swap) / 2**20),
+    "scope_cap_hits": int(hits), "scope_oom_kills": int(ooms),
     "memory_cap": cap, "max_threads": 1, "nice": 15,
     "vivado_version": ver.group(1) if ver else None,
     "git_commit": git("rev-parse", "HEAD"), "git_dirty": bool(git("status", "--porcelain")),
@@ -113,7 +130,8 @@ run = {
 }
 (out / "run.json").write_text(json.dumps(run, indent=2) + "\n")
 print(f"run_vivado: {rel} {variant}: exit {rc}, {run['wall_s']} s, "
-      f"Vivado peak RSS {run['vivado_peak_rss_mib']} MiB, scope peak {run['scope_memory_peak_mib']} MiB (cap {cap})")
+      f"Vivado peak RSS {run['vivado_peak_rss_mib']} MiB, scope peak {run['scope_memory_peak_mib']} MiB "
+      f"(anon {run['scope_anon_peak_mib']} MiB, swap {run['scope_swap_peak_mib']} MiB; cap {cap} hit {run['scope_cap_hits']} times, OOM kills {run['scope_oom_kills']})")
 EOF
   if [ "$rc" -ne 0 ]; then
     tail -n 30 "$out/stdout.txt" >&2 || true

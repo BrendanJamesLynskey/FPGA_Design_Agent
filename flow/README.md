@@ -20,8 +20,10 @@ Python code only.
   (default 7), and says why.
 - Runs Vivado in a transient user scope: `systemd-run --user --scope -p MemoryMax=6G nice -n 15`, with
   `set_param general.maxThreads 1` in `build.tcl`. Multi-threaded Vivado gets OOM-killed on this PC.
-- Records the wall time, the Vivado process's peak RSS (`/usr/bin/time -v`) and the scope's peak memory (cgroup
-  `memory.peak`, polled every 2 s; it includes page cache, so it reads higher than the RSS) in `run.json`.
+- Records in `run.json`: the wall time; the largest Vivado process's peak RSS (`/usr/bin/time -v`); and, from the
+  scope's cgroup polled every 2 s, the peak anonymous memory summed over all its processes (the ILA build spawns
+  helper Vivado processes), the peak charged memory (`memory.peak`, page cache included), the peak swap, and how
+  often the cap was reached and whether anything was OOM-killed (`memory.events`).
 - Variants (`both`) run one after the other.
 
 ## Build stamp
