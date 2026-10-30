@@ -3,25 +3,30 @@
 # synth_design when the build variant is "ila"; opt_design then implements the
 # debug core, and build.tcl writes the .ltx probes file next to the bitstream.
 #
-# Every probe's nets must exist after synthesis with exactly the stated width;
+# Every probe's pins must exist after synthesis with exactly the stated width;
 # if not, the build stops and lists close matches, rather than quietly probing
 # something else.
 
 proc probe_nets {pattern width} {
-    set nets [get_nets -quiet $pattern]
-    if {[llength $nets] != $width} {
-        set leaf [lindex [split $pattern /] end]
-        regsub {\[\*\]$} $leaf {} stem
-        set near [get_nets -quiet -hierarchical -filter "NAME =~ *${stem}*"]
-        error "debug.tcl: '$pattern' matched [llength $nets] nets, expected $width. Nets like it: [lrange $near 0 20]"
+    # Probes name register output pins (e.g. u_dut/count_reg[*]/Q): register
+    # names survive synthesis, while net names get merged across the hierarchy
+    # (u_dut/count[0] becomes the top-level net count[0]).
+    set pins [get_pins -quiet $pattern]
+    if {[llength $pins] != $width} {
+        set cell [lindex [split $pattern /] end-1]
+        regsub {\[\*\]$} $cell {} stem
+        set near [lsort [get_cells -quiet -hierarchical -filter "NAME =~ *${stem}*"]]
+        error "debug.tcl: '$pattern' matched [llength $pins] pins, expected $width. Cells like it: [lrange $near 0 20]"
     }
-    # Order bus bits by index so probe bit i is net bit i
+    # Order bus bits by their last index, so probe bit i is register bit i
     if {$width > 1} {
-        set nets [lsort -command {apply {{a b} {
-            regexp {\[(\d+)\]$} $a -> ia; regexp {\[(\d+)\]$} $b -> ib
+        set pins [lsort -command {apply {{a b} {
+            regexp {\[(\d+)\]/[^/]+$} $a -> ia; regexp {\[(\d+)\]/[^/]+$} $b -> ib
             expr {$ia - $ib}
-        }}} $nets]
+        }}} $pins]
     }
+    set nets {}
+    foreach p $pins { lappend nets [get_nets -of_objects $p] }
     return $nets
 }
 

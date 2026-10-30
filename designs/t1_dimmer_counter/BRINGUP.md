@@ -81,14 +81,14 @@ probes (1024 samples at 100 MHz = 10.24 µs a capture; [probes.yaml](probes.yaml
 | `count` | 16 | the counter |
 | `press_up`, `press_down`, `press_clear` | 1 each | one-clock debounced press pulses |
 | `rx_valid`, `rx_data` | 1, 8 | a byte received from the host, and its value |
-| `win_wr`, `win_rd`, `win_addr` | 1, 1, 7 | the shell accessing a design register (offset = address - 0x80) |
+| `win_wr`, `win_rd`, `addr` | 1, 1, 8 | the shell accessing a design register; `addr` is the request's ADDR byte (0x80 + register offset) |
 | `uart_rx_pin`, `uart_tx_pin` | 1, 1 | the raw serial lines |
 
 Trigger set-ups:
 
 | Name | Trigger condition | Trigger position | Then do | Expect |
 |---|---|---|---|---|
-| count_write | `win_wr == 1` AND `win_addr == 0x00` | 64 | `$SH write 0x80 0x1234` | `count` becomes `0x1234` on the clock after `win_wr` |
+| count_write | `win_wr == 1` AND `addr == 0x80` | 64 | `$SH write 0x80 0x1234` | `count` becomes `0x1234` on the clock after `win_wr` |
 | button_press | `press_up == 1` OR `press_down == 1` OR `press_clear == 1` (set the ILA to OR) | 512 | press any button | exactly one pulse; `count` changes by one (or to 0) on the next clock |
 | host_byte | `rx_valid == 1` AND `rx_data == 0xA5` | 16 | `$SH id` | the trigger fires; `uart_rx_pin` shows the next byte's start bit |
 

@@ -1,6 +1,6 @@
 # ILA probes for the debug build (flow/debug.tcl inserts them after synthesis).
-# nets: post-synthesis net names (hierarchical, as get_nets sees them); a bus
-# lists its bits with [*] and the width must match.
+# pins: post-synthesis register output pins (cell names survive synthesis; net
+# names do not); a bus lists its bits with [*] and the width must match.
 ila:
   name: u_ila_0
   clock_net: CLK100MHZ_IBUF_BUFG
@@ -8,46 +8,47 @@ ila:
   input_pipe_stages: 0
 probes:
   - name: count
-    nets: "u_dut/count[*]"
+    pins: "u_dut/count_reg[*]/Q"
     width: 16
     why: the counter itself
   - name: press_up
-    nets: u_dut/p_up
+    pins: u_dut/u_db_up/press_reg/Q
     width: 1
     why: one-clock debounced press pulses
   - name: press_down
-    nets: u_dut/p_down
+    pins: u_dut/u_db_down/press_reg/Q
     width: 1
   - name: press_clear
-    nets: u_dut/p_clear
+    pins: u_dut/u_db_clear/press_reg/Q
     width: 1
   - name: rx_valid
-    nets: u_shell/rx_valid
+    pins: u_shell/u_rx/valid_reg/Q
     width: 1
     why: a byte arrived from the host
   - name: rx_data
-    nets: "u_shell/rx_data[*]"
+    pins: "u_shell/u_rx/data_reg[*]/Q"
     width: 8
   - name: win_wr
-    nets: win_wr
+    pins: u_shell/u_core/win_wr_reg/Q
     width: 1
     why: the shell writes a design register
   - name: win_rd
-    nets: win_rd
+    pins: u_shell/u_core/win_rd_reg/Q
     width: 1
-  - name: win_addr
-    nets: "win_addr[*]"
-    width: 7
+  - name: addr
+    pins: "u_shell/u_core/frame_reg[1][*]/Q"
+    width: 8
+    why: the request's ADDR byte (0x80 + offset for the design's registers)
   - name: uart_rx_pin
-    nets: UART_TXD_IN_IBUF
+    pins: UART_TXD_IN_IBUF_inst/O
     width: 1
     why: the raw serial line from the host
   - name: uart_tx_pin
-    nets: UART_RXD_OUT_OBUF
+    pins: UART_RXD_OUT_OBUF_inst/I
     width: 1
 triggers:                     # suggestions; BRINGUP.md walks through each
   - name: count_write
-    condition: "win_wr == 1 AND win_addr == 0x00"
+    condition: "win_wr == 1 AND addr == 0x80"
     position: 64
     use: capture a shell write to COUNT; count must take the written value on the next clock
   - name: button_press

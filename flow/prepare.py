@@ -52,10 +52,10 @@ def probes_tcl(probes_yaml: Path) -> str:
              f"set ila_clock_net {{{ila['clock_net']}}}",
              f"set ila_depth {int(ila['depth'])}",
              f"set ila_pipe {int(ila.get('input_pipe_stages', 0))}",
-             "set ila_probes [list"]
+             "set ila_probes {}"]
+    # one lappend per probe: a newline inside [list ...] would start a new Tcl command
     for pr in cfg["probes"]:
-        lines.append(f"    [list {{{pr['name']}}} {{{pr['nets']}}} {int(pr['width'])}]")
-    lines.append("]")
+        lines.append(f"lappend ila_probes [list {{{pr['name']}}} {{{pr['pins']}}} {int(pr['width'])}]")
     return "\n".join(lines) + "\n"
 
 
