@@ -2,7 +2,7 @@
 
 An agent that turns a natural-language spec into a verified, bring-up-ready AMD FPGA bitstream, measured.
 
-The agent is **coming**. What exists today (milestone **F0A**) is the ground it will stand on: every tool step of
+The agent is **coming**. What exists today (milestones **F0A** and **F0B**) is the ground it will stand on: every tool step of
 the flow, proven by hand on one small design, with machine-checked gates, before any model touches it. Everything
 the agent produces later will have the same shape as `designs/t1_dimmer_counter/`.
 
@@ -35,7 +35,10 @@ the agent produces later will have the same shape as `designs/t1_dimmer_counter/
                      |  no DRC errors, no critical methodology or CDC violations, bitstream present
                      v
   [8] bring-up ...... BRINGUP.md for a tester who did not design it, plus the test shell:
-                        every design answers over the USB-UART, so a script can test the board
+                     |  every design answers over the USB-UART, so a script can test the board
+                     v
+  [9] on the board .. flow/bringup.py: discover, program SRAM by cable serial, UART tests against
+                        the model, ILA captures against the model, one JSON result       (F0B)
 ```
 
 Steps 1-8 were done by hand for F0A. In F2 the agent does steps 1-8 itself, and only the passes of the
@@ -56,7 +59,26 @@ Steps 1-8 were done by hand for F0A. In F2 the agent does steps 1-8 itself, and 
 The T1 build numbers (timing, utilisation, ILA cost, run time and memory) are in
 [results/f0a/t1_dimmer_counter.md](results/f0a/t1_dimmer_counter.md); every one comes from the JSON next to it
 ([results/f0a/README.md](results/f0a/README.md) lists the files).
-Programming the board and testing on hardware is milestone F0B.
+Programming the board and testing on hardware is milestone F0B (below).
+
+## Bring-up on hardware (F0B)
+
+```bash
+python3 flow/bringup.py designs/t1_dimmer_counter
+```
+
+One command, no human in the loop: it checks the USB-power gate (the board runs from its USB cable, so a bitstream
+is programmed only if `report_power` says at most 0.5 W), finds the one attached board by its JTAG cable serial and
+its UART, programs the base build into SRAM (never flash), runs 8 UART tests that compare every response byte with
+the shell and T1 models (identity and build stamp, 1,004 scratch loopbacks, error responses, timeouts, framing
+errors, the T1 registers), programs the ILA build, arms the ILA by Tcl in step with UART writes, and checks four
+captures cycle by cycle against the model (a COUNT write; the PWM at three dimmer levels). It writes
+[results/f0b/t1_dimmer_counter_bringup.json](results/f0b/t1_dimmer_counter_bringup.json).
+
+Measured ([results/f0b](results/f0b/README.md)): three runs in a row all PASS in 110.7-114.6 s, with identical
+results: 8 of 8 UART tests, 4 of 4 ILA captures, LED on-time 32, 256 and 640 of 1024 clocks at DUTY 0x08, 0x40 and
+0xA0, exactly as the model predicts. The tests that need the board are marked `hw` and skipped in CI; CI re-checks
+the committed captures instead.
 
 ## Reproduce
 
@@ -82,7 +104,8 @@ Vivado does not run in GitHub Actions (the install is about 100 GB); its results
 ## Layout
 
 ```
-flow/        runner, Tcl flow, ILA insertion, gates, summaries, lint, cocotb helper
+flow/        runner, Tcl flow, ILA insertion, gates, summaries, lint, cocotb helper; board discovery,
+             programming, ILA capture and bringup.py (F0B)
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T)
 designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, design.xdc, probes.yaml,
@@ -94,8 +117,8 @@ results/     committed build summaries, per milestone
 
 | Milestone | What | Status |
 |---|---|---|
-| F0A | Repo, CI, runner, flow, gates, ILA, test shell, T1 by hand | this PR |
-| F0B | Automated bring-up on the Nexys A7: program by cable serial, UART tests, ILA capture | coming |
+| F0A | Repo, CI, runner, flow, gates, ILA, test shell, T1 by hand | done |
+| F0B | Automated bring-up on the Nexys A7: program by cable serial, UART tests, ILA capture | this PR |
 | F1 | Knowledge packs from AMD documentation; model screen | coming |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | F3 | Frozen benchmark, scored runs | coming |

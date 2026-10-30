@@ -1,0 +1,302 @@
+{
+  "design": "designs/t1_dimmer_counter",
+  "started": "2026-10-30T21:47:35",
+  "git_commit": "4587566787c6e9fbf1af7a0570e0ffafec6c0c24",
+  "git_dirty": false,
+  "steps": {
+    "power_ok_usb": {
+      "pass": true,
+      "limit_w": 0.5,
+      "base": {
+        "pass": true,
+        "limit_w": 0.5,
+        "total_w": 0.133,
+        "dynamic_w": 0.036,
+        "static_w": 0.097,
+        "confidence": "Low",
+        "why": ""
+      },
+      "ila": {
+        "pass": true,
+        "limit_w": 0.5,
+        "total_w": 0.149,
+        "dynamic_w": 0.052,
+        "static_w": 0.097,
+        "confidence": "Low",
+        "why": ""
+      },
+      "seconds": 0.0
+    },
+    "discover": {
+      "pass": true,
+      "board": "nexys_a7_100t",
+      "cable_serial": "...B73A",
+      "part": "xc7a100t",
+      "idcode": "13631093",
+      "uart": "FT2232 interface 1 (found)",
+      "targets_seen": 1,
+      "vivado_version": "2025.2",
+      "seconds": 16.7
+    },
+    "program_base": {
+      "variant": "base",
+      "build_stamp": "dfd4624e",
+      "cable_serial": "...B73A",
+      "power_ok_usb": {
+        "pass": true,
+        "limit_w": 0.5,
+        "total_w": 0.133,
+        "dynamic_w": 0.036,
+        "static_w": 0.097,
+        "confidence": "Low",
+        "why": ""
+      },
+      "pass": true,
+      "device": "xc7a100t_0",
+      "part": "xc7a100t",
+      "done_pin": "1",
+      "program_ms": 407,
+      "ila_cores": 0,
+      "vivado_version": "2025.2",
+      "seconds": 18.0
+    },
+    "uart_tests": {
+      "pass": true,
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": {
+        "test_identity_and_build_stamp": 0.131,
+        "test_worked_bytes_from_protocol_md": 0.051,
+        "test_scratch_loopback_random": 32.158,
+        "test_error_responses_and_counters": 0.207,
+        "test_sync_hunting": 0.015,
+        "test_part_frame_times_out": 0.255,
+        "test_framing_error_drops_the_part_frame": 0.271,
+        "test_t1_registers_against_the_model": 5.199
+      },
+      "files": [
+        "designs/t1_dimmer_counter/tests/test_t1_hw.py"
+      ],
+      "seconds": 38.6
+    },
+    "program_ila": {
+      "variant": "ila",
+      "build_stamp": "dfd4624e",
+      "cable_serial": "...B73A",
+      "power_ok_usb": {
+        "pass": true,
+        "limit_w": 0.5,
+        "total_w": 0.149,
+        "dynamic_w": 0.052,
+        "static_w": 0.097,
+        "confidence": "Low",
+        "why": ""
+      },
+      "pass": true,
+      "device": "xc7a100t_0",
+      "part": "xc7a100t",
+      "done_pin": "1",
+      "program_ms": 657,
+      "ila_cores": 1,
+      "vivado_version": "2025.2",
+      "seconds": 18.1
+    },
+    "ila_captures": {
+      "pass": true,
+      "captures": {
+        "count_write": {
+          "pass": true,
+          "errors": [],
+          "write_at_sample": 64,
+          "samples": 1024,
+          "led_rule_violations": 0,
+          "trigger": {
+            "condition": "AND",
+            "position": 64,
+            "compares": {
+              "win_wr": 1,
+              "addr": 128
+            }
+          }
+        },
+        "pwm_08": {
+          "pass": true,
+          "errors": [],
+          "duty": 8,
+          "samples": 1024,
+          "led_on_clocks_measured": [
+            32,
+            0,
+            0,
+            0,
+            0,
+            32,
+            0,
+            0,
+            0,
+            0,
+            32,
+            0,
+            0,
+            0,
+            0,
+            32
+          ],
+          "led_on_clocks_model": [
+            32,
+            0,
+            0,
+            0,
+            0,
+            32,
+            0,
+            0,
+            0,
+            0,
+            32,
+            0,
+            0,
+            0,
+            0,
+            32
+          ],
+          "led_rule_violations": 0,
+          "trigger": {
+            "condition": "AND",
+            "position": 0,
+            "compares": {
+              "phase": 0
+            }
+          }
+        },
+        "pwm_40": {
+          "pass": true,
+          "errors": [],
+          "duty": 64,
+          "samples": 1024,
+          "led_on_clocks_measured": [
+            256,
+            0,
+            0,
+            0,
+            0,
+            256,
+            0,
+            0,
+            0,
+            0,
+            256,
+            0,
+            0,
+            0,
+            0,
+            256
+          ],
+          "led_on_clocks_model": [
+            256,
+            0,
+            0,
+            0,
+            0,
+            256,
+            0,
+            0,
+            0,
+            0,
+            256,
+            0,
+            0,
+            0,
+            0,
+            256
+          ],
+          "led_rule_violations": 0,
+          "trigger": {
+            "condition": "AND",
+            "position": 0,
+            "compares": {
+              "phase": 0
+            }
+          }
+        },
+        "pwm_a0": {
+          "pass": true,
+          "errors": [],
+          "duty": 160,
+          "samples": 1024,
+          "led_on_clocks_measured": [
+            640,
+            0,
+            0,
+            0,
+            0,
+            640,
+            0,
+            0,
+            0,
+            0,
+            640,
+            0,
+            0,
+            0,
+            0,
+            640
+          ],
+          "led_on_clocks_model": [
+            640,
+            0,
+            0,
+            0,
+            0,
+            640,
+            0,
+            0,
+            0,
+            0,
+            640,
+            0,
+            0,
+            0,
+            0,
+            640
+          ],
+          "led_rule_violations": 0,
+          "trigger": {
+            "condition": "AND",
+            "position": 0,
+            "compares": {
+              "phase": 0
+            }
+          }
+        }
+      },
+      "rule": "(from spec.yaml, with model.py giving the expected values):\n- **count_write** (trigger: ``win_wr == 1 AND addr == 0x80``, a COUNT write sent over\n  the UART). Exactly one ``win_wr`` in the window; ``count`` holds the old value up to\n  and including that clock and the written value from the next clock on (the register\n  takes the write at the clock edge that ends the ``win_wr`` cycle); the LED rule\n  below holds on every clock.\n- **pwm_<duty>** (trigger: ``phase == 0``). 1024 samples are exactly one PWM period\n  (256 phases x PWM_PRESCALE). (1) ``phase`` steps by +1 (mod 256) and every whole run\n  is PWM_PRESCALE clocks long. (2) The LED rule on every clock k >= 1:\n  ``led[k] == (count[k-1] if phase[k-1] < duty else 0)`` (LED is a register of the\n  compare; spec: \"lit while phase < DUTY_EFF\", outputs registered). (3) Each LED's\n  lit samples over the window equal ``model.led_on_clocks()`` exactly: duty x 4 for\n  a 1 bit of COUNT, 0 for a 0 bit.\nExact equality everywhere: no tolerance.",
+      "seconds": 19.1
+    },
+    "still_alive": {
+      "pass": true,
+      "build_stamp": "dfd4624e",
+      "scratch_kept": true,
+      "status": {
+        "checksum_errors": 0,
+        "request_errors": 0,
+        "uart_framing_errors": 0,
+        "timeouts": 0
+      },
+      "seconds": 0.1
+    }
+  },
+  "pass": true,
+  "cable_serial": "...B73A",
+  "vivado_version": "2025.2",
+  "build_stamp": "dfd4624e",
+  "seconds": 111.0,
+  "tools": {
+    "vivado": "2025.2",
+    "python": "3.12.3",
+    "pyserial": "3.5",
+    "pytest": "9.2.0"
+  }
+}
