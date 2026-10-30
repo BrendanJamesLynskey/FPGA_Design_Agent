@@ -54,7 +54,8 @@ Steps 1-8 were done by hand for F0A. In F2 the agent does steps 1-8 itself, and 
 | Board files | [boards/nexys_a7_100t](boards/nexys_a7_100t) | Digilent master XDC (MIT) at a pinned commit |
 
 The T1 build numbers (timing, utilisation, ILA cost, run time and memory) are in
-[results/f0a/t1_dimmer_counter.md](results/f0a/t1_dimmer_counter.md); every one comes from the JSON next to it.
+[results/f0a/t1_dimmer_counter.md](results/f0a/t1_dimmer_counter.md); every one comes from the JSON next to it
+([results/f0a/README.md](results/f0a/README.md) lists the files).
 Programming the board and testing on hardware is milestone F0B.
 
 ## Reproduce
