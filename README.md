@@ -115,7 +115,8 @@ shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T)
 designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, design.xdc, probes.yaml,
              build.yaml, tests/, BRINGUP.md
-results/     committed build summaries, per milestone
+results/     committed build and bring-up results, per milestone
+docs/img/    photos (metadata stripped)
 ```
 
 ## Status
