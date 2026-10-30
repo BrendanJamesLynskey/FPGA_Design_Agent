@@ -34,8 +34,8 @@ board resets, browns out or drops off USB, stop: fit an external supply before g
 
 | Item | Setting |
 |---|---|
-| Power | USB from the PC into the micro-USB port marked PROG/UART (J6); power switch on. JP3 (power select) on USB. Total on-chip power must stay at or below 0.5 W (section 0). |
-| Programming mode | JP1 (mode) on JTAG. Nothing is written to the QSPI flash; a power cycle erases the design. (Programming over JTAG works whatever JP1 says; JP1 only chooses what loads at power-up.) |
+| Power | USB from the PC into the micro-USB port marked PROG/UART (J6, checked on the F0B photo); power switch on. JP3 (power select) on USB (checked on the photo). Total on-chip power must stay at or below 0.5 W (section 0). |
+| Programming mode | Leave JP1 (mode: QSPI / JTAG / USB/SD) where it is. JP1 only chooses what the FPGA loads at power-up; programming SRAM over JTAG works whatever it says. The F0B board had JP1 on QSPI (owner's statement), so at power-up it loads whatever is in its QSPI flash, and `flow/program.py` then replaces that in SRAM. Nothing here ever writes the QSPI flash; a power cycle erases the T1 design. |
 | PC | Vivado 2025.2 Hardware Manager (`hw_server`), AMD's cable udev rules installed once (root), the user in `plugdev` with a udev rule for the FTDI UART, Python 3 with `pyserial`. |
 | Cable | One FTDI FT2232 (`lsusb`: `0403:6010`). Channel A (USB interface 0) is JTAG, channel B (interface 1) is the UART. `hw_server` names the target `Digilent/<USB serial>A`: the USB serial plus the channel letter A. |
 | Serial port | interface 1 of that FT2232: `/dev/serial/by-id/usb-Digilent_Digilent_USB_Device_<USB serial>-if01-port0` (on the F0B PC it was `/dev/ttyUSB1`; `ttyUSB0` is interface 0, the JTAG channel). `flow/hw_discover.py` finds it by serial and interface and records it in `~/.config/fpga_design_agent/boards.yaml`. 115200 baud, 8N1, no flow control. |
@@ -126,7 +126,8 @@ trigger value across them using their `MAP` property, and `flow/ila.py` puts the
 ## 6. If it fails, check in this order
 
 1. **Power and programming.** Is the red power LED on? Did programming finish with DONE lit? If not: the cable
-   drivers (`hw_server` must list a Digilent target), the USB cable (some are charge-only), JP1 on JTAG.
+   drivers (`hw_server` must list a Digilent target), the USB cable (some are charge-only). JP1's position does not
+   matter for JTAG programming.
 2. **Right bitstream.** Step 1's `build_stamp` must match the results file. If it differs, you programmed another
    build.
 3. **Reset.** If nothing responds (display stuck, UART silent), the design may be held in reset: CPU RESET is active

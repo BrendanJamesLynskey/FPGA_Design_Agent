@@ -80,6 +80,11 @@ results: 8 of 8 UART tests, 4 of 4 ILA captures, LED on-time 32, 256 and 640 of 
 0xA0, exactly as the model predicts. The tests that need the board are marked `hw` and skipped in CI; CI re-checks
 the committed captures instead.
 
+Manual checks by the owner (buttons count as specified, three visibly different dimmer levels):
+[results/f0b/manual_checks.md](results/f0b/manual_checks.md).
+
+![T1 running on the Nexys A7-100T: display 40 (brightness) and 0000 (count), DONE and POWER LEDs lit](docs/img/t1_on_nexys_a7.jpg)
+
 ## Reproduce
 
 Simulation, lint and the Python tests (what CI runs):
