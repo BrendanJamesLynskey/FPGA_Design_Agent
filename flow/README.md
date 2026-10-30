@@ -19,7 +19,8 @@ Python code only.
 - Refuses to start while another Vivado runs (`pgrep -x vivado`) or when `MemAvailable` is below `MIN_AVAIL_GB`
   (default 7), and says why.
 - Runs Vivado in a transient user scope: `systemd-run --user --scope -p MemoryMax=6G nice -n 15`, with
-  `set_param general.maxThreads 1` in `build.tcl`. Multi-threaded Vivado gets OOM-killed on this PC.
+  `set_param general.maxThreads 1`, `synth.maxThreads 1` and `chipscope.maxJobs 1` in `build.tcl` (the first does not
+  lower the other two). Multi-threaded Vivado gets OOM-killed on this PC.
 - Records in `run.json`: the wall time; the largest Vivado process's peak RSS (`/usr/bin/time -v`); and, from the
   scope's cgroup polled every 2 s, the peak anonymous memory summed over all its processes (the ILA build spawns
   helper Vivado processes), the peak charged memory (`memory.peak`, page cache included), the peak swap, and how

@@ -6,7 +6,13 @@
 # applies the memory guard and records time and memory. Every report the
 # gates read (flow/gates.py) lands in the build directory.
 
-set_param general.maxThreads 1        ;# above 1 thread, Vivado is OOM-killed at 5-6 GB on the 16 GB build PC
+# Memory on the 16 GB build PC. Above 1 thread Vivado is OOM-killed at 5-6 GB.
+# general.maxThreads does not lower synth.maxThreads (it stays at 7), and
+# chipscope.maxJobs (0 = automatic) lets the ILA build synthesise its debug
+# cores in parallel helper Vivado processes, so all three are pinned to 1.
+set_param general.maxThreads 1
+set_param synth.maxThreads   1
+set_param chipscope.maxJobs  1
 
 source [lindex $argv 0]
 set flow_dir [file dirname [file normalize [info script]]]
