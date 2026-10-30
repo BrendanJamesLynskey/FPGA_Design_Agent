@@ -33,4 +33,4 @@ def test_generated_tcl_loads(tmp_path: Path, capsys: pytest.CaptureFixture[str])
     script = (f"source {tmp_path / 'inputs.tcl'}; source $probes_tcl; "
               "puts [list $top $part $ila [llength $sources] [llength $ila_probes] [lindex $ila_probes 0]]")
     out = subprocess.run(["tclsh"], input=script, capture_output=True, text=True, check=True).stdout.strip()
-    assert out == "t1_dimmer_counter_top xc7a100tcsg324-1 1 10 11 {count {u_dut/count_reg[*]/Q} 16}"
+    assert out == "t1_dimmer_counter_top xc7a100tcsg324-1 1 10 13 {count {u_dut/count_reg[*]/Q} 16}"
