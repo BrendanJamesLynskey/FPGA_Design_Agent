@@ -1,0 +1,15 @@
+[project]
+name = "fpga-design-agent"
+version = "0.1.0"
+description = "Natural-language spec to a verified, bring-up-ready AMD FPGA bitstream, measured"
+requires-python = ">=3.10"
+license = "MIT"
+dependencies = ["pyyaml>=6", "pyserial>=3.5"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "cocotb==2.0.1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["flow/tests", "shell/tests", "designs"]
+python_files = ["test_*.py"]

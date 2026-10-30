@@ -1,0 +1,60 @@
+# ILA probes for the debug build (flow/debug.tcl inserts them after synthesis).
+# nets: post-synthesis net names (hierarchical, as get_nets sees them); a bus
+# lists its bits with [*] and the width must match.
+ila:
+  name: u_ila_0
+  clock_net: CLK100MHZ_IBUF_BUFG
+  depth: 1024                 # samples per capture
+  input_pipe_stages: 0
+probes:
+  - name: count
+    nets: "u_dut/count[*]"
+    width: 16
+    why: the counter itself
+  - name: press_up
+    nets: u_dut/p_up
+    width: 1
+    why: one-clock debounced press pulses
+  - name: press_down
+    nets: u_dut/p_down
+    width: 1
+  - name: press_clear
+    nets: u_dut/p_clear
+    width: 1
+  - name: rx_valid
+    nets: u_shell/rx_valid
+    width: 1
+    why: a byte arrived from the host
+  - name: rx_data
+    nets: "u_shell/rx_data[*]"
+    width: 8
+  - name: win_wr
+    nets: win_wr
+    width: 1
+    why: the shell writes a design register
+  - name: win_rd
+    nets: win_rd
+    width: 1
+  - name: win_addr
+    nets: "win_addr[*]"
+    width: 7
+  - name: uart_rx_pin
+    nets: UART_TXD_IN_IBUF
+    width: 1
+    why: the raw serial line from the host
+  - name: uart_tx_pin
+    nets: UART_RXD_OUT_OBUF
+    width: 1
+triggers:                     # suggestions; BRINGUP.md walks through each
+  - name: count_write
+    condition: "win_wr == 1 AND win_addr == 0x00"
+    position: 64
+    use: capture a shell write to COUNT; count must take the written value on the next clock
+  - name: button_press
+    condition: "press_up == 1 OR press_down == 1 OR press_clear == 1"
+    position: 512
+    use: catch a debounced press; count changes by one on the next clock
+  - name: host_byte
+    condition: "rx_valid == 1 AND rx_data == 0xA5"
+    position: 16
+    use: confirm the shell receives the host's sync byte (1024 samples = 10.24 us, about one byte time at 115200)

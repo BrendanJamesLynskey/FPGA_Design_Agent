@@ -1,0 +1,60 @@
+# CI: Python models, gates parser and host driver; cocotb + Icarus RTL tests
+# (with the mutant check); Verilator lint. Vivado does not run here (it is a
+# ~100 GB install): builds run locally through flow/run_vivado.sh, and their
+# summaries are committed under results/.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    name: Python (models, gates parser, host driver)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install pyyaml pyserial pytest cocotb==2.0.1
+      - name: pytest (no simulator)
+        run: python -m pytest -q --ignore-glob='*_rtl.py'
+
+  rtl-sim:
+    name: RTL tests (cocotb + Icarus) and mutants
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          pip install pyyaml pyserial pytest cocotb==2.0.1
+      - name: cocotb tests (shell at 8 clocks a bit and at 115200 baud; T1 against its model)
+        run: python -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py
+      - name: Mutants (each deliberate bug must fail the T1 tests)
+        run: PYTHON=python designs/t1_dimmer_counter/tests/run_mutants.sh
+      - name: Upload simulation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-logs
+          path: build/sim/*/sim.log
+
+  lint:
+    name: Verilator lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Verilator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y verilator python3-yaml
+      - name: Lint
+        run: flow/lint.sh
