@@ -2,6 +2,9 @@
 # run_vivado.sh: the memory-safe local Vivado runner.
 #
 #   flow/run_vivado.sh designs/<name> [base|ila|both]      (default: base)
+#   flow/run_vivado.sh designs/<name> program|program-ila  (program the board's SRAM:
+#       hands over to flow/program.py, which applies the same guard rails, the
+#       USB-power gate and the build-stamp check; flash is never written)
 #
 # For each variant it:
 #   1. refuses to start if another Vivado is running, or if MemAvailable is
@@ -25,15 +28,17 @@ MEM_MAX="${MEM_MAX:-6G}"
 
 die() { echo "run_vivado: $*" >&2; exit 1; }
 
-[ $# -ge 1 ] || die "usage: flow/run_vivado.sh designs/<name> [base|ila|both]"
+[ $# -ge 1 ] || die "usage: flow/run_vivado.sh designs/<name> [base|ila|both|program|program-ila]"
 DESIGN="$(cd "$1" && pwd)" || die "no design directory $1"
 REL="${DESIGN#"$ROOT"/}"
 [ -f "$DESIGN/build.yaml" ] || die "$REL has no build.yaml"
 case "${2:-base}" in
+  program)     exec "$PY" "$ROOT/flow/program.py" "$DESIGN" base "${@:3}" ;;
+  program-ila) exec "$PY" "$ROOT/flow/program.py" "$DESIGN" ila "${@:3}" ;;
   base) VARIANTS=(base) ;;
   ila)  VARIANTS=(ila) ;;
   both) VARIANTS=(base ila) ;;
-  *) die "variant must be base, ila or both" ;;
+  *) die "variant must be base, ila, both, program or program-ila" ;;
 esac
 [ -x "$VIVADO" ] || die "Vivado not found at $VIVADO (set VIVADO=...)"
 command -v systemd-run >/dev/null || die "systemd-run not found"

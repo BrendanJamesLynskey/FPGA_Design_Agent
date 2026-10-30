@@ -13,6 +13,11 @@ Python code only.
 | `summarise.py` | Collects `gates.json` + `run.json` of the variants into `results/<milestone>/` |
 | `cocotb_run.py` | Runs a cocotb module under Icarus from pytest (used by every RTL test) |
 | `lint.sh` | Verilator `--lint-only -Wall` on the shell and every design's top |
+| `bringup.py` | **F0B.** One command on the attached board: power gate, discover, program base, UART tests, program ILA, ILA captures, still alive; writes `results/f0b/<design>_bringup.json` |
+| `hw_discover.py`, `hw_list.tcl` | Find the one JTAG target (refuses if there are several), check it is an xc7a100t, find its UART (FT2232 interface 1, same USB serial); record both in `~/.config/fpga_design_agent/boards.yaml`, outside the repo |
+| `program.py`, `program.tcl` | Program a build into SRAM by cable serial, after the `power_ok_usb` gate (report_power total <= 0.5 W) and a build-stamp check; flash requests are refused. Also `run_vivado.sh designs/<name> program\|program-ila` |
+| `ila_capture.tcl`, `ila.py` | Arm the ILA by Tcl, wait, upload, export CSV + VCD, in step with the UART stimulus; read the CSV back into probe values |
+| `hw.py` | Shared hardware pieces: the Vivado hardware-manager runner (same guard rails), `hw_server`, the board file, the power gate, serial redaction |
 
 ## The runner's guard rails (16 GB build PC)
 
@@ -49,3 +54,17 @@ A build passes only if all of these hold after routing:
 | bitstream present (and `.ltx` for the ILA variant) | build directory |
 
 Warnings that do not fail a gate are still listed in the JSON, by rule, so a reader sees them.
+
+## Hardware steps (F0B)
+
+Every hardware step runs Vivado through `hw.py` with the runner's guard rails (one Vivado at a time, `systemd-run
+--user --scope -p MemoryMax=6G`, `nice -n 15`, `general.maxThreads 1`); the hardware manager needs about 1.6 GB, so
+its free-memory floor is `HW_MIN_AVAIL_GB` (default 3) instead of 7. `bringup.py` starts one `hw_server` for the
+whole run and stops it at the end (it is a wrapper script: the process group is stopped, not just the wrapper).
+
+Rules the code enforces: program only the target whose serial is in the board file, never "the first target";
+SRAM only, never flash; a bitstream above 0.5 W total on-chip power (`report_power`) is not programmed, because the
+board runs from its USB cable; committed files show the cable serial as its last 4 characters and never a `/dev`
+path. The on-board tests are pytest tests marked `hw`, skipped unless `--hw-port` is given (see `conftest.py`), so
+CI never touches a serial port.
+

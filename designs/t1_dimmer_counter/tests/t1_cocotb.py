@@ -12,7 +12,7 @@ import random
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles, RisingEdge
+from cocotb.triggers import ClockCycles, ReadOnly, RisingEdge
 
 from designs.t1_dimmer_counter import model as m
 from shell.host import protocol as p
@@ -241,3 +241,66 @@ async def random_operations_match_the_model(dut):
             await e.read(rng.choice([m.COUNT, m.DUTY, m.CTRL, m.INPUTS, m.PRESSES, 0x05, 0x7F]))
     for off in (m.COUNT, m.DUTY, m.CTRL, m.INPUTS, m.PRESSES):
         await e.read(off)
+
+
+async def clocks_until(clk, sig, limit: int) -> int:
+    """Rising edges from now until ``sig`` is 1 at an edge (sampled just after the edge)."""
+    for k in range(1, limit + 1):
+        await RisingEdge(clk)
+        await ReadOnly()
+        if int(sig.value) == 1:
+            return k
+    raise AssertionError(f"{sig._name} never rose within {limit} clocks")
+
+
+@cocotb.test()
+async def register_write_and_press_on_the_same_clock(dut):
+    """spec.yaml: a COUNT write and a debounced press on one clock: the write wins, the press is still counted.
+
+    The two latencies (start of a UART write to its win_wr pulse; button edge to its press
+    pulse) are measured first, then the button is pushed so both pulses land on one clock,
+    which the test checks before comparing COUNT and PRESSES with the model.
+    """
+    e = Env(dut)
+    await e.start()
+    clk = dut.CLK100MHZ
+    pulses = {"BTNU": dut.u_dut.p_up, "BTND": dut.u_dut.p_down, "BTNC": dut.u_dut.p_clear}
+    limit = 40 * e.cpb * p.REQ_LEN
+
+    # latency of a write: from the clock it starts to win_wr
+    await RisingEdge(clk)
+    task = cocotb.start_soon(e.access(p.CMD_WRITE, p.WINDOW_BASE + m.COUNT, 0x0100))
+    l_wr = await clocks_until(clk, dut.win_wr, limit)
+    await task
+    # latency of a press: from the clock the button rises to the press pulse
+    await RisingEdge(clk)
+    dut.BTNU.value = 1
+    l_press = await clocks_until(clk, pulses["BTNU"], 4 * e.n)
+    await RisingEdge(clk)
+    await e.drive_trace("BTNU", [1] * 4 + [0] * (e.n + 4))
+    e.t1.press(up=True)
+    assert await e.read(m.COUNT) == 0x0101
+    assert l_wr > l_press, (l_wr, l_press)
+    dut._log.info("write reaches win_wr after %d clocks, a press its pulse after %d", l_wr, l_press)
+
+    for button, value in (("BTNU", 0x1234), ("BTND", 0x8000), ("BTNC", 0xBEEF)):
+        hits: list[str] = []
+
+        async def watch() -> None:
+            for _ in range(l_wr + 8):
+                await RisingEdge(clk)
+                await ReadOnly()
+                if int(dut.win_wr.value) == 1 and int(pulses[button].value) == 1:
+                    hits.append(button)
+
+        await RisingEdge(clk)
+        task = cocotb.start_soon(e.access(p.CMD_WRITE, p.WINDOW_BASE + m.COUNT, value))
+        watcher = cocotb.start_soon(watch())
+        await ClockCycles(clk, l_wr - l_press)
+        await e.drive_trace(button, [1] * (e.n + 4) + [0] * (e.n + 4))
+        await task
+        await watcher
+        assert hits == [button], f"{button}: win_wr and the press did not land on one clock"
+        e.t1.press(**{dict(zip(BUTTONS, ("up", "down", "clear")))[button]: True, "reg_write": True})
+        assert await e.read(m.COUNT) == value, f"{button}: the register write must win"
+        await e.read(m.PRESSES)            # compared with the model: the press is still counted

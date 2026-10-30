@@ -17,6 +17,7 @@ MUTANTS=(
   "pwm_le|dimmer_counter.sv|s/(phase < duty_eff)/(phase <= duty_eff)/|PWM on for one phase step too many"
   "glyph_b|sevenseg_scan.sv|s/4'hB: glyph = 7'b1111100/4'hB: glyph = 7'b1111110/|digit b shows an extra segment"
   "down_saturates|dimmer_counter.sv|s/else if (p_down)                   count <= count - 1'b1;/else if (p_down \&\& count != 0) count <= count - 1'b1;/|down stops at 0 instead of wrapping"
+  "press_wins|dimmer_counter.sv|s/if (win_wr \&\& win_addr == R_COUNT) count/if (win_wr \&\& win_addr == R_COUNT \&\& !p_up \&\& !p_down \&\& !p_clear) count/|a press on the clock of a COUNT write beats the write"
 )
 
 caught=0

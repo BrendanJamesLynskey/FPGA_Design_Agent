@@ -39,6 +39,14 @@ probes:
     pins: "u_shell/u_core/frame_reg[1][*]/Q"
     width: 8
     why: the request's ADDR byte (0x80 + offset for the design's registers)
+  - name: led
+    pins: "u_dut/led_reg[*]/Q"
+    width: 16
+    why: the LED outputs (PWM); added in F0B so the ILA can check duty against level
+  - name: phase
+    pins: "u_dut/phase_reg[*]/Q"
+    width: 8
+    why: the PWM phase counter; LED[i] is lit on the clock after phase < duty while count[i] is 1
   - name: uart_rx_pin
     pins: UART_TXD_IN_IBUF_inst/O
     width: 1
@@ -46,7 +54,7 @@ probes:
   - name: uart_tx_pin
     pins: UART_RXD_OUT_OBUF_inst/I
     width: 1
-triggers:                     # suggestions; BRINGUP.md walks through each
+triggers:                     # suggestions; BRINGUP.md walks through each (flow/bringup.py runs count_write and pwm_period)
   - name: count_write
     condition: "win_wr == 1 AND addr == 0x80"
     position: 64
@@ -59,3 +67,7 @@ triggers:                     # suggestions; BRINGUP.md walks through each
     condition: "rx_valid == 1 AND rx_data == 0xA5"
     position: 16
     use: confirm the shell receives the host's sync byte (1024 samples = 10.24 us, about one byte time at 115200)
+  - name: pwm_period
+    condition: "phase == 0x00"
+    position: 0
+    use: one capture of 1024 samples is exactly one PWM period (256 phases x PWM_PRESCALE 4); LED on-time = duty x 4
