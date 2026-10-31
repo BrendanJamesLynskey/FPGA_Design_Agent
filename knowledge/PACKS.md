@@ -4,8 +4,8 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `5fa656fb8312` (branch `board-v2`, PR #4 there, brief 04c; 04d was `238fec497e24`, PR #3;
-  F1A2 `6a677334d5c4`, PR #2).
+- Private repo commit: `517514a` (branch `ultrafast`, PR #5 there, brief 04e; 04c was `5fa656fb8312`, PR #4; 04d
+  `238fec497e24`, PR #3; F1A2 `6a677334d5c4`, PR #2).
 - Generic source: the private repository `BrendanJamesLynskey/RTL_Knowledge_Pack`, annotated tag `v2.2`, commit
   `6f99fbdae4409e4f740ee17a61e4cdf797ac405f`. Its skill files are byte-identical to `v2.1`; `v2.2` adds the file
   that gives every skill a section. `techniques/` and `functions/` are that tag converted to Agent Skills by
@@ -36,23 +36,23 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `vendor/ross_shipped/` | vendor: Ross as shipped | Ross release 2026.10.1 | 50 | 1,195 | 918,458 (none) | 12,578 | 225,565 | `3d2cf1b50012d4676a3b432f0725b00848795059224f913935e37cc98846e773` |
 | `family/artix7/` | family: Artix-7 device (xc7a100tcsg324-1) | 2 (2026-10-31; sectioned 2026-10-31) | 6 | 13 | 22,797 (<= 40,000) | 2,964 | 5,699 | `e6b8e0f3e635908573ade30320459581b1137835ca69175414140545ac21689f` |
 | `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
-| `procedures/` | procedures: board onboarding | 1 (2026-10-31, 04c) | 1 | 3 | 5,285 (none) | 450 | 1,321 | `d75899b879a865a0c1afaccff692cb2ece8eb80f5ed2e9b87b3e720664139436` |
+| `procedures/` | procedures: board onboarding; UltraFast stages | 2 (2026-10-31, 04e: `ultrafast/`, 9 skills) | 10 | 13 | 39,999 (<= 40,000) | 2,672 | 10,000 | `ac4f31ada6472240d43bc43eae8f2bb4757bb0cee8d7c010b62c62ad48e8351c` |
 | `library/` | library (search_docs corpus) | 1 (2026-10-30; chunk sections 2026-10-31) | - | 12 | 6,990,296 total (none) | - | - | `3ca68766b15c83fc5d04b8da0665b353ba5bc3e7e3daf627f0d2f82f9ff4dbfa` |
 
-Root files: `SECTIONS.yaml` sha256 `193e70662662038b6a24d24f1e310089c827d2de196a3a51b93bf63833a9b70f`; `INDEX.md` sha256
-`836416f12993ddb233dd2a7f3c326b75c8a3082398829041c9733e688c5f0748`.
+Root files: `SECTIONS.yaml` sha256 `dc8f3612316e350b4a8a06de82555f9e1b0b478b83cca61fb6fe4d27eee77693`; `INDEX.md` sha256
+`6c75350e6c19cea7e763ad7002a5c1c509303cc75f6e090fe31bbb66e29a7a9e`.
 
 ## The vocabulary
 
-`SECTIONS.yaml` defines 55 section ids: 19 techniques and 21 functional areas (generic; their ids,
+`SECTIONS.yaml` defines 56 section ids: 19 techniques and 21 functional areas (generic; their ids,
 kinds and definitions come from RTL_Knowledge_Pack `v2.2` and must match it), 2 device, 12 tool-flow (vendor topics) and
-1 procedure. One id means one thing on every axis. Sections with no skill yet (gaps):
+2 procedures (`board-onboarding`, `ultrafast`). One id means one thing on every axis. Sections with no skill yet (gaps):
 
 - generic (17): `clocking`, `timing-concepts`, `low-power`, `synthesis-and-dft`, `ethernet`, `high-speed-serial`, `usb`, `user-io`, `processors`, `dram`, `flash`, `sd-card`, `audio`, `sensors`, `analog`, `expansion-io`, `power-config`.
 - `vendor/ross_distilled` (4): `hls`, `vitis-ai`, `segmented-config`, `embedded-software`.
 - `family/artix7` (9): `reset`, `arithmetic`, `fifo`, `cdc`, `low-power`, `high-speed-serial`, `dram`, `analog`, `power-config`.
 - `board/nexys_a7_100t` (7): `reset`, `video`, `processors`, `dram`, `analog`, `expansion-io`, `io-standards` (04c filled `ethernet`, `usb`, `flash`, `sd-card`, `audio`, `sensors`).
-- `procedures`: none (04c added `board-onboarding`).
+- `procedures`: none (04c added `board-onboarding`, 04e `ultrafast`).
 
 ## By section
 
@@ -106,6 +106,7 @@ kinds and definitions come from RTL_Knowledge_Pack `v2.2` and must match it), 2 
 | `board/nexys_a7_100t/` | `usb` | function | 1 | 2,616 | `08904a4de332fa07dfcda408b6193db43174f55f30b599a3250001576a168bc3` |
 | `board/nexys_a7_100t/` | `user-io` | function | 2 | 7,691 | `d032b38fc6d90706c471346a56f44039cac5afa2c12623045a6ee2431e5dd6b9` |
 | `procedures/` | `board-onboarding` | procedure | 1 | 5,285 | `6994af76389f07628736ade90381fe9cbaa272a4862bbb48c760966db50e59f4` |
+| `procedures/` | `ultrafast` | procedure | 9 | 34,714 | `b12fadab86d0d6e9698ea09214dd42594b92eb9149b89486630991319b478707` |
 
 ## Sources, per unit
 
@@ -114,7 +115,7 @@ kinds and definitions come from RTL_Knowledge_Pack `v2.2` and must match it), 2 
 - `vendor/ross_shipped/`: AMD Ross `skills/` tree, unchanged, with its MIT LICENSE.
 - `family/artix7/`: AMD UG474 v1.9, UG473 v1.14, UG479 v1.10, UG472 v1.14, UG471 v1.10, DS181 v1.27.1 (-1 speed grade), UG901/UG949 v2025.2.
 - `board/nexys_a7_100t/`: Digilent Nexys A7 reference manual (PDF rev. 2019-07-10 and the 2024 web page), schematic Rev D.0 (D.2, D.3 compared) and master XDC; data sheets of the ADT7420, ADXL362, SPK0833LM4H, AD8592, ADP121, ADP2118, ADP2138, LAN8720A, PIC24FJ256GB110 family, S25FL128S, S25FL127S, Micron 1Gb DDR2; AMD UG470 v1.17. Board facts confirmed on the owner's board by four self-check designs (`results/board_v2/`).
-- `procedures/`: the board-onboarding procedure as carried out in brief 04c (this repo's `boards/nexys_a7_100t/`, `tools/inventory_check.py`, `flow/board_check.py`, `designs/b2_*`).
+- `procedures/`: the board-onboarding procedure as carried out in brief 04c (this repo's `boards/nexys_a7_100t/`, `tools/inventory_check.py`, `flow/board_check.py`, `designs/b2_*`); the nine UltraFast stage procedures (04e) from AMD UG949 v2025.2 (with UG906 and UG835 v2025.2 for `report_qor_assessment` and rule ids), cited to chapter and section, with the thresholds `flow/gates.py` applies ([docs/methodology.md](../docs/methodology.md)).
 - `library/`: 1,768 chunks: 34 of our summaries of the AMD/Digilent documents above, and the full Ross markdown text (1,734 chunks); each chunk carries its section ids. Offline BM25; used only by the skills-plus-library arm.
 
 ## How F3 uses them
@@ -129,6 +130,17 @@ whose hashes differ from this table is not a scored run.
 
 The human debug playbook ([docs/debug_playbook.md](../docs/debug_playbook.md)) is not a pack and is never given
 to the agent in scored runs.
+
+## The UltraFast stage procedures (2026-10-31, 04e)
+
+The procedures unit gained a second section, `ultrafast`, with nine skills, one per stage of AMD's UltraFast
+Design Methodology (UG949 v2025.2): board and device planning, RTL design creation, constraints, synthesis,
+implementation, timing closure, power closure, DRC closure, configuration and debug. Each gives the stage's exit
+checks as exact Tcl commands with thresholds (the same checks `flow/gates.py` applies, stage by stage; see
+[docs/methodology.md](../docs/methodology.md) for the mapping and the deviations from UG949), common failures and
+version notes, cited to UG949 chapter and section. A procedure section may now hold several skills
+(`procedures/<section>/<skill>/SKILL.md`), and the procedures unit has a 40,000-byte skill budget. Only
+`procedures/`, `SECTIONS.yaml` (one new id) and the root `INDEX.md` changed; every other unit's hash is as in 04c.
 
 ## Board layer v2 and procedures (2026-10-31, 04c)
 

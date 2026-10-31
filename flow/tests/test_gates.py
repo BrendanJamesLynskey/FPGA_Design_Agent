@@ -1,8 +1,11 @@
 """Gates parser tests against saved snippets of real Vivado 2025.2 reports.
 
-good_*: the T1 base build (every gate passes).
+good_*: the T1 base build (every gate passes); the per-stage reports (04e: *_rtl, *_synth,
+        *_place, *_route and good_power_board_env) are from the 04e rebuild of the same sources.
 bad_*:  flow/tests/fixtures/bad_design, built once to make every gate fail.
-The snippets are cut from the reports, not written by hand (see data/README.md).
+The snippets are cut from the reports, not written by hand (see data/README.md). Two thresholds
+(QoR score, post-place hold) have no real failing report yet, so those tests edit a number in a
+real report in memory and say so.
 """
 
 from __future__ import annotations
@@ -84,11 +87,21 @@ def test_parsers_refuse_the_wrong_report() -> None:
         gates.parse_report_power(rd("good_cdc.rpt"))
 
 
-def _build_dir(tmp: Path, prefix: str, top: str, bit: bool, variant: str = "base") -> Path:
+STAGE_REPORTS = ("methodology_rtl", "timing_summary_synth", "check_timing_synth", "methodology_synth", "drc_synth",
+                 "qor_assessment_synth", "utilization_synth", "timing_summary_place", "qor_assessment_route")
+
+
+def _build_dir(tmp: Path, prefix: str, top: str, bit: bool, variant: str = "base", stages: bool = False) -> Path:
+    """A build directory from the fixtures: the F0A post-route set, plus (stages=True) the 04e per-stage reports
+    and the power report made for the board's thermal environment."""
     d = tmp / prefix
     d.mkdir()
     for name in ("timing_summary", "check_timing", "utilization", "drc", "methodology", "cdc", "power"):
         shutil.copy(DATA / f"{prefix}_{name}.rpt", d / f"{name}.rpt")
+    if stages:
+        for name in STAGE_REPORTS:
+            shutil.copy(DATA / f"good_{name}.rpt", d / f"{name}.rpt")
+        shutil.copy(DATA / "good_power_board_env.rpt", d / "power.rpt")
     (d / "prepare.json").write_text(json.dumps({"top": top, "variant": variant, "build_stamp": "0"}))
     if bit:
         (d / f"{top}.bit").write_bytes(b"\x00" * 16)
@@ -99,6 +112,87 @@ def test_every_gate_passes_on_the_good_build(tmp_path: Path) -> None:
     r = gates.evaluate(_build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True))
     assert r["pass"] and all(r["gates"].values())
     assert r["methodology"]["warnings"] == 54 and r["drc"]["errors"] == r["drc"]["critical_warnings"] == 0
+    # an F0A-era build: the per-stage reports are absent, so those stages are "not run", not failed
+    assert [r["stages"][n]["ran"] for n in gates.STAGES] == [False, False, False, True, True]
+    assert r["first_failed_stage"] is None and "power_junction_ok" not in r["gates"]
+
+
+# --- 04e: the UltraFast stages -------------------------------------------------------------------------------
+
+def test_qor_assessment() -> None:
+    q = gates.parse_qor_assessment(rd("good_qor_assessment_synth.rpt"))
+    assert q["score"] == 5 and q["meaning"] == "Design runs will meet timing"
+    assert q["flow_guidance"] == ["Run report_methodology and fix or waive warnings", "Continue to route_design"]
+    assert q["review"] == [{"name": "Max LUT Combined", "threshold": "20.00", "actual": "46.64", "affects_score": False}]
+    assert gates.parse_qor_assessment(rd("good_qor_assessment_route.rpt"))["score"] == 5
+    with pytest.raises(ValueError):
+        gates.parse_qor_assessment(rd("good_drc.rpt"))
+
+
+def test_stage_reports_parse() -> None:
+    assert gates.parse_rule_table(rd("good_methodology_rtl.rpt"))[0]["rule"] == "XDCH-2"
+    assert gates.parse_timing_summary(rd("good_timing_summary_synth.rpt"))["wns_ns"] == 4.602
+    assert gates.parse_timing_summary(rd("good_timing_summary_place.rpt"))["whs_ns"] == -0.027
+    assert not any(gates.parse_check_timing(rd("good_check_timing_synth.rpt")).values())
+    assert gates.parse_rule_table(rd("good_drc_synth.rpt")) == []
+    env = gates.parse_power_environment(rd("good_power_board_env.rpt"))
+    assert (env["airflow_lfm"], env["heatsink"], env["junction_c"], env["theta_ja_c_per_w"]) == (0.0, "none", 42.7, 18.2)
+
+
+def test_every_stage_passes_on_the_04e_build(tmp_path: Path) -> None:
+    r = gates.evaluate(_build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True))
+    assert r["pass"] and r["first_failed_stage"] is None
+    assert all(r["stages"][n]["ran"] and r["stages"][n]["pass"] for n in gates.STAGES)
+    assert set(r["stages"]["rtl"]["gates"]) == {"rtl_methodology_no_critical"}
+    assert set(r["stages"]["post_synth"]["gates"]) == {"post_synth_no_unconstrained_endpoints", "post_synth_methodology_no_critical",
+                                                       "post_synth_drc_clean", "post_synth_qor_assessment"}
+    assert set(r["stages"]["post_place"]["gates"]) == {"post_place_hold"}
+    assert "power_junction_ok" in r["stages"]["post_route"]["gates"]
+    assert r["stages"]["post_synth"]["qor_assessment"]["score"] == 5 and r["stages"]["post_route"]["qor_assessment"]["score"] == 5
+    assert r["stages"]["post_synth"]["timing"]["wns_ns"] == 4.602 and r["stages"]["post_place"]["timing"]["whs_ns"] == -0.027
+    # the flat gates dict still carries the F0A names, plus the stage-prefixed ones
+    assert {"setup", "hold", "pulse_width", "no_unconstrained_endpoints", "drc_clean", "methodology_no_critical",
+            "cdc_no_critical", "bitstream_present"} <= set(r["gates"])
+
+
+def test_first_failed_stage_is_the_earliest(tmp_path: Path) -> None:
+    d = _build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True)
+    # the bad design's methodology report (TIMING-6 critical) as the RTL-stage report
+    shutil.copy(DATA / "bad_methodology.rpt", d / "methodology_rtl.rpt")
+    r = gates.evaluate(d)
+    assert not r["pass"] and r["first_failed_stage"] == "rtl" and not r["gates"]["rtl_methodology_no_critical"]
+    assert r["stages"]["post_synth"]["pass"] and r["stages"]["post_route"]["pass"]
+    # fix rtl, break post_synth with the bad design's check_timing and DRC reports
+    shutil.copy(DATA / "good_methodology_rtl.rpt", d / "methodology_rtl.rpt")
+    shutil.copy(DATA / "bad_check_timing.rpt", d / "check_timing_synth.rpt")
+    shutil.copy(DATA / "bad_drc.rpt", d / "drc_synth.rpt")
+    r = gates.evaluate(d)
+    assert r["first_failed_stage"] == "post_synth"
+    assert not r["gates"]["post_synth_no_unconstrained_endpoints"] and not r["gates"]["post_synth_drc_clean"]
+    assert r["gates"]["post_synth_methodology_no_critical"]
+
+
+def test_qor_score_and_place_hold_thresholds(tmp_path: Path) -> None:
+    """No real report scores below 3 or holds worse than -0.5 ns yet: one number of a real report is changed."""
+    d = _build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True)
+    q = rd("good_qor_assessment_synth.rpt").replace("| 5 - Design runs will meet timing", "| 2 - Design will not meet timing")
+    (d / "qor_assessment_synth.rpt").write_text(q)
+    r = gates.evaluate(d)
+    assert r["first_failed_stage"] == "post_synth" and not r["gates"]["post_synth_qor_assessment"]
+    assert r["stages"]["post_synth"]["qor_assessment"]["score"] == 2
+    (d / "qor_assessment_synth.rpt").write_text(rd("good_qor_assessment_synth.rpt"))
+    t = rd("good_timing_summary_place.rpt").replace("-0.027", "-0.627")
+    (d / "timing_summary_place.rpt").write_text(t)
+    r = gates.evaluate(d)
+    assert r["first_failed_stage"] == "post_place" and not r["gates"]["post_place_hold"]
+    assert r["stages"]["post_place"]["timing"]["whs_ns"] == -0.627
+
+
+def test_power_junction_gate_needs_the_board_environment(tmp_path: Path) -> None:
+    d = _build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True)
+    shutil.copy(DATA / "good_power.rpt", d / "power.rpt")        # F0A's report: Vivado's default heat sink and airflow
+    r = gates.evaluate(d)
+    assert r["first_failed_stage"] == "post_route" and not r["gates"]["power_junction_ok"]
 
 
 def test_the_bad_build_fails_each_gate_it_should(tmp_path: Path) -> None:

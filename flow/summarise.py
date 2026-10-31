@@ -46,6 +46,17 @@ def markdown(name: str, res: dict[str, dict]) -> str:
     row("all gates", lambda x: "PASS" if x["gates"]["pass"] else "FAIL")
     for gname in res[vs[-1]]["gates"]["gates"]:
         row(f"gate: {gname}", lambda x, g=gname: {True: "pass", False: "FAIL"}.get(x["gates"]["gates"].get(g)))
+    if any(res[v]["gates"].get("stages") for v in vs):      # 04e: the UltraFast stages
+        row("first failed stage", lambda x: x["gates"].get("first_failed_stage") or "none")
+        for sname in ("rtl", "post_synth", "post_place", "post_route", "bitstream"):
+            row(f"stage: {sname}", lambda x, n=sname: {True: "pass", False: "FAIL", None: "not run"}
+                .get(x["gates"].get("stages", {}).get(n, {}).get("pass")))
+        row("post-synthesis WNS (ns)", lambda x: (x["gates"].get("stages", {}).get("post_synth", {}).get("timing") or {}).get("wns_ns"))
+        row("post-synthesis QoR assessment score (1-5)",
+            lambda x: (x["gates"].get("stages", {}).get("post_synth", {}).get("qor_assessment") or {}).get("score"))
+        row("post-placement WHS (ns)", lambda x: (x["gates"].get("stages", {}).get("post_place", {}).get("timing") or {}).get("whs_ns"))
+        row("post-route QoR assessment score (1-5)",
+            lambda x: (x["gates"].get("stages", {}).get("post_route", {}).get("qor_assessment") or {}).get("score"))
     row("setup WNS (ns)", lambda x: x["gates"]["timing"]["wns_ns"])
     row("setup TNS (ns)", lambda x: x["gates"]["timing"]["tns_ns"])
     row("hold WHS (ns)", lambda x: x["gates"]["timing"]["whs_ns"])
@@ -62,9 +73,14 @@ def markdown(name: str, res: dict[str, dict]) -> str:
         else ", ".join(f"{r['severity']} {r['rule']} x{r['count']}" for r in x["gates"]["cdc"]["rules"]))
     row("power, total on-chip (W, vectorless)", lambda x: x["gates"]["power"].get("total_w"))
     row("power, dynamic (W)", lambda x: x["gates"]["power"].get("dynamic_w"))
+    row("power, static (W)", lambda x: x["gates"]["power"].get("static_w"))
+    if any("power_environment" in res[v]["gates"] for v in vs):
+        row("junction temperature (C) / thetaJA (C/W) / ambient (C)", lambda x: "{junction_c} / {theta_ja_c_per_w} / {ambient_c}".format(
+            **x["gates"]["power_environment"]) if "power_environment" in x["gates"] else None)
     row("bitstream (bytes)", lambda x: x["gates"]["bitstream"]["bytes"])
     row("build stamp", lambda x: x["run"]["build_stamp"])
     row("Vivado wall time (s)", lambda x: x["run"]["wall_s"])
+    row("stage times (s, cumulative)", lambda x: ", ".join(f"{k} {v}" for k, v in x["run"].get("stages_s", {}).items()) or None)
     row("Vivado peak RSS (MiB)", lambda x: x["run"]["vivado_peak_rss_mib"])
     row("scope peak anonymous memory, all processes (MiB)", lambda x: x["run"].get("scope_anon_peak_mib"))
     row("scope peak charged memory incl. page cache (MiB)", lambda x: x["run"]["scope_memory_peak_mib"])

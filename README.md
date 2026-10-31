@@ -28,11 +28,13 @@ the agent produces later will have the same shape as `designs/t1_dimmer_counter/
   [5] verify ........ cocotb + Icarus: RTL against the model, directed + random;
                      |  Verilator lint; deliberate mutants must fail the tests
                      v
-  [6] implement ..... flow/run_vivado.sh: non-project Vivado Tcl, synth -> place -> route -> bitstream
+  [6] implement ..... flow/run_vivado.sh: non-project Vivado Tcl in UltraFast stages (UG949): RTL DRCs,
+                     |  synth + QoR assessment, place, route, closure reports, bitstream
                      |  (memory-guarded: one job, 1 thread, 6 GB cap; optional ILA from probes.yaml)
                      v
-  [7] gates ......... flow/gates.py: setup/hold/pulse-width slack, no unconstrained endpoints,
-                     |  no DRC errors, no critical methodology or CDC violations, bitstream present
+  [7] gates ......... flow/gates.py, stage by stage: RTL methodology; post-synthesis coverage, DRC,
+                     |  methodology, QoR score; post-place hold; post-route slack, CDC, junction
+                     |  temperature; bitstream present. Names the first stage that failed
                      v
   [8] bring-up ...... BRINGUP.md for a tester who did not design it, plus the test shell:
                      |  every design answers over the USB-UART, so a script can test the board
@@ -105,6 +107,18 @@ Before an agent designs for a board it must know what is on it. For the Nexys A7
   [b2_qspi_jedec](designs/b2_qspi_jedec) (flash ID only: no write or erase opcode exists in its RTL, which a test
   checks) and [b2_mic_pdm](designs/b2_mic_pdm).
 
+## The UltraFast methodology as the backbone (04e)
+
+The flow and the agent's stage machine follow AMD's UltraFast Design Methodology (UG949 v2025.2) stage by stage:
+board and device planning, RTL, constraints, synthesis, implementation, timing closure, power closure, DRC
+closure, configuration and debug. [docs/methodology.md](docs/methodology.md) maps UG949's chapters to the plan's
+flow steps, the reports `flow/build.tcl` writes and the gates `flow/gates.py` applies (with every threshold cited
+to UG949), says where the flow deviates from UG949 and why, and defines the agent's stage machine for F2. The
+per-stage procedures the agent reads (exact Tcl, thresholds, common failures) are nine skills in the private
+knowledge bank. T1 rebuilt through the staged flow passes every stage with timing and utilisation identical to F0A
+([results/ultrafast](results/ultrafast/README.md): +4 s and +168 MiB for the added reports; the power figures
+changed because `report_power` now uses the board's thermal environment).
+
 ## Knowledge packs (F1A)
 
 The agent's know-how is a set of frozen, hashed knowledge layers in Agent Skills format: generic RTL skills, an AMD
@@ -147,7 +161,8 @@ designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, desig
              build.yaml, tests/, BRINGUP.md
 results/     committed build and bring-up results, per milestone
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
-docs/        debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
+docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
+             debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
 ```
 
 ## Status
@@ -159,6 +174,7 @@ docs/        debug_playbook.md (for humans: what each gate rule ID means); img/ 
 | F1A | Knowledge packs (generic, AMD vendor from Ross, Artix-7 family) and a search library, in a private repo; names and hashes in [knowledge/PACKS.md](knowledge/PACKS.md); human [debug playbook](docs/debug_playbook.md) | done |
 | F1B | Model screen on CVDP's 86 problems ([results/f1b/REPORT.md](results/f1b/REPORT.md)): no cheap candidate eligible (DeepSeek V4.1 Flash −12.4 points; GLM-5.3-Flash −4.1, not detectable, but 48.5 reliability failures per 86); pick luna | done |
 | 04c | Board onboarding: Nexys A7 inventory, power budget and source-aware power gate, four read-only peripheral self-checks on the board | done |
+| 04e | UltraFast (UG949) backbone: stage-grouped gates and reports in the flow ([docs/methodology.md](docs/methodology.md)), nine stage procedures in the knowledge bank, T1 rebuilt through the stages ([results/ultrafast](results/ultrafast/README.md)) | done |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | F3 | Frozen benchmark, scored runs | coming |
 
