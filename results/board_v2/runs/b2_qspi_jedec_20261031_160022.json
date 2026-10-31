@@ -1,0 +1,127 @@
+{
+  "design": "designs/b2_qspi_jedec",
+  "started": "2026-10-31T16:00:22",
+  "git_commit": "ac271b0bfd8a879bf8f145dc3b50a93febed02af",
+  "git_dirty": true,
+  "steps": {
+    "power_ok": {
+      "pass": true,
+      "source": "wall",
+      "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+      "limit_w": 2.0,
+      "junction_limit_c": 85.0,
+      "total_w": 0.117,
+      "junction_c": 42.1,
+      "dynamic_w": 0.004,
+      "static_w": 0.113,
+      "confidence": "Medium",
+      "environment": {
+        "ambient_c": 40.0,
+        "airflow_lfm": 0.0,
+        "heatsink": "none",
+        "theta_ja_c_per_w": 18.2,
+        "board": "small (4\"x4\")",
+        "board_layers": "4to7 (4 to 7 Layers)"
+      },
+      "supplies_a": {
+        "vccint": 0.032,
+        "vccaux": 0.019,
+        "vcco33": 0.004,
+        "vccadc": 0.02
+      },
+      "why": "",
+      "seconds": 0.0
+    },
+    "discover": {
+      "pass": true,
+      "board": "nexys_a7_100t",
+      "cable_serial": "...B73A",
+      "part": "xc7a100t",
+      "idcode": "13631093",
+      "uart": "FT2232 interface 1 (found)",
+      "targets_seen": 1,
+      "vivado_version": "2025.2",
+      "seconds": 16.7
+    },
+    "program": {
+      "variant": "base",
+      "build_stamp": "48ff26c6",
+      "cable_serial": "...B73A",
+      "power_ok": {
+        "pass": true,
+        "source": "wall",
+        "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+        "limit_w": 2.0,
+        "junction_limit_c": 85.0,
+        "total_w": 0.117,
+        "junction_c": 42.1,
+        "dynamic_w": 0.004,
+        "static_w": 0.113,
+        "confidence": "Medium",
+        "environment": {
+          "ambient_c": 40.0,
+          "airflow_lfm": 0.0,
+          "heatsink": "none",
+          "theta_ja_c_per_w": 18.2,
+          "board": "small (4\"x4\")",
+          "board_layers": "4to7 (4 to 7 Layers)"
+        },
+        "supplies_a": {
+          "vccint": 0.032,
+          "vccaux": 0.019,
+          "vcco33": 0.004,
+          "vccadc": 0.02
+        },
+        "why": ""
+      },
+      "pass": true,
+      "device": "xc7a100t_0",
+      "part": "xc7a100t",
+      "done_pin": "1",
+      "program_ms": 414,
+      "ila_cores": 0,
+      "vivado_version": "2025.2",
+      "seconds": 17.7
+    },
+    "identify": {
+      "pass": true,
+      "design_id": "B2QF",
+      "build_stamp": "48ff26c6",
+      "shell_version": "0x00010000",
+      "seconds": 0.1
+    },
+    "selfcheck": {
+      "id": "01 20 18 4d 01 80 30 30",
+      "second_read": "01 20 18 4d 01 80 30 30",
+      "expected": {
+        "0": "01",
+        "1": "20",
+        "2": "18",
+        "5": "80"
+      },
+      "cfi_length": "0x4D",
+      "sector_arch": "0x01",
+      "model_ascii": "00",
+      "sck_half_clocks": 50,
+      "pass": true,
+      "rule": "Pass rule (pre-registered in brief 04c, written before any board run): - ID bytes 0-2 = 01 20 18 (manufacturer Cypress/Spansion, 128 Mb) and byte 5 = 80 (FL-S family), as both possible parts list them (S25FL128S data sheet 001-98283 Rev. *P Table 54; S25FL127S Rev. 11 Table 49; the Nexys A7 board may carry either, RM Table 3.2.1). Byte 3 (4D, the ID-CFI length), byte 4 (sector architecture) and bytes 6-7 (model number, ASCII) are recorded only; - the same 8 bytes on a second read in the same run. The design can send no command but RDID (9Fh): see designs/b2_qspi_jedec/tests/test_qspi_rtl.py.",
+      "seconds": 0.1
+    },
+    "still_alive": {
+      "pass": true,
+      "scratch_kept": true,
+      "status": {
+        "checksum_errors": 0,
+        "request_errors": 0,
+        "uart_framing_errors": 0,
+        "timeouts": 0
+      },
+      "seconds": 0.1
+    }
+  },
+  "pass": true,
+  "cable_serial": "...B73A",
+  "vivado_version": "2025.2",
+  "build_stamp": "48ff26c6",
+  "seconds": 34.7
+}

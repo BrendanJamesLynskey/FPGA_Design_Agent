@@ -1,0 +1,10 @@
+# How flow/run_vivado.sh builds this design (paths are relative to the repo root).
+top: b2_acl_adxl362_top
+part: xc7a100tcsg324-1
+board: nexys_a7_100t    # report_power uses this board's thermal environment (boards/<board>/board.yaml)
+sources:
+  - shell/rtl/*.sv
+  - designs/b2_acl_adxl362/rtl/*.sv
+constraints:
+  - designs/b2_acl_adxl362/design.xdc
+generics: {}            # board values are the RTL defaults; BUILD_STAMP is added by the flow

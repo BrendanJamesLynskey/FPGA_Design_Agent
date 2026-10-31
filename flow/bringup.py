@@ -4,7 +4,7 @@
     python3 flow/bringup.py designs/t1_dimmer_counter [--board nexys_a7_100t] [--keep-captures]
 
 Steps (each recorded with pass/fail and its time; the first failure stops the run):
-  1. power_ok_usb  both bitstreams' report_power total on-chip power <= 0.5 W (USB-powered board)
+  1. power_ok      both bitstreams pass the power gate for the board's power source (flow/hw.py)
   2. discover      flow/hw_discover.py: exactly one JTAG target, an xc7a100t, and its UART
   3. program_base  flow/program.py <design> base (SRAM only, by cable serial)
   4. uart_tests    pytest -m hw on designs/<name>/tests/test_*_hw.py with the build stamp
@@ -89,8 +89,8 @@ class Run:
 
     # --- steps --------------------------------------------------------------------------
     def power(self) -> dict[str, Any]:
-        r = {v: hw.power_ok_usb(self.design / "build" / v) for v in ("base", "ila")}
-        return {"pass": all(x["pass"] for x in r.values()), "limit_w": hw.USB_POWER_LIMIT_W, **r}
+        r = {v: hw.power_ok(self.design / "build" / v, self.board_name) for v in ("base", "ila")}
+        return {"pass": all(x["pass"] for x in r.values()), **r}
 
     def discover(self) -> dict[str, Any]:
         r = hw_discover.discover(self.board_name or "nexys_a7_100t", self.log_dir / "discover")
@@ -101,9 +101,9 @@ class Run:
         return r
 
     def program(self, variant: str) -> dict[str, Any]:
-        gate = hw.power_ok_usb(self.design / "build" / variant)   # checked again right before programming
+        gate = hw.power_ok(self.design / "build" / variant, self.board["name"])   # again, right before programming
         if not gate["pass"]:
-            return {"pass": False, "power_ok_usb": gate, "why": gate["why"]}
+            return {"pass": False, "power_ok": gate, "why": gate["why"]}
         r = program.program(self.design, variant, self.board["name"], self.log_dir / f"program_{variant}")
         if variant == "base":
             self.res["build_stamp"] = r["build_stamp"]
@@ -229,7 +229,7 @@ class Run:
         server = hw.HwServer(self.log_dir)
         try:
             server.__enter__()
-            self.step("power_ok_usb", self.power)
+            self.step("power_ok", self.power)
             self.step("discover", self.discover)
             self.step("program_base", lambda: self.program("base"))
             self.step("uart_tests", self.uart_tests)

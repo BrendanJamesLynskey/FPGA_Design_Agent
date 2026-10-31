@@ -1,0 +1,135 @@
+{
+  "design": "designs/b2_acl_adxl362",
+  "started": "2026-10-31T15:57:18",
+  "git_commit": "ac271b0bfd8a879bf8f145dc3b50a93febed02af",
+  "git_dirty": true,
+  "steps": {
+    "power_ok": {
+      "pass": true,
+      "source": "wall",
+      "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+      "limit_w": 2.0,
+      "junction_limit_c": 85.0,
+      "total_w": 0.116,
+      "junction_c": 42.1,
+      "dynamic_w": 0.004,
+      "static_w": 0.113,
+      "confidence": "Medium",
+      "environment": {
+        "ambient_c": 40.0,
+        "airflow_lfm": 0.0,
+        "heatsink": "none",
+        "theta_ja_c_per_w": 18.2,
+        "board": "small (4\"x4\")",
+        "board_layers": "4to7 (4 to 7 Layers)"
+      },
+      "supplies_a": {
+        "vccint": 0.031,
+        "vccaux": 0.019,
+        "vcco33": 0.004,
+        "vccadc": 0.02
+      },
+      "why": "",
+      "seconds": 0.0
+    },
+    "discover": {
+      "pass": true,
+      "board": "nexys_a7_100t",
+      "cable_serial": "...B73A",
+      "part": "xc7a100t",
+      "idcode": "13631093",
+      "uart": "FT2232 interface 1 (found)",
+      "targets_seen": 1,
+      "vivado_version": "2025.2",
+      "seconds": 16.7
+    },
+    "program": {
+      "variant": "base",
+      "build_stamp": "026c264a",
+      "cable_serial": "...B73A",
+      "power_ok": {
+        "pass": true,
+        "source": "wall",
+        "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+        "limit_w": 2.0,
+        "junction_limit_c": 85.0,
+        "total_w": 0.116,
+        "junction_c": 42.1,
+        "dynamic_w": 0.004,
+        "static_w": 0.113,
+        "confidence": "Medium",
+        "environment": {
+          "ambient_c": 40.0,
+          "airflow_lfm": 0.0,
+          "heatsink": "none",
+          "theta_ja_c_per_w": 18.2,
+          "board": "small (4\"x4\")",
+          "board_layers": "4to7 (4 to 7 Layers)"
+        },
+        "supplies_a": {
+          "vccint": 0.031,
+          "vccaux": 0.019,
+          "vcco33": 0.004,
+          "vccadc": 0.02
+        },
+        "why": ""
+      },
+      "pass": true,
+      "device": "xc7a100t_0",
+      "part": "xc7a100t",
+      "done_pin": "1",
+      "program_ms": 300,
+      "ila_cores": 0,
+      "vivado_version": "2025.2",
+      "seconds": 17.8
+    },
+    "identify": {
+      "pass": true,
+      "design_id": "B2AC",
+      "build_stamp": "026c264a",
+      "shell_version": "0x00010000",
+      "seconds": 0.1
+    },
+    "selfcheck": {
+      "ids": "ad 1d f2",
+      "ids_expected": "ad 1d f2",
+      "revid": "0x02",
+      "xyz_lsb": [
+        991,
+        24,
+        -232
+      ],
+      "xyz_g": [
+        0.991,
+        0.024,
+        -0.232
+      ],
+      "magnitude_g": 1.0181,
+      "magnitude_range_g": [
+        0.57,
+        1.43
+      ],
+      "power_ctl_after": "0x00",
+      "sclk_half_clocks": 50,
+      "pass": true,
+      "rule": "Pass rule (pre-registered in brief 04c, written before any board run): - registers 0x00-0x02 read AD 1D F2 (DEVID_AD, DEVID_MST, PARTID; ADXL362 data sheet Rev. G, register map); REVID (0x03) is recorded, not judged (the data sheet gives its reset value as 0x01, but a later silicon revision would differ); - after POWER_CTL (0x2D) = 0x02 (measurement mode, default +/-2 g, 100 Hz) and a wait of 100 ms (> 4/ODR = 40 ms, \"measurement mode instruction to valid data\"), one X/Y/Z sample at rest has magnitude within [0.57, 1.43] g. Tolerance from the data sheet's Table 1: scale factor 1000 LSB/g with sensitivity calibration error +/-10 % (0.9-1.1 g for 1 g), plus the worst-case 0 g offsets (X, Y +/-150 mg, Z +/-250 mg: vector length 0.33 g) on whichever axes carry gravity, so 0.9 - 0.33 = 0.57 and 1.1 + 0.33 = 1.43 whatever the board's tilt. - POWER_CTL is written back to 0x00 (standby) afterwards and read back. The accelerometer has no non-volatile memory; POWER_CTL is the only register written.",
+      "seconds": 0.6
+    },
+    "still_alive": {
+      "pass": true,
+      "scratch_kept": true,
+      "status": {
+        "checksum_errors": 0,
+        "request_errors": 0,
+        "uart_framing_errors": 0,
+        "timeouts": 0
+      },
+      "seconds": 0.1
+    }
+  },
+  "pass": true,
+  "cable_serial": "...B73A",
+  "vivado_version": "2025.2",
+  "build_stamp": "026c264a",
+  "seconds": 35.2
+}

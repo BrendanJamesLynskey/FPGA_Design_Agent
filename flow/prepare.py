@@ -4,7 +4,7 @@
     python3 flow/prepare.py designs/t1_dimmer_counter --variant base|ila --out <build dir>
 
 Writes ``<out>/inputs.tcl`` (top, part, sources, constraints, generics, out
-dir, ILA switch) and, for the ``ila`` variant, ``<out>/probes.tcl``. Prints a
+dir, ILA switch, and the board's thermal environment for report_power) and, for the ``ila`` variant, ``<out>/probes.tcl``. Prints a
 JSON line with the build stamp: the first 8 hex digits of the SHA-256 over
 every source and constraint file (path and content), so the same sources give
 the same stamp in any clone and the shell's BUILD_STAMP register identifies them.
@@ -59,6 +59,31 @@ def probes_tcl(probes_yaml: Path) -> str:
     return "\n".join(lines) + "\n"
 
 
+def board_for(cfg: dict) -> str | None:
+    """The board a design is built for: build.yaml's ``board``, else the one board whose part matches."""
+    if cfg.get("board"):
+        return str(cfg["board"])
+    hits = [b.parent.name for b in sorted((ROOT / "boards").glob("*/board.yaml"))
+            if (yaml.safe_load(b.read_text()) or {}).get("part") == cfg["part"]]
+    return hits[0] if len(hits) == 1 else None
+
+
+def power_env_tcl(board: str | None) -> str:
+    """set_operating_conditions arguments from boards/<board>/board.yaml ``thermal`` (empty: Vivado's defaults).
+
+    Vivado's defaults (250 LFM airflow, a medium heat sink, a 10x10 in 12-15 layer board) understate the
+    junction temperature of a bare development board, and the power gate (flow/hw.py) refuses a report
+    made with them."""
+    if not board:
+        return ""
+    f = ROOT / "boards" / board / "board.yaml"
+    th = (yaml.safe_load(f.read_text()) or {}).get("thermal") if f.is_file() else None
+    if not th:
+        return ""
+    return (f"-airflow {int(th['airflow_lfm'])} -heatsink {th['heatsink']} -board {th['board']} "
+            f"-board_layers {th['board_layers']} -ambient_temp {float(th['ambient_c'])}")
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("design", type=Path)
@@ -81,7 +106,8 @@ def main(argv: list[str] | None = None) -> int:
            f"set constraints {tcl_list([str(x) for x in xdcs])}",
            f"set generics {tcl_list([f'{k}={v}' for k, v in generics.items()])}",
            f"set out {{{out}}}",
-           f"set ila {int(ila)}"]
+           f"set ila {int(ila)}",
+           f"set power_env {{{power_env_tcl(board_for(cfg))}}}"]
     if ila:
         (out / "probes.tcl").write_text(probes_tcl(ROOT / cfg["probes"]))
         tcl.append(f"set probes_tcl {{{out / 'probes.tcl'}}}")

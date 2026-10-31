@@ -4,7 +4,8 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `238fec497e24` (branch `sections`, PR #3 there; F1A2 was `6a677334d5c4`, PR #2).
+- Private repo commit: `5fa656fb8312` (branch `board-v2`, PR #4 there, brief 04c; 04d was `238fec497e24`, PR #3;
+  F1A2 `6a677334d5c4`, PR #2).
 - Generic source: the private repository `BrendanJamesLynskey/RTL_Knowledge_Pack`, annotated tag `v2.2`, commit
   `6f99fbdae4409e4f740ee17a61e4cdf797ac405f`. Its skill files are byte-identical to `v2.1`; `v2.2` adds the file
   that gives every skill a section. `techniques/` and `functions/` are that tag converted to Agent Skills by
@@ -24,8 +25,7 @@ skills it loaded. **No pack content is published here.**
 
 ## By axis
 
-The axes are: techniques and functions (together the `generic` bundle), vendor, family, board, and procedures
-(none yet).
+The axes are: techniques and functions (together the `generic` bundle), vendor, family, board, and procedures.
 
 | Unit | Name | Version | Skills | Files | Skill bytes (budget) | Index bytes | ~Tokens | Hash |
 |---|---|---|---|---|---|---|---|---|
@@ -35,11 +35,12 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `vendor/ross_distilled/` | vendor: Ross distilled | 1 (2026-10-30; sectioned 2026-10-31) | 14 | 24 | 57,716 (<= 60,000) | 4,429 | 14,429 | `71b0be3612dd70311a092aaf9e108dbc68fe9efd324253a25eba2607ec9e3175` |
 | `vendor/ross_shipped/` | vendor: Ross as shipped | Ross release 2026.10.1 | 50 | 1,195 | 918,458 (none) | 12,578 | 225,565 | `3d2cf1b50012d4676a3b432f0725b00848795059224f913935e37cc98846e773` |
 | `family/artix7/` | family: Artix-7 device (xc7a100tcsg324-1) | 2 (2026-10-31; sectioned 2026-10-31) | 6 | 13 | 22,797 (<= 40,000) | 2,964 | 5,699 | `e6b8e0f3e635908573ade30320459581b1137835ca69175414140545ac21689f` |
-| `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 1 (2026-10-31; sectioned 2026-10-31) | 5 | 10 | 18,279 (<= 45,000) | 2,143 | 4,570 | `54667684c4623741ffed34001bbefa97dc9e71033caebcebb946cd381beecd70` |
+| `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
+| `procedures/` | procedures: board onboarding | 1 (2026-10-31, 04c) | 1 | 3 | 5,285 (none) | 450 | 1,321 | `d75899b879a865a0c1afaccff692cb2ece8eb80f5ed2e9b87b3e720664139436` |
 | `library/` | library (search_docs corpus) | 1 (2026-10-30; chunk sections 2026-10-31) | - | 12 | 6,990,296 total (none) | - | - | `3ca68766b15c83fc5d04b8da0665b353ba5bc3e7e3daf627f0d2f82f9ff4dbfa` |
 
 Root files: `SECTIONS.yaml` sha256 `193e70662662038b6a24d24f1e310089c827d2de196a3a51b93bf63833a9b70f`; `INDEX.md` sha256
-`cf44ba937a8df24db360ce85a1c7ff22879d7ae266a665266c92d3ef576b741d`.
+`836416f12993ddb233dd2a7f3c326b75c8a3082398829041c9733e688c5f0748`.
 
 ## The vocabulary
 
@@ -50,8 +51,8 @@ kinds and definitions come from RTL_Knowledge_Pack `v2.2` and must match it), 2 
 - generic (17): `clocking`, `timing-concepts`, `low-power`, `synthesis-and-dft`, `ethernet`, `high-speed-serial`, `usb`, `user-io`, `processors`, `dram`, `flash`, `sd-card`, `audio`, `sensors`, `analog`, `expansion-io`, `power-config`.
 - `vendor/ross_distilled` (4): `hls`, `vitis-ai`, `segmented-config`, `embedded-software`.
 - `family/artix7` (9): `reset`, `arithmetic`, `fifo`, `cdc`, `low-power`, `high-speed-serial`, `dram`, `analog`, `power-config`.
-- `board/nexys_a7_100t` (13): `reset`, `ethernet`, `usb`, `video`, `processors`, `dram`, `flash`, `sd-card`, `audio`, `sensors`, `analog`, `expansion-io`, `io-standards`.
-- `procedures` (1): `board-onboarding`.
+- `board/nexys_a7_100t` (7): `reset`, `video`, `processors`, `dram`, `analog`, `expansion-io`, `io-standards` (04c filled `ethernet`, `usb`, `flash`, `sd-card`, `audio`, `sensors`).
+- `procedures`: none (04c added `board-onboarding`).
 
 ## By section
 
@@ -94,10 +95,17 @@ kinds and definitions come from RTL_Knowledge_Pack `v2.2` and must match it), 2 
 | `family/artix7/` | `logic-fabric` | device | 1 | 3,641 | `5001c3c1b77035388db2fe3e6a4614579aba0f5e07a5861541804d0bbb37625f` |
 | `family/artix7/` | `on-chip-memory` | function | 1 | 3,952 | `fa22d80ad468c9cb13065cf2b5f80d1436689bd4b39f6468673a47eb5b473813` |
 | `family/artix7/` | `timing-concepts` | technique | 1 | 3,422 | `566f1f9f5374de1c8339c65d8044c6c04c6ab44a2a925bbe0808f5dd487f0105` |
+| `board/nexys_a7_100t/` | `audio` | function | 2 | 4,684 | `04611adfe9cfacef48c52da63f781a321ecb7640d1e955a952efe8938ae52f7f` |
 | `board/nexys_a7_100t/` | `clocking` | technique | 1 | 3,678 | `cdfc9164dab9e6d708af0f9e3b53d6f2e430b7588c95840d28ac879eba0a9e48` |
-| `board/nexys_a7_100t/` | `power-config` | function | 1 | 3,769 | `12a46077fa47ff3fb375994a23de895fbcefac48a3e91df6343f6f232afd9fd6` |
+| `board/nexys_a7_100t/` | `ethernet` | function | 1 | 2,810 | `4d43a9efead8ce3cc2140fec81e31c97d2abc51d1290be81a03f14331e00df25` |
+| `board/nexys_a7_100t/` | `flash` | function | 1 | 2,991 | `1246a646d92a41c079b0818c0b3e883ff131b89aa8c06992ba20c266d513ef4e` |
+| `board/nexys_a7_100t/` | `power-config` | function | 1 | 4,395 | `0082d947bd859ef7b79e006cd63cd0e84b2fa53c85cc47bb43e42d370e5c131c` |
+| `board/nexys_a7_100t/` | `sd-card` | function | 1 | 2,168 | `10d803cee86a9c6331e5abad26eab8882615868e245eb7ef83ce3d66453631a8` |
+| `board/nexys_a7_100t/` | `sensors` | function | 2 | 4,899 | `859e60e28ade9ae7818981d8038f7729ad831877aea9cd8d5b0947aea747e373` |
 | `board/nexys_a7_100t/` | `serial-buses` | function | 1 | 3,141 | `634d673ecf3dc3eb474ac76736d77a226e292471316bed1b08454521386855a0` |
+| `board/nexys_a7_100t/` | `usb` | function | 1 | 2,616 | `08904a4de332fa07dfcda408b6193db43174f55f30b599a3250001576a168bc3` |
 | `board/nexys_a7_100t/` | `user-io` | function | 2 | 7,691 | `d032b38fc6d90706c471346a56f44039cac5afa2c12623045a6ee2431e5dd6b9` |
+| `procedures/` | `board-onboarding` | procedure | 1 | 5,285 | `6994af76389f07628736ade90381fe9cbaa272a4862bbb48c760966db50e59f4` |
 
 ## Sources, per unit
 
@@ -105,7 +113,8 @@ kinds and definitions come from RTL_Knowledge_Pack `v2.2` and must match it), 2 
 - `vendor/ross_distilled/`: 9 skills mined from AMD Ross (MIT) at the commit above, rewritten for the batch non-project flow on Vivado 2025.2; 5 gap skills from AMD UG835, UG894, UG903, UG906, UG949 (v2025.2), UG901, UG474, UG479.
 - `vendor/ross_shipped/`: AMD Ross `skills/` tree, unchanged, with its MIT LICENSE.
 - `family/artix7/`: AMD UG474 v1.9, UG473 v1.14, UG479 v1.10, UG472 v1.14, UG471 v1.10, DS181 v1.27.1 (-1 speed grade), UG901/UG949 v2025.2.
-- `board/nexys_a7_100t/`: Digilent Nexys A7 reference manual (rev. 2019-07-10) and master XDC.
+- `board/nexys_a7_100t/`: Digilent Nexys A7 reference manual (PDF rev. 2019-07-10 and the 2024 web page), schematic Rev D.0 (D.2, D.3 compared) and master XDC; data sheets of the ADT7420, ADXL362, SPK0833LM4H, AD8592, ADP121, ADP2118, ADP2138, LAN8720A, PIC24FJ256GB110 family, S25FL128S, S25FL127S, Micron 1Gb DDR2; AMD UG470 v1.17. Board facts confirmed on the owner's board by four self-check designs (`results/board_v2/`).
+- `procedures/`: the board-onboarding procedure as carried out in brief 04c (this repo's `boards/nexys_a7_100t/`, `tools/inventory_check.py`, `flow/board_check.py`, `designs/b2_*`).
 - `library/`: 1,768 chunks: 34 of our summaries of the AMD/Digilent documents above, and the full Ross markdown text (1,734 chunks); each chunk carries its section ids. Offline BM25; used only by the skills-plus-library arm.
 
 ## How F3 uses them
@@ -120,6 +129,17 @@ whose hashes differ from this table is not a scored run.
 
 The human debug playbook ([docs/debug_playbook.md](../docs/debug_playbook.md)) is not a pack and is never given
 to the agent in scored runs.
+
+## Board layer v2 and procedures (2026-10-31, 04c)
+
+The board layer gained one skill per reachable peripheral (sensors, audio, Ethernet, USB HID, microSD, the
+configuration flash read-only), filed under the existing section ids, and the bank gained its first procedure,
+`board-onboarding`, written so the KV260 (F6) and third-party boards (D1) can be onboarded the same way. One
+existing board skill (`nexys-a7-power-config-and-ddr2`) was edited because the board moved to wall power and the
+power gate changed. Only `board/nexys_a7_100t/`, the new `procedures/` and the root `INDEX.md` changed; every
+other unit's hash and `SECTIONS.yaml` are as in 04d. The board-layer facts are checked in this repo:
+[boards/nexys_a7_100t/inventory.yaml](../boards/nexys_a7_100t/inventory.yaml) (by `tools/inventory_check.py` in
+CI) and on the board ([results/board_v2](../results/board_v2/README.md)).
 
 ## Why the bank was sectioned (2026-10-31, 04d)
 

@@ -67,8 +67,8 @@ Programming the board and testing on hardware is milestone F0B (below).
 python3 flow/bringup.py designs/t1_dimmer_counter
 ```
 
-One command, no human in the loop: it checks the USB-power gate (the board runs from its USB cable, so a bitstream
-is programmed only if `report_power` says at most 0.5 W), finds the one attached board by its JTAG cable serial and
+One command, no human in the loop: it checks the power gate (`power_ok`: on USB power, as in F0B, a bitstream is
+programmed only if `report_power` says at most 0.5 W; see "Board onboarding" below for wall power), finds the one attached board by its JTAG cable serial and
 its UART, programs the base build into SRAM (never flash), runs 8 UART tests that compare every response byte with
 the shell and T1 models (identity and build stamp, 1,004 scratch loopbacks, error responses, timeouts, framing
 errors, the T1 registers), programs the ILA build, arms the ILA by Tcl in step with UART writes, and checks four
@@ -84,6 +84,26 @@ Manual checks by the owner (buttons count as specified, three visibly different 
 [results/f0b/manual_checks.md](results/f0b/manual_checks.md).
 
 ![T1 running on the Nexys A7-100T: display 40 (brightness) and 0000 (count), DONE and POWER LEDs lit](docs/img/t1_on_nexys_a7.jpg)
+
+## Board onboarding (04c)
+
+Before an agent designs for a board it must know what is on it. For the Nexys A7-100T:
+
+- [boards/nexys_a7_100t/inventory.yaml](boards/nexys_a7_100t/inventory.yaml): every peripheral a design can reach
+  (temperature sensor, accelerometer, PDM microphone, PWM audio, Ethernet PHY, USB HID host, USB-UART, QSPI flash,
+  DDR2, microSD, XADC) with part, interface, pins, I/O standard, IDs, reset, pull-ups, clocking, a self-check,
+  current and whether it is safe on USB power, and a source for every field (reference manual, schematic Rev D.0
+  and D.3, data sheets). [tools/inventory_check.py](tools/inventory_check.py) checks every pin against the master
+  XDC in CI. Digilent's own demo projects are listed by name only, so later benchmarks can avoid them.
+- [boards/nexys_a7_100t/power_budget.md](boards/nexys_a7_100t/power_budget.md): regulators, shared rails, the
+  FPGA's thermal limit in still air (thetaJA 18.2 C/W, so about 2.5 W reaches 85 C in a 40 C room). The power gate
+  (`flow/hw.py` `power_ok`) now depends on how the board is powered (0.5 W on USB, 2.0 W on wall power, junction
+  temperature and rail currents too), and `report_power` is run for the board's real thermal environment.
+- Four read-only self-check designs, each with its pass rule pre-registered and a device model in simulation,
+  proven on the board 3 times each with `flow/board_check.py` ([results/board_v2](results/board_v2/README.md)):
+  [b2_tmp_adt7420](designs/b2_tmp_adt7420), [b2_acl_adxl362](designs/b2_acl_adxl362),
+  [b2_qspi_jedec](designs/b2_qspi_jedec) (flash ID only: no write or erase opcode exists in its RTL, which a test
+  checks) and [b2_mic_pdm](designs/b2_mic_pdm).
 
 ## Knowledge packs (F1A)
 
@@ -119,9 +139,10 @@ Vivado does not run in GitHub Actions (the install is about 100 GB); its results
 
 ```
 flow/        runner, Tcl flow, ILA insertion, gates, summaries, lint, cocotb helper; board discovery,
-             programming, ILA capture and bringup.py (F0B)
+             programming, ILA capture and bringup.py (F0B); board_check.py (04c)
 shell/       the test shell: RTL, protocol, host driver, model, tests
-boards/      board files (Nexys A7-100T)
+boards/      board files (Nexys A7-100T): board.yaml, master XDC, inventory.yaml, power_budget.md
+tools/       inventory_check.py (board inventory against the master XDC)
 designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, design.xdc, probes.yaml,
              build.yaml, tests/, BRINGUP.md
 results/     committed build and bring-up results, per milestone
@@ -137,6 +158,7 @@ docs/        debug_playbook.md (for humans: what each gate rule ID means); img/ 
 | F0B | Automated bring-up on the Nexys A7: program by cable serial, UART tests, ILA capture | done |
 | F1A | Knowledge packs (generic, AMD vendor from Ross, Artix-7 family) and a search library, in a private repo; names and hashes in [knowledge/PACKS.md](knowledge/PACKS.md); human [debug playbook](docs/debug_playbook.md) | done |
 | F1B | Model screen on CVDP's 86 problems ([results/f1b/REPORT.md](results/f1b/REPORT.md)): no cheap candidate eligible (DeepSeek V4.1 Flash −12.4 points; GLM-5.3-Flash −4.1, not detectable, but 48.5 reliability failures per 86); pick luna | done |
+| 04c | Board onboarding: Nexys A7 inventory, power budget and source-aware power gate, four read-only peripheral self-checks on the board | done |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | F3 | Frozen benchmark, scored runs | coming |
 

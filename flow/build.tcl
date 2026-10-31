@@ -65,6 +65,9 @@ report_utilization    -hierarchical -file $out/utilization_hier.rpt
 report_methodology    -file $out/methodology.rpt
 report_cdc -details   -file $out/cdc.rpt
 report_drc            -file $out/drc.rpt
+# the board's thermal environment (boards/<board>/board.yaml, via prepare.py) so that the
+# junction temperature is the board's, not Vivado's default heat sink and 250 LFM airflow
+if {[info exists power_env] && $power_env ne ""} { set_operating_conditions {*}$power_env }
 report_power          -file $out/power.rpt
 report_io             -file $out/io.rpt
 stage reports

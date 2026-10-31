@@ -1,4 +1,4 @@
-"""The F0B hardware flow without hardware: flash refusal, the USB-power gate, board
+"""The F0B hardware flow without hardware: flash refusal, the power gate, board
 discovery's refusals, serial redaction, and the ILA capture reader and checks on the
 committed captures (results/f0b/captures/), unchanged and deliberately corrupted."""
 
@@ -45,22 +45,75 @@ def test_program_py_refuses_flash(capsys: pytest.CaptureFixture[str]) -> None:
     assert "volatile SRAM only" in capsys.readouterr().err
 
 
-# --- USB power gate ------------------------------------------------------------------
+# --- power gate (power_ok, brief 04c) ------------------------------------------------
 
-def test_power_gate(tmp_path: Path) -> None:
-    good = tmp_path / "good"
-    good.mkdir()
-    shutil.copy(DATA / "good_power.rpt", good / "power.rpt")
-    g = hw.power_ok_usb(good)
-    assert g["pass"] and g["total_w"] == 0.133 and g["limit_w"] == 0.5
-    hot = tmp_path / "hot"
-    hot.mkdir()
-    text = (DATA / "good_power.rpt").read_text().replace("| Total On-Chip Power (W)  | 0.133        |",
-                                                         "| Total On-Chip Power (W)  | 0.612        |")
-    (hot / "power.rpt").write_text(text)
-    h = hw.power_ok_usb(hot)
-    assert not h["pass"] and h["total_w"] == 0.612 and "above the USB-power limit" in h["why"]
-    assert not hw.power_ok_usb(tmp_path / "missing")["pass"]
+STILL_AIR = (DATA / "still_air_power.rpt").read_text()   # b2_tmp_adt7420: 0.116 W, Tj 42.1 C, 0 LFM, no heat sink
+
+
+def _report(tmp_path: Path, name: str, text: str) -> Path:
+    d = tmp_path / name
+    d.mkdir()
+    (d / "power.rpt").write_text(text)
+    return d
+
+
+def _total(text: str, watts: str) -> str:
+    return text.replace("| Total On-Chip Power (W)  | 0.116        |", f"| Total On-Chip Power (W)  | {watts:<12} |")
+
+
+def test_power_gate_usb_and_wall(tmp_path: Path) -> None:
+    good = _report(tmp_path, "good", STILL_AIR)
+    g = hw.power_ok(good, source="usb")
+    assert g["pass"] and g["total_w"] == 0.116 and g["limit_w"] == 0.5 and g["junction_c"] == 42.1
+    assert g["environment"]["airflow_lfm"] == 0 and g["environment"]["heatsink"] == "none"
+    assert g["supplies_a"]["vccint"] == 0.031
+    mid = _report(tmp_path, "mid", _total(STILL_AIR, "0.612"))
+    u = hw.power_ok(mid, source="usb")
+    assert not u["pass"] and "above the usb-power limit 0.5 W" in u["why"]
+    w = hw.power_ok(mid, source="wall")
+    assert w["pass"] and w["limit_w"] == 2.0
+    hot = _report(tmp_path, "hot", _total(STILL_AIR, "2.100"))
+    assert "above the wall-power limit 2.0 W" in hw.power_ok(hot, source="wall")["why"]
+    assert not hw.power_ok(tmp_path / "missing", source="wall")["pass"]
+
+
+def test_power_gate_junction_temperature(tmp_path: Path) -> None:
+    tj = STILL_AIR.replace("| Junction Temperature (C) | 42.1         |", "| Junction Temperature (C) | 85.4         |")
+    r = hw.power_ok(_report(tmp_path, "tj", tj), source="wall")
+    assert not r["pass"] and "junction temperature 85.4 C is above 85.0 C" in r["why"]
+
+
+def test_power_gate_rail_limits(tmp_path: Path) -> None:
+    hot = STILL_AIR.replace("| Vccint    |       1.000 |     0.031 |", "| Vccint    |       1.000 |     2.500 |")
+    r = hw.power_ok(_report(tmp_path, "vccint", hot), source="wall")
+    assert not r["pass"] and "vccint current 2.5 A is above 2.4 A" in r["why"]
+    aux = STILL_AIR.replace("| Vccaux    |       1.800 |     0.019 |", "| Vccaux    |       1.800 |     0.370 |")
+    r = hw.power_ok(_report(tmp_path, "aux", aux), source="wall")
+    assert not r["pass"] and "rail_1v8 current 0.39 A is above 0.38 A" in r["why"]   # 0.370 + 0.020 VCCADC
+    assert hw.power_ok(_report(tmp_path, "ok", STILL_AIR), source="wall")["rails"]["rail_1v8"]["a"] == 0.039
+
+
+def test_power_gate_refuses_vivado_default_environment(tmp_path: Path) -> None:
+    # F0B's T1 report: 0.133 W, but computed for 250 LFM airflow and a medium heat sink
+    r = hw.power_ok(_report(tmp_path, "f0b", (DATA / "good_power.rpt").read_text()), source="usb")
+    assert not r["pass"] and "airflow 250.0 LFM and heat sink medium" in r["why"]
+
+
+def test_power_source_from_board_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    f = tmp_path / "boards.yaml"
+    monkeypatch.setattr(hw, "BOARDS_FILE", f)
+    assert hw.power_source("nexys_a7_100t")[0] == "usb"                        # no file: usb
+    f.write_text("boards:\n  nexys_a7_100t:\n    cable_serial: X\npower_source: wall\n")
+    assert hw.power_source("nexys_a7_100t")[0] == "usb"                        # top-level key is not the board's
+    f.write_text("boards:\n  nexys_a7_100t:\n    cable_serial: X\n    power_source: battery\n")
+    assert hw.power_source("nexys_a7_100t")[0] == "usb"                        # unknown value: usb
+    f.write_text("boards:\n  nexys_a7_100t:\n    cable_serial: X\n    power_source: wall\n")
+    assert hw.power_source("nexys_a7_100t") == ("wall", f"{f} boards.nexys_a7_100t.power_source")
+    mid = _report(tmp_path, "mid", _total(STILL_AIR, "0.612"))
+    assert hw.power_ok(mid, "nexys_a7_100t")["pass"]                          # wall, from the file
+    hw.save_board("nexys_a7_100t", {"cable_serial": "Y", "uart": "/dev/x"})  # rediscovery keeps the source
+    assert hw.power_source("nexys_a7_100t")[0] == "wall"
+    assert hw.load_board("nexys_a7_100t")["cable_serial"] == "Y"
 
 
 # --- discovery refuses to guess -------------------------------------------------------
