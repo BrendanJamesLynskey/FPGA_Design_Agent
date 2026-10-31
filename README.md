@@ -88,8 +88,9 @@ Manual checks by the owner (buttons count as specified, three visibly different 
 ## Knowledge packs (F1A)
 
 The agent's know-how is a set of frozen, hashed knowledge layers in Agent Skills format: generic RTL skills, an AMD
-vendor layer built from AMD's open Ross skills (as shipped, and distilled for this batch flow), an Artix-7 / Nexys
-A7 family layer, and an offline searchable library. They summarise AMD and Digilent documents, so they live in a
+vendor layer built from AMD's open Ross skills (as shipped, and distilled for this batch flow), an Artix-7 device
+layer, a Nexys A7 board layer, and an offline searchable library. Since F1A2 the generic layer is a pinned tag of a
+separate private generic RTL pack. They summarise AMD and Digilent documents, so they live in a
 private repository; [knowledge/PACKS.md](knowledge/PACKS.md) lists each layer's size and hash, which every scored
 run will record. [docs/debug_playbook.md](docs/debug_playbook.md) is the human companion to the gates.
 
