@@ -55,6 +55,11 @@ A build passes only if all of these hold after routing:
 
 Warnings that do not fail a gate are still listed in the JSON, by rule, so a reader sees them.
 
+The gates are **neutral**: `gates.py` reports the tool's own rule IDs, severities, descriptions and counts, and
+the slack numbers, with no advice on how to fix anything, so the agent arms without a knowledge pack learn nothing
+from the harness. For a person reading a failed gate, [docs/debug_playbook.md](../docs/debug_playbook.md) explains
+each rule ID and what to try (it is never given to the agent in scored runs).
+
 ## Hardware steps (F0B)
 
 Every hardware step runs Vivado through `hw.py` with the runner's guard rails (one Vivado at a time, `systemd-run
