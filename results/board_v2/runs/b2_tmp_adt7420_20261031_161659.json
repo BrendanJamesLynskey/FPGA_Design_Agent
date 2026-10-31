@@ -1,0 +1,155 @@
+{
+  "design": "designs/b2_tmp_adt7420",
+  "started": "2026-10-31T16:16:59",
+  "git_commit": "95dcbe8de8c406d494f170aaf05379d2a17dd897",
+  "git_dirty": false,
+  "steps": {
+    "power_ok": {
+      "pass": true,
+      "source": "wall",
+      "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+      "limit_w": 2.0,
+      "junction_limit_c": 85.0,
+      "total_w": 0.116,
+      "junction_c": 42.1,
+      "dynamic_w": 0.003,
+      "static_w": 0.113,
+      "confidence": "Low",
+      "environment": {
+        "ambient_c": 40.0,
+        "airflow_lfm": 0.0,
+        "heatsink": "none",
+        "theta_ja_c_per_w": 18.2,
+        "board": "small (4\"x4\")",
+        "board_layers": "4to7 (4 to 7 Layers)"
+      },
+      "supplies_a": {
+        "vccint": 0.031,
+        "vccaux": 0.019,
+        "vcco33": 0.004,
+        "vccadc": 0.02
+      },
+      "rails": {
+        "vccint": {
+          "a": 0.031,
+          "limit_a": 2.4
+        },
+        "rail_1v8": {
+          "a": 0.039,
+          "limit_a": 0.38
+        },
+        "vcco33": {
+          "a": 0.004,
+          "limit_a": 1.9
+        }
+      },
+      "why": "",
+      "seconds": 0.0
+    },
+    "discover": {
+      "pass": true,
+      "board": "nexys_a7_100t",
+      "cable_serial": "...B73A",
+      "part": "xc7a100t",
+      "idcode": "13631093",
+      "uart": "FT2232 interface 1 (found)",
+      "targets_seen": 1,
+      "vivado_version": "2025.2",
+      "seconds": 16.5
+    },
+    "program": {
+      "variant": "base",
+      "build_stamp": "a576bb81",
+      "cable_serial": "...B73A",
+      "power_ok": {
+        "pass": true,
+        "source": "wall",
+        "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+        "limit_w": 2.0,
+        "junction_limit_c": 85.0,
+        "total_w": 0.116,
+        "junction_c": 42.1,
+        "dynamic_w": 0.003,
+        "static_w": 0.113,
+        "confidence": "Low",
+        "environment": {
+          "ambient_c": 40.0,
+          "airflow_lfm": 0.0,
+          "heatsink": "none",
+          "theta_ja_c_per_w": 18.2,
+          "board": "small (4\"x4\")",
+          "board_layers": "4to7 (4 to 7 Layers)"
+        },
+        "supplies_a": {
+          "vccint": 0.031,
+          "vccaux": 0.019,
+          "vcco33": 0.004,
+          "vccadc": 0.02
+        },
+        "rails": {
+          "vccint": {
+            "a": 0.031,
+            "limit_a": 2.4
+          },
+          "rail_1v8": {
+            "a": 0.039,
+            "limit_a": 0.38
+          },
+          "vcco33": {
+            "a": 0.004,
+            "limit_a": 1.9
+          }
+        },
+        "why": ""
+      },
+      "pass": true,
+      "device": "xc7a100t_0",
+      "part": "xc7a100t",
+      "done_pin": "1",
+      "program_ms": 293,
+      "ila_cores": 0,
+      "vivado_version": "2025.2",
+      "seconds": 17.6
+    },
+    "identify": {
+      "pass": true,
+      "design_id": "B2TS",
+      "build_stamp": "a576bb81",
+      "shell_version": "0x00010000",
+      "seconds": 0.1
+    },
+    "selfcheck": {
+      "id": "0xCB",
+      "id_expected": "0xCB",
+      "id_nack": false,
+      "temp_code": "0x0968",
+      "temperature_c": 18.8125,
+      "temp_nack": false,
+      "temp_range_c": [
+        10.0,
+        40.0
+      ],
+      "i2c_address": "0x4B",
+      "scl_quarter_clocks": 250,
+      "pass": true,
+      "rule": "Pass rule (pre-registered in brief 04c, written before any board run): - the ID register (0x0B) reads 0xCB (ADT7420 data sheet Rev. A, Table 6 / Table 19: manufacturer ID 11001b, revision 011b), with no NACK; - the temperature (registers 0x00-0x01, power-on 13-bit mode: code >> 3, 0.0625 C/LSB, two's complement; data sheet Table 8-9, RM section 12.3) is between 10 and 40 C. Nothing is written to the sensor: the design only sets the register pointer and reads.",
+      "seconds": 0.1
+    },
+    "still_alive": {
+      "pass": true,
+      "scratch_kept": true,
+      "status": {
+        "checksum_errors": 0,
+        "request_errors": 0,
+        "uart_framing_errors": 0,
+        "timeouts": 0
+      },
+      "seconds": 0.1
+    }
+  },
+  "pass": true,
+  "cable_serial": "...B73A",
+  "vivado_version": "2025.2",
+  "build_stamp": "a576bb81",
+  "seconds": 34.3
+}
