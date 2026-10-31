@@ -9,7 +9,7 @@ that failed:
 
     rtl         report_methodology on the elaborated RTL: no critical warnings
     post_synth  check_timing all zero, methodology and DRC clean (no critical
-                warnings, no DRC errors), report_qor_assessment score >= 3;
+                warnings, no DRC errors), report_qor_assessment score >= 4;
                 post-synthesis WNS recorded, not gated
     post_place  WHS > -0.5 ns after placement (large hold violations must be
                 fixed before routing); WNS recorded
@@ -239,7 +239,8 @@ UNCONSTRAINED_CHECKS = ("no_clock", "unconstrained_internal_endpoints", "no_inpu
 
 
 STAGES = ("rtl", "post_synth", "post_place", "post_route", "bitstream")
-QOR_SCORE_MIN = 3          # UG949 ch. 5 table 4 (1-2 will not close; 3 unlikely) and ch. 6 "ML Strategies" (>= 3)
+QOR_SCORE_MIN = 4          # UG949 ch. 5 "Assessing Post-Synthesis Quality of Results": "Scores of 1 and 2 have no chance
+                           # of meeting timing closure and a score of 3 is unlikely to close"; 4 = likely, 5 = will
 PLACE_WHS_MIN_NS = -0.5    # UG949 ch. 6 "Pre- and Post-Placement": hold violations of -0.500 ns or more must be fixed
 JUNCTION_MAX_C = 85.0      # commercial grade; the power gate flow/hw.py uses the same limit
 

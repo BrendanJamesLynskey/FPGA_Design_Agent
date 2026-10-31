@@ -52,7 +52,7 @@ is `ran: false` and skipped.
 | `post_synth` | `post_synth_no_unconstrained_endpoints` | the nine `check_timing` categories below all 0 | `check_timing_synth.rpt` |
 | `post_synth` | `post_synth_methodology_no_critical` | 0 critical warnings | `methodology_synth.rpt` |
 | `post_synth` | `post_synth_drc_clean` | 0 errors, 0 critical warnings | `drc_synth.rpt` |
-| `post_synth` | `post_synth_qor_assessment` | `report_qor_assessment` score >= 3 (of 5) | `qor_assessment_synth.rpt` |
+| `post_synth` | `post_synth_qor_assessment` | `report_qor_assessment` score >= 4 (of 5; UG949 ch. 5: 1-2 have no chance of closing timing, 3 is unlikely to) | `qor_assessment_synth.rpt` |
 | `post_synth` | (recorded, not gated) | post-synthesis WNS/TNS, utilisation, clock networks and interaction, high-fanout nets | `timing_summary_synth.rpt`, `utilization_synth.rpt`, `clock_*_synth.rpt`, `high_fanout_synth.rpt` |
 | `post_place` | `post_place_hold` | WHS > -0.5 ns after `phys_opt_design` (WNS recorded) | `timing_summary_place.rpt` |
 | `post_route` | the table below, plus `power_junction_ok` | `report_power` made for the board's thermal environment (still air, no heat sink) with the junction <= 85 C; post-route QoR score recorded | `power.rpt`, `qor_assessment_route.rpt` |

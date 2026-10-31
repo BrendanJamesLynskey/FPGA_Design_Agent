@@ -175,11 +175,15 @@ def test_first_failed_stage_is_the_earliest(tmp_path: Path) -> None:
 def test_qor_score_and_place_hold_thresholds(tmp_path: Path) -> None:
     """No real report scores below 3 or holds worse than -0.5 ns yet: one number of a real report is changed."""
     d = _build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True)
-    q = rd("good_qor_assessment_synth.rpt").replace("| 5 - Design runs will meet timing", "| 2 - Design will not meet timing")
-    (d / "qor_assessment_synth.rpt").write_text(q)
-    r = gates.evaluate(d)
-    assert r["first_failed_stage"] == "post_synth" and not r["gates"]["post_synth_qor_assessment"]
-    assert r["stages"]["post_synth"]["qor_assessment"]["score"] == 2
+    good = rd("good_qor_assessment_synth.rpt")
+    # UG949 ch. 5: 1-2 have no chance of closing, 3 is unlikely to close, 4 likely, 5 will: 4 is the lowest pass
+    for score, text, ok in ((2, "Design will not meet timing", False), (3, "Design will likely not meet timing", False),
+                            (4, "Design will likely meet timing", True)):
+        (d / "qor_assessment_synth.rpt").write_text(good.replace("| 5 - Design runs will meet timing", f"| {score} - {text}"))
+        r = gates.evaluate(d)
+        assert r["gates"]["post_synth_qor_assessment"] is ok and r["stages"]["post_synth"]["qor_assessment"]["score"] == score
+        assert (r["first_failed_stage"] is None) is ok
+    assert gates.QOR_SCORE_MIN == 4
     (d / "qor_assessment_synth.rpt").write_text(rd("good_qor_assessment_synth.rpt"))
     t = rd("good_timing_summary_place.rpt").replace("-0.027", "-0.627")
     (d / "timing_summary_place.rpt").write_text(t)

@@ -4,7 +4,7 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `517514a` (branch `ultrafast`, PR #5 there, brief 04e; 04c was `5fa656fb8312`, PR #4; 04d
+- Private repo commit: `6db99dd` (branch `ultrafast`, PR #5 there, brief 04e; 04c was `5fa656fb8312`, PR #4; 04d
   `238fec497e24`, PR #3; F1A2 `6a677334d5c4`, PR #2).
 - Generic source: the private repository `BrendanJamesLynskey/RTL_Knowledge_Pack`, annotated tag `v2.2`, commit
   `6f99fbdae4409e4f740ee17a61e4cdf797ac405f`. Its skill files are byte-identical to `v2.1`; `v2.2` adds the file
@@ -36,7 +36,7 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `vendor/ross_shipped/` | vendor: Ross as shipped | Ross release 2026.10.1 | 50 | 1,195 | 918,458 (none) | 12,578 | 225,565 | `3d2cf1b50012d4676a3b432f0725b00848795059224f913935e37cc98846e773` |
 | `family/artix7/` | family: Artix-7 device (xc7a100tcsg324-1) | 2 (2026-10-31; sectioned 2026-10-31) | 6 | 13 | 22,797 (<= 40,000) | 2,964 | 5,699 | `e6b8e0f3e635908573ade30320459581b1137835ca69175414140545ac21689f` |
 | `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
-| `procedures/` | procedures: board onboarding; UltraFast stages | 2 (2026-10-31, 04e: `ultrafast/`, 9 skills) | 10 | 13 | 39,999 (<= 40,000) | 2,672 | 10,000 | `ac4f31ada6472240d43bc43eae8f2bb4757bb0cee8d7c010b62c62ad48e8351c` |
+| `procedures/` | procedures: board onboarding; UltraFast stages | 2 (2026-10-31, 04e: `ultrafast/`, 9 skills) | 10 | 13 | 39,990 (<= 40,000) | 2,672 | 9,998 | `93b6517ef3e47b2f8293b0bc6da19adf5ce57948020dcab3f4835d4ac3400dbb` |
 | `library/` | library (search_docs corpus) | 1 (2026-10-30; chunk sections 2026-10-31) | - | 12 | 6,990,296 total (none) | - | - | `3ca68766b15c83fc5d04b8da0665b353ba5bc3e7e3daf627f0d2f82f9ff4dbfa` |
 
 Root files: `SECTIONS.yaml` sha256 `dc8f3612316e350b4a8a06de82555f9e1b0b478b83cca61fb6fe4d27eee77693`; `INDEX.md` sha256
@@ -106,7 +106,7 @@ kinds and definitions come from RTL_Knowledge_Pack `v2.2` and must match it), 2 
 | `board/nexys_a7_100t/` | `usb` | function | 1 | 2,616 | `08904a4de332fa07dfcda408b6193db43174f55f30b599a3250001576a168bc3` |
 | `board/nexys_a7_100t/` | `user-io` | function | 2 | 7,691 | `d032b38fc6d90706c471346a56f44039cac5afa2c12623045a6ee2431e5dd6b9` |
 | `procedures/` | `board-onboarding` | procedure | 1 | 5,285 | `6994af76389f07628736ade90381fe9cbaa272a4862bbb48c760966db50e59f4` |
-| `procedures/` | `ultrafast` | procedure | 9 | 34,714 | `b12fadab86d0d6e9698ea09214dd42594b92eb9149b89486630991319b478707` |
+| `procedures/` | `ultrafast` | procedure | 9 | 34,705 | `da81d4fb4f51ffaba2a5db4b222f5ed90a50feb6b8a79aa0576b331eab71d3ab` |
 
 ## Sources, per unit
 
