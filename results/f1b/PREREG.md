@@ -136,7 +136,27 @@ $0.63 at the end) was not affected: none of its problems stopped on the guard.
 
 **Change.** G1 is void (kept in the ledger, not in any table) and re-run as `G1` with seed_offset 0 again. The guards
 become: G $1.20, D $2.00, X $1.50 (expected spend + $0.40 in-flight + $0.30 margin). A DeepSeek dispatch made with
-the old $1.60 guard (run 41155696288) was cancelled about a minute into its Run step (correction, 01:36 UTC: it had
+the old $1.60 guard (run 41155696288) was cancelled about a minute into its Run step (correction, same session: it had
 already made calls, $0.0176 reported plus 4 in flight); it is void, in the ledger, and in no table. Nothing
 else changes: arms, settings, comparisons, measures and the selection rule are as above. The brief's $8 stopping
 rule still counts the new guards.
+
+## Deviation 2 (2026-10-31, after the re-run of G1; committed before any further dispatch)
+
+**What happened.** The re-run of G1 (run 41155860445, guard $1.20) stopped 32 of 86 problems on
+`run_budget_exhausted` with $0.4732 reported: GLM-5.3-Flash had 8 calls that never returned (abandoned at the
+per-call deadline, so counted unreported and charged $0.10 each by the guard), and the in-flight charge came on
+top. The guard rule of deviation 1 is still too tight for a model whose calls hang. The run is void (in the ledger,
+in no table); its abandoned calls are a reliability finding and are reported as such, not scored.
+
+**Changes.**
+1. G's guard becomes **$3.00** (its real spend is about $0.75 a run; the guard only has to bound it). D keeps $2.00
+   (D1 ended at a $0.75 charge with no unreported call).
+2. **Arm X (MiniMax-M3.1-Flash) is dropped before any scored X run.** Under `deny_data_collection` its smoke was
+   served by Parasail at $0.15 / $0.60 per M, above luna's list price, so it fails this pre-registration's own price
+   filter as served; and the smokes and runs so far (key usage $2.05 of the $8 at 02:05 UTC) put 3 X runs (about
+   $1.20 each, from the smoke's cost scaled by the luna and DeepSeek smoke-to-run ratios) plus D and G past the cap.
+   The selection rule is applied to D and G only.
+3. The Claude Code run (part 3) is dispatched only if, after D and G, the brief's key usage plus a $1.50 Claude Code
+   guard is ≤ $8; otherwise it is not run and the report says so.
+Nothing else changes.
