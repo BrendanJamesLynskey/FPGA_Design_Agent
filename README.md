@@ -85,6 +85,14 @@ Manual checks by the owner (buttons count as specified, three visibly different 
 
 ![T1 running on the Nexys A7-100T: display 40 (brightness) and 0000 (count), DONE and POWER LEDs lit](docs/img/t1_on_nexys_a7.jpg)
 
+## Knowledge packs (F1A)
+
+The agent's know-how is a set of frozen, hashed knowledge layers in Agent Skills format: generic RTL skills, an AMD
+vendor layer built from AMD's open Ross skills (as shipped, and distilled for this batch flow), an Artix-7 / Nexys
+A7 family layer, and an offline searchable library. They summarise AMD and Digilent documents, so they live in a
+private repository; [knowledge/PACKS.md](knowledge/PACKS.md) lists each layer's size and hash, which every scored
+run will record. [docs/debug_playbook.md](docs/debug_playbook.md) is the human companion to the gates.
+
 ## Reproduce
 
 Simulation, lint and the Python tests (what CI runs):
@@ -116,7 +124,8 @@ boards/      board files (Nexys A7-100T)
 designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, design.xdc, probes.yaml,
              build.yaml, tests/, BRINGUP.md
 results/     committed build and bring-up results, per milestone
-docs/img/    photos (metadata stripped)
+knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
+docs/        debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
 ```
 
 ## Status
@@ -124,8 +133,9 @@ docs/img/    photos (metadata stripped)
 | Milestone | What | Status |
 |---|---|---|
 | F0A | Repo, CI, runner, flow, gates, ILA, test shell, T1 by hand | done |
-| F0B | Automated bring-up on the Nexys A7: program by cable serial, UART tests, ILA capture | this PR |
-| F1 | Knowledge packs from AMD documentation; model screen | coming |
+| F0B | Automated bring-up on the Nexys A7: program by cable serial, UART tests, ILA capture | done |
+| F1A | Knowledge packs (generic, AMD vendor from Ross, Artix-7 family) and a search library, in a private repo; names and hashes in [knowledge/PACKS.md](knowledge/PACKS.md); human [debug playbook](docs/debug_playbook.md) | this PR |
+| F1B | Model screen | coming |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | F3 | Frozen benchmark, scored runs | coming |
 
