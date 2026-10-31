@@ -160,3 +160,14 @@ in no table); its abandoned calls are a reliability finding and are reported as 
 3. The Claude Code run (part 3) is dispatched only if, after D and G, the brief's key usage plus a $1.50 Claude Code
    guard is ≤ $8; otherwise it is not run and the report says so.
 Nothing else changes.
+
+## Deviation 3 (2026-10-31, after the third G1 attempt; the screen stops)
+
+The third G1 attempt (run 41160464390, guard $3.00) is void under the pre-registered 402 rule: 15 of its 86
+problem-runs stopped on HTTP 402 `in_flight_budget_exhausted`. A credits check (`key_check.yml` on
+`f1b-model-screen`, run 41165420738) shows the cause: the OpenRouter **account** has $100 of credits purchased and
+$100.19 used, so it is out of credit, although the key's own limit ($159) has $70.78 left. D3 (run 41160670998) lost
+8 problem-runs (9.3%) to the same 402s at 02:52 UTC; under the 10% rule it stands, and a sensitivity table without it
+is given. No further run can be made until credit is added, which is the owner's decision. The selection rule is
+applied to the arms with valid runs (L and D); GLM has no valid run and is not evaluated; the Claude Code run is not
+made.
