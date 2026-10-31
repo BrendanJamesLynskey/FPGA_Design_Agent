@@ -5,7 +5,7 @@ Each design was built with `flow/run_vivado.sh` and run 3 times with `python3 fl
 | Design | Runs | Commit | Build stamp | Power gate (source, total, Tj) | Result |
 |---|---|---|---|---|---|
 | [b2_tmp_adt7420](../../designs/b2_tmp_adt7420) | 3/3 PASS | 95dcbe8 | `a576bb81` | wall, 0.116 W, 42.1 C | ID 0xCB; 18.88 C, 18.88 C, 18.81 C |
-| [b2_acl_adxl362](../../designs/b2_acl_adxl362) | 3/3 PASS | 95dcbe8 | `026c264a` | wall, 0.116 W, 42.1 C | IDs ad 1d f2, REVID 0x02; |a| 1.018 g, 1.0156 g, 1.0181 g; X/Y/Z [992, 17, -228]; [988, 22, -234]; [991, 24, -232] mg |
+| [b2_acl_adxl362](../../designs/b2_acl_adxl362) | 3/3 PASS | 95dcbe8 | `026c264a` | wall, 0.116 W, 42.1 C | IDs ad 1d f2, REVID 0x02; magnitude 1.018 g, 1.0156 g, 1.0181 g; X/Y/Z [992, 17, -228]; [988, 22, -234]; [991, 24, -232] mg |
 | [b2_qspi_jedec](../../designs/b2_qspi_jedec) | 3/3 PASS | a2e31a0 | `48ff26c6` | wall, 0.117 W, 42.1 C | RDID 01 20 18 4d 01 80 30 30 (model "00") |
 | [b2_mic_pdm](../../designs/b2_mic_pdm) | 3/3 PASS | a2e31a0 | `2c661a6c` | wall, 0.117 W, 42.1 C | ones 0.5157-0.5167, changes 0.7377-0.7391 over 9 windows of 1,048,576 bits |
 
