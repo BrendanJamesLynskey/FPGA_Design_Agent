@@ -4,7 +4,7 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `a9c595dc73dc` (branch `sections`, PR #3 there; F1A2 was `6a677334d5c4`, PR #2).
+- Private repo commit: `238fec497e24` (branch `sections`, PR #3 there; F1A2 was `6a677334d5c4`, PR #2).
 - Generic source: the private repository `BrendanJamesLynskey/RTL_Knowledge_Pack`, annotated tag `v2.2`, commit
   `6f99fbdae4409e4f740ee17a61e4cdf797ac405f`. Its skill files are byte-identical to `v2.1`; `v2.2` adds the file
   that gives every skill a section. `techniques/` and `functions/` are that tag converted to Agent Skills by
