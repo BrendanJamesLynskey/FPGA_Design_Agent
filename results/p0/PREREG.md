@@ -139,6 +139,6 @@ and its artifact is not in `results/`). Its 13/86 pass count is reported only as
 **Change.** Q3C is re-run once as `Q3C` with seed_offset 0, guard **$1.20** (the same settings otherwise). Q36 keeps
 its planned order, with guard `min($1.40, $2.00 − key-usage spend so far)` at its dispatch, and is not dispatched
 below $1.00. The $2.00 cap and the $5.00 balance floor are unchanged. Key usage before the re-run: $90.188965
-(brief spend so far $0.2755; account balance $7.84, key_check run 41243xxxxx at 22:16 UTC).
+(brief spend so far $0.2755; account balance $7.84, key_check run 41247397799 at 22:16 UTC).
 
 Nothing else changes: arms, settings, measures, the selection rule and the spend rules are as above.
