@@ -123,3 +123,19 @@ be set per request through Claude Code; that is a known gap of this arm.
   failure (an HTTP 402/429 balance or rate error on most calls), as M3c's first set was. No other run is dropped.
 - No other runs, no tuning, nothing changed after the first scored dispatch.
 - Not done here: Claude models on the plan (the CVDP ladder exists), heavy split, more runs of luna.
+
+## Deviation 1 (2026-10-31 01:35 UTC, after scored runs L1 and G1; committed before any further dispatch)
+
+**What happened.** G1 (run 41153027220) stopped 67 of its 86 problems on `run_budget_exhausted` with only $0.2377
+reported. The run guards above were set from expected spend alone, but the sweep's guard charges the $0.10
+per-problem budget for every call whose cost is not yet reported, and every in-flight call counts as unreported
+until it returns (the agent checkpoints before each call). At 4 threads that is up to $0.40 of charge on top of the
+real spend, plus $0.10 for each call that ends unreported (G1 had 2). So a $0.60 guard trips at about $0.20 of real
+spend. This is an error in this pre-registration's guard values, not the model's behaviour. L1 (guard $1.20, charge
+$0.63 at the end) was not affected: none of its problems stopped on the guard.
+
+**Change.** G1 is void (kept in the ledger, not in any table) and re-run as `G1` with seed_offset 0 again. The guards
+become: G $1.20, D $2.00, X $1.50 (expected spend + $0.40 in-flight + $0.30 margin). A DeepSeek dispatch made with
+the old $1.60 guard (run 41155696288) was cancelled before its Run step started, so it called no model. Nothing
+else changes: arms, settings, comparisons, measures and the selection rule are as above. The brief's $8 stopping
+rule still counts the new guards.
