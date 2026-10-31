@@ -35,3 +35,12 @@ jtag:
     - program by the cable's serial number (hw_server lists it as Digilent/<serial>), never "the first target"
     - Linux needs Digilent's cable udev rules installed once, as root (Vivado's install_drivers script) - brief 02
     - flash (QSPI) is never written without the owner's explicit yes
+power:                            # brief 04c: boards/nexys_a7_100t/power_budget.md
+  sources: [usb, wall]            # set by jumper JP3; which one is in use is recorded per PC in the local boards.yaml
+  default_source: usb             # assumed when the local board file says nothing (the lower limit: fails safe)
+thermal:                          # report_power's environment for this board (flow/build.tcl applies it)
+  airflow_lfm: 0                  # still air: no fan
+  heatsink: none                  # the FPGA has no heat sink
+  board: small                    # Vivado's "small" board (the Nexys A7 is about 4.3 x 5.3 in)
+  board_layers: 4to7              # stack-up not published: the smallest Vivado class, the conservative choice
+  ambient_c: 40                   # a warm room plus margin

@@ -15,7 +15,7 @@ Python code only.
 | `lint.sh` | Verilator `--lint-only -Wall` on the shell and every design's top |
 | `bringup.py` | **F0B.** One command on the attached board: power gate, discover, program base, UART tests, program ILA, ILA captures, still alive; writes `results/f0b/<design>_bringup.json` |
 | `hw_discover.py`, `hw_list.tcl` | Find the one JTAG target (refuses if there are several), check it is an xc7a100t, find its UART (FT2232 interface 1, same USB serial); record both in `~/.config/fpga_design_agent/boards.yaml`, outside the repo |
-| `program.py`, `program.tcl` | Program a build into SRAM by cable serial, after the `power_ok_usb` gate (report_power total <= 0.5 W) and a build-stamp check; flash requests are refused. Also `run_vivado.sh designs/<name> program\|program-ila` |
+| `program.py`, `program.tcl` | Program a build into SRAM by cable serial, after the `power_ok` gate (report_power total and junction temperature within the limits for the board's power source) and a build-stamp check; flash requests are refused. Also `run_vivado.sh designs/<name> program\|program-ila` |
 | `ila_capture.tcl`, `ila.py` | Arm the ILA by Tcl, wait, upload, export CSV + VCD, in step with the UART stimulus; read the CSV back into probe values |
 | `hw.py` | Shared hardware pieces: the Vivado hardware-manager runner (same guard rails), `hw_server`, the board file, the power gate, serial redaction |
 
@@ -68,8 +68,34 @@ its free-memory floor is `HW_MIN_AVAIL_GB` (default 3) instead of 7. `bringup.py
 whole run and stops it at the end (it is a wrapper script: the process group is stopped, not just the wrapper).
 
 Rules the code enforces: program only the target whose serial is in the board file, never "the first target";
-SRAM only, never flash; a bitstream above 0.5 W total on-chip power (`report_power`) is not programmed, because the
-board runs from its USB cable; committed files show the cable serial as its last 4 characters and never a `/dev`
+SRAM only, never flash; a bitstream is not programmed unless it passes the **power gate** `power_ok` (below);
+committed files show the cable serial as its last 4 characters and never a `/dev`
 path. The on-board tests are pytest tests marked `hw`, skipped unless `--hw-port` is given (see `conftest.py`), so
 CI never touches a serial port.
+
+## The power gate (`power_ok`, brief 04c)
+
+`hw.power_ok(build_dir, board)` reads the build's `power.rpt` and passes only if:
+
+| Check | USB power | Wall power |
+|---|---|---|
+| total on-chip power | <= 0.5 W | <= 2.0 W (interim, until the owner accepts the final limit) |
+| junction temperature | <= 85 C | <= 85 C |
+| the report's thermal environment | still air (0 LFM), no heat sink | same |
+
+The power source comes from the local board file: `boards.<name>.power_source: usb | wall` in
+`~/.config/fpga_design_agent/boards.yaml`. A missing file, board or key, or an unknown value, means `usb` (the
+lower limit), so a mistake fails safe; `hw_discover.py` keeps the key when it rewrites the board's entry.
+`flow/build.tcl` runs `set_operating_conditions` with the board's `thermal` block from
+`boards/<board>/board.yaml` (still air, no heat sink, small 4-7 layer board, 40 C ambient) before `report_power`,
+because Vivado's defaults (250 LFM airflow, a medium heat sink, a 10x10 in 12-15 layer board) understate the
+junction temperature of a bare board; the gate refuses a report made with the defaults. The derivation of the
+limits is in `boards/nexys_a7_100t/power_budget.md`.
+
+## Board self-checks (`board_check.py`, brief 04c)
+
+`python3 flow/board_check.py designs/<name> [--runs 3]`: power gate, discover, program the base build, run the
+design's `selfcheck.py` over the UART, check the design is still alive; one JSON per run in
+`results/board_v2/runs/`, the last in `results/board_v2/<name>.json`. Used by the read-only peripheral checks
+`designs/b2_*` (temperature sensor, accelerometer, flash JEDEC ID).
 

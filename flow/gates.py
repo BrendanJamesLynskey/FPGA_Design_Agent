@@ -132,6 +132,38 @@ def parse_report_power(text: str) -> dict[str, Any]:
 
 # --- new in this repo -------------------------------------------------------------
 
+def parse_power_supplies(text: str) -> dict[str, dict[str, float]]:
+    """report_power's Power Supply Summary: per supply, its voltage and total/dynamic/static current (A)."""
+    sec = text.split("Power Supply Summary", 1)[1] if "Power Supply Summary" in text else ""
+    out: dict[str, dict[str, float]] = {}
+    for name, v, tot, dyn, sta in re.findall(
+            r"^\|\s*(\w+)\s*\|\s*([0-9.]+)\s*\|\s*([<0-9.]+)\s*\|\s*([<0-9.]+)\s*\|\s*([<0-9.]+)\s*\|", sec, re.M):
+        out[name.lower()] = {"v": float(v), "total_a": _w(tot), "dynamic_a": _w(dyn), "static_a": _w(sta)}
+        if name.lower() == "vccadc":
+            break
+    return out
+
+
+def parse_power_environment(text: str) -> dict[str, Any]:
+    """Junction temperature and the thermal environment report_power assumed (Summary and Settings)."""
+    def row(label: str) -> str | None:
+        m = re.search(r"^\|\s*" + re.escape(label) + r"\s*\|\s*(.*?)\s*\|", text, re.M)
+        return m.group(1) if m else None
+
+    def num(label: str) -> float | None:
+        v = row(label)
+        try:
+            return float(v) if v is not None else None
+        except ValueError:
+            return None
+
+    hs = row("Heat Sink")
+    return {"junction_c": num("Junction Temperature (C)"), "max_ambient_c": num("Max Ambient (C)"),
+            "theta_ja_c_per_w": num("Effective TJA (C/W)"), "ambient_c": num("Ambient Temp (C)"),
+            "airflow_lfm": num("Airflow (LFM)"), "heatsink": hs.split()[0] if hs else None,
+            "board": row("Board Selection"), "board_layers": row("# of Board Layers")}
+
+
 def parse_check_timing(text: str) -> dict[str, int]:
     """Counts from check_timing (or the check_timing section of report_timing_summary)."""
     out: dict[str, int] = {}

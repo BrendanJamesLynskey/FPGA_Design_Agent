@@ -24,9 +24,11 @@ write, and the PWM at three dimmer levels), and checks the design is still runni
 `results/f0b/t1_dimmer_counter_bringup.json` and exits non-zero on any failure. Sections 1-6 are the same checks
 by hand, and what a person checks that the script cannot (buttons, what the display and LEDs look like).
 
-**USB power only.** The board is powered from its PROG/UART USB cable. A bitstream is programmed only if its
-`report_power` total on-chip power is at most 0.5 W (`power_ok_usb`, checked by `flow/program.py` before every
-programming step; T1 base 0.133 W, T1 ILA 0.149 W, vectorless estimates). Do not leave many LEDs at full brightness
+**Power.** Written when the board was powered from its PROG/UART USB cable. A bitstream is programmed only if
+its `report_power` passes the power gate (`power_ok`, checked by `flow/program.py` before every programming step):
+0.5 W on USB power, 2.0 W (interim) on wall power, junction temperature at most 85 C in still air; see
+`boards/nexys_a7_100t/power_budget.md` (T1 base 0.133 W, T1 ILA 0.149 W, vectorless estimates under Vivado's
+default environment in F0B; rebuild before the next bring-up so the report uses the board's thermal environment). Do not leave many LEDs at full brightness
 for long: the steps below use at most 0xA0 duty with a few LEDs lit, and 0x40 (25 %) when all 16 are lit. If the
 board resets, browns out or drops off USB, stop: fit an external supply before going further.
 

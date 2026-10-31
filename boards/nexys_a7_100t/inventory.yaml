@@ -1,0 +1,409 @@
+# Nexys A7-100T: inventory of everything a design can reach (brief 04c, 2026-10-31).
+# Facts only, in our own words; no text copied from the documents. Every field names its source
+# (`sources:` per peripheral; ids in `documents:`). FPGA pins are checked against the master XDC
+# by tools/inventory_check.py (run in CI). Procedure: knowledge bank procedures/board-onboarding.
+schema: fpga-design-agent/board-inventory/v1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+master_xdc: Nexys-A7-100T-Master.xdc
+board_revision: >-
+  Schematic Rev D.0 (2018-07-24) is the base; Rev D.2 (2021-12-23) and D.3 (2022-01-25) add the
+  S25FL127S as a flash load option and change nothing else this inventory uses (part lists compared
+  sheet by sheet). The owner's board revision is not recorded; its flash answered as listed under
+  qspi_flash (results/board_v2/).
+
+documents:
+  RM:      {title: "Digilent Nexys A7 FPGA Board Reference Manual (PDF)", version: "revised 2019-07-10", url: "https://digilent.com/reference/programmable-logic/nexys-a7/reference-manual", got: "Internet Archive copy saved in F1A"}
+  RMWEB:   {title: "Digilent Nexys A7 Reference Manual (web page, current)", version: "web.archive.org snapshot 2024-11-07", url: "https://digilent.com/reference/programmable-logic/nexys-a7/reference-manual"}
+  SCH:     {title: "Digilent Nexys A7 schematic", version: "Rev D.0, 2018-07-24 (11 sheets)", url: "https://digilent.com/reference/_media/reference/programmable-logic/nexys-a7/nexys-a7-sch.pdf"}
+  SCH_D3:  {title: "Digilent Nexys A7 schematic", version: "Rev D.3, 2022-01-25 (D.2 2021-12-23 also read)", url: "https://digilent.com/reference/_media/programmable-logic/nexys-a7/nexys-a7-d3-sch.pdf"}
+  XDC:     {title: "Digilent master XDC Nexys-A7-100T-Master.xdc", version: "Digilent/digilent-xdc @ c8644a9 (MIT)", url: "https://github.com/Digilent/digilent-xdc"}
+  RES:     {title: "Digilent Nexys A7 resource centre (demo list)", version: "web.archive.org snapshot 2025-01-13", url: "https://digilent.com/reference/programmable-logic/nexys-a7/start"}
+  ADT7420: {title: "Analog Devices ADT7420 data sheet", version: "Rev. A (2017-09)", url: "https://www.analog.com/media/en/technical-documentation/data-sheets/adt7420.pdf"}
+  ADXL362: {title: "Analog Devices ADXL362 data sheet", version: "Rev. G", url: "https://www.analog.com/media/en/technical-documentation/data-sheets/ADXL362.pdf"}
+  SPK0833: {title: "Knowles SPK0833LM4H-B data sheet", version: "Revision D (2013-06-03)", url: "https://media.digikey.com/pdf/Data%20Sheets/Knowles%20Acoustics%20PDFs/SPK0833LM4H-B.pdf"}
+  AD8592:  {title: "Analog Devices AD8591/AD8592/AD8594 data sheet", version: "Rev. B", url: "https://www.analog.com/media/en/technical-documentation/data-sheets/AD8591_8592_8594.pdf"}
+  AD8515:  {title: "Analog Devices AD8515 data sheet", version: "Rev. E", url: "https://www.analog.com/media/en/technical-documentation/data-sheets/AD8515.pdf"}
+  LAN8720A: {title: "Microchip LAN8720A/LAN8720Ai data sheet", version: "DS00002165B (2016)", url: "https://ww1.microchip.com/downloads/en/DeviceDoc/00002165B.pdf"}
+  PIC24:   {title: "Microchip PIC24FJ256GB110 family data sheet (incl. PIC24FJ128GB106)", version: "DS39897C (2009)", url: "https://ww1.microchip.com/downloads/en/DeviceDoc/39897c.pdf"}
+  FT2232H: {title: "FTDI FT2232H data sheet", version: "FT_000061 Version 2.8", url: "https://ftdichip.com/wp-content/uploads/2024/05/DS_FT2232H.pdf"}
+  S25FL128S: {title: "Cypress S25FL128S/S25FL256S data sheet", version: "001-98283 Rev. *P (2018-08-07)", url: "https://www.cypress.com/file/177966/download"}
+  S25FL127S: {title: "Cypress/Infineon S25FL127S data sheet", version: "001-98282 Rev. *J (2019-04-30)", url: "https://www.infineon.com/dgdl/Infineon-S25FL127S_128-Mb_(16_MB)_3.0_V_SPI_Flash_Memory-DataSheet-v11_00-EN.pdf?fileId=8ac78c8c7d0d8da4017d0ecfa58c49f7"}
+  MT47H:   {title: "Micron 1Gb DDR2 SDRAM data sheet (MT47H64M16)", version: "Rev. AB 09/18", url: "https://www.micron.com/-/media/client/global/documents/products/data-sheet/dram/ddr2/1gb_ddr2.pdf"}
+  ADP2118: {title: "Analog Devices ADP2118 data sheet", version: "Rev. E", url: "https://www.analog.com/media/en/technical-documentation/data-sheets/ADP2118.pdf"}
+  ADP2138: {title: "Analog Devices ADP2138/ADP2139 data sheet", version: "Rev. D", url: "https://www.analog.com/media/en/technical-documentation/data-sheets/ADP2138_2139.pdf"}
+  ADP121:  {title: "Analog Devices ADP121 data sheet", version: "Rev. G", url: "https://www.analog.com/media/en/technical-documentation/data-sheets/ADP121.pdf"}
+  UG470:   {title: "AMD 7 Series FPGAs Configuration User Guide (UG470)", version: "v1.17, 2023-12-05", url: "https://docs.amd.com/api/khub/documents/FOs3lXmlcWxBhTIFxVKyGA/content"}
+  HW:      {title: "This project's board runs (results/board_v2/)", version: "2026-10-31", url: "results/board_v2/"}
+  CALC:    {title: "Arithmetic from the cited values (shown in the field)", version: "-", url: "-"}
+
+# Digilent's own demo projects for this board (names and URLs only, never their code). Public and
+# probably in model training data: F3 must not use them, or tasks close to them, as held-out items.
+digilent_demos:
+  - {name: "Nexys A7 Keyboard Demo", url: "https://digilent.com/reference/programmable-logic/nexys-a7/demos/keyboard"}
+  - {name: "Nexys A7 XADC Demo", url: "https://digilent.com/reference/programmable-logic/nexys-a7/demos/xadc"}
+  - {name: "Nexys A7 GPIO Demo", url: "https://digilent.com/reference/programmable-logic/nexys-a7/demos/gpio"}
+  - {name: "Nexys A7 OOB (out-of-box) Demo", url: "https://digilent.com/reference/programmable-logic/nexys-a7/demos/oob", note: "touches every on-board peripheral (RM, Built-In Self-Test)"}
+  - {name: "Nexys A7-100T MicroBlaze DMA Audio Demo", url: "https://digilent.com/reference/programmable-logic/nexys-a7/nexys-a7-100t-dma-audio"}
+  - {name: "Nexys A7-50T MicroBlaze DMA Audio Demo", url: "https://digilent.com/reference/programmable-logic/nexys-a7/nexys-a7-50t-dma-audio"}
+  - {name: "Nexys 4 DDR resources (the same board, earlier name)", url: "https://digilent.com/reference/programmable-logic/nexys-4-ddr/start", note: "RM: resources for the Nexys 4 DDR apply"}
+
+power:
+  summary: "Derivation and the proposed limits: power_budget.md. The gate: flow/hw.py power_ok."
+  input: {usb: "J6 micro-USB (PROG/UART), JP3 = USB", wall: "J13 barrel, 4.5-5.5 V, centre positive, >= 1 A; JP3 = WALL", protection: "3.5 A fuse R287 (0603SFV350F/32-2) and SMBJ5.0A TVS D16, not resettable", sources: [RM 1.1-1.2, SCH sheet 11]}
+  rails:
+    - {rail: VCC1V0, regulator: "IC22 ADP2118 buck", max_a: 3.0, loads: "FPGA VCCINT and VCCBRAM", sources: [SCH sheet 11, RM Table 1.1, ADP2118 p.1]}
+    - {rail: VCC1V8, regulator: "IC23 ADP2138 buck (RM Table 1.1 says ADP2118; the schematic says ADP2138, an 800 mA part)", max_a: 0.8, loads: "DDR2 (VDD, VDDQ), FPGA VCCAUX and VCCADC, bank 34 VCCO (DDR2)", sources: [SCH sheet 11, RM Table 1.1, ADP2138 p.1]}
+    - {rail: VCC3V3, regulator: "IC17 ADP2118 buck", max_a: 3.0, loads: "FPGA VCCO (3.3 V banks), Ethernet PHY, flash, sensors, SD slot, PIC24, Pmod VCC pins", sources: [SCH sheet 11, RM Table 1.1]}
+    - {rail: AUD3V3, regulator: "IC25 ADP121 LDO", max_a: 0.15, loads: "audio filter op-amp AD8592", sources: [SCH sheet 11, ADP121 p.1]}
+    - {rail: VU5V0, regulator: "none (the fused input)", loads: "the regulators, the USB host port J5 VBUS (no current limiter), the RGB LED anodes", sources: [SCH sheets 2, 4, 11]}
+  sequencing: "ADM1086 sequencer (IC18): SW16 enables the 1.0 V rail; its power-good enables 3.3 V, 1.8 V and AUD3V3 (SCH sheet 11). ADM1086 data sheet not collected (no archive copy); not reachable by a design."
+
+core_io:   # already in board.yaml and the board skills; listed so the inventory is complete
+  - {id: clock, what: "100 MHz oscillator on E3 (MRCC, bank 35)", xdc_section: "Clock signal", pin_count: 1, sources: [RM 5, XDC]}
+  - {id: switches, what: "16 slide switches; SW[8], SW[9] in bank 34 at 1.8 V (LVCMOS18)", xdc_section: "Switches", pin_count: 16, sources: [RM 9, XDC]}
+  - {id: leds, what: "16 LEDs, active high through 330 ohm", xdc_section: "LEDs", pin_count: 16, sources: [RM 9, SCH sheet 1, XDC]}
+  - {id: rgb_leds, what: "2 tri-colour LEDs: FPGA high turns a transistor on; anodes on VU5V0 through 86.6 ohm (blue), 150 ohm (red), 75 ohm (green); RM advises PWM at <= 50 % duty", xdc_section: "RGB LEDs", pin_count: 6, sources: [RM 9.2, SCH sheet 2, XDC]}
+  - {id: seven_segment, what: "8-digit common-anode display; segments and anode enables active low", xdc_section: "7 segment display", pin_count: 16, sources: [RM 9.1, XDC]}
+  - {id: buttons, what: "5 push buttons (active high) + CPU_RESETN (active low)", xdc_section: "Buttons", pin_count: 5, sources: [RM 9, XDC]}
+  - {id: cpu_reset, what: "CPU_RESETN, active low, 4.7 kohm pull-up", xdc_section: "CPU Reset Button", pin_count: 1, sources: [RM 9, SCH sheet 8, XDC]}
+  - {id: vga, what: "12-bit VGA (4 bits a colour through resistor ladders) + HS, VS", xdc_section: "VGA Connector", pin_count: 14, sources: [RM 8, SCH sheet 2, XDC]}
+  - {id: pmod_ja, what: "Pmod JA, 8 I/O through 200 ohm series resistors; pins 6/12 3.3 V", xdc_section: "Pmod Header JA", pin_count: 8, sources: [RM 10, SCH sheet 1, XDC]}
+  - {id: pmod_jb, what: "Pmod JB (as JA)", xdc_section: "Pmod Header JB", pin_count: 8, sources: [RM 10, SCH sheet 1, XDC]}
+  - {id: pmod_jc, what: "Pmod JC (as JA)", xdc_section: "Pmod Header JC", pin_count: 8, sources: [RM 10, SCH sheet 1, XDC]}
+  - {id: pmod_jd, what: "Pmod JD (as JA)", xdc_section: "Pmod Header JD", pin_count: 8, sources: [RM 10, SCH sheet 1, XDC]}
+  - {id: pmod_jxadc, what: "JXADC: 4 analog pairs to XADC auxiliary inputs (AD3, AD10, AD2, AD11); anti-alias filter capacitors not loaded", xdc_section: "Pmod Header JXADC", pin_count: 8, sources: [RM 10.1, XDC]}
+  - {id: usb_uart, what: "FT2232HQ channel B UART (see usb_uart_jtag)", xdc_section: "USB-RS232 Interface", pin_count: 4, sources: [RM 6, XDC]}
+
+peripherals:
+  - id: temperature_sensor
+    part: ADT7420UCPZ (IC14)
+    function: "temperature sensor, +/-0.25 C class, 13-bit (0.0625 C) at power-up, 16-bit option"
+    interface: I2C (up to 400 kHz)
+    pins:
+      TMP_SCL: {pin: C14, iostandard: LVCMOS33, dir: inout}
+      TMP_SDA: {pin: C15, iostandard: LVCMOS33, dir: inout}
+      TMP_INT: {pin: D13, iostandard: LVCMOS33, dir: in}
+      TMP_CT:  {pin: B14, iostandard: LVCMOS33, dir: in}
+    address_or_id: "I2C address 0x4B (A0 = A1 = 3.3 V); ID register 0x0B = 0xCB"
+    reset_enable: "none: runs from power-up, converting continuously (one conversion about 240 ms)"
+    pullups: "SCL and SDA: 1 kohm to 3.3 V on the board (R144, R145), 100 ohm in series; INT and CT: 10 kohm pull-ups not loaded, so enable FPGA pull-ups to use them"
+    clocking: "SCL from the FPGA, 0-400 kHz"
+    self_check: "read ID 0x0B = 0xCB; read temperature 0x00-0x01, plausible room value (DONE: designs/b2_tmp_adt7420)"
+    current: {typical: "210 uA while converting at 3.3 V", max: "265 uA", shutdown: "2 uA typ"}
+    usb_power_safe: {verdict: "yes", reason: "under 0.3 mA from the 3.3 V rail; an I2C design is a few hundred LUTs"}
+    notes: "Pointer-only reads never change its configuration. A STOP between the pointer write and the read loses the pointer (it returns to 0x00): use a repeated START."
+    sources:
+      part: [SCH sheet 3, RM 12]
+      function: [ADT7420 p.1, RM 12]
+      interface: ["ADT7420 Table 2 (I2C timing: SCL 0-400 kHz)"]
+      pins: [XDC]
+      address_or_id: ["SCH sheet 3 (A0 and A1 tied high; note I2C address 1001011)", RM 12.1, ADT7420 Table 6 and Table 19]
+      reset_enable: [ADT7420 Table 1 (conversion time), RM 12.3]
+      pullups: [SCH sheet 3, RM 12.2]
+      clocking: [ADT7420 Table 2]
+      self_check: [ADT7420 Table 19, RM 12.3, HW]
+      current: [ADT7420 Table 1]
+      usb_power_safe: [ADT7420 Table 1]
+
+  - id: accelerometer
+    part: ADXL362BCCZ (IC13)
+    function: "3-axis MEMS accelerometer, 12-bit, +/-2/4/8 g (1 mg/LSB at +/-2 g)"
+    interface: SPI mode 0 (CPOL 0, CPHA 0)
+    pins:
+      ACL_MISO: {pin: E15, iostandard: LVCMOS33, dir: in}
+      ACL_MOSI: {pin: F14, iostandard: LVCMOS33, dir: out}
+      ACL_SCLK: {pin: F15, iostandard: LVCMOS33, dir: out}
+      ACL_CSN:  {pin: D15, iostandard: LVCMOS33, dir: out}
+      "ACL_INT[1]": {pin: B13, iostandard: LVCMOS33, dir: in}
+      "ACL_INT[2]": {pin: C16, iostandard: LVCMOS33, dir: in}
+    address_or_id: "commands 0x0A write, 0x0B read, 0x0D FIFO; registers 0x00-0x02 = AD 1D F2 (REVID 0x03 = 0x01 at release)"
+    reset_enable: "powers up in standby; POWER_CTL (0x2D) = 0x02 starts measurement; valid data 4/ODR later (40 ms at 100 Hz)"
+    pullups: "CS: 1 kohm pull-up to 3.3 V (R148); SCLK, CS, MOSI, MISO through 100 ohm; INT1/INT2: no pull-ups on the board, enable FPGA pull-ups"
+    clocking: "SCLK from the FPGA: RM recommends 1-5 MHz; data sheet 1-8 MHz"
+    self_check: "read 0x00-0x02 = AD 1D F2; measure; |g| at rest about 1 g within the data sheet's sensitivity and offset tolerances (DONE: designs/b2_acl_adxl362)"
+    current: {typical: "1.8 uA measuring at 100 Hz (normal), 13 uA ultra-low-noise", max: "-"}
+    usb_power_safe: {verdict: "yes", reason: "microamps"}
+    notes: "No non-volatile registers. Supply on the board is 3.3 V (data sheet range 1.6-3.5 V)."
+    sources:
+      part: [SCH sheet 3, RM 13]
+      function: [ADXL362 Table 1, RM 13]
+      interface: [RM 13.1, ADXL362 (SPI section)]
+      pins: [XDC]
+      address_or_id: [ADXL362 register map (p.25)]
+      reset_enable: [ADXL362 Table 1 (turn-on time), ADXL362 register map]
+      pullups: [SCH sheet 3, RM 13.2]
+      clocking: [RM 13.1, "ADXL362 (SPI section: 1-8 MHz)"]
+      self_check: [ADXL362 Table 1, HW]
+      current: [ADXL362 Table 1]
+      usb_power_safe: [ADXL362 Table 1]
+
+  - id: pdm_microphone
+    part: SPK0833LM4H-B (IC1; the RM names an ADMP421, the schematic D.0-D.3 an SPK0833LM4H)
+    function: "omnidirectional MEMS microphone, 1-bit PDM output"
+    interface: PDM (clock in, data out)
+    pins:
+      M_CLK:   {pin: J5, iostandard: LVCMOS33, dir: out}
+      M_DATA:  {pin: H5, iostandard: LVCMOS33, dir: in}
+      M_LRSEL: {pin: F5, iostandard: LVCMOS33, dir: out}
+    address_or_id: "none (no ID; a stream of bits)"
+    reset_enable: "asleep while the clock is below 1 kHz (DATA high-Z); wakes within 20 ms of a clock >= 1 MHz"
+    pullups: "none on DATA (high-Z while asleep or on the unused clock edge); VDD 3.3 V through a ferrite (FB3)"
+    clocking: "M_CLK 1.0-3.25 MHz, 40-60 % duty (data sheet); RM says 1-3.3 MHz, typically 2.4 MHz. M_LRSEL low: the mic drives DATA after the falling edge, sample on the rising edge; high: the opposite"
+    self_check: "proposed: at 2.4 MHz, count ones over 1 s; a working mic in a quiet room gives about 50 % ones with bit-to-bit activity (not a constant level); not run in 04c"
+    current: {typical: "500 uA", max: "700 uA", sleep: "4 uA typ"}
+    usb_power_safe: {verdict: "yes", reason: "under 1 mA"}
+    notes: "Sensitivity -26 dBFS at 94 dB SPL, SNR 63 dB(A) (SPK0833 data sheet); the RM's 61 dBA figure is the ADMP421's."
+    sources:
+      part: [SCH sheet 3, SCH_D3 sheet 3, RM 14]
+      function: [SPK0833 p.1]
+      interface: [RM 14.1, SPK0833 (timing diagram)]
+      pins: [XDC]
+      address_or_id: [SPK0833 p.1]
+      reset_enable: ["SPK0833 (electrical table: sleep and wake-up time)"]
+      pullups: [SCH sheet 3]
+      clocking: ["SPK0833 (electrical table and timing diagram)", RM 14.2]
+      self_check: [RM 14.1, CALC]
+      current: [SPK0833 (electrical table)]
+      usb_power_safe: [SPK0833 (electrical table)]
+
+  - id: pwm_audio
+    part: "AD8592ARMZ dual op-amp (IC3, 4th-order Sallen-Key low-pass, fc 12.5 kHz and 16.3 kHz stages), audio jack J8"
+    function: "mono audio output from a PWM or PDM bit stream; the filtered output is also fed back (halved, buffered by AD8515 IC12) to the XADC's dedicated VP/VN input"
+    interface: "open-drain PWM/PDM into the filter; shutdown control"
+    pins:
+      AUD_PWM: {pin: A11, iostandard: LVCMOS33, dir: out}
+      AUD_SD:  {pin: D12, iostandard: LVCMOS33, dir: out}
+    address_or_id: "none"
+    reset_enable: "AUD_SD is the op-amp's shutdown input, active low: drive it high to enable the output stage"
+    pullups: "AUD_PWM: 1.3 kohm pull-up to AUD3V3 (R222): drive 0 for low and release (high-Z) for high, never drive 1"
+    clocking: "PWM carrier at least 10x the highest audio frequency (RM: 50 kHz for 5 kHz audio, higher is better)"
+    self_check: "proposed (no human needed): fixed PWM duty, then read the XADC VP/VN channel, which sees half the filtered audio voltage; three duties should give three proportional readings. Not run in 04c"
+    current: {typical: "about 1 mA per amplifier (AD8592 supply current)", max: "output up to +/-250 mA into a low-impedance load; AUD3V3 LDO limit 150 mA"}
+    usb_power_safe: {verdict: "with conditions", reason: "headphone-level loads only; keep AUD_SD low when unused; the output path can draw tens of mA from AUD3V3 (ADP121, 150 mA max)"}
+    notes: "The XADC loopback (AUDIO -> 1k/1k divider -> AD8515 -> VP/VN, 100 ohm + 10 nF at the pin) is not described in the RM; it is on schematic sheet 3."
+    sources:
+      part: [SCH sheet 3, RM 15]
+      function: [SCH sheet 3, RM 15]
+      interface: [RM 15, RM "Migrating from Nexys 4" (open drain)]
+      pins: [XDC]
+      address_or_id: [SCH sheet 3]
+      reset_enable: [SCH sheet 3, AD8592 p.1 (shutdown)]
+      pullups: [SCH sheet 3, RM 15]
+      clocking: [RM 15.2]
+      self_check: [SCH sheet 3, SCH sheet 8 (VP_0/VN_0), CALC]
+      current: [AD8592 Table 1, ADP121 p.1]
+      usb_power_safe: [AD8592 Table 1, ADP121 p.1]
+
+  - id: ethernet_phy
+    part: LAN8720A-CP-TR (IC4), RJ-45 with magnetics (J4)
+    function: "10/100 Ethernet PHY"
+    interface: "RMII (2-bit data at 50 MHz) + SMI management (MDC/MDIO)"
+    pins:
+      ETH_MDC:    {pin: C9,  iostandard: LVCMOS33, dir: out}
+      ETH_MDIO:   {pin: A9,  iostandard: LVCMOS33, dir: inout}
+      ETH_RSTN:   {pin: B3,  iostandard: LVCMOS33, dir: out}
+      ETH_CRSDV:  {pin: D9,  iostandard: LVCMOS33, dir: in}
+      ETH_RXERR:  {pin: C10, iostandard: LVCMOS33, dir: in}
+      "ETH_RXD[0]": {pin: C11, iostandard: LVCMOS33, dir: in}
+      "ETH_RXD[1]": {pin: D10, iostandard: LVCMOS33, dir: in}
+      ETH_TXEN:   {pin: B9,  iostandard: LVCMOS33, dir: out}
+      "ETH_TXD[0]": {pin: A10, iostandard: LVCMOS33, dir: out}
+      "ETH_TXD[1]": {pin: A8,  iostandard: LVCMOS33, dir: out}
+      ETH_REFCLK: {pin: D5,  iostandard: LVCMOS33, dir: out}
+      ETH_INTN:   {pin: B8,  iostandard: LVCMOS33, dir: in}
+    address_or_id: "PHY address 1 (strap); PHY ID registers 2 = 0x0007, 3 = 0xC0Fx (x = silicon revision)"
+    reset_enable: "ETH_RSTN active low with a 10 kohm pull-up (R138) and a diode to the supplies' power-good: the PHY leaves reset by itself once power is good, even unconfigured; drive it low to hold the PHY in reset (a pulse >= 100 us); straps latch on its rising edge"
+    pullups: "MDIO: 1 kohm pull-up (R133); RXER/PHYAD0: 10 kohm pull-up (R135), which sets PHY address 1; the other strap pull-ups (R134, R136, R137) are not fitted; the PHY's 25 MHz crystal is not fitted"
+    clocking: "REF_CLK-in mode: the FPGA must drive 50 MHz on ETH_REFCLK (the PHY's CLKIN); the RM advises the PHY clock 45 degrees after the MAC's; MDC period >= 400 ns (<= 2.5 MHz)"
+    self_check: "proposed: MDIO read of registers 2 and 3 at address 1 (0x0007, 0xC0Fx), and link status (register 1) with a cable; not run in 04c"
+    current: {typical: "45 mA at 100BASE-TX with traffic (148 mW)", max: "49 mA (159 mW)"}
+    usb_power_safe: {verdict: "yes", reason: "about 0.16 W from 3.3 V at most; plus link LEDs. Fits the USB budget alongside a small design"}
+    notes: "AMD's mii_to_rmii IP was deprecated after Vivado 2019.1 (RMWEB section 4): an RMII MAC is written in RTL or the old IP is carried."
+    sources:
+      part: [SCH sheet 5, RM 4]
+      function: [LAN8720A p.1]
+      interface: [RM 4, LAN8720A p.1]
+      pins: [XDC]
+      address_or_id: [RM 4, LAN8720A 4.2.3-4.2.4]
+      reset_enable: [LAN8720A 5.5.3 (power-on nRST and strap timing), SCH sheet 5]
+      pullups: [SCH sheet 5]
+      clocking: [SCH sheet 5 (REF_CLK in mode), RM 4, LAN8720A (SMI timing)]
+      self_check: [LAN8720A 4.2.3-4.2.4, CALC]
+      current: [LAN8720A Table 5-1]
+      usb_power_safe: [LAN8720A Table 5-1]
+
+  - id: usb_hid_host
+    part: PIC24FJ128GB106 (IC2) with USB-A host port J5
+    function: "auxiliary microcontroller: before configuration it loads a bitstream from USB stick or microSD; after configuration it turns one boot-protocol USB keyboard or mouse into a PS/2 device"
+    interface: "PS/2 (the PIC24 emulates the device; the FPGA is the host): 11-bit frames, clock 20-30 kHz, data valid on the falling clock edge"
+    pins:
+      PS2_CLK:  {pin: F4, iostandard: LVCMOS33, dir: inout}
+      PS2_DATA: {pin: B2, iostandard: LVCMOS33, dir: inout}
+    address_or_id: "on attach the device sends 0xAA (self-test passed); a mouse then sends ID 0x00; a keyboard answers 0xF2 (read ID)"
+    reset_enable: "none from the FPGA; the PIC24 also drives PROG/INIT/DONE and the QSPI SCK/DQ1 lines while the FPGA is unconfigured"
+    pullups: "PS/2 lines are open-drain and idle high-Z: enable FPGA pull-ups"
+    clocking: "clock from the device (20-30 kHz); the host may hold it low to inhibit"
+    self_check: "needs a person (plug in a keyboard, press keys): one batched ask; not run in 04c"
+    current: {typical: "PIC24: about 18 mA at 16 MIPS (DC24)", max: "USB device on J5: up to its own rating (100 mA low-power, 500 mA high-power), drawn straight from the 5 V input"}
+    usb_power_safe: {verdict: "with conditions", reason: "J5 VBUS comes straight from the fused 5 V input with no current limiter (SCH sheet 4); on USB power the whole board shares the PC port. Only a low-power keyboard or mouse; never a hub, memory stick or charging device. On battery, >= 4.6 V is needed for the host port (RM 1.1)"}
+    notes: "No hub support; a keyboard or a mouse, not both (RM 7)."
+    sources:
+      part: [SCH sheet 4, RM 7]
+      function: [RM 2.3, RM 7, RM 7.1]
+      interface: [RM 7.1, RM 7.2, RM 7.3]
+      pins: [XDC]
+      address_or_id: [RM 7.1]
+      reset_enable: [SCH sheet 4]
+      pullups: [RM 7.1]
+      clocking: [RM 7.2]
+      self_check: [RM 7.1]
+      current: [PIC24 Table 29-4, CALC]
+      usb_power_safe: [SCH sheet 4, RM 1.1]
+
+  - id: usb_uart_jtag
+    part: FT2232HQ (on the PROG/UART port J6; not drawn in the published schematic, sheet 6 is blank)
+    function: "USB to JTAG (channel A) and USB to UART (channel B); also the USB power input when JP3 = USB"
+    interface: "UART (TXD/RXD, optional RTS/CTS), JTAG to the FPGA's dedicated pins"
+    pins:
+      UART_TXD_IN:  {pin: C4, iostandard: LVCMOS33, dir: in}
+      UART_RXD_OUT: {pin: D4, iostandard: LVCMOS33, dir: out}
+      UART_CTS:     {pin: D3, iostandard: LVCMOS33, dir: in}
+      UART_RTS:     {pin: E5, iostandard: LVCMOS33, dir: out}
+    address_or_id: "USB 0403:6010; JTAG target Digilent/<serial>; UART on interface 1 (flow/hw_discover.py)"
+    reset_enable: "none"
+    pullups: "-"
+    clocking: "UART at the design's baud (the shell: 115200 8N1)"
+    self_check: "the test shell's identity and scratch registers (every design; F0B)"
+    current: {typical: "70 mA core (FT2232H Table 5.2), powered from the USB cable's own 3.3 V (FT3V3)", max: "-"}
+    usb_power_safe: {verdict: "yes", reason: "it is the USB link itself"}
+    notes: "Signal names are from the PC's side: the FPGA receives on UART_TXD_IN (C4)."
+    sources:
+      part: [RM 6, SCH sheet 6]
+      function: [RM 6]
+      interface: [RM 6]
+      pins: [XDC]
+      address_or_id: [FT2232H p.1, HW]
+      reset_enable: [RM 6]
+      pullups: [RM 6]
+      clocking: [RM 6]
+      self_check: [HW]
+      current: [FT2232H Table 5.2, SCH sheet 11 (FT3V3)]
+      usb_power_safe: [RM 6]
+
+  - id: qspi_flash
+    part: "S25FL128SAG[M|N]FI00 (16 MiB) on every revision; S25FL127SABMF may be fitted from Rev D with a sticker"
+    function: "configuration flash (the FPGA boots from it when JP1 = QSPI); user data above the bitstream (just under 4 MiB for the 100T)"
+    interface: "SPI x1/x2/x4; SCK is the FPGA's dedicated CCLK pin (E9), driven after configuration only through STARTUPE2 USRCCLKO"
+    pins:
+      "QSPI_DQ[0]": {pin: K17, iostandard: LVCMOS33, dir: inout}
+      "QSPI_DQ[1]": {pin: K18, iostandard: LVCMOS33, dir: inout}
+      "QSPI_DQ[2]": {pin: L14, iostandard: LVCMOS33, dir: inout}
+      "QSPI_DQ[3]": {pin: M14, iostandard: LVCMOS33, dir: inout}
+      QSPI_CSN:     {pin: L13, iostandard: LVCMOS33, dir: out}
+    address_or_id: "RDID (9Fh): 01 20 18 4D, then 00/01 (sector architecture), 80 (FL-S family), 2 ASCII model bytes; the same first 3 bytes for both parts"
+    reset_enable: "CS: 4.7 kohm pull-up (R212); no reset pin on the 8-pin package; WP# (DQ2) and HOLD# (DQ3) must be held (HOLD# high) in x1/x2 mode"
+    pullups: "CS only (4.7 kohm); DQ0-DQ3 have 100 ohm series resistors and no pull-ups on the board"
+    clocking: "board limit 50 MHz (RMWEB 3.2); STARTUPE2 drops the first 3 USRCCLKO edges after configuration"
+    self_check: "JEDEC ID by RDID only, no write/erase/register-write opcode in the RTL (DONE: designs/b2_qspi_jedec)"
+    current: {typical: "-", max: "61 mA reading (quad, 104 MHz); 100 mA programming/erasing (never done here)"}
+    usb_power_safe: {verdict: "yes", reason: "reads only; tens of mA at most. Writes are forbidden by the house rules whatever the power"}
+    notes: "The PIC24 shares QSPI_SCK and QSPI_DQ1 (SCH sheet 4) for configuration before the FPGA is programmed. RMWEB lists differences between the two parts (SFDP on the 127S, no DDR reads, different sector map)."
+    sources:
+      part: [SCH sheet 8, SCH_D3 sheet 8, RMWEB 3.2 (Table 3.2.1)]
+      function: [RM 3.2, RM 2.2]
+      interface: [RM 3.2, SCH sheet 8, UG470 chapter 5 (STARTUPE2 primitive)]
+      pins: [XDC]
+      address_or_id: [S25FL128S Table 54, S25FL127S Table 49, HW]
+      reset_enable: [SCH sheet 8, S25FL128S (signal descriptions)]
+      pullups: [SCH sheet 8]
+      clocking: [RMWEB 3.2, "UG470 chapter 5 (STARTUPE2 primitive: USRCCLKO)"]
+      self_check: [S25FL128S Table 53, HW]
+      current: ["S25FL128S (DC characteristics: ICC1-ICC4)"]
+      usb_power_safe: [S25FL128S (DC characteristics)]
+
+  - id: ddr2
+    part: MT47H64M16HR-25:H (IC9), 128 MiB, x16, single rank
+    function: "external DRAM"
+    interface: "DDR2 on a 1.8 V HR bank (bank 34), 50 ohm traces, FPGA internal terminations, ODT 50 ohm"
+    pins: {}
+    pins_note: "Not in the master XDC: the MIG's pin file (Digilent's UCF for MIG) holds them. tools/inventory_check.py accepts an empty pin map only with this note."
+    address_or_id: "none (no ID register)"
+    reset_enable: "a controller is required: AMD MIG 7-series (RM Table 3.1.1 settings) or Digilent's DDR-to-SRAM adapter"
+    pullups: "-"
+    clocking: "MIG: 3000 ps max clock period (667 Mb/s); 3077 ps (650 Mb/s) recommended for easy clocking from 100 MHz"
+    self_check: "proposed: MIG calibration-complete flag plus a write/read pattern over the shell, only after report_power passes; not run in 04c"
+    current: {typical: "IDD2N 26 mA (precharge standby, x16, -25E)", max: "IDD7 260 mA (bank-interleave read, x16, -25E, die H) from 1.8 V"}
+    usb_power_safe: {verdict: "with conditions", reason: "the DDR2 alone can draw 0.47 W from the 0.8 A 1.8 V rail, and a MIG design is large; run report_power first. Likely over the 0.5 W USB gate; plan it on wall power"}
+    sources:
+      part: [SCH sheet 9, RM 3.1]
+      function: [RM 3]
+      interface: [RM 3.1]
+      pins: [RM 3.1]
+      address_or_id: [MT47H p.1]
+      reset_enable: [RM 3.1]
+      pullups: [RM 3.1]
+      clocking: [RM Table 3.1.1]
+      self_check: [RM 3.1, CALC]
+      current: [MT47H Table 10]
+      usb_power_safe: [MT47H Table 10, SCH sheet 11, CALC]
+
+  - id: microsd
+    part: microSD slot J1 (card power switched by Q8)
+    function: "microSD card: configuration source before the FPGA is configured (PIC24, SPI); after that, the FPGA's (native SD or SPI)"
+    interface: "SD native 4-bit or SPI"
+    pins:
+      SD_RESET:    {pin: E2, iostandard: LVCMOS33, dir: out}
+      SD_CD:       {pin: A1, iostandard: LVCMOS33, dir: in}
+      SD_SCK:      {pin: B1, iostandard: LVCMOS33, dir: out}
+      SD_CMD:      {pin: C1, iostandard: LVCMOS33, dir: inout}
+      "SD_DAT[0]": {pin: C2, iostandard: LVCMOS33, dir: inout}
+      "SD_DAT[1]": {pin: E1, iostandard: LVCMOS33, dir: inout}
+      "SD_DAT[2]": {pin: F1, iostandard: LVCMOS33, dir: inout}
+      "SD_DAT[3]": {pin: D2, iostandard: LVCMOS33, dir: inout}
+    address_or_id: "the card's own (CID/CSD registers via CMD2/CMD9); none on the board"
+    reset_enable: "SD_RESET drives the gate of the card's power switch (Q8, 10 kohm pull-up): drive it LOW to power the card"
+    pullups: "DAT0-3 and CMD: 100 kohm to the switched card supply; SD_CD: 10 kohm pull-up to 3.3 V through 100 ohm (low = card present)"
+    clocking: "SD_SCK from the FPGA: 100-400 kHz for card identification, then up to the card's speed"
+    self_check: "proposed: SD_CD shows card presence; CMD0 then CMD8 response with a card fitted (needs a card: one batched ask); not run in 04c"
+    current: {typical: "card dependent", max: "not in any document collected (the SD specification was not collected)"}
+    usb_power_safe: {verdict: "with conditions", reason: "card current is unknown here; with a standard card at default speed it is usually acceptable, but measure or budget it before relying on USB power"}
+    notes: "After configuration the PIC24 power-cycles the slot and releases the bus (RM 11)."
+    sources:
+      part: [SCH sheet 2, RM 11]
+      function: [RM 2.3, RM 11]
+      interface: [RM 11]
+      pins: [XDC]
+      address_or_id: [RM 11]
+      reset_enable: [SCH sheet 2, RM 11]
+      pullups: [SCH sheet 2]
+      clocking: [RM 11, CALC]
+      self_check: [SCH sheet 2, CALC]
+      current: [RM 11]
+      usb_power_safe: [RM 11, CALC]
+
+  - id: xadc_vpvn
+    part: "FPGA XADC dedicated input VP_0/VN_0 (J10/K9), reference ADR127 1.25 V (IC15)"
+    function: "the XADC's dedicated analog pair, wired to the audio output monitor (see pwm_audio); external 1.25 V reference on VREFP"
+    interface: "XADC via DRP (XADC primitive or the XADC Wizard)"
+    pins: {}
+    pins_note: "Dedicated analog pins (VP_0/VN_0, VREFP/VREFN): not user I/O, so not in the master XDC."
+    address_or_id: "the dedicated VP/VN channel of the XADC (its DRP channel number is in UG480, not collected in 04c)"
+    reset_enable: "-"
+    pullups: "-"
+    clocking: "DRP clock from the design (the XADC's ADC clock is derived from it)"
+    self_check: "see pwm_audio (proposed)"
+    current: {typical: "inside the FPGA's VCCADC (report_power counts it)", max: "-"}
+    usb_power_safe: {verdict: "yes", reason: "on-chip; counted by report_power"}
+    sources:
+      part: [SCH sheet 8, SCH sheet 3]
+      function: [SCH sheet 3, SCH sheet 8]
+      interface: [RM 10.1]
+      pins: [SCH sheet 8]
+      address_or_id: [RM 10.1]
+      reset_enable: [SCH sheet 8]
+      pullups: [SCH sheet 8]
+      clocking: [RM 10.1]
+      self_check: [SCH sheet 3]
+      current: [CALC]
+      usb_power_safe: [CALC]

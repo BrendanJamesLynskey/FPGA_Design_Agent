@@ -9,8 +9,9 @@ Before Vivado touches the board it checks, and refuses with the reason if any fa
 - the board was discovered (``flow/hw_discover.py``) and is in the local board file;
 - the bitstream (and, for ``ila``, the ``.ltx``) exists and was built from the current
   sources (its ``prepare.json`` build stamp equals the stamp of the files in the tree);
-- **power_ok_usb**: the build's ``report_power`` total on-chip power is at most 0.5 W,
-  because the board is powered from its USB cable only.
+- **power_ok**: the build's ``report_power`` total on-chip power and junction temperature are
+  within the limits for the board's power source (``power_source`` in the local board file:
+  usb 0.5 W, wall 2.0 W interim; Tj <= 85 C in still air; usb if unrecorded), see flow/hw.py.
 Then it runs ``flow/program.tcl`` (open the target by serial, check the device is an
 xc7a100t, program SRAM, attach the ``.ltx``) under the memory-safe Vivado settings.
 """
@@ -63,9 +64,9 @@ def program(design: Path, variant: str, board: str | None = None, log_dir: Path 
     if info["build_stamp"] != info["tree_stamp"]:
         raise hw.HwError(f"stale bitstream: built from sources with stamp {info['build_stamp']}, "
                          f"the tree now has {info['tree_stamp']}; rebuild first")
-    res["power_ok_usb"] = hw.power_ok_usb(info["dir"])
-    if not res["power_ok_usb"]["pass"]:
-        raise hw.HwError(f"power_ok_usb: {res['power_ok_usb']['why']}; not programming")
+    res["power_ok"] = hw.power_ok(info["dir"], b["name"])
+    if not res["power_ok"]["pass"]:
+        raise hw.HwError(f"power_ok: {res['power_ok']['why']}; not programming")
     args = [b["cable_serial"], str(info["bit"])] + ([str(info["ltx"])] if variant == "ila" else [])
     log_dir = log_dir or hw.ROOT / "build" / "hw" / "program"
     with hw.HwServer(log_dir):

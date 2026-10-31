@@ -1,4 +1,4 @@
-# CI: Python models, gates parser and host driver; cocotb + Icarus RTL tests
+# CI: Python models, gates parser and host driver, board inventory check; cocotb + Icarus RTL tests
 # (with the mutant check); Verilator lint. Vivado does not run here (it is a
 # ~100 GB install): builds run locally through flow/run_vivado.sh, and their
 # summaries are committed under results/.
@@ -25,6 +25,8 @@ jobs:
           pip install pyyaml pyserial pytest cocotb==2.0.1
       - name: pytest (no simulator)
         run: python -m pytest -q --ignore-glob='*_rtl.py'
+      - name: Board inventory against the master XDC (brief 04c)
+        run: python tools/inventory_check.py boards/nexys_a7_100t
 
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
@@ -41,6 +43,10 @@ jobs:
           pip install pyyaml pyserial pytest cocotb==2.0.1
       - name: cocotb tests (shell at 8 clocks a bit and at 115200 baud; T1 against its model)
         run: python -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py
+      - name: Board self-check designs against device models; QSPI source checks (brief 04c)
+        run: >-
+          python -m pytest -q designs/b2_tmp_adt7420/tests/test_tmp_rtl.py designs/b2_acl_adxl362/tests/test_acl_rtl.py
+          designs/b2_qspi_jedec/tests/test_qspi_rtl.py designs/b2_mic_pdm/tests/test_mic_rtl.py
       - name: Mutants (each deliberate bug must fail the T1 tests)
         run: PYTHON=python designs/t1_dimmer_counter/tests/run_mutants.sh
       - name: Upload simulation logs
