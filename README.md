@@ -136,7 +136,7 @@ docs/        debug_playbook.md (for humans: what each gate rule ID means); img/ 
 | F0A | Repo, CI, runner, flow, gates, ILA, test shell, T1 by hand | done |
 | F0B | Automated bring-up on the Nexys A7: program by cable serial, UART tests, ILA capture | done |
 | F1A | Knowledge packs (generic, AMD vendor from Ross, Artix-7 family) and a search library, in a private repo; names and hashes in [knowledge/PACKS.md](knowledge/PACKS.md); human [debug playbook](docs/debug_playbook.md) | done |
-| F1B | Model screen on CVDP's 86 problems ([results/f1b/REPORT.md](results/f1b/REPORT.md)): DeepSeek V4.1 Flash is detectably below luna (−12.4 points); GLM-5.3-Flash not yet measured (no credit); pick so far luna | incomplete |
+| F1B | Model screen on CVDP's 86 problems ([results/f1b/REPORT.md](results/f1b/REPORT.md)): no cheap candidate eligible (DeepSeek V4.1 Flash −12.4 points; GLM-5.3-Flash −4.1, not detectable, but 48.5 reliability failures per 86); pick luna | done |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | F3 | Frozen benchmark, scored runs | coming |
 

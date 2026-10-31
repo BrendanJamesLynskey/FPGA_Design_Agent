@@ -171,3 +171,30 @@ $100.19 used, so it is out of credit, although the key's own limit ($159) has $7
 is given. No further run can be made until credit is added, which is the owner's decision. The selection rule is
 applied to the arms with valid runs (L and D); GLM has no valid run and is not evaluated; the Claude Code run is not
 made.
+
+## Deviation 4 (2026-10-31 ~09:50 UTC: the GLM arm resumed after credit was added; committed before its dispatches)
+
+The owner added $10 of OpenRouter credit (account balance $9.81 at 09:47 UTC, `key_check` run 41190076245; key usage
+unchanged at $88.219704). The GLM arm is run now; nothing else in this file changes except:
+
+1. **Commit.** GLM runs are dispatched from CVDP `main` at `d9e9ca4` (PR #33 merged) instead of `aa7404c`. The only
+   difference between the two is `key_check.yml` (the credits line); the last commit touching `agent/` or `docker/`
+   is still `aa7404c`, so the agent image (`cvdp-rtl-agent:aa7404c…`), the sweep and every setting are those of L1 and
+   D1–D3. Luna's run L1 stays the base; it is not re-run.
+2. **Guards.** Each G run gets `run_budget_usd = min($3.00, $8 − this brief's key usage so far)`, set at dispatch
+   (below about $2.30 the run is not dispatched, since that is the expected spend + $0.40 in flight + about 11
+   abandoned calls). G runs go one at a time, so the $8 rule holds with one guard in flight.
+3. **Stopping.** No dispatch if the account balance is below $3 (planner, 2026-10-31).
+4. **Claude Code run (part 3)** of the pick only if it fits under $8 with margin after the G runs, with nothing else
+   spending on the key.
+
+## Deviation 5 (2026-10-31 ~14:40 UTC, after G3; written after its result was seen)
+
+G1 (run 41190255842) and G2 (run 41196831612) completed with no guard stop and no 402. G3 (run 41204299796, guard
+$2.81 = $8 − $5.19 by deviation 4) stopped 13 of 86 problems on `run_budget_exhausted`. GLM's calls hang (20–21
+abandoned a run), each charged $0.10 by the guard, and the in-flight charge pushed it over. As with deviations 1–2,
+G3 is **void** (in the ledger, not in the primary tables). It cannot be re-run: the brief's key usage is now $5.74,
+which leaves $2.26, under the $2.30 floor of deviation 4. **The rule is applied to G with 2 runs (G1, G2).** A
+sensitivity table adds G3's rows. Neither choice changes the outcome (see REPORT.md): G fails the reliability
+condition with either. The Claude Code 86-problem run (part 3) is cancelled by an owner scope change (Claude Code runs
+Anthropic models only, on the plan); none was dispatched.
