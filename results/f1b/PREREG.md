@@ -124,7 +124,7 @@ be set per request through Claude Code; that is a known gap of this arm.
 - No other runs, no tuning, nothing changed after the first scored dispatch.
 - Not done here: Claude models on the plan (the CVDP ladder exists), heavy split, more runs of luna.
 
-## Deviation 1 (2026-10-31 01:35 UTC, after scored runs L1 and G1; committed before any further dispatch)
+## Deviation 1 (2026-10-31 01:31 UTC, after scored runs L1 and G1; committed before any further dispatch)
 
 **What happened.** G1 (run 41153027220) stopped 67 of its 86 problems on `run_budget_exhausted` with only $0.2377
 reported. The run guards above were set from expected spend alone, but the sweep's guard charges the $0.10
@@ -136,6 +136,7 @@ $0.63 at the end) was not affected: none of its problems stopped on the guard.
 
 **Change.** G1 is void (kept in the ledger, not in any table) and re-run as `G1` with seed_offset 0 again. The guards
 become: G $1.20, D $2.00, X $1.50 (expected spend + $0.40 in-flight + $0.30 margin). A DeepSeek dispatch made with
-the old $1.60 guard (run 41155696288) was cancelled before its Run step started, so it called no model. Nothing
+the old $1.60 guard (run 41155696288) was cancelled about a minute into its Run step (correction, 01:36 UTC: it had
+already made calls, $0.0176 reported plus 4 in flight); it is void, in the ledger, and in no table. Nothing
 else changes: arms, settings, comparisons, measures and the selection rule are as above. The brief's $8 stopping
 rule still counts the new guards.
