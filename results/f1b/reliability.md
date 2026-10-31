@@ -2,6 +2,7 @@
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | L | 1 | 86 | 1 (1) | 17 (45) | 1 (1) | 0 (0) | 1 (1) | 5 (14) | 2 (2) | 17 | 17.0 |
 | D | 3 | 258 | 1 (1) | 30 (37) | 4 (4) | 0 (0) | 9 (9) | 22 (45) | 31 (31) | 75 | 25.0 |
+| G | 2 | 172 | 16 (16) | 39 (61) | 21 (34) | 18 (28) | 34 (34) | 35 (63) | 26 (26) | 97 | 48.5 |
 
 Each measure: problem-runs affected (events). Per 86 = failures / problem-runs x 86.
 
@@ -9,3 +10,4 @@ Each measure: problem-runs affected (events). Per 86 = failures / problem-runs x
 |---|---|
 | L | submit 83, llm_error 1, wall_time 1, max_turns 1 |
 | D | submit 216, max_turns 30, llm_error 9, give_up 2, wall_time 1 |
+| G | submit 112, llm_error 34, wall_time 22, max_turns 4 |

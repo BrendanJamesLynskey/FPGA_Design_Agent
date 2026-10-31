@@ -41,3 +41,6 @@ echo "tables written to $here"
 # Sensitivity (not pre-registered): D without D3, whose 8 llm_error stops were the account's 402s (REPORT.md)
 python3 "$T/ablate.py" --ids "$ids" --level 0.975 --base L --arm "L=$(arm L)" \
   --arm "D12=$(ls "$r"/D1_*.csv "$r"/D2_*.csv | paste -sd,)" > "$here/sensitivity_D1D2_eval86.md"
+# Sensitivity (not pre-registered): G with its void, guard-truncated third run (PREREG deviation 5)
+python3 "$T/ablate.py" --ids "$ids" --level 0.975 --base L --arm "L=$(arm L)" \
+  --arm "G123=$(arm G),$(ls "$here"/void/G3_*.csv | paste -sd,)" > "$here/sensitivity_G123_eval86.md"
