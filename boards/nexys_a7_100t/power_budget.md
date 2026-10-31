@@ -26,7 +26,7 @@ air with no heat sink the FPGA's junction reaches 85 C at about 2.5 W in a 40 C 
 
 | Load | Rail | Typical / max | Source |
 |---|---|---|---|
-| DDR2 MT47H64M16HR-25:H | 1.8 V | 26 mA standby (IDD2N) / **260 mA** bank-interleave read (IDD7, x16, -25E, die H) | MT47H Table 10 |
+| DDR2 MT47H64M16HR-25:H | 1.8 V | 30 mA standby (IDD2N) / **260 mA** bank-interleave read (IDD7, x16, -25E, die H) | MT47H Table 10 |
 | Ethernet PHY LAN8720A | 3.3 V | 45 / 49 mA at 100BASE-TX with traffic | LAN8720A Table 5-1 |
 | QSPI flash | 3.3 V | up to 61 mA reading (quad, 104 MHz); 100 mA programming (never done here) | S25FL128S DC characteristics |
 | PIC24FJ128GB106 | 3.3 V | about 18 mA at 16 MIPS (DC24) | PIC24 Table 29-4 |
@@ -99,13 +99,15 @@ current limiter), no DDR2/MIG designs (the DDR2 alone can take 0.47 W), the RGB 
 - Tests: `flow/tests/test_hw_flow.py` (both sources, the junction limit, the default-environment refusal, the
   board-file rules, rediscovery keeping the source).
 
-## 6. What 04c's bitstreams used (from their `power.rpt`)
+## 6. What 04c's bitstreams used (from their `power.rpt`, still air, 40 C ambient)
 
-| Build | Total on-chip | VCCINT | Junction (40 C ambient) |
-|---|---|---|---|
-| `designs/b2_tmp_adt7420` | 0.116 W | 0.031 A | 42.1 C |
-| `designs/b2_acl_adxl362` | 0.116 W | see `power.rpt` | 42.1 C |
-| `designs/b2_qspi_jedec` | see `results/board_v2/b2_qspi_jedec.json` | | |
-| `designs/b2_mic_pdm` | see `results/board_v2/b2_mic_pdm.json` | | |
+| Build | Total on-chip | Dynamic | VCCINT | 1.8 V rail (FPGA) | VCCO33 | Junction |
+|---|---|---|---|---|---|---|
+| `designs/b2_tmp_adt7420` | 0.116 W | 0.003 W | 0.031 A | 0.039 A | 0.004 A | 42.1 C |
+| `designs/b2_acl_adxl362` | 0.116 W | 0.004 W | 0.031 A | 0.039 A | 0.004 A | 42.1 C |
+| `designs/b2_qspi_jedec` | 0.117 W | 0.004 W | 0.032 A | 0.039 A | 0.004 A | 42.1 C |
+| `designs/b2_mic_pdm` | 0.117 W | 0.004 W | 0.032 A | 0.039 A | 0.004 A | 42.1 C |
 
-(The gate result of every programmed bitstream is in `results/board_v2/runs/*.json`, step `power_ok`.)
+All four are almost entirely device static power (0.113 W at this temperature). The gate result of every
+programmed bitstream is in `results/board_v2/runs/*.json`, step `power_ok` (source `wall`, from the local board
+file).

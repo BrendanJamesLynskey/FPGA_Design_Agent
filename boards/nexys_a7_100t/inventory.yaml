@@ -214,7 +214,7 @@ peripherals:
       ETH_INTN:   {pin: B8,  iostandard: LVCMOS33, dir: in}
     address_or_id: "PHY address 1 (strap); PHY ID registers 2 = 0x0007, 3 = 0xC0Fx (x = silicon revision)"
     reset_enable: "ETH_RSTN active low with a 10 kohm pull-up (R138) and a diode to the supplies' power-good: the PHY leaves reset by itself once power is good, even unconfigured; drive it low to hold the PHY in reset (a pulse >= 100 us); straps latch on its rising edge"
-    pullups: "MDIO: 1 kohm pull-up (R133); RXER/PHYAD0: 10 kohm pull-up (R135), which sets PHY address 1; the other strap pull-ups (R134, R136, R137) are not fitted; the PHY's 25 MHz crystal is not fitted"
+    pullups: "MDIO: 1 kohm pull-up (R133); RXER/PHYAD0: 10 kohm pull-up (R135), which sets PHY address 1; the pull-ups on CRS_DV, RXD0 and RXD1 (R134, R136, R137) are not fitted; ETH_INTN has none (use an FPGA pull-up); the PHY's 25 MHz crystal is not fitted"
     clocking: "REF_CLK-in mode: the FPGA must drive 50 MHz on ETH_REFCLK (the PHY's CLKIN); the RM advises the PHY clock 45 degrees after the MAC's; MDC period >= 400 ns (<= 2.5 MHz)"
     self_check: "proposed: MDIO read of registers 2 and 3 at address 1 (0x0007, 0xC0Fx), and link status (register 1) with a cable; not run in 04c"
     current: {typical: "45 mA at 100BASE-TX with traffic (148 mW)", max: "49 mA (159 mW)"}
@@ -333,7 +333,7 @@ peripherals:
     pullups: "-"
     clocking: "MIG: 3000 ps max clock period (667 Mb/s); 3077 ps (650 Mb/s) recommended for easy clocking from 100 MHz"
     self_check: "proposed: MIG calibration-complete flag plus a write/read pattern over the shell, only after report_power passes; not run in 04c"
-    current: {typical: "IDD2N 26 mA (precharge standby, x16, -25E)", max: "IDD7 260 mA (bank-interleave read, x16, -25E, die H) from 1.8 V"}
+    current: {typical: "IDD2N 30 mA (precharge standby, x16, -25E; IDD2Q quiet standby 26 mA)", max: "IDD7 260 mA (bank-interleave read, x16, -25E, die H) from 1.8 V"}
     usb_power_safe: {verdict: "with conditions", reason: "the DDR2 alone can draw 0.47 W from the 0.8 A 1.8 V rail, and a MIG design is large; run report_power first. Likely over the 0.5 W USB gate; plan it on wall power"}
     sources:
       part: [SCH sheet 9, RM 3.1]
