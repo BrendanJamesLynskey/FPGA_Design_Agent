@@ -126,3 +126,19 @@ pick.
 ## Deviations
 
 (none yet)
+
+## Deviation 1 (2026-10-31 ~22:17 UTC, after run 41242996907 (Q3C); committed before any further dispatch)
+
+**What happened.** Q3C (run 41242996907, guard $0.90) stopped 52 of 86 problems on `run_budget_exhausted`. Its
+provider-reported spend was $0.2657 (key usage change $0.2755), with 4 unreported calls; the guard charge was $0.6657.
+The guard rule (charge $0.10 per in-flight and unreported call on top of reported spend, at 4 threads) was still too
+tight for a cheap model that makes many short calls, the same failure as F1B's deviations 1, 2 and 5. A run with 52
+problems stopped by the guard is not a measurement of the model, so it is **void** (kept in the ledger, in no table,
+and its artifact is not in `results/`). Its 13/86 pass count is reported only as a description of the truncated run.
+
+**Change.** Q3C is re-run once as `Q3C` with seed_offset 0, guard **$1.20** (the same settings otherwise). Q36 keeps
+its planned order, with guard `min($1.40, $2.00 − key-usage spend so far)` at its dispatch, and is not dispatched
+below $1.00. The $2.00 cap and the $5.00 balance floor are unchanged. Key usage before the re-run: $90.188965
+(brief spend so far $0.2755; account balance $7.84, key_check run 41243xxxxx at 22:16 UTC).
+
+Nothing else changes: arms, settings, measures, the selection rule and the spend rules are as above.
