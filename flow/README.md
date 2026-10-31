@@ -7,9 +7,9 @@ Python code only.
 |---|---|
 | `run_vivado.sh` | The memory-safe runner. `flow/run_vivado.sh designs/<name> [base\|ila\|both]` |
 | `prepare.py` | `build.yaml` (+ `probes.yaml`) to `inputs.tcl` / `probes.tcl`; computes the build stamp |
-| `build.tcl` | Non-project flow: read, `synth_design`, (ILA), `opt_design`, `place_design`, `phys_opt_design`, `route_design`, reports, `write_bitstream` |
+| `build.tcl` | Non-project flow in UltraFast stages ([docs/methodology.md](../docs/methodology.md)): read, `synth_design -rtl` + RTL methodology DRCs, `synth_design` + post-synthesis reports (incl. `report_qor_assessment`), (ILA), `opt_design`, `place_design`, `phys_opt_design` + post-placement timing, `route_design`, closure reports, `write_bitstream` |
 | `debug.tcl` | Post-synthesis ILA insertion from `probes.yaml` (`create_debug_core`, `connect_debug_port`); writes `probe_map.txt` and, at the end, the `.ltx` |
-| `gates.py` | Parses the reports into one JSON and passes or fails the build |
+| `gates.py` | Parses the reports into one JSON and passes or fails the build, stage by stage (`rtl`, `post_synth`, `post_place`, `post_route`, `bitstream`), naming the first stage that failed |
 | `summarise.py` | Collects `gates.json` + `run.json` of the variants into `results/<milestone>/` |
 | `cocotb_run.py` | Runs a cocotb module under Icarus from pytest (used by every RTL test) |
 | `lint.sh` | Verilator `--lint-only -Wall` on the shell and every design's top |
@@ -40,7 +40,25 @@ also records the git commit and whether the tree was dirty.
 
 ## Gates (`gates.py`)
 
-A build passes only if all of these hold after routing:
+Since 04e the checks are grouped by UltraFast stage (AMD UG949 v2025.2; the mapping, thresholds and sources are in
+[docs/methodology.md](../docs/methodology.md)). `gates.json` carries `stages` (per stage: `ran`, `pass`, its gates
+and the parsed reports), `first_failed_stage`, and the flat `gates` dict (the F0A names for the post-route and
+bitstream checks, stage-prefixed names for the rest). A stage whose reports are missing (a build made before 04e)
+is `ran: false` and skipped.
+
+| Stage | Gate | Threshold | Source report |
+|---|---|---|---|
+| `rtl` | `rtl_methodology_no_critical` | `report_methodology` on the elaborated RTL: 0 critical warnings | `methodology_rtl.rpt` |
+| `post_synth` | `post_synth_no_unconstrained_endpoints` | the nine `check_timing` categories below all 0 | `check_timing_synth.rpt` |
+| `post_synth` | `post_synth_methodology_no_critical` | 0 critical warnings | `methodology_synth.rpt` |
+| `post_synth` | `post_synth_drc_clean` | 0 errors, 0 critical warnings | `drc_synth.rpt` |
+| `post_synth` | `post_synth_qor_assessment` | `report_qor_assessment` score >= 4 (of 5; UG949 ch. 5: 1-2 have no chance of closing timing, 3 is unlikely to) | `qor_assessment_synth.rpt` |
+| `post_synth` | (recorded, not gated) | post-synthesis WNS/TNS, utilisation, clock networks and interaction, high-fanout nets | `timing_summary_synth.rpt`, `utilization_synth.rpt`, `clock_*_synth.rpt`, `high_fanout_synth.rpt` |
+| `post_place` | `post_place_hold` | WHS > -0.5 ns after `phys_opt_design` (WNS recorded) | `timing_summary_place.rpt` |
+| `post_route` | the table below, plus `power_junction_ok` | `report_power` made for the board's thermal environment (still air, no heat sink) with the junction <= 85 C; post-route QoR score recorded | `power.rpt`, `qor_assessment_route.rpt` |
+| `bitstream` | `bitstream_present` (+ `debug_probes_present` for `ila`) | files present | build directory |
+
+The post-route gates (unchanged since F0A):
 
 | Gate | Source report |
 |---|---|
@@ -53,7 +71,9 @@ A build passes only if all of these hold after routing:
 | no critical CDC violations | `cdc.rpt` |
 | bitstream present (and `.ltx` for the ILA variant) | build directory |
 
-Warnings that do not fail a gate are still listed in the JSON, by rule, so a reader sees them.
+Warnings that do not fail a gate are still listed in the JSON, by rule, so a reader sees them. The post-synthesis
+WNS is not gated: UG949 ch. 1 lets a design with a small negative margin continue to implementation, and gives no
+number.
 
 The gates are **neutral**: `gates.py` reports the tool's own rule IDs, severities, descriptions and counts, and
 the slack numbers, with no advice on how to fix anything, so the agent arms without a knowledge pack learn nothing

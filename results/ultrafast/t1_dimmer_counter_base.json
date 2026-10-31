@@ -1,0 +1,330 @@
+{
+  "design": "designs/t1_dimmer_counter",
+  "variant": "base",
+  "gates": {
+    "build_dir": "designs/t1_dimmer_counter/build/base",
+    "top": "t1_dimmer_counter_top",
+    "variant": "base",
+    "pass": true,
+    "first_failed_stage": null,
+    "gates": {
+      "rtl_methodology_no_critical": true,
+      "post_synth_no_unconstrained_endpoints": true,
+      "post_synth_methodology_no_critical": true,
+      "post_synth_drc_clean": true,
+      "post_synth_qor_assessment": true,
+      "post_place_hold": true,
+      "setup": true,
+      "hold": true,
+      "pulse_width": true,
+      "no_unconstrained_endpoints": true,
+      "drc_clean": true,
+      "methodology_no_critical": true,
+      "cdc_no_critical": true,
+      "power_junction_ok": true,
+      "bitstream_present": true
+    },
+    "stages": {
+      "rtl": {
+        "ran": true,
+        "gates": {
+          "rtl_methodology_no_critical": true
+        },
+        "methodology": {
+          "errors": 0,
+          "critical_warnings": 0,
+          "warnings": 54,
+          "rules": [
+            {
+              "rule": "XDCH-2",
+              "severity": "Warning",
+              "description": "Same min and max delay values on IO port",
+              "count": 54
+            }
+          ]
+        },
+        "pass": true
+      },
+      "post_synth": {
+        "ran": true,
+        "gates": {
+          "post_synth_no_unconstrained_endpoints": true,
+          "post_synth_methodology_no_critical": true,
+          "post_synth_drc_clean": true,
+          "post_synth_qor_assessment": true
+        },
+        "timing": {
+          "wns_ns": 4.602,
+          "tns_ns": 0.0,
+          "tns_failing_endpoints": 0,
+          "tns_total_endpoints": 1232,
+          "whs_ns": 0.045,
+          "ths_ns": 0.0,
+          "ths_failing_endpoints": 0,
+          "ths_total_endpoints": 1232,
+          "wpws_ns": 4.5,
+          "tpws_ns": 0.0,
+          "tpws_failing_endpoints": 0,
+          "tpws_total_endpoints": 489,
+          "timing_met": true
+        },
+        "check_timing": {
+          "no_clock": 0,
+          "constant_clock": 0,
+          "pulse_width_clock": 0,
+          "unconstrained_internal_endpoints": 0,
+          "no_input_delay": 0,
+          "no_output_delay": 0,
+          "multiple_clock": 0,
+          "generated_clocks": 0,
+          "loops": 0,
+          "partial_input_delay": 0,
+          "partial_output_delay": 0,
+          "latch_loops": 0
+        },
+        "methodology": {
+          "errors": 0,
+          "critical_warnings": 0,
+          "warnings": 54,
+          "rules": [
+            {
+              "rule": "XDCH-2",
+              "severity": "Warning",
+              "description": "Same min and max delay values on IO port",
+              "count": 54
+            }
+          ]
+        },
+        "drc": {
+          "errors": 0,
+          "critical_warnings": 0,
+          "warnings": 0,
+          "rules": []
+        },
+        "qor_assessment": {
+          "score": 5,
+          "meaning": "Design runs will meet timing",
+          "flow_guidance": [
+            "Run report_methodology and fix or waive warnings",
+            "Continue to route_design"
+          ],
+          "review": [
+            {
+              "name": "Max LUT Combined",
+              "threshold": "20.00",
+              "actual": "46.64",
+              "affects_score": false
+            }
+          ]
+        },
+        "utilization": {
+          "lut": 506,
+          "lut_available": 63400,
+          "lutram": 0,
+          "lutram_available": 19000,
+          "ff": 488,
+          "ff_available": 126800,
+          "carry4": 29,
+          "bram_tile": 0,
+          "bram_tile_available": 135,
+          "dsp": 0,
+          "dsp_available": 240,
+          "iob": 55,
+          "iob_available": 210,
+          "bufg": 1,
+          "bufg_available": 32
+        },
+        "pass": true
+      },
+      "post_place": {
+        "ran": true,
+        "gates": {
+          "post_place_hold": true
+        },
+        "timing": {
+          "wns_ns": 3.938,
+          "tns_ns": 0.0,
+          "tns_failing_endpoints": 0,
+          "tns_total_endpoints": 1232,
+          "whs_ns": -0.027,
+          "ths_ns": -0.027,
+          "ths_failing_endpoints": 1,
+          "ths_total_endpoints": 1232,
+          "wpws_ns": 4.5,
+          "tpws_ns": 0.0,
+          "tpws_failing_endpoints": 0,
+          "tpws_total_endpoints": 489,
+          "timing_met": false
+        },
+        "pass": true
+      },
+      "post_route": {
+        "ran": true,
+        "gates": {
+          "setup": true,
+          "hold": true,
+          "pulse_width": true,
+          "no_unconstrained_endpoints": true,
+          "drc_clean": true,
+          "methodology_no_critical": true,
+          "cdc_no_critical": true,
+          "power_junction_ok": true
+        },
+        "qor_assessment": {
+          "score": 5,
+          "meaning": "Design runs will meet timing",
+          "flow_guidance": [
+            "Run report_methodology and fix or waive warnings",
+            "Run the incremental flow when making design changes"
+          ],
+          "review": [
+            {
+              "name": "Max LUT Combined",
+              "threshold": "20.00",
+              "actual": "26.06",
+              "affects_score": false
+            }
+          ]
+        },
+        "pass": true
+      },
+      "bitstream": {
+        "ran": true,
+        "gates": {
+          "bitstream_present": true
+        },
+        "pass": true
+      }
+    },
+    "timing": {
+      "wns_ns": 3.911,
+      "tns_ns": 0.0,
+      "tns_failing_endpoints": 0,
+      "tns_total_endpoints": 1232,
+      "whs_ns": 0.106,
+      "ths_ns": 0.0,
+      "ths_failing_endpoints": 0,
+      "ths_total_endpoints": 1232,
+      "wpws_ns": 4.5,
+      "tpws_ns": 0.0,
+      "tpws_failing_endpoints": 0,
+      "tpws_total_endpoints": 489,
+      "timing_met": true
+    },
+    "check_timing": {
+      "no_clock": 0,
+      "constant_clock": 0,
+      "pulse_width_clock": 0,
+      "unconstrained_internal_endpoints": 0,
+      "no_input_delay": 0,
+      "no_output_delay": 0,
+      "multiple_clock": 0,
+      "generated_clocks": 0,
+      "loops": 0,
+      "partial_input_delay": 0,
+      "partial_output_delay": 0,
+      "latch_loops": 0
+    },
+    "utilization": {
+      "lut": 495,
+      "lut_available": 63400,
+      "lutram": 0,
+      "lutram_available": 19000,
+      "ff": 488,
+      "ff_available": 126800,
+      "carry4": 29,
+      "bram_tile": 0,
+      "bram_tile_available": 135,
+      "dsp": 0,
+      "dsp_available": 240,
+      "iob": 55,
+      "iob_available": 210,
+      "bufg": 1,
+      "bufg_available": 32
+    },
+    "drc": {
+      "errors": 0,
+      "critical_warnings": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "methodology": {
+      "errors": 0,
+      "critical_warnings": 0,
+      "warnings": 54,
+      "rules": [
+        {
+          "rule": "XDCH-2",
+          "severity": "Warning",
+          "description": "Same min and max delay values on IO port",
+          "count": 54
+        }
+      ]
+    },
+    "cdc": {
+      "safely_timed": true,
+      "rules": []
+    },
+    "power": {
+      "total_w": 0.15,
+      "dynamic_w": 0.036,
+      "static_w": 0.114,
+      "confidence": "Low",
+      "clocks_w": 0.003,
+      "slice_logic_w": 0.001,
+      "signals_w": 0.001,
+      "io_w": 0.031,
+      "core_w": 0.005
+    },
+    "power_environment": {
+      "junction_c": 42.7,
+      "max_ambient_c": 82.3,
+      "theta_ja_c_per_w": 18.2,
+      "ambient_c": 40.0,
+      "airflow_lfm": 0.0,
+      "heatsink": "none",
+      "board": "small (4\"x4\")",
+      "board_layers": "4to7 (4 to 7 Layers)"
+    },
+    "bitstream": {
+      "file": "t1_dimmer_counter_top.bit",
+      "bytes": 674216
+    },
+    "build_stamp": "dfd4624e",
+    "sources_sha256": "dfd4624ed4d00ad0da08aca9fa2928f684fb2f67011b99ea33c1395ca7863ee7"
+  },
+  "run": {
+    "design": "designs/t1_dimmer_counter",
+    "variant": "base",
+    "exit_code": 0,
+    "wall_s": 191.0,
+    "vivado_peak_rss_mib": 2693,
+    "scope_memory_peak_mib": 2277,
+    "scope_anon_peak_mib": 2071,
+    "scope_swap_peak_mib": 0,
+    "scope_cap_hits": 0,
+    "scope_oom_kills": 0,
+    "memory_cap": "6G",
+    "max_threads": 1,
+    "nice": 15,
+    "vivado_version": "2025.2",
+    "git_commit": "20e0aebc4bc6e1608870635c43a1724b860203b3",
+    "git_dirty": true,
+    "build_stamp": "dfd4624e",
+    "sources_sha256": "dfd4624ed4d00ad0da08aca9fa2928f684fb2f67011b99ea33c1395ca7863ee7",
+    "stages_s": {
+      "read": 13.4,
+      "elaborate": 39.5,
+      "rtl_reports": 40.3,
+      "synth": 87.8,
+      "synth_reports": 96.2,
+      "opt": 99.9,
+      "place": 106.0,
+      "phys_opt": 106.3,
+      "place_reports": 107.0,
+      "route": 142.8,
+      "reports": 147.9,
+      "bitstream": 177.5
+    }
+  }
+}

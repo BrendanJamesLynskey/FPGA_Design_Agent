@@ -1,0 +1,43 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Design       : t1_dimmer_counter_top
+| Device       : xc7a100tcsg324-1
+| Speed File   : -1
+| Design State : Synthesized
+----------------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: t1_dimmer_counter_top
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 54
++--------+----------+------------------------------------------+--------+
+| Rule   | Severity | Description                              | Checks |
++--------+----------+------------------------------------------+--------+
+| XDCH-2 | Warning  | Same min and max delay values on IO port | 54     |
++--------+----------+------------------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+XDCH-2#1 Warning
+Same min and max delay values on IO port  
+The same input delay of 0.000 ns has been defined on port 'BTNC' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {CPU_RESETN BTNC BTNU BTND {SW[*]} UART_TXD_IN}]
+designs/t1_dimmer_counter/design.xdc (Line: 85)
+Related violations: <none>
+
+XDCH-2#2 Warning
+Same min and max delay values on IO port  
+The same input delay of 0.000 ns has been defined on port 'BTND' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {CPU_RESETN BTNC BTNU BTND {SW[*]} UART_TXD_IN}]
+designs/t1_dimmer_counter/design.xdc (Line: 85)
