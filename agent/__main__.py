@@ -84,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     rs = sub._name_parser_map["resume"]
     rs.add_argument("run_id")
     rs.add_argument("--rewind", type=int)
+    rs.add_argument("--max-usd", type=float, help="cost cap for this resumed process (the meter starts at 0)")
     a = ap.parse_args(argv)
     replies = json.loads(a.replies.read_text()) if a.replies else []
     if a.reply:
@@ -109,6 +110,8 @@ def main(argv: list[str] | None = None) -> int:
                  review=c["review"], model=c["model"],
                  hidden_spec=Path(c["hidden_spec"]) if c.get("hidden_spec") not in (None, "None") else None,
                  stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]))
+    if a.max_usd is not None:
+        cfg.run_limits["usd"] = a.max_usd
     client = _client(cfg.model, a.replay, a.record)
     rt = new_runtime(cfg, client, run_id=a.run_id, oracle_llm=_oracle(client))
     graph = build_graph(checkpointer_for(run_dir))

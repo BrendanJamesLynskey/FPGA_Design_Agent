@@ -58,6 +58,15 @@ def _read(p: Path) -> str | None:
         return None
 
 
+def _yaml(p: Path) -> dict:
+    """Agent-written YAML may be invalid: the page shows that instead of failing."""
+    try:
+        v = yaml.safe_load(_read(p) or "")
+        return v if isinstance(v, dict) else {}
+    except yaml.YAMLError as e:
+        return {"_invalid": str(e).splitlines()[0]}
+
+
 def _json(p: Path) -> Any:
     t = _read(p)
     try:
@@ -121,7 +130,7 @@ def write_page(design: Path, n: int, stage: str, info: dict[str, Any]) -> Path:
     """``info``: inputs (list), outputs (list), gates (list of [name, ok, detail]), approval (dict or None),
     visits, limits/used, vcd (path or None), notes (str)."""
     b = design / "build"
-    spec = yaml.safe_load(_read(design / "spec.yaml") or "") or {}
+    spec = _yaml(design / "spec.yaml")
     gates = _json(b / "base" / "gates.json") or {}
     verif = info.get("verif") or _json(design.parent.parent / "build" / "verif" / "verif_gates.json")
     sec = [f"<h1>Stage {n}: {_e(stage)}</h1><p class=\"mut\">{_e(design.name)}; visit {info.get('visits', 1)}; "
@@ -138,9 +147,11 @@ def write_page(design: Path, n: int, stage: str, info: dict[str, Any]) -> Path:
          ["ports", len(ports)], ["open questions", len(spec.get("open_questions") or [])],
          ["resolved questions", len(spec.get("resolved_questions") or [])]]))
     sec.append("<h2>Block diagram</h2>" + block_diagram(_read(design / "ARCHITECTURE.md")))
-    tp = yaml.safe_load(_read(design / "verif" / "testplan.yaml") or "") or {}
+    tp = _yaml(design / "verif" / "testplan.yaml")
     items = tp.get("items") or tp.get("requirements") or []
     vrows = [["testplan items", len(items) if items else "-"]]
+    if tp.get("_invalid"):
+        vrows.append(["testplan.yaml", "invalid YAML: " + tp["_invalid"]])
     if isinstance(verif, dict):
         vrows += [["verification reached", verif.get("reached", "-")], ["first failed", verif.get("first_failed", "-")]]
     sec.append("<h2>Testplan and coverage</h2>" + _table(vrows))
