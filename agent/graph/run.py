@@ -259,10 +259,31 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     return spec, iv.summary()
 
 
+_ORDER = ["synth", "place", "route", "bitstream"]
+
+
+def _sources_hash(rt: Runtime) -> str:
+    import hashlib
+    h = hashlib.sha256()
+    for p in sorted(rt.design.rglob("*")):
+        rel = p.relative_to(rt.design)
+        if p.is_file() and rel.parts[0] in ("rtl", "build.yaml", "design.xdc", "probes.yaml", "lint"):
+            h.update(str(rel).encode() + b"\0" + p.read_bytes())
+    return h.hexdigest()
+
+
 def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
-    b = dispatch(rt.session, "build", {"until": until, "variant": variant})
+    """Run the Vivado flow to ``until`` unless a build of the same sources already went at least that far (the
+    later stages re-read the same reports; a rebuild would only cost time). Gates always re-parsed."""
+    key, cache = _sources_hash(rt), rt.run_dir / f"build_cache_{variant}.json"
+    c = json.loads(cache.read_text()) if cache.is_file() else {}
+    if c.get("sources") == key and _ORDER.index(c.get("until", "synth")) >= _ORDER.index(until) and c.get("ok"):
+        b = {"ok": True, "cached": True}
+    else:
+        b = dispatch(rt.session, "build", {"until": until, "variant": variant})
+        cache.write_text(json.dumps({"sources": key, "until": until, "ok": bool(b.get("ok"))}))
     g = dispatch(rt.session, "gates", {"kind": "stages", "variant": variant})
-    return {"build": {k: b.get(k) for k in ("ok", "refused", "returncode")}, "gates": g.get("gates")}
+    return {"build": {k: b.get(k) for k in ("ok", "refused", "returncode", "cached")}, "gates": g.get("gates")}
 
 
 def node_gate(state: State) -> dict:

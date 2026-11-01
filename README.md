@@ -136,6 +136,14 @@ policy, redaction, audit log), and one trace format with replayed-trace CI. No l
 [docs/agent_core.md](docs/agent_core.md) has the tool list, the security rules with their tests, the known gaps
 and the trace format; results of the real-tools smoke run are in [results/f2](results/f2).
 
+## The agent (05b, F2 part 2)
+
+A LangGraph + Deep Agents agent over the stage machine: gates decide every stage exit; the blind model, the test
+writer and the RTL writer are separate sub-agents whose inputs are enforced in code; a "grill me" spec interview
+(human, or a spec oracle that answers only from a hidden full spec); a review page at every stage end with approve /
+edit / rewind (files and Vivado checkpoints restored and hash-checked); agent-written benches run in a no-network
+container. `python -m agent run|resume`; details in [docs/agent.md](docs/agent.md).
+
 ## Reproduce
 
 Simulation, lint and the Python tests (what CI runs):
@@ -172,7 +180,7 @@ results/     committed build and bring-up results, per milestone
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, the simulator-portable stack, gates, mutation);
-             agent_core.md (tools, MCP server, security rules, traces);
+             agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
 ```
 
