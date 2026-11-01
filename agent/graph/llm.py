@@ -38,14 +38,30 @@ class Reply:
     provider: str | None = None
 
 
+KEY_FILE = Path.home() / ".config" / "fpga_design_agent" / "openrouter.env"
+
+
+def _key_from_file() -> str | None:
+    """OPENROUTER_API_KEY=... from the local key file (outside the repo, mode 600); never printed."""
+    try:
+        if KEY_FILE.stat().st_mode & 0o077:
+            raise ValueError(f"{KEY_FILE} must be readable by its owner only (chmod 600)")
+        for line in KEY_FILE.read_text().splitlines():
+            if line.startswith("OPENROUTER_API_KEY="):
+                return line.split("=", 1)[1].strip() or None
+    except FileNotFoundError:
+        return None
+    return None
+
+
 class OpenRouterClient:
     def __init__(self, model: str = DEFAULT_MODEL, timeout_s: float = 180.0):
         import openai
         if any(f in model.lower() for f in FORBIDDEN):
             raise ValueError(f"model {model!r} is not allowed through OpenRouter (owner rule)")
-        key = os.environ.get("OPENROUTER_API_KEY")
+        key = os.environ.get("OPENROUTER_API_KEY") or _key_from_file()
         if not key:
-            raise ValueError("OPENROUTER_API_KEY is not set")
+            raise ValueError(f"OPENROUTER_API_KEY is not set and {KEY_FILE} has none")
         self.model = model
         self._c = openai.OpenAI(api_key=key, base_url=OPENROUTER_BASE, timeout=timeout_s, max_retries=1)
 
