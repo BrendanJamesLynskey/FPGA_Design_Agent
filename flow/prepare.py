@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -84,6 +85,18 @@ def power_env_tcl(board: str | None) -> str:
             f"-board_layers {th['board_layers']} -ambient_temp {float(th['ambient_c'])}")
 
 
+STOP_AFTER = ("synth", "place", "route", "bitstream")
+
+
+def stop_after() -> str:
+    """The stage a stage-limited build stops after (``FDA_STOP_AFTER`` in the environment; default: run to the
+    bitstream). The agent core's ``build`` tool sets it (brief 05a)."""
+    v = os.environ.get("FDA_STOP_AFTER", "bitstream") or "bitstream"
+    if v not in STOP_AFTER:
+        raise SystemExit(f"prepare.py: FDA_STOP_AFTER must be one of {', '.join(STOP_AFTER)}, not {v!r}")
+    return v
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("design", type=Path)
@@ -107,7 +120,8 @@ def main(argv: list[str] | None = None) -> int:
            f"set generics {tcl_list([f'{k}={v}' for k, v in generics.items()])}",
            f"set out {{{out}}}",
            f"set ila {int(ila)}",
-           f"set power_env {{{power_env_tcl(board_for(cfg))}}}"]
+           f"set power_env {{{power_env_tcl(board_for(cfg))}}}",
+           f"set stop_after {{{stop_after()}}}"]
     if ila:
         (out / "probes.tcl").write_text(probes_tcl(ROOT / cfg["probes"]))
         tcl.append(f"set probes_tcl {{{out / 'probes.tcl'}}}")

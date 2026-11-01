@@ -69,6 +69,16 @@ report_clock_networks -file $out/clock_networks_synth.rpt
 report_clock_interaction -delay_type min_max -file $out/clock_interaction_synth.rpt
 report_high_fanout_nets -timing -load_types -max_nets 25 -file $out/high_fanout_synth.rpt
 stage synth_reports
+# stage-limited build (FDA_STOP_AFTER via flow/prepare.py): stop here after the post_synth reports
+proc stop_here {name} {
+    global stop_after stage_log
+    if {$stop_after eq $name} {
+        close $stage_log
+        puts "FLOW-STOPPED after $name"
+        exit 0
+    }
+}
+if {$ila eq "0"} { stop_here synth }
 
 if {$ila} {
     source $flow_dir/debug.tcl
@@ -87,6 +97,7 @@ stage phys_opt
 # must be fixed before routing) and figure 113 "Baselining the Design"
 report_timing_summary -max_paths 10 -file $out/timing_summary_place.rpt
 stage place_reports
+if {$ila eq "0"} { stop_here place }
 route_design
 stage route
 write_checkpoint -force $out/post_route.dcp
@@ -106,6 +117,7 @@ if {[info exists power_env] && $power_env ne ""} { set_operating_conditions {*}$
 report_power          -file $out/power.rpt
 report_io             -file $out/io.rpt
 stage reports
+if {$ila eq "0"} { stop_here route }
 
 # --- stage bitstream -----------------------------------------------------------
 write_bitstream -force $out/$top.bit

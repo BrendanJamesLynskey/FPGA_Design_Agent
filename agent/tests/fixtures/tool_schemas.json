@@ -1,0 +1,335 @@
+{
+ "schema_version": "1.0.0",
+ "tools": [
+  {
+   "name": "bringup",
+   "description": "Run the design's bring-up on the board: program base, UART tests against the blind model, program ila, ILA captures, check the design is still alive (flow/bringup.py). Same preconditions as program.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "build",
+   "description": "Run the Vivado flow (flow/run_vivado.sh, memory-capped) up to a stage, then the stage gates. until: synth (post_synth reports), place, route (post_route reports), bitstream. variant ila (debug cores from probes.yaml) always runs to the bitstream.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "until": {
+      "type": "string",
+      "enum": [
+       "synth",
+       "place",
+       "route",
+       "bitstream"
+      ]
+     },
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "check_constraints",
+   "description": "Check design.xdc against the board: clocks only on the board's clock input, no CLOCK_DEDICATED_ROUTE FALSE, pins and I/O standards as in the master XDC, commands in the XDC allow-list.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "formal",
+   "description": "Run the design's SymbiYosys jobs (verif/formal/*.sby): bounded proof and cover.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "gates",
+   "description": "Parse a build's reports into stage results (flow/gates.py), or run the verification stage gates (flow/verif_gates.py). Raw numbers and rule ids only.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "kind": {
+      "type": "string",
+      "enum": [
+       "stages",
+       "verif"
+      ]
+     },
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "lint",
+   "description": "Verilator --lint-only -Wall on the design (the build.yaml sources).",
+   "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "list_files",
+   "description": "List files under a directory inside the design directory (at most 500 entries).",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "path": {
+      "type": "string",
+      "maxLength": 300
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "load_skill",
+   "description": "Load the frozen bank's skills for this board and family, filtered to bank section ids (SECTIONS.yaml). Returns SKILL.md text as data.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "sections": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^[a-z0-9\\-]{1,40}$"
+      },
+      "minItems": 1,
+      "maxItems": 4
+     },
+     "procedures": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "sections"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "program",
+   "description": "Program the attached board's SRAM (never flash) with the base or ila bitstream, selected by the board's cable serial from the local board file. Needs stage configuration-and-debug, a passing power_ok for the recorded power source, a current build stamp, and hardware budget.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     },
+     "target": {
+      "type": "string"
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "read_file",
+   "description": "Read a text file inside the design directory (any path, including build/ outputs).",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "path": {
+      "type": "string",
+      "maxLength": 300
+     },
+     "offset": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "max_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+     }
+    },
+    "required": [
+     "path"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "report",
+   "description": "Read a named Vivado report or log from build/<variant>/ (for example timing_summary.rpt, power.rpt).",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-]{1,60}\\.(rpt|txt|log|json|xdc|tcl)$"
+     },
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     },
+     "offset": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "max_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "search_docs",
+   "description": "BM25 search of the frozen documentation library (no web). Returns chunks as data.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "query": {
+      "type": "string",
+      "maxLength": 300
+     },
+     "k": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10
+     },
+     "sections": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^[a-z0-9\\-]{1,40}$"
+      },
+      "maxItems": 6
+     }
+    },
+    "required": [
+     "query"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "simulate",
+   "description": "Run the design's cocotb tests (tests/test_*_rtl.py) under the chosen simulator.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "sim": {
+      "type": "string",
+      "enum": [
+       "icarus",
+       "verilator"
+      ]
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "stage_note",
+   "description": "Append a note to the design's build note (BUILD_NOTE.md) and move the session to a stage.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "stage": {
+      "type": "string",
+      "enum": [
+       "clarify",
+       "board-and-device-planning",
+       "rtl-design-creation",
+       "constraints",
+       "synthesis",
+       "implementation",
+       "timing-closure",
+       "power-closure",
+       "drc-closure",
+       "configuration-and-debug"
+      ]
+     },
+     "text": {
+      "type": "string",
+      "maxLength": 4000
+     }
+    },
+    "required": [
+     "stage",
+     "text"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  },
+  {
+   "name": "write_file",
+   "description": "Write (create or replace) a text file inside the design directory. build/ is read-only.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "path": {
+      "type": "string",
+      "maxLength": 300
+     },
+     "content": {
+      "type": "string",
+      "maxLength": 1000000
+     }
+    },
+    "required": [
+     "path",
+     "content"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.0.0"
+  }
+ ]
+}
