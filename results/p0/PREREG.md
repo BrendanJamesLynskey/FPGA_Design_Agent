@@ -142,3 +142,16 @@ below $1.00. The $2.00 cap and the $5.00 balance floor are unchanged. Key usage 
 (brief spend so far $0.2755; account balance $7.84, key_check run 41247397799 at 22:16 UTC).
 
 Nothing else changes: arms, settings, measures, the selection rule and the spend rules are as above.
+
+## Deviation 2 (2026-11-01 ~09:55 UTC, after run 41247458070 (Q3C re-run); committed before the Q36 dispatch)
+
+**What happened.** The Q3C re-run (guard $1.20) stopped 42 of 86 problems on `run_budget_exhausted`, with provider-
+reported spend $0.3278, 8 unreported calls (charged $0.10 each by the guard), guard charge $1.1278. The guard is still
+too tight for this model's call pattern. Q3C therefore has **no valid run**: both runs are void, and no further Q3C
+run is made (the brief's cap and the owner's plan usage).
+
+**Change.** Q36 is dispatched once, with guard `min($1.40, $2.00 − brief spend)`. Key usage before dispatch was
+$90.531658 (brief spend $0.618203, from key_check run 41295107738, 09:54 UTC). The guard is therefore $1.38. The
+balance is $37.50 after the owner's top-up, so the $5.00 floor does not bind. The selection rule is applied to Q36
+against luna (L1) only; with no valid Q3C run, the pick cannot be made between the two candidates, and the report
+says so. Nothing else changes.
