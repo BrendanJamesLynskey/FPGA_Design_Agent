@@ -378,6 +378,8 @@ def bringup(s: Session) -> dict:
         raise SecurityError("hardware-bringup", "the design has no hw_checks.py and tests/test_*_hw.py for bring-up")
     _refuse_on_scan(s, python=False, hdl=True)
     pre = _hw_common(s, "bringup", ["base", "ila"])
-    r = s.runner.run("bringup", [PY, str(s.root / "flow" / "bringup.py"), str(s.design)], s.root, timeout=1800)
-    res = _read_json(s.root / "results" / "f0b" / f"{s.design.name}_bringup.json")
+    out = s.design / "build" / "bringup"          # agent runs never write another milestone's committed results
+    r = s.runner.run("bringup", [PY, str(s.root / "flow" / "bringup.py"), str(s.design),
+                                 "--results-dir", str(out)], s.root, timeout=1800)
+    res = _read_json(out / f"{s.design.name}_bringup.json")
     return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "bringup": res, **pre}

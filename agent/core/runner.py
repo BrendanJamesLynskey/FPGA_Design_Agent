@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -36,17 +37,66 @@ class Runner(Protocol):
             timeout: float = 600) -> RunResult: ...
 
 
-def scrubbed_env(extra: dict[str, str] | None = None) -> dict[str, str]:
+TOOLS_FILE = Path(os.environ.get("FDA_TOOLS_FILE", Path.home() / ".config" / "fpga_design_agent" / "tools.yaml"))
+
+# How to get each external tool the core runs by bare name (shown in the error when it is missing).
+INSTALL_HINTS = {
+    "verilator": "Verilator 5.x: no root needed; extract a release into ~/.local/opt and add to "
+                 "~/.config/fpga_design_agent/tools.yaml:  path: [<VERILATOR_ROOT>/bin]  env: {VERILATOR_ROOT: ...}",
+    "iverilog": "Icarus Verilog: install it, or add its bin directory to tools.yaml 'path'",
+    "yosys": "Yosys/SymbiYosys (OSS CAD Suite): unpack into ~/.local/opt and add its bin directory to tools.yaml 'path'",
+}
+
+
+class ToolMissing(FileNotFoundError):
+    """An external tool the core needs is not on the configured PATH."""
+
+    def __init__(self, name: str, path: str):
+        self.name = name
+        super().__init__(f"tool {name!r} not found (searched PATH plus {TOOLS_FILE} 'path'). "
+                         f"Install: {INSTALL_HINTS.get(name, 'install it and add its bin directory to tools.yaml')}")
+
+
+def load_tools_config(f: Path | None = None) -> dict[str, Any]:
+    """The local tools file (outside the repo): ``path`` (dirs put first on PATH) and ``env`` (variables set
+    for every run, e.g. ``VERILATOR_ROOT``). ``~`` and ``$HOME`` are expanded. Missing file: empty config."""
+    import yaml
+    f = f or TOOLS_FILE
+    if not f.is_file():
+        return {"path": [], "env": {}}
+    data = yaml.safe_load(f.read_text()) or {}
+    ex = lambda v: os.path.expandvars(os.path.expanduser(str(v)))  # noqa: E731
+    return {"path": [ex(d) for d in data.get("path", []) or []],
+            "env": {str(k): ex(v) for k, v in (data.get("env") or {}).items()}}
+
+
+def scrubbed_env(extra: dict[str, str] | None = None, tools: dict[str, Any] | None = None) -> dict[str, str]:
     env = {k: v for k, v in os.environ.items() if k in ENV_KEEP}
+    tools = load_tools_config() if tools is None else tools
+    env.update(tools.get("env", {}))
+    if tools.get("path"):
+        env["PATH"] = os.pathsep.join([*tools["path"], env.get("PATH", os.defpath)])
     env.update(extra or {})
     return env
+
+
+def resolve_tool(argv0: str, env: dict[str, str]) -> str:
+    """A bare tool name resolved on the run's PATH; a path is returned unchanged. Raises ToolMissing."""
+    if os.sep in argv0:
+        return argv0
+    found = shutil.which(argv0, path=env.get("PATH", os.defpath))
+    if not found:
+        raise ToolMissing(argv0, env.get("PATH", ""))
+    return found
 
 
 class LocalRunner:
     def run(self, kind, argv, cwd, env=None, timeout=600):
         t0 = time.monotonic()
+        full_env = scrubbed_env(env)
+        argv = [resolve_tool(argv[0], full_env), *argv[1:]]
         try:
-            p = subprocess.run(argv, cwd=cwd, env=scrubbed_env(env), capture_output=True, text=True,
+            p = subprocess.run(argv, cwd=cwd, env=full_env, capture_output=True, text=True,
                                timeout=timeout, errors="replace")
             rc, out, err = p.returncode, p.stdout, p.stderr
         except subprocess.TimeoutExpired as e:

@@ -74,6 +74,19 @@ python -m agent.core.smoke --hardware                             # T1 to bitstr
 pip install -e '.[test,agent]' && pytest -q agent/tests
 ```
 
+**Local tools (05b).** The core finds external tools itself: `~/.config/fpga_design_agent/tools.yaml` (outside the
+repo; override with `FDA_TOOLS_FILE`) lists `path` (directories put first on the runs' PATH) and `env` (for example
+`VERILATOR_ROOT`). No shell setup is needed. A missing tool fails with an error naming the tool, the file and how to
+install it.
+
+```yaml
+path: [~/.local/opt/verilator-5048/root/usr/share/verilator/bin]
+env: {VERILATOR_ROOT: ~/.local/opt/verilator-5048/root/usr/share/verilator}
+```
+
+**Results location (05b).** `bringup` runs `flow/bringup.py --results-dir designs/<name>/build/bringup`, so agent runs
+never overwrite another milestone's committed results (`results/f0b/` stays the F0B record).
+
 Reused from the owner's HW Design Space Agent (BrendanJamesLynskey/HW_Design_Space_Agent @ 80415c6, MIT): the
 tracer's redaction approach and JSONL record shape (`agent/trace.py`) and the idea of scripted/replay fakes for
 offline tests (`agent/llm.py`). The structured-output LLM wrapper is not used: the core makes no model calls.
