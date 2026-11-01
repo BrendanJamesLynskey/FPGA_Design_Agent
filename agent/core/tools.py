@@ -121,7 +121,8 @@ def _rel(s: Session, p: Path) -> str:
 
 # --- files ---------------------------------------------------------------------------------------------------------
 
-@tool("read_file", "Read a text file inside the design directory (any path, including build/ outputs).",
+@tool("read_file", "Read a text file inside the design directory (any path, including build/ outputs), or the "
+                   "test shell read-only under @shell/ (@shell/rtl/..., @shell/PROTOCOL.md, @shell/host/protocol.py).",
       {"path": {"type": "string", "maxLength": 300}, "offset": {"type": "integer", "minimum": 0},
        "max_bytes": {"type": "integer", "minimum": 1, "maximum": 100000}}, ["path"])
 def read_file(s: Session, path: str, offset: int = 0, max_bytes: int = 20000) -> dict:
@@ -146,13 +147,34 @@ def write_file(s: Session, path: str, content: str) -> dict:
             "bytes": len(content.encode())}
 
 
-@tool("list_files", "List files under a directory inside the design directory (at most 500 entries).",
+@tool("list_files", "List files under a directory inside the design directory, or @shell/ (read-only test "
+                    "shell view); at most 500 entries.",
       {"path": {"type": "string", "maxLength": 300}})
 def list_files(s: Session, path: str = ".") -> dict:
     d = s.jail.resolve(path)
     if not d.is_dir():
         return {"ok": False, "output": f"not a directory: {path}"}
-    files = sorted(str(p.relative_to(s.jail.root)) for p in d.rglob("*") if p.is_file())[:500]
+    if path.startswith(s.jail.READ_ONLY_PREFIX) or path == s.jail.READ_ONLY_PREFIX.rstrip("/"):
+        files = []
+        for p in sorted(d.rglob("*")):
+            if p.is_file() and "__pycache__" not in p.parts:
+                try:
+                    files.append(s.jail.READ_ONLY_PREFIX + str(p.relative_to(s.jail.shell_root))) \
+                        if s.jail.resolve(s.jail.READ_ONLY_PREFIX + str(p.relative_to(s.jail.shell_root))) else None
+                except SecurityError:
+                    pass
+        files = files[:500]
+    else:
+        files = []
+        for p in sorted(d.rglob("*")):
+            if p.is_file():
+                rel = str(p.relative_to(s.jail.root))
+                try:
+                    s.jail.resolve(rel)                 # a narrowed (role) jail hides what it would refuse
+                    files.append(rel)
+                except SecurityError:
+                    pass
+        files = files[:500]
     return {"output": "\n".join(files), "count": len(files)}
 
 
@@ -237,11 +259,16 @@ def con_files(s: Session, cfg: dict) -> list[Path]:
       {"kind": {"type": "string", "enum": ["stages", "verif"]}, "variant": {"type": "string", "enum": ["base", "ila"]}})
 def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
     if kind == "verif":
-        argv = [PY, str(s.root / "flow" / "verif_gates.py"), _rel(s, s.design), "--json", "build/verif/verif_gates.json"]
+        # per design, and never a stale file: a crashed run must not be read as the previous result (05b)
+        out = s.design / "build" / "verif" / "verif_gates.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.unlink(missing_ok=True)
+        argv = [PY, str(s.root / "flow" / "verif_gates.py"), _rel(s, s.design), "--json", _rel(s, out)]
         r = s.runner.run("verif_gates", argv, s.root, timeout=300)
-        data = _read_json(s.root / "build" / "verif" / "verif_gates.json")
+        data = _read_json(out)
         return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": data}
     bdir = s.design / "build" / variant
+    (bdir / "gates.json").unlink(missing_ok=True)
     r = s.runner.run("gates", [PY, str(s.root / "flow" / "gates.py"), str(bdir), "--json", str(bdir / "gates.json")],
                      s.root, timeout=300)
     data = _read_json(bdir / "gates.json")
@@ -378,6 +405,8 @@ def bringup(s: Session) -> dict:
         raise SecurityError("hardware-bringup", "the design has no hw_checks.py and tests/test_*_hw.py for bring-up")
     _refuse_on_scan(s, python=False, hdl=True)
     pre = _hw_common(s, "bringup", ["base", "ila"])
-    r = s.runner.run("bringup", [PY, str(s.root / "flow" / "bringup.py"), str(s.design)], s.root, timeout=1800)
-    res = _read_json(s.root / "results" / "f0b" / f"{s.design.name}_bringup.json")
+    out = s.design / "build" / "bringup"          # agent runs never write another milestone's committed results
+    r = s.runner.run("bringup", [PY, str(s.root / "flow" / "bringup.py"), str(s.design),
+                                 "--results-dir", str(out)], s.root, timeout=1800)
+    res = _read_json(out / f"{s.design.name}_bringup.json")
     return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "bringup": res, **pre}

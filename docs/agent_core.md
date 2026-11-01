@@ -49,10 +49,10 @@ Stage-limited builds: `flow/prepare.py` reads `FDA_STOP_AFTER` (`synth`, `place`
   isolation (a network and filesystem namespace) is not available here: unprivileged user namespaces are blocked
   on this PC (`bwrap` fails with "setting up uid map: Permission denied"). Until then, a human reads agent-written
   test files before a hardware run.
-- `bringup.py` writes `results/f0b/<design>_bringup.json` outside the design directory (that is flow code, not the
-  agent).
-- The agent cannot read `shell/rtl` through the file tools (read-only access to the shell RTL is a possible
-  addition if designs need it; for now the knowledge bank documents the shell).
+- `bringup` writes under `designs/<name>/build/bringup/` (05b; before that it wrote `results/f0b/`).
+- The file tools can **read** the test shell under the virtual prefix `@shell/` (`@shell/rtl/...`,
+  `@shell/PROTOCOL.md`, `@shell/host/protocol.py`; owner decision 2026-11-01); every write there is refused, and
+  nothing else in the repo is visible.
 
 ## Traces and replay
 
@@ -73,6 +73,31 @@ python -m agent.mcp_server --design designs/t1_dimmer_counter     # stdio MCP se
 python -m agent.core.smoke --hardware                             # T1 to bitstream, then the board (Vivado, ~15 min)
 pip install -e '.[test,agent]' && pytest -q agent/tests
 ```
+
+**Local tools (05b).** The core finds external tools itself: `~/.config/fpga_design_agent/tools.yaml` (outside the
+repo; override with `FDA_TOOLS_FILE`) lists `path` (directories put first on the runs' PATH) and `env` (for example
+`VERILATOR_ROOT`). No shell setup is needed. A missing tool fails with an error naming the tool, the file and how to
+install it.
+
+```yaml
+path: [~/.local/opt/verilator-5048/root/usr/share/verilator/bin]
+env: {VERILATOR_ROOT: ~/.local/opt/verilator-5048/root/usr/share/verilator}
+```
+
+**Isolation for agent-written test code (05b; owner decision 2026-11-01).** `agent.core.runner.ContainerRunner`
+runs `simulate` (the agent's cocotb benches) in a Docker container from `agent/container/Dockerfile`
+(`docker build -t fda-sim:1 agent/container`; Ubuntu 24.04, Python 3.12, cocotb 2.0.1, Icarus 12.0): `--network none`,
+`--cap-drop ALL`, `no-new-privileges`, read-only root, the host uid (not root), memory and pid limits. Mounts: the
+design directory read-write; the repo's own `flow/`, `shell/` and `designs/__init__.py` read-only (the benches import
+them); tmpfs for the repo `build/` scratch and `/tmp`. No home directory, keys or other designs. Engine: Docker 29
+through the docker group. That daemon runs as root (it is not rootless Docker) but the container process is
+unprivileged; podman is not installed. `hw_checks.py` runs inside `flow/bringup.py` on the host, because it needs the
+UART and Vivado, so it is **not** containerised: any run that would program the board pauses for a review approval
+first (see the agent's review gate). Icarus 13, as in the CVDP image, rejects an implicit cast in
+`shell/rtl/uart_rx.sv:46`, which 12.0 accepts; this is why the image pins 12.0.
+
+**Results location (05b).** `bringup` runs `flow/bringup.py --results-dir designs/<name>/build/bringup`, so agent runs
+never overwrite another milestone's committed results (`results/f0b/` stays the F0B record).
 
 Reused from the owner's HW Design Space Agent (BrendanJamesLynskey/HW_Design_Space_Agent @ 80415c6, MIT): the
 tracer's redaction approach and JSONL record shape (`agent/trace.py`) and the idea of scripted/replay fakes for

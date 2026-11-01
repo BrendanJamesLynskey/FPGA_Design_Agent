@@ -51,7 +51,8 @@ class StepFailed(Exception):
 
 
 class Run:
-    def __init__(self, design: Path, board: str | None, keep: bool) -> None:
+    def __init__(self, design: Path, board: str | None, keep: bool, results: Path = RESULTS) -> None:
+        self.results = results
         self.design = design
         self.name = design.name
         self.board_name = board
@@ -201,7 +202,7 @@ class Run:
         if rc != 0 or "FDA-CAPTURE-DONE" not in text:
             raise StepFailed(f"ila_capture.tcl exit {rc}")
         if self.keep:
-            dest = RESULTS / "captures"
+            dest = self.results / "captures"
             dest.mkdir(parents=True, exist_ok=True)
             for c in checks.CAPTURES:
                 for ext in ("csv", "vcd"):
@@ -246,16 +247,16 @@ class Run:
             server.__exit__(None, None, None)
         self.res["seconds"] = round(time.monotonic() - t0, 1)
         self.res["tools"] = tool_versions(self.res.get("vivado_version"))
-        RESULTS.mkdir(parents=True, exist_ok=True)
-        (RESULTS / "runs").mkdir(exist_ok=True)
+        self.results.mkdir(parents=True, exist_ok=True)
+        (self.results / "runs").mkdir(exist_ok=True)
         text = self.scrub(json.dumps(self.res, indent=2, default=str)) + "\n"
-        (RESULTS / f"{self.name}_bringup.json").write_text(text)
-        (RESULTS / "runs" / f"{self.name}_{self.stamp_time}.json").write_text(text)
+        (self.results / f"{self.name}_bringup.json").write_text(text)
+        (self.results / "runs" / f"{self.name}_{self.stamp_time}.json").write_text(text)
         (self.log_dir / "bringup.json").write_text(text)
         if self.keep:
-            shutil.copy(self.log_dir / "uart_tests.txt", RESULTS / "captures" / f"{self.name}_uart_tests.txt")
+            shutil.copy(self.log_dir / "uart_tests.txt", self.results / "captures" / f"{self.name}_uart_tests.txt")
         print(f"bringup: {'PASS' if self.res['pass'] else 'FAIL'} in {self.res['seconds']} s; "
-              f"results/f0b/{self.name}_bringup.json; logs {self.log_dir}")
+              f"{self.results / (self.name + '_bringup.json')}; logs {self.log_dir}")
         return 0 if self.res["pass"] else 1
 
 
@@ -270,11 +271,14 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("design", type=Path)
     ap.add_argument("--board")
+    ap.add_argument("--results-dir", type=Path, default=RESULTS,
+                    help="where to write <design>_bringup.json and runs/ (default results/f0b; agent runs pass "
+                         "the design's build directory so they never touch committed results)")
     ap.add_argument("--keep-captures", action="store_true",
                     help="copy this run's CSV/VCD captures and test log to results/f0b/captures/")
     a = ap.parse_args(argv)
     design = (hw.ROOT / a.design).resolve() if not a.design.is_absolute() else a.design
-    return Run(design, a.board, a.keep_captures).run()
+    return Run(design, a.board, a.keep_captures, a.results_dir).run()
 
 
 if __name__ == "__main__":

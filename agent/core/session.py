@@ -33,6 +33,6 @@ class Session:
     def __post_init__(self) -> None:
         self.design = Path(self.design).resolve()
         self.root = Path(self.root).resolve()
-        self.jail = self.jail or PathJail(self.design)
+        self.jail = self.jail or PathJail(self.design, shell_root=self.root / "shell")
         self.audit = self.audit or AuditLog(self.design / "build" / "audit.jsonl")
         self.hw = self.hw or HardwarePolicy(self.hw_budget)

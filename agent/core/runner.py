@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -36,17 +37,66 @@ class Runner(Protocol):
             timeout: float = 600) -> RunResult: ...
 
 
-def scrubbed_env(extra: dict[str, str] | None = None) -> dict[str, str]:
+TOOLS_FILE = Path(os.environ.get("FDA_TOOLS_FILE", Path.home() / ".config" / "fpga_design_agent" / "tools.yaml"))
+
+# How to get each external tool the core runs by bare name (shown in the error when it is missing).
+INSTALL_HINTS = {
+    "verilator": "Verilator 5.x: no root needed; extract a release into ~/.local/opt and add to "
+                 "~/.config/fpga_design_agent/tools.yaml:  path: [<VERILATOR_ROOT>/bin]  env: {VERILATOR_ROOT: ...}",
+    "iverilog": "Icarus Verilog: install it, or add its bin directory to tools.yaml 'path'",
+    "yosys": "Yosys/SymbiYosys (OSS CAD Suite): unpack into ~/.local/opt and add its bin directory to tools.yaml 'path'",
+}
+
+
+class ToolMissing(FileNotFoundError):
+    """An external tool the core needs is not on the configured PATH."""
+
+    def __init__(self, name: str, path: str):
+        self.name = name
+        super().__init__(f"tool {name!r} not found (searched PATH plus {TOOLS_FILE} 'path'). "
+                         f"Install: {INSTALL_HINTS.get(name, 'install it and add its bin directory to tools.yaml')}")
+
+
+def load_tools_config(f: Path | None = None) -> dict[str, Any]:
+    """The local tools file (outside the repo): ``path`` (dirs put first on PATH) and ``env`` (variables set
+    for every run, e.g. ``VERILATOR_ROOT``). ``~`` and ``$HOME`` are expanded. Missing file: empty config."""
+    import yaml
+    f = f or TOOLS_FILE
+    if not f.is_file():
+        return {"path": [], "env": {}}
+    data = yaml.safe_load(f.read_text()) or {}
+    ex = lambda v: os.path.expandvars(os.path.expanduser(str(v)))  # noqa: E731
+    return {"path": [ex(d) for d in data.get("path", []) or []],
+            "env": {str(k): ex(v) for k, v in (data.get("env") or {}).items()}}
+
+
+def scrubbed_env(extra: dict[str, str] | None = None, tools: dict[str, Any] | None = None) -> dict[str, str]:
     env = {k: v for k, v in os.environ.items() if k in ENV_KEEP}
+    tools = load_tools_config() if tools is None else tools
+    env.update(tools.get("env", {}))
+    if tools.get("path"):
+        env["PATH"] = os.pathsep.join([*tools["path"], env.get("PATH", os.defpath)])
     env.update(extra or {})
     return env
+
+
+def resolve_tool(argv0: str, env: dict[str, str]) -> str:
+    """A bare tool name resolved on the run's PATH; a path is returned unchanged. Raises ToolMissing."""
+    if os.sep in argv0:
+        return argv0
+    found = shutil.which(argv0, path=env.get("PATH", os.defpath))
+    if not found:
+        raise ToolMissing(argv0, env.get("PATH", ""))
+    return found
 
 
 class LocalRunner:
     def run(self, kind, argv, cwd, env=None, timeout=600):
         t0 = time.monotonic()
+        full_env = scrubbed_env(env)
+        argv = [resolve_tool(argv[0], full_env), *argv[1:]]
         try:
-            p = subprocess.run(argv, cwd=cwd, env=scrubbed_env(env), capture_output=True, text=True,
+            p = subprocess.run(argv, cwd=cwd, env=full_env, capture_output=True, text=True,
                                timeout=timeout, errors="replace")
             rc, out, err = p.returncode, p.stdout, p.stderr
         except subprocess.TimeoutExpired as e:
@@ -103,3 +153,56 @@ class RecordedRunner:
 def _norm(a: str) -> str:
     """Paths in recorded argv are repo-relative placeholders: compare the last two path parts only."""
     return "/".join(a.split("/")[-2:]) if a.startswith("/") else a
+
+
+# --- isolation for agent-written test code (owner decision 2026-11-01) ---------------------------------------
+
+#: Default image: Ubuntu 24.04, Python 3.12, cocotb 2.0.1, Icarus 12.0 (agent/container/Dockerfile).
+SIM_IMAGE = "fda-sim:1"          # built from agent/container/Dockerfile (docker build -t fda-sim:1 agent/container)
+
+
+class ContainerRunner:
+    """Run the kinds that execute agent-written code (default: ``simulate``) in a container: no network, all
+    capabilities dropped, no new privileges, the host user's uid/gid (never root inside), a read-only root
+    filesystem, and only these mounts: the design directory read-write, the repo's trusted ``flow/``,
+    ``shell/`` and ``designs/__init__.py`` read-only, and a tmpfs over the repo's ``build/`` (sim scratch) and
+    ``/tmp``. No home directory, no keys, no other design. Other kinds go to ``inner`` unchanged.
+
+    The engine is Docker 29 via the docker group (the daemon itself runs as root; podman is not installed).
+    The argv is the same one the core builds, so replay fixtures do not change."""
+
+    def __init__(self, design: Path, root: Path, inner: Runner | None = None, kinds: tuple[str, ...] = ("simulate",),
+                 image: str = SIM_IMAGE, engine: str = "docker", memory: str = "3g"):
+        self.design, self.root = Path(os.path.realpath(design)), Path(os.path.realpath(root))
+        self.inner = inner or LocalRunner()
+        self.kinds, self.image, self.engine, self.memory = kinds, image, engine, memory
+
+    def container_argv(self, argv: list[str], env: dict[str, str] | None) -> list[str]:
+        import sys
+        r = str(self.root)
+        cmd = [self.engine, "run", "--rm", "--network", "none", "--cap-drop", "ALL",
+               "--security-opt", "no-new-privileges", "--read-only", "--user", f"{os.getuid()}:{os.getgid()}",
+               "--memory", self.memory, "--pids-limit", "512",
+               "--tmpfs", "/tmp:rw,exec,size=512m", "--tmpfs", f"{r}/build:rw,exec,size=1g",
+               "-v", f"{self.design}:{self.design}:rw",
+               "-v", f"{r}/flow:{r}/flow:ro", "-v", f"{r}/shell:{r}/shell:ro",
+               "-v", f"{r}/designs/__init__.py:{r}/designs/__init__.py:ro",
+               "-w", r, "-e", "HOME=/tmp", "-e", "PYTHONDONTWRITEBYTECODE=1", "-e", f"PYTHONPATH={r}"]
+        for k, v in (env or {}).items():
+            cmd += ["-e", f"{k}={v}"]
+        prog = "python3" if argv[0] == sys.executable or os.path.basename(argv[0]).startswith("python") else argv[0]
+        return [*cmd, self.image, prog, *argv[1:]]
+
+    def run(self, kind, argv, cwd, env=None, timeout=600):
+        if kind not in self.kinds:
+            return self.inner.run(kind, argv, cwd, env, timeout)
+        return self.inner.run(kind, self.container_argv(argv, env), cwd, None, timeout)
+
+
+def container_available(engine: str = "docker", image: str = SIM_IMAGE) -> bool:
+    """True if the engine runs and the image is present locally (no pull: pulling needs the network)."""
+    try:
+        p = subprocess.run([engine, "image", "inspect", image], capture_output=True, timeout=30)
+        return p.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False

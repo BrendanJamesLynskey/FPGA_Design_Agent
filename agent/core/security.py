@@ -82,13 +82,37 @@ class PathJail:
 
     MAX_WRITE_BYTES = 1_000_000
 
-    def __init__(self, root: Path, write_deny: tuple[str, ...] = ("build",)):
+    #: Read-only views outside the design (owner, 2026-11-01): the test shell's RTL and protocol. A path
+    #: starting with the prefix resolves under the repo; only the listed entries (files or directories) are
+    #: visible, and every write is refused.
+    READ_ONLY_PREFIX = "@shell/"
+    READ_ONLY_ENTRIES = ("rtl", "PROTOCOL.md", "host/protocol.py")
+
+    def __init__(self, root: Path, write_deny: tuple[str, ...] = ("build",), shell_root: Path | None = None):
         self.root = Path(os.path.realpath(root))
         self.write_deny = write_deny
+        self.shell_root = Path(os.path.realpath(shell_root)) if shell_root else None
+
+    def _resolve_shell(self, rel: str, write: bool) -> Path:
+        if write:
+            raise SecurityError("path-jail", "the test shell (@shell/) is read-only for the agent")
+        if self.shell_root is None:
+            raise SecurityError("path-jail", "no read-only shell view in this session")
+        real = Path(os.path.realpath(self.shell_root / rel[len(self.READ_ONLY_PREFIX):]))
+        for e in self.READ_ONLY_ENTRIES:
+            allowed = Path(os.path.realpath(self.shell_root / e))
+            if real == allowed or allowed in real.parents:
+                return real
+        if real == self.shell_root:
+            return real                               # listing @shell/ itself shows only the allowed entries
+        raise SecurityError("path-jail", f"path {rel!r} is not in the read-only shell view "
+                                         f"({', '.join(self.READ_ONLY_ENTRIES)})")
 
     def resolve(self, rel: str, write: bool = False) -> Path:
         if not isinstance(rel, str) or not rel or "\x00" in rel:
             raise SecurityError("path-jail", "empty or invalid path")
+        if rel.startswith(self.READ_ONLY_PREFIX) or rel == self.READ_ONLY_PREFIX.rstrip("/"):
+            return self._resolve_shell(rel if rel.endswith("/") or "/" in rel else rel + "/", write)
         if rel.startswith("~"):
             raise SecurityError("path-jail", f"path {rel!r} is outside the design directory")
         cand = Path(rel)

@@ -1,0 +1,61 @@
+# The Deep Agents agent (brief 05b, F2 part 2)
+
+A LangGraph graph (1.2.19) over the stage machine of [methodology.md](methodology.md), with Deep Agents (0.7.32)
+sub-agents doing the work in each stage and the 05a core ([agent_core.md](agent_core.md)) as the only way to touch
+files, tools and the board.
+
+```
+python -m agent run designs/t1_dimmer_counter/spec.md --board nexys_a7_100t \
+    --interview oracle --hidden-spec <full spec> --review off --model openai/gpt-6-luna
+python -m agent resume <run-id> [--rewind N] [--reply '{"decision": "approve"}']
+```
+
+Runs live in `runs/<run-id>/` (not committed): the design directory, `snap.git` (stage snapshots), `dcp/` (the
+Vivado checkpoints of each stage end), `checkpoints.sqlite` (LangGraph), `summary.json`.
+
+## The graph
+
+`work -> gate -> review -> advance`, looped over stages 0-9 (`agent/graph/run.py`).
+
+| Node | Does | Decided by |
+|---|---|---|
+| work | the stage's sub-agent(s) act; stage 2 runs the blind model, the test writer and the RTL writer as separate sub-agents | the model, inside its role's view and the stage's tool list |
+| gate | runs the flow's checks (lint, simulate in the container, build, gates, verif gates, bring-up) and `exit_check` | the flow's gate output only (`agent/graph/stages.py`) |
+| review | writes `build/review/<nn>_<stage>.html` and `review_index.html`, snapshots files + `.dcp`, pauses for approve / edit / rewind when `--review on` | the reviewer (human, planner script, or `auto`), recorded in `BUILD_NOTE.md` |
+| advance | next stage on pass; on a failure, the stage that owns the cause (`route_failure`) | the stage machine |
+
+Limits: turns, seconds and USD per stage visit (`stages.MACHINE`) and per run (`RUN_LIMITS`), enforced before each
+model call by the `Meter` (`agent/graph/llm.py`); at most 4 visits per stage. Cost is only what the provider reports.
+Vivado builds are reused when the sources are unchanged and the earlier build went far enough.
+
+## Separation (`agent/graph/roles.py`)
+
+| Sub-agent | Reads | Writes |
+|---|---|---|
+| clarify | spec.md | spec.yaml |
+| blind model | spec.yaml only | model.py |
+| test writer | spec.yaml, model.py, its own tests | tests/, verif/ |
+| RTL writer and later stages | the design, `@shell/` (read-only) | RTL, build.yaml, XDC, probes, notes |
+
+The blind model and the test writer run on an in-memory file backend that holds only their inputs (so `ls`, `grep`
+and `glob` cannot reach anything else); the graph copies their outputs in through the role jail. The hidden full
+spec is outside every design directory and is read only by the spec oracle. `agent/tests/test_roles.py` and
+`test_episode.py` check each sub-agent's inputs.
+
+## Interview (`agent/graph/interview.py`)
+
+Stage 0 asks the open questions in `spec.yaml` one at a time, each with a proposed default and its reason:
+`--interview on` asks the human (a LangGraph interrupt), `oracle` asks the spec oracle (it answers only with a
+verbatim quote from the hidden spec, otherwise "not specified" and the default stands), `off` takes every default.
+The record (asked / answered / defaulted, by whom) goes into `spec.yaml` `resolved_questions`, the stage 0 review
+page and `summary.json`.
+
+## Review and rewind (`agent/graph/review.py`, `snapshot.py`)
+
+Each stage end writes a self-contained page (light and dark, no external assets): gates, inputs and outputs, the
+spec summary, the block diagram from `ARCHITECTURE.md`, testplan and coverage, a waveform, timing / utilisation /
+power from `gates.json`, the budget and the decision. The snapshot is a commit in the run's own git directory plus
+the stage's `.dcp` files and a SHA-256 manifest. Rewind to stage N restores the files and checkpoints of the end of
+stage N, checks every hash, and continues at stage N with the reviewer's note (`resume --rewind N` also restores the
+LangGraph checkpoint saved there). Before stage 9 programs the board the graph always pauses for approval, because
+`hw_checks.py` runs on the host (see the isolation note in [agent_core.md](agent_core.md)).
