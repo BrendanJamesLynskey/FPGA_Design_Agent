@@ -1,0 +1,38 @@
+# Portability sets for T1's SystemVerilog verification code (flow/portability.py; paths from the repo root).
+# The cocotb bench is Python and needs no SystemVerilog; the checkers and the bind file are the only SV.
+sets:
+  t1_checkers_standalone:
+    top: t1_dimmer_counter_top
+    files:
+      - shell/rtl/reset_sync.sv
+      - shell/rtl/sync2.sv
+      - shell/rtl/uart_rx.sv
+      - shell/rtl/uart_tx.sv
+      - shell/rtl/shell_core.sv
+      - shell/rtl/fpga_shell.sv
+      - designs/t1_dimmer_counter/rtl/debounce.sv
+      - designs/t1_dimmer_counter/rtl/sevenseg_scan.sv
+      - designs/t1_dimmer_counter/rtl/dimmer_counter.sv
+      - designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv
+      - designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv
+      - designs/t1_dimmer_counter/verif/checkers/scan_checker.sv
+      - designs/t1_dimmer_counter/verif/checkers/counter_checker.sv
+  t1_checkers_bound:
+    top: t1_dimmer_counter_top
+    # bind is not supported by Icarus 12 (observed: syntax error at the bind line)
+    expect: {icarus: fail}
+    files:
+      - shell/rtl/reset_sync.sv
+      - shell/rtl/sync2.sv
+      - shell/rtl/uart_rx.sv
+      - shell/rtl/uart_tx.sv
+      - shell/rtl/shell_core.sv
+      - shell/rtl/fpga_shell.sv
+      - designs/t1_dimmer_counter/rtl/debounce.sv
+      - designs/t1_dimmer_counter/rtl/sevenseg_scan.sv
+      - designs/t1_dimmer_counter/rtl/dimmer_counter.sv
+      - designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv
+      - designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv
+      - designs/t1_dimmer_counter/verif/checkers/scan_checker.sv
+      - designs/t1_dimmer_counter/verif/checkers/counter_checker.sv
+      - designs/t1_dimmer_counter/verif/checkers/t1_bind.sv

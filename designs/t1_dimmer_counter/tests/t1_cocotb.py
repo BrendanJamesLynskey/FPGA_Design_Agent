@@ -15,6 +15,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, ReadOnly, RisingEdge
 
 from designs.t1_dimmer_counter import model as m
+from designs.t1_dimmer_counter.tests import t1_cov
 from shell.host import protocol as p
 from shell.model.shell_model import ShellModel
 from shell.tests.uart_bfm import UartBfm
@@ -42,12 +43,16 @@ class Env:
         await ClockCycles(d.CLK100MHZ, 5)
         d.CPU_RESETN.value = 1
         await ClockCycles(d.CLK100MHZ, 5)
+        t1_cov.start(d)                      # functional-coverage monitor (04f); samples only, checks nothing
 
     async def access(self, cmd: int, addr: int, data: int = 0) -> int:
         req = p.encode_request(cmd, addr, data)
         got = await self.bfm.transact(req)
         want = self.shell.feed(req)
         assert got == want, f"{req.hex(' ')}: RTL {got.hex(' ')} model {want.hex(' ')}"
+        if p.WINDOW_BASE <= addr < p.WINDOW_BASE + 0x80:
+            t1_cov.sample_reg(t1_cov._reg(addr - p.WINDOW_BASE), "read" if cmd == p.CMD_READ else "write")
+        t1_cov.sample_model(self)
         return p.decode_response(got).data
 
     async def read(self, off: int) -> int:
@@ -58,6 +63,9 @@ class Env:
 
     async def drive_trace(self, button: str, trace: list[int]) -> None:
         pin = getattr(self.dut, button)
+        kind = t1_cov.classify(trace, self.n)
+        if kind:
+            t1_cov.sample_trace(dict(zip(BUTTONS, t1_cov.BTN))[button], kind)
         for x in trace:
             pin.value = x
             await RisingEdge(self.dut.CLK100MHZ)
@@ -70,6 +78,7 @@ class Env:
         self.dut.SW.value = v
         await ClockCycles(self.dut.CLK100MHZ, 4)
         self.t1.set_switches(v)
+        t1_cov.sample_model(self)
 
 
 @cocotb.test()

@@ -1,0 +1,28 @@
+# SymbiYosys: bounded proof and cover of debounce.sv against debounce_checker.sv (control logic, small CYCLES).
+# Run from this folder (paths are relative); flow/formal.sh does it and records results/.
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 24
+cover: mode cover
+cover: depth 24
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -formal -sv sync2.sv
+read_verilog -formal -sv debounce.sv
+read_verilog -formal -sv -DFORMAL v_macros.svh debounce_checker.sv
+read_verilog -formal -sv -DFORMAL formal_debounce.sv
+prep -top formal_debounce
+
+[files]
+../../../../shell/rtl/sync2.sv
+../../rtl/debounce.sv
+../checkers/v_macros.svh
+../checkers/debounce_checker.sv
+formal_debounce.sv

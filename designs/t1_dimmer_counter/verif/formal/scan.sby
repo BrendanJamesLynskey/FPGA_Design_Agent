@@ -1,0 +1,25 @@
+# SymbiYosys: bounded proof and cover of sevenseg_scan.sv against scan_checker.sv.
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 40
+cover: mode cover
+cover: depth 40
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -formal -sv sevenseg_scan.sv
+read_verilog -formal -sv -DFORMAL v_macros.svh scan_checker.sv
+read_verilog -formal -sv -DFORMAL formal_scan.sv
+prep -top formal_scan
+
+[files]
+../../rtl/sevenseg_scan.sv
+../checkers/v_macros.svh
+../checkers/scan_checker.sv
+formal_scan.sv

@@ -40,7 +40,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y iverilog
-          pip install pyyaml pyserial pytest cocotb==2.0.1
+          pip install pyyaml pyserial pytest cocotb==2.0.1 cocotb-coverage
       - name: cocotb tests (shell at 8 clocks a bit and at 115200 baud; T1 against its model)
         run: python -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py
       - name: Board self-check designs against device models; QSPI source checks (brief 04c)
@@ -67,3 +67,69 @@ jobs:
           sudo apt-get install -y verilator python3-yaml
       - name: Lint
         run: flow/lint.sh
+
+  verification:
+    name: Verification (cocotb on Verilator and Icarus, checkers, formal, portability, V-stage gates)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog verilator yosys z3 flex bison autoconf g++ make perl help2man ccache libfl2 libfl-dev
+          pip install pyyaml pyserial pytest click cocotb==2.0.1 cocotb-coverage pyslang
+      - name: Verilator 5.048 from source (cocotb 2 needs 5.036+; the apt package is 5.020), cached
+        id: vl
+        uses: actions/cache@v4
+        with:
+          path: ~/verilator-5.048
+          key: verilator-5.048-ubuntu-24.04
+      - name: Build Verilator
+        if: steps.vl.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch v5.048 https://github.com/verilator/verilator.git /tmp/verilator-src
+          cd /tmp/verilator-src && autoconf && ./configure --prefix=$HOME/verilator-5.048 && make -j2 && make install
+      - name: SymbiYosys (pinned commit)
+        run: |
+          git clone https://github.com/YosysHQ/sby.git /tmp/sby && cd /tmp/sby && git checkout 79fc9ed
+          sudo make install
+      - name: Tool versions
+        run: |
+          export PATH=$HOME/verilator-5.048/bin:$PATH
+          verilator --version; iverilog -V | head -1; yosys -V; z3 --version; sby --help | head -1
+      - name: pytest (gates, portability)
+        run: |
+          export PORT_VERILATORS="$(which verilator):$HOME/verilator-5.048/bin/verilator"
+          python -m pytest -q flow/tests/test_verif_gates.py flow/tests/test_portability.py
+      - name: V2 run under Verilator 5.048 (bound checkers, code coverage), 3 seeds
+        run: |
+          export PATH=$HOME/verilator-5.048/bin:$PATH
+          SIM=verilator T1_SEEDS=1,2,3 python -m pytest -q designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
+      - name: The same bench under Icarus, 3 seeds
+        run: SIM=icarus T1_SEEDS=1,2,3 python -m pytest -q designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
+      - name: Formal (SymbiYosys bmc + cover)
+        run: flow/formal.sh designs/t1_dimmer_counter
+      - name: Portability of the checkers (Icarus, Verilator 5.020 and 5.048, slang; xsim skipped)
+        run: |
+          export PORT_VERILATORS="$(which verilator):$HOME/verilator-5.048/bin/verilator"
+          python flow/portability.py designs/t1_dimmer_counter/verif/portability.yaml --json build/verif/portability.json
+      - name: V-stage gates for T1
+        run: |
+          python flow/verif_gates.py designs/t1_dimmer_counter --also build/verif/icarus \
+            --mutation results/04f/mutation_t1.json --hw results/f0b/t1_dimmer_counter_bringup.json \
+            --json build/verif/t1_verif_gates.json
+      - name: Upload verification outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification
+          path: |
+            build/verif/**/results.xml
+            build/verif/**/coverage_t1.yml
+            build/verif/**/coverage.dat
+            build/verif/**/sim.log
+            build/verif/formal/*.log
+            build/verif/*.json
