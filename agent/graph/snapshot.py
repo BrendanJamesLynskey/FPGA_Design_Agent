@@ -58,6 +58,8 @@ class Snapshots:
         return subprocess.run([*base, *args], check=True, capture_output=True, text=True, env=env).stdout
 
     def take(self, n: int, stage: str, checkpoint_id: str | None = None, note: str = "") -> dict[str, Any]:
+        if self.records and self.records[-1]["n"] == n and self.records[-1]["manifest"] == manifest(self.design):
+            return self.records[-1]               # LangGraph re-runs a node on resume: same state, same snapshot
         files = _files(self.design)
         self._git("read-tree", "--empty")
         for i in range(0, len(files), 200):

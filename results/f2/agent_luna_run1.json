@@ -1,0 +1,82 @@
+{
+ "brief": "05b",
+ "run": "luna_run1",
+ "run_id": "20261101-211402-b0cf",
+ "model": "openai/gpt-6-luna",
+ "interview": "oracle",
+ "review": "off",
+ "note": "process 1 stopped at a review-page crash on the agent's invalid testplan.yaml (fixed); resumed from the LangGraph checkpoint (process 2)",
+ "stages_visited": [
+  0,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "stop": "stage 2 visited more than 4 times",
+ "loops": 4,
+ "questions": {
+  "asked": 8,
+  "answered": 1,
+  "defaulted": 7
+ },
+ "questions_detail": [
+  {
+   "text": "What command framing, register addressing, response format, and error behavior does the standard test shell require?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "What register addresses, access widths, and byte ordering should the shell use?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "Should physical buttons remain active while the shell writes COUNTER, and what happens if software writes coincide with button events?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "Should button press totals saturate or wrap, and should the shell support clearing them independently of CPU reset?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "Does reading BUTTONS need raw electrical levels or debounced logical levels?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "Is brightness intended to be linear duty-cycle control, and should switch brightness be shown on the display when selected?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "What exact PWM and seven-segment refresh rates are required?",
+   "status": "answered",
+   "by": "oracle"
+  },
+  {
+   "text": "What are the exact display encoding and active-low electrical conventions for the seven-segment outputs?",
+   "status": "defaulted",
+   "by": "oracle"
+  }
+ ],
+ "model_calls": 277,
+ "tokens": 7777111,
+ "cost_usd_provider_reported": 0.217184,
+ "unreported_cost_calls": 0,
+ "wall_s": {
+  "process_2_resumed": 1692.1
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "bitstream": false,
+ "bringup": null,
+ "result": "NULL: luna did not pass stage 2 (cocotb tests against its own blind model kept failing; verification never reached V0) in 4 visits; no bitstream, so no board bring-up"
+}

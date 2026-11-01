@@ -1,0 +1,98 @@
+{
+ "brief": "05b",
+ "run": "luna_run2_review_rewind",
+ "run_id": "20261101-215520-e70f",
+ "model": "openai/gpt-6-luna",
+ "interview": "oracle",
+ "review": "on",
+ "reviewer": "scripted planner replies (build/f2/replies_run2.json), not the owner",
+ "stages_visited": [
+  0,
+  1,
+  2,
+  1,
+  2,
+  2,
+  2,
+  2
+ ],
+ "stop": "stage 2 visited more than 4 times",
+ "rewinds": [
+  {
+   "to": 1,
+   "verified": true,
+   "commit": "480561a89761df1b3c4f29dc569c9a780c8526c9"
+  }
+ ],
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "planner",
+   "note": "scripted",
+   "to": null
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "planner",
+   "note": "scripted",
+   "to": null
+  },
+  {
+   "n": 2,
+   "decision": "rewind",
+   "by": "planner",
+   "note": "scripted rewind 2 -> 1 (05b smoke)",
+   "to": 1
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "planner",
+   "note": "scripted",
+   "to": null
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "planner",
+   "note": "scripted",
+   "to": null
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "planner",
+   "note": "scripted",
+   "to": null
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "planner",
+   "note": "scripted",
+   "to": null
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "planner",
+   "note": "scripted",
+   "to": null
+  }
+ ],
+ "questions": {
+  "asked": 0,
+  "answered": 0,
+  "defaulted": 0
+ },
+ "model_calls": 169,
+ "tokens": 2644798,
+ "cost_usd_provider_reported": 0.095511,
+ "unreported_cost_calls": 0,
+ "wall_s": 1288.9,
+ "bitstream": false,
+ "bringup": null,
+ "result": "Live rewind from stage 2 to stage 1 restored the files hash-for-hash (verified true) and the run continued from stage 1. The brief's rewind 6 -> 2 was not reachable: luna again did not pass stage 2 in 4 visits. The interview asked 0 questions (luna's spec.yaml listed none)."
+}

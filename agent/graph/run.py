@@ -419,6 +419,10 @@ def node_review(state: State) -> dict:
         to = int(decision["to"])
         r = rt.snaps.rewind(to)
         hist[-1]["rewind"] = {"to": to, "verified": r["verified"], "commit": r["commit"]}
+        with (rt.design / "BUILD_NOTE.md").open("a") as f:        # the restored note predates this decision
+            f.write(f"\n## review {n:02d} {st.name}\n\nrewind to stage {to} by {decision['by']}"
+                    f"{': ' + decision['note'] if decision.get('note') else ''} (files verified: {r['verified']})\n")
+        rv.write_index(rt.design, hist)
         upd.update(fails=[], note=decision.get("note", ""))
         return {**upd, "history": hist, "evidence": {}}
     if decision["decision"] == "edit":
