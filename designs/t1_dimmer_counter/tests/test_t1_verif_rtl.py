@@ -32,6 +32,6 @@ def test_t1_v2_run(seed: int) -> None:
         sources += sorted((DESIGN / "verif" / "checkers").glob("*.sv"))
         sources = [s for s in sources if s.name != "t1_bind.sv"] + [DESIGN / "verif" / "checkers" / "t1_bind.sv"]
     out = ROOT / "build" / "verif" / f"{SIM}{TAG}" / f"seed{seed}"
-    cocotb_run.run(f"../verif/{SIM}{TAG}/seed{seed}", "t1_dimmer_counter_top", sources, ["t1_cocotb", "t1_verif"], HERE,
-                   parameters=PARAMS, seed=seed, extra_env={"T1_COV_OUT": str(out / "coverage_t1.yml")},
+    cocotb_run.run(f"{SIM}{TAG}/seed{seed}", "t1_dimmer_counter_top", sources, ["t1_cocotb", "t1_verif"], HERE,
+                   parameters=PARAMS, seed=seed, build_root=ROOT / "build" / "verif", extra_env={"T1_COV_OUT": str(out / "coverage_t1.yml")},
                    coverage=(SIM == "verilator"))
