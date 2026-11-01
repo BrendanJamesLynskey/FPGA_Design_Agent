@@ -203,6 +203,9 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
     sess = role_session(rt.session, role)
     model = chat_model(rt.client, rt.meter, rt.llm_log)
     inputs = role_inputs(rt.session, role)
+    if role != "rtl":
+        prompt += ("\nYour working directory is the design directory: write files at paths like /model.py, "
+                   "/tests/..., /verif/... (repo-relative paths in build.yaml and testplan.yaml stay as given).")
     msg = prompt + "\n\nFiles you have:\n" + "\n".join(f"--- {k} ---\n{v}" for k, v in inputs.items())
     if role == "rtl":
         agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt,
@@ -216,6 +219,7 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
     written = {}
     for path, data in (out.get("files") or {}).items():
         rel = path.lstrip("/")
+        rel = rel.removeprefix(str(rt.design.relative_to(ROOT)) + "/")    # the repo-relative design path
         if rel in inputs:
             continue
         r = dispatch(sess, "write_file", {"path": rel, "content": file_data_to_string(data)})
@@ -351,7 +355,8 @@ def node_gate(state: State) -> dict:
         ev["lint"] = {"ok": d("lint", dispatch(rt.session, "lint", {})).get("ok")}
         ev["simulate"] = {"ok": d("simulate", dispatch(rt.session, "simulate", {"sim": "icarus"})).get("ok")}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
-        ev["gates_base"] = _build(rt, "synth")["gates"]
+        if ev["lint"]["ok"] and ev["simulate"]["ok"]:          # no Vivado time on a design that fails its tests
+            ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n in (3, 4):
         ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n == 5:
