@@ -1,0 +1,717 @@
+{
+  "design": "t1_dimmer_counter",
+  "stages": {
+    "V0": {
+      "checks": {
+        "testplan_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "model_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "bench_modules_present": {
+          "value": [
+            "t1_cocotb",
+            "t1_verif"
+          ],
+          "threshold": "all files exist",
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V1": {
+      "checks": {
+        "spec_items_traced": {
+          "value": "26/26",
+          "threshold": "all",
+          "pass": true
+        },
+        "untraced_items": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unknown_spec_refs": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "requirements_without_a_check": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unresolved_references": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "bench_uses_blind_model": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V2": {
+      "checks": {
+        "seeds_run": {
+          "value": [
+            1,
+            2,
+            3
+          ],
+          "threshold": ">=1",
+          "pass": true
+        },
+        "planned_tests_missing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "failing_tests": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "constrained_random_test_ran": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "assertions_bound_zero_failures": {
+          "value": [
+            "A_CT_CLEAR",
+            "A_CT_CTRL_WRITE",
+            "A_CT_DOWN",
+            "A_CT_DUTY_WRITE",
+            "A_CT_HOLD",
+            "A_CT_PRESS_COUNTED_CLEAR",
+            "A_CT_PRESS_COUNTED_DOWN",
+            "A_CT_PRESS_COUNTED_UP",
+            "A_CT_RESET",
+            "A_CT_RO_IGNORED",
+            "A_CT_UP",
+            "A_CT_WRITE_WINS",
+            "A_DB_FALL_NO_PRESS",
+            "A_DB_FLIP",
+            "A_DB_HOLD",
+            "A_DB_PULSE",
+            "A_DB_RISE",
+            "A_DB_RISE_ONLY",
+            "A_PWM_SUBSET",
+            "A_PWM_ZERO_OFF",
+            "A_SC_BLANK",
+            "A_SC_DISABLED",
+            "A_SC_ONE_DIGIT"
+          ],
+          "threshold": "bound in the run; no failure",
+          "pass": true
+        },
+        "other_simulators_failing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "formal_tasks_not_passing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V3": {
+      "checks": {
+        "seeds_run": {
+          "value": 3,
+          "threshold": ">=3",
+          "pass": true
+        },
+        "all_seeds_pass": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "functional_bins_pct": {
+          "value": "100.0 (69/69)",
+          "threshold": 100,
+          "pass": true
+        },
+        "functional_bins_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "cover_properties_pct": {
+          "value": "100.0",
+          "threshold": 100,
+          "pass": true
+        },
+        "cover_properties_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "line_pct": {
+          "value": 100.0,
+          "threshold": 95,
+          "pass": true
+        },
+        "toggle_pct": {
+          "value": 87.24,
+          "threshold": 80,
+          "pass": true
+        },
+        "waivers_without_reason": {
+          "value": 0,
+          "threshold": 0,
+          "pass": true
+        },
+        "mutation_score_pct": {
+          "value": 100.0,
+          "threshold": 85,
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V-HW": {
+      "checks": {
+        "bringup_pass": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "build_stamp": {
+          "value": "dfd4624e",
+          "threshold": "recorded",
+          "pass": true
+        }
+      },
+      "pass": true
+    }
+  },
+  "code_coverage": {
+    "line": {
+      "points": 36,
+      "hit": 36,
+      "pct": 100.0
+    },
+    "toggle": {
+      "points": 870,
+      "hit": 759,
+      "pct": 87.24
+    },
+    "branch": {
+      "points": 28,
+      "hit": 28,
+      "pct": 100.0
+    }
+  },
+  "code_coverage_unhit": {
+    "line": [],
+    "toggle": [
+      "dimmer_counter.sv:17 an[4]:1->0",
+      "dimmer_counter.sv:17 an[5]:1->0",
+      "dimmer_counter.sv:26 win_rdata[20]:0->1",
+      "dimmer_counter.sv:26 win_rdata[20]:1->0",
+      "dimmer_counter.sv:26 win_rdata[21]:0->1",
+      "dimmer_counter.sv:26 win_rdata[21]:1->0",
+      "dimmer_counter.sv:26 win_rdata[22]:0->1",
+      "dimmer_counter.sv:26 win_rdata[22]:1->0",
+      "dimmer_counter.sv:26 win_rdata[23]:0->1",
+      "dimmer_counter.sv:26 win_rdata[23]:1->0",
+      "dimmer_counter.sv:26 win_rdata[24]:0->1",
+      "dimmer_counter.sv:26 win_rdata[24]:1->0",
+      "dimmer_counter.sv:26 win_rdata[25]:0->1",
+      "dimmer_counter.sv:26 win_rdata[25]:1->0",
+      "dimmer_counter.sv:26 win_rdata[26]:0->1",
+      "dimmer_counter.sv:26 win_rdata[26]:1->0",
+      "dimmer_counter.sv:26 win_rdata[27]:0->1",
+      "dimmer_counter.sv:26 win_rdata[27]:1->0",
+      "dimmer_counter.sv:26 win_rdata[28]:0->1",
+      "dimmer_counter.sv:26 win_rdata[28]:1->0",
+      "dimmer_counter.sv:26 win_rdata[29]:0->1",
+      "dimmer_counter.sv:26 win_rdata[29]:1->0",
+      "dimmer_counter.sv:26 win_rdata[30]:0->1",
+      "dimmer_counter.sv:26 win_rdata[30]:1->0",
+      "dimmer_counter.sv:26 win_rdata[31]:0->1",
+      "dimmer_counter.sv:26 win_rdata[31]:1->0",
+      "dimmer_counter.sv:34 n_clear[4]:0->1",
+      "dimmer_counter.sv:34 n_clear[4]:1->0",
+      "dimmer_counter.sv:34 n_clear[5]:0->1",
+      "dimmer_counter.sv:34 n_clear[5]:1->0",
+      "dimmer_counter.sv:34 n_clear[6]:0->1",
+      "dimmer_counter.sv:34 n_clear[6]:1->0",
+      "dimmer_counter.sv:34 n_clear[7]:0->1",
+      "dimmer_counter.sv:34 n_clear[7]:1->0",
+      "dimmer_counter.sv:34 n_down[4]:0->1",
+      "dimmer_counter.sv:34 n_down[4]:1->0",
+      "dimmer_counter.sv:34 n_down[5]:0->1",
+      "dimmer_counter.sv:34 n_down[5]:1->0",
+      "dimmer_counter.sv:34 n_down[6]:0->1",
+      "dimmer_counter.sv:34 n_down[6]:1->0",
+      "dimmer_counter.sv:34 n_down[7]:0->1",
+      "dimmer_counter.sv:34 n_down[7]:1->0",
+      "dimmer_counter.sv:34 n_up[4]:0->1",
+      "dimmer_counter.sv:34 n_up[4]:1->0",
+      "dimmer_counter.sv:34 n_up[5]:0->1",
+      "dimmer_counter.sv:34 n_up[5]:1->0",
+      "dimmer_counter.sv:34 n_up[6]:0->1",
+      "dimmer_counter.sv:34 n_up[6]:1->0",
+      "dimmer_counter.sv:34 n_up[7]:0->1",
+      "dimmer_counter.sv:34 n_up[7]:1->0",
+      "dimmer_counter.sv:37 pre[2]:0->1",
+      "dimmer_counter.sv:37 pre[2]:1->0",
+      "sevenseg_scan.sv:12 digits[16]:0->1",
+      "sevenseg_scan.sv:12 digits[16]:1->0",
+      "sevenseg_scan.sv:12 digits[17]:0->1",
+      "sevenseg_scan.sv:12 digits[17]:1->0",
+      "sevenseg_scan.sv:12 digits[18]:0->1",
+      "sevenseg_scan.sv:12 digits[18]:1->0",
+      "sevenseg_scan.sv:12 digits[19]:0->1",
+      "sevenseg_scan.sv:12 digits[19]:1->0",
+      "sevenseg_scan.sv:12 digits[20]:0->1",
+      "sevenseg_scan.sv:12 digits[20]:1->0",
+      "sevenseg_scan.sv:12 digits[21]:0->1",
+      "sevenseg_scan.sv:12 digits[21]:1->0",
+      "sevenseg_scan.sv:12 digits[22]:0->1",
+      "sevenseg_scan.sv:12 digits[22]:1->0",
+      "sevenseg_scan.sv:12 digits[23]:0->1",
+      "sevenseg_scan.sv:12 digits[23]:1->0",
+      "sevenseg_scan.sv:13 blank[0]:0->1",
+      "sevenseg_scan.sv:13 blank[0]:1->0",
+      "sevenseg_scan.sv:13 blank[1]:0->1",
+      "sevenseg_scan.sv:13 blank[1]:1->0",
+      "sevenseg_scan.sv:13 blank[2]:0->1",
+      "sevenseg_scan.sv:13 blank[2]:1->0",
+      "sevenseg_scan.sv:13 blank[3]:0->1",
+      "sevenseg_scan.sv:13 blank[3]:1->0",
+      "sevenseg_scan.sv:13 blank[4]:1->0",
+      "sevenseg_scan.sv:13 blank[5]:1->0",
+      "sevenseg_scan.sv:13 blank[6]:0->1",
+      "sevenseg_scan.sv:13 blank[6]:1->0",
+      "sevenseg_scan.sv:13 blank[7]:0->1",
+      "sevenseg_scan.sv:13 blank[7]:1->0",
+      "sevenseg_scan.sv:14 an[4]:1->0",
+      "sevenseg_scan.sv:14 an[5]:1->0",
+      "t1_dimmer_counter_top.sv:20 DP:1->0",
+      "t1_dimmer_counter_top.sv:21 AN[4]:1->0",
+      "t1_dimmer_counter_top.sv:21 AN[5]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[20]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[20]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[21]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[21]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[22]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[22]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[23]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[23]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[24]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[24]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[25]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[25]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[26]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[26]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[27]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[27]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[28]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[28]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[29]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[29]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[30]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[30]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[31]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[31]:1->0"
+    ],
+    "branch": []
+  },
+  "mutation": {
+    "design": "t1_dimmer_counter",
+    "mutants": 21,
+    "valid": 21,
+    "killed_by_bench": 21,
+    "score_pct": 100.0,
+    "killed_with_checkers": 21,
+    "score_with_checkers_pct": 100.0,
+    "survivors": [],
+    "survivors_with_checkers": [],
+    "first_run": {
+      "score_pct": 90.48,
+      "score_with_checkers_pct": 90.48,
+      "survivors": [
+        "db_reset_level",
+        "scan_reset_an"
+      ],
+      "note": "first full run of the bench before reset_state_of_outputs was added; this is the unbiased number"
+    },
+    "final_note": "final = first run with db_reset_level and scan_reset_an re-run after the bench gained reset_state_of_outputs (written because of those two survivors); the other 19 rows are from the first run (a new test cannot un-kill a mutant)",
+    "rows": [
+      {
+        "name": "db_step_two",
+        "class": "constant",
+        "why": "debounce counts in steps of two",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "db_level_cond",
+        "class": "condition",
+        "why": "the count is cleared when the input differs",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "db_late",
+        "class": "constant",
+        "why": "debounce accepts a level one clock late",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "db_early",
+        "class": "constant",
+        "why": "debounce accepts a level one clock early",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "db_reset_level",
+        "class": "reset",
+        "why": "the debounced level resets to 1",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "db_release_press",
+        "class": "condition",
+        "why": "a release also makes a press",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "reset_duty",
+        "class": "reset",
+        "why": "DUTY resets to 0x41",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "reset_ctrl",
+        "class": "reset",
+        "why": "CTRL resets with DUTY_SRC set",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "up_is_down",
+        "class": "operator",
+        "why": "up subtracts",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "clear_loses_to_up",
+        "class": "condition",
+        "why": "clear loses to up on the same clock",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "press_not_counted",
+        "class": "condition",
+        "why": "a down press on the clock of an up press is not counted",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "pwm_le",
+        "class": "operator",
+        "why": "PWM on one phase step too long",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "pwm_prescale",
+        "class": "constant",
+        "why": "PWM phase advances early",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "duty_src_bit",
+        "class": "condition",
+        "why": "DUTY_SRC read from the wrong CTRL bit",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "presses_swap",
+        "class": "operator",
+        "why": "PRESSES up and down fields swapped",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "duty_write_mask",
+        "class": "constant",
+        "why": "DUTY write drops bit 7",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "inputs_swap",
+        "class": "operator",
+        "why": "INPUTS up and down levels swapped",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "an_enable",
+        "class": "condition",
+        "why": "DISPLAY_EN no longer darkens the display",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": true
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "glyph_A",
+        "class": "constant",
+        "why": "glyph A loses segment a",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "scan_step",
+        "class": "constant",
+        "why": "display scan runs at twice the rate",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "valid": true,
+        "status": "killed"
+      },
+      {
+        "name": "scan_reset_an",
+        "class": "reset",
+        "why": "anodes reset all low",
+        "tests": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "checkers": {
+          "built": true,
+          "killed": true,
+          "assertion": false
+        },
+        "valid": true,
+        "status": "killed"
+      }
+    ]
+  },
+  "reached": "V3",
+  "first_failed": null
+}

@@ -1,0 +1,8 @@
+# The deliberately non-portable fixture (a covergroup), shown once: results/04f/portability_covergroup_demo.txt.
+# Expectations are what was observed: Icarus 12 and Verilator 5.020 reject it; Verilator 5.048 parses and ignores it
+# (so with PORT_VERILATORS holding both, the 5.048 row reads BAD against `verilator: fail`: that is the finding).
+sets:
+  covergroup_fixture:
+    top: nonportable_covergroup
+    files: [flow/tests/fixtures/nonportable_covergroup.sv]
+    expect: {icarus: fail, verilator: fail, slang: pass, xsim: pass}

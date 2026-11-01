@@ -162,6 +162,7 @@ designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, desig
 results/     committed build and bring-up results, per milestone
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
+             verification.md (V-stages, the simulator-portable stack, gates, mutation);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
 ```
 
@@ -175,6 +176,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | F1B | Model screen on CVDP's 86 problems ([results/f1b/REPORT.md](results/f1b/REPORT.md)): no cheap candidate eligible (DeepSeek V4.1 Flash −12.4 points; GLM-5.3-Flash −4.1, not detectable, but 48.5 reliability failures per 86); pick luna | done |
 | 04c | Board onboarding: Nexys A7 inventory, power budget and source-aware power gate, four read-only peripheral self-checks on the board | done |
 | 04e | UltraFast (UG949) backbone: stage-grouped gates and reports in the flow ([docs/methodology.md](docs/methodology.md)), nine stage procedures in the knowledge bank, T1 rebuilt through the stages ([results/ultrafast](results/ultrafast/README.md)) | done |
+| 04f | Verification backbone: OpenTitan-style V0-V3 plus V-HW on a simulator-portable stack (cocotb bench, bound assertion checkers, SymbiYosys, Verilator coverage, mutation score); T1 reaches V3 ([docs/verification.md](docs/verification.md), [results/04f](results/04f/README.md)) | done |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | F3 | Frozen benchmark, scored runs | coming |
 

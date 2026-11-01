@@ -1,0 +1,380 @@
+{
+  "design": "t1_dimmer_counter",
+  "mutants": 21,
+  "valid": 21,
+  "killed_by_bench": 21,
+  "score_pct": 100.0,
+  "killed_with_checkers": 21,
+  "score_with_checkers_pct": 100.0,
+  "survivors": [],
+  "survivors_with_checkers": [],
+  "first_run": {
+    "score_pct": 90.48,
+    "score_with_checkers_pct": 90.48,
+    "survivors": [
+      "db_reset_level",
+      "scan_reset_an"
+    ],
+    "note": "first full run of the bench before reset_state_of_outputs was added; this is the unbiased number"
+  },
+  "final_note": "final = first run with db_reset_level and scan_reset_an re-run after the bench gained reset_state_of_outputs (written because of those two survivors); the other 19 rows are from the first run (a new test cannot un-kill a mutant)",
+  "rows": [
+    {
+      "name": "db_step_two",
+      "class": "constant",
+      "why": "debounce counts in steps of two",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "db_level_cond",
+      "class": "condition",
+      "why": "the count is cleared when the input differs",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "db_late",
+      "class": "constant",
+      "why": "debounce accepts a level one clock late",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "db_early",
+      "class": "constant",
+      "why": "debounce accepts a level one clock early",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "db_reset_level",
+      "class": "reset",
+      "why": "the debounced level resets to 1",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "db_release_press",
+      "class": "condition",
+      "why": "a release also makes a press",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "reset_duty",
+      "class": "reset",
+      "why": "DUTY resets to 0x41",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "reset_ctrl",
+      "class": "reset",
+      "why": "CTRL resets with DUTY_SRC set",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "up_is_down",
+      "class": "operator",
+      "why": "up subtracts",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "clear_loses_to_up",
+      "class": "condition",
+      "why": "clear loses to up on the same clock",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "press_not_counted",
+      "class": "condition",
+      "why": "a down press on the clock of an up press is not counted",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "pwm_le",
+      "class": "operator",
+      "why": "PWM on one phase step too long",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "pwm_prescale",
+      "class": "constant",
+      "why": "PWM phase advances early",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "duty_src_bit",
+      "class": "condition",
+      "why": "DUTY_SRC read from the wrong CTRL bit",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "presses_swap",
+      "class": "operator",
+      "why": "PRESSES up and down fields swapped",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "duty_write_mask",
+      "class": "constant",
+      "why": "DUTY write drops bit 7",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "inputs_swap",
+      "class": "operator",
+      "why": "INPUTS up and down levels swapped",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "an_enable",
+      "class": "condition",
+      "why": "DISPLAY_EN no longer darkens the display",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": true
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "glyph_A",
+      "class": "constant",
+      "why": "glyph A loses segment a",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "scan_step",
+      "class": "constant",
+      "why": "display scan runs at twice the rate",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "valid": true,
+      "status": "killed"
+    },
+    {
+      "name": "scan_reset_an",
+      "class": "reset",
+      "why": "anodes reset all low",
+      "tests": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "checkers": {
+        "built": true,
+        "killed": true,
+        "assertion": false
+      },
+      "valid": true,
+      "status": "killed"
+    }
+  ]
+}

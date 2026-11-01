@@ -1,0 +1,133 @@
+# T1 testplan (brief 04f; the shape the agent's V1 step will produce from spec.yaml).
+# Every requirement traces to the tests, assertions, cover points and formal tasks that check it: a DO-254 style
+# traceability matrix. flow/verif_gates.py checks that every item of spec.yaml appears under `spec:` below and that
+# every name resolves (tests in the bench, assertions and cover properties in the checkers, bins in the coverage
+# database, formal tasks in formal/*.sby).
+schema: fpga-design-agent/testplan/v0
+design: t1_dimmer_counter
+spec: designs/t1_dimmer_counter/spec.yaml
+model: designs/t1_dimmer_counter/model.py        # blind golden model (written from spec.yaml alone)
+bench:                                           # cocotb modules, run together once per seed
+  modules: [t1_cocotb, t1_verif]
+  dir: designs/t1_dimmer_counter/tests
+checkers: designs/t1_dimmer_counter/verif/checkers
+formal_dir: designs/t1_dimmer_counter/verif/formal
+
+# V3 thresholds (raw numbers are reported whether or not they pass). Set from the first measured run, see
+# results/04f/README.md: functional bins and cover properties must all be hit unless waived.
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 100
+  line_pct: 95
+  toggle_pct: 80
+  mutation_score_pct: 85
+
+waivers:                                         # each: what, why (a waiver without a reason is a gate failure)
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+
+requirements:
+  - id: R01
+    spec: ["behaviour.counter[0]"]
+    tests: [t1_cocotb.count_wraps_both_ways, t1_verif.directed_closure_sweep]
+    assertions: [A_CT_UP, A_CT_DOWN]
+    cover_props: [C_CT_WRAP_UP, C_CT_WRAP_DOWN]
+    bins: [t1.op.kind_x_count]
+  - id: R02
+    spec: ["behaviour.counter[1]"]
+    tests: [t1_cocotb.bouncy_buttons_match_the_model, t1_cocotb.random_operations_match_the_model, t1_verif.constrained_random_operations]
+    assertions: [A_CT_CLEAR, A_CT_UP, A_CT_DOWN, A_CT_HOLD]
+    bins: [t1.op.kind]
+  - id: R03
+    spec: ["behaviour.counter[2]"]
+    tests: [t1_verif.simultaneous_presses_priority]
+    assertions: [A_CT_CLEAR, A_CT_UP, A_CT_DOWN]
+    cover_props: [C_CT_SAME_CLOCK_PRESSES]
+    bins: [t1.clock.mix]
+  - id: R04
+    spec: ["behaviour.counter[3]"]
+    tests: [t1_cocotb.register_write_and_press_on_the_same_clock]
+    assertions: [A_CT_WRITE_WINS, A_CT_PRESS_COUNTED_UP, A_CT_PRESS_COUNTED_DOWN, A_CT_PRESS_COUNTED_CLEAR]
+    cover_props: [C_CT_WRITE_AND_PRESS]
+    bins: [t1.clock.mix]
+  - id: R05
+    spec: ["behaviour.debounce[0]", timing.latency.button_to_count]
+    tests: [t1_cocotb.debounce_boundary_is_exact, t1_verif.short_glitches_are_ignored, t1_cocotb.bouncy_buttons_match_the_model]
+    assertions: [A_DB_HOLD, A_DB_FLIP]
+    cover_props: [C_DB_GLITCH_IGNORED]
+    formal: [debounce]
+    bins: [t1.press.button_x_kind]
+  - id: R06
+    spec: ["behaviour.debounce[1]"]
+    tests: [t1_cocotb.inputs_register_shows_levels, t1_cocotb.debounce_boundary_is_exact]
+    assertions: [A_DB_PULSE, A_DB_RISE, A_DB_RISE_ONLY, A_DB_FALL_NO_PRESS]
+    cover_props: [C_DB_PRESS, C_DB_RELEASE]
+    formal: [debounce]
+  - id: R07
+    spec: ["behaviour.pwm[0]"]
+    tests: [t1_cocotb.pwm_on_time_matches_duty]
+    bins: [t1.duty.class_x_source]
+  - id: R08
+    spec: ["behaviour.pwm[1]", "behaviour.pwm[2]", timing.latency.register_write_to_led]
+    tests: [t1_cocotb.pwm_on_time_matches_duty]
+    assertions: [A_PWM_SUBSET]
+  - id: R09
+    spec: ["behaviour.pwm[3]"]
+    tests: [t1_cocotb.pwm_on_time_matches_duty]
+    assertions: [A_PWM_ZERO_OFF]
+    cover_props: [C_CT_DUTY_FULL]
+    bins: [t1.duty.class]
+  - id: R10
+    spec: ["behaviour.display[0]"]
+    tests: [t1_cocotb.display_shows_count_and_duty]
+    assertions: [A_SC_ONE_DIGIT]
+    cover_props: [C_SC_DIGIT_0_LIT, C_SC_DIGIT_1_LIT, C_SC_DIGIT_2_LIT, C_SC_DIGIT_3_LIT, C_SC_DIGIT_6_LIT, C_SC_DIGIT_7_LIT]
+    formal: [scan]
+  - id: R11
+    spec: ["behaviour.display[1]", "behaviour.display[2]"]
+    tests: [t1_cocotb.display_shows_count_and_duty]
+  - id: R12
+    spec: ["behaviour.display[3]"]
+    tests: [t1_cocotb.display_shows_count_and_duty]
+    assertions: [A_SC_BLANK]
+    formal: [scan]
+  - id: R13
+    spec: ["behaviour.display[4]"]
+    tests: [t1_cocotb.display_shows_count_and_duty]
+    assertions: [A_SC_DISABLED]
+    bins: [t1.display.enable]
+    formal: [scan]
+  - id: R14
+    spec: ["behaviour.display[5]", "behaviour.display[6]"]
+    tests: [t1_cocotb.display_shows_count_and_duty, t1_verif.directed_closure_sweep]
+    bins: [t1.display.glyph]
+  - id: R15
+    spec: [reset]
+    tests: [t1_cocotb.identity_and_reset_values, t1_verif.reset_state_of_outputs]
+    assertions: [A_CT_RESET]
+  - id: R16
+    spec: [registers.map.COUNT]
+    tests: [t1_cocotb.identity_and_reset_values, t1_cocotb.count_wraps_both_ways, t1_verif.directed_closure_sweep]
+    assertions: [A_CT_WRITE_WINS]
+    bins: [t1.reg.name_x_dir]
+  - id: R17
+    spec: [registers.map.DUTY]
+    tests: [t1_cocotb.identity_and_reset_values, t1_cocotb.pwm_on_time_matches_duty]
+    assertions: [A_CT_DUTY_WRITE]
+  - id: R18
+    spec: [registers.map.CTRL]
+    tests: [t1_cocotb.identity_and_reset_values, t1_verif.directed_closure_sweep]
+    assertions: [A_CT_CTRL_WRITE]
+  - id: R19
+    spec: [registers.map.INPUTS]
+    tests: [t1_cocotb.inputs_register_shows_levels]
+  - id: R20
+    spec: [registers.map.PRESSES]
+    tests: [t1_cocotb.debounce_boundary_is_exact, t1_verif.simultaneous_presses_priority]
+    assertions: [A_CT_PRESS_COUNTED_UP, A_CT_PRESS_COUNTED_DOWN, A_CT_PRESS_COUNTED_CLEAR]
+  - id: R21
+    spec: [registers.unmapped]
+    tests: [t1_verif.directed_closure_sweep, t1_cocotb.random_operations_match_the_model]
+    assertions: [A_CT_RO_IGNORED]
