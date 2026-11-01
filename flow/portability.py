@@ -64,7 +64,7 @@ def check_verilator(files: list[str], top: str, defines: list[str]) -> list[dict
             continue
         env = dict(os.environ)
         for cand in (Path(exe).parent.parent, Path(exe).parent.parent / "share" / "verilator"):
-            if (cand / "include").is_dir():              # a .deb extracted without root, a source install, or /usr
+            if (cand / "include" / "verilated.h").is_file():              # a .deb extracted without root, a source install, or /usr
                 env["VERILATOR_ROOT"] = str(cand)
                 break
         ver = _run([exe, "--version"], env)[1].strip().splitlines()[0]
