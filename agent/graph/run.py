@@ -38,11 +38,12 @@ from agent.graph.snapshot import Snapshots
 from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure
 
 RUNS = ROOT / "runs"
-FLOW_TOOLS = ("lint", "simulate", "formal", "build", "gates", "report", "check_constraints", "search_docs",
+FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "build", "gates", "report", "check_constraints", "search_docs",
               "load_skill")
 
 
 class State(TypedDict, total=False):
+    detail: str
     run_id: str
     stage: int
     visits: dict
@@ -80,6 +81,7 @@ class Runtime:
     snaps: Snapshots
     oracle_llm: Callable | None = None
     llm_log: list = field(default_factory=list)
+    last_build_output: str = ""
 
 
 _RT: dict[str, Runtime] = {}
@@ -104,6 +106,29 @@ PROMPTS = {
            "not you; when you think your part is complete, stop and reply DONE. Failures so far: {fails}. "
            "Reviewer note: {note}",
 }
+
+
+CONVENTIONS = """
+Flow conventions (fixed by the repo; follow them exactly):
+- Paths in build.yaml are relative to the repo root. This design's directory is {design_rel}. build.yaml:
+    top: <top module>
+    part: xc7a100tcsg324-1
+    sources: [shell/rtl/*.sv, {design_rel}/rtl/*.sv]
+    constraints: [{design_rel}/design.xdc]
+    generics: {{}}
+    probes: {design_rel}/probes.yaml
+- The board top must instantiate the test shell `fpga_shell` (UART register window; read @shell/PROTOCOL.md and
+  @shell/rtl/fpga_shell.sv with fda_read_file). fpga_shell ports: clk, rst (sync, active high), uart_rx, uart_tx,
+  win_addr[6:0], win_wr, win_rd, win_wdata[31:0], win_rdata[31:0] (due one cycle after win_rd); parameters
+  CLKS_PER_BIT, TIMEOUT_CYCLES, DESIGN_ID, BUILD_STAMP. The design's registers live in this window.
+- design.xdc: pins and IOSTANDARDs from the board's master XDC (search_docs / load_skill), create_clock on the
+  board clock port only.
+- ARCHITECTURE.md must have a "## Block diagram" section with a fenced text diagram, the clock plan and the pin list.
+- Tests (test writer): tests/test_{name}_rtl.py is a pytest entry that calls
+  flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=...), where
+  sources = flow.cocotb_run.SHELL_RTL + sorted((design_dir / "rtl").glob("*.sv")); the cocotb bench module sits
+  next to it in tests/ and checks the RTL against model.py. verif/testplan.yaml traces every spec item to a test.
+"""
 
 
 def _core_tools(rt: Runtime, sess: Session, allowed: tuple[str, ...]):
@@ -209,16 +234,18 @@ def node_work(state: State) -> dict:
     rt.session.stage = st.name
     fmt = {"board": rt.cfg.board, "name": rt.cfg.name, "stage": n, "stage_name": st.name,
            "allowed": ", ".join(st.tools), "fails": "; ".join(state.get("fails") or []) or "none",
-           "note": state.get("note") or "none"}
+           "note": state.get("note") or "none",
+           "design_rel": str(rt.design.relative_to(ROOT))}
+    conv = CONVENTIONS.format(**fmt) + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     try:
         if n == 0:
             run_subagent(rt, "clarify", PROMPTS["clarify"].format(**fmt), ("search_docs", "load_skill"))
         elif n == 2:
             run_subagent(rt, "model", PROMPTS["model"].format(**fmt))
-            run_subagent(rt, "tests", PROMPTS["tests"].format(**fmt), ("search_docs", "load_skill"))
-            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt), st.tools)
+            run_subagent(rt, "tests", PROMPTS["tests"].format(**fmt) + conv, ("search_docs", "load_skill"))
+            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, st.tools)
         elif n != 9 or state.get("hw_approved"):
-            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt), tuple(t for t in st.tools
+            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, tuple(t for t in st.tools
                                                                          if t not in ("program", "bringup")))
     except BudgetExceeded as e:
         return {"visits": visits, "stop": f"budget: {e}"}
@@ -281,6 +308,8 @@ def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
         b = {"ok": True, "cached": True}
     else:
         b = dispatch(rt.session, "build", {"until": until, "variant": variant})
+        if not b.get("ok"):
+            rt.last_build_output = str(b.get("output", ""))[-2000:]
         cache.write_text(json.dumps({"sources": key, "until": until, "ok": bool(b.get("ok"))}))
     g = dispatch(rt.session, "gates", {"kind": "stages", "variant": variant})
     return {"build": {k: b.get(k) for k in ("ok", "refused", "returncode", "cached")}, "gates": g.get("gates")}
@@ -292,17 +321,24 @@ def node_gate(state: State) -> dict:
         return {}
     st, ev = MACHINE[n], dict(state.get("evidence") or {})
     out: dict[str, Any] = {}
+    rt.session.stage = st.name
+    detail: list[str] = []
+
+    def d(name, r):
+        if not r.get("ok"):
+            detail.append(f"[{name}] " + str(r.get("output", ""))[-1500:])
+        return r
     if n == 0:
         spec, summary = _interview(rt, _spec(rt), state)
         out["interview"] = summary
         ev["spec"], ev["signed_off"] = spec, not spec.get("open_questions")
     elif n == 1:
         ev["arch"] = (rt.design / "ARCHITECTURE.md").is_file()
-        ev["inventory"] = {"ok": bool(dispatch(rt.session, "check_constraints", {}).get("ok", False))}
+        ev["inventory"] = {"ok": bool(d("check_constraints", dispatch(rt.session, "check_constraints", {})).get("ok"))}
     elif n == 2:
-        ev["lint"] = {"ok": dispatch(rt.session, "lint", {}).get("ok")}
-        ev["simulate"] = {"ok": dispatch(rt.session, "simulate", {"sim": "icarus"}).get("ok")}
-        ev["verif"] = dispatch(rt.session, "gates", {"kind": "verif"}).get("gates") or {}
+        ev["lint"] = {"ok": d("lint", dispatch(rt.session, "lint", {})).get("ok")}
+        ev["simulate"] = {"ok": d("simulate", dispatch(rt.session, "simulate", {"sim": "icarus"})).get("ok")}
+        ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
         ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n in (3, 4):
         ev["gates_base"] = _build(rt, "synth")["gates"]
@@ -318,6 +354,9 @@ def node_gate(state: State) -> dict:
             br = dispatch(rt.session, "bringup", {}) or {}
             ev["bringup"] = br.get("bringup") or {"pass": False, "failed_step": br.get("rule") or "bringup",
                                                   "why": str(br.get("output", ""))[:300]}
+    if rt.last_build_output:
+        detail.append("[build] " + rt.last_build_output)
+        rt.last_build_output = ""
     if n == 9 and not state.get("hw_approved"):
         from dataclasses import replace as _replace
         ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g != "bringup")), ev)
@@ -325,7 +364,7 @@ def node_gate(state: State) -> dict:
             ok, fails = False, ["hardware: awaiting approval before programming"]
     else:
         ok, fails = exit_check(st, ev)
-    return {**out, "evidence": ev, "fails": [] if ok else fails}
+    return {**out, "evidence": ev, "fails": [] if ok else fails, "detail": "\n".join(detail)}
 
 
 def node_review(state: State) -> dict:
@@ -425,7 +464,13 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
         (design / "__init__.py").write_text("")
     if runner is None:
         runner = ContainerRunner(design, ROOT) if container_available() else LocalRunner()
-    sess = Session(design=design, board=cfg.board, runner=runner)
+    bank = None
+    try:
+        from agent.core.bank import LocalBank
+        bank = LocalBank()
+    except Exception:                                      # CI: no private knowledge bank
+        bank = None
+    sess = Session(design=design, board=cfg.board, runner=runner, bank=bank)
     rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits), Snapshots(run_dir, design),
                  oracle_llm=oracle_llm)
     _RT[run_id] = rt

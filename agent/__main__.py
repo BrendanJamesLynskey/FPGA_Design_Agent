@@ -75,6 +75,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--model", default="openai/gpt-6-luna")
     r.add_argument("--hidden-spec", type=Path)
     r.add_argument("--stop-after", type=int)
+    r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
     for p in (r, sub.add_parser("resume")):
         p.add_argument("--replies", type=Path)
         p.add_argument("--reply")
@@ -93,6 +94,8 @@ def main(argv: list[str] | None = None) -> int:
         name = a.name or a.spec.resolve().parent.name
         cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
                      model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after)
+        if a.max_usd is not None:
+            cfg.run_limits["usd"] = a.max_usd
         client = _client(a.model, a.replay, a.record)
         rt = new_runtime(cfg, client, oracle_llm=_oracle(client))
         graph = build_graph(checkpointer_for(rt.run_dir))

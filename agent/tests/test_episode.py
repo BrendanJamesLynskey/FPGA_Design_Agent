@@ -151,7 +151,7 @@ def _episode(tmp_path, runs):
     model_prompt = next(x["user"] for x in seen if x["role"] == "model")
     assert "--- spec.yaml ---" in model_prompt and "--- model.py ---" not in model_prompt
     tests_prompt = next(x["user"] for x in seen if x["role"] == "tests")
-    assert "ARCHITECTURE" not in tests_prompt and "rtl/" not in tests_prompt
+    assert "--- ARCHITECTURE.md ---" not in tests_prompt and "--- rtl/" not in tests_prompt and "endmodule" not in tests_prompt
     idx = (rt.design / "build" / "review" / "review_index.html").read_text()
     assert "planner" in idx and "rewind" in idx
     assert (rt.design / "build" / "review" / "06_timing-closure.html").is_file()
