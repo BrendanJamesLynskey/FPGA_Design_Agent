@@ -84,6 +84,18 @@ path: [~/.local/opt/verilator-5048/root/usr/share/verilator/bin]
 env: {VERILATOR_ROOT: ~/.local/opt/verilator-5048/root/usr/share/verilator}
 ```
 
+**Isolation for agent-written test code (05b; owner decision 2026-11-01).** `agent.core.runner.ContainerRunner`
+runs `simulate` (the agent's cocotb benches) in a Docker container from `agent/container/Dockerfile`
+(`docker build -t fda-sim:1 agent/container`; Ubuntu 24.04, Python 3.12, cocotb 2.0.1, Icarus 12.0): `--network none`,
+`--cap-drop ALL`, `no-new-privileges`, read-only root, the host uid (not root), memory and pid limits. Mounts: the
+design directory read-write; the repo's own `flow/`, `shell/` and `designs/__init__.py` read-only (the benches import
+them); tmpfs for the repo `build/` scratch and `/tmp`. No home directory, keys or other designs. Engine: Docker 29
+through the docker group. That daemon runs as root (it is not rootless Docker) but the container process is
+unprivileged; podman is not installed. `hw_checks.py` runs inside `flow/bringup.py` on the host, because it needs the
+UART and Vivado, so it is **not** containerised: any run that would program the board pauses for a review approval
+first (see the agent's review gate). Icarus 13, as in the CVDP image, rejects an implicit cast in
+`shell/rtl/uart_rx.sv:46`, which 12.0 accepts; this is why the image pins 12.0.
+
 **Results location (05b).** `bringup` runs `flow/bringup.py --results-dir designs/<name>/build/bringup`, so agent runs
 never overwrite another milestone's committed results (`results/f0b/` stays the F0B record).
 

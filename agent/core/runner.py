@@ -153,3 +153,56 @@ class RecordedRunner:
 def _norm(a: str) -> str:
     """Paths in recorded argv are repo-relative placeholders: compare the last two path parts only."""
     return "/".join(a.split("/")[-2:]) if a.startswith("/") else a
+
+
+# --- isolation for agent-written test code (owner decision 2026-11-01) ---------------------------------------
+
+#: Default image: Ubuntu 24.04, Python 3.12, cocotb 2.0.1, Icarus 12.0 (agent/container/Dockerfile).
+SIM_IMAGE = "fda-sim:1"          # built from agent/container/Dockerfile (docker build -t fda-sim:1 agent/container)
+
+
+class ContainerRunner:
+    """Run the kinds that execute agent-written code (default: ``simulate``) in a container: no network, all
+    capabilities dropped, no new privileges, the host user's uid/gid (never root inside), a read-only root
+    filesystem, and only these mounts: the design directory read-write, the repo's trusted ``flow/``,
+    ``shell/`` and ``designs/__init__.py`` read-only, and a tmpfs over the repo's ``build/`` (sim scratch) and
+    ``/tmp``. No home directory, no keys, no other design. Other kinds go to ``inner`` unchanged.
+
+    The engine is Docker 29 via the docker group (the daemon itself runs as root; podman is not installed).
+    The argv is the same one the core builds, so replay fixtures do not change."""
+
+    def __init__(self, design: Path, root: Path, inner: Runner | None = None, kinds: tuple[str, ...] = ("simulate",),
+                 image: str = SIM_IMAGE, engine: str = "docker", memory: str = "3g"):
+        self.design, self.root = Path(os.path.realpath(design)), Path(os.path.realpath(root))
+        self.inner = inner or LocalRunner()
+        self.kinds, self.image, self.engine, self.memory = kinds, image, engine, memory
+
+    def container_argv(self, argv: list[str], env: dict[str, str] | None) -> list[str]:
+        import sys
+        r = str(self.root)
+        cmd = [self.engine, "run", "--rm", "--network", "none", "--cap-drop", "ALL",
+               "--security-opt", "no-new-privileges", "--read-only", "--user", f"{os.getuid()}:{os.getgid()}",
+               "--memory", self.memory, "--pids-limit", "512",
+               "--tmpfs", "/tmp:rw,exec,size=512m", "--tmpfs", f"{r}/build:rw,exec,size=1g",
+               "-v", f"{self.design}:{self.design}:rw",
+               "-v", f"{r}/flow:{r}/flow:ro", "-v", f"{r}/shell:{r}/shell:ro",
+               "-v", f"{r}/designs/__init__.py:{r}/designs/__init__.py:ro",
+               "-w", r, "-e", "HOME=/tmp", "-e", "PYTHONDONTWRITEBYTECODE=1", "-e", f"PYTHONPATH={r}"]
+        for k, v in (env or {}).items():
+            cmd += ["-e", f"{k}={v}"]
+        prog = "python3" if argv[0] == sys.executable or os.path.basename(argv[0]).startswith("python") else argv[0]
+        return [*cmd, self.image, prog, *argv[1:]]
+
+    def run(self, kind, argv, cwd, env=None, timeout=600):
+        if kind not in self.kinds:
+            return self.inner.run(kind, argv, cwd, env, timeout)
+        return self.inner.run(kind, self.container_argv(argv, env), cwd, None, timeout)
+
+
+def container_available(engine: str = "docker", image: str = SIM_IMAGE) -> bool:
+    """True if the engine runs and the image is present locally (no pull: pulling needs the network)."""
+    try:
+        p = subprocess.run([engine, "image", "inspect", image], capture_output=True, timeout=30)
+        return p.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False

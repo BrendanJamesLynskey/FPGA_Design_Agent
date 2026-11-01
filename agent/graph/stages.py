@@ -1,0 +1,145 @@
+"""The stage machine of docs/methodology.md ("The agent's stage machine") plus the V-stages of
+docs/verification.md, as data and pure functions. The graph moves on only when :func:`exit_check` passes on
+the flow's own gate output (never on the model's judgement); a failure goes to :func:`route_failure`, the
+earliest stage that owns the cause.
+
+No model calls here: everything is decided from tool results (``gates.json``, ``verif_gates.json``, the tools'
+``ok`` flags), so CI tests it with recorded results.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from agent.core.session import STAGES
+
+
+@dataclass(frozen=True)
+class Stage:
+    n: int
+    name: str
+    tools: tuple[str, ...]            # core tools the stage's sub-agent may call (plus read/write/list/search)
+    gates: tuple[str, ...]            # what exit_check requires (names below)
+    loops_to: tuple[int, ...]         # stages a failure here may route to, earliest first
+    limits: dict[str, float] = field(default_factory=dict)   # turns, seconds, usd per visit
+
+
+FILES = ("read_file", "write_file", "list_files", "search_docs", "load_skill")
+_L = {"turns": 30, "seconds": 1800, "usd": 0.40}
+
+MACHINE: tuple[Stage, ...] = (
+    Stage(0, "clarify", FILES, ("spec_signed",), (), {"turns": 20, "seconds": 900, "usd": 0.20}),
+    Stage(1, "board-and-device-planning", (*FILES, "check_constraints"), ("arch_note", "inventory"), (0,), _L),
+    Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates"),
+          ("lint", "simulate", "verif_v3", "stage_rtl"), (0,), {"turns": 60, "seconds": 3600, "usd": 0.80}),
+    Stage(3, "constraints", (*FILES, "check_constraints", "build", "gates"), ("constraints_post_synth",), (2,), _L),
+    Stage(4, "synthesis", (*FILES, "build", "gates", "report"), ("stage_post_synth",), (2, 3), _L),
+    Stage(5, "implementation", (*FILES, "build", "gates", "report"), ("stage_post_place", "stage_post_route"), (6,), _L),
+    Stage(6, "timing-closure", (*FILES, "build", "gates", "report"), ("timing",), (3, 2, 5), _L),
+    Stage(7, "power-closure", (*FILES, "build", "gates", "report"), ("power",), (2, 0), _L),
+    Stage(8, "drc-closure", (*FILES, "build", "gates", "report"), ("drc",), (3, 2), _L),
+    Stage(9, "configuration-and-debug", (*FILES, "build", "gates", "report", "program", "bringup"),
+          ("bitstream_base", "bitstream_ila", "bringup"), (6, 2, 0), {"turns": 30, "seconds": 3600, "usd": 0.40}),
+)
+assert tuple(s.name for s in MACHINE) == STAGES
+
+RUN_LIMITS = {"turns": 300, "seconds": 6 * 3600, "usd": 3.00, "visits_per_stage": 4}
+
+# gate name -> the stage names in flow/gates.py output it reads
+_FLOW_STAGES = {"stage_rtl": ["rtl"], "stage_post_synth": ["post_synth"], "stage_post_place": ["post_place"],
+                "stage_post_route": ["post_route"], "constraints_post_synth": ["post_synth"],
+                "bitstream_base": ["bitstream"]}
+_ROUTE_RULES = {"setup", "hold", "pulse_width"}
+_POWER_RULES = {"power_junction_ok"}
+_DRC_RULES = {"drc_clean", "cdc_no_critical", "methodology_no_critical"}
+
+
+def _stage_pass(gates: dict | None, flow_stage: str, only: set[str] | None = None,
+                skip: set[str] | None = None) -> tuple[bool, list[str]]:
+    st = ((gates or {}).get("stages") or {}).get(flow_stage) or {}
+    if not st.get("ran"):
+        return False, [f"{flow_stage}: did not run"]
+    g = st.get("gates") or {}
+    if only is not None and not only <= set(g):
+        return False, [f"{flow_stage}:{n} missing" for n in sorted(only - set(g))]
+    bad = [f"{flow_stage}:{n}" for n, ok in g.items()
+           if (only is None or n in only) and not (skip and n in skip) and not ok]
+    return not bad, bad
+
+
+def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
+    """``ev`` holds the latest tool results the graph collected in this stage: ``spec`` (parsed spec.yaml),
+    ``signed_off`` (bool, from the review/interview), ``lint``/``simulate`` (tool results), ``gates_base`` /
+    ``gates_ila`` (flow/gates.py JSON), ``verif`` (verif_gates JSON), ``bringup`` (bring-up JSON), ``arch`` (bool,
+    the architecture note exists), ``inventory`` (check_constraints result). Returns (pass, failures)."""
+    fails: list[str] = []
+    for g in stage.gates:
+        ok, why = True, []
+        if g == "spec_signed":
+            spec = ev.get("spec") or {}
+            ok = bool(spec) and not spec.get("open_questions") and bool(ev.get("signed_off"))
+            why = [] if ok else ["spec.yaml missing, has open questions, or not signed off"]
+        elif g == "arch_note":
+            ok, why = bool(ev.get("arch")), ["no architecture note (ARCHITECTURE.md)"]
+        elif g == "inventory":
+            r = ev.get("inventory") or {}
+            ok, why = bool(r.get("ok")), ["check_constraints failed"]
+        elif g in ("lint", "simulate"):
+            ok, why = bool((ev.get(g) or {}).get("ok")), [f"{g} not passing"]
+        elif g == "verif_v3":
+            v = ev.get("verif") or {}
+            ok, why = v.get("reached") == "V3", [f"verification at {v.get('reached')!r}, needs V3"]
+        elif g == "constraints_post_synth":
+            ok, why = _stage_pass(ev.get("gates_base"), "post_synth",
+                                  only={"post_synth_no_unconstrained_endpoints", "post_synth_methodology_no_critical"})
+        elif g == "timing":
+            ok, why = _stage_pass(ev.get("gates_base"), "post_route", only=_ROUTE_RULES)
+        elif g == "power":
+            ok, why = _stage_pass(ev.get("gates_base"), "post_route", only=_POWER_RULES)
+            if ok and ev.get("power_ok") is False:
+                ok, why = False, ["power_ok failed for the board's power source"]
+        elif g == "drc":
+            ok1, w1 = _stage_pass(ev.get("gates_base"), "post_synth", only={"post_synth_drc_clean"})
+            ok2, w2 = _stage_pass(ev.get("gates_base"), "post_route", only=_DRC_RULES)
+            ok, why = ok1 and ok2, w1 + w2
+        elif g == "bitstream_ila":
+            ok, why = _stage_pass(ev.get("gates_ila"), "bitstream")
+        elif g == "bringup":
+            b = ev.get("bringup") or {}
+            ok, why = b.get("pass") is True, [f"bring-up failed at {b.get('failed_step')!r}"]
+        elif g in _FLOW_STAGES:
+            ok, why = _stage_pass(ev.get("gates_base"), _FLOW_STAGES[g][0])
+        else:
+            raise KeyError(g)
+        if not ok:
+            fails += why
+    return not fails, fails
+
+
+def route_failure(stage: Stage, cause: str | None) -> int:
+    """Where a failed stage goes back to. ``cause`` is a classification taken from tool output (never the
+    model's choice): ``spec`` -> 0, ``rtl`` -> 2, ``constraints`` -> 3, ``impl`` -> 5, ``timing`` -> 6, else the
+    stage itself (another attempt). The target must be one the stage machine allows, else the stage retries."""
+    target = {"spec": 0, "rtl": 2, "constraints": 3, "impl": 5, "timing": 6}.get(cause or "", stage.n)
+    return target if target in stage.loops_to or target == stage.n else stage.n
+
+
+def classify(stage: Stage, fails: list[str]) -> str | None:
+    """Map gate failures to the owning cause, following methodology.md's "Loops back to" column."""
+    text = " ".join(fails)
+    if stage.n == 2 and "model" in text and "spec" in text:
+        return "spec"
+    if stage.n in (4, 8) and any(k in text for k in ("unconstrained", "TIMING", "XDC", "methodology")):
+        return "constraints"
+    if stage.n == 4:
+        return "rtl"
+    if stage.n == 5:
+        return "timing"
+    if stage.n == 6:
+        return "constraints" if "unconstrained" in text or "cdc" in text else "rtl"
+    if stage.n == 7:
+        return "rtl"
+    if stage.n == 9:
+        return "timing" if "bitstream" in text else ("rtl" if "bring-up" in text else None)
+    return None
