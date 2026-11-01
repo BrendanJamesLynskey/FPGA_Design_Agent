@@ -259,11 +259,16 @@ def con_files(s: Session, cfg: dict) -> list[Path]:
       {"kind": {"type": "string", "enum": ["stages", "verif"]}, "variant": {"type": "string", "enum": ["base", "ila"]}})
 def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
     if kind == "verif":
-        argv = [PY, str(s.root / "flow" / "verif_gates.py"), _rel(s, s.design), "--json", "build/verif/verif_gates.json"]
+        # per design, and never a stale file: a crashed run must not be read as the previous result (05b)
+        out = s.design / "build" / "verif" / "verif_gates.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.unlink(missing_ok=True)
+        argv = [PY, str(s.root / "flow" / "verif_gates.py"), _rel(s, s.design), "--json", _rel(s, out)]
         r = s.runner.run("verif_gates", argv, s.root, timeout=300)
-        data = _read_json(s.root / "build" / "verif" / "verif_gates.json")
+        data = _read_json(out)
         return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": data}
     bdir = s.design / "build" / variant
+    (bdir / "gates.json").unlink(missing_ok=True)
     r = s.runner.run("gates", [PY, str(s.root / "flow" / "gates.py"), str(bdir), "--json", str(bdir / "gates.json")],
                      s.root, timeout=300)
     data = _read_json(bdir / "gates.json")

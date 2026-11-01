@@ -46,6 +46,7 @@ class FakeRunner:
             out.write_text(json.dumps(GATES))
         if kind == "verif_gates":
             out = cwd / argv[argv.index("--json") + 1]
+            assert "/build/verif/" in str(out) and str(out).startswith(str(cwd / "runs")), out   # never shared
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(json.dumps({"reached": "V3", "first_failed": None}))
         if kind == "build":                                         # run_vivado.sh <design> <variant>
