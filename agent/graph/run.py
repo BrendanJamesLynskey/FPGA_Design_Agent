@@ -127,7 +127,14 @@ Flow conventions (fixed by the repo; follow them exactly):
 - Tests (test writer): tests/test_{name}_rtl.py is a pytest entry that calls
   flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=...), where
   sources = flow.cocotb_run.SHELL_RTL + sorted((design_dir / "rtl").glob("*.sv")); the cocotb bench module sits
-  next to it in tests/ and checks the RTL against model.py. verif/testplan.yaml traces every spec item to a test.
+  next to it in tests/ and checks the RTL against model.py.
+- Stage 2 ends only at verification stage V3 (flow/verif_gates.py): load_skill(["verification-stages"]) first.
+  verif/testplan.yaml (schema fpga-design-agent/testplan/v0) has keys: schema, design, spec ({design_rel}/spec.yaml),
+  model, bench {{modules: [...], dir: {design_rel}/tests}}, checkers ({design_rel}/verif/checkers), formal_dir
+  ({design_rel}/verif/formal), thresholds {{seeds_min, functional_bins_pct, cover_properties_pct, line_pct,
+  toggle_pct, mutation_score_pct}}, waivers {{code_coverage: [], functional_bins: [], cover_properties: []}} (each
+  waiver needs a reason), requirements: [{{id, spec: [spec.yaml item paths], tests: [module.test], assertions,
+  cover_props, bins, formal}}], plus verif/mutants.yaml. The last gate output shows what verif_gates found.
 """
 
 
@@ -328,7 +335,10 @@ def node_gate(state: State) -> dict:
 
     def d(name, r):
         if not r.get("ok"):
-            detail.append(f"[{name}] " + str(r.get("output", ""))[-1500:])
+            out = str(r.get("output", ""))
+            errs = "\n".join(l[:400] for l in out.splitlines() if l.startswith(("E ", "%Error", "ERROR", "error"))
+                             or ": error" in l)[:1500]
+            detail.append(f"[{name}] " + (errs + "\n...\n" if errs else "") + out[-800:])
         return r
     if n == 0:
         spec, summary = _interview(rt, _spec(rt), state)

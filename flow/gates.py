@@ -391,9 +391,9 @@ def main(argv: list[str] | None = None) -> int:
     r = evaluate(a.build_dir)
     if a.json:
         a.json.write_text(json.dumps(r, indent=2) + "\n")
-    t, u = r["timing"], r["utilization"]
+    t, u = r["timing"] or {}, r["utilization"] or {}
     print(f"gates: {r['top']} ({r['variant']}): {'PASS' if r['pass'] else 'FAIL'}  "
-          f"WNS {t['wns_ns']} ns, TNS {t['tns_ns']}, WHS {t['whs_ns']} ns, THS {t['ths_ns']}; "
+          f"WNS {t.get('wns_ns')} ns, TNS {t.get('tns_ns')}, WHS {t.get('whs_ns')} ns, THS {t.get('ths_ns')}; "
           f"LUT {u.get('lut')}, FF {u.get('ff')}, BRAM {u.get('bram_tile')}, DSP {u.get('dsp')}")
     for name in STAGES:
         st = r["stages"][name]
