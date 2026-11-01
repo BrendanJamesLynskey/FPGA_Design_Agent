@@ -248,7 +248,9 @@ def node_work(state: State) -> dict:
             run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, tuple(t for t in st.tools
                                                                          if t not in ("program", "bringup")))
     except BudgetExceeded as e:
-        return {"visits": visits, "stop": f"budget: {e}"}
+        if str(e).startswith("run "):                      # run limit: stop the run
+            return {"visits": visits, "stop": f"budget: {e}"}
+        return {"visits": visits, "note": "", "detail": f"stage visit ended: {e}"}   # stage limit: gate decides
     return {"visits": visits, "note": ""}
 
 
