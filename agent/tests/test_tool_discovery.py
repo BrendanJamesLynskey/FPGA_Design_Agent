@@ -34,3 +34,17 @@ def test_bringup_writes_under_design_build(tmp_path):
     src = (Path(__file__).resolve().parents[1] / "core" / "tools.py").read_text()
     body = src.split('def bringup(', 1)[1].split("\n@tool", 1)[0]
     assert '"--results-dir"' in body and 'results" / "f0b' not in body
+
+
+def test_shell_view_is_read_only(tmp_path):
+    from agent.core import Session, dispatch
+    from agent.core.session import ROOT
+    s = Session(design=ROOT / "designs" / "t1_dimmer_counter", stage="rtl-design")
+    r = dispatch(s, "read_file", {"path": "@shell/rtl/uart_tx.sv"})
+    assert r["ok"] is not False and "module" in r["output"]
+    assert "@shell/host/protocol.py" in dispatch(s, "list_files", {"path": "@shell/"})["output"]
+    assert "@shell/host/fpga_shell.py" not in dispatch(s, "list_files", {"path": "@shell/"})["output"]
+    for bad in ("@shell/host/fpga_shell.py", "@shell/../flow/build.tcl", "@shell/rtl/../../agent/core/tools.py"):
+        assert dispatch(s, "read_file", {"path": bad})["refused"], bad
+    w = dispatch(s, "write_file", {"path": "@shell/rtl/uart_tx.sv", "content": "x"})
+    assert w["refused"] and w["rule"] == "path-jail"

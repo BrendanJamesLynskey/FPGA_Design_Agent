@@ -121,7 +121,8 @@ def _rel(s: Session, p: Path) -> str:
 
 # --- files ---------------------------------------------------------------------------------------------------------
 
-@tool("read_file", "Read a text file inside the design directory (any path, including build/ outputs).",
+@tool("read_file", "Read a text file inside the design directory (any path, including build/ outputs), or the "
+                   "test shell read-only under @shell/ (@shell/rtl/..., @shell/PROTOCOL.md, @shell/host/protocol.py).",
       {"path": {"type": "string", "maxLength": 300}, "offset": {"type": "integer", "minimum": 0},
        "max_bytes": {"type": "integer", "minimum": 1, "maximum": 100000}}, ["path"])
 def read_file(s: Session, path: str, offset: int = 0, max_bytes: int = 20000) -> dict:
@@ -146,13 +147,25 @@ def write_file(s: Session, path: str, content: str) -> dict:
             "bytes": len(content.encode())}
 
 
-@tool("list_files", "List files under a directory inside the design directory (at most 500 entries).",
+@tool("list_files", "List files under a directory inside the design directory, or @shell/ (read-only test "
+                    "shell view); at most 500 entries.",
       {"path": {"type": "string", "maxLength": 300}})
 def list_files(s: Session, path: str = ".") -> dict:
     d = s.jail.resolve(path)
     if not d.is_dir():
         return {"ok": False, "output": f"not a directory: {path}"}
-    files = sorted(str(p.relative_to(s.jail.root)) for p in d.rglob("*") if p.is_file())[:500]
+    if path.startswith(s.jail.READ_ONLY_PREFIX) or path == s.jail.READ_ONLY_PREFIX.rstrip("/"):
+        files = []
+        for p in sorted(d.rglob("*")):
+            if p.is_file() and "__pycache__" not in p.parts:
+                try:
+                    files.append(s.jail.READ_ONLY_PREFIX + str(p.relative_to(s.jail.shell_root))) \
+                        if s.jail.resolve(s.jail.READ_ONLY_PREFIX + str(p.relative_to(s.jail.shell_root))) else None
+                except SecurityError:
+                    pass
+        files = files[:500]
+    else:
+        files = sorted(str(p.relative_to(s.jail.root)) for p in d.rglob("*") if p.is_file())[:500]
     return {"output": "\n".join(files), "count": len(files)}
 
 

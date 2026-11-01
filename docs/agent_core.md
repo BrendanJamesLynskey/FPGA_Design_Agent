@@ -49,10 +49,10 @@ Stage-limited builds: `flow/prepare.py` reads `FDA_STOP_AFTER` (`synth`, `place`
   isolation (a network and filesystem namespace) is not available here: unprivileged user namespaces are blocked
   on this PC (`bwrap` fails with "setting up uid map: Permission denied"). Until then, a human reads agent-written
   test files before a hardware run.
-- `bringup.py` writes `results/f0b/<design>_bringup.json` outside the design directory (that is flow code, not the
-  agent).
-- The agent cannot read `shell/rtl` through the file tools (read-only access to the shell RTL is a possible
-  addition if designs need it; for now the knowledge bank documents the shell).
+- `bringup` writes under `designs/<name>/build/bringup/` (05b; before that it wrote `results/f0b/`).
+- The file tools can **read** the test shell under the virtual prefix `@shell/` (`@shell/rtl/...`,
+  `@shell/PROTOCOL.md`, `@shell/host/protocol.py`; owner decision 2026-11-01); every write there is refused, and
+  nothing else in the repo is visible.
 
 ## Traces and replay
 
