@@ -219,3 +219,19 @@ def test_cli_exit_status(tmp_path: Path) -> None:
     assert gates.main([str(good), "--json", str(tmp_path / "g.json")]) == 0
     assert json.loads((tmp_path / "g.json").read_text())["pass"] is True
     assert gates.main([str(_build_dir(tmp_path, "bad", "bad_top", bit=False))]) == 1
+
+
+def test_stage_limited_build_marks_later_stages_not_run(tmp_path) -> None:
+    """A build stopped after synthesis (FDA_STOP_AFTER=synth, brief 05a) has no post-route reports."""
+    import shutil
+    from pathlib import Path
+    data = Path(__file__).parent / "data"
+    for dst, src in {"methodology_rtl.rpt": "good_methodology_rtl.rpt", "timing_summary_synth.rpt": "good_timing_summary_synth.rpt",
+                     "check_timing_synth.rpt": "good_check_timing_synth.rpt", "methodology_synth.rpt": "good_methodology_synth.rpt",
+                     "drc_synth.rpt": "good_drc_synth.rpt", "qor_assessment_synth.rpt": "good_qor_assessment_synth.rpt",
+                     "utilization_synth.rpt": "good_utilization_synth.rpt"}.items():
+        shutil.copy(data / src, tmp_path / dst)
+    r = gates.evaluate(tmp_path)
+    assert {k: v["ran"] for k, v in r["stages"].items()} == {"rtl": True, "post_synth": True, "post_place": False,
+                                                              "post_route": False, "bitstream": False}
+    assert r["pass"] is True and r["first_failed_stage"] is None and r["timing"] is None

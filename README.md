@@ -128,6 +128,14 @@ separate private generic RTL pack. They summarise AMD and Digilent documents, so
 private repository; [knowledge/PACKS.md](knowledge/PACKS.md) lists each layer's size and hash, which every scored
 run will record. [docs/debug_playbook.md](docs/debug_playbook.md) is the human companion to the gates.
 
+## The agent core (05a, F2 part 1)
+
+The flow's tools as a harness-neutral core: typed functions with JSON schemas, the same tools as an MCP server
+(`python -m agent.mcp_server`), a security layer enforced in code (path jail, no free-form Tcl or shell, hardware
+policy, redaction, audit log), and one trace format with replayed-trace CI. No language model is called.
+[docs/agent_core.md](docs/agent_core.md) has the tool list, the security rules with their tests, the known gaps
+and the trace format; results of the real-tools smoke run are in [results/f2](results/f2).
+
 ## Reproduce
 
 Simulation, lint and the Python tests (what CI runs):
@@ -157,12 +165,14 @@ flow/        runner, Tcl flow, ILA insertion, gates, summaries, lint, cocotb hel
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T): board.yaml, master XDC, inventory.yaml, power_budget.md
 tools/       inventory_check.py (board inventory against the master XDC)
+agent/       core/ (tools, security, trace, replay, smoke) and mcp_server/ (05a); tests/ with the replay fixture
 designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, design.xdc, probes.yaml,
              build.yaml, tests/, BRINGUP.md
 results/     committed build and bring-up results, per milestone
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, the simulator-portable stack, gates, mutation);
+             agent_core.md (tools, MCP server, security rules, traces);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
 ```
 
@@ -177,6 +187,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 04c | Board onboarding: Nexys A7 inventory, power budget and source-aware power gate, four read-only peripheral self-checks on the board | done |
 | 04e | UltraFast (UG949) backbone: stage-grouped gates and reports in the flow ([docs/methodology.md](docs/methodology.md)), nine stage procedures in the knowledge bank, T1 rebuilt through the stages ([results/ultrafast](results/ultrafast/README.md)) | done |
 | 04f | Verification backbone: OpenTitan-style V0-V3 plus V-HW on a simulator-portable stack (cocotb bench, bound assertion checkers, SymbiYosys, Verilator coverage, mutation score); T1 reaches V3 ([docs/verification.md](docs/verification.md), [results/04f](results/04f/README.md)) | done |
+| 05a | F2 part 1: the harness-neutral core, MCP server, security layer and replayed-trace CI ([docs/agent_core.md](docs/agent_core.md)) | in review |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | F3 | Frozen benchmark, scored runs | coming |
 

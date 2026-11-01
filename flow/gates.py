@@ -308,41 +308,50 @@ def evaluate(build_dir: Path) -> dict[str, Any]:
     else:
         stages["post_place"] = {"ran": False, "gates": {}}
 
-    # --- post_route: the closure checks (UG949 ch. 6) ---
-    timing = parse_timing_summary(_read(d, "timing_summary.rpt"))
-    checks = parse_check_timing(_read(d, "check_timing.rpt"))
-    util = parse_utilization(_read(d, "utilization.rpt"))
-    drc = parse_rule_table(_read(d, "drc.rpt"))
-    meth = parse_rule_table(_read(d, "methodology.rpt"))
-    cdc = parse_cdc(_read(d, "cdc.rpt"))
-    power_text = _read(d, "power.rpt")
-    power = parse_report_power(power_text)
-    env = parse_power_environment(power_text)
-    q_r = parse_qor_assessment(_read(d, "qor_assessment_route.rpt")) if (d / "qor_assessment_route.rpt").exists() else None
-    route_gates = {
-        "setup": _slack_ok(timing["wns_ns"], timing["tns_ns"]),
-        "hold": _slack_ok(timing["whs_ns"], timing["ths_ns"]),
-        "pulse_width": _slack_ok(timing["wpws_ns"], timing["tpws_ns"]),
-        "no_unconstrained_endpoints": all(checks.get(k, 0) == 0 for k in UNCONSTRAINED_CHECKS),
-        # NSTD-1/UCIO-1 are critical warnings in report_drc but errors at write_bitstream
-        "drc_clean": _n_sev(drc, "Error") == 0 and _n_sev(drc, "Critical Warning") == 0,
-        "methodology_no_critical": _n_sev(meth, "Critical Warning") == 0,
-        "cdc_no_critical": sum(r["count"] for r in cdc["rules"] if r["severity"] == "Critical") == 0,
-    }
-    # UG949 ch. 6 "Power Closure": the junction temperature must fit the thermal budget, computed for the
-    # board's own environment (still air, no heat sink: flow/build.tcl applies boards/<board>/board.yaml)
-    if (d / "methodology_rtl.rpt").exists():      # a build of this flow version: the environment is set
-        route_gates["power_junction_ok"] = (env["airflow_lfm"] == 0 and env["heatsink"] == "none"
-                                            and env["junction_c"] is not None and env["junction_c"] <= JUNCTION_MAX_C)
-    stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r}
+    # --- post_route and bitstream: only if the flow got that far (a stage-limited build, brief 05a, stops earlier) ---
+    routed = (d / "timing_summary.rpt").exists()
+    timing = checks = util = power = env = None
+    drc = meth = []
+    cdc = None
+    if not routed:
+        stages["post_route"] = {"ran": False, "gates": {}}
+        stages["bitstream"] = {"ran": False, "gates": {}}
+    else:
+        # --- post_route: the closure checks (UG949 ch. 6) ---
+        timing = parse_timing_summary(_read(d, "timing_summary.rpt"))
+        checks = parse_check_timing(_read(d, "check_timing.rpt"))
+        util = parse_utilization(_read(d, "utilization.rpt"))
+        drc = parse_rule_table(_read(d, "drc.rpt"))
+        meth = parse_rule_table(_read(d, "methodology.rpt"))
+        cdc = parse_cdc(_read(d, "cdc.rpt"))
+        power_text = _read(d, "power.rpt")
+        power = parse_report_power(power_text)
+        env = parse_power_environment(power_text)
+        q_r = parse_qor_assessment(_read(d, "qor_assessment_route.rpt")) if (d / "qor_assessment_route.rpt").exists() else None
+        route_gates = {
+            "setup": _slack_ok(timing["wns_ns"], timing["tns_ns"]),
+            "hold": _slack_ok(timing["whs_ns"], timing["ths_ns"]),
+            "pulse_width": _slack_ok(timing["wpws_ns"], timing["tpws_ns"]),
+            "no_unconstrained_endpoints": all(checks.get(k, 0) == 0 for k in UNCONSTRAINED_CHECKS),
+            # NSTD-1/UCIO-1 are critical warnings in report_drc but errors at write_bitstream
+            "drc_clean": _n_sev(drc, "Error") == 0 and _n_sev(drc, "Critical Warning") == 0,
+            "methodology_no_critical": _n_sev(meth, "Critical Warning") == 0,
+            "cdc_no_critical": sum(r["count"] for r in cdc["rules"] if r["severity"] == "Critical") == 0,
+        }
+        # UG949 ch. 6 "Power Closure": the junction temperature must fit the thermal budget, computed for the
+        # board's own environment (still air, no heat sink: flow/build.tcl applies boards/<board>/board.yaml)
+        if (d / "methodology_rtl.rpt").exists():      # a build of this flow version: the environment is set
+            route_gates["power_junction_ok"] = (env["airflow_lfm"] == 0 and env["heatsink"] == "none"
+                                                and env["junction_c"] is not None and env["junction_c"] <= JUNCTION_MAX_C)
+        stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r}
 
-    # --- bitstream ---
-    bit = d / f"{top}.bit"
-    ltx = d / f"{top}.ltx"
-    bit_gates = {"bitstream_present": bit.exists() and bit.stat().st_size > 0}
-    if variant == "ila":
-        bit_gates["debug_probes_present"] = ltx.exists() and ltx.stat().st_size > 0
-    stages["bitstream"] = {"ran": True, "gates": bit_gates}
+        # --- bitstream ---
+        bit = d / f"{top}.bit"
+        ltx = d / f"{top}.ltx"
+        bit_gates = {"bitstream_present": bit.exists() and bit.stat().st_size > 0}
+        if variant == "ila":
+            bit_gates["debug_probes_present"] = ltx.exists() and ltx.stat().st_size > 0
+        stages["bitstream"] = {"ran": True, "gates": bit_gates}
 
     gates: dict[str, bool] = {}
     first_failed = None
@@ -363,12 +372,12 @@ def evaluate(build_dir: Path) -> dict[str, Any]:
         "timing": timing,
         "check_timing": checks,
         "utilization": util,
-        "drc": _rule_summary(drc),
-        "methodology": _rule_summary(meth),
+        "drc": _rule_summary(drc) if routed else None,
+        "methodology": _rule_summary(meth) if routed else None,
         "cdc": cdc,
         "power": power,
         "power_environment": env,
-        "bitstream": {"file": bit.name, "bytes": bit.stat().st_size if bit.exists() else 0},
+        "bitstream": {"file": bit.name, "bytes": bit.stat().st_size if bit.exists() else 0} if routed else None,
         "build_stamp": prep.get("build_stamp"),
         "sources_sha256": prep.get("sources_sha256"),
     }

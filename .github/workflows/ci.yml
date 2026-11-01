@@ -22,8 +22,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y tcl          # prepare.py's Tcl is loaded by a real tclsh
-          pip install pyyaml pyserial pytest cocotb==2.0.1
-      - name: pytest (no simulator)
+          pip install pyyaml pyserial pytest cocotb==2.0.1 mcp==2.3.0 jsonschema
+      - name: pytest (no simulator; includes the agent core: tools, MCP schemas, red-team, replayed T1 episode)
         run: python -m pytest -q --ignore-glob='*_rtl.py'
       - name: Board inventory against the master XDC (brief 04c)
         run: python tools/inventory_check.py boards/nexys_a7_100t

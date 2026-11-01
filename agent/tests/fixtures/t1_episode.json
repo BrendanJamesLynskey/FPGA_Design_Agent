@@ -1,0 +1,353 @@
+{
+ "design": "t1_dimmer_counter",
+ "recorded": "2026-11-01",
+ "steps": [
+  {
+   "tool": "stage_note",
+   "arguments": {
+    "stage": "clarify",
+    "text": "T1: LED dimmer and push-button counter; spec.yaml is signed off."
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "read_file",
+   "arguments": {
+    "path": "spec.yaml",
+    "max_bytes": 4000
+   },
+   "expect": {
+    "ok": true,
+    "refused": false,
+    "digest": "6b423baf85ed1eea"
+   }
+  },
+  {
+   "tool": "list_files",
+   "arguments": {
+    "path": "rtl"
+   },
+   "expect": {
+    "ok": true,
+    "refused": false,
+    "digest": "e0346899df492ff5"
+   }
+  },
+  {
+   "tool": "stage_note",
+   "arguments": {
+    "stage": "board-and-device-planning",
+    "text": "Pins and standards from the master XDC; one 100 MHz clock."
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "search_docs",
+   "arguments": {
+    "query": "clock capable input global buffer",
+    "k": 3,
+    "sections": [
+     "clocking"
+    ]
+   },
+   "bank": true,
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "load_skill",
+   "arguments": {
+    "sections": [
+     "clocking"
+    ]
+   },
+   "bank": true,
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "stage_note",
+   "arguments": {
+    "stage": "rtl-design-creation",
+    "text": "RTL exists; lint, simulate, formal."
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "lint",
+   "arguments": {},
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "simulate",
+   "arguments": {
+    "sim": "icarus"
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "formal",
+   "arguments": {},
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "stage_note",
+   "arguments": {
+    "stage": "constraints",
+    "text": "Check design.xdc against the board."
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "check_constraints",
+   "arguments": {},
+   "expect": {
+    "ok": true,
+    "refused": false,
+    "digest": "75b4f17b611dd316"
+   }
+  },
+  {
+   "tool": "stage_note",
+   "arguments": {
+    "stage": "synthesis",
+    "text": "Build to post_synth."
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "build",
+   "arguments": {
+    "until": "synth"
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "gates",
+   "arguments": {
+    "kind": "stages"
+   },
+   "expect": {
+    "ok": false,
+    "refused": false
+   }
+  },
+  {
+   "tool": "report",
+   "arguments": {
+    "name": "utilization_synth.rpt",
+    "max_bytes": 3000
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "stage_note",
+   "arguments": {
+    "stage": "implementation",
+    "text": "Build to the bitstream."
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "build",
+   "arguments": {
+    "until": "bitstream"
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "gates",
+   "arguments": {
+    "kind": "stages"
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "stage_note",
+   "arguments": {
+    "stage": "power-closure",
+    "text": "Read report_power."
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  },
+  {
+   "tool": "report",
+   "arguments": {
+    "name": "power.rpt",
+    "max_bytes": 3000
+   },
+   "expect": {
+    "ok": true,
+    "refused": false
+   }
+  }
+ ],
+ "runs": [
+  {
+   "kind": "lint",
+   "argv": [
+    "verilator",
+    "--lint-only",
+    "-Wall",
+    "--top-module",
+    "t1_dimmer_counter_top",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/rtl/debounce.sv",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/rtl/dimmer_counter.sv",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/rtl/sevenseg_scan.sv",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/shell/rtl/fpga_shell.sv",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/shell/rtl/reset_sync.sv",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/shell/rtl/shell_core.sv",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/shell/rtl/sync2.sv",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/shell/rtl/uart_rx.sv",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/shell/rtl/uart_tx.sv"
+   ],
+   "returncode": 0,
+   "stdout": "- V e r i l a t i o n   R e p o r t: Verilator 5.048 2026-04-26 rev vUNKNOWN-built20260429\n- Verilator: Built from 0.317 MB sources in 11 modules, into 0.108 MB in 3 C++ files needing 0.000 MB\n- Verilator: Walltime 0.035 s (elab=0.005, cvt=0.018, bld=0.000); cpu 0.035 s on 1 threads; allocated 20.031 MB\n",
+   "stderr": "",
+   "seconds": 0.13,
+   "files": {}
+  },
+  {
+   "kind": "simulate",
+   "argv": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "-x",
+    "-p",
+    "no:cacheprovider",
+    "designs/t1_dimmer_counter/tests/test_t1_rtl.py",
+    "designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py"
+   ],
+   "returncode": 0,
+   "stdout": "....                                                                     [100%]\n4 passed in 129.06s (0:02:09)\n",
+   "stderr": "",
+   "seconds": 129.39,
+   "files": {}
+  },
+  {
+   "kind": "formal",
+   "argv": [
+    "formal.sh",
+    "designs/t1_dimmer_counter"
+   ],
+   "returncode": 0,
+   "stdout": "formal debounce_bmc: PASS 0 0\nformal debounce_cover: PASS 0 0\nformal scan_bmc: PASS 0 0\nformal scan_cover: PASS 0 1\n",
+   "stderr": "",
+   "seconds": 3.88,
+   "files": {}
+  },
+  {
+   "kind": "build",
+   "argv": [
+    "run_vivado.sh",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter",
+    "base"
+   ],
+   "returncode": 1,
+   "stdout": "run_vivado: preflight ok (8337 MiB available, no other Vivado)\nrun_vivado: designs/t1_dimmer_counter base: exit 0, 176.1 s, Vivado peak RSS 2298 MiB, scope peak 2781 MiB (anon 1763 MiB, swap 142 MiB; cap 6G hit 0 times, OOM kills 0)\n",
+   "stderr": "Traceback (most recent call last):\n  File \"/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py\", line 403, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py\", line 382, in main\n    r = evaluate(a.build_dir)\n        ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py\", line 312, in evaluate\n    timing = parse_timing_summary(_read(d, \"timing_summary.rpt\"))\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py\", line 251, in _read\n    raise FileNotFoundError(f\"{p} missing: did the flow reach the reports stage?\")\nFileNotFoundError: /home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/build/base/timing_summary.rpt missing: did the flow reach the reports stage?\n",
+   "seconds": 176.58,
+   "files": {
+    "designs/t1_dimmer_counter/build/base/run.json": "{\n  \"design\": \"designs/t1_dimmer_counter\",\n  \"variant\": \"base\",\n  \"exit_code\": 0,\n  \"wall_s\": 176.1,\n  \"vivado_peak_rss_mib\": 2298,\n  \"scope_memory_peak_mib\": 2781,\n  \"scope_anon_peak_mib\": 1763,\n  \"scope_swap_peak_mib\": 142,\n  \"scope_cap_hits\": 0,\n  \"scope_oom_kills\": 0,\n  \"memory_cap\": \"6G\",\n  \"max_threads\": 1,\n  \"nice\": 15,\n  \"vivado_version\": \"2025.2\",\n  \"git_commit\": \"e39281a0b4f6b5a1e093189b0123e571731d7704\",\n  \"git_dirty\": true,\n  \"build_stamp\": \"dfd4624e\",\n  \"sources_sha256\": \"dfd4624ed4d00ad0da08aca9fa2928f684fb2f67011b99ea33c1395ca7863ee7\",\n  \"stages_s\": {\n    \"read\": 18.3,\n    \"elaborate\": 77.2,\n    \"rtl_reports\": 78.3,\n    \"synth\": 128.4,\n    \"synth_reports\": 140.8\n  }\n}\n",
+    "designs/t1_dimmer_counter/build/ila/run.json": "{\n  \"design\": \"designs/t1_dimmer_counter\",\n  \"variant\": \"ila\",\n  \"exit_code\": 0,\n  \"wall_s\": 390.0,\n  \"vivado_peak_rss_mib\": 2630,\n  \"scope_memory_peak_mib\": 4511,\n  \"scope_anon_peak_mib\": 4232,\n  \"scope_swap_peak_mib\": 0,\n  \"scope_cap_hits\": 0,\n  \"scope_oom_kills\": 0,\n  \"memory_cap\": \"6G\",\n  \"max_threads\": 1,\n  \"nice\": 15,\n  \"vivado_version\": \"2025.2\",\n  \"git_commit\": \"4587566787c6e9fbf1af7a0570e0ffafec6c0c24\",\n  \"git_dirty\": false,\n  \"build_stamp\": \"dfd4624e\",\n  \"sources_sha256\": \"dfd4624ed4d00ad0da08aca9fa2928f684fb2f67011b99ea33c1395ca7863ee7\",\n  \"stages_s\": {\n    \"read\": 9.5,\n    \"synth\": 64.2,\n    \"ila_inserted\": 64.8,\n    \"opt\": 271.4,\n    \"place\": 290.7,\n    \"phys_opt\": 292.5,\n    \"route\": 336.5,\n    \"reports\": 348.2,\n    \"bitstream\": 384.5\n  }\n}\n"
+   }
+  },
+  {
+   "kind": "gates",
+   "argv": [
+    "python",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/build/base",
+    "--json",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/build/base/gates.json"
+   ],
+   "returncode": 1,
+   "stdout": "",
+   "stderr": "Traceback (most recent call last):\n  File \"/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py\", line 403, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py\", line 382, in main\n    r = evaluate(a.build_dir)\n        ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py\", line 312, in evaluate\n    timing = parse_timing_summary(_read(d, \"timing_summary.rpt\"))\n                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py\", line 251, in _read\n    raise FileNotFoundError(f\"{p} missing: did the flow reach the reports stage?\")\nFileNotFoundError: /home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/build/base/timing_summary.rpt missing: did the flow reach the reports stage?\n",
+   "seconds": 0.05,
+   "files": {}
+  },
+  {
+   "kind": "build",
+   "argv": [
+    "run_vivado.sh",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter",
+    "base"
+   ],
+   "returncode": 0,
+   "stdout": "run_vivado: preflight ok (8722 MiB available, no other Vivado)\nrun_vivado: designs/t1_dimmer_counter base: exit 0, 170.9 s, Vivado peak RSS 2693 MiB, scope peak 2130 MiB (anon 2067 MiB, swap 0 MiB; cap 6G hit 0 times, OOM kills 0)\ngates: t1_dimmer_counter_top (base): PASS  WNS 3.911 ns, TNS 0.0, WHS 0.106 ns, THS 0.0; LUT 495, FF 488, BRAM 0, DSP 0\n  rtl: pass\n    ok   rtl_methodology_no_critical\n  post_synth: pass\n    ok   post_synth_no_unconstrained_endpoints\n    ok   post_synth_methodology_no_critical\n    ok   post_synth_drc_clean\n    ok   post_synth_qor_assessment\n  post_place: pass\n    ok   post_place_hold\n  post_route: pass\n    ok   setup\n    ok   hold\n    ok   pulse_width\n    ok   no_unconstrained_endpoints\n    ok   drc_clean\n    ok   methodology_no_critical\n    ok   cdc_no_critical\n    ok   power_junction_ok\n  bitstream: pass\n    ok   bitstream_present\n",
+   "stderr": "",
+   "seconds": 171.18,
+   "files": {
+    "designs/t1_dimmer_counter/build/base/run.json": "{\n  \"design\": \"designs/t1_dimmer_counter\",\n  \"variant\": \"base\",\n  \"exit_code\": 0,\n  \"wall_s\": 170.9,\n  \"vivado_peak_rss_mib\": 2693,\n  \"scope_memory_peak_mib\": 2130,\n  \"scope_anon_peak_mib\": 2067,\n  \"scope_swap_peak_mib\": 0,\n  \"scope_cap_hits\": 0,\n  \"scope_oom_kills\": 0,\n  \"memory_cap\": \"6G\",\n  \"max_threads\": 1,\n  \"nice\": 15,\n  \"vivado_version\": \"2025.2\",\n  \"git_commit\": \"e39281a0b4f6b5a1e093189b0123e571731d7704\",\n  \"git_dirty\": true,\n  \"build_stamp\": \"dfd4624e\",\n  \"sources_sha256\": \"dfd4624ed4d00ad0da08aca9fa2928f684fb2f67011b99ea33c1395ca7863ee7\",\n  \"stages_s\": {\n    \"read\": 10.6,\n    \"elaborate\": 25.9,\n    \"rtl_reports\": 26.6,\n    \"synth\": 73.7,\n    \"synth_reports\": 81.8,\n    \"opt\": 85.4,\n    \"place\": 91.4,\n    \"phys_opt\": 91.8,\n    \"place_reports\": 92.4,\n    \"route\": 127.0,\n    \"reports\": 132.0,\n    \"bitstream\": 161.4\n  }\n}\n",
+    "designs/t1_dimmer_counter/build/ila/run.json": "{\n  \"design\": \"designs/t1_dimmer_counter\",\n  \"variant\": \"ila\",\n  \"exit_code\": 0,\n  \"wall_s\": 390.0,\n  \"vivado_peak_rss_mib\": 2630,\n  \"scope_memory_peak_mib\": 4511,\n  \"scope_anon_peak_mib\": 4232,\n  \"scope_swap_peak_mib\": 0,\n  \"scope_cap_hits\": 0,\n  \"scope_oom_kills\": 0,\n  \"memory_cap\": \"6G\",\n  \"max_threads\": 1,\n  \"nice\": 15,\n  \"vivado_version\": \"2025.2\",\n  \"git_commit\": \"4587566787c6e9fbf1af7a0570e0ffafec6c0c24\",\n  \"git_dirty\": false,\n  \"build_stamp\": \"dfd4624e\",\n  \"sources_sha256\": \"dfd4624ed4d00ad0da08aca9fa2928f684fb2f67011b99ea33c1395ca7863ee7\",\n  \"stages_s\": {\n    \"read\": 9.5,\n    \"synth\": 64.2,\n    \"ila_inserted\": 64.8,\n    \"opt\": 271.4,\n    \"place\": 290.7,\n    \"phys_opt\": 292.5,\n    \"route\": 336.5,\n    \"reports\": 348.2,\n    \"bitstream\": 384.5\n  }\n}\n"
+   }
+  },
+  {
+   "kind": "gates",
+   "argv": [
+    "python",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/flow/gates.py",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/build/base",
+    "--json",
+    "/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/build/base/gates.json"
+   ],
+   "returncode": 0,
+   "stdout": "gates: t1_dimmer_counter_top (base): PASS  WNS 3.911 ns, TNS 0.0, WHS 0.106 ns, THS 0.0; LUT 495, FF 488, BRAM 0, DSP 0\n  rtl: pass\n    ok   rtl_methodology_no_critical\n  post_synth: pass\n    ok   post_synth_no_unconstrained_endpoints\n    ok   post_synth_methodology_no_critical\n    ok   post_synth_drc_clean\n    ok   post_synth_qor_assessment\n  post_place: pass\n    ok   post_place_hold\n  post_route: pass\n    ok   setup\n    ok   hold\n    ok   pulse_width\n    ok   no_unconstrained_endpoints\n    ok   drc_clean\n    ok   methodology_no_critical\n    ok   cdc_no_critical\n    ok   power_junction_ok\n  bitstream: pass\n    ok   bitstream_present\n",
+   "stderr": "",
+   "seconds": 0.06,
+   "files": {
+    "designs/t1_dimmer_counter/build/base/gates.json": "{\n  \"build_dir\": \"/home/brendan/Claude_sandbox/FPGA_Design_Agent/designs/t1_dimmer_counter/build/base\",\n  \"top\": \"t1_dimmer_counter_top\",\n  \"variant\": \"base\",\n  \"pass\": true,\n  \"first_failed_stage\": null,\n  \"gates\": {\n    \"rtl_methodology_no_critical\": true,\n    \"post_synth_no_unconstrained_endpoints\": true,\n    \"post_synth_methodology_no_critical\": true,\n    \"post_synth_drc_clean\": true,\n    \"post_synth_qor_assessment\": true,\n    \"post_place_hold\": true,\n    \"setup\": true,\n    \"hold\": true,\n    \"pulse_width\": true,\n    \"no_unconstrained_endpoints\": true,\n    \"drc_clean\": true,\n    \"methodology_no_critical\": true,\n    \"cdc_no_critical\": true,\n    \"power_junction_ok\": true,\n    \"bitstream_present\": true\n  },\n  \"stages\": {\n    \"rtl\": {\n      \"ran\": true,\n      \"gates\": {\n        \"rtl_methodology_no_critical\": true\n      },\n      \"methodology\": {\n        \"errors\": 0,\n        \"critical_warnings\": 0,\n        \"warnings\": 54,\n        \"rules\": [\n          {\n            \"rule\": \"XDCH-2\",\n            \"severity\": \"Warning\",\n            \"description\": \"Same min and max delay values on IO port\",\n            \"count\": 54\n          }\n        ]\n      },\n      \"pass\": true\n    },\n    \"post_synth\": {\n      \"ran\": true,\n      \"gates\": {\n        \"post_synth_no_unconstrained_endpoints\": true,\n        \"post_synth_methodology_no_critical\": true,\n        \"post_synth_drc_clean\": true,\n        \"post_synth_qor_assessment\": true\n      },\n      \"timing\": {\n        \"wns_ns\": 4.602,\n        \"tns_ns\": 0.0,\n        \"tns_failing_endpoints\": 0,\n        \"tns_total_endpoints\": 1232,\n        \"whs_ns\": 0.045,\n        \"ths_ns\": 0.0,\n        \"ths_failing_endpoints\": 0,\n        \"ths_total_endpoints\": 1232,\n        \"wpws_ns\": 4.5,\n        \"tpws_ns\": 0.0,\n        \"tpws_failing_endpoints\": 0,\n        \"tpws_total_endpoints\": 489,\n        \"timing_met\": true\n      },\n      \"check_timing\": {\n        \"no_clock\": 0,\n        \"constant_clock\": 0,\n        \"pulse_width_clock\": 0,\n        \"unconstrained_internal_endpoints\": 0,\n        \"no_input_delay\": 0,\n        \"no_output_delay\": 0,\n        \"multiple_clock\": 0,\n        \"generated_clocks\": 0,\n        \"loops\": 0,\n        \"partial_input_delay\": 0,\n        \"partial_output_delay\": 0,\n        \"latch_loops\": 0\n      },\n      \"methodology\": {\n        \"errors\": 0,\n        \"critical_warnings\": 0,\n        \"warnings\": 54,\n        \"rules\": [\n          {\n            \"rule\": \"XDCH-2\",\n            \"severity\": \"Warning\",\n            \"description\": \"Same min and max delay values on IO port\",\n            \"count\": 54\n          }\n        ]\n      },\n      \"drc\": {\n        \"errors\": 0,\n        \"critical_warnings\": 0,\n        \"warnings\": 0,\n        \"rules\": []\n      },\n      \"qor_assessment\": {\n        \"score\": 5,\n        \"meaning\": \"Design runs will meet timing\",\n        \"flow_guidance\": [\n          \"Run report_methodology and fix or waive warnings\",\n          \"Continue to route_design\"\n        ],\n        \"review\": [\n          {\n            \"name\": \"Max LUT Combined\",\n            \"threshold\": \"20.00\",\n            \"actual\": \"46.64\",\n            \"affects_score\": false\n          }\n        ]\n      },\n      \"utilization\": {\n        \"lut\": 506,\n        \"lut_available\": 63400,\n        \"lutram\": 0,\n        \"lutram_available\": 19000,\n        \"ff\": 488,\n        \"ff_available\": 126800,\n        \"carry4\": 29,\n        \"bram_tile\": 0,\n        \"bram_tile_available\": 135,\n        \"dsp\": 0,\n        \"dsp_available\": 240,\n        \"iob\": 55,\n        \"iob_available\": 210,\n        \"bufg\": 1,\n        \"bufg_available\": 32\n      },\n      \"pass\": true\n    },\n    \"post_place\": {\n      \"ran\": true,\n      \"gates\": {\n        \"post_place_hold\": true\n      },\n      \"timing\": {\n        \"wns_ns\": 3.938,\n        \"tns_ns\": 0.0,\n        \"tns_failing_endpoints\": 0,\n        \"tns_total_endpoints\": 1232,\n        \"whs_ns\": -0.027,\n        \"ths_ns\": -0.027,\n        \"ths_failing_endpoints\": 1,\n        \"ths_total_endpoints\": 1232,\n        \"wpws_ns\": 4.5,\n        \"tpws_ns\": 0.0,\n        \"tpws_failing_endpoints\": 0,\n        \"tpws_total_endpoints\": 489,\n        \"timing_met\": false\n      },\n      \"pass\": true\n    },\n    \"post_route\": {\n      \"ran\": true,\n      \"gates\": {\n        \"setup\": true,\n        \"hold\": true,\n        \"pulse_width\": true,\n        \"no_unconstrained_endpoints\": true,\n        \"drc_clean\": true,\n        \"methodology_no_critical\": true,\n        \"cdc_no_critical\": true,\n        \"power_junction_ok\": true\n      },\n      \"qor_assessment\": {\n        \"score\": 5,\n        \"meaning\": \"Design runs will meet timing\",\n        \"flow_guidance\": [\n          \"Run report_methodology and fix or waive warnings\",\n          \"Run the incremental flow when making design changes\"\n        ],\n        \"review\": [\n          {\n            \"name\": \"Max LUT Combined\",\n            \"threshold\": \"20.00\",\n            \"actual\": \"26.06\",\n            \"affects_score\": false\n          }\n        ]\n      },\n      \"pass\": true\n    },\n    \"bitstream\": {\n      \"ran\": true,\n      \"gates\": {\n        \"bitstream_present\": true\n      },\n      \"pass\": true\n    }\n  },\n  \"timing\": {\n    \"wns_ns\": 3.911,\n    \"tns_ns\": 0.0,\n    \"tns_failing_endpoints\": 0,\n    \"tns_total_endpoints\": 1232,\n    \"whs_ns\": 0.106,\n    \"ths_ns\": 0.0,\n    \"ths_failing_endpoints\": 0,\n    \"ths_total_endpoints\": 1232,\n    \"wpws_ns\": 4.5,\n    \"tpws_ns\": 0.0,\n    \"tpws_failing_endpoints\": 0,\n    \"tpws_total_endpoints\": 489,\n    \"timing_met\": true\n  },\n  \"check_timing\": {\n    \"no_clock\": 0,\n    \"constant_clock\": 0,\n    \"pulse_width_clock\": 0,\n    \"unconstrained_internal_endpoints\": 0,\n    \"no_input_delay\": 0,\n    \"no_output_delay\": 0,\n    \"multiple_clock\": 0,\n    \"generated_clocks\": 0,\n    \"loops\": 0,\n    \"partial_input_delay\": 0,\n    \"partial_output_delay\": 0,\n    \"latch_loops\": 0\n  },\n  \"utilization\": {\n    \"lut\": 495,\n    \"lut_available\": 63400,\n    \"lutram\": 0,\n    \"lutram_available\": 19000,\n    \"ff\": 488,\n    \"ff_available\": 126800,\n    \"carry4\": 29,\n    \"bram_tile\": 0,\n    \"bram_tile_available\": 135,\n    \"dsp\": 0,\n    \"dsp_available\": 240,\n    \"iob\": 55,\n    \"iob_available\": 210,\n    \"bufg\": 1,\n    \"bufg_available\": 32\n  },\n  \"drc\": {\n    \"errors\": 0,\n    \"critical_warnings\": 0,\n    \"warnings\": 0,\n    \"rules\": []\n  },\n  \"methodology\": {\n    \"errors\": 0,\n    \"critical_warnings\": 0,\n    \"warnings\": 54,\n    \"rules\": [\n      {\n        \"rule\": \"XDCH-2\",\n        \"severity\": \"Warning\",\n        \"description\": \"Same min and max delay values on IO port\",\n        \"count\": 54\n      }\n    ]\n  },\n  \"cdc\": {\n    \"safely_timed\": true,\n    \"rules\": []\n  },\n  \"power\": {\n    \"total_w\": 0.15,\n    \"dynamic_w\": 0.036,\n    \"static_w\": 0.114,\n    \"confidence\": \"Low\",\n    \"clocks_w\": 0.003,\n    \"slice_logic_w\": 0.001,\n    \"signals_w\": 0.001,\n    \"io_w\": 0.031,\n    \"core_w\": 0.005\n  },\n  \"power_environment\": {\n    \"junction_c\": 42.7,\n    \"max_ambient_c\": 82.3,\n    \"theta_ja_c_per_w\": 18.2,\n    \"ambient_c\": 40.0,\n    \"airflow_lfm\": 0.0,\n    \"heatsink\": \"none\",\n    \"board\": \"small (4\\\"x4\\\")\",\n    \"board_layers\": \"4to7 (4 to 7 Layers)\"\n  },\n  \"bitstream\": {\n    \"file\": \"t1_dimmer_counter_top.bit\",\n    \"bytes\": 674216\n  },\n  \"build_stamp\": \"dfd4624e\",\n  \"sources_sha256\": \"dfd4624ed4d00ad0da08aca9fa2928f684fb2f67011b99ea33c1395ca7863ee7\"\n}\n"
+   }
+  }
+ ]
+}

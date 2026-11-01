@@ -19,8 +19,7 @@ from typing import Any, Protocol
 
 ENV_KEEP = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "SIM", "VIVADO", "HW_SERVER", "MEM_MAX", "MIN_AVAIL_GB",
             "HW_MIN_AVAIL_GB", "FDA_BOARDS_FILE", "VERILATOR_ROOT", "PYTHONPATH", "XDG_RUNTIME_DIR",
-            "DBUS_SESSION_BUS_ADDRESS", "PORT_VERILATORS", "USER", "LOGNAME")
-OPT = Path.home() / ".local" / "opt"
+            "DBUS_SESSION_BUS_ADDRESS", "PORT_VERILATORS", "USER", "LOGNAME", "LD_LIBRARY_PATH", "YOSYS_DATDIR")
 
 
 @dataclass
@@ -39,11 +38,6 @@ class Runner(Protocol):
 
 def scrubbed_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     env = {k: v for k, v in os.environ.items() if k in ENV_KEEP}
-    path = env.get("PATH", "/usr/bin:/bin")
-    for d in (OPT / "verilator-5048" / "bin", OPT / "formal-deb" / "bin", OPT / "formal-deb" / "usr" / "bin"):
-        if d.is_dir() and str(d) not in path:
-            path = f"{d}:{path}"
-    env["PATH"] = path
     env.update(extra or {})
     return env
 

@@ -246,7 +246,8 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
                      s.root, timeout=300)
     data = _read_json(bdir / "gates.json")
     return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "variant": variant,
-            "gates": data, "first_failed_stage": (data or {}).get("first_failed_stage")}
+            "gates": data, "first_failed_stage": (data or {}).get("first_failed_stage"),
+            "stages_ran": {k: v.get("ran") for k, v in ((data or {}).get("stages") or {}).items()}}
 
 
 def _read_json(p: Path) -> Any:
