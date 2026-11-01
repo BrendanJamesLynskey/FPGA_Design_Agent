@@ -165,7 +165,16 @@ def list_files(s: Session, path: str = ".") -> dict:
                     pass
         files = files[:500]
     else:
-        files = sorted(str(p.relative_to(s.jail.root)) for p in d.rglob("*") if p.is_file())[:500]
+        files = []
+        for p in sorted(d.rglob("*")):
+            if p.is_file():
+                rel = str(p.relative_to(s.jail.root))
+                try:
+                    s.jail.resolve(rel)                 # a narrowed (role) jail hides what it would refuse
+                    files.append(rel)
+                except SecurityError:
+                    pass
+        files = files[:500]
     return {"output": "\n".join(files), "count": len(files)}
 
 
