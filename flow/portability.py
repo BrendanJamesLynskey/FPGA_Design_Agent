@@ -63,10 +63,9 @@ def check_verilator(files: list[str], top: str, defines: list[str]) -> list[dict
             out_rows.append({"tool": "verilator", "status": "skipped", "why": "verilator not installed"})
             continue
         env = dict(os.environ)
-        for cand in (Path(exe).parent.parent, Path(exe).parent.parent / "share" / "verilator"):
-            if (cand / "include" / "verilated.h").is_file():              # a .deb extracted without root, a source install, or /usr
-                env["VERILATOR_ROOT"] = str(cand)
-                break
+        root = Path(exe).parent.parent
+        if (root / "include" / "verilated.h").is_file():   # a .deb extracted without root: bin/ sits in the root
+            env["VERILATOR_ROOT"] = str(root)               # (apt and source installs find their own root)
         ver = _run([exe, "--version"], env)[1].strip().splitlines()[0]
         with tempfile.TemporaryDirectory() as td:
             rc, out = _run([exe, "--lint-only", "--assert", "--timing", "-Wno-fatal", "--top-module", top,
