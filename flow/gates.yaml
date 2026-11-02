@@ -1,0 +1,9 @@
+# Thresholds the flow owns (read by flow/architecture.py and flow/gates.py). The agent never edits this file.
+#
+# resource_sanity (brief 05d, Taylor addition 4): at post-synthesis the LUT/FF/BRAM/DSP counts must lie within the
+# architecture's predicted [low, high] range widened by this factor (low / factor ... high * factor). A result
+# outside it fails post_synth_resources_in_range and routes back to architecture (the prediction was wrong) or RTL
+# (unintended logic: inferred latches, a RAM that became LUTs).
+resource_sanity:
+  factor: 2.0
+  resources: [lut, ff, bram_tile, dsp]

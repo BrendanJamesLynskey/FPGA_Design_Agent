@@ -1,0 +1,22 @@
+# T1 architecture (hand-written reference; the machine-readable half of the architecture note).
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - {name: reset_sync, function: "asynchronous assert, synchronous release of CPU_RESETN (test shell)"}
+  - {name: fpga_shell, function: "UART register window (test shell)"}
+  - {name: dimmer_counter, function: "debounced up/down/clear counter, PWM LEDs, display scan"}
+  - {name: debounce, function: "two-flop synchroniser and counting debounce, one per button"}
+  - {name: sevenseg_scan, function: "eight-digit multiplexed display"}
+interfaces:
+  - {name: register_window, between: [fpga_shell, dimmer_counter], protocol: simple}
+clock_domains:
+  - {name: sys, clock: CLK100MHZ, freq_mhz: 100}
+reset:
+  synchronisers: [reset_sync]
+crossings:
+  - {from: async, to: sys, signal: "BTNU BTND BTNC SW UART_TXD_IN", primitive: sync2}
+  - {from: async, to: sys, signal: CPU_RESETN, primitive: reset_sync}
+predicted_resources:
+  lut: [350, 700]
+  ff: [350, 700]
+  bram_tile: 0
+  dsp: 0
