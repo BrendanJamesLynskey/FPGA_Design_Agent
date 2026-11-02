@@ -468,3 +468,13 @@ def test_interview_limit_defaults_the_rest_instead_of_crashing_the_run():
         q = iv.ask(Question(id=f"q{i}", text=f"t{i}", default="d", reason="r"), None)
     s = iv.summary()
     assert s["asked"] == 4 and q.by == "limit" and q.status == "defaulted"
+
+
+def test_build_environment_finds_the_user_bus_when_the_launcher_lost_it(monkeypatch, tmp_path):
+    from agent.core import runner as rn
+    monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
+    monkeypatch.delenv("DBUS_SESSION_BUS_ADDRESS", raising=False)
+    env = rn.scrubbed_env(tools={"path": [], "env": {}})
+    import os
+    if Path(f"/run/user/{os.getuid()}/bus").exists():
+        assert env["XDG_RUNTIME_DIR"] == f"/run/user/{os.getuid()}" and env["DBUS_SESSION_BUS_ADDRESS"].startswith("unix:path=")

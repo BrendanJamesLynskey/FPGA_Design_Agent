@@ -1,0 +1,39 @@
+{
+ "brief": "05c2",
+ "run": "claude_code --cc-model claude-opus-5-5, T1, --verif-level V1, oracle interview, no hardware approval",
+ "run_id": "20261102-162947-f7a8",
+ "harness": "claude_code",
+ "model": "claude-opus-5-5",
+ "claude_code_version": "2.1.316 (Claude Code)",
+ "stages_visited": [
+  0,
+  1,
+  1,
+  2,
+  3,
+  3,
+  3,
+  3,
+  3
+ ],
+ "stop": "stage 3 visited more than 4 times",
+ "loops": 5,
+ "turns": 126,
+ "wall_s": 1501.6,
+ "tokens": 2321239,
+ "cost_usd": "unreported (plan)",
+ "plan_cost_estimate_usd": 5.2328,
+ "usage_weekly_before_after": "19% -> 20%",
+ "key_usage_usd": {
+  "before": 93.843277386,
+  "after": 93.844811536
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true,
+  "constraints": false
+ },
+ "bringup": null,
+ "verdict": "First Claude Code run past stage 2 (passed at V1 in one repair visit). Stopped at stage 3 (5 visits): every Vivado build failed in 2 s with 'Failed to connect to bus: No medium found' (run_vivado.sh uses systemd-run --user; this process's environment lacked the user bus variables). Cause: HARNESS/ENVIRONMENT, not the model (board_constraints worked, its mapping error 'DP used by both seg[7] and dp' was corrected by the model in one turn). Fixed: the runner supplies XDG_RUNTIME_DIR / DBUS_SESSION_BUS_ADDRESS when missing."
+}

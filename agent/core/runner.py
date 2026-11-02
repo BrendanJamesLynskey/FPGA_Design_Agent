@@ -73,6 +73,11 @@ def load_tools_config(f: Path | None = None) -> dict[str, Any]:
 def scrubbed_env(extra: dict[str, str] | None = None, tools: dict[str, Any] | None = None) -> dict[str, str]:
     env = {k: v for k, v in os.environ.items() if k in ENV_KEEP}
     tools = load_tools_config() if tools is None else tools
+    uid_dir = Path(f"/run/user/{os.getuid()}")             # the build runs under systemd-run --user: it needs the user bus
+    if "XDG_RUNTIME_DIR" not in env and uid_dir.is_dir():  # (a launcher that lost these made every Vivado build fail
+        env["XDG_RUNTIME_DIR"] = str(uid_dir)              #  with "Failed to connect to bus" in 05c2's Opus run)
+    if "DBUS_SESSION_BUS_ADDRESS" not in env and (uid_dir / "bus").exists():
+        env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={uid_dir / 'bus'}"
     env.update(tools.get("env", {}))
     if tools.get("path"):
         env["PATH"] = os.pathsep.join([*tools["path"], env.get("PATH", os.defpath)])
