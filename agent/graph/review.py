@@ -231,26 +231,27 @@ def constraints_html(design: Path, board_dir: Path) -> str:
     if not xdc:
         return '<p class="mut">No design.xdc yet.</p>'
     inv = _yaml(board_dir / "inventory.yaml")
-    pins: dict[str, str] = {}
-
-    def walk(o: Any, path: str = "") -> None:
-        if isinstance(o, dict):
-            for k, v in o.items():
-                if str(k) in ("pin", "pins", "fpga_pin", "fpga_pins") and isinstance(v, (str, list)):
-                    for p_ in ([v] if isinstance(v, str) else v):
-                        if isinstance(p_, str):
-                            pins.setdefault(p_.upper(), path)
-                elif isinstance(v, (dict, list)):
-                    walk(v, f"{path}.{k}" if path else str(k))
-        elif isinstance(o, list):
-            for i, v in enumerate(o):
-                walk(v, path)
-    walk(inv)
+    master, by_section = {}, {}
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(_ROOT))
+        from tools.inventory_check import parse_xdc            # the checker CI runs on the inventory
+        ports, sections = parse_xdc((board_dir / str(inv.get("master_xdc", "master.xdc"))).read_text())
+        master = {pin.upper(): (port, std) for port, (pin, std) in ports.items()}
+        for sec, plist in sections.items():
+            for pt in plist:
+                by_section[pt] = sec
+    except Exception:                                          # noqa: BLE001  (no inventory: the table says so)
+        pass
+    entries = {e.get("xdc_section"): e for k in ("core_io", "peripherals") for e in (inv.get(k) or []) if isinstance(e, dict)}
     rows = []
-    for m in re.finditer(r"set_property\s+PACKAGE_PIN\s+(\w+)\s+\[get_ports\s+\{?([^\]\}\s]+)\}?\]", xdc):
-        pin, port = m.group(1), m.group(2)
-        rows.append([port, pin, pins.get(pin.upper(), "not in the inventory (check the master XDC)")])
-    tbl = _table(rows, ["port", "pin", "board inventory entry"]) if rows else '<p class="mut">No PACKAGE_PIN lines.</p>'
+    for m in re.finditer(r"set_property\s+(?:-dict\s*\{[^}]*?PACKAGE_PIN\s+(\w+)[^}]*\}|PACKAGE_PIN\s+(\w+))\s*\[get_ports\s*\{?\s*([^\]\}\s]+\]?)", xdc):
+        pin, port = m.group(1) or m.group(2), m.group(3)
+        mp = master.get(pin.upper())
+        ent = entries.get(by_section.get(mp[0])) if mp else None
+        rows.append([port, pin, f"master XDC port {mp[0]} ({mp[1]})" if mp else "not in the master XDC",
+                     f"{ent['id']}: {str(ent.get('what', ''))[:80]}" if ent else "-"])
+    tbl = _table(rows, ["port", "pin", "master XDC", "board inventory entry"]) if rows else '<p class="mut">No PACKAGE_PIN lines.</p>'
     return f'<div class="code">{_e(xdc)}</div>' + "<h3>Pins traced to the board inventory</h3>" + tbl
 
 
