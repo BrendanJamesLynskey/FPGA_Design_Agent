@@ -28,13 +28,20 @@ from agent.core.registry import TOOLS
 SERVER_NAME = "fpga-design-agent-core"
 
 
-def build_server(session: Session) -> Server:
+def build_server(session: Session, only: set[str] | None = None) -> Server:
+    """``only``: expose just these tools (05c: the stage machine's per-stage tool list); others are not listed and
+    a call to one is refused like an unknown tool."""
     async def list_tools(ctx, params):
         return types.ListToolsResult(tools=[
             types.Tool(name=t["name"], description=t["description"], input_schema=t["inputSchema"],
-                       meta={"fda/schemaVersion": t["version"]}) for t in tool_list()])
+                       meta={"fda/schemaVersion": t["version"]}) for t in tool_list()
+            if only is None or t["name"] in only])
 
     async def call_tool(ctx, params):
+        if only is not None and params.name not in only:
+            return types.CallToolResult(content=[types.TextContent(type="text", text=f"no tool named {params.name!r}")],
+                                        structured_content={"ok": False, "refused": True, "rule": "unknown-tool"},
+                                        is_error=True)
         res = await anyio.to_thread.run_sync(dispatch, session, params.name, dict(params.arguments or {}))
         structured = {k: v for k, v in res.items() if k != "output"}
         return types.CallToolResult(content=[types.TextContent(type="text", text=res["output"])],
@@ -43,8 +50,8 @@ def build_server(session: Session) -> Server:
     return Server(SERVER_NAME, version=SCHEMA_VERSION, on_list_tools=list_tools, on_call_tool=call_tool)
 
 
-async def serve(session: Session) -> None:
-    server = build_server(session)
+async def serve(session: Session, only: set[str] | None = None) -> None:
+    server = build_server(session, only)
     async with stdio_server() as (read, write):
         await server.run(read, write, server.create_initialization_options())
 
@@ -55,6 +62,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--board", default="nexys_a7_100t")
     ap.add_argument("--hw-budget", type=int, default=6)
     ap.add_argument("--knowledge", type=Path, help="knowledge bank folder (default: FDA_KNOWLEDGE or the sibling checkout)")
+    ap.add_argument("--role", choices=["clarify", "model", "tests", "rtl"],
+                    help="05c: narrow the jail to a sub-agent role (agent.graph.roles), as the Deep Agents arm does")
+    ap.add_argument("--stage", help="the stage name the session is in (policy and audit)")
+    ap.add_argument("--tools", help="comma-separated tool names to expose (default: all)")
     a = ap.parse_args(argv)
     bank = None
     try:
@@ -63,7 +74,12 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as e:                       # no bank: the docs tools say so
         print(f"fda mcp server: no knowledge bank ({type(e).__name__})", file=sys.stderr)
     session = Session(design=a.design, board=a.board, bank=bank, hw_budget=a.hw_budget)
-    anyio.run(serve, session)
+    if a.stage:
+        session.stage = a.stage
+    if a.role:
+        from agent.graph.roles import role_session
+        session = role_session(session, a.role)
+    anyio.run(serve, session, set(a.tools.split(",")) if a.tools else None)
     return 0
 
 

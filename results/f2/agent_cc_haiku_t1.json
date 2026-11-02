@@ -1,0 +1,126 @@
+{
+ "brief": "05c",
+ "run": "Claude Code arm (headless claude -p, Max plan), T1 dimmer, oracle interview, review off",
+ "run_id": "20261102-074627-336e",
+ "harness": "claude_code",
+ "model": "claude-haiku-5-5",
+ "models_served": [
+  "claude-haiku-5-5"
+ ],
+ "claude_code_version": "2.1.316 (Claude Code)",
+ "effort": "medium",
+ "oracle_model": "openai/gpt-6-luna",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  1,
+  1,
+  1
+ ],
+ "stop": "stage 1 visited more than 4 times",
+ "loops": 5,
+ "turns": 83,
+ "cli_calls": 6,
+ "tool_calls": 77,
+ "wall_s": 404.0,
+ "tokens": 1729283,
+ "cost_usd": "unreported (plan)",
+ "plan_cost_estimate_usd": 0.0825,
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": false
+ },
+ "bringup": null,
+ "questions": {
+  "asked": 9,
+  "answered": 3,
+  "defaulted": 6
+ },
+ "weekly_usage_pct_before_after": [
+  7,
+  7
+ ],
+ "init_event": {
+  "tools": [
+   "mcp__fda__list_files",
+   "mcp__fda__read_file",
+   "mcp__fda__write_file"
+  ],
+  "mcp_servers": [
+   {
+    "name": "fda",
+    "status": "connected",
+    "source": "dynamic"
+   }
+  ],
+  "skills": [],
+  "slash_commands": [],
+  "plugins": [
+   {
+    "name": "cc-plugin-agents-md",
+    "path": "builtin",
+    "source": "cc-plugin-agents-md@builtin"
+   },
+   {
+    "name": "cc-plugin-plugin-authoring",
+    "path": "builtin",
+    "source": "cc-plugin-plugin-authoring@builtin"
+   }
+  ],
+  "permissionMode": "dontAsk",
+  "apiKeySource": "none"
+ },
+ "per_call": [
+  {
+   "tag": "001_clarify_clarify",
+   "turns": 9,
+   "tool_calls": 8,
+   "wall_s": 57.7,
+   "subtype": "success",
+   "plan_cost_estimate_usd": 0.00933033
+  },
+  {
+   "tag": "002_clarify_clarify",
+   "turns": 2,
+   "tool_calls": 1,
+   "wall_s": 20.6,
+   "subtype": "success",
+   "plan_cost_estimate_usd": 0.00497322
+  },
+  {
+   "tag": "003_rtl_board-and-device-planning",
+   "turns": 16,
+   "tool_calls": 15,
+   "wall_s": 97.6,
+   "subtype": "success",
+   "plan_cost_estimate_usd": 0.018070060000000002
+  },
+  {
+   "tag": "004_rtl_board-and-device-planning",
+   "turns": 22,
+   "tool_calls": 21,
+   "wall_s": 88.9,
+   "subtype": "success",
+   "plan_cost_estimate_usd": 0.018652120000000005
+  },
+  {
+   "tag": "005_rtl_board-and-device-planning",
+   "turns": 20,
+   "tool_calls": 19,
+   "wall_s": 100.5,
+   "subtype": "success",
+   "plan_cost_estimate_usd": 0.01827066
+  },
+  {
+   "tag": "006_rtl_board-and-device-planning",
+   "turns": 14,
+   "tool_calls": 13,
+   "wall_s": 74.8,
+   "subtype": "success",
+   "plan_cost_estimate_usd": 0.01315415
+  }
+ ],
+ "verdict": "Null at stage 1 (board-and-device-planning): the rtl sub-agent never produced a build.yaml that passed check_constraints in 5 visits ('stage 1 visited more than 4 times'). Harness sound: init event lists only our 3 MCP tools, no skills or slash commands, apiKeySource none; MCP tools worked; no user CLAUDE.md. Model errors: confused the run path with the design dir, wrote runs/<id>/... paths, load_skill with a stage name, probes.yaml refused by role jail. No prompt tuning."
+}

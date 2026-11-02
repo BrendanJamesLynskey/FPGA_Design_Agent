@@ -64,7 +64,7 @@ def role_session(s: Session, role: str) -> Session:
 
 def role_inputs(s: Session, role: str) -> dict[str, str]:
     """The files a sub-agent's first prompt carries, read through its own jail."""
-    want = {"clarify": ["spec.md"], "model": ["spec.yaml"], "tests": ["spec.yaml", "model.py"],
+    want = {"clarify": ["spec.md", "spec.yaml"], "model": ["spec.yaml"], "tests": ["spec.yaml", "model.py"],
             "rtl": ["spec.yaml", "ARCHITECTURE.md"]}[role]
     j = RoleJail(s.jail, role)
     out = {}

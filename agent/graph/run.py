@@ -19,6 +19,7 @@ limits per stage visit and per run come from ``stages.MACHINE`` / ``RUN_LIMITS``
 from __future__ import annotations
 
 import json
+import re
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -31,15 +32,21 @@ from agent.core import Session, dispatch
 from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
+from agent.graph.contract import MODEL_CONTRACT, contract_argv, parse_result
 from agent.graph.interview import Interview, Question, SpecOracle
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
 from agent.graph.snapshot import Snapshots
+from agent.graph.spec_schema import SpecError, clock_hz, load_spec, rate_params, validate
 from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure
 
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "build", "gates", "report", "check_constraints", "search_docs",
               "load_skill")
+
+
+class ArmBlocked(Exception):
+    """The Claude Code arm cannot run at all (no token, CLI missing, login failed)."""
 
 
 class State(TypedDict, total=False):
@@ -67,6 +74,9 @@ class Config:
     hidden_spec: Path | None = None
     run_limits: dict = field(default_factory=lambda: dict(RUN_LIMITS))
     stop_after: int | None = None   # smokes: stop after this stage passes
+    harness: str = "deepagents"     # deepagents | claude_code (05c: headless `claude -p` on the Max plan)
+    cc_model: str = "claude-haiku-5-5"
+    cc_effort: str = "medium"
 
 
 @dataclass
@@ -94,13 +104,23 @@ PROMPTS = {
                "spec.yaml with: name, title, board, part, top, clocks, reset, parameters, ports (name, direction, "
                "width, board pin role), behaviour, registers, timing, resources_expected, assumptions (each with a "
                "reason), and open_questions: one entry per thing the request leaves open, each as {{question, "
-               "default, reason}} (the default you propose and why). Use only spec.md and the knowledge tools.",
+               "default, reason}} (the default you propose and why). Use only spec.md and the knowledge tools. "
+               "spec.yaml must be valid YAML (quote any text that contains ': ' or '?'); ports, clocks, reset, "
+               "behaviour, registers and timing must all be non-empty, in this exact shape: behaviour is a mapping of "
+               "group name -> list of statements; registers is a mapping with a 'map' list of entries "
+               "{{offset, name, access, reset, bits}}; timing is a mapping, with latency: a mapping of name -> text. Timing parameters (debounce, PWM period, scan or "
+               "refresh period, baud divider) are INTEGER CYCLE COUNTS of the named clock, for example "
+               "PWM_PERIOD_CYCLES: 1024; put the rate or duration only in a comment or in timing. Never a rate "
+               "(_HZ, _MS) or a fraction as a parameter. If spec.yaml already exists it is shown below with the "
+               "gate's message: fix it in place.",
     "model": "You are the blind golden model writer. From spec.yaml alone write model.py: a pure-Python, cycle-level "
-             "reference model of the design's externally visible behaviour (no HDL, no simulator imports).",
+             "reference model of the design's externally visible behaviour (no HDL, no simulator imports).\n"
+             + MODEL_CONTRACT,
     "tests": "You write the cocotb tests for the design from spec.yaml and the blind model model.py (you never see "
              "the RTL). Write tests/test_{name}_rtl.py (pytest entry calling flow.cocotb_run) and the cocotb bench; "
              "import the model with sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import model. "
-             "Also write verif/testplan.yaml tracing every spec item to a test.",
+             "Also write verif/testplan.yaml tracing every spec item to a test. Write your whole output afresh: "
+             "files of an earlier attempt that you do not write again are deleted.\n" + MODEL_CONTRACT,
     "rtl": "You are the RTL and implementation engineer for stage {stage} ({stage_name}) of the UltraFast flow on the "
            "{board}. Do only what this stage allows: {allowed}. The flow's gates decide when the stage is done, "
            "not you; when you think your part is complete, stop and reply DONE. Failures so far: {fails}. "
@@ -110,6 +130,7 @@ PROMPTS = {
 
 CONVENTIONS = """
 Flow conventions (fixed by the repo; follow them exactly):
+- File tool paths (read_file, write_file, list_files) are relative to the design directory, for example rtl/top.sv; "{design_rel}/rtl/top.sv" and "/rtl/top.sv" mean the same file.
 - Paths in build.yaml are relative to the repo root. This design's directory is {design_rel}. build.yaml:
     top: <top module>
     part: xc7a100tcsg324-1
@@ -192,9 +213,45 @@ def _jail_backend(rt: Runtime, role: str):
     return JailBackend(root_dir=rt.design, virtual_mode=True)
 
 
+def drop_superseded(design: Path, jail, before: list[Path], written: dict[str, str]) -> list[str]:
+    """Delete files a role wrote in an earlier attempt and did not write again (05c fix 4), through its jail."""
+    gone = []
+    for p in before:
+        rel = str(p.relative_to(design))
+        if rel not in written and p.is_file():
+            jail.resolve(rel, write=True)
+            p.unlink()
+            gone.append(rel)
+    return gone
+
+
+FILE_TOOLS = ("read_file", "write_file", "list_files")
+
+
+def subagent_plan(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = ()) -> dict:
+    """What one sub-agent turn is given, harness-neutral: the system prompt, the first user message, the core
+    tools and the limits. Both the Deep Agents run and the Claude Code arm (05c) are built from this, and the
+    equivalence test compares them."""
+    from agent.core.registry import TOOLS
+    from agent.graph.roles import ROLE_TOOLS
+    inputs = role_inputs(rt.session, role)
+    if role != "rtl":
+        prompt += ("\nYour working directory is the design directory: write files at paths like /model.py, "
+                   "/tests/..., /verif/... (repo-relative paths in build.yaml and testplan.yaml stay as given).")
+    msg = prompt + "\n\nFiles you have:\n" + "\n".join(f"--- {k} ---\n{v}" for k, v in inputs.items())
+    core = tuple(n for n in allowed if n in FLOW_TOOLS and n in TOOLS)
+    role_files = ROLE_TOOLS[role]
+    files = tuple(n for n in FILE_TOOLS if role_files is None or n in role_files)
+    return {"role": role, "system_prompt": prompt, "user_message": msg, "inputs": inputs, "core_tools": core,
+            "file_tools": files, "limits": dict(rt.meter.stage_limits), "stage": rt.session.stage}
+
+
 def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = ()) -> dict[str, str]:
     """Run one Deep Agents sub-agent. Restricted roles see only their seeded inputs (in-memory backend) and
     their outputs are copied into the design through the role jail. Returns {path: content} written."""
+    if rt.cfg.harness == "claude_code":
+        from agent.claude_code_arm.arm import run_subagent_cc
+        return run_subagent_cc(rt, subagent_plan(rt, role, prompt, allowed))
     from deepagents import HarnessProfile, create_deep_agent, register_harness_profile
     from deepagents.backends.utils import create_file_data, file_data_to_string
     from deepagents.profiles.harness.harness_profiles import GeneralPurposeSubagentProfile
@@ -202,11 +259,8 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
     register_harness_profile("fda", HarnessProfile(general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False)))
     sess = role_session(rt.session, role)
     model = chat_model(rt.client, rt.meter, rt.llm_log)
-    inputs = role_inputs(rt.session, role)
-    if role != "rtl":
-        prompt += ("\nYour working directory is the design directory: write files at paths like /model.py, "
-                   "/tests/..., /verif/... (repo-relative paths in build.yaml and testplan.yaml stay as given).")
-    msg = prompt + "\n\nFiles you have:\n" + "\n".join(f"--- {k} ---\n{v}" for k, v in inputs.items())
+    plan = subagent_plan(rt, role, prompt, allowed)
+    prompt, msg, inputs = plan["system_prompt"], plan["user_message"], plan["inputs"]
     if role == "rtl":
         agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt,
                                   backend=_jail_backend(rt, role))
@@ -217,6 +271,10 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
                         "files": {f"/{k}": create_file_data(v) for k, v in inputs.items()}},
                        {"recursion_limit": 120})
     written = {}
+    superseded: list[Path] = []
+    if role == "tests":
+        superseded = [p for d in ("tests", "verif") for p in sorted((rt.design / d).rglob("*"))
+                      if p.is_file() and "__pycache__" not in p.parts and p.name != "__init__.py"]
     for path, data in (out.get("files") or {}).items():
         rel = path.lstrip("/")
         rel = rel.removeprefix(str(rt.design.relative_to(ROOT)) + "/")    # the repo-relative design path
@@ -225,6 +283,8 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
         r = dispatch(sess, "write_file", {"path": rel, "content": file_data_to_string(data)})
         if not r.get("refused"):
             written[rel] = r["output"]
+    if superseded and written:                    # 05c fix 4: a rewrite replaces the role's earlier output
+        drop_superseded(rt.design, sess.jail, superseded, written)
     return written
 
 
@@ -250,7 +310,9 @@ def node_work(state: State) -> dict:
     conv = CONVENTIONS.format(**fmt) + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     try:
         if n == 0:
-            run_subagent(rt, "clarify", PROMPTS["clarify"].format(**fmt), ("search_docs", "load_skill"))
+            run_subagent(rt, "clarify", PROMPTS["clarify"].format(**fmt)
+                         + ("\nGate message: " + state["detail"][:3000] if state.get("detail") else ""),
+                         ("search_docs", "load_skill"))
         elif n == 2:
             run_subagent(rt, "model", PROMPTS["model"].format(**fmt))
             run_subagent(rt, "tests", PROMPTS["tests"].format(**fmt) + conv, ("search_docs", "load_skill"))
@@ -258,6 +320,8 @@ def node_work(state: State) -> dict:
         elif n != 9 or state.get("hw_approved"):
             run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, tuple(t for t in st.tools
                                                                          if t not in ("program", "bringup")))
+    except ArmBlocked as e:                                # the Claude Code arm cannot run (auth, CLI): stop, say why
+        return {"visits": visits, "stop": f"claude_code blocked: {e}"}
     except BudgetExceeded as e:
         if str(e).startswith("run "):                      # run limit: stop the run
             return {"visits": visits, "stop": f"budget: {e}"}
@@ -266,11 +330,8 @@ def node_work(state: State) -> dict:
 
 
 def _spec(rt: Runtime) -> dict:
-    p = rt.design / "spec.yaml"
-    try:
-        return yaml.safe_load(p.read_text()) or {} if p.is_file() else {}
-    except yaml.YAMLError:
-        return {}
+    """The parsed spec.yaml. A parse error raises SpecError (05c fix 1: never an empty spec)."""
+    return load_spec(rt.design / "spec.yaml")
 
 
 def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
@@ -279,9 +340,16 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     who = None
     if rt.cfg.interview == "oracle":
         who = SpecOracle(rt.cfg.hidden_spec, rt.oracle_llm)
-    for i, o in enumerate(spec.get("open_questions") or []):
-        q = Question(id=f"q{i + 1}", text=str(o.get("question", "")), default=str(o.get("default", "")),
-                     reason=str(o.get("reason", o.get("default", ""))))
+    asks = [(str(o.get("question", "")), str(o.get("default", "")), str(o.get("reason", o.get("default", ""))))
+            for o in spec.get("open_questions") or []]
+    rates = [r for r in rate_params(spec) if r["cycles"]]
+    for r in rates:                                               # 05c fix 3: rates become cycle counts
+        clk = f"{clock_hz(spec) / 1e6:g} MHz"
+        asks.append((f"{r['name']} is given as {r['value']} {r['unit']}. The model and the RTL need an integer "
+                     f"number of clock cycles ({r['new_name']}); at {clk}, how many?", str(r["cycles"]),
+                     f"{r['cycles']} is {r['value']} {r['unit']} at {clk}, rounded once, so the model and RTL agree"))
+    for i, (qt, qd, qr) in enumerate(asks):
+        q = Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr)
         if rt.cfg.interview == "on":                                  # one question at a time, to the human
             ans = interrupt({"kind": "question", "id": q.id, "question": q.text, "default": q.default,
                              "reason": q.reason})
@@ -295,6 +363,12 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         else:
             iv.ask(q, who)
     spec = iv.resolve_into(spec)
+    for r in rates:                                               # the answered (or defaulted) integer replaces it
+        got = next((q for q in iv.questions if q.text.startswith(f"{r['name']} is given as")), None)
+        m = re.search(r"\d+", got.answer or "") if got else None
+        params = {k: v for k, v in (spec.get("parameters") or {}).items() if k != r["name"]}
+        params[r["new_name"]] = int(m.group()) if m else r["cycles"]
+        spec["parameters"] = params
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
     return spec, iv.summary()
 
@@ -328,6 +402,22 @@ def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
     return {"build": {k: b.get(k) for k in ("ok", "refused", "returncode", "cached")}, "gates": g.get("gates")}
 
 
+def _contract(rt: Runtime, detail: list) -> dict:
+    """Contract-check gate (05c fix 2): import model.py, Model(**spec parameters), reset(), step({})."""
+    if not (rt.design / "model.py").is_file():
+        res = {"ok": False, "error": "model.py does not exist"}
+    else:
+        try:
+            spec = _spec(rt)
+        except SpecError:
+            spec = {}
+        r = rt.session.runner.run("contract", contract_argv(rt.design, spec), ROOT, None, 120)
+        res = parse_result(r.returncode, r.stdout, r.stderr)
+    if not res["ok"]:
+        detail.append("[model contract] " + str(res.get("error")))
+    return res
+
+
 def node_gate(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("stop"):
@@ -342,18 +432,38 @@ def node_gate(state: State) -> dict:
             out = str(r.get("output", ""))
             errs = "\n".join(l[:400] for l in out.splitlines() if l.startswith(("E ", "%Error", "ERROR", "error"))
                              or ": error" in l)[:1500]
-            detail.append(f"[{name}] " + (errs + "\n...\n" if errs else "") + out[-800:])
+            ff = r.get("first_failure")
+            head = (f"first failing test {ff['test']}: " + " | ".join(ff["message"]) + (f" ({ff['where']})" if ff.get("where") else "")
+                    + "\n") if ff else ""
+            detail.append(f"[{name}] " + head + (errs + "\n...\n" if errs else "") + out[-800:])
         return r
     if n == 0:
-        spec, summary = _interview(rt, _spec(rt), state)
-        out["interview"] = summary
-        ev["spec"], ev["signed_off"] = spec, not spec.get("open_questions")
+        ev.pop("spec_errors", None)
+        try:
+            spec = _spec(rt)
+            errs = validate(spec, allow_rates=True)       # shape first: an invalid spec is never rewritten
+        except SpecError as e:
+            spec, errs = {}, [str(e)]
+        if errs:                                          # fail the gate with the parser's / schema's message
+            ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs
+            detail.append("[spec.yaml] " + "; ".join(errs))
+        else:
+            spec, summary = _interview(rt, spec, state)
+            out["interview"] = summary
+            errs = validate(spec)
+            ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, not spec.get("open_questions"), errs
+            if errs:
+                detail.append("[spec.yaml] " + "; ".join(errs))
     elif n == 1:
         ev["arch"] = (rt.design / "ARCHITECTURE.md").is_file()
         ev["inventory"] = {"ok": bool(d("check_constraints", dispatch(rt.session, "check_constraints", {})).get("ok"))}
     elif n == 2:
         ev["lint"] = {"ok": d("lint", dispatch(rt.session, "lint", {})).get("ok")}
-        ev["simulate"] = {"ok": d("simulate", dispatch(rt.session, "simulate", {"sim": "icarus"})).get("ok")}
+        ev["contract"] = _contract(rt, detail)
+        if ev["contract"]["ok"]:                       # fail fast: no simulate on a model the tests cannot load
+            ev["simulate"] = {"ok": d("simulate", dispatch(rt.session, "simulate", {"sim": "icarus"})).get("ok")}
+        else:
+            ev["simulate"] = {"ok": False}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
         if ev["lint"]["ok"] and ev["simulate"]["ok"]:          # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
@@ -508,9 +618,20 @@ def checkpointer_for(run_dir: Path):
     return SqliteSaver(sqlite3.connect(str(run_dir / "checkpoints.sqlite"), check_same_thread=False))
 
 
+def _cc_calls(rt: Runtime) -> list[dict]:
+    f = rt.run_dir / "claude_code_calls.jsonl"
+    return [json.loads(x) for x in f.read_text().splitlines() if x.strip()] if f.exists() else []
+
+
 def summary(rt: Runtime, state: dict) -> dict:
     hist = state.get("history") or []
-    return {"run_id": rt.run_id, "design": rt.cfg.name, "model": rt.cfg.model, "interview": rt.cfg.interview,
+    cc = rt.cfg.harness == "claude_code"
+    calls = _cc_calls(rt) if cc else []
+    extra = {"harness": "claude_code", "claude_code_version": (calls[0]["claude_code_version"] if calls else None),
+             "plan_cost_estimate_usd": round(sum(c.get("plan_cost_estimate_usd") or 0 for c in calls), 4),
+             "oracle_model": rt.cfg.model} if cc else {"harness": "deepagents"}
+    return {"run_id": rt.run_id, "design": rt.cfg.name, "model": rt.cfg.cc_model if cc else rt.cfg.model, **extra,
+            "interview": rt.cfg.interview,
             "review": rt.cfg.review, "stages_visited": [h["n"] for h in hist],
             "loops": sum(1 for a, b in zip(hist, hist[1:]) if b["n"] <= a["n"] and not a.get("rewind")),
             "rewinds": [h["rewind"] for h in hist if h.get("rewind")],

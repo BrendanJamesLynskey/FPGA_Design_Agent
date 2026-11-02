@@ -144,6 +144,14 @@ writer and the RTL writer are separate sub-agents whose inputs are enforced in c
 edit / rewind (files and Vivado checkpoints restored and hash-checked); agent-written benches run in a no-network
 container. `python -m agent run|resume`; details in [docs/agent.md](docs/agent.md).
 
+### The Claude Code arm (05c, F2 part 3)
+
+The same graph with each sub-agent turn run by headless `claude -p` on a Claude subscription, configured to
+approximate a plain API call: our system prompt replaces the default, built-in tools off, only our MCP server, an empty
+home and config. `python -m agent run ... --harness claude_code --cc-model claude-haiku-5-5`; details in
+[docs/claude_code_arm.md](docs/claude_code_arm.md). The same release has four agent fixes from the 05b diagnosis (spec
+schema, model API contract, integer cycle-count timing parameters, superseded files).
+
 ## Reproduce
 
 Simulation, lint and the Python tests (what CI runs):
@@ -180,7 +188,7 @@ results/     committed build and bring-up results, per milestone
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, the simulator-portable stack, gates, mutation);
-             agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph);
+             agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph); claude_code_arm.md (the 05c Claude Code arm);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
 ```
 
