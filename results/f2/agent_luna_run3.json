@@ -1,0 +1,100 @@
+{
+ "brief": "05c",
+ "run": "luna_run3",
+ "run_id": "20261102-003147-be4e",
+ "model": "openai/gpt-6-luna",
+ "interview": "oracle",
+ "review": "off",
+ "after_fixes": "05c fixes 1-4 (spec schema + parse error, model API contract gate, integer cycle-count parameters, superseded files)",
+ "stages_visited": [
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "stop": "stage 2 visited more than 4 times",
+ "loops": 5,
+ "questions": {
+  "asked": 10,
+  "answered": 5,
+  "defaulted": 5
+ },
+ "questions_detail": [
+  {
+   "text": "What exact command syntax, response format, and register addressing does the standard test shell require?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "Which switch selects the brightness source, and what polarity selects each source?",
+   "status": "answered",
+   "by": "oracle"
+  },
+  {
+   "text": "What brightness encoding and endpoint behavior are intended?",
+   "status": "answered",
+   "by": "oracle"
+  },
+  {
+   "text": "What button debounce interval is desired?",
+   "status": "answered",
+   "by": "oracle"
+  },
+  {
+   "text": "What PWM period and brightness transfer function are desired?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "What seven-segment scan rate and physical digit order are desired?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "How should simultaneous button presses be handled?",
+   "status": "answered",
+   "by": "oracle"
+  },
+  {
+   "text": "What should the registers contain immediately after reset?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "What UART framing and baud-divider tolerance should be used?",
+   "status": "defaulted",
+   "by": "oracle"
+  },
+  {
+   "text": "What happens when a button press count reaches its maximum value?",
+   "status": "answered",
+   "by": "oracle"
+  }
+ ],
+ "tokens": 6889357,
+ "turns": 271,
+ "wall_s": 2577.1,
+ "cost_usd": 0.221146,
+ "unreported_cost_calls": 0,
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "bringup": null,
+ "earlier_attempt": {
+  "run_id": "20261102-002744-308a",
+  "note": "stopped at stage 0 (4 visits): my first schema rejected luna's valid list-valued `timing`; schema relaxed (timing: list or mapping), then re-run",
+  "cost_usd": 0.0097
+ },
+ "verdict": "Null at stage 2 again, but the failure moved. Run 1 died at 0 ns on a model/test API mismatch; run 2 on an empty spec. Now the spec is valid YAML with integer cycle counts (DEBOUNCE/PWM/scan/baud), the contract gate passed, and the cocotb bench runs against the RTL and fails there (a model-vs-RTL disagreement, the next honest failure). No bitstream, so no bring-up.",
+ "key_usage_usd": {
+  "before": 92.321792591,
+  "after": 92.552426941,
+  "delta": 0.230634
+ }
+}
