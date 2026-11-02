@@ -187,7 +187,8 @@ designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, desig
 results/     committed build and bring-up results, per milestone
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
-             verification.md (V-stages, the simulator-portable stack, gates, mutation);
+             verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
+             design_standards.md (v1.0: the rule table and how each rule is checked);
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph); claude_code_arm.md (the 05c Claude Code arm);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
 ```

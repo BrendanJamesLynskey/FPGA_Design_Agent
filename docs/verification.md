@@ -28,6 +28,34 @@ mutation score) as well as `flow/lint.sh` clean. **V-HW is stage 9** (`configura
 is the bring-up gate. A V-stage failure loops back to stage 2 (RTL or bench) or stage 0 (the model and the RTL
 disagree about the spec).
 
+## A proof method per requirement (brief 05d)
+
+Adam Taylor's FPGA Horizons issue 5 article ("What Star Trek can teach us about using AI in FPGA design") asks that
+every requirement say, up front, how it will be shown to hold. `spec.yaml` therefore has a `requirements:` list,
+each entry `{id, text, proof}` with `proof` a non-empty list from four methods:
+
+| Method | What discharges it | Evidence the sign-off reads |
+|---|---|---|
+| `simulation` | a cocotb test (`module.test`) compared with the blind model | the test passed on every seed (`results.xml`) |
+| `formal` | a SymbiYosys job in `verif/formal` | both its `bmc` and `cover` tasks `PASS` |
+| `hardware` | a bring-up step or `step:case` (`uart_tests`, `uart_tests:test_x`, `ila_captures`) | that step passed in the bring-up JSON |
+| `analysis` | a flow gate, `stage:gate` (`post_route:setup`, `post_synth:post_synth_resources_in_range`) | the gate in `gates.json` is true |
+
+The clarify stage proposes a method per requirement; where it does not, the interview asks one question per
+requirement with a default (`agent.graph.spec_schema.propose_proof`) and the reason for it. The test writer then
+adds a top-level `proof:` list to `verif/testplan.yaml`, `{requirement, method, artefact}`, giving every method of
+every requirement at least one artefact. Two places enforce it:
+
+- **V1** (`flow/verif_gates.py`) fails on `requirements_have_proof_method` (a requirement without a valid method),
+  `proof_methods_discharged` (a method with no artefact in the testplan) and `proof_references_resolve` (a test or
+  formal job that does not exist);
+- **sign-off** (`SIGNOFF` in the same output, `traceability` table: requirement, method, artefact, result) fails
+  unless every row is `pass`. A row is `pending` while its evidence source does not exist (no board result yet), and
+  `pending` is not a pass. The graph runs it at the end of stage 9, after the bring-up. `--require-signoff` makes
+  the command exit 1 on it.
+
+T1's table is in `designs/t1_dimmer_counter/verif/testplan.yaml` (8 requirements, 16 rows). The review pages show it.
+
 ## The stack and why
 
 The owner's simulator matrix (`SystemVerilog_Simulators`, `index.html`, `FEATURES`, columns Icarus 12 / Verilator

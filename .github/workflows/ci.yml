@@ -68,6 +68,8 @@ jobs:
           sudo apt-get install -y verilator python3-yaml
       - name: Lint
         run: flow/lint.sh
+      - name: Design standards (v1.0) on the reference design, latch and loop rules included (brief 05d)
+        run: python3 flow/standards_check.py designs/t1_dimmer_counter --stage rtl
 
   verification:
     name: Verification (cocotb on Verilator and Icarus, checkers, formal, portability, V-stage gates)
@@ -104,7 +106,7 @@ jobs:
       - name: pytest (gates, portability)
         run: |
           export PORT_VERILATORS="$(which verilator):$HOME/verilator-5.048/bin/verilator"
-          python -m pytest -q flow/tests/test_verif_gates.py flow/tests/test_portability.py
+          python -m pytest -q flow/tests/test_verif_gates.py flow/tests/test_portability.py flow/tests/test_standards_check.py
       - name: V2 run under Verilator 5.048 (bound checkers, code coverage), 3 seeds
         run: |
           export PATH=$HOME/verilator-5.048/bin:$PATH

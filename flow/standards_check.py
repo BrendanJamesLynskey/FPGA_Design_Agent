@@ -561,14 +561,21 @@ class Check:
                     self.add("STD-WAIVE-01", f, ln, f"waiver of {rule} has no reason")
 
     # -- tools (latches, loops)
-    def _tool(self, name: str) -> str | None:
-        from agent.core import runner as rn
-        env = rn.scrubbed_env()
-        return shutil.which(name, path=env.get("PATH", os.defpath))
-
     def _env(self) -> dict[str, str]:
-        from agent.core import runner as rn
-        return rn.scrubbed_env()
+        """The tools.yaml-aware environment the core's runner uses; plain os.environ if the core cannot be imported
+        (the lint job installs no Python packages)."""
+        try:
+            sys.path.insert(0, str(ROOT))
+            from agent.core import runner as rn
+            return rn.scrubbed_env()
+        except Exception:                                     # noqa: BLE001
+            return dict(os.environ)
+        finally:
+            if sys.path and sys.path[0] == str(ROOT):
+                sys.path.pop(0)
+
+    def _tool(self, name: str) -> str | None:
+        return shutil.which(name, path=self._env().get("PATH", os.defpath))
 
     def _sources(self) -> list[str]:
         cfg = yaml.safe_load((self.design / "build.yaml").read_text()) if (self.design / "build.yaml").is_file() else {}
