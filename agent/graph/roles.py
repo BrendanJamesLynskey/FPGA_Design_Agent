@@ -27,7 +27,7 @@ ROLES: dict[str, dict[str, tuple[str, ...]]] = {
     "tests": {"read": ("spec.yaml", "model.py", "tests/*", "verif/*", "probes.yaml", "BRINGUP.md", "hw_checks.py"),
               "write": ("tests/*", "verif/*", "hw_checks.py")},       # hw_checks.py: stage 9 bring-up checks, against the model
     "rtl": {"read": ("*",), "write": ("rtl/*", "build.yaml", "design.xdc", "probes.yaml", "BRINGUP.md",
-                                      "ARCHITECTURE.md", "hw_checks.py", "lint/*", "BUILD_NOTE.md")},
+                                      "ARCHITECTURE.md", "architecture.yaml", "hw_checks.py", "lint/*", "BUILD_NOTE.md")},
 }
 #: tool names each role may call at all (on top of the stage's own list)
 ROLE_TOOLS = {"clarify": {"read_file", "write_file", "list_files", "search_docs", "load_skill"},
@@ -51,6 +51,10 @@ class RoleJail(PathJail):
         inside = str(real.relative_to(self.root)) if real != self.root else "."
         if inside == "." and not write:
             return real
+        if write and self.role == "rtl" and inside in ("architecture.yaml", "ARCHITECTURE.md") \
+                and (self.root / "build" / "approvals" / "architecture.json").is_file():
+            raise SecurityError("role", f"{inside} is approved and frozen; a change goes back to the architecture stage "
+                                        f"for a new approval (brief 05d)")
         if not self._ok(inside, self.rules["write" if write else "read"]):
             raise SecurityError("role", f"the {self.role} sub-agent may not {'write' if write else 'read'} {inside}")
         return real

@@ -101,7 +101,7 @@
   },
   {
    "name": "gates",
-   "description": "Parse a build's reports into stage results (flow/gates.py), run the verification stage gates (flow/verif_gates.py), or check the bring-up artefacts without the board (bringup_ready). Raw numbers and rule ids only.",
+   "description": "Parse a build's reports into stage results (flow/gates.py), run the verification stage gates (flow/verif_gates.py: with the proof-method traceability table), check the design standards (flow/standards_check.py: rule ids, with the post-synthesis rules read from build/<variant>), check architecture.yaml and its approval (architecture), or check the bring-up artefacts without the board (bringup_ready). Raw numbers and rule ids only.",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -110,7 +110,9 @@
       "enum": [
        "stages",
        "verif",
-       "bringup_ready"
+       "bringup_ready",
+       "standards",
+       "architecture"
       ]
      },
      "variant": {

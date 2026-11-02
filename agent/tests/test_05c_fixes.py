@@ -30,6 +30,8 @@ def rt(tmp_path, monkeypatch):
     monkeypatch.setattr(gr, "RUNS", runs)
     cfg = gr.Config(spec_md=T1 / "spec.md", name="t1_dimmer_counter", interview="off")
     r = gr.new_runtime(cfg, lambda *a, **k: None, runner=OkRunner())
+    from flow import architecture as _am
+    _am.write_approval(r.design, 'auto', 'agent')
     yield r
     import shutil
     shutil.rmtree(runs, ignore_errors=True)

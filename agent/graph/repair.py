@@ -89,6 +89,9 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0) -> tuple[dict[str, list[s
     lint = ev.get("lint") or {}
     if not lint.get("ok"):
         add("rtl", "[lint] " + str(lint.get("text") or "lint not passing")[-1500:], "lint")
+    std = ev.get("standards_fails") or []
+    if std:
+        add("rtl", "[design standards] " + "\n".join(std)[:1800], "standards")
     c = ev.get("contract") or {}
     if not c.get("ok"):
         add("model", "[model contract] " + str(c.get("error") or "not checked")[-1200:], "contract")
