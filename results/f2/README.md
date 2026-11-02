@@ -34,3 +34,13 @@ Headless `claude -p` 2.1.316, T1 dimmer, `--interview oracle --review off`, no p
 |---|---|
 | `agent_cc_haiku_t1.json` | `--cc-model claude-haiku-5-5`. **Null at stage 1** (board-and-device-planning): 5 visits, `stage 1 visited more than 4 times`; no `build.yaml` passed `check_constraints`. 83 turns, 404 s, 6 CLI calls, plan estimate $0.0825, weekly usage 7% -> 7%. The init event lists only our three MCP tools and no skills or slash commands. |
 | `agent_cc_opus_t1.json` | `--cc-model claude-opus-5-5`. **Null at stage 2** (rtl-design-creation): passed stages 0 and 1, 5 stage-2 visits without a passing simulate. 167 turns, 2324 s, 15 CLI calls, plan estimate $8.71, weekly usage 7% -> 8%. The gates tool crashed on a list-valued `registers` spec (`flow/verif_gates.py`), and the cocotb bench failed against the RTL (cause clipped). |
+
+## Brief 05c follow-ups: reruns after the harness fixes
+
+Fixes before these runs: one canonical spec shape (the gates crash), one design-path convention, a structured first failure from `simulate`. New files; the first-round files above are kept.
+
+| File | What |
+|---|---|
+| `agent_cc_haiku_t1_run2.json` | Claude Code, `claude-haiku-5-5`. **Null at stage 1** again (5 visits), but the path errors are gone. Cause: the model (own port names and guessed pins in `design.xdc`; `check_constraints` reported FDA-CON-1/3/4 each visit and it did not converge). 75 turns, 329 s, plan estimate $0.0761, weekly usage 8% -> 8%. |
+| `agent_cc_opus_t1_run2.json` | Claude Code, `claude-opus-5-5`. **Null at stage 2.** Simulation passed on a visit (a first for the arm); the stage failed at V1: verilator `-Wall` UNUSEDSIGNAL in the RTL, an invalid YAML flow sequence in `verif/testplan.yaml`, and a later bench rewrite that failed simulate. 180 turns, 2883 s, 16 CLI calls, plan estimate $9.87, weekly usage 8% -> 9%. |
+| `agent_luna_run4.json` | Deep Agents, luna, `--interview oracle --review off`. **Null at stage 2** (stage 1 passes). Gates stopped at V1 `spec_items_traced 5/32`. 268 turns, 2174 s, $0.2246 provider-reported, key usage 92.562367 -> 92.788861 ($0.2265). |

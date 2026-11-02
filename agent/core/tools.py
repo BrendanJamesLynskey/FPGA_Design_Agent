@@ -58,7 +58,10 @@ def first_failure(text: str) -> dict[str, Any] | None:
             elif where is None and re.match(r"^\S+\.(py|sv|v):\d+:( |$)", l2):
                 where = l2.strip()[:300]
         if msg or where:
-            return {"test": m.group(1), "message": msg[:20], "where": where}
+            # SystemExit-style failures hide the cause in the captured output: add the log's first raw error lines
+            errs = [x.strip()[:300] for x in lines if re.search(r"(?i)\berror\b", x) and not x.startswith("E ")
+                    and "short test summary" not in x][:5]
+            return {"test": m.group(1), "message": msg[:20], "where": where, "log_errors": errs}
     return None
 
 
@@ -230,7 +233,8 @@ def simulate(s: Session, sim: str = "icarus") -> dict:
         res["first_failure"], res["log_tail"] = ff, out[-4000:]
         if ff:       # MCP clients get only the text, so the same block heads the text: raw log lines, no hints
             out = ("[first failure] " + ff["test"] + "\n" + "\n".join("  " + m for m in ff["message"])
-                   + (f"\n  at {ff['where']}" if ff.get("where") else "") + "\n[end first failure]\n" + out)
+                   + (f"\n  at {ff['where']}" if ff.get("where") else "")
+                   + "".join("\n  log: " + e for e in ff.get("log_errors") or []) + "\n[end first failure]\n" + out)
     res.update({"output": out, "returncode": r.returncode, "sim": sim, "seconds_run": r.seconds})
     return res
 

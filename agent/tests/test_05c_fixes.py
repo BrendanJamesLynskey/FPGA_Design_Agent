@@ -218,6 +218,9 @@ def test_first_failure_is_structured_and_the_tail_is_kept():
                              "test_counter_up: AssertionError: an: rtl=0xfd model=0xfe at 120 ns"]
     assert ff["where"].startswith("tests/test_x_rtl.py:33")
     assert first_failure("all passed") is None
+    sx = first_failure("run: iverilog -o x\nfoo.sv:3: error: Unable to bind wire/reg/memory `dp'\n"
+                       "_____ test_a _____\n\n>  run()\nt.py:9: \nE   SystemExit: 1\n")
+    assert sx["message"] == ["SystemExit: 1"] and "Unable to bind" in sx["log_errors"][0]
 
 
 def test_simulate_returns_first_failure_and_unclipped_tail(rt):
