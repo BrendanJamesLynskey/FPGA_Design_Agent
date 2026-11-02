@@ -1,0 +1,25 @@
+F
+=================================== FAILURES ===================================
+______________________________ test_x_rtl[1] _______________________________
+
+seed = 1
+
+    def test_x_rtl(seed):
+>       flow.cocotb_run.run("x", "top", SOURCES, "bench", Path(__file__).parent, seed=seed)
+
+tests/test_x_rtl.py:17:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+flow/cocotb_run.py:34: in run
+    sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
+cocotb_tools/runner.py:512: in build
+    self._execute(cmds, cwd=self.build_dir)
+cocotb_tools/runner.py:620: in _execute
+    sys.exit(1)
+E   SystemExit: 1
+------------------------------ Captured stdout call ------------------------------
+INFO: Running command iverilog -o sim.vvp -D COCOTB_SIM=1 -g2012 rtl/top.sv
+rtl/top.sv:42: error: Unable to bind wire/reg/memory `cnt_q' in `top'
+1 error(s) during elaboration.
+ERROR: Process exited with code 1
+=========================== short test summary info ============================
+FAILED tests/test_x_rtl.py::test_x_rtl[1] - SystemExit: 1

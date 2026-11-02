@@ -27,7 +27,7 @@ def _read(s, role, path):
 
 def test_blind_model_sees_only_spec_yaml(s):
     assert set(role_inputs(s, "model")) == {"spec.yaml"}
-    for p in ("rtl/top.sv", "tests/test_x_rtl.py", "spec.md", "../../hidden_full_spec.yaml", "model.py"):
+    for p in ("rtl/top.sv", "tests/test_x_rtl.py", "spec.md", "../../hidden_full_spec.yaml"):
         assert _read(s, "model", p)["refused"], p
     assert not _read(s, "model", "spec.yaml")["refused"]
     w = dispatch(role_session(s, "model"), "write_file", {"path": "rtl/top.sv", "content": "x"})

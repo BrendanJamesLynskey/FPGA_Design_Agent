@@ -28,7 +28,7 @@ def test_tool_schemas_match_the_committed_snapshot() -> None:
     the snapshot with `python -m agent.tests.test_mcp` in the same commit."""
     snap = json.loads(SNAPSHOT.read_text())
     assert snap["schema_version"] == SCHEMA_VERSION
-    assert snap["tools"] == tool_list()
+    assert snap["tools"] == tool_list(refined=False)      # the machine-independent schema
 
 
 def test_mcp_tool_list_equals_core_list(session) -> None:
@@ -75,5 +75,5 @@ def test_mcp_over_stdio_subprocess(wd) -> None:
 
 if __name__ == "__main__":
     SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
-    SNAPSHOT.write_text(json.dumps({"schema_version": SCHEMA_VERSION, "tools": tool_list()}, indent=1) + "\n")
+    SNAPSHOT.write_text(json.dumps({"schema_version": SCHEMA_VERSION, "tools": tool_list(refined=False)}, indent=1) + "\n")
     print("wrote", SNAPSHOT)

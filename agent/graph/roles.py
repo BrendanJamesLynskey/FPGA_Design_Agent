@@ -23,7 +23,7 @@ from agent.core.session import Session
 
 ROLES: dict[str, dict[str, tuple[str, ...]]] = {
     "clarify": {"read": ("spec.md", "spec.yaml"), "write": ("spec.yaml",)},
-    "model": {"read": ("spec.yaml",), "write": ("model.py",)},
+    "model": {"read": ("spec.yaml", "model.py"), "write": ("model.py",)},      # its own output, to edit on a repair
     "tests": {"read": ("spec.yaml", "model.py", "tests/*", "verif/*"), "write": ("tests/*", "verif/*")},
     "rtl": {"read": ("*",), "write": ("rtl/*", "build.yaml", "design.xdc", "probes.yaml", "BRINGUP.md",
                                       "ARCHITECTURE.md", "hw_checks.py", "lint/*", "BUILD_NOTE.md")},
@@ -62,11 +62,19 @@ def role_session(s: Session, role: str) -> Session:
     return v
 
 
-def role_inputs(s: Session, role: str) -> dict[str, str]:
-    """The files a sub-agent's first prompt carries, read through its own jail."""
+def role_inputs(s: Session, role: str, previous: bool = False) -> dict[str, str]:
+    """The files a sub-agent's first prompt carries, read through its own jail. ``previous`` (a repair visit) adds
+    the role's own earlier output, which it edits: ``model.py`` for the model writer, ``tests/`` and ``verif/``
+    for the test writer. Never anything the role may not read."""
     want = {"clarify": ["spec.md", "spec.yaml"], "model": ["spec.yaml"], "tests": ["spec.yaml", "model.py"],
             "rtl": ["spec.yaml", "ARCHITECTURE.md"]}[role]
     j = RoleJail(s.jail, role)
+    if previous and role == "model":
+        want = want + ["model.py"]
+    if previous and role == "tests":
+        want = want + sorted(str(p.relative_to(s.design)) for d in ("tests", "verif")
+                             for p in (s.design / d).rglob("*") if p.is_file() and "__pycache__" not in p.parts
+                             and p.name != "__init__.py" and p.stat().st_size < 60_000)
     out = {}
     for f in want:
         p = j.resolve(f)

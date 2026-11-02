@@ -1,0 +1,24 @@
+F
+=================================== FAILURES ===================================
+______________________________ test_x_rtl[1] _______________________________
+
+seed = 1
+
+    def test_x_rtl(seed):
+>       flow.cocotb_run.run("x", "top", SOURCES, "bench", Path(__file__).parent, seed=seed)
+
+tests/test_x_rtl.py:17:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+flow/cocotb_run.py:49: in run
+    assert n_fail == 0, f"{name}: {n_fail} of {n_tests} cocotb tests failed (see {build_dir / 'sim.log'})"
+E   AssertionError: x: 1 of 1 cocotb tests failed (see build/sim/x/sim.log)
+------------------------------ Captured stdout call ------------------------------
+     0.00ns ERROR    cocotb.regression   test_counter failed
+                                         Traceback (most recent call last):
+                                           File "/work/designs/x/tests/bench.py", line 21, in test_counter
+                                             m.step({"btn": 1})
+                                           File "/work/designs/x/model.py", line 33, in step
+                                             self.prev[name] = inputs[name]
+                                         KeyError: 'btn'
+=========================== short test summary info ============================
+FAILED tests/test_x_rtl.py::test_x_rtl[1] - AssertionError
