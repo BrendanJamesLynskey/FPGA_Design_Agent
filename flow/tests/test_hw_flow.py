@@ -197,3 +197,30 @@ def test_pwm_check_catches_one_wrong_led_sample_and_a_wrong_duty(cap: hw_checks.
     assert not cap.check(s)["pass"]
     duty = int(cap.name.split("_")[1], 16)
     assert not hw_checks.make_pwm_check(duty + 1)(load(cap.name))["pass"]
+
+
+def test_uart_test_pytest_finds_design_modules_and_root_conftest(tmp_path):
+    """bring-up's pytest gets ROOT + the design dir on PYTHONPATH: a design's tests import its `model` by bare name,
+    and the root conftest (--hw-port/--hw-stamp) is still found for a design under the repo (no board needed)."""
+    import subprocess
+    import sys
+    import tempfile
+    from pathlib import Path
+    from flow import bringup, hw
+    base = hw.ROOT / "build"
+    base.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=base) as d:
+        design = Path(d) / "dd"
+        (design / "tests").mkdir(parents=True)
+        (design / "model.py").write_text("X = 7\n")
+        (design / "tests" / "test_dd_hw.py").write_text(
+            "import pytest\nimport model\n\n@pytest.mark.hw\ndef test_x(request):\n"
+            "    assert model.X == 7 and request.config.getoption('--hw-port') == 'p'\n")
+        env = bringup.pytest_env(design)
+        assert env["PYTHONPATH"].split(":")[:2] == [str(hw.ROOT), str(design)]
+        cmd = [sys.executable, "-m", "pytest", "-q", "-m", "hw", "-p", "no:cacheprovider", "--hw-port", "p",
+               "--hw-stamp", "00000000", str(design / "tests" / "test_dd_hw.py")]
+        r = subprocess.run(cmd, cwd=hw.ROOT, env=env, capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+        r = subprocess.run(cmd, cwd=hw.ROOT, capture_output=True, text=True)      # without it: the reported failure
+        assert "No module named 'model'" in r.stdout + r.stderr

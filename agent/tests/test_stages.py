@@ -50,3 +50,19 @@ def test_real_t1_gates_pass_if_present():
         g = json.loads(f.read_text())
         for n in (4, 5, 6, 7, 8):
             assert exit_check(MACHINE[n], {"gates_base": g, "standards": {"rules": []}})[0], n
+
+
+def test_bringup_harness_error_routes_to_tests_role():
+    s9 = MACHINE[9]
+    why = ["bring-up failed at 'uart_tests': E   ModuleNotFoundError: No module named 'model'"]
+    assert classify(s9, why) == "bringup"
+    assert route_failure(s9, classify(s9, why)) == 9
+    for k in ("ImportError: x", "ERROR collecting tests/test_x_hw.py", "unrecognized arguments: --hw-port"):
+        assert classify(s9, [f"bring-up failed at 'uart_tests': {k}"]) == "bringup"
+
+
+def test_bringup_hardware_failure_still_routes_to_rtl():
+    s9 = MACHINE[9]
+    why = ["bring-up failed at 'uart_tests': assert 3 == 4"]
+    assert classify(s9, why) == "rtl"
+    assert route_failure(s9, "rtl") == 2

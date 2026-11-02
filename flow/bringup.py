@@ -59,6 +59,16 @@ def _load_checks(design: Path) -> Any:
     return mod
 
 
+def pytest_env(design: Path) -> dict[str, str]:
+    """The environment for the UART-test pytest: the repo root (the root conftest.py with --hw-port/--hw-stamp, and
+    ``shell``/``flow``) and the design directory (an agent design's tests import its blind ``model`` module and
+    ``hw_checks`` by bare name; it lives under runs/<id>/, not on sys.path), as flow/cocotb_run.py does."""
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(hw.ROOT), str(design)] + ([env["PYTHONPATH"]] if env.get("PYTHONPATH") else []))
+    return env
+
+
 class StepFailed(Exception):
     pass
 
@@ -131,7 +141,7 @@ class Run:
         cmd = [sys.executable, "-m", "pytest", "-q", "-m", "hw", "-p", "no:cacheprovider",
                "--hw-port", self.board["uart"], "--hw-stamp", self.res["build_stamp"],
                f"--junitxml={junit}", *map(str, tests)]
-        r = subprocess.run(cmd, cwd=hw.ROOT, capture_output=True, text=True, timeout=900)
+        r = subprocess.run(cmd, cwd=hw.ROOT, env=pytest_env(self.design), capture_output=True, text=True, timeout=900)
         (self.log_dir / "uart_tests.txt").write_text(self.scrub(r.stdout + r.stderr))
         xml = junit.read_text() if junit.is_file() else ""
         junit.write_text(self.scrub(xml))
