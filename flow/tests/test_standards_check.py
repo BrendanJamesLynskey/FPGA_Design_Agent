@@ -165,7 +165,7 @@ def test_waive_01_needs_a_reason(tmp_path):
 @pytest.mark.skipif(not has_vl, reason="Verilator not installed here (the lint and verification CI jobs have it)")
 def test_latch_01_inferred_latch(tmp_path):
     rtl = """module m (input logic clk, input logic en, input logic d, output logic q);
-    always_latch if (en) q = d;
+    always_comb if (en) q = d;
 endmodule
 """
     assert "STD-LATCH-01" in failing(run(tmp_path, rtl))
