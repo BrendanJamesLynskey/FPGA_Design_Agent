@@ -398,3 +398,25 @@ def test_verif_gate_reads_only_this_designs_runs_and_the_level_is_configurable(r
     verif_lines = lambda lvl: [w for w in exit_check(MACHINE[2], {**base, "verif_level": lvl})[1] if w.startswith("V")]
     assert verif_lines("V1") == [] and verif_lines("V2") and verif_lines("V3")
     assert gr.Config(spec_md=T1 / "spec.md", name="x").verif_level == "V3"                   # the default is unchanged
+
+
+# --- found by the second live run: stage 9 never gave the model a turn before its builds --------------------------
+
+def test_stage_9_work_runs_before_the_hardware_approval(rt, monkeypatch):
+    """The ILA build needs probes.yaml, which only the model writes; the work step used to be skipped until the board
+    was approved, so the ILA build always failed and the failure was routed back to timing closure."""
+    ran = []
+    monkeypatch.setattr(gr, "run_subagent", lambda rt_, role, prompt, allowed=(), repair=False: ran.append((role, allowed)) or {})
+    gr.node_work({"run_id": rt.run_id, "stage": 9, "visits": {}})
+    assert ran and ran[0][0] == "rtl" and "program" not in ran[0][1] and "bringup" not in ran[0][1]
+    from agent.graph.stages import classify, route_failure
+    fails = ["bitstream: did not run"]
+    assert route_failure(MACHINE[9], classify(MACHINE[9], fails)) == 9              # retry here, not stages 6-8
+    assert route_failure(MACHINE[9], classify(MACHINE[9], ["bitstream:bitstream_present"])) == 6
+
+
+def test_gates_on_a_missing_build_directory_is_a_failed_gate_not_a_traceback(tmp_path):
+    out = subprocess.run([sys.executable, str(ROOT / "flow" / "gates.py"), str(tmp_path / "nothing"), "--json",
+                          str(tmp_path / "g.json")], capture_output=True, text=True, cwd=ROOT)
+    assert out.returncode == 1 and "Traceback" not in out.stdout + out.stderr and "FAIL" in out.stdout
+    assert json.loads((tmp_path / "g.json").read_text())["pass"] is False

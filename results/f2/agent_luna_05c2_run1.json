@@ -1,0 +1,35 @@
+{
+ "brief": "05c2",
+ "run": "python -m agent run designs/t1_dimmer_counter/spec.md --interview oracle --hidden-spec ... --review off (Deep Agents, luna, 05c2 fixes, verif level V3)",
+ "run_id": "20261102-111638-9636",
+ "harness": "deepagents",
+ "model": "openai/gpt-6-luna",
+ "stages_visited": [
+  0,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "stop": "stage 2 visited more than 4 times",
+ "loops": 4,
+ "turns": 101,
+ "wall_s": 1314.8,
+ "tokens": 2424051,
+ "cost_usd": 0.081645,
+ "unreported_cost_calls": 0,
+ "key_usage_usd": {
+  "before": 92.788861166,
+  "after": 92.871808391,
+  "delta": 0.082947
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "bringup": null,
+ "verdict": "Null at stage 2 (5 visits), but the furthest yet: stage 1 passed first visit via board_constraints; simulate passed from visit 3; V0 and V1 passed (32/32 spec items traced). Stopped at V2. Cause: HARNESS, not the model: (a) verif_gates read the repo-wide build/verif/verilator (a stale T1 run) as this design's seeds, so planned tests were 'missing'; (b) V2/V3 need multi-seed runs, formal, coverage and mutation evidence that no agent tool produces. Both fixed/recorded in the report (per-design runs dir; --verif-level)."
+}

@@ -148,5 +148,7 @@ def classify(stage: Stage, fails: list[str]) -> str | None:
     if stage.n == 7:
         return "rtl"
     if stage.n == 9:
+        if "did not run" in text:       # a build that produced nothing (for example no probes.yaml): another attempt here
+            return None
         return "timing" if "bitstream" in text else ("rtl" if "bring-up" in text else None)
     return None

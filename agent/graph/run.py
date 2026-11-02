@@ -411,7 +411,7 @@ def node_work(state: State) -> dict:
                         "; ".join(state.get("fails") or []) or "none")
                     run_subagent(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
                                  + (note if repair else "") + conv0, st.tools, repair)
-        elif n != 9 or state.get("hw_approved"):
+        else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
             run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, tuple(t for t in st.tools
                                                                          if t not in ("program", "bringup")))
     except ArmBlocked as e:                                # the Claude Code arm cannot run (auth, CLI): stop, say why
