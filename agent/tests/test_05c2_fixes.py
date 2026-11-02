@@ -424,3 +424,23 @@ def test_gates_on_a_missing_build_directory_is_a_failed_gate_not_a_traceback(tmp
                           str(tmp_path / "g.json")], capture_output=True, text=True, cwd=ROOT)
     assert out.returncode == 1 and "Traceback" not in out.stdout + out.stderr and "FAIL" in out.stdout
     assert json.loads((tmp_path / "g.json").read_text())["pass"] is False
+
+
+def test_prepare_runs_as_a_script_for_the_ila_variant(rt, tmp_path):
+    """flow/prepare.py is run as a plain script by the flow: it must not import the agent package (a live run lost an
+    hour to exactly that)."""
+    d = rt.design
+    rel = d.relative_to(ROOT)
+    (d / "rtl").mkdir(exist_ok=True)
+    (d / "rtl" / "t.sv").write_text("module t(input logic clk); endmodule\n")
+    (d / "design.xdc").write_text("# x\n")
+    (d / "probes.yaml").write_text("ila: {name: x, clock_net: c, depth: 512}\nprobes:\n  - {name: a, pins: 'a_reg[*]/Q', width: 4}\n")
+    (d / "build.yaml").write_text(f"top: t\npart: xc7a100tcsg324-1\nsources: [{rel}/rtl/*.sv]\nconstraints: [{rel}/design.xdc]\n"
+                                  f"probes: {rel}/probes.yaml\n")
+    out = subprocess.run([sys.executable, str(ROOT / "flow" / "prepare.py"), str(d), "--variant", "ila", "--out", str(tmp_path)],
+                         capture_output=True, text=True, cwd=ROOT, env={"PATH": "/usr/bin:/bin"})
+    assert out.returncode == 0 and (tmp_path / "probes.tcl").is_file(), out.stderr[-400:]
+    (d / "probes.yaml").write_text("ila: {name: x}\nprobes: [a]\n")
+    bad = subprocess.run([sys.executable, str(ROOT / "flow" / "prepare.py"), str(d), "--variant", "ila", "--out", str(tmp_path)],
+                         capture_output=True, text=True, cwd=ROOT, env={"PATH": "/usr/bin:/bin"})
+    assert bad.returncode != 0 and "malformed" in bad.stderr and "Traceback" not in bad.stderr

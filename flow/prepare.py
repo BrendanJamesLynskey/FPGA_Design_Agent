@@ -18,6 +18,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -45,9 +46,25 @@ def sources_sha256(files: list[Path]) -> str:
     return h.hexdigest()
 
 
+PROBES_FORM = ("expected form: 'ila' a mapping {name, clock_net, depth (int)}, and a top-level 'probes' list of "
+               "mappings {name, pins (a post-synthesis register output pin pattern), width (int)}")
+
+
+def check_probes(data: dict[str, Any]) -> list[str]:
+    """What flow/prepare.py reads from probes.yaml (a wrong shape was a KeyError traceback in the ILA build)."""
+    errs = []
+    ila = data.get("ila")
+    if not isinstance(ila, dict) or not all(k in ila for k in ("name", "clock_net", "depth")):
+        errs.append("'ila' must be a mapping with 'name', 'clock_net' and 'depth'")
+    pr = data.get("probes")
+    if not isinstance(pr, list) or not pr or not all(
+            isinstance(p, dict) and p.get("name") and p.get("pins") and isinstance(p.get("width"), int) for p in pr):
+        errs.append("'probes' must be a top-level non-empty list of mappings, each with 'name', 'pins' and an integer 'width'")
+    return [*errs, PROBES_FORM] if errs else []
+
+
 def probes_tcl(probes_yaml: Path) -> str:
     cfg = yaml.safe_load(probes_yaml.read_text())
-    from agent.core.artefacts import check_probes
     bad = check_probes(cfg) if isinstance(cfg, dict) else ["not a YAML mapping"]
     if bad:
         raise SystemExit(f"prepare: {probes_yaml.name} is malformed: " + "; ".join(bad))
