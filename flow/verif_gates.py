@@ -26,6 +26,8 @@ from typing import Any
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+#: a proof method per requirement (brief 05d, Taylor addition 1; FPGA Horizons issue 5)
+PROOF_METHODS = ("simulation", "formal", "hardware", "analysis")
 
 
 class PlanError(Exception):
@@ -176,7 +178,60 @@ def load_inputs(design: Path, plan_path: Path) -> tuple[dict, dict]:
     return plan, spec
 
 
-def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation: Path | None, hw: Path | None) -> dict:
+def trace_table(reqs: list[dict], entries: list[dict], res: dict[int, dict[str, bool]], formal_res: dict[str, str],
+                gates_json: dict | None, hw_json: dict | None) -> list[dict[str, Any]]:
+    """The sign-off traceability table (brief 05d): requirement -> method -> artefact -> result. ``result`` is
+    ``pass``, ``fail`` or ``pending`` (the evidence source does not exist yet, for example no board result): only
+    ``pass`` counts at sign-off. Hardware artefacts are bring-up step names (``uart_tests``) or ``step:case``
+    (``uart_tests:test_t1_registers_against_the_model``); analysis artefacts are flow gate names (``setup`` or
+    ``post_route:setup``)."""
+    rows: list[dict[str, Any]] = []
+    flat_gates = (gates_json or {}).get("gates") or {}
+    for r in reqs:
+        for m in r.get("proof") or []:
+            es = [e for e in entries if e.get("requirement") == r.get("id") and e.get("method") == m and e.get("artefact")]
+            if not es:
+                rows.append({"requirement": r.get("id"), "text": r.get("text", ""), "method": m, "artefact": "-",
+                             "result": "fail", "detail": "no artefact declared in the testplan proof list"})
+            for e in es:
+                a = str(e["artefact"])
+                result, detail = "pending", ""
+                if m == "simulation":
+                    if not res:
+                        detail = "no simulation results"
+                    else:
+                        bad = [f"seed{s}" for s, tt in sorted(res.items()) if not tt.get(a, False)]
+                        result, detail = ("pass", f"passed on {len(res)} seed(s)") if not bad else ("fail", "failed or missing on " + ", ".join(bad))
+                elif m == "formal":
+                    if not formal_res:
+                        detail = "no formal results"
+                    else:
+                        got = {k: formal_res.get(f"{a}_{k}", "absent") for k in ("bmc", "cover")}
+                        result = "pass" if all(v == "PASS" for v in got.values()) else "fail"
+                        detail = ", ".join(f"{k}={v}" for k, v in got.items())
+                elif m == "hardware":
+                    if not hw_json:
+                        detail = "no bring-up result"
+                    else:
+                        step, _, case = a.partition(":")
+                        st = (hw_json.get("steps") or {}).get(step)
+                        ok = bool(st) and st.get("pass") is True and (not case or case in (st.get("cases") or {}))
+                        result, detail = ("pass", "bring-up step passed") if ok else ("fail", f"bring-up step {a} absent or failed")
+                elif m == "analysis":
+                    if not gates_json:
+                        detail = "no flow gates result"
+                    else:
+                        stage, _, g = a.rpartition(":")
+                        val = ((gates_json.get("stages") or {}).get(stage, {}).get("gates") or {}).get(g) if stage else flat_gates.get(g)
+                        result = "pass" if val is True else "fail"
+                        detail = f"gate {a} = {val}"
+                rows.append({"requirement": r.get("id"), "text": r.get("text", ""), "method": m, "artefact": a,
+                             "result": result, "detail": detail})
+    return rows
+
+
+def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation: Path | None, hw: Path | None,
+             gates: Path | None = None) -> dict:
     plan_path = design / "verif" / "testplan.yaml"
     out: dict[str, Any] = {"design": design.name, "stages": {}}
     v0 = {"testplan_present": chk(plan_path.exists(), True, plan_path.exists())}
@@ -213,7 +268,33 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     bench_src = "".join((bench_dir / f"{m}.py").read_text() for m in modules)
     uses_model = bool(re.search(r"(?m)^\s*(import\s+[\w.]*\bmodel\b|from\s+[\w.]*\bmodel\b\s+import|"
                                 r"from\s+[\w.]+\s+import\s+[^\n]*\bmodel\b)", bench_src))
+    spec_reqs = [r for r in (spec.get("requirements") or []) if isinstance(r, dict)]
+    no_method = [str(r.get("id", f"#{i}")) for i, r in enumerate(spec_reqs)
+                 if not (isinstance(r.get("proof"), list) and r["proof"] and all(m in PROOF_METHODS for m in r["proof"]))]
+    if not spec_reqs:
+        no_method = ["spec.yaml has no requirements"]
+    entries = [e for e in (plan.get("proof") or []) if isinstance(e, dict)]
+    undischarged = [f"{r.get('id')}:{m}" for r in spec_reqs for m in (r.get("proof") or [])
+                    if m in PROOF_METHODS and not any(e.get("requirement") == r.get("id") and e.get("method") == m
+                                                      and e.get("artefact") for e in entries)]
+    ids = {r.get("id") for r in spec_reqs}
+    bad_proof = []
+    for e in entries:
+        a, m = str(e.get("artefact", "")), e.get("method")
+        if e.get("requirement") not in ids:
+            bad_proof.append(f"{e.get('requirement')}: not a requirement of spec.yaml")
+        elif m not in PROOF_METHODS:
+            bad_proof.append(f"{e.get('requirement')}:{m}: not a proof method")
+        elif m == "simulation" and a not in tests_all:
+            bad_proof.append(f"{e['requirement']}:simulation:{a}: not a test in the bench")
+        elif m == "formal" and a not in formal_tasks:
+            bad_proof.append(f"{e['requirement']}:formal:{a}: not a formal job in {plan['formal_dir']}")
+        elif not a:
+            bad_proof.append(f"{e['requirement']}:{m}: no artefact")
     v1 = {
+        "requirements_have_proof_method": chk(no_method, [], not no_method),
+        "proof_methods_discharged": chk(undischarged, [], not undischarged and not no_method),
+        "proof_references_resolve": chk(bad_proof, [], not bad_proof),
         "spec_items_traced": chk(f"{len(items) - len(untraced)}/{len(items)}", "all", not untraced),
         "untraced_items": chk(untraced, [], not untraced),
         "unknown_spec_refs": chk(unknown, [], not unknown),
@@ -290,6 +371,17 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     out["code_coverage"] = {k: {kk: vv for kk, vv in v.items() if kk != "unhit"} for k, v in code.items() if k != "user"}
     out["code_coverage_unhit"] = {k: v.get("unhit", []) for k, v in code.items() if k in ("line", "toggle", "branch")}
     out["mutation"] = mut
+    # ---- sign-off: every proof method has passing evidence (brief 05d)
+    gates_json = json.loads(gates.read_text()) if gates and gates.exists() else None
+    hw_json = json.loads(hw.read_text()) if hw and hw.exists() else None
+    table = trace_table(spec_reqs, entries, res, read_formal(formal), gates_json, hw_json)
+    not_pass = [f"{r['requirement']}:{r['method']}={r['result']}" for r in table if r["result"] != "pass"]
+    out["traceability"] = table
+    out["stages"]["SIGNOFF"] = {"checks": {"every_method_has_passing_evidence": chk(not_pass, [], not not_pass and bool(table))}}
+    out["coverage_detail"] = {"bins": func, "requirements": [
+        {"id": r["id"], "spec": r["spec"], "tests": r.get("tests", []),
+         "bins": {n: {"hit": sum(1 for h in (func.get(n) or {}).values() if h > 0), "total": len(func.get(n) or {})}
+                  for n in r.get("bins", [])}} for r in reqs]}
     # ---- V-HW
     if hw and hw.exists():
         j = json.loads(hw.read_text())
@@ -310,8 +402,9 @@ def finish(out: dict) -> dict:
         if not st["pass"]:
             break
         reached = s
-    if "V-HW" in out["stages"]:
-        out["stages"]["V-HW"]["pass"] = all(c["pass"] for c in out["stages"]["V-HW"]["checks"].values())
+    for extra in ("V-HW", "SIGNOFF"):
+        if extra in out["stages"]:
+            out["stages"][extra]["pass"] = all(c["pass"] for c in out["stages"][extra]["checks"].values())
     out["reached"] = reached
     out["first_failed"] = next((s for s in ("V0", "V1", "V2", "V3") if s in out["stages"] and not out["stages"][s].get("pass")), None)
     return out
@@ -325,13 +418,16 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--formal", default="build/verif/formal")
     ap.add_argument("--mutation")
     ap.add_argument("--hw")
+    ap.add_argument("--gates", help="gates.json of the build (flow/gates.py): evidence for analysis proofs")
     ap.add_argument("--json")
     ap.add_argument("--require-hw", action="store_true")
+    ap.add_argument("--require-signoff", action="store_true", help="exit 1 unless every proof method has passing evidence")
     a = ap.parse_args(argv)
     rel = lambda p: (ROOT / p) if not Path(p).is_absolute() else Path(p)
     try:
         rep = evaluate(rel(a.design), rel(a.runs), [rel(x) for x in a.also], rel(a.formal),
-                       rel(a.mutation) if a.mutation else None, rel(a.hw) if a.hw else None)
+                       rel(a.mutation) if a.mutation else None, rel(a.hw) if a.hw else None,
+                       rel(a.gates) if a.gates else None)
     except (PlanError, OSError, KeyError, TypeError, ValueError, AttributeError, SyntaxError) as e:
         # whatever else a gate input throws, the answer is a failed gate with the message, not a traceback
         msg = e.args[0] if isinstance(e, PlanError) and e.args else f"{type(e).__name__}: {e}"
@@ -341,10 +437,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{s}: {'PASS' if st.get('pass') else 'FAIL'}")
         for n, c in st["checks"].items():
             print(f"    {'ok ' if c['pass'] else 'BAD'} {n}: {c['value']}  (threshold {c['threshold']})")
+    for r in rep.get("traceability") or []:
+        print(f"    trace {r['requirement']:8} {r['method']:10} {r['artefact']:55} {r['result']:8} {r['detail']}")
     print(f"reached: {rep['reached']}  first failed: {rep['first_failed']}")
     if a.json:
         Path(a.json).write_text(json.dumps(rep, indent=2, default=str) + "\n")
-    ok = rep["first_failed"] is None and (not a.require_hw or rep["stages"]["V-HW"].get("pass"))
+    ok = (rep["first_failed"] is None and (not a.require_hw or rep["stages"].get("V-HW", {}).get("pass"))
+          and (not a.require_signoff or rep["stages"].get("SIGNOFF", {}).get("pass")))
     return 0 if ok else 1
 
 

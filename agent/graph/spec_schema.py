@@ -18,7 +18,10 @@ from typing import Any
 
 import yaml
 
-REQUIRED = ("name", "top", "ports", "clocks", "reset", "behaviour", "registers", "timing")
+REQUIRED = ("name", "top", "ports", "clocks", "reset", "behaviour", "registers", "timing", "requirements")
+#: how a requirement can be shown to hold (brief 05d, Taylor addition 1): a cocotb test against the blind model, a
+#: formal property, a check on the board, or an analysis (a flow gate or a report)
+PROOF_METHODS = ("simulation", "formal", "hardware", "analysis")
 #: parameter-name suffix -> seconds per unit (a rate is a frequency: 1/value)
 _RATE = {"HZ": ("rate", 1.0), "KHZ": ("rate", 1e3), "MHZ": ("rate", 1e6), "BAUD": ("rate", 1.0),
          "MS": ("period", 1e-3), "US": ("period", 1e-6), "NS": ("period", 1e-9)}
@@ -91,11 +94,52 @@ def shape_errors(spec: dict[str, Any]) -> list[str]:
     return errs
 
 
-def validate(spec: dict[str, Any], allow_rates: bool = False) -> list[str]:
-    """Why this spec cannot be signed off (empty list: it can)."""
+def requirement_errors(spec: dict[str, Any], need_proof: bool = True) -> list[str]:
+    """``requirements`` is a list of mappings ``{id, text, proof: [method, ...]}``: ids unique, ``proof`` a non-empty
+    list from :data:`PROOF_METHODS`. With ``need_proof=False`` (before the interview has proposed a method for each)
+    a missing ``proof`` is allowed, a wrong one is not."""
+    reqs = spec.get("requirements")
+    if reqs is None:
+        return []
+    if not isinstance(reqs, list) or not all(isinstance(r, dict) for r in reqs):
+        return ["'requirements' must be a list of mappings: {id, text, proof: [simulation|formal|hardware|analysis]}"]
+    errs, seen = [], set()
+    for i, r in enumerate(reqs):
+        rid = r.get("id")
+        if not rid or not r.get("text"):
+            errs.append(f"requirements[{i}] needs an 'id' and a 'text'")
+            continue
+        if rid in seen:
+            errs.append(f"requirement id {rid} is used twice")
+        seen.add(rid)
+        p = r.get("proof")
+        if p is None:
+            if need_proof:
+                errs.append(f"requirement {rid} has no proof method (proof: a list from {', '.join(PROOF_METHODS)})")
+        elif not isinstance(p, list) or not p or any(m not in PROOF_METHODS for m in p):
+            errs.append(f"requirement {rid}: proof must be a non-empty list from {', '.join(PROOF_METHODS)} (got {p!r})")
+    return errs
+
+
+def propose_proof(text: str) -> tuple[list[str], str]:
+    """A default proof method for a requirement, from its wording (the interview offers it with its reason)."""
+    low = text.lower()
+    if re.search(r"\b(never|always|at most one|mutually exclusive|invariant|no more than)\b", low):
+        return ["simulation", "formal"], "an invariant over all states: a bounded formal proof backs the simulation"
+    if re.search(r"\b(mhz|ns\b|timing|slack|clock rate|resource|lut|bram|dsp|power|temperature)\b", low):
+        return ["analysis"], "a timing, resource or power figure is read from the flow's reports, not simulated"
+    if re.search(r"\b(board|led|button|switch|display|uart|pin|visible)\b", low) and "simulat" in low:
+        return ["simulation", "hardware"], "board-visible behaviour: simulated, then checked on the board"
+    return ["simulation"], "behaviour of the design: a cocotb test against the blind model"
+
+
+def validate(spec: dict[str, Any], allow_rates: bool = False, need_proof: bool = True) -> list[str]:
+    """Why this spec cannot be signed off (empty list: it can). ``need_proof=False``: the first pass, before the
+    interview has settled each requirement's proof method."""
     if not spec:
         return ["spec.yaml is empty"]
     errs = [f"spec.yaml has no {k!r} (required, non-empty)" for k in REQUIRED if not spec.get(k)]
+    errs += requirement_errors(spec, need_proof)
     for k in ("ports", "clocks"):
         if spec.get(k) and not isinstance(spec[k], (list, dict)):
             errs.append(f"{k!r} must be a list or mapping")

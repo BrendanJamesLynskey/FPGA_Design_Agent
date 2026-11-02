@@ -354,10 +354,31 @@ def con_files(s: Session, cfg: dict) -> list[Path]:
     return out
 
 
-@tool("gates", "Parse a build's reports into stage results (flow/gates.py), or run the verification stage gates "
-               "(flow/verif_gates.py). Raw numbers and rule ids only.",
-      {"kind": {"type": "string", "enum": ["stages", "verif"]}, "variant": {"type": "string", "enum": ["base", "ila"]}})
+@tool("gates", "Parse a build's reports into stage results (flow/gates.py), run the verification stage gates "
+               "(flow/verif_gates.py: with the proof-method traceability table), check the design standards "
+               "(flow/standards_check.py: rule ids, with the post-synthesis rules read from build/<variant>), check "
+               "architecture.yaml and its approval (architecture), or check the bring-up artefacts without the board "
+               "(bringup_ready). Raw numbers and rule ids only.",
+      {"kind": {"type": "string", "enum": ["stages", "verif", "bringup_ready", "standards", "architecture"]},
+       "variant": {"type": "string", "enum": ["base", "ila"]}})
 def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
+    if kind in ("standards", "architecture"):
+        out = s.design / "build" / f"{kind}.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.unlink(missing_ok=True)
+        script = "standards_check.py" if kind == "standards" else "architecture.py"
+        argv = [PY, str(s.root / "flow" / script)] + (["check"] if kind == "architecture" else []) + [
+            str(s.design), "--json", str(out)] + (["--variant", variant] if kind == "standards" else [])
+        r = s.runner.run(kind, argv, s.root, timeout=300)
+        return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": _read_json(out)}
+    if kind == "bringup_ready":
+        # the bring-up artefacts (hw_checks.py, tests/test_*_hw.py, BRINGUP.md, probes.yaml), checked without the board
+        out = s.design / "build" / "bringup_ready.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.unlink(missing_ok=True)
+        r = s.runner.run("bringup_ready", [PY, str(s.root / "flow" / "hw_dry_check.py"), str(s.design), "--json", str(out)],
+                         s.root, timeout=120)
+        return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": _read_json(out)}
     if kind == "verif":
         # per design, and never a stale file: a crashed run must not be read as the previous result (05b)
         out = s.design / "build" / "verif" / "verif_gates.json"
@@ -367,6 +388,12 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
         # there was read as the new design's seeds in 05c2 run 1)
         argv = [PY, str(s.root / "flow" / "verif_gates.py"), _rel(s, s.design), "--json", _rel(s, out),
                 "--runs", _rel(s, s.design / "build" / "verif" / "sim")]
+        # evidence for the sign-off table, only once it exists: analysis proofs read the flow gates, hardware proofs the
+        # bring-up result (an absent file leaves those rows pending)
+        if (s.design / "build" / "base" / "gates.json").is_file():
+            argv += ["--gates", _rel(s, s.design / "build" / "base" / "gates.json")]
+        if (s.design / "build" / "bringup" / f"{s.design.name}_bringup.json").is_file():
+            argv += ["--hw", _rel(s, s.design / "build" / "bringup" / f"{s.design.name}_bringup.json")]
         r = s.runner.run("verif_gates", argv, s.root, timeout=300)
         data = _read_json(out)
         return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": data}
@@ -474,7 +501,11 @@ def spec_items(s: Session) -> dict:
             rows.append((i, str(spec["timing"]["latency"][i.rsplit(".", 1)[1]])))
         else:
             rows.append((i, str(spec.get(i, ""))))
-    return {"output": "\n".join(f"{i}: {t[:240]}" for i, t in rows), "ids": ids, "count": len(ids)}
+    reqs = [r for r in spec.get("requirements") or [] if isinstance(r, dict)]
+    tail = ("\n\nrequirements (the testplan `proof:` list must give each listed method an artefact):\n" + "\n".join(
+        f"{r.get('id')}: [{', '.join(r.get('proof') or [])}] {str(r.get('text', ''))[:200]}" for r in reqs)) if reqs else ""
+    return {"output": "\n".join(f"{i}: {t[:240]}" for i, t in rows) + tail, "ids": ids, "count": len(ids),
+            "requirements": [{"id": r.get("id"), "proof": r.get("proof")} for r in reqs]}
 
 
 # --- the frozen knowledge bank --------------------------------------------------------------------------------------

@@ -24,9 +24,10 @@ from agent.core.session import Session
 ROLES: dict[str, dict[str, tuple[str, ...]]] = {
     "clarify": {"read": ("spec.md", "spec.yaml"), "write": ("spec.yaml",)},
     "model": {"read": ("spec.yaml", "model.py"), "write": ("model.py",)},      # its own output, to edit on a repair
-    "tests": {"read": ("spec.yaml", "model.py", "tests/*", "verif/*"), "write": ("tests/*", "verif/*")},
+    "tests": {"read": ("spec.yaml", "model.py", "tests/*", "verif/*", "probes.yaml", "BRINGUP.md", "hw_checks.py"),
+              "write": ("tests/*", "verif/*", "hw_checks.py")},       # hw_checks.py: stage 9 bring-up checks, against the model
     "rtl": {"read": ("*",), "write": ("rtl/*", "build.yaml", "design.xdc", "probes.yaml", "BRINGUP.md",
-                                      "ARCHITECTURE.md", "hw_checks.py", "lint/*", "BUILD_NOTE.md")},
+                                      "ARCHITECTURE.md", "architecture.yaml", "hw_checks.py", "lint/*", "BUILD_NOTE.md")},
 }
 #: tool names each role may call at all (on top of the stage's own list)
 ROLE_TOOLS = {"clarify": {"read_file", "write_file", "list_files", "search_docs", "load_skill"},
@@ -50,6 +51,10 @@ class RoleJail(PathJail):
         inside = str(real.relative_to(self.root)) if real != self.root else "."
         if inside == "." and not write:
             return real
+        if write and self.role == "rtl" and inside in ("architecture.yaml", "ARCHITECTURE.md") \
+                and (self.root / "build" / "approvals" / "architecture.json").is_file():
+            raise SecurityError("role", f"{inside} is approved and frozen; a change goes back to the architecture stage "
+                                        f"for a new approval (brief 05d)")
         if not self._ok(inside, self.rules["write" if write else "read"]):
             raise SecurityError("role", f"the {self.role} sub-agent may not {'write' if write else 'read'} {inside}")
         return real
@@ -69,6 +74,9 @@ def role_inputs(s: Session, role: str, previous: bool = False) -> dict[str, str]
     want = {"clarify": ["spec.md", "spec.yaml"], "model": ["spec.yaml"], "tests": ["spec.yaml", "model.py"],
             "rtl": ["spec.yaml", "ARCHITECTURE.md"]}[role]
     j = RoleJail(s.jail, role)
+    if role == "tests" and s.stage == "configuration-and-debug":      # stage 9: the bring-up files (probe names, guide)
+        want = want + ["probes.yaml", "BRINGUP.md", "hw_checks.py"] + sorted(
+            str(p.relative_to(s.design)) for p in (s.design / "tests").glob("test_*_hw.py"))
     if previous and role == "model":
         want = want + ["model.py"]
     if previous and role == "tests":

@@ -89,6 +89,9 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0) -> tuple[dict[str, list[s
     lint = ev.get("lint") or {}
     if not lint.get("ok"):
         add("rtl", "[lint] " + str(lint.get("text") or "lint not passing")[-1500:], "lint")
+    std = ev.get("standards_fails") or []
+    if std:
+        add("rtl", "[design standards] " + "\n".join(std)[:1800], "standards")
     c = ev.get("contract") or {}
     if not c.get("ok"):
         add("model", "[model contract] " + str(c.get("error") or "not checked")[-1200:], "contract")
@@ -124,7 +127,8 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0) -> tuple[dict[str, list[s
         owners["model"] = [f"[independent check] your model disagreed with an independent check in test {mismatch_test}. "
                            f"Re-read spec.yaml for the behaviour that test covers and check your model against it."]
     if not owners:
-        owners["rtl"] = ["[gates] " + " ".join(ev.get("other_fails") or ["a gate failed"])[:1500]]
+        owners["rtl"] = ["[gates] " + " ".join(ev.get("other_fails") or ["a gate failed"])[:1500]
+                         + (("\n[build output]\n" + ev["build_output"][-1800:]) if ev.get("build_output") else "")]
         sig.append("rtl:other")
     owners = {r: owners[r] for r in ROLE_ORDER if r in owners}
     return owners, "|".join(sorted(sig))

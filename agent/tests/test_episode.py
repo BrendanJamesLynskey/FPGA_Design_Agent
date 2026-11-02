@@ -18,10 +18,13 @@ from agent.graph import run as gr  # noqa: E402
 from agent.graph.llm import Reply  # noqa: E402
 
 T1 = Path(__file__).resolve().parents[2] / "designs" / "t1_dimmer_counter"
+from agent.core.session import ROOT as ROOT_  # noqa: E402
+
 STAGES = {k: {"ran": True, "gates": g} for k, g in {
     "rtl": {"rtl_methodology_no_critical": True},
     "post_synth": {"post_synth_no_unconstrained_endpoints": True, "post_synth_methodology_no_critical": True,
-                   "post_synth_drc_clean": True, "post_synth_qor_assessment": True},
+                   "post_synth_drc_clean": True, "post_synth_qor_assessment": True, "post_synth_cdc_no_critical": True,
+                   "post_synth_resources_in_range": True},
     "post_place": {"post_place_hold": True},
     "post_route": {"setup": True, "hold": True, "pulse_width": True, "no_unconstrained_endpoints": True,
                    "drc_clean": True, "methodology_no_critical": True, "cdc_no_critical": True,
@@ -43,6 +46,22 @@ class FakeRunner:
         if kind == "contract":                                       # the real contract check, on the host
             from agent.core.runner import LocalRunner
             return LocalRunner().run(kind, argv, cwd, env, timeout)
+        if kind == "standards":                                      # the real static rules on the scripted RTL; the
+            from flow import standards_check as sc               # Verilator/Yosys rules are tested where those tools are
+            design = Path(argv[2])
+            from unittest import mock
+            out = Path(argv[argv.index("--json") + 1])
+            out.parent.mkdir(parents=True, exist_ok=True)
+            with mock.patch.object(sc.Check, "rule_latch_loop", lambda self: None):
+                res = sc.evaluate(design, ROOT_, "base")
+            out.write_text(json.dumps(res))
+            return RunResult(0 if res["pass"] else 1, "standards: " + ("PASS" if res["pass"] else "FAIL " + json.dumps(
+                [(r["id"], r["findings"]) for r in res["rules"] if r["status"] in ("fail", "not_run")])), "", 0.01)
+        if kind == "architecture":
+            from flow import architecture as am
+            out = Path(argv[argv.index("--json") + 1])
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(json.dumps(am.check_design(Path(argv[3]))))
         if kind == "gates":
             out = Path(argv[argv.index("--json") + 1])
             out.parent.mkdir(parents=True, exist_ok=True)
@@ -51,11 +70,15 @@ class FakeRunner:
             out = cwd / argv[argv.index("--json") + 1]
             assert "/build/verif/" in str(out) and str(out).startswith(str(cwd / "runs")), out   # never shared
             out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps({"reached": "V3", "first_failed": None}))
+            out.write_text(json.dumps({"reached": "V3", "first_failed": None,
+                                       "stages": {"SIGNOFF": {"pass": True, "checks": {}}},
+                                       "traceability": [{"requirement": "REQ-01", "method": "simulation", "artefact": "t.x",
+                                                         "result": "pass", "detail": "passed on 3 seed(s)", "text": "x"}]}))
         if kind == "build":                                         # run_vivado.sh <design> <variant>
             b = Path(argv[1]) / "build" / argv[2]
             b.mkdir(parents=True, exist_ok=True)
             (b / "post_synth.dcp").write_bytes(b"DCP " + str(len(self.kinds)).encode())
+            (b / "clock_networks_synth.rpt").write_text("Clock sys_clk_pin (100MHz)(endpoints: 488 clock)\nPort CLK100MHZ\n")
             if (env or {}).get("FDA_STOP_AFTER") == "bitstream":
                 (b / "top.bit").write_bytes(b"BIT")
         if kind == "bringup":
@@ -73,16 +96,18 @@ def scripted_client(seen, where):
     spec = (T1 / "spec.yaml").read_text().replace("default: no, linear", "reason: not in the request\n    default: no, linear")
     files = {"clarify": {"/spec.yaml": spec}, "model": {"/model.py": (T1 / "model.py").read_text() + SHIM},
              "tests": {"/tests/test_t1_dimmer_counter_rtl.py": "# bench\n", "/verif/testplan.yaml": "items: []\n",
-                       "/tests/test_t1_dimmer_counter_hw.py": "# hw tests\n"}}
-    rtl1 = {"/ARCHITECTURE.md": "# T1\n\n## Block diagram\n\n```\n[buttons] -> [debounce] -> [counter] -> [pwm]\n```\n",
+                       "/tests/test_t1_dimmer_counter_hw.py": (T1 / "tests" / "test_t1_hw.py").read_text(),
+                       "/hw_checks.py": (T1 / "hw_checks.py").read_text()}}
+    rtl1 = {"/architecture.yaml": (T1 / "architecture.yaml").read_text(),
+            "/ARCHITECTURE.md": "# T1\n\n## Block diagram\n\n```\n[buttons] -> [debounce] -> [counter] -> [pwm]\n```\n",
             "/build.yaml": (T1 / "build.yaml").read_text().replace("designs/t1_dimmer_counter/", "{d}/"),
-            "/design.xdc": (T1 / "design.xdc").read_text(), "/hw_checks.py": "# checks\n",
+            "/design.xdc": (T1 / "design.xdc").read_text(), "/probes.yaml": (T1 / "probes.yaml").read_text(), "/BRINGUP.md": (T1 / "BRINGUP.md").read_text(),
             **{f"/rtl/{f.name}": f.read_text() for f in sorted((T1 / "rtl").glob("*.sv"))}}
 
     def client(messages, tools=None):
         system = messages[0]["content"]
         role = ("clarify" if "turn a short design request" in system else "model" if "blind golden model" in system
-                else "tests" if "cocotb tests" in system else "rtl")
+                else "tests" if ("cocotb tests" in system or "bring-up tests" in system) else "rtl")
         seen.append({"role": role, "user": messages[1]["content"] if len(messages) > 1 else ""})
         if messages[-1]["role"] == "tool":
             return Reply("DONE", [])

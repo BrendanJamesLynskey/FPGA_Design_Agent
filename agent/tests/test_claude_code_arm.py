@@ -251,4 +251,4 @@ def test_every_path_in_a_role_prompt_resolves_inside_the_jail(rt):
 
 
 def CONVENTIONS_TEXT(fmt):
-    return gr.CONVENTIONS.format(**fmt)
+    return gr.conventions_text(fmt)

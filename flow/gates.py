@@ -265,7 +265,19 @@ def _rule_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
             "warnings": _n_sev(rows, "Warning"), "rules": rows}
 
 
-def evaluate(build_dir: Path) -> dict[str, Any]:
+def _architecture_for(d: Path, architecture: Path | None) -> dict[str, Any] | None:
+    """The design's architecture.yaml (``build/<variant>`` -> the design directory), or None for a build that has
+    none (a milestone before 05d): the resource gate is then not applied."""
+    import yaml
+    p = architecture or d.parent.parent / "architecture.yaml"
+    try:
+        data = yaml.safe_load(p.read_text()) if p.is_file() else None
+    except yaml.YAMLError:
+        return None
+    return data if isinstance(data, dict) and isinstance(data.get("predicted_resources"), dict) else None
+
+
+def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any]:
     d = build_dir
     prep = json.loads((d / "prepare.json").read_text()) if (d / "prepare.json").exists() else {}
     top = prep.get("top") or next((p.stem for p in d.glob("*.bit")), "")
@@ -292,10 +304,22 @@ def evaluate(build_dir: Path) -> dict[str, Any]:
              "post_synth_drc_clean": _n_sev(d_s, "Error") == 0 and _n_sev(d_s, "Critical Warning") == 0}
         if q_s is not None:
             g["post_synth_qor_assessment"] = q_s["score"] >= QOR_SCORE_MIN
+        cdc_s = parse_cdc(_read(d, "cdc_synth.rpt")) if (d / "cdc_synth.rpt").exists() else None
+        if cdc_s is not None:              # design standard STD-CDC-02 (brief 05d): report_cdc at post-synthesis
+            g["post_synth_cdc_no_critical"] = sum(r["count"] for r in cdc_s["rules"] if r["severity"] == "Critical") == 0
+        util_s = parse_utilization(_read(d, "utilization_synth.rpt")) if (d / "utilization_synth.rpt").exists() else {}
+        arch = _architecture_for(d, architecture)
+        sanity = None
+        if arch is not None and util_s:    # resource sanity gate (brief 05d, Taylor addition 4)
+            try:
+                from flow.architecture import resource_check
+            except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+                from architecture import resource_check
+            sanity = resource_check(util_s, arch)
+            g["post_synth_resources_in_range"] = sanity["pass"]
         stages["post_synth"] = {"ran": True, "gates": g, "timing": t_s, "check_timing": c_s,
                                 "methodology": _rule_summary(m_s), "drc": _rule_summary(d_s), "qor_assessment": q_s,
-                                "utilization": parse_utilization(_read(d, "utilization_synth.rpt"))
-                                if (d / "utilization_synth.rpt").exists() else {}}
+                                "cdc": cdc_s, "resource_sanity": sanity, "utilization": util_s}
     else:
         stages["post_synth"] = {"ran": False, "gates": {}}
 
@@ -387,9 +411,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("build_dir", type=Path)
     ap.add_argument("--json", type=Path, help="write the result here")
+    ap.add_argument("--architecture", type=Path, help="architecture.yaml (default: the design's, two levels up)")
     a = ap.parse_args(argv)
     try:
-        r = evaluate(a.build_dir)
+        r = evaluate(a.build_dir, a.architecture)
     except (OSError, KeyError, ValueError, TypeError) as e:       # no reports to read: a failed gate, not a traceback
         print(f"gates: {a.build_dir.name}: FAIL: no usable build reports ({type(e).__name__}: {e}); the build did not "
               f"complete, read the build output")

@@ -49,4 +49,4 @@ def test_real_t1_gates_pass_if_present():
     if f.is_file():
         g = json.loads(f.read_text())
         for n in (4, 5, 6, 7, 8):
-            assert exit_check(MACHINE[n], {"gates_base": g})[0], n
+            assert exit_check(MACHINE[n], {"gates_base": g, "standards": {"rules": []}})[0], n

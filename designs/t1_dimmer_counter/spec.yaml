@@ -110,6 +110,16 @@ timing:
   async_inputs: buttons, switches, CPU_RESETN and UART RX are asynchronous - synchronised in RTL, false-pathed in XDC
   outputs: LEDs, display and UART TX are slow, registered outputs - no output timing requirement (false-pathed)
 
+requirements:                  # what the owner can check; each has a proof method (brief 05d); verif/testplan.yaml `proof:` names the evidence
+  - {id: REQ-01, text: "The counter counts up, down and clear on debounced presses, wraps at 16 bits, and a same-clock register write wins", proof: [simulation]}
+  - {id: REQ-02, text: "A button change shorter than the debounce time never counts; a release makes no press", proof: [simulation, formal]}
+  - {id: REQ-03, text: "LED brightness is linear in the effective duty over one PWM period", proof: [simulation]}
+  - {id: REQ-04, text: "The display lights exactly one digit at a time, in order, showing COUNT and the duty in hex", proof: [simulation, formal]}
+  - {id: REQ-05, text: "The register window has the listed map and reset values", proof: [simulation]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "The design stays within its predicted resources and uses no BRAM or DSP", proof: [analysis]}
+  - {id: REQ-08, text: "On the board the register window answers as the model predicts and the ILA captures agree", proof: [hardware]}
+
 resources_expected: "well under 1 % of the XC7A100T: a few hundred LUTs and FFs, no BRAM, no DSP"
 
 assumptions:

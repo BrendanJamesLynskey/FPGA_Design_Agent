@@ -37,7 +37,7 @@ as exact Tcl with thresholds, the common failures, and what is version-specific.
 | Stage | Tcl (in order) | Reports | Added by 04e |
 |---|---|---|---|
 | `rtl` | `synth_design -rtl -rtl_skip_ip -top ... -part ...`; `report_methodology` | `methodology_rtl.rpt` | yes |
-| `post_synth` | `synth_design`; `write_checkpoint post_synth.dcp`; `report_timing_summary -max_paths 10 -report_unconstrained`; `check_timing -verbose`; `report_methodology`; `report_drc`; `report_qor_assessment`; `report_utilization`; `report_clock_networks`; `report_clock_interaction -delay_type min_max`; `report_high_fanout_nets -timing -load_types -max_nets 25` | `*_synth.rpt` | all but `utilization_synth.rpt` |
+| `post_synth` | `synth_design`; `write_checkpoint post_synth.dcp`; `report_timing_summary -max_paths 10 -report_unconstrained`; `check_timing -verbose`; `report_methodology`; `report_cdc -details` (05d); `report_drc`; `report_qor_assessment`; `report_utilization`; `report_clock_networks`; `report_clock_interaction -delay_type min_max`; `report_high_fanout_nets -timing -load_types -max_nets 25` | `*_synth.rpt` | all but `utilization_synth.rpt` |
 | (ILA) | `insert_ila` from `probes.yaml` (ILA variant only) | `probe_map.txt` | no |
 | `post_place` | `opt_design`; `place_design`; `phys_opt_design`; `report_timing_summary -max_paths 10` | `timing_summary_place.rpt` | yes |
 | `post_route` | `route_design`; `write_checkpoint post_route.dcp`; `report_timing_summary`, `check_timing`, `report_utilization` (+ `-hierarchical`), `report_methodology`, `report_cdc -details`, `report_drc`, `report_qor_assessment`, `set_operating_conditions <board thermal>`, `report_power`, `report_io` | `timing_summary.rpt`, `check_timing.rpt`, `utilization*.rpt`, `methodology.rpt`, `cdc.rpt`, `drc.rpt`, `qor_assessment_route.rpt`, `power.rpt`, `io.rpt` | `qor_assessment_route.rpt` |
@@ -95,16 +95,16 @@ stage that can fix the cause.
 
 | Stage | What the agent may do | Moves on when | Loops back to |
 |---|---|---|---|
-| 0 clarify | read the spec, write `spec.yaml` (ports, clocks, reset, latency, resources, power, assumptions with reasons, open questions) | the human signs `spec.yaml` off (the only mandatory human step before hardware) | - |
-| 1 board-and-device-planning | choose part and board, map ports to pins and I/O standards from the inventory and master XDC, write the clock plan and the power budget into the architecture note | inventory check passes; every port has a pin and standard; clocks planned | 0 if the spec needs a pin or clock it cannot have |
-| 2 rtl-design-creation | architecture note (block diagram, clocking, every CDC), RTL and IP by Tcl, lint, cocotb tests against the blind model (written by a separate agent from `spec.yaml` alone) | `flow/lint.sh` clean, the blind model's tests pass, every mutant fails, stage `rtl` passes (`report_methodology` on the elaborated RTL has no critical warning) | 0 if the model and RTL disagree on the spec (an open question, not a code fix) |
+| 0 clarify | read the spec, write `spec.yaml` (ports, clocks, reset, latency, resources, power, assumptions with reasons, open questions, **requirements with a proof method each**) | the human signs `spec.yaml` off (the only mandatory human step before hardware) | - |
+| 1 board-and-device-planning | choose part and board, map ports to pins and I/O standards from the inventory and master XDC, write the clock plan and the power budget into the architecture note **and `architecture.yaml`** (blocks, interfaces, clock domains, crossings, predicted resources) | inventory check passes; every port has a pin and standard; clocks planned; `architecture.yaml` valid. **The owner then approves the architecture (review on: always a pause; off: recorded as auto)** | 0 if the spec needs a pin or clock it cannot have |
+| 2 rtl-design-creation | RTL and IP by Tcl, lint, cocotb tests against the blind model (written by a separate agent from `spec.yaml` alone) | **the architecture is approved and unchanged since**, `flow/lint.sh` clean, the blind model's tests pass, **the design standards pass (`standards_rtl`)**, verification reaches the required V-stage (V1 includes a proof method per requirement), stage `rtl` passes (`report_methodology` on the elaborated RTL has no critical warning) | 0 if the model and RTL disagree on the spec (an open question, not a code fix); 1 if the architecture must change |
 | 3 constraints | write `design.xdc` in UG949's four steps (clocks, I/O delays, clock groups/CDC, exceptions), pins, I/O standards | stage `post_synth` constraint checks pass (`check_timing` all 0, methodology TIMING/XDC clean, no unsafe clock pair) | 2 for a CDC structure the constraints cannot make safe |
-| 4 synthesis | run the flow; read the synthesis log, `drc_synth`, `methodology_synth`, `qor_assessment_synth`, `utilization_synth`, post-synthesis WNS | stage `post_synth` passes (DRC, methodology, coverage, QoR score >= 4) | 2 for RTL causes (deep logic, unregistered RAM/DSP outputs, high fanout, QoR REVIEW items), 3 for constraint causes |
+| 4 synthesis | run the flow; read the synthesis log, `drc_synth`, `methodology_synth`, `cdc_synth`, `qor_assessment_synth`, `utilization_synth`, post-synthesis WNS | stage `post_synth` passes (DRC, methodology, coverage, QoR score >= 4, **resources within the architecture's prediction**) and the post-synthesis standards rules pass (`standards_post_synth`) | 1 if the resource prediction was wrong, 2 for RTL causes (unintended logic, a RAM that became LUTs, deep logic, unregistered RAM/DSP outputs, high fanout, QoR REVIEW items), 3 for constraint causes |
 | 5 implementation | run opt, place, phys_opt, route; read `timing_summary_place` and the post-route reports | stage `post_place` passes (WHS > -0.5 ns) and stage `post_route` passes | 6 |
 | 6 timing-closure | root cause with `report_timing_summary`, `report_design_analysis`, `report_qor_suggestions`; apply one change at the earliest stage that owns the cause, say what changed and why | `post_route` timing gates pass | 3 (clocks, exceptions, CDC), 2 (pipelining, fanout, control sets, hierarchy), 5 (directives, overconstraining) only when 2 and 3 are clean |
 | 7 power-closure | read `power.rpt` (total, junction, rails, confidence); reduce power if over | `power_junction_ok` and `power_ok` pass | 2 (coding for power, fewer memories, enables) or 0 (a budget the spec cannot meet) |
 | 8 drc-closure | read `drc_synth`, `drc`, `methodology`, `cdc`; fix or waive with a written reason | DRC gates pass at both stages; CDC no critical | 3 (constraint-shaped rules), 2 (structure rules) |
-| 9 configuration-and-debug | write `BRINGUP.md` and `probes.yaml`; build the ILA variant; program (power gate, serial, SRAM); run `bringup.py` | `bitstream` stage passes for both variants, DONE = 1, UART tests and ILA captures match the model | 6 if the ILA build breaks timing (fewer or narrower probes first), 2 if the hardware contradicts the model and the spec is clear, 0 if the spec is not |
+| 9 configuration-and-debug | write `BRINGUP.md`, `probes.yaml`, `tests/test_*_hw.py` and `hw_checks.py` (the last two by the test writer, against the blind model); build the ILA variant; the dry check of the bring-up files passes **before** the owner is asked to approve programming; program (power gate, serial, SRAM); run `bringup.py` | `bitstream` stage passes for both variants, the bring-up files pass `gates(kind=bringup_ready)`, DONE = 1, UART tests and ILA captures match the model, **the sign-off traceability table is all `pass`** | 9 itself when the bring-up files are missing or malformed (their writers fix them), 6 if the ILA build breaks timing (fewer or narrower probes first), 2 if the hardware contradicts the model and the spec is clear, 0 if the spec is not |
 
 Rules that hold in every stage: the agent never edits a gate, a threshold or a report; it may not waive a rule to
 pass a gate without a written reason; it searches only the frozen knowledge bank; and the stage it is in, what it
@@ -129,3 +129,32 @@ parts that had passed. Now the graph treats a failure as evidence about one arte
 Other tool rules from the same brief: constraints are generated from board resource names (`board_constraints`),
 never from pin numbers; the tool schemas offer only simulators installed here and only bank section ids that exist;
 known artefacts are validated when written, with line and column; the gate failure names every untraced spec id.
+
+### Taylor additions (brief 05d)
+
+Adam Taylor's FPGA Horizons issue 5 article ("What Star Trek can teach us about using AI in FPGA design") argues that
+the AI is a junior engineer held to the same gates as human RTL. Six of its ideas are standard in the flow; each is
+enforced by code, from both harnesses, and none can be switched off.
+
+1. **A proof method per requirement** ([verification.md](verification.md)): V1 fails without one, sign-off fails
+   unless each has passing evidence.
+2. **Architecture first.** Stage 1 ends with `ARCHITECTURE.md` and `architecture.yaml` (schema in `flow/architecture.py`).
+   With `--review on` the stage-1 review always pauses and the owner chooses: approve, edit (a prompt to the writing
+   role, or a hand edit), or **supply** their own files. With `--review off` the approval is written at once and
+   recorded as `auto`. The approval record (`build/approvals/architecture.json`) holds the SHA-256 of both files: stage 2
+   does not start RTL without a matching record, the RTL writer's jail refuses to write the files after approval, and a
+   later change makes the `arch_approved` gate fail and routes back to stage 1. The build note says whether the
+   architecture was written by the agent or is an owner contribution.
+3. **Design standards v1.0** ([design_standards.md](design_standards.md)), checked by `flow/standards_check.py`: gate
+   `standards_rtl` at stage 2, `standards_post_synth` at stage 4 (Vivado `report_cdc`, `report_methodology`,
+   clock-network scan). An unchecked checkable rule counts as failed.
+4. **Resource sanity.** `architecture.yaml` predicts LUT, FF, BRAM and DSP ranges; at post-synthesis the counts must lie
+   within the range widened by the factor in `flow/gates.yaml` (default 2x). A failure is `post_synth_resources_in_range`
+   and goes to stage 1 (the prediction was wrong) or stage 2 (a RAM that did not map while logic is over; a latch).
+5. **Review pages for line-by-line review**: the RTL diff against the previous stage (highlighted, no external script),
+   corner cases hit (requirement, tests, bins hit of total), waveforms with buses as hex values, `design.xdc` in full with
+   each pin traced to the board inventory, the traceability table and the standards results; light and dark.
+6. **Change by prompting; owner edits logged.** With `--review on`, `edit` takes a prompt for the writing role (`role` in
+   the reply, default the stage's writer). Files the owner changes by hand while the run is paused are found by comparing
+   with the stage snapshot, committed separately with author `owner`, gated again (the agent does not rewrite them) and
+   listed in `build/who_did_what.json` and the build note's "Who did what" table: **owner**, **agent** or **auto**.

@@ -4,7 +4,7 @@ Principle: a malformed file is cheapest to fix at the moment it is written, with
 file, the line and column, and the rule broken. The writer refuses the write (the previous good file stays), so a
 broken artefact never reaches a gate, and a gate never shows the model a parser traceback.
 
-Known artefacts: ``spec.yaml``, ``verif/testplan.yaml``, ``build.yaml``, ``probes.yaml``, ``ARCHITECTURE.md``; any other ``*.yaml``
+Known artefacts: ``spec.yaml``, ``verif/testplan.yaml``, ``build.yaml``, ``probes.yaml``, ``architecture.yaml``, ``ARCHITECTURE.md``; any other ``*.yaml``
 is checked for YAML syntax only. Everything else is not checked here.
 """
 
@@ -18,6 +18,7 @@ import yaml
 PLAN_KEYS = ("schema", "design", "spec", "model", "bench", "checkers", "formal_dir", "thresholds", "requirements")
 THRESHOLD_KEYS = ("seeds_min", "functional_bins_pct", "cover_properties_pct", "line_pct", "toggle_pct",
                   "mutation_score_pct")
+PROOF_METHODS = ("simulation", "formal", "hardware", "analysis")
 BUILD_KEYS = ("top", "part", "sources", "constraints")
 
 
@@ -68,6 +69,12 @@ def check_testplan(data: dict[str, Any]) -> list[str]:
                 for k in ("tests", "assertions", "cover_props", "bins", "formal"):
                     if k in r and not isinstance(r[k], list):
                         errs.append(f"requirements[{i}].{k} must be a list")
+    pr = data.get("proof")
+    if "proof" in data:
+        if not isinstance(pr, list) or not all(isinstance(e, dict) and e.get("requirement") and e.get("artefact")
+                                               and e.get("method") in PROOF_METHODS for e in pr):
+            errs.append("'proof' must be a list of mappings {requirement: <spec.yaml requirement id>, method: "
+                        f"{'|'.join(PROOF_METHODS)}, artefact: <test, formal job, bring-up step or flow gate>}}")
     return errs
 
 
@@ -84,8 +91,8 @@ def check_artefact(rel: str, content: str) -> str | None:
         data, err = _mapping(rel, content)
         if err:
             return err
-        from agent.graph.spec_schema import shape_errors
-        errs = shape_errors(data)
+        from agent.graph.spec_schema import requirement_errors, shape_errors
+        errs = shape_errors(data) + requirement_errors(data, need_proof=False)
         return f"{rel}: {'; '.join(errs)}" if errs else None
     if low == "verif/testplan.yaml":
         data, err = _mapping(rel, content)
@@ -106,6 +113,13 @@ def check_artefact(rel: str, content: str) -> str | None:
         if err:
             return err
         errs = check_probes(data)
+        return f"{rel}: {'; '.join(errs)}" if errs else None
+    if low == "architecture.yaml":
+        data, err = _mapping(rel, content)
+        if err:
+            return err
+        from flow.architecture import check_architecture
+        errs = check_architecture(data)
         return f"{rel}: {'; '.join(errs)}" if errs else None
     if low.endswith((".yaml", ".yml")):
         return yaml_error(rel, content)

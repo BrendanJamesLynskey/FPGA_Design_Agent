@@ -1,0 +1,159 @@
+{
+ "brief": "05d",
+ "model": "openai/gpt-6-luna",
+ "harness": "deepagents",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V1",
+ "result": "NULL: three live T1 episodes, none passed stage 2 within 4 visits; no build reached post-synthesis, so the resource-sanity gate, the post-synthesis standards rules and the sign-off table were not exercised live (they are tested with fixtures and the replayed episode). The board was not programmed.",
+ "runs": [
+  {
+   "run_id": "20261102-213438-46e9",
+   "stages_visited": [
+    0,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "stop": "stage 2 visited more than 4 times",
+   "turns": 268,
+   "tokens": 14298480,
+   "wall_s": 2166.1,
+   "meter_cost_usd": 0.280499,
+   "key_usage": {
+    "before": 94.045651686,
+    "after": 94.328127506,
+    "delta": 0.282476
+   },
+   "questions": {
+    "asked": 9,
+    "answered": 3,
+    "defaulted": 6
+   },
+   "architecture_approval": {
+    "decision": "approve",
+    "by": "auto",
+    "source": "agent"
+   },
+   "who_did_what_rows": {
+    "owner": 0,
+    "agent": 2,
+    "auto": 12
+   },
+   "stage_gate_notes": [
+    "00 clarify: pass",
+    "01 board-and-device-planning: pass",
+    "02 rtl-design-creation: simulate not passing; standards STD-CDC-01: architecture.yaml:1: crossings[0]: inline_in reset_sync is not a module of this design; standards STD-CDC-",
+    "02 rtl-design-creation: simulate not passing; standards STD-CDC-01: architecture.yaml:1: crossings[0]: inline_in reset_sync is not a module of this design; standards STD-CDC-",
+    "02 rtl-design-creation: simulate not passing; standards STD-CDC-01: architecture.yaml:1: crossings[0]: inline_in reset_sync is not a module of this design; standards STD-CDC-",
+    "02 rtl-design-creation: lint not passing; simulate not passing; rtl: did not run",
+    "02 rtl-design-creation: lint not passing; simulate not passing; rtl: did not run"
+   ]
+  },
+  {
+   "run_id": "20261102-221504-8828",
+   "stages_visited": [
+    0,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "stop": "stage 2 visited more than 4 times",
+   "turns": 118,
+   "tokens": 3098707,
+   "wall_s": 814.4,
+   "meter_cost_usd": 0.086047,
+   "key_usage": {
+    "before": 94.328127506,
+    "after": 94.416094191,
+    "delta": 0.087967
+   },
+   "questions": {
+    "asked": 12,
+    "answered": 4,
+    "defaulted": 8
+   },
+   "architecture_approval": {
+    "decision": "approve",
+    "by": "auto",
+    "source": "agent"
+   },
+   "who_did_what_rows": {
+    "owner": 0,
+    "agent": 6,
+    "auto": 15
+   },
+   "stage_gate_notes": [
+    "00 clarify: pass",
+    "01 board-and-device-planning: pass",
+    "02 rtl-design-creation: simulate not passing; V1 unknown_spec_refs: [1] timing.display_scan (need []); rtl: did not run",
+    "02 rtl-design-creation: simulate not passing; rtl: did not run",
+    "02 rtl-design-creation: simulate not passing; rtl: did not run",
+    "02 rtl-design-creation: simulate not passing; rtl: did not run",
+    "02 rtl-design-creation: simulate not passing; rtl: did not run"
+   ]
+  },
+  {
+   "run_id": "20261102-222945-478f",
+   "stages_visited": [
+    0,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2
+   ],
+   "stop": "stage 2 visited more than 4 times",
+   "turns": 147,
+   "tokens": 5265619,
+   "wall_s": 1465.6,
+   "meter_cost_usd": 0.135417,
+   "key_usage": {
+    "before": 94.417642666,
+    "after": 94.555093916,
+    "delta": 0.137451
+   },
+   "questions": {
+    "asked": 10,
+    "answered": 6,
+    "defaulted": 4
+   },
+   "architecture_approval": {
+    "decision": "approve",
+    "by": "auto",
+    "source": "agent"
+   },
+   "who_did_what_rows": {
+    "owner": 0,
+    "agent": 6,
+    "auto": 13
+   },
+   "stage_gate_notes": [
+    "00 clarify: pass",
+    "01 board-and-device-planning: pass",
+    "02 rtl-design-creation: lint not passing; simulate not passing; V1 proof_references_resolve: [2] REQ-01:formal:counter_control: not a formal job in runs/20261102-222945-478f/",
+    "02 rtl-design-creation: rtl: did not run",
+    "02 rtl-design-creation: rtl: did not run",
+    "02 rtl-design-creation: rtl: did not run",
+    "02 rtl-design-creation: rtl: did not run"
+   ]
+  }
+ ],
+ "key_usage_total": {
+  "before": 94.045651686,
+  "after": 94.555093916,
+  "delta": 0.5094,
+  "cap_usd": 1.0
+ },
+ "defects_found_by_the_live_runs_and_fixed": [
+  "run 1: STD-CDC-01 rejected inline_in naming a test-shell module (checker defect), and a finding in the frozen architecture.yaml was routed to the RTL writer, which cannot edit it: it now accepts shell modules and routes to stage 1 (tests added)",
+  "run 3: a failed Vivado elaboration (net type must be explicitly specified, default_nettype none) was not shown to the RTL writer that owns it: the repair text now carries the build output (test added); not rerun live, spend cap"
+ ]
+}

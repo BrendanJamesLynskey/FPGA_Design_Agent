@@ -38,9 +38,12 @@ from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
 from agent.core.artefacts import check_artefact
 from agent.graph.repair import stage2_owners
+from agent.graph import ownership
 from agent.graph.snapshot import Snapshots
-from agent.graph.spec_schema import SpecError, clock_hz, load_spec, rate_params, validate
+from agent.graph.spec_schema import (PROOF_METHODS, SpecError, clock_hz, load_spec, propose_proof, rate_params,
+                                     validate)
 from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure
+from flow import architecture as arch_mod
 
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "build", "gates", "report", "check_constraints", "search_docs",
@@ -66,6 +69,9 @@ class State(TypedDict, total=False):
     owners: dict        # stage 2: role -> the failure text that role owns (05c2: repair, do not regenerate)
     sig: str            # stage 2: signature of the last failure
     repeat: int         # stage 2: consecutive visits with an unchanged signature
+    note_role: str      # the owner's edit prompt goes to this role (default: the stage's writer)
+    arch_source: str    # who wrote the approved architecture: agent | owner
+    hand_edit_only: bool  # the owner edited by hand and gave no prompt: re-run the gates on their files, no agent turn
 
 
 @dataclass
@@ -111,6 +117,11 @@ PROMPTS = {
                "width, board pin role), behaviour, registers, timing, resources_expected, assumptions (each with a "
                "reason), and open_questions: one entry per thing the request leaves open, each as {{question, "
                "default, reason}} (the default you propose and why). Use only spec.md and the knowledge tools. "
+               "requirements: a list of {{id, text, proof}}, one per checkable requirement of the request (id unique, for example "
+               "REQ-01); proof is a list of the methods that will discharge it, from simulation (a cocotb test against the "
+               "blind model), formal (a SymbiYosys property), hardware (a bring-up check on the board) and analysis (a flow "
+               "gate or report: timing, resources, power); propose the method you think fits, and leave proof out only if "
+               "you cannot tell (the interview will ask). "
                "spec.yaml must be valid YAML (quote any text that contains ': ' or '?'); ports, clocks, reset, "
                "behaviour, registers and timing must all be non-empty, in this exact shape: behaviour is a mapping of "
                "group name -> list of statements; registers is a mapping with a 'map' list of entries "
@@ -126,13 +137,44 @@ PROMPTS = {
              "the RTL). Write tests/test_{name}_rtl.py (pytest entry calling flow.cocotb_run) and the cocotb bench; "
              "import the model with sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import model. "
              "Also write verif/testplan.yaml tracing every spec item to a test: call spec_items for the exact ids "
-             "the V1 gate checks (every one must appear in some requirement's spec list).\n" + MODEL_CONTRACT,
+             "the V1 gate checks (every one must appear in some requirement's spec list), and the requirements of spec.yaml with "
+             "their proof methods: the testplan gets a top-level `proof:` list of {{requirement, method, artefact}}, one "
+             "entry for every method of every requirement. artefact is: for simulation a bench test (module.test) that "
+             "checks it, for formal a SymbiYosys job name in verif/formal, for hardware a bring-up step (uart_tests, "
+             "ila_captures) or step:case, for analysis a flow gate (stage:gate, for example post_route:setup, "
+             "post_synth:post_synth_resources_in_range).\n" + MODEL_CONTRACT,
+    "hwtests": "You write the board bring-up tests and ILA capture checks for the design (stage 9), from spec.yaml, the "
+               "blind model model.py, probes.yaml and BRINGUP.md. You never see the RTL. Write tests/test_{name}_hw.py "
+               "and hw_checks.py. Paths are relative to the design directory (/tests/..., /hw_checks.py). "
+               "Problems found by the bring-up artefact check: {fails}\n",
     "rtl": "You are the RTL and implementation engineer for stage {stage} ({stage_name}) of the UltraFast flow on the "
            "{board}. Do only what this stage allows: {allowed}. The flow's gates decide when the stage is done, "
            "not you; when you think your part is complete, stop and reply DONE. Failures so far: {fails}. "
            "Reviewer note: {note}",
 }
 
+
+#: the bring-up file formats of stage 9, as a short schema (never the reference design's content): what
+#: flow/bringup.py and flow/hw_dry_check.py need. Same text for both harnesses.
+HW_FORMAT = """
+Bring-up files (stage 9; flow/bringup.py runs them on the board once the owner approves programming):
+- tests/test_{name}_hw.py: a pytest module with `pytestmark = pytest.mark.hw` and plain `def test_...(board)` functions.
+  A module-scoped fixture `board` opens the board's UART: `from shell.host.fpga_shell import FpgaShell`;
+  `FpgaShell.open(request.config.getoption("--hw-port"), timeout_s=0.2)`; the bitstream's build stamp comes from
+  `request.config.getoption("--hw-stamp")` (hex text). Registers are read and written through the shell window,
+  `sh.read(p.WINDOW_BASE + offset)` / `sh.write(p.WINDOW_BASE + offset, value)` with `from shell.host import
+  protocol as p` (@shell/PROTOCOL.md has the frames). Compare every answer with the blind model (model.py). Leave the
+  design at its reset values afterwards, and keep LED duty and count low (the board's power rule).
+- hw_checks.py: the ILA capture checks, run on the ILA build. A module-level `CAPTURES: list[Capture]` where you define
+  `Capture` as a dataclass with name, condition ("AND" or "OR"), position (int, trigger position in the 1024-sample
+  window), compares (dict: probe name -> the integer value the trigger waits for), setup(sh), stimulus(sh) and
+  check(samples) -> dict with a "pass" bool; `samples` is {{probe name: [value per clock]}}. Probe names are the ones in
+  probes.yaml. Also a function `restore(sh)` that puts the design back at its reset values.
+- BRINGUP.md for a tester who did not design it, with the sections Setup, Testing (step by step, pass/fail), Debug aids
+  (the ILA probes and their triggers) and If it fails.
+Call gates(kind="bringup_ready") to check that these files are complete without the board. The stage cannot ask the
+owner to approve programming until that check passes.
+"""
 
 FRESH_TESTS = (" Write your whole output: files of an earlier attempt that you do not write again are deleted.")
 
@@ -166,6 +208,15 @@ Flow conventions (fixed by the repo; follow them exactly):
   `probes:` list of {{name, pins, width}}; pins are post-synthesis register output pins (cell names survive synthesis,
   net names do not; a bus lists its bits with [*] and width must match). Read the synthesised design's reports under
   build/base/ for the real names; the write is refused if the shape is wrong.
+- architecture.yaml (stage 1, beside ARCHITECTURE.md): schema fpga-design-agent/architecture/v1 with blocks [{{name, function}}],
+  interfaces [{{name, between: [a, b], protocol: axi4-lite|axi4-stream|simple|uart|gpio|other, prefix, module}}],
+  clock_domains [{{name, clock (the clock port name), freq_mhz}}], reset {{synchronisers: [module names]}}, crossings
+  [{{from, to, signal, primitive, inline_in}}] ('from' may be async; primitive is one of {cdc_prims}) and
+  predicted_resources {{lut, ff, bram_tile, dsp}}, each a number or [low, high]. Predict before you write RTL: after
+  synthesis a result more than 2x outside your range fails a gate. The owner approves ARCHITECTURE.md and
+  architecture.yaml BEFORE any RTL is written, and both are frozen afterwards.
+- Design standards v1.0 (checked by flow/standards_check.py; gates(kind="standards") shows the rules and findings):
+{standards}
 - ARCHITECTURE.md must have a "## Block diagram" section with a fenced text diagram, the clock plan and the pin list.
 - Tests (test writer): tests/test_{name}_rtl.py is a pytest entry that calls
   flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=...), where
@@ -177,8 +228,20 @@ Flow conventions (fixed by the repo; follow them exactly):
   ({design_rel}/verif/formal), thresholds {{seeds_min, functional_bins_pct, cover_properties_pct, line_pct,
   toggle_pct, mutation_score_pct}}, waivers {{code_coverage: [], functional_bins: [], cover_properties: []}} (each
   waiver needs a reason), requirements: [{{id, spec: [spec.yaml item paths], tests: [module.test], assertions,
-  cover_props, bins, formal}}], plus verif/mutants.yaml. The last gate output shows what verif_gates found.
+  cover_props, bins, formal}}], proof: [{{requirement: <spec.yaml requirement id>, method: simulation|formal|hardware|analysis,
+  artefact: ...}}], plus verif/mutants.yaml. The last gate output shows what verif_gates found.
 """
+
+
+def conventions_text(fmt: dict) -> str:
+    """CONVENTIONS with this run's values; the one place that fills it (the Claude Code arm's tests use it too)."""
+    from flow import architecture as am
+    return CONVENTIONS.format(**{"cdc_prims": ", ".join(am.CDC_PRIMITIVES), "standards": _standards_summary(), **fmt})
+
+
+def _standards_summary() -> str:
+    from flow.standards_check import RULES
+    return "\n".join(f"    {k}: {v[1]}" for k, v in RULES.items() if v[0] != "review")
 
 
 def _core_tools(rt: Runtime, sess: Session, allowed: tuple[str, ...]):
@@ -383,6 +446,8 @@ def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
 
 def node_work(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
+    if state.get("hand_edit_only"):                    # the owner edited by hand: gate their files, do not rewrite them
+        return {"hand_edit_only": False, "note": ""}
     st = MACHINE[n]
     visits = dict(state.get("visits") or {})
     visits[str(n)] = visits.get(str(n), 0) + 1
@@ -394,11 +459,20 @@ def node_work(state: State) -> dict:
            "allowed": ", ".join(st.tools), "fails": "; ".join(state.get("fails") or []) or "none",
            "note": state.get("note") or "none",
            "design_rel": str(rt.design.relative_to(ROOT))}
-    conv0 = CONVENTIONS.format(**fmt)
+    conv0 = conventions_text(fmt)
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
+    # the owner's edit prompt (brief 05d, addition 6) goes to the role it names, default the stage's writer
+    note_for = state.get("note_role") or ("clarify" if n == 0 else "rtl")
+    def prompt_note(role: str) -> str:
+        return (f"\n\nThe owner reviewed the last result and asks (their prompt, follow it): {state['note']}"
+                if state.get("note") and role == note_for else "")
     try:
+        if n == 1:
+            (rt.design / arch_mod.APPROVAL).unlink(missing_ok=True)     # the architecture is open again: approve it anew
+        if n == 2 and not arch_mod.approval_status(rt.design)[0]:       # no RTL before the architecture is approved
+            return {"visits": visits, "note": "", "detail": "stage 2 did not start: " + arch_mod.approval_status(rt.design)[1]}
         if n == 0:
-            run_subagent(rt, "clarify", PROMPTS["clarify"].format(**fmt)
+            run_subagent(rt, "clarify", PROMPTS["clarify"].format(**fmt) + prompt_note("clarify")
                          + ("\nGate message: " + state["detail"][:3000] if state.get("detail") else ""),
                          ("search_docs", "load_skill"))
         elif n == 2:
@@ -406,18 +480,30 @@ def node_work(state: State) -> dict:
                 repair = reasons is not None
                 note = repair_note(role, reasons) if repair else ""
                 if role == "model":
-                    run_subagent(rt, "model", PROMPTS["model"].format(**fmt) + note, (), repair)
+                    run_subagent(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), (), repair)
                 elif role == "tests":
                     run_subagent(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else FRESH_TESTS)
-                                 + conv0, ("search_docs", "load_skill", "spec_items"), repair)
+                                 + prompt_note("tests") + conv0, ("search_docs", "load_skill", "spec_items"), repair)
                 else:
                     own = "; ".join(r[:1500] for r in reasons) if repair else (
                         "; ".join(state.get("fails") or []) or "none")
                     run_subagent(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
-                                 + (note if repair else "") + conv0, st.tools, repair)
+                                 + (note if repair else "") + prompt_note("rtl") + conv0, st.tools, repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
-            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, tuple(t for t in st.tools
-                                                                         if t not in ("program", "bringup")))
+            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + (HW_FORMAT.format(**fmt) if n == 9 else ""),
+                         tuple(t for t in st.tools if t not in ("program", "bringup")))
+            if n == 9:                                  # then the bring-up tests, which need the probe names (planner item, 05d)
+                from flow import hw_dry_check
+                dry = hw_dry_check.check_design(rt.design)
+                own = [q for q in dry["problems"] if not q.startswith(("BRINGUP.md", "probes.yaml"))]
+                if own:
+                    run_subagent(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
+                                 + HW_FORMAT.format(**fmt) + MODEL_CONTRACT, ("search_docs", "load_skill", "gates"),
+                                 repair=True)        # never "fresh": a fresh tests write deletes the stage-2 benches
+        files = [p for p in rt.design.rglob("*") if p.is_file() and "build" not in p.relative_to(rt.design).parts
+                 and "__pycache__" not in p.parts]
+        ownership.record(rt.design, "agent", st.name, f"stage {n} work, visit {visits[str(n)]}",
+                         f"{len(files)} files in the design", n=n)
     except ArmBlocked as e:                                # the Claude Code arm cannot run (auth, CLI): stop, say why
         return {"visits": visits, "stop": f"claude_code blocked: {e}"}
     except BudgetExceeded as e:
@@ -446,6 +532,11 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         asks.append((f"{r['name']} is given as {r['value']} {r['unit']}. The model and the RTL need an integer "
                      f"number of clock cycles ({r['new_name']}); at {clk}, how many?", str(r["cycles"]),
                      f"{r['cycles']} is {r['value']} {r['unit']} at {clk}, rounded once, so the model and RTL agree"))
+    unproven = [r for r in spec.get("requirements") or [] if isinstance(r, dict) and not r.get("proof")]
+    for r in unproven:                                            # 05d: a proof method per requirement, with a default
+        methods, why = propose_proof(str(r.get("text", "")))
+        asks.append((f"Which proof method discharges requirement {r['id']} ({r.get('text')})? One or more of "
+                     f"{', '.join(PROOF_METHODS)}", ",".join(methods), why))
     for i, (qt, qd, qr) in enumerate(asks):
         q = Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr)
         if rt.cfg.interview == "on":                                  # one question at a time, to the human
@@ -467,6 +558,10 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         params = {k: v for k, v in (spec.get("parameters") or {}).items() if k != r["name"]}
         params[r["new_name"]] = int(m.group()) if m else r["cycles"]
         spec["parameters"] = params
+    for r in unproven:                                            # the answered (or defaulted) methods go into the spec
+        got = next((q for q in iv.questions if q.text.startswith(f"Which proof method discharges requirement {r['id']} ")), None)
+        found = [m for m in PROOF_METHODS if got and got.answer and m in got.answer.lower()]
+        r["proof"] = found or propose_proof(str(r.get("text", "")))[0]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
     return spec, iv.summary()
 
@@ -539,7 +634,7 @@ def node_gate(state: State) -> dict:
         ev.pop("spec_errors", None)
         try:
             spec = _spec(rt)
-            errs = validate(spec, allow_rates=True)       # shape first: an invalid spec is never rewritten
+            errs = validate(spec, allow_rates=True, need_proof=False)       # shape first: an invalid spec is never rewritten
         except SpecError as e:
             spec, errs = {}, [str(e)]
         if errs:                                          # fail the gate with the parser's / schema's message
@@ -554,8 +649,14 @@ def node_gate(state: State) -> dict:
                 detail.append("[spec.yaml] " + "; ".join(errs))
     elif n == 1:
         ev["arch"] = (rt.design / "ARCHITECTURE.md").is_file()
+        ev["arch_check"] = arch_mod.check_design(rt.design)
         ev["inventory"] = {"ok": bool(d("check_constraints", dispatch(rt.session, "check_constraints", {})).get("ok"))}
+    elif n == 2 and not arch_mod.approval_status(rt.design)[0]:     # nothing below this line runs without an approval
+        ok_a, why_a = arch_mod.approval_status(rt.design)
+        ev["arch_approval"] = {"ok": ok_a, "why": why_a}
+        detail.append("[architecture] " + why_a)
     elif n == 2:
+        ev["arch_approval"] = {"ok": True, "why": ""}
         lr = d("lint", dispatch(rt.session, "lint", {}))
         ev["lint"] = {"ok": lr.get("ok"), "text": str(lr.get("output", ""))[-1500:]}
         ev["contract"] = _contract(rt, detail)
@@ -567,15 +668,26 @@ def node_gate(state: State) -> dict:
             ev["simulate"] = {"ok": False}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
         ev["verif_level"] = rt.cfg.verif_level
+        std = dispatch(rt.session, "gates", {"kind": "standards"})
+        ev["standards"] = std.get("gates")
+        from agent.graph.stages import standards_stage
+        ev["standards_fails"] = standards_stage(ev["standards"], "rtl")[1]
+        if ev["standards_fails"]:
+            detail.append("[standards] " + "\n".join(ev["standards_fails"])[:1800])
         if ev["lint"]["ok"] and ev["simulate"]["ok"]:          # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n in (3, 4):
         ev["gates_base"] = _build(rt, "synth")["gates"]
+        if n == 4:
+            std = dispatch(rt.session, "gates", {"kind": "standards"})
+            ev["standards"] = std.get("gates")
     elif n == 5:
         ev["gates_base"] = _build(rt, "route")["gates"]
     elif n in (6, 7, 8):
         ev["gates_base"] = _build(rt, "route")["gates"]
     elif n == 9:
+        from flow import hw_dry_check
+        ev["bringup_ready"] = hw_dry_check.check_design(rt.design)     # before the approval pause, not after it
         ev["gates_base"] = _build(rt, "bitstream")["gates"]
         ev["gates_ila"] = _build(rt, "bitstream", "ila")["gates"]
         if state.get("hw_approved"):
@@ -583,12 +695,14 @@ def node_gate(state: State) -> dict:
             br = dispatch(rt.session, "bringup", {}) or {}
             ev["bringup"] = br.get("bringup") or {"pass": False, "failed_step": br.get("rule") or "bringup",
                                                   "why": str(br.get("output", ""))[:300]}
+            ev["signoff"] = dispatch(rt.session, "gates", {"kind": "verif"}).get("gates")      # traceability with the board result
     if rt.last_build_output:
+        ev["build_output"] = rt.last_build_output           # the repair visit's RTL writer is shown it (05d live run 3)
         detail.append("[build] " + rt.last_build_output)
         rt.last_build_output = ""
     if n == 9 and not state.get("hw_approved"):
         from dataclasses import replace as _replace
-        ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g != "bringup")), ev)
+        ok, fails = exit_check(_replace(st, gates=tuple(g for g in st.gates if g not in ("bringup", "signoff"))), ev)
         if ok:                                   # everything but the board passes: ask before programming
             ok, fails = False, ["hardware: awaiting approval before programming"]
     else:
@@ -605,6 +719,14 @@ def node_gate(state: State) -> dict:
     return {**out, "evidence": ev, "fails": [] if ok else fails, "detail": "\n".join(detail)}
 
 
+ARCH_FILES = ("architecture.yaml", "ARCHITECTURE.md")
+
+
+def _who(by: str) -> str:
+    """owner (a person), auto (the run's own default or an oracle)."""
+    return "auto" if by in ("auto", "oracle", "default", "limit") else "owner"
+
+
 def node_review(state: State) -> dict:
     from langgraph.types import interrupt
     rt, n = _rt(state), state["stage"]
@@ -612,22 +734,51 @@ def node_review(state: State) -> dict:
     hist = list(state.get("history") or [])
     passed = not state.get("fails") and not state.get("stop")
     gates = [[f, False, ""] for f in state.get("fails") or []] or [[g, True, ""] for g in st.gates]
+    ev = state.get("evidence") or {}
     info = {"gates": gates, "visits": (state.get("visits") or {}).get(str(n), 1), "used": rt.meter.stage,
             "limits": st.limits, "inputs": list(ROLES["rtl"]["read"]) if n else ["spec.md"],
             "outputs": sorted(str(p.relative_to(rt.design)) for p in rt.design.rglob("*")
                               if p.is_file() and "build" not in p.parts)[:40],
             "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-            "notes": json.dumps(state.get("interview"), indent=1) if n == 0 and state.get("interview") else ""}
+            "notes": json.dumps(state.get("interview"), indent=1) if n == 0 and state.get("interview") else "",
+            "verif": ev.get("verif"), "standards": ev.get("standards"), "stage_n": n, "board": rt.cfg.board,
+            "diff": _stage_diff(rt, n), "owner_rows": ownership.load(rt.design)}
     hw_pause = n == 9 and not state.get("hw_approved") and state.get("fails") == [
         "hardware: awaiting approval before programming"]
     decision = {"decision": "approve", "by": "auto", "note": ""}
+    key = f"{n}:{len(hist)}"                       # LangGraph re-runs this node on resume: one agent snapshot per visit
     page = rv.write_page(rt.design, n, st.name, {**info, "approval": None})
-    snap = rt.snaps.take(n, st.name, note="pass" if passed else "; ".join(state.get("fails") or [])[:150])
+    snap = rt.snaps.take(n, st.name, note="pass" if passed else "; ".join(state.get("fails") or [])[:150], key=key)
+    if n == 0 and passed and state.get("interview") and not any(r["what"] == "interview" for r in ownership.load(rt.design)):
+        for q in state["interview"].get("questions", []):
+            ownership.record(rt.design, _who(q.get("by") or "default"), st.name, "interview",
+                             f"{q.get('status')}: {q.get('text', '')[:120]} -> {str(q.get('answer'))[:80]}", n=0)
+    hand_only = False
+    supplied = None
+    reply: dict = {}
     if rt.cfg.review == "on" or hw_pause:
         reply = interrupt({"kind": "review", "stage": n, "stage_name": st.name, "page": str(page),
                            "passed": passed, "fails": state.get("fails"), "hardware": hw_pause})
         decision = {"decision": reply.get("decision", "approve"), "by": reply.get("by", "human"),
-                    "note": reply.get("note", ""), "to": reply.get("to")}
+                    "note": reply.get("note", ""), "to": reply.get("to"), "role": reply.get("role")}
+        if decision["decision"] == "supply" and n == 1:             # the owner supplies the architecture
+            supplied = {k: v for k, v in (reply.get("files") or {}).items() if k in ARCH_FILES}
+            for k, v in supplied.items():
+                bad = check_artefact(k, v)
+                if bad:
+                    decision["note"] = (decision["note"] + " " if decision["note"] else "") + f"supplied file refused: {bad}"
+                    supplied = None
+                    break
+                (rt.design / k).write_text(v)
+        # owner hand edits: any change since the agent's snapshot (the agent does nothing while paused)
+        edits = ownership.hand_edits(rt.design, snap["manifest"])
+        if edits:
+            rt.snaps.take(n, st.name, note="owner hand edit: " + ", ".join(edits)[:120], author="owner")
+            ownership.record(rt.design, "owner", st.name, "supplied architecture" if supplied else "hand edit",
+                             ", ".join(edits), n=n)
+            if decision["decision"] in ("approve", "supply"):        # edited files are not yet gated: gates run again
+                decision["decision"], hand_only = "edit", not decision["note"]
+                decision["note"] = decision["note"] or "owner hand edit: " + ", ".join(edits)[:150]
     rv.write_page(rt.design, n, st.name, {**info, "approval": decision})
     hist.append({"n": n, "stage": st.name, "page": str(page), "passed": passed, "approval": decision,
                  "snapshot": snap["commit"], "visit": info["visits"], "used": dict(rt.meter.stage)})
@@ -635,7 +786,28 @@ def node_review(state: State) -> dict:
     with (rt.design / "BUILD_NOTE.md").open("a") as f:
         f.write(f"\n## review {n:02d} {st.name}\n\n{decision['decision']} by {decision['by']}"
                 f"{': ' + decision['note'] if decision.get('note') else ''} (gates {'pass' if passed else 'fail'})\n")
-    upd: dict[str, Any] = {"history": hist}
+    upd: dict[str, Any] = {"history": hist, "hand_edit_only": False}
+    if rt.cfg.review == "on" or hw_pause:
+        who = _who(decision["by"])
+        what = {"approve": "approved", "edit": "asked for changes", "rewind": f"rewound to stage {decision.get('to')}",
+                "supply": "supplied the architecture"}.get(decision["decision"], decision["decision"])
+        if decision["decision"] != "edit" or decision.get("note"):
+            ownership.record(rt.design, who, st.name, what + (" (prompt)" if decision["decision"] == "edit" and not hand_only
+                                                               else ""), decision.get("note", ""), n=n)
+    elif passed:
+        ownership.record(rt.design, "auto", st.name, "approved (review off)", "", n=n)
+    # the architecture approval (Taylor addition 2): before any RTL, by the owner or, with review off, automatic
+    if n == 1 and passed and decision["decision"] == "approve":
+        who = _who(decision["by"])
+        by_owner = any(r["who"] == "owner" and r["what"] in ("hand edit", "supplied architecture") and r["n"] == 1
+                       for r in ownership.load(rt.design))
+        rec = arch_mod.write_approval(rt.design, "auto" if who == "auto" else "owner", "owner" if by_owner else "agent",
+                                      decision.get("note", ""))
+        with (rt.design / "BUILD_NOTE.md").open("a") as f:
+            f.write(f"\n## architecture approval\n\napproved ({rec['by']}); written by the {rec['source']}"
+                    + (" (an owner contribution)" if rec["source"] == "owner" else "") + f"; sha256 {rec['sha256'][:12]}\n")
+        ownership.record(rt.design, who, st.name, "architecture approved",
+                         f"source: {rec['source']}" + (" (owner contribution)" if rec["source"] == "owner" else ""), n=n)
     if decision["decision"] == "rewind" and decision.get("to") is not None:
         to = int(decision["to"])
         r = rt.snaps.rewind(to)
@@ -643,14 +815,29 @@ def node_review(state: State) -> dict:
         with (rt.design / "BUILD_NOTE.md").open("a") as f:        # the restored note predates this decision
             f.write(f"\n## review {n:02d} {st.name}\n\nrewind to stage {to} by {decision['by']}"
                     f"{': ' + decision['note'] if decision.get('note') else ''} (files verified: {r['verified']})\n")
+        ownership.record(rt.design, _who(decision["by"]), st.name, f"rewound to stage {to}", decision.get("note", ""), n=n)
         rv.write_index(rt.design, hist)
         upd.update(fails=[], note=decision.get("note", ""))
         return {**upd, "history": hist, "evidence": {}}
     if decision["decision"] == "edit":
-        return {**upd, "note": decision.get("note", ""), "fails": ["reviewer asked for changes"]}
+        return {**upd, "note": decision.get("note", ""), "note_role": decision.get("role") or "", "hand_edit_only": hand_only,
+                "fails": ["reviewer asked for changes"]}
     if hw_pause:
         return {**upd, "hw_approved": decision["decision"] == "approve"}
     return upd
+
+
+def _stage_diff(rt: Runtime, n: int) -> list[dict]:
+    """The RTL changes of this stage against the previous approved stage's snapshot (review page, brief 05d)."""
+    prev = None
+    for h in reversed(rt.snaps.records):
+        if h["n"] < n or (h["n"] == n and False):
+            prev = h["n"]
+            break
+    try:
+        return rt.snaps.diff(prev, None, ("rtl/", "design.xdc", "spec.yaml", "architecture.yaml", "ARCHITECTURE.md"))
+    except (KeyError, IndexError, OSError):
+        return []
 
 
 def route(state: State) -> str:

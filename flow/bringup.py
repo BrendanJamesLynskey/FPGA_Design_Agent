@@ -46,6 +46,19 @@ RESULTS = hw.ROOT / "results" / "f0b"
 SENTINEL = 0x5EED_F0B0
 
 
+def _load_checks(design: Path) -> Any:
+    """The design's hw_checks.py by file path: an agent run's design lives under runs/<id>/, not under designs/
+    (the reference designs import it as designs.<name>.hw_checks, which a path load also allows)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(f"hw_checks_{design.name}", design / "hw_checks.py")
+    if spec is None or spec.loader is None:
+        raise StepFailed(f"cannot load {design / 'hw_checks.py'}")
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
 class StepFailed(Exception):
     pass
 
@@ -138,7 +151,7 @@ class Run:
         return out
 
     def ila_captures(self) -> dict[str, Any]:
-        checks = importlib.import_module(f"designs.{self.name}.hw_checks")
+        checks = _load_checks(self.design)
         build = self.design / "build" / "ila"
         top = json.loads((build / "prepare.json").read_text())["top"]
         ltx = build / f"{top}.ltx"

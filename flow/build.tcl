@@ -62,6 +62,8 @@ write_checkpoint -force $out/post_synth.dcp
 report_timing_summary -max_paths 10 -report_unconstrained -file $out/timing_summary_synth.rpt
 check_timing -verbose -file $out/check_timing_synth.rpt
 report_methodology    -file $out/methodology_synth.rpt
+# design standard STD-CDC-02 (docs/design_standards.md, brief 05d): report_cdc on the synthesised netlist
+report_cdc -details   -file $out/cdc_synth.rpt
 report_drc            -file $out/drc_synth.rpt
 report_qor_assessment -file $out/qor_assessment_synth.rpt
 report_utilization    -file $out/utilization_synth.rpt
