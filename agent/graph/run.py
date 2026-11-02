@@ -162,6 +162,10 @@ Flow conventions (fixed by the repo; follow them exactly):
 - design.xdc: call board_constraints with a map of board resource name -> your port name (it lists the resources when
   called with no map). It writes the pins, I/O standards and the board clock constraint from the master XDC; never
   write a pin number yourself. check_constraints checks the result.
+- probes.yaml (stage 9, ILA debug build; build.yaml `probes:` names it): `ila: {{name, clock_net, depth}}` and a top-level
+  `probes:` list of {{name, pins, width}}; pins are post-synthesis register output pins (cell names survive synthesis,
+  net names do not; a bus lists its bits with [*] and width must match). Read the synthesised design's reports under
+  build/base/ for the real names; the write is refused if the shape is wrong.
 - ARCHITECTURE.md must have a "## Block diagram" section with a fenced text diagram, the clock plan and the pin list.
 - Tests (test writer): tests/test_{name}_rtl.py is a pytest entry that calls
   flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=...), where

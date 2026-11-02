@@ -4,7 +4,7 @@ Principle: a malformed file is cheapest to fix at the moment it is written, with
 file, the line and column, and the rule broken. The writer refuses the write (the previous good file stays), so a
 broken artefact never reaches a gate, and a gate never shows the model a parser traceback.
 
-Known artefacts: ``spec.yaml``, ``verif/testplan.yaml``, ``build.yaml``, ``ARCHITECTURE.md``; any other ``*.yaml``
+Known artefacts: ``spec.yaml``, ``verif/testplan.yaml``, ``build.yaml``, ``probes.yaml``, ``ARCHITECTURE.md``; any other ``*.yaml``
 is checked for YAML syntax only. Everything else is not checked here.
 """
 
@@ -71,6 +71,23 @@ def check_testplan(data: dict[str, Any]) -> list[str]:
     return errs
 
 
+PROBES_FORM = ("expected form: 'ila' a mapping {name, clock_net, depth (int)}, and a top-level 'probes' list of "
+               "mappings {name, pins (a post-synthesis register output pin pattern), width (int)}")
+
+
+def check_probes(data: dict[str, Any]) -> list[str]:
+    """What flow/prepare.py reads from probes.yaml (a wrong shape was a KeyError traceback in the ILA build)."""
+    errs = []
+    ila = data.get("ila")
+    if not isinstance(ila, dict) or not all(k in ila for k in ("name", "clock_net", "depth")):
+        errs.append("'ila' must be a mapping with 'name', 'clock_net' and 'depth'")
+    pr = data.get("probes")
+    if not isinstance(pr, list) or not pr or not all(
+            isinstance(p, dict) and p.get("name") and p.get("pins") and isinstance(p.get("width"), int) for p in pr):
+        errs.append("'probes' must be a top-level non-empty list of mappings, each with 'name', 'pins' and an integer 'width'")
+    return [*errs, PROBES_FORM] if errs else []
+
+
 def check_artefact(rel: str, content: str) -> str | None:
     """One clear error for a malformed known artefact, or ``None``. ``rel`` is design-relative."""
     rel = rel.lstrip("/")
@@ -95,6 +112,12 @@ def check_artefact(rel: str, content: str) -> str | None:
         errs = [f"missing key {k!r}" for k in BUILD_KEYS if k not in data]
         errs += [f"{k!r} must be a non-empty list" for k in ("sources", "constraints")
                  if k in data and not (isinstance(data[k], list) and data[k])]
+        return f"{rel}: {'; '.join(errs)}" if errs else None
+    if low == "probes.yaml":
+        data, err = _mapping(rel, content)
+        if err:
+            return err
+        errs = check_probes(data)
         return f"{rel}: {'; '.join(errs)}" if errs else None
     if low.endswith((".yaml", ".yml")):
         return yaml_error(rel, content)

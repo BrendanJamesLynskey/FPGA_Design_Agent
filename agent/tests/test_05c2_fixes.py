@@ -272,6 +272,10 @@ def test_write_file_refuses_malformed_artefacts_with_line_and_column(rt):
              "verif/testplan.yaml": ("schema: s\n", "missing key 'design'"),
              "ARCHITECTURE.md": ("# A\nno diagram\n", "## Block diagram"),
              "probes.yaml": ("a: [1\n", "not valid YAML")}
+    r = dispatch(rt.session, "write_file", {"path": "probes.yaml", "content": "ila:\n  name: x\n  clock_net: c\n  depth: 1024\n  probes: [a, b]\n"})
+    assert not r["ok"] and "top-level" in r["output"] and "expected form" in r["output"]   # the form the ILA build reads
+    assert dispatch(rt.session, "write_file", {"path": "probes.yaml", "content":
+                    "ila: {name: x, clock_net: c, depth: 1024}\nprobes:\n  - {name: a, pins: 'u/a_reg[*]/Q', width: 4}\n"})["ok"]
     for path, (content, word) in cases.items():
         r = dispatch(rt.session, "write_file", {"path": path, "content": content})
         assert not r["ok"] and word in r["output"], (path, r["output"])
