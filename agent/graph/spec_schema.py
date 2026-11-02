@@ -78,8 +78,8 @@ def validate(spec: dict[str, Any], allow_rates: bool = False) -> list[str]:
     for k in ("ports", "clocks", "registers"):
         if spec.get(k) and not isinstance(spec[k], (list, dict)):
             errs.append(f"{k!r} must be a list or mapping")
-    if spec.get("timing") and not isinstance(spec["timing"], dict):
-        errs.append("'timing' must be a mapping")
+    if spec.get("timing") and not isinstance(spec["timing"], (list, dict)):
+        errs.append("'timing' must be a list or mapping")
     params = spec.get("parameters") or {}
     if not isinstance(params, dict):
         errs.append("'parameters' must be a mapping")

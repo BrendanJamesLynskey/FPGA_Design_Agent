@@ -45,6 +45,10 @@ FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "build", 
               "load_skill")
 
 
+class ArmBlocked(Exception):
+    """The Claude Code arm cannot run at all (no token, CLI missing, login failed)."""
+
+
 class State(TypedDict, total=False):
     detail: str
     run_id: str
@@ -70,6 +74,9 @@ class Config:
     hidden_spec: Path | None = None
     run_limits: dict = field(default_factory=lambda: dict(RUN_LIMITS))
     stop_after: int | None = None   # smokes: stop after this stage passes
+    harness: str = "deepagents"     # deepagents | claude_code (05c: headless `claude -p` on the Max plan)
+    cc_model: str = "claude-haiku-5-5"
+    cc_effort: str = "medium"
 
 
 @dataclass
@@ -215,9 +222,33 @@ def drop_superseded(design: Path, jail, before: list[Path], written: dict[str, s
     return gone
 
 
+FILE_TOOLS = ("read_file", "write_file", "list_files")
+
+
+def subagent_plan(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = ()) -> dict:
+    """What one sub-agent turn is given, harness-neutral: the system prompt, the first user message, the core
+    tools and the limits. Both the Deep Agents run and the Claude Code arm (05c) are built from this, and the
+    equivalence test compares them."""
+    from agent.core.registry import TOOLS
+    from agent.graph.roles import ROLE_TOOLS
+    inputs = role_inputs(rt.session, role)
+    if role != "rtl":
+        prompt += ("\nYour working directory is the design directory: write files at paths like /model.py, "
+                   "/tests/..., /verif/... (repo-relative paths in build.yaml and testplan.yaml stay as given).")
+    msg = prompt + "\n\nFiles you have:\n" + "\n".join(f"--- {k} ---\n{v}" for k, v in inputs.items())
+    core = tuple(n for n in allowed if n in FLOW_TOOLS and n in TOOLS)
+    role_files = ROLE_TOOLS[role]
+    files = tuple(n for n in FILE_TOOLS if role_files is None or n in role_files)
+    return {"role": role, "system_prompt": prompt, "user_message": msg, "inputs": inputs, "core_tools": core,
+            "file_tools": files, "limits": dict(rt.meter.stage_limits), "stage": rt.session.stage}
+
+
 def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = ()) -> dict[str, str]:
     """Run one Deep Agents sub-agent. Restricted roles see only their seeded inputs (in-memory backend) and
     their outputs are copied into the design through the role jail. Returns {path: content} written."""
+    if rt.cfg.harness == "claude_code":
+        from agent.claude_code_arm.arm import run_subagent_cc
+        return run_subagent_cc(rt, subagent_plan(rt, role, prompt, allowed))
     from deepagents import HarnessProfile, create_deep_agent, register_harness_profile
     from deepagents.backends.utils import create_file_data, file_data_to_string
     from deepagents.profiles.harness.harness_profiles import GeneralPurposeSubagentProfile
@@ -225,11 +256,8 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
     register_harness_profile("fda", HarnessProfile(general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False)))
     sess = role_session(rt.session, role)
     model = chat_model(rt.client, rt.meter, rt.llm_log)
-    inputs = role_inputs(rt.session, role)
-    if role != "rtl":
-        prompt += ("\nYour working directory is the design directory: write files at paths like /model.py, "
-                   "/tests/..., /verif/... (repo-relative paths in build.yaml and testplan.yaml stay as given).")
-    msg = prompt + "\n\nFiles you have:\n" + "\n".join(f"--- {k} ---\n{v}" for k, v in inputs.items())
+    plan = subagent_plan(rt, role, prompt, allowed)
+    prompt, msg, inputs = plan["system_prompt"], plan["user_message"], plan["inputs"]
     if role == "rtl":
         agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt,
                                   backend=_jail_backend(rt, role))
@@ -289,6 +317,8 @@ def node_work(state: State) -> dict:
         elif n != 9 or state.get("hw_approved"):
             run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, tuple(t for t in st.tools
                                                                          if t not in ("program", "bringup")))
+    except ArmBlocked as e:                                # the Claude Code arm cannot run (auth, CLI): stop, say why
+        return {"visits": visits, "stop": f"claude_code blocked: {e}"}
     except BudgetExceeded as e:
         if str(e).startswith("run "):                      # run limit: stop the run
             return {"visits": visits, "stop": f"budget: {e}"}

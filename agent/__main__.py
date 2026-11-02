@@ -75,6 +75,10 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--model", default="openai/gpt-6-luna")
     r.add_argument("--hidden-spec", type=Path)
     r.add_argument("--stop-after", type=int)
+    r.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents",
+                   help="claude_code: each sub-agent turn is a headless `claude -p` on the Max plan (05c)")
+    r.add_argument("--cc-model", default="claude-haiku-5-5", help="Claude Code model id (--harness claude_code)")
+    r.add_argument("--cc-effort", default="medium", choices=["low", "medium", "high", "xhigh", "max"])
     r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
     for p in (r, sub.add_parser("resume")):
         p.add_argument("--replies", type=Path)
@@ -94,7 +98,8 @@ def main(argv: list[str] | None = None) -> int:
             ap.error("--interview oracle needs --hidden-spec")
         name = a.name or a.spec.resolve().parent.name
         cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
-                     model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after)
+                     model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after,
+                     harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort)
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd
         client = _client(a.model, a.replay, a.record)
@@ -109,7 +114,9 @@ def main(argv: list[str] | None = None) -> int:
     cfg = Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"],
                  review=c["review"], model=c["model"],
                  hidden_spec=Path(c["hidden_spec"]) if c.get("hidden_spec") not in (None, "None") else None,
-                 stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]))
+                 stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]),
+                 harness=c.get("harness", "deepagents"), cc_model=c.get("cc_model", "claude-haiku-5-5"),
+                 cc_effort=c.get("cc_effort", "medium"))
     if a.max_usd is not None:
         cfg.run_limits["usd"] = a.max_usd
     client = _client(cfg.model, a.replay, a.record)

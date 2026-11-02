@@ -170,3 +170,8 @@ def test_superseded_never_reaches_outside_the_role(rt):
     with pytest.raises(SecurityError):
         gr.drop_superseded(rt.design, RoleJail(rt.session.jail, "tests"), [f], {})
     assert f.exists()
+
+
+def test_timing_may_be_a_list_of_entries():
+    assert validate({**GOOD, "timing": [{"name": "debounce", "cycles": "DEBOUNCE_CYCLES"}]}) == []
+    assert validate({**GOOD, "timing": "fast"}) == ["'timing' must be a list or mapping"]
