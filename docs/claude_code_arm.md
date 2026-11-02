@@ -45,3 +45,10 @@ Context compaction (Claude Code compacts on its own; no switch to turn it off); 
 are counted by Claude Code, not by us; the system-prompt snapshot feature records the prompt once per conversation.
 The equivalence test (`agent/tests/test_claude_code_arm.py`) fixes the rest: same prompt, same core tools, same turn
 limit, no built-ins, no other MCP server.
+
+## First real runs (2026-11-02)
+
+- Two real-stream findings fixed in `parse_stream`: one API message arrives as several `assistant` events with the same id and usage (counted once now), and the streamed output-token counts are partial, so the `result` event's usage is the run total. Test: `test_real_recorded_stream_is_parsed_once_per_message` (redacted recorded stream in `agent/tests/fixtures/cc_real_stream_haiku_clarify.jsonl`).
+- The run summary now names the Claude Code model (the luna model is the spec oracle only) and the plan estimate.
+- Review pages are written by the graph (`node_review`), not by an MCP tool, for both harnesses; the role jail refuses sub-agent writes to `build/review`. With `--review on` the graph pauses with a LangGraph interrupt and the reviewer answers with `python -m agent resume`; Claude Code never asks.
+- Init event of both runs: tools = our three MCP tools, MCP server `fda` connected, no skills or slash commands, `apiKeySource: none`. It also lists two built-in plugins (`cc-plugin-agents-md`, `cc-plugin-plugin-authoring`, source `builtin`) and Claude Code's built-in sub-agent names; none is a user config.

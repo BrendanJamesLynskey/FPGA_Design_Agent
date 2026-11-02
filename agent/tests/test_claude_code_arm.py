@@ -170,3 +170,61 @@ def test_pinned_version_is_enforced(rt, monkeypatch):
     monkeypatch.setattr(arm.subprocess, "run", lambda argv, **kw: subprocess.CompletedProcess(argv, 0, "9.9.9\n", ""))
     with pytest.raises(gr.ArmBlocked):
         arm.run_subagent_cc(rt, gr.subagent_plan(rt, "clarify", "p", ()))
+
+
+def test_summary_reports_claude_code_model_and_plan_cost(tmp_path):
+    """05c: a claude_code run's summary names the CLI model (not the oracle/interview model) and the plan estimate."""
+    import json
+    from types import SimpleNamespace as NS
+    from agent.graph import run as R
+    (tmp_path / "claude_code_calls.jsonl").write_text(
+        json.dumps({"claude_code_version": "2.1.316 (Claude Code)", "plan_cost_estimate_usd": 0.25}) + "\n"
+        + json.dumps({"claude_code_version": "2.1.316 (Claude Code)", "plan_cost_estimate_usd": 0.5}) + "\n")
+    rt = NS(run_id="r", run_dir=tmp_path, cfg=NS(name="d", model="openai/oracle", cc_model="claude-haiku-5-5",
+            harness="claude_code", interview="oracle", review="off"),
+            meter=NS(run={"tokens": 1, "usd": 0.0, "turns": 2, "seconds": 3.0}, unreported=1))
+    s = R.summary(rt, {"history": []})
+    assert s["model"] == "claude-haiku-5-5" and s["oracle_model"] == "openai/oracle"
+    assert s["plan_cost_estimate_usd"] == 0.75 and s["claude_code_version"].startswith("2.1.316")
+
+
+def test_real_recorded_stream_is_parsed_once_per_message(tmp_path):
+    """05c: a REAL claude 2.1.316 stream (Haiku, clarify turn; ids, cwd and thinking redacted). One API message is
+    split over several assistant events with the same id and usage; each is counted once, and the run total comes
+    from the result event."""
+    from pathlib import Path
+    from agent.core.trace import Trace
+    lines = (Path(__file__).parent / "fixtures" / "cc_real_stream_haiku_clarify.jsonl").read_text().splitlines()
+    t = Trace(tmp_path / "t.jsonl", harness="claude_code")
+    info = arm.parse_stream(lines, t, "clarify")
+    msgs = {json.loads(x)["message"]["id"] for x in lines if json.loads(x).get("type") == "assistant"}
+    assert len([r for r in t.records if r["kind"] == "model"]) == len(msgs)
+    assert all(r["cost_usd"] == "unreported" for r in t.records if r["kind"] == "model")
+    ru = info["result"]["usage"]
+    assert info["tokens"]["output"] == ru["output_tokens"] and info["tokens"]["input"] >= ru["input_tokens"]
+    assert info["served_models"] == ["claude-haiku-5-5"] and info["result"]["subtype"] == "success"
+    rep = arm.init_report(info["init"])
+    assert rep["tools"] == ["mcp__fda__list_files", "mcp__fda__read_file", "mcp__fda__write_file"]
+    assert [m["name"] for m in rep["mcp_servers"]] == ["fda"] and rep["skills"] == [] and rep["slash_commands"] == []
+    assert rep["apiKeySource"] == "none" and rep["permissionMode"] == "dontAsk"
+    assert [r["tool"] for r in t.records if r["kind"] == "tool"]
+
+
+def test_review_pages_are_graph_written_and_unreachable_by_the_cc_sub_agent(rt):
+    """05c item 4. The review pages (build/review) are written by the graph (node_review), the same for both
+    harnesses, from gate evidence; the Claude Code sub-agent reaches only the MCP tools of its role jail and cannot
+    write them. With --review on the graph pauses with a LangGraph interrupt (python -m agent resume); Claude Code
+    itself never asks (headless, dontAsk)."""
+    from agent.core import dispatch
+    from agent.graph.review import write_page
+    from agent.graph.roles import role_session
+    _enter(rt, 1)
+    p = write_page(rt.design, 1, "board-and-device-planning", {"gates": [["arch_note", True, ""]], "approval": None})
+    assert p.exists() and "review" in p.parts
+    for role in ("clarify", "model", "tests", "rtl"):
+        s = role_session(rt.session, role)
+        r = dispatch(s, "write_file", {"path": "build/review/review_01.html", "content": "forged"})
+        assert not r.get("ok"), role
+    assert "forged" not in p.read_text()
+    argv = arm.cli_argv(rt, gr.subagent_plan(rt, "rtl", "p", ()), Path("/tmp/m.json"), "claude-haiku-5-5", "medium", 5)
+    assert argv[argv.index("--permission-mode") + 1] == "dontAsk" and "--tools" in argv

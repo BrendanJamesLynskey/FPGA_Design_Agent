@@ -25,3 +25,12 @@ Spend by key usage: $0.2308 (92.321792591 -> 92.552426941), within the $1 cap; s
 | File | What |
 |---|---|
 | `agent_luna_run3.json` | The same smoke as run 1 (`--interview oracle --review off`) after the four 05c fixes. **Null again at stage 2 (4 visits), but the failure moved:** the spec is valid YAML with integer cycle-count timing parameters, the model contract gate passes, and the cocotb bench now runs against the RTL and fails there. Run 1 died at 0 ns on a model/test API mismatch. The oracle answered 5 of 10 questions. No bitstream, so no bring-up. 271 turns, 6.89 M tokens, $0.2211 provider-reported, 0 unreported. An earlier attempt (`$0.0097`) stopped at stage 0 on a too-strict schema of mine (list-valued `timing`), fixed before the re-run. |
+
+## Brief 05c: the Claude Code arm smokes (Max plan, no OpenRouter spend on the agent)
+
+Headless `claude -p` 2.1.316, T1 dimmer, `--interview oracle --review off`, no prompt tuning. Cost is not reported by the plan: `plan_cost_estimate_usd` is Claude Code's own estimate. The only OpenRouter use is the luna spec oracle answering interview questions.
+
+| File | What |
+|---|---|
+| `agent_cc_haiku_t1.json` | `--cc-model claude-haiku-5-5`. **Null at stage 1** (board-and-device-planning): 5 visits, `stage 1 visited more than 4 times`; no `build.yaml` passed `check_constraints`. 83 turns, 404 s, 6 CLI calls, plan estimate $0.0825, weekly usage 7% -> 7%. The init event lists only our three MCP tools and no skills or slash commands. |
+| `agent_cc_opus_t1.json` | `--cc-model claude-opus-5-5`. **Null at stage 2** (rtl-design-creation): passed stages 0 and 1, 5 stage-2 visits without a passing simulate. 167 turns, 2324 s, 15 CLI calls, plan estimate $8.71, weekly usage 7% -> 8%. The gates tool crashed on a list-valued `registers` spec (`flow/verif_gates.py`), and the cocotb bench failed against the RTL (cause clipped). |

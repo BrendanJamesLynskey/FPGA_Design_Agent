@@ -109,7 +109,7 @@ def isolated_env(home: Path, token: str) -> dict[str, str]:
 def parse_stream(lines: list[str], trace: Trace | None, stage: str, seconds: float = 0.0) -> dict[str, Any]:
     """Claude Code's stream-json -> the shared trace (05a format) and a summary. Cost is never reported by the
     plan: ``cost_usd`` is the string "unreported"; Claude Code's own estimate is kept as plan_cost_estimate_usd."""
-    init, result, pending, served = None, None, {}, set()
+    init, result, pending, served, seen = None, None, {}, set(), set()
     tokens = {"input": 0, "output": 0}
     n_tools = 0
     for line in lines:
@@ -125,12 +125,17 @@ def parse_stream(lines: list[str], trace: Trace | None, stage: str, seconds: flo
             u = msg.get("usage") or {}
             tin = sum(int(u.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
             tout = int(u.get("output_tokens") or 0)
-            tokens["input"] += tin
-            tokens["output"] += tout
-            if msg.get("model"):
-                served.add(msg["model"])
-                if trace:
-                    trace.model(msg["model"], {"input": tin, "output": tout}, "unreported", stage)
+            # Real streams (2.1.316) split ONE API message into several assistant events (thinking, text, each
+            # tool_use) that all repeat the same id and usage: count each message once.
+            mid = msg.get("id")
+            if mid is None or mid not in seen:
+                seen.add(mid)
+                tokens["input"] += tin
+                tokens["output"] += tout
+                if msg.get("model"):
+                    served.add(msg["model"])
+                    if trace:
+                        trace.model(msg["model"], {"input": tin, "output": tout}, "unreported", stage)
             for c in msg.get("content") or []:
                 if isinstance(c, dict) and c.get("type") == "tool_use":
                     pending[c["id"]] = (str(c.get("name", "")).removeprefix(f"mcp__{MCP_NAME}__"), c.get("input") or {})
@@ -146,6 +151,11 @@ def parse_stream(lines: list[str], trace: Trace | None, stage: str, seconds: flo
                         trace.tool(name, args, {"ok": not c.get("is_error"), "output": str(body)[:2000]}, stage)
         elif t == "result":
             result = ev
+    ru = (result or {}).get("usage") or {}
+    if ru:   # the result's usage is the run total (streamed per-message output counts are partial); it wins
+        tokens = {"input": sum(int(ru.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens",
+                                                              "cache_creation_input_tokens")),
+                  "output": int(ru.get("output_tokens") or 0)}
     return {"init": init, "result": result, "tokens": tokens, "tool_calls": n_tools, "served_models": sorted(served)}
 
 

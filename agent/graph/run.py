@@ -612,9 +612,20 @@ def checkpointer_for(run_dir: Path):
     return SqliteSaver(sqlite3.connect(str(run_dir / "checkpoints.sqlite"), check_same_thread=False))
 
 
+def _cc_calls(rt: Runtime) -> list[dict]:
+    f = rt.run_dir / "claude_code_calls.jsonl"
+    return [json.loads(x) for x in f.read_text().splitlines() if x.strip()] if f.exists() else []
+
+
 def summary(rt: Runtime, state: dict) -> dict:
     hist = state.get("history") or []
-    return {"run_id": rt.run_id, "design": rt.cfg.name, "model": rt.cfg.model, "interview": rt.cfg.interview,
+    cc = rt.cfg.harness == "claude_code"
+    calls = _cc_calls(rt) if cc else []
+    extra = {"harness": "claude_code", "claude_code_version": (calls[0]["claude_code_version"] if calls else None),
+             "plan_cost_estimate_usd": round(sum(c.get("plan_cost_estimate_usd") or 0 for c in calls), 4),
+             "oracle_model": rt.cfg.model} if cc else {"harness": "deepagents"}
+    return {"run_id": rt.run_id, "design": rt.cfg.name, "model": rt.cfg.cc_model if cc else rt.cfg.model, **extra,
+            "interview": rt.cfg.interview,
             "review": rt.cfg.review, "stages_visited": [h["n"] for h in hist],
             "loops": sum(1 for a, b in zip(hist, hist[1:]) if b["n"] <= a["n"] and not a.get("rewind")),
             "rewinds": [h["rewind"] for h in hist if h.get("rewind")],
