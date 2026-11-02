@@ -16,7 +16,7 @@ from typing import Any, Callable
 
 from agent.core.security import SecurityError, redact, redact_obj, validate_args
 
-SCHEMA_VERSION = "1.1.0"        # bump the minor version for an added optional argument or tool, the major for a break
+SCHEMA_VERSION = "1.2.0"        # bump the minor version for an added optional argument or tool, the major for a break
 MAX_OUTPUT = 20_000             # characters of raw output returned to the model; the full text stays in build/ files
 
 
@@ -28,28 +28,43 @@ class Tool:
     fn: Callable[..., dict[str, Any]]
     hardware: bool = False
     version: str = SCHEMA_VERSION
+    #: 05c2 fix 3: ``refine()`` -> ``{"properties": {name: patch}, "description": suffix}`` computed from what is
+    #: available HERE (installed simulators, the bank's section ids), so the schema never offers a value that fails.
+    refine: Callable[[], dict[str, Any]] | None = None
 
-    def descriptor(self) -> dict[str, Any]:
-        return {"name": self.name, "description": self.description, "inputSchema": self.input_schema,
-                "version": self.version}
+    def schema(self) -> dict[str, Any]:
+        """The input schema as this machine can honour it (``input_schema`` plus ``refine``'s patches)."""
+        if self.refine is None:
+            return self.input_schema
+        patch = self.refine().get("properties", {})
+        props = {k: ({**v, **patch[k]} if k in patch else v) for k, v in self.input_schema["properties"].items()}
+        return {**self.input_schema, "properties": props}
+
+    def describe(self) -> str:
+        return self.description + (" " + self.refine().get("description", "") if self.refine else "")
+
+    def descriptor(self, refined: bool = True) -> dict[str, Any]:
+        """``refined=False`` is the static, machine-independent schema (the committed snapshot)."""
+        return {"name": self.name, "description": self.describe() if refined else self.description,
+                "inputSchema": self.schema() if refined else self.input_schema, "version": self.version}
 
 
 TOOLS: dict[str, Tool] = {}
 
 
 def tool(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None,
-         hardware: bool = False):
+         hardware: bool = False, refine: Callable[[], dict[str, Any]] | None = None):
     def deco(fn):
         TOOLS[name] = Tool(name, description,
                            {"type": "object", "properties": properties, "required": required or [],
-                            "additionalProperties": False}, fn, hardware)
+                            "additionalProperties": False}, fn, hardware, refine=refine)
         return fn
     return deco
 
 
-def tool_list() -> list[dict[str, Any]]:
+def tool_list(refined: bool = True) -> list[dict[str, Any]]:
     from agent.core import tools as _t  # noqa: F401  (registers the tools)
-    return [TOOLS[n].descriptor() for n in sorted(TOOLS)]
+    return [TOOLS[n].descriptor(refined) for n in sorted(TOOLS)]
 
 
 def clip(text: str, limit: int = MAX_OUTPUT) -> str:
@@ -68,7 +83,7 @@ def dispatch(session, name: str, args: dict[str, Any] | None) -> dict[str, Any]:
         if name not in TOOLS:
             raise SecurityError("unknown-tool", f"no tool named {name!r}")
         tl = TOOLS[name]
-        validate_args(tl.input_schema, args)
+        validate_args(tl.schema(), args)
         out = tl.fn(session, **args)
         res = {"ok": bool(out.pop("ok", True)), "refused": False, "tool": name, "stage": session.stage, **out}
     except SecurityError as e:

@@ -1,0 +1,31 @@
+{
+ "brief": "05c2",
+ "run": "claude_code --cc-model claude-haiku-5-5, T1, --verif-level V1, oracle interview, no hardware approval",
+ "run_id": "20261102-204323-d69a",
+ "harness": "claude_code",
+ "model": "claude-haiku-5-5",
+ "claude_code_version": "2.1.316 (Claude Code)",
+ "stages_visited": [
+  0,
+  1,
+  1,
+  1,
+  1,
+  1
+ ],
+ "stop": "stage 1 visited more than 4 times",
+ "loops": 4,
+ "turns": 50,
+ "wall_s": 225.0,
+ "tokens": 460184,
+ "cost_usd": "unreported (plan)",
+ "plan_cost_estimate_usd": 0.0372,
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": false
+ },
+ "bringup": null,
+ "first_failure": "check_constraints: 'the design has no build.yaml' on every stage-1 visit (trace seq 12, 18 of visit 2 and every later visit)",
+ "diagnosis": "The model wrote rtl/top.sv, ARCHITECTURE.md and (after fixing three board_constraints mapping errors it made itself: bus ranges in port names, DP mapped twice) a valid design.xdc, but never wrote build.yaml in any of the 5 visits. The flow conventions (identical for both harnesses, built once by run.py) show the build.yaml format, but nothing says that stage 1 must write it, and check_constraints needed it only to find the XDC, so the stage gate failed on an artefact the check does not read, with an error that gave no remedy. Same symptom in the 05c Haiku runs 1 and 2 ('no build.yaml passed check_constraints'); Haiku 05c2 run 2 did write it and passed stage 1. Cause: MODEL behaviour (it did not write build.yaml) plus a small generic tool defect (non-blocking check blocked on an unrelated file; unactionable error). Fixed after the run (no live rerun): check_constraints reads design.xdc when build.yaml is absent, and the missing-build.yaml error says to create it with write_file and which keys. Test: test_check_constraints_needs_only_the_xdc_and_missing_build_yaml_is_actionable. The Deep Agents harness has the same conventions text and the same tools; the fix applies to both.",
+ "verdict": "Null at stage 1 (5 visits, 225 s, plan estimate $0.0372). Not a bitstream. Model behaviour on build.yaml, with a generic tool fix recorded above that is untested live."
+}

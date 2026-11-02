@@ -109,3 +109,23 @@ stage that can fix the cause.
 Rules that hold in every stage: the agent never edits a gate, a threshold or a report; it may not waive a rule to
 pass a gate without a written reason; it searches only the frozen knowledge bank; and the stage it is in, what it
 read, what it changed and why are written to the build note so the result is reproducible.
+
+### Repair, not regeneration (stage 2, brief 05c2)
+
+A stage-2 failure used to re-run the model writer, the test writer and the RTL writer from scratch, which re-broke
+parts that had passed. Now the graph treats a failure as evidence about one artefact:
+
+- each failing gate or tool result is traced to the role that wrote the failing artefact, from the evidence only
+  (`agent/graph/repair.py`): the contract check or a traceback in `model.py` -> the model writer; a testplan or
+  traceability failure, or a traceback in the bench -> the test writer; lint, an HDL compile error, or a mismatch
+  between the RTL and the model -> the RTL writer;
+- only those roles run, each given the failures that are its own and its previous output to edit ("edit, do not
+  rewrite"); every other artefact is frozen and nobody rewrites it that visit; a repair deletes no file;
+- if the failure signature is unchanged after a repair, the next visit adds the test writer to a behavioural
+  mismatch (the bench may be wrong), and after a second repeat the model writer, which is told only the NAME of the
+  disagreeing test, never RTL or RTL output. The blind-model separation is unchanged: the model writer sees the spec
+  and its own model.
+
+Other tool rules from the same brief: constraints are generated from board resource names (`board_constraints`),
+never from pin numbers; the tool schemas offer only simulators installed here and only bank section ids that exist;
+known artefacts are validated when written, with line and column; the gate failure names every untraced spec id.

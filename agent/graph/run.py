@@ -36,13 +36,15 @@ from agent.graph.contract import MODEL_CONTRACT, contract_argv, parse_result
 from agent.graph.interview import Interview, Question, SpecOracle
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
+from agent.core.artefacts import check_artefact
+from agent.graph.repair import stage2_owners
 from agent.graph.snapshot import Snapshots
 from agent.graph.spec_schema import SpecError, clock_hz, load_spec, rate_params, validate
 from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure
 
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "build", "gates", "report", "check_constraints", "search_docs",
-              "load_skill")
+              "load_skill", "board_constraints", "spec_items")
 
 
 class ArmBlocked(Exception):
@@ -61,6 +63,9 @@ class State(TypedDict, total=False):
     stop: str
     interview: dict
     hw_approved: bool
+    owners: dict        # stage 2: role -> the failure text that role owns (05c2: repair, do not regenerate)
+    sig: str            # stage 2: signature of the last failure
+    repeat: int         # stage 2: consecutive visits with an unchanged signature
 
 
 @dataclass
@@ -77,6 +82,7 @@ class Config:
     harness: str = "deepagents"     # deepagents | claude_code (05c: headless `claude -p` on the Max plan)
     cc_model: str = "claude-haiku-5-5"
     cc_effort: str = "medium"
+    verif_level: str = "V3"         # verification stage stage 2 must reach (V3 = the methodology)
 
 
 @dataclass
@@ -119,13 +125,24 @@ PROMPTS = {
     "tests": "You write the cocotb tests for the design from spec.yaml and the blind model model.py (you never see "
              "the RTL). Write tests/test_{name}_rtl.py (pytest entry calling flow.cocotb_run) and the cocotb bench; "
              "import the model with sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import model. "
-             "Also write verif/testplan.yaml tracing every spec item to a test. Write your whole output afresh: "
-             "files of an earlier attempt that you do not write again are deleted.\n" + MODEL_CONTRACT,
+             "Also write verif/testplan.yaml tracing every spec item to a test: call spec_items for the exact ids "
+             "the V1 gate checks (every one must appear in some requirement's spec list).\n" + MODEL_CONTRACT,
     "rtl": "You are the RTL and implementation engineer for stage {stage} ({stage_name}) of the UltraFast flow on the "
            "{board}. Do only what this stage allows: {allowed}. The flow's gates decide when the stage is done, "
            "not you; when you think your part is complete, stop and reply DONE. Failures so far: {fails}. "
            "Reviewer note: {note}",
 }
+
+
+FRESH_TESTS = (" Write your whole output: files of an earlier attempt that you do not write again are deleted.")
+
+
+def repair_note(role: str, reasons: list[str]) -> str:
+    """The extra prompt text of a repair visit: only this role's own failures, and the instruction to edit."""
+    return ("\n\nREPAIR VISIT. Your previous output is in the files listed below: it is yours to edit. The gates found "
+            f"problems that belong to the {role} role:\n" + "\n".join(f"- {r[:2200]}" for r in reasons)
+            + "\nMake the smallest change that fixes them. Do not rewrite or restructure what already works; the other "
+              "artefacts are frozen and nobody else rewrites them this visit.")
 
 
 CONVENTIONS = """
@@ -142,8 +159,13 @@ Flow conventions (fixed by the repo; follow them exactly):
   @shell/rtl/fpga_shell.sv with fda_read_file). fpga_shell ports: clk, rst (sync, active high), uart_rx, uart_tx,
   win_addr[6:0], win_wr, win_rd, win_wdata[31:0], win_rdata[31:0] (due one cycle after win_rd); parameters
   CLKS_PER_BIT, TIMEOUT_CYCLES, DESIGN_ID, BUILD_STAMP. The design's registers live in this window.
-- design.xdc: pins and IOSTANDARDs from the board's master XDC (search_docs / load_skill), create_clock on the
-  board clock port only.
+- design.xdc: call board_constraints with a map of board resource name -> your port name (it lists the resources when
+  called with no map). It writes the pins, I/O standards and the board clock constraint from the master XDC; never
+  write a pin number yourself. check_constraints checks the result.
+- probes.yaml (stage 9, ILA debug build; build.yaml `probes:` names it): `ila: {{name, clock_net, depth}}` and a top-level
+  `probes:` list of {{name, pins, width}}; pins are post-synthesis register output pins (cell names survive synthesis,
+  net names do not; a bus lists its bits with [*] and width must match). Read the synthesised design's reports under
+  build/base/ for the real names; the write is refused if the shape is wrong.
 - ARCHITECTURE.md must have a "## Block diagram" section with a fenced text diagram, the clock plan and the pin list.
 - Tests (test writer): tests/test_{name}_rtl.py is a pytest entry that calls
   flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=...), where
@@ -171,8 +193,8 @@ def _core_tools(rt: Runtime, sess: Session, allowed: tuple[str, ...]):
 
         def fn(_n=name, **kw):
             return json.dumps(dispatch(sess, _n, kw))[:20000]
-        out.append(StructuredTool.from_function(func=fn, name=f"fda_{name}", description=t.description,
-                                                args_schema={"type": "object", "properties": t.input_schema.get(
+        out.append(StructuredTool.from_function(func=fn, name=f"fda_{name}", description=t.describe(),
+                                                args_schema={"type": "object", "properties": t.schema().get(
                                                     "properties", {}), "additionalProperties": False}))
     return out
 
@@ -200,6 +222,10 @@ def _jail_backend(rt: Runtime, role: str):
             except SecurityError as e:
                 from deepagents.backends.protocol import WriteResult
                 return WriteResult(error=str(e))
+            bad = check_artefact(_canon(rt, file_path), content)
+            if bad:
+                from deepagents.backends.protocol import WriteResult
+                return WriteResult(error=f"not written: {bad}")
             return super().write(file_path, content)
 
         def edit(self, file_path, old_string, new_string, replace_all=False):
@@ -208,6 +234,14 @@ def _jail_backend(rt: Runtime, role: str):
             except SecurityError as e:
                 from deepagents.backends.protocol import EditResult
                 return EditResult(error=str(e))
+            f = rt.design / file_path.lstrip("/")
+            if f.is_file():
+                from deepagents.backends.protocol import EditResult
+                from deepagents.backends.utils import perform_string_replacement
+                r = perform_string_replacement(f.read_text(errors="replace"), old_string, new_string, replace_all)
+                bad = None if isinstance(r, str) else check_artefact(_canon(rt, file_path), r[0])
+                if bad:
+                    return EditResult(error=f"not written: {bad}")
             return super().edit(file_path, old_string, new_string, replace_all)
 
     return JailBackend(root_dir=rt.design, virtual_mode=True)
@@ -228,13 +262,13 @@ def drop_superseded(design: Path, jail, before: list[Path], written: dict[str, s
 FILE_TOOLS = ("read_file", "write_file", "list_files")
 
 
-def subagent_plan(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = ()) -> dict:
+def subagent_plan(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict:
     """What one sub-agent turn is given, harness-neutral: the system prompt, the first user message, the core
     tools and the limits. Both the Deep Agents run and the Claude Code arm (05c) are built from this, and the
     equivalence test compares them."""
     from agent.core.registry import TOOLS
     from agent.graph.roles import ROLE_TOOLS
-    inputs = role_inputs(rt.session, role)
+    inputs = role_inputs(rt.session, role, previous=repair)
     if role != "rtl":
         prompt += ("\nYour working directory is the design directory: write files at paths like /model.py, "
                    "/tests/..., /verif/... (repo-relative paths in build.yaml and testplan.yaml stay as given).")
@@ -243,15 +277,47 @@ def subagent_plan(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] 
     role_files = ROLE_TOOLS[role]
     files = tuple(n for n in FILE_TOOLS if role_files is None or n in role_files)
     return {"role": role, "system_prompt": prompt, "user_message": msg, "inputs": inputs, "core_tools": core,
-            "file_tools": files, "limits": dict(rt.meter.stage_limits), "stage": rt.session.stage}
+            "file_tools": files, "limits": dict(rt.meter.stage_limits), "stage": rt.session.stage, "repair": repair}
 
 
-def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = ()) -> dict[str, str]:
+def _canon(rt: Runtime, path: str) -> str:
+    rel = path.lstrip("/")
+    return rel.removeprefix(str(rt.design.relative_to(ROOT)) + "/")
+
+
+def _validating_state_backend(rt: Runtime):
+    """The in-memory file backend of the restricted roles, validating known artefacts when the model writes or
+    edits them (05c2 fix 4): a malformed file is refused with the line and column, in the model's own turn."""
+    from deepagents.backends import StateBackend
+    from deepagents.backends.protocol import EditResult, WriteResult
+    from deepagents.backends.utils import file_data_to_string, perform_string_replacement
+
+    class ValidatingStateBackend(StateBackend):
+        def write(self, file_path, content):
+            bad = check_artefact(_canon(rt, file_path), content)
+            if bad:
+                return WriteResult(error=f"not written: {bad}")
+            return super().write(file_path, content)
+
+        def edit(self, file_path, old_string, new_string, replace_all=False):
+            fd = self._read_files().get(file_path)
+            if fd is not None and fd.get("encoding") != "base64":
+                r = perform_string_replacement(file_data_to_string(fd), old_string, new_string, replace_all)
+                if not isinstance(r, str):
+                    bad = check_artefact(_canon(rt, file_path), r[0])
+                    if bad:
+                        return EditResult(error=f"not written: {bad}")
+            return super().edit(file_path, old_string, new_string, replace_all)
+
+    return ValidatingStateBackend()
+
+
+def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict[str, str]:
     """Run one Deep Agents sub-agent. Restricted roles see only their seeded inputs (in-memory backend) and
     their outputs are copied into the design through the role jail. Returns {path: content} written."""
     if rt.cfg.harness == "claude_code":
         from agent.claude_code_arm.arm import run_subagent_cc
-        return run_subagent_cc(rt, subagent_plan(rt, role, prompt, allowed))
+        return run_subagent_cc(rt, subagent_plan(rt, role, prompt, allowed, repair))
     from deepagents import HarnessProfile, create_deep_agent, register_harness_profile
     from deepagents.backends.utils import create_file_data, file_data_to_string
     from deepagents.profiles.harness.harness_profiles import GeneralPurposeSubagentProfile
@@ -259,28 +325,29 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
     register_harness_profile("fda", HarnessProfile(general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False)))
     sess = role_session(rt.session, role)
     model = chat_model(rt.client, rt.meter, rt.llm_log)
-    plan = subagent_plan(rt, role, prompt, allowed)
+    plan = subagent_plan(rt, role, prompt, allowed, repair)
     prompt, msg, inputs = plan["system_prompt"], plan["user_message"], plan["inputs"]
     if role == "rtl":
         agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt,
                                   backend=_jail_backend(rt, role))
         agent.invoke({"messages": [{"role": "user", "content": msg}]}, {"recursion_limit": 200})
         return {}
-    agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt)
+    agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt,
+                              backend=_validating_state_backend(rt))
     out = agent.invoke({"messages": [{"role": "user", "content": msg}],
                         "files": {f"/{k}": create_file_data(v) for k, v in inputs.items()}},
                        {"recursion_limit": 120})
     written = {}
     superseded: list[Path] = []
-    if role == "tests":
+    if role == "tests" and not repair:        # a fresh write replaces the role's earlier output; a repair edits it
         superseded = [p for d in ("tests", "verif") for p in sorted((rt.design / d).rglob("*"))
                       if p.is_file() and "__pycache__" not in p.parts and p.name != "__init__.py"]
     for path, data in (out.get("files") or {}).items():
-        rel = path.lstrip("/")
-        rel = rel.removeprefix(str(rt.design.relative_to(ROOT)) + "/")    # the repo-relative design path
-        if rel in inputs:
-            continue
-        r = dispatch(sess, "write_file", {"path": rel, "content": file_data_to_string(data)})
+        rel = _canon(rt, path)                                            # the repo-relative design path
+        content = file_data_to_string(data)
+        if inputs.get(rel) == content:
+            continue                                                      # seeded and not changed
+        r = dispatch(sess, "write_file", {"path": rel, "content": content})
         if not r.get("refused"):
             written[rel] = r["output"]
     if superseded and written:                    # 05c fix 4: a rewrite replaces the role's earlier output
@@ -292,6 +359,26 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
 
 def _rt(state: State) -> Runtime:
     return _RT[state["run_id"]]
+
+
+def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
+    """Which stage-2 roles run this visit, in order. ``None``: a fresh write (the artefact does not exist yet); a list:
+    a repair of that role's own output, with the failures that role owns. Roles not listed are frozen."""
+    d = rt.design
+    have = {"model": (d / "model.py").is_file(),
+            "tests": bool(list((d / "tests").glob("test_*_rtl.py"))) if (d / "tests").is_dir() else False,
+            "rtl": bool(list((d / "rtl").glob("*.sv"))) if (d / "rtl").is_dir() else False}
+    owners = dict(state.get("owners") or {})
+    plan: dict[str, list[str] | None] = {}
+    for role in ("model", "tests", "rtl"):
+        if not have[role]:
+            plan[role] = None                            # nothing to repair: write it
+        elif role in owners:
+            plan[role] = list(owners[role])
+        elif not owners and role == "rtl":               # arrived from a later stage's failure: the RTL is the suspect
+            plan[role] = [("; ".join(state.get("fails") or []) or "a later stage failed") + "\n"
+                          + str(state.get("detail") or "")[:1500]]
+    return plan
 
 
 def node_work(state: State) -> dict:
@@ -307,17 +394,28 @@ def node_work(state: State) -> dict:
            "allowed": ", ".join(st.tools), "fails": "; ".join(state.get("fails") or []) or "none",
            "note": state.get("note") or "none",
            "design_rel": str(rt.design.relative_to(ROOT))}
-    conv = CONVENTIONS.format(**fmt) + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
+    conv0 = CONVENTIONS.format(**fmt)
+    conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     try:
         if n == 0:
             run_subagent(rt, "clarify", PROMPTS["clarify"].format(**fmt)
                          + ("\nGate message: " + state["detail"][:3000] if state.get("detail") else ""),
                          ("search_docs", "load_skill"))
         elif n == 2:
-            run_subagent(rt, "model", PROMPTS["model"].format(**fmt))
-            run_subagent(rt, "tests", PROMPTS["tests"].format(**fmt) + conv, ("search_docs", "load_skill"))
-            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, st.tools)
-        elif n != 9 or state.get("hw_approved"):
+            for role, reasons in stage2_plan(rt, state).items():
+                repair = reasons is not None
+                note = repair_note(role, reasons) if repair else ""
+                if role == "model":
+                    run_subagent(rt, "model", PROMPTS["model"].format(**fmt) + note, (), repair)
+                elif role == "tests":
+                    run_subagent(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else FRESH_TESTS)
+                                 + conv0, ("search_docs", "load_skill", "spec_items"), repair)
+                else:
+                    own = "; ".join(r[:1500] for r in reasons) if repair else (
+                        "; ".join(state.get("fails") or []) or "none")
+                    run_subagent(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
+                                 + (note if repair else "") + conv0, st.tools, repair)
+        else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
             run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, tuple(t for t in st.tools
                                                                          if t not in ("program", "bringup")))
     except ArmBlocked as e:                                # the Claude Code arm cannot run (auth, CLI): stop, say why
@@ -458,13 +556,17 @@ def node_gate(state: State) -> dict:
         ev["arch"] = (rt.design / "ARCHITECTURE.md").is_file()
         ev["inventory"] = {"ok": bool(d("check_constraints", dispatch(rt.session, "check_constraints", {})).get("ok"))}
     elif n == 2:
-        ev["lint"] = {"ok": d("lint", dispatch(rt.session, "lint", {})).get("ok")}
+        lr = d("lint", dispatch(rt.session, "lint", {}))
+        ev["lint"] = {"ok": lr.get("ok"), "text": str(lr.get("output", ""))[-1500:]}
         ev["contract"] = _contract(rt, detail)
         if ev["contract"]["ok"]:                       # fail fast: no simulate on a model the tests cannot load
-            ev["simulate"] = {"ok": d("simulate", dispatch(rt.session, "simulate", {"sim": "icarus"})).get("ok")}
+            sr = d("simulate", dispatch(rt.session, "simulate", {"sim": "icarus"}))
+            ev["simulate"] = {"ok": sr.get("ok"), "first_failure": sr.get("first_failure"),
+                              "text": str(sr.get("log_tail") or sr.get("output", ""))[-3000:]}
         else:
             ev["simulate"] = {"ok": False}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
+        ev["verif_level"] = rt.cfg.verif_level
         if ev["lint"]["ok"] and ev["simulate"]["ok"]:          # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n in (3, 4):
@@ -491,6 +593,15 @@ def node_gate(state: State) -> dict:
             ok, fails = False, ["hardware: awaiting approval before programming"]
     else:
         ok, fails = exit_check(st, ev)
+    if n == 2:                                   # 05c2 fix 1: the roles that own this visit's failures, and the repeat count
+        if ok:
+            out.update(owners={}, sig="", repeat=0)
+        else:
+            prev, rep = state.get("sig") or "", state.get("repeat") or 0
+            _, sig = stage2_owners(ev)                       # this failure's signature
+            rep = rep + 1 if (prev and sig == prev) else 0   # unchanged since the last visit: the repair did not work
+            owners, sig = stage2_owners(ev, repeat=rep)
+            out.update(owners=owners, sig=sig, repeat=rep)
     return {**out, "evidence": ev, "fails": [] if ok else fails, "detail": "\n".join(detail)}
 
 

@@ -28,6 +28,11 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
+class PlanError(Exception):
+    """An input the gates read (testplan.yaml, spec.yaml, the files they name) is malformed: reported as a failed
+    gate with this message, never as a traceback (brief 05c2, fix 4)."""
+
+
 def chk(value: Any, threshold: Any, ok: bool) -> dict[str, Any]:
     return {"value": value, "threshold": threshold, "pass": bool(ok)}
 
@@ -128,6 +133,49 @@ def checker_names(chk_dir: Path, prefix: str) -> set[str]:
 
 
 # ---- stages -----------------------------------------------------------------------------------------------
+def _yaml_file(path: Path, what: str) -> Any:
+    try:
+        return yaml.safe_load(path.read_text())
+    except yaml.YAMLError as e:
+        mk = getattr(e, "problem_mark", None)
+        pos = f"line {mk.line + 1}, column {mk.column + 1}" if mk else "unknown position"
+        raise PlanError(f"{what} is not valid YAML at {pos}: {' '.join(str(getattr(e, 'problem', None) or e).split())}")
+    except OSError as e:
+        raise PlanError(f"{what} cannot be read: {e.strerror or e}")
+
+
+def load_inputs(design: Path, plan_path: Path) -> tuple[dict, dict]:
+    """The testplan and the spec it names, checked for the shape the gates read. Raises :class:`PlanError`."""
+    rel = plan_path.relative_to(ROOT).as_posix() if plan_path.is_relative_to(ROOT) else plan_path.name
+    plan = _yaml_file(plan_path, rel)
+    if not isinstance(plan, dict):
+        raise PlanError(f"{rel} must be a YAML mapping, not {type(plan).__name__}")
+    need = ("spec", "model", "bench", "checkers", "formal_dir", "thresholds", "requirements")
+    miss = [k for k in need if k not in plan]
+    if miss:
+        raise PlanError(f"{rel} has no {', '.join(repr(k) for k in miss)}")
+    if not (isinstance(plan["bench"], dict) and isinstance(plan["bench"].get("modules"), list) and plan["bench"].get("dir")):
+        raise PlanError(f"{rel}: 'bench' must be a mapping with 'modules' (a list) and 'dir'")
+    if not isinstance(plan["thresholds"], dict):
+        raise PlanError(f"{rel}: 'thresholds' must be a mapping")
+    absent = [k for k in ("seeds_min", "functional_bins_pct", "cover_properties_pct", "line_pct", "toggle_pct",
+                          "mutation_score_pct") if k not in plan["thresholds"]]
+    if absent:
+        raise PlanError(f"{rel}: thresholds has no {', '.join(repr(k) for k in absent)}")
+    reqs = plan["requirements"]
+    if not isinstance(reqs, list) or not reqs or not all(
+            isinstance(r, dict) and r.get("id") and isinstance(r.get("spec"), list) for r in reqs):
+        raise PlanError(f"{rel}: 'requirements' must be a non-empty list of mappings, each with an 'id' and a 'spec' list")
+    spec_file = ROOT / str(plan["spec"])
+    spec = _yaml_file(spec_file, str(plan["spec"]))
+    try:
+        spec_items(spec)
+    except (TypeError, KeyError, AttributeError):
+        raise PlanError(f"{plan['spec']} does not have the shape the gates read: 'behaviour' a mapping of lists, "
+                        f"'registers' a mapping with a 'map' list of entries with a 'name', 'timing' a mapping") from None
+    return plan, spec
+
+
 def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation: Path | None, hw: Path | None) -> dict:
     plan_path = design / "verif" / "testplan.yaml"
     out: dict[str, Any] = {"design": design.name, "stages": {}}
@@ -135,14 +183,19 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     out["stages"]["V0"] = {"checks": v0}
     if not plan_path.exists():
         return finish(out)
-    plan = yaml.safe_load(plan_path.read_text())
-    spec = yaml.safe_load((ROOT / plan["spec"]).read_text())
+    try:
+        plan, spec = load_inputs(design, plan_path)
+    except PlanError as e:
+        v0["testplan_valid"] = chk(str(e), "valid testplan and spec", False)
+        return finish(out)
     reqs = plan["requirements"]
     th = plan["thresholds"]
     bench_dir, chk_dir, formal_src = ROOT / plan["bench"]["dir"], ROOT / plan["checkers"], ROOT / plan["formal_dir"]
     modules = plan["bench"]["modules"]
     v0["model_present"] = chk((ROOT / plan["model"]).exists(), True, (ROOT / plan["model"]).exists())
     v0["bench_modules_present"] = chk(modules, "all files exist", all((bench_dir / f"{m}.py").exists() for m in modules))
+    if not v0["bench_modules_present"]["pass"]:          # the V1 readers below open the bench files
+        return finish(out)
     # ---- V1: traceability
     items = spec_items(spec)
     traced = {s for r in reqs for s in r["spec"]}
@@ -158,14 +211,15 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         bad_refs += [f"{r['id']}:{t}" for t in r.get("formal", []) if t not in formal_tasks]
     no_check = [r["id"] for r in reqs if not (r.get("tests") or r.get("assertions") or r.get("formal"))]
     bench_src = "".join((bench_dir / f"{m}.py").read_text() for m in modules)
+    uses_model = bool(re.search(r"(?m)^\s*(import\s+[\w.]*\bmodel\b|from\s+[\w.]*\bmodel\b\s+import|"
+                                r"from\s+[\w.]+\s+import\s+[^\n]*\bmodel\b)", bench_src))
     v1 = {
         "spec_items_traced": chk(f"{len(items) - len(untraced)}/{len(items)}", "all", not untraced),
         "untraced_items": chk(untraced, [], not untraced),
         "unknown_spec_refs": chk(unknown, [], not unknown),
         "requirements_without_a_check": chk(no_check, [], not no_check),
         "unresolved_references": chk(bad_refs, [], not bad_refs),
-        "bench_uses_blind_model": chk("model" in bench_src and "DimmerCounterModel" in bench_src, True,
-                                      "DimmerCounterModel" in bench_src),
+        "bench_uses_blind_model": chk(uses_model, True, uses_model),
     }
     out["stages"]["V1"] = {"checks": v1}
     # ---- V2: tests, assertions, formal
@@ -183,12 +237,12 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     fr = read_formal(formal)
     wanted_formal = {f"{t}_{k}" for r in reqs for t in r.get("formal", []) for k in ("bmc", "cover")}
     formal_bad = sorted(f"{n}={fr.get(n, 'absent')}" for n in wanted_formal if fr.get(n) != "PASS")
+    rand_ran = bool(seeds) and any("random" in t.lower() and ok for t, ok in res[seeds[0]].items())
     v2 = {
         "seeds_run": chk(seeds, f">=1", bool(seeds)),
         "planned_tests_missing": chk(missing, [], not missing and bool(seeds)),
         "failing_tests": chk(failing, [], not failing and bool(seeds)),
-        "constrained_random_test_ran": chk("t1_verif.constrained_random_operations" in (res[seeds[0]] if seeds else {}), True,
-                                           bool(seeds) and res[seeds[0]].get("t1_verif.constrained_random_operations", False)),
+        "constrained_random_test_ran": chk(rand_ran, True, rand_ran),
         "assertions_bound_zero_failures": chk(sorted(a_all), "bound in the run; no failure", bool(seeds) and not failing),
         "other_simulators_failing": chk(also_bad, [], not also_bad),
         "formal_tasks_not_passing": chk(formal_bad, [], not formal_bad and bool(wanted_formal)),
@@ -275,8 +329,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--require-hw", action="store_true")
     a = ap.parse_args(argv)
     rel = lambda p: (ROOT / p) if not Path(p).is_absolute() else Path(p)
-    rep = evaluate(rel(a.design), rel(a.runs), [rel(x) for x in a.also], rel(a.formal),
-                   rel(a.mutation) if a.mutation else None, rel(a.hw) if a.hw else None)
+    try:
+        rep = evaluate(rel(a.design), rel(a.runs), [rel(x) for x in a.also], rel(a.formal),
+                       rel(a.mutation) if a.mutation else None, rel(a.hw) if a.hw else None)
+    except (PlanError, OSError, KeyError, TypeError, ValueError, AttributeError, SyntaxError) as e:
+        # whatever else a gate input throws, the answer is a failed gate with the message, not a traceback
+        msg = e.args[0] if isinstance(e, PlanError) and e.args else f"{type(e).__name__}: {e}"
+        rep = finish({"design": Path(a.design).name, "stages": {"V0": {"checks": {
+            "gate_inputs_readable": chk(str(msg)[:600], "readable", False)}}}})
     for s, st in rep["stages"].items():
         print(f"{s}: {'PASS' if st.get('pass') else 'FAIL'}")
         for n, c in st["checks"].items():

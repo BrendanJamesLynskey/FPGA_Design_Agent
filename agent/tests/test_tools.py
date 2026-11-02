@@ -79,7 +79,7 @@ def test_build_refuses_a_hostile_xdc_and_build_yaml(session) -> None:
 
 def test_fixed_commands(session) -> None:
     session.runner = FakeRunner()
-    for tool, args in (("lint", {}), ("simulate", {"sim": "verilator"}), ("build", {"until": "synth"})):
+    for tool, args in (("lint", {}), ("simulate", {"sim": "icarus"}), ("build", {"until": "synth"})):
         r = dispatch(session, tool, args)
         assert r["ok"], (tool, r["output"])
     kinds = dict((k, a) for k, a in session.runner.calls)

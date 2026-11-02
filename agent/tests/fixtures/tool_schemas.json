@@ -1,6 +1,43 @@
 {
- "schema_version": "1.1.0",
+ "schema_version": "1.2.0",
  "tools": [
+  {
+   "name": "board_constraints",
+   "description": "Write design.xdc from the board's resource names; you never write pin numbers. 'map' is a list of {resource, port}: resource is a board resource (clk100, led[0:15], sw[0:15], seg, an, btnc, uart_rx, ...; name, name[i] or name[a:b]), port is YOUR design's port name (a bus name for a range, or name[i] for one bit of a bus). Pins, I/O standards and the create_clock on the board clock come from the board's master XDC. With no 'map', returns the board's resource list.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "map": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+       "type": "object",
+       "properties": {
+        "resource": {
+         "type": "string",
+         "maxLength": 40
+        },
+        "port": {
+         "type": "string",
+         "maxLength": 70
+        }
+       },
+       "required": [
+        "resource",
+        "port"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "write": {
+      "type": "boolean"
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.2.0"
+  },
   {
    "name": "bringup",
    "description": "Run the design's bring-up on the board: program base, UART tests against the blind model, program ila, ILA captures, check the design is still alive (flow/bringup.py). Same preconditions as program.",
@@ -10,7 +47,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "build",
@@ -38,7 +75,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "check_constraints",
@@ -49,7 +86,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "formal",
@@ -60,7 +97,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "gates",
@@ -86,7 +123,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "lint",
@@ -97,7 +134,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "list_files",
@@ -113,7 +150,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "load_skill",
@@ -139,7 +176,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "program",
@@ -161,7 +198,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "read_file",
@@ -188,7 +225,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "report",
@@ -222,7 +259,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "search_docs",
@@ -253,7 +290,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "simulate",
@@ -272,7 +309,18 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
+  },
+  {
+   "name": "spec_items",
+   "description": "List the spec items the test plan must trace (verif/testplan.yaml requirements[].spec), by the exact ids the V1 gate checks, each with its spec text. Read from spec.yaml.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.2.0"
   },
   {
    "name": "stage_note",
@@ -306,11 +354,11 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   },
   {
    "name": "write_file",
-   "description": "Write (create or replace) a text file inside the design directory. build/ is read-only.",
+   "description": "Write (create or replace) a text file inside the design directory. build/ is read-only. Known artefacts (spec.yaml, verif/testplan.yaml, build.yaml, ARCHITECTURE.md, any *.yaml) are checked first: a malformed one is NOT written and the error names the line and column.",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -329,7 +377,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.1.0"
+   "version": "1.2.0"
   }
  ]
 }

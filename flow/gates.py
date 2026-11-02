@@ -365,7 +365,7 @@ def evaluate(build_dir: Path) -> dict[str, Any]:
         "build_dir": str(d),
         "top": top,
         "variant": variant,
-        "pass": all(gates.values()),
+        "pass": bool(gates) and all(gates.values()),   # nothing ran is not a pass
         "first_failed_stage": first_failed,
         "gates": gates,
         "stages": stages,
@@ -388,8 +388,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("build_dir", type=Path)
     ap.add_argument("--json", type=Path, help="write the result here")
     a = ap.parse_args(argv)
-    r = evaluate(a.build_dir)
+    try:
+        r = evaluate(a.build_dir)
+    except (OSError, KeyError, ValueError, TypeError) as e:       # no reports to read: a failed gate, not a traceback
+        print(f"gates: {a.build_dir.name}: FAIL: no usable build reports ({type(e).__name__}: {e}); the build did not "
+              f"complete, read the build output")
+        if a.json:
+            a.json.parent.mkdir(parents=True, exist_ok=True)
+            a.json.write_text(json.dumps({"pass": False, "stages": {}, "first_failed_stage": None,
+                                          "error": f"{type(e).__name__}: {e}"}, indent=2) + "\n")
+        return 1
     if a.json:
+        a.json.parent.mkdir(parents=True, exist_ok=True)
         a.json.write_text(json.dumps(r, indent=2) + "\n")
     t, u = r["timing"] or {}, r["utilization"] or {}
     print(f"gates: {r['top']} ({r['variant']}): {'PASS' if r['pass'] else 'FAIL'}  "

@@ -1,0 +1,55 @@
+{
+ "brief": "05c2",
+ "run": "luna_run7",
+ "run_id": "20261102-191434-23d3",
+ "harness": "deepagents",
+ "model": "openai/gpt-6-luna",
+ "verif_level": "V1",
+ "interview": "oracle",
+ "review": "off",
+ "stages_visited": [
+  0,
+  1,
+  2,
+  2,
+  3,
+  4,
+  2,
+  2,
+  3,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9
+ ],
+ "visits_per_stage": {
+  "0": 1,
+  "1": 1,
+  "2": 4,
+  "3": 3,
+  "4": 2,
+  "5": 1,
+  "6": 1,
+  "7": 1,
+  "8": 1,
+  "9": 1
+ },
+ "stop": "paused at stage 9: 'hardware: awaiting approval before programming' (the agent never programs without approval; none given)",
+ "wall_s": 5266,
+ "key_usage_usd": {
+  "before": 93.846411391,
+  "after": 94.040488626,
+  "delta": 0.194077
+ },
+ "cost_usd": "not in summary.json (process paused, meter lost); key-usage delta used",
+ "gates_last": {
+  "base_build": "all 15 build gates pass, bitstream present",
+  "ila_build": "all 16 gates pass, bitstream present",
+  "verif": "V0 and V1 pass (spec items traced 35/35); V2/V3 evidence has no agent tool (documented deviation)"
+ },
+ "bringup": null,
+ "verdict": "FIRST RUN TO REACH A BITSTREAM through stages 0-8 and both stage-9 builds (base + ILA) with every Vivado gate passing (the stage-2 repair loop needed 4 visits, stage 3 needed 3). Board NOT programmed: the run is at verif level V1, V2/V3 verification gates (seeds, mutation) are not met and have no agent tool, so it is not 'a bitstream that passes every gate'; and no hardware approval was given. Decision for the planner/owner."
+}

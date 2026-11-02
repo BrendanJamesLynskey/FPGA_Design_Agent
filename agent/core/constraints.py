@@ -9,7 +9,8 @@ Rules (raw findings, rule id plus the offending line; no fix hints):
 - ``FDA-CON-2`` ``CLOCK_DEDICATED_ROUTE FALSE``: it turns off the check that a clock input sits on a
   clock-capable pin.
 - ``FDA-CON-3`` a PACKAGE_PIN or IOSTANDARD that differs from the board's master XDC for the same port.
-- ``FDA-CON-4`` a port constrained to a package pin the master XDC gives to another port.
+- ``FDA-CON-4`` two ports on one package pin, or a pin the master XDC does not use. (Ports may have the design's
+  own names: the pin and I/O standard are checked against the master by PIN, 05c2.)
 - ``FDA-CON-5`` a ``set_false_path`` or ``set_clock_groups -asynchronous`` with no comment in the eight lines above
   (waivers carry a reason, UG949 ch. 5/6).
 
@@ -37,6 +38,9 @@ def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
     clock_port = board["clock"]["port"]
     by_pin: dict[str, str] = {pin: port for port, (pin, _s) in master.items()}
     mine, _ = parse_xdc(xdc_text)
+    pin_std = {pin: std for pin, std in master.values()}
+    clock_pin = board["clock"]["pin"]
+    my_clock_ports = {p for p, (pin, _s) in mine.items() if pin == clock_pin}   # the design's name for the clock pin
     out: list[dict[str, Any]] = []
     lines = xdc_text.splitlines()
 
@@ -48,21 +52,27 @@ def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
         if not code.strip():
             continue
         m = _CLOCK.search(code)
-        if m and m.group(1) != clock_port:
+        if m and m.group(1) != clock_port and m.group(1) not in my_clock_ports:
             add("FDA-CON-1", n, f"create_clock on port {m.group(1)}, which is not the board's clock input {clock_port}")
         if _DEDICATED.search(code):
             add("FDA-CON-2", n, "CLOCK_DEDICATED_ROUTE FALSE disables the dedicated clock-route check")
         if _WAIVER.search(code) and not any(l.lstrip().startswith("#") for l in lines[max(0, n - 9):n - 1]):
             add("FDA-CON-5", n, "timing waiver without a comment line above it")
+    seen: dict[str, str] = {}
     for port, (pin, std) in mine.items():
         n = next((i for i, l in enumerate(lines, 1) if f"{{ {port} }}" in l or f"{{{port}}}" in l), 1)
-        if port in master:
+        if port in master:                                     # the master's own name: pin and standard must match
             if pin != master[port][0]:
                 add("FDA-CON-3", n, f"{port} on {pin}, the board's master XDC has {master[port][0]}")
             if std != master[port][1]:
                 add("FDA-CON-3", n, f"{port} is {std}, the board's master XDC has {master[port][1]}")
-        elif pin in by_pin:
-            add("FDA-CON-4", n, f"{port} on {pin}, which the master XDC gives to {by_pin[pin]}")
+        elif pin not in pin_std:                               # the design's own name: the pin must exist on the board
+            add("FDA-CON-4", n, f"{port} on {pin}, which is not a pin the master XDC uses")
+        elif std != pin_std[pin]:
+            add("FDA-CON-3", n, f"{port} on {pin} is {std}, the board's master XDC has {pin_std[pin]} for that pin")
+        if pin in seen and seen[pin] != port:
+            add("FDA-CON-4", n, f"{port} on {pin}, which port {seen[pin]} already uses")
+        seen.setdefault(pin, port)
     return out
 
 
@@ -114,3 +124,114 @@ def check_xdc_safety(text: str) -> list[dict[str, Any]]:
             out.append({"rule": "FDA-CON-6", "line": n, "text": raw.strip(),
                         "message": "variable use or exec/source/eval outside braces is not allowed"})
     return out
+
+
+# --- constraints from board resource names (05c2, fix 2) --------------------------------------------------------
+#
+# Principle: pin numbers are a fact about the board, not something a model should recall. The model says which board
+# RESOURCE each of its ports uses (``clk100``, ``led[0:15]``, ``sw[0:15]``, ``seg``, ``an``); the tool writes the
+# constraint lines from the board's master XDC, so a pin or I/O standard can never be misremembered. The model still
+# chooses its own port names. ``check_constraints`` remains the gate over whatever ends up in design.xdc.
+
+_RES_REF = re.compile(r"^([a-z][a-z0-9_]*)(?:\[(\d+)(?::(\d+))?\])?$")
+_PORT_REF = re.compile(r"^([A-Za-z_][A-Za-z0-9_]{0,63})(?:\[(\d+)\])?$")
+
+
+def resource_catalogue(board_dir: Path) -> dict[str, dict[int, str]]:
+    """``{resource: {index: master-XDC port}}``. Every master port is a resource (a bus ``SW[0..15]`` is ``sw``, a
+    scalar ``BTNC`` is ``btnc`` with index 0); ``board.yaml``'s ``resources:`` adds named aliases and ordered buses."""
+    board = yaml.safe_load((board_dir / "board.yaml").read_text())
+    master, _ = parse_xdc((board_dir / board["master_xdc"]).read_text())
+    cat: dict[str, dict[int, str]] = {}
+    for port in master:
+        m = re.match(r"^([A-Za-z0-9_]+)(?:\[(\d+)\])?$", port)
+        cat.setdefault(m.group(1).lower(), {})[int(m.group(2) or 0)] = port
+    for name, target in (board.get("resources") or {}).items():
+        ports = target if isinstance(target, list) else [target]
+        cat[name] = {i: p for i, p in enumerate(ports) if p in master}
+    return cat
+
+
+def describe_catalogue(cat: dict[str, dict[int, str]]) -> str:
+    out = []
+    for n in sorted(cat):
+        idx = sorted(cat[n])
+        out.append(n if idx == [0] and len(idx) == 1 else
+                   f"{n}[{idx[0]}:{idx[-1]}]" + ("" if idx == list(range(idx[0], idx[-1] + 1)) else " (gaps)"))
+    return ", ".join(out)
+
+
+def generate_xdc(board_dir: Path, mapping: list[dict[str, str]]) -> dict[str, Any]:
+    """The constraint file for ``mapping`` = ``[{resource, port}]``: ``resource`` is ``name``, ``name[i]`` or
+    ``name[a:b]``; ``port`` is the design's port name (a bus for a range, scalar for one element), or ``name[i]`` to
+    put one resource element on bit ``i`` of a bus. Returns ``{ok, xdc, ports: {port: width}, errors}``."""
+    board = yaml.safe_load((board_dir / "board.yaml").read_text())
+    master, _ = parse_xdc((board_dir / board["master_xdc"]).read_text())
+    cat = resource_catalogue(board_dir)
+    errors: list[str] = []
+    bits: dict[tuple[str, int | None], str] = {}              # (design port, bit or None) -> master port
+    used: dict[str, str] = {}                                 # master port -> design port
+    for e in mapping:
+        res, port = str(e.get("resource", "")), str(e.get("port", ""))
+        m, pm = _RES_REF.match(res.strip().lower()), _PORT_REF.match(port.strip())
+        if not m:
+            errors.append(f"resource {res!r}: write it as name, name[i] or name[a:b] (lower case)")
+            continue
+        if not pm:
+            errors.append(f"port {port!r}: not a plain port name (letters, digits, underscore; optional [bit])")
+            continue
+        name, a, b = m.group(1), m.group(2), m.group(3)
+        if name not in cat:
+            errors.append(f"unknown resource {name!r}; this board's resources: {describe_catalogue(cat)}")
+            continue
+        have = cat[name]
+        if a is None:
+            want = sorted(have)
+        else:
+            lo, hi = sorted((int(a), int(b if b is not None else a)))
+            want = list(range(lo, hi + 1))
+        missing = [i for i in want if i not in have]
+        if missing:
+            errors.append(f"resource {res}: {name} has no element {missing[0]} (it has {sorted(have)})")
+            continue
+        pname, pbit = pm.group(1), (int(pm.group(2)) if pm.group(2) is not None else None)
+        if len(want) > 1 and pbit is not None:
+            errors.append(f"port {port!r}: a {len(want)}-element resource {res} maps to a whole bus, give the bus name")
+            continue
+        for k, i in enumerate(want):
+            key = (pname, pbit if len(want) == 1 and pbit is not None else (k if len(want) > 1 or (b is not None) else None))
+            if key in bits:
+                errors.append(f"port {pname}{'' if key[1] is None else f'[{key[1]}]'} is mapped twice")
+                continue
+            mp = have[i]
+            if mp in used:
+                errors.append(f"resource element {mp} is used by both port {used[mp]} and port {pname}")
+                continue
+            bits[key], used[mp] = mp, f"{pname}{'' if key[1] is None else f'[{key[1]}]'}"
+    # a port is either scalar or a bus 0..n-1 with no gaps
+    widths: dict[str, int] = {}
+    for pname in sorted({p for p, _ in bits}):
+        idx = sorted(i for p, i in bits if p == pname)
+        if idx == [None]:
+            widths[pname] = 1
+        elif None in idx:
+            errors.append(f"port {pname} is used both as a scalar and as a bus")
+        elif idx != list(range(len(idx))):
+            errors.append(f"port {pname}: bus bits {idx} are not 0..{len(idx) - 1} without gaps")
+        else:
+            widths[pname] = len(idx)
+    if errors:
+        return {"ok": False, "errors": errors, "xdc": "", "ports": {}}
+    lines = ["## design.xdc: generated by the core's board_constraints tool from the board's master XDC",
+             f"## ({board['master_xdc']}). Pins and I/O standards are the board's; do not edit pin numbers.", ""]
+    clock_port = board["clock"]["port"]
+    period = 1000.0 / float(board["clock"]["freq_mhz"])
+    for (pname, bit), mp in sorted(bits.items(), key=lambda kv: (kv[0][0], -1 if kv[0][1] is None else kv[0][1])):
+        pin, std = master[mp]
+        ref = pname if bit is None else f"{pname}[{bit}]"
+        lines.append(f"set_property -dict {{ PACKAGE_PIN {pin:<4} IOSTANDARD {std} }} [get_ports {{ {ref} }}];"
+                     f"  # {mp}")
+        if mp == clock_port:
+            lines.append(f"create_clock -add -name sys_clk_pin -period {period:.2f} -waveform {{0 {period / 2:g}}} "
+                         f"[get_ports {{ {ref} }}];")
+    return {"ok": True, "xdc": "\n".join(lines) + "\n", "ports": widths, "errors": []}

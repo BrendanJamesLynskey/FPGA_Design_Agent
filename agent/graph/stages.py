@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from agent.core.session import STAGES
+from agent.graph.repair import verif_failures
 
 
 @dataclass(frozen=True)
@@ -30,10 +31,10 @@ _L = {"turns": 30, "seconds": 1800, "usd": 0.40}
 
 MACHINE: tuple[Stage, ...] = (
     Stage(0, "clarify", FILES, ("spec_signed",), (), {"turns": 20, "seconds": 900, "usd": 0.20}),
-    Stage(1, "board-and-device-planning", (*FILES, "check_constraints"), ("arch_note", "inventory"), (0,), _L),
+    Stage(1, "board-and-device-planning", (*FILES, "board_constraints", "check_constraints"), ("arch_note", "inventory"), (0,), _L),
     Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates"),
           ("lint", "model_contract", "simulate", "verif_v3", "stage_rtl"), (0,), {"turns": 60, "seconds": 3600, "usd": 0.80}),
-    Stage(3, "constraints", (*FILES, "check_constraints", "build", "gates"), ("constraints_post_synth",), (2,), _L),
+    Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates"), ("constraints_post_synth",), (2,), _L),
     Stage(4, "synthesis", (*FILES, "build", "gates", "report"), ("stage_post_synth",), (2, 3), _L),
     Stage(5, "implementation", (*FILES, "build", "gates", "report"), ("stage_post_place", "stage_post_route"), (6,), _L),
     Stage(6, "timing-closure", (*FILES, "build", "gates", "report"), ("timing",), (3, 2, 5), _L),
@@ -93,7 +94,9 @@ def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
             ok, why = bool((ev.get(g) or {}).get("ok")), [f"{g} not passing"]
         elif g == "verif_v3":
             v = ev.get("verif") or {}
-            ok, why = v.get("reached") == "V3", [f"verification at {v.get('reached')!r}, needs V3"]
+            need = ev.get("verif_level") or "V3"
+            ok = (v.get("reached") or "") >= need and v.get("reached") is not None
+            why = verif_failures(v, need) or [f"verification at {v.get('reached')!r}, needs {need}"]
         elif g == "constraints_post_synth":
             ok, why = _stage_pass(ev.get("gates_base"), "post_synth",
                                   only={"post_synth_no_unconstrained_endpoints", "post_synth_methodology_no_critical"})
@@ -145,5 +148,7 @@ def classify(stage: Stage, fails: list[str]) -> str | None:
     if stage.n == 7:
         return "rtl"
     if stage.n == 9:
+        if "did not run" in text:       # a build that produced nothing (for example no probes.yaml): another attempt here
+            return None
         return "timing" if "bitstream" in text else ("rtl" if "bring-up" in text else None)
     return None
