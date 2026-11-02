@@ -494,8 +494,8 @@ class Check:
             prim_modules.add(prim)
             if where:
                 prim_modules.add(str(where))
-            if where and str(where) not in {m.name for m in self.modules}:
-                self.add("STD-CDC-01", af, 1, f"crossings[{i}]: inline_in {where} is not a module of this design")
+            if where and str(where) not in self.by_name:        # the design's own modules and the test shell's
+                self.add("STD-CDC-01", af, 1, f"crossings[{i}]: inline_in {where} is not a module of this design or the shell")
             elif not where and prim not in types and prim.lower() not in {t.lower() for t in types}:
                 self.add("STD-CDC-01", af, 1, f"crossings[{i}]: primitive {prim} is listed but not instantiated in the RTL")
         for mod in self.modules:

@@ -60,7 +60,10 @@ def main() -> int:
     ownership.record(design, "agent", "board-and-device-planning", "stage 1 work, visit 1", "9 files", n=1)
     ownership.record(design, "owner", "board-and-device-planning", "architecture approved", "source: agent", n=1)
     ownership.record(design, "owner", "rtl-design-creation", "hand edit", "rtl/debounce.sv", n=2)
-    info = {"gates": [[g_, True, ""] for g_ in ("arch_approved", "lint", "simulate", "standards_rtl", "verif_v3", "stage_rtl")],
+    ok_v3 = (v.get("reached") or "") >= "V3" and v.get("reached") is not None
+    info = {"gates": [["arch_approved", True, "approval record matches the files"], ["standards_rtl", bool(std["stages"].get("rtl")), "flow/standards_check.py"],
+                      ["verif_v3", ok_v3, f"reached {v.get('reached')}, first failed {v.get('first_failed')}"],
+                      ["stage_rtl", bool(g["stages"]["rtl"].get("pass")), "report_methodology on the elaborated RTL"]],
             "visits": 1, "used": {"turns": 41, "seconds": 910, "usd": 0.21}, "limits": {"turns": 60, "seconds": 3600, "usd": 0.8},
             "inputs": ["spec.yaml", "ARCHITECTURE.md"], "outputs": sorted(str(p.relative_to(design)) for p in rtl.glob("*.sv")),
             "time": "2026-11-02 22:00:00", "verif": v, "standards": std, "board": "nexys_a7_100t",

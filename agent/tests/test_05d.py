@@ -125,6 +125,10 @@ def test_resource_failures_route_to_architecture_or_rtl():
     ram_as_luts = ["resources: lut used 5000 outside the predicted [1, 2] by more than 2x (above; allowed [1, 4])",
                    "resources: bram_tile used 0 outside the predicted [2.0, 2.0] by more than 2x (below; allowed [1.0, 4.0])"]
     assert classify(MACHINE[4], ram_as_luts) == "rtl" and route_failure(MACHINE[4], "rtl") == 2
+    # a standards finding in the frozen architecture.yaml goes back to stage 1; one in the RTL stays with the RTL writer
+    f_arch = ["standards STD-CDC-01: architecture.yaml:1: crossings[0]: primitive x is listed but not instantiated in the RTL"]
+    assert route_failure(MACHINE[2], classify(MACHINE[2], f_arch)) == 1
+    assert classify(MACHINE[2], f_arch + ["standards STD-CLK-01: rtl/a.sv:3: gated"]) == "rtl"
     # a standards finding after synthesis is constraint-shaped
     assert classify(MACHINE[4], ["standards STD-CDC-02: x:1: y"]) == "constraints"
 

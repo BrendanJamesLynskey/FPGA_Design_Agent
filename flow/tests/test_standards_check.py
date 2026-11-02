@@ -208,3 +208,14 @@ def test_every_rule_documents_how_it_is_checked():
     doc = (ROOT / "docs" / "design_standards.md").read_text()
     for rid, (_, _, how) in sc.RULES.items():
         assert rid in doc, rid
+
+
+def test_cdc_01_inline_in_may_name_a_shell_module(tmp_path):
+    (tmp_path / "shell" / "rtl").mkdir(parents=True)
+    (tmp_path / "shell" / "rtl" / "reset_sync.sv").write_text("module reset_sync(input logic clk, input logic a, output logic rst);\nendmodule\n")
+    (tmp_path / "b" / "shell" / "rtl").mkdir(parents=True)
+    (tmp_path / "b" / "shell" / "rtl" / "reset_sync.sv").write_text("module reset_sync(input logic clk, input logic a, output logic rst);\nendmodule\n")
+    arch = {"crossings": [{"from": "async", "to": "sys", "signal": "rst", "primitive": "reset_sync", "inline_in": "reset_sync"}]}
+    assert "STD-CDC-01" not in failing(run(tmp_path, CLEAN, arch))
+    arch["crossings"][0]["inline_in"] = "no_such_module"
+    assert "STD-CDC-01" in failing(run(tmp_path / "b", CLEAN, arch))

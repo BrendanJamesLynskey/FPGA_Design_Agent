@@ -191,7 +191,8 @@ def classify(stage: Stage, fails: list[str]) -> str | None:
     if stage.n == 4 and "standards STD-" in text:
         return "constraints"             # CDC and clock-network findings after synthesis are constraint-shaped
     if stage.n == 2 and "standards STD-" in text:
-        return "rtl"
+        # a finding in the (frozen) architecture.yaml is the architecture's to fix, not the RTL writer's
+        return "arch" if all("architecture.yaml:" in f for f in fails if "standards STD-" in f) else "rtl"
     if stage.n == 2 and "model" in text and "spec" in text:
         return "spec"
     if stage.n in (4, 8) and any(k in text for k in ("unconstrained", "TIMING", "XDC", "methodology")):
