@@ -241,3 +241,12 @@ def test_an_edit_prompt_goes_to_the_named_role(tmp_path, monkeypatch):
         assert pauses.count(1) == 2
     finally:
         shutil.rmtree(runs, ignore_errors=True)
+
+
+def test_a_failed_vivado_build_reaches_the_rtl_writer_that_owns_it():
+    from agent.graph.repair import stage2_owners
+    ev = {"lint": {"ok": True}, "contract": {"ok": True}, "simulate": {"ok": True},
+          "verif": {"reached": "V1", "stages": {}}, "verif_level": "V1",
+          "build_output": "ERROR: [Synth 8-6735] net type must be explicitly specified for 'CLK100MHZ' [rtl/top.sv:9]"}
+    owners, _ = stage2_owners(ev)
+    assert list(owners) == ["rtl"] and "Synth 8-6735" in owners["rtl"][0]

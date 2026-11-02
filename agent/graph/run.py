@@ -697,6 +697,7 @@ def node_gate(state: State) -> dict:
                                                   "why": str(br.get("output", ""))[:300]}
             ev["signoff"] = dispatch(rt.session, "gates", {"kind": "verif"}).get("gates")      # traceability with the board result
     if rt.last_build_output:
+        ev["build_output"] = rt.last_build_output           # the repair visit's RTL writer is shown it (05d live run 3)
         detail.append("[build] " + rt.last_build_output)
         rt.last_build_output = ""
     if n == 9 and not state.get("hw_approved"):

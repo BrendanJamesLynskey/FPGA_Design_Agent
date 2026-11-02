@@ -127,7 +127,8 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0) -> tuple[dict[str, list[s
         owners["model"] = [f"[independent check] your model disagreed with an independent check in test {mismatch_test}. "
                            f"Re-read spec.yaml for the behaviour that test covers and check your model against it."]
     if not owners:
-        owners["rtl"] = ["[gates] " + " ".join(ev.get("other_fails") or ["a gate failed"])[:1500]]
+        owners["rtl"] = ["[gates] " + " ".join(ev.get("other_fails") or ["a gate failed"])[:1500]
+                         + (("\n[build output]\n" + ev["build_output"][-1800:]) if ev.get("build_output") else "")]
         sig.append("rtl:other")
     owners = {r: owners[r] for r in ROLE_ORDER if r in owners}
     return owners, "|".join(sorted(sig))
