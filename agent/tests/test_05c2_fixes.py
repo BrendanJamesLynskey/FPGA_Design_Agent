@@ -459,3 +459,12 @@ def test_cocotb_run_failure_carries_the_simulator_logs_failing_assertions(tmp_pa
     assert "no simulator log" in cocotb_run.failure_excerpt(tmp_path / "missing.log")
     src = (ROOT / "flow" / "cocotb_run.py").read_text()
     assert "except SystemExit" in src and "raise AssertionError" in src
+
+
+def test_interview_limit_defaults_the_rest_instead_of_crashing_the_run():
+    from agent.graph.interview import Interview, Question
+    iv = Interview(max_questions=2)
+    for i in range(4):
+        q = iv.ask(Question(id=f"q{i}", text=f"t{i}", default="d", reason="r"), None)
+    s = iv.summary()
+    assert s["asked"] == 4 and q.by == "limit" and q.status == "defaulted"

@@ -48,11 +48,13 @@ class Interview:
 
     def ask(self, q: Question, who: Answerer | None) -> Question:
         """Ask one question. ``who=None`` (interview off) takes the default."""
-        if len(self.questions) >= self.max_questions:
-            raise RuntimeError(f"interview limit of {self.max_questions} questions reached")
         if not (q.text.strip() and q.default.strip() and q.reason.strip()):
             raise ValueError("a question needs text, a proposed default and the reason for it")
-        if who is None:
+        if len(self.questions) >= self.max_questions:
+            # a limit degrades, never crashes the run (a live run died here): the user is not asked, the default is
+            # taken, and the record says it was the limit
+            q.answer, q.status, q.by = q.default, "defaulted", "limit"
+        elif who is None:
             q.answer, q.status, q.by = q.default, "defaulted", "default"
         else:
             a, ev = who.answer(q)
