@@ -44,3 +44,14 @@ Fixes before these runs: one canonical spec shape (the gates crash), one design-
 | `agent_cc_haiku_t1_run2.json` | Claude Code, `claude-haiku-5-5`. **Null at stage 1** again (5 visits), but the path errors are gone. Cause: the model (own port names and guessed pins in `design.xdc`; `check_constraints` reported FDA-CON-1/3/4 each visit and it did not converge). 75 turns, 329 s, plan estimate $0.0761, weekly usage 8% -> 8%. |
 | `agent_cc_opus_t1_run2.json` | Claude Code, `claude-opus-5-5`. **Null at stage 2.** Simulation passed on a visit (a first for the arm); the stage failed at V1: verilator `-Wall` UNUSEDSIGNAL in the RTL, an invalid YAML flow sequence in `verif/testplan.yaml`, and a later bench rewrite that failed simulate. 180 turns, 2883 s, 16 CLI calls, plan estimate $9.87, weekly usage 8% -> 9%. |
 | `agent_luna_run4.json` | Deep Agents, luna, `--interview oracle --review off`. **Null at stage 2** (stage 1 passes). Gates stopped at V1 `spec_items_traced 5/32`. 268 turns, 2174 s, $0.2246 provider-reported, key usage 92.562367 -> 92.788861 ($0.2265). |
+
+## Brief 05c2: finishing T1 (fixes from the 05b/05c nulls; luna 7 reaches the first bitstream)
+
+Spend by key usage: about $1.23 of the $1.50 cap (luna runs 1-6 $1.0385 from summaries, luna 7 $0.1941); Claude Code runs are plan-billed. See `results/spend_ledger.csv`. The PC crashed at ~18:30 on 2026-11-02 (swap storm during a network switch); one Opus run was interrupted by it.
+
+| File | What |
+|---|---|
+| `agent_luna_05c2_run1.json` to `agent_luna_05c2_run6.json` (+ `_summary.json`) | Deep Agents, luna, T1, oracle, review off. Each stop is attributed to harness or model in its verdict; runs 1-5 exposed harness defects (stale verif evidence, stage-9 ordering, probes.yaml schema, a prepare.py import, hidden cocotb failures), all fixed with tests. Run 6 is a model-vs-RTL disagreement at stage 2. |
+| `agent_luna_05c2_run7.json` | **First run to reach a bitstream through the agent**: stages 0-8 and both stage-9 builds pass every Vivado gate (base 15/15, ILA 16/16, WNS +0.528 ns, 0.14 W, Tj 42.5 C), verification at V1. Paused at stage 9 awaiting hardware approval; the board was not programmed (V2 seeds/V3 have no agent tool). Owner decision pending. |
+| `agent_cc_haiku_05c2_run1_crash.json`, `agent_cc_haiku_05c2_run2.json` (+ summary), `agent_cc_haiku_05c2_run3.json` | Claude Code Haiku. Run 1 crashed in the interview (fixed). Run 2 passed stage 1 and stopped at stage 2. Run 3 stopped at stage 1: the model never wrote `build.yaml` and `check_constraints` was blocked on it; tool fix recorded (not rerun live). |
+| `agent_cc_opus_05c2_run1.json` (+ summary), `agent_cc_opus_05c2_run2_interrupted.json` | Claude Code Opus. Run 1 passed stage 2 and stopped at stage 3 on a systemd user-bus environment defect (fixed). Run 2 was interrupted by the PC crash and is not a result. |

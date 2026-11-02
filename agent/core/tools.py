@@ -90,7 +90,8 @@ def load_build_cfg(s: Session) -> dict[str, Any]:
     """build.yaml with every value that reaches Tcl or a command line validated. Raises SecurityError."""
     f = s.design / "build.yaml"
     if not f.is_file():
-        raise SecurityError("build-yaml", "the design has no build.yaml")
+        raise SecurityError("build-yaml", "the design has no build.yaml: create it with write_file (keys top, part, "
+                                          "sources, constraints, generics; the format is in the flow conventions)")
     cfg = yaml.safe_load(f.read_text()) or {}
     for k in ("top", "part", "sources", "constraints"):
         if k not in cfg:
@@ -403,9 +404,13 @@ def report(s: Session, name: str, variant: str = "base", offset: int = 0, max_by
                            "CLOCK_DEDICATED_ROUTE FALSE, pins and I/O standards as in the master XDC, commands in the "
                            "XDC allow-list.", {})
 def check_constraints(s: Session) -> dict:
-    cfg = load_build_cfg(s)
+    # the XDC check needs only the XDC: a missing build.yaml must not block it (build reports it instead)
+    files = con_files(s, load_build_cfg(s)) if (s.design / "build.yaml").is_file() else \
+        [s.design / "design.xdc"] if (s.design / "design.xdc").is_file() else []
+    if not files:
+        return {"ok": False, "output": "no design.xdc yet: call board_constraints to write it", "findings": []}
     found = []
-    for f in con_files(s, cfg):
+    for f in files:
         text = f.read_text()
         for x in con.check_xdc(text, s.root / "boards" / s.board) + con.check_xdc_safety(text):
             found.append({"file": f.name, **x})

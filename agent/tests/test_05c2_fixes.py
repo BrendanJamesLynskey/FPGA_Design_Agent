@@ -478,3 +478,17 @@ def test_build_environment_finds_the_user_bus_when_the_launcher_lost_it(monkeypa
     import os
     if Path(f"/run/user/{os.getuid()}/bus").exists():
         assert env["XDG_RUNTIME_DIR"] == f"/run/user/{os.getuid()}" and env["DBUS_SESSION_BUS_ADDRESS"].startswith("unix:path=")
+
+
+# --- 05c2 Haiku run 3: stage 1 looped on "the design has no build.yaml" -----------------------------------------
+
+def test_check_constraints_needs_only_the_xdc_and_missing_build_yaml_is_actionable(rt):
+    """A tool must not block a check on an artefact the check does not read, and an error must say how to proceed."""
+    r = dispatch(rt.session, "check_constraints", {})
+    assert not r["ok"] and "board_constraints" in r["output"]                     # no XDC yet: say what to call
+    m = [{"resource": "clk100", "port": "clk"}]
+    assert dispatch(rt.session, "board_constraints", {"map": m})["ok"]
+    assert not (rt.design / "build.yaml").exists()
+    assert dispatch(rt.session, "check_constraints", {})["ok"]                     # no build.yaml needed
+    r = dispatch(rt.session, "build", {})
+    assert "write_file" in str(r) and "build.yaml" in str(r)                      # build's error names the remedy
