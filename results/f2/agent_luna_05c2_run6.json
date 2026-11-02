@@ -1,0 +1,36 @@
+{
+ "brief": "05c2",
+ "run": "... --verif-level V1 --replies build/f2/replies_none.json",
+ "run_id": "20261102-153032-9e6e",
+ "harness": "deepagents",
+ "model": "openai/gpt-6-luna",
+ "verif_level": "V1",
+ "stages_visited": [
+  0,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "stop": "stage 2 visited more than 4 times",
+ "loops": 4,
+ "turns": 279,
+ "wall_s": 2184.7,
+ "tokens": 14814126,
+ "cost_usd": 0.265951,
+ "unreported_cost_calls": 0,
+ "key_usage_usd": {
+  "before": 93.571644901,
+  "after": 93.834656971,
+  "delta": 0.263012
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "bringup": null,
+ "verdict": "Null at stage 2 (5 visits, 279 turns). The simulator's failing assertions now reach the model (the 05c2 cocotb fix worked) and the RTL writer iterated on lint, compile and mismatch errors across visits, but the RTL and the blind model never agreed on the spec's behaviour within the visit limits. Cause: MODEL (a genuine model-vs-RTL behavioural disagreement; the harness gave it the evidence). Stopped luna runs here: OpenRouter spend would pass the brief's cap."
+}
