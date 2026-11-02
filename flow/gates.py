@@ -394,10 +394,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"gates: {a.build_dir.name}: FAIL: no usable build reports ({type(e).__name__}: {e}); the build did not "
               f"complete, read the build output")
         if a.json:
+            a.json.parent.mkdir(parents=True, exist_ok=True)
             a.json.write_text(json.dumps({"pass": False, "stages": {}, "first_failed_stage": None,
                                           "error": f"{type(e).__name__}: {e}"}, indent=2) + "\n")
         return 1
     if a.json:
+        a.json.parent.mkdir(parents=True, exist_ok=True)
         a.json.write_text(json.dumps(r, indent=2) + "\n")
     t, u = r["timing"] or {}, r["utilization"] or {}
     print(f"gates: {r['top']} ({r['variant']}): {'PASS' if r['pass'] else 'FAIL'}  "

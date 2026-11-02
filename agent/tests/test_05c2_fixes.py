@@ -421,9 +421,9 @@ def test_stage_9_work_runs_before_the_hardware_approval(rt, monkeypatch):
 
 def test_gates_on_a_missing_build_directory_is_a_failed_gate_not_a_traceback(tmp_path):
     out = subprocess.run([sys.executable, str(ROOT / "flow" / "gates.py"), str(tmp_path / "nothing"), "--json",
-                          str(tmp_path / "g.json")], capture_output=True, text=True, cwd=ROOT)
+                          str(tmp_path / "newdir" / "g.json")], capture_output=True, text=True, cwd=ROOT)
     assert out.returncode == 1 and "Traceback" not in out.stdout + out.stderr and "FAIL" in out.stdout
-    assert json.loads((tmp_path / "g.json").read_text())["pass"] is False
+    assert json.loads((tmp_path / "newdir" / "g.json").read_text())["pass"] is False      # even when its directory is absent
 
 
 def test_prepare_runs_as_a_script_for_the_ila_variant(rt, tmp_path):
