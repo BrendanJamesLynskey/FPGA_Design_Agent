@@ -73,16 +73,17 @@ def scripted_client(seen, where):
     spec = (T1 / "spec.yaml").read_text().replace("default: no, linear", "reason: not in the request\n    default: no, linear")
     files = {"clarify": {"/spec.yaml": spec}, "model": {"/model.py": (T1 / "model.py").read_text() + SHIM},
              "tests": {"/tests/test_t1_dimmer_counter_rtl.py": "# bench\n", "/verif/testplan.yaml": "items: []\n",
-                       "/tests/test_t1_dimmer_counter_hw.py": "# hw tests\n"}}
+                       "/tests/test_t1_dimmer_counter_hw.py": (T1 / "tests" / "test_t1_hw.py").read_text(),
+                       "/hw_checks.py": (T1 / "hw_checks.py").read_text()}}
     rtl1 = {"/ARCHITECTURE.md": "# T1\n\n## Block diagram\n\n```\n[buttons] -> [debounce] -> [counter] -> [pwm]\n```\n",
             "/build.yaml": (T1 / "build.yaml").read_text().replace("designs/t1_dimmer_counter/", "{d}/"),
-            "/design.xdc": (T1 / "design.xdc").read_text(), "/hw_checks.py": "# checks\n",
+            "/design.xdc": (T1 / "design.xdc").read_text(), "/probes.yaml": (T1 / "probes.yaml").read_text(), "/BRINGUP.md": (T1 / "BRINGUP.md").read_text(),
             **{f"/rtl/{f.name}": f.read_text() for f in sorted((T1 / "rtl").glob("*.sv"))}}
 
     def client(messages, tools=None):
         system = messages[0]["content"]
         role = ("clarify" if "turn a short design request" in system else "model" if "blind golden model" in system
-                else "tests" if "cocotb tests" in system else "rtl")
+                else "tests" if ("cocotb tests" in system or "bring-up tests" in system) else "rtl")
         seen.append({"role": role, "user": messages[1]["content"] if len(messages) > 1 else ""})
         if messages[-1]["role"] == "tool":
             return Reply("DONE", [])

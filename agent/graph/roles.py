@@ -24,7 +24,8 @@ from agent.core.session import Session
 ROLES: dict[str, dict[str, tuple[str, ...]]] = {
     "clarify": {"read": ("spec.md", "spec.yaml"), "write": ("spec.yaml",)},
     "model": {"read": ("spec.yaml", "model.py"), "write": ("model.py",)},      # its own output, to edit on a repair
-    "tests": {"read": ("spec.yaml", "model.py", "tests/*", "verif/*"), "write": ("tests/*", "verif/*")},
+    "tests": {"read": ("spec.yaml", "model.py", "tests/*", "verif/*", "probes.yaml", "BRINGUP.md", "hw_checks.py"),
+              "write": ("tests/*", "verif/*", "hw_checks.py")},       # hw_checks.py: stage 9 bring-up checks, against the model
     "rtl": {"read": ("*",), "write": ("rtl/*", "build.yaml", "design.xdc", "probes.yaml", "BRINGUP.md",
                                       "ARCHITECTURE.md", "hw_checks.py", "lint/*", "BUILD_NOTE.md")},
 }
@@ -69,6 +70,9 @@ def role_inputs(s: Session, role: str, previous: bool = False) -> dict[str, str]
     want = {"clarify": ["spec.md", "spec.yaml"], "model": ["spec.yaml"], "tests": ["spec.yaml", "model.py"],
             "rtl": ["spec.yaml", "ARCHITECTURE.md"]}[role]
     j = RoleJail(s.jail, role)
+    if role == "tests" and s.stage == "configuration-and-debug":      # stage 9: the bring-up files (probe names, guide)
+        want = want + ["probes.yaml", "BRINGUP.md", "hw_checks.py"] + sorted(
+            str(p.relative_to(s.design)) for p in (s.design / "tests").glob("test_*_hw.py"))
     if previous and role == "model":
         want = want + ["model.py"]
     if previous and role == "tests":

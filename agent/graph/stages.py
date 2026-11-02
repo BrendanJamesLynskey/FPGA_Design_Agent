@@ -41,7 +41,7 @@ MACHINE: tuple[Stage, ...] = (
     Stage(7, "power-closure", (*FILES, "build", "gates", "report"), ("power",), (2, 0), _L),
     Stage(8, "drc-closure", (*FILES, "build", "gates", "report"), ("drc",), (3, 2), _L),
     Stage(9, "configuration-and-debug", (*FILES, "build", "gates", "report", "program", "bringup"),
-          ("bitstream_base", "bitstream_ila", "bringup"), (6, 2, 0), {"turns": 30, "seconds": 3600, "usd": 0.40}),
+          ("bitstream_base", "bitstream_ila", "bringup_ready", "bringup"), (6, 2, 0), {"turns": 30, "seconds": 3600, "usd": 0.40}),
 )
 assert tuple(s.name for s in MACHINE) == STAGES
 
@@ -112,9 +112,14 @@ def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
             ok, why = ok1 and ok2, w1 + w2
         elif g == "bitstream_ila":
             ok, why = _stage_pass(ev.get("gates_ila"), "bitstream")
+        elif g == "bringup_ready":
+            r = ev.get("bringup_ready") or {}
+            ok = bool(r.get("ok"))
+            why = ["bring-up artefacts: " + p for p in (r.get("problems") or ["not checked"])]
         elif g == "bringup":
             b = ev.get("bringup") or {}
-            ok, why = b.get("pass") is True, [f"bring-up failed at {b.get('failed_step')!r}"]
+            ok = b.get("pass") is True
+            why = [f"bring-up failed at {b.get('failed_step')!r}" + (f": {b['why']}" if b.get("why") else "")]
         elif g in _FLOW_STAGES:
             ok, why = _stage_pass(ev.get("gates_base"), _FLOW_STAGES[g][0])
         else:
@@ -128,7 +133,7 @@ def route_failure(stage: Stage, cause: str | None) -> int:
     """Where a failed stage goes back to. ``cause`` is a classification taken from tool output (never the
     model's choice): ``spec`` -> 0, ``rtl`` -> 2, ``constraints`` -> 3, ``impl`` -> 5, ``timing`` -> 6, else the
     stage itself (another attempt). The target must be one the stage machine allows, else the stage retries."""
-    target = {"spec": 0, "rtl": 2, "constraints": 3, "impl": 5, "timing": 6}.get(cause or "", stage.n)
+    target = {"spec": 0, "rtl": 2, "constraints": 3, "impl": 5, "timing": 6, "bringup": 9}.get(cause or "", stage.n)
     return target if target in stage.loops_to or target == stage.n else stage.n
 
 
@@ -148,6 +153,8 @@ def classify(stage: Stage, fails: list[str]) -> str | None:
     if stage.n == 7:
         return "rtl"
     if stage.n == 9:
+        if "bring-up artefacts" in text or "hardware-bringup" in text:
+            return "bringup"             # missing or malformed bring-up files: their own writer fixes them, not stage 2
         if "did not run" in text:       # a build that produced nothing (for example no probes.yaml): another attempt here
             return None
         return "timing" if "bitstream" in text else ("rtl" if "bring-up" in text else None)

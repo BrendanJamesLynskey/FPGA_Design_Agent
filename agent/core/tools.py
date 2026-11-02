@@ -354,10 +354,20 @@ def con_files(s: Session, cfg: dict) -> list[Path]:
     return out
 
 
-@tool("gates", "Parse a build's reports into stage results (flow/gates.py), or run the verification stage gates "
-               "(flow/verif_gates.py). Raw numbers and rule ids only.",
-      {"kind": {"type": "string", "enum": ["stages", "verif"]}, "variant": {"type": "string", "enum": ["base", "ila"]}})
+@tool("gates", "Parse a build's reports into stage results (flow/gates.py), run the verification stage gates "
+               "(flow/verif_gates.py), or check the bring-up artefacts without the board (bringup_ready). Raw numbers "
+               "and rule ids only.",
+      {"kind": {"type": "string", "enum": ["stages", "verif", "bringup_ready"]},
+       "variant": {"type": "string", "enum": ["base", "ila"]}})
 def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
+    if kind == "bringup_ready":
+        # the bring-up artefacts (hw_checks.py, tests/test_*_hw.py, BRINGUP.md, probes.yaml), checked without the board
+        out = s.design / "build" / "bringup_ready.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.unlink(missing_ok=True)
+        r = s.runner.run("bringup_ready", [PY, str(s.root / "flow" / "hw_dry_check.py"), str(s.design), "--json", str(out)],
+                         s.root, timeout=120)
+        return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": _read_json(out)}
     if kind == "verif":
         # per design, and never a stale file: a crashed run must not be read as the previous result (05b)
         out = s.design / "build" / "verif" / "verif_gates.json"

@@ -127,12 +127,38 @@ PROMPTS = {
              "import the model with sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import model. "
              "Also write verif/testplan.yaml tracing every spec item to a test: call spec_items for the exact ids "
              "the V1 gate checks (every one must appear in some requirement's spec list).\n" + MODEL_CONTRACT,
+    "hwtests": "You write the board bring-up tests and ILA capture checks for the design (stage 9), from spec.yaml, the "
+               "blind model model.py, probes.yaml and BRINGUP.md. You never see the RTL. Write tests/test_{name}_hw.py "
+               "and hw_checks.py. Paths are relative to the design directory (/tests/..., /hw_checks.py). "
+               "Problems found by the bring-up artefact check: {fails}\n",
     "rtl": "You are the RTL and implementation engineer for stage {stage} ({stage_name}) of the UltraFast flow on the "
            "{board}. Do only what this stage allows: {allowed}. The flow's gates decide when the stage is done, "
            "not you; when you think your part is complete, stop and reply DONE. Failures so far: {fails}. "
            "Reviewer note: {note}",
 }
 
+
+#: the bring-up file formats of stage 9, as a short schema (never the reference design's content): what
+#: flow/bringup.py and flow/hw_dry_check.py need. Same text for both harnesses.
+HW_FORMAT = """
+Bring-up files (stage 9; flow/bringup.py runs them on the board once the owner approves programming):
+- tests/test_{name}_hw.py: a pytest module with `pytestmark = pytest.mark.hw` and plain `def test_...(board)` functions.
+  A module-scoped fixture `board` opens the board's UART: `from shell.host.fpga_shell import FpgaShell`;
+  `FpgaShell.open(request.config.getoption("--hw-port"), timeout_s=0.2)`; the bitstream's build stamp comes from
+  `request.config.getoption("--hw-stamp")` (hex text). Registers are read and written through the shell window,
+  `sh.read(p.WINDOW_BASE + offset)` / `sh.write(p.WINDOW_BASE + offset, value)` with `from shell.host import
+  protocol as p` (@shell/PROTOCOL.md has the frames). Compare every answer with the blind model (model.py). Leave the
+  design at its reset values afterwards, and keep LED duty and count low (the board's power rule).
+- hw_checks.py: the ILA capture checks, run on the ILA build. A module-level `CAPTURES: list[Capture]` where you define
+  `Capture` as a dataclass with name, condition ("AND" or "OR"), position (int, trigger position in the 1024-sample
+  window), compares (dict: probe name -> the integer value the trigger waits for), setup(sh), stimulus(sh) and
+  check(samples) -> dict with a "pass" bool; `samples` is {{probe name: [value per clock]}}. Probe names are the ones in
+  probes.yaml. Also a function `restore(sh)` that puts the design back at its reset values.
+- BRINGUP.md for a tester who did not design it, with the sections Setup, Testing (step by step, pass/fail), Debug aids
+  (the ILA probes and their triggers) and If it fails.
+Call gates(kind="bringup_ready") to check that these files are complete without the board. The stage cannot ask the
+owner to approve programming until that check passes.
+"""
 
 FRESH_TESTS = (" Write your whole output: files of an earlier attempt that you do not write again are deleted.")
 
@@ -416,8 +442,16 @@ def node_work(state: State) -> dict:
                     run_subagent(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
                                  + (note if repair else "") + conv0, st.tools, repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
-            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv, tuple(t for t in st.tools
-                                                                         if t not in ("program", "bringup")))
+            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + (HW_FORMAT.format(**fmt) if n == 9 else ""),
+                         tuple(t for t in st.tools if t not in ("program", "bringup")))
+            if n == 9:                                  # then the bring-up tests, which need the probe names (planner item, 05d)
+                from flow import hw_dry_check
+                dry = hw_dry_check.check_design(rt.design)
+                own = [q for q in dry["problems"] if not q.startswith(("BRINGUP.md", "probes.yaml"))]
+                if own:
+                    run_subagent(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
+                                 + HW_FORMAT.format(**fmt) + MODEL_CONTRACT, ("search_docs", "load_skill", "gates"),
+                                 repair=True)        # never "fresh": a fresh tests write deletes the stage-2 benches
     except ArmBlocked as e:                                # the Claude Code arm cannot run (auth, CLI): stop, say why
         return {"visits": visits, "stop": f"claude_code blocked: {e}"}
     except BudgetExceeded as e:
@@ -576,6 +610,8 @@ def node_gate(state: State) -> dict:
     elif n in (6, 7, 8):
         ev["gates_base"] = _build(rt, "route")["gates"]
     elif n == 9:
+        from flow import hw_dry_check
+        ev["bringup_ready"] = hw_dry_check.check_design(rt.design)     # before the approval pause, not after it
         ev["gates_base"] = _build(rt, "bitstream")["gates"]
         ev["gates_ila"] = _build(rt, "bitstream", "ila")["gates"]
         if state.get("hw_approved"):
