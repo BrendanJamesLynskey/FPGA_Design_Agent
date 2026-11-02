@@ -29,10 +29,13 @@ _HDL_ERR = re.compile(r"\.s?vh?:\d+(:\d+)?:\s*(error|syntax error)|%Error|I give
 _EXC = re.compile(r"\b([A-Za-z_]*(?:Error|Exception|Exit|Interrupt))\b")
 
 
-def verif_failures(v: dict[str, Any] | None, limit: int = 80) -> list[str]:
-    """The failed checks of the first failed verification stage, with their values (untraced spec ids included)."""
+def verif_failures(v: dict[str, Any] | None, need: str = "V3", limit: int = 80) -> list[str]:
+    """The failed checks of the first failed verification stage, with their values (untraced spec ids included).
+    Empty when the stage ``need`` is reached."""
     if not v or not v.get("stages"):
         return ["verification gates produced no result (verif_gates did not run)"]
+    if v.get("reached") is not None and v["reached"] >= need:
+        return []
     st = v.get("first_failed")
     if st is None:
         return []
@@ -101,8 +104,9 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0) -> tuple[dict[str, list[s
         if kind == "mismatch":
             mismatch_test = (ff or {}).get("test")
     v = ev.get("verif") or {}
-    if v.get("reached") != "V3":
-        fails = verif_failures(v)
+    need = ev.get("verif_level") or "V3"
+    if not (v.get("reached") and v["reached"] >= need):
+        fails = verif_failures(v, need)
         # the sim failure already covers `failing_tests`; everything the plan or bench lacks is the test writer's
         # (a missing model is the model writer's)
         covered = sim.get("ok") is False

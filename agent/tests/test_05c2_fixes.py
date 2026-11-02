@@ -381,3 +381,20 @@ def test_check_constraints_accepts_renamed_ports_and_still_catches_wrong_pins():
     clk_on_button = ("set_property -dict { PACKAGE_PIN N17 IOSTANDARD LVCMOS33 } [get_ports { b }];\n"
                      "create_clock -period 10 [get_ports { b }];\n")
     assert "FDA-CON-1" in [x["rule"] for x in con.check_xdc(clk_on_button, BOARD)]
+
+
+# --- found by the first live run: gate evidence must belong to the design, and the level is explicit --------------
+
+def test_verif_gate_reads_only_this_designs_runs_and_the_level_is_configurable(rt):
+    seen = []
+    rt.session.runner = type("R", (), {"run": lambda self, kind, argv, cwd, env=None, timeout=600: (
+        seen.append(argv), RunResult(0, "", "", 0))[1]})()
+    dispatch(rt.session, "gates", {"kind": "verif"})
+    a = seen[0]
+    assert a[a.index("--runs") + 1] == f"{rt.design.relative_to(ROOT)}/build/verif/sim"      # never build/verif/verilator
+    v1 = {"reached": "V1", "first_failed": "V2", "stages": {"V2": {"checks": {"seeds_run": {"value": [], "threshold": ">=1", "pass": False}}}}}
+    base = {"lint": {"ok": True}, "contract": {"ok": True}, "simulate": {"ok": True}, "verif": v1}
+    assert not exit_check(MACHINE[2], {**base, "verif_level": "V3"})[0]
+    verif_lines = lambda lvl: [w for w in exit_check(MACHINE[2], {**base, "verif_level": lvl})[1] if w.startswith("V")]
+    assert verif_lines("V1") == [] and verif_lines("V2") and verif_lines("V3")
+    assert gr.Config(spec_md=T1 / "spec.md", name="x").verif_level == "V3"                   # the default is unchanged

@@ -94,8 +94,9 @@ def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
             ok, why = bool((ev.get(g) or {}).get("ok")), [f"{g} not passing"]
         elif g == "verif_v3":
             v = ev.get("verif") or {}
-            ok = v.get("reached") == "V3"
-            why = verif_failures(v) or [f"verification at {v.get('reached')!r}, needs V3"]
+            need = ev.get("verif_level") or "V3"
+            ok = (v.get("reached") or "") >= need and v.get("reached") is not None
+            why = verif_failures(v, need) or [f"verification at {v.get('reached')!r}, needs {need}"]
         elif g == "constraints_post_synth":
             ok, why = _stage_pass(ev.get("gates_base"), "post_synth",
                                   only={"post_synth_no_unconstrained_endpoints", "post_synth_methodology_no_critical"})

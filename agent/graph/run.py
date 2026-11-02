@@ -82,6 +82,7 @@ class Config:
     harness: str = "deepagents"     # deepagents | claude_code (05c: headless `claude -p` on the Max plan)
     cc_model: str = "claude-haiku-5-5"
     cc_effort: str = "medium"
+    verif_level: str = "V3"         # verification stage stage 2 must reach (V3 = the methodology)
 
 
 @dataclass
@@ -561,6 +562,7 @@ def node_gate(state: State) -> dict:
         else:
             ev["simulate"] = {"ok": False}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
+        ev["verif_level"] = rt.cfg.verif_level
         if ev["lint"]["ok"] and ev["simulate"]["ok"]:          # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n in (3, 4):

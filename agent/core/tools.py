@@ -362,7 +362,10 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
         out = s.design / "build" / "verif" / "verif_gates.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.unlink(missing_ok=True)
-        argv = [PY, str(s.root / "flow" / "verif_gates.py"), _rel(s, s.design), "--json", _rel(s, out)]
+        # evidence belongs to THIS design: its own run directory, never the repo-wide build/verif (a stale T1 run
+        # there was read as the new design's seeds in 05c2 run 1)
+        argv = [PY, str(s.root / "flow" / "verif_gates.py"), _rel(s, s.design), "--json", _rel(s, out),
+                "--runs", _rel(s, s.design / "build" / "verif" / "sim")]
         r = s.runner.run("verif_gates", argv, s.root, timeout=300)
         data = _read_json(out)
         return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": data}
