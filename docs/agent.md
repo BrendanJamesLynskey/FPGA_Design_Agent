@@ -59,3 +59,24 @@ the stage's `.dcp` files and a SHA-256 manifest. Rewind to stage N restores the 
 stage N, checks every hash, and continues at stage N with the reviewer's note (`resume --rewind N` also restores the
 LangGraph checkpoint saved there). Before stage 9 programs the board the graph always pauses for approval, because
 `hw_checks.py` runs on the host (see the isolation note in [agent_core.md](agent_core.md)).
+
+## Review replies, the architecture gate and the owner ledger (brief 05d)
+
+A review reply is `{"decision": "approve" | "edit" | "rewind" | "supply", "by": ..., "note": ..., "role": ..., "to": N,
+"files": {...}}`.
+
+- **approve** at stage 1 writes the architecture approval (`build/approvals/architecture.json`: who, whether the agent
+  or the owner wrote it, the SHA-256 of `ARCHITECTURE.md` and `architecture.yaml`). `--review off` writes it at once as
+  `auto`. Stage 2 will not start RTL without a matching record; a later change reopens stage 1.
+- **edit** takes `note`, the owner's prompt, given to `role` (`clarify`, `model`, `tests`, `rtl`; default the stage's
+  writer). With no note, the owner's hand edit is gated again and the agent does not touch the files.
+- **supply** (stage 1): `files` holds the owner's own `architecture.yaml` and/or `ARCHITECTURE.md`; they are validated
+  when written and recorded as an owner contribution.
+- **Hand edits.** The agent does nothing while a review is paused, so any file that differs from the stage snapshot at
+  the reply (outside `build/` and `BUILD_NOTE.md`) is an owner edit: committed separately in the run's snapshot
+  repository with author `owner`, then gated again. `agent/graph/ownership.py` keeps the ledger
+  `build/who_did_what.json` and the "Who did what" table in `BUILD_NOTE.md` (owner, agent, auto), which the gallery reads.
+
+The page also shows, for line-by-line review, the RTL diff against the previous stage, the requirements with their
+tests and bins, buses as hex waveforms, `design.xdc` in full with each pin traced through the master XDC to the board
+inventory, the proof-method traceability table and the design-standards results.
