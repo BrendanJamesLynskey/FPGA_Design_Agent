@@ -235,4 +235,5 @@ def test_simulate_returns_first_failure_and_unclipped_tail(rt):
     assert "first_failure" in r, r["output"]
     assert r["first_failure"]["test"].startswith("test_t1_dimmer_counter_rtl")
     assert "rtl=0xfd model=0xfe" in " ".join(r["first_failure"]["message"])
+    assert r["output"].startswith("[first failure] test_t1_dimmer_counter_rtl[1]")   # MCP text carries it too
     assert r["log_tail"].endswith("AssertionError\n".rstrip()) and "FAILED tests/test_x_rtl.py" in r["log_tail"]

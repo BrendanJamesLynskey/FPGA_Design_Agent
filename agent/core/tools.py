@@ -226,8 +226,11 @@ def simulate(s: Session, sim: str = "icarus") -> dict:
     res: dict[str, Any] = {"ok": r.returncode == 0}
     if r.returncode != 0:
         # structured and raw: the first failing assertion as the log prints it, and the log's tail (never the clipped middle)
-        res["first_failure"] = first_failure(out)
-        res["log_tail"] = out[-4000:]
+        ff = first_failure(out)
+        res["first_failure"], res["log_tail"] = ff, out[-4000:]
+        if ff:       # MCP clients get only the text, so the same block heads the text: raw log lines, no hints
+            out = ("[first failure] " + ff["test"] + "\n" + "\n".join("  " + m for m in ff["message"])
+                   + (f"\n  at {ff['where']}" if ff.get("where") else "") + "\n[end first failure]\n" + out)
     res.update({"output": out, "returncode": r.returncode, "sim": sim, "seconds_run": r.seconds})
     return res
 
