@@ -148,7 +148,7 @@ def parse_stream(lines: list[str], trace: Trace | None, stage: str, seconds: flo
                     if isinstance(body, list):
                         body = "".join(x.get("text", "") for x in body if isinstance(x, dict))
                     if trace:
-                        trace.tool(name, args, {"ok": not c.get("is_error"), "output": str(body)[:2000]}, stage)
+                        trace.tool(name, args, {"ok": not c.get("is_error"), "output": str(body)[:6000]}, stage)
         elif t == "result":
             result = ev
     ru = (result or {}).get("usage") or {}

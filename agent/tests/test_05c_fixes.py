@@ -172,6 +172,67 @@ def test_superseded_never_reaches_outside_the_role(rt):
     assert f.exists()
 
 
-def test_timing_may_be_a_list_of_entries():
-    assert validate({**GOOD, "timing": [{"name": "debounce", "cycles": "DEBOUNCE_CYCLES"}]}) == []
-    assert validate({**GOOD, "timing": "fast"}) == ["'timing' must be a list or mapping"]
+def test_one_canonical_spec_shape_and_the_gates_accept_it():
+    """05c follow-up: list-valued registers crashed flow/verif_gates.spec_items. The schema now rejects every shape
+    the gates cannot read, and the canonical one goes through spec_items."""
+    from flow.verif_gates import spec_items
+    assert validate(GOOD) == [] and spec_items(GOOD)
+    bad = {**GOOD, "registers": [{"name": "COUNT", "offset": 0}]}
+    assert any("'registers' must be a mapping" in e for e in validate(bad))
+    with pytest.raises(TypeError):
+        spec_items(bad)                                  # the crash the schema now prevents
+    assert any("'timing' must be a mapping" in e for e in validate({**GOOD, "timing": [{"name": "d"}]}))
+    assert any("'timing' must be a mapping" in e for e in validate({**GOOD, "timing": "fast"}))
+    assert any("latency" in e for e in validate({**GOOD, "timing": {"latency": ["a"]}}))
+    assert any("'behaviour' must be a mapping of lists" in e for e in validate({**GOOD, "behaviour": ["a"]}))
+    assert any("behaviour" in e for e in validate({k: v for k, v in GOOD.items() if k != "behaviour"}))
+
+
+# --- follow-up: the first failing assertion is a structured field, the log tail is kept --------------------------------
+
+PYTEST_LOG = """F
+=================================== FAILURES ===================================
+________________________ test_t1_dimmer_counter_rtl[1] _________________________
+
+seed = 1
+
+    def test_t1_dimmer_counter_rtl(seed):
+>       flow.cocotb_run.run("x", "top", [], "bench", Path("."), seed=seed)
+
+tests/test_x_rtl.py:33:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+flow/cocotb_run.py:99: in run
+    raise AssertionError(msg)
+E   AssertionError: 1 cocotb test(s) failed:
+E     test_counter_up: AssertionError: an: rtl=0xfd model=0xfe at 120 ns
+=========================== short test summary info ============================
+FAILED tests/test_x_rtl.py::test_t1_dimmer_counter_rtl[1] - AssertionError
+"""
+
+
+def test_first_failure_is_structured_and_the_tail_is_kept():
+    from agent.core.tools import first_failure
+    ff = first_failure(PYTEST_LOG)
+    assert ff["test"] == "test_t1_dimmer_counter_rtl[1]"
+    assert ff["message"] == ["AssertionError: 1 cocotb test(s) failed:",
+                             "test_counter_up: AssertionError: an: rtl=0xfd model=0xfe at 120 ns"]
+    assert ff["where"].startswith("tests/test_x_rtl.py:33")
+    assert first_failure("all passed") is None
+
+
+def test_simulate_returns_first_failure_and_unclipped_tail(rt):
+    from agent.core import dispatch
+    (rt.design / "tests").mkdir(exist_ok=True)
+    (rt.design / "tests" / "test_x_rtl.py").write_text("x = 1\n")
+    (rt.design / "design.xdc").write_text("# x\n")
+    rel = rt.design.relative_to(ROOT)
+    (rt.design / "build.yaml").write_text(f"top: t\npart: xc7a100tcsg324-1\nsources: [shell/rtl/*.sv]\nconstraints: [{rel}/design.xdc]\n")
+    big = "noise line\n" * 5000 + PYTEST_LOG                  # 55 kB: the middle of this used to be clipped away
+    rt.session.runner = type("R", (), {"run": lambda self, kind, argv, cwd, env=None, timeout=600:
+                                       RunResult(1, big, "", 0.1)})()
+    r = dispatch(rt.session, "simulate", {})
+    assert r["ok"] is False, (r["output"][:300], r.get("rule"))
+    assert "first_failure" in r, r["output"]
+    assert r["first_failure"]["test"].startswith("test_t1_dimmer_counter_rtl")
+    assert "rtl=0xfd model=0xfe" in " ".join(r["first_failure"]["message"])
+    assert r["log_tail"].endswith("AssertionError\n".rstrip()) and "FAILED tests/test_x_rtl.py" in r["log_tail"]

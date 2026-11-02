@@ -228,3 +228,27 @@ def test_review_pages_are_graph_written_and_unreachable_by_the_cc_sub_agent(rt):
     assert "forged" not in p.read_text()
     argv = arm.cli_argv(rt, gr.subagent_plan(rt, "rtl", "p", ()), Path("/tmp/m.json"), "claude-haiku-5-5", "medium", 5)
     assert argv[argv.index("--permission-mode") + 1] == "dontAsk" and "--tools" in argv
+
+
+def test_every_path_in_a_role_prompt_resolves_inside_the_jail(rt):
+    """05c follow-up: a sub-agent can never be handed a path the jail rejects. Every design-directory path in the
+    real prompts and flow conventions (repo-relative 'runs/<id>/<design>/...' and the virtual '/model.py' style)
+    resolves, through the jail both harnesses use, to a location inside the design directory."""
+    import re
+    fmt = {"board": "nexys_a7_100t", "name": "t1_dimmer_counter", "stage": 2, "stage_name": "x", "allowed": "a",
+           "fails": "none", "note": "none", "design_rel": str(rt.design.relative_to(ROOT))}
+    texts = [CONVENTIONS_TEXT(fmt)] + [v.format(**fmt) for v in gr.PROMPTS.values()]
+    texts.append(gr.subagent_plan(rt, "model", "x", ())["system_prompt"])
+    paths = set()
+    for t in texts:
+        paths |= set(re.findall(r"(?:runs/[\w.-]+/[\w.-]+|(?<![\w.])/(?:model\.py|tests|verif|spec\.yaml|rtl))[\w./-]*", t))
+    assert any(p.startswith("runs/") for p in paths) and any(p.startswith("/") for p in paths), paths
+    jail = rt.session.jail
+    for p in paths:
+        real = jail.resolve(p.rstrip("./") or "/")
+        assert real == jail.root or jail.root in real.parents, p
+    assert jail.resolve(fmt["design_rel"]) == jail.root      # the exact mistake seen in the Haiku run
+
+
+def CONVENTIONS_TEXT(fmt):
+    return gr.CONVENTIONS.format(**fmt)

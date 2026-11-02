@@ -41,6 +41,27 @@ def _text_out(res, extra: str = "") -> str:
     return (res.stdout + (("\n" + res.stderr) if res.stderr.strip() else "") + extra).strip()
 
 
+def first_failure(text: str) -> dict[str, Any] | None:
+    """The first failing test of a pytest/cocotb log, as raw text from the log (no interpretation): its name, the
+    'E   ' assertion/exception lines under it, and the 'file:line:' location pytest printed. None if none found."""
+    lines = text.splitlines()
+    for i, l in enumerate(lines):
+        m = re.match(r"^_{3,} (.+?) _{3,}$", l)
+        if not m:
+            continue
+        msg, where = [], None
+        for l2 in lines[i + 1:]:
+            if re.match(r"^_{3,} .+ _{3,}$", l2) or l2.startswith("====="):
+                break
+            if l2.startswith("E "):
+                msg.append(l2[1:].strip()[:600])
+            elif where is None and re.match(r"^\S+\.(py|sv|v):\d+:( |$)", l2):
+                where = l2.strip()[:300]
+        if msg or where:
+            return {"test": m.group(1), "message": msg[:20], "where": where}
+    return None
+
+
 # --- build.yaml and source validation (the Tcl allow-list) ---------------------------------------------------
 
 def load_build_cfg(s: Session) -> dict[str, Any]:
@@ -201,8 +222,14 @@ def simulate(s: Session, sim: str = "icarus") -> dict:
         return {"ok": False, "output": "the design has no tests/test_*_rtl.py"}
     argv = [PY, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *[_rel(s, t) for t in tests]]
     r = s.runner.run("simulate", argv, s.root, {"SIM": sim}, timeout=1800)
-    return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "sim": sim,
-            "seconds_run": r.seconds}
+    out = _text_out(r)
+    res: dict[str, Any] = {"ok": r.returncode == 0}
+    if r.returncode != 0:
+        # structured and raw: the first failing assertion as the log prints it, and the log's tail (never the clipped middle)
+        res["first_failure"] = first_failure(out)
+        res["log_tail"] = out[-4000:]
+    res.update({"output": out, "returncode": r.returncode, "sim": sim, "seconds_run": r.seconds})
+    return res
 
 
 @tool("formal", "Run the design's SymbiYosys jobs (verif/formal/*.sby): bounded proof and cover.", {})

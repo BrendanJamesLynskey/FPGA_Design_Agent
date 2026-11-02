@@ -108,6 +108,32 @@ class PathJail:
         raise SecurityError("path-jail", f"path {rel!r} is not in the read-only shell view "
                                          f"({', '.join(self.READ_ONLY_ENTRIES)})")
 
+    #: first components of the design's own layout; '/<one of these>/...' is the Deep Agents virtual style
+    VIRTUAL_TOPS = ("spec.md", "spec.yaml", "model.py", "tests", "verif", "rtl", "lint", "build.yaml", "design.xdc",
+                    "probes.yaml", "ARCHITECTURE.md", "BRINGUP.md", "hw_checks.py", "BUILD_NOTE.md")
+
+    def canonical(self, rel: str) -> str:
+        """ONE path convention for every harness (05c follow-up): tool paths are relative to the design directory.
+        The prompts also show the repo-relative design path (build.yaml needs it) and the Deep Agents virtual
+        '/model.py' style, so both are accepted and mapped to the design-relative path; the result is still
+        resolved and jailed below, so this widens nothing."""
+        repo = Path(__file__).resolve().parents[2]
+        try:
+            pre = self.root.relative_to(repo).as_posix()
+        except ValueError:
+            pre = ""
+        r = rel
+        if pre:
+            if r.lstrip("/") == pre:
+                return "."
+            for cand in (pre + "/", "/" + pre + "/"):
+                if r.startswith(cand):
+                    return r[len(cand):] or "."
+        absolute = Path(r).is_absolute()
+        if absolute and Path(r).parts[1:2] and Path(r).parts[1] in self.VIRTUAL_TOPS:
+            return r.lstrip("/")                         # virtual '/model.py' -> design-relative 'model.py'
+        return r
+
     def resolve(self, rel: str, write: bool = False) -> Path:
         if not isinstance(rel, str) or not rel or "\x00" in rel:
             raise SecurityError("path-jail", "empty or invalid path")
@@ -115,6 +141,7 @@ class PathJail:
             return self._resolve_shell(rel if rel.endswith("/") or "/" in rel else rel + "/", write)
         if rel.startswith("~"):
             raise SecurityError("path-jail", f"path {rel!r} is outside the design directory")
+        rel = self.canonical(rel)
         cand = Path(rel)
         full = cand if cand.is_absolute() else self.root / cand
         real = Path(os.path.realpath(full))          # resolves '..' and every symlink on the way

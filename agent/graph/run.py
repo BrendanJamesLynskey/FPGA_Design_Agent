@@ -106,7 +106,9 @@ PROMPTS = {
                "reason), and open_questions: one entry per thing the request leaves open, each as {{question, "
                "default, reason}} (the default you propose and why). Use only spec.md and the knowledge tools. "
                "spec.yaml must be valid YAML (quote any text that contains ': ' or '?'); ports, clocks, reset, "
-               "registers and timing must all be non-empty. Timing parameters (debounce, PWM period, scan or "
+               "behaviour, registers and timing must all be non-empty, in this exact shape: behaviour is a mapping of "
+               "group name -> list of statements; registers is a mapping with a 'map' list of entries "
+               "{{offset, name, access, reset, bits}}; timing is a mapping, with latency: a mapping of name -> text. Timing parameters (debounce, PWM period, scan or "
                "refresh period, baud divider) are INTEGER CYCLE COUNTS of the named clock, for example "
                "PWM_PERIOD_CYCLES: 1024; put the rate or duration only in a comment or in timing. Never a rate "
                "(_HZ, _MS) or a fraction as a parameter. If spec.yaml already exists it is shown below with the "
@@ -128,6 +130,7 @@ PROMPTS = {
 
 CONVENTIONS = """
 Flow conventions (fixed by the repo; follow them exactly):
+- File tool paths (read_file, write_file, list_files) are relative to the design directory, for example rtl/top.sv; "{design_rel}/rtl/top.sv" and "/rtl/top.sv" mean the same file.
 - Paths in build.yaml are relative to the repo root. This design's directory is {design_rel}. build.yaml:
     top: <top module>
     part: xc7a100tcsg324-1
@@ -429,7 +432,10 @@ def node_gate(state: State) -> dict:
             out = str(r.get("output", ""))
             errs = "\n".join(l[:400] for l in out.splitlines() if l.startswith(("E ", "%Error", "ERROR", "error"))
                              or ": error" in l)[:1500]
-            detail.append(f"[{name}] " + (errs + "\n...\n" if errs else "") + out[-800:])
+            ff = r.get("first_failure")
+            head = (f"first failing test {ff['test']}: " + " | ".join(ff["message"]) + (f" ({ff['where']})" if ff.get("where") else "")
+                    + "\n") if ff else ""
+            detail.append(f"[{name}] " + head + (errs + "\n...\n" if errs else "") + out[-800:])
         return r
     if n == 0:
         ev.pop("spec_errors", None)

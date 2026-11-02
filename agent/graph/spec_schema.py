@@ -18,7 +18,7 @@ from typing import Any
 
 import yaml
 
-REQUIRED = ("name", "top", "ports", "clocks", "reset", "registers", "timing")
+REQUIRED = ("name", "top", "ports", "clocks", "reset", "behaviour", "registers", "timing")
 #: parameter-name suffix -> seconds per unit (a rate is a frequency: 1/value)
 _RATE = {"HZ": ("rate", 1.0), "KHZ": ("rate", 1e3), "MHZ": ("rate", 1e6), "BAUD": ("rate", 1.0),
          "MS": ("period", 1e-3), "US": ("period", 1e-6), "NS": ("period", 1e-9)}
@@ -70,16 +70,36 @@ def rate_params(spec: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
+def shape_errors(spec: dict[str, Any]) -> list[str]:
+    """The ONE canonical shape the gates read (``flow/verif_gates.spec_items``): ``behaviour`` is a mapping of
+    lists, ``registers`` is a mapping whose ``map`` is a list of mappings each with a ``name``, ``timing`` is a
+    mapping (its ``latency``, if given, a mapping). Anything else is rejected here, with the shape named, instead of
+    crashing the gates later."""
+    errs, b, r, t = [], spec.get("behaviour"), spec.get("registers"), spec.get("timing")
+    if b and not (isinstance(b, dict) and all(isinstance(v, list) for v in b.values())):
+        errs.append("'behaviour' must be a mapping of lists (group name -> list of statements)")
+    if r:
+        m = r.get("map") if isinstance(r, dict) else None
+        if not isinstance(m, list) or not m or not all(isinstance(x, dict) and x.get("name") for x in m):
+            errs.append("'registers' must be a mapping with a non-empty 'map' list; each entry a mapping with a "
+                        "'name' (offset, access, reset, bits)")
+    if t:
+        if not isinstance(t, dict):
+            errs.append("'timing' must be a mapping (for example clock_constraint, latency: {name: text})")
+        elif t.get("latency") is not None and not isinstance(t["latency"], dict):
+            errs.append("'timing.latency' must be a mapping of name -> text")
+    return errs
+
+
 def validate(spec: dict[str, Any], allow_rates: bool = False) -> list[str]:
     """Why this spec cannot be signed off (empty list: it can)."""
     if not spec:
         return ["spec.yaml is empty"]
     errs = [f"spec.yaml has no {k!r} (required, non-empty)" for k in REQUIRED if not spec.get(k)]
-    for k in ("ports", "clocks", "registers"):
+    for k in ("ports", "clocks"):
         if spec.get(k) and not isinstance(spec[k], (list, dict)):
             errs.append(f"{k!r} must be a list or mapping")
-    if spec.get("timing") and not isinstance(spec["timing"], (list, dict)):
-        errs.append("'timing' must be a list or mapping")
+    errs += shape_errors(spec)
     params = spec.get("parameters") or {}
     if not isinstance(params, dict):
         errs.append("'parameters' must be a mapping")
