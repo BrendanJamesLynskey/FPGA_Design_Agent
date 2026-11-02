@@ -171,7 +171,7 @@ class ContainerRunner:
     The engine is Docker 29 via the docker group (the daemon itself runs as root; podman is not installed).
     The argv is the same one the core builds, so replay fixtures do not change."""
 
-    def __init__(self, design: Path, root: Path, inner: Runner | None = None, kinds: tuple[str, ...] = ("simulate",),
+    def __init__(self, design: Path, root: Path, inner: Runner | None = None, kinds: tuple[str, ...] = ("simulate", "contract"),
                  image: str = SIM_IMAGE, engine: str = "docker", memory: str = "3g"):
         self.design, self.root = Path(os.path.realpath(design)), Path(os.path.realpath(root))
         self.inner = inner or LocalRunner()

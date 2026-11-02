@@ -19,6 +19,7 @@ limits per stage visit and per run come from ``stages.MACHINE`` / ``RUN_LIMITS``
 from __future__ import annotations
 
 import json
+import re
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -31,10 +32,12 @@ from agent.core import Session, dispatch
 from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
+from agent.graph.contract import MODEL_CONTRACT, contract_argv, parse_result
 from agent.graph.interview import Interview, Question, SpecOracle
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
 from agent.graph.snapshot import Snapshots
+from agent.graph.spec_schema import SpecError, clock_hz, load_spec, rate_params, validate
 from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure
 
 RUNS = ROOT / "runs"
@@ -94,13 +97,21 @@ PROMPTS = {
                "spec.yaml with: name, title, board, part, top, clocks, reset, parameters, ports (name, direction, "
                "width, board pin role), behaviour, registers, timing, resources_expected, assumptions (each with a "
                "reason), and open_questions: one entry per thing the request leaves open, each as {{question, "
-               "default, reason}} (the default you propose and why). Use only spec.md and the knowledge tools.",
+               "default, reason}} (the default you propose and why). Use only spec.md and the knowledge tools. "
+               "spec.yaml must be valid YAML (quote any text that contains ': ' or '?'); ports, clocks, reset, "
+               "registers and timing must all be non-empty. Timing parameters (debounce, PWM period, scan or "
+               "refresh period, baud divider) are INTEGER CYCLE COUNTS of the named clock, for example "
+               "PWM_PERIOD_CYCLES: 1024; put the rate or duration only in a comment or in timing. Never a rate "
+               "(_HZ, _MS) or a fraction as a parameter. If spec.yaml already exists it is shown below with the "
+               "gate's message: fix it in place.",
     "model": "You are the blind golden model writer. From spec.yaml alone write model.py: a pure-Python, cycle-level "
-             "reference model of the design's externally visible behaviour (no HDL, no simulator imports).",
+             "reference model of the design's externally visible behaviour (no HDL, no simulator imports).\n"
+             + MODEL_CONTRACT,
     "tests": "You write the cocotb tests for the design from spec.yaml and the blind model model.py (you never see "
              "the RTL). Write tests/test_{name}_rtl.py (pytest entry calling flow.cocotb_run) and the cocotb bench; "
              "import the model with sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import model. "
-             "Also write verif/testplan.yaml tracing every spec item to a test.",
+             "Also write verif/testplan.yaml tracing every spec item to a test. Write your whole output afresh: "
+             "files of an earlier attempt that you do not write again are deleted.\n" + MODEL_CONTRACT,
     "rtl": "You are the RTL and implementation engineer for stage {stage} ({stage_name}) of the UltraFast flow on the "
            "{board}. Do only what this stage allows: {allowed}. The flow's gates decide when the stage is done, "
            "not you; when you think your part is complete, stop and reply DONE. Failures so far: {fails}. "
@@ -192,6 +203,18 @@ def _jail_backend(rt: Runtime, role: str):
     return JailBackend(root_dir=rt.design, virtual_mode=True)
 
 
+def drop_superseded(design: Path, jail, before: list[Path], written: dict[str, str]) -> list[str]:
+    """Delete files a role wrote in an earlier attempt and did not write again (05c fix 4), through its jail."""
+    gone = []
+    for p in before:
+        rel = str(p.relative_to(design))
+        if rel not in written and p.is_file():
+            jail.resolve(rel, write=True)
+            p.unlink()
+            gone.append(rel)
+    return gone
+
+
 def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = ()) -> dict[str, str]:
     """Run one Deep Agents sub-agent. Restricted roles see only their seeded inputs (in-memory backend) and
     their outputs are copied into the design through the role jail. Returns {path: content} written."""
@@ -217,6 +240,10 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
                         "files": {f"/{k}": create_file_data(v) for k, v in inputs.items()}},
                        {"recursion_limit": 120})
     written = {}
+    superseded: list[Path] = []
+    if role == "tests":
+        superseded = [p for d in ("tests", "verif") for p in sorted((rt.design / d).rglob("*"))
+                      if p.is_file() and "__pycache__" not in p.parts and p.name != "__init__.py"]
     for path, data in (out.get("files") or {}).items():
         rel = path.lstrip("/")
         rel = rel.removeprefix(str(rt.design.relative_to(ROOT)) + "/")    # the repo-relative design path
@@ -225,6 +252,8 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
         r = dispatch(sess, "write_file", {"path": rel, "content": file_data_to_string(data)})
         if not r.get("refused"):
             written[rel] = r["output"]
+    if superseded and written:                    # 05c fix 4: a rewrite replaces the role's earlier output
+        drop_superseded(rt.design, sess.jail, superseded, written)
     return written
 
 
@@ -250,7 +279,9 @@ def node_work(state: State) -> dict:
     conv = CONVENTIONS.format(**fmt) + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     try:
         if n == 0:
-            run_subagent(rt, "clarify", PROMPTS["clarify"].format(**fmt), ("search_docs", "load_skill"))
+            run_subagent(rt, "clarify", PROMPTS["clarify"].format(**fmt)
+                         + ("\nGate message: " + state["detail"][:3000] if state.get("detail") else ""),
+                         ("search_docs", "load_skill"))
         elif n == 2:
             run_subagent(rt, "model", PROMPTS["model"].format(**fmt))
             run_subagent(rt, "tests", PROMPTS["tests"].format(**fmt) + conv, ("search_docs", "load_skill"))
@@ -266,11 +297,8 @@ def node_work(state: State) -> dict:
 
 
 def _spec(rt: Runtime) -> dict:
-    p = rt.design / "spec.yaml"
-    try:
-        return yaml.safe_load(p.read_text()) or {} if p.is_file() else {}
-    except yaml.YAMLError:
-        return {}
+    """The parsed spec.yaml. A parse error raises SpecError (05c fix 1: never an empty spec)."""
+    return load_spec(rt.design / "spec.yaml")
 
 
 def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
@@ -279,9 +307,16 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     who = None
     if rt.cfg.interview == "oracle":
         who = SpecOracle(rt.cfg.hidden_spec, rt.oracle_llm)
-    for i, o in enumerate(spec.get("open_questions") or []):
-        q = Question(id=f"q{i + 1}", text=str(o.get("question", "")), default=str(o.get("default", "")),
-                     reason=str(o.get("reason", o.get("default", ""))))
+    asks = [(str(o.get("question", "")), str(o.get("default", "")), str(o.get("reason", o.get("default", ""))))
+            for o in spec.get("open_questions") or []]
+    rates = [r for r in rate_params(spec) if r["cycles"]]
+    for r in rates:                                               # 05c fix 3: rates become cycle counts
+        clk = f"{clock_hz(spec) / 1e6:g} MHz"
+        asks.append((f"{r['name']} is given as {r['value']} {r['unit']}. The model and the RTL need an integer "
+                     f"number of clock cycles ({r['new_name']}); at {clk}, how many?", str(r["cycles"]),
+                     f"{r['cycles']} is {r['value']} {r['unit']} at {clk}, rounded once, so the model and RTL agree"))
+    for i, (qt, qd, qr) in enumerate(asks):
+        q = Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr)
         if rt.cfg.interview == "on":                                  # one question at a time, to the human
             ans = interrupt({"kind": "question", "id": q.id, "question": q.text, "default": q.default,
                              "reason": q.reason})
@@ -295,6 +330,12 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         else:
             iv.ask(q, who)
     spec = iv.resolve_into(spec)
+    for r in rates:                                               # the answered (or defaulted) integer replaces it
+        got = next((q for q in iv.questions if q.text.startswith(f"{r['name']} is given as")), None)
+        m = re.search(r"\d+", got.answer or "") if got else None
+        params = {k: v for k, v in (spec.get("parameters") or {}).items() if k != r["name"]}
+        params[r["new_name"]] = int(m.group()) if m else r["cycles"]
+        spec["parameters"] = params
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
     return spec, iv.summary()
 
@@ -328,6 +369,22 @@ def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
     return {"build": {k: b.get(k) for k in ("ok", "refused", "returncode", "cached")}, "gates": g.get("gates")}
 
 
+def _contract(rt: Runtime, detail: list) -> dict:
+    """Contract-check gate (05c fix 2): import model.py, Model(**spec parameters), reset(), step({})."""
+    if not (rt.design / "model.py").is_file():
+        res = {"ok": False, "error": "model.py does not exist"}
+    else:
+        try:
+            spec = _spec(rt)
+        except SpecError:
+            spec = {}
+        r = rt.session.runner.run("contract", contract_argv(rt.design, spec), ROOT, None, 120)
+        res = parse_result(r.returncode, r.stdout, r.stderr)
+    if not res["ok"]:
+        detail.append("[model contract] " + str(res.get("error")))
+    return res
+
+
 def node_gate(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("stop"):
@@ -345,15 +402,32 @@ def node_gate(state: State) -> dict:
             detail.append(f"[{name}] " + (errs + "\n...\n" if errs else "") + out[-800:])
         return r
     if n == 0:
-        spec, summary = _interview(rt, _spec(rt), state)
-        out["interview"] = summary
-        ev["spec"], ev["signed_off"] = spec, not spec.get("open_questions")
+        ev.pop("spec_errors", None)
+        try:
+            spec = _spec(rt)
+            errs = validate(spec, allow_rates=True)       # shape first: an invalid spec is never rewritten
+        except SpecError as e:
+            spec, errs = {}, [str(e)]
+        if errs:                                          # fail the gate with the parser's / schema's message
+            ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs
+            detail.append("[spec.yaml] " + "; ".join(errs))
+        else:
+            spec, summary = _interview(rt, spec, state)
+            out["interview"] = summary
+            errs = validate(spec)
+            ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, not spec.get("open_questions"), errs
+            if errs:
+                detail.append("[spec.yaml] " + "; ".join(errs))
     elif n == 1:
         ev["arch"] = (rt.design / "ARCHITECTURE.md").is_file()
         ev["inventory"] = {"ok": bool(d("check_constraints", dispatch(rt.session, "check_constraints", {})).get("ok"))}
     elif n == 2:
         ev["lint"] = {"ok": d("lint", dispatch(rt.session, "lint", {})).get("ok")}
-        ev["simulate"] = {"ok": d("simulate", dispatch(rt.session, "simulate", {"sim": "icarus"})).get("ok")}
+        ev["contract"] = _contract(rt, detail)
+        if ev["contract"]["ok"]:                       # fail fast: no simulate on a model the tests cannot load
+            ev["simulate"] = {"ok": d("simulate", dispatch(rt.session, "simulate", {"sim": "icarus"})).get("ok")}
+        else:
+            ev["simulate"] = {"ok": False}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
         if ev["lint"]["ok"] and ev["simulate"]["ok"]:          # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]

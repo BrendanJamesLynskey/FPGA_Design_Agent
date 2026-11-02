@@ -40,6 +40,9 @@ class FakeRunner:
 
     def run(self, kind, argv, cwd, env=None, timeout=600):
         self.kinds.append(kind)
+        if kind == "contract":                                       # the real contract check, on the host
+            from agent.core.runner import LocalRunner
+            return LocalRunner().run(kind, argv, cwd, env, timeout)
         if kind == "gates":
             out = Path(argv[argv.index("--json") + 1])
             out.parent.mkdir(parents=True, exist_ok=True)
@@ -62,9 +65,13 @@ class FakeRunner:
         return RunResult(0, f"{kind}: ok", "", 0.01)
 
 
+# the hand-written T1 model predates the 05c contract (`Model`, `step`); the scripted episode adds the thin adapter
+SHIM = "\n\nclass Model(DimmerCounterModel):\n    def step(self, inputs=None):\n        return {}\n"
+
+
 def scripted_client(seen, where):
     spec = (T1 / "spec.yaml").read_text().replace("default: no, linear", "reason: not in the request\n    default: no, linear")
-    files = {"clarify": {"/spec.yaml": spec}, "model": {"/model.py": (T1 / "model.py").read_text()},
+    files = {"clarify": {"/spec.yaml": spec}, "model": {"/model.py": (T1 / "model.py").read_text() + SHIM},
              "tests": {"/tests/test_t1_dimmer_counter_rtl.py": "# bench\n", "/verif/testplan.yaml": "items: []\n",
                        "/tests/test_t1_dimmer_counter_hw.py": "# hw tests\n"}}
     rtl1 = {"/ARCHITECTURE.md": "# T1\n\n## Block diagram\n\n```\n[buttons] -> [debounce] -> [counter] -> [pwm]\n```\n",
@@ -143,7 +150,7 @@ def _episode(tmp_path, runs):
     s = gr.summary(rt, st.values)
     hist = st.values["history"]
     rew = [h["rewind"] for h in hist if h.get("rewind")]
-    assert rew and rew[0]["to"] == 2 and rew[0]["verified"]
+    assert rew and rew[0]["to"] == 2 and rew[0]["verified"], ([(h["n"], h["passed"]) for h in hist], st.values.get("fails"), st.values.get("detail"), st.values.get("stop"))
     assert s["stages_visited"][:7] == [0, 1, 2, 3, 4, 5, 6] and s["stages_visited"][7] == 2
     assert s["stages_visited"][-1] == 9 and s["bringup"] is True and s["stop"] == "done"
     assert (9, True) in reviews                                  # hardware always pauses for approval

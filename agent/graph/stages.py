@@ -32,7 +32,7 @@ MACHINE: tuple[Stage, ...] = (
     Stage(0, "clarify", FILES, ("spec_signed",), (), {"turns": 20, "seconds": 900, "usd": 0.20}),
     Stage(1, "board-and-device-planning", (*FILES, "check_constraints"), ("arch_note", "inventory"), (0,), _L),
     Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates"),
-          ("lint", "simulate", "verif_v3", "stage_rtl"), (0,), {"turns": 60, "seconds": 3600, "usd": 0.80}),
+          ("lint", "model_contract", "simulate", "verif_v3", "stage_rtl"), (0,), {"turns": 60, "seconds": 3600, "usd": 0.80}),
     Stage(3, "constraints", (*FILES, "check_constraints", "build", "gates"), ("constraints_post_synth",), (2,), _L),
     Stage(4, "synthesis", (*FILES, "build", "gates", "report"), ("stage_post_synth",), (2, 3), _L),
     Stage(5, "implementation", (*FILES, "build", "gates", "report"), ("stage_post_place", "stage_post_route"), (6,), _L),
@@ -78,13 +78,17 @@ def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
         ok, why = True, []
         if g == "spec_signed":
             spec = ev.get("spec") or {}
-            ok = bool(spec) and not spec.get("open_questions") and bool(ev.get("signed_off"))
-            why = [] if ok else ["spec.yaml missing, has open questions, or not signed off"]
+            errs = list(ev.get("spec_errors") or [])
+            ok = bool(spec) and not spec.get("open_questions") and bool(ev.get("signed_off")) and not errs
+            why = [] if ok else (errs or ["spec.yaml missing, has open questions, or not signed off"])
         elif g == "arch_note":
             ok, why = bool(ev.get("arch")), ["no architecture note (ARCHITECTURE.md)"]
         elif g == "inventory":
             r = ev.get("inventory") or {}
             ok, why = bool(r.get("ok")), ["check_constraints failed"]
+        elif g == "model_contract":
+            c = ev.get("contract") or {}
+            ok, why = bool(c.get("ok")), ["model contract: " + str(c.get("error") or "not checked")[-600:]]
         elif g in ("lint", "simulate"):
             ok, why = bool((ev.get(g) or {}).get("ok")), [f"{g} not passing"]
         elif g == "verif_v3":
