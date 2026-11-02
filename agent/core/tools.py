@@ -75,11 +75,11 @@ def first_failure(text: str) -> dict[str, Any] | None:
                 captured.append(l2.strip()[:300])
         if msg or where:
             cause = [x for x in captured if _CAUSE.search(x)] or captured[-6:]
-            frames = [x for x in captured if re.search(r'File "[^"]+\.py", line \d+', x)][-6:]
+            frames = [x for x in [*captured, *(m.lstrip() for m in msg)] if re.search(r'File "[^"]+\.py", line \d+', x)][-6:]
             # also the log's first raw error lines (outside the E lines), for logs with no captured section
             errs = [x.strip()[:300] for x in lines if re.search(r"(?i)\berror\b", x) and not x.startswith("E ")
                     and "short test summary" not in x][:5]
-            return {"test": m.group(1), "message": msg[:20], "where": where, "log_errors": errs,
+            return {"test": m.group(1), "message": msg[:40], "where": where, "log_errors": errs,
                     "cause": cause[:12], "frames": frames}
     return None
 

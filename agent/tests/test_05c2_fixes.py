@@ -444,3 +444,18 @@ def test_prepare_runs_as_a_script_for_the_ila_variant(rt, tmp_path):
     bad = subprocess.run([sys.executable, str(ROOT / "flow" / "prepare.py"), str(d), "--variant", "ila", "--out", str(tmp_path)],
                          capture_output=True, text=True, cwd=ROOT, env={"PATH": "/usr/bin:/bin"})
     assert bad.returncode != 0 and "malformed" in bad.stderr and "Traceback" not in bad.stderr
+
+
+def test_cocotb_run_failure_carries_the_simulator_logs_failing_assertions(tmp_path):
+    """cocotb's runner exits with only 'Failed n of m tests'; the assertions are in a log nobody sees (found live in
+    luna run 5: four visits of 'Failed 4 of 4 tests' with the cause one directory away)."""
+    from flow import cocotb_run
+    log = tmp_path / "sim.log"
+    log.write_text("     0.00ns INFO  running bench.t1 (1/1)\n   261.00ns WARNING cocotb.regression bench.t1 failed\n"
+                   "  Traceback (most recent call last):\n    File \"/x/tests/bench.py\", line 9, in t1\n"
+                   "  AssertionError: an: RTL=0xff, model=0xef\n")
+    ex = cocotb_run.failure_excerpt(log)
+    assert "AssertionError: an: RTL=0xff, model=0xef" in ex and "bench.py" in ex
+    assert "no simulator log" in cocotb_run.failure_excerpt(tmp_path / "missing.log")
+    src = (ROOT / "flow" / "cocotb_run.py").read_text()
+    assert "except SystemExit" in src and "raise AssertionError" in src
