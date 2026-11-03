@@ -9,3 +9,7 @@
   wrap (one, 1.68 M clocks): it starts at X = 624, Y = 0 moving up so both turns happen at that wrap, and checks VS
   timing and the blank lines on the way. Plain +-1 steps away from the edges and BOUNCE = 0 holding still are in the
   spec but not simulated (they would need more frames); a reviewer may want a longer optional run.
+- **v1.1 (2026-11-03):** the self-check's bounce rule brackets the frame count (the v1 window was a measurement error on
+  the board); three tests added for the recorded survivors (X far off the right, CTRL.EN = 0 and blanking lines over a
+  non-zero background, each looked at where the fault can show; a turn at X = 0 and at Y = 464). The reference passes
+  9/9 on Icarus; the mutant check of the four survivors is the planner's.

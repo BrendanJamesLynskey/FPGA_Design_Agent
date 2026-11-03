@@ -152,6 +152,58 @@ async def test_bounce_and_vertical_timing(dut):
     assert e.m.x == 623 and e.m.y == 1 and e.m.ctrl == EN | BOUNCE | DX_NEG
 
 
+@cocotb.test(timeout_time=24000000, timeout_unit="ns")
+async def test_offscreen_and_disabled_inside_sprite_span(dut):
+    """v1.1: lines that the sprite would cover (Y .. Y + 15), with it far off to the right (X = 1016 and 1023: no wrap
+    to the left edge) and with CTRL.EN = 0. The v1 tests looked at a line after the sprite's span, where nothing is
+    drawn whatever the design does."""
+    e = Env(dut)
+    await e.start()
+    await e.load([0xFFFF] * 16)
+    await e.wr(SPRITE_COLOR, 0xF00)
+    await e.wr(BG_COLOR, 0x0A0)
+    y0 = e.ahead(3)
+    await e.wr(Y, y0)
+    await e.wr(X, 1016)
+    await e.check_lines([y0 + 3], list(range(0, 24)) + list(range(600, 640, 5)))
+    await e.wr(X, 1023)
+    await e.check_lines([y0 + 6], list(range(0, 24)) + list(range(600, 640, 5)))
+    await e.wr(X, 100)
+    await e.check_lines([y0 + 8], range(96, 120))                 # on screen and enabled: the sprite is there
+    await e.wr(CTRL, 0)                                          # sprite off: background only
+    await e.check_lines([y0 + 10], range(96, 120))
+    await e.check_lines([y0 + 13], range(96, 120))
+    await e.regs((CTRL, X, Y))
+
+
+@cocotb.test(timeout_time=24000000, timeout_unit="ns")
+async def test_bounce_turns_at_left_and_bottom(dut):
+    """v1.1: one frame wrap at X = 0 moving left and Y = 464 moving down: both turn (X to 1, Y to 463). With no turn at
+    X = 0 the position would wrap to 1023."""
+    e = Env(dut)
+    await e.start()
+    await e.load(ARROW)
+    await e.wr(X, 0)
+    await e.wr(Y, 464)
+    await e.wr(CTRL, EN | BOUNCE | DX_NEG)
+    await e.regs((X, Y, CTRL))
+    await e.wait_frame_wrap()
+    await e.regs()
+    assert e.m.x == 1 and e.m.y == 463 and e.m.ctrl == EN | BOUNCE | DY_NEG
+
+
+@cocotb.test(timeout_time=24000000, timeout_unit="ns")
+async def test_blank_lines_are_black_over_a_background(dut):
+    """v1.1: with a non-zero background colour, every pixel of lines 480-524 and every pixel right of column 639 is
+    black (the v1 tests ran with the reset background colour, black, so a background leaking into the blanking could
+    not show)."""
+    e = Env(dut)
+    await e.start()
+    await e.wr(BG_COLOR, 0x321)
+    await e.check_lines([479], range(0, HT, 37))
+    await e.check_lines([480, 497, 524], sorted(set(range(0, HT, 37)) | {0, 1, 639, 640, 799}))
+
+
 @cocotb.test(timeout_time=7267580, timeout_unit="ns")
 async def test_random_sprites(dut):
     e = Env(dut)

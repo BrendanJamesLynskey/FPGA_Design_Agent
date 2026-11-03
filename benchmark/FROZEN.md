@@ -28,3 +28,15 @@ python3 benchmark/tools/split.py show benchmark/split.yaml
   in [OWNER_REVIEW.md](OWNER_REVIEW.md) (none signed at freeze).
 - A held-out `spec.md` is published here only after scoring.
 - The knowledge bank must stay free of every spec's distinctive phrases (`tools/bank_grep.py`; 0 hits at freeze).
+
+## v1.1 (2026-11-03, after the first board run)
+
+Two units changed after the 22/24 bring-up of the references; nothing else did. Each change is a bench or self-check
+fix, recorded here and in [OWNER_REVIEW.md](OWNER_REVIEW.md):
+
+- `t2_vga_sprite`: the self-check's bounce rule brackets the frame count (the v1 window was too narrow, a board
+  measurement error), and `hidden/acceptance.py` gains three directed tests for the four recorded survivors.
+- One held-out task: its on-board self-check changed (the board flow's identify step; detail in the private repository). Public: digest only.
+
+Also in v1.1: `flow/board_check.py` reads a self-check module's `NO_SHELL` flag. Re-frozen: `MANIFEST.json` (the two
+unit digests and the shared-unit digests only).
