@@ -4,7 +4,9 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `d6679f5` (main; PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
+- Private repo commit: `1e589ea` (main; PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
+  LUT6 fabric design, Vivado synthesis attributes and inference templates, STA report interpretation; earlier: `d6679f5`
+  PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
   `217c751` brief 04h, the Artix-7 family and device layers; earlier: `16696e6` PR #6 brief 04f, `6db99dd` PR #5 04e,
   `5fa656fb8312` PR #4 04c, `238fec497e24` PR #3 04d, `6a677334d5c4` PR #2 F1A2).
 - Generic source: the private repository `BrendanJamesLynskey/RTL_Knowledge_Pack`, annotated tag `v3.0`, commit
@@ -36,26 +38,27 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | **bundle `generic`** | techniques + functions | `v3.0` | 33 | - | 137,695 (<= 152,000; was 116,872 <= 120,000 at v2.2) | 12,113 | 34,424 | `d5819522e0ff050785b2191b3bc333e9560da0924a2e8b796090783935e8b6b5` |
 | `vendor/ross_distilled/` | vendor: Ross distilled | 1 (2026-10-30; sectioned 2026-10-31) | 14 | 24 | 57,716 (<= 60,000) | 4,429 | 14,429 | `71b0be3612dd70311a092aaf9e108dbc68fe9efd324253a25eba2607ec9e3175` |
 | `vendor/free_simulators/` | vendor: free-simulator capabilities (ours, from the owner's matrix) | 1 (2026-11-01, 04f) | 1 | 3 | 3,835 (<= 8,000) | 481 | 959 | `3447bec8c927750cac559038f0529bd44614e699587253e66b2b0b2147020a09` |
+| `vendor/vivado_synthesis/` | vendor: Vivado synthesis attributes and inference templates (ours, from UG901/UG912/UG949) | 1 (2026-11-03, 04j) | 3 | 7 | 14,822 (<= 16,000) | 1,225 | 3,706 | `c13e776b78daf0e6ff070bd97a632cb05777a674d80ed1d8808b4cfc1fc9aeaf` |
 | `vendor/ross_shipped/` | vendor: Ross as shipped | Ross release 2026.10.1 | 50 | 1,195 | 918,458 (none) | 12,578 | 225,565 | `3d2cf1b50012d4676a3b432f0725b00848795059224f913935e37cc98846e773` |
-| `family/artix7/` | family: Artix-7 technology (04h added 4) | 3 (2026-11-02, 04h) | 10 | 20 | 39,453 (<= 40,000) | 4,741 | 9,863 | `28eead360c308381e27f3cceb5f25b1026ef209d19c3e3cc730ab18544cc8a67` |
-| `device/xc7a100tcsg324-1/` | device: the part on the Nexys A7-100T (xc7a100tcsg324-1) | 1 (2026-11-02, 04h) | 3 | 7 | 9,444 (<= 12,000) | 1,652 | 2,361 | `fd1d6767130f728f0ad4efe345c38add57256c285d1a2fb937854ff110e01626` |
+| `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 4 (2026-11-03, 04j) | 20 | 42 | 88,636 (<= 95,000) | 7,566 | 22,159 | `26a2ffe7895014616e2a38c1749ed32e50e5b062abf93bd6cef914f0f60305e1` |
+| `device/xc7a100tcsg324-1/` | device: the part on the Nexys A7-100T (xc7a100tcsg324-1) | 2 (2026-11-03, 04j: +1 primitives) | 4 | 14 | 12,995 (<= 18,000) | 2,276 | 3,249 | `a9d0855a4c673880ca6ff30aea91cf357be28269afc026dc0f614aec71f9d65b` |
 | `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
-| `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 3 (2026-11-01, 04f: `verification-stages/`, 4 skills) | 14 | 17 | 50,864 (<= 65,000; verification-stages has its own 25,000) | 3,726 | 12,716 | `e70e7802763f6e101bf0dae330ffa6f48038a256e18295fc389a08ee82830e19` |
+| `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 4 (2026-11-03, 04j: STA report interpretation in `ultrafast/`) | 15 | 23 | 56,848 (<= 72,000; verification-stages has its own 25,000) | 4,048 | 14,212 | `b586d72560db4699c3dea9638bb75f5a4d30c69dc2cdb17a0321305bffc6d825` |
 | `library/` | library (search_docs corpus: 1,783 chunks) | 2 (2026-11-02, 04h: +15 chunks) | - | 16 | see `library/MANIFEST.sha256` | - | - | `04ede99be370ae925d7596cc4a63af9c1a136500de661f6acfb8dfdf35c228d6` |
 
-Root files: `SECTIONS.yaml` sha256 `08c8929d5e671078cc60fb1bd2a6f97d46cb6a15aa7cc3b98bdc5ad06502b35f`; `INDEX.md` sha256
-`f24b139acf88282bebfbfe0777ddf5d1cc299a3e2634847440bc9fcf2b9995af`.
+Root files: `SECTIONS.yaml` sha256 `f5acea89bcc6e86f8f5bdd3ba93b6d07cc5d176cc2a4c57183dee1e6c07e4d92`; `INDEX.md` sha256
+`9d5e10c464165d0fde453f4e1fc637f9fee14a9223280605c9cb8484f6b66bb1`.
 
 ## The vocabulary
 
-`SECTIONS.yaml` defines 57 section ids: 19 techniques and 21 functional areas (generic; their ids,
-kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 2 device, 12 tool-flow (vendor topics) and
+`SECTIONS.yaml` defines 59 section ids: 19 techniques and 21 functional areas (generic; their ids,
+kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 3 device (04j added `primitives`), 13 tool-flow (vendor topics; 04j added `synthesis-attributes`) and
 3 procedures (`board-onboarding`, `ultrafast`, `verification-stages`). One id means one thing on every axis. Sections with no skill yet (gaps):
 
 - generic (15): `low-power`, `synthesis-and-dft`, `ethernet`, `high-speed-serial`, `usb`, `user-io`, `processors`, `dram`, `flash`, `sd-card`, `audio`, `sensors`, `analog`, `expansion-io`, `power-config` (`clocking` and `timing-concepts` were filled by v3.0).
 - `vendor/ross_distilled` (4): `hls`, `vitis-ai`, `segmented-config`, `embedded-software`.
 - `family/artix7` (6): `reset`, `arithmetic`, `fifo`, `cdc`, `low-power`, `high-speed-serial` (04h filled `analog`, `dram`, `power-config`).
-- `device/xc7a100tcsg324-1` (7): `clocking`, `timing-concepts`, `on-chip-memory`, `high-speed-serial`, `dsp`, `dram`, `power-config`.
+- `device/xc7a100tcsg324-1` (7; `primitives` added by 04j is filled): `clocking`, `timing-concepts`, `on-chip-memory`, `high-speed-serial`, `dsp`, `dram`, `power-config`.
 - `board/nexys_a7_100t` (7): `reset`, `video`, `processors`, `dram`, `analog`, `expansion-io`, `io-standards` (04c filled `ethernet`, `usb`, `flash`, `sd-card`, `audio`, `sensors`).
 - `procedures`: none (04c added `board-onboarding`, 04e `ultrafast`, 04f `verification-stages`).
 
