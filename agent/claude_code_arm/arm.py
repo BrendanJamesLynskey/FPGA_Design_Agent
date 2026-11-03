@@ -46,6 +46,7 @@ from agent.core.session import ROOT
 from agent.core.trace import Trace
 
 PINNED_CLI = "2.1.316"
+ACCEPTED_CLI = (PINNED_CLI, "2.1.317")      # 05f: the CLI auto-updated; 2.1.317 accepted, the version of every call is recorded
 MCP_NAME = "fda"
 TOKEN_FILE = Path.home() / ".config" / "fpga_design_agent" / "claude_code_oauth.env"
 MODELS = {"haiku": "claude-haiku-5-5", "opus": "claude-opus-5-5"}
@@ -172,8 +173,8 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     if shutil.which("claude") is None:
         raise ArmBlocked("the claude CLI is not on PATH")
     ver = subprocess.run(["claude", "--version"], capture_output=True, text=True).stdout.strip()
-    if not ver.startswith(PINNED_CLI):
-        raise ArmBlocked(f"Claude Code {ver!r} is not the pinned {PINNED_CLI}")
+    if not ver.startswith(ACCEPTED_CLI):
+        raise ArmBlocked(f"Claude Code {ver!r} is not a tested version {ACCEPTED_CLI}")
     token = oauth_token()
     if not token:
         raise ArmBlocked("CLAUDE_CODE_OAUTH_TOKEN is not set and the token file is missing (owner: run "
