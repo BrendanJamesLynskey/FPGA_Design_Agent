@@ -89,6 +89,14 @@ class Config:
     cc_model: str = "claude-haiku-5-5"
     cc_effort: str = "medium"
     verif_level: str = "V3"         # verification stage stage 2 must reach (V3 = the methodology)
+    profile: str = "single"         # per-role model routing (05f): single | cvdp (agent.graph.role_models.PROFILES)
+    roles: dict | None = None       # explicit per-role overrides on top of the profile: role -> {harness, model, effort}
+
+    def role_models(self, stage: str | None = None) -> dict:
+        """role -> {harness, model, effort}, with the ``role@stage`` overrides of ``stage`` applied. The interview
+        oracle is not a role: it always runs on ``model``."""
+        from agent.graph.role_models import resolve
+        return resolve(self, stage)
 
 
 @dataclass
@@ -104,6 +112,7 @@ class Runtime:
     oracle_llm: Callable | None = None
     llm_log: list = field(default_factory=list)
     last_build_output: str = ""
+    client_for: Callable[[str], Callable] | None = None     # OpenRouter client for a deepagents role on another model
 
 
 _RT: dict[str, Runtime] = {}
@@ -325,6 +334,7 @@ def drop_superseded(design: Path, jail, before: list[Path], written: dict[str, s
     return gone
 
 
+KNOWLEDGE_TOOLS = ("load_skill", "search_docs", "board_constraints")     # never removed or reduced for any role (05f)
 FILE_TOOLS = ("read_file", "write_file", "list_files")
 
 
@@ -378,19 +388,50 @@ def _validating_state_backend(rt: Runtime):
     return ValidatingStateBackend()
 
 
+def role_client(rt: Runtime, model: str) -> Callable:
+    """The model client of a Deep Agents role: the run's own client for the run's model, else a factory's."""
+    if model == rt.cfg.model:
+        return rt.client
+    if rt.client_for is None:
+        raise ValueError(f"no client for model {model!r} (a Deep Agents role on a model other than the run's)")
+    return rt.client_for(model)
+
+
 def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict[str, str]:
-    """Run one Deep Agents sub-agent. Restricted roles see only their seeded inputs (in-memory backend) and
+    """Run one sub-agent through the harness and model its role is routed to (05f), and account for it per role
+    and stage (``role_usage.jsonl``): turns, tokens, wall time, reported cost / plan estimate."""
+    spec = rt.cfg.role_models(rt.session.stage)[role]
+    m0, n_cc, t0 = dict(rt.meter.run), len(_cc_calls(rt)), time.monotonic()
+    try:
+        return _run_subagent(rt, role, prompt, allowed, repair, spec)
+    finally:
+        new_cc = _cc_calls(rt)[n_cc:]
+        rec = {"stage": rt.session.stage, "role": role, "stage_override": spec != rt.cfg.role_models()[role],
+               "harness": spec["harness"], "model": spec["model"],
+               "effort": spec["effort"], "repair": repair,
+               "turns": int(rt.meter.run["turns"] - m0["turns"]), "tokens": int(rt.meter.run["tokens"] - m0["tokens"]),
+               "wall_s": round(time.monotonic() - t0, 1),
+               "cost_usd": None if spec["harness"] == "claude_code" else round(rt.meter.run["usd"] - m0["usd"], 6),
+               "plan_cost_estimate_usd": round(sum(c.get("plan_cost_estimate_usd") or 0 for c in new_cc), 4)
+               if spec["harness"] == "claude_code" else None}
+        with (rt.run_dir / "role_usage.jsonl").open("a") as f:
+            f.write(json.dumps(rec) + "\n")
+
+
+def _run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...], repair: bool, spec: dict) -> dict[str, str]:
+    """Run one sub-agent. Deep Agents: restricted roles see only their seeded inputs (in-memory backend) and
     their outputs are copied into the design through the role jail. Returns {path: content} written."""
-    if rt.cfg.harness == "claude_code":
+    if spec["harness"] == "claude_code":
         from agent.claude_code_arm.arm import run_subagent_cc
-        return run_subagent_cc(rt, subagent_plan(rt, role, prompt, allowed, repair))
+        return run_subagent_cc(rt, {**subagent_plan(rt, role, prompt, allowed, repair),
+                                    "model": spec["model"], "effort": spec["effort"]})
     from deepagents import HarnessProfile, create_deep_agent, register_harness_profile
     from deepagents.backends.utils import create_file_data, file_data_to_string
     from deepagents.profiles.harness.harness_profiles import GeneralPurposeSubagentProfile
 
     register_harness_profile("fda", HarnessProfile(general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False)))
     sess = role_session(rt.session, role)
-    model = chat_model(rt.client, rt.meter, rt.llm_log)
+    model = chat_model(role_client(rt, spec["model"]), rt.meter, rt.llm_log)
     plan = subagent_plan(rt, role, prompt, allowed, repair)
     prompt, msg, inputs = plan["system_prompt"], plan["user_message"], plan["inputs"]
     if role == "rtl":
@@ -745,7 +786,9 @@ def node_review(state: State) -> dict:
             "time": time.strftime("%Y-%m-%d %H:%M:%S"),
             "notes": json.dumps(state.get("interview"), indent=1) if n == 0 and state.get("interview") else "",
             "verif": ev.get("verif"), "standards": ev.get("standards"), "stage_n": n, "board": rt.cfg.board,
-            "diff": _stage_diff(rt, n), "owner_rows": ownership.load(rt.design)}
+            "diff": _stage_diff(rt, n), "owner_rows": ownership.load(rt.design),
+            "role_models": rt.cfg.role_models(),
+            "role_usage": [u for u in role_usage(rt) if u["stage"] == st.name]}
     hw_pause = n == 9 and not state.get("hw_approved") and state.get("fails") == [
         "hardware: awaiting approval before programming"]
     decision = {"decision": "approve", "by": "auto", "note": ""}
@@ -785,7 +828,7 @@ def node_review(state: State) -> dict:
     rv.write_page(rt.design, n, st.name, {**info, "approval": decision})
     hist.append({"n": n, "stage": st.name, "page": str(page), "passed": passed, "approval": decision,
                  "snapshot": snap["commit"], "visit": info["visits"], "used": dict(rt.meter.stage)})
-    rv.write_index(rt.design, hist)
+    rv.write_index(rt.design, hist, rt.cfg.role_models())
     with (rt.design / "BUILD_NOTE.md").open("a") as f:
         f.write(f"\n## review {n:02d} {st.name}\n\n{decision['decision']} by {decision['by']}"
                 f"{': ' + decision['note'] if decision.get('note') else ''} (gates {'pass' if passed else 'fail'})\n")
@@ -819,7 +862,7 @@ def node_review(state: State) -> dict:
             f.write(f"\n## review {n:02d} {st.name}\n\nrewind to stage {to} by {decision['by']}"
                     f"{': ' + decision['note'] if decision.get('note') else ''} (files verified: {r['verified']})\n")
         ownership.record(rt.design, _who(decision["by"]), st.name, f"rewound to stage {to}", decision.get("note", ""), n=n)
-        rv.write_index(rt.design, hist)
+        rv.write_index(rt.design, hist, rt.cfg.role_models())
         upd.update(fails=[], note=decision.get("note", ""))
         return {**upd, "history": hist, "evidence": {}}
     if decision["decision"] == "edit":
@@ -894,6 +937,10 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
     if first:
         (design / "spec.md").write_text(Path(cfg.spec_md).read_text())
         (design / "__init__.py").write_text("")
+        from agent.graph.role_models import describe
+        with (design / "BUILD_NOTE.md").open("a") as f:      # 05f: who ran which role, from the first snapshot on
+            f.write(f"\n## models by role (profile {cfg.profile})\n\n{describe(cfg.role_models())}. "
+                    f"Interview oracle: {cfg.model} (fixed). The stage machine is plain code.\n")
     if runner is None:
         runner = ContainerRunner(design, ROOT) if container_available() else LocalRunner()
     bank = None
@@ -907,7 +954,9 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
                  oracle_llm=oracle_llm)
     _RT[run_id] = rt
     (run_dir / "config.json").write_text(json.dumps({**{k: str(v) for k, v in cfg.__dict__.items()},
-                                                     "run_limits": cfg.run_limits,
+                                                     "run_limits": cfg.run_limits, "profile": cfg.profile,
+                                                     "roles": cfg.roles or {}, "role_models": cfg.role_models(),
+                                                     "oracle_model": cfg.model,
                                                      "isolation": type(runner).__name__}, indent=1))
     return rt
 
@@ -924,14 +973,68 @@ def _cc_calls(rt: Runtime) -> list[dict]:
     return [json.loads(x) for x in f.read_text().splitlines() if x.strip()] if f.exists() else []
 
 
+def knowledge_use(rt: Runtime) -> dict:
+    """Which knowledge tools each role called in each stage, from the audit log (05f): call counts per tool, and for
+    ``load_skill`` the section names and the skill files returned (so the device layers' use by the RTL writer shows)."""
+    f = rt.design / "build" / "audit.jsonl"
+    out: dict[str, dict] = {}
+    for line in (f.read_text().splitlines() if f.exists() else []):
+        try:
+            r = json.loads(line)
+        except ValueError:
+            continue
+        if r.get("tool") not in KNOWLEDGE_TOOLS or r.get("refused"):
+            continue
+        d = out.setdefault(f"{r.get('role') or '?'}/{r.get('stage')}", {})
+        t = d.setdefault(r["tool"], {"calls": 0})
+        t["calls"] += 1
+        if r["tool"] == "load_skill":
+            t.setdefault("sections", [])
+            t.setdefault("skills", [])
+            t["sections"] = sorted({*t["sections"], *(r.get("arguments") or {}).get("sections", [])})
+            t["skills"] = sorted({*t["skills"], *(r.get("skills") or [])})
+    return out
+
+
+def role_usage(rt: Runtime) -> list[dict]:
+    f = rt.run_dir / "role_usage.jsonl"
+    return [json.loads(x) for x in f.read_text().splitlines() if x.strip()] if f.exists() else []
+
+
+def usage_by(rows: list[dict], key: str) -> dict:
+    """Sum role_usage rows by ``key`` (role or stage): calls, turns, tokens, wall_s, reported USD, plan estimate."""
+    out: dict[str, dict] = {}
+    for u in rows:
+        d = out.setdefault(str(u[key]), {"calls": 0, "turns": 0, "tokens": 0, "wall_s": 0.0, "cost_usd": 0.0,
+                                         "plan_cost_estimate_usd": 0.0})
+        d["calls"] += 1
+        d["turns"] += u["turns"]
+        d["tokens"] += u["tokens"]
+        d["wall_s"] = round(d["wall_s"] + u["wall_s"], 1)
+        d["cost_usd"] = round(d["cost_usd"] + (u.get("cost_usd") or 0), 6)
+        d["plan_cost_estimate_usd"] = round(d["plan_cost_estimate_usd"] + (u.get("plan_cost_estimate_usd") or 0), 4)
+    return out
+
+
 def summary(rt: Runtime, state: dict) -> dict:
     hist = state.get("history") or []
-    cc = rt.cfg.harness == "claude_code"
+    roles = rt.cfg.role_models()
+    harnesses = sorted({r["harness"] for r in roles.values()})
+    models = sorted({r["model"] for r in roles.values()})
+    cc = "claude_code" in harnesses
     calls = _cc_calls(rt) if cc else []
-    extra = {"harness": "claude_code", "claude_code_version": (calls[0]["claude_code_version"] if calls else None),
-             "plan_cost_estimate_usd": round(sum(c.get("plan_cost_estimate_usd") or 0 for c in calls), 4),
-             "oracle_model": rt.cfg.model} if cc else {"harness": "deepagents"}
-    return {"run_id": rt.run_id, "design": rt.cfg.name, "model": rt.cfg.cc_model if cc else rt.cfg.model, **extra,
+    mixed = len(harnesses) > 1
+    extra = {"harness": "mixed" if mixed else harnesses[0]}
+    if cc:
+        extra.update(claude_code_version=(calls[0]["claude_code_version"] if calls else None),
+                     plan_cost_estimate_usd=round(sum(c.get("plan_cost_estimate_usd") or 0 for c in calls), 4),
+                     oracle_model=rt.cfg.model)
+    usage = role_usage(rt)
+    return {"run_id": rt.run_id, "design": rt.cfg.name, "model": models[0] if len(models) == 1 else "per-role", **extra,
+            "profile": rt.cfg.profile, "role_models": roles, "oracle_model": rt.cfg.model,
+            "stage_overrides": __import__("agent.graph.role_models", fromlist=["x"]).stage_overrides(rt.cfg),
+            "knowledge_use": knowledge_use(rt),
+            "per_role": usage_by(usage, "role"), "per_stage": usage_by(usage, "stage"),
             "interview": rt.cfg.interview,
             "review": rt.cfg.review, "stages_visited": [h["n"] for h in hist],
             "loops": sum(1 for a, b in zip(hist, hist[1:]) if b["n"] <= a["n"] and not a.get("rewind")),

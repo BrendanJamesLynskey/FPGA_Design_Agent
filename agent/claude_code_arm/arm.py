@@ -96,7 +96,7 @@ def cli_argv(rt, plan: dict[str, Any], mcp_file: Path, model: str, effort: str, 
             "--mcp-config", str(mcp_file), "--strict-mcp-config",
             "--allowedTools", *tool_ids(plan), "--permission-mode", "dontAsk",
             "--setting-sources", "", "--disable-slash-commands", "--no-session-persistence",
-            "--model", model, "--effort", effort, "--max-turns", str(max_turns)]
+            "--model", model, *(["--effort", effort] if effort else []), "--max-turns", str(max_turns)]
 
 
 def isolated_env(home: Path, token: str) -> dict[str, str]:
@@ -193,7 +193,10 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     work = Path(tempfile.mkdtemp(prefix="fda_cc_"))              # HOME, config dir and cwd: all empty, outside the repo
     mcp_file = work / "mcp.json"
     mcp_file.write_text(json.dumps(mcp_config(rt, plan)))
-    argv = cli_argv(rt, plan, mcp_file, rt.cfg.cc_model, rt.cfg.cc_effort, left)
+    # 05f: the model and effort of this role (plan), else the run's single arm settings; effort None = the CLI default
+    model = plan.get("model") or rt.cfg.cc_model
+    effort = plan["effort"] if "effort" in plan else rt.cfg.cc_effort
+    argv = cli_argv(rt, plan, mcp_file, model, effort, left)
     shown = list(argv)
     shown[2], shown[argv.index("--system-prompt") + 1] = f"<user message: {out_dir.name}/{tag}.user.txt>", \
         f"<system prompt: {out_dir.name}/{tag}.system.txt>"
@@ -224,8 +227,8 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     for d in (rt.meter.stage, rt.meter.run):
         d["turns"] += turns
         d["tokens"] += info["tokens"]["input"] + info["tokens"]["output"]
-    rec = {"tag": tag, "role": plan["role"], "stage": plan["stage"], "model_requested": rt.cfg.cc_model,
-           "models_served": info["served_models"], "effort": rt.cfg.cc_effort, "claude_code_version": ver,
+    rec = {"tag": tag, "role": plan["role"], "stage": plan["stage"], "model_requested": model,
+           "models_served": info["served_models"], "effort": effort or "cli-default", "claude_code_version": ver,
            "turns": turns, "max_turns": left, "tool_calls": info["tool_calls"], "wall_s": secs, "timed_out": timed_out,
            "subtype": res.get("subtype"), "is_error": res.get("is_error"), "tokens": info["tokens"],
            "cost_usd": "unreported", "plan_cost_estimate_usd": res.get("total_cost_usd"),

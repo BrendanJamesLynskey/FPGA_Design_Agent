@@ -189,7 +189,7 @@ knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (n
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
              design_standards.md (v1.0: the rule table and how each rule is checked);
-             agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph); claude_code_arm.md (the 05c Claude Code arm);
+             agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
 ```
 
@@ -206,6 +206,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 04f | Verification backbone: OpenTitan-style V0-V3 plus V-HW on a simulator-portable stack (cocotb bench, bound assertion checkers, SymbiYosys, Verilator coverage, mutation score); T1 reaches V3 ([docs/verification.md](docs/verification.md), [results/04f](results/04f/README.md)) | done |
 | 05a | F2 part 1: the harness-neutral core, MCP server, security layer and replayed-trace CI ([docs/agent_core.md](docs/agent_core.md)) | in review |
 | 05d | F2 part 4: proof method per requirement, architecture-first gate, design standards v1.0 and checker, resource sanity gate, upgraded review pages, owner-edit ledger ([docs/methodology.md](docs/methodology.md), [docs/design_standards.md](docs/design_standards.md), [results/f2](results/f2/README.md)); live luna runs null at stage 2 | in review |
+| 05f | F2 part 6: per-role model routing (profiles `single`, `cvdp`; `role@stage` overrides), per-role and per-stage accounting, knowledge-tool use log ([docs/role_models.md](docs/role_models.md)) | in review |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | F3 | Frozen benchmark, scored runs | coming |
 
