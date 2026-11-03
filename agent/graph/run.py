@@ -19,7 +19,9 @@ limits per stage visit and per run come from ``stages.MACHINE`` / ``RUN_LIMITS``
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -113,6 +115,8 @@ class Runtime:
     llm_log: list = field(default_factory=list)
     last_build_output: str = ""
     client_for: Callable[[str], Callable] | None = None     # OpenRouter client for a deepagents role on another model
+    visit: int = 0                                          # the current stage's visit number (for the turn trace)
+    budget_notes: list = field(default_factory=list)        # roles whose turn budget ended this visit (05g)
 
 
 _RT: dict[str, Runtime] = {}
@@ -353,7 +357,8 @@ def subagent_plan(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] 
     role_files = ROLE_TOOLS[role]
     files = tuple(n for n in FILE_TOOLS if role_files is None or n in role_files)
     return {"role": role, "system_prompt": prompt, "user_message": msg, "inputs": inputs, "core_tools": core,
-            "file_tools": files, "limits": dict(rt.meter.stage_limits), "stage": rt.session.stage, "repair": repair}
+            "file_tools": files, "limits": dict(rt.meter.stage_limits), "stage": rt.session.stage, "repair": repair,
+            "turns_left": rt.meter.turns_left()}
 
 
 def _canon(rt: Runtime, path: str) -> str:
@@ -399,23 +404,71 @@ def role_client(rt: Runtime, model: str) -> Callable:
 
 def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict[str, str]:
     """Run one sub-agent through the harness and model its role is routed to (05f), and account for it per role
-    and stage (``role_usage.jsonl``): turns, tokens, wall time, reported cost / plan estimate."""
+    and stage (``role_usage.jsonl``): turns, tokens, wall time, reported cost / plan estimate. Brief 05g adds the turn
+    trace to each record: the visit, the turns the role was allowed, how it ended (done / stage_budget / run_budget /
+    blocked / error), the tools it called, the refusals it met and the files it wrote."""
     spec = rt.cfg.role_models(rt.session.stage)[role]
     m0, n_cc, t0 = dict(rt.meter.run), len(_cc_calls(rt)), time.monotonic()
+    a0, allowed_turns, ended, written = len(rt.session.audit.records), rt.meter.turns_left(), "done", {}
     try:
-        return _run_subagent(rt, role, prompt, allowed, repair, spec)
+        written = _run_subagent(rt, role, prompt, allowed, repair, spec)
+        return written
+    except BudgetExceeded as e:
+        ended = "run_budget" if str(e).startswith("run ") else "stage_budget"
+        raise
+    except ArmBlocked:
+        ended = "blocked"
+        raise
+    except Exception as e:
+        ended = f"error:{type(e).__name__}"
+        raise
     finally:
         new_cc = _cc_calls(rt)[n_cc:]
-        rec = {"stage": rt.session.stage, "role": role, "stage_override": spec != rt.cfg.role_models()[role],
+        rows = [r for r in rt.session.audit.records[a0:] if r.get("role") in (role, None)]
+        tools: dict[str, int] = {}
+        refused: dict[str, int] = {}
+        for r in rows:
+            tools[r["tool"]] = tools.get(r["tool"], 0) + 1
+            if r.get("refused"):
+                refused[str(r.get("rule"))] = refused.get(str(r.get("rule")), 0) + 1
+        rec = {"stage": rt.session.stage, "visit": rt.visit, "role": role, "stage_override": spec != rt.cfg.role_models()[role],
                "harness": spec["harness"], "model": spec["model"],
                "effort": spec["effort"], "repair": repair,
-               "turns": int(rt.meter.run["turns"] - m0["turns"]), "tokens": int(rt.meter.run["tokens"] - m0["tokens"]),
+               "turns": int(rt.meter.run["turns"] - m0["turns"]), "turns_allowed": allowed_turns, "ended": ended,
+               "tokens": int(rt.meter.run["tokens"] - m0["tokens"]),
                "wall_s": round(time.monotonic() - t0, 1),
+               "tools": tools, "refused": refused, "files_written": sorted(written) if isinstance(written, dict) else [],
                "cost_usd": None if spec["harness"] == "claude_code" else round(rt.meter.run["usd"] - m0["usd"], 6),
                "plan_cost_estimate_usd": round(sum(c.get("plan_cost_estimate_usd") or 0 for c in new_cc), 4)
                if spec["harness"] == "claude_code" else None}
         with (rt.run_dir / "role_usage.jsonl").open("a") as f:
             f.write(json.dumps(rec) + "\n")
+
+
+#: Turns held back while a role runs, for the roles that follow it in the same stage visit (brief 05g). Before this,
+#: the stage-9 RTL writer used the whole stage budget and the tests role never got a turn (luna run f7ba, visits 1-2).
+ROLE_TURN_RESERVE = {2: {"model": 35, "tests": 25}, 9: {"rtl": 15}}
+
+
+def run_role(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict[str, str]:
+    """``run_subagent`` with the stage's turn reserve for the roles after this one. A role that ends on the stage turn
+    budget does not stop the visit: the roles after it still run (the gate decides). The run-wide limit still stops the
+    run, but only once the real limit (without the reserve) is reached."""
+    n = next((st.n for st in MACHINE if st.name == rt.session.stage), -1)
+    rt.meter.reserved = ROLE_TURN_RESERVE.get(n, {}).get(role, 0)
+    try:
+        return run_subagent(rt, role, prompt, allowed, repair)
+    except BudgetExceeded as e:
+        rt.meter.reserved = 0
+        try:
+            rt.meter.check()
+        except BudgetExceeded:
+            if str(e).startswith("run "):
+                raise                                   # the real run limit
+        rt.budget_notes.append(f"{role}: {e}")
+        return {}
+    finally:
+        rt.meter.reserved = 0
 
 
 def _run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...], repair: bool, spec: dict) -> dict[str, str]:
@@ -464,6 +517,45 @@ def _run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...],
 
 # --- nodes --------------------------------------------------------------------------------------------------------
 
+def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
+    """The stage-entry checklist of the tests role (brief 05g): the exact files each gate reads, so the role does not
+    have to find them out from a failed gate. Plain text built from the design's own names; no reference content."""
+    from agent.core.runner import tool_available
+    name = rt.cfg.name
+    formal = tool_available("sby")
+    lines = ["", "", "STAGE-ENTRY CHECKLIST (the files the gates read; the gate fails if one is missing):"]
+    if stage == 2:
+        lines += [
+            f"1. tests/test_{name}_rtl.py: the pytest entry (gate V0 `bench_modules_present`; the `simulate` tool runs tests/test_*_rtl.py).",
+            "2. tests/<module>.py for every module listed in bench.modules of the testplan (V0 `bench_modules_present`).",
+            "3. verif/testplan.yaml (V0 `testplan_present`, V1 `spec_items_traced`): every spec item traced to a test. "
+            "Its `proof:` list needs one {requirement, method, artefact} entry for every method of every requirement in "
+            "spec.yaml (V1 `proof_methods_discharged`), and each artefact must exist (V1 `proof_references_resolve`).",
+            "4. `formal` methods: " + (
+                "SymbiYosys is installed. Write verif/formal/<job>.sby and its property module (properties over the top "
+                "module's ports from spec.yaml), call the `formal` tool, and use <job> as the artefact. A job that has not "
+                "passed bmc and cover is not discharged." if formal else
+                "SymbiYosys is NOT installed here, so no formal job can run. Do not name a formal job and do not claim a "
+                "proof. Re-plan the method: add a top-level `replan:` list to verif/testplan.yaml with one "
+                "{requirement, method: formal, replaced_by: simulation|analysis|hardware, artefact, why} entry per formal "
+                "method (why = a sentence saying why it was re-planned). The replacement's own evidence is what counts."),
+            "5. `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
+            "step in the proof list now (uart_tests, ila_captures or step:case).",
+        ]
+    else:
+        lines += [
+            f"1. tests/test_{name}_hw.py: `pytestmark = pytest.mark.hw`, plain `def test_...(board)` functions (bring-up readiness).",
+            "2. hw_checks.py: `CAPTURES` (condition AND) and `restore(sh)` (bring-up readiness).",
+            "3. Read-only references you can open: shell_ref/PROTOCOL.md, shell_ref/host/fpga_shell.py and "
+            "shell_ref/host/protocol.py (the classes you import), and probes.yaml for the probe names.",
+            f"4. Keep tests/test_{name}_rtl.py, the bench and verif/ exactly as they are.",
+        ]
+    lines.append("Write every file of the list in this visit. " + (
+        "This is a repair visit: change only the files the failures name, and never delete another." if repair else
+        "A file you leave out is a failed gate."))
+    return "\n".join(lines) + "\n"
+
+
 def _rt(state: State) -> Runtime:
     return _RT[state["run_id"]]
 
@@ -499,6 +591,7 @@ def node_work(state: State) -> dict:
         return {"visits": visits, "stop": f"stage {n} visited more than {rt.cfg.run_limits['visits_per_stage']} times"}
     rt.meter.start_stage(st.limits)
     rt.session.stage = st.name
+    rt.visit, rt.budget_notes = visits[str(n)], []
     fmt = {"board": rt.cfg.board, "name": rt.cfg.name, "stage": n, "stage_name": st.name,
            "allowed": ", ".join(st.tools), "fails": "; ".join(state.get("fails") or []) or "none",
            "note": state.get("note") or "none",
@@ -516,7 +609,7 @@ def node_work(state: State) -> dict:
         if n == 2 and not arch_mod.approval_status(rt.design)[0]:       # no RTL before the architecture is approved
             return {"visits": visits, "note": "", "detail": "stage 2 did not start: " + arch_mod.approval_status(rt.design)[1]}
         if n == 0:
-            run_subagent(rt, "clarify", PROMPTS["clarify"].format(**fmt) + prompt_note("clarify")
+            run_role(rt, "clarify", PROMPTS["clarify"].format(**fmt) + prompt_note("clarify")
                          + ("\nGate message: " + state["detail"][:3000] if state.get("detail") else ""),
                          ("search_docs", "load_skill"))
         elif n == 2:
@@ -524,25 +617,25 @@ def node_work(state: State) -> dict:
                 repair = reasons is not None
                 note = repair_note(role, reasons) if repair else ""
                 if role == "model":
-                    run_subagent(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), (), repair)
+                    run_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), (), repair)
                 elif role == "tests":
-                    run_subagent(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else FRESH_TESTS)
-                                 + prompt_note("tests") + conv0, ("search_docs", "load_skill", "spec_items"), repair)
+                    run_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else FRESH_TESTS)
+                                 + tests_checklist(rt, 2, repair) + prompt_note("tests") + conv0, ("search_docs", "load_skill", "spec_items"), repair)
                 else:
                     own = "; ".join(r[:1500] for r in reasons) if repair else (
                         "; ".join(state.get("fails") or []) or "none")
-                    run_subagent(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
+                    run_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
                                  + (note if repair else "") + prompt_note("rtl") + conv0, st.tools, repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
-            run_subagent(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + (HW_FORMAT.format(**fmt) if n == 9 else ""),
+            run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + (HW_FORMAT.format(**fmt) if n == 9 else ""),
                          tuple(t for t in st.tools if t not in ("program", "bringup")))
             if n == 9:                                  # then the bring-up tests, which need the probe names (planner item, 05d)
                 from flow import hw_dry_check
                 dry = hw_dry_check.check_design(rt.design)
                 own = [q for q in dry["problems"] if not q.startswith(("BRINGUP.md", "probes.yaml"))]
                 if own:
-                    run_subagent(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
-                                 + HW_FORMAT.format(**fmt) + MODEL_CONTRACT, ("search_docs", "load_skill", "gates"),
+                    run_role(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
+                                 + tests_checklist(rt, 9, True) + HW_FORMAT.format(**fmt) + MODEL_CONTRACT, ("search_docs", "load_skill", "gates"),
                                  repair=True)        # never "fresh": a fresh tests write deletes the stage-2 benches
         files = [p for p in rt.design.rglob("*") if p.is_file() and "build" not in p.relative_to(rt.design).parts
                  and "__pycache__" not in p.parts]
@@ -554,6 +647,8 @@ def node_work(state: State) -> dict:
         if str(e).startswith("run "):                      # run limit: stop the run
             return {"visits": visits, "stop": f"budget: {e}"}
         return {"visits": visits, "note": "", "detail": f"stage visit ended: {e}"}   # stage limit: gate decides
+    if rt.budget_notes:           # a role ended on its turn budget: the gate decides, and the next visit hears about it
+        return {"visits": visits, "note": "", "detail": "stage visit ended on the turn budget: " + "; ".join(rt.budget_notes)}
     return {"visits": visits, "note": ""}
 
 
@@ -991,9 +1086,34 @@ def knowledge_use(rt: Runtime) -> dict:
         if r["tool"] == "load_skill":
             t.setdefault("sections", [])
             t.setdefault("skills", [])
+            t.setdefault("empty_calls", 0)
             t["sections"] = sorted({*t["sections"], *(r.get("arguments") or {}).get("sections", [])})
             t["skills"] = sorted({*t["skills"], *(r.get("skills") or [])})
+            t["empty_calls"] += not r.get("skills")                  # 05g: a call that returned no skill file
+            if r.get("sections_empty"):
+                t["sections_empty"] = sorted({*t.get("sections_empty", []), *r["sections_empty"]})
+            if r.get("procedures_fallback"):
+                t["procedures_fallback"] = sorted({*t.get("procedures_fallback", []), *r["procedures_fallback"]})
+        elif r["tool"] == "search_docs":
+            t.setdefault("hits", [])
+            t["hits"] = sorted({*t["hits"], *(r.get("hits") or [])})[:40]
     return out
+
+
+def knowledge_bank_status(rt: Runtime) -> dict:
+    """Whether the frozen bank was reachable in this run's environment (05g): its path, how the path was chosen
+    (``FDA_KNOWLEDGE`` or the sibling checkout), and the checkout's HEAD. The Claude Code arm's tool server resolves the
+    same path, so one answer covers both harnesses."""
+    from agent.core.bank import DEFAULT_BANK
+    root = Path(DEFAULT_BANK)
+    head = None
+    try:
+        head = subprocess.run(["git", "-C", str(root), "rev-parse", "--short", "HEAD"], capture_output=True, text=True,
+                              timeout=10).stdout.strip() or None
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return {"root": root.name, "chosen_by": "FDA_KNOWLEDGE" if os.environ.get("FDA_KNOWLEDGE") else "sibling checkout",
+            "present": root.is_dir(), "loaded": getattr(getattr(rt, "session", None), "bank", None) is not None, "head": head}
 
 
 def role_usage(rt: Runtime) -> list[dict]:
@@ -1016,6 +1136,12 @@ def usage_by(rows: list[dict], key: str) -> dict:
     return out
 
 
+def usage_trace(rows: list[dict]) -> list[dict]:
+    """The per-stage, per-role turn trace of a run (05g): one line per sub-agent call, in the order they ran."""
+    keep = ("stage", "visit", "role", "repair", "turns_allowed", "turns", "ended", "wall_s", "tools", "refused", "files_written")
+    return [{k: u.get(k) for k in keep} for u in rows]
+
+
 def summary(rt: Runtime, state: dict) -> dict:
     hist = state.get("history") or []
     roles = rt.cfg.role_models()
@@ -1033,7 +1159,8 @@ def summary(rt: Runtime, state: dict) -> dict:
     return {"run_id": rt.run_id, "design": rt.cfg.name, "model": models[0] if len(models) == 1 else "per-role", **extra,
             "profile": rt.cfg.profile, "role_models": roles, "oracle_model": rt.cfg.model,
             "stage_overrides": __import__("agent.graph.role_models", fromlist=["x"]).stage_overrides(rt.cfg),
-            "knowledge_use": knowledge_use(rt),
+            "knowledge_use": knowledge_use(rt), "knowledge_bank": knowledge_bank_status(rt),
+            "turn_trace": usage_trace(usage),
             "per_role": usage_by(usage, "role"), "per_stage": usage_by(usage, "stage"),
             "interview": rt.cfg.interview,
             "review": rt.cfg.review, "stages_visited": [h["n"] for h in hist],

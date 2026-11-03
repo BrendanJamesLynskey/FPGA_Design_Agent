@@ -145,9 +145,11 @@ def test_every_stage_passes_on_the_04e_build(tmp_path: Path) -> None:
     assert all(r["stages"][n]["ran"] and r["stages"][n]["pass"] for n in gates.STAGES)
     assert set(r["stages"]["rtl"]["gates"]) == {"rtl_methodology_no_critical"}
     assert set(r["stages"]["post_synth"]["gates"]) == {"post_synth_no_unconstrained_endpoints", "post_synth_methodology_no_critical",
-                                                       "post_synth_drc_clean", "post_synth_qor_assessment"}
+                                                       "post_synth_drc_clean"}
+    assert "post_synth_qor_assessment" not in r["gates"] and r["warnings"] == []
     assert set(r["stages"]["post_place"]["gates"]) == {"post_place_hold"}
     assert "power_junction_ok" in r["stages"]["post_route"]["gates"]
+    assert r["stages"]["post_route"]["gates"]["post_route_qor_assessment"] is True
     assert r["stages"]["post_synth"]["qor_assessment"]["score"] == 5 and r["stages"]["post_route"]["qor_assessment"]["score"] == 5
     assert r["stages"]["post_synth"]["timing"]["wns_ns"] == 4.602 and r["stages"]["post_place"]["timing"]["whs_ns"] == -0.027
     # the flat gates dict still carries the F0A names, plus the stage-prefixed ones
@@ -172,19 +174,39 @@ def test_first_failed_stage_is_the_earliest(tmp_path: Path) -> None:
     assert r["gates"]["post_synth_methodology_no_critical"]
 
 
-def test_qor_score_and_place_hold_thresholds(tmp_path: Path) -> None:
-    """No real report scores below 3 or holds worse than -0.5 ns yet: one number of a real report is changed."""
+def test_qor_gate_is_after_routing(tmp_path: Path) -> None:
+    """Brief 05g. A post-synthesis score below 4 is a recorded warning, not a gate; the routed score is the gate.
+    No real report scores below 3 yet: one number of a real report is changed."""
     d = _build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True)
-    good = rd("good_qor_assessment_synth.rpt")
-    # UG949 ch. 5: 1-2 have no chance of closing, 3 is unlikely to close, 4 likely, 5 will: 4 is the lowest pass
-    for score, text, ok in ((2, "Design will not meet timing", False), (3, "Design will likely not meet timing", False),
-                            (4, "Design will likely meet timing", True)):
-        (d / "qor_assessment_synth.rpt").write_text(good.replace("| 5 - Design runs will meet timing", f"| {score} - {text}"))
-        r = gates.evaluate(d)
-        assert r["gates"]["post_synth_qor_assessment"] is ok and r["stages"]["post_synth"]["qor_assessment"]["score"] == score
-        assert (r["first_failed_stage"] is None) is ok
+    for rpt in ("synth", "route"):
+        good = rd(f"good_qor_assessment_{rpt}.rpt")
+        for score, text, ok in ((2, "Design will not meet timing", False), (3, "Design will likely not meet timing", False),
+                                (4, "Design will likely meet timing", True)):
+            (d / f"qor_assessment_{rpt}.rpt").write_text(good.replace("| 5 - Design runs will meet timing", f"| {score} - {text}"))
+            r = gates.evaluate(d)
+            if rpt == "synth":     # post-synthesis: warning only, the build still passes
+                assert "post_synth_qor_assessment" not in r["gates"] and r["pass"]
+                assert r["stages"]["post_synth"]["qor_assessment"]["score"] == score
+                assert (r["warnings"] == []) is ok
+                if not ok:
+                    assert r["warnings"][0]["name"] == "post_synth_qor_assessment" and r["warnings"][0]["stage"] == "post_synth"
+                    assert r["warnings"][0]["score"] == score and r["stages"]["post_synth"]["warnings"] == r["warnings"]
+            else:                  # post-route: the gate
+                assert r["gates"]["post_route_qor_assessment"] is ok and r["stages"]["post_route"]["qor_assessment"]["score"] == score
+                assert (r["first_failed_stage"] is None) is ok and r["pass"] is ok
+                if not ok:
+                    assert r["first_failed_stage"] == "post_route"
+        (d / f"qor_assessment_{rpt}.rpt").write_text(good)
     assert gates.QOR_SCORE_MIN == 4
-    (d / "qor_assessment_synth.rpt").write_text(rd("good_qor_assessment_synth.rpt"))
+    # synth 3 and route 5 (the 06a pattern on small designs): passes, with the warning kept
+    (d / "qor_assessment_synth.rpt").write_text(rd("good_qor_assessment_synth.rpt").replace(
+        "| 5 - Design runs will meet timing", "| 3 - Design will likely not meet timing"))
+    r = gates.evaluate(d)
+    assert r["pass"] and len(r["warnings"]) == 1 and r["gates"]["post_route_qor_assessment"]
+
+
+def test_place_hold_threshold(tmp_path: Path) -> None:
+    d = _build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True)
     t = rd("good_timing_summary_place.rpt").replace("-0.027", "-0.627")
     (d / "timing_summary_place.rpt").write_text(t)
     r = gates.evaluate(d)

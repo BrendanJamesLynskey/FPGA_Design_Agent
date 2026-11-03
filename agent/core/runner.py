@@ -85,6 +85,11 @@ def scrubbed_env(extra: dict[str, str] | None = None, tools: dict[str, Any] | No
     return env
 
 
+def tool_available(name: str) -> bool:
+    """Whether ``name`` is on the PATH the agent's tools run with (the local tools file included)."""
+    return shutil.which(name, path=scrubbed_env().get("PATH", os.defpath)) is not None
+
+
 def resolve_tool(argv0: str, env: dict[str, str]) -> str:
     """A bare tool name resolved on the run's PATH; a path is returned unchanged. Raises ToolMissing."""
     if os.sep in argv0:

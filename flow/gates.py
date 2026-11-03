@@ -9,16 +9,23 @@ that failed:
 
     rtl         report_methodology on the elaborated RTL: no critical warnings
     post_synth  check_timing all zero, methodology and DRC clean (no critical
-                warnings, no DRC errors), report_qor_assessment score >= 4;
-                post-synthesis WNS recorded, not gated
+                warnings, no DRC errors); post-synthesis WNS and the
+                post-synthesis report_qor_assessment score are recorded (the
+                score as a warning when below 4), not gated
     post_place  WHS > -0.5 ns after placement (large hold violations must be
                 fixed before routing); WNS recorded
     post_route  setup, hold and pulse-width slack non-negative with zero totals;
+                report_qor_assessment score >= 4 (the QoR gate, after routing);
                 no unconstrained endpoints; no DRC errors or critical warnings;
                 no critical methodology violations; no critical CDC violations;
                 report_power run for the board's thermal environment with the
                 junction at or below 85 C
     bitstream   the bitstream (and, for an ILA build, the .ltx) present
+
+QoR gate (brief 05g): ``post_route_qor_assessment`` (score >= 4 in qor_assessment_route.rpt) is the gate.
+The post-synthesis score is a recorded warning (``stages.post_synth.warnings`` and the top-level ``warnings``
+list), not a gate: on small designs Vivado's post-synthesis predicted-congestion item reads 3 while the routed
+score is 5 (benchmark 06a: 11 of 24 reference designs, all at most 1.2 % of the device, with timing met).
 
 A stage whose reports are absent (an older build) is marked ``ran: false`` and
 skipped. The top-level ``gates`` dict keeps the F0A names for the post_route
@@ -239,7 +246,7 @@ UNCONSTRAINED_CHECKS = ("no_clock", "unconstrained_internal_endpoints", "no_inpu
 
 
 STAGES = ("rtl", "post_synth", "post_place", "post_route", "bitstream")
-QOR_SCORE_MIN = 4          # UG949 ch. 5 "Assessing Post-Synthesis Quality of Results": "Scores of 1 and 2 have no chance
+QOR_SCORE_MIN = 4          # the post-route gate (brief 05g) and the post-synthesis warning. UG949 ch. 5 "Assessing Post-Synthesis Quality of Results": "Scores of 1 and 2 have no chance
                            # of meeting timing closure and a score of 3 is unlikely to close"; 4 = likely, 5 = will
 PLACE_WHS_MIN_NS = -0.5    # UG949 ch. 6 "Pre- and Post-Placement": hold violations of -0.500 ns or more must be fixed
 JUNCTION_MAX_C = 85.0      # commercial grade; the power gate flow/hw.py uses the same limit
@@ -302,8 +309,11 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         g = {"post_synth_no_unconstrained_endpoints": all(c_s.get(k, 0) == 0 for k in UNCONSTRAINED_CHECKS),
              "post_synth_methodology_no_critical": _n_sev(m_s, "Critical Warning") == 0,
              "post_synth_drc_clean": _n_sev(d_s, "Error") == 0 and _n_sev(d_s, "Critical Warning") == 0}
-        if q_s is not None:
-            g["post_synth_qor_assessment"] = q_s["score"] >= QOR_SCORE_MIN
+        warn: list[dict[str, Any]] = []
+        if q_s is not None and q_s["score"] < QOR_SCORE_MIN:      # a warning, not a gate (docstring: QoR gate)
+            warn.append({"name": "post_synth_qor_assessment", "stage": "post_synth", "score": q_s["score"], "min": QOR_SCORE_MIN,
+                         "meaning": q_s["meaning"],
+                         "note": "post-synthesis score is a prediction; the gate is the post-route score"})
         cdc_s = parse_cdc(_read(d, "cdc_synth.rpt")) if (d / "cdc_synth.rpt").exists() else None
         if cdc_s is not None:              # design standard STD-CDC-02 (brief 05d): report_cdc at post-synthesis
             g["post_synth_cdc_no_critical"] = sum(r["count"] for r in cdc_s["rules"] if r["severity"] == "Critical") == 0
@@ -317,7 +327,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
                 from architecture import resource_check
             sanity = resource_check(util_s, arch)
             g["post_synth_resources_in_range"] = sanity["pass"]
-        stages["post_synth"] = {"ran": True, "gates": g, "timing": t_s, "check_timing": c_s,
+        stages["post_synth"] = {"ran": True, "gates": g, "warnings": warn, "timing": t_s, "check_timing": c_s,
                                 "methodology": _rule_summary(m_s), "drc": _rule_summary(d_s), "qor_assessment": q_s,
                                 "cdc": cdc_s, "resource_sanity": sanity, "utilization": util_s}
     else:
@@ -362,6 +372,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             "methodology_no_critical": _n_sev(meth, "Critical Warning") == 0,
             "cdc_no_critical": sum(r["count"] for r in cdc["rules"] if r["severity"] == "Critical") == 0,
         }
+        if q_r is not None:        # the QoR gate (brief 05g): judged after routing, from qor_assessment_route.rpt
+            route_gates["post_route_qor_assessment"] = q_r["score"] >= QOR_SCORE_MIN
         # UG949 ch. 6 "Power Closure": the junction temperature must fit the thermal budget, computed for the
         # board's own environment (still air, no heat sink: flow/build.tcl applies boards/<board>/board.yaml)
         if (d / "methodology_rtl.rpt").exists():      # a build of this flow version: the environment is set
@@ -378,9 +390,11 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         stages["bitstream"] = {"ran": True, "gates": bit_gates}
 
     gates: dict[str, bool] = {}
+    warnings: list[dict[str, Any]] = []
     first_failed = None
     for name in STAGES:
         st = stages[name]
+        warnings.extend(st.get("warnings", []))
         st["pass"] = all(st["gates"].values()) if st["ran"] else None
         gates.update(st["gates"])
         if st["ran"] and not st["pass"] and first_failed is None:
@@ -392,6 +406,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         "pass": bool(gates) and all(gates.values()),   # nothing ran is not a pass
         "first_failed_stage": first_failed,
         "gates": gates,
+        "warnings": warnings,
         "stages": stages,
         "timing": timing,
         "check_timing": checks,
@@ -438,6 +453,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {name}: {'pass' if st['pass'] else 'FAIL'}")
         for g, ok in st["gates"].items():
             print(f"    {'ok  ' if ok else 'FAIL'} {g}")
+        for w in st.get("warnings", []):
+            print(f"    warn {w['name']}: score {w['score']} < {w['min']} (recorded, not a gate)")
     if r["first_failed_stage"]:
         print(f"first failed stage: {r['first_failed_stage']}")
     return 0 if r["pass"] else 1

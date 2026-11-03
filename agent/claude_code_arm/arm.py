@@ -181,12 +181,12 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
                          f"`claude setup-token`, save it to {TOKEN_FILE}, chmod 600)")
     rt.meter.check()
     lim = plan["limits"]
-    left = max(1, int(lim.get("turns", 30) - rt.meter.stage["turns"]))
+    left = max(1, int(plan["turns_left"]) if "turns_left" in plan else int(lim.get("turns", 30) - rt.meter.stage["turns"]))
     wall = max(30.0, float(lim.get("seconds", 1800)) - rt.meter.stage["seconds"])
     before = {str(p): p.stat().st_mtime for p in rt.design.rglob("*") if p.is_file()}
     tests_before = [p for d in ("tests", "verif") for p in sorted((rt.design / d).rglob("*"))
                     if p.is_file() and "__pycache__" not in p.parts and p.name != "__init__.py"] \
-        if plan["role"] == "tests" else []
+        if plan["role"] == "tests" and not plan.get("repair") else []     # 05g: a repair edits; it never deletes
     out_dir = rt.run_dir / "claude_code"
     out_dir.mkdir(exist_ok=True)
     n = len(list(out_dir.glob("*.jsonl"))) + 1

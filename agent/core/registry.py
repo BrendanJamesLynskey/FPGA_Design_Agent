@@ -98,7 +98,9 @@ def dispatch(session, name: str, args: dict[str, Any] | None) -> dict[str, Any]:
     summary = res["output"][:300]
     session.audit.log({**rec, "ok": res["ok"], "refused": res["refused"], "rule": res.get("rule"),
                        "result_summary": summary, "seconds": res["seconds"],
-                       **({"skills": res["skills"]} if res.get("skills") else {})})
+                       **({"skills": res["skills"]} if "skills" in res else {}),
+                       **({k: res[k] for k in ("sections_empty", "procedures_fallback") if res.get(k)}),
+                       **({"hits": [h.get("id") for h in res["hits"]]} if res.get("hits") else {})})
     if session.trace is not None:
         session.trace.tool(name, args, res, session.stage)
     return res

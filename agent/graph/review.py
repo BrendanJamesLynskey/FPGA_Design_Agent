@@ -316,6 +316,11 @@ def write_page(design: Path, n: int, stage: str, info: dict[str, Any]) -> Path:
            f"{_e(info.get('time', ''))}</p>"]
     sec.append("<h2>Exit gates</h2>" + _table([[g[0], chip(g[1]), g[2] if len(g) > 2 else ""]
                                                for g in info.get("gates", [])], ["gate", "result", "detail"]))
+    warns = gates.get("warnings") or []
+    if warns:       # recorded, not gated (brief 05g): the post-synthesis QoR score
+        sec.append("<h2>Warnings (recorded, not gates)</h2>" + _table(
+            [[w.get("stage", ""), w.get("name", ""), f"score {w.get('score')} (min {w.get('min')}): {w.get('meaning', '')}",
+              w.get("note", "")] for w in warns], ["stage", "warning", "value", "note"]))
     sec.append("<h2>Inputs and outputs</h2>" + _table(
         [["inputs", ", ".join(info.get("inputs", [])) or "-"], ["outputs", ", ".join(info.get("outputs", [])) or "-"]]))
     ports = spec.get("ports") or []

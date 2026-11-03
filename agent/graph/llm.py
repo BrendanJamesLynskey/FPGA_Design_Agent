@@ -121,6 +121,7 @@ class Meter:
     t_stage: float = field(default_factory=time.monotonic)
     t_run: float = field(default_factory=time.monotonic)
     unreported: int = 0
+    reserved: int = 0          # brief 05g: turns held back for the roles that run after the current one
 
     def start_stage(self, limits: dict[str, float]) -> None:
         self.stage_limits = limits
@@ -132,8 +133,16 @@ class Meter:
         self.run["seconds"] = round(time.monotonic() - self.t_run, 1)
         for scope, used, lim in (("stage", self.stage, self.stage_limits), ("run", self.run, self.run_limits)):
             for k in ("turns", "seconds", "usd"):
-                if k in lim and used[k] >= lim[k]:
-                    raise BudgetExceeded(f"{scope} {k} limit {lim[k]} reached ({used[k]})")
+                held = self.reserved if k == "turns" else 0
+                if k in lim and used[k] >= lim[k] - held:
+                    raise BudgetExceeded(f"{scope} {k} limit {lim[k] - held} reached ({used[k]})"
+                                         + (f", {held} held back for the roles that follow" if held else ""))
+
+    def turns_left(self) -> int:
+        """Turns the current role may still use: the smaller of the stage and run budgets, less the reserve."""
+        left = [int(lim["turns"] - used["turns"]) for used, lim in ((self.stage, self.stage_limits), (self.run, self.run_limits))
+                if "turns" in lim]
+        return max(0, min(left or [0]) - self.reserved)
 
     def add(self, r: Reply) -> None:
         usd = r.cost if r.cost is not None else UNREPORTED_COST_CEILING
