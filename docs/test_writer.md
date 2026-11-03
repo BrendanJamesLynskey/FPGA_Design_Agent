@@ -42,3 +42,16 @@ was refused for the tests role.
 `post_synth_qor_assessment` is a recorded warning (`stages.post_synth.warnings`, top-level `warnings`, the review page's
 "Warnings" table), not a gate. Reason: on small designs Vivado's post-synthesis predicted-congestion item reads 3 while the
 routed score is 5 (benchmark 06a: 11 of 24 reference designs, all at most 1.2 % of the device, timing met).
+
+## Live checks (T1, oracle, review off, V1; records in `results/f2/`)
+
+- luna `single`: null at stage 2 (RTL writer; lint then simulate). Not a test-writer failure: V0 and V1 passed.
+- `cvdp` profile: **stage 2 passed at visit 2** (05f: 0 of 2). The test writer's visit-1 failure (formal methods named as bench
+  tests, no SymbiYosys) was repaired in 2 turns by a `replan:` with reasons, and its other files survived the repair. Null at
+  stage 3 (`post_synth_no_unconstrained_endpoints`, the stage-3 writer's `design.xdc`), outside this brief.
+- Stage 9, by resuming the recorded luna run from the end of stage 8: the tests role now gets its turns (visit 1: reserved 15,
+  used them on `gates` only; visit 2: wrote `hw_checks.py` and `tests/test_*_hw.py`), `bringup_ready` is READY and the run stops at
+  "awaiting approval before programming". The board was not touched.
+- Found, not fixed live: a cocotb bench that keeps the spec's `DEBOUNCE_CYCLES = 2,000,000` ran for minutes of wall time per
+  simulate (the tool's own limit is 30 minutes). The checklist now says to override long timing parameters through `parameters=`; this
+  line has unit tests but no live run behind it.

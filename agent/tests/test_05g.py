@@ -190,6 +190,7 @@ def test_the_checklist_names_the_files_the_gates_read(rt, monkeypatch):
     monkeypatch.setattr(runner, "tool_available", lambda n: False)
     t2 = gr.tests_checklist(rt, 2, repair=False)
     for needle in ("tests/test_t1_dimmer_counter_rtl.py", "verif/testplan.yaml", "proof_methods_discharged", "bench.modules",
+                   "parameters=", "200,000 cycles",
                    "NOT installed", "replan:", "A file you leave out is a failed gate"):
         assert needle in t2, needle
     monkeypatch.setattr(runner, "tool_available", lambda n: True)
@@ -224,12 +225,16 @@ def test_the_turn_trace_lists_tools_refusals_and_files(rt, monkeypatch):
         dispatch(s, "write_file", {"path": "rtl/x.sv", "content": "x"})                  # both refused: the tests role may not read or write rtl/
         rt_.meter.stage["turns"] += 2
         rt_.meter.run["turns"] += 2
+        (rt_.design / "rtl").mkdir(exist_ok=True)
+        (rt_.design / "rtl" / "written_through_a_backend.sv").write_text("x")      # not in the returned dict
         return {"tests/a.py": "x"}
     monkeypatch.setattr(gr, "_run_subagent", fake)
     gr.run_subagent(rt, "tests", "p", ())
     rec = usage(rt)[0]
     assert rec["tools"] == {"read_file": 1, "write_file": 1} and rec["refused"] == {"role": 2}
     assert rec["files_written"] == ["tests/a.py"] and rec["ended"] == "done" and rec["turns"] == 2 and rec["visit"] == 1
+    assert rec["model_tool_calls"] == {}                         # nothing was logged by the fake model
+    assert rec["files_changed"] == ["rtl/written_through_a_backend.sv"]
     tr = gr.usage_trace(usage(rt))
     assert tr[0]["role"] == "tests" and tr[0]["turns_allowed"] == MACHINE[2].limits["turns"]
 
@@ -309,3 +314,17 @@ def test_the_bank_status_says_whether_the_bank_was_reachable(rt, monkeypatch):
     assert gr.knowledge_bank_status(rt)["chosen_by"] == "FDA_KNOWLEDGE"
     rt.session.bank = None
     assert gr.knowledge_bank_status(rt)["loaded"] is False
+
+
+def test_model_tool_calls_include_the_harness_built_ins(rt, monkeypatch):
+    enter(rt, 9)
+
+    def fake(rt_, role, prompt, allowed, repair, spec):
+        for names in (["ls"], ["read_file", "write_todos"], ["write_file"], []):       # built-ins the audit never sees
+            rt_.llm_log.append({"turn": 1, "cost": 0.0, "tokens": 1, "tools": names})
+        return {}
+    monkeypatch.setattr(gr, "_run_subagent", fake)
+    rt.llm_log.append({"turn": 0, "cost": 0.0, "tokens": 1, "tools": ["earlier_call"]})
+    gr.run_subagent(rt, "tests", "p", (), repair=True)
+    assert usage(rt)[0]["model_tool_calls"] == {"ls": 1, "read_file": 1, "write_file": 1, "write_todos": 1}
+    assert gr.usage_trace(usage(rt))[0]["model_tool_calls"]["write_todos"] == 1

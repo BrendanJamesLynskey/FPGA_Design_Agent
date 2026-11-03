@@ -76,3 +76,14 @@ Spend by key usage: about $1.23 of the $1.50 cap (luna runs 1-6 $1.0385 from sum
 |---|---|
 | `agent_cvdp_profile_05f_run1.json` | **Null:** stages 0 and 1 passed; stage 2 visited 5 times, not passed. Last visit's first failing gate: V0 `testplan_present` (owner: test writer). 17 min, plan estimate $3.44, rtl role $2.35 of it. |
 | `agent_cvdp_profile_05f_run2.json` | **Null:** the same. Last visit's first failing gate: V1 `proof_methods_discharged` (REQ-03 and REQ-04 formal; owner: test writer). 12 min, plan estimate $2.58. |
+
+## Brief 05g: the test writer, the turn trace and the QoR gate after routing
+
+Code: [docs/test_writer.md](../../docs/test_writer.md) (diagnosis table, fixes). Live checks as in 05f (`--interview oracle --review off --verif-level V1`), run on the PR's first commit; the later commits only add trace fields and one line of the test writer's checklist. Spend: OpenRouter key usage $0.415 in all (cap $0.50); the cvdp roles ran on the Max plan (plan estimate below). No board work: the audit of every run has no `program`, `bringup`, `power_ok` or `discover` call.
+
+| File | What |
+|---|---|
+| `agent_luna_05g_run1.json` | `single` profile, luna. **Null at stage 2** (5 visits, cap): lint and simulate failing, owner the RTL writer; the testplan gates (V0, V1) passed. $0.331 by key usage. |
+| `agent_cvdp_profile_05g_run1.json` | `cvdp` profile. **Stage 2 passed at visit 2** (first time in the recorded cvdp runs: 05f's two stopped there). The test writer's failure at visit 1 (formal methods named as bench tests, no SymbiYosys here) was repaired in 2 turns by a `replan:` with reasons while keeping its other files. **Null at stage 3**: `post_synth_no_unconstrained_endpoints`, 5 visits, owner the stage-3 RTL writer. Plan estimate $3.73; oracle $0.013. |
+| `agent_luna_05g_stage9_resume.json` | The stage-9 check, from the recorded luna run `20261103-004742-f7ba` (stages 0-8 pass, stalled at stage 9 in 05e/05f), rewound to the end of stage 8 and continued. Visit 1: the RTL writer took its 30 of 30 turns and the tests role then got its reserved 15 (before: it never got a turn), but wrote nothing (4 `gates` calls). Visit 2: tests role 29 turns wrote `hw_checks.py` and `tests/test_t1_dimmer_counter_hw.py`; `bringup_ready` READY; stopped at "hardware: awaiting approval before programming" (board never programmed). $0.071. |
+

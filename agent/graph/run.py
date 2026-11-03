@@ -24,6 +24,7 @@ import re
 import subprocess
 import time
 import uuid
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, TypedDict
@@ -402,6 +403,11 @@ def role_client(rt: Runtime, model: str) -> Callable:
     return rt.client_for(model)
 
 
+def _design_mtimes(design: Path) -> dict[str, float]:
+    return {str(p.relative_to(design)): p.stat().st_mtime_ns for p in design.rglob("*")
+            if p.is_file() and "build" not in p.relative_to(design).parts and "__pycache__" not in p.parts}
+
+
 def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict[str, str]:
     """Run one sub-agent through the harness and model its role is routed to (05f), and account for it per role
     and stage (``role_usage.jsonl``): turns, tokens, wall time, reported cost / plan estimate. Brief 05g adds the turn
@@ -410,6 +416,8 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
     spec = rt.cfg.role_models(rt.session.stage)[role]
     m0, n_cc, t0 = dict(rt.meter.run), len(_cc_calls(rt)), time.monotonic()
     a0, allowed_turns, ended, written = len(rt.session.audit.records), rt.meter.turns_left(), "done", {}
+    l0 = len(rt.llm_log)
+    before = _design_mtimes(rt.design)
     try:
         written = _run_subagent(rt, role, prompt, allowed, repair, spec)
         return written
@@ -437,7 +445,11 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
                "turns": int(rt.meter.run["turns"] - m0["turns"]), "turns_allowed": allowed_turns, "ended": ended,
                "tokens": int(rt.meter.run["tokens"] - m0["tokens"]),
                "wall_s": round(time.monotonic() - t0, 1),
-               "tools": tools, "refused": refused, "files_written": sorted(written) if isinstance(written, dict) else [],
+               "tools": tools, "refused": refused,
+               # every tool the model asked for, built-ins of the Deep Agents harness included (the audit sees only ours)
+               "model_tool_calls": dict(sorted(Counter(n for e in rt.llm_log[l0:] for n in e.get("tools", [])).items())), "files_written": sorted(written) if isinstance(written, dict) else [],
+               # what changed in the design (the Deep Agents RTL writer writes through its backend and returns nothing)
+               "files_changed": sorted(k for k, v in _design_mtimes(rt.design).items() if before.get(k) != v),
                "cost_usd": None if spec["harness"] == "claude_code" else round(rt.meter.run["usd"] - m0["usd"], 6),
                "plan_cost_estimate_usd": round(sum(c.get("plan_cost_estimate_usd") or 0 for c in new_cc), 4)
                if spec["harness"] == "claude_code" else None}
@@ -527,7 +539,11 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
     if stage == 2:
         lines += [
             f"1. tests/test_{name}_rtl.py: the pytest entry (gate V0 `bench_modules_present`; the `simulate` tool runs tests/test_*_rtl.py).",
-            "2. tests/<module>.py for every module listed in bench.modules of the testplan (V0 `bench_modules_present`).",
+            "2. tests/<module>.py for every module listed in bench.modules of the testplan (V0 `bench_modules_present`). "
+            "Keep the bench fast: cocotb on Icarus runs about 10^5 clock cycles per second and the `simulate` tool stops a run "
+            "after 30 minutes, so override the spec's long timing parameters (debounce, PWM period, baud divider) with small "
+            "values through `parameters=` of flow.cocotb_run.run and take the same values for the model. A test that needs "
+            "more than about 200,000 cycles is too long.",
             "3. verif/testplan.yaml (V0 `testplan_present`, V1 `spec_items_traced`): every spec item traced to a test. "
             "Its `proof:` list needs one {requirement, method, artefact} entry for every method of every requirement in "
             "spec.yaml (V1 `proof_methods_discharged`), and each artefact must exist (V1 `proof_references_resolve`).",
@@ -1138,7 +1154,8 @@ def usage_by(rows: list[dict], key: str) -> dict:
 
 def usage_trace(rows: list[dict]) -> list[dict]:
     """The per-stage, per-role turn trace of a run (05g): one line per sub-agent call, in the order they ran."""
-    keep = ("stage", "visit", "role", "repair", "turns_allowed", "turns", "ended", "wall_s", "tools", "refused", "files_written")
+    keep = ("stage", "visit", "role", "repair", "turns_allowed", "turns", "ended", "wall_s", "tools", "model_tool_calls", "refused",
+            "files_written", "files_changed")
     return [{k: u.get(k) for k in keep} for u in rows]
 
 
