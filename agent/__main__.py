@@ -62,7 +62,20 @@ def _oracle(client):
     return llm
 
 
+def config_from_json(c: dict):
+    """The Config of a run from its config.json (``resume``); runs from before 05f have no profile: ``single``."""
+    from agent.graph.run import Config
+    return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"],
+                  review=c["review"], model=c["model"],
+                  hidden_spec=Path(c["hidden_spec"]) if c.get("hidden_spec") not in (None, "None") else None,
+                  stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]),
+                  harness=c.get("harness", "deepagents"), cc_model=c.get("cc_model", "claude-haiku-5-5"),
+                  cc_effort=c.get("cc_effort", "medium"), verif_level=c.get("verif_level", "V3"),
+                  profile=c.get("profile", "single"), roles=c.get("roles") or None)
+
+
 def main(argv: list[str] | None = None) -> int:
+    from agent.graph.role_models import parse_roles
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
     ap = argparse.ArgumentParser(prog="python -m agent")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -79,6 +92,13 @@ def main(argv: list[str] | None = None) -> int:
                    help="claude_code: each sub-agent turn is a headless `claude -p` on the Max plan (05c)")
     r.add_argument("--cc-model", default="claude-haiku-5-5", help="Claude Code model id (--harness claude_code)")
     r.add_argument("--cc-effort", default="medium", choices=["low", "medium", "high", "xhigh", "max"])
+    r.add_argument("--profile", default="single",
+                   help="per-role model routing (05f): single (today: one harness and model for every role) | cvdp "
+                        "(RTL on Claude Code + Opus 5.5; model, tests, clarify on Claude Code + Sonnet 5.5). "
+                        "The interview oracle always runs on --model.")
+    r.add_argument("--roles", help='JSON of role overrides on top of the profile, for example '
+                                   '\'{"rtl": {"harness": "claude_code", "model": "claude-opus-5-5", "effort": null}}\'; '
+                                   "roles: clarify, model, tests, rtl")
     r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only while the agent "
@@ -103,11 +123,13 @@ def main(argv: list[str] | None = None) -> int:
         cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
                      model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after,
                      harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort,
-                     verif_level=a.verif_level)
+                     verif_level=a.verif_level, profile=a.profile, roles=parse_roles(a.roles))
+        cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd
         client = _client(a.model, a.replay, a.record)
         rt = new_runtime(cfg, client, oracle_llm=_oracle(client))
+        rt.client_for = lambda m: _client(m, a.replay, None)
         graph = build_graph(checkpointer_for(rt.run_dir))
         _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
                {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
@@ -115,16 +137,12 @@ def main(argv: list[str] | None = None) -> int:
     # resume
     run_dir = ROOT / "runs" / a.run_id
     c = json.loads((run_dir / "config.json").read_text())
-    cfg = Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"],
-                 review=c["review"], model=c["model"],
-                 hidden_spec=Path(c["hidden_spec"]) if c.get("hidden_spec") not in (None, "None") else None,
-                 stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]),
-                 harness=c.get("harness", "deepagents"), cc_model=c.get("cc_model", "claude-haiku-5-5"),
-                 cc_effort=c.get("cc_effort", "medium"), verif_level=c.get("verif_level", "V3"))
+    cfg = config_from_json(c)
     if a.max_usd is not None:
         cfg.run_limits["usd"] = a.max_usd
     client = _client(cfg.model, a.replay, a.record)
     rt = new_runtime(cfg, client, run_id=a.run_id, oracle_llm=_oracle(client))
+    rt.client_for = lambda m: _client(m, a.replay, None)
     graph = build_graph(checkpointer_for(run_dir))
     lg = {"configurable": {"thread_id": a.run_id}}
     from langgraph.types import Command

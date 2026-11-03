@@ -78,7 +78,8 @@ def dispatch(session, name: str, args: dict[str, Any] | None) -> dict[str, Any]:
     from agent.core import tools as _t  # noqa: F401
     args = dict(args or {})
     t0 = time.monotonic()
-    rec: dict[str, Any] = {"tool": name, "arguments": args, "stage": session.stage}
+    rec: dict[str, Any] = {"tool": name, "arguments": args, "stage": session.stage,
+                           "role": getattr(session.jail, "role", None)}
     try:
         if name not in TOOLS:
             raise SecurityError("unknown-tool", f"no tool named {name!r}")
@@ -96,7 +97,8 @@ def dispatch(session, name: str, args: dict[str, Any] | None) -> dict[str, Any]:
     res["seconds"] = round(time.monotonic() - t0, 3)
     summary = res["output"][:300]
     session.audit.log({**rec, "ok": res["ok"], "refused": res["refused"], "rule": res.get("rule"),
-                       "result_summary": summary, "seconds": res["seconds"]})
+                       "result_summary": summary, "seconds": res["seconds"],
+                       **({"skills": res["skills"]} if res.get("skills") else {})})
     if session.trace is not None:
         session.trace.tool(name, args, res, session.stage)
     return res

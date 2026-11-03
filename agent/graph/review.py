@@ -355,6 +355,7 @@ def write_page(design: Path, n: int, stage: str, info: dict[str, Any]) -> Path:
     used = info.get("used") or {}
     sec.append("<h2>Budget</h2>" + _table([[k, used.get(k, "-"), (info.get("limits") or {}).get(k, "-")]
                                            for k in ("turns", "seconds", "usd")], ["", "used", "limit"]))
+    sec.append("<h2>Models by role</h2>" + roles_html(info.get("role_models"), info.get("role_usage")))
     a = info.get("approval")
     sec.append("<h2>Review</h2>" + (_table([["decision", a.get("decision")], ["by", a.get("by")],
                                             ["note", a.get("note") or "-"]]) if a else '<p class="mut">Pending.</p>'))
@@ -367,13 +368,33 @@ def write_page(design: Path, n: int, stage: str, info: dict[str, Any]) -> Path:
     return out
 
 
+def roles_html(roles: dict | None, usage: list[dict] | None = None) -> str:
+    """Which harness and model ran each sub-agent role (05f), with this stage's use of each. The stage machine itself is
+    plain code, and the interview oracle always runs on the run's own model (luna by default): neither is a role."""
+    if not roles:
+        return '<p class="mut">Not recorded.</p>'
+    use: dict[str, dict[str, Any]] = {}
+    for u in usage or []:
+        d = use.setdefault(u["role"], {"turns": 0, "tokens": 0, "wall_s": 0.0, "usd": 0.0, "plan": 0.0})
+        d["turns"] += u.get("turns") or 0
+        d["tokens"] += u.get("tokens") or 0
+        d["wall_s"] += u.get("wall_s") or 0
+        d["usd"] += u.get("cost_usd") or 0
+        d["plan"] += u.get("plan_cost_estimate_usd") or 0
+    rows = [[r, s["harness"], s["model"], s.get("effort") or "CLI default",
+             (f"{use[r]['turns']} turns, {use[r]['tokens']} tokens, {use[r]['wall_s']:.0f} s, "
+              f"${use[r]['usd']:.4f} reported, ${use[r]['plan']:.4f} plan estimate") if r in use else "-"]
+            for r, s in roles.items()]
+    return _table(rows, ["role", "harness", "model", "effort", "use this stage"])
+
+
 def _page(title: str, body: str) -> str:
     return (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" '
             f'content="width=device-width,initial-scale=1"><title>{_e(title)}</title><style>{CSS}</style></head>'
             f"<body><main>{body}</main></body></html>\n")
 
 
-def write_index(design: Path, history: list[dict[str, Any]]) -> Path:
+def write_index(design: Path, history: list[dict[str, Any]], role_models: dict | None = None) -> Path:
     """``history``: one dict per stage visit: n, stage, page, passed, approval {decision, by, note}."""
     rows = [[h["n"], Markup(f'<a href="{_e(Path(h["page"]).name)}">{_e(h["stage"])}</a>'), chip(h.get("passed")),
              (h.get("approval") or {}).get("decision", "-"), (h.get("approval") or {}).get("by", "-"),
@@ -381,5 +402,6 @@ def write_index(design: Path, history: list[dict[str, Any]]) -> Path:
     out = design / "build" / "review" / "review_index.html"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(_page("Review index", f"<h1>Review: {_e(design.name)}</h1>" +
-                         _table(rows, ["#", "stage", "gates", "decision", "by", "note"])))
+                         _table(rows, ["#", "stage", "gates", "decision", "by", "note"])
+                         + ("<h2>Models by role</h2>" + roles_html(role_models) if role_models else "")))
     return out
