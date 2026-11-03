@@ -30,6 +30,46 @@ ROOT = Path(__file__).resolve().parents[1]
 PROOF_METHODS = ("simulation", "formal", "hardware", "analysis")
 
 
+def formal_installed() -> bool:
+    """SymbiYosys is on this process's PATH (the agent's tools run with the local tools file's PATH, so this is the
+    answer for the agent's own environment). Overridable in tests."""
+    import shutil
+    return shutil.which("sby") is not None and shutil.which("yosys") is not None
+
+
+def replan_entries(plan: dict, spec_reqs: list[dict]) -> tuple[list[dict], list[str]]:
+    """Brief 05g. When a requirement's proof method cannot be carried out the test writer re-plans it in the testplan:
+    ``replan: [{requirement, method, replaced_by, artefact, why}]``. Only ``formal`` may be re-planned, and only when
+    SymbiYosys is not installed; it needs a ``why`` and a replacement artefact of another method. Returns the
+    equivalent proof entries (carrying ``replan``) and the problems; a proof is never marked discharged without its
+    evidence (the replacement method's evidence is what the sign-off table reads)."""
+    ids = {r.get("id") for r in spec_reqs}
+    entries: list[dict] = []
+    bad: list[str] = []
+    for e in (plan.get("replan") or []):
+        if not isinstance(e, dict):
+            bad.append("replan entry is not a mapping")
+            continue
+        req, m, to, a = e.get("requirement"), e.get("method"), e.get("replaced_by"), str(e.get("artefact") or "")
+        tag = f"{req}:{m}->{to}"
+        if req not in ids:
+            bad.append(f"{tag}: replan names a requirement that spec.yaml does not have")
+        elif m != "formal":
+            bad.append(f"{tag}: only the formal method can be re-planned")
+        elif to not in PROOF_METHODS or to == "formal":
+            bad.append(f"{tag}: replaced_by must be simulation, hardware or analysis")
+        elif not a:
+            bad.append(f"{tag}: no replacement artefact")
+        elif len(str(e.get("why") or "").strip()) < 12:
+            bad.append(f"{tag}: say why (at least a sentence in 'why')")
+        elif formal_installed():
+            bad.append(f"{tag}: SymbiYosys is installed here, so the formal job is written and run, not re-planned")
+        else:
+            entries.append({"requirement": req, "method": m, "artefact": a,
+                            "replan": {"to": to, "why": str(e["why"]).strip()}})
+    return entries, bad
+
+
 class PlanError(Exception):
     """An input the gates read (testplan.yaml, spec.yaml, the files they name) is malformed: reported as a failed
     gate with this message, never as a traceback (brief 05c2, fix 4)."""
@@ -196,20 +236,22 @@ def trace_table(reqs: list[dict], entries: list[dict], res: dict[int, dict[str, 
             for e in es:
                 a = str(e["artefact"])
                 result, detail = "pending", ""
-                if m == "simulation":
+                rp = e.get("replan")
+                me = rp["to"] if rp else m          # a re-planned formal method is judged by the replacement's evidence
+                if me == "simulation":
                     if not res:
                         detail = "no simulation results"
                     else:
                         bad = [f"seed{s}" for s, tt in sorted(res.items()) if not tt.get(a, False)]
                         result, detail = ("pass", f"passed on {len(res)} seed(s)") if not bad else ("fail", "failed or missing on " + ", ".join(bad))
-                elif m == "formal":
+                elif me == "formal":
                     if not formal_res:
                         detail = "no formal results"
                     else:
                         got = {k: formal_res.get(f"{a}_{k}", "absent") for k in ("bmc", "cover")}
                         result = "pass" if all(v == "PASS" for v in got.values()) else "fail"
                         detail = ", ".join(f"{k}={v}" for k, v in got.items())
-                elif m == "hardware":
+                elif me == "hardware":
                     if not hw_json:
                         detail = "no bring-up result"
                     else:
@@ -217,7 +259,7 @@ def trace_table(reqs: list[dict], entries: list[dict], res: dict[int, dict[str, 
                         st = (hw_json.get("steps") or {}).get(step)
                         ok = bool(st) and st.get("pass") is True and (not case or case in (st.get("cases") or {}))
                         result, detail = ("pass", "bring-up step passed") if ok else ("fail", f"bring-up step {a} absent or failed")
-                elif m == "analysis":
+                elif me == "analysis":
                     if not gates_json:
                         detail = "no flow gates result"
                     else:
@@ -225,6 +267,8 @@ def trace_table(reqs: list[dict], entries: list[dict], res: dict[int, dict[str, 
                         val = ((gates_json.get("stages") or {}).get(stage, {}).get("gates") or {}).get(g) if stage else flat_gates.get(g)
                         result = "pass" if val is True else "fail"
                         detail = f"gate {a} = {val}"
+                if rp:
+                    detail = f"re-planned from formal to {me} ({rp['why']}): {detail}"
                 rows.append({"requirement": r.get("id"), "text": r.get("text", ""), "method": m, "artefact": a,
                              "result": result, "detail": detail})
     return rows
@@ -274,6 +318,8 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     if not spec_reqs:
         no_method = ["spec.yaml has no requirements"]
     entries = [e for e in (plan.get("proof") or []) if isinstance(e, dict)]
+    re_entries, bad_replan = replan_entries(plan, spec_reqs)
+    entries += re_entries
     undischarged = [f"{r.get('id')}:{m}" for r in spec_reqs for m in (r.get("proof") or [])
                     if m in PROOF_METHODS and not any(e.get("requirement") == r.get("id") and e.get("method") == m
                                                       and e.get("artefact") for e in entries)]
@@ -281,7 +327,12 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     bad_proof = []
     for e in entries:
         a, m = str(e.get("artefact", "")), e.get("method")
-        if e.get("requirement") not in ids:
+        if e.get("replan"):
+            to = e["replan"]["to"]
+            ok_ref = {"simulation": a in tests_all, "hardware": True, "analysis": True}.get(to, False)
+            if not ok_ref:
+                bad_proof.append(f"{e['requirement']}:formal->{to}:{a}: not a test in the bench")
+        elif e.get("requirement") not in ids:
             bad_proof.append(f"{e.get('requirement')}: not a requirement of spec.yaml")
         elif m not in PROOF_METHODS:
             bad_proof.append(f"{e.get('requirement')}:{m}: not a proof method")
@@ -291,6 +342,7 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
             bad_proof.append(f"{e['requirement']}:formal:{a}: not a formal job in {plan['formal_dir']}")
         elif not a:
             bad_proof.append(f"{e['requirement']}:{m}: no artefact")
+    bad_proof += bad_replan
     v1 = {
         "requirements_have_proof_method": chk(no_method, [], not no_method),
         "proof_methods_discharged": chk(undischarged, [], not undischarged and not no_method),

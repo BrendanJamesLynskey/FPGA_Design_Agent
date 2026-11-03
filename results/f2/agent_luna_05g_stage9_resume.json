@@ -1,0 +1,119 @@
+{
+ "brief": "05g",
+ "what": "stage-9 turn-reserve check: the recorded luna run 20261103-004742-f7ba (it had passed stages 0-8 and stalled at stage 9) rewound to the end of stage 8 and continued with this PR's code (profile single, luna, no board, no hardware tool called; stopped at the hardware-approval pause)",
+ "code": "856f232 (this PR's first commit; the later commits add only model_tool_calls and files_changed to the trace and the bench-runtime line of the checklist)",
+ "stages_visited": [
+  0,
+  1,
+  2,
+  2,
+  3,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  8
+ ],
+ "stage_9": [
+  {
+   "visit": 1,
+   "rtl": "30 of 30 turns, ended on the stage budget (writes nothing useful)",
+   "tests": "15 of 15 turns reserved, 4 gates calls, no file written (ended on its budget)",
+   "first_failing_gate": "bring-up artefacts: no tests/test_*_hw.py, BRINGUP.md missing; owner: bring-up writers"
+  },
+  {
+   "visit": 2,
+   "rtl": "9 turns, done",
+   "tests": "29 of 36 turns, wrote hw_checks.py and tests/test_t1_dimmer_counter_hw.py",
+   "first_failing_gate": "none: hardware: awaiting approval before programming"
+  }
+ ],
+ "bringup_ready": "READY (flow/hw_dry_check.check_design: ok true, no problems); base and ila bitstreams built",
+ "board": "not programmed; the audit has no program, bringup, power_ok or discover call",
+ "openrouter_cost_usd_key_usage": 0.071,
+ "key_usage_before_after": [
+  95.175972486,
+  95.246968936
+ ],
+ "turn_trace_stage_9": [
+  {
+   "stage": "configuration-and-debug",
+   "visit": 1,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 30,
+   "ended": "stage_budget",
+   "wall_s": 1097.8,
+   "tools": {
+    "list_files": 3,
+    "read_file": 18,
+    "gates": 3,
+    "report": 2,
+    "build": 9,
+    "load_skill": 1,
+    "search_docs": 1
+   },
+   "refused": {
+    "path-jail": 2,
+    "arguments": 1
+   },
+   "files_written": []
+  },
+  {
+   "stage": "configuration-and-debug",
+   "visit": 1,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 15,
+   "turns": 15,
+   "ended": "stage_budget",
+   "wall_s": 130.5,
+   "tools": {
+    "gates": 4
+   },
+   "refused": {},
+   "files_written": []
+  },
+  {
+   "stage": "configuration-and-debug",
+   "visit": 2,
+   "role": "rtl",
+   "repair": false,
+   "turns_allowed": 30,
+   "turns": 9,
+   "ended": "done",
+   "wall_s": 94.5,
+   "tools": {
+    "list_files": 2,
+    "read_file": 11,
+    "gates": 1
+   },
+   "refused": {
+    "path-jail": 2
+   },
+   "files_written": []
+  },
+  {
+   "stage": "configuration-and-debug",
+   "visit": 2,
+   "role": "tests",
+   "repair": true,
+   "turns_allowed": 36,
+   "turns": 29,
+   "ended": "done",
+   "wall_s": 230.3,
+   "tools": {
+    "gates": 12,
+    "write_file": 2
+   },
+   "refused": {},
+   "files_written": [
+    "hw_checks.py",
+    "tests/test_t1_dimmer_counter_hw.py"
+   ]
+  }
+ ]
+}

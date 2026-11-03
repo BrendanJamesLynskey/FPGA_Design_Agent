@@ -32,14 +32,20 @@ ROLES: dict[str, dict[str, tuple[str, ...]]] = {
 #: tool names each role may call at all (on top of the stage's own list)
 ROLE_TOOLS = {"clarify": {"read_file", "write_file", "list_files", "search_docs", "load_skill"},
               "model": {"read_file", "write_file"},
-              "tests": {"read_file", "write_file", "list_files", "search_docs", "load_skill"},
+              "tests": {"read_file", "write_file", "list_files", "search_docs", "load_skill", "formal"},
               "rtl": None}                                      # None: whatever the stage allows
+
+
+#: what the test writer may read of ``@shell/`` (read-only): the frame protocol and the host classes it must import
+TESTS_SHELL_VIEW = ("PROTOCOL.md", "host/protocol.py", "host/fpga_shell.py")
 
 
 class RoleJail(PathJail):
     def __init__(self, base: PathJail, role: str):
-        super().__init__(base.root, base.write_deny, base.shell_root if role == "rtl" else None)
+        super().__init__(base.root, base.write_deny, base.shell_root if role in ("rtl", "tests") else None)
         self.role, self.rules = role, ROLES[role]
+        if role == "tests":     # brief 05g: the test shell's protocol and host classes (what the hw tests import), not its RTL
+            self.READ_ONLY_ENTRIES = TESTS_SHELL_VIEW
 
     def _ok(self, rel: str, pats: tuple[str, ...]) -> bool:
         return any(fnmatch.fnmatch(rel, p) for p in pats)
@@ -88,4 +94,13 @@ def role_inputs(s: Session, role: str, previous: bool = False) -> dict[str, str]
         p = j.resolve(f)
         if p.is_file():
             out[f] = p.read_text()
+    if role == "tests":                  # brief 05g: the shell's protocol and host classes, read-only, for the bench and the hw tests
+        refs = ["PROTOCOL.md"] + (["host/fpga_shell.py", "host/protocol.py"] if s.stage == "configuration-and-debug" else [])
+        for f in refs:
+            try:
+                p = j.resolve("@shell/" + f)
+            except SecurityError:
+                continue
+            if p.is_file():
+                out["shell_ref/" + f] = p.read_text()
     return out

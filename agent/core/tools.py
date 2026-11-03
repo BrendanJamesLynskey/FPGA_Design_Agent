@@ -311,8 +311,13 @@ def formal(s: Session) -> dict:
         return {"ok": False, "output": "the design has no verif/formal/*.sby"}
     _refuse_on_scan(s, python=False, hdl=True)
     r = s.runner.run("formal", [str(s.root / "flow" / "formal.sh"), _rel(s, s.design)], s.root, timeout=1800)
-    return {"ok": r.returncode == 0 and "FAIL" not in r.stdout and "ERROR" not in r.stdout,
-            "output": _text_out(r), "returncode": r.returncode}
+    out = _text_out(r)
+    missing = "sby: command not found" in out or "sby: not found" in out or "ABSENT" in out and "formal " in out
+    if missing:       # brief 05g: say so, so the role re-plans the method instead of claiming a proof
+        out += ("\nSymbiYosys (sby) did not run in this environment, so there is no formal result. Do not claim a proof: "
+                "re-plan the formal method in the testplan (replan:) and say why.")
+    return {"ok": r.returncode == 0 and "FAIL" not in r.stdout and "ERROR" not in r.stdout and not missing,
+            "output": out, "returncode": r.returncode}
 
 
 STOPS = ["synth", "place", "route", "bitstream"]
@@ -553,8 +558,27 @@ def load_skill(s: Session, sections: list[str], procedures: bool = False) -> dic
     if s.bank is None:
         return {"ok": False, "output": "no knowledge bank configured"}
     sk = s.bank.skills(s.board, s.family, sections, primary_only=True, procedures=procedures)[:6]
+    # Brief 05g: some sections (verification-stages, debug-ila-vio...) live only in the procedures layer; asking for
+    # them without ``procedures`` returned nothing and the agents (and the 05f log) saw an empty list. A section that
+    # matched nothing is retried in the procedures layer, and the log says so.
+    fallback: list[str] = []
+    if not procedures:
+        got = {x["section"] for x in sk}
+        missing = [x for x in sections if x not in got]
+        if missing:
+            extra = s.bank.skills(s.board, s.family, missing, primary_only=True, procedures=True)
+            known = {x["path"] for x in sk}
+            more = [x for x in extra if x["path"] not in known and x["path"].startswith("procedures/")]
+            if more:
+                sk = (sk + more)[:6]
+                fallback = sorted({x["section"] for x in more})
+    paths = [x["path"] for x in sk]
     text = "\n\n".join(f"{DATA_NOTE}\n[{x['path']}]\n{x['text']}" for x in sk)
-    return {"output": text or "no skill matches", "skills": [x["path"] for x in sk], "untrusted": True}
+    empty = [x for x in sections if not any(x == y["section"] for y in sk)]
+    note = ("" if not fallback else f"[sections {', '.join(fallback)} are procedures: returned from the procedures layer]\n\n")
+    return {"output": (note + text) if text else f"no skill matches for {', '.join(sections)}", "skills": paths,
+            "sections_asked": list(sections), "sections_empty": empty, "procedures_fallback": fallback,
+            "untrusted": True}
 
 
 # --- notes and stages -----------------------------------------------------------------------------------------------------

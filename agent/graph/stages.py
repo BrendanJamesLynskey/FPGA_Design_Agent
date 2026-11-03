@@ -35,7 +35,7 @@ MACHINE: tuple[Stage, ...] = (
           ("arch_note", "arch_yaml", "inventory"), (0,), _L),
     Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates"),
           ("arch_approved", "lint", "model_contract", "simulate", "standards_rtl", "verif_v3", "stage_rtl"), (0, 1),
-          {"turns": 60, "seconds": 3600, "usd": 0.80}),
+          {"turns": 80, "seconds": 3600, "usd": 0.80}),      # 05g: 60 -> 80, the tests role keeps a reserve (run.ROLE_TURN_RESERVE)
     Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates"), ("constraints_post_synth",), (2,), _L),
     Stage(4, "synthesis", (*FILES, "build", "gates", "report"), ("stage_post_synth", "standards_post_synth"), (1, 2, 3), _L),
     Stage(5, "implementation", (*FILES, "build", "gates", "report"), ("stage_post_place", "stage_post_route"), (6,), _L),
@@ -43,7 +43,7 @@ MACHINE: tuple[Stage, ...] = (
     Stage(7, "power-closure", (*FILES, "build", "gates", "report"), ("power",), (2, 0), _L),
     Stage(8, "drc-closure", (*FILES, "build", "gates", "report"), ("drc",), (3, 2), _L),
     Stage(9, "configuration-and-debug", (*FILES, "build", "gates", "report", "program", "bringup"),
-          ("bitstream_base", "bitstream_ila", "bringup_ready", "bringup", "signoff"), (6, 2, 0), {"turns": 30, "seconds": 3600, "usd": 0.40}),
+          ("bitstream_base", "bitstream_ila", "bringup_ready", "bringup", "signoff"), (6, 2, 0), {"turns": 45, "seconds": 3600, "usd": 0.40}),   # 05g: 30 -> 45, 15 held for the tests role
 )
 assert tuple(s.name for s in MACHINE) == STAGES
 
