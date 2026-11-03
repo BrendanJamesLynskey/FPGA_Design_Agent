@@ -3,11 +3,11 @@
   "sim": "icarus",
   "date": "2026-11-03",
   "ref": {
-    "pass": false,
+    "pass": true,
     "tests": {
       "test_identity_and_reset": true,
       "test_sync_timing": true,
-      "test_sprite_bitmap": false,
+      "test_sprite_bitmap": true,
       "test_clipping_and_enable": true,
       "test_bounce_and_vertical_timing": true,
       "test_random_sprites": true
@@ -40,11 +40,9 @@
     {
       "name": "wraps_at_right",
       "why": "a sprite off the right edge wraps round to the left",
-      "killed": true,
+      "killed": false,
       "built": true,
-      "failed_tests": [
-        "test_sprite_bitmap"
-      ]
+      "failed_tests": []
     },
     {
       "name": "hs_positive",
@@ -66,36 +64,29 @@
       "killed": true,
       "built": true,
       "failed_tests": [
-        "test_sprite_bitmap",
         "test_bounce_and_vertical_timing"
       ]
     },
     {
       "name": "no_turn_at_zero",
       "why": "X wraps below 0 instead of turning",
-      "killed": true,
+      "killed": false,
       "built": true,
-      "failed_tests": [
-        "test_sprite_bitmap"
-      ]
+      "failed_tests": []
     },
     {
       "name": "enable_ignored",
       "why": "CTRL.EN does not hide the sprite",
-      "killed": true,
+      "killed": false,
       "built": true,
-      "failed_tests": [
-        "test_sprite_bitmap"
-      ]
+      "failed_tests": []
     },
     {
       "name": "blank_shows_bg",
       "why": "lines 480-524 show the background colour",
-      "killed": true,
+      "killed": false,
       "built": true,
-      "failed_tests": [
-        "test_sprite_bitmap"
-      ]
+      "failed_tests": []
     },
     {
       "name": "vsync_three_lines",
@@ -103,11 +94,10 @@
       "killed": true,
       "built": true,
       "failed_tests": [
-        "test_sprite_bitmap",
         "test_bounce_and_vertical_timing"
       ]
     }
   ],
-  "mutants_killed": 9,
+  "mutants_killed": 5,
   "mutants_total": 9
 }
