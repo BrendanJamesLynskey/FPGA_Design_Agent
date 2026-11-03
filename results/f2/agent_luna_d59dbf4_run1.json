@@ -1,0 +1,77 @@
+{
+ "brief": "05e end-to-end (fresh luna T1 on main d59dbf4)",
+ "main_commit": "d59dbf4",
+ "model": "openai/gpt-6-luna",
+ "harness": "deepagents",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V1",
+ "max_usd": 0.6,
+ "result": "PARTIAL: stages 0-8 passed with every new gate green; stage 9 (configuration-and-debug) visited 3 times, never ready; stopped on the 300-turn run limit. The board was not programmed and no hardware approval was requested.",
+ "run": {
+  "run_id": "20261103-004742-f7ba",
+  "stages_visited": [
+   0,
+   1,
+   2,
+   2,
+   3,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   9,
+   9
+  ],
+  "stop": "budget: run turns limit 300 reached (300)",
+  "turns": 300,
+  "tokens": 9253208,
+  "wall_s": 5536.4,
+  "meter_cost_usd": 0.250313,
+  "key_usage": {
+   "before": 94.575743176,
+   "after": 94.829323656,
+   "delta": 0.25358
+  },
+  "questions": {
+   "asked": 8,
+   "answered": 2,
+   "defaulted": 6
+  },
+  "gates_last": {
+   "clarify": true,
+   "board-and-device-planning": true,
+   "rtl-design-creation": true,
+   "constraints": true,
+   "synthesis": true,
+   "implementation": true,
+   "timing-closure": true,
+   "power-closure": true,
+   "drc-closure": true,
+   "configuration-and-debug": false
+  }
+ },
+ "new_gates": {
+  "architecture": "fired and passed (architecture.json ok, approved by auto, source agent)",
+  "standards_rtl": "11 rules pass (STD-ARCH-00, CLK, RST ...), 3 review_only (STD-REV-01..03)",
+  "standards_post_synth": "3 rules pass (incl. STD-CLK-03)",
+  "resource": "post_synth_resources_in_range pass (base LUT 553 in [150,2400], FF 534 in [175,1800])",
+  "proof_methods_V1": "V1 pass: requirements_have_proof_method, proof_methods_discharged, proof_references_resolve all pass; 32/32 spec items traced; V2 not run (V1 level)",
+  "bringup_dry_check": "fired at stage 9, NOT READY. First call: hw_checks.py, tests/test_*_hw.py, BRINGUP.md, probes.yaml missing; the model then wrote hw_checks.py, BRINGUP.md and probes.yaml and built base and ILA (PASS), but never wrote tests/test_*_hw.py; 4 later calls all: no tests/test_*_hw.py"
+ },
+ "first_failing_gate": "stage 9 configuration-and-debug bringup_ready: no tests/test_*_hw.py. Model/agent cause (stage-9 test role never produced the hw test); not a harness defect seen in this run. Path-jail refusals on read '@shell/host/fpga_shell.py' (3x) cost turns: shell view only exposes rtl, PROTOCOL.md, host/protocol.py.",
+ "stage9_tool_calls": {
+  "read_file": 61,
+  "gates": 16,
+  "build": 14,
+  "list_files": 13,
+  "search_docs": 6,
+  "report": 5,
+  "load_skill": 1
+ },
+ "bringup": null,
+ "board_programmed": false
+}
