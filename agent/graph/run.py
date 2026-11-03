@@ -221,6 +221,12 @@ Flow conventions (fixed by the repo; follow them exactly):
 - design.xdc: call board_constraints with a map of board resource name -> your port name (it lists the resources when
   called with no map). It writes the pins, I/O standards and the board clock constraint from the master XDC; never
   write a pin number yourself. check_constraints checks the result.
+- I/O timing (gate post_synth_no_unconstrained_endpoints; check_timing must list no port without an input or output
+  delay). board_constraints writes pins only and REWRITES the whole of design.xdc, so call it first, then read
+  design.xdc and write it back with your timing lines appended; there is no second constraints file and only design.xdc
+  is yours to write. When the gate fails, gates(kind="stages") names the ports (also report name=check_timing_synth.rpt),
+  and load_skill(["constraints"]) has the vendor note. For each port group say why in a comment above (rule FDA-CON-5), and
+  in the XDC dialect `set NAME [get_ports {{...}}]` is the only allowed `set`.
 - probes.yaml (stage 9, ILA debug build; build.yaml `probes:` names it): `ila: {{name, clock_net, depth}}` and a top-level
   `probes:` list of {{name, pins, width}}; pins are post-synthesis register output pins (cell names survive synthesis,
   net names do not; a bus lists its bits with [*] and width must match). Read the synthesised design's reports under

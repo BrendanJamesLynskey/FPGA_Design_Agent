@@ -43,7 +43,10 @@ def build_server(session: Session, only: set[str] | None = None) -> Server:
                                         structured_content={"ok": False, "refused": True, "rule": "unknown-tool"},
                                         is_error=True)
         res = await anyio.to_thread.run_sync(dispatch, session, params.name, dict(params.arguments or {}))
-        structured = {k: v for k, v in res.items() if k != "output"}
+        # Claude Code shows the model structuredContent INSTEAD of the text when there is some (a real stream shows
+        # {"ok":true,...,"bytes":10424}), so the output text goes in the structured result too: without it, a
+        # successful read_file, report or search_docs returned only its size (f2-stage3-io).
+        structured = dict(res)
         return types.CallToolResult(content=[types.TextContent(type="text", text=res["output"])],
                                     structured_content=structured, is_error=not res["ok"])
 

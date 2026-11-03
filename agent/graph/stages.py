@@ -36,7 +36,7 @@ MACHINE: tuple[Stage, ...] = (
     Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates"),
           ("arch_approved", "lint", "model_contract", "simulate", "standards_rtl", "verif_v3", "stage_rtl"), (0, 1),
           {"turns": 80, "seconds": 3600, "usd": 0.80}),      # 05g: 60 -> 80, the tests role keeps a reserve (run.ROLE_TURN_RESERVE)
-    Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates"), ("constraints_post_synth",), (2,), _L),
+    Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates", "report"), ("constraints_post_synth",), (2,), _L),   # f2-stage3-io: + report
     Stage(4, "synthesis", (*FILES, "build", "gates", "report"), ("stage_post_synth", "standards_post_synth"), (1, 2, 3), _L),
     Stage(5, "implementation", (*FILES, "build", "gates", "report"), ("stage_post_place", "stage_post_route"), (6,), _L),
     Stage(6, "timing-closure", (*FILES, "build", "gates", "report"), ("timing",), (3, 2, 5), _L),
@@ -68,6 +68,9 @@ def _stage_pass(gates: dict | None, flow_stage: str, only: set[str] | None = Non
         return False, [f"{flow_stage}:{n} missing" for n in sorted(only - set(g))]
     bad = [f"{flow_stage}:{n}" for n, ok in g.items()
            if (only is None or n in only) and not (skip and n in skip) and not ok]
+    if st.get("unconstrained_ports"):          # 05g follow-up: the repair visit sees WHICH ports, not only the gate's name
+        from flow.gates import unconstrained_text
+        bad = [b + (f" ({unconstrained_text(st['unconstrained_ports'])})" if "unconstrained" in b else "") for b in bad]
     return not bad, bad
 
 
