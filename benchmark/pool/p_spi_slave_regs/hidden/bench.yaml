@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_spi_slave_regs (pool; benchmark/tools/run_task.py)
+toplevel: p_spi_slave_regs_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400}
+phrases:
+  - "the address moves on by one after each data byte"
+  - "that last partial byte does nothing"
+  - "always reads as the XOR of registers 1 to 7"

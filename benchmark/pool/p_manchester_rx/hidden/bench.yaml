@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_manchester_rx (pool; benchmark/tools/run_task.py)
+toplevel: p_manchester_rx_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, BIT_CYCLES: 64}
+phrases:
+  - "Every bit must have its mid-bit transition"
+  - "is counted as a parity error"
+  - "quiet and low for a couple of bit times"

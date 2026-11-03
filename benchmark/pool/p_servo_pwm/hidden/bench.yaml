@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_servo_pwm (pool; benchmark/tools/run_task.py)
+toplevel: p_servo_pwm_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, FRAME_CYCLES: 700, MIN_CYCLES: 60, STEP_CYCLES: 2}
+phrases:
+  - "is never cut short or stretched by a switch"
+  - "picked up once at the start of each frame"
+  - "switches the servo off: the signal stays low"

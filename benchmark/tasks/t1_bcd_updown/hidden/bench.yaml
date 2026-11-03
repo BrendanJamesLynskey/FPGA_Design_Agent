@@ -1,0 +1,9 @@
+# Hidden acceptance bench for t1_bcd_updown (benchmark/tools/run_task.py)
+toplevel: t1_bcd_updown_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, DEBOUNCE_CYCLES: 16, REFRESH_BITS: 3}
+phrases:
+  - "SW[1:0] = 00 gives 1, 01 gives 2, 10 gives 5 and 11 gives 10"
+  - "going down past 0 carries on from the top"
+  - "7 shows as a single 7, and zero shows as a single 0"
+  - "how many times it has wrapped"

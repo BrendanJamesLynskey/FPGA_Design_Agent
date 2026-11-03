@@ -1,0 +1,73 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_rate_mult
+title: "Rate multiplier (N ticks in every M clocks)"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_rate_mult_top
+design_id: 0x524D554C          # "RMUL"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "N = 1, M = 2, TICKS = 0, the accumulator at 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[0] is used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - 'SW[0] is synchronised by two flops: ENABLE.'
+  dda:
+  - 'Effective values: M_E = max(M, 1) and N_E = min(N, M_E). An accumulator ACC (starts at 0) works on each clock with ENABLE = 1: S = ACC + N_E; if S >= M_E then TICK = 1 and ACC = S - M_E, else TICK = 0 and ACC = S. With ENABLE = 0 ACC holds and TICK = 0.'
+  - So in any M_E consecutive enabled clocks exactly N_E ticks occur, and the tick pattern repeats every M_E enabled clocks starting from ACC = 0.
+  - A write to N, M or CTRL sets ACC to 0 (and CTRL also clears TICKS). Writes take effect within a few clocks.
+  outputs:
+  - LED[0] = TICK (registered), LED[1] toggles on every tick, LED[15:2] = 0. TICKS counts every tick (32 bits, wraps).
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: N, access: RW, reset: 1, bits: "[15:0] ticks per M clocks"}
+    - {offset: 0x01, name: M, access: RW, reset: 2, bits: "[15:0] clocks per N ticks"}
+    - {offset: 0x02, name: TICKS, access: RO, reset: 0, bits: "[31:0] ticks sent"}
+    - {offset: 0x03, name: CTRL, access: WO, reset: 0, bits: "any write clears TICKS and the phase; reads 0"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    enable_to_tick: a few clocks
+  async_inputs: SW[0], CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Exactly N ticks occur in every M enabled clocks, spread by the accumulator rule", proof: [simulation]}
+  - {id: REQ-02, text: "N > M gives a tick every clock and M = 0 acts as 1", proof: [simulation]}
+  - {id: REQ-03, text: "LED[1] toggles on each tick; TICKS counts them; writes restart the phase", proof: [simulation]}
+  - {id: REQ-04, text: "The generator holds while disabled", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "N = M gives a tick on every clock"
+    reason: "N ticks in N clocks"
+
+open_questions: []

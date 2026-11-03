@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_sd_spi_init (pool; benchmark/tools/run_task.py)
+toplevel: p_sd_spi_init_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, PWR_DELAY: 200, INIT_HALF: 4, MAX_TRIES: 6, RETRY_GAP: 100}
+phrases:
+  - "at least 74 clock pulses with chip select high"
+  - "whose top bit is 0"
+  - "giving up after a fixed number of tries"

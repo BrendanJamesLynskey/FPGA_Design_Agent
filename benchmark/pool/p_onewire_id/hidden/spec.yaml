@@ -1,0 +1,88 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_onewire_id
+title: "One-wire style master reading a 16-bit ID with CRC"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_onewire_id_top
+design_id: 0x31574944          # "1WID"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the line is released, ID, CRC and status clear, FAILS 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  RST_LOW: 48000
+  PRES_WAIT: 1500
+  PRES_LOW: 6000
+  PRES_SAMPLE: 3000
+  RST_TOTAL: 48000
+  SLOT: 6000
+  W1_LOW: 600
+  W0_LOW: 5500
+  RD_LOW: 300
+  RD_SAMPLE: 1200
+  RD0_HOLD: 5000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JA1, dir: inout, width: 1, note: "open-drain bidirectional data line on Pmod JA pin 1; the FPGA only ever drives it low; needs the internal pull-up", pullup: true, pins: [C17], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  line:
+  - JA1 is driven low (output enable on, data 0) or released (high impedance); never driven high. The input is synchronised by two flops.
+  sequence:
+  - A write of 1 to CTRL with BUSY = 0 starts a read (otherwise ignored). BUSY = 1 until DONE.
+  - 'Reset phase: the line is pulled low for exactly RST_LOW clocks and released; PRESENT = (synchronised line is low) sampled exactly PRES_SAMPLE clocks after the release (the device''s answer begins PRES_WAIT clocks after the release and lasts PRES_LOW, with PRES_WAIT < PRES_SAMPLE < PRES_WAIT + PRES_LOW). The phase ends RST_TOTAL clocks after the release.'
+  - 'If PRESENT = 0: FAILS increments, DONE = 1, CRC_OK = 0, nothing else is sent.'
+  - 'Write slots: the 8 bits of 0x33 least significant bit first. Slot k begins when the line is pulled low; the low lasts W1_LOW clocks for a 1 and W0_LOW clocks for a 0; the next slot begins exactly SLOT clocks after the start of this one (the first slot begins right after the reset phase ends).'
+  - 'Read slots: 24 slots, the same SLOT spacing, immediately following the last write slot''s SLOT. The line is pulled low for RD_LOW clocks from the slot start, then released; the synchronised line is sampled exactly RD_SAMPLE clocks after the slot start and that level is the bit (1 = high). The device holds the line low from the slot start until RD0_HOLD clocks have passed to send a 0.'
+  - 'The first 16 bits are ID (bit 0 first), the next 8 are CRC. CRC_OK = (CRC-8/Maxim over the two ID bytes, low byte first, equals the received CRC). Maxim: polynomial x^8 + x^5 + x^4 + 1 (0x31, reflected 0x8C), initial value 0, bits processed least significant first, no final XOR. FAILS increments if CRC_OK = 0. DONE = 1 when the last slot has ended.'
+  leds:
+  - LED[15:0] = ID (updated at DONE, also when the CRC was wrong).
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CTRL, access: WO, reset: 0, bits: "[0] start a read; reads 0"}
+    - {offset: 0x01, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [1] DONE, [2] PRESENT, [3] CRC_OK; DONE clears when a new read starts"}
+    - {offset: 0x02, name: ID, access: RO, reset: 0, bits: "[15:0] ID last read"}
+    - {offset: 0x03, name: CRC, access: RO, reset: 0, bits: "[7:0] CRC received"}
+    - {offset: 0x04, name: FAILS, access: RO, reset: 0, bits: "[7:0] failed reads (saturating)"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    read: RST_LOW + RST_TOTAL + 32 x SLOT clocks, approximately
+  async_inputs: JA1 input, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: JA1 open drain (low or high-Z), false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The reset pulse, presence sampling, slot spacing and pulse widths follow the stated clock counts exactly", proof: [simulation]}
+  - {id: REQ-02, text: "The command 0x33 goes out least significant bit first and the ID and CRC are read least significant bit first", proof: [simulation]}
+  - {id: REQ-03, text: "PRESENT, CRC_OK and FAILS report absent devices and CRC mismatches", proof: [simulation]}
+  - {id: REQ-04, text: "JA1 is never driven high", proof: [simulation, formal]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "CRC_OK is 0 when no device is present"
+    reason: "no CRC is read"
+
+open_questions: []

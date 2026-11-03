@@ -1,0 +1,88 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t2_adt7420_alarm
+title: ADT7420 16-bit temperature monitor with a comparator-mode alarm
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t2_adt7420_alarm_top
+design_id: 0x54414C4D          # "TALM"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: registers to reset values; no I2C traffic until a configure command; both lines released
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  QUARTER: 250                  # SCL 100 kHz
+  PERIOD_CYCLES: 25000000       # a reading every 0.25 s (the sensor converts every 240 ms)
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: TMP_SCL, dir: inout, width: 1, async: true, note: "open drain - drive 0 or high-Z only", pins: [C14], iostandard: LVCMOS33}
+  - {name: TMP_SDA, dir: inout, width: 1, async: true, note: "open drain - drive 0 or high-Z only", pins: [C15], iostandard: LVCMOS33}
+  - {name: TMP_INT, dir: in, width: 1, async: true, note: "sensor INT, open drain, no board pull-up - enable the FPGA pull-up (PULLUP true in the XDC)", pins: [D13], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  bus:
+    - "I2C waveforms as an open-drain master with Q = QUARTER clocks - START SDA low, wait 2Q, SCL low, wait Q; each of the 9 bits of a byte - set SDA, wait Q, release SCL and wait until it is seen high (stretching), wait 2Q, sample, SCL low, wait Q; repeated START - release SDA, wait Q, release SCL and wait high, wait 2Q, SDA low, wait 2Q, SCL low, wait Q; STOP - SDA low, wait Q, release SCL and wait high, wait 2Q, release SDA, wait 2Q."
+    - The lines are only pulled low or released.
+  configure:
+    - "A write to CTRL with bit 0 = 1 while BUSY = 0 configures - TEMP, MAX, MIN, SAMPLES and VALID are cleared, NACK cleared, then three write transactions to address 0x4B in this order - [START, 0x96, 0x03, 0x90, STOP] (CONFIG - 16-bit resolution, comparator mode, INT active low, fault queue 1); [START, 0x96, 0x04, THIGH[15:8], THIGH[7:0], STOP]; [START, 0x96, 0x06, TLOW[15:8], TLOW[7:0], STOP]."
+    - After the third transaction CONFIGURED is set (even if a NACK occurred) and polling begins. Writes to CTRL while BUSY are ignored; a later configure repeats the sequence and restarts the statistics.
+  polling:
+    - "While CONFIGURED, a reading starts PERIOD_CYCLES clocks after the previous one started (the first PERIOD_CYCLES clocks after the configure sequence ends) - [START, 0x96, 0x00, repeated START, 0x97, read MSB with ACK, read LSB with NACK, STOP]. Never a STOP between the pointer write and the read (the sensor would lose its pointer)."
+    - "A reading with no NACK sets TEMP = {MSB, LSB}, SAMPLES += 1, and MAX / MIN (compared as signed 16-bit) - the first reading after a configure sets both; VALID is set."
+    - "If any byte of a transaction is NACKed, the master sends STOP after that byte, NACK is set (sticky until the next configure), and a reading is discarded."
+    - BUSY is 1 during the configure sequence and during each reading.
+  alarm:
+    - ALARM = NOT TMP_INT (synchronised by two flops) - the pin is active low. LED[0] = ALARM; LED[15:1] = 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CTRL, access: WO, reset: 0, bits: "[0] write 1 to configure; reads return 0"}
+    - {offset: 0x01, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [1] CONFIGURED, [2] VALID, [3] NACK, [4] ALARM; [31:5] 0"}
+    - {offset: 0x02, name: THIGH, access: RW, reset: 0x2000, bits: "[15:0] T_HIGH in the sensor's 16-bit format (0x2000 = 64 C); [31:16] read 0"}
+    - {offset: 0x03, name: TLOW, access: RW, reset: 0x0500, bits: "[15:0] T_LOW (0x0500 = 10 C); [31:16] read 0"}
+    - {offset: 0x04, name: TEMP, access: RO, reset: 0, bits: "[15:0] last raw reading (16-bit mode - two's complement, 1/128 C); [31:16] 0"}
+    - {offset: 0x05, name: MAX, access: RO, reset: 0, bits: "[15:0] highest reading since configure"}
+    - {offset: 0x06, name: MIN, access: RO, reset: 0, bits: "[15:0] lowest reading since configure"}
+    - {offset: 0x07, name: SAMPLES, access: RO, reset: 0, bits: "[31:0] readings since configure"}
+  unmapped: offsets 0x08-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    reading: "about 5 bytes x 9 bits x 4Q clocks; one every PERIOD_CYCLES"
+  async_inputs: TMP_SCL, TMP_SDA, TMP_INT, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: open-drain enables and LEDs registered
+
+requirements:
+  - {id: REQ-01, text: "Configure writes CONFIG 0x90, T_HIGH and T_LOW in that order", proof: [simulation]}
+  - {id: REQ-02, text: "Readings use a repeated START and keep the full 16-bit value", proof: [simulation]}
+  - {id: REQ-03, text: "MAX, MIN, SAMPLES and VALID follow the readings; NACKs are reported and discard the reading", proof: [simulation]}
+  - {id: REQ-04, text: "ALARM and LED0 follow TMP_INT, active low", proof: [simulation, hardware]}
+  - {id: REQ-05, text: "On the board the reading is a plausible room temperature with odd low bits seen over time", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the fault queue is left at 1 (CONFIG[1:0] = 00).
+    reason: the request does not ask for filtering of the alarm.
+  - assumption: T_HYST stays at its power-on value (5 C).
+    reason: no hysteresis setting was requested.
+
+open_questions: []

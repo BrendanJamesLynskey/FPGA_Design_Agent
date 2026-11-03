@@ -1,0 +1,16 @@
+mutants:
+  - {name: interrupt_mode, file: talm_ctl.sv, find: "AR = 8'h97, CONFIG_VAL = 8'h90;", replace: "AR = 8'h97, CONFIG_VAL = 8'h80;", why: "INT left in interrupt mode (CONFIG bit 4 clear)"}
+  - {name: limits_swapped, file: talm_ctl.sv, find: "5'd7:  begin op = W; wd = 8'h04; end", replace: "5'd7:  begin op = W; wd = 8'h06; end", why: "T_HIGH written to the T_LOW register"}
+  - {name: stop_before_read, file: talm_ctl.sv, find: "5'd3: op = S;                                 // repeated START (the bus is owned)", replace: "5'd3: op = P;", why: "a STOP instead of the repeated START (the sensor loses its pointer)"}
+  - {name: max_unsigned, file: talm_ctl.sv, find: "if (!valid || $signed({msb, rx}) > $signed(tmax)) tmax <= {msb, rx};", replace: "if (!valid || {msb, rx} > tmax) tmax <= {msb, rx};", why: "MAX compared unsigned (negative readings look hot)"}
+  - {name: min_not_seeded, file: talm_ctl.sv, find: "if (!valid || $signed({msb, rx}) < $signed(tmin)) tmin <= {msb, rx};", replace: "if ($signed({msb, rx}) < $signed(tmin)) tmin <= {msb, rx};", why: "MIN starts from 0, not the first reading"}
+  - {name: alarm_active_high, file: t2_adt7420_alarm_top.sv, find: ".alarm(!int_n),", replace: ".alarm(int_n),", why: "ALARM taken as active high"}
+  - {name: nack_ignored, file: talm_ctl.sv, find: "if (op == W && cnack) begin", replace: "if (1'b0) begin", why: "a NACK neither aborts nor is reported"}
+  - {name: byte_order, file: talm_ctl.sv, find: "temp <= {msb, rx};", replace: "temp <= {rx, msb};", why: "MSB and LSB swapped in TEMP"}
+  - {name: period_double, file: talm_ctl.sv, find: "end else if (pc == PW'(PERIOD_CYCLES - 1)) begin", replace: "end else if (pc == PW'(2 * PERIOD_CYCLES - 1)) begin", why: "readings twice as far apart"}
+trap:
+  twin: "textbook ADT7420 reader (power-on 13-bit mode, Celsius display)"
+  why: "the textbook never sets CONFIG bit 7, so the low three bits are the 13-bit mode's flags, not temperature"
+  edits:
+    - {file: talm_ctl.sv, find: "AR = 8'h97, CONFIG_VAL = 8'h90;", replace: "AR = 8'h97, CONFIG_VAL = 8'h10;"}
+  must_fail: [test_full_16bit_resolution]

@@ -1,0 +1,129 @@
+{
+  "task": "t1_lfsr_dice",
+  "sim": "icarus",
+  "date": "2026-11-03",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_press_rolls": true,
+      "test_seed_and_zero_seed": true,
+      "test_never_stuck_at_zero": true,
+      "test_step_burst_and_period": true,
+      "test_press_lost_during_burst": true,
+      "test_taps_register": true,
+      "test_debounce_rejects_bounce": true,
+      "test_register_rules": true,
+      "test_random_sequence": true,
+      "test_all_glyphs": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "zero_not_fixed",
+      "why": "a step can lock the LFSR at 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_never_stuck_at_zero"
+      ]
+    },
+    {
+      "name": "seed_zero_loads_zero",
+      "why": "a SEED write of 0 loads 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_seed_and_zero_seed"
+      ]
+    },
+    {
+      "name": "roll_from_old_state",
+      "why": "the roll uses the state before the step",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_press_rolls",
+        "test_seed_and_zero_seed",
+        "test_never_stuck_at_zero",
+        "test_press_lost_during_burst",
+        "test_taps_register",
+        "test_debounce_rejects_bounce",
+        "test_random_sequence",
+        "test_all_glyphs"
+      ]
+    },
+    {
+      "name": "history_reversed",
+      "why": "newest roll lands in the top nibble",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_press_rolls",
+        "test_seed_and_zero_seed",
+        "test_never_stuck_at_zero",
+        "test_press_lost_during_burst",
+        "test_taps_register",
+        "test_debounce_rejects_bounce",
+        "test_random_sequence",
+        "test_all_glyphs"
+      ]
+    },
+    {
+      "name": "wrong_feedback_bit",
+      "why": "taps applied on the wrong bit",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_press_rolls",
+        "test_seed_and_zero_seed",
+        "test_never_stuck_at_zero",
+        "test_step_burst_and_period",
+        "test_press_lost_during_burst",
+        "test_taps_register",
+        "test_debounce_rejects_bounce",
+        "test_all_glyphs"
+      ]
+    },
+    {
+      "name": "burst_one_extra",
+      "why": "a burst of n makes n + 1 steps",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_step_burst_and_period",
+        "test_press_lost_during_burst"
+      ]
+    },
+    {
+      "name": "dark_digit_shows_zero",
+      "why": "digit 0 lit (blank glyph) before the first roll",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset"
+      ]
+    },
+    {
+      "name": "six_without_top",
+      "why": "6 drawn without segment a",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_press_rolls",
+        "test_all_glyphs"
+      ]
+    },
+    {
+      "name": "debounce_half",
+      "why": "debounce accepts pulses of half the time",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_debounce_rejects_bounce"
+      ]
+    }
+  ],
+  "mutants_killed": 9,
+  "mutants_total": 9
+}

@@ -1,0 +1,10 @@
+# Hidden acceptance bench for t2_i2c_cmd_master (benchmark/tools/run_task.py)
+toplevel: tb_i2c_bench
+module: acceptance
+wrapper: tb_i2c_bench.sv
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, QUARTER: 5}
+phrases:
+  - "try any register sequence without rebuilding the FPGA"
+  - "have the bus must come out as a repeated START"
+  - "whether to answer ACK (more to come) or NACK (last byte)"
+  - "a quarter of the SCL period in clocks"

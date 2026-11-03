@@ -1,0 +1,76 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_pulse_stretch
+title: "Retriggerable pulse stretcher"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_pulse_stretch_top
+design_id: 0x50535452          # "PSTR"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the pulse ends, LED[1] clears and TRIGGERS, RETRIGS and LONGEST return to 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  HOLD_CYCLES: 50000000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[0] is used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - SW[0] is synchronised by two flops. A trigger is a 0 -> 1 change of the synchronised level; a fall does nothing.
+  pulse:
+  - Let T be the clock on which the synchronised level first reads 1. LED[0] is a registered output that is high for exactly HOLD_CYCLES clocks per trigger, counted from the trigger (a lone trigger gives a run of exactly HOLD_CYCLES clocks).
+  - 'A trigger that arrives while the LED is lit (more than 3 clocks before the lit time ends) is a retrigger: the lit time restarts, so the run lasts from the first trigger of the chain to latest trigger + HOLD_CYCLES.'
+  - A trigger more than 3 clocks after the lit time ended starts a new, separate pulse. Triggers within 3 clocks of the end are not specified.
+  - LED[1] is high from the retrigger until the pulse ends, and low otherwise. LED[15:2] are 0.
+  counters:
+  - TRIGGERS counts every trigger (16 bits, wraps). RETRIGS counts the triggers that were retriggers (16 bits).
+  - LONGEST is the longest single lit run seen, in clocks (32 bits); it is updated at each trigger with the run length so far.
+  - Any write to TRIGGERS clears TRIGGERS, RETRIGS and LONGEST.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: TRIGGERS, access: RW, reset: 0, bits: "[15:0] trigger count; any write clears TRIGGERS, RETRIGS and LONGEST"}
+    - {offset: 0x01, name: RETRIGS, access: RO, reset: 0, bits: "[15:0] retrigger count"}
+    - {offset: 0x02, name: LONGEST, access: RO, reset: 0, bits: "[31:0] longest lit run in clocks"}
+    - {offset: 0x03, name: HOLD, access: RO, reset: null, bits: "[31:0] the HOLD_CYCLES parameter"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    trigger_to_led: 2 (sync) + 1 clocks; only the run lengths are specified
+  async_inputs: switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "A lone trigger lights LED[0] for exactly HOLD_CYCLES clocks", proof: [simulation]}
+  - {id: REQ-02, text: "A retrigger extends the pulse to latest trigger + HOLD_CYCLES and raises LED[1] until the end", proof: [simulation]}
+  - {id: REQ-03, text: "TRIGGERS, RETRIGS and LONGEST count as described and clear on any write to TRIGGERS", proof: [simulation]}
+  - {id: REQ-04, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "tens of LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "a retrigger restarts the full time rather than adding to the remainder"
+    reason: "the request says the LED stays lit for the full time from the latest flip"
+
+open_questions: []

@@ -1,0 +1,88 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t2_vga_sprite
+title: Bouncing 16 x 16 sprite on 640 x 480 VGA
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t2_vga_sprite_top
+design_id: 0x53505254          # "SPRT"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator, note: "pixels advance on a clock enable every 4th clock (25 MHz); no MMCM"}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: registers to reset values; the raster restarts at pixel (0, 0); colour outputs black, syncs inactive (high)
+
+parameters:                     # board values; the bench shrinks the shell's time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: VGA_R, dir: out, width: 4, pins: [A3, B4, C5, A4], iostandard: LVCMOS33}
+  - {name: VGA_G, dir: out, width: 4, pins: [C6, A5, B6, A6], iostandard: LVCMOS33}
+  - {name: VGA_B, dir: out, width: 4, pins: [B7, C7, D7, D8], iostandard: LVCMOS33}
+  - {name: VGA_HS, dir: out, width: 1, note: "active low", pins: [B11], iostandard: LVCMOS33}
+  - {name: VGA_VS, dir: out, width: 1, note: "active low", pins: [B12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  raster:
+    - "A pixel lasts exactly 4 clocks. Columns x = 0..799, lines y = 0..524. Horizontal - visible 0-639, front porch 640-655, sync 656-751, back porch 752-799. Vertical - visible 0-479, front porch 480-489, sync 490-491, back porch 492-524."
+    - VGA_HS = 0 exactly while x is 656..751, VGA_VS = 0 exactly for lines 490..491 (from x = 0 of line 490); both 1 otherwise (negative sync).
+    - Colour and syncs change together on the same clock (one registered output stage). After reset the first pixel shown is (0, 0).
+  pixels:
+    - Outside the visible area (x >= 640 or y >= 480) the colour outputs are 0.
+    - "A visible pixel (x, y) is a sprite pixel when CTRL.EN = 1, X <= x <= X + 15, Y <= y <= Y + 15 and bit (15 - (x - X)) of ROW[y - Y] is 1 (bit 15 is the sprite's leftmost column, ROW0 its top row). Sprite pixels show SPRITE_COLOR, all other visible pixels BG_COLOR."
+    - "X and Y are 10-bit and are not wrapped - parts of the sprite at x >= 640 or y >= 480 are simply not shown (X = 1000 hides it)."
+    - Register writes act from the next pixel on.
+  bounce:
+    - "At each frame wrap (from (799, 524) to (0, 0)), if CTRL.BOUNCE = 1, X and Y move - horizontally - if DX_NEG = 0 and X >= 624, DX_NEG becomes 1 and X decreases by 1; else if DX_NEG = 1 and X = 0, DX_NEG becomes 0 and X increases by 1; else X increases by 1 (DX_NEG = 0) or decreases by 1 (DX_NEG = 1). Vertically the same with Y, DY_NEG and the limit 464."
+    - A shell write to X, Y or CTRL on the same clock as the frame update wins over the update.
+  frame_counter:
+    - FRAME (32 bits) increments at every frame wrap; reset 0; read only.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: ROW0, access: RW, reset: 0, bits: "[15:0] top row of the sprite, bit 15 = leftmost pixel; [31:16] read 0. ROW1-ROW15 at 0x01-0x0F the same, in order"}
+    - {offset: 0x10, name: X, access: RW, reset: 0, bits: "[9:0] left column; [31:10] read 0"}
+    - {offset: 0x11, name: Y, access: RW, reset: 0, bits: "[9:0] top line; [31:10] read 0"}
+    - {offset: 0x12, name: SPRITE_COLOR, access: RW, reset: 0xFFF, bits: "[11:0] RGB 4:4:4 (R [11:8])"}
+    - {offset: 0x13, name: BG_COLOR, access: RW, reset: 0x000, bits: "[11:0] RGB 4:4:4"}
+    - {offset: 0x14, name: CTRL, access: RW, reset: 1, bits: "[0] EN (sprite shown), [1] BOUNCE, [2] DX_NEG (moving left), [3] DY_NEG (moving up); the bounce logic updates [3:2]; [31:4] read 0"}
+    - {offset: 0x15, name: FRAME, access: RO, reset: 0, bits: "[31:0] completed frames"}
+  unmapped: offsets 0x16-0x7F read 0; writes to them and to FRAME are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    line: "800 pixels = 3200 clocks (31.25 kHz)"
+    frame: "525 lines = 1 680 000 clocks (59.52 Hz)"
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: VGA outputs registered
+
+requirements:
+  - {id: REQ-01, text: "640x480 timing with negative syncs at the listed positions", proof: [simulation]}
+  - {id: REQ-02, text: "Sprite pixels, bit order, transparency, clipping and EN follow the listed rule", proof: [simulation]}
+  - {id: REQ-03, text: "Bounce moves X and Y by one per frame and reverses at 0 and 624 / 464 exactly as listed", proof: [simulation]}
+  - {id: REQ-04, text: "FRAME counts completed frames", proof: [simulation, hardware]}
+  - {id: REQ-05, text: "On the board a monitor shows the sprite moving", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs (16 x 16 bits in flops or LUT RAM); no BRAM, no DSP"
+
+assumptions:
+  - assumption: bit 15 of a row register is the leftmost pixel.
+    reason: matches how a row of a bitmap is usually written as a hex number.
+  - assumption: the sprite is clipped, not wrapped, at the right and bottom.
+    reason: wrapping would show a split sprite at the far side, which is never what a bounce wants.
+
+open_questions: []

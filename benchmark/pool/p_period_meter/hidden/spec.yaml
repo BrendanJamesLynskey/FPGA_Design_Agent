@@ -1,0 +1,77 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_period_meter
+title: "Edge period meter with stall detection"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_period_meter_top
+design_id: 0x5052444D          # "PRDM"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "all measurements and the stalled flag clear; the next edge only starts a measurement"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  TIMEOUT_PERIOD: 200000000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[0] is used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - SW[0] is synchronised by two flops; an edge is a 0 -> 1 change of the synchronised level.
+  measure:
+  - A free-running 32-bit timer counts the clocks since the last edge. The period between two consecutive edges is the number of clocks between them, exactly as spaced on the input (edges D clocks apart give a period of D).
+  - 'If a period is at most TIMEOUT_PERIOD (the meter is not stalled), it is recorded: LAST = period, MIN = min(MIN, period), MAX = max(MAX, period), COUNT increments (16 bits, wraps).'
+  - 'When the timer exceeds TIMEOUT_PERIOD with no edge, STALLED becomes 1 (only once the gap is clearly longer: gaps within 3 clocks of TIMEOUT_PERIOD are not specified). The next edge clears STALLED and only restarts the timer; nothing is recorded for that gap. After reset the first edge likewise only starts the timer.'
+  - A clear (write to CTRL) sets MIN = 0xFFFFFFFF, MAX = 0, COUNT = 0 and LAST = 0, and makes the next edge a restart; STALLED is left alone.
+  outputs:
+  - LED[15:0] = min(LAST, 65535).
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: LAST, access: RO, reset: 0, bits: "[31:0] latest period in clocks"}
+    - {offset: 0x01, name: MIN, access: RO, reset: 0xFFFFFFFF, bits: "[31:0] shortest period since clear"}
+    - {offset: 0x02, name: MAX, access: RO, reset: 0, bits: "[31:0] longest period since clear"}
+    - {offset: 0x03, name: COUNT, access: RO, reset: 0, bits: "[15:0] periods recorded"}
+    - {offset: 0x04, name: STALLED, access: RO, reset: 0, bits: "[0] no edge for more than TIMEOUT_PERIOD clocks"}
+    - {offset: 0x05, name: CTRL, access: WO, reset: 0, bits: "any write clears MIN, MAX, COUNT, LAST; reads 0"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    edge_to_period: constant; only the spacing of edges is measured
+  async_inputs: switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The period between consecutive edges is measured exactly in clocks", proof: [simulation]}
+  - {id: REQ-02, text: "MIN, MAX, COUNT and LAST update as described and clear on a write to CTRL", proof: [simulation]}
+  - {id: REQ-03, text: "A gap longer than TIMEOUT_PERIOD sets STALLED and is not recorded; the next edge restarts the measurement", proof: [simulation]}
+  - {id: REQ-04, text: "The LEDs show the latest period saturated at 65535", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "a clear forgets the last edge"
+    reason: "so the first period after a clear is not taken across the clear"
+
+open_questions: []

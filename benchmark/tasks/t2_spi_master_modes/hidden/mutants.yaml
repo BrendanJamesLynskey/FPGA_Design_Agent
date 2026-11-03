@@ -1,0 +1,17 @@
+mutants:
+  - {name: div_min_one, file: spim_regs.sv, find: "win_wdata[15:0] >= 16'd2", replace: "win_wdata[15:0] >= 16'd1", why: "a divisor of 1 is accepted"}
+  - {name: msb_rx_reversed, file: spim_core.sv, find: "else       rx[4'(nb - 5'd1 - 5'((e - 6'd1) >> 1))] <= miso;", replace: "else       rx[4'((e - 6'd1) >> 1)] <= miso;", why: "MSB-first frames are received bit-reversed"}
+  - {name: hold_ignored_at_end, file: spim_core.sv, find: "                if (!cs_hold) cs_n <= 1'b1;\n            end else begin", replace: "                cs_n <= 1'b1;\n            end else begin", why: "CS_N rises after every frame even with CS_HOLD"}
+  - {name: always_sample_leading, file: spim_core.sv, find: "if (e[0] != c_pha) begin", replace: "if (e[0] == 1'b1) begin", why: "MISO sampled on leading edges in CPHA 1 modes"}
+  - {name: done_cleared_by_any_write, file: spim_regs.sv, find: "!(win_wr && win_addr == R_STATUS && win_wdata[1])", replace: "!(win_wr && win_addr == R_STATUS)", why: "any STATUS write clears DONE"}
+  - {name: txdata_overwritten_busy, file: spim_regs.sv, find: "wire start = win_wr && win_addr == R_TXDATA && !busy;", replace: "wire start = win_wr && win_addr == R_TXDATA;", why: "a TXDATA write while busy is not ignored"}
+  - {name: edge_spacing_plus_one, file: spim_core.sv, find: "            cnt <= dv - 1'b1;\n            k   <= e;", replace: "            cnt <= dv;\n            k   <= e;", why: "SCLK edges DIV+1 clocks apart"}
+  - {name: w16_ignored, file: spim_core.sv, find: "nb    <= w16 ? 5'd16 : 5'd8;", replace: "nb    <= 5'd8;", why: "16-bit frames send 8 bits"}
+  - {name: loopback_ignored, file: spim_regs.sv, find: ".miso(ctrl[5] ? mosi : miso_pin)", replace: ".miso(miso_pin)", why: "LOOP does not feed MOSI back"}
+  - {name: cpha0_first_bit_late, file: spim_core.sv, find: "mosi  <= cpha ? 1'b0 : bit_at(txd, w16 ? 5'd16 : 5'd8, lsb, 5'd0);", replace: "mosi  <= 1'b0;", why: "in CPHA 0 the first bit is not on MOSI before the first edge"}
+trap:
+  twin: "textbook mode-0-only SPI master for the ADXL362"
+  why: "the textbook master only does CPOL = 0, CPHA = 0; mode 3 idles SCLK high and shifts on falling edges"
+  edits:
+    - {file: spim_regs.sv, find: ".cpol(ctrl[0]), .cpha(ctrl[1])", replace: ".cpol(1'b0), .cpha(1'b0)"}
+  must_fail: [test_mode3_idle_high]

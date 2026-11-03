@@ -1,0 +1,10 @@
+mutants:
+  - {name: always_turns, file: elevator_fsm.sv, find: "end else if (dir ? ahead_dn : ahead_up) begin", replace: "end else if (1'b0) begin", why: "the car never keeps its direction at a decision (always turns)"}
+  - {name: door_short, file: elevator_fsm.sv, find: "timer == 32'(DOOR_CYCLES - 1)", replace: "timer == 32'(DOOR_CYCLES - 2)", why: "door open one clock short"}
+  - {name: floor_long, file: elevator_fsm.sv, find: "timer == 32'(FLOOR_CYCLES - 1)", replace: "timer == 32'(FLOOR_CYCLES)", why: "a floor takes FLOOR_CYCLES + 1 clocks"}
+  - {name: no_stop_passing, file: elevator_fsm.sv, find: "if (p1[nf]) begin", replace: "if (p1[nf] && (nf == 2'd0 || nf == 2'd3)) begin", why: "calls passed on the way are not served until the turn"}
+  - {name: door_floor_call_kept, file: elevator_fsm.sv, find: "if (state == DOOR) calls[floor] = 1'b0;", replace: "", why: "a call at the open-door floor reopens the door afterwards"}
+  - {name: level_calls, file: elevator_fsm.sv, find: "calls = (sw & ~sw_q) |", replace: "calls = sw |", why: "a switch left up keeps calling"}
+  - {name: moves_count_stops, file: elevator_fsm.sv, find: "moves <= moves + 1'b1;\n                timer <= '0;\n                if (p1[nf]) begin", replace: "timer <= '0;\n                if (p1[nf]) begin\n                    moves <= moves + 1'b1;", why: "MOVES counts stops, not floors"}
+  - {name: pending_write_replaces, file: elevator_fsm.sv, find: "p1 = pend | calls;", replace: "p1 = (win_wr && win_addr == R_PEND) ? win_wdata[3:0] : (pend | calls);", why: "a PENDING write replaces the calls instead of adding (not W1S)"}
+  - {name: leds_no_pending, file: elevator_fsm.sv, find: "6'd0, pend, 4'b0001 << floor}", replace: "6'd0, 4'd0, 4'b0001 << floor}", why: "LED[7:4] do not show the calls"}

@@ -1,0 +1,100 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t1_bcd_updown
+title: Decimal up/down counter with selectable step
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_bcd_updown_top
+design_id: 0x42434455          # "BCDU"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: COUNT, WRAPS and every other register return to 0; debounced levels return to 0
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  DEBOUNCE_CYCLES: 1000000      # 10 ms
+  REFRESH_BITS: 17              # 1.31 ms a digit
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: BTNU, dir: in, width: 1, async: true, pins: [M18], iostandard: LVCMOS33}
+  - {name: BTND, dir: in, width: 1, async: true, pins: [P18], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[1:0] are used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: CA, dir: out, width: 1, pins: [T10], iostandard: LVCMOS33}
+  - {name: CB, dir: out, width: 1, pins: [R10], iostandard: LVCMOS33}
+  - {name: CC, dir: out, width: 1, pins: [K16], iostandard: LVCMOS33}
+  - {name: CD, dir: out, width: 1, pins: [K13], iostandard: LVCMOS33}
+  - {name: CE, dir: out, width: 1, pins: [P15], iostandard: LVCMOS33}
+  - {name: CF, dir: out, width: 1, pins: [T11], iostandard: LVCMOS33}
+  - {name: CG, dir: out, width: 1, pins: [L18], iostandard: LVCMOS33}
+  - {name: DP, dir: out, width: 1, pins: [H15], iostandard: LVCMOS33}
+  - {name: AN, dir: out, width: 8, pins: [J17, J18, T9, J14, P14, T14, K2, U13], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  step:
+    - STEP is 1, 2, 5 or 10 for SW[1:0] = 00, 01, 10, 11 (switches synchronised by two flops, not debounced).
+  counter:
+    - COUNT is an integer 0..9999.
+    - A press of BTNU sets COUNT to (COUNT + STEP) mod 10000; a press of BTND sets COUNT to (COUNT - STEP) mod 10000.
+    - Each time an up or down press wraps (the sum is >= 10000 or the difference is < 0), WRAPS increments by one (8 bits, wraps at 256).
+    - If an up press and a down press land on the same clock, neither acts and WRAPS is unchanged.
+    - A shell write to COUNT on the same clock as a press wins (the press is lost).
+  debounce:
+    - Each button is synchronised (two flops), then debounced. The debounced level changes only after the
+      synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count.
+    - A press is a 0 -> 1 change of the debounced level; releases do nothing; holding a button does not repeat.
+  leds:
+    - LED[13:0] = COUNT in binary; LED[15:14] = 0. No PWM.
+  display:
+    - Digits are numbered 0 (rightmost, AN[0]) to 7. They are lit one at a time in order 0..7, each for 2^REFRESH_BITS clocks; while digit k is lit AN[k] = 0 and the other AN = 1.
+    - Digits 0..3 show the units, tens, hundreds and thousands of COUNT in decimal.
+    - Leading zeros are blank - digit k (k = 1..3) is dark (all AN stay 1 in its slot) when COUNT < 10^k. Digit 0 is always lit (zero shows as 0).
+    - Digits 4..7 are always dark. DP is always 1 (off).
+    - "Glyphs (segments lit): 0 abcdef, 1 bc, 2 abdeg, 3 abcdg, 4 bcfg, 5 acdfg, 6 acdefg, 7 abc, 8 abcdefg, 9 abcdfg; CA..CG active low."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: COUNT, access: RW, reset: 0, bits: "[13:0] count 0..9999; a write of 0..9999 sets it, a write of 10000 or more is ignored; [31:14] read 0"}
+    - {offset: 0x01, name: BCD, access: RO, reset: 0, bits: "[3:0] units, [7:4] tens, [11:8] hundreds, [15:12] thousands; [31:16] 0"}
+    - {offset: 0x02, name: WRAPS, access: RW, reset: 0, bits: "[7:0] wrap count; any write sets it to 0"}
+    - {offset: 0x03, name: STEP, access: RO, reset: null, bits: "[3:0] the step SW[1:0] selects (1, 2, 5 or 10)"}
+  unmapped: offsets 0x04-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    button_to_count: "2 (sync) + DEBOUNCE_CYCLES + 1 clocks"
+  async_inputs: buttons, switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Up/down presses move COUNT by the selected step modulo 10000 and count wraps", proof: [simulation]}
+  - {id: REQ-02, text: "A button change shorter than the debounce time never counts; holding does not repeat", proof: [simulation]}
+  - {id: REQ-03, text: "The display shows COUNT in decimal with leading zeros blanked, one digit at a time", proof: [simulation]}
+  - {id: REQ-04, text: "The register window has the listed map, reset values and the out-of-range write rule", proof: [simulation]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-06, text: "On the board the register window answers as the model predicts", proof: [hardware]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: steps wrap modulo 10000 rather than clamping at the ends.
+    reason: the user asks for wrapping at both ends; modulo keeps each press a fixed step.
+  - assumption: simultaneous up and down presses cancel.
+    reason: neither direction is preferred in the request.
+
+open_questions: []

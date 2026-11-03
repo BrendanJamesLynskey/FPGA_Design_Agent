@@ -1,0 +1,9 @@
+# Hidden acceptance bench for t1_debounce_bank (benchmark/tools/run_task.py)
+toplevel: t1_debounce_bank_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, DEBOUNCE_CYCLES: 24}
+phrases:
+  - "anything shorter is noise and is ignored completely, however it lines up with anything else"
+  - "all sixteen slide switches of the Nexys A7-100T cleaned up, each on its own"
+  - "whether rising edges, falling edges or both set the flag"
+  - "count how many times its clean level has changed"

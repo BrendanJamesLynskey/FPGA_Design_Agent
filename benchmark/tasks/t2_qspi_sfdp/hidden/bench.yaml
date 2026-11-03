@@ -1,0 +1,10 @@
+# Hidden acceptance bench for t2_qspi_sfdp (benchmark/tools/run_task.py)
+toplevel: tb_cclk_bench
+module: acceptance
+wrapper: tb_cclk_bench.sv
+sim_stubs: [STARTUPE2.v]
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, HALF: 8}
+phrases:
+  - "and the start of its SFDP table (the standard self-description)"
+  - "the design must never send anything but those two read commands"
+  - "with the dummy clocks the SFDP read needs"

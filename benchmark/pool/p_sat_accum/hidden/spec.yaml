@@ -1,0 +1,79 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_sat_accum
+title: "Saturating accumulator on the switches"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_sat_accum_top
+design_id: 0x53415441          # "SATA"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "ACC, FLAGS and ADDS return to 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  ACC_PERIOD: 10000000
+  SAT_LIMIT: 30000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - SW is synchronised by two flops. The add value V is SW[7:0] read as signed (-128..127); SW[15] is FREEZE, SW[14] is CLEAR.
+  tick:
+  - A free-running counter generates one tick every ACC_PERIOD clocks from reset; ticks continue while frozen.
+  accumulate:
+  - On a tick, unless FREEZE or CLEAR is set, ACC becomes ACC + V clamped to the range -SAT_LIMIT..+SAT_LIMIT, and ADDS increments (16 bits, wraps). An add of 0 still counts.
+  - If the unclamped sum is above +SAT_LIMIT, ACC is +SAT_LIMIT and HI is set; if below -SAT_LIMIT, ACC is -SAT_LIMIT and LO is set. A sum exactly equal to a limit sets no flag.
+  - While CLEAR is set ACC is 0 on every clock (CLEAR wins over FREEZE); ticks during CLEAR do not add and do not count; HI, LO and ADDS are unaffected by CLEAR.
+  outputs:
+  - LED[15:0] = ACC as 16-bit two's complement, no PWM.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: ACC, access: RW, reset: 0, bits: "[15:0] total (signed); reads sign-extended to 32 bits; a write sets it, clamped to -SAT_LIMIT..+SAT_LIMIT, from the low 16 bits read as signed"}
+    - {offset: 0x01, name: FLAGS, access: RW, reset: 0, bits: "[0] HI, [1] LO; any write clears both"}
+    - {offset: 0x02, name: ADDS, access: RW, reset: 0, bits: "[15:0] adds counted; any write sets it to 0"}
+    - {offset: 0x03, name: LIMIT, access: RO, reset: null, bits: "[15:0] SAT_LIMIT"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    switch_to_acc: up to ACC_PERIOD + 3 clocks (next tick)
+  async_inputs: switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "On each tick the signed switch value is added to ACC and clamped at +/-SAT_LIMIT, never wrapping", proof: [simulation]}
+  - {id: REQ-02, text: "HI and LO flag a clamp (not an exact landing on the limit) and clear on a write", proof: [simulation]}
+  - {id: REQ-03, text: "FREEZE stops adds, CLEAR forces ACC to 0 and wins over FREEZE", proof: [simulation]}
+  - {id: REQ-04, text: "LED[15:0] show ACC, and the registers behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the limits are symmetric, +/-SAT_LIMIT"
+    reason: "a single limit parameter is the natural reading of 'its limits'"
+  - assumption: "ticks during CLEAR neither add nor count"
+    reason: "CLEAR forces the total, so an add is meaningless"
+
+open_questions: []

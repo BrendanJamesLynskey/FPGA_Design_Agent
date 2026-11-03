@@ -1,0 +1,9 @@
+# Hidden acceptance bench for t1_gray_stepper (benchmark/tools/run_task.py)
+toplevel: t1_gray_stepper_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, DEBOUNCE_CYCLES: 16, TICK_CYCLES: 4}
+phrases:
+  - "exactly one LED changes on every step, including when the count wraps round"
+  - "I want that proved, not just tested"
+  - "in milliseconds per step; a rate of zero means it stands still"
+  - "LED[15] is lit while automatic mode is on"

@@ -1,0 +1,16 @@
+mutants:
+  - {name: mclk_period, file: pdm_vu.sv, find: "            if (hc == HW'(CLK_HALF - 1)) begin", replace: "            if (hc == HW'(CLK_HALF)) begin", why: "M_CLK half period one clock long (and the sample point off)"}
+  - {name: window_short, file: pdm_vu.sv, find: "wire last = fall && n == NW'(WINDOW - 1);", replace: "wire last = fall && n == NW'(WINDOW - 2);", why: "a block is one sample short"}
+  - {name: no_hold, file: pdm_vu.sv, find: "else if (hold != '0)   hold <= hold - 1'b1;", replace: "else if (1'b0)   hold <= hold - 1'b1;", why: "the peak decays at once, without the hold"}
+  - {name: decay_wraps, file: pdm_vu.sv, find: "peak <= (peak < {12'd0, decay}) ? 16'd0 : peak - {12'd0, decay};", replace: "peak <= peak - {12'd0, decay};", why: "the peak wraps below zero instead of stopping at 0"}
+  - {name: led_strict, file: pdm_vu.sv, find: "led[i] <= lvl_n >= 16'((i + 1) * STEP);", replace: "led[i] <= lvl_n > 16'((i + 1) * STEP);", why: "an LED needs a level above its threshold, not at it"}
+  - {name: peak_clear_ignored, file: pdm_vu.sv, find: "if (win_wr && win_addr == 7'h02) begin peak <= '0; hold <= '0; end", replace: "", why: "a write does not clear PEAK"}
+  - {name: last_sample_lost, file: pdm_vu.sv, find: "ones_last <= ones_n;", replace: "ones_last <= ones;", why: "ONES misses the block's last sample"}
+  - {name: hold_reload_ctrl, file: pdm_vu.sv, find: "if (lvl_n > peak)      begin peak <= lvl_n; hold <= hold_set; end", replace: "if (lvl_n > peak)      begin peak <= lvl_n; hold <= 8'd8; end", why: "the hold ignores CTRL.HOLD"}
+trap:
+  twin: "textbook PDM capture (M_LRSEL low, data taken at the M_CLK rising edge)"
+  why: "this spec uses the M_LRSEL = 1 channel, valid in the high half and taken at the falling edge"
+  edits:
+    - {file: t2_pdm_vu_top.sv, find: "else     M_LRSEL <= 1'b1;", replace: "else     M_LRSEL <= 1'b0;"}
+    - {file: pdm_vu.sv, find: "wire fall = mclk && hc == HW'(CLK_HALF - 1);", replace: "wire fall = !mclk && hc == HW'(CLK_HALF - 1);"}
+  must_fail: [test_lrsel_high_falling_edge]

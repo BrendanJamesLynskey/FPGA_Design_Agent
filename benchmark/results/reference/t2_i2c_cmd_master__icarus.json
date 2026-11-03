@@ -1,0 +1,158 @@
+{
+  "task": "t2_i2c_cmd_master",
+  "sim": "icarus",
+  "date": "2026-11-03",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_id_via_repeated_start": true,
+      "test_temperature_two_bytes": true,
+      "test_write_then_read_back": true,
+      "test_nack_address": true,
+      "test_clock_stretching": true,
+      "test_bit_timing": true,
+      "test_ignored_commands": true,
+      "test_random_transactions": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "no_stretch_wait",
+      "why": "the bit high time is not held off while a slave stretches SCL",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clock_stretching"
+      ]
+    },
+    {
+      "name": "nack_inverted",
+      "why": "ACK and NACK swapped in STATUS",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_id_via_repeated_start",
+        "test_temperature_two_bytes",
+        "test_write_then_read_back",
+        "test_nack_address",
+        "test_clock_stretching",
+        "test_bit_timing",
+        "test_random_transactions"
+      ]
+    },
+    {
+      "name": "read_ack_inverted",
+      "why": "READ answers ACK when told NACK",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_id_via_repeated_start",
+        "test_temperature_two_bytes",
+        "test_write_then_read_back",
+        "test_nack_address",
+        "test_clock_stretching",
+        "test_bit_timing",
+        "test_random_transactions"
+      ]
+    },
+    {
+      "name": "write_lsb_first",
+      "why": "WRITE data bits after the first come from the wrong end",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_id_via_repeated_start",
+        "test_temperature_two_bytes",
+        "test_write_then_read_back",
+        "test_nack_address",
+        "test_clock_stretching",
+        "test_bit_timing",
+        "test_random_transactions"
+      ]
+    },
+    {
+      "name": "data_cmd_on_free_bus",
+      "why": "WRITE/READ on a free bus clock the bus",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_ignored_commands"
+      ]
+    },
+    {
+      "name": "owned_kept_after_stop",
+      "why": "the bus still counts as owned after STOP (next START is a repeated START)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_id_via_repeated_start",
+        "test_temperature_two_bytes",
+        "test_write_then_read_back",
+        "test_nack_address",
+        "test_clock_stretching",
+        "test_bit_timing",
+        "test_ignored_commands",
+        "test_random_transactions"
+      ]
+    },
+    {
+      "name": "short_low",
+      "why": "SCL low time between bits is Q + 1 clocks instead of 2Q",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_bit_timing"
+      ]
+    },
+    {
+      "name": "rx_not_updated",
+      "why": "RXDATA loses its LSB",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_id_via_repeated_start",
+        "test_temperature_two_bytes",
+        "test_write_then_read_back",
+        "test_nack_address",
+        "test_clock_stretching",
+        "test_bit_timing",
+        "test_random_transactions"
+      ]
+    },
+    {
+      "name": "read_never_nacks",
+      "why": "READ never answers NACK",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_id_via_repeated_start",
+        "test_temperature_two_bytes",
+        "test_write_then_read_back",
+        "test_nack_address",
+        "test_clock_stretching",
+        "test_bit_timing",
+        "test_random_transactions"
+      ]
+    }
+  ],
+  "mutants_killed": 9,
+  "mutants_total": 9,
+  "trap": {
+    "twin": "textbook fixed ADT7420 read sequence (STOP after the pointer write, then a fresh START)",
+    "why": "the board's ADT7420 loses its register pointer on a STOP (Nexys A7 RM 12.1), so a pointer write must be followed by a repeated START",
+    "must_fail": [
+      "test_id_via_repeated_start"
+    ],
+    "failed_tests": [
+      "test_id_via_repeated_start",
+      "test_temperature_two_bytes",
+      "test_write_then_read_back",
+      "test_nack_address",
+      "test_clock_stretching",
+      "test_bit_timing",
+      "test_random_transactions"
+    ],
+    "trap_fires": true
+  }
+}

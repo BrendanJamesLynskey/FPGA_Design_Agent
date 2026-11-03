@@ -1,0 +1,90 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t2_sevenseg_marquee
+title: Scrolling raw-segment message on the eight 7-segment digits
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t2_sevenseg_marquee_top
+design_id: 0x4D415251          # "MARQ"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: registers to reset values (message all 0 = blank), scroll counter 0, display scan restarts at digit 0
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  SCROLL_CYCLES: 25000000       # 0.25 s a step
+  REFRESH_BITS: 17              # 1.31 ms a digit slot, 10.5 ms for all eight
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: CA, dir: out, width: 1, pins: [T10], iostandard: LVCMOS33}
+  - {name: CB, dir: out, width: 1, pins: [R10], iostandard: LVCMOS33}
+  - {name: CC, dir: out, width: 1, pins: [K16], iostandard: LVCMOS33}
+  - {name: CD, dir: out, width: 1, pins: [K13], iostandard: LVCMOS33}
+  - {name: CE, dir: out, width: 1, pins: [P15], iostandard: LVCMOS33}
+  - {name: CF, dir: out, width: 1, pins: [T11], iostandard: LVCMOS33}
+  - {name: CG, dir: out, width: 1, pins: [L18], iostandard: LVCMOS33}
+  - {name: DP, dir: out, width: 1, pins: [H15], iostandard: LVCMOS33}
+  - {name: AN, dir: out, width: 8, pins: [J17, J18, T9, J14, P14, T14, K2, U13], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  window:
+    - "Digits are numbered 0 (rightmost, AN[0]) to 7 (leftmost). Digit k shows message byte MSG[(POS + 7 - k) mod LENGTH] - the leftmost digit shows MSG[POS], the rightmost MSG[(POS + 7) mod LENGTH]."
+    - "A byte drives the segments directly - bit 0 a (CA), 1 b, 2 c, 3 d, 4 e, 5 f, 6 g (CG), 7 the decimal point (DP); 1 = lit. The pins are active low (CA = NOT bit 0, ..., DP = NOT bit 7). No decoding."
+  scan:
+    - Digits are scanned in order 0..7, one slot of 2^REFRESH_BITS clocks each, starting with digit 0 after reset.
+    - "In digit k's slot, AN[k] = 0 for the first (DIM + 1) * 2^(REFRESH_BITS - 3) clocks of the slot and 1 for the rest; every other AN bit is 1 throughout. DIM = 7 lights the whole slot. Segment pins carry digit k's pattern for the whole slot."
+  scrolling:
+    - "A scroll counter counts clocks while CTRL.SCROLL = 1. When it reaches SCROLL_CYCLES - 1 it restarts at 0 and POS steps - POS = (POS + 1) mod LENGTH if CTRL.DIR = 0 (text moves left), (POS + LENGTH - 1) mod LENGTH if DIR = 1."
+    - While CTRL.SCROLL = 0 the counter is held at 0. Any write to CTRL or POS restarts the counter at 0.
+  registers_rules:
+    - LENGTH accepts 1..16; writes of 0 or above 16 are ignored. If a new LENGTH is <= POS, POS becomes 0.
+    - A write to POS of a value >= LENGTH is ignored.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CTRL, access: RW, reset: 0, bits: "[0] SCROLL, [1] DIR (0 = POS increases); [31:2] read 0"}
+    - {offset: 0x01, name: LENGTH, access: RW, reset: 8, bits: "[4:0] 1..16; [31:5] read 0"}
+    - {offset: 0x02, name: POS, access: RW, reset: 0, bits: "[3:0] index of the message byte on the leftmost digit; [31:4] read 0"}
+    - {offset: 0x03, name: DIM, access: RW, reset: 7, bits: "[2:0] brightness 0..7; [31:3] read 0"}
+    - {offset: 0x10, name: MSG0, access: RW, reset: 0, bits: "[7:0] raw segment byte of message character 0; MSG1-MSG15 at 0x11-0x1F the same; [31:8] read 0"}
+  unmapped: offsets 0x04-0x0F and 0x20-0x7F read 0; writes to them are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    scroll_step: "SCROLL_CYCLES clocks"
+    digit_on_time: "(DIM + 1) * 2^(REFRESH_BITS - 3) clocks of every 2^REFRESH_BITS"
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: AN, segments and DP registered
+
+requirements:
+  - {id: REQ-01, text: "Every digit shows its window byte's raw segments with no decoding", proof: [simulation]}
+  - {id: REQ-02, text: "The window wraps modulo LENGTH; POS steps every SCROLL_CYCLES in the chosen direction", proof: [simulation]}
+  - {id: REQ-03, text: "Each digit is lit for exactly (DIM + 1)/8 of its slot, one digit at a time", proof: [simulation]}
+  - {id: REQ-04, text: "LENGTH and POS write rules hold", proof: [simulation]}
+  - {id: REQ-05, text: "On the board the message scrolls visibly and DIM dims it", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "about two hundred LUTs and FFs (the 16-byte buffer in flops or LUT RAM); no BRAM, no DSP"
+
+assumptions:
+  - assumption: the leftmost digit shows the message byte at POS.
+    reason: a message reads left to right, so POS is where reading starts.
+  - assumption: dimming keeps the slot length and shortens the lit part from the start of the slot.
+    reason: a fixed scan rate avoids flicker changes when the brightness changes.
+
+open_questions: []

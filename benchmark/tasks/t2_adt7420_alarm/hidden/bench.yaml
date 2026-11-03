@@ -1,0 +1,9 @@
+# Hidden acceptance bench for t2_adt7420_alarm (benchmark/tools/run_task.py)
+toplevel: tb_i2c_bench
+module: acceptance
+wrapper: tb_i2c_bench.sv
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, QUARTER: 3, PERIOD_CYCLES: 8000}
+phrases:
+  - "set the sensor to its high-resolution 16-bit mode with the interrupt pin in comparator"
+  - "the highest and lowest readings since configuring, and a count of readings"
+  - "The alarm is the sensor's own TMP_INT pin"

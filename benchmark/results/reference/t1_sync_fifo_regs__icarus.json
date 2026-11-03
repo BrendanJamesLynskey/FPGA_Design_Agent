@@ -1,0 +1,140 @@
+{
+  "task": "t1_sync_fifo_regs",
+  "sim": "icarus",
+  "date": "2026-11-03",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_fwft_head_and_pop": true,
+      "test_fill_and_overflow": true,
+      "test_underflow_and_w1c": true,
+      "test_almost_full_threshold": true,
+      "test_pointer_wrap_order": true,
+      "test_leds_thermometer": true,
+      "test_register_rules": true,
+      "test_random_traffic": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "full_at_15",
+      "why": "FIFO full one entry early",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fill_and_overflow",
+        "test_underflow_and_w1c",
+        "test_almost_full_threshold",
+        "test_leds_thermometer"
+      ]
+    },
+    {
+      "name": "overflow_overwrites",
+      "why": "a push when full overwrites the head byte",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fill_and_overflow"
+      ]
+    },
+    {
+      "name": "afull_strict",
+      "why": "almost full compares strictly",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fill_and_overflow",
+        "test_almost_full_threshold"
+      ]
+    },
+    {
+      "name": "w1c_clears_both",
+      "why": "clearing OVERFLOW also clears UNDERFLOW",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_underflow_and_w1c"
+      ]
+    },
+    {
+      "name": "head_read_underflows",
+      "why": "a HEAD read removes the byte",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_fwft_head_and_pop",
+        "test_fill_and_overflow",
+        "test_underflow_and_w1c",
+        "test_almost_full_threshold",
+        "test_pointer_wrap_order",
+        "test_register_rules",
+        "test_random_traffic"
+      ]
+    },
+    {
+      "name": "empty_pop_stale",
+      "why": "an empty pop returns a stale byte instead of 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_fwft_head_and_pop",
+        "test_fill_and_overflow",
+        "test_underflow_and_w1c",
+        "test_almost_full_threshold",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "leds_off_by_one",
+      "why": "thermometer lights one LED too many",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_fill_and_overflow",
+        "test_pointer_wrap_order",
+        "test_leds_thermometer",
+        "test_random_traffic"
+      ]
+    },
+    {
+      "name": "underflow_not_sticky",
+      "why": "UNDERFLOW clears on the next good pop",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fwft_head_and_pop",
+        "test_fill_and_overflow",
+        "test_underflow_and_w1c",
+        "test_almost_full_threshold",
+        "test_pointer_wrap_order",
+        "test_leds_thermometer",
+        "test_register_rules",
+        "test_random_traffic"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8,
+  "trap": {
+    "twin": "FIFO Generator in standard (non-FWFT) read mode, as in the textbook temperature-sensor project",
+    "why": "a standard-mode FIFO puts the byte on dout one read after rd_en, so each read returns the previous byte; this spec is first-word-fall-through",
+    "must_fail": [
+      "test_fwft_head_and_pop"
+    ],
+    "failed_tests": [
+      "test_fwft_head_and_pop",
+      "test_fill_and_overflow",
+      "test_underflow_and_w1c",
+      "test_almost_full_threshold",
+      "test_pointer_wrap_order",
+      "test_leds_thermometer",
+      "test_register_rules",
+      "test_random_traffic"
+    ],
+    "trap_fires": true
+  }
+}

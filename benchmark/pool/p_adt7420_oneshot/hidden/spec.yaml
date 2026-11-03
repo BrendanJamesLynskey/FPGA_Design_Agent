@@ -1,0 +1,85 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_adt7420_oneshot
+title: "ADT7420 one-shot temperature readings"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_adt7420_oneshot_top
+design_id: 0x54374F53          # "T7OS"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "idle, RES 0 (13-bit), MIN 0x7FFF, MAX 0x8000, counts 0, LEDs 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  QUARTER: 250
+  CONV_WAIT: 30000000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: TMP_SCL, dir: inout, width: 1, note: "I2C clock to the ADT7420, open drain with the board pull-up", pullup: true, pins: [C14], iostandard: LVCMOS33}
+  - {name: TMP_SDA, dir: inout, width: 1, note: "I2C data, open drain with the board pull-up", pullup: true, pins: [C15], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  bus:
+  - 'Open-drain I2C: SCL and SDA are driven low or released, never driven high; inputs synchronised by two flops. One SCL period is 4 x QUARTER clocks (the master does not wait for clock stretching).'
+  reading:
+  - A write of 1 to CTRL with BUSY = 0 starts a reading; with BUSY = 1 it is ignored and IGNORED increments (8 bits, saturating). BUSY = 1 until DONE.
+  - 'Step 1, one transfer: START, address byte 0x96 (0x4B write), register byte 0x03, configuration byte, STOP. The configuration byte is 0x20 for 13-bit (RES = 0) and 0xA0 for 16-bit (RES = 1): operation mode one-shot (bits 6:5 = 01), resolution in bit 7, everything else 0.'
+  - 'Step 2: CONV_WAIT clocks after the STOP condition is complete (SDA and SCL both released and high) the design starts one transfer: START, 0x96, register byte 0x00, repeated START, 0x97 (0x4B read), read two bytes (acknowledge the first, not the second), STOP. The read may begin up to 8 x QUARTER + 8 clocks late.'
+  - If any of the address or register or configuration bytes is not acknowledged by the sensor, the design sends a STOP at once, ERRORS increments (8 bits, saturating), FAIL = 1, and the reading is over (DONE = 1, nothing else changes). A successful reading sets FAIL = 0.
+  result:
+  - RAW = (first byte << 8) | second byte. TEMP = RAW interpreted as a signed 16-bit number, shifted right by 3 with the sign kept (arithmetic shift) - the temperature in 1/16 degree for both resolutions. COUNT increments (16 bits, wraps). MIN and MAX hold the lowest and highest TEMP since the last clear (MIN is 0x7FFF and MAX 0x8000 after reset or clear).
+  leds:
+  - LED[15:0] = TEMP of the latest reading (0 after reset).
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CTRL, access: WO, reset: 0, bits: "[0] start a reading, [1] clear MIN, MAX, COUNT and ERRORS; reads 0"}
+    - {offset: 0x01, name: RES, access: RW, reset: 0, bits: "[0] 1 = 16-bit resolution"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [1] DONE, [2] FAIL, [15:8] IGNORED"}
+    - {offset: 0x03, name: RAW, access: RO, reset: 0, bits: "[15:0] the two bytes read"}
+    - {offset: 0x04, name: TEMP, access: RO, reset: 0, bits: "[15:0] temperature in 1/16 degree, two's complement"}
+    - {offset: 0x05, name: MIN, access: RO, reset: 0x7FFF, bits: "[15:0] lowest TEMP since clear"}
+    - {offset: 0x06, name: MAX, access: RO, reset: 0x8000, bits: "[15:0] highest TEMP since clear"}
+    - {offset: 0x07, name: COUNT, access: RO, reset: 0, bits: "[15:0] readings completed"}
+    - {offset: 0x08, name: ERRORS, access: RO, reset: 0, bits: "[7:0] abandoned readings"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    reading: two transfers plus CONV_WAIT clocks
+  async_inputs: TMP_SCL, TMP_SDA, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: open drain (low or high-Z), false-pathed
+
+requirements:
+  - {id: REQ-01, text: "A reading is: configuration write in one-shot mode with the chosen resolution, a wait, then a pointer write and a two-byte read via a repeated start", proof: [simulation]}
+  - {id: REQ-02, text: "TEMP is the arithmetic shift right by 3 of the signed 16-bit reading, for both resolutions", proof: [simulation]}
+  - {id: REQ-03, text: "MIN, MAX, COUNT, ERRORS and the clear behave as listed", proof: [simulation]}
+  - {id: REQ-04, text: "A missing sensor ends the reading with a STOP, counts an error and leaves the bus free", proof: [simulation]}
+  - {id: REQ-05, text: "The bus lines are never driven high", proof: [simulation, formal]}
+  - {id: REQ-06, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-07, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the sensor is left in whatever mode the one-shot leaves it in (shutdown)"
+    reason: "the request asks for readings only on demand"
+
+open_questions: []

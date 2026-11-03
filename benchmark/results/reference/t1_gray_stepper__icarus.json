@@ -1,0 +1,123 @@
+{
+  "task": "t1_gray_stepper",
+  "sim": "icarus",
+  "date": "2026-11-03",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_press_steps_both_ways": true,
+      "test_wrap_changes_one_led": true,
+      "test_every_transition_one_bit": true,
+      "test_auto_rate_exact": true,
+      "test_debounce_rejects_bounce": true,
+      "test_register_rules": true,
+      "test_random_sequence": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "gray_wrong_shift",
+      "why": "Gray conversion shifts the wrong way: several LEDs change per step",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_press_steps_both_ways",
+        "test_wrap_changes_one_led",
+        "test_every_transition_one_bit",
+        "test_auto_rate_exact",
+        "test_debounce_rejects_bounce",
+        "test_random_sequence"
+      ]
+    },
+    {
+      "name": "direction_inverted",
+      "why": "SW[15] = 1 counts up",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_press_steps_both_ways",
+        "test_wrap_changes_one_led",
+        "test_every_transition_one_bit",
+        "test_auto_rate_exact",
+        "test_debounce_rejects_bounce",
+        "test_random_sequence"
+      ]
+    },
+    {
+      "name": "leds_binary",
+      "why": "LEDs show the binary count",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_press_steps_both_ways",
+        "test_wrap_changes_one_led",
+        "test_every_transition_one_bit",
+        "test_auto_rate_exact",
+        "test_register_rules",
+        "test_random_sequence"
+      ]
+    },
+    {
+      "name": "rate_off_by_one",
+      "why": "automatic steps RATE + 1 ticks apart",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_every_transition_one_bit",
+        "test_auto_rate_exact"
+      ]
+    },
+    {
+      "name": "auto_ignored",
+      "why": "automatic stepping runs with AUTO off",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_press_steps_both_ways",
+        "test_wrap_changes_one_led",
+        "test_every_transition_one_bit",
+        "test_auto_rate_exact",
+        "test_debounce_rejects_bounce",
+        "test_register_rules",
+        "test_random_sequence"
+      ]
+    },
+    {
+      "name": "wrap_at_1000",
+      "why": "counter wraps at 1000 (decimal habit): the wrap changes several LEDs",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_press_steps_both_ways",
+        "test_wrap_changes_one_led",
+        "test_every_transition_one_bit",
+        "test_auto_rate_exact"
+      ]
+    },
+    {
+      "name": "steps_count_writes",
+      "why": "a BIN write counts as a step",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_wrap_changes_one_led",
+        "test_auto_rate_exact",
+        "test_register_rules",
+        "test_random_sequence"
+      ]
+    },
+    {
+      "name": "debounce_half",
+      "why": "debounce accepts pulses of half the time",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_debounce_rejects_bounce"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8
+}

@@ -1,0 +1,73 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_moving_avg
+title: "Six-sample moving average with clipping"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_moving_avg_top
+design_id: 0x4D415647          # "MAVG"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the window empties, CLIP returns to 500, SAMPLE reads 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  window:
+  - The window holds up to 6 values of 12 bits (the oldest is dropped when a seventh arrives). N is the number of values held (0..6). SUM is their sum (15 bits).
+  - AVG = floor(SUM / N) for N >= 1 and 0 for N = 0. It is updated within 20 clocks of a sample write.
+  clipping:
+  - A written value S uses its low 12 bits. If N < 6 (the window is not full), S goes in unchanged. If N = 6, with A the current AVG, the value that enters is min(max(S, A - CLIP), A + CLIP) (arithmetic on integers, so A - CLIP may be negative); the value that enters is then also limited to 0..4095.
+  - CLIP is a 12-bit register, 500 after reset. A write to CLIP uses its low 12 bits.
+  outputs:
+  - LED[11:0] = AVG, LED[15:12] = 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: SAMPLE, access: RW, reset: 0, bits: "[11:0] write: new sample; read: last raw sample written"}
+    - {offset: 0x01, name: AVG, access: RO, reset: 0, bits: "[11:0] average"}
+    - {offset: 0x02, name: SUM, access: RO, reset: 0, bits: "[14:0] window sum"}
+    - {offset: 0x03, name: COUNT, access: RO, reset: 0, bits: "[2:0] N, samples in the window"}
+    - {offset: 0x04, name: CLIP, access: RW, reset: 500, bits: "[11:0] clipping limit"}
+    - {offset: 0x05, name: CTRL, access: WO, reset: 0, bits: "[0] empty the window (SUM, N, AVG = 0); reads 0"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    write_to_avg: at most 20 clocks
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The output is the floor average of the last up-to-six samples, over the samples present while filling", proof: [simulation]}
+  - {id: REQ-02, text: "With a full window a sample is clipped to within CLIP of the current average before entering", proof: [simulation]}
+  - {id: REQ-03, text: "SUM, COUNT, CLIP, SAMPLE and CTRL behave as listed; LEDs show the average", proof: [simulation]}
+  - {id: REQ-04, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; one small divider or a reciprocal multiply; no BRAM"
+
+assumptions:
+  - assumption: "the clip uses the average before the new sample enters"
+    reason: "the request speaks of the current average"
+
+open_questions: []

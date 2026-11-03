@@ -1,0 +1,80 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_stepper_ramp
+title: "Step and direction generator with trapezoidal speed ramp"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_stepper_ramp_top
+design_id: 0x53544550          # "STEP"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "idle: STEP low, DIR low, driver disabled (JA3 high), POSITION 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  START_INT: 200000
+  MIN_INT: 20000
+  RAMP_DEC: 2000
+  PULSE_CYCLES: 500
+  DIR_SETUP: 1000
+  HOLD_CYCLES: 5000000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JA1, dir: out, width: 1, note: "STEP on Pmod JA pin 1", pins: [C17], iostandard: LVCMOS33}
+  - {name: JA2, dir: out, width: 1, note: "DIR on Pmod JA pin 2", pins: [D18], iostandard: LVCMOS33}
+  - {name: JA3, dir: out, width: 1, note: "driver enable, active low, on Pmod JA pin 3", pins: [E18], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  move:
+  - 'A write of a non-zero signed 16-bit value N to MOVE with BUSY = 0 starts a move of n = |N| steps; N > 0 sets DIR = 1 (forward), N < 0 sets DIR = 0. A write of 0 does nothing and is not counted. A write while BUSY = 1 is refused: REFUSED increments (8 bits, saturating) and nothing else changes. MOVES counts accepted moves (8 bits, wraps).'
+  - 'At the start clock S: JA3 (enable_n) goes low, JA2 takes the direction, BUSY = 1. The first STEP pulse starts exactly DIR_SETUP clocks later, at S + DIR_SETUP: JA1 is high for PULSE_CYCLES clocks then low.'
+  - Step 0 starts at S + DIR_SETUP. Step k+1 starts gap(k) clocks after step k starts (k = 0 .. n-2), where gap(k) = max(I_ACC(k), I_DEC(k)), I_ACC(k) = max(MIN_INT, START_INT - k x RAMP_DEC) and I_DEC(k) = max(MIN_INT, START_INT - (n - 2 - k) x RAMP_DEC). The intervals are always larger than PULSE_CYCLES.
+  - POSITION (32-bit signed) increases by 1 (DIR = 1) or decreases by 1 (DIR = 0) on the clock each STEP pulse starts.
+  - HOLD_CYCLES clocks after the last STEP pulse ended (its falling edge), JA3 returns high and BUSY drops on the same clock; DIR keeps its last value.
+  leds:
+  - LED[0] = JA3 low (driver enabled), LED[1] = JA1, LED[2] = JA2, others 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: MOVE, access: WO, reset: 0, bits: "[15:0] signed number of steps; reads 0"}
+    - {offset: 0x01, name: POSITION, access: RW, reset: 0, bits: "[31:0] signed position in steps; a write sets it when idle"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [15:8] REFUSED, [23:16] MOVES"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    move_to_first_step: DIR_SETUP clocks after the start clock
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Step intervals follow the ramp: START_INT shortening by RAMP_DEC per step to MIN_INT and mirrored at the end", proof: [simulation]}
+  - {id: REQ-02, text: "Short moves ramp up and down symmetrically without reaching MIN_INT", proof: [simulation]}
+  - {id: REQ-03, text: "Enable, direction, pulse width, setup and hold times are as specified; DIR does not change during a move", proof: [simulation]}
+  - {id: REQ-04, text: "POSITION tracks the steps; moves while busy are refused and counted; a zero move does nothing", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the slowest of the acceleration and deceleration limits applies at each step"
+    reason: "that is what makes a short move symmetric"
+
+open_questions: []

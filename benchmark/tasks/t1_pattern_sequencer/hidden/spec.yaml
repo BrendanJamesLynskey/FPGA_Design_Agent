@@ -1,0 +1,85 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t1_pattern_sequencer
+title: LED pattern sequencer
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_pattern_sequencer_top
+design_id: 0x50534551          # "PSEQ"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: stopped (RUN = 0, PAUSED = 0, DONE = 0), ONESHOT = 0, LENGTH = 4, INDEX = 0, LOOPS = 0, LED = 0; the entries are not changed by reset (they power up 0)
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  DEBOUNCE_CYCLES: 1000000      # 10 ms
+  TICK_CYCLES: 100000           # 1 ms, the unit of DUR
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: BTNC, dir: in, width: 1, async: true, pins: [N17], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  entries:
+    - "Sixteen entries, each PATTERN (16 bits) and DUR (8 bits, ticks of TICK_CYCLES clocks; DUR = 0 means 256 ticks)."
+    - "LENGTH (1..16) entries are played - indices 0..LENGTH-1."
+  playback:
+    - "Start - a CTRL write with RUN = 1 while stopped begins at entry 0 (PAUSED = 0, DONE = 0). A write with RUN = 1 while running only updates ONESHOT. A write with RUN = 0 stops (RUN = PAUSED = DONE = 0) and the LEDs go dark."
+    - "Entry i is shown for exactly DUR_i * TICK_CYCLES clocks of running, unpaused time; DUR_i is latched when the entry starts, the pattern is read live, so a write to the playing entry's PATTERN shows on the LEDs at once."
+    - "At the end of entry i - if i + 1 < LENGTH the next entry starts on the next clock; otherwise LOOPS += 1 (16 bits, wrapping) and either entry 0 starts (loop) or, with ONESHOT = 1, playback stops with DONE = 1 and the LEDs keep showing the last entry's pattern."
+    - LENGTH is read at each entry end, so changing it while running takes effect at the next entry end.
+  pause:
+    - "BTNC is synchronised (two flops), then debounced. The debounced level changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count. A press is a 0 -> 1 change of the debounced level."
+    - "A press while RUN = 1 toggles PAUSED. While paused the entry's tick counter and prescaler stand still and the LEDs keep the pattern; the clock of the pausing press still counts and the clock of the resuming press does not, so a pause adds exactly the clocks between the two presses. A press while stopped does nothing."
+  leds:
+    - "LED[15:0] = PATTERN of the current entry while running (paused or not) or DONE; 0 when stopped and not DONE."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CTRL, access: RW, reset: 0, bits: "[0] RUN (see playback), [1] ONESHOT; reads RUN and ONESHOT"}
+    - {offset: 0x01, name: LENGTH, access: RW, reset: 4, bits: "[4:0] entries played, 1..16; a write of 0 or 17..31 is ignored"}
+    - {offset: 0x02, name: INDEX, access: RO, reset: 0, bits: "[3:0] the entry playing (or the last one, when DONE or stopped)"}
+    - {offset: 0x03, name: STATUS, access: RO, reset: 0, bits: "[0] RUN, [1] PAUSED, [2] DONE"}
+    - {offset: 0x04, name: LOOPS, access: RO, reset: 0, bits: "[15:0] passes completed"}
+    - {offset: 0x10, name: ENTRY0, access: RW, reset: 0, bits: "[15:0] PATTERN, [23:16] DUR of entry 0; entries 1..15 at 0x11..0x1F likewise; [31:24] read 0"}
+  unmapped: offsets 0x05-0x0F and 0x20-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    pause_press: "2 (sync) + DEBOUNCE_CYCLES + 1 clocks"
+  async_inputs: BTNC, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Each entry is shown for exactly DUR * TICK_CYCLES running clocks (DUR 0 = 256 ticks) in index order", proof: [simulation]}
+  - {id: REQ-02, text: "Loop mode wraps after LENGTH entries; one-shot stops on the last entry with DONE and the pattern held", proof: [simulation]}
+  - {id: REQ-03, text: "BTNC pauses and resumes; paused time does not count", proof: [simulation]}
+  - {id: REQ-04, text: "A pattern write to the playing entry shows at once; start always begins at entry 0", proof: [simulation]}
+  - {id: REQ-05, text: "The register window has the listed map and rules", proof: [simulation]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board a programmed one-shot show ends DONE on the last entry after the expected time", proof: [hardware]}
+
+resources_expected: "about 150 LUTs (16 x 24 distributed RAM) and 60 FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: a duration of 0 means 256 ticks.
+    reason: an 8-bit field with no useless zero-length step.
+  - assumption: the LEDs go dark when stopped but hold the last step after a one-shot finishes.
+    reason: the request says a one-shot stops on the last step.
+
+open_questions: []

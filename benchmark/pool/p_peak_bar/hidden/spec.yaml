@@ -1,0 +1,76 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_peak_bar
+title: "LED bar graph with decaying peak marker"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_peak_bar_top
+design_id: 0x504B4252          # "PKBR"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "level, peak and MAXRAW return to 0 and the LEDs go dark"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  DECAY_CYCLES: 10000000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "SW[7:0] level, SW[15] clear peak", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - SW is synchronised by two flops. RAW = SW[7:0], CLR = SW[15].
+  bar:
+  - N = ceil(RAW / 16) (0 for RAW = 0, 1 for 1..16, 16 for 241..255). The bar lights LED[0..N-1].
+  peak:
+  - 'PEAK is 0..16 and follows N upward at once: PEAK = max(PEAK, N) on every clock. While CLR is up, PEAK = N.'
+  - While PEAK > N a decay counter counts clocks; every DECAY_CYCLES clocks PEAK decreases by one and the counter restarts. When PEAK <= N the counter is held at zero. A change of N alone does not restart the counter.
+  - So after the level drops the marker's first step comes DECAY_CYCLES clocks after the drop (plus the 2-3 clocks of the pipeline) and the following steps exactly DECAY_CYCLES clocks apart.
+  leds:
+  - LED = bar mask (low N bits set) OR, when PEAK > 0, the single bit PEAK-1. The marker is therefore a separate LED above the bar while PEAK > N and part of the bar when PEAK = N.
+  max:
+  - MAXRAW = the highest RAW seen since reset or since it was last cleared (updated every clock); a write to MAXRAW sets it to the current RAW.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: LEVEL, access: RO, reset: 0, bits: "[4:0] N, the bar length"}
+    - {offset: 0x01, name: PEAK, access: RO, reset: 0, bits: "[4:0] marker position (0 = none, k = LED[k-1])"}
+    - {offset: 0x02, name: MAXRAW, access: RW, reset: 0, bits: "[7:0] highest RAW seen; any write sets it to the current RAW"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    switch_to_bar: 3 clocks
+  async_inputs: switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The bar length is ceil(RAW/16) LEDs from LED[0]", proof: [simulation]}
+  - {id: REQ-02, text: "The marker rises with the bar at once and falls one LED per DECAY_CYCLES clocks until it meets the bar", proof: [simulation]}
+  - {id: REQ-03, text: "SW[15] pulls the marker down to the bar; MAXRAW tracks and clears as listed", proof: [simulation]}
+  - {id: REQ-04, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the bar length rounds up"
+    reason: "a level of 1 must light an LED, as the request says"
+
+open_questions: []

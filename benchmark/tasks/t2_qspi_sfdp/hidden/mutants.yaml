@@ -1,0 +1,10 @@
+mutants:
+  - {name: no_dummy_byte, file: sfdp_ctl.sv, find: "nhdr <= 3'd4; nrd <= 5'd17;", replace: "nhdr <= 3'd4; nrd <= 5'd16;", why: "no dummy cycles: SFDP bytes shifted by one"}
+  - {name: fast_read_opcode, file: sfdp_ctl.sv, find: "localparam logic [7:0] OP_RDID = 8'h9F, OP_RSFDP = 8'h5A;", replace: "localparam logic [7:0] OP_RDID = 8'h9F, OP_RSFDP = 8'h0B;", why: "a FAST_READ (0Bh) of address 0 instead of RSFDP"}
+  - {name: words_big_endian, file: sfdp_ctl.sv, find: "if (ridx != 5'd0) sf <= {rx_byte, sf[127:8]};", replace: "if (ridx != 5'd0) sf <= {sf[119:0], rx_byte};", why: "byte 0 ends in the top of SFDP3"}
+  - {name: no_startup_cycles, file: sf_spi.sv, find: "st <= BOOT; cnt <= CW'(HALF - 1);", replace: "st <= IDLE; cnt <= CW'(HALF - 1);", why: "no SCK cycles with CS high after reset"}
+  - {name: hold_low, file: t2_qspi_sfdp_top.sv, find: "assign QSPI_DQ3 = 1'b1;", replace: "assign QSPI_DQ3 = 1'b0;", why: "HOLD# low (the flash pauses)"}
+  - {name: sig_check_off, file: sfdp_ctl.sv, find: "sig_ok <= sf[31:0] == 32'h5044_4653;", replace: "sig_ok <= 1'b1;", why: "SIG_OK set whatever the bytes"}
+  - {name: wp_high, file: t2_qspi_sfdp_top.sv, find: "assign QSPI_DQ2 = 1'b0;", replace: "assign QSPI_DQ2 = 1'b1;", why: "WP# driven high"}
+  - {name: half_short, file: sf_spi.sv, find: "st <= HIGH; cnt <= CW'(HALF - 1); sck <= 1'b1;", replace: "st <= HIGH; cnt <= CW'(HALF - 2); sck <= 1'b1;", why: "SCK high phase shorter than HALF"}
+  - {name: id_two_bytes, file: sfdp_ctl.sv, find: "hdr <= {OP_RDID, 24'h0}; nhdr <= 3'd1; nrd <= 5'd3;", replace: "hdr <= {OP_RDID, 24'h0}; nhdr <= 3'd1; nrd <= 5'd2;", why: "only two ID bytes read"}

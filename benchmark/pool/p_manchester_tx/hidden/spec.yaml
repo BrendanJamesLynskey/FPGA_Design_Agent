@@ -1,0 +1,72 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_manchester_tx
+title: "Manchester-coded byte transmitter on a Pmod pin"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_manchester_tx_top
+design_id: 0x4D435458          # "MCTX"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "idle (JB1 low), SENT and DROPPED 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  BIT_CYCLES: 1000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JB1, dir: out, width: 1, note: "Manchester line on Pmod JB pin 1", pins: [D14], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  frame:
+  - 'A write to DATA while BUSY = 0 starts a frame with the low 8 bits: BUSY = 1 from the next clock. A write while BUSY = 1 is ignored and increments DROPPED (8 bits, saturating at 255).'
+  - 'The frame is 14 bits of BIT_CYCLES clocks each, back to back from the start clock: bits 0-3 are 1, bit 4 is 0, bits 5-12 are DATA[0]..DATA[7], bit 13 is PAR = XOR of the eight data bits (even parity over data and PAR).'
+  - In bit time t (0 .. BIT_CYCLES-1) of a bit, the line is 0 for t < BIT_CYCLES/2 and 1 after that for a 1 bit; 1 for the first half and 0 for the second for a 0 bit. The line is registered; its first half starts on the first clock of the frame.
+  - After the last bit the line is 0 and BUSY returns to 0 on the same clock the frame ends; SENT increments (16 bits, wraps).
+  leds:
+  - LED[0] = line, LED[1] = BUSY, others 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: DATA, access: RW, reset: 0, bits: "write: byte to send; read: the last byte accepted"}
+    - {offset: 0x01, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [15:8] DROPPED (saturating)"}
+    - {offset: 0x02, name: SENT, access: RO, reset: 0, bits: "[15:0] frames sent"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    write_to_line: a few clocks; the frame is exactly 14 x BIT_CYCLES clocks long
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The line carries the 14-bit frame, Manchester coded with the stated polarity and exact bit time", proof: [simulation]}
+  - {id: REQ-02, text: "The parity bit makes the data plus parity even", proof: [simulation]}
+  - {id: REQ-03, text: "A byte offered while busy is dropped and counted", proof: [simulation]}
+  - {id: REQ-04, text: "The line idles low; SENT, STATUS and the LEDs behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "a 1 bit is low then high"
+    reason: "the request states the polarity"
+
+open_questions: []

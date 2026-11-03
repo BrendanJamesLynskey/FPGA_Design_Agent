@@ -1,0 +1,74 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_crc8_engine
+title: "Bit-serial CRC-8 engine"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_crc8_engine_top
+design_id: 0x43523845          # "CR8E"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "CRC returns to its initial value, COUNT, DROPPED and BUSY to 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  BIT_CLKS: 1
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  crc:
+  - CRC-8 with polynomial 0x1D, initial register value 0xFF, bits processed most significant first, no input or output reflection, and the result XORed with 0xFF. The value read is the post-XOR value; the empty message therefore reads 0x00. The check string 123456789 (ASCII) gives 0x4B.
+  - The register after processing a byte is the value read as CRC.
+  engine:
+  - 'A write to DATA while BUSY = 0 is accepted: BUSY becomes 1 on the next clock and stays 1 for exactly 8 x BIT_CLKS clocks; when it ends the CRC register takes the byte''s effect, COUNT increments (16 bits, wraps) and BUSY returns to 0. Reading CRC while busy returns the value from before the byte.'
+  - A write to DATA while BUSY = 1 is ignored and increments DROPPED (8 bits, saturates at 255). DATA reads back the last accepted byte (0 after reset or a clear).
+  - A write to CTRL while BUSY = 1 is ignored. Otherwise bit 0 set restores the initial CRC, COUNT = 0 and DATA = 0; bit 1 set clears DROPPED.
+  outputs:
+  - LED[7:0] = the CRC as read; LED[15] = BUSY; LED[14:8] = 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: DATA, access: RW, reset: 0, bits: "[7:0] write: byte to process; read: last accepted byte"}
+    - {offset: 0x01, name: CRC, access: RO, reset: 0, bits: "[7:0] CRC as described; [31:8] 0"}
+    - {offset: 0x02, name: COUNT, access: RO, reset: 0, bits: "[15:0] bytes accepted and processed"}
+    - {offset: 0x03, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [15:8] DROPPED"}
+    - {offset: 0x04, name: CTRL, access: WO, reset: 0, bits: "[0] restart (CRC, COUNT, DATA), [1] clear DROPPED; reads 0"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    byte_time: exactly 8 x BIT_CLKS clocks from the accepted write
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The CRC follows CRC-8/0x1D with init 0xFF, MSB first, final XOR 0xFF, shown after the byte time", proof: [simulation]}
+  - {id: REQ-02, text: "A byte offered while busy is dropped and counted, not accepted", proof: [simulation]}
+  - {id: REQ-03, text: "COUNT, STATUS and CTRL behave as listed; the LEDs show CRC and BUSY", proof: [simulation]}
+  - {id: REQ-04, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the parameters are the common SAE J1850 ones apart from the polynomial being stated"
+    reason: "the request fixes only the polynomial; init, order and final XOR follow the usual 8-bit automotive CRC"
+
+open_questions: []

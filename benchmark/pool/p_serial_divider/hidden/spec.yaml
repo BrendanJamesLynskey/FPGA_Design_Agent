@@ -1,0 +1,74 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_serial_divider
+title: "Sequential 16-bit divider with cycle count"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_serial_divider_top
+design_id: 0x53444956          # "SDIV"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "operands and results return to 0; not busy, not done"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  operation:
+  - A write of 1 to CTRL when BUSY = 0 starts a division of NUM by DEN; BUSY = 1 and DONE = 0 from the next clock until the result is valid, then BUSY = 0 and DONE = 1. A write to CTRL while BUSY = 1 is ignored; writes to NUM and DEN while BUSY = 1 are ignored.
+  - 'DEN = 0: the division takes 1 clock; QUOT = 0xFFFF, REM = NUM, DIVZ = 1.'
+  - '0 < DEN > NUM (the divisor is larger): takes 2 clocks; QUOT = 0, REM = NUM, DIVZ = 0.'
+  - 'Otherwise (DEN <= NUM): restoring long division, one quotient bit per clock from bit 15 down, 16 clocks, plus 1 clock to load, 17 in all; QUOT = floor(NUM / DEN), REM = NUM mod DEN, DIVZ = 0.'
+  - CYCLES is the number of clocks BUSY was high for the last division (1, 2 or 17).
+  outputs:
+  - LED[7:0] = QUOT[7:0], LED[15] = DIVZ, others 0. QUOT, REM, DIVZ and CYCLES keep the last result while a new division runs and until it finishes.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: NUM, access: RW, reset: 0, bits: "[15:0] dividend"}
+    - {offset: 0x01, name: DEN, access: RW, reset: 0, bits: "[15:0] divisor"}
+    - {offset: 0x02, name: CTRL, access: WO, reset: 0, bits: "[0] start; reads 0"}
+    - {offset: 0x03, name: QUOT, access: RO, reset: 0, bits: "[15:0] quotient"}
+    - {offset: 0x04, name: REM, access: RO, reset: 0, bits: "[15:0] remainder"}
+    - {offset: 0x05, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [1] DONE, [2] DIVZ, [15:8] CYCLES of the last division"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    division: 1, 2 or 17 clocks as described
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "QUOT and REM are the floor quotient and remainder for every divisor from 1 up", proof: [simulation]}
+  - {id: REQ-02, text: "Division by zero finishes at once with an all-ones quotient, the dividend as remainder and DIVZ set", proof: [simulation]}
+  - {id: REQ-03, text: "The busy time of the last division is reported in CYCLES: 1, 2 or 17", proof: [simulation]}
+  - {id: REQ-04, text: "LEDs and registers behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 150 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the quick case 'divisor larger than dividend' takes 2 clocks and the zero case 1"
+    reason: "the request asks for the exact count of the last division, so every case needs a fixed one"
+
+open_questions: []

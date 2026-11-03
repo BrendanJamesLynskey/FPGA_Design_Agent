@@ -1,0 +1,74 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_hdlc_tx
+title: "HDLC-style framer with bit stuffing and FCS"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_hdlc_tx_top
+design_id: 0x48444C43          # "HDLC"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "line idle high, buffer empty, counts 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  BIT_CYCLES: 10417
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JC1, dir: out, width: 1, note: "serial data on Pmod JC pin 1", pins: [K1], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  buffer:
+  - A write to DATA appends the low 8 bits to the buffer if BUSY = 0 and LEN < 8, else DROPPED increments (8 bits, saturating). A write to CTRL with bit 1 set empties the buffer when BUSY = 0. A write to CTRL with bit 0 set and BUSY = 0 and LEN > 0 starts a frame; otherwise it does nothing. The buffer is kept after a frame.
+  frame:
+  - 'FCS is CRC-16/X-25 of the payload bytes: reflected polynomial 0x8408, initial value 0xFFFF, final XOR 0xFFFF; the value for the ASCII string 123456789 is 0x906E. The frame check is sent low byte first.'
+  - 'Bit sequence: flag 0x7E (bits 0,1,1,1,1,1,1,0 in time order), then the payload bytes and the two FCS bytes, each least significant bit first, then the flag again. In the payload and FCS bits a 0 is inserted immediately after every run of five 1s (the run counter starts at 0 at the first payload bit and restarts after an inserted 0 and after any 0 data bit; it continues across byte boundaries, and the insertion is also made when the five 1s are the very last bits before the closing flag). Flag bits are never stuffed.'
+  - Each bit lasts BIT_CYCLES clocks; the bits follow back to back from the clock after the start; the line is registered. When the last flag bit ends the line returns to 1 and BUSY returns to 0 on the same clock.
+  leds:
+  - LED[0] = line, LED[1] = BUSY, others 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: DATA, access: WO, reset: 0, bits: "[7:0] byte appended to the buffer; reads 0"}
+    - {offset: 0x01, name: CTRL, access: WO, reset: 0, bits: "[0] send, [1] clear the buffer; reads 0"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [7:4] LEN, [15:8] DROPPED"}
+    - {offset: 0x03, name: FCS, access: RO, reset: 0, bits: "[15:0] frame check of the last frame started (0 before any)"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    frame: a few clocks to start; every bit exactly BIT_CYCLES clocks
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The frame is flag, payload, FCS low byte first, flag, all LSB first with 0 stuffing after five 1s", proof: [simulation]}
+  - {id: REQ-02, text: "The FCS is CRC-16/X-25 of the payload", proof: [simulation]}
+  - {id: REQ-03, text: "Bytes offered to a full or busy buffer are dropped and counted; CTRL start and clear behave as listed", proof: [simulation]}
+  - {id: REQ-04, text: "The line idles high and each bit lasts BIT_CYCLES clocks", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; 8x8 buffer in LUTs or one small BRAM; no DSP"
+
+assumptions:
+  - assumption: "stuffing also applies when the last five payload/FCS bits are 1s"
+    reason: "so the closing flag cannot be mistaken for payload"
+
+open_questions: []

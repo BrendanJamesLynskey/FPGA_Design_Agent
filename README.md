@@ -152,6 +152,15 @@ home and config. `python -m agent run ... --harness claude_code --cc-model claud
 [docs/claude_code_arm.md](docs/claude_code_arm.md). The same release has four agent fixes from the 05b diagnosis (spec
 schema, model API contract, integer cycle-count timing parameters, superseded files).
 
+## The benchmark (06a, F3 part 1)
+
+Benchmark v1 for scoring the agent: 24 natural-language tasks for the Nexys A7 (12 T1 blocks, 12 T2 peripherals),
+each with a hidden full spec, an independent golden model, cocotb acceptance tests, deliberate mutants, a trap test
+where a textbook or demo twin exists, an on-board check and a reference design built through every flow gate. A
+third of each tier is held out by a seeded draw and lives in the private repository; a 40-spec training pool for
+P1 and an 18-task contamination probe sit beside it. Frozen and hashed: [benchmark/README.md](benchmark/README.md),
+[benchmark/FROZEN.md](benchmark/FROZEN.md), the owner's checklist [benchmark/OWNER_REVIEW.md](benchmark/OWNER_REVIEW.md).
+
 ## Reproduce
 
 Simulation, lint and the Python tests (what CI runs):
@@ -184,6 +193,7 @@ tools/       inventory_check.py (board inventory against the master XDC)
 agent/       core/ (tools, security, trace, replay, smoke) and mcp_server/ (05a); tests/ with the replay fixture
 designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, design.xdc, probes.yaml,
              build.yaml, tests/, BRINGUP.md
+benchmark/   benchmark v1: tasks (development split), training pool, bench library and tools, manifest, owner review
 results/     committed build and bring-up results, per milestone
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
@@ -207,7 +217,8 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 05a | F2 part 1: the harness-neutral core, MCP server, security layer and replayed-trace CI ([docs/agent_core.md](docs/agent_core.md)) | in review |
 | 05d | F2 part 4: proof method per requirement, architecture-first gate, design standards v1.0 and checker, resource sanity gate, upgraded review pages, owner-edit ledger ([docs/methodology.md](docs/methodology.md), [docs/design_standards.md](docs/design_standards.md), [results/f2](results/f2/README.md)); live luna runs null at stage 2 | in review |
 | F2 | Agent v1 (T1-T2 designs) | coming |
-| F3 | Frozen benchmark, scored runs | coming |
+| 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | in review |
+| F3 | Scored runs | coming |
 
 ## Licence
 

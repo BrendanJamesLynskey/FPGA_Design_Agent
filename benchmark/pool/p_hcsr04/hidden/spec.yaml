@@ -1,0 +1,84 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_hcsr04
+title: "Ultrasonic ranger with median-of-three filtering"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_hcsr04_top
+design_id: 0x48435352          # "HCSR"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "idle, all readings and counts 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  TRIG_CYCLES: 1000
+  CLKS_PER_CM: 5800
+  ECHO_WAIT: 3000000
+  MAX_ECHO: 2320000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JD1, dir: out, width: 1, note: "trigger to the ranger on Pmod JD pin 1", pins: [H4], iostandard: LVCMOS33}
+  - {name: JD2, dir: in, width: 1, async: true, note: "echo from the ranger on Pmod JD pin 2 (level shifted to 3.3 V)", pins: [H1], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - JD2 is synchronised by two flops.
+  ping:
+  - A write to START with BUSY = 0 and JD2 low starts a ping (a write while BUSY = 1 is ignored). If JD2 is high, the ping waits (BUSY = 1) until JD2 has been low, then starts.
+  - The trigger JD1 is high for exactly TRIG_CYCLES clocks. After it falls, the design waits up to ECHO_WAIT clocks for JD2 to rise; if it does not, TIMEOUTS increments (16 bits) and the ping ends.
+  - 'When JD2 rises, the design counts clocks while it is high: W = the number of clocks JD2 stays high (a pulse driven for n clocks reads n). If W would exceed MAX_ECHO the counting stops and the ping ends as out of range: OOR increments (16 bits), no reading is taken. Otherwise, when JD2 falls the reading is taken.'
+  - 'A reading: WIDTH = W, RAW = floor(W / CLKS_PER_CM), GOOD increments (16 bits) and RAW enters the window of the last three readings, DIST = median of the window (one value: itself; two values: the smaller; three: the middle one). An out-of-range echo or a time-out does not touch the window. BUSY drops when the ping ends.'
+  outputs:
+  - LED[7:0] = min(DIST, 255), LED[15] = BUSY, others 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: START, access: WO, reset: 0, bits: "any write starts a ping; reads 0"}
+    - {offset: 0x01, name: RAW, access: RO, reset: 0, bits: "[15:0] last reading in cm"}
+    - {offset: 0x02, name: DIST, access: RO, reset: 0, bits: "[15:0] median of the last three readings, cm"}
+    - {offset: 0x03, name: WIDTH, access: RO, reset: 0, bits: "[31:0] last good echo width in clocks"}
+    - {offset: 0x04, name: GOOD, access: RO, reset: 0, bits: "[15:0] good readings"}
+    - {offset: 0x05, name: TIMEOUTS, access: RO, reset: 0, bits: "[15:0] pings without an echo"}
+    - {offset: 0x06, name: OOR, access: RO, reset: 0, bits: "[15:0] echoes longer than MAX_ECHO"}
+    - {offset: 0x07, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY"}
+    - {offset: 0x08, name: CTRL, access: WO, reset: 0, bits: "any write clears the window, DIST, RAW, WIDTH and the three counts; reads 0"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    echo_to_result: within 4 clocks of the echo falling
+  async_inputs: JD2, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The trigger pulse is TRIG_CYCLES clocks wide and the design waits ECHO_WAIT clocks for an echo", proof: [simulation]}
+  - {id: REQ-02, text: "RAW is floor(echo clocks / CLKS_PER_CM); an echo above MAX_ECHO is out of range and does not count as a reading", proof: [simulation]}
+  - {id: REQ-03, text: "DIST is the median of the last three good readings as specified", proof: [simulation]}
+  - {id: REQ-04, text: "The trigger never goes out while the echo is high; counts, clearing and LEDs behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; one divider or reciprocal; no BRAM"
+
+assumptions:
+  - assumption: "a too-long echo is abandoned at MAX_ECHO clocks"
+    reason: "the request only says the echo is too long to be a real range"
+
+open_questions: []

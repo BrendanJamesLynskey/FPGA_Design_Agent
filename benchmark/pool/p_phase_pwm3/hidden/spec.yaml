@@ -1,0 +1,74 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_phase_pwm3
+title: "Three-phase staggered PWM"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_phase_pwm3_top
+design_id: 0x50483350          # "PH3P"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the period counter restarts at 0 with duty 0; all outputs low"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  PWM_PERIOD: 3072
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "SW[7:0] duty, SW[8] stagger", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - SW is synchronised by two flops. DUTY = SW[7:0], STAGGER = SW[8].
+  period:
+  - A free-running counter T counts 0..PWM_PERIOD-1. On the clock T wraps to 0, DUTY and STAGGER are latched for the next period.
+  - ON = floor(DUTY x PWM_PERIOD / 256) clocks. ON is below PWM_PERIOD for every DUTY.
+  channels:
+  - Channel k (0, 1, 2) has offset O_k = k x PWM_PERIOD / 3 when STAGGER is 1 (exact division) and 0 when STAGGER is 0. In one period LED[k] is high on exactly the clocks where (T - O_k) mod PWM_PERIOD < ON.
+  - So with STAGGER the rising edge of channel 1 comes PWM_PERIOD/3 clocks after channel 0's and channel 2's after channel 1's; with the pulse wrapping into the next period where it does not fit. LED[15:3] = 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: DUTY, access: RO, reset: 0, bits: "[7:0] duty latched for the current period"}
+    - {offset: 0x01, name: ON, access: RO, reset: 0, bits: "[31:0] on-time in clocks"}
+    - {offset: 0x02, name: STAGGER, access: RO, reset: 0, bits: "[0] stagger latched for the current period"}
+    - {offset: 0x03, name: PERIOD, access: RO, reset: null, bits: "[31:0] PWM_PERIOD"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    switch_to_pwm: up to one period plus 3 clocks
+  async_inputs: switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Each channel is high for floor(DUTY x PWM_PERIOD / 256) clocks in each period", proof: [simulation]}
+  - {id: REQ-02, text: "With stagger the channels are PWM_PERIOD/3 apart, without they coincide", proof: [simulation]}
+  - {id: REQ-03, text: "DUTY and STAGGER change only at period boundaries, giving no runt pulses", proof: [simulation]}
+  - {id: REQ-04, text: "The registers report the values in use", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the period is a multiple of three so offsets are exact"
+    reason: "the request says so"
+
+open_questions: []

@@ -1,0 +1,109 @@
+{
+  "task": "t2_pdm_vu",
+  "sim": "icarus",
+  "date": "2026-11-03",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_mclk_timing": true,
+      "test_lrsel_high_falling_edge": true,
+      "test_levels_and_leds": true,
+      "test_peak_hold_and_decay": true,
+      "test_random_stream": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "mclk_period",
+      "why": "M_CLK half period one clock long (and the sample point off)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_mclk_timing"
+      ]
+    },
+    {
+      "name": "window_short",
+      "why": "a block is one sample short",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_lrsel_high_falling_edge",
+        "test_levels_and_leds",
+        "test_peak_hold_and_decay",
+        "test_random_stream"
+      ]
+    },
+    {
+      "name": "no_hold",
+      "why": "the peak decays at once, without the hold",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_hold_and_decay",
+        "test_random_stream"
+      ]
+    },
+    {
+      "name": "decay_wraps",
+      "why": "the peak wraps below zero instead of stopping at 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_hold_and_decay"
+      ]
+    },
+    {
+      "name": "led_strict",
+      "why": "an LED needs a level above its threshold, not at it",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_levels_and_leds"
+      ]
+    },
+    {
+      "name": "peak_clear_ignored",
+      "why": "a write does not clear PEAK",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_hold_and_decay"
+      ]
+    },
+    {
+      "name": "last_sample_lost",
+      "why": "ONES misses the block's last sample",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_levels_and_leds"
+      ]
+    },
+    {
+      "name": "hold_reload_ctrl",
+      "why": "the hold ignores CTRL.HOLD",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_hold_and_decay"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8,
+  "trap": {
+    "twin": "textbook PDM capture (M_LRSEL low, data taken at the M_CLK rising edge)",
+    "why": "this spec uses the M_LRSEL = 1 channel, valid in the high half and taken at the falling edge",
+    "must_fail": [
+      "test_lrsel_high_falling_edge"
+    ],
+    "failed_tests": [
+      "test_identity_and_reset",
+      "test_lrsel_high_falling_edge",
+      "test_random_stream"
+    ],
+    "trap_fires": true
+  }
+}

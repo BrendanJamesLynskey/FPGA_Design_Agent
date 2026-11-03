@@ -1,0 +1,71 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_adler32
+title: "Adler-32 checksum engine with word writes"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_adler32_top
+design_id: 0x41444C52          # "ADLR"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "A = 1, B = 0, COUNT = 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  adler:
+  - 'State A (16 bits) and B (16 bits), reset to A = 1, B = 0. For each byte x in order: A = (A + x) mod 65521, then B = (B + A) mod 65521 (using the new A).'
+  - ADLER = B x 65536 + A. The Adler-32 of the ASCII string Wikipedia is 0x11E60398.
+  - A write to BYTE takes the low 8 bits as one byte. A write to WORD takes four bytes, bits 7:0 first then 15:8, 23:16, 31:24. COUNT counts bytes (32 bits, wraps). A write to CTRL with bit 0 set restores A = 1, B = 0, COUNT = 0.
+  - The result is valid within 8 clocks of a write.
+  outputs:
+  - LED[15:0] = A.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: BYTE, access: WO, reset: 0, bits: "[7:0] one byte; reads 0"}
+    - {offset: 0x01, name: WORD, access: WO, reset: 0, bits: "[31:0] four bytes, lowest first; reads 0"}
+    - {offset: 0x02, name: ADLER, access: RO, reset: 0x00000001, bits: "[31:0] B in the upper half, A in the lower"}
+    - {offset: 0x03, name: COUNT, access: RO, reset: 0, bits: "[31:0] bytes processed"}
+    - {offset: 0x04, name: CTRL, access: WO, reset: 0, bits: "[0] start over; reads 0"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    write_to_result: at most 8 clocks
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The checksum equals Adler-32 (modulus 65521) of the bytes written, in order", proof: [simulation]}
+  - {id: REQ-02, text: "A word write feeds four bytes, lowest first", proof: [simulation]}
+  - {id: REQ-03, text: "COUNT, CTRL and the LEDs behave as listed", proof: [simulation]}
+  - {id: REQ-04, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, a few DSP at most"
+
+assumptions:
+  - assumption: "the sums are reduced after every byte"
+    reason: "so the long-message case needs no special rule"
+
+open_questions: []

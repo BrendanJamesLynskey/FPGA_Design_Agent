@@ -1,0 +1,90 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_tennis_score
+title: "Tennis game scoreboard"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_tennis_score_top
+design_id: 0x54454E4E          # "TENN"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "points, games and the game-over state return to 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  DEBOUNCE_CYCLES: 1000000
+  REFRESH_BITS: 17
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: BTNL, dir: in, width: 1, async: true, pins: [P17], iostandard: LVCMOS33}
+  - {name: BTNR, dir: in, width: 1, async: true, pins: [M17], iostandard: LVCMOS33}
+  - {name: BTNC, dir: in, width: 1, async: true, pins: [N17], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: CA, dir: out, width: 1, pins: [T10], iostandard: LVCMOS33}
+  - {name: CB, dir: out, width: 1, pins: [R10], iostandard: LVCMOS33}
+  - {name: CC, dir: out, width: 1, pins: [K16], iostandard: LVCMOS33}
+  - {name: CD, dir: out, width: 1, pins: [K13], iostandard: LVCMOS33}
+  - {name: CE, dir: out, width: 1, pins: [P15], iostandard: LVCMOS33}
+  - {name: CF, dir: out, width: 1, pins: [T11], iostandard: LVCMOS33}
+  - {name: CG, dir: out, width: 1, pins: [L18], iostandard: LVCMOS33}
+  - {name: DP, dir: out, width: 1, pins: [H15], iostandard: LVCMOS33}
+  - {name: AN, dir: out, width: 8, pins: [J17, J18, T9, J14, P14, T14, K2, U13], iostandard: LVCMOS33}
+
+behaviour:
+  debounce:
+  - Each button is synchronised (two flops), then debounced. The debounced level changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count.
+  - A press is a 0 -> 1 change of the debounced level; releases do nothing; holding does not repeat. A BTNL press and a BTNR press on the same clock cancel (neither scores).
+  scoring:
+  - 'Points per player are 0, 15, 30, 40 (codes 0..3). A point to player p (q the other): if the game is over it is ignored; if there is an advantage: it wins the game if p holds it, else the advantage is removed (deuce); else if both are on 40 p gets the advantage; else if p is on 40 p wins the game; else p''s score moves up one step.'
+  - 'Game over: GAMES of the winner increments (4 bits, saturating at 15), OVER = 1. A BTNC press clears the points and the advantage and OVER (games are kept); BTNC does nothing while a game is in progress... it clears the points whether or not the game is over.'
+  display:
+  - Digits are numbered 0 (rightmost) to 7. Digits are lit one at a time in order 0..7, each for 2^REFRESH_BITS clocks; while digit k is lit AN[k] = 0 and the other AN = 1. Digits 2..5 are always dark and DP is always 1.
+  - 'Player A uses digit 7 (left) and digit 6; player B uses digit 1 and digit 0 (right). A score shows as two glyphs: 00, 15, 30, 40; advantage shows A d (glyph A = abcefg, d = bcdeg) for the holder; the winner of a finished game shows two dashes (segment g only).'
+  - 'Glyphs (segments lit): 0 abcdef, 1 bc, 3 abcdg, 4 bcfg, 5 acdfg; CA..CG active low.'
+  leds:
+  - LED[15:12] = GAMES_A, LED[11:8] = GAMES_B, LED[0] = OVER, others 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: PTS_A, access: RO, reset: 0, bits: "[2:0] player A: 0..3 points 0/15/30/40, 4 advantage, 5 game won"}
+    - {offset: 0x01, name: PTS_B, access: RO, reset: 0, bits: "[2:0] player B, same coding"}
+    - {offset: 0x02, name: GAMES_A, access: RW, reset: 0, bits: "[3:0] games won by A; any write clears both game counts"}
+    - {offset: 0x03, name: GAMES_B, access: RO, reset: 0, bits: "[3:0] games won by B"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    button_to_score: 2 (sync) + DEBOUNCE_CYCLES + 1 clocks
+  async_inputs: buttons, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Points score 0-15-30-40-game, with deuce and advantage as in tennis", proof: [simulation]}
+  - {id: REQ-02, text: "Presses are debounced and each scores once; a game over ignores points until BTNC", proof: [simulation]}
+  - {id: REQ-03, text: "The display shows both scores as described, with Ad and dashes", proof: [simulation]}
+  - {id: REQ-04, text: "Game counts show on the LEDs and read back over the shell", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "BTNC always starts a new game, even mid-game"
+    reason: "the request says it starts the next game"
+
+open_questions: []

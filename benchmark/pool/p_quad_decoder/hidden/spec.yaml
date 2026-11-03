@@ -1,0 +1,76 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_quad_decoder
+title: "Quadrature decoder fed from switches"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_quad_decoder_top
+design_id: 0x51444543          # "QDEC"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "POS, FWD, REV, ERRS and DIR return to 0 and the decoder takes the state of the switches as its starting point"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[2:0] are used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - SW[2:0] are synchronised by two flops. A = SW[1], B = SW[0], INDEX = SW[2]. The pair AB is compared on each clock with its value one clock earlier; after reset the previous value is the synchronised state of the switches, so no count happens at start-up.
+  decode:
+  - 'Gray order of the pair: 00 (index 0), 01 (1), 11 (2), 10 (3). If the index of the new pair minus the index of the old pair is +1 modulo 4: forward, POS = POS + 1 and FWD increments, DIR = 1. If it is -1 modulo 4 (3): backward, POS = POS - 1, REV increments, DIR = 2.'
+  - If it is 2 (both channels changed on the same clock) POS is unchanged and ERRS increments (8 bits, saturating at 255). No change gives nothing.
+  - POS is 16 bits and wraps. FWD and REV are 16 bits and wrap.
+  index:
+  - A 0 -> 1 change of the synchronised INDEX sets POS to 0 (FWD, REV, ERRS and DIR are unchanged). Index and a count on the same clock are not specified.
+  outputs:
+  - LED[15:0] = POS.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: POS, access: RW, reset: 0, bits: "[15:0] position (two's complement); a write sets it"}
+    - {offset: 0x01, name: FWD, access: RW, reset: 0, bits: "[15:0] forward counts; any write sets it to 0"}
+    - {offset: 0x02, name: REV, access: RW, reset: 0, bits: "[15:0] backward counts; any write sets it to 0"}
+    - {offset: 0x03, name: ERRS, access: RW, reset: 0, bits: "[7:0] error count; any write sets it to 0"}
+    - {offset: 0x04, name: DIR, access: RO, reset: 0, bits: "[1:0] 0 none yet, 1 last count was forward, 2 backward"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    switch_to_pos: 3 clocks
+  async_inputs: switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Single changes of the A/B pair count forward or backward in Gray order", proof: [simulation]}
+  - {id: REQ-02, text: "A change of both channels at once leaves POS alone and counts an error", proof: [simulation]}
+  - {id: REQ-03, text: "The index rising edge zeroes POS; the LEDs show POS", proof: [simulation]}
+  - {id: REQ-04, text: "The counters and DIR read and clear as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "forward is the order 00, 01, 11, 10"
+    reason: "the request lists that order as forward"
+
+open_questions: []

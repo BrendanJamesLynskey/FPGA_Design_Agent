@@ -1,0 +1,75 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_timer_compare
+title: "Prescaled 32-bit timer with two output-compare channels"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_timer_compare_top
+design_id: 0x544D5243          # "TMRC"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "stopped, CNT = 0, PRESC = 0, both compares 0xFFFFFFFF, modes none, outputs low, flags clear"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  prescaler:
+  - PC counts 0..PRESC in clocks while RUN = 1; when PC = PRESC a tick occurs and PC returns to 0. While RUN = 0, PC is held at 0. (So a count lasts PRESC + 1 clocks.)
+  counter:
+  - 'On a tick: next = 0 if (ARL = 1 and CNT = CMPA), else CNT + 1 (32 bits, wraps); CNT = next. Match A is (next = CMPA), match B is (next = CMPB), both evaluated on the new value, registered on the same clock as the update.'
+  - 'With ARL = 1 and CMPA = K the counter runs 0, 1, .., K, 0, ..: a period of (K + 1) x (PRESC + 1) clocks, and match B (J <= K) comes (K - J) x (PRESC + 1) clocks before match A. A write to CNT while RUN = 0 sets it; a write while RUN = 1 is ignored.'
+  compare:
+  - A match sets its flag (FLAGS bit 0 for A, bit 1 for B). A write to FLAGS clears the flags written as 1... any write clears both.
+  - 'On match A the output LED[0] acts per MODE_A (CTRL[3:2]): 0 nothing, 1 set high, 2 set low, 3 toggle. LED[1] likewise with MODE_B (CTRL[5:4]).'
+  - Any write to CTRL loads the new CTRL fields and forces LED[0] = CTRL[6] and LED[1] = CTRL[7]; RUN = CTRL[0] and ARL = CTRL[1] take effect at once.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CTRL, access: RW, reset: 0, bits: "[0] RUN, [1] ARL, [3:2] MODE_A, [5:4] MODE_B, [6] initial level A, [7] initial level B"}
+    - {offset: 0x01, name: PRESC, access: RW, reset: 0, bits: "[31:0] prescaler value: a count lasts PRESC + 1 clocks"}
+    - {offset: 0x02, name: CNT, access: RW, reset: 0, bits: "[31:0] counter"}
+    - {offset: 0x03, name: CMPA, access: RW, reset: 0xFFFFFFFF, bits: "[31:0] compare A"}
+    - {offset: 0x04, name: CMPB, access: RW, reset: 0xFFFFFFFF, bits: "[31:0] compare B"}
+    - {offset: 0x05, name: FLAGS, access: RW, reset: 0, bits: "[0] match A seen, [1] match B seen; any write clears both"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    match_to_pin: same clock as the counter update
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The counter advances one count per PRESC + 1 clocks and the auto-reload period is (CMPA + 1) x (PRESC + 1)", proof: [simulation]}
+  - {id: REQ-02, text: "Matches set sticky flags and drive the channel outputs by mode", proof: [simulation]}
+  - {id: REQ-03, text: "Channel B's toggles lead channel A's by (CMPA - CMPB) counts", proof: [simulation]}
+  - {id: REQ-04, text: "Register writes (CNT only when stopped, FLAGS clear, CTRL forces the outputs) behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "ARL restarts after the clock on which CNT equals CMPA"
+    reason: "so a match on A is visible for a full count before the restart"
+
+open_questions: []

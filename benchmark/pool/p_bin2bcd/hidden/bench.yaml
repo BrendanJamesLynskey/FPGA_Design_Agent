@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_bin2bcd (pool; benchmark/tools/run_task.py)
+toplevel: p_bin2bcd_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, REFRESH_BITS: 3}
+phrases:
+  - "sign and magnitude, not two's complement"
+  - "A negative zero is just zero"
+  - "clamped to 99999 and an overflow flag is raised"

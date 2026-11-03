@@ -1,0 +1,83 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t2_pdm_vu
+title: PDM microphone sound-level meter with peak hold
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t2_pdm_vu_top
+design_id: 0x50444D56          # "PDMV"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator, note: "M_CLK is a registered data output, not a fabric clock"}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: registers to reset values; M_CLK low; the first block starts with the first sample after reset
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  CLK_HALF: 20                  # M_CLK 2.5 MHz (period 2 * CLK_HALF clocks)
+  WINDOW: 4096                  # bits per block (1.64 ms at 2.5 MHz)
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: M_CLK, dir: out, width: 1, pins: [J5], iostandard: LVCMOS33}
+  - {name: M_DATA, dir: in, width: 1, async: true, pins: [H5], iostandard: LVCMOS33}
+  - {name: M_LRSEL, dir: out, width: 1, pins: [F5], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  microphone:
+    - M_CLK is a registered output - low for CLK_HALF clocks, then high for CLK_HALF clocks, repeating; after reset it is low and first rises CLK_HALF clocks after reset ends.
+    - M_LRSEL is driven 1 at all times. With M_LRSEL = 1 the microphone drives M_DATA after each M_CLK rising edge and releases it after the falling edge (SPK0833 data sheet), so data is valid during the high half.
+    - "M_DATA is synchronised by two flops; the sample of each M_CLK cycle is the synchronised value on the clock at which the design drives M_CLK from 1 to 0 (the falling edge). (For CLK_HALF >= 4 this is the pin as of 2 clocks before the fall, inside the valid window.)"
+  level:
+    - "Samples are taken in blocks of WINDOW consecutive samples, the first block starting with the first sample after reset. At each block end - ONES = number of 1 samples in the block, LEVEL = |ONES - WINDOW/2|, BLOCKS += 1, then the peak update."
+    - "Peak update, in order - if LEVEL > PEAK then PEAK = LEVEL and the hold counter = HOLD; else if the hold counter > 0 it decreases by 1; else PEAK = PEAK - DECAY, or 0 if PEAK < DECAY."
+    - A write to PEAK sets PEAK and the hold counter to 0.
+  leds:
+    - "LED[i] = 1 when LEVEL >= (i + 1) * WINDOW / 32, for i = 0..15 (a bar from LED0 up; all 16 at LEVEL = WINDOW/2). Updated at each block end."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CTRL, access: RW, reset: 0x108, bits: "[7:0] HOLD (blocks), [11:8] DECAY (per block); [31:12] read 0"}
+    - {offset: 0x01, name: LEVEL, access: RO, reset: 0, bits: "[15:0] level of the last block"}
+    - {offset: 0x02, name: PEAK, access: "RO + write clears", reset: 0, bits: "[15:0] peak; any write sets it (and the hold) to 0"}
+    - {offset: 0x03, name: ONES, access: RO, reset: 0, bits: "[15:0] ones in the last block"}
+    - {offset: 0x04, name: BLOCKS, access: RO, reset: 0, bits: "[31:0] blocks completed since reset"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    block: "WINDOW * 2 * CLK_HALF clocks"
+  async_inputs: M_DATA, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: M_CLK, M_LRSEL and LED registered
+
+requirements:
+  - {id: REQ-01, text: "M_CLK has period 2 * CLK_HALF clocks with 50 % duty; M_LRSEL is always 1", proof: [simulation]}
+  - {id: REQ-02, text: "Data is taken at M_CLK falling edges (the channel M_LRSEL = 1 selects)", proof: [simulation]}
+  - {id: REQ-03, text: "ONES, LEVEL and BLOCKS follow every block", proof: [simulation]}
+  - {id: REQ-04, text: "PEAK holds for HOLD blocks and then decays by DECAY per block; a write clears it", proof: [simulation]}
+  - {id: REQ-05, text: "The LED bar shows LEVEL against the listed thresholds", proof: [simulation, hardware]}
+  - {id: REQ-06, text: "On the board a quiet room gives a low level with bit activity, and a clap raises the peak", proof: [hardware]}
+  - {id: REQ-07, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under a hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the hold and decay are counted in blocks.
+    reason: the level only changes at block ends, so blocks are the natural unit.
+  - assumption: the bar shows the level, not the peak.
+    reason: the request asks for a bar graph of the level.
+
+open_questions: []

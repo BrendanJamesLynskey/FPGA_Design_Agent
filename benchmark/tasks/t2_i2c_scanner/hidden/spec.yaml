@@ -1,0 +1,86 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t2_i2c_scanner
+title: I2C bus scanner on the temperature-sensor bus
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t2_i2c_scanner_top
+design_id: 0x5343414E          # "SCAN"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: no scan running; MAP0-MAP3, COUNT, DONE = 0; LOWEST = 0xFF; both lines released
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  QUARTER: 250                  # SCL 100 kHz
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: TMP_SCL, dir: inout, width: 1, async: true, note: "open drain - drive 0 or high-Z only", pins: [C14], iostandard: LVCMOS33}
+  - {name: TMP_SDA, dir: inout, width: 1, async: true, note: "open drain - drive 0 or high-Z only", pins: [C15], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  scan:
+    - A write to CTRL with bit 0 = 1 while BUSY = 0 starts a scan - MAP0-MAP3 and COUNT are cleared, LOWEST is set to 0xFF, DONE is cleared and BUSY set. Writes while BUSY = 1 are ignored.
+    - The scan probes addresses 0x08, 0x09, ... 0x77 in increasing order, one probe each - never 0x00-0x07 or 0x78-0x7F.
+    - "A probe - START, the byte {address, 0} (write), the ACK bit with SDA released (sampled at the end of its SCL high time), then STOP. No data byte is ever sent."
+    - If the ACK bit was 0 the address answered - its MAP bit is set, COUNT increments, and LOWEST takes the address if it is the first to answer in this scan.
+    - After the probe of 0x77 BUSY falls and DONE is set (DONE stays set until the next scan starts).
+    - The results update during the scan, probe by probe.
+  waveforms:
+    - "Q = QUARTER clocks. Releasing SCL is followed by waiting until SCL is seen high through the two-flop synchroniser (a stretching slave holds it low); high times count from that moment."
+    - "START - SDA low, wait 2Q, SCL low, wait Q. Each of the 9 bits - set SDA (pull low for 0, release for 1), wait Q, release SCL and wait high, wait 2Q, sample SDA, SCL low, wait Q. STOP - SDA low, wait Q, release SCL and wait high, wait 2Q, release SDA, wait 2Q (bus free) before the next START."
+    - The lines are only ever pulled low or released (high-Z).
+  leds:
+    - LED[15:0] = COUNT (zero-extended), updated with COUNT.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CTRL, access: WO, reset: 0, bits: "[0] write 1 to start a scan; reads return 0"}
+    - {offset: 0x01, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [1] DONE; [31:2] 0"}
+    - {offset: 0x02, name: COUNT, access: RO, reset: 0, bits: "[7:0] addresses that answered in this scan; [31:8] 0"}
+    - {offset: 0x03, name: LOWEST, access: RO, reset: 0xFF, bits: "[7:0] lowest address that answered, 0xFF if none (yet); [31:8] 0"}
+    - {offset: 0x04, name: MAP0, access: RO, reset: 0, bits: "bit i = address i answered (addresses 0x00-0x1F)"}
+    - {offset: 0x05, name: MAP1, access: RO, reset: 0, bits: "bit i = address 0x20 + i answered"}
+    - {offset: 0x06, name: MAP2, access: RO, reset: 0, bits: "bit i = address 0x40 + i answered"}
+    - {offset: 0x07, name: MAP3, access: RO, reset: 0, bits: "bit i = address 0x60 + i answered"}
+  unmapped: offsets 0x08-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    probe: "about 9 x 4Q + 8Q clocks per address without stretching; a whole scan is 112 probes"
+  async_inputs: TMP_SCL, TMP_SDA, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: open-drain enables and LEDs registered
+
+requirements:
+  - {id: REQ-01, text: "A scan probes exactly 0x08-0x77 in order, each with START, a write address, the ACK bit and STOP, and no data byte", proof: [simulation]}
+  - {id: REQ-02, text: "MAP, COUNT, LOWEST and DONE report the addresses that ACKed; a new scan clears them first", proof: [simulation]}
+  - {id: REQ-03, text: "Clock stretching is honoured and the lines are never driven high", proof: [simulation]}
+  - {id: REQ-04, text: "LED shows COUNT", proof: [simulation, hardware]}
+  - {id: REQ-05, text: "On the board the scan finds the ADT7420 at 0x4B", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a couple of hundred LUTs and FFs (the 112-bit map in flops); no BRAM, no DSP"
+
+assumptions:
+  - assumption: LOWEST reads 0xFF when nothing has answered.
+    reason: 0xFF cannot be a 7-bit address, so it marks "none" without another flag.
+  - assumption: the map has bits for all 128 addresses; reserved ones always read 0.
+    reason: four aligned 32-bit words keep the address arithmetic trivial for the host.
+
+open_questions: []

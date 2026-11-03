@@ -1,0 +1,85 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_adxl362_activity
+title: "ADXL362 activity interrupt monitor"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_adxl362_activity_top
+design_id: 0x41414354          # "AACT"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the start-up sequence restarts; ACT_THRESH 250, ACT_TIME 5, ACT_COUNT 0, LAST_STATUS and LAST_X 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  INIT_DELAY: 1000000
+  RESET_WAIT: 50000
+  SCLK_HALF: 50
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: ACL_MISO, dir: in, width: 1, async: true, pins: [E15], iostandard: LVCMOS33}
+  - {name: ACL_MOSI, dir: out, width: 1, pins: [F14], iostandard: LVCMOS33}
+  - {name: ACL_SCLK, dir: out, width: 1, pins: [F15], iostandard: LVCMOS33}
+  - {name: ACL_CSN, dir: out, width: 1, pins: [D15], iostandard: LVCMOS33}
+  - {name: ACL_INT1, dir: in, width: 1, async: true, note: "ADXL362 INT1, active high", pins: [B13], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  spi:
+  - 'SPI mode 0 (SCLK idles low, MOSI changes while SCLK is low, the sensor samples on rising edges, MISO is read on rising edges), most significant bit first. ACL_CSN is low for a whole transfer; SCLK has exactly 2 x SCLK_HALF clocks per period and is low while ACL_CSN is high. A transfer is whole bytes. Commands: 0x0A write, 0x0B read; then the register address; then data bytes (the address auto-increments).'
+  startup:
+  - STATE 0 from reset until INIT_DELAY clocks have passed (the first ACL_CSN fall comes INIT_DELAY clocks after reset is released, within 40 clocks).
+  - 'STATE 1 (configuring): first a write of 0x52 to register 0x1F (soft reset). After the transfer ends wait RESET_WAIT clocks (the next ACL_CSN fall comes RESET_WAIT to RESET_WAIT + 40 clocks after the previous ACL_CSN rise). Then write: THRESH_ACT_L (0x20) = ACT_THRESH[7:0], THRESH_ACT_H (0x21) = ACT_THRESH[10:8], TIME_ACT (0x22) = ACT_TIME[7:0], ACT_INACT_CTL (0x27) = 0x01 (activity enabled, absolute mode), INTMAP1 (0x2A) = 0x10 (activity to INT1), and last of all POWER_CTL (0x2D) = 0x02 (measurement mode). They may be separate transfers or bursts. No other register is written. Then STATE 2.'
+  - A write of 1 to CTRL while STATE is 2 runs the sequence again from the soft reset (STATE 1, without the INIT_DELAY wait); ACL_COUNT and the last values are kept.
+  monitor:
+  - In STATE 2, when the synchronised INT1 is high, the design reads STATUS (register 0x0B, one byte) and then XDATA_L, XDATA_H (registers 0x0E, 0x0F). LAST_STATUS = the status byte read; LAST_X = {XDATA_H, XDATA_L} as 16 bits (the sensor sign-extends its 12-bit value); ACT_COUNT increments (16 bits, wraps) once per interrupt. After the reads the design goes back to watching INT1 (the sensor drops INT1 when STATUS is read).
+  leds:
+  - LED[0] = synchronised INT1, LED[1] = (STATE is 2), LED[15:8] = LAST_X[11:4].
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: ACT_THRESH, access: RW, reset: 250, bits: "[10:0] activity threshold, used the next time the sequence runs"}
+    - {offset: 0x01, name: ACT_TIME, access: RW, reset: 5, bits: "[7:0] activity time"}
+    - {offset: 0x02, name: CTRL, access: WO, reset: 0, bits: "[0] run the set-up again; reads 0"}
+    - {offset: 0x03, name: ACT_COUNT, access: RO, reset: 0, bits: "[15:0] activity interrupts serviced"}
+    - {offset: 0x04, name: LAST_STATUS, access: RO, reset: 0, bits: "[7:0] status byte of the last interrupt"}
+    - {offset: 0x05, name: LAST_X, access: RO, reset: 0, bits: "[15:0] X data of the last interrupt"}
+    - {offset: 0x06, name: STATE, access: RO, reset: 0, bits: "[1:0] 0 power-up wait, 1 configuring, 2 monitoring"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    int_to_read: within 50 clocks of INT1 going high (plus the transfers)
+  async_inputs: ACL_MISO, ACL_INT1, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The sensor is soft-reset, then configured with the shell values, with POWER_CTL written last", proof: [simulation]}
+  - {id: REQ-02, text: "INIT_DELAY, RESET_WAIT and SCLK_HALF give the stated bus timing", proof: [simulation]}
+  - {id: REQ-03, text: "Each INT1 event is serviced once: status read first, then X, with count and last values kept", proof: [simulation]}
+  - {id: REQ-04, text: "A new ACT_THRESH / ACT_TIME takes effect when the set-up is run again", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "INT1 is treated as a level and the status read clears it"
+    reason: "that is how the sensor's default interrupt mode behaves"
+
+open_questions: []

@@ -1,0 +1,9 @@
+# Hidden acceptance bench for p_onewire_id (pool; benchmark/tools/run_task.py)
+toplevel: tb_p_onewire_id
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, RST_LOW: 80, PRES_WAIT: 10, PRES_LOW: 30, PRES_SAMPLE: 20, RST_TOTAL: 140, SLOT: 30, W1_LOW: 3, W0_LOW: 24, RD_LOW: 3, RD_SAMPLE: 10, RD0_HOLD: 18}
+wrapper: tb_p_onewire_id.sv
+phrases:
+  - "the FPGA only ever pulls it low, never drives it high"
+  - "or a CRC mismatch"
+  - "if the device is holding it low the bit is a 0"

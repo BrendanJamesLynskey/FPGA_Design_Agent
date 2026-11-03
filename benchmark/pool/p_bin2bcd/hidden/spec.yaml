@@ -1,0 +1,82 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_bin2bcd
+title: "Signed binary to BCD converter with display"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_bin2bcd_top
+design_id: 0x42324244          # "B2BD"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the input register returns to 0, so BCD is 0, no sign, no overflow"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  REFRESH_BITS: 17
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: CA, dir: out, width: 1, pins: [T10], iostandard: LVCMOS33}
+  - {name: CB, dir: out, width: 1, pins: [R10], iostandard: LVCMOS33}
+  - {name: CC, dir: out, width: 1, pins: [K16], iostandard: LVCMOS33}
+  - {name: CD, dir: out, width: 1, pins: [K13], iostandard: LVCMOS33}
+  - {name: CE, dir: out, width: 1, pins: [P15], iostandard: LVCMOS33}
+  - {name: CF, dir: out, width: 1, pins: [T11], iostandard: LVCMOS33}
+  - {name: CG, dir: out, width: 1, pins: [L18], iostandard: LVCMOS33}
+  - {name: DP, dir: out, width: 1, pins: [H15], iostandard: LVCMOS33}
+  - {name: AN, dir: out, width: 8, pins: [J17, J18, T9, J14, P14, T14, K2, U13], iostandard: LVCMOS33}
+
+behaviour:
+  convert:
+  - 'IN holds the last accepted write: MAG = IN[16:0], NEG = IN[31]. Bits 30:17 are ignored. The result follows IN within 40 clocks of a write.'
+  - If MAG > 99999 then OVF = 1 and the digits are 99999, else OVF = 0 and the digits are MAG in decimal. NEG is reported as 1 only if NEG is written 1 and the (clamped) magnitude is not 0.
+  display:
+  - Digits are numbered 0 (rightmost, AN[0]) to 7. They are lit one at a time in order 0..7, each for 2^REFRESH_BITS clocks; while digit k is lit AN[k] = 0 and the other AN = 1.
+  - 'Digits 0..4 show the five decimal digits with leading zeros blank (dark: all AN stay 1 in that slot); digit 0 is always lit. Let L be the number of digits shown (1..5). If NEG is reported, digit L shows a minus (segment g only). If OVF, digit 6 shows E (segments a d e f g). All other digits are dark. DP is always 1.'
+  - 'Glyphs (segments lit): 0 abcdef, 1 bc, 2 abdeg, 3 abcdg, 4 bcfg, 5 acdfg, 6 acdefg, 7 abc, 8 abcdefg, 9 abcdfg; CA..CG active low.'
+  leds:
+  - LED[15:0] = BCD[15:0].
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: IN, access: RW, reset: 0, bits: "[16:0] magnitude, [31] negative; bits 30:17 read 0"}
+    - {offset: 0x01, name: BCD, access: RO, reset: 0, bits: "[19:0] five BCD digits (digit 0 in [3:0])"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] OVF, [1] NEG as reported"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    write_to_result: at most 40 clocks
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The magnitude is converted to five BCD digits, clamped to 99999 with OVF", proof: [simulation]}
+  - {id: REQ-02, text: "NEG is reported only for a non-zero magnitude", proof: [simulation]}
+  - {id: REQ-03, text: "The display shows the number without leading zeros, with the minus and E markers placed as described", proof: [simulation]}
+  - {id: REQ-04, text: "LED[15:0] show BCD[15:0]; registers behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the clamp applies to the magnitude only, the sign is kept"
+    reason: "the request describes the sign as a separate bit"
+
+open_questions: []

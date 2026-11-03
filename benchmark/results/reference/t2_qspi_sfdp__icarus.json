@@ -1,0 +1,127 @@
+{
+  "task": "t2_qspi_sfdp",
+  "sim": "icarus",
+  "date": "2026-11-03",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_jedec_id_and_sfdp": true,
+      "test_bad_signature": true,
+      "test_busy_and_repeat": true,
+      "test_random_contents": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "no_dummy_byte",
+      "why": "no dummy cycles: SFDP bytes shifted by one",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_jedec_id_and_sfdp",
+        "test_bad_signature",
+        "test_busy_and_repeat",
+        "test_random_contents"
+      ]
+    },
+    {
+      "name": "fast_read_opcode",
+      "why": "a FAST_READ (0Bh) of address 0 instead of RSFDP",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_jedec_id_and_sfdp",
+        "test_bad_signature",
+        "test_busy_and_repeat",
+        "test_random_contents"
+      ]
+    },
+    {
+      "name": "words_big_endian",
+      "why": "byte 0 ends in the top of SFDP3",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_jedec_id_and_sfdp",
+        "test_bad_signature",
+        "test_busy_and_repeat",
+        "test_random_contents"
+      ]
+    },
+    {
+      "name": "no_startup_cycles",
+      "why": "no SCK cycles with CS high after reset",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_jedec_id_and_sfdp",
+        "test_bad_signature",
+        "test_busy_and_repeat",
+        "test_random_contents"
+      ]
+    },
+    {
+      "name": "hold_low",
+      "why": "HOLD# low (the flash pauses)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_jedec_id_and_sfdp",
+        "test_bad_signature",
+        "test_busy_and_repeat",
+        "test_random_contents"
+      ]
+    },
+    {
+      "name": "sig_check_off",
+      "why": "SIG_OK set whatever the bytes",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_bad_signature"
+      ]
+    },
+    {
+      "name": "wp_high",
+      "why": "WP# driven high",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_jedec_id_and_sfdp",
+        "test_bad_signature",
+        "test_busy_and_repeat",
+        "test_random_contents"
+      ]
+    },
+    {
+      "name": "half_short",
+      "why": "SCK high phase shorter than HALF",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_jedec_id_and_sfdp",
+        "test_bad_signature",
+        "test_busy_and_repeat",
+        "test_random_contents"
+      ]
+    },
+    {
+      "name": "id_two_bytes",
+      "why": "only two ID bytes read",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_jedec_id_and_sfdp",
+        "test_bad_signature",
+        "test_busy_and_repeat",
+        "test_random_contents"
+      ]
+    }
+  ],
+  "mutants_killed": 9,
+  "mutants_total": 9
+}

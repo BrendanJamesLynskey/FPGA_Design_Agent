@@ -28,6 +28,13 @@ jobs:
         run: python -m pytest -q --ignore-glob='*_rtl.py'
       - name: Board inventory against the master XDC (brief 04c)
         run: python tools/inventory_check.py boards/nexys_a7_100t
+      - name: Benchmark v1 training pool, model unit tests (brief 06a)
+        run: |
+          rc=0
+          for d in benchmark/pool/*/hidden; do
+            PYTHONPATH=$d:. python -m pytest -q -p no:cacheprovider --import-mode=importlib $d/test_model.py || rc=1
+          done
+          exit $rc
 
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
@@ -50,6 +57,11 @@ jobs:
           designs/b2_qspi_jedec/tests/test_qspi_rtl.py designs/b2_mic_pdm/tests/test_mic_rtl.py
       - name: Mutants (each deliberate bug must fail the T1 tests)
         run: PYTHON=python designs/t1_dimmer_counter/tests/run_mutants.sh
+      - name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (brief 06a)
+        run: |
+          rc=0
+          for t in benchmark/tasks/*/; do python benchmark/tools/check_task.py "$t" --out build/bench_ci || rc=1; done
+          exit $rc
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -111,6 +123,10 @@ jobs:
         run: |
           export PATH=$HOME/verilator-5.048/bin:$PATH
           SIM=verilator T1_SEEDS=1,2,3 python -m pytest -q designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
+      - name: Benchmark v1 development tasks - reference RTL under Verilator 5.048 (brief 06a)
+        run: |
+          export PATH=$HOME/verilator-5.048/bin:$PATH
+          SIM=verilator python -m pytest -q benchmark/tests/test_bench_rtl.py
       - name: The same bench under Icarus, 3 seeds
         run: SIM=icarus T1_SEEDS=1,2,3 python -m pytest -q designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
       - name: Formal (SymbiYosys bmc + cover)

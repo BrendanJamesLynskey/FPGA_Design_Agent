@@ -1,0 +1,80 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_handshake_fsm
+title: "Four-phase request/acknowledge responder"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_handshake_fsm_top
+design_id: 0x4853484B          # "HSHK"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the responder is idle with ACK low and all counts at 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  ACK_DELAY: 200
+  HOLD_LIMIT: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[0] is used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - SW[0] is synchronised by two flops; R is the synchronised REQ.
+  fsm:
+  - States IDLE, WAIT, ACKED, FAULT; a count CNT. Transitions are taken on each clock from the state and R.
+  - 'IDLE: if R, go to WAIT with CNT = 0.'
+  - 'WAIT: if not R, ABORTS increments and go to IDLE. Else if CNT + 1 >= ACK_DELAY go to ACKED with CNT = 0, else CNT increments. (WAIT is visible for exactly ACK_DELAY clocks before ACK rises.)'
+  - 'ACKED: if not R, TRANSFERS increments and go to IDLE. Else if CNT + 1 >= HOLD_LIMIT, FAULTS increments and go to FAULT, else CNT increments. (ACK is visible for HOLD_LIMIT clocks before a fault.)'
+  - 'FAULT: if not R go to IDLE.'
+  outputs:
+  - LED[0] = (state is ACKED), LED[1] = (state is FAULT), LED[2] = (state is WAIT); all registered; other LEDs 0. ACK_DELAY and HOLD_LIMIT are at least 1.
+  counts:
+  - TRANSFERS, ABORTS, FAULTS are 16 bits and wrap; a write to TRANSFERS clears all three.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: TRANSFERS, access: RW, reset: 0, bits: "[15:0] completed handshakes; any write clears TRANSFERS, ABORTS and FAULTS"}
+    - {offset: 0x01, name: ABORTS, access: RO, reset: 0, bits: "[15:0] aborted requests"}
+    - {offset: 0x02, name: FAULTS, access: RO, reset: 0, bits: "[15:0] ACK timeouts"}
+    - {offset: 0x03, name: ACK_DELAY, access: RO, reset: null, bits: "[31:0] ACK_DELAY"}
+    - {offset: 0x04, name: HOLD_LIMIT, access: RO, reset: null, bits: "[31:0] HOLD_LIMIT"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    req_to_busy: a few clocks (two-flop synchroniser plus output register)
+  async_inputs: switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "ACK rises ACK_DELAY clocks after the request is seen and falls after REQ falls", proof: [simulation]}
+  - {id: REQ-02, text: "A request withdrawn before ACK is counted as aborted and never acknowledged", proof: [simulation]}
+  - {id: REQ-03, text: "An ACK held for HOLD_LIMIT clocks is dropped, flagged on LED[1] and counted, until REQ falls", proof: [simulation]}
+  - {id: REQ-04, text: "Counts and clear behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "a one-clock REQ pulse is an aborted request"
+    reason: "REQ is withdrawn before ACK could come up"
+
+open_questions: []

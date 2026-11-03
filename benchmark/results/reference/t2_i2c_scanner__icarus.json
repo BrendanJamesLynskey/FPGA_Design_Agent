@@ -1,0 +1,129 @@
+{
+  "task": "t2_i2c_scanner",
+  "sim": "icarus",
+  "date": "2026-11-03",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_scan_finds_devices": true,
+      "test_empty_bus": true,
+      "test_rescan_clears_and_busy": true,
+      "test_clock_stretching_and_timing": true,
+      "test_random_population": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "starts_at_zero",
+      "why": "reserved addresses 0x00-0x07 are probed",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_scan_finds_devices",
+        "test_empty_bus",
+        "test_rescan_clears_and_busy",
+        "test_clock_stretching_and_timing",
+        "test_random_population"
+      ]
+    },
+    {
+      "name": "stops_early",
+      "why": "0x77 is never probed",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_scan_finds_devices",
+        "test_empty_bus",
+        "test_rescan_clears_and_busy",
+        "test_clock_stretching_and_timing",
+        "test_random_population"
+      ]
+    },
+    {
+      "name": "read_probe",
+      "why": "probes with the read bit set",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_scan_finds_devices",
+        "test_empty_bus",
+        "test_rescan_clears_and_busy",
+        "test_clock_stretching_and_timing",
+        "test_random_population"
+      ]
+    },
+    {
+      "name": "lowest_is_last",
+      "why": "LOWEST holds the highest answering address",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_scan_finds_devices",
+        "test_rescan_clears_and_busy",
+        "test_random_population"
+      ]
+    },
+    {
+      "name": "map_not_cleared",
+      "why": "a new scan keeps the old map",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rescan_clears_and_busy",
+        "test_random_population"
+      ]
+    },
+    {
+      "name": "no_stretch_wait",
+      "why": "SCL high time not held off while a slave stretches",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clock_stretching_and_timing"
+      ]
+    },
+    {
+      "name": "ack_inverted",
+      "why": "a NACK counts as an answer",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_scan_finds_devices",
+        "test_empty_bus",
+        "test_rescan_clears_and_busy",
+        "test_clock_stretching_and_timing",
+        "test_random_population"
+      ]
+    },
+    {
+      "name": "led_shows_lowest",
+      "why": "LEDs show LOWEST, not COUNT",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_scan_finds_devices",
+        "test_empty_bus",
+        "test_rescan_clears_and_busy",
+        "test_clock_stretching_and_timing",
+        "test_random_population"
+      ]
+    },
+    {
+      "name": "no_bus_free",
+      "why": "SDA never released: no STOP condition between probes",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_scan_finds_devices",
+        "test_empty_bus",
+        "test_rescan_clears_and_busy",
+        "test_clock_stretching_and_timing",
+        "test_random_population"
+      ]
+    }
+  ],
+  "mutants_killed": 9,
+  "mutants_total": 9
+}

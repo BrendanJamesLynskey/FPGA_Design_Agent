@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_manchester_tx (pool; benchmark/tools/run_task.py)
+toplevel: p_manchester_tx_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, BIT_CYCLES: 240}
+phrases:
+  - "The lead-in is four 1 bits and then a 0 bit"
+  - "A byte written while a frame is still going out is not queued"
+  - "goes back to low when the frame ends"

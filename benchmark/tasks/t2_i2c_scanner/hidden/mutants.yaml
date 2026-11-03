@@ -1,0 +1,10 @@
+mutants:
+  - {name: starts_at_zero, file: scan_core.sv, find: "                    addr <= 7'h08;\n                    st <= S1;", replace: "                    addr <= 7'h00;\n                    st <= S1;", why: "reserved addresses 0x00-0x07 are probed"}
+  - {name: stops_early, file: scan_core.sv, find: "if (addr == 7'h77) begin", replace: "if (addr == 7'h76) begin", why: "0x77 is never probed"}
+  - {name: read_probe, file: scan_core.sv, find: "assign byte_out = {addr, 1'b0};", replace: "assign byte_out = {addr, 1'b1};", why: "probes with the read bit set"}
+  - {name: lowest_is_last, file: scan_core.sv, find: "if (lowest == 8'hFF) lowest <= {1'b0, addr};", replace: "lowest <= {1'b0, addr};", why: "LOWEST holds the highest answering address"}
+  - {name: map_not_cleared, file: scan_core.sv, find: "busy <= 1'b1; done <= 1'b0; count <= '0; lowest <= 8'hFF; map <= '0;", replace: "busy <= 1'b1; done <= 1'b0; count <= '0; lowest <= 8'hFF;", why: "a new scan keeps the old map"}
+  - {name: no_stretch_wait, file: scan_core.sv, find: "                B2: if (!scl_in) cnt <= Q2;", replace: "                B2: if (1'b0) cnt <= Q2;", why: "SCL high time not held off while a slave stretches"}
+  - {name: ack_inverted, file: scan_core.sv, find: "if (k == 4'd8) acked <= !sda_in;", replace: "if (k == 4'd8) acked <= sda_in;", why: "a NACK counts as an answer"}
+  - {name: led_shows_lowest, file: t2_i2c_scanner_top.sv, find: "else     LED <= {8'd0, count};", replace: "else     LED <= {8'd0, lowest};", why: "LEDs show LOWEST, not COUNT"}
+  - {name: no_bus_free, file: scan_core.sv, find: "P2: if (!scl_in) cnt <= Q2;\n                    else if (cnt == '0) begin st <= P3; sda_oe <= 1'b0; cnt <= Q2; end", replace: "P2: if (!scl_in) cnt <= Q2;\n                    else if (cnt == '0) begin st <= P3; sda_oe <= 1'b1; cnt <= Q2; end", why: "SDA never released: no STOP condition between probes"}

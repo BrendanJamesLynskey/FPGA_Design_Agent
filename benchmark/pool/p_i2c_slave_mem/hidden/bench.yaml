@@ -1,0 +1,9 @@
+# Hidden acceptance bench for p_i2c_slave_mem (pool; benchmark/tools/run_task.py)
+toplevel: tb_p_i2c_slave_mem
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400}
+wrapper: tb_p_i2c_slave_mem.sv
+phrases:
+  - "the number moves on by one after each byte the slave sends"
+  - "is acknowledged but ignored"
+  - "the current register number stays as it was"
