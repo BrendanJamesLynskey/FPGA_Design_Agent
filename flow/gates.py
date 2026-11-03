@@ -199,6 +199,22 @@ def parse_check_timing(text: str) -> dict[str, int]:
     return out
 
 
+def parse_check_timing_ports(text: str) -> dict[str, list[str]]:
+    """The names check_timing -verbose lists under each non-empty check (``no_input_delay``: the input ports,
+    ``no_output_delay``: the output ports, ...), from the detail sections (the ones with a dashed rule under the
+    heading). Checks whose detail lists no names (a count of pins, say) are left out."""
+    out: dict[str, list[str]] = {}
+    heads = list(re.finditer(r"^\d+\.\s+checking\s+(\w+)\s+\((\d+)\)\n-+\n", text, re.M))
+    for i, m in enumerate(heads):
+        if int(m.group(2)) == 0:
+            continue
+        end = heads[i + 1].start() if i + 1 < len(heads) else len(text)
+        names = [ln.strip() for ln in text[m.end():end].splitlines() if ln and not ln[0].isspace() and ln.strip()]
+        if names:
+            out[m.group(1)] = names
+    return out
+
+
 def parse_rule_table(text: str) -> list[dict[str, Any]]:
     """The REPORT SUMMARY table of report_drc / report_methodology: rule, severity, description, count."""
     rows = []
@@ -252,6 +268,14 @@ PLACE_WHS_MIN_NS = -0.5    # UG949 ch. 6 "Pre- and Post-Placement": hold violati
 JUNCTION_MAX_C = 85.0      # commercial grade; the power gate flow/hw.py uses the same limit
 
 
+def unconstrained_text(ports: dict[str, list[str]], limit: int = 40) -> str:
+    """The ports check_timing lists, one clause per check, in plain form (raw names, no advice)."""
+    what = {"no_input_delay": "input ports with no input delay", "no_output_delay": "output ports with no output delay",
+            "no_clock": "register pins with no clock", "unconstrained_internal_endpoints": "unconstrained internal endpoints"}
+    return "; ".join(f"{what.get(k, k)} ({len(v)}): " + ", ".join(v[:limit]) + (f", ... {len(v) - limit} more" if len(v) > limit else "")
+                     for k, v in ports.items())
+
+
 def _read(d: Path, name: str) -> str:
     p = d / name
     if not p.exists():
@@ -302,7 +326,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
     # --- post_synth: UG949 ch. 5 "Moving Past Synthesis" ---
     if (d / "timing_summary_synth.rpt").exists():
         t_s = parse_timing_summary(_read(d, "timing_summary_synth.rpt"))
-        c_s = parse_check_timing(_read(d, "check_timing_synth.rpt"))
+        c_s_text = _read(d, "check_timing_synth.rpt")
+        c_s = parse_check_timing(c_s_text)
         m_s = parse_rule_table(_read(d, "methodology_synth.rpt"))
         d_s = parse_rule_table(_read(d, "drc_synth.rpt"))
         q_s = parse_qor_assessment(_read(d, "qor_assessment_synth.rpt")) if (d / "qor_assessment_synth.rpt").exists() else None
@@ -328,6 +353,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             sanity = resource_check(util_s, arch)
             g["post_synth_resources_in_range"] = sanity["pass"]
         stages["post_synth"] = {"ran": True, "gates": g, "warnings": warn, "timing": t_s, "check_timing": c_s,
+                                "unconstrained_ports": parse_check_timing_ports(c_s_text),
                                 "methodology": _rule_summary(m_s), "drc": _rule_summary(d_s), "qor_assessment": q_s,
                                 "cdc": cdc_s, "resource_sanity": sanity, "utilization": util_s}
     else:
@@ -353,7 +379,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
     else:
         # --- post_route: the closure checks (UG949 ch. 6) ---
         timing = parse_timing_summary(_read(d, "timing_summary.rpt"))
-        checks = parse_check_timing(_read(d, "check_timing.rpt"))
+        checks_text = _read(d, "check_timing.rpt")
+        checks = parse_check_timing(checks_text)
         util = parse_utilization(_read(d, "utilization.rpt"))
         drc = parse_rule_table(_read(d, "drc.rpt"))
         meth = parse_rule_table(_read(d, "methodology.rpt"))
@@ -379,7 +406,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         if (d / "methodology_rtl.rpt").exists():      # a build of this flow version: the environment is set
             route_gates["power_junction_ok"] = (env["airflow_lfm"] == 0 and env["heatsink"] == "none"
                                                 and env["junction_c"] is not None and env["junction_c"] <= JUNCTION_MAX_C)
-        stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r}
+        stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r,
+                                "unconstrained_ports": parse_check_timing_ports(checks_text)}
 
         # --- bitstream ---
         bit = d / f"{top}.bit"
@@ -453,6 +481,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {name}: {'pass' if st['pass'] else 'FAIL'}")
         for g, ok in st["gates"].items():
             print(f"    {'ok  ' if ok else 'FAIL'} {g}")
+            if not ok and "unconstrained" in g and st.get("unconstrained_ports"):
+                print(f"         check_timing: {unconstrained_text(st['unconstrained_ports'])}")
         for w in st.get("warnings", []):
             print(f"    warn {w['name']}: score {w['score']} < {w['min']} (recorded, not a gate)")
     if r["first_failed_stage"]:

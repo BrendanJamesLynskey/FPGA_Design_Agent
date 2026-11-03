@@ -27,6 +27,12 @@ def _load(path: Path, name: str):
         sys.path.remove(str(path.parent))
 
 
+#: sectioned vendor sets of the bank (``vendor/<name>/<section>/<skill>/SKILL.md``) that ``skills`` also reads. Until
+#: f2-stage3-io only techniques, functions, family, board and procedures were read, so a section whose skills live in
+#: the vendor axis (``constraints``: xdc-constraints-basics) always came back empty.
+VENDOR_SETS = ("ross_distilled",)
+
+
 class LocalBank:
     def __init__(self, root: Path = DEFAULT_BANK):
         self.root = Path(root)
@@ -41,6 +47,15 @@ class LocalBank:
         """``[{path, axis, section, name, description, text}]`` for the board and family, filtered to the sections."""
         items = self._select.select(board=board, family=family, sections=sections, primary_only=primary_only,
                                     procedures=procedures, root=self.root)
+        if sections:
+            known = {x.path for x in items}
+            for v in VENDOR_SETS:
+                try:
+                    more = self._select.select(sections=sections, vendor=v, generic=False, primary_only=primary_only,
+                                               procedures=False, root=self.root)
+                except Exception:                      # a bank without that set: nothing to add
+                    continue
+                items = list(items) + [x for x in more if x.path not in known]
         out = []
         for s in items:
             p = self.root / s.path
