@@ -5,7 +5,18 @@ Pass rule (written before any board run):
     a written value masked to its width;
   - FRAME advances by 60 +/- 2 in 1.00 s (59.52 Hz);
   - with BOUNCE on from X = 100, Y = 100 (moving right and down) X and Y both advance by the number of frames
-    counted (+/- 1), as long as no edge is reached (about 1 s).
+    that passed between the CTRL write and the X / Y reads, as long as no edge is reached (about 1 s). That
+    number is bracketed (v1.1, below): FRAME is read before and after the CTRL write and before and after the
+    X / Y reads, and X - 100 and Y - 100 must each lie in [FRAME_before_reads - FRAME_after_CTRL_write - 1,
+    FRAME_after_reads - FRAME_before_CTRL_write + 1].
+
+Rule changed in v1.1, after the first board run (2026-11-03, reference build 791b101): the v1 rule compared X - 100 and
+Y - 100 with one FRAME difference (read after the CTRL write, and again before the X / Y reads), to +/- 1. The board
+showed that difference as 60 while X and Y had both moved 62 (measured FRAME rate 59.53 Hz). The two UART register
+reads of X and Y, after the FRAME read, take real time, and frames pass during them. The design behaved correctly
+(X and Y moved together, one pixel per frame); the fault was the measurement window, not the behaviour. The
+bracket makes the window explicit and does not loosen what is checked: X and Y must still track the frame counter
+to within one frame. Board record: results/board_v2/t2_vga_sprite.json (v1 run).
 The bench leaves a bouncing arrow sprite running for the owner to look at (REQ-05).
 """
 
@@ -39,13 +50,17 @@ def check(sh: Any) -> dict[str, Any]:
     rate = (f1 - f0) / (t1 - t0)
     sh.write(X, 100)
     sh.write(Y, 100)
+    fa_lo = sh.read(FRAME)                           # before the CTRL write: motion cannot have started
     sh.write(CTRL, 0x3)
-    fa = sh.read(FRAME)
+    fa_hi = sh.read(FRAME)                           # after it: frames counted so far may include motion
     time.sleep(1.0)
-    fb, x, y = sh.read(FRAME), sh.read(X), sh.read(Y)
-    moved = fb - fa
-    bounce_ok = abs((x - 100) - moved) <= 1 and abs((y - 100) - moved) <= 1
+    fb_lo = sh.read(FRAME)                           # before the X / Y reads
+    x, y = sh.read(X), sh.read(Y)
+    fb_hi = sh.read(FRAME)                           # after them
+    lo, hi = fb_lo - fa_hi - 1, fb_hi - fa_lo + 1
+    moved = fb_lo - fa_hi
+    bounce_ok = lo <= x - 100 <= hi and lo <= y - 100 <= hi
     res = {"reset_ok": reset_ok, "rows_ok": rows_ok, "colours_ok": col_ok, "frames_per_s": round(rate, 2),
-           "frames": moved, "x": x, "y": y}
+           "frames": moved, "frames_lo": lo, "frames_hi": hi, "x": x, "y": y}
     res["pass"] = bool(reset_ok and rows_ok and col_ok and 58 <= rate <= 62 and bounce_ok)
     return res
