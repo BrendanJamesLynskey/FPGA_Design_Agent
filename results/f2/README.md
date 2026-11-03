@@ -56,6 +56,12 @@ Spend by key usage: about $1.23 of the $1.50 cap (luna runs 1-6 $1.0385 from sum
 | `agent_cc_haiku_05c2_run1_crash.json`, `agent_cc_haiku_05c2_run2.json` (+ summary), `agent_cc_haiku_05c2_run3.json` | Claude Code Haiku. Run 1 crashed in the interview (fixed). Run 2 passed stage 1 and stopped at stage 2. Run 3 stopped at stage 1: the model never wrote `build.yaml` and `check_constraints` was blocked on it; tool fix recorded (not rerun live). |
 | `agent_cc_opus_05c2_run1.json` (+ summary), `agent_cc_opus_05c2_run2_interrupted.json` | Claude Code Opus. Run 1 passed stage 2 and stopped at stage 3 on a systemd user-bus environment defect (fixed). Run 2 was interrupted by the PC crash and is not a result. |
 
+## Brief 05e: board bring-up of luna run 7
+
+| File | What |
+|---|---|
+| `agent_luna_05c2_run7_bringup.json` | First agent-designed bitstreams on the Nexys A7 (SRAM only, wall power). Design as written: power_ok, discover, program_base (DONE high), **uart_tests 3/3 pass**, program_ila pass, then **ila_captures fail**: the agent's `hw_checks.py` uses an `OR` trigger on a probe Vivado splits over 4 hw_probes (Labtools 27-3239). A diagnostic copy with `AND` (agent files not edited): both ILA captures pass (counter==10, brightness==90 at position 768), then **still_alive fails**: the agent's RTL hard-wires `.BUILD_STAMP(32'h0)`, so the ILA build reports stamp 0. Harness fixes (PR #17): design dir on the UART-test PYTHONPATH, import/collection errors route to stage 9, `ila.load_capture` handles equal hw_probe names, dry check flags `OR`/constant BUILD_STAMP. |
+
 ## Brief 05d: the Taylor additions
 
 `agent_luna_05d.json`: three live luna T1 episodes (`--interview oracle --review off --verif-level V1`) with the new gates active, **all null at stage 2**; $0.5094 by key usage (cap $1). Stages 0 and 1 passed every time and the architecture approval was written as `auto`. Run 1 failed on the model's tests and on two defects of mine (standards rule STD-CDC-01 refused a shell module; a finding in the frozen architecture was routed to the RTL writer), both fixed with tests before run 2. Run 3 passed lint, simulation and V1 (after the proof-method gate caught a formal job that does not exist) and then failed Vivado elaboration of the model's RTL; the build output was not in the RTL writer's repair text, fixed with a test and not rerun. No build reached post-synthesis, so the resource gate, the post-synthesis standards rules and the sign-off table were not exercised live.

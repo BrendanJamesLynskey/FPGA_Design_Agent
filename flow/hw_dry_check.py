@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,17 @@ def _parse(p: Path, probs: list[str]) -> ast.Module | None:
     except OSError as e:
         probs.append(f"{p.name}: cannot be read ({e.strerror})")
     return None
+
+
+def _or_problem(i: int, call: ast.Call) -> list[str]:
+    """Vivado cannot merge several compare values (a multi-bit probe is split over several nets) on one ILA port under
+    an OR trigger: ``Trigger needs too many comparators``. With one compared probe OR means the same as AND."""
+    kw = {k.arg: k.value for k in call.keywords}
+    cond, cmp_ = kw.get("condition"), kw.get("compares")
+    if (isinstance(cond, ast.Constant) and cond.value == "OR" and isinstance(cmp_, ast.Dict) and len(cmp_.keys) <= 1):
+        return [f"hw_checks.py: CAPTURES[{i}] has condition 'OR' with {len(cmp_.keys)} compared probe(s): Vivado cannot "
+                "merge the compare values of one ILA port under OR (Labtools 27-3239); 'AND' is the same trigger"]
+    return []
 
 
 def check_design(design: Path) -> dict[str, Any]:
@@ -61,6 +73,11 @@ def check_design(design: Path) -> dict[str, Any]:
                         if not e.args and any(f not in kw for f in CAPTURE_FIELDS):
                             probs.append(f"hw_checks.py: CAPTURES[{i}] lacks "
                                          f"{', '.join(f for f in CAPTURE_FIELDS if f not in kw)}")
+                        probs += _or_problem(i, e)
+    for sv in sorted((design / "rtl").glob("*.sv")) if (design / "rtl").is_dir() else []:
+        if re.search(r"\.BUILD_STAMP\s*\(\s*(\d+\s*')?[hHdDbB]\s*_?0[0_]*\s*\)", sv.read_text()):
+            probs.append(f"rtl/{sv.name}: fpga_shell BUILD_STAMP is a constant 0; pass the top's BUILD_STAMP parameter "
+                         "through (the flow sets it per build; bring-up's still_alive compares it with the build's)")
     tests = sorted((design / "tests").glob("test_*_hw.py")) if (design / "tests").is_dir() else []
     if not tests:
         probs.append("no tests/test_*_hw.py (flow/bringup.py runs pytest -m hw on them)")

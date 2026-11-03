@@ -84,3 +84,30 @@ def test_bringup_files_belong_to_the_tests_role_not_the_rtl_writer(tmp_path):
     RoleJail(role_session(s, "tests").jail, "tests").resolve("hw_checks.py", write=True)
     with pytest.raises(SecurityError):
         RoleJail(role_session(s, "tests").jail, "tests").resolve("rtl/top.sv", write=True)
+
+
+def test_dry_check_flags_or_trigger_with_one_compare(tmp_path):
+    """Luna run 7 on the board: condition 'OR' on a split probe -> Vivado 'Trigger needs too many comparators'."""
+    _copy_hw(tmp_path)
+    assert hw_dry_check.check_design(tmp_path)["ok"]
+    (tmp_path / "hw_checks.py").write_text(
+        "CAPTURES = [Capture(name='a', condition='OR', position=1, compares={'counter': 10}, setup=f, stimulus=f, "
+        "check=f)]\ndef restore(sh):\n    pass\n")
+    text = "\n".join(hw_dry_check.check_design(tmp_path)["problems"])
+    assert "condition 'OR'" in text and "27-3239" in text
+
+
+def test_ila_never_armed_vivado_error_routes_to_tests_role():
+    why = ["bring-up failed at 'ila_captures': StepFailed: counter_uart_write: the ILA was never armed (see "
+           "ila_capture.stdout.txt); Vivado: ERROR: [Labtools 27-3239] Trigger needs too many comparators"]
+    assert classify(S9, why) == "bringup" and route_failure(S9, "bringup") == 9
+
+
+def test_dry_check_flags_constant_build_stamp(tmp_path):
+    """Luna run 7 on the board: .BUILD_STAMP(32'h0) in the top; the ILA build reported stamp 0 and still_alive failed."""
+    _copy_hw(tmp_path)
+    (tmp_path / "rtl").mkdir()
+    (tmp_path / "rtl" / "top.sv").write_text("fpga_shell #(.DESIGN_ID(1), .BUILD_STAMP(BUILD_STAMP)) u (.clk(c));\n")
+    assert hw_dry_check.check_design(tmp_path)["ok"]
+    (tmp_path / "rtl" / "top.sv").write_text("fpga_shell #(.DESIGN_ID(D),\n .BUILD_STAMP(32'h0)\n) u (.clk(c));\n")
+    assert "BUILD_STAMP is a constant 0" in "\n".join(hw_dry_check.check_design(tmp_path)["problems"])

@@ -59,6 +59,16 @@ def _load_checks(design: Path) -> Any:
     return mod
 
 
+def pytest_env(design: Path) -> dict[str, str]:
+    """The environment for the UART-test pytest: the repo root (the root conftest.py with --hw-port/--hw-stamp, and
+    ``shell``/``flow``) and the design directory (an agent design's tests import its blind ``model`` module and
+    ``hw_checks`` by bare name; it lives under runs/<id>/, not on sys.path), as flow/cocotb_run.py does."""
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(
+        [str(hw.ROOT), str(design)] + ([env["PYTHONPATH"]] if env.get("PYTHONPATH") else []))
+    return env
+
+
 class StepFailed(Exception):
     pass
 
@@ -131,7 +141,7 @@ class Run:
         cmd = [sys.executable, "-m", "pytest", "-q", "-m", "hw", "-p", "no:cacheprovider",
                "--hw-port", self.board["uart"], "--hw-stamp", self.res["build_stamp"],
                f"--junitxml={junit}", *map(str, tests)]
-        r = subprocess.run(cmd, cwd=hw.ROOT, capture_output=True, text=True, timeout=900)
+        r = subprocess.run(cmd, cwd=hw.ROOT, env=pytest_env(self.design), capture_output=True, text=True, timeout=900)
         (self.log_dir / "uart_tests.txt").write_text(self.scrub(r.stdout + r.stderr))
         xml = junit.read_text() if junit.is_file() else ""
         junit.write_text(self.scrub(xml))
@@ -188,7 +198,10 @@ class Run:
                     c.setup(sh)
                     (cap_dir / f"{c.name}.go").write_text("go\n")
                     if not wait_for(cap_dir / f"{c.name}.armed", 300):
-                        raise StepFailed(f"{c.name}: the ILA was never armed (see ila_capture.stdout.txt)")
+                        errs = [l.strip() for l in (cap_dir / "ila_capture.stdout.txt").read_text(errors="replace")
+                                .splitlines() if l.startswith("ERROR:")][:3] if (cap_dir / "ila_capture.stdout.txt").exists() else []
+                        raise StepFailed(f"{c.name}: the ILA was never armed (see ila_capture.stdout.txt)"
+                                         + ("; Vivado: " + " | ".join(errs) if errs else ""))
                     time.sleep(0.2)
                     c.stimulus(sh)
                     t0 = time.monotonic()
@@ -267,7 +280,9 @@ class Run:
         (self.results / "runs" / f"{self.name}_{self.stamp_time}.json").write_text(text)
         (self.log_dir / "bringup.json").write_text(text)
         if self.keep:
-            shutil.copy(self.log_dir / "uart_tests.txt", self.results / "captures" / f"{self.name}_uart_tests.txt")
+            (self.results / "captures").mkdir(parents=True, exist_ok=True)
+            if (self.log_dir / "uart_tests.txt").is_file():
+                shutil.copy(self.log_dir / "uart_tests.txt", self.results / "captures" / f"{self.name}_uart_tests.txt")
         print(f"bringup: {'PASS' if self.res['pass'] else 'FAIL'} in {self.res['seconds']} s; "
               f"{self.results / (self.name + '_bringup.json')}; logs {self.log_dir}")
         return 0 if self.res["pass"] else 1

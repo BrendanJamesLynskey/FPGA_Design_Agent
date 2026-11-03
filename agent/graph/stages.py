@@ -181,6 +181,12 @@ def route_failure(stage: Stage, cause: str | None) -> int:
     return target if target in stage.loops_to or target == stage.n else stage.n
 
 
+# What a pytest harness or test-file failure looks like in a bring-up step's "why" (never a hardware result).
+_HARNESS_MARKERS = ("ModuleNotFoundError", "ImportError", "SyntaxError", "NameError", "ERROR collecting",
+                    "unrecognized arguments", "Labtools 27-3239", "Labtools 27-3241",
+                    "too many comparators", "no tests/test_", "cannot load", "fixture '")
+
+
 def classify(stage: Stage, fails: list[str]) -> str | None:
     """Map gate failures to the owning cause, following methodology.md's "Loops back to" column."""
     text = " ".join(fails)
@@ -208,6 +214,8 @@ def classify(stage: Stage, fails: list[str]) -> str | None:
     if stage.n == 9:
         if "bring-up artefacts" in text or "hardware-bringup" in text:
             return "bringup"             # missing or malformed bring-up files: their own writer fixes them, not stage 2
+        if "bring-up failed at" in text and any(k in text for k in _HARNESS_MARKERS):
+            return "bringup"             # an import/collection error in the UART tests is the tests role's, not hardware's
         if "did not run" in text:       # a build that produced nothing (for example no probes.yaml): another attempt here
             return None
         return "timing" if "bitstream" in text else ("rtl" if "bring-up" in text else None)

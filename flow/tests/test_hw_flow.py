@@ -197,3 +197,60 @@ def test_pwm_check_catches_one_wrong_led_sample_and_a_wrong_duty(cap: hw_checks.
     assert not cap.check(s)["pass"]
     duty = int(cap.name.split("_")[1], 16)
     assert not hw_checks.make_pwm_check(duty + 1)(load(cap.name))["pass"]
+
+
+def test_uart_test_pytest_finds_design_modules_and_root_conftest(tmp_path):
+    """bring-up's pytest gets ROOT + the design dir on PYTHONPATH: a design's tests import its `model` by bare name,
+    and the root conftest (--hw-port/--hw-stamp) is still found for a design under the repo (no board needed)."""
+    import subprocess
+    import sys
+    import tempfile
+    from pathlib import Path
+    from flow import bringup, hw
+    base = hw.ROOT / "build"
+    base.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=base) as d:
+        design = Path(d) / "dd"
+        (design / "tests").mkdir(parents=True)
+        (design / "model.py").write_text("X = 7\n")
+        (design / "tests" / "test_dd_hw.py").write_text(
+            "import pytest\nimport model\n\n@pytest.mark.hw\ndef test_x(request):\n"
+            "    assert model.X == 7 and request.config.getoption('--hw-port') == 'p'\n")
+        env = bringup.pytest_env(design)
+        assert env["PYTHONPATH"].split(":")[:2] == [str(hw.ROOT), str(design)]
+        cmd = [sys.executable, "-m", "pytest", "-q", "-m", "hw", "-p", "no:cacheprovider", "--hw-port", "p",
+               "--hw-stamp", "00000000", str(design / "tests" / "test_dd_hw.py")]
+        r = subprocess.run(cmd, cwd=hw.ROOT, env=env, capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+        r = subprocess.run(cmd, cwd=hw.ROOT, capture_output=True, text=True)      # without it: the reported failure
+        assert "No module named 'model'" in r.stdout + r.stderr
+
+
+def test_load_capture_equal_hw_probe_names(tmp_path):
+    """Luna run 7: counter_reg_n_0_ appears twice (slices [3:0] and [15:12]); a name-keyed dict lost one of them."""
+    pm = tmp_path / "probe_map.txt"
+    pm.write_text("probe0   counter       16  counter_reg[*]/Q\\n".replace("\\n", "\n"))
+    hp = tmp_path / "hw_probes.txt"
+    hp.write_text("0 4 probe0[15:12] counter_reg_n_0_\n0 4 probe0[3:0] counter_reg_n_0_\n"
+                  "0 4 probe0[11:8] p_2_in\n0 4 probe0[7:4] p_3_in\n")
+    csv_ = tmp_path / "c.csv"
+    csv_.write_text("Sample in Buffer,Sample in Window,TRIGGER,counter_reg_n_0_[3:0],p_3_in[3:0],p_2_in[3:0],"
+                    "counter_reg_n_0_[15:12]\nRadix - UNSIGNED,UNSIGNED,UNSIGNED,HEX,HEX,HEX,HEX\n"
+                    "0,0,0,a,5,3,f\n1,1,1,b,0,0,1\n")
+    s = ila.load_capture(csv_, pm, hp)
+    assert s["counter"] == [0xf35a, 0x100b]
+    # a column whose bus range is not a port-bit range of any same-named hw_probe is reported, not guessed
+    csv_.write_text(csv_.read_text().replace("counter_reg_n_0_[15:12]", "counter_reg_n_0_[7:4]"))
+    with pytest.raises(ValueError, match="matches 0"):
+        ila.load_capture(csv_, pm, hp)
+
+
+def test_load_capture_equal_names_one_bit_slices(tmp_path):
+    """The CSV writes a one-bit slice as 'name[0:0]'; the port MAP says probe2[0]."""
+    pm = tmp_path / "probe_map.txt"
+    pm.write_text("probe2   button_state   3  btn[*]/Q\n")
+    hp = tmp_path / "hw_probes.txt"
+    hp.write_text("2 1 probe2[0] b\n2 1 probe2[2] b\n2 1 probe2[1] other\n")
+    csv_ = tmp_path / "c.csv"
+    csv_.write_text("Sample in Window,b[0:0],other,b[2:2]\nRadix - UNSIGNED,HEX,HEX,HEX\n0,1,0,1\n1,0,1,0\n")
+    assert ila.load_capture(csv_, pm, hp)["button_state"] == [0b101, 0b010]
