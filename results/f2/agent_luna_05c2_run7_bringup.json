@@ -1,0 +1,430 @@
+{
+ "what": "Brief 05e: board bring-up of luna run 7 (runs/20261102-191434-23d3/t1_dimmer_counter) on the Nexys A7-100T, SRAM only, wall power, owner-approved 2026-11-02. Bring-up code = branch f2-bringup-path (PR #17).",
+ "verdict": "Two board runs. (1) The agent's design and files as written: power_ok, discover, program_base, uart_tests (3/3 pass), program_ila pass; ila_captures FAIL: the agent-written hw_checks.py uses condition OR, which Vivado cannot fit on a split probe. (2) DIAGNOSTIC ONLY, a copy of the design under build/ with OR changed to AND (the agent's files were not edited): ila_captures PASS (counter==10 and brightness==90 both captured at trigger position 768), still_alive FAIL: the agent's RTL hard-wires .BUILD_STAMP(32'h0) in the fpga_shell instance, so the ILA bitstream reports build stamp 00000000, not 61041db5. Scratch register kept, status error counters all 0.",
+ "harness_defects_fixed": [
+  "uart_tests pytest had no PYTHONPATH for the design dir (ModuleNotFoundError: model)",
+  "import/collection errors in bring-up routed to stage 2 as hardware failures; now stage 9",
+  "ila.load_capture lost hw_probes of equal name (counter_reg_n_0_ twice) and did not read name[0:0] one-bit ranges",
+  "bringup --keep-captures crashed after a failed step when captures/ did not exist",
+  "ILA never-armed failures now carry the Vivado ERROR lines; classified to stage 9"
+ ],
+ "agent_defects_not_edited": [
+  "hw_checks.py: condition OR with a single compare (Vivado 27-3239); two captures",
+  "rtl/t1_led_dimmer_counter.sv: .BUILD_STAMP(32'h0) constant",
+  "tests/test_t1_dimmer_counter_hw.py: parses --hw-stamp but never compares it with the identity register"
+ ],
+ "harness_prompt_and_dry_check_added": [
+  "hw_dry_check flags OR with <=1 compared probe, and a constant-zero BUILD_STAMP in rtl/*.sv",
+  "stage-9 prompt says to use AND and to pass BUILD_STAMP through"
+ ],
+ "run_as_written": {
+  "design": "runs/20261102-191434-23d3/t1_dimmer_counter",
+  "started": "2026-11-03T00:05:53",
+  "git_commit": "d8ec6408126d3b47c3a34500d4bd44208add3bf4",
+  "git_dirty": false,
+  "pass": false,
+  "cable_serial": "...B73A",
+  "vivado_version": "2025.2",
+  "build_stamp": "61041db5",
+  "failed_step": "ila_captures",
+  "seconds": 76.7,
+  "tools": {
+   "vivado": "2025.2",
+   "python": "3.12.3",
+   "pyserial": "3.5",
+   "pytest": "9.2.0"
+  },
+  "steps": {
+   "power_ok": {
+    "pass": true,
+    "seconds": 0.0,
+    "base": {
+     "pass": true,
+     "source": "wall",
+     "limit_w": 2.0,
+     "total_w": 0.14,
+     "junction_c": 42.5
+    },
+    "ila": {
+     "pass": true,
+     "source": "wall",
+     "limit_w": 2.0,
+     "total_w": 0.151,
+     "junction_c": 42.8
+    }
+   },
+   "discover": {
+    "pass": true,
+    "board": "nexys_a7_100t",
+    "cable_serial": "...B73A",
+    "part": "xc7a100t",
+    "idcode": "13631093",
+    "uart": "FT2232 interface 1 (found)",
+    "targets_seen": 1,
+    "vivado_version": "2025.2",
+    "seconds": 17.1
+   },
+   "program_base": {
+    "variant": "base",
+    "build_stamp": "61041db5",
+    "cable_serial": "...B73A",
+    "power_ok": {
+     "pass": true,
+     "source": "wall",
+     "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+     "limit_w": 2.0,
+     "junction_limit_c": 85.0,
+     "total_w": 0.14,
+     "junction_c": 42.5,
+     "dynamic_w": 0.027,
+     "static_w": 0.113,
+     "confidence": "Low",
+     "environment": {
+      "ambient_c": 40.0,
+      "airflow_lfm": 0.0,
+      "heatsink": "none",
+      "theta_ja_c_per_w": 18.2,
+      "board": "small (4\"x4\")",
+      "board_layers": "4to7 (4 to 7 Layers)"
+     },
+     "supplies_a": {
+      "vccint": 0.034,
+      "vccaux": 0.02,
+      "vcco33": 0.01,
+      "vccbram": 0.001,
+      "vccadc": 0.02
+     },
+     "rails": {
+      "vccint": {
+       "a": 0.034,
+       "limit_a": 2.4
+      },
+      "rail_1v8": {
+       "a": 0.04,
+       "limit_a": 0.38
+      },
+      "vcco33": {
+       "a": 0.01,
+       "limit_a": 1.9
+      }
+     },
+     "why": ""
+    },
+    "pass": true,
+    "device": "xc7a100t_0",
+    "part": "xc7a100t",
+    "done_pin": "1",
+    "program_ms": 2191,
+    "ila_cores": 0,
+    "vivado_version": "2025.2",
+    "seconds": 19.5
+   },
+   "uart_tests": {
+    "pass": true,
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": {
+     "test_register_reset_values_and_identity": 0.195,
+     "test_counter_brightness_and_control_registers": 0.615,
+     "test_switch_state_and_read_only_registers": 0.238
+    },
+    "files": [
+     "runs/20261102-191434-23d3/t1_dimmer_counter/tests/test_t1_dimmer_counter_hw.py"
+    ],
+    "seconds": 2.0
+   },
+   "program_ila": {
+    "variant": "ila",
+    "build_stamp": "61041db5",
+    "cable_serial": "...B73A",
+    "power_ok": {
+     "pass": true,
+     "source": "wall",
+     "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+     "limit_w": 2.0,
+     "junction_limit_c": 85.0,
+     "total_w": 0.151,
+     "junction_c": 42.8,
+     "dynamic_w": 0.038,
+     "static_w": 0.114,
+     "confidence": "Low",
+     "environment": {
+      "ambient_c": 40.0,
+      "airflow_lfm": 0.0,
+      "heatsink": "none",
+      "theta_ja_c_per_w": 18.2,
+      "board": "small (4\"x4\")",
+      "board_layers": "4to7 (4 to 7 Layers)"
+     },
+     "supplies_a": {
+      "vccint": 0.046,
+      "vccaux": 0.02,
+      "vcco33": 0.01,
+      "vccbram": 0.001,
+      "vccadc": 0.02
+     },
+     "rails": {
+      "vccint": {
+       "a": 0.046,
+       "limit_a": 2.4
+      },
+      "rail_1v8": {
+       "a": 0.04,
+       "limit_a": 0.38
+      },
+      "vcco33": {
+       "a": 0.01,
+       "limit_a": 1.9
+      }
+     },
+     "why": ""
+    },
+    "pass": true,
+    "device": "xc7a100t_0",
+    "part": "xc7a100t",
+    "done_pin": "1",
+    "program_ms": 2188,
+    "ila_cores": 1,
+    "vivado_version": "2025.2",
+    "seconds": 19.8
+   },
+   "ila_captures": {
+    "pass": false,
+    "why": "StepFailed: counter_uart_write: the ILA was never armed. Vivado: ERROR [Labtools 27-3239] Trigger needs too many comparators for ILA port(index=0): 1 available, 4 needed (counter split over 4 hw_probes); [27-3241] Unable to fit compare values (OR trigger cannot merge compares on one port)",
+    "seconds": 17.8
+   }
+  }
+ },
+ "diagnostic_copy_with_AND": {
+  "design": "build/diag05e/t1_dimmer_counter",
+  "started": "2026-11-03T00:16:43",
+  "git_commit": "d8ec6408126d3b47c3a34500d4bd44208add3bf4",
+  "git_dirty": true,
+  "pass": false,
+  "cable_serial": "...B73A",
+  "vivado_version": "2025.2",
+  "build_stamp": "61041db5",
+  "failed_step": "still_alive",
+  "seconds": 493.2,
+  "tools": {
+   "vivado": "2025.2",
+   "python": "3.12.3",
+   "pyserial": "3.5",
+   "pytest": "9.2.0"
+  },
+  "steps": {
+   "power_ok": {
+    "pass": true,
+    "seconds": 0.3,
+    "base": {
+     "pass": true,
+     "source": "wall",
+     "limit_w": 2.0,
+     "total_w": 0.14,
+     "junction_c": 42.5
+    },
+    "ila": {
+     "pass": true,
+     "source": "wall",
+     "limit_w": 2.0,
+     "total_w": 0.151,
+     "junction_c": 42.8
+    }
+   },
+   "discover": {
+    "pass": true,
+    "board": "nexys_a7_100t",
+    "cable_serial": "...B73A",
+    "part": "xc7a100t",
+    "idcode": "13631093",
+    "uart": "FT2232 interface 1 (found)",
+    "targets_seen": 1,
+    "vivado_version": "2025.2",
+    "seconds": 138.8
+   },
+   "program_base": {
+    "variant": "base",
+    "build_stamp": "61041db5",
+    "cable_serial": "...B73A",
+    "power_ok": {
+     "pass": true,
+     "source": "wall",
+     "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+     "limit_w": 2.0,
+     "junction_limit_c": 85.0,
+     "total_w": 0.14,
+     "junction_c": 42.5,
+     "dynamic_w": 0.027,
+     "static_w": 0.113,
+     "confidence": "Low",
+     "environment": {
+      "ambient_c": 40.0,
+      "airflow_lfm": 0.0,
+      "heatsink": "none",
+      "theta_ja_c_per_w": 18.2,
+      "board": "small (4\"x4\")",
+      "board_layers": "4to7 (4 to 7 Layers)"
+     },
+     "supplies_a": {
+      "vccint": 0.034,
+      "vccaux": 0.02,
+      "vcco33": 0.01,
+      "vccbram": 0.001,
+      "vccadc": 0.02
+     },
+     "rails": {
+      "vccint": {
+       "a": 0.034,
+       "limit_a": 2.4
+      },
+      "rail_1v8": {
+       "a": 0.04,
+       "limit_a": 0.38
+      },
+      "vcco33": {
+       "a": 0.01,
+       "limit_a": 1.9
+      }
+     },
+     "why": ""
+    },
+    "pass": true,
+    "device": "xc7a100t_0",
+    "part": "xc7a100t",
+    "done_pin": "1",
+    "program_ms": 2187,
+    "ila_cores": 0,
+    "vivado_version": "2025.2",
+    "seconds": 216.7
+   },
+   "uart_tests": {
+    "pass": true,
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": {
+     "test_register_reset_values_and_identity": 0.31,
+     "test_counter_brightness_and_control_registers": 0.617,
+     "test_switch_state_and_read_only_registers": 0.239
+    },
+    "files": [
+     "build/diag05e/t1_dimmer_counter/tests/test_t1_dimmer_counter_hw.py"
+    ],
+    "seconds": 2.5
+   },
+   "program_ila": {
+    "variant": "ila",
+    "build_stamp": "61041db5",
+    "cable_serial": "...B73A",
+    "power_ok": {
+     "pass": true,
+     "source": "wall",
+     "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+     "limit_w": 2.0,
+     "junction_limit_c": 85.0,
+     "total_w": 0.151,
+     "junction_c": 42.8,
+     "dynamic_w": 0.038,
+     "static_w": 0.114,
+     "confidence": "Low",
+     "environment": {
+      "ambient_c": 40.0,
+      "airflow_lfm": 0.0,
+      "heatsink": "none",
+      "theta_ja_c_per_w": 18.2,
+      "board": "small (4\"x4\")",
+      "board_layers": "4to7 (4 to 7 Layers)"
+     },
+     "supplies_a": {
+      "vccint": 0.046,
+      "vccaux": 0.02,
+      "vcco33": 0.01,
+      "vccbram": 0.001,
+      "vccadc": 0.02
+     },
+     "rails": {
+      "vccint": {
+       "a": 0.046,
+       "limit_a": 2.4
+      },
+      "rail_1v8": {
+       "a": 0.04,
+       "limit_a": 0.38
+      },
+      "vcco33": {
+       "a": 0.01,
+       "limit_a": 1.9
+      }
+     },
+     "why": ""
+    },
+    "pass": true,
+    "device": "xc7a100t_0",
+    "part": "xc7a100t",
+    "done_pin": "1",
+    "program_ms": 2204,
+    "ila_cores": 1,
+    "vivado_version": "2025.2",
+    "seconds": 109.9
+   },
+   "ila_captures": {
+    "pass": true,
+    "captures": {
+     "counter_uart_write": {
+      "pass": true,
+      "probe": "counter",
+      "expected": 10,
+      "trigger": {
+       "condition": "AND",
+       "position": 768,
+       "compares": {
+        "counter": 10
+       }
+      },
+      "observed_distinct": [
+       0,
+       10
+      ],
+      "first_match_index": 768,
+      "samples": 1024
+     },
+     "brightness_uart_write": {
+      "pass": true,
+      "probe": "brightness",
+      "expected": 90,
+      "trigger": {
+       "condition": "AND",
+       "position": 768,
+       "compares": {
+        "brightness": 90
+       }
+      },
+      "observed_distinct": [
+       0,
+       90
+      ],
+      "first_match_index": 768,
+      "samples": 1024
+     }
+    },
+    "rule": "ILA capture recipes for the T1 dimmer/counter board bring-up.",
+    "seconds": 23.2
+   },
+   "still_alive": {
+    "pass": false,
+    "build_stamp": "00000000",
+    "scratch_kept": true,
+    "status": {
+     "checksum_errors": 0,
+     "request_errors": 0,
+     "uart_framing_errors": 0,
+     "timeouts": 0
+    },
+    "seconds": 0.1
+   }
+  }
+ }
+}

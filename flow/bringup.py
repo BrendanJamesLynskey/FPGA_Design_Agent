@@ -198,7 +198,10 @@ class Run:
                     c.setup(sh)
                     (cap_dir / f"{c.name}.go").write_text("go\n")
                     if not wait_for(cap_dir / f"{c.name}.armed", 300):
-                        raise StepFailed(f"{c.name}: the ILA was never armed (see ila_capture.stdout.txt)")
+                        errs = [l.strip() for l in (cap_dir / "ila_capture.stdout.txt").read_text(errors="replace")
+                                .splitlines() if l.startswith("ERROR:")][:3] if (cap_dir / "ila_capture.stdout.txt").exists() else []
+                        raise StepFailed(f"{c.name}: the ILA was never armed (see ila_capture.stdout.txt)"
+                                         + ("; Vivado: " + " | ".join(errs) if errs else ""))
                     time.sleep(0.2)
                     c.stimulus(sh)
                     t0 = time.monotonic()
@@ -277,7 +280,9 @@ class Run:
         (self.results / "runs" / f"{self.name}_{self.stamp_time}.json").write_text(text)
         (self.log_dir / "bringup.json").write_text(text)
         if self.keep:
-            shutil.copy(self.log_dir / "uart_tests.txt", self.results / "captures" / f"{self.name}_uart_tests.txt")
+            (self.results / "captures").mkdir(parents=True, exist_ok=True)
+            if (self.log_dir / "uart_tests.txt").is_file():
+                shutil.copy(self.log_dir / "uart_tests.txt", self.results / "captures" / f"{self.name}_uart_tests.txt")
         print(f"bringup: {'PASS' if self.res['pass'] else 'FAIL'} in {self.res['seconds']} s; "
               f"{self.results / (self.name + '_bringup.json')}; logs {self.log_dir}")
         return 0 if self.res["pass"] else 1

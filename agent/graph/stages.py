@@ -183,7 +183,8 @@ def route_failure(stage: Stage, cause: str | None) -> int:
 
 # What a pytest harness or test-file failure looks like in a bring-up step's "why" (never a hardware result).
 _HARNESS_MARKERS = ("ModuleNotFoundError", "ImportError", "SyntaxError", "NameError", "ERROR collecting",
-                    "unrecognized arguments", "no tests/test_", "cannot load", "fixture '")
+                    "unrecognized arguments", "Labtools 27-3239", "Labtools 27-3241",
+                    "too many comparators", "no tests/test_", "cannot load", "fixture '")
 
 
 def classify(stage: Stage, fails: list[str]) -> str | None:

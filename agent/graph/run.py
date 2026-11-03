@@ -167,7 +167,8 @@ Bring-up files (stage 9; flow/bringup.py runs them on the board once the owner a
   design at its reset values afterwards, and keep LED duty and count low (the board's power rule).
 - hw_checks.py: the ILA capture checks, run on the ILA build. A module-level `CAPTURES: list[Capture]` where you define
   `Capture` as a dataclass with name, condition ("AND" or "OR"), position (int, trigger position in the 1024-sample
-  window), compares (dict: probe name -> the integer value the trigger waits for), setup(sh), stimulus(sh) and
+  window), compares (dict: probe name -> the integer value the trigger waits for; use "AND": Vivado cannot merge the compare
+  values of one ILA port under "OR"), setup(sh), stimulus(sh) and
   check(samples) -> dict with a "pass" bool; `samples` is {{probe name: [value per clock]}}. Probe names are the ones in
   probes.yaml. Also a function `restore(sh)` that puts the design back at its reset values.
 - BRINGUP.md for a tester who did not design it, with the sections Setup, Testing (step by step, pass/fail), Debug aids
@@ -200,7 +201,9 @@ Flow conventions (fixed by the repo; follow them exactly):
 - The board top must instantiate the test shell `fpga_shell` (UART register window; read @shell/PROTOCOL.md and
   @shell/rtl/fpga_shell.sv with fda_read_file). fpga_shell ports: clk, rst (sync, active high), uart_rx, uart_tx,
   win_addr[6:0], win_wr, win_rd, win_wdata[31:0], win_rdata[31:0] (due one cycle after win_rd); parameters
-  CLKS_PER_BIT, TIMEOUT_CYCLES, DESIGN_ID, BUILD_STAMP. The design's registers live in this window.
+  CLKS_PER_BIT, TIMEOUT_CYCLES, DESIGN_ID, BUILD_STAMP. The design's registers live in this window. The board top
+  declares `parameter logic [31:0] BUILD_STAMP = 32'h0` and passes it to fpga_shell (.BUILD_STAMP(BUILD_STAMP)); the
+  flow sets it per build, so never write a constant there.
 - design.xdc: call board_constraints with a map of board resource name -> your port name (it lists the resources when
   called with no map). It writes the pins, I/O standards and the board clock constraint from the master XDC; never
   write a pin number yourself. check_constraints checks the result.
