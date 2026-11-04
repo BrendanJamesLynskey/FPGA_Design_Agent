@@ -81,5 +81,9 @@ assumptions:
     reason: an 8-bit field with no useless zero-length step.
   - assumption: the LEDs go dark when stopped but hold the last step after a one-shot finishes.
     reason: the request says a one-shot stops on the last step.
+  - assumption: reset keeps the sixteen pattern entries (they power up 0) and stops playback; everything else returns to its reset value.
+    reason: the entries are configuration the user loaded; the request does not say that a reset erases them.
+  - assumption: LENGTH is read at the end of each entry, so a change while running takes effect at the next entry end.
+    reason: the request does not say when a changed length applies; the end of an entry never cuts one short.
 
 open_questions: []

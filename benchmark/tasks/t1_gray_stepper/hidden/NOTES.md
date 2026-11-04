@@ -11,3 +11,6 @@
   f(BIN)); they are not run by the bench (no formal tool in check_task).
 - **Review:** LED[9:0] must be a register (the spec says so) so a design deriving the LEDs combinationally still
   passes simulation; only formal/hardware would see a glitch. The `wrap_at_1000` mutant models a decimal-wrap habit.
+- **v1.2 (2026-11-04):** `test_press_during_auto` added (a press while AUTO = 1 gives one extra step and leaves the
+  automatic grid at exactly RATE * TICK_CYCLES clocks); mutant `press_restarts_prescaler` (a press restarts the prescaler)
+  is killed by it. The formal half of REQ-01/02 is still not scored by the bench: a score here covers simulation only.

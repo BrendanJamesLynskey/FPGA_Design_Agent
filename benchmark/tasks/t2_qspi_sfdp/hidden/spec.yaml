@@ -44,7 +44,7 @@ behaviour:
     - "Each transaction - QSPI_CSN low, at least HALF clocks, the SCK cycles back to back, at least HALF clocks after the last falling edge QSPI_CSN high, and at least 4 * HALF clocks high before the next."
     - "A write to CTRL with bit 0 = 1 while BUSY = 0 - BUSY set, DONE and SIG_OK cleared, then two transactions - RDID [0x9F, then 3 bytes read into ID] and RSFDP [0x5A, address 0x00 0x00 0x00, 8 dummy SCK cycles, then 16 bytes read into SFDP0-SFDP3]; then BUSY cleared, DONE set, SIG_OK = (SFDP0 == 0x50444653)."
     - Writes to CTRL while BUSY are ignored. A later start reads both again.
-    - "No other opcode is ever sent (no write enable, program, erase, register write or reset); DQ0 carries 0 during dummy and read bytes."
+    - "No other opcode is ever sent (no write enable, program, erase, register write or reset); DQ0 is a don't-care during the dummy and read bytes."
   pins:
     - QSPI_DQ2 (WP#) = 0 and QSPI_DQ3 (HOLD#) = 1 at all times.
 

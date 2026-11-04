@@ -92,5 +92,7 @@ assumptions:
     reason: 0xB400 is the usual tap mask for that form.
   - assumption: the roll uses the state after the press's step.
     reason: each press then shows a fresh state.
+  - assumption: a burst steps once per clock, and a press during a burst is lost (no step, no roll).
+    reason: the bench needs a definite rate and a definite collision rule; a press cannot be queued behind a burst.
 
 open_questions: []

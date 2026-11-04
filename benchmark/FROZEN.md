@@ -47,3 +47,42 @@ The four recorded survivors of `t2_vga_sprite` were run as mutants against the v
 were killed, so they moved from `known_survivors` into `mutants` (now 9/9 killed; `known_survivors: []`). Re-frozen:
 that unit's digest only (`hidden/mutants.yaml`, `hidden/NOTES.md`); `results/reference/t2_vga_sprite__icarus.json` regenerated. No spec,
 reference RTL, test or held-out file changed. `freeze.py verify`: 86 units, 0 mismatches.
+
+## v1.2 (2026-11-04, brief 06a4): the second-model review's blockers and cheap minors
+
+The review of brief 06a3 (a second model, on the owner's instruction; see [OWNER_REVIEW.md](OWNER_REVIEW.md)) found five
+blockers: three public, two held out. All five are fixed, each proven with the reviewer's alternative-but-correct design
+(it failed on v1.1 and passes on v1.2), with the reference passing and every listed mutant and the trap checked again on
+Icarus (Python 3.12.3, cocotb 2.0.1, Icarus 12.0). No held-out detail is published: the two held-out tasks are named in the
+private repository only; here they appear as digests in `MANIFEST.json`.
+
+| Blocker | Fix | Proof (v1.1 -> v1.2) |
+|---|---|---|
+| `scan_display` (`lib/bench.py`) rejected a dark digit whose anode is low; shared by `t1_bcd_updown`, `t1_lfsr_dice` and held-out tasks | a digit with every segment and DP off is dark, anode high or low; a digit that lights any segment still fails | tests passed, bcd_updown copy 5/9 -> 9/9 (the trap still fires); lfsr_dice copy 6/11 -> 11/11; the held-out users were checked privately |
+| `t2_qspi_sfdp` required DQ0 = 0 in the dummy and read bytes, which spec.md never states | compare the opcode and address bytes and the byte count (4, 21); spec.yaml says DQ0 is a don't-care there (the flash ignores it, a MISO-echoing shift register is correct) | tests passed, MOSI-echo copy 3/5 -> 5/5; reference 5/5; mutants 9/9 |
+| two held-out tasks (one display, one SPI transaction) | one through the shared helper plus a spec.yaml sentence; one by comparing fewer bytes | fixed, proven (detail in the private repository) |
+
+Also in v1.2 (each recorded in its OWNER_REVIEW block):
+
+- Tolerances widened: SCL high time 2Q to 2Q + 8 clocks (was + 4) in `t2_i2c_scanner`, `t2_i2c_cmd_master`, `t2_adt7420_alarm`
+  (two-flop synchroniser plus 1-3 clocks of state and output latency); `t1_debounce_bank` settle latency n + 1 to n + 8
+  (was n + 5).
+- Wording and `assumptions` (what the task asks is unchanged): `t1_elevator_fsm` and `t1_press_classifier` and
+  `t2_i2c_cmd_master` gain one sentence each in spec.md (LED[14] while moving; the status word; equal SCL halves);
+  `t1_lfsr_dice`, `t1_pattern_sequencer`, `t2_sevenseg_marquee` gain `assumptions` entries; `t2_pdm_vu` NOTES corrected.
+- Directed tests for stated-but-untested clauses: `t1_gray_stepper` `test_press_during_auto` (and mutant
+  `press_restarts_prescaler`, killed); `t2_vga_sprite` `test_bounce_plain_step_and_bounce_off` (+1/-1 step, BOUNCE = 0
+  holds still).
+- Mutants re-written because the fix made them equivalent to the reference (a lit digit with a blank glyph is dark):
+  `dark_digit_shows_zero` (`t1_lfsr_dice`), and two probe tasks' `upper_digits_lit` (private repository).
+- Deferred to v2 (one line each in the OWNER_REVIEW blocks): reset after activity (bcd_updown); STEP write during a burst
+  (lfsr_dice); zero-clock elevator transitions; SCL low-time duty (i2c_scanner); pdm_vu padding and CTRL race;
+  spi_master_modes DIV wording and TXDATA width; vga_sprite (0,0)-after-reset bound; formal halves unscored.
+
+Re-frozen: `lib/bench.py` and the shared-unit digests; the digests of the 14 public tasks listed above (all of
+`t1_bcd_updown`, `t1_debounce_bank`, `t1_elevator_fsm`, `t1_gray_stepper`, `t1_lfsr_dice`, `t1_pattern_sequencer`,
+`t1_press_classifier`, `t2_adt7420_alarm`, `t2_i2c_cmd_master`, `t2_i2c_scanner`, `t2_pdm_vu`, `t2_qspi_sfdp`,
+`t2_sevenseg_marquee`, `t2_vga_sprite`), the two held-out tasks and two probe tasks; `benchmark/results/reference/<task>__icarus.json`
+regenerated for the tasks whose tests changed. `freeze.py verify --private`: 86 units, 0 mismatches. Pool specs have no
+reference RTL and are not run; their `scan_display` users (`p_bin2bcd`, `p_digital_clock`, `p_tennis_score`) are spec
+units only.

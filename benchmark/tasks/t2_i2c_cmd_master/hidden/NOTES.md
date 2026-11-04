@@ -12,3 +12,6 @@
   individually, only the transaction log (no START or STOP inside a byte).
 - Shared helper: `benchmark/lib/i2c_devices.py` (bus engine + ADT7420 + plain ACKing devices), also used by
   t2_i2c_scanner and t2_adt7420_alarm.
+- **v1.2 (2026-11-04):** SCL high time is accepted from 2Q to 2Q + 8 clocks (v1: + 4). The spec says wait until SCL is
+  seen high through a two-flop synchroniser, then 2Q: 2-3 clocks of synchroniser plus 1-3 of state and registered-output
+  latency. A missed stretch wait still fails (it shortens or lengthens the phase by far more than 8).

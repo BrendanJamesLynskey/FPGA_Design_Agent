@@ -176,6 +176,25 @@ async def test_offscreen_and_disabled_inside_sprite_span(dut):
     await e.regs((CTRL, X, Y))
 
 
+@cocotb.test(timeout_time=40000000, timeout_unit="ns")
+async def test_bounce_plain_step_and_bounce_off(dut):
+    """v1.2: two frame wraps away from every edge. With BOUNCE = 1 and DX_NEG = 0, DY_NEG = 1 the position moves by
+    exactly +1 in X and -1 in Y; with BOUNCE = 0 (direction bits set) it holds still."""
+    e = Env(dut)
+    await e.start()
+    await e.load(ARROW)
+    await e.wr(X, 100)
+    await e.wr(Y, 100)
+    await e.wr(CTRL, EN | BOUNCE | DY_NEG)
+    await e.wait_frame_wrap()
+    await e.regs((X, Y, CTRL))
+    assert e.m.x == 101 and e.m.y == 99 and e.m.ctrl == EN | BOUNCE | DY_NEG
+    await e.wr(CTRL, EN | DX_NEG | DY_NEG)                        # BOUNCE = 0: holds still
+    await e.wait_frame_wrap()
+    await e.regs((X, Y, CTRL))
+    assert e.m.x == 101 and e.m.y == 99 and e.m.ctrl == EN | DX_NEG | DY_NEG
+
+
 @cocotb.test(timeout_time=24000000, timeout_unit="ns")
 async def test_bounce_turns_at_left_and_bottom(dut):
     """v1.1: one frame wrap at X = 0 moving left and Y = 464 moving down: both turn (X to 1, Y to 463). With no turn at

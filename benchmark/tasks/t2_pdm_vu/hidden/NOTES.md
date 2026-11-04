@@ -12,4 +12,6 @@
   computes every block from the bit stream the microphone model plays (`bit(j)` for M_CLK cycle j).
 - The tests do not pin which microphone cycle starts block 0 (the bench's bit patterns are periodic within a block,
   or padded by a few samples around block boundaries), so a design whose blocks are offset by a sample or two from
-  the spec's "first sample after reset" still passes; WINDOW, the sample edge and the counts are exact.
+  the spec's "first sample after reset" still passes in the padded tests; WINDOW, the sample edge and the counts are
+  exact. (v1.2: the first part of `test_peak_hold_and_decay` gives the loud pattern no padding, so there an offset of
+  a sample changes the PEAK values; deferred to v2.)

@@ -9,7 +9,8 @@ script, one bus operation at a time, so I can try any register sequence without 
 - Status shows busy and whether the last written byte was NACKed; the last byte read is in a register.
 - The lines are open drain with the board's pull-ups: never drive them high. Slaves may stretch the clock and the
   master must wait for them.
-- SCL speed: set by a parameter giving a quarter of the SCL period in clocks; on the board I'd like 100 kHz.
+- SCL speed: set by a parameter giving a quarter of the SCL period in clocks (equal high and low halves); on the
+  board I'd like 100 kHz.
 - Design ID "I2CM".
 
 Test hooks: top module `t2_i2c_cmd_master_top`, ports named as in the board's master XDC (`TMP_SCL`, `TMP_SDA`,

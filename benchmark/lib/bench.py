@@ -104,19 +104,23 @@ def seg_pins(dut) -> int:
 async def scan_display(dut, clk, slot_clocks: int, n_digits: int = 8, settle: int = 2) -> dict[int, tuple[int, int]]:
     """Watch the multiplexed display for ``n_digits`` slots after the next digit change.
 
-    Returns {digit: (segment pins CA..CG active low, DP)} for every digit seen lit (AN low). A digit whose slot
-    passes with every AN high is absent from the result."""
+    Returns {digit: (segment pins CA..CG active low, DP)} for every digit seen lit: AN low with at least one segment
+    or the decimal point on. A digit whose slot passes with every AN high, or with its anode low but every segment
+    and DP off (a blanked digit), emits no light and is absent from the result (v1.2: a blank digit may be blanked
+    by either means). At most one digit may be lit at once; a dark digit may share the slot."""
     seen: dict[int, tuple[int, int]] = {}
     total = slot_clocks * (n_digits + 1)
     for _ in range(total):
         await RisingEdge(clk)
         await ReadOnly()
         an = int(dut.AN.value)
+        segs, dp = seg_pins(dut), int(dut.DP.value)
         low = [k for k in range(8) if not (an >> k) & 1]
+        if segs == 0x7F and dp == 1:       # every segment and DP off: nothing is lit whatever the anodes say
+            continue
         assert len(low) <= 1, f"more than one digit lit at once: AN=0b{an:08b}"
         if low:
-            k = low[0]
-            seen[k] = (seg_pins(dut), int(dut.DP.value))
+            seen[low[0]] = (segs, dp)
     await FallingEdge(clk)
     return seen
 

@@ -8,7 +8,7 @@ I want a model of a lift serving four floors (0 to 3) on the Nexys A7-100T.
   open for a fixed time. It should behave like a real lift: keep going in the same direction while there are calls
   further on, and only then turn round. It starts at floor 0 with the door shut.
 - LED[3:0] show which floor the lift is at (one LED lit) and LED[15] is lit while the door is open. Also show the
-  outstanding calls on LED[7:4].
+  outstanding calls on LED[7:4]. LED[14] is lit while the lift is moving between floors.
 - CPU_RESETN resets everything.
 - Over the test shell (USB-UART, 115200 baud) I can read the floor, the direction, the outstanding calls, what the
   lift is doing and how many floors it has travelled, and place calls. The design ID is "ELEV".
