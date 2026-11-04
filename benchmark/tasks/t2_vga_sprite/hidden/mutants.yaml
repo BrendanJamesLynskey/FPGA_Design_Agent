@@ -4,13 +4,17 @@ mutants:
   - {file: sprite_gen.sv, find: hs_n <= !(x >= 10'(HV + HFP) && x < 10'(HV + HFP + HSW));, name: hs_positive, replace: hs_n <= (x >= 10'(HV + HFP) && x < 10'(HV + HFP + HSW));, why: HS positive}
   - {file: sprite_regs.sv, find: 'localparam logic [9:0] XMAX = 10''d624, YMAX = 10''d464;', name: bounce_limit_640, replace: 'localparam logic [9:0] XMAX = 10''d639, YMAX = 10''d464;', why: 'turns at the screen width, not width - 16'}
   - {file: sprite_gen.sv, find: 'localparam int VV = 480, VFP = 10, VSW = 2, VT = 525;', name: vsync_three_lines, replace: 'localparam int VV = 480, VFP = 10, VSW = 3, VT = 525;', why: VS three lines long}
+  - {file: sprite_gen.sv, find: 'dx  = {1''b0, x} - {1''b0, sx};', name: wraps_at_right, replace: 'dx  = {1''b0, 10''(x - sx)};', why: a sprite off the right edge wraps round to the left}
+  - {file: sprite_regs.sv, find: 'else if (ctrl[2] && sx == ''0)    sx <= sx + 1''b1;', name: no_turn_at_zero, replace: else if (1'b0)    sx <= sx + 1'b1;, why: X wraps below 0 instead of turning}
+  - {file: sprite_gen.sv, find: hit = en && dx, name: enable_ignored, replace: hit = dx, why: CTRL.EN does not hide the sprite}
+  - {file: sprite_gen.sv, find: if (x >= 10'(HV) || y >= 10'(VV)) pix = 12'h000;, name: blank_shows_bg, replace: if (x >= 10'(HV)) pix = 12'h000;, why: lines 480-524 show the background colour}
 # Survivors of the final 06a re-check (2026-11-03, after the bench timeout fix): the bench does not catch these.
 # Kept here, not run by check_task.py, as a recorded bench gap for the owner review and a later bench version.
 # v1.1 (2026-11-03): acceptance.py gains test_offscreen_and_disabled_inside_sprite_span (wraps_at_right, enable_ignored),
 # test_bounce_turns_at_left_and_bottom (no_turn_at_zero) and test_blank_lines_are_black_over_a_background (blank_shows_bg).
 # The reference passes them; the mutant run that moves these four into `mutants` once confirmed is queued for the planner.
-known_survivors:
-  - {file: sprite_gen.sv, find: 'dx  = {1''b0, x} - {1''b0, sx};', name: wraps_at_right, replace: 'dx  = {1''b0, 10''(x - sx)};', why: a sprite off the right edge wraps round to the left}
-  - {file: sprite_regs.sv, find: 'else if (ctrl[2] && sx == ''0)    sx <= sx + 1''b1;', name: no_turn_at_zero, replace: else if (1'b0)    sx <= sx + 1'b1;, why: X wraps below 0 instead of turning}
-  - {file: sprite_gen.sv, find: hit = en && dx, name: enable_ignored, replace: hit = dx, why: CTRL.EN does not hide the sprite}
-  - {file: sprite_gen.sv, find: if (x >= 10'(HV) || y >= 10'(VV)) pix = 12'h000;, name: blank_shows_bg, replace: if (x >= 10'(HV)) pix = 12'h000;, why: lines 480-524 show the background colour}
+# 2026-11-03 20:10 (planner): the four v1.1 survivors, run as mutants against the v1.1 acceptance.py on Icarus,
+# are all killed (wraps_at_right, enable_ignored: test_offscreen_and_disabled_inside_sprite_span; no_turn_at_zero:
+# test_bounce_turns_at_left_and_bottom; blank_shows_bg: test_blank_lines_are_black_over_a_background), so they
+# moved into `mutants`. known_survivors is now empty.
+known_survivors: []

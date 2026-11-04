@@ -182,7 +182,7 @@ Files: `t2_spi_master_modes/spec.md`, `hidden/spec.yaml`, `hidden/model.py`, `hi
 
 ### t2_vga_sprite (T2, dev): Bouncing 16 x 16 sprite on 640 x 480 VGA
 
-Files: `t2_vga_sprite/spec.md`, `hidden/spec.yaml`, `hidden/model.py`, `hidden/acceptance.py`, `hidden/NOTES.md`, `ref/rtl/`. Tests 6 (9 in v1.1); mutants killed 5/5 in v1 (4 more recorded as survivors); book/demo twin: none; trap none.
+Files: `t2_vga_sprite/spec.md`, `hidden/spec.yaml`, `hidden/model.py`, `hidden/acceptance.py`, `hidden/NOTES.md`, `ref/rtl/`. Tests 6 (9 in v1.1); mutants killed 5/5 in v1 (4 more recorded as survivors); **9/9 in v1.1** (the 4 survivors moved into `mutants` after the v1.1 tests killed them, 2026-11-04); book/demo twin: none; trap none.
 
 **Changed in v1.1 (2026-11-03):** (1) `hidden/selfcheck.py`: the bounce check now brackets the frame count (FRAME read before and after the CTRL write and before and after the X/Y reads); v1 failed on the board with FRAME +60 and X/Y +62, a measurement-window error, not a design fault; the rule change and the board numbers are in its docstring. (2) `hidden/acceptance.py`: three directed tests added for the four recorded survivors (off-screen X and CTRL.EN = 0 checked on lines the sprite would cover; a bounce turn at X = 0 and Y = 464; blanking lines with a non-zero background). The v1 tests looked at lines past the sprite, or ran with a black background, where those faults cannot show. The reference passes all 9 tests (Icarus); the mutant run that confirms the survivors are now killed is queued.
 
