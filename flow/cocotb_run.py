@@ -81,6 +81,18 @@ def collect_results(build_dir: Path, seed: int | None, dest_root: Path | None = 
     return out
 
 
+def swap_mutant_sources(sources: list[Path]) -> list[Path]:
+    """05k: flow/mutate.py runs a design's own bench against a mutated copy of its RTL without the bench knowing. With
+    ``$FDA_MUTANT_ORIG`` (the design's rtl directory) and ``$FDA_MUTANT_DIR`` (the mutated copy) set, every source that
+    lives in the first is replaced by the same-named file of the second. Unset, nothing changes."""
+    orig, new = os.environ.get("FDA_MUTANT_ORIG"), os.environ.get("FDA_MUTANT_DIR")
+    if not (orig and new):
+        return sources
+    orig_d, new_d = Path(orig).resolve(), Path(new).resolve()
+    return [new_d / Path(s).name if (new_d / Path(s).name).is_file() and Path(s).resolve().parent == orig_d else Path(s)
+            for s in sources]
+
+
 def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
         parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
         seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
@@ -95,6 +107,7 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
     simname = os.environ.get("SIM", "icarus")
     if coverage is None:
         coverage = os.environ.get("FDA_COVERAGE") == "1"
+    sources = swap_mutant_sources(sources)
     sim = get_runner(simname)
     build_dir = (build_root or ROOT / "build" / "sim") / name
     if simname == "verilator":

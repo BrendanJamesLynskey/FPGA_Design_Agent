@@ -50,7 +50,7 @@ from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_
 from flow import architecture as arch_mod
 
 RUNS = ROOT / "runs"
-FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "build", "gates", "report", "check_constraints", "search_docs",
+FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "mutate", "build", "gates", "report", "check_constraints", "search_docs",
               "load_skill", "board_constraints", "spec_items")
 
 
@@ -469,11 +469,19 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
 ROLE_TURN_RESERVE = {2: {"model": 35, "tests": 25}, 9: {"rtl": 15}}
 
 
+def role_tools(role: str, stage_n: int, verif_level: str, allowed: tuple[str, ...]) -> tuple[str, ...]:
+    """05k: ``mutate`` (a heavy job) goes to the tests role at stage 2 when the level is V3, and to nobody else."""
+    if "mutate" in allowed and not (role == "tests" and stage_n == 2 and verif_level == "V3"):
+        return tuple(t for t in allowed if t != "mutate")
+    return allowed
+
+
 def run_role(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict[str, str]:
     """``run_subagent`` with the stage's turn reserve for the roles after this one. A role that ends on the stage turn
     budget does not stop the visit: the roles after it still run (the gate decides). The run-wide limit still stops the
     run, but only once the real limit (without the reserve) is reached."""
     n = next((st.n for st in MACHINE if st.name == rt.session.stage), -1)
+    allowed = role_tools(role, n, rt.cfg.verif_level, allowed)
     rt.meter.reserved = ROLE_TURN_RESERVE.get(n, {}).get(role, 0)
     try:
         return run_subagent(rt, role, prompt, allowed, repair)
@@ -572,7 +580,7 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
             *(["6. V3 coverage evidence (the gate reads only these): (a) functional bins: at least one name in `bins:` of the requirements, "
                "sampled in the bench and exported by its last test with coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"]) "
                "(cocotb-coverage); (b) code coverage (line, toggle, cover properties): run `simulate(sim=\"verilator\", coverage=True)` "
-               "so the seeds' coverage.dat exists; (c) mutation score: no agent tool produces it, so the gate reports it as not measured."]
+               "so the seeds' coverage.dat exists; (c) mutation score: call the `mutate` tool (a capped, seeded sample of mutated copies of rtl/ run against your tests; it takes the heavy-job lock, so on 'busy, retry' call it again), then `gates(kind=verif)`; its survivors, in words, tell you which checks to add. Run `mutate` last, once the bench passes `simulate`."]
               if rt.cfg.verif_level == "V3" else []),
             ("7" if rt.cfg.verif_level == "V3" else "6") + ". `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
             "step in the proof list now (uart_tests, ila_captures or step:case).",
