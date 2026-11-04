@@ -257,10 +257,19 @@ Flow conventions (fixed by the repo; follow them exactly):
 """
 
 
-def conventions_text(fmt: dict) -> str:
+def conventions_text(fmt: dict, template: str | None = None) -> str:
     """CONVENTIONS with this run's values; the one place that fills it (the Claude Code arm's tests use it too)."""
     from flow import architecture as am
-    return CONVENTIONS.format(**{"cdc_prims": ", ".join(am.CDC_PRIMITIVES), "standards": _standards_summary(), **fmt})
+    return (template or CONVENTIONS).format(**{"cdc_prims": ", ".join(am.CDC_PRIMITIVES), "standards": _standards_summary(), **fmt})
+
+
+def tests_conventions_text(fmt: dict) -> str:
+    """05l: the part of ``CONVENTIONS`` that concerns the tests role: where file paths are rooted, the test entry, and the
+    verification stages. The rest (constraints, probes, architecture files, standards) is addressed to the RTL writer and
+    names tools (board_constraints, gates) the tests role does not have, so it is not shown to the tests role."""
+    head, *bullets = CONVENTIONS.split("\n- ")
+    keep = [b for b in bullets if b.startswith(("File tool paths", "Tests (test writer)", "Stage 2 ends only"))]
+    return conventions_text(fmt, "\n- ".join([head, *keep]))
 
 
 def _standards_summary() -> str:
@@ -469,11 +478,35 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
 ROLE_TURN_RESERVE = {2: {"model": 35, "tests": 25}, 9: {"rtl": 15}}
 
 
+def role_allowed(role: str, stage_n: int) -> tuple[str, ...]:
+    """The core tools ``node_work`` hands each role at each stage, before ``role_tools`` (05l: one place, so the guard
+    test builds the same tuple the graph uses)."""
+    st = MACHINE[stage_n]
+    if stage_n == 0:
+        return ("search_docs", "load_skill")
+    if role == "model":
+        return ()
+    if role == "tests":
+        return ("search_docs", "load_skill", "spec_items", "formal") if stage_n == 2 else ("search_docs", "load_skill", "gates")
+    return tuple(t for t in st.tools if t not in ("program", "bringup")) if stage_n != 2 else st.tools
+
+
 def role_tools(role: str, stage_n: int, verif_level: str, allowed: tuple[str, ...]) -> tuple[str, ...]:
-    """05k: ``mutate`` (a heavy job) goes to the tests role at stage 2 when the level is V3, and to nobody else."""
-    if "mutate" in allowed and not (role == "tests" and stage_n == 2 and verif_level == "V3"):
-        return tuple(t for t in allowed if t != "mutate")
-    return allowed
+    """The tools a role really gets. 05l: ``mutate`` is offered to nobody. The V3 evidence (the Verilator coverage run and
+    the mutation run) is produced by the harness itself (``v3_evidence``), because a gate must not be graded on
+    something the model decided to run, and the tests role must not see RTL; the tool stays registered for the owner
+    and the MCP server."""
+    return tuple(t for t in allowed if t != "mutate")
+
+
+def effective_tools(role: str, stage_n: int, verif_level: str) -> tuple[str, ...]:
+    """Every registered tool a role can call at a stage: what ``subagent_plan`` hands the harness (core tools that are
+    flow tools in the registry, plus the role's file tools)."""
+    from agent.core.registry import TOOLS
+    from agent.graph.roles import ROLE_TOOLS
+    allowed = role_tools(role, stage_n, verif_level, role_allowed(role, stage_n))
+    files = tuple(n for n in FILE_TOOLS if ROLE_TOOLS[role] is None or n in ROLE_TOOLS[role])
+    return tuple(dict.fromkeys([*files, *(n for n in allowed if n in FLOW_TOOLS and n in TOOLS)]))
 
 
 def run_role(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict[str, str]:
@@ -553,12 +586,12 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
     lines = ["", "", "STAGE-ENTRY CHECKLIST (the files the gates read; the gate fails if one is missing):"]
     if stage == 2:
         lines += [
-            f"1. tests/test_{name}_rtl.py: the pytest entry (gate V0 `bench_modules_present`; the `simulate` tool runs tests/test_*_rtl.py). "
-            "The V2/V3 gates read build/verif/sim/seed<N>/results.xml of this design, one directory per seed; `simulate` writes it for every "
+            f"1. tests/test_{name}_rtl.py: the pytest entry (gate V0 `bench_modules_present`; the flow runs tests/test_*_rtl.py itself after you write it). "
+            "The V2/V3 gates read build/verif/sim/seed<N>/results.xml of this design, one directory per seed; the flow's run writes it for every "
             "flow.cocotb_run.run(..., seed=N) call (a call without seed= counts as seed 1), so call run() for each seed you need "
             "(V3 wants the testplan's seeds_min) and list every test module in one run's `test_module`.",
             "2. tests/<module>.py for every module listed in bench.modules of the testplan (V0 `bench_modules_present`). "
-            "Keep the bench fast: cocotb on Icarus runs about 10^5 clock cycles per second and the `simulate` tool stops a run "
+            "Keep the bench fast: cocotb on Icarus runs about 10^5 clock cycles per second and the flow stops a run "
             "after 30 minutes, so override the spec's long timing parameters (debounce, PWM period, baud divider) with small "
             "values through `parameters=` of flow.cocotb_run.run and take the same values for the model. A test that needs "
             "more than about 200,000 cycles is too long.",
@@ -577,10 +610,13 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
             "file, already there; include it with the SystemVerilog include directive): `V_SAME(A_x, ante, cons)`, `V_NEXT(A_y, ante, cons)`, `V_RST(A_z, cons)`, "
             "`V_COVER(C_w, expr)`. The module that includes it must declare `clk`, `rst` and `seen_rst`. Names must start A_ or C_. "
             "A plain `C_x: cover property (...)` is not read by the gate, so the name stays unresolved in the testplan.",
-            *(["6. V3 coverage evidence (the gate reads only these): (a) functional bins: at least one name in `bins:` of the requirements, "
+            *(["6. V3 coverage evidence (the gate reads only these; the flow makes the runs itself once V0 to V2 pass, so you write "
+               "the bench and the plan, not the runs): (a) functional bins: at least one name in `bins:` of the requirements, "
                "sampled in the bench and exported by its last test with coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"]) "
-               "(cocotb-coverage); (b) code coverage (line, toggle, cover properties): run `simulate(sim=\"verilator\", coverage=True)` "
-               "so the seeds' coverage.dat exists; (c) mutation score: call the `mutate` tool (a capped, seeded sample of mutated copies of rtl/ run against your tests; it takes the heavy-job lock, so on 'busy, retry' call it again), then `gates(kind=verif)`; its survivors, in words, tell you which checks to add. Run `mutate` last, once the bench passes `simulate`."]
+               "(cocotb-coverage); (b) code coverage (line, toggle, cover properties): the flow runs the bench again under Verilator "
+               "with coverage on, so declare the cover points with `V_COVER` and the bench must reach them; (c) mutation score: the "
+               "flow then runs a capped, seeded sample of changes to the RTL against your tests; a change no test fails on is "
+               "reported to you in words (file, line, change), and the fix is a tighter check or a test that exercises that behaviour."]
               if rt.cfg.verif_level == "V3" else []),
             ("7" if rt.cfg.verif_level == "V3" else "6") + ". `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
             "step in the proof list now (uart_tests, ila_captures or step:case).",
@@ -641,6 +677,7 @@ def node_work(state: State) -> dict:
            "note": state.get("note") or "none",
            "design_rel": str(rt.design.relative_to(ROOT))}
     conv0 = conventions_text(fmt)
+    conv_tests = tests_conventions_text(fmt)
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     # the owner's edit prompt (brief 05d, addition 6) goes to the role it names, default the stage's writer
     note_for = state.get("note_role") or ("clarify" if n == 0 else "rtl")
@@ -655,31 +692,31 @@ def node_work(state: State) -> dict:
         if n == 0:
             run_role(rt, "clarify", PROMPTS["clarify"].format(**fmt) + prompt_note("clarify")
                          + ("\nGate message: " + state["detail"][:3000] if state.get("detail") else ""),
-                         ("search_docs", "load_skill"))
+                         role_allowed("clarify", 0))
         elif n == 2:
             for role, reasons in stage2_plan(rt, state).items():
                 repair = reasons is not None
                 note = repair_note(role, reasons) if repair else ""
                 if role == "model":
-                    run_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), (), repair)
+                    run_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), role_allowed("model", 2), repair)
                 elif role == "tests":
                     run_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else FRESH_TESTS)
-                                 + tests_checklist(rt, 2, repair) + prompt_note("tests") + conv0, ("search_docs", "load_skill", "spec_items"), repair)
+                                 + tests_checklist(rt, 2, repair) + prompt_note("tests") + conv_tests, role_allowed("tests", 2), repair)
                 else:
                     own = "; ".join(r[:1500] for r in reasons) if repair else (
                         "; ".join(state.get("fails") or []) or "none")
                     run_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
-                                 + (note if repair else "") + prompt_note("rtl") + conv0, st.tools, repair)
+                                 + (note if repair else "") + prompt_note("rtl") + conv0, role_allowed("rtl", 2), repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
             run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + (HW_FORMAT.format(**fmt) if n == 9 else ""),
-                         tuple(t for t in st.tools if t not in ("program", "bringup")))
+                         role_allowed("rtl", n))
             if n == 9:                                  # then the bring-up tests, which need the probe names (planner item, 05d)
                 from flow import hw_dry_check
                 dry = hw_dry_check.check_design(rt.design)
                 own = [q for q in dry["problems"] if not q.startswith(("BRINGUP.md", "probes.yaml"))]
                 if own:
                     run_role(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
-                                 + tests_checklist(rt, 9, True) + HW_FORMAT.format(**fmt) + MODEL_CONTRACT, ("search_docs", "load_skill", "gates"),
+                                 + tests_checklist(rt, 9, True) + HW_FORMAT.format(**fmt) + MODEL_CONTRACT, role_allowed("tests", 9),
                                  repair=True)        # never "fresh": a fresh tests write deletes the stage-2 benches
         files = [p for p in rt.design.rglob("*") if p.is_file() and "build" not in p.relative_to(rt.design).parts
                  and "__pycache__" not in p.parts]
@@ -794,6 +831,78 @@ def _contract(rt: Runtime, detail: list) -> dict:
     return res
 
 
+#: 05l: the V3 evidence is produced by the harness, not by a role. Where the status of the two steps is written
+#: (flow/verif_gates.py reads it, to say in the gate's ``why`` why a number is "not measured").
+V3_STATUS = ("build", "verif", "v3_evidence.json")
+V3_MUTATION_ARGS = {"max_mutants": 20, "seed": 1, "lock_wait_s": 300}
+
+
+def _evidence_key(design: Path) -> str:
+    """What the V3 evidence depends on: the RTL, the tests, the model, the testplan and the spec."""
+    import hashlib
+    h = hashlib.sha256()
+    for p in sorted(design.rglob("*")):
+        rel = p.relative_to(design)
+        if p.is_file() and rel.parts[0] in ("rtl", "tests", "verif", "model.py", "spec.yaml") and "__pycache__" not in rel.parts:
+            h.update(str(rel).encode() + b"\0" + p.read_bytes())
+    return h.hexdigest()
+
+
+def v3_evidence(rt: Runtime, sim_ok: bool) -> dict:
+    """Run the V3 evidence steps (brief 05l): the Verilator coverage simulation (``simulate(sim="verilator",
+    coverage=True)``, every seed the bench runs), then the mutation run (``flow/mutate.py``, 05k caps, heavy lock). Their
+    result files are the ones the gates read. Returns the status of each step, also written to ``build/verif/v3_evidence.json``.
+    A step that could not run says why ("busy", no Verilator, a failed run) and the gate shows that as the reason a number
+    is "not measured". The same sources are not run twice: the earlier status is kept while the key is unchanged."""
+    path = rt.design.joinpath(*V3_STATUS)
+    key = _evidence_key(rt.design)
+    try:
+        old = json.loads(path.read_text())
+    except (OSError, ValueError):
+        old = {}
+    mut_file = rt.design / "build" / "verif" / "mutation.json"
+    if (old.get("key") == key and old.get("coverage", {}).get("ok") and old.get("mutation", {}).get("ok")
+            and mut_file.is_file() and list((rt.design / "build" / "verif" / "sim").glob("seed*/coverage*.dat"))):
+        return {**old, "reused": True}
+    st: dict[str, Any] = {"key": key, "coverage": {"ok": False}, "mutation": {"ok": False}}
+    mut_file.unlink(missing_ok=True)                       # never read an old mutation result as the new one
+    from agent.core.tools import available_sims
+    if "verilator" not in available_sims():
+        st["coverage"]["why"] = ("the code-coverage run was not made: Verilator 5.036 or newer is not available on this "
+                                 "machine, so line, toggle and cover-property coverage are not measured")
+    else:
+        from flow import mutate as fm            # the machine's heavy-job lock (a Verilator build is heavy too); $FDA_HEAVY_LOCK
+        lock, holder = fm.take_lock("v3-coverage", V3_MUTATION_ARGS["lock_wait_s"], 900)
+        if lock is None and holder:
+            st["coverage"] = {"ok": False, "busy": True, "why": (f"the Verilator coverage run did not start: another heavy job "
+                              f"held the machine's lock for the {V3_MUTATION_ARGS['lock_wait_s']} s the run waits (busy); it is "
+                              f"retried at the next visit")}
+        else:
+            try:
+                r = dispatch(rt.session, "simulate", {"sim": "verilator", "coverage": True})
+            finally:
+                if lock is not None:
+                    lock.unlink(missing_ok=True)
+            st["coverage"] = {"ok": bool(r.get("ok")), "first_failure": r.get("first_failure"),
+                              "text": str(r.get("log_tail") or r.get("output", ""))[-3000:]}
+            if not r.get("ok"):
+                st["coverage"]["why"] = ("the Verilator coverage run of the bench failed (the failing test is in the simulate "
+                                         "result), so no code coverage was recorded")
+    if not st["coverage"]["ok"]:
+        st["mutation"]["why"] = "the mutation run was not made: it needs the coverage run to have passed first, and it did not"
+    else:
+        r = dispatch(rt.session, "mutate", dict(V3_MUTATION_ARGS))
+        st["mutation"] = {"ok": bool(r.get("ok")), "busy": bool(r.get("busy")), "text": str(r.get("output", ""))[-1500:]}
+        if r.get("busy"):
+            st["mutation"]["why"] = (f"the mutation run did not start: another heavy job held the machine's lock for the "
+                                     f"{V3_MUTATION_ARGS['lock_wait_s']} s the run waits (busy); it is retried at the next visit")
+        elif not r.get("ok"):
+            st["mutation"]["why"] = "the mutation run did not complete: " + st["mutation"]["text"][-300:].replace("\n", " ")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(st, indent=1))
+    return st
+
+
 def node_gate(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("stop"):
@@ -851,6 +960,14 @@ def node_gate(state: State) -> dict:
             ev["simulate"] = {"ok": False}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
         ev["verif_level"] = rt.cfg.verif_level
+        if (rt.cfg.verif_level == "V3" and ev["lint"]["ok"] and ev["simulate"]["ok"]
+                and (ev["verif"].get("reached") or "") >= "V2"):      # 05l: V2 passed, so the harness produces the V3 evidence
+            ev["v3_evidence"] = v3_evidence(rt, True)
+            cov = ev["v3_evidence"]["coverage"]
+            if "text" in cov and not cov["ok"]:                  # the Verilator run itself failed: a simulation failure to repair
+                ev["simulate"] = {"ok": False, "first_failure": cov.get("first_failure"), "text": cov["text"]}
+                detail.append("[simulate, verilator coverage run] " + cov["text"][-800:])
+            ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
         std = dispatch(rt.session, "gates", {"kind": "standards"})
         ev["standards"] = std.get("gates")
         from agent.graph.stages import standards_stage

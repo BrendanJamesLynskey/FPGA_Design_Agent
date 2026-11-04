@@ -96,10 +96,10 @@ def test_the_live_runs_v3_failures_name_their_preconditions(tmp_path, monkeypatc
     assert "no functional bins planned" in c["functional_bins_pct"]["why"]
     assert "bins:" in c["functional_bins_pct"]["why"]
     for k in ("cover_properties_pct", "cover_properties_unhit"):
-        assert not c[k]["pass"] and "no code-coverage data" in c[k]["why"] and 'simulate(sim="verilator", coverage=True)' in c[k]["why"]
+        assert not c[k]["pass"] and "no code-coverage data" in c[k]["why"] and "Verilator run of your bench" in c[k]["why"]
     for k in ("line_pct", "toggle_pct"):
-        assert c[k]["value"] == "not measured" and c[k]["why"].startswith("not measured:") and "coverage=True" in c[k]["why"]
-    assert c["mutation_score_pct"]["value"] == "not measured" and "`mutate` tool" in c["mutation_score_pct"]["why"]
+        assert c[k]["value"] == "not measured" and c[k]["why"].startswith("not measured:") and "Verilator run of your bench" in c[k]["why"]
+    assert c["mutation_score_pct"]["value"] == "not measured" and "the flow runs the mutation step itself" in c["mutation_score_pct"]["why"]
     rep["first_failed"], rep["reached"] = "V3", "V2"          # the repair text of the stage the live run stopped at
     text = "\n".join(verif_failures(rep, "V3"))
     assert "None" not in text and "no functional bins planned" in text and "no code-coverage data" in text

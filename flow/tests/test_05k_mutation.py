@@ -109,8 +109,9 @@ def test_busy_lock_returns_75(tiny, tmp_path):
     assert lock.read_text().startswith("someone-else")               # not stolen, not deleted
 
 
-def test_gate_message_without_mutation_names_the_tool():
-    assert "`mutate` tool" in G.mutation_why(None)
+def test_gate_message_without_mutation_says_the_flow_runs_it():
+    """05l: the tests role has no mutate tool, so its text names none."""
+    assert "the flow runs the mutation step itself" in G.mutation_why(None) and "`mutate`" not in G.mutation_why(None)
 
 
 def test_lock_line_records_the_acquisition_time_not_the_wait_start(tmp_path, monkeypatch):

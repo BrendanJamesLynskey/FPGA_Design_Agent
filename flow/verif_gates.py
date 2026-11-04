@@ -86,30 +86,38 @@ def chk(value: Any, threshold: Any, ok: bool, why: str | None = None) -> dict[st
 
 NOT_EVALUATED = "not evaluated (no seeded results)"
 NOT_MEASURED = "not measured"
-#: how the tests role produces code-coverage data (05j): the tool and argument names as the agent sees them
-HOW_CODE_COV = ("run `simulate(sim=\"verilator\", coverage=True)` (needs Verilator 5.036+; the bench must run through "
-                "flow.cocotb_run.run, which then writes seed<N>/coverage.dat)")
+#: what the tests role can do about each kind of V3 evidence (05l: only actions the role has; the coverage run and the
+#: mutation run are made by the flow itself once V2 passes, so these texts name no tool the role cannot call)
+HOW_CODE_COV = ("the flow records line, toggle and cover-property coverage itself, in a Verilator run of your bench, once "
+                "V0 to V2 pass (the bench must run through flow.cocotb_run.run, which writes seed<N>/coverage.dat)")
 HOW_FUNC_COV = ("name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them "
                 "in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` "
-                "(cocotb-coverage); `simulate` then keeps the file as seed<N>/coverage_func.yml")
-HOW_MUTATION = ("call the `mutate` tool (tests role, stage 2, V3): it runs the design's tests/test_*_rtl.py against a capped "
-                "sample of mutated copies of rtl/ and writes build/verif/mutation.json, then call gates(kind=verif) again")
+                "(cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml")
+HOW_MUTATION = ("the flow runs the mutation step itself once V2 passes (a capped, seeded sample of changes to the RTL, each run "
+                "against your tests); no result exists yet")
 
 
-def mutation_why(mut: dict | None) -> str:
-    """05k: the plain reason the mutation check fails (or the survivors, in words, so the tests role can add checks)."""
+def _more(items: list, n: int = 6) -> str:
+    return ", ".join(str(x) for x in items[:n]) + (f" (+{len(items) - n} more)" if len(items) > n else "")
+
+
+def mutation_why(mut: dict | None, reason: str | None = None) -> str:
+    """05k/05l: the plain reason the mutation check fails: not measured (and why, from the flow's own step), or the
+    surviving mutants as file, line and change, so the tests role can tighten its checks."""
     if not mut:
-        return "not measured: " + HOW_MUTATION
+        return "not measured: " + (reason or HOW_MUTATION)
     if mut.get("evaluated", 1) == 0:
         return ("no mutant was evaluated (" + f"{mut.get('invalid', 0)} invalid, {mut.get('skipped', 0)} skipped by the wall-time cap"
-                + "): the score is not measured; call `mutate` again")
+                + "): the score is not measured; the flow runs the mutation step again at the next visit")
     text = mut.get("survivor_text") or mut.get("survivors") or []
     more = f" (+{len(text) - 5} more in build/verif/mutation.json)" if len(text) > 5 else ""
     extra = ""
     if mut.get("timed_out"):
         extra = f"; {mut['timed_out']} timed out and count as not killed"
-    return (f"mutation score {mut['score_pct']}% is below the threshold{extra}: add checks that kill the survivors"
-            + (": " + " | ".join(text[:5]) + more if text else ""))
+    return (f"mutation score {mut['score_pct']}% is below the threshold{extra}: your tests still passed when the design was "
+            f"changed" + (" as follows (file, line, change): " + " | ".join(text[:5]) + more if text else "")
+            + ". Tighten the checks so a test fails for each change (compare more outputs, add a test that exercises the "
+              "changed behaviour)")
 
 
 def no_seeds_hint(runs: Path) -> str:
@@ -120,10 +128,10 @@ def no_seeds_hint(runs: Path) -> str:
     except ValueError:
         shown = str(runs)
     return (f"no seeded results: read {shown}/seed*/results.xml and found none. The gate expects "
-            f"{shown}/seed<N>/results.xml, one directory per seed. The `simulate` tool writes it when the bench runs "
+            f"{shown}/seed<N>/results.xml, one directory per seed. The flow's simulation step writes it when the bench runs "
             f"through flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=N) in "
             f"tests/test_*_rtl.py: call run() once per seed (for example seed=1, 2, 3; a seed left out counts as seed 1) "
-            f"with the module(s) listed in bench.modules, then call simulate, then gates(kind=\"verif\") again. A bench "
+            f"with the module(s) listed in bench.modules; the flow runs it and checks again. A bench "
             f"that runs the simulator some other way leaves nothing there.")
 
 
@@ -360,7 +368,7 @@ def trace_table(reqs: list[dict], entries: list[dict], res: dict[int, dict[str, 
 
 
 def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation: Path | None, hw: Path | None,
-             gates: Path | None = None) -> dict:
+             gates: Path | None = None, evidence: Path | None = None) -> dict:
     plan_path = design / "verif" / "testplan.yaml"
     out: dict[str, Any] = {"design": design.name, "stages": {}}
     v0 = {"testplan_present": chk(plan_path.exists(), True, plan_path.exists(),
@@ -523,6 +531,11 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     cp_pct = round(100 * (len(cp - cpw) - len(cp_unhit)) / max(1, len(cp - cpw)), 2)
     line, tog = (code.get("line") or {}).get("pct"), (code.get("toggle") or {}).get("pct")
     mut = json.loads(mutation.read_text()) if mutation and mutation.exists() else None
+    try:      # 05l: the flow's own V3 steps say why they did not measure something (busy lock, no Verilator, a failed run)
+        ev3 = json.loads(evidence.read_text()) if evidence and evidence.exists() else {}
+    except (OSError, ValueError):
+        ev3 = {}
+    cov_reason, mut_reason = (ev3.get("coverage") or {}).get("why"), (ev3.get("mutation") or {}).get("why")
     rtl_rel = plan["design_rtl"] if "design_rtl" in plan else f"{design.relative_to(ROOT).as_posix()}/rtl/"
     th_bins = th["functional_bins_pct"]
     if not planned_bins:
@@ -536,18 +549,22 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     else:
         bins_why = f"{hit} of {tot} planned bins were hit; the threshold needs {th_bins}%: see functional_bins_unhit"
     if not code:
-        code_why = "no code-coverage data: " + HOW_CODE_COV
+        code_why = "not measured: no code-coverage data: " + (cov_reason or HOW_CODE_COV)
     elif not cp - cpw:
         code_why = "no cover properties planned: name them in `cover_props:` of the requirements (C_*, declared with V_COVER)"
     else:
-        code_why = "cover properties were not hit: see cover_properties_unhit"
+        code_why = (f"cover properties not hit: {_more(cp_unhit)}: add or extend a test that drives the design into each, "
+                    f"or correct the `V_COVER` expression if it can never be true")
 
     def meas(kind: str, val: Any) -> tuple[Any, str | None]:
         """``(value, why)`` for line/toggle: 'not measured: how' when the evidence never existed."""
         if val is not None:
-            return val, f"{kind} coverage is {val}%, below the threshold: exercise more of the RTL (see code_coverage_unhit)"
+            gaps = (code.get(kind) or {}).get("unhit") or []
+            what = "lines never executed" if kind == "line" else "signal bits that never changed"
+            return val, (f"{kind} coverage is {val}%, below the {th[kind + '_pct']}% threshold: {what} (file:line object): "
+                         f"{_more(gaps)}: add or extend tests that reach them, or waive them with a reason in the testplan")
         if not code:
-            return NOT_MEASURED, f"not measured: no code-coverage data; " + HOW_CODE_COV
+            return NOT_MEASURED, f"not measured: no code-coverage data: " + (cov_reason or HOW_CODE_COV)
         return NOT_MEASURED, (f"not measured: coverage.dat has no {kind} points in {rtl_rel}: build the RTL under test in the "
                               f"coverage run and check the plan's design_rtl path")
     line_v, line_why = meas("line", line)
@@ -560,13 +577,13 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         "functional_bins_pct": chk(f"{pct} ({hit}/{tot})", th_bins, tot > 0 and pct >= th_bins, bins_why),
         "functional_bins_unhit": chk(unhit, [], pct >= th_bins, bins_why),
         "cover_properties_pct": chk(f"{cp_pct}", th["cover_properties_pct"], cp_pct >= th["cover_properties_pct"] and bool(code),
-                                    code_why if (not code or not cp - cpw) else f"cover properties hit: {cp_pct}%, need {th['cover_properties_pct']}%"),
+                                    code_why if (not code or not cp - cpw or cp_unhit) else f"cover properties hit: {cp_pct}%, need {th['cover_properties_pct']}%"),
         "cover_properties_unhit": chk(cp_unhit, [], not cp_unhit and bool(code), code_why),
         "line_pct": chk(line_v, th["line_pct"], line is not None and line >= th["line_pct"], line_why),
         "toggle_pct": chk(tog_v, th["toggle_pct"], tog is not None and tog >= th["toggle_pct"], tog_why),
         "waivers_without_reason": chk(len(bad_waive), 0, not bad_waive, "every waiver needs a non-empty `reason`"),
         "mutation_score_pct": chk(mut["score_pct"] if mut else NOT_MEASURED, th["mutation_score_pct"], mut_ok,
-                                  mutation_why(mut)),
+                                  mutation_why(mut, mut_reason)),
     }
     if not seeds:       # coverage is read from the seeds' own files: nothing to evaluate without them
         for k in ("functional_bins_pct", "functional_bins_unhit", "cover_properties_pct", "cover_properties_unhit",
@@ -623,6 +640,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--also", action="append", default=[])
     ap.add_argument("--formal", default="build/verif/formal")
     ap.add_argument("--mutation")
+    ap.add_argument("--evidence", help="05l: build/verif/v3_evidence.json, the flow's own V3 steps (why a number is not measured)")
     ap.add_argument("--hw")
     ap.add_argument("--gates", help="gates.json of the build (flow/gates.py): evidence for analysis proofs")
     ap.add_argument("--json")
@@ -633,7 +651,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         rep = evaluate(rel(a.design), rel(a.runs), [rel(x) for x in a.also], rel(a.formal),
                        rel(a.mutation) if a.mutation else None, rel(a.hw) if a.hw else None,
-                       rel(a.gates) if a.gates else None)
+                       rel(a.gates) if a.gates else None, rel(a.evidence) if a.evidence else None)
     except (PlanError, OSError, KeyError, TypeError, ValueError, AttributeError, SyntaxError) as e:
         # whatever else a gate input throws, the answer is a failed gate with the message, not a traceback
         msg = e.args[0] if isinstance(e, PlanError) and e.args else f"{type(e).__name__}: {e}"
