@@ -14,6 +14,7 @@ import os
 import shutil
 import subprocess
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
@@ -167,8 +168,10 @@ def _norm(a: str) -> str:
 
 # --- isolation for agent-written test code (owner decision 2026-11-01) ---------------------------------------
 
-#: Default image: Ubuntu 24.04, Python 3.12, cocotb 2.0.1, Icarus 12.0 (agent/container/Dockerfile).
-SIM_IMAGE = "fda-sim:1"          # built from agent/container/Dockerfile (docker build -t fda-sim:1 agent/container)
+#: Default image: Ubuntu 24.04, Python 3.12, cocotb 2.0.1, Icarus 12.0, Verilator 5.048 (agent/container/Dockerfile).
+SIM_IMAGE = "fda-sim:2"          # built from agent/container/Dockerfile (docker build -t fda-sim:2 agent/container)
+#: What a Verilator build plus coverage run needs (05m, measured on T1): see docs/agent_core.md.
+DEFAULT_MEMORY, DEFAULT_BUILD_TMPFS = "4g", "1g"
 
 
 class ContainerRunner:
@@ -182,18 +185,20 @@ class ContainerRunner:
     The argv is the same one the core builds, so replay fixtures do not change."""
 
     def __init__(self, design: Path, root: Path, inner: Runner | None = None, kinds: tuple[str, ...] = ("simulate", "contract"),
-                 image: str = SIM_IMAGE, engine: str = "docker", memory: str = "3g"):
+                 image: str = SIM_IMAGE, engine: str = "docker", memory: str = DEFAULT_MEMORY,
+                 build_tmpfs: str = DEFAULT_BUILD_TMPFS):
         self.design, self.root = Path(os.path.realpath(design)), Path(os.path.realpath(root))
         self.inner = inner or LocalRunner()
         self.kinds, self.image, self.engine, self.memory = kinds, image, engine, memory
+        self.build_tmpfs = build_tmpfs
 
-    def container_argv(self, argv: list[str], env: dict[str, str] | None) -> list[str]:
+    def container_argv(self, argv: list[str], env: dict[str, str] | None, name: str | None = None) -> list[str]:
         import sys
         r = str(self.root)
-        cmd = [self.engine, "run", "--rm", "--network", "none", "--cap-drop", "ALL",
+        cmd = [self.engine, "run", "--rm", *(["--name", name] if name else []), "--network", "none", "--cap-drop", "ALL",
                "--security-opt", "no-new-privileges", "--read-only", "--user", f"{os.getuid()}:{os.getgid()}",
                "--memory", self.memory, "--pids-limit", "512",
-               "--tmpfs", "/tmp:rw,exec,size=512m", "--tmpfs", f"{r}/build:rw,exec,size=1g",
+               "--tmpfs", "/tmp:rw,exec,size=512m", "--tmpfs", f"{r}/build:rw,exec,size={self.build_tmpfs}",
                "-v", f"{self.design}:{self.design}:rw",
                "-v", f"{r}/flow:{r}/flow:ro", "-v", f"{r}/shell:{r}/shell:ro",
                "-v", f"{r}/designs/__init__.py:{r}/designs/__init__.py:ro",
@@ -206,7 +211,11 @@ class ContainerRunner:
     def run(self, kind, argv, cwd, env=None, timeout=600):
         if kind not in self.kinds:
             return self.inner.run(kind, argv, cwd, env, timeout)
-        return self.inner.run(kind, self.container_argv(argv, env), cwd, None, timeout)
+        name = f"fda-{os.getpid()}-{uuid.uuid4().hex[:8]}"
+        res = self.inner.run(kind, self.container_argv(argv, env, name), cwd, None, timeout)
+        if res.returncode == 124:           # timed out: killing the docker client leaves the container running, so remove it by name
+            subprocess.run([self.engine, "rm", "-f", name], capture_output=True, timeout=60)
+        return res
 
 
 def container_available(engine: str = "docker", image: str = SIM_IMAGE) -> bool:
@@ -216,3 +225,24 @@ def container_available(engine: str = "docker", image: str = SIM_IMAGE) -> bool:
         return p.returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         return False
+
+
+_IMAGE_VERILATOR: dict[tuple[str, str], tuple[int, int] | None] = {}
+
+
+def image_verilator_version(engine: str = "docker", image: str = SIM_IMAGE) -> tuple[int, int] | None:
+    """Verilator's (major, minor) inside the sandbox image, or None (no Verilator in it, or no engine). The image is
+    probed once per process and the answer cached: an image does not change under a running graph."""
+    import re
+    key = (engine, image)
+    if key not in _IMAGE_VERILATOR:
+        v = None
+        try:
+            p = subprocess.run([engine, "run", "--rm", "--network", "none", "--entrypoint", "verilator", image, "--version"],
+                               capture_output=True, text=True, timeout=120)
+            m = re.search(r"Verilator\s+(\d+)\.(\d+)", p.stdout) if p.returncode == 0 else None
+            v = (int(m.group(1)), int(m.group(2))) if m else None
+        except (OSError, subprocess.SubprocessError):
+            pass
+        _IMAGE_VERILATOR[key] = v
+    return _IMAGE_VERILATOR[key]

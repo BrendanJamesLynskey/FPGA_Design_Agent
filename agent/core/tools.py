@@ -260,12 +260,13 @@ def _verilator_version(runner_env: dict[str, str] | None = None) -> tuple[int, i
 @functools.lru_cache(maxsize=1)
 def available_sims() -> tuple[str, ...]:
     """The simulators ``simulate`` can really run on this machine (05c2 fix 3). cocotb 2 needs Verilator 5.036+,
-    found through the same tool discovery as lint; the simulate step runs in the container image when it exists,
-    which holds Icarus only."""
-    from agent.core.runner import container_available
+    found through the same tool discovery as lint. When the sandbox image exists the simulate step runs in it, so
+    Verilator is offered only if the image has it (05m: fda-sim:2 does; probed once); with no image the host's
+    Verilator counts. Model-written test code never runs on the host while an image exists."""
+    from agent.core.runner import container_available, image_verilator_version
     sims = ["icarus"]
-    v = _verilator_version()
-    if v and v >= (5, 36) and not container_available():
+    v = image_verilator_version() if container_available() else _verilator_version()
+    if v and v >= (5, 36):
         sims.append("verilator")
     return tuple(sims)
 
@@ -281,8 +282,7 @@ def _sim_refine() -> dict[str, Any]:
                   "gates(kind=verif) needs for the code-coverage checks.",
       {"sim": {"type": "string", "enum": ["icarus", "verilator"]}, "coverage": {"type": "boolean"}}, refine=_sim_refine)
 def simulate(s: Session, sim: str = "icarus", coverage: bool = False) -> dict:
-    from agent.core.runner import ContainerRunner
-    if sim not in available_sims() or (sim != "icarus" and isinstance(s.runner, ContainerRunner)):
+    if sim not in available_sims():
         return {"ok": False, "output": f"simulator {sim!r} is not available here; available: "
                                        f"{', '.join(available_sims())}"}
     if coverage and sim != "verilator":
@@ -333,8 +333,12 @@ def mutate(s: Session, max_mutants: int = 20, seed: int = 1, lock_wait_s: int = 
     out.parent.mkdir(parents=True, exist_ok=True)
     out.unlink(missing_ok=True)          # never read an old result as the new one
     wall = 1500
+    from agent.core.runner import ContainerRunner
+    # 05m: the per-mutant test runs execute model-written tests, so they go through the same sandbox as `simulate`
+    sandbox = ["--sandbox", "container" if isinstance(s.runner, ContainerRunner) else "host"]
     argv = [PY, str(s.root / "flow" / "mutate.py"), _rel(s, s.design), "--generic", "--json", _rel(s, out),
-            "--max-mutants", str(max_mutants), "--seed", str(seed), "--wall-s", str(wall), "--lock-wait-s", str(lock_wait_s)]
+            "--max-mutants", str(max_mutants), "--seed", str(seed), "--wall-s", str(wall), "--lock-wait-s", str(lock_wait_s),
+            *sandbox]
     if shutil.which("systemd-run") and not os.environ.get("FDA_NO_SYSTEMD_CAP"):      # the machine rule: memory-capped
         argv = ["systemd-run", "--user", "--scope", "-q", "-p", "MemoryMax=8G", *argv]
     r = s.runner.run("mutate", argv, s.root, timeout=wall + lock_wait_s + 300)
