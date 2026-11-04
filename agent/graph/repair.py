@@ -44,6 +44,8 @@ def verif_failures(v: dict[str, Any] | None, need: str = "V3", limit: int = 80) 
         if c.get("pass"):
             continue
         val = c.get("value")
+        if isinstance(val, str) and val.startswith("not evaluated"):
+            continue          # a consequence of another failed check (05h): the line that names the cause is enough
         if isinstance(val, list):
             val = f"[{len(val)}] " + ", ".join(str(x) for x in val[:limit]) + (" ..." if len(val) > limit else "")
         out.append(f"{st} {name}: {str(val)[:1500]} (need {c.get('threshold')})")

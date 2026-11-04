@@ -289,7 +289,12 @@ def simulate(s: Session, sim: str = "icarus") -> dict:
     if not tests:
         return {"ok": False, "output": "the design has no tests/test_*_rtl.py"}
     argv = [PY, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *[_rel(s, t) for t in tests]]
-    r = s.runner.run("simulate", argv, s.root, {"SIM": sim}, timeout=1800)
+    # the V2/V3 gate reads <design>/build/verif/sim/seed<N>/results.xml; flow.cocotb_run.run writes it there when this
+    # variable is set (05h: a bench that passed `simulate` left the gate with no seeded results). Cleared per call so
+    # an old result is never read as the new one.
+    results = s.design / "build" / "verif" / "sim"
+    shutil.rmtree(results, ignore_errors=True)
+    r = s.runner.run("simulate", argv, s.root, {"SIM": sim, "FDA_SIM_RESULTS_DIR": _rel(s, results)}, timeout=1800)
     out = _text_out(r)
     res: dict[str, Any] = {"ok": r.returncode == 0}
     if r.returncode != 0:

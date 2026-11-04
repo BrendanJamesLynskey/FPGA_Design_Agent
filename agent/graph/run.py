@@ -544,7 +544,10 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
     lines = ["", "", "STAGE-ENTRY CHECKLIST (the files the gates read; the gate fails if one is missing):"]
     if stage == 2:
         lines += [
-            f"1. tests/test_{name}_rtl.py: the pytest entry (gate V0 `bench_modules_present`; the `simulate` tool runs tests/test_*_rtl.py).",
+            f"1. tests/test_{name}_rtl.py: the pytest entry (gate V0 `bench_modules_present`; the `simulate` tool runs tests/test_*_rtl.py). "
+            "The V2/V3 gates read build/verif/sim/seed<N>/results.xml of this design, one directory per seed; `simulate` writes it for every "
+            "flow.cocotb_run.run(..., seed=N) call (a call without seed= counts as seed 1), so call run() for each seed you need "
+            "(V3 wants the testplan's seeds_min) and list every test module in one run's `test_module`.",
             "2. tests/<module>.py for every module listed in bench.modules of the testplan (V0 `bench_modules_present`). "
             "Keep the bench fast: cocotb on Icarus runs about 10^5 clock cycles per second and the `simulate` tool stops a run "
             "after 30 minutes, so override the spec's long timing parameters (debounce, PWM period, baud divider) with small "
@@ -597,8 +600,9 @@ def stage2_plan(rt: Runtime, state: State) -> dict[str, list[str] | None]:
         elif role in owners:
             plan[role] = list(owners[role])
         elif not owners and role == "rtl":               # arrived from a later stage's failure: the RTL is the suspect
-            plan[role] = [("; ".join(state.get("fails") or []) or "a later stage failed") + "\n"
-                          + str(state.get("detail") or "")[:1500]]
+            reason = ("; ".join(state.get("fails") or []) + "\n" + str(state.get("detail") or "")[:1500]).strip()
+            if reason:                                   # 05h: no reason, no repair visit (it only invites churn)
+                plan[role] = [reason]
     return plan
 
 

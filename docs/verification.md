@@ -41,6 +41,8 @@ each entry `{id, text, proof}` with `proof` a non-empty list from four methods:
 | `hardware` | a bring-up step or `step:case` (`uart_tests`, `uart_tests:test_x`, `ila_captures`) | that step passed in the bring-up JSON |
 | `analysis` | a flow gate, `stage:gate` (`post_route:setup`, `post_synth:post_synth_resources_in_range`) | the gate in `gates.json` is true |
 
+V2's formal check covers the formal tasks the testplan names (`formal:` of each requirement): each must have both its `bmc` and `cover` tasks `PASS`. A plan that names none (every formal method re-planned because SymbiYosys is absent, or no requirement uses it) passes the check; whether a requirement needs formal is decided by its `proof` list in `spec.yaml`, which V1 and the sign-off table enforce. When no `seed*/results.xml` exists the gate says so in one line (the directory read, the file expected, how `flow.cocotb_run.run(..., seed=N)` under `simulate` produces it) and shows the checks that depend on it as `not evaluated (no seeded results)`.
+
 The clarify stage proposes a method per requirement; where it does not, the interview asks one question per
 requirement with a default (`agent.graph.spec_schema.propose_proof`) and the reason for it. The test writer then
 adds a top-level `proof:` list to `verif/testplan.yaml`, `{requirement, method, artefact}`, giving every method of
