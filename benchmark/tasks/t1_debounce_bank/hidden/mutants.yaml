@@ -1,0 +1,15 @@
+mutants:
+  - {name: debounce_half, file: bm_debounce.sv, find: "end else if (run == CW'(CYCLES - 1)) begin", replace: "end else if (run == CW'(CYCLES / 2)) begin", why: "debounce accepts glitches of half the time"}
+  - {name: count_rises_only, file: debounce_bank.sv, find: "else if (lvl[k] != lvl_d[k])            cnt[k] <= cnt[k] + 8'd1;", replace: "else if (lvl[k] && !lvl_d[k])          cnt[k] <= cnt[k] + 8'd1;", why: "only rising changes counted"}
+  - {name: count_clear_all, file: debounce_bank.sv, find: "if (win_wr && win_addr == 7'(4 + k / 4)) cnt[k] <= '0;", replace: "if (win_wr && win_addr[6:2] == 5'd1) cnt[k] <= '0;", why: "a write to one COUNT register clears all sixteen counts"}
+  - {name: edges_not_sticky, file: debounce_bank.sv, find: "edges <= (edges & ~((win_wr && win_addr == R_EDGES) ? win_wdata[15:0] : 16'h0000))", replace: "edges <= (16'h0000 & ~((win_wr && win_addr == R_EDGES) ? win_wdata[15:0] : 16'h0000))", why: "edge flags last one clock"}
+  - {name: w1c_clears_all, file: debounce_bank.sv, find: "? win_wdata[15:0] : 16'h0000))", replace: "? 16'hFFFF : 16'h0000))", why: "any EDGES write clears every flag"}
+  - {name: fall_uses_rise_en, file: debounce_bank.sv, find: "| (rise & rise_en) | (fall & fall_en);", replace: "| (rise & rise_en) | (fall & rise_en);", why: "falling edges selected by RISE_EN"}
+  - {name: count_packing_reversed, file: debounce_bank.sv, find: "7'h04:   win_rdata <= {cnt[3], cnt[2], cnt[1], cnt[0]};", replace: "7'h04:   win_rdata <= {cnt[0], cnt[1], cnt[2], cnt[3]};", why: "COUNT0 bytes in the wrong order"}
+  - {name: rise_en_reset_zero, file: debounce_bank.sv, find: "rise_en <= 16'hFFFF;", replace: "rise_en <= 16'h0000;", why: "RISE_EN resets to 0"}
+trap:
+  twin: "textbook debouncer that samples each switch once per slow tick (10-20 ms enable)"
+  why: "a tick sampler takes any glitch that covers a sampling instant as a real change; this spec needs DEBOUNCE_CYCLES of steady difference"
+  edits:
+    - {file: bm_debounce.sv, find: "        end else if (d == level) begin\n            run <= '0;\n        end else if (run == CW'(CYCLES - 1)) begin", replace: "        end else if (run == CW'(CYCLES - 1)) begin"}
+  must_fail: [test_glitch_on_slow_tick]

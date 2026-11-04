@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_stepper_ramp (pool; benchmark/tools/run_task.py)
+toplevel: p_stepper_ramp_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, START_INT: 40, MIN_INT: 12, RAMP_DEC: 4, PULSE_CYCLES: 3, DIR_SETUP: 6, HOLD_CYCLES: 50}
+phrases:
+  - "A short move never gets to top speed"
+  - "stays enabled for a short hold time afterwards"
+  - "A move that arrives while another is running is refused"

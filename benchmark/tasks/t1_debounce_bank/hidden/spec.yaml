@@ -1,0 +1,82 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t1_debounce_bank
+title: Sixteen-switch debounce bank
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_debounce_bank_top
+design_id: 0x44424E4B          # "DBNK"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: clean levels 0, EDGES = 0, every count 0, RISE_EN = 0xFFFF, FALL_EN = 0x0000
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  DEBOUNCE_CYCLES: 2000000      # 20 ms
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  debounce:
+    - "Each SW[k] is synchronised (two flops), then debounced on its own. The clean level L[k] changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count. No slow sampling tick - a difference shorter than DEBOUNCE_CYCLES never changes L[k], wherever it falls in time."
+    - Because the levels reset to 0, a switch already up at reset gives a rising edge DEBOUNCE_CYCLES clocks after reset.
+  counts:
+    - "COUNT[k] (8 bits, wrapping at 256) adds 1 on every change of L[k], rising or falling, whatever the edge selection."
+  edges:
+    - "EDGES[k] is set on a rise of L[k] when RISE_EN[k] = 1, and on a fall when FALL_EN[k] = 1. It stays set until a shell write to EDGES with bit k = 1 (write-1-to-clear); if an edge and the clear fall on the same clock, the edge wins."
+  leds:
+    - "LED[15:0] = L[15:0]. No PWM."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: LEVEL, access: RO, reset: 0, bits: "[15:0] clean levels"}
+    - {offset: 0x01, name: EDGES, access: RW, reset: 0, bits: "[15:0] sticky edge flags, write 1 to clear"}
+    - {offset: 0x02, name: RISE_EN, access: RW, reset: 0xFFFF, bits: "[15:0] rising edges set EDGES[k]"}
+    - {offset: 0x03, name: FALL_EN, access: RW, reset: 0x0000, bits: "[15:0] falling edges set EDGES[k]"}
+    - {offset: 0x04, name: COUNT0, access: RW, reset: 0, bits: "[7:0] COUNT[0], [15:8] COUNT[1], [23:16] COUNT[2], [31:24] COUNT[3]; any write clears these four"}
+    - {offset: 0x05, name: COUNT1, access: RW, reset: 0, bits: "COUNT[4..7] packed the same way; any write clears them"}
+    - {offset: 0x06, name: COUNT2, access: RW, reset: 0, bits: "COUNT[8..11]; any write clears them"}
+    - {offset: 0x07, name: COUNT3, access: RW, reset: 0, bits: "COUNT[12..15]; any write clears them"}
+  unmapped: offsets 0x08-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    switch_to_level: "2 (sync) + DEBOUNCE_CYCLES clocks"
+  async_inputs: SW, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Each clean level follows its switch after DEBOUNCE_CYCLES of steady difference and never for a shorter glitch, at any phase", proof: [simulation]}
+  - {id: REQ-02, text: "The switches are debounced independently", proof: [simulation]}
+  - {id: REQ-03, text: "COUNT[k] counts every clean change, 8-bit wrapping, cleared four at a time by a write", proof: [simulation]}
+  - {id: REQ-04, text: "EDGES are sticky, W1C, set by the selected edge kinds per switch", proof: [simulation]}
+  - {id: REQ-05, text: "LED[15:0] show the clean levels; the register window has the listed map", proof: [simulation]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board LEVEL reads the switch positions and the register rules hold", proof: [hardware]}
+
+resources_expected: "about 600 FFs (16 debounce counters of 21 bits, 16 8-bit counts) and 500 LUTs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: one counter per switch rather than a shared sampling tick.
+    reason: the request says noise is ignored however it lines up.
+  - assumption: rising edges only by default.
+    reason: a switch being turned on is the usual event of interest.
+
+open_questions: []

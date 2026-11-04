@@ -1,0 +1,79 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_nec_tx
+title: "Infrared remote transmitter (NEC style) with repeat codes"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_nec_tx_top
+design_id: 0x4E454354          # "NECT"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "idle, ADDR = CMD = 0, counts 0, JC1 low"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  UNIT_CYCLES: 56250
+  CARRIER_CYCLES: 2632
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[0] is used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: JC1, dir: out, width: 1, note: "IR LED drive on Pmod JC pin 1", pins: [K1], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  units:
+  - T = UNIT_CYCLES clocks. A mark of n units is n x T clocks of carrier; a space of n units is n x T clocks of low.
+  carrier:
+  - 'During a mark the output JC1 is the carrier: for the clocks t = 0 .. n x T - 1 of the mark, JC1 = 1 if (t mod CARRIER_CYCLES) < CARRIER_CYCLES / 2 else 0, restarting at t = 0 at the start of every mark. During a space JC1 = 0. JC1 is registered.'
+  frame:
+  - 'A write to SEND (any value) with BUSY = 0 starts a frame, otherwise IGNORED increments (8 bits, saturating). Frame: leader mark 16 units, space 8 units; then for each of the 32 bits: a mark of 1 unit and a space of 1 unit for a 0 or 3 units for a 1; then a stop mark of 1 unit. The bits are ADDR, NOT ADDR, CMD, NOT CMD (8 bits each, least significant bit first). ADDR and CMD are sampled when the frame starts.'
+  - 'Repeat code: leader mark 16 units, space 4 units, stop mark 1 unit.'
+  - 'A transmission (frame or repeat) that starts at clock S owns the interval up to S + 192 x T: BUSY stays 1 until then. At exactly S + 192 x T, if SW[0] (synchronised) is 1, a repeat code starts (REPEATS increments, 8 bits saturating, and the same rule applies from its start); otherwise BUSY drops at that clock.'
+  outputs:
+  - 'LED[0] = (transmitting: from the start of a frame or repeat to the end of its stop mark), LED[15:8] = CMD. FRAMES counts frames started (16 bits).'
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: ADDR, access: RW, reset: 0, bits: "[7:0] address byte"}
+    - {offset: 0x01, name: CMD, access: RW, reset: 0, bits: "[7:0] command byte"}
+    - {offset: 0x02, name: SEND, access: WO, reset: 0, bits: "any write sends a frame; reads 0"}
+    - {offset: 0x03, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [15:8] IGNORED, [23:16] REPEATS"}
+    - {offset: 0x04, name: FRAMES, access: RO, reset: 0, bits: "[15:0] frames started"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    repeat_interval: exactly 192 x UNIT_CYCLES clocks from the start of the previous transmission
+  async_inputs: SW[0], CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The frame is the NEC pulse-distance code with the stated units and carrier-gated marks", proof: [simulation]}
+  - {id: REQ-02, text: "Address and command are sent with their complements, least significant bit first", proof: [simulation]}
+  - {id: REQ-03, text: "While SW[0] stays up a repeat code follows every 192 units; it stops at the first due time with SW[0] down", proof: [simulation]}
+  - {id: REQ-04, text: "A send while busy is ignored and counted; registers behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the carrier has a 50 percent duty cycle"
+    reason: "the request does not give one"
+
+open_questions: []

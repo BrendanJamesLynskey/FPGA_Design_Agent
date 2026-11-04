@@ -1,0 +1,81 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_nec_rx
+title: "Infrared remote receiver (NEC style) with tolerant timing"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_nec_rx_top
+design_id: 0x4E454352          # "NECR"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "idle, ADDR = CMD = 0, all counts 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  UNIT_CYCLES: 56250
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JC2, dir: in, width: 1, async: true, note: "demodulated IR receiver output on Pmod JC pin 2, active low", pins: [F6], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - JC2 is synchronised by two flops. T = UNIT_CYCLES. Durations are numbers of clocks between consecutive edges of the synchronised line (low = a mark, high = a space).
+  windows:
+  - 'Leader mark (low): accepted if 12 x T <= d <= 20 x T; a low pulse outside that range at the start of a code is ignored without any count (noise).'
+  - 'Leader space (high): 6 x T <= d <= 10 x T starts a frame; 3 x T <= d <= 5 x T starts a repeat code; any other length is an E_FORMAT error.'
+  - 'Bit mark and stop mark (low): T/2 <= d <= 3T/2 (integer division), else E_FORMAT. Bit space (high): d < 2 x T is a 0, 2 x T <= d <= 4 x T is a 1, d > 4 x T is E_FORMAT (the space after the last bit is also measured this way, to the stop mark).'
+  decode:
+  - 'A frame: 32 bit mark/space pairs, then the stop mark (low pulse of the right length); the frame is complete on the rising edge that ends the stop mark. A repeat code: after its leader space, one more mark of the right length, complete on its rising edge.'
+  - 'A complete frame: if ADDR ^ NOT-ADDR bytes and CMD ^ NOT-CMD bytes are not all-ones (a byte and its complement must XOR to 0xFF) it is an E_CHECK error, otherwise it is good: ADDR and CMD are updated and GOOD increments. A complete repeat code increments REPEATS.'
+  - An E_FORMAT error abandons the code; the receiver then ignores edges until the line has been high for 12 x T consecutive clocks. The same quiet period is not needed after a good code. All counts are 8 bits and saturate at 255.
+  leds:
+  - LED[7:0] = CMD, LED[15:8] = ADDR.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: ADDR, access: RO, reset: 0, bits: "[7:0] address of the last good frame"}
+    - {offset: 0x01, name: CMD, access: RO, reset: 0, bits: "[7:0] command of the last good frame"}
+    - {offset: 0x02, name: GOOD, access: RO, reset: 0, bits: "[7:0] good frames"}
+    - {offset: 0x03, name: REPEATS, access: RO, reset: 0, bits: "[7:0] repeat codes"}
+    - {offset: 0x04, name: E_FORMAT, access: RO, reset: 0, bits: "[7:0] frames abandoned for a wrong pulse or space length"}
+    - {offset: 0x05, name: E_CHECK, access: RO, reset: 0, bits: "[7:0] frames with a wrong complement"}
+    - {offset: 0x06, name: CTRL, access: WO, reset: 0, bits: "any write clears the four counts; reads 0"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    frame_to_result: 3 clocks after the rising edge that ends the stop mark
+  async_inputs: JC2, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Good frames update ADDR and CMD when the complements check out", proof: [simulation]}
+  - {id: REQ-02, text: "Pulse and space lengths are classified by the stated windows, tolerant of drift", proof: [simulation]}
+  - {id: REQ-03, text: "Repeat codes are counted; wrong complements and wrong lengths are separate error counts", proof: [simulation]}
+  - {id: REQ-04, text: "After a format error the receiver waits for a quiet high line", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the first space measured after the 32nd bit is the one before the stop mark"
+    reason: "so a 33rd mark is the stop mark"
+
+open_questions: []

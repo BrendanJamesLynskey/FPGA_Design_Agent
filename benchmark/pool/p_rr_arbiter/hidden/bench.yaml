@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_rr_arbiter (pool; benchmark/tools/run_task.py)
+toplevel: p_rr_arbiter_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, MAX_HOLD: 12}
+phrases:
+  - "a requester cannot be starved"
+  - "Nobody holds a grant for ever when someone else is waiting"
+  - "the grant lines drop for a moment"

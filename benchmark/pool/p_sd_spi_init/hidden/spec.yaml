@@ -1,0 +1,84 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_sd_spi_init
+title: "SD card initialisation in SPI mode"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_sd_spi_init_top
+design_id: 0x5344494E          # "SDIN"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the card is powered off while reset is held; STATE 0, all results 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  PWR_DELAY: 1000000
+  INIT_HALF: 125
+  MAX_TRIES: 100
+  RETRY_GAP: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SD_RESET, dir: out, width: 1, note: "card power control: low = powered", pins: [E2], iostandard: LVCMOS33}
+  - {name: SD_SCK, dir: out, width: 1, pins: [B1], iostandard: LVCMOS33}
+  - {name: SD_CMD, dir: out, width: 1, note: "MOSI to the card", pins: [C1], iostandard: LVCMOS33}
+  - {name: SD_DAT0, dir: in, width: 1, async: true, note: "MISO from the card", pins: [C2], iostandard: LVCMOS33}
+  - {name: SD_DAT3, dir: out, width: 1, note: "chip select, active low", pins: [D2], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  spi:
+  - SPI mode 0, MSB first. SD_SCK idles low and has exactly 2 x INIT_HALF clocks per period for the whole sequence. SD_DAT3 (chip select) is low for the six command bytes and the response polling and is taken high with at least 8 more clock pulses (with SD_CMD high) after each command completes. SD_CMD is 1 whenever no command byte is being sent. SD_DAT0 is synchronised and sampled at the rising edge of SD_SCK.
+  sequence:
+  - While in reset SD_RESET = 1; once out of reset SD_RESET = 0 (STATE 0). After PWR_DELAY clocks (STATE 1) the design gives 80 SD_SCK periods with SD_DAT3 = 1 and SD_CMD = 1.
+  - 'STATE 2: CMD0 = 0x40 00 00 00 00 95. Then up to 8 bytes of 0xFF are sent while looking for R1 (the first received byte with bit 7 = 0): R1 must be 0x01, else ERRCODE 1 (also if no R1 comes in 8 bytes) and STATE 6.'
+  - 'STATE 3: CMD8 = 0x48 00 00 01 AA 87. If R1 has the illegal-command bit (bit 2) set (0x05) the card is version 1 (no further CMD8 bytes). If R1 = 0x01 four more bytes follow and must be 00 00 01 AA, else ERRCODE 2 (STATE 6); a card that answers neither way is ERRCODE 2.'
+  - 'STATE 4: for each try k = 1 .. MAX_TRIES: CMD55 = 0x77 00 00 00 00 65 (R1 must be 0x01, else ERRCODE 3), then CMD41 = 0x69 A 01 where A is 0x40000000 00 00 00 for a version 2 card and zeros for version 1, check byte 0x77 (all non-zero CRC bytes are fixed values ending in a 1 bit); TRIES = k. R1 = 0x00: the card is ready. R1 = 0x01: wait RETRY_GAP clocks (SD_DAT3 high) and try again. After MAX_TRIES tries with R1 still 0x01: ERRCODE 3, STATE 6.'
+  - 'Version 2 card, ready: CMD58 = 0x7A 00 00 00 00 FD: R1 must be 0x00 (else ERRCODE 4, STATE 6), followed by 4 bytes, OCR (first byte is bits 31:24). CARDTYPE = 3 if OCR bit 30 is 1, else 2. Version 1 card ready: CARDTYPE = 1, OCR = 0. Then STATE 5.'
+  leds:
+  - LED[3:0] = STATE, LED[5:4] = CARDTYPE (0 unknown), LED[8] = (STATE 5), LED[9] = (STATE 6), others 0. Nothing is sent after STATE 5 or 6.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: STATE, access: RO, reset: 0, bits: "[2:0] 0 power wait, 1 clocks, 2 CMD0, 3 CMD8, 4 ACMD41/CMD58, 5 ready, 6 failed"}
+    - {offset: 0x01, name: CARDTYPE, access: RO, reset: 0, bits: "[1:0] 0 unknown, 1 SD v1, 2 SD v2 standard capacity, 3 SD v2 high capacity"}
+    - {offset: 0x02, name: OCR, access: RO, reset: 0, bits: "[31:0] operating conditions word (0 for a version 1 card)"}
+    - {offset: 0x03, name: TRIES, access: RO, reset: 0, bits: "[7:0] CMD41 commands sent"}
+    - {offset: 0x04, name: ERRCODE, access: RO, reset: 0, bits: "[2:0] 0 none, 1 CMD0, 2 CMD8, 3 CMD55/CMD41, 4 CMD58"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    init: PWR_DELAY + 80 clock periods + the command exchanges + RETRY_GAP per retry
+  async_inputs: SD_DAT0, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The clock-up, CMD0, CMD8, CMD55/CMD41 loop and CMD58 sequence is sent with the stated bytes and framing", proof: [simulation]}
+  - {id: REQ-02, text: "R1 is found by polling up to 8 bytes; version 1 and version 2, standard and high capacity cards are told apart", proof: [simulation]}
+  - {id: REQ-03, text: "An absent card, a card that never becomes ready and a bad answer give the specified error codes and STATE 6", proof: [simulation]}
+  - {id: REQ-04, text: "SD_SCK has the stated period throughout; chip select and data are high during the 80 initial clocks", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "CRC bytes after CMD8 are fixed dummy values"
+    reason: "SPI mode ignores the CRC after the first commands"
+
+open_questions: []

@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_moving_avg (pool; benchmark/tools/run_task.py)
+toplevel: p_moving_avg_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400}
+phrases:
+  - "the average is taken over the samples that have arrived, not over six"
+  - "Spikes should not drag the output around"
+  - "is pulled in to that limit before it goes into the window"

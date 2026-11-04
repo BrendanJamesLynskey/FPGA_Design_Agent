@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_phase_pwm3 (pool; benchmark/tools/run_task.py)
+toplevel: p_phase_pwm3_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, PWM_PERIOD: 96}
+phrases:
+  - "even 255 leaves a gap"
+  - "so changing the switches never makes a runt pulse"
+  - "each one-third of a period after the previous"

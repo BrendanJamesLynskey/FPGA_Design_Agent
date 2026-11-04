@@ -1,0 +1,17 @@
+mutants:
+  - {name: full_at_15, file: sync_fifo_regs.sv, find: "wire full  = level == 5'd16;", replace: "wire full  = level == 5'd15;", why: "FIFO full one entry early"}
+  - {name: overflow_overwrites, file: sync_fifo_regs.sv, find: "if (push && !full) mem[wp] <= win_wdata[7:0];", replace: "if (push) mem[wp] <= win_wdata[7:0];", why: "a push when full overwrites the head byte"}
+  - {name: afull_strict, file: sync_fifo_regs.sv, find: "wire afull = level >= af_th;", replace: "wire afull = level > af_th;", why: "almost full compares strictly"}
+  - {name: w1c_clears_both, file: sync_fifo_regs.sv, find: "if (win_wdata[9]) unf <= 1'b0;", replace: "if (win_wdata[9] || win_wdata[8]) unf <= 1'b0;", why: "clearing OVERFLOW also clears UNDERFLOW"}
+  - {name: head_read_underflows, file: sync_fifo_regs.sv, find: "wire pop   = win_rd && win_addr == R_POP;", replace: "wire pop   = win_rd && (win_addr == R_POP || win_addr == R_HEAD);", why: "a HEAD read removes the byte"}
+  - {name: empty_pop_stale, file: sync_fifo_regs.sv, find: "assign head = empty ? 8'd0 : mem[rp];", replace: "assign head = mem[rp];", why: "an empty pop returns a stale byte instead of 0"}
+  - {name: leds_off_by_one, file: sync_fifo_regs.sv, find: "led[k] <= 5'(k) < level;", replace: "led[k] <= 5'(k) <= level;", why: "thermometer lights one LED too many"}
+  - {name: underflow_not_sticky, file: sync_fifo_regs.sv, find: "if (empty) unf <= 1'b1;", replace: "if (1'b1) unf <= empty;", why: "UNDERFLOW clears on the next good pop"}
+trap:
+  twin: "FIFO Generator in standard (non-FWFT) read mode, as in the textbook temperature-sensor project"
+  why: "a standard-mode FIFO puts the byte on dout one read after rd_en, so each read returns the previous byte; this spec is first-word-fall-through"
+  edits:
+    - {file: sync_fifo_regs.sv, find: "    logic [7:0]  head;\n", replace: "    logic [7:0]  head, dout = 8'd0;\n    always_ff @(posedge clk) if (pop) dout <= head;\n"}
+    - {file: sync_fifo_regs.sv, find: "R_POP:   win_rdata <= {24'd0, head};", replace: "R_POP:   win_rdata <= {24'd0, dout};"}
+    - {file: sync_fifo_regs.sv, find: "R_HEAD:  win_rdata <= {24'd0, head};", replace: "R_HEAD:  win_rdata <= {24'd0, dout};"}
+  must_fail: [test_fwft_head_and_pop]

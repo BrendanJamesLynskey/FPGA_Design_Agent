@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_hcsr04 (pool; benchmark/tools/run_task.py)
+toplevel: p_hcsr04_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, TRIG_CYCLES: 10, CLKS_PER_CM: 58, ECHO_WAIT: 300, MAX_ECHO: 5800}
+phrases:
+  - "the median of the last three good readings"
+  - "must not go out again while the previous echo is still high"
+  - "an echo that is too long to be a real range counts as out of range"

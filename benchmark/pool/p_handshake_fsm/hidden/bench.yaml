@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_handshake_fsm (pool; benchmark/tools/run_task.py)
+toplevel: p_handshake_fsm_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, ACK_DELAY: 6, HOLD_LIMIT: 20}
+phrases:
+  - "A requester that sits on ACK for too long is a fault"
+  - "If REQ is withdrawn before ACK has come up"
+  - "while the responder is thinking"

@@ -1,0 +1,90 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t2_spi_master_modes
+title: General-purpose SPI master on Pmod JB, all four modes
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t2_spi_master_modes_top
+design_id: 0x5350494D          # "SPIM"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: every register returns to its reset value; no frame in progress; CS_N high, SCLK low, MOSI low
+
+parameters:                     # board values; the bench shrinks the shell's time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: JB1, dir: out, width: 1, note: CS_N active low, pins: [D14], iostandard: LVCMOS33}
+  - {name: JB2, dir: out, width: 1, note: MOSI, pins: [F16], iostandard: LVCMOS33}
+  - {name: JB3, dir: in, width: 1, async: true, note: MISO, pins: [G16], iostandard: LVCMOS33}
+  - {name: JB4, dir: out, width: 1, note: SCLK, pins: [H14], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  frame:
+    - A write to TXDATA while BUSY = 0 starts a frame of N bits (N = 16 if CTRL.W16 = 1, else 8) with TXDATA's bits [N-1:0]. A write to TXDATA while BUSY = 1 is ignored (TXDATA keeps its value).
+    - CTRL (except CS_HOLD) and DIV are taken when a frame starts; changing them during a frame does not affect it.
+    - Bit order - MSB first (bit N-1 first) unless CTRL.LSB = 1 (bit 0 first). Received bits fill RXDATA in the same order (the first bit received lands in bit N-1, or in bit 0 with LSB = 1).
+  timing:
+    - "Let t = 0 be the clock on which CS_N goes low for the frame (or, with CS_N already held low, the clock on which the frame starts). SCLK has 2N edges, at t = k*DIV for k = 1..2N (exactly DIV clocks apart); before the first edge and after the last SCLK is at its idle level CPOL."
+    - "Edges k odd are leading edges, k even trailing edges. CPHA = 0 - MOSI carries the first bit from t = 0, the slave samples on leading edges, MOSI changes to the next bit on each trailing edge (except the last). CPHA = 1 - MOSI changes to bit i on leading edge 2i+1 and the slave samples on trailing edges."
+    - The master samples MISO at the same edges the slave samples MOSI (MISO is synchronised by two flops, so DIV of 5 or more is needed for a slave that changes MISO on the opposite edge).
+    - "The frame ends at t = (2N+1)*DIV - BUSY falls, DONE is set, RXDATA is updated, and CS_N goes high on that clock unless CTRL.CS_HOLD = 1."
+    - MOSI is 0 while no frame is in progress.
+  chip_select:
+    - CS_N goes low when a frame starts (if it is not already low).
+    - While no frame is in progress, CS_N is high whenever CTRL.CS_HOLD = 0 - clearing CS_HOLD after held frames releases CS_N within 2 clocks of the CTRL write. Setting CS_HOLD alone never drives CS_N low.
+  loopback:
+    - With CTRL.LOOP = 1 the master's MISO input is its own MOSI output (JB3 ignored); the pins still carry the frame.
+  divisor:
+    - DIV is 16 bits; a write whose bits [15:0] are below 2 is ignored entirely. Reset 50 (SCLK 1 MHz).
+  status:
+    - DONE is set at every frame end and stays set until a write to STATUS with bit 1 = 1. Reads never clear it.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CTRL, access: RW, reset: 0, bits: "[0] CPOL, [1] CPHA, [2] LSB (1 = LSB first), [3] W16 (1 = 16-bit frames), [4] CS_HOLD, [5] LOOP; [31:6] read 0"}
+    - {offset: 0x01, name: DIV, access: RW, reset: 50, bits: "[15:0] SCLK half period in clocks (>= 2); writes below 2 ignored; [31:16] read 0"}
+    - {offset: 0x02, name: TXDATA, access: RW, reset: 0, bits: "[15:0] the last accepted frame data; a write while idle starts a frame; [31:16] read 0"}
+    - {offset: 0x03, name: RXDATA, access: RO, reset: 0, bits: "[15:0] the last received frame, right-aligned ([15:8] = 0 for 8-bit frames); [31:16] 0"}
+    - {offset: 0x04, name: STATUS, access: "RO + W1C", reset: 0, bits: "[0] BUSY, [1] DONE (sticky, write 1 to clear), [2] CS_ACTIVE (1 while CS_N is low); [31:3] 0"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    start: "CS_N falls within 3 clocks of the shell's TXDATA write"
+    frame: "(2N+1)*DIV clocks from CS_N low to CS_N high"
+  async_inputs: JB3, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: JB1, JB2, JB4 registered
+
+requirements:
+  - {id: REQ-01, text: "All four CPOL/CPHA modes put out and sample data on the edges listed, with SCLK idle at CPOL", proof: [simulation]}
+  - {id: REQ-02, text: "8- and 16-bit frames, MSB or LSB first, with RXDATA filled in the same order", proof: [simulation]}
+  - {id: REQ-03, text: "SCLK edges are exactly DIV clocks apart; DIV writes below 2 are ignored", proof: [simulation]}
+  - {id: REQ-04, text: "CS_HOLD keeps CS_N low across frames and clearing it releases CS_N", proof: [simulation]}
+  - {id: REQ-05, text: "Loopback returns each frame's data in RXDATA", proof: [simulation, hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "about a hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: a TXDATA write while busy is ignored rather than queued.
+    reason: the request has no queue; ignoring is the simplest safe rule.
+  - assumption: the first SCLK edge comes one half period after CS_N falls, and CS_N rises one half period after the last edge.
+    reason: gives the slave one half period of setup and hold around chip select.
+
+open_questions: []

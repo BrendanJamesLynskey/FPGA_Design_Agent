@@ -1,0 +1,78 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t1_sync_fifo_regs
+title: Byte FIFO behind the test shell
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_sync_fifo_regs_top
+design_id: 0x4649464F          # "FIFO"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: the FIFO empties (LEVEL = 0), OVERFLOW = UNDERFLOW = 0, AF_THRESH = 12; stored bytes need not be cleared
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  fifo:
+    - Depth 16, width 8. LEVEL is the number of bytes stored, 0..16.
+    - A write to PUSH stores wdata[7:0] at the tail when LEVEL < 16; when LEVEL = 16 the byte is dropped, nothing changes and OVERFLOW is set.
+    - "Reads are first-word-fall-through: HEAD and POP return the byte at the head now, with no extra read. A read of POP returns the head byte and removes it (LEVEL - 1). A read of HEAD returns the same byte and removes nothing."
+    - A read of POP or HEAD when empty returns 0; a POP read when empty also sets UNDERFLOW. A HEAD read when empty does not.
+    - Bytes leave in the order they arrived, across any number of pointer wraps.
+  flags:
+    - EMPTY = (LEVEL = 0), FULL = (LEVEL = 16), ALMOST_FULL = (LEVEL >= AF_THRESH).
+    - "OVERFLOW and UNDERFLOW are sticky: once set they stay set until a write to FLAGS with that bit 1 (write-1-to-clear); a 0 bit leaves its flag alone."
+  leds:
+    - "Thermometer - LED[k] = 1 for k < LEVEL, so LEVEL = 16 lights all sixteen and LEVEL = 0 none. No PWM."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: PUSH, access: WO, reset: 0, bits: "a write pushes wdata[7:0]; reads 0"}
+    - {offset: 0x01, name: POP, access: RO, reset: 0, bits: "[7:0] head byte, removed by the read (0 when empty, sets UNDERFLOW); writes ignored"}
+    - {offset: 0x02, name: HEAD, access: RO, reset: 0, bits: "[7:0] head byte, not removed (0 when empty)"}
+    - {offset: 0x03, name: LEVEL, access: RO, reset: 0, bits: "[4:0] bytes stored 0..16"}
+    - {offset: 0x04, name: FLAGS, access: RW, reset: 0x001, bits: "[0] EMPTY, [1] FULL, [2] ALMOST_FULL (read-only); [8] OVERFLOW, [9] UNDERFLOW (sticky, write 1 to clear); other bits 0"}
+    - {offset: 0x05, name: AF_THRESH, access: RW, reset: 12, bits: "[4:0] almost-full threshold 0..31 (0 = always set, 17..31 = never); [31:5] read 0"}
+  unmapped: offsets 0x06-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "HEAD and POP are first-word-fall-through - the first read after a push returns that byte, never a lagged one", proof: [simulation]}
+  - {id: REQ-02, text: "Bytes leave in arrival order across pointer wraps; LEVEL and the flags follow the model", proof: [simulation]}
+  - {id: REQ-03, text: "Push when full is dropped and sets OVERFLOW; pop when empty returns 0 and sets UNDERFLOW; both are W1C sticky", proof: [simulation]}
+  - {id: REQ-04, text: "ALMOST_FULL compares LEVEL >= AF_THRESH for every threshold", proof: [simulation]}
+  - {id: REQ-05, text: "LED[15:0] are the LEVEL thermometer", proof: [simulation]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board a push/pop sequence over the shell answers as the model predicts", proof: [hardware]}
+
+resources_expected: "about 100 LUTs (16x8 distributed RAM) and 50 FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the FIFO is built in fabric, not with the FIFO Generator IP.
+    reason: first-word-fall-through over a register read is simplest in plain RTL.
+  - assumption: a HEAD read of an empty FIFO is not an error.
+    reason: peeking does not consume anything.
+
+open_questions: []

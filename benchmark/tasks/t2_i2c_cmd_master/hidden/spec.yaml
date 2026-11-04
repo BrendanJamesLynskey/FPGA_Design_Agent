@@ -1,0 +1,86 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t2_i2c_cmd_master
+title: Byte-command I2C master on the temperature-sensor bus
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t2_i2c_cmd_master_top
+design_id: 0x4932434D          # "I2CM"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: registers to their reset values; both bus lines released; the bus is not owned
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  QUARTER: 250                  # SCL 100 kHz (period 4 * QUARTER clocks plus synchroniser latency)
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: TMP_SCL, dir: inout, width: 1, async: true, note: "open drain - drive 0 or high-Z, never 1; 1 kohm pull-up on the board", pins: [C14], iostandard: LVCMOS33}
+  - {name: TMP_SDA, dir: inout, width: 1, async: true, note: "open drain - drive 0 or high-Z, never 1; 1 kohm pull-up on the board", pins: [C15], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  commands:
+    - "A write to CMD while BUSY = 0 starts one command - OP = CMD[2:0] - 1 START, 2 WRITE (byte CMD[15:8]), 3 READ (CMD[16] = 1 answers NACK, 0 answers ACK), 4 STOP."
+    - Ignored (no bus activity, no register change) - a CMD write while BUSY = 1, any other OP value, WRITE / READ / STOP while the bus is not owned.
+    - BUSY is 1 from the CMD write until the command's last step has finished.
+    - The bus is owned from the end of a START until a STOP.
+  waveforms:
+    - "Q = QUARTER clocks. Releasing SCL is followed by waiting until SCL is seen high through the two-flop synchroniser (a stretching slave holds it low); the 'high' times below count from that moment. Lows and SDA steps are plain clock counts."
+    - "START on a free bus - SDA low, wait 2Q, SCL low, wait Q."
+    - "START on an owned bus (repeated START; SCL is low) - release SDA, wait Q, release SCL and wait high, wait 2Q, SDA low, wait 2Q, SCL low, wait Q. Never a STOP in between."
+    - "Each of the 9 bits of WRITE and READ - set SDA (0 = pull low, 1 = release), wait Q, release SCL and wait high, wait 2Q, sample SDA, SCL low, wait Q."
+    - "WRITE - 8 data bits MSB first, then the ACK bit with SDA released; STATUS.NACK = the SDA level sampled in the ACK bit."
+    - "READ - 8 bits with SDA released, sampled MSB first into RXDATA; then the ACK bit - SDA low for ACK, released for NACK."
+    - "STOP - SDA low, wait Q, release SCL and wait high, wait 2Q, release SDA, wait 2Q. Afterwards the bus is not owned."
+    - SCL and SDA are only ever pulled low or released (high-Z); the output enables are registered.
+  status:
+    - STATUS.NACK is updated at the end of every WRITE and is otherwise unchanged (reset 0).
+    - RXDATA is updated at the end of every READ (reset 0).
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CMD, access: WO, reset: 0, bits: "[2:0] OP (1 START, 2 WRITE, 3 READ, 4 STOP), [15:8] WRITE data, [16] READ answers NACK; reads return 0"}
+    - {offset: 0x01, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [1] NACK (last WRITE not acknowledged), [2] OWNED (between START and STOP); [31:3] 0"}
+    - {offset: 0x02, name: RXDATA, access: RO, reset: 0, bits: "[7:0] the byte of the last READ; [31:8] 0"}
+    - {offset: 0x03, name: INFO, access: RO, reset: null, bits: "[15:0] QUARTER; [31:16] 0"}
+  unmapped: offsets 0x04-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    scl_period: "4 * QUARTER clocks plus the 2-3 clocks of seeing SCL high (no stretching)"
+  async_inputs: TMP_SCL and TMP_SDA (read back), CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: open-drain enables registered
+
+requirements:
+  - {id: REQ-01, text: "START, repeated START, WRITE, READ and STOP produce the listed waveforms; a START on an owned bus is a repeated START", proof: [simulation]}
+  - {id: REQ-02, text: "WRITE records ACK/NACK; READ returns the byte and answers ACK or NACK as told", proof: [simulation]}
+  - {id: REQ-03, text: "Clock stretching is honoured - every SCL high time counts from SCL seen high", proof: [simulation]}
+  - {id: REQ-04, text: "The lines are never driven high", proof: [simulation, analysis]}
+  - {id: REQ-05, text: "Commands while busy, invalid OPs and data commands on a free bus are ignored", proof: [simulation]}
+  - {id: REQ-06, text: "On the board the ADT7420 at 0x4B answers its ID 0xCB through a pointer write, repeated START and read", proof: [hardware]}
+  - {id: REQ-07, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "about a hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the host sequences commands; the master does no address decoding of its own.
+    reason: the request is for byte-level commands, so any register sequence can be tried.
+  - assumption: data commands on a free bus are ignored rather than starting the bus.
+    reason: keeps every bus condition explicit in the command stream.
+
+open_questions: []

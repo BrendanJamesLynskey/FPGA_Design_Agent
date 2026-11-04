@@ -1,0 +1,75 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_morse_beacon
+title: "Morse code beacon with message buffer"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_morse_beacon_top
+design_id: 0x4D4F5253          # "MORS"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the buffer is empty, nothing is being sent, the key is off"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  UNIT_CYCLES: 10000000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[0] is used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: JA1, dir: out, width: 1, note: "keyed output on Pmod JA pin 1", pins: [C17], iostandard: LVCMOS33}
+
+behaviour:
+  buffer:
+  - A write to CHAR takes the low 8 bits as an ASCII character. If BUSY = 0 and it is A-Z, a-z (treated as upper case), 0-9 or space (0x20) and LEN < 16, it is appended (LEN increments). A character of those kinds that arrives when LEN = 16, or while BUSY = 1, is dropped and DROPPED increments (8 bits, saturating at 255). Any other character is ignored and not counted.
+  - A write to CTRL with bit 1 set clears the buffer (LEN = 0) if BUSY = 0; it is ignored while BUSY = 1. CTRL bit 0 set with BUSY = 0 and LEN > 0 starts sending; a start while busy or with an empty buffer does nothing.
+  sending:
+  - Morse for each character is the International table (A .-, B -..., C -.-., D -.., E ., F ..-., G --., H ...., I .., J .---, K -.-, L .-.., M --, N -., O ---, P .--., Q --.-, R .-., S ..., T -, U ..-, V ...-, W .--, X -..-, Y -.--, Z --.., 0 -----, 1 .----, 2 ..---, 3 ...--, 4 ....-, 5 .....,  6 -...., 7 --..., 8 ---.., 9 ----.).
+  - 'Timing in units of UNIT_CYCLES clocks: dot = 1 on, dash = 3 on, 1 off between marks inside a character, 3 off between characters, and a space character makes the gap between the neighbouring characters 7 off in total. A leading or trailing space gives no gap (nothing is keyed for it). The key goes off at the end of the last mark with no trailing gap, and BUSY drops at that clock.'
+  - While SW[0] (synchronised) is 1 at the end of a message, there are 14 units off, then the message is sent again (BUSY stays 1 through the gap); repeating continues until SW[0] is 0 at a message end, when BUSY drops.
+  outputs:
+  - LED[0] = JA1 = key (registered). LED[1] = BUSY. LED[15:2] = 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: CHAR, access: RW, reset: 0, bits: "write: character to append; read: LEN"}
+    - {offset: 0x01, name: CTRL, access: WO, reset: 0, bits: "[0] start, [1] clear the buffer; reads 0"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [15:8] LEN, [23:16] DROPPED"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    unit: exactly UNIT_CYCLES clocks per unit
+  async_inputs: SW[0], CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The key pattern is the International Morse of the buffered text with the stated unit timing", proof: [simulation]}
+  - {id: REQ-02, text: "The buffer accepts only letters, digits and spaces, up to 16, and counts drops", proof: [simulation]}
+  - {id: REQ-03, text: "Repeat mode resends after a 14-unit pause until SW[0] is down at a message end", proof: [simulation]}
+  - {id: REQ-04, text: "BUSY, LEN and DROPPED behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; a small ROM; no BRAM necessarily, no DSP"
+
+assumptions:
+  - assumption: "lower-case letters are treated as upper case"
+    reason: "the request accepts either case"
+
+open_questions: []

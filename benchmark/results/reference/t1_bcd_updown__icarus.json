@@ -1,0 +1,91 @@
+{
+  "task": "t1_bcd_updown",
+  "sim": "icarus",
+  "date": "2026-11-04",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_steps_from_switches": true,
+      "test_wrap_both_ends": true,
+      "test_debounce_rejects_bounce": true,
+      "test_decimal_display": true,
+      "test_leading_zero_blanking": true,
+      "test_register_rules": true,
+      "test_random_sequence": true,
+      "test_simultaneous_presses_cancel": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "step_eight",
+      "why": "SW = 11 steps by 8, not 10",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_steps_from_switches",
+        "test_wrap_both_ends"
+      ]
+    },
+    {
+      "name": "wrap_off_by_one",
+      "why": "9999 + 1 shows 10000 instead of wrapping",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_wrap_both_ends"
+      ]
+    },
+    {
+      "name": "debounce_half",
+      "why": "debounce accepts pulses of half the time",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_debounce_rejects_bounce"
+      ]
+    },
+    {
+      "name": "simultaneous_up_wins",
+      "why": "up wins when both press on one clock",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_simultaneous_presses_cancel"
+      ]
+    },
+    {
+      "name": "write_range",
+      "why": "out-of-range COUNT writes accepted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "wraps_not_cleared",
+      "why": "a write does not clear WRAPS",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_wrap_both_ends"
+      ]
+    }
+  ],
+  "mutants_killed": 6,
+  "mutants_total": 6,
+  "trap": {
+    "twin": "textbook button-press counter with a decimal 7-segment display",
+    "why": "the textbook display shows all four digits, leading zeros included; this spec blanks them",
+    "must_fail": [
+      "test_leading_zero_blanking"
+    ],
+    "failed_tests": [
+      "test_identity_and_reset",
+      "test_decimal_display",
+      "test_leading_zero_blanking"
+    ],
+    "trap_fires": true
+  }
+}

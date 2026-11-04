@@ -1,0 +1,98 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t1_lfsr_dice
+title: Electronic dice from an LFSR
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_lfsr_dice_top
+design_id: 0x44494345          # "DICE"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: STATE = SEED = 0xACE1, TAPS = 0xB400, ROLL = HISTORY = ROLLS = 0, no step burst, display dark
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  DEBOUNCE_CYCLES: 1000000      # 10 ms
+  REFRESH_BITS: 17              # 1.31 ms a digit
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: BTNC, dir: in, width: 1, async: true, pins: [N17], iostandard: LVCMOS33}
+  - {name: CA, dir: out, width: 1, pins: [T10], iostandard: LVCMOS33}
+  - {name: CB, dir: out, width: 1, pins: [R10], iostandard: LVCMOS33}
+  - {name: CC, dir: out, width: 1, pins: [K16], iostandard: LVCMOS33}
+  - {name: CD, dir: out, width: 1, pins: [K13], iostandard: LVCMOS33}
+  - {name: CE, dir: out, width: 1, pins: [P15], iostandard: LVCMOS33}
+  - {name: CF, dir: out, width: 1, pins: [T11], iostandard: LVCMOS33}
+  - {name: CG, dir: out, width: 1, pins: [L18], iostandard: LVCMOS33}
+  - {name: DP, dir: out, width: 1, pins: [H15], iostandard: LVCMOS33}
+  - {name: AN, dir: out, width: 8, pins: [J17, J18, T9, J14, P14, T14, K2, U13], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  lfsr:
+    - "One step of the 16-bit state S (right-shifting Galois form): b = S[0]; S = S >> 1; if b = 1 then S = S xor TAPS."
+    - "If a step (or a SEED write) would make S = 0, S becomes 0x0001 instead, so S is never 0."
+    - With TAPS = 0xB400 (x^16 + x^14 + x^13 + x^11 + 1) the sequence has the maximal period 65535.
+  roll:
+    - "BTNC is synchronised (two flops), then debounced. The debounced level changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count. A press is a 0 -> 1 change of the debounced level; holding does not repeat."
+    - "A press steps S once, then rolls from the new state: ROLL = (S mod 6) + 1, S read as an unsigned 16-bit integer."
+    - Each roll shifts HISTORY left by one nibble and puts the new roll in HISTORY[3:0] (the oldest of four drops out), and adds 1 to ROLLS (16 bits, wrapping).
+    - A press during a step burst, or on the same clock as a SEED write, is lost (no step, no roll).
+  burst:
+    - "A write of n to STEP starts a burst of n = wdata[15:0] steps, one a clock, from the next clock. No rolls. A STEP write during a burst replaces the steps left; a SEED write ends the burst."
+  display:
+    - Digits are numbered 0 (rightmost, AN[0]) to 7, lit one at a time in order 0..7, each for 2^REFRESH_BITS clocks; while digit k is lit AN[k] = 0 and the other AN = 1.
+    - Digit 0 shows ROLL; it is dark (all AN high in its slot) while ROLL = 0 (no roll since reset). Digits 1..7 are always dark. DP is always 1 (off).
+    - "Glyphs (segments lit): 1 bc, 2 abdeg, 3 abcdg, 4 bcfg, 5 acdfg, 6 acdefg; CA..CG active low."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: STATE, access: RO, reset: 0xACE1, bits: "[15:0] the LFSR state; [31:16] 0"}
+    - {offset: 0x01, name: SEED, access: RW, reset: 0xACE1, bits: "[15:0] a write loads S = wdata[15:0] (0 loads 0x0001) and ends any burst; reads the last value written"}
+    - {offset: 0x02, name: TAPS, access: RW, reset: 0xB400, bits: "[15:0] feedback taps; [31:16] read 0"}
+    - {offset: 0x03, name: ROLL, access: RO, reset: 0, bits: "[2:0] last roll 1..6, 0 before the first; [31:3] 0"}
+    - {offset: 0x04, name: HISTORY, access: RO, reset: 0, bits: "[3:0] newest roll, [7:4], [11:8], [15:12] oldest; 0 nibbles before four rolls; [31:16] 0"}
+    - {offset: 0x05, name: STEP, access: RW, reset: 0, bits: "[15:0] a write starts a burst of wdata[15:0] steps; reads the steps left (0 when idle)"}
+    - {offset: 0x06, name: ROLLS, access: RO, reset: 0, bits: "[15:0] rolls since reset, wrapping; [31:16] 0"}
+  unmapped: offsets 0x07-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    button_to_roll: "2 (sync) + DEBOUNCE_CYCLES + 1 clocks"
+  async_inputs: BTNC, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Each press steps the Galois LFSR once and rolls (S mod 6) + 1 from the new state; HISTORY and ROLLS follow", proof: [simulation]}
+  - {id: REQ-02, text: "S is never 0 - a step or SEED write that would give 0 gives 0x0001", proof: [simulation, formal]}
+  - {id: REQ-03, text: "TAPS, SEED and STEP bursts behave as listed; with the reset taps the period is 65535", proof: [simulation]}
+  - {id: REQ-04, text: "Digit 0 shows the roll (dark before the first); other digits are dark", proof: [simulation]}
+  - {id: REQ-05, text: "Bounces shorter than the debounce time never roll", proof: [simulation]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board the register window answers as the model predicts (seeded sequence and burst)", proof: [hardware]}
+
+resources_expected: "about a hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: right-shifting Galois form, taps XORed in when the bit shifted out is 1.
+    reason: 0xB400 is the usual tap mask for that form.
+  - assumption: the roll uses the state after the press's step.
+    reason: each press then shows a fresh state.
+  - assumption: a burst steps once per clock, and a press during a burst is lost (no step, no roll).
+    reason: the bench needs a definite rate and a definite collision rule; a press cannot be queued behind a burst.
+
+open_questions: []

@@ -1,0 +1,89 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t1_gray_stepper
+title: Gray-code stepper on the LEDs
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_gray_stepper_top
+design_id: 0x47524159          # "GRAY"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: BIN = 0, AUTO = 0, RATE = 250, STEPS = 0, the tick and rate counters return to 0
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  DEBOUNCE_CYCLES: 1000000      # 10 ms
+  TICK_CYCLES: 100000           # 1 ms, the unit of RATE
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: BTNU, dir: in, width: 1, async: true, pins: [M18], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[15] is used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  counter:
+    - BIN is a 10-bit binary count 0..1023; GRAY = BIN xor (BIN >> 1) (reflected binary Gray code).
+    - A step sets BIN to (BIN + 1) mod 1024 when DIR = 0, (BIN - 1) mod 1024 when DIR = 1, so GRAY changes in exactly one bit, the wrap included.
+    - DIR is SW[15], synchronised by two flops (not debounced); 1 = down.
+    - Each step adds 1 to STEPS (16 bits, wrapping). Shell writes to BIN are not steps.
+    - If a press and an automatic step fall on the same clock, the counter moves one step only (STEPS += 1).
+    - A shell write to BIN on the same clock as a step wins (the step is lost and not counted).
+  button:
+    - BTNU is synchronised (two flops), then debounced. The debounced level changes only after the synchronised
+      input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count.
+    - A press is a 0 -> 1 change of the debounced level and makes one step, in either mode; holding does not repeat.
+  auto:
+    - "While AUTO = 1 and RATE != 0, a tick occurs every TICK_CYCLES clocks and a step every RATE ticks, so steps are exactly RATE * TICK_CYCLES clocks apart."
+    - "The tick prescaler and the tick count are held at 0 while AUTO = 0 or RATE = 0, and restart from 0 on every write to CTRL or RATE; the first automatic step is RATE * TICK_CYCLES clocks after the write that enables it."
+    - RATE = 0 stops automatic stepping (AUTO stays set).
+  leds:
+    - "LED[9:0] = GRAY, registered from the same register as BIN so the pins change together on each step; LED[15] = AUTO; LED[14:10] = 0. No PWM."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: GRAY, access: RO, reset: 0, bits: "[9:0] Gray code of BIN; [31:10] 0"}
+    - {offset: 0x01, name: BIN, access: RW, reset: 0, bits: "[9:0] binary count; a write sets it to wdata[9:0]; [31:10] read 0"}
+    - {offset: 0x02, name: CTRL, access: RW, reset: 0, bits: "[0] AUTO; [8] DIR (read-only, SW[15] synchronised); other bits read 0"}
+    - {offset: 0x03, name: RATE, access: RW, reset: 250, bits: "[15:0] ticks per automatic step, 0 = stopped; [31:16] read 0"}
+    - {offset: 0x04, name: STEPS, access: RO, reset: 0, bits: "[15:0] steps taken (press or automatic), wrapping; [31:16] 0"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers or bits are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    button_to_step: "2 (sync) + DEBOUNCE_CYCLES + 1 clocks"
+  async_inputs: BTNU, SW, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Every step (press or automatic, either direction, wrap included) changes exactly one bit of LED[9:0] and of GRAY", proof: [simulation, formal]}
+  - {id: REQ-02, text: "GRAY = BIN xor (BIN >> 1) at all times and a step moves BIN by one modulo 1024 in the SW[15] direction", proof: [simulation, formal]}
+  - {id: REQ-03, text: "Automatic steps are exactly RATE * TICK_CYCLES clocks apart; RATE = 0 stops them", proof: [simulation]}
+  - {id: REQ-04, text: "One debounced press gives one step; bounces shorter than the debounce time do nothing", proof: [simulation]}
+  - {id: REQ-05, text: "The register window has the listed map and reset values", proof: [simulation]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board the register window answers as the model predicts and automatic mode steps", proof: [hardware]}
+
+resources_expected: "about a hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the rate is in whole milliseconds (TICK_CYCLES clocks) per step, 16 bits.
+    reason: the request gives milliseconds per step.
+  - assumption: RATE resets to 250 (four steps a second) with AUTO off.
+    reason: a visible default once automatic mode is turned on.
+
+open_questions: []

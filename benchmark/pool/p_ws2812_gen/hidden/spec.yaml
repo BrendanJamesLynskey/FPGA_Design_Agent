@@ -1,0 +1,81 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_ws2812_gen
+title: "Addressable LED strip frame generator"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_ws2812_gen_top
+design_id: 0x57533238          # "WS28"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "line low, COLOR = 0, PIXELS = 1, DIM = 255, nothing sending"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  T0H: 40
+  T0L: 85
+  T1H: 80
+  T1L: 45
+  RESET_CYCLES: 6000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JC1, dir: out, width: 1, note: "strip data on Pmod JC pin 1", pins: [K1], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  frame:
+  - A write of 1 to CTRL when BUSY = 0 starts a frame; BUSY = 1 from the next clock until the latch gap has ended. A write while BUSY = 1 is ignored and counted in IGNORED (8 bits, saturating).
+  - 'Each channel value is scaled: C'' = (C x DIM) >> 8, where C is the 8-bit red, green or blue value and DIM 0..255 (255 is not full scale: 255 x 255 >> 8 = 254).'
+  - 'The stream is PIXELS repeats of 24 bits: C''g (bit 7 first), C''r, C''b. A 1 bit: line high T1H clocks then low T1L clocks. A 0 bit: high T0H then low T0L. Bits follow each other back to back.'
+  - After the last bit the line is low for RESET_CYCLES clocks counted from the end of that bit's low time (the bit's own low time is part of the bit); BUSY drops when this gap ends. The line is low when idle.
+  registers:
+  - COLOR, PIXELS (1..16; a write of 0 or above 16 is clamped to 1 or 16) and DIM are read back as stored. They are sampled when the frame starts.
+  leds:
+  - LED[0] = line, LED[1] = BUSY, others 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: COLOR, access: RW, reset: 0, bits: "[23:0] 0xRRGGBB"}
+    - {offset: 0x01, name: PIXELS, access: RW, reset: 1, bits: "[4:0] pixel count 1..16 (clamped on write)"}
+    - {offset: 0x02, name: DIM, access: RW, reset: 255, bits: "[7:0] dimmer"}
+    - {offset: 0x03, name: CTRL, access: WO, reset: 0, bits: "[0] go; reads 0"}
+    - {offset: 0x04, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY, [15:8] IGNORED"}
+    - {offset: 0x05, name: FRAMES, access: RO, reset: 0, bits: "[15:0] frames started"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    go_to_line: a few clocks; bit times as given by the parameters
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The data line carries PIXELS x 24 bits in G, R, B order, MSB first, with the stated high and low times", proof: [simulation]}
+  - {id: REQ-02, text: "Each channel is scaled by (C x DIM) >> 8 and the line stays low for RESET_CYCLES after the last bit", proof: [simulation]}
+  - {id: REQ-03, text: "A go while busy is ignored and counted", proof: [simulation]}
+  - {id: REQ-04, text: "Registers and LEDs behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; one small multiplier at most"
+
+assumptions:
+  - assumption: "the dimmer scales by DIM/256"
+    reason: "the request calls it a level; 255 not being exactly full scale is a hidden detail"
+
+open_questions: []

@@ -1,0 +1,147 @@
+{
+  "task": "t2_adt7420_alarm",
+  "sim": "icarus",
+  "date": "2026-11-04",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_configure_sequence": true,
+      "test_full_16bit_resolution": true,
+      "test_max_min_samples": true,
+      "test_alarm_follows_int": true,
+      "test_missing_sensor_nack": true,
+      "test_clock_stretching": true,
+      "test_random_temperatures": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "interrupt_mode",
+      "why": "INT left in interrupt mode (CONFIG bit 4 clear)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_configure_sequence",
+        "test_full_16bit_resolution",
+        "test_max_min_samples",
+        "test_alarm_follows_int",
+        "test_clock_stretching",
+        "test_random_temperatures"
+      ]
+    },
+    {
+      "name": "limits_swapped",
+      "why": "T_HIGH written to the T_LOW register",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_configure_sequence",
+        "test_full_16bit_resolution",
+        "test_max_min_samples",
+        "test_alarm_follows_int",
+        "test_clock_stretching",
+        "test_random_temperatures"
+      ]
+    },
+    {
+      "name": "stop_before_read",
+      "why": "a STOP instead of the repeated START (the sensor loses its pointer)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_configure_sequence",
+        "test_full_16bit_resolution",
+        "test_max_min_samples",
+        "test_alarm_follows_int",
+        "test_clock_stretching",
+        "test_random_temperatures"
+      ]
+    },
+    {
+      "name": "max_unsigned",
+      "why": "MAX compared unsigned (negative readings look hot)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_full_16bit_resolution",
+        "test_max_min_samples",
+        "test_random_temperatures"
+      ]
+    },
+    {
+      "name": "min_not_seeded",
+      "why": "MIN starts from 0, not the first reading",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_configure_sequence",
+        "test_max_min_samples",
+        "test_clock_stretching"
+      ]
+    },
+    {
+      "name": "alarm_active_high",
+      "why": "ALARM taken as active high",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_configure_sequence",
+        "test_max_min_samples",
+        "test_alarm_follows_int",
+        "test_missing_sensor_nack",
+        "test_clock_stretching"
+      ]
+    },
+    {
+      "name": "nack_ignored",
+      "why": "a NACK neither aborts nor is reported",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_missing_sensor_nack"
+      ]
+    },
+    {
+      "name": "byte_order",
+      "why": "MSB and LSB swapped in TEMP",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_configure_sequence",
+        "test_full_16bit_resolution",
+        "test_max_min_samples",
+        "test_clock_stretching",
+        "test_random_temperatures"
+      ]
+    },
+    {
+      "name": "period_double",
+      "why": "readings twice as far apart",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_max_min_samples"
+      ]
+    }
+  ],
+  "mutants_killed": 9,
+  "mutants_total": 9,
+  "trap": {
+    "twin": "textbook ADT7420 reader (power-on 13-bit mode, Celsius display)",
+    "why": "the textbook never sets CONFIG bit 7, so the low three bits are the 13-bit mode's flags, not temperature",
+    "must_fail": [
+      "test_full_16bit_resolution"
+    ],
+    "failed_tests": [
+      "test_configure_sequence",
+      "test_full_16bit_resolution",
+      "test_max_min_samples",
+      "test_alarm_follows_int",
+      "test_clock_stretching",
+      "test_random_temperatures"
+    ],
+    "trap_fires": true
+  }
+}

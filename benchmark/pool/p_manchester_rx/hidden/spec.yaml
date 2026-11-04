@@ -1,0 +1,77 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_manchester_rx
+title: "Manchester frame receiver with error classes"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_manchester_rx_top
+design_id: 0x4D435258          # "MCRX"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "idle, all counts 0, DATA 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  BIT_CYCLES: 1000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JB1, dir: in, width: 1, async: true, note: "Manchester line from Pmod JB pin 1", pins: [D14], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - JB1 is synchronised by two flops. Q = BIT_CYCLES / 4.
+  decode:
+  - The receiver is armed when the line has been low for 2 x BIT_CYCLES consecutive clocks (it is armed after reset once that has held). The first 0 -> 1 change while armed at clock t_r is the middle of bit 0 of the frame (the first lead-in bit); it disarms the receiver.
+  - For bit j = 0..13 the receiver looks at the line at t_r + j x BIT_CYCLES - Q (first half, F_j) and at t_r + j x BIT_CYCLES + Q (second half, S_j), where times are the synchronised line, counted from the clock t_r. Bit value = S_j. If F_j = S_j for any j, the frame has a CODING error (the first such j decides; later bits are not examined).
+  - 'Otherwise the bits are checked in order: bits 0..3 must be 1 and bit 4 must be 0, else PREAMBLE error. Then data D[i] = bit 5+i (i = 0..7) and PAR = bit 13: if XOR of D and PAR is 1, PARITY error. Otherwise the frame is good: DATA = D, GOOD increments.'
+  - An error increments exactly one of E_CODING, E_PREAMBLE, E_PARITY (8 bits each, saturating at 255), GOOD is 8 bits (wraps). After the last examined bit (bit 13, or the coding error bit) the receiver waits for the line to be low for 2 x BIT_CYCLES clocks before arming again.
+  leds:
+  - LED[7:0] = DATA, LED[15:8] = GOOD.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: DATA, access: RO, reset: 0, bits: "[7:0] last good byte"}
+    - {offset: 0x01, name: GOOD, access: RO, reset: 0, bits: "[7:0] good frames"}
+    - {offset: 0x02, name: E_CODING, access: RO, reset: 0, bits: "[7:0] frames with a missing mid-bit transition"}
+    - {offset: 0x03, name: E_PREAMBLE, access: RO, reset: 0, bits: "[7:0] frames with a wrong lead-in"}
+    - {offset: 0x04, name: E_PARITY, access: RO, reset: 0, bits: "[7:0] frames with a wrong parity bit"}
+    - {offset: 0x05, name: CTRL, access: WO, reset: 0, bits: "any write clears the four counts; reads 0"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    frame_to_result: about 14 x BIT_CYCLES clocks after the first edge
+  async_inputs: JB1, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "A good frame (lead-in, byte LSB first, even parity) updates DATA and GOOD", proof: [simulation]}
+  - {id: REQ-02, text: "A bit without a mid-bit transition is a coding error, a wrong lead-in a preamble error, a wrong parity bit a parity error", proof: [simulation]}
+  - {id: REQ-03, text: "After a frame the receiver re-arms only after 2 bit times of quiet low line", proof: [simulation]}
+  - {id: REQ-04, text: "Counts, clearing and LEDs behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the coding error beats the other error classes"
+    reason: "a frame without transitions cannot be read at all"
+
+open_questions: []

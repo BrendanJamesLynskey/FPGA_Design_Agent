@@ -1,0 +1,15 @@
+mutants:
+  - {name: threshold_strict, file: press_classifier.sv, find: "assign is_long = hi >= HW'(LONG_CYCLES);", replace: "assign is_long = hi > HW'(LONG_CYCLES - 1) + 1'b1;", why: "a press held exactly LONG_CYCLES classed SHORT"}
+  - {name: ticks_wrap, file: press_classifier.sv, find: "if (ticks != 16'hFFFF) ticks <= ticks + 1'b1;", replace: "ticks <= ticks + 1'b1;", why: "the press length wraps instead of saturating"}
+  - {name: leds_swapped, file: press_classifier.sv, find: "assign led = {short_cnt[7:0], 6'd0, tog_l, tog_s};", replace: "assign led = {short_cnt[7:0], 6'd0, tog_s, tog_l};", why: "LED[0] toggles on long presses"}
+  - {name: led_byte_long, file: press_classifier.sv, find: "assign led = {short_cnt[7:0],", replace: "assign led = {long_cnt[7:0],", why: "LED[15:8] show the long count"}
+  - {name: write_clears_both, file: press_classifier.sv, find: "if (win_wr && win_addr == R_LONG)  long_cnt  <= '0;", replace: "if (win_wr && win_addr <= R_LONG)  long_cnt  <= '0;", why: "a write to SHORT_COUNT also clears LONG_COUNT"}
+  - {name: prescaler_off_by_one, file: press_classifier.sv, find: "if (pre == TW'(TICK_CYCLES - 1)) begin", replace: "if (pre == TW'(TICK_CYCLES)) begin", why: "a length unit is TICK_CYCLES + 1 clocks"}
+  - {name: debounce_half, file: bm_debounce.sv, find: "end else if (run == CW'(CYCLES - 1)) begin", replace: "end else if (run == CW'(CYCLES / 2)) begin", why: "debounce accepts pulses of half the time"}
+  - {name: last_long_inverted, file: press_classifier.sv, find: "last_long <= is_long;", replace: "last_long <= !is_long;", why: "LAST_LONG flag inverted"}
+trap:
+  twin: "textbook button-press counter (debounced BTNC, every press counted)"
+  why: "the textbook design counts every press alike; this spec classes presses held LONG_CYCLES or more as LONG, never SHORT"
+  edits:
+    - {file: press_classifier.sv, find: "assign is_long = hi >= HW'(LONG_CYCLES);", replace: "assign is_long = 1'b0;"}
+  must_fail: [test_long_press_not_short]

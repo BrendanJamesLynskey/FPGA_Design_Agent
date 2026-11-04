@@ -1,0 +1,118 @@
+{
+  "task": "t2_vga_sprite",
+  "sim": "icarus",
+  "date": "2026-11-04",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_sync_timing": true,
+      "test_sprite_bitmap": true,
+      "test_clipping_and_enable": true,
+      "test_bounce_and_vertical_timing": true,
+      "test_offscreen_and_disabled_inside_sprite_span": true,
+      "test_bounce_plain_step_and_bounce_off": true,
+      "test_bounce_turns_at_left_and_bottom": true,
+      "test_blank_lines_are_black_over_a_background": true,
+      "test_random_sprites": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "bit0_leftmost",
+      "why": "sprite mirrored (bit 0 drawn leftmost)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_sprite_bitmap",
+        "test_bounce_and_vertical_timing",
+        "test_random_sprites"
+      ]
+    },
+    {
+      "name": "sprite_17_wide",
+      "why": "a 17th column repeats column 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_sprite_bitmap",
+        "test_clipping_and_enable",
+        "test_bounce_and_vertical_timing",
+        "test_offscreen_and_disabled_inside_sprite_span",
+        "test_random_sprites"
+      ]
+    },
+    {
+      "name": "hs_positive",
+      "why": "HS positive",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_sync_timing",
+        "test_sprite_bitmap",
+        "test_clipping_and_enable",
+        "test_bounce_and_vertical_timing",
+        "test_offscreen_and_disabled_inside_sprite_span",
+        "test_blank_lines_are_black_over_a_background",
+        "test_random_sprites"
+      ]
+    },
+    {
+      "name": "bounce_limit_640",
+      "why": "turns at the screen width, not width - 16",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_bounce_and_vertical_timing"
+      ]
+    },
+    {
+      "name": "vsync_three_lines",
+      "why": "VS three lines long",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_bounce_and_vertical_timing"
+      ]
+    },
+    {
+      "name": "wraps_at_right",
+      "why": "a sprite off the right edge wraps round to the left",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_offscreen_and_disabled_inside_sprite_span"
+      ]
+    },
+    {
+      "name": "no_turn_at_zero",
+      "why": "X wraps below 0 instead of turning",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_bounce_turns_at_left_and_bottom"
+      ]
+    },
+    {
+      "name": "enable_ignored",
+      "why": "CTRL.EN does not hide the sprite",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_offscreen_and_disabled_inside_sprite_span"
+      ]
+    },
+    {
+      "name": "blank_shows_bg",
+      "why": "lines 480-524 show the background colour",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_blank_lines_are_black_over_a_background"
+      ]
+    }
+  ],
+  "mutants_killed": 9,
+  "mutants_total": 9
+}

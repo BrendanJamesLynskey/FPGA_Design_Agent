@@ -1,0 +1,76 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_tone_gen
+title: "Eight-note square-wave tone generator on the audio output"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_tone_gen_top
+design_id: 0x544F4E45          # "TONE"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "silent: AUD_PWM low, AUD_SD low, TOGGLES 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  NOTE_BASE: 4800
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: AUD_PWM, dir: out, width: 1, pins: [A11], iostandard: LVCMOS33}
+  - {name: AUD_SD, dir: out, width: 1, pins: [D12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - SW is synchronised by two flops. NOTE = SW[2:0], OCT = SW[3], ON = SW[15].
+  notes:
+  - 'Half-period in clocks: HALF(k) = floor(NOTE_BASE x W[k] / 12) with W = (24, 22, 20, 18, 16, 15, 13, 12) for notes 0..7: pitch rises with the note, so the half-period shrinks.'
+  - With OCT = 1 the half-period is halved (rounded down) after the table lookup.
+  output:
+  - 'While ON = 0: AUD_SD = 0, AUD_PWM = 0, the half-period counter is held and the output phase is low. ON rising: AUD_SD = 1; the output starts low and flips after HALF clocks, then every HALF clocks.'
+  - The half-period used for a half-wave is the one for the NOTE/OCT value at the clock the half-wave begins (the output flip that begins it), so a change does not shorten the half-wave in progress.
+  - TOGGLES counts the flips made while ON = 1 (32 bits); a write to TOGGLES clears it. LED[2:0] = NOTE, LED[3] = OCT, LED[15] = ON, others 0 (registered).
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: NOTE, access: RO, reset: 0, bits: "[3:0] OCT in bit 3, NOTE in [2:0] as used for the current half-wave"}
+    - {offset: 0x01, name: HALF, access: RO, reset: null, bits: "[31:0] half-period in use, in clocks"}
+    - {offset: 0x02, name: TOGGLES, access: RW, reset: 0, bits: "[31:0] flips while on; any write clears it"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    switch_to_tone: at most one half-wave plus 3 clocks
+  async_inputs: switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Each half-wave of AUD_PWM lasts exactly HALF(note, octave) clocks", proof: [simulation]}
+  - {id: REQ-02, text: "The scale rises in pitch from note 0 to note 7 and the octave bit halves the half-period", proof: [simulation]}
+  - {id: REQ-03, text: "AUD_SD and AUD_PWM are low when off; a note change never shortens the running half-wave", proof: [simulation]}
+  - {id: REQ-04, text: "TOGGLES and the registers behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the scale is roughly the notes of a major scale expressed as integer period weights"
+    reason: "only the half-period table matters to the test"
+
+open_questions: []

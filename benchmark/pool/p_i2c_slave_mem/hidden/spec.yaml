@@ -1,0 +1,81 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_i2c_slave_mem
+title: "I2C slave memory at address 0x2A"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_i2c_slave_mem_top
+design_id: 0x49324353          # "I2CS"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "registers 1..7 and the write counter return to 0, pointer 0, counts 0; the bus is released"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JB1, dir: in, width: 1, async: true, note: "SCL from the I2C master on Pmod JB pin 1 (the design never stretches the clock)", pullup: true, pins: [D14], iostandard: LVCMOS33}
+  - {name: JB2, dir: inout, width: 1, note: "SDA on Pmod JB pin 2, open drain: the design only pulls it low", pullup: true, pins: [F16], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  pins:
+  - JB1 and JB2 are synchronised by two flops each. START = SDA falling while SCL is high, STOP = SDA rising while SCL is high. SDA is driven low (open drain) or released, never driven high. The master clock is at most 1 MHz (at least 100 FPGA clocks per SCL period).
+  protocol:
+  - 'After a START (or repeated START) the next 8 bits are the address byte: 7-bit address 0x2A and R/W. On a match the slave acknowledges (SDA low during the ninth SCL pulse) and MATCHES increments (16 bits); otherwise it ignores the transfer until the next START or STOP.'
+  - 'Write (R/W = 0): the first byte after the address is the register number N. N < 16: acknowledged and PTR = N. N >= 16: not acknowledged, BADPTR increments (8 bits, saturating), PTR is unchanged and every later byte of the transfer is not acknowledged and ignored. Each further byte goes to register PTR then PTR = (PTR + 1) mod 16, acknowledged.'
+  - 'Read (R/W = 1): after acknowledging the address the slave sends reg[PTR] MSB first; after each byte sent PTR = (PTR + 1) mod 16, whatever the master answers; if the master acknowledges, another byte follows, otherwise the slave releases SDA and waits for STOP or START.'
+  registers:
+  - 'reg[0] = 0x5C, writes ignored. reg[1..7]: storage, 0 after reset. reg[8] = WRCOUNT: the number of data bytes accepted into registers 1..7 over I2C (not shell writes), saturating at 255, writes ignored. reg[9] = XOR of reg[1..7], writes ignored. reg[10..15] = 0, writes ignored. The PTR itself is 0 after reset.'
+  shell_window:
+  - Window offsets 0..15 read as reg[0..15] would over I2C; a window write to offsets 1..7 stores the byte (no WRCOUNT change). Offsets 16, 17, 18 are MATCHES, BADPTR and PTR.
+  leds:
+  - LED[7:0] = reg[1].
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: REG0, access: RO, reset: 0x5C, bits: "[7:0] part ID"}
+    - {offset: 0x01, name: REG1, access: RW, reset: 0, bits: "[7:0] storage (offsets 1..7)"}
+    - {offset: 0x08, name: REG8, access: RO, reset: 0, bits: "[7:0] data bytes written over I2C (offset 8); offset 9 is the XOR; offsets 10..15 read 0"}
+    - {offset: 0x10, name: MATCHES, access: RO, reset: 0, bits: "[15:0] transfers that addressed 0x2A"}
+    - {offset: 0x11, name: BADPTR, access: RO, reset: 0, bits: "[7:0] refused register numbers"}
+    - {offset: 0x12, name: PTR, access: RO, reset: 0, bits: "[3:0] current register number"}
+  unmapped: "offsets 19-0x7F read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    scl_to_sda: SDA answers within 4 FPGA clocks of the SCL falling edge that precedes the bit
+  async_inputs: SCL, SDA, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: SDA open drain (low or high-Z), false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The slave answers address 0x2A and no other, acknowledging address and accepted bytes", proof: [simulation]}
+  - {id: REQ-02, text: "Writes go to consecutive registers from the register number, reads return consecutive registers, with the pointer kept between transfers", proof: [simulation]}
+  - {id: REQ-03, text: "The register rules (ID, storage, write counter, XOR, zeros, ignored writes) hold", proof: [simulation]}
+  - {id: REQ-04, text: "A register number of 16 or more is refused with no acknowledge and the pointer unchanged", proof: [simulation]}
+  - {id: REQ-05, text: "SDA is never driven high; the shell window mirrors the registers and counters", proof: [simulation]}
+  - {id: REQ-06, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-07, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the pointer advances after each byte sent even when the master answers with a NACK"
+    reason: "so a following read starts at the next register"
+
+open_questions: []

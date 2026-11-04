@@ -1,0 +1,132 @@
+{
+  "task": "t1_debounce_bank",
+  "sim": "icarus",
+  "date": "2026-11-04",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_glitch_on_slow_tick": true,
+      "test_levels_follow_switches": true,
+      "test_independent_timing": true,
+      "test_counts_and_clear": true,
+      "test_edge_selection_and_w1c": true,
+      "test_bounce_then_steady": true,
+      "test_register_rules": true,
+      "test_random_activity": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "debounce_half",
+      "why": "debounce accepts glitches of half the time",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_glitch_on_slow_tick",
+        "test_independent_timing",
+        "test_random_activity"
+      ]
+    },
+    {
+      "name": "count_rises_only",
+      "why": "only rising changes counted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_levels_follow_switches",
+        "test_counts_and_clear",
+        "test_edge_selection_and_w1c",
+        "test_random_activity"
+      ]
+    },
+    {
+      "name": "count_clear_all",
+      "why": "a write to one COUNT register clears all sixteen counts",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_counts_and_clear",
+        "test_random_activity"
+      ]
+    },
+    {
+      "name": "edges_not_sticky",
+      "why": "edge flags last one clock",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_glitch_on_slow_tick",
+        "test_levels_follow_switches",
+        "test_independent_timing",
+        "test_counts_and_clear",
+        "test_edge_selection_and_w1c",
+        "test_bounce_then_steady",
+        "test_register_rules",
+        "test_random_activity"
+      ]
+    },
+    {
+      "name": "w1c_clears_all",
+      "why": "any EDGES write clears every flag",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_edge_selection_and_w1c"
+      ]
+    },
+    {
+      "name": "fall_uses_rise_en",
+      "why": "falling edges selected by RISE_EN",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_edge_selection_and_w1c",
+        "test_random_activity"
+      ]
+    },
+    {
+      "name": "count_packing_reversed",
+      "why": "COUNT0 bytes in the wrong order",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_levels_follow_switches",
+        "test_independent_timing",
+        "test_counts_and_clear",
+        "test_bounce_then_steady",
+        "test_random_activity"
+      ]
+    },
+    {
+      "name": "rise_en_reset_zero",
+      "why": "RISE_EN resets to 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_glitch_on_slow_tick",
+        "test_levels_follow_switches",
+        "test_independent_timing",
+        "test_counts_and_clear",
+        "test_bounce_then_steady",
+        "test_register_rules"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8,
+  "trap": {
+    "twin": "textbook debouncer that samples each switch once per slow tick (10-20 ms enable)",
+    "why": "a tick sampler takes any glitch that covers a sampling instant as a real change; this spec needs DEBOUNCE_CYCLES of steady difference",
+    "must_fail": [
+      "test_glitch_on_slow_tick"
+    ],
+    "failed_tests": [
+      "test_glitch_on_slow_tick",
+      "test_independent_timing",
+      "test_random_activity"
+    ],
+    "trap_fires": true
+  }
+}

@@ -1,0 +1,81 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_servo_rx
+title: "Radio-control pulse reader with failsafe"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_servo_rx_top
+design_id: 0x53525652          # "SRVR"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "position 128 (neutral), no failsafe yet, counts 0; the failsafe timer starts"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  MIN_W: 100000
+  MAX_W: 200000
+  VALID_MIN: 80000
+  VALID_MAX: 220000
+  FAILSAFE_CYCLES: 5000000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JA1, dir: in, width: 1, async: true, note: "receiver channel pulse on Pmod JA pin 1", pins: [C17], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+  - JA1 is synchronised by two flops. A pulse is a run of 1s on the synchronised level; its width W is the number of clocks it is high, so a pulse driven for n clocks reads n (pulses already high at reset are not measured).
+  pulse:
+  - 'On the falling edge of a pulse: WIDTH = W. If VALID_MIN <= W <= VALID_MAX the pulse is good: GOOD increments (16 bits, wraps), LASTGOOD = 1, POS = 0 if W <= MIN_W, 255 if W >= MAX_W, else floor((W - MIN_W) x 255 / (MAX_W - MIN_W)). Otherwise BAD increments (16 bits, wraps), LASTGOOD = 0 and POS is unchanged.'
+  - Any good pulse also clears FAIL and restarts the failsafe timer.
+  failsafe:
+  - A timer counts clocks since reset or since the falling edge of the last good pulse. When it exceeds FAILSAFE_CYCLES (gaps within 3 clocks of FAILSAFE_CYCLES are not specified), FAIL = 1 and POS reads 128 (the stored position is replaced by 128); bad pulses do not clear FAIL or restart the timer. After reset POS is 128 and FAIL = 0 until the timer expires.
+  outputs:
+  - LED[7:0] = POS, LED[14] = LASTGOOD (0 after reset), LED[15] = FAIL, others 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: WIDTH, access: RO, reset: 0, bits: "[31:0] width of the last pulse in clocks"}
+    - {offset: 0x01, name: POS, access: RO, reset: 128, bits: "[7:0] position (128 during failsafe)"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] FAIL, [1] LASTGOOD"}
+    - {offset: 0x03, name: GOOD, access: RO, reset: 0, bits: "[15:0] good pulses"}
+    - {offset: 0x04, name: BAD, access: RO, reset: 0, bits: "[15:0] bad pulses"}
+    - {offset: 0x05, name: CTRL, access: WO, reset: 0, bits: "any write clears GOOD and BAD; reads 0"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    pulse_to_pos: 3 clocks after the falling edge
+  async_inputs: JA1, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The pulse width in clocks maps linearly to a position 0..255 with the stated end widths and clamping", proof: [simulation]}
+  - {id: REQ-02, text: "Pulses outside VALID_MIN..VALID_MAX are bad and ignored", proof: [simulation]}
+  - {id: REQ-03, text: "Without good pulses for FAILSAFE_CYCLES the position becomes 128 and FAIL is set until a good pulse arrives", proof: [simulation]}
+  - {id: REQ-04, text: "Counts, clearing, status and LEDs behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; one multiplier and a divider or reciprocal; no BRAM"
+
+assumptions:
+  - assumption: "the position is floor-divided"
+    reason: "integer arithmetic in clocks"
+
+open_questions: []

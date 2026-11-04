@@ -1,0 +1,9 @@
+# Hidden acceptance bench for t1_elevator_fsm (benchmark/tools/run_task.py)
+toplevel: t1_elevator_fsm_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, FLOOR_CYCLES: 400, DOOR_CYCLES: 300}
+phrases:
+  - "keep going in the same direction while there are calls further on, and only then turn round"
+  - "flicking a switch up calls the lift to that floor"
+  - "Leaving it up doesn't call again; it has to go down and up again"
+  - "a model of a lift serving four floors"

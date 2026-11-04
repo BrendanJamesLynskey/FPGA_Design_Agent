@@ -1,0 +1,82 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_spi_slave_regs
+title: "SPI slave with a small register file"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_spi_slave_regs_top
+design_id: 0x53504953          # "SPIS"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "registers 1..7 return to 0; FRAMES, BADFRAMES and LASTCMD to 0; MISO low"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: JB1, dir: in, width: 1, async: true, note: "CS_N from the SPI master, Pmod JB pin 1", pins: [D14], iostandard: LVCMOS33}
+  - {name: JB2, dir: in, width: 1, async: true, note: "SCLK, Pmod JB pin 2", pins: [F16], iostandard: LVCMOS33}
+  - {name: JB3, dir: in, width: 1, async: true, note: "MOSI, Pmod JB pin 3", pins: [G16], iostandard: LVCMOS33}
+  - {name: JB4, dir: out, width: 1, note: "MISO, Pmod JB pin 4", pins: [H14], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  pins:
+  - JB1, JB2, JB3 are synchronised by two flops each. SCLK is at most 10 MHz (at least 5 clocks per half period). MISO (JB4) is a registered output, 0 while CS_N is high.
+  frame:
+  - 'A frame is CS_N low. Rising edges of SCLK within it are counted from 0. Bits are taken from MOSI at each rising edge, MSB first. Byte 0 is the command: bit 7 R (1 = read), bits 6:0 the start address A. Byte j >= 1 is a data byte at address (A + j - 1) mod 128.'
+  - 'Write (R = 0): on the 8th rising edge of a data byte the byte is written to its address. Read (R = 1): the data byte is reg[address] shifted out MSB first on MISO, the bit for each rising edge being stable before that edge (MISO changes only after a falling edge). During the command byte and during write data bytes MISO is 0.'
+  - 'On CS_N rising: if at least one rising SCLK edge occurred, FRAMES increments (16 bits, wraps); if the number of edges is not a multiple of 8, BADFRAMES also increments (8 bits, saturating). A frame without any SCLK edge is not counted. LASTCMD is the command byte of the last frame that had 8 or more edges (stored on its 8th edge).'
+  registers:
+  - reg[0] = 0xA7 (writes ignored). reg[1..7] storage, 0 after reset. reg[8] = XOR of reg[1..7] (writes ignored). reg[9..15] = 0 (writes ignored). Addresses >= 16 read 0xFF; writes ignored. The address counter still advances for ignored writes and for reads.
+  shell_window:
+  - Window offsets 0..15 read as reg[0..15] would on SPI and a window write to offsets 1..7 stores like an SPI write (other offsets ignore writes); offsets 16, 17, 18 are FRAMES, BADFRAMES, LASTCMD.
+  leds:
+  - LED[7:0] = LASTCMD, others 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: REG0, access: RO, reset: 0xA7, bits: "[7:0] part ID"}
+    - {offset: 0x01, name: REG1, access: RW, reset: 0, bits: "[7:0] storage (offsets 1..7)"}
+    - {offset: 0x08, name: REG8, access: RO, reset: 0, bits: "[7:0] XOR of registers 1..7 (offsets 9..15 read 0)"}
+    - {offset: 0x10, name: FRAMES, access: RO, reset: 0, bits: "[15:0] transfers with at least one clock edge"}
+    - {offset: 0x11, name: BADFRAMES, access: RO, reset: 0, bits: "[7:0] transfers ended off a byte boundary"}
+    - {offset: 0x12, name: LASTCMD, access: RO, reset: 0, bits: "[7:0] last command byte"}
+  unmapped: "offsets 19-0x7F read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    edge_to_miso: MISO updates within 4 clocks of a falling SCLK edge
+  async_inputs: JB1, JB2, JB3, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: MISO registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Command and data bytes follow the stated frame format in mode 0, MSB first, with auto-increment", proof: [simulation]}
+  - {id: REQ-02, text: "The register file rules (ID, storage, XOR, zeros, out-of-range 0xFF) hold", proof: [simulation]}
+  - {id: REQ-03, text: "A transfer ended mid-byte writes nothing and is counted as bad", proof: [simulation]}
+  - {id: REQ-04, text: "The shell window mirrors the registers and counters", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "the address counter wraps at 128"
+    reason: "seven address bits"
+
+open_questions: []

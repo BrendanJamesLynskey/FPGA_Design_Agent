@@ -1,0 +1,83 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t1_elevator_fsm
+title: Four-floor lift controller
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_elevator_fsm_top
+design_id: 0x454C4556          # "ELEV"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: FLOOR = 0, DIR = up, PENDING = 0, STATE = IDLE, MOVES = 0; the switch edge detector's previous value is 0
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  FLOOR_CYCLES: 150000000       # 1.5 s a floor
+  DOOR_CYCLES: 200000000        # door open 2 s
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "only SW[3:0] are used", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  calls:
+    - SW[3:0] are synchronised by two flops (not debounced). A call for floor k is a 0 -> 1 change of synchronised SW[k]; a switch already up after reset calls once.
+    - A shell write to PENDING with bit k = 1 is a call for floor k (write-1-to-set; 0 bits do nothing).
+    - "A call sets PENDING[k], except a call for the floor where the door is open now, which is ignored."
+  motion:
+    - "States - IDLE (0), MOVING (1), DOOR (2). DIR is 0 for up, 1 for down. ahead(d) = some PENDING bit beyond FLOOR in direction d."
+    - "Decision (taken every clock in IDLE, and on the clock the door closes) - if PENDING[FLOOR] then clear it and open the door (DOOR); else if ahead(DIR) then start MOVING in DIR; else if ahead(not DIR) then flip DIR and start MOVING; else IDLE."
+    - "MOVING - after exactly FLOOR_CYCLES clocks FLOOR changes by one in DIR and MOVES += 1 (16 bits, wrapping). If PENDING[FLOOR] is then set, it is cleared and the door opens; otherwise the next floor's travel starts on the same clock (calls remain ahead, so DIR never flips while moving)."
+    - "DOOR - the door is open for exactly DOOR_CYCLES clocks, then closes and the decision is taken on that clock."
+    - "So travel from floor a to floor b without stops takes |a - b| * FLOOR_CYCLES clocks, and LED[15] is high for exactly DOOR_CYCLES clocks a stop."
+  leds:
+    - "LED[3:0] one-hot FLOOR (LED[FLOOR] = 1); LED[7:4] = PENDING; LED[14] = MOVING; LED[15] = door open; LED[13:8] = 0. Registered, no PWM."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: FLOOR, access: RO, reset: 0, bits: "[1:0] current floor (the floor last reached while moving)"}
+    - {offset: 0x01, name: DIR, access: RO, reset: 0, bits: "[0] 0 up, 1 down"}
+    - {offset: 0x02, name: PENDING, access: RW, reset: 0, bits: "[3:0] outstanding calls; a write of 1 to bit k calls floor k"}
+    - {offset: 0x03, name: STATE, access: RO, reset: 0, bits: "[1:0] 0 IDLE, 1 MOVING, 2 DOOR"}
+    - {offset: 0x04, name: MOVES, access: RO, reset: 0, bits: "[15:0] floors travelled, wrapping"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    switch_to_call: "2 (sync) + 1 clocks"
+  async_inputs: SW, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The car serves calls in SCAN order - it keeps its direction while calls remain ahead, then turns", proof: [simulation]}
+  - {id: REQ-02, text: "Travel takes exactly FLOOR_CYCLES a floor and each stop opens the door for exactly DOOR_CYCLES", proof: [simulation]}
+  - {id: REQ-03, text: "Calls are switch 0 -> 1 edges or shell W1S writes; a call for the open-door floor is ignored", proof: [simulation]}
+  - {id: REQ-04, text: "FLOOR, DIR, PENDING, STATE, MOVES and the LEDs follow the model", proof: [simulation]}
+  - {id: REQ-05, text: "The car never leaves floors 0..3 and the door is never open while moving", proof: [simulation, formal]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board a shell call is served and MOVES and FLOOR change as the model predicts", proof: [hardware]}
+
+resources_expected: "under a hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: a call for the floor the car is idle at opens the door there without moving.
+    reason: a real lift opens for a call at its own floor.
+  - assumption: the car starts upwards after reset.
+    reason: it starts at the bottom floor.
+
+open_questions: []

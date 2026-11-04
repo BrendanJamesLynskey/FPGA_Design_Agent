@@ -1,0 +1,86 @@
+# Hidden full spec (benchmark v1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: t1_press_classifier
+title: Short and long press classifier
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_press_classifier_top
+design_id: 0x50525343          # "PRSC"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: every register, both counts, LAST, the LED toggles and the debounced level return to 0
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  DEBOUNCE_CYCLES: 1000000      # 10 ms
+  LONG_CYCLES: 50000000         # 0.5 s
+  TICK_CYCLES: 100000           # 1 ms, the unit of LAST
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: BTNC, dir: in, width: 1, async: true, pins: [N17], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  debounce:
+    - BTNC is synchronised (two flops), then debounced. The debounced level changes only after the synchronised
+      input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count.
+    - Both edges are delayed by the same amount, so the debounced level is high for exactly as many clocks as a
+      clean (bounce-free) press holds the pin high.
+  press:
+    - A press starts on a 0 -> 1 change of the debounced level and ends on the next 1 -> 0 change.
+    - "H, the press's high time, is the number of clocks on which the debounced level is 1 during the press."
+    - "On the release the press is classified: LONG if H >= LONG_CYCLES, otherwise SHORT. Nothing is classified while the button is held."
+    - "LAST is floor(H / TICK_CYCLES), saturating at 0xFFFF; LAST_LONG is 1 for a LONG press, 0 for a SHORT one. Both update on every release."
+    - A SHORT release adds 1 to SHORT_COUNT; a LONG release adds 1 to LONG_COUNT (16 bits each, wrapping at 65536).
+    - A shell write to SHORT_COUNT or LONG_COUNT on the same clock as a release that would increment it wins (the count reads 0).
+  leds:
+    - LED[0] toggles on every SHORT release; LED[1] toggles on every LONG release. Writes to the counts do not affect them.
+    - "LED[15:8] = SHORT_COUNT[7:0]; LED[7:2] = 0. No PWM."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: SHORT_COUNT, access: RW, reset: 0, bits: "[15:0] short presses; any write sets it to 0; [31:16] read 0"}
+    - {offset: 0x01, name: LONG_COUNT, access: RW, reset: 0, bits: "[15:0] long presses; any write sets it to 0; [31:16] read 0"}
+    - {offset: 0x02, name: LAST, access: RO, reset: 0, bits: "[15:0] last press length in TICK_CYCLES units (saturating); [16] LAST_LONG; [31:17] 0"}
+    - {offset: 0x03, name: STATUS, access: RO, reset: 0, bits: "[0] debounced BTNC level now; [2:1] LED[1:0]; [31:3] 0"}
+  unmapped: offsets 0x04-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    release_to_count: "2 (sync) + DEBOUNCE_CYCLES + 1 clocks after the pin falls"
+  async_inputs: BTNC, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "A release with H >= LONG_CYCLES counts as LONG and never as SHORT; H < LONG_CYCLES counts as SHORT", proof: [simulation]}
+  - {id: REQ-02, text: "LAST holds floor(H / TICK_CYCLES), saturating at 0xFFFF, and LAST_LONG the class", proof: [simulation]}
+  - {id: REQ-03, text: "Bounces shorter than the debounce time neither start nor end a press", proof: [simulation]}
+  - {id: REQ-04, text: "LED[0], LED[1] toggle per short and long press; LED[15:8] show SHORT_COUNT[7:0]", proof: [simulation]}
+  - {id: REQ-05, text: "The register window has the listed map, reset values and write-to-clear rule", proof: [simulation]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board the register window answers as the model predicts", proof: [hardware]}
+
+resources_expected: "about a hundred LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the threshold is inclusive (held exactly LONG_CYCLES is LONG).
+    reason: the request says at least half a second.
+  - assumption: the press length is floored to whole TICK_CYCLES units and saturates rather than wraps.
+    reason: a length that wraps would mislead; milliseconds are whole units.
+
+open_questions: []

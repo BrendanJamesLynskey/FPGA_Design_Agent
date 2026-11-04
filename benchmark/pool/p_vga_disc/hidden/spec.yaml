@@ -1,0 +1,86 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_vga_disc
+title: "VGA 640x480 disc on a bordered screen"
+source: spec.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_vga_disc_top
+design_id: 0x56474144          # "VGAD"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the scan restarts at the first line of a frame; FRAMES 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  H_ACTIVE: 640
+  H_FP: 16
+  H_SYNC: 96
+  H_BP: 48
+  V_ACTIVE: 480
+  V_FP: 10
+  V_SYNC: 2
+  V_BP: 33
+  PIX_DIV: 4
+  BORDER: 4
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "SW[11:0] disc colour", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: VGA_R, dir: out, width: 4, pins: [A3, B4, C5, A4], iostandard: LVCMOS33}
+  - {name: VGA_G, dir: out, width: 4, pins: [C6, A5, B6, A6], iostandard: LVCMOS33}
+  - {name: VGA_B, dir: out, width: 4, pins: [B7, C7, D7, D8], iostandard: LVCMOS33}
+  - {name: VGA_HS, dir: out, width: 1, pins: [B11], iostandard: LVCMOS33}
+  - {name: VGA_VS, dir: out, width: 1, pins: [B12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  timing:
+  - 'H_TOTAL = H_SYNC + H_BP + H_ACTIVE + H_FP pixels; V_TOTAL = V_SYNC + V_BP + V_ACTIVE + V_FP lines. A pixel lasts PIX_DIV clocks. Every line starts with its sync: VGA_HS is 0 for the first H_SYNC pixels of a line and 1 for the rest. Lines are numbered 0.. from the start of the frame: VGA_VS is 0 for lines 0 .. V_SYNC-1 and 1 for the rest. VGA_VS changes only on the clock VGA_HS falls (it is aligned to the start of a line).'
+  - Pixel column x (0 .. H_ACTIVE-1) of visible row y (0 .. V_ACTIVE-1) is shown during the PIX_DIV clocks starting (V_SYNC + V_BP + y) x H_TOTAL + H_SYNC + H_BP + x pixels after the start of the frame (the clock VGA_VS falls). All outputs are registered together, so sync and colour have the same latency. Outside the visible area VGA_R, VGA_G and VGA_B are 0.
+  picture:
+  - COLOR is SW[11:0] (synchronised by two flops) sampled on the clock a frame starts and held for the frame; R = COLOR[11:8], G = COLOR[7:4], B = COLOR[3:0].
+  - 'Colour of the visible pixel (x, y): white (0xF in each channel) if x < BORDER or x >= H_ACTIVE - BORDER or y < BORDER or y >= V_ACTIVE - BORDER; else COLOR if (x - CX)^2 + (y - CY)^2 <= R^2 with CX = H_ACTIVE / 2, CY = V_ACTIVE / 2 (integer division) and R = V_ACTIVE / 4 (integer division); else black.'
+  outputs:
+  - LED[11:0] = COLOR in use, others 0. FRAMES counts frames started since reset (16 bits).
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: COLOR, access: RO, reset: 0, bits: "[11:0] colour in use"}
+    - {offset: 0x01, name: FRAMES, access: RO, reset: 0, bits: "[15:0] frames started"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    switch_to_colour: from the next frame start
+  async_inputs: switches, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered; pixel clock enable every PIX_DIV clocks from the single 100 MHz clock
+
+requirements:
+  - {id: REQ-01, text: "HS, VS and the line and frame lengths follow the stated mode and pixel time", proof: [simulation]}
+  - {id: REQ-02, text: "The visible area shows the white frame, the disc and the black background at the stated positions", proof: [simulation]}
+  - {id: REQ-03, text: "Outside the visible area the colour outputs are black", proof: [simulation]}
+  - {id: REQ-04, text: "The colour changes only at a frame start", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "a few hundred LUTs and FFs; one or two multipliers (or squarers) for the disc test; no BRAM"
+
+assumptions:
+  - assumption: "the disc test uses squared integer distance"
+    reason: "exact integer comparison, no square root"
+
+open_questions: []

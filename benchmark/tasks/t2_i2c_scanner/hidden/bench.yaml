@@ -1,0 +1,10 @@
+# Hidden acceptance bench for t2_i2c_scanner (benchmark/tools/run_task.py)
+toplevel: tb_i2c_bench
+module: acceptance
+wrapper: tb_i2c_bench.sv
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, QUARTER: 3}
+phrases:
+  - "tool, so I can see what answers"
+  - "The reserved addresses at both ends are left alone"
+  - "A new scan starts from a clean map"
+  - "must never send a data byte to anything"

@@ -1,0 +1,132 @@
+{
+  "task": "t2_sevenseg_marquee",
+  "sim": "icarus",
+  "date": "2026-11-03",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_raw_segment_bytes": true,
+      "test_window_wraps": true,
+      "test_length_and_pos_rules": true,
+      "test_dimming": true,
+      "test_scroll_steps": true,
+      "test_random_windows": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "window_reversed",
+      "why": "the rightmost digit shows MSG[POS]: the message reads backwards",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_raw_segment_bytes",
+        "test_window_wraps",
+        "test_dimming",
+        "test_scroll_steps",
+        "test_random_windows"
+      ]
+    },
+    {
+      "name": "dim_off_by_one",
+      "why": "each digit lit for DIM/8 of its slot (DIM 0 dark)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_raw_segment_bytes",
+        "test_window_wraps",
+        "test_dimming",
+        "test_scroll_steps",
+        "test_random_windows"
+      ]
+    },
+    {
+      "name": "dir_inverted",
+      "why": "the direction bit scrolls the other way",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_scroll_steps"
+      ]
+    },
+    {
+      "name": "length_17_accepted",
+      "why": "LENGTH 17 accepted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_length_and_pos_rules"
+      ]
+    },
+    {
+      "name": "pos_kept_on_shorter_length",
+      "why": "POS = new LENGTH is kept (out of range)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_length_and_pos_rules"
+      ]
+    },
+    {
+      "name": "scroll_half_period",
+      "why": "steps twice as often",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_scroll_steps"
+      ]
+    },
+    {
+      "name": "dp_dropped",
+      "why": "bit 7 never lights the decimal point",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_raw_segment_bytes",
+        "test_window_wraps",
+        "test_dimming",
+        "test_scroll_steps",
+        "test_random_windows"
+      ]
+    },
+    {
+      "name": "wrap_at_16",
+      "why": "the window wraps at 16 whatever LENGTH is",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_window_wraps",
+        "test_random_windows"
+      ]
+    },
+    {
+      "name": "scroll_restart_ignored",
+      "why": "writes to CTRL / POS do not restart the scroll counter",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_scroll_steps"
+      ]
+    }
+  ],
+  "mutants_killed": 9,
+  "mutants_total": 9,
+  "trap": {
+    "twin": "textbook hex 7-segment display decoder",
+    "why": "the textbook decodes a hex nibble into a glyph; this spec writes raw segment bytes (a pattern such as 0x49 is no hex glyph)",
+    "must_fail": [
+      "test_raw_segment_bytes"
+    ],
+    "failed_tests": [
+      "test_identity_and_reset",
+      "test_raw_segment_bytes",
+      "test_window_wraps",
+      "test_dimming",
+      "test_scroll_steps",
+      "test_random_windows"
+    ],
+    "trap_fires": true
+  }
+}

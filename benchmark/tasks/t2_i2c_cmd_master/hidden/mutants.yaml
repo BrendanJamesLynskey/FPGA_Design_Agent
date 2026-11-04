@@ -1,0 +1,18 @@
+mutants:
+  - {name: no_stretch_wait, file: i2cm_core.sv, find: "                B2: if (!scl_in) cnt <= Q2;", replace: "                B2: if (1'b0) cnt <= Q2;", why: "the bit high time is not held off while a slave stretches SCL"}
+  - {name: nack_inverted, file: i2cm_core.sv, find: "if (!rd) nack <= sda_in;", replace: "if (!rd) nack <= !sda_in;", why: "ACK and NACK swapped in STATUS"}
+  - {name: read_ack_inverted, file: i2cm_core.sv, find: "if (k == 4'd7) sda_oe <= rd ? !ack_n : 1'b0;", replace: "if (k == 4'd7) sda_oe <= rd ? ack_n : 1'b0;", why: "READ answers ACK when told NACK"}
+  - {name: write_lsb_first, file: i2cm_core.sv, find: "else           sda_oe <= rd ? 1'b0 : !sh[7];", replace: "else           sda_oe <= rd ? 1'b0 : !sh[0];", why: "WRITE data bits after the first come from the wrong end"}
+  - {name: data_cmd_on_free_bus, file: i2cm_core.sv, find: "OP_WRITE, OP_READ: if (owned) begin", replace: "OP_WRITE, OP_READ: if (1'b1) begin", why: "WRITE/READ on a free bus clock the bus"}
+  - {name: owned_kept_after_stop, file: i2cm_core.sv, find: "P3: if (cnt == '0) begin st <= IDLE; busy <= 1'b0; owned <= 1'b0; end", replace: "P3: if (cnt == '0) begin st <= IDLE; busy <= 1'b0; end", why: "the bus still counts as owned after STOP (next START is a repeated START)"}
+  - {name: short_low, file: i2cm_core.sv, find: "st <= B1; k <= k + 1'b1; cnt <= Q1;", replace: "st <= B1; k <= k + 1'b1; cnt <= '0;", why: "SCL low time between bits is Q + 1 clocks instead of 2Q"}
+  - {name: rx_not_updated, file: i2cm_core.sv, find: "if (rd) rxdata <= sh;", replace: "if (rd) rxdata <= {sh[6:0], 1'b0};", why: "RXDATA loses its LSB"}
+  - {name: read_never_nacks, file: i2cm_regs.sv, find: "rnack(win_wdata[16])", replace: "rnack(1'b0)", why: "READ never answers NACK"}
+trap:
+  twin: "textbook fixed ADT7420 read sequence (STOP after the pointer write, then a fresh START)"
+  why: "the board's ADT7420 loses its register pointer on a STOP (Nexys A7 RM 12.1), so a pointer write must be followed by a repeated START"
+  edits:
+    - {file: i2cm_core.sv, find: "if (owned) begin st <= R1; sda_oe <= 1'b0; cnt <= Q1; end", replace: "if (owned) begin st <= P1; sda_oe <= 1'b1; cnt <= Q1; restart <= 1'b1; end"}
+    - {file: i2cm_core.sv, find: "P3: if (cnt == '0) begin st <= IDLE; busy <= 1'b0; owned <= 1'b0; end", replace: "P3: if (cnt == '0) begin if (restart) begin restart <= 1'b0; st <= S1; sda_oe <= 1'b1; cnt <= Q2; owned <= 1'b0; end else begin st <= IDLE; busy <= 1'b0; owned <= 1'b0; end end"}
+    - {file: i2cm_core.sv, find: "    logic          rd, ack_n;", replace: "    logic          rd, ack_n, restart = 1'b0;"}
+  must_fail: [test_id_via_repeated_start]

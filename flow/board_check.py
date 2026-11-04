@@ -7,7 +7,10 @@ For each run (the first failed step stops that run):
   1. power_ok     the base build passes the power gate for the board's power source (flow/hw.py)
   2. discover     flow/hw_discover.py: exactly one JTAG target, an xc7a100t, and its UART
   3. program      flow/program.py <design> base (SRAM only, by cable serial; the gate is checked again)
-  4. identify     DESIGN_ID is the one selfcheck.py names and BUILD_STAMP is the build's
+  4. identify     DESIGN_ID is the one selfcheck.py names and BUILD_STAMP is the build's (a design without the
+                  test shell: its selfcheck.py sets NO_SHELL = True, and then identify and still_alive ask the shell
+                  nothing; the self-check gets the open serial port as ``sh.port`` and reads the design's own ID
+                  register; the build stamp is the one the program step recorded)
   5. selfcheck    designs/<name>/selfcheck.py check(shell): its pass rule is in its docstring
   6. still_alive  identity unchanged, a scratch value written before the check kept, no shell errors
 Writes results/board_v2/runs/<design>_<time>.json for each run and results/board_v2/<design>.json
@@ -91,7 +94,14 @@ class Run:
         self.res["build_stamp"] = r["build_stamp"]
         return r
 
+    @property
+    def no_shell(self) -> bool:
+        return bool(getattr(self.check, "NO_SHELL", False))
+
     def identify(self) -> dict[str, Any]:
+        if self.no_shell:
+            return {"pass": True, "shell": False, "build_stamp": self.res["build_stamp"],
+                    "note": "no test shell in this design: the self-check reads its own ID register"}
         with FpgaShell.open(self.board["uart"]) as sh:
             ident = sh.identify()
             sh.write(p.REG_SCRATCH, SENTINEL)
@@ -111,6 +121,8 @@ class Run:
         return r
 
     def still_alive(self) -> dict[str, Any]:
+        if self.no_shell:
+            return {"pass": True, "shell": False, "note": "no test shell: nothing to ask; the self-check passed"}
         with FpgaShell.open(self.board["uart"]) as sh:
             ident = sh.identify()
             scratch = sh.read(p.REG_SCRATCH)

@@ -1,0 +1,17 @@
+mutants:
+  - {name: window_reversed, file: marquee.sv, find: "assign cur = msg[dix[k]];", replace: "assign cur = msg[dix[3'd7 - k]];", why: "the rightmost digit shows MSG[POS]: the message reads backwards"}
+  - {name: dim_off_by_one, file: marquee.sv, find: "assign lit = t[REFRESH_BITS-1:REFRESH_BITS-3] <= dim;", replace: "assign lit = t[REFRESH_BITS-1:REFRESH_BITS-3] < dim;", why: "each digit lit for DIM/8 of its slot (DIM 0 dark)"}
+  - {name: dir_inverted, file: marquee.sv, find: "if (!ctrl[1]) pos <=", replace: "if (ctrl[1]) pos <=", why: "the direction bit scrolls the other way"}
+  - {name: length_17_accepted, file: marquee.sv, find: "win_wdata[31:0] <= 32'd16;", replace: "win_wdata[31:0] <= 32'd17;", why: "LENGTH 17 accepted"}
+  - {name: pos_kept_on_shorter_length, file: marquee.sv, find: "if (win_wdata[4:0] <= {1'b0, pos}) pos <= '0;", replace: "if (win_wdata[4:0] < {1'b0, pos}) pos <= '0;", why: "POS = new LENGTH is kept (out of range)"}
+  - {name: scroll_half_period, file: marquee.sv, find: "wire step    = ctrl[0] && sc == SW'(SCROLL_CYCLES - 1);", replace: "wire step    = ctrl[0] && sc == SW'(SCROLL_CYCLES / 2);", why: "steps twice as often"}
+  - {name: dp_dropped, file: marquee.sv, find: "seg_n <= ~cur;", replace: "seg_n <= {1'b1, ~cur[6:0]};", why: "bit 7 never lights the decimal point"}
+  - {name: wrap_at_16, file: marquee.sv, find: "dix[i] <= ({1'b0, dix[i + 1]} + 5'd1 >= len)", replace: "dix[i] <= ({1'b0, dix[i + 1]} + 5'd1 >= 5'd16)", why: "the window wraps at 16 whatever LENGTH is"}
+  - {name: scroll_restart_ignored, file: marquee.sv, find: "if (wr_ctrl || wr_pos || !ctrl[0] || step) sc <= '0;", replace: "if (!ctrl[0] || step) sc <= '0;", why: "writes to CTRL / POS do not restart the scroll counter"}
+trap:
+  twin: "textbook hex 7-segment display decoder"
+  why: "the textbook decodes a hex nibble into a glyph; this spec writes raw segment bytes (a pattern such as 0x49 is no hex glyph)"
+  edits:
+    - {file: marquee.sv, find: "seg_n <= ~cur;", replace: "seg_n <= {1'b1, ~hexglyph(cur[3:0])};"}
+    - {file: marquee.sv, find: "    logic [7:0] cur;", replace: "    logic [7:0] cur;\n    function automatic logic [6:0] hexglyph(input logic [3:0] d);\n        case (d)\n            4'h0: hexglyph = 7'h3F; 4'h1: hexglyph = 7'h06; 4'h2: hexglyph = 7'h5B; 4'h3: hexglyph = 7'h4F;\n            4'h4: hexglyph = 7'h66; 4'h5: hexglyph = 7'h6D; 4'h6: hexglyph = 7'h7D; 4'h7: hexglyph = 7'h07;\n            4'h8: hexglyph = 7'h7F; 4'h9: hexglyph = 7'h6F; 4'hA: hexglyph = 7'h77; 4'hB: hexglyph = 7'h7C;\n            4'hC: hexglyph = 7'h39; 4'hD: hexglyph = 7'h5E; 4'hE: hexglyph = 7'h79; default: hexglyph = 7'h71;\n        endcase\n    endfunction"}
+  must_fail: [test_raw_segment_bytes]

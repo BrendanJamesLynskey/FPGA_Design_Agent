@@ -1,0 +1,76 @@
+# Hidden full spec (pool, P1 training set). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: p_hamming84
+title: "Hamming (8,4) encoder and decoder"
+source: spec.md
+tier: T1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: p_hamming84_top
+design_id: 0x48414D38          # "HAM8"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "both inputs and the statistics return to 0"
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+
+behaviour:
+  code:
+  - Codeword bit i-1 (i = 1..7) is the code position i; bit 7 is the overall parity. Positions 1, 2, 4 are check bits p1, p2, p3; the data bits d0..d3 (ENC_IN[0..3]) sit at positions 3, 5, 6, 7 respectively.
+  - 'Even parity: p1 covers positions 1, 3, 5, 7; p2 covers 2, 3, 6, 7; p3 covers 4, 5, 6, 7. Bit 7 is the even parity of bits 0..6 (so the whole 8-bit word has even parity).'
+  encoder:
+  - ENC_OUT is the codeword of ENC_IN[3:0] (the upper bits of a write are ignored). It follows ENC_IN within 4 clocks.
+  decoder:
+  - A write to DEC_IN stores its low 8 bits R. The syndrome S = (p1 check) + 2 x (p2 check) + 4 x (p3 check) over bits 0..6 (bit value is the parity of the covered positions of R, so S is the position of a single flipped bit, 0 for none). OP is the parity of all 8 bits of R.
+  - 'OP = 0 and S = 0: clean, result code 0. OP = 1: one error; result code 1; if S != 0 position S is flipped back, if S = 0 the error was in the overall parity bit and the data is untouched. OP = 0 and S != 0: two errors, result code 2, the data bits are read from positions 3, 5, 6, 7 of R as received.'
+  - 'DEC_DATA is the corrected (or as-received) data. Every write to DEC_IN counts: SINGLES increments for code 1, DOUBLES for code 2 (both 8 bits, saturating at 255).'
+  outputs:
+  - LED[7:0] = ENC_OUT, LED[11:8] = DEC_DATA, LED[13:12] = result code of the last decode, LED[15:14] = 0.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: ENC_IN, access: RW, reset: 0, bits: "[3:0] data to encode"}
+    - {offset: 0x01, name: ENC_OUT, access: RO, reset: 0, bits: "[7:0] codeword"}
+    - {offset: 0x02, name: DEC_IN, access: RW, reset: 0, bits: "[7:0] received word"}
+    - {offset: 0x03, name: DEC_OUT, access: RO, reset: 0, bits: "[3:0] data, [6:4] syndrome S, [9:8] result code"}
+    - {offset: 0x04, name: STATS, access: RW, reset: 0, bits: "[7:0] SINGLES, [15:8] DOUBLES; any write clears both"}
+  unmapped: "offsets above the last register read 0; writes to them and to RO registers are ignored"
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    write_to_result: within 4 clocks
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: registered, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The encoder produces the specified (8,4) extended Hamming codeword", proof: [simulation]}
+  - {id: REQ-02, text: "Any single flipped bit, including the overall parity bit, is corrected; the syndrome is the error position", proof: [simulation]}
+  - {id: REQ-03, text: "Two flipped bits are reported as a double error and the data passes through as received", proof: [simulation]}
+  - {id: REQ-04, text: "Statistics, LEDs and registers behave as listed", proof: [simulation]}
+  - {id: REQ-05, text: "Registers answer as the model predicts on the board", proof: [hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+resources_expected: "under 100 LUTs; no FFs beyond the registers; no BRAM, no DSP"
+
+assumptions:
+  - assumption: "DEC_OUT's result code field is two bits"
+    reason: "three outcomes"
+
+open_questions: []

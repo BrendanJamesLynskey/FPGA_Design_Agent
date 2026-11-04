@@ -1,0 +1,159 @@
+{
+  "task": "t2_spi_master_modes",
+  "sim": "icarus",
+  "date": "2026-11-03",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_divisor_rule": true,
+      "test_mode0_msb_first": true,
+      "test_mode3_idle_high": true,
+      "test_modes_1_and_2": true,
+      "test_lsb_first_16bit": true,
+      "test_cs_hold_across_frames": true,
+      "test_busy_and_done": true,
+      "test_loopback": true,
+      "test_random_frames": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "div_min_one",
+      "why": "a divisor of 1 is accepted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_divisor_rule"
+      ]
+    },
+    {
+      "name": "msb_rx_reversed",
+      "why": "MSB-first frames are received bit-reversed",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_divisor_rule",
+        "test_mode0_msb_first",
+        "test_mode3_idle_high",
+        "test_modes_1_and_2",
+        "test_cs_hold_across_frames",
+        "test_busy_and_done",
+        "test_loopback",
+        "test_random_frames"
+      ]
+    },
+    {
+      "name": "hold_ignored_at_end",
+      "why": "CS_N rises after every frame even with CS_HOLD",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_cs_hold_across_frames",
+        "test_random_frames"
+      ]
+    },
+    {
+      "name": "always_sample_leading",
+      "why": "MISO sampled on leading edges in CPHA 1 modes",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_mode3_idle_high",
+        "test_modes_1_and_2",
+        "test_lsb_first_16bit",
+        "test_loopback",
+        "test_random_frames"
+      ]
+    },
+    {
+      "name": "done_cleared_by_any_write",
+      "why": "any STATUS write clears DONE",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_busy_and_done"
+      ]
+    },
+    {
+      "name": "txdata_overwritten_busy",
+      "why": "a TXDATA write while busy is not ignored",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_busy_and_done"
+      ]
+    },
+    {
+      "name": "edge_spacing_plus_one",
+      "why": "SCLK edges DIV+1 clocks apart",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_divisor_rule",
+        "test_mode0_msb_first",
+        "test_mode3_idle_high",
+        "test_modes_1_and_2",
+        "test_lsb_first_16bit",
+        "test_cs_hold_across_frames",
+        "test_loopback",
+        "test_random_frames"
+      ]
+    },
+    {
+      "name": "w16_ignored",
+      "why": "16-bit frames send 8 bits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_mode3_idle_high",
+        "test_modes_1_and_2",
+        "test_lsb_first_16bit",
+        "test_cs_hold_across_frames",
+        "test_loopback",
+        "test_random_frames"
+      ]
+    },
+    {
+      "name": "loopback_ignored",
+      "why": "LOOP does not feed MOSI back",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_divisor_rule",
+        "test_busy_and_done",
+        "test_loopback"
+      ]
+    },
+    {
+      "name": "cpha0_first_bit_late",
+      "why": "in CPHA 0 the first bit is not on MOSI before the first edge",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_divisor_rule",
+        "test_mode0_msb_first",
+        "test_lsb_first_16bit",
+        "test_cs_hold_across_frames",
+        "test_random_frames"
+      ]
+    }
+  ],
+  "mutants_killed": 10,
+  "mutants_total": 10,
+  "trap": {
+    "twin": "textbook mode-0-only SPI master for the ADXL362",
+    "why": "the textbook master only does CPOL = 0, CPHA = 0; mode 3 idles SCLK high and shifts on falling edges",
+    "must_fail": [
+      "test_mode3_idle_high"
+    ],
+    "failed_tests": [
+      "test_mode3_idle_high",
+      "test_modes_1_and_2",
+      "test_lsb_first_16bit",
+      "test_loopback",
+      "test_random_frames"
+    ],
+    "trap_fires": true
+  }
+}

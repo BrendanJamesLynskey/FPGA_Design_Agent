@@ -1,0 +1,8 @@
+# Hidden acceptance bench for p_window_wdt (pool; benchmark/tools/run_task.py)
+toplevel: p_window_wdt_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, WIN_OPEN: 4000, WIN_CLOSE: 12000, RST_PULSE: 50}
+phrases:
+  - "strict in both directions"
+  - "no kick at all by the time the window closes"
+  - "how many wrong keys were written"

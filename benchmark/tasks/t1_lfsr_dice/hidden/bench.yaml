@@ -1,0 +1,9 @@
+# Hidden acceptance bench for t1_lfsr_dice (benchmark/tools/run_task.py)
+toplevel: t1_lfsr_dice_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400, DEBOUNCE_CYCLES: 16, REFRESH_BITS: 3}
+phrases:
+  - "taken from the LFSR state as (state mod 6) + 1"
+  - "The feedback taps are a register, starting at 0xB400"
+  - "make the LFSR step any number of times without rolling"
+  - "CPU_RESETN resets everything, the state to 0xACE1"
