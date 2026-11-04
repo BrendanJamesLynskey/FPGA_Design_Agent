@@ -3,6 +3,8 @@ and an equality flag; the bench checks the sum only) gives exactly two operator 
 and the equality mutant must survive and be named in plain words. Each cocotb run is a few seconds."""
 
 import json
+import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -39,6 +41,9 @@ def test_tiny_rtl():
 """
 
 
+needs_icarus = pytest.mark.skipif(not shutil.which("iverilog"), reason="cocotb runs need Icarus (the RTL job has it)")
+
+
 @pytest.fixture
 def tiny(tmp_path):
     d = tmp_path / "tiny_design"
@@ -51,7 +56,7 @@ def tiny(tmp_path):
 
 
 def _cli(design, *args, lock=None):
-    env = {**__import__("os").environ, "FDA_HEAVY_LOCK": str(lock)} if lock else __import__("os").environ
+    env = {**os.environ, "FDA_HEAVY_LOCK": str(lock)} if lock else os.environ
     return subprocess.run([sys.executable, str(ROOT / "flow" / "mutate.py"), str(design), "--generic", *args],
                           capture_output=True, text=True, cwd=ROOT, env=env, timeout=600)
 
@@ -64,6 +69,7 @@ def test_candidates_are_plain_operator_changes(tiny):
     assert "line 3" in M.plain_words(c[1]) and "'==' replaced by '!='" in M.plain_words(c[1])
 
 
+@needs_icarus
 def test_generic_run_kills_one_and_names_the_survivor(tiny, tmp_path):
     out = tiny / "build" / "verif" / "mutation.json"
     r = _cli(tiny, "--max-mutants", "5", "--seed", "7", lock=tmp_path / "lock")
@@ -79,6 +85,7 @@ def test_generic_run_kills_one_and_names_the_survivor(tiny, tmp_path):
     assert "50.0%" in why and "line 3" in why
 
 
+@needs_icarus
 def test_wall_cap_skips_and_never_counts_as_killed(tiny, tmp_path):
     r = _cli(tiny, "--wall-s", "0", lock=tmp_path / "lock")
     assert r.returncode == 0, r.stdout + r.stderr
@@ -87,6 +94,7 @@ def test_wall_cap_skips_and_never_counts_as_killed(tiny, tmp_path):
     assert "no mutant was evaluated" in G.mutation_why(res)
 
 
+@needs_icarus
 def test_failing_baseline_writes_nothing(tiny, tmp_path):
     (tiny / "tests" / "tiny_bench.py").write_text(BENCH.replace("== (a + b)", "== (a + b + 1)"))
     r = _cli(tiny, lock=tmp_path / "lock")
