@@ -8,7 +8,7 @@ V3 coverage closure, V-HW board bring-up. Staged after OpenTitan's V0-V3 (Apache
 
 Reads designs/<d>/verif/testplan.yaml, the cocotb results.xml of every seed under --runs, the functional-coverage
 files, Verilator's coverage.dat, the SymbiYosys status files and the mutation result. Reports, per stage, every
-check as {value, threshold, pass}: raw numbers only, no hints. Exit status 0 only if V0..V3 all pass
+check as {value, threshold, pass}, plus a plain-words `why` on a failure that names its precondition (05j). Exit status 0 only if V0..V3 all pass
 (V-HW is reported but needs the board; pass --require-hw to gate on it).
 """
 
@@ -75,11 +75,25 @@ class PlanError(Exception):
     gate with this message, never as a traceback (brief 05c2, fix 4)."""
 
 
-def chk(value: Any, threshold: Any, ok: bool) -> dict[str, Any]:
-    return {"value": value, "threshold": threshold, "pass": bool(ok)}
+def chk(value: Any, threshold: Any, ok: bool, why: str | None = None) -> dict[str, Any]:
+    """One check. ``why`` (05j) is the plain-words reason for a failure; it is carried only on a failed check, and
+    always says the hidden precondition when the value alone looks fine (a value that meets its threshold but fails)."""
+    c = {"value": value, "threshold": threshold, "pass": bool(ok)}
+    if why and not ok:
+        c["why"] = why
+    return c
 
 
 NOT_EVALUATED = "not evaluated (no seeded results)"
+NOT_MEASURED = "not measured"
+#: how the tests role produces code-coverage data (05j): the tool and argument names as the agent sees them
+HOW_CODE_COV = ("run `simulate(sim=\"verilator\", coverage=True)` (needs Verilator 5.036+; the bench must run through "
+                "flow.cocotb_run.run, which then writes seed<N>/coverage.dat)")
+HOW_FUNC_COV = ("name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them "
+                "in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` "
+                "(cocotb-coverage); `simulate` then keeps the file as seed<N>/coverage_func.yml")
+HOW_MUTATION = ("no agent tool runs mutation testing: it needs verif/mutants.yaml and `python3 flow/mutate.py <design> "
+                "--json build/verif/mutation.json`, which is run outside the agent (harness gap)")
 
 
 def no_seeds_hint(runs: Path) -> str:
@@ -129,7 +143,7 @@ def read_results(run_dirs: list[Path]) -> dict[int, dict[str, bool]]:
 
 def merge_func_cov(run_dir: Path) -> dict[str, dict[str, int]]:
     merged: dict[str, dict[str, int]] = {}
-    for f in sorted(run_dir.glob("seed*/coverage_t1.yml")):
+    for f in sorted(run_dir.glob("seed*/coverage*.yml")):
         for name, d in (yaml.safe_load(f.read_text()) or {}).items():
             hits = d.get("bins:_hits") if isinstance(d, dict) else None
             if hits:
@@ -158,7 +172,7 @@ def merge_code_cov(run_dir: Path, rtl_dir: str) -> dict[str, Any]:
     and user (cover property) points."""
     pts: dict[tuple, int] = {}
     meta: dict[tuple, dict[str, str]] = {}
-    for f in sorted(run_dir.glob("seed*/coverage.dat")):
+    for f in sorted(run_dir.glob("seed*/coverage*.dat")):
         for kv, n in parse_cov_dat(f):
             key = tuple(sorted(kv.items()))
             pts[key] = pts.get(key, 0) + n
@@ -333,7 +347,9 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
              gates: Path | None = None) -> dict:
     plan_path = design / "verif" / "testplan.yaml"
     out: dict[str, Any] = {"design": design.name, "stages": {}}
-    v0 = {"testplan_present": chk(plan_path.exists(), True, plan_path.exists())}
+    v0 = {"testplan_present": chk(plan_path.exists(), True, plan_path.exists(),
+                                  f"{plan_path.relative_to(ROOT).as_posix() if plan_path.is_relative_to(ROOT) else plan_path} "
+                                  f"does not exist: write the testplan (verif/testplan.yaml)")}
     out["stages"]["V0"] = {"checks": v0}
     if not plan_path.exists():
         return finish(out)
@@ -346,8 +362,11 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     th = plan["thresholds"]
     bench_dir, chk_dir, formal_src = ROOT / plan["bench"]["dir"], ROOT / plan["checkers"], ROOT / plan["formal_dir"]
     modules = plan["bench"]["modules"]
-    v0["model_present"] = chk((ROOT / plan["model"]).exists(), True, (ROOT / plan["model"]).exists())
-    v0["bench_modules_present"] = chk(modules, "all files exist", all((bench_dir / f"{m}.py").exists() for m in modules))
+    v0["model_present"] = chk((ROOT / plan["model"]).exists(), True, (ROOT / plan["model"]).exists(),
+                              f"the testplan names model {plan['model']}, which does not exist")
+    absent_mods = [f"{plan['bench']['dir']}/{m}.py" for m in modules if not (bench_dir / f"{m}.py").exists()]
+    v0["bench_modules_present"] = chk(modules, "all files exist", not absent_mods,
+                                      "bench.modules lists files that do not exist: " + ", ".join(absent_mods))
     if not v0["bench_modules_present"]["pass"]:          # the V1 readers below open the bench files
         return finish(out)
     # ---- V1: traceability
@@ -402,14 +421,18 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     bad_proof += bad_replan
     v1 = {
         "requirements_have_proof_method": chk(no_method, [], not no_method),
-        "proof_methods_discharged": chk(undischarged, [], not undischarged and not no_method),
+        "proof_methods_discharged": chk(undischarged, [], not undischarged and not no_method,
+                                        "nothing is undischarged, but the proof methods themselves are not all declared: "
+                                        "fix requirements_have_proof_method first" if not undischarged else None),
         "proof_references_resolve": chk(bad_proof, [], not bad_proof),
         "spec_items_traced": chk(f"{len(items) - len(untraced)}/{len(items)}", "all", not untraced),
         "untraced_items": chk(untraced, [], not untraced),
         "unknown_spec_refs": chk(unknown, [], not unknown),
         "requirements_without_a_check": chk(no_check, [], not no_check),
         "unresolved_references": chk(bad_refs, [], not bad_refs),
-        "bench_uses_blind_model": chk(uses_model, True, uses_model),
+        "bench_uses_blind_model": chk(uses_model, True, uses_model,
+                                      "no bench module imports the model: add `from <package>.model import ...` or "
+                                      "`import model` to a module in bench.modules and compare the DUT with it"),
     }
     out["stages"]["V1"] = {"checks": v1}
     mw = macros_warning(chk_dir)                          # 05i: a warning, not a failed check
@@ -436,10 +459,15 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
             "seeds_run": chk(seeds, f">=1", True),
             "planned_tests_missing": chk(missing, [], not missing),
             "failing_tests": chk(failing, [], not failing),
-            "constrained_random_test_ran": chk(rand_ran, True, rand_ran),
-            "assertions_bound_zero_failures": chk(sorted(a_all), "bound in the run; no failure", not failing),
+            "constrained_random_test_ran": chk(rand_ran, True, rand_ran,
+                                               "no passing test with 'random' in its name in seed%s: name the constrained-random "
+                                               "test so (for example test_random_traffic) and run it" % seeds[0]),
+            "assertions_bound_zero_failures": chk(sorted(a_all), "bound in the run; no failure", not failing,
+                                                "a test failed in some seed: see failing_tests"),
             "other_simulators_failing": chk(also_bad, [], not also_bad),
-            "formal_tasks_not_passing": chk(formal_bad, [], not formal_bad),
+            "formal_tasks_not_passing": chk(formal_bad, [], not formal_bad,
+                                            "a planned formal job has no PASS: run the `formal` tool, or re-plan the method "
+                                            "(replan: in the testplan) when sby is not installed"),
         }
     else:
         v2 = {
@@ -449,7 +477,9 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
             "constrained_random_test_ran": ne(True),
             "assertions_bound_zero_failures": ne("bound in the run; no failure"),
             "other_simulators_failing": chk(also_bad, [], not also_bad),
-            "formal_tasks_not_passing": chk(formal_bad, [], not formal_bad),
+            "formal_tasks_not_passing": chk(formal_bad, [], not formal_bad,
+                                            "a planned formal job has no PASS: run the `formal` tool, or re-plan the method "
+                                            "(replan: in the testplan) when sby is not installed"),
         }
     out["stages"]["V2"] = {"checks": v2}
     # ---- V3: coverage closure
@@ -470,25 +500,58 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
             if h == 0:
                 unhit.append(f"{n}:{b}")
     pct = round(100 * hit / tot, 2) if tot else 0.0
-    code = merge_code_cov(runs, plan["design_rtl"] if "design_rtl" in plan else f"{design.relative_to(ROOT).as_posix()}/rtl/") if list(runs.glob("seed*/coverage.dat")) else {}
+    code = merge_code_cov(runs, plan["design_rtl"] if "design_rtl" in plan else f"{design.relative_to(ROOT).as_posix()}/rtl/") if list(runs.glob("seed*/coverage*.dat")) else {}
     cp = {c for r in reqs for c in r.get("cover_props", [])}
     cpw = {w["item"] for w in (waive.get("cover_properties") or [])}
     cp_unhit = sorted(c for c in cp if c not in cpw and not any(c in k and v > 0 for k, v in code.get("user", {}).items()))
     cp_pct = round(100 * (len(cp - cpw) - len(cp_unhit)) / max(1, len(cp - cpw)), 2)
     line, tog = (code.get("line") or {}).get("pct"), (code.get("toggle") or {}).get("pct")
     mut = json.loads(mutation.read_text()) if mutation and mutation.exists() else None
+    rtl_rel = plan["design_rtl"] if "design_rtl" in plan else f"{design.relative_to(ROOT).as_posix()}/rtl/"
+    th_bins = th["functional_bins_pct"]
+    if not planned_bins:
+        bins_why = ("no functional bins planned: put cover-point names in `bins:` of the testplan requirements. " + HOW_FUNC_COV)
+    elif not func:
+        bins_why = (f"{len(planned_bins)} bin group(s) planned but no functional-coverage data was found "
+                    f"(seed*/coverage*.yml): " + HOW_FUNC_COV)
+    elif tot == 0:
+        bins_why = ("the planned bin names (" + ", ".join(planned_bins[:6]) + ") are not in the functional-coverage data (it has: "
+                    + ", ".join(sorted(func)[:6]) + "): use the same names in the testplan and the bench")
+    else:
+        bins_why = f"{hit} of {tot} planned bins were hit; the threshold needs {th_bins}%: see functional_bins_unhit"
+    if not code:
+        code_why = "no code-coverage data: " + HOW_CODE_COV
+    elif not cp - cpw:
+        code_why = "no cover properties planned: name them in `cover_props:` of the requirements (C_*, declared with V_COVER)"
+    else:
+        code_why = "cover properties were not hit: see cover_properties_unhit"
+
+    def meas(kind: str, val: Any) -> tuple[Any, str | None]:
+        """``(value, why)`` for line/toggle: 'not measured: how' when the evidence never existed."""
+        if val is not None:
+            return val, f"{kind} coverage is {val}%, below the threshold: exercise more of the RTL (see code_coverage_unhit)"
+        if not code:
+            return NOT_MEASURED, f"not measured: no code-coverage data; " + HOW_CODE_COV
+        return NOT_MEASURED, (f"not measured: coverage.dat has no {kind} points in {rtl_rel}: build the RTL under test in the "
+                              f"coverage run and check the plan's design_rtl path")
+    line_v, line_why = meas("line", line)
+    tog_v, tog_why = meas("toggle", tog)
+    mut_ok = bool(mut) and mut["score_pct"] >= th["mutation_score_pct"]
     v3 = {
-        "seeds_run": chk(len(seeds) if seeds else no_seeds_hint(runs), f">={th['seeds_min']}", len(seeds) >= th["seeds_min"]),
+        "seeds_run": chk(len(seeds) if seeds else no_seeds_hint(runs), f">={th['seeds_min']}", len(seeds) >= th["seeds_min"],
+                         f"{len(seeds)} seed(s) run, the plan needs {th['seeds_min']}: call flow.cocotb_run.run once per seed"),
         "all_seeds_pass": chk(failing, [], not failing and bool(seeds)) if seeds else ne([]),
-        "functional_bins_pct": chk(f"{pct} ({hit}/{tot})", th["functional_bins_pct"], tot > 0 and pct >= th["functional_bins_pct"]),
-        "functional_bins_unhit": chk(unhit, [], pct >= th["functional_bins_pct"]),
-        "cover_properties_pct": chk(f"{cp_pct}", th["cover_properties_pct"], cp_pct >= th["cover_properties_pct"] and bool(code)),
-        "cover_properties_unhit": chk(cp_unhit, [], not cp_unhit and bool(code)),
-        "line_pct": chk(line, th["line_pct"], line is not None and line >= th["line_pct"]),
-        "toggle_pct": chk(tog, th["toggle_pct"], tog is not None and tog >= th["toggle_pct"]),
-        "waivers_without_reason": chk(len(bad_waive), 0, not bad_waive),
-        "mutation_score_pct": chk(mut and mut["score_pct"], th["mutation_score_pct"],
-                                  bool(mut) and mut["score_pct"] >= th["mutation_score_pct"]),
+        "functional_bins_pct": chk(f"{pct} ({hit}/{tot})", th_bins, tot > 0 and pct >= th_bins, bins_why),
+        "functional_bins_unhit": chk(unhit, [], pct >= th_bins, bins_why),
+        "cover_properties_pct": chk(f"{cp_pct}", th["cover_properties_pct"], cp_pct >= th["cover_properties_pct"] and bool(code),
+                                    code_why if (not code or not cp - cpw) else f"cover properties hit: {cp_pct}%, need {th['cover_properties_pct']}%"),
+        "cover_properties_unhit": chk(cp_unhit, [], not cp_unhit and bool(code), code_why),
+        "line_pct": chk(line_v, th["line_pct"], line is not None and line >= th["line_pct"], line_why),
+        "toggle_pct": chk(tog_v, th["toggle_pct"], tog is not None and tog >= th["toggle_pct"], tog_why),
+        "waivers_without_reason": chk(len(bad_waive), 0, not bad_waive, "every waiver needs a non-empty `reason`"),
+        "mutation_score_pct": chk(mut["score_pct"] if mut else NOT_MEASURED, th["mutation_score_pct"], mut_ok,
+                                  (f"mutation score {mut['score_pct']}% is below the threshold: add checks that kill the survivors" if mut
+                                   else "not measured: " + HOW_MUTATION)),
     }
     if not seeds:       # coverage is read from the seeds' own files: nothing to evaluate without them
         for k in ("functional_bins_pct", "functional_bins_unhit", "cover_properties_pct", "cover_properties_unhit",
@@ -504,7 +567,8 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     table = trace_table(spec_reqs, entries, res, read_formal(formal), gates_json, hw_json)
     not_pass = [f"{r['requirement']}:{r['method']}={r['result']}" for r in table if r["result"] != "pass"]
     out["traceability"] = table
-    out["stages"]["SIGNOFF"] = {"checks": {"every_method_has_passing_evidence": chk(not_pass, [], not not_pass and bool(table))}}
+    out["stages"]["SIGNOFF"] = {"checks": {"every_method_has_passing_evidence": chk(not_pass, [], not not_pass and bool(table),
+                                                                                 "no proof entries: declare a proof list per requirement in the testplan" if not table else None)}}
     out["coverage_detail"] = {"bins": func, "requirements": [
         {"id": r["id"], "spec": r["spec"], "tests": r.get("tests", []),
          "bins": {n: {"hit": sum(1 for h in (func.get(n) or {}).values() if h > 0), "total": len(func.get(n) or {})}
@@ -564,6 +628,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{s}: {'PASS' if st.get('pass') else 'FAIL'}")
         for n, c in st["checks"].items():
             print(f"    {'ok ' if c['pass'] else 'BAD'} {n}: {c['value']}  (threshold {c['threshold']})")
+            if c.get("why"):
+                print(f"        why: {c['why']}")
     for r in rep.get("traceability") or []:
         print(f"    trace {r['requirement']:8} {r['method']:10} {r['artefact']:55} {r['result']:8} {r['detail']}")
     for w in rep.get("warnings") or []:

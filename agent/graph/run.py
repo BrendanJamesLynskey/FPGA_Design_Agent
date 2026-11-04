@@ -569,7 +569,12 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
             "file, already there; include it with the SystemVerilog include directive): `V_SAME(A_x, ante, cons)`, `V_NEXT(A_y, ante, cons)`, `V_RST(A_z, cons)`, "
             "`V_COVER(C_w, expr)`. The module that includes it must declare `clk`, `rst` and `seen_rst`. Names must start A_ or C_. "
             "A plain `C_x: cover property (...)` is not read by the gate, so the name stays unresolved in the testplan.",
-            "6. `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
+            *(["6. V3 coverage evidence (the gate reads only these): (a) functional bins: at least one name in `bins:` of the requirements, "
+               "sampled in the bench and exported by its last test with coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"]) "
+               "(cocotb-coverage); (b) code coverage (line, toggle, cover properties): run `simulate(sim=\"verilator\", coverage=True)` "
+               "so the seeds' coverage.dat exists; (c) mutation score: no agent tool produces it, so the gate reports it as not measured."]
+              if rt.cfg.verif_level == "V3" else []),
+            ("7" if rt.cfg.verif_level == "V3" else "6") + ". `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
             "step in the proof list now (uart_tests, ila_captures or step:case).",
         ]
     else:

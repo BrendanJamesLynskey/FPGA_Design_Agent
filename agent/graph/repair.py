@@ -48,6 +48,9 @@ def verif_failures(v: dict[str, Any] | None, need: str = "V3", limit: int = 80) 
             continue          # a consequence of another failed check (05h): the line that names the cause is enough
         if isinstance(val, list):
             val = f"[{len(val)}] " + ", ".join(str(x) for x in val[:limit]) + (" ..." if len(val) > limit else "")
+        if c.get("why"):          # 05j: the reason in plain words (the hidden precondition when the value looks fine)
+            out.append(f"{st} {name}: {c['why']} [value {str(val)[:300]}, need {c.get('threshold')}]")
+            continue
         out.append(f"{st} {name}: {str(val)[:1500]} (need {c.get('threshold')})")
     return out or [f"verification stopped at {st}"]
 
