@@ -67,10 +67,11 @@ def take_lock(job: str, wait_s: float, expect_s: float) -> tuple[Path | None, st
     p = lock_path()
     if p is None:
         return None, ""
-    line = (f"fda-mutate {job} {time.strftime('%Y-%m-%d %H:%M')} "
-            f"{time.strftime('%H:%M', time.localtime(time.time() + expect_s))}\n")
     end = time.monotonic() + wait_s
     while True:
+        # built at the moment of acquisition, so the start and expected end are real, not the start of the wait
+        line = (f"fda-mutate {job} {time.strftime('%Y-%m-%d %H:%M:%S')} "
+                f"{time.strftime('%H:%M', time.localtime(time.time() + expect_s))}\n")
         try:
             fd = os.open(p, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             with os.fdopen(fd, "w") as f:

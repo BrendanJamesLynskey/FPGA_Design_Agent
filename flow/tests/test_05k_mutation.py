@@ -111,3 +111,25 @@ def test_busy_lock_returns_75(tiny, tmp_path):
 
 def test_gate_message_without_mutation_names_the_tool():
     assert "`mutate` tool" in G.mutation_why(None)
+
+
+def test_lock_line_records_the_acquisition_time_not_the_wait_start(tmp_path, monkeypatch):
+    import threading
+    import time
+    lock = tmp_path / "lock"
+    lock.write_text("other job 10:00 11:00\n")
+    monkeypatch.setenv("FDA_HEAVY_LOCK", str(lock))
+    released = []
+
+    def release():
+        time.sleep(1.5)
+        lock.unlink()
+        released.append(time.strftime("%Y-%m-%d %H:%M:%S"))
+    threading.Thread(target=release).start()
+    t_wait = time.strftime("%Y-%m-%d %H:%M:%S")
+    p, holder = M.take_lock("j", wait_s=20, expect_s=60)
+    assert p == lock and holder == ""
+    start = " ".join(lock.read_text().split()[2:4])
+    assert start >= released[0] and start >= t_wait
+    assert time.mktime(time.strptime(start, "%Y-%m-%d %H:%M:%S")) - time.mktime(time.strptime(t_wait, "%Y-%m-%d %H:%M:%S")) >= 1
+    lock.unlink()
