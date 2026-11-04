@@ -316,6 +316,40 @@ def simulate(s: Session, sim: str = "icarus", coverage: bool = False) -> dict:
     return res
 
 
+@tool("mutate", "Mutation testing of the design's RTL (V3 mutation_score_pct): runs tests/test_*_rtl.py against a capped, "
+                "seeded sample of mutated copies of rtl/ (operator and constant changes, or verif/mutants.yaml) and writes "
+                "build/verif/mutation.json for gates(kind=verif). A mutant is killed only when a test fails; surviving mutants "
+                "come back in plain words (file, line, the change) so you can add checks that catch them. It is a heavy job "
+                "(minutes): it takes the machine's heavy-job lock and returns busy=true, with 'busy, retry', when another job holds it.",
+      {"max_mutants": {"type": "integer", "minimum": 1, "maximum": 50},
+       "seed": {"type": "integer", "minimum": 0, "maximum": 1000000},
+       "lock_wait_s": {"type": "integer", "minimum": 0, "maximum": 600}})
+def mutate(s: Session, max_mutants: int = 20, seed: int = 1, lock_wait_s: int = 60) -> dict:
+    load_build_cfg(s)
+    _refuse_on_scan(s, python=True, hdl=True)
+    if not list((s.design / "tests").glob("test_*_rtl.py")) or not list((s.design / "rtl").glob("*.sv")):
+        return {"ok": False, "output": "the design needs rtl/*.sv and tests/test_*_rtl.py to be mutated"}
+    out = s.design / "build" / "verif" / "mutation.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.unlink(missing_ok=True)          # never read an old result as the new one
+    wall = 1500
+    argv = [PY, str(s.root / "flow" / "mutate.py"), _rel(s, s.design), "--generic", "--json", _rel(s, out),
+            "--max-mutants", str(max_mutants), "--seed", str(seed), "--wall-s", str(wall), "--lock-wait-s", str(lock_wait_s)]
+    if shutil.which("systemd-run") and not os.environ.get("FDA_NO_SYSTEMD_CAP"):      # the machine rule: memory-capped
+        argv = ["systemd-run", "--user", "--scope", "-q", "-p", "MemoryMax=8G", *argv]
+    r = s.runner.run("mutate", argv, s.root, timeout=wall + lock_wait_s + 300)
+    text = _text_out(r)
+    if r.returncode == 75:
+        return {"ok": False, "busy": True, "output": "busy, retry: " + text, "returncode": 75}
+    data = _read_json(out)
+    res: dict[str, Any] = {"ok": r.returncode == 0 and bool(data), "output": text, "returncode": r.returncode}
+    if data:
+        res.update({k: data.get(k) for k in ("score_pct", "evaluated", "killed", "survived", "timed_out", "skipped", "invalid",
+                                             "candidates", "sampled", "rng_seed", "caps")})
+        res["surviving_mutants"] = data.get("survivor_text", [])
+    return res
+
+
 @tool("formal", "Run the design's SymbiYosys jobs (verif/formal/*.sby): bounded proof and cover.", {})
 def formal(s: Session) -> dict:
     if not list((s.design / "verif" / "formal").glob("*.sby")):

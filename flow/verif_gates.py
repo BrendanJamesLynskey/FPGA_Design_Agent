@@ -92,8 +92,24 @@ HOW_CODE_COV = ("run `simulate(sim=\"verilator\", coverage=True)` (needs Verilat
 HOW_FUNC_COV = ("name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them "
                 "in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` "
                 "(cocotb-coverage); `simulate` then keeps the file as seed<N>/coverage_func.yml")
-HOW_MUTATION = ("no agent tool runs mutation testing: it needs verif/mutants.yaml and `python3 flow/mutate.py <design> "
-                "--json build/verif/mutation.json`, which is run outside the agent (harness gap)")
+HOW_MUTATION = ("call the `mutate` tool (tests role, stage 2, V3): it runs the design's tests/test_*_rtl.py against a capped "
+                "sample of mutated copies of rtl/ and writes build/verif/mutation.json, then call gates(kind=verif) again")
+
+
+def mutation_why(mut: dict | None) -> str:
+    """05k: the plain reason the mutation check fails (or the survivors, in words, so the tests role can add checks)."""
+    if not mut:
+        return "not measured: " + HOW_MUTATION
+    if mut.get("evaluated", 1) == 0:
+        return ("no mutant was evaluated (" + f"{mut.get('invalid', 0)} invalid, {mut.get('skipped', 0)} skipped by the wall-time cap"
+                + "): the score is not measured; call `mutate` again")
+    text = mut.get("survivor_text") or mut.get("survivors") or []
+    more = f" (+{len(text) - 5} more in build/verif/mutation.json)" if len(text) > 5 else ""
+    extra = ""
+    if mut.get("timed_out"):
+        extra = f"; {mut['timed_out']} timed out and count as not killed"
+    return (f"mutation score {mut['score_pct']}% is below the threshold{extra}: add checks that kill the survivors"
+            + (": " + " | ".join(text[:5]) + more if text else ""))
 
 
 def no_seeds_hint(runs: Path) -> str:
@@ -536,7 +552,7 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
                               f"coverage run and check the plan's design_rtl path")
     line_v, line_why = meas("line", line)
     tog_v, tog_why = meas("toggle", tog)
-    mut_ok = bool(mut) and mut["score_pct"] >= th["mutation_score_pct"]
+    mut_ok = bool(mut) and mut["score_pct"] >= th["mutation_score_pct"] and mut.get("evaluated", 1) > 0
     v3 = {
         "seeds_run": chk(len(seeds) if seeds else no_seeds_hint(runs), f">={th['seeds_min']}", len(seeds) >= th["seeds_min"],
                          f"{len(seeds)} seed(s) run, the plan needs {th['seeds_min']}: call flow.cocotb_run.run once per seed"),
@@ -550,8 +566,7 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         "toggle_pct": chk(tog_v, th["toggle_pct"], tog is not None and tog >= th["toggle_pct"], tog_why),
         "waivers_without_reason": chk(len(bad_waive), 0, not bad_waive, "every waiver needs a non-empty `reason`"),
         "mutation_score_pct": chk(mut["score_pct"] if mut else NOT_MEASURED, th["mutation_score_pct"], mut_ok,
-                                  (f"mutation score {mut['score_pct']}% is below the threshold: add checks that kill the survivors" if mut
-                                   else "not measured: " + HOW_MUTATION)),
+                                  mutation_why(mut)),
     }
     if not seeds:       # coverage is read from the seeds' own files: nothing to evaluate without them
         for k in ("functional_bins_pct", "functional_bins_unhit", "cover_properties_pct", "cover_properties_unhit",

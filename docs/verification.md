@@ -129,8 +129,22 @@ A failed check carries a plain-words `why`. Several checks need evidence that on
 say so when it is absent: `functional_bins_pct` needs at least one planned bin and a functional-coverage file
 (`seed*/coverage*.yml`, exported by the bench to `$FDA_COV_OUT`); the cover-property, `line_pct` and `toggle_pct`
 checks need `seed*/coverage*.dat`, which `simulate(sim="verilator", coverage=True)` records; `mutation_score_pct`
-needs a mutation result (`build/verif/mutation.json`), which no agent tool produces yet and is reported as
-`not measured`. A stage-2 run that the agent has no tool for stops at the level it can reach (`--verif-level`).
+needs a mutation result (`build/verif/mutation.json`), which the `mutate` tool writes (until it has run, the check
+reads `not measured`). The tests role has `mutate` at stage 2 when the level is V3.
+
+### The `mutate` tool (`flow/mutate.py --generic`)
+
+It runs the design's own `tests/test_*_rtl.py` (Icarus, the bench's own seeds) against mutated copies of `rtl/`:
+the design's `verif/mutants.yaml` when it has one, else operator mutants generated from the RTL (`==`/`!=`,
+`&&`/`||`, `+`/`-`, `<`/`>=`, `>`/`<=`, a removed `!`, a flipped 1-bit constant), sampled with a recorded RNG seed.
+The unmutated RTL must pass first, or nothing is written. Caps (defaults): 20 mutants, 1500 s wall time in all, a
+per-mutant timeout of 4 times the baseline run (30 to 600 s). A mutant is killed only when its run fails. Invalid
+mutants (the copy does not compile) are excluded; timed-out mutants count as not killed; mutants the wall-time cap
+left unrun are listed as skipped and excluded. `score_pct` is killed / (killed + survived + timed out). An equivalent
+mutant (no visible behaviour change) shows as a survivor, so a score below 100 is not always a weak bench. The result
+lists each survivor in words (file, line, the change); `gates(kind=verif)` repeats up to five in the failing check's
+reason. The tool takes the machine's heavy-job lock (`$FDA_HEAVY_LOCK`) under a memory cap, and answers `busy, retry`
+when it is held. A stage-2 run whose level it has no tool for stops at the level it can reach (`--verif-level`).
 
 ## Limits
 

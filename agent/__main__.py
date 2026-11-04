@@ -101,8 +101,8 @@ def main(argv: list[str] | None = None) -> int:
                                    "roles: clarify, model, tests, rtl")
     r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
-                   help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only while the agent "
-                        "has no tool that produces V2/V3 evidence: multi-seed runs, formal, coverage, mutation)")
+                   help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
+                        "V3 needs multi-seed runs, coverage and the mutate tool)")
     for p in (r, sub.add_parser("resume")):
         p.add_argument("--replies", type=Path)
         p.add_argument("--reply")

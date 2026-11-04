@@ -16,7 +16,7 @@ from typing import Any, Callable
 
 from agent.core.security import SecurityError, redact, redact_obj, validate_args
 
-SCHEMA_VERSION = "1.4.0"        # bump the minor version for an added optional argument or tool, the major for a break
+SCHEMA_VERSION = "1.5.0"        # bump the minor version for an added optional argument or tool, the major for a break
 MAX_OUTPUT = 20_000             # characters of raw output returned to the model; the full text stays in build/ files
 
 

@@ -1,5 +1,5 @@
 {
- "schema_version": "1.4.0",
+ "schema_version": "1.5.0",
  "tools": [
   {
    "name": "board_constraints",
@@ -36,7 +36,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "bringup",
@@ -47,7 +47,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "build",
@@ -75,7 +75,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "check_constraints",
@@ -86,7 +86,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "formal",
@@ -97,7 +97,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "gates",
@@ -126,7 +126,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "lint",
@@ -137,7 +137,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "list_files",
@@ -153,7 +153,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "load_skill",
@@ -179,7 +179,34 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
+  },
+  {
+   "name": "mutate",
+   "description": "Mutation testing of the design's RTL (V3 mutation_score_pct): runs tests/test_*_rtl.py against a capped, seeded sample of mutated copies of rtl/ (operator and constant changes, or verif/mutants.yaml) and writes build/verif/mutation.json for gates(kind=verif). A mutant is killed only when a test fails; surviving mutants come back in plain words (file, line, the change) so you can add checks that catch them. It is a heavy job (minutes): it takes the machine's heavy-job lock and returns busy=true, with 'busy, retry', when another job holds it.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "max_mutants": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50
+     },
+     "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+     },
+     "lock_wait_s": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 600
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.5.0"
   },
   {
    "name": "program",
@@ -201,7 +228,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "read_file",
@@ -228,7 +255,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "report",
@@ -262,7 +289,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "search_docs",
@@ -293,7 +320,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "simulate",
@@ -315,7 +342,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "spec_items",
@@ -326,7 +353,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "stage_note",
@@ -360,7 +387,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   },
   {
    "name": "write_file",
@@ -383,7 +410,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.4.0"
+   "version": "1.5.0"
   }
  ]
 }
