@@ -88,3 +88,21 @@ Code: [docs/test_writer.md](../../docs/test_writer.md) (diagnosis table, fixes).
 | `agent_cvdp_profile_05g_run1.json` | `cvdp` profile. **Stage 2 passed at visit 2** (first time in the recorded cvdp runs: 05f's two stopped there). The test writer's failure at visit 1 (formal methods named as bench tests, no SymbiYosys here) was repaired in 2 turns by a `replan:` with reasons while keeping its other files. **Null at stage 3**: `post_synth_no_unconstrained_endpoints`, 5 visits, owner the stage-3 RTL writer. Plan estimate $3.73; oracle $0.013. |
 | `agent_luna_05g_stage9_resume.json` | The stage-9 check, from the recorded luna run `20261103-004742-f7ba` (stages 0-8 pass, stalled at stage 9 in 05e/05f), rewound to the end of stage 8 and continued. Visit 1: the RTL writer took its 30 of 30 turns and the tests role then got its reserved 15 (before: it never got a turn), but wrote nothing (4 `gates` calls). Visit 2: tests role 29 turns wrote `hw_checks.py` and `tests/test_t1_dimmer_counter_hw.py`; `bringup_ready` READY; stopped at "hardware: awaiting approval before programming" (board never programmed). $0.071. |
 
+
+### 2026-11-04: Claude Code arm re-measured with tool text visible (PRs #23, #26, #27, #28, #29)
+
+Before PR #23 the Claude Code arm got tool *metadata* only (no file text, no tool output), so the 05c-05g Claude Code
+results measure nothing about the models. Single runs on `t1_dimmer_counter`, oracle interview, review off.
+
+| File | Model | Level | Result |
+|---|---|---|---|
+| `agent_cc_haiku_t1_mcpcheck.json` | claude-haiku-5-5 | V3 | MCP fix confirmed: 104/104 successful tool results carry text. Stage 2 x5. |
+| `agent_cc_sonnet_t1_remeasure1.json` | claude-sonnet-5-5 | V3 | Stage 2 x5: real RTL vs model disagreement (seg after reset). |
+| `agent_cc_opus_t1_remeasure1.json` | claude-opus-5-5 | V3 | Stage 2 x5: harness, V2 read the wrong results path (fixed #27). |
+| `agent_cc_sonnet_t1_05h.json` | claude-sonnet-5-5 | V3 | Stage 2 x5: harness, checker macros never given (fixed #28). |
+| `agent_cc_sonnet_t1_05i.json` | claude-sonnet-5-5 | V3 | Passes V0-V2; stops at V3 (no mutation tool for the agent; messages fixed #29). |
+| `agent_cc_sonnet_t1_05j_v2.json` | claude-sonnet-5-5 | **V2** | **All gates of stages 0-8 pass**: WNS +2.761 ns, QoR 5, 479 LUT / 523 FF, bitstream. Plan estimate $2.17, 33 min. |
+| `agent_cc_opus_t1_05j_v2.json` | claude-opus-5-5 | **V2** | **All gates of stages 0-8 pass**, stage 2 at the first visit: WNS +2.283 ns, QoR 5, 691 LUT / 1026 FF, bitstream. Plan estimate $6.71, 51 min. |
+
+V3 is unreachable for any agent until mutation has a tool. The 05g Deep Agents cvdp run that passed stage 2 ran at V1, so
+compare the two arms only at the same `--verif-level`.
