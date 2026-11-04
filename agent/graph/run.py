@@ -868,8 +868,9 @@ def v3_evidence(rt: Runtime, sim_ok: bool) -> dict:
     mut_file.unlink(missing_ok=True)                       # never read an old mutation result as the new one
     from agent.core.tools import available_sims
     if "verilator" not in available_sims():
-        st["coverage"]["why"] = ("the code-coverage run was not made: Verilator 5.036 or newer is not available on this "
-                                 "machine, so line, toggle and cover-property coverage are not measured")
+        st["coverage"]["why"] = ("the code-coverage run was not made: the flow offers Verilator only when 5.036 or newer is "
+                                 "installed and the run is not in the container image (which holds Icarus only), so line, "
+                                 "toggle and cover-property coverage are not measured")
     else:
         from flow import mutate as fm            # the machine's heavy-job lock (a Verilator build is heavy too); $FDA_HEAVY_LOCK
         lock, holder = fm.take_lock("v3-coverage", V3_MUTATION_ARGS["lock_wait_s"], 900)

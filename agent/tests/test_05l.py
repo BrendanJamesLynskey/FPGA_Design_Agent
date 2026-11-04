@@ -184,7 +184,7 @@ def test_the_coverage_run_releases_its_own_lock(session, monkeypatch):
 
 def test_no_verilator_says_so_and_runs_nothing(session, monkeypatch):
     calls, st = _v3(session, monkeypatch, sims=("icarus",))
-    assert calls.calls == [] and "Verilator" in st["coverage"]["why"]
+    assert calls.calls == [] and "Verilator" in st["coverage"]["why"] and not tool_mentions(st["coverage"]["why"])
 
 
 def test_the_same_sources_are_not_run_twice(session, monkeypatch):
