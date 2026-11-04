@@ -128,9 +128,17 @@ covergroup fixture (`flow/tests/fixtures/nonportable_covergroup.sv`, tested in `
 A failed check carries a plain-words `why`. Several checks need evidence that only a particular run produces, and
 say so when it is absent: `functional_bins_pct` needs at least one planned bin and a functional-coverage file
 (`seed*/coverage*.yml`, exported by the bench to `$FDA_COV_OUT`); the cover-property, `line_pct` and `toggle_pct`
-checks need `seed*/coverage*.dat`, which `simulate(sim="verilator", coverage=True)` records; `mutation_score_pct`
-needs a mutation result (`build/verif/mutation.json`), which the `mutate` tool writes (until it has run, the check
-reads `not measured`). The tests role has `mutate` at stage 2 when the level is V3.
+checks need `seed*/coverage*.dat`, which the Verilator coverage run records; `mutation_score_pct`
+needs a mutation result (`build/verif/mutation.json`). **The graph produces both itself (brief 05l).** At stage 2 with
+level V3, once V0 to V2 pass, `node_gate` runs `simulate(sim="verilator", coverage=True)` (every seed the bench
+runs) and then the `mutate` step, and gates again; the result files are the ones the gates read. The same sources
+are not run twice (a hash of rtl/, tests/, verif/, model.py and spec.yaml). A step that cannot run (the heavy lock
+stays busy past the wait, no Verilator 5.036+, the bench fails under Verilator) is recorded in
+`build/verif/v3_evidence.json`, and the gate says so in the `why` of the check it leaves `not measured`. The tests
+role is given no `simulate` or `mutate`: its repair texts say what the evidence showed (unhit cover properties by
+name, line and toggle gaps as file:line, surviving mutants as file, line and change) and what it can do about it (add
+or extend tests, add `V_COVER` points, tighten checks). `mutate` stays a registered tool (owner and MCP use) but no
+role is offered it; `agent/tests/test_05l.py` fails if any text names a tool the role to whom it is addressed lacks.
 
 ### The `mutate` tool (`flow/mutate.py --generic`)
 
@@ -144,7 +152,7 @@ left unrun are listed as skipped and excluded. `score_pct` is killed / (killed +
 mutant (no visible behaviour change) shows as a survivor, so a score below 100 is not always a weak bench. The result
 lists each survivor in words (file, line, the change); `gates(kind=verif)` repeats up to five in the failing check's
 reason. The tool takes the machine's heavy-job lock (`$FDA_HEAVY_LOCK`) under a memory cap, and answers `busy, retry`
-when it is held. A stage-2 run whose level it has no tool for stops at the level it can reach (`--verif-level`).
+when it is held. 
 
 ## Limits
 

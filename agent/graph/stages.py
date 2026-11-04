@@ -33,7 +33,7 @@ MACHINE: tuple[Stage, ...] = (
     Stage(0, "clarify", FILES, ("spec_signed",), (), {"turns": 20, "seconds": 900, "usd": 0.20}),
     Stage(1, "board-and-device-planning", (*FILES, "board_constraints", "check_constraints", "gates"),
           ("arch_note", "arch_yaml", "inventory"), (0,), _L),
-    Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "mutate", "gates"),
+    Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates"),
           ("arch_approved", "lint", "model_contract", "simulate", "standards_rtl", "verif_v3", "stage_rtl"), (0, 1),
           {"turns": 80, "seconds": 3600, "usd": 0.80}),      # 05g: 60 -> 80, the tests role keeps a reserve (run.ROLE_TURN_RESERVE)
     Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates", "report"), ("constraints_post_synth",), (2,), _L),   # f2-stage3-io: + report

@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
-                        "V3 needs multi-seed runs, coverage and the mutate tool)")
+                        "V3 needs multi-seed runs; the graph itself runs the Verilator coverage run and the mutation run)")
     for p in (r, sub.add_parser("resume")):
         p.add_argument("--replies", type=Path)
         p.add_argument("--reply")

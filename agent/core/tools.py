@@ -442,6 +442,8 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
         # bring-up result (an absent file leaves those rows pending)
         if (s.design / "build" / "verif" / "mutation.json").is_file():       # 05j: mutation evidence, once someone ran it
             argv += ["--mutation", _rel(s, s.design / "build" / "verif" / "mutation.json")]
+        if (s.design / "build" / "verif" / "v3_evidence.json").is_file():    # 05l: why a V3 step was not measured
+            argv += ["--evidence", _rel(s, s.design / "build" / "verif" / "v3_evidence.json")]
         if (s.design / "build" / "base" / "gates.json").is_file():
             argv += ["--gates", _rel(s, s.design / "build" / "base" / "gates.json")]
         if (s.design / "build" / "bringup" / f"{s.design.name}_bringup.json").is_file():

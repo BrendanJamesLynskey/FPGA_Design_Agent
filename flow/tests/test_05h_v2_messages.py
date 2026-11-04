@@ -22,7 +22,7 @@ def test_no_seeded_results_gives_one_actionable_line(tmp_path):
     hint = c["seeds_run"]["value"]
     assert not c["seeds_run"]["pass"]
     assert "/seed*/results.xml" in hint and "seed<N>/results.xml" in hint     # directory read and file expected
-    assert "flow.cocotb_run.run(" in hint and "seed=N" in hint and "simulate" in hint   # how the tests role makes it
+    assert "flow.cocotb_run.run(" in hint and "seed=N" in hint and "simulation step" in hint   # how the tests role makes it (05l: the flow runs it)
     for k in ("planned_tests_missing", "failing_tests", "constrained_random_test_ran", "assertions_bound_zero_failures"):
         assert c[k]["value"] == G.NOT_EVALUATED and not c[k]["pass"]
 

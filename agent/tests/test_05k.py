@@ -1,5 +1,5 @@
-"""Brief 05k: the `mutate` tool is in the schema, is offered to the tests role at stage 2 level V3 only, and returns
-'busy, retry' when the heavy lock is held."""
+"""Brief 05k: the `mutate` tool is in the schema and returns 'busy, retry' when the heavy lock is held. (05l: no role is
+offered it; the harness runs it itself, see test_05l.)"""
 
 from agent.core import dispatch
 import agent.core.tools  # noqa: F401  (registers the tools)
@@ -7,21 +7,17 @@ from agent.core.registry import TOOLS
 from agent.core.runner import RunResult
 from agent.core.session import ROOT
 from agent.graph import run as R
-from agent.graph.stages import MACHINE
 
 
-def test_mutate_is_a_stage2_tool_with_schema():
+def test_mutate_is_a_registered_tool_with_schema():
     assert "mutate" in TOOLS and "mutate" in R.FLOW_TOOLS
-    assert "mutate" in next(st for st in MACHINE if st.n == 2).tools
     assert set(TOOLS["mutate"].input_schema["properties"]) == {"max_mutants", "seed", "lock_wait_s"}
 
 
-def test_only_the_tests_role_at_stage_2_level_v3_gets_it():
+def test_no_role_is_offered_it():
     a = ("lint", "mutate", "simulate")
-    assert R.role_tools("tests", 2, "V3", a) == a
-    assert R.role_tools("tests", 2, "V2", a) == ("lint", "simulate")
-    assert R.role_tools("rtl", 2, "V3", a) == ("lint", "simulate")
-    assert R.role_tools("tests", 9, "V3", a) == ("lint", "simulate")
+    for role, n, level in (("tests", 2, "V3"), ("tests", 2, "V2"), ("rtl", 2, "V3"), ("tests", 9, "V3")):
+        assert R.role_tools(role, n, level, a) == ("lint", "simulate")
 
 
 def test_busy_result(session):
