@@ -7,3 +7,6 @@
   write of 10000 or more is clamped or ignored (ignored); whether WRAPS counts both directions (yes) and how it is
   cleared (any write); the debounce rule and time; glyph shapes for 6, 7, 9.
 - **Look at:** the wrap counter's width (8 bits) and that STEP is read from synchronised but not debounced switches.
+- **v1.2 (2026-11-04):** `scan_display` (benchmark/lib/bench.py) now treats a digit with every segment and DP off as
+  dark whether or not its anode is low, so a design that blanks leading digits by segments passes; a leading digit that lights
+  any segment still fails (the trap `test_leading_zero_blanking`). Reset after activity is untested (deferred to v2).

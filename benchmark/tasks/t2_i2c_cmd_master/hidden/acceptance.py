@@ -13,6 +13,11 @@ from model import (BUSY, CMD, DESIGN_ID, INFO, OP_READ, OP_START, OP_STOP, OP_WR
 ADDR = 0x4B
 
 
+# v1.2: SCL high time is 2Q to 2Q + SYNC_SLACK clocks. The spec says wait until SCL is seen high through a two-flop
+# synchroniser, then 2Q: 2-3 clocks of synchroniser plus 1-3 of state and registered-output latency; 8 allows for that.
+SYNC_SLACK = 8
+
+
 class Env:
     def __init__(self, dut, temp_q7: int = 0x0D87) -> None:
         self.b = Board(dut, {"dev_scl_pull": 0, "dev_sda_pull": 0})
@@ -132,7 +137,7 @@ async def test_clock_stretching(dut):
     await e.cmd(OP_STOP)
     e.check_bus()
     hi = 2 * e.q
-    assert all(hi <= h <= hi + 4 for h in e.bus.high), f"SCL high times {sorted(set(e.bus.high))}, 2Q = {hi}"
+    assert all(hi <= h <= hi + SYNC_SLACK for h in e.bus.high), f"SCL high times {sorted(set(e.bus.high))}, 2Q = {hi}"
 
 
 @cocotb.test(timeout_time=1585600, timeout_unit="ns")
@@ -142,7 +147,7 @@ async def test_bit_timing(dut):
     await e.reg_read(0x00, 2)
     e.check_bus()
     hi, lo = 2 * e.q, 2 * e.q
-    assert e.bus.high and all(hi <= h <= hi + 4 for h in e.bus.high), f"SCL high {sorted(set(e.bus.high))}"
+    assert e.bus.high and all(hi <= h <= hi + SYNC_SLACK for h in e.bus.high), f"SCL high {sorted(set(e.bus.high))}"
     inner = [t for t in e.bus.low if t < 100]            # lows inside a command (between commands SCL waits low)
     assert len(inner) >= 8 * 5 and all(lo <= t <= lo + 2 for t in inner), f"SCL low {sorted(set(e.bus.low))}"
 

@@ -12,3 +12,6 @@
   transaction. Registers are read straight after a reading ends (PERIOD_CYCLES = 8000 in the bench); STATUS.BUSY is
   masked in those reads. The ALARM test drives INT through the model's comparator logic with T_HYST = 5 C.
 - Hardware: selfcheck sets T_HIGH below the room temperature to see the real INT fire.
+- **v1.2 (2026-11-04):** SCL high time is accepted from 2Q to 2Q + 8 clocks (v1: + 4). The spec says wait until SCL is
+  seen high through a two-flop synchroniser, then 2Q: 2-3 clocks of synchroniser plus 1-3 of state and registered-output
+  latency.

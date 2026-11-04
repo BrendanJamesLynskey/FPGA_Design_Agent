@@ -10,3 +10,6 @@
 - Hardware oracle: the ADT7420 at 0x4B must be found (selfcheck); other on-board I2C devices are not expected on
   this bus (the RM lists only the ADT7420 on TMP_SCL/TMP_SDA).
 - Shared helper: `benchmark/lib/i2c_devices.py`.
+- **v1.2 (2026-11-04):** SCL high time is accepted from 2Q to 2Q + 8 clocks (v1: + 4). The spec says wait until SCL is
+  seen high through a two-flop synchroniser, then 2Q: 2-3 clocks of synchroniser plus 1-3 of state and registered-output
+  latency. A missed stretch wait still fails (it shortens or lengthens the phase by far more than 8).

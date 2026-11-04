@@ -1,7 +1,7 @@
 {
   "task": "t1_gray_stepper",
   "sim": "icarus",
-  "date": "2026-11-03",
+  "date": "2026-11-04",
   "ref": {
     "pass": true,
     "tests": {
@@ -10,6 +10,7 @@
       "test_wrap_changes_one_led": true,
       "test_every_transition_one_bit": true,
       "test_auto_rate_exact": true,
+      "test_press_during_auto": true,
       "test_debounce_rejects_bounce": true,
       "test_register_rules": true,
       "test_random_sequence": true
@@ -26,6 +27,7 @@
         "test_wrap_changes_one_led",
         "test_every_transition_one_bit",
         "test_auto_rate_exact",
+        "test_press_during_auto",
         "test_debounce_rejects_bounce",
         "test_random_sequence"
       ]
@@ -40,6 +42,7 @@
         "test_wrap_changes_one_led",
         "test_every_transition_one_bit",
         "test_auto_rate_exact",
+        "test_press_during_auto",
         "test_debounce_rejects_bounce",
         "test_random_sequence"
       ]
@@ -54,6 +57,7 @@
         "test_wrap_changes_one_led",
         "test_every_transition_one_bit",
         "test_auto_rate_exact",
+        "test_press_during_auto",
         "test_register_rules",
         "test_random_sequence"
       ]
@@ -65,7 +69,8 @@
       "built": true,
       "failed_tests": [
         "test_every_transition_one_bit",
-        "test_auto_rate_exact"
+        "test_auto_rate_exact",
+        "test_press_during_auto"
       ]
     },
     {
@@ -79,6 +84,7 @@
         "test_wrap_changes_one_led",
         "test_every_transition_one_bit",
         "test_auto_rate_exact",
+        "test_press_during_auto",
         "test_debounce_rejects_bounce",
         "test_register_rules",
         "test_random_sequence"
@@ -116,8 +122,17 @@
       "failed_tests": [
         "test_debounce_rejects_bounce"
       ]
+    },
+    {
+      "name": "press_restarts_prescaler",
+      "why": "a button press moves the automatic grid",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_press_during_auto"
+      ]
     }
   ],
-  "mutants_killed": 8,
-  "mutants_total": 8
+  "mutants_killed": 9,
+  "mutants_total": 9
 }

@@ -11,3 +11,5 @@
 - **Review:** `test_independent_timing` also checks the absolute settle latency (DEBOUNCE_CYCLES + 1..5 clocks from
   the pin change to the LED); the spec gives 2 (sync) + DEBOUNCE_CYCLES clocks for the level, plus the registered
   LED.
+- **v1.2 (2026-11-04):** the absolute settle latency is accepted from n + 1 to n + 8 clocks (v1: n + 5), so a three- or
+  four-flop synchroniser passes; the relative `n // 2` check still proves the switches are independent.

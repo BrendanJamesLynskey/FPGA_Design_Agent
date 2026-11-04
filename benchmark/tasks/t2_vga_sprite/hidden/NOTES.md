@@ -15,3 +15,6 @@
   9/9 on Icarus; the mutant check of the four survivors is the planner's.
 - 2026-11-04 (planner): the four ran as mutants on Icarus and were all killed; they moved into `mutants`
   (`known_survivors: []`). Full re-check: reference 9/9, mutants 9/9 killed, 23:45-01:24 (single job, HDD root).
+- **v1.2 (2026-11-04):** `test_bounce_plain_step_and_bounce_off` added: two frame wraps away from every edge, a plain +1 in X
+  and -1 in Y with BOUNCE = 1, then no movement with BOUNCE = 0 (about 6 minutes on Icarus; the reference passes 10/10).
+  The pixel (0,0) bound of 16 clocks after reset release stays; deferred to v2 (not in spec.yaml).

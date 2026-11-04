@@ -182,6 +182,39 @@ async def test_auto_rate_exact(dut):
 
 
 @cocotb.test()
+async def test_press_during_auto(dut):
+    """v1.2: a press while AUTO = 1 makes one extra step and does not move the automatic grid (the prescaler restarts
+    only on a CTRL or RATE write): the automatic steps stay exactly RATE * TICK_CYCLES clocks apart across the press."""
+    e = Env(dut)
+    await e.start()
+    await e.wr(RATE, 100)
+    period = 100 * e.tick
+    e.w.take()
+    await e.wr(CTRL, 1)
+    for _ in range(2 * period):
+        if e.w.events:
+            break
+        await e.b.cycles(1)
+    assert e.w.events, "no automatic step"
+    await e.b.cycles(period // 4)
+    t_press = e.w.t
+    await e.press()                              # about 2 * (DEBOUNCE_CYCLES + 6) clocks, inside one period
+    await e.b.cycles(3 * period)
+    await e.wr(CTRL, 0)
+    ev = e.w.take()
+    e.check_steps(ev)
+    window = (t_press, t_press + e.n + 12)
+    auto = [x for x in ev if not window[0] <= x[0] <= window[1]]
+    assert len(ev) - len(auto) == 1, f"the press gave {len(ev) - len(auto)} LED changes"
+    assert len(auto) >= 4, f"only {len(auto)} automatic steps"
+    for a, b in zip(auto, auto[1:]):
+        assert b[0] - a[0] == period, f"automatic steps {b[0] - a[0]} clocks apart across a press, want {period}"
+    e.m.step(len(ev) - 1)                        # the press was counted by press()
+    await e.check_regs()
+    await e.check_leds()
+
+
+@cocotb.test()
 async def test_debounce_rejects_bounce(dut):
     e = Env(dut)
     await e.start()

@@ -11,3 +11,7 @@
   bytes "00" (an S25FL128S). Whether that part answers 5Ah with a JESD216 header is not established, so selfcheck
   requires the ID and repeatability, and only records SIG_OK. A planner should confirm on the board before relying
   on REQ-05 beyond the ID.
+- **v1.2 (2026-11-04):** the tests compare the opcode and address bytes (RDID 9Fh; RSFDP 5Ah 00 00 00) and the byte
+  count (4 and 21) only. DQ0 during the dummy and read bytes is a don't-care: spec.md never fixed it, the flash ignores it
+  there, and a single shift register that echoes MISO onto MOSI is a correct design. Chosen over adding "DQ0 = 0" to the
+  spec because nothing about the flash needs it. The dummy clocks are still checked, through the byte count.

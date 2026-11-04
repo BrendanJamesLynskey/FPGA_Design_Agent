@@ -11,7 +11,8 @@ I want the centre button of the Nexys A7-100T to tell short presses from long on
   LED[15:8] show the low byte of the short-press count. The other LEDs stay off.
 - CPU_RESETN resets everything.
 - Over the test shell (USB-UART, 115200 baud) I can read both counts (writing either one clears it), the last
-  press's length and whether it was long. The design ID is "PRSC".
+  press's length and whether it was long, and a status word (the debounced button level and the two LED states).
+  The design ID is "PRSC".
 
 Test hooks: top module `t1_press_classifier_top`, ports named as in the board's master XDC, the test shell's
 `CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (debounce time in clocks),

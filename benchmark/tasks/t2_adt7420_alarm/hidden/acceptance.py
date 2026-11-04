@@ -13,6 +13,11 @@ from model import ALARM, BUSY, CTRL, DESIGN_ID, MAX, MIN, SAMPLES, STATUS, TEMP,
 READING_LEN = 8                                   # log entries of one reading
 
 
+# v1.2: SCL high time is 2Q to 2Q + SYNC_SLACK clocks. The spec says wait until SCL is seen high through a two-flop
+# synchroniser, then 2Q: 2-3 clocks of synchroniser plus 1-3 of state and registered-output latency; 8 allows for that.
+SYNC_SLACK = 8
+
+
 class Env:
     def __init__(self, dut) -> None:
         self.b = Board(dut, {"dev_scl_pull": 0, "dev_sda_pull": 0, "TMP_INT": 1})
@@ -170,7 +175,7 @@ async def test_clock_stretching(dut):
     await e.readings(1)
     await e.regs()
     hi = 2 * e.q
-    assert all(hi <= h <= hi + 4 for h in e.bus.high), f"SCL high times {sorted(set(e.bus.high))}, 2Q = {hi}"
+    assert all(hi <= h <= hi + SYNC_SLACK for h in e.bus.high), f"SCL high times {sorted(set(e.bus.high))}, 2Q = {hi}"
 
 
 @cocotb.test(timeout_time=2004240, timeout_unit="ns")

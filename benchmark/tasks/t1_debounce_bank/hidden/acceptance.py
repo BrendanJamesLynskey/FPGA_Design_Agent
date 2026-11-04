@@ -116,7 +116,8 @@ async def test_independent_timing(dut):
     await e.b.cycles(2 * e.n)
     assert set(seen) == {3, 9}, f"LEDs that changed: {sorted(seen)}"
     assert seen[9] - seen[3] == e.n // 2, f"switch 9 settled {seen[9] - seen[3]} clocks after 3, want {e.n // 2}"
-    assert seen[3] - t0 - e.n in range(1, 6), f"switch 3 took {seen[3] - t0} clocks to settle"
+    # v1.2: n + 1 .. n + 8 clocks (a two- to four-flop synchroniser plus one output register all pass)
+    assert seen[3] - t0 - e.n in range(1, 9), f"switch 3 took {seen[3] - t0} clocks to settle"
     e.sw = 1 << 3 | 1 << 9
     e.m.settle(e.sw)
     await e.check_regs()

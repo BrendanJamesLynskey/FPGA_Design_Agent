@@ -26,7 +26,15 @@ class Env:
                           (SFDP0 + 2, "SFDP2"), (SFDP0 + 3, "SFDP3")):
             await self.b.expect(off, self.m.read(off), name)
 
-    async def run(self) -> list[list[int]]:
+    def check_tx(self, want: list[tuple[list[int], int]]) -> None:
+        """Opcode and address bytes exactly, byte count exactly; DQ0 during dummy and read bytes is free."""
+        got = self.f.transactions
+        assert len(got) == len(want), f"{len(got)} transactions, model {len(want)}"
+        for g, (fixed, n) in zip(got, want):
+            assert len(g) == n, f"transaction of {len(g)} bytes {g}, model {n}"
+            assert g[:len(fixed)] == fixed, f"opcode/address bytes {g[:len(fixed)]}, model {fixed}"
+
+    async def run(self) -> list[tuple[list[int], int]]:
         await self.b.write(CTRL, 1)
         want = self.m.start(self.ident, self.sfdp)
         await self.b.cycles(30 * 16 * self.half + 400)
@@ -57,7 +65,7 @@ async def test_jedec_id_and_sfdp(dut):
     e = Env(dut)
     await e.start()
     want = await e.run()
-    assert e.f.transactions == want, f"MOSI bytes {e.f.transactions}, model {want}"
+    e.check_tx(want)
     await e.regs()
     assert e.m.sig
     e.check_flash()
@@ -101,6 +109,6 @@ async def test_random_contents(dut):
     e = Env(dut)
     await e.start(ident, sfdp)
     want = await e.run()
-    assert e.f.transactions == want
+    e.check_tx(want)
     await e.regs()
     e.check_flash()
