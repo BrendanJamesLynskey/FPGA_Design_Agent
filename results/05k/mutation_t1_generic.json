@@ -1,0 +1,239 @@
+{
+  "design": "t1_dimmer_counter",
+  "mode": "generic",
+  "mutant_source": "verif/mutants.yaml",
+  "rng_seed": 1,
+  "baseline_seconds": 140.6,
+  "caps": {
+    "max_mutants": 21,
+    "wall_s": 3000,
+    "mutant_timeout_s": 562
+  },
+  "candidates": 21,
+  "sampled": 21,
+  "evaluated": 21,
+  "killed": 21,
+  "survived": 0,
+  "timed_out": 0,
+  "skipped": 0,
+  "invalid": 0,
+  "score_pct": 100.0,
+  "survivors": [],
+  "survivor_text": [],
+  "timed_out_text": [],
+  "skipped_text": [],
+  "note": "score = killed / (killed + survived + timed_out); invalid and skipped mutants are excluded and listed; an equivalent mutant (no visible behaviour change) shows as a survivor",
+  "wall_seconds": 721.2,
+  "rows": [
+    {
+      "name": "db_step_two",
+      "file": "debounce.sv",
+      "line": 34,
+      "class": "constant",
+      "why": "debounce counts in steps of two",
+      "change": "rtl/debounce.sv line 34: `cnt <= cnt + 1'b1;` became `cnt <= cnt + 2'd2;` (debounce counts in steps of two)",
+      "status": "killed",
+      "seconds": 15.3
+    },
+    {
+      "name": "db_level_cond",
+      "file": "debounce.sv",
+      "line": 27,
+      "class": "condition",
+      "why": "the count is cleared when the input differs",
+      "change": "rtl/debounce.sv line 27: `end else if (s == level) begin` became `end else if (s != level && !press) begin` (the count is cleared when the input differs)",
+      "status": "killed",
+      "seconds": 14.8
+    },
+    {
+      "name": "db_late",
+      "file": "debounce.sv",
+      "line": 29,
+      "class": "constant",
+      "why": "debounce accepts a level one clock late",
+      "change": "rtl/debounce.sv line 29: `cnt == CW'(CYCLES - 1)` became `cnt == CW'(CYCLES)` (debounce accepts a level one clock late)",
+      "status": "killed",
+      "seconds": 20.6
+    },
+    {
+      "name": "db_early",
+      "file": "debounce.sv",
+      "line": 29,
+      "class": "constant",
+      "why": "debounce accepts a level one clock early",
+      "change": "rtl/debounce.sv line 29: `cnt == CW'(CYCLES - 1)` became `cnt == CW'(CYCLES - 2)` (debounce accepts a level one clock early)",
+      "status": "killed",
+      "seconds": 23.7
+    },
+    {
+      "name": "db_reset_level",
+      "file": "debounce.sv",
+      "line": 25,
+      "class": "reset",
+      "why": "the debounced level resets to 1",
+      "change": "rtl/debounce.sv line 25: `level <= 1'b0;` became `level <= 1'b1;` (the debounced level resets to 1)",
+      "status": "killed",
+      "seconds": 59.9
+    },
+    {
+      "name": "db_release_press",
+      "file": "debounce.sv",
+      "line": 32,
+      "class": "condition",
+      "why": "a release also makes a press",
+      "change": "rtl/debounce.sv line 32: `press <= s;` became `press <= 1'b1;` (a release also makes a press)",
+      "status": "killed",
+      "seconds": 13.8
+    },
+    {
+      "name": "reset_duty",
+      "file": "dimmer_counter.sv",
+      "line": 51,
+      "class": "reset",
+      "why": "DUTY resets to 0x41",
+      "change": "rtl/dimmer_counter.sv line 51: `duty    <= 8'h40;` became `duty    <= 8'h41;` (DUTY resets to 0x41)",
+      "status": "killed",
+      "seconds": 20.2
+    },
+    {
+      "name": "reset_ctrl",
+      "file": "dimmer_counter.sv",
+      "line": 52,
+      "class": "reset",
+      "why": "CTRL resets with DUTY_SRC set",
+      "change": "rtl/dimmer_counter.sv line 52: `ctrl    <= 2'b10;` became `ctrl    <= 2'b11;` (CTRL resets with DUTY_SRC set)",
+      "status": "killed",
+      "seconds": 15.7
+    },
+    {
+      "name": "up_is_down",
+      "file": "dimmer_counter.sv",
+      "line": 63,
+      "class": "operator",
+      "why": "up subtracts",
+      "change": "rtl/dimmer_counter.sv line 63: `else if (p_up)                     count <= count + 1'b1;` became `else if (p_up)                     count <= count - 1'b1;` (up subtracts)",
+      "status": "killed",
+      "seconds": 16.4
+    },
+    {
+      "name": "clear_loses_to_up",
+      "file": "dimmer_counter.sv",
+      "line": 62,
+      "class": "condition",
+      "why": "clear loses to up on the same clock",
+      "change": "rtl/dimmer_counter.sv line 62: `else if (p_clear)                  count <= '0;` became `else if (p_clear && !p_up)         count <= '0;` (clear loses to up on the same clock)",
+      "status": "killed",
+      "seconds": 60.6
+    },
+    {
+      "name": "press_not_counted",
+      "file": "dimmer_counter.sv",
+      "line": 58,
+      "class": "condition",
+      "why": "a down press on the clock of an up press is not counted",
+      "change": "rtl/dimmer_counter.sv line 58: `if (p_down)  n_down  <= n_down + 1'b1;` became `if (p_down && !p_up)  n_down  <= n_down + 1'b1;` (a down press on the clock of an up press is not counted)",
+      "status": "killed",
+      "seconds": 60.2
+    },
+    {
+      "name": "pwm_le",
+      "file": "dimmer_counter.sv",
+      "line": 100,
+      "class": "operator",
+      "why": "PWM on one phase step too long",
+      "change": "rtl/dimmer_counter.sv line 100: `(phase < duty_eff)` became `(phase <= duty_eff)` (PWM on one phase step too long)",
+      "status": "killed",
+      "seconds": 22.7
+    },
+    {
+      "name": "pwm_prescale",
+      "file": "dimmer_counter.sv",
+      "line": 94,
+      "class": "constant",
+      "why": "PWM phase advances early",
+      "change": "rtl/dimmer_counter.sv line 94: `if (pre == PW'(PWM_PRESCALE - 1))` became `if (pre == PW'(PWM_PRESCALE - 2))` (PWM phase advances early)",
+      "status": "killed",
+      "seconds": 22.7
+    },
+    {
+      "name": "duty_src_bit",
+      "file": "dimmer_counter.sv",
+      "line": 45,
+      "class": "condition",
+      "why": "DUTY_SRC read from the wrong CTRL bit",
+      "change": "rtl/dimmer_counter.sv line 45: `wire [7:0] duty_eff = ctrl[0] ? sw[7:0] : duty;` became `wire [7:0] duty_eff = ctrl[1] ? sw[7:0] : duty;` (DUTY_SRC read from the wrong CTRL bit)",
+      "status": "killed",
+      "seconds": 21.6
+    },
+    {
+      "name": "presses_swap",
+      "file": "dimmer_counter.sv",
+      "line": 81,
+      "class": "operator",
+      "why": "PRESSES up and down fields swapped",
+      "change": "rtl/dimmer_counter.sv line 81: `{8'h0, n_clear, n_down, n_up}` became `{8'h0, n_clear, n_up, n_down}` (PRESSES up and down fields swapped)",
+      "status": "killed",
+      "seconds": 14.8
+    },
+    {
+      "name": "duty_write_mask",
+      "file": "dimmer_counter.sv",
+      "line": 66,
+      "class": "constant",
+      "why": "DUTY write drops bit 7",
+      "change": "rtl/dimmer_counter.sv line 66: `duty <= win_wdata[7:0];` became `duty <= {1'b0, win_wdata[6:0]};` (DUTY write drops bit 7)",
+      "status": "killed",
+      "seconds": 22.1
+    },
+    {
+      "name": "inputs_swap",
+      "file": "dimmer_counter.sv",
+      "line": 80,
+      "class": "operator",
+      "why": "INPUTS up and down levels swapped",
+      "change": "rtl/dimmer_counter.sv line 80: `{13'h0, lv_clear, lv_down, lv_up, sw}` became `{13'h0, lv_clear, lv_up, lv_down, sw}` (INPUTS up and down levels swapped)",
+      "status": "killed",
+      "seconds": 24.5
+    },
+    {
+      "name": "an_enable",
+      "file": "sevenseg_scan.sv",
+      "line": 49,
+      "class": "condition",
+      "why": "DISPLAY_EN no longer darkens the display",
+      "change": "rtl/sevenseg_scan.sv line 49: `(enable && !blank[k])` became `(enable || !blank[k])` (DISPLAY_EN no longer darkens the display)",
+      "status": "killed",
+      "seconds": 23.2
+    },
+    {
+      "name": "glyph_A",
+      "file": "sevenseg_scan.sv",
+      "line": 33,
+      "class": "constant",
+      "why": "glyph A loses segment a",
+      "change": "rtl/sevenseg_scan.sv line 33: `4'hA: glyph = 7'b1110111;` became `4'hA: glyph = 7'b1110110;` (glyph A loses segment a)",
+      "status": "killed",
+      "seconds": 23.6
+    },
+    {
+      "name": "scan_step",
+      "file": "sevenseg_scan.sv",
+      "line": 48,
+      "class": "constant",
+      "why": "display scan runs at twice the rate",
+      "change": "rtl/sevenseg_scan.sv line 48: `scan <= scan + 1'b1;` became `scan <= scan + 2'd2;` (display scan runs at twice the rate)",
+      "status": "killed",
+      "seconds": 23.0
+    },
+    {
+      "name": "scan_reset_an",
+      "file": "sevenseg_scan.sv",
+      "line": 45,
+      "class": "reset",
+      "why": "anodes reset all low",
+      "change": "rtl/sevenseg_scan.sv line 45: `an   <= '1;` became `an   <= '0;` (anodes reset all low)",
+      "status": "killed",
+      "seconds": 60.4
+    }
+  ]
+}
