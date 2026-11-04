@@ -102,6 +102,7 @@ results measure nothing about the models. Single runs on `t1_dimmer_counter`, or
 | `agent_cc_sonnet_t1_05h.json` | claude-sonnet-5-5 | V3 | Stage 2 x5: harness, checker macros never given (fixed #28). |
 | `agent_cc_sonnet_t1_05i.json` | claude-sonnet-5-5 | V3 | Passes V0-V2; stops at V3 (no mutation tool for the agent; messages fixed #29). |
 | `agent_cc_sonnet_t1_05j_v2.json` | claude-sonnet-5-5 | **V2** | **All gates of stages 0-8 pass**: WNS +2.761 ns, QoR 5, 479 LUT / 523 FF, bitstream. Plan estimate $2.17, 33 min. |
+| `agent_cc_opus_t1_05j_v2.json` | claude-opus-5-5 | **V2** | **All gates of stages 0-8 pass**, stage 2 at the first visit: WNS +2.283 ns, QoR 5, 691 LUT / 1026 FF, bitstream. Plan estimate $6.71, 51 min. |
 
 V3 is unreachable for any agent until mutation has a tool. The 05g Deep Agents cvdp run that passed stage 2 ran at V1, so
 compare the two arms only at the same `--verif-level`.
