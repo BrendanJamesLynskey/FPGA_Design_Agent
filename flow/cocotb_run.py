@@ -6,8 +6,10 @@ Every RTL test in the repo goes through :func:`run`, so CI and a local
 
 from __future__ import annotations
 
+import copy
 import os
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from cocotb_tools.runner import get_results, get_runner
@@ -31,6 +33,42 @@ def failure_excerpt(log: Path, limit: int = 3500) -> str:
                 break
     text = "\n".join(dict.fromkeys(out)) if out else "\n".join(lines[-40:])
     return text[:limit]
+
+
+def collect_results(build_dir: Path, seed: int | None, dest_root: Path | None = None) -> Path | None:
+    """Copy this run's ``results.xml`` to ``<dest>/seed<N>/results.xml``, the place flow/verif_gates.py reads (V2/V3).
+
+    ``dest`` is ``$FDA_SIM_RESULTS_DIR`` (set by the agent's ``simulate`` tool to ``<design>/build/verif/sim``); with
+    it unset nothing is copied, so CI and local pytest runs are unchanged. Several runs of one seed (a directed bench
+    and a random one) are merged into one file: a test case with the same class and name is replaced. A run without a
+    seed counts as seed 1. Returns the destination file, or None when there was nothing to copy."""
+    if dest_root is None:
+        env = os.environ.get("FDA_SIM_RESULTS_DIR")
+        if not env:
+            return None
+        dest_root = Path(env) if Path(env).is_absolute() else ROOT / env
+    src = build_dir / "results.xml"
+    if not src.is_file():
+        return None
+    out = dest_root / f"seed{1 if seed is None else seed}" / "results.xml"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    new = ET.parse(src).getroot()
+    if not out.is_file():
+        ET.ElementTree(new).write(out, encoding="utf-8", xml_declaration=True)
+        return out
+    tree = ET.parse(out)
+    root = tree.getroot()
+    suite = next(root.iter("testsuite"), root)
+    have = {(tc.get("classname"), tc.get("name")): tc for tc in root.iter("testcase")}
+    for tc in new.iter("testcase"):
+        old = have.get((tc.get("classname"), tc.get("name")))
+        if old is not None:
+            old[:] = list(tc)
+            old.attrib.update(tc.attrib)
+        else:
+            suite.append(copy.deepcopy(tc))
+    tree.write(out, encoding="utf-8", xml_declaration=True)
+    return out
 
 
 def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
@@ -64,10 +102,12 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
                            timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
                            log_file=build_dir / "sim.log", plusargs=plus)
     except SystemExit:
+        collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
         # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the
         # simulator log, which lives in a scratch directory the caller never sees. Say what they are.
         raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
                              + failure_excerpt(build_dir / "sim.log")) from None
+    collect_results(build_dir, seed)
     n_tests, n_fail = get_results(results)
     assert n_tests > 0, f"{name}: no cocotb tests ran"
     assert n_fail == 0, f"{name}: {n_fail} of {n_tests} cocotb tests failed (see {build_dir / 'sim.log'})"

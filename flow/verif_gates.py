@@ -79,6 +79,29 @@ def chk(value: Any, threshold: Any, ok: bool) -> dict[str, Any]:
     return {"value": value, "threshold": threshold, "pass": bool(ok)}
 
 
+NOT_EVALUATED = "not evaluated (no seeded results)"
+
+
+def no_seeds_hint(runs: Path) -> str:
+    """The one actionable line when the gate found no ``seed*/results.xml`` (05h): where it looked, what it expects
+    there, and how the tests role produces it."""
+    try:
+        shown = runs.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        shown = str(runs)
+    return (f"no seeded results: read {shown}/seed*/results.xml and found none. The gate expects "
+            f"{shown}/seed<N>/results.xml, one directory per seed. The `simulate` tool writes it when the bench runs "
+            f"through flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=N) in "
+            f"tests/test_*_rtl.py: call run() once per seed (for example seed=1, 2, 3; a seed left out counts as seed 1) "
+            f"with the module(s) listed in bench.modules, then call simulate, then gates(kind=\"verif\") again. A bench "
+            f"that runs the simulator some other way leaves nothing there.")
+
+
+def ne(threshold: Any) -> dict[str, Any]:
+    """A check that cannot be evaluated; it fails, but says so instead of printing an empty value."""
+    return chk(NOT_EVALUATED, threshold, False)
+
+
 # ---- spec items -------------------------------------------------------------------------------------------
 def spec_items(spec: dict) -> list[str]:
     """Every checkable statement of spec.yaml, by path: behaviour bullets, registers, reset, latencies."""
@@ -371,15 +394,26 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     wanted_formal = {f"{t}_{k}" for r in reqs for t in r.get("formal", []) for k in ("bmc", "cover")}
     formal_bad = sorted(f"{n}={fr.get(n, 'absent')}" for n in wanted_formal if fr.get(n) != "PASS")
     rand_ran = bool(seeds) and any("random" in t.lower() and ok for t, ok in res[seeds[0]].items())
-    v2 = {
-        "seeds_run": chk(seeds, f">=1", bool(seeds)),
-        "planned_tests_missing": chk(missing, [], not missing and bool(seeds)),
-        "failing_tests": chk(failing, [], not failing and bool(seeds)),
-        "constrained_random_test_ran": chk(rand_ran, True, rand_ran),
-        "assertions_bound_zero_failures": chk(sorted(a_all), "bound in the run; no failure", bool(seeds) and not failing),
-        "other_simulators_failing": chk(also_bad, [], not also_bad),
-        "formal_tasks_not_passing": chk(formal_bad, [], not formal_bad and bool(wanted_formal)),
-    }
+    if seeds:
+        v2 = {
+            "seeds_run": chk(seeds, f">=1", True),
+            "planned_tests_missing": chk(missing, [], not missing),
+            "failing_tests": chk(failing, [], not failing),
+            "constrained_random_test_ran": chk(rand_ran, True, rand_ran),
+            "assertions_bound_zero_failures": chk(sorted(a_all), "bound in the run; no failure", not failing),
+            "other_simulators_failing": chk(also_bad, [], not also_bad),
+            "formal_tasks_not_passing": chk(formal_bad, [], not formal_bad),
+        }
+    else:
+        v2 = {
+            "seeds_run": chk(no_seeds_hint(runs), ">=1 seed", False),
+            "planned_tests_missing": ne([]),
+            "failing_tests": ne([]),
+            "constrained_random_test_ran": ne(True),
+            "assertions_bound_zero_failures": ne("bound in the run; no failure"),
+            "other_simulators_failing": chk(also_bad, [], not also_bad),
+            "formal_tasks_not_passing": chk(formal_bad, [], not formal_bad),
+        }
     out["stages"]["V2"] = {"checks": v2}
     # ---- V3: coverage closure
     waive = plan.get("waivers", {})
@@ -407,8 +441,8 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     line, tog = (code.get("line") or {}).get("pct"), (code.get("toggle") or {}).get("pct")
     mut = json.loads(mutation.read_text()) if mutation and mutation.exists() else None
     v3 = {
-        "seeds_run": chk(len(seeds), f">={th['seeds_min']}", len(seeds) >= th["seeds_min"]),
-        "all_seeds_pass": chk(failing, [], not failing and bool(seeds)),
+        "seeds_run": chk(len(seeds) if seeds else no_seeds_hint(runs), f">={th['seeds_min']}", len(seeds) >= th["seeds_min"]),
+        "all_seeds_pass": chk(failing, [], not failing and bool(seeds)) if seeds else ne([]),
         "functional_bins_pct": chk(f"{pct} ({hit}/{tot})", th["functional_bins_pct"], tot > 0 and pct >= th["functional_bins_pct"]),
         "functional_bins_unhit": chk(unhit, [], pct >= th["functional_bins_pct"]),
         "cover_properties_pct": chk(f"{cp_pct}", th["cover_properties_pct"], cp_pct >= th["cover_properties_pct"] and bool(code)),
@@ -419,6 +453,10 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         "mutation_score_pct": chk(mut and mut["score_pct"], th["mutation_score_pct"],
                                   bool(mut) and mut["score_pct"] >= th["mutation_score_pct"]),
     }
+    if not seeds:       # coverage is read from the seeds' own files: nothing to evaluate without them
+        for k in ("functional_bins_pct", "functional_bins_unhit", "cover_properties_pct", "cover_properties_unhit",
+                  "line_pct", "toggle_pct"):
+            v3[k] = ne(v3[k]["threshold"])
     out["stages"]["V3"] = {"checks": v3}
     out["code_coverage"] = {k: {kk: vv for kk, vv in v.items() if kk != "unhit"} for k, v in code.items() if k != "user"}
     out["code_coverage_unhit"] = {k: v.get("unhit", []) for k, v in code.items() if k in ("line", "toggle", "branch")}
