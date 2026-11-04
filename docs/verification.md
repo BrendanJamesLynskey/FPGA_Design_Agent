@@ -77,6 +77,8 @@ stops with `unexpected '@'`), so under `-DFORMAL` the same property is emitted a
 (`debounce_checker`, `scan_checker`) are used by the formal wrappers; `counter_checker` needs internal signals and
 is bound in simulation.
 
+The canonical copy is `flow/v_macros.svh`. The agent seeds it into `verif/checkers/` of every new or resumed run (brief 05i); the roles cannot write it, and `gates(kind="verif")` warns if the copy differs. The V1 gate reads `A_*`/`C_*` names only from `V_SAME/V_NEXT/V_RST/V_COVER(name, ...)`; a name declared as plain SystemVerilog is reported as such.
+
 ### What a newer Verilator changes (re-tested, 5.048)
 
 Verilator 5.048 (Ubuntu questing `.deb`, extracted rootless; `source ~/.local/opt/verilator-5048/env.sh`):

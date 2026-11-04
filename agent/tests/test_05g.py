@@ -328,3 +328,15 @@ def test_model_tool_calls_include_the_harness_built_ins(rt, monkeypatch):
     gr.run_subagent(rt, "tests", "p", (), repair=True)
     assert usage(rt)[0]["model_tool_calls"] == {"ls": 1, "read_file": 1, "write_file": 1, "write_todos": 1}
     assert gr.usage_trace(usage(rt))[0]["model_tool_calls"]["write_todos"] == 1
+
+
+def test_new_runs_are_seeded_with_the_macro_file_and_the_checklist_names_it(rt, monkeypatch):      # brief 05i
+    import agent.core.runner as runner
+    from flow import verif_gates as G
+    f = rt.design / "verif" / "checkers" / "v_macros.svh"
+    assert f.read_text() == G.MACROS_CANON.read_text()
+    assert "verif/checkers/v_macros.svh" in role_inputs(rt.session, "tests")
+    monkeypatch.setattr(runner, "tool_available", lambda n: False)
+    t2 = gr.tests_checklist(rt, 2, repair=False)
+    for needle in ("V_SAME(A_x", "V_NEXT(A_y", "V_RST(A_z", "V_COVER(C_w", "`clk`, `rst` and `seen_rst`", "A_ or C_"):
+        assert needle in t2, needle

@@ -41,6 +41,7 @@ from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
 from agent.core.artefacts import check_artefact
 from agent.graph.repair import stage2_owners
+from flow.verif_gates import MACROS_REL
 from agent.graph import ownership
 from agent.graph.snapshot import Snapshots
 from agent.graph.spec_schema import (PROOF_METHODS, SpecError, clock_hz, load_spec, propose_proof, rate_params,
@@ -338,7 +339,7 @@ def drop_superseded(design: Path, jail, before: list[Path], written: dict[str, s
     gone = []
     for p in before:
         rel = str(p.relative_to(design))
-        if rel not in written and p.is_file():
+        if rel not in written and p.is_file() and rel != MACROS_REL:          # the flow's own file stays (05i)
             jail.resolve(rel, write=True)
             p.unlink()
             gone.append(rel)
@@ -564,7 +565,11 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
                 "proof. Re-plan the method: add a top-level `replan:` list to verif/testplan.yaml with one "
                 "{requirement, method: formal, replaced_by: simulation|analysis|hardware, artefact, why} entry per formal "
                 "method (why = a sentence saying why it was re-planned). The replacement's own evidence is what counts."),
-            "5. `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
+            "5. Assertions and covers are declared only through the four macros of verif/checkers/v_macros.svh (the flow's read-only "
+            "file, already there; include it with the SystemVerilog include directive): `V_SAME(A_x, ante, cons)`, `V_NEXT(A_y, ante, cons)`, `V_RST(A_z, cons)`, "
+            "`V_COVER(C_w, expr)`. The module that includes it must declare `clk`, `rst` and `seen_rst`. Names must start A_ or C_. "
+            "A plain `C_x: cover property (...)` is not read by the gate, so the name stays unresolved in the testplan.",
+            "6. `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
             "step in the proof list now (uart_tests, ila_captures or step:case).",
         ]
     else:
@@ -1062,6 +1067,8 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
         with (design / "BUILD_NOTE.md").open("a") as f:      # 05f: who ran which role, from the first snapshot on
             f.write(f"\n## models by role (profile {cfg.profile})\n\n{describe(cfg.role_models())}. "
                     f"Interview oracle: {cfg.model} (fixed). The stage machine is plain code.\n")
+    from flow.verif_gates import seed_macros
+    seed_macros(design)                      # 05i: the checker macro file the V1 gate reads, in every run (also on resume)
     if runner is None:
         runner = ContainerRunner(design, ROOT) if container_available() else LocalRunner()
     bank = None

@@ -74,6 +74,9 @@ def redact_obj(o: Any) -> Any:
 
 # --- the path jail ---------------------------------------------------------------------------------
 
+FLOW_OWNED = "verif/checkers/v_macros.svh"       # 05i: seeded by the flow; the gate reads the checker macros from it
+
+
 class PathJail:
     """Resolve agent-supplied paths and refuse anything outside ``root``.
 
@@ -153,6 +156,8 @@ class PathJail:
             top = inside.parts[0] if inside.parts else ""
             if not inside.parts:
                 raise SecurityError("path-jail", "cannot write the design directory itself")
+            if inside.as_posix() == FLOW_OWNED:
+                raise SecurityError("path-jail", f"{FLOW_OWNED} is the flow's own file (read-only for the agent): include it, do not edit it")
             if top in self.write_deny:
                 raise SecurityError("path-jail", f"{top}/ is read-only for the agent (tool outputs)")
             if top.startswith("."):
