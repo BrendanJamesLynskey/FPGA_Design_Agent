@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 import os
 import re
+import shutil
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -52,6 +53,15 @@ def collect_results(build_dir: Path, seed: int | None, dest_root: Path | None = 
         return None
     out = dest_root / f"seed{1 if seed is None else seed}" / "results.xml"
     out.parent.mkdir(parents=True, exist_ok=True)
+    # 05j: the coverage evidence of this run goes next to the results (the gate reads seed*/coverage*.dat and
+    # seed*/coverage*.yml); a second run of the same seed keeps its file under a numbered name instead of overwriting
+    for name, stem, ext in (("coverage.dat", "coverage", ".dat"), ("coverage_func.yml", "coverage_func", ".yml")):
+        if (build_dir / name).is_file():
+            n, dst = 1, out.parent / name
+            while dst.exists():
+                n += 1
+                dst = out.parent / f"{stem}_{n}{ext}"
+            shutil.copy(build_dir / name, dst)
     new = ET.parse(src).getroot()
     if not out.is_file():
         ET.ElementTree(new).write(out, encoding="utf-8", xml_declaration=True)
@@ -74,14 +84,17 @@ def collect_results(build_dir: Path, seed: int | None, dest_root: Path | None = 
 def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
         parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
         seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
-        coverage: bool = False) -> None:
+        coverage: bool | None = None) -> None:
     """Build ``sources`` with $SIM (icarus by default; verilator needs 5.036+ for cocotb 2) and run
     ``test_module`` (a name or a list of names); fail if any test failed.
 
-    With ``coverage`` (Verilator only) the build is instrumented for line and toggle coverage and the run
+    ``coverage=None`` follows ``$FDA_COVERAGE`` (set by the agent's ``simulate(coverage=True)``). The bench can export
+    its functional-coverage bins to ``$FDA_COV_OUT`` (cocotb-coverage ``coverage_db.export_to_yaml``). With ``coverage`` (Verilator only) the build is instrumented for line and toggle coverage and the run
     writes ``<build_dir>/coverage.dat``. Under Verilator, warnings are not fatal (the repo's lint gate is
     flow/lint.sh) and concurrent assertions are on."""
     simname = os.environ.get("SIM", "icarus")
+    if coverage is None:
+        coverage = os.environ.get("FDA_COVERAGE") == "1"
     sim = get_runner(simname)
     build_dir = (build_root or ROOT / "build" / "sim") / name
     if simname == "verilator":
@@ -94,6 +107,7 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
     sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
               build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)
     env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
+    env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
     env.update(extra_env or {})
     plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
     try:

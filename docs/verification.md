@@ -123,6 +123,15 @@ The portability check compiles the checkers and bind file with Icarus, every Ver
 (pyslang) and xsim (skipped when Vivado is not sourced, as in CI), and fails on a deliberately non-portable
 covergroup fixture (`flow/tests/fixtures/nonportable_covergroup.sv`, tested in `flow/tests/test_portability.py`).
 
+## Preconditions of the V3 checks
+
+A failed check carries a plain-words `why`. Several checks need evidence that only a particular run produces, and
+say so when it is absent: `functional_bins_pct` needs at least one planned bin and a functional-coverage file
+(`seed*/coverage*.yml`, exported by the bench to `$FDA_COV_OUT`); the cover-property, `line_pct` and `toggle_pct`
+checks need `seed*/coverage*.dat`, which `simulate(sim="verilator", coverage=True)` records; `mutation_score_pct`
+needs a mutation result (`build/verif/mutation.json`), which no agent tool produces yet and is reported as
+`not measured`. A stage-2 run that the agent has no tool for stops at the level it can reach (`--verif-level`).
+
 ## Limits
 
 - An assertion that never fires is not evidence it works: the cover properties show the antecedents are reachable

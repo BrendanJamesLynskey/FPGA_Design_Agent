@@ -276,13 +276,18 @@ def _sim_refine() -> dict[str, Any]:
             "description": f"Simulators available here: {', '.join(sims)}."}
 
 
-@tool("simulate", "Run the design's cocotb tests (tests/test_*_rtl.py) under the chosen simulator.",
-      {"sim": {"type": "string", "enum": ["icarus", "verilator"]}}, refine=_sim_refine)
-def simulate(s: Session, sim: str = "icarus") -> dict:
+@tool("simulate", "Run the design's cocotb tests (tests/test_*_rtl.py) under the chosen simulator. coverage=true (with "
+                  "sim=verilator) also records line/toggle/cover-property coverage (coverage.dat per seed), which "
+                  "gates(kind=verif) needs for the code-coverage checks.",
+      {"sim": {"type": "string", "enum": ["icarus", "verilator"]}, "coverage": {"type": "boolean"}}, refine=_sim_refine)
+def simulate(s: Session, sim: str = "icarus", coverage: bool = False) -> dict:
     from agent.core.runner import ContainerRunner
     if sim not in available_sims() or (sim != "icarus" and isinstance(s.runner, ContainerRunner)):
         return {"ok": False, "output": f"simulator {sim!r} is not available here; available: "
                                        f"{', '.join(available_sims())}"}
+    if coverage and sim != "verilator":
+        return {"ok": False, "output": "coverage=true needs sim=verilator (Icarus records no code coverage); "
+                                       f"available: {', '.join(available_sims())}"}
     load_build_cfg(s)
     _refuse_on_scan(s, python=True, hdl=True)
     tests = sorted((s.design / "tests").glob("test_*_rtl.py"))
@@ -294,7 +299,8 @@ def simulate(s: Session, sim: str = "icarus") -> dict:
     # an old result is never read as the new one.
     results = s.design / "build" / "verif" / "sim"
     shutil.rmtree(results, ignore_errors=True)
-    r = s.runner.run("simulate", argv, s.root, {"SIM": sim, "FDA_SIM_RESULTS_DIR": _rel(s, results)}, timeout=1800)
+    r = s.runner.run("simulate", argv, s.root, {"SIM": sim, "FDA_SIM_RESULTS_DIR": _rel(s, results),
+                                                **({"FDA_COVERAGE": "1"} if coverage else {})}, timeout=1800)
     out = _text_out(r)
     res: dict[str, Any] = {"ok": r.returncode == 0}
     if r.returncode != 0:
@@ -400,6 +406,8 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
                 "--runs", _rel(s, s.design / "build" / "verif" / "sim")]
         # evidence for the sign-off table, only once it exists: analysis proofs read the flow gates, hardware proofs the
         # bring-up result (an absent file leaves those rows pending)
+        if (s.design / "build" / "verif" / "mutation.json").is_file():       # 05j: mutation evidence, once someone ran it
+            argv += ["--mutation", _rel(s, s.design / "build" / "verif" / "mutation.json")]
         if (s.design / "build" / "base" / "gates.json").is_file():
             argv += ["--gates", _rel(s, s.design / "build" / "base" / "gates.json")]
         if (s.design / "build" / "bringup" / f"{s.design.name}_bringup.json").is_file():
