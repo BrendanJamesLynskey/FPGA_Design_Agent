@@ -46,7 +46,7 @@ from agent.core.session import ROOT
 from agent.core.trace import Trace
 
 PINNED_CLI = "2.1.316"
-ACCEPTED_CLI = (PINNED_CLI, "2.1.317")      # 05f: the CLI auto-updated; 2.1.317 accepted, the version of every call is recorded
+ACCEPTED_CLI = (PINNED_CLI, "2.1.317", "2.1.318")  # 05f: the CLI auto-updated; 2.1.317 accepted; 2.1.318 accepted 2026-11-04 (MCP text check run); the version of every call is recorded
 MCP_NAME = "fda"
 TOKEN_FILE = Path.home() / ".config" / "fpga_design_agent" / "claude_code_oauth.env"
 MODELS = {"haiku": "claude-haiku-5-5", "opus": "claude-opus-5-5"}
