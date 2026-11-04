@@ -13,3 +13,5 @@
   the board); three tests added for the recorded survivors (X far off the right, CTRL.EN = 0 and blanking lines over a
   non-zero background, each looked at where the fault can show; a turn at X = 0 and at Y = 464). The reference passes
   9/9 on Icarus; the mutant check of the four survivors is the planner's.
+- 2026-11-04 (planner): the four ran as mutants on Icarus and were all killed; they moved into `mutants`
+  (`known_survivors: []`). Full re-check: reference 9/9, mutants 9/9 killed, 23:45-01:24 (single job, HDD root).

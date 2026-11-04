@@ -40,3 +40,10 @@ fix, recorded here and in [OWNER_REVIEW.md](OWNER_REVIEW.md):
 
 Also in v1.1: `flow/board_check.py` reads a self-check module's `NO_SHELL` flag. Re-frozen: `MANIFEST.json` (the two
 unit digests and the shared-unit digests only).
+
+## v1.1 re-freeze (2026-11-04): t2_vga_sprite mutants
+
+The four recorded survivors of `t2_vga_sprite` were run as mutants against the v1.1 `acceptance.py` (Icarus) and all
+were killed, so they moved from `known_survivors` into `mutants` (now 9/9 killed; `known_survivors: []`). Re-frozen:
+that unit's digest only (`hidden/mutants.yaml`, `hidden/NOTES.md`); `results/reference/t2_vga_sprite__icarus.json` regenerated. No spec,
+reference RTL, test or held-out file changed. `freeze.py verify`: 86 units, 0 mismatches.
