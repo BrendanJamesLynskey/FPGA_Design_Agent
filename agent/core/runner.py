@@ -170,8 +170,8 @@ def _norm(a: str) -> str:
 
 #: Default image: Ubuntu 24.04, Python 3.12, cocotb 2.0.1, Icarus 12.0, Verilator 5.048 (agent/container/Dockerfile).
 SIM_IMAGE = "fda-sim:2"          # built from agent/container/Dockerfile (docker build -t fda-sim:2 agent/container)
-#: What a Verilator build plus coverage run needs (05m, measured on T1): see docs/agent_core.md.
-DEFAULT_MEMORY, DEFAULT_BUILD_TMPFS = "4g", "1g"
+#: Unchanged from fda-sim:1: the T1 Verilator coverage run peaked at 0.8 GiB and 13 MB of build tmpfs (05m): see docs/agent_core.md.
+DEFAULT_MEMORY, DEFAULT_BUILD_TMPFS = "3g", "1g"
 
 
 class ContainerRunner:

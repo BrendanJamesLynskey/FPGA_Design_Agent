@@ -225,10 +225,7 @@ def test_simulate_offers_only_simulators_that_work(rt, monkeypatch):
     monkeypatch.setattr(tl, "available_sims", lambda: ("icarus", "verilator"))
     assert next(t for t in tool_list() if t["name"] == "simulate")["inputSchema"]["properties"]["sim"]["enum"] == \
         ["icarus", "verilator"]
-    rt.session.runner = ContainerRunner(rt.design, ROOT)                     # the container image has Icarus only
-    (rt.design / "tests").mkdir(exist_ok=True)
-    r = dispatch(rt.session, "simulate", {"sim": "verilator"})
-    assert not r["ok"] and "not available here" in r["output"]
+    # 05m: the sandbox image (fda-sim:2) has Verilator, so a container session may run it (test_05m covers the offer)
 
 
 def test_verilator_is_found_the_way_lint_finds_it(tmp_path, monkeypatch):

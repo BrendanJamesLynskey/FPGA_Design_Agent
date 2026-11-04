@@ -98,8 +98,8 @@ first (see the agent's review gate). **Verilator and mutation in the sandbox (05
 with no image, when the host has it; model code never runs on the host while an image exists. `flow/mutate.py --generic`
 runs its baseline, every mutant (mutated copies under `<design>/build/mutants`, inside the design mount) and the compile
 check through the same `ContainerRunner` (`--sandbox auto|container|host`; the `mutate` tool passes the session's own).
-A timed-out container is removed by name (`docker rm -f`). Container limits: `--memory 4g`, `build` tmpfs 1g, `/tmp` 512m
-(measured on the T1 coverage run, see the 05m report). Rebuild: `docker build -t fda-sim:2 agent/container`, capped with
+A timed-out container is removed by name (`docker rm -f`). Container limits: `--memory 3g`, `build` tmpfs 1g, `/tmp` 512m (unchanged: the T1 Verilator coverage run peaked at 0.8 GiB and 13 MB of tmpfs).
+Rebuild: `docker build -t fda-sim:2 agent/container`, capped with
 the `JOBS` build argument (default 2).
 
 Icarus 13, as in the CVDP image, rejects an implicit cast in

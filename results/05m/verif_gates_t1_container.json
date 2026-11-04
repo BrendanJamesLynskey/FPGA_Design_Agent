@@ -1,0 +1,1016 @@
+{
+  "design": "t1_dimmer_counter",
+  "stages": {
+    "V0": {
+      "checks": {
+        "testplan_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "model_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "bench_modules_present": {
+          "value": [
+            "t1_cocotb",
+            "t1_verif"
+          ],
+          "threshold": "all files exist",
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V1": {
+      "checks": {
+        "requirements_have_proof_method": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_methods_discharged": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_references_resolve": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "spec_items_traced": {
+          "value": "26/26",
+          "threshold": "all",
+          "pass": true
+        },
+        "untraced_items": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unknown_spec_refs": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "requirements_without_a_check": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unresolved_references": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "bench_uses_blind_model": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V2": {
+      "checks": {
+        "seeds_run": {
+          "value": [
+            1,
+            2,
+            3
+          ],
+          "threshold": ">=1",
+          "pass": true
+        },
+        "planned_tests_missing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "failing_tests": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "constrained_random_test_ran": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "assertions_bound_zero_failures": {
+          "value": [
+            "A_CT_CLEAR",
+            "A_CT_CTRL_WRITE",
+            "A_CT_DOWN",
+            "A_CT_DUTY_WRITE",
+            "A_CT_HOLD",
+            "A_CT_PRESS_COUNTED_CLEAR",
+            "A_CT_PRESS_COUNTED_DOWN",
+            "A_CT_PRESS_COUNTED_UP",
+            "A_CT_RESET",
+            "A_CT_RO_IGNORED",
+            "A_CT_UP",
+            "A_CT_WRITE_WINS",
+            "A_DB_FALL_NO_PRESS",
+            "A_DB_FLIP",
+            "A_DB_HOLD",
+            "A_DB_PULSE",
+            "A_DB_RISE",
+            "A_DB_RISE_ONLY",
+            "A_PWM_SUBSET",
+            "A_PWM_ZERO_OFF",
+            "A_SC_BLANK",
+            "A_SC_DISABLED",
+            "A_SC_ONE_DIGIT"
+          ],
+          "threshold": "bound in the run; no failure",
+          "pass": true
+        },
+        "other_simulators_failing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "formal_tasks_not_passing": {
+          "value": [
+            "debounce_bmc=absent",
+            "debounce_cover=absent",
+            "scan_bmc=absent",
+            "scan_cover=absent"
+          ],
+          "threshold": [],
+          "pass": false,
+          "why": "a planned formal job has no PASS: run the `formal` tool, or re-plan the method (replan: in the testplan) when sby is not installed"
+        }
+      },
+      "pass": false
+    },
+    "V3": {
+      "checks": {
+        "seeds_run": {
+          "value": 3,
+          "threshold": ">=3",
+          "pass": true
+        },
+        "all_seeds_pass": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "functional_bins_pct": {
+          "value": "0.0 (0/0)",
+          "threshold": 100,
+          "pass": false,
+          "why": "9 bin group(s) planned but no functional-coverage data was found (seed*/coverage*.yml): name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "functional_bins_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": false,
+          "why": "9 bin group(s) planned but no functional-coverage data was found (seed*/coverage*.yml): name cover points in the `bins:` of the testplan requirements, sample them in the bench, and export them in the bench's last test with `coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"])` (cocotb-coverage); the flow keeps the file as seed<N>/coverage_func.yml"
+        },
+        "cover_properties_pct": {
+          "value": "100.0",
+          "threshold": 100,
+          "pass": true
+        },
+        "cover_properties_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "line_pct": {
+          "value": 100.0,
+          "threshold": 95,
+          "pass": true
+        },
+        "toggle_pct": {
+          "value": 87.36,
+          "threshold": 80,
+          "pass": true
+        },
+        "waivers_without_reason": {
+          "value": 0,
+          "threshold": 0,
+          "pass": true
+        },
+        "mutation_score_pct": {
+          "value": 100.0,
+          "threshold": 85,
+          "pass": true
+        }
+      }
+    },
+    "SIGNOFF": {
+      "checks": {
+        "every_method_has_passing_evidence": {
+          "value": [
+            "REQ-02:formal=pending",
+            "REQ-04:formal=pending",
+            "REQ-06:analysis=pending",
+            "REQ-06:analysis=pending",
+            "REQ-06:analysis=pending",
+            "REQ-07:analysis=pending",
+            "REQ-08:hardware=pending",
+            "REQ-08:hardware=pending"
+          ],
+          "threshold": [],
+          "pass": false
+        }
+      },
+      "pass": false
+    },
+    "V-HW": {
+      "checks": {
+        "bringup_result_present": {
+          "value": false,
+          "threshold": true,
+          "pass": false
+        }
+      },
+      "pass": false
+    }
+  },
+  "code_coverage": {
+    "line": {
+      "points": 36,
+      "hit": 36,
+      "pct": 100.0
+    },
+    "toggle": {
+      "points": 870,
+      "hit": 760,
+      "pct": 87.36
+    },
+    "branch": {
+      "points": 28,
+      "hit": 28,
+      "pct": 100.0
+    }
+  },
+  "code_coverage_unhit": {
+    "line": [],
+    "toggle": [
+      "dimmer_counter.sv:17 an[4]:1->0",
+      "dimmer_counter.sv:17 an[5]:1->0",
+      "dimmer_counter.sv:26 win_rdata[20]:0->1",
+      "dimmer_counter.sv:26 win_rdata[20]:1->0",
+      "dimmer_counter.sv:26 win_rdata[21]:0->1",
+      "dimmer_counter.sv:26 win_rdata[21]:1->0",
+      "dimmer_counter.sv:26 win_rdata[22]:0->1",
+      "dimmer_counter.sv:26 win_rdata[22]:1->0",
+      "dimmer_counter.sv:26 win_rdata[23]:0->1",
+      "dimmer_counter.sv:26 win_rdata[23]:1->0",
+      "dimmer_counter.sv:26 win_rdata[24]:0->1",
+      "dimmer_counter.sv:26 win_rdata[24]:1->0",
+      "dimmer_counter.sv:26 win_rdata[25]:0->1",
+      "dimmer_counter.sv:26 win_rdata[25]:1->0",
+      "dimmer_counter.sv:26 win_rdata[26]:0->1",
+      "dimmer_counter.sv:26 win_rdata[26]:1->0",
+      "dimmer_counter.sv:26 win_rdata[27]:0->1",
+      "dimmer_counter.sv:26 win_rdata[27]:1->0",
+      "dimmer_counter.sv:26 win_rdata[28]:0->1",
+      "dimmer_counter.sv:26 win_rdata[28]:1->0",
+      "dimmer_counter.sv:26 win_rdata[29]:0->1",
+      "dimmer_counter.sv:26 win_rdata[29]:1->0",
+      "dimmer_counter.sv:26 win_rdata[30]:0->1",
+      "dimmer_counter.sv:26 win_rdata[30]:1->0",
+      "dimmer_counter.sv:26 win_rdata[31]:0->1",
+      "dimmer_counter.sv:26 win_rdata[31]:1->0",
+      "dimmer_counter.sv:34 n_clear[4]:0->1",
+      "dimmer_counter.sv:34 n_clear[4]:1->0",
+      "dimmer_counter.sv:34 n_clear[5]:0->1",
+      "dimmer_counter.sv:34 n_clear[5]:1->0",
+      "dimmer_counter.sv:34 n_clear[6]:0->1",
+      "dimmer_counter.sv:34 n_clear[6]:1->0",
+      "dimmer_counter.sv:34 n_clear[7]:0->1",
+      "dimmer_counter.sv:34 n_clear[7]:1->0",
+      "dimmer_counter.sv:34 n_down[4]:0->1",
+      "dimmer_counter.sv:34 n_down[4]:1->0",
+      "dimmer_counter.sv:34 n_down[5]:0->1",
+      "dimmer_counter.sv:34 n_down[5]:1->0",
+      "dimmer_counter.sv:34 n_down[6]:0->1",
+      "dimmer_counter.sv:34 n_down[6]:1->0",
+      "dimmer_counter.sv:34 n_down[7]:0->1",
+      "dimmer_counter.sv:34 n_down[7]:1->0",
+      "dimmer_counter.sv:34 n_up[4]:1->0",
+      "dimmer_counter.sv:34 n_up[5]:0->1",
+      "dimmer_counter.sv:34 n_up[5]:1->0",
+      "dimmer_counter.sv:34 n_up[6]:0->1",
+      "dimmer_counter.sv:34 n_up[6]:1->0",
+      "dimmer_counter.sv:34 n_up[7]:0->1",
+      "dimmer_counter.sv:34 n_up[7]:1->0",
+      "dimmer_counter.sv:37 pre[2]:0->1",
+      "dimmer_counter.sv:37 pre[2]:1->0",
+      "sevenseg_scan.sv:12 digits[16]:0->1",
+      "sevenseg_scan.sv:12 digits[16]:1->0",
+      "sevenseg_scan.sv:12 digits[17]:0->1",
+      "sevenseg_scan.sv:12 digits[17]:1->0",
+      "sevenseg_scan.sv:12 digits[18]:0->1",
+      "sevenseg_scan.sv:12 digits[18]:1->0",
+      "sevenseg_scan.sv:12 digits[19]:0->1",
+      "sevenseg_scan.sv:12 digits[19]:1->0",
+      "sevenseg_scan.sv:12 digits[20]:0->1",
+      "sevenseg_scan.sv:12 digits[20]:1->0",
+      "sevenseg_scan.sv:12 digits[21]:0->1",
+      "sevenseg_scan.sv:12 digits[21]:1->0",
+      "sevenseg_scan.sv:12 digits[22]:0->1",
+      "sevenseg_scan.sv:12 digits[22]:1->0",
+      "sevenseg_scan.sv:12 digits[23]:0->1",
+      "sevenseg_scan.sv:12 digits[23]:1->0",
+      "sevenseg_scan.sv:13 blank[0]:0->1",
+      "sevenseg_scan.sv:13 blank[0]:1->0",
+      "sevenseg_scan.sv:13 blank[1]:0->1",
+      "sevenseg_scan.sv:13 blank[1]:1->0",
+      "sevenseg_scan.sv:13 blank[2]:0->1",
+      "sevenseg_scan.sv:13 blank[2]:1->0",
+      "sevenseg_scan.sv:13 blank[3]:0->1",
+      "sevenseg_scan.sv:13 blank[3]:1->0",
+      "sevenseg_scan.sv:13 blank[4]:1->0",
+      "sevenseg_scan.sv:13 blank[5]:1->0",
+      "sevenseg_scan.sv:13 blank[6]:0->1",
+      "sevenseg_scan.sv:13 blank[6]:1->0",
+      "sevenseg_scan.sv:13 blank[7]:0->1",
+      "sevenseg_scan.sv:13 blank[7]:1->0",
+      "sevenseg_scan.sv:14 an[4]:1->0",
+      "sevenseg_scan.sv:14 an[5]:1->0",
+      "t1_dimmer_counter_top.sv:20 DP:1->0",
+      "t1_dimmer_counter_top.sv:21 AN[4]:1->0",
+      "t1_dimmer_counter_top.sv:21 AN[5]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[20]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[20]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[21]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[21]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[22]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[22]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[23]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[23]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[24]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[24]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[25]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[25]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[26]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[26]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[27]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[27]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[28]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[28]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[29]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[29]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[30]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[30]:1->0",
+      "t1_dimmer_counter_top.sv:28 win_rdata[31]:0->1",
+      "t1_dimmer_counter_top.sv:28 win_rdata[31]:1->0"
+    ],
+    "branch": []
+  },
+  "mutation": {
+    "design": "t1_dimmer_counter",
+    "mode": "generic",
+    "mutant_source": "verif/mutants.yaml",
+    "rng_seed": 1,
+    "baseline_seconds": 142.2,
+    "sandbox": "container",
+    "caps": {
+      "max_mutants": 20,
+      "wall_s": 1500,
+      "mutant_timeout_s": 568
+    },
+    "candidates": 21,
+    "sampled": 20,
+    "evaluated": 20,
+    "killed": 20,
+    "survived": 0,
+    "timed_out": 0,
+    "skipped": 0,
+    "invalid": 0,
+    "score_pct": 100.0,
+    "survivors": [],
+    "survivor_text": [],
+    "timed_out_text": [],
+    "skipped_text": [],
+    "note": "score = killed / (killed + survived + timed_out); invalid and skipped mutants are excluded and listed; an equivalent mutant (no visible behaviour change) shows as a survivor",
+    "wall_seconds": 938.2,
+    "rows": [
+      {
+        "name": "db_step_two",
+        "file": "debounce.sv",
+        "line": 34,
+        "class": "constant",
+        "why": "debounce counts in steps of two",
+        "change": "rtl/debounce.sv line 34: `cnt <= cnt + 1'b1;` became `cnt <= cnt + 2'd2;` (debounce counts in steps of two)",
+        "status": "killed",
+        "seconds": 19.3
+      },
+      {
+        "name": "db_level_cond",
+        "file": "debounce.sv",
+        "line": 27,
+        "class": "condition",
+        "why": "the count is cleared when the input differs",
+        "change": "rtl/debounce.sv line 27: `end else if (s == level) begin` became `end else if (s != level && !press) begin` (the count is cleared when the input differs)",
+        "status": "killed",
+        "seconds": 18.5
+      },
+      {
+        "name": "db_late",
+        "file": "debounce.sv",
+        "line": 29,
+        "class": "constant",
+        "why": "debounce accepts a level one clock late",
+        "change": "rtl/debounce.sv line 29: `cnt == CW'(CYCLES - 1)` became `cnt == CW'(CYCLES)` (debounce accepts a level one clock late)",
+        "status": "killed",
+        "seconds": 29.8
+      },
+      {
+        "name": "db_early",
+        "file": "debounce.sv",
+        "line": 29,
+        "class": "constant",
+        "why": "debounce accepts a level one clock early",
+        "change": "rtl/debounce.sv line 29: `cnt == CW'(CYCLES - 1)` became `cnt == CW'(CYCLES - 2)` (debounce accepts a level one clock early)",
+        "status": "killed",
+        "seconds": 32.1
+      },
+      {
+        "name": "db_reset_level",
+        "file": "debounce.sv",
+        "line": 25,
+        "class": "reset",
+        "why": "the debounced level resets to 1",
+        "change": "rtl/debounce.sv line 25: `level <= 1'b0;` became `level <= 1'b1;` (the debounced level resets to 1)",
+        "status": "killed",
+        "seconds": 70.1
+      },
+      {
+        "name": "db_release_press",
+        "file": "debounce.sv",
+        "line": 32,
+        "class": "condition",
+        "why": "a release also makes a press",
+        "change": "rtl/debounce.sv line 32: `press <= s;` became `press <= 1'b1;` (a release also makes a press)",
+        "status": "killed",
+        "seconds": 21.5
+      },
+      {
+        "name": "reset_duty",
+        "file": "dimmer_counter.sv",
+        "line": 51,
+        "class": "reset",
+        "why": "DUTY resets to 0x41",
+        "change": "rtl/dimmer_counter.sv line 51: `duty    <= 8'h40;` became `duty    <= 8'h41;` (DUTY resets to 0x41)",
+        "status": "killed",
+        "seconds": 27.4
+      },
+      {
+        "name": "reset_ctrl",
+        "file": "dimmer_counter.sv",
+        "line": 52,
+        "class": "reset",
+        "why": "CTRL resets with DUTY_SRC set",
+        "change": "rtl/dimmer_counter.sv line 52: `ctrl    <= 2'b10;` became `ctrl    <= 2'b11;` (CTRL resets with DUTY_SRC set)",
+        "status": "killed",
+        "seconds": 24.1
+      },
+      {
+        "name": "up_is_down",
+        "file": "dimmer_counter.sv",
+        "line": 63,
+        "class": "operator",
+        "why": "up subtracts",
+        "change": "rtl/dimmer_counter.sv line 63: `else if (p_up)                     count <= count + 1'b1;` became `else if (p_up)                     count <= count - 1'b1;` (up subtracts)",
+        "status": "killed",
+        "seconds": 27.1
+      },
+      {
+        "name": "clear_loses_to_up",
+        "file": "dimmer_counter.sv",
+        "line": 62,
+        "class": "condition",
+        "why": "clear loses to up on the same clock",
+        "change": "rtl/dimmer_counter.sv line 62: `else if (p_clear)                  count <= '0;` became `else if (p_clear && !p_up)         count <= '0;` (clear loses to up on the same clock)",
+        "status": "killed",
+        "seconds": 75.0
+      },
+      {
+        "name": "press_not_counted",
+        "file": "dimmer_counter.sv",
+        "line": 58,
+        "class": "condition",
+        "why": "a down press on the clock of an up press is not counted",
+        "change": "rtl/dimmer_counter.sv line 58: `if (p_down)  n_down  <= n_down + 1'b1;` became `if (p_down && !p_up)  n_down  <= n_down + 1'b1;` (a down press on the clock of an up press is not counted)",
+        "status": "killed",
+        "seconds": 73.0
+      },
+      {
+        "name": "pwm_le",
+        "file": "dimmer_counter.sv",
+        "line": 100,
+        "class": "operator",
+        "why": "PWM on one phase step too long",
+        "change": "rtl/dimmer_counter.sv line 100: `(phase < duty_eff)` became `(phase <= duty_eff)` (PWM on one phase step too long)",
+        "status": "killed",
+        "seconds": 25.4
+      },
+      {
+        "name": "pwm_prescale",
+        "file": "dimmer_counter.sv",
+        "line": 94,
+        "class": "constant",
+        "why": "PWM phase advances early",
+        "change": "rtl/dimmer_counter.sv line 94: `if (pre == PW'(PWM_PRESCALE - 1))` became `if (pre == PW'(PWM_PRESCALE - 2))` (PWM phase advances early)",
+        "status": "killed",
+        "seconds": 25.5
+      },
+      {
+        "name": "duty_src_bit",
+        "file": "dimmer_counter.sv",
+        "line": 45,
+        "class": "condition",
+        "why": "DUTY_SRC read from the wrong CTRL bit",
+        "change": "rtl/dimmer_counter.sv line 45: `wire [7:0] duty_eff = ctrl[0] ? sw[7:0] : duty;` became `wire [7:0] duty_eff = ctrl[1] ? sw[7:0] : duty;` (DUTY_SRC read from the wrong CTRL bit)",
+        "status": "killed",
+        "seconds": 23.2
+      },
+      {
+        "name": "presses_swap",
+        "file": "dimmer_counter.sv",
+        "line": 81,
+        "class": "operator",
+        "why": "PRESSES up and down fields swapped",
+        "change": "rtl/dimmer_counter.sv line 81: `{8'h0, n_clear, n_down, n_up}` became `{8'h0, n_clear, n_up, n_down}` (PRESSES up and down fields swapped)",
+        "status": "killed",
+        "seconds": 20.8
+      },
+      {
+        "name": "duty_write_mask",
+        "file": "dimmer_counter.sv",
+        "line": 66,
+        "class": "constant",
+        "why": "DUTY write drops bit 7",
+        "change": "rtl/dimmer_counter.sv line 66: `duty <= win_wdata[7:0];` became `duty <= {1'b0, win_wdata[6:0]};` (DUTY write drops bit 7)",
+        "status": "killed",
+        "seconds": 24.8
+      },
+      {
+        "name": "inputs_swap",
+        "file": "dimmer_counter.sv",
+        "line": 80,
+        "class": "operator",
+        "why": "INPUTS up and down levels swapped",
+        "change": "rtl/dimmer_counter.sv line 80: `{13'h0, lv_clear, lv_down, lv_up, sw}` became `{13'h0, lv_clear, lv_up, lv_down, sw}` (INPUTS up and down levels swapped)",
+        "status": "killed",
+        "seconds": 33.3
+      },
+      {
+        "name": "an_enable",
+        "file": "sevenseg_scan.sv",
+        "line": 49,
+        "class": "condition",
+        "why": "DISPLAY_EN no longer darkens the display",
+        "change": "rtl/sevenseg_scan.sv line 49: `(enable && !blank[k])` became `(enable || !blank[k])` (DISPLAY_EN no longer darkens the display)",
+        "status": "killed",
+        "seconds": 31.7
+      },
+      {
+        "name": "glyph_A",
+        "file": "sevenseg_scan.sv",
+        "line": 33,
+        "class": "constant",
+        "why": "glyph A loses segment a",
+        "change": "rtl/sevenseg_scan.sv line 33: `4'hA: glyph = 7'b1110111;` became `4'hA: glyph = 7'b1110110;` (glyph A loses segment a)",
+        "status": "killed",
+        "seconds": 33.9
+      },
+      {
+        "name": "scan_step",
+        "file": "sevenseg_scan.sv",
+        "line": 48,
+        "class": "constant",
+        "why": "display scan runs at twice the rate",
+        "change": "rtl/sevenseg_scan.sv line 48: `scan <= scan + 1'b1;` became `scan <= scan + 2'd2;` (display scan runs at twice the rate)",
+        "status": "killed",
+        "seconds": 34.9
+      }
+    ]
+  },
+  "traceability": [
+    {
+      "requirement": "REQ-01",
+      "text": "The counter counts up, down and clear on debounced presses, wraps at 16 bits, and a same-clock register write wins",
+      "method": "simulation",
+      "artefact": "t1_cocotb.count_wraps_both_ways",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-01",
+      "text": "The counter counts up, down and clear on debounced presses, wraps at 16 bits, and a same-clock register write wins",
+      "method": "simulation",
+      "artefact": "t1_verif.simultaneous_presses_priority",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-01",
+      "text": "The counter counts up, down and clear on debounced presses, wraps at 16 bits, and a same-clock register write wins",
+      "method": "simulation",
+      "artefact": "t1_cocotb.register_write_and_press_on_the_same_clock",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "A button change shorter than the debounce time never counts; a release makes no press",
+      "method": "simulation",
+      "artefact": "t1_verif.short_glitches_are_ignored",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "A button change shorter than the debounce time never counts; a release makes no press",
+      "method": "simulation",
+      "artefact": "t1_cocotb.debounce_boundary_is_exact",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "A button change shorter than the debounce time never counts; a release makes no press",
+      "method": "formal",
+      "artefact": "debounce",
+      "result": "pending",
+      "detail": "no formal results"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "LED brightness is linear in the effective duty over one PWM period",
+      "method": "simulation",
+      "artefact": "t1_cocotb.pwm_on_time_matches_duty",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "The display lights exactly one digit at a time, in order, showing COUNT and the duty in hex",
+      "method": "simulation",
+      "artefact": "t1_cocotb.display_shows_count_and_duty",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "The display lights exactly one digit at a time, in order, showing COUNT and the duty in hex",
+      "method": "formal",
+      "artefact": "scan",
+      "result": "pending",
+      "detail": "no formal results"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "The register window has the listed map and reset values",
+      "method": "simulation",
+      "artefact": "t1_cocotb.identity_and_reset_values",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "The design closes timing at 100 MHz with no unconstrained path",
+      "method": "analysis",
+      "artefact": "post_route:setup",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "The design closes timing at 100 MHz with no unconstrained path",
+      "method": "analysis",
+      "artefact": "post_route:hold",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "The design closes timing at 100 MHz with no unconstrained path",
+      "method": "analysis",
+      "artefact": "post_route:no_unconstrained_endpoints",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-07",
+      "text": "The design stays within its predicted resources and uses no BRAM or DSP",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pending",
+      "detail": "no flow gates result"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "On the board the register window answers as the model predicts and the ILA captures agree",
+      "method": "hardware",
+      "artefact": "uart_tests:test_t1_registers_against_the_model",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "On the board the register window answers as the model predicts and the ILA captures agree",
+      "method": "hardware",
+      "artefact": "ila_captures",
+      "result": "pending",
+      "detail": "no bring-up result"
+    }
+  ],
+  "coverage_detail": {
+    "bins": {},
+    "requirements": [
+      {
+        "id": "R01",
+        "spec": [
+          "behaviour.counter[0]"
+        ],
+        "tests": [
+          "t1_cocotb.count_wraps_both_ways",
+          "t1_verif.directed_closure_sweep"
+        ],
+        "bins": {
+          "t1.op.kind_x_count": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R02",
+        "spec": [
+          "behaviour.counter[1]"
+        ],
+        "tests": [
+          "t1_cocotb.bouncy_buttons_match_the_model",
+          "t1_cocotb.random_operations_match_the_model",
+          "t1_verif.constrained_random_operations"
+        ],
+        "bins": {
+          "t1.op.kind": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R03",
+        "spec": [
+          "behaviour.counter[2]"
+        ],
+        "tests": [
+          "t1_verif.simultaneous_presses_priority"
+        ],
+        "bins": {
+          "t1.clock.mix": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R04",
+        "spec": [
+          "behaviour.counter[3]"
+        ],
+        "tests": [
+          "t1_cocotb.register_write_and_press_on_the_same_clock"
+        ],
+        "bins": {
+          "t1.clock.mix": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R05",
+        "spec": [
+          "behaviour.debounce[0]",
+          "timing.latency.button_to_count"
+        ],
+        "tests": [
+          "t1_cocotb.debounce_boundary_is_exact",
+          "t1_verif.short_glitches_are_ignored",
+          "t1_cocotb.bouncy_buttons_match_the_model"
+        ],
+        "bins": {
+          "t1.press.button_x_kind": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R06",
+        "spec": [
+          "behaviour.debounce[1]"
+        ],
+        "tests": [
+          "t1_cocotb.inputs_register_shows_levels",
+          "t1_cocotb.debounce_boundary_is_exact"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R07",
+        "spec": [
+          "behaviour.pwm[0]"
+        ],
+        "tests": [
+          "t1_cocotb.pwm_on_time_matches_duty"
+        ],
+        "bins": {
+          "t1.duty.class_x_source": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R08",
+        "spec": [
+          "behaviour.pwm[1]",
+          "behaviour.pwm[2]",
+          "timing.latency.register_write_to_led"
+        ],
+        "tests": [
+          "t1_cocotb.pwm_on_time_matches_duty"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R09",
+        "spec": [
+          "behaviour.pwm[3]"
+        ],
+        "tests": [
+          "t1_cocotb.pwm_on_time_matches_duty"
+        ],
+        "bins": {
+          "t1.duty.class": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R10",
+        "spec": [
+          "behaviour.display[0]"
+        ],
+        "tests": [
+          "t1_cocotb.display_shows_count_and_duty"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R11",
+        "spec": [
+          "behaviour.display[1]",
+          "behaviour.display[2]"
+        ],
+        "tests": [
+          "t1_cocotb.display_shows_count_and_duty"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R12",
+        "spec": [
+          "behaviour.display[3]"
+        ],
+        "tests": [
+          "t1_cocotb.display_shows_count_and_duty"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R13",
+        "spec": [
+          "behaviour.display[4]"
+        ],
+        "tests": [
+          "t1_cocotb.display_shows_count_and_duty"
+        ],
+        "bins": {
+          "t1.display.enable": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R14",
+        "spec": [
+          "behaviour.display[5]",
+          "behaviour.display[6]"
+        ],
+        "tests": [
+          "t1_cocotb.display_shows_count_and_duty",
+          "t1_verif.directed_closure_sweep"
+        ],
+        "bins": {
+          "t1.display.glyph": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R15",
+        "spec": [
+          "reset"
+        ],
+        "tests": [
+          "t1_cocotb.identity_and_reset_values",
+          "t1_verif.reset_state_of_outputs"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R16",
+        "spec": [
+          "registers.map.COUNT"
+        ],
+        "tests": [
+          "t1_cocotb.identity_and_reset_values",
+          "t1_cocotb.count_wraps_both_ways",
+          "t1_verif.directed_closure_sweep"
+        ],
+        "bins": {
+          "t1.reg.name_x_dir": {
+            "hit": 0,
+            "total": 0
+          }
+        }
+      },
+      {
+        "id": "R17",
+        "spec": [
+          "registers.map.DUTY"
+        ],
+        "tests": [
+          "t1_cocotb.identity_and_reset_values",
+          "t1_cocotb.pwm_on_time_matches_duty"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R18",
+        "spec": [
+          "registers.map.CTRL"
+        ],
+        "tests": [
+          "t1_cocotb.identity_and_reset_values",
+          "t1_verif.directed_closure_sweep"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R19",
+        "spec": [
+          "registers.map.INPUTS"
+        ],
+        "tests": [
+          "t1_cocotb.inputs_register_shows_levels"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R20",
+        "spec": [
+          "registers.map.PRESSES"
+        ],
+        "tests": [
+          "t1_cocotb.debounce_boundary_is_exact",
+          "t1_verif.simultaneous_presses_priority"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "R21",
+        "spec": [
+          "registers.unmapped"
+        ],
+        "tests": [
+          "t1_verif.directed_closure_sweep",
+          "t1_cocotb.random_operations_match_the_model"
+        ],
+        "bins": {}
+      }
+    ]
+  },
+  "reached": "V1",
+  "first_failed": "V2"
+}
