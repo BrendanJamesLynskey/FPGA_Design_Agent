@@ -219,7 +219,8 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 05f | F2 part 6: per-role model routing (profiles `single`, `cvdp`; `role@stage` overrides), per-role and per-stage accounting, knowledge-tool use log ([docs/role_models.md](docs/role_models.md)) | in review |
 | 05g | F2 part 7: test-writer diagnosis and fixes (turn reserve, repair no longer deletes, shell fixtures, checklist, formal re-plan), per-role turn trace, knowledge-use log, QoR gate moved to after routing ([docs/test_writer.md](docs/test_writer.md)) | in review |
 | F2 | Agent v1 (T1-T2 designs) | coming |
-| 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | in review |
+| 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)); v1.2 after a second-model review | done |
+| 06c | F3 part 3: pre-registered scored runs on the 8 held-out tasks ([docs/preregistration_06c.md](docs/preregistration_06c.md)) | draft pre-registration |
 | F3 | Scored runs | coming |
 
 ## Licence
