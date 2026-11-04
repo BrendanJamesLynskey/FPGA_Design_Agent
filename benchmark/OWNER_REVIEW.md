@@ -234,7 +234,7 @@ Files: `t2_vga_sprite/spec.md`, `hidden/spec.yaml`, `hidden/model.py`, `hidden/a
 
 **Changed in v1.1 (2026-11-03):** (1) `hidden/selfcheck.py`: the bounce check now brackets the frame count (FRAME read before and after the CTRL write and before and after the X/Y reads); v1 failed on the board with FRAME +60 and X/Y +62, a measurement-window error, not a design fault; the rule change and the board numbers are in its docstring. (2) `hidden/acceptance.py`: three directed tests added for the four recorded survivors (off-screen X and CTRL.EN = 0 checked on lines the sprite would cover; a bounce turn at X = 0 and Y = 464; blanking lines with a non-zero background). The v1 tests looked at lines past the sprite, or ran with a black background, where those faults cannot show. The reference passes all 9 tests (Icarus); the mutant run that confirms the survivors are now killed is queued.
 
-**Changed in v1.2 (2026-11-04, brief 06a4):** `test_bounce_plain_step_and_bounce_off` added (minor, coverage): two frame wraps away from the edges, +1 in X and -1 in Y with BOUNCE = 1, no movement with BOUNCE = 0. Tests 10; the reference passes 10/10. Deferred to v2: the (0,0)-within-16-clocks-of-reset bound.
+**Changed in v1.2 (2026-11-04, brief 06a4):** `test_bounce_plain_step_and_bounce_off` added (minor, coverage): two frame wraps away from the edges, +1 in X and -1 in Y with BOUNCE = 1, no movement with BOUNCE = 0. Tests 10; the reference passes 10/10 and all 9 mutants are still killed (re-run, Icarus). Deferred to v2: the (0,0)-within-16-clocks-of-reset bound.
 
 - [x] **Spec clear?** spec.md reads as a user would write it; what it leaves out is answerable from spec.yaml
 - [x] **Model right?** model.py does what spec.yaml says (and nothing the RTL happens to do)
