@@ -89,6 +89,8 @@ def role_inputs(s: Session, role: str, previous: bool = False) -> dict[str, str]
         want = want + sorted(str(p.relative_to(s.design)) for d in ("tests", "verif")
                              for p in (s.design / d).rglob("*") if p.is_file() and "__pycache__" not in p.parts
                              and p.name != "__init__.py" and p.stat().st_size < 60_000)
+    if role == "tests" and (s.design / "verif" / "checkers" / "v_macros.svh").is_file():
+        want = want + ["verif/checkers/v_macros.svh"]       # 05i: the macros the tests role declares assertions with
     out = {}
     for f in want:
         p = j.resolve(f)

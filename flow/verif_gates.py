@@ -197,6 +197,38 @@ def checker_names(chk_dir: Path, prefix: str) -> set[str]:
     return set(re.findall(rf"`V_\w+\(({prefix}\w+),", "".join(p.read_text() for p in chk_dir.glob("*.sv"))))
 
 
+def plain_sv_names(chk_dir: Path, prefix: str) -> set[str]:
+    """Names with ``prefix`` that appear in the checker files in any form (05i): a name here that ``checker_names``
+    lacks was declared as plain SystemVerilog (``C_x: cover property (...)``), which the gate does not read."""
+    return set(re.findall(rf"\b({prefix}\w+)\b", "".join(p.read_text() for p in chk_dir.glob("*.sv"))))
+
+
+# ---- the macro file (05i) -------------------------------------------------------------------------------------
+MACROS_CANON = Path(__file__).resolve().parent / "v_macros.svh"      # the one canonical copy, owned by the flow
+MACROS_REL = "verif/checkers/v_macros.svh"                          # where every design carries it
+
+
+def seed_macros(design: Path) -> bool:
+    """Put the canonical ``v_macros.svh`` in the design's ``verif/checkers`` if it is not there. True if it wrote it."""
+    dst = design / MACROS_REL
+    if dst.exists():
+        return False
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_text(MACROS_CANON.read_text())
+    return True
+
+
+def macros_warning(chk_dir: Path) -> str | None:
+    """A warning when the design's ``v_macros.svh`` differs from the canonical copy (or is absent while checkers exist)."""
+    f = chk_dir / "v_macros.svh"
+    if not f.exists():
+        return ("verif/checkers/v_macros.svh is missing: the gate reads A_*/C_* names only from `V_SAME/V_NEXT/V_RST/V_COVER"
+                "(name, ...)` of that file; restore it from flow/v_macros.svh") if any(chk_dir.glob("*.sv")) else None
+    if f.read_text() != MACROS_CANON.read_text():
+        return "verif/checkers/v_macros.svh differs from the flow's canonical copy (flow/v_macros.svh); it is the flow's file, do not edit it"
+    return None
+
+
 # ---- stages -----------------------------------------------------------------------------------------------
 def _yaml_file(path: Path, what: str) -> Any:
     try:
@@ -325,11 +357,13 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     unknown = sorted(traced - set(items))
     tests_all, a_all, c_all = bench_tests(bench_dir, modules), checker_names(chk_dir, "A_"), checker_names(chk_dir, "C_")
     formal_tasks = {p.stem for p in formal_src.glob("*.sby")}
+    plain = plain_sv_names(chk_dir, "A_") | plain_sv_names(chk_dir, "C_")
+    plain_note = " (declared as plain SV; the gate reads only `V_*(name, ...)` from v_macros.svh)"      # 05i
     bad_refs = []
     for r in reqs:
         bad_refs += [f"{r['id']}:{t}" for t in r.get("tests", []) if t not in tests_all]
-        bad_refs += [f"{r['id']}:{t}" for t in r.get("assertions", []) if t not in a_all]
-        bad_refs += [f"{r['id']}:{t}" for t in r.get("cover_props", []) if t not in c_all]
+        bad_refs += [f"{r['id']}:{t}" + (plain_note if t in plain else "") for t in r.get("assertions", []) if t not in a_all]
+        bad_refs += [f"{r['id']}:{t}" + (plain_note if t in plain else "") for t in r.get("cover_props", []) if t not in c_all]
         bad_refs += [f"{r['id']}:{t}" for t in r.get("formal", []) if t not in formal_tasks]
     no_check = [r["id"] for r in reqs if not (r.get("tests") or r.get("assertions") or r.get("formal"))]
     bench_src = "".join((bench_dir / f"{m}.py").read_text() for m in modules)
@@ -378,6 +412,9 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         "bench_uses_blind_model": chk(uses_model, True, uses_model),
     }
     out["stages"]["V1"] = {"checks": v1}
+    mw = macros_warning(chk_dir)                          # 05i: a warning, not a failed check
+    if mw:
+        out["warnings"] = [mw]
     # ---- V2: tests, assertions, formal
     res = read_results([runs])
     seeds = sorted(res)
@@ -529,6 +566,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"    {'ok ' if c['pass'] else 'BAD'} {n}: {c['value']}  (threshold {c['threshold']})")
     for r in rep.get("traceability") or []:
         print(f"    trace {r['requirement']:8} {r['method']:10} {r['artefact']:55} {r['result']:8} {r['detail']}")
+    for w in rep.get("warnings") or []:
+        print(f"WARNING: {w}")
     print(f"reached: {rep['reached']}  first failed: {rep['first_failed']}")
     if a.json:
         Path(a.json).write_text(json.dumps(rep, indent=2, default=str) + "\n")
