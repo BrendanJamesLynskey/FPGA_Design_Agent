@@ -56,7 +56,7 @@ def tiny(tmp_path):
 
 
 def _cli(design, *args, lock=None):
-    env = {**os.environ, "FDA_HEAVY_LOCK": str(lock)} if lock else os.environ
+    env = {**os.environ, "FDA_MUTATE_SANDBOX": "host", **({"FDA_HEAVY_LOCK": str(lock)} if lock else {})}
     return subprocess.run([sys.executable, str(ROOT / "flow" / "mutate.py"), str(design), "--generic", *args],
                           capture_output=True, text=True, cwd=ROOT, env=env, timeout=600)
 

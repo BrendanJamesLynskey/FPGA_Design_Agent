@@ -16,6 +16,7 @@ Generic mode (brief 05k), for any design directory, including the ones the agent
 
     python3 flow/mutate.py designs/<d> --generic [--json designs/<d>/build/verif/mutation.json]
             [--max-mutants 20] [--seed 1] [--wall-s 1500] [--mutant-timeout-s N] [--lock-wait-s 60]
+            [--sandbox auto|container|host]
 
 It runs the design's own tests/test_*_rtl.py (what the `simulate` tool runs, Icarus, the bench's own seeds) against a
 mutated copy of rtl/ (flow.cocotb_run swaps the sources through $FDA_MUTANT_ORIG / $FDA_MUTANT_DIR). The mutants are
@@ -24,6 +25,9 @@ and bit-constant operators), sampled with a recorded RNG seed up to --max-mutant
 A mutant is killed only when its run fails; invalid (the copy does not compile, excluded), timed out (counted as NOT
 killed) and skipped (the wall-time cap came first, excluded and listed) are never counted as killed. The result,
 build/verif/mutation.json, is what flow/verif_gates.py --mutation reads. Takes the heavy-slot lock (exit 75: busy).
+Brief 05m: the baseline and every mutant run (and the compile check) go through agent.core.runner.ContainerRunner, the same
+container as `simulate` (no network, no capabilities, read-only root), whenever the sandbox image exists (--sandbox auto);
+the mutated copies sit under <design>/build/mutants, inside the design mount.
 """
 
 from __future__ import annotations
@@ -43,6 +47,8 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 PY = os.environ.get("MUTATE_PYTHON", sys.executable)
 
 
@@ -154,19 +160,46 @@ def plain_words(m: dict) -> str:
     return f"rtl/{m['file']} line {m['line']}: `{m['old_line']}` became `{m['new_line']}` ({m['why']})"
 
 
-def compile_ok(files: list[Path]) -> bool | None:
-    """Does Icarus accept these sources? None when it cannot tell (no iverilog), so the caller does not guess."""
+def make_runner(design: Path, mode: str = "auto"):
+    """The sandbox for model-written code (05m): a ContainerRunner (the image `simulate` uses) or None for the host.
+    "auto" uses the container whenever the image exists; "container" fails when it does not; "host" is for CI and
+    for machines with no image (the unit tests of this file). Model code never runs on the host when an image exists
+    and the caller did not ask for "host" explicitly."""
+    if mode == "auto":
+        mode = os.environ.get("FDA_MUTATE_SANDBOX", "auto")       # the unit tests of this file set it to "host"
+    if mode == "host":
+        return None
+    from agent.core.runner import ContainerRunner, container_available
+    if container_available():
+        return ContainerRunner(design, ROOT)
+    if mode == "container":
+        raise RuntimeError("--sandbox container: the sandbox image is not present (docker build -t fda-sim:2 agent/container)")
+    return None
+
+
+def compile_ok(files: list[Path], runner=None) -> bool | None:
+    """Does Icarus accept these sources? None when it cannot tell (no iverilog), so the caller does not guess.
+    With a ``runner`` the compile runs in the sandbox like the tests do."""
+    inc = [f"-I{d}" for d in sorted({str(f.parent) for f in files})]
+    argv = ["iverilog", "-g2012", "-t", "null", *inc, *map(str, files)]
+    if runner is not None:
+        return runner.run("simulate", argv, ROOT, None, 120).returncode == 0
     if not shutil.which("iverilog"):
         return None
-    inc = [f"-I{d}" for d in sorted({str(f.parent) for f in files})]
-    r = subprocess.run(["iverilog", "-g2012", "-t", "null", *inc, *map(str, files)], capture_output=True, text=True)
+    r = subprocess.run(argv, capture_output=True, text=True)
     return r.returncode == 0
 
 
-def run_bench(design: Path, env_extra: dict, timeout: float) -> tuple[str, float]:
-    """The design's tests/test_*_rtl.py, as `simulate` runs them, in a fresh process group. Returns (status, seconds):
-    "pass", "fail" or "timeout" (the whole group is killed)."""
+def run_bench(design: Path, env_extra: dict, timeout: float, runner=None) -> tuple[str, float]:
+    """The design's tests/test_*_rtl.py, as `simulate` runs them. Returns (status, seconds): "pass", "fail" or
+    "timeout". With a ``runner`` (05m) the run is the sandbox's, the same container as `simulate` (no network, read-only
+    root; a timed-out container is removed); without one it is a host process in its own group, killed on timeout."""
     tests = sorted((design / "tests").glob("test_*_rtl.py"))
+    if runner is not None:
+        t0 = time.monotonic()
+        r = runner.run("simulate", [PY, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *map(str, tests)], ROOT,
+                       {"SIM": "icarus", **env_extra}, timeout)
+        return ("timeout" if r.returncode == 124 else "pass" if r.returncode == 0 else "fail"), round(time.monotonic() - t0, 1)
     env = {k: v for k, v in os.environ.items() if k not in ("FDA_SIM_RESULTS_DIR", "FDA_COVERAGE", "FDA_COV_OUT")}
     env.update(SIM="icarus", **env_extra)
     t0 = time.monotonic()
@@ -189,23 +222,28 @@ def generic(design: Path, a) -> int:
     if not list(design.glob("tests/test_*_rtl.py")) or not list(rtl.glob("*.sv")):
         print(f"{design.name}: needs rtl/*.sv and tests/test_*_rtl.py", file=sys.stderr)
         return 2
+    try:
+        runner = make_runner(design, a.sandbox)
+    except RuntimeError as e:
+        print(str(e), file=sys.stderr)
+        return 2
     lock, holder = take_lock(design.name, a.lock_wait_s, a.wall_s + 600)
     if lock is None and holder:
         print(f"BUSY: another heavy job holds the lock ({holder}); retry later")
         return EX_BUSY
     try:
-        return _generic_locked(design, a, rtl, out_json, time.monotonic())      # the wall cap starts once the lock is ours
+        return _generic_locked(design, a, rtl, out_json, time.monotonic(), runner)      # the wall cap starts once the lock is ours
     finally:
         if lock is not None:
             lock.unlink(missing_ok=True)
 
 
-def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float) -> int:
+def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, runner=None) -> int:
     mdir_root = design / "build" / "mutants"
     shell = sorted((ROOT / "shell" / "rtl").glob("*.sv"))
     env_orig = {"FDA_MUTANT_ORIG": str(rtl.resolve())}
     # 1. the unmutated RTL must pass: a bench that fails on the original has nothing to measure
-    base, base_s = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(rtl.resolve())}, a.mutant_timeout_s or 900)
+    base, base_s = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(rtl.resolve())}, a.mutant_timeout_s or 900, runner)
     if base != "pass":
         print(f"baseline {base}: the bench does not pass on the unmutated RTL; no mutation result written")
         return 3
@@ -231,11 +269,11 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float) 
             rows.append(row | {"status": "invalid", "note": "the text to change was not found exactly once"})
             continue
         (d / m["file"]).write_text(new)
-        if compile_ok(shell + sorted(d.glob("*.sv"))) is False:
+        if compile_ok(shell + sorted(d.glob("*.sv")), runner) is False:
             rows.append(row | {"status": "invalid", "note": "the mutated RTL does not compile"})
             shutil.rmtree(d, ignore_errors=True)
             continue
-        st, secs = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(d)}, per_mutant)
+        st, secs = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(d)}, per_mutant, runner)
         row |= {"status": {"fail": "killed", "pass": "survived", "timeout": "timed_out"}[st], "seconds": secs}
         print(f"{m['name']:40s} {row['status']}", flush=True)
         rows.append(row)
@@ -244,7 +282,8 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float) 
     killed, surv, tmo = by("killed"), by("survived"), by("timed_out")
     evaluated = len(killed) + len(surv) + len(tmo)
     res = {"design": design.name, "mode": "generic", "mutant_source": source, "rng_seed": a.seed,
-           "baseline_seconds": base_s, "caps": {"max_mutants": a.max_mutants, "wall_s": a.wall_s, "mutant_timeout_s": per_mutant},
+           "baseline_seconds": base_s, "sandbox": "container" if runner is not None else "host",
+           "caps": {"max_mutants": a.max_mutants, "wall_s": a.wall_s, "mutant_timeout_s": per_mutant},
            "candidates": len(pool), "sampled": len(chosen), "evaluated": evaluated, "killed": len(killed),
            "survived": len(surv), "timed_out": len(tmo), "skipped": len(by("skipped")), "invalid": len(by("invalid")),
            "score_pct": round(100 * len(killed) / evaluated, 2) if evaluated else 0.0,
@@ -283,6 +322,8 @@ def main() -> int:
     ap.add_argument("--wall-s", type=int, default=DEFAULT_WALL_S)
     ap.add_argument("--mutant-timeout-s", type=int, default=0)
     ap.add_argument("--lock-wait-s", type=float, default=0)
+    ap.add_argument("--sandbox", choices=("auto", "container", "host"), default="auto",
+                    help="where the design's tests run (05m): the sandbox image when it exists (auto), or force one")
     a = ap.parse_args()
     design = (ROOT / a.design).resolve()
     if a.generic:

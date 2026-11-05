@@ -5,7 +5,7 @@ the 05b report (it needs Docker and the fda-sim image, which CI does not have)."
 import sys
 from pathlib import Path
 
-from agent.core.runner import ContainerRunner, RunResult
+from agent.core.runner import SIM_IMAGE, ContainerRunner, RunResult
 from agent.core.session import ROOT
 
 
@@ -35,7 +35,7 @@ def test_simulate_runs_in_container_without_network_or_privilege():
     for flag in ("--network none", "--cap-drop ALL", "--security-opt no-new-privileges", "--read-only"):
         assert flag in joined
     assert "--user" in argv and not argv[argv.index("--user") + 1].startswith("0:")
-    assert "SIM=icarus" in argv and argv[-5:] == ["fda-sim:1", "python3", "-m", "pytest", "-q"]
+    assert "SIM=icarus" in argv and argv[-5:] == [SIM_IMAGE, "python3", "-m", "pytest", "-q"]
 
 
 def test_only_the_design_is_writable_and_nothing_else_is_mounted():

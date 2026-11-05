@@ -869,8 +869,8 @@ def v3_evidence(rt: Runtime, sim_ok: bool) -> dict:
     from agent.core.tools import available_sims
     if "verilator" not in available_sims():
         st["coverage"]["why"] = ("the code-coverage run was not made: the flow offers Verilator only when 5.036 or newer is "
-                                 "installed and the run is not in the container image (which holds Icarus only), so line, "
-                                 "toggle and cover-property coverage are not measured")
+                                 "available where the tests run (the sandbox image fda-sim:2, or the host when there is no "
+                                 "image), and it is not, so line, toggle and cover-property coverage are not measured")
     else:
         from flow import mutate as fm            # the machine's heavy-job lock (a Verilator build is heavy too); $FDA_HEAVY_LOCK
         lock, holder = fm.take_lock("v3-coverage", V3_MUTATION_ARGS["lock_wait_s"], 900)
