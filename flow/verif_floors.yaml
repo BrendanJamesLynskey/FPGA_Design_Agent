@@ -1,0 +1,11 @@
+# V3 floors (brief 05n). flow/verif_gates.py reads this file; the agent never writes it.
+# The effective V3 threshold is max(floor, testplan value): a testplan may raise a bar, never lower it. Only a waiver
+# (with a reason, in the testplan) excuses a named bin or cover property. Live run 20261105-074023-dd0e set
+# cover_properties_pct 0, toggle_pct 60 and mutation_score_pct 60 in its own plan and passed V3: these floors close that.
+functional_bins_pct: 100        # docs/verification.md V3: functional bins all hit unless waived; T1 reference plan 100
+cover_properties_pct: 100       # docs/verification.md V3: cover properties all hit unless waived; T1 reference plan 100
+line_pct: 90                    # T1 reference plan 95, minus 5 for designs with less reachable RTL; the live Sonnet run had 90
+toggle_pct: 75                  # T1 reference plan 80, minus 5; T1 measures 87.36 with the reference tests (05l/05m)
+mutation_score_pct: 70          # T1 reference plan 85 (measured 100 of 20); below 70 more than 3 in 10 changes go unnoticed
+seeds_min: 3                    # T1 reference plan 3; docs/verification.md: at least seeds_min seeds, all passing
+mutation_min_evaluated: 10      # a score needs at least this many mutants evaluated (or all candidates when fewer exist)

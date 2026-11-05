@@ -1,0 +1,138 @@
+schema: fpga-design-agent/testplan/v0
+design: t1_dimmer_counter
+spec: flow/tests/data/run_dd0e/t1_dimmer_counter/spec.yaml
+model: flow/tests/data/run_dd0e/t1_dimmer_counter/model.py
+bench:
+  modules: [t1_bench]
+  dir: flow/tests/data/run_dd0e/t1_dimmer_counter/tests
+checkers: flow/tests/data/run_dd0e/t1_dimmer_counter/verif/checkers
+formal_dir: flow/tests/data/run_dd0e/t1_dimmer_counter/verif/formal
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 0
+  line_pct: 90
+  toggle_pct: 60
+  mutation_score_pct: 60
+waivers:
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+
+requirements:
+- id: REQ-01
+  spec:
+  - "behaviour.counter[0]"
+  - "behaviour.counter[1]"
+  - "behaviour.counter[4]"
+  - "behaviour.counter[5]"
+  - "timing.latency.button_to_counter"
+  tests: [t1_bench.test_buttons_basic, t1_bench.test_priority, t1_bench.test_wrap_write, t1_bench.test_random]
+  bins: [top.event]
+- id: REQ-02
+  spec:
+  - "behaviour.counter[3]"
+  - "behaviour.debounce[0]"
+  - "behaviour.debounce[1]"
+  tests: [t1_bench.test_bounce_and_hold, t1_bench.test_random]
+  bins: [top.event]
+- id: REQ-03
+  spec:
+  - "behaviour.counter[2]"
+  tests: [t1_bench.test_wrap_write, t1_bench.test_buttons_basic]
+  bins: [top.event]
+- id: REQ-04
+  spec:
+  - "behaviour.led_pwm[0]"
+  - "behaviour.led_pwm[1]"
+  - "timing.latency.counter_to_led_display"
+  tests: [t1_bench.test_pwm_and_brightness]
+  bins: [top.event]
+- id: REQ-05
+  spec:
+  - "behaviour.brightness[0]"
+  - "behaviour.brightness[1]"
+  - "behaviour.brightness[2]"
+  - "registers.map.BRIGHT"
+  - "registers.map.CTRL"
+  - "registers.map.SWITCHES"
+  tests: [t1_bench.test_pwm_and_brightness, t1_bench.test_display]
+  bins: [top.event]
+- id: REQ-06
+  spec:
+  - "behaviour.led_pwm[2]"
+  tests: [t1_bench.test_pwm_and_brightness]
+  bins: [top.event]
+- id: REQ-07
+  spec:
+  - "behaviour.display[0]"
+  - "behaviour.display[1]"
+  - "behaviour.display[2]"
+  - "behaviour.display[3]"
+  - "behaviour.display[5]"
+  tests: [t1_bench.test_display]
+  bins: [top.event]
+- id: REQ-08
+  spec:
+  - "behaviour.display[4]"
+  tests: [t1_bench.test_display]
+  bins: [top.event]
+- id: REQ-09
+  spec:
+  - "reset"
+  tests: [t1_bench.test_reset_mid_operation, t1_bench.test_reset_and_id]
+  bins: [top.event]
+- id: REQ-10
+  spec:
+  - "behaviour.uart_shell[0]"
+  - "behaviour.uart_shell[1]"
+  - "registers.map.COUNTER"
+  - "registers.map.BUTTONS"
+  - "registers.unmapped"
+  - "timing.latency.uart_access"
+  tests: [t1_bench.test_uart_misc, t1_bench.test_reset_and_id, t1_bench.test_random]
+  bins: [top.event]
+- id: REQ-11
+  spec:
+  - "behaviour.press_counters[0]"
+  - "behaviour.press_counters[1]"
+  - "registers.map.PRESS_UP"
+  - "registers.map.PRESS_DOWN"
+  - "registers.map.PRESS_CENTRE"
+  tests: [t1_bench.test_buttons_basic, t1_bench.test_priority, t1_bench.test_uart_misc]
+  bins: [top.event]
+- id: REQ-12
+  spec:
+  - "registers.map.ID"
+  tests: [t1_bench.test_reset_and_id]
+  bins: [top.event]
+
+proof:
+- {requirement: REQ-01, method: simulation, artefact: t1_bench.test_buttons_basic}
+- {requirement: REQ-01, method: hardware, artefact: uart_tests}
+- {requirement: REQ-02, method: simulation, artefact: t1_bench.test_bounce_and_hold}
+- {requirement: REQ-03, method: simulation, artefact: t1_bench.test_wrap_write}
+- {requirement: REQ-04, method: simulation, artefact: t1_bench.test_pwm_and_brightness}
+- {requirement: REQ-04, method: hardware, artefact: uart_tests}
+- {requirement: REQ-05, method: simulation, artefact: t1_bench.test_pwm_and_brightness}
+- {requirement: REQ-05, method: hardware, artefact: uart_tests}
+- {requirement: REQ-06, method: simulation, artefact: t1_bench.test_pwm_and_brightness}
+- {requirement: REQ-06, method: analysis, artefact: "post_route:setup"}
+- {requirement: REQ-07, method: simulation, artefact: t1_bench.test_display}
+- {requirement: REQ-07, method: hardware, artefact: uart_tests}
+- {requirement: REQ-08, method: simulation, artefact: t1_bench.test_display}
+- {requirement: REQ-08, method: hardware, artefact: uart_tests}
+- {requirement: REQ-09, method: simulation, artefact: t1_bench.test_reset_mid_operation}
+- {requirement: REQ-09, method: hardware, artefact: uart_tests}
+- {requirement: REQ-10, method: simulation, artefact: t1_bench.test_uart_misc}
+- {requirement: REQ-10, method: hardware, artefact: uart_tests}
+- {requirement: REQ-11, method: simulation, artefact: t1_bench.test_priority}
+- {requirement: REQ-11, method: hardware, artefact: uart_tests}
+- {requirement: REQ-12, method: simulation, artefact: t1_bench.test_reset_and_id}
+- {requirement: REQ-12, method: hardware, artefact: uart_tests}
+- {requirement: REQ-13, method: analysis, artefact: "post_route:setup"}
+
+replan:
+- {requirement: REQ-02, method: formal, replaced_by: simulation, artefact: t1_bench.test_bounce_and_hold, why: "SymbiYosys is not installed here, so the bounce property is checked by directed and random bounce simulation against the model."}
+- {requirement: REQ-03, method: formal, replaced_by: simulation, artefact: t1_bench.test_wrap_write, why: "SymbiYosys is not installed here, so the wrap property is checked by directed boundary simulation against the model."}
+- {requirement: REQ-09, method: formal, replaced_by: simulation, artefact: t1_bench.test_reset_mid_operation, why: "SymbiYosys is not installed here, so reset of all state is checked by mid-operation reset simulation against the model."}

@@ -30,6 +30,33 @@ ROOT = Path(__file__).resolve().parents[1]
 PROOF_METHODS = ("simulation", "formal", "hardware", "analysis")
 
 
+FLOORS_FILE = Path(__file__).with_name("verif_floors.yaml")
+#: the V3 thresholds the testplan cannot lower (brief 05n); the file is the source, this is the fallback shape
+THRESHOLD_FLOORS = ("seeds_min", "functional_bins_pct", "cover_properties_pct", "line_pct", "toggle_pct", "mutation_score_pct")
+
+
+def load_floors() -> dict[str, float]:
+    """``flow/verif_floors.yaml``: the harness's fixed V3 floors, read by the gate on every call."""
+    return yaml.safe_load(FLOORS_FILE.read_text())
+
+
+def effective_thresholds(plan_th: dict, floors: dict) -> tuple[dict, dict[str, str]]:
+    """``max(floor, plan value)`` for every V3 threshold. Returns the thresholds and, for each one the plan set below
+    its floor, the sentence the check's ``why`` carries ("testplan asked 0%, the floor is 100%")."""
+    th, ignored = dict(plan_th), {}
+    for k in THRESHOLD_FLOORS:
+        fl, asked = floors[k], plan_th.get(k)
+        try:
+            low = asked is None or float(asked) < float(fl)
+        except (TypeError, ValueError):
+            low = True
+        if low:
+            th[k] = fl
+            unit = "" if k == "seeds_min" else "%"
+            ignored[k] = f"testplan asked {asked}{unit if asked is not None else ''}, the floor is {fl}{unit} (flow/verif_floors.yaml)"
+    return th, ignored
+
+
 def formal_installed() -> bool:
     """SymbiYosys is on this process's PATH (the agent's tools run with the local tools file's PATH, so this is the
     answer for the agent's own environment). Overridable in tests."""
@@ -101,11 +128,16 @@ def _more(items: list, n: int = 6) -> str:
     return ", ".join(str(x) for x in items[:n]) + (f" (+{len(items) - n} more)" if len(items) > n else "")
 
 
-def mutation_why(mut: dict | None, reason: str | None = None) -> str:
+def mutation_why(mut: dict | None, reason: str | None = None, enough: int | None = None) -> str:
     """05k/05l: the plain reason the mutation check fails: not measured (and why, from the flow's own step), or the
     surviving mutants as file, line and change, so the tests role can tighten its checks."""
     if not mut:
         return "not measured: " + (reason or HOW_MUTATION)
+    if enough is not None and mut.get("evaluated") is not None and 0 < mut["evaluated"] < enough:
+        return (f"not enough mutants evaluated: {mut['evaluated']} of {mut.get('candidates', mut.get('sampled', '?'))} "
+                f"(skipped {mut.get('skipped', 0)} by the wall cap, {mut.get('invalid', 0)} invalid); at least {enough} must be "
+                f"evaluated before the score {mut['score_pct']}% counts. The flow runs the mutation step again at the next "
+                f"visit; nothing in the tests can raise the number evaluated")
     if mut.get("evaluated", 1) == 0:
         return ("no mutant was evaluated (" + f"{mut.get('invalid', 0)} invalid, {mut.get('skipped', 0)} skipped by the wall-time cap"
                 + "): the score is not measured; the flow runs the mutation step again at the next visit")
@@ -394,7 +426,8 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         v0["testplan_valid"] = chk(str(e), "valid testplan and spec", False)
         return finish(out)
     reqs = plan["requirements"]
-    th = plan["thresholds"]
+    floors = load_floors()
+    th, below = effective_thresholds(plan["thresholds"], floors)      # 05n: the plan may raise a threshold, never lower it
     bench_dir, chk_dir, formal_src = (plan_file(design, plan["bench"]["dir"]), plan_file(design, plan["checkers"]),
                                       plan_file(design, plan["formal_dir"]))
     modules = plan["bench"]["modules"]
@@ -583,7 +616,10 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
                               f"coverage run and check the plan's design_rtl path")
     line_v, line_why = meas("line", line)
     tog_v, tog_why = meas("toggle", tog)
-    mut_ok = bool(mut) and mut["score_pct"] >= th["mutation_score_pct"] and mut.get("evaluated", 1) > 0
+    # 05n: a score counts only when enough mutants were evaluated: min_evaluated, or every candidate when fewer exist
+    need = min(int(floors["mutation_min_evaluated"]), int(mut.get("candidates") or floors["mutation_min_evaluated"])) if mut else None
+    enough_ev = not mut or mut.get("evaluated") is None or mut["evaluated"] >= need
+    mut_ok = bool(mut) and mut["score_pct"] >= th["mutation_score_pct"] and mut.get("evaluated", 1) > 0 and enough_ev
     v3 = {
         "seeds_run": chk(len(seeds) if seeds else no_seeds_hint(runs), f">={th['seeds_min']}", len(seeds) >= th["seeds_min"],
                          f"{len(seeds)} seed(s) run, the plan needs {th['seeds_min']}: call flow.cocotb_run.run once per seed"),
@@ -597,8 +633,18 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         "toggle_pct": chk(tog_v, th["toggle_pct"], tog is not None and tog >= th["toggle_pct"], tog_why),
         "waivers_without_reason": chk(len(bad_waive), 0, not bad_waive, "every waiver needs a non-empty `reason`"),
         "mutation_score_pct": chk(mut["score_pct"] if mut else NOT_MEASURED, th["mutation_score_pct"], mut_ok,
-                                  mutation_why(mut, mut_reason)),
+                                  mutation_why(mut, mut_reason, need)),
     }
+    # 05n: say on every check whose threshold the plan set below the floor that the floor applies
+    for key, names in (("seeds_min", ("seeds_run",)), ("functional_bins_pct", ("functional_bins_pct", "functional_bins_unhit")),
+                       ("cover_properties_pct", ("cover_properties_pct", "cover_properties_unhit")),
+                       ("line_pct", ("line_pct",)), ("toggle_pct", ("toggle_pct",)),
+                       ("mutation_score_pct", ("mutation_score_pct",))):
+        if key in below:
+            for nm in names:
+                v3[nm]["floor_note"] = below[key]
+                if not v3[nm]["pass"]:
+                    v3[nm]["why"] = f"{v3[nm].get('why') or 'below the threshold'} [{below[key]}]"
     if not seeds:       # coverage is read from the seeds' own files: nothing to evaluate without them
         for k in ("functional_bins_pct", "functional_bins_unhit", "cover_properties_pct", "cover_properties_unhit",
                   "line_pct", "toggle_pct"):

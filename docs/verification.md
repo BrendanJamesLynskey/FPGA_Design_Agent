@@ -123,6 +123,17 @@ The portability check compiles the checkers and bind file with Icarus, every Ver
 (pyslang) and xsim (skipped when Vivado is not sourced, as in CI), and fails on a deliberately non-portable
 covergroup fixture (`flow/tests/fixtures/nonportable_covergroup.sv`, tested in `flow/tests/test_portability.py`).
 
+## V3 floors the testplan cannot lower (brief 05n)
+
+`flow/verif_floors.yaml` is a fixed file of the harness: functional bins 100%, cover properties 100%, line 90%, toggle 75%,
+mutation score 70%, `seeds_min` 3 (each value carries a comment saying where it comes from). The gate uses
+`max(floor, testplan value)`: a testplan may raise a threshold but a value below its floor is ignored, and the check's
+`why` says so ("testplan asked 0%, the floor is 100%"). A waiver with a reason is still the only way to excuse a named bin or
+cover property. A mutation score also counts only when enough mutants were evaluated (`mutation_min_evaluated`: 10, or every
+candidate when fewer exist); otherwise the check says "not enough mutants evaluated: N of M (skipped K by the wall cap)".
+`flow/mutate.py` scales its wall cap with the baseline (baseline x (sample + 2), between 1500 s and 2 h) and, when even 2 h is
+too short, shrinks the sample (never below 10) instead of skipping mutants.
+
 ## Preconditions of the V3 checks
 
 A failed check carries a plain-words `why`. Several checks need evidence that only a particular run produces, and

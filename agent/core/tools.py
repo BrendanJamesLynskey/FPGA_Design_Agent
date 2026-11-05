@@ -332,12 +332,12 @@ def mutate(s: Session, max_mutants: int = 20, seed: int = 1, lock_wait_s: int = 
     out = s.design / "build" / "verif" / "mutation.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.unlink(missing_ok=True)          # never read an old result as the new one
-    wall = 1500
+    from flow.mutate import MAX_WALL_S as wall          # 05n: the wall cap scales with the baseline, up to this (2 h)
     from agent.core.runner import ContainerRunner
     # 05m: the per-mutant test runs execute model-written tests, so they go through the same sandbox as `simulate`
     sandbox = ["--sandbox", "container" if isinstance(s.runner, ContainerRunner) else "host"]
     argv = [PY, str(s.root / "flow" / "mutate.py"), _rel(s, s.design), "--generic", "--json", _rel(s, out),
-            "--max-mutants", str(max_mutants), "--seed", str(seed), "--wall-s", str(wall), "--lock-wait-s", str(lock_wait_s),
+            "--max-mutants", str(max_mutants), "--seed", str(seed), "--lock-wait-s", str(lock_wait_s),
             *sandbox]
     if shutil.which("systemd-run") and not os.environ.get("FDA_NO_SYSTEMD_CAP"):      # the machine rule: memory-capped
         argv = ["systemd-run", "--user", "--scope", "-q", "-p", "MemoryMax=8G", *argv]

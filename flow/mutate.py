@@ -54,6 +54,22 @@ PY = os.environ.get("MUTATE_PYTHON", sys.executable)
 
 EX_BUSY = 75                                       # exit status: the heavy-slot lock is held (retry later)
 DEFAULT_MAX_MUTANTS, DEFAULT_WALL_S, DEFAULT_SEED = 20, 1500, 1
+#: 05n. With no explicit --wall-s the cap scales with the baseline so that a normal run evaluates its whole sample:
+#: wall = baseline * (sample + 2), at least DEFAULT_WALL_S and at most MAX_WALL_S (2 h, under the heavy slot). When even that
+#: is too short the sample is reduced (never below MIN_EVALUATED) rather than leaving the sampled mutants unevaluated.
+MAX_WALL_S, MIN_EVALUATED = 7200, 10
+
+
+def plan_caps(baseline_s: float, max_mutants: int, pool: int, wall_s: int | None) -> tuple[int, int]:
+    """(sample size, wall cap in seconds). An explicit ``wall_s`` is honoured as given (the sample is unchanged)."""
+    if wall_s is not None:
+        return max_mutants, wall_s
+    n = min(max_mutants, pool)
+    floor_n = min(MIN_EVALUATED, pool)
+    base = max(1.0, float(baseline_s))
+    if base * (n + 2) > MAX_WALL_S:
+        n = max(floor_n, min(n, int(MAX_WALL_S // base) - 2))
+    return n, int(min(MAX_WALL_S, max(DEFAULT_WALL_S, base * (n + 2))))
 
 
 # ---- the heavy-slot lock (one heavy local job at a time on this PC) -------------------------------------------------
@@ -227,7 +243,7 @@ def generic(design: Path, a) -> int:
     except RuntimeError as e:
         print(str(e), file=sys.stderr)
         return 2
-    lock, holder = take_lock(design.name, a.lock_wait_s, a.wall_s + 600)
+    lock, holder = take_lock(design.name, a.lock_wait_s, (MAX_WALL_S if a.wall_s is None else a.wall_s) + 600)
     if lock is None and holder:
         print(f"BUSY: another heavy job holds the lock ({holder}); retry later")
         return EX_BUSY
@@ -252,11 +268,13 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
     source = "verif/mutants.yaml" if (design / "verif" / "mutants.yaml").is_file() else "generated"
     pool = mutants_from_yaml(design) if source == "verif/mutants.yaml" else generate_candidates(rtl)
     rng = random.Random(a.seed)
-    chosen = sorted(rng.sample(pool, min(a.max_mutants, len(pool))), key=lambda m: pool.index(m))
-    rows, deadline = [], t_start + a.wall_s
+    sample_n, wall_s = plan_caps(base_s, a.max_mutants, len(pool), a.wall_s)
+    chosen = sorted(rng.sample(pool, min(sample_n, len(pool))), key=lambda m: pool.index(m))
+    rows, deadline = [], t_start + wall_s
+    est = min(per_mutant, max(30.0, 1.5 * base_s))          # a mutant costs about one baseline; do not skip on the worst case
     for m in chosen:
         row = {k: m[k] for k in ("name", "file", "line", "class", "why")} | {"change": plain_words(m)}
-        if time.monotonic() + per_mutant > deadline:
+        if time.monotonic() + est > deadline:
             rows.append(row | {"status": "skipped", "note": "wall-time cap reached before this mutant ran"})
             continue
         d = mdir_root / m["name"]
@@ -283,7 +301,8 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
     evaluated = len(killed) + len(surv) + len(tmo)
     res = {"design": design.name, "mode": "generic", "mutant_source": source, "rng_seed": a.seed,
            "baseline_seconds": base_s, "sandbox": "container" if runner is not None else "host",
-           "caps": {"max_mutants": a.max_mutants, "wall_s": a.wall_s, "mutant_timeout_s": per_mutant},
+           "caps": {"max_mutants": a.max_mutants, "sample": sample_n, "wall_s": wall_s, "wall_auto": a.wall_s is None,
+                    "mutant_timeout_s": per_mutant, "min_evaluated": min(MIN_EVALUATED, len(pool))},
            "candidates": len(pool), "sampled": len(chosen), "evaluated": evaluated, "killed": len(killed),
            "survived": len(surv), "timed_out": len(tmo), "skipped": len(by("skipped")), "invalid": len(by("invalid")),
            "score_pct": round(100 * len(killed) / evaluated, 2) if evaluated else 0.0,
@@ -319,7 +338,8 @@ def main() -> int:
     ap.add_argument("--generic", action="store_true", help="any design: its tests/test_*_rtl.py, capped (brief 05k)")
     ap.add_argument("--max-mutants", type=int, default=DEFAULT_MAX_MUTANTS)
     ap.add_argument("--seed", type=int, default=DEFAULT_SEED)
-    ap.add_argument("--wall-s", type=int, default=DEFAULT_WALL_S)
+    ap.add_argument("--wall-s", type=int, default=None,
+                    help="wall cap in seconds; default: baseline x (sample + 2), between 1500 s and 2 h (05n)")
     ap.add_argument("--mutant-timeout-s", type=int, default=0)
     ap.add_argument("--lock-wait-s", type=float, default=0)
     ap.add_argument("--sandbox", choices=("auto", "container", "host"), default="auto",

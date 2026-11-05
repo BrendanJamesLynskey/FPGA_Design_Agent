@@ -1,0 +1,310 @@
+name: t1_led_dimmer
+title: 'T1: LED dimmer and push-button counter'
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_top
+clocks:
+- name: CLK100MHZ
+  port: CLK100MHZ
+  freq_mhz: 100
+  pin: E3
+  note: single clock domain; all logic synchronous to it
+reset:
+  port: CPU_RESETN
+  pin: C12
+  polarity: active_low
+  style: synchronised to CLK100MHZ (async assert, sync release or fully sync); resets
+    counter, brightness, control, press counts, UART
+parameters:
+  CLK_FREQ_CYCLES_PER_SEC: 100000000
+  BAUD_DIV_CYCLES: 868
+  DEBOUNCE_CYCLES: 2000000
+  PWM_PERIOD_CYCLES: 65536
+  SCAN_DIGIT_CYCLES: 100000
+  COUNTER_WIDTH: 16
+  BRIGHT_WIDTH: 8
+  DESIGN_ID: 1412514883
+ports:
+- name: CLK100MHZ
+  direction: in
+  width: 1
+  pin_role: 100 MHz clock (E3)
+- name: CPU_RESETN
+  direction: in
+  width: 1
+  pin_role: red CPU RESET button, active low (C12)
+- name: BTNU
+  direction: in
+  width: 1
+  pin_role: up push-button (M18)
+- name: BTND
+  direction: in
+  width: 1
+  pin_role: down push-button (P18)
+- name: BTNC
+  direction: in
+  width: 1
+  pin_role: centre push-button (N17)
+- name: SW
+  direction: in
+  width: 16
+  pin_role: slide switches SW0..SW15; SW[7:0] are the eight right-hand switches used
+    for brightness
+- name: LED
+  direction: out
+  width: 16
+  pin_role: LD0..LD15, PWM-dimmed counter bits
+- name: SEG
+  direction: out
+  width: 7
+  pin_role: seven-segment cathodes CA..CG, active low
+- name: DP
+  direction: out
+  width: 1
+  pin_role: decimal point cathode, active low, kept off (high)
+- name: AN
+  direction: out
+  width: 8
+  pin_role: digit anodes AN0..AN7, active low
+- name: UART_RXD
+  direction: in
+  width: 1
+  pin_role: USB-UART data into FPGA (board net UART_TXD_IN, C4)
+- name: UART_TXD
+  direction: out
+  width: 1
+  pin_role: USB-UART data out of FPGA (board net UART_RXD_OUT, D4)
+behaviour:
+  counter:
+  - 16-bit unsigned counter, reset value 0.
+  - A debounced rising edge (press) of BTNU adds 1; BTND subtracts 1; BTNC clears
+    to 0.
+  - Wraps 0xFFFF -> 0x0000 on increment and 0x0000 -> 0xFFFF on decrement.
+  - Each press changes the counter by exactly one regardless of contact bounce; holding
+    a button gives no repeat.
+  - If several buttons press in the same cycle, priority is centre (clear) > up >
+    down.
+  - A write to the COUNTER register over UART sets the counter; a button event in
+    the same cycle is dropped in favour of the write.
+  debounce:
+  - Each button is passed through a 2-flop synchroniser and a stable-for-DEBOUNCE_CYCLES
+    filter; one single-cycle press pulse is produced on the debounced rising edge.
+  - Release is also debounced; the BUTTONS register shows the debounced level.
+  press_counters:
+  - Three 32-bit saturating-free (wrapping) counters count debounced presses of up,
+    down and centre; reset to 0 by CPU reset.
+  - Counters are read-only over UART (a write of any value with bit set in CTRL is
+    not provided; clearing only by reset).
+  brightness:
+  - 8-bit brightness setting, reset value 0x80.
+  - CTRL.SW_MODE=0 selects the BRIGHT register as the effective brightness; SW_MODE=1
+    selects SW[7:0].
+  - BRIGHT register keeps its value while SW_MODE=1; the effective brightness is what
+    the display shows.
+  led_pwm:
+  - Each LED i is lit during the PWM period when its counter bit i is 1 and the PWM
+    phase is below the effective brightness; LED=0 for bits that are 0.
+  - Duty = brightness/256 of PWM_PERIOD_CYCLES; brightness 0 is fully off.
+  - A single free-running PWM phase counter is shared by all LEDs and the effective
+    brightness is sampled once per PWM period so changes do not glitch or flicker.
+  display:
+  - Eight digits multiplexed, one at a time, each for SCAN_DIGIT_CYCLES.
+  - Digits AN0..AN3 (right-hand four) show the counter in hex, AN0 least significant
+    nibble.
+  - Digits AN4 and AN5 are blank (off).
+  - Digits AN6 and AN7 (left-hand two) show the effective brightness in hex, AN6 low
+    nibble.
+  - CTRL.DISP_OFF=1 turns all digits off (all AN high); reset value is on.
+  - Decimal points always off.
+  uart_shell:
+  - Standard test shell over UART at 115200 baud, 8N1, using BAUD_DIV_CYCLES; provides
+    read and write access to the register map below.
+  - Reads of unknown addresses return 0; writes to read-only or unknown addresses
+    are ignored.
+registers:
+  map:
+  - offset: 0
+    name: ID
+    access: ro
+    reset: 1412514883
+    bits: '[31:0] ASCII T1DC'
+  - offset: 4
+    name: COUNTER
+    access: rw
+    reset: 0
+    bits: '[15:0] counter value; [31:16] read 0'
+  - offset: 8
+    name: BRIGHT
+    access: rw
+    reset: 128
+    bits: '[7:0] brightness setting; [31:8] read 0'
+  - offset: 12
+    name: CTRL
+    access: rw
+    reset: 0
+    bits: '[0] SW_MODE (1=brightness from SW[7:0]); [1] DISP_OFF (1=7-seg off); others
+      reserved read 0'
+  - offset: 16
+    name: BUTTONS
+    access: ro
+    reset: 0
+    bits: '[0] BTNU, [1] BTND, [2] BTNC debounced levels'
+  - offset: 20
+    name: SWITCHES
+    access: ro
+    reset: 0
+    bits: '[15:0] synchronised SW[15:0]'
+  - offset: 24
+    name: PRESS_UP
+    access: ro
+    reset: 0
+    bits: '[31:0] number of up presses'
+  - offset: 28
+    name: PRESS_DOWN
+    access: ro
+    reset: 0
+    bits: '[31:0] number of down presses'
+  - offset: 32
+    name: PRESS_CENTRE
+    access: ro
+    reset: 0
+    bits: '[31:0] number of centre presses'
+timing:
+  baud: 115200 baud = 868 cycles of CLK100MHZ per bit
+  debounce: 20 ms = 2000000 cycles
+  pwm: period 65536 cycles (~1.5 kHz) so no visible flicker
+  scan: 1 ms per digit, full refresh 8 ms (125 Hz)
+  latency:
+    button_to_counter: debounce time plus 3 cycles after the input is stable
+    counter_to_led_display: within one PWM period / one display scan
+    uart_access: response begins within the shell protocol's frame time; no wait states
+      from the design
+resources_expected:
+  luts: < 1000
+  ffs: < 800
+  bram: 0
+  dsp: 0
+  note: debounce counters (3x21 bits) and press counters (3x32 bits) dominate
+requirements:
+- id: REQ-01
+  text: Up press adds exactly one to the 16-bit counter, down press subtracts exactly
+    one, centre clears it.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-02
+  text: Contact bounce on a button yields exactly one count per press.
+  proof:
+  - simulation
+  - formal
+- id: REQ-03
+  text: Counter wraps at both ends (0xFFFF to 0 and 0 to 0xFFFF).
+  proof:
+  - simulation
+  - formal
+- id: REQ-04
+  text: 16 LEDs show the counter in binary with PWM brightness.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-05
+  text: Brightness comes from the BRIGHT register, or from SW[7:0] when CTRL.SW_MODE=1.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-06
+  text: PWM does not visibly flicker (period short enough, duty changes only at period
+    boundary).
+  proof:
+  - simulation
+  - analysis
+- id: REQ-07
+  text: 7-segment shows counter in hex on the four right digits and brightness on
+    the two left digits; the middle two are off.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-08
+  text: CTRL.DISP_OFF turns the 7-segment display off.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-09
+  text: CPU_RESETN resets all state.
+  proof:
+  - simulation
+  - formal
+  - hardware
+- id: REQ-10
+  text: Counter, brightness, buttons, switches and per-button press counts are readable,
+    and counter and brightness writable, over the UART shell at 115200 baud.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-11
+  text: Per-button press counts increment once per debounced press.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-12
+  text: ID register reads 0x54314443 (T1DC).
+  proof:
+  - simulation
+  - hardware
+- id: REQ-13
+  text: Design meets timing at 100 MHz and fits resource estimate.
+  proof:
+  - analysis
+assumptions:
+- assumption: Single 100 MHz clock domain.
+  reason: Board has one system clock and nothing needs more.
+- assumption: Debounce window is 20 ms.
+  reason: Typical mechanical button bounce is under 10 ms; request gives no value.
+- assumption: Brightness is 8 bits, reset 0x80, 0 = off.
+  reason: Eight switches are the alternative source, so 8 bits matches; mid brightness
+    is visible at power-up.
+- assumption: Press counters are 32-bit, read-only, cleared only by reset.
+  reason: Request says only 'see how many times each button has been pressed'.
+- assumption: Register map and offsets are as listed; the shell exposes them as 32-bit
+    words.
+  reason: Exact shell address format was not available in the request; map is a proposal.
+- assumption: Hex digits use uppercase-style 0-F seven-segment patterns, no leading-zero
+    suppression.
+  reason: Simplest, always readable.
+- assumption: Buttons are active-high on the board.
+  reason: Nexys A7 push-buttons read 1 when pressed; CPU_RESETN is active low.
+open_questions: []
+resolved_questions:
+- question: What register address and frame format does the standard test shell use?
+  answer: 32-bit word registers at the offsets in the map, accessed through the shell's
+    read/write commands.
+  status: defaulted
+  by: oracle
+  default_reason: Shell protocol is not given in the request.
+- question: Should a held button auto-repeat?
+  answer: No. A held button does not auto-repeat; one press causes one step.
+  status: answered
+  by: oracle
+  default_reason: Request says one press changes the counter by exactly one.
+- question: Should the press counts be clearable over UART?
+  answer: No, only by CPU reset.
+  status: defaulted
+  by: oracle
+  default_reason: Not requested.
+- question: Should the CPU reset also reset brightness and the display-off bit?
+  answer: Yes, everything returns to reset values.
+  status: defaulted
+  by: oracle
+  default_reason: Request says the reset button resets everything.
+- question: What is the debounce time and the LED PWM frequency?
+  answer: "The debounce time is 10 ms, and the LED PWM frequency is about 97.7 kHz\u2014\
+    not 20 ms and 1.5 kHz."
+  status: answered
+  by: oracle
+  default_reason: Not specified; chosen for reliability and no flicker.
+- question: Should a UART write to the counter and a button press in the same cycle
+    conflict?
+  answer: A shell write to COUNT wins; the press still counts in PRESSES.
+  status: answered
+  by: oracle
+  default_reason: Rare event; deterministic rule needed.
