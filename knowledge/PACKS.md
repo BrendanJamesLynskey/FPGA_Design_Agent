@@ -43,7 +43,7 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 4 (2026-11-03, 04j) | 20 | 42 | 88,636 (<= 95,000) | 7,566 | 22,159 | `26a2ffe7895014616e2a38c1749ed32e50e5b062abf93bd6cef914f0f60305e1` |
 | `device/xc7a100tcsg324-1/` | device: the part on the Nexys A7-100T (xc7a100tcsg324-1) | 2 (2026-11-03, 04j: +1 primitives) | 4 | 14 | 12,995 (<= 18,000) | 2,276 | 3,249 | `a9d0855a4c673880ca6ff30aea91cf357be28269afc026dc0f614aec71f9d65b` |
 | `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
-| `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 4 (2026-11-03, 04j: STA report interpretation in `ultrafast/`) | 15 | 23 | 56,848 (<= 72,000; verification-stages has its own 25,000) | 4,048 | 14,212 | `b586d72560db4699c3dea9638bb75f5a4d30c69dc2cdb17a0321305bffc6d825` |
+| `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 5 (2026-11-04: the V2 skill names the `V_*` checker macros) | 15 | 23 | 57,667 (<= 72,000; verification-stages has its own 25,000) | 4,048 | 14,417 | `fa382b557d2399527ff3e68e1b090cb52ff05004a81fc1aea2f91c1a7acd35f7` |
 | `library/` | library (search_docs corpus: 1,783 chunks) | 2 (2026-11-02, 04h: +15 chunks) | - | 16 | see `library/MANIFEST.sha256` | - | - | `04ede99be370ae925d7596cc4a63af9c1a136500de661f6acfb8dfdf35c228d6` |
 
 Root files: `SECTIONS.yaml` sha256 `f5acea89bcc6e86f8f5bdd3ba93b6d07cc5d176cc2a4c57183dee1e6c07e4d92`; `INDEX.md` sha256
