@@ -1,0 +1,249 @@
+{
+  "design": "t1_dimmer_counter",
+  "mode": "generic",
+  "mutant_source": "generated",
+  "rng_seed": 1,
+  "baseline_seconds": 311.8,
+  "sandbox": "container",
+  "caps": {
+    "max_mutants": 20,
+    "wall_s": 1500,
+    "mutant_timeout_s": 600
+  },
+  "candidates": 39,
+  "sampled": 20,
+  "evaluated": 6,
+  "killed": 5,
+  "survived": 1,
+  "timed_out": 0,
+  "skipped": 14,
+  "invalid": 0,
+  "score_pct": 83.33,
+  "survivors": [
+    "t1_debounce_L20_bit0_to_1_21"
+  ],
+  "survivor_text": [
+    "rtl/t1_debounce.sv line 20: `s2    <= 1'b0;` became `s2    <= 1'b1;` (constant 1'b0 replaced by 1'b1)"
+  ],
+  "timed_out_text": [],
+  "skipped_text": [
+    "rtl/t1_debounce.sv line 31: `cnt <= cnt + 1'b1;` became `cnt <= cnt + 1'b0;` (constant 1'b1 replaced by 1'b0)",
+    "rtl/t1_top.sv line 90: `wire wr_counter = win_wr && (win_addr == 7'd4);` became `wire wr_counter = win_wr && (win_addr != 7'd4);` ('==' replaced by '!=')",
+    "rtl/t1_top.sv line 90: `wire wr_counter = win_wr && (win_addr == 7'd4);` became `wire wr_counter = win_wr || (win_addr == 7'd4);` ('&&' replaced by '||')",
+    "rtl/t1_top.sv line 91: `wire wr_bright  = win_wr && (win_addr == 7'd8);` became `wire wr_bright  = win_wr && (win_addr != 7'd8);` ('==' replaced by '!=')",
+    "rtl/t1_top.sv line 91: `wire wr_bright  = win_wr && (win_addr == 7'd8);` became `wire wr_bright  = win_wr || (win_addr == 7'd8);` ('&&' replaced by '||')",
+    "rtl/t1_top.sv line 105: `else if (pls[0])    counter <= counter + 16'h1;` became `else if (pls[0])    counter <= counter - 16'h1;` ('+' replaced by '-')",
+    "rtl/t1_top.sv line 106: `else if (pls[1])    counter <= counter - 16'h1;` became `else if (pls[1])    counter <= counter + 16'h1;` ('-' replaced by '+')",
+    "rtl/t1_top.sv line 148: `if (phase == PW'(PWM_PERIOD_CYCLES - 1)) begin` became `if (phase != PW'(PWM_PERIOD_CYCLES - 1)) begin` ('==' replaced by '!=')",
+    "rtl/t1_top.sv line 148: `if (phase == PW'(PWM_PERIOD_CYCLES - 1)) begin` became `if (phase == PW'(PWM_PERIOD_CYCLES + 1)) begin` ('-' replaced by '+')",
+    "rtl/t1_top.sv line 154: `led_r <= (plvl < samp) ? counter : 16'h0;` became `led_r <= (plvl >= samp) ? counter : 16'h0;` ('<' replaced by '>=')",
+    "rtl/t1_top.sv line 197: `wire blank = ctrl[1] || (digit == 3'd4) || (digit == 3'd5);` became `wire blank = ctrl[1] || (digit != 3'd4) || (digit == 3'd5);` ('==' replaced by '!=')",
+    "rtl/t1_top.sv line 197: `wire blank = ctrl[1] || (digit == 3'd4) || (digit == 3'd5);` became `wire blank = ctrl[1] || (digit == 3'd4) || (digit != 3'd5);` ('==' replaced by '!=')",
+    "rtl/t1_top.sv line 197: `wire blank = ctrl[1] || (digit == 3'd4) || (digit == 3'd5);` became `wire blank = ctrl[1] && (digit == 3'd4) || (digit == 3'd5);` ('||' replaced by '&&')",
+    "rtl/t1_top.sv line 210: `scan <= scan + 1'b1;` became `scan <= scan - 1'b1;` ('+' replaced by '-')"
+  ],
+  "note": "score = killed / (killed + survived + timed_out); invalid and skipped mutants are excluded and listed; an equivalent mutant (no visible behaviour change) shows as a survivor",
+  "wall_seconds": 960.8,
+  "rows": [
+    {
+      "name": "t1_debounce_L15_eq_to_ne_41",
+      "file": "t1_debounce.sv",
+      "line": 15,
+      "class": "eq_to_ne",
+      "why": "'==' replaced by '!='",
+      "change": "rtl/t1_debounce.sv line 15: `assign pulse = (s2 != level) && (cnt == CW'(DEBOUNCE_CYCLES - 1)) && s2;` became `assign pulse = (s2 != level) && (cnt != CW'(DEBOUNCE_CYCLES - 1)) && s2;` ('==' replaced by '!=')",
+      "status": "killed",
+      "seconds": 59.9
+    },
+    {
+      "name": "t1_debounce_L15_and_to_or_70",
+      "file": "t1_debounce.sv",
+      "line": 15,
+      "class": "and_to_or",
+      "why": "'&&' replaced by '||'",
+      "change": "rtl/t1_debounce.sv line 15: `assign pulse = (s2 != level) && (cnt == CW'(DEBOUNCE_CYCLES - 1)) && s2;` became `assign pulse = (s2 != level) && (cnt == CW'(DEBOUNCE_CYCLES - 1)) || s2;` ('&&' replaced by '||')",
+      "status": "killed",
+      "seconds": 59.5
+    },
+    {
+      "name": "t1_debounce_L15_minus_to_plus_63",
+      "file": "t1_debounce.sv",
+      "line": 15,
+      "class": "minus_to_plus",
+      "why": "'-' replaced by '+'",
+      "change": "rtl/t1_debounce.sv line 15: `assign pulse = (s2 != level) && (cnt == CW'(DEBOUNCE_CYCLES - 1)) && s2;` became `assign pulse = (s2 != level) && (cnt == CW'(DEBOUNCE_CYCLES + 1)) && s2;` ('-' replaced by '+')",
+      "status": "killed",
+      "seconds": 58.9
+    },
+    {
+      "name": "t1_debounce_L20_bit0_to_1_21",
+      "file": "t1_debounce.sv",
+      "line": 20,
+      "class": "bit0_to_1",
+      "why": "constant 1'b0 replaced by 1'b1",
+      "change": "rtl/t1_debounce.sv line 20: `s2    <= 1'b0;` became `s2    <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+      "status": "survived",
+      "seconds": 315.4
+    },
+    {
+      "name": "t1_debounce_L21_bit0_to_1_21",
+      "file": "t1_debounce.sv",
+      "line": 21,
+      "class": "bit0_to_1",
+      "why": "constant 1'b0 replaced by 1'b1",
+      "change": "rtl/t1_debounce.sv line 21: `level <= 1'b0;` became `level <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+      "status": "killed",
+      "seconds": 77.6
+    },
+    {
+      "name": "t1_debounce_L26_ne_to_eq_19",
+      "file": "t1_debounce.sv",
+      "line": 26,
+      "class": "ne_to_eq",
+      "why": "'!=' replaced by '=='",
+      "change": "rtl/t1_debounce.sv line 26: `if (s2 != level) begin` became `if (s2 == level) begin` ('!=' replaced by '==')",
+      "status": "killed",
+      "seconds": 58.6
+    },
+    {
+      "name": "t1_debounce_L31_bit1_to_0_33",
+      "file": "t1_debounce.sv",
+      "line": 31,
+      "class": "bit1_to_0",
+      "why": "constant 1'b1 replaced by 1'b0",
+      "change": "rtl/t1_debounce.sv line 31: `cnt <= cnt + 1'b1;` became `cnt <= cnt + 1'b0;` (constant 1'b1 replaced by 1'b0)",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L90_eq_to_ne_42",
+      "file": "t1_top.sv",
+      "line": 90,
+      "class": "eq_to_ne",
+      "why": "'==' replaced by '!='",
+      "change": "rtl/t1_top.sv line 90: `wire wr_counter = win_wr && (win_addr == 7'd4);` became `wire wr_counter = win_wr && (win_addr != 7'd4);` ('==' replaced by '!=')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L90_and_to_or_29",
+      "file": "t1_top.sv",
+      "line": 90,
+      "class": "and_to_or",
+      "why": "'&&' replaced by '||'",
+      "change": "rtl/t1_top.sv line 90: `wire wr_counter = win_wr && (win_addr == 7'd4);` became `wire wr_counter = win_wr || (win_addr == 7'd4);` ('&&' replaced by '||')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L91_eq_to_ne_42",
+      "file": "t1_top.sv",
+      "line": 91,
+      "class": "eq_to_ne",
+      "why": "'==' replaced by '!='",
+      "change": "rtl/t1_top.sv line 91: `wire wr_bright  = win_wr && (win_addr == 7'd8);` became `wire wr_bright  = win_wr && (win_addr != 7'd8);` ('==' replaced by '!=')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L91_and_to_or_29",
+      "file": "t1_top.sv",
+      "line": 91,
+      "class": "and_to_or",
+      "why": "'&&' replaced by '||'",
+      "change": "rtl/t1_top.sv line 91: `wire wr_bright  = win_wr && (win_addr == 7'd8);` became `wire wr_bright  = win_wr || (win_addr == 7'd8);` ('&&' replaced by '||')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L105_plus_to_minus_50",
+      "file": "t1_top.sv",
+      "line": 105,
+      "class": "plus_to_minus",
+      "why": "'+' replaced by '-'",
+      "change": "rtl/t1_top.sv line 105: `else if (pls[0])    counter <= counter + 16'h1;` became `else if (pls[0])    counter <= counter - 16'h1;` ('+' replaced by '-')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L106_minus_to_plus_50",
+      "file": "t1_top.sv",
+      "line": 106,
+      "class": "minus_to_plus",
+      "why": "'-' replaced by '+'",
+      "change": "rtl/t1_top.sv line 106: `else if (pls[1])    counter <= counter - 16'h1;` became `else if (pls[1])    counter <= counter + 16'h1;` ('-' replaced by '+')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L148_eq_to_ne_22",
+      "file": "t1_top.sv",
+      "line": 148,
+      "class": "eq_to_ne",
+      "why": "'==' replaced by '!='",
+      "change": "rtl/t1_top.sv line 148: `if (phase == PW'(PWM_PERIOD_CYCLES - 1)) begin` became `if (phase != PW'(PWM_PERIOD_CYCLES - 1)) begin` ('==' replaced by '!=')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L148_minus_to_plus_46",
+      "file": "t1_top.sv",
+      "line": 148,
+      "class": "minus_to_plus",
+      "why": "'-' replaced by '+'",
+      "change": "rtl/t1_top.sv line 148: `if (phase == PW'(PWM_PERIOD_CYCLES - 1)) begin` became `if (phase == PW'(PWM_PERIOD_CYCLES + 1)) begin` ('-' replaced by '+')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L154_lt_to_ge_26",
+      "file": "t1_top.sv",
+      "line": 154,
+      "class": "lt_to_ge",
+      "why": "'<' replaced by '>='",
+      "change": "rtl/t1_top.sv line 154: `led_r <= (plvl < samp) ? counter : 16'h0;` became `led_r <= (plvl >= samp) ? counter : 16'h0;` ('<' replaced by '>=')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L197_eq_to_ne_35",
+      "file": "t1_top.sv",
+      "line": 197,
+      "class": "eq_to_ne",
+      "why": "'==' replaced by '!='",
+      "change": "rtl/t1_top.sv line 197: `wire blank = ctrl[1] || (digit == 3'd4) || (digit == 3'd5);` became `wire blank = ctrl[1] || (digit != 3'd4) || (digit == 3'd5);` ('==' replaced by '!=')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L197_eq_to_ne_54",
+      "file": "t1_top.sv",
+      "line": 197,
+      "class": "eq_to_ne",
+      "why": "'==' replaced by '!='",
+      "change": "rtl/t1_top.sv line 197: `wire blank = ctrl[1] || (digit == 3'd4) || (digit == 3'd5);` became `wire blank = ctrl[1] || (digit == 3'd4) || (digit != 3'd5);` ('==' replaced by '!=')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L197_or_to_and_25",
+      "file": "t1_top.sv",
+      "line": 197,
+      "class": "or_to_and",
+      "why": "'||' replaced by '&&'",
+      "change": "rtl/t1_top.sv line 197: `wire blank = ctrl[1] || (digit == 3'd4) || (digit == 3'd5);` became `wire blank = ctrl[1] && (digit == 3'd4) || (digit == 3'd5);` ('||' replaced by '&&')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    },
+    {
+      "name": "t1_top_L210_plus_to_minus_28",
+      "file": "t1_top.sv",
+      "line": 210,
+      "class": "plus_to_minus",
+      "why": "'+' replaced by '-'",
+      "change": "rtl/t1_top.sv line 210: `scan <= scan + 1'b1;` became `scan <= scan - 1'b1;` ('+' replaced by '-')",
+      "status": "skipped",
+      "note": "wall-time cap reached before this mutant ran"
+    }
+  ]
+}

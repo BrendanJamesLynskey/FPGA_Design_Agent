@@ -250,7 +250,8 @@ Flow conventions (fixed by the repo; follow them exactly):
   verif/testplan.yaml (schema fpga-design-agent/testplan/v0) has keys: schema, design, spec ({design_rel}/spec.yaml),
   model, bench {{modules: [...], dir: {design_rel}/tests}}, checkers ({design_rel}/verif/checkers), formal_dir
   ({design_rel}/verif/formal), thresholds {{seeds_min, functional_bins_pct, cover_properties_pct, line_pct,
-  toggle_pct, mutation_score_pct}}, waivers {{code_coverage: [], functional_bins: [], cover_properties: []}} (each
+  toggle_pct, mutation_score_pct; a value below the harness floor (flow/verif_floors.yaml) is ignored and the floor applies),
+  waivers {{code_coverage: [], functional_bins: [], cover_properties: []}} (each
   waiver needs a reason), requirements: [{{id, spec: [spec.yaml item paths], tests: [module.test], assertions,
   cover_props, bins, formal}}], proof: [{{requirement: <spec.yaml requirement id>, method: simulation|formal|hardware|analysis,
   artefact: ...}}], plus verif/mutants.yaml. The last gate output shows what verif_gates found.
@@ -577,6 +578,14 @@ def _run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...],
 
 # --- nodes --------------------------------------------------------------------------------------------------------
 
+def floors_text() -> str:
+    """The V3 floors the gate applies (flow/verif_floors.yaml), as one sentence for the tests role."""
+    from flow.verif_gates import load_floors
+    f = load_floors()
+    return (f"functional bins {f['functional_bins_pct']}%, cover properties {f['cover_properties_pct']}%, line {f['line_pct']}%, "
+            f"toggle {f['toggle_pct']}%, mutation score {f['mutation_score_pct']}%, at least {f['seeds_min']} seeds")
+
+
 def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
     """The stage-entry checklist of the tests role (brief 05g): the exact files each gate reads, so the role does not
     have to find them out from a failed gate. Plain text built from the design's own names; no reference content."""
@@ -618,7 +627,12 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
                "flow then runs a capped, seeded sample of changes to the RTL against your tests; a change no test fails on is "
                "reported to you in words (file, line, change), and the fix is a tighter check or a test that exercises that behaviour."]
               if rt.cfg.verif_level == "V3" else []),
-            ("7" if rt.cfg.verif_level == "V3" else "6") + ". `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
+            *([f"7. V3 floors (flow/verif_floors.yaml, fixed by the harness): {floors_text()}. A testplan threshold below its floor is "
+               "ignored and the check says so; you can only raise a bar. Only a waiver with a reason in the testplan excuses a named bin "
+               "or cover property. A mutation score counts only when enough mutants were evaluated (10, or every candidate when fewer); "
+               "that number is the flow's, not something your tests can change."]
+              if rt.cfg.verif_level == "V3" else []),
+            ("8" if rt.cfg.verif_level == "V3" else "6") + ". `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
             "step in the proof list now (uart_tests, ila_captures or step:case).",
         ]
     else:
