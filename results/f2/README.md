@@ -108,5 +108,10 @@ results measure nothing about the models. Single runs on `t1_dimmer_counter`, or
 | `agent_cc_sonnet_t1_05k_v3.json` | claude-sonnet-5-5 | V3 | Stage 2 x5 inside V2: RTL and tests disagree on the seven-segment glyphs. V3 not reached. |
 | `agent_cc_opus_t1_05k_v3.json` | claude-opus-5-5 | V3 | V0-V2 pass; V3 "not measured": the tests role was never given simulate or mutate (harness gap, fixed by #34 and #35). Plan estimate $9.14. |
 
-At V2 all three arms reach a bitstream on T1 (single runs, not scored). V3 is unreachable for any agent until PRs #34 (harness-run V3 evidence) and #35 (Verilator in the sandbox) land. The 05g Deep Agents cvdp run that passed stage 2 ran at V1, so
+| `agent_cc_sonnet_t1_05l_v3_e811.json` | claude-sonnet-5-5 | V3 | Stage 2 x5: harness, V0 `model_present` resolved a design-relative testplan path from the repo root (fixed #39). |
+| `agent_cc_sonnet_t1_05m_v3_dd0e.json` | claude-sonnet-5-5 | V3 | All gates 0-8 pass, but **not a V3 result**: the agent's testplan lowered its own thresholds (cover 0, toggle 60, mutation 60) and only 6 of 20 mutants were evaluated (fixed by #40, harness floors). |
+| `agent_cc_sonnet_t1_05n_v3_f10f.json` | claude-sonnet-5-5 | V3 | After #40. Stage 2 x5: real RTL bug (`test_buttons_switches_regs` fails); V3 not reached. |
+| `agent_cc_sonnet_t1_05n_v3_390c.json` | claude-sonnet-5-5 | **V3** | After #40. **All gates of stages 0-8 pass at V3 with the floors applied**: bins 100% (27/27), cover 100%, line 100%, toggle 88.98%, mutation 20 of 20 killed (100%), 3 seeds. WNS +0.843 ns, QoR 5, about 530 LUT / 557 FF, bitstream. Plan estimate $3.17, 114 min. |
+
+At V2 all three arms reach a bitstream on T1 (single runs, not scored). After PRs #34, #35, #39 and #40, Sonnet reached a valid V3 pass on T1 in 1 of 2 runs (single runs, not scored). The 05g Deep Agents cvdp run that passed stage 2 ran at V1, so
 compare the two arms only at the same `--verif-level`.
