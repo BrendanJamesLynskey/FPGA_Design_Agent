@@ -279,6 +279,17 @@ def _yaml_file(path: Path, what: str) -> Any:
         raise PlanError(f"{what} cannot be read: {e.strerror or e}")
 
 
+def plan_file(design: Path, p) -> Path:
+    """A path named in the testplan: absolute, repo-relative (the documented form) or, as a fallback, relative to the
+    design directory (live run 20261105-001259-e811 wrote ``model: model.py`` and V0 failed on a file that existed)."""
+    q = Path(str(p))
+    if q.is_absolute():
+        return q
+    if (ROOT / q).exists() or not (design / q).exists():
+        return ROOT / q
+    return design / q
+
+
 def load_inputs(design: Path, plan_path: Path) -> tuple[dict, dict]:
     """The testplan and the spec it names, checked for the shape the gates read. Raises :class:`PlanError`."""
     rel = plan_path.relative_to(ROOT).as_posix() if plan_path.is_relative_to(ROOT) else plan_path.name
@@ -301,7 +312,7 @@ def load_inputs(design: Path, plan_path: Path) -> tuple[dict, dict]:
     if not isinstance(reqs, list) or not reqs or not all(
             isinstance(r, dict) and r.get("id") and isinstance(r.get("spec"), list) for r in reqs):
         raise PlanError(f"{rel}: 'requirements' must be a non-empty list of mappings, each with an 'id' and a 'spec' list")
-    spec_file = ROOT / str(plan["spec"])
+    spec_file = plan_file(design, plan["spec"])
     spec = _yaml_file(spec_file, str(plan["spec"]))
     try:
         spec_items(spec)
@@ -384,10 +395,13 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         return finish(out)
     reqs = plan["requirements"]
     th = plan["thresholds"]
-    bench_dir, chk_dir, formal_src = ROOT / plan["bench"]["dir"], ROOT / plan["checkers"], ROOT / plan["formal_dir"]
+    bench_dir, chk_dir, formal_src = (plan_file(design, plan["bench"]["dir"]), plan_file(design, plan["checkers"]),
+                                      plan_file(design, plan["formal_dir"]))
     modules = plan["bench"]["modules"]
-    v0["model_present"] = chk((ROOT / plan["model"]).exists(), True, (ROOT / plan["model"]).exists(),
-                              f"the testplan names model {plan['model']}, which does not exist")
+    model_file = plan_file(design, plan["model"])
+    want = (design / "model.py").relative_to(ROOT).as_posix() if design.is_relative_to(ROOT) else str(design / "model.py")
+    v0["model_present"] = chk(model_file.exists(), True, model_file.exists(),
+                              f"the testplan names model {plan['model']}, which does not exist (repo-relative, e.g. {want})")
     absent_mods = [f"{plan['bench']['dir']}/{m}.py" for m in modules if not (bench_dir / f"{m}.py").exists()]
     v0["bench_modules_present"] = chk(modules, "all files exist", not absent_mods,
                                       "bench.modules lists files that do not exist: " + ", ".join(absent_mods))
