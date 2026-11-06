@@ -1,0 +1,96 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c16_nexys_aes_uart
+title: AES-128 encryption over the USB-UART
+source: spec.md
+tier: C16
+difficulty: 3
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c16_nexys_aes_uart_top
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: board oscillator
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: waiting for the first byte of a request, busy low
+parameters:
+  CLKS_PER_BIT: 868
+ports:
+- name: CLK100MHZ
+  dir: in
+  width: 1
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- name: CPU_RESETN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C12
+  iostandard: LVCMOS33
+- name: UART_TXD_IN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C4
+  iostandard: LVCMOS33
+- name: UART_RXD_OUT
+  dir: out
+  width: 1
+  pins:
+  - D4
+  iostandard: LVCMOS33
+- name: LED
+  dir: out
+  width: 1
+  pins:
+  - H17
+  iostandard: LVCMOS33
+  note: LED[0] only
+behaviour:
+  cipher:
+  - reply = AES-128 encryption (FIPS 197) of the 16 plaintext bytes under the 16 key bytes of the same request; byte 0 first in the request and in the reply.
+  protocol:
+  - 'request: 32 bytes, key then plaintext; reply: 16 ciphertext bytes sent after the 32nd byte; nothing is remembered between requests. Input bytes during work may be ignored.'
+  - CPU_RESETN returns the board to waiting for the first byte of a request, dropping a partly received request.
+  leds:
+  - LED[0] = busy, from the 32nd byte until the reply has been sent.
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+  - name: UART_PROTOCOL
+    offset: none
+    access: serial
+    reset: waiting for the first byte of a request
+    bits: 115200 8N1 on UART_TXD_IN (host to FPGA) and UART_RXD_OUT (FPGA to host); request = 16 key bytes + 16 plaintext bytes; reply = 16 ciphertext bytes
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: 'Course reference: iterated round block 620 LUT, 652 FF, 10 RAMB18, Fmax 147 MHz out of context at a 200 MHz target (see reference_qor.md); whole-top full-flow QoR not run.'
+requirements:
+- id: REQ-01
+  text: the reply equals AES-128 of the request for the two FIPS 197 examples and six more requests
+  proof:
+  - simulation
+- id: REQ-02
+  text: 'every request carries its own key: consecutive requests with different keys are all answered correctly'
+  proof:
+  - simulation
+- id: REQ-03
+  text: CPU_RESETN drops a part-received request, and LED0 is high only while busy
+  proof:
+  - simulation
+- id: REQ-04
+  text: The design closes timing at 100 MHz with no unconstrained path
+  proof:
+  - analysis
+assumptions: []
+open_questions: []

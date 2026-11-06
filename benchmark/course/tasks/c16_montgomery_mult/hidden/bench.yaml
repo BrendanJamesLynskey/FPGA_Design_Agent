@@ -1,0 +1,9 @@
+# Hidden acceptance bench for c16_montgomery_mult (benchmark/tools/run_task.py)
+toplevel: c16_montgomery_mult_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 4, TIMEOUT_CYCLES: 400}
+phrases:
+  - "multiplies two 64-bit numbers modulo a third, in the \"Montgomery\" way"
+  - "must be exactly the same for every input"
+  - "the time must\n  not tell an observer anything about the numbers"
+  - "No divide operators and no remainder operators"

@@ -1,0 +1,10 @@
+# Hidden acceptance bench for c14_nexys_tiny_cnn (benchmark/tools/run_task.py)
+toplevel: c14_nexys_tiny_cnn_top
+module: acceptance
+no_shell: true
+parameters: {DEBOUNCE_CYCLES: 20, CLKS_PER_BIT: 8}
+phrases:
+  - "recognise which of four simple shapes is in a small grey picture"
+  - "Pressing the centre button (it needs debouncing) classifies that picture"
+  - "keeping the largest of every 2 by 2 block"
+  - "the number of the biggest score (if two tie, the lower number)"

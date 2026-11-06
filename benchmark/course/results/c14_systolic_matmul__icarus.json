@@ -1,0 +1,88 @@
+{
+  "task": "c14_systolic_matmul",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_burst_random_rows": true,
+      "test_burst_extreme_rows": true,
+      "test_second_table_and_single_row": true,
+      "test_registers": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "skew_row1",
+      "why": "row element 1 is skewed by the wrong amount",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_burst_random_rows",
+        "test_burst_extreme_rows",
+        "test_second_table_and_single_row",
+        "test_registers"
+      ]
+    },
+    {
+      "name": "deskew_col0",
+      "why": "output columns de-skewed by the wrong delay",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_burst_random_rows",
+        "test_burst_extreme_rows",
+        "test_second_table_and_single_row",
+        "test_registers"
+      ]
+    },
+    {
+      "name": "reload_ignored",
+      "why": "a second table does not replace non-zero entries of the first",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_second_table_and_single_row"
+      ]
+    },
+    {
+      "name": "weights_unsigned",
+      "why": "table entries treated as unsigned",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_burst_random_rows",
+        "test_burst_extreme_rows",
+        "test_second_table_and_single_row",
+        "test_registers"
+      ]
+    },
+    {
+      "name": "valid_early",
+      "why": "out_valid one clock before the results are ready",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_burst_random_rows",
+        "test_burst_extreme_rows",
+        "test_second_table_and_single_row",
+        "test_registers"
+      ]
+    },
+    {
+      "name": "valid_late",
+      "why": "the last row of a burst is not reported valid (out_valid needs two consecutive rows)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_burst_random_rows",
+        "test_burst_extreme_rows",
+        "test_second_table_and_single_row",
+        "test_registers"
+      ]
+    }
+  ],
+  "mutants_killed": 6,
+  "mutants_total": 6
+}

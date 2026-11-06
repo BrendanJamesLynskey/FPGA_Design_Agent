@@ -1,0 +1,9 @@
+# Hidden acceptance bench for c14_systolic_matmul (benchmark/tools/run_task.py)
+toplevel: c14_systolic_matmul_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 4, TIMEOUT_CYCLES: 400}
+phrases:
+  - "multiplies short rows of numbers by a fixed small table of numbers"
+  - "no row lost even when rows come on consecutive clocks"
+  - "within 8 clocks of the row being presented"
+  - "a new table can be loaded the same way"

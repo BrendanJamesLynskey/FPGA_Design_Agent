@@ -1,0 +1,9 @@
+# Hidden acceptance bench for c15_softmax_unit (benchmark/tools/run_task.py)
+toplevel: c15_softmax_unit_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 4, TIMEOUT_CYCLES: 400}
+phrases:
+  - "turns eight scores into eight probabilities the way a neural network does"
+  - "adding the same amount to every score must not change"
+  - "every probability within 1/128 of the true value"
+  - "Use no floating-point blocks and no division blocks"

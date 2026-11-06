@@ -1,0 +1,134 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c13_hough_lines
+title: Hough line accumulator behind the test shell
+source: spec.md
+tier: C13
+difficulty: 2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c13_hough_lines_top
+design_id: '0x484f5547'
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: board oscillator
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: idle, selection 0
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+ports:
+- name: CLK100MHZ
+  dir: in
+  width: 1
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- name: CPU_RESETN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C12
+  iostandard: LVCMOS33
+- name: LED
+  dir: out
+  width: 16
+  pins:
+  - H17
+  - K15
+  - J13
+  - N14
+  - R18
+  - V17
+  - U17
+  - U16
+  - V16
+  - T15
+  - U14
+  - T16
+  - V15
+  - V14
+  - V12
+  - V11
+  iostandard: LVCMOS33
+- name: UART_TXD_IN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C4
+  iostandard: LVCMOS33
+- name: UART_RXD_OUT
+  dir: out
+  width: 1
+  pins:
+  - D4
+  iostandard: LVCMOS33
+behaviour:
+  voting:
+  - 'For each presented point (x, y) and each direction index k in 0..15: rho = ((x*CT[k] + y*ST[k] + 64) >>> 7) + 48 with CT[k] = round(128 cos(k*pi/16)) and ST[k] = round(128 sin(k*pi/16)) (arithmetic shift, round-half-up); if 0 <= rho < 96 the count of (k, rho) increases by one.'
+  - CT = [128, 126, 118, 106, 91, 71, 49, 25, 0, -25, -49, -71, -91, -106, -118, -126]; ST = [0, 25, 49, 71, 91, 106, 118, 126, 128, 126, 118, 106, 91, 71, 49, 25].
+  handshake:
+  - A point written while BUSY is ignored; BUSY is high for about 17 clocks per point (the reference). The shell is slower than a point, so the bench never overlaps points.
+  leds:
+  - LED[0] = BUSY, the other LEDs are 0.
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+  - offset: 0
+    name: PT
+    access: WO
+    reset: 0
+    bits: '[7:0] x, [15:8] y (0..31): presents the point for one clock; ignored while BUSY; reads 0'
+  - offset: 1
+    name: CLEAR
+    access: WO
+    reset: 0
+    bits: any write zeroes all counts (only when not busy); reads 0
+  - offset: 2
+    name: RD_SEL
+    access: RW
+    reset: 0
+    bits: '[3:0] direction index k (0..15), [14:8] distance index r = rho + 48 (0..95)'
+  - offset: 3
+    name: RD_CNT
+    access: RO
+    reset: 0
+    bits: '[15:0] vote count of (k, r), valid a few clocks after RD_SEL is written'
+  - offset: 4
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] BUSY: a point is being processed'
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: Course reference clears all cells in one clock, which a block RAM cannot do; the memory estimate is 1 RAMB36; Vivado QoR not run (see reference_qor.md).
+requirements:
+- id: REQ-01
+  text: the counts read back equal the model's accumulator for pictures of single lines (diagonal, vertical) and for several lines at once
+  proof:
+  - simulation
+- id: REQ-02
+  text: CLEAR zeroes all counts and a new picture starts from zero
+  proof:
+  - simulation
+- id: REQ-03
+  text: the 96-entry distance table (-48 to +47) covers every vote of a 32 x 32 picture, and votes outside it would be dropped
+  proof:
+  - simulation
+- id: REQ-04
+  text: The design closes timing at 100 MHz with no unconstrained path
+  proof:
+  - analysis
+assumptions:
+- assumption: the table is not cleared by CPU_RESETN.
+  reason: only the clear command zeroes the counts; the bench always clears first.
+open_questions: []

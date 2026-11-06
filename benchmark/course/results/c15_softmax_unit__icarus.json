@@ -1,0 +1,76 @@
+{
+  "task": "c15_softmax_unit",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_special_score_sets": true,
+      "test_random_score_sets": true,
+      "test_offset_invariance": true,
+      "test_registers": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "max_zero",
+      "why": "no max subtraction: scores are not shifted by their maximum",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_special_score_sets",
+        "test_offset_invariance"
+      ]
+    },
+    {
+      "name": "min_not_max",
+      "why": "the minimum is subtracted instead of the maximum",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_special_score_sets",
+        "test_random_score_sets",
+        "test_offset_invariance",
+        "test_registers"
+      ]
+    },
+    {
+      "name": "scale_double_shift",
+      "why": "probabilities come out half size",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_special_score_sets",
+        "test_random_score_sets",
+        "test_offset_invariance",
+        "test_registers"
+      ]
+    },
+    {
+      "name": "recip_index",
+      "why": "reciprocal table indexed by the wrong bits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_special_score_sets",
+        "test_random_score_sets",
+        "test_offset_invariance"
+      ]
+    },
+    {
+      "name": "sum_drops_last",
+      "why": "the last score is left out of the denominator",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_special_score_sets",
+        "test_random_score_sets",
+        "test_offset_invariance",
+        "test_registers"
+      ]
+    }
+  ],
+  "mutants_killed": 5,
+  "mutants_total": 5
+}

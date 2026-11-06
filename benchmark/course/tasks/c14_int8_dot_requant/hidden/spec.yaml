@@ -1,0 +1,76 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c14_int8_dot_requant
+title: Quantised-layer arithmetic unit behind the test shell
+source: spec.md
+tier: C14
+difficulty: 1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c14_int8_dot_requant_top
+design_id: 0x444F5451          # "DOTQ"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: operand registers 0, SHIFT = 1, RELU = 0, READY = 0
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  arithmetic:
+    - "acc = sum over i<8 of a_i * w_i + bias (signed arithmetic; a_i and w_i signed 8-bit, bias signed 32-bit; the sum never overflows for the allowed inputs)"
+    - "r = (acc * mult + 2^(shift-1)) >>> shift, with a 64-bit signed product and the arithmetic (floor) shift, so exact halves round towards plus infinity"
+    - "y = clamp(r, lo, 127) with lo = 0 when relu = 1 and -128 when relu = 0"
+  handshake:
+    - "A write to GO (any value) clears READY and presents the loaded operands to the arithmetic for one clock; READY becomes 1 within 8 clocks and stays 1 until the next GO; Y and ACC hold the result until the next GO and read 0 while READY is 0."
+    - "The core's own latency is one clock after the presented clock; the shell window needs no more than READY."
+  leds:
+    - "LED[0] = READY, the other LEDs are 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: A_LO, access: RW, reset: 0, bits: "[31:0] activations 0..3, a_i in bits [8i+7:8i]"}
+    - {offset: 0x01, name: A_HI, access: RW, reset: 0, bits: "[31:0] activations 4..7, a_(4+i) in bits [8i+7:8i]"}
+    - {offset: 0x02, name: W_LO, access: RW, reset: 0, bits: "[31:0] weights 0..3, same packing"}
+    - {offset: 0x03, name: W_HI, access: RW, reset: 0, bits: "[31:0] weights 4..7, same packing"}
+    - {offset: 0x04, name: BIAS, access: RW, reset: 0, bits: "[31:0] signed bias"}
+    - {offset: 0x05, name: MULT, access: RW, reset: 0, bits: "[15:0] unsigned multiplier; [31:16] read 0"}
+    - {offset: 0x06, name: CTRL, access: RW, reset: 1, bits: "[4:0] shift (1..31), [8] relu; other bits read 0"}
+    - {offset: 0x07, name: GO, access: WO, reset: 0, bits: "any write starts one computation; reads 0"}
+    - {offset: 0x08, name: Y, access: RO, reset: 0, bits: "[7:0] limited answer (two's complement); [31:8] read 0"}
+    - {offset: 0x09, name: ACC, access: RO, reset: 0, bits: "[31:0] the signed accumulator including the bias"}
+    - {offset: 0x0A, name: STATUS, access: RO, reset: 0, bits: "[0] READY; other bits 0"}
+  unmapped: offsets 0x0B-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: "The course reference is one combinational multiply-add stage and does not reach 100 MHz out of context (31 MHz); the shell wrapper adds no pipeline. See reference_qor.md."
+
+requirements:
+  - {id: REQ-01, text: "Y and ACC equal the model for every tested case, including extremes, both saturations and exact halves", proof: [simulation]}
+  - {id: REQ-02, text: "READY is 0 after GO is written and 1 when the result is available", proof: [simulation]}
+  - {id: REQ-03, text: "relu limits the answer at 0; without relu the lower limit is -128; mult is unsigned", proof: [simulation]}
+  - {id: REQ-04, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+
+assumptions:
+  - assumption: the 16 LEDs other than LED[0] stay off.
+    reason: only the ready flag is asked for.
+
+open_questions: []

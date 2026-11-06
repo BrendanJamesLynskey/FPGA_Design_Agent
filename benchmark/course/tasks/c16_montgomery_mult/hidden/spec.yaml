@@ -1,0 +1,164 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c16_montgomery_mult
+title: Montgomery multiplier behind the test shell
+source: spec.md
+tier: C16
+difficulty: 2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c16_montgomery_mult_top
+design_id: '0x4d4f4e54'
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: board oscillator
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: operands, DONE, BUSY and CLOCKS 0
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+ports:
+- name: CLK100MHZ
+  dir: in
+  width: 1
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- name: CPU_RESETN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C12
+  iostandard: LVCMOS33
+- name: LED
+  dir: out
+  width: 16
+  pins:
+  - H17
+  - K15
+  - J13
+  - N14
+  - R18
+  - V17
+  - U17
+  - U16
+  - V16
+  - T15
+  - U14
+  - T16
+  - V15
+  - V14
+  - V12
+  - V11
+  iostandard: LVCMOS33
+- name: UART_TXD_IN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C4
+  iostandard: LVCMOS33
+- name: UART_RXD_OUT
+  dir: out
+  width: 1
+  pins:
+  - D4
+  iostandard: LVCMOS33
+behaviour:
+  function:
+  - r = a * b * 2^-64 mod n with r < n, for odd n < 2^64 and a, b < n (a, b, n may be 40-bit or 64-bit values; n odd).
+  timing:
+  - The number of clocks from START to done is the same for every input and at most 100 (the reference takes 66). CLOCKS reports it.
+  - No data-dependent early exit; no division or remainder operators.
+  handshake:
+  - START clears DONE; BUSY is high from the clock after START until done; DONE and r hold until the next START.
+  leds:
+  - LED[0] = DONE, LED[1] = BUSY, the other LEDs are 0.
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+  - offset: 0
+    name: A_LO
+    access: RW
+    reset: 0
+    bits: '[31:0] a[31:0]'
+  - offset: 1
+    name: A_HI
+    access: RW
+    reset: 0
+    bits: '[31:0] a[63:32]'
+  - offset: 2
+    name: B_LO
+    access: RW
+    reset: 0
+    bits: '[31:0] b[31:0]'
+  - offset: 3
+    name: B_HI
+    access: RW
+    reset: 0
+    bits: '[31:0] b[63:32]'
+  - offset: 4
+    name: N_LO
+    access: RW
+    reset: 0
+    bits: '[31:0] n[31:0]'
+  - offset: 5
+    name: N_HI
+    access: RW
+    reset: 0
+    bits: '[31:0] n[63:32]'
+  - offset: 6
+    name: START
+    access: WO
+    reset: 0
+    bits: any write requests a product for one clock and clears DONE; not while BUSY
+  - offset: 7
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] DONE (since the last START), [1] BUSY'
+  - offset: 8
+    name: R_LO
+    access: RO
+    reset: 0
+    bits: '[31:0] r[31:0] after DONE; 0 before'
+  - offset: 9
+    name: R_HI
+    access: RO
+    reset: 0
+    bits: '[31:0] r[63:32] after DONE; 0 before'
+  - offset: 10
+    name: CLOCKS
+    access: RO
+    reset: 0
+    bits: '[7:0] clocks from the clock in which START was applied to the clock in which done was high (reference: 66); same for every input'
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: 'Course reference: bit-serial, 268 LUT, 590 FF, Fmax 140 MHz out of context for the 64-bit block (see reference_qor.md); the W=256 variant is a brownfield case (brief 07a3).'
+requirements:
+- id: REQ-01
+  text: r equals the model for every tested product, with 64-bit and 40-bit moduli and the edge operands (0, 1, n-1)
+  proof:
+  - simulation
+- id: REQ-02
+  text: CLOCKS is the same for every tested product and at most 100
+  proof:
+  - simulation
+- id: REQ-03
+  text: BUSY and DONE follow START as described and r holds until the next START
+  proof:
+  - simulation
+- id: REQ-04
+  text: The design closes timing at 100 MHz with no unconstrained path
+  proof:
+  - analysis
+assumptions: []
+open_questions: []

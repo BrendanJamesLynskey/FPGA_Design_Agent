@@ -1,0 +1,127 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c15_rmsnorm_unit
+title: RMS norm unit behind the test shell
+source: spec.md
+tier: C15
+difficulty: 2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c15_rmsnorm_unit_top
+design_id: '0x524d534e'
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: board oscillator
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: loaded inputs 0, READY = 0
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+ports:
+- name: CLK100MHZ
+  dir: in
+  width: 1
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- name: CPU_RESETN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C12
+  iostandard: LVCMOS33
+- name: LED
+  dir: out
+  width: 16
+  pins:
+  - H17
+  - K15
+  - J13
+  - N14
+  - R18
+  - V17
+  - U17
+  - U16
+  - V16
+  - T15
+  - U14
+  - T16
+  - V15
+  - V14
+  - V12
+  - V11
+  iostandard: LVCMOS33
+- name: UART_TXD_IN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C4
+  iostandard: LVCMOS33
+- name: UART_RXD_OUT
+  dir: out
+  width: 1
+  pins:
+  - D4
+  iostandard: LVCMOS33
+behaviour:
+  function:
+  - y_i = x_i / sqrt(mean(x_j^2) + 2^-16) in real units; with the Q8.8 scaling (value times 256) that is y_i = x_i * 1024 / sqrt(sum_j x_j^2 + 16), as a signed 16-bit number
+  - 'Accuracy: |y_i - model_i| <= 1 LSB (1/256) for every lane; the all-zero input gives all zeros.'
+  handshake:
+  - A write to GO clears READY and presents the loaded inputs for one clock; READY is 1 within 8 clocks and stays 1 until the next GO; OUT reads 0 while READY is 0.
+  leds:
+  - LED[0] = READY, the other LEDs are 0.
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+  - offset: 0x00-0x07
+    name: X0..X7
+    access: RW
+    reset: 0
+    bits: '[31:0] input lanes: lane i (signed 16-bit) in register i//2, bits [16*(i%2)+15:16*(i%2)]'
+  - offset: 16
+    name: GO
+    access: WO
+    reset: 0
+    bits: any write presents the loaded inputs to the block for one clock and clears READY; reads 0
+  - offset: 17
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] READY: the outputs are valid (set within 8 clocks of GO, held until the next GO)'
+  - offset: 0x20-0x27
+    name: OUT0..OUT7
+    access: RO
+    reset: 0
+    bits: '[31:0] output lanes: lane i in register i//2, bits [16*(i%2)+15:16*(i%2)] (signed Q8.8); read 0 while READY is 0'
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: 'Course reference: 5501 LUT, 73 DSP48, Fmax 15 MHz out of context as one combinational stage (see reference_qor.md).'
+requirements:
+- id: REQ-01
+  text: every output is within 1 LSB of the true value for each tested vector, from tiny to full-scale inputs
+  proof:
+  - simulation
+- id: REQ-02
+  text: one large input among fifteen zeros, and the all-zero input, give the right result
+  proof:
+  - simulation
+- id: REQ-03
+  text: READY is 0 after GO is written and 1 when OUT is valid
+  proof:
+  - simulation
+- id: REQ-04
+  text: The design closes timing at 100 MHz with no unconstrained path
+  proof:
+  - analysis
+assumptions: []
+open_questions: []

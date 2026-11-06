@@ -1,0 +1,9 @@
+# Hidden acceptance bench for c14_int8_dot_requant (benchmark/tools/run_task.py)
+toplevel: c14_int8_dot_requant_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 4, TIMEOUT_CYCLES: 400}
+phrases:
+  - "does the arithmetic of one output of a quantised neural-network layer"
+  - "exact halves going up (towards plus infinity"
+  - "including extreme inputs, results that need limiting at both ends and exact halves"
+  - "a 16-bit unsigned multiplier"

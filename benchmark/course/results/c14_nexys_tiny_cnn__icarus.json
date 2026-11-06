@@ -1,0 +1,92 @@
+{
+  "task": "c14_nexys_tiny_cnn",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_blank_before_first_answer": true,
+      "test_pictures_0_to_3": true,
+      "test_pictures_4_to_7": true,
+      "test_glitch_is_not_a_press": true,
+      "test_reset_blanks_the_display": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "letters_swapped",
+      "why": "the letters of classes 2 and 3 are swapped",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pictures_4_to_7",
+        "test_glitch_is_not_a_press"
+      ]
+    },
+    {
+      "name": "digit_pattern",
+      "why": "the segment pattern for 2 is wrong",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pictures_4_to_7",
+        "test_glitch_is_not_a_press"
+      ]
+    },
+    {
+      "name": "min_pool",
+      "why": "min-pooling instead of max-pooling",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pictures_0_to_3",
+        "test_pictures_4_to_7",
+        "test_glitch_is_not_a_press",
+        "test_reset_blanks_the_display"
+      ]
+    },
+    {
+      "name": "no_relu_clamp",
+      "why": "negative values are not limited to 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pictures_0_to_3",
+        "test_pictures_4_to_7",
+        "test_reset_blanks_the_display"
+      ]
+    },
+    {
+      "name": "extra_shift",
+      "why": "every layer output is scaled down four times too far",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pictures_4_to_7"
+      ]
+    },
+    {
+      "name": "argmin",
+      "why": "the class is the smallest score, not the biggest",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pictures_0_to_3",
+        "test_pictures_4_to_7",
+        "test_glitch_is_not_a_press",
+        "test_reset_blanks_the_display"
+      ]
+    },
+    {
+      "name": "debounce_ignored",
+      "why": "the button is not debounced: the press starts before it is stable",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_glitch_is_not_a_press"
+      ]
+    }
+  ],
+  "mutants_killed": 7,
+  "mutants_total": 7
+}

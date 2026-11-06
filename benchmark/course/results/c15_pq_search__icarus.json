@@ -1,0 +1,83 @@
+{
+  "task": "c15_pq_search",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_first_query": true,
+      "test_second_query_after_first": true,
+      "test_equal_distances_and_short_database": true,
+      "test_short_query_and_reset": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "group7_dropped",
+      "why": "the last group is left out of the distance sum",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_query",
+        "test_second_query_after_first",
+        "test_equal_distances_and_short_database",
+        "test_short_query_and_reset"
+      ]
+    },
+    {
+      "name": "table_group_stride",
+      "why": "table entries of different groups overlap when written",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_query",
+        "test_second_query_after_first",
+        "test_equal_distances_and_short_database",
+        "test_short_query_and_reset"
+      ]
+    },
+    {
+      "name": "farthest_not_closest",
+      "why": "the farthest entries are kept instead of the closest",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_query",
+        "test_second_query_after_first",
+        "test_equal_distances_and_short_database",
+        "test_short_query_and_reset"
+      ]
+    },
+    {
+      "name": "start_does_not_clear",
+      "why": "START does not forget the previous result",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_second_query_after_first"
+      ]
+    },
+    {
+      "name": "tie_larger_index",
+      "why": "of two equal distances the larger entry number comes first",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_second_query_after_first",
+        "test_equal_distances_and_short_database"
+      ]
+    },
+    {
+      "name": "numbering_not_restarted",
+      "why": "START does not restart the entry numbering",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_second_query_after_first"
+      ]
+    }
+  ],
+  "mutants_killed": 6,
+  "mutants_total": 6
+}

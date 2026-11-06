@@ -1,0 +1,148 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c14_systolic_matmul
+title: 4 x 4 row multiplier behind the test shell
+source: spec.md
+tier: C14
+difficulty: 3
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c14_systolic_matmul_top
+design_id: '0x4d4d3458'
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: board oscillator
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: table, parked rows and results 0, DONE = 0, array registers cleared
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+ports:
+- name: CLK100MHZ
+  dir: in
+  width: 1
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- name: CPU_RESETN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C12
+  iostandard: LVCMOS33
+- name: LED
+  dir: out
+  width: 16
+  pins:
+  - H17
+  - K15
+  - J13
+  - N14
+  - R18
+  - V17
+  - U17
+  - U16
+  - V16
+  - T15
+  - U14
+  - T16
+  - V15
+  - V14
+  - V12
+  - V11
+  iostandard: LVCMOS33
+- name: UART_TXD_IN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C4
+  iostandard: LVCMOS33
+- name: UART_RXD_OUT
+  dir: out
+  width: 1
+  pins:
+  - D4
+  iostandard: LVCMOS33
+behaviour:
+  product:
+  - C[m][j] = sum over i of A[m][i] * W[i][j], exact signed arithmetic, W and A signed 8-bit, C signed 32-bit
+  burst:
+  - BURST N presents ROW0..ROW(N-1) on N consecutive clocks (one row per clock, no gaps); the results arrive in order and are stored as RES rows 0..N-1; DONE rises when the Nth is stored.
+  - 'Latency: a row presented in clock t has its result valid in clock t+L with L at most 8 (the reference has 8); LAT reports L for ROW0.'
+  - A table loaded with LOAD replaces the previous one for rows presented afterwards; LOAD is not issued while a burst runs.
+  leds:
+  - LED[0] = DONE, the other LEDs are 0.
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+  - offset: 0x00-0x03
+    name: W0..W3
+    access: RW
+    reset: 0
+    bits: '[31:0] row i of the table: W[i][j] in bits [8j+7:8j] (signed 8-bit)'
+  - offset: 4
+    name: LOAD
+    access: WO
+    reset: 0
+    bits: any write loads the table into the arithmetic for one clock; reads 0
+  - offset: 0x08-0x17
+    name: ROW0..ROW15
+    access: RW
+    reset: 0
+    bits: '[31:0] parked row m: A[m][i] in bits [8i+7:8i] (signed 8-bit)'
+  - offset: 24
+    name: BURST
+    access: WO
+    reset: 0
+    bits: '[4:0] row count N (1..16; 0 counts as 1): presents ROW0..ROW(N-1) on N consecutive clocks, clears DONE; reads 0'
+  - offset: 25
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] DONE: all N results captured (cleared by BURST)'
+  - offset: 26
+    name: LAT
+    access: RO
+    reset: 0
+    bits: '[4:0] clocks from the clock in which ROW0 was presented to the clock in which its result was valid (reference: 8); a conforming design reports 1..8'
+  - offset: 27
+    name: COUNT
+    access: RO
+    reset: 0
+    bits: '[4:0] results captured by the last burst'
+  - offset: 0x20-0x5F
+    name: RES
+    access: RO
+    reset: 0
+    bits: 'address 0x20 + 4*m + j: [31:0] C[m][j], signed 32-bit; rows beyond the last burst keep older values'
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: 'Course reference: 1122 LUT, 774 FF, 2 DSP48 (the 16 int8 multipliers mostly in LUTs), meets 100 MHz out of context (see reference_qor.md).'
+requirements:
+- id: REQ-01
+  text: every result row equals the model, in order, for bursts of 16, 8 and 1 rows on consecutive clocks
+  proof:
+  - simulation
+- id: REQ-02
+  text: the latency of the first row is at most 8 clocks and every row of a burst gives a result
+  proof:
+  - simulation
+- id: REQ-03
+  text: a second table loaded after the first gives results for the new table only
+  proof:
+  - simulation
+- id: REQ-04
+  text: The design closes timing at 100 MHz with no unconstrained path
+  proof:
+  - analysis
+assumptions: []
+open_questions: []

@@ -1,0 +1,6 @@
+mutants:
+  - {name: no_epsilon, file: rmsnorm_unit.sv, find: "ss = 64'sd16;", replace: "ss = 64'sd0;", why: "the tiny constant is missing, so a one-LSB input is scaled to full size"}
+  - {name: newton_shift, file: rmsnorm_unit.sv, find: "y1 = (y0 * (64'd196608 - mt)) >> 17;", replace: "y1 = (y0 * (64'd196608 - mt)) >> 18;", why: "the refined reciprocal square root is half size"}
+  - {name: lut_index, file: rmsnorm_unit.sv, find: "y0 = rsqrt_lut(mq[17:11] - 7'd32);", replace: "y0 = rsqrt_lut(mq[16:10] - 7'd32);", why: "table indexed by the wrong mantissa bits"}
+  - {name: exponent_off, file: rmsnorm_unit.sv, find: "e = pb >> 1;", replace: "e = (pb + 6'd1) >> 1;", why: "the power-of-four exponent is off by one for odd bit positions"}
+  - {name: squares_unsigned, file: rmsnorm_unit.sv, find: "ss = ss + $signed(x[i*16 +: 16]) * $signed(x[i*16 +: 16]);", replace: "ss = ss + x[i*16 +: 16] * x[i*16 +: 16];", why: "negative inputs are squared as unsigned numbers"}
