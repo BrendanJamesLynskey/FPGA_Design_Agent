@@ -52,8 +52,8 @@ def test_split_is_reproducible_and_public_has_no_held_out() -> None:
     assert not public & held, f"held-out tasks in the public repo: {public & held}"
     dev = {i for t in s["tiers"].values() for i in t["dev"]}
     assert public <= dev, f"public tasks that are not development tasks: {public - dev}"
-    pending = set(yaml.safe_load((COURSE / "PENDING.yaml").read_text())["pending"])
-    assert pending <= set(ids) and not pending & public
+    assert dev == public, f"development tasks without a public task or the other way round: {dev ^ public}"
+    assert not (COURSE / "PENDING.yaml").exists(), "every split id has a task since course v1.1"
 
 
 def test_manifest_verifies() -> None:

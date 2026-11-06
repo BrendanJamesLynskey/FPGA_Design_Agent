@@ -1,0 +1,160 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c13_nexys_blob_tracker
+title: Blob finder behind the test shell (re-scoped from the blob tracker with a crosshair)
+source: spec.md
+tier: C13
+difficulty: 3
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c13_nexys_blob_tracker_top
+design_id: '0x424c4f42'
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: board oscillator
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: idle, no report, area and middle point 0
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+ports:
+- name: CLK100MHZ
+  dir: in
+  width: 1
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- name: CPU_RESETN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C12
+  iostandard: LVCMOS33
+- name: LED
+  dir: out
+  width: 16
+  pins:
+  - H17
+  - K15
+  - J13
+  - N14
+  - R18
+  - V17
+  - U17
+  - U16
+  - V16
+  - T15
+  - U14
+  - T16
+  - V15
+  - V14
+  - V12
+  - V11
+  iostandard: LVCMOS33
+- name: UART_TXD_IN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C4
+  iostandard: LVCMOS33
+- name: UART_RXD_OUT
+  dir: out
+  width: 1
+  pins:
+  - D4
+  iostandard: LVCMOS33
+behaviour:
+  stream:
+  - AXI4-Stream video slave (tdata[0] = pixel, tvalid, tready, tuser = start of picture, tlast = end of line), 40 x 30; the wrapper drives one pixel per clock and holds a pixel until tready.
+  objects:
+  - 4-connected groups of bright pixels (neighbours up, down, left, right); a diagonal contact does not join two objects; a U-shaped object is one object. Up to 64 provisional labels of a single-pass labeller
+    are available.
+  biggest:
+  - Largest area; on a tie the object with the smaller top row, then the smaller left edge.
+  centroid:
+  - (sum x // area, sum y // area), integer division (floor), pixel coordinates from 0.
+  empty_picture:
+  - Not exercised by the bench (a picture with no bright pixel has no object).
+  leds:
+  - LED[0] = BUSY, the other LEDs are 0.
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+  - offset: 0
+    name: PTR
+    access: RW
+    reset: 0
+    bits: '[5:0] word index of the parked picture (0..37) that the next DATA write fills'
+  - offset: 1
+    name: DATA
+    access: WO
+    reset: 0
+    bits: '[31:0] 32 pixels of the parked picture at PTR (pixel i of the word in bit i, row by row, 1 = bright); PTR then increments; reads 0'
+  - offset: 2
+    name: GO
+    access: WO
+    reset: 0
+    bits: any write streams the parked picture (1200 pixels, row by row, tuser on pixel 0, tlast on the last pixel of each 40-pixel line) into the block, one per clock, and clears the report flag; reads
+      0
+  - offset: 3
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] BUSY: from GO until the report is final; [1] REPORT: a report is available (set when BUSY falls, cleared by GO and reset)'
+  - offset: 4
+    name: AREA
+    access: RO
+    reset: 0
+    bits: '[15:0] area of the biggest object of the last picture (0 until a report exists)'
+  - offset: 5
+    name: CX
+    access: RO
+    reset: 0
+    bits: '[7:0] x of the middle point (sum of x // area)'
+  - offset: 6
+    name: CY
+    access: RO
+    reset: 0
+    bits: '[7:0] y of the middle point (sum of y // area)'
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: The course labeller is behavioural and not synthesisable to a pixel clock as written; QoR not run (see reference_qor.md).
+requirements:
+- id: REQ-01
+  text: for every picture the reported area, x and y equal the reference
+  proof:
+  - simulation
+- id: REQ-02
+  text: two objects that touch only diagonally are reported separately
+  proof:
+  - simulation
+- id: REQ-03
+  text: the U-shaped object is one object
+  proof:
+  - simulation
+assumptions:
+- assumption: the picture buffer and the stream generator are part of the test wrapper, not of the block under test
+  reason: the shell cannot present a stream; any design must provide the register map above
+open_questions: []
+scope:
+  rescoped: 2026-11-06 (brief 07a1b), to what the course reference implements (the labeller ccl.sv plus the selection glue blob_report.sv)
+  dropped:
+  - the animation of 8 stored pictures shown one per video frame (the pictures are streamed in by the test wrapper)
+  - the 640 x 480 VGA output at about 60 Hz with the 16 x enlargement and the MMCM pixel clock
+  - the crosshair overlay through the middle point
+  - the seven-segment display of x, y and area
+  - SW0 (stop the animation) and the reset restarting the animation
+  kept:
+  - single-pass labelling (4-connected, union-find)
+  - area and centroid of the biggest object with the tie rule
+  - the stream interface
+  glue_added: blob_report.sv picks the biggest object from the labeller list and divides the sums by the area; the register wrapper parks and streams the picture

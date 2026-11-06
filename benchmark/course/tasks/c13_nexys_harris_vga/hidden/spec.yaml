@@ -1,0 +1,154 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c13_nexys_harris_vga
+title: Corner finder behind the test shell (re-scoped from the Harris VGA corner marks)
+source: spec.md
+tier: C13
+difficulty: 3
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c13_nexys_harris_vga_top
+design_id: '0x48415252'
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: board oscillator
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: idle, no list, count 0, LEDs 0
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+ports:
+- name: CLK100MHZ
+  dir: in
+  width: 1
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- name: CPU_RESETN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C12
+  iostandard: LVCMOS33
+- name: LED
+  dir: out
+  width: 16
+  pins:
+  - H17
+  - K15
+  - J13
+  - N14
+  - R18
+  - V17
+  - U17
+  - U16
+  - V16
+  - T15
+  - U14
+  - T16
+  - V15
+  - V14
+  - V12
+  - V11
+  iostandard: LVCMOS33
+- name: UART_TXD_IN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C4
+  iostandard: LVCMOS33
+- name: UART_RXD_OUT
+  dir: out
+  width: 1
+  pins:
+  - D4
+  iostandard: LVCMOS33
+behaviour:
+  stream:
+  - AXI4-Stream video slave (tdata[7:0], tvalid, tready, tuser = start of picture, tlast = end of line), 80 x 60; the wrapper drives one pixel per clock and holds a pixel until tready.
+  detector:
+  - 'Harris corner response with non-maximum suppression, as the course exercise: Sobel gradients scaled down by 4 (arithmetic shift), structure tensor summed over 3 x 3, k = 1/16, R = det - (trace*trace
+    >> 4), signed 48-bit; threshold 50 000 000 (signed compare); the pixel is a corner if R is strictly greater than NW, N, NE, W and greater-or-equal than E, SW, S, SE; replicated borders (edge pixels
+    extend the picture).'
+  expected_result:
+  - The corner pixels of the rectangles that are visible inside the picture, exactly (the bench accepts a detection within one pixel of each true corner, and no extra detections).
+  weak_rectangles:
+  - 'A rectangle only about 45 grey levels brighter than its surroundings gives a response below the threshold: no corners.'
+  leds:
+  - LED[15:0] = COUNT.
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+  - offset: 0
+    name: PTR
+    access: RW
+    reset: 0
+    bits: '[10:0] word index of the parked picture (0..1199) that the next DATA write fills'
+  - offset: 1
+    name: DATA
+    access: WO
+    reset: 0
+    bits: '[31:0] four pixels of the parked picture at PTR (pixel 0 of the word in [7:0], row by row); PTR then increments; reads 0'
+  - offset: 2
+    name: GO
+    access: WO
+    reset: 0
+    bits: any write streams the parked picture (4800 pixels, row by row, tuser on pixel 0, tlast on the last pixel of each 80-pixel line) into the block, one per clock, and clears the list flag; reads 0
+  - offset: 3
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] BUSY: from GO until the list is final; [1] REPORT: a list is available (set when BUSY falls, cleared by GO and reset)'
+  - offset: 4
+    name: COUNT
+    access: RO
+    reset: 0
+    bits: '[15:0] number of corners found in the last picture (0 until a list exists); the LEDs show the same number'
+  - offset: 5
+    name: SEL
+    access: RW
+    reset: 0
+    bits: '[5:0] place in the corner list that CORNER shows (0..63)'
+  - offset: 6
+    name: CORNER
+    access: RO
+    reset: 0
+    bits: '[6:0] x and [14:8] y of corner SEL (the first 64 corners in raster order), valid a few clocks after SEL is written; 0 beyond COUNT'
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: The course gave out-of-context numbers for the pipelined response block only; QoR of the reference system not run (see reference_qor.md).
+requirements:
+- id: REQ-01
+  text: the detected corner set equals the reference set (within 1 pixel; no extra detections)
+  proof:
+  - simulation
+- id: REQ-02
+  text: the LEDs (the count) equal the number of corners reported
+  proof:
+  - simulation
+assumptions:
+- assumption: the picture buffer and the stream generator are part of the test wrapper, not of the block under test
+  reason: the shell cannot present a stream; any design must provide the register map above
+open_questions: []
+scope:
+  rescoped: 2026-11-06 (brief 07a1b), to what the course reference implements (harris.sv, the 7 x 7 window Harris response with non-maximum suppression) plus the glue harris_detect.sv
+  dropped:
+  - the 640 x 480 VGA output at 60 Hz (25.175 MHz pixel clock from an MMCM, scaling x8 by pixel replication)
+  - the overlay of small red crosses on the enlarged picture and the switch SW0 that turns it on and off
+  - the picture stored in the design from a hex file (the picture is parked by the test wrapper and streamed in)
+  - the timing requirement of the first version (REQ-03, a 5-stage response pipeline closing at the pixel clock)
+  kept:
+  - the corner detector itself, bit-exact
+  - the LEDs showing the number of corners
+  - the stream interface
+  glue_added: harris_detect.sv stores the streamed picture, builds the 7 x 7 window of every pixel (clamped at the edges), feeds harris.sv and appends each corner to a list; the register wrapper parks and
+    streams the picture

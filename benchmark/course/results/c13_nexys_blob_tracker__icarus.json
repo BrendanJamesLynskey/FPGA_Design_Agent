@@ -1,0 +1,122 @@
+{
+  "task": "c13_nexys_blob_tracker",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_animation_pictures": true,
+      "test_corner_pixel_comb_ring_and_tie": true,
+      "test_reset_forgets_the_report": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "left_neighbour_ignored",
+      "why": "the pixel to the left is not looked at, so a row of pixels is many objects",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_animation_pictures",
+        "test_corner_pixel_comb_ring_and_tie",
+        "test_reset_forgets_the_report"
+      ]
+    },
+    {
+      "name": "no_merge",
+      "why": "two labels that meet are never merged (the U-shape and the comb split)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_animation_pictures",
+        "test_reset_forgets_the_report"
+      ]
+    },
+    {
+      "name": "stale_up_label",
+      "why": "a dark pixel keeps the label of the pixel above it, so objects bridge a gap",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_animation_pictures",
+        "test_corner_pixel_comb_ring_and_tie",
+        "test_reset_forgets_the_report"
+      ]
+    },
+    {
+      "name": "area_counted_twice",
+      "why": "every pixel counts twice",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_animation_pictures",
+        "test_corner_pixel_comb_ring_and_tie",
+        "test_reset_forgets_the_report"
+      ]
+    },
+    {
+      "name": "x_sum_from_y",
+      "why": "the x sum accumulates y",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_animation_pictures",
+        "test_corner_pixel_comb_ring_and_tie",
+        "test_reset_forgets_the_report"
+      ]
+    },
+    {
+      "name": "merge_loses_sums",
+      "why": "merging two labels drops the y sum of the one merged away",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_animation_pictures",
+        "test_reset_forgets_the_report"
+      ]
+    },
+    {
+      "name": "centroid_rounded",
+      "why": "the middle point is rounded instead of rounded down",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_animation_pictures",
+        "test_corner_pixel_comb_ring_and_tie",
+        "test_reset_forgets_the_report"
+      ]
+    },
+    {
+      "name": "tie_to_lower_row_loses",
+      "why": "on equal areas the object that starts lower wins",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_animation_pictures",
+        "test_corner_pixel_comb_ring_and_tie"
+      ]
+    },
+    {
+      "name": "tie_to_left_edge_loses",
+      "why": "on equal areas and top rows the object further right wins",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_corner_pixel_comb_ring_and_tie"
+      ]
+    },
+    {
+      "name": "new_picture_not_reset",
+      "why": "the labeller tables are not cleared at the start of a picture, so objects of the earlier picture are reported again",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_animation_pictures",
+        "test_corner_pixel_comb_ring_and_tie"
+      ]
+    }
+  ],
+  "mutants_killed": 10,
+  "mutants_total": 10
+}
