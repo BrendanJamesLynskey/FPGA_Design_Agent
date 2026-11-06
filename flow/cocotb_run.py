@@ -15,6 +15,8 @@ from pathlib import Path
 
 from cocotb_tools.runner import get_results, get_runner
 
+from flow import srcorder
+
 ROOT = Path(__file__).resolve().parents[1]
 SHELL_RTL = sorted((ROOT / "shell" / "rtl").glob("*.sv"))
 
@@ -108,6 +110,10 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
     if coverage is None:
         coverage = os.environ.get("FDA_COVERAGE") == "1"
     sources = swap_mutant_sources(sources)
+    design = srcorder.design_of(test_dir)
+    if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
+        sources = srcorder.drop_shell(sources)
+    sources = srcorder.order_sv(sources)                  # 07a2-prep: packages and interfaces first, not name order
     sim = get_runner(simname)
     build_dir = (build_root or ROOT / "build" / "sim") / name
     if simname == "verilator":
@@ -124,10 +130,12 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
     env.update(extra_env or {})
     plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
     try:
-        results = sim.test(test_module=test_module, hdl_toplevel=toplevel, testcase=testcase, seed=seed,
-                           build_dir=build_dir, test_dir=test_dir, extra_env=env, parameters=parameters or {},
-                           timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
-                           log_file=build_dir / "sim.log", plusargs=plus)
+        # 07a2-prep: the simulator starts in test_dir; the task's data files are linked there for the run ($readmemh)
+        with srcorder.linked_data(design / "data", test_dir):
+            results = sim.test(test_module=test_module, hdl_toplevel=toplevel, testcase=testcase, seed=seed,
+                               build_dir=build_dir, test_dir=test_dir, extra_env=env, parameters=parameters or {},
+                               timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
+                               log_file=build_dir / "sim.log", plusargs=plus)
     except SystemExit:
         collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
         # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the

@@ -27,3 +27,12 @@ python3 benchmark/course/tools/bank_grep.py                                  # t
 - Held-out tasks are never used while tuning the agent; they are run once, at a milestone the planner names, as one measurement. A held-out `spec.md` is published only after scoring.
 - No fix may be motivated by a held-out run. Model errors and spec ambiguities found on development tasks are recorded, not repaired by editing a task.
 - Nothing from the course repository (lessons, exercises, labs, reference RTL) goes into the agent's knowledge bank or prompts. The reference RTL here is a copy of the course reference, wrapped for the shell.
+
+## Tool change after the freeze (brief 07a2-prep, 2026-11-06)
+
+`benchmark/course/tools/no_shell.py` (a shared unit; its digest changed in the public and the private manifest, no task changed):
+the course scoring entry now (1) compiles the sources in dependency order, packages and interfaces first (`flow/srcorder.py`),
+where it used to compile in file-name order, so an agent's `foo_pkg.sv` next to `foo_core.sv` builds; (2) links a task's
+`data/` files into the simulator's working directory (`hidden/`) for the length of a scoring run, only where no file of that name
+exists, so `$readmemh("x.hex")` and `$readmemh("data/x.hex")` find the task's data as they do in the agent's own simulation.
+A design that already scored the same way still does; the reference of every task passes unchanged (checked below).

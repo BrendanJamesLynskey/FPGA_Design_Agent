@@ -81,7 +81,7 @@ class PathJail:
     """Resolve agent-supplied paths and refuse anything outside ``root``.
 
     ``write_deny`` lists top-level names under ``root`` that are read-only for the agent (default
-    ``build``: tool outputs). Hidden files at the top level (``.git``, ``.env``) are never writable."""
+    ``build``: tool outputs; ``data``: the task's data files, 07a2-prep). Hidden files at the top level (``.git``, ``.env``) are never writable."""
 
     MAX_WRITE_BYTES = 1_000_000
 
@@ -91,7 +91,7 @@ class PathJail:
     READ_ONLY_PREFIX = "@shell/"
     READ_ONLY_ENTRIES = ("rtl", "PROTOCOL.md", "host/protocol.py")
 
-    def __init__(self, root: Path, write_deny: tuple[str, ...] = ("build",), shell_root: Path | None = None):
+    def __init__(self, root: Path, write_deny: tuple[str, ...] = ("build", "data"), shell_root: Path | None = None):
         self.root = Path(os.path.realpath(root))
         self.write_deny = write_deny
         self.shell_root = Path(os.path.realpath(shell_root)) if shell_root else None
@@ -113,7 +113,7 @@ class PathJail:
 
     #: first components of the design's own layout; '/<one of these>/...' is the Deep Agents virtual style
     VIRTUAL_TOPS = ("spec.md", "spec.yaml", "model.py", "tests", "verif", "rtl", "lint", "build.yaml", "design.xdc",
-                    "probes.yaml", "ARCHITECTURE.md", "BRINGUP.md", "hw_checks.py", "BUILD_NOTE.md")
+                    "probes.yaml", "data", "ARCHITECTURE.md", "BRINGUP.md", "hw_checks.py", "BUILD_NOTE.md")
 
     def canonical(self, rel: str) -> str:
         """ONE path convention for every harness (05c follow-up): tool paths are relative to the design directory.

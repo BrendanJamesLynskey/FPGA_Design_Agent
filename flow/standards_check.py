@@ -41,6 +41,11 @@ try:
 except ImportError:                     # run as a script: flow/ itself is on sys.path
     import architecture as arch_mod     # type: ignore[no-redef]
 
+try:
+    from flow import srcorder
+except ImportError:
+    import srcorder                     # type: ignore[no-redef]
+
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = "1.0"
 
@@ -579,8 +584,12 @@ class Check:
 
     def _sources(self) -> list[str]:
         cfg = yaml.safe_load((self.design / "build.yaml").read_text()) if (self.design / "build.yaml").is_file() else {}
+        noshell = srcorder.no_shell(self.design)         # 07a2-prep: a UART-subject design has no test shell
         srcs = sorted({p for pat in (cfg or {}).get("sources", []) for p in glob.glob(str(self.root / pat))}) or \
-            sorted(glob.glob(str(self.root / "shell" / "rtl" / "*.sv"))) + self.rtl_files
+            ([] if noshell else sorted(glob.glob(str(self.root / "shell" / "rtl" / "*.sv")))) + self.rtl_files
+        if noshell:
+            srcs = [str(p) for p in srcorder.drop_shell(srcs)]
+        srcs = [str(p) for p in srcorder.order_sv(srcs)]     # 07a2-prep: packages and interfaces first, not name order
         return srcs + sorted(glob.glob(str(self.design / "lint" / "*.sv")))
 
     def rule_latch_loop(self) -> None:
