@@ -21,6 +21,9 @@ per task that the bench must kill. `check_task.py` and `run_task.py` are the v1 
 - **`data/`** (optional): files the user hands over together with `spec.md` (weights, databases, pictures); the agent may see them. Everything else stays under `hidden/`.
 - **Package files first.** The harness compiles sources in file-name order, so a SystemVerilog package must sort before its users (a reference file is named `_*_pkg.sv`). An agent
   design that names its package file otherwise fails to build.
+- **Re-scoped tasks (course v1.1).** `c13_nexys_blob_tracker` and `c13_nexys_harris_vga` keep the course project ids, but the task is only what the course reference implements: a block behind the shell that is fed a picture
+  (a 40 x 30 bit picture and the biggest-object report; an 80 x 60 grey picture and the corner list), with no VGA output, overlay, seven-segment display or switches. Each `hidden/spec.yaml` has a `scope:` section that
+  says what was dropped and what glue was added; the course project specs were re-scoped the same way.
 - **`hidden/reference_qor.md`**: the course's recorded numbers for the reference, marked "OOC" (out of context, 200 MHz target), "placed only" or "not run". Difficulty 3 tasks keep
   the course's OOC numbers only.
 
@@ -37,11 +40,11 @@ per task that the bench must kill. `check_task.py` and `run_task.py` are the v1 
 ## Tasks
 
 Development tasks in this repository; held-out tasks live in the private repository and are listed by id and digest only ([split.yaml](split.yaml), [MANIFEST.json](MANIFEST.json)).
-Four split ids have no task yet ([PENDING.yaml](PENDING.yaml)).
+All 19 split ids have a task since course v1.1 (the two Part 13 held-out tasks and the two re-scoped development tasks were added on 2026-11-06, see [FROZEN.md](FROZEN.md)).
 
 | Part | Development tasks |
 |---|---|
-| 13 | `c13_hough_lines` |
+| 13 | `c13_hough_lines`, `c13_nexys_blob_tracker`, `c13_nexys_harris_vga` |
 | 14 | `c14_int8_dot_requant`, `c14_nexys_tiny_cnn`, `c14_systolic_matmul` |
 | 15 | `c15_pq_search`, `c15_rmsnorm_unit`, `c15_softmax_unit` |
 | 16 | `c16_montgomery_mult`, `c16_nexys_aes_uart`, `c16_ntt_engine` |

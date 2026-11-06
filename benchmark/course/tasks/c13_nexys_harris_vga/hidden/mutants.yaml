@@ -1,0 +1,11 @@
+mutants:
+  - {name: gradient_scale, file: harris.sv, find: "ix = gx(w, r + dr, c + dc) >>> 2;", replace: "ix = gx(w, r + dr, c + dc) >>> 1;", why: "the horizontal gradient is scaled down by 2 instead of 4, so weak rectangles produce corners"}
+  - {name: threshold_too_high, file: harris_detect.sv, find: ".thresh(48'sd50000000)", replace: ".thresh(48'sd500000000)", why: "the corner threshold is ten times too high, so medium-contrast corners are missed"}
+  - {name: threshold_too_low, file: harris_detect.sv, find: ".thresh(48'sd50000000)", replace: ".thresh(48'sd2000000)", why: "the corner threshold is far too low, so faint rectangles produce corners"}
+  - {name: nms_west_dropped, file: harris.sv, find: "(rc > rw) && ", replace: "", why: "the west neighbour is not part of the non-maximum suppression"}
+  - {name: nms_east_dropped, file: harris.sv, find: "(rc >= re) && ", replace: "", why: "the east neighbour is not part of the non-maximum suppression"}
+  - {name: nms_south_dropped, file: harris.sv, find: "(rc >= rs) && ", replace: "", why: "the south neighbour is not part of the non-maximum suppression"}
+  - {name: nms_off, file: harris.sv, find: "corner <= (rc > thresh) && is_max;", replace: "corner <= (rc > thresh);", why: "no non-maximum suppression: a cluster of detections at every corner"}
+  - {name: border_wraps, file: harris_detect.sv, find: "clamp = (v < 0) ? 0 : (v > hi) ? hi : v;", replace: "clamp = (v < 0) ? hi : (v > hi) ? hi : v;", why: "pixels left of or above the picture are taken from the opposite edge instead of replicated"}
+  - {name: count_double, file: harris_detect.sv, find: "count <= count + 16'd1;", replace: "count <= count + 16'd2;", why: "the count of corners is twice the number found"}
+  - {name: x_and_y_swapped, file: harris_detect.sv, find: "lx[count[5:0]] <= px; ly[count[5:0]] <= py;", replace: "lx[count[5:0]] <= py; ly[count[5:0]] <= px;", why: "the list holds y where x belongs"}

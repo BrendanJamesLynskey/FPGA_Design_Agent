@@ -1,0 +1,113 @@
+{
+  "task": "c13_nexys_harris_vga",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_course_picture_then_mixed_picture": true,
+      "test_reset_forgets_the_list": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "gradient_scale",
+      "why": "the horizontal gradient is scaled down by 2 instead of 4, so weak rectangles produce corners",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture"
+      ]
+    },
+    {
+      "name": "threshold_too_high",
+      "why": "the corner threshold is ten times too high, so medium-contrast corners are missed",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture"
+      ]
+    },
+    {
+      "name": "threshold_too_low",
+      "why": "the corner threshold is far too low, so faint rectangles produce corners",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture"
+      ]
+    },
+    {
+      "name": "nms_west_dropped",
+      "why": "the west neighbour is not part of the non-maximum suppression",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture",
+        "test_reset_forgets_the_list"
+      ]
+    },
+    {
+      "name": "nms_east_dropped",
+      "why": "the east neighbour is not part of the non-maximum suppression",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture",
+        "test_reset_forgets_the_list"
+      ]
+    },
+    {
+      "name": "nms_south_dropped",
+      "why": "the south neighbour is not part of the non-maximum suppression",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture",
+        "test_reset_forgets_the_list"
+      ]
+    },
+    {
+      "name": "nms_off",
+      "why": "no non-maximum suppression: a cluster of detections at every corner",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture",
+        "test_reset_forgets_the_list"
+      ]
+    },
+    {
+      "name": "border_wraps",
+      "why": "pixels left of or above the picture are taken from the opposite edge instead of replicated",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture"
+      ]
+    },
+    {
+      "name": "count_double",
+      "why": "the count of corners is twice the number found",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture",
+        "test_reset_forgets_the_list"
+      ]
+    },
+    {
+      "name": "x_and_y_swapped",
+      "why": "the list holds y where x belongs",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_course_picture_then_mixed_picture",
+        "test_reset_forgets_the_list"
+      ]
+    }
+  ],
+  "mutants_killed": 10,
+  "mutants_total": 10
+}
