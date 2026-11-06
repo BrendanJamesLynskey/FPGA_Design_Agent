@@ -231,6 +231,9 @@ Flow conventions (fixed by the repo; follow them exactly):
 - design.xdc: call board_constraints with a map of board resource name -> your port name (it lists the resources when
   called with no map). It writes the pins, I/O standards and the board clock constraint from the master XDC; never
   write a pin number yourself. check_constraints checks the result.
+  Top-level port names are the master XDC's: CLK100MHZ, BTNC, UART_RXD_OUT, and buses such as LED[15:0], SW[15:0], AN[7:0]
+  (a request's "LED0" is bit 0 of bus LED, so declare `LED` as a bus; never a scalar LED0). Connector pins are scalar
+  JA1, QSPI_DQ0.
 - I/O timing (gate post_synth_no_unconstrained_endpoints; check_timing must list no port without an input or output
   delay). board_constraints writes pins only and REWRITES the whole of design.xdc, so call it first, then read
   design.xdc and write it back with your timing lines appended; there is no second constraints file and only design.xdc
