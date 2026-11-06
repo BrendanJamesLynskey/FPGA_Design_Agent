@@ -1,0 +1,80 @@
+{
+ "task": "c14_int8_dot_requant",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 1,
+ "run": 2,
+ "date": "2026-11-06",
+ "run_id": "20261106-183713-956d",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.318",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "a197745 (PR #45 merged; the run used branch f3-07a2-fix1, same code)",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (mutation score 100.0%: 10 killed of 10 evaluated, 0 survived, per the run's mutation.json)",
+  "stage_gates_post_route": "all pass (setup, hold, pulse width, DRC, CDC, methodology, power)",
+  "bitstream": "built"
+ },
+ "agent_turns": 125,
+ "sub_agent_calls": 18,
+ "questions": {
+  "asked": 6,
+  "answered": 5,
+  "defaulted": 1,
+  "register_map_asked": "yes: the clarify stage added a register-map question, answered with the whole map (11 registers, offsets 0x00 to 0x0A); registers.map in the final spec.yaml carries those offsets"
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": false,
+  "tests_passed": 5,
+  "tests_total": 6,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_random_cases": true,
+   "test_extremes_halves_and_bias": true,
+   "test_tail_cases": true,
+   "test_shift_and_mult_ranges": true,
+   "test_ready_clears_on_go_and_regs": false
+  }
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 2.146,
+  "whs_ns": 0.052,
+  "lut": 1290,
+  "ff": 837,
+  "dsp": 2,
+  "bram36": 0,
+  "power_w": 0.118,
+  "reference_qor_ooc": {
+   "lut": 882,
+   "ff": 265,
+   "dsp": 2,
+   "bram36": 0,
+   "wns_ns_at_200MHz": -26.957,
+   "fmax_mhz": 31
+  },
+  "note": "full-flow post-route with the test shell on the xc7a100t at 100 MHz; the reference numbers are out-of-context at 200 MHz, so not like for like. Run 1 for comparison: WNS +0.849, LUT 1359, FF 904."
+ },
+ "failure": {
+  "class": "spec ambiguity (task text names the pin 'LED0'; the master-XDC convention names the bus LED[15:0]) plus a weak port-name check; not an arithmetic or register error",
+  "evidence": "test_ready_clears_on_go_and_regs: AttributeError: c14_int8_dot_requant_top contains no child object named LED. Did you mean: 'LED0'? The agent made a scalar port LED0 (spec.md: 'LED0 shows the ready flag') and its design.xdc maps get_ports { LED0 } to H17; the board's master XDC and the task conventions name the port LED (LED[0]). The other five tests pass, including every register read.",
+  "fixed_by_this_pr": "the register-map failure of run 1 is fixed (5 of 6 tests now pass); the new LED port-name failure is recorded, not fixed (brief: stop on a new failure)"
+ },
+ "wall_h_agent_calls": 0.59,
+ "claude_code_plan_cost_estimate_usd": 2.71
+}
