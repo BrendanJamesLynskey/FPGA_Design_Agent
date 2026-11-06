@@ -150,6 +150,7 @@ def _episode(tmp_path, runs):
     where = {}
     rt = gr.new_runtime(cfg, scripted_client(seen, where), run_id="ci", runner=runner,
                         oracle_llm=lambda s, u: next(oracle_replies))
+    (rt.design / "spec.md").write_text("A PWM dimmer counter for the board.\n")   # 07a2 fix 1: no register wording
     # build.yaml must name this run's design directory
     from agent.core.session import ROOT
     where["design"] = str(rt.design.relative_to(ROOT))

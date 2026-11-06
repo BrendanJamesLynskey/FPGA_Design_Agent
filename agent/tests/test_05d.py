@@ -67,6 +67,7 @@ def rt(monkeypatch):
     monkeypatch.setattr(gr, "RUNS", runs)
     cfg = gr.Config(spec_md=T1 / "spec.md", name="t1_dimmer_counter", interview="off")
     r = gr.new_runtime(cfg, lambda *a, **k: None, runner=FakeRunner())
+    (r.design / "spec.md").write_text("A PWM dimmer counter for the board.\n")   # 07a2 fix 1: no register wording
     yield r
     shutil.rmtree(runs, ignore_errors=True)
 
@@ -158,6 +159,7 @@ def _drive(tmp_path, monkeypatch, review, replies, stop_after=3, before_reply=No
                     stop_after=stop_after)
     rt = gr.new_runtime(cfg, scripted_client(seen, where), run_id="d", runner=FakeRunner(),
                         oracle_llm=lambda s, u: {"answer": "not specified", "quote": None})
+    (rt.design / "spec.md").write_text("A PWM dimmer counter for the board.\n")   # 07a2 fix 1: no register wording
     where["design"] = str(rt.design.relative_to(ROOT))
     graph = gr.build_graph(gr.checkpointer_for(rt.run_dir))
     lg = {"configurable": {"thread_id": "d"}}

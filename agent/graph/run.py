@@ -36,7 +36,7 @@ from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
 from agent.graph.contract import MODEL_CONTRACT, contract_argv, parse_result
-from agent.graph.interview import Interview, Question, SpecOracle
+from agent.graph.interview import Interview, Question, SpecOracle, register_map_errors
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
 from agent.core.artefacts import check_artefact
@@ -142,6 +142,10 @@ PROMPTS = {
                "blind model), formal (a SymbiYosys property), hardware (a bring-up check on the board) and analysis (a flow "
                "gate or report: timing, resources, power); propose the method you think fits, and leave proof out only if "
                "you cannot tell (the interview will ask). "
+               "REGISTER MAP: if spec.md names registers or the test shell but gives no register offsets, you do NOT know the "
+               "map and must not invent it: add an open_questions entry that asks for the register map (offset, width, reset "
+               "value and access of every register), with your proposed map as the default, and write registers.map from the "
+               "answer. The gate fails a spec that has shell registers and no such question. "
                "spec.yaml must be valid YAML (quote any text that contains ': ' or '?'); ports, clocks, reset, "
                "behaviour, registers and timing must all be non-empty, in this exact shape: behaviour is a mapping of "
                "group name -> list of statements; registers is a mapping with a 'map' list of entries "
@@ -973,12 +977,18 @@ def node_gate(state: State) -> dict:
             ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs
             detail.append("[spec.yaml] " + "; ".join(errs))
         else:
-            spec, summary = _interview(rt, spec, state)
-            out["interview"] = summary
-            errs = validate(spec)
-            ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, not spec.get("open_questions"), errs
+            req = (rt.design / "spec.md").read_text() if (rt.design / "spec.md").is_file() else ""
+            errs = register_map_errors(req, spec)           # 07a2 fix 1: ask for the register map before the interview
             if errs:
+                ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs
                 detail.append("[spec.yaml] " + "; ".join(errs))
+            else:
+                spec, summary = _interview(rt, spec, state)
+                out["interview"] = summary
+                errs = validate(spec) + register_map_errors(req, spec)
+                ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, not spec.get("open_questions"), errs
+                if errs:
+                    detail.append("[spec.yaml] " + "; ".join(errs))
     elif n == 1:
         ev["arch"] = (rt.design / "ARCHITECTURE.md").is_file()
         ev["arch_check"] = arch_mod.check_design(rt.design)

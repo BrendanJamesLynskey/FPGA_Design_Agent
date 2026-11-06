@@ -65,10 +65,16 @@ def test_clarify_gate_fails_on_empty_spec_and_on_missing_sections(rt):
 
 
 def test_valid_spec_signs_off(rt):
-    spec = {**GOOD, "open_questions": []}
+    # 07a2 fix 1: this request names registers without offsets, so the spec carries the register-map question
+    ask = {"question": "What is the register map (offsets, widths, reset values, access)?", "default": "d", "reason": "r"}
+    spec = {**GOOD, "open_questions": [ask]}
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec))
     out = gr.node_gate({"run_id": rt.run_id, "stage": 0})
     assert out["fails"] == []
+    spec["open_questions"] = []
+    (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec))
+    out = gr.node_gate({"run_id": rt.run_id, "stage": 0})
+    assert out["fails"] and "register map" in out["fails"][0]
 
 
 @pytest.mark.parametrize("missing", ["ports", "clocks", "reset", "registers", "timing", "name", "top"])
@@ -139,6 +145,7 @@ def test_rate_to_cycles():
 
 
 def test_interview_asks_for_the_cycle_count_and_rewrites_the_parameter(rt):
+    (rt.design / "spec.md").write_text("A PWM dimmer counter for the board.\n")     # 07a2 fix 1: no register wording
     spec = {**GOOD, "open_questions": [], "parameters": {"PWM_HZ": 1000, "CLKS_PER_BIT": 868}}
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec))
     out = gr.node_gate({"run_id": rt.run_id, "stage": 0})
