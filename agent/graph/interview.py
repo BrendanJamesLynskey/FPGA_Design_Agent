@@ -16,6 +16,7 @@ rules are tested without a model.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Protocol
@@ -109,6 +110,62 @@ def render_register_map(text: str) -> str:
     return "\n".join(["Register map (the same entries as registers.map above, one per line):", *lines, *extra])
 
 
+REG_TOPIC = re.compile(r"(?is)\b(?:registers?|regs?)\b.{0,80}\b(?:map|offsets?|address(?:es|ing)?|layout)\b"
+                       r"|\b(?:offsets?|address(?:es|ing)?)\b.{0,80}\bregisters?\b|\bregister\s+map\b")
+REQUEST_REGS = re.compile(r"(?i)\b(?:registers?|test\s+shell|the\s+shell|over\s+the\s+shell|shell\s+registers?)\b")
+REQUEST_OFFSETS = re.compile(r"(?i)\b(?:offsets?)\b|\b0x[0-9a-f]+\b|\|\s*(?:0x)?[0-9a-f]+\s*\|")
+
+
+def is_register_question(text: str) -> bool:
+    """07a2 fix 1: a question about register addressing, offsets or the register map."""
+    return bool(REG_TOPIC.search(text or ""))
+
+
+def request_needs_register_map(request: str) -> bool:
+    """07a2 fix 1: the request names registers or the test shell but gives no offsets."""
+    return bool(REQUEST_REGS.search(request or "")) and not REQUEST_OFFSETS.search(request or "")
+
+
+def _offset_int(t: str) -> int | None:
+    try:
+        return int(str(t), 0)
+    except ValueError:
+        return None
+
+
+def register_map_errors(request: str, spec: dict[str, Any]) -> list[str]:
+    """07a2 fix 1, the clarify gate: a request that names shell registers without offsets needs a question about the
+    register map in the spec (open, or resolved by the interview), and, once that question is answered with a map, the
+    spec's ``registers.map`` must carry every offset of the answer. Empty list: nothing to fix."""
+    if not request_needs_register_map(request):
+        return []
+    qs = [*(spec.get("open_questions") or []), *(spec.get("resolved_questions") or [])]
+    mine = [q for q in qs if isinstance(q, dict) and is_register_question(str(q.get("question", "")))]
+    if not mine:
+        return ["the request names registers or the test shell but gives no register offsets, and spec.yaml has no question "
+                "asking for the register map: add an open_questions entry asking for the offsets, widths, reset values and "
+                "access of every register (your proposed map as the default); do not invent the map"]
+    regs = spec.get("registers") or {}
+    have = {_offset_int(r.get("offset")) for r in (regs.get("map") or []) if isinstance(r, dict)} if isinstance(regs, dict) else set()
+    errs = []
+    for q in mine:
+        if q.get("status") == "answered":
+            want = {_offset_int(m) for m in re.findall(r"(?i)\boffset\s+(0x[0-9a-f]+|\d+)", str(q.get("answer", "")))}
+            miss = sorted(w for w in want if w is not None and w not in have)
+            if miss:
+                errs.append("registers.map disagrees with the answered register map: no register at offset "
+                            + ", ".join(f"0x{m:02X}" for m in miss) + "; copy the answer's map into registers.map")
+    return errs
+
+
+#: The oracle answers a register-addressing question with the whole map, one register per line.
+def register_map_answer(rendered: str) -> tuple[str, str] | None:
+    lines = rendered.splitlines()
+    if len(lines) < 2:
+        return None
+    return "\n".join(lines[1:]), lines[1]
+
+
 def _norm(t: str) -> str:
     return " ".join(str(t).replace("\u2019", "'").split()).strip(" \"'`-")
 
@@ -128,12 +185,17 @@ class SpecOracle:
     def __init__(self, hidden_spec: Path, llm: Callable[[str, str], dict[str, Any]]):
         self._file = hidden_spec.read_text()
         rendered = render_register_map(self._file)                # 07a2-prep: register-map questions
+        self._rendered = rendered
         self._text = self._file + ("\n\n" + rendered + "\n" if rendered else "")
         self._flat = _norm(self._text)
         self._llm = llm
         self.log: list[dict[str, Any]] = []
 
     def answer(self, q: Question) -> tuple[str, str | None]:
+        if self._rendered and is_register_question(q.text):          # 07a2 fix 1: the whole map, no model call
+            ans, quote = register_map_answer(self._rendered)
+            self.log.append({"question": q.text, "answer": ans, "by": "register map"})
+            return ans, quote
         out = self._llm(self.SYSTEM + "\n\n--- specification ---\n" + self._text,
                         json.dumps({"question": q.text, "proposed_default": q.default}))
         a, quote = str(out.get("answer", NOT_SPECIFIED)), out.get("quote")

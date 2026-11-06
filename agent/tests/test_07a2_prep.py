@@ -98,12 +98,12 @@ def test_oracle_prompt_carries_the_register_map_and_quotes_are_checked() -> None
         seen["system"] = system
         return next(replies)
     o = SpecOracle(hidden, llm)
-    a, q = o.answer(Question("q1", "At which offset is the result register Y?", "0x08", "r"))
+    a, q = o.answer(Question("q1", "What does the Y field hold?", "0x08", "r"))
     assert a == "0x08" and q
     assert "Register map" in seen["system"] and "A_LO: offset 0x00, RW" in seen["system"]
-    a, _ = o.answer(Question("q2", "Offset of ACC?", "0x09", "r"))
+    a, _ = o.answer(Question("q2", "What does ACC hold?", "0x09", "r"))
     assert a == "0x09"                                                          # quote differs only in white space
-    a, q = o.answer(Question("q3", "Offset of an invented register?", "0x0B", "r"))
+    a, q = o.answer(Question("q3", "What does an invented field hold?", "0x0B", "r"))
     assert a == "not specified" and q is None                                  # an invented quote is still refused
 
 
@@ -139,3 +139,64 @@ def test_a_caller_that_holds_the_heavy_slot_can_give_mutate_its_own_lock(monkeyp
     from agent.core.runner import scrubbed_env
     monkeypatch.setenv("FDA_HEAVY_LOCK", "/tmp/x/private.lock")
     assert scrubbed_env(tools={})["FDA_HEAVY_LOCK"] == "/tmp/x/private.lock"
+
+
+# --- 07a2 fix 1: the register map is asked for, and the oracle answers with the whole map ------------------------
+
+RUN1_QUESTION = "What are the shell's actual register addressing and word format?"      # recorded in run 1 (oracle_calls.jsonl)
+C14 = ROOT / "benchmark" / "course" / "tasks" / "c14_int8_dot_requant"
+
+
+def test_oracle_answers_a_register_addressing_question_with_the_whole_map() -> None:
+    from agent.graph.interview import Question, SpecOracle
+
+    def llm(system, user):                  # the old behaviour: prose that does not list the map
+        return {"answer": "Partly specified. Offsets 0x00 to 0x0A; byte or word not stated.", "quote": "shell: shell/PROTOCOL.md (version 1.0)"}
+    o = SpecOracle(C14 / "hidden" / "spec.yaml", llm)
+    a, quote = o.answer(Question("q1", RUN1_QUESTION, "32-bit word registers", "r"))
+    rows = [l for l in a.splitlines() if ": offset 0x" in l]
+    assert len(rows) == 11 and rows[0].startswith("A_LO: offset 0x00, RW") and rows[8].startswith("Y: offset 0x08, RO"), a
+    assert quote in o._text
+    # a question that is not about the map still goes to the model
+    a, _ = o.answer(Question("q2", "Should ready clear when a new go is issued?", "yes", "r"))
+    assert a.startswith("Partly")
+
+
+def test_register_question_detector() -> None:
+    from agent.graph.interview import is_register_question
+    for t in (RUN1_QUESTION, "Which offset is the result register?", "What is the register map?", "Offsets and widths of the registers?"):
+        assert is_register_question(t), t
+    for t in ("Should ready clear on go?", "What baud rate does the shell use?", "Does the register file reset?"):
+        assert not is_register_question(t), t
+
+
+def test_clarify_gate_needs_a_register_map_question_when_the_request_gives_no_offsets() -> None:
+    from agent.graph.interview import register_map_errors
+    req = (C14 / "spec.md").read_text()
+    spec = {"registers": {"map": [{"offset": 0, "name": "ID", "access": "RO", "reset": 0, "bits": "x"}]},
+            "open_questions": [{"question": "What if bias overflows?", "default": "wrap", "reason": "r"}]}
+    errs = register_map_errors(req, spec)
+    assert errs and "register map" in errs[0]                                  # run 1's spec: invented map, no question
+    spec["open_questions"].append({"question": RUN1_QUESTION, "default": "d", "reason": "r"})
+    assert register_map_errors(req, spec) == []
+    # a request that gives offsets, or names no registers, is not asked
+    assert register_map_errors("Registers: | 0x00 | A | RW |", {}) == []
+    assert register_map_errors("A blinking LED on the board.", {}) == []
+
+
+def test_clarify_gate_checks_the_answered_map_reaches_registers_map() -> None:
+    from agent.graph.interview import Question, SpecOracle, register_map_errors
+    req = (C14 / "spec.md").read_text()
+    o = SpecOracle(C14 / "hidden" / "spec.yaml", lambda s, u: {"answer": "not specified", "quote": None})
+    ans, _ = o.answer(Question("q1", RUN1_QUESTION, "d", "r"))
+    spec = {"registers": {"map": [{"offset": 0, "name": "ID", "access": "RO", "reset": 0, "bits": "x"}]},
+            "resolved_questions": [{"question": RUN1_QUESTION, "answer": ans, "status": "answered", "by": "oracle"}]}
+    errs = register_map_errors(req, spec)
+    assert errs and "0x08" in errs[0]
+    spec["registers"]["map"] = [{"offset": i, "name": f"R{i}", "access": "RW", "reset": 0, "bits": "x"} for i in range(11)]
+    assert register_map_errors(req, spec) == []
+
+
+def test_clarify_prompt_tells_the_agent_to_ask_for_the_register_map() -> None:
+    from agent.graph.run import PROMPTS
+    assert "REGISTER MAP" in PROMPTS["clarify"] and "must not invent" in PROMPTS["clarify"]
