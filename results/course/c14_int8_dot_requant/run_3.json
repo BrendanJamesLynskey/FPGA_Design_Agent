@@ -1,0 +1,61 @@
+{
+ "task": "c14_int8_dot_requant",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 1,
+ "run": 3,
+ "date": "2026-11-06",
+ "run_id": "20261106-211457-2e65",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.318",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "b111407 (PR #47, branch f3-07a2-fix2; the run began before CI finished)",
+ "stop": {
+  "stage": 2,
+  "name": "rtl-design-creation",
+  "reason": "stage 2 visited more than 4 times (run limit visits_per_stage=4); the V2 simulate gate never passed",
+  "stages_0_1_passed": true
+ },
+ "gates": {
+  "clarify": "pass",
+  "board-and-device-planning": "pass (design.xdc used LED[0]: the port-name fix held)",
+  "rtl-design-creation": "fail (9 of 9 simulate calls failed at 0 ns; verif gate V0 pass, V1 pass, later levels not reached)",
+  "vivado": "never reached (no synthesis, no QoR)"
+ },
+ "agent_turns": 158,
+ "sub_agent_calls": 13,
+ "questions": {
+  "oracle_calls": 5,
+  "register_map": "asked and answered with the whole map (11 registers); registers.map in spec.yaml has all 11 offsets; the run summary's 'questions' counter reads 0, a reporting quirk to look at"
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": true,
+  "tests_passed": 6,
+  "tests_total": 6,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_random_cases": true,
+   "test_extremes_halves_and_bias": true,
+   "test_tail_cases": true,
+   "test_shift_and_mult_ranges": true,
+   "test_ready_clears_on_go_and_regs": true
+  },
+  "note": "the RTL the run left in rtl/ passes all six hidden tests (top port is the bus LED, LED[0] = ready), but the run itself stopped at stage 2 because its own cocotb bench would not import, so this RTL was never synthesised or gated by the agent"
+ },
+ "qor": null,
+ "failure": {
+  "class": "model error (primary) plus a harness gap (the failure summary hides the root cause)",
+  "evidence": "tests/c14_bench.py line 24: @CoverPoint(...) at module level; cocotb_coverage raises 'Exception: CoverPoint must have a parent (parent.CoverPoint)' while cocotb imports the module, then cocotb itself fails with \"AttributeError: 'RegressionManager' object has no attribute '_running_test'\" (a follow-on error). The simulate tool's [first failure] block elides the frames between _gcd_import and _sim_event, so the root-cause line is missing and the agent searched the docs for '_running_test' and cocotb internals for 6 loops instead of fixing the decorator use.",
+  "not_fixed": "brief: stop on a new failure. Candidate fixes for the planner: (1) the sim failure summariser keeps the first 'Exception:' line of a collection-time import error; (2) a KB entry on cocotb_coverage CoverPoint use (names need a parent: 'top.name' or coverage_section); (3) a lint/import check of tests/ before simulating."
+ },
+ "wall_h_agent_calls": 0.32,
+ "claude_code_plan_cost_estimate_usd": 3.72,
+ "comparison": "runs 1 and 2 reached stage 9 with WNS +0.849 / +2.146 ns at 100 MHz, LUT 1359 / 1290; run 3 has no QoR"
+}
