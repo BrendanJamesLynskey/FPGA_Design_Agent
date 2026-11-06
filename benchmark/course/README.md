@@ -46,4 +46,4 @@ Four split ids have no task yet ([PENDING.yaml](PENDING.yaml)).
 | 15 | `c15_pq_search`, `c15_rmsnorm_unit`, `c15_softmax_unit` |
 | 16 | `c16_montgomery_mult`, `c16_nexys_aes_uart`, `c16_ntt_engine` |
 
-Reference check results (reference passes, every mutant killed) are in [results/](results/).
+Reference check results (reference passes, every mutant killed) are in [results/](results/); the reference Vivado builds are in [results/REFERENCE_BUILDS.md](results/REFERENCE_BUILDS.md).
