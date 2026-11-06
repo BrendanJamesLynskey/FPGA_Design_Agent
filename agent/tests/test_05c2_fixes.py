@@ -177,17 +177,17 @@ BOARD = ROOT / "boards" / "nexys_a7_100t"
 
 def test_board_constraints_writes_pins_from_the_master_xdc(rt):
     rt.session.stage = "board-and-device-planning"
-    m = [{"resource": "clk100", "port": "clk"}, {"resource": "led[0:15]", "port": "led"},
-         {"resource": "sw[0:3]", "port": "sw"}, {"resource": "seg", "port": "seg"}, {"resource": "an", "port": "an"},
-         {"resource": "btnc", "port": "go"}, {"resource": "reset_n", "port": "rst_n"},
-         {"resource": "sw[15]", "port": "mode"}]
+    m = [{"resource": "clk100", "port": "CLK100MHZ"}, {"resource": "led[0:15]", "port": "LED"},
+         {"resource": "sw[0:3]", "port": "SW"}, {"resource": "ca", "port": "CA"}, {"resource": "an", "port": "AN"},
+         {"resource": "btnc", "port": "BTNC"}, {"resource": "reset_n", "port": "CPU_RESETN"},
+         {"resource": "btnu", "port": "BTNU"}]
     r = dispatch(rt.session, "board_constraints", {"map": m})
     assert r["ok"], r["output"]
     xdc = (rt.design / "design.xdc").read_text()
-    assert "PACKAGE_PIN E3" in xdc and "[get_ports { clk }]" in xdc          # the board clock, from the master
-    assert "create_clock -add -name sys_clk_pin -period 10.00" in xdc and "{ clk }" in xdc.split("create_clock")[1]
-    assert "PACKAGE_PIN H17" in xdc and "led[15]" in xdc and "PACKAGE_PIN V10" in xdc and "{ mode }" in xdc
-    assert r["ports"] == {"an": 8, "clk": 1, "go": 1, "led": 16, "mode": 1, "rst_n": 1, "seg": 8, "sw": 4}
+    assert "PACKAGE_PIN E3" in xdc and "[get_ports { CLK100MHZ }]" in xdc          # the board clock, from the master
+    assert "create_clock -add -name sys_clk_pin -period 10.00" in xdc and "{ CLK100MHZ }" in xdc.split("create_clock")[1]
+    assert "PACKAGE_PIN H17" in xdc and "LED[15]" in xdc and "PACKAGE_PIN M18" in xdc and "{ BTNU }" in xdc
+    assert r["ports"] == {"AN": 8, "BTNC": 1, "BTNU": 1, "CA": 1, "CLK100MHZ": 1, "CPU_RESETN": 1, "LED": 16, "SW": 4}
     assert r["findings"] == []
     # the result passes the gate that remains
     cfg = (f"top: t\npart: xc7a100tcsg324-1\nsources: [shell/rtl/*.sv]\nconstraints: [{rt.design.relative_to(ROOT)}/design.xdc]\n")
@@ -372,17 +372,18 @@ def test_simulate_output_heads_with_the_cause(rt):
 
 
 def test_check_constraints_accepts_renamed_ports_and_still_catches_wrong_pins():
-    """Ports may carry the design's own names; the pin and standard are checked against the master by pin."""
+    """Pin and standard are checked against the master by pin (07a2 fix 2: the port NAMES must be the master's, see
+    test_07a2_fix2.py; these cases use master names and test the other rules)."""
     from agent.core import constraints as con
-    good = "set_property -dict { PACKAGE_PIN E3 IOSTANDARD LVCMOS33 } [get_ports { clk }];\ncreate_clock -period 10 [get_ports { clk }];\n"
+    good = "set_property -dict { PACKAGE_PIN E3 IOSTANDARD LVCMOS33 } [get_ports { CLK100MHZ }];\ncreate_clock -period 10 [get_ports { CLK100MHZ }];\n"
     assert con.check_xdc(good, BOARD) == []
-    wrong_pin = "set_property -dict { PACKAGE_PIN W5 IOSTANDARD LVCMOS33 } [get_ports { clk }];\n"
-    assert [x["rule"] for x in con.check_xdc(wrong_pin, BOARD)] == ["FDA-CON-4"]       # W5 is not a pin the board uses
-    dup = ("set_property -dict { PACKAGE_PIN J15 IOSTANDARD LVCMOS33 } [get_ports { a }];\n"
-           "set_property -dict { PACKAGE_PIN J15 IOSTANDARD LVCMOS33 } [get_ports { b }];\n")
-    assert [x["rule"] for x in con.check_xdc(dup, BOARD)] == ["FDA-CON-4"]
-    clk_on_button = ("set_property -dict { PACKAGE_PIN N17 IOSTANDARD LVCMOS33 } [get_ports { b }];\n"
-                     "create_clock -period 10 [get_ports { b }];\n")
+    wrong_pin = "set_property -dict { PACKAGE_PIN W5 IOSTANDARD LVCMOS33 } [get_ports { CLK100MHZ }];\n"
+    assert [x["rule"] for x in con.check_xdc(wrong_pin, BOARD)] == ["FDA-CON-3"]       # a master name on another pin
+    dup = ("set_property -dict { PACKAGE_PIN J15 IOSTANDARD LVCMOS33 } [get_ports { SW[0] }];\n"
+           "set_property -dict { PACKAGE_PIN J15 IOSTANDARD LVCMOS33 } [get_ports { SW[1] }];\n")
+    assert "FDA-CON-4" in [x["rule"] for x in con.check_xdc(dup, BOARD)]
+    clk_on_button = ("set_property -dict { PACKAGE_PIN N17 IOSTANDARD LVCMOS33 } [get_ports { BTNC }];\n"
+                     "create_clock -period 10 [get_ports { BTNC }];\n")
     assert "FDA-CON-1" in [x["rule"] for x in con.check_xdc(clk_on_button, BOARD)]
 
 
@@ -485,7 +486,7 @@ def test_check_constraints_needs_only_the_xdc_and_missing_build_yaml_is_actionab
     """A tool must not block a check on an artefact the check does not read, and an error must say how to proceed."""
     r = dispatch(rt.session, "check_constraints", {})
     assert not r["ok"] and "board_constraints" in r["output"]                     # no XDC yet: say what to call
-    m = [{"resource": "clk100", "port": "clk"}]
+    m = [{"resource": "clk100", "port": "CLK100MHZ"}]
     assert dispatch(rt.session, "board_constraints", {"map": m})["ok"]
     assert not (rt.design / "build.yaml").exists()
     assert dispatch(rt.session, "check_constraints", {})["ok"]                     # no build.yaml needed

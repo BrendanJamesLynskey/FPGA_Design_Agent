@@ -32,6 +32,34 @@ _DEDICATED = re.compile(r"CLOCK_DEDICATED_ROUTE\s+(FALSE|0)", re.I)
 _WAIVER = re.compile(r"\b(set_false_path|set_clock_groups\b.*-asynchronous)", re.I)
 
 
+# Buses whose bits benchmark specs name as scalar ports (JA1, QSPI_DQ0, ACL_INT1): Pmod and connector pins.
+# LED, SW, AN, VGA_* and the like are written as the bus (``LED[0]``), never ``LED0``.
+SCALAR_BUS_FAMILIES = re.compile(r"^(J[A-D]|XA_[NP]|QSPI_DQ|ACL_INT|ETH_RXD|ETH_TXD|SD_DAT)$")
+_PORT_BASE = re.compile(r"^([A-Za-z_]\w*?)(?:\[(\d+)\])?$")
+
+
+def port_name_problem(port: str, master_ports: set[str]) -> str | None:
+    """None if ``port`` (as written in a ``get_ports``) is a master-XDC name, a bit of a master bus, or a
+    benchmark-convention scalar of a connector bus; else the message naming the master-XDC form."""
+    if port in master_ports:
+        return None
+    m = _PORT_BASE.match(port)
+    bases = {re.sub(r"\[\d+\]$", "", p) for p in master_ports}
+    if m and m.group(1) in bases:
+        return None                                            # a bus name, or a bit of one, in the master's own form
+    g = re.fullmatch(r"(\w*?[A-Za-z_])(\d+)", port)
+    if g and f"{g.group(1)}[{g.group(2)}]" in master_ports:
+        if SCALAR_BUS_FAMILIES.match(g.group(1)):
+            return None
+        return (f"port {port} is not a master-XDC port name; the master XDC has {g.group(1)}[{g.group(2)}], bit "
+                f"{g.group(2)} of bus {g.group(1)}. Declare the top-level port as the bus {g.group(1)} and use "
+                f"{g.group(1)}[{g.group(2)}]")
+    near = sorted(b for b in bases if b.lower() == (m.group(1).lower() if m else port.lower()))
+    hint = f" (the master XDC has {near[0]})" if near else ""
+    return (f"port {port} is neither a master-XDC port name nor a bus of one{hint}. Top-level ports use the master "
+            f"XDC's names (e.g. CLK100MHZ, BTNC, LED[0] of bus LED, SW[0] of bus SW)")
+
+
 def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
     board = yaml.safe_load((board_dir / "board.yaml").read_text())
     master, _ = parse_xdc((board_dir / board["master_xdc"]).read_text())
@@ -59,8 +87,12 @@ def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
         if _WAIVER.search(code) and not any(l.lstrip().startswith("#") for l in lines[max(0, n - 9):n - 1]):
             add("FDA-CON-5", n, "timing waiver without a comment line above it")
     seen: dict[str, str] = {}
+    master_ports = set(master)
     for port, (pin, std) in mine.items():
         n = next((i for i, l in enumerate(lines, 1) if f"{{ {port} }}" in l or f"{{{port}}}" in l), 1)
+        problem = port_name_problem(port, master_ports)
+        if problem:
+            add("FDA-CON-7", n, problem)
         if port in master:                                     # the master's own name: pin and standard must match
             if pin != master[port][0]:
                 add("FDA-CON-3", n, f"{port} on {pin}, the board's master XDC has {master[port][0]}")
