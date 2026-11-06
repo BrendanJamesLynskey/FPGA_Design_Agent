@@ -1281,7 +1281,7 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
     (run_dir / "config.json").write_text(json.dumps({**{k: str(v) for k, v in cfg.__dict__.items()},
                                                      "run_limits": cfg.run_limits, "profile": cfg.profile,
                                                      "roles": cfg.roles or {}, "role_models": cfg.role_models(),
-                                                     "oracle_model": cfg.model,
+                                                     "oracle_model": oracle_model_name(cfg),
                                                      "isolation": type(runner).__name__}, indent=1))
     return rt
 
@@ -1373,6 +1373,10 @@ def usage_trace(rows: list[dict]) -> list[dict]:
     return [{k: u.get(k) for k in keep} for u in rows]
 
 
+def oracle_model_name(cfg: Config) -> str:
+    return cfg.oracle_cc_model if cfg.oracle == "claude_code" else cfg.model
+
+
 def summary(rt: Runtime, state: dict) -> dict:
     hist = state.get("history") or []
     roles = rt.cfg.role_models()
@@ -1385,10 +1389,10 @@ def summary(rt: Runtime, state: dict) -> dict:
     if cc:
         extra.update(claude_code_version=(calls[0]["claude_code_version"] if calls else None),
                      plan_cost_estimate_usd=round(sum(c.get("plan_cost_estimate_usd") or 0 for c in calls), 4),
-                     oracle_model=rt.cfg.model)
+                     oracle_model=oracle_model_name(rt.cfg))
     usage = role_usage(rt)
     return {"run_id": rt.run_id, "design": rt.cfg.name, "model": models[0] if len(models) == 1 else "per-role", **extra,
-            "profile": rt.cfg.profile, "role_models": roles, "oracle_model": rt.cfg.model,
+            "profile": rt.cfg.profile, "role_models": roles, "oracle_model": oracle_model_name(rt.cfg), "oracle": rt.cfg.oracle,
             "stage_overrides": __import__("agent.graph.role_models", fromlist=["x"]).stage_overrides(rt.cfg),
             "knowledge_use": knowledge_use(rt), "knowledge_bank": knowledge_bank_status(rt),
             "turn_trace": usage_trace(usage),

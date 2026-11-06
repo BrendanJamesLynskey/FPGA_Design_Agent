@@ -131,3 +131,11 @@ def test_cc_oracle_parses_replies_and_never_uses_openrouter() -> None:
     from agent.__main__ import _NoOpenRouter
     with pytest.raises(RuntimeError):
         _NoOpenRouter()()
+
+
+def test_a_caller_that_holds_the_heavy_slot_can_give_mutate_its_own_lock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The mutation tool takes the machine's heavy-slot lock itself and reports busy when the caller already holds it; the
+    caller sets FDA_HEAVY_LOCK to a private path, and the scrubbed tool environment must carry it."""
+    from agent.core.runner import scrubbed_env
+    monkeypatch.setenv("FDA_HEAVY_LOCK", "/tmp/x/private.lock")
+    assert scrubbed_env(tools={})["FDA_HEAVY_LOCK"] == "/tmp/x/private.lock"
