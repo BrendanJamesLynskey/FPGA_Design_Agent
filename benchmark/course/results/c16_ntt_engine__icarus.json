@@ -1,0 +1,85 @@
+{
+  "task": "c16_ntt_engine",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_forward_random": true,
+      "test_inverse_random": true,
+      "test_forward_edge_polynomials": true,
+      "test_registers_and_reset": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "barrett_constant",
+      "why": "the Barrett reduction constant is off by one",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_inverse_random"
+      ]
+    },
+    {
+      "name": "inverse_scale",
+      "why": "the final inverse scaling uses the wrong constant",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_inverse_random"
+      ]
+    },
+    {
+      "name": "inverse_zeta_index",
+      "why": "inverse butterflies use the wrong zeta",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_inverse_random"
+      ]
+    },
+    {
+      "name": "forward_sub_is_add",
+      "why": "the forward butterfly adds twice instead of add and subtract",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_forward_random",
+        "test_forward_edge_polynomials"
+      ]
+    },
+    {
+      "name": "one_layer_short",
+      "why": "the last of the seven layers is skipped",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_forward_random",
+        "test_inverse_random",
+        "test_forward_edge_polynomials"
+      ]
+    },
+    {
+      "name": "subq_unreduced",
+      "why": "the subtraction is not reduced when the result is already non-negative",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_forward_random",
+        "test_inverse_random",
+        "test_forward_edge_polynomials"
+      ]
+    },
+    {
+      "name": "forward_scaled",
+      "why": "the forward transform also runs the multiplication by 3303",
+      "killed": true,
+      "built": false,
+      "failed_tests": []
+    }
+  ],
+  "mutants_killed": 7,
+  "mutants_total": 7
+}

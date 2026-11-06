@@ -1,0 +1,42 @@
+# The held-out split of benchmark v1 (benchmark/tools/split.py); never edit by hand.
+seed: 20261106
+method: 'per tier: random.Random(seed).sample(sorted(ids), round(n / 3)); tiers in
+  sorted order, one Random instance per tier'
+python: 3.12.3
+date: '2026-11-06'
+tiers:
+  C13:
+    n: 5
+    held_out:
+    - c13_histogram_equaliser
+    - c13_stereo_disparity
+    dev:
+    - c13_hough_lines
+    - c13_nexys_blob_tracker
+    - c13_nexys_harris_vga
+  C14:
+    n: 4
+    held_out:
+    - c14_binarised_dense
+    dev:
+    - c14_int8_dot_requant
+    - c14_nexys_tiny_cnn
+    - c14_systolic_matmul
+  C15:
+    n: 5
+    held_out:
+    - c15_nexys_vector_search
+    - c15_topk_stream
+    dev:
+    - c15_pq_search
+    - c15_rmsnorm_unit
+    - c15_softmax_unit
+  C16:
+    n: 5
+    held_out:
+    - c16_health_test
+    - c16_sha256_uart
+    dev:
+    - c16_montgomery_mult
+    - c16_nexys_aes_uart
+    - c16_ntt_engine

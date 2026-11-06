@@ -1,0 +1,7 @@
+mutants:
+  - {name: group7_dropped, file: pq_adc.sv, find: "for (int j = 0; j < M; j++) sum", replace: "for (int j = 0; j < M - 1; j++) sum", why: "the last group is left out of the distance sum"}
+  - {name: table_group_stride, file: pq_adc.sv, find: "tab[(int'(t_m) << KB) + int'(t_k)] <= t_data;", replace: "tab[(int'(t_m) << 3) + int'(t_k)] <= t_data;", why: "table entries of different groups overlap when written"}
+  - {name: farthest_not_closest, file: pq_search.sv, find: ".score(-$signed({1'b0, d}))", replace: ".score($signed({1'b0, d}))", why: "the farthest entries are kept instead of the closest"}
+  - {name: start_does_not_clear, file: pq_search.sv, find: ".clear(start)", replace: ".clear(1'b0)", why: "START does not forget the previous result"}
+  - {name: tie_larger_index, file: topk.sv, find: "idx < top_idx[i*IW +: IW]", replace: "idx > top_idx[i*IW +: IW]", why: "of two equal distances the larger entry number comes first"}
+  - {name: numbering_not_restarted, file: pq_search.sv, find: "            cnt <= 16'd0;\n", replace: "            cnt <= start ? cnt : 16'd0;\n", why: "START does not restart the entry numbering"}

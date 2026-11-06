@@ -1,0 +1,8 @@
+mutants:
+  - {name: letters_swapped, file: cnn_system.sv, find: "\"HVBX\" >>", replace: "\"HVXB\" >>", why: "the letters of classes 2 and 3 are swapped"}
+  - {name: digit_pattern, file: cnn_nexys_top_ref.sv, find: "2'd2: SEG = 7'h24;", replace: "2'd2: SEG = 7'h25;", why: "the segment pattern for 2 is wrong"}
+  - {name: min_pool, file: tiny_cnn.sv, find: "(k == 0 || in_data > m) ? in_data : m;", replace: "(k == 0 || in_data < m) ? in_data : m;", why: "min-pooling instead of max-pooling"}
+  - {name: no_relu_clamp, file: tiny_cnn.sv, find: "else if (r < 64'sd0) out_data = 32'sd0;", replace: "else if (r < -64'sd128) out_data = 32'sd0;", why: "negative values are not limited to 0"}
+  - {name: extra_shift, file: tiny_cnn.sv, find: "r = (p + rnd) >>> shift;", replace: "r = (p + rnd) >>> (shift + 5'd2);", why: "every layer output is scaled down four times too far"}
+  - {name: argmin, file: tiny_cnn.sv, find: "if (lg[k] > lg[cls]) cls = 2'(k);", replace: "if (lg[k] < lg[cls]) cls = 2'(k);", why: "the class is the smallest score, not the biggest"}
+  - {name: debounce_ignored, file: cnn_nexys_top_ref.sv, find: "wire go = b_stable & ~b_prev;", replace: "wire go = b_sync1 & ~b_stable;", why: "the button is not debounced: the press starts before it is stable"}

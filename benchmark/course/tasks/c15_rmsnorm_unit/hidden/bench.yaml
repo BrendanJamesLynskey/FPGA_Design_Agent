@@ -1,0 +1,9 @@
+# Hidden acceptance bench for c15_rmsnorm_unit (benchmark/tools/run_task.py)
+toplevel: c15_rmsnorm_unit_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 4, TIMEOUT_CYCLES: 400}
+phrases:
+  - "rescales a vector of 16 numbers so that its root-mean-square value becomes 1"
+  - "The tiny constant makes an all-zero input give an all-zero output"
+  - "every output within 1 unit of the last place"
+  - "No floating-point blocks and no divider blocks"

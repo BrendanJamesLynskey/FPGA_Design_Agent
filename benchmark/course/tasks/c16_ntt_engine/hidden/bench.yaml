@@ -1,0 +1,9 @@
+# Hidden acceptance bench for c16_ntt_engine (benchmark/tools/run_task.py)
+toplevel: c16_ntt_engine_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 4, TIMEOUT_CYCLES: 400}
+phrases:
+  - "computes the \"number-theoretic transform\" used in the post-quantum key-exchange standard FIPS 203"
+  - "including the final multiplication by 3303 at the end of the inverse"
+  - "no more than 1,200 clocks for either direction"
+  - "Use no divide operators and no remainder operators"

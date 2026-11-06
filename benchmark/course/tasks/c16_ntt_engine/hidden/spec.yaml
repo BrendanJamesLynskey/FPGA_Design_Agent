@@ -1,0 +1,149 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c16_ntt_engine
+title: NTT engine behind the test shell
+source: spec.md
+tier: C16
+difficulty: 3
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c16_ntt_engine_top
+design_id: '0x4e545445'
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: board oscillator
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: BUSY, DONE and CYCLES 0; the coefficient memory need not be cleared
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+ports:
+- name: CLK100MHZ
+  dir: in
+  width: 1
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- name: CPU_RESETN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C12
+  iostandard: LVCMOS33
+- name: LED
+  dir: out
+  width: 16
+  pins:
+  - H17
+  - K15
+  - J13
+  - N14
+  - R18
+  - V17
+  - U17
+  - U16
+  - V16
+  - T15
+  - U14
+  - T16
+  - V15
+  - V14
+  - V12
+  - V11
+  iostandard: LVCMOS33
+- name: UART_TXD_IN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C4
+  iostandard: LVCMOS33
+- name: UART_RXD_OUT
+  dir: out
+  width: 1
+  pins:
+  - D4
+  iostandard: LVCMOS33
+behaviour:
+  transform:
+  - q = 3329, zetas = 17^bitrev7(i) mod q. The forward transform is FIPS 203 algorithm 9; the inverse is algorithm 10 including the final multiplication of every coefficient by 3303. The transform replaces the 256 coefficients in place (natural order in and out as in the algorithms).
+  - Coefficients are 0..3328; results are 0..3328.
+  timing:
+  - BUSY is high for at most 1200 clocks per transform (reference 896 forward, 1152 inverse); CYCLES reports the count. No divide or remainder operators.
+  access:
+  - Loads are accepted only while idle. The coefficient pair p is words {c[2p+1], c[2p]}; LD_PTR and RD_PTR count pairs 0..127.
+  leds:
+  - LED[0] = DONE, LED[1] = BUSY, the other LEDs are 0.
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+  - offset: 0
+    name: LD_PTR
+    access: RW
+    reset: 0
+    bits: '[6:0] pair index of the next LD_DATA write; advances by one per write'
+  - offset: 1
+    name: RD_PTR
+    access: RW
+    reset: 0
+    bits: '[7:0] pair index of the next RD_DATA read; advances by one per read'
+  - offset: 2
+    name: LD_DATA
+    access: WO
+    reset: 0
+    bits: '[11:0] coefficient 2p, [27:16] coefficient 2p+1 for p = LD_PTR; stored while idle; reads 0'
+  - offset: 3
+    name: START_FWD
+    access: WO
+    reset: 0
+    bits: any write starts the forward transform and clears DONE
+  - offset: 4
+    name: START_INV
+    access: WO
+    reset: 0
+    bits: any write starts the inverse transform and clears DONE
+  - offset: 5
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] BUSY, [1] DONE (since the last start)'
+  - offset: 6
+    name: RD_DATA
+    access: RO
+    reset: 0
+    bits: '[11:0] coefficient 2p, [27:16] coefficient 2p+1 for p = RD_PTR; the read advances RD_PTR; other bits 0'
+  - offset: 7
+    name: CYCLES
+    access: RO
+    reset: 0
+    bits: '[11:0] clocks BUSY was high during the last transform (reference: 896 forward, 1152 inverse)'
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: 'Course reference: placed only (the router did not converge in 20 minutes); Fmax about 31 MHz estimated from the placed design (see reference_qor.md).'
+requirements:
+- id: REQ-01
+  text: the forward transform of each tested polynomial equals FIPS 203 algorithm 9
+  proof:
+  - simulation
+- id: REQ-02
+  text: the inverse transform of a random polynomial equals FIPS 203 algorithm 10 including the multiplication by 3303
+  proof:
+  - simulation
+- id: REQ-03
+  text: a transform takes at most 1200 busy clocks in either direction
+  proof:
+  - simulation
+- id: REQ-04
+  text: The design closes timing at 100 MHz with no unconstrained path
+  proof:
+  - analysis
+assumptions: []
+open_questions: []

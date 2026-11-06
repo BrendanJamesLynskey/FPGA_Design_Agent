@@ -1,0 +1,9 @@
+mutants:
+  - {name: sbox_entry, file: aes_sbox_tab.sv, find: "8'h50: y = 8'h53;", replace: "8'h50: y = 8'h52;", why: "one S-box entry is wrong"}
+  - {name: no_shiftrows, file: aes128.sv, find: "sr[4*c + r] = sb[4*((c + r) % 4) + r];", replace: "sr[4*c + r] = sb[4*c + r];", why: "ShiftRows is missing"}
+  - {name: mixcolumns_row0, file: aes128.sv, find: "mc[4*c + 0] = xt(sr[4*c]) ^ (xt(sr[4*c + 1]) ^ sr[4*c + 1]) ^ sr[4*c + 2] ^ sr[4*c + 3];", replace: "mc[4*c + 0] = xt(sr[4*c]) ^ sr[4*c + 1] ^ sr[4*c + 2] ^ sr[4*c + 3];", why: "MixColumns row 0 lost a term"}
+  - {name: last_round_mixes, file: aes128.sv, find: "(rnd == 4'd10) ? sr[i] : mc[i];", replace: "mc[i];", why: "the last round also applies MixColumns"}
+  - {name: rcon_9, file: aes128.sv, find: "4'd9: rcon = 8'h1B;", replace: "4'd9: rcon = 8'h1A;", why: "the round constant of round 9 is wrong"}
+  - {name: key_mix_in, file: aes128.sv, find: "st <= pt ^ key; rk <= key;", replace: "st <= pt; rk <= key;", why: "the initial AddRoundKey is missing"}
+  - {name: byte_order_out, file: aes_uart_system.sv, find: "assign tx_data = ct[127 - 8*k -: 8];", replace: "assign tx_data = ct[7 + 8*k -: 8];", why: "the ciphertext is sent last byte first"}
+  - {name: short_reply, file: aes_uart_system.sv, find: "if (k == 5'd15) st <= S_RX;", replace: "if (k == 5'd14) st <= S_RX;", why: "only 15 reply bytes are sent"}

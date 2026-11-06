@@ -1,0 +1,93 @@
+{
+  "task": "c14_int8_dot_requant",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_random_cases": true,
+      "test_extremes_halves_and_bias": true,
+      "test_tail_cases": true,
+      "test_shift_and_mult_ranges": true,
+      "test_ready_clears_on_go_and_regs": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "no_rounding",
+      "why": "scaling truncates instead of rounding halves up",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_cases",
+        "test_extremes_halves_and_bias",
+        "test_shift_and_mult_ranges"
+      ]
+    },
+    {
+      "name": "relu_ignored",
+      "why": "the relu switch no longer limits at 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_cases",
+        "test_extremes_halves_and_bias",
+        "test_tail_cases",
+        "test_shift_and_mult_ranges",
+        "test_ready_clears_on_go_and_regs"
+      ]
+    },
+    {
+      "name": "mult_signed",
+      "why": "mult treated as signed, wrong above 32767",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_cases",
+        "test_extremes_halves_and_bias",
+        "test_tail_cases",
+        "test_shift_and_mult_ranges",
+        "test_ready_clears_on_go_and_regs"
+      ]
+    },
+    {
+      "name": "weights_unsigned",
+      "why": "weights read as unsigned",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_cases",
+        "test_extremes_halves_and_bias",
+        "test_tail_cases",
+        "test_shift_and_mult_ranges",
+        "test_ready_clears_on_go_and_regs"
+      ]
+    },
+    {
+      "name": "bias_dropped",
+      "why": "bias not added",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_cases",
+        "test_extremes_halves_and_bias",
+        "test_tail_cases",
+        "test_shift_and_mult_ranges",
+        "test_ready_clears_on_go_and_regs"
+      ]
+    },
+    {
+      "name": "round_wrong_bit",
+      "why": "rounding constant is 2^shift, not 2^(shift-1)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_extremes_halves_and_bias",
+        "test_shift_and_mult_ranges"
+      ]
+    }
+  ],
+  "mutants_killed": 6,
+  "mutants_total": 6
+}

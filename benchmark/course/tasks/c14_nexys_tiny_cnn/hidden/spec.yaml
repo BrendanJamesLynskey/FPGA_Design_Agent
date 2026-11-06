@@ -1,0 +1,203 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c14_nexys_tiny_cnn
+title: Tiny CNN shape classifier
+source: spec.md
+tier: C14
+difficulty: 3
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c14_nexys_tiny_cnn_top
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: board oscillator
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: the display is blank, no answer yet
+parameters:
+  CLKS_PER_BIT: 868
+ports:
+- name: CLK100MHZ
+  dir: in
+  width: 1
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- name: CPU_RESETN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C12
+  iostandard: LVCMOS33
+- name: UART_TXD_IN
+  dir: in
+  width: 1
+  async: true
+  pins:
+  - C4
+  iostandard: LVCMOS33
+  note: unused (the design only sends)
+- name: UART_RXD_OUT
+  dir: out
+  width: 1
+  pins:
+  - D4
+  iostandard: LVCMOS33
+- name: BTNC
+  dir: in
+  width: 1
+  pins:
+  - N17
+  iostandard: LVCMOS33
+- name: SW
+  dir: in
+  width: 16
+  pins:
+  - J15
+  - L16
+  - M13
+  - R15
+  - R17
+  - T18
+  - U18
+  - R13
+  - T8
+  - U8
+  - R16
+  - T13
+  - H6
+  - U12
+  - U11
+  - V10
+  iostandard: LVCMOS33
+  note: only SW[2:0] are used
+- name: AN
+  dir: out
+  width: 8
+  pins:
+  - J17
+  - J18
+  - T9
+  - J14
+  - P14
+  - T14
+  - K2
+  - U13
+  iostandard: LVCMOS33
+  note: AN[0] is the right-hand digit
+- name: CA
+  dir: out
+  width: 1
+  pins:
+  - T10
+  iostandard: LVCMOS33
+- name: CB
+  dir: out
+  width: 1
+  pins:
+  - R10
+  iostandard: LVCMOS33
+- name: CC
+  dir: out
+  width: 1
+  pins:
+  - K16
+  iostandard: LVCMOS33
+- name: CD
+  dir: out
+  width: 1
+  pins:
+  - K13
+  iostandard: LVCMOS33
+- name: CE
+  dir: out
+  width: 1
+  pins:
+  - P15
+  iostandard: LVCMOS33
+- name: CF
+  dir: out
+  width: 1
+  pins:
+  - T11
+  iostandard: LVCMOS33
+- name: CG
+  dir: out
+  width: 1
+  pins:
+  - L18
+  iostandard: LVCMOS33
+- name: DP
+  dir: out
+  width: 1
+  pins:
+  - H15
+  iostandard: LVCMOS33
+- name: LED
+  dir: out
+  width: 16
+  pins:
+  - H17
+  - K15
+  - J13
+  - N14
+  - R18
+  - V17
+  - U17
+  - U16
+  - V16
+  - T15
+  - U14
+  - T16
+  - V15
+  - V14
+  - V12
+  - V11
+  iostandard: LVCMOS33
+behaviour:
+  network:
+  - 'Exactly the course network: conv 3x3 1->4 with requantisation (acc*M1 + 2^(S1-1)) >>> S1 clamped to 0..127; 2x2 max-pool; conv 3x3 4->8 with requantisation by M2/S2 and clamp 0..127; dense 72->4 raw int32; class = argmax, lowest index on a tie.'
+  - 'Parameters and pictures: data/cnn_params.hex (612 weights, 16 biases, M1, S1, M2, S2) and data/cnn_images.hex (8 x 144 pixels).'
+  board:
+  - SW[2:0] choose the picture; a debounced rising edge of BTNC (stable for DEBOUNCE_CYCLES clocks) classifies it.
+  - 'When the answer is ready: the class digit (0..3) on the right-hand digit (AN = 8''hFE; segments 0x40, 0x79, 0x24, 0x30 active low as {CG..CA}); all segments off before the first answer; one letter H, V, B or X then 0x0A on UART_RXD_OUT at 115200 8N1.'
+  - The reference loads its parameter memories after reset (about 650 clocks) before it accepts a press (LED15 is its ready flag).
+  leds:
+  - The reference shows ready on LED15 and the class on LED[1:0]; the bench does not check the LEDs.
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+  - name: UART_PROTOCOL
+    offset: none
+    access: serial
+    reset: waiting for the first byte of a request
+    bits: UART_RXD_OUT carries H, V, B or X then 0x0A at 115200 8N1; no input protocol
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: 'Course reference: tiny_cnn core 2484 LUT, 1016 FF, 7 DSP48, Fmax 53 MHz as written (int8 multipliers in LUTs), does not meet 100 MHz; full-flow QoR not run (see reference_qor.md).'
+requirements:
+- id: REQ-01
+  text: for each of the eight pictures the letter and the display digit equal the reference class
+  proof:
+  - simulation
+- id: REQ-02
+  text: the display is blank before the first answer and shows only the right-hand digit
+  proof:
+  - simulation
+- id: REQ-03
+  text: the four scores of each picture equal the reference exactly (checked by the designer's own simulation; the bench sees the class only)
+  proof:
+  - simulation
+- id: REQ-04
+  text: The design closes timing at 100 MHz and fits the XC7A100T
+  proof:
+  - analysis
+assumptions: []
+open_questions: []

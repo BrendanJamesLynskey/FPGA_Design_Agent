@@ -1,0 +1,7 @@
+mutants:
+  - {name: early_exit, file: montgomery.sv, find: "if (cnt == W - 1) fin <= 1'b1;", replace: "if (cnt == W - 1 || ar == '0) fin <= 1'b1;", why: "stops early when the remaining bits of a are zero: data-dependent time and a wrong result"}
+  - {name: no_final_subtract, file: montgomery.sv, find: "r <= (s >= {2'b00, nr}) ? (s - {2'b00, nr}) : s[W-1:0];", replace: "r <= s[W-1:0];", why: "the final conditional subtraction is missing"}
+  - {name: odd_fix_missing, file: montgomery.sv, find: "sum2 = sum[0] ? sum + {2'b00, nr} : sum;", replace: "sum2 = sum;", why: "n is never added to make the sum even"}
+  - {name: one_step_short, file: montgomery.sv, find: "if (cnt == W - 1) fin <= 1'b1;", replace: "if (cnt == W - 2) fin <= 1'b1;", why: "one multiplication step too few"}
+  - {name: wrong_bit_of_a, file: montgomery.sv, find: "sum = s + (ar[0] ? {2'b00, br} : '0);", replace: "sum = s + (ar[1] ? {2'b00, br} : '0);", why: "adds b for the wrong bit of a"}
+  - {name: slow_for_small_s, file: montgomery.sv, find: "            busy <= 1'b0;\n            done <= 1'b1;", replace: "            busy <= (s < {2'b00, nr}) && !(s == '0) ? 1'b1 : 1'b0;\n            done <= (s >= {2'b00, nr}) || (s == '0);", why: "one extra clock when no final subtraction is needed: a timing difference that leaks the comparison"}

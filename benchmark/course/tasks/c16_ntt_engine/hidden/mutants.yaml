@@ -1,0 +1,8 @@
+mutants:
+  - {name: barrett_constant, file: ntt_engine.sv, find: "m = p * 13'd5039;", replace: "m = p * 13'd5038;", why: "the Barrett reduction constant is off by one"}
+  - {name: inverse_scale, file: ntt_engine.sv, find: "barrett(mem[sc] * 12'd3303)", replace: "barrett(mem[sc] * 12'd3302)", why: "the final inverse scaling uses the wrong constant"}
+  - {name: inverse_zeta_index, file: ntt_engine.sv, find: "7'(2 * gcount - 1 - g)", replace: "7'(2 * gcount - 2 - g)", why: "inverse butterflies use the wrong zeta"}
+  - {name: forward_sub_is_add, file: ntt_engine.sv, find: "nhi = subq(vlo, tt);", replace: "nhi = addq(vlo, tt);", why: "the forward butterfly adds twice instead of add and subtract"}
+  - {name: one_layer_short, file: ntt_engine.sv, find: "if (layer == 3'd6) begin", replace: "if (layer == 3'd5) begin", why: "the last of the seven layers is skipped"}
+  - {name: subq_unreduced, file: ntt_engine.sv, find: "subq = (u >= v) ? (u - v) : 12'(u + Q - v);", replace: "subq = 12'(u + Q - v);", why: "the subtraction is not reduced when the result is already non-negative"}
+  - {name: forward_scaled, file: ntt_engine.sv, find: "if (inv_r) scaling <= 1'b1;", replace: "scaling <= 1'b1;", why: "the forward transform also runs the multiplication by 3303"}

@@ -1,0 +1,90 @@
+{
+  "task": "c16_montgomery_mult",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_products_64_and_40_bit": true,
+      "test_edge_operands": true,
+      "test_constant_time": true,
+      "test_registers_and_reset": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "early_exit",
+      "why": "stops early when the remaining bits of a are zero: data-dependent time and a wrong result",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_products_64_and_40_bit",
+        "test_edge_operands",
+        "test_constant_time",
+        "test_registers_and_reset"
+      ]
+    },
+    {
+      "name": "no_final_subtract",
+      "why": "the final conditional subtraction is missing",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_products_64_and_40_bit",
+        "test_edge_operands",
+        "test_constant_time"
+      ]
+    },
+    {
+      "name": "odd_fix_missing",
+      "why": "n is never added to make the sum even",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_products_64_and_40_bit",
+        "test_edge_operands",
+        "test_constant_time",
+        "test_registers_and_reset"
+      ]
+    },
+    {
+      "name": "one_step_short",
+      "why": "one multiplication step too few",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_products_64_and_40_bit",
+        "test_edge_operands",
+        "test_constant_time",
+        "test_registers_and_reset"
+      ]
+    },
+    {
+      "name": "wrong_bit_of_a",
+      "why": "adds b for the wrong bit of a",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_products_64_and_40_bit",
+        "test_edge_operands",
+        "test_constant_time",
+        "test_registers_and_reset"
+      ]
+    },
+    {
+      "name": "slow_for_small_s",
+      "why": "one extra clock when no final subtraction is needed: a timing difference that leaks the comparison",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_products_64_and_40_bit",
+        "test_edge_operands",
+        "test_constant_time",
+        "test_registers_and_reset"
+      ]
+    }
+  ],
+  "mutants_killed": 6,
+  "mutants_total": 6
+}

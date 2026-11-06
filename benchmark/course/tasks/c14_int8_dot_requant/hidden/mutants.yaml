@@ -1,0 +1,7 @@
+mutants:
+  - {name: no_rounding, file: dot_requant.sv, find: "rnd = 64'sd1 <<< (shift - 5'd1);", replace: "rnd = 64'sd0;", why: "scaling truncates instead of rounding halves up"}
+  - {name: relu_ignored, file: dot_requant.sv, find: "else if (r < (relu ? 64'sd0 : -64'sd128)) y <= relu ? 8'sd0 : -8'sd128;", replace: "else if (r < -64'sd128) y <= -8'sd128;", why: "the relu switch no longer limits at 0"}
+  - {name: mult_signed, file: dot_requant.sv, find: "p = s * $signed({1'b0, mult});", replace: "p = s * $signed(mult);", why: "mult treated as signed, wrong above 32767"}
+  - {name: weights_unsigned, file: dot_requant.sv, find: "$signed(a[i*8 +: 8]) * $signed(w[i*8 +: 8])", replace: "$signed(a[i*8 +: 8]) * w[i*8 +: 8]", why: "weights read as unsigned"}
+  - {name: bias_dropped, file: dot_requant.sv, find: "s = bias;", replace: "s = 32'sd0;", why: "bias not added"}
+  - {name: round_wrong_bit, file: dot_requant.sv, find: "rnd = 64'sd1 <<< (shift - 5'd1);", replace: "rnd = 64'sd1 <<< shift;", why: "rounding constant is 2^shift, not 2^(shift-1)"}

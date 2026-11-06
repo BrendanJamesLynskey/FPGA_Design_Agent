@@ -1,0 +1,95 @@
+{
+  "task": "c13_hough_lines",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_diagonal_line": true,
+      "test_vertical_line": true,
+      "test_four_lines_then_clear": true,
+      "test_corners_and_registers": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "rho_offset",
+      "why": "the distance table is offset by one",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_diagonal_line",
+        "test_vertical_line",
+        "test_four_lines_then_clear",
+        "test_corners_and_registers"
+      ]
+    },
+    {
+      "name": "no_rounding",
+      "why": "the distance is truncated instead of rounded",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_diagonal_line",
+        "test_vertical_line",
+        "test_four_lines_then_clear"
+      ]
+    },
+    {
+      "name": "cos_entry",
+      "why": "one cosine table entry is wrong",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_four_lines_then_clear"
+      ]
+    },
+    {
+      "name": "sin_entry",
+      "why": "one sine table entry is wrong",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_four_lines_then_clear"
+      ]
+    },
+    {
+      "name": "y_from_x",
+      "why": "the y coordinate of a point is replaced by its x",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_diagonal_line",
+        "test_vertical_line",
+        "test_four_lines_then_clear",
+        "test_corners_and_registers"
+      ]
+    },
+    {
+      "name": "clear_ignored",
+      "why": "CLEAR does not zero the table",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_diagonal_line",
+        "test_vertical_line",
+        "test_four_lines_then_clear",
+        "test_corners_and_registers"
+      ]
+    },
+    {
+      "name": "one_angle_missing",
+      "why": "the last direction never votes",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_vertical_line",
+        "test_four_lines_then_clear",
+        "test_corners_and_registers"
+      ]
+    }
+  ],
+  "mutants_killed": 7,
+  "mutants_total": 7
+}

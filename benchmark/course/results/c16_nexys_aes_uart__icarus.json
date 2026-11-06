@@ -1,0 +1,123 @@
+{
+  "task": "c16_nexys_aes_uart",
+  "sim": "icarus",
+  "date": "2026-11-06",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_fips_197_examples": true,
+      "test_random_requests_a": true,
+      "test_random_requests_b": true,
+      "test_no_state_between_requests": true,
+      "test_reset_and_busy_led": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "sbox_entry",
+      "why": "one S-box entry is wrong",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fips_197_examples",
+        "test_random_requests_a",
+        "test_random_requests_b",
+        "test_no_state_between_requests",
+        "test_reset_and_busy_led"
+      ]
+    },
+    {
+      "name": "no_shiftrows",
+      "why": "ShiftRows is missing",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fips_197_examples",
+        "test_random_requests_a",
+        "test_random_requests_b",
+        "test_no_state_between_requests",
+        "test_reset_and_busy_led"
+      ]
+    },
+    {
+      "name": "mixcolumns_row0",
+      "why": "MixColumns row 0 lost a term",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fips_197_examples",
+        "test_random_requests_a",
+        "test_random_requests_b",
+        "test_no_state_between_requests",
+        "test_reset_and_busy_led"
+      ]
+    },
+    {
+      "name": "last_round_mixes",
+      "why": "the last round also applies MixColumns",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fips_197_examples",
+        "test_random_requests_a",
+        "test_random_requests_b",
+        "test_no_state_between_requests",
+        "test_reset_and_busy_led"
+      ]
+    },
+    {
+      "name": "rcon_9",
+      "why": "the round constant of round 9 is wrong",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fips_197_examples",
+        "test_random_requests_a",
+        "test_random_requests_b",
+        "test_no_state_between_requests",
+        "test_reset_and_busy_led"
+      ]
+    },
+    {
+      "name": "key_mix_in",
+      "why": "the initial AddRoundKey is missing",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fips_197_examples",
+        "test_random_requests_a",
+        "test_random_requests_b",
+        "test_no_state_between_requests",
+        "test_reset_and_busy_led"
+      ]
+    },
+    {
+      "name": "byte_order_out",
+      "why": "the ciphertext is sent last byte first",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fips_197_examples",
+        "test_random_requests_a",
+        "test_random_requests_b",
+        "test_no_state_between_requests",
+        "test_reset_and_busy_led"
+      ]
+    },
+    {
+      "name": "short_reply",
+      "why": "only 15 reply bytes are sent",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_fips_197_examples",
+        "test_random_requests_a",
+        "test_random_requests_b",
+        "test_no_state_between_requests",
+        "test_reset_and_busy_led"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8
+}

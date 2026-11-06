@@ -5,6 +5,8 @@ tests that the agent never sees, and a reference design that shows the task is a
 toolchain. The benchmark measures the agent, so it was written **before** any agent tuning on it, by a session that
 did not read the agent's prompts or run records (brief 06a). Frozen: see [FROZEN.md](FROZEN.md).
 
+The course projects of Parts 13-16 are ported to this layout as a separate tier with its own split and freeze: [course/README.md](course/README.md).
+
 ## Layout of one task
 
 ```

@@ -1,0 +1,7 @@
+mutants:
+  - {name: skew_row1, file: matmul4_rows.sv, find: "a_skew[15:8]  = dly[1][1];", replace: "a_skew[15:8]  = dly[1][0];", why: "row element 1 is skewed by the wrong amount"}
+  - {name: deskew_col0, file: matmul4_rows.sv, find: "odly[j][2 - j]", replace: "odly[j][1]", why: "output columns de-skewed by the wrong delay"}
+  - {name: reload_ignored, file: systolic4.sv, find: "if (w_load) wt[i][j] <= w_in[(4*i + j)*8 +: 8];", replace: "if (w_load && wt[i][j] == 8'sd0) wt[i][j] <= w_in[(4*i + j)*8 +: 8];", why: "a second table does not replace non-zero entries of the first"}
+  - {name: weights_unsigned, file: systolic4.sv, find: "logic signed [7:0]  wt   [0:3][0:3];", replace: "logic [7:0]  wt   [0:3][0:3];", why: "table entries treated as unsigned"}
+  - {name: valid_early, file: matmul4_rows.sv, find: "assign out_valid = vsr[7];", replace: "assign out_valid = vsr[6];", why: "out_valid one clock before the results are ready"}
+  - {name: valid_late, file: matmul4_rows.sv, find: "assign out_valid = vsr[7];", replace: "assign out_valid = vsr[7] & vsr[6];", why: "the last row of a burst is not reported valid (out_valid needs two consecutive rows)"}

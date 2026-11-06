@@ -1,0 +1,10 @@
+# Hidden acceptance bench for c16_nexys_aes_uart (benchmark/tools/run_task.py)
+toplevel: c16_nexys_aes_uart_top
+module: acceptance
+no_shell: true
+parameters: {CLKS_PER_BIT: 8}
+phrases:
+  - "encrypt one block of data with the AES-128 cipher"
+  - "exactly as published in FIPS 197"
+  - "every request carries its own key"
+  - "Show on LED0 that the board is busy"
