@@ -1,0 +1,76 @@
+{
+ "task": "c14_int8_dot_requant",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 1,
+ "run": 1,
+ "date": "2026-11-06",
+ "run_id": "20261106-123035-86a9",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.316-2.1.318 (per call in claude_code_calls.jsonl)",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "beb3067e885cb9670a0b6ac9cc9782bc32ff1064+uncommitted-at-start (branch f3-07a2-prep)",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (mutation 11 of 13 killed, 2 survived)",
+  "stage_gates_post_route": "all pass",
+  "bitstream": "built"
+ },
+ "agent_turns": 140,
+ "sub_agent_calls": 11,
+ "questions": {
+  "asked": 5,
+  "answered": 3,
+  "defaulted": 2,
+  "register_map_asked": "not asked as such; one question on shell addressing"
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": false,
+  "tests": {
+   "test_identity_and_reset": false,
+   "test_random_cases": false,
+   "test_extremes_halves_and_bias": false,
+   "test_tail_cases": false,
+   "test_shift_and_mult_ranges": false,
+   "test_ready_clears_on_go_and_regs": false
+  }
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 0.849,
+  "whs_ns": 0.043,
+  "lut": 1359,
+  "ff": 904,
+  "dsp": 2,
+  "bram36": 0,
+  "power_w": 0.119,
+  "reference_qor_ooc": {
+   "lut": 882,
+   "ff": 265,
+   "dsp": 2,
+   "bram36": 0,
+   "wns_ns_at_200MHz": -26.957,
+   "fmax_mhz": 31
+  },
+  "note": "agent figures are full-flow post-route with the test shell on the xc7a100t at 100 MHz; the reference numbers are out-of-context at 200 MHz, so the two are not like for like. The agent design meets 100 MHz; the reference does not."
+ },
+ "failure": {
+  "class": "spec ambiguity plus clarify-stage gap (not a model error in the arithmetic)",
+  "evidence": "all 6 hidden tests fail at the first register read: 'reset value of 0 at window 0x00: RTL 0x444F5451, model 0x00000000'. The agent invented a byte-addressed register map with an ID register at window 0x00; the task's spec.md does not give the map, which lives only in hidden/spec.yaml. The agent asked one question about shell addressing, the oracle answered 'partly specified' without giving the offsets, and the agent never asked for the register offsets.",
+  "fixed_by_this_pr": false
+ }
+}
