@@ -62,16 +62,53 @@ def _oracle(client):
     return llm
 
 
+def task_no_shell(hidden_spec: Path | None) -> bool:
+    """07a2-prep: a benchmark task's hidden/bench.yaml says ``no_shell: true`` (the subject is the USB-UART itself)."""
+    import yaml
+    b = hidden_spec.resolve().parent / "bench.yaml" if hidden_spec else None
+    return bool(b and b.is_file() and (yaml.safe_load(b.read_text()) or {}).get("no_shell"))
+
+
+def task_data_dir(spec_md: Path) -> Path | None:
+    """07a2-prep: the task's ``data/`` directory, next to its spec.md (the benchmark task layout), when it exists."""
+    d = spec_md.resolve().parent / "data"
+    return d if d.is_dir() else None
+
+
+def _no_openrouter(model):
+    raise RuntimeError("--oracle claude_code: no OpenRouter call is allowed in this run")
+
+
+class _NoOpenRouter:
+    """The run client when nothing may use OpenRouter (Claude Code arm and a Claude Code oracle): any call is an error."""
+    def __call__(self, *a, **k):
+        raise RuntimeError("--oracle claude_code: no OpenRouter call is allowed in this run")
+
+
+def _clients(cfg, a):
+    if cfg.oracle == "claude_code":
+        if cfg.harness != "claude_code":
+            raise SystemExit("--oracle claude_code needs --harness claude_code (no OpenRouter at all)")
+        return _NoOpenRouter(), None
+    client = _client(cfg.model, a.replay, a.record)
+    return client, _oracle(client)
+
+
 def config_from_json(c: dict):
     """The Config of a run from its config.json (``resume``); runs from before 05f have no profile: ``single``."""
     from agent.graph.run import Config
+    def flag(k: str) -> bool:
+        return str(c.get(k, False)) == "True"
     return Config(spec_md=Path(c["spec_md"]), name=c["name"], board=c["board"], interview=c["interview"],
                   review=c["review"], model=c["model"],
                   hidden_spec=Path(c["hidden_spec"]) if c.get("hidden_spec") not in (None, "None") else None,
                   stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]),
                   harness=c.get("harness", "deepagents"), cc_model=c.get("cc_model", "claude-haiku-5-5"),
                   cc_effort=c.get("cc_effort", "medium"), verif_level=c.get("verif_level", "V3"),
-                  profile=c.get("profile", "single"), roles=c.get("roles") or None)
+                  profile=c.get("profile", "single"), roles=c.get("roles") or None,
+                  no_shell=flag("no_shell"),
+                  data_dir=Path(c["data_dir"]) if c.get("data_dir") not in (None, "None") else None,
+                  oracle=c.get("oracle", "openrouter"), oracle_cc_model=c.get("oracle_cc_model", "claude-haiku-5-5"))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -99,6 +136,16 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--roles", help='JSON of role overrides on top of the profile, for example '
                                    '\'{"rtl": {"harness": "claude_code", "model": "claude-opus-5-5", "effort": null}}\'; '
                                    "roles: clarify, model, tests, rtl")
+    r.add_argument("--no-shell", action="store_true",
+                   help="the subject is the USB-UART itself: build, lint and simulate without the test shell "
+                        "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true)")
+    r.add_argument("--data-dir", type=Path,
+                   help="the task's data/ files (weights, images ...), copied to <design>/data (07a2-prep; default: "
+                        "data/ next to spec.md, when it exists)")
+    r.add_argument("--oracle", choices=["openrouter", "claude_code"], default="openrouter",
+                   help="where the interview oracle runs: openrouter (--model) or claude_code (a headless `claude -p` on the "
+                        "Max plan; no OpenRouter call at all, 07a2-prep)")
+    r.add_argument("--oracle-cc-model", default="claude-haiku-5-5", help="model of --oracle claude_code")
     r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
@@ -123,13 +170,18 @@ def main(argv: list[str] | None = None) -> int:
         cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
                      model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after,
                      harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort,
-                     verif_level=a.verif_level, profile=a.profile, roles=parse_roles(a.roles))
+                     verif_level=a.verif_level, profile=a.profile, roles=parse_roles(a.roles),
+                     no_shell=a.no_shell or task_no_shell(a.hidden_spec), data_dir=a.data_dir or task_data_dir(a.spec),
+                     oracle=a.oracle, oracle_cc_model=a.oracle_cc_model)
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd
-        client = _client(a.model, a.replay, a.record)
-        rt = new_runtime(cfg, client, oracle_llm=_oracle(client))
-        rt.client_for = lambda m: _client(m, a.replay, None)
+        client, oracle_llm = _clients(cfg, a)
+        rt = new_runtime(cfg, client, oracle_llm=oracle_llm)
+        rt.client_for = (lambda m: _client(m, a.replay, None)) if cfg.oracle == "openrouter" else _no_openrouter
+        if cfg.oracle == "claude_code":
+            from agent.claude_code_arm.oracle import cc_oracle
+            rt.oracle_llm = cc_oracle(cfg.oracle_cc_model, rt.run_dir / "oracle_calls.jsonl")
         graph = build_graph(checkpointer_for(rt.run_dir))
         _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
                {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
@@ -140,9 +192,12 @@ def main(argv: list[str] | None = None) -> int:
     cfg = config_from_json(c)
     if a.max_usd is not None:
         cfg.run_limits["usd"] = a.max_usd
-    client = _client(cfg.model, a.replay, a.record)
-    rt = new_runtime(cfg, client, run_id=a.run_id, oracle_llm=_oracle(client))
-    rt.client_for = lambda m: _client(m, a.replay, None)
+    client, oracle_llm = _clients(cfg, a)
+    rt = new_runtime(cfg, client, run_id=a.run_id, oracle_llm=oracle_llm)
+    rt.client_for = (lambda m: _client(m, a.replay, None)) if cfg.oracle == "openrouter" else _no_openrouter
+    if cfg.oracle == "claude_code":
+        from agent.claude_code_arm.oracle import cc_oracle
+        rt.oracle_llm = cc_oracle(cfg.oracle_cc_model, rt.run_dir / "oracle_calls.jsonl")
     graph = build_graph(checkpointer_for(run_dir))
     lg = {"configurable": {"thread_id": a.run_id}}
     from langgraph.types import Command

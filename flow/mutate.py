@@ -51,6 +51,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 PY = os.environ.get("MUTATE_PYTHON", sys.executable)
 
+from flow import srcorder  # noqa: E402
+
 
 EX_BUSY = 75                                       # exit status: the heavy-slot lock is held (retry later)
 DEFAULT_MAX_MUTANTS, DEFAULT_WALL_S, DEFAULT_SEED = 20, 1500, 1
@@ -256,7 +258,7 @@ def generic(design: Path, a) -> int:
 
 def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, runner=None) -> int:
     mdir_root = design / "build" / "mutants"
-    shell = sorted((ROOT / "shell" / "rtl").glob("*.sv"))
+    shell = [] if srcorder.no_shell(design) else sorted((ROOT / "shell" / "rtl").glob("*.sv"))     # 07a2-prep
     env_orig = {"FDA_MUTANT_ORIG": str(rtl.resolve())}
     # 1. the unmutated RTL must pass: a bench that fails on the original has nothing to measure
     base, base_s = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(rtl.resolve())}, a.mutant_timeout_s or 900, runner)
@@ -287,7 +289,7 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
             rows.append(row | {"status": "invalid", "note": "the text to change was not found exactly once"})
             continue
         (d / m["file"]).write_text(new)
-        if compile_ok(shell + sorted(d.glob("*.sv")), runner) is False:
+        if compile_ok(srcorder.order_sv(shell + sorted(d.glob("*.sv"))), runner) is False:
             rows.append(row | {"status": "invalid", "note": "the mutated RTL does not compile"})
             shutil.rmtree(d, ignore_errors=True)
             continue

@@ -80,3 +80,25 @@ A review reply is `{"decision": "approve" | "edit" | "rewind" | "supply", "by": 
 The page also shows, for line-by-line review, the RTL diff against the previous stage, the requirements with their
 tests and bins, buses as hex waveforms, `design.xdc` in full with each pin traced through the master XDC to the board
 inventory, the proof-method traceability table and the design-standards results.
+
+## Benchmark tasks as agent runs (brief 07a2-prep)
+
+`python -m agent run <task>/spec.md --interview oracle --hidden-spec <task>/hidden/spec.yaml ...` runs a benchmark task.
+Four gaps found by the course-tier port are closed; each has a test in `flow/tests/test_07a2_prep.py` or
+`agent/tests/test_07a2_prep.py`.
+
+- **Task data.** A `data/` directory next to `spec.md` (or `--data-dir`) is copied to `<design>/data`, read-only for the agent
+  (`data` is in the path jail's write-deny list; the clarify, model, tests and rtl roles may read it), and listed at the end of
+  the design's `spec.md`. The simulators find it: `flow.cocotb_run.run` links the files into the simulator's working directory
+  (`test_dir`) for the length of a run as `data/<name>` and `<name>`, so `$readmemh("x.hex")` and `$readmemh("data/x.hex")` both
+  open it; `flow/prepare.py` copies them into the Vivado build directory (and into the build stamp); the course scoring tool
+  links them into `hidden/` for the length of a scoring run.
+- **UART-subject designs (`no_shell`).** `--no-shell`, or a `bench.yaml` with `no_shell: true` next to `--hidden-spec`, writes
+  the marker `.no_shell` into the design. With it, `flow.cocotb_run.run`, `lint`, the standards check, `flow/mutate.py` and
+  `flow/prepare.py` leave out `shell/rtl`, and no `BUILD_STAMP` generic is passed; the prompts' flow conventions say so.
+- **Compile order.** `flow/srcorder.py` `order_sv` puts packages and interfaces before the files that import or use them
+  (stable; a cycle keeps the input order) for simulation, lint, the standards check, Vivado and the course scoring tool.
+- **Register maps.** The interview oracle's text now ends with `registers.map` rendered one register per line, and a quote
+  that differs from the file only in white space is accepted (an invented quote is still refused).
+- **No OpenRouter.** `--oracle claude_code` (needs `--harness claude_code`) runs the oracle as a tool-less headless
+  `claude -p` call (`agent/claude_code_arm/oracle.py`, Haiku by default); any OpenRouter call raises.

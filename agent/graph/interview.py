@@ -87,6 +87,32 @@ def open_questions(spec: dict[str, Any] | None) -> list[str]:
     return [o.get("question", "") for o in (spec or {}).get("open_questions") or []]
 
 
+def render_register_map(text: str) -> str:
+    """07a2-prep: the hidden spec's ``registers.map`` as plain lines, one per register ("Y: offset 0x08, RO, reset 0: [7:0]
+    limited answer"). The YAML flow mappings of the file are hard to quote verbatim, so a question like "which offset is the
+    result register?" was answered "not specified" when the quote did not match. The lines are appended to the oracle's text,
+    so the oracle can answer register-map questions and quote a line that is really there. "" when there is no map."""
+    import yaml
+    try:
+        spec = yaml.safe_load(text)
+    except yaml.YAMLError:
+        return ""
+    regs = (spec.get("registers") if isinstance(spec, dict) else None) or {}
+    rows = [r for r in (regs.get("map") or []) if isinstance(r, dict) and "name" in r and "offset" in r] if isinstance(regs, dict) else []
+    if not rows:
+        return ""
+    def off(v: Any) -> str:
+        return f"0x{v:02X}" if isinstance(v, int) else str(v)
+    lines = [f"{r['name']}: offset {off(r['offset'])}, {r.get('access', '?')}, reset {r.get('reset', 0)}: {r.get('bits', '')}"
+             for r in rows]
+    extra = [f"{k}: {v}" for k, v in regs.items() if k not in ("map",) and isinstance(v, (str, int))]
+    return "\n".join(["Register map (the same entries as registers.map above, one per line):", *lines, *extra])
+
+
+def _norm(t: str) -> str:
+    return " ".join(str(t).replace("\u2019", "'").split()).strip(" \"'`-")
+
+
 class SpecOracle:
     """Answers only from a hidden full spec file. ``llm`` is a callable (system, user) -> dict with keys
     ``answer`` and ``quote``; the quote must appear verbatim in the hidden spec, else the answer is refused and
@@ -100,7 +126,10 @@ class SpecOracle:
               "{\"answer\": \"not specified\", \"quote\": null}. Never guess, never add requirements.")
 
     def __init__(self, hidden_spec: Path, llm: Callable[[str, str], dict[str, Any]]):
-        self._text = hidden_spec.read_text()
+        self._file = hidden_spec.read_text()
+        rendered = render_register_map(self._file)                # 07a2-prep: register-map questions
+        self._text = self._file + ("\n\n" + rendered + "\n" if rendered else "")
+        self._flat = _norm(self._text)
         self._llm = llm
         self.log: list[dict[str, Any]] = []
 
@@ -108,7 +137,8 @@ class SpecOracle:
         out = self._llm(self.SYSTEM + "\n\n--- specification ---\n" + self._text,
                         json.dumps({"question": q.text, "proposed_default": q.default}))
         a, quote = str(out.get("answer", NOT_SPECIFIED)), out.get("quote")
-        if a.strip().lower() != NOT_SPECIFIED and (not quote or str(quote).strip() not in self._text):
+        if a.strip().lower() != NOT_SPECIFIED and (not quote or str(quote).strip() not in self._text
+                                                        and _norm(str(quote)) not in self._flat):
             self.log.append({"question": q.text, "refused": "quote not in the hidden spec", "raw": a})
             a, quote = NOT_SPECIFIED, None
         self.log.append({"question": q.text, "answer": a})

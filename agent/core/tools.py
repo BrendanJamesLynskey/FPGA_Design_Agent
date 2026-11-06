@@ -32,6 +32,7 @@ from agent.core.artefacts import check_artefact
 from agent.core.registry import clip, tool
 from agent.core.security import FLASH_WORDS, SecurityError
 from agent.core.session import STAGES, Session
+from flow import srcorder
 
 PY = sys.executable
 _ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
@@ -234,6 +235,9 @@ def lint(s: Session) -> dict:
     cfg = load_build_cfg(s)
     _refuse_on_scan(s, python=False, hdl=True)
     srcs = sorted({p for pat in cfg["sources"] for p in glob.glob(str(s.root / pat))})
+    if srcorder.no_shell(s.design):                    # 07a2-prep: a UART-subject design is linted without the test shell
+        srcs = srcorder.drop_shell(srcs)
+    srcs = [str(p) for p in srcorder.order_sv(srcs)]   # 07a2-prep: packages and interfaces first, not name order
     stubs = sorted(glob.glob(str(s.design / "lint" / "*.sv")))
     argv = ["verilator", "--lint-only", "-Wall", "--top-module", cfg["top"], *srcs, *stubs]
     r = s.runner.run("lint", argv, s.root, timeout=300)

@@ -22,9 +22,9 @@ from agent.core.security import PathJail, SecurityError
 from agent.core.session import Session
 
 ROLES: dict[str, dict[str, tuple[str, ...]]] = {
-    "clarify": {"read": ("spec.md", "spec.yaml"), "write": ("spec.yaml",)},
-    "model": {"read": ("spec.yaml", "model.py"), "write": ("model.py",)},      # its own output, to edit on a repair
-    "tests": {"read": ("spec.yaml", "model.py", "tests/*", "verif/*", "probes.yaml", "BRINGUP.md", "hw_checks.py"),
+    "clarify": {"read": ("spec.md", "spec.yaml", "data/*"), "write": ("spec.yaml",)},
+    "model": {"read": ("spec.yaml", "model.py", "data/*"), "write": ("model.py",)},      # its own output, to edit on a repair
+    "tests": {"read": ("spec.yaml", "model.py", "data/*", "tests/*", "verif/*", "probes.yaml", "BRINGUP.md", "hw_checks.py"),
               "write": ("tests/*", "verif/*", "hw_checks.py")},       # hw_checks.py: stage 9 bring-up checks, against the model
     "rtl": {"read": ("*",), "write": ("rtl/*", "build.yaml", "design.xdc", "probes.yaml", "BRINGUP.md",
                                       "ARCHITECTURE.md", "architecture.yaml", "hw_checks.py", "lint/*", "BUILD_NOTE.md")},

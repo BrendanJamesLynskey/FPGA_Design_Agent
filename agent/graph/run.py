@@ -48,6 +48,7 @@ from agent.graph.spec_schema import (PROOF_METHODS, SpecError, clock_hz, load_sp
                                      validate)
 from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure
 from flow import architecture as arch_mod
+from flow import srcorder
 
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "mutate", "build", "gates", "report", "check_constraints", "search_docs",
@@ -95,6 +96,10 @@ class Config:
     verif_level: str = "V3"         # verification stage stage 2 must reach (V3 = the methodology)
     profile: str = "single"         # per-role model routing (05f): single | cvdp (agent.graph.role_models.PROFILES)
     roles: dict | None = None       # explicit per-role overrides on top of the profile: role -> {harness, model, effort}
+    no_shell: bool = False          # 07a2-prep: the subject is the USB-UART itself: built, linted and simulated without the test shell
+    data_dir: Path | None = None    # 07a2-prep: the task's data/ files (weights, images ...), copied to <design>/data (read-only)
+    oracle: str = "openrouter"      # 07a2-prep: where the interview oracle runs: openrouter (--model) | claude_code (the Max plan)
+    oracle_cc_model: str = "claude-haiku-5-5"
 
     def role_models(self, stage: str | None = None) -> dict:
         """role -> {harness, model, effort}, with the ``role@stage`` overrides of ``stage`` applied. The interview
@@ -258,10 +263,30 @@ Flow conventions (fixed by the repo; follow them exactly):
 """
 
 
+NO_SHELL_BULLET = """- This design does NOT use the test shell: its subject is the USB-UART itself (07a2-prep). The flow builds, lints and simulates
+  without shell/rtl, so `uart_rx` and `uart_tx` are free for your own modules. The board top has exactly the ports the
+  request names (names from the board's master XDC) and the parameters the request names as top-level parameters (for
+  example CLKS_PER_BIT); it has no fpga_shell, no register window and no BUILD_STAMP parameter, and the flow passes no
+  BUILD_STAMP generic. Drive the design's pins from your own cocotb bench."""
+
+
+def no_shell_conventions(t: str) -> str:
+    """CONVENTIONS for a design without the test shell: no shell source in build.yaml, no fpga_shell bullet, no shell in the test sources."""
+    t = t.replace("sources: [shell/rtl/*.sv, {design_rel}/rtl/*.sv]", "sources: [{design_rel}/rtl/*.sv]")
+    t = t.replace("sources = flow.cocotb_run.SHELL_RTL + sorted((design_dir / \"rtl\").glob(\"*.sv\"))",
+                  "sources = sorted((design_dir / \"rtl\").glob(\"*.sv\")) (no test shell for this design)")
+    head, *bullets = t.split("\n- ")
+    bullets = [NO_SHELL_BULLET[2:] if b.startswith("The board top must instantiate the test shell") else b for b in bullets]
+    return "\n- ".join([head, *bullets])
+
+
 def conventions_text(fmt: dict, template: str | None = None) -> str:
     """CONVENTIONS with this run's values; the one place that fills it (the Claude Code arm's tests use it too)."""
     from flow import architecture as am
-    return (template or CONVENTIONS).format(**{"cdc_prims": ", ".join(am.CDC_PRIMITIVES), "standards": _standards_summary(), **fmt})
+    t = template or CONVENTIONS
+    if fmt.get("no_shell"):
+        t = no_shell_conventions(t)
+    return t.format(**{"cdc_prims": ", ".join(am.CDC_PRIMITIVES), "standards": _standards_summary(), **fmt})
 
 
 def tests_conventions_text(fmt: dict) -> str:
@@ -689,7 +714,7 @@ def node_work(state: State) -> dict:
     fmt = {"board": rt.cfg.board, "name": rt.cfg.name, "stage": n, "stage_name": st.name,
            "allowed": ", ".join(st.tools), "fails": "; ".join(state.get("fails") or []) or "none",
            "note": state.get("note") or "none",
-           "design_rel": str(rt.design.relative_to(ROOT))}
+           "design_rel": str(rt.design.relative_to(ROOT)), "no_shell": rt.cfg.no_shell}
     conv0 = conventions_text(fmt)
     conv_tests = tests_conventions_text(fmt)
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
@@ -1198,6 +1223,29 @@ def build_graph(checkpointer):
 
 # --- set-up -------------------------------------------------------------------------------------------------------
 
+def install_data_files(design: Path, data_dir: Path) -> list[str]:
+    """07a2-prep: the task's ``data/`` files (weights, images, databases) reach the run: copied to ``<design>/data`` (read-only
+    for the agent: ``data`` is in the path jail's write-deny list), listed at the end of the design's spec.md, and found by
+    the simulators and the Vivado build (``flow.cocotb_run.link_data_files``, ``flow/prepare.py``) under both ``data/<name>``
+    and ``<name>``. Returns the relative names."""
+    import shutil
+    dst = design / "data"
+    if dst.exists():
+        shutil.rmtree(dst)
+    shutil.copytree(data_dir, dst)
+    names = [str(p.relative_to(dst)) for p in sorted(dst.rglob("*")) if p.is_file()]
+    if names:
+        with (design / "spec.md").open("a") as f:
+            f.write("\n\n## Data files supplied with this request\n\n"
+                    "These files belong to the request. They are in the design directory under data/ and are read-only "
+                    "(read them with read_file; list_files data shows them):\n\n"
+                    + "".join(f"- data/{n} ({(dst / n).stat().st_size} bytes)\n" for n in names)
+                    + "\nSimulations and the Vivado build run with these files available: `$readmemh(\"data/<name>\")` and "
+                      "`$readmemh(\"<name>\")` both open them, and the scoring run finds them the same way. A design may read "
+                      "them with $readmemh/$readmemb or embed their values in the RTL.\n")
+    return names
+
+
 def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner=None,
                 oracle_llm: Callable | None = None) -> Runtime:
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
@@ -1208,6 +1256,10 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
     if first:
         (design / "spec.md").write_text(Path(cfg.spec_md).read_text())
         (design / "__init__.py").write_text("")
+        if cfg.no_shell:
+            (design / srcorder.NO_SHELL_MARKER).write_text("")
+        if cfg.data_dir:
+            install_data_files(design, Path(cfg.data_dir))
         from agent.graph.role_models import describe
         with (design / "BUILD_NOTE.md").open("a") as f:      # 05f: who ran which role, from the first snapshot on
             f.write(f"\n## models by role (profile {cfg.profile})\n\n{describe(cfg.role_models())}. "
