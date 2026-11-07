@@ -146,6 +146,8 @@ class RecordedRunner:
         self.i = 0
 
     def run(self, kind, argv, cwd, env=None, timeout=600):
+        if kind == "import_check":       # 07a2 fix 3: a derived pre-check, not a recorded step; recordings predate it
+            return RunResult(0, "", "", 0.0)
         if self.i >= len(self.records):
             raise AssertionError(f"replay: unexpected extra run {kind} {argv}")
         r = self.records[self.i]
@@ -184,7 +186,7 @@ class ContainerRunner:
     The engine is Docker 29 via the docker group (the daemon itself runs as root; podman is not installed).
     The argv is the same one the core builds, so replay fixtures do not change."""
 
-    def __init__(self, design: Path, root: Path, inner: Runner | None = None, kinds: tuple[str, ...] = ("simulate", "contract"),
+    def __init__(self, design: Path, root: Path, inner: Runner | None = None, kinds: tuple[str, ...] = ("simulate", "contract", "import_check"),
                  image: str = SIM_IMAGE, engine: str = "docker", memory: str = DEFAULT_MEMORY,
                  build_tmpfs: str = DEFAULT_BUILD_TMPFS):
         self.design, self.root = Path(os.path.realpath(design)), Path(os.path.realpath(root))

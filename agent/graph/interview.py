@@ -84,6 +84,19 @@ class Interview:
         return spec
 
 
+def merge_summaries(prev: dict[str, Any] | None, new: dict[str, Any]) -> dict[str, Any]:
+    """07a2 fix 3: the clarify gate can run the interview more than once (the first visit fails on something else, the
+    second finds every question already resolved in spec.yaml and asks none). The run summary must count the questions
+    of every visit, so the later, empty summary must not replace the earlier one. Questions are kept in order, once
+    each (by text)."""
+    qs = [*(prev or {}).get("questions", [])]
+    for q in new.get("questions", []):
+        if q.get("text") not in {x.get("text") for x in qs}:
+            qs.append(q)
+    return {"asked": len(qs), "answered": sum(q.get("status") == "answered" for q in qs),
+            "defaulted": sum(q.get("status") == "defaulted" for q in qs), "questions": qs}
+
+
 def open_questions(spec: dict[str, Any] | None) -> list[str]:
     return [o.get("question", "") for o in (spec or {}).get("open_questions") or []]
 
