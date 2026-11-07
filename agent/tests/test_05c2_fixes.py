@@ -219,12 +219,12 @@ def test_board_constraints_is_a_stage_tool_and_on_the_mcp_server():
 def test_simulate_offers_only_simulators_that_work(rt, monkeypatch):
     monkeypatch.setattr(tl, "available_sims", lambda: ("icarus",))
     sim = next(t for t in tool_list() if t["name"] == "simulate")
-    assert sim["inputSchema"]["properties"]["sim"]["enum"] == ["icarus"] and "available here: icarus" in sim["description"]
+    assert sim["inputSchema"]["properties"]["sim"]["enum"] == ["auto", "icarus"] and "available here: icarus" in sim["description"]
     r = dispatch(rt.session, "simulate", {"sim": "verilator"})
     assert r["refused"] and "icarus" in r["output"]                          # the schema itself refuses it
     monkeypatch.setattr(tl, "available_sims", lambda: ("icarus", "verilator"))
     assert next(t for t in tool_list() if t["name"] == "simulate")["inputSchema"]["properties"]["sim"]["enum"] == \
-        ["icarus", "verilator"]
+        ["auto", "icarus", "verilator"]
     # 05m: the sandbox image (fda-sim:2) has Verilator, so a container session may run it (test_05m covers the offer)
 
 

@@ -118,7 +118,7 @@ def test_below_floor_score_fails_with_the_floor(tmp_path):
 # ---- the cap ---------------------------------------------------------------------------------------------------------
 
 def test_wall_cap_scales_with_the_baseline():
-    assert M.plan_caps(312, 20, 39, None) == (20, 6864)            # the live run: 312 s baseline, 20 sampled, now fits
+    assert M.plan_caps(312, 20, 39, None) == (10, 3744)            # 07a2 fix 5 E: 312 s baseline, the one-hour budget allows 10 (was 20 in 6864 s)
     assert M.plan_caps(10, 20, 39, None) == (20, 1500)             # a quick bench keeps the old 1500 s
     assert M.plan_caps(312, 20, 39, 1500) == (20, 1500)            # an explicit cap is honoured
     assert M.plan_caps(312, 20, 39, 0) == (20, 0)

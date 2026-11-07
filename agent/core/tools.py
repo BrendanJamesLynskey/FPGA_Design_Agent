@@ -296,8 +296,8 @@ def available_sims() -> tuple[str, ...]:
 
 def _sim_refine() -> dict[str, Any]:
     sims = list(available_sims())
-    return {"properties": {"sim": {"enum": sims}},
-            "description": f"Simulators available here: {', '.join(sims)}."}
+    return {"properties": {"sim": {"enum": ["auto", *sims]}},
+            "description": f"Simulators available here: {', '.join(sims)}; auto (the default) picks Verilator when it is available."}
 
 
 _IMPORT_CHECK = r"""
@@ -346,11 +346,18 @@ def _import_check_tests(s: Session) -> dict | None:
                               "log_errors": [], "cause": [errs[0]["error"]], "frames": []}}
 
 
-@tool("simulate", "Run the design's cocotb tests (tests/test_*_rtl.py) under the chosen simulator. coverage=true (with "
+@tool("simulate", "Run the design's cocotb tests (tests/test_*_rtl.py) under the chosen simulator. sim=auto (the default) "
+                  "uses Verilator, which is faster (1.8x to 3.2x on two measured benches), when it is available and the design builds in it, and "
+                  "otherwise Icarus; the harness cross-checks on Icarus before a stage passes. coverage=true (with "
                   "sim=verilator) also records line/toggle/cover-property coverage (coverage.dat per seed), which "
                   "gates(kind=verif) needs for the code-coverage checks.",
-      {"sim": {"type": "string", "enum": ["icarus", "verilator"]}, "coverage": {"type": "boolean"}}, refine=_sim_refine)
-def simulate(s: Session, sim: str = "icarus", coverage: bool = False) -> dict:
+      {"sim": {"type": "string", "enum": ["auto", "icarus", "verilator"]}, "coverage": {"type": "boolean"}},
+      refine=_sim_refine)
+def simulate(s: Session, sim: str = "auto", coverage: bool = False) -> dict:
+    if sim == "auto" and not coverage:                 # 07a2 fix 5 E: the agent's own iterations run on the fast simulator
+        return _simulate_auto(s)
+    if sim == "auto":
+        sim = "verilator" if "verilator" in available_sims() else "icarus"
     if sim not in available_sims():
         return {"ok": False, "output": f"simulator {sim!r} is not available here; available: "
                                        f"{', '.join(available_sims())}"}
@@ -372,7 +379,8 @@ def simulate(s: Session, sim: str = "icarus", coverage: bool = False) -> dict:
     results = s.design / "build" / "verif" / "sim"
     shutil.rmtree(results, ignore_errors=True)
     r = s.runner.run("simulate", argv, s.root, {"SIM": sim, "FDA_SIM_RESULTS_DIR": _rel(s, results),
-                                                **({"FDA_COVERAGE": "1"} if coverage else {})}, timeout=1800)
+                                                **({"FDA_COVERAGE": "1"} if coverage else {})},
+                     timeout=sim_timeout(s.design, sim))
     out = _text_out(r)
     res: dict[str, Any] = {"ok": r.returncode == 0}
     if r.returncode != 0:
@@ -385,7 +393,59 @@ def simulate(s: Session, sim: str = "icarus", coverage: bool = False) -> dict:
                    + "".join("\n  cause: " + e for e in ff.get("cause") or [])
                    + "".join("\n  log: " + e for e in ff.get("log_errors") or []) + "\n[end first failure]\n" + out)
     res.update({"output": out, "returncode": r.returncode, "sim": sim, "seconds_run": r.seconds})
+    if r.returncode == 0 and not coverage:
+        record_sim_baseline(s.design, sim, r.seconds)
     return res
+
+
+#: 07a2 fix 5 E. The simulate timeout scales with the measured run time of this design on this simulator instead of a
+#: fixed 1800 s: 4 x the last passing run + 120 s, never under 600 s, never over 7200 s; without a measurement, 1800 s.
+SIM_TIMEOUT_DEFAULT, SIM_TIMEOUT_MIN, SIM_TIMEOUT_MAX = 1800, 600, 7200
+_BASELINE_FILE = ("build", "verif", "sim_baseline.json")
+
+
+def sim_timeout(design: Path, sim: str) -> int:
+    try:
+        base = float(json.loads(design.joinpath(*_BASELINE_FILE).read_text())[sim])
+    except (OSError, ValueError, KeyError, TypeError):
+        return SIM_TIMEOUT_DEFAULT
+    return int(min(SIM_TIMEOUT_MAX, max(SIM_TIMEOUT_MIN, 4 * base + 120)))
+
+
+def record_sim_baseline(design: Path, sim: str, seconds: float) -> None:
+    f = design.joinpath(*_BASELINE_FILE)
+    try:
+        data = json.loads(f.read_text())
+    except (OSError, ValueError):
+        data = {}
+    data[sim] = round(float(seconds), 1)
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(data))
+
+
+_VERILATOR_BUILD_FAIL = re.compile(r"Exiting due to \d+ error|%Error-UNSUPPORTED|%Error-PINNOTFOUND|%Error: Cannot find|make: \*\*\*|"
+                                   r"Verilator build failed|ninja: build stopped", re.I)
+
+
+def _simulate_auto(s: Session) -> dict:
+    """sim=auto: Verilator when available; if it could not even build the design (a build error, not a failed test),
+    Icarus runs instead and the result says so."""
+    if "verilator" not in available_sims():
+        return simulate(s, "icarus")
+    r = simulate(s, "verilator")
+    if r.get("ok") or not _verilator_could_not_build(r):
+        return r
+    r2 = simulate(s, "icarus")
+    r2["output"] = ("[sim=auto: the design did not build in Verilator, so this is the Icarus run; Verilator said: "
+                    + str(r.get("output", ""))[-300:].replace("\n", " ") + "]\n" + str(r2.get("output", "")))
+    r2["fell_back_from"] = "verilator"
+    return r2
+
+
+def _verilator_could_not_build(r: dict) -> bool:
+    if r.get("kind") == "import_error" or r.get("refused"):
+        return False
+    return bool(_VERILATOR_BUILD_FAIL.search(str(r.get("log_tail") or r.get("output", ""))))
 
 
 @tool("mutate", "Mutation testing of the design's RTL (V3 mutation_score_pct): runs tests/test_*_rtl.py against a capped, "
