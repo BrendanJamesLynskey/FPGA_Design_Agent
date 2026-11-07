@@ -44,30 +44,6 @@ def sources(task: Path, rtl: Path) -> list[Path]:
     return src
 
 
-def missing_modules(task: Path) -> list[str]:
-    """07a2 fix 5 F: third-party modules the task's hidden Python files import that this interpreter lacks (batch 1: the
-    c15 model imports numpy, the scoring venv had none, and the run was scored 0/0 with no word why). Standard-library,
-    repo-local and hidden/-local modules are not checked."""
-    import ast
-    import importlib.util
-
-    hidden = task / "hidden"
-    local = {p.stem for p in hidden.glob("*.py")} | {"benchmark", "flow", "shell", "agent", "cocotb", "cocotb_tools",
-                                                   "cocotb_coverage"}
-    need: set[str] = set()
-    for f in sorted(hidden.glob("*.py")):
-        try:
-            tree = ast.parse(f.read_text())
-        except SyntaxError:
-            continue
-        for n in ast.walk(tree):
-            if isinstance(n, ast.Import):
-                need |= {a.name.split(".")[0] for a in n.names}
-            elif isinstance(n, ast.ImportFrom) and n.level == 0 and n.module:
-                need.add(n.module.split(".")[0])
-    return sorted(m for m in need - local - set(sys.stdlib_module_names) if importlib.util.find_spec(m) is None)
-
-
 def parse_results(xml: Path) -> dict[str, bool]:
     out: dict[str, bool] = {}
     if not xml.exists():
@@ -81,15 +57,9 @@ def parse_results(xml: Path) -> dict[str, bool]:
 
 def run(task: Path, rtl: Path | None = None, sim: str | None = None, seed: int = 1, tag: str = "ref",
         testcase: list[str] | None = None, build_root: Path | None = None) -> dict:
-    task = task.resolve()
-    miss = missing_modules(task)
-    if miss:                                      # a clear environment error instead of a silent 0/0
-        return {"task": task.name, "tag": tag, "sim": sim or os.environ.get("SIM", "icarus"), "seed": seed,
-                "rtl": str(rtl), "built": False, "tests": {}, "pass": False,
-                "error": "environment: the task's hidden bench imports " + ", ".join(miss)
-                         + " which this Python lacks (pip install it in the scoring venv); not an RTL failure"}
     from cocotb_tools.runner import get_runner
 
+    task = task.resolve()
     rtl = (rtl or task / "ref" / "rtl").resolve()
     b = load_bench(task)
     simname = sim or os.environ.get("SIM", "icarus")
