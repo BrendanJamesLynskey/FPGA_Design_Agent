@@ -241,7 +241,26 @@ def lint(s: Session) -> dict:
     stubs = sorted(glob.glob(str(s.design / "lint" / "*.sv")))
     argv = ["verilator", "--lint-only", "-Wall", "--top-module", cfg["top"], *srcs, *stubs]
     r = s.runner.run("lint", argv, s.root, timeout=300)
-    return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "seconds_run": r.seconds}
+    out, ok = _text_out(r), r.returncode == 0
+    ic = _icarus_elaborate(s, cfg["top"], srcs)           # 07a2 fix 5 D: the simulator the tests run on must accept it too
+    if ic is not None and ic.returncode != 0:
+        ok = False
+        out += ("\n" if out else "") + "[icarus elaboration, iverilog -g2012] " + _text_out(ic)[-1500:] \
+            + "\n(Icarus 12 is stricter than Verilator here: for example a constant function that returns an unpacked " \
+              "array, or a parameter built from one, does not elaborate. Load the free-simulators skill for the list.)"
+    return {"ok": ok, "output": out, "returncode": r.returncode if r.returncode else (ic.returncode if ic else 0),
+            "seconds_run": r.seconds + (ic.seconds if ic else 0)}
+
+
+def _icarus_elaborate(s: Session, top: str, srcs: list[str]):
+    """``iverilog -g2012 -s <top> -o /dev/null`` over the lint sources; None when iverilog is not installed (the
+    elaboration check is skipped then, as the portability check is)."""
+    incs = [f"-I{d}" for d in sorted({str(Path(f).parent) for f in srcs})]
+    try:
+        return s.runner.run("lint-icarus", ["iverilog", "-g2012", "-s", top, "-o", os.devnull, *incs, *srcs], s.root,
+                            timeout=300)
+    except FileNotFoundError:
+        return None
 
 
 def _verilator_version(runner_env: dict[str, str] | None = None) -> tuple[int, int] | None:
