@@ -1,0 +1,162 @@
+{
+  "design": "build/bench/t2_vga_sprite",
+  "runs": 1,
+  "passed": 1,
+  "pass": true,
+  "results": [
+    {
+      "design": "build/bench/t2_vga_sprite",
+      "started": "2026-11-03T19:56:25",
+      "git_commit": "64c7f37b410c66da281c5b48855d8970e121ddc3",
+      "git_dirty": false,
+      "steps": {
+        "power_ok": {
+          "pass": true,
+          "source": "wall",
+          "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+          "limit_w": 2.0,
+          "junction_limit_c": 85.0,
+          "total_w": 0.132,
+          "junction_c": 42.4,
+          "dynamic_w": 0.018,
+          "static_w": 0.113,
+          "confidence": "Medium",
+          "environment": {
+            "ambient_c": 40.0,
+            "airflow_lfm": 0.0,
+            "heatsink": "none",
+            "theta_ja_c_per_w": 18.2,
+            "board": "small (4\"x4\")",
+            "board_layers": "4to7 (4 to 7 Layers)"
+          },
+          "supplies_a": {
+            "vccint": 0.033,
+            "vccaux": 0.02,
+            "vcco33": 0.008,
+            "vccbram": 0.001,
+            "vccadc": 0.02
+          },
+          "rails": {
+            "vccint": {
+              "a": 0.033,
+              "limit_a": 2.4
+            },
+            "rail_1v8": {
+              "a": 0.04,
+              "limit_a": 0.38
+            },
+            "vcco33": {
+              "a": 0.008,
+              "limit_a": 1.9
+            }
+          },
+          "why": "",
+          "seconds": 0.0
+        },
+        "discover": {
+          "pass": true,
+          "board": "nexys_a7_100t",
+          "cable_serial": "...B73A",
+          "part": "xc7a100t",
+          "idcode": "13631093",
+          "uart": "FT2232 interface 1 (found)",
+          "targets_seen": 1,
+          "vivado_version": "2025.2",
+          "seconds": 37.1
+        },
+        "program": {
+          "variant": "base",
+          "build_stamp": "47f61ff1",
+          "cable_serial": "...B73A",
+          "power_ok": {
+            "pass": true,
+            "source": "wall",
+            "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+            "limit_w": 2.0,
+            "junction_limit_c": 85.0,
+            "total_w": 0.132,
+            "junction_c": 42.4,
+            "dynamic_w": 0.018,
+            "static_w": 0.113,
+            "confidence": "Medium",
+            "environment": {
+              "ambient_c": 40.0,
+              "airflow_lfm": 0.0,
+              "heatsink": "none",
+              "theta_ja_c_per_w": 18.2,
+              "board": "small (4\"x4\")",
+              "board_layers": "4to7 (4 to 7 Layers)"
+            },
+            "supplies_a": {
+              "vccint": 0.033,
+              "vccaux": 0.02,
+              "vcco33": 0.008,
+              "vccbram": 0.001,
+              "vccadc": 0.02
+            },
+            "rails": {
+              "vccint": {
+                "a": 0.033,
+                "limit_a": 2.4
+              },
+              "rail_1v8": {
+                "a": 0.04,
+                "limit_a": 0.38
+              },
+              "vcco33": {
+                "a": 0.008,
+                "limit_a": 1.9
+              }
+            },
+            "why": ""
+          },
+          "pass": true,
+          "device": "xc7a100t_0",
+          "part": "xc7a100t",
+          "done_pin": "1",
+          "program_ms": 360,
+          "ila_cores": 0,
+          "vivado_version": "2025.2",
+          "seconds": 18.3
+        },
+        "identify": {
+          "pass": true,
+          "design_id": "SPRT",
+          "build_stamp": "47f61ff1",
+          "shell_version": "0x00010000",
+          "seconds": 0.1
+        },
+        "selfcheck": {
+          "reset_ok": true,
+          "rows_ok": true,
+          "colours_ok": true,
+          "frames_per_s": 60.52,
+          "frames": 61,
+          "frames_lo": 60,
+          "frames_hi": 66,
+          "x": 162,
+          "y": 163,
+          "pass": true,
+          "rule": "Pass rule (written before any board run): - reset values: ROW0-15 = 0, X = Y = 0, SPRITE_COLOR 0xFFF, BG_COLOR 0, CTRL 1, and every RW register reads back a written value masked to its width; - FRAME advances by 60 +/- 2 in 1.00 s (59.52 Hz); - with BOUNCE on from X = 100, Y = 100 (moving right and down) X and Y both advance by the number of frames that passed between the CTRL write and the X / Y reads, as long as no edge is reached (about 1 s). That number is bracketed (v1.1, below): FRAME is read before and after the CTRL write and before and after the X / Y reads, and X - 100 and Y - 100 must each lie in [FRAME_before_reads - FRAME_after_CTRL_write - 1, FRAME_after_reads - FRAME_before_CTRL_write + 1]. Rule changed in v1.1, after the first board run (2026-11-03, reference build 791b101): the v1 rule compared X - 100 and Y - 100 with one FRAME difference (read after the CTRL write, and again before the X / Y reads), to +/- 1. The board showed that difference as 60 while X and Y had both moved 62 (measured FRAME rate 59.53 Hz). The two UART register reads of X and Y, after the FRAME read, take real time, and frames pass during them. The design behaved correctly (X and Y moved together, one pixel per frame); the fault was the measurement window, not the behaviour. The bracket makes the window explicit and does not loosen what is checked: X and Y must still track the frame counter to within one frame. Board record: results/board_v2/t2_vga_sprite.json (v1 run). The bench leaves a bouncing arrow sprite running for the owner to look at (REQ-05).",
+          "seconds": 3.1
+        },
+        "still_alive": {
+          "pass": true,
+          "scratch_kept": true,
+          "status": {
+            "checksum_errors": 0,
+            "request_errors": 0,
+            "uart_framing_errors": 0,
+            "timeouts": 0
+          },
+          "seconds": 0.1
+        }
+      },
+      "pass": true,
+      "cable_serial": "...B73A",
+      "vivado_version": "2025.2",
+      "build_stamp": "47f61ff1",
+      "seconds": 58.7
+    }
+  ]
+}

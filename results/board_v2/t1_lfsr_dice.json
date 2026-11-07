@@ -1,0 +1,160 @@
+{
+  "design": "build/bench/t1_lfsr_dice",
+  "runs": 1,
+  "passed": 1,
+  "pass": true,
+  "results": [
+    {
+      "design": "build/bench/t1_lfsr_dice",
+      "started": "2026-11-03T13:21:03",
+      "git_commit": "791b1011543278e48fb414f922c36803abc7e942",
+      "git_dirty": false,
+      "steps": {
+        "power_ok": {
+          "pass": true,
+          "source": "wall",
+          "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+          "limit_w": 2.0,
+          "junction_limit_c": 85.0,
+          "total_w": 0.12,
+          "junction_c": 42.2,
+          "dynamic_w": 0.008,
+          "static_w": 0.113,
+          "confidence": "Medium",
+          "environment": {
+            "ambient_c": 40.0,
+            "airflow_lfm": 0.0,
+            "heatsink": "none",
+            "theta_ja_c_per_w": 18.2,
+            "board": "small (4\"x4\")",
+            "board_layers": "4to7 (4 to 7 Layers)"
+          },
+          "supplies_a": {
+            "vccint": 0.033,
+            "vccaux": 0.02,
+            "vcco33": 0.005,
+            "vccadc": 0.02
+          },
+          "rails": {
+            "vccint": {
+              "a": 0.033,
+              "limit_a": 2.4
+            },
+            "rail_1v8": {
+              "a": 0.04,
+              "limit_a": 0.38
+            },
+            "vcco33": {
+              "a": 0.005,
+              "limit_a": 1.9
+            }
+          },
+          "why": "",
+          "seconds": 0.0
+        },
+        "discover": {
+          "pass": true,
+          "board": "nexys_a7_100t",
+          "cable_serial": "...B73A",
+          "part": "xc7a100t",
+          "idcode": "13631093",
+          "uart": "FT2232 interface 1 (found)",
+          "targets_seen": 1,
+          "vivado_version": "2025.2",
+          "seconds": 25.2
+        },
+        "program": {
+          "variant": "base",
+          "build_stamp": "95e2cc4b",
+          "cable_serial": "...B73A",
+          "power_ok": {
+            "pass": true,
+            "source": "wall",
+            "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+            "limit_w": 2.0,
+            "junction_limit_c": 85.0,
+            "total_w": 0.12,
+            "junction_c": 42.2,
+            "dynamic_w": 0.008,
+            "static_w": 0.113,
+            "confidence": "Medium",
+            "environment": {
+              "ambient_c": 40.0,
+              "airflow_lfm": 0.0,
+              "heatsink": "none",
+              "theta_ja_c_per_w": 18.2,
+              "board": "small (4\"x4\")",
+              "board_layers": "4to7 (4 to 7 Layers)"
+            },
+            "supplies_a": {
+              "vccint": 0.033,
+              "vccaux": 0.02,
+              "vcco33": 0.005,
+              "vccadc": 0.02
+            },
+            "rails": {
+              "vccint": {
+                "a": 0.033,
+                "limit_a": 2.4
+              },
+              "rail_1v8": {
+                "a": 0.04,
+                "limit_a": 0.38
+              },
+              "vcco33": {
+                "a": 0.005,
+                "limit_a": 1.9
+              }
+            },
+            "why": ""
+          },
+          "pass": true,
+          "device": "xc7a100t_0",
+          "part": "xc7a100t",
+          "done_pin": "1",
+          "program_ms": 383,
+          "ila_cores": 0,
+          "vivado_version": "2025.2",
+          "seconds": 28.9
+        },
+        "identify": {
+          "pass": true,
+          "design_id": "DICE",
+          "build_stamp": "95e2cc4b",
+          "shell_version": "0x00010000",
+          "seconds": 0.1
+        },
+        "selfcheck": {
+          "taps": "0xB400",
+          "seeded": "0x1234",
+          "after_1000": "0x22C3",
+          "expected_1000": "0x22C3",
+          "steps_left": 0,
+          "zero_seed_state": 1,
+          "roll": 0,
+          "history": "0x0000",
+          "unmapped": 0,
+          "pass": true,
+          "rule": "Pass rule (written before any board run): - TAPS reads 0xB400 (after a write of 0xB400); SEED = 0x1234 makes STATE read 0x1234; - a burst of 1000 steps (STEP = 1000) leaves STATE equal to the host-side Galois model's 1000th state from 0x1234 and STEP reads 0; - a SEED write of 0 makes STATE read 0x0001; ROLL reads 0..6 and HISTORY's nibbles each 0..6; 0x07 reads 0.",
+          "seconds": 0.2
+        },
+        "still_alive": {
+          "pass": true,
+          "scratch_kept": true,
+          "status": {
+            "checksum_errors": 0,
+            "request_errors": 0,
+            "uart_framing_errors": 0,
+            "timeouts": 0
+          },
+          "seconds": 0.1
+        }
+      },
+      "pass": true,
+      "cable_serial": "...B73A",
+      "vivado_version": "2025.2",
+      "build_stamp": "95e2cc4b",
+      "seconds": 54.5
+    }
+  ]
+}

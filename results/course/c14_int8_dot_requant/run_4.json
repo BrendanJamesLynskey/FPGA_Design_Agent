@@ -1,0 +1,58 @@
+{
+ "task": "c14_int8_dot_requant",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 1,
+ "run": 4,
+ "date": "2026-11-07",
+ "run_id": "20261107-005621-8deb",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.318 (Claude Code)",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "73d23ec (PR #49, branch f3-07a2-fix3); the run began before CI finished; knowledge bank a8ba042 (Knowledge PR #19, via FDA_KNOWLEDGE)",
+ "stop": {
+  "stage": 2,
+  "name": "rtl-design-creation",
+  "reason": "stage 2 visited more than 4 times (run limit visits_per_stage=4); the V3 gate never passed",
+  "stages_0_1_passed": true
+ },
+ "gates": {
+  "clarify": "pass",
+  "board-and-device-planning": "pass",
+  "rtl-design-creation": "fail (V0, V1 pass; V2 pass after repairs; V3: cover_properties_pct 0.0, C_led_fall/C_led_high/C_led_rise/C_rx_start/C_tx_start never hit; mutation 17 of 17 killed)",
+  "vivado": "post-synthesis only (until=synth): rtl and post_synth gates pass; no place/route, so no WNS/LUT at 100 MHz (post-synth WNS -0.011 ns, 1 endpoint)"
+ },
+ "agent_turns": 101,
+ "wall_s": 3379.0,
+ "questions": {
+  "asked": 6,
+  "answered": 3,
+  "defaulted": 3
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": true,
+  "tests_passed": 6,
+  "tests_total": 6,
+  "note": "the RTL the run left in rtl/ passes all six hidden tests; it was never placed or routed by the agent"
+ },
+ "qor": null,
+ "failure": {
+  "class": "harness gap (tests-role convention) plus model error",
+  "evidence": "build/verif/verif_gates.json V3 cover_properties_pct 0.0: tests/test_c14_int8_dot_requant_rtl.py builds sources = SHELL_RTL + rtl/*.sv only; the bound checker verif/checkers/*.sv (V_COVER points) is never compiled in the Verilator coverage run (coverage.dat has no A_ or C_ entries). The reference test (designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py) adds the checkers for SIM=verilator; nothing in the tests-role prompt or the verification-stages skills says to. Each Icarus simulate also took about 6 min (3 seeds x 2 min), so the 4-visit limit was reached.",
+  "not_fixed": "brief: stop on a new failure. Candidate fix for the planner: tests-role conventions (and v2 skill) say: when SIM=verilator add verif/checkers/*.sv to the sources, bind file last."
+ },
+ "fixes_checked": {
+  "root_cause_summary": "not triggered (the bench imported); the first failing simulate showed the real assertion ('LED never fell on GO' in test_reset) in the [first failure] block",
+  "import_check": "ran before every simulate, passed",
+  "questions_counter": "asked 6, answered 3, defaulted 3 (run 3 read 0)",
+  "cocotb_coverage": "bench used dotted names (top.rst_class ...) and imported; 49 of 50 then 50 of 50 functional bins"
+ },
+ "comparison": "run 3 stopped at stage 2 on the bench import; run 4 got past it (simulate passes, mutation 100%, synth gates pass) and stopped at stage 2 on the V3 cover-property gate"
+}
