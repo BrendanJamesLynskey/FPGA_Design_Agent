@@ -4,17 +4,28 @@
 # summaries are committed under results/.
 name: CI
 
+# Brief 07a2 fix 5 G: a pull request runs only the benchmark tasks it touches plus a small smoke set
+# (tools/ci_select.py, tools/ci_smoke.yaml). Pushes to main, the nightly schedule and a manual run use every task, so
+# main's coverage is the full sweep.
 on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
 
 jobs:
   python:
     name: Python (models, gates parser, host driver)
     runs-on: ubuntu-24.04
+    env:
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the pull request base (for the task selection)
+        if: github.event_name == 'pull_request'
+        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -31,7 +42,10 @@ jobs:
       - name: Benchmark v1 training pool, model unit tests (brief 06a)
         run: |
           rc=0
-          for d in benchmark/pool/*/hidden; do
+          sel=$(python tools/ci_select.py pool)
+          if [ "$sel" = ALL ]; then dirs=$(ls -d benchmark/pool/*/hidden); else dirs=$(for t in $sel; do echo benchmark/pool/$t/hidden; done); fi
+          echo "pool tasks: $sel"
+          for d in $dirs; do
             PYTHONPATH=$d:. python -m pytest -q -p no:cacheprovider --import-mode=importlib $d/test_model.py || rc=1
           done
           exit $rc
@@ -39,8 +53,13 @@ jobs:
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
     runs-on: ubuntu-24.04
+    env:
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the pull request base (for the task selection)
+        if: github.event_name == 'pull_request'
+        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -62,7 +81,10 @@ jobs:
       - name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (brief 06a)
         run: |
           rc=0
-          for t in benchmark/tasks/*/; do python benchmark/tools/check_task.py "$t" --out build/bench_ci || rc=1; done
+          sel=$(python tools/ci_select.py v1)
+          if [ "$sel" = ALL ]; then dirs=$(ls -d benchmark/tasks/*/); else dirs=$(for t in $sel; do echo benchmark/tasks/$t/; done); fi
+          echo "v1 tasks: $sel"
+          for t in $dirs; do python benchmark/tools/check_task.py "$t" --out build/bench_ci || rc=1; done
           exit $rc
       - name: Upload simulation logs
         if: always()
@@ -74,8 +96,13 @@ jobs:
   course-tier:
     name: Course tier development tasks (cocotb + Icarus, reference and mutants)
     runs-on: ubuntu-24.04
+    env:
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the pull request base (for the task selection)
+        if: github.event_name == 'pull_request'
+        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -87,7 +114,10 @@ jobs:
       - name: Course tier (brief 07a1) - reference RTL passes, every mutant killed
         run: |
           rc=0
-          for t in benchmark/course/tasks/*/; do python benchmark/course/tools/check_task.py "$t" --out build/course_ci || rc=1; done
+          sel=$(python tools/ci_select.py course)
+          if [ "$sel" = ALL ]; then dirs=$(ls -d benchmark/course/tasks/*/); else dirs=$(for t in $sel; do echo benchmark/course/tasks/$t/; done); fi
+          echo "course tasks: $sel"
+          for t in $dirs; do python benchmark/course/tools/check_task.py "$t" --out build/course_ci || rc=1; done
           exit $rc
 
   lint:
@@ -107,8 +137,13 @@ jobs:
   verification:
     name: Verification (cocotb on Verilator and Icarus, checkers, formal, portability, V-stage gates)
     runs-on: ubuntu-24.04
+    env:
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v4
+      - name: Fetch the pull request base (for the task selection)
+        if: github.event_name == 'pull_request'
+        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -147,7 +182,7 @@ jobs:
       - name: Benchmark v1 development tasks - reference RTL under Verilator 5.048 (brief 06a)
         run: |
           export PATH=$HOME/verilator-5.048/bin:$PATH
-          SIM=verilator python -m pytest -q benchmark/tests/test_bench_rtl.py
+          SIM=verilator python -m pytest -q benchmark/tests/test_bench_rtl.py -k "$(python tools/ci_select.py v1 --k)"
       - name: The same bench under Icarus, 3 seeds
         run: SIM=icarus T1_SEEDS=1,2,3 python -m pytest -q designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
       - name: Formal (SymbiYosys bmc + cover)
