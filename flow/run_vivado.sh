@@ -45,9 +45,13 @@ command -v systemd-run >/dev/null || die "systemd-run not found"
 
 preflight() {
   # pgrep -x matches the process name exactly, so it never matches this script
-  local running
-  running="$(pgrep -x -d, vivado || true)"
-  [ -z "$running" ] || die "another Vivado is running (PIDs $running); one Vivado job at a time on this PC"
+  # FDA_VIVADO_MAX (default 1) is how many Vivado jobs may run at once; the owner may raise it to 2 on the 32 GB PC
+  # (2026-11-07 trial, measured by _handoff/fpga_agent/resources/vivado_monitor.sh). It counts the real binaries.
+  local running n max="${FDA_VIVADO_MAX:-1}"
+  # Vivado's own task_worker.tcl helpers (synthesis children) are part of their parent job, so they are not counted
+  running="$(pgrep -af 'unwrapped/lnx64.o/vivado' | grep -v task_worker.tcl | awk '{print $1}' | paste -sd, - || true)"
+  n="$(pgrep -af 'unwrapped/lnx64.o/vivado' | grep -vc task_worker.tcl || true)"
+  [ "${n:-0}" -lt "$max" ] || die "$n Vivado job(s) running (PIDs $running), limit FDA_VIVADO_MAX=$max on this PC"
   local avail_kb need_kb
   avail_kb="$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)"
   need_kb=$((MIN_AVAIL_GB * 1024 * 1024))
