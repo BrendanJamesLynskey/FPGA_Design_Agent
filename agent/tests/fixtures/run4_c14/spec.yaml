@@ -1,0 +1,257 @@
+name: c14_int8_dot_requant
+title: Quantised-layer arithmetic unit (8-way int8 dot product, bias, requantise,
+  clamp) behind the test shell
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c14_int8_dot_requant_top
+clocks:
+- name: CLK100MHZ
+  pin_role: board 100 MHz oscillator (E3)
+  frequency: 100 MHz
+  note: single clock domain for shell and arithmetic
+reset:
+  name: CPU_RESETN
+  pin_role: board CPU reset button (C12)
+  polarity: active low
+  behaviour: clears loaded operands, result registers and the ready flag; synchronised
+    to CLK100MHZ
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000000
+  BUILD_STAMP: 0
+  DESIGN_ID: DOTQ
+ports:
+- name: CLK100MHZ
+  direction: input
+  width: 1
+  board_pin_role: 100 MHz clock (E3)
+- name: CPU_RESETN
+  direction: input
+  width: 1
+  board_pin_role: CPU reset button, active low (C12)
+- name: UART_TXD_IN
+  direction: input
+  width: 1
+  board_pin_role: USB-UART, data from host into FPGA (C4)
+- name: UART_RXD_OUT
+  direction: output
+  width: 1
+  board_pin_role: USB-UART, data from FPGA to host (D4)
+- name: LED0
+  direction: output
+  width: 1
+  board_pin_role: LED0 (H17), shows ready flag
+behaviour:
+  inputs:
+  - 'Operands loaded over the shell: act[0..7] signed 8-bit (-128..127), wgt[0..7]
+    signed 8-bit (-127..127), bias signed 32-bit, mult unsigned 16-bit, shift 5-bit
+    (1..31), relu 1-bit.'
+  - Loading does not start computation; a write to GO presents the loaded operands
+    to the arithmetic block for exactly one clock cycle.
+  arithmetic:
+  - acc = sum over i=0..7 of act[i]*wgt[i] + bias, exact signed integer; no overflow
+    is allowed for legal inputs.
+  - Scaled value = acc * mult / 2^shift, rounded to nearest integer with exact halves
+    towards plus infinity, i.e. floor((acc*mult + 2^(shift-1)) / 2^shift) using arithmetic
+    shift (2.5 -> 3, -2.5 -> -2).
+  - Intermediate product acc*mult is held in full width (at least 49 bits signed)
+    so no precision is lost.
+  - y = clamp(scaled, -128, 127); when relu = 1, y = clamp(scaled, 0, 127).
+  outputs:
+  - y is signed 8-bit; acc is signed 32-bit; ready is a status bit.
+  - A write to GO clears READY and presents the operands for one clock; READY becomes
+    1 within 8 clocks and stays 1 until the next GO or reset.
+  - Y and ACC hold the result until the next GO and read 0 while READY is 0.
+  - A GO is always accepted, also when READY is already set (restarts with the loaded
+    operands).
+  - LED0 = ready flag.
+  reset:
+  - CPU_RESETN clears all loaded operands, y, acc and ready; CTRL resets to 1 (shift
+    = 1, relu = 0).
+  shell:
+  - Shell runs at 115200 baud, 8N1 on the USB-UART (shell/PROTOCOL.md version 1.0);
+    design ID DOTQ is supplied by the shell ID mechanism (0x444F5451 as ASCII D,O,T,Q).
+  - Offsets 0x0B-0x7F read 0; writes to them and to RO registers are ignored.
+registers:
+  map:
+  - offset: '0x00'
+    name: A_LO
+    access: RW
+    reset: '0x00000000'
+    bits: '[31:0] activations 0..3, a_i in bits [8i+7:8i]'
+  - offset: '0x01'
+    name: A_HI
+    access: RW
+    reset: '0x00000000'
+    bits: '[31:0] activations 4..7, a_(4+i) in bits [8i+7:8i]'
+  - offset: '0x02'
+    name: W_LO
+    access: RW
+    reset: '0x00000000'
+    bits: '[31:0] weights 0..3, same packing'
+  - offset: '0x03'
+    name: W_HI
+    access: RW
+    reset: '0x00000000'
+    bits: '[31:0] weights 4..7, same packing'
+  - offset: '0x04'
+    name: BIAS
+    access: RW
+    reset: '0x00000000'
+    bits: '[31:0] signed bias'
+  - offset: '0x05'
+    name: MULT
+    access: RW
+    reset: '0x00000000'
+    bits: '[15:0] unsigned multiplier; [31:16] read 0'
+  - offset: '0x06'
+    name: CTRL
+    access: RW
+    reset: '0x00000001'
+    bits: '[4:0] shift (1..31), [8] relu; other bits read 0'
+  - offset: '0x07'
+    name: GO
+    access: WO
+    reset: '0x00000000'
+    bits: any write starts one computation; reads 0
+  - offset: '0x08'
+    name: Y
+    access: RO
+    reset: '0x00000000'
+    bits: '[7:0] limited answer (two''s complement); [31:8] read 0'
+  - offset: '0x09'
+    name: ACC
+    access: RO
+    reset: '0x00000000'
+    bits: '[31:0] the signed accumulator including the bias'
+  - offset: '0x0A'
+    name: STATUS
+    access: RO
+    reset: '0x00000000'
+    bits: '[0] READY; other bits 0'
+timing:
+  clock: CLK100MHZ
+  uart_bit_cycles: 868
+  latency:
+    go_to_ready: READY rises within 8 CLK100MHZ cycles after GO; never before y and
+      acc are valid.
+    reset: Outputs and ready clear within 2 cycles of CPU_RESETN asserting.
+  throughput: One result per go; shell UART access dominates.
+  constraints: 100 MHz clock, timing closure with non-negative WNS.
+resources_expected:
+  luts: under 1500 including UART shell
+  ffs: under 1500
+  dsp48: 0 to 12
+  bram: 0
+assumptions:
+- assumption: System clock is the 100 MHz board oscillator, so CLKS_PER_BIT = 868.
+  reason: 100e6/115200 = 868.06; the request fixes 115200 baud and the Nexys A7 clock
+    is 100 MHz.
+- assumption: Weights are never -128; the design still computes correctly if they
+    are.
+  reason: The request limits weights to -127..127.
+- assumption: acc never overflows 32 bits for the inputs that are tested.
+  reason: The oracle says the spec allows no overflow and defines no wrap behaviour.
+- assumption: Operand writes while a result is being computed are not required to
+    be safe.
+  reason: Computation takes at most 8 cycles, far shorter than a UART transaction.
+- assumption: Shift outside 1..31 is out of contract and not tested.
+  reason: Request specifies 1 to 31.
+open_questions: []
+requirements:
+- id: REQ-01
+  text: acc equals the exact sum of the eight act*wgt products plus bias, for all
+    legal inputs including extremes.
+  proof:
+  - simulation
+  - formal
+- id: REQ-02
+  text: Scaling by mult/2^shift rounds to nearest with exact halves towards plus infinity
+    for shift 1..31 and mult 0..65535.
+  proof:
+  - simulation
+  - formal
+- id: REQ-03
+  text: y is clamped to -128..127, and to 0..127 when relu = 1, with both ends exercised.
+  proof:
+  - simulation
+  - formal
+- id: REQ-04
+  text: y, acc and READY are readable over the shell after GO; READY is set only when
+    y and acc are valid; Y and ACC read 0 while READY is 0.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-05
+  text: GO presents the loaded operands to the block for exactly one clock cycle,
+    clears READY, and READY rises within 8 clocks.
+  proof:
+  - simulation
+  - formal
+- id: REQ-06
+  text: CPU_RESETN clears the loaded operands and the ready flag.
+  proof:
+  - simulation
+  - formal
+  - hardware
+- id: REQ-07
+  text: LED0 shows the ready flag.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-08
+  text: Shell communicates at 115200 baud on the USB-UART (CLKS_PER_BIT = 868 at 100
+    MHz).
+  proof:
+  - simulation
+  - hardware
+- id: REQ-09
+  text: Design ID reads back as DOTQ.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-10
+  text: Top module is c14_int8_dot_requant_top with ports named as in the master XDC
+    and CLKS_PER_BIT, TIMEOUT_CYCLES, BUILD_STAMP as top-level parameters; no other
+    time constants.
+  proof:
+  - analysis
+- id: REQ-11
+  text: Design meets timing at 100 MHz and fits the xc7a100t.
+  proof:
+  - analysis
+- id: REQ-12
+  text: Register map follows the answered map (offsets 0x00-0x0A); unmapped offsets
+    read 0 and writes to them and to RO registers are ignored.
+  proof:
+  - simulation
+resolved_questions:
+- question: What is the register map (offset, width, reset value and access of every
+    register) of the shell-facing block?
+  answer: A_LO 0x00 RW; A_HI 0x01 RW; W_LO 0x02 RW; W_HI 0x03 RW; BIAS 0x04 RW; MULT
+    0x05 RW; CTRL 0x06 RW reset 1 (shift [4:0], relu [8]); GO 0x07 WO; Y 0x08 RO;
+    ACC 0x09 RO; STATUS 0x0A RO; offsets 0x0B-0x7F read 0.
+  status: answered
+  by: oracle
+- question: Is acc allowed to overflow 32 bits when bias is near its limit?
+  answer: The spec allows no overflow and defines no wrap behaviour.
+  status: answered
+  by: oracle
+- question: Is ready cleared when a new go is accepted, and are results held until
+    then?
+  answer: Yes. GO clears READY; READY becomes 1 within 8 clocks; Y and ACC hold until
+    next GO and read 0 while READY is 0.
+  status: answered
+  by: oracle
+- question: What are the TIMEOUT_CYCLES default and BUILD_STAMP default values?
+  answer: TIMEOUT_CYCLES = 100000000, BUILD_STAMP = 0 overridden by the flow.
+  status: defaulted
+  by: oracle
+- question: How is the DOTQ design ID presented by the shell?
+  answer: Four ASCII bytes D,O,T,Q read as 0x444F5451 via the shell ID mechanism.
+  status: defaulted
+  by: oracle
+- question: Does a go with the ready flag already set restart the computation?
+  answer: Yes, always accepted.
+  status: defaulted
+  by: oracle

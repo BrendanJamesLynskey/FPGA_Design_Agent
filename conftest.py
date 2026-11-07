@@ -28,3 +28,11 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     for item in items:
         if "hw" in item.keywords:
             item.add_marker(skip)
+
+
+@pytest.fixture(autouse=True)
+def _private_heavy_lock(tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch) -> None:
+    """07a2 fix 4: the suite never waits on, or writes, the owner's shared ``_handoff/heavy_slot.lock``. Tests of the
+    mutation and coverage tools take a lock; with ``$FDA_HEAVY_LOCK`` unset they would use the shared one and hang while
+    a real job holds it. A test that needs its own path sets the variable again."""
+    monkeypatch.setenv("FDA_HEAVY_LOCK", str(tmp_path_factory.mktemp("heavy") / "heavy_slot.lock"))
