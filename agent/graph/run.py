@@ -260,7 +260,7 @@ Flow conventions (fixed by the repo; follow them exactly):
   next to it in tests/ and checks the RTL against model.py. Do not add verif/checkers/*.sv to sources: cocotb_run.run
   compiles them (the bind file last) into every Verilator build, which is the run that counts cover properties.
   Proof methods for bench tests: a cocotb test is proven by method `simulation` (artefact = module.test_name);
-  `formal` is only for a job in verif/formal. Name the constrained-random test with "random" in it
+  the method name formal is only for a job in verif/formal. Name the constrained-random test with "random" in it
   (for example test_random_traffic): V2 `constrained_random_test_ran` looks for that word.
 - Stage 2 ends only at verification stage V3 (flow/verif_gates.py): load_skill(["verification-stages"]) first.
   verif/testplan.yaml (schema fpga-design-agent/testplan/v0) has keys: schema, design, spec ({design_rel}/spec.yaml),
@@ -643,7 +643,7 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
             "3. verif/testplan.yaml (V0 `testplan_present`, V1 `spec_items_traced`): every spec item traced to a test. "
             "Its `proof:` list needs one {requirement, method, artefact} entry for every method of every requirement in "
             "spec.yaml (V1 `proof_methods_discharged`), and each artefact must exist (V1 `proof_references_resolve`). "
-            "A bench test (module.test_name) is proven by method `simulation`; method `formal` is only for a job in verif/formal. "
+            "A bench test (module.test_name) is proven by method `simulation`; the method name formal is only for a job in verif/formal. "
             "Name the constrained-random test with \"random\" in its name (V2 `constrained_random_test_ran`).",
             "4. `formal` methods: " + (
                 "SymbiYosys is installed. Write verif/formal/<job>.sby and its property module (properties over the top "
