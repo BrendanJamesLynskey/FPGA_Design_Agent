@@ -1,0 +1,99 @@
+{
+ "task": "c15_softmax_unit",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 2,
+ "run": 1,
+ "date": "2026-11-07",
+ "run_id": "20261107-102719-783b",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.318",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "main 73c135c (FPGA_Design_Agent), Knowledge main 62f0425; no code changes in this batch",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (3 seeds; functional bins 100% 16/16; cover properties 100%; line 100%; toggle 98.94%; mutation score 100%: 10 killed of 10 evaluated)",
+  "stage_gates_post_route": "all pass",
+  "bitstream": "built"
+ },
+ "agent_turns": 190,
+ "sub_agent_calls": 23,
+ "stage_visits": {
+  "clarify": 2,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 6,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 1
+ },
+ "questions": {
+  "oracle_calls": 5
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": true,
+  "tests_passed": 5,
+  "tests_total": 5,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_special_score_sets": true,
+   "test_random_score_sets": true,
+   "test_offset_invariance": true,
+   "test_registers": true
+  },
+  "note": "the first scoring attempt returned 0/0 because the shared agent venv has no numpy (hidden/model.py imports it); scored again with numpy supplied through PYTHONPATH from a private directory, same RTL and bench"
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 0.521,
+  "whs_ns": 0.081,
+  "lut": 1788,
+  "ff": 945,
+  "dsp": 17,
+  "bram36": 0,
+  "power_w": 0.125,
+  "reference_qor_ooc": {
+   "lut": 1404,
+   "ff": 387,
+   "dsp": 16,
+   "bram36": 0,
+   "wns_ns_at_200MHz": -39.209,
+   "fmax_mhz": 23,
+   "note": "softmax_unit N=8 datapath only, out of context, 200 MHz, ports registered"
+  },
+  "note": "full-flow post-route with the test shell at 100 MHz (LUT and FF include the shell); not like for like with the OOC reference"
+ },
+ "failure": null,
+ "stage2_repair_loop": {
+  "visits": 6,
+  "limit": 6,
+  "note": "passed on the last allowed visit; one more failure would have stopped the run at stage 2",
+  "visit_failures": [
+   "v1->v2: iverilog elaboration: 'gen_t1 is not a constant function' (ROM tables built by constant functions returning unpacked arrays)",
+   "v2->v3: cocotb: test_coverage_sweep register read 601425210 != model 601359674 (bench/RTL disagreement on a register)",
+   "v3->v4: simulate tool 'timed out after 1800 s' (each Icarus run of this bench is 2.5 to 12.7 minutes: 145, 765, 178, 176, 695 s)",
+   "v4->v5: iverilog elaboration again: 'Array v needs an array index here', 'Unable to evaluate parameter T1_ROM'",
+   "v5->v6: passed"
+  ]
+ },
+ "notes": "Passes the task and all gates after six stage-2 visits. Slow Icarus simulations (the Verilator path is not used for scoring) dominated wall time: 3.88 h for the run, 1.35 h of it agent calls.",
+ "wall_h_total": 3.88,
+ "wall_h_agent_calls": 1.35
+}

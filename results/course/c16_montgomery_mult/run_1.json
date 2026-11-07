@@ -1,0 +1,86 @@
+{
+ "task": "c16_montgomery_mult",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 2,
+ "run": 1,
+ "date": "2026-11-07",
+ "run_id": "20261107-090459-99ae",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.318",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "main 73c135c (FPGA_Design_Agent), Knowledge main 62f0425; no code changes in this batch",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (3 seeds; functional bins 100% 11/11; cover properties 100%; line 100%; toggle 97.04%; mutation score 95.0%: 19 killed of 20 evaluated, 1 survivor)",
+  "stage_gates_post_route": "all pass",
+  "bitstream": "built"
+ },
+ "agent_turns": 134,
+ "sub_agent_calls": 16,
+ "stage_visits": {
+  "clarify": 2,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 1,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 2
+ },
+ "questions": {
+  "oracle_calls": 4
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": true,
+  "tests_passed": 5,
+  "tests_total": 5,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_products_64_and_40_bit": true,
+   "test_edge_operands": true,
+   "test_constant_time": true,
+   "test_registers_and_reset": true
+  }
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 3.386,
+  "whs_ns": 0.109,
+  "lut": 778,
+  "ff": 683,
+  "dsp": 0,
+  "bram36": 0,
+  "power_w": 0.117,
+  "reference_qor_ooc": {
+   "lut": 268,
+   "ff": 590,
+   "dsp": 0,
+   "bram36": 0,
+   "wns_ns_at_200MHz": -2.127,
+   "fmax_mhz": 140,
+   "note": "mont64 datapath only, out of context, 200 MHz, ports registered"
+  },
+  "note": "full-flow post-route with the test shell at 100 MHz (LUT and FF include the shell); not like for like with the OOC reference"
+ },
+ "failure": null,
+ "notes": "Passes the task and all gates on the first run, no fixes needed; stage 2 took one visit. Mutation: 1 survivor (shift register fill bit in c16_mont_core).",
+ "wall_h_total": 1.36,
+ "wall_h_agent_calls": 0.56
+}
