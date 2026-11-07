@@ -1,0 +1,78 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c9_nexys_vga_720p
+title: "eight colour bars on the Nexys A7 VGA connector, 1280x720@60 (74.25 MHz pixel clock), behind the test shell"
+source: spec.md
+tier: C9
+difficulty: 2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c9_nexys_vga_720p_top
+design_id: 0x56373230          # "V720"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "the raster restarts when BTNC is pressed or the video clock is not locked; colour outputs 0 while held; the shell window is reset"
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: BTNC, dir: in, width: 1, async: true, pins: [N17], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: LVCMOS33}
+  - {name: VGA_R, dir: out, width: 4, pins: [A3, B4, C5, A4], iostandard: LVCMOS33}
+  - {name: VGA_G, dir: out, width: 4, pins: [C6, A5, B6, A6], iostandard: LVCMOS33}
+  - {name: VGA_B, dir: out, width: 4, pins: [B7, C7, D7, D8], iostandard: LVCMOS33}
+  - {name: VGA_HS, dir: out, width: 1, note: "active high", pins: [B11], iostandard: LVCMOS33}
+  - {name: VGA_VS, dir: out, width: 1, note: "active high", pins: [B12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  timing:
+  - H 1280+110+40+220 = 1650 clocks, V 720+5+5+20 = 750 lines; hs and vs idle low, high during sync (positive polarity)
+  pattern:
+  - SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area
+  alignment:
+  - colour and syncs leave from one output register rank; the first white pixel is 220 clocks after the hs falling edge, the first picture line is 20 lines after the vs falling edge
+  reset:
+  - while BTNC is pressed or the clock is not locked the colour outputs are 0
+  sim:
+  - 'parameter SIM_DIRECT_CLOCK = 1 makes the clock input the pixel clock (no MMCM, locked = 1); the bench uses it. With 0 an MMCM makes 74.25 MHz from the 100 MHz clock (VCO 742.5 MHz: DIVCLK_DIVIDE 5, CLKFBOUT_MULT_F 37.125, CLKOUT0_DIVIDE_F 10)'
+  led:
+  - LED[0] = video clock locked (1 in simulation with SIM_DIRECT_CLOCK = 1); the other LEDs are 0
+  data:
+  - the bench measures one whole frame after BTNC is released (line period, hs width, vs width in lines, frame period, picture position against hs and vs, bar colours at and next to every bar edge, blanking)
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: STATUS, access: RO, reset: 0, bits: "[0] video clock locked; other bits 0"}
+  unmapped: offsets not listed read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: the pixel clock domain is 74.25 MHz; timing must close there. The course recorded no timing numbers for the block (reference_qor.md).
+
+requirements:
+  - {id: REQ-01, text: "line period 1650, hs width 40, frame 750 lines, vs width 5 lines, both positive", proof: [simulation]}
+  - {id: REQ-02, text: "picture 220 clocks and 20 lines after the end of the sync pulses; eight 160-pixel bars with the stated colours; black outside the active area", proof: [simulation]}
+  - {id: REQ-03, text: "colours are 0 while BTNC is pressed", proof: [simulation]}
+  - {id: REQ-04, text: "timing closes at 74.25 MHz", proof: [analysis]}
+
+assumptions:
+  - assumption: the LEDs stay off.
+    reason: nothing is asked of them.
+
+open_questions: []

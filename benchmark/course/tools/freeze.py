@@ -30,8 +30,21 @@ SHARED = ["benchmark/lib", "benchmark/tools/run_task.py", "benchmark/tools/check
           "benchmark/course/tools/no_shell.py", "benchmark/course/tools/run_task.py", "benchmark/course/tools/check_task.py"]
 
 
+SPLITS = ["split.yaml", "split_c9_c12.yaml"]      # Parts 13-16 (course v1), Parts 9-12 (course v1.2)
+
+
+def load_split() -> dict:
+    """The tiers of every split file, merged (the files hold disjoint tiers)."""
+    out: dict = {"tiers": {}}
+    for f in SPLITS:
+        p = COURSE / f
+        if p.exists():
+            out["tiers"].update(yaml.safe_load(p.read_text())["tiers"])
+    return out
+
+
 def units(private: Path | None) -> tuple[list[dict], list[str]]:
-    split = yaml.safe_load((COURSE / "split.yaml").read_text())
+    split = load_split()
     held = {i for t in split["tiers"].values() for i in t["held_out"]}
     tier_of = {i: t for t, v in split["tiers"].items() for i in v["held_out"] + v["dev"]}
     us, have = [], set()
@@ -58,8 +71,9 @@ def make(private: Path, out: Path, private_out: Path) -> None:
         rec.update({"files": len(f), "digest": digest(f)})
         full.append({**rec, "file_hashes": f})
         pub.append(rec if u["where"] == "private" else {**rec, "file_hashes": f})
-    head = {"benchmark": "FPGA_Design_Agent benchmark, course tier (Parts 13-16)", "frozen": time.strftime("%Y-%m-%d"),
-            "split_sha256": hashlib.sha256((COURSE / "split.yaml").read_bytes()).hexdigest(), "pending": pending,
+    head = {"benchmark": "FPGA_Design_Agent benchmark, course tier (Parts 9-16)", "frozen": time.strftime("%Y-%m-%d"),
+            "split_sha256": hashlib.sha256((COURSE / "split.yaml").read_bytes()).hexdigest(),
+            "split_c9_c12_sha256": hashlib.sha256((COURSE / "split_c9_c12.yaml").read_bytes()).hexdigest(), "pending": pending,
             "tools": tool_versions()}
     out.write_text(json.dumps({**head, "units": pub}, indent=1) + "\n")
     private_out.parent.mkdir(parents=True, exist_ok=True)
@@ -72,6 +86,8 @@ def verify(private: Path | None, manifest: Path) -> int:
     bad, checked, skipped = [], 0, 0
     if hashlib.sha256((COURSE / "split.yaml").read_bytes()).hexdigest() != m["split_sha256"]:
         bad.append("split.yaml")
+    if "split_c9_c12_sha256" in m and hashlib.sha256((COURSE / "split_c9_c12.yaml").read_bytes()).hexdigest() != m["split_c9_c12_sha256"]:
+        bad.append("split_c9_c12.yaml")
     us, _ = units(private)
     by_id = {(u["kind"], u["id"]): u for u in us}
     for rec in m["units"]:

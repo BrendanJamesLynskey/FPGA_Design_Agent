@@ -1,0 +1,7 @@
+mutants:
+  - {name: fourth_smallest, file: median3x3.sv, find: "med <= v[4];", replace: "med <= v[3];", why: "returns a neighbour of the median"}
+  - {name: valid_always_high, file: median3x3.sv, find: "else        out_valid <= in_valid;", replace: "else        out_valid <= 1'b1;", why: "a result on clocks with no window"}
+  - {name: valid_not_registered, file: median3x3.sv, find: "else        out_valid <= in_valid;", replace: "else        out_valid <= in_valid & ~out_valid;", why: "a back-to-back window gives no result"}
+  - {name: exchange_dropped, file: median3x3.sv, find: "{v[6], v[4]} = ce(v[6], v[4]);", replace: "", why: "one compare-exchange of the final stage is missing"}
+  - {name: first_stage_dropped, file: median3x3.sv, find: "{v[0], v[1]} = ce(v[0], v[1]); {v[3], v[4]} = ce(v[3], v[4]); {v[6], v[7]} = ce(v[6], v[7]);", replace: "", why: "the second round of row sorting is missing"}
+  - {name: middle_exchange_dropped, file: median3x3.sv, find: "{v[1], v[4]} = ce(v[1], v[4]);", replace: "", why: "the cross-row exchange of the middle column is missing"}

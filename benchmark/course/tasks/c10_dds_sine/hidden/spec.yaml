@@ -1,0 +1,67 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c10_dds_sine
+title: "24-bit phase accumulator, 256-entry sine table, 12-bit output (DDS), behind the test shell"
+source: spec.md
+tier: C10
+difficulty: 1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c10_dds_sine_top
+design_id: 0x4444534e          # "DDSN"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "FW 0, the oscillator reset, DONE = 0, read pointer 0, samples cleared"
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  table:
+  - LUT[i] = floor(2047*sin(2*pi*i/256) + 0.5), i = 0..255
+  output:
+  - out[k] = LUT[(sum of fw over clocks 0..k-1) mod 2^24 >> 16], k = 0 at the first clock after the oscillator is reset; fw is the value of FW (constant during a recording)
+  record:
+  - GO resets the oscillator (two clocks of reset), clears DONE and the read pointer, then records the next 1200 valid samples (the first is out[0]); DONE becomes 1 when all are recorded
+  readback:
+  - 'each read of DATA returns two samples, 12-bit two''s complement: sample 2m in [11:0] and sample 2m+1 in [27:16] (the other bits 0), m = 0..599, and advances the read pointer by one; reads past the 600th word return 0; a write to DATA or to PTR sets the pointer to the value written'
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: FW, access: RW, reset: 0, bits: "[23:0] frequency word; [31:24] read 0"}
+    - {offset: 0x01, name: GO, access: WO, reset: 0, bits: "any write resets the oscillator and starts a recording; reads 0"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] DONE; other bits 0"}
+    - {offset: 0x03, name: PTR, access: RW, reset: 0, bits: "[9:0] read pointer (word number); cleared by GO"}
+    - {offset: 0x04, name: DATA, access: RO, reset: 0, bits: "[11:0] sample 2m, [27:16] sample 2m+1 (m = PTR); each read advances PTR; 0 before DONE"}
+  unmapped: offsets not listed read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: the course reference is one adder, one 256-entry table and an output register; no OOC number recorded (reference_qor.md).
+
+requirements:
+  - {id: REQ-01, text: "every sample equals the table entry addressed by the top 8 bits of the accumulated phase", proof: [simulation]}
+  - {id: REQ-02, text: "timing closes at 100 MHz", proof: [analysis]}
+
+assumptions:
+  - assumption: the LEDs stay off.
+    reason: nothing is asked of them.
+
+open_questions: []

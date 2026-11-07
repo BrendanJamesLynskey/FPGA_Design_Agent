@@ -1,0 +1,10 @@
+# Hidden acceptance bench for c12_nexys_pwm_audio (benchmark/tools/run_task.py)
+toplevel: tb_audio_bench
+module: acceptance
+wrapper: tb_audio_bench.sv
+parameters: {CLKS_PER_BIT: 2, TIMEOUT_CYCLES: 400}
+phrases:
+  - "a volume control that cannot hurt anybody's ears"
+  - "the pin is never driven high"
+  - "any value above **8192** (about -12 dBFS) is replaced by 8192"
+  - "so in each period the pin is pulled low for 1024 minus the duty clocks"

@@ -1,0 +1,8 @@
+mutants:
+  - {name: attack_reaches_exclusive, file: adsr.sv, find: "3'd1: if (sum >= 17'd65535) begin", replace: "3'd1: if (sum > 17'd65535) begin", why: "attack landing exactly on 65535 does not move to decay"}
+  - {name: release_strict, file: adsr.sv, find: "3'd4: if (level <= rel_dec) begin", replace: "3'd4: if (level < rel_dec) begin", why: "release at level == rel_dec does not end"}
+  - {name: decay_strict, file: adsr.sv, find: "else if (level - sus_lvl <= dec_dec) begin", replace: "else if (level - sus_lvl < dec_dec) begin", why: "decay landing exactly on sus_lvl overshoots by one tick"}
+  - {name: retrigger_resets_level, file: adsr.sv, find: "if (gate && !gate_d) state <= 3'd1;", replace: "if (gate && !gate_d) begin state <= 3'd1; level <= '0; end", why: "a re-trigger restarts from zero"}
+  - {name: runs_without_tick, file: adsr.sv, find: "end else if (en) begin", replace: "end else begin", why: "the envelope moves on every clock, not on ticks"}
+  - {name: release_state_code, file: adsr.sv, find: "else if (!gate && gate_d && state != 3'd0) state <= 3'd4;", replace: "else if (!gate && gate_d && state != 3'd0) state <= 3'd5;", why: "release reports state 5"}
+  - {name: sustain_ignores_new_level, file: adsr.sv, find: "3'd2: if (level <= sus_lvl) state <= 3'd3;", replace: "3'd2: if (level < sus_lvl) state <= 3'd3;\n                      else if (level == sus_lvl) state <= 3'd2;", why: "decay at level == sus_lvl never ends"}

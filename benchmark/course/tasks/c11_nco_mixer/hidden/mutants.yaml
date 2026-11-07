@@ -1,0 +1,8 @@
+mutants:
+  - {name: cosine_offset_half_cycle, file: nco_mixer.sv, find: "wire signed [CW-1:0] c = lut[idx + LA'(2**(LA-2))];", replace: "wire signed [CW-1:0] c = lut[idx + LA'(2**(LA-1))];", why: "cosine a half cycle off"}
+  - {name: q_shift_13, file: nco_mixer.sv, find: "q_out <= XW'(pq >>> 14);", replace: "q_out <= XW'(pq >>> 13);", why: "q scaled by 2"}
+  - {name: q_sign, file: nco_mixer.sv, find: "wire signed [XW+CW-1:0] pq = x * (-s);", replace: "wire signed [XW+CW-1:0] pq = x * s;", why: "the tone rotates the other way"}
+  - {name: runs_on_gaps, file: nco_mixer.sv, find: "            if (en) begin", replace: "            if (1'b1) begin", why: "the phase advances on clocks with no sample"}
+  - {name: amplitude_16384, file: nco_mixer.sv, find: "16383.0 * $sin", replace: "16384.0 * $sin", why: "table scaled by 16384 instead of 16383"}
+  - {name: rounded_not_floored, file: nco_mixer.sv, find: "i_out <= XW'(pi >>> 14);", replace: "i_out <= XW'((pi + 8192) >>> 14);", why: "i rounds to nearest instead of towards minus infinity"}
+  - {name: valid_always_high, file: nco_mixer.sv, find: "out_valid <= en;", replace: "out_valid <= 1'b1;", why: "a result on clocks with no sample"}

@@ -1,0 +1,77 @@
+{
+  "task": "c10_dds_sine",
+  "sim": "icarus",
+  "date": "2026-11-07",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_each_frequency_word_sample_for_sample": true,
+      "test_restart_and_pointer": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "wrong_address_bits",
+      "why": "table addressed by the wrong 8 phase bits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_each_frequency_word_sample_for_sample",
+        "test_restart_and_pointer"
+      ]
+    },
+    {
+      "name": "amplitude_2048",
+      "why": "table peak 2048 wraps to -2048",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_each_frequency_word_sample_for_sample",
+        "test_restart_and_pointer"
+      ]
+    },
+    {
+      "name": "no_rounding",
+      "why": "table entries truncated instead of rounded",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_each_frequency_word_sample_for_sample",
+        "test_restart_and_pointer"
+      ]
+    },
+    {
+      "name": "phase_step_doubled",
+      "why": "frequency twice the word",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_each_frequency_word_sample_for_sample",
+        "test_restart_and_pointer"
+      ]
+    },
+    {
+      "name": "reset_keeps_phase",
+      "why": "reset does not clear the phase, so a second run starts mid-cycle",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_each_frequency_word_sample_for_sample",
+        "test_restart_and_pointer"
+      ]
+    },
+    {
+      "name": "phase_one_clock_late",
+      "why": "table read from the already advanced phase",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_each_frequency_word_sample_for_sample",
+        "test_restart_and_pointer"
+      ]
+    }
+  ],
+  "mutants_killed": 6,
+  "mutants_total": 6
+}

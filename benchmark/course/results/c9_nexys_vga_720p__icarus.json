@@ -1,0 +1,81 @@
+{
+  "task": "c9_nexys_vga_720p",
+  "sim": "icarus",
+  "date": "2026-11-07",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_status_and_blank_while_pressed": true,
+      "test_pressing_the_button_blanks_the_picture": true,
+      "test_one_frame_geometry_and_colours": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "hs_width_41",
+      "why": "horizontal sync one pixel too long (and a 1651-clock line)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_frame_geometry_and_colours"
+      ]
+    },
+    {
+      "name": "vs_negative",
+      "why": "vertical sync idles high",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_frame_geometry_and_colours"
+      ]
+    },
+    {
+      "name": "sync_misaligned",
+      "why": "hs leaves one clock before the colours",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_frame_geometry_and_colours"
+      ]
+    },
+    {
+      "name": "bar_order",
+      "why": "green and magenta bars swapped (green missing)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_frame_geometry_and_colours"
+      ]
+    },
+    {
+      "name": "blank_not_gated_by_reset",
+      "why": "the picture shows while BTNC is pressed",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_status_and_blank_while_pressed",
+        "test_pressing_the_button_blanks_the_picture"
+      ]
+    },
+    {
+      "name": "back_porch_219",
+      "why": "line of 1649 clocks, picture 219 clocks after the hs pulse",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_frame_geometry_and_colours"
+      ]
+    },
+    {
+      "name": "v_back_porch_21",
+      "why": "frame of 751 lines",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_frame_geometry_and_colours"
+      ]
+    }
+  ],
+  "mutants_killed": 7,
+  "mutants_total": 7
+}

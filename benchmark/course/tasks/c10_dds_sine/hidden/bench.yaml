@@ -1,0 +1,9 @@
+# Hidden acceptance bench for c10_dds_sine (benchmark/tools/run_task.py)
+toplevel: c10_dds_sine_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 2, TIMEOUT_CYCLES: 400}
+phrases:
+  - "a numerically controlled sine oscillator"
+  - "a frequency word in, a sampled sine wave out, one sample per clock"
+  - "256 entries covering one full cycle"
+  - "the lower bits are simply dropped, no interpolation or dithering"
