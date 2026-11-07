@@ -21,6 +21,22 @@ ROOT = Path(__file__).resolve().parents[1]
 SHELL_RTL = sorted((ROOT / "shell" / "rtl").glob("*.sv"))
 
 
+_EXC_LINE = re.compile(r"^[\w.]*(Error|Exception|Exit|Interrupt)\b.*")
+
+
+def root_cause(lines: list[str], before: int = 8) -> list[str]:
+    """07a2 fix 3: the FIRST exception line of a simulator log (a non-indented ``SomeError: ...`` line that ends a
+    traceback) with the ``before`` lines above it (the frames, the last of which is the user's own file). A
+    collection-time or import error in the bench is followed by cocotb's own follow-on error
+    (``AttributeError ... _running_test``); the root cause is the first one, and it used to fall outside the excerpt.
+    Raw log lines, headed by a marker; [] when the log has no exception line."""
+    for i, l in enumerate(lines):
+        if _EXC_LINE.match(l) and any(x.startswith("Traceback") for x in lines[max(0, i - 40):i]):
+            return ["[root cause: the first exception in the simulator log]",
+                    *[x.rstrip() for x in lines[max(0, i - before):i + 1]], "[other failure lines]"]
+    return []
+
+
 def failure_excerpt(log: Path, limit: int = 3500) -> str:
     """The failing tests of a cocotb simulator log, raw: each line that reports a failure with the traceback lines
     that follow it (no interpretation); the log's tail if none is recognised."""
@@ -28,7 +44,7 @@ def failure_excerpt(log: Path, limit: int = 3500) -> str:
         lines = log.read_text(errors="replace").splitlines()
     except OSError as e:
         return f"(no simulator log: {e.strerror or e})"
-    out: list[str] = []
+    out: list[str] = root_cause(lines)
     for i, l in enumerate(lines):
         if re.search(r"\bFAIL\b|failed\b|Traceback|Error\b|error:", l) and "Failed 0" not in l:
             out += [x.rstrip() for x in lines[i:i + 14]]

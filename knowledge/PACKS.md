@@ -37,7 +37,7 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `functions/` | generic: functional areas | RTL_Knowledge_Pack `v3.0` @ `b2ae875` (2026-11-02) | 11 | 20 | 45,956 (none) | 3,826 | 11,489 | `daea2321a397f7e4dfcdca2f5741c8f421854ebe0e85ddfd6a5485309b21a540` |
 | **bundle `generic`** | techniques + functions | `v3.0` | 33 | - | 137,695 (<= 152,000; was 116,872 <= 120,000 at v2.2) | 12,113 | 34,424 | `d5819522e0ff050785b2191b3bc333e9560da0924a2e8b796090783935e8b6b5` |
 | `vendor/ross_distilled/` | vendor: Ross distilled | 1 (2026-10-30; sectioned 2026-10-31) | 14 | 24 | 57,716 (<= 60,000) | 4,429 | 14,429 | `71b0be3612dd70311a092aaf9e108dbc68fe9efd324253a25eba2607ec9e3175` |
-| `vendor/free_simulators/` | vendor: free-simulator capabilities (ours, from the owner's matrix) | 1 (2026-11-01, 04f) | 1 | 3 | 3,835 (<= 8,000) | 481 | 959 | `3447bec8c927750cac559038f0529bd44614e699587253e66b2b0b2147020a09` |
+| `vendor/free_simulators/` | vendor: free-simulator capabilities and cocotb_coverage usage (ours, from the owner's matrix and the cocotb-coverage 2.0 source) | 2 (2026-11-07, 07a2 fix 3) | 2 | 4 | 7,536 (<= 8,000) | 669 | 1,884 | `3788c1dd57f5bce2fe62b7d445d362b82dd1d561db61dcdbf9746670b105cb80` |
 | `vendor/vivado_synthesis/` | vendor: Vivado synthesis attributes and inference templates (ours, from UG901/UG912/UG949) | 1 (2026-11-03, 04j) | 3 | 7 | 14,822 (<= 16,000) | 1,225 | 3,706 | `c13e776b78daf0e6ff070bd97a632cb05777a674d80ed1d8808b4cfc1fc9aeaf` |
 | `vendor/ross_shipped/` | vendor: Ross as shipped | Ross release 2026.10.1 | 50 | 1,195 | 918,458 (none) | 12,578 | 225,565 | `3d2cf1b50012d4676a3b432f0725b00848795059224f913935e37cc98846e773` |
 | `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 4 (2026-11-03, 04j) | 20 | 42 | 88,636 (<= 95,000) | 7,566 | 22,159 | `26a2ffe7895014616e2a38c1749ed32e50e5b062abf93bd6cef914f0f60305e1` |
@@ -91,7 +91,7 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 3 
 | `functions/` | `on-chip-memory` | function | 2 | 8,547 | `794d37f27a48727da47794adfad43fe0b4a680682f7f939d02b825adfaa28f7b` |
 | `functions/` | `serial-buses` | function | 2 | 8,328 | `035238ea6a7f94ab7202c98c0d6e813a5c2c25066f7fb7d7a029d9d5dc49e15c` |
 | `functions/` | `video` | function | 1 | 3,401 | `4a8f1d4d9b5b4414ad07a753e2aa7d8e37b58285478e14c2aeca8fd04739b069` |
-| `vendor/free_simulators/` | `simulation` | tool-flow | 1 | 3,835 | `305ceb14f3bbccfcb6746d50d0aed84d24787fdd1878403d0418fd39185ccc10` |
+| `vendor/free_simulators/` | `simulation` | tool-flow | 2 | 7,536 | `cc383bda4acc1030d9ef24a2a25fc9835cb79cb013c465e2cccb372fccb80ef5` |
 | `vendor/ross_distilled/` | `clocking-ip` | tool-flow | 1 | 4,495 | `9cb66d5f9a42742c53be67e8270c1c81229132dc49ba1602986b9ecd4044e13f` |
 | `vendor/ross_distilled/` | `constraints` | tool-flow | 1 | 4,495 | `2dfb95cff49e1da9a6edf6b2d4dc192306f6bffd1d363326b2655871979ecd57` |
 | `vendor/ross_distilled/` | `debug-ila-vio` | tool-flow | 2 | 7,023 | `2be1ea67875613b39f7fa6cb9d7c0c4abd49a0c82599b7f1e69d992e72a717af` |

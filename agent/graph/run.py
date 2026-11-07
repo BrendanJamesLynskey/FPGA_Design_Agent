@@ -36,7 +36,7 @@ from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
 from agent.graph.contract import MODEL_CONTRACT, contract_argv, parse_result
-from agent.graph.interview import Interview, Question, SpecOracle, register_map_errors
+from agent.graph.interview import Interview, Question, SpecOracle, merge_summaries, register_map_errors
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
 from agent.core.artefacts import check_artefact
@@ -654,7 +654,9 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
             *(["6. V3 coverage evidence (the gate reads only these; the flow makes the runs itself once V0 to V2 pass, so you write "
                "the bench and the plan, not the runs): (a) functional bins: at least one name in `bins:` of the requirements, "
                "sampled in the bench and exported by its last test with coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"]) "
-               "(cocotb-coverage); (b) code coverage (line, toggle, cover properties): the flow runs the bench again under Verilator "
+               "(cocotb-coverage; every CoverPoint/CoverCross name is a dotted path with a parent such as \"top.result_class\", else the bench "
+               "fails at import with \"CoverPoint must have a parent\"; sample by calling the decorated function; "
+               "load_skill([\"simulation\"]) has the details); (b) code coverage (line, toggle, cover properties): the flow runs the bench again under Verilator "
                "with coverage on, so declare the cover points with `V_COVER` and the bench must reach them; (c) mutation score: the "
                "flow then runs a capped, seeded sample of changes to the RTL against your tests; a change no test fails on is "
                "reported to you in words (file, line, change), and the fix is a tighter check or a test that exercises that behaviour."]
@@ -829,7 +831,7 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         found = [m for m in PROOF_METHODS if got and got.answer and m in got.answer.lower()]
         r["proof"] = found or propose_proof(str(r.get("text", "")))[0]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
-    return spec, iv.summary()
+    return spec, merge_summaries(state.get("interview"), iv.summary())
 
 
 _ORDER = ["synth", "place", "route", "bitstream"]

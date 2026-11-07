@@ -281,6 +281,52 @@ def _sim_refine() -> dict[str, Any]:
             "description": f"Simulators available here: {', '.join(sims)}."}
 
 
+_IMPORT_CHECK = r"""
+import importlib.util, sys, traceback
+from pathlib import Path
+bad = 0
+for f in sys.argv[1:]:
+    p = Path(f).resolve()
+    for d in (p.parent, p.parent.parent):
+        if str(d) not in sys.path:
+            sys.path.append(str(d))
+    try:
+        spec = importlib.util.spec_from_file_location("_fda_import_check_" + p.stem, p)
+        spec.loader.exec_module(importlib.util.module_from_spec(spec))
+    except BaseException as e:
+        bad += 1
+        tb = traceback.format_exc().splitlines()
+        print("IMPORT-ERROR " + f)
+        print("\n".join(tb[-12:]))
+        print("IMPORT-ERROR-END")
+sys.exit(1 if bad else 0)
+"""
+
+
+def _import_check_tests(s: Session) -> dict | None:
+    """07a2 fix 3: import every Python file under the design's tests/ before simulating (the sim environment, the
+    same runner as ``simulate``). A bench that raises at import (run 3: a cocotb_coverage ``CoverPoint`` with no
+    parent) otherwise fails inside cocotb's test discovery, where the simulator log shows the root cause only above
+    cocotb's own follow-on ``AttributeError``. Returns the failed ``simulate`` result (kind ``import_error``), or None."""
+    files = sorted((s.design / "tests").rglob("*.py"))
+    if not files:
+        return None
+    r = s.runner.run("import_check", [PY, "-c", _IMPORT_CHECK, *[_rel(s, f) for f in files]], s.root, {}, timeout=300)
+    if r.returncode == 0:
+        return None
+    out = _text_out(r)
+    blocks = re.findall(r"IMPORT-ERROR (\S+)\n(.*?)\nIMPORT-ERROR-END", out, re.S)
+    if not blocks:       # the check itself died or said nothing: not a finding; the simulation reports what it finds
+        return None
+    errs = [{"file": f, "error": next((x for x in reversed(b.splitlines()) if x.strip() and not x.startswith(" ")), ""),
+             "traceback": b} for f, b in blocks]
+    text = "\n".join(f"[import error] {e['file']}\n{e['traceback']}" for e in errs)
+    text = ("The simulation did not start: a Python file under tests/ fails on import. Fix it first.\n" + text)
+    return {"ok": False, "kind": "import_error", "output": text, "returncode": r.returncode, "import_errors": errs,
+            "first_failure": {"test": "import " + errs[0]["file"], "message": [errs[0]["error"]], "where": None,
+                              "log_errors": [], "cause": [errs[0]["error"]], "frames": []}}
+
+
 @tool("simulate", "Run the design's cocotb tests (tests/test_*_rtl.py) under the chosen simulator. coverage=true (with "
                   "sim=verilator) also records line/toggle/cover-property coverage (coverage.dat per seed), which "
                   "gates(kind=verif) needs for the code-coverage checks.",
@@ -297,6 +343,9 @@ def simulate(s: Session, sim: str = "icarus", coverage: bool = False) -> dict:
     tests = sorted((s.design / "tests").glob("test_*_rtl.py"))
     if not tests:
         return {"ok": False, "output": "the design has no tests/test_*_rtl.py"}
+    bad = _import_check_tests(s)
+    if bad:
+        return bad
     argv = [PY, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *[_rel(s, t) for t in tests]]
     # the V2/V3 gate reads <design>/build/verif/sim/seed<N>/results.xml; flow.cocotb_run.run writes it there when this
     # variable is set (05h: a bench that passed `simulate` left the gate with no seeded results). Cleared per call so
