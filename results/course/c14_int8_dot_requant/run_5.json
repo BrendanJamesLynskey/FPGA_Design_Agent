@@ -1,0 +1,91 @@
+{
+ "task": "c14_int8_dot_requant",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 1,
+ "run": 5,
+ "date": "2026-11-07",
+ "run_id": "20261107-031012-c3b2",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.318",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "f4-07a2-fix4 (PR #52; the run used the branch before CI finished)",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (3 seeds; functional bins 100% 23/23; cover properties 100%; line 100%; toggle 98.51%; mutation score 95.0%: 19 killed of 20 evaluated, 0 survived, per the run's mutation.json)",
+  "stage_gates_post_route": "all pass (setup, hold, pulse width, DRC, CDC, methodology, power)",
+  "bitstream": "built"
+ },
+ "agent_turns": 152,
+ "sub_agent_calls": 15,
+ "stage_visits": {
+  "clarify": 2,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 3,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 2
+ },
+ "questions": {
+  "asked": 6,
+  "answered": 3,
+  "defaulted": 3,
+  "oracle_calls": 5,
+  "register_map_asked": "yes: registers.map in the final spec.yaml carries 11 registers"
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": true,
+  "tests_passed": 6,
+  "tests_total": 6,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_random_cases": true,
+   "test_extremes_halves_and_bias": true,
+   "test_tail_cases": true,
+   "test_shift_and_mult_ranges": true,
+   "test_ready_clears_on_go_and_regs": true
+  }
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 0.495,
+  "whs_ns": 0.099,
+  "lut": 737,
+  "ff": 753,
+  "dsp": 12,
+  "bram36": 0,
+  "power_w": 0.118,
+  "reference_qor_ooc": {
+   "lut": 882,
+   "ff": 265,
+   "dsp": 2,
+   "bram36": 0,
+   "wns_ns_at_200MHz": -26.957,
+   "fmax_mhz": 31
+  },
+  "note": "full-flow post-route with the test shell on the xc7a100t at 100 MHz; the reference numbers are out-of-context at 200 MHz, so not like for like. Run 2 for comparison: WNS +2.146, LUT 1290, FF 837, DSP 2. This run uses 12 DSP48 blocks against the reference's 2 (a more parallel multiplier array)."
+ },
+ "failure": null,
+ "notes": "First run of the five to pass the task's tests and the full flow through stage 8 on one run (run 2: 5/6; run 3 and 4: stopped at stage 2). The stage-2 visit limit (now 6) was not needed: stage 2 used 3 visits. Fixes seen working: the checker sources reached the Verilator coverage build (cover_properties_pct 100.0, run 4: 0.0).",
+ "wall_h_total": 1.42,
+ "wall_h_agent_calls": 0.65,
+ "claude_code_plan_cost_estimate_usd": 2.9
+}
