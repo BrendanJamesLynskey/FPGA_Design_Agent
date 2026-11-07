@@ -1,0 +1,86 @@
+{
+ "task": "c12_adsr_envelope",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 2,
+ "run": 1,
+ "date": "2026-11-07",
+ "run_id": "20261107-142203-5090",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.318",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "main 73c135c (FPGA_Design_Agent), Knowledge main 62f0425; no code changes in this batch",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (3 seeds; functional bins 100% 26/26; cover properties 100%; line 100%; toggle 95.81%; mutation score 100%: 11 killed of 11 evaluated)",
+  "stage_gates_post_route": "all pass",
+  "bitstream": "built"
+ },
+ "agent_turns": 132,
+ "sub_agent_calls": 18,
+ "stage_visits": {
+  "clarify": 2,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 3,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 2
+ },
+ "questions": {
+  "oracle_calls": 4
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": true,
+  "tests_passed": 4,
+  "tests_total": 4,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_course_script": true,
+   "test_boundaries": true,
+   "test_holds_between_ticks_and_consecutive_tick_clocks": true
+  }
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 0.627,
+  "whs_ns": 0.095,
+  "lut": 508,
+  "ff": 359,
+  "dsp": 0,
+  "bram36": 0,
+  "power_w": 0.118,
+  "reference_qor": "not run (the course recorded no OOC or full-flow numbers for this block)",
+  "note": "full-flow post-route with the test shell on the xc7a100t at 100 MHz; LUT and FF include the shell"
+ },
+ "failure": null,
+ "stage2_repair_loop": {
+  "visits": 3,
+  "limit": 6,
+  "visit_failures": [
+   "v1->v2 (tests role): V1 proof_references_resolve: eight 'REQ-nn:formal:c12_bench.<test>: not a formal job in verif/formal' (bench tests declared with method formal)",
+   "v2->v3 (tests role): V2 constrained_random_test_ran: no passing test with 'random' in its name in seed1",
+   "v3->v4: passed"
+  ]
+ },
+ "notes": "Passes the task and all gates, no fixes needed. Stage 2 took 3 visits, both repairs in the tests role (verification conventions).",
+ "wall_h_total": 1.92,
+ "wall_h_agent_calls": 0.67
+}
