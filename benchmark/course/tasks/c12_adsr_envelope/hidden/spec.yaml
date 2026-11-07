@@ -1,0 +1,70 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c12_adsr_envelope
+title: "linear ADSR envelope generator, 16-bit level, 5 states, behind the test shell"
+source: spec.md
+tier: C12
+difficulty: 2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c12_adsr_envelope_top
+design_id: 0x41445352          # "ADSR"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "level 0, state idle, gate considered low at the previous tick, all loaded values 0"
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  rules:
+  - as spec.md, exact; the previous gate is updated on enabled clocks only; the four values are sampled on every tick
+  tick:
+  - 'a write to TICK with N in [4:0] presents the tick for N consecutive clocks (N = 0: nothing); the gate and the values are held in their registers throughout'
+  hold:
+  - between ticks LEVEL, STATE and SNAP do not change
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: GATE, access: RW, reset: 0, bits: "[0] key down; other bits read 0"}
+    - {offset: 0x01, name: ATK, access: RW, reset: 0, bits: "[15:0] atk_inc; [31:16] read 0"}
+    - {offset: 0x02, name: DEC, access: RW, reset: 0, bits: "[15:0] dec_dec; [31:16] read 0"}
+    - {offset: 0x03, name: SUS, access: RW, reset: 0, bits: "[15:0] sus_lvl; [31:16] read 0"}
+    - {offset: 0x04, name: REL, access: RW, reset: 0, bits: "[15:0] rel_dec; [31:16] read 0"}
+    - {offset: 0x05, name: TICK, access: WO, reset: 0, bits: "[4:0] number of consecutive tick clocks to present; reads 0"}
+    - {offset: 0x06, name: LEVEL, access: RO, reset: 0, bits: "[15:0] level; [31:16] read 0"}
+    - {offset: 0x07, name: STATE, access: RO, reset: 0, bits: "[2:0] state (0 idle, 1 attack, 2 decay, 3 sustain, 4 release); other bits 0"}
+    - {offset: 0x08, name: SNAP, access: RO, reset: 0, bits: "[15:0] level, [18:16] state; other bits 0 (both read in one access)"}
+  unmapped: offsets not listed read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: the course reference is one 17-bit adder and comparisons; no OOC number recorded (reference_qor.md).
+
+requirements:
+  - {id: REQ-01, text: "level and state after every tick equal the model", proof: [simulation]}
+  - {id: REQ-02, text: "outputs hold on clocks where there is no tick", proof: [simulation]}
+  - {id: REQ-03, text: "timing closes at 100 MHz", proof: [analysis]}
+
+assumptions:
+  - assumption: the LEDs stay off.
+    reason: nothing is asked of them.
+
+open_questions: []

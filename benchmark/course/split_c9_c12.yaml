@@ -1,0 +1,33 @@
+# The held-out split of the course tier, parts 9-12 (benchmark/tools/split.py); never edit by hand. Parts 13-16 are in split.yaml.
+seed: 20261106
+method: 'per tier: random.Random(seed).sample(sorted(ids), round(n / 3)); tiers in
+  sorted order, one Random instance per tier'
+python: 3.12.3
+date: '2026-11-07'
+tiers:
+  C10:
+    n: 2
+    held_out:
+    - c10_cic_decimator
+    dev:
+    - c10_dds_sine
+  C11:
+    n: 2
+    held_out:
+    - c11_fm_discriminator
+    dev:
+    - c11_nco_mixer
+  C12:
+    n: 3
+    held_out:
+    - c12_pdm_decimator
+    dev:
+    - c12_adsr_envelope
+    - c12_nexys_pwm_audio
+  C9:
+    n: 3
+    held_out:
+    - c9_rgb2ycc
+    dev:
+    - c9_median3x3
+    - c9_nexys_vga_720p

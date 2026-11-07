@@ -1,0 +1,7 @@
+mutants:
+  - {name: wrong_address_bits, file: dds.sv, find: "out_data <= lut[acc[AW-1 -: LA]];", replace: "out_data <= lut[acc[AW-2 -: LA]];", why: "table addressed by the wrong 8 phase bits"}
+  - {name: amplitude_2048, file: dds.sv, find: "(2.0**(OW-1) - 1.0)", replace: "(2.0**(OW-1))", why: "table peak 2048 wraps to -2048"}
+  - {name: no_rounding, file: dds.sv, find: "/ (2.0**LA)) + 0.5)", replace: "/ (2.0**LA)) + 0.0)", why: "table entries truncated instead of rounded"}
+  - {name: phase_step_doubled, file: dds.sv, find: "acc <= acc + fw;", replace: "acc <= acc + {fw[AW-2:0], 1'b0};", why: "frequency twice the word"}
+  - {name: reset_keeps_phase, file: dds.sv, find: "acc <= '0; out_valid <= 1'b0; out_data <= '0;", replace: "out_valid <= 1'b0; out_data <= '0;", why: "reset does not clear the phase, so a second run starts mid-cycle"}
+  - {name: phase_one_clock_late, file: dds.sv, find: "out_data <= lut[acc[AW-1 -: LA]];", replace: "out_data <= lut[(acc + fw) >> (AW - LA)];", why: "table read from the already advanced phase"}

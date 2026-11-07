@@ -1,0 +1,88 @@
+{
+  "task": "c12_nexys_pwm_audio",
+  "sim": "icarus",
+  "date": "2026-11-07",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_gain_clamp_and_pwm_duty": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "clamp_missing",
+      "why": "a write of 65535 is not limited",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_and_pwm_duty"
+      ]
+    },
+    {
+      "name": "default_gain_wrong",
+      "why": "reset gain -18 dBFS instead of -24",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_and_pwm_duty"
+      ]
+    },
+    {
+      "name": "clamp_limit_8193",
+      "why": "limit one above -12 dBFS",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_and_pwm_duty"
+      ]
+    },
+    {
+      "name": "duty_offset_511",
+      "why": "duty one clock short",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_and_pwm_duty"
+      ]
+    },
+    {
+      "name": "sd_low",
+      "why": "amplifier disabled",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_and_pwm_duty"
+      ]
+    },
+    {
+      "name": "gain_shift_14",
+      "why": "the gain is twice what it should be",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_and_pwm_duty"
+      ]
+    },
+    {
+      "name": "compare_strict",
+      "why": "one clock less low per period",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_and_pwm_duty"
+      ]
+    },
+    {
+      "name": "pin_driven_high",
+      "why": "the pin is driven high instead of released",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_and_pwm_duty"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8
+}

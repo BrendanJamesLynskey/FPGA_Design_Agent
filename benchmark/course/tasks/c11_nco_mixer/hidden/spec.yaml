@@ -1,0 +1,75 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c11_nco_mixer
+title: "NCO (16-bit phase, 256-entry table) and complex mixer, 12-bit in and out, behind the test shell"
+source: spec.md
+tier: C11
+difficulty: 2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c11_nco_mixer_top
+design_id: 0x4e434f4d          # "NCOM"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "phase 0, FW 0, burst mask 0, sample registers 0, results cleared, DONE = 0"
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  nco:
+  - acc 16 bits; idx = acc >> 8 before the update; s = S[idx]; c = S[(idx + 64) % 256]; acc += fw on enabled clocks only
+  mix:
+  - i = (x*c) >>> 14, q = (x*(-s)) >>> 14 (arithmetic shift; the result fits 12 bits)
+  latency:
+  - 'exactly 1 clock: the result of a sample presented in clock n is seen in clock n + 1 (VMASK records it)'
+  stream:
+  - the phase persists across bursts; the enabled samples of all bursts form one stream
+  burst:
+  - GO starts a burst of 64 clocks; DONE is 0 from the GO until the burst has ended (then 1). In clock n < 32 of the burst the block is presented with a sample when MASK bit n is 1; the samples are taken from SAMP0, SAMP1, ... in order (at most 16 bits of MASK may be 1). FW is presented on every clock.
+  - Each result is stored in OUT0, OUT1, ... in order and counted in NOUT (only the first 16 are stored); VMASK bit n is 1 when a result appeared in clock n + 1 of the burst (so VMASK = MASK for a correct block).
+  - GO clears NOUT, VMASK and DONE; OUT registers read 0 beyond NOUT.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: MASK, access: RW, reset: 0, bits: "[31:0] clock n of the burst presents a sample when bit n is 1"}
+    - {offset: 0x01, name: GO, access: WO, reset: 0, bits: "any write starts a burst; reads 0"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] DONE; other bits 0"}
+    - {offset: 0x03, name: NOUT, access: RO, reset: 0, bits: "[5:0] number of results seen in the last burst"}
+    - {offset: 0x04, name: VMASK, access: RO, reset: 0, bits: "[31:0] bit n = a result appeared in clock n + 1"}
+    - {offset: 0x05, name: FW, access: RW, reset: 0, bits: "[15:0] phase step; [31:16] read 0"}
+    - {offset: 0x10, name: SAMP0, access: RW, reset: 0, bits: "[11:0] signed sample, two's complement; [31:12] read 0. SAMP1-SAMP15 at 0x11-0x1F the same, in order"}
+    - {offset: 0x20, name: OUT0, access: RO, reset: 0, bits: "[11:0] i_out, [27:16] q_out of the first result, two's complement; other bits 0. OUT1-OUT15 at 0x21-0x2F the same; 0 beyond NOUT"}
+  unmapped: offsets not listed read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: the course reference is a table, an accumulator and two multipliers in one stage; no OOC number recorded (reference_qor.md).
+
+requirements:
+  - {id: REQ-01, text: "every (i_out, q_out) equals the model's", proof: [simulation]}
+  - {id: REQ-02, text: "the phase advances only on enabled clocks; a result appears one clock after each enabled clock", proof: [simulation]}
+  - {id: REQ-03, text: "timing closes at 100 MHz", proof: [analysis]}
+
+assumptions:
+  - assumption: the LEDs stay off.
+    reason: nothing is asked of them.
+
+open_questions: []

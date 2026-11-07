@@ -1,0 +1,72 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c9_median3x3
+title: "3 x 3 median of nine 8-bit pixels, one clock of latency, behind the test shell"
+source: spec.md
+tier: C9
+difficulty: 1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c9_median3x3_top
+design_id: 0x4d45444e          # "MEDN"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "burst mask 0, window registers 0, results cleared, DONE = 0, no result in flight"
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  median:
+  - the fifth smallest of the nine pixels
+  latency:
+  - 'exactly 1 clock: the result of a window presented in clock n is seen in clock n + 1 (VMASK records it)'
+  window_packing:
+  - 'a window is three consecutive registers; pixel p (0..8) is in bits [8*(p mod 3)+7 : 8*(p mod 3)] of register p div 3 of the window'
+  burst:
+  - GO starts a burst of 64 clocks; DONE is 0 from the GO until the burst has ended (then 1). In clock n < 32 of the burst the block is presented with a window when MASK bit n is 1; the windows are taken from WIN0, WIN1, ... in order (at most 8 bits of MASK may be 1).
+  - Each result is stored in MED0, MED1, ... in order and counted in NOUT (only the first 8 are stored); VMASK bit n is 1 when a result appeared in clock n + 1 of the burst (so VMASK = MASK for a correct block).
+  - GO clears NOUT, VMASK and DONE; MED registers read 0 beyond NOUT.
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: MASK, access: RW, reset: 0, bits: "[31:0] clock n of the burst presents a window when bit n is 1"}
+    - {offset: 0x01, name: GO, access: WO, reset: 0, bits: "any write starts a burst; reads 0"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] DONE; other bits 0"}
+    - {offset: 0x03, name: NOUT, access: RO, reset: 0, bits: "[5:0] number of results seen in the last burst"}
+    - {offset: 0x04, name: VMASK, access: RO, reset: 0, bits: "[31:0] bit n = a result appeared in clock n + 1"}
+    - {offset: 0x10, name: WIN0, access: RW, reset: 0, bits: "[23:0] pixels 0..2 of window 0, pixel p in bits [8p+7:8p]; [31:24] read 0. Registers 0x11 and 0x12 hold pixels 3..5 and 6..8 of window 0; window k uses 0x10+3k .. 0x12+3k (k up to 7, to 0x27)"}
+    - {offset: 0x30, name: MED0, access: RO, reset: 0, bits: "[7:0] median of the first result; [31:8] read 0. MED1-MED7 at 0x31-0x37 the same; 0 beyond NOUT"}
+  unmapped: offsets not listed read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: the course reference is one comparator network and one output register; no OOC number recorded (reference_qor.md).
+
+requirements:
+  - {id: REQ-01, text: "every median equals the fifth smallest of the window", proof: [simulation]}
+  - {id: REQ-02, text: "a result appears exactly one clock after the window and never otherwise", proof: [simulation]}
+  - {id: REQ-03, text: "timing closes at 100 MHz", proof: [analysis]}
+
+assumptions:
+  - assumption: the LEDs stay off.
+    reason: nothing is asked of them.
+
+open_questions: []
