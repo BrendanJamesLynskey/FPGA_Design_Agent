@@ -39,3 +39,12 @@ Each fix: the run that exposed it, the PR, the re-run result.
 ## Run 5 (fix 4): result
 
 - `c14_int8_dot_requant` run 5 passes: 6 of 6 tests, V0 to V3, stages 0 to 8, then the stage-9 hardware pause (no board). Post-route WNS +0.495 ns, WHS +0.099 ns at 100 MHz; 737 LUT, 753 FF, 12 DSP, 0 BRAM; power 0.118 W. Choice of the visit limit: stage 2 raised to 6 rather than counting tool-error visits separately (those cannot be told reliably from the agent's own failures); run 5 used 3 visits, so the limit was not exercised. Nothing new open.
+
+## c10_dds_sine run 2 (fix 5 check)
+
+- `c10_dds_sine` run 2 (main 876f29b, Knowledge 415d555, same settings as batch 1) passes: 3 of 3 hidden tests (run 1: 1 of 3), V0 to V3, stages 0 to 8, then the stage-9 hardware pause (no board). Post-route WNS +0.775 ns, WHS +0.131 ns at 100 MHz; 578 LUT, 366 FF, 0 DSP, 2 RAMB18; power 0.123 W.
+- Fix B (YAML-aware oracle quote): not exercised. The oracle's DATA quote carried the file's own `two''s`, so the old raw-text check accepted it too.
+- Fix C (map beats a default): the packing question was answered, not defaulted, and `registers.map` DATA reads `[11:0]` / `[27:16]`; no default competed with the map, so the override itself was not tested. A leftover behaviours line in `spec.yaml` still says "sign-extended"; RTL and tests follow the map.
+- Fix A (tests conventions): no V1 `proof_references_resolve` repair at stage 2 (run 1 had one). Stage 2 took 1 visit.
+- Fix E (Verilator first): mutation baseline 51.5 s on Verilator (run 1: 134.7 s on Icarus), mutation wall 520 s (run 1: 842 s), same sample of 20 mutants and the same score, 18 of 20. Gate baseline on the same bench: Icarus 390.6 s, Verilator 52.4 s. Total run wall 1.23 h (run 1: 1.26 h), 136 turns (160).
+- Single draw: the pass is consistent with the fixes but not proof of B or C.

@@ -1,0 +1,118 @@
+{
+ "task": "c10_dds_sine",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 1,
+ "run": 2,
+ "date": "2026-11-07",
+ "run_id": "20261107-223406-643a",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.318",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "main 876f29b (FPGA_Design_Agent), Knowledge main 415d555 (07a2 fix 5: oracle YAML quote check, register-map precedence, Verilator-first simulation); no code changes in this run",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (3 seeds; functional bins 100% 19/19; cover properties 100%; line 100%; toggle 92.01%; mutation score 90.0%: 18 killed of 20 evaluated, 2 survivors)",
+  "stage_gates_post_route": "all pass",
+  "bitstream": "built"
+ },
+ "agent_turns": 136,
+ "sub_agent_calls": 14,
+ "stage_visits_role_calls": {
+  "clarify": 1,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 3,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 2
+ },
+ "stage2_repair_loop": {
+  "visits": 1,
+  "limit": 6,
+  "visit_failures": [],
+  "note": "no repair call at stage 2; the only repair call is a tests-role fix at stage 9 (bring-up readiness)"
+ },
+ "questions": {
+  "oracle_calls": 4,
+  "answered": [
+   "register map (whole map from hidden/spec.yaml, no model call)",
+   "DATA packing",
+   "TIMEOUT_CYCLES/BUILD_STAMP"
+  ],
+  "defaulted": [
+   "reads past the end / before done",
+   "fw writable while recording"
+  ]
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": true,
+  "tests_passed": 3,
+  "tests_total": 3,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_each_frequency_word_sample_for_sample": true,
+   "test_restart_and_pointer": true
+  },
+  "scoring_env": "benchmark/tools/scoring_env.py: ok (exit 0) before scoring"
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 0.775,
+  "whs_ns": 0.131,
+  "lut": 578,
+  "ff": 366,
+  "dsp": 0,
+  "bram36": 0,
+  "ramb18": 2,
+  "power_w": 0.123,
+  "reference_qor": "not run (the course recorded no OOC or full-flow numbers for this block)",
+  "note": "full-flow post-route with the test shell on the xc7a100t at 100 MHz; LUT and FF include the shell"
+ },
+ "fix5_effects": {
+  "B_oracle_quote": "not exercised. The Haiku oracle's DATA quote this time carried the file's own text (two''s, doubled apostrophe) and was accepted by the old raw-text check too; no answer was refused for its quote. The YAML-aware path was not needed.",
+  "C_register_map_precedence": "outcome good, mechanism not isolated. The DATA packing question was answered (not defaulted) and registers.map DATA bits are '[11:0] sample 2m, [27:16] sample 2m+1 ...; 0 before DONE', matching the hidden map. No default competed with the map, so the override code had nothing to override. A stale behaviours line in spec.yaml still says 'each sign-extended to 16 bits within its half-word'; the RTL and tests follow the map.",
+  "A_tests_conventions": "took effect: no V1 proof_references_resolve repair at stage 2 (run 1 had one)",
+  "E_verilator_first": "took effect: stage-2 gate ran Verilator coverage, then the Icarus cross-check, then Verilator coverage; mutation ran on Verilator"
+ },
+ "timing": {
+  "simulation_baseline_s": {
+   "run_1": "Icarus 134.7 (mutation baseline)",
+   "run_2": "Icarus 390.6 and Verilator 52.4 (build/verif/sim_baseline.json, same bench; the Icarus figure is the gate's last passing run, a different run from run 1's mutation baseline)"
+  },
+  "mutation": {
+   "run_1": {
+    "sim": "Icarus",
+    "baseline_s": 134.7,
+    "sample": 20,
+    "wall_s": 841.6
+   },
+   "run_2": {
+    "sim": "Verilator",
+    "baseline_s": 51.5,
+    "sample": 20,
+    "wall_s": 519.7
+   }
+  }
+ },
+ "notes": "Run 1 failed 1/3 on the DATA packing (harness gap). Run 2 passes 3/3: the clarify stage got the correct packing and the whole register map. One run each; a run 1 / run 2 difference could also be oracle wording luck.",
+ "wall_h_total": 1.23,
+ "wall_h_agent_calls": 0.71
+}
