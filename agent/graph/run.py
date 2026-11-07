@@ -36,7 +36,8 @@ from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
 from agent.graph.contract import MODEL_CONTRACT, contract_argv, parse_result
-from agent.graph.interview import Interview, Question, SpecOracle, merge_summaries, register_map_errors
+from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, merge_summaries,
+                                   register_map_errors)
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
 from agent.core.artefacts import check_artefact
@@ -145,7 +146,7 @@ PROMPTS = {
                "REGISTER MAP: if spec.md names registers or the test shell but gives no register offsets, you do NOT know the "
                "map and must not invent it: add an open_questions entry that asks for the register map (offset, width, reset "
                "value and access of every register), with your proposed map as the default, and write registers.map from the "
-               "answer. The gate fails a spec that has shell registers and no such question. "
+               "answer; an answered map overrides your proposal (the harness copies it into registers.map). The gate fails a spec that has shell registers and no such question. "
                "spec.yaml must be valid YAML (quote any text that contains ': ' or '?'); ports, clocks, reset, "
                "behaviour, registers and timing must all be non-empty, in this exact shape: behaviour is a mapping of "
                "group name -> list of statements; registers is a mapping with a 'map' list of entries "
@@ -826,7 +827,7 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
             iv.ask(q, _Human())
         else:
             iv.ask(q, who)
-    spec = iv.resolve_into(spec)
+    spec = apply_register_answer(iv.resolve_into(spec))               # 07a2 fix 5 C: an answered map beats the role's default
     for r in rates:                                               # the answered (or defaulted) integer replaces it
         got = next((q for q in iv.questions if q.text.startswith(f"{r['name']} is given as")), None)
         m = re.search(r"\d+", got.answer or "") if got else None

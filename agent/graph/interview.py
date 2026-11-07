@@ -171,6 +171,36 @@ def register_map_errors(request: str, spec: dict[str, Any]) -> list[str]:
     return errs
 
 
+REG_LINE = re.compile(r"^\s*(\w+): offset (0x[0-9a-fA-F]+|\d+), (\w+), reset (\S+?): (.*)$")
+
+
+def apply_register_answer(spec: dict[str, Any]) -> dict[str, Any]:
+    """07a2 fix 5 C: a register map supplied in an answer overrides what the clarify role proposed. Every line of the
+    answered register-map question that reads "NAME: offset 0xNN, ACC, reset R: bits" replaces the access, reset and bits
+    of the spec's entry at that offset (batch 1, c10: the answer said DATA is [11:0]/[27:16], the role kept its own
+    "[15:0] sign-extended" default). An offset the spec lacks is added. Free-form human answers match no line and change
+    nothing. The offsets and names come from the answer, never from the role's guess."""
+    qs = [q for q in (spec.get("resolved_questions") or []) if isinstance(q, dict) and q.get("status") == "answered"
+          and is_register_question(str(q.get("question", "")))]
+    rows = [m.groups() for q in qs for l in str(q.get("answer", "")).splitlines() if (m := REG_LINE.match(l))]
+    if not rows:
+        return spec
+    spec = dict(spec)
+    regs = dict(spec.get("registers") or {})
+    entries = [dict(e) if isinstance(e, dict) else e for e in regs.get("map") or []]
+    for name, off, acc, reset, bits in rows:
+        want = _offset_int(off)
+        hit = next((e for e in entries if isinstance(e, dict) and _offset_int(e.get("offset")) == want), None)
+        if hit is None:
+            hit = {"offset": want, "name": name}
+            entries.append(hit)
+        hit.update({"name": name, "access": acc, "reset": _offset_int(reset) if _offset_int(reset) is not None else reset,
+                    "bits": bits})
+    regs["map"] = entries
+    spec["registers"] = regs
+    return spec
+
+
 #: The oracle answers a register-addressing question with the whole map, one register per line.
 def register_map_answer(rendered: str) -> tuple[str, str] | None:
     lines = rendered.splitlines()
