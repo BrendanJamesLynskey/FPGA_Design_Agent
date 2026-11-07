@@ -1,0 +1,165 @@
+{
+  "design": "build/bench/t1_gray_stepper",
+  "runs": 1,
+  "passed": 1,
+  "pass": true,
+  "results": [
+    {
+      "design": "build/bench/t1_gray_stepper",
+      "started": "2026-11-03T13:20:19",
+      "git_commit": "791b1011543278e48fb414f922c36803abc7e942",
+      "git_dirty": false,
+      "steps": {
+        "power_ok": {
+          "pass": true,
+          "source": "wall",
+          "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+          "limit_w": 2.0,
+          "junction_limit_c": 85.0,
+          "total_w": 0.117,
+          "junction_c": 42.1,
+          "dynamic_w": 0.004,
+          "static_w": 0.113,
+          "confidence": "Low",
+          "environment": {
+            "ambient_c": 40.0,
+            "airflow_lfm": 0.0,
+            "heatsink": "none",
+            "theta_ja_c_per_w": 18.2,
+            "board": "small (4\"x4\")",
+            "board_layers": "4to7 (4 to 7 Layers)"
+          },
+          "supplies_a": {
+            "vccint": 0.032,
+            "vccaux": 0.019,
+            "vcco33": 0.004,
+            "vccadc": 0.02
+          },
+          "rails": {
+            "vccint": {
+              "a": 0.032,
+              "limit_a": 2.4
+            },
+            "rail_1v8": {
+              "a": 0.039,
+              "limit_a": 0.38
+            },
+            "vcco33": {
+              "a": 0.004,
+              "limit_a": 1.9
+            }
+          },
+          "why": "",
+          "seconds": 0.0
+        },
+        "discover": {
+          "pass": true,
+          "board": "nexys_a7_100t",
+          "cable_serial": "...B73A",
+          "part": "xc7a100t",
+          "idcode": "13631093",
+          "uart": "FT2232 interface 1 (found)",
+          "targets_seen": 1,
+          "vivado_version": "2025.2",
+          "seconds": 17.0
+        },
+        "program": {
+          "variant": "base",
+          "build_stamp": "2a0a8376",
+          "cable_serial": "...B73A",
+          "power_ok": {
+            "pass": true,
+            "source": "wall",
+            "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+            "limit_w": 2.0,
+            "junction_limit_c": 85.0,
+            "total_w": 0.117,
+            "junction_c": 42.1,
+            "dynamic_w": 0.004,
+            "static_w": 0.113,
+            "confidence": "Low",
+            "environment": {
+              "ambient_c": 40.0,
+              "airflow_lfm": 0.0,
+              "heatsink": "none",
+              "theta_ja_c_per_w": 18.2,
+              "board": "small (4\"x4\")",
+              "board_layers": "4to7 (4 to 7 Layers)"
+            },
+            "supplies_a": {
+              "vccint": 0.032,
+              "vccaux": 0.019,
+              "vcco33": 0.004,
+              "vccadc": 0.02
+            },
+            "rails": {
+              "vccint": {
+                "a": 0.032,
+                "limit_a": 2.4
+              },
+              "rail_1v8": {
+                "a": 0.039,
+                "limit_a": 0.38
+              },
+              "vcco33": {
+                "a": 0.004,
+                "limit_a": 1.9
+              }
+            },
+            "why": ""
+          },
+          "pass": true,
+          "device": "xc7a100t_0",
+          "part": "xc7a100t",
+          "done_pin": "1",
+          "program_ms": 438,
+          "ila_cores": 0,
+          "vivado_version": "2025.2",
+          "seconds": 22.7
+        },
+        "identify": {
+          "pass": true,
+          "design_id": "GRAY",
+          "build_stamp": "2a0a8376",
+          "shell_version": "0x00010000",
+          "seconds": 0.1
+        },
+        "selfcheck": {
+          "conversion_ok": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+          ],
+          "auto_steps": 20,
+          "bin_after": 120,
+          "bin_expected": 120,
+          "down": 0,
+          "steps_still": true,
+          "unmapped": 0,
+          "pass": true,
+          "rule": "Pass rule (written before any board run): - with AUTO off, for BIN written to 0, 1, 511, 512, 1023 and 0x2A5, BIN reads back the value and GRAY reads BIN xor (BIN >> 1); - with RATE = 100 (100 ms a step at TICK_CYCLES = 1 ms) and AUTO on for about 2 s, STEPS advances by 15 to 25 and BIN moves by the same number of steps (mod 1024) in the direction CTRL[8] reports; - after AUTO is turned off, STEPS stands still for 0.5 s; unmapped offset 0x05 reads 0.",
+          "seconds": 3.0
+        },
+        "still_alive": {
+          "pass": true,
+          "scratch_kept": true,
+          "status": {
+            "checksum_errors": 0,
+            "request_errors": 0,
+            "uart_framing_errors": 0,
+            "timeouts": 0
+          },
+          "seconds": 0.1
+        }
+      },
+      "pass": true,
+      "cable_serial": "...B73A",
+      "vivado_version": "2025.2",
+      "build_stamp": "2a0a8376",
+      "seconds": 42.9
+    }
+  ]
+}

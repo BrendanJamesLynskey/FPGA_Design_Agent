@@ -1,0 +1,164 @@
+{
+  "design": "build/bench/t1_sync_fifo_regs",
+  "runs": 1,
+  "passed": 1,
+  "pass": true,
+  "results": [
+    {
+      "design": "build/bench/t1_sync_fifo_regs",
+      "started": "2026-11-03T13:23:19",
+      "git_commit": "791b1011543278e48fb414f922c36803abc7e942",
+      "git_dirty": false,
+      "steps": {
+        "power_ok": {
+          "pass": true,
+          "source": "wall",
+          "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+          "limit_w": 2.0,
+          "junction_limit_c": 85.0,
+          "total_w": 0.116,
+          "junction_c": 42.1,
+          "dynamic_w": 0.003,
+          "static_w": 0.113,
+          "confidence": "Medium",
+          "environment": {
+            "ambient_c": 40.0,
+            "airflow_lfm": 0.0,
+            "heatsink": "none",
+            "theta_ja_c_per_w": 18.2,
+            "board": "small (4\"x4\")",
+            "board_layers": "4to7 (4 to 7 Layers)"
+          },
+          "supplies_a": {
+            "vccint": 0.031,
+            "vccaux": 0.019,
+            "vcco33": 0.004,
+            "vccadc": 0.02
+          },
+          "rails": {
+            "vccint": {
+              "a": 0.031,
+              "limit_a": 2.4
+            },
+            "rail_1v8": {
+              "a": 0.039,
+              "limit_a": 0.38
+            },
+            "vcco33": {
+              "a": 0.004,
+              "limit_a": 1.9
+            }
+          },
+          "why": "",
+          "seconds": 0.0
+        },
+        "discover": {
+          "pass": true,
+          "board": "nexys_a7_100t",
+          "cable_serial": "...B73A",
+          "part": "xc7a100t",
+          "idcode": "13631093",
+          "uart": "FT2232 interface 1 (found)",
+          "targets_seen": 1,
+          "vivado_version": "2025.2",
+          "seconds": 21.4
+        },
+        "program": {
+          "variant": "base",
+          "build_stamp": "97aa0226",
+          "cable_serial": "...B73A",
+          "power_ok": {
+            "pass": true,
+            "source": "wall",
+            "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+            "limit_w": 2.0,
+            "junction_limit_c": 85.0,
+            "total_w": 0.116,
+            "junction_c": 42.1,
+            "dynamic_w": 0.003,
+            "static_w": 0.113,
+            "confidence": "Medium",
+            "environment": {
+              "ambient_c": 40.0,
+              "airflow_lfm": 0.0,
+              "heatsink": "none",
+              "theta_ja_c_per_w": 18.2,
+              "board": "small (4\"x4\")",
+              "board_layers": "4to7 (4 to 7 Layers)"
+            },
+            "supplies_a": {
+              "vccint": 0.031,
+              "vccaux": 0.019,
+              "vcco33": 0.004,
+              "vccadc": 0.02
+            },
+            "rails": {
+              "vccint": {
+                "a": 0.031,
+                "limit_a": 2.4
+              },
+              "rail_1v8": {
+                "a": 0.039,
+                "limit_a": 0.38
+              },
+              "vcco33": {
+                "a": 0.004,
+                "limit_a": 1.9
+              }
+            },
+            "why": ""
+          },
+          "pass": true,
+          "device": "xc7a100t_0",
+          "part": "xc7a100t",
+          "done_pin": "1",
+          "program_ms": 370,
+          "ila_cores": 0,
+          "vivado_version": "2025.2",
+          "seconds": 20.1
+        },
+        "identify": {
+          "pass": true,
+          "design_id": "FIFO",
+          "build_stamp": "97aa0226",
+          "shell_version": "0x00010000",
+          "seconds": 0.1
+        },
+        "selfcheck": {
+          "flags_clean": "0x001",
+          "head": "0x11",
+          "level": 3,
+          "popped": [
+            17,
+            34,
+            51
+          ],
+          "empty_pop": 0,
+          "flags_underflow": "0x201",
+          "level_full": 16,
+          "flags_full": "0x106",
+          "flags_after_w1c": "0x006",
+          "pass": true,
+          "rule": "Pass rule (written before any board run): - after draining (POP until LEVEL = 0) and clearing both error flags (FLAGS = 0x300), FLAGS reads 0x001; - pushing 0x11, 0x22, 0x33: HEAD reads 0x11 (first-word-fall-through), LEVEL 3; POP reads 0x11, 0x22, 0x33; - a fourth POP reads 0 and sets UNDERFLOW (FLAGS 0x201); 17 pushes give LEVEL 16 and FLAGS 0x106 (empty 0, full, almost full at the reset threshold 12, OVERFLOW, UNDERFLOW cleared first); FLAGS = 0x100 then clears OVERFLOW only; - the FIFO is drained again at the end.",
+          "seconds": 1.1
+        },
+        "still_alive": {
+          "pass": true,
+          "scratch_kept": true,
+          "status": {
+            "checksum_errors": 0,
+            "request_errors": 0,
+            "uart_framing_errors": 0,
+            "timeouts": 0
+          },
+          "seconds": 0.1
+        }
+      },
+      "pass": true,
+      "cable_serial": "...B73A",
+      "vivado_version": "2025.2",
+      "build_stamp": "97aa0226",
+      "seconds": 42.8
+    }
+  ]
+}

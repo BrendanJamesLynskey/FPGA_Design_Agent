@@ -1,0 +1,180 @@
+{
+  "design": "build/bench/t2_pdm_vu",
+  "runs": 1,
+  "passed": 1,
+  "pass": true,
+  "results": [
+    {
+      "design": "build/bench/t2_pdm_vu",
+      "started": "2026-11-03T13:26:27",
+      "git_commit": "791b1011543278e48fb414f922c36803abc7e942",
+      "git_dirty": false,
+      "steps": {
+        "power_ok": {
+          "pass": true,
+          "source": "wall",
+          "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+          "limit_w": 2.0,
+          "junction_limit_c": 85.0,
+          "total_w": 0.117,
+          "junction_c": 42.1,
+          "dynamic_w": 0.004,
+          "static_w": 0.113,
+          "confidence": "Medium",
+          "environment": {
+            "ambient_c": 40.0,
+            "airflow_lfm": 0.0,
+            "heatsink": "none",
+            "theta_ja_c_per_w": 18.2,
+            "board": "small (4\"x4\")",
+            "board_layers": "4to7 (4 to 7 Layers)"
+          },
+          "supplies_a": {
+            "vccint": 0.032,
+            "vccaux": 0.019,
+            "vcco33": 0.004,
+            "vccadc": 0.02
+          },
+          "rails": {
+            "vccint": {
+              "a": 0.032,
+              "limit_a": 2.4
+            },
+            "rail_1v8": {
+              "a": 0.039,
+              "limit_a": 0.38
+            },
+            "vcco33": {
+              "a": 0.004,
+              "limit_a": 1.9
+            }
+          },
+          "why": "",
+          "seconds": 0.0
+        },
+        "discover": {
+          "pass": true,
+          "board": "nexys_a7_100t",
+          "cable_serial": "...B73A",
+          "part": "xc7a100t",
+          "idcode": "13631093",
+          "uart": "FT2232 interface 1 (found)",
+          "targets_seen": 1,
+          "vivado_version": "2025.2",
+          "seconds": 18.0
+        },
+        "program": {
+          "variant": "base",
+          "build_stamp": "501138d8",
+          "cable_serial": "...B73A",
+          "power_ok": {
+            "pass": true,
+            "source": "wall",
+            "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+            "limit_w": 2.0,
+            "junction_limit_c": 85.0,
+            "total_w": 0.117,
+            "junction_c": 42.1,
+            "dynamic_w": 0.004,
+            "static_w": 0.113,
+            "confidence": "Medium",
+            "environment": {
+              "ambient_c": 40.0,
+              "airflow_lfm": 0.0,
+              "heatsink": "none",
+              "theta_ja_c_per_w": 18.2,
+              "board": "small (4\"x4\")",
+              "board_layers": "4to7 (4 to 7 Layers)"
+            },
+            "supplies_a": {
+              "vccint": 0.032,
+              "vccaux": 0.019,
+              "vcco33": 0.004,
+              "vccadc": 0.02
+            },
+            "rails": {
+              "vccint": {
+                "a": 0.032,
+                "limit_a": 2.4
+              },
+              "rail_1v8": {
+                "a": 0.039,
+                "limit_a": 0.38
+              },
+              "vcco33": {
+                "a": 0.004,
+                "limit_a": 1.9
+              }
+            },
+            "why": ""
+          },
+          "pass": true,
+          "device": "xc7a100t_0",
+          "part": "xc7a100t",
+          "done_pin": "1",
+          "program_ms": 384,
+          "ila_cores": 0,
+          "vivado_version": "2025.2",
+          "seconds": 17.6
+        },
+        "identify": {
+          "pass": true,
+          "design_id": "PDMV",
+          "build_stamp": "501138d8",
+          "shell_version": "0x00010000",
+          "seconds": 0.1
+        },
+        "selfcheck": {
+          "ctrl": [
+            "0x108",
+            "0x204"
+          ],
+          "blocks_per_s": 615.0,
+          "ones": [
+            2116,
+            2112,
+            2123,
+            2097,
+            2106,
+            2145,
+            2109,
+            2112,
+            2126,
+            2103,
+            2106,
+            2121,
+            2117,
+            2110,
+            2116,
+            2110,
+            2107,
+            2118,
+            2117,
+            2114
+          ],
+          "level": 67,
+          "peak": 67,
+          "pass": true,
+          "rule": "Pass rule (written before any board run): - CTRL reads its reset value 0x108 and reads back a written 0x204; - BLOCKS grows by 610 +/- 15 over 1.00 s (2.5 MHz / 4096); - ONES of a block is between 25 % and 75 % of WINDOW (1024..3072): a live microphone in a room, neither stuck at 0 nor at 1 (a stuck or high-Z line reads near 0 or 4096, or exactly the same value every time); - 20 ONES readings are not all equal. No human is needed; a clap near the board (optional) should raise PEAK, recorded only.",
+          "seconds": 1.4
+        },
+        "still_alive": {
+          "pass": true,
+          "scratch_kept": true,
+          "status": {
+            "checksum_errors": 0,
+            "request_errors": 0,
+            "uart_framing_errors": 0,
+            "timeouts": 0
+          },
+          "seconds": 0.1
+        }
+      },
+      "pass": true,
+      "cable_serial": "...B73A",
+      "vivado_version": "2025.2",
+      "build_stamp": "501138d8",
+      "seconds": 37.2
+    }
+  ]
+}

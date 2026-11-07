@@ -1,0 +1,166 @@
+{
+  "design": "build/bench/t1_debounce_bank",
+  "runs": 1,
+  "passed": 1,
+  "pass": true,
+  "results": [
+    {
+      "design": "build/bench/t1_debounce_bank",
+      "started": "2026-11-03T13:18:44",
+      "git_commit": "791b1011543278e48fb414f922c36803abc7e942",
+      "git_dirty": false,
+      "steps": {
+        "power_ok": {
+          "pass": true,
+          "source": "wall",
+          "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+          "limit_w": 2.0,
+          "junction_limit_c": 85.0,
+          "total_w": 0.122,
+          "junction_c": 42.2,
+          "dynamic_w": 0.009,
+          "static_w": 0.113,
+          "confidence": "Low",
+          "environment": {
+            "ambient_c": 40.0,
+            "airflow_lfm": 0.0,
+            "heatsink": "none",
+            "theta_ja_c_per_w": 18.2,
+            "board": "small (4\"x4\")",
+            "board_layers": "4to7 (4 to 7 Layers)"
+          },
+          "supplies_a": {
+            "vccint": 0.037,
+            "vccaux": 0.019,
+            "vcco33": 0.004,
+            "vccadc": 0.02
+          },
+          "rails": {
+            "vccint": {
+              "a": 0.037,
+              "limit_a": 2.4
+            },
+            "rail_1v8": {
+              "a": 0.039,
+              "limit_a": 0.38
+            },
+            "vcco33": {
+              "a": 0.004,
+              "limit_a": 1.9
+            }
+          },
+          "why": "",
+          "seconds": 0.0
+        },
+        "discover": {
+          "pass": true,
+          "board": "nexys_a7_100t",
+          "cable_serial": "...B73A",
+          "part": "xc7a100t",
+          "idcode": "13631093",
+          "uart": "FT2232 interface 1 (found)",
+          "targets_seen": 1,
+          "vivado_version": "2025.2",
+          "seconds": 17.0
+        },
+        "program": {
+          "variant": "base",
+          "build_stamp": "1620e8c5",
+          "cable_serial": "...B73A",
+          "power_ok": {
+            "pass": true,
+            "source": "wall",
+            "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+            "limit_w": 2.0,
+            "junction_limit_c": 85.0,
+            "total_w": 0.122,
+            "junction_c": 42.2,
+            "dynamic_w": 0.009,
+            "static_w": 0.113,
+            "confidence": "Low",
+            "environment": {
+              "ambient_c": 40.0,
+              "airflow_lfm": 0.0,
+              "heatsink": "none",
+              "theta_ja_c_per_w": 18.2,
+              "board": "small (4\"x4\")",
+              "board_layers": "4to7 (4 to 7 Layers)"
+            },
+            "supplies_a": {
+              "vccint": 0.037,
+              "vccaux": 0.019,
+              "vcco33": 0.004,
+              "vccadc": 0.02
+            },
+            "rails": {
+              "vccint": {
+                "a": 0.037,
+                "limit_a": 2.4
+              },
+              "rail_1v8": {
+                "a": 0.039,
+                "limit_a": 0.38
+              },
+              "vcco33": {
+                "a": 0.004,
+                "limit_a": 1.9
+              }
+            },
+            "why": ""
+          },
+          "pass": true,
+          "device": "xc7a100t_0",
+          "part": "xc7a100t",
+          "done_pin": "1",
+          "program_ms": 542,
+          "ila_cores": 0,
+          "vivado_version": "2025.2",
+          "seconds": 18.2
+        },
+        "identify": {
+          "pass": true,
+          "design_id": "DBNK",
+          "build_stamp": "1620e8c5",
+          "shell_version": "0x00010000",
+          "seconds": 0.1
+        },
+        "selfcheck": {
+          "level": "0x0000",
+          "level_stable": true,
+          "edges_cleared": 0,
+          "counts_cleared": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "enable_readback": [
+            "0x1234",
+            "0x8001"
+          ],
+          "level_after_ro_write": "0x0000",
+          "unmapped": 0,
+          "pass": true,
+          "rule": "Pass rule (written before any board run): - LEVEL reads the same value twice 0.2 s apart (switches untouched), with [31:16] = 0; - after writes of 0xFFFF to EDGES and to COUNT0..COUNT3, EDGES reads 0 and every count reads 0; - RISE_EN and FALL_EN read back 0x1234 and 0x8001 when written, and are restored to 0xFFFF / 0x0000; - writes to LEVEL are ignored; offset 0x08 reads 0. The host reports LEVEL so the operator can compare it with the switch positions (the visible check).",
+          "seconds": 0.5
+        },
+        "still_alive": {
+          "pass": true,
+          "scratch_kept": true,
+          "status": {
+            "checksum_errors": 0,
+            "request_errors": 0,
+            "uart_framing_errors": 0,
+            "timeouts": 0
+          },
+          "seconds": 0.1
+        }
+      },
+      "pass": true,
+      "cable_serial": "...B73A",
+      "vivado_version": "2025.2",
+      "build_stamp": "1620e8c5",
+      "seconds": 35.9
+    }
+  ]
+}

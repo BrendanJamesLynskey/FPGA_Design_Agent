@@ -1,0 +1,160 @@
+{
+  "design": "build/bench/t2_qspi_sfdp",
+  "runs": 1,
+  "passed": 1,
+  "pass": true,
+  "results": [
+    {
+      "design": "build/bench/t2_qspi_sfdp",
+      "started": "2026-11-03T13:27:05",
+      "git_commit": "791b1011543278e48fb414f922c36803abc7e942",
+      "git_dirty": false,
+      "steps": {
+        "power_ok": {
+          "pass": true,
+          "source": "wall",
+          "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+          "limit_w": 2.0,
+          "junction_limit_c": 85.0,
+          "total_w": 0.116,
+          "junction_c": 42.1,
+          "dynamic_w": 0.004,
+          "static_w": 0.113,
+          "confidence": "Medium",
+          "environment": {
+            "ambient_c": 40.0,
+            "airflow_lfm": 0.0,
+            "heatsink": "none",
+            "theta_ja_c_per_w": 18.2,
+            "board": "small (4\"x4\")",
+            "board_layers": "4to7 (4 to 7 Layers)"
+          },
+          "supplies_a": {
+            "vccint": 0.032,
+            "vccaux": 0.019,
+            "vcco33": 0.004,
+            "vccadc": 0.02
+          },
+          "rails": {
+            "vccint": {
+              "a": 0.032,
+              "limit_a": 2.4
+            },
+            "rail_1v8": {
+              "a": 0.039,
+              "limit_a": 0.38
+            },
+            "vcco33": {
+              "a": 0.004,
+              "limit_a": 1.9
+            }
+          },
+          "why": "",
+          "seconds": 0.0
+        },
+        "discover": {
+          "pass": true,
+          "board": "nexys_a7_100t",
+          "cable_serial": "...B73A",
+          "part": "xc7a100t",
+          "idcode": "13631093",
+          "uart": "FT2232 interface 1 (found)",
+          "targets_seen": 1,
+          "vivado_version": "2025.2",
+          "seconds": 19.3
+        },
+        "program": {
+          "variant": "base",
+          "build_stamp": "74598378",
+          "cable_serial": "...B73A",
+          "power_ok": {
+            "pass": true,
+            "source": "wall",
+            "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+            "limit_w": 2.0,
+            "junction_limit_c": 85.0,
+            "total_w": 0.116,
+            "junction_c": 42.1,
+            "dynamic_w": 0.004,
+            "static_w": 0.113,
+            "confidence": "Medium",
+            "environment": {
+              "ambient_c": 40.0,
+              "airflow_lfm": 0.0,
+              "heatsink": "none",
+              "theta_ja_c_per_w": 18.2,
+              "board": "small (4\"x4\")",
+              "board_layers": "4to7 (4 to 7 Layers)"
+            },
+            "supplies_a": {
+              "vccint": 0.032,
+              "vccaux": 0.019,
+              "vcco33": 0.004,
+              "vccadc": 0.02
+            },
+            "rails": {
+              "vccint": {
+                "a": 0.032,
+                "limit_a": 2.4
+              },
+              "rail_1v8": {
+                "a": 0.039,
+                "limit_a": 0.38
+              },
+              "vcco33": {
+                "a": 0.004,
+                "limit_a": 1.9
+              }
+            },
+            "why": ""
+          },
+          "pass": true,
+          "device": "xc7a100t_0",
+          "part": "xc7a100t",
+          "done_pin": "1",
+          "program_ms": 386,
+          "ila_cores": 0,
+          "vivado_version": "2025.2",
+          "seconds": 21.0
+        },
+        "identify": {
+          "pass": true,
+          "design_id": "SFDP",
+          "build_stamp": "74598378",
+          "shell_version": "0x00010000",
+          "seconds": 0.1
+        },
+        "selfcheck": {
+          "id": "0x012018",
+          "sfdp": [
+            "0x00000000",
+            "0x00000000",
+            "0x00000000",
+            "0x00000000"
+          ],
+          "sig_ok": false,
+          "repeat_same": true,
+          "pass": true,
+          "rule": "Pass rule (written before any board run): - after a start, DONE within 0.1 s; ID = 0x012018 (Cypress/Spansion, 128 Mb: S25FL128S Table 54 / S25FL127S Table 49; the owner's board answered 01 20 18 in results/board_v2); - a second start gives the same ID and the same 16 SFDP bytes; - SIG_OK and the four SFDP words are recorded but are not required: the S25FL127S lists SFDP (5Ah), and whether the owner's part (model bytes \"00\", an S25FL128S by its RDID) answers 5Ah with the JESD216 header is not yet known from hardware (see NOTES.md). If SIG_OK is 1, SFDP1 byte 1 (major revision) must be 1. The design can send only 9Fh and 5Ah (tests); nothing is written to the flash.",
+          "seconds": 0.2
+        },
+        "still_alive": {
+          "pass": true,
+          "scratch_kept": true,
+          "status": {
+            "checksum_errors": 0,
+            "request_errors": 0,
+            "uart_framing_errors": 0,
+            "timeouts": 0
+          },
+          "seconds": 0.1
+        }
+      },
+      "pass": true,
+      "cable_serial": "...B73A",
+      "vivado_version": "2025.2",
+      "build_stamp": "74598378",
+      "seconds": 40.7
+    }
+  ]
+}
