@@ -486,7 +486,10 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         elif m == "simulation" and a not in tests_all:
             bad_proof.append(f"{e['requirement']}:simulation:{a}: not a test in the bench")
         elif m == "formal" and a not in formal_tasks:
-            bad_proof.append(f"{e['requirement']}:formal:{a}: not a formal job in {plan['formal_dir']}")
+            hint = ("; it is a test in the bench, so its method is `simulation`" if a in tests_all else "")
+            bad_proof.append(f"{e['requirement']}:formal:{a}: not a formal job in {plan['formal_dir']}{hint}; "
+                             f"valid methods: {', '.join(sorted(PROOF_METHODS))} (a bench test is `simulation`, "
+                             "`formal` names a job in the formal directory)")
         elif not a:
             bad_proof.append(f"{e['requirement']}:{m}: no artefact")
     bad_proof += bad_replan
