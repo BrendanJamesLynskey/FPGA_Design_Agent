@@ -1,0 +1,68 @@
+# Hidden full spec (course tier, from the course project spec). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: c12_nexys_pwm_audio
+title: "PWM audio output stage with a hearing-safety gain register (Nexys A7 AUD_PWM), behind the test shell"
+source: spec.md
+tier: C12
+difficulty: 2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c12_nexys_pwm_audio_top
+design_id: 0x50574d41          # "PWMA"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: "gain 2068, sample 0, PWM counter 0 and duty 512"
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: AUD_PWM, dir: out, width: 1, note: "open drain style: pulled low or high impedance, never driven high", pins: [A11], iostandard: LVCMOS33}
+  - {name: AUD_SD, dir: out, width: 1, pins: [D12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  gain:
+  - reset 2068, clamp 8192 on write; sample_out = (sample * gain) >>> 15 (arithmetic shift)
+  pwm:
+  - 10-bit counter; duty = 512 + (sample_out >>> 7) latched when the counter wraps (reset value 512); AUD_PWM pulled low while counter >= duty, otherwise high impedance (the board pull-up makes it high)
+  sd:
+  - AUD_SD = 1 always
+  data:
+  - the bench counts the clocks with AUD_PWM low over 4096 consecutive clocks (4 whole periods) after the sample has been held for 2048 clocks, and divides by 4
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: SAMPLE, access: RW, reset: 0, bits: "[15:0] audio sample, two's complement; [31:16] read 0"}
+    - {offset: 0x01, name: GAIN, access: WO, reset: 0, bits: "[15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0"}
+    - {offset: 0x02, name: SOUT, access: RO, reset: 0, bits: "[15:0] sample_out = sample after the gain, two's complement; [31:16] read 0"}
+  unmapped: offsets not listed read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+  note: the course reference is a 16x16 multiplier into a 10-bit counter-compare; no OOC number recorded (reference_qor.md).
+
+requirements:
+  - {id: REQ-01, text: "default gain 2068 after reset; writes clamp at 8192", proof: [simulation]}
+  - {id: REQ-02, text: "sample_out and the low-clock count per period equal the model for every step; AUD_SD always 1; the pin is never driven high", proof: [simulation]}
+  - {id: REQ-03, text: "timing closes at 100 MHz", proof: [analysis]}
+
+assumptions:
+  - assumption: the LEDs stay off.
+    reason: nothing is asked of them.
+
+open_questions: []

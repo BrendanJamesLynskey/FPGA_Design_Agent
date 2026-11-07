@@ -1,4 +1,4 @@
-# Benchmark course tier: course v1 frozen 2026-11-06, course v1.1 frozen 2026-11-06 (see the end)
+# Benchmark course tier: course v1 frozen 2026-11-06, course v1.1 frozen 2026-11-06, course v1.2 frozen 2026-11-07 (see the end)
 
 Written by brief 07a1 before any agent run on these tasks. The tier ports the course projects of Parts 13-16 to the benchmark v1 layout; v1 itself (`benchmark/tasks`, `pool`, `lib`, the scoring tools) is unchanged.
 Nothing in `benchmark/course/tasks`, `benchmark/lib` or the scoring tools may change after this point without a new version and a new freeze; a change found necessary is recorded here.
@@ -50,3 +50,16 @@ Added before any agent run on a Part 13 task; split, seed and the 15 v1 tasks ar
 
 The split is not redrawn: the ids did not change. Tool versions as above (Python 3.12.3, cocotb 2.0.1, Icarus 12.0, Verilator 5.048). The shell wrapper of these four tasks uses `CLKS_PER_BIT: 2` in its bench (the shell works at 2; the transfers are
 long). Shared units (`benchmark/lib`, the scoring tools, `benchmark/course/tools`) are unchanged by v1.1.
+
+## Course v1.2 (brief 07a4 step 3, 2026-11-07)
+
+Parts 9-12 join the tier before any agent run on them. Nothing earlier changed: `split.yaml` is byte-identical (SHA-256 above), and the digest of every v1 and v1.1 task in `MANIFEST.json` is the same as before (the 19 task units and the 7 shared units are unchanged).
+
+| What | Value |
+|---|---|
+| Split | `split_c9_c12.yaml`, seed 20261106, the same rule (`random.Random(seed).sample(sorted(ids), round(n/3))` per course part, tiers C9..C12), 10 ids; SHA-256 `db737086b1eb708b8043268ae2860a6f628f7d9cdbd0d7701011f2a6e5546f84`. Drawn with `tools/split.py` and committed (`d24107f`) before any task was ported or checked. Held out 4 of 10 (C9 1, C10 1, C11 1, C12 1), development 6 |
+| Tasks added | ten, from the course specs `projects/p9_*` .. `p12_*` (course repository, `3680a9c`): development 6 in this repository (`c9_median3x3`, `c9_nexys_vga_720p`, `c10_dds_sine`, `c11_nco_mixer`, `c12_adsr_envelope`, `c12_nexys_pwm_audio`), held out 4 in the private repository (by digest here) |
+| Manifest | `MANIFEST.json`: 36 units (29 tasks, 7 shared; the 26 earlier units have the same digests as before) and both split digests (`split_sha256`, `split_c9_c12_sha256`); private manifest `benchmark_private/course/MANIFEST_full.json` |
+| Tools | `tools/freeze.py` reads both split files; `tests/test_course_static.py` reproduces both draws. Shared units are unchanged |
+
+The streaming blocks of Parts 9-12 are exercised behind the shell with bursts (a 32-clock enable pattern, a 64-clock run, results in order with a count and, where the spec fixes a latency, a record of the clocks on which results appeared); see `README.md`. The 720p video task is scored by one whole frame (about 4 minutes in Icarus, 3.7 on the reference); there is no reduced bench.

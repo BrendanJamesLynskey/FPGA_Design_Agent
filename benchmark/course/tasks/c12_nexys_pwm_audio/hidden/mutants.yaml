@@ -1,0 +1,9 @@
+mutants:
+  - {name: clamp_missing, file: audio_pwm.sv, find: "if (gain_wr) gain <= (gain_in > GAIN_MAX) ? GAIN_MAX : gain_in;", replace: "if (gain_wr) gain <= gain_in;", why: "a write of 65535 is not limited"}
+  - {name: default_gain_wrong, file: audio_pwm.sv, find: "parameter logic [15:0] GAIN_DEFAULT = 16'd2068,", replace: "parameter logic [15:0] GAIN_DEFAULT = 16'd4096,", why: "reset gain -18 dBFS instead of -24"}
+  - {name: clamp_limit_8193, file: audio_pwm.sv, find: "parameter logic [15:0] GAIN_MAX     = 16'd8192", replace: "parameter logic [15:0] GAIN_MAX     = 16'd8193", why: "limit one above -12 dBFS"}
+  - {name: duty_offset_511, file: audio_pwm.sv, find: "+ 17'sd512);", replace: "+ 17'sd511);", why: "duty one clock short"}
+  - {name: sd_low, file: audio_pwm.sv, find: "assign aud_sd = 1'b1;", replace: "assign aud_sd = 1'b0;", why: "amplifier disabled"}
+  - {name: gain_shift_14, file: audio_pwm.sv, find: "sample_out = 16'(prod >>> 15);", replace: "sample_out = 16'(prod >>> 14);", why: "the gain is twice what it should be"}
+  - {name: compare_strict, file: audio_pwm.sv, find: "assign aud_pwm_drive_low = (ctr >= duty);", replace: "assign aud_pwm_drive_low = (ctr > duty);", why: "one clock less low per period"}
+  - {name: pin_driven_high, file: c12_nexys_pwm_audio_top.sv, find: "assign AUD_PWM = drive_low ? 1'b0 : 1'bz;", replace: "assign AUD_PWM = drive_low ? 1'b0 : 1'b1;", why: "the pin is driven high instead of released"}

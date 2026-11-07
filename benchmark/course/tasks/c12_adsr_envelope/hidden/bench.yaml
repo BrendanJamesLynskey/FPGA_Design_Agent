@@ -1,0 +1,9 @@
+# Hidden acceptance bench for c12_adsr_envelope (benchmark/tools/run_task.py)
+toplevel: c12_adsr_envelope_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 2, TIMEOUT_CYCLES: 400}
+phrases:
+  - "an ADSR (attack, decay, sustain, release) envelope that steps once per sample tick"
+  - "a re-trigger starts from the present level"
+  - "level + `atk_inc` reaches 65535 or more"
+  - "compare `level` and `state` after every tick"

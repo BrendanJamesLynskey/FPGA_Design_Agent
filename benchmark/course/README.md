@@ -1,6 +1,6 @@
-# benchmark/course/: the course-tier tasks (Parts 13-16)
+# benchmark/course/: the course-tier tasks (Parts 9-16)
 
-Natural-language FPGA design tasks taken from the 19 project specs of course Parts 13 (computer vision), 14 (machine learning), 15 (AI kernels) and 16 (crypto),
+Natural-language FPGA design tasks taken from the 29 project specs of course Parts 9 (video), 10 (DSP), 11 (radio), 12 (audio), 13 (computer vision), 14 (machine learning), 15 (AI kernels) and 16 (crypto),
 in the layout of benchmark v1 ([../README.md](../README.md)) and scored by the same `run_task.py` through the same test shell. The tier is separate from v1: its own task
 list, split, manifest and freeze ([FROZEN.md](FROZEN.md)); v1 itself is unchanged. The purpose is to run the agent on the projects and use the results to improve it (brief 07a).
 
@@ -24,6 +24,8 @@ per task that the bench must kill. `check_task.py` and `run_task.py` are the v1 
 - **Re-scoped tasks (course v1.1).** `c13_nexys_blob_tracker` and `c13_nexys_harris_vga` keep the course project ids, but the task is only what the course reference implements: a block behind the shell that is fed a picture
   (a 40 x 30 bit picture and the biggest-object report; an 80 x 60 grey picture and the corner list), with no VGA output, overlay, seven-segment display or switches. Each `hidden/spec.yaml` has a `scope:` section that
   says what was dropped and what glue was added; the course project specs were re-scoped the same way.
+- **Streams behind the shell (course v1.2).** The Part 9-12 blocks are streaming filters. The shell window loads up to 16 items (or 512 PDM bits), a 32-bit pattern says on which of the next 32 clocks an item is presented, a "go" runs a 64-clock burst, and the results come back in order with a count and, where the spec fixes the latency, a record of the clocks on which results appeared (`VMASK`, `LAT`/`LATOK`). The state of a filter persists across bursts, so a long stream is many bursts.
+- **`c9_nexys_vga_720p`** is scored by the pins, not through registers: the bench measures one whole frame with edge triggers and timed samples (`benchmark/lib/vga_sampler.py`); the test hook `SIM_DIRECT_CLOCK` makes the 100 MHz input the pixel clock. **`c12_nexys_pwm_audio`** uses a bench wrapper with two copies of the design, one pin with a pull-up (the level the speaker circuit sees) and one with a pull-down (it must never read 1).
 - **`hidden/reference_qor.md`**: the course's recorded numbers for the reference, marked "OOC" (out of context, 200 MHz target), "placed only" or "not run". Difficulty 3 tasks keep
   the course's OOC numbers only.
 
@@ -35,15 +37,19 @@ per task that the bench must kill. `check_task.py` and `run_task.py` are the v1 
 | `tools/check_task.py <task>` | v1 `check_task.py` with `no_shell`; writes `results/<id>__icarus.json` here |
 | `tools/freeze.py make\|verify` | the course manifest (see [FROZEN.md](FROZEN.md)) |
 | `tools/bank_grep.py` | the knowledge bank must not contain any course task's distinctive phrases (public and, when present, private tasks) |
-| `../tools/split.py` | the seeded draw (seed 20261106, per course part, `round(n/3)` held out) |
+| `../tools/split.py` | the seeded draw (seed 20261106, per course part, `round(n/3)` held out); Parts 13-16 in `split.yaml`, Parts 9-12 in `split_c9_c12.yaml` (course v1.2) |
 
 ## Tasks
 
 Development tasks in this repository; held-out tasks live in the private repository and are listed by id and digest only ([split.yaml](split.yaml), [MANIFEST.json](MANIFEST.json)).
-All 19 split ids have a task since course v1.1 (the two Part 13 held-out tasks and the two re-scoped development tasks were added on 2026-11-06, see [FROZEN.md](FROZEN.md)).
+All 29 split ids have a task: 19 since course v1.1 (the two Part 13 held-out tasks and the two re-scoped development tasks were added on 2026-11-06) and the ten of Parts 9-12 since course v1.2 (2026-11-07), see [FROZEN.md](FROZEN.md).
 
 | Part | Development tasks |
 |---|---|
+| 9 | `c9_median3x3`, `c9_nexys_vga_720p` |
+| 10 | `c10_dds_sine` |
+| 11 | `c11_nco_mixer` |
+| 12 | `c12_adsr_envelope`, `c12_nexys_pwm_audio` |
 | 13 | `c13_hough_lines`, `c13_nexys_blob_tracker`, `c13_nexys_harris_vga` |
 | 14 | `c14_int8_dot_requant`, `c14_nexys_tiny_cnn`, `c14_systolic_matmul` |
 | 15 | `c15_pq_search`, `c15_rmsnorm_unit`, `c15_softmax_unit` |

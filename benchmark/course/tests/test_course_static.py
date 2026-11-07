@@ -23,7 +23,7 @@ def test_task_well_formed(task: Path) -> None:
     assert validate(spec) == [], validate(spec)
     assert spec["name"] == task.name and spec["top"] == f"{task.name}_top"
     bench = yaml.safe_load((task / "hidden" / "bench.yaml").read_text())
-    assert bench["toplevel"] == spec["top"] and len(bench.get("phrases") or []) >= 3
+    assert (bench["toplevel"] == spec["top"] or bench.get("wrapper")) and len(bench.get("phrases") or []) >= 3
     text = " ".join((task / "spec.md").read_text().split()).lower()
     for ph in bench["phrases"]:
         assert " ".join(ph.split()).lower() in text, f"phrase not verbatim in spec.md: {ph!r}"
@@ -37,20 +37,26 @@ def test_task_well_formed(task: Path) -> None:
         assert (task / "ref" / "rtl" / e["file"]).read_text().count(e["find"]) == 1, f"{e['name']}: {e['find']!r} must occur once"
 
 
+SPLIT_FILES = {"split.yaml": 19, "split_c9_c12.yaml": 10}      # Parts 13-16 (course v1), Parts 9-12 (course v1.2)
+
+
 def test_split_is_reproducible_and_public_has_no_held_out() -> None:
     from benchmark.tools.split import draw
-    s = yaml.safe_load((COURSE / "split.yaml").read_text())
-    ids = [i for t in s["tiers"].values() for i in t["held_out"] + t["dev"]]
-    assert len(ids) == 19
-    again = draw(ids, s["seed"])
-    assert s["seed"] == 20261106
-    for t, v in s["tiers"].items():
-        assert again["tiers"][t]["held_out"] == v["held_out"]
-        assert len(v["held_out"]) == round(v["n"] / 3)
-    held = {i for t in s["tiers"].values() for i in t["held_out"]}
+    dev: set[str] = set()
+    held: set[str] = set()
+    for name, n_ids in SPLIT_FILES.items():
+        s = yaml.safe_load((COURSE / name).read_text())
+        ids = [i for t in s["tiers"].values() for i in t["held_out"] + t["dev"]]
+        assert len(ids) == n_ids, name
+        again = draw(ids, s["seed"])
+        assert s["seed"] == 20261106
+        for t, v in s["tiers"].items():
+            assert again["tiers"][t]["held_out"] == v["held_out"], f"{name} {t}: the draw does not reproduce"
+            assert len(v["held_out"]) == round(v["n"] / 3)
+        held |= {i for t in s["tiers"].values() for i in t["held_out"]}
+        dev |= {i for t in s["tiers"].values() for i in t["dev"]}
     public = {d.name for d in TASKS}
     assert not public & held, f"held-out tasks in the public repo: {public & held}"
-    dev = {i for t in s["tiers"].values() for i in t["dev"]}
     assert public <= dev, f"public tasks that are not development tasks: {public - dev}"
     assert dev == public, f"development tasks without a public task or the other way round: {dev ^ public}"
     assert not (COURSE / "PENDING.yaml").exists(), "every split id has a task since course v1.1"

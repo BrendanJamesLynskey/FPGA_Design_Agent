@@ -1,0 +1,8 @@
+mutants:
+  - {name: hs_width_41, file: vga_bars_720p.sv, find: ".H_SYNC(40)", replace: ".H_SYNC(41)", why: "horizontal sync one pixel too long (and a 1651-clock line)"}
+  - {name: vs_negative, file: vga_bars_720p.sv, find: ".VS_POL(1'b1)", replace: ".VS_POL(1'b0)", why: "vertical sync idles high"}
+  - {name: sync_misaligned, file: vga_bars_720p.sv, find: "VGA_HS <= hs_d;", replace: "VGA_HS <= hs;", why: "hs leaves one clock before the colours"}
+  - {name: bar_order, file: tpg.sv, find: "3: bar_colour = 12'h0F0;", replace: "3: bar_colour = 12'hF0F;", why: "green and magenta bars swapped (green missing)"}
+  - {name: blank_not_gated_by_reset, file: vga_bars_720p.sv, find: ".de(de & rst_n)", replace: ".de(de)", why: "the picture shows while BTNC is pressed"}
+  - {name: back_porch_219, file: vga_bars_720p.sv, find: ".H_BP(220)", replace: ".H_BP(219)", why: "line of 1649 clocks, picture 219 clocks after the hs pulse"}
+  - {name: v_back_porch_21, file: vga_bars_720p.sv, find: ".V_BP(20)", replace: ".V_BP(21)", why: "frame of 751 lines"}

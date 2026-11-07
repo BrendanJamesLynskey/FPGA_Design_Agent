@@ -161,7 +161,7 @@ third of each tier is held out by a seeded draw and lives in the private reposit
 P1 and an 18-task contamination probe sit beside it. Frozen and hashed: [benchmark/README.md](benchmark/README.md),
 [benchmark/FROZEN.md](benchmark/FROZEN.md), the owner's checklist [benchmark/OWNER_REVIEW.md](benchmark/OWNER_REVIEW.md).
 
-A separate course tier (07a1) ports the course projects of Parts 13-16 to the same layout, with its own split and freeze:
+A separate course tier (07a1) ports the course projects of Parts 9-16 to the same layout, with its own split and freeze:
 [benchmark/course/README.md](benchmark/course/README.md), [benchmark/course/FROZEN.md](benchmark/course/FROZEN.md).
 
 ## Reproduce
@@ -197,7 +197,7 @@ agent/       core/ (tools, security, trace, replay, smoke) and mcp_server/ (05a)
 designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, design.xdc, probes.yaml,
              build.yaml, tests/, BRINGUP.md
 benchmark/   benchmark v1: tasks (development split), training pool, bench library and tools, manifest, owner review;
-             benchmark/course/: the course-tier tasks (Parts 13-16), split, manifest
+             benchmark/course/: the course-tier tasks (Parts 9-16), splits, manifest
 results/     committed build and bring-up results, per milestone
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);

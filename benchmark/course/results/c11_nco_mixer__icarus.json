@@ -1,0 +1,95 @@
+{
+  "task": "c11_nco_mixer",
+  "sim": "icarus",
+  "date": "2026-11-07",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_first_frequency_word": true,
+      "test_second_frequency_word": true,
+      "test_consecutive_clocks_and_single_sample": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "cosine_offset_half_cycle",
+      "why": "cosine a half cycle off",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_frequency_word",
+        "test_second_frequency_word",
+        "test_consecutive_clocks_and_single_sample"
+      ]
+    },
+    {
+      "name": "q_shift_13",
+      "why": "q scaled by 2",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_frequency_word",
+        "test_second_frequency_word",
+        "test_consecutive_clocks_and_single_sample"
+      ]
+    },
+    {
+      "name": "q_sign",
+      "why": "the tone rotates the other way",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_frequency_word",
+        "test_second_frequency_word",
+        "test_consecutive_clocks_and_single_sample"
+      ]
+    },
+    {
+      "name": "runs_on_gaps",
+      "why": "the phase advances on clocks with no sample",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_frequency_word",
+        "test_second_frequency_word",
+        "test_consecutive_clocks_and_single_sample"
+      ]
+    },
+    {
+      "name": "amplitude_16384",
+      "why": "table scaled by 16384 instead of 16383",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_frequency_word",
+        "test_second_frequency_word",
+        "test_consecutive_clocks_and_single_sample"
+      ]
+    },
+    {
+      "name": "rounded_not_floored",
+      "why": "i rounds to nearest instead of towards minus infinity",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_frequency_word",
+        "test_second_frequency_word",
+        "test_consecutive_clocks_and_single_sample"
+      ]
+    },
+    {
+      "name": "valid_always_high",
+      "why": "a result on clocks with no sample",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_first_frequency_word",
+        "test_second_frequency_word",
+        "test_consecutive_clocks_and_single_sample"
+      ]
+    }
+  ],
+  "mutants_killed": 7,
+  "mutants_total": 7
+}
