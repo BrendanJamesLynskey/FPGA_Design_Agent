@@ -217,7 +217,10 @@ def choose_sim(requested: str, runner=None) -> str:
     """The simulator the mutation run uses: Verilator (5.036+) when it is available where the tests run, else Icarus."""
     if requested != "auto":
         return requested
-    from agent.core import tools as T
+    try:
+        from agent.core import tools as T
+    except ImportError:                 # a bare environment (the CI rtl-sim job has no agent dependencies): as before, Icarus
+        return "icarus"
     return "verilator" if "verilator" in T.available_sims() else "icarus"
 
 

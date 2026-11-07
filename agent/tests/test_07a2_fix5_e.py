@@ -116,3 +116,16 @@ def test_mutation_uses_verilator_and_falls_back_on_a_baseline_that_does_not_buil
     M._generic_locked(d, A(), d / "rtl", out, 0.0, None)
     res = json.loads(out.read_text())
     assert calls[:2] == ["verilator", "icarus"] and res["sim"] == "icarus" and "used icarus instead" in res["sim_note"]
+
+
+def test_choose_sim_falls_back_to_icarus_without_the_agent_dependencies(monkeypatch) -> None:
+    """The CI rtl-sim job runs flow/mutate.py without jsonschema and the rest of agent.core."""
+    import builtins
+    real = builtins.__import__
+
+    def deny(name, *a, **k):
+        if name == "agent.core" or name.startswith("agent.core"):
+            raise ImportError("No module named 'jsonschema'")
+        return real(name, *a, **k)
+    monkeypatch.setattr(builtins, "__import__", deny)
+    assert M.choose_sim("auto") == "icarus" and M.choose_sim("verilator") == "verilator"
