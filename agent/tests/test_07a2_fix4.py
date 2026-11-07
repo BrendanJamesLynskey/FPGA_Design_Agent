@@ -85,14 +85,21 @@ def test_the_icarus_build_does_not(monkeypatch, run4) -> None:
     assert "c14_int8_dot_requant_checker.sv" not in _build_sources(monkeypatch, run4, "icarus")
 
 
-@pytest.mark.skipif(not shutil.which("verilator") or os.environ.get("FDA_RUN_VERILATOR_TESTS") != "1",
+def _verilator_ok() -> bool:
+    from agent.core.tools import _verilator_version
+    v = _verilator_version()
+    return bool(v and v >= (5, 36))
+
+
+@pytest.mark.skipif(not _verilator_ok() or os.environ.get("FDA_RUN_VERILATOR_TESTS") != "1",
                     reason="a real Verilator coverage build of run 4's bench (minutes); set FDA_RUN_VERILATOR_TESTS=1")
 def test_run4_bench_now_reaches_cover_properties_under_verilator(run4: Path, monkeypatch) -> None:
     pytest.importorskip("cocotb_coverage")
     import subprocess
     import sys
     root = Path(__file__).resolve().parents[2]
-    env = {**os.environ, "SIM": "verilator", "FDA_COVERAGE": "1", "FDA_SIM_RESULTS_DIR": str(run4 / "res")}
+    from agent.core import runner as rn
+    env = {**os.environ, **rn.scrubbed_env(), "SIM": "verilator", "FDA_COVERAGE": "1", "FDA_SIM_RESULTS_DIR": str(run4 / "res")}
     r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", "-k", "seed_1",
                         str(run4 / "tests" / "test_c14_int8_dot_requant_rtl.py")], cwd=root, env=env,
                        capture_output=True, text=True, timeout=1500)
