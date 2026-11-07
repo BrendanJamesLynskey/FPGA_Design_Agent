@@ -1,0 +1,94 @@
+{
+ "task": "c10_dds_sine",
+ "tier": "course",
+ "split": "development",
+ "difficulty": 1,
+ "run": 1,
+ "date": "2026-11-07",
+ "run_id": "20261107-074755-3941",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.318",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "main 73c135c (FPGA_Design_Agent), Knowledge main 62f0425; no code changes in this batch",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (3 seeds; functional bins 100% 23/23; cover properties 100%; line 100%; toggle 97.55%; mutation score 90.0%: 18 killed of 20 evaluated, 2 survivors)",
+  "stage_gates_post_route": "all pass",
+  "bitstream": "built"
+ },
+ "agent_turns": 160,
+ "sub_agent_calls": 17,
+ "stage_visits": {
+  "clarify": 2,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 2,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 2
+ },
+ "questions": {
+  "oracle_calls": 6,
+  "note": "the question 'How is DATA packed' was recorded as defaulted although the oracle's reply was a correct, quoted answer (see failure)"
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": false,
+  "tests_passed": 1,
+  "tests_total": 3,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_each_frequency_word_sample_for_sample": false,
+   "test_restart_and_pointer": false
+  }
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 3.607,
+  "whs_ns": 0.07,
+  "lut": 471,
+  "ff": 357,
+  "dsp": 0,
+  "bram36": 1.5,
+  "power_w": 0.121,
+  "reference_qor": "not run (the course recorded no OOC or full-flow numbers for this block)",
+  "note": "full-flow post-route with the test shell on the xc7a100t at 100 MHz; LUT and FF include the shell"
+ },
+ "failure": {
+  "class": "harness gap (primary), model error (secondary)",
+  "what": "DATA read packs two sign-extended 16-bit halves (0xFF05012C) where the register map has two 12-bit samples at [11:0] and [27:16] with the other bits 0; both failing tests assert 'bits above the samples must read 0'.",
+  "evidence": [
+   "oracle_calls.jsonl #2: the oracle answered 'Not as proposed ... sample 2m in [11:0] ... [27:16], other bits 0' with a quote taken from hidden/spec.yaml",
+   "the quote contains two's; in hidden/spec.yaml the line is a single-quoted YAML scalar so the raw text reads two''s; SpecOracle.answer (agent/graph/interview.py:215) checks the quote against the raw file text only, so it refused the answer as 'quote not in the hidden spec' and the interview took the proposed default (resolved_questions: status defaulted)",
+   "the clarify role then rewrote registers.map DATA bits to the default ('[15:0] sample 2m sign-extended') although the register-map answer it had received read [11:0] / [27:16]",
+   "the agent's own tests encode the same wrong packing, so V0-V3 pass; only the hidden bench sees it"
+  ]
+ },
+ "notes": "Everything after the clarify error is consistent with the wrong packing, so gates cannot see it. Mutation survivors: top win_rd gating (&& to ||) and capture_mem sel_q reset value.",
+ "wall_h_total": 1.26,
+ "wall_h_agent_calls": 0.64,
+ "stage2_repair_loop": {
+  "visits": 2,
+  "limit": 6,
+  "visit_failures": [
+   "v1->v2 (tests role): V1 proof_references_resolve: four 'REQ-nn:formal:dds_bench.<test>: not a formal job in verif/formal' (bench tests declared with method formal)",
+   "v2->v3: passed"
+  ]
+ }
+}
