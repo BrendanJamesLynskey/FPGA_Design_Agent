@@ -183,6 +183,31 @@ def _norm(t: str) -> str:
     return " ".join(str(t).replace("\u2019", "'").split()).strip(" \"'`-")
 
 
+def _yaml_strings(text: str) -> str:
+    """Every string value of the YAML document, one per line: a single-quoted scalar holds ``two''s`` in the file
+    and ``two's`` once parsed, and the oracle's model quotes the parsed form (07a2 fix 5 B, c10_dds_sine)."""
+    import yaml
+    try:
+        doc = yaml.safe_load(text)
+    except yaml.YAMLError:
+        return ""
+    out: list[str] = []
+
+    def walk(x: Any) -> None:
+        if isinstance(x, str):
+            out.append(x)
+        elif isinstance(x, dict):
+            for k, v in x.items():
+                walk(k)
+                walk(v)
+        elif isinstance(x, (list, tuple)):
+            for v in x:
+                walk(v)
+
+    walk(doc)
+    return "\n".join(out)
+
+
 class SpecOracle:
     """Answers only from a hidden full spec file. ``llm`` is a callable (system, user) -> dict with keys
     ``answer`` and ``quote``; the quote must appear verbatim in the hidden spec, else the answer is refused and
@@ -201,6 +226,7 @@ class SpecOracle:
         self._rendered = rendered
         self._text = self._file + ("\n\n" + rendered + "\n" if rendered else "")
         self._flat = _norm(self._text)
+        self._decoded = _norm(_yaml_strings(self._file))     # 07a2 fix 5 B: quotes are checked against parsed values too
         self._llm = llm
         self.log: list[dict[str, Any]] = []
 
@@ -213,7 +239,8 @@ class SpecOracle:
                         json.dumps({"question": q.text, "proposed_default": q.default}))
         a, quote = str(out.get("answer", NOT_SPECIFIED)), out.get("quote")
         if a.strip().lower() != NOT_SPECIFIED and (not quote or str(quote).strip() not in self._text
-                                                        and _norm(str(quote)) not in self._flat):
+                                                        and _norm(str(quote)) not in self._flat
+                                                        and _norm(str(quote)) not in self._decoded):
             self.log.append({"question": q.text, "refused": "quote not in the hidden spec", "raw": a})
             a, quote = NOT_SPECIFIED, None
         self.log.append({"question": q.text, "answer": a})
