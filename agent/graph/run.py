@@ -960,6 +960,20 @@ def v3_evidence(rt: Runtime, sim_ok: bool) -> dict:
     return st
 
 
+def simulate_gate(session, d=lambda name, r: r) -> dict:
+    """07a2 fix 5 E: the stage-2 simulation gate. The bench runs on Verilator first (``simulate(sim="auto")``: a few times
+    faster, and a failure comes back in a minute instead of ten); only when that passes does Icarus run the same bench as
+    the final cross-check, and the gate passes only if both do. A design that does not build in Verilator runs on Icarus
+    alone (the tool falls back). ``d`` records a failed result into the visit's detail."""
+    sr = d("simulate", dispatch(session, "simulate", {"sim": "auto"}))
+    used = sr.get("sim") or "icarus"
+    if sr.get("ok") and used != "icarus":
+        sr = d("simulate [icarus cross-check]", dispatch(session, "simulate", {"sim": "icarus"}))
+        used = "verilator+icarus" if sr.get("ok") else "icarus (cross-check)"
+    return {"ok": sr.get("ok"), "first_failure": sr.get("first_failure"), "sim": used,
+            "text": str(sr.get("log_tail") or sr.get("output", ""))[-3000:]}
+
+
 def node_gate(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("stop"):
@@ -1016,9 +1030,7 @@ def node_gate(state: State) -> dict:
         ev["lint"] = {"ok": lr.get("ok"), "text": str(lr.get("output", ""))[-1500:]}
         ev["contract"] = _contract(rt, detail)
         if ev["contract"]["ok"]:                       # fail fast: no simulate on a model the tests cannot load
-            sr = d("simulate", dispatch(rt.session, "simulate", {"sim": "icarus"}))
-            ev["simulate"] = {"ok": sr.get("ok"), "first_failure": sr.get("first_failure"),
-                              "text": str(sr.get("log_tail") or sr.get("output", ""))[-3000:]}
+            ev["simulate"] = simulate_gate(rt.session, d)
         else:
             ev["simulate"] = {"ok": False}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}

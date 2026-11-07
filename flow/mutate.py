@@ -60,6 +60,10 @@ DEFAULT_MAX_MUTANTS, DEFAULT_WALL_S, DEFAULT_SEED = 20, 1500, 1
 #: wall = baseline * (sample + 2), at least DEFAULT_WALL_S and at most MAX_WALL_S (2 h, under the heavy slot). When even that
 #: is too short the sample is reduced (never below MIN_EVALUATED) rather than leaving the sampled mutants unevaluated.
 MAX_WALL_S, MIN_EVALUATED = 7200, 10
+#: 07a2 fix 5 E. The sample is also capped by the baseline: the mutants may use about one hour in all, so a bench whose
+#: baseline run takes B seconds gets floor(3600 / B) - 2 mutants, never fewer than MIN_EVALUATED (the V3 floor) and never
+#: more than asked. A 30 s Verilator bench keeps all 20; a 312 s Icarus bench gets the minimum 10.
+MUTATION_BUDGET_S = 3600
 
 
 def plan_caps(baseline_s: float, max_mutants: int, pool: int, wall_s: int | None) -> tuple[int, int]:
@@ -69,8 +73,8 @@ def plan_caps(baseline_s: float, max_mutants: int, pool: int, wall_s: int | None
     n = min(max_mutants, pool)
     floor_n = min(MIN_EVALUATED, pool)
     base = max(1.0, float(baseline_s))
-    if base * (n + 2) > MAX_WALL_S:
-        n = max(floor_n, min(n, int(MAX_WALL_S // base) - 2))
+    if base * (n + 2) > MUTATION_BUDGET_S:
+        n = max(floor_n, min(n, int(MUTATION_BUDGET_S // base) - 2))
     return n, int(min(MAX_WALL_S, max(DEFAULT_WALL_S, base * (n + 2))))
 
 
@@ -195,6 +199,31 @@ def make_runner(design: Path, mode: str = "auto"):
     return None
 
 
+def compile_ok_verilator(files: list[Path], top: str | None, runner=None) -> bool | None:
+    """07a2 fix 5 E: under Verilator a mutant that does not build would be "killed" by the build error alone, so the mutated
+    RTL is linted first (errors only). None when it cannot tell."""
+    inc = [f"-I{d}" for d in sorted({str(f.parent) for f in files})]
+    argv = ["verilator", "--lint-only", "-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD",
+            *(["--top-module", top] if top else []), *inc, *map(str, files)]
+    if runner is not None:
+        return runner.run("simulate", argv, ROOT, None, 120).returncode == 0
+    exe = shutil.which("verilator")
+    if not exe:
+        return None
+    return subprocess.run(argv, capture_output=True, text=True).returncode == 0
+
+
+def choose_sim(requested: str, runner=None) -> str:
+    """The simulator the mutation run uses: Verilator (5.036+) when it is available where the tests run, else Icarus."""
+    if requested != "auto":
+        return requested
+    try:
+        from agent.core import tools as T
+    except ImportError:                 # a bare environment (the CI rtl-sim job has no agent dependencies): as before, Icarus
+        return "icarus"
+    return "verilator" if "verilator" in T.available_sims() else "icarus"
+
+
 def compile_ok(files: list[Path], runner=None) -> bool | None:
     """Does Icarus accept these sources? None when it cannot tell (no iverilog), so the caller does not guess.
     With a ``runner`` the compile runs in the sandbox like the tests do."""
@@ -208,7 +237,7 @@ def compile_ok(files: list[Path], runner=None) -> bool | None:
     return r.returncode == 0
 
 
-def run_bench(design: Path, env_extra: dict, timeout: float, runner=None) -> tuple[str, float]:
+def run_bench(design: Path, env_extra: dict, timeout: float, runner=None, sim: str = "icarus") -> tuple[str, float]:
     """The design's tests/test_*_rtl.py, as `simulate` runs them. Returns (status, seconds): "pass", "fail" or
     "timeout". With a ``runner`` (05m) the run is the sandbox's, the same container as `simulate` (no network, read-only
     root; a timed-out container is removed); without one it is a host process in its own group, killed on timeout."""
@@ -216,10 +245,10 @@ def run_bench(design: Path, env_extra: dict, timeout: float, runner=None) -> tup
     if runner is not None:
         t0 = time.monotonic()
         r = runner.run("simulate", [PY, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *map(str, tests)], ROOT,
-                       {"SIM": "icarus", **env_extra}, timeout)
+                       {"SIM": sim, **env_extra}, timeout)
         return ("timeout" if r.returncode == 124 else "pass" if r.returncode == 0 else "fail"), round(time.monotonic() - t0, 1)
     env = {k: v for k, v in os.environ.items() if k not in ("FDA_SIM_RESULTS_DIR", "FDA_COVERAGE", "FDA_COV_OUT")}
-    env.update(SIM="icarus", **env_extra)
+    env.update(SIM=sim, **env_extra)
     t0 = time.monotonic()
     p = subprocess.Popen([PY, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *map(str, tests)], cwd=ROOT, env=env,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
@@ -261,10 +290,21 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
     shell = [] if srcorder.no_shell(design) else sorted((ROOT / "shell" / "rtl").glob("*.sv"))     # 07a2-prep
     env_orig = {"FDA_MUTANT_ORIG": str(rtl.resolve())}
     # 1. the unmutated RTL must pass: a bench that fails on the original has nothing to measure
-    base, base_s = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(rtl.resolve())}, a.mutant_timeout_s or 900, runner)
+    sim = choose_sim(getattr(a, "sim", "auto"), runner)
+    base, base_s = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(rtl.resolve())}, a.mutant_timeout_s or 900, runner, sim)
+    sim_note = None
+    if base != "pass" and sim != "icarus" and getattr(a, "sim", "auto") == "auto":      # the design may not build in Verilator
+        sim_note = f"baseline {base} on {sim}: the run used icarus instead"
+        sim = "icarus"
+        base, base_s = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(rtl.resolve())}, a.mutant_timeout_s or 900, runner, sim)
     if base != "pass":
         print(f"baseline {base}: the bench does not pass on the unmutated RTL; no mutation result written")
         return 3
+    top = None
+    try:
+        top = (yaml.safe_load((design / "build.yaml").read_text()) or {}).get("top")
+    except (OSError, yaml.YAMLError):
+        pass
     per_mutant = a.mutant_timeout_s or int(min(600, max(30, 4 * base_s)))
     # 2. the mutants
     source = "verif/mutants.yaml" if (design / "verif" / "mutants.yaml").is_file() else "generated"
@@ -289,11 +329,12 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
             rows.append(row | {"status": "invalid", "note": "the text to change was not found exactly once"})
             continue
         (d / m["file"]).write_text(new)
-        if compile_ok(srcorder.order_sv(shell + sorted(d.glob("*.sv"))), runner) is False:
+        files = srcorder.order_sv(shell + sorted(d.glob("*.sv")))
+        if compile_ok(files, runner) is False or (sim == "verilator" and compile_ok_verilator(files, top, runner) is False):
             rows.append(row | {"status": "invalid", "note": "the mutated RTL does not compile"})
             shutil.rmtree(d, ignore_errors=True)
             continue
-        st, secs = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(d)}, per_mutant, runner)
+        st, secs = run_bench(design, env_orig | {"FDA_MUTANT_DIR": str(d)}, per_mutant, runner, sim)
         row |= {"status": {"fail": "killed", "pass": "survived", "timeout": "timed_out"}[st], "seconds": secs}
         print(f"{m['name']:40s} {row['status']}", flush=True)
         rows.append(row)
@@ -302,7 +343,7 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
     killed, surv, tmo = by("killed"), by("survived"), by("timed_out")
     evaluated = len(killed) + len(surv) + len(tmo)
     res = {"design": design.name, "mode": "generic", "mutant_source": source, "rng_seed": a.seed,
-           "baseline_seconds": base_s, "sandbox": "container" if runner is not None else "host",
+           "baseline_seconds": base_s, "sim": sim, "sim_note": sim_note, "sandbox": "container" if runner is not None else "host",
            "caps": {"max_mutants": a.max_mutants, "sample": sample_n, "wall_s": wall_s, "wall_auto": a.wall_s is None,
                     "mutant_timeout_s": per_mutant, "min_evaluated": min(MIN_EVALUATED, len(pool))},
            "candidates": len(pool), "sampled": len(chosen), "evaluated": evaluated, "killed": len(killed),
@@ -344,6 +385,9 @@ def main() -> int:
                     help="wall cap in seconds; default: baseline x (sample + 2), between 1500 s and 2 h (05n)")
     ap.add_argument("--mutant-timeout-s", type=int, default=0)
     ap.add_argument("--lock-wait-s", type=float, default=0)
+    ap.add_argument("--sim", choices=("auto", "icarus", "verilator"), default="auto",
+                    help="simulator for the baseline and every mutant (07a2 fix 5 E): auto = Verilator when available "
+                         "and the design builds in it, else Icarus")
     ap.add_argument("--sandbox", choices=("auto", "container", "host"), default="auto",
                     help="where the design's tests run (05m): the sandbox image when it exists (auto), or force one")
     a = ap.parse_args()
