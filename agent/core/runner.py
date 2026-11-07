@@ -146,7 +146,7 @@ class RecordedRunner:
         self.i = 0
 
     def run(self, kind, argv, cwd, env=None, timeout=600):
-        if kind == "import_check":       # 07a2 fix 3: a derived pre-check, not a recorded step; recordings predate it
+        if kind in ("import_check", "lint-icarus"):       # derived pre-checks (07a2 fix 3, fix 5 D), not recorded steps; recordings predate them
             return RunResult(0, "", "", 0.0)
         if self.i >= len(self.records):
             raise AssertionError(f"replay: unexpected extra run {kind} {argv}")
