@@ -15,6 +15,11 @@ on:
     - cron: "17 3 * * *"
   workflow_dispatch:
 
+# A newer push to the same pull request cancels the older run (the same branch on main is never cancelled).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   python:
     name: Python (models, gates parser, host driver)
