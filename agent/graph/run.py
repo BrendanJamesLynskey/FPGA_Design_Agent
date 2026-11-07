@@ -259,6 +259,9 @@ Flow conventions (fixed by the repo; follow them exactly):
   sources = flow.cocotb_run.SHELL_RTL + sorted((design_dir / "rtl").glob("*.sv")); the cocotb bench module sits
   next to it in tests/ and checks the RTL against model.py. Do not add verif/checkers/*.sv to sources: cocotb_run.run
   compiles them (the bind file last) into every Verilator build, which is the run that counts cover properties.
+  Proof methods for bench tests: a cocotb test is proven by method `simulation` (artefact = module.test_name);
+  the method name formal is only for a job in verif/formal. Name the constrained-random test with "random" in it
+  (for example test_random_traffic): V2 `constrained_random_test_ran` looks for that word.
 - Stage 2 ends only at verification stage V3 (flow/verif_gates.py): load_skill(["verification-stages"]) first.
   verif/testplan.yaml (schema fpga-design-agent/testplan/v0) has keys: schema, design, spec ({design_rel}/spec.yaml),
   model, bench {{modules: [...], dir: {design_rel}/tests}}, checkers ({design_rel}/verif/checkers), formal_dir
@@ -639,7 +642,9 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
             "more than about 200,000 cycles is too long.",
             "3. verif/testplan.yaml (V0 `testplan_present`, V1 `spec_items_traced`): every spec item traced to a test. "
             "Its `proof:` list needs one {requirement, method, artefact} entry for every method of every requirement in "
-            "spec.yaml (V1 `proof_methods_discharged`), and each artefact must exist (V1 `proof_references_resolve`).",
+            "spec.yaml (V1 `proof_methods_discharged`), and each artefact must exist (V1 `proof_references_resolve`). "
+            "A bench test (module.test_name) is proven by method `simulation`; the method name formal is only for a job in verif/formal. "
+            "Name the constrained-random test with \"random\" in its name (V2 `constrained_random_test_ran`).",
             "4. `formal` methods: " + (
                 "SymbiYosys is installed. Write verif/formal/<job>.sby and its property module (properties over the top "
                 "module's ports from spec.yaml), call the `formal` tool, and use <job> as the artefact. A job that has not "
