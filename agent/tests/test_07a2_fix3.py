@@ -29,6 +29,8 @@ def test_root_cause_is_empty_for_a_log_with_no_exception() -> None:
 
 
 def test_simulate_import_check_returns_the_import_error_as_its_own_kind(session: Session) -> None:
+    import pytest
+    pytest.importorskip("cocotb_coverage")          # the fixture bench imports it (not installed in the Python-only CI job)
     d = session.design
     shutil.rmtree(d / "tests", ignore_errors=True)
     (d / "tests").mkdir()
