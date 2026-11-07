@@ -49,6 +49,19 @@ assert tuple(s.name for s in MACHINE) == STAGES
 
 RUN_LIMITS = {"turns": 300, "seconds": 6 * 3600, "usd": 3.00, "visits_per_stage": 4}
 
+# 07a2 fix 4: stage 2 (verification) is the one stage whose single visit can spend many minutes in the simulator, and it
+# repairs three roles (model, tests, RTL), so it gets more visits than the rest. Run 4's Icarus runs took ~6 min each and
+# used up four visits while every repair was converging. Chosen over "count tool-error visits separately": a visit that
+# ends in a tool error is not reliably told from one that ends in the agent's own failure, and a per-stage number is
+# plain, testable, and bounded by the stage's turn and USD limits anyway.
+STAGE_VISITS = {2: 6}
+
+
+def visit_limit(stage: int, run_limits: dict) -> int:
+    """How many times ``stage`` may be entered: the run's ``visits_per_stage``, or the stage's own number when larger."""
+    base = int(run_limits["visits_per_stage"])
+    return max(base, STAGE_VISITS.get(stage, 0)) if base >= RUN_LIMITS["visits_per_stage"] else base
+
 # gate name -> the stage names in flow/gates.py output it reads
 _FLOW_STAGES = {"stage_rtl": ["rtl"], "stage_post_synth": ["post_synth"], "stage_post_place": ["post_place"],
                 "stage_post_route": ["post_route"], "constraints_post_synth": ["post_synth"],

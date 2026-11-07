@@ -111,6 +111,22 @@ def swap_mutant_sources(sources: list[Path]) -> list[Path]:
             for s in sources]
 
 
+_BIND = re.compile(r"^\s*bind\s", re.M)
+
+
+def with_checkers(sources: list[Path], design: Path) -> list[Path]:
+    """07a2 fix 4: the design's bound checkers (``verif/checkers/*.sv``) in a Verilator build, whether or not the bench's
+    own source list names them (run 4's bench did not, so every cover property read 0 %). Files already listed are not
+    added twice; a file with a ``bind`` statement goes last, after the modules it binds into. Icarus has no bind and no
+    concurrent assertions, so it never calls this."""
+    have = {Path(s).resolve() for s in sources}
+    found = sorted((Path(design) / "verif" / "checkers").glob("*.sv"))
+    add = [c for c in found if c.resolve() not in have]
+    out = [Path(s) for s in sources] + add
+    binds = [c for c in out if c in found and _BIND.search(c.read_text(errors="replace"))]
+    return [c for c in out if c not in binds] + binds
+
+
 def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
         parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
         seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
@@ -129,6 +145,8 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
     design = srcorder.design_of(test_dir)
     if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
         sources = srcorder.drop_shell(sources)
+    if simname == "verilator":                            # 07a2 fix 4: bound checkers belong to every Verilator build
+        sources = with_checkers(sources, design)
     sources = srcorder.order_sv(sources)                  # 07a2-prep: packages and interfaces first, not name order
     sim = get_runner(simname)
     build_dir = (build_root or ROOT / "build" / "sim") / name

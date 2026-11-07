@@ -46,7 +46,7 @@ from agent.graph import ownership
 from agent.graph.snapshot import Snapshots
 from agent.graph.spec_schema import (PROOF_METHODS, SpecError, clock_hz, load_spec, propose_proof, rate_params,
                                      validate)
-from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure
+from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure, visit_limit
 from flow import architecture as arch_mod
 from flow import srcorder
 
@@ -257,7 +257,8 @@ Flow conventions (fixed by the repo; follow them exactly):
 - Tests (test writer): tests/test_{name}_rtl.py is a pytest entry that calls
   flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=...), where
   sources = flow.cocotb_run.SHELL_RTL + sorted((design_dir / "rtl").glob("*.sv")); the cocotb bench module sits
-  next to it in tests/ and checks the RTL against model.py.
+  next to it in tests/ and checks the RTL against model.py. Do not add verif/checkers/*.sv to sources: cocotb_run.run
+  compiles them (the bind file last) into every Verilator build, which is the run that counts cover properties.
 - Stage 2 ends only at verification stage V3 (flow/verif_gates.py): load_skill(["verification-stages"]) first.
   verif/testplan.yaml (schema fpga-design-agent/testplan/v0) has keys: schema, design, spec ({design_rel}/spec.yaml),
   model, bench {{modules: [...], dir: {design_rel}/tests}}, checkers ({design_rel}/verif/checkers), formal_dir
@@ -657,7 +658,7 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
                "(cocotb-coverage; every CoverPoint/CoverCross name is a dotted path with a parent such as \"top.result_class\", else the bench "
                "fails at import with \"CoverPoint must have a parent\"; sample by calling the decorated function; "
                "load_skill([\"simulation\"]) has the details); (b) code coverage (line, toggle, cover properties): the flow runs the bench again under Verilator "
-               "with coverage on, so declare the cover points with `V_COVER` and the bench must reach them; (c) mutation score: the "
+               "with coverage on, so declare the cover points with `V_COVER` and the bench must reach them (the flow compiles verif/checkers/*.sv, the bind file last, into that Verilator build itself; list them in your own sources only if you build by hand); (c) mutation score: the "
                "flow then runs a capped, seeded sample of changes to the RTL against your tests; a change no test fails on is "
                "reported to you in words (file, line, change), and the fix is a tighter check or a test that exercises that behaviour."]
               if rt.cfg.verif_level == "V3" else []),
@@ -715,8 +716,9 @@ def node_work(state: State) -> dict:
     st = MACHINE[n]
     visits = dict(state.get("visits") or {})
     visits[str(n)] = visits.get(str(n), 0) + 1
-    if visits[str(n)] > rt.cfg.run_limits["visits_per_stage"]:
-        return {"visits": visits, "stop": f"stage {n} visited more than {rt.cfg.run_limits['visits_per_stage']} times"}
+    limit = visit_limit(n, rt.cfg.run_limits)
+    if visits[str(n)] > limit:
+        return {"visits": visits, "stop": f"stage {n} visited more than {limit} times"}
     rt.meter.start_stage(st.limits)
     rt.session.stage = st.name
     rt.visit, rt.budget_notes = visits[str(n)], []
