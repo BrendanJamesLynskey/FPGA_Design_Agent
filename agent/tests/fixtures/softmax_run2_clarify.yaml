@@ -1,0 +1,124 @@
+note: 'c15_softmax_unit run 2 (batch 2, 2026-11-08): the clarify output after the interview. The map question
+  was asked and answered by the oracle in range-line form; the role kept its own registers.map.'
+registers:
+  map:
+  - offset: 0
+    name: ID
+    access: RO
+    reset: 1397571928
+    bits: '[31:0] ASCII ''SMAX'''
+  - offset: 4
+    name: CTRL
+    access: WO
+    reset: 0
+    bits: '[0] go (write 1 = start, self-clearing pulse); [31:1] reserved'
+  - offset: 8
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] ready; [1] busy; [31:2] 0'
+  - offset: 16
+    name: GO
+    access: WO
+    reset: 0
+    bits: any write presents the loaded inputs to the block for one clock and clears READY; reads 0
+  - offset: 20
+    name: SCORE1
+    access: RW
+    reset: 0
+    bits: '[15:0] signed score 1'
+  - offset: 24
+    name: SCORE2
+    access: RW
+    reset: 0
+    bits: '[15:0] signed score 2'
+  - offset: 28
+    name: SCORE3
+    access: RW
+    reset: 0
+    bits: '[15:0] signed score 3'
+  - offset: 32
+    name: SCORE4
+    access: RW
+    reset: 0
+    bits: '[15:0] signed score 4'
+  - offset: 36
+    name: SCORE5
+    access: RW
+    reset: 0
+    bits: '[15:0] signed score 5'
+  - offset: 40
+    name: SCORE6
+    access: RW
+    reset: 0
+    bits: '[15:0] signed score 6'
+  - offset: 44
+    name: SCORE7
+    access: RW
+    reset: 0
+    bits: '[15:0] signed score 7'
+  - offset: 48
+    name: PROB0
+    access: RO
+    reset: 0
+    bits: '[15:0] unsigned probability 0 (real*32768)'
+  - offset: 52
+    name: PROB1
+    access: RO
+    reset: 0
+    bits: '[15:0] probability 1'
+  - offset: 56
+    name: PROB2
+    access: RO
+    reset: 0
+    bits: '[15:0] probability 2'
+  - offset: 60
+    name: PROB3
+    access: RO
+    reset: 0
+    bits: '[15:0] probability 3'
+  - offset: 64
+    name: PROB4
+    access: RO
+    reset: 0
+    bits: '[15:0] probability 4'
+  - offset: 68
+    name: PROB5
+    access: RO
+    reset: 0
+    bits: '[15:0] probability 5'
+  - offset: 72
+    name: PROB6
+    access: RO
+    reset: 0
+    bits: '[15:0] probability 6'
+  - offset: 76
+    name: PROB7
+    access: RO
+    reset: 0
+    bits: '[15:0] probability 7'
+  - offset: 17
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] READY: the outputs are valid (set within 8 clocks of GO, held until the next GO)'
+resolved_questions:
+- question: What is the register map (offset, width, reset value and access of every register) the shell
+    exposes?
+  answer: 'X0..X3: offset 0x00-0x03, RW, reset 0: [31:0] input lanes: lane i (signed 16-bit) in register
+    i//2, bits [16*(i%2)+15:16*(i%2)]
+
+    GO: offset 0x10, WO, reset 0: any write presents the loaded inputs to the block for one clock and
+    clears READY; reads 0
+
+    STATUS: offset 0x11, RO, reset 0: [0] READY: the outputs are valid (set within 8 clocks of GO, held
+    until the next GO)
+
+    OUT0..OUT3: offset 0x20-0x23, RO, reset 0: [31:0] output lanes: lane i in register i//2, bits [16*(i%2)+15:16*(i%2)]
+    (unsigned probability times 32768); read 0 while READY is 0
+
+    shell: shell/PROTOCOL.md (version 1.0)'
+  status: answered
+  by: oracle
+  default_reason: The request names the shell and registers but gives no offsets, so the proposed map
+    is a guess.

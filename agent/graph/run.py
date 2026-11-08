@@ -143,7 +143,7 @@ PROMPTS = {
                "blind model), formal (a SymbiYosys property), hardware (a bring-up check on the board) and analysis (a flow "
                "gate or report: timing, resources, power); propose the method you think fits, and leave proof out only if "
                "you cannot tell (the interview will ask). "
-               "REGISTER MAP: if spec.md names registers or the test shell but gives no register offsets, you do NOT know the "
+               "REGISTER MAP: if spec.md names registers, the test shell, the USB-UART host interface or reading values back, but gives no register offsets (a hex constant such as a seed or an I2C address is not an offset), you do NOT know the "
                "map and must not invent it: add an open_questions entry that asks for the register map (offset, width, reset "
                "value and access of every register), with your proposed map as the default, and write registers.map from the "
                "answer; an answered map overrides your proposal (the harness copies it into registers.map). The gate fails a spec that has shell registers and no such question. "

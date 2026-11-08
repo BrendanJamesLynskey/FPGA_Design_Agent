@@ -125,8 +125,8 @@ def render_register_map(text: str) -> str:
 
 REG_TOPIC = re.compile(r"(?is)\b(?:registers?|regs?)\b.{0,80}\b(?:map|offsets?|address(?:es|ing)?|layout)\b"
                        r"|\b(?:offsets?|address(?:es|ing)?)\b.{0,80}\bregisters?\b|\bregister\s+map\b")
-REQUEST_REGS = re.compile(r"(?i)\b(?:registers?|test\s+shell|the\s+shell|over\s+the\s+shell|shell\s+registers?)\b")
-REQUEST_OFFSETS = re.compile(r"(?i)\b(?:offsets?)\b|\b0x[0-9a-f]+\b|\|\s*(?:0x)?[0-9a-f]+\s*\|")
+REQUEST_REGS = re.compile(r"(?i)\b(?:registers?|regs?|shell|usb[- ]?uart|read(?:ing)?[ -]?back|host\s+(?:interface|bus|port))\b")
+REQUEST_OFFSETS = re.compile(r"(?i)\b(?:offsets?)\b|\|\s*(?:0x)?[0-9a-f]+\s*\|")
 
 
 def is_register_question(text: str) -> bool:
@@ -135,7 +135,9 @@ def is_register_question(text: str) -> bool:
 
 
 def request_needs_register_map(request: str) -> bool:
-    """07a2 fix 1: the request names registers or the test shell but gives no offsets."""
+    """07a2 fix 1 + fix 6: the request names registers, the shell or the UART host interface but gives no offsets. Only the
+    word "offset" or a table row "| 0x.. |" counts as giving them: a hex constant (an LFSR seed, an I2C
+    address) is not a register offset (fix 6: three dev specs with such constants were exempted by the old test)."""
     return bool(REQUEST_REGS.search(request or "")) and not REQUEST_OFFSETS.search(request or "")
 
 
@@ -163,39 +165,73 @@ def register_map_errors(request: str, spec: dict[str, Any]) -> list[str]:
     errs = []
     for q in mine:
         if q.get("status") == "answered":
-            want = {_offset_int(m) for m in re.findall(r"(?i)\boffset\s+(0x[0-9a-f]+|\d+)", str(q.get("answer", "")))}
-            miss = sorted(w for w in want if w is not None and w not in have)
+            want = {r["offset"] for r in answer_register_rows(str(q.get("answer", "")))}
+            miss = sorted(w for w in want if w not in have)
             if miss:
                 errs.append("registers.map disagrees with the answered register map: no register at offset "
                             + ", ".join(f"0x{m:02X}" for m in miss) + "; copy the answer's map into registers.map")
+            extra = sorted(h for h in have if h is not None and want and h not in want) if q.get("by") == "oracle" else []
+            if extra:                              # 07a2 fix 6: the oracle's map is the whole map; invented registers are wrong
+                errs.append("registers.map has registers at offsets the answered register map does not list ("
+                            + ", ".join(f"0x{m:02X}" for m in extra) + "): the answer is the whole map, remove them")
     return errs
 
 
-REG_LINE = re.compile(r"^\s*(\w+): offset (0x[0-9a-fA-F]+|\d+), (\w+), reset (\S+?): (.*)$")
+REG_LINE = re.compile(r"^\s*([\w.]+): offset (0x[0-9a-fA-F]+|\d+)(?:\s*-\s*(0x[0-9a-fA-F]+|\d+))?, (\w+), reset (\S+?): (.*)$")
+NAME_RANGE = re.compile(r"^(\D*?)(\d+)\.\.(\D*?)(\d+)$")
+
+
+def answer_register_rows(answer: str) -> list[dict[str, Any]]:
+    """07a2 fix 6: the registers of an answered register-map question, one dict per register. A line reads "NAME: offset
+    0xNN, ACC, reset R: bits"; a range line ("X0..X3: offset 0x00-0x03, ...", "OUT0..OUT3: offset 0x20-0x23") is expanded
+    to one register per offset (X0, X1, X2, X3). Softmax run 2: the oracle's range lines were not parsed, so the role's own
+    one-register-per-score map stayed and the hidden bench found different registers."""
+    rows: list[dict[str, Any]] = []
+    for line in str(answer).splitlines():
+        m = REG_LINE.match(line)
+        if not m:
+            continue
+        name, lo, hi, acc, reset, bits = m.groups()
+        first = _offset_int(lo)
+        last = _offset_int(hi) if hi else first
+        if first is None or last is None or last < first:
+            continue
+        n = last - first + 1
+        nm = NAME_RANGE.match(name)
+        if nm and int(nm.group(4)) - int(nm.group(2)) + 1 == n:
+            names = [f"{nm.group(1)}{int(nm.group(2)) + i}" for i in range(n)]
+        else:
+            names = [name] if n == 1 else [f"{name}{i}" for i in range(n)]
+        for i, nme in enumerate(names):
+            rows.append({"offset": first + i, "name": nme, "access": acc,
+                         "reset": _offset_int(reset) if _offset_int(reset) is not None else reset, "bits": bits})
+    return rows
 
 
 def apply_register_answer(spec: dict[str, Any]) -> dict[str, Any]:
-    """07a2 fix 5 C: a register map supplied in an answer overrides what the clarify role proposed. Every line of the
-    answered register-map question that reads "NAME: offset 0xNN, ACC, reset R: bits" replaces the access, reset and bits
-    of the spec's entry at that offset (batch 1, c10: the answer said DATA is [11:0]/[27:16], the role kept its own
-    "[15:0] sign-extended" default). An offset the spec lacks is added. Free-form human answers match no line and change
-    nothing. The offsets and names come from the answer, never from the role's guess."""
+    """07a2 fix 5 C + fix 6: a register map supplied in an answer overrides what the clarify role proposed. Every line of the
+    answered register-map question that reads "NAME: offset 0xNN, ACC, reset R: bits" (ranges expanded, see
+    ``answer_register_rows``) replaces the name, access, reset and bits of the spec's entry at that offset; an offset the
+    spec lacks is added. When the oracle gave the answer (the whole map of the hidden spec) the role's registers at other
+    offsets are dropped: they were guesses (softmax run 2 kept an invented ID/CTRL/SCORE1..7 map beside the real one).
+    Free-form human answers match no line and change nothing."""
     qs = [q for q in (spec.get("resolved_questions") or []) if isinstance(q, dict) and q.get("status") == "answered"
           and is_register_question(str(q.get("question", "")))]
-    rows = [m.groups() for q in qs for l in str(q.get("answer", "")).splitlines() if (m := REG_LINE.match(l))]
+    rows = [(r, q.get("by") == "oracle") for q in qs for r in answer_register_rows(str(q.get("answer", "")))]
     if not rows:
         return spec
     spec = dict(spec)
     regs = dict(spec.get("registers") or {})
     entries = [dict(e) if isinstance(e, dict) else e for e in regs.get("map") or []]
-    for name, off, acc, reset, bits in rows:
-        want = _offset_int(off)
-        hit = next((e for e in entries if isinstance(e, dict) and _offset_int(e.get("offset")) == want), None)
+    if any(whole for _, whole in rows):
+        keep = {r["offset"] for r, whole in rows if whole}
+        entries = [e for e in entries if isinstance(e, dict) and _offset_int(e.get("offset")) in keep]
+    for r, _ in rows:
+        hit = next((e for e in entries if isinstance(e, dict) and _offset_int(e.get("offset")) == r["offset"]), None)
         if hit is None:
-            hit = {"offset": want, "name": name}
+            hit = {"offset": r["offset"], "name": r["name"]}
             entries.append(hit)
-        hit.update({"name": name, "access": acc, "reset": _offset_int(reset) if _offset_int(reset) is not None else reset,
-                    "bits": bits})
+        hit.update(r)
     regs["map"] = entries
     spec["registers"] = regs
     return spec
