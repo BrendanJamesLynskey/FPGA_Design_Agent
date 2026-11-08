@@ -248,8 +248,41 @@ def lint(s: Session) -> dict:
         out += ("\n" if out else "") + "[icarus elaboration, iverilog -g2012] " + _text_out(ic)[-1500:] \
             + "\n(Icarus 12 is stricter than Verilator here: for example a constant function that returns an unpacked " \
               "array, or a parameter built from one, does not elaborate. Load the free-simulators skill for the list.)"
+    found = top_port_findings(s, cfg, xdc_check=False)   # 08a: the spec's ports and the USB-UART pair exist on the top
+    if found:
+        ok = False
+        out += ("\n" if out else "") + "\n".join(f"{x['rule']} {x['message']}" for x in found)
     return {"ok": ok, "output": out, "returncode": r.returncode if r.returncode else (ic.returncode if ic else 0),
             "seconds_run": r.seconds + (ic.seconds if ic else 0)}
+
+
+def top_port_findings(s: Session, cfg: dict, xdc_check: bool = True) -> list[dict]:
+    """08a: FDA-CON-8 / FDA-CON-9 for the design's top module (see agent.core.constraints.check_top_ports). Nothing is
+    reported while the top module's source does not exist yet (the early stages), or spec.yaml cannot be read."""
+    from flow.standards_check import parse_modules
+    top = cfg["top"]
+    mods = []
+    for pat in cfg["sources"]:
+        for f in sorted(glob.glob(str(s.root / pat))):
+            if srcorder.is_shell_source(f):
+                continue
+            try:
+                mods += [m for m in parse_modules(Path(f).read_text(), Path(f).name) if m.name == top]
+            except OSError:
+                pass
+    if not mods:
+        return []
+    try:
+        spec = yaml.safe_load((s.design / "spec.yaml").read_text()) if (s.design / "spec.yaml").is_file() else None
+    except yaml.YAMLError:
+        spec = None
+    xdc_ports = None
+    if xdc_check:
+        from tools.inventory_check import parse_xdc
+        texts = [f.read_text() for f in con_files(s, cfg)]
+        xdc_ports = set().union(*(parse_xdc(t)[0] for t in texts)) if texts else None
+    return con.check_top_ports(top, set(mods[0].ports), con.spec_port_names(spec), xdc_ports,
+                               s.root / "boards" / s.board, shell=not srcorder.no_shell(s.design))
 
 
 def _icarus_elaborate(s: Session, top: str, srcs: list[str]):
@@ -631,6 +664,8 @@ def check_constraints(s: Session) -> dict:
         text = f.read_text()
         for x in con.check_xdc(text, s.root / "boards" / s.board) + con.check_xdc_safety(text):
             found.append({"file": f.name, **x})
+    if (s.design / "build.yaml").is_file():
+        found += top_port_findings(s, load_build_cfg(s))      # 08a: FDA-CON-8 / FDA-CON-9
     out = "\n".join(f"{x['file']}:{x['line']}: {x['rule']} {x['message']}\n    {x['text']}" for x in found)
     return {"ok": not found, "output": out or "no findings", "findings": found}
 
