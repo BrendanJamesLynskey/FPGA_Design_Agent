@@ -31,6 +31,7 @@ def test_lint_and_standards_drop_the_shell_for_no_shell_designs(session) -> None
         f.unlink()
     write(d / "rtl", {"uart_rx.sv": OWN_UART, "nsh_top.sv": TOP_NOSHELL})
     (d / NO_SHELL_MARKER).write_text("")
+    (d / "spec.yaml").unlink(missing_ok=True)        # 08a: the T1 spec's ports are not this toy top's (FDA-CON-8 would fire)
     cfg = yaml.safe_load((d / "build.yaml").read_text())
     cfg["top"] = "nsh_top"
     cfg["sources"] = ["shell/rtl/*.sv", f"{d.relative_to(session.root)}/rtl/*.sv"]

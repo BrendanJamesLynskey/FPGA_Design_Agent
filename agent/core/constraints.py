@@ -13,6 +13,11 @@ Rules (raw findings, rule id plus the offending line; no fix hints):
   own names: the pin and I/O standard are checked against the master by PIN, 05c2.)
 - ``FDA-CON-5`` a ``set_false_path`` or ``set_clock_groups -asynchronous`` with no comment in the eight lines above
   (waivers carry a reason, UG949 ch. 5/6).
+- ``FDA-CON-8`` (``check_top_ports``) a port that ``spec.yaml`` declares is not a port of the top module. The hidden
+  bench of a task is written against the spec's ports, so a port the design "does not need" must still exist.
+- ``FDA-CON-9`` (``check_top_ports``) the board's USB-UART is a pair (``board.yaml`` ``uart``): when the design uses the
+  test shell, or uses either UART pin, the top has both, and design.xdc constrains both. Brief 08a: ``c14_nexys_tiny_cnn``
+  run 1 left ``UART_TXD_IN`` out because the design only sends, and the bench, which drives it, scored 0 of 5.
 
 The master-XDC parser is ``tools/inventory_check.py``'s.
 """
@@ -105,6 +110,54 @@ def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
         if pin in seen and seen[pin] != port:
             add("FDA-CON-4", n, f"{port} on {pin}, which port {seen[pin]} already uses")
         seen.setdefault(pin, port)
+    return out
+
+
+def _base(name: str) -> str:
+    return re.sub(r"\[[^\]]*\]$", "", str(name).strip())
+
+
+def spec_port_names(spec: Any) -> list[str]:
+    """Port names of a spec.yaml (``ports:`` as a list of mappings with ``name``, or a mapping name -> ...)."""
+    ports = (spec or {}).get("ports") if isinstance(spec, dict) else None
+    if isinstance(ports, dict):
+        return [_base(k) for k in ports]
+    return [_base(p["name"]) for p in ports or [] if isinstance(p, dict) and p.get("name")]
+
+
+def check_top_ports(top: str, top_ports: set[str] | None, spec_ports: list[str], xdc_ports: set[str] | None,
+                    board_dir: Path, shell: bool) -> list[dict[str, Any]]:
+    """FDA-CON-8 and FDA-CON-9. ``top_ports`` is None when the top module's source does not exist yet (nothing to
+    check); ``xdc_ports`` None when there is no design.xdc. Findings have ``file`` "rtl" and line 0."""
+    if top_ports is None:
+        return []
+    have = {_base(p) for p in top_ports}
+    out: list[dict[str, Any]] = []
+
+    def add(rule: str, msg: str) -> None:
+        out.append({"file": "rtl", "rule": rule, "line": 0, "text": f"module {top}", "message": msg})
+
+    for name in dict.fromkeys(spec_ports):
+        if name not in have:
+            add("FDA-CON-8", f"spec.yaml declares port {name}, but the top module {top} has no port {name}. Every port "
+                f"the spec declares must exist on the top, even when the design does not use it: declare it and mark an "
+                f"unused input with `/* verilator lint_off UNUSEDSIGNAL */`; never delete the port.")
+    board = yaml.safe_load((board_dir / "board.yaml").read_text())
+    uart = [board["uart"][k]["port"] for k in ("fpga_rx", "fpga_tx") if k in (board.get("uart") or {})]
+    if len(uart) == 2:
+        used = shell or any(u in have for u in uart) or any(u in set(spec_ports) for u in uart)
+        if used:
+            for u in uart:
+                other = next(x for x in uart if x != u)
+                why = ("the design uses the test shell, which drives both UART pins" if shell else
+                       f"the design uses the board's USB-UART ({other} is on the top)")
+                if u not in have:
+                    add("FDA-CON-9", f"{why}, so the top module {top} must declare the port {u} (the USB-UART is a pair; "
+                        f"the bench drives {uart[0]} and reads {uart[1]}). Declare {u} even if the design never uses it, "
+                        f"with `/* verilator lint_off UNUSEDSIGNAL */` for an unused input.")
+                elif xdc_ports is not None and u not in {_base(p) for p in xdc_ports}:
+                    add("FDA-CON-9", f"the top declares {u} but design.xdc does not constrain it: add board resource "
+                        f"{'uart_rx' if u == uart[0] else 'uart_tx'} -> {u} to the board_constraints map.")
     return out
 
 

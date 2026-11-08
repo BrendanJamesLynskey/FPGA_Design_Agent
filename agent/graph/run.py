@@ -235,6 +235,11 @@ Flow conventions (fixed by the repo; follow them exactly):
   Top-level port names are the master XDC's: CLK100MHZ, BTNC, UART_RXD_OUT, and buses such as LED[15:0], SW[15:0], AN[7:0]
   (a request's "LED0" is bit 0 of bus LED, so declare `LED` as a bus; never a scalar LED0). Connector pins are scalar
   JA1, QSPI_DQ0.
+  Every port that spec.yaml declares must exist on the top module, used or not (the hidden bench is written against
+  the spec's ports; rule FDA-CON-8 in lint and check_constraints). The board's USB-UART is a pair: with the test shell,
+  or when the design uses either of UART_TXD_IN / UART_RXD_OUT, the top declares BOTH and design.xdc constrains both
+  (FDA-CON-9). A design that only sends still declares UART_TXD_IN; mark an unused input with
+  `/* verilator lint_off UNUSEDSIGNAL */`, never delete the port.
 - I/O timing (gate post_synth_no_unconstrained_endpoints; check_timing must list no port without an input or output
   delay). board_constraints writes pins only and REWRITES the whole of design.xdc, so call it first, then read
   design.xdc and write it back with your timing lines appended; there is no second constraints file and only design.xdc
