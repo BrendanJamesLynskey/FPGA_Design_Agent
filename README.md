@@ -164,6 +164,11 @@ P1 and an 18-task contamination probe sit beside it. Frozen and hashed: [benchma
 A separate course tier (07a1) ports the course projects of Parts 9-16 to the same layout, with its own split and freeze:
 [benchmark/course/README.md](benchmark/course/README.md), [benchmark/course/FROZEN.md](benchmark/course/FROZEN.md).
 
+Each course run is recorded in `results/course/<task>/run_N.json` with the escape-rate fields (internal pass, hidden
+pass, outcome, escape level, tool runs, tokens, cost; 08a): [tools/run_record.py](tools/run_record.py) derives and
+back-fills them, [results/course/summarise.py](results/course/summarise.py) prints per-task pass counts, pass@1/pass@k
+and escapes by level.
+
 ## Reproduce
 
 Simulation, lint and the Python tests (what CI runs):
