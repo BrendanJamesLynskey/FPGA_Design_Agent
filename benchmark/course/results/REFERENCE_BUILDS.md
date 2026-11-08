@@ -36,3 +36,16 @@ the large ones. Agent results on the same tasks are in `results/course/<task>/ru
 
 Memory (the monitor, `_handoff` of the planner): two small jobs together peaked at 7.9 GB; the large designs need 6 to
 10 GB per job (NTT scope peak 10.4 GB), so they run alone.
+
+## Course v1.3: the four fixed references (brief 07a1c, 2026-11-08)
+
+Same flow, 100 MHz, whole board top with the test shell. Numbers from `<id>__vivado.json`. All four now pass every gate.
+
+| Task | Gates | WNS at 100 MHz | LUT | FF | RAMB tiles | DSP48 | Before |
+|---|---|---|---|---|---|---|---|
+| `c13_nexys_harris_vga` | pass | +0.485 ns | 11,267 | 5,019 | 14 | 9 | 155,527 LUT, did not fit |
+| `c13_nexys_blob_tracker` | pass | +0.465 ns | 2,794 | 2,098 | 0 | 0 | not finished in 60 min |
+| `c13_hough_lines` | pass | +0.013 ns | 3,062 | 1,915 | 2 | 0 | not finished in 25-60 min |
+| `c9_nexys_vga_720p` | pass | +3.678 ns | 507 | 318 | 0 | 0 | `cdc_no_critical` failed |
+
+`c10_dds_sine`: the "sign-extended" line named in the brief is not in `hidden/spec.yaml` (checked at HEAD and in git history; the readback line says the other bits read 0); it was text proposed by the agent's clarify role in the agent's own spec, so no task change was made.

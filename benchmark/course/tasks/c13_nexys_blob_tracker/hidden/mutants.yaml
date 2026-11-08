@@ -1,11 +1,11 @@
 mutants:
-  - {name: left_neighbour_ignored, file: ccl.sv, find: "rl = (xi > 0) ? find(left) : 0;", replace: "rl = 0;", why: "the pixel to the left is not looked at, so a row of pixels is many objects"}
-  - {name: no_merge, file: ccl.sv, find: "end else if (ru != 0 && rl != 0 && ru != rl) begin", replace: "end else if (ru != 0 && rl != 0 && ru != rl && 1'b0) begin", why: "two labels that meet are never merged (the U-shape and the comb split)"}
-  - {name: stale_up_label, file: ccl.sv, find: "line[xi] = 0;", replace: "line[xi] = line[xi];", why: "a dark pixel keeps the label of the pixel above it, so objects bridge a gap"}
-  - {name: area_counted_twice, file: ccl.sv, find: "area[root] = area[root] + 1;", replace: "area[root] = area[root] + 2;", why: "every pixel counts twice"}
-  - {name: x_sum_from_y, file: ccl.sv, find: "sx[root] = sx[root] + xi;", replace: "sx[root] = sx[root] + yi;", why: "the x sum accumulates y"}
-  - {name: merge_loses_sums, file: ccl.sv, find: "sy[root] = sy[root] + sy[other];", replace: "sy[root] = sy[root];", why: "merging two labels drops the y sum of the one merged away"}
-  - {name: centroid_rounded, file: blob_report.sv, find: "8'(b_sx / b_area)", replace: "8'((b_sx + (b_area >> 1)) / b_area)", why: "the middle point is rounded instead of rounded down"}
+  - {name: left_neighbour_ignored, file: ccl.sv, find: "cur <= (xi == 0) ? '0 : left;", replace: "cur <= '0;", why: "the pixel to the left is not looked at, so a row of pixels is many objects"}
+  - {name: no_merge, file: ccl.sv, find: "wire           both   = (ru != 0) && (rl != 0) && (ru != rl);", replace: "wire           both   = (ru != 0) && (rl != 0) && (ru != rl) && 1'b0;", why: "two labels that meet are never merged (the U-shape and the comb split)"}
+  - {name: stale_up_label, file: ccl.sv, find: "rootp <= '0;                                  // a dark pixel has no label", replace: "rootp <= (y == 0) ? '0 : line_q[x];", why: "a dark pixel keeps the label of the pixel above it, so objects bridge a gap"}
+  - {name: area_counted_twice, file: ccl.sv, find: "area[sel] <= a_base + 16'd1;", replace: "area[sel] <= a_base + 16'd2;", why: "every pixel counts twice"}
+  - {name: x_sum_from_y, file: ccl.sv, find: "sx[sel]   <= sx_base + 20'(xi);", replace: "sx[sel]   <= sx_base + 20'(yi);", why: "the x sum accumulates y"}
+  - {name: merge_loses_sums, file: ccl.sv, find: "wire  [19:0]   sy_base_w = sy[sel] + (both ? sy[r_hi] : 20'd0);", replace: "wire  [19:0]   sy_base_w = sy[sel];", why: "merging two labels drops the y sum of the one merged away"}
+  - {name: centroid_rounded, file: blob_report.sv, find: "qx <= b_sx; qy <= b_sy;", replace: "qx <= b_sx + 20'(b_area >> 1); qy <= b_sy;", why: "the middle point is rounded instead of rounded down"}
   - {name: tie_to_lower_row_loses, file: blob_report.sv, find: "(o_ymin < b_ymin || (o_ymin == b_ymin && o_xmin < b_xmin))", replace: "(o_ymin > b_ymin || (o_ymin == b_ymin && o_xmin < b_xmin))", why: "on equal areas the object that starts lower wins"}
   - {name: tie_to_left_edge_loses, file: blob_report.sv, find: "o_ymin == b_ymin && o_xmin < b_xmin", replace: "o_ymin == b_ymin && o_xmin > b_xmin", why: "on equal areas and top rows the object further right wins"}
   - {name: new_picture_not_reset, file: ccl.sv, find: "if (s_tuser) begin", replace: "if (s_tuser && 1'b0) begin", why: "the labeller tables are not cleared at the start of a picture, so objects of the earlier picture are reported again"}

@@ -1,4 +1,4 @@
-# Benchmark course tier: course v1 frozen 2026-11-06, course v1.1 frozen 2026-11-06, course v1.2 frozen 2026-11-07 (see the end)
+# Benchmark course tier: course v1 frozen 2026-11-06, course v1.1 frozen 2026-11-06, course v1.2 frozen 2026-11-07, course v1.3 frozen 2026-11-08 (see the end)
 
 Written by brief 07a1 before any agent run on these tasks. The tier ports the course projects of Parts 13-16 to the benchmark v1 layout; v1 itself (`benchmark/tasks`, `pool`, `lib`, the scoring tools) is unchanged.
 Nothing in `benchmark/course/tasks`, `benchmark/lib` or the scoring tools may change after this point without a new version and a new freeze; a change found necessary is recorded here.
@@ -63,3 +63,16 @@ Parts 9-12 join the tier before any agent run on them. Nothing earlier changed: 
 | Tools | `tools/freeze.py` reads both split files; `tests/test_course_static.py` reproduces both draws. Shared units are unchanged |
 
 The streaming blocks of Parts 9-12 are exercised behind the shell with bursts (a 32-clock enable pattern, a 64-clock run, results in order with a count and, where the spec fixes a latency, a record of the clocks on which results appeared); see `README.md`. The 720p video task is scored by one whole frame (about 4 minutes in Icarus, 3.7 on the reference); there is no reduced bench.
+
+## Course v1.3 (brief 07a1c, 2026-11-08)
+
+Four development references are rewritten so that Vivado can build them. No spec text, hidden model, acceptance bench, split or private (held-out) unit changed; `split.yaml` and `split_c9_c12.yaml` are byte-identical. None of the four is held out.
+
+| Task | What changed in `ref/rtl` (and why) |
+|---|---|
+| `c13_nexys_harris_vga` | picture in seven block-RAM copies with a registered address; `harris.sv` pipelined with one shared response unit (the parallel form needed 155,527 LUTs, the device has 63,400). Bit-exact against the model |
+| `c13_nexys_blob_tracker` | `ccl.sv` rewritten as a state machine with sized registers (the unrolled form did not finish in 60 minutes); `blob_report.sv` divides bit-serially |
+| `c13_hough_lines` | counts in two block RAMs plus a valid bit per cell (one-clock `clear` kept); busy is 4 clocks longer after a point |
+| `c9_nexys_vga_720p` | BTNC, SW and MMCM LOCKED pass through two-flop synchronisers (`cdc_no_critical` failed) |
+
+Mutants whose search text was in rewritten code were re-expressed against the new code (`mutants.yaml` of blob tracker and Harris); each is killed. The reference Vivado numbers are in `results/REFERENCE_BUILDS.md`. The manifest digests of these four tasks changed; every other unit is unchanged.

@@ -4,7 +4,7 @@
 //
 // 100 MHz oscillator -> MMCME2_BASE -> pixel clock: 25.1748 MHz (VCO 900 MHz = 100 MHz x 9, CLKOUT0 divide 35.75; 6.9 ppm from 25.175) or, with
 // PIX_25_175 = 0, exactly 25.000 MHz (VCO 600 MHz, divide 24). The timing generator and pattern generator are the course's reference solutions
-// (solutions/p9l02_vtg, solutions/p9l02_tpg). SW[1:0] picks the pattern (bars, checkerboard, ramp, moving box); BTNC is a reset.
+// (solutions/p9l02_vtg, solutions/p9l02_tpg). SW[1:0] picks the pattern (bars, checkerboard, ramp, moving box); BTNC is a reset. Both cross into the pixel clock through two-flop synchronisers (07a1c).
 // The pattern generator registers its colour, so hs and vs are delayed by one clock to stay aligned with it (lesson 2, section 5).
 // SIM = 1 swaps the MMCM for a wire so the file also runs in Icarus (labs/p9_video/test_lab_vga.py).
 module vga_bars_720p #(
@@ -42,11 +42,21 @@ module vga_bars_720p #(
         end
     endgenerate
 
+    // BTNC and SW come from the 100 MHz oscillator's world (a button and slide switches), not from the pixel clock: each goes through a two-flop synchroniser
+    // (ASYNC_REG keeps both flops together and tells Vivado's CDC check the crossing is handled)
+    (* ASYNC_REG = "TRUE" *) logic [1:0] btn_sync = 2'b00;
+    (* ASYNC_REG = "TRUE" *) logic [1:0] sw_sync0 = 2'b00, sw_sync1 = 2'b00;
+    always_ff @(posedge pix_clk) begin
+        btn_sync <= {btn_sync[0], ~BTNC};
+        sw_sync0 <= SW;
+        sw_sync1 <= sw_sync0;
+    end
+
     // reset: held while the MMCM is unlocked or BTNC is pressed, released synchronously
     logic [2:0] rst_sr = '0;
     always_ff @(posedge pix_clk or negedge locked)
         if (!locked) rst_sr <= '0;
-        else         rst_sr <= {rst_sr[1:0], ~BTNC};
+        else         rst_sr <= {rst_sr[1:0], btn_sync[1]};
     wire rst_n = rst_sr[2];
 
     logic hs, vs, de, sof, eol;
@@ -60,7 +70,7 @@ module vga_bars_720p #(
     // the timing generator shows h = 0, v = 0 (an active pixel) while it is held in reset, so de is gated with rst_n: no lit pixels during reset
     logic de_q;
     logic [3:0] r, g, b;
-    tpg #(.W(1280), .H(720)) u_tpg (.clk(pix_clk), .de(de & rst_n), .x(x), .y(y), .sel(SW), .frame(frame), .de_q(de_q), .r(r), .g(g), .b(b));
+    tpg #(.W(1280), .H(720)) u_tpg (.clk(pix_clk), .de(de & rst_n), .x(x), .y(y), .sel(sw_sync1), .frame(frame), .de_q(de_q), .r(r), .g(g), .b(b));
 
     // tpg registers the colour (one clock), so hs and vs take one extra register too; then everything leaves the chip from one final register rank
     logic hs_d, vs_d;
