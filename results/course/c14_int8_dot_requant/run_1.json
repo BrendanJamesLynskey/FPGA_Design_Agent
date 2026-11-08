@@ -1,7 +1,7 @@
 {
  "task": "c14_int8_dot_requant",
  "tier": "course",
- "split": "development",
+ "split": "dev",
  "difficulty": 1,
  "run": 1,
  "date": "2026-11-06",
@@ -72,5 +72,25 @@
   "class": "spec ambiguity plus clarify-stage gap (not a model error in the arithmetic)",
   "evidence": "all 6 hidden tests fail at the first register read: 'reset value of 0 at window 0x00: RTL 0x444F5451, model 0x00000000'. The agent invented a byte-addressed register map with an ID register at window 0x00; the task's spec.md does not give the map, which lives only in hidden/spec.yaml. The agent asked one question about shell addressing, the oracle answered 'partly specified' without giving the offsets, and the agent never asked for the register offsets.",
   "fixed_by_this_pr": false
- }
+ },
+ "agent_commit": "beb3067e885cb9670a0b6ac9cc9782bc32ff1064",
+ "internal_pass": true,
+ "hidden_pass": false,
+ "hidden_tests_passed": 0,
+ "hidden_tests_total": 6,
+ "internal_gate_failed_before_pass": "unknown",
+ "outcome": "escape",
+ "escape_level": "spec-interpretation",
+ "tool_runs": {
+  "simulate": 1,
+  "mutate": 0,
+  "formal": 0,
+  "build": 8,
+  "lint": 3,
+  "gates": 10,
+  "simulate_mutate_build": 9
+ },
+ "tokens": 2962884,
+ "plan_cost_estimate_usd": 3.0082,
+ "wall_h_total": "unknown"
 }
