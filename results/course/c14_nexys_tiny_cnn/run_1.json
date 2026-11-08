@@ -1,0 +1,89 @@
+{
+ "task": "c14_nexys_tiny_cnn",
+ "tier": "course",
+ "split": "dev",
+ "difficulty": 3,
+ "run": 1,
+ "date": "2026-11-08",
+ "run_id": "20261108-122944-0cb0",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.319",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "FPGA_Design_Agent main 598433e, Knowledge main 415d555; no code changes",
+ "stop": {
+  "stage": 2,
+  "name": "rtl-design-creation",
+  "reason": "stage 2 visited more than 6 times; last failing gate V3 mutation_score_pct 54.55% (6 of 11 mutants killed, threshold not met)",
+  "stages_0_to_8_passed": false
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "fail (mutation 54.55%)",
+  "stage_gates_post_route": "not reached"
+ },
+ "stage_visits": {
+  "clarify": 2,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 6
+ },
+ "note_aborted_attempt": "run 20261108-113207-83b2 was a harness block (CLI 2.1.319 not in ACCEPTED_CLI); not counted",
+ "questions": {
+  "asked": 6,
+  "answered": 1,
+  "defaulted": 5,
+  "oracle_refusals_for_quote": 0,
+  "note": "all 5 defaulted questions had oracle reply 'not specified' with no quote; fix B (YAML quote) and fix C (map precedence) were not exercised"
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": false,
+  "tests_passed": 0,
+  "tests_total": 5,
+  "tests": {
+   "test_blank_before_first_answer": false,
+   "test_pictures_0_to_3": false,
+   "test_pictures_4_to_7": false,
+   "test_glitch_is_not_a_press": false,
+   "test_reset_blanks_the_display": false
+  },
+  "cause": "hidden bench accesses dut.UART_TXD_IN; the agent's top has no such port (it omitted the unused input), AttributeError in every test"
+ },
+ "qor": null,
+ "failure": {
+  "class": "spec/task gap (score) plus model error (stage-2 mutation loop)",
+  "what": "The spec says ports are named as in the board master XDC but lists no UART_TXD_IN; the hidden bench drives it. Separately the tests role could not kill 5 of 11 mutants (cnn_core.sv index arithmetic and last_tap) within six stage-2 visits."
+ },
+ "timing": {
+  "baseline_verilator_s": 286.2,
+  "baseline_icarus_s": 522.2,
+  "mutation_wall_s_last": 1969.2
+ },
+ "wall_h_total": 5.83,
+ "agent_commit": "598433e",
+ "internal_pass": "stopped at stage 2 (rtl-design-creation)",
+ "hidden_pass": false,
+ "hidden_tests_passed": 0,
+ "hidden_tests_total": 5,
+ "internal_gate_failed_before_pass": true,
+ "outcome": "fail",
+ "escape_level": null,
+ "tool_runs": {
+  "simulate": 4,
+  "mutate": 0,
+  "formal": 0,
+  "build": 0,
+  "lint": 4,
+  "gates": 3,
+  "simulate_mutate_build": 4
+ },
+ "tokens": 3163675,
+ "plan_cost_estimate_usd": 3.6568
+}

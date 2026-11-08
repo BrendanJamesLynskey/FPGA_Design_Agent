@@ -1,0 +1,85 @@
+{
+ "task": "c15_softmax_unit",
+ "tier": "course",
+ "split": "dev",
+ "difficulty": 2,
+ "run": 2,
+ "date": "2026-11-08",
+ "run_id": "20261108-182142-4119",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.319",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "FPGA_Design_Agent main 598433e, Knowledge main 415d555; no code changes",
+ "stop": {
+  "stage": 2,
+  "name": "rtl-design-creation",
+  "reason": "stage 2 visited more than 6 times; last failing gate V3 cover_properties_pct 33.33% (C_led_on, C_led_fall not hit)",
+  "stages_0_to_8_passed": false
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "fail (cover properties 33.33%; mutation 70.0% 14/20 in the last measured pass)",
+  "stage_gates_post_route": "not reached"
+ },
+ "stage_visits": {
+  "clarify": 1,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 6
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": false,
+  "tests_passed": 0,
+  "tests_total": 5,
+  "cause": "the clarify role never asked for the register map and invented ID/CTRL/STATUS; the hidden bench expects X0..X3 at 0x00-0x03 and GO at 16 (reset read 0x534D4158 vs 0)"
+ },
+ "qor": null,
+ "failure": {
+  "class": "model error (clarify skipped the map question) plus harness gap (nothing forces the map question or supplies the map)",
+  "what": "Oracle was asked 4 questions (TIMEOUT_CYCLES, ready clearing, busy go, rounding), none about registers; the agent's register map is its own. Stage 2 then spent 6 visits on tests-role gate repairs (V1 proof method formal vs simulation despite fix A's message, V2 'random' name, V3 bins and covers)."
+ },
+ "timing": {
+  "batch1_run1": {
+   "wall_h": 3.88,
+   "stage2_visits": 6,
+   "icarus_baseline_s_per_sim": "145-765"
+  },
+  "run2": {
+   "wall_h": 1.68,
+   "stage2_visits": 6,
+   "baseline_icarus_s": 221.0,
+   "baseline_verilator_s": 64.7,
+   "mutation_sim": "verilator",
+   "mutation_baseline_s": 64.6,
+   "mutation_wall_s": 822.5
+  }
+ },
+ "wall_h_total": 1.68,
+ "agent_commit": "598433e",
+ "internal_pass": "stopped at stage 2 (rtl-design-creation)",
+ "hidden_pass": false,
+ "hidden_tests_passed": 0,
+ "hidden_tests_total": 5,
+ "internal_gate_failed_before_pass": true,
+ "outcome": "fail",
+ "escape_level": null,
+ "tool_runs": {
+  "simulate": 4,
+  "mutate": 0,
+  "formal": 0,
+  "build": 0,
+  "lint": 4,
+  "gates": 0,
+  "simulate_mutate_build": 4
+ },
+ "tokens": 2817021,
+ "plan_cost_estimate_usd": 3.5825
+}
