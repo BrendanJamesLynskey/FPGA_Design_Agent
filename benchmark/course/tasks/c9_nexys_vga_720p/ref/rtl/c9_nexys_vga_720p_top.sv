@@ -36,11 +36,16 @@ module c9_nexys_vga_720p_top #(
         .CLK100MHZ(CLK100MHZ), .BTNC(BTNC), .SW(SW[1:0]), .LED0(locked),
         .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .VGA_HS(VGA_HS), .VGA_VS(VGA_VS));
 
-    assign LED = {15'd0, locked};
+    // the MMCM's LOCKED output belongs to the pixel-clock world: a two-flop synchroniser brings it into the system clock before the LED and the status register use it
+    (* ASYNC_REG = "TRUE" *) logic [1:0] locked_sync = 2'b00;
+    always_ff @(posedge clk) locked_sync <= {locked_sync[0], locked};
+    wire locked_s = locked_sync[1];
+
+    assign LED = {15'd0, locked_s};
 
     always_ff @(posedge clk) begin
         win_rdata <= 32'd0;
-        if (win_rd && win_addr == 7'h00) win_rdata <= {31'd0, locked};
+        if (win_rd && win_addr == 7'h00) win_rdata <= {31'd0, locked_s};
         if (rst) win_rdata <= 32'd0;
     end
 endmodule

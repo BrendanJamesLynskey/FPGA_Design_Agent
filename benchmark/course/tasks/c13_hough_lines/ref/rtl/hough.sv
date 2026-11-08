@@ -8,6 +8,27 @@
 // and clears it at the end; a point presented while busy is ignored. clear (a one-clock pulse, only when not busy) zeroes every cell in ONE clock.
 // Read port: rd_theta (k), rd_rho (cell) select a cell and rd_cnt shows its 16-bit count one clock later. rst_n is synchronous, active low (it does not clear the cells).
 // The tables are computed by a CORDIC or a small ROM; lesson 8 discusses which and the cost.
+//
+// Block-RAM form (07a1c): the 1536 counts live in two block RAMs written together (one read port each: the read-modify-write of a vote, and the read port), and one
+// valid bit per cell in flip-flops. A cell whose valid bit is 0 reads as 0, so `clear` still zeroes every cell in ONE clock (it clears the valid bits, not the RAMs).
+// A vote takes four clocks after its angle clock (distance register, index register, read, write), so busy stays high four clocks longer than before; a read sees the same value one clock after the select.
+module hough_cell_ram #(
+    parameter int N = 1536
+) (
+    input  logic        clk,
+    input  logic        we,
+    input  logic [10:0] waddr,
+    input  logic [15:0] wdata,
+    input  logic [10:0] raddr,
+    output logic [15:0] rdata
+);
+    (* ram_style = "block" *) logic [15:0] mem [0:N-1];
+    always_ff @(posedge clk) begin
+        if (we) mem[waddr] <= wdata;
+        rdata <= mem[raddr];
+    end
+endmodule
+
 module hough #(
     parameter int NT = 16,
     parameter int NR = 96,
@@ -66,29 +87,55 @@ module hough #(
             default: stab = 0;
         endcase
     endfunction
-    logic [15:0] acc [0:NT*NR-1];
+    localparam int NC = NT * NR;
+    logic [NC-1:0] vld;       // a cell that was never voted since the last clear reads as 0
+    initial vld = '0;
     logic [7:0]  x, y;
     logic [4:0]  k;          // 0 .. NT-1 while busy
-    integer i, rho;
+    integer rho;
     logic start_q;
-    assign busy = (k != 0) || start_q;
+    logic signed [15:0] rho_r;  logic [3:0] k_r;  logic p_en;   // stage P: the distance, registered
+    logic        s0_en, s0_vote, s1_en, s1_vote, vld_a, vld_b;   // stage 0: index registered; stage 1: the vote's RAM read is on q_a
+    logic [10:0] s0_idx, s1_idx;
+    logic [15:0] q_a, q_b;
+    assign busy = (k != 0) || start_q || p_en || s0_en || s1_en;
+
+    // stage 0 (the angle clock): the cell index of this angle's vote
+    always_comb rho = (($signed({1'b0, x}) * ctab(k[3:0]) + $signed({1'b0, y}) * stab(k[3:0]) + 64) >>> 7) + ROFF;
+    wire         vote0 = p_en && rho_r >= 0 && rho_r < NR;
+    wire  [10:0] idx0  = 11'(k_r * NR + rho_r);
+    wire  [10:0] ridx  = 11'(rd_theta * NR + rd_rho);
+    wire  [15:0] newc  = (vld_a ? q_a : 16'd0) + 16'd1;
+
+    hough_cell_ram #(.N(NC)) u_a (.clk(clk), .we(s1_vote), .waddr(s1_idx), .wdata(newc), .raddr(s0_idx), .rdata(q_a));
+    hough_cell_ram #(.N(NC)) u_b (.clk(clk), .we(s1_vote), .waddr(s1_idx), .wdata(newc), .raddr(ridx), .rdata(q_b));
+    assign rd_cnt = vld_b ? q_b : 16'd0;
+
     always_ff @(posedge clk) begin
-        rd_cnt <= acc[rd_theta * NR + rd_rho];
+        vld_b <= vld[ridx];
+        vld_a <= vld[s0_idx];
+        p_en <= start_q || k != 0;
+        rho_r <= 16'(rho);
+        k_r <= k[3:0];
+        s0_en <= p_en;
+        s0_vote <= vote0;
+        s0_idx <= idx0;
+        s1_en <= s0_en;
+        s1_vote <= s0_vote;
+        s1_idx <= s0_idx;
         if (!rst_n) begin
-            k <= 5'd0; start_q <= 1'b0;
+            k <= 5'd0; start_q <= 1'b0; p_en <= 1'b0; s0_en <= 1'b0; s0_vote <= 1'b0; s1_en <= 1'b0; s1_vote <= 1'b0;
         end else begin
             start_q <= 1'b0;
             if (clear && !busy) begin
-                for (i = 0; i < NT*NR; i = i + 1) acc[i] <= 16'd0;
+                vld <= '0;
             end
+            if (s1_vote) vld[s1_idx] <= 1'b1;
             if (pt_valid && !busy) begin
                 x <= pt_x; y <= pt_y;
                 start_q <= 1'b1;
             end
             if (start_q || k != 0) begin
-                // angle index is k (start_q: k = 0)
-                rho = (($signed({1'b0, x}) * ctab(k[3:0]) + $signed({1'b0, y}) * stab(k[3:0]) + 64) >>> 7) + ROFF;
-                if (rho >= 0 && rho < NR) acc[k * NR + rho] <= acc[k * NR + rho] + 16'd1;
                 k <= (k == NT - 1) ? 5'd0 : k + 5'd1;
             end
         end

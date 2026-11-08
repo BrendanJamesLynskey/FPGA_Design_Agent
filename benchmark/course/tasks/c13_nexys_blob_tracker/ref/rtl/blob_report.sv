@@ -25,6 +25,11 @@ module blob_report #(
     logic [19:0] b_sx, b_sy;
     logic [7:0]  b_xmin, b_ymin;
     logic        have;
+    logic        dbusy;
+    logic [4:0]  dcnt;
+    logic [19:0] qx, qy;                    // numerator shifting out, quotient shifting in
+    logic [20:0] rx, ry;
+    wire  [20:0] nrx = {rx[19:0], qx[19]}, nry = {ry[19:0], qy[19]};
 
     ccl #(.W(W), .H(H), .MAXL(64)) u_ccl (.clk(clk), .rst_n(rst_n), .s_tdata(s_tdata), .s_tvalid(s_tvalid), .s_tready(s_tready), .s_tuser(s_tuser), .s_tlast(s_tlast),
         .busy(ccl_busy), .out_valid(ov), .out_area(o_area), .out_sx(o_sx), .out_sy(o_sy), .out_xmin(o_xmin), .out_xmax(o_xmax), .out_ymin(o_ymin), .out_ymax(o_ymax),
@@ -35,7 +40,7 @@ module blob_report #(
     always_ff @(posedge clk) begin
         done <= 1'b0;
         if (!rst_n) begin
-            have <= 1'b0; area <= 16'd0; cx <= 8'd0; cy <= 8'd0; b_area <= 16'd0;
+            have <= 1'b0; dbusy <= 1'b0; area <= 16'd0; cx <= 8'd0; cy <= 8'd0; b_area <= 16'd0;
         end else begin
             if (s_tvalid && s_tready && s_tuser) begin have <= 1'b0; b_area <= 16'd0; end   // a new picture: forget the previous choice
             if (ov && better) begin
@@ -44,9 +49,22 @@ module blob_report #(
             end
             if (ccl_done) begin
                 area <= b_area;
-                cx   <= (b_area == 0) ? 8'd0 : 8'(b_sx / b_area);
-                cy   <= (b_area == 0) ? 8'd0 : 8'(b_sy / b_area);
-                done <= 1'b1;
+                if (b_area == 0) begin cx <= 8'd0; cy <= 8'd0; done <= 1'b1; end
+                else begin                                          // the centroid: two restoring divisions, one bit per clock
+                    dbusy <= 1'b1; dcnt <= 5'd19; qx <= b_sx; qy <= b_sy; rx <= '0; ry <= '0;
+                end
+            end
+            if (dbusy) begin
+                qx <= {qx[18:0], (nrx >= {5'd0, b_area})};
+                qy <= {qy[18:0], (nry >= {5'd0, b_area})};
+                rx <= (nrx >= {5'd0, b_area}) ? nrx - {5'd0, b_area} : nrx;
+                ry <= (nry >= {5'd0, b_area}) ? nry - {5'd0, b_area} : nry;
+                dcnt <= dcnt - 5'd1;
+                if (dcnt == 5'd0) begin
+                    dbusy <= 1'b0; done <= 1'b1;
+                    cx <= {qx[6:0], (nrx >= {5'd0, b_area})};
+                    cy <= {qy[6:0], (nry >= {5'd0, b_area})};
+                end
             end
         end
     end
