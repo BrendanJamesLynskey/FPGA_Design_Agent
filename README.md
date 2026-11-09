@@ -209,7 +209,8 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
              design_standards.md (v1.0: the rule table and how each rule is checked);
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph; benchmark tasks as agent runs, 07a2-prep); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing); test_writer.md (the 05g test-writer diagnosis, turn trace, formal re-plan, QoR gate);
-             debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped)
+             debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped);
+             eval/eval1_preregistration.md (the eval-1 held-out evaluation, fixed before any scored run)
 ```
 
 ## Status
