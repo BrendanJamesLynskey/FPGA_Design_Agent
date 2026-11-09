@@ -49,3 +49,28 @@ Each fix: the run that exposed it, the PR, the re-run result.
 - Fix A (tests conventions): no V1 `proof_references_resolve` repair at stage 2 (run 1 had one). Stage 2 took 1 visit.
 - Fix E (Verilator first): mutation baseline 51.5 s on Verilator (run 1: 134.7 s on Icarus), mutation wall 520 s (run 1: 842 s), same sample of 20 mutants and the same score, 18 of 20. Gate baseline on the same bench: Icarus 390.6 s, Verilator 52.4 s. Total run wall 1.23 h (run 1: 1.26 h), 136 turns (160).
 - Single draw: the pass is consistent with the fixes but not proof of B or C.
+
+## Fix 7 (07a2): reruns of the three batch 2 failures
+
+PR #70 (main 646e904, v1.3.1 for `c12_nexys_pwm_audio`); same settings as batch 2; Vivado limited to one run at a time.
+
+| Task | Hidden score (batch 2) | Stop | Stage-2 visits (batch 2) | Wall | agent_commit |
+|---|---|---|---|---|---|
+| `c14_nexys_tiny_cnn` run 2 | 2 of 5 (0 of 5) | stage 9 hardware pause (stage 2, 6 visits exhausted) | 5 (6) | 4.59 h | 646e904 |
+| `c11_nco_mixer` run 2 | 4 of 4 (4 of 4) | stage 9 hardware pause (stage 2, 6 visits) | 1 (6) | 1.69 h | 646e904 |
+| `c12_nexys_pwm_audio` run 2 | 1 of 2 (0 of 0, did not elaborate) | stage 9 hardware pause (stage 9) | 4 | 1.23 h | 646e904 |
+
+| Fix 7 part | Fired? |
+|---|---|
+| Register map asked by the harness (`ensure_register_question`) | Yes: sixth question of the tiny-CNN run; run 2 of c11 and c12 carry the map question too. |
+| Tests-role self-check (`flow.verif_gates.static_check`, up to 2 repair passes) | Ran every visit in all three runs; it found no problem, so the repair path is untested live. |
+| Surviving mutants in full to the tests role on repair visits | Applied on the 4 repair visits of the tiny-CNN run (and c12); unit tested; no isolated effect measurable. |
+| run_record fixes (post-route pending counts as pass, stage-9 SIGNOFF/V-HW ignored, spec gap = spec-interpretation) | Yes: backfill re-read c12 batch 2, systolic, pq_search and softmax run 3. |
+| `c12_nexys_pwm_audio` spec lists `LED` | Yes: the hidden bench now elaborates (batch 2: 0 of 0). |
+| Tiny-CNN `UART_TXD_IN` (FDA-CON-9, #67) | Yes: the top has the pin, the bench elaborated, 2 of 5 (0 of 5). |
+
+Results:
+- `c14_nexys_tiny_cnn` run 2: V0 to V3 pass (mutation 100%), stages 0 to 8 pass, then the hardware pause; post-route WNS +1.993 ns, WHS +0.126 ns; 1108 LUT, 577 FF, 2 DSP; power 0.131 W. Hidden 2 of 5 (outcome escape, spec-interpretation). Cause, from the run's own files: the weight words in `cnn_params.hex` are signed bytes (0 to 255) in 32-bit words; the agent's `model.py` and `cnn_core.sv` both sign-extended from bit 31, so weights 128 to 255 read as positive and every picture classified as 2 ('B'). With bit 7 as the sign the agent's own model gives 0,0,1,1,2,2,3,3. Model and RTL agree, so no internal gate sees it. The spec states the bias width but not the weight width: a task text gap to consider for a later freeze (not changed here).
+- `c11_nco_mixer` run 2: passes 4 of 4 hidden tests; V3 mutation 86.67% (13 of 15); WNS +0.628 ns, WHS +0.131 ns; 933 LUT, 981 FF, 2 DSP; power 0.122 W. Stage 2 took 1 visit (batch 2: six, exhausted).
+- `c12_nexys_pwm_audio` run 2: V0 to V3 pass (mutation 100%); WNS +3.825 ns, WHS +0.122 ns; 388 LUT, 303 FF, 1 DSP; power 0.117 W. Hidden 1 of 2: `test_gain_clamp_and_pwm_duty` reads the pulled-up pin and gets Z. The agent's top declares `output logic AUD_PWM` and drives 1'bz when released; the reference passes the same bench. Not investigated further.
+- Single draws. The two escapes are both reads of a task detail (a data width, an open-drain pin) that the agent's own tests share with its RTL.

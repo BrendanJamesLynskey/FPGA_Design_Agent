@@ -1,0 +1,96 @@
+{
+ "task": "c12_nexys_pwm_audio",
+ "tier": "course",
+ "split": "dev",
+ "run": 2,
+ "date": "2026-11-09",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.319",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "FPGA_Design_Agent main 646e904 (07a2 fix 7, PR #70), Knowledge main 415d555; benchmark course v1.3.1",
+ "agent_commit": "646e904",
+ "difficulty": 2,
+ "run_id": "20261109-141014-43e3",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (mutation score 100.0%)",
+  "stage_gates_post_route": "all pass (setup, hold, pulse width, DRC, CDC, methodology, power)",
+  "bitstream": "built"
+ },
+ "stage_visits": {
+  "clarify": 1,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 4,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 1
+ },
+ "questions": {
+  "asked": 6,
+  "answered": 5,
+  "defaulted": 1,
+  "register_map_asked": "yes (fix 7 gate)"
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": false,
+  "tests_passed": 1,
+  "tests_total": 2,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_gain_clamp_and_pwm_duty": false
+  },
+  "cause": "hidden bench reads the resolved pin (tri1 pull-up) and gets Logic('Z') in test_gain_clamp_and_pwm_duty at 40.87 us"
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 3.825,
+  "whs_ns": 0.122,
+  "lut": 388,
+  "ff": 303,
+  "dsp": 1,
+  "bram36": 0,
+  "power_w": 0.117,
+  "note": "base build, test shell, xc7a100t at 100 MHz"
+ },
+ "failure": {
+  "class": "spec-interpretation (open-drain pin, not confirmed)",
+  "what": "The LED gap of batch 2 is closed (v1.3.1): the hidden bench elaborates and test_identity_and_reset passes. test_gain_clamp_and_pwm_duty reads the pulled-up pin and gets Z: the agent's top drives `output logic AUD_PWM` with 1'bz when released, and the bench's tri1 net did not resolve it to 1. The reference passes the same bench, so the difference is in how the pin is declared or driven; not investigated further (hidden files not read beyond the failing line)."
+ },
+ "wall_h_total": 1.23,
+ "internal_pass": true,
+ "hidden_pass": false,
+ "hidden_tests_passed": 1,
+ "hidden_tests_total": 2,
+ "internal_gate_failed_before_pass": true,
+ "outcome": "escape",
+ "escape_level": "spec-interpretation",
+ "tool_runs": {
+  "simulate": 3,
+  "mutate": 0,
+  "formal": 0,
+  "build": 6,
+  "lint": 4,
+  "gates": 9,
+  "simulate_mutate_build": 9
+ },
+ "tokens": 2744871,
+ "plan_cost_estimate_usd": 3.7134
+}

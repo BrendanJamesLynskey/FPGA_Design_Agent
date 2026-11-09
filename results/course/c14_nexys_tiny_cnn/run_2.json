@@ -1,0 +1,102 @@
+{
+ "task": "c14_nexys_tiny_cnn",
+ "tier": "course",
+ "split": "dev",
+ "run": 2,
+ "date": "2026-11-09",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.319",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "FPGA_Design_Agent main 646e904 (07a2 fix 7, PR #70), Knowledge main 415d555; benchmark course v1.3.1",
+ "agent_commit": "646e904",
+ "difficulty": 3,
+ "run_id": "20261109-035646-6e34",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board in this run)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (mutation score 100.0%)",
+  "stage_gates_post_route": "all pass (setup, hold, pulse width, DRC, CDC, methodology, power)",
+  "bitstream": "built"
+ },
+ "stage_visits": {
+  "clarify": 1,
+  "board-and-device-planning": 3,
+  "rtl-design-creation": 5,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 2
+ },
+ "questions": {
+  "asked": 6,
+  "answered": 3,
+  "defaulted": 3,
+  "register_map_asked": "yes: the sixth question (fix 7 ensure_register_question fired), answered by the oracle"
+ },
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": false,
+  "tests_passed": 2,
+  "tests_total": 5,
+  "tests": {
+   "test_blank_before_first_answer": true,
+   "test_pictures_0_to_3": false,
+   "test_pictures_4_to_7": false,
+   "test_glitch_is_not_a_press": true,
+   "test_reset_blanks_the_display": false
+  },
+  "cause": "the design answers class 2 ('B') for every picture; the agent's own model.py gives the same answers as its RTL"
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 1.993,
+  "whs_ns": 0.126,
+  "lut": 1108,
+  "ff": 577,
+  "dsp": 2,
+  "bram36": 0,
+  "power_w": 0.131,
+  "note": "base build, test shell, xc7a100t at 100 MHz"
+ },
+ "failure": {
+  "class": "spec-interpretation (data format, shared by model and RTL)",
+  "what": "The weight words in data/cnn_params.hex are signed 8-bit values written zero-extended in 32-bit words (range 0 to 255, 310 of 612 above 127). The agent's model.py and cnn_core.sv sign-extended from bit 31, so every weight 128 to 255 read as positive and the network always chose class 2. With bytes sign-extended from bit 7 the agent's own model.py classifies the eight pictures 0,0,1,1,2,2,3,3. The spec says only that biases are 32-bit signed and does not state the weight width. Model and RTL agree, so no internal gate could catch it. The UART_TXD_IN port gap of run 1 is closed (FDA-CON-9): the hidden bench elaborated."
+ },
+ "timing": {
+  "wall_note": "03:56 to 08:32"
+ },
+ "wall_h_total": 4.59,
+ "internal_pass": true,
+ "hidden_pass": false,
+ "hidden_tests_passed": 2,
+ "hidden_tests_total": 5,
+ "internal_gate_failed_before_pass": true,
+ "outcome": "escape",
+ "escape_level": "spec-interpretation",
+ "tool_runs": {
+  "simulate": 2,
+  "mutate": 0,
+  "formal": 0,
+  "build": 5,
+  "lint": 3,
+  "gates": 14,
+  "simulate_mutate_build": 7
+ },
+ "tokens": 3439845,
+ "plan_cost_estimate_usd": 4.1673
+}
