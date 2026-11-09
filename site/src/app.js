@@ -269,3 +269,75 @@
   var ila = document.getElementById("ila"); if (ila) mountILA(ila);
   mountDev(); mountEval1();
 })();
+
+/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
+   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
+(function () {
+  var cv = document.getElementById("fabric");
+  if (!cv || !cv.getContext) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
+  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
+  function layout() {
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
+    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
+  }
+  function base() {
+    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
+    var hrow = Math.floor(rows / 2);
+    for (var c = 0; c < cols; c++) {
+      var x = c * T, k = kind[c];
+      for (var r = 0; r < rows; r++) {
+        var y = r * T;
+        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
+        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
+        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
+        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
+          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
+  function net() {
+    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
+    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
+    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
+    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
+    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
+  }
+  function drawNet(n, alpha) {
+    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
+    for (var i = 1; i < n.p.length && left > 0; i++) {
+      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
+      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
+    }
+    ctx.stroke();
+    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
+    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
+    ctx.globalAlpha = 1;
+  }
+  function frame(now) {
+    if (!run) return;
+    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
+    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
+    nets = nets.filter(function (n) {
+      n.t += dt; var done = n.len / n.speed, a = .42;
+      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
+      if (a <= 0) return false; drawNet(n, a); return true;
+    });
+    requestAnimationFrame(frame);
+  }
+  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
+  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
+  start();
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
+  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
+  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
+  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+})();

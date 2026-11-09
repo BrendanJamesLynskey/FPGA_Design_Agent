@@ -26,7 +26,7 @@ SRC = HERE / "src"
 REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 
 PAGES = [  # file, nav label, title, description, data keys inlined
-    ("index.html", "Home", "FPGA Design Agent", "An agent that turns a plain English spec into a verified bitstream for a Nexys A7-100T, measured.", ["replay"]),
+    ("index.html", "Home", "End-to-end FPGA Agent", "An open agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGA boards, measured.", ["replay"]),
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
     ("examples.html", "Examples", "Examples", "Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.", ["board"]),
     ("evaluation.html", "How it is evaluated", "How it is evaluated", "The held-out evaluation in plain words: split, hidden grader, three runs per task, task-level bootstrap.", []),
@@ -143,7 +143,7 @@ def layout(fname, title, desc, body, keys, d, css, js):
     nxt = PAGES[idx + 1] if idx + 1 < len(PAGES) else None
     pager = '<div class="pager">' + (f'<a href="{prev[0]}">&larr; {html.escape(prev[1])}</a>' if prev else "<span></span>") + \
             (f'<a href="{nxt[0]}">{html.escape(nxt[1])} &rarr;</a>' if nxt else "<span></span>") + "</div>"
-    full = title if fname == "index.html" else f"{title} | FPGA Design Agent"
+    full = title if fname == "index.html" else f"{title} | End-to-end FPGA Agent"
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -157,7 +157,7 @@ def layout(fname, title, desc, body, keys, d, css, js):
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
 <main id="main" class="wrap">
 {body}
 {pager}
