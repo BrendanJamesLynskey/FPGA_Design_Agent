@@ -108,7 +108,9 @@ def config_from_json(c: dict):
                   profile=c.get("profile", "single"), roles=c.get("roles") or None,
                   no_shell=flag("no_shell"),
                   data_dir=Path(c["data_dir"]) if c.get("data_dir") not in (None, "None") else None,
-                  oracle=c.get("oracle", "openrouter"), oracle_cc_model=c.get("oracle_cc_model", "claude-haiku-5-5"))
+                  oracle=c.get("oracle", "openrouter"), oracle_cc_model=c.get("oracle_cc_model", "claude-haiku-5-5"),
+                  spec_tests=flag("spec_tests"), spectest_model=c.get("spectest_model", "claude-sonnet-5-5"),
+                  spectest_effort=c.get("spectest_effort", "medium"), spectest_max_loops=int(c.get("spectest_max_loops", 2)))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -146,6 +148,10 @@ def main(argv: list[str] | None = None) -> int:
                    help="where the interview oracle runs: openrouter (--model) or claude_code (a headless `claude -p` on the "
                         "Max plan; no OpenRouter call at all, 07a2-prep)")
     r.add_argument("--oracle-cc-model", default="claude-haiku-5-5", help="model of --oracle claude_code")
+    r.add_argument("--spec-tests", action="store_true",
+                   help="08f (eval-2): after V2/V3, an independent bench written from spec.md alone must also pass (agent.graph.spectest)")
+    r.add_argument("--spectest-model", default="claude-sonnet-5-5", help="Claude Code model of the spec-test role and its triage")
+    r.add_argument("--spectest-max-loops", type=int, default=2, help="design_wrong round trips per run before 'unresolved'")
     r.add_argument("--max-usd", type=float, help="run cost cap (provider-reported); default RUN_LIMITS")
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
@@ -172,7 +178,8 @@ def main(argv: list[str] | None = None) -> int:
                      harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort,
                      verif_level=a.verif_level, profile=a.profile, roles=parse_roles(a.roles),
                      no_shell=a.no_shell or task_no_shell(a.hidden_spec), data_dir=a.data_dir or task_data_dir(a.spec),
-                     oracle=a.oracle, oracle_cc_model=a.oracle_cc_model)
+                     oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=a.spec_tests,
+                     spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops)
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd

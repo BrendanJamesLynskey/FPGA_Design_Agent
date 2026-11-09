@@ -1,0 +1,60 @@
+{
+ "label": "c14_tiny_cnn_fix7",
+ "run_dir": "20261109-035646-6e34",
+ "gate": {
+  "verdict": "design_wrong",
+  "blocks": true,
+  "evidence": "[spec test] An independent bench written from the request alone fails against your design, and a reviewer who read the request judged the design wrong: The request fixes the network exactly (\"must be followed exactly\") and says the answer is the biggest score, with H, V, B, X for 0 to 3. Bench B checks the letter against that network and the design sent 'B' for pictures 0 and 7, while bench A's oracle is the implementer's own model, so its pass is circular.\nFailing checks of the independent bench:\n- all_eight_pictures_letter_and_digit_in_order:                                                         Traceback (most recent call last):\n                                                          File \"/home/brendan/Claude_sandbox/_wt_fda_eval2/runs/_spectest_replay/c14_tiny_cnn_fix7/c14_nexys_tiny_cnn/spectest/spec_bench.py\", line 122, in all_eight_pictures_letter_and_digit_in_order\n                                                            await run_picture(dut, got, pic)\n                                                          File \"/home/brendan/Claude_sandbox/_wt_fda_eval2/runs/_spectest_replay/c14_tiny_cnn_fix7/c14_nexys_tiny_cnn/spectest/spec_bench.py\", line 93, in run_picture\n                                                            assert b0 == letter and s0 == 1, (\n                                                        AssertionError: picture 0: expected letter H (class 0) 8N1 with stop bit 1, got 0x42 stop=1\n                                                        assert (66 == 72)\n178580.00ns WARNING  cocotb.regression                  spec_bench.all_eight_pictures_letter_and_digit_in_order failed\n178580.00ns INFO     cocotb.regression                  running spec_bench.all_eight_pictures_reverse_order_ignoring_other_switches (3/4)\n349070.00ns WARNING  ..se_order_ignoring_other_switches picture 7: expected letter X (class 3) 8N1 with stop bit 1, got 0x42 stop=1\n                                                        assert (66 == 88)\n                                                          File \"/home/brendan/Claude_sandbox/_wt_fda_eval2/runs/_spectest_replay/c14_tiny_cnn_fix7/c14_nexys_tiny_cnn/spectest/spec_bench.py\", line 131, in all_eight_pictures_reverse_order_ignoring_other_switches\n                                                            await run_picture(dut, got, pic, swhigh=rnd.randran\n- all_eight_pictures_reverse_order_ignoring_other_switches:                                                         Traceback (most recent call last):\n                                                          File \"/home/brendan/Claude_sandbox/_wt_fda_eval2/runs/_spectest_replay/c14_tiny_cnn_fix7/c14_nexys_tiny_cnn/spectest/spec_bench.py\", line 122, in all_eight_pictures_letter_and_digit_in_order\n                                                            await run_picture(dut, got, pic)\n                                                          File \"/home/brendan/Claude_sandbox/_wt_fda_eval2/runs/_spectest_replay/c14_tiny_cnn_fix7/c14_nexys_tiny_cnn/spectest/spec_bench.py\", line 93, in run_picture\n                                                            assert b0 == letter and s0 == 1, (\n                                                        AssertionError: picture 0: expected letter H (class 0) 8N1 with stop bit 1, got 0x42 stop=1\n                                                        assert (66 == 72)\n178580.00ns WARNING  cocotb.regression                  spec_bench.all_eight_pictures_letter_and_digit_in_order failed\n178580.00ns INFO     cocotb.regression                  running spec_bench.all_eight_pictures_reverse_order_ignoring_other_switches (3/4)\n349070.00ns WARNING  ..se_order_ignoring_other_switches picture 7: expected letter X (class 3) 8N1 with stop bit 1, got 0x42 stop=1\n                                                        assert (66 == 88)\n                                                          File \"/home/brendan/Claude_sandbox/_wt_fda_eval2/runs/_spectest_replay/c14_tiny_cnn_fix7/c14_nexys_tiny_cnn/spectest/spec_bench.py\", line 131, in all_eight_pictures_reverse_order_ignoring_other_switches\n                                                            await run_picture(dut, got, pic, swhigh=rnd.randran\n- short_button_glitch_is_debounced_away:                                                         Traceback (most recent call last):\n                                                          File \"/home/brendan/Claude_sandbox/_wt_fda_eval2/runs/_spectest_replay/c14_tiny_cnn_fix7/c14_nexys_tiny_cnn/spectest/spec_bench.py\", line 122, in all_eight_pictures_letter_and_digit_in_order\n                                                            await run_picture(dut, got, pic)\n                                                          File \"/home/brendan/Claude_sandbox/_wt_fda_eval2/runs/_spectest_replay/c14_tiny_cnn_fix7/c14_nexys_tiny_cnn/spectest/spec_bench.py\", line 93, in run_picture\n                                                            assert b0 == letter and s0 == 1, (\n                                                        AssertionError: picture 0: expected letter H (class 0) 8N1 with stop bit 1, got 0x42 stop=1\n                                                        assert (66 == 72)\n178580.00ns WARNING  cocotb.regression                  spec_bench.all_eight_pictures_letter_and_digit_in_order failed\n178580.00ns INFO     cocotb.regression                  running spec_bench.all_eight_pictures_reverse_order_ignoring_other_switches (3/4)\n349070.00ns WARNING  ..se_order_ignoring_other_switches picture 7: expected letter X (class 3) 8N1 with stop bit 1, got 0x42 stop=1\n                                                        assert (66 == 88)\n                                                          File \"/home/brendan/Claude_sandbox/_wt_fda_eval2/runs/_spectest_replay/c14_tiny_cnn_fix7/c14_nexys_tiny_cnn/spectest/spec_bench.py\", line 131, in all_eight_pictures_reverse_order_ignoring_other_switches\n                                                            await run_picture(dut, got, pic, swhigh=rnd.randran\nThe bench (spectest/spec_bench.py) is yours to read; fix the RTL to match the request.",
+  "sig": "spectest:all_eight_pictures_letter_and_digit_in_order|all_eight_pictures_reverse_order_ignoring_other_switches|short_button_glitch_is_debounced_away"
+ },
+ "state": {
+  "enabled": true,
+  "fired": true,
+  "runs": 1,
+  "outcome": "design_wrong",
+  "passed": false,
+  "caught_bug": false,
+  "bench_repaired": false,
+  "design_wrong": 1,
+  "bench_wrong": 0,
+  "bench_writes": 1,
+  "passed_hash": null
+ },
+ "history": [
+  {
+   "t": 1794242128,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1794242136,
+   "step": "run",
+   "rtl": "09a20bb5f26a785a",
+   "ok": false,
+   "failing": [
+    "all_eight_pictures_letter_and_digit_in_order",
+    "all_eight_pictures_reverse_order_ignoring_other_switches",
+    "short_button_glitch_is_debounced_away"
+   ],
+   "built": true
+  },
+  {
+   "t": 1794242151,
+   "step": "triage",
+   "verdict": "design_wrong",
+   "reason": "The request fixes the network exactly (\"must be followed exactly\") and says the answer is the biggest score, with H, V, B, X for 0 to 3. Bench B checks the letter against that network and the design sent 'B' for pictures 0 and 7, while bench A's oracle is the implementer's own model, so its pass is circular."
+  }
+ ],
+ "first_run_ok": false,
+ "first_run_failing": [
+  "all_eight_pictures_letter_and_digit_in_order",
+  "all_eight_pictures_reverse_order_ignoring_other_switches",
+  "short_button_glitch_is_debounced_away"
+ ],
+ "first_triage": "design_wrong",
+ "first_triage_reason": "The request fixes the network exactly (\"must be followed exactly\") and says the answer is the biggest score, with H, V, B, X for 0 to 3. Bench B checks the letter against that network and the design sent 'B' for pictures 0 and 7, while bench A's oracle is the implementer's own model, so its pass is circular."
+}

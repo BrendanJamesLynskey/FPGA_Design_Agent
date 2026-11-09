@@ -1,0 +1,77 @@
+{
+ "label": "c14_int8_run2",
+ "run_dir": "20261106-183713-956d",
+ "gate": {
+  "verdict": "pass",
+  "blocks": false,
+  "evidence": "",
+  "sig": "pass"
+ },
+ "state": {
+  "enabled": true,
+  "fired": true,
+  "runs": 2,
+  "outcome": "pass",
+  "passed": true,
+  "caught_bug": false,
+  "bench_repaired": true,
+  "design_wrong": 0,
+  "bench_wrong": 1,
+  "bench_writes": 2,
+  "passed_hash": "4e6f4c9f5d0e62c4"
+ },
+ "history": [
+  {
+   "t": 1794242838,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1794242846,
+   "step": "run",
+   "rtl": "4e6f4c9f5d0e62c4",
+   "ok": false,
+   "failing": [
+    "directed_extremes_halves_and_limits",
+    "random_vectors",
+    "reset_clears_ready_and_loaded_numbers"
+   ],
+   "built": true
+  },
+  {
+   "t": 1794242850,
+   "step": "triage",
+   "verdict": "bench_wrong",
+   "reason": "The request says 'LED0 shows the ready flag' and ports are named as in the board's master XDC, so the port is LED0; bench B accessed dut.LED, which does not exist (AttributeError), a naming mistake and not a design fault. Bench A uses dut.LED0 and passes, so the failure comes from bench B's wrong signal name and says nothing about the arithmetic."
+  },
+  {
+   "t": 1794242874,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1794242961,
+   "step": "run",
+   "rtl": "4e6f4c9f5d0e62c4",
+   "ok": true,
+   "failing": [],
+   "built": true
+  }
+ ],
+ "first_run_ok": false,
+ "first_run_failing": [
+  "directed_extremes_halves_and_limits",
+  "random_vectors",
+  "reset_clears_ready_and_loaded_numbers"
+ ],
+ "first_triage": "bench_wrong",
+ "first_triage_reason": "The request says 'LED0 shows the ready flag' and ports are named as in the board's master XDC, so the port is LED0; bench B accessed dut.LED, which does not exist (AttributeError), a naming mistake and not a design fault. Bench A uses dut.LED0 and passes, so the failure comes from bench B's wrong signal name and says nothing about the arithmetic."
+}
