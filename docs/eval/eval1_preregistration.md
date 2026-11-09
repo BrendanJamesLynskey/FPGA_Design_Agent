@@ -201,7 +201,7 @@ Adopted from the CVDP project's practice:
 
 ## 10. Abandoned (2026-11-09, owner decision)
 
-`eval-1` was stopped on 2026-11-09 at about 21:40, before completion, and **no result from it is reported**.
+`eval-1` was stopped on 2026-11-09 at about 21:15, before completion, and **no result from it is reported**.
 
 - **Reason (owner):** the evaluation could not finish by the next morning. The owner chose to first grow the problem
   set (harder and larger designs, more boards, more application areas) and improve the agent on it. A baseline
@@ -210,7 +210,7 @@ Adopted from the CVDP project's practice:
 - **What had happened by then:**
   - 14 of the 57 slots had been launched.
   - 2 runs were scored (r01, r03).
-  - 9 had ended as not run: Claude Code auto-updated from 2.1.319 to 2.1.321 at 19:47, and the agent refuses
+  - 9 had ended as not run: Claude Code auto-updated from 2.1.319 to 2.1.321 between 19:36 and 19:47 (new binary 19:36, launcher link 19:47), and the agent refuses
     untested CLI versions (section 8.1).
   - 3 were stopped mid-run (r12–r14) and not scored.
 - **Records:** they stay private with the held-out material.
