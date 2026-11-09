@@ -163,6 +163,7 @@ behaviour:
   network:
   - 'Exactly the course network: conv 3x3 1->4 with requantisation (acc*M1 + 2^(S1-1)) >>> S1 clamped to 0..127; 2x2 max-pool; conv 3x3 4->8 with requantisation by M2/S2 and clamp 0..127; dense 72->4 raw int32; class = argmax, lowest index on a tie.'
   - 'Parameters and pictures: data/cnn_params.hex (612 weights, 16 biases, M1, S1, M2, S2) and data/cnn_images.hex (8 x 144 pixels).'
+  - "Weight encoding: each of the 612 weights is a signed 8-bit two's complement number stored zero-extended in the low byte of its 32-bit word of cnn_params.hex (80..FF are negative, bit 7 is the sign); biases are 32-bit signed; M1, S1, M2, S2 are non-negative."
   board:
   - SW[2:0] choose the picture; a debounced rising edge of BTNC (stable for DEBOUNCE_CYCLES clocks) classifies it.
   - 'When the answer is ready: the class digit (0..3) on the right-hand digit (AN = 8''hFE; segments 0x40, 0x79, 0x24, 0x30 active low as {CG..CA}); all segments off before the first answer; one letter H, V, B or X then 0x0A on UART_RXD_OUT at 115200 8N1.'
