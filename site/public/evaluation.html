@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How it is evaluated | FPGA Design Agent</title>
+<meta name="description" content="The held-out evaluation in plain words: split, hidden grader, three runs per task, task-level bootstrap.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
+  --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --measure: 68ch; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+    --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+  --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); overflow-x: hidden; }
+a { color: var(--ink); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, kbd, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--panel); border: 1px solid var(--rule); padding: 0 .3em; border-radius: 2px; overflow-wrap: anywhere; }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; line-height: 1.45; margin: 0 0 1em; max-width: 100%; }
+pre code { border: 0; padding: 0; background: none; overflow-wrap: normal; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 3.2vw, 3rem); margin: .3em 0 .4em; font-weight: 700; }
+h2 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.8rem); margin: 2.2em 0 .5em; font-weight: 700; }
+h3 { font-size: 1.05rem; margin: 1.6em 0 .4em; }
+p, li { max-width: var(--measure); }
+p { margin: 0 0 1em; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-3); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
+.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.bar nav a { padding: 10px 8px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
+.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* sections, cards */
+.hero { padding: 36px 0 8px; }
+.eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
+.fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.fact .n { font: 700 2rem/1.1 var(--f-mono); letter-spacing: -.02em; }
+.fact p { margin: .4em 0 0; font-size: .92rem; color: var(--ink-2); }
+.tag { display: inline-block; font: 600 .75rem var(--f-mono); border: 1px solid var(--ink-3); padding: 1px 7px; border-radius: 2px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.tag.run { border-style: dashed; }
+figure { margin: 1.4em 0; }
+figcaption { font-size: .88rem; color: var(--ink-3); margin-top: 6px; max-width: var(--measure); }
+.panel { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.tablewrap { overflow-x: auto; margin: 0 0 1.2em; border: 1px solid var(--rule); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+img { max-width: 100%; height: auto; display: block; }
+footer { border-top: 1px solid var(--rule); margin-top: 56px; padding: 22px 0 40px; color: var(--ink-3); font-size: .9rem; }
+footer .wrap > * { max-width: var(--measure); }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
+
+/* pipeline player */
+.player { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0 0 12px; counter-reset: n; }
+.pipe li { max-width: none; border: 1px solid var(--mute); padding: 8px 10px; font-size: .86rem; line-height: 1.3; position: relative; color: var(--ink-3); min-height: 62px; }
+.pipe li b { display: block; font-size: .72rem; font-family: var(--f-mono); letter-spacing: .04em; margin-bottom: 2px; }
+.pipe li.done { color: var(--ink-2); border-color: var(--ink-3); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px); }
+.pipe li.active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.pipe li.stop { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.pipe li .v { position: absolute; right: 8px; top: 6px; font: .72rem var(--f-mono); }
+.cap { min-height: 3.2em; margin: 0 0 10px; color: var(--ink); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctl input[type=range] { flex: 1 1 140px; min-width: 120px; min-height: 44px; accent-color: var(--ink); }
+.ctl .pos { font: .85rem var(--f-mono); color: var(--ink-3); min-width: 6ch; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* charts */
+svg text { fill: var(--ink-2); font: 11px var(--f-mono); }
+svg .ink { stroke: var(--ink); fill: none; }
+svg .fillink { fill: var(--ink); }
+svg .rule { stroke: var(--rule); }
+svg .warn { stroke: var(--warn); fill: none; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; }
+.dot.p { background: var(--ink); }
+.dot.f { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.dot.n { border-style: dotted; border-color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.strip .t { font-family: var(--f-mono); overflow-wrap: anywhere; }
+.bars { display: grid; grid-template-columns: minmax(0, 14ch) 1fr auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.bars .b { height: 14px; background: var(--ink); min-width: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-3); margin-top: 8px; }
+.stub { border: 1px dashed var(--ink-3); padding: 18px; background: var(--panel); }
+@media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<a class="visually-hidden" href="#main">Skip to content</a>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html">How it works</a><a href="examples.html">Examples</a><a href="evaluation.html" aria-current="page">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<main id="main" class="wrap">
+<h1>How it is evaluated</h1>
+<p class="lede">A held-out evaluation, written down and committed before any scored run. The agent at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> is frozen while it runs. The full text is <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/eval-1/docs/eval/eval1_preregistration.md">the pre-registration</a>.</p>
+
+<h2>The idea</h2>
+<p>Tasks used to improve an agent cannot also measure it. So 19 tasks were set aside by a fixed random seed before any agent run, and the agent never sees them: not their text, not their tests, not their reference designs. Everything on the results page labelled "development" comes from the other tasks.</p>
+
+<h2>Steps</h2>
+<ol>
+<li><strong>Held-out split.</strong> 19 tasks, drawn by seed from two sets (the first benchmark and the course tier). The files are frozen with checksums, and a check must show zero mismatches before the first run.</li>
+<li><strong>A hidden grader.</strong> Each task has hidden tests written before any agent run, against an independent golden model, run on Icarus. No language model grades anything. A run passes only if every hidden test passes.</li>
+<li><strong>The grader is itself checked.</strong> The reference design passes, and 5-8 deliberately broken versions per task ("mutants") must fail.</li>
+<li><strong>Three runs per task.</strong> 57 runs in all, each from a clean checkout and a fresh directory, in an order fixed in advance by a seed so that no task is run easiest first.</li>
+<li><strong>The agent sees only the task text and the board pack.</strong> Questions go to an oracle (claude-haiku-5-5) that answers from the hidden spec with a quote check; every question and answer is logged.</li>
+<li><strong>Errors are "not run".</strong> A run that ends for an infrastructure reason is reported as not run, with evidence. It is never repeated into the result.</li>
+<li><strong>Tasks, not runs, are the unit.</strong> The headline is pass@1 with a 95% interval from a bootstrap over tasks (2,000 resamples). A Wilson interval on the runs is shown beside it and labelled as ignoring the clustering of runs within tasks.</li>
+<li><strong>Escapes.</strong> The share of runs where every check the agent ran passed and the hidden tests still failed, split by the check that should have caught it.</li>
+<li><strong>No changes during the evaluation.</strong> A bug found on the way is written down, fixed afterwards and measured as <code>eval-2</code> on the same tasks.</li>
+</ol>
+
+<h2>How wide will the interval be?</h2>
+<p>Planned in advance from the 21 development runs on 11 tasks: an expected 95% half-width for pass@1 of about &plusmn;17.5 points. The width comes from tasks differing in difficulty, so more runs per task barely narrow it. On 19 tasks a pass rate is known to about that much, and precision for comparisons comes from pairing by task, later.</p>
+
+<h2>What was fixed in advance</h2>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Fixed before the first scored run</th><th>Value</th></tr></thead><tbody><tr><td>Agent under test</td><td>tag eval-1, model claude-sonnet-5-5, Claude Code 2.1.319</td></tr><tr><td>Tools</td><td>Vivado 2025.2, Icarus Verilog 12.0, cocotb 2.0.1, Verilator 5.048</td></tr><tr><td>Tasks and runs</td><td>19 tasks x 3 runs = 57 runs</td></tr><tr><td>Interval</td><td>bootstrap over tasks, 2,000 resamples; planned half-width 17.5 points</td></tr><tr><td>Randomness</td><td>task order seed 20261109</td></tr></tbody></table></div>
+
+<h2>Limitations, stated up front</h2>
+<ul>
+<li>19 tasks give wide intervals.</li>
+<li>One board, one model, one harness.</li>
+<li>An LLM oracle stands in for the user during the interview.</li>
+<li>Icarus is the scoring simulator.</li>
+<li>Constants (gate floors, caps, timeouts) were all chosen on development tasks.</li>
+</ul>
+<p>Held-out task text stays private until the results are published. Nothing on this site comes from a held-out task; a leak scan of the published pages against the private held-out material is part of the release.</p>
+
+<div class="pager"><a href="examples.html">&larr; Examples</a><a href="results.html">Results &rarr;</a></div>
+</main>
+<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+
+<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+(function () {
+  "use strict";
+  var D = {};
+  document.querySelectorAll('script[type="application/json"][data-key]').forEach(function (s) {
+    try { D[s.dataset.key] = JSON.parse(s.textContent); } catch (e) { /* data missing: component skips */ }
+  });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* theme toggle: remembered per viewer, optional */
+  var tb = document.getElementById("theme");
+  function curTheme() {
+    var t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  if (tb) {
+    try { var st = localStorage.getItem("fda-theme"); if (st) document.documentElement.dataset.theme = st; } catch (e) {}
+    tb.addEventListener("click", function () {
+      var n = curTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = n;
+      try { localStorage.setItem("fda-theme", n); } catch (e) {}
+      tb.textContent = n === "dark" ? "Light" : "Dark";
+    });
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+  }
+
+  /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
+  function Player(root, n, onFrame, opts) {
+    opts = opts || {};
+    var i = 0, playing = false, timer = null, speed = 1, visible = true, base = opts.interval || 1100;
+    var live = root.querySelector(".cap");
+    var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
+    var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
+    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
+    var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
+    var pos = el("span", { class: "pos" });
+    var sp = el("select", { "aria-label": "Speed" });
+    [0.25, 0.5, 1, 2, 4].forEach(function (s) { var o = el("option", { value: s, text: s + "x" }); if (s === 1) o.selected = true; sp.appendChild(o); });
+    var ctl = el("div", { class: "ctl" }, [play, back, fwd, rst, rng, pos, sp]);
+    root.appendChild(ctl);
+    if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
+    function show() {
+      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      var c = onFrame(i);
+      if (live && c != null) live.textContent = c;
+    }
+    function stop() { playing = false; play.textContent = "Play"; play.setAttribute("aria-label", "Play"); clearTimeout(timer); }
+    function tick() {
+      if (!playing) return;
+      if (!visible) { timer = setTimeout(tick, 400); return; }
+      if (i >= n - 1) { stop(); return; }
+      i++; show(); timer = setTimeout(tick, base / speed);
+    }
+    function go() {
+      if (i >= n - 1) i = 0;
+      playing = true; play.textContent = "Pause"; play.setAttribute("aria-label", "Pause"); show(); timer = setTimeout(tick, base / speed);
+    }
+    play.onclick = function () { playing ? stop() : go(); };
+    back.onclick = function () { stop(); i = Math.max(0, i - 1); show(); };
+    fwd.onclick = function () { stop(); i = Math.min(n - 1, i + 1); show(); };
+    rst.onclick = function () { stop(); i = 0; show(); };
+    rng.oninput = function () { stop(); i = +rng.value; show(); };
+    sp.onchange = function () { speed = +sp.value; };
+    root.addEventListener("keydown", function (e) {
+      if (e.target !== root) return;
+      if (e.key === " ") { e.preventDefault(); play.onclick(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); fwd.onclick(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); back.onclick(); }
+      else if (e.key === "Home") { e.preventDefault(); rst.onclick(); }
+    });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+    show();
+    if (opts.autoplay && !reduce) go();
+    return { goto: function (k) { stop(); i = k; show(); } };
+  }
+
+  /* ---------- stage replay (hero and how-it-works): frames from the committed run record ---------- */
+  var GROUPS = [
+    { id: "clarify", label: "Interview", stages: [0] },
+    { id: "plan", label: "Plan", stages: [1] },
+    { id: "rtl", label: "RTL and gates V0 to V3", stages: [2] },
+    { id: "build", label: "Build", stages: [3, 4, 5] },
+    { id: "post", label: "Post-route gates", stages: [6, 7, 8] },
+    { id: "board", label: "Board", stages: [9] }
+  ];
+  var DETAIL = [
+    "Interview", "Plan", "RTL and V0 to V3", "Constraints", "Synthesis", "Implementation", "Timing closure",
+    "Power closure", "DRC closure", "Board and debug"
+  ];
+  function frameState(R, i) {
+    var s = R.steps[i];
+    return { stage: s.stage_no, step: s, last: i === R.steps.length - 1 };
+  }
+  function mountReplay(root, mode) {
+    var R = D.replay; if (!R) return;
+    var items = mode === "hero" ? GROUPS : DETAIL.map(function (l, k) { return { id: "s" + k, label: l, stages: [k] }; });
+    var ul = el("ul", { class: "pipe", "aria-label": "Stages" });
+    var lis = items.map(function (g, k) {
+      var li = el("li", {}, [el("b", { text: mode === "hero" ? String(k + 1) : String(g.stages[0]) }), document.createTextNode(g.label)]);
+      ul.appendChild(li); return li;
+    });
+    var cap = el("p", { class: "cap", "aria-live": "polite" });
+    root.appendChild(ul); root.appendChild(cap);
+    function frame(i) {
+      var st = frameState(R, i), cur = -1;
+      items.forEach(function (g, k) { if (g.stages.indexOf(st.stage) >= 0) cur = k; });
+      lis.forEach(function (li, k) {
+        li.className = k < cur ? "done" : (k === cur ? (st.last ? "stop" : "active") : "");
+        var old = li.querySelector(".v"); if (old) li.removeChild(old);
+      });
+      var visits = st.step.visits;
+      if (visits > 1) lis[cur].appendChild(el("span", { class: "v", text: st.step.visit + "/" + visits }));
+      return "Stage " + st.stage + ", " + DETAIL[st.stage] + (visits > 1 ? " (visit " + st.step.visit + " of " + visits + ")" : "") + ". " + st.step.fact;
+    }
+    Player(root, R.steps.length, frame, { autoplay: mode === "hero", interval: mode === "hero" ? 1300 : 1500 });
+  }
+
+  /* ---------- k-of-n strip, intervals, bars (shared by development data and eval1.json) ---------- */
+  function strip(root, rows) {
+    var g = el("div", { class: "strip", role: "list" });
+    rows.forEach(function (r) {
+      var dots = el("span", { class: "dots", "aria-hidden": "true" });
+      for (var j = 0; j < r.n; j++) dots.appendChild(el("span", { class: "dot " + (j < r.k ? "p" : "f") }));
+      for (var q = r.n; q < (r.of || r.n); q++) dots.appendChild(el("span", { class: "dot n", title: "not run" }));
+      g.appendChild(el("span", { class: "t", role: "listitem", text: r.task }));
+      g.appendChild(dots);
+      g.appendChild(el("span", { class: "k mono", text: r.k + " of " + r.n }));
+    });
+    root.appendChild(g);
+    root.appendChild(el("div", { class: "legend" }, [
+      el("span", { text: "filled: all hidden tests passed" }), el("span", { text: "hatched: failed" }), el("span", { text: "dotted: not run" })]));
+  }
+  function intervals(root, items) {
+    var W = 560, H = 36 + items.length * 52, L = 14, R = 14;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": items.map(function (x) { return x.label + " " + x.mid + " percent, interval " + x.lo + " to " + x.hi; }).join("; ") });
+    function X(v) { return L + (W - L - R) * v / 100; }
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      s.appendChild(sv("line", { x1: X(v), x2: X(v), y1: 6, y2: H - 20, class: "rule" }));
+      s.appendChild(sv("text", { x: X(v), y: H - 6, "text-anchor": "middle" }, v));
+    });
+    items.forEach(function (it, k) {
+      var y = 36 + k * 52;
+      s.appendChild(sv("text", { x: 0, y: y - 14 }, it.label));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.hi), y1: y, y2: y, class: "ink", "stroke-width": 2, "stroke-dasharray": it.dash ? "5 3" : "none" }));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.lo), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("line", { x1: X(it.hi), x2: X(it.hi), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("circle", { cx: X(it.mid), cy: y, r: 5, class: "fillink" }));
+    });
+    root.appendChild(s);
+    var t = el("div", { class: "tablewrap" });
+    var tb2 = el("table");
+    tb2.appendChild(el("tr", {}, ["Estimate", "Point", "95% interval"].map(function (h) { return el("th", { text: h }); })));
+    items.forEach(function (it) {
+      tb2.appendChild(el("tr", {}, [el("td", { text: it.label }), el("td", { class: "num", text: it.mid + "%" }), el("td", { class: "num", text: it.lo + " to " + it.hi + "%" })]));
+    });
+    t.appendChild(tb2); root.appendChild(t);
+  }
+  function bars(root, obj, total, unit) {
+    var g = el("div", { class: "bars" });
+    var max = Math.max.apply(null, Object.keys(obj).map(function (k) { return obj[k]; }).concat([1]));
+    Object.keys(obj).forEach(function (k) {
+      var b = el("span", { class: "b", "aria-hidden": "true" }); b.style.width = (100 * obj[k] / max) + "%"; b.style.display = "block";
+      g.appendChild(el("span", { text: k.replace(/_/g, " ").replace(/-/g, " ") }));
+      var cell = el("span", {}, [b]); g.appendChild(cell);
+      g.appendChild(el("span", { class: "mono", text: obj[k] + (total ? " of " + total : "") + (unit || "") }));
+    });
+    root.appendChild(g);
+  }
+  var OUTCOME_TEXT = { pass: "passed, no repair needed", caught_and_repaired: "an internal gate failed, the agent repaired it, hidden tests passed",
+    escape: "own checks passed, hidden tests failed (escape)", internal_stop_hidden_pass: "stopped on an internal gate, hidden tests pass on the RTL it left",
+    fail: "failed" };
+
+  function mountDev() {
+    var d = D.dev; if (!d) return;
+    var a = document.getElementById("dev-strip"); if (a) strip(a, d.per_task);
+    var b = document.getElementById("dev-int");
+    if (b) intervals(b, [
+      { label: "pass@1, bootstrap over tasks", mid: d.pass_at_1_tasks_pct, lo: d.bootstrap_tasks_pct[0], hi: d.bootstrap_tasks_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: d.pass_pct_runs, lo: d.wilson_runs_pct[0], hi: d.wilson_runs_pct[1], dash: true }]);
+    var c = document.getElementById("dev-out"); if (c) {
+      var o = {}; Object.keys(d.outcomes).forEach(function (k) { o[OUTCOME_TEXT[k] || k] = d.outcomes[k]; });
+      bars(c, o, d.runs);
+    }
+    var e = document.getElementById("dev-esc"); if (e) bars(e, d.escape_levels, d.escapes);
+  }
+  function mountEval1() {
+    var root = document.getElementById("eval1"); if (!root) return;
+    var E = D.eval1;
+    if (!E) {
+      root.appendChild(el("div", { class: "stub" }, [
+        el("span", { class: "tag run", text: "Running" }),
+        el("p", { text: "Running: results after all 57 runs. Nothing is shown here until the last run is scored; the order of the runs is fixed in advance and does not depend on results." })]));
+      return;
+    }
+    root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
+    var s = el("div"); root.appendChild(s); strip(s, E.per_task.map(function (t) { return { task: t.task, k: t.k, n: t.n, of: 3 }; }));
+    root.appendChild(el("h3", { text: "pass@1 with 95% intervals" }));
+    var i = el("div"); root.appendChild(i);
+    intervals(i, [
+      { label: "pass@1, bootstrap over tasks", mid: E.pass_at_1_pct, lo: E.bootstrap_pct[0], hi: E.bootstrap_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: E.wilson_mid_pct, lo: E.wilson_pct[0], hi: E.wilson_pct[1], dash: true }]);
+    root.appendChild(el("h3", { text: "Escapes by the check level that should have caught them" }));
+    var b = el("div"); root.appendChild(b); bars(b, E.escape_levels, E.escapes);
+  }
+
+  /* ---------- ILA capture player (T1 on the board): LED0 against the sample index ---------- */
+  function mountILA(root) {
+    var B = D.board; if (!B) return;
+    var keys = Object.keys(B.captures).sort(function (a, b) { return B.captures[a].duty - B.captures[b].duty; });
+    var W = 600, H = 120, L = 30, cur = keys[0], svg, cursor, trace, label;
+    var sel = el("div", { class: "ctl", role: "group", "aria-label": "Dimmer level" });
+    var btns = keys.map(function (k) {
+      var b = el("button", { type: "button", "aria-pressed": k === cur ? "true" : "false", text: "duty " + B.captures[k].duty });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", keys[j] === cur ? "true" : "false"); }); draw(); player.goto(0); };
+      return b;
+    });
+    btns.forEach(function (b) { sel.appendChild(b); });
+    root.appendChild(sel);
+    var holder = el("div"); root.appendChild(holder);
+    root.appendChild(el("p", { class: "cap", "aria-live": "polite" }));
+    function X(i) { return L + (W - L - 10) * i / (B.captures[cur].samples - 1); }
+    function draw() {
+      var c = B.captures[cur]; holder.innerHTML = "";
+      svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "ILA capture of LED 0 over " + c.samples + " samples at duty " + c.duty + ": on for " + c.on + " samples" });
+      svg.appendChild(sv("text", { x: 0, y: 34 }, "on"));
+      svg.appendChild(sv("text", { x: 0, y: 94 }, "off"));
+      var d = "", prev = 0;
+      c.edges.forEach(function (e, k) {
+        var y = e[1] ? 30 : 90;
+        d += (k === 0 ? "M" : "L") + X(e[0]) + " " + (k === 0 ? y : (e[1] ? 90 : 30)) + " L" + X(e[0]) + " " + y + " ";
+      });
+      d += "L" + X(c.samples - 1) + " " + (c.edges[c.edges.length - 1][1] ? 30 : 90);
+      svg.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      cursor = sv("line", { x1: X(0), x2: X(0), y1: 10, y2: 108, class: "warn", "stroke-width": 1.5 });
+      svg.appendChild(cursor);
+      svg.appendChild(sv("text", { x: L, y: H - 2 }, "sample 0"));
+      svg.appendChild(sv("text", { x: W - 10, y: H - 2, "text-anchor": "end" }, "sample " + (c.samples - 1)));
+      holder.appendChild(svg);
+    }
+    draw();
+    var marks = 64;
+    function onFrame(k) {
+      var c = B.captures[cur]; var idx = Math.round(k * (c.samples - 1) / 63);
+      cursor.setAttribute("x1", X(idx)); cursor.setAttribute("x2", X(idx));
+      var on = 0, v = 0; c.edges.forEach(function (e) { if (e[0] <= idx) { v = e[1]; } });
+      for (var q = 0; q < c.edges.length; q++) { var e = c.edges[q], nx = q + 1 < c.edges.length ? c.edges[q + 1][0] : c.samples; if (e[1]) on += Math.max(0, Math.min(nx, idx + 1) - e[0]); }
+      return "Sample " + idx + ": LED 0 is " + (v ? "on" : "off") + ". On for " + on + " of the " + (idx + 1) + " samples so far. The whole capture: " + c.on + " of " + c.samples + " samples on, the model says " + c.model_on + ".";
+    }
+    var player = Player(root, marks, onFrame, { interval: 220 });
+  }
+
+  var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
+  var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
+  var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+  mountDev(); mountEval1();
+})();
+</script>
+</body>
+</html>

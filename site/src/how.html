@@ -1,0 +1,47 @@
+<h1>How it works</h1>
+<p class="lede">A staged flow with a gate at the end of each stage. The model proposes; scripts and tools judge. Nothing the model wrote about its own work counts.</p>
+
+<h2>A real run, step by step</h2>
+<figure>
+<div class="player" id="replay" aria-label="Stage replay from a real run record"></div>
+<figcaption>Replay of <code>{{replay.task}}</code>, run {{replay.run}} ({{replay.date}}, {{replay.model}}), a development task. The steps are the stage visits in the run record; a stage visited more than once shows "visit k of n". The record keeps the visit counts, not the order inside a repeated stage. Run 1 of this same task scored 0 of 6; the examples page shows all five runs.</figcaption>
+</figure>
+
+<h2>Stages</h2>
+<p>Stages 0 to 9 follow the AMD UltraFast methodology (UG949) for implementation. Each stage ends in checks run by code, and a failed check sends the run back to the stage that can fix it.</p>
+<div class="tablewrap"><table><thead><tr><th class="num">Stage</th><th>Name</th><th>What it produces</th></tr></thead><tbody>
+<tr><td class="num">0</td><td>Interview</td><td>A signed-off <code>spec.yaml</code>: ports, clocks, reset, latency, assumptions with reasons, open questions. The user, or a stand-in oracle in evaluations, answers.</td></tr>
+<tr><td class="num">1</td><td>Plan</td><td>Block diagram, clocking plan, every clock-domain crossing, resource budget for the xc7a100t.</td></tr>
+<tr><td class="num">2</td><td>RTL, bench, gates V0 to V3</td><td>SystemVerilog and constraints; a bench compared with a golden model written from the spec alone; the four verification gates below.</td></tr>
+<tr><td class="num">3</td><td>Constraints</td><td>Pins and clocks checked against the board's master XDC.</td></tr>
+<tr><td class="num">4</td><td>Synthesis</td><td>Synthesis reports and gates.</td></tr>
+<tr><td class="num">5</td><td>Implementation</td><td>Place and route, bitstream.</td></tr>
+<tr><td class="num">6</td><td>Timing closure</td><td>Setup and hold slack at the target clock.</td></tr>
+<tr><td class="num">7</td><td>Power closure</td><td>Vectorless power estimate and its gate.</td></tr>
+<tr><td class="num">8</td><td>DRC closure</td><td>Design rule, methodology and clock-domain-crossing reports.</td></tr>
+<tr><td class="num">9</td><td>Board and debug</td><td>Program the board, run tests over its USB-UART, capture internal signals with a logic analyser core. Always waits for a human to approve programming.</td></tr>
+</tbody></table></div>
+
+<h2>The gates V0 to V3</h2>
+<p>Adopted from OpenTitan's development stages, replacing the parts that need a paid simulator. They sit inside stage 2: the stage cannot end until V3 passes and lint is clean.</p>
+<div class="tablewrap"><table><thead><tr><th>Gate</th><th>What it requires</th></tr></thead><tbody>
+<tr><td>V0 plan</td><td>A test plan, the blind golden model and the bench modules exist.</td></tr>
+<tr><td>V1 test plan</td><td>Every statement in the spec is traced to a test, an assertion, a cover point or a formal task, and each requirement names how it will be shown to hold (simulation, formal, hardware or analysis).</td></tr>
+<tr><td>V2 tests complete</td><td>Directed and constrained-random tests pass on every seed; checkers are bound and none fires.</td></tr>
+<tr><td>V3 coverage closed</td><td>Functional bins and cover properties all hit, line and toggle coverage at stated thresholds, several seeds passing, and a mutation score at its threshold.</td></tr>
+<tr><td>V-HW</td><td>Stage 9: the board bring-up against the model passes.</td></tr>
+</tbody></table></div>
+
+<h2>Independent tests from the spec alone</h2>
+<p><span class="tag run">In evaluation</span> The agent's own testbench never counts as a pass. A planned second line of defence writes tests from the signed-off spec only, without seeing the RTL, and runs them against the design. It is built and replayed offline on development tasks. Whether it catches escapes on held-out tasks is a separate pre-registered comparison (<code>eval-2</code>), and no result is claimed for it here.</p>
+
+<h2>Mutation testing</h2>
+<p>A bench that passes proves little unless it can fail. Deliberate bugs ("mutants") are injected into the RTL and the bench must kill them. On the hand-built T1 design, {{board.mutants}} mutants were made. The first full run killed {{board.mutation_first_run_pct}}% and {{board.mutation_survivors_first}} survived, both in reset behaviour. A test for reset state was added because of those survivors, and then all {{board.mutants_killed}} of {{board.mutants}} were killed. The first number is the unbiased one.</p>
+
+<h2>The knowledge bank</h2>
+<p>A private bank of Agent Skills the agent loads on demand: generic RTL techniques, AMD-vendor know-how, Artix-7 family and device facts, the Nexys A7 board, and the procedures above. The bank has {{packs.sections}} section ids. Its contents stay private; layers and sizes are public, with hashes, so a scored run can prove which version it read.</p>
+{{!packs_table}}
+<p class="small muted">Source: <code>knowledge/PACKS.md</code> in the repository. "Ross shipped" is AMD's published Ross assistant, included as shipped for comparison arms; the distilled layer is ours.</p>
+
+<h2>The Claude Code arm and the tools</h2>
+<p>The model runs as headless Claude Code, one call per turn, with every built-in tool switched off. It sees only our MCP server, which gives each role only the tools its stage needs: <code>lint</code>, <code>simulate</code>, <code>mutate</code>, <code>formal</code>, <code>build</code>, <code>gates</code>, <code>search_docs</code>, <code>load_skill</code>, and file tools limited to the role's own directories. Programming the board and bring-up are never exposed to the model; the harness does those after a human approves. The same stage graph also runs with other models, so harness and model can be compared. Development runs on this site used {{dev.model.0}}, Vivado {{board.vivado}}.</p>

@@ -2,6 +2,8 @@
 
 An agent that turns a natural-language spec into a verified, bring-up-ready AMD FPGA bitstream, measured.
 
+Showcase site: what it is, how it works, examples, how it is evaluated, results ([site/](site), static pages; the live link is added here when it is published).
+
 The agent is **coming**. What exists today (milestones **F0A** and **F0B**) is the ground it will stand on: every tool step of
 the flow, proven by hand on one small design, with machine-checked gates, before any model touches it. Everything
 the agent produces later will have the same shape as `designs/t1_dimmer_counter/`.
@@ -204,6 +206,8 @@ designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, desig
 benchmark/   benchmark v1: tasks (development split), training pool, bench library and tools, manifest, owner review;
              benchmark/course/: the course-tier tasks (Parts 9-16), splits, manifest
 results/     committed build and bring-up results, per milestone
+site/        the showcase site (static, Vercel): export.py (results -> data), build.py (pages, number check),
+             leak_guard.py, src/, data/, public/, tests/; the preview link is in the pull request
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);

@@ -1,0 +1,25 @@
+<section class="hero">
+<p class="eyebrow">Open agent, measured</p>
+<h1>Plain English spec in. Verified RTL and a bitstream out, for a Nexys A7-100T.</h1>
+<p class="lede">The FPGA Design Agent interviews you about a spec, plans the design, writes the RTL and its checks, builds it with Vivado {{board.vivado}}, and stops at independent gates. Only checks it did not write count as a pass: a blind golden model, mutation testing, the post-route reports, and the board.</p>
+</section>
+
+<figure>
+<div class="player" id="hero-player" aria-label="Pipeline replay from a real run record">
+</div>
+<figcaption>One real development run replayed step by step: <code>{{replay.task}}</code>, run {{replay.run}}, {{replay.model}}, {{replay.turns}} agent turns, {{replay.wall_h}} h. Hidden tests passed: {{replay.hidden}}. This run stops at the board stage because no board was attached to it. Space plays and pauses, arrow keys step.</figcaption>
+</figure>
+
+<div class="facts">
+<div class="fact"><div class="n">{{dev.hidden_pass}} of {{dev.runs}}</div><p>development runs passed every hidden test ({{dev.tasks}} development tasks, {{dev.model.0}}). <span class="tag">Development, not the held-out score</span></p></div>
+<div class="fact"><div class="n">{{dev.escapes}} of {{dev.runs}}</div><p>runs were escapes: every check the agent ran passed, and the hidden tests still failed. All {{dev.escapes}} were spec interpretation, not logic errors. Found, then fixed by changing the interview.</p></div>
+<div class="fact"><div class="n">{{board.uart_tests}} of {{board.uart_tests}}</div><p>UART tests and {{board.ila_captures}} of {{board.ila_captures}} logic-analyser captures passed on the board, in all {{board.board_runs}} bring-up runs, for the hand-built reference design. No agent-built design from the development runs has been on a board yet.</p></div>
+</div>
+
+<h2>What is here</h2>
+<div class="cols">
+<div><h3><a href="how.html">How it works</a></h3><p>Stages, the gates V0 to V3, independent tests, mutation testing, the knowledge bank, and the tools the model is allowed to call.</p></div>
+<div><h3><a href="examples.html">Examples</a></h3><p>Development tasks from spec to timing report, a failure and its fix, and a design running on the board.</p></div>
+<div><h3><a href="evaluation.html">How it is evaluated</a></h3><p>A held-out evaluation, pre-registered before any scored run. The method, in plain words.</p></div>
+<div><h3><a href="results.html">Results</a></h3><p>Development results now. The held-out results appear after all {{eval.runs}} runs are scored.</p></div>
+</div>

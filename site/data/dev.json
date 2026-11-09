@@ -1,0 +1,454 @@
+{
+ "bootstrap_tasks_pct": [
+  46.4,
+  90.9
+ ],
+ "dates": [
+  "2026-11-06",
+  "2026-11-09"
+ ],
+ "escape_levels": {
+  "spec-interpretation": 6
+ },
+ "escapes": 6,
+ "hidden_pass": 13,
+ "label": "development tasks, not the held-out score",
+ "mean_plan_cost_usd": 3.21,
+ "mean_wall_h": 2.0,
+ "model": [
+  "claude-sonnet-5-5"
+ ],
+ "outcomes": {
+  "caught_and_repaired": 5,
+  "escape": 6,
+  "fail": 2,
+  "internal_stop_hidden_pass": 3,
+  "pass": 5
+ },
+ "pass_at_1_tasks_pct": 71,
+ "pass_pct_runs": 62,
+ "per_task": [
+  {
+   "k": 1,
+   "n": 2,
+   "outcomes": [
+    "escape",
+    "pass"
+   ],
+   "task": "c10_dds_sine"
+  },
+  {
+   "k": 2,
+   "n": 2,
+   "outcomes": [
+    "internal_stop_hidden_pass",
+    "pass"
+   ],
+   "task": "c11_nco_mixer"
+  },
+  {
+   "k": 1,
+   "n": 1,
+   "outcomes": [
+    "caught_and_repaired"
+   ],
+   "task": "c12_adsr_envelope"
+  },
+  {
+   "k": 0,
+   "n": 2,
+   "outcomes": [
+    "escape",
+    "escape"
+   ],
+   "task": "c12_nexys_pwm_audio"
+  },
+  {
+   "k": 3,
+   "n": 5,
+   "outcomes": [
+    "escape",
+    "escape",
+    "internal_stop_hidden_pass",
+    "internal_stop_hidden_pass",
+    "caught_and_repaired"
+   ],
+   "task": "c14_int8_dot_requant"
+  },
+  {
+   "k": 0,
+   "n": 2,
+   "outcomes": [
+    "fail",
+    "escape"
+   ],
+   "task": "c14_nexys_tiny_cnn"
+  },
+  {
+   "k": 1,
+   "n": 1,
+   "outcomes": [
+    "caught_and_repaired"
+   ],
+   "task": "c14_systolic_matmul"
+  },
+  {
+   "k": 1,
+   "n": 1,
+   "outcomes": [
+    "pass"
+   ],
+   "task": "c15_pq_search"
+  },
+  {
+   "k": 2,
+   "n": 3,
+   "outcomes": [
+    "caught_and_repaired",
+    "fail",
+    "caught_and_repaired"
+   ],
+   "task": "c15_softmax_unit"
+  },
+  {
+   "k": 1,
+   "n": 1,
+   "outcomes": [
+    "pass"
+   ],
+   "task": "c16_montgomery_mult"
+  },
+  {
+   "k": 1,
+   "n": 1,
+   "outcomes": [
+    "pass"
+   ],
+   "task": "c9_median3x3"
+  }
+ ],
+ "runs": 21,
+ "runs_list": [
+  {
+   "agent_turns": 160,
+   "bram36": 1.5,
+   "dsp": 0,
+   "failure_class": "harness gap (primary), model error (secondary)",
+   "ff": 357,
+   "lut": 471,
+   "outcome": "escape",
+   "run": 1,
+   "task": "c10_dds_sine",
+   "tests_passed": 1,
+   "tests_total": 3,
+   "wall_h": 1.26,
+   "wns_ns": 3.607
+  },
+  {
+   "agent_turns": 136,
+   "bram36": 0,
+   "dsp": 0,
+   "failure_class": null,
+   "ff": 366,
+   "lut": 578,
+   "outcome": "pass",
+   "run": 2,
+   "task": "c10_dds_sine",
+   "tests_passed": 3,
+   "tests_total": 3,
+   "wall_h": 1.23,
+   "wns_ns": 0.775
+  },
+  {
+   "agent_turns": 82,
+   "bram36": null,
+   "dsp": null,
+   "failure_class": "model error (tests-role gate conventions)",
+   "ff": null,
+   "lut": null,
+   "outcome": "internal_stop_hidden_pass",
+   "run": 1,
+   "task": "c11_nco_mixer",
+   "tests_passed": 4,
+   "tests_total": 4,
+   "wall_h": 1.5,
+   "wns_ns": null
+  },
+  {
+   "agent_turns": null,
+   "bram36": 0,
+   "dsp": 2,
+   "failure_class": null,
+   "ff": 981,
+   "lut": 933,
+   "outcome": "pass",
+   "run": 2,
+   "task": "c11_nco_mixer",
+   "tests_passed": 4,
+   "tests_total": 4,
+   "wall_h": 1.69,
+   "wns_ns": 0.628
+  },
+  {
+   "agent_turns": 132,
+   "bram36": 0,
+   "dsp": 0,
+   "failure_class": null,
+   "ff": 359,
+   "lut": 508,
+   "outcome": "caught_and_repaired",
+   "run": 1,
+   "task": "c12_adsr_envelope",
+   "tests_passed": 4,
+   "tests_total": 4,
+   "wall_h": 1.92,
+   "wns_ns": 0.627
+  },
+  {
+   "agent_turns": 147,
+   "bram36": 0,
+   "dsp": 1,
+   "failure_class": "spec/task gap (hidden bench needs a port the public spec does not name)",
+   "ff": 301,
+   "lut": 387,
+   "outcome": "escape",
+   "run": 1,
+   "task": "c12_nexys_pwm_audio",
+   "tests_passed": 0,
+   "tests_total": 0,
+   "wall_h": 1.2,
+   "wns_ns": 0.545
+  },
+  {
+   "agent_turns": null,
+   "bram36": 0,
+   "dsp": 1,
+   "failure_class": "spec-interpretation (open-drain pin, not confirmed)",
+   "ff": 303,
+   "lut": 388,
+   "outcome": "escape",
+   "run": 2,
+   "task": "c12_nexys_pwm_audio",
+   "tests_passed": 1,
+   "tests_total": 2,
+   "wall_h": 1.23,
+   "wns_ns": 3.825
+  },
+  {
+   "agent_turns": 140,
+   "bram36": 0,
+   "dsp": 2,
+   "failure_class": "spec ambiguity plus clarify-stage gap (not a model error in the arithmetic)",
+   "ff": 904,
+   "lut": 1359,
+   "outcome": "escape",
+   "run": 1,
+   "task": "c14_int8_dot_requant",
+   "tests_passed": 0,
+   "tests_total": 6,
+   "wall_h": "unknown",
+   "wns_ns": 0.849
+  },
+  {
+   "agent_turns": 125,
+   "bram36": 0,
+   "dsp": 2,
+   "failure_class": "spec ambiguity (task text names the pin 'LED0'; the master-XDC convention names the bus LED[15:0]) plus a weak port-name check; not an arithmetic or register error",
+   "ff": 837,
+   "lut": 1290,
+   "outcome": "escape",
+   "run": 2,
+   "task": "c14_int8_dot_requant",
+   "tests_passed": 5,
+   "tests_total": 6,
+   "wall_h": "unknown",
+   "wns_ns": 2.146
+  },
+  {
+   "agent_turns": 158,
+   "bram36": null,
+   "dsp": null,
+   "failure_class": "model error (primary) plus a harness gap (the failure summary hides the root cause)",
+   "ff": null,
+   "lut": null,
+   "outcome": "internal_stop_hidden_pass",
+   "run": 3,
+   "task": "c14_int8_dot_requant",
+   "tests_passed": 6,
+   "tests_total": 6,
+   "wall_h": "unknown",
+   "wns_ns": null
+  },
+  {
+   "agent_turns": 101,
+   "bram36": null,
+   "dsp": null,
+   "failure_class": "harness gap (tests-role convention) plus model error",
+   "ff": null,
+   "lut": null,
+   "outcome": "internal_stop_hidden_pass",
+   "run": 4,
+   "task": "c14_int8_dot_requant",
+   "tests_passed": 6,
+   "tests_total": 6,
+   "wall_h": 0.94,
+   "wns_ns": null
+  },
+  {
+   "agent_turns": 152,
+   "bram36": 0,
+   "dsp": 12,
+   "failure_class": null,
+   "ff": 753,
+   "lut": 737,
+   "outcome": "caught_and_repaired",
+   "run": 5,
+   "task": "c14_int8_dot_requant",
+   "tests_passed": 6,
+   "tests_total": 6,
+   "wall_h": 1.42,
+   "wns_ns": 0.495
+  },
+  {
+   "agent_turns": null,
+   "bram36": null,
+   "dsp": null,
+   "failure_class": "spec/task gap (score) plus model error (stage-2 mutation loop)",
+   "ff": null,
+   "lut": null,
+   "outcome": "fail",
+   "run": 1,
+   "task": "c14_nexys_tiny_cnn",
+   "tests_passed": 0,
+   "tests_total": 5,
+   "wall_h": 5.83,
+   "wns_ns": null
+  },
+  {
+   "agent_turns": null,
+   "bram36": 0,
+   "dsp": 2,
+   "failure_class": "spec-interpretation (data format, shared by model and RTL)",
+   "ff": 577,
+   "lut": 1108,
+   "outcome": "escape",
+   "run": 2,
+   "task": "c14_nexys_tiny_cnn",
+   "tests_passed": 2,
+   "tests_total": 5,
+   "wall_h": 4.59,
+   "wns_ns": 1.993
+  },
+  {
+   "agent_turns": 144,
+   "bram36": 0,
+   "dsp": 0,
+   "failure_class": null,
+   "ff": 2694,
+   "lut": 2324,
+   "outcome": "caught_and_repaired",
+   "run": 1,
+   "task": "c14_systolic_matmul",
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 1.42,
+   "wns_ns": 0.327
+  },
+  {
+   "agent_turns": 114,
+   "bram36": 0,
+   "dsp": 0,
+   "failure_class": null,
+   "ff": 1532,
+   "lut": 1440,
+   "outcome": "pass",
+   "run": 1,
+   "task": "c15_pq_search",
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 1.4,
+   "wns_ns": 2.621
+  },
+  {
+   "agent_turns": 190,
+   "bram36": 0,
+   "dsp": 17,
+   "failure_class": null,
+   "ff": 945,
+   "lut": 1788,
+   "outcome": "caught_and_repaired",
+   "run": 1,
+   "task": "c15_softmax_unit",
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 3.88,
+   "wns_ns": 0.521
+  },
+  {
+   "agent_turns": null,
+   "bram36": null,
+   "dsp": null,
+   "failure_class": "model error (clarify skipped the map question) plus harness gap (nothing forces the map question or supplies the map)",
+   "ff": null,
+   "lut": null,
+   "outcome": "fail",
+   "run": 2,
+   "task": "c15_softmax_unit",
+   "tests_passed": 0,
+   "tests_total": 5,
+   "wall_h": 1.68,
+   "wns_ns": null
+  },
+  {
+   "agent_turns": 152,
+   "bram36": 0.5,
+   "dsp": 1,
+   "failure_class": null,
+   "ff": 780,
+   "lut": 752,
+   "outcome": "caught_and_repaired",
+   "run": 3,
+   "task": "c15_softmax_unit",
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 1.72,
+   "wns_ns": 2.749
+  },
+  {
+   "agent_turns": 134,
+   "bram36": 0,
+   "dsp": 0,
+   "failure_class": null,
+   "ff": 683,
+   "lut": 778,
+   "outcome": "pass",
+   "run": 1,
+   "task": "c16_montgomery_mult",
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 1.36,
+   "wns_ns": 3.386
+  },
+  {
+   "agent_turns": 157,
+   "bram36": 0,
+   "dsp": 0,
+   "failure_class": null,
+   "ff": 1018,
+   "lut": 1060,
+   "outcome": "pass",
+   "run": 1,
+   "task": "c9_median3x3",
+   "tests_passed": 4,
+   "tests_total": 4,
+   "wall_h": 1.85,
+   "wns_ns": 0.698
+  }
+ ],
+ "tasks": 11,
+ "wall_n": 18,
+ "wilson_runs_pct": [
+  40.9,
+  79.2
+ ]
+}

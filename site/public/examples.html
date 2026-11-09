@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Examples | FPGA Design Agent</title>
+<meta name="description" content="Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
+  --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --measure: 68ch; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+    --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+  --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); overflow-x: hidden; }
+a { color: var(--ink); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, kbd, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--panel); border: 1px solid var(--rule); padding: 0 .3em; border-radius: 2px; overflow-wrap: anywhere; }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; line-height: 1.45; margin: 0 0 1em; max-width: 100%; }
+pre code { border: 0; padding: 0; background: none; overflow-wrap: normal; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 3.2vw, 3rem); margin: .3em 0 .4em; font-weight: 700; }
+h2 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.8rem); margin: 2.2em 0 .5em; font-weight: 700; }
+h3 { font-size: 1.05rem; margin: 1.6em 0 .4em; }
+p, li { max-width: var(--measure); }
+p { margin: 0 0 1em; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-3); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
+.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.bar nav a { padding: 10px 8px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
+.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* sections, cards */
+.hero { padding: 36px 0 8px; }
+.eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
+.fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.fact .n { font: 700 2rem/1.1 var(--f-mono); letter-spacing: -.02em; }
+.fact p { margin: .4em 0 0; font-size: .92rem; color: var(--ink-2); }
+.tag { display: inline-block; font: 600 .75rem var(--f-mono); border: 1px solid var(--ink-3); padding: 1px 7px; border-radius: 2px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.tag.run { border-style: dashed; }
+figure { margin: 1.4em 0; }
+figcaption { font-size: .88rem; color: var(--ink-3); margin-top: 6px; max-width: var(--measure); }
+.panel { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.tablewrap { overflow-x: auto; margin: 0 0 1.2em; border: 1px solid var(--rule); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+img { max-width: 100%; height: auto; display: block; }
+footer { border-top: 1px solid var(--rule); margin-top: 56px; padding: 22px 0 40px; color: var(--ink-3); font-size: .9rem; }
+footer .wrap > * { max-width: var(--measure); }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
+
+/* pipeline player */
+.player { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0 0 12px; counter-reset: n; }
+.pipe li { max-width: none; border: 1px solid var(--mute); padding: 8px 10px; font-size: .86rem; line-height: 1.3; position: relative; color: var(--ink-3); min-height: 62px; }
+.pipe li b { display: block; font-size: .72rem; font-family: var(--f-mono); letter-spacing: .04em; margin-bottom: 2px; }
+.pipe li.done { color: var(--ink-2); border-color: var(--ink-3); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px); }
+.pipe li.active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.pipe li.stop { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.pipe li .v { position: absolute; right: 8px; top: 6px; font: .72rem var(--f-mono); }
+.cap { min-height: 3.2em; margin: 0 0 10px; color: var(--ink); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctl input[type=range] { flex: 1 1 140px; min-width: 120px; min-height: 44px; accent-color: var(--ink); }
+.ctl .pos { font: .85rem var(--f-mono); color: var(--ink-3); min-width: 6ch; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* charts */
+svg text { fill: var(--ink-2); font: 11px var(--f-mono); }
+svg .ink { stroke: var(--ink); fill: none; }
+svg .fillink { fill: var(--ink); }
+svg .rule { stroke: var(--rule); }
+svg .warn { stroke: var(--warn); fill: none; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; }
+.dot.p { background: var(--ink); }
+.dot.f { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.dot.n { border-style: dotted; border-color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.strip .t { font-family: var(--f-mono); overflow-wrap: anywhere; }
+.bars { display: grid; grid-template-columns: minmax(0, 14ch) 1fr auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.bars .b { height: 14px; background: var(--ink); min-width: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-3); margin-top: 8px; }
+.stub { border: 1px dashed var(--ink-3); padding: 18px; background: var(--panel); }
+@media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<a class="visually-hidden" href="#main">Skip to content</a>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html">How it works</a><a href="examples.html" aria-current="page">Examples</a><a href="evaluation.html">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<main id="main" class="wrap">
+<h1>Examples</h1>
+<p class="lede">Development tasks and the hand-built reference design only. Every task here was used to find and fix problems in the agent, so these runs show how it works and fails, not how well it will do on tasks it has never seen. The held-out evaluation has its own page.</p>
+
+<h2>1. A median filter, first time through</h2>
+<p><code>c9_median3x3</code>, run 1. The task text, in full:</p>
+<pre tabindex="0"><code># Median filter behind the test shell
+
+I want a block for the Nexys A7-100T&#x27;s FPGA that takes a 3 x 3 window of 8-bit pixels and returns the median value of the nine (the fifth smallest), to remove speckle noise from a video stream, and I want to exercise it entirely from the test shell. Nine multipliers or a software sort are out of the question: it has to be pure logic and run at 100 MHz.
+
+- The order of the nine pixels in a window is irrelevant to a median.
+- A window presented to the block at one clock gives its median as a result exactly one clock later (one clock of latency); there is no result on a clock unless a window was presented one clock earlier. A window can be presented on any clock or on consecutive clocks. CPU_RESETN clears the block and the loaded values.
+- The block must close timing at 100 MHz.
+- Over the shell I load up to 8 windows, give a 32-bit pattern that says on which of the next 32 clocks a window is presented (a 1 bit presents the next window, in order), and a &quot;go&quot;. Afterwards I read the medians in order, how many results came out, and a 32-bit record of the clocks on which a result appeared, so that I can check the latency and that there are no extra results. I will compare a couple of hundred windows (random pixels, equal pixels, runs of 0 and 255, single outliers), with gaps.
+- The shell runs at 115200 baud on the USB-UART. The design ID is &quot;MEDN&quot;.
+
+Test hooks: top module `c9_median3x3_top`, ports named as in the board&#x27;s master XDC, and the test shell&#x27;s
+`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time
+constants.</code></pre>
+<p>The agent asked the oracle 5 questions across two interview visits, then built the design. Gate results, copied from the run record:</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody><tr><td>V0</td><td>pass</td></tr><tr><td>V1</td><td>pass</td></tr><tr><td>V2</td><td>pass</td></tr><tr><td>V3</td><td>pass (3 seeds; functional bins 100% 16/16; cover properties 100%; line 100%; toggle 100%; mutation score 93.33%: 14 killed of 15 evaluated, 1 survivor c9_regs_L23 &#x27;-&#x27; to &#x27;+&#x27; on the window-address offset)</td></tr><tr><td>bitstream</td><td>built</td></tr><tr><td>stage_gates_post_route</td><td>all pass</td></tr></tbody></table></div>
+<p>Hidden tests: 4 of 4. After place and route at 100 MHz the setup slack was 0.698 ns, with 1,060 LUT, 1,018 FF, 0 DSP and 0 BRAM; the counts include the test shell. The run took 157 agent turns and 1.85 h. The run stopped at stage 9 as designed: no board was attached. Not a clean sweep: the mutation score was below 100% and one mutant (a changed offset in the window address) survived.</p>
+
+<h2>2. The same task, two outcomes: the interview decides</h2>
+<p><code>c10_dds_sine</code> ran twice with the same agent. The part of the task text that mattered:</p>
+<pre tabindex="0"><code># Sine-wave generator behind the test shell
+
+I want a numerically controlled sine oscillator for the Nexys A7-100T&#x27;s FPGA, to drive a DAC test: a frequency word in, a sampled sine wave out, one sample per clock. I want to exercise it entirely from the test shell.</code></pre>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th class="num">Run</th><th>Outcome</th><th>Hidden tests</th><th>What went wrong</th><th class="num">WNS (ns)</th><th class="num">LUT</th><th class="num">FF</th></tr></thead><tbody><tr><td class="num">1</td><td>escape (own checks passed, hidden failed)</td><td>1 of 3</td><td>harness gap (primary), model error (secondary)</td><td class="num">+3.607</td><td class="num">471</td><td class="num">357</td></tr><tr><td class="num">2</td><td>passed</td><td>3 of 3</td><td>none</td><td class="num">+0.775</td><td class="num">578</td><td class="num">366</td></tr></tbody></table></div>
+<p>Run 1 passed every check the agent ran and still scored 1 of 3 on the hidden tests: it did not settle how the sample is packed into the data register. Run 2 asked, was answered, and passed. This is an escape, and the reason the agent now asks about register layout whenever a task names registers without offsets.</p>
+
+<h2>3. Five runs of one task, each exposing the next problem</h2>
+<p><code>c14_int8_dot_requant</code> was run five times. After each failure a fix was made to the agent (not to the task) and the task was run again. This is how development tasks are used, and why their results are not a score.</p>
+<pre tabindex="0"><code># Quantised-layer arithmetic unit behind the test shell
+
+I want a block that does the arithmetic of one output of a quantised neural-network layer, for the Nexys A7-100T&#x27;s FPGA, and I want to exercise it entirely from the test shell.</code></pre>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th class="num">Run</th><th>Outcome</th><th>Hidden tests</th><th>What went wrong (from the run record)</th></tr></thead><tbody><tr><td class="num">1</td><td>escape (own checks passed, hidden failed)</td><td>0 of 6</td><td>spec ambiguity plus clarify-stage gap (not a model error in the arithmetic)</td></tr><tr><td class="num">2</td><td>escape (own checks passed, hidden failed)</td><td>5 of 6</td><td>spec ambiguity (task text names the pin &#x27;LED0&#x27;; the master-XDC convention names the bus LED[15:0]) plus a weak port-name check; not an arithmetic or register error</td></tr><tr><td class="num">3</td><td>internal stop, hidden tests pass</td><td>6 of 6</td><td>model error (primary) plus a harness gap (the failure summary hides the root cause)</td></tr><tr><td class="num">4</td><td>internal stop, hidden tests pass</td><td>6 of 6</td><td>harness gap (tests-role convention) plus model error</td></tr><tr><td class="num">5</td><td>gate failed, repaired, passed</td><td>6 of 6</td><td>none</td></tr></tbody></table></div>
+<p>Run 5 passed all 6 hidden tests with every gate green; setup slack 0.495 ns, 737 LUT, 753 FF, 12 DSP. Runs 3 and 4 passed the hidden tests on the RTL they left, but stopped on an internal gate: the agent failed its own bar, and the bar was the problem.</p>
+
+<h3>Timing and area of every development run that reached place and route</h3>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Task</th><th class="num">Run</th><th>Hidden tests</th><th class="num">WNS (ns)</th><th class="num">LUT</th><th class="num">FF</th><th class="num">DSP</th><th class="num">BRAM36</th><th class="num">Wall (h)</th></tr></thead><tbody><tr><td>c9_median3x3</td><td class="num">1</td><td>4 of 4</td><td class="num">+0.698</td><td class="num">1060</td><td class="num">1018</td><td class="num">0</td><td class="num">0</td><td class="num">1.85</td></tr><tr><td>c10_dds_sine</td><td class="num">1</td><td>1 of 3</td><td class="num">+3.607</td><td class="num">471</td><td class="num">357</td><td class="num">0</td><td class="num">1.5</td><td class="num">1.26</td></tr><tr><td>c10_dds_sine</td><td class="num">2</td><td>3 of 3</td><td class="num">+0.775</td><td class="num">578</td><td class="num">366</td><td class="num">0</td><td class="num">0</td><td class="num">1.23</td></tr><tr><td>c14_int8_dot_requant</td><td class="num">1</td><td>0 of 6</td><td class="num">+0.849</td><td class="num">1359</td><td class="num">904</td><td class="num">2</td><td class="num">0</td><td class="num">not recorded</td></tr><tr><td>c14_int8_dot_requant</td><td class="num">2</td><td>5 of 6</td><td class="num">+2.146</td><td class="num">1290</td><td class="num">837</td><td class="num">2</td><td class="num">0</td><td class="num">not recorded</td></tr><tr><td>c14_int8_dot_requant</td><td class="num">5</td><td>6 of 6</td><td class="num">+0.495</td><td class="num">737</td><td class="num">753</td><td class="num">12</td><td class="num">0</td><td class="num">1.42</td></tr></tbody></table></div>
+<p class="small muted">Only the three tasks above; the full list of 21 runs is on the results page. Slack is at 100 MHz; counts include the test shell.</p>
+
+<h2>4. On the board: the hand-built reference design</h2>
+<p>Before the agent existed, one design (<code>t1_dimmer_counter</code>: a push-button counter driving 16 LEDs by a dimmer) was written by hand and taken through every step: gates, bitstream, programming and testing on a Nexys A7-100T. This proves the flow the agent drives. It is not agent output.</p>
+<figure><img src="t1_on_nexys_a7.jpg" width="900" height="1200" loading="lazy" alt="The T1 design running on the Nexys A7-100T board" style="max-width:min(100%,380px)"><figcaption>T1 running on the board.</figcaption></figure>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Measure</th><th class="num">Base build</th><th class="num">With logic analyser</th></tr></thead><tbody>
+<tr><td>Setup slack (ns)</td><td class="num">3.911</td><td class="num">3.065</td></tr>
+<tr><td>Hold slack (ns)</td><td class="num">0.106</td><td class="num">0.04</td></tr>
+<tr><td>LUT</td><td class="num">495</td><td class="num">1968</td></tr>
+<tr><td>FF</td><td class="num">488</td><td class="num">2881</td></tr>
+<tr><td>BRAM tiles</td><td class="num">0</td><td class="num">1.5</td></tr>
+<tr><td>Total power, vectorless (W)</td><td class="num">0.133</td><td class="num">0.147</td></tr>
+</tbody></table></div>
+<p>One command programs the board, runs 8 UART tests against the model and checks 4 captures of the on-chip logic analyser cycle by cycle. All 3 runs passed (0 failures), each in about 110.6 s. Below, the capture of LED 0 at three dimmer levels; the number of "on" samples equals the model's in every case.</p>
+<figure>
+<div class="player" id="ila" aria-label="Logic analyser capture replay"></div>
+<figcaption>Logic-analyser capture of LED 0 from the board, 1024 samples per dimmer level, replayed with a cursor. Raw captures are in <code>results/f0b/captures</code>.</figcaption>
+</figure>
+<p>A piece of the design, the push-button debouncer, as written:</p>
+<pre tabindex="0"><code>// debounce.sv: synchronise and debounce one push button.
+// The debounced level changes only after the synchronised input has differed
+// from it for CYCLES consecutive clocks; a shorter difference restarts the
+// count. press pulses for one clock on each 0 -&gt; 1 change of the level.
+
+module debounce #(
+    parameter int CYCLES = 1_000_000          // 10 ms at 100 MHz
+) (
+    input  logic clk,
+    input  logic rst,
+    input  logic btn,                         // asynchronous, active high
+    output logic level,                       // debounced
+    output logic press                        // one-clock pulse on a press
+);
+    localparam int CW = $clog2(CYCLES + 1);
+
+    logic          s;
+    logic [CW-1:0] cnt;
+
+    sync2 #(.WIDTH(1)) u_sync (.clk(clk), .rst(rst), .d(btn), .q(s));
+
+    always_ff @(posedge clk) begin
+        press &lt;= 1&#x27;b0;
+        if (rst) begin
+            level &lt;= 1&#x27;b0;
+            cnt   &lt;= &#x27;0;
+        end else if (s == level) begin
+            cnt &lt;= &#x27;0;
+        end else if (cnt == CW&#x27;(CYCLES - 1)) begin
+            cnt   &lt;= &#x27;0;
+            level &lt;= s;
+            press &lt;= s;
+        end else begin
+            cnt &lt;= cnt + 1&#x27;b1;
+        end
+    end
+endmodule</code></pre>
+<p>4 more small designs (temperature sensor, accelerometer, flash ID, microphone) were also checked on the board, 30 runs in all, 30 passed; their results are in <code>results/board_v2</code>.</p>
+
+<div class="pager"><a href="how.html">&larr; How it works</a><a href="evaluation.html">How it is evaluated &rarr;</a></div>
+</main>
+<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<script type="application/json" data-key="board">{"board_runs":3,"board_v2_designs":4,"board_v2_passed":30,"board_v2_runs":30,"bram":["0","1.5"],"captures":{"08":{"duty":8,"edges":[[0,0],[1,1],[33,0]],"model_on":32,"on":32,"samples":1024},"40":{"duty":64,"edges":[[0,0],[1,1],[257,0]],"model_on":256,"on":256,"samples":1024},"a0":{"duty":160,"edges":[[0,0],[1,1],[641,0]],"model_on":640,"on":640,"samples":1024}},"design":"t1_dimmer_counter","dsp":["0","0"],"ff":["488","2881"],"ila_captures":4,"lut":["495","1968"],"mutants":21,"mutants_killed":21,"mutation_first_run_pct":90.48,"mutation_survivors_first":2,"part":"xc7a100t","power":["0.133","0.147"],"rtl":"// debounce.sv: synchronise and debounce one push button.\n// The debounced level changes only after the synchronised input has differed\n// from it for CYCLES consecutive clocks; a shorter difference restarts the\n// count. press pulses for one clock on each 0 -> 1 change of the level.\n\nmodule debounce #(\n    parameter int CYCLES = 1_000_000          // 10 ms at 100 MHz\n) (\n    input  logic clk,\n    input  logic rst,\n    input  logic btn,                         // asynchronous, active high\n    output logic level,                       // debounced\n    output logic press                        // one-clock pulse on a press\n);\n    localparam int CW = $clog2(CYCLES + 1);\n\n    logic          s;\n    logic [CW-1:0] cnt;\n\n    sync2 #(.WIDTH(1)) u_sync (.clk(clk), .rst(rst), .d(btn), .q(s));\n\n    always_ff @(posedge clk) begin\n        press <= 1'b0;\n        if (rst) begin\n            level <= 1'b0;\n            cnt   <= '0;\n        end else if (s == level) begin\n            cnt <= '0;\n        end else if (cnt == CW'(CYCLES - 1)) begin\n            cnt   <= '0;\n            level <= s;\n            press <= s;\n        end else begin\n            cnt <= cnt + 1'b1;\n        end\n    end\nendmodule","run_totals_s":[114.1,110.6,110.3],"uart_failures":0,"uart_tests":8,"vivado":"2025.2","whs":["0.106","0.04"],"wns":["3.911","3.065"]}</script>
+<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+(function () {
+  "use strict";
+  var D = {};
+  document.querySelectorAll('script[type="application/json"][data-key]').forEach(function (s) {
+    try { D[s.dataset.key] = JSON.parse(s.textContent); } catch (e) { /* data missing: component skips */ }
+  });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* theme toggle: remembered per viewer, optional */
+  var tb = document.getElementById("theme");
+  function curTheme() {
+    var t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  if (tb) {
+    try { var st = localStorage.getItem("fda-theme"); if (st) document.documentElement.dataset.theme = st; } catch (e) {}
+    tb.addEventListener("click", function () {
+      var n = curTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = n;
+      try { localStorage.setItem("fda-theme", n); } catch (e) {}
+      tb.textContent = n === "dark" ? "Light" : "Dark";
+    });
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+  }
+
+  /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
+  function Player(root, n, onFrame, opts) {
+    opts = opts || {};
+    var i = 0, playing = false, timer = null, speed = 1, visible = true, base = opts.interval || 1100;
+    var live = root.querySelector(".cap");
+    var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
+    var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
+    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
+    var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
+    var pos = el("span", { class: "pos" });
+    var sp = el("select", { "aria-label": "Speed" });
+    [0.25, 0.5, 1, 2, 4].forEach(function (s) { var o = el("option", { value: s, text: s + "x" }); if (s === 1) o.selected = true; sp.appendChild(o); });
+    var ctl = el("div", { class: "ctl" }, [play, back, fwd, rst, rng, pos, sp]);
+    root.appendChild(ctl);
+    if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
+    function show() {
+      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      var c = onFrame(i);
+      if (live && c != null) live.textContent = c;
+    }
+    function stop() { playing = false; play.textContent = "Play"; play.setAttribute("aria-label", "Play"); clearTimeout(timer); }
+    function tick() {
+      if (!playing) return;
+      if (!visible) { timer = setTimeout(tick, 400); return; }
+      if (i >= n - 1) { stop(); return; }
+      i++; show(); timer = setTimeout(tick, base / speed);
+    }
+    function go() {
+      if (i >= n - 1) i = 0;
+      playing = true; play.textContent = "Pause"; play.setAttribute("aria-label", "Pause"); show(); timer = setTimeout(tick, base / speed);
+    }
+    play.onclick = function () { playing ? stop() : go(); };
+    back.onclick = function () { stop(); i = Math.max(0, i - 1); show(); };
+    fwd.onclick = function () { stop(); i = Math.min(n - 1, i + 1); show(); };
+    rst.onclick = function () { stop(); i = 0; show(); };
+    rng.oninput = function () { stop(); i = +rng.value; show(); };
+    sp.onchange = function () { speed = +sp.value; };
+    root.addEventListener("keydown", function (e) {
+      if (e.target !== root) return;
+      if (e.key === " ") { e.preventDefault(); play.onclick(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); fwd.onclick(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); back.onclick(); }
+      else if (e.key === "Home") { e.preventDefault(); rst.onclick(); }
+    });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+    show();
+    if (opts.autoplay && !reduce) go();
+    return { goto: function (k) { stop(); i = k; show(); } };
+  }
+
+  /* ---------- stage replay (hero and how-it-works): frames from the committed run record ---------- */
+  var GROUPS = [
+    { id: "clarify", label: "Interview", stages: [0] },
+    { id: "plan", label: "Plan", stages: [1] },
+    { id: "rtl", label: "RTL and gates V0 to V3", stages: [2] },
+    { id: "build", label: "Build", stages: [3, 4, 5] },
+    { id: "post", label: "Post-route gates", stages: [6, 7, 8] },
+    { id: "board", label: "Board", stages: [9] }
+  ];
+  var DETAIL = [
+    "Interview", "Plan", "RTL and V0 to V3", "Constraints", "Synthesis", "Implementation", "Timing closure",
+    "Power closure", "DRC closure", "Board and debug"
+  ];
+  function frameState(R, i) {
+    var s = R.steps[i];
+    return { stage: s.stage_no, step: s, last: i === R.steps.length - 1 };
+  }
+  function mountReplay(root, mode) {
+    var R = D.replay; if (!R) return;
+    var items = mode === "hero" ? GROUPS : DETAIL.map(function (l, k) { return { id: "s" + k, label: l, stages: [k] }; });
+    var ul = el("ul", { class: "pipe", "aria-label": "Stages" });
+    var lis = items.map(function (g, k) {
+      var li = el("li", {}, [el("b", { text: mode === "hero" ? String(k + 1) : String(g.stages[0]) }), document.createTextNode(g.label)]);
+      ul.appendChild(li); return li;
+    });
+    var cap = el("p", { class: "cap", "aria-live": "polite" });
+    root.appendChild(ul); root.appendChild(cap);
+    function frame(i) {
+      var st = frameState(R, i), cur = -1;
+      items.forEach(function (g, k) { if (g.stages.indexOf(st.stage) >= 0) cur = k; });
+      lis.forEach(function (li, k) {
+        li.className = k < cur ? "done" : (k === cur ? (st.last ? "stop" : "active") : "");
+        var old = li.querySelector(".v"); if (old) li.removeChild(old);
+      });
+      var visits = st.step.visits;
+      if (visits > 1) lis[cur].appendChild(el("span", { class: "v", text: st.step.visit + "/" + visits }));
+      return "Stage " + st.stage + ", " + DETAIL[st.stage] + (visits > 1 ? " (visit " + st.step.visit + " of " + visits + ")" : "") + ". " + st.step.fact;
+    }
+    Player(root, R.steps.length, frame, { autoplay: mode === "hero", interval: mode === "hero" ? 1300 : 1500 });
+  }
+
+  /* ---------- k-of-n strip, intervals, bars (shared by development data and eval1.json) ---------- */
+  function strip(root, rows) {
+    var g = el("div", { class: "strip", role: "list" });
+    rows.forEach(function (r) {
+      var dots = el("span", { class: "dots", "aria-hidden": "true" });
+      for (var j = 0; j < r.n; j++) dots.appendChild(el("span", { class: "dot " + (j < r.k ? "p" : "f") }));
+      for (var q = r.n; q < (r.of || r.n); q++) dots.appendChild(el("span", { class: "dot n", title: "not run" }));
+      g.appendChild(el("span", { class: "t", role: "listitem", text: r.task }));
+      g.appendChild(dots);
+      g.appendChild(el("span", { class: "k mono", text: r.k + " of " + r.n }));
+    });
+    root.appendChild(g);
+    root.appendChild(el("div", { class: "legend" }, [
+      el("span", { text: "filled: all hidden tests passed" }), el("span", { text: "hatched: failed" }), el("span", { text: "dotted: not run" })]));
+  }
+  function intervals(root, items) {
+    var W = 560, H = 36 + items.length * 52, L = 14, R = 14;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": items.map(function (x) { return x.label + " " + x.mid + " percent, interval " + x.lo + " to " + x.hi; }).join("; ") });
+    function X(v) { return L + (W - L - R) * v / 100; }
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      s.appendChild(sv("line", { x1: X(v), x2: X(v), y1: 6, y2: H - 20, class: "rule" }));
+      s.appendChild(sv("text", { x: X(v), y: H - 6, "text-anchor": "middle" }, v));
+    });
+    items.forEach(function (it, k) {
+      var y = 36 + k * 52;
+      s.appendChild(sv("text", { x: 0, y: y - 14 }, it.label));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.hi), y1: y, y2: y, class: "ink", "stroke-width": 2, "stroke-dasharray": it.dash ? "5 3" : "none" }));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.lo), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("line", { x1: X(it.hi), x2: X(it.hi), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("circle", { cx: X(it.mid), cy: y, r: 5, class: "fillink" }));
+    });
+    root.appendChild(s);
+    var t = el("div", { class: "tablewrap" });
+    var tb2 = el("table");
+    tb2.appendChild(el("tr", {}, ["Estimate", "Point", "95% interval"].map(function (h) { return el("th", { text: h }); })));
+    items.forEach(function (it) {
+      tb2.appendChild(el("tr", {}, [el("td", { text: it.label }), el("td", { class: "num", text: it.mid + "%" }), el("td", { class: "num", text: it.lo + " to " + it.hi + "%" })]));
+    });
+    t.appendChild(tb2); root.appendChild(t);
+  }
+  function bars(root, obj, total, unit) {
+    var g = el("div", { class: "bars" });
+    var max = Math.max.apply(null, Object.keys(obj).map(function (k) { return obj[k]; }).concat([1]));
+    Object.keys(obj).forEach(function (k) {
+      var b = el("span", { class: "b", "aria-hidden": "true" }); b.style.width = (100 * obj[k] / max) + "%"; b.style.display = "block";
+      g.appendChild(el("span", { text: k.replace(/_/g, " ").replace(/-/g, " ") }));
+      var cell = el("span", {}, [b]); g.appendChild(cell);
+      g.appendChild(el("span", { class: "mono", text: obj[k] + (total ? " of " + total : "") + (unit || "") }));
+    });
+    root.appendChild(g);
+  }
+  var OUTCOME_TEXT = { pass: "passed, no repair needed", caught_and_repaired: "an internal gate failed, the agent repaired it, hidden tests passed",
+    escape: "own checks passed, hidden tests failed (escape)", internal_stop_hidden_pass: "stopped on an internal gate, hidden tests pass on the RTL it left",
+    fail: "failed" };
+
+  function mountDev() {
+    var d = D.dev; if (!d) return;
+    var a = document.getElementById("dev-strip"); if (a) strip(a, d.per_task);
+    var b = document.getElementById("dev-int");
+    if (b) intervals(b, [
+      { label: "pass@1, bootstrap over tasks", mid: d.pass_at_1_tasks_pct, lo: d.bootstrap_tasks_pct[0], hi: d.bootstrap_tasks_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: d.pass_pct_runs, lo: d.wilson_runs_pct[0], hi: d.wilson_runs_pct[1], dash: true }]);
+    var c = document.getElementById("dev-out"); if (c) {
+      var o = {}; Object.keys(d.outcomes).forEach(function (k) { o[OUTCOME_TEXT[k] || k] = d.outcomes[k]; });
+      bars(c, o, d.runs);
+    }
+    var e = document.getElementById("dev-esc"); if (e) bars(e, d.escape_levels, d.escapes);
+  }
+  function mountEval1() {
+    var root = document.getElementById("eval1"); if (!root) return;
+    var E = D.eval1;
+    if (!E) {
+      root.appendChild(el("div", { class: "stub" }, [
+        el("span", { class: "tag run", text: "Running" }),
+        el("p", { text: "Running: results after all 57 runs. Nothing is shown here until the last run is scored; the order of the runs is fixed in advance and does not depend on results." })]));
+      return;
+    }
+    root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
+    var s = el("div"); root.appendChild(s); strip(s, E.per_task.map(function (t) { return { task: t.task, k: t.k, n: t.n, of: 3 }; }));
+    root.appendChild(el("h3", { text: "pass@1 with 95% intervals" }));
+    var i = el("div"); root.appendChild(i);
+    intervals(i, [
+      { label: "pass@1, bootstrap over tasks", mid: E.pass_at_1_pct, lo: E.bootstrap_pct[0], hi: E.bootstrap_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: E.wilson_mid_pct, lo: E.wilson_pct[0], hi: E.wilson_pct[1], dash: true }]);
+    root.appendChild(el("h3", { text: "Escapes by the check level that should have caught them" }));
+    var b = el("div"); root.appendChild(b); bars(b, E.escape_levels, E.escapes);
+  }
+
+  /* ---------- ILA capture player (T1 on the board): LED0 against the sample index ---------- */
+  function mountILA(root) {
+    var B = D.board; if (!B) return;
+    var keys = Object.keys(B.captures).sort(function (a, b) { return B.captures[a].duty - B.captures[b].duty; });
+    var W = 600, H = 120, L = 30, cur = keys[0], svg, cursor, trace, label;
+    var sel = el("div", { class: "ctl", role: "group", "aria-label": "Dimmer level" });
+    var btns = keys.map(function (k) {
+      var b = el("button", { type: "button", "aria-pressed": k === cur ? "true" : "false", text: "duty " + B.captures[k].duty });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", keys[j] === cur ? "true" : "false"); }); draw(); player.goto(0); };
+      return b;
+    });
+    btns.forEach(function (b) { sel.appendChild(b); });
+    root.appendChild(sel);
+    var holder = el("div"); root.appendChild(holder);
+    root.appendChild(el("p", { class: "cap", "aria-live": "polite" }));
+    function X(i) { return L + (W - L - 10) * i / (B.captures[cur].samples - 1); }
+    function draw() {
+      var c = B.captures[cur]; holder.innerHTML = "";
+      svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "ILA capture of LED 0 over " + c.samples + " samples at duty " + c.duty + ": on for " + c.on + " samples" });
+      svg.appendChild(sv("text", { x: 0, y: 34 }, "on"));
+      svg.appendChild(sv("text", { x: 0, y: 94 }, "off"));
+      var d = "", prev = 0;
+      c.edges.forEach(function (e, k) {
+        var y = e[1] ? 30 : 90;
+        d += (k === 0 ? "M" : "L") + X(e[0]) + " " + (k === 0 ? y : (e[1] ? 90 : 30)) + " L" + X(e[0]) + " " + y + " ";
+      });
+      d += "L" + X(c.samples - 1) + " " + (c.edges[c.edges.length - 1][1] ? 30 : 90);
+      svg.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      cursor = sv("line", { x1: X(0), x2: X(0), y1: 10, y2: 108, class: "warn", "stroke-width": 1.5 });
+      svg.appendChild(cursor);
+      svg.appendChild(sv("text", { x: L, y: H - 2 }, "sample 0"));
+      svg.appendChild(sv("text", { x: W - 10, y: H - 2, "text-anchor": "end" }, "sample " + (c.samples - 1)));
+      holder.appendChild(svg);
+    }
+    draw();
+    var marks = 64;
+    function onFrame(k) {
+      var c = B.captures[cur]; var idx = Math.round(k * (c.samples - 1) / 63);
+      cursor.setAttribute("x1", X(idx)); cursor.setAttribute("x2", X(idx));
+      var on = 0, v = 0; c.edges.forEach(function (e) { if (e[0] <= idx) { v = e[1]; } });
+      for (var q = 0; q < c.edges.length; q++) { var e = c.edges[q], nx = q + 1 < c.edges.length ? c.edges[q + 1][0] : c.samples; if (e[1]) on += Math.max(0, Math.min(nx, idx + 1) - e[0]); }
+      return "Sample " + idx + ": LED 0 is " + (v ? "on" : "off") + ". On for " + on + " of the " + (idx + 1) + " samples so far. The whole capture: " + c.on + " of " + c.samples + " samples on, the model says " + c.model_on + ".";
+    }
+    var player = Player(root, marks, onFrame, { interval: 220 });
+  }
+
+  var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
+  var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
+  var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+  mountDev(); mountEval1();
+})();
+</script>
+</body>
+</html>
