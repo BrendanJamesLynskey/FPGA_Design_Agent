@@ -125,7 +125,8 @@ def render_register_map(text: str) -> str:
 
 REG_TOPIC = re.compile(r"(?is)\b(?:registers?|regs?)\b.{0,80}\b(?:map|offsets?|address(?:es|ing)?|layout)\b"
                        r"|\b(?:offsets?|address(?:es|ing)?)\b.{0,80}\bregisters?\b|\bregister\s+map\b")
-REQUEST_REGS = re.compile(r"(?i)\b(?:registers?|regs?|shell|usb[- ]?uart|read(?:ing)?[ -]?back|host\s+(?:interface|bus|port))\b")
+REQUEST_REGS = re.compile(r"(?i)\b(?:registers?|regs?|shell|usb[- ]?uart|uart|read(?:ing)?[ -]?back|host\s+(?:interface|bus|port)"
+                          r"|command\s+set|axi\w*|apb|wishbone|bus|address(?:es)?)\b")      # 07a2 fix 7: any host-visible interface
 REQUEST_OFFSETS = re.compile(r"(?i)\b(?:offsets?)\b|\|\s*(?:0x)?[0-9a-f]+\s*\|")
 
 
@@ -139,6 +140,39 @@ def request_needs_register_map(request: str) -> bool:
     word "offset" or a table row "| 0x.. |" counts as giving them: a hex constant (an LFSR seed, an I2C
     address) is not a register offset (fix 6: three dev specs with such constants were exempted by the old test)."""
     return bool(REQUEST_REGS.search(request or "")) and not REQUEST_OFFSETS.search(request or "")
+
+
+def proposed_register_default(spec: dict[str, Any]) -> str:
+    """The clarify role's own register map as the default of the question: "NAME: offset 0xNN, ACC, reset R" lines
+    (the form ``answer_register_rows`` reads), or a plain sentence when the spec has none."""
+    regs = spec.get("registers") if isinstance(spec.get("registers"), dict) else {}
+    rows = []
+    for r in regs.get("map") or []:
+        if isinstance(r, dict) and r.get("name") is not None and r.get("offset") is not None:
+            off = _offset_int(r["offset"])
+            rows.append(f"{r['name']}: offset {('0x%02X' % off) if off is not None else r['offset']}, "
+                        f"{str(r.get('access', 'RW')).upper()}, reset {r.get('reset', 0)}")
+    return "; ".join(rows) if rows else "no registers beyond the test shell's own window (the design is driven by its ports)"
+
+
+def ensure_register_question(request: str, spec: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    """07a2 fix 7 (1): the harness asks for the register map itself. Whenever the request has a host-visible interface (UART
+    command set, bus, "register", "address") and does not give the map, the spec gets an open question asking for it, unless
+    the clarify role already asked one (open or resolved). Softmax run 2 and c14 tiny CNN: the model left the question out,
+    so the oracle was never asked and the role's own map reached the hidden bench. Returns (spec, added)."""
+    if not request_needs_register_map(request):
+        return spec, False
+    qs = [*(spec.get("open_questions") or []), *(spec.get("resolved_questions") or [])]
+    if any(isinstance(q, dict) and is_register_question(str(q.get("question", ""))) for q in qs):
+        return spec, False
+    spec = dict(spec)
+    spec["open_questions"] = [*(spec.get("open_questions") or []), {
+        "question": "What is the register map: the offset, width, reset value and access (RW, RO, WO) of every register the "
+                    "host reads or writes, and the address layout of the host interface?",
+        "default": proposed_register_default(spec),
+        "reason": "the request names a host-visible interface but gives no register offsets; the harness asks so the map is "
+                  "never invented"}]
+    return spec, True
 
 
 def _offset_int(t: str) -> int | None:

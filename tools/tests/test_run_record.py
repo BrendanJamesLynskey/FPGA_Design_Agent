@@ -114,3 +114,20 @@ def test_committed_records_all_carry_the_new_fields():
         for k in ("internal_pass", "hidden_pass", "outcome", "escape_level", "tool_runs", "split", "agent_commit"):
             assert k in d, f"{path}: {k}"
         assert d["outcome"] in rr.OUTCOMES and d["split"] in ("dev", "held-out", "unknown")
+
+
+def test_hardware_pause_without_a_board_is_pending_not_failed():
+    """07a2 fix 7: batch 2 wrote 'pass' for the post-route summary and a stage-9 pause; that must not read as a failure."""
+    f = rr.derive(rec(gates={**GOOD, "stage_gates_post_route": "pass", "SIGNOFF": "open", "V-HW": "fail (no board)"}))
+    assert f["internal_pass"] is True and f["outcome"] == "pass"
+    f = rr.derive(rec(gates={**GOOD, "stage_gates_post_route": "pending"}))
+    assert f["internal_pass"] is True
+    f = rr.derive(rec(gates={**GOOD, "stage_gates_post_route": "fail (WNS -0.2)"}))
+    assert f["internal_pass"] == "post-route gates failed"
+
+
+def test_spec_level_gap_with_a_passing_internal_verdict_is_a_spec_interpretation_escape():
+    r = rec(score={"pass": False, "tests_passed": 0, "tests_total": 0},
+            failure={"class": "spec/task gap (hidden bench needs a port the public spec does not name)"})
+    f = rr.derive(r)
+    assert f["outcome"] == "escape" and f["escape_level"] == "spec-interpretation"

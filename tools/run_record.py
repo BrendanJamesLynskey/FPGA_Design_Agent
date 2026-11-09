@@ -50,6 +50,18 @@ KNOWN_ESCAPE_LEVELS = {
 }
 
 
+#: Values of the post-route gate summary that count as passed ("pass" is what the batch 2 records say). A hardware-pause
+#: run has no board, so its SIGNOFF and V-HW are "pending", never failed (07a2 fix 7).
+POST_ROUTE_OK = ("all pass", "pass", "pending")
+HW_GATES = ("SIGNOFF", "V-HW")
+
+
+def _hw_pause(rec: dict) -> bool:
+    """True when the run ended at the stage-9 hardware pause (approval awaited, no board attached)."""
+    stop = rec.get("stop") or {}
+    return stop.get("stage") == 9
+
+
 def _is_stopped(rec: dict) -> str | None:
     stop = rec.get("stop") or {}
     stage = stop.get("stage")
@@ -72,8 +84,12 @@ def internal_pass(rec: dict):
         if gates and v and not v.startswith("pass"):
             return f"{lvl} failed"
     post = str(gates.get("stage_gates_post_route", "")).lower()
-    if post and not post.startswith("all pass"):
+    if post and not post.startswith(POST_ROUTE_OK):
         return "post-route gates failed"
+    for k, v in gates.items():                       # 07a2 fix 7: with no board the hardware gates stay open
+        if k.upper().replace("_", "-") in HW_GATES and not str(v).lower().startswith(("pass", "all pass", "pending", "open")):
+            if not _hw_pause(rec):
+                return f"{k} failed"
     return True
 
 
@@ -128,7 +144,7 @@ def escape_level_of(rec: dict, outcome: str):
     if known:
         return known[0]
     cls = str((rec.get("failure") or {}).get("class", "")).lower()
-    if "spec ambiguity" in cls or "clarify-stage" in cls or "spec-interpretation" in cls:
+    if "spec ambiguity" in cls or "spec/task gap" in cls or "spec gap" in cls or "clarify-stage" in cls or "spec-interpretation" in cls:
         return "spec-interpretation"
     return "unclassified"
 
