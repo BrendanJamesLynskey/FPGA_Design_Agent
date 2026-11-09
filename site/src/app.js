@@ -203,8 +203,8 @@
     var E = D.eval1;
     if (!E) {
       root.appendChild(el("div", { class: "stub" }, [
-        el("span", { class: "tag run", text: "Running" }),
-        el("p", { text: "Running: results after all 57 runs. Nothing is shown here until the last run is scored; the order of the runs is fixed in advance and does not depend on results." })]));
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
       return;
     }
     root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));

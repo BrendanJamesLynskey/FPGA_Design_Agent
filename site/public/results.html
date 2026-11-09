@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Results | End-to-end FPGA Agent</title>
-<meta name="description" content="Development results, and the held-out results once all 57 runs are scored.">
+<meta name="description" content="Development results; held-out results come with the baseline evaluation.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
@@ -141,7 +141,7 @@ svg .warn { stroke: var(--warn); fill: none; }
 <h1>Results</h1>
 
 <h2>Held-out evaluation (<code>eval-1</code>)</h2>
-<p>The agent at tag <code>eval-1</code> on 19 tasks it never saw during development, 3 runs each. The method is on the <a href="evaluation.html">evaluation page</a>.</p>
+<p>The agent at tag <code>eval-1</code> was to be measured on 19 tasks it never saw during development, 3 runs each. That evaluation was <strong>stopped before any result was analysed</strong>: a tool update partway through blocked some of its runs, and the owner chose to grow the benchmark (more tasks, boards and application areas) before measuring. The stop is recorded in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/eval/eval1_preregistration.md">the pre-registration</a>. A baseline evaluation on the larger benchmark comes later, with a new tag and a new pre-registration. The method is on the <a href="evaluation.html">evaluation page</a>.</p>
 <div id="eval1"></div>
 
 <h2>Development tasks</h2>
@@ -165,7 +165,7 @@ svg .warn { stroke: var(--warn); fill: none; }
 
 <h3>Escapes by the check that should have caught them</h3>
 <div id="dev-esc"></div>
-<p class="small muted">Each escape was a spec the agent read differently from the hidden tests (a pin named differently, an unasked register layout). The changes made in response went to the interview, the agent's own checks and, where a task's text was found to leave a behaviour unstated, to that task (dated, before eval-1 was frozen). Whether they help is measured by eval-1, not claimed here.</p>
+<p class="small muted">Each escape was a spec the agent read differently from the hidden tests (a pin named differently, an unasked register layout). The changes made in response went to the interview, the agent's own checks and, where a task's text was found to leave a behaviour unstated, to that task (dated, before eval-1 was frozen). Whether they help will be measured by the baseline evaluation, not claimed here.</p>
 
 <h3>Every run</h3>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Task</th><th class="num">Run</th><th>Outcome</th><th>Hidden tests</th><th class="num">WNS (ns)</th><th class="num">LUT</th></tr></thead><tbody><tr><td>c10_dds_sine</td><td class="num">1</td><td>escape (own checks passed, hidden failed)</td><td>1 of 3</td><td class="num">+3.607</td><td class="num">471</td></tr><tr><td>c10_dds_sine</td><td class="num">2</td><td>passed</td><td>3 of 3</td><td class="num">+0.775</td><td class="num">578</td></tr><tr><td>c11_nco_mixer</td><td class="num">1</td><td>internal stop, hidden tests pass</td><td>4 of 4</td><td class="num"></td><td class="num"></td></tr><tr><td>c11_nco_mixer</td><td class="num">2</td><td>passed</td><td>4 of 4</td><td class="num">+0.628</td><td class="num">933</td></tr><tr><td>c12_adsr_envelope</td><td class="num">1</td><td>gate failed, repaired, passed</td><td>4 of 4</td><td class="num">+0.627</td><td class="num">508</td></tr><tr><td>c12_nexys_pwm_audio</td><td class="num">1</td><td>escape (own checks passed, hidden failed)</td><td>0 of 0</td><td class="num">+0.545</td><td class="num">387</td></tr><tr><td>c12_nexys_pwm_audio</td><td class="num">2</td><td>escape (own checks passed, hidden failed)</td><td>1 of 2</td><td class="num">+3.825</td><td class="num">388</td></tr><tr><td>c14_int8_dot_requant</td><td class="num">1</td><td>escape (own checks passed, hidden failed)</td><td>0 of 6</td><td class="num">+0.849</td><td class="num">1359</td></tr><tr><td>c14_int8_dot_requant</td><td class="num">2</td><td>escape (own checks passed, hidden failed)</td><td>5 of 6</td><td class="num">+2.146</td><td class="num">1290</td></tr><tr><td>c14_int8_dot_requant</td><td class="num">3</td><td>internal stop, hidden tests pass</td><td>6 of 6</td><td class="num"></td><td class="num"></td></tr><tr><td>c14_int8_dot_requant</td><td class="num">4</td><td>internal stop, hidden tests pass</td><td>6 of 6</td><td class="num"></td><td class="num"></td></tr><tr><td>c14_int8_dot_requant</td><td class="num">5</td><td>gate failed, repaired, passed</td><td>6 of 6</td><td class="num">+0.495</td><td class="num">737</td></tr><tr><td>c14_nexys_tiny_cnn</td><td class="num">1</td><td>failed</td><td>0 of 5</td><td class="num"></td><td class="num"></td></tr><tr><td>c14_nexys_tiny_cnn</td><td class="num">2</td><td>escape (own checks passed, hidden failed)</td><td>2 of 5</td><td class="num">+1.993</td><td class="num">1108</td></tr><tr><td>c14_systolic_matmul</td><td class="num">1</td><td>gate failed, repaired, passed</td><td>5 of 5</td><td class="num">+0.327</td><td class="num">2324</td></tr><tr><td>c15_pq_search</td><td class="num">1</td><td>passed</td><td>5 of 5</td><td class="num">+2.621</td><td class="num">1440</td></tr><tr><td>c15_softmax_unit</td><td class="num">1</td><td>gate failed, repaired, passed</td><td>5 of 5</td><td class="num">+0.521</td><td class="num">1788</td></tr><tr><td>c15_softmax_unit</td><td class="num">2</td><td>failed</td><td>0 of 5</td><td class="num"></td><td class="num"></td></tr><tr><td>c15_softmax_unit</td><td class="num">3</td><td>gate failed, repaired, passed</td><td>5 of 5</td><td class="num">+2.749</td><td class="num">752</td></tr><tr><td>c16_montgomery_mult</td><td class="num">1</td><td>passed</td><td>5 of 5</td><td class="num">+3.386</td><td class="num">778</td></tr><tr><td>c9_median3x3</td><td class="num">1</td><td>passed</td><td>4 of 4</td><td class="num">+0.698</td><td class="num">1060</td></tr></tbody></table></div>
@@ -380,8 +380,8 @@ svg .warn { stroke: var(--warn); fill: none; }
     var E = D.eval1;
     if (!E) {
       root.appendChild(el("div", { class: "stub" }, [
-        el("span", { class: "tag run", text: "Running" }),
-        el("p", { text: "Running: results after all 57 runs. Nothing is shown here until the last run is scored; the order of the runs is fixed in advance and does not depend on results." })]));
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
       return;
     }
     root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));

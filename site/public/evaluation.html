@@ -139,7 +139,7 @@ svg .warn { stroke: var(--warn); fill: none; }
 <header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html">How it works</a><a href="examples.html">Examples</a><a href="evaluation.html" aria-current="page">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>How it is evaluated</h1>
-<p class="lede">A held-out evaluation, written down and committed before any scored run. The agent at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> is frozen while it runs. The full text is <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/eval-1/docs/eval/eval1_preregistration.md">the pre-registration</a>.</p>
+<p class="lede">A held-out evaluation, written down and committed before any scored run. The agent at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> is frozen while it runs. The full text is <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/eval-1/docs/eval/eval1_preregistration.md">the pre-registration</a>. <strong>eval-1 was stopped before analysis</strong> (<a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/eval/eval1_preregistration.md">the dated note</a>); the next evaluation, the baseline, uses the same method on a larger benchmark.</p>
 
 <h2>The idea</h2>
 <p>Tasks used to improve an agent cannot also measure it. So 19 tasks were set aside by a fixed random seed before any agent run, and the agent never sees them: not their text, not their tests, not their reference designs. Everything on the results page labelled "development" comes from the other tasks.</p>
@@ -382,8 +382,8 @@ svg .warn { stroke: var(--warn); fill: none; }
     var E = D.eval1;
     if (!E) {
       root.appendChild(el("div", { class: "stub" }, [
-        el("span", { class: "tag run", text: "Running" }),
-        el("p", { text: "Running: results after all 57 runs. Nothing is shown here until the last run is scored; the order of the runs is fixed in advance and does not depend on results." })]));
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
       return;
     }
     root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
