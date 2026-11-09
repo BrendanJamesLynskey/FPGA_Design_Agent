@@ -11,5 +11,5 @@ The Nexys A7-100T has a mono audio output driven by a single pin (`AUD_PWM`) tha
 - Over the shell I write the sample, write the gain, and read `sample_out` back. I will exercise it in simulation (reset, default gain, writes of 65535, 4000, 8192, 8193, a reset after a write; sample values of 0, +32767, -32768 and others; each held for several periods) and compare `sample_out`, the number of clocks the pin is pulled low per period (measured on the `AUD_PWM` pin), and `AUD_SD`.
 - The shell runs at 115200 baud on the USB-UART. The design ID is "PWMA".
 
-Test hooks: top module `c12_nexys_pwm_audio_top`, ports named as in the board's master XDC (`AUD_PWM`, `AUD_SD`, the USB-UART pins, `CLK100MHZ`, `CPU_RESETN`), and the test shell's
+Test hooks: top module `c12_nexys_pwm_audio_top`, ports named as in the board's master XDC (`AUD_PWM`, `AUD_SD`, the USB-UART pins, `CLK100MHZ`, `CPU_RESETN`, and the 16-bit `LED` output, which the block leaves off), and the test shell's
 `CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time constants.

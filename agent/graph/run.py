@@ -36,7 +36,7 @@ from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
 from agent.graph.contract import MODEL_CONTRACT, contract_argv, parse_result
-from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, merge_summaries,
+from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_register_question, merge_summaries,
                                    register_map_errors)
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
@@ -211,6 +211,54 @@ def repair_note(role: str, reasons: list[str]) -> str:
             f"problems that belong to the {role} role:\n" + "\n".join(f"- {r[:2200]}" for r in reasons)
             + "\nMake the smallest change that fixes them. Do not rewrite or restructure what already works; the other "
               "artefacts are frozen and nobody else rewrites them this visit.")
+
+
+SELF_CHECK_PASSES = 2          # 07a2 fix 7: repair passes the tests role gets inside one turn before it hands over
+
+
+def selfcheck_tests_role(rt: Runtime, repair_fn: Callable[[list[str]], Any], passes: int = SELF_CHECK_PASSES) -> list[str]:
+    """07a2 fix 7 (2): run the V0/V1 (and V2/V3 convention) checks of the gate code, no simulation, on the tests role's output
+    and let the role repair what they find before the visit goes on, so convention misses (proof methods, the "random" test
+    name, planned cover properties and bins) no longer use stage-2 visits. Every pass is recorded in
+    ``build/verif/selfcheck.jsonl``. Returns the problems left (empty: clean)."""
+    from flow.verif_gates import static_check
+    log = rt.design / "build" / "verif" / "selfcheck.jsonl"
+    left: list[str] = []
+    for i in range(passes + 1):
+        try:
+            left = static_check(rt.design, rt.cfg.verif_level)
+        except Exception as e:                                   # a self-check must never stop the run
+            left = []
+            problems_note = f"self-check not run: {type(e).__name__}: {e}"
+            log.parent.mkdir(parents=True, exist_ok=True)
+            with log.open("a") as f:
+                f.write(json.dumps({"visit": rt.visit, "pass": i, "error": problems_note}) + "\n")
+            return left
+        log.parent.mkdir(parents=True, exist_ok=True)
+        with log.open("a") as f:
+            f.write(json.dumps({"visit": rt.visit, "pass": i, "problems": left}) + "\n")
+        if not left or i == passes:
+            return left
+        repair_fn(left)
+    return left
+
+
+def surviving_mutants_note(design: Path, limit: int = 30) -> str:
+    """07a2 fix 7 (3): the surviving (and timed-out) mutants of the last mutation run, as file, line and change, for the tests
+    role's first repair visit, whatever else failed (the gate text shows five and only when V3 is the first failure). Empty
+    when there is no run or no survivor."""
+    try:
+        mut = json.loads((design / "build" / "verif" / "mutation.json").read_text())
+    except (OSError, ValueError):
+        return ""
+    text = [*(mut.get("survivor_text") or []), *(("timed out, counts as not killed: " + t) for t in mut.get("timed_out_text") or [])]
+    if not text:
+        return ""
+    return ("\n\nSURVIVING MUTANTS of the last mutation run (the design was changed as follows and your tests still passed; "
+            f"score {mut.get('score_pct')}%, {mut.get('killed')} of {mut.get('evaluated')} killed). Tighten the checks so a test "
+            "fails for each change (compare more outputs, drive the stimulus that exercises the changed line):\n"
+            + "\n".join(f"- {t}" for t in text[:limit]) + (f"\n(+{len(text) - limit} more in build/verif/mutation.json)" if len(text) > limit else ""))
+
 
 
 CONVENTIONS = """
@@ -761,8 +809,12 @@ def node_work(state: State) -> dict:
                 if role == "model":
                     run_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), role_allowed("model", 2), repair)
                 elif role == "tests":
-                    run_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else FRESH_TESTS)
+                    mut = surviving_mutants_note(rt.design) if repair else ""        # 07a2 fix 7 (3)
+                    run_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else FRESH_TESTS) + mut
                                  + tests_checklist(rt, 2, repair) + prompt_note("tests") + conv_tests, role_allowed("tests", 2), repair)
+                    selfcheck_tests_role(rt, lambda extra: run_role(            # 07a2 fix 7 (2): convention misses end here
+                        rt, "tests", PROMPTS["tests"].format(**fmt) + repair_note("tests", extra) + mut
+                        + tests_checklist(rt, 2, True) + conv_tests, role_allowed("tests", 2), True))
                 else:
                     own = "; ".join(r[:1500] for r in reasons) if repair else (
                         "; ".join(state.get("fails") or []) or "none")
@@ -1010,6 +1062,7 @@ def node_gate(state: State) -> dict:
             detail.append("[spec.yaml] " + "; ".join(errs))
         else:
             req = (rt.design / "spec.md").read_text() if (rt.design / "spec.md").is_file() else ""
+            spec, _asked = ensure_register_question(req, spec)       # 07a2 fix 7: the harness asks for the register map itself
             errs = register_map_errors(req, spec)           # 07a2 fix 1: ask for the register map before the interview
             if errs:
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs

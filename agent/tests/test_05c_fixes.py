@@ -74,7 +74,9 @@ def test_valid_spec_signs_off(rt):
     spec["open_questions"] = []
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec))
     out = gr.node_gate({"run_id": rt.run_id, "stage": 0})
-    assert out["fails"] and "register map" in out["fails"][0]
+    # 07a2 fix 7: a role that left the question out no longer fails the gate; the harness adds it and the interview asks it
+    assert out["fails"] == []
+    assert any("register map" in q["question"] for q in (yaml.safe_load((rt.design / "spec.yaml").read_text()) or {}).get("resolved_questions", []))
 
 
 @pytest.mark.parametrize("missing", ["ports", "clocks", "reset", "registers", "timing", "name", "top"])

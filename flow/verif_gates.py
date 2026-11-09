@@ -740,3 +740,43 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+# ---- the tests role's self-check (07a2 fix 7) --------------------------------------------------------------
+def static_check(design: Path, level: str = "V3") -> list[str]:
+    """The convention checks of V0/V1 (the gate code itself, no simulation) plus the V2/V3 conventions that can be read from
+    the files: a bench test with "random" in its name, planned functional bins and planned cover properties. Returns one
+    plain-words line per problem (empty list: the tests role may hand over). The harness runs it inside the tests role's turn
+    so a convention miss is repaired there and does not cost a stage-2 visit (softmax run 2, c11, tiny CNN)."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as t:
+        tmp = Path(t)
+        rep = evaluate(design, tmp / "runs", [], tmp / "formal", None, None)
+    out: list[str] = []
+    for st in ("V0", "V1"):
+        for name, c in ((rep["stages"].get(st) or {}).get("checks") or {}).items():
+            if c.get("pass"):
+                continue
+            val = c.get("value")
+            if isinstance(val, list):
+                val = f"[{len(val)}] " + ", ".join(str(x) for x in val[:40])
+            out.append(f"{st} {name}: {c.get('why') or str(val)[:800]}")
+    if out or (level not in ("V2", "V3")):
+        return out
+    plan_path = design / "verif" / "testplan.yaml"
+    try:
+        plan, _spec = load_inputs(design, plan_path)
+        names = bench_tests(plan_file(design, plan["bench"]["dir"]), plan["bench"]["modules"])
+    except (PlanError, OSError, KeyError):
+        return out
+    if not any("random" in n.lower() for n in names):
+        out.append("V2 constrained_random_test_ran: no bench test has 'random' in its name: name the constrained-random test so "
+                   "(for example test_random_traffic), list it in a requirement's `tests:` and run it")
+    if level == "V3":
+        reqs = plan["requirements"]
+        if not {b for r in reqs for b in r.get("bins", [])}:
+            out.append("V3 functional_bins_pct: no functional bins planned: " + HOW_FUNC_COV)
+        if not {c for r in reqs for c in r.get("cover_props", [])}:
+            out.append("V3 cover_properties_pct: no cover properties planned: name them in `cover_props:` of the requirements "
+                       "(C_*, declared with V_COVER in verif/checkers, and reached by a test)")
+    return out

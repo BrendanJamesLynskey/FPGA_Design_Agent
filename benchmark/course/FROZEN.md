@@ -1,4 +1,4 @@
-# Benchmark course tier: course v1 frozen 2026-11-06, course v1.1 frozen 2026-11-06, course v1.2 frozen 2026-11-07, course v1.3 frozen 2026-11-08 (see the end)
+# Benchmark course tier: course v1 frozen 2026-11-06, course v1.1 frozen 2026-11-06, course v1.2 frozen 2026-11-07, course v1.3 frozen 2026-11-08, course v1.3.1 2026-11-09 (see the end)
 
 Written by brief 07a1 before any agent run on these tasks. The tier ports the course projects of Parts 13-16 to the benchmark v1 layout; v1 itself (`benchmark/tasks`, `pool`, `lib`, the scoring tools) is unchanged.
 Nothing in `benchmark/course/tasks`, `benchmark/lib` or the scoring tools may change after this point without a new version and a new freeze; a change found necessary is recorded here.
@@ -76,3 +76,7 @@ Four development references are rewritten so that Vivado can build them. No spec
 | `c9_nexys_vga_720p` | BTNC, SW and MMCM LOCKED pass through two-flop synchronisers (`cdc_no_critical` failed) |
 
 Mutants whose search text was in rewritten code were re-expressed against the new code (`mutants.yaml` of blob tracker and Harris); each is killed. The reference Vivado numbers are in `results/REFERENCE_BUILDS.md`. The manifest digests of these four tasks changed; every other unit is unchanged.
+
+## Course v1.3.1 (07a2 fix 7, 2026-11-09)
+
+One development task text changed, found by `c12_nexys_pwm_audio` in 07a2 batch 2: its hidden bench connects the 16-bit `LED` output, which `spec.md` never named, so the agent's design (every gate green) failed to elaborate against the bench (0/0). `spec.md` of `c12_nexys_pwm_audio` now lists `LED` in the test-hooks port list ("the 16-bit `LED` output, which the block leaves off"). No hidden file, model, mutant, split or other task changed; the reference passes (2/2) and all 8 mutants are killed (`check_task.py`, Icarus). Only this task's digest in `MANIFEST.json` changed (public manifest edited for this unit; the private `MANIFEST_full.json` copy of the unit needs the same regeneration with `freeze.py make --private`). The C14 tiny-CNN gap (`UART_TXD_IN`) is covered by the agent's FDA-CON-9 check (#67), not by a task edit. The earlier c12 batch 2 run is a record against v1.3 and is kept as such.
