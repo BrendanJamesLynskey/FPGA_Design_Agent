@@ -131,6 +131,9 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0) -> tuple[dict[str, list[s
     if mismatch_test and repeat >= 2 and "model" not in owners:
         owners["model"] = [f"[independent check] your model disagreed with an independent check in test {mismatch_test}. "
                            f"Re-read spec.yaml for the behaviour that test covers and check your model against it."]
+    stt = ev.get("spec_test") or {}
+    if stt.get("blocks") and not owners:             # 08f: the independent spec-only bench failed and triage blamed the design
+        add("rtl", str(stt.get("evidence") or "[spec test] the independent bench failed")[:1800], str(stt.get("sig") or "spectest"))
     if not owners:
         owners["rtl"] = ["[gates] " + " ".join(ev.get("other_fails") or ["a gate failed"])[:1500]
                          + (("\n[build output]\n" + ev["build_output"][-1800:]) if ev.get("build_output") else "")]

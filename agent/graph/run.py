@@ -101,6 +101,10 @@ class Config:
     data_dir: Path | None = None    # 07a2-prep: the task's data/ files (weights, images ...), copied to <design>/data (read-only)
     oracle: str = "openrouter"      # 07a2-prep: where the interview oracle runs: openrouter (--model) | claude_code (the Max plan)
     oracle_cc_model: str = "claude-haiku-5-5"
+    spec_tests: bool = False        # 08f (eval-2): the independent spec-only bench gate after V2/V3 (agent.graph.spectest); off = eval-1 behaviour
+    spectest_model: str = "claude-sonnet-5-5"       # the spec-test role and its triage step (own Claude Code calls, not a role of the map)
+    spectest_effort: str = "medium"
+    spectest_max_loops: int = 2     # design_wrong round trips per run before the result is recorded as unresolved
 
     def role_models(self, stage: str | None = None) -> dict:
         """role -> {harness, model, effort}, with the ``role@stage`` overrides of ``stage`` applied. The interview
@@ -125,6 +129,8 @@ class Runtime:
     client_for: Callable[[str], Callable] | None = None     # OpenRouter client for a deepagents role on another model
     visit: int = 0                                          # the current stage's visit number (for the turn trace)
     budget_notes: list = field(default_factory=list)        # roles whose turn budget ended this visit (05g)
+    spectest_llm: Callable[[str, str], str] | None = None   # 08f: the spec-test role's model call (None: a Claude Code call per cfg)
+    spectest_triage_llm: Callable[[str, str], str] | None = None
 
 
 _RT: dict[str, Runtime] = {}
@@ -1031,6 +1037,15 @@ def simulate_gate(session, d=lambda name, r: r) -> dict:
             "text": str(sr.get("log_tail") or sr.get("output", ""))[-3000:]}
 
 
+def spec_test_gate(rt: Runtime) -> dict:
+    """08f: run the independent spec-only bench gate (agent.graph.spectest) for the design as it stands now."""
+    from agent.graph import spectest
+    log = rt.run_dir / "claude_code_calls.jsonl"
+    role = rt.spectest_llm or spectest.cc_llm(rt.cfg.spectest_model, rt.cfg.spectest_effort, log, "spectest")
+    tri = rt.spectest_triage_llm or spectest.cc_llm(rt.cfg.spectest_model, "low", log, "spectest_triage")
+    return spectest.gate(rt.design, rt.cfg.board, rt.session.runner, role, tri, max_loops=rt.cfg.spectest_max_loops)
+
+
 def node_gate(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     if state.get("stop"):
@@ -1107,7 +1122,14 @@ def node_gate(state: State) -> dict:
         ev["standards_fails"] = standards_stage(ev["standards"], "rtl")[1]
         if ev["standards_fails"]:
             detail.append("[standards] " + "\n".join(ev["standards_fails"])[:1800])
-        if ev["lint"]["ok"] and ev["simulate"]["ok"]:          # no Vivado time on a design that fails its tests
+        spec_blocks = False
+        if (rt.cfg.spec_tests and ev["lint"]["ok"] and ev["simulate"]["ok"] and not ev["standards_fails"]
+                and (ev["verif"].get("reached") or "") >= rt.cfg.verif_level):
+            ev["spec_test"] = spec_test_gate(rt)                   # 08f: V2/V3 passed, now the independent spec-only bench
+            spec_blocks = ev["spec_test"]["blocks"]
+            if spec_blocks:
+                detail.append(ev["spec_test"]["evidence"][:3000])
+        if ev["lint"]["ok"] and ev["simulate"]["ok"] and not spec_blocks:          # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n in (3, 4):
         ev["gates_base"] = _build(rt, "synth")["gates"]
@@ -1140,6 +1162,8 @@ def node_gate(state: State) -> dict:
             ok, fails = False, ["hardware: awaiting approval before programming"]
     else:
         ok, fails = exit_check(st, ev)
+    if n == 2 and ok and (ev.get("spec_test") or {}).get("blocks"):      # 08f: the independent bench failed and triage blamed the design
+        ok, fails = False, ["spec test: an independent bench written from the request alone fails against the design"]
     if n == 2:                                   # 05c2 fix 1: the roles that own this visit's failures, and the repeat count
         if ok:
             out.update(owners={}, sig="", repeat=0)
@@ -1499,4 +1523,5 @@ def summary(rt: Runtime, state: dict) -> dict:
             "questions": (state.get("interview") or {}), "stop": state.get("stop"),
             "gates_last": {h["stage"]: h["passed"] for h in hist},
             "approvals": [{"n": h["n"], **h["approval"]} for h in hist],
-            "bringup": ((state.get("evidence") or {}).get("bringup") or {}).get("pass")}
+            "bringup": ((state.get("evidence") or {}).get("bringup") or {}).get("pass"),
+            **({"spec_test": __import__("agent.graph.spectest", fromlist=["x"]).record(rt.design)} if rt.cfg.spec_tests else {})}

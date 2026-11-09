@@ -13,6 +13,9 @@ measurable and writes them next to the fields the executor recorded by hand:
   tokens, plan_cost_estimate_usd, wall_h_total   from the run logs when they exist, else "unknown"
   split                dev | held-out
   agent_commit         the agent commit the run used, else "unknown"
+  spec_test            08f (eval-2 only): the independent spec-only bench gate of the run: fired, passed, caught_bug, bench_repaired,
+                       outcome (pass | design_wrong | unresolved | error), the verdict and bench counters. Absent for a run
+                       that did not use --spec-tests.
 
 Outcome rules (internal = the agent's own gates, hidden = the held-out-style bench run by run_task.py):
   internal pass, hidden pass, no gate failure before the pass   -> pass
@@ -200,6 +203,27 @@ def run_stats(run_dir: Path | None) -> dict:
     return out
 
 
+def spec_test_of(run_dir: Path | None):
+    """08f: the run's spec-test record (``<design>/build/spectest/state.json``, read as a plain file: no agent import), or None
+    when the run did not use the gate. A run started with --spec-tests whose gate never ran (no state file) reads fired False."""
+    if run_dir is None or not run_dir.is_dir():
+        return None
+    for f in sorted(run_dir.glob("*/build/spectest/state.json")):
+        try:
+            st = json.loads(f.read_text())
+        except ValueError:
+            continue
+        return {"fired": bool(st.get("fired")), "passed": st.get("passed"), "outcome": st.get("outcome"),
+                "caught_bug": bool(st.get("caught_bug")), "bench_repaired": bool(st.get("bench_repaired")),
+                "design_wrong_verdicts": st.get("design_wrong", 0), "bench_wrong_verdicts": st.get("bench_wrong", 0),
+                "bench_writes": st.get("bench_writes", 0), "bench_runs": st.get("runs", 0)}
+    try:
+        cfg = json.loads((run_dir / "config.json").read_text())
+    except (OSError, ValueError):
+        return None
+    return {"fired": False} if str(cfg.get("spec_tests")) == "True" else None
+
+
 def find_run_dir(run_id: str, roots) -> Path | None:
     for root in roots:
         p = Path(root) / run_id
@@ -225,6 +249,9 @@ def derive(rec: dict, run_dir: Path | None = None) -> dict:
         "outcome": outcome,
         "escape_level": escape_level_of(rec, outcome),
     }
+    st = spec_test_of(run_dir)
+    if st is not None:
+        fields["spec_test"] = st
     stats = run_stats(run_dir)
     fields["tool_runs"] = stats["tool_runs"]
     fields["tokens"] = stats["tokens"]

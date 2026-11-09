@@ -165,6 +165,39 @@ lists each survivor in words (file, line, the change); `gates(kind=verif)` repea
 reason. The tool takes the machine's heavy-job lock (`$FDA_HEAVY_LOCK`) under a memory cap, and answers `busy, retry`
 when it is held. 
 
+## Independent spec-only tests (brief 08f, `eval-2`)
+
+Every escape so far shares one cause: the agent's tests are written in the same context as the design, so they repeat its
+misreading (c10 DDS run 1, tiny CNN: the model, the RTL and the bench agreed, and every internal gate passed). With
+`--spec-tests` (off by default; `eval-1` behaviour is unchanged) a second reader is added after V2/V3
+(`agent/graph/spectest.py`):
+
+1. **Spec-test role**, one headless Claude Code call of its own (Sonnet, no tools, no design directory). It is given only
+   `spec.md`, the interview (`resolved_questions` of `spec.yaml`; an answer the requester did not give is labelled NOT
+   CONFIRMED and must not be tested), the board pack (`board.yaml`, master-XDC port names), the task's `data/` files and, for a
+   shell design, the shell protocol and UART bus model. It never sees the RTL, `model.py`, the agent's tests or the rest of
+   `spec.yaml`. It returns `spectest/spec_ref.py` (its own model) and `spectest/spec_bench.py` (a cocotb bench).
+2. **Gate.** When V2/V3 pass, the harness writes the pytest entry itself and runs the bench against the RTL (Icarus, results
+   from `results.xml`). A pass is recorded. A failure goes to a **triage** call that sees the spec, the interview and both benches
+   (never the RTL) and answers `design_wrong` (the failing check goes to the RTL role as a `[spec test]` repair; Vivado is
+   skipped that visit) or `bench_wrong` (the spec-test role repairs its bench once, then the bench runs again; bench_wrong a
+   second time is `unresolved`). An unreadable verdict counts as bench_wrong: a design is never failed on a guess.
+   `--spectest-max-loops` (default 2) limits design_wrong round trips per run; past it the result is `unresolved` and does not
+   block. Any infrastructure fault is `error` and does not block.
+3. **Record.** `build/spectest/state.json` (fired, passed, caught_bug, bench_repaired, verdict counters), copied into the run
+   summary and into the course run record by `tools/run_record.py` as `spec_test`.
+4. **Unchanged paths.** `agent/tests/test_08f_golden_requests.py` compares hashes of every other request path (prompts,
+   conventions, checklists, per-role plans, Claude Code argv and MCP arguments, oracle prompt, role map, tool registry) with the
+   values taken at the `eval-1` tag.
+
+**Offline replay** (`tools/spectest_replay.py`, results in [results/08f](../results/08f/)): the role run against saved final
+designs, once each, no RTL repair. Of the two escapes the brief names, it caught one: the tiny CNN (the bench decoded the weights
+as signed bytes and the design answered `B` for pictures 0 and 7). The c10 design had not been kept, so it was rebuilt from the
+reference RTL with the DATA word packed as two sign-extended halves; the role's bench decoded `[11:0]`/`[27:16]` only and
+passed it, because the register map the requester gave does not say that the other bits read 0 (the hidden bench asserts it).
+No correct design failed (0 of 4). Of five escapes in all, one was caught. The bench repair fired twice, both for the role's own
+mistakes (a PTR count, a wrong port name). Full table: `reports/08f_eval2_build_report.md`.
+
 ## Limits
 
 - An assertion that never fires is not evidence it works: the cover properties show the antecedents are reachable

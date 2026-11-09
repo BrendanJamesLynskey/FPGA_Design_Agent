@@ -1,0 +1,73 @@
+{
+ "label": "c10_run1_reconstructed",
+ "run_dir": "c10r1",
+ "gate": {
+  "verdict": "pass",
+  "blocks": false,
+  "evidence": "",
+  "sig": "pass"
+ },
+ "state": {
+  "enabled": true,
+  "fired": true,
+  "runs": 2,
+  "outcome": "pass",
+  "passed": true,
+  "caught_bug": false,
+  "bench_repaired": true,
+  "design_wrong": 0,
+  "bench_wrong": 1,
+  "bench_writes": 2,
+  "passed_hash": "0250a8a36e9ad495"
+ },
+ "history": [
+  {
+   "t": 1794241845,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1794241866,
+   "step": "run",
+   "rtl": "0250a8a36e9ad495",
+   "ok": false,
+   "failing": [
+    "full_recording_matches_model"
+   ],
+   "built": true
+  },
+  {
+   "t": 1794241878,
+   "step": "triage",
+   "verdict": "bench_wrong",
+   "reason": "The request says each DATA read advances PTR, and PTR starts at 0 after GO. When Bench B reads PTR at m == 2, only three DATA reads (m = 0, 1, 2) have happened, so PTR = 3 is correct. Bench B miscounted the reads and expected 4, which is an assertion the request does not support."
+  },
+  {
+   "t": 1794241897,
+   "step": "write",
+   "files": [
+    "spectest/spec_bench.py",
+    "spectest/spec_ref.py"
+   ],
+   "problems": []
+  },
+  {
+   "t": 1794242019,
+   "step": "run",
+   "rtl": "0250a8a36e9ad495",
+   "ok": true,
+   "failing": [],
+   "built": true
+  }
+ ],
+ "first_run_ok": false,
+ "first_run_failing": [
+  "full_recording_matches_model"
+ ],
+ "first_triage": "bench_wrong",
+ "first_triage_reason": "The request says each DATA read advances PTR, and PTR starts at 0 after GO. When Bench B reads PTR at m == 2, only three DATA reads (m = 0, 1, 2) have happened, so PTR = 3 is correct. Bench B miscounted the reads and expected 4, which is an assertion the request does not support."
+}
