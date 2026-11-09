@@ -198,3 +198,29 @@ Adopted from the CVDP project's practice:
 56. c13_histogram_equaliser run 3
 57. t1_breathe_rgb run 3
 ```
+
+## 10. Abandoned (2026-11-09, owner decision)
+
+`eval-1` was stopped on 2026-11-09 at about 21:40, before completion, and **no result from it is reported**.
+
+- **Reason (owner):** the evaluation could not finish by the next morning. The owner chose to first grow the problem
+  set (harder and larger designs, more boards, more application areas) and improve the agent on it. A baseline
+  evaluation follows later, once the agent is judged ready. This is a scope decision. It was not made because of the
+  results: two runs had been scored.
+- **What had happened by then:**
+  - 14 of the 57 slots had been launched.
+  - 2 runs were scored (r01, r03).
+  - 9 had ended as not run: Claude Code auto-updated from 2.1.319 to 2.1.321 at 19:47, and the agent refuses
+    untested CLI versions (section 8.1).
+  - 3 were stopped mid-run (r12–r14) and not scored.
+- **Records:** they stay private with the held-out material.
+- **Procedure change:** later evaluations turn off CLI auto-updates and pin the CLI binary with a version check before
+  each launch.
+- **Held-out integrity:**
+  - Pass/fail counts were seen for runs of five held-out tasks: t2_ascii_console, c10_cic_decimator, c15_topk_stream,
+    t2_uart_regs and t1_combo_lock.
+  - No fix will be derived from them.
+  - When the enlarged benchmark gets its held-out split, these five tasks move to the development side. The rest of
+    the held-out set is redrawn by a published seed.
+- **The tag stays:** `eval-1` remains on commit 132b784 as a record of what was frozen. The next scored evaluation
+  gets a new tag and its own pre-registration.
