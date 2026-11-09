@@ -49,7 +49,7 @@ the public repo lists them by id and hash only, and publishes their `spec.md` on
 | `tools/board_xdc.py expand\|xdc` | pins from the master XDC into a spec's ports; the reference XDC from a spec |
 | `tools/ref_build.py <task>` | stages the reference into `build/bench/<id>/` and runs `flow/run_vivado.sh` (memory-guarded) and the gates |
 | `tools/freeze.py make\|verify` | the manifest (SHA-256 of every file per task, the split, tool versions) |
-| `tools/split.py` | the seeded held-out draw |
+| `tools/split.py` | the seeded held-out draw (v1); v2: per-task draw at creation into an append-only ledger, see [v2/README.md](v2/README.md) |
 | `tools/bank_grep.py` | the knowledge bank must not contain any spec's distinctive phrases |
 | `tools/similarity.py` | pool/benchmark spec similarity; RTL similarity to a local clone of the textbook repos (contamination probe) |
 | `tools/pin_scan.py` | grader-validity scan (08a2): which hidden benches read a pulled-up or tri-state pin and would fail a legal `1'bz` driver; prints only ids and yes/no flags (`--private` adds the held-out tasks) |
