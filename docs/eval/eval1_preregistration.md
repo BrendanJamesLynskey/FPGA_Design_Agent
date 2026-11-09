@@ -128,6 +128,13 @@ Adopted from the CVDP project's practice:
 - **Pace:** up to two agent runs at a time, each under a 6 GB memory cap, with at most one Vivado process across both
   (`FDA_VIVADO_MAX=1`). Runs follow the order below whatever their results; if the weekly plan allowance runs short,
   the remaining runs continue after the reset in the same order. Pausing never depends on results.
+- **Amended 2026-11-09 17:15 (planner, before the first held-out run; pace only, no effect on scoring):** up to
+  **three** agent runs at a time, with at most two Vivado processes across them (`FDA_VIVADO_MAX=2`; a two-build
+  trial on this PC kept at least 12 GB free). While `c13_histogram_equaliser` or `c13_stereo_disparity` is in flight
+  (large image designs, 10-12 GB in Vivado), that run gets a 12 GB cap and at most one other run goes beside it.
+  Each other run is capped at 8 GB for its whole process tree (agent, simulators, Vivado), up from 6 GB: the largest
+  development design peaked at 6.2 GB in Vivado alone, and an out-of-memory kill would turn a run into "not run".
+  Reason: the PC used under 9 GB with two runs; the order and every rule above are unchanged.
 - **Tool versions** (recorded per run as well): Claude Code CLI 2.1.319, Icarus Verilog 12.0, cocotb 2.0.1, Vivado
   2025.2, Verilator 5.048 (in the `fda-sim` container).
 - **Run order** (19 held-out tasks x 3, seed 20261109):
