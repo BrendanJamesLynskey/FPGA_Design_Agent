@@ -13,17 +13,22 @@ module tb_audio_bench #(
     output logic        AUD_SD,
     output logic [15:0] LED
 );
-    tri1 AUD_PWM;
-    tri0 AUD_PWM_PD;
+    // Each design pin goes through a plain wire, then onto the pulled net with a continuous assign: a design that declares the port `output logic` (a variable) and
+    // releases it with 1'bz is then resolved by the pull exactly as a `wire` port is (Icarus drops the pull on a variable port connected straight to a tri1 net).
+    wire  aud_pwm_pin, aud_pwm_pd_pin;
+    tri1  AUD_PWM;
+    tri0  AUD_PWM_PD;
+    assign AUD_PWM    = aud_pwm_pin;
+    assign AUD_PWM_PD = aud_pwm_pd_pin;
     assign pwm    = AUD_PWM;
     assign pwm_pd = AUD_PWM_PD;
     logic sd2, tx2;
     logic [15:0] led2;
 
     c12_nexys_pwm_audio_top #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES)) u_top (
-        .CLK100MHZ(CLK100MHZ), .CPU_RESETN(CPU_RESETN), .AUD_PWM(AUD_PWM), .AUD_SD(AUD_SD),
+        .CLK100MHZ(CLK100MHZ), .CPU_RESETN(CPU_RESETN), .AUD_PWM(aud_pwm_pin), .AUD_SD(AUD_SD),
         .LED(LED), .UART_TXD_IN(UART_TXD_IN), .UART_RXD_OUT(UART_RXD_OUT));
     c12_nexys_pwm_audio_top #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES)) u_top_pd (
-        .CLK100MHZ(CLK100MHZ), .CPU_RESETN(CPU_RESETN), .AUD_PWM(AUD_PWM_PD), .AUD_SD(sd2),
+        .CLK100MHZ(CLK100MHZ), .CPU_RESETN(CPU_RESETN), .AUD_PWM(aud_pwm_pd_pin), .AUD_SD(sd2),
         .LED(led2), .UART_TXD_IN(UART_TXD_IN), .UART_RXD_OUT(tx2));
 endmodule
