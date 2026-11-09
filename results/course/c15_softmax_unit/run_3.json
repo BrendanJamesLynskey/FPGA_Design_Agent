@@ -1,0 +1,101 @@
+{
+ "task": "c15_softmax_unit",
+ "tier": "course",
+ "split": "dev",
+ "difficulty": 2,
+ "run": 3,
+ "date": "2026-11-09",
+ "run_id": "20261109-002838-1508",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.319",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "FPGA_Design_Agent main a3f91d3 (fix 6), Knowledge main 415d555; no code changes",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (3 seeds; bins 12/12; cover 100%; line 93.1%; toggle 85.91%; mutation 80.0%, 16 of 20)",
+  "stage_gates_post_route": "pass"
+ },
+ "stage_visits": {
+  "clarify": 1,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 3,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 2
+ },
+ "agent_turns": 152,
+ "sub_agent_calls": 17,
+ "oracle_calls": 4,
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": true,
+  "tests_passed": 5,
+  "tests_total": 5,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_special_score_sets": true,
+   "test_random_score_sets": true,
+   "test_offset_invariance": true,
+   "test_registers": true
+  }
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 2.749,
+  "whs_ns": 0.064,
+  "lut": 752,
+  "ff": 780,
+  "dsp": 1,
+  "bram36": 0.5,
+  "power_w": 0.12,
+  "reference_qor": "not compared (full flow with shell vs OOC)"
+ },
+ "fix6_check": "final spec.yaml register map starts with X0 (RW, input lanes) and GO at offset 16, the hidden map, not the invented ID/CTRL/STATUS of run 2",
+ "timing": {
+  "batch1_run1_wall_h": 3.88,
+  "batch2_run2_wall_h": 1.68,
+  "run3_wall_h": 1.72,
+  "baseline_verilator_s": 74.8,
+  "baseline_icarus_s": 225.7,
+  "mutation_sim": "verilator",
+  "mutation_wall_s": 874.3
+ },
+ "wall_h_total": 1.72,
+ "wall_h_agent_calls": 0.57,
+ "agent_commit": "a3f91d3",
+ "internal_pass": "post-route gates failed",
+ "hidden_pass": true,
+ "hidden_tests_passed": 5,
+ "hidden_tests_total": 5,
+ "internal_gate_failed_before_pass": true,
+ "outcome": "internal_stop_hidden_pass",
+ "escape_level": null,
+ "tool_runs": {
+  "simulate": 2,
+  "mutate": 0,
+  "formal": 0,
+  "build": 5,
+  "lint": 4,
+  "gates": 11,
+  "simulate_mutate_build": 7
+ },
+ "tokens": 3386649,
+ "plan_cost_estimate_usd": 3.3282
+}

@@ -1,0 +1,95 @@
+{
+ "task": "c12_nexys_pwm_audio",
+ "tier": "course",
+ "split": "dev",
+ "difficulty": 2,
+ "run": 1,
+ "date": "2026-11-09",
+ "run_id": "20261109-021220-b816",
+ "harness": "claude_code",
+ "claude_code_version": "2.1.319",
+ "model": "claude-sonnet-5-5",
+ "effort": "medium",
+ "oracle": "claude_code (claude-haiku-5-5)",
+ "interview": "oracle",
+ "review": "off",
+ "verif_level": "V3",
+ "harness_commit": "FPGA_Design_Agent main a3f91d3, Knowledge main 415d555; no code changes",
+ "stop": {
+  "stage": 9,
+  "name": "configuration-and-debug",
+  "reason": "hardware: awaiting approval before programming (no board)",
+  "stages_0_to_8_passed": true
+ },
+ "gates": {
+  "V0": "pass",
+  "V1": "pass",
+  "V2": "pass",
+  "V3": "pass (3 seeds; bins 23/23; cover 100%; line 100%; toggle 89.29%; mutation 90.0%, 9 of 10)",
+  "stage_gates_post_route": "pass"
+ },
+ "stage_visits": {
+  "clarify": 1,
+  "board-and-device-planning": 2,
+  "rtl-design-creation": 1,
+  "constraints": 1,
+  "synthesis": 1,
+  "implementation": 1,
+  "timing-closure": 1,
+  "power-closure": 1,
+  "drc-closure": 1,
+  "configuration-and-debug": 2
+ },
+ "agent_turns": 147,
+ "sub_agent_calls": 15,
+ "oracle_calls": 4,
+ "score": {
+  "tool": "benchmark/course/tools/run_task.py",
+  "sim": "icarus",
+  "pass": false,
+  "tests_passed": 0,
+  "tests_total": 0,
+  "cause": "hidden bench tb_audio_bench.sv connects .LED(...) to the top; the agent's top has no LED port (build error: port LED is not a port of u_top). spec.md never mentions LED; only hidden/spec.yaml lists it (16 outputs, kept off). Build failure, 0/0 tests, not a functional failure."
+ },
+ "qor": {
+  "wns_ns_at_100MHz_post_route": 0.545,
+  "whs_ns": 0.14,
+  "lut": 387,
+  "ff": 301,
+  "dsp": 1,
+  "bram36": 0,
+  "power_w": 0.117,
+  "reference_qor": "not compared"
+ },
+ "failure": {
+  "class": "spec/task gap (hidden bench needs a port the public spec does not name)",
+  "what": "The agent built a design that satisfies every gate it can see; the hidden bench fails to elaborate because of the unlisted LED output. Same family as c14_nexys_tiny_cnn (UART_TXD_IN)."
+ },
+ "timing": {
+  "baseline_verilator_s": 75.8,
+  "baseline_icarus_s": 158.3,
+  "mutation_sim": "verilator",
+  "mutation_wall_s": 349.8
+ },
+ "wall_h_total": 1.2,
+ "wall_h_agent_calls": 0.7,
+ "agent_commit": "a3f91d3",
+ "internal_pass": "post-route gates failed",
+ "hidden_pass": false,
+ "hidden_tests_passed": 0,
+ "hidden_tests_total": 0,
+ "internal_gate_failed_before_pass": false,
+ "outcome": "fail",
+ "escape_level": null,
+ "tool_runs": {
+  "simulate": 4,
+  "mutate": 0,
+  "formal": 0,
+  "build": 8,
+  "lint": 3,
+  "gates": 11,
+  "simulate_mutate_build": 12
+ },
+ "tokens": 2869734,
+ "plan_cost_estimate_usd": 3.1154
+}
