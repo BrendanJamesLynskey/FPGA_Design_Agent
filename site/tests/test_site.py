@@ -242,3 +242,39 @@ def test_expertise_page_is_native_details_and_linked():
     assert 'href="expertise.html"' in pages["index.html"] and 'href="expertise.html"' in p
     assert 'id="expand-all"' in p and 'id="collapse-all"' in p
     assert not re.search(r"<script[^>]*>[^<]*openHash", p.split("<script>")[0])
+
+
+import os  # noqa: E402
+from html import escape as html_escape  # noqa: E402
+
+
+# ---- brief 31: "Differs by family" per drawer, from the bank's family matrix ----------------------------------------------
+
+def test_every_drawer_lists_the_matrix_rows_for_its_area():
+    fd = json.loads((SITE / "data" / "family_diffs.json").read_text())
+    x = json.loads((SITE / "data" / "expertise.json").read_text())
+    for a in x["areas"]:
+        want = fd["areas"][a["id"]]
+        assert a["family"]["rows"] == want["rows"] and a["family"]["rows"], a["id"]
+        assert a["family"]["docs"] == want["docs"], a["id"]
+        for r in a["family"]["rows"]:
+            assert set(r) == {"topic", "summary", "confirmed"} and r["confirmed"] in ("tool", "doc")
+    html = (SITE / "public" / "expertise.html").read_text()
+    for a in x["areas"]:
+        assert f'id="{a["id"]}-docs"' in html and f'href="#{a["id"]}-docs"' in html, a["id"]
+        for r in a["family"]["rows"]:
+            assert html_escape(r["topic"]) in html, (a["id"], r["topic"])
+
+
+def _matrix_kb():
+    p = Path(os.environ.get("FDA_FAMILY_MATRIX_KB", os.environ.get("FDA_KNOWLEDGE_REPO", "~/Claude_sandbox/FPGA_Design_Agent_Knowledge"))).expanduser()
+    return p if (p / "tools" / "family_matrix.py").exists() and (p / "family_matrix" / "areas").is_dir() else None
+
+
+@pytest.mark.skipif(_matrix_kb() is None, reason="no knowledge-bank checkout with family_matrix/ here")
+def test_family_diffs_match_the_bank_matrix(tmp_path):
+    kb = _matrix_kb()
+    out = tmp_path / "fd.json"
+    r = subprocess.run([sys.executable, str(kb / "tools" / "family_matrix.py"), "--site-json", str(out)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert json.loads(out.read_text()) == json.loads((SITE / "data" / "family_diffs.json").read_text())

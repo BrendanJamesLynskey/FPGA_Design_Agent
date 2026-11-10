@@ -26,6 +26,10 @@ def _links(srcs) -> str:
     return "; ".join(f'<a href="{e(s["url"])}"><code>{e(s["path"])}</code></a>' for s in srcs)
 
 
+FAMILY_LABEL = {"7series": "7-series (Artix-7, Zynq-7000 PL)", "ultrascale_plus": "UltraScale+ (K26 PL)",
+                "zynq7000_ps": "Zynq-7000 PS", "zynqmp_ps": "Zynq UltraScale+ PS", "common": "All families (tool guides)"}
+
+
 def drawer(a: dict) -> str:
     c = a["counts"]
     head = (f'<summary><span class="an">{e(a["name"])}</span><span class="as">{e(a["summary"])}</span>'
@@ -44,10 +48,18 @@ def drawer(a: dict) -> str:
         if a["evidence"] else "<p>No committed result yet.</p>"
     cards = ("<ul>" + "".join(f'<li><a href="{e(k["href"])}">{e(k["label"])}</a></li>' for k in a["cards"]) + "</ul>") if a["cards"] else "<p>None yet.</p>"
     gaps = "<ul>" + "".join(f"<li>{e(g)}</li>" for g in a["gaps"]) + "</ul>"
+    fam = a.get("family") or {"rows": [], "docs": {}}
+    fl = ("<ul>" + "".join(f'<li><strong>{e(r["topic"])}</strong>: {e(r["summary"])} <span class="tag">{"tool-checked" if r["confirmed"] == "tool" else "from the guides"}</span></li>'
+                           for r in fam["rows"]) + "</ul>"
+          f'<p class="small"><a href="#{e(a["id"])}-docs">Documents to read for this area, by family</a></p>'
+          f'<details class="docs" id="{e(a["id"])}-docs"><summary>Documents by family</summary>' +
+          "".join(f'<h4>{e(FAMILY_LABEL.get(f, f))}</h4><ul>' +
+                  "".join(f'<li><strong>{e(d["doc"])}</strong>: {e(d["use"])}</li>' for d in lst) + "</ul>"
+                  for f, lst in fam["docs"].items()) + "</details>") if fam["rows"] else "<p>No family difference recorded yet.</p>"
     cap = f'<p class="note small">Level held at this point because: {e(a["cap_reason"])}</p>' if a["cap_reason"] else ""
     body = (f'<div class="abody">{cap}<dl class="kv">'
             f'<dt>Knows</dt><dd><p class="small muted">Skills of the knowledge bank at its pin, by unit and section, with the one-line description from each skill.</p>{know}</dd>'
-            f"<dt>Flow checks</dt><dd>{chk}</dd><dt>Evidence</dt><dd>{ev}</dd><dt>See also</dt><dd>{cards}</dd><dt>Known gaps</dt><dd>{gaps}</dd></dl></div>")
+            f"<dt>Flow checks</dt><dd>{chk}</dd><dt>Evidence</dt><dd>{ev}</dd><dt>Differs by family</dt><dd>{fl}</dd><dt>See also</dt><dd>{cards}</dd><dt>Known gaps</dt><dd>{gaps}</dd></dl></div>")
     return f'<details class="area" id="{e(a["id"])}">{head}{body}</details>'
 
 

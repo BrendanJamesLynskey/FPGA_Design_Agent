@@ -8,6 +8,7 @@ instructions into a chunk and check they are only text)."""
 from __future__ import annotations
 
 import importlib.util
+import inspect
 import os
 import sys
 from pathlib import Path
@@ -44,10 +45,18 @@ class LocalBank:
         return self._search.search_docs(query, k=k, sections=sections, lib=self.root / "library")
 
     def skills(self, board: str | None, family: str | None, sections: list[str] | None,
-               primary_only: bool = True, procedures: bool = False) -> list[dict[str, Any]]:
-        """``[{path, axis, section, name, description, text}]`` for the board and family, filtered to the sections."""
-        items = self._select.select(board=board, family=family, sections=sections, primary_only=primary_only,
-                                    procedures=procedures, root=self.root)
+               primary_only: bool = True, procedures: bool = False, part: str | None = None) -> list[dict[str, Any]]:
+        """``[{path, axis, section, name, description, text}]`` for the board and family, filtered to the sections.
+
+        Brief 31: with ``part`` (build.yaml) and a bank whose ``select`` takes it, the family units come from the part, so
+        a K26 design gets the Zynq UltraScale+ layer and never the Artix-7 one. A bank older than brief 31 falls back
+        to ``family``."""
+        if part and "part" in inspect.signature(self._select.select).parameters:
+            items = self._select.select(board=board, part=part, sections=sections, primary_only=primary_only,
+                                        procedures=procedures, root=self.root)
+        else:
+            items = self._select.select(board=board, family=family, sections=sections, primary_only=primary_only,
+                                        procedures=procedures, root=self.root)
         if sections:
             known = {x.path for x in items}
             for v in VENDOR_SETS:
