@@ -38,6 +38,12 @@ is 12.859 against 5.378 ns at the slow corner (0.93 ns a stage) and 4.780 agains
 
 ## Vivado 2025.2, xc7a100tcsg324-1, default directives
 
+The files below are the **11c rebuild** (RTL at b02ed5e, build id `b02ed5e6`): small build 28 copies 0.277 W, Tj 26.3 C,
+WNS +0.480 ns; full build 352 copies 0.776 W, Tj 28.5 C, WNS +0.308 ns (11b: 0.279 W / 26.3 C / +1.038 ns and
+0.828 W / 28.8 C / +0.357 ns). Full build utilisation 35,872 LUTs (56.6 %) and 56,218 flip-flops (44.3 %), against
+34,658 (54.7 %) and 55,712 (43.9 %) in 11b: the added start-up gates, the M6b/M6c reference banks and the 24-stage pad.
+No Critical or unsafe row is left in `report_cdc`; both builds meet timing.
+
 | | Small build (28 copies) | Full build (352 copies) |
 |---|---|---|
 | Summary | [build_small.json](build_small.json) | [build_full.json](build_full.json) |
