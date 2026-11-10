@@ -116,3 +116,129 @@ def test_flow_notes_counts_match_the_mutant_table():
     c = d["counts"]
     assert (c["ported"], c["gate_flags"], c["report_cdc_flags"], c["correct"], c["correct_pass"]) == (10, 10, 5, 12, 12)
     assert [m["id"] for m in d["mutants"] if m["gate"] is None] == ["M9", "M11"]
+
+
+# ---- brief 23: areas of expertise (drawers) -------------------------------------------------------------------------------
+
+import copy  # noqa: E402
+import re  # noqa: E402
+
+import pytest  # noqa: E402
+import yaml  # noqa: E402
+
+import expertise  # noqa: E402
+
+
+def _yaml():
+    return yaml.safe_load((SITE / "data" / "expertise.yaml").read_text())
+
+
+def test_skills_are_the_skills_at_the_pin():
+    doc = json.loads((SITE / "data" / "skills.json").read_text())
+    assert doc["pin"] == expertise.pin()
+    counts = {}
+    for s in doc["skills"]:
+        counts[(s["unit"], s["section"])] = counts.get((s["unit"], s["section"]), 0) + 1
+    assert counts == expertise.packs_section_counts(), "skills.json differs from the sections and counts of knowledge/PACKS.md"
+    assert len({(s["unit"], s["name"]) for s in doc["skills"]}) == len(doc["skills"])
+    assert all(s["description"] and len(s["description"]) < 260 for s in doc["skills"])
+
+
+@pytest.mark.skipif(expertise.kb_checkout() is None, reason="the private knowledge bank is not checked out here")
+def test_skills_json_matches_the_bank():
+    assert expertise.skills_from_bank(expertise.kb_checkout()) == json.loads((SITE / "data" / "skills.json").read_text())["skills"]
+
+
+def test_every_drawer_skill_exists_at_the_pin():
+    have = {(s["unit"], s["name"], s["section"]) for s in json.loads((SITE / "data" / "skills.json").read_text())["skills"]}
+    x = json.loads((SITE / "data" / "expertise.json").read_text())
+    for a in x["areas"]:
+        for g in a["skills"]:
+            for s in g["items"]:
+                assert (g["unit"], s["name"], g["section"]) in have, (a["id"], s["name"])
+
+
+def test_areas_and_required_drawers():
+    x = json.loads((SITE / "data" / "expertise.json").read_text())
+    ids = [a["id"] for a in x["areas"]]
+    assert 12 <= len(ids) <= 20 and len(set(ids)) == len(ids)
+    for need in ("fsm", "memory", "mixed", "cdc", "constraints"):
+        assert need in ids
+    assert all(a["counts"]["skills"] > 0 and a["gaps"] for a in x["areas"])
+
+
+def test_no_number_is_typed_into_prose_or_templates():
+    for a in _yaml()["areas"]:
+        for t in [a["name"], a["summary"], *a["gaps"], *[c["what"] for c in a.get("checks", [])]]:
+            assert not expertise.prose_numbers(t), (a["id"], t)
+        for it in a.get("evidence", []):
+            tmpl = expertise.PROSE_OK.sub(" ", re.sub(r"\{\d+\}", " ", it["text"]))
+            assert not expertise.NUM.findall(tmpl), (a["id"], it["text"])
+
+
+def test_a_typed_number_in_an_evidence_template_is_refused(monkeypatch):
+    y = _yaml()
+    y["areas"][0]["evidence"][0]["text"] += " Slack was 9.999 ns."
+    real = yaml.safe_load
+    monkeypatch.setattr(expertise.yaml, "safe_load", lambda t: y if t.startswith("# Areas of expertise") else real(t))
+    with pytest.raises(AssertionError):
+        expertise.build()
+
+
+def test_direct_values_are_in_their_source_files():
+    """A get: or re: value must occur, as a number, in the source file it is read from; counts are derived and exempt."""
+    for a in _yaml()["areas"]:
+        for it in a.get("evidence", []):
+            for ex in it.get("values", []):
+                if not ex.startswith(("get:", "re:")):
+                    continue
+                v = expertise.evaluate(ex, it)
+                if isinstance(v, bool) or not isinstance(v, (int, float)):
+                    continue
+                nums = set()
+                for p in expertise.files_of(it):
+                    for tok in re.findall(r"-?\d[\d,]*(?:\.\d+)?", p.read_text()):
+                        nums.add(float(tok.replace(",", "")))
+                assert float(v) in nums, (a["id"], ex, v)
+
+
+def test_level_is_computed_from_the_items():
+    y = {a["id"]: a for a in _yaml()["areas"]}
+    for a in json.loads((SITE / "data" / "expertise.json").read_text())["areas"]:
+        kinds = {e["kind"] for e in a["evidence"]}
+        n = expertise.LEVELS.index(a["level"])
+        if n >= 3:
+            assert "agent" in kinds or y[a["id"]].get("cap"), a["id"]
+        if a["level"] == "agent":
+            assert "agent" in kinds
+        if a["level"] == "checked":
+            assert a["counts"]["enforced"] > 0
+        if a["level"] == "measured":
+            assert "measured" in kinds and a["counts"]["enforced"] == 0 and "agent" not in kinds
+        if a["level"] == "knowledge":
+            assert not kinds - {"example"} and a["counts"]["enforced"] == 0
+    assert y["constraints"]["cap"]["level"] == "checked"
+
+
+def test_checks_and_links_point_at_real_files():
+    x = json.loads((SITE / "data" / "expertise.json").read_text())
+    for a in x["areas"]:
+        for c in a["checks"]:
+            assert (SITE.parent / c["file"]).exists(), c["file"]
+        for e in a["evidence"]:
+            for s in e["sources"]:
+                assert (SITE.parent / s["path"].split("*")[0].rstrip("/").rsplit("/", 1)[0]).exists() or (SITE.parent / s["path"]).exists()
+
+
+def test_expertise_page_is_native_details_and_linked():
+    d = build.load_data(None)
+    pages, bad = build.build(SITE / "public", d)
+    assert not bad
+    p = pages["expertise.html"]
+    x = d["expertise"]
+    assert p.count('<details class="area"') == len(x["areas"])
+    for a in x["areas"]:
+        assert f'id="{a["id"]}"' in p and f'href="#{a["id"]}"' in p
+    assert 'href="expertise.html"' in pages["index.html"] and 'href="expertise.html"' in p
+    assert 'id="expand-all"' in p and 'id="collapse-all"' in p
+    assert not re.search(r"<script[^>]*>[^<]*openHash", p.split("<script>")[0])

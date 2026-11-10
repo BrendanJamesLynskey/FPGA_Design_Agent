@@ -1,0 +1,2800 @@
+{
+ "areas": [
+  {
+   "cap_reason": "The constraint-grading tasks (Brief 20, timing exceptions) are not merged, so the area is not yet credited with agent-run evidence.",
+   "cards": [
+    {
+     "href": "flow-notes.html#xpm-cdc",
+     "label": "Beyond the flow: CDC macro constraints"
+    },
+    {
+     "href": "flow-notes.html#exceptions",
+     "label": "Beyond the flow: exceptions that hide failures"
+    }
+   ],
+   "checks": [
+    {
+     "enforced": true,
+     "file": "flow/gates.py",
+     "gate": "no_unconstrained_endpoints",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/gates.py",
+     "what": "Setup, hold and pulse-width slack must be met after routing, and no endpoint may be left unconstrained."
+    },
+    {
+     "enforced": false,
+     "file": "agent/core/constraints.py",
+     "gate": "FDA-CON-5",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/core/constraints.py",
+     "what": "Checks design.xdc: clocks only on the board's clock input, no disabled clock-route check, a reason beside every false path or asynchronous clock group. Run as the check_constraints tool; a command outside the allow-list refuses the build."
+    },
+    {
+     "enforced": false,
+     "file": "flow/xpm_cdc.tcl",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl",
+     "what": "Applies the exceptions that AMD ships as scoped files for its crossing macros, which the batch flow otherwise drops."
+    }
+   ],
+   "counts": {
+    "checks": 3,
+    "enforced": 1,
+    "evidence": 2,
+    "sections": 7,
+    "skills": 18
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/14_flow_notes/inputs.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/14_flow_notes/inputs.json"
+      }
+     ],
+     "text": "On a two-clock probe design, setup slack on the crossing was -1.364 ns without the macro exceptions and 8.891 ns with them (Vivado 2025.2)."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/course/*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      }
+     ],
+     "text": "16 development runs reached routing and recorded post-route setup slack; it was positive in 16."
+    }
+   ],
+   "gaps": [
+    "Exceptions that hide a real failure (a blanket false path, a clock group over a failing path) are designed as tasks but not built or run; Brief 20 settles this.",
+    "I/O delay constraints are written from skills; no committed run scores them against a data sheet."
+   ],
+   "id": "constraints",
+   "level": "checked",
+   "level_label": "Checked by the flow",
+   "level_n": 3,
+   "name": "Constraints and timing closure",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Writing the clock part of an XDC: create_clock (-add, waveform), which generated clocks Vivado derives by itself and which need create_generated_clock (fabric dividers, forwarded clocks) ...",
+       "name": "xdc-clock-definitions"
+      },
+      {
+       "description": "Proving an XDC is complete and honest before trusting timing: what each check_timing category means and its usual fix, report_exceptions -ignored/-coverage/-ignored_objects ...",
+       "name": "xdc-coverage-and-audit-checks"
+      },
+      {
+       "description": "Deciding whether a timing exception is justified: set_false_path, set_multicycle_path (setup N, hold N-1), set_max_delay -datapath_only, set_clock_groups, set_bus_skew, set_case_analysis ...",
+       "name": "xdc-exceptions-right-and-masking"
+      },
+      {
+       "description": "Turning an external device's data-sheet numbers and the board's trace delays into set_input_delay/set_output_delay -min/-max values: the derivation for system-synchronous and ...",
+       "name": "xdc-io-delay-derivation"
+      },
+      {
+       "description": "Adding physical constraints to an XDC and deciding whether they are needed: Pblocks (create_pblock, resize_pblock, add_cells_to_pblock, CONTAIN_ROUTING, EXCLUDE_PLACEMENT) ...",
+       "name": "xdc-physical-constraints"
+      },
+      {
+       "description": "An XDC has more than one file or more than one constraint on the same object: file and line order, last-one-wins for equivalent constraints and physical properties, -add and -add_delay ...",
+       "name": "xdc-precedence-order-and-scoping"
+      }
+     ],
+     "section": "constraints",
+     "unit": "vendor/amd_constraints"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing or reviewing XDC: clocks, I/O delays, asynchronous I/O, false paths, clock groups, max_delay -datapath_only, multicycle, order and precedence.",
+       "name": "xdc-constraints-basics"
+      }
+     ],
+     "section": "constraints",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "The setup, hold or pulse-width gate fails, or timing reports must be explained: WNS/TNS/WHS, path anatomy, logic vs net delay, skew.",
+       "name": "reading-timing-reports"
+      },
+      {
+       "description": "Methodology.rpt lists TIMING-1/2/3/4/5/14/17/19/20/21/27/28/36 or check_timing no_clock: a clock defined in the wrong place, twice or not at all.",
+       "name": "timing-checks-clock-definitions"
+      },
+      {
+       "description": "Methodology.rpt lists TIMING-6/7/8/9/10/11/13/15/16/18/23/24/29: clocks timed together, CDC exceptions, missing I/O delays, large violations.",
+       "name": "timing-checks-clock-relationships"
+      },
+      {
+       "description": "Writing or reviewing RTL for AMD fabric: resets, clock enables, control sets, clock gating, pipelining, ASYNC_REG, report_methodology.",
+       "name": "ultrafast-rtl-checklist"
+      }
+     ],
+     "section": "timing-methodology",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "A slow path, high fanout, deep logic or needless toggling; logic levels, replication, retiming-friendly code, operand isolation, enables for power.",
+       "name": "coding-for-timing-and-power"
+      }
+     ],
+     "section": "timing-concepts",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Choosing a clock rate, judging whether a timing target is realistic on the xc7a100tcsg324-1, or explaining a pulse-width failure ...",
+       "name": "artix7-speed-grade-limits"
+      }
+     ],
+     "section": "timing-concepts",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing or checking the XDC: UG949's four timing-constraint steps (clocks, I/O delays, clock groups and CDC, exceptions), physical and power constraints ...",
+       "name": "constraints"
+      },
+      {
+       "description": "Running opt, place, physical optimisation and route in the non-project flow, reading timing after each step, and deciding what to fix before routing (UG949 ch. 5 and ch. 6).",
+       "name": "implementation"
+      },
+      {
+       "description": "Reading Vivado timing reports to find out why a path fails: report_timing_summary, report_timing, report_design_analysis ...",
+       "name": "sta-report-interpretation"
+      },
+      {
+       "description": "A build fails the setup, hold, pulse-width, coverage or methodology gates: the closure criteria, the order of fixes (constraints, clocks, then paths) ...",
+       "name": "timing-closure"
+      }
+     ],
+     "section": "ultrafast",
+     "unit": "procedures"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing or checking set_input_delay/set_output_delay on 7-series (Artix-7, Zynq-7020 PL): system- vs source-synchronous, centre- vs edge-aligned, min and max, DDR edges ...",
+       "name": "artix7-io-timing-constraints"
+      }
+     ],
+     "section": "io-standards",
+     "unit": "family/artix7"
+    }
+   ],
+   "summary": "Writing clocks, I/O delays and exceptions that are right, and reading timing reports to close the paths that fail."
+  },
+  {
+   "cap_reason": null,
+   "cards": [
+    {
+     "href": "flow-notes.html#cdc-gate",
+     "label": "Beyond the flow: report_cdc cannot see every unsafe crossing"
+    },
+    {
+     "href": "flow-notes.html#xpm-cdc",
+     "label": "Beyond the flow: CDC macro constraints"
+    },
+    {
+     "href": "flow-notes.html#pblock",
+     "label": "Beyond the flow: pblocks after synthesis"
+    }
+   ],
+   "checks": [
+    {
+     "enforced": true,
+     "file": "flow/cdc_structure.py",
+     "gate": "post_synth_cdc_structure_clean",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_structure.py",
+     "what": "After synthesis, classifies every flip-flop reached from another clock (synchroniser chain, XPM macro, constrained Gray or handshake, reset bridge, unsafe) and fails on an unsafe one."
+    },
+    {
+     "enforced": true,
+     "file": "flow/cdc_inject.py",
+     "gate": "inject",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_inject.py",
+     "what": "Simulation with a late-resolving first synchroniser stage, so a crossing that only works when every bit settles on time fails."
+    },
+    {
+     "enforced": true,
+     "file": "flow/gates.py",
+     "gate": "cdc_no_critical",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/gates.py",
+     "what": "report_cdc must have no Critical row, after synthesis and after routing."
+    },
+    {
+     "enforced": false,
+     "file": "flow/xpm_cdc.tcl",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl",
+     "what": "Exceptions for AMD's crossing macros."
+    }
+   ],
+   "counts": {
+    "checks": 4,
+    "enforced": 3,
+    "evidence": 2,
+    "sections": 7,
+    "skills": 14
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/16_cdc_gate/mutant_table.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/16_cdc_gate/mutant_table.json"
+      }
+     ],
+     "text": "On 10 ported broken crossings, report_cdc alone flagged 5; the flow's gate flagged 10. It passed 12 of 12 correct variants."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "hil/cdc_soak/results/cdc_rig_sim.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/hil/cdc_soak/results/cdc_rig_sim.json"
+      }
+     ],
+     "text": "On the 12 mutants of the soak rig, its simulation with injection flagged 9; report_cdc alone flagged 5."
+    }
+   ],
+   "gaps": [
+    "No agent run has used the stronger gate yet.",
+    "Resets cleared on one side only (an asynchronous FIFO, a handshake) are not caught by the gate; the rig's simulation catches them.",
+    "The model is cycle-level: it finds lost pulses and bits crossed separately, not route skew, glitches or true metastability."
+   ],
+   "id": "cdc",
+   "level": "checked",
+   "level_label": "Checked by the flow",
+   "level_n": 3,
+   "name": "Clock-domain and reset-domain crossing",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Two clocks, asynchronous inputs, synchronisers, pulse crossing, Gray code, async FIFO.",
+       "name": "clock-domain-crossing"
+      }
+     ],
+     "section": "cdc",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "A stream crosses clock domains through a dual-clock FIFO on Artix-7: Cummings-style Gray pointers, full/empty in Gray, conservative flags, depth sizing for bursts ...",
+       "name": "artix7-async-fifo-cdc"
+      },
+      {
+       "description": "Writing XDC for clock-domain crossings or deciding which exception to use: set_max_delay -datapath_only, set_bus_skew, set_clock_groups -asynchronous (and when it is too blunt) ...",
+       "name": "artix7-cdc-constraints-and-checks"
+      },
+      {
+       "description": "Verifying CDC and reset-crossing logic in simulation (cocotb/Icarus or xsim) without a board: metastability-injection models (a random extra cycle per synchronised bit) ...",
+       "name": "artix7-cdc-verification-without-hardware"
+      },
+      {
+       "description": "A multi-bit value crosses clock domains: Gray-coded counters (conversion, +-1 rule, non-power-of-two), qualifier/enable (MCP) crossing, 2- and 4-phase req/ack handshakes, mux recirculation ...",
+       "name": "artix7-multibit-cdc"
+      },
+      {
+       "description": "A single bit crosses between unrelated clocks on Artix-7 or Zynq-7000 PL: 2FF/3FF synchronisers, ASYNC_REG, MTBF (resolution time, tau, T_W), glitches from logic before the sync ...",
+       "name": "artix7-synchronisers-and-mtbf"
+      },
+      {
+       "description": "Choosing or instantiating an AMD XPM CDC macro on 7-series: xpm_cdc_single, _array_single, _gray, _handshake, _pulse, _async_rst, _sync_rst and xpm_fifo_async ...",
+       "name": "artix7-xpm-cdc-macros"
+      }
+     ],
+     "section": "cdc",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Many resets or enables, which registers to reset, reset vs enable precedence, sync vs async reset in implementation terms; the spec's reset values win.",
+       "name": "control-sets-resets-and-enables"
+      },
+      {
+       "description": "Any register with a reset; polarity from port name, sync vs async choice, reset values, reset synchroniser.",
+       "name": "reset-strategy"
+      }
+     ],
+     "section": "reset",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Building the reset network of a multi-clock Artix-7 or Zynq-7000 PL design: sync vs async per domain, the reset bridge (async assert, sync release), reset trees and fan-out ...",
+       "name": "artix7-reset-bridge-and-sequencing"
+      },
+      {
+       "description": "Registers under different resets talk to each other, even in one clock domain: reset-domain crossings (RDC), why an asynchronous reset in domain A corrupts a flop in domain B ...",
+       "name": "artix7-reset-domain-crossings"
+      }
+     ],
+     "section": "reset",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Report_drc or report_cdc has violations or write_bitstream refuses: NSTD-1, UCIO-1, CFGBVS, CDC-1 to CDC-26, waivers.",
+       "name": "drc-and-cdc-report-triage"
+      }
+     ],
+     "section": "drc-and-cdc-reports",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "An AXI, AXI-Stream or APB interface crosses clock domains: AMD clock converter IP, async FIFOs on streams, per-channel crossing of memory-mapped AXI ...",
+       "name": "axi-clock-domain-crossing"
+      }
+     ],
+     "section": "amba",
+     "unit": "vendor/amba_axi"
+    },
+    {
+     "items": [
+      {
+       "description": "Single-clock FIFO/queue/buffer with full/empty/count; pointer extra bit, simultaneous push/pop, FWFT vs standard read.",
+       "name": "fifo-design"
+      }
+     ],
+     "section": "fifo",
+     "unit": "techniques"
+    }
+   ],
+   "summary": "Synchronisers, multi-bit crossings, asynchronous FIFOs, reset bridges and the checks that find a crossing report_cdc passes but that is still wrong."
+  },
+  {
+   "cap_reason": null,
+   "cards": [
+    {
+     "href": "flow-notes.html#xpm-cdc",
+     "label": "Beyond the flow: CDC macro constraints"
+    }
+   ],
+   "checks": [
+    {
+     "enforced": true,
+     "file": "flow/gates.py",
+     "gate": "post_synth_drc_clean",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/gates.py",
+     "what": "A DRC Error or Critical Warning after synthesis fails the run; an illegal MMCM VCO or phase-detector frequency raises one (AVAL-46)."
+    },
+    {
+     "enforced": false,
+     "file": "flow/mmcm_search.py",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/mmcm_search.py",
+     "what": "A search over legal MMCM settings for a target frequency, so the setting is computed, not guessed."
+    },
+    {
+     "enforced": false,
+     "file": "flow/cmt_check.tcl",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cmt_check.tcl",
+     "what": "A VCO and phase-detector range checker, written and measured but not wired into a gate."
+    }
+   ],
+   "counts": {
+    "checks": 3,
+    "enforced": 1,
+    "evidence": 1,
+    "sections": 7,
+    "skills": 12
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/project_parity/cmt_check/drc_*.rpt",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/project_parity/cmt_check"
+      }
+     ],
+     "text": "Of 4 probe designs (one legal, three with an MMCM setting outside its range), Vivado's DRC after synthesis raised AVAL-46 on 3."
+    }
+   ],
+   "gaps": [
+    "A skill said the tools do not flag an illegal VCO; the measurement shows they do, so that skill needs correcting in the bank.",
+    "The Clocking Wizard's own readback was compared with the flow's hand search on a few target sets only.",
+    "No agent run has been graded on a clocking task yet."
+   ],
+   "id": "clocking",
+   "level": "checked",
+   "level_label": "Checked by the flow",
+   "level_n": 3,
+   "name": "Clocking",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Stopping or slowing part of a design, divided clocks, gated-clock logic in existing code; enables instead of gating the clock.",
+       "name": "clock-enables-not-gated-clocks"
+      }
+     ],
+     "section": "clocking",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Planning clocks on Artix-7: clock-capable pins, BUFG/BUFH/BUFR/BUFIO, CMTs with MMCME2/PLLE2, M/D/O settings and VCO ranges, LOCKED, clock enables vs gated clocks.",
+       "name": "artix7-clocking"
+      },
+      {
+       "description": "Switching, stopping or selecting clocks on Artix-7: BUFGMUX vs BUFGMUX_CTRL vs BUFGCTRL (S vs CE pins, IGNORE, INIT_OUT), BUFGCE to stop a clock ...",
+       "name": "artix7-glitch-free-clock-switching"
+      },
+      {
+       "description": "Deciding how an MMCM/PLL is fed and fed back on 7-series (compensation ZHOLD, BUF_IN, EXTERNAL, INTERNAL; deskew), whether to cascade two clock managers or the CLKOUT6-to-CLKOUT4 counter ...",
+       "name": "artix7-mmcm-compensation-cascade-and-wizard"
+      },
+      {
+       "description": "An MMCME2 must move a clock phase at run time (PSEN/PSINCDEC/PSDONE fine steps) or change its frequency at run time through the DRP (XAPP888 read-modify-write with RST held) ...",
+       "name": "artix7-mmcm-dynamic-phase-and-drp"
+      },
+      {
+       "description": "Choosing MMCME2/PLLE2 settings (M, D, O, VCO, phase, duty) for a wanted output frequency on Artix-7 at speed grade -1, writing the parameter search, or deciding between MMCM ...",
+       "name": "artix7-mmcm-pll-configuration"
+      }
+     ],
+     "section": "clocking",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "A Zynq-7000 PL design takes its clock from the PS (FCLK_CLK0-3): how many, how set, how they relate to other clocks, and what to constrain.",
+       "name": "zynq7000-ps-clocks-fclk"
+      }
+     ],
+     "section": "clocking",
+     "unit": "family/zynq7000"
+    },
+    {
+     "items": [
+      {
+       "description": "Generating PL clocks on Zynq UltraScale+ (K26, speed grade -2LV): MMCME4/PLLE4 limits and M/D/O ranges, PLL versus MMCM, fine and dynamic phase shift, DRP, compensation AUTO ...",
+       "name": "zynqmp-mmcme4-plle4-and-buffers"
+      },
+      {
+       "description": "A Zynq UltraScale+ (K26) PL design takes its clock from the PS: pl_clk0-3, default 100 MHz, how the board preset sets it, and the PS input clock.",
+       "name": "zynqmp-pl-clocks-pl-clk"
+      }
+     ],
+     "section": "clocking",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "A Nexys A7-100T design uses the 100 MHz clock, the CPU_RESETN button, the five push buttons or the 16 slide switches; pins, polarities, I/O standards, synchronising.",
+       "name": "nexys-a7-clock-reset-and-inputs"
+      }
+     ],
+     "section": "clocking",
+     "unit": "board/nexys_a7_100t"
+    },
+    {
+     "items": [
+      {
+       "description": "A clock other than the board oscillator is needed (MMCM/PLL via clk_wiz or MMCME2 directly) in the non-project flow; achieved frequency, LOCKED.",
+       "name": "clocking-ip-non-project"
+      }
+     ],
+     "section": "clocking-ip",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "Instantiating or choosing an Artix-7 clocking primitive: MMCME2_ADV/BASE, PLLE2_ADV/BASE, BUFG, BUFGCE, BUFGMUX, BUFH/BUFHCE, BUFR, BUFIO ...",
+       "name": "artix7-primitives-clocking"
+      }
+     ],
+     "section": "primitives",
+     "unit": "family/artix7"
+    }
+   ],
+   "summary": "Choosing an MMCM or PLL setting, clock buffers, dynamic phase and glitch-free switching, and using the Clocking Wizard as a checker."
+  },
+  {
+   "cap_reason": null,
+   "cards": [],
+   "checks": [
+    {
+     "enforced": false,
+     "file": "agent/core/constraints.py",
+     "gate": "FDA-CON-4",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/core/constraints.py",
+     "what": "Compares every pin and I/O standard in design.xdc with the board's master constraints file, and flags two ports on one pin. Run as the check_constraints tool."
+    },
+    {
+     "enforced": false,
+     "file": "tools/inventory_check.py",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/tools/inventory_check.py",
+     "what": "Checks the board inventory against the master constraints file in CI."
+    }
+   ],
+   "counts": {
+    "checks": 2,
+    "enforced": 0,
+    "evidence": 0,
+    "sections": 15,
+    "skills": 27
+   },
+   "evidence": [],
+   "gaps": [
+    "The I/O delay and eye-scan procedures are skills; the rig that would measure them is designed on paper only.",
+    "No transceiver design has been built or run.",
+    "Pin and standard checks are a tool the agent can run, not a stage gate."
+   ],
+   "id": "io",
+   "level": "knowledge",
+   "level_label": "Knowledge only",
+   "level_n": 1,
+   "name": "I/O, primitives and transceivers",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "An input or output link on 7-series HR banks (Artix-7, Zynq-7020 PL) must be made reliable by tuning delay: IDELAYE2 sweep with a PRBS, error count per tap, eye width in ps, centring ...",
+       "name": "artix7-io-delay-tuning-and-eye-scan"
+      },
+      {
+       "description": "Writing or checking set_input_delay/set_output_delay on 7-series (Artix-7, Zynq-7020 PL): system- vs source-synchronous, centre- vs edge-aligned, min and max, DDR edges ...",
+       "name": "artix7-io-timing-constraints"
+      },
+      {
+       "description": "Assigning I/O standards, drive, slew, pull-ups or IOB registers on Artix-7 pins; HR banks and VCCO, LVCMOS33/LVCMOS18 rules, differential inputs, tri-state and open-drain pins.",
+       "name": "artix7-selectio-and-banks"
+      }
+     ],
+     "section": "io-standards",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Choosing which bank each signal group goes in on a new 7-series board (Artix-7, Zynq-7000 PL): one VCCO per bank, which standards may share a bank, VREF and INTERNAL_VREF ...",
+       "name": "artix7-pin-planning-banks-and-standards"
+      },
+      {
+       "description": "Choosing pins for clock inputs on a new 7-series board: SRCC vs MRCC and what each reaches (BUFIO, BUFR, BUFH, BUFMR, CMT, BUFG), P-side rule for single-ended clocks ...",
+       "name": "artix7-pin-planning-clocks"
+      },
+      {
+       "description": "Planning pins around configuration (CFGBVS and the bank 0/14/15 voltage, dual-purpose pins, PUDC_B, persist), simultaneous switching noise (report_ssn, SSO spreading, virtual grounds) ...",
+       "name": "artix7-pin-planning-config-ssn-and-pcb"
+      },
+      {
+       "description": "Allocating pins for a DDR2/DDR3 interface on a 7-series device: byte groups T0-T3 and DQS pins, address/control byte groups, the top/bottom pins, three-bank and one-column limits ...",
+       "name": "artix7-pin-planning-memory-interfaces"
+      },
+      {
+       "description": "Producing a complete pinout for a new 7-series board from a written spec (peripherals, voltages, speeds, part and package): the order to allocate groups in ...",
+       "name": "artix7-pinout-from-a-spec-flow"
+      }
+     ],
+     "section": "pin-planning",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Deciding whether to instantiate or infer CLB primitives on Artix-7: LUT1-LUT6, LUT6_2, MUXF7/MUXF8, CARRY4, FDRE/FDSE/FDCE/FDPE and latches ...",
+       "name": "artix7-primitives-clb"
+      },
+      {
+       "description": "Instantiating or choosing an Artix-7 clocking primitive: MMCME2_ADV/BASE, PLLE2_ADV/BASE, BUFG, BUFGCE, BUFGMUX, BUFH/BUFHCE, BUFR, BUFIO ...",
+       "name": "artix7-primitives-clocking"
+      },
+      {
+       "description": "Capturing or driving double-data-rate or serialised pins on Artix-7: IDDR/ODDR (modes, clock forwarding), ISERDESE2/OSERDESE2 (widths, clocks, bitslip), why they are instantiated ...",
+       "name": "artix7-primitives-ddr-serdes"
+      },
+      {
+       "description": "Writing, instantiating or auditing a DSP48E1: which RTL infers it, the attributes that matter (AREG/BREG/MREG/PREG, USE_MULT, USE_SIMD), OPMODE/ALUMODE, cascade ...",
+       "name": "artix7-primitives-dsp"
+      },
+      {
+       "description": "A port needs an explicit Artix-7 I/O primitive or delay: IBUF/OBUF/IOBUF/IBUFDS/OBUFDS, IDELAYE2 with IDELAYCTRL, the absence of ODELAYE2 on HR banks, IOB flip-flop packing ...",
+       "name": "artix7-primitives-io-buffers-delay"
+      },
+      {
+       "description": "A memory or delay line must map to a specific Artix-7 primitive: RAMB18E1/RAMB36E1, RAM32M/RAM64M/RAM128X1S distributed RAM, SRL16E/SRLC32E shift registers ...",
+       "name": "artix7-primitives-memory"
+      }
+     ],
+     "section": "primitives",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Structuring RTL for the Artix-7 LUT6 fabric at speed grade -1: logic levels per clock period, how many inputs a LUT absorbs, wide functions and MUXF7/F8, carry chains ...",
+       "name": "artix7-design-for-lut6"
+      }
+     ],
+     "section": "logic-fabric",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Assigning pins or I/O standards on the Nexys A7-100T's xc7a100tcsg324-1: which bank is at which voltage on the board, what each bank holds, the clock-capable pins in use ...",
+       "name": "xc7a100tcsg324-banks-and-clock-pins"
+      }
+     ],
+     "section": "io-standards",
+     "unit": "device/xc7a100tcsg324-1"
+    },
+    {
+     "items": [
+      {
+       "description": "Planning a pinout on the xc7a100tcsg324 package (any board, including a new one): user pins per bank, clock-capable, DQS, VREF and single-ended pins per bank ...",
+       "name": "xc7a100tcsg324-package-pin-census"
+      }
+     ],
+     "section": "pin-planning",
+     "unit": "device/xc7a100tcsg324-1"
+    },
+    {
+     "items": [
+      {
+       "description": "You need the primitive counts and package limits of the xc7a100tcsg324-1 for clocking, I/O logic, memory and DSP: BUFG/BUFH/BUFR/BUFIO, MMCM/PLL, IDELAY/ISERDES sites, usable pins, banks ...",
+       "name": "xc7a100t-primitive-limits"
+      }
+     ],
+     "section": "primitives",
+     "unit": "device/xc7a100tcsg324-1"
+    },
+    {
+     "items": [
+      {
+       "description": "Routing a Zynq-7000 PS peripheral to pins or into the PL: MIO versus EMIO, EMIO GPIO count, PS interrupts into the PL.",
+       "name": "zynq7000-mio-and-emio"
+      }
+     ],
+     "section": "io-standards",
+     "unit": "family/zynq7000"
+    },
+    {
+     "items": [
+      {
+       "description": "Tuning or capturing I/O timing on Zynq UltraScale+ (K26/KR260): IDELAYE3/ODELAYE3 in HP banks (TIME vs COUNT, EN_VTC, Align_Delay, cascade, IDELAYCTRL) ...",
+       "name": "zynqmp-hp-io-delays-and-serdes"
+      },
+      {
+       "description": "Using Zynq UltraScale+ PS MIO/EMIO or choosing PL I/O banks on the K26: HD banks 3.3 V, HP banks 1.8 V, which PS peripherals use PS-GTR lanes.",
+       "name": "zynqmp-mio-emio-and-pl-io-banks"
+      }
+     ],
+     "section": "io-standards",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "Planning PL pins on a Zynq UltraScale+ (K26) or other UltraScale+ part: HP vs HD bank limits, DCI and the single VRP pin, GC and HDGC clock pins, byte-lane clocks (DBC/QBC) ...",
+       "name": "zynqmp-pin-planning-hp-hd-banks"
+      }
+     ],
+     "section": "pin-planning",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "Choosing or configuring memory, DSP or carry primitives on Zynq UltraScale+ (K26): RAMB36E2/RAMB18E2 changes from 7-series (built-in cascade, all SDP write modes), URAM288 (4K x 72 ...",
+       "name": "zynqmp-bram-uram-dsp48e2-carry8"
+      }
+     ],
+     "section": "primitives",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "Using a GTH transceiver on a Zynq UltraScale+ (K26: quad 224): refclk pins, channels, PLLs, line rates and where the detail lives (UG576).",
+       "name": "zynqmp-gth-basics"
+      }
+     ],
+     "section": "high-speed-serial",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "Assigning pins or I/O standards on the K26 PL: bank list and types (HD 43-45, HP 64-66), pin counts, voltage, global-clock pins.",
+       "name": "xck26-banks-and-clock-pins"
+      }
+     ],
+     "section": "io-standards",
+     "unit": "device/xck26"
+    },
+    {
+     "items": [
+      {
+       "description": "Using the K26's GTH quad 224 (the only PL transceiver quad): channel names, reference-clock pins, PS-GTR separation.",
+       "name": "xck26-gth-quad-224"
+      }
+     ],
+     "section": "primitives",
+     "unit": "device/xck26"
+    },
+    {
+     "items": [
+      {
+       "description": "A Nexys A7-100T design talks to the host over the USB-UART, or uses the Pmod connectors JA-JD or JXADC; pin directions, names from the host's side, Pmod power and limits.",
+       "name": "nexys-a7-uart-and-pmods"
+      }
+     ],
+     "section": "serial-buses",
+     "unit": "board/nexys_a7_100t"
+    }
+   ],
+   "summary": "Pin planning against the board's master constraints, I/O standards, DDR and delay primitives, and the limits of the 7-series and UltraScale+ I/O."
+  },
+  {
+   "cap_reason": null,
+   "cards": [
+    {
+     "href": "flow-notes.html#mig",
+     "label": "Beyond the flow: the MIG wizard validates pins"
+    }
+   ],
+   "checks": [
+    {
+     "enforced": true,
+     "file": "flow/gates.py",
+     "gate": "post_synth_resources_in_range",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/gates.py",
+     "what": "Post-synthesis LUT, flip-flop, block RAM and DSP counts must lie near the architecture's prediction, which catches a RAM that became LUTs."
+    },
+    {
+     "enforced": false,
+     "file": "flow/mig_impl_check.tcl",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/mig_impl_check.tcl",
+     "what": "Runs a MIG example design through implementation to see whether Vivado rejects a bad pin set."
+    }
+   ],
+   "counts": {
+    "checks": 2,
+    "enforced": 1,
+    "evidence": 1,
+    "sections": 17,
+    "skills": 22
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/project_parity/mig_impl/*/drc_place.rpt",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/project_parity/mig_impl"
+      }
+     ],
+     "text": "3 MIG example designs (good pins, a byte-group fault, a duplicated pin) went through placement; the placement DRC raised PLIO-3 on 1, the duplicated pin. The byte-group fault was not rejected."
+    }
+   ],
+   "gaps": [
+    "No committed run exercises ECC, dual-port or asynchronous memory behaviour on hardware or in Vivado; the skills give the rules.",
+    "The MIG's pin validation lives in the GUI and has no Tcl command, so pins are checked by rules, not by the tool; the rule checker is not in this repository yet.",
+    "Choice of DDR device, device count, width and speed rests on skills only; no memory-interface design has been run."
+   ],
+   "id": "memory",
+   "level": "checked",
+   "level_label": "Checked by the flow",
+   "level_n": 3,
+   "name": "Memory, on-chip and off-chip",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "RAM, ROM, register file, byte enables; sync vs async read, read-during-write behaviour, RAM inference.",
+       "name": "memories-and-register-files"
+      },
+      {
+       "description": "RAM, ROM, multiplier or MAC that should map to hard blocks; read-during-write modes, output registers, pipelined multiply-accumulate.",
+       "name": "memory-and-arithmetic-inference"
+      }
+     ],
+     "section": "on-chip-memory",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "A memory, buffer, ROM or FIFO larger than a few hundred bits is needed on Artix-7: RAMB36E1/RAMB18E1 widths, read/write modes, output register, inference vs FIFO36E1, reset rules.",
+       "name": "artix7-block-ram-and-fifo"
+      },
+      {
+       "description": "Deciding how to build an on-chip memory on 7-series: RTL inference, an XPM_MEMORY macro, the Block Memory Generator IP or a RAMB18E1/RAMB36E1 instance ...",
+       "name": "artix7-memory-implementation-choice"
+      }
+     ],
+     "section": "on-chip-memory",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Planning an Artix-7 DDR2/DDR3 interface with AMD's MIG 7-series core: maximum data rates by speed grade, the 200 MHz reference clock, bank and pin rules, VREF, user-interface signals ...",
+       "name": "artix7-ddr2-memory-interface"
+      }
+     ],
+     "section": "dram",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Sizing or debugging PL masters on the Zynq-7000 HP and ACP ports: AXI3 limits, 32 versus 64-bit mode, command expansion versus upsizing and the AxCACHE[1] bit, write store-and-forward ...",
+       "name": "zynq7000-hp-and-acp-port-behaviour"
+      },
+      {
+       "description": "Connecting PL logic to the Zynq-7000 PS over AXI: GP master ports and their address windows, GP slaves, HP ports to DDR, the ACP, widths.",
+       "name": "zynq7000-ps-pl-axi-ports"
+      }
+     ],
+     "section": "dram",
+     "unit": "family/zynq7000"
+    },
+    {
+     "items": [
+      {
+       "description": "Choosing and configuring a Zynq UltraScale+ PS-PL AXI port: the confirmed table of data widths, ID and address widths, PS-side AXI3 versus PL-side AXI4 ...",
+       "name": "zynqmp-ps-pl-axi-interface-table"
+      },
+      {
+       "description": "Connecting K26 PL logic to the Zynq UltraScale+ PS over AXI: HPM masters, HPC/HP slave ports to DDR, LPD ports, widths and what to choose.",
+       "name": "zynqmp-ps-pl-axi-ports"
+      }
+     ],
+     "section": "dram",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "Choosing or configuring memory, DSP or carry primitives on Zynq UltraScale+ (K26): RAMB36E2/RAMB18E2 changes from 7-series (built-in cascade, all SDP write modes), URAM288 (4K x 72 ...",
+       "name": "zynqmp-bram-uram-dsp48e2-carry8"
+      }
+     ],
+     "section": "primitives",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "A memory or delay line must map to a specific Artix-7 primitive: RAMB18E1/RAMB36E1, RAM32M/RAM64M/RAM128X1S distributed RAM, SRL16E/SRLC32E shift registers ...",
+       "name": "artix7-primitives-memory"
+      }
+     ],
+     "section": "primitives",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Choosing flip-flops, SRL, LUT RAM or block RAM for a delay line, FIFO, small table or buffer on the XC7A100T, by depth, width, read style and clock rate ...",
+       "name": "artix7-srl-lutram-bram-choice"
+      }
+     ],
+     "section": "logic-fabric",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Direct-mapped or set-associative caches, tag/index/offset, write and replacement policies, hit/miss timing, DMA engines.",
+       "name": "caches-and-memory-systems"
+      }
+     ],
+     "section": "caches-and-dma",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "Single-clock FIFO/queue/buffer with full/empty/count; pointer extra bit, simultaneous push/pop, FWFT vs standard read.",
+       "name": "fifo-design"
+      }
+     ],
+     "section": "fifo",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "A stream crosses clock domains through a dual-clock FIFO on Artix-7: Cummings-style Gray pointers, full/empty in Gray, conservative flags, depth sizing for bursts ...",
+       "name": "artix7-async-fifo-cdc"
+      }
+     ],
+     "section": "cdc",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "A KR260 design needs memory: the SOM's 4 GB DDR4 belongs to the PS; there is no PL DDR; how the preset configures it and how the PL reaches it.",
+       "name": "kr260-som-ddr4"
+      }
+     ],
+     "section": "dram",
+     "unit": "board/kr260"
+    },
+    {
+     "items": [
+      {
+       "description": "A ZedBoard design configures the PS7 DDR3 controller: 512 MB (2 x 16-bit), 533 MHz, board delay and DQS-to-clock values, Vivado preset.",
+       "name": "zedboard-ps-ddr3"
+      }
+     ],
+     "section": "dram",
+     "unit": "board/zedboard"
+    },
+    {
+     "items": [
+      {
+       "description": "Allocating pins for a DDR2/DDR3 interface on a 7-series device: byte groups T0-T3 and DQS pins, address/control byte groups, the top/bottom pins, three-bank and one-column limits ...",
+       "name": "artix7-pin-planning-memory-interfaces"
+      }
+     ],
+     "section": "pin-planning",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",
+       "name": "vivado-inference-templates-datapath"
+      },
+      {
+       "description": "Writing SystemVerilog that Vivado must map to SRL shift registers, LUT RAM, block RAM (simple and true dual port, byte write) or ROM on Artix-7 ...",
+       "name": "vivado-inference-templates"
+      }
+     ],
+     "section": "synthesis-attributes",
+     "unit": "vendor/vivado_synthesis"
+    },
+    {
+     "items": [
+      {
+       "description": "Configuring or checking the free AMD infrastructure cores Block Memory Generator 8.4, FIFO Generator 13.2, Clocking Wizard 6.0 and XADC Wizard 3.3 (System Management Wizard on UltraScale+) ...",
+       "name": "amd-ip-memory-fifo-clock-xadc"
+      }
+     ],
+     "section": "ip-cores",
+     "unit": "vendor/amd_ip_cores"
+    },
+    {
+     "items": [
+      {
+       "description": "CRC/FCS, LFSR, PRBS, scramblers, 8b/10b, 64b/66b, Manchester, AMI/HDB3; CRC parameters and published check values.",
+       "name": "crc-lfsr-and-line-codes"
+      }
+     ],
+     "section": "crc-and-line-codes",
+     "unit": "functions"
+    }
+   ],
+   "summary": "Block RAM, distributed RAM and UltraRAM choice, widths, ports and ECC; FIFOs and buffering; crossing clocks through memory; DDR devices, widths and speeds, and the MIG."
+  },
+  {
+   "cap_reason": null,
+   "cards": [],
+   "checks": [
+    {
+     "enforced": false,
+     "file": "flow/board_check.py",
+     "gate": "power_ok",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/board_check.py",
+     "what": "On the board, checks the power and junction-temperature budget before programming; the self-checks read the board's sensors."
+    }
+   ],
+   "counts": {
+    "checks": 1,
+    "enforced": 0,
+    "evidence": 2,
+    "sections": 8,
+    "skills": 11
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/board_v2/b2_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/board_v2"
+      }
+     ],
+     "text": "4 hand-built designs that read the board's temperature sensor, accelerometer, SPI flash and PDM microphone each ran on the board and passed their pre-written self-checks."
+    },
+    {
+     "kind": "example",
+     "sources": [
+      {
+       "path": "results/board_v2/README.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/board_v2/README.md"
+      }
+     ],
+     "text": "The temperature sensor design reads the sensor's ID byte and a temperature over I2C three times in a row."
+    }
+   ],
+   "gaps": [
+    "The on-chip XADC is covered by skills; no committed design reads it or its alarms.",
+    "Analogue front ends and converter timing are not scored by any development task.",
+    "The audio tasks (PWM output) were development tasks; see the DSP area for their runs."
+   ],
+   "id": "mixed",
+   "level": "measured",
+   "level_label": "Measured in Vivado",
+   "level_n": 2,
+   "name": "Mixed-signal: XADC and converter interfaces",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Reading Artix-7 on-chip temperature or supply voltages, or sampling an analog input with the XADC: channels, 0-1 V range, DRP registers, DCLK/ADCCLK limits, transfer functions, accuracy ...",
+       "name": "artix7-xadc"
+      }
+     ],
+     "section": "analog",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Using the XADC on the Nexys A7-100T (which analog channels reach pins), choosing configuration mode and JTAG vs flash boot on this part ...",
+       "name": "xc7a100tcsg324-xadc-and-config-pins"
+      }
+     ],
+     "section": "analog",
+     "unit": "device/xc7a100tcsg324-1"
+    },
+    {
+     "items": [
+      {
+       "description": "Using the XADC of the xc7z020 on the ZedBoard (J2 header inputs, on-chip sensors) or naming the dedicated configuration pins.",
+       "name": "xc7z020-xadc-and-config-pins"
+      }
+     ],
+     "section": "analog",
+     "unit": "device/xc7z020clg484-1"
+    },
+    {
+     "items": [
+      {
+       "description": "Configuring or checking the free AMD infrastructure cores Block Memory Generator 8.4, FIFO Generator 13.2, Clocking Wizard 6.0 and XADC Wizard 3.3 (System Management Wizard on UltraScale+) ...",
+       "name": "amd-ip-memory-fifo-clock-xadc"
+      }
+     ],
+     "section": "ip-cores",
+     "unit": "vendor/amd_ip_cores"
+    },
+    {
+     "items": [
+      {
+       "description": "A Nexys A7-100T design talks to the on-board ADXL362 accelerometer over SPI (mode, commands, IDs, starting measurement, sample format).",
+       "name": "nexys-a7-accelerometer-spi"
+      },
+      {
+       "description": "A Nexys A7-100T design reads the on-board ADT7420 temperature sensor over I2C (address, registers, pull-ups, read sequence, units).",
+       "name": "nexys-a7-temperature-sensor-i2c"
+      }
+     ],
+     "section": "sensors",
+     "unit": "board/nexys_a7_100t"
+    },
+    {
+     "items": [
+      {
+       "description": "A Nexys A7-100T design uses the on-board PDM microphone (clock range, L/R select and sampling edge, what the bit stream looks like).",
+       "name": "nexys-a7-pdm-microphone"
+      },
+      {
+       "description": "A Nexys A7-100T design drives the mono audio jack (open-drain PWM/PDM, the shutdown pin, the filter) or reads the audio back through the XADC.",
+       "name": "nexys-a7-pwm-audio"
+      }
+     ],
+     "section": "audio",
+     "unit": "board/nexys_a7_100t"
+    },
+    {
+     "items": [
+      {
+       "description": "A ZedBoard design uses the ADAU1761 audio codec: I2C control, master clock from the FPGA, I2S pins, jack connectors.",
+       "name": "zedboard-adau1761-codec"
+      }
+     ],
+     "section": "audio",
+     "unit": "board/zedboard"
+    },
+    {
+     "items": [
+      {
+       "description": "UART, SPI modes, I2C, Ethernet MII/RMII framing (preamble, SFD, FCS), AXI4-Stream packets with tlast/tkeep.",
+       "name": "serial-and-network-protocols"
+      },
+      {
+       "description": "Baud divisors and error, 16x UART receive, SPI master SCLK edges, I2C master stretching, arbitration, NACK.",
+       "name": "serial-link-timing"
+      }
+     ],
+     "section": "serial-buses",
+     "unit": "functions"
+    }
+   ],
+   "summary": "Reading the on-chip XADC, wiring analogue inputs and alarms, and interfacing external converters and sensors over SPI and I2C."
+  },
+  {
+   "cap_reason": null,
+   "cards": [],
+   "checks": [
+    {
+     "enforced": true,
+     "file": "flow/standards_check.py",
+     "gate": "STD-AXI-01",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/standards_check.py",
+     "what": "A new block interface must be AXI4-Lite or AXI4-Stream with AMBA port names, and ports named like AXI belong to a declared interface."
+    },
+    {
+     "enforced": true,
+     "file": "agent/graph/stages.py",
+     "gate": "standards_rtl",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/graph/stages.py",
+     "what": "The stage that runs the design-standards checker on the RTL; a failing rule loops the run back."
+    }
+   ],
+   "counts": {
+    "checks": 2,
+    "enforced": 2,
+    "evidence": 0,
+    "sections": 12,
+    "skills": 28
+   },
+   "evidence": [],
+   "gaps": [
+    "The gate checks interface names and declarations only; protocol behaviour (valid held until ready, no combinational path) is for review and for the skills' assertions.",
+    "No committed development task is an AXI design, so nothing measures this area end to end yet.",
+    "Zynq PS designs have skills but no built flow step; the flow targets the Nexys A7 first."
+   ],
+   "id": "amba",
+   "level": "checked",
+   "level_label": "Checked by the flow",
+   "level_n": 3,
+   "name": "AMBA/AXI and the Zynq processing system",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Writing an APB completer or an AXI4-Lite to APB bridge, reading AHB-Lite signals, or choosing AMD's AXI APB and AHB-Lite bridges: setup and access phases, PREADY, PSLVERR, PSTRB, HTRANS ...",
+       "name": "apb-ahb-and-axi-lite-bridges"
+      },
+      {
+       "description": "An AXI, AXI-Stream or APB interface crosses clock domains: AMD clock converter IP, async FIFOs on streams, per-channel crossing of memory-mapped AXI ...",
+       "name": "axi-clock-domain-crossing"
+      },
+      {
+       "description": "Writing or checking any AXI, AXI-Stream or APB-style VALID/READY interface: the legal dependency directions on every channel, what may and may not be combinational, holding payload ...",
+       "name": "axi-handshake-rules-and-register-slices"
+      },
+      {
+       "description": "Generating or checking AXI4 (full) burst addresses and lengths: INCR, WRAP and FIXED, AxLEN and AxSIZE, the 4 KB boundary rule, splitting long transfers, WLAST and RLAST placement ...",
+       "name": "axi4-bursts-addressing-and-4kb-rule"
+      },
+      {
+       "description": "Dealing with AXI4 transaction IDs and ordering, narrow or unaligned transfers and WSTRB lanes, exclusive accesses, or the AxCACHE and AxPROT/AxQOS defaults a design must drive when the spec ...",
+       "name": "axi4-ids-ordering-narrow-exclusive-attributes"
+      },
+      {
+       "description": "Reviewing, debugging or grading an AXI4-Lite slave or master: the bug list (lost channel, ignored WSTRB, BVALID or RVALID drop, response before handshake, stuck READY) ...",
+       "name": "axi4-lite-common-bugs-and-checks"
+      },
+      {
+       "description": "Writing an AXI4-Lite register slave or a simple AXI4-Lite master in RTL: the five channels, independent AW and W acceptance, WSTRB, BRESP and RRESP, the one-outstanding design ...",
+       "name": "axi4-lite-slave-and-master-design"
+      },
+      {
+       "description": "Building or choosing AXI4-Stream plumbing: packet FIFOs with drop-on-error, width up and down converters, muxes and demuxes, arbiters that grant on TLAST, and AMD's axis data FIFO ...",
+       "name": "axi4-stream-fifos-width-converters-and-arbitration"
+      },
+      {
+       "description": "Designing or checking an AXI4-Stream interface: TVALID/TREADY, TDATA, TKEEP versus TSTRB byte types, TLAST packets, TID and TDEST, TUSER sideband, default values when signals are absent ...",
+       "name": "axi4-stream-signals-and-packets"
+      }
+     ],
+     "section": "amba",
+     "unit": "vendor/amba_axi"
+    },
+    {
+     "items": [
+      {
+       "description": "Moving data between memory and AXI4-Stream with the AMD AXI DMA IP (PG021): simple (direct register) versus scatter-gather mode, the register programming order ...",
+       "name": "amd-axi-dma-simple-and-sg"
+      },
+      {
+       "description": "Picking AMD AXI infrastructure and peripheral IP: which AXI cores are free or fee-based in Vivado 2025.2 (axi_dma, axi_gpio, axi_bram_ctrl, protocol checker, VIP, bridges ...",
+       "name": "amd-axi-infrastructure-ip-and-licences"
+      },
+      {
+       "description": "Connecting several AXI masters and slaves in a Vivado block design: choosing SmartConnect or AXI Interconnect or AXI Crossbar, setting NUM_SI and NUM_MI, assigning address ranges from Tcl ...",
+       "name": "amd-axi-smartconnect-and-address-maps"
+      }
+     ],
+     "section": "ip-cores",
+     "unit": "vendor/amba_axi"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing SystemVerilog assertions or SymbiYosys properties for an AXI, AXI-Stream or APB block: the hold rule, response ordering, beat-count conservation, the assume side for the master ...",
+       "name": "axi-protocol-assertions-and-formal"
+      },
+      {
+       "description": "Checking AXI protocol compliance in Vivado simulation with AMD's AXI Protocol Checker IP (pc_status, pc_asserted) and AXI Verification IP (master, slave ...",
+       "name": "axi-protocol-checker-and-vip-in-xsim"
+      },
+      {
+       "description": "Writing a cocotb testbench for an AXI4-Lite, AXI4 or AXI4-Stream block with Icarus or Verilator: random READY and VALID back-pressure, a protocol monitor that fails the test, a scoreboard ...",
+       "name": "axi-verification-with-cocotb"
+      }
+     ],
+     "section": "simulation",
+     "unit": "vendor/amba_axi"
+    },
+    {
+     "items": [
+      {
+       "description": "CSR/register maps, APB, AXI4-Lite, Wishbone; access types (RW, RO, W1C, RC), address decode, responses.",
+       "name": "bus-and-register-interfaces"
+      }
+     ],
+     "section": "buses-axi",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "A Zynq-7000 PL design takes its clock from the PS (FCLK_CLK0-3): how many, how set, how they relate to other clocks, and what to constrain.",
+       "name": "zynq7000-ps-clocks-fclk"
+      }
+     ],
+     "section": "clocking",
+     "unit": "family/zynq7000"
+    },
+    {
+     "items": [
+      {
+       "description": "Sizing or debugging PL masters on the Zynq-7000 HP and ACP ports: AXI3 limits, 32 versus 64-bit mode, command expansion versus upsizing and the AxCACHE[1] bit, write store-and-forward ...",
+       "name": "zynq7000-hp-and-acp-port-behaviour"
+      },
+      {
+       "description": "Connecting PL logic to the Zynq-7000 PS over AXI: GP master ports and their address windows, GP slaves, HP ports to DDR, the ACP, widths.",
+       "name": "zynq7000-ps-pl-axi-ports"
+      }
+     ],
+     "section": "dram",
+     "unit": "family/zynq7000"
+    },
+    {
+     "items": [
+      {
+       "description": "Routing a Zynq-7000 PS peripheral to pins or into the PL: MIO versus EMIO, EMIO GPIO count, PS interrupts into the PL.",
+       "name": "zynq7000-mio-and-emio"
+      }
+     ],
+     "section": "io-standards",
+     "unit": "family/zynq7000"
+    },
+    {
+     "items": [
+      {
+       "description": "Building a Zynq-7000 design with a PS7 block design from Tcl in Vivado non-project mode: PS configuration, connections, wrapper, synthesis to bitstream.",
+       "name": "zynq7000-block-design-flow-nonproject"
+      },
+      {
+       "description": "Loading a Zynq-7000 bitstream over JTAG with the PS otherwise idle: what the PS must do first (clocks, level shifters), JTAG boot mode, and the order of steps.",
+       "name": "zynq7000-jtag-bringup-ps7-init"
+      },
+      {
+       "description": "Exporting a Zynq-7000 hardware platform (XSA) from Vivado and using it for bare-metal firmware in Vitis, including ps7_init and the FSBL question.",
+       "name": "zynq7000-xsa-export-and-vitis"
+      }
+     ],
+     "section": "power-config",
+     "unit": "family/zynq7000"
+    },
+    {
+     "items": [
+      {
+       "description": "A Zynq-7000 PL design needs a reset from the PS (FCLK_RESET0_N), or must behave across PS resets, PROG and power-on.",
+       "name": "zynq7000-fclk-reset-and-ps-reset"
+      }
+     ],
+     "section": "reset",
+     "unit": "family/zynq7000"
+    },
+    {
+     "items": [
+      {
+       "description": "Any K26 SOM question: what is on the SOM (xck26, 4 GB DDR4, QSPI, eMMC), the two 240-pin connectors, carrier supplies, boot, and what must not be changed.",
+       "name": "k26-som-specifics"
+      },
+      {
+       "description": "Building a Zynq UltraScale+ (K26) design with a zynq_ultra_ps_e block design in Vivado non-project mode, with the SOM board flow, then exporting an XSA.",
+       "name": "zynqmp-block-design-flow-and-xsa"
+      }
+     ],
+     "section": "power-config",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "A Zynq UltraScale+ PL design needs a reset from the PS (pl_resetn0), or must survive PS subsystem restarts and PL isolation.",
+       "name": "zynqmp-pl-resetn-and-isolation"
+      }
+     ],
+     "section": "reset",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "A ZedBoard design reads the five PL push buttons or eight slide switches, or drives the eight PL LEDs; pins, banks, I/O standards, active levels.",
+       "name": "zedboard-buttons-switches-leds"
+      }
+     ],
+     "section": "user-io",
+     "unit": "board/zedboard"
+    }
+   ],
+   "summary": "AXI4, AXI4-Lite and AXI4-Stream handshakes, bursts, bridges and crossing clocks, AMD's AXI IP, and the PS-PL ports of Zynq-7000 and UltraScale+."
+  },
+  {
+   "cap_reason": null,
+   "cards": [
+    {
+     "href": "flow-notes.html#xsim",
+     "label": "Beyond the flow: IP models need xsim"
+    }
+   ],
+   "checks": [
+    {
+     "enforced": false,
+     "file": "flow/wizard_probe.tcl",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/wizard_probe.tcl",
+     "what": "Creates a wizard's IP in batch, sets its options and reads back what it generated, so a wizard's checks can be tested without the GUI."
+    }
+   ],
+   "counts": {
+    "checks": 1,
+    "enforced": 0,
+    "evidence": 1,
+    "sections": 3,
+    "skills": 10
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/project_parity/wizards/wizards.txt",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/project_parity/wizards/wizards.txt"
+      }
+     ],
+     "text": "Batch-mode generation of the Block Memory, FIFO, XADC, Transceiver, PS7, Clocking and other wizards was tried; the probe output is committed."
+    }
+   ],
+   "gaps": [
+    "The encrypted cores run only in xsim; the harness that drives them from files belongs to Brief 19 (PR #92), which is not merged.",
+    "The Transceiver wizard's legal low-rate setting was not measured because of a property-name error."
+   ],
+   "id": "ip",
+   "level": "measured",
+   "level_label": "Measured in Vivado",
+   "level_n": 2,
+   "name": "AMD IP cores and wizards",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Configuring or checking the free AMD DDS Compiler 6.0, CORDIC 6.0 or Fast Fourier Transform 9.1: functions and modes, number formats (1QN/2QN, scaled radians) ...",
+       "name": "amd-ip-dds-cordic-fft"
+      },
+      {
+       "description": "Configuring or checking the free AMD Divider Generator 5.1, Floating-Point 7.1 or Multiplier 12.0 cores: algorithm choice (Radix2, High_Radix, LutMult), remainder or fractional output ...",
+       "name": "amd-ip-divider-float-multiplier"
+      },
+      {
+       "description": "Configuring or checking the free AMD FIR Compiler 7.2 or CIC Compiler 4.0: filter and rate types, coefficient sets and reload, architecture and DSP use, widths and rounding, CIC bit growth ...",
+       "name": "amd-ip-fir-and-cic"
+      },
+      {
+       "description": "Configuring or checking the free AMD infrastructure cores Block Memory Generator 8.4, FIFO Generator 13.2, Clocking Wizard 6.0 and XADC Wizard 3.3 (System Management Wizard on UltraScale+) ...",
+       "name": "amd-ip-memory-fifo-clock-xadc"
+      },
+      {
+       "description": "A design uses an AMD IP catalogue core in a batch non-project Vivado flow: which cores are free in Vivado 2025.2 (REQUIRES_LICENSE), create_ip and CONFIG.* properties, generate_target ...",
+       "name": "amd-ip-non-project-flow-and-licences"
+      },
+      {
+       "description": "Simulating or grading a design that contains AMD IP cores: which cores need xsim (encrypted VHDL) and which ship plain Verilog models ...",
+       "name": "amd-ip-simulation-and-c-models"
+      }
+     ],
+     "section": "ip-cores",
+     "unit": "vendor/amd_ip_cores"
+    },
+    {
+     "items": [
+      {
+       "description": "Moving data between memory and AXI4-Stream with the AMD AXI DMA IP (PG021): simple (direct register) versus scatter-gather mode, the register programming order ...",
+       "name": "amd-axi-dma-simple-and-sg"
+      },
+      {
+       "description": "Picking AMD AXI infrastructure and peripheral IP: which AXI cores are free or fee-based in Vivado 2025.2 (axi_dma, axi_gpio, axi_bram_ctrl, protocol checker, VIP, bridges ...",
+       "name": "amd-axi-infrastructure-ip-and-licences"
+      },
+      {
+       "description": "Connecting several AXI masters and slaves in a Vivado block design: choosing SmartConnect or AXI Interconnect or AXI Crossbar, setting NUM_SI and NUM_MI, assigning address ranges from Tcl ...",
+       "name": "amd-axi-smartconnect-and-address-maps"
+      }
+     ],
+     "section": "ip-cores",
+     "unit": "vendor/amba_axi"
+    },
+    {
+     "items": [
+      {
+       "description": "Checking AXI protocol compliance in Vivado simulation with AMD's AXI Protocol Checker IP (pc_status, pc_asserted) and AXI Verification IP (master, slave ...",
+       "name": "axi-protocol-checker-and-vip-in-xsim"
+      }
+     ],
+     "section": "simulation",
+     "unit": "vendor/amba_axi"
+    }
+   ],
+   "summary": "The free IP cores (FIR, DDS, CORDIC, FFT, divider, memory, FIFO, clocking), their licences, and what the wizards do in batch mode."
+  },
+  {
+   "cap_reason": null,
+   "cards": [],
+   "checks": [],
+   "counts": {
+    "checks": 0,
+    "enforced": 0,
+    "evidence": 1,
+    "sections": 5,
+    "skills": 9
+   },
+   "evidence": [
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/course/c10_*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      },
+      {
+       "path": "results/course/c11_*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      }
+     ],
+     "text": "Development runs of the DDS and NCO-mixer tasks: 4 runs, hidden tests all passed in 3; escapes (own checks passed, hidden tests did not): 1."
+    }
+   ],
+   "gaps": [
+    "Driving AMD cores from external design tools (Brief 19, PR #92) is not merged, so no core is exercised here.",
+    "Development results are not the held-out score."
+   ],
+   "id": "dsp",
+   "level": "agent",
+   "level_label": "Shown in agent runs",
+   "level_n": 4,
+   "name": "DSP and IP driven from external tools",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "FIR forms (direct, transposed, systolic, symmetric), time-multiplexed MAC, CIC droop, CORDIC vectoring; group delay.",
+       "name": "dsp-filter-structures"
+      },
+      {
+       "description": "Q-format data, multipliers/MACs, rounding and saturation, complex multiply, FIR, CIC, CORDIC, colour-space conversion.",
+       "name": "fixed-point-and-dsp-datapaths"
+      }
+     ],
+     "section": "dsp",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "A 7-series datapath should use DSP48E1 features beyond a plain MAC: the pre-adder, the pattern detector (overflow, rounding, terminal count with AUTORESET_PATDET) ...",
+       "name": "artix7-dsp48e1-advanced-modes"
+      },
+      {
+       "description": "Multipliers, multiply-accumulate, wide adders/counters or filters must map onto Artix-7 DSP48E1 slices; 25x18 multiply, pre-adder, 48-bit accumulator, pipeline registers, cascade, inference.",
+       "name": "artix7-dsp48e1"
+      }
+     ],
+     "section": "dsp",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing, instantiating or auditing a DSP48E1: which RTL infers it, the attributes that matter (AREG/BREG/MREG/PREG, USE_MULT, USE_SIMD), OPMODE/ALUMODE, cascade ...",
+       "name": "artix7-primitives-dsp"
+      }
+     ],
+     "section": "primitives",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Configuring or checking the free AMD DDS Compiler 6.0, CORDIC 6.0 or Fast Fourier Transform 9.1: functions and modes, number formats (1QN/2QN, scaled radians) ...",
+       "name": "amd-ip-dds-cordic-fft"
+      },
+      {
+       "description": "Configuring or checking the free AMD FIR Compiler 7.2 or CIC Compiler 4.0: filter and rate types, coefficient sets and reload, architecture and DSP use, widths and rounding, CIC bit growth ...",
+       "name": "amd-ip-fir-and-cic"
+      },
+      {
+       "description": "Simulating or grading a design that contains AMD IP cores: which cores need xsim (encrypted VHDL) and which ship plain Verilog models ...",
+       "name": "amd-ip-simulation-and-c-models"
+      }
+     ],
+     "section": "ip-cores",
+     "unit": "vendor/amd_ip_cores"
+    },
+    {
+     "items": [
+      {
+       "description": "CRC/FCS, LFSR, PRBS, scramblers, 8b/10b, 64b/66b, Manchester, AMI/HDB3; CRC parameters and published check values.",
+       "name": "crc-lfsr-and-line-codes"
+      }
+     ],
+     "section": "crc-and-line-codes",
+     "unit": "functions"
+    }
+   ],
+   "summary": "Filters, NCOs and mixers; designing the coefficients and word lengths in Python, then building and checking the datapath or the AMD core."
+  },
+  {
+   "cap_reason": null,
+   "cards": [],
+   "checks": [],
+   "counts": {
+    "checks": 0,
+    "enforced": 0,
+    "evidence": 2,
+    "sections": 5,
+    "skills": 6
+   },
+   "evidence": [
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/course/c9_*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      }
+     ],
+     "text": "The development task that filters a pixel stream (a median filter): 1 run, hidden tests all passed in 1."
+    },
+    {
+     "kind": "example",
+     "sources": [
+      {
+       "path": "results/board_v2/t2_vga_sprite.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/board_v2/t2_vga_sprite.json"
+      }
+     ],
+     "text": "A hand-built VGA sprite design ran on the board at 60.52 frames per second."
+    }
+   ],
+   "gaps": [
+    "One development run only; the high-definition VGA task has not been run.",
+    "HDMI and DisplayPort have skills, no design."
+   ],
+   "id": "video",
+   "level": "agent",
+   "level_label": "Shown in agent runs",
+   "level_n": 4,
+   "name": "Video",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Button press events, LED dimming, scanned seven-segment displays, VGA/raster sync; VESA 640x480 timing.",
+       "name": "display-and-video-timing"
+      }
+     ],
+     "section": "video",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "A ZedBoard design drives HDMI video through the ADV7511 transmitter: I2C configuration, 16-bit data pins, pixel clock, bank and voltage.",
+       "name": "zedboard-hdmi-adv7511"
+      },
+      {
+       "description": "A ZedBoard design drives the 12-bit VGA connector: resistor-ladder colour bits, sync pins, bank and voltage, pixel clock.",
+       "name": "zedboard-vga"
+      }
+     ],
+     "section": "video",
+     "unit": "board/zedboard"
+    },
+    {
+     "items": [
+      {
+       "description": "A KR260 task needs video: the PS DisplayPort output (J6) or the Framos SLVS-EC camera input (J22); note there is no HDMI and no MIPI connector.",
+       "name": "kr260-displayport-and-slvs-ec"
+      }
+     ],
+     "section": "video",
+     "unit": "board/kr260"
+    },
+    {
+     "items": [
+      {
+       "description": "A Nexys A7-100T design debounces the push buttons, scans the 8-digit seven-segment display or drives the VGA port; counts at 100 MHz, active levels ...",
+       "name": "nexys-a7-buttons-displays-and-vga"
+      }
+     ],
+     "section": "user-io",
+     "unit": "board/nexys_a7_100t"
+    },
+    {
+     "items": [
+      {
+       "description": "RAM, ROM, register file, byte enables; sync vs async read, read-during-write behaviour, RAM inference.",
+       "name": "memories-and-register-files"
+      }
+     ],
+     "section": "on-chip-memory",
+     "unit": "functions"
+    }
+   ],
+   "summary": "Display timing, pixel pipelines and line buffers, VGA and HDMI-style output."
+  },
+  {
+   "cap_reason": null,
+   "cards": [],
+   "checks": [],
+   "counts": {
+    "checks": 0,
+    "enforced": 0,
+    "evidence": 1,
+    "sections": 6,
+    "skills": 7
+   },
+   "evidence": [
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/course/c14_int8*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      },
+      {
+       "path": "results/course/c15_softmax*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      },
+      {
+       "path": "results/course/c16_montgomery*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      }
+     ],
+     "text": "Development runs of the int8 dot product, softmax and Montgomery multiplier tasks: 9 runs, hidden tests all passed in 6, escapes 2, failures 1."
+    }
+   ],
+   "gaps": [
+    "The int8 task escaped most often; the misreading was of the specification, not the arithmetic.",
+    "Rounding modes and saturation are covered by skills; only these tasks test them."
+   ],
+   "id": "arithmetic",
+   "level": "agent",
+   "level_label": "Shown in agent runs",
+   "level_n": 4,
+   "name": "Arithmetic",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Add/sub/multiply/compare/shift, signed or fixed-point data, overflow, saturation, rounding, width and sign-extension rules.",
+       "name": "arithmetic-and-widths"
+      }
+     ],
+     "section": "arithmetic",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Sorting networks and sorters, search, GCD, division/square root, systolic arrays; turning a loop into datapath plus FSM, latency vs area.",
+       "name": "hardware-algorithms"
+      }
+     ],
+     "section": "hardware-algorithms",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "AES, DES, Feistel or RC5-style ARX ciphers and key schedules; round loop vs unrolled, byte and bit order, known-answer test vectors.",
+       "name": "block-ciphers-in-hardware"
+      }
+     ],
+     "section": "crypto",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "Q-format data, multipliers/MACs, rounding and saturation, complex multiply, FIR, CIC, CORDIC, colour-space conversion.",
+       "name": "fixed-point-and-dsp-datapaths"
+      }
+     ],
+     "section": "dsp",
+     "unit": "functions"
+    },
+    {
+     "items": [
+      {
+       "description": "A 7-series datapath should use DSP48E1 features beyond a plain MAC: the pre-adder, the pattern detector (overflow, rounding, terminal count with AUTORESET_PATDET) ...",
+       "name": "artix7-dsp48e1-advanced-modes"
+      },
+      {
+       "description": "Multipliers, multiply-accumulate, wide adders/counters or filters must map onto Artix-7 DSP48E1 slices; 25x18 multiply, pre-adder, 48-bit accumulator, pipeline registers, cascade, inference.",
+       "name": "artix7-dsp48e1"
+      }
+     ],
+     "section": "dsp",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",
+       "name": "vivado-inference-templates-datapath"
+      }
+     ],
+     "section": "synthesis-attributes",
+     "unit": "vendor/vivado_synthesis"
+    }
+   ],
+   "summary": "Widths and rounding, saturation, fixed-point datapaths, modular multiplication and quantised neural-network arithmetic."
+  },
+  {
+   "cap_reason": null,
+   "cards": [
+    {
+     "href": "flow-notes.html#gates",
+     "label": "Beyond the flow: gates beyond Vivado's own"
+    }
+   ],
+   "checks": [
+    {
+     "enforced": true,
+     "file": "agent/graph/stages.py",
+     "gate": "standards_rtl",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/graph/stages.py",
+     "what": "Design standards on the RTL: no latches, no combinational loops, no gated clocks, synchronous resets, declared crossings."
+    },
+    {
+     "enforced": true,
+     "file": "flow/gates.py",
+     "gate": "rtl_methodology_no_critical",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/gates.py",
+     "what": "Methodology checks on the elaborated design, then after synthesis: no Critical Warning."
+    },
+    {
+     "enforced": false,
+     "file": "flow/lint.sh",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/lint.sh",
+     "what": "Verilator lint, run before the stage can end."
+    }
+   ],
+   "counts": {
+    "checks": 3,
+    "enforced": 2,
+    "evidence": 1,
+    "sections": 13,
+    "skills": 24
+   },
+   "evidence": [
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/course/*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      }
+     ],
+     "text": "Across all development runs: 21 runs, hidden tests all passed in 13, escapes (own checks passed, hidden tests failed) 6, failures 2."
+    }
+   ],
+   "gaps": [
+    "Every escape so far was a misreading of the specification; the gates cannot catch a spec error the agent's own tests share.",
+    "These are development tasks, not the held-out score."
+   ],
+   "id": "rtl",
+   "level": "agent",
+   "level_label": "Shown in agent runs",
+   "level_n": 4,
+   "name": "RTL design",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Writing always_ff/always_comb; blocking vs nonblocking, latches, multiple drivers, sizing literals, unique/priority case.",
+       "name": "sequential-and-combinational-coding"
+      },
+      {
+       "description": "What synthesises, parameters/localparams, generate, $clog2 edge cases, packages, open-tool portability.",
+       "name": "synthesisable-subset-and-parameters"
+      }
+     ],
+     "section": "rtl-coding",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Start of every RTL task; extract ports, parameters, latency/throughput, reset, corner cases; list ambiguities with stated assumptions and silent-spec defaults.",
+       "name": "spec-reading"
+      }
+     ],
+     "section": "spec-reading",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Building a top level from given submodules; named port maps, parameter propagation, width and clock-domain checks, handshake glue.",
+       "name": "module-integration"
+      },
+      {
+       "description": "Splitting a design into modules, registered module outputs, a target clock rate, or a critical path crossing a module boundary.",
+       "name": "rtl-hierarchy-and-register-boundaries"
+      }
+     ],
+     "section": "integration",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Spec gives a latency in cycles, \"pipelined\", \"registered output\", or a test is off by a cycle; valid shift registers, side-band alignment.",
+       "name": "pipelining-and-latency"
+      },
+      {
+       "description": "Valid/ready, tvalid/tready, back-pressure or stall; transfer rules, pipeline stage with ready, skid buffer, req/ack.",
+       "name": "valid-ready-handshake"
+      }
+     ],
+     "section": "pipelining-handshakes",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Adding a feature, mode, parameter or port to working RTL; backward-compatible defaults, additive ports, regression against the old design.",
+       "name": "minimal-change-modification"
+      },
+      {
+       "description": "The task gives existing RTL files to read, fix or extend; map the hierarchy, build files and house style, keep interfaces unchanged.",
+       "name": "working-in-existing-code"
+      }
+     ],
+     "section": "existing-code",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Shared resource, priority encoder, fixed or round-robin arbiter, one-hot/binary conversion, wide muxes.",
+       "name": "arbiters-encoders-and-muxes"
+      }
+     ],
+     "section": "arbitration-and-muxing",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Counters, timers, prescalers, clock enables, PWM, edge detection, debouncing, \"wait N cycles\".",
+       "name": "counters-timers-and-edges"
+      }
+     ],
+     "section": "counters-and-timers",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Stopping or slowing part of a design, divided clocks, gated-clock logic in existing code; enables instead of gating the clock.",
+       "name": "clock-enables-not-gated-clocks"
+      }
+     ],
+     "section": "clocking",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "A slow path, high fanout, deep logic or needless toggling; logic levels, replication, retiming-friendly code, operand isolation, enables for power.",
+       "name": "coding-for-timing-and-power"
+      }
+     ],
+     "section": "timing-concepts",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Sizing or optimising logic on Artix-7: LUT6/LUT5, slice flip-flops and control sets, CARRY4 chains, wide muxes, SRL32 shift registers, distributed (LUT) RAM.",
+       "name": "artix7-clb-and-carry"
+      },
+      {
+       "description": "Deciding resets and enables on Artix-7: synchronous vs asynchronous, active-high, whether to reset at all, control sets per slice, report_control_sets thresholds for the xc7a100t ...",
+       "name": "artix7-control-sets-and-resets"
+      },
+      {
+       "description": "Structuring RTL for the Artix-7 LUT6 fabric at speed grade -1: logic levels per clock period, how many inputs a LUT absorbs, wide functions and MUXF7/F8, carry chains ...",
+       "name": "artix7-design-for-lut6"
+      },
+      {
+       "description": "Choosing flip-flops, SRL, LUT RAM or block RAM for a delay line, FIFO, small table or buffer on the XC7A100T, by depth, width, read style and clock rate ...",
+       "name": "artix7-srl-lutram-bram-choice"
+      }
+     ],
+     "section": "logic-fabric",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Running synth_design -lint or reading its report; ASSIGN-n, INFER-n, RESET-n, CLOCK-1, QOR-1.",
+       "name": "rtl-lint-triage"
+      },
+      {
+       "description": "Synth_design fails or logs [Synth 8-n] errors/warnings: undeclared, latches, undriven or multi-driven nets, width mismatches, removed registers.",
+       "name": "synth-message-triage"
+      }
+     ],
+     "section": "lint",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing the architecture note, the RTL and any IP for a clarified spec: hierarchy, IP by Tcl, AMD coding rules, clocking, CDC, and the RTL methodology DRCs that end the stage (UG949 ch. 3).",
+       "name": "rtl-design-creation"
+      },
+      {
+       "description": "Running or judging synthesis: defaults first, then the post-synthesis checks that decide whether to implement (log, DRC, methodology, timing, utilisation, clocks ...",
+       "name": "synthesis"
+      }
+     ],
+     "section": "ultrafast",
+     "unit": "procedures"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",
+       "name": "vivado-inference-templates-datapath"
+      },
+      {
+       "description": "Writing SystemVerilog that Vivado must map to SRL shift registers, LUT RAM, block RAM (simple and true dual port, byte write) or ROM on Artix-7 ...",
+       "name": "vivado-inference-templates"
+      },
+      {
+       "description": "Steering Vivado synthesis from RTL or XDC: KEEP, DONT_TOUCH, KEEP_HIERARCHY, MAX_FANOUT, RAM_STYLE, ROM_STYLE, SRL_STYLE, SHREG_EXTRACT, USE_DSP, FSM_ENCODING, EXTRACT_ENABLE/RESET ...",
+       "name": "vivado-synthesis-attributes"
+      }
+     ],
+     "section": "synthesis-attributes",
+     "unit": "vendor/vivado_synthesis"
+    }
+   ],
+   "summary": "Reading a specification, synthesisable coding, pipelines and handshakes, hierarchy and register boundaries, lint and synthesis messages."
+  },
+  {
+   "cap_reason": null,
+   "cards": [],
+   "checks": [
+    {
+     "enforced": false,
+     "file": "flow/standards_check.py",
+     "gate": "STD-RST-01",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/standards_check.py",
+     "what": "Synchronous-reset rule, no latch and no combinational loop; part of the standards stage gate that covers all RTL."
+    }
+   ],
+   "counts": {
+    "checks": 1,
+    "enforced": 0,
+    "evidence": 1,
+    "sections": 5,
+    "skills": 7
+   },
+   "evidence": [
+    {
+     "kind": "example",
+     "sources": [
+      {
+       "path": "results/board_v2/t1_elevator_fsm.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/board_v2/t1_elevator_fsm.json"
+      }
+     ],
+     "text": "A hand-built elevator controller (an FSM with timers) passed its on-board self-check in 1 of 1 run."
+    }
+   ],
+   "gaps": [
+    "Brief 24 (FSM measurements and coverage) is not merged: no committed measurement compares encodings, registered outputs, reset styles or an FSM split from its counter.",
+    "No gate checks state or transition coverage; the owner's slow-FSM multicycle pattern is part of Brief 20.",
+    "There is no FSM lesson in the course yet."
+   ],
+   "id": "fsm",
+   "level": "knowledge",
+   "level_label": "Knowledge only",
+   "level_n": 1,
+   "name": "Finite state machines",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Spec describes states, modes, phases, sequences or a controller; Moore vs Mealy timing, two-block enum FSM, sequence detectors.",
+       "name": "fsm-design"
+      }
+     ],
+     "section": "fsm",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Reviewing or debugging an FSM for the classic bugs (latches, incomplete case, unreachable or sink states, reset into an illegal state, Mealy loops ...",
+       "name": "artix7-fsm-bugs-and-formal-checks"
+      },
+      {
+       "description": "Choosing or checking how Vivado encodes a state machine on 7-series LUT6 fabric: auto, one-hot, sequential (binary), Gray, Johnson, user encoding, none ...",
+       "name": "artix7-fsm-encoding-and-extraction"
+      },
+      {
+       "description": "A 7-series state machine must never lock up: illegal-state recovery, Vivado FSM_SAFE_STATE (auto_safe_state Hamming-3, reset_state, power_on_state, default_state) ...",
+       "name": "artix7-safe-fsm-and-seu"
+      }
+     ],
+     "section": "fsm",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Any register with a reset; polarity from port name, sync vs async choice, reset values, reset synchroniser.",
+       "name": "reset-strategy"
+      }
+     ],
+     "section": "reset",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Counters, timers, prescalers, clock enables, PWM, edge detection, debouncing, \"wait N cycles\".",
+       "name": "counters-timers-and-edges"
+      }
+     ],
+     "section": "counters-and-timers",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Valid/ready, tvalid/tready, back-pressure or stall; transfer rules, pipeline stage with ready, skid buffer, req/ack.",
+       "name": "valid-ready-handshake"
+      }
+     ],
+     "section": "pipelining-handshakes",
+     "unit": "techniques"
+    }
+   ],
+   "summary": "Separating control from datapath, choosing the clock and any multicycle ratio, registering inputs and outputs, encoding, reset, and coverage."
+  },
+  {
+   "cap_reason": null,
+   "cards": [
+    {
+     "href": "flow-notes.html#gates",
+     "label": "Beyond the flow: gates beyond Vivado's own"
+    }
+   ],
+   "checks": [
+    {
+     "enforced": true,
+     "file": "flow/verif_gates.py",
+     "gate": "mutation_score_pct",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/verif_gates.py",
+     "what": "V0 to V3: plan, traceability, passing tests on every seed, coverage and a mutation score, each at or above a floor the agent cannot lower."
+    },
+    {
+     "enforced": true,
+     "file": "flow/mutate.py",
+     "gate": "mutant",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/mutate.py",
+     "what": "Mutation testing of the RTL against the agent's tests."
+    },
+    {
+     "enforced": false,
+     "file": "flow/formal.sh",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/formal.sh",
+     "what": "SymbiYosys jobs for bounded proofs."
+    }
+   ],
+   "counts": {
+    "checks": 3,
+    "enforced": 2,
+    "evidence": 2,
+    "sections": 7,
+    "skills": 14
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/04f/mutation_t1.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/04f/mutation_t1.json"
+      }
+     ],
+     "text": "On the reference design, mutation testing made 21 valid changes; the first run caught 90.48 percent and, after the bench was fixed, 100 percent."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/course/*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      }
+     ],
+     "text": "16 development runs passed the V3 gate (coverage and mutation floors) in the flow."
+    }
+   ],
+   "gaps": [
+    "The agent's own tests never count as a pass; the hidden tests are the judge, and several runs passed every gate yet failed them.",
+    "Formal checks are enforced only where the testplan promises a proof."
+   ],
+   "id": "verification",
+   "level": "agent",
+   "level_label": "Shown in agent runs",
+   "level_n": 4,
+   "name": "Verification",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "After writing RTL or when writing a testbench; lint commands, cocotb 2.x idioms and Makefile, self-review checklist.",
+       "name": "self-check-and-cocotb"
+      }
+     ],
+     "section": "verification",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "V3 has passed and a bitstream exists: closing verification on the board, with the same model as the oracle (V-HW), and when hardware and model disagree.",
+       "name": "v-hw-bringup"
+      },
+      {
+       "description": "A spec.yaml is signed off and RTL verification is about to start: writing the testplan and traceability matrix (V0, V1) and connecting the bench to the blind golden model.",
+       "name": "v0-v1-testplan"
+      },
+      {
+       "description": "The testplan exists and RTL tests are being written or run: directed and constrained-random cocotb tests, bound assertion checkers, and formal on control logic (V2).",
+       "name": "v2-tests-assertions-formal"
+      },
+      {
+       "description": "V2 passes and sign-off is next: functional and code coverage thresholds, waivers with reasons, all seeds passing, and the bench's mutation score (V3).",
+       "name": "v3-coverage-closure"
+      }
+     ],
+     "section": "verification-stages",
+     "unit": "procedures"
+    },
+    {
+     "items": [
+      {
+       "description": "A cocotb bench samples functional coverage with cocotb_coverage (CoverPoint, CoverCross, coverage_db), or a run dies at import with 'CoverPoint must have a parent'.",
+       "name": "cocotb-coverage-usage"
+      },
+      {
+       "description": "Writing a SystemVerilog bench or checker that must run in Icarus 12, Verilator, xsim or the Questa Starter edition, or a free simulator rejects a construct (error signatures and ...",
+       "name": "free-simulator-capabilities"
+      },
+      {
+       "description": "Icarus 12 fails at elaboration on code Verilator accepts: 'is not a constant function', 'Unable to evaluate parameter', 'Array ... needs an array index here', ROM tables built by a function.",
+       "name": "icarus-elaboration-limits"
+      }
+     ],
+     "section": "simulation",
+     "unit": "vendor/free_simulators"
+    },
+    {
+     "items": [
+      {
+       "description": "Simulating with xvlog/xelab/xsim from a script, or xsim fails with XSIM 43-n, VRFC 10-n, USF-XSim-n; classifying simulation failures.",
+       "name": "xsim-batch-and-error-signatures"
+      }
+     ],
+     "section": "simulation",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing SystemVerilog assertions or SymbiYosys properties for an AXI, AXI-Stream or APB block: the hold rule, response ordering, beat-count conservation, the assume side for the master ...",
+       "name": "axi-protocol-assertions-and-formal"
+      },
+      {
+       "description": "Checking AXI protocol compliance in Vivado simulation with AMD's AXI Protocol Checker IP (pc_status, pc_asserted) and AXI Verification IP (master, slave ...",
+       "name": "axi-protocol-checker-and-vip-in-xsim"
+      },
+      {
+       "description": "Writing a cocotb testbench for an AXI4-Lite, AXI4 or AXI4-Stream block with Icarus or Verilator: random READY and VALID back-pressure, a protocol monitor that fails the test, a scoreboard ...",
+       "name": "axi-verification-with-cocotb"
+      }
+     ],
+     "section": "simulation",
+     "unit": "vendor/amba_axi"
+    },
+    {
+     "items": [
+      {
+       "description": "A test fails, output is wrong or late, or \"find and fix the bug\"; reproduce-localise-explain method, lint warnings, common RTL bug classes, assertions.",
+       "name": "rtl-debugging"
+      }
+     ],
+     "section": "debugging",
+     "unit": "techniques"
+    },
+    {
+     "items": [
+      {
+       "description": "Verifying CDC and reset-crossing logic in simulation (cocotb/Icarus or xsim) without a board: metastability-injection models (a random extra cycle per synchronised bit) ...",
+       "name": "artix7-cdc-verification-without-hardware"
+      }
+     ],
+     "section": "cdc",
+     "unit": "family/artix7"
+    }
+   ],
+   "summary": "Self-checking tests, assertions, formal checks, mutation testing, coverage, and CDC fault injection, staged V0 to V3 with a hardware step."
+  },
+  {
+   "cap_reason": null,
+   "cards": [
+    {
+     "href": "flow-notes.html#pblock",
+     "label": "Beyond the flow: pblocks on the CDC rig"
+    }
+   ],
+   "checks": [
+    {
+     "enforced": false,
+     "file": "flow/board_check.py",
+     "gate": "power_ok",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/board_check.py",
+     "what": "Power budget gate, programming by cable serial and SRAM only, identify, self-check and still-alive steps."
+    }
+   ],
+   "counts": {
+    "checks": 1,
+    "enforced": 0,
+    "evidence": 2,
+    "sections": 5,
+    "skills": 6
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/board_v2/*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/board_v2"
+      }
+     ],
+     "text": "20 board-check result files, each a design built by the flow and run on the board; 20 are marked pass."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "hil/cdc_soak/results/build_full.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/hil/cdc_soak/results/build_full.json"
+      }
+     ],
+     "text": "The CDC soak rig's full build uses 35,872 LUTs, meets timing with 0.308 ns of slack and has a Vivado power estimate of 0.776 W."
+    }
+   ],
+   "gaps": [
+    "The soak's hardware logs are not among the committed results here; what is committed is the builds and the simulations.",
+    "Unattended soaks and board runs need the owner's approval.",
+    "The agent's development runs stop before programming; the board designs above were hand-built."
+   ],
+   "id": "hil",
+   "level": "measured",
+   "level_label": "Measured in Vivado",
+   "level_n": 2,
+   "name": "Hardware in the loop",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "A new FPGA board must be described before anyone designs for it (Nexys A7 done in 04c; KV260 in F6; third-party boards in D1): documents, inventory, pin check, power budget, self-checks ...",
+       "name": "board-onboarding"
+      }
+     ],
+     "section": "board-onboarding",
+     "unit": "procedures"
+    },
+    {
+     "items": [
+      {
+       "description": "Inserting an ILA, or arming, triggering, uploading and exporting captures from batch hardware-manager Tcl; compare values, .ltx maps.",
+       "name": "ila-capture-batch-tcl"
+      },
+      {
+       "description": "A VIO core must be read or driven from batch hardware-manager Tcl; refresh, commit, reset outputs, activity.",
+       "name": "vio-batch-tcl"
+      }
+     ],
+     "section": "debug-ila-vio",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "V3 has passed and a bitstream exists: closing verification on the board, with the same model as the oracle (V-HW), and when hardware and model disagree.",
+       "name": "v-hw-bringup"
+      }
+     ],
+     "section": "verification-stages",
+     "unit": "procedures"
+    },
+    {
+     "items": [
+      {
+       "description": "A bitstream is ready for the board: programming it (SRAM by JTAG, by cable serial), what to check if configuration fails, adding ILA/VIO debug without breaking timing ...",
+       "name": "configuration-and-debug"
+      }
+     ],
+     "section": "ultrafast",
+     "unit": "procedures"
+    },
+    {
+     "items": [
+      {
+       "description": "A test fails, output is wrong or late, or \"find and fix the bug\"; reproduce-localise-explain method, lint warnings, common RTL bug classes, assertions.",
+       "name": "rtl-debugging"
+      }
+     ],
+     "section": "debugging",
+     "unit": "techniques"
+    }
+   ],
+   "summary": "Programming only the owner's board, self-checks over the UART, ILA capture, and the soak rig that exercises clock crossings on hardware."
+  },
+  {
+   "cap_reason": null,
+   "cards": [],
+   "checks": [
+    {
+     "enforced": true,
+     "file": "flow/gates.py",
+     "gate": "power_junction_ok",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/gates.py",
+     "what": "The junction temperature computed for the board's real cooling must fit the limit."
+    },
+    {
+     "enforced": true,
+     "file": "flow/board_check.py",
+     "gate": "power_ok",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/board_check.py",
+     "what": "Before programming, total on-chip power and junction temperature must be within the board's limits."
+    }
+   ],
+   "counts": {
+    "checks": 2,
+    "enforced": 2,
+    "evidence": 2,
+    "sections": 7,
+    "skills": 10
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/board_v2/*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/board_v2"
+      }
+     ],
+     "text": "Across the board-check results the highest on-chip power was 0.141 W and the highest junction temperature 42.6 C."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/course/*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      }
+     ],
+     "text": "4 development runs recorded post-route power and passed every post-route stage gate, the junction-temperature gate among them."
+    }
+   ],
+   "gaps": [
+    "Power figures are Vivado's estimates, not measurements at the supply.",
+    "Low-power coding techniques have skills; no run compares them."
+   ],
+   "id": "power",
+   "level": "agent",
+   "level_label": "Shown in agent runs",
+   "level_n": 4,
+   "name": "Power and thermal",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Choosing or debugging how an Artix-7 loads its bitstream: M[2:0] modes, CFGBVS and VCCO_0, DONE/INIT_B/PROGRAM_B, startup sequence and GSR/GWE/GTS, SPI flash settings, MultiBoot fallback ...",
+       "name": "artix7-configuration"
+      },
+      {
+       "description": "Checking or designing Artix-7 supplies: VCCINT/VCCAUX/VCCBRAM/VCCO ranges, power-on sequence and ramp times, the 3.3 V VCCO-VCCAUX rule, minimum power-on current ...",
+       "name": "artix7-power-rails-and-decoupling"
+      }
+     ],
+     "section": "power-config",
+     "unit": "family/artix7"
+    },
+    {
+     "items": [
+      {
+       "description": "Any K26 SOM question: what is on the SOM (xck26, 4 GB DDR4, QSPI, eMMC), the two 240-pin connectors, carrier supplies, boot, and what must not be changed.",
+       "name": "k26-som-specifics"
+      },
+      {
+       "description": "Building a Zynq UltraScale+ (K26) design with a zynq_ultra_ps_e block design in Vivado non-project mode, with the SOM board flow, then exporting an XSA.",
+       "name": "zynqmp-block-design-flow-and-xsa"
+      }
+     ],
+     "section": "power-config",
+     "unit": "family/zynq_ultrascale_plus"
+    },
+    {
+     "items": [
+      {
+       "description": "A question involves how the Nexys A7-100T is powered or configured (USB vs external power, JP1/JP3, JTAG vs QSPI, bitstream size) or a design needs the on-board DDR2 or flash.",
+       "name": "nexys-a7-power-config-and-ddr2"
+      }
+     ],
+     "section": "power-config",
+     "unit": "board/nexys_a7_100t"
+    },
+    {
+     "items": [
+      {
+       "description": "Powering or programming a ZedBoard: 12 V supply and switch, Vadj jumper J18, boot-mode jumpers JP7-JP11 (JTAG mode for our use), JTAG chain, PROG, DONE and power-good LEDs, safety rules.",
+       "name": "zedboard-power-boot-and-safety"
+      }
+     ],
+     "section": "power-config",
+     "unit": "board/zedboard"
+    },
+    {
+     "items": [
+      {
+       "description": "A KR260 task concerns the fan, thermal headroom, power draw or supply budgets of the PL peripherals.",
+       "name": "kr260-fan-power-and-thermal"
+      },
+      {
+       "description": "Powering, programming or testing the KR260: carrier plus SOM, 12 V supply, boot devices left untouched, JTAG paths, buttons that must not be pressed, safety rules.",
+       "name": "kr260-power-boot-and-safety"
+      }
+     ],
+     "section": "power-config",
+     "unit": "board/kr260"
+    },
+    {
+     "items": [
+      {
+       "description": "Judging a routed design's power and junction temperature against the board's budget, making report_power accurate, and reducing power when it is over (UG949 ch. 6 Power Closure).",
+       "name": "power-closure"
+      }
+     ],
+     "section": "ultrafast",
+     "unit": "procedures"
+    },
+    {
+     "items": [
+      {
+       "description": "A slow path, high fanout, deep logic or needless toggling; logic levels, replication, retiming-friendly code, operand isolation, enables for power.",
+       "name": "coding-for-timing-and-power"
+      }
+     ],
+     "section": "timing-concepts",
+     "unit": "techniques"
+    }
+   ],
+   "summary": "Power and junction-temperature budgets for a board without a heat sink, power rails, and low-power coding."
+  },
+  {
+   "cap_reason": null,
+   "cards": [],
+   "checks": [
+    {
+     "enforced": false,
+     "file": "flow/run_vivado.sh",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/run_vivado.sh",
+     "what": "The only way the agent builds: batch Vivado under a memory cap and a thread limit, writing the reports the gates read."
+    },
+    {
+     "enforced": false,
+     "file": "flow/xprobe.py",
+     "gate": null,
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xprobe.py",
+     "what": "Cross-probing: names the RTL file and line, clock region and nets of a failing or tight path."
+    }
+   ],
+   "counts": {
+    "checks": 2,
+    "enforced": 0,
+    "evidence": 2,
+    "sections": 7,
+    "skills": 21
+   },
+   "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/project_parity/xprobe/*.xprobe.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/project_parity/xprobe"
+      }
+     ],
+     "text": "Cross-probe examples from 2 routed designs; the tighter had 2.024 ns of setup slack, and the output names source lines, locations and nets."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/course/*/run_*.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
+      }
+     ],
+     "text": "16 development runs went through every stage up to the configuration stage with every stage gate passed."
+    }
+   ],
+   "gaps": [
+    "Cross-probing found no failing path on any local design, so it is shown on passing ones.",
+    "Everything is measured on Vivado 2025.2; behaviour in other versions is not tested.",
+    "The block-design and project-mode steps are measured in batch but not part of the flow."
+   ],
+   "id": "toolflow",
+   "level": "agent",
+   "level_label": "Shown in agent runs",
+   "level_n": 4,
+   "name": "Tool flow",
+   "skills": [
+    {
+     "items": [
+      {
+       "description": "Writing or changing the batch Vivado build Tcl (read_*, synth, opt/place/route, reports, bitstream) or reopening a checkpoint to analyse.",
+       "name": "non-project-flow-and-checkpoints"
+      },
+      {
+       "description": "Deciding what to version-control for a Vivado design, adding IP or memory-init files, or making a build reproducible from a clean clone.",
+       "name": "reproducible-builds"
+      }
+     ],
+     "section": "non-project-flow",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "The setup, hold or pulse-width gate fails, or timing reports must be explained: WNS/TNS/WHS, path anatomy, logic vs net delay, skew.",
+       "name": "reading-timing-reports"
+      }
+     ],
+     "section": "timing-methodology",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "A design is about to be started on a board: choosing the part, mapping ports to board pins and I/O standards, planning clocks ...",
+       "name": "board-and-device-planning"
+      },
+      {
+       "description": "A bitstream is ready for the board: programming it (SRAM by JTAG, by cable serial), what to check if configuration fails, adding ILA/VIO debug without breaking timing ...",
+       "name": "configuration-and-debug"
+      },
+      {
+       "description": "Writing or checking the XDC: UG949's four timing-constraint steps (clocks, I/O delays, clock groups and CDC, exceptions), physical and power constraints ...",
+       "name": "constraints"
+      },
+      {
+       "description": "Report_drc, report_methodology or report_cdc shows violations at any stage, or write_bitstream refuses: which severities block, when, waivers, and the debug-core DRCs (UG949 ch. 5 and 6).",
+       "name": "drc-closure"
+      },
+      {
+       "description": "Running opt, place, physical optimisation and route in the non-project flow, reading timing after each step, and deciding what to fix before routing (UG949 ch. 5 and ch. 6).",
+       "name": "implementation"
+      },
+      {
+       "description": "Judging a routed design's power and junction temperature against the board's budget, making report_power accurate, and reducing power when it is over (UG949 ch. 6 Power Closure).",
+       "name": "power-closure"
+      },
+      {
+       "description": "Writing the architecture note, the RTL and any IP for a clarified spec: hierarchy, IP by Tcl, AMD coding rules, clocking, CDC, and the RTL methodology DRCs that end the stage (UG949 ch. 3).",
+       "name": "rtl-design-creation"
+      },
+      {
+       "description": "Reading Vivado timing reports to find out why a path fails: report_timing_summary, report_timing, report_design_analysis ...",
+       "name": "sta-report-interpretation"
+      },
+      {
+       "description": "Running or judging synthesis: defaults first, then the post-synthesis checks that decide whether to implement (log, DRC, methodology, timing, utilisation, clocks ...",
+       "name": "synthesis"
+      },
+      {
+       "description": "A build fails the setup, hold, pulse-width, coverage or methodology gates: the closure criteria, the order of fixes (constraints, clocks, then paths) ...",
+       "name": "timing-closure"
+      }
+     ],
+     "section": "ultrafast",
+     "unit": "procedures"
+    },
+    {
+     "items": [
+      {
+       "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",
+       "name": "vivado-inference-templates-datapath"
+      },
+      {
+       "description": "Writing SystemVerilog that Vivado must map to SRL shift registers, LUT RAM, block RAM (simple and true dual port, byte write) or ROM on Artix-7 ...",
+       "name": "vivado-inference-templates"
+      },
+      {
+       "description": "Steering Vivado synthesis from RTL or XDC: KEEP, DONT_TOUCH, KEEP_HIERARCHY, MAX_FANOUT, RAM_STYLE, ROM_STYLE, SRL_STYLE, SHREG_EXTRACT, USE_DSP, FSM_ENCODING, EXTRACT_ENABLE/RESET ...",
+       "name": "vivado-synthesis-attributes"
+      }
+     ],
+     "section": "synthesis-attributes",
+     "unit": "vendor/vivado_synthesis"
+    },
+    {
+     "items": [
+      {
+       "description": "A cocotb bench samples functional coverage with cocotb_coverage (CoverPoint, CoverCross, coverage_db), or a run dies at import with 'CoverPoint must have a parent'.",
+       "name": "cocotb-coverage-usage"
+      },
+      {
+       "description": "Writing a SystemVerilog bench or checker that must run in Icarus 12, Verilator, xsim or the Questa Starter edition, or a free simulator rejects a construct (error signatures and ...",
+       "name": "free-simulator-capabilities"
+      },
+      {
+       "description": "Icarus 12 fails at elaboration on code Verilator accepts: 'is not a constant function', 'Unable to evaluate parameter', 'Array ... needs an array index here', ROM tables built by a function.",
+       "name": "icarus-elaboration-limits"
+      }
+     ],
+     "section": "simulation",
+     "unit": "vendor/free_simulators"
+    },
+    {
+     "items": [
+      {
+       "description": "Synth_design fails or logs [Synth 8-n] errors/warnings: undeclared, latches, undriven or multi-driven nets, width mismatches, removed registers.",
+       "name": "synth-message-triage"
+      }
+     ],
+     "section": "lint",
+     "unit": "vendor/ross_distilled"
+    },
+    {
+     "items": [
+      {
+       "description": "Simulating with xvlog/xelab/xsim from a script, or xsim fails with XSIM 43-n, VRFC 10-n, USF-XSim-n; classifying simulation failures.",
+       "name": "xsim-batch-and-error-signatures"
+      }
+     ],
+     "section": "simulation",
+     "unit": "vendor/ross_distilled"
+    }
+   ],
+   "summary": "Non-project batch Vivado, reproducible builds, report reading, cross-probing a failing path to its source line, and what changes between Vivado versions."
+  }
+ ],
+ "levels": [
+  {
+   "areas": 2,
+   "id": "knowledge",
+   "label": "Knowledge only",
+   "means": "Skills in the knowledge bank and nothing measured or enforced for this area yet."
+  },
+  {
+   "areas": 3,
+   "id": "measured",
+   "label": "Measured in Vivado",
+   "means": "Committed results from Vivado runs (or the board) that the skills and checks rest on."
+  },
+  {
+   "areas": 5,
+   "id": "checked",
+   "label": "Checked by the flow",
+   "means": "A stage gate of the flow enforces part of the area on every run that reaches it."
+  },
+  {
+   "areas": 7,
+   "id": "agent",
+   "label": "Shown in agent runs",
+   "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
+  }
+ ],
+ "pin": "ab7fc4c",
+ "skills_total": 209,
+ "skills_used": 183
+}

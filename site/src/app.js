@@ -641,4 +641,21 @@
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
   document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
   if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+
+})();
+
+/* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
+(function () {
+  var ctl = document.getElementById("areactl");
+  if (!ctl) return;
+  ctl.hidden = false;
+  var all = function () { return document.querySelectorAll("details.area"); };
+  document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
+  document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  function openHash() {
+    var id = decodeURIComponent((location.hash || "").slice(1)), t = id && document.getElementById(id);
+    if (t && t.tagName === "DETAILS") { t.open = true; t.scrollIntoView(); }
+  }
+  openHash();
+  window.addEventListener("hashchange", openHash);
 })();

@@ -29,6 +29,7 @@ PAGES = [  # file, nav label, title, description, data keys inlined
     ("index.html", "Home", "End-to-end FPGA Agent", "An open agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGA boards, measured.", ["replay"]),
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
     ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
+    ("expertise.html", "Expertise", "Areas of expertise", "What the agent knows, what its flow checks and what has been measured, area by area, in drawers; each area states how far its evidence goes.", []),
     ("examples.html", "Examples", "Examples", "Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.", ["board"]),
     ("problems.html", "Problems", "Problems", "Every benchmark task: development tasks in full with spec, hidden tests, reference RTL, mutants and the golden model running; held-out tasks by id and tier only.", ["catalogue_index"]),
     ("evaluation.html", "How it is evaluated", "How it is evaluated", "The held-out evaluation in plain words: split, hidden grader, three runs per task, task-level bootstrap.", []),
@@ -152,6 +153,9 @@ def block(name, d):
         rows = [[("binary counter" if s["bus"] == "binary" else "Gray counter"), "on" if s["extra_cycle"] else "off", s["cycles"], s["torn_cycles"]]
                 for s in d["flow_notes"]["tear"]["stats"]]
         return table(["Bus", "Extra cycle", "Cycles simulated", "Cycles with a torn value"], rows, num=(2, 3))
+    if name in ("expertise_levels", "expertise_ladder", "expertise_drawers"):
+        import expertise_page
+        return getattr(expertise_page, name.split("_", 1)[1])(d["expertise"])
     if name == "exception_figure":
         return exception_figure()
     raise KeyError(name)
