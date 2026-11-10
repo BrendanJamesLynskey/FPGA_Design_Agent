@@ -33,16 +33,40 @@
      "gate": null,
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl",
      "what": "Applies the exceptions that AMD ships as scoped files for its crossing macros, which the batch flow otherwise drops."
+    },
+    {
+     "enforced": true,
+     "file": "flow/exceptions_check.py",
+     "gate": "post_synth_exceptions_clean",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/exceptions_check.py",
+     "what": "After synthesis and after routing: no exception ignored or covering no path, no constraint message from an XDC line, no TIMING-24/-29/-47 or XDCH-1, and every multicycle path's registers share a real clock enable."
+    },
+    {
+     "enforced": false,
+     "file": "agent/core/constraints.py",
+     "gate": "FDA-CON-10",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/core/constraints.py",
+     "what": "Before Vivado: a -setup N multicycle needs its -hold N-1, and a multicycle or datapath-only max delay needs a comment naming the enable or the synchroniser."
     }
    ],
    "counts": {
-    "checks": 3,
-    "enforced": 1,
-    "evidence": 2,
+    "checks": 5,
+    "enforced": 2,
+    "evidence": 3,
     "sections": 7,
     "skills": 18
    },
    "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/20_timing_exceptions/exceptions_table.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/20_timing_exceptions/exceptions_table.json"
+      }
+     ],
+     "text": "On 10 small designs with one timing-exception mistake each, Vivado itself said something about the exception in 5; the flow's checks flagged 10. They passed 4 of 4 correct designs."
+    },
     {
      "kind": "measured",
      "sources": [

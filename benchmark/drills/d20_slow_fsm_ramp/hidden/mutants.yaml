@@ -1,0 +1,13 @@
+# Functional mutants for d20_slow_fsm_ramp (benchmark/tools/check_task.py conventions). The constraint mutants (E10b:
+# unqualified copy; E10c: all_registers; E10d: divided clock) are graded by grade_constraints.py, see ../README.md.
+mutants:
+  - {name: tick_one_in_7, file: ramp_ctrl.sv, find: "tick <= (div == 3'd7);", replace: "tick <= (div == 3'd6); if (div == 3'd6) div <= '0;", why: "the tick comes every 7 clocks"}
+  - {name: top_overshoot, file: ramp_ctrl.sv, find: "UP: if (up_sum >= {1'b0, top}) begin level <= top; st <= DOWN; end", replace: "UP: if (up_sum > {1'b0, top}) begin level <= top; st <= DOWN; end", why: "the ramp turns one tick late when it lands on TOP"}
+  - {name: down_no_floor, file: ramp_ctrl.sv, find: "default: if (level <= step) begin level <= '0; st <= IDLE; end", replace: "default: if (level == 8'd0) begin level <= '0; st <= IDLE; end", why: "the level wraps below zero"}
+  - {name: step_zero_kept, file: ramp_ctrl.sv, find: "if (wr_step) step <= (win_wdata[7:0] == 8'd0) ? 8'd1 : win_wdata[7:0];", replace: "if (wr_step) step <= win_wdata[7:0];", why: "a write of 0 stores 0"}
+  - {name: go_while_running, file: ramp_ctrl.sv, find: "else if (wr_go && st == IDLE) go_pending <= 1'b1;", replace: "else if (wr_go) go_pending <= 1'b1;", why: "a GO during a ramp starts another one"}
+  - {name: acc_no_clear, file: ramp_ctrl.sv, find: "if (rst || wr_acc) acc <= '0;", replace: "if (rst) acc <= '0;", why: "a write to ACC does not clear it"}
+# Constraint mutants: functionally the same as the reference on the acceptance bench (they survive it by design);
+# grade_constraints.py must fail them (flow/tests/test_20_drill_grader.py).
+constraint_mutants:
+  - {name: copy_every_clock, file: ramp_ctrl.sv, find: "else if (tick) level_q <= level;", replace: "else level_q <= level;", why: "E10b: COPY is no longer tick-qualified, so the 8-clock multicycle on it is false"}

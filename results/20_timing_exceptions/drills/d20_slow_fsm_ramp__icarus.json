@@ -1,0 +1,78 @@
+{
+  "task": "d20_slow_fsm_ramp",
+  "sim": "icarus",
+  "date": "2026-11-10",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_ramp_levels_and_tick_spacing": true,
+      "test_acc_sums_the_copy_every_clock": true,
+      "test_go_ignored_while_running_and_step_zero": true,
+      "test_random_ramps": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "tick_one_in_7",
+      "why": "the tick comes every 7 clocks",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_ramp_levels_and_tick_spacing",
+        "test_acc_sums_the_copy_every_clock",
+        "test_random_ramps"
+      ]
+    },
+    {
+      "name": "top_overshoot",
+      "why": "the ramp turns one tick late when it lands on TOP",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_ramp_levels_and_tick_spacing",
+        "test_acc_sums_the_copy_every_clock"
+      ]
+    },
+    {
+      "name": "down_no_floor",
+      "why": "the level wraps below zero",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_ramp_levels_and_tick_spacing",
+        "test_acc_sums_the_copy_every_clock",
+        "test_random_ramps"
+      ]
+    },
+    {
+      "name": "step_zero_kept",
+      "why": "a write of 0 stores 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_go_ignored_while_running_and_step_zero"
+      ]
+    },
+    {
+      "name": "go_while_running",
+      "why": "a GO during a ramp starts another one",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_go_ignored_while_running_and_step_zero"
+      ]
+    },
+    {
+      "name": "acc_no_clear",
+      "why": "a write to ACC does not clear it",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_acc_sums_the_copy_every_clock"
+      ]
+    }
+  ],
+  "mutants_killed": 6,
+  "mutants_total": 6
+}

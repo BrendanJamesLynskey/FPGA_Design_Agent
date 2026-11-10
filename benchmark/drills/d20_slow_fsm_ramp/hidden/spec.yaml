@@ -1,0 +1,62 @@
+# Hidden full spec (brief 20 development drill). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: d20_slow_fsm_ramp
+title: Slow ramp controller on one fast clock
+source: spec.md
+tier: drill
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: d20_slow_fsm_ramp_top
+design_id: 0x52414D50          # "RAMP"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+  - "Only this clock: no MMCM, PLL, BUFGCE, divided or generated clock. One clock buffer (the board clock's BUFG)."
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: state idle, level 0, the copy of the level 0, STEP 1, TOP 255, ACC 0, no start pending, tick counter 0
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  tick:
+    - "TICK is a registered signal from a counter on the 100 MHz clock: 1 on exactly one clock in every 8, 0 otherwise. Its phase after reset is not specified."
+  controller:
+    - "The controller's registers (its state and the level) change only on a clock where TICK is 1."
+    - "IDLE: if a start is pending, the state becomes UP and the pending start is cleared; the level stays 0."
+    - "UP: if level + STEP >= TOP, the level becomes TOP and the state becomes DOWN; otherwise the level becomes level + STEP."
+    - "DOWN: if level <= STEP, the level becomes 0 and the state becomes IDLE; otherwise the level becomes level - STEP."
+  fast_unit:
+    - "COPY (8 bits) takes the controller's level only on a clock where TICK is 1 (it gets the level as it was before that tick's update), so it changes at most once every 8 clocks and is constant between ticks."
+    - "ACC (32 bits, wrapping) adds COPY on every clock. A shell write to ACC (any data) clears it; the clear wins on that clock."
+  start:
+    - "A shell write to GO (any data) sets the pending start if the state is IDLE when the write happens; a write while the state is UP or DOWN is ignored."
+  leds:
+    - "LED[15:8] = COPY, LED[7:2] = 0, LED[1:0] = state (0 idle, 1 up, 2 down)."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: STEP, access: RW, reset: 1, bits: "[7:0]; a write of 0 stores 1; [31:8] read 0"}
+    - {offset: 0x01, name: TOP, access: RW, reset: 255, bits: "[7:0]; [31:8] read 0"}
+    - {offset: 0x02, name: GO, access: W, reset: 0, bits: "a write starts a ramp when idle; reads 0"}
+    - {offset: 0x03, name: STATE, access: R, reset: 0, bits: "[1:0] 0 idle, 1 up, 2 down"}
+    - {offset: 0x04, name: LEVEL, access: R, reset: 0, bits: "[7:0] COPY, the fast unit's copy of the level"}
+    - {offset: 0x05, name: ACC, access: RW, reset: 0, bits: "[31:0] the sum; any write clears it"}
+  unmapped: offsets 0x06-0x7F read 0; writes to them are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  exceptions: "Paths that start and end on registers loaded only on TICK (the controller's state and level, and COPY) are 8-clock paths: set_multicycle_path 8 -setup and 7 -hold on exactly those registers, with a comment naming the tick enable. Every other path (shell registers STEP/TOP, the pending start, ACC, the tick counter, LEDs) is a normal one-clock path. No false path or clock group inside the design. The ports: CPU_RESETN and UART_TXD_IN are asynchronous (false path into their synchronisers is right); LED and UART_RXD_OUT are slow outputs."
