@@ -1,29 +1,33 @@
 <section class="hero">
 <canvas id="fabric" aria-hidden="true"></canvas>
-<p class="eyebrow">Open agent, measured</p>
 <h1>End-to-end FPGA Agent</h1>
 <p class="strap">Plain-English spec in. Verified RTL and a bitstream out.</p>
-<p class="boards"><span>Built and measured today on a Digilent Nexys A7-100T (Artix-7).</span> <span>Next targets: AMD Kria KR260 and ZedBoard (Zynq-7000).</span></p>
-<p class="lede">The agent interviews you about a spec, plans the design, writes the RTL and its checks, builds it with Vivado {{board.vivado}}, and stops at independent gates. Only checks it did not write count as a pass: a blind golden model, mutation testing, the post-route reports, and the board.</p>
+<p class="boards"><span>Built and measured on a Digilent Nexys A7-100T (Artix-7).</span> <span>Next: AMD Kria KR260 and ZedBoard (Zynq-7000).</span></p>
+<p class="lede">An open-source agent that designs hardware for AMD FPGAs. Describe a block in plain English and it asks about what you left out, writes the design and its tests, and builds it with Vivado. Only checks it did not write can pass its work.</p>
 </section>
+
+<h2>What it does</h2>
+<p>The agent follows the stages of AMD's UltraFast methodology: an interview to settle what the spec leaves open, a plan, the <a href="how.html#term-rtl">RTL</a> and its tests, then Vivado {{board.vivado}} through synthesis and place and route to a <a href="how.html#term-bitstream">bitstream</a>. The runs shown here used Anthropic's Claude Sonnet (<code>{{dev.model.0}}</code>) through Claude Code.</p>
+
+<h2>How it is checked</h2>
+<p>A model that writes a design and its tests can make the same mistake in both. So the agent's own tests never decide. Each task has hidden tests, written in advance against an independent model of the spec and themselves checked by <a href="how.html#term-mutation">mutation testing</a>. Timing must be met after routing, and the board has the last word.</p>
+
+<h2>What has been shown so far</h2>
+<p>On {{dev.tasks}} development tasks the agent passed every hidden test in {{dev.hidden_pass}} of {{dev.runs}} runs. In {{dev.escapes}} more its own checks passed and the hidden tests failed, each time because it read the spec differently from the test author. The fixes made since are not yet measured.</p>
+<p>Development tasks are the ones used to find faults, so these figures are a record of the work, not a score. The score will come from <a href="how.html#term-heldout">held-out</a> tasks; the first attempt was stopped before any result was analysed. A hand-built reference design passes all its tests on the board, but no agent-built design has been on one yet.</p>
 
 <figure>
 <div class="player" id="hero-player" aria-label="Pipeline replay from a real run record">
 </div>
-<figcaption>One real development run replayed step by step: <code>{{replay.task}}</code>, run {{replay.run}}, {{replay.model}}, {{replay.turns}} agent turns, {{replay.wall_h}} h. Hidden tests passed: {{replay.hidden}}. This run stops at the board stage because no board was attached to it. Space plays and pauses, arrow keys step.</figcaption>
+<figcaption>A real development run, stage by stage: the int8 dot-product task, which passed {{replay.hidden}} hidden tests and stopped before the board, as none was attached. Space plays; the arrow keys step.</figcaption>
 </figure>
-
-<div class="facts">
-<div class="fact"><div class="n">{{dev.hidden_pass}} of {{dev.runs}}</div><p>development runs passed every hidden test ({{dev.tasks}} development tasks, {{dev.model.0}}). <span class="tag">Development, not the held-out score</span></p></div>
-<div class="fact"><div class="n">{{dev.escapes}} of {{dev.runs}}</div><p>runs were escapes: every check the agent ran passed, and the hidden tests still failed. The run records class all {{dev.escapes}} as spec interpretation, not logic errors. The changes made in response have not been measured yet; the baseline evaluation will measure them.</p></div>
-<div class="fact"><div class="n">{{board.uart_tests}} of {{board.uart_tests}}</div><p>UART tests and {{board.ila_captures}} of {{board.ila_captures}} logic-analyser captures passed on the board, in all {{board.board_runs}} bring-up runs, for the hand-built reference design. No agent-built design from the development runs has been on a board yet.</p></div>
-</div>
 
 <h2>What is here</h2>
 <div class="cols">
-<div><h3><a href="how.html">How it works</a></h3><p>Stages, the gates V0 to V3, independent tests, mutation testing, the knowledge bank, and the tools the model is allowed to call.</p></div>
-<div><h3><a href="expertise.html">Areas of expertise</a></h3><p>What the agent knows, what its flow checks and what has been measured, in one drawer per area, each with its evidence level.</p></div>
-<div><h3><a href="examples.html">Examples</a></h3><p>Development tasks from spec to timing report, a failure and its fix, and a design running on the board.</p></div>
-<div><h3><a href="evaluation.html">How it is evaluated</a></h3><p>A held-out evaluation, pre-registered before any scored run. The method, in plain words.</p></div>
-<div><h3><a href="results.html">Results</a></h3><p>Development results now. Held-out results come with the baseline evaluation, on a larger benchmark; the first held-out evaluation (<code>eval-1</code>) was stopped and reports none.</p></div>
+<div><h3><a href="how.html">How it works</a></h3><p>The stages, the checks and the tools.</p></div>
+<div><h3><a href="flow-notes.html">Beyond the flow</a></h3><p>Where scripted Vivado falls short, and the fixes.</p></div>
+<div><h3><a href="expertise.html">Areas of expertise</a></h3><p>What the agent knows and checks, area by area.</p></div>
+<div><h3><a href="examples.html">Examples</a></h3><p>Runs from spec to timing report, and the board.</p></div>
+<div><h3><a href="evaluation.html">How it is evaluated</a></h3><p>The held-out method, fixed before any scored run.</p></div>
+<div><h3><a href="results.html">Results</a></h3><p>Every development run so far.</p></div>
 </div>

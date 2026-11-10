@@ -30,11 +30,33 @@ FAMILY_LABEL = {"7series": "7-series (Artix-7, Zynq-7000 PL)", "ultrascale_plus"
                 "zynq7000_ps": "Zynq-7000 PS", "zynqmp_ps": "Zynq UltraScale+ PS", "common": "All families (tool guides)"}
 
 
+KIND_LEAD = {"measured": "Measured.", "agent": "In agent runs.", "example": "Hand-built examples."}
+
+
+def _src(srcs) -> str:
+    """A small source link after an evidence sentence; the path is in the link's label and title, not the sentence."""
+    return " ".join(f'<a class="evsrc" href="{e(s["url"])}" title="{e(s["path"])}" aria-label="Source: {e(s["path"])}">source</a>' for s in srcs)
+
+
 def drawer(a: dict) -> str:
+    """One area: a plain opening paragraph, what has been shown (by kind of evidence, each sentence with its source link),
+    what is not yet shown, related cards; skills, checks and family differences in a nested Details drawer, closed."""
     c = a["counts"]
     head = (f'<summary><span class="an">{e(a["name"])}</span><span class="as">{e(a["summary"])}</span>'
-            f'<span class="ac">{c["skills"]} skills, {c["checks"]} flow checks</span>'
+            f'<span class="ac">{c["skills"]} skills, {c["checks"]} flow check{"" if c["checks"] == 1 else "s"}</span>'
             f'<span class="tag lvl">{_seg(a["level_n"])} {e(a["level_label"])}</span></summary>')
+    shown = ""
+    for kind in ("measured", "agent", "example"):
+        items = [x for x in a["evidence"] if x["kind"] == kind]
+        if items:
+            shown += (f'<p><strong>{KIND_LEAD[kind]}</strong> ' +
+                      " ".join(f'{e(x["text"])} {_src(x["sources"])}' for x in items) + "</p>")
+    if not shown:
+        shown = "<p><strong>Measured.</strong> Nothing yet for this area.</p>"
+    gaps = " ".join(e(g) for g in a["gaps"])
+    cap = f' {e(a["cap_reason"])}' if a["cap_reason"] else ""
+    notyet = f"<p><strong>Not yet shown.</strong> {gaps}{cap}</p>"
+    cards = (f'<p class="small">Related: ' + "; ".join(f'<a href="{e(k["href"])}">{e(k["label"])}</a>' for k in a["cards"]) + "</p>") if a["cards"] else ""
     know = "".join(
         f'<h4><code>{e(g["unit"])}/{e(g["section"])}</code></h4><ul class="sk">' +
         "".join(f'<li><code>{e(s["name"])}</code> {e(s["description"])}</li>' for s in g["items"]) + "</ul>"
@@ -43,11 +65,6 @@ def drawer(a: dict) -> str:
         f'<li><a href="{e(k["url"])}"><code>{e(k["file"])}</code></a>' + (f' (<code>{e(k["gate"])}</code>)' if k["gate"] else "") +
         f' <span class="tag {"built" if k["enforced"] else "plan"}">{"gate" if k["enforced"] else "tool"}</span> {e(k["what"])}</li>'
         for k in a["checks"]) + "</ul>") if a["checks"] else "<p>No flow check is specific to this area.</p>"
-    ev = ("<ul>" + "".join(f'<li><span class="tag">{ {"measured": "measured", "agent": "agent runs", "example": "example"}[x["kind"]] }</span> {e(x["text"])}'
-                           f' <span class="small muted">Source: {_links(x["sources"])}</span></li>' for x in a["evidence"]) + "</ul>") \
-        if a["evidence"] else "<p>No committed result yet.</p>"
-    cards = ("<ul>" + "".join(f'<li><a href="{e(k["href"])}">{e(k["label"])}</a></li>' for k in a["cards"]) + "</ul>") if a["cards"] else "<p>None yet.</p>"
-    gaps = "<ul>" + "".join(f"<li>{e(g)}</li>" for g in a["gaps"]) + "</ul>"
     fam = a.get("family") or {"rows": [], "docs": {}}
     fl = ("<ul>" + "".join(f'<li><strong>{e(r["topic"])}</strong>: {e(r["summary"])} <span class="tag">{"tool-checked" if r["confirmed"] == "tool" else "from the guides"}</span></li>'
                            for r in fam["rows"]) + "</ul>"
@@ -56,10 +73,10 @@ def drawer(a: dict) -> str:
           "".join(f'<h4>{e(FAMILY_LABEL.get(f, f))}</h4><ul>' +
                   "".join(f'<li><strong>{e(d["doc"])}</strong>: {e(d["use"])}</li>' for d in lst) + "</ul>"
                   for f, lst in fam["docs"].items()) + "</details>") if fam["rows"] else "<p>No family difference recorded yet.</p>"
-    cap = f'<p class="note small">Level held at this point because: {e(a["cap_reason"])}</p>' if a["cap_reason"] else ""
-    body = (f'<div class="abody">{cap}<dl class="kv">'
-            f'<dt>Knows</dt><dd><p class="small muted">Skills of the knowledge bank at its pin, by unit and section, with the one-line description from each skill.</p>{know}</dd>'
-            f"<dt>Flow checks</dt><dd>{chk}</dd><dt>Evidence</dt><dd>{ev}</dd><dt>Differs by family</dt><dd>{fl}</dd><dt>See also</dt><dd>{cards}</dd><dt>Known gaps</dt><dd>{gaps}</dd></dl></div>")
+    details = (f'<details class="more"><summary>Details: skills, flow checks and differences between device families</summary><dl class="kv">'
+               f'<dt>Knows</dt><dd><p class="small muted">Skills of the knowledge bank at its pin, by unit and section, with the one-line description from each skill.</p>{know}</dd>'
+               f"<dt>Flow checks</dt><dd>{chk}</dd><dt>Differs by family</dt><dd>{fl}</dd></dl></details>")
+    body = f'<div class="abody"><p>{e(a["about"])}</p>{shown}{notyet}{cards}{details}</div>'
     return f'<details class="area" id="{e(a["id"])}">{head}{body}</details>'
 
 

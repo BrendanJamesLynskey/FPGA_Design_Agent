@@ -169,7 +169,7 @@ def test_areas_and_required_drawers():
 
 def test_no_number_is_typed_into_prose_or_templates():
     for a in _yaml()["areas"]:
-        for t in [a["name"], a["summary"], *a["gaps"], *[c["what"] for c in a.get("checks", [])]]:
+        for t in [a["name"], a["summary"], a["about"], *a["gaps"], *[c["what"] for c in a.get("checks", [])]]:
             assert not expertise.prose_numbers(t), (a["id"], t)
         for it in a.get("evidence", []):
             tmpl = expertise.PROSE_OK.sub(" ", re.sub(r"\{\d+\}", " ", it["text"]))
