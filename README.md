@@ -199,6 +199,9 @@ Vivado does not run in GitHub Actions (the install is about 100 GB); its results
 ```
 flow/        runner, Tcl flow, ILA insertion, gates, summaries, lint, cocotb helper; board discovery,
              programming, ILA capture and bringup.py (F0B); board_check.py (04c)
+flow/ipgen/  external design tools driving AMD IP configuration (brief 19): the xsim file-I/O harness, FIR and CIC adapters
+             (scipy design -> .coe/CONFIG.* -> create_ip read-back -> bit-exact xsim check -> OOC synthesis), the signal-chain
+             model and diagram; worked examples in results/19_ipgen/
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T): board.yaml, master XDC, inventory.yaml, power_budget.md
 tools/       inventory_check.py (board inventory against the master XDC)
@@ -219,6 +222,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              design_standards.md (v1.0: the rule table and how each rule is checked);
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph; benchmark tasks as agent runs, 07a2-prep); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing); test_writer.md (the 05g test-writer diagnosis, turn trace, formal re-plan, QoR gate);
              project_mode_parity.md (what project mode and the wizards give that non-project mode does not, measured; cross-probing);
+             ipgen.md (the ipgen pipeline, the adapter interface, candidate IPs); ipgen_tradeoffs.md (design only: the drop-down trade-off view);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped);
              eval/eval1_preregistration.md (the eval-1 held-out evaluation, fixed before any scored run)
 ```
@@ -242,6 +246,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 11b | CDC soak rig, phase 2a: the 13 correct variants and 11 mutant types (28 codes) on three clock domains, checkers, UART readout, Tj stop; simulated with metastability injection and reset storms, built in Vivado; no board run yet ([hil/cdc_soak](hil/cdc_soak/README.md)) | merged |
 | 16 | Stronger CDC gate: structural check of every asynchronous path in the netlist ([flow/cdc_structure.py](flow/cdc_structure.py), [flow/cdc_paths.tcl](flow/cdc_paths.tcl)) and the design's own tests with synchroniser-delay injection ([flow/cdc_inject.py](flow/cdc_inject.py), [flow/cdc_inject_run.py](flow/cdc_inject_run.py)), proved against the rig's mutants ([flow/tests/fixtures/cdc_mutants](flow/tests/fixtures/cdc_mutants), [results/16_cdc_gate](results/16_cdc_gate/mutant_table.md)) | merged |
 | 18 | Project-mode parity: inventory of what project mode and each wizard give, measured in batch (Clocking Wizard against the hand M/D/O search, MIG through implementation, FIFO/XADC/GT/PS7/block automation); machine-readable cross-probing (`xprobe.json`, SVG device map, evidence for the repair visit) ([docs/project_mode_parity.md](docs/project_mode_parity.md), [flow/xprobe.py](flow/xprobe.py), [results/project_parity](results/project_parity)) | open PR |
+| 19 | External design tools driving AMD IP: xsim file-I/O harness, FIR and CIC adapters (spec to .coe to IP to bit-exact check), PDM-microphone signal chain with SINAD/ENOB per node ([docs/ipgen.md](docs/ipgen.md), [results/19_ipgen](results/19_ipgen)) | PR open |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |
 | F3 | Scored runs | coming |

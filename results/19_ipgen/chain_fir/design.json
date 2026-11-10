@@ -1,0 +1,71 @@
+{
+  "spec": {
+    "name": "cic_comp_dec2",
+    "fs_in_hz": 96000,
+    "pass_edge_hz": 20000,
+    "stop_edge_hz": 28000,
+    "ripple_db": 0.1,
+    "atten_db": 70,
+    "design_margin_db": 2,
+    "decimation": 2,
+    "data_width": 21,
+    "coef_width": 16,
+    "channels": 1,
+    "clock_hz": 100000000,
+    "back_pressure": true,
+    "seed": 1,
+    "n_samples": 1200,
+    "compensation": {
+      "cic_fs_in_hz": 2400000,
+      "rate": 25,
+      "diff_delay": 1,
+      "stages": 4
+    }
+  },
+  "design": {
+    "method": "firls",
+    "taps": 51,
+    "float_metrics": {
+      "passband_ripple_db": 0.029178605982230987,
+      "stopband_atten_db": 73.03946590326787
+    },
+    "requested_coef_width": 16,
+    "coef_width": 16,
+    "quantised_metrics": {
+      "passband_ripple_db": 0.029803832546280606,
+      "stopband_atten_db": 75.7312989483215
+    },
+    "attenuation_lost_db": -2.6918330450536274,
+    "width_search": [
+      {
+        "coef_width": 16,
+        "ok": true,
+        "passband_ripple_db": 0.029803832546280606,
+        "stopband_atten_db": 75.7312989483215
+      }
+    ],
+    "symmetric": true,
+    "dc_gain_int": 58633,
+    "candidates": [
+      {
+        "method": "remez",
+        "taps": null,
+        "note": "no arbitrary pass-band shape"
+      },
+      {
+        "method": "kaiser",
+        "taps": null,
+        "note": "no arbitrary pass-band shape"
+      },
+      {
+        "method": "firls",
+        "taps": 51,
+        "passband_ripple_db": 0.029178605982230987,
+        "stopband_atten_db": 73.03946590326787
+      }
+    ],
+    "spec_attenuation_db": 70,
+    "spec_ripple_db": 0.1,
+    "coef_abs_sum": 126145
+  }
+}

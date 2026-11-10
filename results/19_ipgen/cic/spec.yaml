@@ -1,0 +1,12 @@
+# CIC example (brief 19): the decimator behind the Nexys A7 PDM microphone, 2.4 MHz bit stream down to 96 kS/s.
+name: pdm_cic
+fs_in_hz: 2400000       # microphone clock = PDM bit rate (Knowles SPK0833LM4H, 1.0-3.25 MHz)
+decimation: 25          # 2.4 MHz / 25 = 96 kS/s (the compensating FIR then halves it to 48 kS/s)
+diff_delay: 1
+passband_hz: 20000      # audio band
+alias_atten_db: 45      # rejection wanted where fs_out - passband folds onto the pass-band edge (worst case, at the edge)
+input_width: 2          # PDM bit as signed +-1
+clock_hz: 100000000
+use_dsp: false
+seed: 19
+n_samples: 10000
