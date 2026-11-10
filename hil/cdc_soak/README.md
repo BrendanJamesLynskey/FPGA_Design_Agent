@@ -19,7 +19,7 @@ grader (`report_cdc`, simulation with injection) can be checked against hardware
 | f | MMCM output, 250 MHz | source of M6b/M6c only |
 
 Each variant is instantiated for a->b, b->a and a->c (copy k: direction k mod 3, placement class (k + k/3) mod 3:
-far X0Y0->X1Y3, near X0Y2, boundary X0Y1->X1Y1).
+far X0Y0->X1Y3, near X0Y2 or X1Y2, boundary X0Y1->X1Y1).
 
 ## Variants
 
@@ -40,7 +40,7 @@ far X0Y0->X1Y3, near X0Y2, boundary X0Y1->X1Y1).
 | | | M11 | 2-phase handshake, source side reset alone |
 
 Copy counts are parameters (`N_<variant>` on `rig_top`/`rig_core`): the small build has one of each (28 copies), the
-full build 536 (`tcl/rig_map.tcl`).
+full build 352 (`tcl/rig_map.tcl`; the design's 536 did not place on the xc7a100t, see [results/](results)).
 
 ## Checkers and readout
 

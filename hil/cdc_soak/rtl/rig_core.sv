@@ -4,7 +4,7 @@
 // the simulation drives it directly.
 //
 // Copy counts: one parameter per variant (N_<variant>). The small build sets them all to 1; the full build uses
-// the design's 536 (constr/full_counts.tcl). Copies are numbered g = 0..NTOT-1 in variant order.
+// 352 (tcl/rig_map.tcl; the design's 536 did not fit). Copies are numbered g = 0..NTOT-1 in variant order.
 
 module rig_core #(
     parameter int N_C1 = 1, N_C2 = 1, N_C3A = 1, N_C3B = 1, N_C4 = 1, N_C5 = 1, N_C6 = 1, N_C7 = 1,

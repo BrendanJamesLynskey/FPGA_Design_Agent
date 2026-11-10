@@ -39,21 +39,22 @@ python3 hil/cdc_soak/host/read_counters.py --port /dev/serial/by-id/<the board's
 
 - The rig sends one `H` line after configuration, then every 60 s of traffic an `E` line (epoch, uptime, Tj and
   VCCINT codes, the measured CFGMCLK frequency, the storm mode) followed by one `C` line per copy (errors, events,
-  lock-ups, relocks, saturation). About 22 kB per epoch, 2 s at 115,200 baud; traffic is paused while it is sent.
+  lock-ups, relocks, saturation). About 14 kB per epoch for the full build, 1.3 s at 115,200 baud; traffic is paused while it is sent.
 - The script only reads. It checks every line's CRC-8, appends to the CSV with the host time, and prints one status
   line per epoch. `--file <log> --summary` gives the per-variant totals afterwards.
 - Join the CSV with `build/full/delays_copies.csv` (per-copy routed delay and skew) on the copy number.
 
 ## Smoke run (1 hour per bitstream, owner present)
 
-1. Program the small build first (`rig_small.bit`, 28 copies), then the full build (`rig_full.bit`, 536 copies).
+1. Program the small build first (`rig_small.bit`, 28 copies), then the full build (`rig_full.bit`, 352 copies).
 2. Watch the first `E` line: Tj should read about room temperature plus a few degrees, VCCINT about 1,000 mV, and
    CFGMCLK somewhere in 32,000-98,000 kHz (typically about 65,000).
 3. Pass rules for the smoke hour (the rig is broken if any fails):
    - every correct variant (C1-C13): 0 errors and 0 lock-ups (C8-C13 show relocks: one at power-up, and one per
      reset event for the stormed ones; relocks are not errors);
    - the mutants the design predicts to fail in seconds (M2, M3, M5 into a slower clock, M6c, M7, and after the
-     10-minute storm delay M8, M9, M10, M11) have non-zero errors or lock-ups;
+     10-minute storm delay M8, M9, M11, and M10 except its b->a copies, whose raw reset is already
+     synchronous to their clock) have non-zero errors or lock-ups;
    - M1, M1b, M4 (near copies), M6a and M6b are recorded as they come: the design predicts 0 or "uncertain" for them.
 4. Tj must level off within the hour. Stop the run if it keeps rising past 70 degC.
 

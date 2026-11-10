@@ -110,7 +110,8 @@ set_false_path -to [pins_of $mut {D CLR PRE}]
 puts "rig_cdc: false path to [llength $mut] mutant endpoint flops"
 
 # --- 6. pblocks: each copy's pbs_* cells in its source pblock, pbd_* in its destination pblock, by class
-#        far: X0Y0 -> X1Y3 (opposite corners); near: both in X0Y2; boundary: X0Y1 -> X1Y1 (adjacent regions)
+#        far: X0Y0 -> X1Y3 (opposite corners); near: both sides in one region, X0Y2 or X1Y2 by copy parity (one region
+#        could not hold all 180 near copies in the first full build); boundary: X0Y1 -> X1Y1 (adjacent regions)
 #        Each pblock gets the SLICE range of its clock region and is made hard (IS_SOFT false): the first small
 #        builds placed about half the destination cells outside their soft pblocks.
 proc region_slices {r} {
@@ -121,7 +122,7 @@ proc region_slices {r} {
     }
     return "SLICE_X[tcl::mathfunc::min {*}$xs]Y[tcl::mathfunc::min {*}$ys]:SLICE_X[tcl::mathfunc::max {*}$xs]Y[tcl::mathfunc::max {*}$ys]"
 }
-foreach {pb region} {pb_far_s X0Y0 pb_far_d X1Y3 pb_near X0Y2 pb_bnd_s X0Y1 pb_bnd_d X1Y1} {
+foreach {pb region} {pb_far_s X0Y0 pb_far_d X1Y3 pb_near0 X0Y2 pb_near1 X1Y2 pb_bnd_s X0Y1 pb_bnd_d X1Y1} {
     create_pblock $pb
     set rng [region_slices $region]
     resize_pblock [get_pblocks $pb] -add $rng
@@ -130,7 +131,7 @@ foreach {pb region} {pb_far_s X0Y0 pb_far_d X1Y3 pb_near X0Y2 pb_bnd_s X0Y1 pb_b
 }
 set cls_of [dict create]
 foreach cp [rig_copies $rig_counts] { dict set cls_of [lindex $cp 0] [lindex $cp 4] }
-set members [dict create pb_far_s {} pb_far_d {} pb_near {} pb_bnd_s {} pb_bnd_d {}]
+set members [dict create pb_far_s {} pb_far_d {} pb_near0 {} pb_near1 {} pb_bnd_s {} pb_bnd_d {}]
 foreach side {pbs pbd} {
     foreach c [get_cells -quiet -hierarchical -filter "IS_PRIMITIVE && NAME =~ *${side}_* && REF_NAME !~ RAM* && REF_NAME !~ RAMB*"] {
         set g [rig_copy_of [get_property NAME $c]]
@@ -138,6 +139,7 @@ foreach side {pbs pbd} {
         set cls [dict get $cls_of $g]
         set pb [dict get {far,pbs pb_far_s far,pbd pb_far_d near,pbs pb_near near,pbd pb_near
                           boundary,pbs pb_bnd_s boundary,pbd pb_bnd_d} $cls,$side]
+        if {$pb eq "pb_near"} { set pb pb_near[expr {$g % 2}] }
         dict lappend members $pb $c
     }
 }

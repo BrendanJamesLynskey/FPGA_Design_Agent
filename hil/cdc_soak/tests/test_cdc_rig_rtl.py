@@ -75,8 +75,10 @@ def judge(run: rc.Run, inject: int) -> dict:
             verdict = "as predicted (0)" if ok else "VIOLATION"
         elif v in FAST:
             pred = "caught in seconds"
-            # M5 loses pulses only into a slower (or equal, sliding) destination; b->a is a faster destination
-            need = [p for p in per if not (v == "M5" and p["dir"] == "b->a")]
+            # M5 loses pulses only into a slower (or equal, sliding) destination; b->a is a faster destination.
+            # M10's raw reset request is launched in clk_a, so in b->a copies (flops in clk_a) its release is
+            # synchronous to the flops: no release skew to find (the same holds in hardware, where that path is timed)
+            need = [p for p in per if not (v in ("M5", "M10") and p["dir"] == "b->a")]
             caught = [p for p in need if p["errors"] > 0 or p["lockups"] > 0]
             ok = len(caught) == len(need)
             if not ok:
@@ -92,6 +94,11 @@ def judge(run: rc.Run, inject: int) -> dict:
 
 def _check(name: str, ncopy: int, epochs: int, inject: int, tj_stop: bool, seed: int) -> dict:
     log = build_and_run(name, ncopy, epochs, inject, tj_stop, seed)
+    return judge_log(log, name, ncopy, epochs, inject, tj_stop, seed)
+
+
+def judge_log(log: Path, name: str, ncopy: int, epochs: int, inject: int, tj_stop: bool, seed: int) -> dict:
+    """Parse a recorded UART log, check it against the predictions and write results/<name>.json."""
     run = rc.Run()
     for r in rc.parse_stream(log.read_text().splitlines()):
         run.add(r)
