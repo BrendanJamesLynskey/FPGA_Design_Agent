@@ -13,7 +13,10 @@ agent = ["mcp==2.3.0", "jsonschema>=4"]
 # the Deep Agents agent (brief 05b); versions current on 2026-11-01
 graph = ["langgraph==1.2.19", "langgraph-checkpoint-sqlite==3.1.3", "deepagents==0.7.32", "langchain-openai==1.7.3"]
 
+# the ipgen design tools (brief 19): numpy and scipy, both BSD-3
+ipgen = ["numpy>=2", "scipy>=1.14"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["flow/tests", "shell/tests", "designs", "tools/tests", "agent/tests", "benchmark/tests"]
+testpaths = ["flow/tests", "flow/ipgen/tests", "shell/tests", "designs", "tools/tests", "agent/tests", "benchmark/tests"]
 python_files = ["test_*.py"]

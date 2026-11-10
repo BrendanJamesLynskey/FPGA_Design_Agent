@@ -1,0 +1,10 @@
+# DDS example (brief 19): an NCO from an SFDR and a frequency resolution, one tone for the spectrum check.
+name: nco_90db
+clock_hz: 100000000
+freq_resolution_hz: 0.01     # -> phase width 34 (clock / 2^34 = 0.0058 Hz)
+sfdr_db: 90                  # -> output width ceil((90 + 3) / 6.02) = 16
+f_out_hz: 6221436.8411   # 1021 / 16411 of the clock: the 16411-point record holds 1021 periods to within 1e-6 bin, and every phase bit is in use
+sfdr_margin_db: 3         # a design margin of half a bit: without it (../dds_no_margin) the rule gives 15 bits and the core measures 90.2 dB, 0.2 dB over the target
+noise_shaping: None     # Hardware_Parameters mode refuses Auto; PG141: SFDR ~ 6.02 x LUT address bits without dither
+n_samples: 16411
+seed: 19
