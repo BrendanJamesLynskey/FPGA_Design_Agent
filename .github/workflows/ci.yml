@@ -24,6 +24,7 @@ jobs:
   python:
     name: Python (models, gates parser, host driver)
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     env:
       PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
@@ -58,6 +59,7 @@ jobs:
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     env:
       PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
@@ -115,6 +117,7 @@ jobs:
   course-tier:
     name: Course tier development tasks (cocotb + Icarus, reference and mutants)
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     env:
       PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
@@ -142,6 +145,7 @@ jobs:
   lint:
     name: Verilator lint
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Install Verilator
@@ -156,6 +160,7 @@ jobs:
   verification:
     name: Verification (cocotb on Verilator and Icarus, checkers, formal, portability, V-stage gates)
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     env:
       PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
     steps:
@@ -231,6 +236,7 @@ jobs:
   site:
     name: Site (data, pages, numbers)
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
