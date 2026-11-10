@@ -1,7 +1,7 @@
 {
   "task": "t1_press_classifier",
   "sim": "icarus",
-  "date": "2026-11-03",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -114,10 +114,27 @@
         "test_register_rules",
         "test_random_presses"
       ]
+    },
+    {
+      "name": "short_cnt_not_reset",
+      "why": "CPU_RESETN does not reset short_cnt (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_short_presses",
+        "test_long_press_not_short",
+        "test_threshold_boundary",
+        "test_length_units",
+        "test_debounce_rejects_bounce",
+        "test_length_saturates",
+        "test_register_rules",
+        "test_random_presses"
+      ]
     }
   ],
-  "mutants_killed": 8,
-  "mutants_total": 8,
+  "mutants_killed": 9,
+  "mutants_total": 9,
   "trap": {
     "twin": "textbook button-press counter (debounced BTNC, every press counted)",
     "why": "the textbook design counts every press alike; this spec classes presses held LONG_CYCLES or more as LONG, never SHORT",

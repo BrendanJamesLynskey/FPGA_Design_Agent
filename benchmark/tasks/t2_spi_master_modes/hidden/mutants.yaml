@@ -9,6 +9,7 @@ mutants:
   - {name: w16_ignored, file: spim_core.sv, find: "nb    <= w16 ? 5'd16 : 5'd8;", replace: "nb    <= 5'd8;", why: "16-bit frames send 8 bits"}
   - {name: loopback_ignored, file: spim_regs.sv, find: ".miso(ctrl[5] ? mosi : miso_pin)", replace: ".miso(miso_pin)", why: "LOOP does not feed MOSI back"}
   - {name: cpha0_first_bit_late, file: spim_core.sv, find: "mosi  <= cpha ? 1'b0 : bit_at(txd, w16 ? 5'd16 : 5'd8, lsb, 5'd0);", replace: "mosi  <= 1'b0;", why: "in CPHA 0 the first bit is not on MOSI before the first edge"}
+  - {name: rxd_not_reset, file: spim_core.sv, find: "if (rst) begin\n            busy <= 1'b0; cs_n <= 1'b1; sclk <= 1'b0; mosi <= 1'b0; rxd <= '0;", replace: "if (rst) begin\n            busy <= 1'b0; cs_n <= 1'b1; sclk <= 1'b0; mosi <= 1'b0; ", why: "CPU_RESETN does not reset rxd (amended 2026-11-10: the reset test now kills a mutant)"}
 trap:
   twin: "textbook mode-0-only SPI master for the ADXL362"
   why: "the textbook master only does CPOL = 0, CPHA = 0; mode 3 idles SCLK high and shifts on falling edges"

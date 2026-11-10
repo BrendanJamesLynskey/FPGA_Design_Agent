@@ -6,3 +6,4 @@ mutants:
   - {name: runs_without_tick, file: adsr.sv, find: "end else if (en) begin", replace: "end else begin", why: "the envelope moves on every clock, not on ticks"}
   - {name: release_state_code, file: adsr.sv, find: "else if (!gate && gate_d && state != 3'd0) state <= 3'd4;", replace: "else if (!gate && gate_d && state != 3'd0) state <= 3'd5;", why: "release reports state 5"}
   - {name: sustain_ignores_new_level, file: adsr.sv, find: "3'd2: if (level <= sus_lvl) state <= 3'd3;", replace: "3'd2: if (level < sus_lvl) state <= 3'd3;\n                      else if (level == sus_lvl) state <= 3'd2;", why: "decay at level == sus_lvl never ends"}
+  - {name: level_not_reset, file: adsr.sv, find: "if (!rst_n) begin\n            level <= '0; ", replace: "if (!rst_n) begin\n            ", why: "CPU_RESETN does not reset level (amended 2026-11-10: the reset test now kills a mutant)"}

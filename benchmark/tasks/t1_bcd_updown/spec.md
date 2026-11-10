@@ -6,7 +6,8 @@ I want a four-digit decimal counter on the Nexys A7-100T.
   switches: SW[1:0] = 00 gives 1, 01 gives 2, 10 gives 5 and 11 gives 10. The buttons bounce, so one press must
   move it exactly once.
 - The count runs from 0000 to 9999 and wraps round at both ends (going up past 9999 carries on from the bottom,
-  going down past 0 carries on from the top). I'd like to know how many times it has wrapped.
+  going down past 0 carries on from the top). I'd like to know how many times it has wrapped; a single byte is
+  plenty, so after 255 that count can go round to zero.
 - The right-hand four digits of the 7-segment display show the count in decimal, without leading zeros: 7 shows
   as a single 7, and zero shows as a single 0. The other digits stay dark.
 - LED[13:0] show the count in binary.

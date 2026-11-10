@@ -34,8 +34,14 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-06",
+  "date": "2026-11-10",
   "mutants": {
+   "a_r_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset"
+    ],
+    "killed": true
+   },
    "bias_dropped": {
     "failed_tests": [
      "test_random_cases",
@@ -292,6 +298,11 @@
    "file": "dot_requant.sv",
    "name": "round_wrong_bit",
    "why": "rounding constant is 2^shift, not 2^(shift-1)"
+  },
+  {
+   "file": "c14_int8_dot_requant_regs.sv",
+   "name": "a_r_not_reset",
+   "why": "CPU_RESETN does not reset a_r (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

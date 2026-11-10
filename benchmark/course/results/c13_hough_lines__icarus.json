@@ -1,7 +1,7 @@
 {
   "task": "c13_hough_lines",
   "sim": "icarus",
-  "date": "2026-11-06",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -72,7 +72,6 @@
       "killed": true,
       "built": true,
       "failed_tests": [
-        "test_diagonal_line",
         "test_vertical_line",
         "test_four_lines_then_clear",
         "test_corners_and_registers"
@@ -88,8 +87,21 @@
         "test_four_lines_then_clear",
         "test_corners_and_registers"
       ]
+    },
+    {
+      "name": "k_not_reset",
+      "why": "CPU_RESETN does not reset k (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_diagonal_line",
+        "test_vertical_line",
+        "test_four_lines_then_clear",
+        "test_corners_and_registers"
+      ]
     }
   ],
-  "mutants_killed": 7,
-  "mutants_total": 7
+  "mutants_killed": 8,
+  "mutants_total": 8
 }

@@ -1,7 +1,7 @@
 {
   "task": "t1_pattern_sequencer",
   "sim": "icarus",
-  "date": "2026-11-03",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -106,8 +106,27 @@
       "failed_tests": [
         "test_debounce_rejects_bounce"
       ]
+    },
+    {
+      "name": "run_not_reset",
+      "why": "CPU_RESETN does not reset run (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_loop_playback",
+        "test_one_shot_holds_last",
+        "test_pause_button",
+        "test_zero_duration_is_256",
+        "test_length_rules",
+        "test_live_pattern_edit",
+        "test_start_is_from_entry_zero",
+        "test_debounce_rejects_bounce",
+        "test_register_rules",
+        "test_random_program"
+      ]
     }
   ],
-  "mutants_killed": 9,
-  "mutants_total": 9
+  "mutants_killed": 10,
+  "mutants_total": 10
 }

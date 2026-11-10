@@ -1,7 +1,7 @@
 {
   "task": "c14_int8_dot_requant",
   "sim": "icarus",
-  "date": "2026-11-06",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -86,8 +86,17 @@
         "test_extremes_halves_and_bias",
         "test_shift_and_mult_ranges"
       ]
+    },
+    {
+      "name": "a_r_not_reset",
+      "why": "CPU_RESETN does not reset a_r (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset"
+      ]
     }
   ],
-  "mutants_killed": 6,
-  "mutants_total": 6
+  "mutants_killed": 7,
+  "mutants_total": 7
 }

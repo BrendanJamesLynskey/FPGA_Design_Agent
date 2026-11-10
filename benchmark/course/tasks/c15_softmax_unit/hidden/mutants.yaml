@@ -4,3 +4,4 @@ mutants:
   - {name: scale_double_shift, file: softmax_unit.sv, find: "pout[i*16 +: 16] = prod >> (pb + 6'd1);", replace: "pout[i*16 +: 16] = prod >> (pb + 6'd2);", why: "probabilities come out half size"}
   - {name: recip_index, file: softmax_unit.sv, find: "rl = recip_lut(ms[14:8]);", replace: "rl = recip_lut(ms[13:7]);", why: "reciprocal table indexed by the wrong bits"}
   - {name: sum_drops_last, file: softmax_unit.sv, find: "ssum = ssum + ev[i*17 +: 17];", replace: "ssum = ssum + ((i == N-1) ? 32'd0 : ev[i*17 +: 17]);", why: "the last score is left out of the denominator"}
+  - {name: x_r_not_reset, file: c15_softmax_unit_regs.sv, find: "if (rst) begin x_r <= '0; go", replace: "if (rst) begin go", why: "CPU_RESETN does not reset x_r (amended 2026-11-10: the reset test now kills a mutant)"}

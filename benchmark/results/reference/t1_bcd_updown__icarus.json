@@ -1,7 +1,7 @@
 {
   "task": "t1_bcd_updown",
   "sim": "icarus",
-  "date": "2026-11-04",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -13,7 +13,9 @@
       "test_leading_zero_blanking": true,
       "test_register_rules": true,
       "test_random_sequence": true,
-      "test_simultaneous_presses_cancel": true
+      "test_simultaneous_presses_cancel": true,
+      "test_wrap_count_is_a_byte": true,
+      "test_reset_after_activity": true
     }
   },
   "mutants": [
@@ -33,7 +35,8 @@
       "killed": true,
       "built": true,
       "failed_tests": [
-        "test_wrap_both_ends"
+        "test_wrap_both_ends",
+        "test_wrap_count_is_a_byte"
       ]
     },
     {
@@ -71,10 +74,39 @@
       "failed_tests": [
         "test_wrap_both_ends"
       ]
+    },
+    {
+      "name": "wraps_nine_bits",
+      "why": "the wrap count is nine bits and reads 256 after 256 wraps (amended 2026-11-10)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_wrap_count_is_a_byte"
+      ]
+    },
+    {
+      "name": "count_survives_reset",
+      "why": "CPU_RESETN does not clear COUNT after activity (amended 2026-11-10)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_debounce_rejects_bounce",
+        "test_wrap_count_is_a_byte",
+        "test_reset_after_activity"
+      ]
+    },
+    {
+      "name": "wraps_survive_reset",
+      "why": "CPU_RESETN does not clear WRAPS after activity (amended 2026-11-10)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_reset_after_activity"
+      ]
     }
   ],
-  "mutants_killed": 6,
-  "mutants_total": 6,
+  "mutants_killed": 9,
+  "mutants_total": 9,
   "trap": {
     "twin": "textbook button-press counter with a decimal 7-segment display",
     "why": "the textbook display shows all four digits, leading zeros included; this spec blanks them",
@@ -84,7 +116,8 @@
     "failed_tests": [
       "test_identity_and_reset",
       "test_decimal_display",
-      "test_leading_zero_blanking"
+      "test_leading_zero_blanking",
+      "test_reset_after_activity"
     ],
     "trap_fires": true
   }

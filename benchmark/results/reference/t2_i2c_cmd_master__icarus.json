@@ -1,7 +1,7 @@
 {
   "task": "t2_i2c_cmd_master",
   "sim": "icarus",
-  "date": "2026-11-04",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -134,10 +134,23 @@
         "test_bit_timing",
         "test_random_transactions"
       ]
+    },
+    {
+      "name": "scl_oe_not_reset",
+      "why": "CPU_RESETN does not reset scl_oe (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_id_via_repeated_start",
+        "test_temperature_two_bytes",
+        "test_write_then_read_back",
+        "test_nack_address"
+      ]
     }
   ],
-  "mutants_killed": 9,
-  "mutants_total": 9,
+  "mutants_killed": 10,
+  "mutants_total": 10,
   "trap": {
     "twin": "textbook fixed ADT7420 read sequence (STOP after the pointer write, then a fresh START)",
     "why": "the board's ADT7420 loses its register pointer on a STOP (Nexys A7 RM 12.1), so a pointer write must be followed by a repeated START",

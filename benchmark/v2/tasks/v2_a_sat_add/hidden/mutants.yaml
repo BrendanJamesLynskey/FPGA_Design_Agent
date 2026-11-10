@@ -8,6 +8,8 @@ mutants:
   - {name: neg_before_saturation, file: sat_add.sv, find: "wire [2:0]  flags = {sum[15],", replace: "wire [2:0]  flags = {raw[15],", why: "NEG is taken from the wrapped sum"}
   - {name: carry_partial, file: sat_add.sv, find: "wire        ovf_u = raw[16];", replace: "wire        ovf_u = a[15] && b[15];", why: "unsigned overflow only when both top bits are set (misses 0x8000 + 0x7FFF + carry cases)"}
   - {name: ctrl_bits_swapped, file: sat_add.sv, find: "sgn <= win_wdata[0];\n                sat <= win_wdata[1];", replace: "sgn <= win_wdata[1];\n                sat <= win_wdata[0];", why: "SIGNED and SAT bits exchanged"}
+  - {name: led_wrapped_sum, file: sat_add.sv, find: "led <= sum;", replace: "led <= raw[15:0];", why: "LED[15:0] shows the wrapped sum, not the sum that SAT produces (amended 2026-11-10: REQ-04 had no mutant)"}
+  - {name: a_not_reset, file: sat_add.sv, find: "if (rst) begin\n            a <= '0; ", replace: "if (rst) begin\n            ", why: "CPU_RESETN does not reset a (amended 2026-11-10: the reset test now kills a mutant)"}
 trap:
   twin: "textbook adder whose overflow flag is the carry out of the top bit"
   why: "the carry out is the unsigned overflow; signed overflow needs the operand and result signs, and the two differ (0x7FFF + 1 overflows signed but has no carry; 0xFFFF + 1 carries but is fine signed)"

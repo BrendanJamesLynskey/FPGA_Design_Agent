@@ -1,7 +1,7 @@
 {
   "task": "c12_nexys_pwm_audio",
   "sim": "icarus",
-  "date": "2026-11-09",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -81,8 +81,18 @@
       "failed_tests": [
         "test_gain_clamp_and_pwm_duty"
       ]
+    },
+    {
+      "name": "gain_not_reset",
+      "why": "CPU_RESETN does not reset gain (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_gain_clamp_and_pwm_duty"
+      ]
     }
   ],
-  "mutants_killed": 8,
-  "mutants_total": 8
+  "mutants_killed": 9,
+  "mutants_total": 9
 }

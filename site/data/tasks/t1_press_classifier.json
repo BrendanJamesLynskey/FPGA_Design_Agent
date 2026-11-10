@@ -45,7 +45,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-03",
+  "date": "2026-11-10",
   "mutants": {
    "debounce_half": {
     "failed_tests": [
@@ -88,6 +88,20 @@
    },
    "prescaler_off_by_one": {
     "failed_tests": [
+     "test_short_presses",
+     "test_long_press_not_short",
+     "test_threshold_boundary",
+     "test_length_units",
+     "test_debounce_rejects_bounce",
+     "test_length_saturates",
+     "test_register_rules",
+     "test_random_presses"
+    ],
+    "killed": true
+   },
+   "short_cnt_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset",
      "test_short_presses",
      "test_long_press_not_short",
      "test_threshold_boundary",
@@ -299,6 +313,11 @@
    "file": "press_classifier.sv",
    "name": "last_long_inverted",
    "why": "LAST_LONG flag inverted"
+  },
+  {
+   "file": "press_classifier.sv",
+   "name": "short_cnt_not_reset",
+   "why": "CPU_RESETN does not reset short_cnt (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

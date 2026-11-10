@@ -41,7 +41,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-03",
+  "date": "2026-11-10",
   "mutants": {
    "decay_wraps": {
     "failed_tests": [
@@ -52,6 +52,12 @@
    "hold_reload_ctrl": {
     "failed_tests": [
      "test_peak_hold_and_decay"
+    ],
+    "killed": true
+   },
+   "hold_set_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset"
     ],
     "killed": true
    },
@@ -282,6 +288,11 @@
    "file": "pdm_vu.sv",
    "name": "hold_reload_ctrl",
    "why": "the hold ignores CTRL.HOLD"
+  },
+  {
+   "file": "pdm_vu.sv",
+   "name": "hold_set_not_reset",
+   "why": "CPU_RESETN does not reset hold_set (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

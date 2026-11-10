@@ -5,3 +5,4 @@ mutants:
   - {name: weights_unsigned, file: dot_requant.sv, find: "$signed(a[i*8 +: 8]) * $signed(w[i*8 +: 8])", replace: "$signed(a[i*8 +: 8]) * w[i*8 +: 8]", why: "weights read as unsigned"}
   - {name: bias_dropped, file: dot_requant.sv, find: "s = bias;", replace: "s = 32'sd0;", why: "bias not added"}
   - {name: round_wrong_bit, file: dot_requant.sv, find: "rnd = 64'sd1 <<< (shift - 5'd1);", replace: "rnd = 64'sd1 <<< shift;", why: "rounding constant is 2^shift, not 2^(shift-1)"}
+  - {name: a_r_not_reset, file: c14_int8_dot_requant_regs.sv, find: "if (rst) begin\n            a_r <= '0; ", replace: "if (rst) begin\n            ", why: "CPU_RESETN does not reset a_r (amended 2026-11-10: the reset test now kills a mutant)"}

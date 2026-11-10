@@ -27,9 +27,9 @@ COURSE = sorted(d for d in (BENCH / "course" / "tasks").iterdir() if d.is_dir())
 V2 = sorted(d for d in (BENCH / "v2" / "tasks").iterdir() if d.is_dir())
 ALL = V1 + COURSE + V2
 
-# A mutant that "dies" because the copy does not compile proves nothing about the tests. Known case, listed for the planner
-# (needs a dated amendment of c16_ntt_engine/hidden/mutants.yaml); a new one must fail this test.
-KNOWN_BUILD_KILLS = {("c16_ntt_engine", "forward_scaled")}
+# A mutant that "dies" because the copy does not compile proves nothing about the tests. None is known now (c16_ntt_engine's
+# forward_scaled was replaced by an amendment, benchmark/AMENDMENTS.md); a new one must fail this test.
+KNOWN_BUILD_KILLS: set[tuple[str, str]] = set()
 
 
 def _tests_in(task: Path) -> set[str]:
@@ -85,15 +85,16 @@ def _manifest_path(task: Path) -> Path:
 @pytest.mark.parametrize("task", V2, ids=lambda d: d.name)
 def test_v2_manifest_matches_the_task_and_the_ledger(task: Path) -> None:
     """A published v2 task is exactly what was frozen: its files hash to the manifest, and the manifest's SHA-256 is the one
-    the ledger recorded at submit and draw (so the task cannot change after its draw without a test failing)."""
+    the ledger recorded at submit and draw, or the one its latest ``amend`` entry names (so the task cannot change after its draw
+    except through a dated, hash-chained amendment)."""
     mp = _manifest_path(task)
     rec = json.loads(mp.read_text())["units"][0]
     now = v2_unit(task)
     assert rec["id"] == task.name and rec["file_hashes"] == now["file_hashes"] and rec["digest"] == now["digest"], \
         f"{task.name} differs from its freeze manifest"
     msha = hashlib.sha256(mp.read_bytes()).hexdigest()
-    dev = {d["task"]: d["manifest"] for e in S.read_ledger() if e["kind"] == "draw" for d in e["dev"]}
-    assert dev.get(task.name) == msha, f"{task.name}: manifest SHA-256 is not the one in the ledger's draw entry"
+    assert S.current_manifests(S.read_ledger()).get(task.name) == msha, \
+        f"{task.name}: manifest SHA-256 is not the one in the ledger's draw entry or its latest amend entry"
 
 
 def test_public_v2_tasks_are_exactly_the_ledger_development_tasks() -> None:

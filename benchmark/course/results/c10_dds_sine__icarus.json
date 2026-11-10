@@ -1,7 +1,7 @@
 {
   "task": "c10_dds_sine",
   "sim": "icarus",
-  "date": "2026-11-07",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -70,8 +70,18 @@
         "test_each_frequency_word_sample_for_sample",
         "test_restart_and_pointer"
       ]
+    },
+    {
+      "name": "fw_r_not_reset",
+      "why": "CPU_RESETN does not reset fw_r (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_restart_and_pointer"
+      ]
     }
   ],
-  "mutants_killed": 6,
-  "mutants_total": 6
+  "mutants_killed": 7,
+  "mutants_total": 7
 }

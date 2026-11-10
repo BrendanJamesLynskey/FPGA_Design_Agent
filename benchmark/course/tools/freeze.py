@@ -2,7 +2,8 @@
 """The course-tier freeze: SHA-256 of every file per task, the split, the tool versions; and its verification (as benchmark/tools/freeze.py).
 
     freeze.py make   [--private DIR] [--out benchmark/course/MANIFEST.json] [--private-out DIR/course/MANIFEST_full.json]
-    freeze.py verify [--private DIR] [--manifest benchmark/course/MANIFEST.json]
+    freeze.py verify [--private DIR] [--manifest benchmark/course/MANIFEST.json] [--grader-shell DIR]
+    freeze.py refreeze UNIT...                                    # dated amendment: re-record named public units only
 
 Units: a task (public benchmark/course/tasks/<id>, or private <DIR>/course/tasks/<id> for the held-out ones) and the shared code (the v1 bench
 library and scoring tools, which the course tier reuses unchanged, and benchmark/course/tools). A held-out unit appears in the public manifest by
@@ -81,9 +82,29 @@ def make(private: Path, out: Path, private_out: Path) -> None:
     print(f"{len(pub)} units, {len(pending)} pending; manifest {out}; private manifest {private_out}")
 
 
-def verify(private: Path | None, manifest: Path) -> int:
+def refreeze(ids: list[str], manifest: Path) -> int:
+    """Re-record the named public units in an existing manifest (a dated amendment, benchmark/AMENDMENTS.md); nothing else changes."""
+    m = json.loads(manifest.read_text())
+    by_id = {u["id"]: u for u in units(None)[0] if u["where"] == "public"}
+    for i in ids:
+        rec = next((r for r in m["units"] if r["id"] == i), None)
+        if rec is None or rec["where"] != "public" or i not in by_id:
+            raise SystemExit(f"{i}: not a public unit of {manifest.name}")
+        f = files_of(by_id[i]["path"])
+        old = rec["digest"]
+        rec.update({"files": len(f), "digest": digest(f), "file_hashes": f})
+        print(f"{i}: {old[:16]} -> {rec['digest'][:16]} ({len(f)} files)")
+    manifest.write_text(json.dumps(m, indent=1) + "\n")
+    return 0
+
+
+def verify(private: Path | None, manifest: Path, grader_shell: Path | None = None) -> int:
     m = json.loads(manifest.read_text())
     bad, checked, skipped = [], 0, 0
+    from benchmark.tools import shell_freeze
+    deps = manifest.parent / "GRADER_DEPS.json"
+    bad += (shell_freeze.verify_record(json.loads(deps.read_text()), grader_shell, label="shell") if deps.exists()
+            else [f"{deps.name} (missing: the shell fingerprint is not recorded)"])
     if hashlib.sha256((COURSE / "split.yaml").read_bytes()).hexdigest() != m["split_sha256"]:
         bad.append("split.yaml")
     if "split_c9_c12_sha256" in m and hashlib.sha256((COURSE / "split_c9_c12.yaml").read_bytes()).hexdigest() != m["split_c9_c12_sha256"]:
@@ -107,7 +128,9 @@ def verify(private: Path | None, manifest: Path) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["make", "verify"])
+    ap.add_argument("cmd", choices=["make", "verify", "refreeze"])
+    ap.add_argument("units", nargs="*")
+    ap.add_argument("--grader-shell", type=Path, default=None)
     ap.add_argument("--private", type=Path, default=None)
     ap.add_argument("--out", type=Path, default=COURSE / "MANIFEST.json")
     ap.add_argument("--private-out", type=Path, default=None)
@@ -117,7 +140,9 @@ def main() -> int:
         priv = a.private or DEFAULT_PRIVATE
         make(priv, a.out, a.private_out or priv / "course" / "MANIFEST_full.json")
         return 0
-    return verify(a.private, a.manifest)
+    if a.cmd == "refreeze":
+        return refreeze(a.units, a.manifest)
+    return verify(a.private, a.manifest, a.grader_shell)
 
 
 if __name__ == "__main__":

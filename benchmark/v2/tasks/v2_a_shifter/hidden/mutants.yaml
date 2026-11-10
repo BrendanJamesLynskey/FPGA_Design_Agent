@@ -8,6 +8,7 @@ mutants:
   - {name: led_high_half, file: shifter.sv, find: "led <= res[15:0];", replace: "led <= res[31:16];", why: "LEDs show the top half of the result"}
   - {name: sra_amount_off_by_one, file: shifter.sv, find: "32'($signed(a) >>> r);", replace: "32'($signed(a) >>> (r + 5'd1));", why: "arithmetic shift is one place too far"}
   - {name: mode_bit_swap, file: shifter.sv, find: "mode <= win_wdata[9:8];", replace: "mode <= {win_wdata[8], win_wdata[9]};", why: "operation bits swapped: modes 1 and 2 exchange"}
+  - {name: a_not_reset, file: shifter.sv, find: "if (rst) begin\n            a <= '0; ", replace: "if (rst) begin\n            ", why: "CPU_RESETN does not reset a (amended 2026-11-10: the reset test now kills a mutant)"}
 trap:
   twin: "textbook arithmetic shift written with >>> on an unsigned vector"
   why: "in Verilog, >>> on an unsigned operand shifts in zeros, so the textbook line is a logical shift; the spec wants the sign kept"

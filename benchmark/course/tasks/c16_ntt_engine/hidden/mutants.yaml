@@ -5,4 +5,5 @@ mutants:
   - {name: forward_sub_is_add, file: ntt_engine.sv, find: "nhi = subq(vlo, tt);", replace: "nhi = addq(vlo, tt);", why: "the forward butterfly adds twice instead of add and subtract"}
   - {name: one_layer_short, file: ntt_engine.sv, find: "if (layer == 3'd6) begin", replace: "if (layer == 3'd5) begin", why: "the last of the seven layers is skipped"}
   - {name: subq_unreduced, file: ntt_engine.sv, find: "subq = (u >= v) ? (u - v) : 12'(u + Q - v);", replace: "subq = 12'(u + Q - v);", why: "the subtraction is not reduced when the result is already non-negative"}
-  - {name: forward_scaled, file: ntt_engine.sv, find: "if (inv_r) scaling <= 1'b1;", replace: "scaling <= 1'b1;", why: "the forward transform also runs the multiplication by 3303"}
+  - {name: forward_scaled, file: ntt_engine.sv, find: "if (inv_r) scaling <= 1'b1;\n                    else begin busy <= 1'b0; done <= 1'b1; end", replace: "scaling <= 1'b1;", why: "the forward transform also runs the multiplication by 3303 (amended 2026-11-10: the first form of this edit left a dangling else and never compiled)"}
+  - {name: ld_ptr_q_not_reset, file: c16_ntt_engine_regs.sv, find: "if (rst) begin\n            ld_ptr_q <= '0; ", replace: "if (rst) begin\n            ", why: "CPU_RESETN does not reset ld_ptr_q (amended 2026-11-10: the reset test now kills a mutant)"}

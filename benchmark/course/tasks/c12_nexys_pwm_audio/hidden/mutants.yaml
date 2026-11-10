@@ -7,3 +7,4 @@ mutants:
   - {name: gain_shift_14, file: audio_pwm.sv, find: "sample_out = 16'(prod >>> 15);", replace: "sample_out = 16'(prod >>> 14);", why: "the gain is twice what it should be"}
   - {name: compare_strict, file: audio_pwm.sv, find: "assign aud_pwm_drive_low = (ctr >= duty);", replace: "assign aud_pwm_drive_low = (ctr > duty);", why: "one clock less low per period"}
   - {name: pin_driven_high, file: c12_nexys_pwm_audio_top.sv, find: "assign AUD_PWM = drive_low ? 1'b0 : 1'bz;", replace: "assign AUD_PWM = drive_low ? 1'b0 : 1'b1;", why: "the pin is driven high instead of released"}
+  - {name: gain_not_reset, file: audio_pwm.sv, find: "if (!rst_n) begin\n            gain <= GAIN_DEFAULT; ", replace: "if (!rst_n) begin\n            ", why: "CPU_RESETN does not reset gain (amended 2026-11-10: the reset test now kills a mutant)"}
