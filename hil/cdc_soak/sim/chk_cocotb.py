@@ -22,6 +22,8 @@ async def setup(dut):
     dut.v_ref.value = 0
     dut.c_v.value = 0
     dut.c_raw.value = 0
+    dut.t_v.value = 0
+    dut.t_vref.value = 0
     dut.h_q.value = 0
     await ClockCycles(dut.clk, 3)
     await FallingEdge(dut.clk)
@@ -198,3 +200,57 @@ async def count_and_coherence(dut):
     for _ in range(5):
         await cycle("h_err")
     assert errs == 1
+
+
+@cocotb.test()
+async def tear_check_against_a_reference(dut):
+    """chk_tear (M6b/M6c): the padded bank's decoded value against the reference bank's, tolerance one count; the step
+    check inside it still fires. A tear of two counts or more, either way round, is an error; one count is not."""
+    await setup(dut)
+    errs = 0
+
+    async def cycle():
+        nonlocal errs
+        await RisingEdge(dut.clk)
+        await ReadOnly()
+        errs += int(dut.t_err.value)
+        await FallingEdge(dut.clk)
+
+    # v counts up one a cycle (the step check stays quiet); vref sits `lag` counts behind it (a negative lag: ahead)
+    cur = 0
+
+    async def run(lag, n=12):
+        nonlocal cur
+        for _ in range(n):
+            cur += 1
+            dut.t_v.value = cur
+            dut.t_vref.value = cur - lag
+            await cycle()
+        await cycle()
+        await cycle()
+
+    await run(0, 120)
+    errs = 0
+    for lag in (0, 1, -1, 0):                    # up to one count apart either way: no error
+        await run(lag)
+        assert errs == 0, (lag, errs)
+    for lag in (2, -2, 3):                       # a tear of two counts or more: counted
+        await run(0)
+        before = errs
+        await run(lag)
+        assert errs > before, lag
+    # the wrap: 4095 against 0 is one count apart (a Gray counter is cyclic), 4094 against 1 is three
+    for v in (4093, 4094, 4095, 0):             # both banks cross the wrap together (the step is modulo 4096)
+        dut.t_v.value = v
+        dut.t_vref.value = v
+        await cycle()
+    await cycle()
+    errs = 0
+    dut.t_vref.value = 4095                     # reference one count behind across the wrap: 0 against 4095
+    for _ in range(3):
+        await cycle()
+    assert errs == 0, errs
+    dut.t_v.value = 1                           # now two counts: 1 against 4095
+    for _ in range(3):
+        await cycle()
+    assert errs >= 1

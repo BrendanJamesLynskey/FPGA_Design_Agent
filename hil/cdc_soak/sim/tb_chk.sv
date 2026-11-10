@@ -17,6 +17,9 @@ module tb_chk (
     // chk_count
     input  logic [11:0] c_v, c_raw,
     output logic        c_err, c_ev,
+    // chk_tear (brief 11c)
+    input  logic [11:0] t_v, t_vref,
+    output logic        t_err, t_ev,
     // chk_coh
     input  logic [31:0] h_q,
     input  logic        h_rqs,
@@ -28,5 +31,6 @@ module tb_chk (
         .e_ev(w_ev), .e_relock(w_relock), .e_lock(w_lock));
     chk_events #(.QUIET(8)) u_v (.clk(clk), .ev(v_ev), .ref_cnt(v_ref), .lvl_chk(1'b1), .e_err(v_err), .e_ev(v_evo));
     chk_count #(.MAXSTEP(2), .RAWCHK(1)) u_c (.clk(clk), .v(c_v), .raw(c_raw), .e_err(c_err), .e_ev(c_ev));
+    chk_tear #(.MAXSTEP(10), .TOL(1)) u_t (.clk(clk), .v(t_v), .vref(t_vref), .e_err(t_err), .e_ev(t_ev));
     chk_coh u_h (.clk(clk), .q(h_q), .rqs(h_rqs), .e_err(h_err), .e_ev(h_ev));
 endmodule
