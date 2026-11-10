@@ -1384,7 +1384,16 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
     from flow.verif_gates import seed_macros
     seed_macros(design)                      # 05i: the checker macro file the V1 gate reads, in every run (also on resume)
     if runner is None:
-        runner = ContainerRunner(design, ROOT) if container_available() else LocalRunner()
+        if container_available():
+            runner = ContainerRunner(design, ROOT)
+        elif cfg.hidden_spec is not None and not os.environ.get("FDA_ALLOW_HOST_SANDBOX"):
+            # QR1: agent-written tests run as host code from the repo root, where benchmark/tasks/*/hidden lives: without
+            # the container a benchmark run could read the held-out material, so it is refused (owner opt-out below)
+            raise ArmBlocked("the sandbox image (docker image fda-sim:2) is not available and this run has a hidden spec: "
+                             "agent-written tests would run on the host, next to the benchmark's hidden files. Build the image "
+                             "(docker build -t fda-sim:2 agent/container) or set FDA_ALLOW_HOST_SANDBOX=1 to accept the host.")
+        else:
+            runner = LocalRunner()
     bank = None
     try:
         from agent.core.bank import LocalBank

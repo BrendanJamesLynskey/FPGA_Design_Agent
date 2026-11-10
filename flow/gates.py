@@ -314,12 +314,18 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
     top = prep.get("top") or next((p.stem for p in d.glob("*.bit")), "")
     variant = prep.get("variant", "base")
     stages: dict[str, dict[str, Any]] = {}
+    # QR1: a build made by this flow (run_vivado.sh writes run.json before the gates run) always writes the reports below;
+    # for such a build a missing one FAILS its gate instead of skipping it (a deleted report was a gate that vanished).
+    # A directory without run.json (an older build, a hand-made fixture) keeps the old "absent = not run" behaviour.
+    strict = (d / "run.json").exists()
 
     # --- rtl: methodology DRCs on the elaborated design (UG949 ch. 3 "Running RTL DRCs") ---
     if (d / "methodology_rtl.rpt").exists():
         meth_rtl = parse_rule_table(_read(d, "methodology_rtl.rpt"))
         stages["rtl"] = {"ran": True, "gates": {"rtl_methodology_no_critical": _n_sev(meth_rtl, "Critical Warning") == 0},
                          "methodology": _rule_summary(meth_rtl)}
+    elif strict and (d / "timing_summary_synth.rpt").exists():
+        stages["rtl"] = {"ran": True, "gates": {"rtl_methodology_no_critical": False}, "missing_report": "methodology_rtl.rpt"}
     else:
         stages["rtl"] = {"ran": False, "gates": {}}
 
@@ -340,6 +346,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
                          "meaning": q_s["meaning"],
                          "note": "post-synthesis score is a prediction; the gate is the post-route score"})
         cdc_s = parse_cdc(_read(d, "cdc_synth.rpt")) if (d / "cdc_synth.rpt").exists() else None
+        if cdc_s is None and strict:
+            g["post_synth_cdc_no_critical"] = False
         if cdc_s is not None:              # design standard STD-CDC-02 (brief 05d): report_cdc at post-synthesis
             g["post_synth_cdc_no_critical"] = sum(r["count"] for r in cdc_s["rules"] if r["severity"] == "Critical") == 0
         util_s = parse_utilization(_read(d, "utilization_synth.rpt")) if (d / "utilization_synth.rpt").exists() else {}
@@ -401,9 +409,11 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         }
         if q_r is not None:        # the QoR gate (brief 05g): judged after routing, from qor_assessment_route.rpt
             route_gates["post_route_qor_assessment"] = q_r["score"] >= QOR_SCORE_MIN
+        elif strict:
+            route_gates["post_route_qor_assessment"] = False
         # UG949 ch. 6 "Power Closure": the junction temperature must fit the thermal budget, computed for the
         # board's own environment (still air, no heat sink: flow/build.tcl applies boards/<board>/board.yaml)
-        if (d / "methodology_rtl.rpt").exists():      # a build of this flow version: the environment is set
+        if (d / "methodology_rtl.rpt").exists() or strict:      # a build of this flow version: the environment is set
             route_gates["power_junction_ok"] = (env["airflow_lfm"] == 0 and env["heatsink"] == "none"
                                                 and env["junction_c"] is not None and env["junction_c"] <= JUNCTION_MAX_C)
         stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r,

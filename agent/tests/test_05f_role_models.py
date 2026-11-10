@@ -102,6 +102,7 @@ def test_cli_builds_the_oracle_client_on_the_run_model_whatever_the_profile(runs
     monkeypatch.setattr(cli, "_client", lambda model, replay, record: asked.append(model) or (lambda *a, **k: None))
     monkeypatch.setattr(cli, "_drive", lambda *a, **k: {})
     monkeypatch.setattr(gr, "container_available", lambda: False)
+    monkeypatch.setenv("FDA_ALLOW_HOST_SANDBOX", "1")          # QR1: a hidden-spec run is otherwise refused without the image
     hidden = tmp_path / "h.yaml"
     hidden.write_text("name: x\n")
     cli.main(["run", str(T1 / "spec.md"), "--profile", "cvdp", "--interview", "oracle", "--hidden-spec", str(hidden)])

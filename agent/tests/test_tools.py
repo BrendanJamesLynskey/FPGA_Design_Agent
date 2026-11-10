@@ -161,3 +161,13 @@ def test_cable_serial_is_redacted_from_output(session, board_file) -> None:
     session.runner = FakeRunner({"program": RunResult(0, "target 210292AE3B73 programmed", "", 1.0)})
     r = dispatch(session, "program", {})
     assert "210292AE3B73" not in json.dumps(r)
+
+
+def test_qr1_sv_scan_refuses_parent_directory_reads():
+    """QR1: $readmemh/`include with '..' reach files outside the design (the benchmark's hidden folders sit beside designs/)."""
+    from agent.core.tools import _SV_BAD
+    for bad in ('initial $readmemh("../../../benchmark/tasks/x/hidden/a.hex", m);', '`include "../../x/hidden/m.svh"',
+                '$readmemb("/etc/passwd", m);'):
+        assert _SV_BAD.search(bad), bad
+    for ok in ('initial $readmemh("rom.hex", m);', '`include "v_macros.svh"', '$readmemh("data/rom.hex", m);'):
+        assert not _SV_BAD.search(ok), ok

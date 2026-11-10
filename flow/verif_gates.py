@@ -191,7 +191,8 @@ def read_results(run_dirs: list[Path]) -> dict[int, dict[str, bool]]:
             seed = int(x.parent.name.removeprefix("seed"))
             tests = {}
             for tc in ET.parse(x).getroot().iter("testcase"):
-                bad = any(c.tag in ("failure", "error") for c in tc)
+                # a skipped test is not a pass (QR1: cocotb writes <skipped/>; `skip=True` satisfied "planned test present")
+                bad = any(c.tag in ("failure", "error", "skipped") for c in tc)
                 tests[f"{tc.get('classname', '').split('.')[-1]}.{tc.get('name')}"] = not bad
             out[seed] = tests
     return out
@@ -517,6 +518,8 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
     seeds = sorted(res)
     planned = {t for r in reqs for t in r.get("tests", [])}
     failing = sorted({f"seed{s}:{t}" for s in seeds for t, ok in res[s].items() if not ok})
+    # cocotb reports a failing `expect_fail=True` / `expect_error` test as a pass, and `skip=True` as skipped: none may stand in for a check
+    failing += sorted({f"bench:{m.group(1)}=True" for m in re.finditer(r"@cocotb\.test\s*\([^)]*?\b(expect_fail|expect_error|skip)\s*=\s*(?!False\b)\w", bench_src)})
     missing = sorted({f"seed{s}:{t}" for s in seeds for t in planned if t not in res[s]})
     also_bad = []
     for d in also:

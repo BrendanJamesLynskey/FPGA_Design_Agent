@@ -257,3 +257,18 @@ def test_stage_limited_build_marks_later_stages_not_run(tmp_path) -> None:
     assert {k: v["ran"] for k, v in r["stages"].items()} == {"rtl": True, "post_synth": True, "post_place": False,
                                                               "post_route": False, "bitstream": False}
     assert r["pass"] is True and r["first_failed_stage"] is None and r["timing"] is None
+
+
+def test_qr1_missing_reports_fail_their_gates_in_a_build_with_run_json(tmp_path: Path) -> None:
+    """QR1: run_vivado.sh writes run.json, and a build of this flow always writes qor_assessment_route.rpt, cdc_synth.rpt and
+    methodology_rtl.rpt: where one is missing its gate fails (it used to be skipped). No run.json keeps the older behaviour."""
+    d = _build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True)
+    assert gates.evaluate(d)["pass"]
+    (d / "run.json").write_text("{}")
+    r = gates.evaluate(d)
+    assert not r["pass"]
+    assert r["gates"]["post_synth_cdc_no_critical"] is False          # the fixture build has no cdc_synth.rpt
+    (d / "qor_assessment_route.rpt").unlink()
+    assert gates.evaluate(d)["gates"]["post_route_qor_assessment"] is False
+    (d / "methodology_rtl.rpt").unlink()
+    assert gates.evaluate(d)["gates"]["rtl_methodology_no_critical"] is False
