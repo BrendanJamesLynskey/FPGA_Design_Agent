@@ -1,0 +1,68 @@
+# Hidden full spec (benchmark v2, batch 1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: v2_a_bit_count
+title: Bit counter
+source: spec.md
+tier: drill
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_a_bit_count_top
+design_id: 0x42434E54          # "BCNT"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: WORD = 0 (so POP = 0, LZC = 32, REV = 0), LED = 0
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  functions:
+    - "WORD is a 32-bit register written over the shell. POP = number of 1 bits (0..32, needs 6 bits). LZC = number of consecutive 0 bits from bit 31 down to the first 1 (0..31); for WORD = 0 there is no 1 and LZC = 32. REV[i] = WORD[31 - i]."
+    - "All three are combinational from WORD."
+  leds:
+    - "LED[5:0] = POP, registered once, so it follows WORD by one clock; LED[15:6] = 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: WORD, access: RW, reset: 0, bits: "[31:0] the word"}
+    - {offset: 0x01, name: POP, access: RO, reset: 0, bits: "[5:0] number of 1 bits; [31:6] 0"}
+    - {offset: 0x02, name: LZC, access: RO, reset: 32, bits: "[5:0] leading zeros (32 for a zero word); [31:6] 0"}
+    - {offset: 0x03, name: REV, access: RO, reset: 0, bits: "[31:0] WORD with the bit order reversed"}
+  unmapped: offsets 0x04-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "POP is the number of 1 bits, 0..32, including for the all-ones word", proof: [simulation]}
+  - {id: REQ-02, text: "LZC counts zeros down from bit 31, and is 32 for a zero word", proof: [simulation]}
+  - {id: REQ-03, text: "REV is the bit-reversed word", proof: [simulation]}
+  - {id: REQ-04, text: "LED[5:0] shows POP", proof: [simulation]}
+  - {id: REQ-05, text: "The register window has the listed map and reset values", proof: [simulation]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board the register window answers as the model predicts", proof: [hardware]}
+
+resources_expected: "about 80 LUTs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: a zero word has 32 leading zeros.
+    reason: every bit is a zero and none is a 1, so all 32 are counted.
+
+open_questions: []

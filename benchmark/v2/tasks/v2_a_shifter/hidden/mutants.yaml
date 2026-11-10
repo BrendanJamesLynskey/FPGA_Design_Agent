@@ -1,0 +1,16 @@
+# Mutants and the trap for v2_a_shifter (benchmark/tools/check_task.py)
+mutants:
+  - {name: rotate_is_right, file: shifter.sv, find: "default: res = (a << r) | (a >> (6'd32 - {1'b0, r}));", replace: "default: res = (a >> r) | (a << (6'd32 - {1'b0, r}));", why: "mode 3 rotates right"}
+  - {name: rotate_big_zero, file: shifter.sv, find: "default: res = (a << r) | (a >> (6'd32 - {1'b0, r}));", replace: "default: res = amt[5] ? 32'd0 : (a << r) | (a >> (6'd32 - {1'b0, r}));", why: "rotating by 32 or more gives 0 instead of amount mod 32"}
+  - {name: sll_big_wraps, file: shifter.sv, find: "2'd0:    res = amt[5] ? 32'd0 : a << r;", replace: "2'd0:    res = a << r;", why: "a left shift by 32..63 uses only the low 5 bits of the amount"}
+  - {name: srl_big_wraps, file: shifter.sv, find: "2'd1:    res = amt[5] ? 32'd0 : a >> r;", replace: "2'd1:    res = a >> r;", why: "a logical right shift by 32..63 uses only the low 5 bits"}
+  - {name: sra_big_zero, file: shifter.sv, find: "2'd2:    res = amt[5] ? {32{a[31]}} : 32'($signed(a) >>> r);", replace: "2'd2:    res = amt[5] ? 32'd0 : 32'($signed(a) >>> r);", why: "arithmetic right shift by 32 or more gives 0 for a negative operand"}
+  - {name: led_high_half, file: shifter.sv, find: "led <= res[15:0];", replace: "led <= res[31:16];", why: "LEDs show the top half of the result"}
+  - {name: sra_amount_off_by_one, file: shifter.sv, find: "32'($signed(a) >>> r);", replace: "32'($signed(a) >>> (r + 5'd1));", why: "arithmetic shift is one place too far"}
+  - {name: mode_bit_swap, file: shifter.sv, find: "mode <= win_wdata[9:8];", replace: "mode <= {win_wdata[8], win_wdata[9]};", why: "operation bits swapped: modes 1 and 2 exchange"}
+trap:
+  twin: "textbook arithmetic shift written with >>> on an unsigned vector"
+  why: "in Verilog, >>> on an unsigned operand shifts in zeros, so the textbook line is a logical shift; the spec wants the sign kept"
+  edits:
+    - {file: shifter.sv, find: "32'($signed(a) >>> r);", replace: "a >>> r;"}
+  must_fail: [test_arithmetic_right_shift]

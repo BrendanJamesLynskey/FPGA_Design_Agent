@@ -1,0 +1,16 @@
+# Mutants and the trap for v2_a_prio_enc (benchmark/tools/check_task.py)
+mutants:
+  - {name: lowest_wins, file: prio_enc.sv, find: "for (int i = 0; i < 16; i++) begin", replace: "for (int i = 15; i >= 0; i--) begin", why: "the lowest-numbered request wins"}
+  - {name: index_off_by_one, file: prio_enc.sv, find: "idx   = i[3:0];", replace: "idx   = i[3:0] + 4'd1;", why: "INDEX is one too high"}
+  - {name: valid_misses_bit15, file: prio_enc.sv, find: "valid = 1'b1;", replace: "valid = (i != 15);", why: "a lone request 15 does not set VALID"}
+  - {name: grant_not_one_hot, file: prio_enc.sv, find: "grant = 16'd1 << i;", replace: "grant = grant | (16'd1 << i);", why: "every active request is lit, not just the winner"}
+  - {name: mask_inverted, file: prio_enc.sv, find: "wire [15:0] eff = req & ~mask;", replace: "wire [15:0] eff = req & mask;", why: "a set mask bit keeps the request instead of dropping it"}
+  - {name: mask_ignored, file: prio_enc.sv, find: "wire [15:0] eff = req & ~mask;", replace: "wire [15:0] eff = req;", why: "the mask has no effect"}
+  - {name: led_shows_requests, file: prio_enc.sv, find: "led <= grant;", replace: "led <= eff;", why: "LEDs show every active request"}
+  - {name: one_sync_stage, file: prio_enc.sv, find: "req <= s1;", replace: "req <= sw_async;", why: "only one synchroniser stage: the LED answers a clock early"}
+trap:
+  twin: "textbook priority encoder (casez / for loop with index 0 as the default)"
+  why: "the textbook encoder returns index 0 with a valid flag when nothing is requested; this spec says all ones"
+  edits:
+    - {file: prio_enc.sv, find: "idx = 4'hF; valid = 1'b0; grant = '0;", replace: "idx = 4'h0; valid = 1'b0; grant = '0;"}
+  must_fail: [test_single_requests]

@@ -1,0 +1,70 @@
+# Hidden full spec (benchmark v2, batch 1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: v2_a_tick_gen
+title: Programmable tick generator
+source: spec.md
+tier: drill
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_a_tick_gen_top
+design_id: 0x5449434B          # "TICK"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: DIV = 8, the counter and the tick are 0, LED[1] = 0, TICKS = 0 (ticks start at once with DIV = 8)
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  generator:
+    - DIV (16 bits) is N. DIV = 0 means no ticks. A shell write to DIV sets it and restarts the counter, so the first tick after the write comes about N clocks later; the exact phase to the write is not specified.
+    - TICK is a registered signal, 1 for exactly one clock per tick and 0 otherwise. Consecutive ticks are exactly DIV clocks apart: with DIV = 1 TICK is 1 on every clock, with DIV = 2 it is 1 on every second clock.
+    - "Reset gives DIV = 8 and the generator runs from reset."
+  count:
+    - TICKS (32 bits, wrapping) adds 1 for every clock in which TICK is 1; a shell write to TICKS (any data) clears it, and the clear wins over a tick on the same clock.
+  leds:
+    - "LED[0] = TICK. LED[1] flips on the same clock edge on which TICK becomes 1, so it changes exactly where a tick starts. LED[15:2] = 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: DIV, access: RW, reset: 8, bits: "[15:0] clocks per tick, 0 = stopped; [31:16] read 0"}
+    - {offset: 0x01, name: TICKS, access: RW, reset: 0, bits: "[31:0] ticks counted; any write clears it"}
+  unmapped: offsets 0x02-0x7F read 0; writes to them are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "Ticks are exactly DIV clocks apart, one clock wide each; DIV = 1 ticks every clock; DIV = 0 stops them", proof: [simulation]}
+  - {id: REQ-02, text: "LED[1] flips on exactly the clocks where a tick starts", proof: [simulation]}
+  - {id: REQ-03, text: "TICKS counts every tick in 32 bits and any write clears it; DIV keeps 16 bits", proof: [simulation]}
+  - {id: REQ-04, text: "The register window has the listed map and reset values", proof: [simulation]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-06, text: "On the board the tick rate measured over the shell matches DIV", proof: [hardware]}
+
+resources_expected: "about 70 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the generator runs after reset with DIV = 8.
+    reason: a visible default so the LEDs do something before the first write.
+  - assumption: a tick is one clock wide, not a divided clock with 50 per cent duty.
+    reason: the request says a pulse other logic could use as an enable.
+
+open_questions: []

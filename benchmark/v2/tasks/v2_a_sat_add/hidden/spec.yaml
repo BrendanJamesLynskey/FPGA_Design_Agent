@@ -1,0 +1,73 @@
+# Hidden full spec (benchmark v2, batch 1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: v2_a_sat_add
+title: Saturating adder
+source: spec.md
+tier: drill
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_a_sat_add_top
+design_id: 0x53414444          # "SADD"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: A = 0, B = 0, SIGNED = 0, SAT = 0, LED = 0 (so SUM = 0 and FLAGS = ZERO, 0x2)
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  adder:
+    - "RAW = A + B as a 17-bit unsigned sum of the 16-bit operands; the low 16 bits are the wrapped sum."
+    - "OVF (overflow) is raw, before saturation: in unsigned mode (SIGNED = 0) OVF = carry out of bit 15 (RAW[16]); in signed mode OVF = signed overflow: A[15] = B[15] and RAW[15] != A[15]. OVF is reported the same whether SAT is set or not."
+    - "SUM = the wrapped sum, unless SAT = 1 and OVF = 1: then SUM is the saturated value. Unsigned: 0xFFFF. Signed: 0x7FFF when A is non-negative (both operands were), 0x8000 when A is negative."
+    - "ZERO = (SUM == 0) and NEG = SUM[15], both taken from the final SUM, after saturation. NEG is SUM[15] in unsigned mode too."
+  leds:
+    - "LED[15:0] = SUM, registered once, so it follows the inputs by one clock."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: A, access: RW, reset: 0, bits: "[15:0] first operand; [31:16] read 0, ignored on write"}
+    - {offset: 0x01, name: B, access: RW, reset: 0, bits: "[15:0] second operand; [31:16] read 0, ignored on write"}
+    - {offset: 0x02, name: CTRL, access: RW, reset: 0, bits: "[0] SIGNED; [1] SAT; other bits read 0"}
+    - {offset: 0x03, name: SUM, access: RO, reset: 0, bits: "[15:0] the sum; [31:16] 0"}
+    - {offset: 0x04, name: FLAGS, access: RO, reset: 2, bits: "[0] OVF; [1] ZERO; [2] NEG; [31:3] 0"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "SUM is the wrapped sum when SAT = 0 and the saturated value when SAT = 1 and OVF = 1, in both signed and unsigned mode", proof: [simulation]}
+  - {id: REQ-02, text: "OVF is the carry out in unsigned mode and the signed overflow in signed mode, with or without saturation", proof: [simulation]}
+  - {id: REQ-03, text: "ZERO and NEG come from the final SUM", proof: [simulation]}
+  - {id: REQ-04, text: "LED[15:0] shows SUM", proof: [simulation]}
+  - {id: REQ-05, text: "The register window has the listed map and reset values", proof: [simulation]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board the register window answers as the model predicts", proof: [hardware]}
+
+resources_expected: "about 60 LUTs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the overflow flag reports the overflow that happened, even when saturation hid it from the sum.
+    reason: otherwise a saturated result could not be told from an exact one.
+  - assumption: signed saturation goes to the extreme with the sign of the operands.
+    reason: only same-sign operands can overflow.
+
+open_questions: []

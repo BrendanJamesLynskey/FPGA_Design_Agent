@@ -1,0 +1,70 @@
+# Hidden full spec (benchmark v2, batch 1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: v2_a_shifter
+title: Shifter and rotator
+source: spec.md
+tier: drill
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_a_shifter_top
+design_id: 0x53484654          # "SHFT"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: A = 0, AMT = 0, MODE = 0, LED = 0
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  operations:
+    - "MODE 0 = shift left logical, 1 = shift right logical, 2 = shift right arithmetic (the sign bit A[31] fills), 3 = rotate left. A is 32 bits; AMT is 6 bits (0..63)."
+    - "RES is combinational from A, AMT and MODE; the registers A, AMT and MODE are written over the shell."
+    - "AMT >= 32: shift left and shift right logical give 0; shift right arithmetic gives 32 copies of A[31]; rotate left rotates by AMT mod 32 (so AMT = 32 gives A back, AMT = 33 rotates by 1)."
+    - AMT = 0 gives A for every mode.
+  leds:
+    - "LED[15:0] = RES[15:0], registered once, so it follows RES by one clock."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: A, access: RW, reset: 0, bits: "[31:0] operand"}
+    - {offset: 0x01, name: CTRL, access: RW, reset: 0, bits: "[5:0] AMT; [9:8] MODE; other bits ignored on write and read 0"}
+    - {offset: 0x02, name: RES, access: RO, reset: 0, bits: "[31:0] result of MODE applied to A by AMT"}
+  unmapped: offsets 0x03-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "All four operations give the model's result for every amount 0..63, including amounts of 32 and over", proof: [simulation]}
+  - {id: REQ-02, text: "Shift right arithmetic keeps the sign for negative operands", proof: [simulation]}
+  - {id: REQ-03, text: "LED[15:0] shows RES[15:0]", proof: [simulation]}
+  - {id: REQ-04, text: "The register window has the listed map and reset values", proof: [simulation]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-06, text: "On the board the register window answers as the model predicts", proof: [hardware]}
+
+resources_expected: "about 150 LUTs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: an amount of 32 or more empties a logical shift and sign-fills an arithmetic one.
+    reason: the amount is a full number from 0 to 63 and a shift past the width has to be defined.
+  - assumption: rotate takes the amount modulo 32.
+    reason: a rotate has no empty result.
+
+open_questions: []

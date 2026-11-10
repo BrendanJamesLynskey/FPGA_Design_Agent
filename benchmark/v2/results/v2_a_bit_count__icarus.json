@@ -1,0 +1,125 @@
+{
+  "task": "v2_a_bit_count",
+  "sim": "icarus",
+  "date": "2026-11-10",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_zero_word": true,
+      "test_one_hot_words": true,
+      "test_dense_words": true,
+      "test_random_words": true,
+      "test_register_rules": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "pop_5bit",
+      "why": "the 1-bit count has 5 bits, so the all-ones word reads 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_dense_words"
+      ]
+    },
+    {
+      "name": "lzc_is_msb_index",
+      "why": "LZC reports the index of the top 1 instead of the zeros above it",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_hot_words",
+        "test_dense_words",
+        "test_random_words",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "pop_misses_bit31",
+      "why": "bit 31 is not counted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_hot_words",
+        "test_dense_words",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "rev_within_nibbles",
+      "why": "bits are reversed inside each nibble only",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_hot_words",
+        "test_dense_words",
+        "test_random_words",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "lzc_zero_is_31",
+      "why": "a zero word reports 31 leading zeros",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_zero_word",
+        "test_random_words"
+      ]
+    },
+    {
+      "name": "led_shows_lzc",
+      "why": "the LEDs show LZC",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_zero_word",
+        "test_one_hot_words",
+        "test_dense_words",
+        "test_random_words",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "word_16bit",
+      "why": "WORD keeps only 16 bits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_hot_words",
+        "test_dense_words",
+        "test_random_words",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "lzc_counts_from_lsb",
+      "why": "LZC counts the zeros below the lowest 1",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_one_hot_words",
+        "test_dense_words",
+        "test_random_words"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8,
+  "trap": {
+    "twin": "textbook priority-encoder style leading-zero count whose default (no 1 found) is 0",
+    "why": "a case or loop with no 1 found falls through to 0; this spec says a zero word has 32 leading zeros",
+    "must_fail": [
+      "test_zero_word"
+    ],
+    "failed_tests": [
+      "test_identity_and_reset",
+      "test_zero_word",
+      "test_random_words"
+    ],
+    "trap_fires": true
+  }
+}

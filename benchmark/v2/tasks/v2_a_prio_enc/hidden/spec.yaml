@@ -1,0 +1,71 @@
+# Hidden full spec (benchmark v2, batch 1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: v2_a_prio_enc
+title: Priority encoder
+source: spec.md
+tier: drill
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_a_prio_enc_top
+design_id: 0x50454E43          # "PENC"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: MASK = 0, LED = 0
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: SW, dir: in, width: 16, async: true, note: "the 16 requests", pins: [J15, L16, M13, R15, R17, T18, U18, R13, T8, U8, R16, T13, H6, U12, U11, V10], iostandard: {default: LVCMOS33, "SW[8]": LVCMOS18, "SW[9]": LVCMOS18}}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  encoder:
+    - "SW is synchronised by two flops: REQ. EFF = REQ and not MASK."
+    - "Among the set bits of EFF the highest-numbered wins. INDEX is its number (0..15); VALID = 1 when EFF is non-zero. When EFF is 0, VALID = 0 and INDEX = 15 (all ones, the 'no request' pattern)."
+    - "GRANT is the one-hot vector of the winner (all zero when VALID = 0)."
+  leds:
+    - "LED[15:0] = GRANT, registered once, so it follows SW by three clocks (two synchroniser flops and the output register)."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: REQ, access: RO, reset: 0, bits: "[15:0] the synchronised switches (not masked); [31:16] 0"}
+    - {offset: 0x01, name: MASK, access: RW, reset: 0, bits: "[15:0] a set bit ignores that request; [31:16] read 0, ignored on write"}
+    - {offset: 0x02, name: WINNER, access: RO, reset: "0x0F", bits: "[3:0] INDEX; [4] VALID; [31:5] 0"}
+  unmapped: offsets 0x03-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    switch_to_led: "3 clocks"
+  async_inputs: SW, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "The highest-numbered unmasked request wins; LED shows it one-hot; no request gives all LEDs off, VALID = 0 and INDEX = 15", proof: [simulation]}
+  - {id: REQ-02, text: "A masked request is ignored as if its switch were down", proof: [simulation]}
+  - {id: REQ-03, text: "The register window has the listed map and reset values (WINNER reads 0x0F at reset with all switches down)", proof: [simulation]}
+  - {id: REQ-04, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-05, text: "On the board raising switches changes the LED and WINNER as the model predicts", proof: [hardware]}
+
+resources_expected: "about 50 LUTs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: with no active request the index reads 15, with VALID = 0.
+    reason: an index of 0 would be indistinguishable from request 0 winning without the flag; all ones is the usual invalid pattern.
+  - assumption: the switches are not debounced.
+    reason: slide switches do not bounce in a way that matters here.
+
+open_questions: []

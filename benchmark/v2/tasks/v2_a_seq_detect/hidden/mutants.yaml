@@ -1,0 +1,16 @@
+# Mutants and the trap for v2_a_seq_detect (benchmark/tools/check_task.py)
+mutants:
+  - {name: pattern_reversed, file: seq_detect.sv, find: "localparam logic [3:0] PATTERN = 4'b1011;", replace: "localparam logic [3:0] PATTERN = 4'b1101;", why: "pattern read newest-bit-first: 1,1,0,1 is spotted instead of 1,0,1,1"}
+  - {name: first_bit_ignored, file: seq_detect.sv, find: "hit  <= {hist[2:0], s2} == PATTERN;", replace: "hit  <= {1'b1, hist[1:0], s2} == PATTERN;", why: "the oldest bit is not compared: 0,0,1,1 also matches"}
+  - {name: no_second_sync, file: seq_detect.sv, find: "s2 <= s1;", replace: "s2 <= sig_async;", why: "only one synchroniser stage: LED[0] comes one clock early"}
+  - {name: hit_sticky, file: seq_detect.sv, find: "hit  <= {hist[2:0], s2} == PATTERN;", replace: "hit  <= hit | ({hist[2:0], s2} == PATTERN);", why: "LED[0] stays lit after the first match instead of one clock"}
+  - {name: clear_ignored, file: seq_detect.sv, find: "else if (wr_cnt) count <= '0;", replace: "else if (1'b0) count <= '0;", why: "a write to COUNT does not clear it"}
+  - {name: count_8bit, file: seq_detect.sv, find: "logic [15:0] count;", replace: "logic [7:0]  count;", why: "the count is 8 bits and wraps at 256"}
+  - {name: count_survives_reset, file: seq_detect.sv, find: "if (rst) count <= '0;", replace: "if (rst) count <= (count === 16'bx) ? 16'd0 : count;", why: "CPU_RESETN does not clear the count"}
+  - {name: level_inverted, file: seq_detect.sv, find: "7'h01:   win_rdata <= {31'd0, s2};", replace: "7'h01:   win_rdata <= {31'd0, ~s2};", why: "LEVEL reads the input inverted"}
+trap:
+  twin: "textbook non-overlapping sequence detector (state machine that returns to idle after a match)"
+  why: "the textbook detector restarts from nothing after a match, so 1,0,1,1,0,1,1 holds one match; this spec wants two"
+  edits:
+    - {file: seq_detect.sv, find: "hist <= {hist[6:0], s2};", replace: "hist <= ({hist[2:0], s2} == PATTERN) ? 8'd0 : {hist[6:0], s2};"}
+  must_fail: [test_overlapping_matches]
