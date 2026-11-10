@@ -137,7 +137,6 @@ def main() -> int:
     if a.cmd == "specs":
         if "--" not in sys.argv:
             raise SystemExit("usage: similarity.py specs A_DIR... -- B_DIR...")
-        i = a.dirs.index("--") if "--" in a.dirs else None
         raw = sys.argv[sys.argv.index("specs") + 1:]
         raw = [x for x in raw if not x.startswith("--threshold") and not x.startswith("--json")]
         cut = raw.index("--")
@@ -150,6 +149,8 @@ def main() -> int:
             print(f"  {p['cosine']:.3f}  {p['a']} ~ {p['nearest']}")
     else:
         ref_fp = corpus(a.ref, a.k, a.w)
+        if not ref_fp:                      # a missing or empty corpus would score every design 0.0000 and exit 0
+            raise SystemExit(f"similarity: no reference fingerprints under {a.ref} (is the textbook clone there?)")
         r = {"ref": str(a.ref), "ref_fingerprints": len(ref_fp),
              "results": [cmd_code(d, a.ref, a.k, a.w, ref_fp) for d in a.rtl]}
         for x in r["results"]:

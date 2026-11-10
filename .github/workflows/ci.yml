@@ -83,6 +83,8 @@ jobs:
           designs/b2_qspi_jedec/tests/test_qspi_rtl.py designs/b2_mic_pdm/tests/test_mic_rtl.py
       - name: CDC soak rig (brief 11b) - checkers, host reader, the rig with metastability injection and reset storms (one copy a variant)
         run: CDC_SIM_QUICK=1 python -m pytest -q hil/cdc_soak/tests
+      - name: CDC gate fixtures - the rig's mutants and correct variants, plain and with synchroniser-delay injection (brief 16)
+        run: python -m pytest -q flow/tests/test_16_cdc_inject_rtl.py
       - name: Mutants (each deliberate bug must fail the T1 tests)
         run: PYTHON=python designs/t1_dimmer_counter/tests/run_mutants.sh
       - name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (brief 06a)
@@ -92,6 +94,14 @@ jobs:
           if [ "$sel" = ALL ]; then dirs=$(ls -d benchmark/tasks/*/); else dirs=$(for t in $sel; do echo benchmark/tasks/$t/; done); fi
           echo "v1 tasks: $sel"
           for t in $dirs; do python benchmark/tools/check_task.py "$t" --out build/bench_ci || rc=1; done
+          exit $rc
+      - name: Benchmark v2 development tasks - reference RTL, every mutant killed, every trap fires (quality review 12)
+        run: |
+          rc=0
+          sel=$(python tools/ci_select.py v2)
+          if [ "$sel" = ALL ]; then dirs=$(ls -d benchmark/v2/tasks/*/); else dirs=$(for t in $sel; do echo benchmark/v2/tasks/$t/; done); fi
+          echo "v2 tasks: $sel"
+          for t in $dirs; do python benchmark/tools/check_task.py "$t" --out build/bench_ci_v2 || rc=1; done
           exit $rc
       - name: Upload simulation logs
         if: always()

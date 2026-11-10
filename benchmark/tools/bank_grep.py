@@ -48,11 +48,16 @@ def main() -> int:
     ap.add_argument("--json", type=Path)
     a = ap.parse_args()
     files = bank_text(a.bank)
+    if not files:                           # a wrong --bank path would otherwise report "0 hits: PASS"
+        raise SystemExit(f"bank grep: no text files under {a.bank}")
     tasks, hits = 0, []
     for root in a.roots:
         for b in sorted(root.glob("*/hidden/bench.yaml")):
             tasks += 1
-            for ph in yaml.safe_load(b.read_text()).get("phrases") or []:
+            phrases = yaml.safe_load(b.read_text()).get("phrases") or []
+            if len(phrases) < 3:            # the contract in the docstring is 3-5 phrases per task
+                hits.append({"task": b.parent.parent.name, "phrase": f"(only {len(phrases)} phrases listed)", "file": str(b)})
+            for ph in phrases:
                 n = norm(ph)
                 for f, text in files:
                     if n in text:

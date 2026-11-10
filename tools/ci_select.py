@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Which benchmark tasks a CI job runs (brief 07a2 fix 5, group G).
 
-    python3 tools/ci_select.py v1|course|pool        # prints ALL, or task names separated by spaces
-    python3 tools/ci_select.py v1|course|pool --k    # prints a pytest -k expression ("a or b"), empty for ALL
+    python3 tools/ci_select.py v1|course|v2|pool        # prints ALL, or task names separated by spaces
+    python3 tools/ci_select.py v1|course|v2|pool --k    # prints a pytest -k expression ("a or b"), empty for ALL
 
 On a pull request the answer is the tasks the PR touches (files under that tier's task directory) plus the smoke set in
 tools/ci_smoke.yaml. On a push to main, the nightly schedule or a manual run it is ALL, so main's coverage is the full
@@ -20,7 +20,11 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-TIER_DIRS = {"v1": "benchmark/tasks", "course": "benchmark/course/tasks", "pool": "benchmark/pool"}
+TIER_DIRS = {"v1": "benchmark/tasks", "course": "benchmark/course/tasks", "v2": "benchmark/v2/tasks", "pool": "benchmark/pool"}
+# Code every task's grader runs through: a change here can break any task, so a pull request that touches it runs them all
+# (quality review 12, area 2: before this, such a pull request ran only the smoke set and main's full sweep found the break later).
+SHARED_PREFIXES = ("benchmark/lib/", "benchmark/tools/", "benchmark/course/tools/", "benchmark/course/lib/", "shell/rtl/",
+                   "shell/host/", "shell/tests/uart_bfm.py", "tools/ci_select.py", "tools/ci_smoke.yaml")
 
 
 def all_tasks(tier: str, root: Path = ROOT) -> list[str]:
@@ -45,6 +49,8 @@ def select(tier: str, event: str, base: str | None, files: list[str] | None = No
     if unknown:
         raise SystemExit(f"tools/ci_smoke.yaml names {unknown}, which are not {tier} tasks")
     files = changed_files(base, root) if files is None else files
+    if tier != "pool" and any(f.startswith(SHARED_PREFIXES) for f in files):
+        return None
     prefix = TIER_DIRS[tier] + "/"
     touched = {f[len(prefix):].split("/")[0] for f in files if f.startswith(prefix)} & existing
     return sorted(set(smoke) | touched)

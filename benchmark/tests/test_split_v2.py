@@ -107,9 +107,9 @@ def test_a_task_cannot_be_submitted_twice_or_without_a_seed(tmp_path) -> None:
         S.submit("zedboard", "A", "T1", _m(1), "dup", seeds=SEEDS, path=led, private_dir=priv)      # same id
     with pytest.raises(SystemExit):
         S.submit("zedboard", "Z", "T1", _m(2), "x", seeds=SEEDS, path=led, private_dir=priv)        # no seed
-    S.move_dev("a", "r", path=led)
+    S.move_dev("a", "r", path=led, check=False)
     with pytest.raises(SystemExit):
-        S.move_dev("a", "r", path=led)
+        S.move_dev("a", "r", path=led, check=False)
 
 
 def test_committed_ledger_and_seen_five() -> None:

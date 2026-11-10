@@ -141,6 +141,15 @@ def submit(board: str, domain: str, tier: str, manifest: str, task: str, *, priv
     if any(r["task"] == task for r in _private_read(private_dir)) or \
             any(e["kind"] == "draw" and task in [d.get("task") for d in e["dev"]] for e in entries):
         raise SystemExit(f"task {task!r} is already in the ledger")
+    # Everything the draw needs must be known before the ledger is touched: a draw that fails after the third submit has
+    # been appended would leave three pending entries and a private file with no way to complete the block.
+    would_be = [x["manifest"] for x in pending(entries).get((domain, tier), [])] + [manifest]
+    if len(would_be) >= BLOCK:
+        known = {r["manifest"] for r in _private_read(private_dir)}
+        missing = [m for m in would_be[:BLOCK] if m != manifest and m not in known]
+        if missing:
+            raise SystemExit(f"this submit completes a block, but {private_dir} does not hold the task ids of {len(missing)} "
+                             f"of its pending manifests; use the private directory of the earlier submits (nothing was written)")
     e = _append({"kind": "submit", "board": board, "domain": domain, "tier": tier, "manifest": manifest}, path)
     _private_write(private_dir, {"seq": e["seq"], "task": task, "manifest": manifest, "board": board, "domain": domain, "tier": tier})
     cell = pending(read_ledger(path)).get((domain, tier), [])
@@ -157,11 +166,25 @@ def submit(board: str, domain: str, tier: str, manifest: str, task: str, *, priv
     return e, d
 
 
-def move_dev(task: str, reason: str, *, path: Path = LEDGER) -> dict:
-    """Record that a held-out task moved to development. Moves only go one way (held-out -> development)."""
+def listed_held_out(bench: Path | None = None) -> set[str]:
+    """Held-out task ids named in the v1 and course split files."""
+    bench = bench or Path(__file__).resolve().parents[1]
+    out: set[str] = set()
+    for f in (bench / "split.yaml", bench / "course" / "split.yaml", bench / "course" / "split_c9_c12.yaml"):
+        for v in yaml.safe_load(f.read_text())["tiers"].values():
+            out |= set(v["held_out"])
+    return out
+
+
+def move_dev(task: str, reason: str, *, path: Path = LEDGER, check: bool = True) -> dict:
+    """Record that a held-out task moved to development. Moves only go one way (held-out -> development). With
+    ``check`` (the CLI default) the task must be a held-out id in a v1 or course split file: a v2 held-out task is named
+    nowhere public, so moving one needs ``--unlisted`` and the id is then written to the ledger on purpose."""
     entries = read_ledger(path)
     if any(e["kind"] == "move" and e["task"] == task for e in entries):
         raise SystemExit(f"{task!r} is already recorded as moved")
+    if check and task not in listed_held_out():
+        raise SystemExit(f"{task!r} is not a held-out task in any split file (pass --unlisted to move a v2 held-out task)")
     return _append({"kind": "move", "task": task, "from": "held_out", "to": "dev", "reason": reason}, path)
 
 
@@ -190,6 +213,9 @@ def verify_ledger(path: Path = LEDGER, seeds: dict | None = None) -> list[str]:
                 bad.append(f"entry {i}: draw is not the cell's first three pending manifests")
                 continue
             nblock = sum(1 for x in entries[:i] if x["kind"] == "draw" and x["domain"] == e["domain"] and x["tier"] == e["tier"])
+            if e["tier"] not in seeds.get(e["domain"], {}):
+                bad.append(f"entry {i}: no published seed for domain {e['domain']!r} tier {e['tier']!r}")
+                continue
             want = e["manifests"][held_index(seeds[e["domain"]][e["tier"]], e["domain"], e["tier"], nblock, cell)]
             if e["block"] != nblock or e["held_out"]["manifest"] != want:
                 bad.append(f"entry {i}: held-out choice differs from the published draw")
@@ -239,6 +265,7 @@ def main_v2(argv: list[str]) -> int:
     m = sub.add_parser("move-dev")
     m.add_argument("--task", required=True)
     m.add_argument("--reason", required=True)
+    m.add_argument("--unlisted", action="store_true", help="allow a task that no split file lists as held out")
     sub.add_parser("verify")
     sub.add_parser("effective")
     r = ap.parse_args(argv)
@@ -246,7 +273,7 @@ def main_v2(argv: list[str]) -> int:
         e, d = submit(r.board, r.domain, r.tier, manifest_hash(r.manifest), r.task, private_dir=r.private_dir)
         print(f"{r.domain}/{r.tier}: pending" + (f", block {d['block']} drawn" if d else ""))
     elif r.cmd == "move-dev":
-        move_dev(r.task, r.reason)
+        move_dev(r.task, r.reason, check=not r.unlisted)
         print(f"{r.task}: recorded as moved to development")
     elif r.cmd == "verify":
         bad = verify_ledger()

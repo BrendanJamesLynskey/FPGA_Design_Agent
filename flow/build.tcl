@@ -67,6 +67,9 @@ check_timing -verbose -file $out/check_timing_synth.rpt
 report_methodology    -file $out/methodology_synth.rpt
 # design standard STD-CDC-02 (docs/design_standards.md, brief 05d): report_cdc on the synthesised netlist
 report_cdc -details   -file $out/cdc_synth.rpt
+# brief 16: every asynchronous register-to-register path of the netlist, for flow/cdc_structure.py (gate post_synth_cdc_structure_clean)
+source $flow_dir/cdc_paths.tcl
+cdc_dump_paths $out/cdc_paths_synth.rpt
 report_drc            -file $out/drc_synth.rpt
 report_qor_assessment -file $out/qor_assessment_synth.rpt
 report_utilization    -file $out/utilization_synth.rpt
