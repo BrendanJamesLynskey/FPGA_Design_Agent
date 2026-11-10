@@ -1,0 +1,372 @@
+{
+  "build_dir": "designs/_b20_d20_ref/build/base",
+  "top": "d20_slow_fsm_ramp_top",
+  "variant": "base",
+  "pass": true,
+  "first_failed_stage": null,
+  "gates": {
+    "rtl_methodology_no_critical": true,
+    "post_synth_no_unconstrained_endpoints": true,
+    "post_synth_methodology_no_critical": true,
+    "post_synth_drc_clean": true,
+    "post_synth_cdc_no_critical": true,
+    "post_synth_cdc_structure_clean": true,
+    "post_synth_exceptions_clean": true,
+    "post_place_hold": true,
+    "setup": true,
+    "hold": true,
+    "pulse_width": true,
+    "no_unconstrained_endpoints": true,
+    "drc_clean": true,
+    "methodology_no_critical": true,
+    "cdc_no_critical": true,
+    "post_route_qor_assessment": true,
+    "power_junction_ok": true,
+    "exceptions_clean": true,
+    "bitstream_present": true
+  },
+  "warnings": [
+    {
+      "name": "post_synth_qor_assessment",
+      "stage": "post_synth",
+      "score": 3,
+      "min": 4,
+      "meaning": "Design runs have a small chance of success",
+      "note": "post-synthesis score is a prediction; the gate is the post-route score"
+    }
+  ],
+  "stages": {
+    "rtl": {
+      "ran": true,
+      "gates": {
+        "rtl_methodology_no_critical": true
+      },
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 19,
+        "rules": [
+          {
+            "rule": "XDCH-2",
+            "severity": "Warning",
+            "description": "Same min and max delay values on IO port",
+            "count": 19
+          }
+        ]
+      },
+      "pass": true
+    },
+    "post_synth": {
+      "ran": true,
+      "gates": {
+        "post_synth_no_unconstrained_endpoints": true,
+        "post_synth_methodology_no_critical": true,
+        "post_synth_drc_clean": true,
+        "post_synth_cdc_no_critical": true,
+        "post_synth_cdc_structure_clean": true,
+        "post_synth_exceptions_clean": true
+      },
+      "warnings": [
+        {
+          "name": "post_synth_qor_assessment",
+          "stage": "post_synth",
+          "score": 3,
+          "min": 4,
+          "meaning": "Design runs have a small chance of success",
+          "note": "post-synthesis score is a prediction; the gate is the post-route score"
+        }
+      ],
+      "timing": {
+        "wns_ns": 4.742,
+        "tns_ns": 0.0,
+        "tns_failing_endpoints": 0,
+        "tns_total_endpoints": 968,
+        "whs_ns": 0.045,
+        "ths_ns": 0.0,
+        "ths_failing_endpoints": 0,
+        "ths_total_endpoints": 968,
+        "wpws_ns": 4.5,
+        "tpws_ns": 0.0,
+        "tpws_failing_endpoints": 0,
+        "tpws_total_endpoints": 353,
+        "timing_met": true
+      },
+      "check_timing": {
+        "no_clock": 0,
+        "constant_clock": 0,
+        "pulse_width_clock": 0,
+        "unconstrained_internal_endpoints": 0,
+        "no_input_delay": 0,
+        "no_output_delay": 0,
+        "multiple_clock": 0,
+        "generated_clocks": 0,
+        "loops": 0,
+        "partial_input_delay": 0,
+        "partial_output_delay": 0,
+        "latch_loops": 0
+      },
+      "unconstrained_ports": {},
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 19,
+        "rules": [
+          {
+            "rule": "XDCH-2",
+            "severity": "Warning",
+            "description": "Same min and max delay values on IO port",
+            "count": 19
+          }
+        ]
+      },
+      "drc": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 0,
+        "rules": []
+      },
+      "qor_assessment": {
+        "score": 3,
+        "meaning": "Design runs have a small chance of success",
+        "flow_guidance": [
+          "Run report_methodology and fix or waive warnings",
+          "To see critical timing paths examine the CSV file containing timing paths."
+        ],
+        "review": [
+          {
+            "name": "Max LUT Combined",
+            "threshold": "20.00",
+            "actual": "42.44",
+            "affects_score": false
+          },
+          {
+            "name": "Predicted Congestion Score",
+            "threshold": "5",
+            "actual": "3",
+            "affects_score": true
+          }
+        ]
+      },
+      "cdc": {
+        "safely_timed": true,
+        "rules": []
+      },
+      "cdc_structure": {
+        "crossings": [],
+        "summary": {},
+        "unsafe": [],
+        "n_crossings": 0,
+        "clocks": {
+          "sys_clk_pin": {
+            "period": 10.0,
+            "root": "sys_clk_pin"
+          }
+        },
+        "pass": true
+      },
+      "exceptions": {
+        "stage": "synth",
+        "pass": true,
+        "exceptions": 4,
+        "ignored": 0,
+        "covered": {
+          "3": 3,
+          "5": 11,
+          "6": 16,
+          "7": 16
+        },
+        "failures": []
+      },
+      "resource_sanity": null,
+      "utilization": {
+        "lut": 443,
+        "lut_available": 63400,
+        "lutram": 0,
+        "lutram_available": 19000,
+        "ff": 352,
+        "ff_available": 126800,
+        "carry4": 20,
+        "bram_tile": 0,
+        "bram_tile_available": 135,
+        "dsp": 0,
+        "dsp_available": 240,
+        "iob": 20,
+        "iob_available": 210,
+        "bufg": 1,
+        "bufg_available": 32
+      },
+      "pass": true
+    },
+    "post_place": {
+      "ran": true,
+      "gates": {
+        "post_place_hold": true
+      },
+      "timing": {
+        "wns_ns": 4.055,
+        "tns_ns": 0.0,
+        "tns_failing_endpoints": 0,
+        "tns_total_endpoints": 968,
+        "whs_ns": 0.131,
+        "ths_ns": 0.0,
+        "ths_failing_endpoints": 0,
+        "ths_total_endpoints": 968,
+        "wpws_ns": 4.5,
+        "tpws_ns": 0.0,
+        "tpws_failing_endpoints": 0,
+        "tpws_total_endpoints": 353,
+        "timing_met": true
+      },
+      "pass": true
+    },
+    "post_route": {
+      "ran": true,
+      "gates": {
+        "setup": true,
+        "hold": true,
+        "pulse_width": true,
+        "no_unconstrained_endpoints": true,
+        "drc_clean": true,
+        "methodology_no_critical": true,
+        "cdc_no_critical": true,
+        "post_route_qor_assessment": true,
+        "power_junction_ok": true,
+        "exceptions_clean": true
+      },
+      "qor_assessment": {
+        "score": 5,
+        "meaning": "Design runs will meet timing",
+        "flow_guidance": [
+          "Run report_methodology and fix or waive warnings",
+          "Run the incremental flow when making design changes"
+        ],
+        "review": [
+          {
+            "name": "Max LUT Combined",
+            "threshold": "20.00",
+            "actual": "25.00",
+            "affects_score": false
+          }
+        ]
+      },
+      "exceptions": {
+        "stage": "route",
+        "pass": true,
+        "exceptions": 4,
+        "ignored": 0,
+        "covered": {
+          "3": 3,
+          "5": 11,
+          "6": 16,
+          "7": 16
+        },
+        "failures": []
+      },
+      "unconstrained_ports": {},
+      "pass": true
+    },
+    "bitstream": {
+      "ran": true,
+      "gates": {
+        "bitstream_present": true
+      },
+      "pass": true
+    }
+  },
+  "timing": {
+    "wns_ns": 3.775,
+    "tns_ns": 0.0,
+    "tns_failing_endpoints": 0,
+    "tns_total_endpoints": 968,
+    "whs_ns": 0.122,
+    "ths_ns": 0.0,
+    "ths_failing_endpoints": 0,
+    "ths_total_endpoints": 968,
+    "wpws_ns": 4.5,
+    "tpws_ns": 0.0,
+    "tpws_failing_endpoints": 0,
+    "tpws_total_endpoints": 353,
+    "timing_met": true
+  },
+  "check_timing": {
+    "no_clock": 0,
+    "constant_clock": 0,
+    "pulse_width_clock": 0,
+    "unconstrained_internal_endpoints": 0,
+    "no_input_delay": 0,
+    "no_output_delay": 0,
+    "multiple_clock": 0,
+    "generated_clocks": 0,
+    "loops": 0,
+    "partial_input_delay": 0,
+    "partial_output_delay": 0,
+    "latch_loops": 0
+  },
+  "utilization": {
+    "lut": 436,
+    "lut_available": 63400,
+    "lutram": 0,
+    "lutram_available": 19000,
+    "ff": 352,
+    "ff_available": 126800,
+    "carry4": 20,
+    "bram_tile": 0,
+    "bram_tile_available": 135,
+    "dsp": 0,
+    "dsp_available": 240,
+    "iob": 20,
+    "iob_available": 210,
+    "bufg": 1,
+    "bufg_available": 32
+  },
+  "drc": {
+    "errors": 0,
+    "critical_warnings": 0,
+    "warnings": 0,
+    "rules": []
+  },
+  "methodology": {
+    "errors": 0,
+    "critical_warnings": 0,
+    "warnings": 19,
+    "rules": [
+      {
+        "rule": "XDCH-2",
+        "severity": "Warning",
+        "description": "Same min and max delay values on IO port",
+        "count": 19
+      }
+    ]
+  },
+  "cdc": {
+    "safely_timed": true,
+    "rules": []
+  },
+  "power": {
+    "total_w": 0.119,
+    "dynamic_w": 0.006,
+    "static_w": 0.113,
+    "confidence": "Medium",
+    "clocks_w": 0.002,
+    "slice_logic_w": 0.0005,
+    "signals_w": 0.0005,
+    "io_w": 0.003,
+    "core_w": 0.003
+  },
+  "power_environment": {
+    "junction_c": 42.2,
+    "max_ambient_c": 82.8,
+    "theta_ja_c_per_w": 18.2,
+    "ambient_c": 40.0,
+    "airflow_lfm": 0.0,
+    "heatsink": "none",
+    "board": "small (4\"x4\")",
+    "board_layers": "4to7 (4 to 7 Layers)"
+  },
+  "bitstream": {
+    "file": "d20_slow_fsm_ramp_top.bit",
+    "bytes": 3825922
+  },
+  "build_stamp": "244b1086",
+  "sources_sha256": "244b10864f1c1d78e2730da055f4904803c8623c1aa01c6bc7d9bfe1584a8069"
+}
