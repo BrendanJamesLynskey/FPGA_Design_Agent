@@ -132,6 +132,11 @@ separate private generic RTL pack. They summarise AMD and Digilent documents, so
 private repository; [knowledge/PACKS.md](knowledge/PACKS.md) lists each layer's size and hash, which every scored
 run will record. [docs/debug_playbook.md](docs/debug_playbook.md) is the human companion to the gates.
 
+Since brief 31 the bank also holds a device-family matrix (where AMD advice differs between 7-series, UltraScale+
+and the two Zynq processing systems). The agent reads the target `part` from `build.yaml` and the bank loads only that
+family's layer ([agent/tests/test_31_family_selection.py](agent/tests/test_31_family_selection.py)); each area on the
+expertise page lists its family differences from [site/data/family_diffs.json](site/data/family_diffs.json).
+
 ## The agent core (05a, F2 part 1)
 
 The flow's tools as a harness-neutral core: typed functions with JSON schemas, the same tools as an MCP server
