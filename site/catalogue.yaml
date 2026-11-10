@@ -1,0 +1,63 @@
+# Problem catalogue: domain and survey row of each development task, and the showcase choices.
+# Domains are the letters of the benchmark v2 coverage survey (brief 10 B-1, version 2, 2026-11-09); the survey row is
+# the row whose coverage column names the task. Descriptions (what/where) are in catalogue_parts/*.yaml, written fresh
+# from spec.md; export.py fails if a digit in a description is not in the task's spec.md or hidden/spec.yaml.
+domains:
+  A: Basic digital design drills
+  B: DSP
+  C: Communications, SDR and coding
+  D: Cryptography and security
+  E: Ethernet and networking
+  F: Interfaces and protocols
+  G: Memory and storage
+  H: Video and image processing
+  I: Machine learning inference
+  J: Processors, SoC and embedded software
+  K: Control, motors and robotics
+  L: Test and measurement
+  M: Clocking, CDC and resets
+  N: HPC, acceleration and data processing
+  O: Audio
+  P: Verification and debug
+  Q: High reliability
+  R: Other commonly attempted
+  S: Computer vision
+  T: High-speed serial transceivers
+boards:
+  nexys_a7_100t: Nexys A7-100T
+showcase: [t1_elevator_fsm, c10_dds_sine, c16_nexys_aes_uart, c9_median3x3, c14_systolic_matmul]
+tasks:
+  t1_bcd_updown: {domain: A, survey: [A01]}
+  t1_debounce_bank: {domain: A, survey: [A06]}
+  t1_elevator_fsm: {domain: A, survey: [A10]}
+  t1_gray_stepper: {domain: A, survey: [A02]}
+  t1_lfsr_dice: {domain: A, survey: [A04, A35]}
+  t1_pattern_sequencer: {domain: A, survey: [A08, A11]}
+  t1_press_classifier: {domain: A, survey: [A07]}
+  t1_sync_fifo_regs: {domain: A, survey: [A28, A26, G01]}
+  t2_adt7420_alarm: {domain: F, survey: [F09, K15, L15]}
+  t2_i2c_cmd_master: {domain: F, survey: [F07]}
+  t2_i2c_scanner: {domain: F, survey: [F07]}
+  t2_pdm_vu: {domain: O, survey: [O06, B29, L08]}
+  t2_qspi_sfdp: {domain: F, survey: [F42]}
+  t2_sevenseg_marquee: {domain: A, survey: [A14]}
+  t2_spi_master_modes: {domain: F, survey: [F04]}
+  t2_vga_sprite: {domain: H, survey: [H03]}
+  c9_median3x3: {domain: H, survey: [H07, G15, S36]}
+  c9_nexys_vga_720p: {domain: H, survey: [H01, H02, F18, M07]}
+  c10_dds_sine: {domain: B, survey: [B13, A27, L04, O03]}
+  c11_nco_mixer: {domain: B, survey: [B13, B15]}
+  c12_adsr_envelope: {domain: O, survey: [O03, B22]}
+  c12_nexys_pwm_audio: {domain: O, survey: [O01, B28]}
+  c13_hough_lines: {domain: S, survey: [S14]}
+  c13_nexys_blob_tracker: {domain: S, survey: [S11]}
+  c13_nexys_harris_vga: {domain: S, survey: [S02]}
+  c14_int8_dot_requant: {domain: I, survey: [I01, I17, B23, A30]}
+  c14_nexys_tiny_cnn: {domain: I, survey: [I03, I09]}
+  c14_systolic_matmul: {domain: I, survey: [I02, A40]}
+  c15_pq_search: {domain: I, survey: [I10]}
+  c15_rmsnorm_unit: {domain: I, survey: [I06]}
+  c15_softmax_unit: {domain: I, survey: [I06, I05, B25]}
+  c16_montgomery_mult: {domain: D, survey: [D14, D23]}
+  c16_nexys_aes_uart: {domain: D, survey: [D01, D02, F01]}
+  c16_ntt_engine: {domain: D, survey: [D20, D32]}

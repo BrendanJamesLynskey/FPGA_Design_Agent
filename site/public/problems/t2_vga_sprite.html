@@ -1,0 +1,1298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A bouncing 16 x 16 sprite on VGA | End-to-end FPGA Agent</title>
+<meta name="description" content="A bouncing 16 x 16 sprite on VGA: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task t2_vga_sprite.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
+  --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --measure: 68ch; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+    --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+  --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); overflow-x: hidden; }
+a { color: var(--ink); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, kbd, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--panel); border: 1px solid var(--rule); padding: 0 .3em; border-radius: 2px; overflow-wrap: anywhere; }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; line-height: 1.45; margin: 0 0 1em; max-width: 100%; }
+pre code { border: 0; padding: 0; background: none; overflow-wrap: normal; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 3.2vw, 3rem); margin: .3em 0 .4em; font-weight: 700; }
+h2 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.8rem); margin: 2.2em 0 .5em; font-weight: 700; }
+h3 { font-size: 1.05rem; margin: 1.6em 0 .4em; }
+p, li { max-width: var(--measure); }
+p { margin: 0 0 1em; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-3); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
+.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.bar nav a { padding: 10px 8px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
+.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* sections, cards */
+.hero { padding: 36px 0 8px; }
+.eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
+.fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.fact .n { font: 700 2rem/1.1 var(--f-mono); letter-spacing: -.02em; }
+.fact p { margin: .4em 0 0; font-size: .92rem; color: var(--ink-2); }
+.tag { display: inline-block; font: 600 .75rem var(--f-mono); border: 1px solid var(--ink-3); padding: 1px 7px; border-radius: 2px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.tag.run { border-style: dashed; }
+figure { margin: 1.4em 0; }
+figcaption { font-size: .88rem; color: var(--ink-3); margin-top: 6px; max-width: var(--measure); }
+.panel { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.tablewrap { overflow-x: auto; margin: 0 0 1.2em; border: 1px solid var(--rule); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+img { max-width: 100%; height: auto; display: block; }
+footer { border-top: 1px solid var(--rule); margin-top: 56px; padding: 22px 0 40px; color: var(--ink-3); font-size: .9rem; }
+footer .wrap > * { max-width: var(--measure); }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
+
+/* pipeline player */
+.player { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0 0 12px; counter-reset: n; }
+.pipe li { max-width: none; border: 1px solid var(--mute); padding: 8px 10px; font-size: .86rem; line-height: 1.3; position: relative; color: var(--ink-3); min-height: 62px; }
+.pipe li b { display: block; font-size: .72rem; font-family: var(--f-mono); letter-spacing: .04em; margin-bottom: 2px; }
+.pipe li.done { color: var(--ink-2); border-color: var(--ink-3); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px); }
+.pipe li.active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.pipe li.stop { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.pipe li .v { position: absolute; right: 8px; top: 6px; font: .72rem var(--f-mono); }
+.cap { min-height: 3.2em; margin: 0 0 10px; color: var(--ink); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctl input[type=range] { flex: 1 1 140px; min-width: 120px; min-height: 44px; accent-color: var(--ink); }
+.ctl .pos { font: .85rem var(--f-mono); color: var(--ink-3); min-width: 6ch; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* charts */
+svg text { fill: var(--ink-2); font: 11px var(--f-mono); }
+svg .ink { stroke: var(--ink); fill: none; }
+svg .fillink { fill: var(--ink); }
+svg .rule { stroke: var(--rule); }
+svg .warn { stroke: var(--warn); fill: none; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; }
+.dot.p { background: var(--ink); }
+.dot.f { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.dot.n { border-style: dotted; border-color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.strip .t { font-family: var(--f-mono); overflow-wrap: anywhere; }
+.bars { display: grid; grid-template-columns: minmax(0, 14ch) 1fr auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.bars .b { height: 14px; background: var(--ink); min-width: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-3); margin-top: 8px; }
+.stub { border: 1px dashed var(--ink-3); padding: 18px; background: var(--panel); }
+@media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Home hero: FPGA fabric backdrop (canvas, monochrome, drawn by app.js; still under reduced motion). */
+.hero { position: relative; isolation: isolate; padding: 72px 0 40px; }
+#fabric { position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  mask-composite: intersect; }
+@media (max-width: 640px) { #fabric { opacity: .55; } }
+.hero h1 { font-size: clamp(2.4rem, 1.2rem + 5.6vw, 4.6rem); letter-spacing: -.025em; margin: .15em 0 .2em; }
+.strap { font-size: clamp(1.15rem, .9rem + 1.2vw, 1.6rem); line-height: 1.3; font-weight: 600; margin: 0 0 .8em; max-width: 40ch; }
+.boards { font: .9rem/1.5 var(--f-mono); color: var(--ink-2); max-width: 70ch; }
+.boards span { background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
+.hero h1, .hero .strap { text-shadow: 0 0 12px var(--bg), 0 0 4px var(--bg); }
+
+/* problems: index and task pages */
+.dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.dombars li { display: grid; grid-template-columns: minmax(0, 22ch) 1fr 3ch; gap: 10px; align-items: center; max-width: none; font-size: .88rem; }
+.dombars a { text-decoration: none; padding: 6px 0; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+.dombars a b { font-family: var(--f-mono); }
+.db { height: 12px; border: 1px solid var(--rule); display: block; }
+.db span { display: block; height: 100%; background: var(--ink); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0 12px; }
+.filters label { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; }
+.filters select { max-width: 70vw; }
+.plist { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.pcard { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; max-width: none; display: flex; flex-direction: column; gap: 2px; }
+.pcard a { font-weight: 600; text-decoration: none; }
+.pcard a:hover .pt { text-decoration: underline; }
+.pcard .pm { font-size: .82rem; color: var(--ink-3); }
+.made li { margin-bottom: .5em; }
+.crumbs { margin: 24px 0 0; color: var(--ink-3); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.spec { border-left: 3px solid var(--ink); padding: 2px 0 2px 16px; margin: 0 0 1em; }
+.spec h3, .spec h4 { margin-top: .8em; }
+.reqs li { margin-bottom: .3em; }
+details.rules, details.code { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 10px; }
+details.rules > summary, details.code > summary { padding: 10px 12px; cursor: pointer; min-height: 44px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+details.rules > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.code pre { margin: 0; border: 0; border-top: 1px solid var(--rule); max-height: 36em; }
+.codebar { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0 12px 8px; align-items: center; }
+.codebar a { min-height: 32px; display: inline-flex; align-items: center; }
+.hk { font-weight: 700; }
+.hc { color: var(--ink-3); font-style: italic; }
+.hs { color: var(--ink-2); }
+.note { border: 1px solid var(--ink-3); padding: 10px 12px; background: var(--panel); }
+.trace .hero-art { margin-bottom: 10px; }
+.wavewrap { overflow-x: auto; margin-bottom: 8px; }
+.wavesvg { min-width: 520px; }
+svg .future { fill: var(--panel); opacity: .62; }
+svg .cursor { fill: var(--ink); opacity: .08; }
+svg text.big { font-size: 15px; fill: var(--ink); }
+svg text.inv, svg text.big.inv { fill: var(--panel); }
+svg .pix { stroke: var(--ink-3); stroke-width: 1; }
+svg text.dark { fill: #000; } svg text.light { fill: #fff; }
+.vals { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 14px; margin: 0 0 8px; font-size: .85rem; }
+.vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
+.trace .hero-art svg { margin: 0 auto; display: block; }
+</style>
+</head>
+<body>
+<a class="visually-hidden" href="#main">Skip to content</a>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<main id="main" class="wrap">
+<p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-H">H. Video and image processing</a></p>
+<h1>A bouncing 16 x 16 sprite on VGA</h1>
+<p class="tags"><code>t2_vga_sprite</code> <span class="tag">Benchmark v1</span> <span class="tag">T2</span> <span class="tag">H Video and image processing</span> <span class="tag">Nexys A7-100T</span></p>
+<figure><div class="player trace" id="trace" aria-label="Golden model replay"><div class="wave"></div><p class="cap" aria-live="polite"></p></div><figcaption>The task's own golden model (<code>hidden/model.py</code>) run on a fixed input when the site is built, so this is what the hidden tests check. A solid 16 x 16 block is placed at (620, 455) with bounce on and followed for 14 frames, then restarted at (3, 2) moving up and left for 12 frames. Finally bounce is turned off and X is set to 632, 636, 640, 1000. Space plays and pauses, arrow keys step.</figcaption></figure>
+<h2>The problem</h2>
+<p>A small image drawn over a plain background on a VGA monitor. The image is a sixteen by sixteen block of pixels, loaded row by row over the shell, with a position and two colours that the user can set. A bounce mode moves it by one pixel in each direction every frame and turns it round at the screen edges, like an old screen saver. Parts of it that fall off the screen are simply not drawn, and the design counts frames.</p>
+<p><strong>Where it is used.</strong> Hardware sprites were how home computers and games consoles moved characters and cursors cheaply, and the same idea survives in mouse pointers, on-screen overlays and the simple video generators used in FPGA teaching boards.</p>
+
+<h2>The spec the agent is given</h2>
+<div class="spec"><h3>A bouncing 16 x 16 sprite on VGA</h3>
+<p>I want one small sprite on a VGA monitor from the Nexys A7-100T, at the ordinary 640 x 480, 60 Hz mode (25 MHz pixel rate made from the 100 MHz clock with an enable, no clocking wizard; standard timing and sync polarity for that mode).</p>
+<ul><li>The sprite is 16 x 16 pixels, one bit per pixel: 1 draws the sprite colour, 0 lets the background show through. I load its 16 rows from the test shell.</li><li>I can set its position (X, Y of its top-left corner), the sprite colour and the background colour (12-bit RGB), and switch it off.</li><li>Optional bounce mode: once per frame it moves one pixel horizontally and one vertically, and turns round when it reaches an edge of the screen, like the old screen savers.</li><li>It must behave sensibly if I put it partly or completely off the screen.</li><li>Outside the visible area the colour outputs are black. A frame counter would help me check it runs.</li><li>Design ID &quot;SPRT&quot;.</li></ul>
+<p>Test hooks: top module <code>t2_vga_sprite_top</code>, ports named as in the board&#x27;s master XDC (<code>VGA_R</code>, <code>VGA_G</code>, <code>VGA_B</code>, <code>VGA_HS</code>, <code>VGA_VS</code>, the USB-UART pins, <code>CLK100MHZ</code>, <code>CPU_RESETN</code>), the test shell&#x27;s <code>CLKS_PER_BIT</code>, <code>TIMEOUT_CYCLES</code> and <code>BUILD_STAMP</code> parameters as top-level parameters. The video timing is fixed (no parameters).</p></div>
+<p class="small muted">Exactly <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/spec.md"><code>spec.md</code></a>. Anything it leaves open, the agent has to ask about.</p>
+
+<h2>Interface</h2>
+<p>Top module <code>t2_vga_sprite_top</code> on the Nexys A7-100T (<code>xc7a100tcsg324-1</code>). Clock: CLK100MHZ at 100 MHz (board oscillator). Reset: CPU_RESETN, active low: registers to reset values; the raster restarts at pixel (0, 0); colour outputs black, syncs inactive (high). Resources expected: a few hundred LUTs and FFs (16 x 16 bits in flops or LUT RAM); no BRAM, no DSP.</p>
+<p>Top-level parameters (board values): <code>CLKS_PER_BIT</code> = 868, <code>TIMEOUT_CYCLES</code> = 100000. The hidden bench shrinks them to <code>CLKS_PER_BIT</code> = 8, <code>TIMEOUT_CYCLES</code> = 400.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Port</th><th>Direction</th><th class="num">Width</th><th>Note</th></tr></thead><tbody><tr><td><code>CLK100MHZ</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>CPU_RESETN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>VGA_R</code></td><td>out</td><td class="num">4</td><td></td></tr><tr><td><code>VGA_G</code></td><td>out</td><td class="num">4</td><td></td></tr><tr><td><code>VGA_B</code></td><td>out</td><td class="num">4</td><td></td></tr><tr><td><code>VGA_HS</code></td><td>out</td><td class="num">1</td><td>active low</td></tr><tr><td><code>VGA_VS</code></td><td>out</td><td class="num">1</td><td>active low</td></tr><tr><td><code>UART_TXD_IN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>UART_RXD_OUT</code></td><td>out</td><td class="num">1</td><td></td></tr></tbody></table></div>
+<h3>Registers behind the test shell</h3><div class="tablewrap" tabindex="0"><table><thead><tr><th>Offset</th><th>Name</th><th>Access</th><th>Bits</th></tr></thead><tbody><tr><td><code>0x00</code></td><td><code>ROW0</code></td><td>RW</td><td>[15:0] top row of the sprite, bit 15 = leftmost pixel; [31:16] read 0. ROW1-ROW15 at 0x01-0x0F the same, in order</td></tr><tr><td><code>0x10</code></td><td><code>X</code></td><td>RW</td><td>[9:0] left column; [31:10] read 0</td></tr><tr><td><code>0x11</code></td><td><code>Y</code></td><td>RW</td><td>[9:0] top line; [31:10] read 0</td></tr><tr><td><code>0x12</code></td><td><code>SPRITE_COLOR</code></td><td>RW</td><td>[11:0] RGB 4:4:4 (R [11:8])</td></tr><tr><td><code>0x13</code></td><td><code>BG_COLOR</code></td><td>RW</td><td>[11:0] RGB 4:4:4</td></tr><tr><td><code>0x14</code></td><td><code>CTRL</code></td><td>RW</td><td>[0] EN (sprite shown), [1] BOUNCE, [2] DX_NEG (moving left), [3] DY_NEG (moving up); the bounce logic updates [3:2]; [31:4] read 0</td></tr><tr><td><code>0x15</code></td><td><code>FRAME</code></td><td>RO</td><td>[31:0] completed frames</td></tr></tbody></table></div><p class="small muted">offsets 0x16-0x7F read 0; writes to them and to FRAME are ignored</p>
+<h2>What the hidden tests check</h2>
+<p>The requirements in the hidden spec, and how each is shown to hold:</p>
+<ul class="reqs"><li><span class="mono">REQ-01</span> 640x480 timing with negative syncs at the listed positions <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-02</span> Sprite pixels, bit order, transparency, clipping and EN follow the listed rule <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-03</span> Bounce moves X and Y by one per frame and reverses at 0 and 624 / 464 exactly as listed <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-04</span> FRAME counts completed frames <span class="muted">(shown by simulation, on the board)</span></li><li><span class="mono">REQ-05</span> On the board a monitor shows the sprite moving <span class="muted">(shown by on the board)</span></li><li><span class="mono">REQ-06</span> The design closes timing at 100 MHz with no unconstrained path <span class="muted">(shown by report analysis)</span></li></ul>
+<details class="rules"><summary>The full behaviour rules from <code>hidden/spec.yaml</code></summary><h4>raster</h4><ul><li>A pixel lasts exactly 4 clocks. Columns x = 0..799, lines y = 0..524. Horizontal - visible 0-639, front porch 640-655, sync 656-751, back porch 752-799. Vertical - visible 0-479, front porch 480-489, sync 490-491, back porch 492-524.</li><li>VGA_HS = 0 exactly while x is 656..751, VGA_VS = 0 exactly for lines 490..491 (from x = 0 of line 490); both 1 otherwise (negative sync).</li><li>Colour and syncs change together on the same clock (one registered output stage). After reset the first pixel shown is (0, 0).</li></ul><h4>pixels</h4><ul><li>Outside the visible area (x &gt;= 640 or y &gt;= 480) the colour outputs are 0.</li><li>A visible pixel (x, y) is a sprite pixel when CTRL.EN = 1, X &lt;= x &lt;= X + 15, Y &lt;= y &lt;= Y + 15 and bit (15 - (x - X)) of ROW[y - Y] is 1 (bit 15 is the sprite&#x27;s leftmost column, ROW0 its top row). Sprite pixels show SPRITE_COLOR, all other visible pixels BG_COLOR.</li><li>X and Y are 10-bit and are not wrapped - parts of the sprite at x &gt;= 640 or y &gt;= 480 are simply not shown (X = 1000 hides it).</li><li>Register writes act from the next pixel on.</li></ul><h4>bounce</h4><ul><li>At each frame wrap (from (799, 524) to (0, 0)), if CTRL.BOUNCE = 1, X and Y move - horizontally - if DX_NEG = 0 and X &gt;= 624, DX_NEG becomes 1 and X decreases by 1; else if DX_NEG = 1 and X = 0, DX_NEG becomes 0 and X increases by 1; else X increases by 1 (DX_NEG = 0) or decreases by 1 (DX_NEG = 1). Vertically the same with Y, DY_NEG and the limit 464.</li><li>A shell write to X, Y or CTRL on the same clock as the frame update wins over the update.</li></ul><h4>frame counter</h4><ul><li>FRAME (32 bits) increments at every frame wrap; reset 0; read only.</li></ul></details>
+<h3>Settled assumptions</h3><ul><li>bit 15 of a row register is the leftmost pixel. <span class="muted">matches how a row of a bitmap is usually written as a hex number.</span></li><li>the sprite is clipped, not wrapped, at the right and bottom. <span class="muted">wrapping would show a split sprite at the far side, which is never what a bounce wants.</span></li></ul>
+
+<h2>What the tests catch: the mutants</h2>
+<p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-04, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t2_vga_sprite__icarus.json"><code>t2_vga_sprite__icarus.json</code></a>) the reference passed all 10 hidden tests and 9 of 9 mutants failed them.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>bit0_leftmost</code></td><td><code>sprite_gen.sv</code></td><td>sprite mirrored (bit 0 drawn leftmost)</td><td><code>test_sprite_bitmap</code>, <code>test_bounce_and_vertical_timing</code>, <code>test_random_sprites</code></td></tr><tr><td><code>sprite_17_wide</code></td><td><code>sprite_gen.sv</code></td><td>a 17th column repeats column 0</td><td><code>test_sprite_bitmap</code>, <code>test_clipping_and_enable</code>, <code>test_bounce_and_vertical_timing</code>, <code>test_offscreen_and_disabled_inside_sprite_span</code>, <code>test_random_sprites</code></td></tr><tr><td><code>hs_positive</code></td><td><code>sprite_gen.sv</code></td><td>HS positive</td><td><code>test_identity_and_reset</code>, <code>test_sync_timing</code>, <code>test_sprite_bitmap</code>, <code>test_clipping_and_enable</code>, <code>test_bounce_and_vertical_timing</code>, <code>test_offscreen_and_disabled_inside_sprite_span</code>, <code>test_blank_lines_are_black_over_a_background</code>, <code>test_random_sprites</code></td></tr><tr><td><code>bounce_limit_640</code></td><td><code>sprite_regs.sv</code></td><td>turns at the screen width, not width - 16</td><td><code>test_bounce_and_vertical_timing</code></td></tr><tr><td><code>vsync_three_lines</code></td><td><code>sprite_gen.sv</code></td><td>VS three lines long</td><td><code>test_bounce_and_vertical_timing</code></td></tr><tr><td><code>wraps_at_right</code></td><td><code>sprite_gen.sv</code></td><td>a sprite off the right edge wraps round to the left</td><td><code>test_offscreen_and_disabled_inside_sprite_span</code></td></tr><tr><td><code>no_turn_at_zero</code></td><td><code>sprite_regs.sv</code></td><td>X wraps below 0 instead of turning</td><td><code>test_bounce_turns_at_left_and_bottom</code></td></tr><tr><td><code>enable_ignored</code></td><td><code>sprite_gen.sv</code></td><td>CTRL.EN does not hide the sprite</td><td><code>test_offscreen_and_disabled_inside_sprite_span</code></td></tr><tr><td><code>blank_shows_bg</code></td><td><code>sprite_gen.sv</code></td><td>lines 480-524 show the background colour</td><td><code>test_blank_lines_are_black_over_a_background</code></td></tr></tbody></table></div>
+<h2>Sample solution</h2>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
+<details class="code"><summary><span class="mono">sprite_gen.sv</span> <span class="muted small">reference RTL, 64 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/sprite_gen.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/ref/rtl/sprite_gen.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// sprite_gen.sv: 640x480 at 60 Hz raster (800 x 525, negative syncs) on a</span>
+<span class="hc">// pixel enable every 4th clock, one 16x16 1-bit sprite over a background.</span>
+<span class="hk">module</span> sprite_gen (
+    <span class="hk">input</span>  <span class="hk">logic</span>            clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>            rst,
+    <span class="hk">input</span>  <span class="hk">logic</span> [255:0]    rows,        <span class="hc">// row r = rows[16*r +: 16], bit 15 of a row = leftmost pixel</span>
+    <span class="hk">input</span>  <span class="hk">logic</span> [9:0]      sx,
+    <span class="hk">input</span>  <span class="hk">logic</span> [9:0]      sy,
+    <span class="hk">input</span>  <span class="hk">logic</span>            en,
+    <span class="hk">input</span>  <span class="hk">logic</span> [11:0]     sprite_color,
+    <span class="hk">input</span>  <span class="hk">logic</span> [11:0]     bg_color,
+    <span class="hk">output</span> <span class="hk">logic</span>            frame_tick,  <span class="hc">// one clock at the wrap to (0, 0)</span>
+    <span class="hk">output</span> <span class="hk">logic</span> [11:0]     rgb,
+    <span class="hk">output</span> <span class="hk">logic</span>            hs_n,
+    <span class="hk">output</span> <span class="hk">logic</span>            vs_n
+);
+    <span class="hk">localparam</span> <span class="hk">int</span> HV = 640, HFP = 16, HSW = 96, HT = 800;
+    <span class="hk">localparam</span> <span class="hk">int</span> VV = 480, VFP = 10, VSW = 2, VT = 525;
+
+    <span class="hk">logic</span> [1:0]  ph;
+    <span class="hk">logic</span> [9:0]  x, y;
+    <span class="hk">logic</span> [10:0] dx, dy;           <span class="hc">// x - X, y - Y (11 bits: negative = outside)</span>
+    <span class="hk">logic</span>        hit;
+    <span class="hk">logic</span> [11:0] pix;
+    <span class="hk">logic</span> [3:0]  c, r;
+    <span class="hk">logic</span> [15:0] row;
+
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        dx  = {1&#x27;b0, x} - {1&#x27;b0, sx};
+        dy  = {1&#x27;b0, y} - {1&#x27;b0, sy};
+        c   = dx[3:0];
+        r   = dy[3:0];
+        row = rows[16 * r +: 16];
+        hit = en &amp;&amp; dx &lt; 11&#x27;d16 &amp;&amp; dy &lt; 11&#x27;d16 &amp;&amp; row[4&#x27;d15 - c];
+        <span class="hk">if</span> (x &gt;= 10&#x27;(HV) || y &gt;= 10&#x27;(VV)) pix = 12&#x27;h000;
+        <span class="hk">else</span> <span class="hk">if</span> (hit)                     pix = sprite_color;
+        <span class="hk">else</span>                              pix = bg_color;
+    <span class="hk">end</span>
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        frame_tick &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (rst) <span class="hk">begin</span>
+            ph &lt;= &#x27;0; x &lt;= &#x27;0; y &lt;= &#x27;0; rgb &lt;= &#x27;0; hs_n &lt;= 1&#x27;b1; vs_n &lt;= 1&#x27;b1;
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            ph &lt;= ph + 1&#x27;b1;
+            <span class="hk">if</span> (ph == 2&#x27;d3) <span class="hk">begin</span>
+                rgb  &lt;= pix;
+                hs_n &lt;= !(x &gt;= 10&#x27;(HV + HFP) &amp;&amp; x &lt; 10&#x27;(HV + HFP + HSW));
+                vs_n &lt;= !(y &gt;= 10&#x27;(VV + VFP) &amp;&amp; y &lt; 10&#x27;(VV + VFP + VSW));
+                <span class="hk">if</span> (x == 10&#x27;(HT - 1)) <span class="hk">begin</span>
+                    x &lt;= &#x27;0;
+                    <span class="hk">if</span> (y == 10&#x27;(VT - 1)) <span class="hk">begin</span>
+                        y &lt;= &#x27;0;
+                        frame_tick &lt;= 1&#x27;b1;
+                    <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+                        y &lt;= y + 1&#x27;b1;
+                    <span class="hk">end</span>
+                <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+                    x &lt;= x + 1&#x27;b1;
+                <span class="hk">end</span>
+            <span class="hk">end</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">sprite_regs.sv</span> <span class="muted small">reference RTL, 85 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/sprite_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/ref/rtl/sprite_regs.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// sprite_regs.sv: sprite rows, position, colours, CTRL (with the bounce</span>
+<span class="hc">// update at each frame wrap) and FRAME, in the shell window.</span>
+<span class="hk">module</span> sprite_regs (
+    <span class="hk">input</span>  <span class="hk">logic</span>              clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>              rst,
+    <span class="hk">input</span>  <span class="hk">logic</span>              frame_tick,
+    <span class="hk">output</span> <span class="hk">logic</span> [255:0]      rows,
+    <span class="hk">output</span> <span class="hk">logic</span> [9:0]        sx,
+    <span class="hk">output</span> <span class="hk">logic</span> [9:0]        sy,
+    <span class="hk">output</span> <span class="hk">logic</span> [11:0]       sprite_color,
+    <span class="hk">output</span> <span class="hk">logic</span> [11:0]       bg_color,
+    <span class="hk">output</span> <span class="hk">logic</span>              en,
+    <span class="hk">input</span>  <span class="hk">logic</span> [6:0]        win_addr,
+    <span class="hk">input</span>  <span class="hk">logic</span>              win_wr,
+    <span class="hk">input</span>  <span class="hk">logic</span>              win_rd,
+    <span class="hk">input</span>  <span class="hk">logic</span> [31:0]       win_wdata,
+    <span class="hk">output</span> <span class="hk">logic</span> [31:0]       win_rdata
+);
+    <span class="hk">localparam</span> <span class="hk">logic</span> [9:0] XMAX = 10&#x27;d624, YMAX = 10&#x27;d464;
+    <span class="hk">logic</span> [3:0]  ctrl;
+    <span class="hk">logic</span> [15:0] row_r [16];
+
+    <span class="hk">always_comb</span> <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; 16; i++) rows[16 * i +: 16] = row_r[i];
+    <span class="hk">logic</span> [31:0] frame;
+
+    <span class="hk">assign</span> en = ctrl[0];
+
+    <span class="hk">wire</span> wr_x = win_wr &amp;&amp; win_addr == 7&#x27;h10;
+    <span class="hk">wire</span> wr_y = win_wr &amp;&amp; win_addr == 7&#x27;h11;
+    <span class="hk">wire</span> wr_c = win_wr &amp;&amp; win_addr == 7&#x27;h14;
+    <span class="hk">wire</span> move = frame_tick &amp;&amp; ctrl[1];
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (rst) <span class="hk">begin</span>
+            <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; 16; i++) row_r[i] &lt;= &#x27;0;
+            sx &lt;= &#x27;0; sy &lt;= &#x27;0; sprite_color &lt;= 12&#x27;hFFF; bg_color &lt;= 12&#x27;h000;
+            ctrl &lt;= 4&#x27;b0001; frame &lt;= &#x27;0;
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            <span class="hk">if</span> (frame_tick) frame &lt;= frame + 1&#x27;b1;
+            <span class="hk">if</span> (win_wr &amp;&amp; win_addr &lt; 7&#x27;h10) row_r[win_addr[3:0]] &lt;= win_wdata[15:0];
+            <span class="hk">if</span> (win_wr &amp;&amp; win_addr == 7&#x27;h12) sprite_color &lt;= win_wdata[11:0];
+            <span class="hk">if</span> (win_wr &amp;&amp; win_addr == 7&#x27;h13) bg_color &lt;= win_wdata[11:0];
+            <span class="hc">// horizontal</span>
+            <span class="hk">if</span> (wr_x) sx &lt;= win_wdata[9:0];
+            <span class="hk">else</span> <span class="hk">if</span> (move) <span class="hk">begin</span>
+                <span class="hk">if</span> (!ctrl[2] &amp;&amp; sx &gt;= XMAX)      sx &lt;= sx - 1&#x27;b1;
+                <span class="hk">else</span> <span class="hk">if</span> (ctrl[2] &amp;&amp; sx == &#x27;0)    sx &lt;= sx + 1&#x27;b1;
+                <span class="hk">else</span> <span class="hk">if</span> (ctrl[2])                sx &lt;= sx - 1&#x27;b1;
+                <span class="hk">else</span>                             sx &lt;= sx + 1&#x27;b1;
+            <span class="hk">end</span>
+            <span class="hc">// vertical</span>
+            <span class="hk">if</span> (wr_y) sy &lt;= win_wdata[9:0];
+            <span class="hk">else</span> <span class="hk">if</span> (move) <span class="hk">begin</span>
+                <span class="hk">if</span> (!ctrl[3] &amp;&amp; sy &gt;= YMAX)      sy &lt;= sy - 1&#x27;b1;
+                <span class="hk">else</span> <span class="hk">if</span> (ctrl[3] &amp;&amp; sy == &#x27;0)    sy &lt;= sy + 1&#x27;b1;
+                <span class="hk">else</span> <span class="hk">if</span> (ctrl[3])                sy &lt;= sy - 1&#x27;b1;
+                <span class="hk">else</span>                             sy &lt;= sy + 1&#x27;b1;
+            <span class="hk">end</span>
+            <span class="hc">// CTRL: direction bits flip at the edges</span>
+            <span class="hk">if</span> (wr_c) ctrl &lt;= win_wdata[3:0];
+            <span class="hk">else</span> <span class="hk">if</span> (move) <span class="hk">begin</span>
+                <span class="hk">if</span> (!ctrl[2] &amp;&amp; sx &gt;= XMAX) ctrl[2] &lt;= 1&#x27;b1;
+                <span class="hk">else</span> <span class="hk">if</span> (ctrl[2] &amp;&amp; sx == &#x27;0) ctrl[2] &lt;= 1&#x27;b0;
+                <span class="hk">if</span> (!ctrl[3] &amp;&amp; sy &gt;= YMAX) ctrl[3] &lt;= 1&#x27;b1;
+                <span class="hk">else</span> <span class="hk">if</span> (ctrl[3] &amp;&amp; sy == &#x27;0) ctrl[3] &lt;= 1&#x27;b0;
+            <span class="hk">end</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (rst) win_rdata &lt;= &#x27;0;
+        <span class="hk">else</span> <span class="hk">if</span> (win_rd) <span class="hk">begin</span>
+            <span class="hk">if</span> (win_addr &lt; 7&#x27;h10) win_rdata &lt;= {16&#x27;d0, row_r[win_addr[3:0]]};
+            <span class="hk">else</span> <span class="hk">case</span> (win_addr)
+                7&#x27;h10:   win_rdata &lt;= {22&#x27;d0, sx};
+                7&#x27;h11:   win_rdata &lt;= {22&#x27;d0, sy};
+                7&#x27;h12:   win_rdata &lt;= {20&#x27;d0, sprite_color};
+                7&#x27;h13:   win_rdata &lt;= {20&#x27;d0, bg_color};
+                7&#x27;h14:   win_rdata &lt;= {28&#x27;d0, ctrl};
+                7&#x27;h15:   win_rdata &lt;= frame;
+                <span class="hk">default</span>: win_rdata &lt;= &#x27;0;
+            <span class="hk">endcase</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">t2_vga_sprite_top.sv</span> <span class="muted small">reference RTL, 46 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/t2_vga_sprite_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/ref/rtl/t2_vga_sprite_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t2_vga_sprite_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+<span class="hc">// Reference design for benchmark task t2_vga_sprite; DESIGN_ID &quot;SPRT&quot;.</span>
+<span class="hc">// 640x480 at 60 Hz with one 16x16 1-bit sprite and an optional bounce.</span>
+<span class="hk">module</span> t2_vga_sprite_top #(
+    <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
+    <span class="hk">parameter</span> <span class="hk">int</span>          TIMEOUT_CYCLES = 100_000,
+    <span class="hk">parameter</span> <span class="hk">logic</span> [31:0] BUILD_STAMP    = 32&#x27;h0
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>       CLK100MHZ,
+    <span class="hk">input</span>  <span class="hk">logic</span>       CPU_RESETN,
+    <span class="hk">output</span> <span class="hk">logic</span> [3:0] VGA_R,
+    <span class="hk">output</span> <span class="hk">logic</span> [3:0] VGA_G,
+    <span class="hk">output</span> <span class="hk">logic</span> [3:0] VGA_B,
+    <span class="hk">output</span> <span class="hk">logic</span>       VGA_HS,
+    <span class="hk">output</span> <span class="hk">logic</span>       VGA_VS,
+    <span class="hk">input</span>  <span class="hk">logic</span>       UART_TXD_IN,
+    <span class="hk">output</span> <span class="hk">logic</span>       UART_RXD_OUT
+);
+    <span class="hk">logic</span>              clk, rst, win_wr, win_rd, frame_tick, en;
+    <span class="hk">logic</span> [6:0]        win_addr;
+    <span class="hk">logic</span> [31:0]       win_wdata, win_rdata;
+    <span class="hk">logic</span> [255:0]      rows;
+    <span class="hk">logic</span> [9:0]        sx, sy;
+    <span class="hk">logic</span> [11:0]       sprite_color, bg_color, rgb;
+
+    <span class="hk">assign</span> clk = CLK100MHZ;
+    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));
+
+    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),
+                 .DESIGN_ID(32&#x27;h5350_5254), .BUILD_STAMP(BUILD_STAMP)) u_shell (
+        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),
+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
+
+    sprite_regs u_regs (
+        .clk(clk), .rst(rst), .frame_tick(frame_tick), .rows(rows), .sx(sx), .sy(sy),
+        .sprite_color(sprite_color), .bg_color(bg_color), .en(en),
+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
+
+    sprite_gen u_gen (
+        .clk(clk), .rst(rst), .rows(rows), .sx(sx), .sy(sy), .en(en), .sprite_color(sprite_color),
+        .bg_color(bg_color), .frame_tick(frame_tick), .rgb(rgb), .hs_n(VGA_HS), .vs_n(VGA_VS));
+
+    <span class="hk">assign</span> VGA_R = rgb[11:8];
+    <span class="hk">assign</span> VGA_G = rgb[7:4];
+    <span class="hk">assign</span> VGA_B = rgb[3:0];
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 240 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t2_vga_sprite against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+
+<span class="hk">from</span> __future__ <span class="hk">import</span> annotations
+
+<span class="hk">import</span> random
+
+<span class="hk">import</span> cocotb
+<span class="hk">from</span> benchmark.lib.bench <span class="hk">import</span> Board
+<span class="hk">from</span> benchmark.lib.vga_sampler <span class="hk">import</span> edge_clock, now_clock, sample
+<span class="hk">from</span> model <span class="hk">import</span> (BG_COLOR, BOUNCE, CPP, CTRL, DESIGN_ID, DX_NEG, DY_NEG, EN, FRAME, FRAME_CLOCKS, HS_START, HSW,
+                   HT, LINE, SPRITE_COLOR, VS_START, VSW, VT, X, Y, Model)
+
+ARROW = [0x8000, 0xC000, 0xE000, 0xF000, 0xF800, 0xFC00, 0xFE00, 0xFF00, 0xFF80, 0xFC00, 0xEC00, 0xC600, 0x8600,
+         0x0300, 0x0300, 0x0181]
+
+
+<span class="hk">class</span> Env:
+    <span class="hk">def</span> __init__(self, dut) -&gt; <span class="hk">None</span>:
+        self.b = Board(dut)
+        self.dut, self.m = dut, Model()
+
+    <span class="hk">async</span> <span class="hk">def</span> start(self) -&gt; <span class="hk">None</span>:
+        <span class="hk">await</span> self.b.start()
+        self.t_release = now_clock() - 8               <span class="hc"># Board.start waits 8 clocks after releasing reset</span>
+        self.t0 = <span class="hk">await</span> edge_clock(self.dut.VGA_HS, rising=<span class="hk">False</span>)   <span class="hc"># HS fall (sync start) of line 0</span>
+        self.line0 = self.t0 - CPP * HS_START
+
+    <span class="hk">def</span> clock_of(self, x: int, y: int, frame: int = 0) -&gt; int:
+        <span class="hk">return</span> self.line0 + frame * FRAME_CLOCKS + y * LINE + CPP * x
+
+    <span class="hk">def</span> next_line(self, margin: int = 50) -&gt; tuple[int, int]:
+        k = (now_clock() + margin - self.line0 + LINE - 1) // LINE
+        <span class="hk">return</span> k // VT, k % VT
+
+    <span class="hk">def</span> ahead(self, k: int) -&gt; int:
+        <span class="hs">&quot;&quot;&quot;A line of the current frame at least ``k`` lines ahead (the tests stay in the top of the frame).&quot;&quot;&quot;</span>
+        _, y = self.next_line()
+        <span class="hk">assert</span> y + k + 20 &lt; 470, f<span class="hs">&quot;test ran too far down the frame (line {y})&quot;</span>
+        <span class="hk">return</span> y + k
+
+    <span class="hk">async</span> <span class="hk">def</span> wr(self, off: int, v: int) -&gt; <span class="hk">None</span>:
+        <span class="hk">await</span> self.b.write(off, v)
+        self.m.write(off, v)
+
+    <span class="hk">async</span> <span class="hk">def</span> load(self, rows: list[int]) -&gt; <span class="hk">None</span>:
+        <span class="hk">for</span> i, r <span class="hk">in</span> enumerate(rows):
+            <span class="hk">await</span> self.wr(i, r)
+
+    <span class="hk">async</span> <span class="hk">def</span> regs(self, offs=(X, Y, CTRL, FRAME)) -&gt; <span class="hk">None</span>:
+        <span class="hk">for</span> off <span class="hk">in</span> offs:
+            <span class="hk">await</span> self.b.expect(off, self.m.read(off), f<span class="hs">&quot;window 0x{off:02X}&quot;</span>)
+
+    <span class="hk">async</span> <span class="hk">def</span> check_line(self, frame: int, y: int, xs) -&gt; <span class="hk">None</span>:
+        xs = list(xs)
+        got = <span class="hk">await</span> sample(self.dut, [self.clock_of(x, y, frame) + 2 <span class="hk">for</span> x <span class="hk">in</span> xs], (<span class="hs">&quot;rgb&quot;</span>, <span class="hs">&quot;VGA_HS&quot;</span>, <span class="hs">&quot;VGA_VS&quot;</span>))
+        want = [(self.m.pixel(x, y), self.m.hs(x), self.m.vs(y)) <span class="hk">for</span> x <span class="hk">in</span> xs]
+        bad = [(x, g, w) <span class="hk">for</span> x, g, w <span class="hk">in</span> zip(xs, got, want) <span class="hk">if</span> g != w]
+        <span class="hk">assert</span> <span class="hk">not</span> bad, f<span class="hs">&quot;line {y}: {len(bad)} pixels differ, first (x, rtl (rgb, hs, vs), model) = {bad[:4]}&quot;</span>
+
+    <span class="hk">async</span> <span class="hk">def</span> check_lines(self, ys, xs) -&gt; <span class="hk">None</span>:
+        <span class="hs">&quot;&quot;&quot;Lines ``ys`` of the next frame whose line min(ys) is still ahead.&quot;&quot;&quot;</span>
+        f, y = self.next_line()
+        frame = f <span class="hk">if</span> y &lt;= min(ys) <span class="hk">else</span> f + 1
+        <span class="hk">for</span> yy <span class="hk">in</span> ys:
+            <span class="hk">await</span> self.check_line(frame, yy, xs)
+
+    <span class="hk">async</span> <span class="hk">def</span> wait_frame_wrap(self) -&gt; int:
+        <span class="hs">&quot;&quot;&quot;Wait until just after the next frame wrap (the model&#x27;s bounce update); returns the new frame index.&quot;&quot;&quot;</span>
+        f = (now_clock() - self.line0) // FRAME_CLOCKS
+        target = self.clock_of(0, 0, f + 1) + 8
+        <span class="hk">await</span> self.b.cycles(target - now_clock())
+        self.m.frame_wrap()
+        <span class="hk">return</span> f + 1
+
+
+@cocotb.test(timeout_time=1662700, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_identity_and_reset(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">assert</span> <span class="hk">await</span> e.b.shell_id() == DESIGN_ID
+    <span class="hk">await</span> e.regs(list(range(0x16)) + [0x16, 0x7F])
+    <span class="hk">assert</span> 0 &lt;= e.line0 - e.t_release &lt;= 16, f<span class="hs">&quot;pixel (0, 0) starts {e.line0 - e.t_release} clocks after reset&quot;</span>
+
+
+@cocotb.test(timeout_time=1256164, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_sync_timing(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    t_rise = <span class="hk">await</span> edge_clock(dut.VGA_HS)
+    <span class="hk">assert</span> t_rise - e.t0 == CPP * HSW, f<span class="hs">&quot;HS low for {t_rise - e.t0} clocks, model {CPP * HSW}&quot;</span>
+    t1 = <span class="hk">await</span> edge_clock(dut.VGA_HS, rising=<span class="hk">False</span>)
+    <span class="hk">assert</span> t1 - e.t0 == LINE, f<span class="hs">&quot;line period {t1 - e.t0} clocks, model {LINE}&quot;</span>
+    <span class="hk">await</span> e.check_line(0, 3, range(600, HT, 2))
+
+
+@cocotb.test(timeout_time=30000000, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_sprite_bitmap(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.load(ARROW)
+    <span class="hk">await</span> e.wr(SPRITE_COLOR, 0xF80)
+    <span class="hk">await</span> e.wr(BG_COLOR, 0x123)
+    <span class="hk">await</span> e.wr(X, 37)
+    y0 = e.ahead(6)
+    <span class="hk">await</span> e.wr(Y, y0)
+    <span class="hk">await</span> e.check_lines(range(y0 - 2, y0 + 18), range(30, 60))
+    <span class="hk">await</span> e.check_lines([y0 + 1], range(0, 640, 3))
+
+
+@cocotb.test(timeout_time=4418220, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_clipping_and_enable(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.load([0xFFFF] * 16)
+    <span class="hk">await</span> e.wr(BG_COLOR, 0x0A0)
+    <span class="hk">await</span> e.wr(X, 632)                               <span class="hc"># half off the right edge</span>
+    y0 = e.ahead(3)
+    <span class="hk">await</span> e.wr(Y, y0)
+    <span class="hk">await</span> e.check_lines([y0, y0 + 7, y0 + 15, y0 + 16], range(620, 660))
+    <span class="hk">await</span> e.wr(X, 1016)                              <span class="hc"># completely off screen (no wrap to the left edge)</span>
+    <span class="hk">await</span> e.check_lines([e.ahead(1)], list(range(0, 16)) + list(range(16, 800, 4)))
+    <span class="hk">await</span> e.wr(X, 0)                                 <span class="hc"># at the left edge</span>
+    y0 = e.ahead(3)
+    <span class="hk">await</span> e.wr(Y, y0)
+    <span class="hk">await</span> e.check_lines([y0, y0 + 15, y0 + 16], range(0, 20))
+    <span class="hk">await</span> e.wr(CTRL, 0)                              <span class="hc"># sprite off</span>
+    <span class="hk">await</span> e.check_lines([max(y0 + 3, e.ahead(1))], range(0, 20))
+    <span class="hk">await</span> e.regs((CTRL,))
+
+
+@cocotb.test(timeout_time=22000000, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_bounce_and_vertical_timing(dut):
+    <span class="hs">&quot;&quot;&quot;One frame wrap: the bounce turns at the right limit (X &gt;= 624) and at the top (Y = 0); on the way, the bottom
+    lines (background, then black) and VS timing. (A frame is 1.68 M clocks: one wrap keeps the test short.)&quot;&quot;&quot;</span>
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.load(ARROW)
+    <span class="hk">await</span> e.wr(X, 624)
+    <span class="hk">await</span> e.wr(Y, 0)
+    <span class="hk">await</span> e.wr(CTRL, EN | BOUNCE | DY_NEG)
+    <span class="hk">await</span> e.check_line(0, 479, range(600, 660, 3))
+    <span class="hk">await</span> e.check_line(0, 480, range(0, HT, 9))
+    t_vs = <span class="hk">await</span> edge_clock(dut.VGA_VS, rising=<span class="hk">False</span>)
+    <span class="hk">assert</span> t_vs == e.clock_of(0, VS_START), f<span class="hs">&quot;VS fell at clock {t_vs - e.line0} of the frame, model {VS_START * LINE}&quot;</span>
+    t_end = <span class="hk">await</span> edge_clock(dut.VGA_VS)
+    <span class="hk">assert</span> t_end - t_vs == VSW * LINE, f<span class="hs">&quot;VS low for {t_end - t_vs} clocks, model {VSW * LINE}&quot;</span>
+    <span class="hk">await</span> e.check_line(0, 500, range(0, HT, 9))
+    <span class="hk">for</span> _ <span class="hk">in</span> range(1):                                  <span class="hc"># both turn: (623, 1), moving left and down</span>
+        f = <span class="hk">await</span> e.wait_frame_wrap()
+        <span class="hk">await</span> e.regs()
+        <span class="hk">await</span> e.check_line(f, e.m.y + 1, range(616, 642))
+    <span class="hk">assert</span> e.m.x == 623 <span class="hk">and</span> e.m.y == 1 <span class="hk">and</span> e.m.ctrl == EN | BOUNCE | DX_NEG
+
+
+@cocotb.test(timeout_time=24000000, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_offscreen_and_disabled_inside_sprite_span(dut):
+    <span class="hs">&quot;&quot;&quot;v1.1: lines that the sprite would cover (Y .. Y + 15), with it far off to the right (X = 1016 and 1023: no wrap
+    to the left edge) and with CTRL.EN = 0. The v1 tests looked at a line after the sprite&#x27;s span, where nothing is
+    drawn whatever the design does.&quot;&quot;&quot;</span>
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.load([0xFFFF] * 16)
+    <span class="hk">await</span> e.wr(SPRITE_COLOR, 0xF00)
+    <span class="hk">await</span> e.wr(BG_COLOR, 0x0A0)
+    y0 = e.ahead(3)
+    <span class="hk">await</span> e.wr(Y, y0)
+    <span class="hk">await</span> e.wr(X, 1016)
+    <span class="hk">await</span> e.check_lines([y0 + 3], list(range(0, 24)) + list(range(600, 640, 5)))
+    <span class="hk">await</span> e.wr(X, 1023)
+    <span class="hk">await</span> e.check_lines([y0 + 6], list(range(0, 24)) + list(range(600, 640, 5)))
+    <span class="hk">await</span> e.wr(X, 100)
+    <span class="hk">await</span> e.check_lines([y0 + 8], range(96, 120))                 <span class="hc"># on screen and enabled: the sprite is there</span>
+    <span class="hk">await</span> e.wr(CTRL, 0)                                          <span class="hc"># sprite off: background only</span>
+    <span class="hk">await</span> e.check_lines([y0 + 10], range(96, 120))
+    <span class="hk">await</span> e.check_lines([y0 + 13], range(96, 120))
+    <span class="hk">await</span> e.regs((CTRL, X, Y))
+
+
+@cocotb.test(timeout_time=40000000, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_bounce_plain_step_and_bounce_off(dut):
+    <span class="hs">&quot;&quot;&quot;v1.2: two frame wraps away from every edge. With BOUNCE = 1 and DX_NEG = 0, DY_NEG = 1 the position moves by
+    exactly +1 in X and -1 in Y; with BOUNCE = 0 (direction bits set) it holds still.&quot;&quot;&quot;</span>
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.load(ARROW)
+    <span class="hk">await</span> e.wr(X, 100)
+    <span class="hk">await</span> e.wr(Y, 100)
+    <span class="hk">await</span> e.wr(CTRL, EN | BOUNCE | DY_NEG)
+    <span class="hk">await</span> e.wait_frame_wrap()
+    <span class="hk">await</span> e.regs((X, Y, CTRL))
+    <span class="hk">assert</span> e.m.x == 101 <span class="hk">and</span> e.m.y == 99 <span class="hk">and</span> e.m.ctrl == EN | BOUNCE | DY_NEG
+    <span class="hk">await</span> e.wr(CTRL, EN | DX_NEG | DY_NEG)                        <span class="hc"># BOUNCE = 0: holds still</span>
+    <span class="hk">await</span> e.wait_frame_wrap()
+    <span class="hk">await</span> e.regs((X, Y, CTRL))
+    <span class="hk">assert</span> e.m.x == 101 <span class="hk">and</span> e.m.y == 99 <span class="hk">and</span> e.m.ctrl == EN | DX_NEG | DY_NEG
+
+
+@cocotb.test(timeout_time=24000000, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_bounce_turns_at_left_and_bottom(dut):
+    <span class="hs">&quot;&quot;&quot;v1.1: one frame wrap at X = 0 moving left and Y = 464 moving down: both turn (X to 1, Y to 463). With no turn at
+    X = 0 the position would wrap to 1023.&quot;&quot;&quot;</span>
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.load(ARROW)
+    <span class="hk">await</span> e.wr(X, 0)
+    <span class="hk">await</span> e.wr(Y, 464)
+    <span class="hk">await</span> e.wr(CTRL, EN | BOUNCE | DX_NEG)
+    <span class="hk">await</span> e.regs((X, Y, CTRL))
+    <span class="hk">await</span> e.wait_frame_wrap()
+    <span class="hk">await</span> e.regs()
+    <span class="hk">assert</span> e.m.x == 1 <span class="hk">and</span> e.m.y == 463 <span class="hk">and</span> e.m.ctrl == EN | BOUNCE | DY_NEG
+
+
+@cocotb.test(timeout_time=24000000, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_blank_lines_are_black_over_a_background(dut):
+    <span class="hs">&quot;&quot;&quot;v1.1: with a non-zero background colour, every pixel of lines 480-524 and every pixel right of column 639 is
+    black (the v1 tests ran with the reset background colour, black, so a background leaking into the blanking could
+    not show).&quot;&quot;&quot;</span>
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.wr(BG_COLOR, 0x321)
+    <span class="hk">await</span> e.check_lines([479], range(0, HT, 37))
+    <span class="hk">await</span> e.check_lines([480, 497, 524], sorted(set(range(0, HT, 37)) | {0, 1, 639, 640, 799}))
+
+
+@cocotb.test(timeout_time=7267580, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_random_sprites(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    rng = random.Random(int(cocotb.RANDOM_SEED))
+    <span class="hk">await</span> e.load([rng.randrange(1 &lt;&lt; 16) <span class="hk">for</span> _ <span class="hk">in</span> range(16)])
+    <span class="hk">for</span> _ <span class="hk">in</span> range(4):
+        <span class="hk">await</span> e.wr(X, rng.choice([rng.randrange(0, 640), rng.randrange(620, 650)]))
+        <span class="hk">await</span> e.wr(SPRITE_COLOR, rng.randrange(1 &lt;&lt; 12))
+        <span class="hk">await</span> e.wr(BG_COLOR, rng.randrange(1 &lt;&lt; 12))
+        <span class="hk">await</span> e.wr(rng.randrange(16), rng.randrange(1 &lt;&lt; 16))
+        <span class="hk">await</span> e.wr(Y, e.ahead(3) + rng.randrange(0, 8))
+        ys = sorted(rng.sample(range(e.m.y, e.m.y + 16), 3))
+        <span class="hk">await</span> e.check_lines(ys, range(max(0, e.m.x - 4), min(HT, e.m.x + 20)))
+    <span class="hk">await</span> e.regs((ROW <span class="hk">for</span> ROW <span class="hk">in</span> range(16)))
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 76 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t2_vga_sprite, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+
+<span class="hk">from</span> __future__ <span class="hk">import</span> annotations
+
+DESIGN_ID = 0x53505254
+ROW0, X, Y, SPRITE_COLOR, BG_COLOR, CTRL, FRAME = 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15
+EN, BOUNCE, DX_NEG, DY_NEG = 1, 2, 4, 8
+CPP = 4
+HV, HFP, HSW, HT = 640, 16, 96, 800
+VV, VFP, VSW, VT = 480, 10, 2, 525
+HS_START, VS_START = HV + HFP, VV + VFP          <span class="hc"># 656, 490</span>
+LINE = HT * CPP                                  <span class="hc"># 3200 clocks</span>
+FRAME_CLOCKS = LINE * VT
+XMAX, YMAX = 624, 464
+
+
+<span class="hk">class</span> Model:
+    <span class="hk">def</span> __init__(self) -&gt; <span class="hk">None</span>:
+        self.rows = [0] * 16
+        self.x = self.y = 0
+        self.sprite_color, self.bg_color = 0xFFF, 0x000
+        self.ctrl = EN
+        self.frame = 0
+
+    <span class="hk">def</span> write(self, off: int, v: int) -&gt; <span class="hk">None</span>:
+        <span class="hk">if</span> off &lt; 0x10:
+            self.rows[off] = v &amp; 0xFFFF
+        <span class="hk">elif</span> off == X:
+            self.x = v &amp; 0x3FF
+        <span class="hk">elif</span> off == Y:
+            self.y = v &amp; 0x3FF
+        <span class="hk">elif</span> off == SPRITE_COLOR:
+            self.sprite_color = v &amp; 0xFFF
+        <span class="hk">elif</span> off == BG_COLOR:
+            self.bg_color = v &amp; 0xFFF
+        <span class="hk">elif</span> off == CTRL:
+            self.ctrl = v &amp; 0xF
+
+    <span class="hk">def</span> read(self, off: int) -&gt; int:
+        <span class="hk">if</span> off &lt; 0x10:
+            <span class="hk">return</span> self.rows[off]
+        <span class="hk">return</span> {X: self.x, Y: self.y, SPRITE_COLOR: self.sprite_color, BG_COLOR: self.bg_color,
+                CTRL: self.ctrl, FRAME: self.frame}.get(off, 0)
+
+    <span class="hk">def</span> frame_wrap(self) -&gt; <span class="hk">None</span>:
+        self.frame += 1
+        <span class="hk">if</span> <span class="hk">not</span> self.ctrl &amp; BOUNCE:
+            <span class="hk">return</span>
+        self.x, neg = self._axis(self.x, bool(self.ctrl &amp; DX_NEG), XMAX)
+        self.ctrl = (self.ctrl &amp; ~DX_NEG) | (DX_NEG <span class="hk">if</span> neg <span class="hk">else</span> 0)
+        self.y, neg = self._axis(self.y, bool(self.ctrl &amp; DY_NEG), YMAX)
+        self.ctrl = (self.ctrl &amp; ~DY_NEG) | (DY_NEG <span class="hk">if</span> neg <span class="hk">else</span> 0)
+
+    @staticmethod
+    <span class="hk">def</span> _axis(p: int, neg: bool, lim: int) -&gt; tuple[int, bool]:
+        <span class="hk">if</span> <span class="hk">not</span> neg <span class="hk">and</span> p &gt;= lim:
+            <span class="hk">return</span> p - 1, <span class="hk">True</span>
+        <span class="hk">if</span> neg <span class="hk">and</span> p == 0:
+            <span class="hk">return</span> p + 1, <span class="hk">False</span>
+        <span class="hk">return</span> (p - 1, <span class="hk">True</span>) <span class="hk">if</span> neg <span class="hk">else</span> (p + 1, <span class="hk">False</span>)
+
+    <span class="hk">def</span> pixel(self, x: int, y: int) -&gt; int:
+        <span class="hk">if</span> x &gt;= HV <span class="hk">or</span> y &gt;= VV:
+            <span class="hk">return</span> 0
+        c, r = x - self.x, y - self.y
+        <span class="hk">if</span> self.ctrl &amp; EN <span class="hk">and</span> 0 &lt;= c &lt; 16 <span class="hk">and</span> 0 &lt;= r &lt; 16 <span class="hk">and</span> (self.rows[r] &gt;&gt; (15 - c)) &amp; 1:
+            <span class="hk">return</span> self.sprite_color
+        <span class="hk">return</span> self.bg_color
+
+    @staticmethod
+    <span class="hk">def</span> hs(x: int) -&gt; int:
+        <span class="hk">return</span> int(<span class="hk">not</span> HS_START &lt;= x &lt; HS_START + HSW)
+
+    @staticmethod
+    <span class="hk">def</span> vs(y: int) -&gt; int:
+        <span class="hk">return</span> int(<span class="hk">not</span> VS_START &lt;= y &lt; VS_START + VSW)
+</code></pre></details>
+<h2>The agent on this task</h2>
+<p>No development run of the agent on this task is committed yet.</p>
+<div class="pager"><a href="t2_spi_master_modes.html">&larr; General-purpose SPI master on Pmod JB</a><a href="c9_median3x3.html">Median filter behind the test shell &rarr;</a></div>
+
+<div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
+</main>
+<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<script type="application/json" data-key="trace">{"captions":["Step 0: Start with the sprite at (620, 455), bounce on, moving right and down. Position (620, 455), 256 sprite pixels on screen.","Step 1: Frame 1 ends and the sprite moves one pixel each way. Position (621, 456), 256 sprite pixels on screen.","Step 2: Frame 2 ends and the sprite moves one pixel each way. Position (622, 457), 256 sprite pixels on screen.","Step 3: Frame 3 ends and the sprite moves one pixel each way. Position (623, 458), 256 sprite pixels on screen.","Step 4: Frame 4 ends and the sprite moves one pixel each way. Position (624, 459), 256 sprite pixels on screen.","Step 5: Frame 5 ends and the sprite moves one pixel each way. It turns round at the right edge. Position (623, 460), 256 sprite pixels on screen.","Step 6: Frame 6 ends and the sprite moves one pixel each way. Position (622, 461), 256 sprite pixels on screen.","Step 7: Frame 7 ends and the sprite moves one pixel each way. Position (621, 462), 256 sprite pixels on screen.","Step 8: Frame 8 ends and the sprite moves one pixel each way. Position (620, 463), 256 sprite pixels on screen.","Step 9: Frame 9 ends and the sprite moves one pixel each way. Position (619, 464), 256 sprite pixels on screen.","Step 10: Frame 10 ends and the sprite moves one pixel each way. It turns round at the bottom edge. Position (618, 463), 256 sprite pixels on screen.","Step 11: Frame 11 ends and the sprite moves one pixel each way. Position (617, 462), 256 sprite pixels on screen.","Step 12: Frame 12 ends and the sprite moves one pixel each way. Position (616, 461), 256 sprite pixels on screen.","Step 13: Frame 13 ends and the sprite moves one pixel each way. Position (615, 460), 256 sprite pixels on screen.","Step 14: Frame 14 ends and the sprite moves one pixel each way. Position (614, 459), 256 sprite pixels on screen.","Step 15: The sprite is placed at (3, 2), moving left and up. Position (3, 2), 256 sprite pixels on screen.","Step 16: Frame 15 ends and the sprite moves one pixel each way. Position (2, 1), 256 sprite pixels on screen.","Step 17: Frame 16 ends and the sprite moves one pixel each way. Position (1, 0), 256 sprite pixels on screen.","Step 18: Frame 17 ends and the sprite moves one pixel each way. It turns round at the top edge. Position (0, 1), 256 sprite pixels on screen.","Step 19: Frame 18 ends and the sprite moves one pixel each way. It turns round at the left edge. Position (1, 2), 256 sprite pixels on screen.","Step 20: Frame 19 ends and the sprite moves one pixel each way. Position (2, 3), 256 sprite pixels on screen.","Step 21: Frame 20 ends and the sprite moves one pixel each way. Position (3, 4), 256 sprite pixels on screen.","Step 22: Frame 21 ends and the sprite moves one pixel each way. Position (4, 5), 256 sprite pixels on screen.","Step 23: Frame 22 ends and the sprite moves one pixel each way. Position (5, 6), 256 sprite pixels on screen.","Step 24: Frame 23 ends and the sprite moves one pixel each way. Position (6, 7), 256 sprite pixels on screen.","Step 25: Frame 24 ends and the sprite moves one pixel each way. Position (7, 8), 256 sprite pixels on screen.","Step 26: Frame 25 ends and the sprite moves one pixel each way. Position (8, 9), 256 sprite pixels on screen.","Step 27: Frame 26 ends and the sprite moves one pixel each way. Position (9, 10), 256 sprite pixels on screen.","Step 28: Bounce is off and X is set to 632; only part of the block is inside the 640 columns, the rest is clipped. Position (632, 10), 128 sprite pixels on screen.","Step 29: Bounce is off and X is set to 636; only part of the block is inside the 640 columns, the rest is clipped. Position (636, 10), 64 sprite pixels on screen.","Step 30: Bounce is off and X is set to 640; none of the block is inside the screen. Position (640, 10), 0 sprite pixels on screen.","Step 31: Bounce is off and X is set to 1000; none of the block is inside the screen. Position (1000, 10), 0 sprite pixels on screen."],"signals":[{"kind":"bus","name":"FRAME","radix":"dec","v":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14,15,16,17,18,19,20,21,22,23,24,25,26,26,26,26,26]},{"hi":1023,"kind":"wave","lo":0,"name":"X","v":[620,621,622,623,624,623,622,621,620,619,618,617,616,615,614,3,2,1,0,1,2,3,4,5,6,7,8,9,632,636,640,1000]},{"hi":479,"kind":"wave","lo":0,"name":"Y","v":[455,456,457,458,459,460,461,462,463,464,463,462,461,460,459,2,1,0,1,2,3,4,5,6,7,8,9,10,10,10,10,10]},{"kind":"bit","name":"DX_NEG (1 = left)","v":[0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"kind":"bit","name":"DY_NEG (1 = up)","v":[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"hi":256,"kind":"wave","lo":0,"name":"sprite pixels on screen","v":[256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,128,64,0,0]}],"stimulus":"A solid 16 x 16 block is placed at (620, 455) with bounce on and followed for 14 frames, then restarted at (3, 2) moving up and left for 12 frames. Finally bounce is turned off and X is set to 632, 636, 640, 1000.","unit":"step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]}</script>
+<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+(function () {
+  "use strict";
+  var D = {};
+  document.querySelectorAll('script[type="application/json"][data-key]').forEach(function (s) {
+    try { D[s.dataset.key] = JSON.parse(s.textContent); } catch (e) { /* data missing: component skips */ }
+  });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* theme toggle: remembered per viewer, optional */
+  var tb = document.getElementById("theme");
+  function curTheme() {
+    var t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  if (tb) {
+    try { var st = localStorage.getItem("fda-theme"); if (st) document.documentElement.dataset.theme = st; } catch (e) {}
+    tb.addEventListener("click", function () {
+      var n = curTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = n;
+      try { localStorage.setItem("fda-theme", n); } catch (e) {}
+      tb.textContent = n === "dark" ? "Light" : "Dark";
+    });
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+  }
+
+  /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
+  function Player(root, n, onFrame, opts) {
+    opts = opts || {};
+    var i = 0, playing = false, timer = null, speed = 1, visible = true, base = opts.interval || 1100;
+    var live = root.querySelector(".cap");
+    var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
+    var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
+    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
+    var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
+    var pos = el("span", { class: "pos" });
+    var sp = el("select", { "aria-label": "Speed" });
+    [0.25, 0.5, 1, 2, 4].forEach(function (s) { var o = el("option", { value: s, text: s + "x" }); if (s === 1) o.selected = true; sp.appendChild(o); });
+    var ctl = el("div", { class: "ctl" }, [play, back, fwd, rst, rng, pos, sp]);
+    root.appendChild(ctl);
+    if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
+    function show() {
+      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      var c = onFrame(i);
+      if (live && c != null) live.textContent = c;
+    }
+    function stop() { playing = false; play.textContent = "Play"; play.setAttribute("aria-label", "Play"); clearTimeout(timer); }
+    function tick() {
+      if (!playing) return;
+      if (!visible) { timer = setTimeout(tick, 400); return; }
+      if (i >= n - 1) { stop(); return; }
+      i++; show(); timer = setTimeout(tick, base / speed);
+    }
+    function go() {
+      if (i >= n - 1) i = 0;
+      playing = true; play.textContent = "Pause"; play.setAttribute("aria-label", "Pause"); show(); timer = setTimeout(tick, base / speed);
+    }
+    play.onclick = function () { playing ? stop() : go(); };
+    back.onclick = function () { stop(); i = Math.max(0, i - 1); show(); };
+    fwd.onclick = function () { stop(); i = Math.min(n - 1, i + 1); show(); };
+    rst.onclick = function () { stop(); i = 0; show(); };
+    rng.oninput = function () { stop(); i = +rng.value; show(); };
+    sp.onchange = function () { speed = +sp.value; };
+    root.addEventListener("keydown", function (e) {
+      if (e.target !== root) return;
+      if (e.key === " ") { e.preventDefault(); play.onclick(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); fwd.onclick(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); back.onclick(); }
+      else if (e.key === "Home") { e.preventDefault(); rst.onclick(); }
+    });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+    show();
+    if (opts.autoplay && !reduce) go();
+    return { goto: function (k) { stop(); i = k; show(); } };
+  }
+
+  /* ---------- stage replay (hero and how-it-works): frames from the committed run record ---------- */
+  var GROUPS = [
+    { id: "clarify", label: "Interview", stages: [0] },
+    { id: "plan", label: "Plan", stages: [1] },
+    { id: "rtl", label: "RTL and gates V0 to V3", stages: [2] },
+    { id: "build", label: "Build", stages: [3, 4, 5] },
+    { id: "post", label: "Post-route gates", stages: [6, 7, 8] },
+    { id: "board", label: "Board", stages: [9] }
+  ];
+  var DETAIL = [
+    "Interview", "Plan", "RTL and V0 to V3", "Constraints", "Synthesis", "Implementation", "Timing closure",
+    "Power closure", "DRC closure", "Board and debug"
+  ];
+  function frameState(R, i) {
+    var s = R.steps[i];
+    return { stage: s.stage_no, step: s, last: i === R.steps.length - 1 };
+  }
+  function mountReplay(root, mode) {
+    var R = D.replay; if (!R) return;
+    var items = mode === "hero" ? GROUPS : DETAIL.map(function (l, k) { return { id: "s" + k, label: l, stages: [k] }; });
+    var ul = el("ul", { class: "pipe", "aria-label": "Stages" });
+    var lis = items.map(function (g, k) {
+      var li = el("li", {}, [el("b", { text: mode === "hero" ? String(k + 1) : String(g.stages[0]) }), document.createTextNode(g.label)]);
+      ul.appendChild(li); return li;
+    });
+    var cap = el("p", { class: "cap", "aria-live": "polite" });
+    root.appendChild(ul); root.appendChild(cap);
+    function frame(i) {
+      var st = frameState(R, i), cur = -1;
+      items.forEach(function (g, k) { if (g.stages.indexOf(st.stage) >= 0) cur = k; });
+      lis.forEach(function (li, k) {
+        li.className = k < cur ? "done" : (k === cur ? (st.last ? "stop" : "active") : "");
+        var old = li.querySelector(".v"); if (old) li.removeChild(old);
+      });
+      var visits = st.step.visits;
+      if (visits > 1) lis[cur].appendChild(el("span", { class: "v", text: st.step.visit + "/" + visits }));
+      return "Stage " + st.stage + ", " + DETAIL[st.stage] + (visits > 1 ? " (visit " + st.step.visit + " of " + visits + ")" : "") + ". " + st.step.fact;
+    }
+    Player(root, R.steps.length, frame, { autoplay: mode === "hero", interval: mode === "hero" ? 1300 : 1500 });
+  }
+
+  /* ---------- k-of-n strip, intervals, bars (shared by development data and eval1.json) ---------- */
+  function strip(root, rows) {
+    var g = el("div", { class: "strip", role: "list" });
+    rows.forEach(function (r) {
+      var dots = el("span", { class: "dots", "aria-hidden": "true" });
+      for (var j = 0; j < r.n; j++) dots.appendChild(el("span", { class: "dot " + (j < r.k ? "p" : "f") }));
+      for (var q = r.n; q < (r.of || r.n); q++) dots.appendChild(el("span", { class: "dot n", title: "not run" }));
+      g.appendChild(el("span", { class: "t", role: "listitem", text: r.task }));
+      g.appendChild(dots);
+      g.appendChild(el("span", { class: "k mono", text: r.k + " of " + r.n }));
+    });
+    root.appendChild(g);
+    root.appendChild(el("div", { class: "legend" }, [
+      el("span", { text: "filled: all hidden tests passed" }), el("span", { text: "hatched: failed" }), el("span", { text: "dotted: not run" })]));
+  }
+  function intervals(root, items) {
+    var W = 560, H = 36 + items.length * 52, L = 14, R = 14;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": items.map(function (x) { return x.label + " " + x.mid + " percent, interval " + x.lo + " to " + x.hi; }).join("; ") });
+    function X(v) { return L + (W - L - R) * v / 100; }
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      s.appendChild(sv("line", { x1: X(v), x2: X(v), y1: 6, y2: H - 20, class: "rule" }));
+      s.appendChild(sv("text", { x: X(v), y: H - 6, "text-anchor": "middle" }, v));
+    });
+    items.forEach(function (it, k) {
+      var y = 36 + k * 52;
+      s.appendChild(sv("text", { x: 0, y: y - 14 }, it.label));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.hi), y1: y, y2: y, class: "ink", "stroke-width": 2, "stroke-dasharray": it.dash ? "5 3" : "none" }));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.lo), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("line", { x1: X(it.hi), x2: X(it.hi), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("circle", { cx: X(it.mid), cy: y, r: 5, class: "fillink" }));
+    });
+    root.appendChild(s);
+    var t = el("div", { class: "tablewrap" });
+    var tb2 = el("table");
+    tb2.appendChild(el("tr", {}, ["Estimate", "Point", "95% interval"].map(function (h) { return el("th", { text: h }); })));
+    items.forEach(function (it) {
+      tb2.appendChild(el("tr", {}, [el("td", { text: it.label }), el("td", { class: "num", text: it.mid + "%" }), el("td", { class: "num", text: it.lo + " to " + it.hi + "%" })]));
+    });
+    t.appendChild(tb2); root.appendChild(t);
+  }
+  function bars(root, obj, total, unit) {
+    var g = el("div", { class: "bars" });
+    var max = Math.max.apply(null, Object.keys(obj).map(function (k) { return obj[k]; }).concat([1]));
+    Object.keys(obj).forEach(function (k) {
+      var b = el("span", { class: "b", "aria-hidden": "true" }); b.style.width = (100 * obj[k] / max) + "%"; b.style.display = "block";
+      g.appendChild(el("span", { text: k.replace(/_/g, " ").replace(/-/g, " ") }));
+      var cell = el("span", {}, [b]); g.appendChild(cell);
+      g.appendChild(el("span", { class: "mono", text: obj[k] + (total ? " of " + total : "") + (unit || "") }));
+    });
+    root.appendChild(g);
+  }
+  var OUTCOME_TEXT = { pass: "passed, no repair needed", caught_and_repaired: "an internal gate failed, the agent repaired it, hidden tests passed",
+    escape: "own checks passed, hidden tests failed (escape)", internal_stop_hidden_pass: "stopped on an internal gate, hidden tests pass on the RTL it left",
+    fail: "failed" };
+
+  function mountDev() {
+    var d = D.dev; if (!d) return;
+    var a = document.getElementById("dev-strip"); if (a) strip(a, d.per_task);
+    var b = document.getElementById("dev-int");
+    if (b) intervals(b, [
+      { label: "pass@1, bootstrap over tasks", mid: d.pass_at_1_tasks_pct, lo: d.bootstrap_tasks_pct[0], hi: d.bootstrap_tasks_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: d.pass_pct_runs, lo: d.wilson_runs_pct[0], hi: d.wilson_runs_pct[1], dash: true }]);
+    var c = document.getElementById("dev-out"); if (c) {
+      var o = {}; Object.keys(d.outcomes).forEach(function (k) { o[OUTCOME_TEXT[k] || k] = d.outcomes[k]; });
+      bars(c, o, d.runs);
+    }
+    var e = document.getElementById("dev-esc"); if (e) bars(e, d.escape_levels, d.escapes);
+  }
+  function mountEval1() {
+    var root = document.getElementById("eval1"); if (!root) return;
+    var E = D.eval1;
+    if (!E) {
+      root.appendChild(el("div", { class: "stub" }, [
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
+      return;
+    }
+    root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
+    var s = el("div"); root.appendChild(s); strip(s, E.per_task.map(function (t) { return { task: t.task, k: t.k, n: t.n, of: 3 }; }));
+    root.appendChild(el("h3", { text: "pass@1 with 95% intervals" }));
+    var i = el("div"); root.appendChild(i);
+    intervals(i, [
+      { label: "pass@1, bootstrap over tasks", mid: E.pass_at_1_pct, lo: E.bootstrap_pct[0], hi: E.bootstrap_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: E.wilson_mid_pct, lo: E.wilson_pct[0], hi: E.wilson_pct[1], dash: true }]);
+    root.appendChild(el("h3", { text: "Escapes by the check level that should have caught them" }));
+    var b = el("div"); root.appendChild(b); bars(b, E.escape_levels, E.escapes);
+  }
+
+  /* ---------- ILA capture player (T1 on the board): LED0 against the sample index ---------- */
+  function mountILA(root) {
+    var B = D.board; if (!B) return;
+    var keys = Object.keys(B.captures).sort(function (a, b) { return B.captures[a].duty - B.captures[b].duty; });
+    var W = 600, H = 120, L = 30, cur = keys[0], svg, cursor, trace, label;
+    var sel = el("div", { class: "ctl", role: "group", "aria-label": "Dimmer level" });
+    var btns = keys.map(function (k) {
+      var b = el("button", { type: "button", "aria-pressed": k === cur ? "true" : "false", text: "duty " + B.captures[k].duty });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", keys[j] === cur ? "true" : "false"); }); draw(); player.goto(0); };
+      return b;
+    });
+    btns.forEach(function (b) { sel.appendChild(b); });
+    root.appendChild(sel);
+    var holder = el("div"); root.appendChild(holder);
+    root.appendChild(el("p", { class: "cap", "aria-live": "polite" }));
+    function X(i) { return L + (W - L - 10) * i / (B.captures[cur].samples - 1); }
+    function draw() {
+      var c = B.captures[cur]; holder.innerHTML = "";
+      svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "ILA capture of LED 0 over " + c.samples + " samples at duty " + c.duty + ": on for " + c.on + " samples" });
+      svg.appendChild(sv("text", { x: 0, y: 34 }, "on"));
+      svg.appendChild(sv("text", { x: 0, y: 94 }, "off"));
+      var d = "", prev = 0;
+      c.edges.forEach(function (e, k) {
+        var y = e[1] ? 30 : 90;
+        d += (k === 0 ? "M" : "L") + X(e[0]) + " " + (k === 0 ? y : (e[1] ? 90 : 30)) + " L" + X(e[0]) + " " + y + " ";
+      });
+      d += "L" + X(c.samples - 1) + " " + (c.edges[c.edges.length - 1][1] ? 30 : 90);
+      svg.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      cursor = sv("line", { x1: X(0), x2: X(0), y1: 10, y2: 108, class: "warn", "stroke-width": 1.5 });
+      svg.appendChild(cursor);
+      svg.appendChild(sv("text", { x: L, y: H - 2 }, "sample 0"));
+      svg.appendChild(sv("text", { x: W - 10, y: H - 2, "text-anchor": "end" }, "sample " + (c.samples - 1)));
+      holder.appendChild(svg);
+    }
+    draw();
+    var marks = 64;
+    function onFrame(k) {
+      var c = B.captures[cur]; var idx = Math.round(k * (c.samples - 1) / 63);
+      cursor.setAttribute("x1", X(idx)); cursor.setAttribute("x2", X(idx));
+      var on = 0, v = 0; c.edges.forEach(function (e) { if (e[0] <= idx) { v = e[1]; } });
+      for (var q = 0; q < c.edges.length; q++) { var e = c.edges[q], nx = q + 1 < c.edges.length ? c.edges[q + 1][0] : c.samples; if (e[1]) on += Math.max(0, Math.min(nx, idx + 1) - e[0]); }
+      return "Sample " + idx + ": LED 0 is " + (v ? "on" : "off") + ". On for " + on + " of the " + (idx + 1) + " samples so far. The whole capture: " + c.on + " of " + c.samples + " samples on, the model says " + c.model_on + ".";
+    }
+    var player = Player(root, marks, onFrame, { interval: 220 });
+  }
+
+
+  /* ---------- golden-model trace viewer (problem pages): waveform + values at the cursor + bespoke hero ---------- */
+  function fmtv(sg, v) {
+    if (sg.kind === "bus") {
+      if (sg.radix === "hex") { var hd = sg.width ? Math.ceil(sg.width / 4) : 1; var hs = (v >>> 0).toString(16); if (v < 0) hs = "-" + (-v).toString(16); while (hs.length < hd) hs = "0" + hs; return "0x" + hs; }
+      if (sg.radix === "bin") { var bs = (v >>> 0).toString(2); while (sg.width && bs.length < sg.width) bs = "0" + bs; return bs; }
+      return String(v);
+    }
+    return String(v);
+  }
+  function mountWave(holder, T) {
+    var n = T.x.length, LW = 132, CW = Math.max(12, Math.min(28, Math.floor(620 / n))), W = LW + n * CW + 6, RH = 34;
+    var H = 22 + T.signals.length * RH;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "wavesvg",
+      "aria-label": "Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s" });
+    function X(i) { return LW + i * CW; }
+    for (var i = 0; i < n; i += Math.max(1, Math.ceil(n / 12))) s.appendChild(sv("text", { x: X(i) + 2, y: 12 }, T.x[i]));
+    T.signals.forEach(function (g, r) {
+      var y0 = 22 + r * RH, top = y0 + 5, bot = y0 + RH - 7, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4 }, g.name.length > 17 ? g.name.slice(0, 16) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      var d = "";
+      if (g.kind === "bit") {
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k) + " " + y + " L" + X(k + 1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); d += (k ? "L" : "M") + (X(k) + CW / 2) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); s.appendChild(sv("circle", { cx: X(k) + CW / 2, cy: y.toFixed(1), r: 1.8, class: "fillink" })); });
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), val = g.v[a], txt = fmtv(g, val), empty = g.kind === "text" ? val === "" : false;
+            if (empty) s.appendChild(sv("line", { x1: x1, x2: x2, y1: mid, y2: mid, class: "ink", "stroke-width": 1 }));
+            else {
+              s.appendChild(sv("path", { d: "M" + x1 + " " + mid + " L" + (x1 + 3) + " " + top + " L" + (x2 - 3) + " " + top + " L" + x2 + " " + mid + " L" + (x2 - 3) + " " + bot + " L" + (x1 + 3) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+              var room = Math.floor((x2 - x1 - 8) / 6.7);
+              if (room >= 1) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4 }, txt.length > room ? (room > 2 ? txt.slice(0, room - 1) + "." : "") : txt));
+            }
+            a = k;
+          }
+        }
+      }
+    });
+    var shade = sv("rect", { x: X(1), y: 16, width: W, height: H, class: "future" });
+    var cur = sv("rect", { x: X(0), y: 16, width: CW, height: H - 16, class: "cursor" });
+    s.appendChild(shade); s.appendChild(cur);
+    var wrap = el("div", { class: "wavewrap", tabindex: "0" }); wrap.appendChild(s); holder.appendChild(wrap);
+    var vals = el("dl", { class: "vals" }); holder.appendChild(vals);
+    return function (i) {
+      shade.setAttribute("x", X(i + 1)); cur.setAttribute("x", X(i));
+      vals.innerHTML = "";
+      vals.appendChild(el("div", {}, [el("dt", { text: T.unit }), el("dd", { class: "mono", text: String(T.x[i]) })]));
+      T.signals.forEach(function (g) { vals.appendChild(el("div", {}, [el("dt", { text: g.name }), el("dd", { class: "mono", text: g.kind === "text" && g.v[i] === "" ? "none" : fmtv(g, g.v[i]) })])); });
+    };
+  }
+  function sig(T, name) { for (var k = 0; k < T.signals.length; k++) if (T.signals[k].name === name) return T.signals[k].v; return null; }
+  function hx(b) { return (b < 16 ? "0" : "") + b.toString(16); }
+  var HEROES = {
+    t1_elevator_fsm: function (box, T) {
+      var F = T.hero.floors, W = 360, FH = 52, H = F * FH + 20, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Lift shaft: car position, door and calls from the model" });
+      box.appendChild(s);
+      var fl = sig(T, "FLOOR"), st = sig(T, "STATE"), pe = sig(T, "PENDING"), dr = sig(T, "DIR (1 = down)");
+      var lamps = [], labels = [];
+      for (var f = 0; f < F; f++) {
+        var y = 10 + (F - 1 - f) * FH;
+        s.appendChild(sv("line", { x1: 60, x2: 300, y1: y + FH, y2: y + FH, class: "rule" }));
+        s.appendChild(sv("text", { x: 4, y: y + FH / 2 + 4 }, "floor " + f));
+        lamps.push(sv("circle", { cx: 290, cy: y + FH / 2, r: 7, class: "ink", "stroke-width": 1.5 }));
+        s.appendChild(lamps[f]);
+      }
+      s.appendChild(sv("rect", { x: 120, y: 10, width: 90, height: F * FH, class: "ink", "stroke-width": 1 }));
+      var car = sv("g", {}), body = sv("rect", { x: 128, width: 74, height: FH - 10, class: "ink", "stroke-width": 2 });
+      var dl = sv("rect", { width: 0, height: FH - 18, class: "fillink" }), dr2 = sv("rect", { width: 0, height: FH - 18, class: "fillink" });
+      var arrow = sv("text", { x: 228, "text-anchor": "middle" }, "");
+      car.appendChild(body); car.appendChild(dl); car.appendChild(dr2); s.appendChild(car); s.appendChild(arrow);
+      s.appendChild(sv("text", { x: 290, y: H - 2, "text-anchor": "middle" }, "calls"));
+      return function (i) {
+        var y = 10 + (F - 1 - fl[i]) * FH + 5, open = st[i] === "door open";
+        body.setAttribute("y", y);
+        var dw = open ? 14 : 36;
+        dl.setAttribute("x", 132); dl.setAttribute("y", y + 4); dl.setAttribute("width", dw);
+        dr2.setAttribute("x", 198 - dw); dr2.setAttribute("y", y + 4); dr2.setAttribute("width", dw);
+        arrow.setAttribute("y", y + FH / 2); arrow.textContent = st[i] === "moving" ? (dr[i] ? "down" : "up") : (open ? "open" : "");
+        lamps.forEach(function (c, f) { c.setAttribute("class", (pe[i] >> f) & 1 ? "fillink" : "ink"); });
+      };
+    },
+    c10_dds_sine: function (box, T) {
+      var h = T.hero, W = 600, H = 200, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Phase wheel and sine output from the model" });
+      box.appendChild(s);
+      var cx = 90, cy = 100, R = 70, N = 1 << h.la;
+      s.appendChild(sv("circle", { cx: cx, cy: cy, r: R, class: "ink", "stroke-width": 1 }));
+      s.appendChild(sv("text", { x: cx, y: 192, "text-anchor": "middle" }, "phase (" + h.aw + " bits)"));
+      var hand = sv("line", { x1: cx, y1: cy, class: "ink", "stroke-width": 2 }); s.appendChild(hand);
+      var dot = sv("circle", { r: 5, class: "fillink" }); s.appendChild(dot);
+      var X0 = 200, PW = 390, ph = sig(T, "phase"), out = sig(T, "out"), ad = sig(T, "table address");
+      s.appendChild(sv("line", { x1: X0, x2: X0 + PW, y1: cy, y2: cy, class: "rule" }));
+      s.appendChild(sv("text", { x: X0 + PW, y: 192, "text-anchor": "end" }, "output samples"));
+      var stems = [];
+      for (var k = 0; k < out.length; k++) {
+        var x = X0 + PW * (k + .5) / out.length, y = cy - (R) * out[k] / h.amp;
+        var g = sv("g", {}); g.appendChild(sv("line", { x1: x, x2: x, y1: cy, y2: y, class: "ink", "stroke-width": 1 })); g.appendChild(sv("circle", { cx: x, cy: y, r: 2.5, class: "fillink" }));
+        stems.push(g); s.appendChild(g);
+      }
+      var lab = sv("text", { x: cx, y: 18, "text-anchor": "middle" }, ""); s.appendChild(lab);
+      return function (i) {
+        var a = 2 * Math.PI * ad[i] / N, x = cx + R * Math.cos(a), y = cy - R * Math.sin(a);
+        hand.setAttribute("x2", x); hand.setAttribute("y2", y); dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        lab.textContent = "entry " + ad[i] + " of " + N;
+        stems.forEach(function (g, k) { g.style.opacity = k <= i ? 1 : .15; });
+      };
+    },
+    c16_nexys_aes_uart: function (box, T) {
+      var h = T.hero, W = 420, C = 56, s = sv("svg", { viewBox: "0 0 " + W + " 250", width: "100%", role: "img", "aria-label": "AES state, 4 by 4 bytes, from the model's round functions" });
+      box.appendChild(s);
+      var cells = [], texts = [];
+      for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) {
+        var x = 10 + c * C, y = 26 + r * C;
+        var rc = sv("rect", { x: x, y: y, width: C - 6, height: C - 6, class: "ink", "stroke-width": 1 }), t = sv("text", { x: x + (C - 6) / 2, y: y + C / 2, "text-anchor": "middle", class: "big" }, "");
+        s.appendChild(rc); s.appendChild(t); cells[4 * c + r] = rc; texts[4 * c + r] = t;
+      }
+      var op = sv("text", { x: 250, y: 60, class: "big" }, ""), rd = sv("text", { x: 250, y: 90 }, ""), ch = sv("text", { x: 250, y: 120 }, "");
+      s.appendChild(op); s.appendChild(rd); s.appendChild(ch);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "state: bytes go down the columns"));
+      var rounds = sig(T, "round");
+      return function (i) {
+        var st = h.states[i], pr = i ? h.states[i - 1] : st, nch = 0;
+        for (var k = 0; k < 16; k++) {
+          var diff = st[k] !== pr[k]; if (diff) nch++;
+          cells[k].setAttribute("class", diff ? "fillink" : "ink"); texts[k].setAttribute("class", diff ? "big inv" : "big"); texts[k].textContent = hx(st[k]);
+        }
+        op.textContent = h.ops[i]; rd.textContent = "round " + rounds[i]; ch.textContent = i ? nch + " of 16 bytes changed" : "";
+      };
+    },
+    c9_median3x3: function (box, T) {
+      var h = T.hero, W = 600, s = sv("svg", { viewBox: "0 0 " + W + " 200", width: "100%", role: "img", "aria-label": "Window presented and median result, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "window presented this clock"));
+      s.appendChild(sv("text", { x: 230, y: 16 }, "window from " + h.lat + " clock earlier, sorted"));
+      s.appendChild(sv("text", { x: 230 + 4 * 40 + 18, y: 50, "text-anchor": "middle" }, "fifth"));
+      var g = [], gt = [];
+      for (var k = 0; k < 9; k++) {
+        var x = 10 + (k % 3) * 50, y = 26 + Math.floor(k / 3) * 50;
+        var r = sv("rect", { x: x, y: y, width: 46, height: 46, class: "pix" }), t = sv("text", { x: x + 23, y: y + 28, "text-anchor": "middle" }, "");
+        s.appendChild(r); s.appendChild(t); g.push(r); gt.push(t);
+      }
+      var srt = [], st2 = [];
+      for (var q = 0; q < 9; q++) {
+        var x2 = 230 + q * 40, r2 = sv("rect", { x: x2, y: 60, width: 36, height: 36, class: "pix" }), t2 = sv("text", { x: x2 + 18, y: 83, "text-anchor": "middle" }, "");
+        s.appendChild(r2); s.appendChild(t2); srt.push(r2); st2.push(t2);
+      }
+      var box5 = sv("rect", { x: 230 + 4 * 40 - 4, y: 56, width: 44, height: 44, class: "ink", "stroke-width": 2.5 }); s.appendChild(box5);
+      var res = sv("text", { x: 230, y: 130, class: "big" }, ""); s.appendChild(res);
+      return function (i) {
+        var w = h.in[i], so = h.sorted[i];
+        for (var k = 0; k < 9; k++) {
+          if (w) { g[k].style.fill = "rgb(" + w[k] + "," + w[k] + "," + w[k] + ")"; gt[k].textContent = w[k]; gt[k].setAttribute("class", w[k] > 127 ? "dark" : "light"); }
+          else { g[k].style.fill = "none"; gt[k].textContent = ""; }
+          if (so) { srt[k].style.fill = "rgb(" + so[k] + "," + so[k] + "," + so[k] + ")"; st2[k].textContent = so[k]; st2[k].setAttribute("class", so[k] > 127 ? "dark" : "light"); }
+          else { srt[k].style.fill = "none"; st2[k].textContent = ""; }
+        }
+        box5.style.opacity = so ? 1 : .2; res.textContent = so ? "median " + so[4] : "no result this clock";
+      };
+    },
+    c14_systolic_matmul: function (box, T) {
+      var h = T.hero, W = 600, n = h.rows.length, L = h.lat, s = sv("svg", { viewBox: "0 0 " + W + " 190", width: "100%", role: "img", "aria-label": "Rows entering, in flight for the latency, and results leaving, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "rows waiting"));
+      s.appendChild(sv("text", { x: 170, y: 16 }, "in flight for " + L + " clocks"));
+      s.appendChild(sv("text", { x: 170, y: 34 }, "(each row times the 4 x 4 weights)"));
+      s.appendChild(sv("text", { x: 480, y: 16 }, "results out"));
+      var slots = [];
+      for (var k = 0; k < L; k++) { var r = sv("rect", { x: 170 + k * 38, y: 70, width: 34, height: 34, class: "ink", "stroke-width": 1 }); s.appendChild(r); slots.push([r, sv("text", { x: 170 + k * 38 + 17, y: 92, "text-anchor": "middle" }, "")]); s.appendChild(slots[k][1]); }
+      var waiting = sv("text", { x: 10, y: 92 }, ""), done = sv("text", { x: 480, y: 92 }, ""), last = sv("text", { x: 170, y: 150 }, "");
+      s.appendChild(waiting); s.appendChild(done); s.appendChild(last);
+      return function (i) {
+        var nextIn = 0; for (var t = 0; t <= i; t++) if (h.in[t] != null) nextIn = h.in[t] + 1;
+        var outN = 0; for (var t2 = 0; t2 <= i; t2++) if (h.out[t2] != null) outN = h.out[t2] + 1;
+        waiting.textContent = nextIn < n ? (n - nextIn) + " rows" : "none";
+        done.textContent = outN + " of " + n + " rows";
+        slots.forEach(function (sl, k) {
+          var row = i - k >= 0 && h.in[i - k] != null ? h.in[i - k] : null;
+          sl[0].setAttribute("class", row != null ? "fillink" : "ink"); sl[1].textContent = row != null ? "r" + row : ""; sl[1].setAttribute("class", row != null ? "inv" : "");
+        });
+        var o = h.out[i]; last.textContent = o != null ? "row " + o + " x W = " + h.C[o].join("  ") : "";
+      };
+    }
+  };
+  function mountTrace(root) {
+    var T = D.trace; if (!T) return;
+    var heroFn = null, art = root.querySelector(".hero-art"), id = root.getAttribute("data-hero");
+    if (art && HEROES[id]) { heroFn = HEROES[id](art, T); var hs = art.querySelector("svg"); if (hs) hs.style.maxWidth = id === "t1_elevator_fsm" ? "400px" : "680px"; }
+    var wv = mountWave(root.querySelector(".wave"), T);
+    Player(root, T.x.length, function (i) { if (heroFn) heroFn(i); wv(i); return T.captions[i]; }, { autoplay: !!heroFn, interval: 900 });
+  }
+  var tr = document.getElementById("trace"); if (tr) mountTrace(tr);
+
+  /* ---------- problems index: filter by domain, tier, board (the list is complete without script) ---------- */
+  (function () {
+    var sels = document.querySelectorAll(".filters select"); if (!sels.length) return;
+    var cards = document.querySelectorAll(".pcard"), secs = document.querySelectorAll("section.dom"), cnt = document.getElementById("f-count");
+    function apply() {
+      var f = {}; sels.forEach(function (s) { f[s.dataset.f] = s.value; });
+      var shown = 0;
+      cards.forEach(function (c) { var ok = (!f.domain || c.dataset.domain === f.domain) && (!f.tier || c.dataset.tier === f.tier) && (!f.board || c.dataset.board === f.board); c.hidden = !ok; if (ok) shown++; });
+      secs.forEach(function (s) { s.hidden = !s.querySelector(".pcard:not([hidden])"); });
+      if (cnt) cnt.textContent = shown + " of " + cards.length + " shown";
+    }
+    sels.forEach(function (s) { s.addEventListener("change", apply); });
+    document.querySelectorAll(".dombars a.dl").forEach(function (a) {
+      a.addEventListener("click", function (e) { var d = document.getElementById("f-domain"); if (!d || !d.querySelector('option[value="' + a.dataset.dom + '"]')) return; e.preventDefault(); d.value = a.dataset.dom; apply(); document.querySelector(".filters").scrollIntoView(); });
+    });
+    apply();
+  })();
+  var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
+  var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
+  var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+  mountDev(); mountEval1();
+})();
+
+/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
+   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
+(function () {
+  var cv = document.getElementById("fabric");
+  if (!cv || !cv.getContext) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
+  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
+  function layout() {
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
+    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
+  }
+  function base() {
+    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
+    var hrow = Math.floor(rows / 2);
+    for (var c = 0; c < cols; c++) {
+      var x = c * T, k = kind[c];
+      for (var r = 0; r < rows; r++) {
+        var y = r * T;
+        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
+        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
+        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
+        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
+          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
+  function net() {
+    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
+    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
+    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
+    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
+    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
+  }
+  function drawNet(n, alpha) {
+    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
+    for (var i = 1; i < n.p.length && left > 0; i++) {
+      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
+      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
+    }
+    ctx.stroke();
+    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
+    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
+    ctx.globalAlpha = 1;
+  }
+  function frame(now) {
+    if (!run) return;
+    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
+    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
+    nets = nets.filter(function (n) {
+      n.t += dt; var done = n.len / n.speed, a = .42;
+      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
+      if (a <= 0) return false; drawNet(n, a); return true;
+    });
+    requestAnimationFrame(frame);
+  }
+  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
+  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
+  start();
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
+  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
+  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
+  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+})();
+</script>
+</body>
+</html>

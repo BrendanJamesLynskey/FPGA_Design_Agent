@@ -1,0 +1,519 @@
+{
+ "assumptions": [
+  {
+   "assumption": "one counter per switch rather than a shared sampling tick.",
+   "reason": "the request says noise is ignored however it lines up."
+  },
+  {
+   "assumption": "rising edges only by default.",
+   "reason": "a switch being turned on is the usual event of interest."
+  }
+ ],
+ "behaviour": [
+  [
+   "debounce",
+   [
+    "Each SW[k] is synchronised (two flops), then debounced on its own. The clean level L[k] changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count. No slow sampling tick - a difference shorter than DEBOUNCE_CYCLES never changes L[k], wherever it falls in time.",
+    "Because the levels reset to 0, a switch already up at reset gives a rising edge DEBOUNCE_CYCLES clocks after reset."
+   ]
+  ],
+  [
+   "counts",
+   [
+    "COUNT[k] (8 bits, wrapping at 256) adds 1 on every change of L[k], rising or falling, whatever the edge selection."
+   ]
+  ],
+  [
+   "edges",
+   [
+    "EDGES[k] is set on a rise of L[k] when RISE_EN[k] = 1, and on a fall when FALL_EN[k] = 1. It stays set until a shell write to EDGES with bit k = 1 (write-1-to-clear); if an edge and the clear fall on the same clock, the edge wins."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[15:0] = L[15:0]. No PWM."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "DEBOUNCE_CYCLES": 24,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-04",
+  "mutants": {
+   "count_clear_all": {
+    "failed_tests": [
+     "test_counts_and_clear",
+     "test_random_activity"
+    ],
+    "killed": true
+   },
+   "count_packing_reversed": {
+    "failed_tests": [
+     "test_levels_follow_switches",
+     "test_independent_timing",
+     "test_counts_and_clear",
+     "test_bounce_then_steady",
+     "test_random_activity"
+    ],
+    "killed": true
+   },
+   "count_rises_only": {
+    "failed_tests": [
+     "test_levels_follow_switches",
+     "test_counts_and_clear",
+     "test_edge_selection_and_w1c",
+     "test_random_activity"
+    ],
+    "killed": true
+   },
+   "debounce_half": {
+    "failed_tests": [
+     "test_glitch_on_slow_tick",
+     "test_independent_timing",
+     "test_random_activity"
+    ],
+    "killed": true
+   },
+   "edges_not_sticky": {
+    "failed_tests": [
+     "test_glitch_on_slow_tick",
+     "test_levels_follow_switches",
+     "test_independent_timing",
+     "test_counts_and_clear",
+     "test_edge_selection_and_w1c",
+     "test_bounce_then_steady",
+     "test_register_rules",
+     "test_random_activity"
+    ],
+    "killed": true
+   },
+   "fall_uses_rise_en": {
+    "failed_tests": [
+     "test_edge_selection_and_w1c",
+     "test_random_activity"
+    ],
+    "killed": true
+   },
+   "rise_en_reset_zero": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_glitch_on_slow_tick",
+     "test_levels_follow_switches",
+     "test_independent_timing",
+     "test_counts_and_clear",
+     "test_bounce_then_steady",
+     "test_register_rules"
+    ],
+    "killed": true
+   },
+   "w1c_clears_all": {
+    "failed_tests": [
+     "test_edge_selection_and_w1c"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t1_debounce_bank__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 9,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "A",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 51,
+    "name": "model.py",
+    "path": "benchmark/tasks/t1_debounce_bank/hidden/model.py",
+    "sha256": "9e1655231c6d",
+    "text": "\"\"\"Golden model of t1_debounce_bank, written from spec.yaml alone (never from any RTL).\"\"\"\n\nfrom __future__ import annotations\n\nLEVEL, EDGES, RISE_EN, FALL_EN = 0, 1, 2, 3\nCOUNT0 = 4\nDESIGN_ID = 0x44424E4B          # \"DBNK\"\n\n\nclass Model:\n    def __init__(self) -> None:\n        self.level = 0\n        self.edges = 0\n        self.rise_en, self.fall_en = 0xFFFF, 0\n        self.cnt = [0] * 16\n\n    def settle(self, sw: int) -> None:\n        \"\"\"The switches have been steady at ``sw`` for longer than the debounce time.\"\"\"\n        for k in range(16):\n            old, new = self.level >> k & 1, sw >> k & 1\n            if old != new:\n                self.cnt[k] = (self.cnt[k] + 1) & 0xFF\n                if (new and self.rise_en >> k & 1) or (not new and self.fall_en >> k & 1):\n                    self.edges |= 1 << k\n        self.level = sw & 0xFFFF\n\n    def read(self, off: int) -> int:\n        if off == LEVEL:\n            return self.level\n        if off == EDGES:\n            return self.edges\n        if off == RISE_EN:\n            return self.rise_en\n        if off == FALL_EN:\n            return self.fall_en\n        if COUNT0 <= off < COUNT0 + 4:\n            g = off - COUNT0\n            return sum(self.cnt[4 * g + i] << (8 * i) for i in range(4))\n        return 0\n\n    def write(self, off: int, v: int) -> None:\n        if off == EDGES:\n            self.edges &= ~v & 0xFFFF\n        elif off == RISE_EN:\n            self.rise_en = v & 0xFFFF\n        elif off == FALL_EN:\n            self.fall_en = v & 0xFFFF\n        elif COUNT0 <= off < COUNT0 + 4:\n            g = off - COUNT0\n            for i in range(4):\n                self.cnt[4 * g + i] = 0\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 35,
+    "name": "bm_debounce.sv",
+    "path": "benchmark/tasks/t1_debounce_bank/ref/rtl/bm_debounce.sv",
+    "sha256": "bb439c819c2c",
+    "text": "// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level\n// changes only after the synchronised input has differed from it for CYCLES\n// consecutive clocks; a shorter difference restarts the count. rise is a\n// one-clock pulse on each 0 -> 1 change of the level.\nmodule bm_debounce #(\n    parameter int CYCLES = 1_000_000\n) (\n    input  logic clk,\n    input  logic rst,\n    input  logic d_async,\n    output logic level,\n    output logic rise\n);\n    localparam int CW = $clog2(CYCLES + 1);\n    logic        d;\n    logic [CW-1:0] run;\n\n    sync2 u_sync (.clk(clk), .rst(rst), .d(d_async), .q(d));\n\n    always_ff @(posedge clk) begin\n        rise <= 1'b0;\n        if (rst) begin\n            level <= 1'b0;\n            run   <= '0;\n        end else if (d == level) begin\n            run <= '0;\n        end else if (run == CW'(CYCLES - 1)) begin\n            level <= d;\n            run   <= '0;\n            rise  <= d;\n        end else begin\n            run <= run + 1'b1;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 63,
+    "name": "debounce_bank.sv",
+    "path": "benchmark/tasks/t1_debounce_bank/ref/rtl/debounce_bank.sv",
+    "sha256": "b35b1534d44f",
+    "text": "// debounce_bank.sv: sixteen independent switch debouncers, per-switch change\n// counts and selectable sticky edge flags, for t1_debounce_bank.\nmodule debounce_bank #(\n    parameter int DEBOUNCE_CYCLES = 2_000_000\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic [15:0] sw_async,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam logic [6:0] R_LEVEL = 7'h00, R_EDGES = 7'h01, R_RISE = 7'h02, R_FALL = 7'h03;\n\n    logic [15:0]      lvl, lvl_d, rise, fall, edges, rise_en, fall_en, unused;\n    logic [15:0][7:0] cnt;\n\n    for (genvar k = 0; k < 16; k++) begin : g_db\n        bm_debounce #(.CYCLES(DEBOUNCE_CYCLES)) u_db (.clk(clk), .rst(rst), .d_async(sw_async[k]),\n                                                      .level(lvl[k]), .rise(unused[k]));\n    end\n\n    assign rise = lvl & ~lvl_d;\n    assign fall = ~lvl & lvl_d;\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            lvl_d <= '0; edges <= '0; rise_en <= 16'hFFFF; fall_en <= '0; cnt <= '0;\n        end else begin\n            lvl_d <= lvl;\n            edges <= (edges & ~((win_wr && win_addr == R_EDGES) ? win_wdata[15:0] : 16'h0000))\n                   | (rise & rise_en) | (fall & fall_en);\n            if (win_wr && win_addr == R_RISE) rise_en <= win_wdata[15:0];\n            if (win_wr && win_addr == R_FALL) fall_en <= win_wdata[15:0];\n            for (int k = 0; k < 16; k++) begin\n                if (win_wr && win_addr == 7'(4 + k / 4)) cnt[k] <= '0;\n                else if (lvl[k] != lvl_d[k])            cnt[k] <= cnt[k] + 8'd1;\n            end\n        end\n    end\n\n    assign led = lvl_d;\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            case (win_addr)\n                R_LEVEL: win_rdata <= {16'd0, lvl_d};\n                R_EDGES: win_rdata <= {16'd0, edges};\n                R_RISE:  win_rdata <= {16'd0, rise_en};\n                R_FALL:  win_rdata <= {16'd0, fall_en};\n                7'h04:   win_rdata <= {cnt[3], cnt[2], cnt[1], cnt[0]};\n                7'h05:   win_rdata <= {cnt[7], cnt[6], cnt[5], cnt[4]};\n                7'h06:   win_rdata <= {cnt[11], cnt[10], cnt[9], cnt[8]};\n                7'h07:   win_rdata <= {cnt[15], cnt[14], cnt[13], cnt[12]};\n                default: win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 31,
+    "name": "t1_debounce_bank_top.sv",
+    "path": "benchmark/tasks/t1_debounce_bank/ref/rtl/t1_debounce_bank_top.sv",
+    "sha256": "107bdc5656bb",
+    "text": "// t1_debounce_bank_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t1_debounce_bank; DESIGN_ID \"DBNK\".\nmodule t1_debounce_bank_top #(\n    parameter int          CLKS_PER_BIT    = 868,\n    parameter int          TIMEOUT_CYCLES  = 100_000,\n    parameter int          DEBOUNCE_CYCLES = 2_000_000,\n    parameter logic [31:0] BUILD_STAMP     = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    input  logic [15:0] SW,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4442_4E4B), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    debounce_bank #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)) u_bank (\n        .clk(clk), .rst(rst), .sw_async(SW), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 209,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t1_debounce_bank/hidden/acceptance.py",
+    "sha256": "9b0f52e40dc2",
+    "text": "\"\"\"Acceptance tests of t1_debounce_bank against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom cocotb.triggers import ReadOnly, RisingEdge\nfrom cocotb.utils import get_sim_time\nfrom model import COUNT0, DESIGN_ID, EDGES, FALL_EN, LEVEL, RISE_EN, Model\n\nNAMES = {LEVEL: \"LEVEL\", EDGES: \"EDGES\", RISE_EN: \"RISE_EN\", FALL_EN: \"FALL_EN\", 4: \"COUNT0\", 5: \"COUNT1\",\n         6: \"COUNT2\", 7: \"COUNT3\"}\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, {\"SW\": 0})\n        self.dut, self.m = dut, Model()\n        self.n = self.b.param(\"DEBOUNCE_CYCLES\")\n        self.sw = 0\n\n    async def start(self) -> None:\n        await self.b.start()\n\n    async def set_sw(self, v: int, settle: bool = True) -> None:\n        self.sw = v & 0xFFFF\n        self.dut.SW.value = self.sw\n        if settle:\n            await self.b.cycles(self.n + 8)\n            self.m.settle(self.sw)\n\n    async def wr(self, off: int, v: int) -> None:\n        await self.b.write(off, v)\n        self.m.write(off, v)\n\n    async def check_regs(self) -> None:\n        for off in range(8):\n            await self.b.expect(off, self.m.read(off), NAMES[off])\n\n    async def check_leds(self) -> None:\n        led = await peek(self.b.clk, self.dut.LED)\n        assert led == self.m.level, f\"LED {led:04X} != model {self.m.level:04X}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_glitch_on_slow_tick(dut):\n    \"\"\"Trap: the textbook debouncer samples each switch on a slow tick, so a short glitch that happens to cover a\n    sampling instant changes the level. Glitches of 3 clocks are swept across every phase of a DEBOUNCE_CYCLES\n    period (and longer ones up to DEBOUNCE_CYCLES - 1): none may change any level.\"\"\"\n    e = Env(dut)\n    await e.start()\n    await e.set_sw(0x0F0F)\n    await e.check_regs()\n    base = e.sw\n    for width, step in ((3, 3), (e.n - 1, 1), (e.n // 2, 5)):\n        for _ in range(e.n // step + 2):\n            dut.SW.value = base ^ 0xFFFF\n            await e.b.cycles(width)\n            dut.SW.value = base\n            await e.b.cycles(e.n + step)\n    await e.b.cycles(e.n + 8)\n    await e.check_regs()                         # no level change, no count, no edge beyond the first settle\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_levels_follow_switches(dut):\n    e = Env(dut)\n    await e.start()\n    for v in (0x0001, 0x8000, 0xFFFF, 0x0000, 0xA5C3, 0x5A3C):\n        await e.set_sw(v)\n        await e.check_leds()\n        await e.b.expect(LEVEL, e.m.read(LEVEL), \"LEVEL\")\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_independent_timing(dut):\n    \"\"\"Each switch has its own debounce: a change on one never restarts or delays another.\"\"\"\n    e = Env(dut)\n    await e.start()\n    seen: dict[int, int] = {}\n\n    async def watch():\n        prev = 0\n        while True:\n            await RisingEdge(e.b.clk)\n            await ReadOnly()\n            v = int(dut.LED.value)\n            for k in range(16):\n                if (v ^ prev) >> k & 1 and k not in seen:\n                    seen[k] = int(get_sim_time(\"ns\")) // 10\n            prev = v\n\n    cocotb.start_soon(watch())\n    t0 = int(get_sim_time(\"ns\")) // 10\n    dut.SW.value = 1 << 3                       # switch 3 up at t0\n    await e.b.cycles(e.n // 2)\n    dut.SW.value = 1 << 3 | 1 << 9              # switch 9 up half a debounce later\n    for _ in range(3):                          # switch 12 chatters meanwhile\n        await e.b.cycles(e.n // 6)\n        dut.SW.value = int(dut.SW.value) | 1 << 12\n        await e.b.cycles(2)\n        dut.SW.value = int(dut.SW.value) & ~(1 << 12)\n    await e.b.cycles(2 * e.n)\n    assert set(seen) == {3, 9}, f\"LEDs that changed: {sorted(seen)}\"\n    assert seen[9] - seen[3] == e.n // 2, f\"switch 9 settled {seen[9] - seen[3]} clocks after 3, want {e.n // 2}\"\n    # v1.2: n + 1 .. n + 8 clocks (a two- to four-flop synchroniser plus one output register all pass)\n    assert seen[3] - t0 - e.n in range(1, 9), f\"switch 3 took {seen[3] - t0} clocks to settle\"\n    e.sw = 1 << 3 | 1 << 9\n    e.m.settle(e.sw)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_counts_and_clear(dut):\n    e = Env(dut)\n    await e.start()\n    for k, n in ((0, 3), (5, 2), (7, 5), (14, 1), (15, 4)):\n        for _ in range(n):\n            await e.set_sw(e.sw ^ 1 << k)\n    await e.check_regs()\n    await e.wr(5, 0x1234)                       # clears counts 4..7 only\n    await e.check_regs()\n    for _ in range(258):                        # count 0 wraps at 256\n        await e.set_sw(e.sw ^ 1)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_edge_selection_and_w1c(dut):\n    e = Env(dut)\n    await e.start()\n    await e.wr(RISE_EN, 0x00FF)\n    await e.wr(FALL_EN, 0x0F0F)\n    await e.set_sw(0xFFFF)                      # rises: EDGES 0x00FF\n    await e.check_regs()\n    await e.wr(EDGES, 0x000F)                   # W1C: clear four\n    await e.check_regs()\n    await e.wr(EDGES, 0)                        # zeros clear nothing\n    await e.check_regs()\n    await e.set_sw(0x0000)                      # falls: adds 0x0F0F\n    await e.check_regs()\n    await e.wr(EDGES, 0xFFFF)\n    await e.wr(RISE_EN, 0)\n    await e.wr(FALL_EN, 0)\n    await e.set_sw(0xFFFF)                      # nothing selected: no flags, counts still move\n    await e.set_sw(0x0000)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_bounce_then_steady(dut):\n    e = Env(dut)\n    await e.start()\n    for w in (2, 7, 4, 11, 3):\n        dut.SW.value = 0x0101\n        await e.b.cycles(w)\n        dut.SW.value = 0\n        await e.b.cycles(w)\n    await e.set_sw(0x0101)                      # one rise each, however much chatter before\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_register_rules(dut):\n    e = Env(dut)\n    await e.start()\n    await e.set_sw(0x00F0)\n    await e.b.write(LEVEL, 0xFFFF)              # read-only\n    await e.wr(RISE_EN, 0xABCD_1234)            # [15:0] only\n    await e.wr(FALL_EN, 0x1_0000)\n    await e.check_regs()\n    for off in (0x08, 0x40, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n\n\n@cocotb.test()\nasync def test_random_activity(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    await e.wr(RISE_EN, rng.getrandbits(16))\n    await e.wr(FALL_EN, rng.getrandbits(16))\n    for _ in range(25):\n        r = rng.random()\n        if r < 0.15:\n            mask = rng.getrandbits(16)\n            dut.SW.value = e.sw ^ mask          # a glitch: shorter than the debounce time\n            await e.b.cycles(rng.randrange(1, e.n))\n            dut.SW.value = e.sw\n            await e.b.cycles(e.n + 4)\n        elif r < 0.25:\n            await e.wr(rng.choice((EDGES, 4, 5, 6, 7)), rng.getrandbits(32))\n        else:\n            await e.set_sw(e.sw ^ rng.getrandbits(16))\n    await e.check_regs()\n    await e.check_leds()\n"
+   }
+  ]
+ },
+ "heading": "Sixteen-switch debounce bank",
+ "id": "t1_debounce_bank",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "DEBOUNCE_CYCLES": 2000000,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "SW",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RO",
+    "bits": "[15:0] clean levels",
+    "name": "LEVEL",
+    "offset": "0x00"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] sticky edge flags, write 1 to clear",
+    "name": "EDGES",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] rising edges set EDGES[k]",
+    "name": "RISE_EN",
+    "offset": "0x02"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] falling edges set EDGES[k]",
+    "name": "FALL_EN",
+    "offset": "0x03"
+   },
+   {
+    "access": "RW",
+    "bits": "[7:0] COUNT[0], [15:8] COUNT[1], [23:16] COUNT[2], [31:24] COUNT[3]; any write clears these four",
+    "name": "COUNT0",
+    "offset": "0x04"
+   },
+   {
+    "access": "RW",
+    "bits": "COUNT[4..7] packed the same way; any write clears them",
+    "name": "COUNT1",
+    "offset": "0x05"
+   },
+   {
+    "access": "RW",
+    "bits": "COUNT[8..11]; any write clears them",
+    "name": "COUNT2",
+    "offset": "0x06"
+   },
+   {
+    "access": "RW",
+    "bits": "COUNT[12..15]; any write clears them",
+    "name": "COUNT3",
+    "offset": "0x07"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: clean levels 0, EDGES = 0, every count 0, RISE_EN = 0xFFFF, FALL_EN = 0x0000",
+  "top": "t1_debounce_bank_top",
+  "unmapped": "offsets 0x08-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "bm_debounce.sv",
+   "name": "debounce_half",
+   "why": "debounce accepts glitches of half the time"
+  },
+  {
+   "file": "debounce_bank.sv",
+   "name": "count_rises_only",
+   "why": "only rising changes counted"
+  },
+  {
+   "file": "debounce_bank.sv",
+   "name": "count_clear_all",
+   "why": "a write to one COUNT register clears all sixteen counts"
+  },
+  {
+   "file": "debounce_bank.sv",
+   "name": "edges_not_sticky",
+   "why": "edge flags last one clock"
+  },
+  {
+   "file": "debounce_bank.sv",
+   "name": "w1c_clears_all",
+   "why": "any EDGES write clears every flag"
+  },
+  {
+   "file": "debounce_bank.sv",
+   "name": "fall_uses_rise_en",
+   "why": "falling edges selected by RISE_EN"
+  },
+  {
+   "file": "debounce_bank.sv",
+   "name": "count_packing_reversed",
+   "why": "COUNT0 bytes in the wrong order"
+  },
+  {
+   "file": "debounce_bank.sv",
+   "name": "rise_en_reset_zero",
+   "why": "RISE_EN resets to 0"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t1_debounce_bank",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Each clean level follows its switch after DEBOUNCE_CYCLES of steady difference and never for a shorter glitch, at any phase"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "The switches are debounced independently"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "COUNT[k] counts every clean change, 8-bit wrapping, cleared four at a time by a write"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation"
+   ],
+   "text": "EDGES are sticky, W1C, set by the selected edge kinds per switch"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "simulation"
+   ],
+   "text": "LED[15:0] show the clean levels; the register window has the listed map"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  },
+  {
+   "id": "REQ-07",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board LEVEL reads the switch positions and the register rules hold"
+  }
+ ],
+ "resources_expected": "about 600 FFs (16 debounce counters of 21 bits, 16 8-bit counts) and 500 LUTs; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# Sixteen-switch debounce bank\n\nI want all sixteen slide switches of the Nexys A7-100T cleaned up, each on its own.\n\n- Every switch is synchronised and debounced separately: a switch's clean level only changes once the switch\n  has stayed at the new level for the whole debounce time; anything shorter is noise and is ignored completely,\n  however it lines up with anything else.\n- LED[15:0] show the sixteen clean levels.\n- For each switch, count how many times its clean level has changed (a small counter per switch is enough).\n- Keep a register of sticky edge flags, one per switch, that I clear by writing ones to it. I want to choose, per\n  switch, whether rising edges, falling edges or both set the flag.\n- CPU_RESETN resets everything.\n- Over the test shell (USB-UART, 115200 baud) I can read the clean levels, the counts and the edge flags, clear\n  them, and set the edge selection. The design ID is \"DBNK\".\n\nTest hooks: top module `t1_debounce_bank_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (the debounce time in clocks)\nas top-level parameters.\n",
+ "survey": [
+  "A06"
+ ],
+ "tier": "T1",
+ "title": "Sixteen-switch debounce bank",
+ "trace": {
+  "captions": [
+   "Start: all clean levels 0, no edge flags, rising edges enabled, falling edges not.",
+   "Step 1: switches held at 0000000000000101 long enough; switches 0 and 2 change their clean level. New edge flags set: 0005.",
+   "Step 2: switches held at 0000000000000111 long enough; switch 1 changes its clean level. New edge flags set: 0002.",
+   "Step 3: writing ones with mask 0007 clears those edge flags, leaving 0000.",
+   "Step 4: falling edges are enabled for the switches in mask 0004.",
+   "Step 5: switches held at 0000000000000011 long enough; switch 2 changes its clean level. New edge flags set: 0004.",
+   "Step 6: switches held at 0000000000000111 long enough; switch 2 changes its clean level.",
+   "Step 7: switches held at 0000000000000100 long enough; switches 0 and 1 change their clean level.",
+   "Step 8: writing ones with mask 0004 clears those edge flags, leaving 0000.",
+   "Step 9: switches held at 1000000000000100 long enough; switch 15 changes its clean level. New edge flags set: 8000.",
+   "Step 10: switches held at 1000000000000000 long enough; switch 2 changes its clean level. New edge flags set: 0004.",
+   "Step 11: switches held at 1000000000000100 long enough; switch 2 changes its clean level.",
+   "Step 12: switches held at 0000000000000000 long enough; switches 2 and 15 change their clean level.",
+   "Step 13: writing ones with mask FFFF clears those edge flags, leaving 0000.",
+   "Step 14: switches held at 0000000000000001 long enough; switch 0 changes its clean level. New edge flags set: 0001."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "LEVEL",
+    "radix": "bin",
+    "v": [
+     0,
+     5,
+     7,
+     7,
+     7,
+     3,
+     7,
+     4,
+     4,
+     32772,
+     32768,
+     32772,
+     0,
+     0,
+     1
+    ],
+    "width": 16
+   },
+   {
+    "kind": "bus",
+    "name": "EDGES",
+    "radix": "bin",
+    "v": [
+     0,
+     5,
+     7,
+     0,
+     0,
+     4,
+     4,
+     4,
+     0,
+     32768,
+     32772,
+     32772,
+     32772,
+     0,
+     1
+    ],
+    "width": 16
+   },
+   {
+    "kind": "bus",
+    "name": "COUNT[0]",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     3
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "COUNT[2]",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     1,
+     1,
+     1,
+     2,
+     3,
+     3,
+     3,
+     3,
+     4,
+     5,
+     6,
+     6,
+     6
+    ]
+   }
+  ],
+  "stimulus": "Switch patterns are applied after each has been steady for longer than the debounce time (glitches shorter than that never reach the model). Between them the edge flags are cleared and falling edges are enabled for one switch.",
+  "unit": "step",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14
+  ]
+ },
+ "what": "A bank that cleans up every slide switch on the board separately. A switch's clean level only changes after it has held its new position for the whole debounce time, so shorter glitches are ignored however they line up. For each switch the design counts how many times the clean level changed, and keeps a sticky flag for rising and falling edges that the user can choose per switch and clear by writing ones.",
+ "where": "Switch and button inputs on nearly every embedded product need this kind of conditioning, from front-panel keypads to limit switches on machines. Per-input edge flags and event counters are the usual way a processor is told that something changed."
+}

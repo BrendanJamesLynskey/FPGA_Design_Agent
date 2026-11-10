@@ -1,0 +1,365 @@
+{
+ "assumptions": [],
+ "behaviour": [
+  [
+   "function",
+   [
+    "y_i = x_i / sqrt(mean(x_j^2) + 2^-16) in real units; with the Q8.8 scaling (value times 256) that is y_i = x_i * 1024 / sqrt(sum_j x_j^2 + 16), as a signed 16-bit number",
+    "Accuracy: |y_i - model_i| <= 1 LSB (1/256) for every lane; the all-zero input gives all zeros."
+   ]
+  ],
+  [
+   "handshake",
+   [
+    "A write to GO clears READY and presents the loaded inputs for one clock; READY is 1 within 8 clocks and stays 1 until the next GO; OUT reads 0 while READY is 0."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] = READY, the other LEDs are 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 4,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "exponent_off": {
+    "failed_tests": [
+     "test_special_vectors",
+     "test_random_vectors"
+    ],
+    "killed": true
+   },
+   "lut_index": {
+    "failed_tests": [
+     "test_special_vectors",
+     "test_single_large_input",
+     "test_random_vectors",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "newton_shift": {
+    "failed_tests": [
+     "test_special_vectors",
+     "test_single_large_input",
+     "test_random_vectors",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "no_epsilon": {
+    "failed_tests": [
+     "test_special_vectors",
+     "test_random_vectors",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "squares_unsigned": {
+    "failed_tests": [
+     "test_special_vectors",
+     "test_random_vectors",
+     "test_registers"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c15_rmsnorm_unit__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 5,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 2,
+ "domain": "I",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 41,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c15_rmsnorm_unit/hidden/model.py",
+    "sha256": "37084e55d996",
+    "text": "\"\"\"P15-3 model: the input vectors and the float reference with the error budget (standalone: numpy only).\"\"\"\nimport numpy as np\n\nN = 16\nBUDGET_LSB = 1.0\n\n\ndef inputs():\n    rng = np.random.default_rng(16)\n    cases = [[0] * N, [1] + [0] * (N - 1), [32767] * N, [-32768] * N, [32767, -32768] * (N // 2), [5] * N, [0] * (N - 1) + [-1]]\n    for i in range(N):\n        cases.append([0] * i + [20000] + [0] * (N - 1 - i))\n    for scale in (0.01, 0.1, 1, 10, 60):\n        for _ in range(250):\n            cases.append([int(v) for v in np.clip(np.round(rng.normal(0, scale, N) * 256), -32768, 32767)])\n    return cases\n\n\ndef rmsnorm_float(x):\n    z = np.asarray(x, dtype=float)\n    return z * 1024.0 / np.sqrt((z * z).sum() + 16)\n\n\ndef reference_output():\n    return {\"y\": [[int(round(v)) for v in rmsnorm_float(x)] for x in inputs()]}\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x524D534E          # \"RMSN\"\nX0, GO, STATUS, OUT0 = 0x00, 0x10, 0x11, 0x20\n\n\ndef bench_inputs():\n    \"\"\"The seven specials, four unit impulses (lane 0, 5, 9, 15), and 16 random vectors across the five scales.\"\"\"\n    xs = inputs()\n    return xs[:7] + [xs[7], xs[12], xs[16], xs[22]] + xs[23:1273:80]\n\n\ndef lanes_to_regs(v, bits=16):\n    m = (1 << bits) - 1\n    return [sum((v[i + k] & m) << (bits * k) for k in range(32 // bits) if i + k < len(v)) for i in range(0, len(v), 32 // bits)]\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 35,
+    "name": "c15_rmsnorm_unit_regs.sv",
+    "path": "benchmark/course/tasks/c15_rmsnorm_unit/ref/rtl/c15_rmsnorm_unit_regs.sv",
+    "sha256": "2457b42d8503",
+    "text": "// c15_rmsnorm_unit_regs.sv: the shell window of course task c15_rmsnorm_unit.\nmodule c15_rmsnorm_unit_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic [255:0] x_r;\n    logic [255:0] o_w;\n    logic go, ov, vld;\n    \n    assign led = {15'd0, vld};\n\n    rmsnorm_unit #(.N(16)) u_core (.clk(clk), .rst_n(!rst), .in_valid(go), .x(x_r), .out_valid(ov), .y(o_w));\n\n    always_ff @(posedge clk) begin\n        go <= 1'b0;\n        if (ov) vld <= 1'b1;\n        if (win_wr) begin\n            if (win_addr < 7'd8) x_r[win_addr*32 +: 32] <= win_wdata;\n            else if (win_addr == 7'h10) begin go <= 1'b1; vld <= 1'b0; end\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            if (win_addr < 7'd8) win_rdata <= x_r[win_addr*32 +: 32];\n            else if (win_addr == 7'h11) win_rdata <= {31'd0, vld};\n            else if (win_addr >= 7'h20 && win_addr < 7'd40) win_rdata <= vld ? o_w[(win_addr - 7'h20)*32 +: 32] : 32'd0;\n        end\n        if (rst) begin x_r <= '0; go <= 1'b0; vld <= 1'b0; win_rdata <= 32'd0; end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c15_rmsnorm_unit_top.sv",
+    "path": "benchmark/course/tasks/c15_rmsnorm_unit/ref/rtl/c15_rmsnorm_unit_top.sv",
+    "sha256": "bfda3b665b07",
+    "text": "// c15_rmsnorm_unit_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"RMSN\".\n// Reference design for course task c15_rmsnorm_unit; the shell window is wired to c15_rmsnorm_unit_regs.\nmodule c15_rmsnorm_unit_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h524d534e), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c15_rmsnorm_unit_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 155,
+    "name": "rmsnorm_unit.sv",
+    "path": "benchmark/course/tasks/c15_rmsnorm_unit/ref/rtl/rmsnorm_unit.sv",
+    "sha256": "38d3c5c6b491",
+    "text": "// P15-3 reference RTL: a copy of solutions/p15l06_rmsnorm/rmsnorm_unit.sv (course exercise p15l06_rmsnorm).\n// Part 15 lesson 6 exercise: an RMS-norm unit for N = 16 values, an inverse square root from a table and one Newton step, within a stated error budget.\n//\n// Input: N signed 16-bit values in Q8.8 (x_i / 256 is the real value), packed x[i*16 +: 16]. Output: N signed 16-bit values in Q8.8, y_i = x_i / sqrt(mean(x^2) + eps) with\n// eps = 1 LSB of the mean in Q16.16 (the gain gamma is left out: it folds into the next layer's weights). With in_valid high, one clock later (out_valid high; rst_n synchronous,\n// active low, clears out_valid only):\n//   1. ss = 16 + sum x_i^2                       (unsigned, 35 bits; the 16 is the epsilon: sum x^2 / 16 is the mean in Q16.16, so eps = 16 / 16 = 1 LSB)\n//   2. p = index of the highest set bit of ss;  e = p >> 1;  mq = ss * 4^(-e) in Q2.16, i.e. ss << (16 - 2e) if 2e <= 16, else ss >> (2e - 16);   mq is in [65536, 262144)\n//   3. y0 = RSQRT_LUT[(mq >> 11) - 32], RSQRT_LUT[k] = round(65536 / sqrt((k + 32.5) / 32)), k = 0..95        (a Q0.16 estimate of 1/sqrt(mq / 65536))\n//   4. one Newton step:  t = (y0 * y0) >> 16;  mt = (mq * t) >> 16;  y1 = (y0 * (3 * 65536 - mt)) >> 17\n//   5. y_i = clamp((x_i * y1 + 2^(5+e)) >>> (6 + e), -32768, 32767)       (round to nearest, arithmetic shift; y1 / 2^e is 1/sqrt(ss) in Q0.16, and 1024 / 65536 = 2^-6 supplies the 6)\n// Golden model: tools/ai_models.rmsnorm_int (bit-exact). Error budget against the float result 1024 * x_i / sqrt(ss): every output within 1 LSB (1/256).\nmodule rmsnorm_unit #(\n    parameter int N = 16\n) (\n    input  logic            clk,\n    input  logic            rst_n,\n    input  logic            in_valid,\n    input  logic [N*16-1:0] x,\n    output logic            out_valid,\n    output logic [N*16-1:0] y\n);\n    function automatic [15:0] rsqrt_lut(input [6:0] k);\n        case (k)\n            7'd0: rsqrt_lut = 16'd65030;\n            7'd1: rsqrt_lut = 16'd64052;\n            7'd2: rsqrt_lut = 16'd63117;\n            7'd3: rsqrt_lut = 16'd62222;\n            7'd4: rsqrt_lut = 16'd61363;\n            7'd5: rsqrt_lut = 16'd60540;\n            7'd6: rsqrt_lut = 16'd59748;\n            7'd7: rsqrt_lut = 16'd58987;\n            7'd8: rsqrt_lut = 16'd58254;\n            7'd9: rsqrt_lut = 16'd57548;\n            7'd10: rsqrt_lut = 16'd56867;\n            7'd11: rsqrt_lut = 16'd56210;\n            7'd12: rsqrt_lut = 16'd55574;\n            7'd13: rsqrt_lut = 16'd54960;\n            7'd14: rsqrt_lut = 16'd54366;\n            7'd15: rsqrt_lut = 16'd53791;\n            7'd16: rsqrt_lut = 16'd53233;\n            7'd17: rsqrt_lut = 16'd52693;\n            7'd18: rsqrt_lut = 16'd52169;\n            7'd19: rsqrt_lut = 16'd51660;\n            7'd20: rsqrt_lut = 16'd51165;\n            7'd21: rsqrt_lut = 16'd50685;\n            7'd22: rsqrt_lut = 16'd50218;\n            7'd23: rsqrt_lut = 16'd49763;\n            7'd24: rsqrt_lut = 16'd49321;\n            7'd25: rsqrt_lut = 16'd48890;\n            7'd26: rsqrt_lut = 16'd48470;\n            7'd27: rsqrt_lut = 16'd48061;\n            7'd28: rsqrt_lut = 16'd47663;\n            7'd29: rsqrt_lut = 16'd47273;\n            7'd30: rsqrt_lut = 16'd46894;\n            7'd31: rsqrt_lut = 16'd46523;\n            7'd32: rsqrt_lut = 16'd46161;\n            7'd33: rsqrt_lut = 16'd45807;\n            7'd34: rsqrt_lut = 16'd45462;\n            7'd35: rsqrt_lut = 16'd45124;\n            7'd36: rsqrt_lut = 16'd44793;\n            7'd37: rsqrt_lut = 16'd44470;\n            7'd38: rsqrt_lut = 16'd44153;\n            7'd39: rsqrt_lut = 16'd43843;\n            7'd40: rsqrt_lut = 16'd43540;\n            7'd41: rsqrt_lut = 16'd43243;\n            7'd42: rsqrt_lut = 16'd42951;\n            7'd43: rsqrt_lut = 16'd42666;\n            7'd44: rsqrt_lut = 16'd42386;\n            7'd45: rsqrt_lut = 16'd42112;\n            7'd46: rsqrt_lut = 16'd41843;\n            7'd47: rsqrt_lut = 16'd41579;\n            7'd48: rsqrt_lut = 16'd41320;\n            7'd49: rsqrt_lut = 16'd41065;\n            7'd50: rsqrt_lut = 16'd40816;\n            7'd51: rsqrt_lut = 16'd40571;\n            7'd52: rsqrt_lut = 16'd40330;\n            7'd53: rsqrt_lut = 16'd40093;\n            7'd54: rsqrt_lut = 16'd39861;\n            7'd55: rsqrt_lut = 16'd39632;\n            7'd56: rsqrt_lut = 16'd39408;\n            7'd57: rsqrt_lut = 16'd39187;\n            7'd58: rsqrt_lut = 16'd38970;\n            7'd59: rsqrt_lut = 16'd38756;\n            7'd60: rsqrt_lut = 16'd38546;\n            7'd61: rsqrt_lut = 16'd38340;\n            7'd62: rsqrt_lut = 16'd38136;\n            7'd63: rsqrt_lut = 16'd37936;\n            7'd64: rsqrt_lut = 16'd37739;\n            7'd65: rsqrt_lut = 16'd37545;\n            7'd66: rsqrt_lut = 16'd37354;\n            7'd67: rsqrt_lut = 16'd37166;\n            7'd68: rsqrt_lut = 16'd36980;\n            7'd69: rsqrt_lut = 16'd36798;\n            7'd70: rsqrt_lut = 16'd36618;\n            7'd71: rsqrt_lut = 16'd36441;\n            7'd72: rsqrt_lut = 16'd36266;\n            7'd73: rsqrt_lut = 16'd36093;\n            7'd74: rsqrt_lut = 16'd35924;\n            7'd75: rsqrt_lut = 16'd35756;\n            7'd76: rsqrt_lut = 16'd35591;\n            7'd77: rsqrt_lut = 16'd35428;\n            7'd78: rsqrt_lut = 16'd35267;\n            7'd79: rsqrt_lut = 16'd35109;\n            7'd80: rsqrt_lut = 16'd34953;\n            7'd81: rsqrt_lut = 16'd34798;\n            7'd82: rsqrt_lut = 16'd34646;\n            7'd83: rsqrt_lut = 16'd34496;\n            7'd84: rsqrt_lut = 16'd34347;\n            7'd85: rsqrt_lut = 16'd34201;\n            7'd86: rsqrt_lut = 16'd34056;\n            7'd87: rsqrt_lut = 16'd33913;\n            7'd88: rsqrt_lut = 16'd33772;\n            7'd89: rsqrt_lut = 16'd33633;\n            7'd90: rsqrt_lut = 16'd33496;\n            7'd91: rsqrt_lut = 16'd33360;\n            7'd92: rsqrt_lut = 16'd33225;\n            7'd93: rsqrt_lut = 16'd33093;\n            7'd94: rsqrt_lut = 16'd32962;\n            7'd95: rsqrt_lut = 16'd32832;\n            default: rsqrt_lut = 16'd0;\n        endcase\n    endfunction\n\n    logic signed [63:0] ss;\n    logic [5:0]         pb;\n    logic [5:0]         e;\n    logic [63:0]        mq;\n    logic [15:0]        y0;\n    logic [63:0]        t, mt, y1;\n    logic signed [63:0] r, xi;\n    logic [N*16-1:0]    yout;\n    always_comb begin\n        ss = 64'sd16;\n        for (int i = 0; i < N; i++) ss = ss + $signed(x[i*16 +: 16]) * $signed(x[i*16 +: 16]);\n        pb = 6'd0;\n        for (int j = 0; j < 40; j++) if (ss[j]) pb = j;\n        e = pb >> 1;\n        mq = (e <= 6'd8) ? (ss << (6'd16 - (e << 1))) : (ss >> ((e << 1) - 6'd16));\n        y0 = rsqrt_lut(mq[17:11] - 7'd32);\n        t = (y0 * y0) >> 16;\n        mt = (mq * t) >> 16;\n        y1 = (y0 * (64'd196608 - mt)) >> 17;\n        for (int i = 0; i < N; i++) begin\n            xi = $signed(x[i*16 +: 16]);\n            r = (xi * $signed(y1) + (64'sd1 <<< (5 + e))) >>> (6 + e);\n            yout[i*16 +: 16] = (r > 64'sd32767) ? 16'sh7FFF : (r < -64'sd32768) ? 16'sh8000 : r[15:0];\n        end\n    end\n    always_ff @(posedge clk) begin\n        if (!rst_n) out_valid <= 1'b0;\n        else out_valid <= in_valid;\n        if (in_valid) y <= yout;\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 75,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c15_rmsnorm_unit/hidden/acceptance.py",
+    "sha256": "d6d37bd52d8f",
+    "text": "\"\"\"Acceptance tests of c15_rmsnorm_unit against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import BUDGET_LSB, DESIGN_ID, GO, OUT0, STATUS, X0, bench_inputs, lanes_to_regs, rmsnorm_float\n\n\nasync def run_x(b: Board, x: list[int], what: str) -> None:\n    for k, w in enumerate(lanes_to_regs(x)):\n        await b.write(X0 + k, w)\n    await b.write(GO, 1)\n    await b.expect(STATUS, 1, f\"READY {what}\")\n    y = []\n    for k in range(8):\n        w = await b.read(OUT0 + k)\n        for h in (w & 0xFFFF, w >> 16):\n            y.append(h - 65536 if h >= 32768 else h)\n    ref = rmsnorm_float(x)\n    err = max(abs(v - r) for v, r in zip(y, ref))\n    assert err <= BUDGET_LSB, f\"{what} input {x}: worst error {err:.3f} LSB above {BUDGET_LSB}; got {y}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (X0, X0 + 7, STATUS, OUT0, OUT0 + 7):\n        await b.expect(off, 0, f\"reset value of {off:#x}\")\n\n\n@cocotb.test()\nasync def test_special_vectors(dut):\n    \"\"\"All zero, one LSB, full scale both signs, alternating, a constant 5, a single -1.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    for k, x in enumerate(bench_inputs()[:7]):\n        await run_x(b, x, f\"special {k}\")\n\n\n@cocotb.test()\nasync def test_single_large_input(dut):\n    \"\"\"One big number among fifteen zeros, at four lane positions.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    for k, x in enumerate(bench_inputs()[7:11]):\n        await run_x(b, x, f\"impulse {k}\")\n\n\n@cocotb.test()\nasync def test_random_vectors(dut):\n    b = Board(dut, {})\n    await b.start()\n    for k, x in enumerate(bench_inputs()[11:]):\n        await run_x(b, x, f\"random {k}\")\n\n\n@cocotb.test()\nasync def test_registers(dut):\n    b = Board(dut, {})\n    await b.start()\n    await run_x(b, bench_inputs()[12], \"first\")\n    await b.write(X0 + 7, 0x12345678)\n    await b.expect(X0 + 7, 0x12345678, \"X7\")\n    await b.expect(STATUS, 1, \"READY holds until the next GO\")\n    await b.write(OUT0, 0xFFFF)\n    led = await peek(b.clk, dut.LED)\n    assert led == 1, f\"LED {led:04X}: only LED0 (READY) is lit\"\n    for off in (0x08, 0x12, 0x28, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n    await b.reset()\n    await b.expect(STATUS, 0, \"READY after reset\")\n    await b.expect(X0, 0, \"X0 after reset\")\n"
+   }
+  ]
+ },
+ "heading": "RMS norm unit behind the test shell",
+ "id": "c15_rmsnorm_unit",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[31:0] input lanes: lane i (signed 16-bit) in register i//2, bits [16*(i%2)+15:16*(i%2)]",
+    "name": "X0..X7",
+    "offset": "0x00-0x07"
+   },
+   {
+    "access": "WO",
+    "bits": "any write presents the loaded inputs to the block for one clock and clears READY; reads 0",
+    "name": "GO",
+    "offset": "0x10"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] READY: the outputs are valid (set within 8 clocks of GO, held until the next GO)",
+    "name": "STATUS",
+    "offset": "0x11"
+   },
+   {
+    "access": "RO",
+    "bits": "[31:0] output lanes: lane i in register i//2, bits [16*(i%2)+15:16*(i%2)] (signed Q8.8); read 0 while READY is 0",
+    "name": "OUT0..OUT7",
+    "offset": "0x20-0x27"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: loaded inputs 0, READY = 0",
+  "top": "c15_rmsnorm_unit_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "rmsnorm_unit.sv",
+   "name": "no_epsilon",
+   "why": "the tiny constant is missing, so a one-LSB input is scaled to full size"
+  },
+  {
+   "file": "rmsnorm_unit.sv",
+   "name": "newton_shift",
+   "why": "the refined reciprocal square root is half size"
+  },
+  {
+   "file": "rmsnorm_unit.sv",
+   "name": "lut_index",
+   "why": "table indexed by the wrong mantissa bits"
+  },
+  {
+   "file": "rmsnorm_unit.sv",
+   "name": "exponent_off",
+   "why": "the power-of-four exponent is off by one for odd bit positions"
+  },
+  {
+   "file": "rmsnorm_unit.sv",
+   "name": "squares_unsigned",
+   "why": "negative inputs are squared as unsigned numbers"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c15_rmsnorm_unit",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "every output is within 1 LSB of the true value for each tested vector, from tiny to full-scale inputs"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "one large input among fifteen zeros, and the all-zero input, give the right result"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "READY is 0 after GO is written and 1 when OUT is valid"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# RMS norm unit behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that rescales a vector of 16 numbers so that its root-mean-square value becomes 1 (the \"RMS norm\" a neural network applies before each layer), and I want to exercise it entirely from the test shell.\n\n- The input is 16 numbers loaded over the shell, each a signed 16-bit number that is the real value times 256 (so 256 means 1.0), followed by a \"go\" command. The output is 16 numbers in the same format (real value times 256) that I read back\n  over the shell, with a flag that says they are ready.\n- Each output is the input divided by the square root of (the mean of the squares of the 16 inputs, plus a tiny constant 1/65536, in real units). The tiny constant makes an all-zero input give an all-zero output.\n- Inputs range from a few units in the last place up to full scale, and the 16 numbers can have very different sizes (one big, fifteen zero). No floating-point blocks and no divider blocks; tables and multipliers\n  are fine.\n- Accuracy I need: every output within 1 unit of the last place (1/256) of the true value (rounded as you like).\n- I will check the outputs for a few dozen input vectors against my own calculation with real numbers. CPU_RESETN clears the loaded inputs and the ready flag. LED0 shows the ready flag.\n  The shell runs at 115200 baud on the USB-UART. The design ID is \"RMSN\".\n\nTest hooks: top module `c15_rmsnorm_unit_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "I06"
+ ],
+ "tier": "C15",
+ "title": "RMS norm unit behind the test shell",
+ "trace": {
+  "captions": [
+   "Lane 0: input 86 (0.34 in real units) becomes 89 (0.35).",
+   "Lane 1: input 353 (1.38 in real units) becomes 367 (1.43).",
+   "Lane 2: input -119 (-0.46 in real units) becomes -124 (-0.48).",
+   "Lane 3: input -50 (-0.20 in real units) becomes -52 (-0.20).",
+   "Lane 4: input 180 (0.70 in real units) becomes 187 (0.73).",
+   "Lane 5: input 156 (0.61 in real units) becomes 162 (0.63).",
+   "Lane 6: input 477 (1.86 in real units) becomes 496 (1.94).",
+   "Lane 7: input 212 (0.83 in real units) becomes 220 (0.86).",
+   "Lane 8: input -39 (-0.15 in real units) becomes -41 (-0.16).",
+   "Lane 9: input -540 (-2.11 in real units) becomes -561 (-2.19).",
+   "Lane 10: input -17 (-0.07 in real units) becomes -18 (-0.07).",
+   "Lane 11: input -245 (-0.96 in real units) becomes -255 (-1.00).",
+   "Lane 12: input -122 (-0.48 in real units) becomes -127 (-0.50).",
+   "Lane 13: input 139 (0.54 in real units) becomes 144 (0.56).",
+   "Lane 14: input -240 (-0.94 in real units) becomes -249 (-0.97).",
+   "Lane 15: input -220 (-0.86 in real units) becomes -229 (-0.89)."
+  ],
+  "signals": [
+   {
+    "hi": 32767,
+    "kind": "wave",
+    "lo": -32768,
+    "name": "input",
+    "v": [
+     86,
+     353,
+     -119,
+     -50,
+     180,
+     156,
+     477,
+     212,
+     -39,
+     -540,
+     -17,
+     -245,
+     -122,
+     139,
+     -240,
+     -220
+    ]
+   },
+   {
+    "hi": 32767,
+    "kind": "wave",
+    "lo": -32768,
+    "name": "output",
+    "v": [
+     89,
+     367,
+     -124,
+     -52,
+     187,
+     162,
+     496,
+     220,
+     -41,
+     -561,
+     -18,
+     -255,
+     -127,
+     144,
+     -249,
+     -229
+    ]
+   }
+  ],
+  "stimulus": "Input vector number 530 of the model's set: 16 numbers, value times 256. The mean of the squares of the real values is 0.93, so every lane is divided by its square root.",
+  "unit": "lane",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "what": "A unit that rescales a vector of sixteen numbers so that their root-mean-square value becomes one. It squares and sums the inputs, finds the reciprocal square root without a divider or floating-point block, and multiplies each input by it. A tiny added constant makes an all-zero input give an all-zero output. Results must be within one unit of the last place.",
+ "where": "Normalisation layers of this kind sit in front of nearly every layer of modern language models, so efficient hardware for them matters in inference accelerators."
+}

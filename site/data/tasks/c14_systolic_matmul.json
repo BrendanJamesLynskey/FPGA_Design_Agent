@@ -1,0 +1,687 @@
+{
+ "assumptions": [],
+ "behaviour": [
+  [
+   "product",
+   [
+    "C[m][j] = sum over i of A[m][i] * W[i][j], exact signed arithmetic, W and A signed 8-bit, C signed 32-bit"
+   ]
+  ],
+  [
+   "burst",
+   [
+    "BURST N presents ROW0..ROW(N-1) on N consecutive clocks (one row per clock, no gaps); the results arrive in order and are stored as RES rows 0..N-1; DONE rises when the Nth is stored.",
+    "Latency: a row presented in clock t has its result valid in clock t+L with L at most 8 (the reference has 8); LAT reports L for ROW0.",
+    "A table loaded with LOAD replaces the previous one for rows presented afterwards; LOAD is not issued while a burst runs."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] = DONE, the other LEDs are 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 4,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "deskew_col0": {
+    "failed_tests": [
+     "test_burst_random_rows",
+     "test_burst_extreme_rows",
+     "test_second_table_and_single_row",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "reload_ignored": {
+    "failed_tests": [
+     "test_second_table_and_single_row"
+    ],
+    "killed": true
+   },
+   "skew_row1": {
+    "failed_tests": [
+     "test_burst_random_rows",
+     "test_burst_extreme_rows",
+     "test_second_table_and_single_row",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "valid_early": {
+    "failed_tests": [
+     "test_burst_random_rows",
+     "test_burst_extreme_rows",
+     "test_second_table_and_single_row",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "valid_late": {
+    "failed_tests": [
+     "test_burst_random_rows",
+     "test_burst_extreme_rows",
+     "test_second_table_and_single_row",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "weights_unsigned": {
+    "failed_tests": [
+     "test_burst_random_rows",
+     "test_burst_extreme_rows",
+     "test_second_table_and_single_row",
+     "test_registers"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c14_systolic_matmul__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 5,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 3,
+ "domain": "I",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 49,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c14_systolic_matmul/hidden/model.py",
+    "sha256": "f80fc5a1bec2",
+    "text": "\"\"\"Reference model for P14-3 (4 x 4 matrix multiplier, rows in and out). Plain Python integers.\"\"\"\nimport random\n\nLATENCY = 7                    # clock edges between the edge that samples a row and the edge after which its results are visible with out_valid\nMAX_LATENCY = 8                # what the spec allows\n\n\ndef weights():\n    rng = random.Random(14)\n    return [[rng.randint(-128, 127) for _ in range(4)] for _ in range(4)]\n\n\ndef rows():\n    \"\"\"The fixed test set: 40 rows applied on 40 consecutive clocks, then a second batch of 12 rows after a gap with new weights (weights2()).\"\"\"\n    rng = random.Random(15)\n    r = [[rng.randint(-128, 127) for _ in range(4)] for _ in range(34)]\n    r += [[-128] * 4, [127] * 4, [-128, 127, -128, 127], [0] * 4, [1, 0, 0, 0], [0, 0, 0, 1]]\n    return r\n\n\ndef weights2():\n    rng = random.Random(16)\n    return [[rng.randint(-100, 100) for _ in range(4)] for _ in range(4)]\n\n\ndef rows2():\n    rng = random.Random(17)\n    return [[rng.randint(-128, 127) for _ in range(4)] for _ in range(12)]\n\n\ndef matmul(rs, W):\n    return [[sum(a[i] * W[i][j] for i in range(4)) for j in range(4)] for a in rs]\n\n\ndef reference_output():\n    return {\"C\": matmul(rows(), weights()), \"C2\": matmul(rows2(), weights2()), \"latency_clocks\": LATENCY, \"accepted_every_clock\": True}\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x4D4D3458          # \"MM4X\"\nW0, LOAD, ROW0, BURST, STATUS, LAT, COUNT, RES0 = 0x00, 0x04, 0x08, 0x18, 0x19, 0x1A, 0x1B, 0x20\n\n\ndef pack_row(r):\n    return sum((x & 0xFF) << (8 * i) for i, x in enumerate(r))\n\n\ndef s32(v):\n    return v & 0xFFFFFFFF\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 66,
+    "name": "c14_systolic_matmul_regs.sv",
+    "path": "benchmark/course/tasks/c14_systolic_matmul/ref/rtl/c14_systolic_matmul_regs.sv",
+    "sha256": "3decc90588d3",
+    "text": "// c14_systolic_matmul_regs.sv: the shell window of course task c14_systolic_matmul.\nmodule c14_systolic_matmul_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic [127:0] w_r, c_row;\n    logic [31:0]  rowm [0:15];\n    logic [127:0] resm [0:15];\n    logic [4:0]   n_tot, tx_i, rx_i;\n    logic [7:0]   cnt;\n    logic [4:0]   lat;\n    logic         txing, wl, ov, done, running, got_first;\n    logic [31:0]  a_row;\n\n    assign a_row = rowm[tx_i[3:0]];\n    assign led   = {15'd0, done};\n\n    matmul4_rows u_core (.clk(clk), .rst_n(!rst), .w_load(wl), .w_in(w_r), .row_valid(txing), .a_row(a_row),\n                         .out_valid(ov), .c_row(c_row));\n\n    always_ff @(posedge clk) begin\n        wl <= 1'b0;\n        if (win_wr) begin\n            if (win_addr <= 7'd3) w_r[win_addr[1:0]*32 +: 32] <= win_wdata;\n            else if (win_addr == 7'd4) wl <= 1'b1;\n            else if (win_addr >= 7'h08 && win_addr <= 7'h17) rowm[4'(win_addr - 7'h08)] <= win_wdata;\n            else if (win_addr == 7'h18) begin\n                n_tot <= (win_wdata[4:0] == 5'd0) ? 5'd1 : win_wdata[4:0];\n                tx_i <= 5'd0; rx_i <= 5'd0; txing <= 1'b1; done <= 1'b0; running <= 1'b0; got_first <= 1'b0; cnt <= 8'd0;\n            end\n        end\n        if (txing) begin\n            tx_i <= tx_i + 5'd1;\n            if (tx_i + 5'd1 == n_tot) txing <= 1'b0;\n            if (tx_i == 5'd0) begin running <= 1'b1; cnt <= 8'd1; end\n        end\n        if (running && !(txing && tx_i == 5'd0)) cnt <= cnt + 8'd1;\n        if (ov && !done) begin\n            resm[rx_i[3:0]] <= c_row;\n            rx_i <= rx_i + 5'd1;\n            if (!got_first) begin got_first <= 1'b1; lat <= cnt[4:0]; running <= 1'b0; end\n            if (rx_i + 5'd1 == n_tot) done <= 1'b1;\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            if (win_addr <= 7'd3) win_rdata <= w_r[win_addr[1:0]*32 +: 32];\n            else if (win_addr >= 7'h08 && win_addr <= 7'h17) win_rdata <= rowm[4'(win_addr - 7'h08)];\n            else if (win_addr == 7'h19) win_rdata <= {31'd0, done};\n            else if (win_addr == 7'h1A) win_rdata <= {27'd0, lat};\n            else if (win_addr == 7'h1B) win_rdata <= {27'd0, rx_i};\n            else if (win_addr >= 7'h20 && win_addr <= 7'h5F)\n                win_rdata <= resm[4'(win_addr[6:2] - 5'd8)][win_addr[1:0]*32 +: 32];\n        end\n        if (rst) begin\n            txing <= 1'b0; done <= 1'b0; running <= 1'b0; got_first <= 1'b0; wl <= 1'b0; w_r <= '0;\n            tx_i <= '0; rx_i <= '0; n_tot <= '0; lat <= '0; cnt <= '0; win_rdata <= 32'd0;\n            for (int i = 0; i < 16; i++) begin rowm[i] <= '0; resm[i] <= '0; end\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c14_systolic_matmul_top.sv",
+    "path": "benchmark/course/tasks/c14_systolic_matmul/ref/rtl/c14_systolic_matmul_top.sv",
+    "sha256": "47897e8423f1",
+    "text": "// c14_systolic_matmul_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"MM4X\".\n// Reference design for course task c14_systolic_matmul; the shell window is wired to c14_systolic_matmul_regs.\nmodule c14_systolic_matmul_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4d4d3458), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c14_systolic_matmul_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 39,
+    "name": "matmul4_rows.sv",
+    "path": "benchmark/course/tasks/c14_systolic_matmul/ref/rtl/matmul4_rows.sv",
+    "sha256": "51e90919a515",
+    "text": "// P14-3 reference: a row-in, row-out 4 x 4 matrix multiplier. The weight-stationary array of the course (systolic4.sv) with the input rows skewed (element i delayed by i clocks) and the\n// output columns de-skewed (column j delayed by 3 - j clocks), so that C[m][*] appears together, 7 clocks after the edge that sampled A[m][*]. row_valid has no gaps requirement: a new row every clock.\nmodule matmul4_rows (\n    input  logic          clk,\n    input  logic          rst_n,\n    input  logic          w_load,\n    input  logic [127:0]  w_in,             // W[i][j] = w_in[(4*i + j)*8 +: 8], signed\n    input  logic          row_valid,\n    input  logic [31:0]   a_row,            // A[m][i] = a_row[i*8 +: 8], signed\n    output logic          out_valid,\n    output logic [127:0]  c_row             // C[m][j] = c_row[j*32 +: 32], signed\n);\n    logic [7:0]   dly [0:3][0:3];           // input skew: element i passes through i registers\n    logic [31:0]  a_skew;\n    logic [127:0] c_raw;\n    logic [31:0]  odly [0:3][0:3];          // output de-skew: column j passes through 3 - j registers\n    logic [7:0]   vsr;\n    always_ff @(posedge clk) begin\n        for (int i = 0; i < 4; i++) begin\n            dly[i][0] <= row_valid ? a_row[i*8 +: 8] : 8'd0;\n            for (int k = 1; k < 4; k++) dly[i][k] <= dly[i][k-1];\n        end\n        for (int j = 0; j < 4; j++) begin\n            odly[j][0] <= c_raw[j*32 +: 32];\n            for (int k = 1; k < 4; k++) odly[j][k] <= odly[j][k-1];\n        end\n        vsr <= rst_n ? {vsr[6:0], row_valid} : 8'd0;\n    end\n    // element i uses i extra registers on top of the input register (so a_skew[i] is delayed by i + 1 in all; element 0 by one)\n    always_comb begin\n        a_skew[7:0]   = dly[0][0];\n        a_skew[15:8]  = dly[1][1];\n        a_skew[23:16] = dly[2][2];\n        a_skew[31:24] = dly[3][3];\n        for (int j = 0; j < 4; j++) c_row[j*32 +: 32] = (j == 3) ? c_raw[j*32 +: 32] : odly[j][2 - j];\n    end\n    assign out_valid = vsr[7];\n    systolic4 u (.clk, .rst_n, .w_load, .w_in, .a_in(a_skew), .c_out(c_raw));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 44,
+    "name": "systolic4.sv",
+    "path": "benchmark/course/tasks/c14_systolic_matmul/ref/rtl/systolic4.sv",
+    "sha256": "a390011657e5",
+    "text": "// Part 14 lesson 4 exercise: a 4 x 4 weight-stationary systolic array computing C = A x W for signed 8-bit A and W (C[m][j] = sum over i of A[m][i] * W[i][j]).\n//\n// PE (i, j) holds the weight W[i][j]. Activations travel along a row (left to right, one register per PE); partial sums travel down a column (top to bottom, one\n// register per PE). In every PE, each clock:   a_reg <= a_left;   p_reg <= p_above + a_left * W[i][j]   (row 0 has p_above = 0, column 0 has a_left = a_in[i]).\n//\n// Weights: with w_load = 1 for one clock, all 16 weights are taken from w_in: W[i][j] = w_in[(4*i + j)*8 +: 8]. Reset (rst_n low, synchronous) clears every a_reg and\n// p_reg to zero. a_in[i*8 +: 8] is the activation entering row i; c_out[j*32 +: 32] is the signed sum leaving the bottom of column j (the p_reg of PE (3, j)).\n//\n// Timing: if A[m][i] is applied on a_in[i] in clock cycle m + i (sampled at the rising edge that ends that cycle; the rows are skewed by one cycle each), then\n// c_out[j] holds C[m][j] after the rising edge that ends cycle m + j + 3, so it can be read during cycle m + j + 4 (a cycle starts at a rising edge).\n// A zero on a_in is a bubble (it adds nothing). Only one multiply-accumulate per PE per clock: after the pipeline fills, all 16 multipliers work every clock.\nmodule systolic4 (\n    input  logic          clk,\n    input  logic          rst_n,\n    input  logic          w_load,\n    input  logic [127:0]  w_in,\n    input  logic [31:0]   a_in,\n    output logic [127:0]  c_out\n);\n    logic signed [7:0]  wt   [0:3][0:3];\n    logic signed [7:0]  a_r  [0:3][0:3];\n    logic signed [31:0] p_r  [0:3][0:3];\n\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            for (int i = 0; i < 4; i++)\n                for (int j = 0; j < 4; j++) begin\n                    a_r[i][j] <= '0;\n                    p_r[i][j] <= '0;\n                    wt[i][j]  <= '0;\n                end\n        end else begin\n            for (int i = 0; i < 4; i++)\n                for (int j = 0; j < 4; j++) begin\n                    if (w_load) wt[i][j] <= w_in[(4*i + j)*8 +: 8];\n                    a_r[i][j] <= (j == 0) ? $signed(a_in[i*8 +: 8]) : a_r[i][j-1];\n                    p_r[i][j] <= ((i == 0) ? 32'sd0 : p_r[i-1][j])\n                                 + ((j == 0) ? $signed(a_in[i*8 +: 8]) : a_r[i][j-1]) * wt[i][j];\n                end\n        end\n    end\n    always_comb\n        for (int j = 0; j < 4; j++) c_out[j*32 +: 32] = p_r[3][j];\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 96,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c14_systolic_matmul/hidden/acceptance.py",
+    "sha256": "cb83c982b668",
+    "text": "\"\"\"Acceptance tests of c14_systolic_matmul against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import (BURST, COUNT, DESIGN_ID, LAT, LOAD, RES0, ROW0, STATUS, W0, matmul, pack_row, rows, rows2, s32,\n                   weights, weights2)\n\n\nasync def load_table(b: Board, W) -> None:\n    for i in range(4):\n        await b.write(W0 + i, pack_row(W[i]))\n    await b.write(LOAD, 1)\n\n\nasync def burst(b: Board, rs, W, what: str) -> None:\n    want = matmul(rs, W)\n    for m, r in enumerate(rs):\n        await b.write(ROW0 + m, pack_row(r))\n    await b.write(BURST, len(rs))\n    await b.cycles(40)\n    await b.expect(STATUS, 1, f\"DONE {what}\")\n    await b.expect(COUNT, len(rs), f\"COUNT {what}\")\n    lat = await b.read(LAT)\n    assert 1 <= lat <= 8, f\"{what}: first-row latency {lat} clocks (must be 1..8)\"\n    for m in range(len(rs)):\n        for j in range(4):\n            await b.expect(RES0 + 4 * m + j, s32(want[m][j]), f\"{what}: C[{m}][{j}] for row {rs[m]}\")\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (W0, ROW0, STATUS, LAT, COUNT, RES0):\n        await b.expect(off, 0, f\"reset value of {off:#x}\")\n\n\n@cocotb.test()\nasync def test_burst_random_rows(dut):\n    \"\"\"16 rows on 16 consecutive clocks, then 16 more, against the first table.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    await load_table(b, weights())\n    r = rows()\n    await burst(b, r[0:16], weights(), \"rows 0-15\")\n    await burst(b, r[16:32], weights(), \"rows 16-31\")\n\n\n@cocotb.test()\nasync def test_burst_extreme_rows(dut):\n    \"\"\"-128 and 127 everywhere, zero rows and unit rows.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    await load_table(b, weights())\n    await burst(b, rows()[32:40], weights(), \"extreme rows\")\n\n\n@cocotb.test()\nasync def test_second_table_and_single_row(dut):\n    \"\"\"A new table replaces the old one; a one-row burst works; the old table can come back.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    await load_table(b, weights())\n    await burst(b, rows()[0:4], weights(), \"table 1\")\n    await load_table(b, weights2())\n    await burst(b, rows2(), weights2(), \"table 2\")\n    await burst(b, rows2()[5:6], weights2(), \"one-row burst\")\n    await load_table(b, weights())\n    await burst(b, rows()[4:8], weights(), \"table 1 again\")\n\n\n@cocotb.test()\nasync def test_registers(dut):\n    b = Board(dut, {})\n    await b.start()\n    await b.write(ROW0 + 15, 0xDEADBEEF)\n    await b.expect(ROW0 + 15, 0xDEADBEEF, \"ROW15\")\n    await b.write(W0 + 2, 0x01020304)\n    await b.expect(W0 + 2, 0x01020304, \"W2\")\n    await b.write(STATUS, 1)\n    await b.expect(STATUS, 0, \"STATUS is read-only\")\n    await load_table(b, weights())\n    await burst(b, rows()[0:3], weights(), \"three rows\")\n    led = await peek(b.clk, dut.LED)\n    assert led == 1, f\"LED {led:04X}: only LED0 (DONE) is lit\"\n    await b.write(BURST, 2)\n    await b.cycles(40)\n    await b.expect(COUNT, 2, \"COUNT of the second burst\")\n    for off in (0x1C, 0x60, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n    await b.reset()\n    await b.expect(STATUS, 0, \"DONE after reset\")\n    await b.expect(RES0, 0, \"results after reset\")\n"
+   }
+  ]
+ },
+ "heading": "4 x 4 row multiplier behind the test shell",
+ "id": "c14_systolic_matmul",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[31:0] row i of the table: W[i][j] in bits [8j+7:8j] (signed 8-bit)",
+    "name": "W0..W3",
+    "offset": "0x00-0x03"
+   },
+   {
+    "access": "WO",
+    "bits": "any write loads the table into the arithmetic for one clock; reads 0",
+    "name": "LOAD",
+    "offset": "0x04"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] parked row m: A[m][i] in bits [8i+7:8i] (signed 8-bit)",
+    "name": "ROW0..ROW15",
+    "offset": "0x08-0x17"
+   },
+   {
+    "access": "WO",
+    "bits": "[4:0] row count N (1..16; 0 counts as 1): presents ROW0..ROW(N-1) on N consecutive clocks, clears DONE; reads 0",
+    "name": "BURST",
+    "offset": "0x18"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] DONE: all N results captured (cleared by BURST)",
+    "name": "STATUS",
+    "offset": "0x19"
+   },
+   {
+    "access": "RO",
+    "bits": "[4:0] clocks from the clock in which ROW0 was presented to the clock in which its result was valid (reference: 8); a conforming design reports 1..8",
+    "name": "LAT",
+    "offset": "0x1a"
+   },
+   {
+    "access": "RO",
+    "bits": "[4:0] results captured by the last burst",
+    "name": "COUNT",
+    "offset": "0x1b"
+   },
+   {
+    "access": "RO",
+    "bits": "address 0x20 + 4*m + j: [31:0] C[m][j], signed 32-bit; rows beyond the last burst keep older values",
+    "name": "RES",
+    "offset": "0x20-0x5F"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: table, parked rows and results 0, DONE = 0, array registers cleared",
+  "top": "c14_systolic_matmul_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "matmul4_rows.sv",
+   "name": "skew_row1",
+   "why": "row element 1 is skewed by the wrong amount"
+  },
+  {
+   "file": "matmul4_rows.sv",
+   "name": "deskew_col0",
+   "why": "output columns de-skewed by the wrong delay"
+  },
+  {
+   "file": "systolic4.sv",
+   "name": "reload_ignored",
+   "why": "a second table does not replace non-zero entries of the first"
+  },
+  {
+   "file": "systolic4.sv",
+   "name": "weights_unsigned",
+   "why": "table entries treated as unsigned"
+  },
+  {
+   "file": "matmul4_rows.sv",
+   "name": "valid_early",
+   "why": "out_valid one clock before the results are ready"
+  },
+  {
+   "file": "matmul4_rows.sv",
+   "name": "valid_late",
+   "why": "the last row of a burst is not reported valid (out_valid needs two consecutive rows)"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c14_systolic_matmul",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "every result row equals the model, in order, for bursts of 16, 8 and 1 rows on consecutive clocks"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the latency of the first row is at most 8 clocks and every row of a burst gives a result"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "a second table loaded after the first gives results for the new table only"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": 144,
+   "bram36": 0,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-08",
+   "dsp": 0,
+   "escape_level": null,
+   "failure_class": null,
+   "ff": 2694,
+   "hidden_pass": true,
+   "lut": 2324,
+   "model": "claude-sonnet-5-5",
+   "outcome": "caught_and_repaired",
+   "run": 1,
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 1.42,
+   "wns_ns": 0.327
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": true,
+ "spec_md": "# 4 x 4 row multiplier behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that multiplies short rows of numbers by a fixed small table of numbers, as fast as one row per clock, and I want to exercise it entirely from the test shell.\n\n- The table is 4 by 4 signed 8-bit numbers. I load it once with a \"load\" command: all 16 numbers are loaded over the shell and applied together, and later a new table can be loaded the same way (not\n  while rows are being processed).\n- A row is four signed 8-bit numbers presented together. Because the shell is slow, I can park up to 16 rows over the shell and then give a \"burst\" command with a row count; the block then presents those rows\n  to the arithmetic on consecutive clocks, with no gaps, and keeps the results in order.\n- For each row, the block gives four signed results (each is the sum of the four row numbers times the four numbers of one column of the table, so each needs more than 8 bits; keep each as a\n  32-bit signed number). I read them back over the shell after the burst, and a flag tells me when all of them are in.\n- The results for a row must be ready within 8 clocks of the row being presented; every row must give its answer, in order, with no row lost even when rows come on consecutive clocks. I can read\n  back how many clocks the first row took.\n- CPU_RESETN clears everything. Exact results only: I will compare every number with my own calculation. LED0 shows the done flag. The shell runs at 115200 baud on the USB-UART. The design ID is \"MM4X\".\n\nTest hooks: top module `c14_systolic_matmul_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "I02",
+  "A40"
+ ],
+ "tier": "C14",
+ "title": "4 x 4 row multiplier behind the test shell",
+ "trace": {
+  "captions": [
+   "Clock 0: row 0 (-22 -123 -110 -48) goes in.",
+   "Clock 1: row 1 (-6 -120 -100 -53) goes in.",
+   "Clock 2: row 2 (60 -6 -69 45) goes in.",
+   "Clock 3: row 3 (110 54 15 72) goes in.",
+   "Clock 4: row 4 (6 48 -11 -23) goes in.",
+   "Clock 5: row 5 (53 32 -14 28) goes in.",
+   "Clock 6: row 6 (87 -10 105 86) goes in.",
+   "Clock 7: row 7 (122 -88 108 56) goes in; result row 0 comes out (-13343 3659 -22380 1475).",
+   "Clock 8: row 8 (96 33 102 79) goes in; result row 1 comes out (-13394 4174 -21349 633).",
+   "Clock 9: row 9 (-95 123 -119 -28) goes in; result row 2 comes out (-11886 -5379 -3564 7125).",
+   "Clock 10: result row 3 comes out (-4924 -5017 10079 4618).",
+   "Clock 11: result row 4 comes out (-784 -4883 3394 791).",
+   "Clock 12: result row 5 comes out (-4622 -4460 3696 3462).",
+   "Clock 13: result row 6 comes out (5418 7407 10353 -2506).",
+   "Clock 14: result row 7 comes out (1340 15080 1976 -6396).",
+   "Clock 15: result row 8 comes out (5283 3349 14379 -1508).",
+   "Clock 16: result row 9 comes out (-3645 -19536 1985 9683).",
+   "Clock 17: pipeline empty.",
+   "Clock 18: pipeline empty."
+  ],
+  "hero": {
+   "C": [
+    [
+     -13343,
+     3659,
+     -22380,
+     1475
+    ],
+    [
+     -13394,
+     4174,
+     -21349,
+     633
+    ],
+    [
+     -11886,
+     -5379,
+     -3564,
+     7125
+    ],
+    [
+     -4924,
+     -5017,
+     10079,
+     4618
+    ],
+    [
+     -784,
+     -4883,
+     3394,
+     791
+    ],
+    [
+     -4622,
+     -4460,
+     3696,
+     3462
+    ],
+    [
+     5418,
+     7407,
+     10353,
+     -2506
+    ],
+    [
+     1340,
+     15080,
+     1976,
+     -6396
+    ],
+    [
+     5283,
+     3349,
+     14379,
+     -1508
+    ],
+    [
+     -3645,
+     -19536,
+     1985,
+     9683
+    ]
+   ],
+   "W": [
+    [
+     -74,
+     -2,
+     10,
+     2
+    ],
+    [
+     21,
+     -91,
+     102,
+     27
+    ],
+    [
+     110,
+     75,
+     73,
+     -68
+    ],
+    [
+     6,
+     -14,
+     33,
+     55
+    ]
+   ],
+   "in": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "lat": 7,
+   "out": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    null,
+    null
+   ],
+   "rows": [
+    [
+     -22,
+     -123,
+     -110,
+     -48
+    ],
+    [
+     -6,
+     -120,
+     -100,
+     -53
+    ],
+    [
+     60,
+     -6,
+     -69,
+     45
+    ],
+    [
+     110,
+     54,
+     15,
+     72
+    ],
+    [
+     6,
+     48,
+     -11,
+     -23
+    ],
+    [
+     53,
+     32,
+     -14,
+     28
+    ],
+    [
+     87,
+     -10,
+     105,
+     86
+    ],
+    [
+     122,
+     -88,
+     108,
+     56
+    ],
+    [
+     96,
+     33,
+     102,
+     79
+    ],
+    [
+     -95,
+     123,
+     -119,
+     -28
+    ]
+   ]
+  },
+  "signals": [
+   {
+    "kind": "bit",
+    "name": "row valid",
+    "v": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "text",
+    "name": "row in",
+    "v": [
+     "-22 -123 -110 -48",
+     "-6 -120 -100 -53",
+     "60 -6 -69 45",
+     "110 54 15 72",
+     "6 48 -11 -23",
+     "53 32 -14 28",
+     "87 -10 105 86",
+     "122 -88 108 56",
+     "96 33 102 79",
+     "-95 123 -119 -28",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     ""
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "out valid",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "text",
+    "name": "result row",
+    "v": [
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "",
+     "-13343 3659 -22380 1475",
+     "-13394 4174 -21349 633",
+     "-11886 -5379 -3564 7125",
+     "-4924 -5017 10079 4618",
+     "-784 -4883 3394 791",
+     "-4622 -4460 3696 3462",
+     "5418 7407 10353 -2506",
+     "1340 15080 1976 -6396",
+     "5283 3349 14379 -1508",
+     "-3645 -19536 1985 9683",
+     "",
+     ""
+    ]
+   }
+  ],
+  "stimulus": "The model's first 10 test rows of four signed 8-bit numbers, one row a clock, times its fixed 4 x 4 weight matrix; latency 7 clocks.",
+  "unit": "clock",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18
+  ]
+ },
+ "what": "A block that multiplies short rows of numbers by a small fixed table. The table of signed 8-bit numbers is loaded once. Rows of four numbers are then fed in one per clock with no gaps, and for each row the block gives four exact 32-bit results, one per table column, in order. The spec fixes only the results and their timing; the course builds it as a systolic array, a grid of multiply-and-add cells passing data to their neighbours, but any structure that meets the timing passes.",
+ "where": "This row-by-table product is the inner step of matrix multiplication, which dominates neural-network inference. Systolic grids are the matrix engines in many AI accelerators."
+}
