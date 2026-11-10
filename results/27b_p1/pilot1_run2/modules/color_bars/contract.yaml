@@ -1,0 +1,18 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: color_bars
+summary: Generate the specified default vertical colour-bar picture.
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: x, dir: in, width: 11, clock: clk}
+- {name: y, dir: in, width: 10, clock: clk}
+- {name: active, dir: in, width: 1, clock: clk}
+- {name: pattern, dir: in, width: 2, clock: clk}
+- {name: red, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: green, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: blue, dir: out, width: 4, clock: clk, reset_value: 0}

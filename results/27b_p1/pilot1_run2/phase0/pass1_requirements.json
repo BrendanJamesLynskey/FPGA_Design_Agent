@@ -1,0 +1,96 @@
+{
+ "pass": "requirements",
+ "budget": 12,
+ "drafter_repairs": 0,
+ "requirements": 7,
+ "asked": 6,
+ "answered": 2,
+ "defaulted": 4,
+ "questions": [
+  {
+   "id": "P1-1",
+   "text": "Which clock input should be used to generate the 74.25 MHz pixel clock, and what should count as stable?",
+   "default": "Use the Nexys A7 100 MHz onboard oscillator and consider the pixel clock stable when the clock generator's lock signal is asserted.",
+   "reason": "The required pixel-clock frequency is specified, but the source and stability criterion are not.",
+   "answer": "Use the Nexys A7 100 MHz onboard oscillator and consider the pixel clock stable when the clock generator's lock signal is asserted.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-1",
+    "S-5",
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "What should the median filter use for neighbourhood samples beyond the active picture boundaries?",
+   "default": "Replicate the nearest active-picture pixel at each boundary.",
+   "reason": "The 3 x 3 operation is specified, but its boundary behavior is not.",
+   "answer": "Replicate the nearest active-picture pixel at each boundary.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-3",
+    "S-4",
+    "S-5"
+   ]
+  },
+  {
+   "id": "P1-3",
+   "text": "What set of patterns should be selectable through the test shell?",
+   "default": "Offer the specified colour bars and a grayscale ramp, with the colour bars selected at startup.",
+   "reason": "The default pattern is specified, but the other selectable patterns are not.",
+   "answer": "Only eight colour bars are specified; additional selectable patterns and test-shell pattern selection are not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    - SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area",
+   "settles": [
+    "S-2",
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-4",
+   "text": "What UART command and response format should the host use?",
+   "default": "Use newline-terminated ASCII commands `ID?`, `PAT n`, and `FRAME?`, with line-terminated ASCII responses.",
+   "reason": "The baud rate, design ID, and shell capabilities are specified, but the protocol is not.",
+   "answer": "Use newline-terminated ASCII commands `ID?`, `PAT n`, and `FRAME?`, with line-terminated ASCII responses.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-5",
+   "text": "How wide should the frame counter be, and when should it increment?",
+   "default": "Use a 32-bit unsigned counter that increments once at the end of each video frame.",
+   "reason": "Reading a frame counter is required, but its width and counting event are not specified.",
+   "answer": "Use a 32-bit unsigned counter that increments once at the end of each video frame.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-6",
+   "text": "What colour-channel width should be used for the VGA output?",
+   "default": "Use the Nexys A7 VGA connector's 4-bit width per red, green, and blue channel.",
+   "reason": "The VGA output is required, but its channel widths are not stated.",
+   "answer": "Use 4 bits per red, green, and blue channel.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area",
+   "settles": [
+    "S-2",
+    "S-3",
+    "S-5"
+   ]
+  }
+ ]
+}

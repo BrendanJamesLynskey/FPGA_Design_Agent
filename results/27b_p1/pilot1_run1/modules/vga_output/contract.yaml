@@ -1,0 +1,54 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: vga_output
+summary: Drives VGA sync and RGB pins from the filtered raster stream, blanking colour when required.
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: btnc, dir: in, width: 1, clock: async}
+- {name: pixel_clock_stable, dir: in, width: 1, clock: clk}
+- {name: s_axis_tvalid, dir: in, clock: clk}
+- {name: s_axis_tready, dir: out, clock: clk}
+- {name: s_axis_tdata, dir: in, width: 12, clock: clk}
+- {name: s_axis_tuser, dir: in, width: 3, clock: clk}
+- {name: s_axis_tlast, dir: in, clock: clk}
+- {name: hsync, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: vsync, dir: out, width: 1, clock: clk}
+- {name: vga_r, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: vga_g, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: vga_b, dir: out, width: 4, clock: clk, reset_value: 0}
+data_formats:
+- {name: channel, format: u4, packing: One unsigned 4-bit RGB channel}
+interfaces:
+- name: in
+  protocol: axi4-stream
+  role: slave
+  prefix: s_axis
+  clock: clk
+  reset: rst
+  tdata:
+    width: 12
+    fields:
+    - name: red
+      bits: [11, 8]
+      format: channel
+    - name: green
+      bits: [7, 4]
+      format: channel
+    - name: blue
+      bits: [3, 0]
+      format: channel
+  tuser:
+  - {bit: 0, name: active, meaning: Pixel is in the active picture}
+  - {bit: 1, name: hsync, meaning: Positive horizontal sync level for this pixel}
+  - {bit: 2, name: vsync, meaning: Positive vertical sync level for this pixel}
+  tlast: Assert on the final pixel clock of each 1650-clock line.
+  packet_beats: 1650
+  backpressure: true
+  source_gaps: true
+throughput:
+- {interface: in, beats_per_cycle: 1, from: in, out_per_in: 1}

@@ -1,0 +1,178 @@
+[
+ {
+  "question": "How should the 3 x 3 neighbourhood be formed at the active-picture edges?",
+  "answer": "not specified"
+ },
+ {
+  "question": "Which patterns must be selectable in addition to the default colour bars?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What UART command and response format should the test shell use, including serial framing?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What are the frame counter's width, initial value, and increment point?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What colour-channel width and digital levels should be used for the VGA output and colour bars?",
+  "answer": "Use 4-bit RGB channels. Set each channel to 0xF when on and 0x0 when off."
+ },
+ {
+  "question": "Is video_source's reset rst active high or active low, and synchronous or asynchronous?",
+  "answer": "The external reset is active low, with asynchronous assertion and synchronized release on the clock."
+ },
+ {
+  "question": "What does tlast mark on video_source.out, if anything?",
+  "answer": "not specified"
+ },
+ {
+  "question": "May the sink of video_source.out stall the stream (drive tready low)?",
+  "answer": "False"
+ },
+ {
+  "question": "May the source of video_source.out leave gaps (tvalid low) once the stream has started?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What throughput must video_source.out sustain (beats per clock, and output beats per input beat)?",
+  "answer": "not specified"
+ },
+ {
+  "question": "Is median_filter's reset rst active high or active low, and synchronous or asynchronous?",
+  "answer": "Active low and asynchronous (asserts at once, releases on the clock)."
+ },
+ {
+  "question": "What does tlast mark on median_filter.out, if anything?",
+  "answer": "not specified"
+ },
+ {
+  "question": "How many beats does a packet on median_filter.out have?",
+  "answer": "not specified"
+ },
+ {
+  "question": "May the sink of median_filter.out stall the stream (drive tready low)?",
+  "answer": "not specified"
+ },
+ {
+  "question": "May the source of median_filter.out leave gaps (tvalid low) once the stream has started?",
+  "answer": "No. The accepted contract is a full-raster video stream with no back-pressure."
+ },
+ {
+  "question": "What throughput must median_filter.in sustain (beats per clock, and output beats per input beat)?",
+  "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': '1:1'}"
+ },
+ {
+  "question": "What throughput must median_filter.out sustain (beats per clock, and output beats per input beat)?",
+  "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
+ },
+ {
+  "question": "Is vga_output's reset rst active high or active low, and synchronous or asynchronous?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port vga_r: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "vga_r (VGA_R) is an output, 4 bits wide, and its value is 0 while BTNC is pressed or the video clock is not locked."
+ },
+ {
+  "question": "What is vga_output's port vga_r: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port vga_g: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "{'dir': 'out', 'width': 4, 'reset_value': 0}"
+ },
+ {
+  "question": "What is vga_output's port vga_g: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port vga_b: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "{'dir': 'out', 'width': 4, 'reset_value': 0}"
+ },
+ {
+  "question": "What is vga_output's port vga_b: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port vga_hs: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port vga_vs: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port frame_count: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What throughput must vga_output.in sustain (beats per clock, and output beats per input beat)?",
+  "answer": "1 beat per clock; 1 output beat per input beat."
+ },
+ {
+  "question": "Which clock is clk_sys: its frequency and where it comes from?",
+  "answer": "clk_sys is the 100 MHz board-oscillator clock on port CLK100MHZ."
+ },
+ {
+  "question": "What resets the design's reset rst_pix (button or other source), and its polarity?",
+  "answer": "The raster reset is triggered by BTNC being pressed or the video clock not being locked; its polarity is not specified."
+ },
+ {
+  "question": "What number format is x_coord in video_source (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is y_coord in video_source (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is rgb444 in video_source (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is x_coord in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is y_coord in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is rgb444 in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is x_coord in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is y_coord in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is rgb444 in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is frame_counter in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "refused": "quote not in the hidden spec",
+  "raw": "CLK100MHZ is an input on pin E3, sourced by the board oscillator. The electrical drive type (push-pull, open-drain, or pull-up) is not specified."
+ },
+ {
+  "question": "What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "answer": "CPU_RESETN maps to pin C12 and is an input. Its internal connection and whether it is push-pull, open-drain, or pulled up are not specified."
+ }
+]

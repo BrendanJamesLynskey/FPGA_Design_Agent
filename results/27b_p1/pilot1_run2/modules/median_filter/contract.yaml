@@ -1,0 +1,23 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: median_filter
+summary: Compute each output colour channel's median over a 3 x 3 pixel neighbourhood and keep timing aligned.
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: in_red, dir: in, width: 4, clock: clk}
+- {name: in_green, dir: in, width: 4, clock: clk}
+- {name: in_blue, dir: in, width: 4, clock: clk}
+- {name: in_active, dir: in, width: 1, clock: clk}
+- {name: in_hsync, dir: in, width: 1, clock: clk}
+- {name: in_vsync, dir: in, width: 1, clock: clk}
+- {name: out_red, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: out_green, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: out_blue, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: out_active, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: out_hsync, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: out_vsync, dir: out, width: 1, clock: clk, reset_value: 0}

@@ -1,0 +1,37 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/requirements/v1
+requirements:
+- id: S-1
+  text: Generate 1280 x 720, 60 Hz video timing with a 74.25 MHz pixel clock, 1650 pixel clocks per line (1280 active,
+    110 front porch, 40 sync, 220 back porch), 750 lines per frame (720 active, 5 front porch, 5 sync, 20 back porch),
+    and positive horizontal and vertical sync.
+  proof: [simulation, hardware, analysis]
+  modules: [video_timing, top]
+- id: S-2
+  text: 'By default, generate eight vertical colour bars, each 160 active pixels wide, in this order: white, yellow,
+    cyan, green, magenta, red, blue, black.'
+  proof: [simulation, hardware]
+  modules: [color_bars, video_control, top]
+- id: S-3
+  text: For each output pixel, compute the median independently for each colour channel over the pixel's 3 x 3 neighbourhood.
+  proof: [simulation, formal]
+  modules: [median_filter, top]
+- id: S-4
+  text: Keep the output picture and sync signals aligned to the video timing that would be produced without the
+    median filter.
+  proof: [simulation, hardware]
+  modules: [median_filter, video_output, top]
+- id: S-5
+  text: Drive all colour outputs to zero outside the active picture, while BTNC is pressed, or while the pixel clock
+    is not stable.
+  proof: [simulation, hardware]
+  modules: [video_output, top]
+- id: S-6
+  text: Light LED[0] when the pixel clock is stable.
+  proof: [hardware]
+  modules: [top]
+- id: S-7
+  text: Provide a USB-UART test shell at 115200 baud with design ID VMED that allows a host to choose the pattern
+    and read a frame counter.
+  proof: [simulation, hardware]
+  modules: [video_control, top]

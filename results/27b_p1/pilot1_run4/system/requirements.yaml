@@ -1,0 +1,41 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/requirements/v1
+requirements:
+- id: S-1
+  text: Generate VGA timing at 1280x720 and 60 Hz using a 74.25 MHz pixel clock, 1650 clocks per line (1280 active,
+    110 front porch, 40 sync, 220 back porch), and 750 lines per frame (720 active, 5 front porch, 5 sync, 20 back
+    porch), with positive horizontal and vertical sync.
+  proof: [simulation, hardware]
+  modules: [pixel_clock, timing_gen, vga_output, top]
+- id: S-2
+  text: 'By default, generate eight vertical bars, each 160 pixels wide, in this order: white, yellow, cyan, green,
+    magenta, red, blue, black.'
+  proof: [simulation, hardware]
+  modules: [pattern_gen, top]
+- id: S-3
+  text: For pixels with a complete 3x3 neighbourhood, output the median of the nine neighbourhood values independently
+    for each colour channel.
+  proof: [simulation, formal]
+  modules: [median_filter, top]
+- id: S-4
+  text: Keep the output picture, active-video indication, and horizontal and vertical sync aligned so that each
+    output picture coordinate corresponds to the sync and active-video timing for that coordinate.
+  proof: [simulation, formal]
+  modules: [timing_gen, pattern_gen, median_filter, vga_output, top]
+- id: S-5
+  text: Drive all colour outputs to zero outside the active picture, while BTNC is pressed, and while the pixel
+    clock is not stable.
+  proof: [simulation, hardware]
+  modules: [vga_output, top]
+- id: S-6
+  text: Illuminate LED[0] when the pixel clock is stable.
+  proof: [hardware]
+  modules: [pixel_clock, top]
+- id: S-7
+  text: Provide a USB-UART test shell at 115200 baud that identifies the design as VMED.
+  proof: [simulation, hardware]
+  modules: [top]
+- id: S-8
+  text: Through the USB-UART test shell, allow the host to select a test pattern and read a frame counter.
+  proof: [simulation, hardware]
+  modules: [pattern_gen, timing_gen, top]

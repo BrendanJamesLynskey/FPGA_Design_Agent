@@ -1,0 +1,15 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: pwm_audio
+summary: Captures the sample-derived duty once per period and drives the open-drain audio pin.
+clocks:
+- {name: clk, port: clk, max_mhz: 100}
+resets:
+- {name: rst_n, port: rst_n, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst_n, dir: in}
+- {name: sample_out, dir: in, width: 16, clock: clk}
+- {name: AUD_PWM, dir: out, clock: clk}
+- {name: AUD_SD, dir: out, clock: clk, reset_value: 1}
+- {name: LED, dir: out, width: 16, clock: clk, reset_value: 0}

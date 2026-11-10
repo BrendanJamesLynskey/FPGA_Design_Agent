@@ -1,0 +1,1192 @@
+{
+ "pass": "contracts",
+ "budget": 40,
+ "drafter_repairs": {
+  "draft": 1,
+  "apply": 0
+ },
+ "modules": [
+  "color_bars",
+  "frame_counter",
+  "median_filter",
+  "video_cdc",
+  "video_control",
+  "video_output",
+  "video_timing"
+ ],
+ "connections": [],
+ "fields": 82,
+ "stated_in_spec": 15,
+ "asked": 67,
+ "answered": 4,
+ "defaulted": 63,
+ "stated": [
+  {
+   "fields": [
+    "video_timing.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "color_bars.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "median_filter.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "frame_counter.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "frame_counter.contract.ports.count"
+   ],
+   "quote": "read a frame counter"
+  },
+  {
+   "fields": [
+    "video_cdc.contract.clocks.clk_pix.max_mhz"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "video_output.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "video_output.contract.ports.btnc"
+   ],
+   "quote": "while the centre button `BTNC` is pressed"
+  },
+  {
+   "fields": [
+    "design.clocks.clk_pix"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "design.resets.rst_pix"
+   ],
+   "quote": "pixel clock"
+  },
+  {
+   "fields": [
+    "design.shell.design_id"
+   ],
+   "quote": "design ID \"VMED\""
+  },
+  {
+   "fields": [
+    "design.board_ports.UART_TXD_IN"
+   ],
+   "quote": "USB-UART"
+  },
+  {
+   "fields": [
+    "design.board_ports.UART_RXD_OUT"
+   ],
+   "quote": "USB-UART"
+  },
+  {
+   "fields": [
+    "design.board_ports.BTNC"
+   ],
+   "quote": "while the centre button `BTNC` is pressed"
+  },
+  {
+   "fields": [
+    "design.board_ports.LED[0]"
+   ],
+   "quote": "`LED[0]` lights when the pixel clock is stable."
+  }
+ ],
+ "bad_quotes": [
+  "color_bars.contract.ports.blue",
+  "color_bars.contract.ports.green",
+  "color_bars.contract.ports.red",
+  "design.board_ports.CLK100MHZ",
+  "design.board_ports.CPU_RESETN",
+  "design.board_ports.VGA_B[3:0]",
+  "design.board_ports.VGA_G[3:0]",
+  "design.board_ports.VGA_HS",
+  "design.board_ports.VGA_R[3:0]",
+  "design.board_ports.VGA_VS",
+  "design.clocks.clk_sys",
+  "design.modules.video_control.window_base",
+  "design.resets.rst_sys",
+  "median_filter.contract.ports.in_blue",
+  "median_filter.contract.ports.in_green",
+  "median_filter.contract.ports.in_red",
+  "median_filter.contract.ports.out_blue",
+  "median_filter.contract.ports.out_green",
+  "median_filter.contract.ports.out_red",
+  "video_cdc.contract.clocks.clk_sys.max_mhz",
+  "video_control.contract.clocks.clk.max_mhz",
+  "video_control.contract.registers",
+  "video_output.contract.ports.blue",
+  "video_output.contract.ports.green",
+  "video_output.contract.ports.locked",
+  "video_output.contract.ports.red"
+ ],
+ "questions": [
+  {
+   "id": "P2-1",
+   "text": "Is video_timing's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_high, style: sync}",
+   "reason": "Reset polarity and style were not specified; use a synchronous active-high reset in the pixel-clock domain.",
+   "answer": "{polarity: active_high, style: sync}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_high, style: sync}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-2",
+   "text": "What is video_timing's port x: its direction, width and value in reset?",
+   "default": "{dir: out, width: 11, reset_value: 0}",
+   "reason": "An 11-bit coordinate can represent the horizontal timing range of 0 through 1649.",
+   "answer": "{dir: out, width: 11, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.ports.x"
+   ],
+   "draft_value": "{dir: out, width: 11, reset_value: 0}",
+   "final_value": "{dir: out, width: 11, reset_value: 0}"
+  },
+  {
+   "id": "P2-3",
+   "text": "What is video_timing's port y: its direction, width and value in reset?",
+   "default": "{dir: out, width: 10, reset_value: 0}",
+   "reason": "A 10-bit coordinate can represent the vertical timing range of 0 through 749.",
+   "answer": "{dir: out, width: 10, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.ports.y"
+   ],
+   "draft_value": "{dir: out, width: 10, reset_value: 0}",
+   "final_value": "{dir: out, width: 10, reset_value: 0}"
+  },
+  {
+   "id": "P2-4",
+   "text": "What is video_timing's port active: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "The timing generator needs an active-picture qualification to identify the picture region.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.ports.active"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-5",
+   "text": "What is video_timing's port hsync: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "The timing generator needs a horizontal sync output.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.ports.hsync"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-6",
+   "text": "What is video_timing's port vsync: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "The timing generator needs a vertical sync output.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.ports.vsync"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-7",
+   "text": "What is video_timing's port frame_end: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "A frame-end pulse is needed by the frame counter; its event is specified in the answered frame-counter default.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.ports.frame_end"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-8",
+   "text": "Is color_bars's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_high, style: sync}",
+   "reason": "Use the shared pixel-domain reset; reset polarity and style were not specified.",
+   "answer": "The specified reset is active-low, with asynchronous assertion and synchronous release. The specification does not identify an internal `color_bars` signal named `rst`.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    polarity: active_low\n    kind: asynchronous button, synchronised (asserts at once, releases on the clock)",
+   "fields": [
+    "color_bars.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_high, style: sync}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-9",
+   "text": "What is color_bars's port x: its direction, width and value in reset?",
+   "default": "{dir: in, width: 11}",
+   "reason": "The bar generator needs the horizontal coordinate to select a 160-pixel bar.",
+   "answer": "{dir: in, width: 11}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "color_bars.contract.ports.x"
+   ],
+   "draft_value": "{dir: in, width: 11}",
+   "final_value": "{dir: in, width: 11}"
+  },
+  {
+   "id": "P2-10",
+   "text": "What is color_bars's port y: its direction, width and value in reset?",
+   "default": "{dir: in, width: 10}",
+   "reason": "The bar generator accepts the vertical coordinate so its input follows the raster.",
+   "answer": "{dir: in, width: 10}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "color_bars.contract.ports.y"
+   ],
+   "draft_value": "{dir: in, width: 10}",
+   "final_value": "{dir: in, width: 10}"
+  },
+  {
+   "id": "P2-11",
+   "text": "What is color_bars's port active: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "The bar generator needs the active-picture qualification to restrict the test picture to the active region.",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "color_bars.contract.ports.active"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-12",
+   "text": "What is color_bars's port pattern: its direction, width and value in reset?",
+   "default": "{dir: in, width: 2}",
+   "reason": "A two-bit field is sufficient for pattern 0 and the proposed selection interface; width is not otherwise specified.",
+   "answer": "{dir: in, width: 2}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "color_bars.contract.ports.pattern"
+   ],
+   "draft_value": "{dir: in, width: 2}",
+   "final_value": "{dir: in, width: 2}"
+  },
+  {
+   "id": "P2-13",
+   "text": "What is color_bars's port red: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "The bar generator needs a red output channel.",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "color_bars.contract.ports.red"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-14",
+   "text": "What is color_bars's port green: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "The bar generator needs a green output channel.",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "color_bars.contract.ports.green"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-15",
+   "text": "What is color_bars's port blue: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "The bar generator needs a blue output channel.",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "color_bars.contract.ports.blue"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-16",
+   "text": "Is median_filter's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_high, style: sync}",
+   "reason": "Use the shared pixel-domain reset; reset polarity and style were not specified.",
+   "answer": "CPU_RESETN is active low, with asynchronous assertion and release on the clock.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    polarity: active_low\n    kind: asynchronous button, synchronised (asserts at once, releases on the clock)",
+   "fields": [
+    "median_filter.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_high, style: sync}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-17",
+   "text": "What is median_filter's port in_red: its direction, width and value in reset?",
+   "default": "{dir: in, width: 4}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: in, width: 4}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.in_red"
+   ],
+   "draft_value": "{dir: in, width: 4}",
+   "final_value": "{dir: in, width: 4}"
+  },
+  {
+   "id": "P2-18",
+   "text": "What is median_filter's port in_green: its direction, width and value in reset?",
+   "default": "{dir: in, width: 4}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: in, width: 4}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.in_green"
+   ],
+   "draft_value": "{dir: in, width: 4}",
+   "final_value": "{dir: in, width: 4}"
+  },
+  {
+   "id": "P2-19",
+   "text": "What is median_filter's port in_blue: its direction, width and value in reset?",
+   "default": "{dir: in, width: 4}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: in, width: 4}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.in_blue"
+   ],
+   "draft_value": "{dir: in, width: 4}",
+   "final_value": "{dir: in, width: 4}"
+  },
+  {
+   "id": "P2-20",
+   "text": "What is median_filter's port in_active: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "Pass active-picture qualification through the filter so the picture remains aligned.",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.in_active"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-21",
+   "text": "What is median_filter's port in_hsync: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "Accept horizontal sync to keep it aligned with the filtered picture.",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.in_hsync"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-22",
+   "text": "What is median_filter's port in_vsync: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "Accept vertical sync to keep it aligned with the filtered picture.",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.in_vsync"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-23",
+   "text": "What is median_filter's port out_red: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.out_red"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-24",
+   "text": "What is median_filter's port out_green: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.out_green"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-25",
+   "text": "What is median_filter's port out_blue: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.out_blue"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-26",
+   "text": "What is median_filter's port out_active: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "Provide active-picture qualification aligned with the filtered output.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.out_active"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-27",
+   "text": "What is median_filter's port out_hsync: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "Provide horizontal sync aligned with the filtered output.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.out_hsync"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-28",
+   "text": "What is median_filter's port out_vsync: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "Provide vertical sync aligned with the filtered output.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.ports.out_vsync"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-29",
+   "text": "Is frame_counter's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_high, style: sync}",
+   "reason": "Use the shared pixel-domain reset; reset polarity and style were not specified.",
+   "answer": "{polarity: active_high, style: sync}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "frame_counter.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_high, style: sync}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-30",
+   "text": "What is frame_counter's port frame_end: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "The frame counter needs a frame-end event to increment once per frame.",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "frame_counter.contract.ports.frame_end"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-31",
+   "text": "At what clock rate (MHz) must video_cdc's clock clk_sys close timing?",
+   "default": "100",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "100 MHz",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    freq_mhz: 100",
+   "fields": [
+    "video_cdc.contract.clocks.clk_sys.max_mhz"
+   ],
+   "draft_value": "100",
+   "final_value": "100"
+  },
+  {
+   "id": "P2-32",
+   "text": "Is video_cdc's reset rst_sys active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_high, style: sync}",
+   "reason": "Use the system-domain reset.",
+   "answer": "{polarity: active_high, style: sync}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_cdc.contract.resets.rst_sys"
+   ],
+   "draft_value": "{polarity: active_high, style: sync}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-33",
+   "text": "Is video_cdc's reset rst_pix active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_high, style: sync}",
+   "reason": "Use the pixel-domain reset.",
+   "answer": "{polarity: active_high, style: sync}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_cdc.contract.resets.rst_pix"
+   ],
+   "draft_value": "{polarity: active_high, style: sync}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-34",
+   "text": "What is video_cdc's port pattern_sys: its direction, width and value in reset?",
+   "default": "{dir: in, width: 2}",
+   "reason": "Pattern selection originates in the system-clock domain and must cross into the pixel-clock domain.",
+   "answer": "{dir: in, width: 2}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_cdc.contract.ports.pattern_sys"
+   ],
+   "draft_value": "{dir: in, width: 2}",
+   "final_value": "{dir: in, width: 2}"
+  },
+  {
+   "id": "P2-35",
+   "text": "What is video_cdc's port frame_count_pix: its direction, width and value in reset?",
+   "default": "{dir: in, width: 32}",
+   "reason": "The frame counter operates in the pixel-clock domain and its value must cross to the system-clock domain.",
+   "answer": "{dir: in, width: 32}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_cdc.contract.ports.frame_count_pix"
+   ],
+   "draft_value": "{dir: in, width: 32}",
+   "final_value": "{dir: in, width: 32}"
+  },
+  {
+   "id": "P2-36",
+   "text": "What is video_cdc's port pattern_pix: its direction, width and value in reset?",
+   "default": "{dir: out, width: 2, reset_value: 0}",
+   "reason": "The bar generator consumes pattern selection in the pixel-clock domain.",
+   "answer": "{dir: out, width: 2, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_cdc.contract.ports.pattern_pix"
+   ],
+   "draft_value": "{dir: out, width: 2, reset_value: 0}",
+   "final_value": "{dir: out, width: 2, reset_value: 0}"
+  },
+  {
+   "id": "P2-37",
+   "text": "What is video_cdc's port frame_count_sys: its direction, width and value in reset?",
+   "default": "{dir: out, width: 32, reset_value: 0}",
+   "reason": "The shell register window reads the frame count in the system-clock domain.",
+   "answer": "{dir: out, width: 32, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_cdc.contract.ports.frame_count_sys"
+   ],
+   "draft_value": "{dir: out, width: 32, reset_value: 0}",
+   "final_value": "{dir: out, width: 32, reset_value: 0}"
+  },
+  {
+   "id": "P2-38",
+   "text": "At what clock rate (MHz) must video_control's clock clk close timing?",
+   "default": "100",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "74.25 MHz",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "note: the pixel clock domain is 74.25 MHz; timing must close there. The course recorded no timing numbers for the block (reference_qor.md).",
+   "fields": [
+    "video_control.contract.clocks.clk.max_mhz"
+   ],
+   "draft_value": "100",
+   "final_value": "74.25"
+  },
+  {
+   "id": "P2-39",
+   "text": "Is video_control's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_high, style: sync}",
+   "reason": "Use the shell's system-domain reset; reset polarity and style were not specified.",
+   "answer": "{polarity: active_high, style: sync}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_control.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_high, style: sync}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-40",
+   "text": "What is video_control's port pattern: its direction, width and value in reset?",
+   "default": "{dir: in, width: 2}",
+   "reason": "The top-level register decoder drives the RW register's input field.",
+   "answer": "{dir: in, width: 2}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_control.contract.ports.pattern"
+   ],
+   "draft_value": "{dir: in, width: 2}",
+   "final_value": "{dir: in, width: 2}"
+  },
+  {
+   "id": "P2-41",
+   "text": "What is video_control's port pattern_selected: its direction, width and value in reset?",
+   "default": "{dir: out, width: 2, reset_value: 0}",
+   "reason": "Expose the selected pattern to the CDC path; this is the proposed control-module connection.",
+   "answer": "{dir: out, width: 2, reset_value: 0}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_control.contract.ports.pattern_selected"
+   ],
+   "draft_value": "{dir: out, width: 2, reset_value: 0}",
+   "final_value": "{dir: out, width: 2, reset_value: 0}"
+  },
+  {
+   "id": "P2-42",
+   "text": "What is video_control's port frame_count_in: its direction, width and value in reset?",
+   "default": "{dir: in, width: 32}",
+   "reason": "Accept the synchronized frame count for the shell register window.",
+   "answer": "{dir: in, width: 32}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_control.contract.ports.frame_count_in"
+   ],
+   "draft_value": "{dir: in, width: 32}",
+   "final_value": "{dir: in, width: 32}"
+  },
+  {
+   "id": "P2-43",
+   "text": "What is video_control's port frame_count: its direction, width and value in reset?",
+   "default": "{dir: out, width: 32, reset_value: 0}",
+   "reason": "Expose the frame count as the RO register field.",
+   "answer": "{dir: out, width: 32, reset_value: 0}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_control.contract.ports.frame_count"
+   ],
+   "draft_value": "{dir: out, width: 32, reset_value: 0}",
+   "final_value": "{dir: out, width: 32, reset_value: 0}"
+  },
+  {
+   "id": "P2-44",
+   "text": "What is the register map of video_control: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
+   "default": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME_COUNT, offset: 4, access: RO, reset: 0}]",
+   "reason": "Use the proposed offsets in assumption A-2. The PATTERN field is an input driven by the top-level RW register; FRAME_COUNT is read from the module output.",
+   "answer": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME_COUNT, offset: 4, access: RO, reset: 0}]",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_control.contract.registers"
+   ],
+   "draft_value": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME_COUNT, offset: 4, access: RO, reset: 0}]",
+   "final_value": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME_COUNT, offset: 4, access: RO, reset: 0}]"
+  },
+  {
+   "id": "P2-45",
+   "text": "Is video_output's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_high, style: sync}",
+   "reason": "Use the shared pixel-domain reset; reset polarity and style were not specified.",
+   "answer": "{polarity: active_high, style: sync}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_high, style: sync}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-46",
+   "text": "What is video_output's port locked: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.locked"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-47",
+   "text": "What is video_output's port active: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "The output gate needs the active-picture qualification.",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.active"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-48",
+   "text": "What is video_output's port in_hsync: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "The output gate needs the filtered horizontal sync.",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.in_hsync"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-49",
+   "text": "What is video_output's port in_vsync: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "The output gate needs the filtered vertical sync.",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.in_vsync"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-50",
+   "text": "What is video_output's port in_red: its direction, width and value in reset?",
+   "default": "{dir: in, width: 4}",
+   "reason": "The output gate needs the filtered red channel.",
+   "answer": "{dir: in, width: 4}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.in_red"
+   ],
+   "draft_value": "{dir: in, width: 4}",
+   "final_value": "{dir: in, width: 4}"
+  },
+  {
+   "id": "P2-51",
+   "text": "What is video_output's port in_green: its direction, width and value in reset?",
+   "default": "{dir: in, width: 4}",
+   "reason": "The output gate needs the filtered green channel.",
+   "answer": "{dir: in, width: 4}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.in_green"
+   ],
+   "draft_value": "{dir: in, width: 4}",
+   "final_value": "{dir: in, width: 4}"
+  },
+  {
+   "id": "P2-52",
+   "text": "What is video_output's port in_blue: its direction, width and value in reset?",
+   "default": "{dir: in, width: 4}",
+   "reason": "The output gate needs the filtered blue channel.",
+   "answer": "{dir: in, width: 4}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.in_blue"
+   ],
+   "draft_value": "{dir: in, width: 4}",
+   "final_value": "{dir: in, width: 4}"
+  },
+  {
+   "id": "P2-53",
+   "text": "What is video_output's port hsync: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "Expose horizontal sync for the VGA output.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.hsync"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-54",
+   "text": "What is video_output's port vsync: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "Expose vertical sync for the VGA output.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.vsync"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-55",
+   "text": "What is video_output's port red: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "Gate the output red channel on active video, BTNC, and the clock lock indication.",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.red"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-56",
+   "text": "What is video_output's port green: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "Gate the output green channel on active video, BTNC, and the clock lock indication.",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.green"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-57",
+   "text": "What is video_output's port blue: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "Gate the output blue channel on active video, BTNC, and the clock lock indication.",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "video_output.contract.ports.blue"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-58",
+   "text": "Which clock is clk_sys: its frequency and where it comes from?",
+   "default": "{source: board, mhz: 100, port: CLK100MHZ}",
+   "reason": "The answered default selects the Nexys A7 100 MHz onboard oscillator.",
+   "answer": "{source: board, mhz: 100, port: CLK100MHZ}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.clocks.clk_sys"
+   ],
+   "draft_value": "{source: board, mhz: 100, port: CLK100MHZ}",
+   "final_value": "{source: board, mhz: 100, port: CLK100MHZ}"
+  },
+  {
+   "id": "P2-59",
+   "text": "What resets the design's reset rst_sys (button or other source), and its polarity?",
+   "default": "{from: CPU_RESETN, polarity: active_high, style: sync}",
+   "reason": "The reset source and behavior were not specified; use the board reset input and synchronize it.",
+   "answer": "{from: CPU_RESETN, polarity: active_high, style: sync}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.resets.rst_sys"
+   ],
+   "draft_value": "{from: CPU_RESETN, polarity: active_high, style: sync}",
+   "final_value": "{from: CPU_RESETN, polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-60",
+   "text": "At which offset of the shell's register window do video_control's registers start?",
+   "default": "0",
+   "reason": "The shell window occupies 0x80-0xFF. The module base is 0x00 so its proposed offsets 0x00 and 0x04 map within the shell window.",
+   "answer": "0",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.modules.video_control.window_base"
+   ],
+   "draft_value": "0",
+   "final_value": "0"
+  },
+  {
+   "id": "P2-61",
+   "text": "What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: in, drive: input, to: clk_sys}",
+   "reason": "Bind the board oscillator selected by the answered clock-source default.",
+   "answer": "{dir: in, drive: input, to: clk_sys}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.CLK100MHZ"
+   ],
+   "draft_value": "{dir: in, drive: input, to: clk_sys}",
+   "final_value": "{dir: in, drive: input, to: clk_sys}"
+  },
+  {
+   "id": "P2-62",
+   "text": "What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: in, drive: input, to: rst_sys}",
+   "reason": "Use the board reset pin as the proposed system reset source.",
+   "answer": "{dir: in, drive: input, to: rst_sys}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.CPU_RESETN"
+   ],
+   "draft_value": "{dir: in, drive: input, to: rst_sys}",
+   "final_value": "{dir: in, drive: input, to: rst_sys}"
+  },
+  {
+   "id": "P2-63",
+   "text": "What does the board pin VGA_HS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: video_output.hsync}",
+   "reason": "Connect generated horizontal sync to the VGA output.",
+   "answer": "{dir: out, drive: push-pull, from: video_output.hsync}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.VGA_HS"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: video_output.hsync}",
+   "final_value": "{dir: out, drive: push-pull, from: video_output.hsync}"
+  },
+  {
+   "id": "P2-64",
+   "text": "What does the board pin VGA_VS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: video_output.vsync}",
+   "reason": "Connect generated vertical sync to the VGA output.",
+   "answer": "{dir: out, drive: push-pull, from: video_output.vsync}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.VGA_VS"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: video_output.vsync}",
+   "final_value": "{dir: out, drive: push-pull, from: video_output.vsync}"
+  },
+  {
+   "id": "P2-65",
+   "text": "What does the board pin VGA_R[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: video_output.red}",
+   "reason": "Use the answered 4-bit VGA red-channel width.",
+   "answer": "{dir: out, drive: push-pull, from: video_output.red}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.VGA_R[3:0]"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: video_output.red}",
+   "final_value": "{dir: out, drive: push-pull, from: video_output.red}"
+  },
+  {
+   "id": "P2-66",
+   "text": "What does the board pin VGA_G[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: video_output.green}",
+   "reason": "Use the answered 4-bit VGA green-channel width.",
+   "answer": "{dir: out, drive: push-pull, from: video_output.green}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.VGA_G[3:0]"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: video_output.green}",
+   "final_value": "{dir: out, drive: push-pull, from: video_output.green}"
+  },
+  {
+   "id": "P2-67",
+   "text": "What does the board pin VGA_B[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: video_output.blue}",
+   "reason": "Use the answered 4-bit VGA blue-channel width.",
+   "answer": "{dir: out, drive: push-pull, from: video_output.blue}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.VGA_B[3:0]"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: video_output.blue}",
+   "final_value": "{dir: out, drive: push-pull, from: video_output.blue}"
+  }
+ ],
+ "unasked_changes": [
+  {
+   "field": "design.resets.rst_pix",
+   "draft": "{from: rst_sys, polarity: active_high, style: sync}",
+   "final": "{from: rst_sys, polarity: active_low, style: async}"
+  },
+  {
+   "field": "design.resets.rst_sys",
+   "draft": "{from: CPU_RESETN, polarity: active_high, style: sync}",
+   "final": "{from: CPU_RESETN, polarity: active_low, style: async}"
+  },
+  {
+   "field": "frame_counter.contract.resets.rst",
+   "draft": "{polarity: active_high, style: sync}",
+   "final": "{polarity: active_low, style: async}"
+  },
+  {
+   "field": "video_cdc.contract.resets.rst_pix",
+   "draft": "{polarity: active_high, style: sync}",
+   "final": "{polarity: active_low, style: async}"
+  },
+  {
+   "field": "video_cdc.contract.resets.rst_sys",
+   "draft": "{polarity: active_high, style: sync}",
+   "final": "{polarity: active_low, style: async}"
+  },
+  {
+   "field": "video_control.contract.resets.rst",
+   "draft": "{polarity: active_high, style: sync}",
+   "final": "{polarity: active_low, style: async}"
+  },
+  {
+   "field": "video_output.contract.resets.rst",
+   "draft": "{polarity: active_high, style: sync}",
+   "final": "{polarity: active_low, style: async}"
+  },
+  {
+   "field": "video_timing.contract.resets.rst",
+   "draft": "{polarity: active_high, style: sync}",
+   "final": "{polarity: active_low, style: async}"
+  }
+ ]
+}

@@ -1,0 +1,79 @@
+{
+ "pass": "requirements",
+ "budget": 12,
+ "drafter_repairs": 0,
+ "requirements": 7,
+ "asked": 5,
+ "answered": 1,
+ "defaulted": 4,
+ "questions": [
+  {
+   "id": "P1-1",
+   "text": "How should the 3 x 3 neighbourhood be formed at the active-picture edges?",
+   "default": "Clamp each neighbourhood coordinate to the nearest active-picture edge.",
+   "reason": "The specification defines the filter neighbourhood but not how samples beyond the active picture are handled.",
+   "answer": "Clamp each neighbourhood coordinate to the nearest active-picture edge.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-3"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "Which patterns must be selectable in addition to the default colour bars?",
+   "default": "Offer the specified colour bars and a black-and-white checkerboard.",
+   "reason": "The shell must allow pattern selection, but the available pattern choices are not specified.",
+   "answer": "Offer the specified colour bars and a black-and-white checkerboard.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-2",
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-3",
+   "text": "What UART command and response format should the test shell use, including serial framing?",
+   "default": "Use 115200 baud, 8N1, with newline-terminated ASCII commands and responses.",
+   "reason": "The baud rate and shell capabilities are specified, but the serial framing and command protocol are not.",
+   "answer": "Use 115200 baud, 8N1, with newline-terminated ASCII commands and responses.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-4",
+   "text": "What are the frame counter's width, initial value, and increment point?",
+   "default": "Use a 32-bit counter that starts at zero after FPGA configuration and increments once per completed frame, wrapping modulo 2^32.",
+   "reason": "The specification requires reading a frame counter but does not define its counting or initialization behavior.",
+   "answer": "Use a 32-bit counter that starts at zero after FPGA configuration and increments once per completed frame, wrapping modulo 2^32.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-5",
+   "text": "What colour-channel width and digital levels should be used for the VGA output and colour bars?",
+   "default": "Use the Nexys A7 VGA interface's 4-bit RGB channels, with each named colour channel set to 0xF when on and 0x0 when off.",
+   "reason": "The board is specified, but the output channel representation and exact bar levels are not stated.",
+   "answer": "Use 4-bit RGB channels. Set each channel to 0xF when on and 0x0 when off.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area",
+   "settles": [
+    "S-2",
+    "S-3",
+    "S-5"
+   ]
+  }
+ ]
+}

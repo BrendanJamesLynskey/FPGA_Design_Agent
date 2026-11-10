@@ -1,0 +1,63 @@
+{
+ "pass": "requirements",
+ "budget": 12,
+ "drafter_repairs": 0,
+ "requirements": 9,
+ "asked": 4,
+ "answered": 3,
+ "defaulted": 1,
+ "questions": [
+  {
+   "id": "P1-1",
+   "text": "What shell command, response, and register-addressing format should be used for sample writes, gain writes, and sample_out reads?",
+   "default": "Use ASCII line commands `S <signed-decimal>`, `G <unsigned-decimal>`, and `R`, with a response for each command and a startup identifier `PWMA`.",
+   "reason": "The specification requires these shell operations and the design ID but does not define the protocol or register map.",
+   "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0",
+   "settles": [
+    "S-3"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "When during a PWM period should the duty be captured, and what should the PWM counter and duty be initialized to on reset?",
+   "default": "Capture the duty at counter rollover for the upcoming period; reset the counter to 0 and the duty to 512.",
+   "reason": "The specification gives the update rate and comparison rule but not the capture edge or PWM reset phase.",
+   "answer": "Capture the duty at counter rollover for the upcoming period; reset the counter to 0 and the duty to 512.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-4"
+   ]
+  },
+  {
+   "id": "P1-3",
+   "text": "Should CPU_RESETN reset assertion be synchronous or asynchronous?",
+   "default": "Use asynchronous active-low assertion.",
+   "reason": "The reset values are specified, but reset assertion timing is not.",
+   "answer": "Asynchronous active-low assertion; reset release is synchronized to the clock.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  kind: asynchronous button, synchronised (asserts at once, releases on the clock)",
+   "settles": [
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-4",
+   "text": "What defaults and representation should be used for CLKS_PER_BIT, TIMEOUT_CYCLES, and BUILD_STAMP?",
+   "default": "Use integer parameters with CLKS_PER_BIT=868, TIMEOUT_CYCLES=10000000, and BUILD_STAMP=32'h00000000.",
+   "reason": "The parameters must be exposed but their defaults and the BUILD_STAMP representation are unspecified; 868 approximates 115200 baud from 100 MHz.",
+   "answer": "CLKS_PER_BIT is 868 and TIMEOUT_CYCLES is 100000, not 10000000. Their representation and any BUILD_STAMP default are not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  CLKS_PER_BIT: 868\n  TIMEOUT_CYCLES: 100000",
+   "settles": [
+    "S-7"
+   ]
+  }
+ ]
+}

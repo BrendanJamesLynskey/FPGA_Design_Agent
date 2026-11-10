@@ -1,0 +1,58 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/requirements/v1
+requirements:
+- id: S-1
+  text: The block shall accept a signed 16-bit audio sample that is held between sample writes.
+  proof: [simulation]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-2
+  text: The block shall provide an unsigned Q15 gain register that resets to 2068; a gain write above 8192 shall
+    store 8192, and any other gain write shall store the written value.
+  proof: [simulation]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-3
+  text: The signed 16-bit sample_out shall be combinationally computed as floor(sample * gain / 32768).
+  proof: [simulation, formal]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-4
+  text: When CPU_RESETN is asserted, the sample shall be cleared to zero and the gain register shall be set to 2068.
+  proof: [simulation]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-5
+  text: The UART shell shall run at 115200 baud and shall support writing the sample, writing the gain, and reading
+    sample_out.
+  proof: [simulation, hardware]
+  modules: [c12_nexys_pwm_audio_top, top]
+- id: S-6
+  text: The PWM shall use a free-running 10-bit counter clocked by CLK100MHZ, producing a 1024-clock period and
+    a carrier frequency of approximately 97.7 kHz.
+  proof: [simulation, analysis]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-7
+  text: The PWM duty value shall be 512 + floor(sample_out / 128), with a nominal value of 512 for silence, and
+    shall be updated once per PWM period.
+  proof: [simulation, formal]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-8
+  text: 'AUD_PWM shall be open-drain style: it shall be pulled low when the PWM counter is at or above the duty
+    value and otherwise be high-impedance, never actively driven high; each period shall therefore have 1024 minus
+    the duty value low clocks.'
+  proof: [simulation, hardware]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-9
+  text: AUD_SD shall be held high.
+  proof: [simulation, hardware]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-10
+  text: The 16-bit LED output shall be held off.
+  proof: [simulation, hardware]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-11
+  text: The top module shall be named c12_nexys_pwm_audio_top and expose AUD_PWM, AUD_SD, CLK100MHZ, CPU_RESETN,
+    the USB-UART pins, LED[15:0], and top-level parameters CLKS_PER_BIT, TIMEOUT_CYCLES, and BUILD_STAMP.
+  proof: [analysis, hardware]
+  modules: [c12_nexys_pwm_audio_top, top]
+- id: S-12
+  text: The design shall meet timing at a 100 MHz clock.
+  proof: [analysis, hardware]
+  modules: [c12_nexys_pwm_audio_top]

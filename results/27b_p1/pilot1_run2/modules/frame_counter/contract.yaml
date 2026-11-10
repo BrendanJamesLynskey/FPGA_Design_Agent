@@ -1,0 +1,13 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: frame_counter
+summary: Maintain a 32-bit unsigned frame count, incrementing once at each frame end.
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: frame_end, dir: in, width: 1, clock: clk}
+- {name: count, dir: out, width: 32, clock: clk, reset_value: 0}

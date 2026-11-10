@@ -1,0 +1,1 @@
+For every active output pixel, calculate the median of each colour channel independently from its 3 by 3 neighbourhood. Clamp neighbourhood coordinates to the nearest active-picture edge. Delay the pixel and its raster metadata equally so the filtered picture and syncs retain their positions.

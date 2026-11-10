@@ -1,0 +1,81 @@
+{
+ "pass": "requirements",
+ "budget": 12,
+ "drafter_repairs": 0,
+ "requirements": 7,
+ "asked": 5,
+ "answered": 1,
+ "defaulted": 4,
+ "questions": [
+  {
+   "id": "P1-1",
+   "text": "What policy should the 3 x 3 filter use when its neighbourhood extends beyond the active picture boundary?",
+   "default": "Replicate the nearest active-edge pixel.",
+   "reason": "The specification defines the filter neighbourhood but not how samples outside the picture are supplied.",
+   "answer": "Replicate the nearest active-edge pixel.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-3",
+    "S-4"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "What colour-channel width should the VGA outputs use?",
+   "default": "Four bits per channel, using the Nexys A7 VGA interface.",
+   "reason": "The board is named, but the specification does not state the output colour width or level encoding.",
+   "answer": "Four bits per colour channel.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    - SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area",
+   "settles": [
+    "S-2",
+    "S-3",
+    "S-5"
+   ]
+  },
+  {
+   "id": "P1-3",
+   "text": "What clock source and criterion should define a stable pixel clock?",
+   "default": "Generate 74.25 MHz from the board's 100 MHz oscillator and treat the clock as stable when the clock generator's lock indication is asserted.",
+   "reason": "The required pixel-clock rate is specified, but its source and the meaning of stable are not.",
+   "answer": "Generate 74.25 MHz from the board's 100 MHz oscillator and treat the clock as stable when the clock generator's lock indication is asserted.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-1",
+    "S-5",
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-4",
+   "text": "Which patterns should be selectable, and what UART command and response format should the host use for design identification, pattern selection, and frame-counter reads?",
+   "default": "Use ASCII commands and responses terminated by newline; support the specified colour bars and a checkerboard pattern, with commands for ID, pattern selection, and frame-counter read.",
+   "reason": "The default pattern and UART baud rate are specified, but the selectable pattern set and UART protocol are not.",
+   "answer": "Use ASCII commands and responses terminated by newline; support the specified colour bars and a checkerboard pattern, with commands for ID, pattern selection, and frame-counter read.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-5",
+   "text": "What should the frame counter count, how wide should it be, and when should it reset?",
+   "default": "Use a 32-bit unsigned counter that increments once per completed video frame, wraps on overflow, and starts at zero after power-up.",
+   "reason": "The specification requires a readable frame counter but does not define its width, increment event, wrap behaviour, or initial value.",
+   "answer": "Use a 32-bit unsigned counter that increments once per completed video frame, wraps on overflow, and starts at zero after power-up.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  }
+ ]
+}

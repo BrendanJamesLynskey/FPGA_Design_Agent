@@ -1,0 +1,83 @@
+[
+ {
+  "question": "What shell command framing, command encodings, numeric formats, and response format should be used for sample writes, gain writes, and sample_out reads?",
+  "answer": "not specified"
+ },
+ {
+  "question": "When should a changed duty value take effect, and what PWM counter and duty state should be used at reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "A changed duty value takes effect when the PWM counter wraps. At reset, use counter 0 and duty 512."
+ },
+ {
+  "question": "When should a changed duty value take effect, and what PWM counter and duty state should be used at reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "Should CPU_RESETN assertion and release be synchronous or asynchronous to CLK100MHZ?",
+  "answer": "Asynchronous assertion and synchronized release on the clock."
+ },
+ {
+  "question": "What value, and what allowed range, should parameter CLKS_PER_BIT of c12_nexys_pwm_audio_top have?",
+  "answer": "Default: 868. Allowed range: not specified."
+ },
+ {
+  "question": "What value, and what allowed range, should parameter TIMEOUT_CYCLES of c12_nexys_pwm_audio_top have?",
+  "answer": "TIMEOUT_CYCLES is 100000; its allowed range is not specified."
+ },
+ {
+  "question": "What value, and what allowed range, should parameter BUILD_STAMP of c12_nexys_pwm_audio_top have?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port aud_pwm: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "Direction: out; width: 1; in reset, AUD_PWM is high impedance."
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port aud_pwm: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port aud_sd: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "{dir: out, width: 1, reset_value: 1}"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port aud_sd: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port led: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is audio_state's port gain: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is gain_u16 in audio_state (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is pwm_stage's port sample_in: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is pwm_stage's port aud_pwm: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "out, width 1; high impedance during reset"
+ },
+ {
+  "question": "What is pwm_stage's port aud_pwm: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "At which offset of the shell's register window do audio_state's registers start?",
+  "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
+  "by": "register map"
+ },
+ {
+  "question": "What does the board pin LED[15:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "answer": "LED[15:0] is a 16-bit output on pins H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, and V11. Its drive style and pull configuration are not specified."
+ }
+]

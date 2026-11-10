@@ -28,11 +28,28 @@ def _load(path: Path, name: str):
         sys.path.remove(str(path.parent))
 
 
-#: sectioned vendor sets of the bank (``vendor/<name>/<section>/<skill>/SKILL.md``) that ``skills`` also reads. Until
-#: f2-stage3-io only techniques, functions, family, board and procedures were read, so a section whose skills live in
-#: the vendor axis (``constraints``: xdc-constraints-basics) always came back empty.
-VENDOR_SETS = ("ross_distilled", "amd_constraints")   # brief 20: amd_constraints (13b) was never read, so the
-#: exception, I/O-delay and clock skills did not reach the agent (run 1 of the d20 drill loaded only xdc-constraints-basics)
+#: vendor units that are not sectioned (as AMD ships them); the bank's own ``sections.UNSECTIONED`` names the same one
+UNSECTIONED_VENDOR = ("ross_shipped",)
+
+#: read first, in this order, so a skill the agent already got stays ahead of the newly read units. ``load_skill`` keeps
+#: only the first six skills; units are otherwise read in name order, and ``amba_axi`` / ``amd_ip_cores`` would push
+#: ``ross_distilled`` (xdc-constraints-basics, timing-methodology) out of a six-skill answer. An order hint only: it names
+#: no unit that must exist, and every other sectioned unit is still read.
+VENDOR_FIRST = ("ross_distilled", "amd_constraints")
+
+
+def vendor_units(root: Path, unsectioned=UNSECTIONED_VENDOR) -> list[str]:
+    """The sectioned vendor units of the bank at ``root``, found from its layout: every ``vendor/<unit>/`` that holds
+    ``<section>/<skill>/SKILL.md`` (``ross_distilled``, ``amd_constraints``, ``amd_ip_cores``, ``amba_axi``,
+    ``vivado_synthesis``, ``free_simulators`` at the pin), without the unsectioned ones. Nothing is listed by hand, so a
+    unit added to the bank reaches the agent when the bank is re-pinned (brief 20 found the old hard-coded pair left four
+    units unread)."""
+    v = Path(root) / "vendor"
+    if not v.is_dir():
+        return []
+    found = [u.name for u in sorted(v.iterdir())
+             if u.is_dir() and u.name not in unsectioned and any(u.glob("*/*/SKILL.md"))]
+    return sorted(found, key=lambda n: (VENDOR_FIRST.index(n) if n in VENDOR_FIRST else len(VENDOR_FIRST), n))
 
 
 class LocalBank:
@@ -59,7 +76,7 @@ class LocalBank:
                                         procedures=procedures, root=self.root)
         if sections:
             known = {x.path for x in items}
-            for v in VENDOR_SETS:
+            for v in vendor_units(self.root):
                 try:
                     more = self._select.select(sections=sections, vendor=v, generic=False, primary_only=primary_only,
                                                procedures=False, root=self.root)

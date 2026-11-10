@@ -1,0 +1,1 @@
+Use a free-running 10-bit counter with a 1024-clock period. Reset the counter to zero and duty to 512. Capture the duty for the upcoming period at counter rollover, using 512 + floor(sample_out / 128). Pull AUD_PWM low when the counter is at or above duty; otherwise put it in high impedance. Never drive AUD_PWM high. Hold AUD_SD high and LED at zero.

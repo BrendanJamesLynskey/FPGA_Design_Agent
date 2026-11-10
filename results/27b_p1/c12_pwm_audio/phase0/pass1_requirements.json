@@ -1,0 +1,78 @@
+{
+ "pass": "requirements",
+ "budget": 12,
+ "drafter_repairs": 0,
+ "requirements": 12,
+ "asked": 5,
+ "answered": 3,
+ "defaulted": 2,
+ "questions": [
+  {
+   "id": "P1-1",
+   "text": "What UART command and response format shall the shell use for sample writes, gain writes, and sample_out reads?",
+   "default": "Use line-oriented ASCII commands: S followed by a four-digit hexadecimal two's-complement sample, G followed by a four-digit hexadecimal gain, and R to read sample_out as four hexadecimal digits.",
+   "reason": "The required shell operations and baud rate are specified, but the framing, command syntax, numeric encoding, and response format are not.",
+   "answer": "Use line-oriented ASCII commands: S followed by a four-digit hexadecimal two's-complement sample, G followed by a four-digit hexadecimal gain, and R to read sample_out as four hexadecimal digits.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-5"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "What are the exact USB-UART top-level port names and directions?",
+   "default": "Use the Nexys A7 master-XDC names UART_TXD_IN as an input and UART_RXD_OUT as an output.",
+   "reason": "The specification requires the USB-UART pins to use master-XDC names but does not enumerate them.",
+   "answer": "UART_TXD_IN is an input; UART_RXD_OUT is an output.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}\n  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}",
+   "settles": [
+    "S-11"
+   ]
+  },
+  {
+   "id": "P1-3",
+   "text": "At what point in the PWM period should a changed duty value take effect?",
+   "default": "Latch the duty value when the counter wraps from 1023 to 0 and use it for the following period.",
+   "reason": "The specification says duty is updated once per period but does not define the boundary or how mid-period changes are handled.",
+   "answer": "Latch the changed duty value when the counter wraps, for use in the following period.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- 10-bit counter; duty = 512 + (sample_out >>> 7) latched when the counter wraps (reset value 512)",
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-4",
+   "text": "What reset behavior and phase should the PWM counter have under CPU_RESETN?",
+   "default": "Reset the counter to zero while CPU_RESETN is asserted so PWM starts at a deterministic phase.",
+   "reason": "The specified reset effects cover the gain and sample but do not state whether reset affects the PWM counter.",
+   "answer": "Reset the counter to zero while CPU_RESETN is asserted so PWM starts at a deterministic phase.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-4",
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-5",
+   "text": "Should CPU_RESETN be treated synchronously or asynchronously to CLK100MHZ?",
+   "default": "Treat it as an active-low synchronous reset sampled on CLK100MHZ.",
+   "reason": "The reset polarity is given by the port name, but its timing relationship to the clock is not specified.",
+   "answer": "CPU_RESETN is an active-low asynchronous reset: it asserts immediately and releases synchronously to CLK100MHZ. The proposed synchronous-reset default is not correct.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "port: CPU_RESETN\n  polarity: active_low\n  kind: asynchronous button, synchronised (asserts at once, releases on the clock)",
+   "settles": [
+    "S-4",
+    "S-6"
+   ]
+  }
+ ]
+}

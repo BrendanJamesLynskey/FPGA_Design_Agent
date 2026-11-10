@@ -1,0 +1,72 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: video_timing
+summary: Generates the 720p60 raster and selectable test-pattern pixel stream.
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: pattern_id, dir: in, width: 2, clock: clk}
+- {name: frame_count, dir: out, width: 32, clock: clk, reset_value: 0}
+- {name: m_axis_tvalid, dir: out, clock: clk, reset_value: 0}
+- {name: m_axis_tready, dir: in, clock: clk}
+- {name: m_axis_tdata, dir: out, width: 12, clock: clk}
+- {name: m_axis_tuser, dir: out, width: 3, clock: clk}
+- {name: m_axis_tlast, dir: out, clock: clk}
+data_formats:
+- {name: channel, format: u4, packing: One unsigned 4-bit RGB channel}
+- {name: frame_counter, format: u32, packing: Unsigned completed-frame count}
+interfaces:
+- name: out
+  protocol: axi4-stream
+  role: master
+  prefix: m_axis
+  clock: clk
+  reset: rst
+  tdata:
+    width: 12
+    fields:
+    - name: red
+      bits: [11, 8]
+      format: channel
+    - name: green
+      bits: [7, 4]
+      format: channel
+    - name: blue
+      bits: [3, 0]
+      format: channel
+  tuser:
+  - {bit: 0, name: active, meaning: Pixel is in the active picture}
+  - {bit: 1, name: hsync, meaning: Positive horizontal sync level for this pixel}
+  - {bit: 2, name: vsync, meaning: Positive vertical sync level for this pixel}
+  tlast: Assert on the final pixel clock of each 1650-clock line.
+  packet_beats: 1650
+  backpressure: false
+  source_gaps: false
+registers:
+  bus: top
+  map:
+  - name: PATTERN
+    offset: 0
+    access: RW
+    reset: 0
+    width: 32
+    fields:
+    - name: pattern_id
+      bits: [1, 0]
+      port: pattern_id
+  - name: FRAME
+    offset: 4
+    access: RO
+    reset: 0
+    width: 32
+    volatile: true
+    fields:
+    - name: frame_count
+      bits: [31, 0]
+      port: frame_count
+throughput:
+- {interface: out, beats_per_cycle: 1}

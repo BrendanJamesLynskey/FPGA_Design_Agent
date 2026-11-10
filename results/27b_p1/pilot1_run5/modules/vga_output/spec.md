@@ -1,0 +1,1 @@
+Drive the VGA channels from the filtered stream, outputting zero RGB outside active video, when force_blank is asserted, or while the pixel clock is unstable. Preserve the stream's positive syncs. Increment the 32-bit frame counter once per completed frame, modulo 2^32, and expose it in the top register window.

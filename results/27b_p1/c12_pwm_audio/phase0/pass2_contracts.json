@@ -1,0 +1,337 @@
+{
+ "pass": "contracts",
+ "budget": {
+  "contracts_per_module": 12,
+  "contracts_design": 12,
+  "contracts_rest": 12
+ },
+ "drafter_repairs": {
+  "draft": 1,
+  "apply": 1
+ },
+ "apply_failed": null,
+ "modules": [
+  "c12_nexys_pwm_audio_top"
+ ],
+ "connections": [],
+ "fields": 27,
+ "stated_in_spec": 12,
+ "asked": 15,
+ "answered": 9,
+ "defaulted": 6,
+ "stated": [
+  {
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "The block must close timing at 100 MHz."
+  },
+  {
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.resets.rst"
+   ],
+   "quote": "CPU_RESETN resets the gain to its default and clears the sample."
+  },
+  {
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.CPU_RESETN"
+   ],
+   "quote": "ports named as in the board's master XDC (`AUD_PWM`, `AUD_SD`, the USB-UART pins, `CLK100MHZ`, `CPU_RESETN`, and the 16-bit `LED` output, which the block leaves off)"
+  },
+  {
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.sample"
+   ],
+   "quote": "The audio sample is a signed 16-bit number that may be changed at any time and is held between samples."
+  },
+  {
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.data_formats.audio_sample"
+   ],
+   "quote": "The audio sample is a signed 16-bit number"
+  },
+  {
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.data_formats.processed_sample"
+   ],
+   "quote": "`sample_out` (signed 16 bits)"
+  },
+  {
+   "fields": [
+    "design.shell.design_id"
+   ],
+   "quote": "The design ID is \"PWMA\"."
+  },
+  {
+   "fields": [
+    "design.board_ports.CLK100MHZ"
+   ],
+   "quote": "ports named as in the board's master XDC (`AUD_PWM`, `AUD_SD`, the USB-UART pins, `CLK100MHZ`, `CPU_RESETN`, and the 16-bit `LED` output, which the block leaves off)"
+  },
+  {
+   "fields": [
+    "design.board_ports.CPU_RESETN"
+   ],
+   "quote": "CPU_RESETN resets the gain to its default and clears the sample."
+  },
+  {
+   "fields": [
+    "design.board_ports.AUD_PWM"
+   ],
+   "quote": "`AUD_PWM` is open-drain style: the design pulls the pin low or lets it go (high impedance), and the board's pull-up floats it high; the pin is never driven high."
+  },
+  {
+   "fields": [
+    "design.board_ports.AUD_SD"
+   ],
+   "quote": "`AUD_SD`, the amplifier enable, is always high."
+  },
+  {
+   "fields": [
+    "design.board_ports.LED[15:0]"
+   ],
+   "quote": "the 16-bit `LED` output, which the block leaves off"
+  }
+ ],
+ "bad_quotes": [
+  "c12_nexys_pwm_audio_top.contract.data_formats.q15_gain",
+  "design.board_ports.UART_RXD_OUT",
+  "design.board_ports.UART_TXD_IN"
+ ],
+ "quotes_without_the_value": [
+  "c12_nexys_pwm_audio_top.contract.parameters.CLKS_PER_BIT",
+  "c12_nexys_pwm_audio_top.contract.ports.AUD_PWM",
+  "c12_nexys_pwm_audio_top.contract.ports.AUD_SD",
+  "c12_nexys_pwm_audio_top.contract.ports.LED",
+  "c12_nexys_pwm_audio_top.contract.ports.gain",
+  "c12_nexys_pwm_audio_top.contract.ports.sample_out"
+ ],
+ "questions": [
+  {
+   "id": "P2-1",
+   "text": "What value, and what allowed range, should parameter CLKS_PER_BIT of c12_nexys_pwm_audio_top have?",
+   "default": "{default: 868, min: 1, max: 2147483647}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "The specified value is 868; the allowed range is not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  CLKS_PER_BIT: 868",
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.parameters.CLKS_PER_BIT"
+   ],
+   "draft_value": "{default: 868, min: 1, max: 2147483647}",
+   "final_value": "{default: 868}"
+  },
+  {
+   "id": "P2-2",
+   "text": "What value, and what allowed range, should parameter TIMEOUT_CYCLES of c12_nexys_pwm_audio_top have?",
+   "default": "{default: 10000000, min: 1, max: 2147483647}",
+   "reason": "The specification names this parameter but gives no default or range; a positive proposed default is used.",
+   "answer": "The specified value is 100000; the allowed range is not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - TIMEOUT_CYCLES: 100000",
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.parameters.TIMEOUT_CYCLES"
+   ],
+   "draft_value": "{default: 10000000, min: 1, max: 2147483647}",
+   "final_value": "{default: 100000}"
+  },
+  {
+   "id": "P2-3",
+   "text": "What value, and what allowed range, should parameter BUILD_STAMP of c12_nexys_pwm_audio_top have?",
+   "default": "{default: 0, min: 0, max: 2147483647}",
+   "reason": "The specification names this parameter but gives no default or range; zero is a neutral proposed default.",
+   "answer": "{default: 0, min: 0, max: 2147483647}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.parameters.BUILD_STAMP"
+   ],
+   "draft_value": "{default: 0, min: 0, max: 2147483647}",
+   "final_value": "{default: 0, min: 0, max: 2147483647}"
+  },
+  {
+   "id": "P2-4",
+   "text": "What is c12_nexys_pwm_audio_top's port gain: its direction, width and value in reset?",
+   "default": "{dir: in, width: 16}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: in, width: 16}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.gain"
+   ],
+   "draft_value": "{dir: in, width: 16}",
+   "final_value": "{dir: in, width: 16}"
+  },
+  {
+   "id": "P2-5",
+   "text": "What is c12_nexys_pwm_audio_top's port sample_out: its direction, width and value in reset?",
+   "default": "{dir: out, width: 16, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 16, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.sample_out"
+   ],
+   "draft_value": "{dir: out, width: 16, reset_value: 0}",
+   "final_value": "{dir: out, width: 16, reset_value: 0}"
+  },
+  {
+   "id": "P2-6",
+   "text": "What is c12_nexys_pwm_audio_top's port AUD_PWM: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "The board-facing output must support high-impedance behavior, so the board port is declared open-drain.",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.AUD_PWM"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-7",
+   "text": "What is c12_nexys_pwm_audio_top's port AUD_SD: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 1}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{'dir': 'out', 'width': 1, 'reset_value': 1}",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- AUD_SD = 1 always",
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.AUD_SD"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 1}",
+   "final_value": "{dir: out, width: 1, reset_value: 1}"
+  },
+  {
+   "id": "P2-8",
+   "text": "What is c12_nexys_pwm_audio_top's port LED: its direction, width and value in reset?",
+   "default": "{dir: out, width: 16, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "LED is an output, 16 bits wide; its value in reset is not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}",
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.LED"
+   ],
+   "draft_value": "{dir: out, width: 16, reset_value: 0}",
+   "final_value": "{dir: out, width: 16}"
+  },
+  {
+   "id": "P2-9",
+   "text": "What is the register map of c12_nexys_pwm_audio_top: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
+   "default": "[{name: SAMPLE, offset: 0, access: RW, reset: 0}, {name: GAIN, offset: 4, access: RW, reset: 2068}, {name: SAMPLE_OUT, offset: 8, access: RO, reset: 0}]",
+   "reason": "The shell owns a 0x80-0xFF window; window_base 0x00 uses the beginning of that window. Relative register offsets are proposed in assumption A-2.",
+   "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0",
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.registers"
+   ],
+   "draft_value": "[{name: SAMPLE, offset: 0, access: RW, reset: 0}, {name: GAIN, offset: 4, access: RW, reset: 2068}, {name: SAMPLE_OUT, offset: 8, access: RO, reset: 0}]",
+   "final_value": "[{name: SAMPLE, offset: 0, access: RW, reset: 0}, {name: GAIN, offset: 1, access: WO, reset: 0}, {name: SOUT, offset: 2, access: RO, reset: 0}]"
+  },
+  {
+   "id": "P2-10",
+   "text": "Which clock is clk_sys: its frequency and where it comes from?",
+   "default": "{source: board, mhz: 100, port: CLK100MHZ}",
+   "reason": "The named board clock is used directly; the specification sets the timing target at 100 MHz.",
+   "answer": "sys_clk is 100 MHz and comes from the board oscillator, on port CLK100MHZ.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}",
+   "fields": [
+    "design.clocks.clk_sys"
+   ],
+   "draft_value": "{source: board, mhz: 100, port: CLK100MHZ}",
+   "final_value": "{source: board, mhz: 100, port: CLK100MHZ}"
+  },
+  {
+   "id": "P2-11",
+   "text": "What resets the design's reset rst_sys (button or other source), and its polarity?",
+   "default": "{from: CPU_RESETN, polarity: active_low, style: async}",
+   "reason": "The answered reset requirement specifies active-low asynchronous assertion and synchronous release; reset_sync implements the release behavior in the CLK100MHZ domain.",
+   "answer": "CPU_RESETN, an active-low asynchronous button reset.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  port: CPU_RESETN\n",
+   "fields": [
+    "design.resets.rst_sys"
+   ],
+   "draft_value": "{from: CPU_RESETN, polarity: active_low, style: async}",
+   "final_value": "{from: CPU_RESETN, polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-12",
+   "text": "At which offset of the shell's register window do c12_nexys_pwm_audio_top's registers start?",
+   "default": "0",
+   "reason": "The shell owns the 0x80-0xFF register window; 0x00 is the proposed base relative to that window.",
+   "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0",
+   "fields": [
+    "design.modules.c12_nexys_pwm_audio_top.window_base"
+   ],
+   "draft_value": "0",
+   "final_value": "0"
+  },
+  {
+   "id": "P2-13",
+   "text": "What number format is q15_gain in c12_nexys_pwm_audio_top (signed or unsigned, total and fraction bits), and how is it packed?",
+   "default": "{format: u16, packing: unsigned Q15 gain}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{format: u16, packing: unsigned Q15 gain}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.data_formats.q15_gain"
+   ],
+   "draft_value": "{format: u16, packing: unsigned Q15 gain}",
+   "final_value": "{format: u16, packing: unsigned Q15 gain}"
+  },
+  {
+   "id": "P2-14",
+   "text": "What does the board pin UART_TXD_IN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: in, drive: input, to: shell.uart_rx}",
+   "reason": "The board pin direction is the FPGA's own; the oracle answer identifies UART_TXD_IN as an input.",
+   "answer": "UART_TXD_IN is specified as an input on pin C4. Its connection to shell.uart_rx and whether the external signal is push-pull, open-drain, or pulled up are not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}",
+   "fields": [
+    "design.board_ports.UART_TXD_IN"
+   ],
+   "draft_value": "{dir: in, drive: input, to: shell.uart_rx}",
+   "final_value": "{dir: in, drive: input, to: shell.uart_rx}"
+  },
+  {
+   "id": "P2-15",
+   "text": "What does the board pin UART_RXD_OUT connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: shell.uart_tx}",
+   "reason": "The board pin direction is the FPGA's own; the oracle answer identifies UART_RXD_OUT as an output.",
+   "answer": "{dir: out, drive: push-pull, from: shell.uart_tx}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.UART_RXD_OUT"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: shell.uart_tx}",
+   "final_value": "{dir: out, drive: push-pull, from: shell.uart_tx}"
+  }
+ ],
+ "unasked_changes": []
+}
