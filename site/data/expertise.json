@@ -2,7 +2,7 @@
  "areas": [
   {
    "about": "Constraints tell Vivado what the clocks are, when signals arrive at the pins and which paths need no timing; timing closure is the work of making every remaining path fast enough. The agent writes the constraints from its skills, and a gate after routing fails any run that misses setup, hold or pulse-width timing or leaves a path unconstrained. A separate checker looks for risky lines, such as a false path with no stated reason.",
-   "cap_reason": "Until those tasks run, the area is held at this level and not credited with agent-run evidence.",
+   "cap_reason": "Exceptions are now shown in agent runs, but one of the three wrote a wrong multicycle that the flow's own gate passed, and I/O delays, virtual clocks and clock uncertainty have no agent runs yet; the area as a whole stays at this level.",
    "cards": [
     {
      "href": "flow-notes.html#xpm-cdc",
@@ -34,16 +34,40 @@
      "gate": null,
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl",
      "what": "Applies the exceptions that AMD ships as scoped files for its crossing macros, which the batch flow otherwise drops."
+    },
+    {
+     "enforced": true,
+     "file": "flow/exceptions_check.py",
+     "gate": "post_synth_exceptions_clean",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/exceptions_check.py",
+     "what": "After synthesis and after routing: no exception ignored or covering no path, no constraint message from an XDC line, no TIMING-24/-29/-47 or XDCH-1, and every multicycle path's registers share a real clock enable."
+    },
+    {
+     "enforced": false,
+     "file": "agent/core/constraints.py",
+     "gate": "FDA-CON-10",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/core/constraints.py",
+     "what": "Before Vivado: a -setup N multicycle needs its -hold N-1, and a multicycle or datapath-only max delay needs a comment naming the enable or the synchroniser."
     }
    ],
    "counts": {
-    "checks": 3,
-    "enforced": 1,
-    "evidence": 2,
+    "checks": 5,
+    "enforced": 2,
+    "evidence": 4,
     "sections": 7,
     "skills": 18
    },
    "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/20_timing_exceptions/exceptions_table.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/20_timing_exceptions/exceptions_table.json"
+      }
+     ],
+     "text": "On 10 small designs with one timing-exception mistake each, Vivado itself said something about the exception in 5; the flow's checks flagged 10. They passed 4 of 4 correct designs."
+    },
     {
      "kind": "measured",
      "sources": [
@@ -63,6 +87,16 @@
       }
      ],
      "text": "Of the development runs, 16 reached routing and recorded setup slack there; it was positive in 16."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/20_timing_exceptions/drills/run_*.constraints.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/20_timing_exceptions/drills"
+      }
+     ],
+     "text": "In 3 agent runs of the slow-controller drill (one clock, a one-in-eight enable, an eight-clock multicycle), the constraint grader passed 2; the other run put a register that a write sets on any clock into the eight-clock group, which only the grader's simulation check caught."
     }
    ],
    "family": {
@@ -131,8 +165,9 @@
     ]
    },
    "gaps": [
-    "Exceptions that hide a real failure, such as a blanket false path or a clock group over a failing path, are designed as tasks but not yet built or run.",
-    "I/O delay constraints are written from the skills, and no committed run scores them against a data sheet."
+    "I/O delay constraints, virtual clocks and clock uncertainty are written from the skills; no committed run scores them against a data sheet.",
+    "The flow's multicycle check looks at each register's clock-enable logic, not at whether the register really changes only on the enable; the drill grader adds that check in simulation, the flow does not yet.",
+    "Only one exception drill is built (the slow controller); the two-cycle datapath, the quasi-static register and the seeded wrong false path are not."
    ],
    "id": "constraints",
    "level": "checked",

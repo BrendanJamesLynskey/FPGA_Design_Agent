@@ -1,0 +1,61 @@
+{
+  "task": "d20_slow_fsm_ramp",
+  "design": "runs/20261110-195112-20cf/d20_slow_fsm_ramp",
+  "pass": false,
+  "choice": "multicycle",
+  "checks": {
+    "routed": {
+      "pass": true,
+      "wns_ns": 3.967,
+      "whs_ns": 0.064
+    },
+    "xdc_rules": {
+      "pass": true,
+      "findings": []
+    },
+    "exceptions_gate": {
+      "pass": true,
+      "failures": []
+    },
+    "clocks": {
+      "pass": true,
+      "clocks": {
+        "sys_clk_pin": 10.0
+      },
+      "bufg": 1
+    },
+    "multicycle": {
+      "pass": true,
+      "broad_lines": [],
+      "xdc_lines": [
+        "set_multicycle_path 8 -setup -from $CTRL_SRC -to $CTRL_DST",
+        "set_multicycle_path 7 -hold -from $CTRL_SRC -to $CTRL_DST"
+      ],
+      "setup_n": [
+        8
+      ],
+      "hold_n": [
+        7
+      ],
+      "registers": 17,
+      "enable_problems": []
+    },
+    "multicycle_sim": {
+      "signals": [
+        "copy_q",
+        "level_q",
+        "pending_q"
+      ],
+      "n": 8,
+      "phase": 0,
+      "off_phase": {
+        "pending_q": 3
+      },
+      "pass": false
+    },
+    "no_broad_waivers": {
+      "pass": true,
+      "lines": []
+    }
+  }
+}

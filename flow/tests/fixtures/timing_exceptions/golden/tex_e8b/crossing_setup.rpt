@@ -1,0 +1,74 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date : (removed)
+| Host : (removed)
+| Command : (removed)
+| Design       : tex_e8b
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Synthesized
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             13.406ns  (required time - arrival time)
+  Source:                 s_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by c0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            acc_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by c1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             c1
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            15.000ns  (c1 rise@5.000ns - c0 rise@-10.000ns)
+  Data Path Delay:        1.254ns  (logic 0.773ns (61.643%)  route 0.481ns (38.357%))
+  Logic Levels:           1  (LUT2=1)
+  Clock Path Skew:        -0.190ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.300ns = ( 7.300 - 5.000 ) 
+    Source Clock Delay      (SCD):    2.544ns
+    Clock Pessimism Removal (CPR):    0.054ns
+  Clock Uncertainty:      0.194ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.129ns
+    Phase Error              (PE):    0.120ns
+  Timing Exception:       MultiCycle Path   Setup -start 2
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock c0 rise edge)       -10.000   -10.000 r  
+                                                      0.000   -10.000 r  clk_in (IN)
+                         net (fo=0)                   0.973    -9.027    clk_in
+                         MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                      0.088    -8.939 r  mmcm/CLKOUT0
+                         net (fo=1, unplaced)         0.803    -8.136    c0
+                         BUFG (Prop_bufg_I_O)         0.096    -8.040 r  b0/O
+                         net (fo=16, unplaced)        0.584    -7.456    clk0
+                         FDRE                                         r  s_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_fdre_C_Q)         0.478    -6.978 r  s_reg[0]/Q
+                         net (fo=2, unplaced)         0.481    -6.497    s_reg[0]
+                         LUT2 (Prop_lut2_I0_O)        0.295    -6.202 r  acc[0]_i_1/O
+                         net (fo=1, unplaced)         0.000    -6.202    acc[0]_i_1_n_0
+                         FDRE                                         r  acc_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c1 rise edge)         5.000     5.000 r  
+                                                      0.000     5.000 r  clk_in (IN)
+                         net (fo=0)                   0.924     5.924    clk_in
+                         MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT1)
+                                                      0.083     6.007 r  mmcm/CLKOUT1
+                         net (fo=1, unplaced)         0.763     6.770    c1
+                         BUFG (Prop_bufg_I_O)         0.091     6.861 r  b1/O
+                         net (fo=17, unplaced)        0.439     7.300    clk1
+                         FDRE                                         r  acc_reg[0]/C
+                         clock pessimism              0.054     7.354    
+                         clock uncertainty           -0.194     7.160    
+                         FDRE (Setup_fdre_C_D)        0.044     7.204    acc_reg[0]
+  -------------------------------------------------------------------
+                         required time                          7.204    
+                         arrival time                           6.202    
+  -------------------------------------------------------------------
+                         slack                                 13.406    
+
+
+
+

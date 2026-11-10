@@ -19,7 +19,13 @@ areas:
   - {file: flow/gates.py, gate: no_unconstrained_endpoints, enforced: true, what: "Setup, hold and pulse-width slack must be met after routing, and no endpoint may be left unconstrained."}
   - {file: agent/core/constraints.py, gate: FDA-CON-5, enforced: false, what: "Checks design.xdc: clocks only on the board's clock input, no disabled clock-route check, a reason beside every false path or asynchronous clock group. Run as the check_constraints tool; a command outside the allow-list refuses the build."}
   - {file: flow/xpm_cdc.tcl, enforced: false, what: "Applies the exceptions that AMD ships as scoped files for its crossing macros, which the batch flow otherwise drops."}
+  - {file: flow/exceptions_check.py, gate: post_synth_exceptions_clean, gate_in: flow/gates.py, enforced: true, what: "After synthesis and after routing: no exception ignored or covering no path, no constraint message from an XDC line, no TIMING-24/-29/-47 or XDCH-1, and every multicycle path's registers share a real clock enable."}
+  - {file: agent/core/constraints.py, gate: FDA-CON-10, enforced: false, what: "Before Vivado: a -setup N multicycle needs its -hold N-1, and a multicycle or datapath-only max delay needs a comment naming the enable or the synchroniser."}
   evidence:
+  - kind: measured
+    source: results/20_timing_exceptions/exceptions_table.json
+    values: ["count@rows:expect_flag=true", "count@rows:expect_flag=true,vivado_flags=true", "count@rows:expect_flag=true,flow_flags=true", "count@rows:expect_flag=false", "count@rows:expect_flag=false,flow_flags=false"]
+    text: "On {0} small designs with one timing-exception mistake each, Vivado itself said something about the exception in {1}; the flow's checks flagged {2}. They passed {4} of {3} correct designs."
   - kind: measured
     source: results/14_flow_notes/inputs.json
     values: [get:xpm_probe.before.wns_ns, get:xpm_probe.after.wns_ns]
@@ -29,13 +35,18 @@ areas:
     where: split=dev,qor.wns_ns_at_100MHz_post_route?
     values: [n, "count:qor.wns_ns_at_100MHz_post_route>0"]
     text: "Of the development runs, {0} reached routing and recorded setup slack there; it was positive in {1}."
+  - kind: agent
+    source: results/20_timing_exceptions/drills/run_*.constraints.json
+    values: [n, "count:pass=true"]
+    text: "In {0} agent runs of the slow-controller drill (one clock, a one-in-eight enable, an eight-clock multicycle), the constraint grader passed {1}; the other run put a register that a write sets on any clock into the eight-clock group, which only the grader's simulation check caught."
   cards:
   - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: AMD's crossing macros lose their exceptions"}
   - {href: "flow-notes.html#exceptions", label: "Beyond the flow: over-broad exceptions hide failures"}
-  cap: {level: checked, why: "Until those tasks run, the area is held at this level and not credited with agent-run evidence."}
+  cap: {level: checked, why: "Exceptions are now shown in agent runs, but one of the three wrote a wrong multicycle that the flow's own gate passed, and I/O delays, virtual clocks and clock uncertainty have no agent runs yet; the area as a whole stays at this level."}
   gaps:
-  - "Exceptions that hide a real failure, such as a blanket false path or a clock group over a failing path, are designed as tasks but not yet built or run."
-  - "I/O delay constraints are written from the skills, and no committed run scores them against a data sheet."
+  - "I/O delay constraints, virtual clocks and clock uncertainty are written from the skills; no committed run scores them against a data sheet."
+  - "The flow's multicycle check looks at each register's clock-enable logic, not at whether the register really changes only on the enable; the drill grader adds that check in simulation, the flow does not yet."
+  - "Only one exception drill is built (the slow controller); the two-cycle datapath, the quasi-static register and the seeded wrong false path are not."
 - id: cdc
   name: Clock-domain and reset-domain crossing
   summary: Synchronisers, multi-bit crossings, asynchronous FIFOs, reset bridges and the checks that find a crossing report_cdc passes but that is still wrong.

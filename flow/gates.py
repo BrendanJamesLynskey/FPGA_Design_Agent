@@ -19,6 +19,9 @@ that failed:
                 no unconstrained endpoints; no DRC errors or critical warnings;
                 no critical methodology violations; no critical CDC violations;
                 (post_synth also: the structural CDC check, brief 16: no unsafe crossing)
+                the exception check (brief 20, flow/exceptions_check.py) after
+                synthesis and after routing: no exception ignored or covering no
+                path, no XDC message dropping one, no TIMING-29/-46/-47
                 report_power run for the board's thermal environment with the
                 junction at or below 85 C
     bitstream   the bitstream (and, for an ILA build, the .ltx) present
@@ -333,6 +336,27 @@ def _cdc_structure(d: Path, architecture: Path | None) -> dict[str, Any]:
     return cdc_structure.evaluate(d / "cdc_paths_synth.rpt", d / "cdc_synth.rpt", waivers)
 
 
+def _exceptions(d: Path, stage: str, strict: bool, g: dict[str, bool], name: str) -> dict[str, Any] | None:
+    """Brief 20: flow/exceptions_check.py for one stage (``synth`` or ``route``) into gate ``name``. A build of this flow
+    version (``strict``) that lacks the reports fails it; an older build without them skips it."""
+    try:
+        from flow import exceptions_check
+    except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+        import exceptions_check
+    if not (d / f"exceptions_{stage}.rpt").exists():
+        if strict:
+            g[name] = False
+            return {"pass": False, "missing_report": f"exceptions_{stage}.rpt"}
+        return None
+    try:
+        r = exceptions_check.evaluate(d, stage)
+    except (OSError, ValueError) as e:
+        g[name] = False
+        return {"pass": False, "error": f"{type(e).__name__}: {e}"}
+    g[name] = r["pass"]
+    return r
+
+
 def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any]:
     d = build_dir
     prep = json.loads((d / "prepare.json").read_text()) if (d / "prepare.json").exists() else {}
@@ -386,6 +410,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
                 g["post_synth_cdc_structure_clean"] = False
         elif strict:
             g["post_synth_cdc_structure_clean"] = False
+        exc_s = _exceptions(d, "synth", strict, g, "post_synth_exceptions_clean")
         util_s = parse_utilization(_read(d, "utilization_synth.rpt")) if (d / "utilization_synth.rpt").exists() else {}
         arch = _architecture_for(d, architecture)
         sanity = None
@@ -399,7 +424,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         stages["post_synth"] = {"ran": True, "gates": g, "warnings": warn, "timing": t_s, "check_timing": c_s,
                                 "unconstrained_ports": parse_check_timing_ports(c_s_text),
                                 "methodology": _rule_summary(m_s), "drc": _rule_summary(d_s), "qor_assessment": q_s,
-                                "cdc": cdc_s, "cdc_structure": cdc_struct, "resource_sanity": sanity, "utilization": util_s}
+                                "cdc": cdc_s, "cdc_structure": cdc_struct, "exceptions": exc_s, "resource_sanity": sanity,
+                                "utilization": util_s}
     else:
         stages["post_synth"] = {"ran": False, "gates": {}}
 
@@ -452,7 +478,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         if (d / "methodology_rtl.rpt").exists() or strict:      # a build of this flow version: the environment is set
             route_gates["power_junction_ok"] = (env["airflow_lfm"] == 0 and env["heatsink"] == "none"
                                                 and env["junction_c"] is not None and env["junction_c"] <= JUNCTION_MAX_C)
-        stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r,
+        exc_r = _exceptions(d, "route", strict, route_gates, "exceptions_clean")
+        stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r, "exceptions": exc_r,
                                 "unconstrained_ports": parse_check_timing_ports(checks_text)}
 
         # --- bitstream ---

@@ -76,6 +76,16 @@ report_utilization    -file $out/utilization_synth.rpt
 report_clock_networks -file $out/clock_networks_synth.rpt
 report_clock_interaction -delay_type min_max -file $out/clock_interaction_synth.rpt
 report_high_fanout_nets -timing -load_types -max_nets 25 -file $out/high_fanout_synth.rpt
+# brief 20: every timing exception, the ones Vivado drops (overridden or no path) and the endpoints each covers, for
+# flow/exceptions_check.py (gates post_synth_exceptions_clean and exceptions_clean; UG906 ch. 5 "Report Exceptions")
+source $flow_dir/mcp_paths.tcl
+proc exception_reports {out sfx} {
+    mcp_dump_paths $out/mcp_paths_$sfx.txt
+    report_exceptions           -file $out/exceptions_$sfx.rpt
+    report_exceptions -ignored  -file $out/exceptions_ignored_$sfx.rpt
+    report_exceptions -coverage -file $out/exceptions_coverage_$sfx.rpt
+}
+exception_reports $out synth
 stage synth_reports
 # stage-limited build (FDA_STOP_AFTER via flow/prepare.py): stop here after the post_synth reports
 proc stop_here {name} {
@@ -119,6 +129,7 @@ report_methodology    -file $out/methodology.rpt
 report_cdc -details   -file $out/cdc.rpt
 report_drc            -file $out/drc.rpt
 report_qor_assessment -file $out/qor_assessment_route.rpt
+exception_reports $out route
 # the board's thermal environment (boards/<board>/board.yaml, via prepare.py) so that the
 # junction temperature is the board's, not Vivado's default heat sink and 250 LFM airflow
 if {[info exists power_env] && $power_env ne ""} { set_operating_conditions {*}$power_env }

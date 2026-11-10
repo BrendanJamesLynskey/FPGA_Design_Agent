@@ -1,0 +1,101 @@
+{
+ "run_id": "20261110-172635-9d14",
+ "writes": [
+  {
+   "stage": "board-and-device-planning",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set_input_delay -clock sys_clk_pin -max 2.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_input_delay -clock sys_clk_pin -min 0.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_output_delay -clock sys_clk_pin -max 2.0 [get_ports { LED[*] UART_RXD_OUT }];",
+    "set_output_delay -clock sys_clk_pin -min 0.0 [get_ports { LED[*] UART_RXD_OUT }];"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set_input_delay -clock sys_clk_pin -max 2.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_input_delay -clock sys_clk_pin -min 0.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_output_delay -clock sys_clk_pin -max 2.0 [get_ports { LED[*] UART_RXD_OUT }];",
+    "set_output_delay -clock sys_clk_pin -min 0.0 [get_ports { LED[*] UART_RXD_OUT }];",
+    "set_multicycle_path 8 -setup -from [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg*}] -to [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg* || NAME =~ *copy_q_reg*}];",
+    "set_multicycle_path 7 -hold -from [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg*}] -to [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg* || NAME =~ *copy_q_reg*}];"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set_input_delay -clock sys_clk_pin -max 2.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_input_delay -clock sys_clk_pin -min 0.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_output_delay -clock sys_clk_pin -max 2.0 [get_ports { LED[*] UART_RXD_OUT }];",
+    "set_output_delay -clock sys_clk_pin -min 0.0 [get_ports { LED[*] UART_RXD_OUT }];",
+    "set TICK_SRC [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg*}]",
+    "set TICK_DST [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg* || NAME =~ *copy_q_reg*}]",
+    "set_multicycle_path 8 -setup -end -from $TICK_SRC -to $TICK_DST;",
+    "set_multicycle_path 7 -hold -end -from $TICK_SRC -to $TICK_DST;"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set_input_delay -clock sys_clk_pin -max 2.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_input_delay -clock sys_clk_pin -min 0.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_output_delay -clock sys_clk_pin -max -1.5 [get_ports { LED[*] UART_RXD_OUT }];",
+    "set_output_delay -clock sys_clk_pin -min -2.0 [get_ports { LED[*] UART_RXD_OUT }];",
+    "set TICK_SRC [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg*}]",
+    "set TICK_DST [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg* || NAME =~ *copy_q_reg*}]",
+    "set_multicycle_path 8 -setup -end -from $TICK_SRC -to $TICK_DST;",
+    "set_multicycle_path 7 -hold -end -from $TICK_SRC -to $TICK_DST;"
+   ]
+  },
+  {
+   "stage": "synthesis",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set_input_delay -clock sys_clk_pin -max 2.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_input_delay -clock sys_clk_pin -min 0.0 [get_ports { CPU_RESETN UART_TXD_IN }];",
+    "set_output_delay -clock sys_clk_pin -max -1.5 [get_ports { LED[*] UART_RXD_OUT }];",
+    "set_output_delay -clock sys_clk_pin -min -2.0 -add_delay [get_ports { LED[*] UART_RXD_OUT }];",
+    "set TICK_SRC [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg*}]",
+    "set TICK_DST [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg* || NAME =~ *copy_q_reg*}]",
+    "set_multicycle_path 8 -setup -end -from $TICK_SRC -to $TICK_DST;",
+    "set_multicycle_path 7 -hold -end -from $TICK_SRC -to $TICK_DST;"
+   ]
+  },
+  {
+   "stage": "implementation",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set async_in [get_ports { CPU_RESETN UART_TXD_IN }]",
+    "set_input_delay -clock sys_clk_pin 0.000 $async_in",
+    "set_false_path -from $async_in",
+    "set slow_out [get_ports { LED[*] UART_RXD_OUT }]",
+    "set_output_delay -clock sys_clk_pin 0.000 $slow_out",
+    "set_false_path -to $slow_out",
+    "set TICK_SRC [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg*}]",
+    "set TICK_DST [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg* || NAME =~ *copy_q_reg*}]",
+    "set_multicycle_path 8 -setup -end -from $TICK_SRC -to $TICK_DST;",
+    "set_multicycle_path 7 -hold -end -from $TICK_SRC -to $TICK_DST;"
+   ]
+  },
+  {
+   "stage": "timing-closure",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set async_in [get_ports { CPU_RESETN UART_TXD_IN }]",
+    "set_input_delay -clock sys_clk_pin 0.000 $async_in",
+    "set_false_path -from $async_in",
+    "set slow_out [get_ports { LED[*] UART_RXD_OUT }]",
+    "set_output_delay -clock sys_clk_pin 0.000 $slow_out",
+    "set_false_path -to $slow_out",
+    "set TICK_SRC [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg*}]",
+    "set TICK_DST [get_cells -hierarchical -filter {NAME =~ *state_q_reg* || NAME =~ *level_q_reg* || NAME =~ *copy_q_reg*}]",
+    "set_multicycle_path 8 -setup -end -from $TICK_SRC -to $TICK_DST",
+    "set_multicycle_path 7 -hold -end -from $TICK_SRC -to $TICK_DST"
+   ]
+  }
+ ]
+}

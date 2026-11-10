@@ -67,6 +67,27 @@ _FLOW_STAGES = {"stage_rtl": ["rtl"], "stage_post_synth": ["post_synth"], "stage
                 "stage_post_route": ["post_route"], "constraints_post_synth": ["post_synth"],
                 "bitstream_base": ["bitstream"]}
 _ROUTE_RULES = {"setup", "hold", "pulse_width"}
+# brief 20: the exception check (flow/exceptions_check.py) joins the constraints and timing gates where the build has it
+_EXC_GATES = {"post_synth": "post_synth_exceptions_clean", "post_route": "exceptions_clean"}
+
+
+def _with_exceptions(gates: dict | None, flow_stage: str, only: set[str]) -> set[str]:
+    st = ((gates or {}).get("stages") or {}).get(flow_stage) or {}
+    name = _EXC_GATES[flow_stage]
+    return only | {name} if name in (st.get("gates") or {}) else only
+
+
+def exceptions_text(st: dict, limit: int = 6) -> str:
+    """The failing exceptions of a stage's exception check, one clause each (rule, XDC file:line, Vivado's text)."""
+    fails = ((st.get("exceptions") or {}).get("failures") or [])
+    out = []
+    for f in fails[:limit]:
+        where = f"{f['file']}:{f['line']}" if f.get("file") else (f"position {f['position']}" if f.get("position") else "")
+        viv = f.get("vivado") or {}
+        msg = viv.get("message") or viv.get("detail") or " ".join(f"{k}={v}" for k, v in viv.items() if v)
+        out.append(" ".join(x for x in (f["rule"], where, (f.get("text") or ""), msg[:240]) if x))
+    more = f"; ... {len(fails) - limit} more" if len(fails) > limit else ""
+    return "; ".join(out) + more
 _POWER_RULES = {"power_junction_ok"}
 _DRC_RULES = {"drc_clean", "cdc_no_critical", "methodology_no_critical"}
 
@@ -84,6 +105,8 @@ def _stage_pass(gates: dict | None, flow_stage: str, only: set[str] | None = Non
     if st.get("unconstrained_ports"):          # 05g follow-up: the repair visit sees WHICH ports, not only the gate's name
         from flow.gates import unconstrained_text
         bad = [b + (f" ({unconstrained_text(st['unconstrained_ports'])})" if "unconstrained" in b else "") for b in bad]
+    if st.get("exceptions"):                   # brief 20: which exception, where in the XDC, and Vivado's words
+        bad = [b + (f" ({exceptions_text(st)})" if b.endswith("exceptions_clean") else "") for b in bad]
     xp = (gates or {}).get("xprobe")           # brief 18: present only for a build run with FDA_XPROBE=1
     if xp and not xp.get("error"):
         for b in list(bad):
@@ -159,9 +182,12 @@ def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
             why = verif_failures(v, need) or [f"verification at {v.get('reached')!r}, needs {need}"]
         elif g == "constraints_post_synth":
             ok, why = _stage_pass(ev.get("gates_base"), "post_synth",
-                                  only={"post_synth_no_unconstrained_endpoints", "post_synth_methodology_no_critical"})
+                                  only=_with_exceptions(ev.get("gates_base"), "post_synth",
+                                                        {"post_synth_no_unconstrained_endpoints",
+                                                         "post_synth_methodology_no_critical"}))
         elif g == "timing":
-            ok, why = _stage_pass(ev.get("gates_base"), "post_route", only=_ROUTE_RULES)
+            ok, why = _stage_pass(ev.get("gates_base"), "post_route", only=_with_exceptions(ev.get("gates_base"), "post_route",
+                                                                                           _ROUTE_RULES))
         elif g == "power":
             ok, why = _stage_pass(ev.get("gates_base"), "post_route", only=_POWER_RULES)
             if ok and ev.get("power_ok") is False:

@@ -1,0 +1,8 @@
+# Hidden acceptance bench for d20_slow_fsm_ramp (benchmark/tools/run_task.py); constraint grader: hidden/grade_constraints.py
+toplevel: d20_slow_fsm_ramp_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400}
+phrases:
+  - "it advances only on a tick, a clock enable that is 1 on exactly one clock in every 8"
+  - "which it takes from the controller only on the tick"
+  - "Constrain exactly those paths as 8-clock paths, for setup and for hold"

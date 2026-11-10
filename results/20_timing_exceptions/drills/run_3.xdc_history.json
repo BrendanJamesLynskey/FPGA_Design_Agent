@@ -1,0 +1,35 @@
+{
+ "run_id": "20261110-204907-cafb",
+ "writes": [
+  {
+   "stage": "rtl-design-creation",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set_input_delay -clock sys_clk_pin -max 2.0 [get_ports { CPU_RESETN UART_TXD_IN }]",
+    "set_input_delay -clock sys_clk_pin -min 0.0 [get_ports { CPU_RESETN UART_TXD_IN }]",
+    "set_output_delay -clock sys_clk_pin -max 2.0 [get_ports { LED[*] UART_RXD_OUT }]",
+    "set_output_delay -clock sys_clk_pin -min 0.0 [get_ports { LED[*] UART_RXD_OUT }]",
+    "set_multicycle_path 8 -setup -from [get_cells -hier -filter {NAME =~ */level_reg[*] || NAME =~ */state_reg[*] || NAME =~ level_reg[*] || NAME =~ state_reg[*]}] -to [get_cells -hier -filter {NAME =~ */level_reg[*] || NAME =~ */state_reg[*] || NAME =~ */copy_reg[*] || NAME =~ level_reg[*] || NAME =~ state_reg[*] || NAME =~ copy_reg[*]}]",
+    "set_multicycle_path 7 -hold -from [get_cells -hier -filter {NAME =~ */level_reg[*] || NAME =~ */state_reg[*] || NAME =~ level_reg[*] || NAME =~ state_reg[*]}] -to [get_cells -hier -filter {NAME =~ */level_reg[*] || NAME =~ */state_reg[*] || NAME =~ */copy_reg[*] || NAME =~ level_reg[*] || NAME =~ state_reg[*] || NAME =~ copy_reg[*]}]"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set async_in [get_ports { CPU_RESETN UART_TXD_IN }]",
+    "set_input_delay -clock sys_clk_pin -max 2.0 $async_in",
+    "set_input_delay -clock sys_clk_pin -min 0.0 $async_in",
+    "set_false_path -from $async_in",
+    "set slow_out [get_ports { LED[*] UART_RXD_OUT }]",
+    "set_output_delay -clock sys_clk_pin -max 2.0 $slow_out",
+    "set_output_delay -clock sys_clk_pin -min 0.0 $slow_out",
+    "set_false_path -to $slow_out",
+    "set mcp_from [get_cells {level_reg[*] state_reg[*]}]",
+    "set mcp_to [get_cells {level_reg[*] state_reg[*] copy_reg[*]}]",
+    "set_multicycle_path 8 -setup -from $mcp_from -to $mcp_to",
+    "set_multicycle_path 7 -hold -from $mcp_from -to $mcp_to"
+   ]
+  }
+ ]
+}

@@ -24,6 +24,7 @@ Vivado 2025.2; and AMD UG903, UG906, UG835, UG949 (all v2025.2), cited by chapte
 | `drc_clean` | `drc.rpt` | NSTD-1, UCIO-1, ... |
 | `methodology_no_critical` | `methodology.rpt` | TIMING-n, XDC*, SYNTH-n, ... |
 | `cdc_no_critical` | `cdc.rpt` | CDC-n |
+| `post_synth_exceptions_clean`, `exceptions_clean` | `exceptions_{ignored,coverage}_<stage>.rpt`, `mcp_paths_<stage>.txt`, `vivado.log`, methodology | EXC-IGNORED, EXC-NO-PATH, EXC-XDC-MSG, EXC-MCP-ENABLE, TIMING-24/29/47, XDCH-1 |
 | `bitstream_present` | Vivado log | the first ERROR before `write_bitstream` |
 
 Fix order: clock definitions (TIMING-1/2/3/4/17), then clock relationships (TIMING-6/7/8), then I/O delays, then
@@ -50,6 +51,19 @@ logic. Ross resolves its "group 1" checks first for the same reason: clock fixes
 | `partial_input_delay` / `partial_output_delay` | min or max (or one edge) missing | give both |
 | `multiple_clock` | more than one clock reaches a register | usually a clock mux; constrain with `set_clock_groups -physically_exclusive` or case analysis |
 | `loops`, `latch_loops` | combinational loops | remove in RTL (TIMING-23) |
+
+## Timing exceptions (gates `post_synth_exceptions_clean`, `exceptions_clean`; brief 20)
+
+Each failure names the XDC file and line. Measured on Vivado 2025.2 (`results/20_timing_exceptions/exceptions_table.md`).
+
+| Finding | What it usually means | What to try |
+|---|---|---|
+| EXC-XDC-MSG (Vivado 12-4739) | a `get_cells`/`get_pins` in the exception matched nothing (a typo, or a name synthesis changed), so Vivado dropped the exception | read the post-synthesis cell names (`report name=utilization_synth.rpt`, the timing report's path) and fix the pattern |
+| EXC-IGNORED "Non-existent path" / EXC-NO-PATH | the objects exist but no timing path joins them | the exception is aimed at the wrong registers; find the real start and end points |
+| EXC-IGNORED "Totally overridden ... by CG", TIMING-24 | a clock group (or a false path) beats the max delay or multicycle | a clock group overrides every exception between its clocks: drop the group and keep the max delay, or the reverse |
+| TIMING-47 | false path, clock group or datapath-only max delay between clocks from one MMCM | the clocks are synchronous: let the tool time the path, or use a real CDC circuit and constrain it as one |
+| XDCH-1 | `-setup N` with no `-hold N-1`: the hold check moves N-1 cycles and fails | add `set_multicycle_path N-1 -hold` on the same `-from`/`-to` (FDA-CON-10 catches this before Vivado) |
+| EXC-MCP-ENABLE | a multicycle path whose start or end register loads on every clock (CE tied), or whose registers share no enable; or `-start`/`-end` counting the slower clock | write the multicycle only on registers the enable loads, named by a property or by the enable; Vivado raised no TIMING-46 for this in 2025.2 |
 
 ## Methodology checks (`methodology.rpt`)
 

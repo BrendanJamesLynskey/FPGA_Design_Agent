@@ -12,7 +12,16 @@ Rules (raw findings, rule id plus the offending line; no fix hints):
 - ``FDA-CON-4`` two ports on one package pin, or a pin the master XDC does not use. (Ports may have the design's
   own names: the pin and I/O standard are checked against the master by PIN, 05c2.)
 - ``FDA-CON-5`` a ``set_false_path`` or ``set_clock_groups -asynchronous`` with no comment in the eight lines above
-  (waivers carry a reason, UG949 ch. 5/6).
+  (waivers carry a reason, UG949 ch. 5/6). Brief 20 extends it to ``set_multicycle_path`` (the comment must name the
+  enable that makes the path multi-cycle: a word such as enable, en, CE, "1 in N", "every N") and to
+  ``set_max_delay -datapath_only`` (the comment must name the synchroniser or crossing structure: sync, synchroniser,
+  ASYNC_REG, Gray, handshake, FIFO, XPM).
+- ``FDA-CON-10`` (brief 20) a ``set_multicycle_path N -setup`` with no ``set_multicycle_path N-1 -hold`` on the same
+  ``-from``/``-through``/``-to`` (any ``-start``/``-end`` choice): the hold check then moves N-1 cycles with the
+  capture edge (UG903 ch. 5; brief 20 E2 measured it: Vivado raises only XDCH-1, a Warning, and hold fails by 4.7 ns at
+  200 MHz). Allowed only
+  when a comment above says the hold check stays at its default on purpose ("hold" with "default", "intentional" or
+  "on purpose").
 - ``FDA-CON-8`` (``check_top_ports``) a port that ``spec.yaml`` declares is not a port of the top module. The hidden
   bench of a task is written against the spec's ports, so a port the design "does not need" must still exist.
 - ``FDA-CON-9`` (``check_top_ports``) the board's USB-UART is a pair (``board.yaml`` ``uart``): when the design uses the
@@ -35,6 +44,30 @@ from tools.inventory_check import parse_xdc
 _CLOCK = re.compile(r"create_clock\b.*?get_ports\s*\{?\s*([^\s}\]]+)", re.I)
 _DEDICATED = re.compile(r"CLOCK_DEDICATED_ROUTE\s+(FALSE|0)", re.I)
 _WAIVER = re.compile(r"\b(set_false_path|set_clock_groups\b.*-asynchronous)", re.I)
+_MULTICYCLE = re.compile(r"\bset_multicycle_path\b", re.I)
+_DATAPATH_ONLY = re.compile(r"\bset_max_delay\b.*-datapath_only", re.I)
+_ENABLE_WORDS = re.compile(r"\b(enable[sd]?|en|ce|clock[- ]enable|1[- ]in[- ]\d+|one (clock |cycle )?in \d+|every \d+|"
+                           r"every (second|other|third|fourth|\w+th)( \w+)? (clock|cycle|edge)s?)\b|_en\b|\ben_", re.I)
+_SYNC_WORDS = re.compile(r"(sync|synchroni[sz]|async_reg|gray|handshake|fifo|xpm|crossing)", re.I)
+_HOLD_WAIVER = re.compile(r"hold\b.*\b(default|intentional|on purpose)|\b(default|intentional|on purpose)\b.*\bhold", re.I)
+
+
+def _comments_above(lines: list[str], n: int) -> list[str]:
+    """The comment lines among the eight lines above line ``n`` (1-based)."""
+    return [l for l in lines[max(0, n - 9):n - 1] if l.lstrip().startswith("#")]
+
+
+def _mcp_key(code: str) -> tuple[str, int | None, str, str]:
+    """(kind, N, edge, path) of a set_multicycle_path line: kind setup/hold, edge start/end (the default for the kind
+    when not given), path = the -from/-through/-to text with whitespace normalised."""
+    kind = "hold" if re.search(r"-hold\b", code) else "setup"
+    edge = "start" if re.search(r"-start\b", code) else "end" if re.search(r"-end\b", code) else (
+        "end" if kind == "setup" else "start")
+    m = re.search(r"set_multicycle_path\s+(?:-\w+\s+)*?(\d+)\b", code)
+    n = int(m.group(1)) if m else None
+    rest = re.sub(r"-(setup|hold|start|end)\b", " ", code.split("set_multicycle_path", 1)[1])
+    rest = re.sub(r"(?<![\w\[])\d+(?![\w\]])", " ", rest, count=1)
+    return kind, n, edge, " ".join(rest.replace(";", " ").split())
 
 
 # Buses whose bits benchmark specs name as scalar ports (JA1, QSPI_DQ0, ACL_INT1): Pmod and connector pins.
@@ -89,8 +122,15 @@ def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
             add("FDA-CON-1", n, f"create_clock on port {m.group(1)}, which is not the board's clock input {clock_port}")
         if _DEDICATED.search(code):
             add("FDA-CON-2", n, "CLOCK_DEDICATED_ROUTE FALSE disables the dedicated clock-route check")
-        if _WAIVER.search(code) and not any(l.lstrip().startswith("#") for l in lines[max(0, n - 9):n - 1]):
+        if _WAIVER.search(code) and not _comments_above(lines, n):
             add("FDA-CON-5", n, "timing waiver without a comment line above it")
+        if _MULTICYCLE.search(code) and not any(_ENABLE_WORDS.search(c) for c in _comments_above(lines, n)):
+            add("FDA-CON-5", n, "multicycle path without a comment above it that names the enable making the path "
+                                "multi-cycle")
+        if _DATAPATH_ONLY.search(code) and not any(_SYNC_WORDS.search(c) for c in _comments_above(lines, n)):
+            add("FDA-CON-5", n, "set_max_delay -datapath_only without a comment above it that names the synchroniser or "
+                                "crossing it bounds")
+    out += _multicycle_pairs(lines)
     seen: dict[str, str] = {}
     master_ports = set(master)
     for port, (pin, std) in mine.items():
@@ -110,6 +150,31 @@ def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
         if pin in seen and seen[pin] != port:
             add("FDA-CON-4", n, f"{port} on {pin}, which port {seen[pin]} already uses")
         seen.setdefault(pin, port)
+    return out
+
+
+def _multicycle_pairs(lines: list[str]) -> list[dict[str, Any]]:
+    """FDA-CON-10: every ``-setup N`` multicycle has a ``-hold N-1`` on the same path (or a comment
+    above saying the hold check stays at its default on purpose)."""
+    setups, holds = [], set()
+    for n, line in enumerate(lines, 1):
+        code = line.split("#", 1)[0]
+        if not _MULTICYCLE.search(code):
+            continue
+        kind, k, edge, path = _mcp_key(code)
+        if kind == "hold":
+            holds.add((k, path))
+        else:
+            setups.append((n, k, edge, path))
+    out = []
+    for n, k, edge, path in setups:
+        if k is None or k < 2 or (k - 1, path) in holds:
+            continue
+        if any(_HOLD_WAIVER.search(c) for c in _comments_above(lines, n)):
+            continue
+        out.append({"rule": "FDA-CON-10", "line": n, "text": lines[n - 1].strip(),
+                    "message": f"set_multicycle_path {k} -setup has no set_multicycle_path {k - 1} -hold on the same path: the "
+                               f"hold check moves {k - 1} cycles later with the capture edge"})
     return out
 
 
