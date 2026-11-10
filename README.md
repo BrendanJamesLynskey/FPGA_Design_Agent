@@ -218,6 +218,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
              design_standards.md (v1.0: the rule table and how each rule is checked);
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph; benchmark tasks as agent runs, 07a2-prep); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing); test_writer.md (the 05g test-writer diagnosis, turn trace, formal re-plan, QoR gate);
+             project_mode_parity.md (what project mode and the wizards give that non-project mode does not, measured; cross-probing);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped);
              eval/eval1_preregistration.md (the eval-1 held-out evaluation, fixed before any scored run)
 ```
@@ -240,6 +241,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 08f | `eval-2` build: independent spec-only test role and gate after V2/V3 (`--spec-tests`, off by default), golden request test against `eval-1`, offline replay on saved designs ([docs/verification.md](docs/verification.md), [results/08f](results/08f/), [agent/graph/spectest.py](agent/graph/spectest.py), [tools/spectest_replay.py](tools/spectest_replay.py)) | merged |
 | 11b | CDC soak rig, phase 2a: the 13 correct variants and 11 mutant types (28 codes) on three clock domains, checkers, UART readout, Tj stop; simulated with metastability injection and reset storms, built in Vivado; no board run yet ([hil/cdc_soak](hil/cdc_soak/README.md)) | merged |
 | 16 | Stronger CDC gate: structural check of every asynchronous path in the netlist ([flow/cdc_structure.py](flow/cdc_structure.py), [flow/cdc_paths.tcl](flow/cdc_paths.tcl)) and the design's own tests with synchroniser-delay injection ([flow/cdc_inject.py](flow/cdc_inject.py), [flow/cdc_inject_run.py](flow/cdc_inject_run.py)), proved against the rig's mutants ([flow/tests/fixtures/cdc_mutants](flow/tests/fixtures/cdc_mutants), [results/16_cdc_gate](results/16_cdc_gate/mutant_table.md)) | merged |
+| 18 | Project-mode parity: inventory of what project mode and each wizard give, measured in batch (Clocking Wizard against the hand M/D/O search, MIG through implementation, FIFO/XADC/GT/PS7/block automation); machine-readable cross-probing (`xprobe.json`, SVG device map, evidence for the repair visit) ([docs/project_mode_parity.md](docs/project_mode_parity.md), [flow/xprobe.py](flow/xprobe.py), [results/project_parity](results/project_parity)) | open PR |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |
 | F3 | Scored runs | coming |

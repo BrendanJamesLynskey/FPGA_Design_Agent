@@ -488,7 +488,22 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         "bitstream": {"file": bit.name, "bytes": bit.stat().st_size if bit.exists() else 0} if routed else None,
         "build_stamp": prep.get("build_stamp"),
         "sources_sha256": prep.get("sources_sha256"),
+        **_xprobe_evidence(d),
     }
+
+
+def _xprobe_evidence(d: Path) -> dict[str, Any]:
+    """Evidence only (brief 18): the cross-probe summary when the build ran with FDA_XPROBE=1; no gate reads it, and a
+    build without xprobe.json gets no extra key (so the results and the golden requests do not change)."""
+    f = d / "xprobe.json"
+    if not f.is_file():
+        return {}
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import xprobe
+        return {"xprobe": xprobe.summary(json.loads(f.read_text()))}
+    except (OSError, ValueError, KeyError, ImportError) as e:
+        return {"xprobe": {"error": f"{type(e).__name__}: {e}"}}
 
 
 def main(argv: list[str] | None = None) -> int:
