@@ -1,7 +1,7 @@
 # FPGA_Design_Agent
 
 An open-source agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGAs, with every result measured.
-Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)).
+Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)); [the agent](https://fpga-design-agent.vercel.app/agent) shows its architecture and LangGraph.
 
 **What it does today.** Given a short request, the agent interviews the user (or, in an evaluation, a stand-in that
 answers only from a hidden full spec), plans the design, writes SystemVerilog and its tests, and drives Vivado 2025.2
@@ -15,7 +15,9 @@ through Claude Code.
 agent's own checks passed and the hidden tests failed, each time because it read the spec differently from the test
 author; the fixes made since are not yet measured ([results](https://fpga-design-agent.vercel.app/results),
 from `results/course/*/run_*.json`). A hand-written reference design passes all its tests on the board
-([F0B](#bring-up-on-hardware-f0b)); no agent-built design has been on a board yet.
+([F0B](#bring-up-on-hardware-f0b)). One agent-built design (Deep Agents smoke run luna 7 on T1) has been programmed onto the
+board: UART tests 3 of 3 passed and the ILA captures failed ([record](results/f2/agent_luna_05c2_run7_bringup.json)), so no
+design the agent built has yet passed every test on the board.
 
 **What is not yet shown.** There is no held-out score. Development tasks are the ones used to find and fix faults,
 so their results are a record of the work, not a measure of how the agent does on new tasks. The first held-out
@@ -258,6 +260,8 @@ site/        the showcase site (static, Vercel): export.py (results -> data), bu
              leak_guard.py, src/, data/, public/, tests/; the preview link is in the pull request;
              problem catalogue: catalogue.yaml + catalogue_parts/ (domains, descriptions), catalogue_pages.py,
              traces/ (one adapter per task that runs its hidden/model.py for the page animation)
+             agent page ("The agent"): agent_arch.py (the LangGraph and role agents read from agent/graph -> data/agent_graph.json),
+             agent_page.py (its SVG figures); a site test fails if the drawn graph differs from the compiled one
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
