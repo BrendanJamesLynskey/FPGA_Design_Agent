@@ -2,61 +2,76 @@
  "pass": "requirements",
  "budget": 12,
  "drafter_repairs": 0,
- "requirements": 9,
- "asked": 4,
+ "requirements": 12,
+ "asked": 5,
  "answered": 3,
- "defaulted": 1,
+ "defaulted": 2,
  "questions": [
   {
    "id": "P1-1",
-   "text": "What shell command, response, and register-addressing format should be used for sample writes, gain writes, and sample_out reads?",
-   "default": "Use ASCII line commands `S <signed-decimal>`, `G <unsigned-decimal>`, and `R`, with a response for each command and a startup identifier `PWMA`.",
-   "reason": "The specification requires these shell operations and the design ID but does not define the protocol or register map.",
-   "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
-   "status": "answered",
-   "by": "oracle",
-   "evidence": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0",
-   "settles": [
-    "S-3"
-   ]
-  },
-  {
-   "id": "P1-2",
-   "text": "When during a PWM period should the duty be captured, and what should the PWM counter and duty be initialized to on reset?",
-   "default": "Capture the duty at counter rollover for the upcoming period; reset the counter to 0 and the duty to 512.",
-   "reason": "The specification gives the update rate and comparison rule but not the capture edge or PWM reset phase.",
-   "answer": "Capture the duty at counter rollover for the upcoming period; reset the counter to 0 and the duty to 512.",
+   "text": "What UART command and response format shall the shell use for sample writes, gain writes, and sample_out reads?",
+   "default": "Use line-oriented ASCII commands: S followed by a four-digit hexadecimal two's-complement sample, G followed by a four-digit hexadecimal gain, and R to read sample_out as four hexadecimal digits.",
+   "reason": "The required shell operations and baud rate are specified, but the framing, command syntax, numeric encoding, and response format are not.",
+   "answer": "Use line-oriented ASCII commands: S followed by a four-digit hexadecimal two's-complement sample, G followed by a four-digit hexadecimal gain, and R to read sample_out as four hexadecimal digits.",
    "status": "defaulted",
    "by": "oracle",
    "evidence": null,
    "settles": [
-    "S-4"
+    "S-5"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "What are the exact USB-UART top-level port names and directions?",
+   "default": "Use the Nexys A7 master-XDC names UART_TXD_IN as an input and UART_RXD_OUT as an output.",
+   "reason": "The specification requires the USB-UART pins to use master-XDC names but does not enumerate them.",
+   "answer": "UART_TXD_IN is an input; UART_RXD_OUT is an output.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}\n  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}",
+   "settles": [
+    "S-11"
    ]
   },
   {
    "id": "P1-3",
-   "text": "Should CPU_RESETN reset assertion be synchronous or asynchronous?",
-   "default": "Use asynchronous active-low assertion.",
-   "reason": "The reset values are specified, but reset assertion timing is not.",
-   "answer": "Asynchronous active-low assertion; reset release is synchronized to the clock.",
+   "text": "At what point in the PWM period should a changed duty value take effect?",
+   "default": "Latch the duty value when the counter wraps from 1023 to 0 and use it for the following period.",
+   "reason": "The specification says duty is updated once per period but does not define the boundary or how mid-period changes are handled.",
+   "answer": "Latch the changed duty value when the counter wraps, for use in the following period.",
    "status": "answered",
    "by": "oracle",
-   "evidence": "  kind: asynchronous button, synchronised (asserts at once, releases on the clock)",
+   "evidence": "- 10-bit counter; duty = 512 + (sample_out >>> 7) latched when the counter wraps (reset value 512)",
    "settles": [
-    "S-6"
+    "S-7"
    ]
   },
   {
    "id": "P1-4",
-   "text": "What defaults and representation should be used for CLKS_PER_BIT, TIMEOUT_CYCLES, and BUILD_STAMP?",
-   "default": "Use integer parameters with CLKS_PER_BIT=868, TIMEOUT_CYCLES=10000000, and BUILD_STAMP=32'h00000000.",
-   "reason": "The parameters must be exposed but their defaults and the BUILD_STAMP representation are unspecified; 868 approximates 115200 baud from 100 MHz.",
-   "answer": "CLKS_PER_BIT is 868 and TIMEOUT_CYCLES is 100000, not 10000000. Their representation and any BUILD_STAMP default are not specified.",
+   "text": "What reset behavior and phase should the PWM counter have under CPU_RESETN?",
+   "default": "Reset the counter to zero while CPU_RESETN is asserted so PWM starts at a deterministic phase.",
+   "reason": "The specified reset effects cover the gain and sample but do not state whether reset affects the PWM counter.",
+   "answer": "Reset the counter to zero while CPU_RESETN is asserted so PWM starts at a deterministic phase.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-4",
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-5",
+   "text": "Should CPU_RESETN be treated synchronously or asynchronously to CLK100MHZ?",
+   "default": "Treat it as an active-low synchronous reset sampled on CLK100MHZ.",
+   "reason": "The reset polarity is given by the port name, but its timing relationship to the clock is not specified.",
+   "answer": "CPU_RESETN is an active-low asynchronous reset: it asserts immediately and releases synchronously to CLK100MHZ. The proposed synchronous-reset default is not correct.",
    "status": "answered",
    "by": "oracle",
-   "evidence": "  CLKS_PER_BIT: 868\n  TIMEOUT_CYCLES: 100000",
+   "evidence": "port: CPU_RESETN\n  polarity: active_low\n  kind: asynchronous button, synchronised (asserts at once, releases on the clock)",
    "settles": [
-    "S-7"
+    "S-4",
+    "S-6"
    ]
   }
  ]

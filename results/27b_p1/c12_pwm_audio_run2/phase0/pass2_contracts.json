@@ -1,0 +1,273 @@
+{
+ "pass": "contracts",
+ "budget": 40,
+ "drafter_repairs": {
+  "draft": 1,
+  "apply": 0
+ },
+ "modules": [
+  "audio_gain",
+  "pwm_audio"
+ ],
+ "connections": [],
+ "fields": 23,
+ "stated_in_spec": 12,
+ "asked": 11,
+ "answered": 5,
+ "defaulted": 6,
+ "stated": [
+  {
+   "fields": [
+    "audio_gain.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "The block must close timing at 100 MHz."
+  },
+  {
+   "fields": [
+    "audio_gain.contract.resets.rst_n"
+   ],
+   "quote": "CPU_RESETN resets the gain to its default and clears the sample."
+  },
+  {
+   "fields": [
+    "audio_gain.contract.ports.sample"
+   ],
+   "quote": "The audio sample is a signed 16-bit number that may be changed at any time and is held between samples."
+  },
+  {
+   "fields": [
+    "audio_gain.contract.ports.gain"
+   ],
+   "quote": "There is a gain register and a way to write it."
+  },
+  {
+   "fields": [
+    "audio_gain.contract.ports.sample_out"
+   ],
+   "quote": "The sample after the volume, `sample_out` (signed 16 bits), is available combinationally from the sample and the gain register."
+  },
+  {
+   "fields": [
+    "pwm_audio.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "The block must close timing at 100 MHz."
+  },
+  {
+   "fields": [
+    "pwm_audio.contract.resets.rst_n"
+   ],
+   "quote": "CPU_RESETN resets the gain to its default and clears the sample."
+  },
+  {
+   "fields": [
+    "pwm_audio.contract.ports.sample_out"
+   ],
+   "quote": "The duty value is `512 + floor(sample_out / 128)` (mid-scale 512 for silence), updated once per period."
+  },
+  {
+   "fields": [
+    "design.resets.rst_sys"
+   ],
+   "quote": "CPU_RESETN resets the gain to its default and clears the sample."
+  },
+  {
+   "fields": [
+    "design.shell.design_id"
+   ],
+   "quote": "The design ID is \"PWMA\"."
+  },
+  {
+   "fields": [
+    "design.board_ports.UART_TXD_IN"
+   ],
+   "quote": "the USB-UART pins"
+  },
+  {
+   "fields": [
+    "design.board_ports.UART_RXD_OUT"
+   ],
+   "quote": "the USB-UART pins"
+  }
+ ],
+ "bad_quotes": [
+  "audio_gain.contract.registers",
+  "design.board_ports.AUD_PWM",
+  "design.board_ports.AUD_SD",
+  "design.board_ports.CLK100MHZ",
+  "design.board_ports.CPU_RESETN",
+  "design.board_ports.LED[15:0]",
+  "design.clocks.clk_sys",
+  "design.modules.audio_gain.window_base",
+  "pwm_audio.contract.ports.AUD_PWM",
+  "pwm_audio.contract.ports.AUD_SD",
+  "pwm_audio.contract.ports.LED"
+ ],
+ "questions": [
+  {
+   "id": "P2-1",
+   "text": "What is the register map of audio_gain: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
+   "default": "[{name: SAMPLE, offset: 0, access: RW, reset: 0}, {name: GAIN, offset: 1, access: WO, reset: 0}, {name: SOUT, offset: 2, access: RO, reset: 0}]",
+   "reason": "The oracle specifies reset 0 for the shell-visible register map; the gain state itself resets to 2068 as required. The GAIN register is write-only, and its reads return 0.",
+   "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0",
+   "fields": [
+    "audio_gain.contract.registers"
+   ],
+   "draft_value": "[{name: SAMPLE, offset: 0, access: RW, reset: 0}, {name: GAIN, offset: 1, access: WO, reset: 0}, {name: SOUT, offset: 2, access: RO, reset: 0}]",
+   "final_value": "[{name: SAMPLE, offset: 0, access: RW, reset: 0}, {name: GAIN, offset: 1, access: WO, reset: 0}, {name: SOUT, offset: 2, access: RO, reset: 0}]"
+  },
+  {
+   "id": "P2-2",
+   "text": "What is pwm_audio's port AUD_PWM: its direction, width and value in reset?",
+   "default": "{dir: out}",
+   "reason": "The pin is implemented as a low-or-high-impedance output and is never driven high.",
+   "answer": "{dir: out}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "pwm_audio.contract.ports.AUD_PWM"
+   ],
+   "draft_value": "{dir: out}",
+   "final_value": "{dir: out}"
+  },
+  {
+   "id": "P2-3",
+   "text": "What is pwm_audio's port AUD_SD: its direction, width and value in reset?",
+   "default": "{dir: out, reset_value: 1}",
+   "reason": "A constant-high output implements the specified always-enabled amplifier behavior.",
+   "answer": "{dir: out, reset_value: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "pwm_audio.contract.ports.AUD_SD"
+   ],
+   "draft_value": "{dir: out, reset_value: 1}",
+   "final_value": "{dir: out, reset_value: 1}"
+  },
+  {
+   "id": "P2-4",
+   "text": "What is pwm_audio's port LED: its direction, width and value in reset?",
+   "default": "{dir: out, width: 16, reset_value: 0}",
+   "reason": "A constant-zero output implements the specified leave-LED-off requirement.",
+   "answer": "{dir: out, width: 16, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "pwm_audio.contract.ports.LED"
+   ],
+   "draft_value": "{dir: out, width: 16, reset_value: 0}",
+   "final_value": "{dir: out, width: 16, reset_value: 0}"
+  },
+  {
+   "id": "P2-5",
+   "text": "Which clock is clk_sys: its frequency and where it comes from?",
+   "default": "{source: board, mhz: 100, port: CLK100MHZ}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{'source': 'board oscillator', 'mhz': 100, 'port': 'CLK100MHZ'}",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}",
+   "fields": [
+    "design.clocks.clk_sys"
+   ],
+   "draft_value": "{source: board, mhz: 100, port: CLK100MHZ}",
+   "final_value": "{source: board, mhz: 100, port: CLK100MHZ}"
+  },
+  {
+   "id": "P2-6",
+   "text": "At which offset of the shell's register window do audio_gain's registers start?",
+   "default": "0",
+   "reason": "The test shell window is 0x80-0xFF; relative window_base 0x00 places the register map at the start of that window.",
+   "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0",
+   "fields": [
+    "design.modules.audio_gain.window_base"
+   ],
+   "draft_value": "0",
+   "final_value": "0"
+  },
+  {
+   "id": "P2-7",
+   "text": "What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: in, drive: input, to: clk_sys}",
+   "reason": "The board clock is an input and directly drives clk_sys.",
+   "answer": "{dir: in, drive: input, to: clk_sys}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.CLK100MHZ"
+   ],
+   "draft_value": "{dir: in, drive: input, to: clk_sys}",
+   "final_value": "{dir: in, drive: input, to: clk_sys}"
+  },
+  {
+   "id": "P2-8",
+   "text": "What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: in, drive: input, to: rst_sys}",
+   "reason": "The board reset pin is an input used to derive rst_sys.",
+   "answer": "CPU_RESETN is an input on pin C12. Its push-pull/open-drain/pull-up drive mode and connection to rst_sys are not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}",
+   "fields": [
+    "design.board_ports.CPU_RESETN"
+   ],
+   "draft_value": "{dir: in, drive: input, to: rst_sys}",
+   "final_value": "{dir: in, drive: input, to: rst_sys}"
+  },
+  {
+   "id": "P2-9",
+   "text": "What does the board pin AUD_PWM connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: open-drain, from: pwm_audio.AUD_PWM}",
+   "reason": "The pin must only be pulled low or released, so it is represented as an open-drain board output.",
+   "answer": "{dir: out, drive: open-drain, from: pwm_audio.AUD_PWM}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.AUD_PWM"
+   ],
+   "draft_value": "{dir: out, drive: open-drain, from: pwm_audio.AUD_PWM}",
+   "final_value": "{dir: out, drive: open-drain, from: pwm_audio.AUD_PWM}"
+  },
+  {
+   "id": "P2-10",
+   "text": "What does the board pin AUD_SD connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: pwm_audio.AUD_SD}",
+   "reason": "The amplifier enable is specified to remain high, so it is a push-pull output.",
+   "answer": "{dir: out, drive: push-pull, from: pwm_audio.AUD_SD}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.AUD_SD"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: pwm_audio.AUD_SD}",
+   "final_value": "{dir: out, drive: push-pull, from: pwm_audio.AUD_SD}"
+  },
+  {
+   "id": "P2-11",
+   "text": "What does the board pin LED[15:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: pwm_audio.LED}",
+   "reason": "The required 16-bit LED output is left off and is driven push-pull.",
+   "answer": "LED[15:0] connects to pins [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11] and is an output. Its drive type and any pull-up are not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}",
+   "fields": [
+    "design.board_ports.LED[15:0]"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: pwm_audio.LED}",
+   "final_value": "{dir: out, drive: push-pull, from: pwm_audio.LED}"
+  }
+ ],
+ "unasked_changes": []
+}

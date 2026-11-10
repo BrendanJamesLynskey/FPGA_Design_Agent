@@ -17,23 +17,32 @@ Runs in the order made. The harness was changed twice after reading a run (never
   and a board pin whose direction disagrees with the board (master XDC sections, inventory `dir`).
 - after `pilot1_run5` (the median latency, 1651, was "stated" by a quote with no number in it, so never
   asked): a quote states a field only if it holds every number of the field's value.
-`pilot1` (run 6) ran with the final harness. `c12_pwm_audio` (run 2) ran before the last three changes. The last column re-checks every run's files with today's checker. Each row is a single run.
+`pilot1` (run 7) and `c12_pwm_audio` (run 3) ran with the final harness; for run 7 the pilot oracle's file
+also says the owner's choices win where the tasks' text differs (planner, after run 6; `prepare.py`).
+The last column re-checks every run's files with today's checker. Each row is a single run.
 
-**Owner choice 2 in run 6.** The median latency was asked (question order and shares fixed it) and the oracle
+**Owner choice 2 in run 6** (before the precedence line). The median latency was asked (question order and shares fixed it) and the oracle
 answered "1 clock cycle", quoting the `c9_median3x3` task ("exactly 1 clock: the result of a window
 presented in clock n is seen in clock n + 1"): that task filters a presented window, the pilot's median a
 raster with line buffers. The oracle's hidden file holds both that line and the owner's "Median latency
 H_TOTAL + 2." and nothing says which wins, so the choice is lost in the oracle, not in the harness.
+
+**Run 7** (with the precedence line): choices 2 and 3 hold. Choice 1 holds on the source-to-median link
+(answered, quoting the owner's choice) but not on the median-to-VGA link: the oracle said "not specified" for
+that link's back-pressure, so the drafter's `true` stays, written down as open assumption A-20 (its gap field
+was answered `false` from the same quote). Single run; the oracle's answers vary between near-identical questions.
 
 | Spec | Modules | Pass 1 asked / answered / assumptions | Contract and design fields | Stated by a spec quote | Pass 2 asked / answered / assumptions | Assumptions written | Files valid | Calls | Tokens (in / out) | USD | Today's checker |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | pilot1_run1 | video_timing, median_filter, vga_output | 6 / 2 / 4 | 60 | 16 | 44 / 15 / 29 | 33 | yes | 51 | 222714 / 54522 | 0.0339 | 2 errors |
 | pilot1_run2 | video_timing, color_bars, median_filter, frame_counter, video_cdc, video_output, video_control | 6 / 2 / 4 | 82 | 15 | 67 / 4 / 63 | 67 | yes | 50 | 194446 / 37839 | 0.0243 | 6 errors |
 | c12_pwm_audio_run1 | c12_nexys_pwm_audio_top, audio_state, pwm_stage | 3 / 1 / 2 | 34 | 22 | 12 / 4 / 8 | 10 | yes | 19 | 72390 / 30099 | 0.0187 | 2 errors |
-| c12_pwm_audio | audio_gain, pwm_audio | 4 / 3 / 1 | 23 | 12 | 11 / 5 / 6 | 7 | yes | 16 | 50430 / 26603 | 0.0160 | 1 errors |
+| c12_pwm_audio_run2 | audio_gain, pwm_audio | 4 / 3 / 1 | 23 | 12 | 11 / 5 / 6 | 7 | yes | 16 | 50430 / 26603 | 0.0160 | 1 errors |
 | pilot1_run4 | pixel_clock, timing_gen, pattern_gen, median_filter, vga_output | 7 / 2 / 5 | 86 | 22 | 64 / 9 / 55 | 60 | yes | 53 | 309079 / 66135 | 0.0427 | 1 errors |
 | pilot1_run5 | video_source, median_filter, vga_output | 5 / 1 / 4 | 64 | 27 | 37 / 10 / 27 | 31 | yes | 46 | 299641 / 72051 | 0.0451 | valid |
-| pilot1 | pattern_timing, median_filter, vga_output | 6 / 1 / 5 | 66 | 8 | 58 / 14 / 44 | 49 | yes | 64 | 351751 / 74278 | 0.0470 | valid |
+| pilot1_run6 | pattern_timing, median_filter, vga_output | 6 / 1 / 5 | 66 | 8 | 58 / 14 / 44 | 49 | yes | 64 | 351751 / 74278 | 0.0470 | valid |
+| pilot1 | video_timing_pattern, median_filter, vga_output | 6 / 1 / 5 | 61 | 4 | 57 / 16 / 41 | 46 | yes | 65 | 362977 / 71986 | 0.0456 | valid |
+| c12_pwm_audio | c12_nexys_pwm_audio_top | 5 / 3 / 2 | 27 | 12 | 15 / 9 / 6 | 8 | yes | 23 | 79299 / 32879 | 0.0200 | valid |
 
 ## pilot1_run1
 
@@ -273,7 +282,7 @@ Unasked changes:
 
 - `audio_state.contract.registers`: [{name: SAMPLE, offset: 0, access: RW, reset: 0... -> [{name: SAMPLE, offset: 0, access: RW, reset: 0...
 
-## c12_pwm_audio
+## c12_pwm_audio_run2
 
 Drafter repairs: pass 1 0, pass 2 {'draft': 1, 'apply': 0}. Quotes that were not in the spec (so the field was asked): 11. Questions over the pass 2 budget: 0. Fields the drafter changed without being asked: 0. Calls by role: {'drafter': 4, 'oracle': 12}.
 
@@ -480,7 +489,7 @@ Unasked changes:
 - `design.board_ports.BTNC`: {dir: in, drive: input, to: video_source.button... -> {dir: in, drive: input, to: rst_pix}
 - `vga_output.contract.resets.rst`: {polarity: active_high, style: sync} -> {polarity: active_low, style: async}
 
-## pilot1
+## pilot1_run6
 
 Drafter repairs: pass 1 0, pass 2 {'draft': 2, 'apply': 2}. Quotes that were not in the spec (so the field was asked): 17. Questions over the pass 2 budget: 7. Fields the drafter changed without being asked: 6. Calls by role: {'drafter': 7, 'oracle': 57}.
 
@@ -574,6 +583,139 @@ Unasked changes:
 - `pattern_timing.contract.interfaces.out.tdata`: {width: 36, fields: [{name: x, bits: [35, 25], ... -> {width: 48, fields: [{name: x, bits: [47, 37], ...
 - `vga_output.contract.data_formats.channel`: {format: u4, packing: Unsigned VGA colour channel} -> {format: u8, packing: Unsigned 8-bit colour cha...
 - `vga_output.contract.interfaces.in.tdata`: {width: 36, fields: [{name: x, bits: [35, 25], ... -> {width: 48, fields: [{name: x, bits: [47, 37], ...
+
+## pilot1
+
+Drafter repairs: pass 1 0, pass 2 {'draft': 2, 'apply': 3}. Quotes that were not in the spec (so the field was asked): 8. Questions over the pass 2 budget: 6. Fields the drafter changed without being asked: 3. Calls by role: {'drafter': 8, 'oracle': 57}.
+
+Checks against facts fixed before the run:
+
+| Fact | Holds | Found |
+|---|---|---|
+| owner choice 1: a full-raster video stream with no back-pressure (every stream link: no back-pressure, no gaps) | no | [{'link': 'video_timing_pattern.out -> median_filter.in', 'protocol': 'axi4-stream', 'backpressure': [False... |
+| owner choice 2: median latency H_TOTAL + 2 | yes | ["median_filter: {'from': 'in', 'to': 'out', 'cycles': 'H_TOTAL + 2'}"] |
+| owner choice 3: shell registers at window base 0x00 | yes | {'video_timing_pattern': 0, 'vga_output': 0} |
+
+Pass 1 questions:
+
+| Question | Result | Settles |
+|---|---|---|
+| What source and criterion should be used for the pixel clock and its stable indication? | defaulted | S-1, S-5, S-6 |
+| What output colour-channel width and representation should be used for the VGA connector? | answered | S-2, S-5 |
+| How should the filter handle neighbourhoods at the active-picture edges where a full 3 x 3 window is unavai... | defaulted | S-3, S-4 |
+| Which selectable test patterns should the shell provide? | defaulted | S-2, S-7 |
+| What UART framing and command/response format should the test shell use? | defaulted | S-7 |
+| How should the frame counter advance, reset, and be represented when read? | defaulted | S-7 |
+
+Pass 2 questions (one per field the spec does not state; the fields each one settles):
+
+| Fields | Result | Draft value | Final value |
+|---|---|---|---|
+| video_timing_pattern.contract.resets.rst | assumption (oracle) | {polarity: active_high, style: sync} | {polarity: active_high, style: sync} |
+| video_timing_pattern.contract.ports.pattern_select | assumption (oracle) | {dir: in, width: 1} | {dir: in, width: 1} |
+| video_timing_pattern.contract.interfaces.out.protocol | assumption (oracle) | {protocol: axi4-stream, role: master} | {protocol: axi4-stream, role: master} |
+| video_timing_pattern.contract.interfaces.out.tdata<br>median_filter.contract.interfaces.in.tdata | assumption (oracle) | {width: 16, fields: [{name: rgb, bits: [11, 0],... | {width: 16, fields: [{name: rgb, bits: [11, 0],... |
+| video_timing_pattern.contract.interfaces.out.tuser<br>median_filter.contract.interfaces.in.tuser | assumption (oracle) | null | null |
+| video_timing_pattern.contract.interfaces.out.tlast<br>median_filter.contract.interfaces.in.tlast | assumption (oracle) | Assert on the final pixel clock of each raster ... | Assert on the final pixel clock of each raster ... |
+| video_timing_pattern.contract.interfaces.out.packet_beats<br>median_filter.contract.interfaces.in.packet_beats | assumption (oracle) | 1237500 | 1237500 |
+| video_timing_pattern.contract.interfaces.out.backpressure<br>median_filter.contract.interfaces.in.backpressure | answered | true | false |
+| video_timing_pattern.contract.interfaces.out.source_gaps<br>median_filter.contract.interfaces.in.source_gaps | answered | false | false |
+| video_timing_pattern.contract.registers | answered | [{name: PATTERN, offset: 0, access: RW, reset: 0}] | [{name: STATUS, offset: 0, access: RO, reset: 0}] |
+| video_timing_pattern.contract.throughput.out | assumption (oracle) | {beats_per_cycle: 1} | {beats_per_cycle: 1} |
+| median_filter.contract.resets.rst | answered | {polarity: active_high, style: sync} | {polarity: active_low, style: async} |
+| median_filter.contract.interfaces.in.protocol | assumption (oracle) | {protocol: axi4-stream, role: slave} | {protocol: axi4-stream, role: slave} |
+| median_filter.contract.interfaces.out.protocol | assumption (oracle) | {protocol: axi4-stream, role: master} | {protocol: axi4-stream, role: master} |
+| median_filter.contract.interfaces.out.tdata<br>vga_output.contract.interfaces.in.tdata | assumption (oracle) | {width: 16, fields: [{name: rgb, bits: [11, 0],... | {width: 16, fields: [{name: rgb, bits: [11, 0],... |
+| median_filter.contract.interfaces.out.tuser<br>vga_output.contract.interfaces.in.tuser | assumption (oracle) | null | null |
+| median_filter.contract.interfaces.out.tlast<br>vga_output.contract.interfaces.in.tlast | assumption (oracle) | Assert on the final pixel clock of each raster ... | Assert on the final pixel clock of each raster ... |
+| median_filter.contract.interfaces.out.packet_beats<br>vga_output.contract.interfaces.in.packet_beats | assumption (oracle) | 1237500 | 1237500 |
+| median_filter.contract.interfaces.out.backpressure<br>vga_output.contract.interfaces.in.backpressure | assumption (oracle) | true | true |
+| median_filter.contract.interfaces.out.source_gaps<br>vga_output.contract.interfaces.in.source_gaps | answered | false | false |
+| median_filter.contract.throughput.in | answered | {beats_per_cycle: 1} | {beats_per_cycle: 1, from: in, out_per_in: 1} |
+| median_filter.contract.throughput.out | answered | {beats_per_cycle: 1} | {beats_per_cycle: 1, from: in, out_per_in: 1} |
+| median_filter.contract.latency.in.out | answered | null | H_TOTAL + 2 |
+| vga_output.contract.resets.rst | assumption (oracle) | {polarity: active_high, style: sync} | {polarity: active_high, style: sync} |
+| vga_output.contract.ports.centre_button | assumption (oracle) | {dir: in, width: 1} | {dir: in, width: 1} |
+| vga_output.contract.ports.vga_r | assumption (oracle) | {dir: out, width: 4, reset_value: 0} | {dir: out, width: 4, reset_value: 0} |
+| vga_output.contract.ports.vga_g | assumption (oracle) | {dir: out, width: 4, reset_value: 0} | {dir: out, width: 4, reset_value: 0} |
+| vga_output.contract.ports.vga_b | assumption (oracle) | {dir: out, width: 4, reset_value: 0} | {dir: out, width: 4, reset_value: 0} |
+| vga_output.contract.ports.vga_hsync | answered | {dir: out, width: 1, reset_value: 0} | {dir: out, width: 1} |
+| vga_output.contract.ports.vga_vsync | assumption (oracle) | {dir: out, width: 1, reset_value: 0} | {dir: out, width: 1, reset_value: 0} |
+| vga_output.contract.ports.frame_count | assumption (oracle) | {dir: out, width: 32, reset_value: 0} | {dir: out, width: 32, reset_value: 0} |
+| vga_output.contract.interfaces.in.protocol | assumption (oracle) | {protocol: axi4-stream, role: slave} | {protocol: axi4-stream, role: slave} |
+| vga_output.contract.registers | assumption (oracle) | [{name: FRAME_COUNT, offset: 0, access: RO, res... | [{name: FRAME_COUNT, offset: 4, access: RO, res... |
+| design.clocks.clk_sys | answered | {source: board, mhz: 100, port: CLK100MHZ} | {source: board, mhz: 100, port: CLK100MHZ} |
+| design.clocks.clk_pix | answered | {source: mmcm, mhz: 74.25, from: clk_sys} | {source: mmcm, mhz: 74.25, from: clk_sys} |
+| design.resets.rst_sys | answered | {from: CPU_RESETN, polarity: active_low, style:... | {from: CPU_RESETN, polarity: active_low, style:... |
+| design.resets.rst_pix | assumption (oracle) | {from: rst_sys, polarity: active_high, style: s... | {from: rst_sys, polarity: active_high, style: s... |
+| design.modules.video_timing_pattern.window_base | answered | 0 | 0 |
+| design.modules.vga_output.window_base | answered | 4 | 0 |
+| video_timing_pattern.contract.data_formats.rgb444 | assumption (oracle) | {format: u12, packing: 'R[11:8], G[7:4], B[3:0]'} | {format: u12, packing: 'R[11:8], G[7:4], B[3:0]'} |
+| video_timing_pattern.contract.data_formats.bit | assumption (oracle) | {format: u1, packing: one Boolean raster or sta... | {format: u1, packing: one Boolean raster or sta... |
+| median_filter.contract.data_formats.rgb444 | assumption (oracle) | {format: u12, packing: 'R[11:8], G[7:4], B[3:0]'} | {format: u12, packing: 'R[11:8], G[7:4], B[3:0]'} |
+| median_filter.contract.data_formats.bit | assumption (oracle) | {format: u1, packing: one Boolean raster or sta... | {format: u1, packing: one Boolean raster or sta... |
+| vga_output.contract.data_formats.rgb444 | assumption (oracle) | {format: u12, packing: 'R[11:8], G[7:4], B[3:0]'} | {format: u12, packing: 'R[11:8], G[7:4], B[3:0]'} |
+| vga_output.contract.data_formats.bit | assumption (oracle) | {format: u1, packing: one Boolean raster or sta... | {format: u1, packing: one Boolean raster or sta... |
+| vga_output.contract.data_formats.count32 | assumption (oracle) | {format: u32, packing: unsigned 32-bit frame co... | {format: u32, packing: unsigned 32-bit frame co... |
+| design.board_ports.CLK100MHZ | assumption (oracle) | {dir: in, drive: input, to: clk_sys} | {dir: in, drive: input, to: clk_sys} |
+| design.board_ports.CPU_RESETN | assumption (oracle) | {dir: in, drive: input, to: rst_sys} | {dir: in, drive: input, to: rst_sys} |
+| design.board_ports.UART_TXD_IN | answered | {dir: in, drive: input, to: shell.uart_rx} | {dir: in, drive: input, to: shell.uart_rx} |
+| design.board_ports.UART_RXD_OUT | assumption (oracle) | {dir: out, drive: push-pull, from: shell.uart_tx} | {dir: out, drive: push-pull, from: shell.uart_tx} |
+| design.board_ports.BTNC | answered | {dir: in, drive: input, to: vga_output.centre_b... | {dir: in, drive: input, to: vga_output.centre_b... |
+| design.board_ports.VGA_R[3:0] | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.v... | {dir: out, drive: push-pull, from: vga_output.v... |
+| design.board_ports.VGA_G[3:0] | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.v... | {dir: out, drive: push-pull, from: vga_output.v... |
+| design.board_ports.VGA_B[3:0] | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.v... | {dir: out, drive: push-pull, from: vga_output.v... |
+| design.board_ports.VGA_HS | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.v... | {dir: out, drive: push-pull, from: vga_output.v... |
+| design.board_ports.VGA_VS | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.v... | {dir: out, drive: push-pull, from: vga_output.v... |
+| design.board_ports.LED[0] | assumption (limit) | {dir: out, drive: push-pull, from: clk_pix.locked} | {dir: out, drive: push-pull, from: clk_pix.locked} |
+
+Unasked changes:
+
+- `design.resets.rst_filter`: None -> {from: rst_sys, polarity: active_low, style: as...
+- `median_filter.contract.parameters.H_TOTAL`: None -> {default: 1650, values: [1650]}
+- `vga_output.contract.registers`: [{name: FRAME_COUNT, offset: 0, access: RO, res... -> [{name: FRAME_COUNT, offset: 4, access: RO, res...
+
+## c12_pwm_audio
+
+Drafter repairs: pass 1 0, pass 2 {'draft': 1, 'apply': 1}. Quotes that were not in the spec (so the field was asked): 3. Questions over the pass 2 budget: 0. Fields the drafter changed without being asked: 0. Calls by role: {'drafter': 5, 'oracle': 18}.
+
+Checks against facts fixed before the run:
+
+| Fact | Holds | Found |
+|---|---|---|
+| recorded c12 failure: AUD_PWM is open-drain (pulled low or released, never driven high) | yes | {'name': 'AUD_PWM', 'dir': 'out', 'drive': 'open-drain', 'from': 'c12_nexys_pwm_audio_top.AUD_PWM'} |
+| recorded c12 failure: the top has the 16-bit LED output (left off) | yes | [{'name': 'LED[15:0]', 'dir': 'out', 'drive': 'push-pull', 'from': 'c12_nexys_pwm_audio_top.LED'}] |
+| register map = the hidden spec's map (offset, name, access) | yes | [(0, 'SAMPLE', 'RW'), (1, 'GAIN', 'WO'), (2, 'SOUT', 'RO')] |
+
+Pass 1 questions:
+
+| Question | Result | Settles |
+|---|---|---|
+| What UART command and response format shall the shell use for sample writes, gain writes, and sample_out re... | defaulted | S-5 |
+| What are the exact USB-UART top-level port names and directions? | answered | S-11 |
+| At what point in the PWM period should a changed duty value take effect? | answered | S-7 |
+| What reset behavior and phase should the PWM counter have under CPU_RESETN? | defaulted | S-4, S-6 |
+| Should CPU_RESETN be treated synchronously or asynchronously to CLK100MHZ? | answered | S-4, S-6 |
+
+Pass 2 questions (one per field the spec does not state; the fields each one settles):
+
+| Fields | Result | Draft value | Final value |
+|---|---|---|---|
+| c12_nexys_pwm_audio_top.contract.parameters.CLKS_PER_BIT | answered | {default: 868, min: 1, max: 2147483647} | {default: 868} |
+| c12_nexys_pwm_audio_top.contract.parameters.TIMEOUT_CYCLES | answered | {default: 10000000, min: 1, max: 2147483647} | {default: 100000} |
+| c12_nexys_pwm_audio_top.contract.parameters.BUILD_STAMP | assumption (oracle) | {default: 0, min: 0, max: 2147483647} | {default: 0, min: 0, max: 2147483647} |
+| c12_nexys_pwm_audio_top.contract.ports.gain | assumption (oracle) | {dir: in, width: 16} | {dir: in, width: 16} |
+| c12_nexys_pwm_audio_top.contract.ports.sample_out | assumption (oracle) | {dir: out, width: 16, reset_value: 0} | {dir: out, width: 16, reset_value: 0} |
+| c12_nexys_pwm_audio_top.contract.ports.AUD_PWM | assumption (oracle) | {dir: out, width: 1, reset_value: 0} | {dir: out, width: 1, reset_value: 0} |
+| c12_nexys_pwm_audio_top.contract.ports.AUD_SD | answered | {dir: out, width: 1, reset_value: 1} | {dir: out, width: 1, reset_value: 1} |
+| c12_nexys_pwm_audio_top.contract.ports.LED | answered | {dir: out, width: 16, reset_value: 0} | {dir: out, width: 16} |
+| c12_nexys_pwm_audio_top.contract.registers | answered | [{name: SAMPLE, offset: 0, access: RW, reset: 0... | [{name: SAMPLE, offset: 0, access: RW, reset: 0... |
+| design.clocks.clk_sys | answered | {source: board, mhz: 100, port: CLK100MHZ} | {source: board, mhz: 100, port: CLK100MHZ} |
+| design.resets.rst_sys | answered | {from: CPU_RESETN, polarity: active_low, style:... | {from: CPU_RESETN, polarity: active_low, style:... |
+| design.modules.c12_nexys_pwm_audio_top.window_base | answered | 0 | 0 |
+| c12_nexys_pwm_audio_top.contract.data_formats.q15_gain | assumption (oracle) | {format: u16, packing: unsigned Q15 gain} | {format: u16, packing: unsigned Q15 gain} |
+| design.board_ports.UART_TXD_IN | answered | {dir: in, drive: input, to: shell.uart_rx} | {dir: in, drive: input, to: shell.uart_rx} |
+| design.board_ports.UART_RXD_OUT | assumption (oracle) | {dir: out, drive: push-pull, from: shell.uart_tx} | {dir: out, drive: push-pull, from: shell.uart_tx} |
 
 ## pilot1_run3 (stopped, no files written)
 

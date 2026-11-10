@@ -1,84 +1,80 @@
 [
  {
-  "question": "What boundary rule should the 3 x 3 filter use for neighbourhood samples beyond the active picture?",
-  "answer": "not specified"
- },
- {
-  "question": "Which patterns should be selectable through the UART?",
-  "answer": "not specified"
- },
- {
-  "question": "What UART command and response format should select a pattern and read the frame counter?",
-  "answer": "not specified"
- },
- {
-  "question": "How should the frame counter count frames, and what width and reset behavior should it have?",
-  "answer": "not specified"
- },
- {
-  "question": "What pixel-clock stability criterion should control the colour blanking and LED[0]?",
+  "question": "What source and criterion should be used for the pixel clock and its stable indication?",
   "refused": "quote not in the hidden spec",
-  "raw": "Use the video clock\u2019s locked indication: blank the colours when it is not asserted, and drive LED[0] from it."
+  "raw": "With SIM_DIRECT_CLOCK=0, generate the 74.25 MHz pixel clock from the 100 MHz input using an MMCM; treat the video clock\u2019s locked indication as the stable indication. In simulation, SIM_DIRECT_CLOCK=1 instead uses the input as the pixel clock and sets locked to 1."
  },
  {
-  "question": "What pixel-clock stability criterion should control the colour blanking and LED[0]?",
+  "question": "What source and criterion should be used for the pixel clock and its stable indication?",
   "answer": "not specified"
  },
  {
-  "question": "What colour-channel width should be used at the VGA output?",
-  "answer": "Use 4 bits per colour channel."
+  "question": "What output colour-channel width and representation should be used for the VGA connector?",
+  "answer": "Use 4 bits per RGB channel. The bars are FFF, FF0, 0FF, 0F0, F0F, F00, 00F, and 000 from left to right."
  },
  {
-  "question": "Is pattern_timing's reset pixel_reset active high or active low, and synchronous or asynchronous?",
+  "question": "How should the filter handle neighbourhoods at the active-picture edges where a full 3 x 3 window is unavailable?",
   "answer": "not specified"
  },
  {
-  "question": "What is pattern_timing's port pattern_select: its direction, width and value in reset?",
+  "question": "Which selectable test patterns should the shell provide?",
   "answer": "not specified"
  },
  {
-  "question": "What is pattern_timing's port frame_count: its direction, width and value in reset?",
+  "question": "What UART framing and command/response format should the test shell use?",
   "answer": "not specified"
  },
  {
-  "question": "What protocol does pattern_timing's interface out use, and is pattern_timing its master or slave?",
+  "question": "How should the frame counter advance, reset, and be represented when read?",
   "answer": "not specified"
  },
  {
-  "question": "What does a beat of pattern_timing.out carry: the tdata width and its fields with their formats?",
+  "question": "Is video_timing_pattern's reset rst active high or active low, and synchronous or asynchronous?",
   "answer": "not specified"
  },
  {
-  "question": "Does pattern_timing.out carry sideband bits in tuser, and what does each bit mean?",
+  "question": "What is video_timing_pattern's port pattern_select: its direction, width and value in reset?",
   "answer": "not specified"
  },
  {
-  "question": "What does tlast mark on pattern_timing.out, if anything?",
+  "question": "What protocol does video_timing_pattern's interface out use, and is video_timing_pattern its master or slave?",
   "answer": "not specified"
  },
  {
-  "question": "How many beats does a packet on pattern_timing.out have?",
+  "question": "What does a beat of video_timing_pattern.out carry: the tdata width and its fields with their formats?",
   "answer": "not specified"
  },
  {
-  "question": "May the sink of pattern_timing.out stall the stream (drive tready low)?",
-  "answer": "No. The stream has no back-pressure, so the sink may not stall it by driving tready low."
- },
- {
-  "question": "May the source of pattern_timing.out leave gaps (tvalid low) once the stream has started?",
-  "answer": "false"
- },
- {
-  "question": "What is the register map of pattern_timing: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
+  "question": "Does video_timing_pattern.out carry sideband bits in tuser, and what does each bit mean?",
   "answer": "not specified"
  },
  {
-  "question": "What throughput must pattern_timing.out sustain (beats per clock, and output beats per input beat)?",
-  "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
+  "question": "What does tlast mark on video_timing_pattern.out, if anything?",
+  "answer": "not specified"
  },
  {
-  "question": "Is median_filter's reset pixel_reset active high or active low, and synchronous or asynchronous?",
-  "answer": "The median filter's specified reset input (CPU_RESETN) is active-low, with asynchronous assertion and synchronous release. The internal signal `pixel_reset` is not specified."
+  "question": "How many beats does a packet on video_timing_pattern.out have?",
+  "answer": "not specified"
+ },
+ {
+  "question": "May the sink of video_timing_pattern.out stall the stream (drive tready low)?",
+  "answer": "False"
+ },
+ {
+  "question": "May the source of video_timing_pattern.out leave gaps (tvalid low) once the stream has started?",
+  "answer": "False"
+ },
+ {
+  "question": "What is the register map of video_timing_pattern: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
+  "answer": "The only listed video register is STATUS: offset 0, width not specified, reset value 0, access RO. PATTERN is not listed."
+ },
+ {
+  "question": "What throughput must video_timing_pattern.out sustain (beats per clock, and output beats per input beat)?",
+  "answer": "not specified"
+ },
+ {
+  "question": "Is median_filter's reset rst active high or active low, and synchronous or asynchronous?",
+  "answer": "The reset is active low, with asynchronous assertion and synchronous release."
  },
  {
   "question": "What protocol does median_filter's interface in use, and is median_filter its master or slave?",
@@ -110,7 +106,7 @@
  },
  {
   "question": "May the source of median_filter.out leave gaps (tvalid low) once the stream has started?",
-  "answer": "No; the accepted choice is a full-raster video stream with no back-pressure."
+  "answer": "False"
  },
  {
   "question": "What throughput must median_filter.in sustain (beats per clock, and output beats per input beat)?",
@@ -118,57 +114,57 @@
  },
  {
   "question": "What throughput must median_filter.out sustain (beats per clock, and output beats per input beat)?",
-  "refused": "quote not in the hidden spec",
-  "raw": "{'beats_per_clock': 1, 'output_beats_per_input_beat': 1}"
- },
- {
-  "question": "What throughput must median_filter.out sustain (beats per clock, and output beats per input beat)?",
-  "answer": "not specified"
+  "answer": "1 beat per clock; 1 output beat per input beat."
  },
  {
   "question": "What latency, in clock cycles, from median_filter.in to median_filter.out?",
-  "answer": "1 clock cycle"
+  "answer": "H_TOTAL + 2 clock cycles"
  },
  {
-  "question": "Is vga_output's reset pixel_reset active high or active low, and synchronous or asynchronous?",
+  "question": "Is vga_output's reset rst active high or active low, and synchronous or asynchronous?",
   "answer": "not specified"
  },
  {
-  "question": "What is vga_output's port pixel_stable: its direction, width and value in reset?",
+  "question": "What is vga_output's port centre_button: its direction, width and value in reset?",
   "answer": "not specified"
  },
  {
-  "question": "What is vga_output's port blank_button: its direction, width and value in reset?",
-  "answer": "not specified"
- },
- {
-  "question": "What is vga_output's port red: its direction, width and value in reset?",
-  "refused": "quote not in the hidden spec",
-  "raw": "VGA_R is an output, 4 bits wide. The colour output is 0 while BTNC is pressed or the video clock is not locked."
- },
- {
-  "question": "What is vga_output's port red: its direction, width and value in reset?",
-  "answer": "not specified"
- },
- {
-  "question": "What is vga_output's port green: its direction, width and value in reset?",
+  "question": "What is vga_output's port vga_r: its direction, width and value in reset?",
   "refused": "quote not in the hidden spec",
   "raw": "{'dir': 'out', 'width': 4, 'reset_value': 0}"
  },
  {
-  "question": "What is vga_output's port green: its direction, width and value in reset?",
+  "question": "What is vga_output's port vga_r: its direction, width and value in reset?",
   "answer": "not specified"
  },
  {
-  "question": "What is vga_output's port blue: its direction, width and value in reset?",
+  "question": "What is vga_output's port vga_g: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "{'dir': 'out', 'width': 4, 'reset_value': 0}"
+ },
+ {
+  "question": "What is vga_output's port vga_g: its direction, width and value in reset?",
   "answer": "not specified"
  },
  {
-  "question": "What is vga_output's port hsync: its direction, width and value in reset?",
+  "question": "What is vga_output's port vga_b: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "{'dir': 'out', 'width': 4, 'reset_value': 0}"
+ },
+ {
+  "question": "What is vga_output's port vga_b: its direction, width and value in reset?",
   "answer": "not specified"
  },
  {
-  "question": "What is vga_output's port vsync: its direction, width and value in reset?",
+  "question": "What is vga_output's port vga_hsync: its direction, width and value in reset?",
+  "answer": "The corresponding VGA_HS port is out, width 1; its value in reset is not specified."
+ },
+ {
+  "question": "What is vga_output's port vga_vsync: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port frame_count: its direction, width and value in reset?",
   "answer": "not specified"
  },
  {
@@ -176,75 +172,89 @@
   "answer": "not specified"
  },
  {
-  "question": "What throughput must vga_output.in sustain (beats per clock, and output beats per input beat)?",
-  "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
+  "question": "What is the register map of vga_output: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
+  "answer": "not specified"
  },
  {
-  "question": "Which clock is sys_clk: its frequency and where it comes from?",
-  "answer": "sys_clk is the 100 MHz clock from the board oscillator, on port CLK100MHZ."
+  "question": "Which clock is clk_sys: its frequency and where it comes from?",
+  "answer": "clk_sys is the 100 MHz board-oscillator clock on port CLK100MHZ."
  },
  {
-  "question": "Which clock is pixel_clk: its frequency and where it comes from?",
-  "answer": "In normal operation, pixel_clk is 74.25 MHz, generated by an MMCM from the 100 MHz input clock (sys_clk/CLK100MHZ). With SIM_DIRECT_CLOCK=1, the input clock is used directly as the pixel clock instead."
+  "question": "Which clock is clk_pix: its frequency and where it comes from?",
+  "answer": "clk_pix is 74.25 MHz, generated by an MMCM from the 100 MHz input clock when SIM_DIRECT_CLOCK=0. With SIM_DIRECT_CLOCK=1, the input clock is used directly as the pixel clock."
  },
  {
-  "question": "What resets the design's reset sys_reset (button or other source), and its polarity?",
-  "answer": "The reset input is CPU_RESETN, active-low. It asserts asynchronously and releases on the clock. For the video design, BTNC being pressed or the video clock not being locked also restarts the raster."
+  "question": "What resets the design's reset rst_sys (button or other source), and its polarity?",
+  "answer": "CPU_RESETN, an active-low asynchronous button reset (synchronised on release)."
  },
  {
-  "question": "What resets the design's reset pixel_reset (button or other source), and its polarity?",
-  "answer": "The specified reset port is CPU_RESETN, active-low. The raster also restarts when BTNC is pressed or the video clock is not locked. BTNC\u2019s polarity and a signal named pixel_reset are not specified."
+  "question": "What resets the design's reset rst_pix (button or other source), and its polarity?",
+  "answer": "not specified"
  },
  {
-  "question": "At which offset of the shell's register window do pattern_timing's registers start?",
+  "question": "At which offset of the shell's register window do video_timing_pattern's registers start?",
   "answer": "0x00"
  },
  {
-  "question": "What number format is raster_x in pattern_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "At which offset of the shell's register window do vga_output's registers start?",
+  "answer": "0x00"
+ },
+ {
+  "question": "What number format is rgb444 in video_timing_pattern (signed or unsigned, total and fraction bits), and how is it packed?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is raster_y in pattern_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What number format is bit in video_timing_pattern (signed or unsigned, total and fraction bits), and how is it packed?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is channel in pattern_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What number format is rgb444 in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is flag in pattern_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What number format is bit in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is raster_x in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What number format is rgb444 in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is raster_y in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What number format is bit in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is channel in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
-  "answer": "Signedness and fraction bits are not specified. Each pixel is 8 bits; pixel p is packed into bits [8*(p mod 3)+7 : 8*(p mod 3)] of register p div 3 of the window."
- },
- {
-  "question": "What number format is flag in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What number format is count32 in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is raster_x in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "refused": "quote not in the hidden spec",
+  "raw": "CLK100MHZ is an input on pin E3, sourced by the board oscillator. Its electrical drive mode (push-pull, open-drain, or pull-up) is not specified."
+ },
+ {
+  "question": "What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is raster_y in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "refused": "quote not in the hidden spec",
+  "raw": "CPU_RESETN is an input on board pin C12 and is an active-low asynchronous reset. Whether it is push-pull, open-drain, or pulled up is not specified."
+ },
+ {
+  "question": "What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is channel in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What does the board pin UART_TXD_IN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "answer": "UART_TXD_IN is an input. Its internal connection and electrical drive or pull-up mode are not specified."
+ },
+ {
+  "question": "What does the board pin UART_RXD_OUT connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is flag in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
-  "answer": "not specified"
+  "question": "What does the board pin BTNC connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "answer": "BTNC is an asynchronous input on pin N17. Its electrical drive style (push-pull or open-drain) and any pull-up are not specified; the connection to `vga_output.centre_button` is also not specified."
  }
 ]

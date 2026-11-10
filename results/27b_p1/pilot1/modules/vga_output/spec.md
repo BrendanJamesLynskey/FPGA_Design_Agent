@@ -1,4 +1,3 @@
-Drives four-bit red, green, and blue VGA channels and the aligned horizontal
-and vertical sync. Drives all colour channels to zero outside active video,
-while BTNC is pressed, and while pixel clock stability is not asserted.
-The top-level connects the pixel-clock lock indication to pixel_stable.
+Drive the VGA RGB and sync pins from the filtered stream. Drive RGB to zero outside the active picture, while
+BTNC is pressed, or when the pixel-clock-stable indication is false. Count completed raster frames and expose the
+unsigned 32-bit count to the shell window.

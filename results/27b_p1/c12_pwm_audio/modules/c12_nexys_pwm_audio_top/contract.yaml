@@ -1,0 +1,63 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: c12_nexys_pwm_audio_top
+hdl_top: c12_nexys_pwm_audio_top
+summary: Holds the audio sample and capped Q15 gain, computes sample_out, and drives the open-drain PWM audio output.
+parameters:
+- {name: CLKS_PER_BIT, default: 868}
+- {name: TIMEOUT_CYCLES, default: 100000}
+- {name: BUILD_STAMP, default: 0, min: 0, max: 2147483647}
+clocks:
+- {name: clk, port: CLK100MHZ, max_mhz: 100}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: CLK100MHZ, dir: in}
+- {name: CPU_RESETN, dir: in, clock: async}
+- {name: rst, dir: in}
+- {name: sample, dir: in, width: 16, clock: clk}
+- {name: gain, dir: in, width: 16, clock: clk}
+- {name: sample_out, dir: out, width: 16, clock: clk, reset_value: 0}
+- {name: AUD_PWM, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: AUD_SD, dir: out, width: 1, clock: clk, reset_value: 1}
+- {name: LED, dir: out, width: 16, clock: clk}
+data_formats:
+- {name: audio_sample, format: s16, packing: signed 16-bit two's-complement audio sample}
+- {name: q15_gain, format: u16, packing: unsigned Q15 gain}
+- {name: processed_sample, format: s16, packing: signed 16-bit sample_out}
+interfaces: []
+registers:
+  bus: top
+  map:
+  - name: SAMPLE
+    offset: 0
+    access: RW
+    reset: 0
+    width: 32
+    volatile: false
+    fields:
+    - name: sample
+      bits: [15, 0]
+      port: sample
+  - name: GAIN
+    offset: 1
+    access: WO
+    reset: 0
+    width: 32
+    volatile: false
+    fields:
+    - name: gain
+      bits: [15, 0]
+      port: gain
+  - name: SOUT
+    offset: 2
+    access: RO
+    reset: 0
+    width: 32
+    volatile: true
+    fields:
+    - name: sample_out
+      bits: [15, 0]
+      port: sample_out
+latency: []
+throughput: []

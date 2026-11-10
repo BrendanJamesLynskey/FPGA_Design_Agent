@@ -1,409 +1,391 @@
 # Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
 schema: fpga-design-agent/project/v1
-name: vmed_video_filter
+name: vmed_720p_median
 board: nexys_a7_100t
 clocks:
-- {name: sys_clk, source: board, port: CLK100MHZ, mhz: 100}
-- {name: pixel_clk, source: mmcm, from: sys_clk, mhz: 74.25}
+- {name: clk_sys, source: board, port: CLK100MHZ, mhz: 100}
+- {name: clk_pix, source: mmcm, from: clk_sys, mhz: 74.25}
 resets:
-- {name: sys_reset, domain: sys_clk, polarity: active_low, style: async, from: CPU_RESETN, via: reset_sync}
-- {name: pixel_reset, domain: pixel_clk, polarity: active_low, style: sync, from: sys_reset, via: reset_sync}
-shell: {design_id: VMED, clock: sys_clk, reset: sys_reset}
+- {name: rst_sys, domain: clk_sys, polarity: active_low, style: async, from: CPU_RESETN, via: reset_sync}
+- {name: rst_pix, domain: clk_pix, polarity: active_high, style: sync, from: rst_sys, via: reset_sync}
+- {name: rst_filter, domain: clk_pix, polarity: active_low, style: async, from: rst_sys, via: reset_sync}
+shell: {design_id: VMED, clock: clk_sys, reset: rst_sys}
 modules:
-- name: pattern_timing
+- name: video_timing_pattern
   kind: rtl
-  clocks: {pixel_clk: pixel_clk}
-  resets: {pixel_reset: pixel_reset}
+  clocks: {clk: clk_pix}
+  resets: {rst: rst_pix}
+  params: {}
   window_base: 0
-  register_crossings: {PATTERN: xpm_cdc_handshake, FRAME_COUNT: xpm_cdc_handshake}
 - name: median_filter
   kind: rtl
-  clocks: {pixel_clk: pixel_clk}
-  resets: {pixel_reset: pixel_reset}
+  clocks: {clk: clk_pix}
+  resets: {rst: rst_filter}
+  params: {H_TOTAL: 1650}
 - name: vga_output
   kind: rtl
-  clocks: {pixel_clk: pixel_clk}
-  resets: {pixel_reset: pixel_reset}
+  clocks: {clk: clk_pix}
+  resets: {rst: rst_pix}
+  params: {}
+  window_base: 0
+  register_crossings: {FRAME_COUNT: xpm_cdc_handshake}
 connections:
-- {from: pattern_timing.out, to: median_filter.in}
+- {from: video_timing_pattern.out, to: median_filter.in}
 - {from: median_filter.out, to: vga_output.in}
 board_ports:
-- {name: CLK100MHZ, dir: in, drive: input, to: sys_clk}
-- {name: CPU_RESETN, dir: in, drive: input, to: sys_reset}
-- {name: BTNC, dir: in, drive: input, to: vga_output.blank_button}
+- {name: CLK100MHZ, dir: in, drive: input, to: clk_sys}
+- {name: CPU_RESETN, dir: in, drive: input, to: rst_sys}
 - {name: UART_TXD_IN, dir: in, drive: input, to: shell.uart_rx}
 - {name: UART_RXD_OUT, dir: out, drive: push-pull, from: shell.uart_tx}
-- {name: VGA_HS, dir: out, drive: push-pull, from: vga_output.hsync}
-- {name: VGA_VS, dir: out, drive: push-pull, from: vga_output.vsync}
-- {name: 'VGA_R[3:0]', dir: out, drive: push-pull, from: vga_output.red}
-- {name: 'VGA_G[3:0]', dir: out, drive: push-pull, from: vga_output.green}
-- {name: 'VGA_B[3:0]', dir: out, drive: push-pull, from: vga_output.blue}
-- {name: 'LED[0]', dir: out, drive: push-pull, from: pixel_clk.locked}
+- {name: BTNC, dir: in, drive: input, to: vga_output.centre_button}
+- {name: 'VGA_R[3:0]', dir: out, drive: push-pull, from: vga_output.vga_r}
+- {name: 'VGA_G[3:0]', dir: out, drive: push-pull, from: vga_output.vga_g}
+- {name: 'VGA_B[3:0]', dir: out, drive: push-pull, from: vga_output.vga_b}
+- {name: VGA_HS, dir: out, drive: push-pull, from: vga_output.vga_hsync}
+- {name: VGA_VS, dir: out, drive: push-pull, from: vga_output.vga_vsync}
+- {name: 'LED[0]', dir: out, drive: push-pull, from: clk_pix.locked}
 owned: []
 assumptions:
 - id: A-1
-  text: What boundary rule should the 3 x 3 filter use for neighbourhood samples beyond the active picture?
-  default: Replicate the nearest active-picture pixel at each boundary, so every active output pixel has a complete
-    3 x 3 neighbourhood.
-  reason: The specification defines the neighbourhood operation but not how to obtain samples beyond the image edges.
-  affects: [S-3]
+  text: What source and criterion should be used for the pixel clock and its stable indication?
+  default: Generate 74.25 MHz from the Nexys A7 100 MHz oscillator with an MMCM, and treat the MMCM LOCKED indication
+    as stable.
+  reason: The specification requires a 74.25 MHz clock and a stable indication but does not specify clock generation
+    or how stability is determined.
+  affects: [S-1, S-5, S-6]
   status: open
   by: oracle
 - id: A-2
-  text: Which patterns should be selectable through the UART?
-  default: Provide the specified colour bars, a grayscale ramp, and a checkerboard; use the colour bars at startup.
-  reason: The default pattern is specified, but the other choices available through the pattern-selection interface
-    are not.
-  affects: [S-2, S-7]
+  text: How should the filter handle neighbourhoods at the active-picture edges where a full 3 x 3 window is unavailable?
+  default: Extend the nearest active-picture pixel to fill missing window positions.
+  reason: The median operation is specified, but edge-window handling is not.
+  affects: [S-3, S-4]
   status: open
   by: oracle
 - id: A-3
-  text: What UART command and response format should select a pattern and read the frame counter?
-  default: Use newline-terminated ASCII commands `P<n>` to select pattern number n and `F` to read the counter,
-    with newline-terminated ASCII replies.
-  reason: The interface functions and baud rate are specified, but the command syntax and response format are not.
-  affects: [S-7]
+  text: Which selectable test patterns should the shell provide?
+  default: Provide the specified colour bars and a one-pixel checkerboard; select the colour bars on startup.
+  reason: The specification requires pattern selection and defines the default pattern, but does not name any alternative
+    patterns.
+  affects: [S-2, S-7]
   status: open
   by: oracle
 - id: A-4
-  text: How should the frame counter count frames, and what width and reset behavior should it have?
-  default: Use a 32-bit unsigned counter that increments once per completed displayed frame and starts at zero after
-    power-up or reset.
-  reason: The specification requires a readable frame counter but does not define its counting event, width, or
-    initialization.
+  text: What UART framing and command/response format should the test shell use?
+  default: 'Use 8-N-1 ASCII lines: `P<n>` selects pattern n, `F?` reads the frame counter, and `ID?` returns `VMED`.'
+  reason: The baud rate, design ID, and shell functions are specified, but the serial framing and command syntax
+    are not.
   affects: [S-7]
   status: open
   by: oracle
 - id: A-5
-  text: What pixel-clock stability criterion should control the colour blanking and LED[0]?
-  default: Treat the clock as stable when the clock-generation primitive's locked indication is asserted.
-  reason: The specification requires stable-clock behavior but does not define how stability is determined.
-  affects: [S-5, S-6]
+  text: How should the frame counter advance, reset, and be represented when read?
+  default: Use a 32-bit unsigned counter, reset to zero on FPGA configuration, increment once per completed video
+    frame, and return its decimal value.
+  reason: The specification requires a readable frame counter but does not define its counting event, width, reset
+    value, or representation.
+  affects: [S-7]
   status: open
   by: oracle
 - id: A-6
-  text: Is pattern_timing's reset pixel_reset active high or active low, and synchronous or asynchronous?
-  default: '{polarity: active_low, style: sync}'
-  reason: Reset the timing generator synchronously in its pixel-clock domain.
-  affects: [pattern_timing.contract.resets.pixel_reset]
+  text: Is video_timing_pattern's reset rst active high or active low, and synchronous or asynchronous?
+  default: '{polarity: active_high, style: sync}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [video_timing_pattern.contract.resets.rst]
   status: open
   by: oracle
 - id: A-7
-  text: 'What is pattern_timing''s port pattern_select: its direction, width and value in reset?'
-  default: '{dir: in, width: 2}'
-  reason: Two bits encode the three selectable patterns, with zero selecting the startup colour bars.
-  affects: [pattern_timing.contract.ports.pattern_select]
+  text: 'What is video_timing_pattern''s port pattern_select: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [video_timing_pattern.contract.ports.pattern_select]
   status: open
   by: oracle
 - id: A-8
-  text: 'What is pattern_timing''s port frame_count: its direction, width and value in reset?'
-  default: '{dir: out, width: 32, reset_value: 0}'
-  reason: Use the supplied 32-bit unsigned completed-frame counter.
-  affects: [pattern_timing.contract.ports.frame_count]
+  text: What protocol does video_timing_pattern's interface out use, and is video_timing_pattern its master or slave?
+  default: '{protocol: axi4-stream, role: master}'
+  reason: Use AXI4-Stream as a point-to-point pixel transport with valid/ready backpressure and frame-end indication.
+  affects: [video_timing_pattern.contract.interfaces.out.protocol]
   status: open
   by: oracle
 - id: A-9
-  text: What protocol does pattern_timing's interface out use, and is pattern_timing its master or slave?
-  default: '{protocol: axi4-stream, role: master}'
-  reason: AXI4-Stream provides a point-to-point stream between the design blocks.
-  affects: [pattern_timing.contract.interfaces.out.protocol]
+  text: 'What does a beat of video_timing_pattern.out carry: the tdata width and its fields with their formats?'
+  default: '{width: 16, fields: [{name: rgb, bits: [11, 0], format: rgb444}, {name: hsync, bits: [12, 12], format:
+    bit}, {name: vsync, bits: [13, 13], format: bit}, {name: active, bits: [14, 14], format: bit}, {name: stable,
+    bits: [15, 15], format: bit}]}'
+  reason: Pack the 12-bit RGB value and the sync, active-picture, and stable flags into a 16-bit stream word so
+    the filter and output stage can preserve alignment.
+  affects: [video_timing_pattern.contract.interfaces.out.tdata, median_filter.contract.interfaces.in.tdata]
   status: open
   by: oracle
 - id: A-10
-  text: 'What does a beat of pattern_timing.out carry: the tdata width and its fields with their formats?'
-  default: '{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format:
-    raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name:
-    blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1],
-    format: flag}, {name: vsync, bits: [0, 0], format: flag}]}'
-  reason: Carry raster coordinates, generated colour, active state, and sync signals to the filter.
-  affects: [pattern_timing.contract.interfaces.out.tdata, median_filter.contract.interfaces.in.tdata]
+  text: Does video_timing_pattern.out carry sideband bits in tuser, and what does each bit mean?
+  default: '(none: leave the field out)'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [video_timing_pattern.contract.interfaces.out.tuser, median_filter.contract.interfaces.in.tuser]
   status: open
   by: oracle
 - id: A-11
-  text: Does pattern_timing.out carry sideband bits in tuser, and what does each bit mean?
-  default: '(none: leave the field out)'
+  text: What does tlast mark on video_timing_pattern.out, if anything?
+  default: Assert on the final pixel clock of each raster frame.
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [pattern_timing.contract.interfaces.out.tuser, median_filter.contract.interfaces.in.tuser]
+  affects: [video_timing_pattern.contract.interfaces.out.tlast, median_filter.contract.interfaces.in.tlast]
   status: open
   by: oracle
 - id: A-12
-  text: What does tlast mark on pattern_timing.out, if anything?
-  default: '(none: leave the field out)'
-  reason: the specification does not state it; this is the drafter's proposal
-  affects: [pattern_timing.contract.interfaces.out.tlast, median_filter.contract.interfaces.in.tlast]
+  text: How many beats does a packet on video_timing_pattern.out have?
+  default: '1237500'
+  reason: A raster frame contains 1650 clocks per line times 750 lines, or 1,237,500 beats.
+  affects: [video_timing_pattern.contract.interfaces.out.packet_beats, median_filter.contract.interfaces.in.packet_beats]
   status: open
   by: oracle
 - id: A-13
-  text: How many beats does a packet on pattern_timing.out have?
-  default: '(none: leave the field out)'
+  text: What throughput must video_timing_pattern.out sustain (beats per clock, and output beats per input beat)?
+  default: '{beats_per_cycle: 1}'
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [pattern_timing.contract.interfaces.out.packet_beats, median_filter.contract.interfaces.in.packet_beats]
+  affects: [video_timing_pattern.contract.throughput.out]
   status: open
   by: oracle
 - id: A-14
-  text: 'What is the register map of pattern_timing: the offset, width, reset value and access (RW, RO, WO) of every
-    register the host reads or writes?'
-  default: '[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME_COUNT, offset: 4, access: RO, reset:
-    0}]'
-  reason: the specification does not state it; this is the drafter's proposal
-  affects: [pattern_timing.contract.registers]
-  status: open
-  by: oracle
-- id: A-15
   text: What protocol does median_filter's interface in use, and is median_filter its master or slave?
   default: '{protocol: axi4-stream, role: slave}'
-  reason: Use AXI4-Stream for the point-to-point raster connection.
+  reason: Use the same AXI4-Stream pixel transport as the connected timing source.
   affects: [median_filter.contract.interfaces.in.protocol]
   status: open
   by: oracle
-- id: A-16
+- id: A-15
   text: What protocol does median_filter's interface out use, and is median_filter its master or slave?
   default: '{protocol: axi4-stream, role: master}'
-  reason: Use AXI4-Stream for the point-to-point filtered raster connection.
+  reason: Use AXI4-Stream to pass filtered pixels and timing to the VGA output stage.
   affects: [median_filter.contract.interfaces.out.protocol]
   status: open
   by: oracle
-- id: A-17
+- id: A-16
   text: 'What does a beat of median_filter.out carry: the tdata width and its fields with their formats?'
-  default: '{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format:
-    raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name:
-    blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1],
-    format: flag}, {name: vsync, bits: [0, 0], format: flag}]}'
-  reason: Preserve raster fields so filtered pixels and sync timing remain aligned.
+  default: '{width: 16, fields: [{name: rgb, bits: [11, 0], format: rgb444}, {name: hsync, bits: [12, 12], format:
+    bit}, {name: vsync, bits: [13, 13], format: bit}, {name: active, bits: [14, 14], format: bit}, {name: stable,
+    bits: [15, 15], format: bit}]}'
+  reason: Keep the same field layout so sync, active-picture, and stable metadata accompany the filtered RGB.
   affects: [median_filter.contract.interfaces.out.tdata, vga_output.contract.interfaces.in.tdata]
   status: open
   by: oracle
-- id: A-18
+- id: A-17
   text: Does median_filter.out carry sideband bits in tuser, and what does each bit mean?
   default: '(none: leave the field out)'
   reason: the specification does not state it; this is the drafter's proposal
   affects: [median_filter.contract.interfaces.out.tuser, vga_output.contract.interfaces.in.tuser]
   status: open
   by: oracle
-- id: A-19
+- id: A-18
   text: What does tlast mark on median_filter.out, if anything?
-  default: '(none: leave the field out)'
+  default: Assert on the final pixel clock of each raster frame, aligned with the corresponding filtered pixel.
   reason: the specification does not state it; this is the drafter's proposal
   affects: [median_filter.contract.interfaces.out.tlast, vga_output.contract.interfaces.in.tlast]
   status: open
   by: oracle
-- id: A-20
+- id: A-19
   text: How many beats does a packet on median_filter.out have?
-  default: '(none: leave the field out)'
-  reason: the specification does not state it; this is the drafter's proposal
+  default: '1237500'
+  reason: Preserve the input frame packet length.
   affects: [median_filter.contract.interfaces.out.packet_beats, vga_output.contract.interfaces.in.packet_beats]
   status: open
   by: oracle
-- id: A-21
+- id: A-20
   text: May the sink of median_filter.out stall the stream (drive tready low)?
-  default: 'false'
-  reason: The fixed-rate output raster is not stalled.
+  default: 'true'
+  reason: Allow the downstream stage to apply ready/valid backpressure.
   affects: [median_filter.contract.interfaces.out.backpressure, vga_output.contract.interfaces.in.backpressure]
   status: open
   by: oracle
+- id: A-21
+  text: Is vga_output's reset rst active high or active low, and synchronous or asynchronous?
+  default: '{polarity: active_high, style: sync}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [vga_output.contract.resets.rst]
+  status: open
+  by: oracle
 - id: A-22
-  text: What throughput must median_filter.out sustain (beats per clock, and output beats per input beat)?
-  default: '{beats_per_cycle: 1}'
-  reason: The filter must sustain one output pixel beat per pixel clock.
-  affects: [median_filter.contract.throughput.out]
+  text: 'What is vga_output''s port centre_button: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: The centre button BTNC is pressed
+  affects: [vga_output.contract.ports.centre_button]
   status: open
   by: oracle
 - id: A-23
-  text: Is vga_output's reset pixel_reset active high or active low, and synchronous or asynchronous?
-  default: '{polarity: active_low, style: sync}'
-  reason: Reset the output stage synchronously in its pixel-clock domain.
-  affects: [vga_output.contract.resets.pixel_reset]
+  text: 'What is vga_output''s port vga_r: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [vga_output.contract.ports.vga_r]
   status: open
   by: oracle
 - id: A-24
-  text: 'What is vga_output''s port pixel_stable: its direction, width and value in reset?'
-  default: '{dir: in, width: 1}'
-  reason: Use the clock-generation primitive's locked indication as the stability input.
-  affects: [vga_output.contract.ports.pixel_stable]
+  text: 'What is vga_output''s port vga_g: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [vga_output.contract.ports.vga_g]
   status: open
   by: oracle
 - id: A-25
-  text: 'What is vga_output''s port blank_button: its direction, width and value in reset?'
-  default: '{dir: in, width: 1}'
-  reason: Use BTNC as the colour-blanking control.
-  affects: [vga_output.contract.ports.blank_button]
+  text: 'What is vga_output''s port vga_b: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [vga_output.contract.ports.vga_b]
   status: open
   by: oracle
 - id: A-26
-  text: 'What is vga_output''s port red: its direction, width and value in reset?'
-  default: '{dir: out, width: 4, reset_value: 0}'
+  text: 'What is vga_output''s port vga_vsync: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [vga_output.contract.ports.red]
+  affects: [vga_output.contract.ports.vga_vsync]
   status: open
   by: oracle
 - id: A-27
-  text: 'What is vga_output''s port green: its direction, width and value in reset?'
-  default: '{dir: out, width: 4, reset_value: 0}'
+  text: 'What is vga_output''s port frame_count: its direction, width and value in reset?'
+  default: '{dir: out, width: 32, reset_value: 0}'
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [vga_output.contract.ports.green]
+  affects: [vga_output.contract.ports.frame_count]
   status: open
   by: oracle
 - id: A-28
-  text: 'What is vga_output''s port blue: its direction, width and value in reset?'
-  default: '{dir: out, width: 4, reset_value: 0}'
-  reason: the specification does not state it; this is the drafter's proposal
-  affects: [vga_output.contract.ports.blue]
-  status: open
-  by: oracle
-- id: A-29
-  text: 'What is vga_output''s port hsync: its direction, width and value in reset?'
-  default: '{dir: out, width: 1, reset_value: 0}'
-  reason: Drive the horizontal sync from the aligned raster timing.
-  affects: [vga_output.contract.ports.hsync]
-  status: open
-  by: oracle
-- id: A-30
-  text: 'What is vga_output''s port vsync: its direction, width and value in reset?'
-  default: '{dir: out, width: 1, reset_value: 0}'
-  reason: Drive the vertical sync from the aligned raster timing.
-  affects: [vga_output.contract.ports.vsync]
-  status: open
-  by: oracle
-- id: A-31
   text: What protocol does vga_output's interface in use, and is vga_output its master or slave?
   default: '{protocol: axi4-stream, role: slave}'
-  reason: Use AXI4-Stream for the filtered raster connection.
+  reason: Use AXI4-Stream to receive the filtered pixel and timing data.
   affects: [vga_output.contract.interfaces.in.protocol]
   status: open
   by: oracle
-- id: A-32
-  text: What number format is raster_x in pattern_timing (signed or unsigned, total and fraction bits), and how
-    is it packed?
-  default: '{format: u11, packing: Raster horizontal coordinate}'
+- id: A-29
+  text: 'What is the register map of vga_output: the offset, width, reset value and access (RW, RO, WO) of every
+    register the host reads or writes?'
+  default: '[{name: FRAME_COUNT, offset: 0, access: RO, reset: 0}]'
+  reason: The frame counter advances once per completed frame, resets to zero, and is read as an unsigned decimal
+    value through the shell.
+  affects: [vga_output.contract.registers]
+  status: open
+  by: oracle
+- id: A-30
+  text: What resets the design's reset rst_pix (button or other source), and its polarity?
+  default: '{from: rst_sys, polarity: active_high, style: sync}'
+  reason: The pixel-clock domain needs a reset derived from the system reset; use a synchronous active-high reset
+    synchronized into clk_pix.
+  affects: [design.resets.rst_pix]
+  status: open
+  by: oracle
+- id: A-31
+  text: What number format is rgb444 in video_timing_pattern (signed or unsigned, total and fraction bits), and
+    how is it packed?
+  default: '{format: u12, packing: ''R[11:8], G[7:4], B[3:0]''}'
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [pattern_timing.contract.data_formats.raster_x]
+  affects: [video_timing_pattern.contract.data_formats.rgb444]
+  status: open
+  by: oracle
+- id: A-32
+  text: What number format is bit in video_timing_pattern (signed or unsigned, total and fraction bits), and how
+    is it packed?
+  default: '{format: u1, packing: one Boolean raster or status value}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [video_timing_pattern.contract.data_formats.bit]
   status: open
   by: oracle
 - id: A-33
-  text: What number format is raster_y in pattern_timing (signed or unsigned, total and fraction bits), and how
-    is it packed?
-  default: '{format: u10, packing: Raster vertical coordinate}'
+  text: What number format is rgb444 in median_filter (signed or unsigned, total and fraction bits), and how is
+    it packed?
+  default: '{format: u12, packing: ''R[11:8], G[7:4], B[3:0]''}'
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [pattern_timing.contract.data_formats.raster_y]
+  affects: [median_filter.contract.data_formats.rgb444]
   status: open
   by: oracle
 - id: A-34
-  text: What number format is channel in pattern_timing (signed or unsigned, total and fraction bits), and how is
-    it packed?
-  default: '{format: u4, packing: Unsigned VGA colour channel}'
+  text: What number format is bit in median_filter (signed or unsigned, total and fraction bits), and how is it
+    packed?
+  default: '{format: u1, packing: one Boolean raster or status value}'
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [pattern_timing.contract.data_formats.channel]
+  affects: [median_filter.contract.data_formats.bit]
   status: open
   by: oracle
 - id: A-35
-  text: What number format is flag in pattern_timing (signed or unsigned, total and fraction bits), and how is it
+  text: What number format is rgb444 in vga_output (signed or unsigned, total and fraction bits), and how is it
     packed?
-  default: '{format: u1, packing: Boolean raster or sync flag}'
+  default: '{format: u12, packing: ''R[11:8], G[7:4], B[3:0]''}'
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [pattern_timing.contract.data_formats.flag]
+  affects: [vga_output.contract.data_formats.rgb444]
   status: open
   by: oracle
 - id: A-36
-  text: What number format is raster_x in median_filter (signed or unsigned, total and fraction bits), and how is
-    it packed?
-  default: '{format: u11, packing: Raster horizontal coordinate}'
+  text: What number format is bit in vga_output (signed or unsigned, total and fraction bits), and how is it packed?
+  default: '{format: u1, packing: one Boolean raster or status value}'
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [median_filter.contract.data_formats.raster_x]
+  affects: [vga_output.contract.data_formats.bit]
   status: open
   by: oracle
 - id: A-37
-  text: What number format is raster_y in median_filter (signed or unsigned, total and fraction bits), and how is
-    it packed?
-  default: '{format: u10, packing: Raster vertical coordinate}'
+  text: What number format is count32 in vga_output (signed or unsigned, total and fraction bits), and how is it
+    packed?
+  default: '{format: u32, packing: unsigned 32-bit frame count}'
   reason: the specification does not state it; this is the drafter's proposal
-  affects: [median_filter.contract.data_formats.raster_y]
+  affects: [vga_output.contract.data_formats.count32]
   status: open
   by: oracle
 - id: A-38
-  text: What number format is flag in median_filter (signed or unsigned, total and fraction bits), and how is it
-    packed?
-  default: '{format: u1, packing: Boolean raster or sync flag}'
-  reason: the specification does not state it; this is the drafter's proposal
-  affects: [median_filter.contract.data_formats.flag]
+  text: What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: in, drive: input, to: clk_sys}'
+  reason: The Nexys A7 100 MHz oscillator
+  affects: [design.board_ports.CLK100MHZ]
   status: open
   by: oracle
 - id: A-39
-  text: What number format is raster_x in vga_output (signed or unsigned, total and fraction bits), and how is it
-    packed?
-  default: '{format: u11, packing: Raster horizontal coordinate}'
-  reason: the specification does not state it; this is the drafter's proposal
-  affects: [vga_output.contract.data_formats.raster_x]
+  text: What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: in, drive: input, to: rst_sys}'
+  reason: Use the board's CPU_RESETN input as the external reset source.
+  affects: [design.board_ports.CPU_RESETN]
   status: open
   by: oracle
 - id: A-40
-  text: What number format is raster_y in vga_output (signed or unsigned, total and fraction bits), and how is it
-    packed?
-  default: '{format: u10, packing: Raster vertical coordinate}'
-  reason: the specification does not state it; this is the drafter's proposal
-  affects: [vga_output.contract.data_formats.raster_y]
+  text: What does the board pin UART_RXD_OUT connect to, and how is it driven (push-pull, open-drain, pulled up,
+    input)?
+  default: '{dir: out, drive: push-pull, from: shell.uart_tx}'
+  reason: The test shell is on the USB-UART at 115200 baud.
+  affects: [design.board_ports.UART_RXD_OUT]
   status: open
   by: oracle
 - id: A-41
-  text: What number format is channel in vga_output (signed or unsigned, total and fraction bits), and how is it
-    packed?
-  default: '{format: u4, packing: Unsigned VGA colour channel}'
-  reason: the specification does not state it; this is the drafter's proposal
-  affects: [vga_output.contract.data_formats.channel]
-  status: open
-  by: oracle
-- id: A-42
-  text: What number format is flag in vga_output (signed or unsigned, total and fraction bits), and how is it packed?
-  default: '{format: u1, packing: Boolean raster or sync flag}'
-  reason: the specification does not state it; this is the drafter's proposal
-  affects: [vga_output.contract.data_formats.flag]
-  status: open
-  by: oracle
-- id: A-43
-  text: What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
-  default: '{dir: in, drive: input, to: sys_clk}'
-  reason: Connect the board reference clock to the declared system clock.
-  affects: [design.board_ports.CLK100MHZ]
-  status: open
-  by: limit
-- id: A-44
-  text: What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
-  default: '{dir: in, drive: input, to: sys_reset}'
-  reason: Connect the board's external active-low reset to the declared reset source.
-  affects: [design.board_ports.CPU_RESETN]
-  status: open
-  by: limit
-- id: A-45
-  text: What does the board pin VGA_HS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
-  default: '{dir: out, drive: push-pull, from: vga_output.hsync}'
-  reason: Connect the horizontal sync output to the board's VGA horizontal-sync pin.
-  affects: [design.board_ports.VGA_HS]
-  status: open
-  by: limit
-- id: A-46
-  text: What does the board pin VGA_VS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
-  default: '{dir: out, drive: push-pull, from: vga_output.vsync}'
-  reason: Connect the vertical sync output to the board's VGA vertical-sync pin.
-  affects: [design.board_ports.VGA_VS]
-  status: open
-  by: limit
-- id: A-47
   text: What does the board pin VGA_R[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
-  default: '{dir: out, drive: push-pull, from: vga_output.red}'
-  reason: Bind the four-bit red channel to the board's four VGA red pins.
+  default: '{dir: out, drive: push-pull, from: vga_output.vga_r}'
+  reason: The Nexys A7 ... VGA connector
   affects: ['design.board_ports.VGA_R[3:0]']
   status: open
   by: limit
-- id: A-48
+- id: A-42
   text: What does the board pin VGA_G[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
-  default: '{dir: out, drive: push-pull, from: vga_output.green}'
-  reason: Bind the four-bit green channel to the board's four VGA green pins.
+  default: '{dir: out, drive: push-pull, from: vga_output.vga_g}'
+  reason: The Nexys A7 ... VGA connector
   affects: ['design.board_ports.VGA_G[3:0]']
   status: open
   by: limit
-- id: A-49
+- id: A-43
   text: What does the board pin VGA_B[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
-  default: '{dir: out, drive: push-pull, from: vga_output.blue}'
-  reason: Bind the four-bit blue channel to the board's four VGA blue pins.
+  default: '{dir: out, drive: push-pull, from: vga_output.vga_b}'
+  reason: The Nexys A7 ... VGA connector
   affects: ['design.board_ports.VGA_B[3:0]']
+  status: open
+  by: limit
+- id: A-44
+  text: What does the board pin VGA_HS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: push-pull, from: vga_output.vga_hsync}'
+  reason: horizontal sync
+  affects: [design.board_ports.VGA_HS]
+  status: open
+  by: limit
+- id: A-45
+  text: What does the board pin VGA_VS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: push-pull, from: vga_output.vga_vsync}'
+  reason: vertical sync
+  affects: [design.board_ports.VGA_VS]
+  status: open
+  by: limit
+- id: A-46
+  text: What does the board pin LED[0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: push-pull, from: clk_pix.locked}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: ['design.board_ports.LED[0]']
   status: open
   by: limit

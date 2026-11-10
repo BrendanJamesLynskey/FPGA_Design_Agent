@@ -1,0 +1,54 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: video_timing_pattern
+summary: Generates the raster timing and selectable test-pattern pixel stream.
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_high, style: sync}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: pattern_select, dir: in, width: 1, clock: clk}
+- {name: m_axis_tvalid, dir: out, clock: clk, reset_value: 0}
+- {name: m_axis_tready, dir: in, clock: clk}
+- {name: m_axis_tdata, dir: out, width: 16, clock: clk}
+- {name: m_axis_tlast, dir: out, clock: clk, reset_value: 0}
+data_formats:
+- {name: rgb444, format: u12, packing: 'R[11:8], G[7:4], B[3:0]'}
+- {name: bit, format: u1, packing: one Boolean raster or status value}
+interfaces:
+- name: out
+  protocol: axi4-stream
+  role: master
+  prefix: m_axis
+  clock: clk
+  reset: rst
+  tdata:
+    width: 16
+    fields:
+    - name: rgb
+      bits: [11, 0]
+      format: rgb444
+    - name: hsync
+      bits: [12, 12]
+      format: bit
+    - name: vsync
+      bits: [13, 13]
+      format: bit
+    - name: active
+      bits: [14, 14]
+      format: bit
+    - name: stable
+      bits: [15, 15]
+      format: bit
+  tlast: Assert on the final pixel clock of each raster frame.
+  packet_beats: 1237500
+  backpressure: false
+  source_gaps: false
+registers:
+  bus: top
+  map:
+  - {name: STATUS, offset: 0, access: RO, reset: 0, width: 32, volatile: false}
+throughput:
+- {interface: out, beats_per_cycle: 1}

@@ -39,6 +39,7 @@ def main() -> None:
     shutil.copy(ROOT / "project" / "examples" / "video_median" / "system" / "spec.md", d / "spec.md")
     hidden = {"name": "video_median_pilot1",
               "owner_contract_choices": OWNER_CHOICES,
+              "precedence": "Where the owner's contract choices above differ from the two task specifications below, the owner's choices win.",
               "video_source_task": yaml.safe_load((TASKS / "c9_nexys_vga_720p" / "hidden" / "spec.yaml").read_text()),
               "median_filter_task": yaml.safe_load((TASKS / "c9_median3x3" / "hidden" / "spec.yaml").read_text())}
     p = HERE / "oracle" / "pilot1.yaml"

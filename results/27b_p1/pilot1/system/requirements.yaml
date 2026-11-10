@@ -2,24 +2,24 @@
 schema: fpga-design-agent/requirements/v1
 requirements:
 - id: S-1
-  text: 'Generate VGA timing at 1280 x 720 active pixels and 60 Hz using CEA-861 720p60 timing: 74.25 MHz pixel
-    clock, 1650 pixel clocks per line (1280 active, 110 front porch, 40 sync, 220 back porch), 750 lines per frame
-    (720 active, 5 front porch, 5 sync, 20 back porch), with positive horizontal and vertical sync.'
-  proof: [simulation, hardware, analysis]
-  modules: [pattern_timing, top]
-- id: S-2
-  text: 'With the default pattern selected, display eight vertical colour bars, each 160 active pixels wide, in
-    this order: white, yellow, cyan, green, magenta, red, blue, black.'
+  text: 'Generate CEA-861 720p60 timing using a nominal 74.25 MHz pixel clock: 1650 pixel clocks per line (1280
+    active, 110 front porch, 40 sync, 220 back porch), 750 lines per frame (720 active, 5 front porch, 5 sync, 20
+    back porch), with positive horizontal and vertical sync.'
   proof: [simulation, hardware]
-  modules: [pattern_timing, top]
+  modules: [video_timing_pattern, top]
+- id: S-2
+  text: The default test pattern shall consist of eight vertical bars, each 160 pixels wide, ordered white, yellow,
+    cyan, green, magenta, red, blue, and black.
+  proof: [simulation, hardware]
+  modules: [video_timing_pattern, top]
 - id: S-3
-  text: For each active output pixel, output the median of the nine samples in its 3 x 3 neighbourhood independently
-    for each colour channel.
+  text: For each output pixel and each colour channel, compute the median of that channel's values in the pixel's
+    3 x 3 neighbourhood.
   proof: [simulation, formal]
-  modules: [median_filter]
+  modules: [median_filter, top]
 - id: S-4
-  text: Keep the filtered picture and the horizontal and vertical sync signals aligned at the VGA output, with the
-    same active-picture timing as the unfiltered timing generator.
+  text: 'The output picture and horizontal and vertical syncs shall remain aligned: the sync timing shall correspond
+    to the filtered pixel positions, with the same active-picture timing and sync polarity as the timing generator.'
   proof: [simulation, hardware]
   modules: [median_filter, vga_output, top]
 - id: S-5
@@ -28,11 +28,11 @@ requirements:
   proof: [simulation, hardware]
   modules: [vga_output, top]
 - id: S-6
-  text: Illuminate LED[0] when the pixel clock is stable.
+  text: Drive LED[0] on when the pixel clock is stable and off when it is not stable.
   proof: [simulation, hardware]
   modules: [top]
 - id: S-7
-  text: Provide a 115200-baud USB-UART interface identified as VMED that allows the host to select a test pattern
-    and read a frame counter.
+  text: Provide a test shell over the USB-UART at 115200 baud that identifies the design as VMED, allows the user
+    to select a test pattern, and allows the user to read a frame counter.
   proof: [simulation, hardware]
-  modules: [top, pattern_timing]
+  modules: [video_timing_pattern, vga_output, top]

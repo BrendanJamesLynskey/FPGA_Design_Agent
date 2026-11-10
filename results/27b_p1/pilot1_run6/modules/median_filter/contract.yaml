@@ -1,0 +1,99 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: median_filter
+summary: Computes the per-channel 3 x 3 median for active pixels and preserves aligned raster metadata.
+clocks:
+- {name: pixel_clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: pixel_reset, port: rst, clock: pixel_clk, polarity: active_low, style: sync}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: s_axis_tvalid, dir: in, clock: pixel_clk}
+- {name: s_axis_tready, dir: out, clock: pixel_clk, reset_value: 0}
+- {name: s_axis_tdata, dir: in, width: 48, clock: pixel_clk}
+- {name: m_axis_tvalid, dir: out, clock: pixel_clk, reset_value: 0}
+- {name: m_axis_tready, dir: in, clock: pixel_clk}
+- {name: m_axis_tdata, dir: out, width: 48, clock: pixel_clk}
+data_formats:
+- {name: raster_x, format: u11, packing: Raster horizontal coordinate}
+- {name: raster_y, format: u10, packing: Raster vertical coordinate}
+- {name: channel, format: u8, packing: 'Each pixel is 8 bits; pixel p is packed into bits [8*(p mod 3)+7 : 8*(p
+    mod 3)] of register p div 3 of the window.'}
+- {name: flag, format: u1, packing: Boolean raster or sync flag}
+interfaces:
+- name: in
+  protocol: axi4-stream
+  role: slave
+  prefix: s_axis
+  clock: pixel_clk
+  reset: pixel_reset
+  tdata:
+    width: 48
+    fields:
+    - name: x
+      bits: [47, 37]
+      format: raster_x
+    - name: y
+      bits: [36, 27]
+      format: raster_y
+    - name: red
+      bits: [26, 19]
+      format: channel
+    - name: green
+      bits: [18, 11]
+      format: channel
+    - name: blue
+      bits: [10, 3]
+      format: channel
+    - name: active
+      bits: [2, 2]
+      format: flag
+    - name: hsync
+      bits: [1, 1]
+      format: flag
+    - name: vsync
+      bits: [0, 0]
+      format: flag
+  backpressure: false
+  source_gaps: false
+- name: out
+  protocol: axi4-stream
+  role: master
+  prefix: m_axis
+  clock: pixel_clk
+  reset: pixel_reset
+  tdata:
+    width: 48
+    fields:
+    - name: x
+      bits: [47, 37]
+      format: raster_x
+    - name: y
+      bits: [36, 27]
+      format: raster_y
+    - name: red
+      bits: [26, 19]
+      format: channel
+    - name: green
+      bits: [18, 11]
+      format: channel
+    - name: blue
+      bits: [10, 3]
+      format: channel
+    - name: active
+      bits: [2, 2]
+      format: flag
+    - name: hsync
+      bits: [1, 1]
+      format: flag
+    - name: vsync
+      bits: [0, 0]
+      format: flag
+  backpressure: false
+  source_gaps: false
+latency:
+- {from: in, to: out, cycles: 1}
+throughput:
+- {interface: in, beats_per_cycle: 1}
+- {interface: out, beats_per_cycle: 1}

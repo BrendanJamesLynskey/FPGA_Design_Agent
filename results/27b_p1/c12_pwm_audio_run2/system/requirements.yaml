@@ -1,0 +1,49 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/requirements/v1
+requirements:
+- id: S-1
+  text: sample_out shall be a combinational signed 16-bit result equal to floor(sample * gain / 32768), where sample
+    is signed 16-bit and gain is unsigned Q15.
+  proof: [simulation, formal]
+  modules: [audio_gain]
+- id: S-2
+  text: The unsigned gain register shall reset to 2068; a write shall store the written value if it is at most 8192,
+    and otherwise store 8192.
+  proof: [simulation, formal]
+  modules: [audio_gain]
+- id: S-3
+  text: The shell shall run at 115200 baud, identify the design as PWMA, and provide a way to write the sample,
+    write the gain, and read back sample_out.
+  proof: [simulation, hardware]
+  modules: [top, audio_gain]
+- id: S-4
+  text: The PWM shall use a free-running 10-bit counter with a 1024-clock period and a duty value of 512 + floor(sample_out
+    / 128); it shall pull AUD_PWM low when the counter is at or above the duty value and release it otherwise, updating
+    the duty once per period.
+  proof: [simulation, formal]
+  modules: [pwm_audio]
+- id: S-5
+  text: 'AUD_PWM shall never be driven high: it shall be driven low or placed in high impedance. AUD_SD shall remain
+    high.'
+  proof: [simulation, hardware]
+  modules: [pwm_audio]
+- id: S-6
+  text: When CPU_RESETN is asserted, the sample shall be cleared and the gain shall return to 2068.
+  proof: [simulation, formal]
+  modules: [audio_gain]
+- id: S-7
+  text: The top module shall be c12_nexys_pwm_audio_top, expose the board-XDC-named AUD_PWM, AUD_SD, USB-UART, CLK100MHZ,
+    CPU_RESETN, and 16-bit LED ports, leave LED off, and expose CLKS_PER_BIT, TIMEOUT_CYCLES, and BUILD_STAMP as
+    top-level parameters.
+  proof: [analysis, simulation, hardware]
+  modules: [top, pwm_audio]
+- id: S-8
+  text: The design shall close timing at 100 MHz.
+  proof: [analysis, hardware]
+  modules: [audio_gain, pwm_audio, top]
+- id: S-9
+  text: Simulation shall cover reset, gain writes of 65535, 4000, 8192, and 8193, reset after a write, and sample
+    values including 0, +32767, and -32768 held for several PWM periods; it shall check sample_out, low-clock count
+    per period at AUD_PWM, and AUD_SD.
+  proof: [simulation]
+  modules: [audio_gain, pwm_audio, top]

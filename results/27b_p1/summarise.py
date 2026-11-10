@@ -18,8 +18,8 @@ from typing import Any
 import yaml
 
 HERE = Path(__file__).resolve().parent
-SPECS = ("pilot1_run1", "pilot1_run2", "c12_pwm_audio_run1", "pilot1_run3", "c12_pwm_audio", "pilot1_run4", "pilot1_run5",
-         "pilot1")
+SPECS = ("pilot1_run1", "pilot1_run2", "c12_pwm_audio_run1", "pilot1_run3", "c12_pwm_audio_run2", "pilot1_run4",
+         "pilot1_run5", "pilot1_run6", "pilot1", "c12_pwm_audio")
 #: ^ the order run
 
 
@@ -153,13 +153,18 @@ def markdown(rs: list[dict[str, Any]]) -> str:
          "  and a board pin whose direction disagrees with the board (master XDC sections, inventory `dir`).",
          "- after `pilot1_run5` (the median latency, 1651, was \"stated\" by a quote with no number in it, so never",
          "  asked): a quote states a field only if it holds every number of the field's value.",
-         "`pilot1` (run 6) ran with the final harness. `c12_pwm_audio` (run 2) ran before the last three changes. "
+         "`pilot1` (run 7) and `c12_pwm_audio` (run 3) ran with the final harness; for run 7 the pilot oracle's file",
+         "also says the owner's choices win where the tasks' text differs (planner, after run 6; `prepare.py`).",
          "The last column re-checks every run's files with today's checker. Each row is a single run.", "",
-         "**Owner choice 2 in run 6.** The median latency was asked (question order and shares fixed it) and the oracle",
+         "**Owner choice 2 in run 6** (before the precedence line). The median latency was asked (question order and shares fixed it) and the oracle",
          "answered \"1 clock cycle\", quoting the `c9_median3x3` task (\"exactly 1 clock: the result of a window",
          "presented in clock n is seen in clock n + 1\"): that task filters a presented window, the pilot's median a",
          "raster with line buffers. The oracle's hidden file holds both that line and the owner's \"Median latency",
          "H_TOTAL + 2.\" and nothing says which wins, so the choice is lost in the oracle, not in the harness.", "",
+         "**Run 7** (with the precedence line): choices 2 and 3 hold. Choice 1 holds on the source-to-median link",
+         "(answered, quoting the owner's choice) but not on the median-to-VGA link: the oracle said \"not specified\" for",
+         "that link's back-pressure, so the drafter's `true` stays, written down as open assumption A-20 (its gap field",
+         "was answered `false` from the same quote). Single run; the oracle's answers vary between near-identical questions.", "",
          "| Spec | Modules | Pass 1 asked / answered / assumptions | Contract and design fields | Stated by a spec quote | "
          "Pass 2 asked / answered / assumptions | Assumptions written | Files valid | Calls | Tokens (in / out) | USD | "
          "Today's checker |",

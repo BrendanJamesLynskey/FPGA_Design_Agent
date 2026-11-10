@@ -1,95 +1,94 @@
 [
  {
-  "question": "What shell command, response, and register-addressing format should be used for sample writes, gain writes, and sample_out reads?",
+  "question": "What UART command and response format shall the shell use for sample writes, gain writes, and sample_out reads?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What are the exact USB-UART top-level port names and directions?",
+  "answer": "UART_TXD_IN is an input; UART_RXD_OUT is an output."
+ },
+ {
+  "question": "At what point in the PWM period should a changed duty value take effect?",
+  "answer": "Latch the changed duty value when the counter wraps, for use in the following period."
+ },
+ {
+  "question": "What reset behavior and phase should the PWM counter have under CPU_RESETN?",
+  "refused": "quote not in the hidden spec",
+  "raw": "CPU_RESETN is active-low and asynchronous: assertion takes effect at once, and release is synchronized to a clock. The PWM counter resets to 0, with duty set to 512, giving a deterministic starting phase."
+ },
+ {
+  "question": "What reset behavior and phase should the PWM counter have under CPU_RESETN?",
+  "answer": "not specified"
+ },
+ {
+  "question": "Should CPU_RESETN be treated synchronously or asynchronously to CLK100MHZ?",
+  "answer": "CPU_RESETN is an active-low asynchronous reset: it asserts immediately and releases synchronously to CLK100MHZ. The proposed synchronous-reset default is not correct."
+ },
+ {
+  "question": "What value, and what allowed range, should parameter CLKS_PER_BIT of c12_nexys_pwm_audio_top have?",
+  "answer": "The specified value is 868; the allowed range is not specified."
+ },
+ {
+  "question": "What value, and what allowed range, should parameter TIMEOUT_CYCLES of c12_nexys_pwm_audio_top have?",
+  "answer": "The specified value is 100000; the allowed range is not specified."
+ },
+ {
+  "question": "What value, and what allowed range, should parameter BUILD_STAMP of c12_nexys_pwm_audio_top have?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port gain: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port sample_out: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port AUD_PWM: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "{'dir': 'out', 'width': 1, 'reset_value': 'high impedance (Z)'}"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port AUD_PWM: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port AUD_SD: its direction, width and value in reset?",
+  "answer": "{'dir': 'out', 'width': 1, 'reset_value': 1}"
+ },
+ {
+  "question": "What is c12_nexys_pwm_audio_top's port LED: its direction, width and value in reset?",
+  "answer": "LED is an output, 16 bits wide; its value in reset is not specified."
+ },
+ {
+  "question": "What is the register map of c12_nexys_pwm_audio_top: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
   "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
   "by": "register map"
- },
- {
-  "question": "When during a PWM period should the duty be captured, and what should the PWM counter and duty be initialized to on reset?",
-  "refused": "quote not in the hidden spec",
-  "raw": "Capture the duty when the counter wraps. On reset, initialize the counter to 0 and the duty to 512."
- },
- {
-  "question": "When during a PWM period should the duty be captured, and what should the PWM counter and duty be initialized to on reset?",
-  "answer": "not specified"
- },
- {
-  "question": "Should CPU_RESETN reset assertion be synchronous or asynchronous?",
-  "answer": "Asynchronous active-low assertion; reset release is synchronized to the clock."
- },
- {
-  "question": "What defaults and representation should be used for CLKS_PER_BIT, TIMEOUT_CYCLES, and BUILD_STAMP?",
-  "answer": "CLKS_PER_BIT is 868 and TIMEOUT_CYCLES is 100000, not 10000000. Their representation and any BUILD_STAMP default are not specified."
- },
- {
-  "question": "What is the register map of audio_gain: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
-  "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
-  "by": "register map"
- },
- {
-  "question": "What is pwm_audio's port AUD_PWM: its direction, width and value in reset?",
-  "refused": "quote not in the hidden spec",
-  "raw": "AUD_PWM is an output, 1 bit wide, and is high-impedance during reset."
- },
- {
-  "question": "What is pwm_audio's port AUD_PWM: its direction, width and value in reset?",
-  "answer": "not specified"
- },
- {
-  "question": "What is pwm_audio's port AUD_SD: its direction, width and value in reset?",
-  "refused": "quote not in the hidden spec",
-  "raw": "AUD_SD is an output, 1 bit wide, and its value is 1 in reset."
- },
- {
-  "question": "What is pwm_audio's port AUD_SD: its direction, width and value in reset?",
-  "answer": "not specified"
- },
- {
-  "question": "What is pwm_audio's port LED: its direction, width and value in reset?",
-  "answer": "not specified"
  },
  {
   "question": "Which clock is clk_sys: its frequency and where it comes from?",
-  "answer": "{'source': 'board oscillator', 'mhz': 100, 'port': 'CLK100MHZ'}"
+  "answer": "sys_clk is 100 MHz and comes from the board oscillator, on port CLK100MHZ."
  },
  {
-  "question": "At which offset of the shell's register window do audio_gain's registers start?",
+  "question": "What resets the design's reset rst_sys (button or other source), and its polarity?",
+  "answer": "CPU_RESETN, an active-low asynchronous button reset."
+ },
+ {
+  "question": "At which offset of the shell's register window do c12_nexys_pwm_audio_top's registers start?",
   "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
   "by": "register map"
  },
  {
-  "question": "What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
-  "refused": "quote not in the hidden spec",
-  "raw": "CLK100MHZ is an input on pin E3, sourced by the board oscillator. Its direction is input; the specification does not state a push-pull, open-drain, or pull-up drive mode."
- },
- {
-  "question": "What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "question": "What number format is q15_gain in c12_nexys_pwm_audio_top (signed or unsigned, total and fraction bits), and how is it packed?",
   "answer": "not specified"
  },
  {
-  "question": "What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
-  "answer": "CPU_RESETN is an input on pin C12. Its push-pull/open-drain/pull-up drive mode and connection to rst_sys are not specified."
+  "question": "What does the board pin UART_TXD_IN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "answer": "UART_TXD_IN is specified as an input on pin C4. Its connection to shell.uart_rx and whether the external signal is push-pull, open-drain, or pulled up are not specified."
  },
  {
-  "question": "What does the board pin AUD_PWM connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
-  "refused": "quote not in the hidden spec",
-  "raw": "AUD_PWM is a top-level output on pin A11. It pulls low or goes high-impedance and is never driven high; the board pull-up makes it high. The specification does not name an internal module connection."
- },
- {
-  "question": "What does the board pin AUD_PWM connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+  "question": "What does the board pin UART_RXD_OUT connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
   "answer": "not specified"
- },
- {
-  "question": "What does the board pin AUD_SD connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
-  "refused": "quote not in the hidden spec",
-  "raw": "AUD_SD connects to pin D12 and is driven as an output at logic 1 always. The specification does not state whether its output drive is push-pull or open-drain, or whether a pull-up is used."
- },
- {
-  "question": "What does the board pin AUD_SD connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
-  "answer": "not specified"
- },
- {
-  "question": "What does the board pin LED[15:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
-  "answer": "LED[15:0] connects to pins [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11] and is an output. Its drive type and any pull-up are not specified."
  }
 ]
