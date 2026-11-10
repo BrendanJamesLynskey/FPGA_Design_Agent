@@ -15,7 +15,9 @@ through Claude Code.
 agent's own checks passed and the hidden tests failed, each time because it read the spec differently from the test
 author; the fixes made since are not yet measured ([results](https://fpga-design-agent.vercel.app/results),
 from `results/course/*/run_*.json`). A hand-written reference design passes all its tests on the board
-([F0B](#bring-up-on-hardware-f0b)); no agent-built design has been on a board yet.
+([F0B](#bring-up-on-hardware-f0b)). One agent-built design (Deep Agents smoke run luna 7 on T1) has been programmed onto the
+board: UART tests 3 of 3 passed and the ILA captures failed ([record](results/f2/agent_luna_05c2_run7_bringup.json)), so no
+design the agent built has yet passed every test on the board.
 
 **What is not yet shown.** There is no held-out score. Development tasks are the ones used to find and fix faults,
 so their results are a record of the work, not a measure of how the agent does on new tasks. The first held-out

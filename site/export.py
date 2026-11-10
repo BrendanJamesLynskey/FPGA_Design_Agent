@@ -179,7 +179,14 @@ def board():
     mut = jload(ROOT / "results/04f/mutation_t1.json")
     v2 = [jload(p) for p in sorted((ROOT / "results/board_v2").glob("b2_*.json"))]
     v2runs = [jload(p) for p in sorted((ROOT / "results/board_v2/runs").glob("*.json"))]
+    ab = jload(ROOT / "results/f2/agent_luna_05c2_run7_bringup.json")["run_as_written"]     # 05e: the agent's own design
+    ab_steps = ab["steps"]
+    agent_board = {"source": "results/f2/agent_luna_05c2_run7_bringup.json", "pass": ab["pass"], "failed_step": ab["failed_step"],
+                   "uart_tests": ab_steps["uart_tests"]["tests"],
+                   "uart_passed": ab_steps["uart_tests"]["tests"] - ab_steps["uart_tests"]["failures"],
+                   "programmed": ab_steps["program_base"]["pass"] and ab_steps["program_ila"]["pass"]}
     return {
+        "agent_board": agent_board,
         "design": "t1_dimmer_counter", "vivado": bring["steps"]["discover"]["vivado_version"], "part": bring["steps"]["discover"]["part"],
         "wns": row("setup WNS (ns)"), "whs": row("hold WHS (ns)"), "lut": row("LUTs"), "ff": row("FFs"), "bram": row("BRAM tiles"),
         "dsp": row("DSP48E1"), "power": row("power, total on-chip (W, vectorless)"),
