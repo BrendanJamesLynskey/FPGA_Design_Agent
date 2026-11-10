@@ -7,14 +7,14 @@
 </section>
 
 <h2>What it does</h2>
-<p>The agent follows the stages of AMD's UltraFast methodology: an interview to settle what the spec leaves open, a plan, the <a href="how.html#term-rtl">RTL</a> and its tests, then Vivado {{board.vivado}} through synthesis and place and route to a <a href="how.html#term-bitstream">bitstream</a>. The runs shown here used Anthropic's Claude Sonnet (<code>{{dev.model.0}}</code>) through Claude Code.</p>
+<p>The agent follows the stages of AMD's UltraFast methodology: an interview to settle what the spec leaves open, a plan, the <a href="how.html#term-rtl">RTL</a> and its tests, then Vivado {{board.vivado}} through synthesis and place and route to a <a href="how.html#term-bitstream">bitstream</a>. The runs shown here used Anthropic's Claude Sonnet (<code>{{dev.model.0}}</code>) through Claude Code. <a href="agent.html">The agent</a> shows how it is built: a controller in code over a small team of model agents, each with a narrow job.</p>
 
 <h2>How it is checked</h2>
 <p>A model that writes a design and its tests can make the same mistake in both. So the agent's own tests never decide. Each task has hidden tests, written in advance against an independent model of the spec and themselves checked by <a href="how.html#term-mutation">mutation testing</a>. Timing must be met after routing, and the board has the last word.</p>
 
 <h2>What has been shown so far</h2>
 <p>On {{dev.tasks}} development tasks the agent passed every hidden test in {{dev.hidden_pass}} of {{dev.runs}} runs. In {{dev.escapes}} more its own checks passed and the hidden tests failed, each time because it read the spec differently from the test author. The fixes made since are not yet measured.</p>
-<p>Development tasks are the ones used to find faults, so these figures are a record of the work, not a score. The score will come from <a href="how.html#term-heldout">held-out</a> tasks; the first attempt was stopped before any result was analysed. A hand-built reference design passes all its tests on the board, but no agent-built design has been on one yet.</p>
+<p>Development tasks are the ones used to find faults, so these figures are a record of the work, not a score. The score will come from <a href="how.html#term-heldout">held-out</a> tasks; the first attempt was stopped before any result was analysed. A hand-built reference design passes all its tests on the board. One design the agent built, in a Deep Agents smoke run on the small T1 design, has been programmed onto the board: it passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its captures of internal signals, so no design the agent built has yet passed every test on the board.</p>
 
 <figure>
 <div class="player" id="hero-player" aria-label="Pipeline replay from a real run record">
@@ -24,6 +24,7 @@
 
 <h2>What is here</h2>
 <div class="cols">
+<div><h3><a href="agent.html">The agent</a></h3><p>The controller, the role agents and a replayed run.</p></div>
 <div><h3><a href="how.html">How it works</a></h3><p>The stages, the checks and the tools.</p></div>
 <div><h3><a href="flow-notes.html">Beyond the flow</a></h3><p>Where scripted Vivado falls short, and the fixes.</p></div>
 <div><h3><a href="expertise.html">Areas of expertise</a></h3><p>What the agent knows and checks, area by area.</p></div>

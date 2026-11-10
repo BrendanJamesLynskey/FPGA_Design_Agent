@@ -27,6 +27,7 @@ REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 
 PAGES = [  # file, nav label, title, description, data keys inlined
     ("index.html", "Home", "End-to-end FPGA Agent", "An open agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGA boards, measured.", ["replay"]),
+    ("agent.html", "The agent", "The agent", "The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.", ["agent_graph"]),
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
     ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
     ("expertise.html", "Expertise", "Areas of expertise", "What the agent knows, what its flow checks and what has been measured, area by area, in drawers; each area states how far its evidence goes.", []),
@@ -156,8 +157,46 @@ def block(name, d):
     if name in ("expertise_levels", "expertise_ladder", "expertise_drawers"):
         import expertise_page
         return getattr(expertise_page, name.split("_", 1)[1])(d["expertise"])
+    if name.startswith("agent_"):
+        return agent_block(name, d)
     if name == "exception_figure":
         return exception_figure()
+    raise KeyError(name)
+
+
+def agent_block(name, d):
+    """agent.html (brief 43): figures from site/agent_page.py, tables from agent_graph.json."""
+    import agent_page as ap
+    A = dict(d["agent_graph"], vivado=d["board"]["vivado"])
+    if name == "agent_arch":
+        return ap.both(ap.architecture(A, "wide"), ap.architecture(A, "narrow"))
+    if name == "agent_langgraph":
+        return ap.both(ap.langgraph(A["graph"], "wide"), ap.langgraph(A["graph"], "narrow"))
+    if name == "agent_pipeline":
+        return ap.both(ap.pipeline(A, "wide"), ap.pipeline(A, "narrow"))
+    if name == "agent_live":
+        return ap.both(ap.live(A, "wide"), ap.live(A, "narrow"))
+    if name == "agent_inner_da":
+        return '<div class="agone">' + ap.inner(A, "deepagents") + "</div>"
+    if name == "agent_inner_cc":
+        return '<div class="agone">' + ap.inner(A, "claude_code") + "</div>"
+    if name == "agent_roles":
+        prof = A["defaults"]["profiles"]["cvdp"]
+        st2 = {s["n"]: s for s in A["stages"]}[2]["tools"]
+        rows = [[r["label"], r["what"], ", ".join(r["reads"]), ", ".join(r["writes"]),
+                 f'Deep Agents: {A["defaults"]["model"]}; cvdp profile: {prof[r["id"]]["model"]}'] for r in A["roles"]]
+        t = table(["Role", "Job", "May read", "May write", "Model (default; cvdp profile)"], rows)
+        tl = table(["Role", "Tools in stage 2"], [[r["label"], ", ".join(st2.get(r["id"], []))] for r in A["roles"] if r["id"] in st2])
+        return t + '<details class="more"><summary>Details: the tools each role gets in stage 2</summary>' + tl + "</details>"
+    if name == "agent_runs":
+        names = {"claude_code": "Claude Code", "deepagents": "Deep Agents", "mixed": "mixed"}
+        return table(["Runs", "Harness", "Models", "Run records"], [[r["set"], names[r["harness"]], r["models"], r["records"]] for r in A["runs"]], num=(3,))
+    if name == "agent_variants":
+        out = ['<ul class="variants">']
+        for a in A["arms"]:
+            out.append(f'<li><div class="vh"><b>{html.escape(a["name"])}</b> <span class="tag run">{html.escape(a["status"])}</span></div>'
+                       f'<p>Adds {html.escape(a["adds"])}.</p><div class="vfig">{ap.variant(a)}</div></li>')
+        return "".join(out) + "</ul>"
     raise KeyError(name)
 
 
