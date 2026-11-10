@@ -1,0 +1,27 @@
+{
+ "note": "Facts the flow-notes page states that no machine-written result file holds. Each entry names the run or report it was read from; the page quotes only these and the result files named in site/export.py.",
+ "xpm_probe": {
+  "design": "flow/tests/fixtures/xpm_probe (two clocks, one xpm_cdc_single, one xpm_cdc_gray)",
+  "part": "xc7a100tcsg324-1",
+  "vivado": "2025.2",
+  "clk_a_period_ns": 10,
+  "clk_b_period_ns": 7,
+  "before": {
+   "what": "flow/build.tcl without flow/xpm_cdc.tcl (quality review QR1, 2026-11-10)",
+   "wns_ns": -1.364,
+   "tns_ns": -6.222,
+   "failing_endpoints": 5,
+   "report_cdc_exception": {"single": "None", "gray": "None"}
+  },
+  "after": {
+   "what": "same probe through flow/run_vivado.sh with flow/xpm_cdc.tcl (planner verification, 2026-11-10)",
+   "wns_ns": 8.891,
+   "report_cdc_exception": {"single": "False Path", "gray": "Max Delay Datapath Only"}
+  }
+ },
+ "rig_report_cdc_alone": {
+  "note": "From the rig build report (brief 11b, 'report_cdc limits observed'): these two mutants are structurally valid synchronisers to report_cdc.",
+  "M9": false,
+  "M11": false
+ }
+}

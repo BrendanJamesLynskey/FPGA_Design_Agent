@@ -33,9 +33,9 @@
       var n = curTheme() === "dark" ? "light" : "dark";
       document.documentElement.dataset.theme = n;
       try { localStorage.setItem("fda-theme", n); } catch (e) {}
-      tb.textContent = n === "dark" ? "Light" : "Dark";
+      tb.textContent = n === "dark" ? "Light" : "Dark"; tb.setAttribute("aria-label", "Switch to " + tb.textContent.toLowerCase() + " theme");
     });
-    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark"; tb.setAttribute("aria-label", "Switch to " + tb.textContent.toLowerCase() + " theme");
   }
 
   /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
@@ -45,7 +45,7 @@
     var live = root.querySelector(".cap");
     var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
     var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
-    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var fwd = el("button", { type: "button", "aria-label": "Next step", text: "Next" });
     var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
     var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
     var pos = el("span", { class: "pos" });
@@ -483,6 +483,91 @@
   var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
   var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
   var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+
+  /* ---------- flow notes: a bus crossing a two-flop synchroniser (frames from site/flow_model.py) ---------- */
+  function mountTear(root) {
+    var T = D.flow_notes && D.flow_notes.tear; if (!T) return;
+    var bus = "binary", extra = true, Fr = T.configs.binary_extra, p;
+    var tog = el("div", { class: "tog" });
+    function group(label, opts, cur, set) {
+      var g = el("div", { class: "grp", role: "group", "aria-label": label }, [el("span", { text: label })]), bs = [];
+      opts.forEach(function (o) {
+        var b = el("button", { type: "button", text: o[1], "aria-pressed": String(o[0] === cur) });
+        b.onclick = function () { set(o[0]); bs.forEach(function (x, k) { x.setAttribute("aria-pressed", String(opts[k][0] === o[0])); }); };
+        bs.push(b); g.appendChild(b);
+      });
+      tog.appendChild(g);
+    }
+    group("Bus", [["binary", "Binary counter"], ["gray", "Gray counter"]], bus, function (v) { bus = v; reload(); });
+    group("Extra cycle", [[false, "Off"], [true, "On"]], extra, function (v) { extra = v; reload(); });
+    root.appendChild(tog);
+    var W = 400, svg = sv("svg", { viewBox: "0 0 400 190", role: "img", "aria-label": "Source bus, first flop and second flop of the synchroniser" });
+    var defs = sv("defs"); var pat = sv("pattern", { id: "hatchhold", width: 5, height: 5, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+    pat.appendChild(sv("rect", { width: 5, height: 5, fill: "var(--bg)" })); pat.appendChild(sv("line", { x1: 0, y1: 0, x2: 0, y2: 5, stroke: "var(--ink)", "stroke-width": 2 }));
+    defs.appendChild(pat); svg.appendChild(defs);
+    var rowY = [14, 74, 134], names = ["source bus", "flop 1", "flop 2"], cells = [];
+    names.forEach(function (n, r) {
+      svg.appendChild(sv("text", { x: 6, y: rowY[r] + 23 }, n));
+      var row = [];
+      for (var j = 0; j < 4; j++) {
+        var g = sv("g"), x = 150 + j * 60;
+        var rc = sv("rect", { x: x, y: rowY[r], width: 40, height: 36, class: "bit0" });
+        var tx = sv("text", { x: x + 16, y: rowY[r] + 23, class: "big" }, "0");
+        g.appendChild(rc); g.appendChild(tx); svg.appendChild(g); row.push([rc, tx]);
+      }
+      cells.push(row);
+    });
+    [0, 1].forEach(function (r) { for (var j = 0; j < 4; j++) { var x = 170 + j * 60; svg.appendChild(sv("path", { class: "ink", d: "M" + x + " " + (rowY[r] + 36) + " L" + x + " " + (rowY[r + 1]) })); } });
+    root.appendChild(svg);
+    var cap = el("p", { class: "cap", "aria-live": "polite" }); root.appendChild(cap);
+    var ch = sv("svg", { viewBox: "0 0 400 132", role: "img", "aria-label": "Source value and sampled value over the cycles" });
+    var X0 = 34, DX = 360 / T.frames, Y = function (v) { return 108 - v * 6; };
+    ch.appendChild(sv("text", { x: 6, y: 10 }, "value, 0 to 15"));
+    var cursor = sv("rect", { class: "cursor", x: X0, y: 14, width: DX, height: 96 }); ch.appendChild(cursor);
+    ch.appendChild(sv("line", { class: "rule", x1: X0, y1: 108, x2: 394, y2: 108 }));
+    ch.appendChild(sv("text", { x: 290, y: 126 }, "destination cycle"));
+    var lSrc = sv("path", { class: "line-ink" }), lSeen = sv("path", { class: "line-seen" }); ch.appendChild(lSrc); ch.appendChild(lSeen);
+    var marks = sv("g"); ch.appendChild(marks);
+    ch.appendChild(sv("text", { x: 6, y: 126 }, "cycle 0 at left"));
+    root.appendChild(ch);
+    var leg = el("p", { class: "small muted", text: "Chart: solid line is the source value, dashed line is the value the destination sees, a ringed point is a torn value." });
+    root.appendChild(leg);
+    function path(vals) {
+      var d = ""; vals.forEach(function (v, t) { var x = X0 + t * DX; d += (t ? "L" : "M") + x.toFixed(1) + " " + Y(v) + " L" + (x + DX).toFixed(1) + " " + Y(v) + " "; });
+      return d;
+    }
+    function reload() {
+      Fr = T.configs[bus + "_" + (extra ? "extra" : "plain")];
+      lSrc.setAttribute("d", path(Fr.map(function (f) { return f.cur; })));
+      lSeen.setAttribute("d", path(Fr.map(function (f) { return f.seen; })));
+      while (marks.firstChild) marks.removeChild(marks.firstChild);
+      Fr.forEach(function (f, t) { if (f.torn) marks.appendChild(sv("circle", { class: "torn", cx: (X0 + t * DX + DX / 2).toFixed(1), cy: Y(f.seen), r: 5 })); });
+      if (p) p.goto(0);
+    }
+    function draw(rowI, bits, held) {
+      for (var j = 0; j < 4; j++) {
+        var c = cells[rowI][j], b = bits[j];
+        var isHeld = held && held[j];
+        c[0].setAttribute("class", isHeld ? "held" : (b ? "bit1" : "bit0"));
+        c[1].textContent = b; c[1].setAttribute("class", "big" + (b && !isHeld ? " b1" : ""));
+      }
+    }
+    function frame(i) {
+      var f = Fr[i];
+      draw(0, f.src); draw(1, f.f1, f.held); draw(2, f.f2);
+      cursor.setAttribute("x", (X0 + i * DX).toFixed(1));
+      var h = []; f.held.forEach(function (x, k) { if (x) h.push(k + 1); });
+      var code = bus === "gray" ? "Gray code" : "binary";
+      var c = "Cycle " + i + ": the source value is " + f.cur + " (" + code + " bits " + f.src.join("") + ")" +
+        (i % T.hold === 0 && i ? ", just changed from " + f.prev : "") + ". ";
+      c += h.length ? "Flop 1 keeps its old value for bit" + (h.length > 1 ? "s " : " ") + h.join(" and ") + " (counting from the left). " : "";
+      c += "The destination sees " + f.seen + (f.torn ? ", which is neither " + f.cur + " nor " + f.prev + ": a torn value." : (f.seen === f.cur ? "." : ", the previous value."));
+      return c;
+    }
+    p = Player(root, T.frames, frame, { interval: 700 });
+    reload();
+  }
+  var tr = document.getElementById("tear"); if (tr) mountTear(tr);
   mountDev(); mountEval1();
 })();
 

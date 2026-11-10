@@ -88,3 +88,31 @@ def test_every_trace_is_valid_and_from_its_model():
     for p in (SITE / "data" / "tasks").glob("*.json"):
         t = json.loads(p.read_text())
         traces.validate(t["id"], t["trace"])
+
+
+def test_flow_notes_tear_model():
+    """Brief 14: the synchroniser model. Gray and no-extra-cycle never tear; a binary bus with the extra cycle does, and the
+    page's frames show it; held bits only appear with the extra cycle and never two cycles in a row."""
+    import flow_model as m
+    d = json.loads((SITE / "data" / "flow_notes.json").read_text())
+    st = {(s["bus"], s["extra_cycle"]): s["torn_cycles"] for s in d["tear"]["stats"]}
+    assert st[("gray", True)] == 0 and st[("gray", False)] == 0 and st[("binary", False)] == 0 and st[("binary", True)] > 0
+    fr = d["tear"]["configs"]["binary_extra"]
+    assert any(f["torn"] for f in fr)
+    assert fr == m.run("binary", True, m.FRAMES)
+    for key, frames in d["tear"]["configs"].items():
+        for a, b in zip(frames, frames[1:]):
+            assert not any(x and y for x, y in zip(a["held"], b["held"]))
+        if key.endswith("plain"):
+            assert not any(any(f["held"]) for f in frames)
+    # a Gray source changes one bit at a time
+    g = d["tear"]["configs"]["gray_extra"]
+    for a, b in zip(g, g[1:]):
+        assert sum(x != y for x, y in zip(a["src"], b["src"])) <= 1
+
+
+def test_flow_notes_counts_match_the_mutant_table():
+    d = json.loads((SITE / "data" / "flow_notes.json").read_text())
+    c = d["counts"]
+    assert (c["ported"], c["gate_flags"], c["report_cdc_flags"], c["correct"], c["correct_pass"]) == (10, 10, 5, 12, 12)
+    assert [m["id"] for m in d["mutants"] if m["gate"] is None] == ["M9", "M11"]
