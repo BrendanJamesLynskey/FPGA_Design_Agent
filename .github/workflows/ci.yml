@@ -81,6 +81,8 @@ jobs:
         run: >-
           python -m pytest -q designs/b2_tmp_adt7420/tests/test_tmp_rtl.py designs/b2_acl_adxl362/tests/test_acl_rtl.py
           designs/b2_qspi_jedec/tests/test_qspi_rtl.py designs/b2_mic_pdm/tests/test_mic_rtl.py
+      - name: CDC soak rig (brief 11b) - checkers, host reader, the rig with metastability injection and reset storms (one copy a variant)
+        run: CDC_SIM_QUICK=1 python -m pytest -q hil/cdc_soak/tests
       - name: Mutants (each deliberate bug must fail the T1 tests)
         run: PYTHON=python designs/t1_dimmer_counter/tests/run_mutants.sh
       - name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (brief 06a)

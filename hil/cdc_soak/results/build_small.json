@@ -1,0 +1,366 @@
+{
+ "build": "small",
+ "utilisation": {
+  "lut": {
+   "used": 3354.0,
+   "available": 63400,
+   "pct": "5.29"
+  },
+  "ff": {
+   "used": 5305.0,
+   "available": 126800,
+   "pct": "4.18"
+  },
+  "lutram": {
+   "used": 79.0,
+   "available": 19000,
+   "pct": "0.42"
+  },
+  "bram36": {
+   "used": 0.5,
+   "available": 135,
+   "pct": "0.37"
+  },
+  "bufg": {
+   "used": 4.0,
+   "available": 32,
+   "pct": "12.50"
+  },
+  "mmcm": {
+   "used": 1.0,
+   "available": 6,
+   "pct": "16.67"
+  }
+ },
+ "power": {
+  "total_w": 0.28,
+  "dynamic_w": 0.182,
+  "static_w": 0.098,
+  "tj_c": 26.3,
+  "theta_ja_c_per_w": 4.6,
+  "max_ambient_c": 83.7,
+  "confidence": "Medium"
+ },
+ "timing": {
+  "wns_ns": 0.689,
+  "tns_ns": 0.0,
+  "setup_failing": 0,
+  "setup_endpoints": 9906,
+  "whs_ns": 0.019,
+  "ths_ns": 0.0,
+  "hold_failing": 0,
+  "hold_endpoints": 9686,
+  "wpws_ns": 1.5,
+  "met": true
+ },
+ "report_cdc": {
+  "ids": {},
+  "waived_endpoints": {
+   "CDC-1": 1,
+   "CDC-2": 3,
+   "CDC-6": 202,
+   "CDC-7": 48,
+   "CDC-10": 1,
+   "CDC-11": 2,
+   "CDC-15": 96
+  },
+  "clock_pairs": [
+   {
+    "severity": "Info",
+    "from": "clk_b",
+    "to": "clk_a",
+    "type": "No Common Primary Clock",
+    "exceptions": "Max Delay Datapath Only",
+    "endpoints": 10,
+    "safe": 10,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_c_u",
+    "to": "clk_a",
+    "type": "User Ignored",
+    "exceptions": "False Path",
+    "endpoints": 2,
+    "safe": 2,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_a",
+    "to": "clk_b",
+    "type": "No Common Primary Clock",
+    "exceptions": "Max Delay Datapath Only",
+    "endpoints": 36,
+    "safe": 36,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_a",
+    "to": "clk_c_u",
+    "type": "User Ignored",
+    "exceptions": "False Path",
+    "endpoints": 3,
+    "safe": 3,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_a",
+    "to": "clk_f_u",
+    "type": "User Ignored",
+    "exceptions": "False Path",
+    "endpoints": 1,
+    "safe": 1,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   }
+  ]
+ },
+ "report_cdc_without_waivers": {
+  "ids": {},
+  "waived_endpoints": {},
+  "clock_pairs": [
+   {
+    "severity": "Critical",
+    "from": "clk_a",
+    "to": "clk_b",
+    "type": "No Common Primary Clock",
+    "exceptions": "Max Delay Datapath Only",
+    "endpoints": 321,
+    "safe": 269,
+    "unsafe": 3,
+    "unknown": 49,
+    "no_async_reg": 3
+   },
+   {
+    "severity": "Warning",
+    "from": "clk_b",
+    "to": "clk_a",
+    "type": "No Common Primary Clock",
+    "exceptions": "Max Delay Datapath Only",
+    "endpoints": 51,
+    "safe": 51,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Warning",
+    "from": "clk_f_u",
+    "to": "clk_b",
+    "type": "No Common Primary Clock",
+    "exceptions": "False Path",
+    "endpoints": 24,
+    "safe": 24,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_c_u",
+    "to": "clk_a",
+    "type": "User Ignored",
+    "exceptions": "False Path",
+    "endpoints": 2,
+    "safe": 2,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_a",
+    "to": "clk_c_u",
+    "type": "User Ignored",
+    "exceptions": "False Path",
+    "endpoints": 3,
+    "safe": 3,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_a",
+    "to": "clk_f_u",
+    "type": "User Ignored",
+    "exceptions": "False Path",
+    "endpoints": 1,
+    "safe": 1,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   }
+  ]
+ },
+ "report_methodology": {
+  "PDRC-190": {
+   "severity": "Warning",
+   "description": "Suboptimally placed synchronized register chain",
+   "checks": 2
+  },
+  "TIMING-9": {
+   "severity": "Warning",
+   "description": "Unknown CDC Logic",
+   "checks": 1
+  },
+  "TIMING-10": {
+   "severity": "Warning",
+   "description": "Missing property on synchronizer",
+   "checks": 1
+  }
+ },
+ "report_methodology_without_waivers": {
+  "PDRC-190": {
+   "severity": "Warning",
+   "description": "Suboptimally placed synchronized register chain",
+   "checks": 2
+  },
+  "TIMING-9": {
+   "severity": "Warning",
+   "description": "Unknown CDC Logic",
+   "checks": 1
+  },
+  "TIMING-10": {
+   "severity": "Warning",
+   "description": "Missing property on synchronizer",
+   "checks": 1
+  }
+ },
+ "bus_skew": {
+  "constraints": 21,
+  "worst_slack_ns": 3.511,
+  "largest_skew_ns": 1.575,
+  "met": true
+ },
+ "stages_s": {
+  "synth": 80.0,
+  "constraints": 88.8,
+  "opt": 97.0,
+  "place": 122.5,
+  "phys_opt": 124.6,
+  "route": 170.6,
+  "reports": 189.9,
+  "bitstream": 225.3,
+  "delay_table": 229.0
+ },
+ "cdc_ids_by_variant": {
+  "C1": {
+   "CDC-3 Info": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "C10": {
+   "CDC-6 Warning (waived)": 2,
+   "CDC-3 Info": 2,
+   "CDC-15 Warning (waived)": 16
+  },
+  "C11": {
+   "CDC-6 Warning (waived)": 2,
+   "CDC-3 Info": 3
+  },
+  "C13": {
+   "CDC-6 Warning (waived)": 2,
+   "CDC-3 Info": 2,
+   "CDC-15 Warning (waived)": 16
+  },
+  "C2": {
+   "CDC-3 Info": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "C3A": {
+   "CDC-3 Info": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "C3B": {
+   "CDC-3 Info": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "C4": {
+   "CDC-3 Info": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "C5": {
+   "CDC-3 Info": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "C6": {
+   "CDC-6 Warning (waived)": 1
+  },
+  "C7": {
+   "CDC-6 Warning (waived)": 1
+  },
+  "C8": {
+   "CDC-3 Info": 2,
+   "CDC-15 Warning (waived)": 16
+  },
+  "C9": {
+   "CDC-3 Info": 2,
+   "CDC-15 Warning (waived)": 16
+  },
+  "M1": {
+   "CDC-2 Warning (waived)": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "M10": {
+   "CDC-7 Critical (waived)": 32,
+   "CDC-3 Info": 1
+  },
+  "M11": {
+   "CDC-3 Info": 3,
+   "CDC-15 Warning (waived)": 16
+  },
+  "M1B": {
+   "CDC-1 Critical (waived)": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "M2": {
+   "CDC-2 Warning (waived)": 2,
+   "CDC-11 Critical (waived)": 2
+  },
+  "M3": {
+   "CDC-6 Warning (waived)": 1
+  },
+  "M4": {
+   "CDC-3 Info": 1,
+   "CDC-10 Critical (waived)": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "M5": {
+   "CDC-3 Info": 1,
+   "CDC-6 Warning (waived)": 1
+  },
+  "M6A": {
+   "CDC-3 Info": 12
+  },
+  "M6B": {
+   "CDC-6 Warning (waived)": 1
+  },
+  "M6C": {
+   "CDC-6 Warning (waived)": 1
+  },
+  "M7": {
+   "CDC-3 Info": 2
+  },
+  "M8": {
+   "CDC-7 Critical (waived)": 16
+  },
+  "M9": {
+   "CDC-6 Warning (waived)": 2,
+   "CDC-3 Info": 3,
+   "CDC-15 Warning (waived)": 16
+  }
+ },
+ "vivado_peak_rss_mb": 2627
+}
