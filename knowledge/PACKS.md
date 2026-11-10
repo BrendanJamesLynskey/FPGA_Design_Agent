@@ -4,7 +4,7 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `9598415` (main, 2026-11-10; merges PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
+- Private repo commit: `ab7fc4c` (main, 2026-11-10; merges PR #33 (brief 17: AMBA and AXI, new unit `vendor/amba_axi`), PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
   LUT6 fabric design, Vivado synthesis attributes and inference templates, STA report interpretation; earlier: `d6679f5`
   PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
   `217c751` brief 04h, the Artix-7 family and device layers; earlier: `16696e6` PR #6 brief 04f, `6db99dd` PR #5 04e,
@@ -46,21 +46,22 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 5 (2026-11-04: the V2 skill names the `V_*` checker macros) | 15 | 19 | 58,020 (<= 72,000) | 4,048 | 14,505 | `dd75d279863dd2e73d546d5990c61d0fbd2a6927b87791514068434cc5d85f15` |
 | `vendor/amd_constraints/` | vendor: AMD constraints (ours; clocks, I/O delays, exceptions; brief 13b) | 1 (2026-11-10, 13b) | 6 | 8 | 31,268 (<= 34,000) | 2,482 | 7,817 | `84d2ac6be94c7f71b3d426c2b63eaff5c7ba21db4c59e45a5e73ed68a54e2a5d` |
 | `vendor/amd_ip_cores/` | vendor: free AMD IP cores (ours; FIR, DDS, FFT, memory, DSP; brief 13) | 1 (2026-11-10, 13) | 6 | 8 | 32,993 (<= 36,000) | 2,409 | 8,248 | `8d395601e048a7d55988d83965112eee1f69be8912045d0a0791657ce5ea2833` |
-| `family/zynq7000/` | family: Zynq-7000 PS7 basics (ours, from UG585/UG470) | 1 (2026-11-09, 10 B0) | 7 | 13 | 19,583 (none) | 2,185 | 4,896 | `eec37b13d7ba4029f7704e5139986cb86d12c55daacc832c36b27701919a47e2` |
-| `family/zynq_ultrascale_plus/` | family: Zynq UltraScale+ (PS8, GTH, K26 SOM; ours) | 2 (2026-11-10, 13) | 11 | 20 | 37,465 (none) | 4,286 | 9,366 | `71f187c0d5e6316dfa1af4a979f64af0adb23e47364cf04a5a4c022b93daaa7e` |
+| `vendor/amba_axi/` | vendor: AMBA AXI4, AXI4-Lite, AXI4-Stream, APB/AHB rules, AMD AXI IP and verification (ours; brief 17) | 1 (2026-11-10, 17) | 15 | 19 | 61,524 (<= 80,000) | 5,465 | 15,381 | `1add990cc85f37a25cb94326dddf90849f720149918913d291f23e2c70e80e4a` |
+| `family/zynq7000/` | family: Zynq-7000 PS7 basics (ours, from UG585/UG470) | 1 (2026-11-09, 10 B0) | 8 | 14 | 23,897 (none) | 2,461 | 5,974 | `8ffdde319128122d994e6b79b000171c5ecc009f867299c9d2cfe8192e42318c` |
+| `family/zynq_ultrascale_plus/` | family: Zynq UltraScale+ (PS8, GTH, K26 SOM; ours) | 2 (2026-11-10, 13) | 12 | 21 | 41,462 (none) | 4,596 | 10,366 | `fc859c3be9a9f5f5bfa2a8b936e65041d00b2156d6d0f7bf0be9860558eb7043` |
 | `device/xc7z020clg484-1/` | device: the Zynq-7020 part on the ZedBoard (xc7z020clg484-1) | 1 (2026-11-09, 10 B0) | 3 | 7 | 7,062 (none) | 1,153 | 1,766 | `541c7bbd3add40d205c65840f038d96e17b023b061fa4c65a1887658e9488a6f` |
 | `device/xck26/` | device: the K26 SOM part (xck26-sfvc784-2LV-c) | 1 (2026-11-09, 10 B0) | 3 | 7 | 6,497 (none) | 1,149 | 1,624 | `111bbb00559b7f8add60d3721c7c838085b5564b7e58bd713115567c913dd354` |
 | `board/kr260/` | board: AMD Kria KR260 | 1 (2026-11-09, 10 B0) | 12 | 23 | 27,087 (none) | 3,704 | 6,772 | `838a34741bf2120beae39f6033bcf6998dac5399ee7343a7d2c2d033c1a186e8` |
 | `board/zedboard/` | board: Avnet/Digilent ZedBoard | 1 (2026-11-09, 10 B0) | 15 | 28 | 36,556 (none) | 4,634 | 9,139 | `9fa5567f88f707b07efc84c456e8027a76064fd0981b0642739f85a90f42c18b` |
 | `library/` | library (search_docs corpus: 1,783 chunks) | 2 (2026-11-02, 04h: +15 chunks) | - | 16 | see `library/MANIFEST.sha256` | - | - | `04ede99be370ae925d7596cc4a63af9c1a136500de661f6acfb8dfdf35c228d6` |
 
-Root files: `SECTIONS.yaml` sha256 `f4362c4ffe33667436a7c75aeee5d6c08bc97790205feafd411dc93a09466dfb`; `INDEX.md` sha256
-`ad58896276f99d10100c91f3d5636c27f8e4fe853767ccb565f38dcdd31dc03d`.
+Root files: `SECTIONS.yaml` sha256 `1ae5c8dbc3bb887f05b7377d3915959879abbcd3d8cd4a80d788aea71a253251`; `INDEX.md` sha256
+`9b6ae0e73f7af96f01854134f36f4a9b8fee4100d45b8b8d2570b3b6321556f0`.
 
 ## The vocabulary
 
-`SECTIONS.yaml` defines 61 section ids: 19 techniques and 21 functional areas (generic; their ids,
-kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 device (04j added `primitives`), 14 tool-flow (vendor topics; 04j added `synthesis-attributes`, brief 13 `ip-cores`) and
+`SECTIONS.yaml` defines 62 section ids: 19 techniques and 21 functional areas (generic; their ids,
+kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 device (04j added `primitives`), 15 tool-flow (vendor topics; 04j added `synthesis-attributes`, brief 13 `ip-cores`, brief 17 `amba`) and
 3 procedures (`board-onboarding`, `ultrafast`, `verification-stages`). One id means one thing on every axis. Sections with no skill yet (gaps; this list is as of 2026-11-03 and is not re-derived here: the bank's root `INDEX.md` marks the current gaps with "(none yet)"):
 
 - generic (15): `low-power`, `synthesis-and-dft`, `ethernet`, `high-speed-serial`, `usb`, `user-io`, `processors`, `dram`, `flash`, `sd-card`, `audio`, `sensors`, `analog`, `expansion-io`, `power-config` (`clocking` and `timing-concepts` were filled by v3.0).
@@ -101,6 +102,9 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `functions/` | `video` | function | 1 | 3,401 | `4a8f1d4d9b5b4414ad07a753e2aa7d8e37b58285478e14c2aeca8fd04739b069` |
 | `vendor/amd_constraints/` | `constraints` | tool-flow | 6 | 31,268 | `9d125aaccab223f9cbf3083503ca9301c345894d3b3a7ee4048dd4b5633595a7` |
 | `vendor/amd_ip_cores/` | `ip-cores` | tool-flow | 6 | 32,993 | `a873445bb2b510018e09e6619688102b8db77b2dd4bc89796900f387960c0002` |
+| `vendor/amba_axi/` | `amba` | tool-flow | 9 | 34,898 | `ccf425bc3cf1c3c03375ece826aceb7dc6fdab2021210cba0dc8b7413a40243e` |
+| `vendor/amba_axi/` | `ip-cores` | tool-flow | 3 | 13,321 | `8bb4aea3226501862b927fa33f92ae54a13a38d69307c4725a6a53ee9d395268` |
+| `vendor/amba_axi/` | `simulation` | tool-flow | 3 | 13,305 | `50ee9a41b12688a6722f7f94f09c15a5df79078a5508450d09c1f64b31119869` |
 | `vendor/free_simulators/` | `simulation` | tool-flow | 3 | 9,878 | `8718cc4fde03e66a48d192f53057e3a26c8c8ff70b86b740941709f030b71e20` |
 | `vendor/ross_distilled/` | `clocking-ip` | tool-flow | 1 | 4,495 | `9cb66d5f9a42742c53be67e8270c1c81229132dc49ba1602986b9ecd4044e13f` |
 | `vendor/ross_distilled/` | `constraints` | tool-flow | 1 | 4,495 | `2dfb95cff49e1da9a6edf6b2d4dc192306f6bffd1d363326b2655871979ecd57` |
@@ -126,12 +130,12 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `family/artix7/` | `reset` | technique | 2 | 11,618 | `4d3a3281d3a0efd5dd1aa9dee7d0aa9910ce7586b1d58d5ea4bb9f397a48edd4` |
 | `family/artix7/` | `timing-concepts` | technique | 1 | 3,422 | `566f1f9f5374de1c8339c65d8044c6c04c6ab44a2a925bbe0808f5dd487f0105` |
 | `family/zynq7000/` | `clocking` | technique | 1 | 2,792 | `5c912bd3b6b5a58b1498b9c8080e41809b9feb7b374ea9ecb9dbb23494f99d12` |
-| `family/zynq7000/` | `dram` | function | 1 | 2,649 | `675212396e4fbaa3f6226fabe9407d174e8a7ef9da031427ef875b02adfc4cbd` |
+| `family/zynq7000/` | `dram` | function | 2 | 6,963 | `28e83ca982213349e4422a522ca0d0957f17e0f32c0d84846f6c326bd440a9b4` |
 | `family/zynq7000/` | `io-standards` | device | 1 | 2,360 | `21c40f7d09d06e4e75ca094e5d29b1b5c0287ff060b66c7d5c78c643db98d546` |
 | `family/zynq7000/` | `power-config` | function | 3 | 9,000 | `d7fb1f4d2f7fba199ec3c9d506d75e1e713af0b2df83debcc3f8160f4886d070` |
 | `family/zynq7000/` | `reset` | technique | 1 | 2,782 | `73463a1e7941f304a34f349f2917f742c4b441ab97f9c8750c58b67ef14bac28` |
 | `family/zynq_ultrascale_plus/` | `clocking` | technique | 2 | 7,700 | `b5cd91cc16f036ee930c1c53b3e98c7531613d166e1a5ea4df33d268f5109ce6` |
-| `family/zynq_ultrascale_plus/` | `dram` | function | 1 | 2,576 | `fa932b147d375fd2ad51b40c38366e5e3f142a9a173dfa61de0d1c76566e0cd7` |
+| `family/zynq_ultrascale_plus/` | `dram` | function | 2 | 6,573 | `8d00e24db9e1513d93b90842af33062c52ff118cb8632f1a7c7cbde1c5c77f3a` |
 | `family/zynq_ultrascale_plus/` | `high-speed-serial` | function | 1 | 2,391 | `6ec940ef70a88c5b267cf1ce2d14048975c43da0b0f2f2d89aef1e320c4927ea` |
 | `family/zynq_ultrascale_plus/` | `io-standards` | device | 2 | 7,651 | `38d18797cf351911e9578ff360fe95d6f5e68d1711c12ca7c995c3758e115d3d` |
 | `family/zynq_ultrascale_plus/` | `pin-planning` | device | 1 | 4,297 | `1e5d9ff23f148496d3dab78a8231cc95c2fc405a4b3d80c5ee357cc89c5d5b80` |
