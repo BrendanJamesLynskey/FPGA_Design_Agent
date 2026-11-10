@@ -4,9 +4,11 @@ An agent that turns a natural-language spec into a verified, bring-up-ready AMD 
 
 Showcase site: what it is, how it works, examples, the problem catalogue (every development task with its spec, hidden tests, reference RTL, mutants and golden model animated; held-out tasks by id and tier only), how it is evaluated, results ([site/](site), static pages; the live link is added here when it is published).
 
-The agent is **coming**. What exists today (milestones **F0A** and **F0B**) is the ground it will stand on: every tool step of
-the flow, proven by hand on one small design, with machine-checked gates, before any model touches it. Everything
-the agent produces later will have the same shape as `designs/t1_dimmer_counter/`.
+The flow was proven first (milestones **F0A** and **F0B**): every tool step, by hand on one small design, with
+machine-checked gates, before any model touched it. The agent (milestone F2, below) now runs that flow on benchmark
+tasks. There is no held-out score yet: the first held-out evaluation (`eval-1`) was stopped on 2026-11-09 and reports
+nothing, and the baseline evaluation comes later. Everything the agent produces has the same shape as
+`designs/t1_dimmer_counter/`.
 
 ## The flow
 
@@ -45,7 +47,7 @@ the agent produces later will have the same shape as `designs/t1_dimmer_counter/
                         the model, ILA captures against the model, one JSON result       (F0B)
 ```
 
-Steps 1-8 were done by hand for F0A. In F2 the agent does steps 1-8 itself, and only the passes of the
+Steps 1-8 were done by hand for F0A. In F2 the agent does steps 1-8 itself (the `(agent: coming)` marks above predate it), and only the passes of the
 **independent** checks (the blind model's tests, the gates, the hardware) count; its own testbench never does.
 
 ## What F0A proves
@@ -231,15 +233,15 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 04c | Board onboarding: Nexys A7 inventory, power budget and source-aware power gate, four read-only peripheral self-checks on the board | done |
 | 04e | UltraFast (UG949) backbone: stage-grouped gates and reports in the flow ([docs/methodology.md](docs/methodology.md)), nine stage procedures in the knowledge bank, T1 rebuilt through the stages ([results/ultrafast](results/ultrafast/README.md)) | done |
 | 04f | Verification backbone: OpenTitan-style V0-V3 plus V-HW on a simulator-portable stack (cocotb bench, bound assertion checkers, SymbiYosys, Verilator coverage, mutation score); T1 reaches V3 ([docs/verification.md](docs/verification.md), [results/04f](results/04f/README.md)) | done |
-| 05a | F2 part 1: the harness-neutral core, MCP server, security layer and replayed-trace CI ([docs/agent_core.md](docs/agent_core.md)) | in review |
-| 05d | F2 part 4: proof method per requirement, architecture-first gate, design standards v1.0 and checker, resource sanity gate, upgraded review pages, owner-edit ledger ([docs/methodology.md](docs/methodology.md), [docs/design_standards.md](docs/design_standards.md), [results/f2](results/f2/README.md)); live luna runs null at stage 2 | in review |
-| 05f | F2 part 6: per-role model routing (profiles `single`, `cvdp`; `role@stage` overrides), per-role and per-stage accounting, knowledge-tool use log ([docs/role_models.md](docs/role_models.md)) | in review |
-| 05g | F2 part 7: test-writer diagnosis and fixes (turn reserve, repair no longer deletes, shell fixtures, checklist, formal re-plan), per-role turn trace, knowledge-use log, QoR gate moved to after routing ([docs/test_writer.md](docs/test_writer.md)) | in review |
-| 08f | `eval-2` build: independent spec-only test role and gate after V2/V3 (`--spec-tests`, off by default), golden request test against `eval-1`, offline replay on saved designs ([docs/verification.md](docs/verification.md), [results/08f](results/08f/), [agent/graph/spectest.py](agent/graph/spectest.py), [tools/spectest_replay.py](tools/spectest_replay.py)) | in review |
-| 11b | CDC soak rig, phase 2a: the 13 correct variants and 11 mutant types (28 codes) on three clock domains, checkers, UART readout, Tj stop; simulated with metastability injection and reset storms, built in Vivado; no board run yet ([hil/cdc_soak](hil/cdc_soak/README.md)) | in review |
-| 16 | Stronger CDC gate: structural check of every asynchronous path in the netlist ([flow/cdc_structure.py](flow/cdc_structure.py), [flow/cdc_paths.tcl](flow/cdc_paths.tcl)) and the design's own tests with synchroniser-delay injection ([flow/cdc_inject.py](flow/cdc_inject.py), [flow/cdc_inject_run.py](flow/cdc_inject_run.py)), proved against the rig's mutants ([flow/tests/fixtures/cdc_mutants](flow/tests/fixtures/cdc_mutants), [results/16_cdc_gate](results/16_cdc_gate/mutant_table.md)) | in review |
+| 05a | F2 part 1: the harness-neutral core, MCP server, security layer and replayed-trace CI ([docs/agent_core.md](docs/agent_core.md)) | merged |
+| 05d | F2 part 4: proof method per requirement, architecture-first gate, design standards v1.0 and checker, resource sanity gate, upgraded review pages, owner-edit ledger ([docs/methodology.md](docs/methodology.md), [docs/design_standards.md](docs/design_standards.md), [results/f2](results/f2/README.md)); live luna runs null at stage 2 | merged |
+| 05f | F2 part 6: per-role model routing (profiles `single`, `cvdp`; `role@stage` overrides), per-role and per-stage accounting, knowledge-tool use log ([docs/role_models.md](docs/role_models.md)) | merged |
+| 05g | F2 part 7: test-writer diagnosis and fixes (turn reserve, repair no longer deletes, shell fixtures, checklist, formal re-plan), per-role turn trace, knowledge-use log, QoR gate moved to after routing ([docs/test_writer.md](docs/test_writer.md)) | merged |
+| 08f | `eval-2` build: independent spec-only test role and gate after V2/V3 (`--spec-tests`, off by default), golden request test against `eval-1`, offline replay on saved designs ([docs/verification.md](docs/verification.md), [results/08f](results/08f/), [agent/graph/spectest.py](agent/graph/spectest.py), [tools/spectest_replay.py](tools/spectest_replay.py)) | merged |
+| 11b | CDC soak rig, phase 2a: the 13 correct variants and 11 mutant types (28 codes) on three clock domains, checkers, UART readout, Tj stop; simulated with metastability injection and reset storms, built in Vivado; no board run yet ([hil/cdc_soak](hil/cdc_soak/README.md)) | merged |
+| 16 | Stronger CDC gate: structural check of every asynchronous path in the netlist ([flow/cdc_structure.py](flow/cdc_structure.py), [flow/cdc_paths.tcl](flow/cdc_paths.tcl)) and the design's own tests with synchroniser-delay injection ([flow/cdc_inject.py](flow/cdc_inject.py), [flow/cdc_inject_run.py](flow/cdc_inject_run.py)), proved against the rig's mutants ([flow/tests/fixtures/cdc_mutants](flow/tests/fixtures/cdc_mutants), [results/16_cdc_gate](results/16_cdc_gate/mutant_table.md)) | merged |
 | F2 | Agent v1 (T1-T2 designs) | coming |
-| 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | in review |
+| 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |
 | F3 | Scored runs | coming |
 
 ## Licence

@@ -10,8 +10,8 @@
 # Everything is get_cells -quiet: a design with no XPM macros gets no exception.
 #
 # Status: the gap was measured for xpm_cdc_single and xpm_cdc_gray (flow/tests/fixtures/xpm_probe). This fix reuses the rig's
-# rules (proven there) and was NOT re-run in Vivado after QR1's one allowed run: re-run the probe and look for Exception entries
-# in report_cdc and a non-negative clk_a -> clk_b WNS. xpm_cdc_array_single may match the first-stage pattern by name (not
+# rules (proven there). Re-run on the probe through flow/run_vivado.sh (2026-11-10): report_cdc shows Max Delay Datapath Only
+# and False Path on the two rows, clk_a -> clk_b WNS +8.891 ns (was -1.364 ns). xpm_cdc_array_single may match the first-stage pattern by name (not
 # checked); xpm_cdc_pulse and xpm_cdc_async_rst get no exception here.
 
 proc xpm_cells_like {pat} { get_cells -quiet -hierarchical -filter "IS_PRIMITIVE && NAME =~ $pat" }

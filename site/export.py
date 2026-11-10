@@ -200,7 +200,7 @@ def packs():
     for m in re.finditer(r"^\| (`[^`]+`|\*\*[^|]+\*\*) \| ([^|]+) \| ([^|]+) \| (\d+|-) \| ([\d,-]+|-) \| ([\d,]+|see[^|]*|-) ", t, re.M):
         rows.append({"unit": m.group(1).replace("`", "").strip("*"), "name": re.sub(r"\s*\(.*", "", m.group(2)).strip(), "skills": m.group(4),
                      "bytes": m.group(6).split(" ")[0] if m.group(6)[0].isdigit() else None})
-    return {"units": [x for x in rows if x["bytes"]], "sections": 59}
+    return {"units": [x for x in rows if x["bytes"]], "sections": 61}
 
 
 def evaldata():

@@ -61,7 +61,7 @@ python3 hil/cdc_soak/host/read_counters.py --port /dev/serial/by-id/<the board's
 ## Soak (12-24 h)
 
 - Only after a clean smoke run of the same bitstream. Owner present for the first 15 minutes to see Tj level off.
-- Run the reader as above with a new CSV; leave it running. Unattended after the first 15 minutes.
+- Run the reader as above with a new CSV; leave it running. Unattended after the first 15 minutes **only with the owner's separate OK**: a yes to the smoke run is not a yes to an unattended soak, so ask again before leaving the board running.
 - A soak that sees 0 errors on a correct variant supports only a lower bound: MTBF > (copies x hours) / 3 per copy
   at 95 % confidence (design section 0), never a theoretical MTBF.
 
