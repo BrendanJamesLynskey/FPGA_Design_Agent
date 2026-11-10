@@ -1,0 +1,22 @@
+# The compensating FIR of the PDM microphone chain (brief 19, section 7): follows the CIC of results/19_ipgen/cic,
+# 96 kS/s in, 48 kS/s out. The pass-band ripple is measured on FIR x CIC, so the FIR undoes the CIC droop.
+name: cic_comp_dec2
+fs_in_hz: 96000
+pass_edge_hz: 20000     # audio band
+stop_edge_hz: 28000     # 48 kS/s output: 28 kHz and above folds onto 0..20 kHz
+ripple_db: 0.1          # flatness of FIR x CIC over the pass band
+atten_db: 70
+design_margin_db: 2
+decimation: 2
+data_width: 21          # the CIC's full-precision output (2 + 19 bits)
+coef_width: 16
+channels: 1
+clock_hz: 100000000
+back_pressure: true
+seed: 1
+n_samples: 1200
+compensation:
+  cic_fs_in_hz: 2400000
+  rate: 25
+  diff_delay: 1
+  stages: 4

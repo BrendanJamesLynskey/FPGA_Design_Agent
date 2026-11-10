@@ -1,0 +1,111 @@
+// tb_axis_io: the generic file-driven AXI-Stream testbench (brief 19). Generated from a template by flow/ipgen/harness.py;
+// every @NAME@ is replaced. It reads stimulus beats from a file, drives tvalid by a gap schedule (and tready by a
+// second one, when the core has a tready on its output), and writes every accepted output beat, with its cycle number,
+// to a response file. Python compares that file against the golden model; nothing here judges the result.
+//
+// Stimulus file : one beat per line, "<tdata hex> <tlast 0|1>".
+// Schedule file : one cycle per line, "<valid-allowed 0|1> <ready-allowed 0|1>", read cyclically.
+// Response file : "# first_in <cycle>" and "# last_out <cycle>" comment lines, then "<cycle> <tdata hex> <tlast>".
+`timescale 1ns/1ps
+module tb_axis_io;
+    localparam int IN_W = @IN_W@;
+    localparam int OUT_W = @OUT_W@;
+    localparam int N_IN = @N_IN@;
+    localparam int DRAIN_CYCLES = @DRAIN_CYCLES@;
+    localparam int MAX_CYCLES = @MAX_CYCLES@;
+    localparam int N_SCHED = @N_SCHED@;
+    localparam bit OUT_BP = @OUT_BP@;   // the core has an output tready, driven by the schedule; otherwise held high
+    localparam string STIM_FILE = "@STIM_FILE@";
+    localparam string SCHED_FILE = "@SCHED_FILE@";
+    localparam string RESP_FILE = "@RESP_FILE@";
+
+    reg aclk = 1'b0;
+    always #(@HALF_PERIOD_NS@) aclk = ~aclk;
+
+    reg  [IN_W-1:0]  in_tdata = '0;
+    reg              in_tvalid = 1'b0;
+    reg              in_tlast = 1'b0;
+    wire             in_tready;
+    wire [OUT_W-1:0] out_tdata;
+    wire             out_tvalid;
+    wire             out_tlast;
+    reg              out_tready = 1'b1;
+
+    reg [IN_W-1:0] stim_data [0:N_IN-1];
+    reg            stim_last [0:N_IN-1];
+    reg            sched_v [0:N_SCHED-1];
+    reg            sched_r [0:N_SCHED-1];
+
+@DUT_INST@
+
+    integer fd, rc, i, cyc, sent, got, first_in, last_out, idle;
+    reg [IN_W-1:0] d;
+    integer l, sv, sr;
+    reg loaded = 1'b0;
+
+    initial begin
+        fd = $fopen(STIM_FILE, "r");
+        if (fd == 0) begin $display("TB_ERROR cannot open %s", STIM_FILE); $finish; end
+        for (i = 0; i < N_IN; i = i + 1) begin
+            rc = $fscanf(fd, "%h %d\n", d, l);
+            stim_data[i] = d; stim_last[i] = l[0];
+        end
+        $fclose(fd);
+        fd = $fopen(SCHED_FILE, "r");
+        if (fd == 0) begin $display("TB_ERROR cannot open %s", SCHED_FILE); $finish; end
+        for (i = 0; i < N_SCHED; i = i + 1) begin
+            rc = $fscanf(fd, "%d %d\n", sv, sr);
+            sched_v[i] = sv[0]; sched_r[i] = sr[0];
+        end
+        $fclose(fd);
+        loaded = 1'b1;
+    end
+
+    // the output recorder
+    integer ofd;
+    initial begin
+        ofd = $fopen(RESP_FILE, "w");
+        got = 0; first_in = -1; last_out = -1; cyc = 0;
+    end
+
+    // drive: advance the stimulus on a rising edge when the core accepted the beat
+    initial begin
+        sent = 0; idle = 0;
+        wait (loaded);
+        @(posedge aclk);
+        forever begin
+            @(posedge aclk);
+            cyc = cyc + 1;
+            // sample handshakes of the previous cycle (values before this edge's update)
+            if (in_tvalid && in_tready) begin
+                if (first_in < 0) first_in = cyc - 1;
+                sent = sent + 1;
+            end
+            if (out_tvalid && out_tready) begin
+                $fdisplay(ofd, "%0d %h %0d", cyc - 1, out_tdata, out_tlast);
+                got = got + 1; last_out = cyc - 1;
+            end
+            // next beat. AXI-Stream: a beat that was offered and not accepted stays offered, unchanged
+            if (in_tvalid && !in_tready) begin
+                // hold
+            end else if (sent < N_IN && sched_v[cyc % N_SCHED]) begin
+                in_tvalid <= 1'b1; in_tdata <= stim_data[sent]; in_tlast <= stim_last[sent];
+            end else begin
+                in_tvalid <= 1'b0;
+            end
+            out_tready <= OUT_BP ? sched_r[(cyc + 7) % N_SCHED] : 1'b1;
+            if (sent >= N_IN) idle = idle + 1;
+            if (idle > DRAIN_CYCLES || cyc > MAX_CYCLES) begin
+                $fdisplay(ofd, "# first_in %0d", first_in);
+                $fdisplay(ofd, "# last_out %0d", last_out);
+                $fdisplay(ofd, "# sent %0d", sent);
+                $fdisplay(ofd, "# got %0d", got);
+                $fdisplay(ofd, "# cycles %0d", cyc);
+                $fdisplay(ofd, "# timeout %0d", cyc > MAX_CYCLES);
+                $fclose(ofd);
+                $display("TB_DONE sent=%0d got=%0d cycles=%0d", sent, got, cyc);
+                $finish;
+            end
+        end
+    end
+endmodule
