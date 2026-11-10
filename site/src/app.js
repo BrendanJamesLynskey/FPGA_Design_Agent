@@ -568,6 +568,133 @@
     reload();
   }
   var tr = document.getElementById("tear"); if (tr) mountTear(tr);
+
+  /* ---------- the agent page (brief 43): a recorded run through the live figure; frames from agent_graph.json ---------- */
+  var PH = ["work", "gate", "review", "advance"];
+  var RL = { clarify: "clarify role", model: "blind model", tests: "test writer", rtl: "RTL writer" };
+  function agFrames(R) {
+    var F = [];
+    R.visits.forEach(function (v, i) { PH.forEach(function (ph) { F.push({ v: v, i: i, ph: ph }); }); });
+    var last = R.visits[R.visits.length - 1];
+    if (last.next.kind === "end") F.push({ v: last, i: R.visits.length - 1, ph: "end" });
+    return F;
+  }
+  function wrapTxt(t, n) {
+    var out = [], line = "";
+    String(t).split(/\s+/).forEach(function (w) { if (line && (line + " " + w).length > n) { out.push(line); line = w; } else line = (line ? line + " " : "") + w; });
+    if (line) out.push(line);
+    return out;
+  }
+  function mountAgent(root) {
+    var A = D.agent_graph; if (!A) return;
+    var S = A.stages, host0 = root.querySelector(".phost"), tmpl = host0.innerHTML, sel = root.querySelector(".runsel"), info = root.querySelector(".runinfo");
+    var lab = {}; S.forEach(function (s) { lab[s.n] = s.label; });
+    var cur = 0, btns = [], raf = null;
+    A.replays.forEach(function (R, k) {
+      var b = el("button", { type: "button", "aria-pressed": String(k === 0), text: R.title + " (" + (R.harness === "deepagents" ? "Deep Agents" : "Claude Code") + ")" });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", String(j === k)); }); start(); };
+      btns.push(b); sel.appendChild(b);
+    });
+    function start() {
+      var R = A.replays[cur], F = agFrames(R);
+      var host = root.querySelector(".phost"), fresh = el("div", { class: "phost" }); fresh.innerHTML = tmpl;
+      host.parentNode.replaceChild(fresh, host); host = fresh;
+      info.textContent = R.task + ", run " + R.run + ", " + R.date + ". Harness: " + (R.harness === "deepagents" ? "Deep Agents" : "Claude Code " + (R.claude_code || "")) +
+        "; model " + R.model + "; interview oracle " + R.oracle + ". " + R.turns + " model turns, " + R.wall_h + " h. Source: " + R.source + ".";
+      var svgs = host.querySelectorAll("svg.live");
+      function all(q) { var o = []; svgs.forEach(function (s) { s.querySelectorAll(q).forEach(function (e) { o.push(e); }); }); return o; }
+      function cls(e, c, on) { if (on) e.classList.add(c); else e.classList.remove(c); }
+      function animAll(key, animate) {
+        if (raf) cancelAnimationFrame(raf);
+        var items = [];
+        svgs.forEach(function (s) {
+          var tok = s.querySelector("[data-tok]"), path = s.querySelector('[data-e="' + key + '"]');
+          if (tok && path) { tok.classList.remove("idle"); items.push([tok, path, path.getTotalLength()]); }
+        });
+        function put(e) { items.forEach(function (it) { var q = it[1].getPointAtLength(it[2] * e); it[0].setAttribute("cx", q.x.toFixed(1)); it[0].setAttribute("cy", q.y.toFixed(1)); }); }
+        if (!animate) { put(1); return; }
+        var t0 = null, dur = 560;
+        function step(ts) {
+          if (t0 === null) t0 = ts;
+          var u = Math.min(1, (ts - t0) / dur), e = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+          put(e); if (u < 1) raf = requestAnimationFrame(step);
+        }
+        put(0); raf = requestAnimationFrame(step);
+      }
+      function arcTo(from, to) {
+        svgs.forEach(function (s) {
+          var a = s.querySelector("[data-rarc]"), c1 = s.querySelector('[data-st="' + from + '"] rect'), c2 = to == null ? null : s.querySelector('[data-st="' + to + '"] rect');
+          if (!a) return;
+          if (!c1 || !c2) { a.setAttribute("d", ""); return; }
+          var x1 = +c1.getAttribute("x") + c1.getAttribute("width") / 2, x2 = +c2.getAttribute("x") + c2.getAttribute("width") / 2, y = +c1.getAttribute("y");
+          var d = from === to ? "M" + (x1 - 6) + " " + y + " C" + (x1 - 16) + " " + (y - 18) + ", " + (x1 + 16) + " " + (y - 18) + ", " + (x1 + 6) + " " + (y - 1)
+            : "M" + x1 + " " + y + " C" + x1 + " " + (y - 22) + ", " + x2 + " " + (y - 22) + ", " + x2 + " " + (y - 1);
+          a.setAttribute("d", d);
+        });
+      }
+      function setText(q, rows) { svgs.forEach(function (s) { var g = s.querySelectorAll(q + " text"), bx = s.querySelector(q + " rect"), n = Math.floor((+bx.getAttribute("width") - 28) / 6.1);
+        var flat = []; rows.forEach(function (r, k) { if (k === 0) flat.push(r); else wrapTxt(r, n).forEach(function (x) { flat.push(x); }); });
+        g.forEach(function (t, k) { t.textContent = flat[k] || ""; if (k === g.length - 1 && flat.length > g.length) t.textContent += " ..."; }); }); }
+      function frame(i) {
+        var f = F[i], v = f.v, ph = f.ph, R2 = R;
+        var passed = {}; R2.visits.forEach(function (w, j) { if (j < f.i || (j === f.i && PH.indexOf(ph) >= 1 && ph !== "work")) { if (w.gate.pass) passed[w.stage] = 1; } });
+        all("[data-st]").forEach(function (g) { var n = +g.dataset.st; cls(g, "cur", n === v.stage && ph !== "end"); cls(g, "done", !!passed[n] && n !== v.stage); cls(g, "bad", n === v.stage && ph !== "work" && v.gate.pass === false); });
+        all("[data-n]").forEach(function (g) { cls(g, "on", g.dataset.n === (ph === "end" ? "__end__" : ph)); });
+        var key = ph === "work" ? (f.i === 0 ? "__start__~work" : "advance~work") : ph === "gate" ? "work~gate" : ph === "review" ? "gate~review" : ph === "advance" ? "review~advance" : "advance~__end__";
+        all("path.ed[data-e]").forEach(function (p) { cls(p, "on", p.dataset.e === key); });
+        animAll(key, !reduce);
+        var on = {}; v.roles.forEach(function (r) { on[r.role] = 1; });
+        all("[data-r]").forEach(function (g) { cls(g, "on", ph === "work" && !!on[g.dataset.r]); });
+        var called = {}, offered = {};
+        if (ph === "work") v.roles.forEach(function (r) { Object.keys(r.tools || {}).forEach(function (t) { called[t] = (called[t] || 0) + r.tools[t]; }); (r.offered || []).forEach(function (t) { offered[t] = 1; }); });
+        if (ph === "end" && !R2.per_visit_tools) called = R2.tool_totals || {};
+        all("[data-t]").forEach(function (g) { var t = g.dataset.t; cls(g, "called", !!called[t]); cls(g, "offer", !!offered[t]); g.querySelector(".tc").textContent = called[t] ? called[t] : ""; });
+        var gh = ["", "", ""], gcl = "";
+        if (ph === "work") gh = ["Waiting for the gate", "The role agents are working; the gate runs when they finish."];
+        else { gh = [v.gate.pass === true ? "Passed" : v.gate.pass === false ? "Failed" : (v.roles.length ? "Stopped" : "No work"), v.gate.text]; gcl = v.gate.pass === true ? "pass" : v.gate.pass === false ? "fail" : ""; }
+        all("[data-gate]").forEach(function (g) { cls(g, "pass", gcl === "pass"); cls(g, "fail", gcl === "fail"); });
+        setText("[data-gate]", gh);
+        var nh = ["", ""];
+        if (ph === "advance" || ph === "end") {
+          var nx = v.next;
+          nh = nx.kind === "next" ? ["Next stage: " + nx.to + ", " + lab[nx.to], "The gates passed, so the controller moves on."]
+            : nx.kind === "repair" ? ["Repair: back to stage " + nx.to + ", " + lab[nx.to], "The stage that owns the failure gets another visit."]
+            : ["End", nx.text.charAt(0).toUpperCase() + nx.text.slice(1) + "."];
+          arcTo(v.stage, nx.kind === "end" ? null : nx.to);
+        } else arcTo(v.stage, null);
+        all("[data-next]").forEach(function (g) { cls(g, "on", ph === "advance" || ph === "end"); });
+        setText("[data-next]", nh);
+        var head = "Stage " + v.stage + ", " + lab[v.stage] + ", visit " + v.visit + " of " + v.visits + ". ";
+        if (ph === "work") {
+          if (!v.roles.length) return head + "Work: nothing runs; the stage has used its visits.";
+          return head + "Work: " + v.roles.map(function (r) {
+            var t = Object.keys(r.tools || {}).map(function (k) { return k + " " + r.tools[k]; }).join(", ");
+            var rf = Object.keys(r.refused || {}).map(function (k) { return k + " " + r.refused[k]; }).join(", ");
+            return "the " + RL[r.role] + (r.repair ? " repairs its own files" : "") + (r.turns != null ? " (" + r.turns + " of " + r.allowed + " turns" + (r.ended === "stage_budget" ? ", its whole budget" : "") + ")" : "") +
+              (t ? "; tool calls: " + t : "") + (rf ? "; refused by the jail or the schema: " + rf : "");
+          }).join("; ") + (R2.per_visit_tools ? "." : ". This run's record does not keep tool calls per visit; the tools offered are outlined.");
+        }
+        if (ph === "gate") return head + "Gate: " + v.gate.text;
+        if (ph === "review") return head + "Review: " + v.review + ".";
+        if (ph === "advance") return head + "Advance: " + (v.next.kind === "end" ? "end the run (" + v.next.text + ")." : v.next.kind === "repair" ? "go back to stage " + v.next.to + " for a repair." : "move on to stage " + v.next.to + ".");
+        return "End of the run. " + (R2.result ? R2.result : "Hidden tests passed: " + R2.hidden + ".") + (R2.per_visit_tools ? "" : " Tool calls over the whole run are shown on the tool layer.");
+      }
+      Player(host, F.length, frame, { autoplay: true, interval: 1000 });
+    }
+    start();
+  }
+  var agr = document.getElementById("agent-replay"); if (agr) mountAgent(agr);
+  /* pipeline: a focused or clicked stage shows where its failures go back to */
+  document.querySelectorAll("svg.pipe").forEach(function (s) {
+    function show(n) { s.querySelectorAll(".arc").forEach(function (a) { a.classList.toggle("show", n != null && a.dataset.arc.split("~")[0] === String(n)); });
+      s.querySelectorAll(".stg").forEach(function (g) { g.classList.toggle("sel", g.dataset.s === String(n)); }); }
+    s.querySelectorAll(".stg").forEach(function (g) {
+      g.addEventListener("focus", function () { show(g.dataset.s); });
+      g.addEventListener("click", function () { show(g.dataset.s); });
+      g.addEventListener("mouseenter", function () { show(g.dataset.s); });
+    });
+    show(2);
+  });
   mountDev(); mountEval1();
 })();
 

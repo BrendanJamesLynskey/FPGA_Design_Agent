@@ -428,11 +428,13 @@ def flow_notes():
 def main():
     runs = dev_runs()
     sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import agent_arch
     import expertise
     cat, pages = catalogue(runs)
     out = {"dev": build_dev(runs), "replay": replay(runs), "examples": examples(runs), "board": board(),
            "packs": packs(), "eval": evaldata(), "catalogue": cat, "flow_notes": flow_notes(),
            "skills": expertise.skills_doc(), "expertise": expertise.build()}
+    out["agent_graph"] = agent_arch.build(out["replay"], out["skills"])     # brief 43: the agent's graph, roles and two replays, from the code
     out.update({f"tasks/{k}": v for k, v in pages.items()})
     (OUT / "tasks").mkdir(exist_ok=True)
     bad = 0

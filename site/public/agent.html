@@ -1,0 +1,1184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The agent | End-to-end FPGA Agent</title>
+<meta name="description" content="The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
+  --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --accent: #2a5b87; --accent-bg: #e4ecf4;
+  --measure: 68ch; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+    --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; --accent: #8fb5da; --accent-bg: #152230; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+  --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; --accent: #8fb5da; --accent-bg: #152230; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); overflow-x: hidden; }
+a { color: var(--ink); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, kbd, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--panel); border: 1px solid var(--rule); padding: 0 .3em; border-radius: 2px; overflow-wrap: anywhere; }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; line-height: 1.45; margin: 0 0 1em; max-width: 100%; }
+pre code { border: 0; padding: 0; background: none; overflow-wrap: normal; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 3.2vw, 3rem); margin: .3em 0 .4em; font-weight: 700; }
+h2 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.8rem); margin: 2.2em 0 .5em; font-weight: 700; }
+h3 { font-size: 1.05rem; margin: 1.6em 0 .4em; }
+p, li { max-width: var(--measure); }
+p { margin: 0 0 1em; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-3); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
+.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.bar nav a { padding: 10px 6px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
+.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* sections, cards */
+.hero { padding: 36px 0 8px; }
+.eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
+.fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.fact .n { font: 700 2rem/1.1 var(--f-mono); letter-spacing: -.02em; }
+.fact p { margin: .4em 0 0; font-size: .92rem; color: var(--ink-2); }
+.tag { display: inline-block; font: 600 .75rem var(--f-mono); border: 1px solid var(--ink-3); padding: 1px 7px; border-radius: 2px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.tag.run { border-style: dashed; }
+figure { margin: 1.4em 0; }
+figcaption { font-size: .88rem; color: var(--ink-3); margin-top: 6px; max-width: var(--measure); }
+.panel { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.tablewrap { overflow-x: auto; margin: 0 0 1.2em; border: 1px solid var(--rule); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+img { max-width: 100%; height: auto; display: block; }
+footer { border-top: 1px solid var(--rule); margin-top: 56px; padding: 22px 0 40px; color: var(--ink-3); font-size: .9rem; }
+footer .wrap > * { max-width: var(--measure); }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
+
+/* pipeline player */
+.player { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0 0 12px; counter-reset: n; }
+.pipe li { max-width: none; border: 1px solid var(--mute); padding: 8px 10px; font-size: .86rem; line-height: 1.3; position: relative; color: var(--ink-3); min-height: 62px; }
+.pipe li b { display: block; font-size: .72rem; font-family: var(--f-mono); letter-spacing: .04em; margin-bottom: 2px; }
+.pipe li.done { color: var(--ink-2); border-color: var(--ink-3); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px); }
+.pipe li.active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.pipe li.stop { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.pipe li .v { position: absolute; right: 8px; top: 6px; font: .72rem var(--f-mono); }
+.cap { min-height: 3.2em; margin: 0 0 10px; color: var(--ink); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctl input[type=range] { flex: 1 1 140px; min-width: 120px; min-height: 44px; accent-color: var(--ink); }
+.ctl .pos { font: .85rem var(--f-mono); color: var(--ink-3); min-width: 6ch; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* charts */
+svg text { fill: var(--ink-2); font: 11px var(--f-mono); }
+svg .ink { stroke: var(--ink); fill: none; }
+svg .fillink { fill: var(--ink); }
+svg .rule { stroke: var(--rule); }
+svg .warn { stroke: var(--warn); fill: none; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; }
+.dot.p { background: var(--ink); }
+.dot.f { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.dot.n { border-style: dotted; border-color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.strip .t { font-family: var(--f-mono); overflow-wrap: anywhere; }
+.bars { display: grid; grid-template-columns: minmax(0, 14ch) 1fr auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.bars .b { height: 14px; background: var(--ink); min-width: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-3); margin-top: 8px; }
+.stub { border: 1px dashed var(--ink-3); padding: 18px; background: var(--panel); }
+@media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Home hero: FPGA fabric backdrop (canvas, monochrome, drawn by app.js; still under reduced motion). */
+.hero { position: relative; isolation: isolate; padding: 72px 0 40px; }
+#fabric { position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  mask-composite: intersect; }
+@media (max-width: 640px) { #fabric { opacity: .55; } }
+.hero h1 { font-size: clamp(2.4rem, 1.2rem + 5.6vw, 4.6rem); letter-spacing: -.025em; margin: .15em 0 .2em; }
+.strap { font-size: clamp(1.15rem, .9rem + 1.2vw, 1.6rem); line-height: 1.3; font-weight: 600; margin: 0 0 .8em; max-width: 40ch; }
+.boards { font: .9rem/1.5 var(--f-mono); color: var(--ink-2); max-width: 70ch; }
+.boards span { background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
+.hero h1, .hero .strap { text-shadow: 0 0 12px var(--bg), 0 0 4px var(--bg); }
+
+/* problems: index and task pages */
+.dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.dombars li { display: grid; grid-template-columns: minmax(0, 22ch) 1fr 3ch; gap: 10px; align-items: center; max-width: none; font-size: .88rem; }
+.dombars a, .dombars .dl-empty { text-decoration: none; padding: 6px 0; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+.dombars a b, .dombars .dl-empty b { font-family: var(--f-mono); }
+.db { height: 12px; border: 1px solid var(--rule); display: block; }
+.db span { display: block; height: 100%; background: var(--ink); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0 12px; }
+.filters label { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; }
+.filters select { max-width: 70vw; }
+.plist { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.pcard { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; max-width: none; display: flex; flex-direction: column; gap: 2px; }
+.pcard a { font-weight: 600; text-decoration: none; }
+.pcard a:hover .pt { text-decoration: underline; }
+.pcard .pm { font-size: .82rem; color: var(--ink-3); }
+.made li { margin-bottom: .5em; }
+.crumbs { margin: 24px 0 0; color: var(--ink-3); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.spec { border-left: 3px solid var(--ink); padding: 2px 0 2px 16px; margin: 0 0 1em; }
+.spec h3, .spec h4 { margin-top: .8em; }
+.reqs li { margin-bottom: .3em; }
+details.rules, details.code { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 10px; }
+details.rules > summary, details.code > summary { padding: 10px 12px; cursor: pointer; min-height: 44px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+details.rules > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.code pre { margin: 0; border: 0; border-top: 1px solid var(--rule); max-height: 36em; }
+.codebar { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0 12px 8px; align-items: center; }
+.codebar a { min-height: 32px; display: inline-flex; align-items: center; }
+.hk { font-weight: 700; }
+.hc { color: var(--ink-3); font-style: italic; }
+.hs { color: var(--ink-2); }
+.note { border: 1px solid var(--ink-3); padding: 10px 12px; background: var(--panel); }
+.trace .hero-art { margin-bottom: 10px; }
+.wavewrap { overflow-x: auto; margin-bottom: 8px; }
+.wavesvg { min-width: 520px; }
+svg .future { fill: var(--panel); opacity: .62; }
+svg .cursor { fill: var(--ink); opacity: .08; }
+svg text.big { font-size: 15px; fill: var(--ink); }
+svg text.inv, svg text.big.inv { fill: var(--panel); }
+svg .pix { stroke: var(--ink-3); stroke-width: 1; }
+svg text.dark { fill: #000; } svg text.light { fill: #fff; }
+.vals { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 14px; margin: 0 0 8px; font-size: .85rem; }
+.vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
+.trace .hero-art svg { margin: 0 auto; display: block; }
+
+/* flow notes: cards, status, figures */
+.card { border: 1px solid var(--rule); background: var(--panel); padding: 4px 16px 14px; margin: 0 0 28px; }
+.card h2 { margin-top: .8em; font-size: clamp(1.2rem, 1rem + 1vw, 1.5rem); }
+.kv { display: grid; grid-template-columns: minmax(0, 11ch) minmax(0, 1fr); gap: 10px 16px; margin: 0; }
+.kv dt { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); padding-top: .25em; }
+.kv dd { margin: 0; min-width: 0; }
+.kv dd > :last-child { margin-bottom: 0; }
+@media (max-width: 640px) { .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; } .kv dd { margin-bottom: 12px; } }
+.tag.built { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tag.part { border-style: solid; }
+.tag.plan { border-style: dashed; }
+.index td:first-child { white-space: nowrap; }
+.fig { margin: 1em 0; }
+.fig svg { display: block; width: 100%; height: auto; max-width: 560px; }
+.fig svg .hatch line { stroke: var(--warn); stroke-width: 1.2; }
+svg .barneg { fill: url(#hatchwarn); stroke: var(--warn); }
+svg .barpos { fill: var(--ink); }
+svg .box { fill: var(--bg); stroke: var(--ink-3); }
+svg .boxink { fill: var(--bg); stroke: var(--ink); }
+svg .dash { stroke: var(--ink-3); stroke-dasharray: 4 3; fill: none; }
+svg .held { fill: url(#hatchhold); stroke: var(--ink); }
+svg .bit0 { fill: var(--bg); stroke: var(--ink-3); }
+svg .bit1 { fill: var(--ink); stroke: var(--ink); }
+svg text.b1 { fill: var(--bg); }
+svg .torn { fill: none; stroke: var(--warn); stroke-width: 2; }
+svg .line-ink { stroke: var(--ink); fill: none; stroke-width: 1.5; }
+svg .line-seen { stroke: var(--ink-3); fill: none; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.tear .tog { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 10px; align-items: center; }
+.tear .tog .grp { display: inline-flex; gap: 0; align-items: center; flex-wrap: wrap; }
+.tear .tog .grp > span { font-size: .85rem; color: var(--ink-3); margin-right: 8px; }
+.tear .tog button { border-radius: 0; margin-left: -1px; }
+.tear svg { display: block; width: 100%; height: auto; max-width: 560px; }
+
+/* expertise: drawers */
+.seg { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 4px; }
+.seg i { width: 9px; height: 9px; border: 1px solid var(--ink-3); display: inline-block; }
+.seg i.on { background: var(--ink); border-color: var(--ink); }
+.tag.lvl { text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.ladder { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0 18px; }
+.ladder li { display: flex; align-items: center; gap: 6px; max-width: none; border-bottom: 1px solid var(--rule); min-height: 44px; font-size: .92rem; }
+.ladder li a { flex: 1; min-width: 0; padding: 10px 0; }
+.ladder .lv { color: var(--ink-3); font-size: .8rem; min-width: 11ch; text-align: right; }
+.areactl { display: flex; gap: 8px; margin: 0 0 12px; flex-wrap: wrap; }
+.areactl[hidden] { display: none; }
+details.area { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 8px; }
+details.area > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; padding: 10px 14px; cursor: pointer; min-height: 44px; list-style: none; }
+details.area > summary::-webkit-details-marker { display: none; }
+details.area > summary::before { content: "+"; grid-column: 1; font: 700 1rem var(--f-mono); }
+details.area[open] > summary::before { content: "-"; }
+details.area > summary { grid-template-areas: "n l" "s l" "c l"; }
+details.area > summary::before { display: none; }
+details.area .an { grid-area: n; font-weight: 700; }
+details.area .an::before { content: "+ "; font-family: var(--f-mono); }
+details.area[open] .an::before { content: "- "; }
+details.area .as { grid-area: s; color: var(--ink-2); font-size: .92rem; }
+details.area .ac { grid-area: c; color: var(--ink-3); font-size: .82rem; }
+details.area .tag.lvl { grid-area: l; align-self: start; }
+details.area .abody { padding: 4px 14px 14px; border-top: 1px solid var(--rule); }
+details.area h4 { margin: .9em 0 .3em; font-size: .85rem; font-weight: 600; }
+details.area ul { padding-left: 1.1em; margin: 0 0 .6em; }
+details.area li { margin-bottom: .35em; }
+details.area .kv { grid-template-columns: minmax(0, 12ch) minmax(0, 1fr); margin-top: 10px; }
+@media (max-width: 640px) {
+  details.area > summary { grid-template-columns: minmax(0, 1fr); grid-template-areas: "n" "s" "c" "l"; }
+  details.area .tag.lvl { justify-self: start; margin-top: 4px; }
+  details.area .kv { grid-template-columns: minmax(0, 1fr); }
+  .ladder .lv { display: none; }
+}
+details.area { scroll-margin-top: 110px; }
+@media (max-width: 640px) { details.area { scroll-margin-top: 250px; } }
+
+/* nested "Details" drawers (brief 32): specialist detail, closed by default */
+details.more { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 1em; }
+details.more > summary { padding: 8px 12px; cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: .9rem; color: var(--ink-2); }
+details.more > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.more[open] > summary { border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.card details.more, details.area details.more { background: var(--bg); }
+dl.gloss { margin: 0; }
+dl.gloss dt { font-weight: 700; margin-top: .8em; scroll-margin-top: 70px; }
+dl.gloss dd { margin: .1em 0 0; max-width: var(--measure); }
+.evsrc { font-size: .8rem; color: var(--ink-3); white-space: nowrap; }
+
+/* the agent page (brief 43): hand-tuned SVG figures, two layouts each; one accent for "active" */
+.agfig .lay-n { display: none; }
+@media (max-width: 819px) { .agfig .lay-w { display: none; } .agfig .lay-n { display: block; max-width: 480px; } }
+.agone { max-width: 420px; }
+.ag { display: block; width: 100%; height: auto; overflow: visible; }
+.ag text { font: 13px var(--f-body); fill: var(--ink); }
+.ag text.s { font-size: 11px; fill: var(--ink-2); }
+.ag text.t { font-size: 15px; font-weight: 600; }
+.ag .nd { fill: var(--panel); stroke: var(--ink); stroke-width: 1.5; transition: fill .3s, stroke .3s; }
+.ag .band { fill: var(--panel); stroke: var(--rule); stroke-width: 1.5; }
+.ag .dashb { stroke: var(--ink-3); stroke-dasharray: 6 4; }
+.ag .chip { fill: var(--bg); stroke: var(--ink-3); stroke-width: 1.5; transition: fill .3s, stroke .3s; }
+.ag .chip2 { fill: var(--bg); stroke: var(--ink); stroke-width: 1.5; }
+.ag .ed { stroke: var(--ink-2); stroke-width: 1.5; fill: none; transition: stroke .3s; }
+.ag .ah { fill: var(--ink-2); }
+.ag .aha { fill: var(--accent); }
+.ag .term { fill: var(--ink); }
+.ag .termo { fill: var(--panel); stroke: var(--ink); stroke-width: 2; }
+.ag .ufband { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 3; }
+.ag .arc { fill: none; stroke: var(--accent); stroke-width: 1.5; opacity: 0; transition: opacity .25s; }
+.ag .arc.show { opacity: 1; }
+.ag .stg { cursor: pointer; }
+.ag .stg:focus { outline: none; }
+.ag .stg:focus-visible .nd, .ag .stg.sel .nd { stroke: var(--accent); stroke-width: 2; }
+.ag .vadd { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.ag .cell { fill: var(--bg); stroke: var(--rule); stroke-width: 1.5; transition: fill .3s, stroke .3s; }
+.ag [data-st].done .cell { fill: var(--panel); stroke: var(--ink-2); }
+.ag [data-st].cur .cell { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 2; }
+.ag [data-st].bad .cell { stroke: var(--warn); }
+.ag [data-st] text { fill: var(--ink-3); }
+.ag [data-st].done text, .ag [data-st].cur text { fill: var(--ink); }
+.ag [data-n].on .nd { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 2; }
+.ag [data-n].on circle.termo { stroke: var(--accent); }
+.ag path.ed.on { stroke: var(--accent); stroke-width: 2; }
+.ag .tok { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+.ag .tok.idle { opacity: 0; }
+.ag [data-r] text { fill: var(--ink-3); transition: fill .3s; }
+.ag [data-r].on .chip { fill: var(--accent-bg); stroke: var(--accent); }
+.ag [data-r].on text { fill: var(--ink); }
+.ag .tchip { fill: var(--bg); stroke: var(--mute); stroke-width: 1.5; stroke-dasharray: 3 3; transition: fill .3s, stroke .3s; }
+.ag [data-t] text { fill: var(--ink-3); }
+.ag [data-t].offer .tchip { stroke: var(--ink-3); stroke-dasharray: none; }
+.ag [data-t].offer text { fill: var(--ink-2); }
+.ag [data-t].called .tchip { fill: var(--accent-bg); stroke: var(--accent); stroke-dasharray: none; }
+.ag [data-t].called text { fill: var(--ink); }
+.ag [data-t] text.tc { font-weight: 600; }
+.ag .gbox { fill: var(--bg); stroke: var(--rule); stroke-width: 1.5; transition: stroke .3s; }
+.ag [data-gate].pass .gbox { stroke: var(--ink); }
+.ag [data-gate].fail .gbox { stroke: var(--warn); }
+.ag [data-gate].fail text.gt:not(.s) { fill: var(--warn); }
+.ag [data-next].on .gbox { stroke: var(--accent); }
+.ag .rarc { fill: none; stroke: var(--accent); stroke-width: 2; }
+.agplay .runsel { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.agplay .runinfo { margin: 0 0 10px; }
+.agplay .phost:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+.agplay .cap { margin-top: 10px; }
+ul.variants { list-style: none; padding: 0; margin: 0 0 1em; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+ul.variants li { max-width: none; min-width: 0; border: 1px solid var(--rule); background: var(--panel); padding: 10px 14px; }
+ul.variants .vh { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+ul.variants p { margin: .3em 0 .5em; }
+.vfig { overflow-x: auto; }
+.vfig .ag { width: 100%; height: auto; }
+@media (max-width: 640px) { .bar { position: static; } }   /* brief 43: nine pages wrap the nav to several rows on a phone; do not pin it */
+</style>
+</head>
+<body>
+<a class="visually-hidden" href="#main">Skip to content</a>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="agent.html" aria-current="page">The agent</a><a href="how.html">How it works</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="problems.html">Problems</a><a href="evaluation.html">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<main id="main" class="wrap">
+<h1>The agent</h1>
+<p class="lede">This page shows the agent itself: a controller written in code that walks a design through fixed stages, and a small team of language-model agents that do the writing inside each stage. The diagrams are drawn from the agent's own code and its run records, and a recorded run plays through them at the end.</p>
+
+<h2>What "agent" means here</h2>
+<p>An <a href="how.html#term-agent">agent</a> is a language model that works in a loop: it reads, calls a tool, reads the result and decides what to do next. Left to itself, such a loop drifts, and a model that writes both a design and its tests can make the same mistake in both. So the agent here is two things. A controller, written in Python with <a href="how.html#term-langgraph">LangGraph</a>, decides which stage comes next and whether a stage has passed, from the tools' results alone. Inside each stage, one or more role agents, each a model with a narrow job and a narrow view of the files, do the work.</p>
+
+<h2>The architecture</h2>
+<p>A request comes in as plain English. The interview turns it into a signed-off spec. From then on the controller runs the stages; the role agents write files and call tools; the tools drive Vivado and the simulators; code turns the reports into gate results; and those results, not the models, decide what happens next. Beside the stack sit the private knowledge bank, which the agent reads through two tools, and the project layer for multi-module designs, which today has its own commands and is not yet called by the controller.</p>
+<figure><div class="agfig"><div class="lay-w"><svg class="ag arch" viewBox="0 0 940 985" role="img" aria-labelledby="arw-t"><title id="arw-t">Architecture: spec and interview, the LangGraph controller, role agents on either harness, the tool layer, the flow, the gates and the board shell, with the knowledge bank and project layer beside them</title><defs><marker id="arw-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="arw-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><g data-l="spec"><rect class="band" x="34" y="6" width="556" height="78" rx="8"/><text x="48" y="30" class="t">Spec and interview</text><rect class="chip" x="48" y="42" width="169.4" height="30" rx="4"/><text x="132.7" y="61.5" text-anchor="middle">spec.md, plain English</text><path class="ed" d="M220.4 57.0 L238.4 57.0" marker-end="url(#arw-ah)"/><rect class="chip" x="241.4" y="42" width="82.3" height="30" rx="4"/><text x="282.55" y="61.5" text-anchor="middle">interview</text><path class="ed" d="M326.70000000000005 57.0 L344.70000000000005 57.0" marker-end="url(#arw-ah)"/><rect class="chip" x="347.7" y="42" width="162.7" height="30" rx="4"/><text x="429.05" y="61.5" text-anchor="middle">spec.yaml, signed off</text></g><path class="ed" d="M74 86 L74 118" marker-end="url(#arw-ah)"/><text x="86" y="106" class="s">spec.yaml</text><g data-l="ctl"><rect class="band" x="34" y="122" width="556" height="99" rx="8"/><text x="48" y="146" class="t">LangGraph controller</text><rect class="chip" x="48" y="158" width="48.8" height="30" rx="4"/><text x="72.4" y="177.5" text-anchor="middle">work</text><path class="ed" d="M99.8 173.0 L117.8 173.0" marker-end="url(#arw-ah)"/><rect class="chip" x="120.8" y="158" width="48.8" height="30" rx="4"/><text x="145.2" y="177.5" text-anchor="middle">gate</text><path class="ed" d="M172.6 173.0 L190.6 173.0" marker-end="url(#arw-ah)"/><rect class="chip" x="193.6" y="158" width="62.2" height="30" rx="4"/><text x="224.7" y="177.5" text-anchor="middle">review</text><path class="ed" d="M258.8 173.0 L276.8 173.0" marker-end="url(#arw-ah)"/><rect class="chip" x="279.8" y="158" width="68.9" height="30" rx="4"/><text x="314.25" y="177.5" text-anchor="middle">advance</text><text x="48" y="202" class="s">LangGraph 1.2.19: the stage machine, its limits and its repair routing, in code</text></g><path class="ed" d="M74 223 L74 255" marker-end="url(#arw-ah)"/><text x="86" y="243" class="s">stage prompt, files, repair notes</text><g data-l="roles"><rect class="band" x="34" y="259" width="556" height="157" rx="8"/><text x="48" y="283" class="t">Role agents</text><rect class="chip" x="48" y="295" width="68.9" height="30" rx="4"/><text x="82.45" y="314.5" text-anchor="middle">Clarify</text><rect class="chip" x="124.9" y="295" width="95.7" height="30" rx="4"/><text x="172.75" y="314.5" text-anchor="middle">Blind model</text><rect class="chip" x="228.6" y="295" width="95.7" height="30" rx="4"/><text x="276.45" y="314.5" text-anchor="middle">Test writer</text><rect class="chip" x="332.3" y="295" width="89" height="30" rx="4"/><text x="376.8" y="314.5" text-anchor="middle">RTL writer</text><g class="sw" data-h="deepagents"><rect class="chip2" x="48" y="337" width="246" height="46" rx="4"/><text x="60" y="356">Deep Agents</text><text x="60" y="373" class="s">deepagents 0.7.32; OpenRouter models</text></g><text x="312" y="365" class="s" text-anchor="middle">or</text><g class="sw" data-h="claude_code"><rect class="chip2" x="330" y="337" width="246" height="46" rx="4"/><text x="342" y="356">Claude Code</text><text x="342" y="373" class="s">headless; Anthropic models</text></g><text x="48" y="397" class="s">same roles, prompts, tools and gates on either harness</text></g><path class="ed" d="M74 418 L74 450" marker-end="url(#arw-ah)"/><text x="86" y="438" class="s">tool calls, schema-checked</text><g data-l="tools"><rect class="band" x="34" y="454" width="556" height="114" rx="8"/><text x="48" y="478" class="t">Tool layer</text><rect class="chip" x="48" y="490" width="55.5" height="30" rx="4"/><text x="75.75" y="509.5" text-anchor="middle">Files</text><rect class="chip" x="111.5" y="490" width="82.3" height="30" rx="4"/><text x="152.65" y="509.5" text-anchor="middle">Knowledge</text><rect class="chip" x="201.8" y="490" width="102.4" height="30" rx="4"/><text x="253" y="509.5" text-anchor="middle">Verification</text><rect class="chip" x="312.2" y="490" width="62.2" height="30" rx="4"/><text x="343.3" y="509.5" text-anchor="middle">Vivado</text><text x="48" y="534" class="s">one registry: in process for Deep Agents, over MCP 2.3.0 for Claude Code; path jail,</text><text x="48" y="549" class="s">argument check, audit log</text></g><path class="ed" d="M74 570 L74 602" marker-end="url(#arw-ah)"/><text x="86" y="590" class="s">fixed commands</text><g data-l="flow"><rect class="band" x="34" y="606" width="556" height="99" rx="8"/><text x="48" y="630" class="t">Flow</text><rect class="chip" x="48" y="642" width="109.1" height="30" rx="4"/><text x="102.55" y="661.5" text-anchor="middle">Vivado 2025.2</text><rect class="chip" x="165.1" y="642" width="135.9" height="30" rx="4"/><text x="233.05" y="661.5" text-anchor="middle">Icarus and cocotb</text><rect class="chip" x="309" y="642" width="82.3" height="30" rx="4"/><text x="350.15" y="661.5" text-anchor="middle">Verilator</text><rect class="chip" x="399.3" y="642" width="89" height="30" rx="4"/><text x="443.8" y="661.5" text-anchor="middle">SymbiYosys</text><text x="48" y="686" class="s">fixed commands built by the tools; the model never writes Tcl or shell</text></g><path class="ed" d="M74 707 L74 739" marker-end="url(#arw-ah)"/><text x="86" y="727" class="s">reports and logs</text><g data-l="gates"><rect class="band" x="34" y="743" width="556" height="99" rx="8"/><text x="48" y="767" class="t">Gates</text><rect class="chip" x="48" y="779" width="75.6" height="30" rx="4"/><text x="85.8" y="798.5" text-anchor="middle">V0 to V3</text><rect class="chip" x="131.6" y="779" width="95.7" height="30" rx="4"/><text x="179.45" y="798.5" text-anchor="middle">stage gates</text><rect class="chip" x="235.3" y="779" width="129.2" height="30" rx="4"/><text x="299.9" y="798.5" text-anchor="middle">design standards</text><rect class="chip" x="372.5" y="779" width="189.5" height="30" rx="4"/><text x="467.25" y="798.5" text-anchor="middle">CDC and timing exceptions</text><text x="48" y="823" class="s">parsed from the reports by code; the agent&#x27;s own tests never decide</text></g><path class="ed" d="M74 844 L74 876" marker-end="url(#arw-ah)"/><text x="86" y="864" class="s">bitstream, once approved</text><g data-l="board"><rect class="band" x="34" y="880" width="556" height="99" rx="8"/><text x="48" y="904" class="t">Board shell</text><rect class="chip" x="48" y="916" width="209.6" height="30" rx="4"/><text x="152.8" y="935.5" text-anchor="middle">program SRAM, after approval</text><rect class="chip" x="265.6" y="916" width="122.5" height="30" rx="4"/><text x="326.85" y="935.5" text-anchor="middle">UART test shell</text><text x="48" y="960" class="s">the model is never offered the board</text></g><path class="ed" d="M34 767 L14 767 L14 146 L32 146" marker-end="url(#arw-ah)"/><g transform="translate(9 472.5) rotate(-90)"><text x="0" y="0" class="s" text-anchor="middle">gate results, failures</text></g><g data-l="bank"><rect class="band" x="640" y="259" width="300" height="228" rx="8"/><text x="654" y="283" class="t">Knowledge bank</text><text x="654" y="305" class="s">private; pinned at commit a598197</text><text x="654" y="320" class="s">216 skills in 18 units</text><text x="654" y="335" class="s">techniques: 22</text><text x="654" y="350" class="s">functions: 11</text><text x="654" y="365" class="s">vendor: 53</text><text x="654" y="380" class="s">family: 64</text><text x="654" y="395" class="s">device: 11</text><text x="654" y="410" class="s">board: 40</text><text x="654" y="425" class="s">procedures: 15</text><text x="654" y="440" class="s"></text><text x="654" y="455" class="s">reached from the tool layer through</text><text x="654" y="470" class="s">load_skill and search_docs</text></g><path class="ed" d="M590 506 L610 506 L610 373.0 L638 373.0" marker-end="url(#arw-ah)"/><g data-l="project"><rect class="band dashb" x="640" y="6" width="300" height="123" rx="8"/><text x="654" y="30" class="t">Project layer</text><text x="654" y="52" class="s">a module graph (design.yaml)</text><text x="654" y="67" class="s">a contract for each module</text><text x="654" y="82" class="s">contract tests, generated without a model</text><text x="654" y="97" class="s">beside the agent today: its own commands, not</text><text x="654" y="112" class="s">yet called by the graph</text></g></svg></div><div class="lay-n"><svg class="ag arch" viewBox="0 0 360 1758" role="img" aria-labelledby="arn-t"><title id="arn-t">Architecture: spec and interview, the LangGraph controller, role agents on either harness, the tool layer, the flow, the gates and the board shell, with the knowledge bank and project layer beside them</title><defs><marker id="arn-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="arn-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><g data-l="spec"><rect class="band" x="22" y="6" width="338" height="118" rx="8"/><text x="36" y="30" class="t">Spec and interview</text><rect class="chip" x="36" y="42" width="169.4" height="30" rx="4"/><text x="120.7" y="61.5" text-anchor="middle">spec.md, plain English</text><path class="ed" d="M208.4 57.0 L226.4 57.0" marker-end="url(#arn-ah)"/><rect class="chip" x="229.4" y="42" width="82.3" height="30" rx="4"/><text x="270.55" y="61.5" text-anchor="middle">interview</text><rect class="chip" x="36" y="82" width="162.7" height="30" rx="4"/><text x="117.35" y="101.5" text-anchor="middle">spec.yaml, signed off</text></g><path class="ed" d="M62 126 L62 158" marker-end="url(#arn-ah)"/><text x="74" y="146" class="s">spec.yaml</text><g data-l="ctl"><rect class="band" x="22" y="162" width="338" height="114" rx="8"/><text x="36" y="186" class="t">LangGraph controller</text><rect class="chip" x="36" y="198" width="48.8" height="30" rx="4"/><text x="60.4" y="217.5" text-anchor="middle">work</text><path class="ed" d="M87.8 213.0 L105.8 213.0" marker-end="url(#arn-ah)"/><rect class="chip" x="108.8" y="198" width="48.8" height="30" rx="4"/><text x="133.2" y="217.5" text-anchor="middle">gate</text><path class="ed" d="M160.6 213.0 L178.6 213.0" marker-end="url(#arn-ah)"/><rect class="chip" x="181.6" y="198" width="62.2" height="30" rx="4"/><text x="212.7" y="217.5" text-anchor="middle">review</text><path class="ed" d="M246.8 213.0 L264.8 213.0" marker-end="url(#arn-ah)"/><rect class="chip" x="267.8" y="198" width="68.9" height="30" rx="4"/><text x="302.25" y="217.5" text-anchor="middle">advance</text><text x="36" y="242" class="s">LangGraph 1.2.19: the stage machine, its limits and</text><text x="36" y="257" class="s">its repair routing, in code</text></g><path class="ed" d="M62 278 L62 310" marker-end="url(#arn-ah)"/><text x="74" y="298" class="s">stage prompt, files, repair notes</text><g data-l="roles"><rect class="band" x="22" y="314" width="338" height="273" rx="8"/><text x="36" y="338" class="t">Role agents</text><rect class="chip" x="36" y="350" width="68.9" height="30" rx="4"/><text x="70.45" y="369.5" text-anchor="middle">Clarify</text><rect class="chip" x="112.9" y="350" width="95.7" height="30" rx="4"/><text x="160.75" y="369.5" text-anchor="middle">Blind model</text><rect class="chip" x="216.6" y="350" width="95.7" height="30" rx="4"/><text x="264.45" y="369.5" text-anchor="middle">Test writer</text><rect class="chip" x="36" y="390" width="89" height="30" rx="4"/><text x="80.5" y="409.5" text-anchor="middle">RTL writer</text><g class="sw" data-h="deepagents"><rect class="chip2" x="36" y="432" width="310" height="43" rx="4"/><text x="48" y="451">Deep Agents</text><text x="48" y="468" class="s">deepagents 0.7.32; OpenRouter models</text></g><text x="191" y="491" class="s" text-anchor="middle">or</text><g class="sw" data-h="claude_code"><rect class="chip2" x="36" y="496" width="310" height="43" rx="4"/><text x="48" y="515">Claude Code</text><text x="48" y="532" class="s">headless; Anthropic models</text></g><text x="36" y="553" class="s">same roles, prompts, tools and gates on either</text><text x="36" y="568" class="s">harness</text></g><path class="ed" d="M62 589 L62 621" marker-end="url(#arn-ah)"/><text x="74" y="609" class="s">tool calls, schema-checked</text><g data-l="tools"><rect class="band" x="22" y="625" width="338" height="169" rx="8"/><text x="36" y="649" class="t">Tool layer</text><rect class="chip" x="36" y="661" width="55.5" height="30" rx="4"/><text x="63.75" y="680.5" text-anchor="middle">Files</text><rect class="chip" x="99.5" y="661" width="82.3" height="30" rx="4"/><text x="140.65" y="680.5" text-anchor="middle">Knowledge</text><rect class="chip" x="189.8" y="661" width="102.4" height="30" rx="4"/><text x="241" y="680.5" text-anchor="middle">Verification</text><rect class="chip" x="36" y="701" width="62.2" height="30" rx="4"/><text x="67.1" y="720.5" text-anchor="middle">Vivado</text><text x="36" y="745" class="s">one registry: in process for Deep Agents, over MCP</text><text x="36" y="760" class="s">2.3.0 for Claude Code; path jail, argument check,</text><text x="36" y="775" class="s">audit log</text></g><path class="ed" d="M62 796 L62 828" marker-end="url(#arn-ah)"/><text x="74" y="816" class="s">fixed commands</text><g data-l="flow"><rect class="band" x="22" y="832" width="338" height="154" rx="8"/><text x="36" y="856" class="t">Flow</text><rect class="chip" x="36" y="868" width="109.1" height="30" rx="4"/><text x="90.55" y="887.5" text-anchor="middle">Vivado 2025.2</text><rect class="chip" x="153.1" y="868" width="135.9" height="30" rx="4"/><text x="221.05" y="887.5" text-anchor="middle">Icarus and cocotb</text><rect class="chip" x="36" y="908" width="82.3" height="30" rx="4"/><text x="77.15" y="927.5" text-anchor="middle">Verilator</text><rect class="chip" x="126.3" y="908" width="89" height="30" rx="4"/><text x="170.8" y="927.5" text-anchor="middle">SymbiYosys</text><text x="36" y="952" class="s">fixed commands built by the tools; the model never</text><text x="36" y="967" class="s">writes Tcl or shell</text></g><path class="ed" d="M62 988 L62 1020" marker-end="url(#arn-ah)"/><text x="74" y="1008" class="s">reports and logs</text><g data-l="gates"><rect class="band" x="22" y="1024" width="338" height="194" rx="8"/><text x="36" y="1048" class="t">Gates</text><rect class="chip" x="36" y="1060" width="75.6" height="30" rx="4"/><text x="73.8" y="1079.5" text-anchor="middle">V0 to V3</text><rect class="chip" x="119.6" y="1060" width="95.7" height="30" rx="4"/><text x="167.45" y="1079.5" text-anchor="middle">stage gates</text><rect class="chip" x="36" y="1100" width="129.2" height="30" rx="4"/><text x="100.6" y="1119.5" text-anchor="middle">design standards</text><rect class="chip" x="36" y="1140" width="189.5" height="30" rx="4"/><text x="130.75" y="1159.5" text-anchor="middle">CDC and timing exceptions</text><text x="36" y="1184" class="s">parsed from the reports by code; the agent&#x27;s own</text><text x="36" y="1199" class="s">tests never decide</text></g><path class="ed" d="M62 1220 L62 1252" marker-end="url(#arn-ah)"/><text x="74" y="1240" class="s">bitstream, once approved</text><g data-l="board"><rect class="band" x="22" y="1256" width="338" height="139" rx="8"/><text x="36" y="1280" class="t">Board shell</text><rect class="chip" x="36" y="1292" width="209.6" height="30" rx="4"/><text x="140.8" y="1311.5" text-anchor="middle">program SRAM, after approval</text><rect class="chip" x="36" y="1332" width="122.5" height="30" rx="4"/><text x="97.25" y="1351.5" text-anchor="middle">UART test shell</text><text x="36" y="1376" class="s">the model is never offered the board</text></g><path class="ed" d="M22 1048 L9 1048 L9 186 L20 186" marker-end="url(#arn-ah)"/><g transform="translate(5 633.0) rotate(-90)"><text x="0" y="0" class="s" text-anchor="middle">gate results, failures</text></g><g data-l="bank"><rect class="band" x="22" y="1413" width="338" height="198" rx="8"/><text x="36" y="1437" class="t">Knowledge bank</text><text x="36" y="1459" class="s">private; pinned at commit a598197</text><text x="36" y="1474" class="s">216 skills in 18 units</text><text x="36" y="1489" class="s">techniques: 22</text><text x="36" y="1504" class="s">functions: 11</text><text x="36" y="1519" class="s">vendor: 53</text><text x="36" y="1534" class="s">family: 64</text><text x="36" y="1549" class="s">device: 11</text><text x="36" y="1564" class="s">board: 40</text><text x="36" y="1579" class="s">procedures: 15</text><text x="36" y="1594" class="s">reached through load_skill and search_docs</text></g><g data-l="project"><rect class="band dashb" x="22" y="1629" width="338" height="123" rx="8"/><text x="36" y="1653" class="t">Project layer</text><text x="36" y="1675" class="s">a module graph (design.yaml)</text><text x="36" y="1690" class="s">a contract for each module</text><text x="36" y="1705" class="s">contract tests, generated without a model</text><text x="36" y="1720" class="s">beside the agent today: its own commands, not yet</text><text x="36" y="1735" class="s">called by the graph</text></g></svg></div></div>
+<figcaption>Labels on the arrows say what passes between the layers. The return path on the left carries the gate results and the failures each role owns back to the controller. Library versions are the ones pinned in <code>pyproject.toml</code>.</figcaption></figure>
+
+<h2>The controller loop</h2>
+<p>The controller is a LangGraph state graph with four steps that repeat once per stage visit. <b>Work</b> runs the stage's role agents. <b>Gate</b> runs the flow's own checks. <b>Review</b> takes a snapshot of the design, so any stage can be rewound, and, when review is on, lets a person approve, edit or rewind; it always pauses before anything touches the board. <b>Advance</b> picks the next stage in code: the next one if the gates passed, or the stage that owns the failure if they did not. A run ends when every stage has passed, or when a stage has used its visits and the run gives up.</p>
+<figure><div class="agfig"><div class="lay-w"><svg class="ag lg" viewBox="0 0 940 200" role="img" aria-labelledby="lgw-t"><title id="lgw-t">The agent&#x27;s LangGraph: start, work, gate, review, advance, then work again or end; read from the compiled graph</title><defs><marker id="lgw-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="lgw-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><path class="ed" d="M44 96 L113.0 96" marker-end="url(#lgw-ah)" data-e="__start__~work"/><text x="78.5" y="84" class="s el" text-anchor="middle">spec.md</text><path class="ed" d="M790.0 96 L892 96" stroke-dasharray="5 4" marker-end="url(#lgw-ah)" data-e="advance~__end__"/><text x="841" y="84" class="s el" text-anchor="middle">done, or give up</text><path class="ed" d="M728 119.0 C728 188, 176 188, 176 121.0" stroke-dasharray="5 4" marker-end="url(#lgw-ah)" data-e="advance~work"/><text x="452" y="182" class="s el" text-anchor="middle">next stage, or repair</text><path class="ed" d="M422.0 96 L481.0 96" marker-end="url(#lgw-ah)" data-e="gate~review"/><text x="451.5" y="84" class="s el" text-anchor="middle">gate JSON</text><path class="ed" d="M606.0 96 L665.0 96" marker-end="url(#lgw-ah)" data-e="review~advance"/><text x="635.5" y="70" class="s el" text-anchor="middle">snapshot,</text><text x="635.5" y="84" class="s el" text-anchor="middle">approval</text><path class="ed" d="M238.0 96 L297.0 96" marker-end="url(#lgw-ah)" data-e="work~gate"/><text x="267.5" y="70" class="s el" text-anchor="middle">files</text><text x="267.5" y="84" class="s el" text-anchor="middle">written</text><g data-n="__start__"><circle class="term" cx="34" cy="96" r="10"/><text x="34" y="124" class="s" text-anchor="middle">start</text></g><g data-n="work"><rect class="nd" x="114" y="73" width="124" height="46" rx="6"/><text x="176" y="101" class="t" text-anchor="middle">work</text></g><g data-n="gate"><rect class="nd" x="298" y="73" width="124" height="46" rx="6"/><text x="360" y="101" class="t" text-anchor="middle">gate</text></g><g data-n="review"><rect class="nd" x="482" y="73" width="124" height="46" rx="6"/><text x="544" y="101" class="t" text-anchor="middle">review</text></g><g data-n="advance"><rect class="nd" x="666" y="73" width="124" height="46" rx="6"/><text x="728" y="101" class="t" text-anchor="middle">advance</text></g><g data-n="__end__"><circle class="termo" cx="904" cy="96" r="10"/><text x="904" y="124" class="s" text-anchor="middle">end</text></g></svg></div><div class="lay-n"><svg class="ag lg" viewBox="0 0 360 492" role="img" aria-labelledby="lgn-t"><title id="lgn-t">The agent&#x27;s LangGraph: start, work, gate, review, advance, then work again or end; read from the compiled graph</title><defs><marker id="lgn-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="lgn-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><path class="ed" d="M130 32 L130 68.0" marker-end="url(#lgn-ah)" data-e="__start__~work"/><text x="120" y="54" class="s el" text-anchor="end">spec.md</text><path class="ed" d="M130 397.0 L130 454" stroke-dasharray="5 4" marker-end="url(#lgn-ah)" data-e="advance~__end__"/><text x="120" y="429.5" class="s el" text-anchor="end">done, or give up</text><path class="ed" d="M192.0 374 C345 374, 345 92, 194.0 92" stroke-dasharray="5 4" marker-end="url(#lgn-ah)" data-e="advance~work"/><text x="204" y="237" class="s el">next stage,</text><text x="204" y="251" class="s el">or repair</text><path class="ed" d="M130 209.0 L130 256.0" marker-end="url(#lgn-ah)" data-e="gate~review"/><text x="120" y="236.5" class="s el" text-anchor="end">gate JSON</text><path class="ed" d="M130 303.0 L130 350.0" marker-end="url(#lgn-ah)" data-e="review~advance"/><text x="120" y="330.5" class="s el" text-anchor="end">snapshot, approval</text><path class="ed" d="M130 115.0 L130 162.0" marker-end="url(#lgn-ah)" data-e="work~gate"/><text x="120" y="142.5" class="s el" text-anchor="end">files written</text><g data-n="__start__"><circle class="term" cx="130" cy="22" r="10"/><text x="148" y="26" class="s">start</text></g><g data-n="work"><rect class="nd" x="68" y="69" width="124" height="46" rx="6"/><text x="130" y="97" class="t" text-anchor="middle">work</text></g><g data-n="gate"><rect class="nd" x="68" y="163" width="124" height="46" rx="6"/><text x="130" y="191" class="t" text-anchor="middle">gate</text></g><g data-n="review"><rect class="nd" x="68" y="257" width="124" height="46" rx="6"/><text x="130" y="285" class="t" text-anchor="middle">review</text></g><g data-n="advance"><rect class="nd" x="68" y="351" width="124" height="46" rx="6"/><text x="130" y="379" class="t" text-anchor="middle">advance</text></g><g data-n="__end__"><circle class="termo" cx="130" cy="466" r="10"/><text x="148" y="470" class="s">end</text></g></svg></div></div>
+<figcaption>Drawn from the graph the code compiles (<code>build_graph().get_graph()</code>, exported to <code>site/data/agent_graph.json</code>). Dashed edges are conditional: the code chooses one at run time. A site test fails if this drawing and the code's graph ever differ.</figcaption></figure>
+<p>The loop exists because language models are good at writing and poor at judging their own work. Putting the judgement in code means a model cannot talk its way past a failed check, and the same stages, limits and gates apply whichever model is doing the writing.</p>
+
+<h2>The role agents</h2>
+<p>There are four roles. The clarify role turns the request into a spec. The blind model writes a short Python model of the design from the spec alone. The test writer writes the tests and the test plan from the spec and the model. The RTL writer writes the SystemVerilog and constraints and repairs whatever the later stages find. The blind model and the test writer never see the RTL, so a misreading of the spec in the RTL is not copied into the tests that judge it. Even so, the agent's own tests never decide a result: <a href="how.html#term-hidden">hidden tests</a>, written in advance and checked by <a href="how.html#term-mutation">mutation testing</a>, do.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Role</th><th>Job</th><th>May read</th><th>May write</th><th>Model (default; cvdp profile)</th></tr></thead><tbody><tr><td>Clarify</td><td>Turns the plain-English request into a structured spec, asking about what it leaves open.</td><td>spec.md, spec.yaml, data/*</td><td>spec.yaml</td><td>Deep Agents: openai/gpt-6-luna; cvdp profile: claude-sonnet-5-5</td></tr><tr><td>Blind model</td><td>Writes a short Python model of the design from the spec alone. Never sees the RTL.</td><td>spec.yaml, model.py, data/*</td><td>model.py</td><td>Deep Agents: openai/gpt-6-luna; cvdp profile: claude-sonnet-5-5</td></tr><tr><td>Test writer</td><td>Writes the tests and the test plan from the spec and the model. Never sees the RTL.</td><td>spec.yaml, model.py, data/*, tests/*, verif/*, probes.yaml, BRINGUP.md, hw_checks.py</td><td>tests/*, verif/*, hw_checks.py</td><td>Deep Agents: openai/gpt-6-luna; cvdp profile: claude-sonnet-5-5</td></tr><tr><td>RTL writer</td><td>Writes the SystemVerilog and constraints, and repairs what the later stages find.</td><td>*</td><td>rtl/*, build.yaml, design.xdc, probes.yaml, BRINGUP.md, ARCHITECTURE.md, architecture.yaml, hw_checks.py, lint/*, BUILD_NOTE.md</td><td>Deep Agents: openai/gpt-6-luna; cvdp profile: claude-opus-5-5</td></tr></tbody></table></div><details class="more"><summary>Details: the tools each role gets in stage 2</summary><div class="tablewrap" tabindex="0"><table><thead><tr><th>Role</th><th>Tools in stage 2</th></tr></thead><tbody><tr><td>Blind model</td><td>read_file, write_file</td></tr><tr><td>Test writer</td><td>read_file, write_file, list_files, search_docs, load_skill, spec_items, formal</td></tr><tr><td>RTL writer</td><td>read_file, write_file, list_files, search_docs, load_skill, lint, simulate, formal, gates</td></tr></tbody></table></div></details>
+<p class="small muted">What each role may read and write is enforced by a path jail in code (<code>agent/graph/roles.py</code>, <code>agent/core/security.py</code>); a write outside its list is refused and logged.</p>
+
+<h3>Two harnesses, the same roles</h3>
+<p>A <a href="how.html#term-harness">harness</a> is the program that runs a model's tool loop. The agent has two, chosen per role. By default each role is a <b>Deep Agents</b> agent (LangChain's <code>create_deep_agent</code>, deepagents 0.7.32), calling models through OpenRouter; the default model is <code>openai/gpt-6-luna</code>. The alternative runs each role turn as one headless <b>Claude Code</b> call on Anthropic models, with every built-in tool switched off and only the agent's <a href="how.html#term-mcp">MCP</a> server attached. Either way the role gets the same prompt, the same tools and the same jail, and the same gates judge it.</p>
+<div class="cols">
+<figure><div class="agone"><svg class="ag inner" viewBox="0 0 380 272" role="img" aria-labelledby="ind-t"><title id="ind-t">Inside a Deep Agents role agent: a model and tool loop over a jailed file backend</title><defs><marker id="ind-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="ind-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><text x="0" y="18" class="t">Deep Agents role agent</text><text x="0" y="36" class="s">create_deep_agent, deepagents 0.7.32</text><rect class="nd" x="10" y="74" width="120" height="44" rx="6"/><text x="70" y="101" text-anchor="middle">model call</text><rect class="nd" x="240" y="74" width="120" height="44" rx="6"/><text x="300" y="101" text-anchor="middle">tool calls</text><path class="ed" d="M130 88 L238 88" marker-end="url(#ind-ah)"/><path class="ed" d="M240 104 L132 104" marker-end="url(#ind-ah)"/><text x="185" y="66" class="s" text-anchor="middle">until no more calls</text><text x="0" y="148">Built-in tools, on a jailed file backend:</text><rect class="chip" x="0" y="158" width="33.6" height="26" rx="4"/><text x="16.8" y="175.5" class="s" text-anchor="middle">ls</text><rect class="chip" x="39.6" y="158" width="74.2" height="26" rx="4"/><text x="76.7" y="175.5" class="s" text-anchor="middle">read_file</text><rect class="chip" x="119.8" y="158" width="80" height="26" rx="4"/><text x="159.8" y="175.5" class="s" text-anchor="middle">write_file</text><rect class="chip" x="205.8" y="158" width="74.2" height="26" rx="4"/><text x="242.9" y="175.5" class="s" text-anchor="middle">edit_file</text><rect class="chip" x="286" y="158" width="56.8" height="26" rx="4"/><text x="314.4" y="175.5" class="s" text-anchor="middle">delete</text><rect class="chip" x="0" y="194" width="45.2" height="26" rx="4"/><text x="22.6" y="211.5" class="s" text-anchor="middle">glob</text><rect class="chip" x="51.2" y="194" width="45.2" height="26" rx="4"/><text x="73.8" y="211.5" class="s" text-anchor="middle">grep</text><text x="0" y="242" class="s">Plus the stage&#x27;s own tools from the tool layer.</text><text x="0" y="260" class="s">A to-do tool: none. Sub-agents: none (switched off).</text></svg></div></figure>
+<figure><div class="agone"><svg class="ag inner" viewBox="0 0 380 217" role="img" aria-labelledby="inc-t"><title id="inc-t">Inside a Claude Code role agent: one headless call per turn, only the agent&#x27;s MCP tools</title><defs><marker id="inc-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="inc-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><text x="0" y="18" class="t">Claude Code role agent</text><text x="0" y="36" class="s">one headless claude -p call per role turn</text><rect class="nd" x="10" y="74" width="120" height="44" rx="6"/><text x="70" y="101" text-anchor="middle">model call</text><rect class="nd" x="240" y="74" width="120" height="44" rx="6"/><text x="300" y="101" text-anchor="middle">MCP tools</text><path class="ed" d="M130 88 L238 88" marker-end="url(#inc-ah)"/><path class="ed" d="M240 104 L132 104" marker-end="url(#inc-ah)"/><text x="185" y="66" class="s" text-anchor="middle">until no more calls</text><text x="0" y="148">Configured to match:</text><text x="0" y="168" class="s">Every built-in tool off; only the agent&#x27;s MCP server.</text><text x="0" y="183" class="s">No user settings, skills or project files loaded.</text><text x="0" y="198" class="s">The same role jail and audit log as the Deep Agents tools.</text></svg></div></figure>
+</div>
+<p>The Deep Agents library can give an agent a to-do list and sub-agents of its own. Here it does neither: the inspection of the role agent as the code builds it, above, finds no to-do tool, and the general-purpose sub-agent is switched off. The planning lives in the controller instead, and the "sub-agents" of this design are the role agents themselves, which the controller calls one after another.</p>
+
+<h3>Which harness each recorded run used</h3>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Runs</th><th>Harness</th><th>Models</th><th class="num">Run records</th></tr></thead><tbody><tr><td>Development tasks</td><td>Claude Code</td><td>claude-sonnet-5-5</td><td class="num">21</td></tr><tr><td>T1 smoke runs</td><td>Claude Code</td><td>claude-haiku-5-5</td><td class="num">6</td></tr><tr><td>T1 smoke runs</td><td>Claude Code</td><td>claude-opus-5-5</td><td class="num">7</td></tr><tr><td>T1 smoke runs</td><td>Claude Code</td><td>claude-opus-5-5, claude-sonnet-5-5</td><td class="num">3</td></tr><tr><td>T1 smoke runs</td><td>Claude Code</td><td>claude-sonnet-5-5</td><td class="num">9</td></tr><tr><td>T1 smoke runs</td><td>Deep Agents</td><td>openai/gpt-6-luna</td><td class="num">15</td></tr></tbody></table></div>
+<p class="small muted">Counted from the committed run records (<code>results/course/*/run_*.json</code> and <code>results/f2/agent_*.json</code>; summary files that repeat a run are not counted again). Every development-task result on this site came from Claude Code with <code>claude-sonnet-5-5</code>. The Deep Agents runs are smoke runs on the hand-built T1 design.</p>
+
+<h2>The stages and their gates</h2>
+<p>Each stage ends in gates. Stage 2 holds the verification stages V0 to V3, from a test plan to closed coverage and a mutation score; stages 1 to 9 follow AMD's UltraFast methodology. Every stage visit has a turn budget, each stage a number of visits, and each failure a list of earlier stages it may go back to; all three come from <code>agent/graph/stages.py</code>. The whole run is capped at 300 turns.</p>
+<figure><div class="agfig"><div class="lay-w"><svg class="ag pipe" viewBox="0 0 940 728" role="img" aria-labelledby="plw-t"><title id="plw-t">The stages from interview to the board, the gates of each, their budgets, and where a failure goes back to</title><defs><marker id="plw-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="plw-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><rect class="ufband" x="38" y="68" width="902" height="634" rx="8"/><text x="940" y="720" class="s" text-anchor="end">UltraFast stages (AMD UG949), inside the dotted line</text><g data-s="0" tabindex="0" class="stg"><rect class="nd" x="44" y="8" width="250" height="52" rx="6"/><text x="58" y="30" class="t">0</text><text x="84" y="30" class="t">Interview</text><text x="84" y="48" class="s">Clarify</text></g><text x="314" y="26" class="s">spec signed off, no open questions</text><text x="664" y="26" class="s">20 turns a visit, 4 visits</text><text x="664" y="42" class="s">on failure, back to: none</text><path class="ed" d="M169 61 L169 72" marker-end="url(#plw-ah)"/><g data-s="1" tabindex="0" class="stg"><rect class="nd" x="44" y="74" width="250" height="56" rx="6"/><text x="58" y="96" class="t">1</text><text x="84" y="96" class="t">Plan</text><text x="84" y="114" class="s">RTL writer</text></g><text x="314" y="92" class="s">architecture note written; architecture file valid; pins</text><text x="314" y="107" class="s">and clocks match the board</text><text x="664" y="92" class="s">30 turns a visit, 4 visits</text><text x="664" y="108" class="s">on failure, back to: 0</text><path class="ed" d="M169 131 L169 142" marker-end="url(#plw-ah)"/><g data-s="2" tabindex="0" class="stg"><rect class="nd" x="44" y="144" width="250" height="86" rx="6"/><text x="58" y="166" class="t">2</text><text x="84" y="166" class="t">RTL and tests</text><text x="84" y="184" class="s">Blind model, Test writer, RTL writer</text></g><text x="314" y="162" class="s">architecture approved; lint clean; golden model keeps</text><text x="314" y="177" class="s">its contract; tests pass against the model; design</text><text x="314" y="192" class="s">standards on the RTL; verification V0 to V3; RTL</text><text x="314" y="207" class="s">methodology checks</text><text x="664" y="162" class="s">80 turns a visit, 6 visits</text><text x="664" y="178" class="s">on failure, back to: 0, 1</text><rect class="chip" x="314" y="216" width="33.6" height="22" rx="4"/><text x="330.8" y="231.5" class="s" text-anchor="middle">V0</text><path class="ed" d="M350.6 227.0 L366.6 227.0" marker-end="url(#plw-ah)"/><rect class="chip" x="369.6" y="216" width="33.6" height="22" rx="4"/><text x="386.4" y="231.5" class="s" text-anchor="middle">V1</text><path class="ed" d="M406.20000000000005 227.0 L422.20000000000005 227.0" marker-end="url(#plw-ah)"/><rect class="chip" x="425.2" y="216" width="33.6" height="22" rx="4"/><text x="442" y="231.5" class="s" text-anchor="middle">V2</text><path class="ed" d="M461.80000000000007 227.0 L477.80000000000007 227.0" marker-end="url(#plw-ah)"/><rect class="chip" x="480.8" y="216" width="33.6" height="22" rx="4"/><text x="497.6" y="231.5" class="s" text-anchor="middle">V3</text><path class="ed" d="M169 231 L169 242" marker-end="url(#plw-ah)"/><g data-s="3" tabindex="0" class="stg"><rect class="nd" x="44" y="244" width="250" height="52" rx="6"/><text x="58" y="266" class="t">3</text><text x="84" y="266" class="t">Constraints</text><text x="84" y="284" class="s">RTL writer</text></g><text x="314" y="262" class="s">every timing endpoint constrained</text><text x="664" y="262" class="s">30 turns a visit, 4 visits</text><text x="664" y="278" class="s">on failure, back to: 2</text><path class="ed" d="M169 297 L169 308" marker-end="url(#plw-ah)"/><g data-s="4" tabindex="0" class="stg"><rect class="nd" x="44" y="310" width="250" height="52" rx="6"/><text x="58" y="332" class="t">4</text><text x="84" y="332" class="t">Synthesis</text><text x="84" y="350" class="s">RTL writer</text></g><text x="314" y="328" class="s">post-synthesis gates; design standards on the netlist</text><text x="664" y="328" class="s">30 turns a visit, 4 visits</text><text x="664" y="344" class="s">on failure, back to: 1, 2, 3</text><path class="ed" d="M169 363 L169 374" marker-end="url(#plw-ah)"/><g data-s="5" tabindex="0" class="stg"><rect class="nd" x="44" y="376" width="250" height="52" rx="6"/><text x="58" y="398" class="t">5</text><text x="84" y="398" class="t">Implementation</text><text x="84" y="416" class="s">RTL writer</text></g><text x="314" y="394" class="s">post-place gates; post-route gates</text><text x="664" y="394" class="s">30 turns a visit, 4 visits</text><text x="664" y="410" class="s">on failure, back to: 6</text><path class="ed" d="M169 429 L169 440" marker-end="url(#plw-ah)"/><g data-s="6" tabindex="0" class="stg"><rect class="nd" x="44" y="442" width="250" height="52" rx="6"/><text x="58" y="464" class="t">6</text><text x="84" y="464" class="t">Timing closure</text><text x="84" y="482" class="s">RTL writer</text></g><text x="314" y="460" class="s">setup and hold met</text><text x="664" y="460" class="s">30 turns a visit, 4 visits</text><text x="664" y="476" class="s">on failure, back to: 3, 2, 5</text><path class="ed" d="M169 495 L169 506" marker-end="url(#plw-ah)"/><g data-s="7" tabindex="0" class="stg"><rect class="nd" x="44" y="508" width="250" height="52" rx="6"/><text x="58" y="530" class="t">7</text><text x="84" y="530" class="t">Power closure</text><text x="84" y="548" class="s">RTL writer</text></g><text x="314" y="526" class="s">power and junction temperature</text><text x="664" y="526" class="s">30 turns a visit, 4 visits</text><text x="664" y="542" class="s">on failure, back to: 2, 0</text><path class="ed" d="M169 561 L169 572" marker-end="url(#plw-ah)"/><g data-s="8" tabindex="0" class="stg"><rect class="nd" x="44" y="574" width="250" height="52" rx="6"/><text x="58" y="596" class="t">8</text><text x="84" y="596" class="t">Design-rule closure</text><text x="84" y="614" class="s">RTL writer</text></g><text x="314" y="592" class="s">DRC, CDC and methodology clean</text><text x="664" y="592" class="s">30 turns a visit, 4 visits</text><text x="664" y="608" class="s">on failure, back to: 3, 2</text><path class="ed" d="M169 627 L169 638" marker-end="url(#plw-ah)"/><g data-s="9" tabindex="0" class="stg"><rect class="nd" x="44" y="640" width="250" height="56" rx="6"/><text x="58" y="662" class="t">9</text><text x="84" y="662" class="t">Board and debug</text><text x="84" y="680" class="s">RTL writer, Test writer</text></g><text x="314" y="658" class="s">bitstream built; debug bitstream built; bring-up files</text><text x="314" y="673" class="s">ready; board tests pass; every requirement has evidence</text><text x="664" y="658" class="s">45 turns a visit, 4 visits</text><text x="664" y="674" class="s">on failure, back to: 6, 2, 0</text><path class="arc" data-arc="1~0" d="M44 102.0 C27 102.0, 27 34.0, 43 34.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="2~0" d="M44 187.0 C23 187.0, 23 34.0, 43 34.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="2~1" d="M44 187.0 C27 187.0, 27 102.0, 43 102.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="3~2" d="M44 270.0 C27 270.0, 27 187.0, 43 187.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="4~1" d="M44 336.0 C19 336.0, 19 102.0, 43 102.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="4~2" d="M44 336.0 C23 336.0, 23 187.0, 43 187.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="4~3" d="M44 336.0 C27 336.0, 27 270.0, 43 270.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="5~6" d="M44 402.0 C27 402.0, 27 468.0, 43 468.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="6~3" d="M44 468.0 C19 468.0, 19 270.0, 43 270.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="6~2" d="M44 468.0 C15 468.0, 15 187.0, 43 187.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="6~5" d="M44 468.0 C27 468.0, 27 402.0, 43 402.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="7~2" d="M44 534.0 C11 534.0, 11 187.0, 43 187.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="7~0" d="M44 534.0 C6 534.0, 6 34.0, 43 34.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="8~3" d="M44 600.0 C11 600.0, 11 270.0, 43 270.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="8~2" d="M44 600.0 C7 600.0, 7 187.0, 43 187.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="9~6" d="M44 668.0 C19 668.0, 19 468.0, 43 468.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="9~2" d="M44 668.0 C6 668.0, 6 187.0, 43 187.0" marker-end="url(#plw-aha)"/><path class="arc" data-arc="9~0" d="M44 668.0 C6 668.0, 6 34.0, 43 34.0" marker-end="url(#plw-aha)"/></svg></div><div class="lay-n"><svg class="ag pipe" viewBox="0 0 360 981" role="img" aria-labelledby="pln-t"><title id="pln-t">The stages from interview to the board, the gates of each, their budgets, and where a failure goes back to</title><defs><marker id="pln-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="pln-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><rect class="ufband" x="38" y="87" width="322" height="868" rx="8"/><text x="360" y="973" class="s" text-anchor="end">UltraFast stages (AMD UG949), inside the dotted line</text><g data-s="0" tabindex="0" class="stg"><rect class="nd" x="44" y="8" width="316" height="71" rx="6"/><text x="56" y="30" class="t">0</text><text x="80" y="30" class="t">Interview</text></g><text x="56" y="50" class="s">spec signed off, no open questions</text><text x="56" y="67" class="s">20 turns a visit, 4 visits; back to: none</text><path class="ed" d="M204 80 L204 91" marker-end="url(#pln-ah)"/><g data-s="1" tabindex="0" class="stg"><rect class="nd" x="44" y="93" width="316" height="86" rx="6"/><text x="56" y="115" class="t">1</text><text x="80" y="115" class="t">Plan</text></g><text x="56" y="135" class="s">architecture note written; architecture file</text><text x="56" y="150" class="s">valid; pins and clocks match the board</text><text x="56" y="167" class="s">30 turns a visit, 4 visits; back to: 0</text><path class="ed" d="M204 180 L204 191" marker-end="url(#pln-ah)"/><g data-s="2" tabindex="0" class="stg"><rect class="nd" x="44" y="193" width="316" height="116" rx="6"/><text x="56" y="215" class="t">2</text><text x="80" y="215" class="t">RTL and tests</text></g><text x="56" y="235" class="s">architecture approved; lint clean; golden model</text><text x="56" y="250" class="s">keeps its contract; tests pass against the model;</text><text x="56" y="265" class="s">design standards on the RTL; verification V0 to</text><text x="56" y="280" class="s">V3; RTL methodology checks</text><text x="56" y="297" class="s">80 turns a visit, 6 visits; back to: 0, 1</text><path class="ed" d="M204 310 L204 321" marker-end="url(#pln-ah)"/><g data-s="3" tabindex="0" class="stg"><rect class="nd" x="44" y="323" width="316" height="71" rx="6"/><text x="56" y="345" class="t">3</text><text x="80" y="345" class="t">Constraints</text></g><text x="56" y="365" class="s">every timing endpoint constrained</text><text x="56" y="382" class="s">30 turns a visit, 4 visits; back to: 2</text><path class="ed" d="M204 395 L204 406" marker-end="url(#pln-ah)"/><g data-s="4" tabindex="0" class="stg"><rect class="nd" x="44" y="408" width="316" height="86" rx="6"/><text x="56" y="430" class="t">4</text><text x="80" y="430" class="t">Synthesis</text></g><text x="56" y="450" class="s">post-synthesis gates; design standards on the</text><text x="56" y="465" class="s">netlist</text><text x="56" y="482" class="s">30 turns a visit, 4 visits; back to: 1, 2, 3</text><path class="ed" d="M204 495 L204 506" marker-end="url(#pln-ah)"/><g data-s="5" tabindex="0" class="stg"><rect class="nd" x="44" y="508" width="316" height="71" rx="6"/><text x="56" y="530" class="t">5</text><text x="80" y="530" class="t">Implementation</text></g><text x="56" y="550" class="s">post-place gates; post-route gates</text><text x="56" y="567" class="s">30 turns a visit, 4 visits; back to: 6</text><path class="ed" d="M204 580 L204 591" marker-end="url(#pln-ah)"/><g data-s="6" tabindex="0" class="stg"><rect class="nd" x="44" y="593" width="316" height="71" rx="6"/><text x="56" y="615" class="t">6</text><text x="80" y="615" class="t">Timing closure</text></g><text x="56" y="635" class="s">setup and hold met</text><text x="56" y="652" class="s">30 turns a visit, 4 visits; back to: 3, 2, 5</text><path class="ed" d="M204 665 L204 676" marker-end="url(#pln-ah)"/><g data-s="7" tabindex="0" class="stg"><rect class="nd" x="44" y="678" width="316" height="71" rx="6"/><text x="56" y="700" class="t">7</text><text x="80" y="700" class="t">Power closure</text></g><text x="56" y="720" class="s">power and junction temperature</text><text x="56" y="737" class="s">30 turns a visit, 4 visits; back to: 2, 0</text><path class="ed" d="M204 750 L204 761" marker-end="url(#pln-ah)"/><g data-s="8" tabindex="0" class="stg"><rect class="nd" x="44" y="763" width="316" height="71" rx="6"/><text x="56" y="785" class="t">8</text><text x="80" y="785" class="t">Design-rule closure</text></g><text x="56" y="805" class="s">DRC, CDC and methodology clean</text><text x="56" y="822" class="s">30 turns a visit, 4 visits; back to: 3, 2</text><path class="ed" d="M204 835 L204 846" marker-end="url(#pln-ah)"/><g data-s="9" tabindex="0" class="stg"><rect class="nd" x="44" y="848" width="316" height="101" rx="6"/><text x="56" y="870" class="t">9</text><text x="80" y="870" class="t">Board and debug</text></g><text x="56" y="890" class="s">bitstream built; debug bitstream built; bring-up</text><text x="56" y="905" class="s">files ready; board tests pass; every requirement</text><text x="56" y="920" class="s">has evidence</text><text x="56" y="937" class="s">45 turns a visit, 4 visits; back to: 6, 2, 0</text><path class="arc" data-arc="1~0" d="M44 136.0 C27 136.0, 27 43.5, 43 43.5" marker-end="url(#pln-aha)"/><path class="arc" data-arc="2~0" d="M44 251.0 C23 251.0, 23 43.5, 43 43.5" marker-end="url(#pln-aha)"/><path class="arc" data-arc="2~1" d="M44 251.0 C27 251.0, 27 136.0, 43 136.0" marker-end="url(#pln-aha)"/><path class="arc" data-arc="3~2" d="M44 358.5 C27 358.5, 27 251.0, 43 251.0" marker-end="url(#pln-aha)"/><path class="arc" data-arc="4~1" d="M44 451.0 C19 451.0, 19 136.0, 43 136.0" marker-end="url(#pln-aha)"/><path class="arc" data-arc="4~2" d="M44 451.0 C23 451.0, 23 251.0, 43 251.0" marker-end="url(#pln-aha)"/><path class="arc" data-arc="4~3" d="M44 451.0 C27 451.0, 27 358.5, 43 358.5" marker-end="url(#pln-aha)"/><path class="arc" data-arc="5~6" d="M44 543.5 C27 543.5, 27 628.5, 43 628.5" marker-end="url(#pln-aha)"/><path class="arc" data-arc="6~3" d="M44 628.5 C19 628.5, 19 358.5, 43 358.5" marker-end="url(#pln-aha)"/><path class="arc" data-arc="6~2" d="M44 628.5 C15 628.5, 15 251.0, 43 251.0" marker-end="url(#pln-aha)"/><path class="arc" data-arc="6~5" d="M44 628.5 C27 628.5, 27 543.5, 43 543.5" marker-end="url(#pln-aha)"/><path class="arc" data-arc="7~2" d="M44 713.5 C11 713.5, 11 251.0, 43 251.0" marker-end="url(#pln-aha)"/><path class="arc" data-arc="7~0" d="M44 713.5 C6 713.5, 6 43.5, 43 43.5" marker-end="url(#pln-aha)"/><path class="arc" data-arc="8~3" d="M44 798.5 C11 798.5, 11 358.5, 43 358.5" marker-end="url(#pln-aha)"/><path class="arc" data-arc="8~2" d="M44 798.5 C7 798.5, 7 251.0, 43 251.0" marker-end="url(#pln-aha)"/><path class="arc" data-arc="9~6" d="M44 898.5 C19 898.5, 19 628.5, 43 628.5" marker-end="url(#pln-aha)"/><path class="arc" data-arc="9~2" d="M44 898.5 C6 898.5, 6 251.0, 43 251.0" marker-end="url(#pln-aha)"/><path class="arc" data-arc="9~0" d="M44 898.5 C6 898.5, 6 43.5, 43 43.5" marker-end="url(#pln-aha)"/></svg></div></div>
+<figcaption>Select a stage to show where its failures may go back to. A stage that has used its visits ends the run.</figcaption></figure>
+
+<h2>A recorded run, replayed</h2>
+<p>Choose a run. The first passed every hidden test and stopped at the board, as none was attached; its record keeps how often each stage was visited, not the order of the repeats, so repeats are shown back to back. The second is a Deep Agents run that recorded the order of its visits and every tool call of every role; it could not get stage 2 to pass and gave up.</p>
+<div class="player agplay" id="agent-replay" aria-label="Replay of a recorded run through the agent's diagrams">
+<div class="runsel" role="group" aria-label="Run"></div>
+<p class="runinfo small muted"></p>
+<div class="phost">
+<div class="agfig"><div class="lay-w"><svg class="ag live" viewBox="0 0 940 412" role="img" aria-labelledby="lvw-t"><title id="lvw-t">Replay of a recorded run through the controller, the role agents, the gates and the tool layer</title><defs><marker id="lvw-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="lvw-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><g data-st="0"><rect class="cell" x="0" y="26" width="92.2" height="40" rx="3"/><text x="46.1" y="44" class="s" text-anchor="middle">0</text><text x="46.1" y="59" class="s" text-anchor="middle">Interview</text></g><g data-st="1"><rect class="cell" x="94.2" y="26" width="92.2" height="40" rx="3"/><text x="140.3" y="44" class="s" text-anchor="middle">1</text><text x="140.3" y="59" class="s" text-anchor="middle">Plan</text></g><g data-st="2"><rect class="cell" x="188.4" y="26" width="92.2" height="40" rx="3"/><text x="234.5" y="44" class="s" text-anchor="middle">2</text><text x="234.5" y="59" class="s" text-anchor="middle">RTL</text></g><g data-st="3"><rect class="cell" x="282.6" y="26" width="92.2" height="40" rx="3"/><text x="328.7" y="44" class="s" text-anchor="middle">3</text><text x="328.7" y="59" class="s" text-anchor="middle">Constraints</text></g><g data-st="4"><rect class="cell" x="376.8" y="26" width="92.2" height="40" rx="3"/><text x="422.9" y="44" class="s" text-anchor="middle">4</text><text x="422.9" y="59" class="s" text-anchor="middle">Synthesis</text></g><g data-st="5"><rect class="cell" x="471" y="26" width="92.2" height="40" rx="3"/><text x="517.1" y="44" class="s" text-anchor="middle">5</text><text x="517.1" y="59" class="s" text-anchor="middle">Implementation</text></g><g data-st="6"><rect class="cell" x="565.2" y="26" width="92.2" height="40" rx="3"/><text x="611.3" y="44" class="s" text-anchor="middle">6</text><text x="611.3" y="59" class="s" text-anchor="middle">Timing</text></g><g data-st="7"><rect class="cell" x="659.4" y="26" width="92.2" height="40" rx="3"/><text x="705.5" y="44" class="s" text-anchor="middle">7</text><text x="705.5" y="59" class="s" text-anchor="middle">Power</text></g><g data-st="8"><rect class="cell" x="753.6" y="26" width="92.2" height="40" rx="3"/><text x="799.7" y="44" class="s" text-anchor="middle">8</text><text x="799.7" y="59" class="s" text-anchor="middle">Design-rule</text></g><g data-st="9"><rect class="cell" x="847.8" y="26" width="92.2" height="40" rx="3"/><text x="893.9" y="44" class="s" text-anchor="middle">9</text><text x="893.9" y="59" class="s" text-anchor="middle">Board</text></g><text x="0" y="14" class="s">Stages</text><path class="rarc" d="" data-rarc="1" marker-end="url(#lvw-aha)"/><path class="ed" id="lvw-e-work-gate" data-e="work~gate" d="M172 132 L267 132" marker-end="url(#lvw-ah)"/><path class="ed" id="lvw-e-gate-review" data-e="gate~review" d="M392 132 L487 132" marker-end="url(#lvw-ah)"/><path class="ed" id="lvw-e-review-advance" data-e="review~advance" d="M612 132 L707 132" marker-end="url(#lvw-ah)"/><path class="ed" id="lvw-e-advance-work" data-e="advance~work" d="M770 155 C770 200, 110 200, 110 156" stroke-dasharray="5 4" marker-end="url(#lvw-ah)"/><path class="ed" id="lvw-e-advance-__end__" data-e="advance~__end__" d="M832 132 L891 132" stroke-dasharray="5 4" marker-end="url(#lvw-ah)"/><path class="ed" id="lvw-e-__start__-work" data-e="__start__~work" d="M110 84 L110 108" marker-end="url(#lvw-ah)"/><g data-n="work"><rect class="nd" x="48" y="109" width="124" height="46" rx="6"/><text x="110" y="137" class="t" text-anchor="middle">work</text></g><g data-n="gate"><rect class="nd" x="268" y="109" width="124" height="46" rx="6"/><text x="330" y="137" class="t" text-anchor="middle">gate</text></g><g data-n="review"><rect class="nd" x="488" y="109" width="124" height="46" rx="6"/><text x="550" y="137" class="t" text-anchor="middle">review</text></g><g data-n="advance"><rect class="nd" x="708" y="109" width="124" height="46" rx="6"/><text x="770" y="137" class="t" text-anchor="middle">advance</text></g><g data-n="__end__"><circle class="termo" cx="904" cy="132" r="10"/><text x="904" y="160" class="s" text-anchor="middle">end</text></g><circle class="tok" r="6" cx="110" cy="109" data-tok="1"/><text x="0" y="214" class="s">Role agents</text><g data-r="clarify"><rect class="chip" x="0" y="222" width="108" height="32" rx="4"/><text x="54" y="243" text-anchor="middle">Clarify</text></g><g data-r="model"><rect class="chip" x="116" y="222" width="108" height="32" rx="4"/><text x="170" y="243" text-anchor="middle">Blind model</text></g><g data-r="tests"><rect class="chip" x="0" y="262" width="108" height="32" rx="4"/><text x="54" y="283" text-anchor="middle">Test writer</text></g><g data-r="rtl"><rect class="chip" x="116" y="262" width="108" height="32" rx="4"/><text x="170" y="283" text-anchor="middle">RTL writer</text></g><text x="262" y="214" class="s">Gate result</text><g data-gate="1"><rect class="gbox" x="262" y="222" width="384" height="72" rx="4"/><text class="gt" x="276" y="244"></text><text class="gt s" x="276" y="262"></text><text class="gt s" x="276" y="278"></text></g><text x="676" y="214" class="s">Next</text><g data-next="1"><rect class="gbox" x="676" y="222" width="264" height="72" rx="4"/><text class="nt" x="690" y="244"></text><text class="nt s" x="690" y="262"></text><text class="nt s" x="690" y="278"></text></g><text x="0" y="324" class="s">Tool layer: called this visit (count), offered, not offered</text><g data-t="read_file"><rect class="tchip" x="0" y="332" width="110.5" height="30" rx="4"/><text x="10" y="351.5" class="s">read_file</text><text class="tc s" x="100.5" y="351.5" text-anchor="end"></text></g><g data-t="write_file"><rect class="tchip" x="118.5" y="332" width="110.5" height="30" rx="4"/><text x="128.5" y="351.5" class="s">write_file</text><text class="tc s" x="219" y="351.5" text-anchor="end"></text></g><g data-t="list_files"><rect class="tchip" x="237" y="332" width="110.5" height="30" rx="4"/><text x="247" y="351.5" class="s">list_files</text><text class="tc s" x="337.5" y="351.5" text-anchor="end"></text></g><g data-t="search_docs"><rect class="tchip" x="355.5" y="332" width="110.5" height="30" rx="4"/><text x="365.5" y="351.5" class="s">search_docs</text><text class="tc s" x="456" y="351.5" text-anchor="end"></text></g><g data-t="load_skill"><rect class="tchip" x="474" y="332" width="110.5" height="30" rx="4"/><text x="484" y="351.5" class="s">load_skill</text><text class="tc s" x="574.5" y="351.5" text-anchor="end"></text></g><g data-t="lint"><rect class="tchip" x="592.5" y="332" width="110.5" height="30" rx="4"/><text x="602.5" y="351.5" class="s">lint</text><text class="tc s" x="693" y="351.5" text-anchor="end"></text></g><g data-t="simulate"><rect class="tchip" x="711" y="332" width="110.5" height="30" rx="4"/><text x="721" y="351.5" class="s">simulate</text><text class="tc s" x="811.5" y="351.5" text-anchor="end"></text></g><g data-t="formal"><rect class="tchip" x="829.5" y="332" width="110.5" height="30" rx="4"/><text x="839.5" y="351.5" class="s">formal</text><text class="tc s" x="930" y="351.5" text-anchor="end"></text></g><g data-t="spec_items"><rect class="tchip" x="0" y="370" width="110.5" height="30" rx="4"/><text x="10" y="389.5" class="s">spec_items</text><text class="tc s" x="100.5" y="389.5" text-anchor="end"></text></g><g data-t="board_constraints"><rect class="tchip" x="118.5" y="370" width="110.5" height="30" rx="4"/><text x="128.5" y="389.5" class="s">board_constraints</text><text class="tc s" x="219" y="389.5" text-anchor="end"></text></g><g data-t="check_constraints"><rect class="tchip" x="237" y="370" width="110.5" height="30" rx="4"/><text x="247" y="389.5" class="s">check_constraints</text><text class="tc s" x="337.5" y="389.5" text-anchor="end"></text></g><g data-t="build"><rect class="tchip" x="355.5" y="370" width="110.5" height="30" rx="4"/><text x="365.5" y="389.5" class="s">build</text><text class="tc s" x="456" y="389.5" text-anchor="end"></text></g><g data-t="gates"><rect class="tchip" x="474" y="370" width="110.5" height="30" rx="4"/><text x="484" y="389.5" class="s">gates</text><text class="tc s" x="574.5" y="389.5" text-anchor="end"></text></g><g data-t="report"><rect class="tchip" x="592.5" y="370" width="110.5" height="30" rx="4"/><text x="602.5" y="389.5" class="s">report</text><text class="tc s" x="693" y="389.5" text-anchor="end"></text></g><g data-t="program"><rect class="tchip" x="711" y="370" width="110.5" height="30" rx="4"/><text x="721" y="389.5" class="s">program</text><text class="tc s" x="811.5" y="389.5" text-anchor="end"></text></g><g data-t="bringup"><rect class="tchip" x="829.5" y="370" width="110.5" height="30" rx="4"/><text x="839.5" y="389.5" class="s">bringup</text><text class="tc s" x="930" y="389.5" text-anchor="end"></text></g></svg></div><div class="lay-n"><svg class="ag live" viewBox="0 0 360 858" role="img" aria-labelledby="lvn-t"><title id="lvn-t">Replay of a recorded run through the controller, the role agents, the gates and the tool layer</title><defs><marker id="lvn-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="lvn-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><g data-st="0"><rect class="cell" x="0" y="26" width="34.2" height="40" rx="3"/><text x="17.1" y="51" class="s" text-anchor="middle">0</text></g><g data-st="1"><rect class="cell" x="36.2" y="26" width="34.2" height="40" rx="3"/><text x="53.3" y="51" class="s" text-anchor="middle">1</text></g><g data-st="2"><rect class="cell" x="72.4" y="26" width="34.2" height="40" rx="3"/><text x="89.5" y="51" class="s" text-anchor="middle">2</text></g><g data-st="3"><rect class="cell" x="108.6" y="26" width="34.2" height="40" rx="3"/><text x="125.7" y="51" class="s" text-anchor="middle">3</text></g><g data-st="4"><rect class="cell" x="144.8" y="26" width="34.2" height="40" rx="3"/><text x="161.9" y="51" class="s" text-anchor="middle">4</text></g><g data-st="5"><rect class="cell" x="181" y="26" width="34.2" height="40" rx="3"/><text x="198.1" y="51" class="s" text-anchor="middle">5</text></g><g data-st="6"><rect class="cell" x="217.2" y="26" width="34.2" height="40" rx="3"/><text x="234.3" y="51" class="s" text-anchor="middle">6</text></g><g data-st="7"><rect class="cell" x="253.4" y="26" width="34.2" height="40" rx="3"/><text x="270.5" y="51" class="s" text-anchor="middle">7</text></g><g data-st="8"><rect class="cell" x="289.6" y="26" width="34.2" height="40" rx="3"/><text x="306.7" y="51" class="s" text-anchor="middle">8</text></g><g data-st="9"><rect class="cell" x="325.8" y="26" width="34.2" height="40" rx="3"/><text x="342.9" y="51" class="s" text-anchor="middle">9</text></g><text x="0" y="14" class="s">Stages</text><path class="rarc" d="" data-rarc="1" marker-end="url(#lvn-aha)"/><path class="ed" id="lvn-e-work-gate" data-e="work~gate" d="M152 120 L207 120" marker-end="url(#lvn-ah)"/><path class="ed" id="lvn-e-gate-review" data-e="gate~review" d="M270 143 L270 182" marker-end="url(#lvn-ah)"/><path class="ed" id="lvn-e-review-advance" data-e="review~advance" d="M208 206 L153 206" marker-end="url(#lvn-ah)"/><path class="ed" id="lvn-e-advance-work" data-e="advance~work" d="M90 183 L90 144" stroke-dasharray="5 4" marker-end="url(#lvn-ah)"/><path class="ed" id="lvn-e-advance-__end__" data-e="advance~__end__" d="M90 229 L90 263" stroke-dasharray="5 4" marker-end="url(#lvn-ah)"/><path class="ed" id="lvn-e-__start__-work" data-e="__start__~work" d="M20 120 L27 120" marker-end="url(#lvn-ah)"/><g data-n="work"><rect class="nd" x="28" y="97" width="124" height="46" rx="6"/><text x="90" y="125" class="t" text-anchor="middle">work</text></g><g data-n="gate"><rect class="nd" x="208" y="97" width="124" height="46" rx="6"/><text x="270" y="125" class="t" text-anchor="middle">gate</text></g><g data-n="review"><rect class="nd" x="208" y="183" width="124" height="46" rx="6"/><text x="270" y="211" class="t" text-anchor="middle">review</text></g><g data-n="advance"><rect class="nd" x="28" y="183" width="124" height="46" rx="6"/><text x="90" y="211" class="t" text-anchor="middle">advance</text></g><g data-n="__end__"><circle class="termo" cx="90" cy="276" r="10"/><text x="108" y="280" class="s">end</text></g><circle class="tok" r="6" cx="90" cy="97" data-tok="1"/><text x="0" y="304" class="s">Role agents</text><g data-r="clarify"><rect class="chip" x="0" y="312" width="178" height="32" rx="4"/><text x="89" y="333" text-anchor="middle">Clarify</text></g><g data-r="model"><rect class="chip" x="182" y="312" width="178" height="32" rx="4"/><text x="271" y="333" text-anchor="middle">Blind model</text></g><g data-r="tests"><rect class="chip" x="0" y="352" width="178" height="32" rx="4"/><text x="89" y="373" text-anchor="middle">Test writer</text></g><g data-r="rtl"><rect class="chip" x="182" y="352" width="178" height="32" rx="4"/><text x="271" y="373" text-anchor="middle">RTL writer</text></g><text x="0" y="400" class="s">Gate result</text><g data-gate="1"><rect class="gbox" x="0" y="408" width="360" height="88" rx="4"/><text class="gt" x="14" y="430"></text><text class="gt s" x="14" y="448"></text><text class="gt s" x="14" y="463"></text><text class="gt s" x="14" y="478"></text></g><text x="0" y="512" class="s">Next</text><g data-next="1"><rect class="gbox" x="0" y="520" width="360" height="72" rx="4"/><text class="nt" x="14" y="542"></text><text class="nt s" x="14" y="560"></text><text class="nt s" x="14" y="576"></text></g><text x="0" y="618" class="s">Tool layer: called this visit (count), offered, not offered</text><g data-t="read_file"><rect class="tchip" x="0" y="626" width="114.667" height="30" rx="4"/><text x="10" y="645.5" class="s">read_file</text><text class="tc s" x="104.667" y="645.5" text-anchor="end"></text></g><g data-t="write_file"><rect class="tchip" x="122.667" y="626" width="114.667" height="30" rx="4"/><text x="132.667" y="645.5" class="s">write_file</text><text class="tc s" x="227.333" y="645.5" text-anchor="end"></text></g><g data-t="list_files"><rect class="tchip" x="245.333" y="626" width="114.667" height="30" rx="4"/><text x="255.333" y="645.5" class="s">list_files</text><text class="tc s" x="350" y="645.5" text-anchor="end"></text></g><g data-t="search_docs"><rect class="tchip" x="0" y="664" width="114.667" height="30" rx="4"/><text x="10" y="683.5" class="s">search_docs</text><text class="tc s" x="104.667" y="683.5" text-anchor="end"></text></g><g data-t="load_skill"><rect class="tchip" x="122.667" y="664" width="114.667" height="30" rx="4"/><text x="132.667" y="683.5" class="s">load_skill</text><text class="tc s" x="227.333" y="683.5" text-anchor="end"></text></g><g data-t="lint"><rect class="tchip" x="245.333" y="664" width="114.667" height="30" rx="4"/><text x="255.333" y="683.5" class="s">lint</text><text class="tc s" x="350" y="683.5" text-anchor="end"></text></g><g data-t="simulate"><rect class="tchip" x="0" y="702" width="114.667" height="30" rx="4"/><text x="10" y="721.5" class="s">simulate</text><text class="tc s" x="104.667" y="721.5" text-anchor="end"></text></g><g data-t="formal"><rect class="tchip" x="122.667" y="702" width="114.667" height="30" rx="4"/><text x="132.667" y="721.5" class="s">formal</text><text class="tc s" x="227.333" y="721.5" text-anchor="end"></text></g><g data-t="spec_items"><rect class="tchip" x="245.333" y="702" width="114.667" height="30" rx="4"/><text x="255.333" y="721.5" class="s">spec_items</text><text class="tc s" x="350" y="721.5" text-anchor="end"></text></g><g data-t="board_constraints"><rect class="tchip" x="0" y="740" width="114.667" height="30" rx="4"/><text x="10" y="759.5" class="s">board_constraints</text><text class="tc s" x="104.667" y="759.5" text-anchor="end"></text></g><g data-t="check_constraints"><rect class="tchip" x="122.667" y="740" width="114.667" height="30" rx="4"/><text x="132.667" y="759.5" class="s">check_constraints</text><text class="tc s" x="227.333" y="759.5" text-anchor="end"></text></g><g data-t="build"><rect class="tchip" x="245.333" y="740" width="114.667" height="30" rx="4"/><text x="255.333" y="759.5" class="s">build</text><text class="tc s" x="350" y="759.5" text-anchor="end"></text></g><g data-t="gates"><rect class="tchip" x="0" y="778" width="114.667" height="30" rx="4"/><text x="10" y="797.5" class="s">gates</text><text class="tc s" x="104.667" y="797.5" text-anchor="end"></text></g><g data-t="report"><rect class="tchip" x="122.667" y="778" width="114.667" height="30" rx="4"/><text x="132.667" y="797.5" class="s">report</text><text class="tc s" x="227.333" y="797.5" text-anchor="end"></text></g><g data-t="program"><rect class="tchip" x="245.333" y="778" width="114.667" height="30" rx="4"/><text x="255.333" y="797.5" class="s">program</text><text class="tc s" x="350" y="797.5" text-anchor="end"></text></g><g data-t="bringup"><rect class="tchip" x="0" y="816" width="114.667" height="30" rx="4"/><text x="10" y="835.5" class="s">bringup</text><text class="tc s" x="104.667" y="835.5" text-anchor="end"></text></g></svg></div></div>
+<p class="cap" aria-live="polite">The controller, role agents, gates and tool layer of the agent. With script on, a recorded run plays through them.</p>
+</div>
+</div>
+
+<h2>Workflow variants under test</h2>
+<p>Several other shapes of workflow are planned as variants of this graph, each behind a flag, to be compared on the same development tasks with the same budgets. None has been run yet, so nothing is claimed for any of them.</p>
+<ul class="variants"><li><div class="vh"><b>Skill router</b> <span class="tag run">not yet measured</span></div><p>Adds a step that shortlists skills before each role, which then loads them on demand.</p><div class="vfig"><svg style="max-width:441.4px" class="ag var" viewBox="0 0 441.4 38" role="img" aria-labelledby="vaA1-t"><title id="vaA1-t">Skill router: a step that shortlists skills before each role, which then loads them on demand</title><defs><marker id="vaA1-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="vaA1-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><rect class="chip" x="0" y="6" width="68.2" height="26" rx="4"/><text x="34.1" y="23" class="s" text-anchor="middle">interview</text><path class="ed" d="M70.19999999999999 19 L81.19999999999999 19" marker-end="url(#vaA1-ah)"/><rect class="chip" x="84.2" y="6" width="39.2" height="26" rx="4"/><text x="103.8" y="23" class="s" text-anchor="middle">plan</text><path class="ed" d="M125.39999999999999 19 L136.39999999999998 19" marker-end="url(#vaA1-ah)"/><rect class="vadd" x="139.4" y="6" width="103" height="26" rx="4"/><text x="190.9" y="23" class="s" text-anchor="middle">skill shortlist</text><path class="ed" d="M244.39999999999998 19 L255.39999999999998 19" marker-end="url(#vaA1-ah)"/><rect class="chip" x="258.4" y="6" width="39.2" height="26" rx="4"/><text x="278" y="23" class="s" text-anchor="middle">work</text><path class="ed" d="M299.59999999999997 19 L310.59999999999997 19" marker-end="url(#vaA1-ah)"/><rect class="chip" x="313.6" y="6" width="39.2" height="26" rx="4"/><text x="333.2" y="23" class="s" text-anchor="middle">gate</text><path class="ed" d="M354.79999999999995 19 L365.79999999999995 19" marker-end="url(#vaA1-ah)"/><rect class="chip" x="368.8" y="6" width="56.6" height="26" rx="4"/><text x="397.1" y="23" class="s" text-anchor="middle">advance</text></svg></div></li><li><div class="vh"><b>Independent spec reviewer</b> <span class="tag run">not yet measured</span></div><p>Adds a second agent, on another model, that challenges the signed-off spec before any RTL.</p><div class="vfig"><svg style="max-width:429.8px" class="ag var" viewBox="0 0 429.79999999999995 38" role="img" aria-labelledby="vaA2-t"><title id="vaA2-t">Independent spec reviewer: a second agent, on another model, that challenges the signed-off spec before any RTL</title><defs><marker id="vaA2-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="vaA2-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><rect class="chip" x="0" y="6" width="68.2" height="26" rx="4"/><text x="34.1" y="23" class="s" text-anchor="middle">interview</text><path class="ed" d="M70.19999999999999 19 L81.19999999999999 19" marker-end="url(#vaA2-ah)"/><rect class="vadd" x="84.2" y="6" width="91.4" height="26" rx="4"/><text x="129.9" y="23" class="s" text-anchor="middle">spec reviewer</text><path class="ed" d="M177.59999999999997 19 L188.59999999999997 19" marker-end="url(#vaA2-ah)"/><rect class="chip" x="191.6" y="6" width="39.2" height="26" rx="4"/><text x="211.2" y="23" class="s" text-anchor="middle">plan</text><path class="ed" d="M232.79999999999995 19 L243.79999999999995 19" marker-end="url(#vaA2-ah)"/><rect class="chip" x="246.8" y="6" width="39.2" height="26" rx="4"/><text x="266.4" y="23" class="s" text-anchor="middle">work</text><path class="ed" d="M287.99999999999994 19 L298.99999999999994 19" marker-end="url(#vaA2-ah)"/><rect class="chip" x="302" y="6" width="39.2" height="26" rx="4"/><text x="321.6" y="23" class="s" text-anchor="middle">gate</text><path class="ed" d="M343.19999999999993 19 L354.19999999999993 19" marker-end="url(#vaA2-ah)"/><rect class="chip" x="357.2" y="6" width="56.6" height="26" rx="4"/><text x="385.5" y="23" class="s" text-anchor="middle">advance</text></svg></div></li><li><div class="vh"><b>Best of N</b> <span class="tag run">not yet measured</span></div><p>Adds several RTL candidates in parallel; the agent&#x27;s own gates pick one (hidden tests never).</p><div class="vfig"><svg style="max-width:424px" class="ag var" viewBox="0 0 423.9999999999999 38" role="img" aria-labelledby="vaA3-t"><title id="vaA3-t">Best of N: several RTL candidates in parallel; the agent&#x27;s own gates pick one (hidden tests never)</title><defs><marker id="vaA3-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="vaA3-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><rect class="chip" x="0" y="6" width="68.2" height="26" rx="4"/><text x="34.1" y="23" class="s" text-anchor="middle">interview</text><path class="ed" d="M70.19999999999999 19 L81.19999999999999 19" marker-end="url(#vaA3-ah)"/><rect class="chip" x="84.2" y="6" width="39.2" height="26" rx="4"/><text x="103.8" y="23" class="s" text-anchor="middle">plan</text><path class="ed" d="M125.39999999999999 19 L136.39999999999998 19" marker-end="url(#vaA3-ah)"/><rect class="chip" x="139.4" y="6" width="39.2" height="26" rx="4"/><text x="159" y="23" class="s" text-anchor="middle">work</text><path class="ed" d="M180.59999999999997 19 L191.59999999999997 19" marker-end="url(#vaA3-ah)"/><rect class="vadd" x="194.6" y="6" width="85.6" height="26" rx="4"/><text x="237.4" y="23" class="s" text-anchor="middle">N candidates</text><path class="ed" d="M282.19999999999993 19 L293.19999999999993 19" marker-end="url(#vaA3-ah)"/><rect class="chip" x="296.2" y="6" width="39.2" height="26" rx="4"/><text x="315.8" y="23" class="s" text-anchor="middle">gate</text><path class="ed" d="M337.3999999999999 19 L348.3999999999999 19" marker-end="url(#vaA3-ah)"/><rect class="chip" x="351.4" y="6" width="56.6" height="26" rx="4"/><text x="379.7" y="23" class="s" text-anchor="middle">advance</text></svg></div></li><li><div class="vh"><b>Plan and decompose</b> <span class="tag run">not yet measured</span></div><p>Adds a split into modules with contracts, built in parallel and then integrated.</p><div class="vfig"><svg style="max-width:464.6px" class="ag var" viewBox="0 0 464.5999999999999 38" role="img" aria-labelledby="vaA4-t"><title id="vaA4-t">Plan and decompose: a split into modules with contracts, built in parallel and then integrated</title><defs><marker id="vaA4-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="vaA4-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><rect class="chip" x="0" y="6" width="68.2" height="26" rx="4"/><text x="34.1" y="23" class="s" text-anchor="middle">interview</text><path class="ed" d="M70.19999999999999 19 L81.19999999999999 19" marker-end="url(#vaA4-ah)"/><rect class="chip" x="84.2" y="6" width="39.2" height="26" rx="4"/><text x="103.8" y="23" class="s" text-anchor="middle">plan</text><path class="ed" d="M125.39999999999999 19 L136.39999999999998 19" marker-end="url(#vaA4-ah)"/><rect class="vadd" x="139.4" y="6" width="126.2" height="26" rx="4"/><text x="202.5" y="23" class="s" text-anchor="middle">modules in parallel</text><path class="ed" d="M267.59999999999997 19 L278.59999999999997 19" marker-end="url(#vaA4-ah)"/><rect class="chip" x="281.6" y="6" width="39.2" height="26" rx="4"/><text x="301.2" y="23" class="s" text-anchor="middle">work</text><path class="ed" d="M322.79999999999995 19 L333.79999999999995 19" marker-end="url(#vaA4-ah)"/><rect class="chip" x="336.8" y="6" width="39.2" height="26" rx="4"/><text x="356.4" y="23" class="s" text-anchor="middle">gate</text><path class="ed" d="M377.99999999999994 19 L388.99999999999994 19" marker-end="url(#vaA4-ah)"/><rect class="chip" x="392" y="6" width="56.6" height="26" rx="4"/><text x="420.3" y="23" class="s" text-anchor="middle">advance</text></svg></div></li><li><div class="vh"><b>Retrieve, then adapt</b> <span class="tag run">not yet measured</span></div><p>Adds a search for the closest verified component, which is adapted instead of writing from nothing.</p><div class="vfig"><svg style="max-width:441.4px" class="ag var" viewBox="0 0 441.4 38" role="img" aria-labelledby="vaA5-t"><title id="vaA5-t">Retrieve, then adapt: a search for the closest verified component, which is adapted instead of writing from nothing</title><defs><marker id="vaA5-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="vaA5-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><rect class="chip" x="0" y="6" width="68.2" height="26" rx="4"/><text x="34.1" y="23" class="s" text-anchor="middle">interview</text><path class="ed" d="M70.19999999999999 19 L81.19999999999999 19" marker-end="url(#vaA5-ah)"/><rect class="chip" x="84.2" y="6" width="39.2" height="26" rx="4"/><text x="103.8" y="23" class="s" text-anchor="middle">plan</text><path class="ed" d="M125.39999999999999 19 L136.39999999999998 19" marker-end="url(#vaA5-ah)"/><rect class="chip" x="139.4" y="6" width="39.2" height="26" rx="4"/><text x="159" y="23" class="s" text-anchor="middle">work</text><path class="ed" d="M180.59999999999997 19 L191.59999999999997 19" marker-end="url(#vaA5-ah)"/><rect class="vadd" x="194.6" y="6" width="103" height="26" rx="4"/><text x="246.1" y="23" class="s" text-anchor="middle">retrieve, adapt</text><path class="ed" d="M299.59999999999997 19 L310.59999999999997 19" marker-end="url(#vaA5-ah)"/><rect class="chip" x="313.6" y="6" width="39.2" height="26" rx="4"/><text x="333.2" y="23" class="s" text-anchor="middle">gate</text><path class="ed" d="M354.79999999999995 19 L365.79999999999995 19" marker-end="url(#vaA5-ah)"/><rect class="chip" x="368.8" y="6" width="56.6" height="26" rx="4"/><text x="397.1" y="23" class="s" text-anchor="middle">advance</text></svg></div></li><li><div class="vh"><b>Constraints critic</b> <span class="tag run">not yet measured</span></div><p>Adds a narrow agent that reviews timing exceptions against known rules.</p><div class="vfig"><svg style="max-width:458.8px" class="ag var" viewBox="0 0 458.79999999999995 38" role="img" aria-labelledby="vaA6-t"><title id="vaA6-t">Constraints critic: a narrow agent that reviews timing exceptions against known rules</title><defs><marker id="vaA6-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0 0 L10 5 L0 10 z"/></marker><marker id="vaA6-aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="aha" d="M0 0 L10 5 L0 10 z"/></marker></defs><rect class="chip" x="0" y="6" width="68.2" height="26" rx="4"/><text x="34.1" y="23" class="s" text-anchor="middle">interview</text><path class="ed" d="M70.19999999999999 19 L81.19999999999999 19" marker-end="url(#vaA6-ah)"/><rect class="chip" x="84.2" y="6" width="39.2" height="26" rx="4"/><text x="103.8" y="23" class="s" text-anchor="middle">plan</text><path class="ed" d="M125.39999999999999 19 L136.39999999999998 19" marker-end="url(#vaA6-ah)"/><rect class="chip" x="139.4" y="6" width="39.2" height="26" rx="4"/><text x="159" y="23" class="s" text-anchor="middle">work</text><path class="ed" d="M180.59999999999997 19 L191.59999999999997 19" marker-end="url(#vaA6-ah)"/><rect class="chip" x="194.6" y="6" width="39.2" height="26" rx="4"/><text x="214.2" y="23" class="s" text-anchor="middle">gate</text><path class="ed" d="M235.79999999999995 19 L246.79999999999995 19" marker-end="url(#vaA6-ah)"/><rect class="vadd" x="249.8" y="6" width="120.4" height="26" rx="4"/><text x="310" y="23" class="s" text-anchor="middle">constraints critic</text><path class="ed" d="M372.19999999999993 19 L383.19999999999993 19" marker-end="url(#vaA6-ah)"/><rect class="chip" x="386.2" y="6" width="56.6" height="26" rx="4"/><text x="414.5" y="23" class="s" text-anchor="middle">advance</text></svg></div></li></ul>
+
+<h2>What the agent cannot do yet</h2>
+<p>It has no held-out score: the development runs are a record of the work, not a measure of how it does on new tasks. No design the agent built has yet passed every test on the board. It designs one module at a time; the project layer for multi-module designs is not yet driven by the controller. And the Deep Agents harness has been run only on the small T1 design, with one model; how it compares with Claude Code on the benchmark has not been measured.</p>
+
+<div class="pager"><a href="index.html">&larr; Home</a><a href="how.html">How it works &rarr;</a></div>
+</main>
+<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<script type="application/json" data-key="agent_graph">{"arms":[{"adds":"a step that shortlists skills before each role, which then loads them on demand","at":"before work","id":"A1","name":"Skill router","status":"not yet measured"},{"adds":"a second agent, on another model, that challenges the signed-off spec before any RTL","at":"after the interview","id":"A2","name":"Independent spec reviewer","status":"not yet measured"},{"adds":"several RTL candidates in parallel; the agent's own gates pick one (hidden tests never)","at":"the RTL writer","id":"A3","name":"Best of N","status":"not yet measured"},{"adds":"a split into modules with contracts, built in parallel and then integrated","at":"the plan","id":"A4","name":"Plan and decompose","status":"not yet measured"},{"adds":"a search for the closest verified component, which is adapted instead of writing from nothing","at":"the RTL writer","id":"A5","name":"Retrieve, then adapt","status":"not yet measured"},{"adds":"a narrow agent that reviews timing exceptions against known rules","at":"the constraints stage","id":"A6","name":"Constraints critic","status":"not yet measured"}],"bank":{"layers":[{"layer":"techniques","skills":22},{"layer":"functions","skills":11},{"layer":"vendor","skills":53},{"layer":"family","skills":64},{"layer":"device","skills":11},{"layer":"board","skills":40},{"layer":"procedures","skills":15}],"pin":"a598197","skills":216,"units":18},"defaults":{"cc_model":"claude-haiku-5-5","harness":"deepagents","model":"openai/gpt-6-luna","profiles":{"cvdp":{"clarify":{"effort":"medium","harness":"claude_code","model":"claude-sonnet-5-5"},"model":{"effort":"medium","harness":"claude_code","model":"claude-sonnet-5-5"},"rtl":{"effort":null,"harness":"claude_code","model":"claude-opus-5-5"},"tests":{"effort":"medium","harness":"claude_code","model":"claude-sonnet-5-5"}},"single":{}}},"graph":{"edges":[{"conditional":false,"key":null,"label":"spec.md","source":"__start__","target":"work"},{"conditional":true,"key":"end","label":"done, or give up","source":"advance","target":"__end__"},{"conditional":true,"key":null,"label":"next stage, or repair","source":"advance","target":"work"},{"conditional":false,"key":null,"label":"gate JSON","source":"gate","target":"review"},{"conditional":false,"key":null,"label":"snapshot, approval","source":"review","target":"advance"},{"conditional":false,"key":null,"label":"files written","source":"work","target":"gate"}],"nodes":[{"id":"__start__","label":"start","what":"A run begins at the interview."},{"id":"work","label":"work","what":"The stage's role agents act: each writes only the files its role owns."},{"id":"gate","label":"gate","what":"The flow's own checks run: lint, simulation, Vivado reports, the stage gates. No model decides."},{"id":"review","label":"review","what":"A snapshot of the design is taken; a person may approve, edit or rewind. Always pauses before the board."},{"id":"advance","label":"advance","what":"Code picks the next stage from the gate result: the next stage, or the stage that owns the failure."},{"id":"__end__","label":"end","what":"The run stops: every stage passed, or a limit was reached."}]},"inner":{"builtin_tools":["ls","read_file","write_file","edit_file","delete","glob","grep"],"edges":[["PatchToolCallsMiddleware.before_agent","model",false],["_ParentNotifierMiddleware.after_agent","__end__",false],["__start__","PatchToolCallsMiddleware.before_agent",false],["model","_ParentNotifierMiddleware.after_agent",true],["model","model",true],["model","tools",true],["tools","model",true]],"nodes":["__start__","model","tools","_ParentNotifierMiddleware.after_agent","PatchToolCallsMiddleware.before_agent","__end__"],"subagent_tool":false,"todo_tool":false},"inner_words":{"PatchToolCallsMiddleware.before_agent":"tidy unanswered tool calls","_ParentNotifierMiddleware.after_agent":"report back","__end__":"back to the controller","__start__":"the role's prompt and files","model":"model call","tools":"tool calls"},"replays":[{"claude_code":"2.1.318","date":"2026-11-07","harness":"claude_code","hidden":"6 of 6","id":"pass","model":"claude-sonnet-5-5","oracle":"claude_code (claude-haiku-5-5)","order_recorded":false,"per_visit_tools":false,"run":5,"source":"results/course/c14_int8_dot_requant/run_5.json","task":"c14_int8_dot_requant","title":"A run that passed","tool_totals":{"build":9,"gates":13,"lint":2,"simulate":1},"turns":152,"visits":[{"gate":{"pass":false,"text":"Not passed on this visit; the stage was entered 2 times in all."},"next":{"kind":"repair","text":"visit the stage again","to":0},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill"],"role":"clarify","tools":{}}],"stage":0,"visit":1,"visits":2},{"gate":{"pass":true,"text":"6 questions asked; 3 answered by the oracle, 3 defaulted; the register map was asked for and the final spec carries 11 registers."},"next":{"kind":"next","text":"stage passed","to":1},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill"],"role":"clarify","tools":{}}],"stage":0,"visit":2,"visits":2},{"gate":{"pass":false,"text":"Not passed on this visit; the stage was entered 2 times in all."},"next":{"kind":"repair","text":"visit the stage again","to":1},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","board_constraints","check_constraints","gates"],"role":"rtl","tools":{}}],"stage":1,"visit":1,"visits":2},{"gate":{"pass":true,"text":"Architecture, clocking plan, resource budget on the xc7a100t."},"next":{"kind":"next","text":"stage passed","to":2},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","board_constraints","check_constraints","gates"],"role":"rtl","tools":{}}],"stage":1,"visit":2,"visits":2},{"gate":{"pass":false,"text":"Not passed on this visit; the stage was entered 3 times in all."},"next":{"kind":"repair","text":"visit the stage again","to":2},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file"],"role":"model","tools":{}},{"offered":["read_file","write_file","list_files","search_docs","load_skill","spec_items","formal"],"role":"tests","tools":{}},{"offered":["read_file","write_file","list_files","search_docs","load_skill","lint","simulate","formal","gates"],"role":"rtl","tools":{}}],"stage":2,"visit":1,"visits":3},{"gate":{"pass":false,"text":"Not passed on this visit; the stage was entered 3 times in all."},"next":{"kind":"repair","text":"visit the stage again","to":2},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file"],"role":"model","tools":{}},{"offered":["read_file","write_file","list_files","search_docs","load_skill","spec_items","formal"],"role":"tests","tools":{}},{"offered":["read_file","write_file","list_files","search_docs","load_skill","lint","simulate","formal","gates"],"role":"rtl","tools":{}}],"stage":2,"visit":2,"visits":3},{"gate":{"pass":true,"text":"RTL, constraints and the independent bench are written; the checks V0 to V3 run here. V3: pass; mutation score 95.0%: 19 killed of 20 evaluated, 0 survived."},"next":{"kind":"next","text":"stage passed","to":3},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file"],"role":"model","tools":{}},{"offered":["read_file","write_file","list_files","search_docs","load_skill","spec_items","formal"],"role":"tests","tools":{}},{"offered":["read_file","write_file","list_files","search_docs","load_skill","lint","simulate","formal","gates"],"role":"rtl","tools":{}}],"stage":2,"visit":3,"visits":3},{"gate":{"pass":true,"text":"Pin and clock constraints checked against the board's master XDC."},"next":{"kind":"next","text":"stage passed","to":4},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","board_constraints","check_constraints","build","gates","report"],"role":"rtl","tools":{}}],"stage":3,"visit":1,"visits":1},{"gate":{"pass":true,"text":"Synthesis gates: all pass by the end of the run."},"next":{"kind":"next","text":"stage passed","to":5},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"role":"rtl","tools":{}}],"stage":4,"visit":1,"visits":1},{"gate":{"pass":true,"text":"Place and route; bitstream built."},"next":{"kind":"next","text":"stage passed","to":6},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"role":"rtl","tools":{}}],"stage":5,"visit":1,"visits":1},{"gate":{"pass":true,"text":"Post-route setup slack +0.495 ns, hold slack +0.099 ns at 100 MHz."},"next":{"kind":"next","text":"stage passed","to":7},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"role":"rtl","tools":{}}],"stage":6,"visit":1,"visits":1},{"gate":{"pass":true,"text":"Vectorless power estimate 0.118 W."},"next":{"kind":"next","text":"stage passed","to":8},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"role":"rtl","tools":{}}],"stage":7,"visit":1,"visits":1},{"gate":{"pass":true,"text":"737 LUT, 753 FF, 12 DSP, 0 BRAM after place and route (test shell included)."},"next":{"kind":"next","text":"stage passed","to":9},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"role":"rtl","tools":{}}],"stage":8,"visit":1,"visits":1},{"gate":{"pass":false,"text":"Not passed on this visit; the stage was entered 2 times in all."},"next":{"kind":"repair","text":"visit the stage again","to":9},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"role":"rtl","tools":{}},{"offered":["read_file","write_file","list_files","search_docs","load_skill","gates"],"role":"tests","tools":{}}],"stage":9,"visit":1,"visits":2},{"gate":{"pass":null,"text":"Stops here: hardware: awaiting approval before programming (no board in this run)."},"next":{"kind":"end","text":"paused before the board, as no board was attached","to":null},"review":"snapshot taken; approved automatically (review off)","roles":[{"offered":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"role":"rtl","tools":{}},{"offered":["read_file","write_file","list_files","search_docs","load_skill","gates"],"role":"tests","tools":{}}],"stage":9,"visit":2,"visits":2}],"wall_h":1.42},{"date":"2026-11-03","harness":"deepagents","id":"giveup","model":"openai/gpt-6-luna","oracle":"openai/gpt-6-luna","order_recorded":true,"per_visit_tools":true,"result":"NULL: stage 2 not passed in 5 visits (visit cap); no build reached synthesis, stage 9 not reached","run":"20261103-104103-5298","source":"results/f2/agent_luna_05g_run1.json","task":"t1_dimmer_counter","title":"A run that gave up","turns":289,"usd":0.331,"visits":[{"gate":{"pass":true,"text":"Spec signed off: 10 questions asked, 6 answered by the oracle, 4 left at their defaults."},"next":{"kind":"next","text":"stage passed","to":1},"review":"snapshot taken; approved automatically (review off)","roles":[{"allowed":20,"ended":"done","files":["spec.yaml"],"offered":["read_file","write_file","list_files","search_docs","load_skill"],"refused":{},"repair":false,"role":"clarify","tools":{"write_file":1},"turns":5}],"stage":0,"visit":1,"visits":1},{"gate":{"pass":true,"text":"Stage gates pass."},"next":{"kind":"next","text":"stage passed","to":2},"review":"snapshot taken; approved automatically (review off)","roles":[{"allowed":30,"ended":"done","files":[],"offered":["read_file","write_file","list_files","search_docs","load_skill","board_constraints","check_constraints","gates"],"refused":{"arguments":2,"path-jail":1},"repair":false,"role":"rtl","tools":{"board_constraints":2,"check_constraints":2,"gates":3,"list_files":7,"load_skill":5,"read_file":14,"search_docs":3},"turns":21}],"stage":1,"visit":1,"visits":1},{"gate":{"pass":false,"text":"Stage gates failed; the next visit repairs the RTL writer's work."},"next":{"kind":"repair","text":"repair","to":2},"review":"snapshot taken; approved automatically (review off)","roles":[{"allowed":45,"ended":"done","files":["model.py"],"offered":["read_file","write_file"],"refused":{},"repair":false,"role":"model","tools":{"write_file":1},"turns":2},{"allowed":53,"ended":"done","files":["tests/test_t1_dimmer_counter.py","tests/test_t1_dimmer_counter_rtl.py","verif/testplan.yaml"],"offered":["read_file","write_file","list_files","search_docs","load_skill","spec_items","formal"],"refused":{"arguments":1},"repair":false,"role":"tests","tools":{"load_skill":2,"spec_items":1,"write_file":3},"turns":15},{"allowed":63,"ended":"stage_budget","files":[],"offered":["read_file","write_file","list_files","search_docs","load_skill","lint","simulate","formal","gates"],"refused":{"build-yaml":2,"path-jail":1},"repair":false,"role":"rtl","tools":{"gates":5,"lint":8,"list_files":6,"load_skill":1,"read_file":17,"simulate":6},"turns":63}],"stage":2,"visit":1,"visits":5},{"gate":{"pass":false,"text":"Stage gates failed; the next visit repairs the RTL writer's work."},"next":{"kind":"repair","text":"repair","to":2},"review":"snapshot taken; approved automatically (review off)","roles":[{"allowed":80,"ended":"done","files":[],"offered":["read_file","write_file","list_files","search_docs","load_skill","lint","simulate","formal","gates"],"refused":{},"repair":true,"role":"rtl","tools":{"lint":3,"list_files":2,"load_skill":1,"read_file":12,"simulate":2},"turns":23}],"stage":2,"visit":2,"visits":5},{"gate":{"pass":false,"text":"Stage gates failed; the next visit repairs the test writer and RTL writer's work."},"next":{"kind":"repair","text":"repair","to":2},"review":"snapshot taken; approved automatically (review off)","roles":[{"allowed":80,"ended":"stage_budget","files":[],"offered":["read_file","write_file","list_files","search_docs","load_skill","lint","simulate","formal","gates"],"refused":{},"repair":true,"role":"rtl","tools":{"gates":1,"lint":1,"list_files":2,"load_skill":2,"read_file":20,"simulate":15},"turns":80}],"stage":2,"visit":3,"visits":5},{"gate":{"pass":false,"text":"lint and the tests against the model failed; the RTL writer owns the fix."},"next":{"kind":"repair","text":"repair","to":2},"review":"snapshot taken; approved automatically (review off)","roles":[{"allowed":55,"ended":"done","files":["tests/test_t1_dimmer_counter.py"],"offered":["read_file","write_file","list_files","search_docs","load_skill","spec_items","formal"],"refused":{},"repair":true,"role":"tests","tools":{"load_skill":1,"spec_items":1,"write_file":1},"turns":4},{"allowed":76,"ended":"stage_budget","files":[],"offered":["read_file","write_file","list_files","search_docs","load_skill","lint","simulate","formal","gates"],"refused":{},"repair":true,"role":"rtl","tools":{"lint":1,"load_skill":1,"read_file":5,"simulate":11},"turns":76}],"stage":2,"visit":4,"visits":5},{"gate":{"pass":null,"text":"No work: the stage had already used its visits."},"next":{"kind":"end","text":"give up: stage 2 visited more than 4 times","to":null},"review":"snapshot taken; approved automatically (review off)","roles":[],"stage":2,"visit":5,"visits":5}],"wall_h":0.79}],"roles":[{"backend":"an in-memory folder seeded with only the role's inputs; outputs copied in through the jail","id":"clarify","label":"Clarify","reads":["spec.md","spec.yaml","data/*"],"what":"Turns the plain-English request into a structured spec, asking about what it leaves open.","writes":["spec.yaml"]},{"backend":"an in-memory folder seeded with only the role's inputs; outputs copied in through the jail","id":"model","label":"Blind model","reads":["spec.yaml","model.py","data/*"],"what":"Writes a short Python model of the design from the spec alone. Never sees the RTL.","writes":["model.py"]},{"backend":"an in-memory folder seeded with only the role's inputs; outputs copied in through the jail","id":"tests","label":"Test writer","reads":["spec.yaml","model.py","data/*","tests/*","verif/*","probes.yaml","BRINGUP.md","hw_checks.py"],"what":"Writes the tests and the test plan from the spec and the model. Never sees the RTL.","writes":["tests/*","verif/*","hw_checks.py"]},{"backend":"the real design folder, every path checked by the role's jail","id":"rtl","label":"RTL writer","reads":["*"],"what":"Writes the SystemVerilog and constraints, and repairs what the later stages find.","writes":["rtl/*","build.yaml","design.xdc","probes.yaml","BRINGUP.md","ARCHITECTURE.md","architecture.yaml","hw_checks.py","lint/*","BUILD_NOTE.md"]}],"run_limits":{"seconds":21600,"turns":300,"usd":3.0,"visits_per_stage":4},"runs":[{"files":["c10_dds_sine run 1","c10_dds_sine run 2","c11_nco_mixer run 1","c11_nco_mixer run 2","c12_adsr_envelope run 1","c12_nexys_pwm_audio run 1","c12_nexys_pwm_audio run 2","c14_int8_dot_requant run 1","c14_int8_dot_requant run 2","c14_int8_dot_requant run 3","c14_int8_dot_requant run 4","c14_int8_dot_requant run 5","c14_nexys_tiny_cnn run 1","c14_nexys_tiny_cnn run 2","c14_systolic_matmul run 1","c15_pq_search run 1","c15_softmax_unit run 1","c15_softmax_unit run 2","c15_softmax_unit run 3","c16_montgomery_mult run 1","c9_median3x3 run 1"],"harness":"claude_code","models":"claude-sonnet-5-5","records":21,"set":"Development tasks"},{"files":["agent_cc_haiku_05c2_run1_crash","agent_cc_haiku_05c2_run2","agent_cc_haiku_05c2_run3","agent_cc_haiku_t1","agent_cc_haiku_t1_mcpcheck","agent_cc_haiku_t1_run2"],"harness":"claude_code","models":"claude-haiku-5-5","records":6,"set":"T1 smoke runs"},{"files":["agent_cc_opus_05c2_run1","agent_cc_opus_05c2_run2_interrupted","agent_cc_opus_t1","agent_cc_opus_t1_05j_v2","agent_cc_opus_t1_05k_v3","agent_cc_opus_t1_remeasure1","agent_cc_opus_t1_run2"],"harness":"claude_code","models":"claude-opus-5-5","records":7,"set":"T1 smoke runs"},{"files":["agent_cvdp_profile_05f_run1","agent_cvdp_profile_05f_run2","agent_cvdp_profile_05g_run1"],"harness":"claude_code","models":"claude-opus-5-5, claude-sonnet-5-5","records":3,"set":"T1 smoke runs"},{"files":["agent_cc_sonnet_t1_05h","agent_cc_sonnet_t1_05i","agent_cc_sonnet_t1_05j_v2","agent_cc_sonnet_t1_05k_v3","agent_cc_sonnet_t1_05l_v3_e811","agent_cc_sonnet_t1_05m_v3_dd0e","agent_cc_sonnet_t1_05n_v3_390c","agent_cc_sonnet_t1_05n_v3_f10f","agent_cc_sonnet_t1_remeasure1"],"harness":"claude_code","models":"claude-sonnet-5-5","records":9,"set":"T1 smoke runs"},{"files":["agent_luna_05c2_run1","agent_luna_05c2_run2","agent_luna_05c2_run3","agent_luna_05c2_run4","agent_luna_05c2_run5","agent_luna_05c2_run6","agent_luna_05c2_run7","agent_luna_05d","agent_luna_05g_run1","agent_luna_d59dbf4_run1","agent_luna_run1","agent_luna_run2","agent_luna_run3","agent_luna_run4","agent_luna_t1_v2_parity"],"harness":"deepagents","models":"openai/gpt-6-luna","records":15,"set":"T1 smoke runs"}],"stages":[{"gates":[{"id":"spec_signed","words":"spec signed off, no open questions"}],"label":"Interview","limits":{"seconds":900,"turns":20,"usd":0.2},"loops_to":[],"n":0,"name":"clarify","roles":["clarify"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill"],"tools":{"clarify":["read_file","write_file","list_files","search_docs","load_skill"]},"ultrafast":false,"visits":4},{"gates":[{"id":"arch_note","words":"architecture note written"},{"id":"arch_yaml","words":"architecture file valid"},{"id":"inventory","words":"pins and clocks match the board"}],"label":"Plan","limits":{"seconds":1800,"turns":30,"usd":0.4},"loops_to":[0],"n":1,"name":"board-and-device-planning","roles":["rtl"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill","board_constraints","check_constraints","gates"],"tools":{"rtl":["read_file","write_file","list_files","search_docs","load_skill","board_constraints","check_constraints","gates"]},"ultrafast":true,"visits":4},{"gates":[{"id":"arch_approved","words":"architecture approved"},{"id":"lint","words":"lint clean"},{"id":"model_contract","words":"golden model keeps its contract"},{"id":"simulate","words":"tests pass against the model"},{"id":"standards_rtl","words":"design standards on the RTL"},{"id":"verif_v3","words":"verification V0 to V3"},{"id":"stage_rtl","words":"RTL methodology checks"}],"label":"RTL and tests","limits":{"seconds":3600,"turns":80,"usd":0.8},"loops_to":[0,1],"n":2,"name":"rtl-design-creation","roles":["model","tests","rtl"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill","lint","simulate","formal","gates"],"tools":{"model":["read_file","write_file"],"rtl":["read_file","write_file","list_files","search_docs","load_skill","lint","simulate","formal","gates"],"tests":["read_file","write_file","list_files","search_docs","load_skill","spec_items","formal"]},"ultrafast":true,"visits":6},{"gates":[{"id":"constraints_post_synth","words":"every timing endpoint constrained"}],"label":"Constraints","limits":{"seconds":1800,"turns":30,"usd":0.4},"loops_to":[2],"n":3,"name":"constraints","roles":["rtl"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill","board_constraints","check_constraints","build","gates","report"],"tools":{"rtl":["read_file","write_file","list_files","search_docs","load_skill","board_constraints","check_constraints","build","gates","report"]},"ultrafast":true,"visits":4},{"gates":[{"id":"stage_post_synth","words":"post-synthesis gates"},{"id":"standards_post_synth","words":"design standards on the netlist"}],"label":"Synthesis","limits":{"seconds":1800,"turns":30,"usd":0.4},"loops_to":[1,2,3],"n":4,"name":"synthesis","roles":["rtl"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"tools":{"rtl":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"]},"ultrafast":true,"visits":4},{"gates":[{"id":"stage_post_place","words":"post-place gates"},{"id":"stage_post_route","words":"post-route gates"}],"label":"Implementation","limits":{"seconds":1800,"turns":30,"usd":0.4},"loops_to":[6],"n":5,"name":"implementation","roles":["rtl"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"tools":{"rtl":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"]},"ultrafast":true,"visits":4},{"gates":[{"id":"timing","words":"setup and hold met"}],"label":"Timing closure","limits":{"seconds":1800,"turns":30,"usd":0.4},"loops_to":[3,2,5],"n":6,"name":"timing-closure","roles":["rtl"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"tools":{"rtl":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"]},"ultrafast":true,"visits":4},{"gates":[{"id":"power","words":"power and junction temperature"}],"label":"Power closure","limits":{"seconds":1800,"turns":30,"usd":0.4},"loops_to":[2,0],"n":7,"name":"power-closure","roles":["rtl"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"tools":{"rtl":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"]},"ultrafast":true,"visits":4},{"gates":[{"id":"drc","words":"DRC, CDC and methodology clean"}],"label":"Design-rule closure","limits":{"seconds":1800,"turns":30,"usd":0.4},"loops_to":[3,2],"n":8,"name":"drc-closure","roles":["rtl"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"tools":{"rtl":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"]},"ultrafast":true,"visits":4},{"gates":[{"id":"bitstream_base","words":"bitstream built"},{"id":"bitstream_ila","words":"debug bitstream built"},{"id":"bringup_ready","words":"bring-up files ready"},{"id":"bringup","words":"board tests pass"},{"id":"signoff","words":"every requirement has evidence"}],"label":"Board and debug","limits":{"seconds":3600,"turns":45,"usd":0.4},"loops_to":[6,2,0],"n":9,"name":"configuration-and-debug","roles":["rtl","tests"],"stage_tools":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report","program","bringup"],"tools":{"rtl":["read_file","write_file","list_files","search_docs","load_skill","build","gates","report"],"tests":["read_file","write_file","list_files","search_docs","load_skill","gates"]},"ultrafast":true,"visits":4}],"tools":[{"group":"Files","model_may_call":true,"name":"read_file","what":"read a file in the design"},{"group":"Files","model_may_call":false,"name":"write_file","what":"write a file the role owns"},{"group":"Files","model_may_call":true,"name":"list_files","what":"list the design"},{"group":"Knowledge","model_may_call":true,"name":"search_docs","what":"search the frozen documents"},{"group":"Knowledge","model_may_call":true,"name":"load_skill","what":"load know-how from the bank"},{"group":"Verification","model_may_call":true,"name":"lint","what":"Verilator lint"},{"group":"Verification","model_may_call":true,"name":"simulate","what":"cocotb tests on a simulator"},{"group":"Verification","model_may_call":true,"name":"formal","what":"SymbiYosys proofs"},{"group":"Verification","model_may_call":true,"name":"spec_items","what":"the spec items to trace"},{"group":"Vivado","model_may_call":true,"name":"board_constraints","what":"pins from the board file"},{"group":"Vivado","model_may_call":true,"name":"check_constraints","what":"check the XDC"},{"group":"Vivado","model_may_call":true,"name":"build","what":"run Vivado to a stage"},{"group":"Vivado","model_may_call":true,"name":"gates","what":"parse reports into gates"},{"group":"Vivado","model_may_call":true,"name":"report","what":"read a Vivado report"},{"group":"Board","model_may_call":false,"name":"program","what":"program the board (harness only)"},{"group":"Board","model_may_call":false,"name":"bringup","what":"board tests (harness only)"}],"versions":{"deepagents":"0.7.32","langchain-openai":"1.7.3","langgraph":"1.2.19","langgraph-checkpoint-sqlite":"3.1.3","mcp":"2.3.0"}}</script>
+<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+(function () {
+  "use strict";
+  var D = {};
+  document.querySelectorAll('script[type="application/json"][data-key]').forEach(function (s) {
+    try { D[s.dataset.key] = JSON.parse(s.textContent); } catch (e) { /* data missing: component skips */ }
+  });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* theme toggle: remembered per viewer, optional */
+  var tb = document.getElementById("theme");
+  function curTheme() {
+    var t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  if (tb) {
+    try { var st = localStorage.getItem("fda-theme"); if (st) document.documentElement.dataset.theme = st; } catch (e) {}
+    tb.addEventListener("click", function () {
+      var n = curTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = n;
+      try { localStorage.setItem("fda-theme", n); } catch (e) {}
+      tb.textContent = n === "dark" ? "Light" : "Dark"; tb.setAttribute("aria-label", "Switch to " + tb.textContent.toLowerCase() + " theme");
+    });
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark"; tb.setAttribute("aria-label", "Switch to " + tb.textContent.toLowerCase() + " theme");
+  }
+
+  /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
+  function Player(root, n, onFrame, opts) {
+    opts = opts || {};
+    var i = 0, playing = false, timer = null, speed = 1, visible = true, base = opts.interval || 1100;
+    var live = root.querySelector(".cap");
+    var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
+    var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
+    var fwd = el("button", { type: "button", "aria-label": "Next step", text: "Next" });
+    var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
+    var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
+    var pos = el("span", { class: "pos" });
+    var sp = el("select", { "aria-label": "Speed" });
+    [0.25, 0.5, 1, 2, 4].forEach(function (s) { var o = el("option", { value: s, text: s + "x" }); if (s === 1) o.selected = true; sp.appendChild(o); });
+    var ctl = el("div", { class: "ctl" }, [play, back, fwd, rst, rng, pos, sp]);
+    root.appendChild(ctl);
+    if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
+    function show() {
+      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      var c = onFrame(i);
+      if (live && c != null) live.textContent = c;
+    }
+    function stop() { playing = false; play.textContent = "Play"; play.setAttribute("aria-label", "Play"); clearTimeout(timer); }
+    function tick() {
+      if (!playing) return;
+      if (!visible) { timer = setTimeout(tick, 400); return; }
+      if (i >= n - 1) { stop(); return; }
+      i++; show(); timer = setTimeout(tick, base / speed);
+    }
+    function go() {
+      if (i >= n - 1) i = 0;
+      playing = true; play.textContent = "Pause"; play.setAttribute("aria-label", "Pause"); show(); timer = setTimeout(tick, base / speed);
+    }
+    play.onclick = function () { playing ? stop() : go(); };
+    back.onclick = function () { stop(); i = Math.max(0, i - 1); show(); };
+    fwd.onclick = function () { stop(); i = Math.min(n - 1, i + 1); show(); };
+    rst.onclick = function () { stop(); i = 0; show(); };
+    rng.oninput = function () { stop(); i = +rng.value; show(); };
+    sp.onchange = function () { speed = +sp.value; };
+    root.addEventListener("keydown", function (e) {
+      if (e.target !== root) return;
+      if (e.key === " ") { e.preventDefault(); play.onclick(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); fwd.onclick(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); back.onclick(); }
+      else if (e.key === "Home") { e.preventDefault(); rst.onclick(); }
+    });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+    show();
+    if (opts.autoplay && !reduce) go();
+    return { goto: function (k) { stop(); i = k; show(); } };
+  }
+
+  /* ---------- stage replay (hero and how-it-works): frames from the committed run record ---------- */
+  var GROUPS = [
+    { id: "clarify", label: "Interview", stages: [0] },
+    { id: "plan", label: "Plan", stages: [1] },
+    { id: "rtl", label: "RTL and gates V0 to V3", stages: [2] },
+    { id: "build", label: "Build", stages: [3, 4, 5] },
+    { id: "post", label: "Post-route gates", stages: [6, 7, 8] },
+    { id: "board", label: "Board", stages: [9] }
+  ];
+  var DETAIL = [
+    "Interview", "Plan", "RTL and V0 to V3", "Constraints", "Synthesis", "Implementation", "Timing closure",
+    "Power closure", "DRC closure", "Board and debug"
+  ];
+  function frameState(R, i) {
+    var s = R.steps[i];
+    return { stage: s.stage_no, step: s, last: i === R.steps.length - 1 };
+  }
+  function mountReplay(root, mode) {
+    var R = D.replay; if (!R) return;
+    var items = mode === "hero" ? GROUPS : DETAIL.map(function (l, k) { return { id: "s" + k, label: l, stages: [k] }; });
+    var ul = el("ul", { class: "pipe", "aria-label": "Stages" });
+    var lis = items.map(function (g, k) {
+      var li = el("li", {}, [el("b", { text: mode === "hero" ? String(k + 1) : String(g.stages[0]) }), document.createTextNode(g.label)]);
+      ul.appendChild(li); return li;
+    });
+    var cap = el("p", { class: "cap", "aria-live": "polite" });
+    root.appendChild(ul); root.appendChild(cap);
+    function frame(i) {
+      var st = frameState(R, i), cur = -1;
+      items.forEach(function (g, k) { if (g.stages.indexOf(st.stage) >= 0) cur = k; });
+      lis.forEach(function (li, k) {
+        li.className = k < cur ? "done" : (k === cur ? (st.last ? "stop" : "active") : "");
+        var old = li.querySelector(".v"); if (old) li.removeChild(old);
+      });
+      var visits = st.step.visits;
+      if (visits > 1) lis[cur].appendChild(el("span", { class: "v", text: st.step.visit + "/" + visits }));
+      return "Stage " + st.stage + ", " + DETAIL[st.stage] + (visits > 1 ? " (visit " + st.step.visit + " of " + visits + ")" : "") + ". " + st.step.fact;
+    }
+    Player(root, R.steps.length, frame, { autoplay: mode === "hero", interval: mode === "hero" ? 1300 : 1500 });
+  }
+
+  /* ---------- k-of-n strip, intervals, bars (shared by development data and eval1.json) ---------- */
+  function strip(root, rows) {
+    var g = el("div", { class: "strip", role: "list" });
+    rows.forEach(function (r) {
+      var dots = el("span", { class: "dots", "aria-hidden": "true" });
+      for (var j = 0; j < r.n; j++) dots.appendChild(el("span", { class: "dot " + (j < r.k ? "p" : "f") }));
+      for (var q = r.n; q < (r.of || r.n); q++) dots.appendChild(el("span", { class: "dot n", title: "not run" }));
+      g.appendChild(el("span", { class: "t", role: "listitem", text: r.task }));
+      g.appendChild(dots);
+      g.appendChild(el("span", { class: "k mono", text: r.k + " of " + r.n }));
+    });
+    root.appendChild(g);
+    root.appendChild(el("div", { class: "legend" }, [
+      el("span", { text: "filled: all hidden tests passed" }), el("span", { text: "hatched: failed" }), el("span", { text: "dotted: not run" })]));
+  }
+  function intervals(root, items) {
+    var W = 560, H = 36 + items.length * 52, L = 14, R = 14;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": items.map(function (x) { return x.label + " " + x.mid + " percent, interval " + x.lo + " to " + x.hi; }).join("; ") });
+    function X(v) { return L + (W - L - R) * v / 100; }
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      s.appendChild(sv("line", { x1: X(v), x2: X(v), y1: 6, y2: H - 20, class: "rule" }));
+      s.appendChild(sv("text", { x: X(v), y: H - 6, "text-anchor": "middle" }, v));
+    });
+    items.forEach(function (it, k) {
+      var y = 36 + k * 52;
+      s.appendChild(sv("text", { x: 0, y: y - 14 }, it.label));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.hi), y1: y, y2: y, class: "ink", "stroke-width": 2, "stroke-dasharray": it.dash ? "5 3" : "none" }));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.lo), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("line", { x1: X(it.hi), x2: X(it.hi), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("circle", { cx: X(it.mid), cy: y, r: 5, class: "fillink" }));
+    });
+    root.appendChild(s);
+    var t = el("div", { class: "tablewrap" });
+    var tb2 = el("table");
+    tb2.appendChild(el("tr", {}, ["Estimate", "Point", "95% interval"].map(function (h) { return el("th", { text: h }); })));
+    items.forEach(function (it) {
+      tb2.appendChild(el("tr", {}, [el("td", { text: it.label }), el("td", { class: "num", text: it.mid + "%" }), el("td", { class: "num", text: it.lo + " to " + it.hi + "%" })]));
+    });
+    t.appendChild(tb2); root.appendChild(t);
+  }
+  function bars(root, obj, total, unit) {
+    var g = el("div", { class: "bars" });
+    var max = Math.max.apply(null, Object.keys(obj).map(function (k) { return obj[k]; }).concat([1]));
+    Object.keys(obj).forEach(function (k) {
+      var b = el("span", { class: "b", "aria-hidden": "true" }); b.style.width = (100 * obj[k] / max) + "%"; b.style.display = "block";
+      g.appendChild(el("span", { text: k.replace(/_/g, " ").replace(/-/g, " ") }));
+      var cell = el("span", {}, [b]); g.appendChild(cell);
+      g.appendChild(el("span", { class: "mono", text: obj[k] + (total ? " of " + total : "") + (unit || "") }));
+    });
+    root.appendChild(g);
+  }
+  var OUTCOME_TEXT = { pass: "passed, no repair needed", caught_and_repaired: "an internal gate failed, the agent repaired it, hidden tests passed",
+    escape: "own checks passed, hidden tests failed (escape)", internal_stop_hidden_pass: "stopped on an internal gate, hidden tests pass on the RTL it left",
+    fail: "failed" };
+
+  function mountDev() {
+    var d = D.dev; if (!d) return;
+    var a = document.getElementById("dev-strip"); if (a) strip(a, d.per_task);
+    var b = document.getElementById("dev-int");
+    if (b) intervals(b, [
+      { label: "pass@1, bootstrap over tasks", mid: d.pass_at_1_tasks_pct, lo: d.bootstrap_tasks_pct[0], hi: d.bootstrap_tasks_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: d.pass_pct_runs, lo: d.wilson_runs_pct[0], hi: d.wilson_runs_pct[1], dash: true }]);
+    var c = document.getElementById("dev-out"); if (c) {
+      var o = {}; Object.keys(d.outcomes).forEach(function (k) { o[OUTCOME_TEXT[k] || k] = d.outcomes[k]; });
+      bars(c, o, d.runs);
+    }
+    var e = document.getElementById("dev-esc"); if (e) bars(e, d.escape_levels, d.escapes);
+  }
+  function mountEval1() {
+    var root = document.getElementById("eval1"); if (!root) return;
+    var E = D.eval1;
+    if (!E) {
+      root.appendChild(el("div", { class: "stub" }, [
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
+      return;
+    }
+    root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
+    var s = el("div"); root.appendChild(s); strip(s, E.per_task.map(function (t) { return { task: t.task, k: t.k, n: t.n, of: 3 }; }));
+    root.appendChild(el("h3", { text: "pass@1 with 95% intervals" }));
+    var i = el("div"); root.appendChild(i);
+    intervals(i, [
+      { label: "pass@1, bootstrap over tasks", mid: E.pass_at_1_pct, lo: E.bootstrap_pct[0], hi: E.bootstrap_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: E.wilson_mid_pct, lo: E.wilson_pct[0], hi: E.wilson_pct[1], dash: true }]);
+    root.appendChild(el("h3", { text: "Escapes by the check level that should have caught them" }));
+    var b = el("div"); root.appendChild(b); bars(b, E.escape_levels, E.escapes);
+  }
+
+  /* ---------- ILA capture player (T1 on the board): LED0 against the sample index ---------- */
+  function mountILA(root) {
+    var B = D.board; if (!B) return;
+    var keys = Object.keys(B.captures).sort(function (a, b) { return B.captures[a].duty - B.captures[b].duty; });
+    var W = 600, H = 120, L = 30, cur = keys[0], svg, cursor, trace, label;
+    var sel = el("div", { class: "ctl", role: "group", "aria-label": "Dimmer level" });
+    var btns = keys.map(function (k) {
+      var b = el("button", { type: "button", "aria-pressed": k === cur ? "true" : "false", text: "duty " + B.captures[k].duty });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", keys[j] === cur ? "true" : "false"); }); draw(); player.goto(0); };
+      return b;
+    });
+    btns.forEach(function (b) { sel.appendChild(b); });
+    root.appendChild(sel);
+    var holder = el("div"); root.appendChild(holder);
+    root.appendChild(el("p", { class: "cap", "aria-live": "polite" }));
+    function X(i) { return L + (W - L - 10) * i / (B.captures[cur].samples - 1); }
+    function draw() {
+      var c = B.captures[cur]; holder.innerHTML = "";
+      svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "ILA capture of LED 0 over " + c.samples + " samples at duty " + c.duty + ": on for " + c.on + " samples" });
+      svg.appendChild(sv("text", { x: 0, y: 34 }, "on"));
+      svg.appendChild(sv("text", { x: 0, y: 94 }, "off"));
+      var d = "", prev = 0;
+      c.edges.forEach(function (e, k) {
+        var y = e[1] ? 30 : 90;
+        d += (k === 0 ? "M" : "L") + X(e[0]) + " " + (k === 0 ? y : (e[1] ? 90 : 30)) + " L" + X(e[0]) + " " + y + " ";
+      });
+      d += "L" + X(c.samples - 1) + " " + (c.edges[c.edges.length - 1][1] ? 30 : 90);
+      svg.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      cursor = sv("line", { x1: X(0), x2: X(0), y1: 10, y2: 108, class: "warn", "stroke-width": 1.5 });
+      svg.appendChild(cursor);
+      svg.appendChild(sv("text", { x: L, y: H - 2 }, "sample 0"));
+      svg.appendChild(sv("text", { x: W - 10, y: H - 2, "text-anchor": "end" }, "sample " + (c.samples - 1)));
+      holder.appendChild(svg);
+    }
+    draw();
+    var marks = 64;
+    function onFrame(k) {
+      var c = B.captures[cur]; var idx = Math.round(k * (c.samples - 1) / 63);
+      cursor.setAttribute("x1", X(idx)); cursor.setAttribute("x2", X(idx));
+      var on = 0, v = 0; c.edges.forEach(function (e) { if (e[0] <= idx) { v = e[1]; } });
+      for (var q = 0; q < c.edges.length; q++) { var e = c.edges[q], nx = q + 1 < c.edges.length ? c.edges[q + 1][0] : c.samples; if (e[1]) on += Math.max(0, Math.min(nx, idx + 1) - e[0]); }
+      return "Sample " + idx + ": LED 0 is " + (v ? "on" : "off") + ". On for " + on + " of the " + (idx + 1) + " samples so far. The whole capture: " + c.on + " of " + c.samples + " samples on, the model says " + c.model_on + ".";
+    }
+    var player = Player(root, marks, onFrame, { interval: 220 });
+  }
+
+
+  /* ---------- golden-model trace viewer (problem pages): waveform + values at the cursor + bespoke hero ---------- */
+  function fmtv(sg, v) {
+    if (sg.kind === "bus") {
+      if (sg.radix === "hex") { var hd = sg.width ? Math.ceil(sg.width / 4) : 1; var hs = (v >>> 0).toString(16); if (v < 0) hs = "-" + (-v).toString(16); while (hs.length < hd) hs = "0" + hs; return "0x" + hs; }
+      if (sg.radix === "bin") { var bs = (v >>> 0).toString(2); while (sg.width && bs.length < sg.width) bs = "0" + bs; return bs; }
+      return String(v);
+    }
+    return String(v);
+  }
+  function mountWave(holder, T) {
+    var n = T.x.length, LW = 132, CW = Math.max(12, Math.min(28, Math.floor(620 / n))), W = LW + n * CW + 6, RH = 34;
+    var H = 22 + T.signals.length * RH;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "wavesvg",
+      "aria-label": "Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s" });
+    function X(i) { return LW + i * CW; }
+    for (var i = 0; i < n; i += Math.max(1, Math.ceil(n / 12))) s.appendChild(sv("text", { x: X(i) + 2, y: 12 }, T.x[i]));
+    T.signals.forEach(function (g, r) {
+      var y0 = 22 + r * RH, top = y0 + 5, bot = y0 + RH - 7, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4 }, g.name.length > 17 ? g.name.slice(0, 16) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      var d = "";
+      if (g.kind === "bit") {
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k) + " " + y + " L" + X(k + 1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); d += (k ? "L" : "M") + (X(k) + CW / 2) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); s.appendChild(sv("circle", { cx: X(k) + CW / 2, cy: y.toFixed(1), r: 1.8, class: "fillink" })); });
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), val = g.v[a], txt = fmtv(g, val), empty = g.kind === "text" ? val === "" : false;
+            if (empty) s.appendChild(sv("line", { x1: x1, x2: x2, y1: mid, y2: mid, class: "ink", "stroke-width": 1 }));
+            else {
+              s.appendChild(sv("path", { d: "M" + x1 + " " + mid + " L" + (x1 + 3) + " " + top + " L" + (x2 - 3) + " " + top + " L" + x2 + " " + mid + " L" + (x2 - 3) + " " + bot + " L" + (x1 + 3) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+              var room = Math.floor((x2 - x1 - 8) / 6.7);
+              if (room >= 1) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4 }, txt.length > room ? (room > 2 ? txt.slice(0, room - 1) + "." : "") : txt));
+            }
+            a = k;
+          }
+        }
+      }
+    });
+    var shade = sv("rect", { x: X(1), y: 16, width: W, height: H, class: "future" });
+    var cur = sv("rect", { x: X(0), y: 16, width: CW, height: H - 16, class: "cursor" });
+    s.appendChild(shade); s.appendChild(cur);
+    var wrap = el("div", { class: "wavewrap", tabindex: "0" }); wrap.appendChild(s); holder.appendChild(wrap);
+    var vals = el("dl", { class: "vals" }); holder.appendChild(vals);
+    return function (i) {
+      shade.setAttribute("x", X(i + 1)); cur.setAttribute("x", X(i));
+      vals.innerHTML = "";
+      vals.appendChild(el("div", {}, [el("dt", { text: T.unit }), el("dd", { class: "mono", text: String(T.x[i]) })]));
+      T.signals.forEach(function (g) { vals.appendChild(el("div", {}, [el("dt", { text: g.name }), el("dd", { class: "mono", text: g.kind === "text" && g.v[i] === "" ? "none" : fmtv(g, g.v[i]) })])); });
+    };
+  }
+  function sig(T, name) { for (var k = 0; k < T.signals.length; k++) if (T.signals[k].name === name) return T.signals[k].v; return null; }
+  function hx(b) { return (b < 16 ? "0" : "") + b.toString(16); }
+  var HEROES = {
+    t1_elevator_fsm: function (box, T) {
+      var F = T.hero.floors, W = 360, FH = 52, H = F * FH + 20, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Lift shaft: car position, door and calls from the model" });
+      box.appendChild(s);
+      var fl = sig(T, "FLOOR"), st = sig(T, "STATE"), pe = sig(T, "PENDING"), dr = sig(T, "DIR (1 = down)");
+      var lamps = [], labels = [];
+      for (var f = 0; f < F; f++) {
+        var y = 10 + (F - 1 - f) * FH;
+        s.appendChild(sv("line", { x1: 60, x2: 300, y1: y + FH, y2: y + FH, class: "rule" }));
+        s.appendChild(sv("text", { x: 4, y: y + FH / 2 + 4 }, "floor " + f));
+        lamps.push(sv("circle", { cx: 290, cy: y + FH / 2, r: 7, class: "ink", "stroke-width": 1.5 }));
+        s.appendChild(lamps[f]);
+      }
+      s.appendChild(sv("rect", { x: 120, y: 10, width: 90, height: F * FH, class: "ink", "stroke-width": 1 }));
+      var car = sv("g", {}), body = sv("rect", { x: 128, width: 74, height: FH - 10, class: "ink", "stroke-width": 2 });
+      var dl = sv("rect", { width: 0, height: FH - 18, class: "fillink" }), dr2 = sv("rect", { width: 0, height: FH - 18, class: "fillink" });
+      var arrow = sv("text", { x: 228, "text-anchor": "middle" }, "");
+      car.appendChild(body); car.appendChild(dl); car.appendChild(dr2); s.appendChild(car); s.appendChild(arrow);
+      s.appendChild(sv("text", { x: 290, y: H - 2, "text-anchor": "middle" }, "calls"));
+      return function (i) {
+        var y = 10 + (F - 1 - fl[i]) * FH + 5, open = st[i] === "door open";
+        body.setAttribute("y", y);
+        var dw = open ? 14 : 36;
+        dl.setAttribute("x", 132); dl.setAttribute("y", y + 4); dl.setAttribute("width", dw);
+        dr2.setAttribute("x", 198 - dw); dr2.setAttribute("y", y + 4); dr2.setAttribute("width", dw);
+        arrow.setAttribute("y", y + FH / 2); arrow.textContent = st[i] === "moving" ? (dr[i] ? "down" : "up") : (open ? "open" : "");
+        lamps.forEach(function (c, f) { c.setAttribute("class", (pe[i] >> f) & 1 ? "fillink" : "ink"); });
+      };
+    },
+    c10_dds_sine: function (box, T) {
+      var h = T.hero, W = 600, H = 200, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Phase wheel and sine output from the model" });
+      box.appendChild(s);
+      var cx = 90, cy = 100, R = 70, N = 1 << h.la;
+      s.appendChild(sv("circle", { cx: cx, cy: cy, r: R, class: "ink", "stroke-width": 1 }));
+      s.appendChild(sv("text", { x: cx, y: 192, "text-anchor": "middle" }, "phase (" + h.aw + " bits)"));
+      var hand = sv("line", { x1: cx, y1: cy, class: "ink", "stroke-width": 2 }); s.appendChild(hand);
+      var dot = sv("circle", { r: 5, class: "fillink" }); s.appendChild(dot);
+      var X0 = 200, PW = 390, ph = sig(T, "phase"), out = sig(T, "out"), ad = sig(T, "table address");
+      s.appendChild(sv("line", { x1: X0, x2: X0 + PW, y1: cy, y2: cy, class: "rule" }));
+      s.appendChild(sv("text", { x: X0 + PW, y: 192, "text-anchor": "end" }, "output samples"));
+      var stems = [];
+      for (var k = 0; k < out.length; k++) {
+        var x = X0 + PW * (k + .5) / out.length, y = cy - (R) * out[k] / h.amp;
+        var g = sv("g", {}); g.appendChild(sv("line", { x1: x, x2: x, y1: cy, y2: y, class: "ink", "stroke-width": 1 })); g.appendChild(sv("circle", { cx: x, cy: y, r: 2.5, class: "fillink" }));
+        stems.push(g); s.appendChild(g);
+      }
+      var lab = sv("text", { x: cx, y: 18, "text-anchor": "middle" }, ""); s.appendChild(lab);
+      return function (i) {
+        var a = 2 * Math.PI * ad[i] / N, x = cx + R * Math.cos(a), y = cy - R * Math.sin(a);
+        hand.setAttribute("x2", x); hand.setAttribute("y2", y); dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        lab.textContent = "entry " + ad[i] + " of " + N;
+        stems.forEach(function (g, k) { g.style.opacity = k <= i ? 1 : .15; });
+      };
+    },
+    c16_nexys_aes_uart: function (box, T) {
+      var h = T.hero, W = 420, C = 56, s = sv("svg", { viewBox: "0 0 " + W + " 250", width: "100%", role: "img", "aria-label": "AES state, 4 by 4 bytes, from the model's round functions" });
+      box.appendChild(s);
+      var cells = [], texts = [];
+      for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) {
+        var x = 10 + c * C, y = 26 + r * C;
+        var rc = sv("rect", { x: x, y: y, width: C - 6, height: C - 6, class: "ink", "stroke-width": 1 }), t = sv("text", { x: x + (C - 6) / 2, y: y + C / 2, "text-anchor": "middle", class: "big" }, "");
+        s.appendChild(rc); s.appendChild(t); cells[4 * c + r] = rc; texts[4 * c + r] = t;
+      }
+      var op = sv("text", { x: 250, y: 60, class: "big" }, ""), rd = sv("text", { x: 250, y: 90 }, ""), ch = sv("text", { x: 250, y: 120 }, "");
+      s.appendChild(op); s.appendChild(rd); s.appendChild(ch);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "state: bytes go down the columns"));
+      var rounds = sig(T, "round");
+      return function (i) {
+        var st = h.states[i], pr = i ? h.states[i - 1] : st, nch = 0;
+        for (var k = 0; k < 16; k++) {
+          var diff = st[k] !== pr[k]; if (diff) nch++;
+          cells[k].setAttribute("class", diff ? "fillink" : "ink"); texts[k].setAttribute("class", diff ? "big inv" : "big"); texts[k].textContent = hx(st[k]);
+        }
+        op.textContent = h.ops[i]; rd.textContent = "round " + rounds[i]; ch.textContent = i ? nch + " of 16 bytes changed" : "";
+      };
+    },
+    c9_median3x3: function (box, T) {
+      var h = T.hero, W = 600, s = sv("svg", { viewBox: "0 0 " + W + " 200", width: "100%", role: "img", "aria-label": "Window presented and median result, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "window presented this clock"));
+      s.appendChild(sv("text", { x: 230, y: 16 }, "window from " + h.lat + " clock earlier, sorted"));
+      s.appendChild(sv("text", { x: 230 + 4 * 40 + 18, y: 50, "text-anchor": "middle" }, "fifth"));
+      var g = [], gt = [];
+      for (var k = 0; k < 9; k++) {
+        var x = 10 + (k % 3) * 50, y = 26 + Math.floor(k / 3) * 50;
+        var r = sv("rect", { x: x, y: y, width: 46, height: 46, class: "pix" }), t = sv("text", { x: x + 23, y: y + 28, "text-anchor": "middle" }, "");
+        s.appendChild(r); s.appendChild(t); g.push(r); gt.push(t);
+      }
+      var srt = [], st2 = [];
+      for (var q = 0; q < 9; q++) {
+        var x2 = 230 + q * 40, r2 = sv("rect", { x: x2, y: 60, width: 36, height: 36, class: "pix" }), t2 = sv("text", { x: x2 + 18, y: 83, "text-anchor": "middle" }, "");
+        s.appendChild(r2); s.appendChild(t2); srt.push(r2); st2.push(t2);
+      }
+      var box5 = sv("rect", { x: 230 + 4 * 40 - 4, y: 56, width: 44, height: 44, class: "ink", "stroke-width": 2.5 }); s.appendChild(box5);
+      var res = sv("text", { x: 230, y: 130, class: "big" }, ""); s.appendChild(res);
+      return function (i) {
+        var w = h.in[i], so = h.sorted[i];
+        for (var k = 0; k < 9; k++) {
+          if (w) { g[k].style.fill = "rgb(" + w[k] + "," + w[k] + "," + w[k] + ")"; gt[k].textContent = w[k]; gt[k].setAttribute("class", w[k] > 127 ? "dark" : "light"); }
+          else { g[k].style.fill = "none"; gt[k].textContent = ""; }
+          if (so) { srt[k].style.fill = "rgb(" + so[k] + "," + so[k] + "," + so[k] + ")"; st2[k].textContent = so[k]; st2[k].setAttribute("class", so[k] > 127 ? "dark" : "light"); }
+          else { srt[k].style.fill = "none"; st2[k].textContent = ""; }
+        }
+        box5.style.opacity = so ? 1 : .2; res.textContent = so ? "median " + so[4] : "no result this clock";
+      };
+    },
+    c14_systolic_matmul: function (box, T) {
+      var h = T.hero, W = 600, n = h.rows.length, L = h.lat, s = sv("svg", { viewBox: "0 0 " + W + " 190", width: "100%", role: "img", "aria-label": "Rows entering, in flight for the latency, and results leaving, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "rows waiting"));
+      s.appendChild(sv("text", { x: 170, y: 16 }, "in flight for " + L + " clocks"));
+      s.appendChild(sv("text", { x: 170, y: 34 }, "(each row times the 4 x 4 weights)"));
+      s.appendChild(sv("text", { x: 480, y: 16 }, "results out"));
+      var slots = [];
+      for (var k = 0; k < L; k++) { var r = sv("rect", { x: 170 + k * 38, y: 70, width: 34, height: 34, class: "ink", "stroke-width": 1 }); s.appendChild(r); slots.push([r, sv("text", { x: 170 + k * 38 + 17, y: 92, "text-anchor": "middle" }, "")]); s.appendChild(slots[k][1]); }
+      var waiting = sv("text", { x: 10, y: 92 }, ""), done = sv("text", { x: 480, y: 92 }, ""), last = sv("text", { x: 170, y: 150 }, "");
+      s.appendChild(waiting); s.appendChild(done); s.appendChild(last);
+      return function (i) {
+        var nextIn = 0; for (var t = 0; t <= i; t++) if (h.in[t] != null) nextIn = h.in[t] + 1;
+        var outN = 0; for (var t2 = 0; t2 <= i; t2++) if (h.out[t2] != null) outN = h.out[t2] + 1;
+        waiting.textContent = nextIn < n ? (n - nextIn) + " rows" : "none";
+        done.textContent = outN + " of " + n + " rows";
+        slots.forEach(function (sl, k) {
+          var row = i - k >= 0 && h.in[i - k] != null ? h.in[i - k] : null;
+          sl[0].setAttribute("class", row != null ? "fillink" : "ink"); sl[1].textContent = row != null ? "r" + row : ""; sl[1].setAttribute("class", row != null ? "inv" : "");
+        });
+        var o = h.out[i]; last.textContent = o != null ? "row " + o + " x W = " + h.C[o].join("  ") : "";
+      };
+    }
+  };
+  function mountTrace(root) {
+    var T = D.trace; if (!T) return;
+    var heroFn = null, art = root.querySelector(".hero-art"), id = root.getAttribute("data-hero");
+    if (art && HEROES[id]) { heroFn = HEROES[id](art, T); var hs = art.querySelector("svg"); if (hs) hs.style.maxWidth = id === "t1_elevator_fsm" ? "400px" : "680px"; }
+    var wv = mountWave(root.querySelector(".wave"), T);
+    Player(root, T.x.length, function (i) { if (heroFn) heroFn(i); wv(i); return T.captions[i]; }, { autoplay: !!heroFn, interval: 900 });
+  }
+  var tr = document.getElementById("trace"); if (tr) mountTrace(tr);
+
+  /* ---------- problems index: filter by domain, tier, board (the list is complete without script) ---------- */
+  (function () {
+    var sels = document.querySelectorAll(".filters select"); if (!sels.length) return;
+    var cards = document.querySelectorAll(".pcard"), secs = document.querySelectorAll("section.dom"), cnt = document.getElementById("f-count");
+    function apply() {
+      var f = {}; sels.forEach(function (s) { f[s.dataset.f] = s.value; });
+      var shown = 0;
+      cards.forEach(function (c) { var ok = (!f.domain || c.dataset.domain === f.domain) && (!f.tier || c.dataset.tier === f.tier) && (!f.board || c.dataset.board === f.board); c.hidden = !ok; if (ok) shown++; });
+      secs.forEach(function (s) { s.hidden = !s.querySelector(".pcard:not([hidden])"); });
+      if (cnt) cnt.textContent = shown + " of " + cards.length + " shown";
+    }
+    sels.forEach(function (s) { s.addEventListener("change", apply); });
+    document.querySelectorAll(".dombars a.dl").forEach(function (a) {
+      a.addEventListener("click", function (e) { var d = document.getElementById("f-domain"); if (!d || !d.querySelector('option[value="' + a.dataset.dom + '"]')) return; e.preventDefault(); d.value = a.dataset.dom; apply(); document.querySelector(".filters").scrollIntoView(); });
+    });
+    apply();
+  })();
+  var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
+  var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
+  var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+
+  /* ---------- flow notes: a bus crossing a two-flop synchroniser (frames from site/flow_model.py) ---------- */
+  function mountTear(root) {
+    var T = D.flow_notes && D.flow_notes.tear; if (!T) return;
+    var bus = "binary", extra = true, Fr = T.configs.binary_extra, p;
+    var tog = el("div", { class: "tog" });
+    function group(label, opts, cur, set) {
+      var g = el("div", { class: "grp", role: "group", "aria-label": label }, [el("span", { text: label })]), bs = [];
+      opts.forEach(function (o) {
+        var b = el("button", { type: "button", text: o[1], "aria-pressed": String(o[0] === cur) });
+        b.onclick = function () { set(o[0]); bs.forEach(function (x, k) { x.setAttribute("aria-pressed", String(opts[k][0] === o[0])); }); };
+        bs.push(b); g.appendChild(b);
+      });
+      tog.appendChild(g);
+    }
+    group("Bus", [["binary", "Binary counter"], ["gray", "Gray counter"]], bus, function (v) { bus = v; reload(); });
+    group("Extra cycle", [[false, "Off"], [true, "On"]], extra, function (v) { extra = v; reload(); });
+    root.appendChild(tog);
+    var W = 400, svg = sv("svg", { viewBox: "0 0 400 190", role: "img", "aria-label": "Source bus, first flop and second flop of the synchroniser" });
+    var defs = sv("defs"); var pat = sv("pattern", { id: "hatchhold", width: 5, height: 5, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+    pat.appendChild(sv("rect", { width: 5, height: 5, fill: "var(--bg)" })); pat.appendChild(sv("line", { x1: 0, y1: 0, x2: 0, y2: 5, stroke: "var(--ink)", "stroke-width": 2 }));
+    defs.appendChild(pat); svg.appendChild(defs);
+    var rowY = [14, 74, 134], names = ["source bus", "flop 1", "flop 2"], cells = [];
+    names.forEach(function (n, r) {
+      svg.appendChild(sv("text", { x: 6, y: rowY[r] + 23 }, n));
+      var row = [];
+      for (var j = 0; j < 4; j++) {
+        var g = sv("g"), x = 150 + j * 60;
+        var rc = sv("rect", { x: x, y: rowY[r], width: 40, height: 36, class: "bit0" });
+        var tx = sv("text", { x: x + 16, y: rowY[r] + 23, class: "big" }, "0");
+        g.appendChild(rc); g.appendChild(tx); svg.appendChild(g); row.push([rc, tx]);
+      }
+      cells.push(row);
+    });
+    [0, 1].forEach(function (r) { for (var j = 0; j < 4; j++) { var x = 170 + j * 60; svg.appendChild(sv("path", { class: "ink", d: "M" + x + " " + (rowY[r] + 36) + " L" + x + " " + (rowY[r + 1]) })); } });
+    root.appendChild(svg);
+    var cap = el("p", { class: "cap", "aria-live": "polite" }); root.appendChild(cap);
+    var ch = sv("svg", { viewBox: "0 0 400 132", role: "img", "aria-label": "Source value and sampled value over the cycles" });
+    var X0 = 34, DX = 360 / T.frames, Y = function (v) { return 108 - v * 6; };
+    ch.appendChild(sv("text", { x: 6, y: 10 }, "value, 0 to 15"));
+    var cursor = sv("rect", { class: "cursor", x: X0, y: 14, width: DX, height: 96 }); ch.appendChild(cursor);
+    ch.appendChild(sv("line", { class: "rule", x1: X0, y1: 108, x2: 394, y2: 108 }));
+    ch.appendChild(sv("text", { x: 290, y: 126 }, "destination cycle"));
+    var lSrc = sv("path", { class: "line-ink" }), lSeen = sv("path", { class: "line-seen" }); ch.appendChild(lSrc); ch.appendChild(lSeen);
+    var marks = sv("g"); ch.appendChild(marks);
+    ch.appendChild(sv("text", { x: 6, y: 126 }, "cycle 0 at left"));
+    root.appendChild(ch);
+    var leg = el("p", { class: "small muted", text: "Chart: solid line is the source value, dashed line is the value the destination sees, a ringed point is a torn value." });
+    root.appendChild(leg);
+    function path(vals) {
+      var d = ""; vals.forEach(function (v, t) { var x = X0 + t * DX; d += (t ? "L" : "M") + x.toFixed(1) + " " + Y(v) + " L" + (x + DX).toFixed(1) + " " + Y(v) + " "; });
+      return d;
+    }
+    function reload() {
+      Fr = T.configs[bus + "_" + (extra ? "extra" : "plain")];
+      lSrc.setAttribute("d", path(Fr.map(function (f) { return f.cur; })));
+      lSeen.setAttribute("d", path(Fr.map(function (f) { return f.seen; })));
+      while (marks.firstChild) marks.removeChild(marks.firstChild);
+      Fr.forEach(function (f, t) { if (f.torn) marks.appendChild(sv("circle", { class: "torn", cx: (X0 + t * DX + DX / 2).toFixed(1), cy: Y(f.seen), r: 5 })); });
+      if (p) p.goto(0);
+    }
+    function draw(rowI, bits, held) {
+      for (var j = 0; j < 4; j++) {
+        var c = cells[rowI][j], b = bits[j];
+        var isHeld = held && held[j];
+        c[0].setAttribute("class", isHeld ? "held" : (b ? "bit1" : "bit0"));
+        c[1].textContent = b; c[1].setAttribute("class", "big" + (b && !isHeld ? " b1" : ""));
+      }
+    }
+    function frame(i) {
+      var f = Fr[i];
+      draw(0, f.src); draw(1, f.f1, f.held); draw(2, f.f2);
+      cursor.setAttribute("x", (X0 + i * DX).toFixed(1));
+      var h = []; f.held.forEach(function (x, k) { if (x) h.push(k + 1); });
+      var code = bus === "gray" ? "Gray code" : "binary";
+      var c = "Cycle " + i + ": the source value is " + f.cur + " (" + code + " bits " + f.src.join("") + ")" +
+        (i % T.hold === 0 && i ? ", just changed from " + f.prev : "") + ". ";
+      c += h.length ? "Flop 1 keeps its old value for bit" + (h.length > 1 ? "s " : " ") + h.join(" and ") + " (counting from the left). " : "";
+      c += "The destination sees " + f.seen + (f.torn ? ", which is neither " + f.cur + " nor " + f.prev + ": a torn value." : (f.seen === f.cur ? "." : ", the previous value."));
+      return c;
+    }
+    p = Player(root, T.frames, frame, { interval: 700 });
+    reload();
+  }
+  var tr = document.getElementById("tear"); if (tr) mountTear(tr);
+
+  /* ---------- the agent page (brief 43): a recorded run through the live figure; frames from agent_graph.json ---------- */
+  var PH = ["work", "gate", "review", "advance"];
+  var RL = { clarify: "clarify role", model: "blind model", tests: "test writer", rtl: "RTL writer" };
+  function agFrames(R) {
+    var F = [];
+    R.visits.forEach(function (v, i) { PH.forEach(function (ph) { F.push({ v: v, i: i, ph: ph }); }); });
+    var last = R.visits[R.visits.length - 1];
+    if (last.next.kind === "end") F.push({ v: last, i: R.visits.length - 1, ph: "end" });
+    return F;
+  }
+  function wrapTxt(t, n) {
+    var out = [], line = "";
+    String(t).split(/\s+/).forEach(function (w) { if (line && (line + " " + w).length > n) { out.push(line); line = w; } else line = (line ? line + " " : "") + w; });
+    if (line) out.push(line);
+    return out;
+  }
+  function mountAgent(root) {
+    var A = D.agent_graph; if (!A) return;
+    var S = A.stages, host0 = root.querySelector(".phost"), tmpl = host0.innerHTML, sel = root.querySelector(".runsel"), info = root.querySelector(".runinfo");
+    var lab = {}; S.forEach(function (s) { lab[s.n] = s.label; });
+    var cur = 0, btns = [], raf = null;
+    A.replays.forEach(function (R, k) {
+      var b = el("button", { type: "button", "aria-pressed": String(k === 0), text: R.title + " (" + (R.harness === "deepagents" ? "Deep Agents" : "Claude Code") + ")" });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", String(j === k)); }); start(); };
+      btns.push(b); sel.appendChild(b);
+    });
+    function start() {
+      var R = A.replays[cur], F = agFrames(R);
+      var host = root.querySelector(".phost"), fresh = el("div", { class: "phost" }); fresh.innerHTML = tmpl;
+      host.parentNode.replaceChild(fresh, host); host = fresh;
+      info.textContent = R.task + ", run " + R.run + ", " + R.date + ". Harness: " + (R.harness === "deepagents" ? "Deep Agents" : "Claude Code " + (R.claude_code || "")) +
+        "; model " + R.model + "; interview oracle " + R.oracle + ". " + R.turns + " model turns, " + R.wall_h + " h. Source: " + R.source + ".";
+      var svgs = host.querySelectorAll("svg.live");
+      function all(q) { var o = []; svgs.forEach(function (s) { s.querySelectorAll(q).forEach(function (e) { o.push(e); }); }); return o; }
+      function cls(e, c, on) { if (on) e.classList.add(c); else e.classList.remove(c); }
+      function animAll(key, animate) {
+        if (raf) cancelAnimationFrame(raf);
+        var items = [];
+        svgs.forEach(function (s) {
+          var tok = s.querySelector("[data-tok]"), path = s.querySelector('[data-e="' + key + '"]');
+          if (tok && path) { tok.classList.remove("idle"); items.push([tok, path, path.getTotalLength()]); }
+        });
+        function put(e) { items.forEach(function (it) { var q = it[1].getPointAtLength(it[2] * e); it[0].setAttribute("cx", q.x.toFixed(1)); it[0].setAttribute("cy", q.y.toFixed(1)); }); }
+        if (!animate) { put(1); return; }
+        var t0 = null, dur = 560;
+        function step(ts) {
+          if (t0 === null) t0 = ts;
+          var u = Math.min(1, (ts - t0) / dur), e = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+          put(e); if (u < 1) raf = requestAnimationFrame(step);
+        }
+        put(0); raf = requestAnimationFrame(step);
+      }
+      function arcTo(from, to) {
+        svgs.forEach(function (s) {
+          var a = s.querySelector("[data-rarc]"), c1 = s.querySelector('[data-st="' + from + '"] rect'), c2 = to == null ? null : s.querySelector('[data-st="' + to + '"] rect');
+          if (!a) return;
+          if (!c1 || !c2) { a.setAttribute("d", ""); return; }
+          var x1 = +c1.getAttribute("x") + c1.getAttribute("width") / 2, x2 = +c2.getAttribute("x") + c2.getAttribute("width") / 2, y = +c1.getAttribute("y");
+          var d = from === to ? "M" + (x1 - 6) + " " + y + " C" + (x1 - 16) + " " + (y - 18) + ", " + (x1 + 16) + " " + (y - 18) + ", " + (x1 + 6) + " " + (y - 1)
+            : "M" + x1 + " " + y + " C" + x1 + " " + (y - 22) + ", " + x2 + " " + (y - 22) + ", " + x2 + " " + (y - 1);
+          a.setAttribute("d", d);
+        });
+      }
+      function setText(q, rows) { svgs.forEach(function (s) { var g = s.querySelectorAll(q + " text"), bx = s.querySelector(q + " rect"), n = Math.floor((+bx.getAttribute("width") - 28) / 6.1);
+        var flat = []; rows.forEach(function (r, k) { if (k === 0) flat.push(r); else wrapTxt(r, n).forEach(function (x) { flat.push(x); }); });
+        g.forEach(function (t, k) { t.textContent = flat[k] || ""; if (k === g.length - 1 && flat.length > g.length) t.textContent += " ..."; }); }); }
+      function frame(i) {
+        var f = F[i], v = f.v, ph = f.ph, R2 = R;
+        var passed = {}; R2.visits.forEach(function (w, j) { if (j < f.i || (j === f.i && PH.indexOf(ph) >= 1 && ph !== "work")) { if (w.gate.pass) passed[w.stage] = 1; } });
+        all("[data-st]").forEach(function (g) { var n = +g.dataset.st; cls(g, "cur", n === v.stage && ph !== "end"); cls(g, "done", !!passed[n] && n !== v.stage); cls(g, "bad", n === v.stage && ph !== "work" && v.gate.pass === false); });
+        all("[data-n]").forEach(function (g) { cls(g, "on", g.dataset.n === (ph === "end" ? "__end__" : ph)); });
+        var key = ph === "work" ? (f.i === 0 ? "__start__~work" : "advance~work") : ph === "gate" ? "work~gate" : ph === "review" ? "gate~review" : ph === "advance" ? "review~advance" : "advance~__end__";
+        all("path.ed[data-e]").forEach(function (p) { cls(p, "on", p.dataset.e === key); });
+        animAll(key, !reduce);
+        var on = {}; v.roles.forEach(function (r) { on[r.role] = 1; });
+        all("[data-r]").forEach(function (g) { cls(g, "on", ph === "work" && !!on[g.dataset.r]); });
+        var called = {}, offered = {};
+        if (ph === "work") v.roles.forEach(function (r) { Object.keys(r.tools || {}).forEach(function (t) { called[t] = (called[t] || 0) + r.tools[t]; }); (r.offered || []).forEach(function (t) { offered[t] = 1; }); });
+        if (ph === "end" && !R2.per_visit_tools) called = R2.tool_totals || {};
+        all("[data-t]").forEach(function (g) { var t = g.dataset.t; cls(g, "called", !!called[t]); cls(g, "offer", !!offered[t]); g.querySelector(".tc").textContent = called[t] ? called[t] : ""; });
+        var gh = ["", "", ""], gcl = "";
+        if (ph === "work") gh = ["Waiting for the gate", "The role agents are working; the gate runs when they finish."];
+        else { gh = [v.gate.pass === true ? "Passed" : v.gate.pass === false ? "Failed" : (v.roles.length ? "Stopped" : "No work"), v.gate.text]; gcl = v.gate.pass === true ? "pass" : v.gate.pass === false ? "fail" : ""; }
+        all("[data-gate]").forEach(function (g) { cls(g, "pass", gcl === "pass"); cls(g, "fail", gcl === "fail"); });
+        setText("[data-gate]", gh);
+        var nh = ["", ""];
+        if (ph === "advance" || ph === "end") {
+          var nx = v.next;
+          nh = nx.kind === "next" ? ["Next stage: " + nx.to + ", " + lab[nx.to], "The gates passed, so the controller moves on."]
+            : nx.kind === "repair" ? ["Repair: back to stage " + nx.to + ", " + lab[nx.to], "The stage that owns the failure gets another visit."]
+            : ["End", nx.text.charAt(0).toUpperCase() + nx.text.slice(1) + "."];
+          arcTo(v.stage, nx.kind === "end" ? null : nx.to);
+        } else arcTo(v.stage, null);
+        all("[data-next]").forEach(function (g) { cls(g, "on", ph === "advance" || ph === "end"); });
+        setText("[data-next]", nh);
+        var head = "Stage " + v.stage + ", " + lab[v.stage] + ", visit " + v.visit + " of " + v.visits + ". ";
+        if (ph === "work") {
+          if (!v.roles.length) return head + "Work: nothing runs; the stage has used its visits.";
+          return head + "Work: " + v.roles.map(function (r) {
+            var t = Object.keys(r.tools || {}).map(function (k) { return k + " " + r.tools[k]; }).join(", ");
+            var rf = Object.keys(r.refused || {}).map(function (k) { return k + " " + r.refused[k]; }).join(", ");
+            return "the " + RL[r.role] + (r.repair ? " repairs its own files" : "") + (r.turns != null ? " (" + r.turns + " of " + r.allowed + " turns" + (r.ended === "stage_budget" ? ", its whole budget" : "") + ")" : "") +
+              (t ? "; tool calls: " + t : "") + (rf ? "; refused by the jail or the schema: " + rf : "");
+          }).join("; ") + (R2.per_visit_tools ? "." : ". This run's record does not keep tool calls per visit; the tools offered are outlined.");
+        }
+        if (ph === "gate") return head + "Gate: " + v.gate.text;
+        if (ph === "review") return head + "Review: " + v.review + ".";
+        if (ph === "advance") return head + "Advance: " + (v.next.kind === "end" ? "end the run (" + v.next.text + ")." : v.next.kind === "repair" ? "go back to stage " + v.next.to + " for a repair." : "move on to stage " + v.next.to + ".");
+        return "End of the run. " + (R2.result ? R2.result : "Hidden tests passed: " + R2.hidden + ".") + (R2.per_visit_tools ? "" : " Tool calls over the whole run are shown on the tool layer.");
+      }
+      Player(host, F.length, frame, { autoplay: true, interval: 1000 });
+    }
+    start();
+  }
+  var agr = document.getElementById("agent-replay"); if (agr) mountAgent(agr);
+  /* pipeline: a focused or clicked stage shows where its failures go back to */
+  document.querySelectorAll("svg.pipe").forEach(function (s) {
+    function show(n) { s.querySelectorAll(".arc").forEach(function (a) { a.classList.toggle("show", n != null && a.dataset.arc.split("~")[0] === String(n)); });
+      s.querySelectorAll(".stg").forEach(function (g) { g.classList.toggle("sel", g.dataset.s === String(n)); }); }
+    s.querySelectorAll(".stg").forEach(function (g) {
+      g.addEventListener("focus", function () { show(g.dataset.s); });
+      g.addEventListener("click", function () { show(g.dataset.s); });
+      g.addEventListener("mouseenter", function () { show(g.dataset.s); });
+    });
+    show(2);
+  });
+  mountDev(); mountEval1();
+})();
+
+/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
+   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
+(function () {
+  var cv = document.getElementById("fabric");
+  if (!cv || !cv.getContext) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
+  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
+  function layout() {
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
+    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
+  }
+  function base() {
+    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
+    var hrow = Math.floor(rows / 2);
+    for (var c = 0; c < cols; c++) {
+      var x = c * T, k = kind[c];
+      for (var r = 0; r < rows; r++) {
+        var y = r * T;
+        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
+        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
+        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
+        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
+          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
+  function net() {
+    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
+    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
+    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
+    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
+    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
+  }
+  function drawNet(n, alpha) {
+    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
+    for (var i = 1; i < n.p.length && left > 0; i++) {
+      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
+      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
+    }
+    ctx.stroke();
+    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
+    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
+    ctx.globalAlpha = 1;
+  }
+  function frame(now) {
+    if (!run) return;
+    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
+    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
+    nets = nets.filter(function (n) {
+      n.t += dt; var done = n.len / n.speed, a = .42;
+      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
+      if (a <= 0) return false; drawNet(n, a); return true;
+    });
+    requestAnimationFrame(frame);
+  }
+  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
+  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
+  start();
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
+  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
+  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
+  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+
+})();
+
+/* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
+(function () {
+  var ctl = document.getElementById("areactl");
+  if (!ctl) return;
+  ctl.hidden = false;
+  var all = function () { return document.querySelectorAll("details.area"); };
+  document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
+  document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  function openHash() {
+    var id = decodeURIComponent((location.hash || "").slice(1)), t = id && document.getElementById(id);
+    if (t && t.tagName === "DETAILS") { t.open = true; t.scrollIntoView(); }
+  }
+  openHash();
+  window.addEventListener("hashchange", openHash);
+})();
+</script>
+</body>
+</html>
