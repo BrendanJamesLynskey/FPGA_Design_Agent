@@ -166,26 +166,49 @@ areas:
     contains: ["== Block Memory Generator", "== FIFO Generator"]
     source: results/project_parity/wizards/wizards.txt
     text: "Batch-mode generation of the Block Memory, FIFO, XADC, Transceiver, PS7, Clocking and other wizards was tried; the probe output is committed."
+  - kind: measured
+    source: results/19_ipgen/bmg_sine/sim.json
+    values: [get:sim.mem.n_words, get:sim.mem.n_mismatch, get:sim.mem.latency_cycles]
+    text: "A generated block-memory sine ROM was read in xsim: {1} mismatches in {0} reads, and its read latency measured {2} cycles."
   cards:
   - {href: "flow-notes.html#xsim", label: "Beyond the flow: IP models need xsim"}
   gaps:
-  - "The encrypted cores run only in xsim; the harness that drives them from files belongs to Brief 19 (PR #92), which is not merged."
+  - "The encrypted cores run only in xsim; the xsim harness (Brief 19) drives four of them, and the others are skills only."
   - "The Transceiver wizard's legal low-rate setting was not measured because of a property-name error."
 - id: dsp
   name: DSP and IP driven from external tools
   summary: Filters, NCOs and mixers; designing the coefficients and word lengths in Python, then building and checking the datapath or the AMD core.
   kb: [functions/dsp, family/artix7/dsp, family/artix7/primitives~dsp, vendor/amd_ip_cores/ip-cores~fir|dds|simulation, functions/crc-and-line-codes]
-  checks: []
+  checks:
+  - {file: flow/ipgen/harness.py, enforced: false, what: "Runs an AMD core in xsim from stimulus files, with a seeded valid and ready schedule, and compares every output word with a Python model. A tool for design work, not a stage gate."}
+  - {file: flow/ipgen/fir_design.py, enforced: false, what: "Designs the FIR coefficients, quantises them, and reports the attenuation lost to the word length before the core is built."}
   evidence:
   - kind: agent
     source: [results/course/c10_*/run_*.json, results/course/c11_*/run_*.json]
     where: split=dev
     values: [n, "count:hidden_pass=true", "count:outcome=escape"]
     text: "Development runs of the DDS and NCO-mixer tasks: {0} runs, hidden tests all passed in {1}; escapes (own checks passed, hidden tests did not): {2}."
+  - kind: measured
+    source: results/19_ipgen/fir/design.json
+    values: [get:design.taps, get:design.attenuation_lost_db]
+    text: "A decimating low-pass FIR designed in Python came to {0} taps; quantising its coefficients to the core's word length cost {1} dB of stop-band attenuation and the specification was still met."
+  - kind: measured
+    source: results/19_ipgen/fir/sim.json
+    values: [get:sim.continuous.n_got, get:sim.continuous.n_mismatch, get:sim.random.n_mismatch]
+    text: "The generated FIR core, run in xsim, matched the integer model on all {0} outputs: {1} mismatches with continuous input and {2} with random gaps."
+  - kind: measured
+    source: results/19_ipgen/fir/ooc.json
+    values: [get:luts, get:dsp, get:wns_ns]
+    text: "Out-of-context synthesis of that core: {0} LUTs, {1} DSP slices, post-synthesis setup slack {2} ns at the target clock (an upper bound; no routing)."
+  - kind: measured
+    source: results/19_ipgen/dds/sim.json
+    values: [get:sim.continuous.sfdr_db, get:sim.continuous.sfdr_spec_db]
+    text: "The generated DDS core measured {0} dB spurious-free dynamic range against a target of {1} dB."
   cards: []
   gaps:
-  - "Driving AMD cores from external design tools (Brief 19, PR #92) is not merged, so no core is exercised here."
-  - "Development results are not the held-out score."
+  - "Only the FIR, CIC, block memory and DDS cores have adapters; CORDIC, FFT and the Clocking Wizard do not, and the CIC and FIR are not simulated as a cascade."
+  - "The cores are exercised by hand-run examples (Brief 19), not by an agent run; no development task uses an AMD core yet."
+  - "One part (the Artix-7 device on the Nexys A7) and single examples only; development results are not the held-out score."
 - id: video
   name: Video
   summary: Display timing, pixel pipelines and line buffers, VGA and HDMI-style output.
