@@ -1,0 +1,94 @@
+{
+ "pass": "requirements",
+ "budget": 12,
+ "drafter_repairs": 0,
+ "requirements": 7,
+ "asked": 6,
+ "answered": 2,
+ "defaulted": 4,
+ "questions": [
+  {
+   "id": "P1-1",
+   "text": "What board clock source and condition should define pixel-clock stability?",
+   "default": "Use the Nexys A7 100 MHz oscillator as the source, generate 74.25 MHz with an MMCM, and treat the MMCM LOCKED indication as pixel-clock stable.",
+   "reason": "The output clock frequency is specified, but its source and the stability criterion used for blanking and LED[0] are not.",
+   "answer": "Use the Nexys A7 100 MHz oscillator as the source, generate 74.25 MHz with an MMCM, and treat its LOCKED indication as pixel-clock stable.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    - 'parameter SIM_DIRECT_CLOCK = 1 makes the clock input the pixel clock (no MMCM, locked = 1); the bench uses it. With 0 an MMCM makes 74.25 MHz from the 100 MHz clock (VCO 742.5 MHz: DIVCLK_DIVIDE 5, CLKFBOUT_MULT_F 37.125, CLKOUT0_DIVIDE_F 10)'",
+   "settles": [
+    "S-1",
+    "S-5",
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "What RGB channel width and numeric levels should the VGA output use?",
+   "default": "Use 4 bits per channel, with each named bar colour using 0 or 15 for each channel.",
+   "reason": "The bar names are specified, but channel width and the exact numeric representation of the colours are not.",
+   "answer": "Use 4 bits per RGB channel. The named bar colours use channel values 0 or 15 (hex 0 or F).",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area",
+   "settles": [
+    "S-2",
+    "S-3",
+    "S-5"
+   ]
+  },
+  {
+   "id": "P1-3",
+   "text": "How should the 3 x 3 filter handle neighbourhoods at the active-picture edges?",
+   "default": "Replicate the nearest active-picture pixel when a neighbourhood extends beyond an edge, including at corners.",
+   "reason": "The 3 x 3 operation is specified, but pixels outside the active picture do not have defined neighbourhood values.",
+   "answer": "Replicate the nearest active-picture pixel when a neighbourhood extends beyond an edge, including at corners.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-3"
+   ]
+  },
+  {
+   "id": "P1-4",
+   "text": "Which patterns should be selectable, and when should a pattern change take effect?",
+   "default": "Expose the specified colour bars as pattern 0; apply selections at the next frame boundary and reject unsupported pattern IDs.",
+   "reason": "A default pattern and the ability to choose a pattern are specified, but the available alternatives and change timing are not.",
+   "answer": "Expose the specified colour bars as pattern 0; apply selections at the next frame boundary and reject unsupported pattern IDs.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-2",
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-5",
+   "text": "What UART framing, command syntax, and response format should the test shell use, including how the host obtains design ID VMED?",
+   "default": "Use 8-N-1 ASCII commands `PATTERN n`, `FRAME?`, and `ID?`, each terminated by a newline; return the requested value as an ASCII line.",
+   "reason": "The baud rate, design ID, and shell functions are specified, but the serial protocol is not.",
+   "answer": "Use 8-N-1 ASCII commands `PATTERN n`, `FRAME?`, and `ID?`, each terminated by a newline; return the requested value as an ASCII line.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-6",
+   "text": "What should the frame counter count, and what are its width, wrap, and reset behavior?",
+   "default": "Use a 32-bit unsigned counter that increments once per completed frame regardless of blanking or BTNC, wraps naturally, and resets to zero on system reset.",
+   "reason": "Reading a frame counter is specified, but its count event, width, wrap behavior, and reset behavior are not.",
+   "answer": "Use a 32-bit unsigned counter that increments once per completed frame regardless of blanking or BTNC, wraps naturally, and resets to zero on system reset.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  }
+ ]
+}

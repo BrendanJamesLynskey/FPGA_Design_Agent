@@ -1,0 +1,29 @@
+schema: fpga-design-agent/contract/v1
+module: led_sink
+summary: holds the last byte received on the LEDs
+clocks:
+  - {name: clk, port: clk, max_mhz: 100}
+resets:
+  - {name: rst, port: rst, clock: clk, polarity: active_high, style: sync}
+ports:
+  - {name: clk, dir: in}
+  - {name: rst, dir: in}
+  - {name: s_axis_tvalid, dir: in, clock: clk}
+  - {name: s_axis_tready, dir: out, clock: clk}
+  - {name: s_axis_tdata, dir: in, width: 8, clock: clk}
+  - {name: s_axis_tlast, dir: in, clock: clk}
+  - {name: leds, dir: out, width: 8, clock: clk, reset_value: 0}
+data_formats:
+  - {name: byte, format: u8, packing: "an unsigned count"}
+interfaces:
+  - name: in
+    protocol: axi4-stream
+    role: slave
+    prefix: s_axis
+    clock: clk
+    reset: rst
+    tdata: {width: 8, fields: [{name: value, bits: [7, 0], format: byte}]}
+    tlast: "every 256th beat"
+    packet_beats: 256
+    backpressure: true
+    source_gaps: true

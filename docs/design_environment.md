@@ -488,7 +488,7 @@ makes the first one.
 | Step | What | Needs |
 |---|---|---|
 | P0 | `design.yaml` and `contract.yaml` schemas and checkers; contract-test generator; `project status` and the dashboard on hand-written evidence (**exists**: [project_layer.md](project_layer.md), `project/`) | code only; CI |
-| P1 | phase 0 passes on top of `interview.py`; assumptions; the question log | model runs (small) |
+| P1 | phase 0 passes on top of `interview.py`; assumptions; the question log (**exists**: `python -m project spec`, [project_layer.md](project_layer.md#phase-0-the-spec-session-stage-p1), [results/27b_p1](../results/27b_p1/results.md)) | model runs (small) |
 | P2 | module mode (`mode: ooc` in `build.tcl`, pin checks skipped), project cache keyed by input hash, scheduler with the slot rules | Vivado; heavy slots |
 | P3 | top generator (instances, clock plan, resets, XPM CDC, point-to-point AXIS, AXI-Lite decoder), system model and boundary monitors | simulation |
 | P4 | phase 3: proposal, computed impact, re-entry, regression, review page; ownership marks and patch proposals | model runs |

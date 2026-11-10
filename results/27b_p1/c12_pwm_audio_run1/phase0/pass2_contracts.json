@@ -1,0 +1,356 @@
+{
+ "pass": "contracts",
+ "budget": 40,
+ "drafter_repairs": {
+  "draft": 2,
+  "apply": 0
+ },
+ "modules": [
+  "audio_state",
+  "c12_nexys_pwm_audio_top",
+  "pwm_stage"
+ ],
+ "connections": [],
+ "fields": 34,
+ "stated_in_spec": 22,
+ "asked": 12,
+ "answered": 4,
+ "defaulted": 8,
+ "stated": [
+  {
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "The block must close timing at 100 MHz."
+  },
+  {
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.resets.rst"
+   ],
+   "quote": "CPU_RESETN resets the gain to its default and clears the sample."
+  },
+  {
+   "fields": [
+    "audio_state.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "The block must close timing at 100 MHz."
+  },
+  {
+   "fields": [
+    "audio_state.contract.resets.rst"
+   ],
+   "quote": "CPU_RESETN resets the gain to its default and clears the sample."
+  },
+  {
+   "fields": [
+    "audio_state.contract.ports.sample"
+   ],
+   "quote": "The audio sample is a signed 16-bit number that may be changed at any time and is held between samples."
+  },
+  {
+   "fields": [
+    "audio_state.contract.ports.sample_out"
+   ],
+   "quote": "The sample after the volume, `sample_out` (signed 16 bits), is available combinationally from the sample and the gain register."
+  },
+  {
+   "fields": [
+    "audio_state.contract.data_formats.sample_s16"
+   ],
+   "quote": "The audio sample is a signed 16-bit number"
+  },
+  {
+   "fields": [
+    "audio_state.contract.data_formats.sample_out_s16"
+   ],
+   "quote": "`sample_out` (signed 16 bits)"
+  },
+  {
+   "fields": [
+    "audio_state.contract.registers"
+   ],
+   "quote": "Over the shell I write the sample, write the gain, and read `sample_out` back."
+  },
+  {
+   "fields": [
+    "pwm_stage.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "The block must close timing at 100 MHz."
+  },
+  {
+   "fields": [
+    "pwm_stage.contract.resets.rst"
+   ],
+   "quote": "CPU_RESETN resets the gain to its default and clears the sample."
+  },
+  {
+   "fields": [
+    "pwm_stage.contract.data_formats.sample_s16"
+   ],
+   "quote": "`sample_out` (signed 16 bits)"
+  },
+  {
+   "fields": [
+    "pwm_stage.contract.data_formats.duty_u10"
+   ],
+   "quote": "The duty value is `512 + floor(sample_out / 128)`"
+  },
+  {
+   "fields": [
+    "design.clocks.clk_sys"
+   ],
+   "quote": "The block must close timing at 100 MHz."
+  },
+  {
+   "fields": [
+    "design.resets.rst_sys"
+   ],
+   "quote": "CPU_RESETN resets the gain to its default and clears the sample."
+  },
+  {
+   "fields": [
+    "design.shell.design_id"
+   ],
+   "quote": "The design ID is \"PWMA\"."
+  },
+  {
+   "fields": [
+    "design.board_ports.CLK100MHZ"
+   ],
+   "quote": "CLK100MHZ"
+  },
+  {
+   "fields": [
+    "design.board_ports.CPU_RESETN"
+   ],
+   "quote": "CPU_RESETN"
+  },
+  {
+   "fields": [
+    "design.board_ports.UART_TXD_IN"
+   ],
+   "quote": "USB-UART pins"
+  },
+  {
+   "fields": [
+    "design.board_ports.UART_RXD_OUT"
+   ],
+   "quote": "USB-UART pins"
+  },
+  {
+   "fields": [
+    "design.board_ports.AUD_PWM"
+   ],
+   "quote": "AUD_PWM"
+  },
+  {
+   "fields": [
+    "design.board_ports.AUD_SD"
+   ],
+   "quote": "AUD_SD"
+  }
+ ],
+ "bad_quotes": [
+  "audio_state.contract.data_formats.gain_u16",
+  "audio_state.contract.ports.gain",
+  "c12_nexys_pwm_audio_top.contract.parameters.BUILD_STAMP",
+  "c12_nexys_pwm_audio_top.contract.parameters.CLKS_PER_BIT",
+  "c12_nexys_pwm_audio_top.contract.parameters.TIMEOUT_CYCLES",
+  "c12_nexys_pwm_audio_top.contract.ports.aud_pwm",
+  "c12_nexys_pwm_audio_top.contract.ports.aud_sd",
+  "c12_nexys_pwm_audio_top.contract.ports.led",
+  "design.board_ports.LED[15:0]",
+  "design.modules.audio_state.window_base",
+  "pwm_stage.contract.ports.aud_pwm",
+  "pwm_stage.contract.ports.sample_in"
+ ],
+ "questions": [
+  {
+   "id": "P2-1",
+   "text": "What value, and what allowed range, should parameter CLKS_PER_BIT of c12_nexys_pwm_audio_top have?",
+   "default": "{default: 868, values: [868]}",
+   "reason": "The specification provides the parameter name and baud rate but not its default; 868 is the nearest integer number of 100 MHz clocks per 115200-baud bit.",
+   "answer": "Default: 868. Allowed range: not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "CLKS_PER_BIT: 868",
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.parameters.CLKS_PER_BIT"
+   ],
+   "draft_value": "{default: 868, values: [868]}",
+   "final_value": "{default: 868}"
+  },
+  {
+   "id": "P2-2",
+   "text": "What value, and what allowed range, should parameter TIMEOUT_CYCLES of c12_nexys_pwm_audio_top have?",
+   "default": "{default: 100000000, values: [100000000]}",
+   "reason": "The specification provides the parameter name but not a default; 100000000 cycles is a proposed one-second timeout at 100 MHz.",
+   "answer": "TIMEOUT_CYCLES is 100000; its allowed range is not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  TIMEOUT_CYCLES: 100000",
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.parameters.TIMEOUT_CYCLES"
+   ],
+   "draft_value": "{default: 100000000, values: [100000000]}",
+   "final_value": "{default: 100000}"
+  },
+  {
+   "id": "P2-3",
+   "text": "What value, and what allowed range, should parameter BUILD_STAMP of c12_nexys_pwm_audio_top have?",
+   "default": "{default: 0, values: [0]}",
+   "reason": "The specification provides the parameter name but not a default; zero is a neutral placeholder.",
+   "answer": "{default: 0, values: [0]}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.parameters.BUILD_STAMP"
+   ],
+   "draft_value": "{default: 0, values: [0]}",
+   "final_value": "{default: 0, values: [0]}"
+  },
+  {
+   "id": "P2-4",
+   "text": "What is c12_nexys_pwm_audio_top's port aud_pwm: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.aud_pwm"
+   ],
+   "draft_value": "{dir: out, width: 1}",
+   "final_value": "{dir: out, width: 1}"
+  },
+  {
+   "id": "P2-5",
+   "text": "What is c12_nexys_pwm_audio_top's port aud_sd: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 1}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 1, reset_value: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.aud_sd"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 1}",
+   "final_value": "{dir: out, width: 1, reset_value: 1}"
+  },
+  {
+   "id": "P2-6",
+   "text": "What is c12_nexys_pwm_audio_top's port led: its direction, width and value in reset?",
+   "default": "{dir: out, width: 16, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 16, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "c12_nexys_pwm_audio_top.contract.ports.led"
+   ],
+   "draft_value": "{dir: out, width: 16, reset_value: 0}",
+   "final_value": "{dir: out, width: 16, reset_value: 0}"
+  },
+  {
+   "id": "P2-7",
+   "text": "What is audio_state's port gain: its direction, width and value in reset?",
+   "default": "{dir: in, width: 16}",
+   "reason": "The gain is represented as a 16-bit input driven by its shell register; reset is specified for the stored register value, not as a port reset_value.",
+   "answer": "{dir: in, width: 16}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "audio_state.contract.ports.gain"
+   ],
+   "draft_value": "{dir: in, width: 16}",
+   "final_value": "{dir: in, width: 16}"
+  },
+  {
+   "id": "P2-8",
+   "text": "What number format is gain_u16 in audio_state (signed or unsigned, total and fraction bits), and how is it packed?",
+   "default": "{format: u16, packing: unsigned Q15 gain register}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{format: u16, packing: unsigned Q15 gain register}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "audio_state.contract.data_formats.gain_u16"
+   ],
+   "draft_value": "{format: u16, packing: unsigned Q15 gain register}",
+   "final_value": "{format: u16, packing: unsigned Q15 gain register}"
+  },
+  {
+   "id": "P2-9",
+   "text": "What is pwm_stage's port sample_in: its direction, width and value in reset?",
+   "default": "{dir: in, width: 16}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: in, width: 16}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "pwm_stage.contract.ports.sample_in"
+   ],
+   "draft_value": "{dir: in, width: 16}",
+   "final_value": "{dir: in, width: 16}"
+  },
+  {
+   "id": "P2-10",
+   "text": "What is pwm_stage's port aud_pwm: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "pwm_stage.contract.ports.aud_pwm"
+   ],
+   "draft_value": "{dir: out, width: 1}",
+   "final_value": "{dir: out, width: 1}"
+  },
+  {
+   "id": "P2-11",
+   "text": "At which offset of the shell's register window do audio_state's registers start?",
+   "default": "0",
+   "reason": "The shell window occupies 0x80-0xFF; window_base 0x00 places the aligned offsets 0x00, 0x04, and 0x08 at physical addresses 0x80, 0x84, and 0x88.",
+   "answer": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0\nGAIN: offset 0x01, WO, reset 0: [15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0\nSOUT: offset 0x02, RO, reset 0: [15:0] sample_out = sample after the gain, two's complement; [31:16] read 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets not listed read 0; writes to them and to RO registers are ignored",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "SAMPLE: offset 0x00, RW, reset 0: [15:0] audio sample, two's complement; [31:16] read 0",
+   "fields": [
+    "design.modules.audio_state.window_base"
+   ],
+   "draft_value": "0",
+   "final_value": "0"
+  },
+  {
+   "id": "P2-12",
+   "text": "What does the board pin LED[15:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: c12_nexys_pwm_audio_top.led}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "LED[15:0] is a 16-bit output on pins H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, and V11. Its drive style and pull configuration are not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}",
+   "fields": [
+    "design.board_ports.LED[15:0]"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: c12_nexys_pwm_audio_top.led}",
+   "final_value": "{dir: out, drive: push-pull, from: c12_nexys_pwm_audio_top.led}"
+  }
+ ],
+ "unasked_changes": [
+  {
+   "field": "audio_state.contract.registers",
+   "draft": "[{name: SAMPLE, offset: 0, access: RW, reset: 0}, {name: GAIN, offset: 4, access: RW, reset: 2068}, {name: SAMPLE_OUT, offset: 8, access: RO, reset: 0}]",
+   "final": "[{name: SAMPLE, offset: 0, access: RW, reset: 0}, {name: GAIN, offset: 1, access: WO, reset: 0}, {name: SOUT, offset: 2, access: RO, reset: 0}]"
+  }
+ ]
+}

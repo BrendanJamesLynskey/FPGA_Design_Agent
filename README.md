@@ -192,6 +192,11 @@ that turns a contract into a cocotb contract test (proved on fixture RTL with te
 example is pilot 1, a 720p test pattern through a 3x3 median filter ([project/examples/video_median](project/examples/video_median)),
 described with hand-written evidence; nothing in it is measured yet.
 
+Stage P1 adds phase 0, the spec session (`python -m project spec`, [docs/project_layer.md](docs/project_layer.md#phase-0-the-spec-session-stage-p1)):
+from the user's `system/spec.md` it writes the requirements, `design.yaml` and the contracts, all checked; the harness
+asks one question per contract field the spec does not state, and every unanswered question is written down as an
+assumption. Measured on two development-split specs with the spec oracle: [results/27b_p1](results/27b_p1/results.md).
+
 ## Reproduce
 
 Simulation, lint and the Python tests (what CI runs):
@@ -226,7 +231,8 @@ boards/      board files (Nexys A7-100T): board.yaml, master XDC, inventory.yaml
 tools/       inventory_check.py (board inventory against the master XDC)
 agent/       core/ (tools, security, trace, replay, smoke) and mcp_server/ (05a); tests/ with the replay fixture
 project/     the project layer (brief 27 P0): design.yaml and contract.yaml checkers, stage keys, status and dashboard,
-             the contract-test generator; examples/video_median (pilot 1, described); tests/ with fixture RTL
+             the contract-test generator; examples/video_median (pilot 1, described); tests/ with fixture RTL;
+             phase0.py (brief 27 P1: the spec session) and phase0_format/ (the drafter's format example)
 designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, design.xdc, probes.yaml,
              build.yaml, tests/, BRINGUP.md
 benchmark/   benchmark v1: tasks (development split), training pool, bench library and tools, manifest, owner review;
@@ -245,7 +251,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              project_mode_parity.md (what project mode and the wizards give that non-project mode does not, measured; cross-probing);
              ipgen.md (the ipgen pipeline, the adapter interface, candidate IPs); ipgen_tradeoffs.md (design only: the drop-down trade-off view);
              design_environment.md (design only, brief 27: projects of many modules, contracts, re-entry by input hash, the engineer's own edits);
-             project_layer.md (brief 27 P0: the design.yaml and contract.yaml formats, status, the contract test);
+             project_layer.md (brief 27 P0 and P1: the design.yaml and contract.yaml formats, status, the contract test, phase 0);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped);
              eval/eval1_preregistration.md (the eval-1 held-out evaluation, fixed before any scored run)
 ```
@@ -268,7 +274,8 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 08f | `eval-2` build: independent spec-only test role and gate after V2/V3 (`--spec-tests`, off by default), golden request test against `eval-1`, offline replay on saved designs ([docs/verification.md](docs/verification.md), [results/08f](results/08f/), [agent/graph/spectest.py](agent/graph/spectest.py), [tools/spectest_replay.py](tools/spectest_replay.py)) | merged |
 | 11b | CDC soak rig, phase 2a: the 13 correct variants and 11 mutant types (28 codes) on three clock domains, checkers, UART readout, Tj stop; simulated with metastability injection and reset storms, built in Vivado; no board run yet ([hil/cdc_soak](hil/cdc_soak/README.md)) | merged |
 | 16 | Stronger CDC gate: structural check of every asynchronous path in the netlist ([flow/cdc_structure.py](flow/cdc_structure.py), [flow/cdc_paths.tcl](flow/cdc_paths.tcl)) and the design's own tests with synchroniser-delay injection ([flow/cdc_inject.py](flow/cdc_inject.py), [flow/cdc_inject_run.py](flow/cdc_inject_run.py)), proved against the rig's mutants ([flow/tests/fixtures/cdc_mutants](flow/tests/fixtures/cdc_mutants), [results/16_cdc_gate](results/16_cdc_gate/mutant_table.md)) | merged |
-| 27 P0 | Project layer: `design.yaml` and `contract.yaml` checkers, stage keys from input hashes, `project status` and a static dashboard, a contract-test generator proved on fixture RTL; pilot 1 described with hand-written evidence ([docs/project_layer.md](docs/project_layer.md), [project/](project/)) | PR open |
+| 27 P0 | Project layer: `design.yaml` and `contract.yaml` checkers, stage keys from input hashes, `project status` and a static dashboard, a contract-test generator proved on fixture RTL; pilot 1 described with hand-written evidence ([docs/project_layer.md](docs/project_layer.md), [project/](project/)) | merged (#98) |
+| 27 P1 | Phase 0, the spec session: requirements, `design.yaml` and contracts written and checked, one harness-made question per unstated contract field, unanswered questions kept as assumptions, a question log per pass; measured on pilot 1 and `c12_nexys_pwm_audio` ([project/phase0.py](project/phase0.py), [results/27b_p1](results/27b_p1/results.md)) | PR open |
 | 18 | Project-mode parity: inventory of what project mode and each wizard give, measured in batch (Clocking Wizard against the hand M/D/O search, MIG through implementation, FIFO/XADC/GT/PS7/block automation); machine-readable cross-probing (`xprobe.json`, SVG device map, evidence for the repair visit) ([docs/project_mode_parity.md](docs/project_mode_parity.md), [flow/xprobe.py](flow/xprobe.py), [results/project_parity](results/project_parity)) | merged (#89) |
 | 19 | External design tools driving AMD IP: xsim file-I/O harness, FIR and CIC adapters (spec to .coe to IP to bit-exact check), PDM-microphone signal chain with SINAD/ENOB per node ([docs/ipgen.md](docs/ipgen.md), [results/19_ipgen](results/19_ipgen)) | merged (#92) |
 | F2 | Agent v1 (T1-T2 designs) | coming |

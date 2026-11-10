@@ -1,0 +1,17 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: video_timing
+summary: Generate 720p60 raster coordinates, active-picture qualification, positive syncs, and a frame-end pulse.
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: x, dir: out, width: 11, clock: clk, reset_value: 0}
+- {name: y, dir: out, width: 10, clock: clk, reset_value: 0}
+- {name: active, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: hsync, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: vsync, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: frame_end, dir: out, width: 1, clock: clk, reset_value: 0}

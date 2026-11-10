@@ -1,0 +1,16 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: pwm_stage
+summary: Generates the 10-bit-counter PWM waveform and open-drain audio pin from sample_out.
+clocks:
+- {name: clk, port: clk, max_mhz: 100}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: sample_in, dir: in, width: 16, clock: clk}
+- {name: aud_pwm, dir: out, width: 1, clock: clk}
+data_formats:
+- {name: sample_s16, format: s16, packing: signed 16-bit sample_out}
+- {name: duty_u10, format: u10, packing: PWM duty comparison value}

@@ -1,0 +1,81 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/project/v1
+name: safe_pwm_audio
+board: nexys_a7_100t
+clocks:
+- {name: clk_sys, source: board, port: CLK100MHZ, mhz: 100}
+resets:
+- {name: rst_sys, domain: clk_sys, polarity: active_low, style: async, from: CPU_RESETN, via: reset_sync}
+shell: {design_id: PWMA, clock: clk_sys, reset: rst_sys}
+modules:
+- name: audio_gain
+  kind: rtl
+  clocks: {clk: clk_sys}
+  resets: {rst_n: rst_sys}
+  window_base: 0
+- name: pwm_audio
+  kind: rtl
+  clocks: {clk: clk_sys}
+  resets: {rst_n: rst_sys}
+connections: []
+board_ports:
+- {name: CLK100MHZ, dir: in, drive: input, to: clk_sys}
+- {name: CPU_RESETN, dir: in, drive: input, to: rst_sys}
+- {name: UART_TXD_IN, dir: in, drive: input, to: shell.uart_rx}
+- {name: UART_RXD_OUT, dir: out, drive: push-pull, from: shell.uart_tx}
+- {name: AUD_PWM, dir: out, drive: open-drain, from: pwm_audio.AUD_PWM}
+- {name: AUD_SD, dir: out, drive: push-pull, from: pwm_audio.AUD_SD}
+- {name: 'LED[15:0]', dir: out, drive: push-pull, from: pwm_audio.LED}
+owned: []
+assumptions:
+- id: A-1
+  text: When during a PWM period should the duty be captured, and what should the PWM counter and duty be initialized
+    to on reset?
+  default: Capture the duty at counter rollover for the upcoming period; reset the counter to 0 and the duty to
+    512.
+  reason: The specification gives the update rate and comparison rule but not the capture edge or PWM reset phase.
+  affects: [S-4]
+  status: open
+  by: oracle
+- id: A-2
+  text: 'What is pwm_audio''s port AUD_PWM: its direction, width and value in reset?'
+  default: '{dir: out}'
+  reason: The pin is implemented as a low-or-high-impedance output and is never driven high.
+  affects: [pwm_audio.contract.ports.AUD_PWM]
+  status: open
+  by: oracle
+- id: A-3
+  text: 'What is pwm_audio''s port AUD_SD: its direction, width and value in reset?'
+  default: '{dir: out, reset_value: 1}'
+  reason: A constant-high output implements the specified always-enabled amplifier behavior.
+  affects: [pwm_audio.contract.ports.AUD_SD]
+  status: open
+  by: oracle
+- id: A-4
+  text: 'What is pwm_audio''s port LED: its direction, width and value in reset?'
+  default: '{dir: out, width: 16, reset_value: 0}'
+  reason: A constant-zero output implements the specified leave-LED-off requirement.
+  affects: [pwm_audio.contract.ports.LED]
+  status: open
+  by: oracle
+- id: A-5
+  text: What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: in, drive: input, to: clk_sys}'
+  reason: The board clock is an input and directly drives clk_sys.
+  affects: [design.board_ports.CLK100MHZ]
+  status: open
+  by: oracle
+- id: A-6
+  text: What does the board pin AUD_PWM connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: open-drain, from: pwm_audio.AUD_PWM}'
+  reason: The pin must only be pulled low or released, so it is represented as an open-drain board output.
+  affects: [design.board_ports.AUD_PWM]
+  status: open
+  by: oracle
+- id: A-7
+  text: What does the board pin AUD_SD connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: push-pull, from: pwm_audio.AUD_SD}'
+  reason: The amplifier enable is specified to remain high, so it is a push-pull output.
+  affects: [design.board_ports.AUD_SD]
+  status: open
+  by: oracle

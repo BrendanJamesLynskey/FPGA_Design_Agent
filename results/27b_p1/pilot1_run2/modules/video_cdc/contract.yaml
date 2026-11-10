@@ -1,0 +1,19 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: video_cdc
+summary: Transfer pattern selection to the pixel domain and frame count to the system domain.
+clocks:
+- {name: clk_sys, port: clk_sys, max_mhz: 100}
+- {name: clk_pix, port: clk_pix, max_mhz: 74.25}
+resets:
+- {name: rst_sys, port: rst_sys, clock: clk_sys, polarity: active_low, style: async}
+- {name: rst_pix, port: rst_pix, clock: clk_pix, polarity: active_low, style: async}
+ports:
+- {name: clk_sys, dir: in}
+- {name: clk_pix, dir: in}
+- {name: rst_sys, dir: in}
+- {name: rst_pix, dir: in}
+- {name: pattern_sys, dir: in, width: 2, clock: clk_sys}
+- {name: frame_count_pix, dir: in, width: 32, clock: clk_pix}
+- {name: pattern_pix, dir: out, width: 2, clock: clk_pix, reset_value: 0}
+- {name: frame_count_sys, dir: out, width: 32, clock: clk_sys, reset_value: 0}

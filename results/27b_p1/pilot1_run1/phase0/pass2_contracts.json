@@ -1,0 +1,812 @@
+{
+ "pass": "contracts",
+ "budget": 40,
+ "drafter_repairs": {
+  "draft": 1,
+  "apply": 1
+ },
+ "modules": [
+  "fpga_shell",
+  "median_filter",
+  "vga_output",
+  "video_timing"
+ ],
+ "connections": [
+  {
+   "from": "video_timing.out",
+   "to": "median_filter.in"
+  },
+  {
+   "from": "median_filter.out",
+   "to": "vga_output.in"
+  }
+ ],
+ "fields": 60,
+ "stated_in_spec": 16,
+ "asked": 44,
+ "answered": 15,
+ "defaulted": 29,
+ "stated": [
+  {
+   "fields": [
+    "video_timing.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "video_timing.contract.ports.pattern_id"
+   ],
+   "quote": "Through it I choose the pattern"
+  },
+  {
+   "fields": [
+    "video_timing.contract.ports.frame_count"
+   ],
+   "quote": "Through it I choose the pattern and read a frame counter."
+  },
+  {
+   "fields": [
+    "video_timing.contract.interfaces.out.protocol"
+   ],
+   "quote": "The picture comes from a 720p timing generator with a test pattern"
+  },
+  {
+   "fields": [
+    "video_timing.contract.interfaces.out.tdata",
+    "median_filter.contract.interfaces.in.tdata"
+   ],
+   "quote": "The picture comes from a 720p timing generator with a test pattern"
+  },
+  {
+   "fields": [
+    "video_timing.contract.interfaces.out.tuser",
+    "median_filter.contract.interfaces.in.tuser"
+   ],
+   "quote": "The syncs and the picture leave the chip aligned with each other, as they would without the filter."
+  },
+  {
+   "fields": [
+    "median_filter.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "median_filter.contract.interfaces.in.protocol"
+   ],
+   "quote": "The median filter takes each pixel's 3 x 3 neighbourhood and outputs the median of each colour channel."
+  },
+  {
+   "fields": [
+    "median_filter.contract.interfaces.out.protocol"
+   ],
+   "quote": "The median filter takes each pixel's 3 x 3 neighbourhood and outputs the median of each colour channel."
+  },
+  {
+   "fields": [
+    "median_filter.contract.interfaces.out.tdata",
+    "vga_output.contract.interfaces.in.tdata"
+   ],
+   "quote": "The median filter takes each pixel's 3 x 3 neighbourhood and outputs the median of each colour channel."
+  },
+  {
+   "fields": [
+    "median_filter.contract.interfaces.out.tuser",
+    "vga_output.contract.interfaces.in.tuser"
+   ],
+   "quote": "The syncs and the picture leave the chip aligned with each other, as they would without the filter."
+  },
+  {
+   "fields": [
+    "vga_output.contract.clocks.clk.max_mhz"
+   ],
+   "quote": "74.25 MHz pixel clock"
+  },
+  {
+   "fields": [
+    "vga_output.contract.ports.btnc"
+   ],
+   "quote": "while the centre button `BTNC` is pressed"
+  },
+  {
+   "fields": [
+    "fpga_shell.contract.ports.uart_rx"
+   ],
+   "quote": "The test shell is on the USB-UART at 115200 baud"
+  },
+  {
+   "fields": [
+    "fpga_shell.contract.ports.uart_tx"
+   ],
+   "quote": "The test shell is on the USB-UART at 115200 baud"
+  },
+  {
+   "fields": [
+    "design.shell.design_id"
+   ],
+   "quote": "design ID \"VMED\""
+  }
+ ],
+ "bad_quotes": [
+  "design.clocks.clk_pix",
+  "design.clocks.clk_sys",
+  "design.modules.video_timing.window_base",
+  "design.resets.rst_pix",
+  "vga_output.contract.ports.pixel_clock_stable",
+  "vga_output.contract.ports.vga_b",
+  "vga_output.contract.ports.vga_g",
+  "vga_output.contract.ports.vga_r"
+ ],
+ "questions": [
+  {
+   "id": "P2-1",
+   "text": "Is video_timing's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_low, style: async}",
+   "reason": "Use the selected active-low asynchronous reset in the pixel-clock domain.",
+   "answer": "{polarity: active_low, style: async}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_low, style: async}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-2",
+   "text": "What number format is channel in video_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+   "default": "{format: u4, packing: One unsigned 4-bit RGB channel}",
+   "reason": "The oracle specifies 4 bits per RGB channel; the format is an unsigned channel value.",
+   "answer": "{format: u4, packing: One unsigned 4-bit RGB channel}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.data_formats.channel"
+   ],
+   "draft_value": "{format: u4, packing: One unsigned 4-bit RGB channel}",
+   "final_value": "{format: u4, packing: One unsigned 4-bit RGB channel}"
+  },
+  {
+   "id": "P2-3",
+   "text": "What number format is frame_counter in video_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+   "default": "{format: u32, packing: Unsigned completed-frame count}",
+   "reason": "The defaulted answer specifies a 32-bit unsigned counter.",
+   "answer": "{format: u32, packing: Unsigned completed-frame count}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.data_formats.frame_counter"
+   ],
+   "draft_value": "{format: u32, packing: Unsigned completed-frame count}",
+   "final_value": "{format: u32, packing: Unsigned completed-frame count}"
+  },
+  {
+   "id": "P2-4",
+   "text": "What does tlast mark on video_timing.out, if anything?",
+   "default": "Assert on the final pixel clock of each 1650-clock line.",
+   "reason": "Use one stream packet per raster line, ending after the specified 1650 pixel clocks.",
+   "answer": "Assert on the final pixel clock of each 1650-clock line.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.interfaces.out.tlast",
+    "median_filter.contract.interfaces.in.tlast"
+   ],
+   "draft_value": "Assert on the final pixel clock of each 1650-clock line.",
+   "final_value": "Assert on the final pixel clock of each 1650-clock line."
+  },
+  {
+   "id": "P2-5",
+   "text": "How many beats does a packet on video_timing.out have?",
+   "default": "1650",
+   "reason": "One line contains 1650 pixel clocks.",
+   "answer": "1650",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.interfaces.out.packet_beats",
+    "median_filter.contract.interfaces.in.packet_beats"
+   ],
+   "draft_value": "1650",
+   "final_value": "1650"
+  },
+  {
+   "id": "P2-6",
+   "text": "May the sink of video_timing.out stall the stream (drive tready low)?",
+   "default": "true",
+   "reason": "The stream uses ready/valid flow control so downstream blocks can apply backpressure.",
+   "answer": "No. The video stream has no back-pressure, so the sink may not stall it by driving tready low.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- A full-raster video stream with no back-pressure.",
+   "fields": [
+    "video_timing.contract.interfaces.out.backpressure",
+    "median_filter.contract.interfaces.in.backpressure"
+   ],
+   "draft_value": "true",
+   "final_value": "false"
+  },
+  {
+   "id": "P2-7",
+   "text": "May the source of video_timing.out leave gaps (tvalid low) once the stream has started?",
+   "default": "false",
+   "reason": "The raster generator is specified to emit every pixel clock, so it does not intentionally insert source gaps.",
+   "answer": "false",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.interfaces.out.source_gaps",
+    "median_filter.contract.interfaces.in.source_gaps"
+   ],
+   "draft_value": "false",
+   "final_value": "false"
+  },
+  {
+   "id": "P2-8",
+   "text": "What is the register map of video_timing: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
+   "default": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME, offset: 4, access: RO, reset: 0}]",
+   "reason": "PATTERN is RW and FRAME is RO to provide the requested pattern selection and frame-counter read through the shell window.",
+   "answer": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME, offset: 4, access: RO, reset: 0}]",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.registers"
+   ],
+   "draft_value": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME, offset: 4, access: RO, reset: 0}]",
+   "final_value": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME, offset: 4, access: RO, reset: 0}]"
+  },
+  {
+   "id": "P2-9",
+   "text": "What throughput must video_timing.out sustain (beats per clock, and output beats per input beat)?",
+   "default": "{beats_per_cycle: 1}",
+   "reason": "The raster emits one pixel for each pixel clock.",
+   "answer": "{beats_per_cycle: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "video_timing.contract.throughput.out"
+   ],
+   "draft_value": "{beats_per_cycle: 1}",
+   "final_value": "{beats_per_cycle: 1}"
+  },
+  {
+   "id": "P2-10",
+   "text": "Is median_filter's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_low, style: async}",
+   "reason": "Use the selected active-low asynchronous reset in the pixel-clock domain.",
+   "answer": "active low and asynchronous (asserts immediately; release is synchronized to the clock)",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    polarity: active_low\n    kind: asynchronous button, synchronised (asserts at once, releases on the clock)",
+   "fields": [
+    "median_filter.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_low, style: async}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-11",
+   "text": "What number format is channel in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+   "default": "{format: u4, packing: One unsigned 4-bit RGB channel}",
+   "reason": "The oracle specifies 4 bits per RGB channel; the format is an unsigned channel value.",
+   "answer": "{format: u4, packing: One unsigned 4-bit RGB channel}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.data_formats.channel"
+   ],
+   "draft_value": "{format: u4, packing: One unsigned 4-bit RGB channel}",
+   "final_value": "{format: u4, packing: One unsigned 4-bit RGB channel}"
+  },
+  {
+   "id": "P2-12",
+   "text": "What does tlast mark on median_filter.out, if anything?",
+   "default": "Assert on the final pixel clock of each 1650-clock line.",
+   "reason": "Preserve the per-line end marker through the filter.",
+   "answer": "Assert on the final pixel clock of each 1650-clock line.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.interfaces.out.tlast",
+    "vga_output.contract.interfaces.in.tlast"
+   ],
+   "draft_value": "Assert on the final pixel clock of each 1650-clock line.",
+   "final_value": "Assert on the final pixel clock of each 1650-clock line."
+  },
+  {
+   "id": "P2-13",
+   "text": "How many beats does a packet on median_filter.out have?",
+   "default": "1650",
+   "reason": "The raster has 1650 pixel clocks per line.",
+   "answer": "1650",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.interfaces.out.packet_beats",
+    "vga_output.contract.interfaces.in.packet_beats"
+   ],
+   "draft_value": "1650",
+   "final_value": "1650"
+  },
+  {
+   "id": "P2-14",
+   "text": "May the sink of median_filter.out stall the stream (drive tready low)?",
+   "default": "true",
+   "reason": "The selected AXI4-Stream interface uses ready/valid flow control.",
+   "answer": "true",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "median_filter.contract.interfaces.out.backpressure",
+    "vga_output.contract.interfaces.in.backpressure"
+   ],
+   "draft_value": "true",
+   "final_value": "true"
+  },
+  {
+   "id": "P2-15",
+   "text": "May the source of median_filter.out leave gaps (tvalid low) once the stream has started?",
+   "default": "true",
+   "reason": "Filter pipeline startup or line-boundary processing may produce valid gaps.",
+   "answer": "True",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "In clock n < 32 of the burst the block is presented with a window when MASK bit n is 1; the windows are taken from WIN0, WIN1, ... in order (at most 8 bits of MASK may be 1).",
+   "fields": [
+    "median_filter.contract.interfaces.out.source_gaps",
+    "vga_output.contract.interfaces.in.source_gaps"
+   ],
+   "draft_value": "true",
+   "final_value": "true"
+  },
+  {
+   "id": "P2-16",
+   "text": "What throughput must median_filter.out sustain (beats per clock, and output beats per input beat)?",
+   "default": "{beats_per_cycle: 1}",
+   "reason": "A pixel-rate output is needed to drive the specified raster timing.",
+   "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- 'exactly 1 clock: the result of a window presented in clock n is seen in clock n + 1 (VMASK records it)'",
+   "fields": [
+    "median_filter.contract.throughput.out"
+   ],
+   "draft_value": "{beats_per_cycle: 1}",
+   "final_value": "{beats_per_cycle: 1, from: in, out_per_in: 1}"
+  },
+  {
+   "id": "P2-17",
+   "text": "Is vga_output's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_low, style: async}",
+   "reason": "Use the selected active-low asynchronous reset in the pixel-clock domain.",
+   "answer": "{polarity: active_low, style: async}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "vga_output.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_low, style: async}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-18",
+   "text": "What is vga_output's port pixel_clock_stable: its direction, width and value in reset?",
+   "default": "{dir: in, width: 1}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: in, width: 1}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "vga_output.contract.ports.pixel_clock_stable"
+   ],
+   "draft_value": "{dir: in, width: 1}",
+   "final_value": "{dir: in, width: 1}"
+  },
+  {
+   "id": "P2-19",
+   "text": "What is vga_output's port hsync: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 1, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "vga_output.contract.ports.hsync"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1, reset_value: 0}"
+  },
+  {
+   "id": "P2-20",
+   "text": "What is vga_output's port vsync: its direction, width and value in reset?",
+   "default": "{dir: out, width: 1, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "direction: out; width: 1; reset value: not specified",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - name: VGA_VS\n    dir: out\n    width: 1",
+   "fields": [
+    "vga_output.contract.ports.vsync"
+   ],
+   "draft_value": "{dir: out, width: 1, reset_value: 0}",
+   "final_value": "{dir: out, width: 1}"
+  },
+  {
+   "id": "P2-21",
+   "text": "What is vga_output's port vga_r: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "vga_output.contract.ports.vga_r"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-22",
+   "text": "What is vga_output's port vga_g: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "vga_output.contract.ports.vga_g"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-23",
+   "text": "What is vga_output's port vga_b: its direction, width and value in reset?",
+   "default": "{dir: out, width: 4, reset_value: 0}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: out, width: 4, reset_value: 0}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "vga_output.contract.ports.vga_b"
+   ],
+   "draft_value": "{dir: out, width: 4, reset_value: 0}",
+   "final_value": "{dir: out, width: 4, reset_value: 0}"
+  },
+  {
+   "id": "P2-24",
+   "text": "What number format is channel in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+   "default": "{format: u4, packing: One unsigned 4-bit RGB channel}",
+   "reason": "The oracle specifies 4 bits per RGB channel; the format is an unsigned channel value.",
+   "answer": "{format: u4, packing: One unsigned 4-bit RGB channel}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "vga_output.contract.data_formats.channel"
+   ],
+   "draft_value": "{format: u4, packing: One unsigned 4-bit RGB channel}",
+   "final_value": "{format: u4, packing: One unsigned 4-bit RGB channel}"
+  },
+  {
+   "id": "P2-25",
+   "text": "What protocol does vga_output's interface in use, and is vga_output its master or slave?",
+   "default": "{protocol: axi4-stream, role: slave}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{protocol: axi4-stream, role: slave}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "vga_output.contract.interfaces.in.protocol"
+   ],
+   "draft_value": "{protocol: axi4-stream, role: slave}",
+   "final_value": "{protocol: axi4-stream, role: slave}"
+  },
+  {
+   "id": "P2-26",
+   "text": "What throughput must vga_output.in sustain (beats per clock, and output beats per input beat)?",
+   "default": "{beats_per_cycle: 1}",
+   "reason": "The VGA output must accept the raster at pixel rate.",
+   "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- A full-raster video stream with no back-pressure.",
+   "fields": [
+    "vga_output.contract.throughput.in"
+   ],
+   "draft_value": "{beats_per_cycle: 1}",
+   "final_value": "{beats_per_cycle: 1, from: in, out_per_in: 1}"
+  },
+  {
+   "id": "P2-27",
+   "text": "At what clock rate (MHz) must fpga_shell's clock clk close timing?",
+   "default": "100",
+   "reason": "The shell uses the board oscillator domain.",
+   "answer": "100 MHz",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    clock_constraint: 10 ns on CLK100MHZ",
+   "fields": [
+    "fpga_shell.contract.clocks.clk.max_mhz"
+   ],
+   "draft_value": "100",
+   "final_value": "100"
+  },
+  {
+   "id": "P2-28",
+   "text": "Is fpga_shell's reset rst active high or active low, and synchronous or asynchronous?",
+   "default": "{polarity: active_low, style: async}",
+   "reason": "Use the selected system reset for the shell.",
+   "answer": "{polarity: active_low, style: async}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "fpga_shell.contract.resets.rst"
+   ],
+   "draft_value": "{polarity: active_low, style: async}",
+   "final_value": "{polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-29",
+   "text": "Which clock is clk_sys: its frequency and where it comes from?",
+   "default": "{source: board, mhz: 100, port: CLK100MHZ}",
+   "reason": "The selected board oscillator pin is the Nexys A7 100 MHz source; the spec requires that oscillator as the pixel-clock source.",
+   "answer": "clk_sys is 100 MHz, comes from the board oscillator, and is on CLK100MHZ.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - name: sys_clk\n    port: CLK100MHZ\n    freq_mhz: 100\n    source: board oscillator",
+   "fields": [
+    "design.clocks.clk_sys"
+   ],
+   "draft_value": "{source: board, mhz: 100, port: CLK100MHZ}",
+   "final_value": "{source: board, mhz: 100, port: CLK100MHZ}"
+  },
+  {
+   "id": "P2-30",
+   "text": "Which clock is clk_pix: its frequency and where it comes from?",
+   "default": "{source: mmcm, mhz: 74.25, from: clk_sys}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "`clk_pix` is 74.25 MHz, generated by an MMCM from the 100 MHz `CLK100MHZ` input (`sys_clk`). In simulation with `SIM_DIRECT_CLOCK = 1`, the input clock is used directly instead.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- 'parameter SIM_DIRECT_CLOCK = 1 makes the clock input the pixel clock (no MMCM, locked = 1); the bench uses it. With 0 an MMCM makes 74.25 MHz from the 100 MHz clock (VCO 742.5 MHz: DIVCLK_DIVIDE 5, CLKFBOUT_MULT_F 37.125, CLKOUT0_DIVIDE_F 10)'",
+   "fields": [
+    "design.clocks.clk_pix"
+   ],
+   "draft_value": "{source: mmcm, mhz: 74.25, from: clk_sys}",
+   "final_value": "{source: mmcm, mhz: 74.25, from: clk_sys}"
+  },
+  {
+   "id": "P2-31",
+   "text": "What resets the design's reset rst_sys (button or other source), and its polarity?",
+   "default": "{from: CPU_RESETN, polarity: active_low, style: async}",
+   "reason": "The specification does not choose a reset pin; CPU_RESETN is the board reset input. Preserve its active-low polarity.",
+   "answer": "CPU_RESETN is the active-low asynchronous button reset; assertion is immediate and release is synchronized. Separately, the video raster restarts when BTNC is pressed or the video clock is not locked.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  reset:\n    port: CPU_RESETN\n    polarity: active_low\n    kind: asynchronous button, synchronised (asserts at once, releases on the clock)\n    effect: the raster restarts when BTNC is pressed or the video clock is not locked; colour outputs 0 while held; the shell window is reset",
+   "fields": [
+    "design.resets.rst_sys"
+   ],
+   "draft_value": "{from: CPU_RESETN, polarity: active_low, style: async}",
+   "final_value": "{from: CPU_RESETN, polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-32",
+   "text": "What resets the design's reset rst_pix (button or other source), and its polarity?",
+   "default": "{from: rst_sys, polarity: active_low, style: async}",
+   "reason": "The pixel domain needs reset release synchronized to its own clock; reset_sync is the selected CDC reset primitive.",
+   "answer": "The internal signal `rst_pix` is not specified. The video raster restarts when BTNC is pressed or the video clock is not locked; `CPU_RESETN` is an active-low asynchronous button reset, synchronized.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  reset:\n    port: CPU_RESETN\n    polarity: active_low\n    kind: asynchronous button, synchronised (asserts at once, releases on the clock)\n    effect: the raster restarts when BTNC is pressed or the video clock is not locked; colour outputs 0 while held; the shell window is reset",
+   "fields": [
+    "design.resets.rst_pix"
+   ],
+   "draft_value": "{from: rst_sys, polarity: active_low, style: async}",
+   "final_value": "{from: rst_sys, polarity: active_low, style: async}"
+  },
+  {
+   "id": "P2-33",
+   "text": "At which offset of the shell's register window do video_timing's registers start?",
+   "default": "0",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "0x00",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- Shell registers at window base 0x00.",
+   "fields": [
+    "design.modules.video_timing.window_base"
+   ],
+   "draft_value": "0",
+   "final_value": "0"
+  },
+  {
+   "id": "P2-34",
+   "text": "What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: in, drive: input, to: clk_sys}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: in, drive: input, to: clk_sys}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.CLK100MHZ"
+   ],
+   "draft_value": "{dir: in, drive: input, to: clk_sys}",
+   "final_value": "{dir: in, drive: input, to: clk_sys}"
+  },
+  {
+   "id": "P2-35",
+   "text": "What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: in, drive: input, to: rst_sys}",
+   "reason": "the specification does not state it; this is the drafter's proposal",
+   "answer": "{dir: in, drive: input, to: rst_sys}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.CPU_RESETN"
+   ],
+   "draft_value": "{dir: in, drive: input, to: rst_sys}",
+   "final_value": "{dir: in, drive: input, to: rst_sys}"
+  },
+  {
+   "id": "P2-36",
+   "text": "What does the board pin BTNC connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: in, drive: input, to: vga_output.btnc}",
+   "reason": "The specification names BTNC as the centre button; the board pin is connected directly to the output blanking control.",
+   "answer": "BTNC is an asynchronous input on pin N17 with LVCMOS33. Push-pull, open-drain, pull-up, and the proposed `vga_output.btnc` mapping are not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - name: BTNC\n    dir: in\n    width: 1\n    async: true\n    pins:\n    - N17\n    iostandard: LVCMOS33",
+   "fields": [
+    "design.board_ports.BTNC"
+   ],
+   "draft_value": "{dir: in, drive: input, to: vga_output.btnc}",
+   "final_value": "{dir: in, drive: input, to: vga_output.btnc}"
+  },
+  {
+   "id": "P2-37",
+   "text": "What does the board pin UART_RXD_OUT connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: in, drive: input, to: shell.uart_rx}",
+   "reason": "The board master XDC provides this UART pin; it is used as the shell receive input, consistent with the supplied project example.",
+   "answer": "{dir: in, drive: input, to: shell.uart_rx}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.UART_RXD_OUT"
+   ],
+   "draft_value": "{dir: in, drive: input, to: shell.uart_rx}",
+   "final_value": "{dir: in, drive: input, to: shell.uart_rx}"
+  },
+  {
+   "id": "P2-38",
+   "text": "What does the board pin UART_TXD_IN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: shell.uart_tx}",
+   "reason": "The board master XDC provides this UART pin; it is used as the shell transmit output, consistent with the supplied project example.",
+   "answer": "UART_TXD_IN is an asynchronous input on pin C4. What it connects to and whether it is push-pull, open-drain, or pulled up are not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    dir: in",
+   "fields": [
+    "design.board_ports.UART_TXD_IN"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: shell.uart_tx}",
+   "final_value": "{dir: out, drive: push-pull, from: shell.uart_tx}"
+  },
+  {
+   "id": "P2-39",
+   "text": "What does the board pin VGA_HS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: vga_output.hsync}",
+   "reason": "The specification requires horizontal sync; the board VGA connector pin is selected.",
+   "answer": "{dir: out, drive: push-pull, from: vga_output.hsync}",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.VGA_HS"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: vga_output.hsync}",
+   "final_value": "{dir: out, drive: push-pull, from: vga_output.hsync}"
+  },
+  {
+   "id": "P2-40",
+   "text": "What does the board pin VGA_VS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: vga_output.vsync}",
+   "reason": "The specification requires vertical sync; the board VGA connector pin is selected.",
+   "answer": "VGA_VS connects to pin B12 and is an active-high output. Its electrical drive mode and signal source are not specified.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  - name: VGA_VS\n    dir: out\n    width: 1\n    note: active high\n    pins:\n    - B12",
+   "fields": [
+    "design.board_ports.VGA_VS"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: vga_output.vsync}",
+   "final_value": "{dir: out, drive: push-pull, from: vga_output.vsync}"
+  },
+  {
+   "id": "P2-41",
+   "text": "What does the board pin VGA_R[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: vga_output.vga_r}",
+   "reason": "The specification requires 4-bit RGB channels; the board VGA red pins are selected.",
+   "answer": "{dir: out, drive: push-pull, from: vga_output.vga_r}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.VGA_R[3:0]"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: vga_output.vga_r}",
+   "final_value": "{dir: out, drive: push-pull, from: vga_output.vga_r}"
+  },
+  {
+   "id": "P2-42",
+   "text": "What does the board pin VGA_G[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: vga_output.vga_g}",
+   "reason": "The specification requires 4-bit RGB channels; the board VGA green pins are selected.",
+   "answer": "{dir: out, drive: push-pull, from: vga_output.vga_g}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.VGA_G[3:0]"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: vga_output.vga_g}",
+   "final_value": "{dir: out, drive: push-pull, from: vga_output.vga_g}"
+  },
+  {
+   "id": "P2-43",
+   "text": "What does the board pin VGA_B[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: vga_output.vga_b}",
+   "reason": "The specification requires 4-bit RGB channels; the board VGA blue pins are selected.",
+   "answer": "{dir: out, drive: push-pull, from: vga_output.vga_b}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.VGA_B[3:0]"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: vga_output.vga_b}",
+   "final_value": "{dir: out, drive: push-pull, from: vga_output.vga_b}"
+  },
+  {
+   "id": "P2-44",
+   "text": "What does the board pin LED[0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?",
+   "default": "{dir: out, drive: push-pull, from: clk_pix.locked}",
+   "reason": "The requirement names LED[0]; bind it to the pixel clock LOCKED indication.",
+   "answer": "{dir: out, drive: push-pull, from: clk_pix.locked}",
+   "status": "defaulted",
+   "by": "limit",
+   "evidence": null,
+   "fields": [
+    "design.board_ports.LED[0]"
+   ],
+   "draft_value": "{dir: out, drive: push-pull, from: clk_pix.locked}",
+   "final_value": "{dir: out, drive: push-pull, from: clk_pix.locked}"
+  }
+ ],
+ "unasked_changes": []
+}
