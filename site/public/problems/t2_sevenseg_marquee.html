@@ -210,11 +210,49 @@ svg .line-seen { stroke: var(--ink-3); fill: none; stroke-width: 1.5; stroke-das
 .tear .tog .grp > span { font-size: .85rem; color: var(--ink-3); margin-right: 8px; }
 .tear .tog button { border-radius: 0; margin-left: -1px; }
 .tear svg { display: block; width: 100%; height: auto; max-width: 560px; }
+
+/* expertise: drawers */
+.seg { display: inline-flex; gap: 2px; vertical-align: middle; margin: 0 4px; }
+.seg i { width: 9px; height: 9px; border: 1px solid var(--ink-3); display: inline-block; }
+.seg i.on { background: var(--ink); border-color: var(--ink); }
+.tag.lvl { text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.ladder { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0 18px; }
+.ladder li { display: flex; align-items: center; gap: 6px; max-width: none; border-bottom: 1px solid var(--rule); min-height: 44px; font-size: .92rem; }
+.ladder li a { flex: 1; min-width: 0; padding: 10px 0; }
+.ladder .lv { color: var(--ink-3); font-size: .8rem; min-width: 11ch; text-align: right; }
+.areactl { display: flex; gap: 8px; margin: 0 0 12px; flex-wrap: wrap; }
+.areactl[hidden] { display: none; }
+details.area { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 8px; }
+details.area > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; padding: 10px 14px; cursor: pointer; min-height: 44px; list-style: none; }
+details.area > summary::-webkit-details-marker { display: none; }
+details.area > summary::before { content: "+"; grid-column: 1; font: 700 1rem var(--f-mono); }
+details.area[open] > summary::before { content: "-"; }
+details.area > summary { grid-template-areas: "n l" "s l" "c l"; }
+details.area > summary::before { display: none; }
+details.area .an { grid-area: n; font-weight: 700; }
+details.area .an::before { content: "+ "; font-family: var(--f-mono); }
+details.area[open] .an::before { content: "- "; }
+details.area .as { grid-area: s; color: var(--ink-2); font-size: .92rem; }
+details.area .ac { grid-area: c; color: var(--ink-3); font-size: .82rem; }
+details.area .tag.lvl { grid-area: l; align-self: start; }
+details.area .abody { padding: 4px 14px 14px; border-top: 1px solid var(--rule); }
+details.area h4 { margin: .9em 0 .3em; font-size: .85rem; font-weight: 600; }
+details.area ul { padding-left: 1.1em; margin: 0 0 .6em; }
+details.area li { margin-bottom: .35em; }
+details.area .kv { grid-template-columns: minmax(0, 12ch) minmax(0, 1fr); margin-top: 10px; }
+@media (max-width: 640px) {
+  details.area > summary { grid-template-columns: minmax(0, 1fr); grid-template-areas: "n" "s" "c" "l"; }
+  details.area .tag.lvl { justify-self: start; margin-top: 4px; }
+  details.area .kv { grid-template-columns: minmax(0, 1fr); }
+  .ladder .lv { display: none; }
+}
+details.area { scroll-margin-top: 110px; }
+@media (max-width: 640px) { details.area { scroll-margin-top: 250px; } }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Scrolling message on the eight 7-segment digits</h1>
@@ -1276,6 +1314,23 @@ SCROLL, DIR = 1, 2
   if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
   document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
   if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+
+})();
+
+/* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
+(function () {
+  var ctl = document.getElementById("areactl");
+  if (!ctl) return;
+  ctl.hidden = false;
+  var all = function () { return document.querySelectorAll("details.area"); };
+  document.getElementById("expand-all").addEventListener("click", function () { all().forEach(function (d) { d.open = true; }); });
+  document.getElementById("collapse-all").addEventListener("click", function () { all().forEach(function (d) { d.open = false; }); });
+  function openHash() {
+    var id = decodeURIComponent((location.hash || "").slice(1)), t = id && document.getElementById(id);
+    if (t && t.tagName === "DETAILS") { t.open = true; t.scrollIntoView(); }
+  }
+  openHash();
+  window.addEventListener("hashchange", openHash);
 })();
 </script>
 </body>

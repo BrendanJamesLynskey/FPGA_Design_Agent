@@ -1,0 +1,372 @@
+# Areas of expertise (brief 23). One entry per drawer on site/src/expertise.html; site/expertise.py builds and checks it.
+# To extend an area in a later brief: add a skill selector to `kb`, a check to `checks`, an item to `evidence`
+# (kind measured , agent , example; numbers only as {0} {1} placeholders filled from `values` expressions, see
+# `python3 -c "import expertise; print(expertise.EXPR)"`), or a line to `gaps`. The evidence level is computed:
+# an `agent` item gives "Shown in agent runs", an enforced check gives "Checked by the flow", a `measured` item
+# gives "Measured in Vivado"; an `example` item never raises the level. `cap` lowers it, with a reason shown.
+# kb selectors: "<unit>/<section>" (section may be *), optionally "~sub1|sub2" to keep skills whose name has a substring.
+# checks: gate = an id that must occur in `file`; enforced = a stage gate fails the run when it is not met.
+areas:
+- id: constraints
+  name: Constraints and timing closure
+  summary: Writing clocks, I/O delays and exceptions that are right, and reading timing reports to close the paths that fail.
+  kb: [vendor/amd_constraints/constraints, vendor/ross_distilled/constraints, vendor/ross_distilled/timing-methodology,
+       techniques/timing-concepts, family/artix7/timing-concepts, procedures/ultrafast~constraints|timing-closure|sta-report|implementation,
+       family/artix7/io-standards~timing-constraints]
+  checks:
+  - {file: flow/gates.py, gate: no_unconstrained_endpoints, enforced: true, what: "Setup, hold and pulse-width slack must be met after routing, and no endpoint may be left unconstrained."}
+  - {file: agent/core/constraints.py, gate: FDA-CON-5, enforced: false, what: "Checks design.xdc: clocks only on the board's clock input, no disabled clock-route check, a reason beside every false path or asynchronous clock group. Run as the check_constraints tool; a command outside the allow-list refuses the build."}
+  - {file: flow/xpm_cdc.tcl, enforced: false, what: "Applies the exceptions that AMD ships as scoped files for its crossing macros, which the batch flow otherwise drops."}
+  evidence:
+  - kind: measured
+    source: results/14_flow_notes/inputs.json
+    values: [get:xpm_probe.before.wns_ns, get:xpm_probe.after.wns_ns]
+    text: "On a two-clock probe design, setup slack on the crossing was {0} ns without the macro exceptions and {1} ns with them (Vivado 2025.2)."
+  - kind: agent
+    source: results/course/*/run_*.json
+    where: split=dev,qor.wns_ns_at_100MHz_post_route?
+    values: [n, "count:qor.wns_ns_at_100MHz_post_route>0"]
+    text: "{0} development runs reached routing and recorded post-route setup slack; it was positive in {1}."
+  cards:
+  - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: CDC macro constraints"}
+  - {href: "flow-notes.html#exceptions", label: "Beyond the flow: exceptions that hide failures"}
+  cap: {level: checked, why: "The constraint-grading tasks (Brief 20, timing exceptions) are not merged, so the area is not yet credited with agent-run evidence."}
+  gaps:
+  - "Exceptions that hide a real failure (a blanket false path, a clock group over a failing path) are designed as tasks but not built or run; Brief 20 settles this."
+  - "I/O delay constraints are written from skills; no committed run scores them against a data sheet."
+- id: cdc
+  name: Clock-domain and reset-domain crossing
+  summary: Synchronisers, multi-bit crossings, asynchronous FIFOs, reset bridges and the checks that find a crossing report_cdc passes but that is still wrong.
+  kb: [techniques/cdc, family/artix7/cdc, techniques/reset, family/artix7/reset, vendor/ross_distilled/drc-and-cdc-reports,
+       vendor/amba_axi/amba~clock-domain-crossing, techniques/fifo]
+  checks:
+  - {file: flow/cdc_structure.py, gate: post_synth_cdc_structure_clean, gate_in: flow/gates.py, enforced: true, what: "After synthesis, classifies every flip-flop reached from another clock (synchroniser chain, XPM macro, constrained Gray or handshake, reset bridge, unsafe) and fails on an unsafe one."}
+  - {file: flow/cdc_inject.py, enforced: true, gate: inject, what: "Simulation with a late-resolving first synchroniser stage, so a crossing that only works when every bit settles on time fails."}
+  - {file: flow/gates.py, gate: cdc_no_critical, enforced: true, what: "report_cdc must have no Critical row, after synthesis and after routing."}
+  - {file: flow/xpm_cdc.tcl, enforced: false, what: "Exceptions for AMD's crossing macros."}
+  evidence:
+  - kind: measured
+    source: results/16_cdc_gate/mutant_table.json
+    values: ["count@rows:kind=mutant", "count@rows:kind=mutant,report_cdc_alone_flags=true", "count@rows:kind=mutant,gate_flags=true", "count@rows:kind=correct", "count@rows:kind=correct,gate_flags=false"]
+    text: "On {0} ported broken crossings, report_cdc alone flagged {1}; the flow's gate flagged {2}. It passed {4} of {3} correct variants."
+  - kind: measured
+    source: site/data/flow_notes.json
+    link: [hil/cdc_soak/results/cdc_rig_sim.json]
+    values: ["get:counts.rig_mutants", "get:counts.rig_sim_flags", "get:counts.rig_report_cdc_flags"]
+    text: "On the {0} mutants of the soak rig, its simulation with injection flagged {1}; report_cdc alone flagged {2}."
+  cards:
+  - {href: "flow-notes.html#cdc-gate", label: "Beyond the flow: report_cdc cannot see every unsafe crossing"}
+  - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: CDC macro constraints"}
+  - {href: "flow-notes.html#pblock", label: "Beyond the flow: pblocks after synthesis"}
+  gaps:
+  - "No agent run has used the stronger gate yet."
+  - "Resets cleared on one side only (an asynchronous FIFO, a handshake) are not caught by the gate; the rig's simulation catches them."
+  - "The model is cycle-level: it finds lost pulses and bits crossed separately, not route skew, glitches or true metastability."
+- id: clocking
+  name: Clocking
+  summary: Choosing an MMCM or PLL setting, clock buffers, dynamic phase and glitch-free switching, and using the Clocking Wizard as a checker.
+  kb: [techniques/clocking, family/artix7/clocking, family/zynq7000/clocking, family/zynq_ultrascale_plus/clocking,
+       board/nexys_a7_100t/clocking, vendor/ross_distilled/clocking-ip, family/artix7/primitives~clocking]
+  checks:
+  - {file: flow/gates.py, gate: post_synth_drc_clean, enforced: true, what: "A DRC Error or Critical Warning after synthesis fails the run; an illegal MMCM VCO or phase-detector frequency raises one (AVAL-46)."}
+  - {file: flow/mmcm_search.py, enforced: false, what: "A search over legal MMCM settings for a target frequency, so the setting is computed, not guessed."}
+  - {file: flow/cmt_check.tcl, enforced: false, what: "A VCO and phase-detector range checker, written and measured but not wired into a gate."}
+  evidence:
+  - kind: measured
+    source: results/project_parity/cmt_check/drc_*.rpt
+    values: [nfiles, "nmatch:AVAL-46"]
+    text: "Of {0} probe designs (one legal, three with an MMCM setting outside its range), Vivado's DRC after synthesis raised AVAL-46 on {1}."
+  cards:
+  - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: CDC macro constraints"}
+  gaps:
+  - "The Clocking Wizard's own readback was compared with the flow's hand search on a few target sets only."
+  - "No agent run has been graded on a clocking task yet."
+- id: io
+  name: I/O, primitives and transceivers
+  summary: Pin planning against the board's master constraints, I/O standards, DDR and delay primitives, and the limits of the 7-series and UltraScale+ I/O.
+  kb: [family/artix7/io-standards, family/artix7/pin-planning, family/artix7/primitives, family/artix7/logic-fabric~lut6,
+       device/xc7a100tcsg324-1/io-standards, device/xc7a100tcsg324-1/pin-planning, device/xc7a100tcsg324-1/primitives,
+       family/zynq7000/io-standards, family/zynq_ultrascale_plus/io-standards, family/zynq_ultrascale_plus/pin-planning,
+       family/zynq_ultrascale_plus/primitives, family/zynq_ultrascale_plus/high-speed-serial, device/xck26/io-standards,
+       device/xck26/primitives, board/nexys_a7_100t/serial-buses]
+  checks:
+  - {file: agent/core/constraints.py, gate: FDA-CON-4, enforced: false, what: "Compares every pin and I/O standard in design.xdc with the board's master constraints file, and flags two ports on one pin. Run as the check_constraints tool."}
+  - {file: tools/inventory_check.py, enforced: false, what: "Checks the board inventory against the master constraints file in CI."}
+  evidence: []
+  cards: []
+  gaps:
+  - "The I/O delay and eye-scan procedures are skills; the rig that would measure them is designed on paper only."
+  - "No transceiver design has been built or run."
+  - "Pin and standard checks are a tool the agent can run, not a stage gate."
+- id: memory
+  name: Memory, on-chip and off-chip
+  summary: Block RAM, distributed RAM and UltraRAM choice, widths, ports and ECC; FIFOs and buffering; crossing clocks through memory; DDR devices, widths and speeds, and the MIG.
+  kb: [functions/on-chip-memory, family/artix7/on-chip-memory, family/artix7/dram, family/zynq7000/dram, family/zynq_ultrascale_plus/dram,
+       family/zynq_ultrascale_plus/primitives~bram, family/artix7/primitives~memory, family/artix7/logic-fabric~srl, functions/caches-and-dma,
+       techniques/fifo, family/artix7/cdc~async-fifo, board/kr260/dram, board/zedboard/dram, family/artix7/pin-planning~memory,
+       vendor/vivado_synthesis/synthesis-attributes~inference-templates, vendor/amd_ip_cores/ip-cores~memory, functions/crc-and-line-codes]
+  checks:
+  - {file: flow/gates.py, gate: post_synth_resources_in_range, enforced: true, what: "Post-synthesis LUT, flip-flop, block RAM and DSP counts must lie near the architecture's prediction, which catches a RAM that became LUTs."}
+  - {file: flow/mig_impl_check.tcl, enforced: false, what: "Runs a MIG example design through implementation to see whether Vivado rejects a bad pin set."}
+  evidence:
+  - kind: measured
+    source: results/project_parity/mig_impl/*/drc_place.rpt
+    values: [nfiles, "nmatch:PLIO-3"]
+    text: "{0} MIG example designs (good pins, a byte-group fault, a duplicated pin) went through placement; the placement DRC raised PLIO-3 on {1}, the duplicated pin. The byte-group fault was not rejected."
+  cards:
+  - {href: "flow-notes.html#mig", label: "Beyond the flow: the MIG wizard validates pins"}
+  gaps:
+  - "No committed run exercises ECC, dual-port or asynchronous memory behaviour on hardware or in Vivado; the skills give the rules."
+  - "The MIG's pin validation lives in the GUI and has no Tcl command, so pins are checked by rules, not by the tool; the rule checker is not in this repository yet."
+  - "Choice of DDR device, device count, width and speed rests on skills only; no memory-interface design has been run."
+- id: mixed
+  name: "Mixed-signal: XADC and converter interfaces"
+  summary: Reading the on-chip XADC, wiring analogue inputs and alarms, and interfacing external converters and sensors over SPI and I2C.
+  kb: [family/artix7/analog, device/xc7a100tcsg324-1/analog, device/xc7z020clg484-1/analog, vendor/amd_ip_cores/ip-cores~xadc,
+       board/nexys_a7_100t/sensors, board/nexys_a7_100t/audio, board/zedboard/audio, functions/serial-buses]
+  checks:
+  - {file: flow/board_check.py, gate: power_ok, enforced: false, what: "On the board, checks the power and junction-temperature budget before programming; the self-checks read the board's sensors."}
+  evidence:
+  - kind: measured
+    source: results/board_v2/b2_*.json
+    values: [n]
+    where: pass=true
+    text: "{0} hand-built designs that read the board's temperature sensor, accelerometer, SPI flash and PDM microphone each ran on the board and passed their pre-written self-checks."
+  - kind: example
+    source: results/board_v2/README.md
+    contains: ["ID 0xCB"]
+    text: "The temperature sensor design reads the sensor's ID byte and a temperature over I2C three times in a row."
+  cards: []
+  gaps:
+  - "The on-chip XADC is covered by skills; no committed design reads it or its alarms."
+  - "Analogue front ends and converter timing are not scored by any development task."
+  - "The audio tasks (PWM output) were development tasks; see the DSP area for their runs."
+- id: amba
+  name: AMBA/AXI and the Zynq processing system
+  summary: AXI4, AXI4-Lite and AXI4-Stream handshakes, bursts, bridges and crossing clocks, AMD's AXI IP, and the PS-PL ports of Zynq-7000 and UltraScale+.
+  kb: [vendor/amba_axi/*, functions/buses-axi, family/zynq7000/*, family/zynq_ultrascale_plus/power-config, family/zynq_ultrascale_plus/reset, board/zedboard/user-io~buttons]
+  checks:
+  - {file: flow/standards_check.py, gate: STD-AXI-01, enforced: true, what: "A new block interface must be AXI4-Lite or AXI4-Stream with AMBA port names, and ports named like AXI belong to a declared interface."}
+  - {file: agent/graph/stages.py, gate: standards_rtl, enforced: true, what: "The stage that runs the design-standards checker on the RTL; a failing rule loops the run back."}
+  evidence: []
+  cards: []
+  gaps:
+  - "The gate checks interface names and declarations only; protocol behaviour (valid held until ready, no combinational path) is for review and for the skills' assertions."
+  - "No committed development task is an AXI design, so nothing measures this area end to end yet."
+  - "Zynq PS designs have skills but no built flow step; the flow targets the Nexys A7 first."
+- id: ip
+  name: AMD IP cores and wizards
+  summary: The free IP cores (FIR, DDS, CORDIC, FFT, divider, memory, FIFO, clocking), their licences, and what the wizards do in batch mode.
+  kb: [vendor/amd_ip_cores/ip-cores, vendor/amba_axi/ip-cores, vendor/amba_axi/simulation~vip]
+  checks:
+  - {file: flow/wizard_probe.tcl, enforced: false, what: "Creates a wizard's IP in batch, sets its options and reads back what it generated, so a wizard's checks can be tested without the GUI."}
+  evidence:
+  - kind: measured
+    contains: ["== Block Memory Generator", "== FIFO Generator"]
+    source: results/project_parity/wizards/wizards.txt
+    text: "Batch-mode generation of the Block Memory, FIFO, XADC, Transceiver, PS7, Clocking and other wizards was tried; the probe output is committed."
+  - kind: measured
+    source: results/19_ipgen/bmg_sine/sim.json
+    values: [get:sim.mem.n_words, get:sim.mem.n_mismatch, get:sim.mem.latency_cycles]
+    text: "A generated block-memory sine ROM was read in xsim: {1} mismatches in {0} reads, and its read latency measured {2} cycles."
+  cards:
+  - {href: "flow-notes.html#xsim", label: "Beyond the flow: IP models need xsim"}
+  gaps:
+  - "The encrypted cores run only in xsim; the xsim harness (Brief 19) drives four of them, and the others are skills only."
+  - "The Transceiver wizard's legal low-rate setting was not measured because of a property-name error."
+- id: dsp
+  name: DSP and IP driven from external tools
+  summary: Filters, NCOs and mixers; designing the coefficients and word lengths in Python, then building and checking the datapath or the AMD core.
+  kb: [functions/dsp, family/artix7/dsp, family/artix7/primitives~dsp, vendor/amd_ip_cores/ip-cores~fir|dds|simulation, functions/crc-and-line-codes]
+  checks:
+  - {file: flow/ipgen/harness.py, enforced: false, what: "Runs an AMD core in xsim from stimulus files, with a seeded valid and ready schedule, and compares every output word with a Python model. A tool for design work, not a stage gate."}
+  - {file: flow/ipgen/fir_design.py, enforced: false, what: "Designs the FIR coefficients, quantises them, and reports the attenuation lost to the word length before the core is built."}
+  evidence:
+  - kind: agent
+    source: [results/course/c10_*/run_*.json, results/course/c11_*/run_*.json]
+    where: split=dev
+    values: [n, "count:hidden_pass=true", "count:outcome=escape"]
+    text: "Development runs of the DDS and NCO-mixer tasks: {0} runs, hidden tests all passed in {1}; escapes (own checks passed, hidden tests did not): {2}."
+  - kind: measured
+    source: results/19_ipgen/fir/design.json
+    values: [get:design.taps, get:design.attenuation_lost_db]
+    text: "A decimating low-pass FIR designed in Python came to {0} taps; quantising its coefficients to the core's word length cost {1} dB of stop-band attenuation and the specification was still met."
+  - kind: measured
+    source: results/19_ipgen/fir/sim.json
+    values: [get:sim.continuous.n_got, get:sim.continuous.n_mismatch, get:sim.random.n_mismatch]
+    text: "The generated FIR core, run in xsim, matched the integer model on all {0} outputs: {1} mismatches with continuous input and {2} with random gaps."
+  - kind: measured
+    source: results/19_ipgen/fir/ooc.json
+    values: [get:luts, get:dsp, get:wns_ns]
+    text: "Out-of-context synthesis of that core: {0} LUTs, {1} DSP slices, post-synthesis setup slack {2} ns at the target clock (an upper bound; no routing)."
+  - kind: measured
+    source: results/19_ipgen/dds/sim.json
+    values: [get:sim.continuous.sfdr_db, get:sim.continuous.sfdr_spec_db]
+    text: "The generated DDS core measured {0} dB spurious-free dynamic range against a target of {1} dB."
+  cards: []
+  gaps:
+  - "Only the FIR, CIC, block memory and DDS cores have adapters; CORDIC, FFT and the Clocking Wizard do not, and the CIC and FIR are not simulated as a cascade."
+  - "The cores are exercised by hand-run examples (Brief 19), not by an agent run; no development task uses an AMD core yet."
+  - "One part (the Artix-7 device on the Nexys A7) and single examples only; development results are not the held-out score."
+- id: video
+  name: Video
+  summary: Display timing, pixel pipelines and line buffers, VGA and HDMI-style output.
+  kb: [functions/video, board/zedboard/video, board/kr260/video, board/nexys_a7_100t/user-io~vga, functions/on-chip-memory~memories]
+  checks: []
+  evidence:
+  - kind: agent
+    source: results/course/c9_*/run_*.json
+    where: split=dev
+    values: [n, "count:hidden_pass=true"]
+    text: "The development task that filters a pixel stream (a median filter): {0} run, hidden tests all passed in {1}."
+  - kind: example
+    source: results/board_v2/t2_vga_sprite.json
+    values: ["get:results.0.steps.selfcheck.frames_per_s"]
+    text: "A hand-built VGA sprite design ran on the board at {0} frames per second."
+  cards: []
+  gaps:
+  - "One development run only; the high-definition VGA task has not been run."
+  - "HDMI and DisplayPort have skills, no design."
+- id: arithmetic
+  name: Arithmetic
+  summary: Widths and rounding, saturation, fixed-point datapaths, modular multiplication and quantised neural-network arithmetic.
+  kb: [techniques/arithmetic, techniques/hardware-algorithms, functions/crypto, functions/dsp~fixed-point, family/artix7/dsp, vendor/vivado_synthesis/synthesis-attributes~datapath]
+  checks: []
+  evidence:
+  - kind: agent
+    source: [results/course/c14_int8*/run_*.json, results/course/c15_softmax*/run_*.json, results/course/c16_montgomery*/run_*.json]
+    where: split=dev
+    values: [n, "count:hidden_pass=true", "count:outcome=escape", "count:outcome=fail"]
+    text: "Development runs of the int8 dot product, softmax and Montgomery multiplier tasks: {0} runs, hidden tests all passed in {1}, escapes {2}, failures {3}."
+  cards: []
+  gaps:
+  - "The int8 task escaped most often; the misreading was of the specification, not the arithmetic."
+  - "Rounding modes and saturation are covered by skills; only these tasks test them."
+- id: rtl
+  name: RTL design
+  summary: Reading a specification, synthesisable coding, pipelines and handshakes, hierarchy and register boundaries, lint and synthesis messages.
+  kb: [techniques/rtl-coding, techniques/spec-reading, techniques/integration, techniques/pipelining-handshakes, techniques/existing-code,
+       techniques/arbitration-and-muxing, techniques/counters-and-timers, techniques/clocking, techniques/timing-concepts,
+       family/artix7/logic-fabric, vendor/ross_distilled/lint, procedures/ultrafast~rtl-design|synthesis, vendor/vivado_synthesis/synthesis-attributes]
+  checks:
+  - {file: agent/graph/stages.py, gate: standards_rtl, enforced: true, what: "Design standards on the RTL: no latches, no combinational loops, no gated clocks, synchronous resets, declared crossings."}
+  - {file: flow/gates.py, gate: rtl_methodology_no_critical, enforced: true, what: "Methodology checks on the elaborated design, then after synthesis: no Critical Warning."}
+  - {file: flow/lint.sh, enforced: false, what: "Verilator lint, run before the stage can end."}
+  evidence:
+  - kind: agent
+    source: results/course/*/run_*.json
+    where: split=dev
+    values: [n, "count:hidden_pass=true", "count:outcome=escape", "count:outcome=fail"]
+    text: "Across all development runs: {0} runs, hidden tests all passed in {1}, escapes (own checks passed, hidden tests failed) {2}, failures {3}."
+  cards:
+  - {href: "flow-notes.html#gates", label: "Beyond the flow: gates beyond Vivado's own"}
+  gaps:
+  - "Every escape so far was a misreading of the specification; the gates cannot catch a spec error the agent's own tests share."
+  - "These are development tasks, not the held-out score."
+- id: fsm
+  name: Finite state machines
+  summary: Separating control from datapath, choosing the clock and any multicycle ratio, registering inputs and outputs, encoding, reset, and coverage.
+  kb: [techniques/fsm, family/artix7/fsm, techniques/reset~reset-strategy, techniques/counters-and-timers, techniques/pipelining-handshakes~valid-ready]
+  checks:
+  - {file: flow/standards_check.py, gate: STD-RST-01, enforced: false, what: "Synchronous-reset rule, no latch and no combinational loop; part of the standards stage gate that covers all RTL."}
+  evidence:
+  - kind: example
+    source: results/board_v2/t1_elevator_fsm.json
+    values: [get:runs, get:passed]
+    text: "A hand-built elevator controller (an FSM with timers) passed its on-board self-check in {1} of {0} run."
+  cards: []
+  gaps:
+  - "Brief 24 (FSM measurements and coverage) is not merged: no committed measurement compares encodings, registered outputs, reset styles or an FSM split from its counter."
+  - "No gate checks state or transition coverage; the owner's slow-FSM multicycle pattern is part of Brief 20."
+  - "There is no FSM lesson in the course yet."
+- id: verification
+  name: Verification
+  summary: Self-checking tests, assertions, formal checks, mutation testing, coverage, and CDC fault injection, staged V0 to V3 with a hardware step.
+  kb: [techniques/verification, procedures/verification-stages, vendor/free_simulators/simulation, vendor/ross_distilled/simulation,
+       vendor/amba_axi/simulation, techniques/debugging, family/artix7/cdc~verification]
+  checks:
+  - {file: flow/verif_gates.py, gate: mutation_score_pct, gate_in: flow/verif_floors.yaml, enforced: true, what: "V0 to V3: plan, traceability, passing tests on every seed, coverage and a mutation score, each at or above a floor the agent cannot lower."}
+  - {file: flow/mutate.py, enforced: true, gate: mutant, what: "Mutation testing of the RTL against the agent's tests."}
+  - {file: flow/formal.sh, enforced: false, what: "SymbiYosys jobs for bounded proofs."}
+  evidence:
+  - kind: measured
+    source: results/04f/mutation_t1.json
+    values: [get:mutants, "get:first_run.score_pct", get:score_pct]
+    text: "On the reference design, mutation testing made {0} valid changes; the first run caught {1} percent and, after the bench was fixed, {2} percent."
+  - kind: agent
+    source: results/course/*/run_*.json
+    where: split=dev,gates.V3^=pass
+    values: [n]
+    text: "{0} development runs passed the V3 gate (coverage and mutation floors) in the flow."
+  cards:
+  - {href: "flow-notes.html#gates", label: "Beyond the flow: gates beyond Vivado's own"}
+  gaps:
+  - "The agent's own tests never count as a pass; the hidden tests are the judge, and several runs passed every gate yet failed them."
+  - "Formal checks are enforced only where the testplan promises a proof."
+- id: hil
+  name: Hardware in the loop
+  summary: Programming only the owner's board, self-checks over the UART, ILA capture, and the soak rig that exercises clock crossings on hardware.
+  kb: [procedures/board-onboarding, vendor/ross_distilled/debug-ila-vio, procedures/verification-stages~hw, procedures/ultrafast~configuration, techniques/debugging]
+  checks:
+  - {file: flow/board_check.py, gate: power_ok, enforced: false, what: "Power budget gate, programming by cable serial and SRAM only, identify, self-check and still-alive steps."}
+  evidence:
+  - kind: measured
+    source: results/board_v2/*.json
+    where: pass=true
+    values: [nfiles, n]
+    text: "{0} board-check result files, each a design built by the flow and run on the board; {1} are marked pass."
+  - kind: measured
+    source: hil/cdc_soak/results/build_full.json
+    values: ["get:utilisation.lut.used", "get:timing.wns_ns", "get:power.total_w"]
+    text: "The CDC soak rig's full build uses {0} LUTs, meets timing with {1} ns of slack and has a Vivado power estimate of {2} W."
+  cards:
+  - {href: "flow-notes.html#pblock", label: "Beyond the flow: pblocks on the CDC rig"}
+  gaps:
+  - "The soak's hardware logs are not among the committed results here; what is committed is the builds and the simulations."
+  - "Unattended soaks and board runs need the owner's approval."
+  - "The agent's development runs stop before programming; the board designs above were hand-built."
+- id: power
+  name: Power and thermal
+  summary: Power and junction-temperature budgets for a board without a heat sink, power rails, and low-power coding.
+  kb: [family/artix7/power-config, family/zynq_ultrascale_plus/power-config, board/nexys_a7_100t/power-config,
+       board/zedboard/power-config, board/kr260/power-config, procedures/ultrafast~power, techniques/timing-concepts]
+  checks:
+  - {file: flow/gates.py, gate: power_junction_ok, enforced: true, what: "The junction temperature computed for the board's real cooling must fit the limit."}
+  - {file: flow/board_check.py, gate: power_ok, enforced: true, what: "Before programming, total on-chip power and junction temperature must be within the board's limits."}
+  evidence:
+  - kind: measured
+    source: results/board_v2/*.json
+    values: ["max@results:steps.power_ok.total_w", "max@results:steps.power_ok.junction_c"]
+    text: "Across the board-check results the highest on-chip power was {0} W and the highest junction temperature {1} C."
+  - kind: agent
+    source: results/course/*/run_*.json
+    where: split=dev,qor.power_w?,gates.stage_gates_post_route=pass
+    values: [n]
+    text: "{0} development runs recorded post-route power and passed every post-route stage gate, the junction-temperature gate among them."
+  cards: []
+  gaps:
+  - "Power figures are Vivado's estimates, not measurements at the supply."
+  - "Low-power coding techniques have skills; no run compares them."
+- id: toolflow
+  name: Tool flow
+  summary: Non-project batch Vivado, reproducible builds, report reading, cross-probing a failing path to its source line, and what changes between Vivado versions.
+  kb: [vendor/ross_distilled/non-project-flow, vendor/ross_distilled/timing-methodology~reading, procedures/ultrafast, vendor/vivado_synthesis/synthesis-attributes,
+       vendor/free_simulators/simulation, vendor/ross_distilled/lint~synth-message, vendor/ross_distilled/simulation]
+  checks:
+  - {file: flow/run_vivado.sh, enforced: false, what: "The only way the agent builds: batch Vivado under a memory cap and a thread limit, writing the reports the gates read."}
+  - {file: flow/xprobe.py, enforced: false, what: "Cross-probing: names the RTL file and line, clock region and nets of a failing or tight path."}
+  evidence:
+  - kind: measured
+    source: results/project_parity/xprobe/*.xprobe.json
+    values: [n, "min:wns"]
+    text: "Cross-probe examples from {0} routed designs; the tighter had {1} ns of setup slack, and the output names source lines, locations and nets."
+  - kind: agent
+    source: results/course/*/run_*.json
+    where: split=dev,stop.stages_0_to_8_passed=true
+    values: [n]
+    text: "{0} development runs went through every stage up to the configuration stage with every stage gate passed."
+  cards: []
+  gaps:
+  - "Cross-probing found no failing path on any local design, so it is shown on passing ones."
+  - "Everything is measured on Vivado 2025.2; behaviour in other versions is not tested."
+  - "The block-design and project-mode steps are measured in batch but not part of the flow."
