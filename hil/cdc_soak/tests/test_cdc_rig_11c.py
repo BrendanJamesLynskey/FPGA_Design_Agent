@@ -20,7 +20,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import os
+
 import pytest
+
+QUICK = os.environ.get("CDC_SIM_QUICK") == "1"
 
 HERE = Path(__file__).resolve().parent
 RIG = HERE.parent
@@ -47,8 +51,9 @@ def test_startup_artefact_and_gate() -> None:
         assert all(sum(x) == 0 for x in errs(new, v).values()), (v, errs(new, v))
 
 
-@pytest.mark.parametrize("hb_ps", [7687, 15625])             # CFGMCLK at 65 MHz and at its 32 MHz slow end
-def test_c13_storms(hb_ps: int) -> None:
+@pytest.mark.parametrize("hb_ps", [7687, pytest.param(15625, marks=pytest.mark.skipif(QUICK, reason="slow end only locally")),
+                                   pytest.param(5102, marks=pytest.mark.skipif(QUICK, reason="fast end only locally"))])
+def test_c13_storms(hb_ps: int) -> None:                      # CFGMCLK at 65 MHz, 32 MHz (slow end), 98 MHz (fast end)
     kw = dict(sel=["C13"], copies=3, epochs=6, hb_ps=hb_ps, storm_maskw=9)
     new = scenario.run(f"t11c_c13_new_{hb_ps}", RTL, **kw)
     e = errs(new, "C13")

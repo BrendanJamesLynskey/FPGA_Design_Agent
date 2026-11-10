@@ -202,6 +202,14 @@ set xgends [pins_of [cells_like *dest_graysync_ff_reg?0?*] D]
 if {[llength $xgends]} {
     create_waiver -quiet -type CDC -id CDC-6 -to $xgends -description "correct: xpm_cdc_gray (as AMD's xpm_cdc_gray.tcl), max_delay + bus_skew applied here"
 }
+# the M6b/M6c reference bank (rsyn_g) shares its launch flops with the padded mutant bank: CDC-11 (fan-out from a
+# launch flop to the destination clock) is the deliberate shape of the measurement, so it is waived by name here
+set rcells {}
+foreach c [cells_like *rsyn_g*] { if {![string match *rsyn_g2* [get_property NAME $c]]} { lappend rcells $c } }
+set rends [pins_of $rcells D]
+if {[llength $rends]} {
+    create_waiver -quiet -type CDC -id CDC-11 -to $rends -description "M6b/M6c reference bank: the launch flops also feed the padded mutant bank (brief 11c)"
+}
 set hends [pins_of [concat [cells_like *hsd_*] [cells_like *ramrd_*] [cells_like *dest_hsdata_ff_reg*]] D]
 if {[llength $hends]} {
     create_waiver -quiet -type CDC -id CDC-15 -to $hends -description "correct: data held stable by a handshake or FIFO pointers, set_max_delay -datapath_only"
