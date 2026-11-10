@@ -1424,7 +1424,7 @@
      "file": "flow/board_check.py",
      "gate": "power_ok",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/board_check.py",
-     "what": "On the board, checks the power and junction-temperature budget before programming; the self-checks read the board's sensors."
+     "what": "The board-check tool re-runs the power and junction-temperature check before programming and stops if it fails; the self-checks read the board's sensors. The stage gate that enforces it is under power and thermal."
     }
    ],
    "counts": {
@@ -3318,7 +3318,7 @@
      "file": "flow/board_check.py",
      "gate": "power_ok",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/board_check.py",
-     "what": "Power budget gate, programming by cable serial and SRAM only, identify, self-check and still-alive steps."
+     "what": "The board-check tool: the power check again before programming, programming by cable serial and SRAM only, identify, self-check and still-alive steps. The stage gate that enforces the power check is under power and thermal."
     }
    ],
    "counts": {
@@ -3487,7 +3487,7 @@
    "summary": "Programming only the owner's board, self-checks over the UART, ILA capture, and the soak rig that exercises clock crossings on hardware."
   },
   {
-   "about": "The Nexys A7 has no heat sink, so power is a hard limit, not a nicety. Two gates enforce it: after routing, the junction temperature Vivado computes for the board's real cooling must stay within the limit, and before programming the total on-chip power and temperature must fit the board's budget.",
+   "about": "The Nexys A7 has no heat sink, so power is a hard limit, not a nicety. Two checks in the power-closure stage gate enforce it: the junction temperature Vivado computes for the board's real cooling must stay within the limit, and the total on-chip power and temperature must fit the budget for the board's power source, which the board tools check again before programming.",
    "cap_reason": null,
    "cards": [],
    "checks": [
@@ -3500,10 +3500,10 @@
     },
     {
      "enforced": true,
-     "file": "flow/board_check.py",
+     "file": "agent/graph/stages.py",
      "gate": "power_ok",
-     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/board_check.py",
-     "what": "Before programming, total on-chip power and junction temperature must be within the board's limits."
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/graph/stages.py",
+     "what": "Part of the power-closure stage gate: total on-chip power and junction temperature must be within the limits for the board's power source, and the board tools refuse to program a build that fails."
     }
    ],
    "counts": {

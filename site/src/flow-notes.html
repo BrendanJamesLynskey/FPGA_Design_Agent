@@ -7,7 +7,7 @@
 <tr><td><a href="#exceptions">3</a></td><td>Over-broad timing exceptions hide real failures</td><td>Designed, not built</td></tr>
 <tr><td><a href="#gates">4</a></td><td>A missing report or a skipped test looks like a pass</td><td>Built, covered by unit tests</td></tr>
 <tr><td><a href="#pblock">5</a></td><td>Placement regions made after synthesis are only hints</td><td>Measured on the crossing test rig</td></tr>
-<tr><td><a href="#mig">6</a></td><td>Scripted DDR controller generation skips the pin check</td><td>Measured; rule checker built</td></tr>
+<tr><td><a href="#mig">6</a></td><td>Scripted DDR controller generation skips the pin check</td><td>Measured through placement; rule checker built</td></tr>
 <tr><td><a href="#ssn">7</a></td><td>The switching-noise report is missing on some parts</td><td>Measured; no substitute built</td></tr>
 <tr><td><a href="#xsim">8</a></td><td>AMD's IP models need a simulator the tests cannot drive</td><td>Planned</td></tr>
 </tbody></table></div>
@@ -74,9 +74,10 @@
 
 <article class="card" id="mig">
 <h2>6. Scripted DDR controller generation skips the pin check</h2>
-<p class="tags"><span class="tag built">Measured</span><span class="muted small">two seeded faults; rule checker built</span></p>
-<p>AMD's DDR controller wizard, the MIG, checks a pinout against the memory's byte-group and bank rules before it generates the core. Generating the same core from a script, as the agent must, skips that check. A pinout with a byte-group fault generated silently, with the bad pins in the constraints file; one with a pin used twice also generated silently, and one data pin's line was dropped. The knowledge bank's own pin-rule checker flagged both and passed the good pinout. Not yet run: whether implementing the example design would reject a bad byte group.</p>
-<p class="small">Source: pin-check results in the private knowledge repository (<code>tools/pin_xdc_check</code>, <code>mig_pin_rules.py</code>) and the pin-planning grading design.</p>
+<p class="tags"><span class="tag built">Measured</span><span class="muted small">two seeded faults, through placement; rule checker built</span></p>
+<p>AMD's DDR controller wizard, the MIG, checks a pinout against the memory's byte-group and bank rules before it generates the core. Generating the same core from a script, as the agent must, skips that check. A pinout with a byte-group fault generated silently, with the bad pins in the constraints file; one with a pin used twice also generated silently, and one data pin's line was dropped. The knowledge bank's own pin-rule checker flagged both and passed the good pinout.</p>
+<p>Could Vivado catch the faults later, when the design is built? The good pinout and both faulty ones were taken through the controller's example design: synthesis, placement and the design-rule checks. The byte-group fault came out identical to the good pinout and was not rejected, because the generator derives the byte lanes from whatever pins it is given, so the design is consistent with the wrong pins. The duplicated pin raised no error either, only warnings naming the missing data pin and one more unplaced port than the good build. So the build is at best a weak second opinion, and the rule checker stays the gate. Routing was not run for the faults.</p>
+<p class="small">Sources: section 2 of <a href="{{!repo}}/blob/main/docs/project_mode_parity.md"><code>docs/project_mode_parity.md</code></a> and <a href="{{!repo}}/tree/main/results/project_parity/mig_impl"><code>results/project_parity/mig_impl</code></a> (the build of the example design, <a href="{{!repo}}/blob/main/flow/mig_impl_check.tcl"><code>flow/mig_impl_check.tcl</code></a>); pin-check results in the private knowledge repository (<code>tools/pin_xdc_check</code>, <code>mig_pin_rules.py</code>) and the pin-planning grading design.</p>
 </article>
 
 <article class="card" id="ssn">
