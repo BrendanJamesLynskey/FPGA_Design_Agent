@@ -4,6 +4,7 @@
     freeze.py make   [--private DIR] [--out benchmark/course/MANIFEST.json] [--private-out DIR/course/MANIFEST_full.json]
     freeze.py verify [--private DIR] [--manifest benchmark/course/MANIFEST.json] [--grader-shell DIR]
     freeze.py refreeze UNIT...                                    # dated amendment: re-record named public units only
+    freeze.py refreeze UNIT... --private-manifest DIR/course/MANIFEST_full.json [--dry-run]    # the same, in the owner's private manifest
 
 Units: a task (public benchmark/course/tasks/<id>, or private <DIR>/course/tasks/<id> for the held-out ones) and the shared code (the v1 bench
 library and scoring tools, which the course tier reuses unchanged, and benchmark/course/tools). A held-out unit appears in the public manifest by
@@ -23,7 +24,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
-from benchmark.tools.freeze import digest, files_of, tool_versions  # noqa: E402
+from benchmark.tools.freeze import digest, files_of, refreeze_private, tool_versions  # noqa: E402
 
 COURSE = ROOT / "benchmark" / "course"
 DEFAULT_PRIVATE = ROOT.parent / "FPGA_Design_Agent_Knowledge" / "benchmark_private"
@@ -135,11 +136,17 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=COURSE / "MANIFEST.json")
     ap.add_argument("--private-out", type=Path, default=None)
     ap.add_argument("--manifest", type=Path, default=COURSE / "MANIFEST.json")
+    ap.add_argument("--private-manifest", type=Path, default=None)
+    ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
+    if a.dry_run and not a.private_manifest:
+        ap.error("--dry-run needs --private-manifest")
     if a.cmd == "make":
         priv = a.private or DEFAULT_PRIVATE
         make(priv, a.out, a.private_out or priv / "course" / "MANIFEST_full.json")
         return 0
+    if a.cmd == "refreeze" and a.private_manifest:
+        return refreeze_private(a.units, {u["id"]: u for u in units(None)[0] if u["where"] == "public"}, a.private_manifest, a.dry_run)
     if a.cmd == "refreeze":
         return refreeze(a.units, a.manifest)
     return verify(a.private, a.manifest, a.grader_shell)
