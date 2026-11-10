@@ -14,7 +14,8 @@ question log under ``phase0/``.
    as stated only when the drafter quotes the user's spec for it, and the quote is really there (the oracle's own
    verbatim rule); every other field becomes one question, with the drafter's value as the proposed default and its
    reason. Fields that two ends of a connection must share (``tdata``, ``tuser``, ``tlast``, ``packet_beats``,
-   ``backpressure``, ``source_gaps``) are asked once per connection. This generalises ``ensure_register_question``
+   ``backpressure``, ``source_gaps``) are asked once per connection. Interface fields are asked first, each module
+   within its own budget share, then data formats, then board pins (:func:`plan_questions`). This generalises ``ensure_register_question``
    (one harness-made question) to every field. The drafter then applies the answers; a field it changes without an
    answer naming it goes back as a repair note, and what is still changed after the repairs is logged
    (``unasked_changes``).
@@ -53,7 +54,45 @@ from project.schema import (CONTRACT_SCHEMA, DESIGN_SCHEMA, REQUIREMENTS_SCHEMA,
 from project.expr import ExprError, evaluate
 
 PASSES = ("requirements", "contracts")
-BUDGET = {"requirements": 12, "contracts": 40}          # questions per pass (the 12-question cap, per pass)
+#: question budgets. Pass 1: one budget. Pass 2 (planner review of PR #104, after pilot 1 run 4 lost the median latency
+#: past a single 40-question budget): each module has its own share for its interface fields, the design's own interface
+#: fields (clocks, resets, design ID, window bases) have one, and data formats and board pins share the rest, asked last.
+BUDGET = {"requirements": 12, "contracts_per_module": 12, "contracts_design": 12, "contracts_rest": 12}
+#: the order pass 2 asks in: 0 interface fields (latency, stream fields, widths, register map, clocks, resets ...),
+#: 1 data formats, 2 board pins
+TIERS = ("interface", "data_formats", "board_pins")
+
+
+def field_tier(path: str) -> int:
+    if path.startswith("design.board_ports."):
+        return 2
+    if ".contract.data_formats." in path:
+        return 1
+    return 0
+
+
+def field_group(path: str) -> str:
+    """The share a tier-0 field counts against: its module, or ``design``."""
+    return "design" if path.startswith("design.") else path.split(".", 1)[0]
+
+
+def plan_questions(fields: list[Field], budget: dict[str, int]) -> list[tuple[Field, bool]]:
+    """The open fields in asking order, each with whether it is inside its budget share: tier 0 module by module (in
+    the drafter's module order), then the design's tier 0, then data formats, then board pins. A module's interface
+    questions never compete with another module's, or with formats and pins."""
+    def key(ix: tuple[int, Field]) -> tuple[int, int, int]:
+        i, f = ix
+        t, g = field_tier(f.paths[0]), field_group(f.paths[0])
+        return (t, 1 if (t == 0 and g == "design") else 0, i)
+    used: dict[str, int] = {}
+    out = []
+    for _, f in sorted(enumerate(fields), key=key):
+        t, g = field_tier(f.paths[0]), field_group(f.paths[0])
+        share = ("rest", budget["contracts_rest"]) if t else \
+            (g, budget["contracts_design"] if g == "design" else budget["contracts_per_module"])
+        used[share[0]] = used.get(share[0], 0) + 1
+        out.append((f, used[share[0]] <= share[1]))
+    return out
 MAX_REPAIRS = 3                                         # drafter attempts per step after the first
 LINK_FIELDS = ("tdata", "tuser", "tlast", "packet_beats", "backpressure", "source_gaps")
 FORMAT_DIR = Path(__file__).with_name("phase0_format")
@@ -229,9 +268,29 @@ def quote_ok(quote: Any, spec_text: str) -> bool:
     return len(q.split()) >= 3 and q in _norm(spec_text)
 
 
+_NUM = re.compile(r"(?<![\w.])(0x[0-9a-fA-F]+|\d+(?:\.\d+)?)(?![\w.])")
+
+
+def _numbers(text: str) -> set[float]:
+    out = set()
+    for t in _NUM.findall(text):
+        try:
+            out.add(float(int(t, 16)) if t.lower().startswith("0x") else float(t))
+        except ValueError:
+            pass
+    return out
+
+
+def numbers_in_quote(value: Any, quote: str) -> bool:
+    """Every number in the field's value is also a number in the quote (pilot 1 run 5: a latency of 1651 cycles was
+    "stated" by "The syncs and the picture leave the chip aligned ...", which gives no number, so it was never asked)."""
+    return _numbers(_flow(value)) <= _numbers(str(quote))
+
+
 def settled_by_spec(f: Field, sources: dict[str, Any], spec_text: str) -> str | None:
+    """The quote that states the field: in the spec, three words or more, and holding every number of the value."""
     for p in f.paths:
-        if quote_ok(sources.get(p), spec_text):
+        if quote_ok(sources.get(p), spec_text) and numbers_in_quote(f.value, str(sources[p])):
             return str(sources[p])
     return None
 
@@ -325,6 +384,9 @@ the connections between them, a contract per module, and the design file (clock 
 board pins), before any behaviour. The test shell (shell/rtl/fpga_shell.sv) is always present: it owns the USB-UART
 and a register window at 0x80-0xFF; a module's registers on `bus: top` are placed in that window at `window_base`.
 Use only board pin names from the board's master XDC: {board_port_summary(board)}.
+Pin directions are the FPGA's own (the checker compares them with the board: UART_RXD_OUT is an FPGA output,
+UART_TXD_IN an input). Connect the modules point to point through their interfaces: every module must reach a board
+pin or the shell's register window, directly or through connections.
 The board is {board}.
 
 For EVERY field you fill, either quote the user's specification word for word under `sources` (the exact words that
@@ -588,14 +650,19 @@ class Session:
             qt = settled_by_spec(f, sources, spec_text)
             (stated if qt else open_fields).append((f, qt))
         bad_quotes = sorted(p for p, v in sources.items() if v and not quote_ok(v, spec_text))
-        iv = Interview(max_questions=self.budget["contracts"])
+        no_number = sorted(p for f, qt in open_fields for p in f.paths if quote_ok(sources.get(p), spec_text))
+        iv = Interview(max_questions=10_000)                 # the shares are applied here, per module
         asked: list[tuple[Question, list[str]]] = []
-        for i, (f, _) in enumerate(open_fields, 1):
+        for i, (f, inside) in enumerate(plan_questions([f for f, _ in open_fields], self.budget), 1):
             reason = next((str(reasons[p]) for p in f.paths if reasons.get(p)), None) or \
                 "the specification does not state it; this is the drafter's proposal"
             q = Question(f"P2-{i}", f.ask, _flow(f.value) if f.value is not None else "(none: leave the field out)",
                          reason)
-            iv.ask(q, self.who)
+            if inside:
+                iv.ask(q, self.who)
+            else:                                            # over its share: the default, recorded as the limit
+                q.answer, q.status, q.by = q.default, "defaulted", "limit"
+                iv.questions.append(q)
             asked.append((q, f.paths))
         answered = [(q, p) for q, p in asked if q.status == "answered"]
         apply_repairs, unasked, apply_failed = 0, [], None
@@ -634,13 +701,13 @@ class Session:
         final_values = values_by_path(b["design"], b["contracts"])
         assumptions = [{"q": q, "affects": p} for q, p in asked if q.status == "defaulted"]
         self._log("pass2_contracts.json", {
-            "pass": "contracts", "budget": self.budget["contracts"],
+            "pass": "contracts", "budget": {k: v for k, v in self.budget.items() if k.startswith("contracts")},
             "drafter_repairs": {"draft": repairs, "apply": apply_repairs}, "apply_failed": apply_failed,
             "modules": sorted(b["contracts"]), "connections": b["design"].get("connections") or [],
             "fields": len(fields), "stated_in_spec": len(stated),
             **{k: v for k, v in iv.summary().items() if k != "questions"},
             "stated": [{"fields": f.paths, "quote": qt} for f, qt in stated],
-            "bad_quotes": bad_quotes,
+            "bad_quotes": bad_quotes, "quotes_without_the_value": no_number,
             "questions": [{**asdict(q), "fields": p, "draft_value": draft_values.get(p[0]),
                            "final_value": final_values.get(p[0])} for q, p in asked],
             "unasked_changes": [{"field": p, "draft": draft_values.get(p), "final": final_values.get(p)}
@@ -711,5 +778,5 @@ def spec_contract_errors(spec: dict[str, Any], contract: dict[str, Any]) -> list
     return e
 
 
-__all__ = ["BUDGET", "Calls", "Drafter", "Field", "Session", "Terminal", "contract_fields", "design_fields", "inventory",
+__all__ = ["BUDGET", "TIERS", "field_group", "field_tier", "plan_questions", "Calls", "Drafter", "Field", "Session", "Terminal", "contract_fields", "design_fields", "inventory",
            "oracle_llm", "quote_ok", "settled_by_spec", "spec_contract_errors", "values_by_path"]

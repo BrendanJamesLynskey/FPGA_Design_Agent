@@ -10,20 +10,39 @@ Runs in the order made. The harness was changed twice after reading a run (never
 - after `pilot1_run3` (it stopped: the unasked-change notes used up the apply step's repairs and a checker
   error remained): the last repair is kept for checker errors, and an apply step that never passes keeps the
   valid draft and writes every answer it could not apply as an open assumption carrying the answer.
-`pilot1` (run 4) ran with the final harness. `c12_pwm_audio` (run 2) ran before the third change; its apply
-step needed no repair, so that change would not have altered it. Each row is a single run.
+- after `pilot1_run4` (planner review of PR #104; the median latency was asked but fell past the single
+  40-question budget): pass 2 asks interface fields first, each module within its own share (12), then the
+  design's own fields (12), then data formats and board pins (12 together); the checker now rejects a
+  multi-module graph with no connections or with a module that reaches neither a board pin nor the shell,
+  and a board pin whose direction disagrees with the board (master XDC sections, inventory `dir`).
+- after `pilot1_run5` (the median latency, 1651, was "stated" by a quote with no number in it, so never
+  asked): a quote states a field only if it holds every number of the field's value.
+`pilot1` (run 6) ran with the final harness. `c12_pwm_audio` (run 2) ran before the last three changes. The last column re-checks every run's files with today's checker. Each row is a single run.
 
-| Spec | Modules | Pass 1 asked / answered / assumptions | Contract and design fields | Stated by a spec quote | Pass 2 asked / answered / assumptions | Assumptions written | Files valid | Calls | Tokens (in / out) | USD |
-|---|---|---|---|---|---|---|---|---|---|---|
-| pilot1_run1 | video_timing, median_filter, vga_output | 6 / 2 / 4 | 60 | 16 | 44 / 15 / 29 | 33 | yes | 51 | 222714 / 54522 | 0.0339 |
-| pilot1_run2 | video_timing, color_bars, median_filter, frame_counter, video_cdc, video_output, video_control | 6 / 2 / 4 | 82 | 15 | 67 / 4 / 63 | 67 | yes | 50 | 194446 / 37839 | 0.0243 |
-| c12_pwm_audio_run1 | c12_nexys_pwm_audio_top, audio_state, pwm_stage | 3 / 1 / 2 | 34 | 22 | 12 / 4 / 8 | 10 | yes | 19 | 72390 / 30099 | 0.0187 |
-| c12_pwm_audio | audio_gain, pwm_audio | 4 / 3 / 1 | 23 | 12 | 11 / 5 / 6 | 7 | yes | 16 | 50430 / 26603 | 0.0160 |
-| pilot1 | pixel_clock, timing_gen, pattern_gen, median_filter, vga_output | 7 / 2 / 5 | 86 | 22 | 64 / 9 / 55 | 60 | yes | 53 | 309079 / 66135 | 0.0427 |
+**Owner choice 2 in run 6.** The median latency was asked (question order and shares fixed it) and the oracle
+answered "1 clock cycle", quoting the `c9_median3x3` task ("exactly 1 clock: the result of a window
+presented in clock n is seen in clock n + 1"): that task filters a presented window, the pilot's median a
+raster with line buffers. The oracle's hidden file holds both that line and the owner's "Median latency
+H_TOTAL + 2." and nothing says which wins, so the choice is lost in the oracle, not in the harness.
+
+| Spec | Modules | Pass 1 asked / answered / assumptions | Contract and design fields | Stated by a spec quote | Pass 2 asked / answered / assumptions | Assumptions written | Files valid | Calls | Tokens (in / out) | USD | Today's checker |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| pilot1_run1 | video_timing, median_filter, vga_output | 6 / 2 / 4 | 60 | 16 | 44 / 15 / 29 | 33 | yes | 51 | 222714 / 54522 | 0.0339 | 2 errors |
+| pilot1_run2 | video_timing, color_bars, median_filter, frame_counter, video_cdc, video_output, video_control | 6 / 2 / 4 | 82 | 15 | 67 / 4 / 63 | 67 | yes | 50 | 194446 / 37839 | 0.0243 | 6 errors |
+| c12_pwm_audio_run1 | c12_nexys_pwm_audio_top, audio_state, pwm_stage | 3 / 1 / 2 | 34 | 22 | 12 / 4 / 8 | 10 | yes | 19 | 72390 / 30099 | 0.0187 | 2 errors |
+| c12_pwm_audio | audio_gain, pwm_audio | 4 / 3 / 1 | 23 | 12 | 11 / 5 / 6 | 7 | yes | 16 | 50430 / 26603 | 0.0160 | 1 errors |
+| pilot1_run4 | pixel_clock, timing_gen, pattern_gen, median_filter, vga_output | 7 / 2 / 5 | 86 | 22 | 64 / 9 / 55 | 60 | yes | 53 | 309079 / 66135 | 0.0427 | 1 errors |
+| pilot1_run5 | video_source, median_filter, vga_output | 5 / 1 / 4 | 64 | 27 | 37 / 10 / 27 | 31 | yes | 46 | 299641 / 72051 | 0.0451 | valid |
+| pilot1 | pattern_timing, median_filter, vga_output | 6 / 1 / 5 | 66 | 8 | 58 / 14 / 44 | 49 | yes | 64 | 351751 / 74278 | 0.0470 | valid |
 
 ## pilot1_run1
 
 Drafter repairs: pass 1 0, pass 2 {'draft': 1, 'apply': 1}. Quotes that were not in the spec (so the field was asked): 8. Questions over the pass 2 budget: 4. Fields the drafter changed without being asked: 0. Calls by role: {'drafter': 5, 'oracle': 46}.
+
+Today's checker on these files:
+
+- board port UART_RXD_OUT: dir in, but the board pin is an output of the FPGA (boards/nexys_a7_100t/inventory.yaml)
+- board port UART_TXD_IN: dir out, but the board pin is an input of the FPGA (boards/nexys_a7_100t/inventory.yaml)
 
 Checks against facts fixed before the run:
 
@@ -96,6 +115,15 @@ Pass 2 questions (one per field the spec does not state; the fields each one set
 ## pilot1_run2
 
 Drafter repairs: pass 1 0, pass 2 {'draft': 1, 'apply': 0}. Quotes that were not in the spec (so the field was asked): 26. Questions over the pass 2 budget: 27. Fields the drafter changed without being asked: 8. Calls by role: {'drafter': 4, 'oracle': 46}.
+
+Today's checker on these files:
+
+- connections: the design has 7 modules and no connection between them; connect each module's interfaces (point to point), or merge the modules
+- module video_timing: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)
+- module color_bars: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)
+- module median_filter: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)
+- module frame_counter: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)
+- module video_cdc: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)
 
 Checks against facts fixed before the run:
 
@@ -203,6 +231,11 @@ Unasked changes:
 
 Drafter repairs: pass 1 0, pass 2 {'draft': 2, 'apply': 0}. Quotes that were not in the spec (so the field was asked): 12. Questions over the pass 2 budget: 0. Fields the drafter changed without being asked: 1. Calls by role: {'drafter': 5, 'oracle': 14}.
 
+Today's checker on these files:
+
+- connections: the design has 3 modules and no connection between them; connect each module's interfaces (point to point), or merge the modules
+- module pwm_stage: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)
+
 Checks against facts fixed before the run:
 
 | Fact | Holds | Found |
@@ -244,6 +277,10 @@ Unasked changes:
 
 Drafter repairs: pass 1 0, pass 2 {'draft': 1, 'apply': 0}. Quotes that were not in the spec (so the field was asked): 11. Questions over the pass 2 budget: 0. Fields the drafter changed without being asked: 0. Calls by role: {'drafter': 4, 'oracle': 12}.
 
+Today's checker on these files:
+
+- connections: the design has 2 modules and no connection between them; connect each module's interfaces (point to point), or merge the modules
+
 Checks against facts fixed before the run:
 
 | Fact | Holds | Found |
@@ -277,9 +314,13 @@ Pass 2 questions (one per field the spec does not state; the fields each one set
 | design.board_ports.AUD_SD | assumption (oracle) | {dir: out, drive: push-pull, from: pwm_audio.AU... | {dir: out, drive: push-pull, from: pwm_audio.AU... |
 | design.board_ports.LED[15:0] | answered | {dir: out, drive: push-pull, from: pwm_audio.LED} | {dir: out, drive: push-pull, from: pwm_audio.LED} |
 
-## pilot1
+## pilot1_run4
 
 Drafter repairs: pass 1 0, pass 2 {'draft': 1, 'apply': 2}. Quotes that were not in the spec (so the field was asked): 30. Questions over the pass 2 budget: 24. Fields the drafter changed without being asked: 0. Calls by role: {'drafter': 6, 'oracle': 47}.
+
+Today's checker on these files:
+
+- module pixel_clock: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)
 
 Checks against facts fixed before the run:
 
@@ -369,6 +410,170 @@ Pass 2 questions (one per field the spec does not state; the fields each one set
 | design.board_ports.VGA_B[3:0] | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.b... | {dir: out, drive: push-pull, from: vga_output.b... |
 | design.board_ports.VGA_HS | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.h... | {dir: out, drive: push-pull, from: vga_output.h... |
 | design.board_ports.VGA_VS | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.v... | {dir: out, drive: push-pull, from: vga_output.v... |
+
+## pilot1_run5
+
+Drafter repairs: pass 1 0, pass 2 {'draft': 1, 'apply': 3}. Quotes that were not in the spec (so the field was asked): 8. Questions over the pass 2 budget: 3. Fields the drafter changed without being asked: 2. Calls by role: {'drafter': 7, 'oracle': 39}.
+
+Checks against facts fixed before the run:
+
+| Fact | Holds | Found |
+|---|---|---|
+| owner choice 1: a full-raster video stream with no back-pressure (every stream link: no back-pressure, no gaps) | yes | [{'link': 'video_source.out -> median_filter.in', 'protocol': 'axi4-stream', 'backpressure': [False, False]... |
+| owner choice 2: median latency H_TOTAL + 2 | no | ["median_filter: {'from': 'in', 'to': 'out', 'cycles': 1651}"] |
+| owner choice 3: shell registers at window base 0x00 | yes | {'video_source': 0, 'vga_output': 4} |
+
+Pass 1 questions:
+
+| Question | Result | Settles |
+|---|---|---|
+| How should the 3 x 3 neighbourhood be formed at the active-picture edges? | defaulted | S-3 |
+| Which patterns must be selectable in addition to the default colour bars? | defaulted | S-2, S-7 |
+| What UART command and response format should the test shell use, including serial framing? | defaulted | S-7 |
+| What are the frame counter's width, initial value, and increment point? | defaulted | S-7 |
+| What colour-channel width and digital levels should be used for the VGA output and colour bars? | answered | S-2, S-3, S-5 |
+
+Pass 2 questions (one per field the spec does not state; the fields each one settles):
+
+| Fields | Result | Draft value | Final value |
+|---|---|---|---|
+| video_source.contract.resets.rst | answered | {polarity: active_high, style: sync} | {polarity: active_low, style: async} |
+| video_source.contract.interfaces.out.tlast<br>median_filter.contract.interfaces.in.tlast | assumption (oracle) | End of each 1650-pixel line. | End of each 1650-pixel line. |
+| video_source.contract.interfaces.out.backpressure<br>median_filter.contract.interfaces.in.backpressure | answered | false | false |
+| video_source.contract.interfaces.out.source_gaps<br>median_filter.contract.interfaces.in.source_gaps | assumption (oracle) | false | false |
+| video_source.contract.throughput.out | assumption (oracle) | {beats_per_cycle: 1} | {beats_per_cycle: 1} |
+| median_filter.contract.resets.rst | answered | {polarity: active_high, style: sync} | {polarity: active_low, style: async} |
+| median_filter.contract.interfaces.out.tlast<br>vga_output.contract.interfaces.in.tlast | assumption (oracle) | End of each 1650-pixel line. | End of each 1650-pixel line. |
+| median_filter.contract.interfaces.out.packet_beats<br>vga_output.contract.interfaces.in.packet_beats | assumption (oracle) | 1650 | 1650 |
+| median_filter.contract.interfaces.out.backpressure<br>vga_output.contract.interfaces.in.backpressure | assumption (oracle) | false | false |
+| median_filter.contract.interfaces.out.source_gaps<br>vga_output.contract.interfaces.in.source_gaps | answered | false | false |
+| median_filter.contract.throughput.in | answered | {beats_per_cycle: 1} | {beats_per_cycle: 1, from: in, out_per_in: 1} |
+| median_filter.contract.throughput.out | answered | {beats_per_cycle: 1} | {beats_per_cycle: 1, from: in, out_per_in: 1} |
+| vga_output.contract.resets.rst | assumption (oracle) | {polarity: active_high, style: sync} | {polarity: active_low, style: async} |
+| vga_output.contract.ports.vga_r | assumption (oracle) | {dir: out, width: 4, reset_value: 0} | {dir: out, width: 4, reset_value: 0} |
+| vga_output.contract.ports.vga_g | assumption (oracle) | {dir: out, width: 4, reset_value: 0} | {dir: out, width: 4, reset_value: 0} |
+| vga_output.contract.ports.vga_b | assumption (oracle) | {dir: out, width: 4, reset_value: 0} | {dir: out, width: 4, reset_value: 0} |
+| vga_output.contract.ports.vga_hs | assumption (oracle) | {dir: out, width: 1, reset_value: 0} | {dir: out, width: 1, reset_value: 0} |
+| vga_output.contract.ports.vga_vs | assumption (oracle) | {dir: out, width: 1, reset_value: 0} | {dir: out, width: 1, reset_value: 0} |
+| vga_output.contract.ports.frame_count | assumption (oracle) | {dir: out, width: 32, reset_value: 0} | {dir: out, width: 32, reset_value: 0} |
+| vga_output.contract.throughput.in | answered | {beats_per_cycle: 1} | {beats_per_cycle: 1, from: in, out_per_in: 1} |
+| design.clocks.clk_sys | answered | {source: board, mhz: 100, port: CLK100MHZ} | {source: board, mhz: 100, port: CLK100MHZ} |
+| design.resets.rst_pix | answered | {from: CPU_RESETN, polarity: active_high, style... | {from: BTNC, polarity: active_low, style: async} |
+| video_source.contract.data_formats.x_coord | assumption (oracle) | {format: u11, packing: 'Horizontal raster coord... | {format: u11, packing: 'Horizontal raster coord... |
+| video_source.contract.data_formats.y_coord | assumption (oracle) | {format: u10, packing: 'Vertical raster coordin... | {format: u10, packing: 'Vertical raster coordin... |
+| video_source.contract.data_formats.rgb444 | assumption (oracle) | {format: u12, packing: 'R[3:0], G[3:0], B[3:0],... | {format: u12, packing: 'R[3:0], G[3:0], B[3:0],... |
+| median_filter.contract.data_formats.x_coord | assumption (oracle) | {format: u11, packing: 'Horizontal raster coord... | {format: u11, packing: 'Horizontal raster coord... |
+| median_filter.contract.data_formats.y_coord | assumption (oracle) | {format: u10, packing: 'Vertical raster coordin... | {format: u10, packing: 'Vertical raster coordin... |
+| median_filter.contract.data_formats.rgb444 | assumption (oracle) | {format: u12, packing: 'R[3:0], G[3:0], B[3:0],... | {format: u12, packing: 'R[3:0], G[3:0], B[3:0],... |
+| vga_output.contract.data_formats.x_coord | assumption (oracle) | {format: u11, packing: 'Horizontal raster coord... | {format: u11, packing: 'Horizontal raster coord... |
+| vga_output.contract.data_formats.y_coord | assumption (oracle) | {format: u10, packing: 'Vertical raster coordin... | {format: u10, packing: 'Vertical raster coordin... |
+| vga_output.contract.data_formats.rgb444 | assumption (oracle) | {format: u12, packing: 'R[3:0], G[3:0], B[3:0],... | {format: u12, packing: 'R[3:0], G[3:0], B[3:0],... |
+| vga_output.contract.data_formats.frame_counter | assumption (oracle) | {format: u32, packing: 'Completed-frame count, ... | {format: u32, packing: 'Completed-frame count, ... |
+| design.board_ports.CLK100MHZ | assumption (oracle) | {dir: in, drive: input, to: clk_sys} | {dir: in, drive: input, to: clk_sys} |
+| design.board_ports.CPU_RESETN | answered | {dir: in, drive: input, to: rst_pix} | None |
+| design.board_ports.VGA_HS | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.v... | {dir: out, drive: push-pull, from: vga_output.v... |
+| design.board_ports.VGA_VS | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.v... | {dir: out, drive: push-pull, from: vga_output.v... |
+| design.board_ports.LED[0] | assumption (limit) | {dir: out, drive: push-pull, from: clk_pix.locked} | {dir: out, drive: push-pull, from: clk_pix.locked} |
+
+Unasked changes:
+
+- `design.board_ports.BTNC`: {dir: in, drive: input, to: video_source.button... -> {dir: in, drive: input, to: rst_pix}
+- `vga_output.contract.resets.rst`: {polarity: active_high, style: sync} -> {polarity: active_low, style: async}
+
+## pilot1
+
+Drafter repairs: pass 1 0, pass 2 {'draft': 2, 'apply': 2}. Quotes that were not in the spec (so the field was asked): 17. Questions over the pass 2 budget: 7. Fields the drafter changed without being asked: 6. Calls by role: {'drafter': 7, 'oracle': 57}.
+
+Checks against facts fixed before the run:
+
+| Fact | Holds | Found |
+|---|---|---|
+| owner choice 1: a full-raster video stream with no back-pressure (every stream link: no back-pressure, no gaps) | yes | [{'link': 'pattern_timing.out -> median_filter.in', 'protocol': 'axi4-stream', 'backpressure': [False, Fals... |
+| owner choice 2: median latency H_TOTAL + 2 | no | ["median_filter: {'from': 'in', 'to': 'out', 'cycles': 1}"] |
+| owner choice 3: shell registers at window base 0x00 | yes | {'pattern_timing': 0} |
+
+Pass 1 questions:
+
+| Question | Result | Settles |
+|---|---|---|
+| What boundary rule should the 3 x 3 filter use for neighbourhood samples beyond the active picture? | defaulted | S-3 |
+| Which patterns should be selectable through the UART? | defaulted | S-2, S-7 |
+| What UART command and response format should select a pattern and read the frame counter? | defaulted | S-7 |
+| How should the frame counter count frames, and what width and reset behavior should it have? | defaulted | S-7 |
+| What pixel-clock stability criterion should control the colour blanking and LED[0]? | defaulted | S-5, S-6 |
+| What colour-channel width should be used at the VGA output? | answered | S-2, S-3 |
+
+Pass 2 questions (one per field the spec does not state; the fields each one settles):
+
+| Fields | Result | Draft value | Final value |
+|---|---|---|---|
+| pattern_timing.contract.resets.pixel_reset | assumption (oracle) | {polarity: active_low, style: sync} | {polarity: active_low, style: sync} |
+| pattern_timing.contract.ports.pattern_select | assumption (oracle) | {dir: in, width: 2} | {dir: in, width: 2} |
+| pattern_timing.contract.ports.frame_count | assumption (oracle) | {dir: out, width: 32, reset_value: 0} | {dir: out, width: 32, reset_value: 0} |
+| pattern_timing.contract.interfaces.out.protocol | assumption (oracle) | {protocol: axi4-stream, role: master} | {protocol: axi4-stream, role: master} |
+| pattern_timing.contract.interfaces.out.tdata<br>median_filter.contract.interfaces.in.tdata | assumption (oracle) | {width: 36, fields: [{name: x, bits: [35, 25], ... | {width: 48, fields: [{name: x, bits: [47, 37], ... |
+| pattern_timing.contract.interfaces.out.tuser<br>median_filter.contract.interfaces.in.tuser | assumption (oracle) | null | null |
+| pattern_timing.contract.interfaces.out.tlast<br>median_filter.contract.interfaces.in.tlast | assumption (oracle) | null | null |
+| pattern_timing.contract.interfaces.out.packet_beats<br>median_filter.contract.interfaces.in.packet_beats | assumption (oracle) | null | null |
+| pattern_timing.contract.interfaces.out.backpressure<br>median_filter.contract.interfaces.in.backpressure | answered | false | false |
+| pattern_timing.contract.interfaces.out.source_gaps<br>median_filter.contract.interfaces.in.source_gaps | answered | false | false |
+| pattern_timing.contract.registers | assumption (oracle) | [{name: PATTERN, offset: 0, access: RW, reset: ... | [{name: PATTERN, offset: 0, access: RW, reset: ... |
+| pattern_timing.contract.throughput.out | answered | {beats_per_cycle: 1} | {beats_per_cycle: 1} |
+| median_filter.contract.resets.pixel_reset | answered | {polarity: active_low, style: sync} | {polarity: active_low, style: sync} |
+| median_filter.contract.interfaces.in.protocol | assumption (oracle) | {protocol: axi4-stream, role: slave} | {protocol: axi4-stream, role: slave} |
+| median_filter.contract.interfaces.out.protocol | assumption (oracle) | {protocol: axi4-stream, role: master} | {protocol: axi4-stream, role: master} |
+| median_filter.contract.interfaces.out.tdata<br>vga_output.contract.interfaces.in.tdata | assumption (oracle) | {width: 36, fields: [{name: x, bits: [35, 25], ... | {width: 48, fields: [{name: x, bits: [47, 37], ... |
+| median_filter.contract.interfaces.out.tuser<br>vga_output.contract.interfaces.in.tuser | assumption (oracle) | null | null |
+| median_filter.contract.interfaces.out.tlast<br>vga_output.contract.interfaces.in.tlast | assumption (oracle) | null | null |
+| median_filter.contract.interfaces.out.packet_beats<br>vga_output.contract.interfaces.in.packet_beats | assumption (oracle) | null | null |
+| median_filter.contract.interfaces.out.backpressure<br>vga_output.contract.interfaces.in.backpressure | assumption (oracle) | false | false |
+| median_filter.contract.interfaces.out.source_gaps<br>vga_output.contract.interfaces.in.source_gaps | answered | false | false |
+| median_filter.contract.throughput.in | answered | {beats_per_cycle: 1} | {beats_per_cycle: 1} |
+| median_filter.contract.throughput.out | assumption (oracle) | {beats_per_cycle: 1} | {beats_per_cycle: 1} |
+| median_filter.contract.latency.in.out | answered | null | 1 |
+| vga_output.contract.resets.pixel_reset | assumption (oracle) | {polarity: active_low, style: sync} | {polarity: active_low, style: sync} |
+| vga_output.contract.ports.pixel_stable | assumption (oracle) | {dir: in, width: 1} | {dir: in, width: 1} |
+| vga_output.contract.ports.blank_button | assumption (oracle) | {dir: in, width: 1} | {dir: in, width: 1} |
+| vga_output.contract.ports.red | assumption (oracle) | {dir: out, width: 4, reset_value: 0} | {dir: out, width: 4, reset_value: 0} |
+| vga_output.contract.ports.green | assumption (oracle) | {dir: out, width: 4, reset_value: 0} | {dir: out, width: 4, reset_value: 0} |
+| vga_output.contract.ports.blue | assumption (oracle) | {dir: out, width: 4, reset_value: 0} | {dir: out, width: 4, reset_value: 0} |
+| vga_output.contract.ports.hsync | assumption (oracle) | {dir: out, width: 1, reset_value: 0} | {dir: out, width: 1, reset_value: 0} |
+| vga_output.contract.ports.vsync | assumption (oracle) | {dir: out, width: 1, reset_value: 0} | {dir: out, width: 1, reset_value: 0} |
+| vga_output.contract.interfaces.in.protocol | assumption (oracle) | {protocol: axi4-stream, role: slave} | {protocol: axi4-stream, role: slave} |
+| vga_output.contract.throughput.in | answered | {beats_per_cycle: 1} | {beats_per_cycle: 1} |
+| design.clocks.sys_clk | answered | {source: board, mhz: 100, port: CLK100MHZ} | {source: board, mhz: 100, port: CLK100MHZ} |
+| design.clocks.pixel_clk | answered | {source: mmcm, mhz: 74.25, from: sys_clk} | {source: mmcm, mhz: 74.25, from: sys_clk} |
+| design.resets.sys_reset | answered | {from: CPU_RESETN, polarity: active_low, style:... | {from: CPU_RESETN, polarity: active_low, style:... |
+| design.resets.pixel_reset | answered | {from: sys_reset, polarity: active_low, style: ... | {from: sys_reset, polarity: active_low, style: ... |
+| design.modules.pattern_timing.window_base | answered | 0 | 0 |
+| pattern_timing.contract.data_formats.raster_x | assumption (oracle) | {format: u11, packing: Raster horizontal coordi... | {format: u11, packing: Raster horizontal coordi... |
+| pattern_timing.contract.data_formats.raster_y | assumption (oracle) | {format: u10, packing: Raster vertical coordinate} | {format: u10, packing: Raster vertical coordinate} |
+| pattern_timing.contract.data_formats.channel | assumption (oracle) | {format: u4, packing: Unsigned VGA colour channel} | {format: u8, packing: Unsigned 8-bit colour cha... |
+| pattern_timing.contract.data_formats.flag | assumption (oracle) | {format: u1, packing: Boolean raster or sync flag} | {format: u1, packing: Boolean raster or sync flag} |
+| median_filter.contract.data_formats.raster_x | assumption (oracle) | {format: u11, packing: Raster horizontal coordi... | {format: u11, packing: Raster horizontal coordi... |
+| median_filter.contract.data_formats.raster_y | assumption (oracle) | {format: u10, packing: Raster vertical coordinate} | {format: u10, packing: Raster vertical coordinate} |
+| median_filter.contract.data_formats.channel | answered | {format: u4, packing: Unsigned VGA colour channel} | {format: u8, packing: 'Each pixel is 8 bits; pi... |
+| median_filter.contract.data_formats.flag | assumption (oracle) | {format: u1, packing: Boolean raster or sync flag} | {format: u1, packing: Boolean raster or sync flag} |
+| vga_output.contract.data_formats.raster_x | assumption (oracle) | {format: u11, packing: Raster horizontal coordi... | {format: u11, packing: Raster horizontal coordi... |
+| vga_output.contract.data_formats.raster_y | assumption (oracle) | {format: u10, packing: Raster vertical coordinate} | {format: u10, packing: Raster vertical coordinate} |
+| vga_output.contract.data_formats.channel | assumption (oracle) | {format: u4, packing: Unsigned VGA colour channel} | {format: u8, packing: Unsigned 8-bit colour cha... |
+| vga_output.contract.data_formats.flag | assumption (oracle) | {format: u1, packing: Boolean raster or sync flag} | {format: u1, packing: Boolean raster or sync flag} |
+| design.board_ports.CLK100MHZ | assumption (limit) | {dir: in, drive: input, to: sys_clk} | {dir: in, drive: input, to: sys_clk} |
+| design.board_ports.CPU_RESETN | assumption (limit) | {dir: in, drive: input, to: sys_reset} | {dir: in, drive: input, to: sys_reset} |
+| design.board_ports.VGA_HS | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.h... | {dir: out, drive: push-pull, from: vga_output.h... |
+| design.board_ports.VGA_VS | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.v... | {dir: out, drive: push-pull, from: vga_output.v... |
+| design.board_ports.VGA_R[3:0] | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.red} | {dir: out, drive: push-pull, from: vga_output.red} |
+| design.board_ports.VGA_G[3:0] | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.g... | {dir: out, drive: push-pull, from: vga_output.g... |
+| design.board_ports.VGA_B[3:0] | assumption (limit) | {dir: out, drive: push-pull, from: vga_output.b... | {dir: out, drive: push-pull, from: vga_output.b... |
+
+Unasked changes:
+
+- `median_filter.contract.interfaces.in.tdata`: {width: 36, fields: [{name: x, bits: [35, 25], ... -> {width: 48, fields: [{name: x, bits: [47, 37], ...
+- `median_filter.contract.interfaces.out.tdata`: {width: 36, fields: [{name: x, bits: [35, 25], ... -> {width: 48, fields: [{name: x, bits: [47, 37], ...
+- `pattern_timing.contract.data_formats.channel`: {format: u4, packing: Unsigned VGA colour channel} -> {format: u8, packing: Unsigned 8-bit colour cha...
+- `pattern_timing.contract.interfaces.out.tdata`: {width: 36, fields: [{name: x, bits: [35, 25], ... -> {width: 48, fields: [{name: x, bits: [47, 37], ...
+- `vga_output.contract.data_formats.channel`: {format: u4, packing: Unsigned VGA colour channel} -> {format: u8, packing: Unsigned 8-bit colour cha...
+- `vga_output.contract.interfaces.in.tdata`: {width: 36, fields: [{name: x, bits: [35, 25], ... -> {width: 48, fields: [{name: x, bits: [47, 37], ...
 
 ## pilot1_run3 (stopped, no files written)
 

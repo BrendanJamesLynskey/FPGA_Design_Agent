@@ -1,168 +1,84 @@
 [
  {
-  "question": "How should the 74.25 MHz pixel clock be generated on the Nexys A7-100T?",
-  "answer": "Generate it from the 100 MHz oscillator using an MMCM: DIVCLK_DIVIDE = 5, CLKFBOUT_MULT_F = 37.125, and CLKOUT0_DIVIDE_F = 10. Use the lock indication to identify when the video clock is locked."
- },
- {
-  "question": "What should the filter do at the active-picture boundaries, where a full 3x3 neighbourhood extends outside the picture?",
+  "question": "What boundary rule should the 3 x 3 filter use for neighbourhood samples beyond the active picture?",
   "answer": "not specified"
  },
  {
-  "question": "What colour-output width and encoding should be used for the VGA connector?",
-  "answer": "Use 4 bits per RGB channel. Encode each colour as the listed 4-bit channel values (for example, FFF means 15 on red, green, and blue; 000 means 0 on all channels)."
- },
- {
-  "question": "Which patterns should be selectable through the test shell?",
+  "question": "Which patterns should be selectable through the UART?",
   "answer": "not specified"
  },
  {
-  "question": "What UART command and response format should the host use for identifying the design, selecting a pattern, and reading the frame counter?",
+  "question": "What UART command and response format should select a pattern and read the frame counter?",
   "answer": "not specified"
  },
  {
-  "question": "What should the frame counter count, and what width and wrap behaviour should it have?",
+  "question": "How should the frame counter count frames, and what width and reset behavior should it have?",
   "answer": "not specified"
  },
  {
-  "question": "How should the design initialize its state at FPGA configuration, given that BTNC is specified as a video-blanking control?",
-  "answer": "not specified"
- },
- {
-  "question": "At what clock rate (MHz) must pixel_clock's clock clk close timing?",
+  "question": "What pixel-clock stability criterion should control the colour blanking and LED[0]?",
   "refused": "quote not in the hidden spec",
-  "raw": "74.25 MHz"
+  "raw": "Use the video clock\u2019s locked indication: blank the colours when it is not asserted, and drive LED[0] from it."
  },
  {
-  "question": "At what clock rate (MHz) must pixel_clock's clock clk close timing?",
+  "question": "What pixel-clock stability criterion should control the colour blanking and LED[0]?",
   "answer": "not specified"
  },
  {
-  "question": "Is pixel_clock's reset rst active high or active low, and synchronous or asynchronous?",
-  "answer": "The specified reset is active low, with asynchronous assertion and synchronous release."
+  "question": "What colour-channel width should be used at the VGA output?",
+  "answer": "Use 4 bits per colour channel."
  },
  {
-  "question": "What is pixel_clock's port locked: its direction, width and value in reset?",
+  "question": "Is pattern_timing's reset pixel_reset active high or active low, and synchronous or asynchronous?",
   "answer": "not specified"
  },
  {
-  "question": "Is timing_gen's reset rst active high or active low, and synchronous or asynchronous?",
+  "question": "What is pattern_timing's port pattern_select: its direction, width and value in reset?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is rgb12 in timing_gen (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What is pattern_timing's port frame_count: its direction, width and value in reset?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is y10 in timing_gen (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What protocol does pattern_timing's interface out use, and is pattern_timing its master or slave?",
   "answer": "not specified"
  },
  {
-  "question": "What number format is bit1 in timing_gen (signed or unsigned, total and fraction bits), and how is it packed?",
+  "question": "What does a beat of pattern_timing.out carry: the tdata width and its fields with their formats?",
   "answer": "not specified"
  },
  {
-  "question": "What protocol does timing_gen's interface out use, and is timing_gen its master or slave?",
+  "question": "Does pattern_timing.out carry sideband bits in tuser, and what does each bit mean?",
   "answer": "not specified"
  },
  {
-  "question": "What does a beat of timing_gen.out carry: the tdata width and its fields with their formats?",
+  "question": "What does tlast mark on pattern_timing.out, if anything?",
   "answer": "not specified"
  },
  {
-  "question": "What does tlast mark on timing_gen.out, if anything?",
+  "question": "How many beats does a packet on pattern_timing.out have?",
   "answer": "not specified"
  },
  {
-  "question": "How many beats does a packet on timing_gen.out have?",
-  "answer": "not specified"
+  "question": "May the sink of pattern_timing.out stall the stream (drive tready low)?",
+  "answer": "No. The stream has no back-pressure, so the sink may not stall it by driving tready low."
  },
  {
-  "question": "May the sink of timing_gen.out stall the stream (drive tready low)?",
-  "answer": "No. The stream has no back-pressure."
- },
- {
-  "question": "May the source of timing_gen.out leave gaps (tvalid low) once the stream has started?",
+  "question": "May the source of pattern_timing.out leave gaps (tvalid low) once the stream has started?",
   "answer": "false"
  },
  {
-  "question": "What throughput must timing_gen.out sustain (beats per clock, and output beats per input beat)?",
+  "question": "What is the register map of pattern_timing: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
   "answer": "not specified"
  },
  {
-  "question": "At what clock rate (MHz) must pattern_gen's clock clk close timing?",
-  "answer": "74.25 MHz"
+  "question": "What throughput must pattern_timing.out sustain (beats per clock, and output beats per input beat)?",
+  "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
  },
  {
-  "question": "Is pattern_gen's reset rst active high or active low, and synchronous or asynchronous?",
-  "answer": "not specified"
- },
- {
-  "question": "What is pattern_gen's port pattern_select: its direction, width and value in reset?",
-  "answer": "not specified"
- },
- {
-  "question": "What number format is rgb12 in pattern_gen (signed or unsigned, total and fraction bits), and how is it packed?",
-  "answer": "not specified"
- },
- {
-  "question": "What number format is y10 in pattern_gen (signed or unsigned, total and fraction bits), and how is it packed?",
-  "answer": "not specified"
- },
- {
-  "question": "What number format is bit1 in pattern_gen (signed or unsigned, total and fraction bits), and how is it packed?",
-  "answer": "not specified"
- },
- {
-  "question": "What protocol does pattern_gen's interface in use, and is pattern_gen its master or slave?",
-  "answer": "not specified"
- },
- {
-  "question": "What protocol does pattern_gen's interface out use, and is pattern_gen its master or slave?",
-  "answer": "not specified"
- },
- {
-  "question": "What does tlast mark on pattern_gen.out, if anything?",
-  "answer": "not specified"
- },
- {
-  "question": "How many beats does a packet on pattern_gen.out have?",
-  "answer": "not specified"
- },
- {
-  "question": "May the sink of pattern_gen.out stall the stream (drive tready low)?",
-  "answer": "No. The stream has no back-pressure, so the sink may not stall it by driving `tready` low."
- },
- {
-  "question": "May the source of pattern_gen.out leave gaps (tvalid low) once the stream has started?",
-  "answer": "False"
- },
- {
-  "question": "What is the register map of pattern_gen: the offset, width, reset value and access (RW, RO, WO) of every register the host reads or writes?",
-  "answer": "not specified"
- },
- {
-  "question": "What throughput must pattern_gen.out sustain (beats per clock, and output beats per input beat)?",
-  "answer": "not specified"
- },
- {
-  "question": "What latency, in clock cycles, from pattern_gen.in to pattern_gen.out?",
-  "answer": "not specified"
- },
- {
-  "question": "Is median_filter's reset rst active high or active low, and synchronous or asynchronous?",
-  "answer": "The specified reset input, CPU_RESETN, is active low, with asynchronous assertion and synchronous release."
- },
- {
-  "question": "What number format is rgb12 in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
-  "answer": "not specified"
- },
- {
-  "question": "What number format is y10 in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
-  "answer": "not specified"
- },
- {
-  "question": "What number format is bit1 in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
-  "answer": "not specified"
+  "question": "Is median_filter's reset pixel_reset active high or active low, and synchronous or asynchronous?",
+  "answer": "The median filter's specified reset input (CPU_RESETN) is active-low, with asynchronous assertion and synchronous release. The internal signal `pixel_reset` is not specified."
  },
  {
   "question": "What protocol does median_filter's interface in use, and is median_filter its master or slave?",
@@ -170,6 +86,14 @@
  },
  {
   "question": "What protocol does median_filter's interface out use, and is median_filter its master or slave?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What does a beat of median_filter.out carry: the tdata width and its fields with their formats?",
+  "answer": "not specified"
+ },
+ {
+  "question": "Does median_filter.out carry sideband bits in tuser, and what does each bit mean?",
   "answer": "not specified"
  },
  {
@@ -186,10 +110,141 @@
  },
  {
   "question": "May the source of median_filter.out leave gaps (tvalid low) once the stream has started?",
-  "answer": "false"
+  "answer": "No; the accepted choice is a full-raster video stream with no back-pressure."
+ },
+ {
+  "question": "What throughput must median_filter.in sustain (beats per clock, and output beats per input beat)?",
+  "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
  },
  {
   "question": "What throughput must median_filter.out sustain (beats per clock, and output beats per input beat)?",
+  "refused": "quote not in the hidden spec",
+  "raw": "{'beats_per_clock': 1, 'output_beats_per_input_beat': 1}"
+ },
+ {
+  "question": "What throughput must median_filter.out sustain (beats per clock, and output beats per input beat)?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What latency, in clock cycles, from median_filter.in to median_filter.out?",
+  "answer": "1 clock cycle"
+ },
+ {
+  "question": "Is vga_output's reset pixel_reset active high or active low, and synchronous or asynchronous?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port pixel_stable: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port blank_button: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port red: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "VGA_R is an output, 4 bits wide. The colour output is 0 while BTNC is pressed or the video clock is not locked."
+ },
+ {
+  "question": "What is vga_output's port red: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port green: its direction, width and value in reset?",
+  "refused": "quote not in the hidden spec",
+  "raw": "{'dir': 'out', 'width': 4, 'reset_value': 0}"
+ },
+ {
+  "question": "What is vga_output's port green: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port blue: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port hsync: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What is vga_output's port vsync: its direction, width and value in reset?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What protocol does vga_output's interface in use, and is vga_output its master or slave?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What throughput must vga_output.in sustain (beats per clock, and output beats per input beat)?",
   "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
+ },
+ {
+  "question": "Which clock is sys_clk: its frequency and where it comes from?",
+  "answer": "sys_clk is the 100 MHz clock from the board oscillator, on port CLK100MHZ."
+ },
+ {
+  "question": "Which clock is pixel_clk: its frequency and where it comes from?",
+  "answer": "In normal operation, pixel_clk is 74.25 MHz, generated by an MMCM from the 100 MHz input clock (sys_clk/CLK100MHZ). With SIM_DIRECT_CLOCK=1, the input clock is used directly as the pixel clock instead."
+ },
+ {
+  "question": "What resets the design's reset sys_reset (button or other source), and its polarity?",
+  "answer": "The reset input is CPU_RESETN, active-low. It asserts asynchronously and releases on the clock. For the video design, BTNC being pressed or the video clock not being locked also restarts the raster."
+ },
+ {
+  "question": "What resets the design's reset pixel_reset (button or other source), and its polarity?",
+  "answer": "The specified reset port is CPU_RESETN, active-low. The raster also restarts when BTNC is pressed or the video clock is not locked. BTNC\u2019s polarity and a signal named pixel_reset are not specified."
+ },
+ {
+  "question": "At which offset of the shell's register window do pattern_timing's registers start?",
+  "answer": "0x00"
+ },
+ {
+  "question": "What number format is raster_x in pattern_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is raster_y in pattern_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is channel in pattern_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is flag in pattern_timing (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is raster_x in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is raster_y in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is channel in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "Signedness and fraction bits are not specified. Each pixel is 8 bits; pixel p is packed into bits [8*(p mod 3)+7 : 8*(p mod 3)] of register p div 3 of the window."
+ },
+ {
+  "question": "What number format is flag in median_filter (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is raster_x in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is raster_y in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is channel in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
+ },
+ {
+  "question": "What number format is flag in vga_output (signed or unsigned, total and fraction bits), and how is it packed?",
+  "answer": "not specified"
  }
 ]

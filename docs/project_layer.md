@@ -53,8 +53,8 @@ same as in today's `designs/<name>/`. They enter the stage keys as soon as they 
 | `resets` | `{name, domain, polarity, style: sync\|async, from, via}` | a reset derived in another domain needs `via` (a CDC primitive) |
 | `shell` | `{design_id: 4 ASCII characters, clock, reset}`: `shell/rtl/fpga_shell.sv` | the shell's UART pins are on board ports |
 | `modules` | `{name, kind: rtl\|ipgen\|lib, clocks: {contract clock: design clock}, resets: {...}, params, window_base, register_crossings}` | every contract clock and reset is bound; a bound clock is not faster than the contract's `max_mhz`; reset polarity, style and domain match; parameter overrides are in the contract's allowed values |
-| `connections` | `{from: <module>.<interface>, to: <module>.<interface>, crossing: {primitive}}` | master to slave, the same protocol and `tdata` width and fields, the same `tuser` bits, both or neither with `tlast`, equal `packet_beats`, a sink that may stall only behind a source that can be stalled, a source with gaps only into a sink that allows gaps; a crossing exactly where the two ends are on different design clocks; every slave connected; each interface connected once |
-| `board_ports` | `{name: NAME or NAME[hi:lo], dir, drive: push-pull\|open-drain\|pulled-up\|input, from \| to}` | every bit is in the board's master XDC; the width equals the width of what it is bound to (`<clock>`, `<reset>`, `<clock>.locked`, `shell.uart_rx`/`uart_tx`, `<module>.<port>`, `<module>.<interface>.tuser.<name>`, `<module>.<interface>.<signal>[hi:lo]`) |
+| `connections` | `{from: <module>.<interface>, to: <module>.<interface>, crossing: {primitive}}` | master to slave, the same protocol and `tdata` width and fields, the same `tuser` bits, both or neither with `tlast`, equal `packet_beats`, a sink that may stall only behind a source that can be stalled, a source with gaps only into a sink that allows gaps; a crossing exactly where the two ends are on different design clocks; every slave connected; each interface connected once; with more than one module, at least one connection, and every module reachable from a board port or the shell window (its `window_base`) through connections |
+| `board_ports` | `{name: NAME or NAME[hi:lo], dir, drive: push-pull\|open-drain\|pulled-up\|input, from \| to}` | every bit is in the board's master XDC; `dir` agrees with the board's direction for the pin (the FPGA's view: the master XDC's section, or the pin's `dir` in `boards/<board>/inventory.yaml`; Pmod pins are not checked); the width equals the width of what it is bound to (`<clock>`, `<reset>`, `<clock>.locked`, `shell.uart_rx`/`uart_tx`, `<module>.<port>`, `<module>.<interface>.tuser.<name>`, `<module>.<interface>.<signal>[hi:lo]`) |
 | `owned` | paths or globs the engineer owns | inside the project |
 | `assumptions` | `{id: A-<n>, text, default, reason, affects, status: open\|resolved}` | ids unique; the dashboard lists the open ones |
 
@@ -142,7 +142,7 @@ python -m project status project/examples/video_median --html build/project_dash
 | Pass | The drafter does | The questions | Log |
 |---|---|---|---|
 | 1 requirements | S-requirements with proof methods (a missing proof gets `propose_proof`'s default) | its own, each naming the S-ids it settles; budget 12 | `phase0/pass1_requirements.json` |
-| 2 decomposition and contracts | modules, connections, a contract per module, the clock and reset plan, the shell and the board pins, with the pass 1 answers; for every field, a word-for-word quote of the spec (`sources`) or a reason (`reasons`) | **made by the harness, not the model:** one per field of the inventory (below) that no quote states; the drafter's value is the proposed default; budget 40 | `phase0/pass2_contracts.json` |
+| 2 decomposition and contracts | modules, connections, a contract per module, the clock and reset plan, the shell and the board pins, with the pass 1 answers; for every field, a word-for-word quote of the spec (`sources`) or a reason (`reasons`) | **made by the harness, not the model:** one per field of the inventory (below) that no quote states; the drafter's value is the proposed default. Asked in order: interface fields module by module, each module within its own share (12), then the design's own fields (12), then data formats and board pins (12 together) | `phase0/pass2_contracts.json` |
 | assumptions | - | every question nobody answered (`not specified`, over the budget, `--interview off`) becomes `assumptions: [{id: A-n, text, default, reason, affects, status: open, by}]` in `design.yaml`; the drafter's own assumptions are dropped | `design.yaml` |
 
 The field inventory (`phase0.inventory`): per contract, each parameter, each clock's `max_mhz`, each reset, each port
@@ -152,8 +152,9 @@ worded so that the oracle answers it with the hidden spec's whole map, as `ensur
 latency and throughput. Per design: each clock, each reset, the shell's design ID, each module's `window_base`, each
 board pin. The six stream fields that both ends of a connection must share are asked once per connection and settle both
 ends. A quote counts only when it is in `system/spec.md` (whitespace and quote marks normalised, at least three
-words), the rule the oracle's quotes already follow. A quote proves that the words are in the spec, not that the value
-matches them (see the measurement).
+words), the rule the oracle's quotes already follow, and only when it holds every number of the field's value (a
+latency of 1651 cycles is not stated by a sentence with no number in it). A quote still proves only that the words are
+in the spec, not that a non-numeric value (an electrical type, a protocol) matches them (see the measurement).
 
 After the answers, the drafter applies them. A field it changes without an answer naming it goes back to it as a
 repair note (put the draft value back); what is still changed after three repairs is listed under `unasked_changes`

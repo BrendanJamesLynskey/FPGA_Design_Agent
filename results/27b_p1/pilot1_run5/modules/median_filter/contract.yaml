@@ -1,0 +1,86 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: median_filter
+summary: Produces the per-channel 3 by 3 median for each active pixel and delays raster metadata to keep it aligned.
+parameters: []
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: s_axis_tvalid, dir: in, clock: clk}
+- {name: s_axis_tready, dir: out, clock: clk, reset_value: 0}
+- {name: s_axis_tdata, dir: in, width: 33, clock: clk}
+- {name: s_axis_tuser, dir: in, width: 4, clock: clk}
+- {name: s_axis_tlast, dir: in, clock: clk}
+- {name: m_axis_tvalid, dir: out, clock: clk, reset_value: 0}
+- {name: m_axis_tready, dir: in, clock: clk}
+- {name: m_axis_tdata, dir: out, width: 33, clock: clk, reset_value: 0}
+- {name: m_axis_tuser, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: m_axis_tlast, dir: out, clock: clk, reset_value: 0}
+data_formats:
+- {name: x_coord, format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}
+- {name: y_coord, format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}
+- {name: rgb444, format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}
+interfaces:
+- name: in
+  protocol: axi4-stream
+  role: slave
+  prefix: s_axis
+  clock: clk
+  reset: rst
+  tdata:
+    width: 33
+    fields:
+    - name: x
+      bits: [32, 22]
+      format: x_coord
+    - name: y
+      bits: [21, 12]
+      format: y_coord
+    - name: rgb
+      bits: [11, 0]
+      format: rgb444
+  tuser:
+  - {bit: 0, name: active, meaning: 1 during the 1280 by 720 active picture}
+  - {bit: 1, name: hsync, meaning: Positive horizontal sync}
+  - {bit: 2, name: vsync, meaning: Positive vertical sync}
+  - {bit: 3, name: force_blank, meaning: 1 while BTNC is pressed}
+  tlast: End of each 1650-pixel line.
+  packet_beats: 1650
+  backpressure: false
+  source_gaps: false
+- name: out
+  protocol: axi4-stream
+  role: master
+  prefix: m_axis
+  clock: clk
+  reset: rst
+  tdata:
+    width: 33
+    fields:
+    - name: x
+      bits: [32, 22]
+      format: x_coord
+    - name: y
+      bits: [21, 12]
+      format: y_coord
+    - name: rgb
+      bits: [11, 0]
+      format: rgb444
+  tuser:
+  - {bit: 0, name: active, meaning: 1 during the 1280 by 720 active picture}
+  - {bit: 1, name: hsync, meaning: Positive horizontal sync}
+  - {bit: 2, name: vsync, meaning: Positive vertical sync}
+  - {bit: 3, name: force_blank, meaning: 1 while BTNC is pressed}
+  tlast: End of each 1650-pixel line.
+  packet_beats: 1650
+  backpressure: false
+  source_gaps: false
+latency:
+- {from: in, to: out, cycles: 1651}
+throughput:
+- {interface: in, beats_per_cycle: 1, from: in, out_per_in: 1}
+- {interface: out, beats_per_cycle: 1, from: in, out_per_in: 1}

@@ -1,62 +1,64 @@
 # Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
 schema: fpga-design-agent/contract/v1
 module: vga_output
-summary: Drives VGA RGB and sync outputs from the filtered raster stream, blanking RGB when required.
+summary: Drives the VGA colour and sync outputs from the filtered raster and blanks colour when required.
 clocks:
-- {name: clk, port: clk, max_mhz: 74.25}
+- {name: pixel_clk, port: clk, max_mhz: 74.25}
 resets:
-- {name: rst, port: rst, clock: clk, polarity: active_high, style: sync}
+- {name: pixel_reset, port: rst, clock: pixel_clk, polarity: active_low, style: sync}
 ports:
 - {name: clk, dir: in}
 - {name: rst, dir: in}
+- {name: pixel_stable, dir: in, width: 1, clock: async}
 - {name: blank_button, dir: in, width: 1, clock: async}
-- {name: pixel_locked, dir: in, width: 1, clock: async}
-- {name: red, dir: out, width: 4, clock: clk, reset_value: 0}
-- {name: green, dir: out, width: 4, clock: clk, reset_value: 0}
-- {name: blue, dir: out, width: 4, clock: clk, reset_value: 0}
-- {name: hsync, dir: out, width: 1, clock: clk, reset_value: 0}
-- {name: vsync, dir: out, width: 1, clock: clk, reset_value: 0}
-- {name: s_axis_tvalid, dir: in, clock: clk}
-- {name: s_axis_tready, dir: out, clock: clk, reset_value: 0}
-- {name: s_axis_tdata, dir: in, width: 36, clock: clk}
-- {name: s_axis_tuser, dir: in, width: 1, clock: clk}
-- {name: s_axis_tlast, dir: in, clock: clk}
+- {name: s_axis_tvalid, dir: in, clock: pixel_clk}
+- {name: s_axis_tready, dir: out, clock: pixel_clk, reset_value: 0}
+- {name: s_axis_tdata, dir: in, width: 48, clock: pixel_clk}
+- {name: red, dir: out, width: 4, clock: pixel_clk, reset_value: 0}
+- {name: green, dir: out, width: 4, clock: pixel_clk, reset_value: 0}
+- {name: blue, dir: out, width: 4, clock: pixel_clk, reset_value: 0}
+- {name: hsync, dir: out, width: 1, clock: pixel_clk, reset_value: 0}
+- {name: vsync, dir: out, width: 1, clock: pixel_clk, reset_value: 0}
 data_formats:
-- {name: rgb12, format: u12, packing: three 4-bit RGB channels}
-- {name: x11, format: u11, packing: horizontal raster coordinate}
-- {name: y10, format: u10, packing: vertical raster coordinate}
-- {name: bit1, format: u1, packing: one raster metadata bit}
+- {name: raster_x, format: u11, packing: Raster horizontal coordinate}
+- {name: raster_y, format: u10, packing: Raster vertical coordinate}
+- {name: channel, format: u8, packing: Unsigned 8-bit colour channel}
+- {name: flag, format: u1, packing: Boolean raster or sync flag}
 interfaces:
 - name: in
   protocol: axi4-stream
   role: slave
   prefix: s_axis
-  clock: clk
-  reset: rst
+  clock: pixel_clk
+  reset: pixel_reset
   tdata:
-    width: 36
+    width: 48
     fields:
-    - name: rgb
-      bits: [35, 24]
-      format: rgb12
     - name: x
-      bits: [23, 13]
-      format: x11
+      bits: [47, 37]
+      format: raster_x
     - name: y
-      bits: [12, 3]
-      format: y10
+      bits: [36, 27]
+      format: raster_y
+    - name: red
+      bits: [26, 19]
+      format: channel
+    - name: green
+      bits: [18, 11]
+      format: channel
+    - name: blue
+      bits: [10, 3]
+      format: channel
     - name: active
       bits: [2, 2]
-      format: bit1
+      format: flag
     - name: hsync
       bits: [1, 1]
-      format: bit1
+      format: flag
     - name: vsync
       bits: [0, 0]
-      format: bit1
-  tuser:
-  - {bit: 0, name: frame_start, meaning: Assert on the first raster position of each frame.}
-  tlast: Assert on the final raster position of each frame.
-  packet_beats: 1237500
+      format: flag
   backpressure: false
   source_gaps: false
+throughput:
+- {interface: in, beats_per_cycle: 1}

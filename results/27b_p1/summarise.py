@@ -18,7 +18,9 @@ from typing import Any
 import yaml
 
 HERE = Path(__file__).resolve().parent
-SPECS = ("pilot1_run1", "pilot1_run2", "c12_pwm_audio_run1", "pilot1_run3", "c12_pwm_audio", "pilot1")   # the order run
+SPECS = ("pilot1_run1", "pilot1_run2", "c12_pwm_audio_run1", "pilot1_run3", "c12_pwm_audio", "pilot1_run4", "pilot1_run5",
+         "pilot1")
+#: ^ the order run
 
 
 def _load(p: Path) -> Any:
@@ -47,6 +49,17 @@ def _links(d: dict[str, Any], contracts: dict[str, Any]) -> list[dict[str, Any]]
     return out
 
 
+def _lat_ok(c: dict[str, Any], cycles: Any) -> bool:
+    """H_TOTAL + 2, as the expression or as its value with the contract's own H_TOTAL (default 1650, the 720p line)."""
+    if str(cycles).replace(" ", "") == "H_TOTAL+2":
+        return True
+    h = next((p.get("default") for p in c.get("parameters") or [] if p.get("name") == "H_TOTAL"), 1650)
+    try:
+        return int(str(cycles), 0) == h + 2
+    except ValueError:
+        return False
+
+
 def checks(spec: str, root: Path) -> list[dict[str, Any]]:
     d = _load(root / "design.yaml")
     cs = {m["name"]: _load(root / "modules" / m["name"] / "contract.yaml") for m in d["modules"]
@@ -61,7 +74,7 @@ def checks(spec: str, root: Path) -> list[dict[str, Any]]:
                                                     for l in stream)})
         lat = [(m, x) for m, c in cs.items() for x in c.get("latency") or []]
         out.append({"fact": "owner choice 2: median latency H_TOTAL + 2", "found": [f"{m}: {x}" for m, x in lat],
-                    "holds": any("median" in m and str(x.get("cycles")).replace(" ", "") == "H_TOTAL+2" for m, x in lat)})
+                    "holds": any("median" in m and _lat_ok(cs[m], x.get("cycles")) for m, x in lat)})
         wb = {m["name"]: m.get("window_base") for m in d["modules"] if m.get("window_base") is not None}
         out.append({"fact": "owner choice 3: shell registers at window base 0x00", "found": wb,
                     "holds": bool(wb) and min(wb.values()) == 0})
@@ -97,6 +110,10 @@ def summarise(spec: str) -> dict[str, Any]:
         settled[k] += q["fields"]
         by_area[(_area(q["fields"][0]), k)] += 1
     who = Counter(c["who"] for c in calls)
+    import sys
+    sys.path.insert(0, str(HERE.parents[1]))
+    from project.schema import check_project
+    recheck = check_project(root).errors
     return {"spec": spec, "valid": s["valid"], "errors": s["errors"], "modules": s["modules"],
             "pass1": {k: p1[k] for k in ("requirements", "asked", "answered", "defaulted", "drafter_repairs")},
             "pass2": {k: p2[k] for k in ("fields", "stated_in_spec", "asked", "answered", "defaulted", "drafter_repairs")},
@@ -109,7 +126,7 @@ def summarise(spec: str) -> dict[str, Any]:
             "questions_pass2": [{"fields": q["fields"], "status": q["status"], "by": q["by"],
                                  "draft": q["draft_value"], "final": q["final_value"], "answer": q["answer"]}
                                 for q in p2["questions"]],
-            "llm": s["llm"], "calls_by_role": dict(who), "checks": checks(spec, root)}
+            "llm": s["llm"], "calls_by_role": dict(who), "checks": checks(spec, root), "recheck": recheck}
 
 
 def _short(v: Any, n: int = 70) -> str:
@@ -129,23 +146,38 @@ def markdown(rs: list[dict[str, Any]]) -> str:
          "- after `pilot1_run3` (it stopped: the unasked-change notes used up the apply step's repairs and a checker",
          "  error remained): the last repair is kept for checker errors, and an apply step that never passes keeps the",
          "  valid draft and writes every answer it could not apply as an open assumption carrying the answer.",
-         "`pilot1` (run 4) ran with the final harness. `c12_pwm_audio` (run 2) ran before the third change; its apply",
-         "step needed no repair, so that change would not have altered it. Each row is a single run.", "",
+         "- after `pilot1_run4` (planner review of PR #104; the median latency was asked but fell past the single",
+         "  40-question budget): pass 2 asks interface fields first, each module within its own share (12), then the",
+         "  design's own fields (12), then data formats and board pins (12 together); the checker now rejects a",
+         "  multi-module graph with no connections or with a module that reaches neither a board pin nor the shell,",
+         "  and a board pin whose direction disagrees with the board (master XDC sections, inventory `dir`).",
+         "- after `pilot1_run5` (the median latency, 1651, was \"stated\" by a quote with no number in it, so never",
+         "  asked): a quote states a field only if it holds every number of the field's value.",
+         "`pilot1` (run 6) ran with the final harness. `c12_pwm_audio` (run 2) ran before the last three changes. "
+         "The last column re-checks every run's files with today's checker. Each row is a single run.", "",
+         "**Owner choice 2 in run 6.** The median latency was asked (question order and shares fixed it) and the oracle",
+         "answered \"1 clock cycle\", quoting the `c9_median3x3` task (\"exactly 1 clock: the result of a window",
+         "presented in clock n is seen in clock n + 1\"): that task filters a presented window, the pilot's median a",
+         "raster with line buffers. The oracle's hidden file holds both that line and the owner's \"Median latency",
+         "H_TOTAL + 2.\" and nothing says which wins, so the choice is lost in the oracle, not in the harness.", "",
          "| Spec | Modules | Pass 1 asked / answered / assumptions | Contract and design fields | Stated by a spec quote | "
-         "Pass 2 asked / answered / assumptions | Assumptions written | Files valid | Calls | Tokens (in / out) | USD |",
-         "|---|---|---|---|---|---|---|---|---|---|---|"]
+         "Pass 2 asked / answered / assumptions | Assumptions written | Files valid | Calls | Tokens (in / out) | USD | "
+         "Today's checker |",
+         "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rs:
         a, b, l = r["pass1"], r["pass2"], r["llm"]
         L.append(f"| {r['spec']} | {', '.join(r['modules'])} | {a['asked']} / {a['answered']} / {a['defaulted']} | "
                  f"{b['fields']} | {b['stated_in_spec']} | {b['asked']} / {b['answered']} / {b['defaulted']} | "
                  f"{r['assumptions']} | {'yes' if r['valid'] else 'NO'} | {l['calls']} | {l['prompt_tokens']} / "
-                 f"{l['completion_tokens']} | {l['usd_provider_reported']:.4f} |")
+                 f"{l['completion_tokens']} | {l['usd_provider_reported']:.4f} | "
+                 f"{'valid' if not r['recheck'] else str(len(r['recheck'])) + ' errors'} |")
     for r in rs:
         L += ["", f"## {r['spec']}", "",
               f"Drafter repairs: pass 1 {r['pass1']['drafter_repairs']}, pass 2 {r['pass2']['drafter_repairs']}. "
               f"Quotes that were not in the spec (so the field was asked): {r['bad_quotes']}. Questions over the "
               f"pass 2 budget: {r['pass2_by_limit']}. Fields the drafter changed without being asked: "
               f"{len(r['unasked_changes'])}. Calls by role: {r['calls_by_role']}.", "",
+              *(["Today's checker on these files:", "", *(f"- {e}" for e in r["recheck"]), ""] if r["recheck"] else []),
               "Checks against facts fixed before the run:", "", "| Fact | Holds | Found |", "|---|---|---|"]
         for c in r["checks"]:
             L.append(f"| {c['fact']} | {'yes' if c['holds'] else 'no'} | {_short(c['found'], 110)} |")

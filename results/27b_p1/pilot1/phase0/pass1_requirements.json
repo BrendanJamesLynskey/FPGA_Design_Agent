@@ -2,32 +2,17 @@
  "pass": "requirements",
  "budget": 12,
  "drafter_repairs": 0,
- "requirements": 8,
- "asked": 7,
- "answered": 2,
+ "requirements": 7,
+ "asked": 6,
+ "answered": 1,
  "defaulted": 5,
  "questions": [
   {
    "id": "P1-1",
-   "text": "How should the 74.25 MHz pixel clock be generated on the Nexys A7-100T?",
-   "default": "Derive it from the board's 100 MHz oscillator using an MMCM, and use the MMCM lock indication as the clock-stable signal.",
-   "reason": "The specification sets the pixel-clock rate and requires a stable indication, but does not specify the clock source or stability criterion.",
-   "answer": "Generate it from the 100 MHz oscillator using an MMCM: DIVCLK_DIVIDE = 5, CLKFBOUT_MULT_F = 37.125, and CLKOUT0_DIVIDE_F = 10. Use the lock indication to identify when the video clock is locked.",
-   "status": "answered",
-   "by": "oracle",
-   "evidence": "    - 'parameter SIM_DIRECT_CLOCK = 1 makes the clock input the pixel clock (no MMCM, locked = 1); the bench uses it. With 0 an MMCM makes 74.25 MHz from the 100 MHz clock (VCO 742.5 MHz: DIVCLK_DIVIDE 5, CLKFBOUT_MULT_F 37.125, CLKOUT0_DIVIDE_F 10)'",
-   "settles": [
-    "S-1",
-    "S-5",
-    "S-6"
-   ]
-  },
-  {
-   "id": "P1-2",
-   "text": "What should the filter do at the active-picture boundaries, where a full 3x3 neighbourhood extends outside the picture?",
-   "default": "Use nearest-edge replication: clamp each neighbourhood coordinate to the nearest active-picture coordinate.",
-   "reason": "The filter operation is specified, but boundary pixels do not have a complete in-picture neighbourhood.",
-   "answer": "Use nearest-edge replication: clamp each neighbourhood coordinate to the nearest active-picture coordinate.",
+   "text": "What boundary rule should the 3 x 3 filter use for neighbourhood samples beyond the active picture?",
+   "default": "Replicate the nearest active-picture pixel at each boundary, so every active output pixel has a complete 3 x 3 neighbourhood.",
+   "reason": "The specification defines the neighbourhood operation but not how to obtain samples beyond the image edges.",
+   "answer": "Replicate the nearest active-picture pixel at each boundary, so every active output pixel has a complete 3 x 3 neighbourhood.",
    "status": "defaulted",
    "by": "oracle",
    "evidence": null,
@@ -36,73 +21,71 @@
    ]
   },
   {
+   "id": "P1-2",
+   "text": "Which patterns should be selectable through the UART?",
+   "default": "Provide the specified colour bars, a grayscale ramp, and a checkerboard; use the colour bars at startup.",
+   "reason": "The default pattern is specified, but the other choices available through the pattern-selection interface are not.",
+   "answer": "Provide the specified colour bars, a grayscale ramp, and a checkerboard; use the colour bars at startup.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-2",
+    "S-7"
+   ]
+  },
+  {
    "id": "P1-3",
-   "text": "What colour-output width and encoding should be used for the VGA connector?",
-   "default": "Use the Nexys A7 VGA interface's 4 bits per RGB channel, mapping each named bar colour to full-scale 0 or 15 per channel.",
-   "reason": "The bar colours are specified, but the output channel width and numeric colour encoding are not.",
-   "answer": "Use 4 bits per RGB channel. Encode each colour as the listed 4-bit channel values (for example, FFF means 15 on red, green, and blue; 000 means 0 on all channels).",
+   "text": "What UART command and response format should select a pattern and read the frame counter?",
+   "default": "Use newline-terminated ASCII commands `P<n>` to select pattern number n and `F` to read the counter, with newline-terminated ASCII replies.",
+   "reason": "The interface functions and baud rate are specified, but the command syntax and response format are not.",
+   "answer": "Use newline-terminated ASCII commands `P<n>` to select pattern number n and `F` to read the counter, with newline-terminated ASCII replies.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-4",
+   "text": "How should the frame counter count frames, and what width and reset behavior should it have?",
+   "default": "Use a 32-bit unsigned counter that increments once per completed displayed frame and starts at zero after power-up or reset.",
+   "reason": "The specification requires a readable frame counter but does not define its counting event, width, or initialization.",
+   "answer": "Use a 32-bit unsigned counter that increments once per completed displayed frame and starts at zero after power-up or reset.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-5",
+   "text": "What pixel-clock stability criterion should control the colour blanking and LED[0]?",
+   "default": "Treat the clock as stable when the clock-generation primitive's locked indication is asserted.",
+   "reason": "The specification requires stable-clock behavior but does not define how stability is determined.",
+   "answer": "Treat the clock as stable when the clock-generation primitive's locked indication is asserted.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-5",
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-6",
+   "text": "What colour-channel width should be used at the VGA output?",
+   "default": "Use the Nexys A7 VGA connector's native 4 bits per colour channel.",
+   "reason": "The board is specified, but the required output colour precision is not stated.",
+   "answer": "Use 4 bits per colour channel.",
    "status": "answered",
    "by": "oracle",
    "evidence": "    - SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area",
    "settles": [
     "S-2",
-    "S-3",
-    "S-5"
-   ]
-  },
-  {
-   "id": "P1-4",
-   "text": "Which patterns should be selectable through the test shell?",
-   "default": "Offer the specified colour bars and a solid-black pattern, with the colour bars selected at power-up.",
-   "reason": "The specification requires pattern selection and defines the default pattern, but does not define the other selectable patterns.",
-   "answer": "Offer the specified colour bars and a solid-black pattern, with the colour bars selected at power-up.",
-   "status": "defaulted",
-   "by": "oracle",
-   "evidence": null,
-   "settles": [
-    "S-2",
-    "S-8"
-   ]
-  },
-  {
-   "id": "P1-5",
-   "text": "What UART command and response format should the host use for identifying the design, selecting a pattern, and reading the frame counter?",
-   "default": "Use newline-terminated ASCII commands and responses: ID, PAT <number>, and FRAME; return VMED for ID and an acknowledgement or value for the other commands.",
-   "reason": "The baud rate and design ID are specified, but the serial protocol and command syntax are not.",
-   "answer": "Use newline-terminated ASCII commands and responses: ID, PAT <number>, and FRAME; return VMED for ID and an acknowledgement or value for the other commands.",
-   "status": "defaulted",
-   "by": "oracle",
-   "evidence": null,
-   "settles": [
-    "S-7",
-    "S-8"
-   ]
-  },
-  {
-   "id": "P1-6",
-   "text": "What should the frame counter count, and what width and wrap behaviour should it have?",
-   "default": "Use a 32-bit unsigned counter that increments once per completed video frame and wraps naturally on overflow.",
-   "reason": "A readable frame counter is required, but its meaning, width, and overflow behaviour are unspecified.",
-   "answer": "Use a 32-bit unsigned counter that increments once per completed video frame and wraps naturally on overflow.",
-   "status": "defaulted",
-   "by": "oracle",
-   "evidence": null,
-   "settles": [
-    "S-8"
-   ]
-  },
-  {
-   "id": "P1-7",
-   "text": "How should the design initialize its state at FPGA configuration, given that BTNC is specified as a video-blanking control?",
-   "default": "Initialize state through FPGA configuration; use BTNC only to blank colour outputs, not as a reset.",
-   "reason": "The specification assigns BTNC a blanking behaviour but does not specify a reset or initialization method.",
-   "answer": "Initialize state through FPGA configuration; use BTNC only to blank colour outputs, not as a reset.",
-   "status": "defaulted",
-   "by": "oracle",
-   "evidence": null,
-   "settles": [
-    "S-3",
-    "S-8"
+    "S-3"
    ]
   }
  ]

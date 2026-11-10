@@ -178,8 +178,9 @@ def test_unanswered_questions_become_assumptions(tmp_path: Path) -> None:
     assert ids == [f"A-{n}" for n in range(1, len(ids) + 1)]
     colour = next(a for a in d["assumptions"] if "colour" in a["text"])
     assert colour["affects"] == ["S-1"] and colour["default"] == "green" and colour["status"] == "open"
-    lat = [a for a in d["assumptions"] if "led_sink.contract.ports.leds" in a["affects"]]
-    assert not lat                                                       # stated by a quote: no question, no assumption
+    assert not [a for a in d["assumptions"] if "design.board_ports.BTNC" in a["affects"]]   # stated: no question
+    # the quote "holds the last byte on LED[7:0]" has no 8 (the width) and no reset value: asked, then an assumption
+    assert [a for a in d["assumptions"] if "led_sink.contract.ports.leds" in a["affects"]]
     # the drafter's own assumptions are dropped: only unanswered questions are assumptions
     assert all(a.get("by") in ("oracle", "limit", "default") for a in d["assumptions"])
 
@@ -233,11 +234,29 @@ def test_checker_errors_go_back_to_the_drafter_as_repair_notes(tmp_path: Path) -
 
 
 def test_budget_overflow_is_defaulted_by_limit_and_kept_as_assumptions(tmp_path: Path) -> None:
-    root, out, _ = _run(tmp_path, [PASS1, _bundle(), _applied()], budget={"requirements": 1, "contracts": 3})
+    budget = {"requirements": 1, "contracts_per_module": 2, "contracts_design": 1, "contracts_rest": 0}
+    root, out, _ = _run(tmp_path, [PASS1, _bundle(), _applied()], budget=budget)
     p2 = json.loads((root / "phase0" / "pass2_contracts.json").read_text())
-    assert sum(q["by"] == "limit" for q in p2["questions"]) == p2["asked"] - 3
+    inside = [q for q in p2["questions"] if q["by"] != "limit"]
+    assert len(inside) <= 2 + 2 + 1 and sum(q["by"] == "limit" for q in p2["questions"]) == p2["asked"] - len(inside)
     d = yaml.safe_load((root / "design.yaml").read_text())
-    assert sum(a["by"] == "limit" for a in d["assumptions"]) >= p2["asked"] - 3
+    assert sum(a["by"] == "limit" for a in d["assumptions"]) == p2["asked"] - len(inside) + 1   # + pass 1's second
+
+
+def test_interface_fields_are_asked_first_within_each_modules_share() -> None:
+    from project.phase0 import Field, plan_questions
+    fs = [Field(["design.board_ports.LED[0]"], 1, "pin"), Field(["a.contract.data_formats.x"], 1, "fmt"),
+          *[Field([f"a.contract.ports.p{i}"], 1, "a") for i in range(5)],
+          Field(["b.contract.latency.in.out"], None, "b latency"), Field(["design.clocks.clk"], 1, "clk")]
+    plan = plan_questions(fs, {"contracts_per_module": 3, "contracts_design": 1, "contracts_rest": 1})
+    order = [f.paths[0] for f, _ in plan]
+    # tier 0 first, modules in order, then the design's own, then formats, then pins
+    assert order[:6] == [f"a.contract.ports.p{i}" for i in range(5)] + ["b.contract.latency.in.out"]
+    assert order[6:] == ["design.clocks.clk", "a.contract.data_formats.x", "design.board_ports.LED[0]"]
+    inside = {f.paths[0]: ok for f, ok in plan}
+    # module a over its share does not push module b's latency out
+    assert inside["b.contract.latency.in.out"] and not inside["a.contract.ports.p3"]
+    assert inside["design.clocks.clk"] and inside["a.contract.data_formats.x"] and not inside["design.board_ports.LED[0]"]
 
 
 def test_usd_cap_stops_the_drafter(tmp_path: Path) -> None:
@@ -348,3 +367,50 @@ def test_the_last_apply_repair_is_kept_for_checker_errors(tmp_path: Path) -> Non
     p2 = json.loads((root / "phase0" / "pass2_contracts.json").read_text())
     assert p2["apply_failed"] is None and p2["drafter_repairs"]["apply"] == 2
     assert [x["field"] for x in p2["unasked_changes"]] == ["design.shell.design_id"]
+
+
+def test_module_graph_needs_connections_and_reachable_modules(tmp_path: Path) -> None:
+    d = tmp_path / "p"
+    shutil.copytree(FMT, d)
+    data = yaml.safe_load((d / "design.yaml").read_text())
+    data["connections"] = []
+    (d / "design.yaml").write_text(yaml.safe_dump(data, sort_keys=False))
+    errs = check_project(d).errors
+    assert any("2 modules and no connection" in e for e in errs)
+    # led_sink still reaches the board through LED[7:0]; ramp through its window_base
+    assert not any("not reachable" in e for e in errs)
+    data["board_ports"] = [b for b in data["board_ports"] if not str(b.get("from", "")).startswith("led_sink")]
+    (d / "design.yaml").write_text(yaml.safe_dump(data, sort_keys=False))
+    assert any("module led_sink: not reachable" in e for e in check_project(d).errors)
+
+
+def test_board_pin_direction_is_checked_against_the_board(tmp_path: Path) -> None:
+    from project.schema import board_pin_dirs
+    dirs = board_pin_dirs("nexys_a7_100t")
+    assert dirs["UART_RXD_OUT"][0] == "out" and dirs["UART_TXD_IN"][0] == "in"      # the FPGA's side
+    assert dirs["LED"][0] == "out" and dirs["BTNC"][0] == "in" and dirs["VGA_HS"][0] == "out"
+    assert "JA" not in dirs                                                          # Pmods: either way
+    d = tmp_path / "p"
+    shutil.copytree(FMT, d)
+    data = yaml.safe_load((d / "design.yaml").read_text())
+    for b in data["board_ports"]:                        # pilot 1 run 1's mistake: the UART pins swapped
+        if b["name"] == "UART_RXD_OUT":
+            b.update({"dir": "in", "drive": "input", "to": "shell.uart_rx"}); b.pop("from")
+        if b["name"] == "UART_TXD_IN":
+            b.update({"dir": "out", "drive": "push-pull", "from": "shell.uart_tx"}); b.pop("to")
+    (d / "design.yaml").write_text(yaml.safe_dump(data, sort_keys=False))
+    errs = check_project(d).errors
+    assert any("UART_RXD_OUT: dir in, but the board pin is an output" in e for e in errs)
+    assert any("UART_TXD_IN: dir out, but the board pin is an input" in e for e in errs)
+
+
+def test_a_quote_must_hold_the_numbers_of_the_value() -> None:
+    from project.phase0 import Field, numbers_in_quote, settled_by_spec
+    spec = "The syncs and the picture leave the chip aligned. The step register is at offset 0x00, reset 1."
+    lat = Field(["m.contract.latency.in.out"], 1651, "q")
+    assert settled_by_spec(lat, {"m.contract.latency.in.out": "The syncs and the picture leave the chip aligned"},
+                           spec) is None
+    reg = Field(["m.contract.registers"], [{"name": "STEP", "offset": 0, "reset": 1}], "q")
+    assert settled_by_spec(reg, {"m.contract.registers": "register is at offset 0x00, reset 1"}, spec)
+    assert numbers_in_quote({"mhz": 74.25}, "a 74.25 MHz pixel clock") and not numbers_in_quote({"mhz": 74.25}, "720p60")
+    assert numbers_in_quote({"dir": "out", "drive": "push-pull"}, "drives the LEDs")          # no number to hold

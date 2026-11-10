@@ -552,6 +552,50 @@ def xdc_ports(xdc: Path) -> set[str]:
     return set(re.findall(r"get_ports\s*\{\s*([^\s}]+)\s*\}", xdc.read_text(errors="replace")))
 
 
+#: the direction of each section of a Digilent master XDC, by its heading ("##LEDs" ...): what the board wires the
+#: pins to. Pmod headers and anything not listed are not checked; ``inventory.yaml`` ``dir`` entries win over this.
+XDC_SECTION_DIR = {"clock signal": "in", "switches": "in", "leds": "out", "rgb leds": "out", "7 segment display": "out",
+                   "cpu reset button": "in", "buttons": "in", "vga connector": "out"}
+
+
+def board_pin_dirs(board: str) -> dict[str, tuple[str, str]]:
+    """{XDC port base name: (in | out | inout, where it was read)} for the pins whose direction the board fixes: the
+    master XDC's section headings (:data:`XDC_SECTION_DIR`), then the board inventory's per-pin ``dir`` (UART, audio,
+    sensors ...), which wins. The FPGA's view: ``UART_RXD_OUT`` is an output."""
+    bd = board_dir(board)
+    bcfg, _ = load_yaml(bd / "board.yaml")
+    out: dict[str, tuple[str, str]] = {}
+    xdc = bd / str((bcfg or {}).get("master_xdc", "")) if isinstance(bcfg, dict) else None
+    if xdc and xdc.is_file():
+        sec = None
+        for line in xdc.read_text(errors="replace").splitlines():
+            h = re.match(r"^##\s*([^#].*?)\s*$", line)
+            if h and "get_ports" not in line:
+                sec = h.group(1).lower()
+                continue
+            m = re.search(r"get_ports\s*\{\s*([^\s}]+)\s*\}", line)
+            if m and sec in XDC_SECTION_DIR:
+                b = bus_bits(m.group(1))
+                if b:
+                    out[b[0]] = (XDC_SECTION_DIR[sec], f"master XDC section '{sec}'")
+    inv, _ = load_yaml(bd / "inventory.yaml")
+
+    def walk(x: Any) -> None:
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if isinstance(v, dict) and v.get("dir") in ("in", "out", "inout") and "pin" in v:
+                    b = bus_bits(str(k))
+                    if b:
+                        out[b[0]] = (v["dir"], "boards/" + board + "/inventory.yaml")
+                else:
+                    walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+    walk(inv)
+    return out
+
+
 def board_dir(board: str) -> Path:
     return ROOT / "boards" / board
 
@@ -842,6 +886,7 @@ def check_project(root: Path) -> Project:
     if have is None:
         p.errors.append(f"board {d.get('board')}: no boards/{d.get('board')}/board.yaml with a master_xdc to check ports against")
     bound_inputs: set[str] = set()
+    pin_dirs = board_pin_dirs(str(d.get("board"))) if have is not None else {}
     for bp in d.get("board_ports") or []:
         if not isinstance(bp, dict) or not bp.get("name"):
             continue
@@ -849,6 +894,10 @@ def check_project(root: Path) -> Project:
         if not bb:
             continue
         base, bits = bb
+        pd = pin_dirs.get(base)
+        if pd and pd[0] != "inout" and bp.get("dir") in ("in", "out") and bp["dir"] != pd[0]:
+            p.errors.append(f"board port {bp['name']}: dir {bp['dir']}, but the board pin is an "
+                            f"{'input' if pd[0] == 'in' else 'output'} of the FPGA ({pd[1]})")
         if have is not None:
             missing = [n for n in ([f"{base}[{b}]" for b in bits] if bits else [base]) if n not in have]
             if missing:
@@ -873,6 +922,7 @@ def check_project(root: Path) -> Project:
         if isinstance(r, dict) and r.get("from") not in {x.get("name") for x in d.get("resets") or [] if isinstance(x, dict)}:
             if r.get("name") not in bound_inputs:
                 p.errors.append(f"reset {r.get('name')}: comes from the board ({r.get('from')}) but no board port drives it")
+    p.errors += _graph_errors(d)
     if sh:
         for need in ("shell.uart_rx", "shell.uart_tx"):
             if not any(isinstance(b, dict) and need in (b.get("from"), b.get("to")) for b in d.get("board_ports") or []):
@@ -888,6 +938,39 @@ def check_project(root: Path) -> Project:
         else:
             p.errors += [f"system/requirements.yaml: {x}" for x in check_requirements(rq, p.modules())]
     return p
+
+
+def _graph_errors(d: dict[str, Any]) -> list[str]:
+    """The module graph (planner review of PR #104; phase 0 pilot 1 run 2 drew seven modules and no connection): with
+    more than one module there is at least one connection, and every module is reachable from the board ports or the
+    shell through connections (a module reaches the board through a board port bound to it, the shell through its
+    registers' ``window_base``)."""
+    mods = [m["name"] for m in d.get("modules") or [] if isinstance(m, dict) and m.get("name")]
+    if not mods:
+        return []
+    e = []
+    links = [x for x in d.get("connections") or [] if isinstance(x, dict)]
+    if len(mods) > 1 and not links:
+        e.append(f"connections: the design has {len(mods)} modules and no connection between them; connect each "
+                 "module's interfaces (point to point), or merge the modules")
+    adj: dict[str, set[str]] = {m: set() for m in mods}
+    for x in links:
+        a, b = str(x.get("from", "")).split(".")[0], str(x.get("to", "")).split(".")[0]
+        if a in adj and b in adj:
+            adj[a].add(b)
+            adj[b].add(a)
+    seen = {m for m in mods if any(isinstance(bp, dict) and any(str(bp.get(k, "")).split(".")[0] == m
+                                                                for k in ("from", "to")) for bp in d.get("board_ports") or [])}
+    seen |= {m["name"] for m in d.get("modules") or [] if isinstance(m, dict) and m.get("window_base") is not None}
+    todo = list(seen)
+    while todo:
+        for n in adj.get(todo.pop(), ()):
+            if n not in seen:
+                seen.add(n)
+                todo.append(n)
+    e += [f"module {m}: not reachable from the board ports or the shell (no board port, no registers in the shell "
+          f"window, and no connection to a module that has one)" for m in mods if m not in seen]
+    return e
 
 
 def check_requirements(rq: dict[str, Any], modules: list[str]) -> list[str]:

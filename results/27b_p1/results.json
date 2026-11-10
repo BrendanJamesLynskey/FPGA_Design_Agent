@@ -746,6 +746,10 @@
     },
     "holds": true
    }
+  ],
+  "recheck": [
+   "board port UART_RXD_OUT: dir in, but the board pin is an output of the FPGA (boards/nexys_a7_100t/inventory.yaml)",
+   "board port UART_TXD_IN: dir out, but the board pin is an input of the FPGA (boards/nexys_a7_100t/inventory.yaml)"
   ]
  },
  {
@@ -1694,6 +1698,14 @@
     },
     "holds": true
    }
+  ],
+  "recheck": [
+   "connections: the design has 7 modules and no connection between them; connect each module's interfaces (point to point), or merge the modules",
+   "module video_timing: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)",
+   "module color_bars: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)",
+   "module median_filter: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)",
+   "module frame_counter: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)",
+   "module video_cdc: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)"
   ]
  },
  {
@@ -1987,6 +1999,10 @@
     ],
     "holds": true
    }
+  ],
+  "recheck": [
+   "connections: the design has 3 modules and no connection between them; connect each module's interfaces (point to point), or merge the modules",
+   "module pwm_stage: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)"
   ]
  },
  {
@@ -2263,10 +2279,13 @@
     ],
     "holds": true
    }
+  ],
+  "recheck": [
+   "connections: the design has 2 modules and no connection between them; connect each module's interfaces (point to point), or merge the modules"
   ]
  },
  {
-  "spec": "pilot1",
+  "spec": "pilot1_run4",
   "valid": true,
   "errors": [],
   "modules": [
@@ -3266,6 +3285,1603 @@
     },
     "holds": true
    }
+  ],
+  "recheck": [
+   "module pixel_clock: not reachable from the board ports or the shell (no board port, no registers in the shell window, and no connection to a module that has one)"
   ]
+ },
+ {
+  "spec": "pilot1_run5",
+  "valid": true,
+  "errors": [],
+  "modules": [
+   "video_source",
+   "median_filter",
+   "vga_output"
+  ],
+  "pass1": {
+   "requirements": 7,
+   "asked": 5,
+   "answered": 1,
+   "defaulted": 4,
+   "drafter_repairs": 0
+  },
+  "pass2": {
+   "fields": 64,
+   "stated_in_spec": 27,
+   "asked": 37,
+   "answered": 10,
+   "defaulted": 27,
+   "drafter_repairs": {
+    "draft": 1,
+    "apply": 3
+   }
+  },
+  "pass2_by_limit": 3,
+  "bad_quotes": 8,
+  "unasked_changes": [
+   {
+    "field": "design.board_ports.BTNC",
+    "draft": "{dir: in, drive: input, to: video_source.button_center}",
+    "final": "{dir: in, drive: input, to: rst_pix}"
+   },
+   {
+    "field": "vga_output.contract.resets.rst",
+    "draft": "{polarity: active_high, style: sync}",
+    "final": "{polarity: active_low, style: async}"
+   }
+  ],
+  "assumptions": 31,
+  "fields_settled_by_answer": [
+   "video_source.contract.resets.rst",
+   "video_source.contract.interfaces.out.backpressure",
+   "median_filter.contract.interfaces.in.backpressure",
+   "median_filter.contract.resets.rst",
+   "median_filter.contract.interfaces.out.source_gaps",
+   "vga_output.contract.interfaces.in.source_gaps",
+   "median_filter.contract.throughput.in",
+   "median_filter.contract.throughput.out",
+   "vga_output.contract.throughput.in",
+   "design.clocks.clk_sys",
+   "design.resets.rst_pix",
+   "design.board_ports.CPU_RESETN"
+  ],
+  "fields_left_as_assumption": [
+   "video_source.contract.interfaces.out.tlast",
+   "median_filter.contract.interfaces.in.tlast",
+   "video_source.contract.interfaces.out.source_gaps",
+   "median_filter.contract.interfaces.in.source_gaps",
+   "video_source.contract.throughput.out",
+   "median_filter.contract.interfaces.out.tlast",
+   "vga_output.contract.interfaces.in.tlast",
+   "median_filter.contract.interfaces.out.packet_beats",
+   "vga_output.contract.interfaces.in.packet_beats",
+   "median_filter.contract.interfaces.out.backpressure",
+   "vga_output.contract.interfaces.in.backpressure",
+   "vga_output.contract.resets.rst",
+   "vga_output.contract.ports.vga_r",
+   "vga_output.contract.ports.vga_g",
+   "vga_output.contract.ports.vga_b",
+   "vga_output.contract.ports.vga_hs",
+   "vga_output.contract.ports.vga_vs",
+   "vga_output.contract.ports.frame_count",
+   "video_source.contract.data_formats.x_coord",
+   "video_source.contract.data_formats.y_coord",
+   "video_source.contract.data_formats.rgb444",
+   "median_filter.contract.data_formats.x_coord",
+   "median_filter.contract.data_formats.y_coord",
+   "median_filter.contract.data_formats.rgb444",
+   "vga_output.contract.data_formats.x_coord",
+   "vga_output.contract.data_formats.y_coord",
+   "vga_output.contract.data_formats.rgb444",
+   "vga_output.contract.data_formats.frame_counter",
+   "design.board_ports.CLK100MHZ",
+   "design.board_ports.VGA_HS",
+   "design.board_ports.VGA_VS",
+   "design.board_ports.LED[0]"
+  ],
+  "by_area": [
+   [
+    "contract.data_formats",
+    "assumption",
+    10
+   ],
+   [
+    "contract.interfaces.backpressure",
+    "answered",
+    1
+   ],
+   [
+    "contract.interfaces.backpressure",
+    "assumption",
+    1
+   ],
+   [
+    "contract.interfaces.packet_beats",
+    "assumption",
+    1
+   ],
+   [
+    "contract.interfaces.source_gaps",
+    "answered",
+    1
+   ],
+   [
+    "contract.interfaces.source_gaps",
+    "assumption",
+    1
+   ],
+   [
+    "contract.interfaces.tlast",
+    "assumption",
+    2
+   ],
+   [
+    "contract.ports",
+    "assumption",
+    6
+   ],
+   [
+    "contract.resets",
+    "answered",
+    2
+   ],
+   [
+    "contract.resets",
+    "assumption",
+    1
+   ],
+   [
+    "contract.throughput",
+    "answered",
+    3
+   ],
+   [
+    "contract.throughput",
+    "assumption",
+    1
+   ],
+   [
+    "design.board_ports",
+    "answered",
+    1
+   ],
+   [
+    "design.board_ports",
+    "assumption",
+    4
+   ],
+   [
+    "design.clocks",
+    "answered",
+    1
+   ],
+   [
+    "design.resets",
+    "answered",
+    1
+   ]
+  ],
+  "questions_pass1": [
+   {
+    "q": "How should the 3 x 3 neighbourhood be formed at the active-picture edges?",
+    "status": "defaulted",
+    "settles": [
+     "S-3"
+    ]
+   },
+   {
+    "q": "Which patterns must be selectable in addition to the default colour bars?",
+    "status": "defaulted",
+    "settles": [
+     "S-2",
+     "S-7"
+    ]
+   },
+   {
+    "q": "What UART command and response format should the test shell use, including serial framing?",
+    "status": "defaulted",
+    "settles": [
+     "S-7"
+    ]
+   },
+   {
+    "q": "What are the frame counter's width, initial value, and increment point?",
+    "status": "defaulted",
+    "settles": [
+     "S-7"
+    ]
+   },
+   {
+    "q": "What colour-channel width and digital levels should be used for the VGA output and colour bars?",
+    "status": "answered",
+    "settles": [
+     "S-2",
+     "S-3",
+     "S-5"
+    ]
+   }
+  ],
+  "questions_pass2": [
+   {
+    "fields": [
+     "video_source.contract.resets.rst"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{polarity: active_high, style: sync}",
+    "final": "{polarity: active_low, style: async}",
+    "answer": "The external reset is active low, with asynchronous assertion and synchronized release on the clock."
+   },
+   {
+    "fields": [
+     "video_source.contract.interfaces.out.tlast",
+     "median_filter.contract.interfaces.in.tlast"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "End of each 1650-pixel line.",
+    "final": "End of each 1650-pixel line.",
+    "answer": "End of each 1650-pixel line."
+   },
+   {
+    "fields": [
+     "video_source.contract.interfaces.out.backpressure",
+     "median_filter.contract.interfaces.in.backpressure"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "false",
+    "final": "false",
+    "answer": "False"
+   },
+   {
+    "fields": [
+     "video_source.contract.interfaces.out.source_gaps",
+     "median_filter.contract.interfaces.in.source_gaps"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "false",
+    "final": "false",
+    "answer": "false"
+   },
+   {
+    "fields": [
+     "video_source.contract.throughput.out"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{beats_per_cycle: 1}",
+    "final": "{beats_per_cycle: 1}",
+    "answer": "{beats_per_cycle: 1}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.resets.rst"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{polarity: active_high, style: sync}",
+    "final": "{polarity: active_low, style: async}",
+    "answer": "Active low and asynchronous (asserts at once, releases on the clock)."
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.tlast",
+     "vga_output.contract.interfaces.in.tlast"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "End of each 1650-pixel line.",
+    "final": "End of each 1650-pixel line.",
+    "answer": "End of each 1650-pixel line."
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.packet_beats",
+     "vga_output.contract.interfaces.in.packet_beats"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "1650",
+    "final": "1650",
+    "answer": "1650"
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.backpressure",
+     "vga_output.contract.interfaces.in.backpressure"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "false",
+    "final": "false",
+    "answer": "false"
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.source_gaps",
+     "vga_output.contract.interfaces.in.source_gaps"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "false",
+    "final": "false",
+    "answer": "No. The accepted contract is a full-raster video stream with no back-pressure."
+   },
+   {
+    "fields": [
+     "median_filter.contract.throughput.in"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{beats_per_cycle: 1}",
+    "final": "{beats_per_cycle: 1, from: in, out_per_in: 1}",
+    "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': '1:1'}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.throughput.out"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{beats_per_cycle: 1}",
+    "final": "{beats_per_cycle: 1, from: in, out_per_in: 1}",
+    "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.resets.rst"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{polarity: active_high, style: sync}",
+    "final": "{polarity: active_low, style: async}",
+    "answer": "{polarity: active_high, style: sync}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.vga_r"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 4, reset_value: 0}",
+    "final": "{dir: out, width: 4, reset_value: 0}",
+    "answer": "{dir: out, width: 4, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.vga_g"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 4, reset_value: 0}",
+    "final": "{dir: out, width: 4, reset_value: 0}",
+    "answer": "{dir: out, width: 4, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.vga_b"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 4, reset_value: 0}",
+    "final": "{dir: out, width: 4, reset_value: 0}",
+    "answer": "{dir: out, width: 4, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.vga_hs"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 1, reset_value: 0}",
+    "final": "{dir: out, width: 1, reset_value: 0}",
+    "answer": "{dir: out, width: 1, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.vga_vs"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 1, reset_value: 0}",
+    "final": "{dir: out, width: 1, reset_value: 0}",
+    "answer": "{dir: out, width: 1, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.frame_count"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 32, reset_value: 0}",
+    "final": "{dir: out, width: 32, reset_value: 0}",
+    "answer": "{dir: out, width: 32, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.throughput.in"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{beats_per_cycle: 1}",
+    "final": "{beats_per_cycle: 1, from: in, out_per_in: 1}",
+    "answer": "1 beat per clock; 1 output beat per input beat."
+   },
+   {
+    "fields": [
+     "design.clocks.clk_sys"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{source: board, mhz: 100, port: CLK100MHZ}",
+    "final": "{source: board, mhz: 100, port: CLK100MHZ}",
+    "answer": "clk_sys is the 100 MHz board-oscillator clock on port CLK100MHZ."
+   },
+   {
+    "fields": [
+     "design.resets.rst_pix"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{from: CPU_RESETN, polarity: active_high, style: sync}",
+    "final": "{from: BTNC, polarity: active_low, style: async}",
+    "answer": "The raster reset is triggered by BTNC being pressed or the video clock not being locked; its polarity is not specified."
+   },
+   {
+    "fields": [
+     "video_source.contract.data_formats.x_coord"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}",
+    "final": "{format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}",
+    "answer": "{format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}"
+   },
+   {
+    "fields": [
+     "video_source.contract.data_formats.y_coord"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}",
+    "final": "{format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}",
+    "answer": "{format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}"
+   },
+   {
+    "fields": [
+     "video_source.contract.data_formats.rgb444"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}",
+    "final": "{format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}",
+    "answer": "{format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.data_formats.x_coord"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}",
+    "final": "{format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}",
+    "answer": "{format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.data_formats.y_coord"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}",
+    "final": "{format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}",
+    "answer": "{format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.data_formats.rgb444"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}",
+    "final": "{format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}",
+    "answer": "{format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.data_formats.x_coord"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}",
+    "final": "{format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}",
+    "answer": "{format: u11, packing: 'Horizontal raster coordinate, 0 through 1649.'}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.data_formats.y_coord"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}",
+    "final": "{format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}",
+    "answer": "{format: u10, packing: 'Vertical raster coordinate, 0 through 749.'}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.data_formats.rgb444"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}",
+    "final": "{format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}",
+    "answer": "{format: u12, packing: 'R[3:0], G[3:0], B[3:0], with each channel 0xF when on and 0x0 when off.'}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.data_formats.frame_counter"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u32, packing: 'Completed-frame count, modulo 2^32.'}",
+    "final": "{format: u32, packing: 'Completed-frame count, modulo 2^32.'}",
+    "answer": "{format: u32, packing: 'Completed-frame count, modulo 2^32.'}"
+   },
+   {
+    "fields": [
+     "design.board_ports.CLK100MHZ"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: in, drive: input, to: clk_sys}",
+    "final": "{dir: in, drive: input, to: clk_sys}",
+    "answer": "{dir: in, drive: input, to: clk_sys}"
+   },
+   {
+    "fields": [
+     "design.board_ports.CPU_RESETN"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{dir: in, drive: input, to: rst_pix}",
+    "final": null,
+    "answer": "CPU_RESETN maps to pin C12 and is an input. Its internal connection and whether it is push-pull, open-drain, or pulled up are not specified."
+   },
+   {
+    "fields": [
+     "design.board_ports.VGA_HS"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: out, drive: push-pull, from: vga_output.vga_hs}",
+    "final": "{dir: out, drive: push-pull, from: vga_output.vga_hs}",
+    "answer": "{dir: out, drive: push-pull, from: vga_output.vga_hs}"
+   },
+   {
+    "fields": [
+     "design.board_ports.VGA_VS"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: out, drive: push-pull, from: vga_output.vga_vs}",
+    "final": "{dir: out, drive: push-pull, from: vga_output.vga_vs}",
+    "answer": "{dir: out, drive: push-pull, from: vga_output.vga_vs}"
+   },
+   {
+    "fields": [
+     "design.board_ports.LED[0]"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: out, drive: push-pull, from: clk_pix.locked}",
+    "final": "{dir: out, drive: push-pull, from: clk_pix.locked}",
+    "answer": "{dir: out, drive: push-pull, from: clk_pix.locked}"
+   }
+  ],
+  "llm": {
+   "calls": 46,
+   "prompt_tokens": 299641,
+   "completion_tokens": 72051,
+   "usd_provider_reported": 0.045118,
+   "unreported_cost_calls": 0
+  },
+  "calls_by_role": {
+   "drafter": 7,
+   "oracle": 39
+  },
+  "checks": [
+   {
+    "fact": "owner choice 1: a full-raster video stream with no back-pressure (every stream link: no back-pressure, no gaps)",
+    "found": [
+     {
+      "link": "video_source.out -> median_filter.in",
+      "protocol": "axi4-stream",
+      "backpressure": [
+       false,
+       false
+      ],
+      "source_gaps": [
+       false,
+       false
+      ]
+     },
+     {
+      "link": "median_filter.out -> vga_output.in",
+      "protocol": "axi4-stream",
+      "backpressure": [
+       false,
+       false
+      ],
+      "source_gaps": [
+       false,
+       false
+      ]
+     }
+    ],
+    "holds": true
+   },
+   {
+    "fact": "owner choice 2: median latency H_TOTAL + 2",
+    "found": [
+     "median_filter: {'from': 'in', 'to': 'out', 'cycles': 1651}"
+    ],
+    "holds": false
+   },
+   {
+    "fact": "owner choice 3: shell registers at window base 0x00",
+    "found": {
+     "video_source": 0,
+     "vga_output": 4
+    },
+    "holds": true
+   }
+  ],
+  "recheck": []
+ },
+ {
+  "spec": "pilot1",
+  "valid": true,
+  "errors": [],
+  "modules": [
+   "pattern_timing",
+   "median_filter",
+   "vga_output"
+  ],
+  "pass1": {
+   "requirements": 7,
+   "asked": 6,
+   "answered": 1,
+   "defaulted": 5,
+   "drafter_repairs": 0
+  },
+  "pass2": {
+   "fields": 66,
+   "stated_in_spec": 8,
+   "asked": 58,
+   "answered": 14,
+   "defaulted": 44,
+   "drafter_repairs": {
+    "draft": 2,
+    "apply": 2
+   }
+  },
+  "pass2_by_limit": 7,
+  "bad_quotes": 17,
+  "unasked_changes": [
+   {
+    "field": "median_filter.contract.interfaces.in.tdata",
+    "draft": "{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format: raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name: blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}",
+    "final": "{width: 48, fields: [{name: x, bits: [47, 37], format: raster_x}, {name: y, bits: [36, 27], format: raster_y}, {name: red, bits: [26, 19], format: channel}, {name: green, bits: [18, 11], format: channel}, {name: blue, bits: [10, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}"
+   },
+   {
+    "field": "median_filter.contract.interfaces.out.tdata",
+    "draft": "{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format: raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name: blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}",
+    "final": "{width: 48, fields: [{name: x, bits: [47, 37], format: raster_x}, {name: y, bits: [36, 27], format: raster_y}, {name: red, bits: [26, 19], format: channel}, {name: green, bits: [18, 11], format: channel}, {name: blue, bits: [10, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}"
+   },
+   {
+    "field": "pattern_timing.contract.data_formats.channel",
+    "draft": "{format: u4, packing: Unsigned VGA colour channel}",
+    "final": "{format: u8, packing: Unsigned 8-bit colour channel}"
+   },
+   {
+    "field": "pattern_timing.contract.interfaces.out.tdata",
+    "draft": "{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format: raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name: blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}",
+    "final": "{width: 48, fields: [{name: x, bits: [47, 37], format: raster_x}, {name: y, bits: [36, 27], format: raster_y}, {name: red, bits: [26, 19], format: channel}, {name: green, bits: [18, 11], format: channel}, {name: blue, bits: [10, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}"
+   },
+   {
+    "field": "vga_output.contract.data_formats.channel",
+    "draft": "{format: u4, packing: Unsigned VGA colour channel}",
+    "final": "{format: u8, packing: Unsigned 8-bit colour channel}"
+   },
+   {
+    "field": "vga_output.contract.interfaces.in.tdata",
+    "draft": "{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format: raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name: blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}",
+    "final": "{width: 48, fields: [{name: x, bits: [47, 37], format: raster_x}, {name: y, bits: [36, 27], format: raster_y}, {name: red, bits: [26, 19], format: channel}, {name: green, bits: [18, 11], format: channel}, {name: blue, bits: [10, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}"
+   }
+  ],
+  "assumptions": 49,
+  "fields_settled_by_answer": [
+   "pattern_timing.contract.interfaces.out.backpressure",
+   "median_filter.contract.interfaces.in.backpressure",
+   "pattern_timing.contract.interfaces.out.source_gaps",
+   "median_filter.contract.interfaces.in.source_gaps",
+   "pattern_timing.contract.throughput.out",
+   "median_filter.contract.resets.pixel_reset",
+   "median_filter.contract.interfaces.out.source_gaps",
+   "vga_output.contract.interfaces.in.source_gaps",
+   "median_filter.contract.throughput.in",
+   "median_filter.contract.latency.in.out",
+   "vga_output.contract.throughput.in",
+   "design.clocks.sys_clk",
+   "design.clocks.pixel_clk",
+   "design.resets.sys_reset",
+   "design.resets.pixel_reset",
+   "design.modules.pattern_timing.window_base",
+   "median_filter.contract.data_formats.channel"
+  ],
+  "fields_left_as_assumption": [
+   "pattern_timing.contract.resets.pixel_reset",
+   "pattern_timing.contract.ports.pattern_select",
+   "pattern_timing.contract.ports.frame_count",
+   "pattern_timing.contract.interfaces.out.protocol",
+   "pattern_timing.contract.interfaces.out.tdata",
+   "median_filter.contract.interfaces.in.tdata",
+   "pattern_timing.contract.interfaces.out.tuser",
+   "median_filter.contract.interfaces.in.tuser",
+   "pattern_timing.contract.interfaces.out.tlast",
+   "median_filter.contract.interfaces.in.tlast",
+   "pattern_timing.contract.interfaces.out.packet_beats",
+   "median_filter.contract.interfaces.in.packet_beats",
+   "pattern_timing.contract.registers",
+   "median_filter.contract.interfaces.in.protocol",
+   "median_filter.contract.interfaces.out.protocol",
+   "median_filter.contract.interfaces.out.tdata",
+   "vga_output.contract.interfaces.in.tdata",
+   "median_filter.contract.interfaces.out.tuser",
+   "vga_output.contract.interfaces.in.tuser",
+   "median_filter.contract.interfaces.out.tlast",
+   "vga_output.contract.interfaces.in.tlast",
+   "median_filter.contract.interfaces.out.packet_beats",
+   "vga_output.contract.interfaces.in.packet_beats",
+   "median_filter.contract.interfaces.out.backpressure",
+   "vga_output.contract.interfaces.in.backpressure",
+   "median_filter.contract.throughput.out",
+   "vga_output.contract.resets.pixel_reset",
+   "vga_output.contract.ports.pixel_stable",
+   "vga_output.contract.ports.blank_button",
+   "vga_output.contract.ports.red",
+   "vga_output.contract.ports.green",
+   "vga_output.contract.ports.blue",
+   "vga_output.contract.ports.hsync",
+   "vga_output.contract.ports.vsync",
+   "vga_output.contract.interfaces.in.protocol",
+   "pattern_timing.contract.data_formats.raster_x",
+   "pattern_timing.contract.data_formats.raster_y",
+   "pattern_timing.contract.data_formats.channel",
+   "pattern_timing.contract.data_formats.flag",
+   "median_filter.contract.data_formats.raster_x",
+   "median_filter.contract.data_formats.raster_y",
+   "median_filter.contract.data_formats.flag",
+   "vga_output.contract.data_formats.raster_x",
+   "vga_output.contract.data_formats.raster_y",
+   "vga_output.contract.data_formats.channel",
+   "vga_output.contract.data_formats.flag",
+   "design.board_ports.CLK100MHZ",
+   "design.board_ports.CPU_RESETN",
+   "design.board_ports.VGA_HS",
+   "design.board_ports.VGA_VS",
+   "design.board_ports.VGA_R[3:0]",
+   "design.board_ports.VGA_G[3:0]",
+   "design.board_ports.VGA_B[3:0]"
+  ],
+  "by_area": [
+   [
+    "contract.data_formats",
+    "answered",
+    1
+   ],
+   [
+    "contract.data_formats",
+    "assumption",
+    11
+   ],
+   [
+    "contract.interfaces.backpressure",
+    "answered",
+    1
+   ],
+   [
+    "contract.interfaces.backpressure",
+    "assumption",
+    1
+   ],
+   [
+    "contract.interfaces.packet_beats",
+    "assumption",
+    2
+   ],
+   [
+    "contract.interfaces.protocol",
+    "assumption",
+    4
+   ],
+   [
+    "contract.interfaces.source_gaps",
+    "answered",
+    2
+   ],
+   [
+    "contract.interfaces.tdata",
+    "assumption",
+    2
+   ],
+   [
+    "contract.interfaces.tlast",
+    "assumption",
+    2
+   ],
+   [
+    "contract.interfaces.tuser",
+    "assumption",
+    2
+   ],
+   [
+    "contract.latency",
+    "answered",
+    1
+   ],
+   [
+    "contract.ports",
+    "assumption",
+    9
+   ],
+   [
+    "contract.registers",
+    "assumption",
+    1
+   ],
+   [
+    "contract.resets",
+    "answered",
+    1
+   ],
+   [
+    "contract.resets",
+    "assumption",
+    2
+   ],
+   [
+    "contract.throughput",
+    "answered",
+    3
+   ],
+   [
+    "contract.throughput",
+    "assumption",
+    1
+   ],
+   [
+    "design.board_ports",
+    "assumption",
+    7
+   ],
+   [
+    "design.clocks",
+    "answered",
+    2
+   ],
+   [
+    "design.modules",
+    "answered",
+    1
+   ],
+   [
+    "design.resets",
+    "answered",
+    2
+   ]
+  ],
+  "questions_pass1": [
+   {
+    "q": "What boundary rule should the 3 x 3 filter use for neighbourhood samples beyond the active picture?",
+    "status": "defaulted",
+    "settles": [
+     "S-3"
+    ]
+   },
+   {
+    "q": "Which patterns should be selectable through the UART?",
+    "status": "defaulted",
+    "settles": [
+     "S-2",
+     "S-7"
+    ]
+   },
+   {
+    "q": "What UART command and response format should select a pattern and read the frame counter?",
+    "status": "defaulted",
+    "settles": [
+     "S-7"
+    ]
+   },
+   {
+    "q": "How should the frame counter count frames, and what width and reset behavior should it have?",
+    "status": "defaulted",
+    "settles": [
+     "S-7"
+    ]
+   },
+   {
+    "q": "What pixel-clock stability criterion should control the colour blanking and LED[0]?",
+    "status": "defaulted",
+    "settles": [
+     "S-5",
+     "S-6"
+    ]
+   },
+   {
+    "q": "What colour-channel width should be used at the VGA output?",
+    "status": "answered",
+    "settles": [
+     "S-2",
+     "S-3"
+    ]
+   }
+  ],
+  "questions_pass2": [
+   {
+    "fields": [
+     "pattern_timing.contract.resets.pixel_reset"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{polarity: active_low, style: sync}",
+    "final": "{polarity: active_low, style: sync}",
+    "answer": "{polarity: active_low, style: sync}"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.ports.pattern_select"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: in, width: 2}",
+    "final": "{dir: in, width: 2}",
+    "answer": "{dir: in, width: 2}"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.ports.frame_count"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 32, reset_value: 0}",
+    "final": "{dir: out, width: 32, reset_value: 0}",
+    "answer": "{dir: out, width: 32, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.interfaces.out.protocol"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{protocol: axi4-stream, role: master}",
+    "final": "{protocol: axi4-stream, role: master}",
+    "answer": "{protocol: axi4-stream, role: master}"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.interfaces.out.tdata",
+     "median_filter.contract.interfaces.in.tdata"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format: raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name: blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}",
+    "final": "{width: 48, fields: [{name: x, bits: [47, 37], format: raster_x}, {name: y, bits: [36, 27], format: raster_y}, {name: red, bits: [26, 19], format: channel}, {name: green, bits: [18, 11], format: channel}, {name: blue, bits: [10, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}",
+    "answer": "{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format: raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name: blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.interfaces.out.tuser",
+     "median_filter.contract.interfaces.in.tuser"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "null",
+    "final": "null",
+    "answer": "(none: leave the field out)"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.interfaces.out.tlast",
+     "median_filter.contract.interfaces.in.tlast"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "null",
+    "final": "null",
+    "answer": "(none: leave the field out)"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.interfaces.out.packet_beats",
+     "median_filter.contract.interfaces.in.packet_beats"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "null",
+    "final": "null",
+    "answer": "(none: leave the field out)"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.interfaces.out.backpressure",
+     "median_filter.contract.interfaces.in.backpressure"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "false",
+    "final": "false",
+    "answer": "No. The stream has no back-pressure, so the sink may not stall it by driving tready low."
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.interfaces.out.source_gaps",
+     "median_filter.contract.interfaces.in.source_gaps"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "false",
+    "final": "false",
+    "answer": "false"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.registers"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME_COUNT, offset: 4, access: RO, reset: 0}]",
+    "final": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME_COUNT, offset: 4, access: RO, reset: 0}]",
+    "answer": "[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME_COUNT, offset: 4, access: RO, reset: 0}]"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.throughput.out"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{beats_per_cycle: 1}",
+    "final": "{beats_per_cycle: 1}",
+    "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.resets.pixel_reset"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{polarity: active_low, style: sync}",
+    "final": "{polarity: active_low, style: sync}",
+    "answer": "The median filter's specified reset input (CPU_RESETN) is active-low, with asynchronous assertion and synchronous release. The internal signal `pixel_reset` is not specified."
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.in.protocol"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{protocol: axi4-stream, role: slave}",
+    "final": "{protocol: axi4-stream, role: slave}",
+    "answer": "{protocol: axi4-stream, role: slave}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.protocol"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{protocol: axi4-stream, role: master}",
+    "final": "{protocol: axi4-stream, role: master}",
+    "answer": "{protocol: axi4-stream, role: master}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.tdata",
+     "vga_output.contract.interfaces.in.tdata"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format: raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name: blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}",
+    "final": "{width: 48, fields: [{name: x, bits: [47, 37], format: raster_x}, {name: y, bits: [36, 27], format: raster_y}, {name: red, bits: [26, 19], format: channel}, {name: green, bits: [18, 11], format: channel}, {name: blue, bits: [10, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}",
+    "answer": "{width: 36, fields: [{name: x, bits: [35, 25], format: raster_x}, {name: y, bits: [24, 15], format: raster_y}, {name: red, bits: [14, 11], format: channel}, {name: green, bits: [10, 7], format: channel}, {name: blue, bits: [6, 3], format: channel}, {name: active, bits: [2, 2], format: flag}, {name: hsync, bits: [1, 1], format: flag}, {name: vsync, bits: [0, 0], format: flag}]}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.tuser",
+     "vga_output.contract.interfaces.in.tuser"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "null",
+    "final": "null",
+    "answer": "(none: leave the field out)"
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.tlast",
+     "vga_output.contract.interfaces.in.tlast"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "null",
+    "final": "null",
+    "answer": "(none: leave the field out)"
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.packet_beats",
+     "vga_output.contract.interfaces.in.packet_beats"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "null",
+    "final": "null",
+    "answer": "(none: leave the field out)"
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.backpressure",
+     "vga_output.contract.interfaces.in.backpressure"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "false",
+    "final": "false",
+    "answer": "false"
+   },
+   {
+    "fields": [
+     "median_filter.contract.interfaces.out.source_gaps",
+     "vga_output.contract.interfaces.in.source_gaps"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "false",
+    "final": "false",
+    "answer": "No; the accepted choice is a full-raster video stream with no back-pressure."
+   },
+   {
+    "fields": [
+     "median_filter.contract.throughput.in"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{beats_per_cycle: 1}",
+    "final": "{beats_per_cycle: 1}",
+    "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.throughput.out"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{beats_per_cycle: 1}",
+    "final": "{beats_per_cycle: 1}",
+    "answer": "{beats_per_cycle: 1}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.latency.in.out"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "null",
+    "final": "1",
+    "answer": "1 clock cycle"
+   },
+   {
+    "fields": [
+     "vga_output.contract.resets.pixel_reset"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{polarity: active_low, style: sync}",
+    "final": "{polarity: active_low, style: sync}",
+    "answer": "{polarity: active_low, style: sync}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.pixel_stable"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: in, width: 1}",
+    "final": "{dir: in, width: 1}",
+    "answer": "{dir: in, width: 1}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.blank_button"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: in, width: 1}",
+    "final": "{dir: in, width: 1}",
+    "answer": "{dir: in, width: 1}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.red"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 4, reset_value: 0}",
+    "final": "{dir: out, width: 4, reset_value: 0}",
+    "answer": "{dir: out, width: 4, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.green"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 4, reset_value: 0}",
+    "final": "{dir: out, width: 4, reset_value: 0}",
+    "answer": "{dir: out, width: 4, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.blue"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 4, reset_value: 0}",
+    "final": "{dir: out, width: 4, reset_value: 0}",
+    "answer": "{dir: out, width: 4, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.hsync"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 1, reset_value: 0}",
+    "final": "{dir: out, width: 1, reset_value: 0}",
+    "answer": "{dir: out, width: 1, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.ports.vsync"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{dir: out, width: 1, reset_value: 0}",
+    "final": "{dir: out, width: 1, reset_value: 0}",
+    "answer": "{dir: out, width: 1, reset_value: 0}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.interfaces.in.protocol"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{protocol: axi4-stream, role: slave}",
+    "final": "{protocol: axi4-stream, role: slave}",
+    "answer": "{protocol: axi4-stream, role: slave}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.throughput.in"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{beats_per_cycle: 1}",
+    "final": "{beats_per_cycle: 1}",
+    "answer": "{'beats_per_cycle': 1, 'output_beats_per_input_beat': 1}"
+   },
+   {
+    "fields": [
+     "design.clocks.sys_clk"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{source: board, mhz: 100, port: CLK100MHZ}",
+    "final": "{source: board, mhz: 100, port: CLK100MHZ}",
+    "answer": "sys_clk is the 100 MHz clock from the board oscillator, on port CLK100MHZ."
+   },
+   {
+    "fields": [
+     "design.clocks.pixel_clk"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{source: mmcm, mhz: 74.25, from: sys_clk}",
+    "final": "{source: mmcm, mhz: 74.25, from: sys_clk}",
+    "answer": "In normal operation, pixel_clk is 74.25 MHz, generated by an MMCM from the 100 MHz input clock (sys_clk/CLK100MHZ). With SIM_DIRECT_CLOCK=1, the input clock is used directly as the pixel clock instead."
+   },
+   {
+    "fields": [
+     "design.resets.sys_reset"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{from: CPU_RESETN, polarity: active_low, style: sync}",
+    "final": "{from: CPU_RESETN, polarity: active_low, style: async}",
+    "answer": "The reset input is CPU_RESETN, active-low. It asserts asynchronously and releases on the clock. For the video design, BTNC being pressed or the video clock not being locked also restarts the raster."
+   },
+   {
+    "fields": [
+     "design.resets.pixel_reset"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{from: sys_reset, polarity: active_low, style: sync}",
+    "final": "{from: sys_reset, polarity: active_low, style: sync}",
+    "answer": "The specified reset port is CPU_RESETN, active-low. The raster also restarts when BTNC is pressed or the video clock is not locked. BTNC\u2019s polarity and a signal named pixel_reset are not specified."
+   },
+   {
+    "fields": [
+     "design.modules.pattern_timing.window_base"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "0",
+    "final": "0",
+    "answer": "0x00"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.data_formats.raster_x"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u11, packing: Raster horizontal coordinate}",
+    "final": "{format: u11, packing: Raster horizontal coordinate}",
+    "answer": "{format: u11, packing: Raster horizontal coordinate}"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.data_formats.raster_y"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u10, packing: Raster vertical coordinate}",
+    "final": "{format: u10, packing: Raster vertical coordinate}",
+    "answer": "{format: u10, packing: Raster vertical coordinate}"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.data_formats.channel"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u4, packing: Unsigned VGA colour channel}",
+    "final": "{format: u8, packing: Unsigned 8-bit colour channel}",
+    "answer": "{format: u4, packing: Unsigned VGA colour channel}"
+   },
+   {
+    "fields": [
+     "pattern_timing.contract.data_formats.flag"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u1, packing: Boolean raster or sync flag}",
+    "final": "{format: u1, packing: Boolean raster or sync flag}",
+    "answer": "{format: u1, packing: Boolean raster or sync flag}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.data_formats.raster_x"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u11, packing: Raster horizontal coordinate}",
+    "final": "{format: u11, packing: Raster horizontal coordinate}",
+    "answer": "{format: u11, packing: Raster horizontal coordinate}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.data_formats.raster_y"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u10, packing: Raster vertical coordinate}",
+    "final": "{format: u10, packing: Raster vertical coordinate}",
+    "answer": "{format: u10, packing: Raster vertical coordinate}"
+   },
+   {
+    "fields": [
+     "median_filter.contract.data_formats.channel"
+    ],
+    "status": "answered",
+    "by": "oracle",
+    "draft": "{format: u4, packing: Unsigned VGA colour channel}",
+    "final": "{format: u8, packing: 'Each pixel is 8 bits; pixel p is packed into bits [8*(p mod 3)+7 : 8*(p mod 3)] of register p div 3 of the window.'}",
+    "answer": "Signedness and fraction bits are not specified. Each pixel is 8 bits; pixel p is packed into bits [8*(p mod 3)+7 : 8*(p mod 3)] of register p div 3 of the window."
+   },
+   {
+    "fields": [
+     "median_filter.contract.data_formats.flag"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u1, packing: Boolean raster or sync flag}",
+    "final": "{format: u1, packing: Boolean raster or sync flag}",
+    "answer": "{format: u1, packing: Boolean raster or sync flag}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.data_formats.raster_x"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u11, packing: Raster horizontal coordinate}",
+    "final": "{format: u11, packing: Raster horizontal coordinate}",
+    "answer": "{format: u11, packing: Raster horizontal coordinate}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.data_formats.raster_y"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u10, packing: Raster vertical coordinate}",
+    "final": "{format: u10, packing: Raster vertical coordinate}",
+    "answer": "{format: u10, packing: Raster vertical coordinate}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.data_formats.channel"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u4, packing: Unsigned VGA colour channel}",
+    "final": "{format: u8, packing: Unsigned 8-bit colour channel}",
+    "answer": "{format: u4, packing: Unsigned VGA colour channel}"
+   },
+   {
+    "fields": [
+     "vga_output.contract.data_formats.flag"
+    ],
+    "status": "defaulted",
+    "by": "oracle",
+    "draft": "{format: u1, packing: Boolean raster or sync flag}",
+    "final": "{format: u1, packing: Boolean raster or sync flag}",
+    "answer": "{format: u1, packing: Boolean raster or sync flag}"
+   },
+   {
+    "fields": [
+     "design.board_ports.CLK100MHZ"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: in, drive: input, to: sys_clk}",
+    "final": "{dir: in, drive: input, to: sys_clk}",
+    "answer": "{dir: in, drive: input, to: sys_clk}"
+   },
+   {
+    "fields": [
+     "design.board_ports.CPU_RESETN"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: in, drive: input, to: sys_reset}",
+    "final": "{dir: in, drive: input, to: sys_reset}",
+    "answer": "{dir: in, drive: input, to: sys_reset}"
+   },
+   {
+    "fields": [
+     "design.board_ports.VGA_HS"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: out, drive: push-pull, from: vga_output.hsync}",
+    "final": "{dir: out, drive: push-pull, from: vga_output.hsync}",
+    "answer": "{dir: out, drive: push-pull, from: vga_output.hsync}"
+   },
+   {
+    "fields": [
+     "design.board_ports.VGA_VS"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: out, drive: push-pull, from: vga_output.vsync}",
+    "final": "{dir: out, drive: push-pull, from: vga_output.vsync}",
+    "answer": "{dir: out, drive: push-pull, from: vga_output.vsync}"
+   },
+   {
+    "fields": [
+     "design.board_ports.VGA_R[3:0]"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: out, drive: push-pull, from: vga_output.red}",
+    "final": "{dir: out, drive: push-pull, from: vga_output.red}",
+    "answer": "{dir: out, drive: push-pull, from: vga_output.red}"
+   },
+   {
+    "fields": [
+     "design.board_ports.VGA_G[3:0]"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: out, drive: push-pull, from: vga_output.green}",
+    "final": "{dir: out, drive: push-pull, from: vga_output.green}",
+    "answer": "{dir: out, drive: push-pull, from: vga_output.green}"
+   },
+   {
+    "fields": [
+     "design.board_ports.VGA_B[3:0]"
+    ],
+    "status": "defaulted",
+    "by": "limit",
+    "draft": "{dir: out, drive: push-pull, from: vga_output.blue}",
+    "final": "{dir: out, drive: push-pull, from: vga_output.blue}",
+    "answer": "{dir: out, drive: push-pull, from: vga_output.blue}"
+   }
+  ],
+  "llm": {
+   "calls": 64,
+   "prompt_tokens": 351751,
+   "completion_tokens": 74278,
+   "usd_provider_reported": 0.046967,
+   "unreported_cost_calls": 0
+  },
+  "calls_by_role": {
+   "drafter": 7,
+   "oracle": 57
+  },
+  "checks": [
+   {
+    "fact": "owner choice 1: a full-raster video stream with no back-pressure (every stream link: no back-pressure, no gaps)",
+    "found": [
+     {
+      "link": "pattern_timing.out -> median_filter.in",
+      "protocol": "axi4-stream",
+      "backpressure": [
+       false,
+       false
+      ],
+      "source_gaps": [
+       false,
+       false
+      ]
+     },
+     {
+      "link": "median_filter.out -> vga_output.in",
+      "protocol": "axi4-stream",
+      "backpressure": [
+       false,
+       false
+      ],
+      "source_gaps": [
+       false,
+       false
+      ]
+     }
+    ],
+    "holds": true
+   },
+   {
+    "fact": "owner choice 2: median latency H_TOTAL + 2",
+    "found": [
+     "median_filter: {'from': 'in', 'to': 'out', 'cycles': 1}"
+    ],
+    "holds": false
+   },
+   {
+    "fact": "owner choice 3: shell registers at window base 0x00",
+    "found": {
+     "pattern_timing": 0
+    },
+    "holds": true
+   }
+  ],
+  "recheck": []
  }
 ]
