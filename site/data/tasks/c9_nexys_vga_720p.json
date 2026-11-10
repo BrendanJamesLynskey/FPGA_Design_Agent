@@ -1,0 +1,551 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the LEDs stay off.",
+   "reason": "nothing is asked of them."
+  }
+ ],
+ "behaviour": [
+  [
+   "timing",
+   [
+    "H 1280+110+40+220 = 1650 clocks, V 720+5+5+20 = 750 lines; hs and vs idle low, high during sync (positive polarity)"
+   ]
+  ],
+  [
+   "pattern",
+   [
+    "SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area"
+   ]
+  ],
+  [
+   "alignment",
+   [
+    "colour and syncs leave from one output register rank; the first white pixel is 220 clocks after the hs falling edge, the first picture line is 20 lines after the vs falling edge"
+   ]
+  ],
+  [
+   "reset",
+   [
+    "while BTNC is pressed or the clock is not locked the colour outputs are 0"
+   ]
+  ],
+  [
+   "sim",
+   [
+    "parameter SIM_DIRECT_CLOCK = 1 makes the clock input the pixel clock (no MMCM, locked = 1); the bench uses it. With 0 an MMCM makes 74.25 MHz from the 100 MHz clock (VCO 742.5 MHz: DIVCLK_DIVIDE 5, CLKFBOUT_MULT_F 37.125, CLKOUT0_DIVIDE_F 10)"
+   ]
+  ],
+  [
+   "led",
+   [
+    "LED[0] = video clock locked (1 in simulation with SIM_DIRECT_CLOCK = 1); the other LEDs are 0"
+   ]
+  ],
+  [
+   "data",
+   [
+    "the bench measures one whole frame after BTNC is released (line period, hs width, vs width in lines, frame period, picture position against hs and vs, bar colours at and next to every bar edge, blanking)"
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 2,
+  "SIM_DIRECT_CLOCK": 1,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-07",
+  "mutants": {
+   "back_porch_219": {
+    "failed_tests": [
+     "test_one_frame_geometry_and_colours"
+    ],
+    "killed": true
+   },
+   "bar_order": {
+    "failed_tests": [
+     "test_one_frame_geometry_and_colours"
+    ],
+    "killed": true
+   },
+   "blank_not_gated_by_reset": {
+    "failed_tests": [
+     "test_identity_status_and_blank_while_pressed",
+     "test_pressing_the_button_blanks_the_picture"
+    ],
+    "killed": true
+   },
+   "hs_width_41": {
+    "failed_tests": [
+     "test_one_frame_geometry_and_colours"
+    ],
+    "killed": true
+   },
+   "sync_misaligned": {
+    "failed_tests": [
+     "test_one_frame_geometry_and_colours"
+    ],
+    "killed": true
+   },
+   "v_back_porch_21": {
+    "failed_tests": [
+     "test_one_frame_geometry_and_colours"
+    ],
+    "killed": true
+   },
+   "vs_negative": {
+    "failed_tests": [
+     "test_one_frame_geometry_and_colours"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c9_nexys_vga_720p__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 3,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 2,
+ "domain": "H",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 19,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c9_nexys_vga_720p/hidden/model.py",
+    "sha256": "d09e68bd30a1",
+    "text": "\"\"\"Reference model for P9-2 (1280x720@60 colour bars): the geometry and the colours the pins must show. Standalone: python only.\"\"\"\nBARS = [0xFFF, 0xFF0, 0x0FF, 0x0F0, 0xF0F, 0xF00, 0x00F, 0x000]\nH_ACT, H_FP, H_SYNC, H_BP = 1280, 110, 40, 220\nV_ACT, V_FP, V_SYNC, V_BP = 720, 5, 5, 20\nLINE = H_ACT + H_FP + H_SYNC + H_BP          # 1650 pixel clocks\nFRAME_LINES = V_ACT + V_FP + V_SYNC + V_BP   # 750 lines\nBAR_W = 160\n\n\ndef colour_at(x: int, y: int) -> int:\n    \"\"\"12-bit colour (R in [11:8]) of picture position (x, y); anything outside the 1280 x 720 area is black.\"\"\"\n    if 0 <= x < H_ACT and 0 <= y < V_ACT:\n        return BARS[x // BAR_W]\n    return 0\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x56373230          # \"V720\"\nSTATUS = 0x00\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 51,
+    "name": "c9_nexys_vga_720p_top.sv",
+    "path": "benchmark/course/tasks/c9_nexys_vga_720p/ref/rtl/c9_nexys_vga_720p_top.sv",
+    "sha256": "d2b6cd2aa860",
+    "text": "// c9_nexys_vga_720p_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"V720\".\n// Reference design for course task c9_nexys_vga_720p: 1280x720@60 colour bars (vga_bars_720p) plus the shell window (one status register).\n// SIM_DIRECT_CLOCK = 1: CLK100MHZ is the pixel clock and no MMCM is built (the bench uses it).\nmodule c9_nexys_vga_720p_top #(\n    parameter int          CLKS_PER_BIT     = 868,\n    parameter int          TIMEOUT_CYCLES   = 100_000,\n    parameter logic [31:0] BUILD_STAMP      = 32'h0,\n    parameter bit          SIM_DIRECT_CLOCK = 1'b0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    input  logic        BTNC,\n    input  logic [15:0] SW,\n    output logic [3:0]  VGA_R,\n    output logic [3:0]  VGA_G,\n    output logic [3:0]  VGA_B,\n    output logic        VGA_HS,\n    output logic        VGA_VS,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd, locked;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h56373230), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    vga_bars_720p #(.SIM(SIM_DIRECT_CLOCK)) u_video (\n        .CLK100MHZ(CLK100MHZ), .BTNC(BTNC), .SW(SW[1:0]), .LED0(locked),\n        .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .VGA_HS(VGA_HS), .VGA_VS(VGA_VS));\n\n    // the MMCM's LOCKED output belongs to the pixel-clock world: a two-flop synchroniser brings it into the system clock before the LED and the status register use it\n    (* ASYNC_REG = \"TRUE\" *) logic [1:0] locked_sync = 2'b00;\n    always_ff @(posedge clk) locked_sync <= {locked_sync[0], locked};\n    wire locked_s = locked_sync[1];\n\n    assign LED = {15'd0, locked_s};\n\n    always_ff @(posedge clk) begin\n        win_rdata <= 32'd0;\n        if (win_rd && win_addr == 7'h00) win_rdata <= {31'd0, locked_s};\n        if (rst) win_rdata <= 32'd0;\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 48,
+    "name": "tpg.sv",
+    "path": "benchmark/course/tasks/c9_nexys_vga_720p/ref/rtl/tpg.sv",
+    "sha256": "b16a61dff695",
+    "text": "// Part 9 lesson 2 reference solution: a test-pattern generator.\nmodule tpg #(\n    parameter int W = 160,\n    parameter int H = 120\n) (\n    input  logic        clk,\n    input  logic        de,\n    input  logic [11:0] x,\n    input  logic [11:0] y,\n    input  logic [1:0]  sel,\n    input  logic [7:0]  frame,\n    output logic        de_q,\n    output logic [3:0]  r,\n    output logic [3:0]  g,\n    output logic [3:0]  b\n);\n    localparam int BAR_W = W / 8;\n    function automatic logic [11:0] bar_colour(input int idx);\n        case (idx)\n            0: bar_colour = 12'hFFF;\n            1: bar_colour = 12'hFF0;\n            2: bar_colour = 12'h0FF;\n            3: bar_colour = 12'h0F0;\n            4: bar_colour = 12'hF0F;\n            5: bar_colour = 12'hF00;\n            6: bar_colour = 12'h00F;\n            default: bar_colour = 12'h000;\n        endcase\n    endfunction\n\n    int ox, oy;\n    logic [11:0] px;\n    always_comb begin\n        ox = (2 * int'(frame)) % (W - 32);\n        oy = int'(frame) % (H - 32);\n        px = 12'h000;\n        case (sel)\n            2'd0: px = bar_colour(int'(x) / BAR_W);\n            2'd1: px = (((x >> 3) ^ (y >> 3)) & 12'd1) ? 12'hFFF : 12'h000;\n            2'd2: px = {3{4'((int'(x) * 16) / W)}};\n            2'd3: px = (int'(x) >= ox && int'(x) < ox + 32 && int'(y) >= oy && int'(y) < oy + 32) ? 12'hFFF : 12'h888;\n        endcase\n    end\n    always_ff @(posedge clk) begin\n        de_q <= de;\n        {r, g, b} <= de ? px : 12'h000;\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 86,
+    "name": "vga_bars_720p.sv",
+    "path": "benchmark/course/tasks/c9_nexys_vga_720p/ref/rtl/vga_bars_720p.sv",
+    "sha256": "92c417c58cb5",
+    "text": "// P9-2 reference: 1280x720@60 colour bars on the Nexys A7 VGA connector (CEA-861 timing, 74.25 MHz pixel clock, positive syncs). SIM = 1 swaps the MMCM for a wire.\n// (Copy of the lab top labs/p9_video/vga_pattern_top_720p.sv; PIX_25_175 = 1 selects the 74.25 MHz MMCM settings.)\n// Part 9 lab 1 (Nexys A7-100T, VGA): the test patterns of lesson 2 on a monitor, 640 x 480 at about 60 Hz.\n//\n// 100 MHz oscillator -> MMCME2_BASE -> pixel clock: 25.1748 MHz (VCO 900 MHz = 100 MHz x 9, CLKOUT0 divide 35.75; 6.9 ppm from 25.175) or, with\n// PIX_25_175 = 0, exactly 25.000 MHz (VCO 600 MHz, divide 24). The timing generator and pattern generator are the course's reference solutions\n// (solutions/p9l02_vtg, solutions/p9l02_tpg). SW[1:0] picks the pattern (bars, checkerboard, ramp, moving box); BTNC is a reset. Both cross into the pixel clock through two-flop synchronisers (07a1c).\n// The pattern generator registers its colour, so hs and vs are delayed by one clock to stay aligned with it (lesson 2, section 5).\n// SIM = 1 swaps the MMCM for a wire so the file also runs in Icarus (labs/p9_video/test_lab_vga.py).\nmodule vga_bars_720p #(\n    parameter bit SIM = 1'b0,\n    parameter bit PIX_25_175 = 1'b1\n) (\n    input  logic        CLK100MHZ,\n    input  logic        BTNC,\n    input  logic [1:0]  SW,\n    output logic        LED0,\n    output logic [3:0]  VGA_R,\n    output logic [3:0]  VGA_G,\n    output logic [3:0]  VGA_B,\n    output logic        VGA_HS,\n    output logic        VGA_VS\n);\n    logic pix_clk, locked;\n    assign LED0 = locked;                  // lit when the MMCM has locked\n    generate\n        if (SIM) begin : g_sim\n            assign pix_clk = CLK100MHZ;\n            assign locked  = 1'b1;\n        end else begin : g_mmcm\n            logic clkfb, clk0, clk0_b;\n            MMCME2_BASE #(\n                .CLKIN1_PERIOD(10.000),\n                .DIVCLK_DIVIDE(PIX_25_175 ? 5 : 1),\n                .CLKFBOUT_MULT_F(PIX_25_175 ? 37.125 : 6.000),\n                .CLKOUT0_DIVIDE_F(PIX_25_175 ? 10.000 : 24.000)\n            ) u_mmcm (\n                .CLKIN1(CLK100MHZ), .CLKFBIN(clkfb), .CLKFBOUT(clkfb), .CLKOUT0(clk0), .LOCKED(locked), .PWRDWN(1'b0), .RST(1'b0),\n                .CLKOUT0B(), .CLKOUT1(), .CLKOUT1B(), .CLKOUT2(), .CLKOUT2B(), .CLKOUT3(), .CLKOUT3B(), .CLKOUT4(), .CLKOUT5(), .CLKOUT6(), .CLKFBOUTB()\n            );\n            BUFG u_bufg (.I(clk0), .O(pix_clk));\n        end\n    endgenerate\n\n    // BTNC and SW come from the 100 MHz oscillator's world (a button and slide switches), not from the pixel clock: each goes through a two-flop synchroniser\n    // (ASYNC_REG keeps both flops together and tells Vivado's CDC check the crossing is handled)\n    (* ASYNC_REG = \"TRUE\" *) logic [1:0] btn_sync = 2'b00;\n    (* ASYNC_REG = \"TRUE\" *) logic [1:0] sw_sync0 = 2'b00, sw_sync1 = 2'b00;\n    always_ff @(posedge pix_clk) begin\n        btn_sync <= {btn_sync[0], ~BTNC};\n        sw_sync0 <= SW;\n        sw_sync1 <= sw_sync0;\n    end\n\n    // reset: held while the MMCM is unlocked or BTNC is pressed, released synchronously\n    logic [2:0] rst_sr = '0;\n    always_ff @(posedge pix_clk or negedge locked)\n        if (!locked) rst_sr <= '0;\n        else         rst_sr <= {rst_sr[1:0], btn_sync[1]};\n    wire rst_n = rst_sr[2];\n\n    logic hs, vs, de, sof, eol;\n    logic [11:0] x, y;\n    vtg #(.H_ACT(1280), .H_FP(110), .H_SYNC(40), .H_BP(220), .V_ACT(720), .V_FP(5), .V_SYNC(5), .V_BP(20), .HS_POL(1'b1), .VS_POL(1'b1)) u_vtg (\n        .clk(pix_clk), .rst_n(rst_n), .hs(hs), .vs(vs), .de(de), .x(x), .y(y), .sof(sof), .eol(eol));\n\n    logic [7:0] frame = '0;\n    always_ff @(posedge pix_clk) if (sof) frame <= frame + 8'd1;\n\n    // the timing generator shows h = 0, v = 0 (an active pixel) while it is held in reset, so de is gated with rst_n: no lit pixels during reset\n    logic de_q;\n    logic [3:0] r, g, b;\n    tpg #(.W(1280), .H(720)) u_tpg (.clk(pix_clk), .de(de & rst_n), .x(x), .y(y), .sel(sw_sync1), .frame(frame), .de_q(de_q), .r(r), .g(g), .b(b));\n\n    // tpg registers the colour (one clock), so hs and vs take one extra register too; then everything leaves the chip from one final register rank\n    logic hs_d, vs_d;\n    always_ff @(posedge pix_clk) begin\n        hs_d <= hs;\n        vs_d <= vs;\n        VGA_R  <= r;\n        VGA_G  <= g;\n        VGA_B  <= b;\n        VGA_HS <= hs_d;\n        VGA_VS <= vs_d;\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 41,
+    "name": "vtg.sv",
+    "path": "benchmark/course/tasks/c9_nexys_vga_720p/ref/rtl/vtg.sv",
+    "sha256": "f7a053c6182f",
+    "text": "// Part 9 lesson 2 reference solution: a video timing generator.\nmodule vtg #(\n    parameter int H_ACT = 640, H_FP = 16, H_SYNC = 96, H_BP = 48,\n    parameter int V_ACT = 480, V_FP = 10, V_SYNC = 2,  V_BP = 33,\n    parameter bit HS_POL = 1'b0,\n    parameter bit VS_POL = 1'b0\n) (\n    input  logic        clk,\n    input  logic        rst_n,\n    output logic        hs,\n    output logic        vs,\n    output logic        de,\n    output logic [11:0] x,\n    output logic [11:0] y,\n    output logic        sof,\n    output logic        eol\n);\n    localparam int H_TOT = H_ACT + H_FP + H_SYNC + H_BP;\n    localparam int V_TOT = V_ACT + V_FP + V_SYNC + V_BP;\n    logic [11:0] h, v;\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            h <= '0;\n            v <= '0;\n        end else if (h == H_TOT - 1) begin\n            h <= '0;\n            v <= (v == V_TOT - 1) ? 12'd0 : v + 12'd1;\n        end else begin\n            h <= h + 12'd1;\n        end\n    end\n    wire h_in_sync = (h >= H_ACT + H_FP) && (h < H_ACT + H_FP + H_SYNC);\n    wire v_in_sync = (v >= V_ACT + V_FP) && (v < V_ACT + V_FP + V_SYNC);\n    assign de  = (h < H_ACT) && (v < V_ACT);\n    assign hs  = h_in_sync ? HS_POL : ~HS_POL;\n    assign vs  = v_in_sync ? VS_POL : ~VS_POL;\n    assign x   = h;\n    assign y   = v;\n    assign sof = de && (h == 0) && (v == 0);\n    assign eol = de && (h == H_ACT - 1);\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 100,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c9_nexys_vga_720p/hidden/acceptance.py",
+    "sha256": "0e5ce034868e",
+    "text": "\"\"\"Acceptance tests of c9_nexys_vga_720p against model.py (hidden from the agent).\n\nThe bench treats the clock input as the pixel clock (SIM_DIRECT_CLOCK = 1). One whole frame after the button is released is measured with edge triggers and\ntimed samples (benchmark/lib/vga_sampler.py), not a Python callback on every clock.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board\nfrom benchmark.lib.vga_sampler import edge_clock, now_clock, rgb, sample\nfrom cocotb.triggers import Edge, First, FallingEdge, RisingEdge, Timer\nfrom model import BAR_W, BARS, DESIGN_ID, FRAME_LINES, H_ACT, H_BP, H_SYNC, LINE, STATUS, V_ACT, V_BP, V_SYNC, colour_at\n\nINPUTS = {\"BTNC\": 1, \"SW\": 0}\n\n\nasync def settled(dut, n: int = 4):\n    \"\"\"Wait a few clocks past Board.start (all outputs are defined by then).\"\"\"\n    for _ in range(n):\n        await RisingEdge(dut.CLK100MHZ)\n\n\n@cocotb.test()\nasync def test_identity_status_and_blank_while_pressed(dut):\n    b = Board(dut, dict(INPUTS))\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    await b.expect(STATUS, 1, \"STATUS: video clock locked\")\n    assert int(dut.LED.value) & 1 == 1, \"LED[0] must be lit when the video clock is stable\"\n    for _ in range(40):                                   # BTNC pressed since before the start\n        await RisingEdge(dut.CLK100MHZ)\n        assert rgb(dut) == 0, f\"colour {rgb(dut):03X} while BTNC is pressed\"\n\n\n@cocotb.test(timeout_time=60_000_000, timeout_unit=\"ns\")\nasync def test_pressing_the_button_blanks_the_picture(dut):\n    \"\"\"Free-running picture first (BTNC low), then BTNC pressed in the middle of a bar: the colours go to zero.\"\"\"\n    b = Board(dut, {\"BTNC\": 0, \"SW\": 0})\n    await b.start()\n    seen = False\n    for _ in range(4000):\n        r = await First(Edge(dut.VGA_R), Edge(dut.VGA_G), Edge(dut.VGA_B), Timer(80_000, \"ns\"))\n        if rgb(dut) != 0:\n            seen = True\n            break\n    assert seen, \"no picture within a line and a half with BTNC low\"\n    for _ in range(6):\n        await RisingEdge(dut.CLK100MHZ)\n    assert rgb(dut) != 0, \"the bar ended before the test pressed BTNC\"\n    dut.BTNC.value = 1\n    for _ in range(16):\n        await RisingEdge(dut.CLK100MHZ)\n    for k in range(40):\n        await RisingEdge(dut.CLK100MHZ)\n        assert rgb(dut) == 0, f\"colour {rgb(dut):03X} {k + 16} clocks after BTNC was pressed\"\n    dut.BTNC.value = 0\n\n\n@cocotb.test(timeout_time=200_000_000, timeout_unit=\"ns\")\nasync def test_one_frame_geometry_and_colours(dut):\n    b = Board(dut, dict(INPUTS))\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    assert int(dut.VGA_HS.value) == 0 and int(dut.VGA_VS.value) == 0, \"sync outputs must idle low\"\n    dut.BTNC.value = 0                                    # release: the raster runs\n    hr0 = await edge_clock(dut.VGA_HS, rising=True)\n    hf0 = await edge_clock(dut.VGA_HS, rising=False)\n    hr1 = await edge_clock(dut.VGA_HS, rising=True)\n    line = hr1 - hr0\n    assert line == LINE, f\"line period {line} pixel clocks, expected {LINE}\"\n    assert hf0 - hr0 == H_SYNC, f\"hs width {hf0 - hr0}, expected {H_SYNC}\"\n    v0 = await edge_clock(dut.VGA_VS, rising=True)\n    v1 = await edge_clock(dut.VGA_VS, rising=False)\n    assert (v1 - v0) == V_SYNC * LINE, f\"vs width {(v1 - v0) / LINE} lines, expected {V_SYNC}\"\n    assert (v1 - hf0) % LINE in range(0, LINE), \"vs edge position\"\n    # picture line 0 starts 20 lines after the vs pulse ends, and its first pixel is 220 clocks after an hs pulse ended\n    w0 = v1 + V_BP * LINE\n    assert (w0 - hf0 - H_BP) % LINE == 0, f\"first picture pixel {(w0 - hf0) % LINE} clocks after an hs pulse ended, expected {H_BP}\"\n    want: list[tuple[int, int, str]] = []                 # (clock, colour, what)\n    want.append((v1 + (V_BP - 1) * LINE + 80, 0, \"line 19 after vs (back porch)\"))\n    want.append((w0 - 1, 0, \"pixel before the first picture pixel\"))\n    for x in (0, 1, 159, 160, 319, 320, 479, 480, 639, 640, 799, 800, 959, 960, 1119, 1120, 1279):\n        want.append((w0 + x, colour_at(x, 0), f\"line 0, x {x}\"))\n    want.append((w0 + H_ACT, 0, \"first pixel after the picture on line 0\"))\n    for k in range(8):\n        want.append((w0 + 360 * LINE + BAR_W * k + 80, BARS[k], f\"line 360, bar {k} centre\"))\n        want.append((w0 + 360 * LINE + BAR_W * k, BARS[k], f\"line 360, bar {k} first pixel\"))\n        want.append((w0 + 360 * LINE + BAR_W * (k + 1) - 1, BARS[k], f\"line 360, bar {k} last pixel\"))\n    for dy in (719,):\n        want.append((w0 + dy * LINE + 80, colour_at(80, dy), f\"last picture line {dy}\"))\n    want.append((w0 + V_ACT * LINE + 80, 0, \"line after the picture\"))\n    want.append((w0 + (V_ACT + 2) * LINE + 700, 0, \"front porch line\"))\n    want.sort()\n    got = await sample(dut, [c for c, _, _ in want], (\"rgb\",))\n    bad = [(w[2], f\"{g[0]:03X}\", f\"{w[1]:03X}\") for w, g in zip(want, got) if g[0] != w[1]]\n    assert not bad, f\"{len(bad)} samples differ (what, RTL, expected): {bad[:6]}\"\n    v2 = await edge_clock(dut.VGA_VS, rising=True)\n    assert v2 - v0 == FRAME_LINES * LINE, f\"frame period {(v2 - v0) / LINE} lines, expected {FRAME_LINES}\"\n    assert int(dut.VGA_HS.value) in (0, 1)\n"
+   }
+  ]
+ },
+ "heading": "Colour bars on the Nexys A7 VGA connector at 1280 x 720",
+ "id": "c9_nexys_vga_720p",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "BTNC",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "SW",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "out",
+    "name": "VGA_R",
+    "note": "",
+    "width": 4
+   },
+   {
+    "dir": "out",
+    "name": "VGA_G",
+    "note": "",
+    "width": 4
+   },
+   {
+    "dir": "out",
+    "name": "VGA_B",
+    "note": "",
+    "width": 4
+   },
+   {
+    "dir": "out",
+    "name": "VGA_HS",
+    "note": "active high",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "VGA_VS",
+    "note": "active high",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RO",
+    "bits": "[0] video clock locked; other bits 0",
+    "name": "STATUS",
+    "offset": "0x00"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: the raster restarts when BTNC is pressed or the video clock is not locked; colour outputs 0 while held; the shell window is reset",
+  "top": "c9_nexys_vga_720p_top",
+  "unmapped": "offsets not listed read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "vga_bars_720p.sv",
+   "name": "hs_width_41",
+   "why": "horizontal sync one pixel too long (and a 1651-clock line)"
+  },
+  {
+   "file": "vga_bars_720p.sv",
+   "name": "vs_negative",
+   "why": "vertical sync idles high"
+  },
+  {
+   "file": "vga_bars_720p.sv",
+   "name": "sync_misaligned",
+   "why": "hs leaves one clock before the colours"
+  },
+  {
+   "file": "tpg.sv",
+   "name": "bar_order",
+   "why": "green and magenta bars swapped (green missing)"
+  },
+  {
+   "file": "vga_bars_720p.sv",
+   "name": "blank_not_gated_by_reset",
+   "why": "the picture shows while BTNC is pressed"
+  },
+  {
+   "file": "vga_bars_720p.sv",
+   "name": "back_porch_219",
+   "why": "line of 1649 clocks, picture 219 clocks after the hs pulse"
+  },
+  {
+   "file": "vga_bars_720p.sv",
+   "name": "v_back_porch_21",
+   "why": "frame of 751 lines"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c9_nexys_vga_720p",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "line period 1650, hs width 40, frame 750 lines, vs width 5 lines, both positive"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "picture 220 clocks and 20 lines after the end of the sync pulses; eight 160-pixel bars with the stated colours; black outside the active area"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "colours are 0 while BTNC is pressed"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "timing closes at 74.25 MHz"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Colour bars on the Nexys A7 VGA connector at 1280 x 720\n\nI want the Nexys A7-100T to put eight vertical colour bars on its VGA connector as a **1280 x 720 picture at 60 Hz**. (My capture dongle rejects 640 x 480, so it has to be 720p.)\n\n- Inputs: the 100 MHz board clock `CLK100MHZ`, the centre button `BTNC` (a reset while pressed) and the switches `SW[1:0]` (the board's `SW` bus; the other switches are unused). Outputs: `VGA_R[3:0]`, `VGA_G[3:0]`, `VGA_B[3:0]`, `VGA_HS`, `VGA_VS`, and `LED[0]`, which lights when the video clock is stable. Use the board's own pin names.\n- Timing: the CEA-861 1280 x 720 at 60 Hz timing: pixel clock 74.25 MHz, 1650 pixel clocks per line (1280 active, 110 front porch, 40 sync, 220 back porch) and 750 lines per frame (720 active, 5 front porch, 5 sync, 20 back porch). Both sync pulses are positive (idle low, high during the sync).\n- Picture, when `SW[1:0]` = 00: eight bars of 160 pixels each, left to right white, yellow, cyan, green, magenta, red, blue, black, at full intensity (a lit colour channel is 4'b1111). Everywhere outside the 1280 x 720 active area the colour outputs are zero. What the other switch values show is up to you; I only test 00.\n- The colour outputs and both sync outputs leave the chip aligned with each other: the first white pixel appears exactly 220 pixel clocks after the horizontal sync pulse ends, and the first picture line exactly 20 lines after the vertical sync pulse ends.\n- While `BTNC` is pressed, or the video clock is not yet stable, the outputs show no picture (colours zero).\n- The design must close timing at the pixel clock.\n- I will watch the outputs for a frame in simulation and measure the line and frame periods, the sync widths and polarity, the position of the picture against the sync pulses, and the colours of the bars. (In my simulation the clock input is treated as the pixel clock; in the real design it is the 100 MHz board clock.)\n- The test shell is on the USB-UART at 115200 baud, as for every board design; its window needs only one status register for this design. The design ID is \"V720\".\n\nTest hooks: top module `c9_nexys_vga_720p_top`, ports named as in the board's master XDC, the test shell's `CLKS_PER_BIT`,\n`TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters, and a one-bit parameter `SIM_DIRECT_CLOCK`\n(default 0): when 1 the `CLK100MHZ` input is used directly as the pixel clock (no clock generator in the design, the clock counts as stable).\nThere are no other time constants.\n",
+ "survey": [
+  "H01",
+  "H02",
+  "F18",
+  "M07"
+ ],
+ "tier": "C9",
+ "title": "eight colour bars on the Nexys A7 VGA connector, 1280x720@60 (74.25 MHz pixel clock), behind the test shell",
+ "trace": {
+  "captions": [
+   "Pixel (0, 100) is in bar 0 and its colour is FFF (red 15, green 15, blue 15).",
+   "Pixel (159, 100) is in bar 0 and its colour is FFF (red 15, green 15, blue 15).",
+   "Pixel (160, 100) is in bar 1 and its colour is FF0 (red 15, green 15, blue 0).",
+   "Pixel (319, 100) is in bar 1 and its colour is FF0 (red 15, green 15, blue 0).",
+   "Pixel (320, 100) is in bar 2 and its colour is 0FF (red 0, green 15, blue 15).",
+   "Pixel (479, 100) is in bar 2 and its colour is 0FF (red 0, green 15, blue 15).",
+   "Pixel (480, 100) is in bar 3 and its colour is 0F0 (red 0, green 15, blue 0).",
+   "Pixel (639, 100) is in bar 3 and its colour is 0F0 (red 0, green 15, blue 0).",
+   "Pixel (640, 100) is in bar 4 and its colour is F0F (red 15, green 0, blue 15).",
+   "Pixel (799, 100) is in bar 4 and its colour is F0F (red 15, green 0, blue 15).",
+   "Pixel (800, 100) is in bar 5 and its colour is F00 (red 15, green 0, blue 0).",
+   "Pixel (959, 100) is in bar 5 and its colour is F00 (red 15, green 0, blue 0).",
+   "Pixel (960, 100) is in bar 6 and its colour is 00F (red 0, green 0, blue 15).",
+   "Pixel (1119, 100) is in bar 6 and its colour is 00F (red 0, green 0, blue 15).",
+   "Pixel (1120, 100) is in bar 7 and its colour is 000 (red 0, green 0, blue 0).",
+   "Pixel (1279, 100) is in bar 7 and its colour is 000 (red 0, green 0, blue 0).",
+   "Position (1280, 100) is right of the last column, outside the active area, so the colour is 000.",
+   "Position (0, 720) is below the last row, outside the active area, so the colour is 000."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "X",
+    "radix": "dec",
+    "v": [
+     0,
+     159,
+     160,
+     319,
+     320,
+     479,
+     480,
+     639,
+     640,
+     799,
+     800,
+     959,
+     960,
+     1119,
+     1120,
+     1279,
+     1280,
+     0
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "Y",
+    "radix": "dec",
+    "v": [
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     720
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "RGB",
+    "radix": "hex",
+    "v": [
+     4095,
+     4095,
+     4080,
+     4080,
+     255,
+     255,
+     240,
+     240,
+     3855,
+     3855,
+     3840,
+     3840,
+     15,
+     15,
+     0,
+     0,
+     0,
+     0
+    ],
+    "width": 12
+   },
+   {
+    "kind": "bus",
+    "name": "VGA_R",
+    "radix": "hex",
+    "v": [
+     15,
+     15,
+     15,
+     15,
+     0,
+     0,
+     0,
+     0,
+     15,
+     15,
+     15,
+     15,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "width": 4
+   },
+   {
+    "kind": "bus",
+    "name": "VGA_G",
+    "radix": "hex",
+    "v": [
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     15,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "width": 4
+   },
+   {
+    "kind": "bus",
+    "name": "VGA_B",
+    "radix": "hex",
+    "v": [
+     15,
+     15,
+     0,
+     0,
+     15,
+     15,
+     0,
+     0,
+     15,
+     15,
+     0,
+     0,
+     15,
+     15,
+     0,
+     0,
+     0,
+     0
+    ],
+    "width": 4
+   }
+  ],
+  "stimulus": "The model is asked for the colour at the first and last pixel of each of the 8 bars of 160 pixels on row 100, then for one pixel to the right of the 1280 columns and one below the 720 rows.",
+  "unit": "pixel",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17
+  ]
+ },
+ "what": "A video output for the Nexys A7 board that draws eight vertical colour bars on its VGA connector as a high-definition picture. The design counts pixels and lines to make the horizontal and vertical sync pulses that tell a monitor where each line and frame begins, and puts the bar colours out in step with them. The picture is blank outside the visible area and while the reset button is held. A small status register reports whether the video clock has locked.",
+ "where": "Every monitor, projector and capture device is driven by a timing generator like this one. FPGA boards use the same structure for test patterns and as the first stage of a video pipeline."
+}

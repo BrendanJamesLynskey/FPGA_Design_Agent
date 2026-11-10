@@ -1,0 +1,481 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the LEDs stay off.",
+   "reason": "nothing is asked of them."
+  }
+ ],
+ "behaviour": [
+  [
+   "rules",
+   [
+    "as spec.md, exact; the previous gate is updated on enabled clocks only; the four values are sampled on every tick"
+   ]
+  ],
+  [
+   "tick",
+   [
+    "a write to TICK with N in [4:0] presents the tick for N consecutive clocks (N = 0: nothing); the gate and the values are held in their registers throughout"
+   ]
+  ],
+  [
+   "hold",
+   [
+    "between ticks LEVEL, STATE and SNAP do not change"
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 2,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-07",
+  "mutants": {
+   "attack_reaches_exclusive": {
+    "failed_tests": [
+     "test_boundaries"
+    ],
+    "killed": true
+   },
+   "decay_strict": {
+    "failed_tests": [
+     "test_boundaries"
+    ],
+    "killed": true
+   },
+   "release_state_code": {
+    "failed_tests": [
+     "test_course_script",
+     "test_boundaries",
+     "test_holds_between_ticks_and_consecutive_tick_clocks"
+    ],
+    "killed": true
+   },
+   "release_strict": {
+    "failed_tests": [
+     "test_course_script",
+     "test_boundaries"
+    ],
+    "killed": true
+   },
+   "retrigger_resets_level": {
+    "failed_tests": [
+     "test_course_script",
+     "test_boundaries"
+    ],
+    "killed": true
+   },
+   "runs_without_tick": {
+    "failed_tests": [
+     "test_course_script",
+     "test_boundaries",
+     "test_holds_between_ticks_and_consecutive_tick_clocks"
+    ],
+    "killed": true
+   },
+   "sustain_ignores_new_level": {
+    "failed_tests": [
+     "test_course_script",
+     "test_boundaries"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c12_adsr_envelope__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 4,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 2,
+ "domain": "O",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 73,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c12_adsr_envelope/hidden/model.py",
+    "sha256": "6ec5b17a446d",
+    "text": "\"\"\"Reference model for P12-1 (linear ADSR envelope): the rules of the spec, tick by tick. Standalone: python only.\"\"\"\nimport random\n\n\ndef script(seed=12):\n    rng = random.Random(seed)\n    s = []\n\n    def note(n_on, n_off, atk, dec, sus, rel):\n        s.extend([[1, atk, dec, sus, rel]] * n_on)\n        s.extend([[0, atk, dec, sus, rel]] * n_off)\n\n    note(60, 80, 1500, 600, 30000, 900)\n    note(10, 70, 4000, 1000, 40000, 700)          # early release during the attack\n    note(40, 100, 20000, 300, 0, 5000)            # sustain at 0\n    note(15, 6, 60000, 65535, 65535, 65535)       # extreme steps\n    for _ in range(18):\n        note(rng.randrange(1, 25), rng.randrange(1, 25), rng.randrange(1, 9000), rng.randrange(1, 9000), rng.randrange(65536), rng.randrange(1, 9000))\n    s.extend([[1, 100, 50, 20000, 400]] * 20)     # slow attack, interrupted by a re-trigger during release\n    s.extend([[0, 100, 50, 20000, 400]] * 5)\n    s.extend([[1, 100, 50, 20000, 400]] * 30)\n    s.extend([[0, 100, 50, 20000, 400]] * 40)\n    return s[:900]\n\n\ndef boundary_script():\n    \"\"\"Levels that land exactly on a limit: release at level == rel_dec, decay at level - sus == dec_dec, attack reaching 65535 exactly,\n    sustain level raised above the level during the decay, and a re-trigger from the middle of a release.\"\"\"\n    s = [[0, 0, 0, 0, 0]] * 3\n    s += [[1, 1000, 50, 20000, 1000]] * 2 + [[0, 1000, 50, 20000, 1000]] * 3       # level 1000, released with rel = 1000 exactly\n    s += [[0, 0, 0, 0, 0]] * 2\n    s += [[1, 65535, 535, 65000, 100]] * 4 + [[0, 65535, 535, 65000, 100]] * 3     # attack in one step, decay lands on sus with dec = level - sus exactly\n    s += [[1, 30000, 100, 65535, 100]] * 3 + [[1, 5535, 100, 65535, 100]] * 2      # 60000 + 5535 = 65535 exactly\n    s += [[0, 5535, 100, 65535, 60000]] * 3 + [[0, 5535, 100, 65535, 4000]] * 3\n    s += [[1, 100, 3000, 5000, 100]] * 1 + [[1, 65535, 3000, 5000, 100]] * 2        # decay from the top\n    s += [[1, 100, 3000, 5000, 100]] * 3 + [[1, 100, 3000, 60000, 100]] * 3         # sustain raised above the falling level\n    s += [[0, 100, 3000, 60000, 7000]] * 2 + [[1, 700, 3000, 60000, 7000]] * 3      # re-trigger in the middle of a release\n    s += [[0, 700, 3000, 60000, 65535]] * 3\n    return s\n\n\ndef run(sc):\n    level, state, gate_d, out = 0, 0, 0, []\n    for gate, atk, dec, sus, rel in sc:\n        if gate and not gate_d:\n            state = 1\n        elif not gate and gate_d and state != 0:\n            state = 4\n        elif state == 1:\n            if level + atk >= 65535:\n                level, state = 65535, 2\n            else:\n                level += atk\n        elif state == 2:\n            if level <= sus:\n                state = 3\n            elif level - sus <= dec:\n                level, state = sus, 3\n            else:\n                level -= dec\n        elif state == 4:\n            if level <= rel:\n                level, state = 0, 0\n            else:\n                level -= rel\n        gate_d = gate\n        out.append([level, state])\n    return out\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x41445352          # \"ADSR\"\nGATE, ATK, DEC, SUS, REL, TICK, LEVEL, STATE, SNAP = range(9)\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 34,
+    "name": "adsr.sv",
+    "path": "benchmark/course/tasks/c12_adsr_envelope/ref/rtl/adsr.sv",
+    "sha256": "fa8611a99bfe",
+    "text": "// Part 12 lesson 5 solution: a linear ADSR.\nmodule adsr (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        en,\n    input  logic        gate,\n    input  logic [15:0] atk_inc,\n    input  logic [15:0] dec_dec,\n    input  logic [15:0] sus_lvl,\n    input  logic [15:0] rel_dec,\n    output logic [15:0] level,\n    output logic [2:0]  state\n);\n    logic gate_d;\n    logic [16:0] sum;\n    always_comb sum = {1'b0, level} + {1'b0, atk_inc};\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            level <= '0; state <= 3'd0; gate_d <= 1'b0;\n        end else if (en) begin\n            gate_d <= gate;\n            if (gate && !gate_d) state <= 3'd1;\n            else if (!gate && gate_d && state != 3'd0) state <= 3'd4;\n            else case (state)\n                3'd1: if (sum >= 17'd65535) begin level <= 16'd65535; state <= 3'd2; end else level <= sum[15:0];\n                3'd2: if (level <= sus_lvl) state <= 3'd3;\n                      else if (level - sus_lvl <= dec_dec) begin level <= sus_lvl; state <= 3'd3; end\n                      else level <= level - dec_dec;\n                3'd4: if (level <= rel_dec) begin level <= '0; state <= 3'd0; end else level <= level - rel_dec;\n                default: ;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 54,
+    "name": "c12_adsr_envelope_regs.sv",
+    "path": "benchmark/course/tasks/c12_adsr_envelope/ref/rtl/c12_adsr_envelope_regs.sv",
+    "sha256": "593234883236",
+    "text": "// c12_adsr_envelope_regs.sv: the shell window of course task c12_adsr_envelope (gate, four values, tick command, level and state).\nmodule c12_adsr_envelope_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic        gate_r;\n    logic [15:0] atk_r, dec_r, sus_r, rel_r, level;\n    logic [4:0]  tleft;\n    logic [2:0]  state;\n    wire         en = (tleft != 5'd0);\n\n    assign led = 16'd0;\n\n    adsr u_core (.clk(clk), .rst_n(!rst), .en(en), .gate(gate_r), .atk_inc(atk_r), .dec_dec(dec_r), .sus_lvl(sus_r), .rel_dec(rel_r),\n                 .level(level), .state(state));\n\n    always_ff @(posedge clk) begin\n        if (en) tleft <= tleft - 1'b1;\n        if (win_wr) begin\n            case (win_addr)\n                7'h00: gate_r <= win_wdata[0];\n                7'h01: atk_r  <= win_wdata[15:0];\n                7'h02: dec_r  <= win_wdata[15:0];\n                7'h03: sus_r  <= win_wdata[15:0];\n                7'h04: rel_r  <= win_wdata[15:0];\n                7'h05: tleft  <= win_wdata[4:0];\n                default: ;\n            endcase\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            case (win_addr)\n                7'h00: win_rdata <= {31'd0, gate_r};\n                7'h01: win_rdata <= {16'd0, atk_r};\n                7'h02: win_rdata <= {16'd0, dec_r};\n                7'h03: win_rdata <= {16'd0, sus_r};\n                7'h04: win_rdata <= {16'd0, rel_r};\n                7'h06: win_rdata <= {16'd0, level};\n                7'h07: win_rdata <= {29'd0, state};\n                7'h08: win_rdata <= {13'd0, state, level};\n                default: ;\n            endcase\n        end\n        if (rst) begin\n            gate_r <= 1'b0; atk_r <= '0; dec_r <= '0; sus_r <= '0; rel_r <= '0; tleft <= '0; win_rdata <= 32'd0;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c12_adsr_envelope_top.sv",
+    "path": "benchmark/course/tasks/c12_adsr_envelope/ref/rtl/c12_adsr_envelope_top.sv",
+    "sha256": "5fede63b3153",
+    "text": "// c12_adsr_envelope_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"ADSR\".\n// Reference design for course task c12_adsr_envelope; the shell window is wired to c12_adsr_envelope_regs.\nmodule c12_adsr_envelope_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h41445352), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c12_adsr_envelope_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 75,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c12_adsr_envelope/hidden/acceptance.py",
+    "sha256": "8be66338ba41",
+    "text": "\"\"\"Acceptance tests of c12_adsr_envelope against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board\nfrom model import ATK, DEC, DESIGN_ID, GATE, LEVEL, REL, SNAP, STATE, SUS, TICK, boundary_script, run, script\n\nREGS = (GATE, ATK, DEC, SUS, REL)\n\n\nasync def play(b: Board, sc: list[list[int]], what: str, per_tick_check: bool = True) -> None:\n    \"\"\"Run a script tick by tick (one tick per TICK write), writing only the registers that change, and compare level and state after every tick.\"\"\"\n    want = run(sc)\n    cur = [None] * 5\n    for k, row in enumerate(sc):\n        for reg, v, c in zip(REGS, row, cur):\n            if v != c:\n                await b.write(reg, v)\n        cur = list(row)\n        await b.write(TICK, 1)\n        snap = await b.read(SNAP)\n        got = [snap & 0xFFFF, snap >> 16]\n        assert got == want[k], f\"{what}: tick {k} (gate/atk/dec/sus/rel {row}): RTL level/state {got}, model {want[k]}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (GATE, ATK, DEC, SUS, REL, LEVEL, STATE, SNAP):\n        await b.expect(off, 0, f\"reset value of {off:#x}\")\n\n\n@cocotb.test()\nasync def test_course_script(dut):\n    b = Board(dut, {})\n    await b.start()\n    await play(b, script(), \"script\")\n\n\n@cocotb.test()\nasync def test_boundaries(dut):\n    b = Board(dut, {})\n    await b.start()\n    await play(b, boundary_script(), \"boundaries\")\n\n\n@cocotb.test()\nasync def test_holds_between_ticks_and_consecutive_tick_clocks(dut):\n    b = Board(dut, {})\n    await b.start()\n    await b.write(ATK, 700)\n    await b.write(DEC, 50)\n    await b.write(SUS, 3000)\n    await b.write(REL, 400)\n    await b.write(GATE, 1)\n    await b.write(TICK, 1)                       # gate rises: attack, level unchanged\n    await b.expect(SNAP, 1 << 16, \"after the gate rises\")\n    await b.cycles(300)                          # no tick: nothing moves, however long we wait\n    await b.expect(SNAP, 1 << 16, \"no tick, no change\")\n    await b.write(TICK, 5)                       # five consecutive tick clocks = five attack steps\n    await b.expect(LEVEL, 3500, \"five consecutive ticks\")\n    await b.expect(STATE, 1, \"still attacking\")\n    await b.write(TICK, 16)                      # 16 more: 3500 + 11200 = 14700 (attack continues)\n    await b.expect(LEVEL, 14700, \"sixteen consecutive ticks\")\n    await b.write(GATE, 0)\n    await b.cycles(200)\n    await b.expect(SNAP, 14700 | 1 << 16, \"the gate alone does nothing without a tick\")\n    await b.write(TICK, 1)\n    await b.expect(SNAP, 14700 | 4 << 16, \"release on the first tick after the gate falls\")\n    await b.reset()\n    await b.expect(SNAP, 0, \"SNAP after reset\")\n    await b.expect(ATK, 0, \"ATK after reset\")\n"
+   }
+  ]
+ },
+ "heading": "Envelope generator for a synthesiser voice, behind the test shell",
+ "id": "c12_adsr_envelope",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[0] key down; other bits read 0",
+    "name": "GATE",
+    "offset": "0x00"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] atk_inc; [31:16] read 0",
+    "name": "ATK",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] dec_dec; [31:16] read 0",
+    "name": "DEC",
+    "offset": "0x02"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] sus_lvl; [31:16] read 0",
+    "name": "SUS",
+    "offset": "0x03"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] rel_dec; [31:16] read 0",
+    "name": "REL",
+    "offset": "0x04"
+   },
+   {
+    "access": "WO",
+    "bits": "[4:0] number of consecutive tick clocks to present; reads 0",
+    "name": "TICK",
+    "offset": "0x05"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] level; [31:16] read 0",
+    "name": "LEVEL",
+    "offset": "0x06"
+   },
+   {
+    "access": "RO",
+    "bits": "[2:0] state (0 idle, 1 attack, 2 decay, 3 sustain, 4 release); other bits 0",
+    "name": "STATE",
+    "offset": "0x07"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] level, [18:16] state; other bits 0 (both read in one access)",
+    "name": "SNAP",
+    "offset": "0x08"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: level 0, state idle, gate considered low at the previous tick, all loaded values 0",
+  "top": "c12_adsr_envelope_top",
+  "unmapped": "offsets not listed read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "adsr.sv",
+   "name": "attack_reaches_exclusive",
+   "why": "attack landing exactly on 65535 does not move to decay"
+  },
+  {
+   "file": "adsr.sv",
+   "name": "release_strict",
+   "why": "release at level == rel_dec does not end"
+  },
+  {
+   "file": "adsr.sv",
+   "name": "decay_strict",
+   "why": "decay landing exactly on sus_lvl overshoots by one tick"
+  },
+  {
+   "file": "adsr.sv",
+   "name": "retrigger_resets_level",
+   "why": "a re-trigger restarts from zero"
+  },
+  {
+   "file": "adsr.sv",
+   "name": "runs_without_tick",
+   "why": "the envelope moves on every clock, not on ticks"
+  },
+  {
+   "file": "adsr.sv",
+   "name": "release_state_code",
+   "why": "release reports state 5"
+  },
+  {
+   "file": "adsr.sv",
+   "name": "sustain_ignores_new_level",
+   "why": "decay at level == sus_lvl never ends"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c12_adsr_envelope",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "level and state after every tick equal the model"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "outputs hold on clocks where there is no tick"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "analysis"
+   ],
+   "text": "timing closes at 100 MHz"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": 132,
+   "bram36": 0,
+   "claude_code_version": "2.1.318",
+   "date": "2026-11-07",
+   "dsp": 0,
+   "escape_level": null,
+   "failure_class": null,
+   "ff": 359,
+   "hidden_pass": true,
+   "lut": 508,
+   "model": "claude-sonnet-5-5",
+   "outcome": "caught_and_repaired",
+   "run": 1,
+   "tests_passed": 4,
+   "tests_total": 4,
+   "wall_h": 1.92,
+   "wns_ns": 0.627
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Envelope generator for a synthesiser voice, behind the test shell\n\nI am building a hardware synthesiser voice on the Nexys A7-100T and need an ADSR (attack, decay, sustain, release) envelope that steps once per sample tick, with linear segments. I want to exercise it entirely from the test shell.\n\n- Inputs: a tick (the sample tick: everything below happens only on a clock where the tick is present; on all other clocks the outputs hold), `gate` (the key is down), and four 16-bit values that are read on every tick: `atk_inc` (the level added per tick during the attack), `dec_dec` (subtracted per tick during the decay), `sus_lvl` (the sustain level) and `rel_dec` (subtracted per tick during the release). Outputs: `level` (unsigned 16 bits) and `state` (3 bits: 0 idle, 1 attack, 2 decay, 3 sustain, 4 release), both showing the result of the latest tick from the clock after it.\n- After reset: `level` = 0, `state` = idle, and the gate is considered to have been low. CPU_RESETN does this and clears the loaded values.\n- On each tick, in this order of priority:\n  1. If `gate` is high and it was low at the previous tick: state becomes attack (the level is not changed on this tick, so a re-trigger starts from the present level).\n  2. Otherwise, if `gate` is low, it was high at the previous tick, and the state is not idle: state becomes release (level unchanged on this tick).\n  3. Otherwise by state: **attack**: if level + `atk_inc` reaches 65535 or more, the level is 65535 and the state becomes decay; else the level grows by `atk_inc`. **Decay**: if the level is at or below `sus_lvl`, the state becomes sustain (level unchanged); else if level - `sus_lvl` is at most `dec_dec`, the level becomes `sus_lvl` and the state becomes sustain; else the level falls by `dec_dec`. **Sustain** and **idle**: hold. **Release**: if the level is at most `rel_dec`, the level becomes 0 and the state idle; else the level falls by `rel_dec`.\n- The block must close timing at 100 MHz.\n- Over the shell I set the gate and the four values, give a \"tick\" command that presents the tick for 1 to 16 consecutive clocks, and read the level and the state back. I will run a script of about 900 ticks (full notes, early releases, re-triggers during decay and release, extreme step sizes and sustain levels, with gaps between the ticks) and compare `level` and `state` after every tick, and some boundary cases (a level that lands exactly on a limit).\n- The shell runs at 115200 baud on the USB-UART. The design ID is \"ADSR\".\n\nTest hooks: top module `c12_adsr_envelope_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "O03",
+  "B22"
+ ],
+ "tier": "C12",
+ "title": "linear ADSR envelope generator, 16-bit level, 5 states, behind the test shell",
+ "trace": {
+  "captions": [
+   "Tick 0: gate high, level 0 (0% of full scale), state attack.",
+   "Tick 1: gate high, level 12000 (18% of full scale), state attack.",
+   "Tick 2: gate high, level 24000 (36% of full scale), state attack.",
+   "Tick 3: gate high, level 36000 (54% of full scale), state attack.",
+   "Tick 4: gate high, level 48000 (73% of full scale), state attack.",
+   "Tick 5: gate high, level 60000 (91% of full scale), state attack.",
+   "Tick 6: gate high, level 65535 (100% of full scale), state decay. The state changes to decay.",
+   "Tick 7: gate high, level 57535 (87% of full scale), state decay.",
+   "Tick 8: gate high, level 49535 (75% of full scale), state decay.",
+   "Tick 9: gate high, level 41535 (63% of full scale), state decay.",
+   "Tick 10: gate high, level 33535 (51% of full scale), state decay.",
+   "Tick 11: gate high, level 30000 (45% of full scale), state sustain. The state changes to sustain.",
+   "Tick 12: gate high, level 30000 (45% of full scale), state sustain.",
+   "Tick 13: gate high, level 30000 (45% of full scale), state sustain.",
+   "Tick 14: gate low, level 30000 (45% of full scale), state release. The state changes to release.",
+   "Tick 15: gate low, level 16000 (24% of full scale), state release.",
+   "Tick 16: gate low, level 2000 (3% of full scale), state release.",
+   "Tick 17: gate low, level 0 (0% of full scale), state idle. The state changes to idle.",
+   "Tick 18: gate low, level 0 (0% of full scale), state idle.",
+   "Tick 19: gate low, level 0 (0% of full scale), state idle.",
+   "Tick 20: gate low, level 0 (0% of full scale), state idle.",
+   "Tick 21: gate low, level 0 (0% of full scale), state idle."
+  ],
+  "signals": [
+   {
+    "kind": "bit",
+    "name": "gate",
+    "v": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "hi": 65535,
+    "kind": "wave",
+    "lo": 0,
+    "name": "level",
+    "v": [
+     0,
+     12000,
+     24000,
+     36000,
+     48000,
+     60000,
+     65535,
+     57535,
+     49535,
+     41535,
+     33535,
+     30000,
+     30000,
+     30000,
+     30000,
+     16000,
+     2000,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "text",
+    "name": "state",
+    "v": [
+     "attack",
+     "attack",
+     "attack",
+     "attack",
+     "attack",
+     "attack",
+     "decay",
+     "decay",
+     "decay",
+     "decay",
+     "decay",
+     "sustain",
+     "sustain",
+     "sustain",
+     "release",
+     "release",
+     "release",
+     "idle",
+     "idle",
+     "idle",
+     "idle",
+     "idle"
+    ]
+   }
+  ],
+  "stimulus": "One note: the gate is high for 14 ticks and then low for 8. Attack step 12000, decay step 8000, sustain level 30000, release step 14000.",
+  "unit": "tick",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21
+  ]
+ },
+ "what": "The envelope generator of a synthesiser voice. When the key goes down the level rises in steps (attack), then falls to a held level (decay to sustain), and when the key is released it falls to zero (release). All steps are straight lines and happen only on sample ticks. A new key press starts again from wherever the level happens to be.",
+ "where": "Envelope generators shape the loudness or brightness of every note in hardware and software synthesisers, from analogue modular systems to digital keyboards and plug-ins."
+}

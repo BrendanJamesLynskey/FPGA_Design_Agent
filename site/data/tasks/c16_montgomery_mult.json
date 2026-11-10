@@ -1,0 +1,557 @@
+{
+ "assumptions": [],
+ "behaviour": [
+  [
+   "function",
+   [
+    "r = a * b * 2^-64 mod n with r < n, for odd n < 2^64 and a, b < n (a, b, n may be 40-bit or 64-bit values; n odd)."
+   ]
+  ],
+  [
+   "timing",
+   [
+    "The number of clocks from START to done is the same for every input and at most 100 (the reference takes 66). CLOCKS reports it.",
+    "No data-dependent early exit; no division or remainder operators."
+   ]
+  ],
+  [
+   "handshake",
+   [
+    "START clears DONE; BUSY is high from the clock after START until done; DONE and r hold until the next START."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] = DONE, LED[1] = BUSY, the other LEDs are 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 4,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "early_exit": {
+    "failed_tests": [
+     "test_products_64_and_40_bit",
+     "test_edge_operands",
+     "test_constant_time",
+     "test_registers_and_reset"
+    ],
+    "killed": true
+   },
+   "no_final_subtract": {
+    "failed_tests": [
+     "test_products_64_and_40_bit",
+     "test_edge_operands",
+     "test_constant_time"
+    ],
+    "killed": true
+   },
+   "odd_fix_missing": {
+    "failed_tests": [
+     "test_products_64_and_40_bit",
+     "test_edge_operands",
+     "test_constant_time",
+     "test_registers_and_reset"
+    ],
+    "killed": true
+   },
+   "one_step_short": {
+    "failed_tests": [
+     "test_products_64_and_40_bit",
+     "test_edge_operands",
+     "test_constant_time",
+     "test_registers_and_reset"
+    ],
+    "killed": true
+   },
+   "slow_for_small_s": {
+    "failed_tests": [
+     "test_products_64_and_40_bit",
+     "test_edge_operands",
+     "test_constant_time",
+     "test_registers_and_reset"
+    ],
+    "killed": true
+   },
+   "wrong_bit_of_a": {
+    "failed_tests": [
+     "test_products_64_and_40_bit",
+     "test_edge_operands",
+     "test_constant_time",
+     "test_registers_and_reset"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c16_montgomery_mult__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 5,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 2,
+ "domain": "D",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 35,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c16_montgomery_mult/hidden/model.py",
+    "sha256": "d6ca5d2db72f",
+    "text": "\"\"\"P16-4 model: 64-bit Montgomery products a * b * 2^-64 mod n (standalone: python only).\"\"\"\nimport hashlib\nimport math\nimport random\nimport struct\n\n\ndef mont_mul(a, b, n, w=64):\n    return a * b * pow(1 << w, -1, n) % n\n\n\ndef cases():\n    rng = random.Random(19)\n    out = []\n    for t in range(40):\n        n = rng.getrandbits(64) | (1 << 63) | 1 if t % 4 else rng.getrandbits(40) | (1 << 39) | 1\n        out.append((rng.randrange(n), rng.randrange(n), n))\n    n = (1 << 64) - 59                                                            # a 64-bit prime\n    out += [(0, 5, n), (1, n - 1, n), (n - 1, n - 1, n), (n - 1, 1, n)]\n    return out\n\n\ndef reference_output():\n    return {\"cases\": [{\"a\": a, \"b\": b, \"n\": n, \"r\": mont_mul(a, b, n), \"clocks\": 66} for a, b, n in cases()]}\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x4D4F4E54          # \"MONT\"\nA_LO, A_HI, B_LO, B_HI, N_LO, N_HI, START, STATUS, R_LO, R_HI, CLOCKS = range(11)\n\n\ndef bench_cases():\n    \"\"\"First 14 course products (mixed 64/40-bit moduli), the four edge cases, and a 64-bit prime modulus case or two.\"\"\"\n    c = cases()\n    return c[:14] + c[40:44] + [c[20], c[27], c[33]]\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 57,
+    "name": "c16_montgomery_mult_regs.sv",
+    "path": "benchmark/course/tasks/c16_montgomery_mult/ref/rtl/c16_montgomery_mult_regs.sv",
+    "sha256": "bdb4e4160e49",
+    "text": "// c16_montgomery_mult_regs.sv: the shell window of course task c16_montgomery_mult.\nmodule c16_montgomery_mult_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic [63:0] a_r, b_r, n_r, r_w;\n    logic        st, busy, done, run, got, dn;\n    logic [7:0]  clk_cnt, clocks;\n\n    assign led = {14'd0, busy, dn};\n\n    montgomery #(.W(64)) u_core (.clk(clk), .rst_n(!rst), .start(st), .a(a_r), .b(b_r), .n(n_r), .busy(busy), .done(done), .r(r_w));\n\n    always_ff @(posedge clk) begin\n        st <= 1'b0;\n        if (win_wr) begin\n            case (win_addr)\n                7'd0: a_r[31:0]  <= win_wdata;\n                7'd1: a_r[63:32] <= win_wdata;\n                7'd2: b_r[31:0]  <= win_wdata;\n                7'd3: b_r[63:32] <= win_wdata;\n                7'd4: n_r[31:0]  <= win_wdata;\n                7'd5: n_r[63:32] <= win_wdata;\n                7'd6: begin st <= 1'b1; dn <= 1'b0; end\n                default: ;\n            endcase\n        end\n        if (st) begin run <= 1'b1; clk_cnt <= 8'd1; end\n        else if (run) clk_cnt <= clk_cnt + 8'd1;\n        if (done) begin dn <= 1'b1; run <= 1'b0; clocks <= clk_cnt; end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            case (win_addr)\n                7'd0: win_rdata <= a_r[31:0];\n                7'd1: win_rdata <= a_r[63:32];\n                7'd2: win_rdata <= b_r[31:0];\n                7'd3: win_rdata <= b_r[63:32];\n                7'd4: win_rdata <= n_r[31:0];\n                7'd5: win_rdata <= n_r[63:32];\n                7'd7: win_rdata <= {30'd0, busy, dn};\n                7'd8: win_rdata <= dn ? r_w[31:0] : 32'd0;\n                7'd9: win_rdata <= dn ? r_w[63:32] : 32'd0;\n                7'd10: win_rdata <= {24'd0, clocks};\n                default: ;\n            endcase\n        end\n        if (rst) begin\n            a_r <= '0; b_r <= '0; n_r <= '0; st <= 1'b0; run <= 1'b0; dn <= 1'b0; clk_cnt <= '0; clocks <= '0; win_rdata <= 32'd0;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c16_montgomery_mult_top.sv",
+    "path": "benchmark/course/tasks/c16_montgomery_mult/ref/rtl/c16_montgomery_mult_top.sv",
+    "sha256": "2fea6ca64f59",
+    "text": "// c16_montgomery_mult_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"MONT\".\n// Reference design for course task c16_montgomery_mult; the shell window is wired to c16_montgomery_mult_regs.\nmodule c16_montgomery_mult_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4d4f4e54), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c16_montgomery_mult_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 46,
+    "name": "montgomery.sv",
+    "path": "benchmark/course/tasks/c16_montgomery_mult/ref/rtl/montgomery.sv",
+    "sha256": "687dd0e75ef5",
+    "text": "// source: solutions/p16l05_montgomery/montgomery.sv (course file, unchanged below this line)\n// Part 16 lesson 5 exercise: a bit-serial Montgomery multiplier of parameterised width. For an ODD modulus n < 2^W and operands a, b < n it computes r = a * b * 2^-W mod n.\n//   Algorithm (radix 2): S = 0; for i = 0 .. W-1: S = S + a[i] * b; if S is odd, S = S + n; S = S / 2.  After W steps S < 2n; one conditional subtraction gives r = S - n if S >= n else S.\n//   start (one clock, only while !busy): take a, b, n. One bit of a per clock: W clocks, then one clock for the final subtraction. busy is high from the clock after start until r is ready; done is high for\n//   exactly one clock then, and r keeps its value until the next start.  Latency: counting the edge that sampled start as edge 1, done is high after edge W+2 (edge 1 loads, edges 2..W+1 are the steps,\n//   edge W+2 subtracts). It must be the same for every a, b and n: no data-dependent early exit, and the final subtraction is a multiplexer, not a branch in time. rst_n is synchronous, active low,\n//   clears busy and done. S needs W+2 bits (S < 2n plus the addends before halving).\nmodule montgomery #(\n    parameter int W = 64\n) (\n    input  logic         clk,\n    input  logic         rst_n,\n    input  logic         start,\n    input  logic [W-1:0] a,\n    input  logic [W-1:0] b,\n    input  logic [W-1:0] n,\n    output logic         busy,\n    output logic         done,\n    output logic [W-1:0] r\n);\n    logic [W-1:0]  ar, br, nr;\n    logic [W+1:0]  s;\n    logic [$clog2(W+2)-1:0] cnt;\n    logic          fin;\n    logic [W+1:0]  sum, sum2;\n    always_comb begin\n        sum = s + (ar[0] ? {2'b00, br} : '0);\n        sum2 = sum[0] ? sum + {2'b00, nr} : sum;\n    end\n    always_ff @(posedge clk) begin\n        done <= 1'b0;\n        if (!rst_n) begin busy <= 1'b0; fin <= 1'b0; end\n        else if (!busy) begin\n            if (start) begin ar <= a; br <= b; nr <= n; s <= '0; cnt <= '0; busy <= 1'b1; fin <= 1'b0; end\n        end else if (!fin) begin\n            s <= sum2 >> 1;\n            ar <= ar >> 1;\n            cnt <= cnt + 1'b1;\n            if (cnt == W - 1) fin <= 1'b1;\n        end else begin\n            r <= (s >= {2'b00, nr}) ? (s - {2'b00, nr}) : s[W-1:0];\n            busy <= 1'b0;\n            done <= 1'b1;\n        end\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 82,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c16_montgomery_mult/hidden/acceptance.py",
+    "sha256": "8a1004756fc6",
+    "text": "\"\"\"Acceptance tests of c16_montgomery_mult against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import (A_HI, A_LO, B_HI, B_LO, CLOCKS, DESIGN_ID, N_HI, N_LO, R_HI, R_LO, START, STATUS, bench_cases,\n                   mont_mul)\n\nM32 = 0xFFFFFFFF\n\n\nasync def product(b: Board, a: int, bb: int, n: int, what: str) -> int:\n    for off, v in ((A_LO, a), (A_HI, a >> 32), (B_LO, bb), (B_HI, bb >> 32), (N_LO, n), (N_HI, n >> 32)):\n        await b.write(off, v & M32)\n    await b.write(START, 1)\n    await b.cycles(110)\n    await b.expect(STATUS, 1, f\"{what}: DONE and not BUSY\")\n    r = await b.read(R_LO) | await b.read(R_HI) << 32\n    want = mont_mul(a, bb, n)\n    assert r == want, f\"{what}: a=0x{a:X} b=0x{bb:X} n=0x{n:X}: RTL r=0x{r:X}, model 0x{want:X}\"\n    clocks = await b.read(CLOCKS)\n    assert 1 <= clocks <= 100, f\"{what}: {clocks} clocks (must be at most 100)\"\n    return clocks\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (A_LO, N_HI, STATUS, R_LO, R_HI, CLOCKS):\n        await b.expect(off, 0, f\"reset value of {off}\")\n\n\n@cocotb.test()\nasync def test_products_64_and_40_bit(dut):\n    b = Board(dut, {})\n    await b.start()\n    for k, (a, bb, n) in enumerate(bench_cases()[:14]):\n        await product(b, a, bb, n, f\"product {k}\")\n\n\n@cocotb.test()\nasync def test_edge_operands(dut):\n    \"\"\"0 x 5, 1 x (n-1), (n-1) x (n-1), (n-1) x 1 modulo a 64-bit prime.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    for k, (a, bb, n) in enumerate(bench_cases()[14:18]):\n        await product(b, a, bb, n, f\"edge {k}\")\n\n\n@cocotb.test()\nasync def test_constant_time(dut):\n    \"\"\"The number of clocks is the same for every product, small and large operands, many moduli.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    seen = set()\n    for k, (a, bb, n) in enumerate(bench_cases()):\n        seen.add(await product(b, a, bb, n, f\"timing {k}\"))\n    assert len(seen) == 1, f\"the number of clocks depends on the data: {sorted(seen)}\"\n\n\n@cocotb.test()\nasync def test_registers_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    a, bb, n = bench_cases()[0]\n    await product(b, a, bb, n, \"first\")\n    await b.write(A_LO, 0x12345678)\n    await b.expect(A_LO, 0x12345678, \"A_LO\")\n    await b.expect(R_LO, mont_mul(a, bb, n) & M32, \"r holds until the next START\")\n    await b.write(R_LO, 0xFFFF)\n    await b.write(START, 1)\n    await b.cycles(110)\n    led = await peek(b.clk, dut.LED)\n    assert led == 1, f\"LED {led:04X}: only LED0 (DONE) is lit\"\n    for off in (0x0B, 0x41, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n    await b.reset()\n    await b.expect(STATUS, 0, \"DONE after reset\")\n    await b.expect(A_LO, 0, \"A after reset\")\n"
+   }
+  ]
+ },
+ "heading": "Montgomery multiplier behind the test shell",
+ "id": "c16_montgomery_mult",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[31:0] a[31:0]",
+    "name": "A_LO",
+    "offset": "0x00"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] a[63:32]",
+    "name": "A_HI",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] b[31:0]",
+    "name": "B_LO",
+    "offset": "0x02"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] b[63:32]",
+    "name": "B_HI",
+    "offset": "0x03"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] n[31:0]",
+    "name": "N_LO",
+    "offset": "0x04"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] n[63:32]",
+    "name": "N_HI",
+    "offset": "0x05"
+   },
+   {
+    "access": "WO",
+    "bits": "any write requests a product for one clock and clears DONE; not while BUSY",
+    "name": "START",
+    "offset": "0x06"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] DONE (since the last START), [1] BUSY",
+    "name": "STATUS",
+    "offset": "0x07"
+   },
+   {
+    "access": "RO",
+    "bits": "[31:0] r[31:0] after DONE; 0 before",
+    "name": "R_LO",
+    "offset": "0x08"
+   },
+   {
+    "access": "RO",
+    "bits": "[31:0] r[63:32] after DONE; 0 before",
+    "name": "R_HI",
+    "offset": "0x09"
+   },
+   {
+    "access": "RO",
+    "bits": "[7:0] clocks from the clock in which START was applied to the clock in which done was high (reference: 66); same for every input",
+    "name": "CLOCKS",
+    "offset": "0x0a"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: operands, DONE, BUSY and CLOCKS 0",
+  "top": "c16_montgomery_mult_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "montgomery.sv",
+   "name": "early_exit",
+   "why": "stops early when the remaining bits of a are zero: data-dependent time and a wrong result"
+  },
+  {
+   "file": "montgomery.sv",
+   "name": "no_final_subtract",
+   "why": "the final conditional subtraction is missing"
+  },
+  {
+   "file": "montgomery.sv",
+   "name": "odd_fix_missing",
+   "why": "n is never added to make the sum even"
+  },
+  {
+   "file": "montgomery.sv",
+   "name": "one_step_short",
+   "why": "one multiplication step too few"
+  },
+  {
+   "file": "montgomery.sv",
+   "name": "wrong_bit_of_a",
+   "why": "adds b for the wrong bit of a"
+  },
+  {
+   "file": "montgomery.sv",
+   "name": "slow_for_small_s",
+   "why": "one extra clock when no final subtraction is needed: a timing difference that leaks the comparison"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c16_montgomery_mult",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "r equals the model for every tested product, with 64-bit and 40-bit moduli and the edge operands (0, 1, n-1)"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "CLOCKS is the same for every tested product and at most 100"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "BUSY and DONE follow START as described and r holds until the next START"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": 134,
+   "bram36": 0,
+   "claude_code_version": "2.1.318",
+   "date": "2026-11-07",
+   "dsp": 0,
+   "escape_level": null,
+   "failure_class": null,
+   "ff": 683,
+   "hidden_pass": true,
+   "lut": 778,
+   "model": "claude-sonnet-5-5",
+   "outcome": "pass",
+   "run": 1,
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 1.36,
+   "wns_ns": 3.386
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Montgomery multiplier behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that multiplies two 64-bit numbers modulo a third, in the \"Montgomery\" way public-key cryptography uses, and I want to exercise it entirely from the test shell.\n\n- Inputs: a, b and n, each 64 bits, with n odd and a and b smaller than n, loaded over the shell, and a \"start\" command that requests the product for one clock.\n- Output: r = a x b x 2^-64 mod n, that is, the number r smaller than n for which r x 2^64 leaves the same remainder as a x b when divided by n. A \"done\" flag says r is ready; \"busy\" is high between the start and the done.\n  r keeps its value until the next start. A new start will not come while it is busy.\n- **The number of clocks from start to done must be exactly the same for every input** (zero operands, operands equal to n minus one, and everything in between), and no more than 100. This is a security requirement: the time must\n  not tell an observer anything about the numbers. The block measures this and I can read the number of clocks of the last product.\n- No divide operators and no remainder operators, and no floating-point blocks. CPU_RESETN clears the loaded numbers, busy and done.\n- I will check a few dozen products exactly, with moduli of 64 and of 40 bits, and I will compare the number of clocks of all of them. LED0 shows done and LED1 shows busy.\n  The shell runs at 115200 baud on the USB-UART. The design ID is \"MONT\".\n\nTest hooks: top module `c16_montgomery_mult_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "D14",
+  "D23"
+ ],
+ "tier": "C16",
+ "title": "Montgomery multiplier behind the test shell",
+ "trace": {
+  "captions": [
+   "Pair 0: modulus of 40 bits. r = a x b x 2^-64 mod n = 0x559cac6d7, which is below n. It takes 66 clocks.",
+   "Pair 1: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x7a267ce8b69ae79, which is below n. It takes 66 clocks.",
+   "Pair 2: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x1a74855cda1e4392, which is below n. It takes 66 clocks.",
+   "Pair 3: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x985452e188dc3473, which is below n. It takes 66 clocks.",
+   "Pair 4: modulus of 40 bits. r = a x b x 2^-64 mod n = 0xa6e9df9482, which is below n. It takes 66 clocks.",
+   "Pair 5: modulus of 64 bits. r = a x b x 2^-64 mod n = 0xa076edf9878278c9, which is below n. It takes 66 clocks.",
+   "Pair 6: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x13984d41b39a7862, which is below n. It takes 66 clocks.",
+   "Pair 7: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x64828865aad8d6e6, which is below n. It takes 66 clocks.",
+   "Pair 8: modulus of 40 bits. r = a x b x 2^-64 mod n = 0xe4205fb223, which is below n. It takes 66 clocks.",
+   "Pair 9: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x830c362ea04f7c4b, which is below n. It takes 66 clocks.",
+   "Pair 10: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x2cfff787687ec981, which is below n. It takes 66 clocks.",
+   "Pair 11: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x88ca646472adf7aa, which is below n. It takes 66 clocks.",
+   "Pair 12: modulus of 40 bits. r = a x b x 2^-64 mod n = 0x1d95aa13f7, which is below n. It takes 66 clocks.",
+   "Pair 13: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x980c06e67abffb1a, which is below n. It takes 66 clocks.",
+   "Pair 14: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x0, which is below n. It takes 66 clocks.",
+   "Pair 15: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x34115b1e5f752701, which is below n. It takes 66 clocks.",
+   "Pair 16: modulus of 64 bits. r = a x b x 2^-64 mod n = 0xcbeea4e1a08ad8c4, which is below n. It takes 66 clocks.",
+   "Pair 17: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x34115b1e5f752701, which is below n. It takes 66 clocks.",
+   "Pair 18: modulus of 40 bits. r = a x b x 2^-64 mod n = 0x6ee0d762bb, which is below n. It takes 66 clocks.",
+   "Pair 19: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x3b583ca056437f93, which is below n. It takes 66 clocks.",
+   "Pair 20: modulus of 64 bits. r = a x b x 2^-64 mod n = 0x6d3e60ac7599ebe, which is below n. It takes 66 clocks."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "a",
+    "radix": "hex",
+    "v": [
+     131084404015,
+     9761997150923744516,
+     1986120937536621482,
+     15393975088589426193,
+     22810850805,
+     2100928827606332199,
+     1359554905513441872,
+     7806290843871862627,
+     628349638530,
+     11751918668659693223,
+     10636375163858690431,
+     3532798979901842870,
+     601744854811,
+     16711080721138719326,
+     0,
+     1,
+     18446744073709551556,
+     18446744073709551556,
+     340200949589,
+     5345345102007857358,
+     5645292206078376550
+    ],
+    "width": 64
+   },
+   {
+    "kind": "bus",
+    "name": "b",
+    "radix": "hex",
+    "v": [
+     221240172224,
+     10785923630493848110,
+     7597596285007037196,
+     14264869967224540557,
+     681049700002,
+     8404465309349414043,
+     1816846958650019654,
+     8122126330618996738,
+     553685251428,
+     7496628895416043077,
+     1987043210768910846,
+     2483934906774165084,
+     505540671152,
+     10959814925707456601,
+     5,
+     18446744073709551556,
+     18446744073709551556,
+     1,
+     462791517726,
+     725159842705041430,
+     9753713145496999305
+    ],
+    "width": 64
+   },
+   {
+    "kind": "bus",
+    "name": "n",
+    "radix": "hex",
+    "v": [
+     599908687447,
+     15627506703124049939,
+     10975805370994547331,
+     17856590468856304399,
+     984945521505,
+     16217371871440410033,
+     15976626100465355127,
+     9533325229793252613,
+     1089454056883,
+     12147536335631310325,
+     14290560413427530915,
+     13047869181333957247,
+     1093611705549,
+     17653030750184262593,
+     18446744073709551557,
+     18446744073709551557,
+     18446744073709551557,
+     18446744073709551557,
+     631554869167,
+     11451338060759540437,
+     13612121729288371417
+    ],
+    "width": 64
+   },
+   {
+    "kind": "bus",
+    "name": "r",
+    "radix": "hex",
+    "v": [
+     22981297879,
+     550116241292504697,
+     1906295176127464338,
+     10976489320425993331,
+     716888315010,
+     11562690749296441545,
+     1411963427762108514,
+     7242501121004590822,
+     979795685923,
+     9442982092575046731,
+     3242582417675831681,
+     9856801117037262762,
+     127065002999,
+     10956139580457220890,
+     0,
+     3751880150584993537,
+     14694863923124558020,
+     3751880150584993537,
+     476218614459,
+     4276234505527984019,
+     491989718282116798
+    ],
+    "width": 64
+   },
+   {
+    "kind": "bus",
+    "name": "clocks",
+    "radix": "dec",
+    "v": [
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66,
+     66
+    ]
+   }
+  ],
+  "stimulus": "21 products from the model's bench set: 64-bit and 40-bit odd moduli, then the edge cases (zero, n minus one) and some prime moduli.",
+  "unit": "operand pair",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20
+  ]
+ },
+ "what": "A multiplier for large numbers that works modulo a third number, using the Montgomery method, which replaces division with shifts and additions. The time from start to done is the same whatever the inputs, so that timing reveals nothing about the numbers, and the block reports how many clocks it took.",
+ "where": "Modular multiplication of this kind is the inner loop of RSA and elliptic-curve cryptography. Constant-time behaviour is a standard requirement against timing attacks."
+}

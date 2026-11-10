@@ -1,0 +1,453 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the picture buffer and the stream generator are part of the test wrapper, not of the block under test",
+   "reason": "the shell cannot present a stream; any design must provide the register map above"
+  }
+ ],
+ "behaviour": [
+  [
+   "stream",
+   [
+    "AXI4-Stream video slave (tdata[7:0], tvalid, tready, tuser = start of picture, tlast = end of line), 80 x 60; the wrapper drives one pixel per clock and holds a pixel until tready."
+   ]
+  ],
+  [
+   "detector",
+   [
+    "Harris corner response with non-maximum suppression, as the course exercise: Sobel gradients scaled down by 4 (arithmetic shift), structure tensor summed over 3 x 3, k = 1/16, R = det - (trace*trace >> 4), signed 48-bit; threshold 50 000 000 (signed compare); the pixel is a corner if R is strictly greater than NW, N, NE, W and greater-or-equal than E, SW, S, SE; replicated borders (edge pixels extend the picture)."
+   ]
+  ],
+  [
+   "expected result",
+   [
+    "The corner pixels of the rectangles that are visible inside the picture, exactly (the bench accepts a detection within one pixel of each true corner, and no extra detections)."
+   ]
+  ],
+  [
+   "weak rectangles",
+   [
+    "A rectangle only about 45 grey levels brighter than its surroundings gives a response below the threshold: no corners."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[15:0] = COUNT."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 2,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "border_wraps": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture"
+    ],
+    "killed": true
+   },
+   "count_double": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture",
+     "test_reset_forgets_the_list"
+    ],
+    "killed": true
+   },
+   "gradient_scale": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture"
+    ],
+    "killed": true
+   },
+   "nms_east_dropped": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture",
+     "test_reset_forgets_the_list"
+    ],
+    "killed": true
+   },
+   "nms_off": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture",
+     "test_reset_forgets_the_list"
+    ],
+    "killed": true
+   },
+   "nms_south_dropped": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture",
+     "test_reset_forgets_the_list"
+    ],
+    "killed": true
+   },
+   "nms_west_dropped": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture",
+     "test_reset_forgets_the_list"
+    ],
+    "killed": true
+   },
+   "threshold_too_high": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture"
+    ],
+    "killed": true
+   },
+   "threshold_too_low": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture"
+    ],
+    "killed": true
+   },
+   "x_and_y_swapped": {
+    "failed_tests": [
+     "test_course_picture_then_mixed_picture",
+     "test_reset_forgets_the_list"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c13_nexys_harris_vga__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 3,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 3,
+ "domain": "S",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 93,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c13_nexys_harris_vga/hidden/model.py",
+    "sha256": "2679fe7638ea",
+    "text": "\"\"\"P13-1 reference model: the Harris corner list (numpy, bit-exact with the course exercise) and the bench pictures. Standalone copy of the course model.\"\"\"\nimport numpy as np\n\nW, H, THRESH = 80, 60, 50_000_000\nBOXES = ((12, 10, 30, 26), (50, 32, 68, 50))\n\n\ndef squares(w, h, boxes):\n    \"\"\"Bright rectangles (x0, y0, x1, y1 inclusive, value 220) on a dark background (30).\"\"\"\n    img = np.full((h, w), 30, np.uint8)\n    for x0, y0, x1, y1 in boxes:\n        img[y0:y1 + 1, x0:x1 + 1] = 220\n    return img\n\n\ndef scene():\n    return squares(W, H, BOXES)\n\n\ndef _grad(p, r, c):\n    gx = (p[r - 1, c + 1] + 2 * p[r, c + 1] + p[r + 1, c + 1]) - (p[r - 1, c - 1] + 2 * p[r, c - 1] + p[r + 1, c - 1])\n    gy = (p[r + 1, c - 1] + 2 * p[r + 1, c] + p[r + 1, c + 1]) - (p[r - 1, c - 1] + 2 * p[r - 1, c] + p[r - 1, c + 1])\n    return gx >> 2, gy >> 2\n\n\ndef response_map(img):\n    p = np.pad(img.astype(np.int64), 3, mode=\"edge\")\n    ix = np.zeros(p.shape, np.int64)\n    iy = np.zeros(p.shape, np.int64)\n    for r in range(1, p.shape[0] - 1):\n        for c in range(1, p.shape[1] - 1):\n            ix[r, c], iy[r, c] = _grad(p, r, c)\n    R = np.zeros(p.shape, np.int64)\n    for r in range(2, p.shape[0] - 2):\n        for c in range(2, p.shape[1] - 2):\n            a, b = ix[r - 1:r + 2, c - 1:c + 2], iy[r - 1:r + 2, c - 1:c + 2]\n            sxx, syy, sxy = int((a * a).sum()), int((b * b).sum()), int((a * b).sum())\n            R[r, c] = sxx * syy - sxy * sxy - (((sxx + syy) ** 2) >> 4)\n    return R\n\n\ndef corners(img=None):\n    img = scene() if img is None else img\n    R = response_map(img)\n    out = []\n    for y in range(H):\n        for x in range(W):\n            r, c = y + 3, x + 3\n            rc = R[r, c]\n            strict = all(rc > R[r + dy, c + dx] for dy, dx in ((-1, -1), (-1, 0), (-1, 1), (0, -1)))\n            loose = all(rc >= R[r + dy, c + dx] for dy, dx in ((0, 1), (1, -1), (1, 0), (1, 1)))\n            if rc > THRESH and strict and loose:\n                out.append([x, y])\n    return out\n\n\ndef mixed_picture():\n    \"\"\"Strong, weak and border-touching rectangles: a strong box inside, a weak one (contrast 45, below the threshold: no corners), a medium one on the right and bottom edges\n    and a strong one on the left and bottom edges (their corners at the picture edge are replicated, not mirrored or zero-padded).\"\"\"\n    img = np.full((H, W), 30, np.uint8)\n    img[4:19, 4:21] = 220\n    img[6:23, 30:56] = 75\n    img[30:60, 60:80] = 100\n    img[36:60, 0:15] = 220\n    return img\n\n\ndef bench_pictures():\n    return [(\"the course picture\", scene()), (\"strong, weak and border rectangles\", mixed_picture())]\n\n\ndef pack_words(img):\n    flat = [int(v) for v in img.flatten()]\n    return [sum(flat[4 * i + k] << (8 * k) for k in range(4)) for i in range(len(flat) // 4)]\n\n\ndef check_corners(got, exp):\n    \"\"\"The course check.py rule: every true corner has a detection within one pixel, no detection is away from every true corner, and no more detections than corners.\"\"\"\n    why = []\n    for ex, ey in exp:\n        if not any(abs(x - ex) <= 1 and abs(y - ey) <= 1 for x, y in got):\n            why.append(f\"corner ({ex}, {ey}) not found\")\n    extra = [(x, y) for x, y in got if all(abs(x - ex) > 1 or abs(y - ey) > 1 for ex, ey in exp)]\n    if extra:\n        why.append(f\"{len(extra)} detections away from every true corner: {extra[:6]}\")\n    if len(got) > len(exp):\n        why.append(f\"{len(got)} detections for {len(exp)} corners (one cross per corner expected)\")\n    return why\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x48415252          # \"HARR\"\nPTR, DATA, GO, STATUS, COUNT, SEL, CORNER = range(7)\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 68,
+    "name": "c13_nexys_harris_vga_regs.sv",
+    "path": "benchmark/course/tasks/c13_nexys_harris_vga/ref/rtl/c13_nexys_harris_vga_regs.sv",
+    "sha256": "1ee6ba741719",
+    "text": "// c13_nexys_harris_vga_regs.sv: the shell window of course task c13_nexys_harris_vga: a parked picture, a stream generator and the corner-list readback.\nmodule c13_nexys_harris_vga_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam int NPIX = 4800;\n    logic [31:0] ram [0:1199];\n    logic [10:0] ptr;\n    logic        streaming, have_report;\n    logic [12:0] tx_i;\n    logic [6:0]  tx_x;\n    logic [7:0]  s_tdata;\n    logic        s_tvalid, s_tready, s_tuser, s_tlast, core_done;\n    logic [15:0] count;\n    logic [5:0]  sel;\n    logic [6:0]  rd_x, rd_y;\n    wire busy = streaming;\n    assign led = count;\n\n    harris_detect #(.W(80), .H(60)) u_core (.clk(clk), .rst_n(!rst), .s_tdata(s_tdata), .s_tvalid(s_tvalid), .s_tready(s_tready), .s_tuser(s_tuser), .s_tlast(s_tlast),\n                                              .done(core_done), .count(count), .rd_idx(sel), .rd_x(rd_x), .rd_y(rd_y));\n\n    wire [31:0] nxt_w = ram[tx_i[12:2]];\n    wire slot_free = !s_tvalid || s_tready;\n\n    always_ff @(posedge clk) begin\n        if (win_wr) begin\n            case (win_addr)\n                7'd0: ptr <= win_wdata[10:0];\n                7'd1: begin ram[ptr] <= win_wdata; ptr <= ptr + 11'd1; end\n                7'd2: begin streaming <= 1'b1; have_report <= 1'b0; tx_i <= 13'd0; tx_x <= 7'd0; s_tvalid <= 1'b0; end\n                7'd5: sel <= win_wdata[5:0];\n                default: ;\n            endcase\n        end\n        if (streaming && slot_free) begin\n            if (tx_i < NPIX) begin\n                s_tvalid <= 1'b1;\n                s_tdata  <= nxt_w[8*tx_i[1:0] +: 8];\n                s_tuser  <= (tx_i == 13'd0);\n                s_tlast  <= (tx_x == 7'd79);\n                tx_i     <= tx_i + 13'd1;\n                tx_x     <= (tx_x == 7'd79) ? 7'd0 : tx_x + 7'd1;\n            end else s_tvalid <= 1'b0;\n        end\n        if (streaming && tx_i == NPIX && !s_tvalid && core_done) begin streaming <= 1'b0; have_report <= 1'b1; end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            case (win_addr)\n                7'd0: win_rdata <= {21'd0, ptr};\n                7'd3: win_rdata <= {30'd0, have_report, busy};\n                7'd4: win_rdata <= {16'd0, count};\n                7'd5: win_rdata <= {26'd0, sel};\n                7'd6: win_rdata <= (16'(sel) < count) ? {17'd0, rd_y, 1'b0, rd_x} : 32'd0;\n                default: ;\n            endcase\n        end\n        if (rst) begin\n            ptr <= '0; sel <= '0; streaming <= 1'b0; have_report <= 1'b0; tx_i <= '0; tx_x <= '0; s_tvalid <= 1'b0; win_rdata <= 32'd0; s_tdata <= '0; s_tuser <= 1'b0; s_tlast <= 1'b0;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c13_nexys_harris_vga_top.sv",
+    "path": "benchmark/course/tasks/c13_nexys_harris_vga/ref/rtl/c13_nexys_harris_vga_top.sv",
+    "sha256": "c43b873bc58c",
+    "text": "// c13_nexys_harris_vga_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"HARR\".\n// Reference design for course task c13_nexys_harris_vga; the shell window is wired to c13_nexys_harris_vga_regs.\nmodule c13_nexys_harris_vga_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h48415252), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c13_nexys_harris_vga_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 99,
+    "name": "harris.sv",
+    "path": "benchmark/course/tasks/c13_nexys_harris_vga/ref/rtl/harris.sv",
+    "sha256": "09d354afb689",
+    "text": "// Part 13 project reference (07a1c form): Harris response and non-maximum suppression on a 7 x 7 window, pipelined and with one shared response unit.\n// The first form of this reference computed the nine responses of the 3 x 3 neighbourhood in parallel (243 multipliers, about 100,000 LUTs): it did not fit the device.\n// This form computes the same numbers in a different order:\n//   cycle 1: the Sobel gradients ix, iy of the 25 pixels of the central 5 x 5 (each >>> 2, as the model does);\n//   cycle 2: their products ix*ix, iy*iy, ix*iy;\n//   cycle 3: the sums of three neighbouring products along each row;\n//   cycle 4: the 3 x 3 box sums sxx, syy, sxy for each of the nine response positions (the three row sums added);\n//   cycles 5 .. 15: one position per clock through one det - trace^2/16 unit (three multipliers, pipelined);\n//   cycle 16: the non-maximum suppression and the threshold; out_valid is high in cycle 17.\n// Cycle 0 is the clock in which in_valid is high; the window must hold still from then until out_valid (harris_detect does that).\nmodule harris (\n    input  logic                clk,\n    input  logic                rst_n,\n    input  logic                in_valid,\n    input  logic [391:0]        win,\n    input  logic signed [47:0]  thresh,\n    output logic                out_valid,\n    output logic signed [47:0]  resp,\n    output logic                corner\n);\n    function automatic integer px(input [391:0] w, input integer r, input integer c);\n        px = w[(7*r + c)*8 +: 8];\n    endfunction\n    function automatic integer gx(input [391:0] w, input integer r, input integer c);\n        gx = (px(w, r-1, c+1) + 2*px(w, r, c+1) + px(w, r+1, c+1)) - (px(w, r-1, c-1) + 2*px(w, r, c-1) + px(w, r+1, c-1));\n    endfunction\n    function automatic integer gy(input [391:0] w, input integer r, input integer c);\n        gy = (px(w, r+1, c-1) + 2*px(w, r+1, c) + px(w, r+1, c+1)) - (px(w, r-1, c-1) + 2*px(w, r-1, c) + px(w, r-1, c+1));\n    endfunction\n\n    // stage 1: gradients of window rows / columns 1 .. 5 (index 0 .. 4)\n    logic signed [8:0]  ix  [0:4][0:4], iy  [0:4][0:4];\n    // stage 2: products\n    logic signed [17:0] ixx [0:4][0:4], iyy [0:4][0:4], ixy [0:4][0:4];\n    // stage 3: sums of three products along a row (index: row 0 .. 4, first column 0 .. 2)\n    logic signed [20:0] hxx [0:4][0:2], hyy [0:4][0:2], hxy [0:4][0:2];\n    // stage 4: box sums for the nine response positions (row-major: nw n ne w c e sw s se)\n    logic signed [23:0] sxx [0:8], syy [0:8], sxy [0:8];\n    // the shared response unit: operands, products, response\n    logic [4:0]         t;                          // the cycle number once a window has been presented (cycle 0 = in_valid)\n    logic               run;\n    logic signed [23:0] o_xx, o_yy, o_xy, o_tr;\n    logic signed [47:0] p_det_a, p_det_b, p_tr2, rsp;\n    logic signed [47:0] rr [0:8];\n\n    integer a, b;\n    always_ff @(posedge clk) begin\n        for (a = 0; a < 5; a = a + 1)\n            for (b = 0; b < 5; b = b + 1) begin\n                ix[a][b]  <= 9'(gx(win, a + 1, b + 1) >>> 2);\n                iy[a][b]  <= 9'(gy(win, a + 1, b + 1) >>> 2);\n                ixx[a][b] <= ix[a][b] * ix[a][b];\n                iyy[a][b] <= iy[a][b] * iy[a][b];\n                ixy[a][b] <= ix[a][b] * iy[a][b];\n            end\n        for (a = 0; a < 5; a = a + 1)\n            for (b = 0; b < 3; b = b + 1) begin\n                hxx[a][b] <= 21'(ixx[a][b]) + 21'(ixx[a][b + 1]) + 21'(ixx[a][b + 2]);\n                hyy[a][b] <= 21'(iyy[a][b]) + 21'(iyy[a][b + 1]) + 21'(iyy[a][b + 2]);\n                hxy[a][b] <= 21'(ixy[a][b]) + 21'(ixy[a][b + 1]) + 21'(ixy[a][b + 2]);\n            end\n        for (a = 0; a < 3; a = a + 1)\n            for (b = 0; b < 3; b = b + 1) begin\n                sxx[3*a + b] <= 24'(hxx[a][b]) + 24'(hxx[a + 1][b]) + 24'(hxx[a + 2][b]);\n                syy[3*a + b] <= 24'(hyy[a][b]) + 24'(hyy[a + 1][b]) + 24'(hyy[a + 2][b]);\n                sxy[3*a + b] <= 24'(hxy[a][b]) + 24'(hxy[a + 1][b]) + 24'(hxy[a + 2][b]);\n            end\n        // one position per clock: position p is selected in cycle 4 + p, its response is stored in cycle 7 + p\n        o_xx <= sxx[(t >= 4 && t <= 12) ? t - 4 : 0];\n        o_yy <= syy[(t >= 4 && t <= 12) ? t - 4 : 0];\n        o_xy <= sxy[(t >= 4 && t <= 12) ? t - 4 : 0];\n        o_tr <= sxx[(t >= 4 && t <= 12) ? t - 4 : 0] + syy[(t >= 4 && t <= 12) ? t - 4 : 0];\n        p_det_a <= o_xx * o_yy;\n        p_det_b <= o_xy * o_xy;\n        p_tr2   <= o_tr * o_tr;\n        rsp     <= (p_det_a - p_det_b) - (p_tr2 >>> 4);\n        if (t >= 7 && t <= 15) rr[t - 7] <= rsp;\n    end\n\n    wire signed [47:0] rc = rr[4];\n    wire is_max = (rc > rr[0]) && (rc > rr[1]) && (rc > rr[2]) && (rc > rr[3]) && (rc >= rr[5]) && (rc >= rr[6]) && (rc >= rr[7]) && (rc >= rr[8]);\n\n    always_ff @(posedge clk) begin\n        if (t == 5'd16) begin\n            resp   <= rc;\n            corner <= (rc > thresh) && is_max;\n        end\n        if (!rst_n) begin\n            out_valid <= 1'b0; run <= 1'b0; t <= 5'd0;\n        end else begin\n            out_valid <= 1'b0;\n            if (in_valid) begin run <= 1'b1; t <= 5'd1; end\n            else if (run) begin\n                t <= t + 5'd1;\n                if (t == 5'd16) begin run <= 1'b0; t <= 5'd0; out_valid <= 1'b1; end\n            end\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 129,
+    "name": "harris_detect.sv",
+    "path": "benchmark/course/tasks/c13_nexys_harris_vga/ref/rtl/harris_detect.sv",
+    "sha256": "3d22d7b71506",
+    "text": "// P13-1 reference glue (v1.1 scope): a picture goes in as a stream of 8-bit pixels (80 x 60) into a picture store; when the last pixel is in, a scan engine builds the\n// 7 x 7 window of every pixel (edge pixels replicated), one column per clock, and hands it to the course's Harris response and non-maximum suppression (harris.sv).\n// The picture is held in seven block-RAM copies (one per window row, each written together and read through a registered port), so Vivado infers block RAM\n// instead of 38,400 flip-flops with seven read multiplexers each; the address is registered before the RAM, so a column arrives two clocks after its address (the drain states 5 and 6).\n// Each corner is appended to a list (x, y); `count` counts all corners found (the list holds the first 64); `done` is high from the end of the scan until the next picture starts.\nmodule harris_pic_ram #(\n    parameter int N = 4800\n) (\n    input  logic        clk,\n    input  logic        we,\n    input  logic [12:0] waddr,\n    input  logic [7:0]  wdata,\n    input  logic [12:0] raddr,\n    output logic [7:0]  rdata\n);\n    (* ram_style = \"block\" *) logic [7:0] mem [0:N-1];\n    always_ff @(posedge clk) begin\n        if (we) mem[waddr] <= wdata;\n        rdata <= mem[raddr];\n    end\nendmodule\n\nmodule harris_detect #(\n    parameter int W = 80,\n    parameter int H = 60\n) (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic [7:0]  s_tdata,\n    input  logic        s_tvalid,\n    output logic        s_tready,\n    input  logic        s_tuser,\n    input  logic        s_tlast,\n    output logic        done,\n    output logic [15:0] count,\n    input  logic [5:0]  rd_idx,\n    output logic [6:0]  rd_x,\n    output logic [6:0]  rd_y\n);\n    localparam int N = W * H;\n    logic [12:0] wn;                        // pixels stored\n    logic [6:0]  px, py;                    // pixel being examined\n    logic [2:0]  k;                         // window column being loaded\n    logic [2:0]  st;                        // 0 idle/store, 1 fill, 2 fire, 3 wait, 4 collect\n    logic [7:0]  wreg [0:6][0:6];\n    logic [391:0] win;\n    logic        in_valid, h_valid, h_corner;\n    logic signed [47:0] h_resp;\n    logic [6:0]  lx [0:63], ly [0:63];\n    logic        cap_en, cap_en1;           // a column was addressed two clocks ago: its pixels are on q now\n    logic [2:0]  kd, kd1;                   // the window column those pixels belong to\n    logic [7:0]  q [0:6];                   // registered read of the seven picture copies\n    logic [12:0] raddr [0:6], raddr_q [0:6];\n    wire         pic_we = (st == 3'd0) && s_tvalid && s_tready;\n    wire  [12:0] pic_wa = s_tuser ? 13'd0 : wn;\n\n    harris u_h (.clk(clk), .rst_n(rst_n), .in_valid(in_valid), .win(win), .thresh(48'sd50000000), .out_valid(h_valid), .resp(h_resp), .corner(h_corner));\n\n    assign s_tready = (st == 3'd0) && !(wn == N);\n    wire acc = s_tvalid && s_tready;\n    assign rd_x = lx[rd_idx];\n    assign rd_y = ly[rd_idx];\n\n    function automatic integer clamp(input integer v, input integer hi);\n        clamp = (v < 0) ? 0 : (v > hi) ? hi : v;\n    endfunction\n\n    integer r, c;\n    always_comb begin\n        for (int i = 0; i < 7; i++)\n            raddr[i] = 13'(clamp(int'(py) - 3 + i, H - 1) * W + clamp(int'(px) - 3 + int'(k), W - 1));\n    end\n    for (genvar g = 0; g < 7; g++) begin : g_pic\n        harris_pic_ram #(.N(N)) u_ram (.clk(clk), .we(pic_we), .waddr(pic_wa), .wdata(s_tdata), .raddr(raddr_q[g]), .rdata(q[g]));\n    end\n\n    always_ff @(posedge clk) begin\n        in_valid <= 1'b0;\n        for (r = 0; r < 7; r = r + 1) raddr_q[r] <= raddr[r];\n        cap_en1 <= (st == 3'd1);\n        kd1 <= k;\n        cap_en <= cap_en1;\n        kd <= kd1;\n        if (cap_en) for (r = 0; r < 7; r = r + 1) wreg[r][kd] <= q[r];\n        if (!rst_n) begin\n            st <= 3'd0; wn <= 13'd0; done <= 1'b0; count <= 16'd0;\n        end else begin\n            case (st)\n                3'd0: if (acc) begin\n                    if (s_tuser) begin\n                        wn <= 13'd1; done <= 1'b0; count <= 16'd0;\n                    end else begin\n                        wn <= wn + 13'd1;\n                        if (wn == N - 1) begin st <= 3'd1; px <= 7'd0; py <= 7'd0; k <= 3'd0; end\n                    end\n                end\n                3'd1: begin                                        // address one column of the window per clock (the pixels follow one clock later)\n                    k <= k + 3'd1;\n                    if (k == 3'd6) st <= 3'd5;\n                end\n                3'd5: st <= 3'd6;                                  // drain: the last two columns are still on their way\n                3'd6: st <= 3'd2;                                  // the last column is captured into wreg at the end of this clock\n                3'd2: begin\n                    for (r = 0; r < 7; r = r + 1)\n                        for (c = 0; c < 7; c = c + 1)\n                            win[(7*r + c)*8 +: 8] <= wreg[r][c];\n                    in_valid <= 1'b1;\n                    st <= 3'd3;\n                end\n                3'd3: st <= 3'd4;                                  // harris.sv registers the answer one clock after in_valid\n                3'd4: begin\n                    if (h_valid) begin\n                        if (h_corner) begin\n                            if (count < 64) begin lx[count[5:0]] <= px; ly[count[5:0]] <= py; end\n                            count <= count + 16'd1;\n                        end\n                        k <= 3'd0;\n                        if (px == W - 1) begin\n                            px <= 7'd0;\n                            if (py == H - 1) begin st <= 3'd0; done <= 1'b1; wn <= 13'd0; end\n                            else begin py <= py + 7'd1; st <= 3'd1; end\n                        end else begin px <= px + 7'd1; st <= 3'd1; end\n                    end\n                end\n                default: st <= 3'd0;\n            endcase\n        end\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 70,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c13_nexys_harris_vga/hidden/acceptance.py",
+    "sha256": "3396cfe921b3",
+    "text": "\"\"\"Acceptance tests of c13_nexys_harris_vga against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import COUNT, CORNER, DATA, DESIGN_ID, GO, PTR, SEL, STATUS, bench_pictures, check_corners, corners, pack_words\n\n\nasync def run_picture(b: Board, dut, name: str, img) -> None:\n    exp = corners(img)\n    await b.write(PTR, 0)\n    for w in pack_words(img):\n        await b.write(DATA, w)\n    await b.write(GO, 1)\n    await b.cycles(4800)\n    for _ in range(600):\n        if not (await b.read(STATUS)) & 1:\n            break\n    else:\n        raise AssertionError(f\"{name}: still busy long after the picture\")\n    st = await b.read(STATUS)\n    assert st & 2, f\"{name}: no list available after the picture (STATUS 0x{st:X})\"\n    n = await b.read(COUNT)\n    got = []\n    for i in range(min(n, 64)):\n        await b.write(SEL, i)\n        v = await b.read(CORNER)\n        got.append((v & 0x7F, (v >> 8) & 0x7F))\n    why = check_corners(got, exp)\n    assert not why, f\"{name}: \" + \"; \".join(why) + f\" (reported {got}, true {[tuple(c) for c in exp]})\"\n    assert n == len(got), f\"{name}: the count is {n} but {len(got)} corners were readable\"\n    led = await peek(b.clk, dut.LED)\n    assert led == n, f\"{name}: LEDs show {led}, the count is {n}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (PTR, STATUS, COUNT, SEL, CORNER):\n        await b.expect(off, 0, f\"reset value of {off}\")\n    await b.write(PTR, 0x4AF)\n    await b.expect(PTR, 0x4AF, \"PTR is a plain register\")\n    led = await peek(b.clk, dut.LED)\n    assert led == 0, f\"LED {led:04X}: no corners yet\"\n    for off in (0x07, 0x41, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n\n\n@cocotb.test()\nasync def test_course_picture_then_mixed_picture(dut):\n    \"\"\"The two bright rectangles of the course picture: eight corners, one detection each; then a different picture with strong, weak and edge-touching rectangles (the weak one has none).\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    for name, img in bench_pictures():\n        await run_picture(b, dut, name, img)\n\n\n@cocotb.test()\nasync def test_reset_forgets_the_list(dut):\n    b = Board(dut, {})\n    await b.start()\n    await run_picture(b, dut, \"before reset\", bench_pictures()[0][1])\n    await b.reset()\n    for off in (STATUS, COUNT, SEL, CORNER):\n        await b.expect(off, 0, f\"register {off} after reset\")\n    led = await peek(b.clk, dut.LED)\n    assert led == 0, f\"LED {led:04X} after reset\"\n"
+   }
+  ]
+ },
+ "heading": "Corner finder behind the test shell",
+ "id": "c13_nexys_harris_vga",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[10:0] word index of the parked picture (0..1199) that the next DATA write fills",
+    "name": "PTR",
+    "offset": "0x00"
+   },
+   {
+    "access": "WO",
+    "bits": "[31:0] four pixels of the parked picture at PTR (pixel 0 of the word in [7:0], row by row); PTR then increments; reads 0",
+    "name": "DATA",
+    "offset": "0x01"
+   },
+   {
+    "access": "WO",
+    "bits": "any write streams the parked picture (4800 pixels, row by row, tuser on pixel 0, tlast on the last pixel of each 80-pixel line) into the block, one per clock, and clears the list flag; reads 0",
+    "name": "GO",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] BUSY: from GO until the list is final; [1] REPORT: a list is available (set when BUSY falls, cleared by GO and reset)",
+    "name": "STATUS",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] number of corners found in the last picture (0 until a list exists); the LEDs show the same number",
+    "name": "COUNT",
+    "offset": "0x04"
+   },
+   {
+    "access": "RW",
+    "bits": "[5:0] place in the corner list that CORNER shows (0..63)",
+    "name": "SEL",
+    "offset": "0x05"
+   },
+   {
+    "access": "RO",
+    "bits": "[6:0] x and [14:8] y of corner SEL (the first 64 corners in raster order), valid a few clocks after SEL is written; 0 beyond COUNT",
+    "name": "CORNER",
+    "offset": "0x06"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: idle, no list, count 0, LEDs 0",
+  "top": "c13_nexys_harris_vga_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "harris.sv",
+   "name": "gradient_scale",
+   "why": "the horizontal gradient is scaled down by 2 instead of 4, so weak rectangles produce corners"
+  },
+  {
+   "file": "harris_detect.sv",
+   "name": "threshold_too_high",
+   "why": "the corner threshold is ten times too high, so medium-contrast corners are missed"
+  },
+  {
+   "file": "harris_detect.sv",
+   "name": "threshold_too_low",
+   "why": "the corner threshold is far too low, so faint rectangles produce corners"
+  },
+  {
+   "file": "harris.sv",
+   "name": "nms_west_dropped",
+   "why": "the west neighbour is not part of the non-maximum suppression"
+  },
+  {
+   "file": "harris.sv",
+   "name": "nms_east_dropped",
+   "why": "the east neighbour is not part of the non-maximum suppression"
+  },
+  {
+   "file": "harris.sv",
+   "name": "nms_south_dropped",
+   "why": "the south neighbour is not part of the non-maximum suppression"
+  },
+  {
+   "file": "harris.sv",
+   "name": "nms_off",
+   "why": "no non-maximum suppression: a cluster of detections at every corner"
+  },
+  {
+   "file": "harris_detect.sv",
+   "name": "border_wraps",
+   "why": "pixels left of or above the picture are taken from the opposite edge instead of replicated"
+  },
+  {
+   "file": "harris_detect.sv",
+   "name": "count_double",
+   "why": "the count of corners is twice the number found"
+  },
+  {
+   "file": "harris_detect.sv",
+   "name": "x_and_y_swapped",
+   "why": "the list holds y where x belongs"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c13_nexys_harris_vga",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the detected corner set equals the reference set (within 1 pixel; no extra detections)"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the LEDs (the count) equal the number of corners reported"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [],
+ "scope": {
+  "dropped": [
+   "the 640 x 480 VGA output at 60 Hz (25.175 MHz pixel clock from an MMCM, scaling x8 by pixel replication)",
+   "the overlay of small red crosses on the enlarged picture and the switch SW0 that turns it on and off",
+   "the picture stored in the design from a hex file (the picture is parked by the test wrapper and streamed in)",
+   "the timing requirement of the first version (REQ-03, a 5-stage response pipeline closing at the pixel clock)"
+  ],
+  "glue_added": "harris_detect.sv stores the streamed picture, builds the 7 x 7 window of every pixel (clamped at the edges), feeds harris.sv and appends each corner to a list; the register wrapper parks and streams the picture",
+  "kept": [
+   "the corner detector itself, bit-exact",
+   "the LEDs showing the number of corners",
+   "the stream interface"
+  ],
+  "rescoped": "2026-11-06 (brief 07a1b), to what the course reference implements (harris.sv, the 7 x 7 window Harris response with non-maximum suppression) plus the glue harris_detect.sv"
+ },
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Corner finder behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that finds the corners of the bright rectangles in a small picture, and I want to exercise it entirely from the test shell.\n\n- The picture is 80 pixels wide and 60 high, 8-bit grey, and arrives as a stream of pixels, one per clock when available, row by row, with a start-of-picture mark and an end-of-line mark. It shows a few bright\n  rectangles on a dark background; a different picture can follow.\n- Find the corners of the rectangles. A corner is reported once, at the corner pixel: not along the edges, and not as a cluster of neighbouring pixels. Rectangles that are only faintly brighter than the background\n  have no corners worth reporting. A rectangle that touches the edge of the picture has only the corners that are inside the picture; the edge of the picture itself is not a corner.\n- When the picture has been processed, tell me how many corners were found and where each one is (x and y in whole pixels, x counted from 0 at the left and y from 0 at the top), as a list I can read.\n- The 16 LEDs show, in binary, how many corners were found in the picture.\n- The red CPU reset button returns the block to idle and forgets the list.\n\nThe shell is slow, so the stream is driven for me: I park a whole picture over the shell (four pixels per write, row by row, the first pixel of a word in its lowest byte) and give a \"go\" command, and the block\nthen presents the pixels to the stream, one per clock. A status flag says busy from \"go\" until the list is final, and another says that a list is available. I read the number of corners, and then the corners one\nat a time (I select a place in the list and read it). The shell runs at 115200 baud on the USB-UART. The design ID is \"HARR\".\n\nTest hooks: top module `c13_nexys_harris_vga_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "S02"
+ ],
+ "tier": "C13",
+ "title": "Corner finder behind the test shell (re-scoped from the Harris VGA corner marks)",
+ "trace": {
+  "captions": [
+   "Corner 0: at x = 12, y = 10, where the corner response is 8981285346, above the threshold of 50000000 and the largest in its neighbourhood.",
+   "Corner 1: at x = 30, y = 10, where the corner response is 9020760506, above the threshold of 50000000 and the largest in its neighbourhood.",
+   "Corner 2: at x = 12, y = 26, where the corner response is 9020760506, above the threshold of 50000000 and the largest in its neighbourhood.",
+   "Corner 3: at x = 30, y = 26, where the corner response is 9060163466, above the threshold of 50000000 and the largest in its neighbourhood.",
+   "Corner 4: at x = 50, y = 32, where the corner response is 8981285346, above the threshold of 50000000 and the largest in its neighbourhood.",
+   "Corner 5: at x = 68, y = 32, where the corner response is 9020760506, above the threshold of 50000000 and the largest in its neighbourhood.",
+   "Corner 6: at x = 50, y = 50, where the corner response is 9020760506, above the threshold of 50000000 and the largest in its neighbourhood.",
+   "Corner 7: at x = 68, y = 50, where the corner response is 9060163466, above the threshold of 50000000 and the largest in its neighbourhood."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "SEL (list place)",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "corner x",
+    "radix": "dec",
+    "v": [
+     12,
+     30,
+     12,
+     30,
+     50,
+     68,
+     50,
+     68
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "corner y",
+    "radix": "dec",
+    "v": [
+     10,
+     10,
+     26,
+     26,
+     32,
+     32,
+     50,
+     50
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "response",
+    "radix": "dec",
+    "v": [
+     8981285346,
+     9020760506,
+     9020760506,
+     9060163466,
+     8981285346,
+     9020760506,
+     9020760506,
+     9060163466
+    ]
+   }
+  ],
+  "stimulus": "The 80 by 60 picture with 2 bright rectangles on a dark background. The model computes the corner response everywhere and keeps the local peaks above the threshold.",
+  "unit": "corner",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ]
+ },
+ "what": "A corner detector for a small grey-scale picture. It measures how brightness changes around each pixel in two directions, combines the measurements into a corner score, and keeps only scores that are high and are the largest nearby, so that each corner is reported once. The result is a list of corner positions, and the LEDs show how many were found.",
+ "where": "Harris corner detection is a classic first step in feature tracking, image stitching, camera calibration and visual odometry. FPGAs run it on streaming video where a processor would be too slow."
+}

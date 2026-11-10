@@ -1,0 +1,3134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tiny CNN shape classifier | End-to-end FPGA Agent</title>
+<meta name="description" content="Tiny CNN shape classifier: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task c14_nexys_tiny_cnn.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
+  --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --measure: 68ch; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+    --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+  --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); overflow-x: hidden; }
+a { color: var(--ink); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, kbd, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--panel); border: 1px solid var(--rule); padding: 0 .3em; border-radius: 2px; overflow-wrap: anywhere; }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; line-height: 1.45; margin: 0 0 1em; max-width: 100%; }
+pre code { border: 0; padding: 0; background: none; overflow-wrap: normal; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 3.2vw, 3rem); margin: .3em 0 .4em; font-weight: 700; }
+h2 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.8rem); margin: 2.2em 0 .5em; font-weight: 700; }
+h3 { font-size: 1.05rem; margin: 1.6em 0 .4em; }
+p, li { max-width: var(--measure); }
+p { margin: 0 0 1em; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-3); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
+.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.bar nav a { padding: 10px 8px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
+.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* sections, cards */
+.hero { padding: 36px 0 8px; }
+.eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
+.fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.fact .n { font: 700 2rem/1.1 var(--f-mono); letter-spacing: -.02em; }
+.fact p { margin: .4em 0 0; font-size: .92rem; color: var(--ink-2); }
+.tag { display: inline-block; font: 600 .75rem var(--f-mono); border: 1px solid var(--ink-3); padding: 1px 7px; border-radius: 2px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.tag.run { border-style: dashed; }
+figure { margin: 1.4em 0; }
+figcaption { font-size: .88rem; color: var(--ink-3); margin-top: 6px; max-width: var(--measure); }
+.panel { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.tablewrap { overflow-x: auto; margin: 0 0 1.2em; border: 1px solid var(--rule); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+img { max-width: 100%; height: auto; display: block; }
+footer { border-top: 1px solid var(--rule); margin-top: 56px; padding: 22px 0 40px; color: var(--ink-3); font-size: .9rem; }
+footer .wrap > * { max-width: var(--measure); }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
+
+/* pipeline player */
+.player { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0 0 12px; counter-reset: n; }
+.pipe li { max-width: none; border: 1px solid var(--mute); padding: 8px 10px; font-size: .86rem; line-height: 1.3; position: relative; color: var(--ink-3); min-height: 62px; }
+.pipe li b { display: block; font-size: .72rem; font-family: var(--f-mono); letter-spacing: .04em; margin-bottom: 2px; }
+.pipe li.done { color: var(--ink-2); border-color: var(--ink-3); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px); }
+.pipe li.active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.pipe li.stop { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.pipe li .v { position: absolute; right: 8px; top: 6px; font: .72rem var(--f-mono); }
+.cap { min-height: 3.2em; margin: 0 0 10px; color: var(--ink); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctl input[type=range] { flex: 1 1 140px; min-width: 120px; min-height: 44px; accent-color: var(--ink); }
+.ctl .pos { font: .85rem var(--f-mono); color: var(--ink-3); min-width: 6ch; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* charts */
+svg text { fill: var(--ink-2); font: 11px var(--f-mono); }
+svg .ink { stroke: var(--ink); fill: none; }
+svg .fillink { fill: var(--ink); }
+svg .rule { stroke: var(--rule); }
+svg .warn { stroke: var(--warn); fill: none; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; }
+.dot.p { background: var(--ink); }
+.dot.f { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.dot.n { border-style: dotted; border-color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.strip .t { font-family: var(--f-mono); overflow-wrap: anywhere; }
+.bars { display: grid; grid-template-columns: minmax(0, 14ch) 1fr auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.bars .b { height: 14px; background: var(--ink); min-width: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-3); margin-top: 8px; }
+.stub { border: 1px dashed var(--ink-3); padding: 18px; background: var(--panel); }
+@media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Home hero: FPGA fabric backdrop (canvas, monochrome, drawn by app.js; still under reduced motion). */
+.hero { position: relative; isolation: isolate; padding: 72px 0 40px; }
+#fabric { position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  mask-composite: intersect; }
+@media (max-width: 640px) { #fabric { opacity: .55; } }
+.hero h1 { font-size: clamp(2.4rem, 1.2rem + 5.6vw, 4.6rem); letter-spacing: -.025em; margin: .15em 0 .2em; }
+.strap { font-size: clamp(1.15rem, .9rem + 1.2vw, 1.6rem); line-height: 1.3; font-weight: 600; margin: 0 0 .8em; max-width: 40ch; }
+.boards { font: .9rem/1.5 var(--f-mono); color: var(--ink-2); max-width: 70ch; }
+.boards span { background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
+.hero h1, .hero .strap { text-shadow: 0 0 12px var(--bg), 0 0 4px var(--bg); }
+
+/* problems: index and task pages */
+.dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.dombars li { display: grid; grid-template-columns: minmax(0, 22ch) 1fr 3ch; gap: 10px; align-items: center; max-width: none; font-size: .88rem; }
+.dombars a { text-decoration: none; padding: 6px 0; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+.dombars a b { font-family: var(--f-mono); }
+.db { height: 12px; border: 1px solid var(--rule); display: block; }
+.db span { display: block; height: 100%; background: var(--ink); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0 12px; }
+.filters label { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; }
+.filters select { max-width: 70vw; }
+.plist { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.pcard { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; max-width: none; display: flex; flex-direction: column; gap: 2px; }
+.pcard a { font-weight: 600; text-decoration: none; }
+.pcard a:hover .pt { text-decoration: underline; }
+.pcard .pm { font-size: .82rem; color: var(--ink-3); }
+.made li { margin-bottom: .5em; }
+.crumbs { margin: 24px 0 0; color: var(--ink-3); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.spec { border-left: 3px solid var(--ink); padding: 2px 0 2px 16px; margin: 0 0 1em; }
+.spec h3, .spec h4 { margin-top: .8em; }
+.reqs li { margin-bottom: .3em; }
+details.rules, details.code { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 10px; }
+details.rules > summary, details.code > summary { padding: 10px 12px; cursor: pointer; min-height: 44px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+details.rules > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.code pre { margin: 0; border: 0; border-top: 1px solid var(--rule); max-height: 36em; }
+.codebar { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0 12px 8px; align-items: center; }
+.codebar a { min-height: 32px; display: inline-flex; align-items: center; }
+.hk { font-weight: 700; }
+.hc { color: var(--ink-3); font-style: italic; }
+.hs { color: var(--ink-2); }
+.note { border: 1px solid var(--ink-3); padding: 10px 12px; background: var(--panel); }
+.trace .hero-art { margin-bottom: 10px; }
+.wavewrap { overflow-x: auto; margin-bottom: 8px; }
+.wavesvg { min-width: 520px; }
+svg .future { fill: var(--panel); opacity: .62; }
+svg .cursor { fill: var(--ink); opacity: .08; }
+svg text.big { font-size: 15px; fill: var(--ink); }
+svg text.inv, svg text.big.inv { fill: var(--panel); }
+svg .pix { stroke: var(--ink-3); stroke-width: 1; }
+svg text.dark { fill: #000; } svg text.light { fill: #fff; }
+.vals { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 14px; margin: 0 0 8px; font-size: .85rem; }
+.vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
+.trace .hero-art svg { margin: 0 auto; display: block; }
+</style>
+</head>
+<body>
+<a class="visually-hidden" href="#main">Skip to content</a>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<main id="main" class="wrap">
+<p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-I">I. Machine learning inference</a></p>
+<h1>Tiny CNN shape classifier</h1>
+<p class="tags"><code>c14_nexys_tiny_cnn</code> <span class="tag">Course tier</span> <span class="tag">course part 14</span> <span class="tag">I Machine learning inference</span> <span class="tag">Nexys A7-100T</span></p>
+<figure><div class="player trace" id="trace" aria-label="Golden model replay"><div class="wave"></div><p class="cap" aria-live="polite"></p></div><figcaption>The task's own golden model (<code>hidden/model.py</code>) run on a fixed input when the site is built, so this is what the hidden tests check. The 8 pictures of 12 by 12 pixels from the data file, each run through the model&#x27;s integer network (two convolution layers, a pooling step and a final layer). Space plays and pauses, arrow keys step.</figcaption></figure>
+<h2>The problem</h2>
+<p>A very small convolutional neural network on the Nexys A7 that decides which of four simple shapes is in a small grey picture. The network&#x27;s numbers come from files and it uses only whole-number arithmetic: two convolution layers with a pooling step between them, then a final layer that gives four scores. The board shows the winning class on a display digit and sends a letter over the serial port.</p>
+<p><strong>Where it is used.</strong> Small quantised networks like this run on cameras, sensors and microcontrollers for tasks such as gesture, symbol and defect recognition, and are a common way to learn how neural-network hardware works.</p>
+<p class="small muted">Adapted from a project in the owner's FPGA design course (the course itself is private).</p>
+<h2>The spec the agent is given</h2>
+<div class="spec"><h3>Tiny CNN shape classifier</h3>
+<p>I want the Nexys A7-100T to recognise which of four simple shapes is in a small grey picture, using a tiny neural network whose numbers I give you in files.</p>
+<ul><li>The pictures: eight of them, each 12 by 12 pixels, each pixel a signed 8-bit number from 0 to 127 (<code>data/cnn_images.hex</code>, one number per line, picture after picture, row by row). They show a horizontal bar, a vertical bar, a box outline or a cross; the four classes are numbered 0 (horizontal bar), 1 (vertical bar), 2 (box), 3 (cross).</li><li>The network, which must be followed exactly (all numbers are whole numbers): 1. Layer 1: four filters of 3 by 3, each sliding over the picture without going over the edge (so the result is 10 by 10 for each filter). For each place, multiply the nine pixels by the filter&#x27;s nine weights, add them and add the filter&#x27;s bias. Then scale the total by the fraction M1 / 2^S1, rounding to the nearest whole number with exact halves going up, and limit it to 0 to 127 (so negatives become 0). 2. Shrink each 10 by 10 result to 5 by 5 by keeping the largest of every 2 by 2 block. 3. Layer 2: eight filters of 3 by 3 over all four 5 by 5 results at once (each filter has 36 weights, one 3 by 3 per input result; add everything and a bias), giving 3 by 3 for each filter; then scale by M2 / 2^S2, round and limit to 0 to 127 in the same way. 4. Final layer: four sums, each of the 72 numbers from step 3 (taken filter by filter, row by row) times 72 weights, plus a bias. These four whole numbers (&quot;scores&quot;) are not scaled or limited. The answer is the number of the biggest score (if two tie, the lower number).</li><li>The file <code>data/cnn_params.hex</code> holds all 612 weights, 16 biases (a 32-bit signed number each) and M1, S1, M2, S2 (one 32-bit hexadecimal word per line; each weight is a signed 8-bit number in two&#x27;s complement stored in the low byte of its word with the upper 24 bits zero, so a word from 80 to FF is a negative weight and bit 7 is the sign; a bias is a full 32-bit signed number; M1, S1, M2, S2 are plain non-negative numbers; the order is: layer 1 weights, layer 2 weights, final layer weights, then the 16 biases, then M1, S1, M2, S2; the weights of a layer are ordered by filter, then input result, then row, then column).</li><li>Using the board: switches SW0 to SW2 choose the picture (0 to 7). Pressing the centre button (it needs debouncing) classifies that picture. When the answer is ready, show its number (0 to 3) on the right-hand seven-segment digit (blank before the first answer) and send one letter on the USB serial port at 115200 baud, 8 data bits, no parity, 1 stop bit, followed by a line feed: H for 0, V for 1, B for 2, X for 3.</li><li>I will check the letter and the digit for each of the eight pictures. The USB-UART carries the answer, so this design does not embed the test shell.</li></ul>
+<p>Test hooks: top module <code>c14_nexys_tiny_cnn_top</code>, ports named as in the board&#x27;s master XDC, and the parameters <code>DEBOUNCE_CYCLES</code> (the button must be stable for this many clocks, 10 ms on the board) and <code>CLKS_PER_BIT</code> (868 on the board) as top-level parameters; the bench shrinks both. There are no other time constants.</p></div>
+<p class="small muted">Exactly <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/spec.md"><code>spec.md</code></a>. Anything it leaves open, the agent has to ask about.</p>
+<p>Handed over with the spec (the agent may read them): <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/data/cnn_images.hex"><code>cnn_images.hex</code></a>, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/data/cnn_params.hex"><code>cnn_params.hex</code></a>.</p>
+<h2>Interface</h2>
+<p>Top module <code>c14_nexys_tiny_cnn_top</code> on the Nexys A7-100T (<code>xc7a100tcsg324-1</code>). Clock: CLK100MHZ at 100 MHz (board oscillator). Reset: CPU_RESETN, active low: the display is blank, no answer yet.</p>
+<p>Top-level parameters (board values): <code>CLKS_PER_BIT</code> = 868. The hidden bench shrinks them to <code>CLKS_PER_BIT</code> = 8, <code>DEBOUNCE_CYCLES</code> = 20. The bench builds it without the test shell, since its subject is the USB-UART itself.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Port</th><th>Direction</th><th class="num">Width</th><th>Note</th></tr></thead><tbody><tr><td><code>CLK100MHZ</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>CPU_RESETN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>UART_TXD_IN</code></td><td>in</td><td class="num">1</td><td>unused (the design only sends)</td></tr><tr><td><code>UART_RXD_OUT</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>BTNC</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>SW</code></td><td>in</td><td class="num">16</td><td>only SW[2:0] are used</td></tr><tr><td><code>AN</code></td><td>out</td><td class="num">8</td><td>AN[0] is the right-hand digit</td></tr><tr><td><code>CA</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CB</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CC</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CD</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CE</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CF</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CG</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>DP</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>LED</code></td><td>out</td><td class="num">16</td><td></td></tr></tbody></table></div>
+<h3>Registers behind the test shell</h3><div class="tablewrap" tabindex="0"><table><thead><tr><th>Offset</th><th>Name</th><th>Access</th><th>Bits</th></tr></thead><tbody><tr><td><code>none</code></td><td><code>UART_PROTOCOL</code></td><td>serial</td><td>UART_RXD_OUT carries H, V, B or X then 0x0A at 115200 8N1; no input protocol</td></tr></tbody></table></div>
+<h2>What the hidden tests check</h2>
+<p>The requirements in the hidden spec, and how each is shown to hold:</p>
+<ul class="reqs"><li><span class="mono">REQ-01</span> for each of the eight pictures the letter and the display digit equal the reference class <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-02</span> the display is blank before the first answer and shows only the right-hand digit <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-03</span> the four scores of each picture equal the reference exactly (checked by the designer&#x27;s own simulation; the bench sees the class only) <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-04</span> The design closes timing at 100 MHz and fits the XC7A100T <span class="muted">(shown by report analysis)</span></li></ul>
+<details class="rules"><summary>The full behaviour rules from <code>hidden/spec.yaml</code></summary><h4>network</h4><ul><li>Exactly the course network: conv 3x3 1-&gt;4 with requantisation (acc*M1 + 2^(S1-1)) &gt;&gt;&gt; S1 clamped to 0..127; 2x2 max-pool; conv 3x3 4-&gt;8 with requantisation by M2/S2 and clamp 0..127; dense 72-&gt;4 raw int32; class = argmax, lowest index on a tie.</li><li>Parameters and pictures: data/cnn_params.hex (612 weights, 16 biases, M1, S1, M2, S2) and data/cnn_images.hex (8 x 144 pixels).</li><li>Weight encoding: each of the 612 weights is a signed 8-bit two&#x27;s complement number stored zero-extended in the low byte of its 32-bit word of cnn_params.hex (80..FF are negative, bit 7 is the sign); biases are 32-bit signed; M1, S1, M2, S2 are non-negative.</li></ul><h4>board</h4><ul><li>SW[2:0] choose the picture; a debounced rising edge of BTNC (stable for DEBOUNCE_CYCLES clocks) classifies it.</li><li>When the answer is ready: the class digit (0..3) on the right-hand digit (AN = 8&#x27;hFE; segments 0x40, 0x79, 0x24, 0x30 active low as {CG..CA}); all segments off before the first answer; one letter H, V, B or X then 0x0A on UART_RXD_OUT at 115200 8N1.</li><li>The reference loads its parameter memories after reset (about 650 clocks) before it accepts a press (LED15 is its ready flag).</li></ul><h4>leds</h4><ul><li>The reference shows ready on LED15 and the class on LED[1:0]; the bench does not check the LEDs.</li></ul></details>
+
+
+<h2>What the tests catch: the mutants</h2>
+<p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-09, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/results/c14_nexys_tiny_cnn__icarus.json"><code>c14_nexys_tiny_cnn__icarus.json</code></a>) the reference passed all 5 hidden tests and 7 of 7 mutants failed them.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>letters_swapped</code></td><td><code>cnn_system.sv</code></td><td>the letters of classes 2 and 3 are swapped</td><td><code>test_pictures_4_to_7</code>, <code>test_glitch_is_not_a_press</code></td></tr><tr><td><code>digit_pattern</code></td><td><code>cnn_nexys_top_ref.sv</code></td><td>the segment pattern for 2 is wrong</td><td><code>test_pictures_4_to_7</code>, <code>test_glitch_is_not_a_press</code></td></tr><tr><td><code>min_pool</code></td><td><code>tiny_cnn.sv</code></td><td>min-pooling instead of max-pooling</td><td><code>test_pictures_0_to_3</code>, <code>test_pictures_4_to_7</code>, <code>test_glitch_is_not_a_press</code>, <code>test_reset_blanks_the_display</code></td></tr><tr><td><code>no_relu_clamp</code></td><td><code>tiny_cnn.sv</code></td><td>negative values are not limited to 0</td><td><code>test_pictures_0_to_3</code>, <code>test_pictures_4_to_7</code>, <code>test_reset_blanks_the_display</code></td></tr><tr><td><code>extra_shift</code></td><td><code>tiny_cnn.sv</code></td><td>every layer output is scaled down four times too far</td><td><code>test_pictures_4_to_7</code></td></tr><tr><td><code>argmin</code></td><td><code>tiny_cnn.sv</code></td><td>the class is the smallest score, not the biggest</td><td><code>test_pictures_0_to_3</code>, <code>test_pictures_4_to_7</code>, <code>test_glitch_is_not_a_press</code>, <code>test_reset_blanks_the_display</code></td></tr><tr><td><code>debounce_ignored</code></td><td><code>cnn_nexys_top_ref.sv</code></td><td>the button is not debounced: the press starts before it is stable</td><td><code>test_glitch_is_not_a_press</code></td></tr></tbody></table></div>
+<h2>Sample solution</h2>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
+<details class="code"><summary><span class="mono">c14_nexys_tiny_cnn_top.sv</span> <span class="muted small">reference RTL, 22 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/c14_nexys_tiny_cnn_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/c14_nexys_tiny_cnn_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c14_nexys_tiny_cnn_top.sv: board top (Nexys A7-100T, master-XDC port names) around the course reference&#x27;s tiny CNN system.</span>
+<span class="hk">module</span> c14_nexys_tiny_cnn_top #(
+    <span class="hk">parameter</span> <span class="hk">int</span> DEBOUNCE_CYCLES = 1_000_000,
+    <span class="hk">parameter</span> <span class="hk">int</span> CLKS_PER_BIT    = 868
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        CLK100MHZ,
+    <span class="hk">input</span>  <span class="hk">logic</span>        CPU_RESETN,
+    <span class="hk">input</span>  <span class="hk">logic</span>        BTNC,
+    <span class="hk">input</span>  <span class="hk">logic</span> [15:0] SW,
+    <span class="hk">output</span> <span class="hk">logic</span> [7:0]  AN,
+    <span class="hk">output</span> <span class="hk">logic</span>        CA, CB, CC, CD, CE, CF, CG, DP,
+    <span class="hk">output</span> <span class="hk">logic</span> [15:0] LED,
+    <span class="hk">input</span>  <span class="hk">logic</span>        UART_TXD_IN,
+    <span class="hk">output</span> <span class="hk">logic</span>        UART_RXD_OUT
+);
+    <span class="hk">logic</span> [6:0] seg;
+    cnn_nexys_top_ref #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES), .CLKS_PER_BIT(CLKS_PER_BIT)) u_ref (
+        .CLK100MHZ(CLK100MHZ), .CPU_RESETN(CPU_RESETN), .BTNC(BTNC), .SW(SW[2:0]), .AN(AN), .SEG(seg), .LED(LED),
+        .UART_RXD_OUT(UART_RXD_OUT));
+    <span class="hk">assign</span> {CG, CF, CE, CD, CC, CB, CA} = seg;
+    <span class="hk">assign</span> DP = 1&#x27;b1;
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">cnn_init.svh</span> <span class="muted small">reference RTL, 1784 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/cnn_init.svh" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_init.svh">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code>prom[0] = 32&#x27;h00000022;
+prom[1] = 32&#x27;h0000002e;
+prom[2] = 32&#x27;h0000003d;
+prom[3] = 32&#x27;h000000e0;
+prom[4] = 32&#x27;h00000015;
+prom[5] = 32&#x27;h0000003f;
+prom[6] = 32&#x27;h000000fa;
+prom[7] = 32&#x27;h00000010;
+prom[8] = 32&#x27;h00000030;
+prom[9] = 32&#x27;h00000010;
+prom[10] = 32&#x27;h0000001a;
+prom[11] = 32&#x27;h00000025;
+prom[12] = 32&#x27;h000000d6;
+prom[13] = 32&#x27;h000000dd;
+prom[14] = 32&#x27;h000000db;
+prom[15] = 32&#x27;h0000002a;
+prom[16] = 32&#x27;h00000018;
+prom[17] = 32&#x27;h00000011;
+prom[18] = 32&#x27;h000000f1;
+prom[19] = 32&#x27;h000000e9;
+prom[20] = 32&#x27;h000000eb;
+prom[21] = 32&#x27;h00000037;
+prom[22] = 32&#x27;h00000054;
+prom[23] = 32&#x27;h0000004e;
+prom[24] = 32&#x27;h000000ee;
+prom[25] = 32&#x27;h000000d5;
+prom[26] = 32&#x27;h000000ea;
+prom[27] = 32&#x27;h0000003a;
+prom[28] = 32&#x27;h00000014;
+prom[29] = 32&#x27;h0000000f;
+prom[30] = 32&#x27;h00000076;
+prom[31] = 32&#x27;h000000f9;
+prom[32] = 32&#x27;h000000f6;
+prom[33] = 32&#x27;h0000007f;
+prom[34] = 32&#x27;h0000003e;
+prom[35] = 32&#x27;h0000002d;
+prom[36] = 32&#x27;h000000a9;
+prom[37] = 32&#x27;h0000008f;
+prom[38] = 32&#x27;h000000c0;
+prom[39] = 32&#x27;h000000dd;
+prom[40] = 32&#x27;h000000cc;
+prom[41] = 32&#x27;h000000b9;
+prom[42] = 32&#x27;h0000000d;
+prom[43] = 32&#x27;h00000018;
+prom[44] = 32&#x27;h00000012;
+prom[45] = 32&#x27;h000000e6;
+prom[46] = 32&#x27;h000000dd;
+prom[47] = 32&#x27;h000000cc;
+prom[48] = 32&#x27;h00000027;
+prom[49] = 32&#x27;h0000002e;
+prom[50] = 32&#x27;h00000020;
+prom[51] = 32&#x27;h00000015;
+prom[52] = 32&#x27;h00000053;
+prom[53] = 32&#x27;h0000003d;
+prom[54] = 32&#x27;h000000d4;
+prom[55] = 32&#x27;h000000af;
+prom[56] = 32&#x27;h000000d6;
+prom[57] = 32&#x27;h00000008;
+prom[58] = 32&#x27;h00000004;
+prom[59] = 32&#x27;h000000ed;
+prom[60] = 32&#x27;h0000002b;
+prom[61] = 32&#x27;h00000048;
+prom[62] = 32&#x27;h00000027;
+prom[63] = 32&#x27;h000000d6;
+prom[64] = 32&#x27;h000000de;
+prom[65] = 32&#x27;h000000d7;
+prom[66] = 32&#x27;h00000012;
+prom[67] = 32&#x27;h0000001f;
+prom[68] = 32&#x27;h0000000a;
+prom[69] = 32&#x27;h00000021;
+prom[70] = 32&#x27;h00000041;
+prom[71] = 32&#x27;h0000003c;
+prom[72] = 32&#x27;h0000001a;
+prom[73] = 32&#x27;h0000002b;
+prom[74] = 32&#x27;h00000016;
+prom[75] = 32&#x27;h00000036;
+prom[76] = 32&#x27;h00000003;
+prom[77] = 32&#x27;h000000e3;
+prom[78] = 32&#x27;h00000029;
+prom[79] = 32&#x27;h0000000b;
+prom[80] = 32&#x27;h00000015;
+prom[81] = 32&#x27;h00000042;
+prom[82] = 32&#x27;h00000004;
+prom[83] = 32&#x27;h000000f5;
+prom[84] = 32&#x27;h00000041;
+prom[85] = 32&#x27;h0000002e;
+prom[86] = 32&#x27;h00000005;
+prom[87] = 32&#x27;h0000003a;
+prom[88] = 32&#x27;h00000038;
+prom[89] = 32&#x27;h00000032;
+prom[90] = 32&#x27;h00000034;
+prom[91] = 32&#x27;h0000000e;
+prom[92] = 32&#x27;h00000003;
+prom[93] = 32&#x27;h0000001f;
+prom[94] = 32&#x27;h00000031;
+prom[95] = 32&#x27;h000000e3;
+prom[96] = 32&#x27;h00000042;
+prom[97] = 32&#x27;h0000003e;
+prom[98] = 32&#x27;h0000001b;
+prom[99] = 32&#x27;h0000003b;
+prom[100] = 32&#x27;h000000ff;
+prom[101] = 32&#x27;h0000000f;
+prom[102] = 32&#x27;h0000002b;
+prom[103] = 32&#x27;h0000001b;
+prom[104] = 32&#x27;h00000014;
+prom[105] = 32&#x27;h00000044;
+prom[106] = 32&#x27;h00000011;
+prom[107] = 32&#x27;h000000dc;
+prom[108] = 32&#x27;h00000028;
+prom[109] = 32&#x27;h000000cf;
+prom[110] = 32&#x27;h000000c6;
+prom[111] = 32&#x27;h000000ff;
+prom[112] = 32&#x27;h000000c9;
+prom[113] = 32&#x27;h000000d8;
+prom[114] = 32&#x27;h000000f0;
+prom[115] = 32&#x27;h000000c5;
+prom[116] = 32&#x27;h0000009d;
+prom[117] = 32&#x27;h0000001a;
+prom[118] = 32&#x27;h000000f5;
+prom[119] = 32&#x27;h000000fe;
+prom[120] = 32&#x27;h00000051;
+prom[121] = 32&#x27;h000000e1;
+prom[122] = 32&#x27;h000000c3;
+prom[123] = 32&#x27;h0000001e;
+prom[124] = 32&#x27;h00000037;
+prom[125] = 32&#x27;h000000bd;
+prom[126] = 32&#x27;h000000dc;
+prom[127] = 32&#x27;h0000000b;
+prom[128] = 32&#x27;h000000dd;
+prom[129] = 32&#x27;h000000e2;
+prom[130] = 32&#x27;h000000eb;
+prom[131] = 32&#x27;h000000ec;
+prom[132] = 32&#x27;h000000df;
+prom[133] = 32&#x27;h000000fe;
+prom[134] = 32&#x27;h000000e0;
+prom[135] = 32&#x27;h00000026;
+prom[136] = 32&#x27;h000000ee;
+prom[137] = 32&#x27;h000000de;
+prom[138] = 32&#x27;h00000045;
+prom[139] = 32&#x27;h000000d6;
+prom[140] = 32&#x27;h00000006;
+prom[141] = 32&#x27;h0000004c;
+prom[142] = 32&#x27;h000000d5;
+prom[143] = 32&#x27;h000000d3;
+prom[144] = 32&#x27;h0000001d;
+prom[145] = 32&#x27;h00000022;
+prom[146] = 32&#x27;h0000001e;
+prom[147] = 32&#x27;h00000025;
+prom[148] = 32&#x27;h0000003d;
+prom[149] = 32&#x27;h0000001c;
+prom[150] = 32&#x27;h00000023;
+prom[151] = 32&#x27;h00000023;
+prom[152] = 32&#x27;h00000028;
+prom[153] = 32&#x27;h000000a9;
+prom[154] = 32&#x27;h000000ca;
+prom[155] = 32&#x27;h00000011;
+prom[156] = 32&#x27;h000000ba;
+prom[157] = 32&#x27;h000000f4;
+prom[158] = 32&#x27;h000000b4;
+prom[159] = 32&#x27;h000000e5;
+prom[160] = 32&#x27;h00000005;
+prom[161] = 32&#x27;h000000da;
+prom[162] = 32&#x27;h000000e8;
+prom[163] = 32&#x27;h000000ec;
+prom[164] = 32&#x27;h000000e9;
+prom[165] = 32&#x27;h000000e7;
+prom[166] = 32&#x27;h0000000d;
+prom[167] = 32&#x27;h000000d8;
+prom[168] = 32&#x27;h000000d2;
+prom[169] = 32&#x27;h000000ec;
+prom[170] = 32&#x27;h000000e8;
+prom[171] = 32&#x27;h000000c5;
+prom[172] = 32&#x27;h0000002a;
+prom[173] = 32&#x27;h00000035;
+prom[174] = 32&#x27;h0000009e;
+prom[175] = 32&#x27;h00000042;
+prom[176] = 32&#x27;h0000002c;
+prom[177] = 32&#x27;h000000ad;
+prom[178] = 32&#x27;h0000001f;
+prom[179] = 32&#x27;h00000049;
+prom[180] = 32&#x27;h00000020;
+prom[181] = 32&#x27;h0000002b;
+prom[182] = 32&#x27;h00000015;
+prom[183] = 32&#x27;h00000045;
+prom[184] = 32&#x27;h0000001b;
+prom[185] = 32&#x27;h000000f2;
+prom[186] = 32&#x27;h000000e1;
+prom[187] = 32&#x27;h000000f6;
+prom[188] = 32&#x27;h000000d0;
+prom[189] = 32&#x27;h00000044;
+prom[190] = 32&#x27;h00000038;
+prom[191] = 32&#x27;h00000071;
+prom[192] = 32&#x27;h0000003e;
+prom[193] = 32&#x27;h000000e8;
+prom[194] = 32&#x27;h0000003b;
+prom[195] = 32&#x27;h000000e1;
+prom[196] = 32&#x27;h00000022;
+prom[197] = 32&#x27;h0000001b;
+prom[198] = 32&#x27;h00000053;
+prom[199] = 32&#x27;h0000003e;
+prom[200] = 32&#x27;h0000007f;
+prom[201] = 32&#x27;h00000074;
+prom[202] = 32&#x27;h00000037;
+prom[203] = 32&#x27;h0000005d;
+prom[204] = 32&#x27;h000000c3;
+prom[205] = 32&#x27;h000000ca;
+prom[206] = 32&#x27;h000000ae;
+prom[207] = 32&#x27;h00000031;
+prom[208] = 32&#x27;h000000f3;
+prom[209] = 32&#x27;h00000017;
+prom[210] = 32&#x27;h000000f9;
+prom[211] = 32&#x27;h000000e4;
+prom[212] = 32&#x27;h00000002;
+prom[213] = 32&#x27;h000000cf;
+prom[214] = 32&#x27;h000000db;
+prom[215] = 32&#x27;h000000c7;
+prom[216] = 32&#x27;h00000000;
+prom[217] = 32&#x27;h000000fe;
+prom[218] = 32&#x27;h000000cb;
+prom[219] = 32&#x27;h00000015;
+prom[220] = 32&#x27;h00000005;
+prom[221] = 32&#x27;h000000fb;
+prom[222] = 32&#x27;h0000000d;
+prom[223] = 32&#x27;h000000ff;
+prom[224] = 32&#x27;h000000cb;
+prom[225] = 32&#x27;h000000bb;
+prom[226] = 32&#x27;h000000ac;
+prom[227] = 32&#x27;h000000e3;
+prom[228] = 32&#x27;h000000ae;
+prom[229] = 32&#x27;h000000bc;
+prom[230] = 32&#x27;h000000e6;
+prom[231] = 32&#x27;h000000e6;
+prom[232] = 32&#x27;h000000c4;
+prom[233] = 32&#x27;h000000af;
+prom[234] = 32&#x27;h00000008;
+prom[235] = 32&#x27;h000000bd;
+prom[236] = 32&#x27;h000000d1;
+prom[237] = 32&#x27;h0000001b;
+prom[238] = 32&#x27;h000000b1;
+prom[239] = 32&#x27;h000000f6;
+prom[240] = 32&#x27;h0000001c;
+prom[241] = 32&#x27;h000000c6;
+prom[242] = 32&#x27;h000000ed;
+prom[243] = 32&#x27;h000000bd;
+prom[244] = 32&#x27;h00000049;
+prom[245] = 32&#x27;h000000d8;
+prom[246] = 32&#x27;h000000be;
+prom[247] = 32&#x27;h0000003a;
+prom[248] = 32&#x27;h000000d9;
+prom[249] = 32&#x27;h000000f0;
+prom[250] = 32&#x27;h00000021;
+prom[251] = 32&#x27;h000000e4;
+prom[252] = 32&#x27;h00000028;
+prom[253] = 32&#x27;h000000d4;
+prom[254] = 32&#x27;h000000ca;
+prom[255] = 32&#x27;h00000034;
+prom[256] = 32&#x27;h000000e1;
+prom[257] = 32&#x27;h000000c9;
+prom[258] = 32&#x27;h00000041;
+prom[259] = 32&#x27;h000000fa;
+prom[260] = 32&#x27;h000000bb;
+prom[261] = 32&#x27;h0000001a;
+prom[262] = 32&#x27;h000000d9;
+prom[263] = 32&#x27;h000000cf;
+prom[264] = 32&#x27;h00000016;
+prom[265] = 32&#x27;h000000d6;
+prom[266] = 32&#x27;h000000ef;
+prom[267] = 32&#x27;h000000f2;
+prom[268] = 32&#x27;h00000002;
+prom[269] = 32&#x27;h000000d2;
+prom[270] = 32&#x27;h00000005;
+prom[271] = 32&#x27;h000000f7;
+prom[272] = 32&#x27;h000000b9;
+prom[273] = 32&#x27;h00000038;
+prom[274] = 32&#x27;h000000b3;
+prom[275] = 32&#x27;h000000b4;
+prom[276] = 32&#x27;h00000002;
+prom[277] = 32&#x27;h000000e3;
+prom[278] = 32&#x27;h000000c9;
+prom[279] = 32&#x27;h00000028;
+prom[280] = 32&#x27;h00000039;
+prom[281] = 32&#x27;h000000d3;
+prom[282] = 32&#x27;h00000027;
+prom[283] = 32&#x27;h0000003e;
+prom[284] = 32&#x27;h000000d8;
+prom[285] = 32&#x27;h0000000e;
+prom[286] = 32&#x27;h00000018;
+prom[287] = 32&#x27;h000000dd;
+prom[288] = 32&#x27;h000000ce;
+prom[289] = 32&#x27;h000000d4;
+prom[290] = 32&#x27;h000000b9;
+prom[291] = 32&#x27;h0000002e;
+prom[292] = 32&#x27;h00000019;
+prom[293] = 32&#x27;h0000001c;
+prom[294] = 32&#x27;h00000006;
+prom[295] = 32&#x27;h00000016;
+prom[296] = 32&#x27;h000000f6;
+prom[297] = 32&#x27;h0000001f;
+prom[298] = 32&#x27;h00000039;
+prom[299] = 32&#x27;h000000fb;
+prom[300] = 32&#x27;h00000008;
+prom[301] = 32&#x27;h0000001c;
+prom[302] = 32&#x27;h00000014;
+prom[303] = 32&#x27;h0000000a;
+prom[304] = 32&#x27;h0000001f;
+prom[305] = 32&#x27;h00000019;
+prom[306] = 32&#x27;h00000024;
+prom[307] = 32&#x27;h00000009;
+prom[308] = 32&#x27;h0000000e;
+prom[309] = 32&#x27;h00000035;
+prom[310] = 32&#x27;h00000022;
+prom[311] = 32&#x27;h00000043;
+prom[312] = 32&#x27;h0000000b;
+prom[313] = 32&#x27;h0000000a;
+prom[314] = 32&#x27;h0000000a;
+prom[315] = 32&#x27;h00000008;
+prom[316] = 32&#x27;h000000df;
+prom[317] = 32&#x27;h000000fe;
+prom[318] = 32&#x27;h000000f0;
+prom[319] = 32&#x27;h00000039;
+prom[320] = 32&#x27;h0000001b;
+prom[321] = 32&#x27;h000000cd;
+prom[322] = 32&#x27;h000000d2;
+prom[323] = 32&#x27;h000000dc;
+prom[324] = 32&#x27;h00000030;
+prom[325] = 32&#x27;h00000029;
+prom[326] = 32&#x27;h0000002a;
+prom[327] = 32&#x27;h00000015;
+prom[328] = 32&#x27;h00000014;
+prom[329] = 32&#x27;h0000003a;
+prom[330] = 32&#x27;h00000047;
+prom[331] = 32&#x27;h00000033;
+prom[332] = 32&#x27;h00000038;
+prom[333] = 32&#x27;h000000de;
+prom[334] = 32&#x27;h00000010;
+prom[335] = 32&#x27;h000000fb;
+prom[336] = 32&#x27;h0000000b;
+prom[337] = 32&#x27;h00000021;
+prom[338] = 32&#x27;h000000c9;
+prom[339] = 32&#x27;h00000018;
+prom[340] = 32&#x27;h000000fd;
+prom[341] = 32&#x27;h0000000c;
+prom[342] = 32&#x27;h000000ab;
+prom[343] = 32&#x27;h000000af;
+prom[344] = 32&#x27;h000000ce;
+prom[345] = 32&#x27;h000000f9;
+prom[346] = 32&#x27;h000000ce;
+prom[347] = 32&#x27;h000000c3;
+prom[348] = 32&#x27;h000000ce;
+prom[349] = 32&#x27;h000000ce;
+prom[350] = 32&#x27;h000000cb;
+prom[351] = 32&#x27;h000000c7;
+prom[352] = 32&#x27;h000000ca;
+prom[353] = 32&#x27;h00000096;
+prom[354] = 32&#x27;h000000eb;
+prom[355] = 32&#x27;h000000b8;
+prom[356] = 32&#x27;h000000a6;
+prom[357] = 32&#x27;h000000b1;
+prom[358] = 32&#x27;h000000bb;
+prom[359] = 32&#x27;h00000090;
+prom[360] = 32&#x27;h0000004e;
+prom[361] = 32&#x27;h00000052;
+prom[362] = 32&#x27;h00000030;
+prom[363] = 32&#x27;h00000018;
+prom[364] = 32&#x27;h00000010;
+prom[365] = 32&#x27;h00000022;
+prom[366] = 32&#x27;h00000027;
+prom[367] = 32&#x27;h00000013;
+prom[368] = 32&#x27;h0000002e;
+prom[369] = 32&#x27;h00000008;
+prom[370] = 32&#x27;h000000f8;
+prom[371] = 32&#x27;h000000bb;
+prom[372] = 32&#x27;h000000ea;
+prom[373] = 32&#x27;h000000ed;
+prom[374] = 32&#x27;h000000b9;
+prom[375] = 32&#x27;h000000ca;
+prom[376] = 32&#x27;h000000fc;
+prom[377] = 32&#x27;h000000e9;
+prom[378] = 32&#x27;h000000ad;
+prom[379] = 32&#x27;h000000ba;
+prom[380] = 32&#x27;h000000c3;
+prom[381] = 32&#x27;h000000f9;
+prom[382] = 32&#x27;h000000c9;
+prom[383] = 32&#x27;h000000e1;
+prom[384] = 32&#x27;h0000009b;
+prom[385] = 32&#x27;h000000b2;
+prom[386] = 32&#x27;h000000ca;
+prom[387] = 32&#x27;h00000040;
+prom[388] = 32&#x27;h0000003d;
+prom[389] = 32&#x27;h00000008;
+prom[390] = 32&#x27;h00000040;
+prom[391] = 32&#x27;h00000038;
+prom[392] = 32&#x27;h00000014;
+prom[393] = 32&#x27;h0000001b;
+prom[394] = 32&#x27;h0000002d;
+prom[395] = 32&#x27;h0000001e;
+prom[396] = 32&#x27;h00000021;
+prom[397] = 32&#x27;h00000013;
+prom[398] = 32&#x27;h000000af;
+prom[399] = 32&#x27;h00000005;
+prom[400] = 32&#x27;h000000d7;
+prom[401] = 32&#x27;h00000090;
+prom[402] = 32&#x27;h000000f7;
+prom[403] = 32&#x27;h00000009;
+prom[404] = 32&#x27;h00000081;
+prom[405] = 32&#x27;h000000c2;
+prom[406] = 32&#x27;h000000dc;
+prom[407] = 32&#x27;h000000e2;
+prom[408] = 32&#x27;h000000d5;
+prom[409] = 32&#x27;h000000ca;
+prom[410] = 32&#x27;h000000d5;
+prom[411] = 32&#x27;h000000d3;
+prom[412] = 32&#x27;h000000c0;
+prom[413] = 32&#x27;h000000e2;
+prom[414] = 32&#x27;h00000038;
+prom[415] = 32&#x27;h0000000f;
+prom[416] = 32&#x27;h00000027;
+prom[417] = 32&#x27;h00000030;
+prom[418] = 32&#x27;h000000f6;
+prom[419] = 32&#x27;h00000007;
+prom[420] = 32&#x27;h0000003e;
+prom[421] = 32&#x27;h00000005;
+prom[422] = 32&#x27;h000000fe;
+prom[423] = 32&#x27;h00000043;
+prom[424] = 32&#x27;h00000042;
+prom[425] = 32&#x27;h0000004b;
+prom[426] = 32&#x27;h0000004c;
+prom[427] = 32&#x27;h00000027;
+prom[428] = 32&#x27;h00000047;
+prom[429] = 32&#x27;h00000032;
+prom[430] = 32&#x27;h00000056;
+prom[431] = 32&#x27;h00000039;
+prom[432] = 32&#x27;h000000d7;
+prom[433] = 32&#x27;h000000b4;
+prom[434] = 32&#x27;h000000a2;
+prom[435] = 32&#x27;h000000c8;
+prom[436] = 32&#x27;h000000ba;
+prom[437] = 32&#x27;h000000a0;
+prom[438] = 32&#x27;h000000e3;
+prom[439] = 32&#x27;h000000b6;
+prom[440] = 32&#x27;h000000bf;
+prom[441] = 32&#x27;h0000003b;
+prom[442] = 32&#x27;h0000004e;
+prom[443] = 32&#x27;h00000047;
+prom[444] = 32&#x27;h0000004c;
+prom[445] = 32&#x27;h00000043;
+prom[446] = 32&#x27;h00000027;
+prom[447] = 32&#x27;h0000004a;
+prom[448] = 32&#x27;h0000004d;
+prom[449] = 32&#x27;h00000052;
+prom[450] = 32&#x27;h0000003d;
+prom[451] = 32&#x27;h00000026;
+prom[452] = 32&#x27;h0000000a;
+prom[453] = 32&#x27;h00000022;
+prom[454] = 32&#x27;h00000020;
+prom[455] = 32&#x27;h0000000f;
+prom[456] = 32&#x27;h0000002c;
+prom[457] = 32&#x27;h0000004c;
+prom[458] = 32&#x27;h00000013;
+prom[459] = 32&#x27;h000000d3;
+prom[460] = 32&#x27;h000000f8;
+prom[461] = 32&#x27;h000000be;
+prom[462] = 32&#x27;h000000f4;
+prom[463] = 32&#x27;h000000be;
+prom[464] = 32&#x27;h00000086;
+prom[465] = 32&#x27;h000000cb;
+prom[466] = 32&#x27;h000000dd;
+prom[467] = 32&#x27;h000000a0;
+prom[468] = 32&#x27;h000000d9;
+prom[469] = 32&#x27;h000000d2;
+prom[470] = 32&#x27;h000000de;
+prom[471] = 32&#x27;h000000b8;
+prom[472] = 32&#x27;h000000ce;
+prom[473] = 32&#x27;h000000bd;
+prom[474] = 32&#x27;h000000c0;
+prom[475] = 32&#x27;h000000dd;
+prom[476] = 32&#x27;h000000ef;
+prom[477] = 32&#x27;h00000042;
+prom[478] = 32&#x27;h00000022;
+prom[479] = 32&#x27;h00000010;
+prom[480] = 32&#x27;h00000030;
+prom[481] = 32&#x27;h00000015;
+prom[482] = 32&#x27;h0000002a;
+prom[483] = 32&#x27;h00000040;
+prom[484] = 32&#x27;h00000047;
+prom[485] = 32&#x27;h0000002a;
+prom[486] = 32&#x27;h000000d8;
+prom[487] = 32&#x27;h000000eb;
+prom[488] = 32&#x27;h000000dd;
+prom[489] = 32&#x27;h000000d0;
+prom[490] = 32&#x27;h000000c3;
+prom[491] = 32&#x27;h000000de;
+prom[492] = 32&#x27;h000000d3;
+prom[493] = 32&#x27;h000000d3;
+prom[494] = 32&#x27;h000000fb;
+prom[495] = 32&#x27;h000000e8;
+prom[496] = 32&#x27;h00000004;
+prom[497] = 32&#x27;h000000be;
+prom[498] = 32&#x27;h00000000;
+prom[499] = 32&#x27;h00000006;
+prom[500] = 32&#x27;h000000d9;
+prom[501] = 32&#x27;h00000033;
+prom[502] = 32&#x27;h000000f7;
+prom[503] = 32&#x27;h000000ca;
+prom[504] = 32&#x27;h000000b6;
+prom[505] = 32&#x27;h000000e5;
+prom[506] = 32&#x27;h000000d9;
+prom[507] = 32&#x27;h000000fe;
+prom[508] = 32&#x27;h0000000a;
+prom[509] = 32&#x27;h00000016;
+prom[510] = 32&#x27;h000000e9;
+prom[511] = 32&#x27;h000000ea;
+prom[512] = 32&#x27;h0000001c;
+prom[513] = 32&#x27;h000000d7;
+prom[514] = 32&#x27;h000000e6;
+prom[515] = 32&#x27;h000000ee;
+prom[516] = 32&#x27;h00000009;
+prom[517] = 32&#x27;h000000f4;
+prom[518] = 32&#x27;h00000002;
+prom[519] = 32&#x27;h000000e0;
+prom[520] = 32&#x27;h00000011;
+prom[521] = 32&#x27;h0000000e;
+prom[522] = 32&#x27;h000000b2;
+prom[523] = 32&#x27;h000000fa;
+prom[524] = 32&#x27;h00000002;
+prom[525] = 32&#x27;h000000d2;
+prom[526] = 32&#x27;h000000ef;
+prom[527] = 32&#x27;h000000fd;
+prom[528] = 32&#x27;h000000c3;
+prom[529] = 32&#x27;h000000c6;
+prom[530] = 32&#x27;h000000d6;
+prom[531] = 32&#x27;h000000bf;
+prom[532] = 32&#x27;h000000d5;
+prom[533] = 32&#x27;h000000fe;
+prom[534] = 32&#x27;h000000e7;
+prom[535] = 32&#x27;h000000d7;
+prom[536] = 32&#x27;h00000002;
+prom[537] = 32&#x27;h00000007;
+prom[538] = 32&#x27;h000000f4;
+prom[539] = 32&#x27;h000000f7;
+prom[540] = 32&#x27;h000000e8;
+prom[541] = 32&#x27;h00000012;
+prom[542] = 32&#x27;h00000017;
+prom[543] = 32&#x27;h00000022;
+prom[544] = 32&#x27;h00000015;
+prom[545] = 32&#x27;h00000051;
+prom[546] = 32&#x27;h000000fd;
+prom[547] = 32&#x27;h000000eb;
+prom[548] = 32&#x27;h0000000c;
+prom[549] = 32&#x27;h000000fc;
+prom[550] = 32&#x27;h000000ef;
+prom[551] = 32&#x27;h000000f3;
+prom[552] = 32&#x27;h000000cd;
+prom[553] = 32&#x27;h000000ed;
+prom[554] = 32&#x27;h000000fe;
+prom[555] = 32&#x27;h000000e6;
+prom[556] = 32&#x27;h000000ff;
+prom[557] = 32&#x27;h000000dc;
+prom[558] = 32&#x27;h000000b5;
+prom[559] = 32&#x27;h00000036;
+prom[560] = 32&#x27;h00000018;
+prom[561] = 32&#x27;h000000bf;
+prom[562] = 32&#x27;h00000042;
+prom[563] = 32&#x27;h0000003d;
+prom[564] = 32&#x27;h000000b9;
+prom[565] = 32&#x27;h00000022;
+prom[566] = 32&#x27;h00000015;
+prom[567] = 32&#x27;h0000001e;
+prom[568] = 32&#x27;h00000019;
+prom[569] = 32&#x27;h00000010;
+prom[570] = 32&#x27;h000000fd;
+prom[571] = 32&#x27;h0000001f;
+prom[572] = 32&#x27;h00000030;
+prom[573] = 32&#x27;h00000003;
+prom[574] = 32&#x27;h000000f5;
+prom[575] = 32&#x27;h000000fb;
+prom[576] = 32&#x27;h000000e5;
+prom[577] = 32&#x27;h00000003;
+prom[578] = 32&#x27;h00000006;
+prom[579] = 32&#x27;h0000000b;
+prom[580] = 32&#x27;h00000030;
+prom[581] = 32&#x27;h00000010;
+prom[582] = 32&#x27;h000000f0;
+prom[583] = 32&#x27;h000000fb;
+prom[584] = 32&#x27;h000000f3;
+prom[585] = 32&#x27;h000000cb;
+prom[586] = 32&#x27;h000000bb;
+prom[587] = 32&#x27;h000000ad;
+prom[588] = 32&#x27;h000000a8;
+prom[589] = 32&#x27;h000000c1;
+prom[590] = 32&#x27;h000000a5;
+prom[591] = 32&#x27;h000000ae;
+prom[592] = 32&#x27;h000000a8;
+prom[593] = 32&#x27;h000000b6;
+prom[594] = 32&#x27;h00000000;
+prom[595] = 32&#x27;h00000023;
+prom[596] = 32&#x27;h00000035;
+prom[597] = 32&#x27;h00000018;
+prom[598] = 32&#x27;h00000017;
+prom[599] = 32&#x27;h0000001a;
+prom[600] = 32&#x27;h0000000f;
+prom[601] = 32&#x27;h00000026;
+prom[602] = 32&#x27;h0000004c;
+prom[603] = 32&#x27;h00000015;
+prom[604] = 32&#x27;h000000fa;
+prom[605] = 32&#x27;h00000030;
+prom[606] = 32&#x27;h000000eb;
+prom[607] = 32&#x27;h000000eb;
+prom[608] = 32&#x27;h000000fe;
+prom[609] = 32&#x27;h000000f2;
+prom[610] = 32&#x27;h00000007;
+prom[611] = 32&#x27;h000000e5;
+prom[612] = 32&#x27;hfffff209;
+prom[613] = 32&#x27;hfffff777;
+prom[614] = 32&#x27;hfffff15a;
+prom[615] = 32&#x27;hffffefb3;
+prom[616] = 32&#x27;h000004c1;
+prom[617] = 32&#x27;hfffffca5;
+prom[618] = 32&#x27;h000002d8;
+prom[619] = 32&#x27;h0000005f;
+prom[620] = 32&#x27;h00000066;
+prom[621] = 32&#x27;h000005fb;
+prom[622] = 32&#x27;h000003b1;
+prom[623] = 32&#x27;h000000e1;
+prom[624] = 32&#x27;h000000cd;
+prom[625] = 32&#x27;h0000013a;
+prom[626] = 32&#x27;hffffff30;
+prom[627] = 32&#x27;hffffff17;
+prom[628] = 32&#x27;h0000ab89;
+prom[629] = 32&#x27;h00000018;
+prom[630] = 32&#x27;h0000c560;
+prom[631] = 32&#x27;h00000018;
+irom[0] = 8&#x27;h22;
+irom[1] = 8&#x27;h0d;
+irom[2] = 8&#x27;h16;
+irom[3] = 8&#x27;h00;
+irom[4] = 8&#x27;h05;
+irom[5] = 8&#x27;h14;
+irom[6] = 8&#x27;h00;
+irom[7] = 8&#x27;h32;
+irom[8] = 8&#x27;h0a;
+irom[9] = 8&#x27;h05;
+irom[10] = 8&#x27;h16;
+irom[11] = 8&#x27;h07;
+irom[12] = 8&#x27;h00;
+irom[13] = 8&#x27;h00;
+irom[14] = 8&#x27;h00;
+irom[15] = 8&#x27;h15;
+irom[16] = 8&#x27;h01;
+irom[17] = 8&#x27;h00;
+irom[18] = 8&#x27;h00;
+irom[19] = 8&#x27;h04;
+irom[20] = 8&#x27;h00;
+irom[21] = 8&#x27;h00;
+irom[22] = 8&#x27;h00;
+irom[23] = 8&#x27;h00;
+irom[24] = 8&#x27;h18;
+irom[25] = 8&#x27;h00;
+irom[26] = 8&#x27;h00;
+irom[27] = 8&#x27;h1e;
+irom[28] = 8&#x27;h00;
+irom[29] = 8&#x27;h05;
+irom[30] = 8&#x27;h02;
+irom[31] = 8&#x27;h00;
+irom[32] = 8&#x27;h00;
+irom[33] = 8&#x27;h17;
+irom[34] = 8&#x27;h06;
+irom[35] = 8&#x27;h00;
+irom[36] = 8&#x27;h19;
+irom[37] = 8&#x27;h00;
+irom[38] = 8&#x27;h03;
+irom[39] = 8&#x27;h00;
+irom[40] = 8&#x27;h00;
+irom[41] = 8&#x27;h1c;
+irom[42] = 8&#x27;h1d;
+irom[43] = 8&#x27;h19;
+irom[44] = 8&#x27;h01;
+irom[45] = 8&#x27;h00;
+irom[46] = 8&#x27;h0c;
+irom[47] = 8&#x27;h00;
+irom[48] = 8&#x27;h03;
+irom[49] = 8&#x27;h06;
+irom[50] = 8&#x27;h00;
+irom[51] = 8&#x27;h00;
+irom[52] = 8&#x27;h7a;
+irom[53] = 8&#x27;h6e;
+irom[54] = 8&#x27;h7f;
+irom[55] = 8&#x27;h7f;
+irom[56] = 8&#x27;h7f;
+irom[57] = 8&#x27;h6d;
+irom[58] = 8&#x27;h70;
+irom[59] = 8&#x27;h77;
+irom[60] = 8&#x27;h00;
+irom[61] = 8&#x27;h00;
+irom[62] = 8&#x27;h00;
+irom[63] = 8&#x27;h00;
+irom[64] = 8&#x27;h00;
+irom[65] = 8&#x27;h00;
+irom[66] = 8&#x27;h01;
+irom[67] = 8&#x27;h11;
+irom[68] = 8&#x27;h00;
+irom[69] = 8&#x27;h00;
+irom[70] = 8&#x27;h0c;
+irom[71] = 8&#x27;h09;
+irom[72] = 8&#x27;h06;
+irom[73] = 8&#x27;h06;
+irom[74] = 8&#x27;h07;
+irom[75] = 8&#x27;h09;
+irom[76] = 8&#x27;h05;
+irom[77] = 8&#x27;h00;
+irom[78] = 8&#x27;h09;
+irom[79] = 8&#x27;h24;
+irom[80] = 8&#x27;h0e;
+irom[81] = 8&#x27;h00;
+irom[82] = 8&#x27;h12;
+irom[83] = 8&#x27;h13;
+irom[84] = 8&#x27;h28;
+irom[85] = 8&#x27;h00;
+irom[86] = 8&#x27;h00;
+irom[87] = 8&#x27;h00;
+irom[88] = 8&#x27;h00;
+irom[89] = 8&#x27;h00;
+irom[90] = 8&#x27;h38;
+irom[91] = 8&#x27;h1e;
+irom[92] = 8&#x27;h09;
+irom[93] = 8&#x27;h00;
+irom[94] = 8&#x27;h03;
+irom[95] = 8&#x27;h00;
+irom[96] = 8&#x27;h00;
+irom[97] = 8&#x27;h00;
+irom[98] = 8&#x27;h00;
+irom[99] = 8&#x27;h00;
+irom[100] = 8&#x27;h00;
+irom[101] = 8&#x27;h0f;
+irom[102] = 8&#x27;h00;
+irom[103] = 8&#x27;h00;
+irom[104] = 8&#x27;h04;
+irom[105] = 8&#x27;h00;
+irom[106] = 8&#x27;h03;
+irom[107] = 8&#x27;h00;
+irom[108] = 8&#x27;h00;
+irom[109] = 8&#x27;h0d;
+irom[110] = 8&#x27;h04;
+irom[111] = 8&#x27;h00;
+irom[112] = 8&#x27;h00;
+irom[113] = 8&#x27;h05;
+irom[114] = 8&#x27;h24;
+irom[115] = 8&#x27;h00;
+irom[116] = 8&#x27;h11;
+irom[117] = 8&#x27;h00;
+irom[118] = 8&#x27;h00;
+irom[119] = 8&#x27;h07;
+irom[120] = 8&#x27;h17;
+irom[121] = 8&#x27;h00;
+irom[122] = 8&#x27;h00;
+irom[123] = 8&#x27;h15;
+irom[124] = 8&#x27;h00;
+irom[125] = 8&#x27;h30;
+irom[126] = 8&#x27;h03;
+irom[127] = 8&#x27;h00;
+irom[128] = 8&#x27;h21;
+irom[129] = 8&#x27;h00;
+irom[130] = 8&#x27;h00;
+irom[131] = 8&#x27;h00;
+irom[132] = 8&#x27;h00;
+irom[133] = 8&#x27;h00;
+irom[134] = 8&#x27;h00;
+irom[135] = 8&#x27;h19;
+irom[136] = 8&#x27;h12;
+irom[137] = 8&#x27;h04;
+irom[138] = 8&#x27;h0b;
+irom[139] = 8&#x27;h07;
+irom[140] = 8&#x27;h00;
+irom[141] = 8&#x27;h00;
+irom[142] = 8&#x27;h0d;
+irom[143] = 8&#x27;h00;
+irom[144] = 8&#x27;h00;
+irom[145] = 8&#x27;h00;
+irom[146] = 8&#x27;h27;
+irom[147] = 8&#x27;h0d;
+irom[148] = 8&#x27;h00;
+irom[149] = 8&#x27;h00;
+irom[150] = 8&#x27;h0a;
+irom[151] = 8&#x27;h00;
+irom[152] = 8&#x27;h00;
+irom[153] = 8&#x27;h00;
+irom[154] = 8&#x27;h00;
+irom[155] = 8&#x27;h00;
+irom[156] = 8&#x27;h07;
+irom[157] = 8&#x27;h1b;
+irom[158] = 8&#x27;h00;
+irom[159] = 8&#x27;h17;
+irom[160] = 8&#x27;h1d;
+irom[161] = 8&#x27;h07;
+irom[162] = 8&#x27;h0e;
+irom[163] = 8&#x27;h01;
+irom[164] = 8&#x27;h00;
+irom[165] = 8&#x27;h00;
+irom[166] = 8&#x27;h00;
+irom[167] = 8&#x27;h0b;
+irom[168] = 8&#x27;h17;
+irom[169] = 8&#x27;h12;
+irom[170] = 8&#x27;h1c;
+irom[171] = 8&#x27;h00;
+irom[172] = 8&#x27;h05;
+irom[173] = 8&#x27;h00;
+irom[174] = 8&#x27;h00;
+irom[175] = 8&#x27;h09;
+irom[176] = 8&#x27;h00;
+irom[177] = 8&#x27;h00;
+irom[178] = 8&#x27;h00;
+irom[179] = 8&#x27;h1c;
+irom[180] = 8&#x27;h0f;
+irom[181] = 8&#x27;h01;
+irom[182] = 8&#x27;h00;
+irom[183] = 8&#x27;h18;
+irom[184] = 8&#x27;h16;
+irom[185] = 8&#x27;h00;
+irom[186] = 8&#x27;h00;
+irom[187] = 8&#x27;h00;
+irom[188] = 8&#x27;h1a;
+irom[189] = 8&#x27;h14;
+irom[190] = 8&#x27;h13;
+irom[191] = 8&#x27;h00;
+irom[192] = 8&#x27;h26;
+irom[193] = 8&#x27;h00;
+irom[194] = 8&#x27;h08;
+irom[195] = 8&#x27;h00;
+irom[196] = 8&#x27;h00;
+irom[197] = 8&#x27;h00;
+irom[198] = 8&#x27;h00;
+irom[199] = 8&#x27;h0e;
+irom[200] = 8&#x27;h00;
+irom[201] = 8&#x27;h00;
+irom[202] = 8&#x27;h00;
+irom[203] = 8&#x27;h08;
+irom[204] = 8&#x27;h0c;
+irom[205] = 8&#x27;h00;
+irom[206] = 8&#x27;h14;
+irom[207] = 8&#x27;h00;
+irom[208] = 8&#x27;h00;
+irom[209] = 8&#x27;h07;
+irom[210] = 8&#x27;h00;
+irom[211] = 8&#x27;h00;
+irom[212] = 8&#x27;h00;
+irom[213] = 8&#x27;h00;
+irom[214] = 8&#x27;h12;
+irom[215] = 8&#x27;h05;
+irom[216] = 8&#x27;h00;
+irom[217] = 8&#x27;h15;
+irom[218] = 8&#x27;h11;
+irom[219] = 8&#x27;h0a;
+irom[220] = 8&#x27;h0b;
+irom[221] = 8&#x27;h00;
+irom[222] = 8&#x27;h27;
+irom[223] = 8&#x27;h11;
+irom[224] = 8&#x27;h00;
+irom[225] = 8&#x27;h00;
+irom[226] = 8&#x27;h21;
+irom[227] = 8&#x27;h00;
+irom[228] = 8&#x27;h05;
+irom[229] = 8&#x27;h00;
+irom[230] = 8&#x27;h15;
+irom[231] = 8&#x27;h00;
+irom[232] = 8&#x27;h00;
+irom[233] = 8&#x27;h03;
+irom[234] = 8&#x27;h00;
+irom[235] = 8&#x27;h00;
+irom[236] = 8&#x27;h00;
+irom[237] = 8&#x27;h00;
+irom[238] = 8&#x27;h00;
+irom[239] = 8&#x27;h00;
+irom[240] = 8&#x27;h00;
+irom[241] = 8&#x27;h00;
+irom[242] = 8&#x27;h0c;
+irom[243] = 8&#x27;h00;
+irom[244] = 8&#x27;h2d;
+irom[245] = 8&#x27;h00;
+irom[246] = 8&#x27;h04;
+irom[247] = 8&#x27;h20;
+irom[248] = 8&#x27;h00;
+irom[249] = 8&#x27;h07;
+irom[250] = 8&#x27;h22;
+irom[251] = 8&#x27;h02;
+irom[252] = 8&#x27;h1c;
+irom[253] = 8&#x27;h00;
+irom[254] = 8&#x27;h24;
+irom[255] = 8&#x27;h00;
+irom[256] = 8&#x27;h0e;
+irom[257] = 8&#x27;h0e;
+irom[258] = 8&#x27;h0c;
+irom[259] = 8&#x27;h0f;
+irom[260] = 8&#x27;h00;
+irom[261] = 8&#x27;h00;
+irom[262] = 8&#x27;h0c;
+irom[263] = 8&#x27;h00;
+irom[264] = 8&#x27;h00;
+irom[265] = 8&#x27;h59;
+irom[266] = 8&#x27;h5d;
+irom[267] = 8&#x27;h7f;
+irom[268] = 8&#x27;h61;
+irom[269] = 8&#x27;h7a;
+irom[270] = 8&#x27;h2d;
+irom[271] = 8&#x27;h69;
+irom[272] = 8&#x27;h7f;
+irom[273] = 8&#x27;h11;
+irom[274] = 8&#x27;h00;
+irom[275] = 8&#x27;h02;
+irom[276] = 8&#x27;h00;
+irom[277] = 8&#x27;h00;
+irom[278] = 8&#x27;h00;
+irom[279] = 8&#x27;h01;
+irom[280] = 8&#x27;h21;
+irom[281] = 8&#x27;h00;
+irom[282] = 8&#x27;h00;
+irom[283] = 8&#x27;h00;
+irom[284] = 8&#x27;h1c;
+irom[285] = 8&#x27;h0f;
+irom[286] = 8&#x27;h0f;
+irom[287] = 8&#x27;h00;
+irom[288] = 8&#x27;h01;
+irom[289] = 8&#x27;h00;
+irom[290] = 8&#x27;h00;
+irom[291] = 8&#x27;h00;
+irom[292] = 8&#x27;h0d;
+irom[293] = 8&#x27;h1c;
+irom[294] = 8&#x27;h00;
+irom[295] = 8&#x27;h0c;
+irom[296] = 8&#x27;h00;
+irom[297] = 8&#x27;h0e;
+irom[298] = 8&#x27;h08;
+irom[299] = 8&#x27;h0c;
+irom[300] = 8&#x27;h17;
+irom[301] = 8&#x27;h00;
+irom[302] = 8&#x27;h00;
+irom[303] = 8&#x27;h00;
+irom[304] = 8&#x27;h00;
+irom[305] = 8&#x27;h00;
+irom[306] = 8&#x27;h1b;
+irom[307] = 8&#x27;h1d;
+irom[308] = 8&#x27;h2e;
+irom[309] = 8&#x27;h00;
+irom[310] = 8&#x27;h1d;
+irom[311] = 8&#x27;h00;
+irom[312] = 8&#x27;h00;
+irom[313] = 8&#x27;h00;
+irom[314] = 8&#x27;h09;
+irom[315] = 8&#x27;h00;
+irom[316] = 8&#x27;h01;
+irom[317] = 8&#x27;h07;
+irom[318] = 8&#x27;h1b;
+irom[319] = 8&#x27;h00;
+irom[320] = 8&#x27;h11;
+irom[321] = 8&#x27;h0a;
+irom[322] = 8&#x27;h0c;
+irom[323] = 8&#x27;h00;
+irom[324] = 8&#x27;h15;
+irom[325] = 8&#x27;h00;
+irom[326] = 8&#x27;h00;
+irom[327] = 8&#x27;h06;
+irom[328] = 8&#x27;h03;
+irom[329] = 8&#x27;h00;
+irom[330] = 8&#x27;h00;
+irom[331] = 8&#x27;h0e;
+irom[332] = 8&#x27;h00;
+irom[333] = 8&#x27;h0b;
+irom[334] = 8&#x27;h05;
+irom[335] = 8&#x27;h04;
+irom[336] = 8&#x27;h1d;
+irom[337] = 8&#x27;h64;
+irom[338] = 8&#x27;h00;
+irom[339] = 8&#x27;h11;
+irom[340] = 8&#x27;h00;
+irom[341] = 8&#x27;h00;
+irom[342] = 8&#x27;h00;
+irom[343] = 8&#x27;h22;
+irom[344] = 8&#x27;h15;
+irom[345] = 8&#x27;h0e;
+irom[346] = 8&#x27;h00;
+irom[347] = 8&#x27;h00;
+irom[348] = 8&#x27;h00;
+irom[349] = 8&#x27;h51;
+irom[350] = 8&#x27;h07;
+irom[351] = 8&#x27;h0b;
+irom[352] = 8&#x27;h00;
+irom[353] = 8&#x27;h00;
+irom[354] = 8&#x27;h00;
+irom[355] = 8&#x27;h00;
+irom[356] = 8&#x27;h00;
+irom[357] = 8&#x27;h0b;
+irom[358] = 8&#x27;h00;
+irom[359] = 8&#x27;h00;
+irom[360] = 8&#x27;h00;
+irom[361] = 8&#x27;h7d;
+irom[362] = 8&#x27;h12;
+irom[363] = 8&#x27;h1d;
+irom[364] = 8&#x27;h00;
+irom[365] = 8&#x27;h00;
+irom[366] = 8&#x27;h04;
+irom[367] = 8&#x27;h00;
+irom[368] = 8&#x27;h00;
+irom[369] = 8&#x27;h11;
+irom[370] = 8&#x27;h00;
+irom[371] = 8&#x27;h00;
+irom[372] = 8&#x27;h00;
+irom[373] = 8&#x27;h75;
+irom[374] = 8&#x27;h0e;
+irom[375] = 8&#x27;h00;
+irom[376] = 8&#x27;h15;
+irom[377] = 8&#x27;h07;
+irom[378] = 8&#x27;h00;
+irom[379] = 8&#x27;h02;
+irom[380] = 8&#x27;h00;
+irom[381] = 8&#x27;h0d;
+irom[382] = 8&#x27;h00;
+irom[383] = 8&#x27;h11;
+irom[384] = 8&#x27;h15;
+irom[385] = 8&#x27;h7e;
+irom[386] = 8&#x27;h00;
+irom[387] = 8&#x27;h00;
+irom[388] = 8&#x27;h02;
+irom[389] = 8&#x27;h00;
+irom[390] = 8&#x27;h00;
+irom[391] = 8&#x27;h19;
+irom[392] = 8&#x27;h10;
+irom[393] = 8&#x27;h00;
+irom[394] = 8&#x27;h09;
+irom[395] = 8&#x27;h00;
+irom[396] = 8&#x27;h00;
+irom[397] = 8&#x27;h70;
+irom[398] = 8&#x27;h05;
+irom[399] = 8&#x27;h00;
+irom[400] = 8&#x27;h0b;
+irom[401] = 8&#x27;h10;
+irom[402] = 8&#x27;h00;
+irom[403] = 8&#x27;h09;
+irom[404] = 8&#x27;h02;
+irom[405] = 8&#x27;h00;
+irom[406] = 8&#x27;h00;
+irom[407] = 8&#x27;h00;
+irom[408] = 8&#x27;h27;
+irom[409] = 8&#x27;h7e;
+irom[410] = 8&#x27;h0e;
+irom[411] = 8&#x27;h00;
+irom[412] = 8&#x27;h00;
+irom[413] = 8&#x27;h11;
+irom[414] = 8&#x27;h00;
+irom[415] = 8&#x27;h09;
+irom[416] = 8&#x27;h14;
+irom[417] = 8&#x27;h05;
+irom[418] = 8&#x27;h1b;
+irom[419] = 8&#x27;h17;
+irom[420] = 8&#x27;h0b;
+irom[421] = 8&#x27;h62;
+irom[422] = 8&#x27;h19;
+irom[423] = 8&#x27;h00;
+irom[424] = 8&#x27;h00;
+irom[425] = 8&#x27;h00;
+irom[426] = 8&#x27;h03;
+irom[427] = 8&#x27;h00;
+irom[428] = 8&#x27;h00;
+irom[429] = 8&#x27;h19;
+irom[430] = 8&#x27;h00;
+irom[431] = 8&#x27;h10;
+irom[432] = 8&#x27;h16;
+irom[433] = 8&#x27;h2a;
+irom[434] = 8&#x27;h00;
+irom[435] = 8&#x27;h05;
+irom[436] = 8&#x27;h01;
+irom[437] = 8&#x27;h00;
+irom[438] = 8&#x27;h00;
+irom[439] = 8&#x27;h00;
+irom[440] = 8&#x27;h00;
+irom[441] = 8&#x27;h11;
+irom[442] = 8&#x27;h00;
+irom[443] = 8&#x27;h00;
+irom[444] = 8&#x27;h07;
+irom[445] = 8&#x27;h00;
+irom[446] = 8&#x27;h00;
+irom[447] = 8&#x27;h0a;
+irom[448] = 8&#x27;h00;
+irom[449] = 8&#x27;h17;
+irom[450] = 8&#x27;h00;
+irom[451] = 8&#x27;h12;
+irom[452] = 8&#x27;h17;
+irom[453] = 8&#x27;h00;
+irom[454] = 8&#x27;h14;
+irom[455] = 8&#x27;h00;
+irom[456] = 8&#x27;h02;
+irom[457] = 8&#x27;h06;
+irom[458] = 8&#x27;h17;
+irom[459] = 8&#x27;h00;
+irom[460] = 8&#x27;h02;
+irom[461] = 8&#x27;h03;
+irom[462] = 8&#x27;h16;
+irom[463] = 8&#x27;h00;
+irom[464] = 8&#x27;h0f;
+irom[465] = 8&#x27;h19;
+irom[466] = 8&#x27;h16;
+irom[467] = 8&#x27;h00;
+irom[468] = 8&#x27;h05;
+irom[469] = 8&#x27;h00;
+irom[470] = 8&#x27;h00;
+irom[471] = 8&#x27;h05;
+irom[472] = 8&#x27;h00;
+irom[473] = 8&#x27;h00;
+irom[474] = 8&#x27;h00;
+irom[475] = 8&#x27;h00;
+irom[476] = 8&#x27;h02;
+irom[477] = 8&#x27;h00;
+irom[478] = 8&#x27;h03;
+irom[479] = 8&#x27;h00;
+irom[480] = 8&#x27;h05;
+irom[481] = 8&#x27;h18;
+irom[482] = 8&#x27;h29;
+irom[483] = 8&#x27;h00;
+irom[484] = 8&#x27;h04;
+irom[485] = 8&#x27;h00;
+irom[486] = 8&#x27;h00;
+irom[487] = 8&#x27;h11;
+irom[488] = 8&#x27;h04;
+irom[489] = 8&#x27;h00;
+irom[490] = 8&#x27;h71;
+irom[491] = 8&#x27;h00;
+irom[492] = 8&#x27;h04;
+irom[493] = 8&#x27;h03;
+irom[494] = 8&#x27;h00;
+irom[495] = 8&#x27;h0d;
+irom[496] = 8&#x27;h01;
+irom[497] = 8&#x27;h20;
+irom[498] = 8&#x27;h16;
+irom[499] = 8&#x27;h1e;
+irom[500] = 8&#x27;h00;
+irom[501] = 8&#x27;h00;
+irom[502] = 8&#x27;h79;
+irom[503] = 8&#x27;h30;
+irom[504] = 8&#x27;h05;
+irom[505] = 8&#x27;h00;
+irom[506] = 8&#x27;h00;
+irom[507] = 8&#x27;h00;
+irom[508] = 8&#x27;h00;
+irom[509] = 8&#x27;h01;
+irom[510] = 8&#x27;h10;
+irom[511] = 8&#x27;h00;
+irom[512] = 8&#x27;h0d;
+irom[513] = 8&#x27;h0a;
+irom[514] = 8&#x27;h52;
+irom[515] = 8&#x27;h00;
+irom[516] = 8&#x27;h00;
+irom[517] = 8&#x27;h16;
+irom[518] = 8&#x27;h00;
+irom[519] = 8&#x27;h13;
+irom[520] = 8&#x27;h00;
+irom[521] = 8&#x27;h00;
+irom[522] = 8&#x27;h00;
+irom[523] = 8&#x27;h29;
+irom[524] = 8&#x27;h00;
+irom[525] = 8&#x27;h00;
+irom[526] = 8&#x27;h51;
+irom[527] = 8&#x27;h00;
+irom[528] = 8&#x27;h03;
+irom[529] = 8&#x27;h00;
+irom[530] = 8&#x27;h06;
+irom[531] = 8&#x27;h22;
+irom[532] = 8&#x27;h08;
+irom[533] = 8&#x27;h00;
+irom[534] = 8&#x27;h07;
+irom[535] = 8&#x27;h04;
+irom[536] = 8&#x27;h00;
+irom[537] = 8&#x27;h04;
+irom[538] = 8&#x27;h7f;
+irom[539] = 8&#x27;h0c;
+irom[540] = 8&#x27;h08;
+irom[541] = 8&#x27;h00;
+irom[542] = 8&#x27;h00;
+irom[543] = 8&#x27;h15;
+irom[544] = 8&#x27;h0d;
+irom[545] = 8&#x27;h1f;
+irom[546] = 8&#x27;h00;
+irom[547] = 8&#x27;h00;
+irom[548] = 8&#x27;h02;
+irom[549] = 8&#x27;h00;
+irom[550] = 8&#x27;h75;
+irom[551] = 8&#x27;h00;
+irom[552] = 8&#x27;h2c;
+irom[553] = 8&#x27;h00;
+irom[554] = 8&#x27;h08;
+irom[555] = 8&#x27;h04;
+irom[556] = 8&#x27;h24;
+irom[557] = 8&#x27;h08;
+irom[558] = 8&#x27;h00;
+irom[559] = 8&#x27;h09;
+irom[560] = 8&#x27;h01;
+irom[561] = 8&#x27;h00;
+irom[562] = 8&#x27;h5b;
+irom[563] = 8&#x27;h00;
+irom[564] = 8&#x27;h00;
+irom[565] = 8&#x27;h10;
+irom[566] = 8&#x27;h00;
+irom[567] = 8&#x27;h00;
+irom[568] = 8&#x27;h00;
+irom[569] = 8&#x27;h1c;
+irom[570] = 8&#x27;h07;
+irom[571] = 8&#x27;h11;
+irom[572] = 8&#x27;h0c;
+irom[573] = 8&#x27;h00;
+irom[574] = 8&#x27;h7f;
+irom[575] = 8&#x27;h19;
+irom[576] = 8&#x27;h06;
+irom[577] = 8&#x27;h00;
+irom[578] = 8&#x27;h00;
+irom[579] = 8&#x27;h0b;
+irom[580] = 8&#x27;h0d;
+irom[581] = 8&#x27;h05;
+irom[582] = 8&#x27;h00;
+irom[583] = 8&#x27;h00;
+irom[584] = 8&#x27;h0b;
+irom[585] = 8&#x27;h0a;
+irom[586] = 8&#x27;h05;
+irom[587] = 8&#x27;h00;
+irom[588] = 8&#x27;h09;
+irom[589] = 8&#x27;h00;
+irom[590] = 8&#x27;h00;
+irom[591] = 8&#x27;h00;
+irom[592] = 8&#x27;h19;
+irom[593] = 8&#x27;h00;
+irom[594] = 8&#x27;h14;
+irom[595] = 8&#x27;h05;
+irom[596] = 8&#x27;h08;
+irom[597] = 8&#x27;h06;
+irom[598] = 8&#x27;h00;
+irom[599] = 8&#x27;h22;
+irom[600] = 8&#x27;h00;
+irom[601] = 8&#x27;h00;
+irom[602] = 8&#x27;h01;
+irom[603] = 8&#x27;h0b;
+irom[604] = 8&#x27;h00;
+irom[605] = 8&#x27;h00;
+irom[606] = 8&#x27;h07;
+irom[607] = 8&#x27;h00;
+irom[608] = 8&#x27;h11;
+irom[609] = 8&#x27;h0f;
+irom[610] = 8&#x27;h00;
+irom[611] = 8&#x27;h00;
+irom[612] = 8&#x27;h00;
+irom[613] = 8&#x27;h07;
+irom[614] = 8&#x27;h51;
+irom[615] = 8&#x27;h59;
+irom[616] = 8&#x27;h3d;
+irom[617] = 8&#x27;h76;
+irom[618] = 8&#x27;h56;
+irom[619] = 8&#x27;h56;
+irom[620] = 8&#x27;h00;
+irom[621] = 8&#x27;h12;
+irom[622] = 8&#x27;h04;
+irom[623] = 8&#x27;h00;
+irom[624] = 8&#x27;h09;
+irom[625] = 8&#x27;h0a;
+irom[626] = 8&#x27;h57;
+irom[627] = 8&#x27;h04;
+irom[628] = 8&#x27;h12;
+irom[629] = 8&#x27;h00;
+irom[630] = 8&#x27;h0f;
+irom[631] = 8&#x27;h67;
+irom[632] = 8&#x27;h00;
+irom[633] = 8&#x27;h00;
+irom[634] = 8&#x27;h01;
+irom[635] = 8&#x27;h19;
+irom[636] = 8&#x27;h00;
+irom[637] = 8&#x27;h00;
+irom[638] = 8&#x27;h78;
+irom[639] = 8&#x27;h01;
+irom[640] = 8&#x27;h00;
+irom[641] = 8&#x27;h00;
+irom[642] = 8&#x27;h09;
+irom[643] = 8&#x27;h62;
+irom[644] = 8&#x27;h00;
+irom[645] = 8&#x27;h00;
+irom[646] = 8&#x27;h08;
+irom[647] = 8&#x27;h00;
+irom[648] = 8&#x27;h09;
+irom[649] = 8&#x27;h00;
+irom[650] = 8&#x27;h77;
+irom[651] = 8&#x27;h00;
+irom[652] = 8&#x27;h00;
+irom[653] = 8&#x27;h11;
+irom[654] = 8&#x27;h07;
+irom[655] = 8&#x27;h6e;
+irom[656] = 8&#x27;h00;
+irom[657] = 8&#x27;h15;
+irom[658] = 8&#x27;h00;
+irom[659] = 8&#x27;h1a;
+irom[660] = 8&#x27;h00;
+irom[661] = 8&#x27;h1a;
+irom[662] = 8&#x27;h59;
+irom[663] = 8&#x27;h00;
+irom[664] = 8&#x27;h00;
+irom[665] = 8&#x27;h00;
+irom[666] = 8&#x27;h00;
+irom[667] = 8&#x27;h5f;
+irom[668] = 8&#x27;h02;
+irom[669] = 8&#x27;h00;
+irom[670] = 8&#x27;h04;
+irom[671] = 8&#x27;h00;
+irom[672] = 8&#x27;h0a;
+irom[673] = 8&#x27;h11;
+irom[674] = 8&#x27;h56;
+irom[675] = 8&#x27;h7c;
+irom[676] = 8&#x27;h57;
+irom[677] = 8&#x27;h7f;
+irom[678] = 8&#x27;h6c;
+irom[679] = 8&#x27;h60;
+irom[680] = 8&#x27;h00;
+irom[681] = 8&#x27;h00;
+irom[682] = 8&#x27;h05;
+irom[683] = 8&#x27;h00;
+irom[684] = 8&#x27;h1b;
+irom[685] = 8&#x27;h00;
+irom[686] = 8&#x27;h24;
+irom[687] = 8&#x27;h08;
+irom[688] = 8&#x27;h00;
+irom[689] = 8&#x27;h00;
+irom[690] = 8&#x27;h27;
+irom[691] = 8&#x27;h0b;
+irom[692] = 8&#x27;h13;
+irom[693] = 8&#x27;h1e;
+irom[694] = 8&#x27;h07;
+irom[695] = 8&#x27;h06;
+irom[696] = 8&#x27;h0d;
+irom[697] = 8&#x27;h0a;
+irom[698] = 8&#x27;h0e;
+irom[699] = 8&#x27;h00;
+irom[700] = 8&#x27;h00;
+irom[701] = 8&#x27;h04;
+irom[702] = 8&#x27;h00;
+irom[703] = 8&#x27;h00;
+irom[704] = 8&#x27;h00;
+irom[705] = 8&#x27;h07;
+irom[706] = 8&#x27;h00;
+irom[707] = 8&#x27;h00;
+irom[708] = 8&#x27;h00;
+irom[709] = 8&#x27;h03;
+irom[710] = 8&#x27;h00;
+irom[711] = 8&#x27;h15;
+irom[712] = 8&#x27;h00;
+irom[713] = 8&#x27;h00;
+irom[714] = 8&#x27;h00;
+irom[715] = 8&#x27;h2b;
+irom[716] = 8&#x27;h00;
+irom[717] = 8&#x27;h05;
+irom[718] = 8&#x27;h00;
+irom[719] = 8&#x27;h00;
+irom[720] = 8&#x27;h00;
+irom[721] = 8&#x27;h00;
+irom[722] = 8&#x27;h09;
+irom[723] = 8&#x27;h00;
+irom[724] = 8&#x27;h1c;
+irom[725] = 8&#x27;h22;
+irom[726] = 8&#x27;h1c;
+irom[727] = 8&#x27;h17;
+irom[728] = 8&#x27;h0e;
+irom[729] = 8&#x27;h0a;
+irom[730] = 8&#x27;h00;
+irom[731] = 8&#x27;h17;
+irom[732] = 8&#x27;h0d;
+irom[733] = 8&#x27;h00;
+irom[734] = 8&#x27;h00;
+irom[735] = 8&#x27;h00;
+irom[736] = 8&#x27;h55;
+irom[737] = 8&#x27;h42;
+irom[738] = 8&#x27;h5a;
+irom[739] = 8&#x27;h48;
+irom[740] = 8&#x27;h46;
+irom[741] = 8&#x27;h57;
+irom[742] = 8&#x27;h0a;
+irom[743] = 8&#x27;h03;
+irom[744] = 8&#x27;h00;
+irom[745] = 8&#x27;h00;
+irom[746] = 8&#x27;h00;
+irom[747] = 8&#x27;h15;
+irom[748] = 8&#x27;h6f;
+irom[749] = 8&#x27;h02;
+irom[750] = 8&#x27;h00;
+irom[751] = 8&#x27;h00;
+irom[752] = 8&#x27;h00;
+irom[753] = 8&#x27;h55;
+irom[754] = 8&#x27;h12;
+irom[755] = 8&#x27;h0f;
+irom[756] = 8&#x27;h08;
+irom[757] = 8&#x27;h00;
+irom[758] = 8&#x27;h00;
+irom[759] = 8&#x27;h00;
+irom[760] = 8&#x27;h67;
+irom[761] = 8&#x27;h00;
+irom[762] = 8&#x27;h00;
+irom[763] = 8&#x27;h21;
+irom[764] = 8&#x27;h00;
+irom[765] = 8&#x27;h5e;
+irom[766] = 8&#x27;h09;
+irom[767] = 8&#x27;h0c;
+irom[768] = 8&#x27;h08;
+irom[769] = 8&#x27;h00;
+irom[770] = 8&#x27;h00;
+irom[771] = 8&#x27;h00;
+irom[772] = 8&#x27;h3c;
+irom[773] = 8&#x27;h0f;
+irom[774] = 8&#x27;h00;
+irom[775] = 8&#x27;h00;
+irom[776] = 8&#x27;h16;
+irom[777] = 8&#x27;h6b;
+irom[778] = 8&#x27;h0b;
+irom[779] = 8&#x27;h17;
+irom[780] = 8&#x27;h02;
+irom[781] = 8&#x27;h2c;
+irom[782] = 8&#x27;h01;
+irom[783] = 8&#x27;h00;
+irom[784] = 8&#x27;h69;
+irom[785] = 8&#x27;h18;
+irom[786] = 8&#x27;h18;
+irom[787] = 8&#x27;h00;
+irom[788] = 8&#x27;h08;
+irom[789] = 8&#x27;h54;
+irom[790] = 8&#x27;h00;
+irom[791] = 8&#x27;h00;
+irom[792] = 8&#x27;h07;
+irom[793] = 8&#x27;h04;
+irom[794] = 8&#x27;h00;
+irom[795] = 8&#x27;h13;
+irom[796] = 8&#x27;h74;
+irom[797] = 8&#x27;h4d;
+irom[798] = 8&#x27;h72;
+irom[799] = 8&#x27;h43;
+irom[800] = 8&#x27;h38;
+irom[801] = 8&#x27;h50;
+irom[802] = 8&#x27;h00;
+irom[803] = 8&#x27;h0b;
+irom[804] = 8&#x27;h16;
+irom[805] = 8&#x27;h00;
+irom[806] = 8&#x27;h09;
+irom[807] = 8&#x27;h00;
+irom[808] = 8&#x27;h0b;
+irom[809] = 8&#x27;h0f;
+irom[810] = 8&#x27;h12;
+irom[811] = 8&#x27;h0c;
+irom[812] = 8&#x27;h00;
+irom[813] = 8&#x27;h00;
+irom[814] = 8&#x27;h14;
+irom[815] = 8&#x27;h16;
+irom[816] = 8&#x27;h0b;
+irom[817] = 8&#x27;h00;
+irom[818] = 8&#x27;h00;
+irom[819] = 8&#x27;h07;
+irom[820] = 8&#x27;h00;
+irom[821] = 8&#x27;h00;
+irom[822] = 8&#x27;h0f;
+irom[823] = 8&#x27;h20;
+irom[824] = 8&#x27;h02;
+irom[825] = 8&#x27;h00;
+irom[826] = 8&#x27;h14;
+irom[827] = 8&#x27;h04;
+irom[828] = 8&#x27;h00;
+irom[829] = 8&#x27;h00;
+irom[830] = 8&#x27;h15;
+irom[831] = 8&#x27;h00;
+irom[832] = 8&#x27;h00;
+irom[833] = 8&#x27;h10;
+irom[834] = 8&#x27;h11;
+irom[835] = 8&#x27;h00;
+irom[836] = 8&#x27;h11;
+irom[837] = 8&#x27;h00;
+irom[838] = 8&#x27;h00;
+irom[839] = 8&#x27;h15;
+irom[840] = 8&#x27;h00;
+irom[841] = 8&#x27;h03;
+irom[842] = 8&#x27;h00;
+irom[843] = 8&#x27;h00;
+irom[844] = 8&#x27;h0c;
+irom[845] = 8&#x27;h0c;
+irom[846] = 8&#x27;h0a;
+irom[847] = 8&#x27;h0d;
+irom[848] = 8&#x27;h00;
+irom[849] = 8&#x27;h0f;
+irom[850] = 8&#x27;h00;
+irom[851] = 8&#x27;h00;
+irom[852] = 8&#x27;h00;
+irom[853] = 8&#x27;h00;
+irom[854] = 8&#x27;h17;
+irom[855] = 8&#x27;h02;
+irom[856] = 8&#x27;h00;
+irom[857] = 8&#x27;h00;
+irom[858] = 8&#x27;h00;
+irom[859] = 8&#x27;h00;
+irom[860] = 8&#x27;h00;
+irom[861] = 8&#x27;h03;
+irom[862] = 8&#x27;h00;
+irom[863] = 8&#x27;h00;
+irom[864] = 8&#x27;h0b;
+irom[865] = 8&#x27;h00;
+irom[866] = 8&#x27;h00;
+irom[867] = 8&#x27;h17;
+irom[868] = 8&#x27;h00;
+irom[869] = 8&#x27;h0f;
+irom[870] = 8&#x27;h00;
+irom[871] = 8&#x27;h06;
+irom[872] = 8&#x27;h00;
+irom[873] = 8&#x27;h1c;
+irom[874] = 8&#x27;h00;
+irom[875] = 8&#x27;h04;
+irom[876] = 8&#x27;h11;
+irom[877] = 8&#x27;h01;
+irom[878] = 8&#x27;h08;
+irom[879] = 8&#x27;h21;
+irom[880] = 8&#x27;h00;
+irom[881] = 8&#x27;h0c;
+irom[882] = 8&#x27;h00;
+irom[883] = 8&#x27;h00;
+irom[884] = 8&#x27;h06;
+irom[885] = 8&#x27;h1e;
+irom[886] = 8&#x27;h0b;
+irom[887] = 8&#x27;h10;
+irom[888] = 8&#x27;h00;
+irom[889] = 8&#x27;h00;
+irom[890] = 8&#x27;h04;
+irom[891] = 8&#x27;h11;
+irom[892] = 8&#x27;h07;
+irom[893] = 8&#x27;h1c;
+irom[894] = 8&#x27;h00;
+irom[895] = 8&#x27;h05;
+irom[896] = 8&#x27;h00;
+irom[897] = 8&#x27;h00;
+irom[898] = 8&#x27;h04;
+irom[899] = 8&#x27;h0d;
+irom[900] = 8&#x27;h00;
+irom[901] = 8&#x27;h00;
+irom[902] = 8&#x27;h09;
+irom[903] = 8&#x27;h09;
+irom[904] = 8&#x27;h00;
+irom[905] = 8&#x27;h11;
+irom[906] = 8&#x27;h0f;
+irom[907] = 8&#x27;h05;
+irom[908] = 8&#x27;h1e;
+irom[909] = 8&#x27;h00;
+irom[910] = 8&#x27;h00;
+irom[911] = 8&#x27;h00;
+irom[912] = 8&#x27;h00;
+irom[913] = 8&#x27;h00;
+irom[914] = 8&#x27;h0b;
+irom[915] = 8&#x27;h00;
+irom[916] = 8&#x27;h06;
+irom[917] = 8&#x27;h06;
+irom[918] = 8&#x27;h10;
+irom[919] = 8&#x27;h1e;
+irom[920] = 8&#x27;h29;
+irom[921] = 8&#x27;h00;
+irom[922] = 8&#x27;h11;
+irom[923] = 8&#x27;h01;
+irom[924] = 8&#x27;h0e;
+irom[925] = 8&#x27;h00;
+irom[926] = 8&#x27;h0c;
+irom[927] = 8&#x27;h02;
+irom[928] = 8&#x27;h08;
+irom[929] = 8&#x27;h0e;
+irom[930] = 8&#x27;h08;
+irom[931] = 8&#x27;h01;
+irom[932] = 8&#x27;h0f;
+irom[933] = 8&#x27;h1d;
+irom[934] = 8&#x27;h12;
+irom[935] = 8&#x27;h0a;
+irom[936] = 8&#x27;h0b;
+irom[937] = 8&#x27;h0a;
+irom[938] = 8&#x27;h00;
+irom[939] = 8&#x27;h00;
+irom[940] = 8&#x27;h15;
+irom[941] = 8&#x27;h00;
+irom[942] = 8&#x27;h00;
+irom[943] = 8&#x27;h53;
+irom[944] = 8&#x27;h08;
+irom[945] = 8&#x27;h16;
+irom[946] = 8&#x27;h00;
+irom[947] = 8&#x27;h22;
+irom[948] = 8&#x27;h00;
+irom[949] = 8&#x27;h09;
+irom[950] = 8&#x27;h0e;
+irom[951] = 8&#x27;h12;
+irom[952] = 8&#x27;h0a;
+irom[953] = 8&#x27;h00;
+irom[954] = 8&#x27;h00;
+irom[955] = 8&#x27;h7f;
+irom[956] = 8&#x27;h0f;
+irom[957] = 8&#x27;h00;
+irom[958] = 8&#x27;h21;
+irom[959] = 8&#x27;h03;
+irom[960] = 8&#x27;h00;
+irom[961] = 8&#x27;h00;
+irom[962] = 8&#x27;h23;
+irom[963] = 8&#x27;h19;
+irom[964] = 8&#x27;h00;
+irom[965] = 8&#x27;h4c;
+irom[966] = 8&#x27;h69;
+irom[967] = 8&#x27;h55;
+irom[968] = 8&#x27;h6e;
+irom[969] = 8&#x27;h54;
+irom[970] = 8&#x27;h00;
+irom[971] = 8&#x27;h00;
+irom[972] = 8&#x27;h00;
+irom[973] = 8&#x27;h00;
+irom[974] = 8&#x27;h03;
+irom[975] = 8&#x27;h00;
+irom[976] = 8&#x27;h16;
+irom[977] = 8&#x27;h00;
+irom[978] = 8&#x27;h00;
+irom[979] = 8&#x27;h4a;
+irom[980] = 8&#x27;h00;
+irom[981] = 8&#x27;h00;
+irom[982] = 8&#x27;h04;
+irom[983] = 8&#x27;h00;
+irom[984] = 8&#x27;h08;
+irom[985] = 8&#x27;h07;
+irom[986] = 8&#x27;h00;
+irom[987] = 8&#x27;h0a;
+irom[988] = 8&#x27;h25;
+irom[989] = 8&#x27;h14;
+irom[990] = 8&#x27;h00;
+irom[991] = 8&#x27;h75;
+irom[992] = 8&#x27;h00;
+irom[993] = 8&#x27;h0b;
+irom[994] = 8&#x27;h25;
+irom[995] = 8&#x27;h00;
+irom[996] = 8&#x27;h13;
+irom[997] = 8&#x27;h14;
+irom[998] = 8&#x27;h00;
+irom[999] = 8&#x27;h00;
+irom[1000] = 8&#x27;h05;
+irom[1001] = 8&#x27;h01;
+irom[1002] = 8&#x27;h26;
+irom[1003] = 8&#x27;h00;
+irom[1004] = 8&#x27;h00;
+irom[1005] = 8&#x27;h00;
+irom[1006] = 8&#x27;h1f;
+irom[1007] = 8&#x27;h00;
+irom[1008] = 8&#x27;h13;
+irom[1009] = 8&#x27;h00;
+irom[1010] = 8&#x27;h07;
+irom[1011] = 8&#x27;h0c;
+irom[1012] = 8&#x27;h07;
+irom[1013] = 8&#x27;h00;
+irom[1014] = 8&#x27;h00;
+irom[1015] = 8&#x27;h00;
+irom[1016] = 8&#x27;h10;
+irom[1017] = 8&#x27;h06;
+irom[1018] = 8&#x27;h0d;
+irom[1019] = 8&#x27;h00;
+irom[1020] = 8&#x27;h00;
+irom[1021] = 8&#x27;h00;
+irom[1022] = 8&#x27;h00;
+irom[1023] = 8&#x27;h01;
+irom[1024] = 8&#x27;h0d;
+irom[1025] = 8&#x27;h00;
+irom[1026] = 8&#x27;h00;
+irom[1027] = 8&#x27;h7f;
+irom[1028] = 8&#x27;h0c;
+irom[1029] = 8&#x27;h0f;
+irom[1030] = 8&#x27;h00;
+irom[1031] = 8&#x27;h00;
+irom[1032] = 8&#x27;h08;
+irom[1033] = 8&#x27;h07;
+irom[1034] = 8&#x27;h00;
+irom[1035] = 8&#x27;h00;
+irom[1036] = 8&#x27;h05;
+irom[1037] = 8&#x27;h09;
+irom[1038] = 8&#x27;h00;
+irom[1039] = 8&#x27;h7f;
+irom[1040] = 8&#x27;h20;
+irom[1041] = 8&#x27;h00;
+irom[1042] = 8&#x27;h24;
+irom[1043] = 8&#x27;h00;
+irom[1044] = 8&#x27;h10;
+irom[1045] = 8&#x27;h00;
+irom[1046] = 8&#x27;h0a;
+irom[1047] = 8&#x27;h1d;
+irom[1048] = 8&#x27;h0d;
+irom[1049] = 8&#x27;h7f;
+irom[1050] = 8&#x27;h7f;
+irom[1051] = 8&#x27;h37;
+irom[1052] = 8&#x27;h7f;
+irom[1053] = 8&#x27;h7f;
+irom[1054] = 8&#x27;h00;
+irom[1055] = 8&#x27;h00;
+irom[1056] = 8&#x27;h00;
+irom[1057] = 8&#x27;h00;
+irom[1058] = 8&#x27;h00;
+irom[1059] = 8&#x27;h00;
+irom[1060] = 8&#x27;h2a;
+irom[1061] = 8&#x27;h00;
+irom[1062] = 8&#x27;h00;
+irom[1063] = 8&#x27;h7e;
+irom[1064] = 8&#x27;h00;
+irom[1065] = 8&#x27;h06;
+irom[1066] = 8&#x27;h00;
+irom[1067] = 8&#x27;h00;
+irom[1068] = 8&#x27;h00;
+irom[1069] = 8&#x27;h0d;
+irom[1070] = 8&#x27;h00;
+irom[1071] = 8&#x27;h04;
+irom[1072] = 8&#x27;h1e;
+irom[1073] = 8&#x27;h02;
+irom[1074] = 8&#x27;h00;
+irom[1075] = 8&#x27;h77;
+irom[1076] = 8&#x27;h10;
+irom[1077] = 8&#x27;h00;
+irom[1078] = 8&#x27;h07;
+irom[1079] = 8&#x27;h11;
+irom[1080] = 8&#x27;h00;
+irom[1081] = 8&#x27;h00;
+irom[1082] = 8&#x27;h00;
+irom[1083] = 8&#x27;h00;
+irom[1084] = 8&#x27;h00;
+irom[1085] = 8&#x27;h00;
+irom[1086] = 8&#x27;h00;
+irom[1087] = 8&#x27;h00;
+irom[1088] = 8&#x27;h00;
+irom[1089] = 8&#x27;h19;
+irom[1090] = 8&#x27;h12;
+irom[1091] = 8&#x27;h00;
+irom[1092] = 8&#x27;h09;
+irom[1093] = 8&#x27;h00;
+irom[1094] = 8&#x27;h00;
+irom[1095] = 8&#x27;h00;
+irom[1096] = 8&#x27;h18;
+irom[1097] = 8&#x27;h14;
+irom[1098] = 8&#x27;h00;
+irom[1099] = 8&#x27;h00;
+irom[1100] = 8&#x27;h00;
+irom[1101] = 8&#x27;h0f;
+irom[1102] = 8&#x27;h08;
+irom[1103] = 8&#x27;h00;
+irom[1104] = 8&#x27;h2f;
+irom[1105] = 8&#x27;h00;
+irom[1106] = 8&#x27;h00;
+irom[1107] = 8&#x27;h1c;
+irom[1108] = 8&#x27;h2a;
+irom[1109] = 8&#x27;h00;
+irom[1110] = 8&#x27;h00;
+irom[1111] = 8&#x27;h00;
+irom[1112] = 8&#x27;h00;
+irom[1113] = 8&#x27;h00;
+irom[1114] = 8&#x27;h0b;
+irom[1115] = 8&#x27;h0c;
+irom[1116] = 8&#x27;h11;
+irom[1117] = 8&#x27;h0a;
+irom[1118] = 8&#x27;h00;
+irom[1119] = 8&#x27;h1d;
+irom[1120] = 8&#x27;h05;
+irom[1121] = 8&#x27;h00;
+irom[1122] = 8&#x27;h0e;
+irom[1123] = 8&#x27;h15;
+irom[1124] = 8&#x27;h00;
+irom[1125] = 8&#x27;h00;
+irom[1126] = 8&#x27;h00;
+irom[1127] = 8&#x27;h31;
+irom[1128] = 8&#x27;h04;
+irom[1129] = 8&#x27;h00;
+irom[1130] = 8&#x27;h0a;
+irom[1131] = 8&#x27;h00;
+irom[1132] = 8&#x27;h00;
+irom[1133] = 8&#x27;h0b;
+irom[1134] = 8&#x27;h00;
+irom[1135] = 8&#x27;h00;
+irom[1136] = 8&#x27;h00;
+irom[1137] = 8&#x27;h00;
+irom[1138] = 8&#x27;h16;
+irom[1139] = 8&#x27;h12;
+irom[1140] = 8&#x27;h00;
+irom[1141] = 8&#x27;h06;
+irom[1142] = 8&#x27;h09;
+irom[1143] = 8&#x27;h0a;
+irom[1144] = 8&#x27;h0f;
+irom[1145] = 8&#x27;h30;
+irom[1146] = 8&#x27;h00;
+irom[1147] = 8&#x27;h15;
+irom[1148] = 8&#x27;h00;
+irom[1149] = 8&#x27;h00;
+irom[1150] = 8&#x27;h10;
+irom[1151] = 8&#x27;h0a;
+</code></pre></details><details class="code"><summary><span class="mono">cnn_nexys_top_ref.sv</span> <span class="muted small">reference RTL, 55 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/cnn_nexys_top_ref.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_nexys_top_ref.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// P14-1 reference top for the Nexys A7-100T: the course&#x27;s tiny CNN (tiny_cnn.sv) with the parameters and eight images in block-RAM files (cnn_system.sv loads them), a debounced</span>
+<span class="hc">// button to classify the picture chosen on SW[2:0], the class (0 .. 3) on the right-hand seven-segment digit, and one letter (H, V, B, X) plus a newline over the USB-UART at 115200 baud.</span>
+<span class="hc">// Not run on a board; simulated in Icarus by projects/test_p14_projects.py with a shortened debounce and baud divider.</span>
+<span class="hk">module</span> cnn_nexys_top_ref #(
+    <span class="hk">parameter</span> DEBOUNCE_CYCLES = 1000000,        <span class="hc">// 10 ms at 100 MHz</span>
+    <span class="hk">parameter</span> CLKS_PER_BIT    = 868,            <span class="hc">// 115200 baud at 100 MHz</span>
+    <span class="hk">parameter</span> PARAMS = <span class="hs">&quot;cnn_params.hex&quot;</span>,
+    <span class="hk">parameter</span> IMAGES = <span class="hs">&quot;cnn_images.hex&quot;</span>
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        CLK100MHZ,
+    <span class="hk">input</span>  <span class="hk">logic</span>        CPU_RESETN,
+    <span class="hk">input</span>  <span class="hk">logic</span>        BTNC,
+    <span class="hk">input</span>  <span class="hk">logic</span> [2:0]  SW,
+    <span class="hk">output</span> <span class="hk">logic</span> [7:0]  AN,
+    <span class="hk">output</span> <span class="hk">logic</span> [6:0]  SEG,
+    <span class="hk">output</span> <span class="hk">logic</span> [15:0] LED,
+    <span class="hk">output</span> <span class="hk">logic</span>        UART_RXD_OUT
+);
+    <span class="hk">logic</span> [2:0] rst_sr = &#x27;0;
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> CLK100MHZ) rst_sr &lt;= {rst_sr[1:0], CPU_RESETN};
+    <span class="hk">wire</span> rst_n = rst_sr[2];
+    <span class="hc">// debounce: the button value is accepted when it has been stable for DEBOUNCE_CYCLES clocks</span>
+    <span class="hk">logic</span> b_sync0 = 1&#x27;b0, b_sync1 = 1&#x27;b0, b_stable = 1&#x27;b0, b_prev = 1&#x27;b0;
+    <span class="hk">logic</span> [$clog2(DEBOUNCE_CYCLES+1):0] cnt = &#x27;0;
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> CLK100MHZ) <span class="hk">begin</span>
+        b_sync0 &lt;= BTNC; b_sync1 &lt;= b_sync0;
+        <span class="hk">if</span> (b_sync1 == b_stable) cnt &lt;= &#x27;0;
+        <span class="hk">else</span> <span class="hk">if</span> (cnt == DEBOUNCE_CYCLES - 1) <span class="hk">begin</span> b_stable &lt;= b_sync1; cnt &lt;= &#x27;0; <span class="hk">end</span>
+        <span class="hk">else</span> cnt &lt;= cnt + 1;
+        b_prev &lt;= b_stable;
+    <span class="hk">end</span>
+    <span class="hk">wire</span> go = b_stable &amp; ~b_prev;
+    <span class="hk">logic</span> ready, result_valid;
+    <span class="hk">logic</span> [1:0] cls, cls_q;
+    <span class="hk">logic</span> have;
+    <span class="hk">logic</span> [127:0] logits;
+    cnn_system #(.CLKS_PER_BIT(CLKS_PER_BIT), .PARAMS(PARAMS), .IMAGES(IMAGES)) u_sys (
+        .clk(CLK100MHZ), .rst_n, .go(go &amp; ready), .img_sel(SW), .ready, .result_valid, .cls, .logits, .uart_tx(UART_RXD_OUT));
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> CLK100MHZ) <span class="hk">begin</span>
+        <span class="hk">if</span> (!rst_n) have &lt;= 1&#x27;b0;
+        <span class="hk">else</span> <span class="hk">if</span> (result_valid) <span class="hk">begin</span> cls_q &lt;= cls; have &lt;= 1&#x27;b1; <span class="hk">end</span>
+    <span class="hk">end</span>
+    <span class="hk">assign</span> AN = 8&#x27;hFE;                                         <span class="hc">// the right-hand digit only (active low)</span>
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        SEG = 7&#x27;h7F;                                           <span class="hc">// blank until the first result</span>
+        <span class="hk">if</span> (have)
+            <span class="hk">case</span> (cls_q)                                       <span class="hc">// SEG[6:0] = {CG, CF, CE, CD, CC, CB, CA}, active low</span>
+                2&#x27;d0: SEG = 7&#x27;h40;
+                2&#x27;d1: SEG = 7&#x27;h79;
+                2&#x27;d2: SEG = 7&#x27;h24;
+                <span class="hk">default</span>: SEG = 7&#x27;h30;
+            <span class="hk">endcase</span>
+    <span class="hk">end</span>
+    <span class="hk">assign</span> LED = {ready, 13&#x27;d0, have ? cls_q : 2&#x27;d0};
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">cnn_system.sv</span> <span class="muted small">reference RTL, 94 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/cnn_system.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_system.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 14 lab 1, the working core (checked in Icarus by test_lab_cnn.py): block-RAM parameters and eight test images, a loader that writes them into the course tiny CNN</span>
+<span class="hc">// (solutions/p14l10_tiny_cnn/tiny_cnn.sv), a start on `go`, and a UART transmitter that sends the class letter (H, V, B or X for a horizontal bar, a vertical bar, a box</span>
+<span class="hc">// or a cross) and a newline. After reset the 632 parameter words are loaded once (about 650 clocks); `ready` goes high when the system can take a `go`.</span>
+<span class="hk">module</span> cnn_system #(
+    <span class="hk">parameter</span> CLKS_PER_BIT = 868,
+    <span class="hk">parameter</span> PARAMS = <span class="hs">&quot;cnn_params.hex&quot;</span>,
+    <span class="hk">parameter</span> IMAGES = <span class="hs">&quot;cnn_images.hex&quot;</span>
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>        rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>        go,                 <span class="hc">// one clock: classify image img_sel</span>
+    <span class="hk">input</span>  <span class="hk">logic</span> [2:0]  img_sel,
+    <span class="hk">output</span> <span class="hk">logic</span>        ready,
+    <span class="hk">output</span> <span class="hk">logic</span>        result_valid,       <span class="hc">// one clock when cls is new</span>
+    <span class="hk">output</span> <span class="hk">logic</span> [1:0]  cls,
+    <span class="hk">output</span> <span class="hk">logic</span> [127:0] logits,
+    <span class="hk">output</span> <span class="hk">logic</span>        uart_tx
+);
+    <span class="hk">logic</span> [31:0] prom [0:631];
+    <span class="hk">logic</span> [7:0]  irom [0:1151];
+    <span class="hk">initial</span> <span class="hk">begin</span>
+<span class="hk">`include</span> <span class="hs">&quot;cnn_init.svh&quot;</span>
+    <span class="hk">end</span>
+    <span class="hk">logic</span>        ld_we, start, busy, done;
+    <span class="hk">logic</span> [1:0]  ld_sel;
+    <span class="hk">logic</span> [9:0]  ld_addr;
+    <span class="hk">logic</span> [31:0] ld_data;
+    tiny_cnn u_cnn (.clk, .rst_n, .ld_we, .ld_sel, .ld_addr, .ld_data, .start, .busy, .done, .logits, .cls);
+
+    <span class="hk">typedef</span> <span class="hk">enum</span> <span class="hk">logic</span> [2:0] {LOAD, IDLE, IMG, RUN, WAIT, SEND} st_t;
+    st_t st;
+    <span class="hk">logic</span> [9:0] n;
+    <span class="hk">logic</span> [2:0] sel_q;
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        ld_we = 1&#x27;b0; ld_sel = 2&#x27;d0; ld_addr = 10&#x27;d0; ld_data = 32&#x27;d0;
+        <span class="hk">if</span> (st == LOAD) <span class="hk">begin</span>
+            ld_we = 1&#x27;b1;
+            ld_data = prom[n];
+            <span class="hk">if</span> (n &lt; 612) <span class="hk">begin</span> ld_sel = 2&#x27;d0; ld_addr = n; <span class="hk">end</span>
+            <span class="hk">else</span> <span class="hk">if</span> (n &lt; 628) <span class="hk">begin</span> ld_sel = 2&#x27;d1; ld_addr = n - 612; <span class="hk">end</span>
+            <span class="hk">else</span> <span class="hk">begin</span> ld_sel = 2&#x27;d2; ld_addr = n - 628; <span class="hk">end</span>
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">if</span> (st == IMG) <span class="hk">begin</span>
+            ld_we = 1&#x27;b1; ld_sel = 2&#x27;d3; ld_addr = n;
+            ld_data = {24&#x27;d0, irom[11&#x27;({sel_q, 7&#x27;d0}) + 11&#x27;({sel_q, 4&#x27;d0}) + 11&#x27;(n)]};     <span class="hc">// sel * 144 + n  (144 = 128 + 16)</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+    <span class="hk">assign</span> ready = (st == IDLE);
+    <span class="hk">logic</span> tx_start, tx_busy;
+    <span class="hk">logic</span> [7:0] tx_byte;
+    <span class="hk">logic</span> send_nl;
+    uart_tx #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_tx (.clk, .rst_n, .start(tx_start), .data(tx_byte), .busy(tx_busy), .tx(uart_tx));
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        start &lt;= 1&#x27;b0; tx_start &lt;= 1&#x27;b0; result_valid &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (!rst_n) <span class="hk">begin</span> st &lt;= LOAD; n &lt;= &#x27;0; send_nl &lt;= 1&#x27;b0; <span class="hk">end</span>
+        <span class="hk">else</span> <span class="hk">case</span> (st)
+            LOAD: <span class="hk">if</span> (n == 631) <span class="hk">begin</span> st &lt;= IDLE; n &lt;= &#x27;0; <span class="hk">end</span> <span class="hk">else</span> n &lt;= n + 10&#x27;d1;
+            IDLE: <span class="hk">if</span> (go) <span class="hk">begin</span> sel_q &lt;= img_sel; n &lt;= &#x27;0; st &lt;= IMG; <span class="hk">end</span>
+            IMG:  <span class="hk">if</span> (n == 143) <span class="hk">begin</span> st &lt;= RUN; <span class="hk">end</span> <span class="hk">else</span> n &lt;= n + 10&#x27;d1;
+            RUN:  <span class="hk">begin</span> start &lt;= 1&#x27;b1; st &lt;= WAIT; <span class="hk">end</span>
+            WAIT: <span class="hk">if</span> (done) <span class="hk">begin</span> result_valid &lt;= 1&#x27;b1; st &lt;= SEND; send_nl &lt;= 1&#x27;b0; tx_start &lt;= 1&#x27;b1; tx_byte &lt;= <span class="hs">&quot;HVBX&quot;</span> &gt;&gt; ((3 - cls) * 8); <span class="hk">end</span>
+            SEND: <span class="hk">if</span> (!tx_busy &amp;&amp; !tx_start) <span class="hk">begin</span>
+                      <span class="hk">if</span> (!send_nl) <span class="hk">begin</span> send_nl &lt;= 1&#x27;b1; tx_start &lt;= 1&#x27;b1; tx_byte &lt;= 8&#x27;h0A; <span class="hk">end</span>
+                      <span class="hk">else</span> st &lt;= IDLE;
+                  <span class="hk">end</span>
+            <span class="hk">default</span>: st &lt;= IDLE;
+        <span class="hk">endcase</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+
+<span class="hc">// 8N1 UART transmitter, LSB first. start (one clock, only when busy is low) sends data.</span>
+<span class="hk">module</span> uart_tx #(
+    <span class="hk">parameter</span> CLKS_PER_BIT = 868
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>       clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>       rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>       start,
+    <span class="hk">input</span>  <span class="hk">logic</span> [7:0] data,
+    <span class="hk">output</span> <span class="hk">logic</span>       busy,
+    <span class="hk">output</span> <span class="hk">logic</span>       tx
+);
+    <span class="hk">logic</span> [9:0] sh;
+    <span class="hk">logic</span> [3:0] bits;
+    <span class="hk">logic</span> [$clog2(CLKS_PER_BIT+1):0] cnt;
+    <span class="hk">assign</span> busy = (bits != 0);
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (!rst_n) <span class="hk">begin</span> tx &lt;= 1&#x27;b1; bits &lt;= &#x27;0; cnt &lt;= &#x27;0; <span class="hk">end</span>
+        <span class="hk">else</span> <span class="hk">if</span> (start &amp;&amp; !busy) <span class="hk">begin</span> sh &lt;= {1&#x27;b1, data, 1&#x27;b0}; bits &lt;= 4&#x27;d10; cnt &lt;= &#x27;0; <span class="hk">end</span>
+        <span class="hk">else</span> <span class="hk">if</span> (busy) <span class="hk">begin</span>
+            tx &lt;= sh[0];
+            <span class="hk">if</span> (cnt == CLKS_PER_BIT - 1) <span class="hk">begin</span> cnt &lt;= &#x27;0; sh &lt;= {1&#x27;b1, sh[9:1]}; bits &lt;= bits - 4&#x27;d1; <span class="hk">end</span>
+            <span class="hk">else</span> cnt &lt;= cnt + 1;
+        <span class="hk">end</span> <span class="hk">else</span> tx &lt;= 1&#x27;b1;
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">tiny_cnn.sv</span> <span class="muted small">reference RTL, 238 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/tiny_cnn.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/tiny_cnn.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 14 lesson 10 exercise: a whole tiny CNN in RTL, one multiply-accumulate unit, bit-exact against the numpy integer model (tools/ml_models.int_forward).</span>
+<span class="hc">//</span>
+<span class="hc">// The network (12 x 12 grey image, int8 values 0 .. 127) is   conv 3x3, 1 -&gt; 4 channels, ReLU, requantise   (4 x 10 x 10)</span>
+<span class="hc">//                                                             max-pool 2 x 2                                 (4 x 5 x 5)</span>
+<span class="hc">//                                                             conv 3x3, 4 -&gt; 8 channels, ReLU, requantise   (8 x 3 x 3)</span>
+<span class="hc">//                                                             dense 72 -&gt; 4, raw int32 logits (no requantisation); cls = index of the largest (the lowest index wins a tie).</span>
+<span class="hc">// Layout, all row-major with the channel first: image[y*12 + x]; conv1 weights w[oc*9 + ky*3 + kx]; conv2 weights w[oc*36 + ic*9 + ky*3 + kx]; dense weights w[o*72 + i] where i is the</span>
+<span class="hc">// flatten index c*9 + y*3 + x of the 8 x 3 x 3 map. A layer output y = clamp(requant(acc), 0, 127) with requant(acc) = (acc * M + 2^(S-1)) &gt;&gt;&gt; S (M unsigned 16 bit, S 1 .. 31).</span>
+<span class="hc">//</span>
+<span class="hc">// Loading (any time while busy = 0): write ld_we = 1 with ld_sel and ld_addr, ld_data (the low bits are used, as signed numbers):</span>
+<span class="hc">//   ld_sel 0: weight memory, addresses 0 .. 611 (conv1 0 .. 35, conv2 36 .. 323, dense 324 .. 611), 8-bit signed;</span>
+<span class="hc">//   ld_sel 1: bias memory, addresses 0 .. 15 (conv1 0 .. 3, conv2 4 .. 11, dense 12 .. 15), 32-bit signed;</span>
+<span class="hc">//   ld_sel 2: configuration, address 0 = M1, 1 = S1, 2 = M2, 3 = S2;</span>
+<span class="hc">//   ld_sel 3: image, addresses 0 .. 143, 8-bit signed.</span>
+<span class="hc">// Run: start = 1 for one clock (while busy = 0) begins an inference; busy is high until done pulses high for one clock; then logits[k*32 +: 32] (signed) and cls hold the result</span>
+<span class="hc">// until the next start. The weights and the image stay loaded.</span>
+<span class="hk">module</span> tiny_cnn (
+    <span class="hk">input</span>  <span class="hk">logic</span>          clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>          rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>          ld_we,
+    <span class="hk">input</span>  <span class="hk">logic</span> [1:0]    ld_sel,
+    <span class="hk">input</span>  <span class="hk">logic</span> [9:0]    ld_addr,
+    <span class="hk">input</span>  <span class="hk">logic</span> [31:0]   ld_data,
+    <span class="hk">input</span>  <span class="hk">logic</span>          start,
+    <span class="hk">output</span> <span class="hk">logic</span>          busy,
+    <span class="hk">output</span> <span class="hk">logic</span>          done,
+    <span class="hk">output</span> <span class="hk">logic</span> [127:0]  logits,
+    <span class="hk">output</span> <span class="hk">logic</span> [1:0]    cls
+);
+    <span class="hk">logic</span> <span class="hk">signed</span> [7:0]  wmem [0:611];
+    <span class="hk">logic</span> <span class="hk">signed</span> [31:0] bmem [0:15];
+    <span class="hk">logic</span> [15:0]        cfg_m1, cfg_m2;
+    <span class="hk">logic</span> [4:0]         cfg_s1, cfg_s2;
+    <span class="hk">logic</span> <span class="hk">signed</span> [7:0]  img [0:143];
+    <span class="hk">logic</span> <span class="hk">signed</span> [7:0]  a1  [0:399];
+    <span class="hk">logic</span> <span class="hk">signed</span> [7:0]  p1  [0:99];
+    <span class="hk">logic</span> <span class="hk">signed</span> [7:0]  a2  [0:71];
+    <span class="hk">logic</span> <span class="hk">signed</span> [31:0] lg  [0:3];
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (ld_we) <span class="hk">begin</span>
+            <span class="hk">case</span> (ld_sel)
+                2&#x27;d0: wmem[ld_addr] &lt;= ld_data[7:0];
+                2&#x27;d1: bmem[ld_addr[3:0]] &lt;= ld_data;
+                2&#x27;d2: <span class="hk">case</span> (ld_addr[1:0])
+                          2&#x27;d0: cfg_m1 &lt;= ld_data[15:0];
+                          2&#x27;d1: cfg_s1 &lt;= ld_data[4:0];
+                          2&#x27;d2: cfg_m2 &lt;= ld_data[15:0];
+                          <span class="hk">default</span>: cfg_s2 &lt;= ld_data[4:0];
+                      <span class="hk">endcase</span>
+                <span class="hk">default</span>: img[ld_addr[7:0]] &lt;= ld_data[7:0];
+            <span class="hk">endcase</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+
+    <span class="hc">// ---- layer 1: conv, 1 -&gt; 4, 12 x 12 -&gt; 10 x 10</span>
+    <span class="hk">logic</span> l1_start, l1_done, l1_we;
+    <span class="hk">logic</span> [15:0] l1_ia, l1_wa, l1_oa;
+    <span class="hk">logic</span> [7:0]  l1_ba;
+    <span class="hk">logic</span> <span class="hk">signed</span> [31:0] l1_od;
+    mac_layer #(.CIN(1), .COUT(4), .IH(12), .IW(12), .K(3), .WB(0), .BB(0), .RAW(0)) u_l1 (
+        .clk, .rst_n, .start(l1_start), .done(l1_done), .in_addr(l1_ia), .in_data(img[l1_ia[7:0]]), .w_addr(l1_wa), .w_data(wmem[l1_wa[9:0]]),
+        .b_addr(l1_ba), .b_data(bmem[l1_ba[3:0]]), .mult(cfg_m1), .shift(cfg_s1), .out_we(l1_we), .out_addr(l1_oa), .out_data(l1_od));
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">if</span> (l1_we) a1[l1_oa[8:0]] &lt;= l1_od[7:0];
+
+    <span class="hc">// ---- pool: 4 x 10 x 10 -&gt; 4 x 5 x 5</span>
+    <span class="hk">logic</span> pl_start, pl_done, pl_we;
+    <span class="hk">logic</span> [15:0] pl_ia, pl_oa;
+    <span class="hk">logic</span> <span class="hk">signed</span> [7:0] pl_od;
+    pool_layer #(.C(4), .IH(10), .IW(10)) u_pl (
+        .clk, .rst_n, .start(pl_start), .done(pl_done), .in_addr(pl_ia), .in_data(a1[pl_ia[8:0]]), .out_we(pl_we), .out_addr(pl_oa), .out_data(pl_od));
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">if</span> (pl_we) p1[pl_oa[6:0]] &lt;= pl_od;
+
+    <span class="hc">// ---- layer 2: conv, 4 -&gt; 8, 5 x 5 -&gt; 3 x 3</span>
+    <span class="hk">logic</span> l2_start, l2_done, l2_we;
+    <span class="hk">logic</span> [15:0] l2_ia, l2_wa, l2_oa;
+    <span class="hk">logic</span> [7:0]  l2_ba;
+    <span class="hk">logic</span> <span class="hk">signed</span> [31:0] l2_od;
+    mac_layer #(.CIN(4), .COUT(8), .IH(5), .IW(5), .K(3), .WB(36), .BB(4), .RAW(0)) u_l2 (
+        .clk, .rst_n, .start(l2_start), .done(l2_done), .in_addr(l2_ia), .in_data(p1[l2_ia[6:0]]), .w_addr(l2_wa), .w_data(wmem[l2_wa[9:0]]),
+        .b_addr(l2_ba), .b_data(bmem[l2_ba[3:0]]), .mult(cfg_m2), .shift(cfg_s2), .out_we(l2_we), .out_addr(l2_oa), .out_data(l2_od));
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">if</span> (l2_we) a2[l2_oa[6:0]] &lt;= l2_od[7:0];
+
+    <span class="hc">// ---- layer 3: dense 72 -&gt; 4 (a convolution with K = 1 over a 1 x 1 map), raw logits</span>
+    <span class="hk">logic</span> l3_start, l3_done, l3_we;
+    <span class="hk">logic</span> [15:0] l3_ia, l3_wa, l3_oa;
+    <span class="hk">logic</span> [7:0]  l3_ba;
+    <span class="hk">logic</span> <span class="hk">signed</span> [31:0] l3_od;
+    mac_layer #(.CIN(72), .COUT(4), .IH(1), .IW(1), .K(1), .WB(324), .BB(12), .RAW(1)) u_l3 (
+        .clk, .rst_n, .start(l3_start), .done(l3_done), .in_addr(l3_ia), .in_data(a2[l3_ia[6:0]]), .w_addr(l3_wa), .w_data(wmem[l3_wa[9:0]]),
+        .b_addr(l3_ba), .b_data(bmem[l3_ba[3:0]]), .mult(16&#x27;d0), .shift(5&#x27;d1), .out_we(l3_we), .out_addr(l3_oa), .out_data(l3_od));
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">if</span> (l3_we) lg[l3_oa[1:0]] &lt;= l3_od;
+
+    <span class="hc">// ---- sequencer</span>
+    <span class="hk">typedef</span> <span class="hk">enum</span> <span class="hk">logic</span> [2:0] {IDLE, S1, SP, S2, S3, FIN} st_t;
+    st_t st;
+    <span class="hk">assign</span> busy = (st != IDLE);
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        l1_start &lt;= 1&#x27;b0; pl_start &lt;= 1&#x27;b0; l2_start &lt;= 1&#x27;b0; l3_start &lt;= 1&#x27;b0; done &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (!rst_n) st &lt;= IDLE;
+        <span class="hk">else</span> <span class="hk">case</span> (st)
+            IDLE: <span class="hk">if</span> (start) <span class="hk">begin</span> st &lt;= S1; l1_start &lt;= 1&#x27;b1; <span class="hk">end</span>
+            S1:   <span class="hk">if</span> (l1_done) <span class="hk">begin</span> st &lt;= SP; pl_start &lt;= 1&#x27;b1; <span class="hk">end</span>
+            SP:   <span class="hk">if</span> (pl_done) <span class="hk">begin</span> st &lt;= S2; l2_start &lt;= 1&#x27;b1; <span class="hk">end</span>
+            S2:   <span class="hk">if</span> (l2_done) <span class="hk">begin</span> st &lt;= S3; l3_start &lt;= 1&#x27;b1; <span class="hk">end</span>
+            S3:   <span class="hk">if</span> (l3_done) <span class="hk">begin</span> st &lt;= FIN; <span class="hk">end</span>
+            FIN:  <span class="hk">begin</span> st &lt;= IDLE; done &lt;= 1&#x27;b1; <span class="hk">end</span>
+            <span class="hk">default</span>: st &lt;= IDLE;
+        <span class="hk">endcase</span>
+    <span class="hk">end</span>
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        <span class="hk">for</span> (<span class="hk">int</span> k = 0; k &lt; 4; k++) logits[k*32 +: 32] = lg[k];
+        cls = 2&#x27;d0;
+        <span class="hk">for</span> (<span class="hk">int</span> k = 1; k &lt; 4; k++) <span class="hk">if</span> (lg[k] &gt; lg[cls]) cls = 2&#x27;(k);
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+
+<span class="hc">// A sequential convolution / dense layer: one MAC per clock. For every output (oc, oy, ox): load the bias, accumulate CIN*K*K products, then (unless RAW) requantise</span>
+<span class="hc">// with mult and shift and clamp to 0 .. 127 (the ReLU), and write. Reads are combinational (in_addr -&gt; in_data and w_addr -&gt; w_data in the same clock).</span>
+<span class="hk">module</span> mac_layer #(
+    <span class="hk">parameter</span> <span class="hk">int</span> CIN = 1, COUT = 1, IH = 4, IW = 4, K = 3, WB = 0, BB = 0, RAW = 0
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>                clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>                rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>                start,
+    <span class="hk">output</span> <span class="hk">logic</span>                done,
+    <span class="hk">output</span> <span class="hk">logic</span> [15:0]         in_addr,
+    <span class="hk">input</span>  <span class="hk">logic</span> <span class="hk">signed</span> [7:0]   in_data,
+    <span class="hk">output</span> <span class="hk">logic</span> [15:0]         w_addr,
+    <span class="hk">input</span>  <span class="hk">logic</span> <span class="hk">signed</span> [7:0]   w_data,
+    <span class="hk">output</span> <span class="hk">logic</span> [7:0]          b_addr,
+    <span class="hk">input</span>  <span class="hk">logic</span> <span class="hk">signed</span> [31:0]  b_data,
+    <span class="hk">input</span>  <span class="hk">logic</span> [15:0]         mult,
+    <span class="hk">input</span>  <span class="hk">logic</span> [4:0]          shift,
+    <span class="hk">output</span> <span class="hk">logic</span>                out_we,
+    <span class="hk">output</span> <span class="hk">logic</span> [15:0]         out_addr,
+    <span class="hk">output</span> <span class="hk">logic</span> <span class="hk">signed</span> [31:0]  out_data
+);
+    <span class="hk">localparam</span> <span class="hk">int</span> OH = IH - K + 1, OW = IW - K + 1;
+    <span class="hk">typedef</span> <span class="hk">enum</span> <span class="hk">logic</span> [1:0] {IDLE, INIT, MAC, WR} st_t;
+    st_t st;
+    <span class="hk">int</span> oc, oy, ox, ic, ky, kx;
+    <span class="hk">logic</span> <span class="hk">signed</span> [31:0] acc;
+    <span class="hk">assign</span> in_addr = 16&#x27;(ic * IH * IW + (oy + ky) * IW + ox + kx);
+    <span class="hk">assign</span> w_addr  = 16&#x27;(WB + oc * CIN * K * K + ic * K * K + ky * K + kx);
+    <span class="hk">assign</span> b_addr  = 8&#x27;(BB + oc);
+    <span class="hk">assign</span> out_addr = 16&#x27;(oc * OH * OW + oy * OW + ox);
+    <span class="hk">logic</span> <span class="hk">signed</span> [63:0] p, r, rnd;
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        p = acc * $signed({1&#x27;b0, mult});
+        rnd = 64&#x27;sd1 &lt;&lt;&lt; (shift - 5&#x27;d1);
+        r = (p + rnd) &gt;&gt;&gt; shift;
+        <span class="hk">if</span> (RAW) out_data = acc;
+        <span class="hk">else</span> <span class="hk">if</span> (r &gt; 64&#x27;sd127) out_data = 32&#x27;sd127;
+        <span class="hk">else</span> <span class="hk">if</span> (r &lt; 64&#x27;sd0) out_data = 32&#x27;sd0;
+        <span class="hk">else</span> out_data = r[31:0];
+    <span class="hk">end</span>
+    <span class="hk">assign</span> out_we = (st == WR);
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        done &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (!rst_n) st &lt;= IDLE;
+        <span class="hk">else</span> <span class="hk">case</span> (st)
+            IDLE: <span class="hk">if</span> (start) <span class="hk">begin</span> oc &lt;= 0; oy &lt;= 0; ox &lt;= 0; st &lt;= INIT; <span class="hk">end</span>
+            INIT: <span class="hk">begin</span> acc &lt;= b_data; ic &lt;= 0; ky &lt;= 0; kx &lt;= 0; st &lt;= MAC; <span class="hk">end</span>
+            MAC: <span class="hk">begin</span>
+                acc &lt;= acc + in_data * w_data;
+                <span class="hk">if</span> (kx == K - 1) <span class="hk">begin</span>
+                    kx &lt;= 0;
+                    <span class="hk">if</span> (ky == K - 1) <span class="hk">begin</span>
+                        ky &lt;= 0;
+                        <span class="hk">if</span> (ic == CIN - 1) st &lt;= WR;
+                        <span class="hk">else</span> ic &lt;= ic + 1;
+                    <span class="hk">end</span> <span class="hk">else</span> ky &lt;= ky + 1;
+                <span class="hk">end</span> <span class="hk">else</span> kx &lt;= kx + 1;
+            <span class="hk">end</span>
+            WR: <span class="hk">begin</span>
+                <span class="hk">if</span> (ox == OW - 1) <span class="hk">begin</span>
+                    ox &lt;= 0;
+                    <span class="hk">if</span> (oy == OH - 1) <span class="hk">begin</span>
+                        oy &lt;= 0;
+                        <span class="hk">if</span> (oc == COUT - 1) <span class="hk">begin</span> st &lt;= IDLE; done &lt;= 1&#x27;b1; <span class="hk">end</span>
+                        <span class="hk">else</span> <span class="hk">begin</span> oc &lt;= oc + 1; st &lt;= INIT; <span class="hk">end</span>
+                    <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span> oy &lt;= oy + 1; st &lt;= INIT; <span class="hk">end</span>
+                <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span> ox &lt;= ox + 1; st &lt;= INIT; <span class="hk">end</span>
+            <span class="hk">end</span>
+        <span class="hk">endcase</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+
+<span class="hc">// 2 x 2 max-pool, stride 2, over C maps of IH x IW values (read from a memory, written to another), four reads per output.</span>
+<span class="hk">module</span> pool_layer #(
+    <span class="hk">parameter</span> <span class="hk">int</span> C = 1, IH = 4, IW = 4
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>                clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>                rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>                start,
+    <span class="hk">output</span> <span class="hk">logic</span>                done,
+    <span class="hk">output</span> <span class="hk">logic</span> [15:0]         in_addr,
+    <span class="hk">input</span>  <span class="hk">logic</span> <span class="hk">signed</span> [7:0]   in_data,
+    <span class="hk">output</span> <span class="hk">logic</span>                out_we,
+    <span class="hk">output</span> <span class="hk">logic</span> [15:0]         out_addr,
+    <span class="hk">output</span> <span class="hk">logic</span> <span class="hk">signed</span> [7:0]   out_data
+);
+    <span class="hk">localparam</span> <span class="hk">int</span> OH = IH / 2, OW = IW / 2;
+    <span class="hk">typedef</span> <span class="hk">enum</span> <span class="hk">logic</span> [1:0] {IDLE, RD, WR} st_t;
+    st_t st;
+    <span class="hk">int</span> c, y, x, k;
+    <span class="hk">logic</span> <span class="hk">signed</span> [7:0] m;
+    <span class="hk">assign</span> in_addr = 16&#x27;(c * IH * IW + (2 * y + k / 2) * IW + 2 * x + (k % 2));
+    <span class="hk">assign</span> out_addr = 16&#x27;(c * OH * OW + y * OW + x);
+    <span class="hk">assign</span> out_we = (st == WR);
+    <span class="hk">assign</span> out_data = m;
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        done &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (!rst_n) st &lt;= IDLE;
+        <span class="hk">else</span> <span class="hk">case</span> (st)
+            IDLE: <span class="hk">if</span> (start) <span class="hk">begin</span> c &lt;= 0; y &lt;= 0; x &lt;= 0; k &lt;= 0; st &lt;= RD; <span class="hk">end</span>
+            RD: <span class="hk">begin</span>
+                m &lt;= (k == 0 || in_data &gt; m) ? in_data : m;
+                <span class="hk">if</span> (k == 3) st &lt;= WR;
+                <span class="hk">else</span> k &lt;= k + 1;
+            <span class="hk">end</span>
+            WR: <span class="hk">begin</span>
+                k &lt;= 0;
+                st &lt;= RD;
+                <span class="hk">if</span> (x == OW - 1) <span class="hk">begin</span>
+                    x &lt;= 0;
+                    <span class="hk">if</span> (y == OH - 1) <span class="hk">begin</span>
+                        y &lt;= 0;
+                        <span class="hk">if</span> (c == C - 1) <span class="hk">begin</span> st &lt;= IDLE; done &lt;= 1&#x27;b1; <span class="hk">end</span>
+                        <span class="hk">else</span> c &lt;= c + 1;
+                    <span class="hk">end</span> <span class="hk">else</span> y &lt;= y + 1;
+                <span class="hk">end</span> <span class="hk">else</span> x &lt;= x + 1;
+            <span class="hk">end</span>
+            <span class="hk">default</span>: st &lt;= IDLE;
+        <span class="hk">endcase</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 88 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c14_nexys_tiny_cnn against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+
+<span class="hk">from</span> __future__ <span class="hk">import</span> annotations
+
+<span class="hk">import</span> cocotb
+<span class="hk">from</span> benchmark.lib.bench <span class="hk">import</span> Board, peek, seg_pins
+<span class="hk">from</span> cocotb.triggers <span class="hk">import</span> ClockCycles
+<span class="hk">from</span> model <span class="hk">import</span> LETTERS, SEG_OF, forward, load
+
+
+<span class="hk">def</span> expected():
+    w, b, cfg, imgs = load()
+    out = []
+    <span class="hk">for</span> k <span class="hk">in</span> range(8):
+        lg = forward(imgs[k], w, b, cfg)
+        cls = max(range(4), key=<span class="hk">lambda</span> i: (lg[i], -i))          <span class="hc"># the lowest index wins a tie</span>
+        out.append(cls)
+    <span class="hk">return</span> out
+
+
+<span class="hk">async</span> <span class="hk">def</span> press(b: Board, k: int, what: str) -&gt; <span class="hk">None</span>:
+    dut = b.dut
+    dut.SW.value = k
+    <span class="hk">await</span> ClockCycles(b.clk, 5)
+    dut.BTNC.value = 1
+    <span class="hk">await</span> ClockCycles(b.clk, 60)
+    dut.BTNC.value = 0
+    cls = EXP[k]
+    got = <span class="hk">await</span> b.uart.recv(2, 60_000)
+    <span class="hk">assert</span> got == (LETTERS[cls] + <span class="hs">&quot;\n&quot;</span>).encode(), f<span class="hs">&quot;{what}: picture {k}: UART {got!r}, expected {LETTERS[cls]!r} + LF&quot;</span>
+    <span class="hk">await</span> ClockCycles(b.clk, 40)
+    seg = seg_pins(dut)
+    <span class="hk">assert</span> seg == SEG_OF[cls], f<span class="hs">&quot;{what}: picture {k}: display segments 0x{seg:02X}, expected 0x{SEG_OF[cls]:02X} (digit {cls})&quot;</span>
+    <span class="hk">assert</span> int(dut.AN.value) == 0xFE, f<span class="hs">&quot;{what}: only the right-hand digit may be lit (AN=0x{int(dut.AN.value):02X})&quot;</span>
+    <span class="hk">await</span> ClockCycles(b.clk, 100)
+
+
+EXP = expected()
+
+
+<span class="hk">async</span> <span class="hk">def</span> boot(dut) -&gt; Board:
+    b = Board(dut, {<span class="hs">&quot;BTNC&quot;</span>: 0, <span class="hs">&quot;SW&quot;</span>: 0})
+    <span class="hk">await</span> b.start()
+    <span class="hk">await</span> b.cycles(1500)                  <span class="hc"># the reference loads its parameter memories after reset</span>
+    <span class="hk">return</span> b
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_blank_before_first_answer(dut):
+    b = <span class="hk">await</span> boot(dut)
+    seg = seg_pins(dut)
+    <span class="hk">assert</span> seg == 0x7F, f<span class="hs">&quot;display must be blank before the first answer (segments 0x{seg:02X})&quot;</span>
+    <span class="hk">await</span> b.uart.expect_silence(2000)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_pictures_0_to_3(dut):
+    b = <span class="hk">await</span> boot(dut)
+    <span class="hk">for</span> k <span class="hk">in</span> range(4):
+        <span class="hk">await</span> press(b, k, <span class="hs">&quot;first half&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_pictures_4_to_7(dut):
+    b = <span class="hk">await</span> boot(dut)
+    <span class="hk">for</span> k <span class="hk">in</span> range(4, 8):
+        <span class="hk">await</span> press(b, k, <span class="hs">&quot;second half&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_glitch_is_not_a_press(dut):
+    <span class="hs">&quot;&quot;&quot;A button pulse shorter than the debounce time starts nothing.&quot;&quot;&quot;</span>
+    b = <span class="hk">await</span> boot(dut)
+    dut.SW.value = 2
+    dut.BTNC.value = 1
+    <span class="hk">await</span> ClockCycles(b.clk, 6)
+    dut.BTNC.value = 0
+    <span class="hk">await</span> b.uart.expect_silence(3000)
+    <span class="hk">await</span> press(b, 5, <span class="hs">&quot;after a glitch&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_reset_blanks_the_display(dut):
+    b = <span class="hk">await</span> boot(dut)
+    <span class="hk">await</span> press(b, 1, <span class="hs">&quot;before reset&quot;</span>)
+    <span class="hk">await</span> b.reset()
+    <span class="hk">await</span> b.cycles(20)
+    <span class="hk">assert</span> seg_pins(dut) == 0x7F, <span class="hs">&quot;reset must blank the display&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 66 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Reference model for P14-1 (the Nexys tiny CNN). Standalone numpy: it rebuilds the integer network from cnn_params.hex and cnn_images.hex (the files the design loads) and
+evaluates it. Layout: 612 weights (conv1 36: [oc][ky][kx]; conv2 288: [oc][ic][ky][kx]; dense 288: [o][i], i = c*9 + y*3 + x), 16 int32 biases, then M1, S1, M2, S2.&quot;&quot;&quot;</span>
+<span class="hk">from</span> pathlib <span class="hk">import</span> Path
+
+<span class="hk">import</span> numpy <span class="hk">as</span> np
+
+HERE = Path(__file__).resolve().parent
+LETTERS = <span class="hs">&quot;HVBX&quot;</span>
+
+
+<span class="hk">def</span> _s8(v):
+    <span class="hk">return</span> v - 256 <span class="hk">if</span> v &gt;= 128 <span class="hk">else</span> v
+
+
+<span class="hk">def</span> _s32(v):
+    <span class="hk">return</span> v - (1 &lt;&lt; 32) <span class="hk">if</span> v &gt;= (1 &lt;&lt; 31) <span class="hk">else</span> v
+
+
+<span class="hk">def</span> load():
+    p = [int(t, 16) <span class="hk">for</span> t <span class="hk">in</span> (HERE / <span class="hs">&quot;cnn_params.hex&quot;</span>).read_text().split()]
+    w = np.array([_s8(v &amp; 0xFF) <span class="hk">for</span> v <span class="hk">in</span> p[:612]], dtype=np.int64)
+    b = np.array([_s32(v) <span class="hk">for</span> v <span class="hk">in</span> p[612:628]], dtype=np.int64)
+    m1, s1, m2, s2 = p[628:632]
+    imgs = np.array([_s8(int(t, 16)) <span class="hk">for</span> t <span class="hk">in</span> (HERE / <span class="hs">&quot;cnn_images.hex&quot;</span>).read_text().split()], dtype=np.int64).reshape(8, 12, 12)
+    <span class="hk">return</span> w, b, (m1, s1, m2, s2), imgs
+
+
+<span class="hk">def</span> requant_relu(acc, m, s):
+    <span class="hk">return</span> np.clip((acc * m + (1 &lt;&lt; (s - 1))) &gt;&gt; s, 0, 127)
+
+
+<span class="hk">def</span> forward(img, w, b, cfg):
+    m1, s1, m2, s2 = cfg
+    w1, w2, w3 = w[:36].reshape(4, 3, 3), w[36:324].reshape(8, 4, 3, 3), w[324:].reshape(4, 72)
+    a1 = np.zeros((4, 10, 10), dtype=np.int64)
+    <span class="hk">for</span> oc <span class="hk">in</span> range(4):
+        <span class="hk">for</span> ky <span class="hk">in</span> range(3):
+            <span class="hk">for</span> kx <span class="hk">in</span> range(3):
+                a1[oc] += w1[oc, ky, kx] * img[ky:ky + 10, kx:kx + 10]
+        a1[oc] += b[oc]
+    a1 = requant_relu(a1, m1, s1)
+    p1 = a1.reshape(4, 5, 2, 5, 2).max(axis=(2, 4))
+    a2 = np.zeros((8, 3, 3), dtype=np.int64)
+    <span class="hk">for</span> oc <span class="hk">in</span> range(8):
+        <span class="hk">for</span> ic <span class="hk">in</span> range(4):
+            <span class="hk">for</span> ky <span class="hk">in</span> range(3):
+                <span class="hk">for</span> kx <span class="hk">in</span> range(3):
+                    a2[oc] += w2[oc, ic, ky, kx] * p1[ic, ky:ky + 3, kx:kx + 3]
+        a2[oc] += b[4 + oc]
+    a2 = requant_relu(a2, m2, s2)
+    <span class="hk">return</span> w3 @ a2.reshape(72) + b[12:16]
+
+
+<span class="hk">def</span> reference_output():
+    w, b, cfg, imgs = load()
+    out = []
+    <span class="hk">for</span> k <span class="hk">in</span> range(8):
+        lg = forward(imgs[k], w, b, cfg)
+        cls = int(np.argmax(lg))                             <span class="hc"># numpy picks the lowest index on a tie, as the design does</span>
+        out.append({<span class="hs">&quot;image&quot;</span>: k, <span class="hs">&quot;logits&quot;</span>: [int(v) <span class="hk">for</span> v <span class="hk">in</span> lg], <span class="hs">&quot;uart&quot;</span>: LETTERS[cls] + <span class="hs">&quot;\n&quot;</span>, <span class="hs">&quot;digit&quot;</span>: cls})
+    <span class="hk">return</span> {<span class="hs">&quot;images&quot;</span>: out}
+
+
+<span class="hc"># ---- benchmark wrapper (from spec.yaml) ----</span>
+DESIGN_ID = <span class="hk">None</span>
+SEG_OF = {0: 0x40, 1: 0x79, 2: 0x24, 3: 0x30}
+</code></pre></details>
+<h2>The agent on this task</h2>
+<p><span class="tag">Development, not the held-out score</span> 0 of 2 committed development runs passed every hidden test (claude-sonnet-5-5). Partial credit is the hidden tests passed; slack is post-route at 100 MHz and the counts include the test shell.</p><div class="tablewrap" tabindex="0"><table><thead><tr><th>Record</th><th>Date</th><th>Outcome</th><th class="num">Hidden tests</th><th class="num">WNS (ns)</th><th class="num">LUT</th><th class="num">FF</th><th class="num">DSP</th><th>What went wrong</th></tr></thead><tbody><tr><td><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/course/c14_nexys_tiny_cnn/run_1.json">run 1</a></td><td>2026-11-08</td><td>failed</td><td class="num">0 of 5</td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td><td>spec/task gap (score) plus model error (stage-2 mutation loop)</td></tr><tr><td><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/course/c14_nexys_tiny_cnn/run_2.json">run 2</a></td><td>2026-11-09</td><td>escape: own checks passed, hidden tests failed</td><td class="num">2 of 5</td><td class="num">+1.993</td><td class="num">1108</td><td class="num">577</td><td class="num">2</td><td>spec-interpretation (data format, shared by model and RTL)</td></tr></tbody></table></div><p class="small muted">Agent-written RTL is not committed per run, so only the reference RTL is shown above.</p>
+<div class="pager"><a href="c14_int8_dot_requant.html">&larr; Quantised-layer arithmetic unit behind the test shell</a><a href="c14_systolic_matmul.html">4 x 4 row multiplier behind the test shell &rarr;</a></div>
+
+<div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
+</main>
+<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<script type="application/json" data-key="trace">{"captions":["Picture 0: the scores are 0: 11955, 1: -36784, 2: -1141, 3: 6100. The biggest is class 0 (horizontal bar), so the board shows 0 and sends the letter H.","Picture 1: the scores are 0: 9680, 1: -11429, 2: -3435, 3: -2750. The biggest is class 0 (horizontal bar), so the board shows 0 and sends the letter H.","Picture 2: the scores are 0: -10783, 1: 6838, 2: -6631, 3: -11783. The biggest is class 1 (vertical bar), so the board shows 1 and sends the letter V.","Picture 3: the scores are 0: -5018, 1: 4413, 2: -5122, 3: 459. The biggest is class 1 (vertical bar), so the board shows 1 and sends the letter V.","Picture 4: the scores are 0: -7887, 1: -26065, 2: 15368, 3: -3667. The biggest is class 2 (box), so the board shows 2 and sends the letter B.","Picture 5: the scores are 0: -7742, 1: -15851, 2: 10919, 3: -1115. The biggest is class 2 (box), so the board shows 2 and sends the letter B.","Picture 6: the scores are 0: -12524, 1: -4157, 2: -8301, 3: 7462. The biggest is class 3 (cross), so the board shows 3 and sends the letter X.","Picture 7: the scores are 0: -3491, 1: -20039, 2: -2207, 3: 9932. The biggest is class 3 (cross), so the board shows 3 and sends the letter X."],"signals":[{"kind":"bus","name":"score 0","radix":"dec","v":[11955,9680,-10783,-5018,-7887,-7742,-12524,-3491]},{"kind":"bus","name":"score 1","radix":"dec","v":[-36784,-11429,6838,4413,-26065,-15851,-4157,-20039]},{"kind":"bus","name":"score 2","radix":"dec","v":[-1141,-3435,-6631,-5122,15368,10919,-8301,-2207]},{"kind":"bus","name":"score 3","radix":"dec","v":[6100,-2750,-11783,459,-3667,-1115,7462,9932]},{"kind":"bus","name":"class (digit)","radix":"dec","v":[0,0,1,1,2,2,3,3]},{"kind":"text","name":"UART letter","v":["H","H","V","V","B","B","X","X"]}],"stimulus":"The 8 pictures of 12 by 12 pixels from the data file, each run through the model's integer network (two convolution layers, a pooling step and a final layer).","unit":"picture","x":[0,1,2,3,4,5,6,7]}</script>
+<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+(function () {
+  "use strict";
+  var D = {};
+  document.querySelectorAll('script[type="application/json"][data-key]').forEach(function (s) {
+    try { D[s.dataset.key] = JSON.parse(s.textContent); } catch (e) { /* data missing: component skips */ }
+  });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* theme toggle: remembered per viewer, optional */
+  var tb = document.getElementById("theme");
+  function curTheme() {
+    var t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  if (tb) {
+    try { var st = localStorage.getItem("fda-theme"); if (st) document.documentElement.dataset.theme = st; } catch (e) {}
+    tb.addEventListener("click", function () {
+      var n = curTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = n;
+      try { localStorage.setItem("fda-theme", n); } catch (e) {}
+      tb.textContent = n === "dark" ? "Light" : "Dark";
+    });
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+  }
+
+  /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
+  function Player(root, n, onFrame, opts) {
+    opts = opts || {};
+    var i = 0, playing = false, timer = null, speed = 1, visible = true, base = opts.interval || 1100;
+    var live = root.querySelector(".cap");
+    var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
+    var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
+    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
+    var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
+    var pos = el("span", { class: "pos" });
+    var sp = el("select", { "aria-label": "Speed" });
+    [0.25, 0.5, 1, 2, 4].forEach(function (s) { var o = el("option", { value: s, text: s + "x" }); if (s === 1) o.selected = true; sp.appendChild(o); });
+    var ctl = el("div", { class: "ctl" }, [play, back, fwd, rst, rng, pos, sp]);
+    root.appendChild(ctl);
+    if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
+    function show() {
+      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      var c = onFrame(i);
+      if (live && c != null) live.textContent = c;
+    }
+    function stop() { playing = false; play.textContent = "Play"; play.setAttribute("aria-label", "Play"); clearTimeout(timer); }
+    function tick() {
+      if (!playing) return;
+      if (!visible) { timer = setTimeout(tick, 400); return; }
+      if (i >= n - 1) { stop(); return; }
+      i++; show(); timer = setTimeout(tick, base / speed);
+    }
+    function go() {
+      if (i >= n - 1) i = 0;
+      playing = true; play.textContent = "Pause"; play.setAttribute("aria-label", "Pause"); show(); timer = setTimeout(tick, base / speed);
+    }
+    play.onclick = function () { playing ? stop() : go(); };
+    back.onclick = function () { stop(); i = Math.max(0, i - 1); show(); };
+    fwd.onclick = function () { stop(); i = Math.min(n - 1, i + 1); show(); };
+    rst.onclick = function () { stop(); i = 0; show(); };
+    rng.oninput = function () { stop(); i = +rng.value; show(); };
+    sp.onchange = function () { speed = +sp.value; };
+    root.addEventListener("keydown", function (e) {
+      if (e.target !== root) return;
+      if (e.key === " ") { e.preventDefault(); play.onclick(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); fwd.onclick(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); back.onclick(); }
+      else if (e.key === "Home") { e.preventDefault(); rst.onclick(); }
+    });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+    show();
+    if (opts.autoplay && !reduce) go();
+    return { goto: function (k) { stop(); i = k; show(); } };
+  }
+
+  /* ---------- stage replay (hero and how-it-works): frames from the committed run record ---------- */
+  var GROUPS = [
+    { id: "clarify", label: "Interview", stages: [0] },
+    { id: "plan", label: "Plan", stages: [1] },
+    { id: "rtl", label: "RTL and gates V0 to V3", stages: [2] },
+    { id: "build", label: "Build", stages: [3, 4, 5] },
+    { id: "post", label: "Post-route gates", stages: [6, 7, 8] },
+    { id: "board", label: "Board", stages: [9] }
+  ];
+  var DETAIL = [
+    "Interview", "Plan", "RTL and V0 to V3", "Constraints", "Synthesis", "Implementation", "Timing closure",
+    "Power closure", "DRC closure", "Board and debug"
+  ];
+  function frameState(R, i) {
+    var s = R.steps[i];
+    return { stage: s.stage_no, step: s, last: i === R.steps.length - 1 };
+  }
+  function mountReplay(root, mode) {
+    var R = D.replay; if (!R) return;
+    var items = mode === "hero" ? GROUPS : DETAIL.map(function (l, k) { return { id: "s" + k, label: l, stages: [k] }; });
+    var ul = el("ul", { class: "pipe", "aria-label": "Stages" });
+    var lis = items.map(function (g, k) {
+      var li = el("li", {}, [el("b", { text: mode === "hero" ? String(k + 1) : String(g.stages[0]) }), document.createTextNode(g.label)]);
+      ul.appendChild(li); return li;
+    });
+    var cap = el("p", { class: "cap", "aria-live": "polite" });
+    root.appendChild(ul); root.appendChild(cap);
+    function frame(i) {
+      var st = frameState(R, i), cur = -1;
+      items.forEach(function (g, k) { if (g.stages.indexOf(st.stage) >= 0) cur = k; });
+      lis.forEach(function (li, k) {
+        li.className = k < cur ? "done" : (k === cur ? (st.last ? "stop" : "active") : "");
+        var old = li.querySelector(".v"); if (old) li.removeChild(old);
+      });
+      var visits = st.step.visits;
+      if (visits > 1) lis[cur].appendChild(el("span", { class: "v", text: st.step.visit + "/" + visits }));
+      return "Stage " + st.stage + ", " + DETAIL[st.stage] + (visits > 1 ? " (visit " + st.step.visit + " of " + visits + ")" : "") + ". " + st.step.fact;
+    }
+    Player(root, R.steps.length, frame, { autoplay: mode === "hero", interval: mode === "hero" ? 1300 : 1500 });
+  }
+
+  /* ---------- k-of-n strip, intervals, bars (shared by development data and eval1.json) ---------- */
+  function strip(root, rows) {
+    var g = el("div", { class: "strip", role: "list" });
+    rows.forEach(function (r) {
+      var dots = el("span", { class: "dots", "aria-hidden": "true" });
+      for (var j = 0; j < r.n; j++) dots.appendChild(el("span", { class: "dot " + (j < r.k ? "p" : "f") }));
+      for (var q = r.n; q < (r.of || r.n); q++) dots.appendChild(el("span", { class: "dot n", title: "not run" }));
+      g.appendChild(el("span", { class: "t", role: "listitem", text: r.task }));
+      g.appendChild(dots);
+      g.appendChild(el("span", { class: "k mono", text: r.k + " of " + r.n }));
+    });
+    root.appendChild(g);
+    root.appendChild(el("div", { class: "legend" }, [
+      el("span", { text: "filled: all hidden tests passed" }), el("span", { text: "hatched: failed" }), el("span", { text: "dotted: not run" })]));
+  }
+  function intervals(root, items) {
+    var W = 560, H = 36 + items.length * 52, L = 14, R = 14;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": items.map(function (x) { return x.label + " " + x.mid + " percent, interval " + x.lo + " to " + x.hi; }).join("; ") });
+    function X(v) { return L + (W - L - R) * v / 100; }
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      s.appendChild(sv("line", { x1: X(v), x2: X(v), y1: 6, y2: H - 20, class: "rule" }));
+      s.appendChild(sv("text", { x: X(v), y: H - 6, "text-anchor": "middle" }, v));
+    });
+    items.forEach(function (it, k) {
+      var y = 36 + k * 52;
+      s.appendChild(sv("text", { x: 0, y: y - 14 }, it.label));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.hi), y1: y, y2: y, class: "ink", "stroke-width": 2, "stroke-dasharray": it.dash ? "5 3" : "none" }));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.lo), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("line", { x1: X(it.hi), x2: X(it.hi), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("circle", { cx: X(it.mid), cy: y, r: 5, class: "fillink" }));
+    });
+    root.appendChild(s);
+    var t = el("div", { class: "tablewrap" });
+    var tb2 = el("table");
+    tb2.appendChild(el("tr", {}, ["Estimate", "Point", "95% interval"].map(function (h) { return el("th", { text: h }); })));
+    items.forEach(function (it) {
+      tb2.appendChild(el("tr", {}, [el("td", { text: it.label }), el("td", { class: "num", text: it.mid + "%" }), el("td", { class: "num", text: it.lo + " to " + it.hi + "%" })]));
+    });
+    t.appendChild(tb2); root.appendChild(t);
+  }
+  function bars(root, obj, total, unit) {
+    var g = el("div", { class: "bars" });
+    var max = Math.max.apply(null, Object.keys(obj).map(function (k) { return obj[k]; }).concat([1]));
+    Object.keys(obj).forEach(function (k) {
+      var b = el("span", { class: "b", "aria-hidden": "true" }); b.style.width = (100 * obj[k] / max) + "%"; b.style.display = "block";
+      g.appendChild(el("span", { text: k.replace(/_/g, " ").replace(/-/g, " ") }));
+      var cell = el("span", {}, [b]); g.appendChild(cell);
+      g.appendChild(el("span", { class: "mono", text: obj[k] + (total ? " of " + total : "") + (unit || "") }));
+    });
+    root.appendChild(g);
+  }
+  var OUTCOME_TEXT = { pass: "passed, no repair needed", caught_and_repaired: "an internal gate failed, the agent repaired it, hidden tests passed",
+    escape: "own checks passed, hidden tests failed (escape)", internal_stop_hidden_pass: "stopped on an internal gate, hidden tests pass on the RTL it left",
+    fail: "failed" };
+
+  function mountDev() {
+    var d = D.dev; if (!d) return;
+    var a = document.getElementById("dev-strip"); if (a) strip(a, d.per_task);
+    var b = document.getElementById("dev-int");
+    if (b) intervals(b, [
+      { label: "pass@1, bootstrap over tasks", mid: d.pass_at_1_tasks_pct, lo: d.bootstrap_tasks_pct[0], hi: d.bootstrap_tasks_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: d.pass_pct_runs, lo: d.wilson_runs_pct[0], hi: d.wilson_runs_pct[1], dash: true }]);
+    var c = document.getElementById("dev-out"); if (c) {
+      var o = {}; Object.keys(d.outcomes).forEach(function (k) { o[OUTCOME_TEXT[k] || k] = d.outcomes[k]; });
+      bars(c, o, d.runs);
+    }
+    var e = document.getElementById("dev-esc"); if (e) bars(e, d.escape_levels, d.escapes);
+  }
+  function mountEval1() {
+    var root = document.getElementById("eval1"); if (!root) return;
+    var E = D.eval1;
+    if (!E) {
+      root.appendChild(el("div", { class: "stub" }, [
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
+      return;
+    }
+    root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
+    var s = el("div"); root.appendChild(s); strip(s, E.per_task.map(function (t) { return { task: t.task, k: t.k, n: t.n, of: 3 }; }));
+    root.appendChild(el("h3", { text: "pass@1 with 95% intervals" }));
+    var i = el("div"); root.appendChild(i);
+    intervals(i, [
+      { label: "pass@1, bootstrap over tasks", mid: E.pass_at_1_pct, lo: E.bootstrap_pct[0], hi: E.bootstrap_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: E.wilson_mid_pct, lo: E.wilson_pct[0], hi: E.wilson_pct[1], dash: true }]);
+    root.appendChild(el("h3", { text: "Escapes by the check level that should have caught them" }));
+    var b = el("div"); root.appendChild(b); bars(b, E.escape_levels, E.escapes);
+  }
+
+  /* ---------- ILA capture player (T1 on the board): LED0 against the sample index ---------- */
+  function mountILA(root) {
+    var B = D.board; if (!B) return;
+    var keys = Object.keys(B.captures).sort(function (a, b) { return B.captures[a].duty - B.captures[b].duty; });
+    var W = 600, H = 120, L = 30, cur = keys[0], svg, cursor, trace, label;
+    var sel = el("div", { class: "ctl", role: "group", "aria-label": "Dimmer level" });
+    var btns = keys.map(function (k) {
+      var b = el("button", { type: "button", "aria-pressed": k === cur ? "true" : "false", text: "duty " + B.captures[k].duty });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", keys[j] === cur ? "true" : "false"); }); draw(); player.goto(0); };
+      return b;
+    });
+    btns.forEach(function (b) { sel.appendChild(b); });
+    root.appendChild(sel);
+    var holder = el("div"); root.appendChild(holder);
+    root.appendChild(el("p", { class: "cap", "aria-live": "polite" }));
+    function X(i) { return L + (W - L - 10) * i / (B.captures[cur].samples - 1); }
+    function draw() {
+      var c = B.captures[cur]; holder.innerHTML = "";
+      svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "ILA capture of LED 0 over " + c.samples + " samples at duty " + c.duty + ": on for " + c.on + " samples" });
+      svg.appendChild(sv("text", { x: 0, y: 34 }, "on"));
+      svg.appendChild(sv("text", { x: 0, y: 94 }, "off"));
+      var d = "", prev = 0;
+      c.edges.forEach(function (e, k) {
+        var y = e[1] ? 30 : 90;
+        d += (k === 0 ? "M" : "L") + X(e[0]) + " " + (k === 0 ? y : (e[1] ? 90 : 30)) + " L" + X(e[0]) + " " + y + " ";
+      });
+      d += "L" + X(c.samples - 1) + " " + (c.edges[c.edges.length - 1][1] ? 30 : 90);
+      svg.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      cursor = sv("line", { x1: X(0), x2: X(0), y1: 10, y2: 108, class: "warn", "stroke-width": 1.5 });
+      svg.appendChild(cursor);
+      svg.appendChild(sv("text", { x: L, y: H - 2 }, "sample 0"));
+      svg.appendChild(sv("text", { x: W - 10, y: H - 2, "text-anchor": "end" }, "sample " + (c.samples - 1)));
+      holder.appendChild(svg);
+    }
+    draw();
+    var marks = 64;
+    function onFrame(k) {
+      var c = B.captures[cur]; var idx = Math.round(k * (c.samples - 1) / 63);
+      cursor.setAttribute("x1", X(idx)); cursor.setAttribute("x2", X(idx));
+      var on = 0, v = 0; c.edges.forEach(function (e) { if (e[0] <= idx) { v = e[1]; } });
+      for (var q = 0; q < c.edges.length; q++) { var e = c.edges[q], nx = q + 1 < c.edges.length ? c.edges[q + 1][0] : c.samples; if (e[1]) on += Math.max(0, Math.min(nx, idx + 1) - e[0]); }
+      return "Sample " + idx + ": LED 0 is " + (v ? "on" : "off") + ". On for " + on + " of the " + (idx + 1) + " samples so far. The whole capture: " + c.on + " of " + c.samples + " samples on, the model says " + c.model_on + ".";
+    }
+    var player = Player(root, marks, onFrame, { interval: 220 });
+  }
+
+
+  /* ---------- golden-model trace viewer (problem pages): waveform + values at the cursor + bespoke hero ---------- */
+  function fmtv(sg, v) {
+    if (sg.kind === "bus") {
+      if (sg.radix === "hex") { var hd = sg.width ? Math.ceil(sg.width / 4) : 1; var hs = (v >>> 0).toString(16); if (v < 0) hs = "-" + (-v).toString(16); while (hs.length < hd) hs = "0" + hs; return "0x" + hs; }
+      if (sg.radix === "bin") { var bs = (v >>> 0).toString(2); while (sg.width && bs.length < sg.width) bs = "0" + bs; return bs; }
+      return String(v);
+    }
+    return String(v);
+  }
+  function mountWave(holder, T) {
+    var n = T.x.length, LW = 132, CW = Math.max(12, Math.min(28, Math.floor(620 / n))), W = LW + n * CW + 6, RH = 34;
+    var H = 22 + T.signals.length * RH;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "wavesvg",
+      "aria-label": "Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s" });
+    function X(i) { return LW + i * CW; }
+    for (var i = 0; i < n; i += Math.max(1, Math.ceil(n / 12))) s.appendChild(sv("text", { x: X(i) + 2, y: 12 }, T.x[i]));
+    T.signals.forEach(function (g, r) {
+      var y0 = 22 + r * RH, top = y0 + 5, bot = y0 + RH - 7, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4 }, g.name.length > 17 ? g.name.slice(0, 16) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      var d = "";
+      if (g.kind === "bit") {
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k) + " " + y + " L" + X(k + 1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); d += (k ? "L" : "M") + (X(k) + CW / 2) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); s.appendChild(sv("circle", { cx: X(k) + CW / 2, cy: y.toFixed(1), r: 1.8, class: "fillink" })); });
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), val = g.v[a], txt = fmtv(g, val), empty = g.kind === "text" ? val === "" : false;
+            if (empty) s.appendChild(sv("line", { x1: x1, x2: x2, y1: mid, y2: mid, class: "ink", "stroke-width": 1 }));
+            else {
+              s.appendChild(sv("path", { d: "M" + x1 + " " + mid + " L" + (x1 + 3) + " " + top + " L" + (x2 - 3) + " " + top + " L" + x2 + " " + mid + " L" + (x2 - 3) + " " + bot + " L" + (x1 + 3) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+              var room = Math.floor((x2 - x1 - 8) / 6.7);
+              if (room >= 1) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4 }, txt.length > room ? (room > 2 ? txt.slice(0, room - 1) + "." : "") : txt));
+            }
+            a = k;
+          }
+        }
+      }
+    });
+    var shade = sv("rect", { x: X(1), y: 16, width: W, height: H, class: "future" });
+    var cur = sv("rect", { x: X(0), y: 16, width: CW, height: H - 16, class: "cursor" });
+    s.appendChild(shade); s.appendChild(cur);
+    var wrap = el("div", { class: "wavewrap", tabindex: "0" }); wrap.appendChild(s); holder.appendChild(wrap);
+    var vals = el("dl", { class: "vals" }); holder.appendChild(vals);
+    return function (i) {
+      shade.setAttribute("x", X(i + 1)); cur.setAttribute("x", X(i));
+      vals.innerHTML = "";
+      vals.appendChild(el("div", {}, [el("dt", { text: T.unit }), el("dd", { class: "mono", text: String(T.x[i]) })]));
+      T.signals.forEach(function (g) { vals.appendChild(el("div", {}, [el("dt", { text: g.name }), el("dd", { class: "mono", text: g.kind === "text" && g.v[i] === "" ? "none" : fmtv(g, g.v[i]) })])); });
+    };
+  }
+  function sig(T, name) { for (var k = 0; k < T.signals.length; k++) if (T.signals[k].name === name) return T.signals[k].v; return null; }
+  function hx(b) { return (b < 16 ? "0" : "") + b.toString(16); }
+  var HEROES = {
+    t1_elevator_fsm: function (box, T) {
+      var F = T.hero.floors, W = 360, FH = 52, H = F * FH + 20, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Lift shaft: car position, door and calls from the model" });
+      box.appendChild(s);
+      var fl = sig(T, "FLOOR"), st = sig(T, "STATE"), pe = sig(T, "PENDING"), dr = sig(T, "DIR (1 = down)");
+      var lamps = [], labels = [];
+      for (var f = 0; f < F; f++) {
+        var y = 10 + (F - 1 - f) * FH;
+        s.appendChild(sv("line", { x1: 60, x2: 300, y1: y + FH, y2: y + FH, class: "rule" }));
+        s.appendChild(sv("text", { x: 4, y: y + FH / 2 + 4 }, "floor " + f));
+        lamps.push(sv("circle", { cx: 290, cy: y + FH / 2, r: 7, class: "ink", "stroke-width": 1.5 }));
+        s.appendChild(lamps[f]);
+      }
+      s.appendChild(sv("rect", { x: 120, y: 10, width: 90, height: F * FH, class: "ink", "stroke-width": 1 }));
+      var car = sv("g", {}), body = sv("rect", { x: 128, width: 74, height: FH - 10, class: "ink", "stroke-width": 2 });
+      var dl = sv("rect", { width: 0, height: FH - 18, class: "fillink" }), dr2 = sv("rect", { width: 0, height: FH - 18, class: "fillink" });
+      var arrow = sv("text", { x: 228, "text-anchor": "middle" }, "");
+      car.appendChild(body); car.appendChild(dl); car.appendChild(dr2); s.appendChild(car); s.appendChild(arrow);
+      s.appendChild(sv("text", { x: 290, y: H - 2, "text-anchor": "middle" }, "calls"));
+      return function (i) {
+        var y = 10 + (F - 1 - fl[i]) * FH + 5, open = st[i] === "door open";
+        body.setAttribute("y", y);
+        var dw = open ? 14 : 36;
+        dl.setAttribute("x", 132); dl.setAttribute("y", y + 4); dl.setAttribute("width", dw);
+        dr2.setAttribute("x", 198 - dw); dr2.setAttribute("y", y + 4); dr2.setAttribute("width", dw);
+        arrow.setAttribute("y", y + FH / 2); arrow.textContent = st[i] === "moving" ? (dr[i] ? "down" : "up") : (open ? "open" : "");
+        lamps.forEach(function (c, f) { c.setAttribute("class", (pe[i] >> f) & 1 ? "fillink" : "ink"); });
+      };
+    },
+    c10_dds_sine: function (box, T) {
+      var h = T.hero, W = 600, H = 200, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Phase wheel and sine output from the model" });
+      box.appendChild(s);
+      var cx = 90, cy = 100, R = 70, N = 1 << h.la;
+      s.appendChild(sv("circle", { cx: cx, cy: cy, r: R, class: "ink", "stroke-width": 1 }));
+      s.appendChild(sv("text", { x: cx, y: 192, "text-anchor": "middle" }, "phase (" + h.aw + " bits)"));
+      var hand = sv("line", { x1: cx, y1: cy, class: "ink", "stroke-width": 2 }); s.appendChild(hand);
+      var dot = sv("circle", { r: 5, class: "fillink" }); s.appendChild(dot);
+      var X0 = 200, PW = 390, ph = sig(T, "phase"), out = sig(T, "out"), ad = sig(T, "table address");
+      s.appendChild(sv("line", { x1: X0, x2: X0 + PW, y1: cy, y2: cy, class: "rule" }));
+      s.appendChild(sv("text", { x: X0 + PW, y: 192, "text-anchor": "end" }, "output samples"));
+      var stems = [];
+      for (var k = 0; k < out.length; k++) {
+        var x = X0 + PW * (k + .5) / out.length, y = cy - (R) * out[k] / h.amp;
+        var g = sv("g", {}); g.appendChild(sv("line", { x1: x, x2: x, y1: cy, y2: y, class: "ink", "stroke-width": 1 })); g.appendChild(sv("circle", { cx: x, cy: y, r: 2.5, class: "fillink" }));
+        stems.push(g); s.appendChild(g);
+      }
+      var lab = sv("text", { x: cx, y: 18, "text-anchor": "middle" }, ""); s.appendChild(lab);
+      return function (i) {
+        var a = 2 * Math.PI * ad[i] / N, x = cx + R * Math.cos(a), y = cy - R * Math.sin(a);
+        hand.setAttribute("x2", x); hand.setAttribute("y2", y); dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        lab.textContent = "entry " + ad[i] + " of " + N;
+        stems.forEach(function (g, k) { g.style.opacity = k <= i ? 1 : .15; });
+      };
+    },
+    c16_nexys_aes_uart: function (box, T) {
+      var h = T.hero, W = 420, C = 56, s = sv("svg", { viewBox: "0 0 " + W + " 250", width: "100%", role: "img", "aria-label": "AES state, 4 by 4 bytes, from the model's round functions" });
+      box.appendChild(s);
+      var cells = [], texts = [];
+      for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) {
+        var x = 10 + c * C, y = 26 + r * C;
+        var rc = sv("rect", { x: x, y: y, width: C - 6, height: C - 6, class: "ink", "stroke-width": 1 }), t = sv("text", { x: x + (C - 6) / 2, y: y + C / 2, "text-anchor": "middle", class: "big" }, "");
+        s.appendChild(rc); s.appendChild(t); cells[4 * c + r] = rc; texts[4 * c + r] = t;
+      }
+      var op = sv("text", { x: 250, y: 60, class: "big" }, ""), rd = sv("text", { x: 250, y: 90 }, ""), ch = sv("text", { x: 250, y: 120 }, "");
+      s.appendChild(op); s.appendChild(rd); s.appendChild(ch);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "state: bytes go down the columns"));
+      var rounds = sig(T, "round");
+      return function (i) {
+        var st = h.states[i], pr = i ? h.states[i - 1] : st, nch = 0;
+        for (var k = 0; k < 16; k++) {
+          var diff = st[k] !== pr[k]; if (diff) nch++;
+          cells[k].setAttribute("class", diff ? "fillink" : "ink"); texts[k].setAttribute("class", diff ? "big inv" : "big"); texts[k].textContent = hx(st[k]);
+        }
+        op.textContent = h.ops[i]; rd.textContent = "round " + rounds[i]; ch.textContent = i ? nch + " of 16 bytes changed" : "";
+      };
+    },
+    c9_median3x3: function (box, T) {
+      var h = T.hero, W = 600, s = sv("svg", { viewBox: "0 0 " + W + " 200", width: "100%", role: "img", "aria-label": "Window presented and median result, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "window presented this clock"));
+      s.appendChild(sv("text", { x: 230, y: 16 }, "window from " + h.lat + " clock earlier, sorted"));
+      s.appendChild(sv("text", { x: 230 + 4 * 40 + 18, y: 50, "text-anchor": "middle" }, "fifth"));
+      var g = [], gt = [];
+      for (var k = 0; k < 9; k++) {
+        var x = 10 + (k % 3) * 50, y = 26 + Math.floor(k / 3) * 50;
+        var r = sv("rect", { x: x, y: y, width: 46, height: 46, class: "pix" }), t = sv("text", { x: x + 23, y: y + 28, "text-anchor": "middle" }, "");
+        s.appendChild(r); s.appendChild(t); g.push(r); gt.push(t);
+      }
+      var srt = [], st2 = [];
+      for (var q = 0; q < 9; q++) {
+        var x2 = 230 + q * 40, r2 = sv("rect", { x: x2, y: 60, width: 36, height: 36, class: "pix" }), t2 = sv("text", { x: x2 + 18, y: 83, "text-anchor": "middle" }, "");
+        s.appendChild(r2); s.appendChild(t2); srt.push(r2); st2.push(t2);
+      }
+      var box5 = sv("rect", { x: 230 + 4 * 40 - 4, y: 56, width: 44, height: 44, class: "ink", "stroke-width": 2.5 }); s.appendChild(box5);
+      var res = sv("text", { x: 230, y: 130, class: "big" }, ""); s.appendChild(res);
+      return function (i) {
+        var w = h.in[i], so = h.sorted[i];
+        for (var k = 0; k < 9; k++) {
+          if (w) { g[k].style.fill = "rgb(" + w[k] + "," + w[k] + "," + w[k] + ")"; gt[k].textContent = w[k]; gt[k].setAttribute("class", w[k] > 127 ? "dark" : "light"); }
+          else { g[k].style.fill = "none"; gt[k].textContent = ""; }
+          if (so) { srt[k].style.fill = "rgb(" + so[k] + "," + so[k] + "," + so[k] + ")"; st2[k].textContent = so[k]; st2[k].setAttribute("class", so[k] > 127 ? "dark" : "light"); }
+          else { srt[k].style.fill = "none"; st2[k].textContent = ""; }
+        }
+        box5.style.opacity = so ? 1 : .2; res.textContent = so ? "median " + so[4] : "no result this clock";
+      };
+    },
+    c14_systolic_matmul: function (box, T) {
+      var h = T.hero, W = 600, n = h.rows.length, L = h.lat, s = sv("svg", { viewBox: "0 0 " + W + " 190", width: "100%", role: "img", "aria-label": "Rows entering, in flight for the latency, and results leaving, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "rows waiting"));
+      s.appendChild(sv("text", { x: 170, y: 16 }, "in flight for " + L + " clocks"));
+      s.appendChild(sv("text", { x: 170, y: 34 }, "(each row times the 4 x 4 weights)"));
+      s.appendChild(sv("text", { x: 480, y: 16 }, "results out"));
+      var slots = [];
+      for (var k = 0; k < L; k++) { var r = sv("rect", { x: 170 + k * 38, y: 70, width: 34, height: 34, class: "ink", "stroke-width": 1 }); s.appendChild(r); slots.push([r, sv("text", { x: 170 + k * 38 + 17, y: 92, "text-anchor": "middle" }, "")]); s.appendChild(slots[k][1]); }
+      var waiting = sv("text", { x: 10, y: 92 }, ""), done = sv("text", { x: 480, y: 92 }, ""), last = sv("text", { x: 170, y: 150 }, "");
+      s.appendChild(waiting); s.appendChild(done); s.appendChild(last);
+      return function (i) {
+        var nextIn = 0; for (var t = 0; t <= i; t++) if (h.in[t] != null) nextIn = h.in[t] + 1;
+        var outN = 0; for (var t2 = 0; t2 <= i; t2++) if (h.out[t2] != null) outN = h.out[t2] + 1;
+        waiting.textContent = nextIn < n ? (n - nextIn) + " rows" : "none";
+        done.textContent = outN + " of " + n + " rows";
+        slots.forEach(function (sl, k) {
+          var row = i - k >= 0 && h.in[i - k] != null ? h.in[i - k] : null;
+          sl[0].setAttribute("class", row != null ? "fillink" : "ink"); sl[1].textContent = row != null ? "r" + row : ""; sl[1].setAttribute("class", row != null ? "inv" : "");
+        });
+        var o = h.out[i]; last.textContent = o != null ? "row " + o + " x W = " + h.C[o].join("  ") : "";
+      };
+    }
+  };
+  function mountTrace(root) {
+    var T = D.trace; if (!T) return;
+    var heroFn = null, art = root.querySelector(".hero-art"), id = root.getAttribute("data-hero");
+    if (art && HEROES[id]) { heroFn = HEROES[id](art, T); var hs = art.querySelector("svg"); if (hs) hs.style.maxWidth = id === "t1_elevator_fsm" ? "400px" : "680px"; }
+    var wv = mountWave(root.querySelector(".wave"), T);
+    Player(root, T.x.length, function (i) { if (heroFn) heroFn(i); wv(i); return T.captions[i]; }, { autoplay: !!heroFn, interval: 900 });
+  }
+  var tr = document.getElementById("trace"); if (tr) mountTrace(tr);
+
+  /* ---------- problems index: filter by domain, tier, board (the list is complete without script) ---------- */
+  (function () {
+    var sels = document.querySelectorAll(".filters select"); if (!sels.length) return;
+    var cards = document.querySelectorAll(".pcard"), secs = document.querySelectorAll("section.dom"), cnt = document.getElementById("f-count");
+    function apply() {
+      var f = {}; sels.forEach(function (s) { f[s.dataset.f] = s.value; });
+      var shown = 0;
+      cards.forEach(function (c) { var ok = (!f.domain || c.dataset.domain === f.domain) && (!f.tier || c.dataset.tier === f.tier) && (!f.board || c.dataset.board === f.board); c.hidden = !ok; if (ok) shown++; });
+      secs.forEach(function (s) { s.hidden = !s.querySelector(".pcard:not([hidden])"); });
+      if (cnt) cnt.textContent = shown + " of " + cards.length + " shown";
+    }
+    sels.forEach(function (s) { s.addEventListener("change", apply); });
+    document.querySelectorAll(".dombars a.dl").forEach(function (a) {
+      a.addEventListener("click", function (e) { var d = document.getElementById("f-domain"); if (!d || !d.querySelector('option[value="' + a.dataset.dom + '"]')) return; e.preventDefault(); d.value = a.dataset.dom; apply(); document.querySelector(".filters").scrollIntoView(); });
+    });
+    apply();
+  })();
+  var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
+  var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
+  var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+  mountDev(); mountEval1();
+})();
+
+/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
+   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
+(function () {
+  var cv = document.getElementById("fabric");
+  if (!cv || !cv.getContext) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
+  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
+  function layout() {
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
+    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
+  }
+  function base() {
+    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
+    var hrow = Math.floor(rows / 2);
+    for (var c = 0; c < cols; c++) {
+      var x = c * T, k = kind[c];
+      for (var r = 0; r < rows; r++) {
+        var y = r * T;
+        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
+        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
+        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
+        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
+          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
+  function net() {
+    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
+    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
+    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
+    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
+    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
+  }
+  function drawNet(n, alpha) {
+    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
+    for (var i = 1; i < n.p.length && left > 0; i++) {
+      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
+      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
+    }
+    ctx.stroke();
+    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
+    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
+    ctx.globalAlpha = 1;
+  }
+  function frame(now) {
+    if (!run) return;
+    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
+    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
+    nets = nets.filter(function (n) {
+      n.t += dt; var done = n.len / n.speed, a = .42;
+      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
+      if (a <= 0) return false; drawNet(n, a); return true;
+    });
+    requestAnimationFrame(frame);
+  }
+  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
+  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
+  start();
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
+  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
+  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
+  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+})();
+</script>
+</body>
+</html>
