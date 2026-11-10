@@ -176,8 +176,9 @@ def test_run_task_refuses_a_file_that_shares_a_name_with_a_shell_file(tmp_path: 
     (rtl / "sync2.sv").write_text("module sync2; endmodule\n")
     with pytest.raises(ValueError, match="sync2.sv"):
         run_task.sources(task, rtl)
-    r = run_task.run(task, rtl, tag="collision", build_root=tmp_path / "b")
-    assert r["pass"] is False and "sync2.sv" in r["error"] and not r["built"]
+    if shutil.which("iverilog"):                                          # the Python CI job has no simulator
+        r = run_task.run(task, rtl, tag="collision", build_root=tmp_path / "b")
+        assert r["pass"] is False and "sync2.sv" in r["error"] and not r["built"]
 
 
 def test_no_reference_design_collides_with_the_shell() -> None:
