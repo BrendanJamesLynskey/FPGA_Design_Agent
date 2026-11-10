@@ -204,6 +204,7 @@ designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, desig
 benchmark/   benchmark v1: tasks (development split), training pool, bench library and tools, manifest, owner review;
              benchmark/course/: the course-tier tasks (Parts 9-16), splits, manifest
 results/     committed build and bring-up results, per milestone
+hil/         hardware-in-the-loop rigs: cdc_soak/ (the CDC soak rig, brief 11b: RTL, simulation, Vivado builds, run plan)
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
@@ -229,6 +230,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 05f | F2 part 6: per-role model routing (profiles `single`, `cvdp`; `role@stage` overrides), per-role and per-stage accounting, knowledge-tool use log ([docs/role_models.md](docs/role_models.md)) | in review |
 | 05g | F2 part 7: test-writer diagnosis and fixes (turn reserve, repair no longer deletes, shell fixtures, checklist, formal re-plan), per-role turn trace, knowledge-use log, QoR gate moved to after routing ([docs/test_writer.md](docs/test_writer.md)) | in review |
 | 08f | `eval-2` build: independent spec-only test role and gate after V2/V3 (`--spec-tests`, off by default), golden request test against `eval-1`, offline replay on saved designs ([docs/verification.md](docs/verification.md), [results/08f](results/08f/), [agent/graph/spectest.py](agent/graph/spectest.py), [tools/spectest_replay.py](tools/spectest_replay.py)) | in review |
+| 11b | CDC soak rig, phase 2a: the 13 correct variants and 11 mutant types (28 codes) on three clock domains, checkers, UART readout, Tj stop; simulated with metastability injection and reset storms, built in Vivado; no board run yet ([hil/cdc_soak](hil/cdc_soak/README.md)) | in review |
 | F2 | Agent v1 (T1-T2 designs) | coming |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | in review |
 | F3 | Scored runs | coming |
