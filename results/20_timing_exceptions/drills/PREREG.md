@@ -18,3 +18,13 @@ Development runs, not a scored evaluation: the drills are outside every benchmar
   even if a gate caught it and it was repaired (from the run's build history).
 - **Stopping rules:** stop launching at 70 % of the 5-hour usage window; a run that fails for a harness reason (CLI version,
   slot refused) is re-run once and reported.
+
+## Amendment 1 (2026-11-10 18:40, after run 1, before run 2)
+
+- Run 1 (`20261110-172635-9d14`) showed that `load_skill(["constraints"])` returned only
+  `vendor/ross_distilled/constraints/xdc-constraints-basics`: `agent/core/bank.py` read one vendor set, so
+  `vendor/amd_constraints` (the exceptions, I/O-delay and clock skills) never reached the agent. Runs 2 and 3 run with
+  `VENDOR_SETS = ("ross_distilled", "amd_constraints")`; run 1 is reported as the run without those skills.
+- Run 1's in-run exception gate read a multicycle dump from an earlier `flow/mcp_paths.tcl` (it failed to parse the
+  agent's wrapped `get_cells` query and the gate then ignored the error). Run 1 is graded on a re-dump of its routed
+  checkpoint with the final Tcl; dump errors now fail the gate.

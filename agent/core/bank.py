@@ -30,7 +30,8 @@ def _load(path: Path, name: str):
 #: sectioned vendor sets of the bank (``vendor/<name>/<section>/<skill>/SKILL.md``) that ``skills`` also reads. Until
 #: f2-stage3-io only techniques, functions, family, board and procedures were read, so a section whose skills live in
 #: the vendor axis (``constraints``: xdc-constraints-basics) always came back empty.
-VENDOR_SETS = ("ross_distilled",)
+VENDOR_SETS = ("ross_distilled", "amd_constraints")   # brief 20: amd_constraints (13b) was never read, so the
+#: exception, I/O-delay and clock skills did not reach the agent (run 1 of the d20 drill loaded only xdc-constraints-basics)
 
 
 class LocalBank:

@@ -173,7 +173,12 @@ def parse_mcp_dump(text: str) -> dict[str, Any]:
             if f[3].startswith("<"):
                 e["other"].append(f"{f[2]} {f[3]}")
             else:
-                e["cells"][f[2]].append({"cell": f[3], "clock": f[4], "tied": f[5], "fanin": [x for x in f[6].split(",") if x]})
+                e["cells"][f[2]].append({"cell": f[3], "clock": f[4], "tied": f[5], "fanin": [x for x in f[6].split(",") if x],
+                                         "dfanin": [x for x in (f[7] if len(f) > 7 else "").split(",") if x]})
+        elif f[0] == "NONSEQ" and len(f) >= 4:
+            e = out["exceptions"].get(int(f[1]))
+            if e is not None:
+                e["nonseq"] = e.get("nonseq", 0) + int(f[3])
         elif f[0] == "ERROR":
             out["errors"].append(line)
     return out
@@ -184,6 +189,8 @@ def enable_problems(dump: dict[str, Any], limit: int = 20) -> list[dict[str, Any
     (between clocks) the register on the faster clock has none, or -start/-end counts the slower clock."""
     out = []
     clocks = dump["clocks"]
+    for err in dump.get("errors", [])[:3]:          # a check that could not run fails, it is not skipped
+        out.append({"position": None, "exception": "dump", "why": f"flow/mcp_paths.tcl could not evaluate: {err[:200]}"})
     for pos, e in sorted(dump["exceptions"].items()):
         cells = e["cells"]["from"] + e["cells"]["to"]
         if not cells:
@@ -191,18 +198,23 @@ def enable_problems(dump: dict[str, Any], limit: int = 20) -> list[dict[str, Any
         per = {c["clock"]: clocks.get(c["clock"]) for c in cells if c["clock"]}
         why = None
         if len(per) <= 1:
-            bad = sorted({c["cell"] for c in cells if c["tied"] != "0"})
+            # the enable: a register in the CE cone of every register that has a real CE. A register whose CE is tied
+            # passes only if that enable is in its D cone (synthesis may fold an enable into the D logic).
             common = None
             for c in cells:
-                common = set(c["fanin"]) if common is None else common & set(c["fanin"])
-            if bad:
+                if c["tied"] == "0":
+                    common = set(c["fanin"]) if common is None else common & set(c["fanin"])
+            common = common or set()
+            bad = sorted({c["cell"] for c in cells if c["tied"] != "0" and not (common & set(c["dfanin"]))})
+            if not common:
+                why = (f"no register among the {len({c['cell'] for c in cells})} named ones loads on a clock enable shared "
+                       f"by the others (CE tied, absent, or no common register in the CE cones)")
+            elif bad:
                 why = (f"{len(bad)} of {len({c['cell'] for c in cells})} named registers load on every clock (CE tied or "
-                       f"absent), e.g. {', '.join(bad[:4])}")
-            elif not common:
-                why = "the named registers share no register in their clock-enable cones"
+                       f"absent and the enable {sorted(common)[0]} is not in their D cone), e.g. {', '.join(bad[:4])}")
         else:
             fast = min(per, key=lambda k: per[k] or 1e9)
-            bad = sorted({c["cell"] for c in cells if c["clock"] == fast and c["tied"] != "0"})
+            bad = sorted({c["cell"] for c in cells if c["clock"] == fast and c["tied"] != "0" and not c["dfanin"]})
             src = {c["clock"] for c in e["cells"]["from"]}
             dst = {c["clock"] for c in e["cells"]["to"]}
             ps = max((clocks.get(k) or 0) for k in src) if src else None
@@ -219,7 +231,8 @@ def enable_problems(dump: dict[str, Any], limit: int = 20) -> list[dict[str, Any
     return out
 
 
-def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None = None) -> dict[str, Any]:
+def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None = None,
+             mcp_dump: Path | None = None) -> dict[str, Any]:
     """The exception check for one stage of a build. Missing reports raise FileNotFoundError (the caller decides
     whether a missing report fails: flow/gates.py fails it for a strict build)."""
     d = Path(build_dir)
@@ -260,11 +273,11 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
         fails.append({"rule": "EXC-XDC-MSG", "position": None, "file": m["file"], "line": m["line"],
                       "text": line_text(m["file"], m["line"]),
                       "vivado": {"severity": m["severity"], "id": m["id"], "message": m["message"]}})
-    dump_p = d / f"mcp_paths_{stage}.txt"
+    dump_p = mcp_dump or d / f"mcp_paths_{stage}.txt"
     if dump_p.exists():
         try:
             for f in enable_problems(parse_mcp_dump(dump_p.read_text(errors="replace"))):
-                w = at(f["position"])
+                w = at(f["position"]) if f["position"] else {"file": None, "line": None, "text": None}
                 fails.append({"rule": "EXC-MCP-ENABLE", "position": f["position"], "file": w["file"], "line": w["line"],
                               "text": w["text"], "vivado": {"message": f"multicycle {f['exception']}: {f['why']}"}})
         except ValueError as e:

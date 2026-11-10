@@ -71,8 +71,10 @@ def grade(task: Path, design: Path, dump: Path | None = None) -> dict[str, Any]:
     found = [x for x in con.check_xdc(xdc, board) if x["rule"] in ("FDA-CON-5", "FDA-CON-10")] if xdc else []
     checks["xdc_rules"] = {"pass": bool(xdc) and not found, "findings": found}
 
+    if dump is None and (build / "mcp_paths_route.txt").exists():     # flow/build.tcl writes it after routing
+        dump = build / "mcp_paths_route.txt"
     try:
-        exc = exceptions_check.evaluate(build, "route", [xdc_p])
+        exc = exceptions_check.evaluate(build, "route", [xdc_p], dump)
         checks["exceptions_gate"] = {"pass": exc["pass"], "failures": exc["failures"]}
     except (OSError, ValueError) as e:
         checks["exceptions_gate"] = {"pass": False, "error": f"{type(e).__name__}: {e}"}

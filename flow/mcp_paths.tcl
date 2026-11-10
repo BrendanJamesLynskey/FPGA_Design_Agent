@@ -4,7 +4,9 @@
 #   source flow/mcp_paths.tcl; mcp_dump_paths <out file>
 # CLOCK|<name>|<period>
 # EXC|<position>|<setup or hold>|<N>|<start or end>|<from expression>|<to expression>
-# CELL|<position>|<from or to>|<cell>|<clock>|<CE tied 1/0, or none>|<sequential cells in the CE pin's fan-in, comma separated>
+# CELL|<position>|<from or to>|<cell>|<clock>|<CE tied 1/0, or none>|<sequential cells in the CE pin's fan-in>|<and in the D
+#      pin's fan-in, only when CE is tied or absent>   (comma-separated lists; sequential cells only)
+# NONSEQ|<position>|<from or to>|<n>   cells the query matched that are not registers (Vivado: "Invalid startpoint")
 # ERROR|<what>|<message>
 # The file ends with "# end". The registers come from re-evaluating each exception's -from/-to object query as
 # report_exceptions prints it (cells, or the cells of pins; a clock or port end is listed as such and not checked). This
@@ -28,6 +30,18 @@ proc mcp__cells {expr} {
     return [list $kind [lsort -unique $cells]]
 }
 
+# the sequential cells in the fan-in of a register's D pin (an enable that synthesis folded into the D logic shows here)
+proc mcp__dcone {c} {
+    set regs {}
+    foreach d [get_pins -quiet -filter {REF_PIN_NAME == D} -of_objects [get_cells $c]] {
+        foreach q [all_fanin -quiet -flat -startpoints_only $d] {
+            set qc [get_cells -quiet -of_objects $q]
+            if {$qc ne "" && [get_property IS_SEQUENTIAL $qc]} { lappend regs $qc }
+        }
+    }
+    return [lsort -unique $regs]
+}
+
 proc mcp_dump_paths {outf} {
     set out [open $outf w]
     foreach c [get_clocks -quiet] { puts $out "CLOCK|[get_property NAME $c]|[get_property PERIOD $c]" }
@@ -46,16 +60,27 @@ proc mcp_dump_paths {outf} {
     }
     if {$spans eq ""} { puts $out "# end"; close $out; return }
     set ncol [llength $spans]
-    set done {}
+    # rows; a long cell wraps (at a word) onto continuation lines that start with spaces: join them with a space
+    set rows {}
     for {set i $first} {$i < [llength $lines]} {incr i} {
         set row [lindex $lines $i]
-        if {![regexp {^\d+\s} $row]} { if {[string trim $row] eq ""} { break } else { continue } }
+        if {[string trim $row] eq ""} { break }
         set cols {}
         for {set k 0} {$k < $ncol} {incr k} {
             set a [lindex [lindex $spans $k] 0]
             set b [expr {$k + 1 < $ncol ? [lindex [lindex $spans [expr {$k + 1}]] 0] - 1 : [string length $row]}]
             lappend cols [string trim [string range $row $a $b]]
         }
+        if {[regexp {^\d+\s} $row]} {
+            lappend rows $cols
+        } elseif {[llength $rows] > 0} {
+            set last [lindex $rows end]
+            set merged {}
+            foreach x $last y $cols { lappend merged [string trim "$x $y"] }
+            lset rows end $merged
+        }
+    }
+    foreach cols $rows {
         lassign $cols pos from thru to setup hold
         set kind ""
         if {[regexp {cycles=(\d+)(\((start|end)\))?} $setup -> n - edge]} {
@@ -70,12 +95,14 @@ proc mcp_dump_paths {outf} {
         foreach side {from to} expr [list $from $to] {
             if {[catch {lassign [mcp__cells $expr] what cells} err]} { puts $out "ERROR|$pos $side|$err"; continue }
             if {$what ne "cells"} { puts $out "CELL|$pos|$side|<$what>||none|"; continue }
+            set nonseq 0
             foreach c $cells {
+                if {![get_property IS_SEQUENTIAL [get_cells $c]]} { incr nonseq; continue }
                 if {[catch {
                     set clk [get_clocks -quiet -of_objects [get_pins -quiet -filter {IS_CLOCK} -of_objects [get_cells $c]]]
                     set ce [get_pins -quiet -filter {REF_PIN_NAME == CE} -of_objects [get_cells $c]]
                     if {$ce eq ""} {
-                        puts $out "CELL|$pos|$side|$c|[lindex $clk 0]|none|"
+                        puts $out "CELL|$pos|$side|$c|[lindex $clk 0]|none||[join [mcp__dcone $c] ,]"
                     } else {
                         set net [get_nets -quiet -of_objects $ce]
                         set tied [expr {[lsearch -exact {POWER GROUND} [get_property TYPE $net]] >= 0 ? 1 : 0}]
@@ -84,10 +111,13 @@ proc mcp_dump_paths {outf} {
                             set qc [get_cells -quiet -of_objects $q]
                             if {$qc ne "" && [get_property IS_SEQUENTIAL $qc]} { lappend regs $qc }
                         }
-                        puts $out "CELL|$pos|$side|$c|[lindex $clk 0]|$tied|[join [lsort -unique $regs] ,]"
+                        set dregs {}
+                        if {$tied} { set dregs [mcp__dcone $c] }
+                        puts $out "CELL|$pos|$side|$c|[lindex $clk 0]|$tied|[join [lsort -unique $regs] ,]|[join $dregs ,]"
                     }
                 } err]} { puts $out "ERROR|$c|$err" }
             }
+            if {$nonseq} { puts $out "NONSEQ|$pos|$side|$nonseq" }
         }
     }
     puts $out "# end"
