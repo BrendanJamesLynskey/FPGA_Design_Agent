@@ -173,6 +173,15 @@ pass, outcome, escape level, tool runs, tokens, cost; 08a): [tools/run_record.py
 back-fills them, [results/course/summarise.py](results/course/summarise.py) prints per-task pass counts, pass@1/pass@k
 and escapes by level.
 
+## From one run to a design environment (brief 27, design only)
+
+[docs/design_environment.md](docs/design_environment.md) proposes how the single-spec run becomes the inner loop of a
+project of many modules: a `design.yaml` module graph with an interface contract per module, an interface-first spec
+session, parallel module loops under the machine's Vivado limits, a top generated from the contracts, natural-language
+changes that re-enter at the earliest stage whose inputs changed (worked out from input hashes, not by the model), and
+ownership marks so that the engineer's own edits are never overwritten. Nothing in it is built yet; a pilot waits for the
+owner's approval.
+
 ## Reproduce
 
 Simulation, lint and the Python tests (what CI runs):
@@ -223,6 +232,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph; benchmark tasks as agent runs, 07a2-prep); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing); test_writer.md (the 05g test-writer diagnosis, turn trace, formal re-plan, QoR gate);
              project_mode_parity.md (what project mode and the wizards give that non-project mode does not, measured; cross-probing);
              ipgen.md (the ipgen pipeline, the adapter interface, candidate IPs); ipgen_tradeoffs.md (design only: the drop-down trade-off view);
+             design_environment.md (design only, brief 27: projects of many modules, contracts, re-entry by input hash, the engineer's own edits);
              debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped);
              eval/eval1_preregistration.md (the eval-1 held-out evaluation, fixed before any scored run)
 ```
