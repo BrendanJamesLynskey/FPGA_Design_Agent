@@ -48,12 +48,26 @@
      "gate": "FDA-CON-10",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/core/constraints.py",
      "what": "Before Vivado: a -setup N multicycle needs its -hold N-1, and a multicycle or datapath-only max delay needs a comment naming the enable or the synchroniser."
+    },
+    {
+     "enforced": true,
+     "file": "flow/io_check.py",
+     "gate": "io_timing_clean",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/io_check.py",
+     "what": "After synthesis and after routing: no made-up delay on a button, switch, LED or UART pin, every delay explained by its data-sheet formula, -min not above -max, no delay replaced for want of -add_delay; for the interfaces a design declares, both -min and -max, the data sheet's values, the right reference clock, and the registers in the I/O blocks."
+    },
+    {
+     "enforced": false,
+     "file": "agent/core/constraints.py",
+     "gate": "FDA-CON-11",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/core/constraints.py",
+     "what": "Before Vivado: the same made-up, unexplained, swapped or replaced I/O delays, and a virtual clock used before it is defined."
     }
    ],
    "counts": {
-    "checks": 5,
-    "enforced": 2,
-    "evidence": 4,
+    "checks": 7,
+    "enforced": 3,
+    "evidence": 5,
     "sections": 7,
     "skills": 18
    },
@@ -67,6 +81,16 @@
       }
      ],
      "text": "On 10 small designs with one timing-exception mistake each, Vivado itself said something about the exception in 5; the flow's checks flagged 10. They passed 4 of 4 correct designs."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/20_timing_exceptions/io_table.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/20_timing_exceptions/io_table.json"
+      }
+     ],
+     "text": "On 13 small designs with one I/O-delay or virtual-clock mistake each, Vivado itself said something in 2; the flow's gates flagged 13."
     },
     {
      "kind": "measured",
