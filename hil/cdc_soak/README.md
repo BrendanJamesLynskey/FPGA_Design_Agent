@@ -32,11 +32,11 @@ far X0Y0->X1Y3, near X0Y2 or X1Y2, boundary X0Y1->X1Y1).
 | C6 | hand Gray 12-bit + max_delay + bus_skew | M4 | XOR of two coincident toggles before the synchroniser |
 | C7 | xpm_cdc_gray 12-bit | M5 | one-cycle pulse into a level synchroniser |
 | C8 | hand 4-phase handshake, 16 bits | M6a | Gray without bus_skew/max_delay, bits launched far apart |
-| C9 | xpm_cdc_handshake, 16 bits | M6b / M6c | 250 MHz Gray, odd bits padded with 4 / 8 route-through LUTs |
+| C9 | xpm_cdc_handshake, 16 bits | M6b / M6c | 250 MHz Gray, odd bits padded with 4 / 24 route-through LUTs; tear check against a correct bank (11c) |
 | C10 | hand Cummings async FIFO 16x16 (LUT RAM) | M7 | two flags from one edge, synchronised separately, compared |
 | C11 | xpm_fifo_async 512x16 (block RAM), reset by the storms | M8 | source domain's raw reset clears a destination register |
 | C12 | reset bridge into 32 flops over two pblocks | M9 | async FIFO reset on the write side only |
-| C13 | Cummings FIFO, both sides reset together, reader qualified | M10 | 32 flops released by a raw asynchronous reset |
+| C13 | Cummings FIFO, both sides reset together (synchronously, reader first; 11c), reader qualified | M10 | 32 flops released by a raw asynchronous reset |
 | | | M11 | 2-phase handshake, source side reset alone |
 
 Copy counts are parameters (`N_<variant>` on `rig_top`/`rig_core`): the small build has one of each (28 copies), the
@@ -47,7 +47,10 @@ full build 352 (`tcl/rig_map.tcl`; the design's 536 did not place on the xc7a100
 Every checker sits in the copy's destination domain: event counts against a correct `xpm_cdc_gray` reference at quiet
 points, plus a glitch check (level and pulse crossings); a step and one-bit-change check (counters); PRBS-16 word
 continuity with one allowed relock per reset event and a 2^16-cycle lock-up watchdog (handshakes and FIFOs); release
-coherence (C12/M10); pairwise agreement (M2, M7). Each copy has a record {errors 24 saturating, events 32, lock-ups 8,
+coherence (C12/M10); pairwise agreement (M2, M7); for M6b/M6c the padded Gray bank is compared with a correct bank
+captured on the same edges (a tear of two counts or more is an error). The sources start only when every domain is
+out of reset and has settled 255 cycles (`dom_rdy`, brief 11c): the MMCM clocks start tens of microseconds after
+clk_a, and the first board runs counted the events already sent as one error in each a->c copy. Each copy has a record {errors 24 saturating, events 32, lock-ups 8,
 relocks 8, saturated 1}. Every 60 s of traffic the sources stop, the domains drain and freeze, and each domain's
 records rotate bit by bit through a correct XPM toggle handshake to clk_a and out of the UART as one CRC-8 line per
 copy (format in [rtl/rig_ctrl.sv](rtl/rig_ctrl.sv)); traffic resumes. Reset storms (mean about 1 kHz, modes source /

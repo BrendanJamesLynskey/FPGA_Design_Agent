@@ -10,8 +10,14 @@
 //             Plusarg +CDC_NOINJECT turns injection off.
 // rst_bridge  asynchronous assert, synchronous release (2 flops, ASYNC_REG); optional synchronous second source.
 // rt_delay    N route-through LUT1s (DONT_TOUCH) in hardware; a transport delay of N x SIM_NS in simulation.
+//             SIM_NS defaults to CDC_LUT_NS = 0.5 ns a stage (brief 11c): the routed delay tables put one padded stage
+//             at about 0.3 ns (fast corner) to 0.93 ns (slow corner); the first model used 1.0 ns, which is the slow
+//             corner and made M6c tear in simulation where the board's silicon did not.
 // lfsr16      PRBS-16 (x^16 + x^14 + x^13 + x^11 + 1), one step when en.
 
+`ifndef CDC_LUT_NS
+`define CDC_LUT_NS 0.5
+`endif
 `ifndef CDC_WIN_NS
 `define CDC_WIN_NS 1.0
 `endif
@@ -100,7 +106,7 @@ endmodule
 
 module rt_delay #(
     parameter int  N      = 4,
-    parameter real SIM_NS = 1.0
+    parameter real SIM_NS = `CDC_LUT_NS
 ) (
     input  logic a,
     output logic y

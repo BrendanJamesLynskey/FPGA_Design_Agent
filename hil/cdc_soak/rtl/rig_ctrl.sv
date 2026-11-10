@@ -12,6 +12,7 @@
 // storm_gen  the reset-storm generator in clk_a (section 5).
 // ro_dom     one destination domain's side of the epoch: quiesce, drain, freeze, and the bit-by-bit readout of
 //            its rotating record chain over a toggle request / toggle acknowledge pair.
+// dom_rdy    start-up gate (brief 11c): a domain is ready SETTLE cycles after its power-on reset is released.
 // rig_epoch  the clk_a controller: seconds, epochs, the readout sequence, the temperature stop.
 
 module uart_tx #(
@@ -162,6 +163,25 @@ module storm_gen #(
             end
         end
     end
+endmodule
+
+// A domain is ready SETTLE cycles after its power-on reset has been released, in its own clock. rig_core holds the
+// sources off (the quiesce request) until every domain is ready, so no checker sees traffic before both of its
+// domains are running: clk_c, the MMCM output, starts tens of microseconds after clk_a, and the first board runs
+// counted the events the sources had already sent as one error in every a->c copy (brief 11c, finding 1).
+module dom_rdy #(
+    parameter int SETTLE = 255
+) (
+    input  logic clk,
+    input  logic por,
+    output logic rdy
+);
+    logic [7:0] n = '0;
+    initial rdy = 1'b0;
+    always @(posedge clk)
+        if (por) begin n <= '0; rdy <= 1'b0; end
+        else if (n == 8'(SETTLE)) rdy <= 1'b1;
+        else n <= n + 1'b1;
 endmodule
 
 module ro_dom #(

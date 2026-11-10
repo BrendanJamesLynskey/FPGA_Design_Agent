@@ -37,7 +37,8 @@ module rig_copy #(
     localparam int  C1_STAGES = VAR == V_C1 ? 2 : 3;
     localparam int  C3_STAGES = VAR == V_C3A ? 2 : 4;
     localparam bit  LVL_CHK   = VAR != V_C4 && VAR != V_C5 && VAR != V_M5;
-    localparam int  M6_LUTS   = VAR == V_M6B ? 4 : 8;
+    localparam int  M6_LUTS   = VAR == V_M6B ? 4 : 24;     // M6c: 24 route-through LUTs (brief 11c; was 8)
+    localparam bit  C13_SYNC  = VAR == V_C13;              // C13 resets synchronously (brief 11c)
     localparam bit  M6_FAST   = VAR == V_M6B || VAR == V_M6C;
     wire sclk  = SD == D_A ? clk_a : SD == D_B ? clk_b : SD == D_C ? clk_c : clk_f;
     wire dclk  = DD == D_A ? clk_a : DD == D_B ? clk_b : clk_c;
@@ -214,8 +215,13 @@ module rig_copy #(
             cff #(.W(12), .ASYNC(1'b1), .INJ(1'b1)) pbd_mut_m6 (.clk(dclk), .arst(1'b0), .d(gd), .q(g1));
             cff #(.W(12), .ASYNC(1'b1))             pbd_m6b    (.clk(dclk), .arst(1'b0), .d(g1), .q(raw));
             assign v = gray2bin12(raw);
+            // reference (brief 11c): the same source register through a correct bank (rsyn_*: max_delay and a bus_skew
+            // below one source period), captured on the same destination edges; a tear of two counts or more shows
+            logic [11:0] r1, rr;
+            cff #(.W(12), .ASYNC(1'b1), .INJ(1'b1)) pbd_rsyn_g (.clk(dclk), .arst(1'b0), .d(pbs_gray), .q(r1));
+            cff #(.W(12), .ASYNC(1'b1))             pbd_rsyn_g2 (.clk(dclk), .arst(1'b0), .d(r1), .q(rr));
             // CFGMCLK may be as slow as 32 MHz: up to 8 source steps per destination sample
-            chk_count #(.MAXSTEP(10)) u_chk (.clk(dclk), .v(v), .raw(raw), .e_err(e_err), .e_ev(e_ev));
+            chk_tear #(.MAXSTEP(10)) u_chk (.clk(dclk), .v(v), .vref(gray2bin12(rr)), .e_err(e_err), .e_ev(e_ev));
         end
         assign e_lock = 1'b0;
         assign e_relock = 1'b0;
@@ -319,35 +325,69 @@ module rig_copy #(
             assign valid = pbd_v;
             assign w = dout;
         end else begin : g_hand
-            logic wrst, rrst, full, empty, pbd_v = 1'b0, rq, rqp = 1'b0;
+            logic wrst, rrst, full, empty, pbd_v = 1'b0, rq, rqe, rqp = 1'b0;
             logic [15:0] pbs_data = SEED, rdata, pbd_ramrd_w = '0;
             if (VAR == V_C10) begin : g_r
                 assign wrst = s_por;
                 assign rrst = d_por;
                 assign rq = 1'b0;
+                assign rqe = 1'b0;
             end else if (VAR == V_C13) begin : g_r
-                // both sides reset together, each through its own bridge; the reader is qualified by its reset,
-                // and the checker learns of the reset from the destination bridge itself
+`ifdef CDC_C13_LEGACY
+                // the version of the first board runs (kept for the simulation that reproduces its failure): both sides
+                // cleared asynchronously through a bridge each, the checker re-armed from the raw bridge output
                 rst_bridge pbs_rb (.clk(sclk), .arst_in(rq_any), .sync_in(s_por), .rst_out(wrst));
                 rst_bridge pbd_rb (.clk(dclk), .arst_in(rq_any), .sync_in(d_por), .rst_out(rrst));
-                assign rq = rrst;
+                // two flops sampling one asynchronous signal, each with its own resolution (metastability injection)
+                logic rq_a, rq_p;
+                cff #(.INJ(1'b1)) pbd_arm_a (.clk(dclk), .arst(1'b0), .d(rrst), .q(rq_a));
+                cff #(.INJ(1'b1)) pbd_arm_p (.clk(dclk), .arst(1'b0), .d(rrst), .q(rq_p));
+                assign rq  = rq_a;
+                assign rqe = rq_p;
+`else
+                // Reader first, writer second, both synchronous (brief 11c). The request is synchronised into the reader's
+                // clock (rs); the reader's reset flag rrst_r is a flop of its clock and resets its pointers synchronously;
+                // the writer resets from that flag, synchronised into its clock. So the reader is always in reset before
+                // the writer's reset can reach it through the pointers, the words it captured before are in sequence, and
+                // the re-arm of the checker reads a flop of its own clock. (The first version cleared both sides
+                // asynchronously from the request: it let the checker sample an asynchronous signal with two flops, and
+                // the read address and qualifier change inside a cycle.) The request is held at least 50 clk_a cycles,
+                // longer than both entries (3 + 3 cycles of the slower clock) plus the pointer synchronisers.
+                logic rs, ws;
+                logic pbd_rrst_r = 1'b1, pbs_wrst_r = 1'b1;
+                sync_n #(.STAGES(2)) pbd_rq_s (.clk(dclk), .d(rq_any), .q(rs));
+                always_ff @(posedge dclk) pbd_rrst_r <= rs | d_por;
+                sync_n #(.STAGES(2)) pbs_rr_s (.clk(sclk), .d(pbd_rrst_r), .q(ws));
+                always_ff @(posedge sclk) pbs_wrst_r <= ws | s_por;
+                assign rrst = pbd_rrst_r;
+                assign wrst = pbs_wrst_r;
+                assign rq   = pbd_rrst_r;
+                assign rqe  = pbd_rrst_r;
+`endif
             end else begin : g_r
                 // M9: the write side alone is reset
                 rst_bridge pbs_rb (.clk(sclk), .arst_in(rq_s), .sync_in(s_por), .rst_out(wrst));
                 assign rrst = d_por;
                 sync_n #(.STAGES(2)) pbd_rq_s (.clk(dclk), .d(rq_s), .q(rq));
+                assign rqe = rq;
             end
             wire we = s_run && !full && !wrst && s_lf[0];
-            always_ff @(posedge sclk or posedge wrst)
-                if (wrst) pbs_data <= SEED;
-                else if (we) pbs_data <= prbs16_next(pbs_data);
+            if (C13_SYNC) begin : g_sd
+                always_ff @(posedge sclk)
+                    if (wrst) pbs_data <= SEED;
+                    else if (we) pbs_data <= prbs16_next(pbs_data);
+            end else begin : g_ad
+                always_ff @(posedge sclk or posedge wrst)
+                    if (wrst) pbs_data <= SEED;
+                    else if (we) pbs_data <= prbs16_next(pbs_data);
+            end
             wire re = !empty && !rrst && d_lf[0];
-            afifo16 u_fifo (.wclk(sclk), .wrst(wrst), .winc(we), .wdata(prbs16_next(pbs_data)), .wfull(full),
+            afifo16 #(.SYNC_RST(C13_SYNC)) u_fifo (.wclk(sclk), .wrst(wrst), .winc(we), .wdata(prbs16_next(pbs_data)), .wfull(full),
                             .rclk(dclk), .rrst(rrst), .rinc(re), .rdata(rdata), .rempty(empty));
             always_ff @(posedge dclk) begin
                 pbd_v <= re;
                 if (re) pbd_ramrd_w <= rdata;
-                rqp <= rq; arm <= rq && !rqp;
+                rqp <= rqe; arm <= rq && !rqp;
             end
             assign valid = pbd_v;
             assign w = pbd_ramrd_w;
