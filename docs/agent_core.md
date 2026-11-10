@@ -21,7 +21,8 @@ are `additionalProperties: false`; they are snapshot-tested in `agent/tests/fixt
 | `gates` | `flow/gates.py` (stage results) or `flow/verif_gates.py` (V-stages), raw | kind, variant |
 | `report` | one named report or log from `build/<variant>/` | name, variant, offset, max_bytes |
 | `check_constraints` | `design.xdc` against the board: clock only on the board's clock input, no `CLOCK_DEDICATED_ROUTE FALSE`, pins and standards as in the master XDC, XDC command allow-list | none |
-| `search_docs`, `load_skill` | the frozen knowledge bank only (`tools/search_docs.py`, `tools/select_skills.py`); text comes back as untrusted data | query, k, sections |
+| `search_docs`, `load_skill` | the frozen knowledge bank only (`tools/search_docs.py`, `tools/select_skills.py`); text comes back as untrusted data | query, k, sections; `load_skill` also takes `name` (one body, brief 36) |
+| `skill_index`, `skill_excerpt` | brief 36, offered to roles only with `--skill-routing router`: ranked skill names and one-line descriptions (BM25 plus embeddings), and one section of one skill ([docs/skill_routing.md](skill_routing.md)) | query, k; name, heading |
 | `program` | `flow/program.py`: SRAM only, by the board's cable serial | variant (`target` accepts only `sram`) |
 | `bringup` | `flow/bringup.py` | none |
 | `stage_note` | append to `BUILD_NOTE.md` and move the session to a stage | stage, text |

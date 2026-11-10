@@ -8,10 +8,10 @@ FROM python:3.12-slim
 RUN pip install --no-cache-dir fastembed==0.9.1 numpy==2.5.4 PyYAML==6.0.3
 ENV FASTEMBED_CACHE_PATH=/opt/models HF_HUB_OFFLINE=0
 RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-small-en-v1.5', cache_dir='/opt/models')"
-ENV HF_HUB_OFFLINE=1 FDA_KNOWLEDGE=/bank FDA_CORE=/app/core PORT=8088
-COPY agent/core/bank.py agent/core/skill_index.py /app/core/
-COPY agent/skill_service/server.py /app/skill_service/server.py
+ENV HF_HUB_OFFLINE=1 FDA_KNOWLEDGE=/bank FDA_CORE=/app/agent/core PORT=8088
+COPY agent/core/bank.py agent/core/skill_index.py /app/agent/core/
+COPY agent/skill_service/server.py /app/agent/skill_service/server.py
 RUN useradd -u 10001 -M app
 USER 10001
 EXPOSE 8088
-CMD ["python", "/app/skill_service/server.py"]
+CMD ["python", "/app/agent/skill_service/server.py"]
