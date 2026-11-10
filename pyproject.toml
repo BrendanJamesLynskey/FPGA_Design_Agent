@@ -15,6 +15,9 @@ graph = ["langgraph==1.2.19", "langgraph-checkpoint-sqlite==3.1.3", "deepagents=
 
 # the ipgen design tools (brief 19): numpy and scipy, both BSD-3
 ipgen = ["numpy>=2", "scipy>=1.14"]
+# the skill index's embeddings (brief 36): fastembed Apache-2.0 (onnxruntime MIT, tokenizers Apache-2.0); optional, without
+# it the index is BM25 only. Vectors are built only on the owner's PC (never a work machine).
+retrieval = ["fastembed==0.9.1", "numpy>=2"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

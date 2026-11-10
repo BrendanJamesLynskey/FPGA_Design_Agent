@@ -1,5 +1,5 @@
 {
- "schema_version": "1.6.0",
+ "schema_version": "1.7.0",
  "tools": [
   {
    "name": "board_constraints",
@@ -36,7 +36,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "bringup",
@@ -47,7 +47,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "build",
@@ -75,7 +75,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "check_constraints",
@@ -86,7 +86,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "formal",
@@ -97,7 +97,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "gates",
@@ -126,7 +126,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "lint",
@@ -137,7 +137,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "list_files",
@@ -153,11 +153,11 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "load_skill",
-   "description": "Load the frozen bank's skills for this board and family, filtered to bank section ids (SECTIONS.yaml). Returns SKILL.md text as data.",
+   "description": "Load the frozen bank's skills for this board and family, filtered to bank section ids (SECTIONS.yaml), or one skill by name (brief 36). Returns SKILL.md text as data.",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -172,14 +172,16 @@
      },
      "procedures": {
       "type": "boolean"
+     },
+     "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9\\-]{0,79}$"
      }
     },
-    "required": [
-     "sections"
-    ],
+    "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "mutate",
@@ -206,7 +208,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "program",
@@ -228,7 +230,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "read_file",
@@ -255,7 +257,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "report",
@@ -289,7 +291,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "search_docs",
@@ -320,7 +322,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "simulate",
@@ -343,7 +345,53 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
+  },
+  {
+   "name": "skill_excerpt",
+   "description": "One section of one skill: the text under a heading of its SKILL.md (exact heading or a unique prefix). Without a match, lists the skill's headings.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9\\-]{0,79}$"
+     },
+     "heading": {
+      "type": "string",
+      "maxLength": 120
+     }
+    },
+    "required": [
+     "name",
+     "heading"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.7.0"
+  },
+  {
+   "name": "skill_index",
+   "description": "Rank the frozen bank's skills for a query (names, sections and one-line descriptions, no bodies). Then load_skill(name=...) for one body or skill_excerpt(name, heading) for one section.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "query": {
+      "type": "string",
+      "maxLength": 300
+     },
+     "k": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 15
+     }
+    },
+    "required": [
+     "query"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.7.0"
   },
   {
    "name": "spec_items",
@@ -354,7 +402,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "stage_note",
@@ -388,7 +436,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   },
   {
    "name": "write_file",
@@ -411,7 +459,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.6.0"
+   "version": "1.7.0"
   }
  ]
 }

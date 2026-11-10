@@ -79,11 +79,13 @@ def mcp_config(rt, plan: dict[str, Any]) -> dict[str, Any]:
     """The strict MCP config: our server only, jailed to this role and stage, exposing only the stage's tools."""
     names = list(dict.fromkeys([*plan["file_tools"], *plan["core_tools"]]))
     env = {"PYTHONPATH": str(ROOT), "PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "")}
-    for k in ("FDA_TOOLS_FILE", "FDA_BOARDS_FILE", "FDA_KNOWLEDGE"):
+    for k in ("FDA_TOOLS_FILE", "FDA_BOARDS_FILE", "FDA_KNOWLEDGE", "FDA_SKILL_INDEX_URL"):
         if os.environ.get(k):
             env[k] = os.environ[k]
     tf = Path.home() / ".config" / "fpga_design_agent" / "tools.yaml"
     env.setdefault("FDA_TOOLS_FILE", str(tf))
+    if getattr(rt.cfg, "skill_routing", "off") != "off":        # brief 36: only when on, so the off path is unchanged
+        env["FDA_SKILL_ROUTING"] = rt.cfg.skill_routing
     return {"mcpServers": {MCP_NAME: {
         "command": sys.executable,
         "args": ["-m", "agent.mcp_server", "--design", str(rt.design), "--board", rt.cfg.board,

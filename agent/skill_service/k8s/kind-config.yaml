@@ -1,0 +1,13 @@
+# kind cluster for the skill-index service (brief 36): the bank checkout is mounted into the node, read-only to the pod.
+#   kind create cluster --name fda --config agent/skill_service/k8s/kind-config.yaml
+#   kind load docker-image fda-skill-index:1 --name fda
+#   kubectl apply -f agent/skill_service/k8s/skill-index.yaml
+# Set hostPath below to the bank checkout (FPGA_Design_Agent_Knowledge). k3d: k3d cluster create fda -v <bank>:/bank@server:0
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+    extraMounts:
+      - hostPath: /path/to/FPGA_Design_Agent_Knowledge
+        containerPath: /bank
+        readOnly: true
