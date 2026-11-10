@@ -1,0 +1,51 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: audio_state
+summary: Holds the signed sample and capped unsigned Q15 gain, and computes sample_out combinationally.
+clocks:
+- {name: clk, port: clk, max_mhz: 100}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: sample, dir: in, width: 16, clock: clk}
+- {name: gain, dir: in, width: 16, clock: clk}
+- {name: sample_out, dir: out, width: 16, clock: clk}
+data_formats:
+- {name: sample_s16, format: s16, packing: signed 16-bit audio sample}
+- {name: gain_u16, format: u16, packing: unsigned Q15 gain register}
+- {name: sample_out_s16, format: s16, packing: signed 16-bit result}
+registers:
+  bus: top
+  map:
+  - name: SAMPLE
+    offset: 0
+    access: RW
+    reset: 0
+    width: 32
+    volatile: false
+    fields:
+    - name: sample
+      bits: [15, 0]
+      port: sample
+  - name: GAIN
+    offset: 1
+    access: WO
+    reset: 0
+    width: 32
+    volatile: false
+    fields:
+    - name: gain
+      bits: [15, 0]
+      port: gain
+  - name: SOUT
+    offset: 2
+    access: RO
+    reset: 0
+    width: 32
+    volatile: true
+    fields:
+    - name: sample_out
+      bits: [15, 0]
+      port: sample_out

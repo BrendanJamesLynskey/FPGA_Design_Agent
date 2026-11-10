@@ -1,0 +1,22 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: c12_nexys_pwm_audio_top
+hdl_top: c12_nexys_pwm_audio_top
+summary: Integrates the audio state, PWM output stage, and test shell; exposes the Nexys A7 board pins.
+parameters:
+- {name: CLKS_PER_BIT, default: 868}
+- {name: TIMEOUT_CYCLES, default: 100000}
+- name: BUILD_STAMP
+  default: 0
+  values: [0]
+clocks:
+- {name: clk, port: clk, max_mhz: 100}
+resets:
+- {name: rst, port: reset_n, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: reset_n, dir: in}
+- {name: aud_pwm, dir: out, width: 1, clock: clk}
+- {name: aud_sd, dir: out, width: 1, clock: clk, reset_value: 1}
+- {name: led, dir: out, width: 16, clock: clk, reset_value: 0}
+data_formats: []

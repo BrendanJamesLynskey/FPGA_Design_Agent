@@ -1,0 +1,533 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/project/v1
+name: vga_median_720p
+board: nexys_a7_100t
+clocks:
+- {name: clk_sys, source: board, port: CLK100MHZ, mhz: 100}
+- {name: clk_pix, source: mmcm, from: clk_sys, mhz: 74.25}
+resets:
+- {name: rst_sys, domain: clk_sys, polarity: active_low, style: async, from: CPU_RESETN, via: reset_sync}
+- {name: rst_pix, domain: clk_pix, polarity: active_low, style: async, from: rst_sys, via: reset_sync}
+shell: {design_id: VMED, clock: clk_sys, reset: rst_sys}
+modules:
+- name: video_timing
+  kind: rtl
+  clocks: {clk: clk_pix}
+  resets: {rst: rst_pix}
+- name: color_bars
+  kind: rtl
+  clocks: {clk: clk_pix}
+  resets: {rst: rst_pix}
+- name: median_filter
+  kind: rtl
+  clocks: {clk: clk_pix}
+  resets: {rst: rst_pix}
+- name: frame_counter
+  kind: rtl
+  clocks: {clk: clk_pix}
+  resets: {rst: rst_pix}
+- name: video_cdc
+  kind: rtl
+  clocks: {clk_sys: clk_sys, clk_pix: clk_pix}
+  resets: {rst_sys: rst_sys, rst_pix: rst_pix}
+- name: video_output
+  kind: rtl
+  clocks: {clk: clk_pix}
+  resets: {rst: rst_pix}
+- name: video_control
+  kind: rtl
+  clocks: {clk: clk_pix}
+  resets: {rst: rst_pix}
+  window_base: 0
+  register_crossings: {PATTERN: xpm_cdc_array_single, FRAME_COUNT: xpm_cdc_array_single}
+connections: []
+board_ports:
+- {name: CLK100MHZ, dir: in, drive: input, to: clk_sys}
+- {name: CPU_RESETN, dir: in, drive: input, to: rst_sys}
+- {name: UART_TXD_IN, dir: in, drive: input, to: shell.uart_rx}
+- {name: UART_RXD_OUT, dir: out, drive: push-pull, from: shell.uart_tx}
+- {name: BTNC, dir: in, drive: input, to: video_output.btnc}
+- {name: VGA_HS, dir: out, drive: push-pull, from: video_output.hsync}
+- {name: VGA_VS, dir: out, drive: push-pull, from: video_output.vsync}
+- {name: 'VGA_R[3:0]', dir: out, drive: push-pull, from: video_output.red}
+- {name: 'VGA_G[3:0]', dir: out, drive: push-pull, from: video_output.green}
+- {name: 'VGA_B[3:0]', dir: out, drive: push-pull, from: video_output.blue}
+- {name: 'LED[0]', dir: out, drive: push-pull, from: clk_pix.locked}
+owned: []
+assumptions:
+- id: A-1
+  text: Which clock input should be used to generate the 74.25 MHz pixel clock, and what should count as stable?
+  default: Use the Nexys A7 100 MHz onboard oscillator and consider the pixel clock stable when the clock generator's
+    lock signal is asserted.
+  reason: The required pixel-clock frequency is specified, but the source and stability criterion are not.
+  affects: [S-1, S-5, S-6]
+  status: open
+  by: oracle
+- id: A-2
+  text: What should the median filter use for neighbourhood samples beyond the active picture boundaries?
+  default: Replicate the nearest active-picture pixel at each boundary.
+  reason: The 3 x 3 operation is specified, but its boundary behavior is not.
+  affects: [S-3, S-4, S-5]
+  status: open
+  by: oracle
+- id: A-3
+  text: What UART command and response format should the host use?
+  default: Use newline-terminated ASCII commands `ID?`, `PAT n`, and `FRAME?`, with line-terminated ASCII responses.
+  reason: The baud rate, design ID, and shell capabilities are specified, but the protocol is not.
+  affects: [S-7]
+  status: open
+  by: oracle
+- id: A-4
+  text: How wide should the frame counter be, and when should it increment?
+  default: Use a 32-bit unsigned counter that increments once at the end of each video frame.
+  reason: Reading a frame counter is required, but its width and counting event are not specified.
+  affects: [S-7]
+  status: open
+  by: oracle
+- id: A-5
+  text: Is video_timing's reset rst active high or active low, and synchronous or asynchronous?
+  default: '{polarity: active_high, style: sync}'
+  reason: Reset polarity and style were not specified; use a synchronous active-high reset in the pixel-clock domain.
+  affects: [video_timing.contract.resets.rst]
+  status: open
+  by: oracle
+- id: A-6
+  text: 'What is video_timing''s port x: its direction, width and value in reset?'
+  default: '{dir: out, width: 11, reset_value: 0}'
+  reason: An 11-bit coordinate can represent the horizontal timing range of 0 through 1649.
+  affects: [video_timing.contract.ports.x]
+  status: open
+  by: oracle
+- id: A-7
+  text: 'What is video_timing''s port y: its direction, width and value in reset?'
+  default: '{dir: out, width: 10, reset_value: 0}'
+  reason: A 10-bit coordinate can represent the vertical timing range of 0 through 749.
+  affects: [video_timing.contract.ports.y]
+  status: open
+  by: oracle
+- id: A-8
+  text: 'What is video_timing''s port active: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
+  reason: The timing generator needs an active-picture qualification to identify the picture region.
+  affects: [video_timing.contract.ports.active]
+  status: open
+  by: oracle
+- id: A-9
+  text: 'What is video_timing''s port hsync: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
+  reason: The timing generator needs a horizontal sync output.
+  affects: [video_timing.contract.ports.hsync]
+  status: open
+  by: oracle
+- id: A-10
+  text: 'What is video_timing''s port vsync: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
+  reason: The timing generator needs a vertical sync output.
+  affects: [video_timing.contract.ports.vsync]
+  status: open
+  by: oracle
+- id: A-11
+  text: 'What is video_timing''s port frame_end: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
+  reason: A frame-end pulse is needed by the frame counter; its event is specified in the answered frame-counter
+    default.
+  affects: [video_timing.contract.ports.frame_end]
+  status: open
+  by: oracle
+- id: A-12
+  text: 'What is color_bars''s port x: its direction, width and value in reset?'
+  default: '{dir: in, width: 11}'
+  reason: The bar generator needs the horizontal coordinate to select a 160-pixel bar.
+  affects: [color_bars.contract.ports.x]
+  status: open
+  by: oracle
+- id: A-13
+  text: 'What is color_bars''s port y: its direction, width and value in reset?'
+  default: '{dir: in, width: 10}'
+  reason: The bar generator accepts the vertical coordinate so its input follows the raster.
+  affects: [color_bars.contract.ports.y]
+  status: open
+  by: oracle
+- id: A-14
+  text: 'What is color_bars''s port active: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: The bar generator needs the active-picture qualification to restrict the test picture to the active region.
+  affects: [color_bars.contract.ports.active]
+  status: open
+  by: oracle
+- id: A-15
+  text: 'What is color_bars''s port pattern: its direction, width and value in reset?'
+  default: '{dir: in, width: 2}'
+  reason: A two-bit field is sufficient for pattern 0 and the proposed selection interface; width is not otherwise
+    specified.
+  affects: [color_bars.contract.ports.pattern]
+  status: open
+  by: oracle
+- id: A-16
+  text: 'What is color_bars''s port red: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: The bar generator needs a red output channel.
+  affects: [color_bars.contract.ports.red]
+  status: open
+  by: oracle
+- id: A-17
+  text: 'What is color_bars''s port green: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: The bar generator needs a green output channel.
+  affects: [color_bars.contract.ports.green]
+  status: open
+  by: oracle
+- id: A-18
+  text: 'What is color_bars''s port blue: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: The bar generator needs a blue output channel.
+  affects: [color_bars.contract.ports.blue]
+  status: open
+  by: oracle
+- id: A-19
+  text: 'What is median_filter''s port in_red: its direction, width and value in reset?'
+  default: '{dir: in, width: 4}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [median_filter.contract.ports.in_red]
+  status: open
+  by: oracle
+- id: A-20
+  text: 'What is median_filter''s port in_green: its direction, width and value in reset?'
+  default: '{dir: in, width: 4}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [median_filter.contract.ports.in_green]
+  status: open
+  by: oracle
+- id: A-21
+  text: 'What is median_filter''s port in_blue: its direction, width and value in reset?'
+  default: '{dir: in, width: 4}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [median_filter.contract.ports.in_blue]
+  status: open
+  by: oracle
+- id: A-22
+  text: 'What is median_filter''s port in_active: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: Pass active-picture qualification through the filter so the picture remains aligned.
+  affects: [median_filter.contract.ports.in_active]
+  status: open
+  by: oracle
+- id: A-23
+  text: 'What is median_filter''s port in_hsync: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: Accept horizontal sync to keep it aligned with the filtered picture.
+  affects: [median_filter.contract.ports.in_hsync]
+  status: open
+  by: oracle
+- id: A-24
+  text: 'What is median_filter''s port in_vsync: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: Accept vertical sync to keep it aligned with the filtered picture.
+  affects: [median_filter.contract.ports.in_vsync]
+  status: open
+  by: oracle
+- id: A-25
+  text: 'What is median_filter''s port out_red: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [median_filter.contract.ports.out_red]
+  status: open
+  by: oracle
+- id: A-26
+  text: 'What is median_filter''s port out_green: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [median_filter.contract.ports.out_green]
+  status: open
+  by: oracle
+- id: A-27
+  text: 'What is median_filter''s port out_blue: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [median_filter.contract.ports.out_blue]
+  status: open
+  by: oracle
+- id: A-28
+  text: 'What is median_filter''s port out_active: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
+  reason: Provide active-picture qualification aligned with the filtered output.
+  affects: [median_filter.contract.ports.out_active]
+  status: open
+  by: oracle
+- id: A-29
+  text: 'What is median_filter''s port out_hsync: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
+  reason: Provide horizontal sync aligned with the filtered output.
+  affects: [median_filter.contract.ports.out_hsync]
+  status: open
+  by: oracle
+- id: A-30
+  text: 'What is median_filter''s port out_vsync: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
+  reason: Provide vertical sync aligned with the filtered output.
+  affects: [median_filter.contract.ports.out_vsync]
+  status: open
+  by: oracle
+- id: A-31
+  text: Is frame_counter's reset rst active high or active low, and synchronous or asynchronous?
+  default: '{polarity: active_high, style: sync}'
+  reason: Use the shared pixel-domain reset; reset polarity and style were not specified.
+  affects: [frame_counter.contract.resets.rst]
+  status: open
+  by: oracle
+- id: A-32
+  text: 'What is frame_counter''s port frame_end: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: The frame counter needs a frame-end event to increment once per frame.
+  affects: [frame_counter.contract.ports.frame_end]
+  status: open
+  by: oracle
+- id: A-33
+  text: Is video_cdc's reset rst_sys active high or active low, and synchronous or asynchronous?
+  default: '{polarity: active_high, style: sync}'
+  reason: Use the system-domain reset.
+  affects: [video_cdc.contract.resets.rst_sys]
+  status: open
+  by: oracle
+- id: A-34
+  text: Is video_cdc's reset rst_pix active high or active low, and synchronous or asynchronous?
+  default: '{polarity: active_high, style: sync}'
+  reason: Use the pixel-domain reset.
+  affects: [video_cdc.contract.resets.rst_pix]
+  status: open
+  by: oracle
+- id: A-35
+  text: 'What is video_cdc''s port pattern_sys: its direction, width and value in reset?'
+  default: '{dir: in, width: 2}'
+  reason: Pattern selection originates in the system-clock domain and must cross into the pixel-clock domain.
+  affects: [video_cdc.contract.ports.pattern_sys]
+  status: open
+  by: oracle
+- id: A-36
+  text: 'What is video_cdc''s port frame_count_pix: its direction, width and value in reset?'
+  default: '{dir: in, width: 32}'
+  reason: The frame counter operates in the pixel-clock domain and its value must cross to the system-clock domain.
+  affects: [video_cdc.contract.ports.frame_count_pix]
+  status: open
+  by: oracle
+- id: A-37
+  text: 'What is video_cdc''s port pattern_pix: its direction, width and value in reset?'
+  default: '{dir: out, width: 2, reset_value: 0}'
+  reason: The bar generator consumes pattern selection in the pixel-clock domain.
+  affects: [video_cdc.contract.ports.pattern_pix]
+  status: open
+  by: oracle
+- id: A-38
+  text: 'What is video_cdc''s port frame_count_sys: its direction, width and value in reset?'
+  default: '{dir: out, width: 32, reset_value: 0}'
+  reason: The shell register window reads the frame count in the system-clock domain.
+  affects: [video_cdc.contract.ports.frame_count_sys]
+  status: open
+  by: oracle
+- id: A-39
+  text: Is video_control's reset rst active high or active low, and synchronous or asynchronous?
+  default: '{polarity: active_high, style: sync}'
+  reason: Use the shell's system-domain reset; reset polarity and style were not specified.
+  affects: [video_control.contract.resets.rst]
+  status: open
+  by: oracle
+- id: A-40
+  text: 'What is video_control''s port pattern: its direction, width and value in reset?'
+  default: '{dir: in, width: 2}'
+  reason: The top-level register decoder drives the RW register's input field.
+  affects: [video_control.contract.ports.pattern]
+  status: open
+  by: oracle
+- id: A-41
+  text: 'What is video_control''s port pattern_selected: its direction, width and value in reset?'
+  default: '{dir: out, width: 2, reset_value: 0}'
+  reason: Expose the selected pattern to the CDC path; this is the proposed control-module connection.
+  affects: [video_control.contract.ports.pattern_selected]
+  status: open
+  by: limit
+- id: A-42
+  text: 'What is video_control''s port frame_count_in: its direction, width and value in reset?'
+  default: '{dir: in, width: 32}'
+  reason: Accept the synchronized frame count for the shell register window.
+  affects: [video_control.contract.ports.frame_count_in]
+  status: open
+  by: limit
+- id: A-43
+  text: 'What is video_control''s port frame_count: its direction, width and value in reset?'
+  default: '{dir: out, width: 32, reset_value: 0}'
+  reason: Expose the frame count as the RO register field.
+  affects: [video_control.contract.ports.frame_count]
+  status: open
+  by: limit
+- id: A-44
+  text: 'What is the register map of video_control: the offset, width, reset value and access (RW, RO, WO) of every
+    register the host reads or writes?'
+  default: '[{name: PATTERN, offset: 0, access: RW, reset: 0}, {name: FRAME_COUNT, offset: 4, access: RO, reset:
+    0}]'
+  reason: Use the proposed offsets in assumption A-2. The PATTERN field is an input driven by the top-level RW register;
+    FRAME_COUNT is read from the module output.
+  affects: [video_control.contract.registers]
+  status: open
+  by: limit
+- id: A-45
+  text: Is video_output's reset rst active high or active low, and synchronous or asynchronous?
+  default: '{polarity: active_high, style: sync}'
+  reason: Use the shared pixel-domain reset; reset polarity and style were not specified.
+  affects: [video_output.contract.resets.rst]
+  status: open
+  by: limit
+- id: A-46
+  text: 'What is video_output''s port locked: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [video_output.contract.ports.locked]
+  status: open
+  by: limit
+- id: A-47
+  text: 'What is video_output''s port active: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: The output gate needs the active-picture qualification.
+  affects: [video_output.contract.ports.active]
+  status: open
+  by: limit
+- id: A-48
+  text: 'What is video_output''s port in_hsync: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: The output gate needs the filtered horizontal sync.
+  affects: [video_output.contract.ports.in_hsync]
+  status: open
+  by: limit
+- id: A-49
+  text: 'What is video_output''s port in_vsync: its direction, width and value in reset?'
+  default: '{dir: in, width: 1}'
+  reason: The output gate needs the filtered vertical sync.
+  affects: [video_output.contract.ports.in_vsync]
+  status: open
+  by: limit
+- id: A-50
+  text: 'What is video_output''s port in_red: its direction, width and value in reset?'
+  default: '{dir: in, width: 4}'
+  reason: The output gate needs the filtered red channel.
+  affects: [video_output.contract.ports.in_red]
+  status: open
+  by: limit
+- id: A-51
+  text: 'What is video_output''s port in_green: its direction, width and value in reset?'
+  default: '{dir: in, width: 4}'
+  reason: The output gate needs the filtered green channel.
+  affects: [video_output.contract.ports.in_green]
+  status: open
+  by: limit
+- id: A-52
+  text: 'What is video_output''s port in_blue: its direction, width and value in reset?'
+  default: '{dir: in, width: 4}'
+  reason: The output gate needs the filtered blue channel.
+  affects: [video_output.contract.ports.in_blue]
+  status: open
+  by: limit
+- id: A-53
+  text: 'What is video_output''s port hsync: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
+  reason: Expose horizontal sync for the VGA output.
+  affects: [video_output.contract.ports.hsync]
+  status: open
+  by: limit
+- id: A-54
+  text: 'What is video_output''s port vsync: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 0}'
+  reason: Expose vertical sync for the VGA output.
+  affects: [video_output.contract.ports.vsync]
+  status: open
+  by: limit
+- id: A-55
+  text: 'What is video_output''s port red: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: Gate the output red channel on active video, BTNC, and the clock lock indication.
+  affects: [video_output.contract.ports.red]
+  status: open
+  by: limit
+- id: A-56
+  text: 'What is video_output''s port green: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: Gate the output green channel on active video, BTNC, and the clock lock indication.
+  affects: [video_output.contract.ports.green]
+  status: open
+  by: limit
+- id: A-57
+  text: 'What is video_output''s port blue: its direction, width and value in reset?'
+  default: '{dir: out, width: 4, reset_value: 0}'
+  reason: Gate the output blue channel on active video, BTNC, and the clock lock indication.
+  affects: [video_output.contract.ports.blue]
+  status: open
+  by: limit
+- id: A-58
+  text: 'Which clock is clk_sys: its frequency and where it comes from?'
+  default: '{source: board, mhz: 100, port: CLK100MHZ}'
+  reason: The answered default selects the Nexys A7 100 MHz onboard oscillator.
+  affects: [design.clocks.clk_sys]
+  status: open
+  by: limit
+- id: A-59
+  text: What resets the design's reset rst_sys (button or other source), and its polarity?
+  default: '{from: CPU_RESETN, polarity: active_high, style: sync}'
+  reason: The reset source and behavior were not specified; use the board reset input and synchronize it.
+  affects: [design.resets.rst_sys]
+  status: open
+  by: limit
+- id: A-60
+  text: At which offset of the shell's register window do video_control's registers start?
+  default: '0'
+  reason: The shell window occupies 0x80-0xFF. The module base is 0x00 so its proposed offsets 0x00 and 0x04 map
+    within the shell window.
+  affects: [design.modules.video_control.window_base]
+  status: open
+  by: limit
+- id: A-61
+  text: What does the board pin CLK100MHZ connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: in, drive: input, to: clk_sys}'
+  reason: Bind the board oscillator selected by the answered clock-source default.
+  affects: [design.board_ports.CLK100MHZ]
+  status: open
+  by: limit
+- id: A-62
+  text: What does the board pin CPU_RESETN connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: in, drive: input, to: rst_sys}'
+  reason: Use the board reset pin as the proposed system reset source.
+  affects: [design.board_ports.CPU_RESETN]
+  status: open
+  by: limit
+- id: A-63
+  text: What does the board pin VGA_HS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: push-pull, from: video_output.hsync}'
+  reason: Connect generated horizontal sync to the VGA output.
+  affects: [design.board_ports.VGA_HS]
+  status: open
+  by: limit
+- id: A-64
+  text: What does the board pin VGA_VS connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: push-pull, from: video_output.vsync}'
+  reason: Connect generated vertical sync to the VGA output.
+  affects: [design.board_ports.VGA_VS]
+  status: open
+  by: limit
+- id: A-65
+  text: What does the board pin VGA_R[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: push-pull, from: video_output.red}'
+  reason: Use the answered 4-bit VGA red-channel width.
+  affects: ['design.board_ports.VGA_R[3:0]']
+  status: open
+  by: limit
+- id: A-66
+  text: What does the board pin VGA_G[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: push-pull, from: video_output.green}'
+  reason: Use the answered 4-bit VGA green-channel width.
+  affects: ['design.board_ports.VGA_G[3:0]']
+  status: open
+  by: limit
+- id: A-67
+  text: What does the board pin VGA_B[3:0] connect to, and how is it driven (push-pull, open-drain, pulled up, input)?
+  default: '{dir: out, drive: push-pull, from: video_output.blue}'
+  reason: Use the answered 4-bit VGA blue-channel width.
+  affects: ['design.board_ports.VGA_B[3:0]']
+  status: open
+  by: limit

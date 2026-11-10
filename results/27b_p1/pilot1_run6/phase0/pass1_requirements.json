@@ -1,0 +1,92 @@
+{
+ "pass": "requirements",
+ "budget": 12,
+ "drafter_repairs": 0,
+ "requirements": 7,
+ "asked": 6,
+ "answered": 1,
+ "defaulted": 5,
+ "questions": [
+  {
+   "id": "P1-1",
+   "text": "What boundary rule should the 3 x 3 filter use for neighbourhood samples beyond the active picture?",
+   "default": "Replicate the nearest active-picture pixel at each boundary, so every active output pixel has a complete 3 x 3 neighbourhood.",
+   "reason": "The specification defines the neighbourhood operation but not how to obtain samples beyond the image edges.",
+   "answer": "Replicate the nearest active-picture pixel at each boundary, so every active output pixel has a complete 3 x 3 neighbourhood.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-3"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "Which patterns should be selectable through the UART?",
+   "default": "Provide the specified colour bars, a grayscale ramp, and a checkerboard; use the colour bars at startup.",
+   "reason": "The default pattern is specified, but the other choices available through the pattern-selection interface are not.",
+   "answer": "Provide the specified colour bars, a grayscale ramp, and a checkerboard; use the colour bars at startup.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-2",
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-3",
+   "text": "What UART command and response format should select a pattern and read the frame counter?",
+   "default": "Use newline-terminated ASCII commands `P<n>` to select pattern number n and `F` to read the counter, with newline-terminated ASCII replies.",
+   "reason": "The interface functions and baud rate are specified, but the command syntax and response format are not.",
+   "answer": "Use newline-terminated ASCII commands `P<n>` to select pattern number n and `F` to read the counter, with newline-terminated ASCII replies.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-4",
+   "text": "How should the frame counter count frames, and what width and reset behavior should it have?",
+   "default": "Use a 32-bit unsigned counter that increments once per completed displayed frame and starts at zero after power-up or reset.",
+   "reason": "The specification requires a readable frame counter but does not define its counting event, width, or initialization.",
+   "answer": "Use a 32-bit unsigned counter that increments once per completed displayed frame and starts at zero after power-up or reset.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-5",
+   "text": "What pixel-clock stability criterion should control the colour blanking and LED[0]?",
+   "default": "Treat the clock as stable when the clock-generation primitive's locked indication is asserted.",
+   "reason": "The specification requires stable-clock behavior but does not define how stability is determined.",
+   "answer": "Treat the clock as stable when the clock-generation primitive's locked indication is asserted.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-5",
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-6",
+   "text": "What colour-channel width should be used at the VGA output?",
+   "default": "Use the Nexys A7 VGA connector's native 4 bits per colour channel.",
+   "reason": "The board is specified, but the required output colour precision is not stated.",
+   "answer": "Use 4 bits per colour channel.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "    - SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area",
+   "settles": [
+    "S-2",
+    "S-3"
+   ]
+  }
+ ]
+}

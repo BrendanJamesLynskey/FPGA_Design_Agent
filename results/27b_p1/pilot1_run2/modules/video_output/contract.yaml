@@ -1,0 +1,24 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: video_output
+summary: Drive VGA sync and blank colour outputs when inactive, BTNC is pressed, or the pixel clock is unlocked.
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: btnc, dir: in, width: 1, clock: async}
+- {name: locked, dir: in, width: 1, clock: clk}
+- {name: active, dir: in, width: 1, clock: clk}
+- {name: in_hsync, dir: in, width: 1, clock: clk}
+- {name: in_vsync, dir: in, width: 1, clock: clk}
+- {name: in_red, dir: in, width: 4, clock: clk}
+- {name: in_green, dir: in, width: 4, clock: clk}
+- {name: in_blue, dir: in, width: 4, clock: clk}
+- {name: hsync, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: vsync, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: red, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: green, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: blue, dir: out, width: 4, clock: clk, reset_value: 0}

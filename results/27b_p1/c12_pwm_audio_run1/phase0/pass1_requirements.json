@@ -1,0 +1,56 @@
+{
+ "pass": "requirements",
+ "budget": 12,
+ "drafter_repairs": 0,
+ "requirements": 13,
+ "asked": 3,
+ "answered": 1,
+ "defaulted": 2,
+ "questions": [
+  {
+   "id": "P1-1",
+   "text": "What shell command framing, command encodings, numeric formats, and response format should be used for sample writes, gain writes, and sample_out reads?",
+   "default": "Use line-oriented ASCII commands: S followed by a signed decimal sample, G followed by an unsigned decimal gain, and R to read sample_out; return one line per command with a result or error.",
+   "reason": "The specification requires these shell operations and the baud rate but does not define the protocol the shell and design must share.",
+   "answer": "Use line-oriented ASCII commands: S followed by a signed decimal sample, G followed by an unsigned decimal gain, and R to read sample_out; return one line per command with a result or error.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-1",
+    "S-2",
+    "S-3",
+    "S-10"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "When should a changed duty value take effect, and what PWM counter and duty state should be used at reset?",
+   "default": "Reset the counter to zero and duty to 512; capture the calculated duty at counter rollover so it applies for the following period.",
+   "reason": "The specification says duty is updated once per period but does not define the update boundary or initial PWM phase.",
+   "answer": "Reset the counter to zero and duty to 512; capture the calculated duty at counter rollover so it applies for the following period.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-5",
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-3",
+   "text": "Should CPU_RESETN assertion and release be synchronous or asynchronous to CLK100MHZ?",
+   "default": "Use asynchronous assertion and synchronize deassertion to CLK100MHZ.",
+   "reason": "The specification requires reset behavior but does not define reset synchronization.",
+   "answer": "Asynchronous assertion and synchronized release on the clock.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "  kind: asynchronous button, synchronised (asserts at once, releases on the clock)",
+   "settles": [
+    "S-2",
+    "S-3",
+    "S-5"
+   ]
+  }
+ ]
+}

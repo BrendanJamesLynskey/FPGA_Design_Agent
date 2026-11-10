@@ -1,0 +1,13 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: pixel_clock
+summary: Generates the video pixel clock from the board clock using an MMCM.
+clocks:
+- {name: clk, port: clk_in, max_mhz: 100}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_low, style: async}
+ports:
+- {name: clk_in, dir: in}
+- {name: rst, dir: in}
+- {name: clk_out, dir: out, width: 1, clock: clk}
+- {name: locked, dir: out, width: 1, clock: clk, reset_value: 0}

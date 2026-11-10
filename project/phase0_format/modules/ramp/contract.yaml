@@ -1,0 +1,37 @@
+schema: fpga-design-agent/contract/v1
+module: ramp
+summary: a byte ramp on AXI4-Stream; STEP sets the increment
+parameters:
+  - {name: W, default: 8, values: [8]}
+clocks:
+  - {name: clk, port: clk, max_mhz: 150}
+resets:
+  - {name: rst, port: rst, clock: clk, polarity: active_high, style: sync}
+ports:
+  - {name: clk, dir: in}
+  - {name: rst, dir: in}
+  - {name: step, dir: in, width: W, clock: clk}
+  - {name: m_axis_tvalid, dir: out, clock: clk, reset_value: 0}
+  - {name: m_axis_tready, dir: in, clock: clk}
+  - {name: m_axis_tdata, dir: out, width: W, clock: clk}
+  - {name: m_axis_tlast, dir: out, clock: clk}
+data_formats:
+  - {name: byte, format: u8, packing: "an unsigned count"}
+interfaces:
+  - name: out
+    protocol: axi4-stream
+    role: master
+    prefix: m_axis
+    clock: clk
+    reset: rst
+    tdata: {width: W, fields: [{name: value, bits: [7, 0], format: byte}]}
+    tlast: "every 256th beat"
+    packet_beats: 256
+    backpressure: true
+    source_gaps: false
+registers:
+  bus: top
+  map:
+    - {name: STEP, offset: 0x00, access: RW, reset: 1, fields: [{name: step, bits: [7, 0], port: step}]}
+throughput:
+  - {interface: out, beats_per_cycle: 1}

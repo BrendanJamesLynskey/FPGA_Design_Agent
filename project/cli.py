@@ -5,9 +5,12 @@ generate the contract tests.
     python -m project status    <dir> [--json OUT] [--html OUT]
     python -m project hash      <dir> [--module M] [--json]
     python -m project gen-tests <dir> [--module M]
+    python -m project spec      <dir> [--interview on|oracle|off] [--hidden-spec F] [--model M] [--usd-cap X]
 
 ``status`` and ``check`` exit 1 when the checker finds a problem. ``hash`` prints the key of every (module, stage): the
-value an evidence item records (``modules/<m>/evidence/status.json``) so that it counts as current.
+value an evidence item records (``modules/<m>/evidence/status.json``) so that it counts as current. ``spec`` is phase 0
+(``project/phase0.py``): from ``<dir>/system/spec.md`` it writes the requirements, ``design.yaml`` and the contracts, and
+the question log under ``<dir>/phase0/``.
 """
 
 from __future__ import annotations
@@ -35,8 +38,16 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("status", help="current / stale / missing evidence per module and stage")
     h = sub.add_parser("hash", help="the stage keys of today's inputs")
     g = sub.add_parser("gen-tests", help="write tests/contract_tb.py and tests/test_contract_rtl.py per module")
-    for p in (c, s, h, g):
+    sp = sub.add_parser("spec", help="phase 0: requirements, design.yaml and the contracts from system/spec.md")
+    for p in (c, s, h, g, sp):
         p.add_argument("dir", type=Path)
+    sp.add_argument("--interview", choices=("on", "oracle", "off"), default="on")
+    sp.add_argument("--hidden-spec", type=Path, help="the oracle's full spec (--interview oracle)")
+    sp.add_argument("--model", help="the drafter's and the oracle's model (OpenRouter); default: the agent's")
+    sp.add_argument("--board", default="nexys_a7_100t")
+    sp.add_argument("--usd-cap", type=float, default=0.50, help="stop when provider-reported cost reaches this")
+    sp.add_argument("--record", type=Path, help="write every model call to this file (a replay fixture)")
+    sp.add_argument("--replay", type=Path, help="serve the model calls from this file (no network)")
     for p in (c, s):
         p.add_argument("--json", type=Path, help="write the result as JSON to this file")
     s.add_argument("--html", type=Path, help="write the dashboard page to this file")
@@ -67,6 +78,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"dashboard: {a.html}")
         return 0 if st["valid"] else 1
 
+    if a.cmd == "spec":
+        return _spec(a, root)
+
     p = check_project(root)
     if p.errors:
         for e in p.errors:
@@ -91,6 +105,31 @@ def main(argv: list[str] | None = None) -> int:
         for f in contract_test.write(root / "modules" / m, p.module(m).get("params")):
             print(f"wrote {f.relative_to(root)}")
     return 0
+
+
+def _spec(a: argparse.Namespace, root: Path) -> int:
+    from agent.graph.interview import SpecOracle
+    from agent.graph.llm import DEFAULT_MODEL, OpenRouterClient, Recorder, Replay
+    from project.phase0 import Calls, Drafter, Session, Terminal, oracle_llm
+    if not (root / "system" / "spec.md").is_file():
+        print(f"project: {root}/system/spec.md is missing (the user's words)")
+        return 1
+    if a.interview == "oracle" and not (a.hidden_spec and a.hidden_spec.is_file()):
+        print("project: --interview oracle needs --hidden-spec <file>")
+        return 1
+    if a.replay:
+        client = Replay(a.replay)
+    else:
+        client = OpenRouterClient(a.model or DEFAULT_MODEL)
+        client = Recorder(client, a.record) if a.record else client
+    calls = Calls()
+    who = {"on": Terminal(), "off": None}.get(a.interview) if a.interview != "oracle" else \
+        SpecOracle(a.hidden_spec, oracle_llm(client, calls))
+    out = Session(root, Drafter(client, calls, a.usd_cap), who, board=a.board).run()
+    if isinstance(who, SpecOracle):                   # the oracle's own record: refused quotes, register-map answers
+        (root / "phase0" / "oracle_log.json").write_text(json.dumps(who.log, indent=1) + "\n")
+    print(json.dumps(out, indent=1))
+    return 0 if out["valid"] else 1
 
 
 if __name__ == "__main__":

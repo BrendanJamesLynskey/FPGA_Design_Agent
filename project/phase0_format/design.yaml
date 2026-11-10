@@ -1,0 +1,38 @@
+# Format example for the phase 0 drafter (brief 27B P1): NOT a real design and not related to any benchmark task.
+# A ramp generator streams bytes to an LED sink; the step size is a shell register. The prompt shows this project so the
+# drafter sees every key of design.yaml and contract.yaml in a form the checker accepts (project/tests checks it).
+schema: fpga-design-agent/project/v1
+name: ramp_leds
+board: nexys_a7_100t
+clocks:
+  - {name: clk_sys, source: board, port: CLK100MHZ, mhz: 100}
+  - {name: clk_fast, source: mmcm, from: clk_sys, mhz: 125}
+resets:
+  - {name: rst_sys, domain: clk_sys, polarity: active_high, style: sync, from: BTNC, via: reset_sync}
+  - {name: rst_fast, domain: clk_fast, polarity: active_high, style: sync, from: rst_sys, via: reset_sync}
+shell: {design_id: RAMP, clock: clk_sys, reset: rst_sys}
+modules:
+  - name: ramp
+    kind: rtl
+    clocks: {clk: clk_fast}
+    resets: {rst: rst_fast}
+    params: {W: 8}
+    window_base: 0x00
+    register_crossings: {STEP: xpm_cdc_array_single}
+  - name: led_sink
+    kind: rtl
+    clocks: {clk: clk_sys}
+    resets: {rst: rst_sys}
+connections:
+  - {from: ramp.out, to: led_sink.in, crossing: {primitive: xpm_fifo_async}}
+board_ports:
+  - {name: CLK100MHZ, dir: in, drive: input, to: clk_sys}
+  - {name: BTNC, dir: in, drive: input, to: rst_sys}
+  - {name: UART_TXD_IN, dir: in, drive: input, to: shell.uart_rx}
+  - {name: UART_RXD_OUT, dir: out, drive: push-pull, from: shell.uart_tx}
+  - {name: "LED[7:0]", dir: out, drive: push-pull, from: led_sink.leds}
+  - {name: "LED[8]", dir: out, drive: push-pull, from: clk_fast.locked}
+owned: []
+assumptions:
+  - {id: A-1, text: "The LEDs show the last byte received", default: "hold the last byte", reason: "the spec does not say",
+     affects: [led_sink.contract.ports.leds], status: open}

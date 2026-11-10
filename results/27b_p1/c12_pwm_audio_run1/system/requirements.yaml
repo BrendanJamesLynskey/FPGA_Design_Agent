@@ -1,0 +1,65 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/requirements/v1
+requirements:
+- id: S-1
+  text: The top-level module is c12_nexys_pwm_audio_top and exposes the board-XDC ports for AUD_PWM, AUD_SD, USB-UART,
+    CLK100MHZ, CPU_RESETN, and the 16-bit LED output, plus the CLKS_PER_BIT, TIMEOUT_CYCLES, and BUILD_STAMP parameters.
+  proof: [analysis, simulation]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-2
+  text: The sample is a signed 16-bit value that can be written over the shell, is held between writes, and is cleared
+    by CPU_RESETN; sample_out is a combinational signed 16-bit result.
+  proof: [simulation]
+  modules: [audio_state]
+- id: S-3
+  text: The gain register is unsigned Q15, resets to 2068, accepts shell writes, and stores 8192 instead of any
+    written value greater than 8192.
+  proof: [simulation]
+  modules: [audio_state]
+- id: S-4
+  text: sample_out equals floor(sample multiplied by gain divided by 32768), with the result represented as a signed
+    16-bit value.
+  proof: [simulation, analysis]
+  modules: [audio_state]
+- id: S-5
+  text: A free-running 10-bit counter advances from the 100 MHz clock and repeats every 1024 clocks, giving a nominal
+    97.7 kHz PWM carrier.
+  proof: [simulation, analysis]
+  modules: [pwm_stage]
+- id: S-6
+  text: The PWM duty value is 512 plus floor(sample_out divided by 128), and is updated once per PWM period.
+  proof: [simulation, analysis]
+  modules: [pwm_stage]
+- id: S-7
+  text: AUD_PWM is pulled low when the PWM counter is greater than or equal to the duty value and is otherwise high
+    impedance; it is never driven high.
+  proof: [simulation, hardware]
+  modules: [pwm_stage, c12_nexys_pwm_audio_top]
+- id: S-8
+  text: AUD_SD is always high.
+  proof: [simulation, hardware]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-9
+  text: The 16-bit LED output is always off.
+  proof: [simulation, hardware]
+  modules: [c12_nexys_pwm_audio_top]
+- id: S-10
+  text: The shell communicates over the USB-UART at 115200 baud and supports writing the sample, writing the gain,
+    and reading back sample_out.
+  proof: [simulation, hardware]
+  modules: [audio_state, c12_nexys_pwm_audio_top]
+- id: S-11
+  text: The design closes timing at 100 MHz.
+  proof: [analysis, hardware]
+  modules: [audio_state, pwm_stage, c12_nexys_pwm_audio_top]
+- id: S-12
+  text: Simulation verifies reset behavior, gain writes of 65535, 4000, 8192, and 8193, a reset after a write, and
+    sample values including 0, +32767, and -32768 held for several PWM periods; it checks sample_out, low-clock
+    counts measured at AUD_PWM, and AUD_SD.
+  proof: [simulation]
+  modules: [audio_state, pwm_stage, c12_nexys_pwm_audio_top]
+- id: S-13
+  text: The top-level exposes CLKS_PER_BIT, TIMEOUT_CYCLES, and BUILD_STAMP as parameters, and introduces no other
+    time constants.
+  proof: [analysis]
+  modules: [c12_nexys_pwm_audio_top]

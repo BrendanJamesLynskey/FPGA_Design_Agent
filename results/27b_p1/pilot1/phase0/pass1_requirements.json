@@ -1,0 +1,94 @@
+{
+ "pass": "requirements",
+ "budget": 12,
+ "drafter_repairs": 0,
+ "requirements": 7,
+ "asked": 6,
+ "answered": 1,
+ "defaulted": 5,
+ "questions": [
+  {
+   "id": "P1-1",
+   "text": "What source and criterion should be used for the pixel clock and its stable indication?",
+   "default": "Generate 74.25 MHz from the Nexys A7 100 MHz oscillator with an MMCM, and treat the MMCM LOCKED indication as stable.",
+   "reason": "The specification requires a 74.25 MHz clock and a stable indication but does not specify clock generation or how stability is determined.",
+   "answer": "Generate 74.25 MHz from the Nexys A7 100 MHz oscillator with an MMCM, and treat the MMCM LOCKED indication as stable.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-1",
+    "S-5",
+    "S-6"
+   ]
+  },
+  {
+   "id": "P1-2",
+   "text": "What output colour-channel width and representation should be used for the VGA connector?",
+   "default": "Use 4 bits per RGB channel, as on the Nexys A7 VGA interface, with the named bars represented by full-scale RGB combinations.",
+   "reason": "The specification names colours and requires black output in certain conditions, but does not define channel width or colour encoding.",
+   "answer": "Use 4 bits per RGB channel. The bars are FFF, FF0, 0FF, 0F0, F0F, F00, 00F, and 000 from left to right.",
+   "status": "answered",
+   "by": "oracle",
+   "evidence": "- SW[1:0] = 00 -> eight bars of 160 pixels, 4-bit channels, colours FFF FF0 0FF 0F0 F0F F00 00F 000 left to right; black outside the active area",
+   "settles": [
+    "S-2",
+    "S-5"
+   ]
+  },
+  {
+   "id": "P1-3",
+   "text": "How should the filter handle neighbourhoods at the active-picture edges where a full 3 x 3 window is unavailable?",
+   "default": "Extend the nearest active-picture pixel to fill missing window positions.",
+   "reason": "The median operation is specified, but edge-window handling is not.",
+   "answer": "Extend the nearest active-picture pixel to fill missing window positions.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-3",
+    "S-4"
+   ]
+  },
+  {
+   "id": "P1-4",
+   "text": "Which selectable test patterns should the shell provide?",
+   "default": "Provide the specified colour bars and a one-pixel checkerboard; select the colour bars on startup.",
+   "reason": "The specification requires pattern selection and defines the default pattern, but does not name any alternative patterns.",
+   "answer": "Provide the specified colour bars and a one-pixel checkerboard; select the colour bars on startup.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-2",
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-5",
+   "text": "What UART framing and command/response format should the test shell use?",
+   "default": "Use 8-N-1 ASCII lines: `P<n>` selects pattern n, `F?` reads the frame counter, and `ID?` returns `VMED`.",
+   "reason": "The baud rate, design ID, and shell functions are specified, but the serial framing and command syntax are not.",
+   "answer": "Use 8-N-1 ASCII lines: `P<n>` selects pattern n, `F?` reads the frame counter, and `ID?` returns `VMED`.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  },
+  {
+   "id": "P1-6",
+   "text": "How should the frame counter advance, reset, and be represented when read?",
+   "default": "Use a 32-bit unsigned counter, reset to zero on FPGA configuration, increment once per completed video frame, and return its decimal value.",
+   "reason": "The specification requires a readable frame counter but does not define its counting event, width, reset value, or representation.",
+   "answer": "Use a 32-bit unsigned counter, reset to zero on FPGA configuration, increment once per completed video frame, and return its decimal value.",
+   "status": "defaulted",
+   "by": "oracle",
+   "evidence": null,
+   "settles": [
+    "S-7"
+   ]
+  }
+ ]
+}

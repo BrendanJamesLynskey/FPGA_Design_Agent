@@ -1,0 +1,112 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/project/v1
+name: c12_nexys_pwm_audio
+board: nexys_a7_100t
+clocks:
+- {name: clk_sys, source: board, port: CLK100MHZ, mhz: 100}
+resets:
+- {name: rst_sys, domain: clk_sys, polarity: active_low, style: async, from: CPU_RESETN, via: reset_sync}
+shell: {design_id: PWMA, clock: clk_sys, reset: rst_sys}
+modules:
+- name: c12_nexys_pwm_audio_top
+  kind: rtl
+  clocks: {clk: clk_sys}
+  resets: {rst: rst_sys}
+  params: {CLKS_PER_BIT: 868, TIMEOUT_CYCLES: 100000, BUILD_STAMP: 0}
+- name: audio_state
+  kind: rtl
+  clocks: {clk: clk_sys}
+  resets: {rst: rst_sys}
+  window_base: 0
+- name: pwm_stage
+  kind: rtl
+  clocks: {clk: clk_sys}
+  resets: {rst: rst_sys}
+connections: []
+board_ports:
+- {name: CLK100MHZ, dir: in, drive: input, to: clk_sys}
+- {name: CPU_RESETN, dir: in, drive: input, to: rst_sys}
+- {name: UART_TXD_IN, dir: in, drive: input, to: shell.uart_rx}
+- {name: UART_RXD_OUT, dir: out, drive: push-pull, from: shell.uart_tx}
+- {name: AUD_PWM, dir: out, drive: pulled-up, from: c12_nexys_pwm_audio_top.aud_pwm}
+- {name: AUD_SD, dir: out, drive: push-pull, from: c12_nexys_pwm_audio_top.aud_sd}
+- {name: 'LED[15:0]', dir: out, drive: push-pull, from: c12_nexys_pwm_audio_top.led}
+owned: []
+assumptions:
+- id: A-1
+  text: What shell command framing, command encodings, numeric formats, and response format should be used for sample
+    writes, gain writes, and sample_out reads?
+  default: 'Use line-oriented ASCII commands: S followed by a signed decimal sample, G followed by an unsigned decimal
+    gain, and R to read sample_out; return one line per command with a result or error.'
+  reason: The specification requires these shell operations and the baud rate but does not define the protocol the
+    shell and design must share.
+  affects: [S-1, S-2, S-3, S-10]
+  status: open
+  by: oracle
+- id: A-2
+  text: When should a changed duty value take effect, and what PWM counter and duty state should be used at reset?
+  default: Reset the counter to zero and duty to 512; capture the calculated duty at counter rollover so it applies
+    for the following period.
+  reason: The specification says duty is updated once per period but does not define the update boundary or initial
+    PWM phase.
+  affects: [S-5, S-6]
+  status: open
+  by: oracle
+- id: A-3
+  text: What value, and what allowed range, should parameter BUILD_STAMP of c12_nexys_pwm_audio_top have?
+  default: '{default: 0, values: [0]}'
+  reason: The specification provides the parameter name but not a default; zero is a neutral placeholder.
+  affects: [c12_nexys_pwm_audio_top.contract.parameters.BUILD_STAMP]
+  status: open
+  by: oracle
+- id: A-4
+  text: 'What is c12_nexys_pwm_audio_top''s port aud_pwm: its direction, width and value in reset?'
+  default: '{dir: out, width: 1}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [c12_nexys_pwm_audio_top.contract.ports.aud_pwm]
+  status: open
+  by: oracle
+- id: A-5
+  text: 'What is c12_nexys_pwm_audio_top''s port aud_sd: its direction, width and value in reset?'
+  default: '{dir: out, width: 1, reset_value: 1}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [c12_nexys_pwm_audio_top.contract.ports.aud_sd]
+  status: open
+  by: oracle
+- id: A-6
+  text: 'What is c12_nexys_pwm_audio_top''s port led: its direction, width and value in reset?'
+  default: '{dir: out, width: 16, reset_value: 0}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [c12_nexys_pwm_audio_top.contract.ports.led]
+  status: open
+  by: oracle
+- id: A-7
+  text: 'What is audio_state''s port gain: its direction, width and value in reset?'
+  default: '{dir: in, width: 16}'
+  reason: The gain is represented as a 16-bit input driven by its shell register; reset is specified for the stored
+    register value, not as a port reset_value.
+  affects: [audio_state.contract.ports.gain]
+  status: open
+  by: oracle
+- id: A-8
+  text: What number format is gain_u16 in audio_state (signed or unsigned, total and fraction bits), and how is
+    it packed?
+  default: '{format: u16, packing: unsigned Q15 gain register}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [audio_state.contract.data_formats.gain_u16]
+  status: open
+  by: oracle
+- id: A-9
+  text: 'What is pwm_stage''s port sample_in: its direction, width and value in reset?'
+  default: '{dir: in, width: 16}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [pwm_stage.contract.ports.sample_in]
+  status: open
+  by: oracle
+- id: A-10
+  text: 'What is pwm_stage''s port aud_pwm: its direction, width and value in reset?'
+  default: '{dir: out, width: 1}'
+  reason: the specification does not state it; this is the drafter's proposal
+  affects: [pwm_stage.contract.ports.aud_pwm]
+  status: open
+  by: oracle

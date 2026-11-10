@@ -1,0 +1,1 @@
+Generate one raster beat per pixel-clock cycle. Use 1650 clocks per line and 750 lines per frame, marking active video, positive syncs, and line ends in stream metadata. Pattern register value 0 selects the eight specified colour bars; value 1 selects the proposed black-and-white checkerboard. Carry BTNC as a force-blank flag in the stream.

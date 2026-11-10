@@ -22,6 +22,8 @@ python -m project check     <dir> [--json OUT]               # design.yaml, each
 python -m project status    <dir> [--json OUT] [--html OUT]   # current / stale / missing evidence per module and stage; the dashboard
 python -m project hash      <dir> [--module M] [--json]       # the stage keys of today's inputs
 python -m project gen-tests <dir> [--module M]                # tests/contract_tb.py and tests/test_contract_rtl.py per module
+python -m project spec      <dir> [--interview on|oracle|off] [--hidden-spec F] [--model M] [--usd-cap X]
+                                                              # phase 0 (stage P1): requirements, design.yaml, contracts
 ```
 
 `python -m agent project ...` is the same CLI. `check` and `status` exit with 1 when the checker finds a problem.
@@ -51,8 +53,8 @@ same as in today's `designs/<name>/`. They enter the stage keys as soon as they 
 | `resets` | `{name, domain, polarity, style: sync\|async, from, via}` | a reset derived in another domain needs `via` (a CDC primitive) |
 | `shell` | `{design_id: 4 ASCII characters, clock, reset}`: `shell/rtl/fpga_shell.sv` | the shell's UART pins are on board ports |
 | `modules` | `{name, kind: rtl\|ipgen\|lib, clocks: {contract clock: design clock}, resets: {...}, params, window_base, register_crossings}` | every contract clock and reset is bound; a bound clock is not faster than the contract's `max_mhz`; reset polarity, style and domain match; parameter overrides are in the contract's allowed values |
-| `connections` | `{from: <module>.<interface>, to: <module>.<interface>, crossing: {primitive}}` | master to slave, the same protocol and `tdata` width and fields, the same `tuser` bits, both or neither with `tlast`, equal `packet_beats`, a sink that may stall only behind a source that can be stalled, a source with gaps only into a sink that allows gaps; a crossing exactly where the two ends are on different design clocks; every slave connected; each interface connected once |
-| `board_ports` | `{name: NAME or NAME[hi:lo], dir, drive: push-pull\|open-drain\|pulled-up\|input, from \| to}` | every bit is in the board's master XDC; the width equals the width of what it is bound to (`<clock>`, `<reset>`, `<clock>.locked`, `shell.uart_rx`/`uart_tx`, `<module>.<port>`, `<module>.<interface>.tuser.<name>`, `<module>.<interface>.<signal>[hi:lo]`) |
+| `connections` | `{from: <module>.<interface>, to: <module>.<interface>, crossing: {primitive}}` | master to slave, the same protocol and `tdata` width and fields, the same `tuser` bits, both or neither with `tlast`, equal `packet_beats`, a sink that may stall only behind a source that can be stalled, a source with gaps only into a sink that allows gaps; a crossing exactly where the two ends are on different design clocks; every slave connected; each interface connected once; with more than one module, at least one connection, and every module reachable from a board port or the shell window (its `window_base`) through connections |
+| `board_ports` | `{name: NAME or NAME[hi:lo], dir, drive: push-pull\|open-drain\|pulled-up\|input, from \| to}` | every bit is in the board's master XDC; `dir` agrees with the board's direction for the pin (the FPGA's view: the master XDC's section, or the pin's `dir` in `boards/<board>/inventory.yaml`; Pmod pins are not checked); the width equals the width of what it is bound to (`<clock>`, `<reset>`, `<clock>.locked`, `shell.uart_rx`/`uart_tx`, `<module>.<port>`, `<module>.<interface>.tuser.<name>`, `<module>.<interface>.<signal>[hi:lo]`) |
 | `owned` | paths or globs the engineer owns | inside the project |
 | `assumptions` | `{id: A-<n>, text, default, reason, affects, status: open\|resolved}` | ids unique; the dashboard lists the open ones |
 
@@ -129,6 +131,45 @@ only (`c9_nexys_vga_720p`, `c9_median3x3`). There is no RGB-to-YCbCr stage (`c9_
 ```
 python -m project status project/examples/video_median --html build/project_dashboard.html
 ```
+
+## Phase 0, the spec session (stage P1)
+
+`python -m project spec <dir>` ([project/phase0.py](../project/phase0.py)) reads the user's words in
+`<dir>/system/spec.md` and writes `system/requirements.yaml`, `design.yaml`, and `modules/<m>/contract.yaml` and
+`modules/<m>/spec.md` per module. The drafter is a model (the clarify role); every file it proposes goes through
+`check_project`, and the checker's messages go back to it as repair notes (at most three repairs per step).
+
+| Pass | The drafter does | The questions | Log |
+|---|---|---|---|
+| 1 requirements | S-requirements with proof methods (a missing proof gets `propose_proof`'s default) | its own, each naming the S-ids it settles; budget 12 | `phase0/pass1_requirements.json` |
+| 2 decomposition and contracts | modules, connections, a contract per module, the clock and reset plan, the shell and the board pins, with the pass 1 answers; for every field, a word-for-word quote of the spec (`sources`) or a reason (`reasons`) | **made by the harness, not the model:** one per field of the inventory (below) that no quote states; the drafter's value is the proposed default. Asked in order: interface fields module by module, each module within its own share (12), then the design's own fields (12), then data formats and board pins (12 together) | `phase0/pass2_contracts.json` |
+| assumptions | - | every question nobody answered (`not specified`, over the budget, `--interview off`) becomes `assumptions: [{id: A-n, text, default, reason, affects, status: open, by}]` in `design.yaml`; the drafter's own assumptions are dropped | `design.yaml` |
+
+The field inventory (`phase0.inventory`): per contract, each parameter, each clock's `max_mhz`, each reset, each port
+outside an interface, each data format, each interface's protocol and role, and for AXI4-Stream its `tdata`, `tuser`,
+`tlast`, `packet_beats`, `backpressure` and `source_gaps`, for AXI4-Lite its widths; the register map (one question,
+worded so that the oracle answers it with the hidden spec's whole map, as `ensure_register_question` does today); each
+latency and throughput. Per design: each clock, each reset, the shell's design ID, each module's `window_base`, each
+board pin. The six stream fields that both ends of a connection must share are asked once per connection and settle both
+ends. A quote counts only when it is in `system/spec.md` (whitespace and quote marks normalised, at least three
+words), the rule the oracle's quotes already follow, and only when it holds every number of the field's value (a
+latency of 1651 cycles is not stated by a sentence with no number in it). A quote still proves only that the words are
+in the spec, not that a non-numeric value (an electrical type, a protocol) matches them (see the measurement).
+
+After the answers, the drafter applies them. A field it changes without an answer naming it goes back to it as a
+repair note (put the draft value back); what is still changed after three repairs is listed under `unasked_changes`
+in the pass 2 log. `phase0/session.json` holds the check result and the token and cost totals,
+`phase0/llm_calls.json` every call, `phase0/oracle_log.json` the oracle's own record.
+
+**`spec.yaml` stays the stage 1 input.** Phase 0 does not write it. Today's stage 0 clarify writes it per module from
+`modules/<m>/spec.md` and the approved contract, and `phase0.spec_contract_errors` holds the two together (the same port
+names, directions and widths with the parameter defaults, the same register offsets, names and access). The reason: the
+roles and gates after stage 0 (model, tests, RTL, `flow/verif_gates.spec_items`, the spec-test role) read `spec.yaml`'s
+behaviour, timing and M-requirements, which a contract does not hold, and replacing it would change every role's request
+(the eval-1 golden request test). The contract is the authority on the interface.
+
+Measured on two development-split specs: [results/27b_p1/results.md](../results/27b_p1/results.md). The test-plan pass
+(design section 3, pass 3) and an interactive review of the decomposition are not in P1.
 
 ## Not in P0
 

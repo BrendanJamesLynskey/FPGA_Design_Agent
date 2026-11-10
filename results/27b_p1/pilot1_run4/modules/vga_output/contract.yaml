@@ -1,0 +1,62 @@
+# Written by phase 0 (python -m project spec; brief 27B P1). Format: docs/project_layer.md.
+schema: fpga-design-agent/contract/v1
+module: vga_output
+summary: Drives VGA RGB and sync outputs from the filtered raster stream, blanking RGB when required.
+clocks:
+- {name: clk, port: clk, max_mhz: 74.25}
+resets:
+- {name: rst, port: rst, clock: clk, polarity: active_high, style: sync}
+ports:
+- {name: clk, dir: in}
+- {name: rst, dir: in}
+- {name: blank_button, dir: in, width: 1, clock: async}
+- {name: pixel_locked, dir: in, width: 1, clock: async}
+- {name: red, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: green, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: blue, dir: out, width: 4, clock: clk, reset_value: 0}
+- {name: hsync, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: vsync, dir: out, width: 1, clock: clk, reset_value: 0}
+- {name: s_axis_tvalid, dir: in, clock: clk}
+- {name: s_axis_tready, dir: out, clock: clk, reset_value: 0}
+- {name: s_axis_tdata, dir: in, width: 36, clock: clk}
+- {name: s_axis_tuser, dir: in, width: 1, clock: clk}
+- {name: s_axis_tlast, dir: in, clock: clk}
+data_formats:
+- {name: rgb12, format: u12, packing: three 4-bit RGB channels}
+- {name: x11, format: u11, packing: horizontal raster coordinate}
+- {name: y10, format: u10, packing: vertical raster coordinate}
+- {name: bit1, format: u1, packing: one raster metadata bit}
+interfaces:
+- name: in
+  protocol: axi4-stream
+  role: slave
+  prefix: s_axis
+  clock: clk
+  reset: rst
+  tdata:
+    width: 36
+    fields:
+    - name: rgb
+      bits: [35, 24]
+      format: rgb12
+    - name: x
+      bits: [23, 13]
+      format: x11
+    - name: y
+      bits: [12, 3]
+      format: y10
+    - name: active
+      bits: [2, 2]
+      format: bit1
+    - name: hsync
+      bits: [1, 1]
+      format: bit1
+    - name: vsync
+      bits: [0, 0]
+      format: bit1
+  tuser:
+  - {bit: 0, name: frame_start, meaning: Assert on the first raster position of each frame.}
+  tlast: Assert on the final raster position of each frame.
+  packet_beats: 1237500
+  backpressure: false
+  source_gaps: false
