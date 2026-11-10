@@ -296,7 +296,7 @@ def test_the_dashboard_is_one_static_page() -> None:
     assert "Hand-written evidence." in html and "nobody has approved" in html
     assert html.count('<rect class="box') == 2
     assert '<rect class="box pass"' in html and '<rect class="box stale"' in html
-    assert "video_out → video_in" in html and "A-1" in html and "prefers-color-scheme:dark" in html
+    assert "video_out →" in html and "→ video_in" in html and "A-1" in html and "prefers-color-scheme:dark" in html
 
 
 def test_the_dashboard_marks_a_failing_module_and_a_crossing(proj: Path) -> None:

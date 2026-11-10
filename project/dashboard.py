@@ -60,15 +60,15 @@ def _columns(st: dict[str, Any]) -> list[list[str]]:
 def graph_svg(st: dict[str, Any]) -> str:
     mods = {m["module"]: m for m in st["modules"]}
     cols = _columns(st)
-    bw, bh, gx, gy, x0, y0 = 190, 78, 90, 34, 20, 46
+    bw, bh, gx, gy, x0, y0 = 250, 96, 150, 34, 10, 30
     pos: dict[str, tuple[int, int]] = {}
     for ci, col in enumerate(cols):
         for ri, n in enumerate(col):
             pos[n] = (x0 + ci * (bw + gx), y0 + ri * (bh + gy))
     rows = max((len(c) for c in cols), default=1)
-    width = x0 * 2 + len(cols) * bw + (len(cols) - 1) * gx + 120
+    width = x0 * 2 + len(cols) * bw + (len(cols) - 1) * gx
     height = y0 + rows * (bh + gy) + 10
-    out = [f'<svg viewBox="0 0 {width} {height}" role="img" aria-label="module graph" xmlns="http://www.w3.org/2000/svg">',
+    out = [f'<svg viewBox="0 0 {width} {height}" style="max-width:{width}px" role="img" aria-label="module graph" xmlns="http://www.w3.org/2000/svg">',
            '<defs><marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" '
            'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--fg)"/></marker></defs>']
     for x in st["connections"]:
@@ -80,7 +80,8 @@ def graph_svg(st: dict[str, Any]) -> str:
         cls = "edge x" if x.get("crossing") else "edge"
         out.append(f'<path class="{cls}" d="M{sx},{sy} C{sx + 40},{sy} {ex - 40},{ey} {ex},{ey}" marker-end="url(#arr)"/>')
         lab = str(x.get("from", "")).split(".")[1] + " → " + str(x.get("to", "")).split(".")[1]
-        out.append(f'<text x="{(sx + ex) // 2}" y="{min(sy, ey) - 8}" text-anchor="middle">{_e(lab)}</text>')
+        out.append(f'<text x="{(sx + ex) // 2}" y="{min(sy, ey) - 22}" text-anchor="middle">{_e(lab.split(" → ")[0])} →</text>')
+        out.append(f'<text x="{(sx + ex) // 2}" y="{min(sy, ey) - 8}" text-anchor="middle">→ {_e(lab.split(" → ")[1])}</text>')
         if x.get("crossing"):
             out.append(f'<text class="m" x="{(sx + ex) // 2}" y="{min(sy, ey) + 16}" text-anchor="middle">'
                        f'{_e(x["crossing"].get("primitive"))}</text>')
@@ -89,15 +90,15 @@ def graph_svg(st: dict[str, Any]) -> str:
         state = _box_state(m)
         inv = ' class="inv"' if state == "fail" else ""
         dom = ", ".join(sorted(set((st["domains"].get(n) or {}).get("clocks", {}).values())))
-        reached = f"reached {m['reached']} {m['reached_stage']}" if m["reached"] >= 0 else "no stage passed"
+        reached = f"reached {m['reached']}" if m["reached"] >= 0 else "no stage passed"
+        stage = m["reached_stage"] or ""
         reent = "" if m["reentry"] is None else f"re-enter at {m['reentry']}"
         out.append(f'<rect class="box {state}" x="{x}" y="{y}" width="{bw}" height="{bh}" rx="3"/>')
         out.append(f'<text{inv} x="{x + 8}" y="{y + 18}" style="font-weight:bold">{_e(n)}</text>')
         out.append(f'<text{inv} x="{x + 8}" y="{y + 34}">{_e(m["kind"])} · {_e(dom)}</text>')
         out.append(f'<text{inv} x="{x + 8}" y="{y + 50}">{_e(reached)}</text>')
-        out.append(f'<text{inv} x="{x + 8}" y="{y + 66}">{_e(reent)}</text>')
-    out.append(f'<text class="m" x="{x0}" y="20">solid: stages so far pass · dashed box: stale evidence · filled: a '
-               'stage fails · dashed link: clock-domain crossing</text>')
+        out.append(f'<text{inv} x="{x + 8}" y="{y + 66}">{_e(stage)}</text>')
+        out.append(f'<text{inv} x="{x + 8}" y="{y + 84}">{_e(reent)}</text>')
     out.append("</svg>")
     return "".join(out)
 
@@ -118,7 +119,9 @@ def page(st: dict[str, Any]) -> str:
         parts.append("<h2>Problems</h2><ul>" + "".join(f"<li>{_e(x)}</li>" for x in st["errors"]) + "</ul>")
     if st["warnings"]:
         parts.append("<h2>Warnings</h2><ul>" + "".join(f"<li>{_e(x)}</li>" for x in st["warnings"]) + "</ul>")
-    parts.append("<h2>Module graph</h2>" + f'<div class="wrap">{graph_svg(st)}</div>')
+    parts.append("<h2>Module graph</h2>" + f'<div class="wrap">{graph_svg(st)}</div>'
+                 + '<p class="mut">Box outline: solid when every stage so far passes, dashed when evidence is stale, '
+                 "filled when a stage fails. A dashed link is a clock-domain crossing.</p>")
     head = "".join(f'<th title="{_e(n)}">{i}</th>' for i, n in enumerate(st["stages"]))
     rows = []
     for m in st["modules"]:
