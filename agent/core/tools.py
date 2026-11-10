@@ -14,6 +14,8 @@ rely on the model's good behaviour):
 
 from __future__ import annotations
 
+import inspect
+
 import functools
 import glob
 import json
@@ -771,6 +773,15 @@ def search_docs(s: Session, query: str, k: int = 5, sections: list[str] | None =
             "untrusted": True}
 
 
+def _bank_skills(s: Session, sections: list[str], procedures: bool) -> list[dict]:
+    """The bank's skills for the session; the target part goes along when the bank takes it (brief 31), so the family
+    units follow build.yaml rather than the session's default family."""
+    kw = {}
+    if getattr(s, "part", None) and "part" in inspect.signature(s.bank.skills).parameters:
+        kw["part"] = s.part
+    return s.bank.skills(s.board, s.family, sections, primary_only=True, procedures=procedures, **kw)
+
+
 @tool("load_skill", "Load the frozen bank's skills for this board and family, filtered to bank section ids "
                     "(SECTIONS.yaml). Returns SKILL.md text as data.",
       {"sections": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9\\-]{1,40}$"},
@@ -779,7 +790,7 @@ def search_docs(s: Session, query: str, k: int = 5, sections: list[str] | None =
 def load_skill(s: Session, sections: list[str], procedures: bool = False) -> dict:
     if s.bank is None:
         return {"ok": False, "output": "no knowledge bank configured"}
-    sk = s.bank.skills(s.board, s.family, sections, primary_only=True, procedures=procedures)[:6]
+    sk = _bank_skills(s, sections, procedures)[:6]
     # Brief 05g: some sections (verification-stages, debug-ila-vio...) live only in the procedures layer; asking for
     # them without ``procedures`` returned nothing and the agents (and the 05f log) saw an empty list. A section that
     # matched nothing is retried in the procedures layer, and the log says so.
@@ -788,7 +799,7 @@ def load_skill(s: Session, sections: list[str], procedures: bool = False) -> dic
         got = {x["section"] for x in sk}
         missing = [x for x in sections if x not in got]
         if missing:
-            extra = s.bank.skills(s.board, s.family, missing, primary_only=True, procedures=True)
+            extra = _bank_skills(s, missing, True)
             known = {x["path"] for x in sk}
             more = [x for x in extra if x["path"] not in known and x["path"].startswith("procedures/")]
             if more:

@@ -297,8 +297,15 @@ def prose_numbers(s: str) -> list[str]:
     return NUM.findall(PROSE_OK.sub(" ", s))
 
 
+def family_diffs() -> dict:
+    """site/data/family_diffs.json (brief 31): per area the family-difference topics with our one-line summaries and the
+    documents to read per family, exported from the private bank's family_matrix/ by its tools/family_matrix.py."""
+    return json.loads((HERE / "data" / "family_diffs.json").read_text())
+
+
 def build() -> dict:
     y = yaml.safe_load((HERE / "data" / "expertise.yaml").read_text())
+    fd = family_diffs()
     sk = skills()
     anchors = site_anchors()
     areas, seen = [], set()
@@ -338,6 +345,7 @@ def build() -> dict:
             cards.append({"href": c["href"], "label": c["label"]})
         for g in a["gaps"]:
             assert g
+        assert a["id"] in fd["areas"] and fd["areas"][a["id"]]["rows"], (a["id"], "no family-difference rows (brief 31)")
         sup = ["knowledge"]
         if any(e["kind"] == "measured" for e in ev):
             sup.append("measured")
@@ -357,9 +365,10 @@ def build() -> dict:
             "skills": [{"unit": u, "section": s, "items": [{"name": x["name"], "description": x["description"]} for x in v]}
                        for (u, s), v in groups.items()],
             "checks": checks, "evidence": ev, "cards": cards, "gaps": a["gaps"],
+            "family": {"rows": fd["areas"][a["id"]]["rows"], "docs": fd["areas"][a["id"]]["docs"]},
             "counts": {"skills": len(picked), "sections": len(groups), "checks": len(checks),
                        "enforced": sum(c["enforced"] for c in checks), "evidence": len(ev)},
         })
     by = {k: sum(1 for a in areas if a["level"] == k) for k in LEVELS}
-    return {"pin": pin(), "levels": [{"id": k, "label": LEVEL_LABEL[k], "means": LEVEL_MEANS[k], "areas": by[k]} for k in LEVELS],
+    return {"pin": pin(), "families": fd["families"], "levels": [{"id": k, "label": LEVEL_LABEL[k], "means": LEVEL_MEANS[k], "areas": by[k]} for k in LEVELS],
             "areas": areas, "skills_total": len(sk), "skills_used": len({(g["unit"], s["name"]) for a in areas for g in a["skills"] for s in g["items"]})}
