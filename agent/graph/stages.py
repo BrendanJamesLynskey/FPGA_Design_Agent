@@ -84,6 +84,11 @@ def _stage_pass(gates: dict | None, flow_stage: str, only: set[str] | None = Non
     if st.get("unconstrained_ports"):          # 05g follow-up: the repair visit sees WHICH ports, not only the gate's name
         from flow.gates import unconstrained_text
         bad = [b + (f" ({unconstrained_text(st['unconstrained_ports'])})" if "unconstrained" in b else "") for b in bad]
+    xp = (gates or {}).get("xprobe")           # brief 18: present only for a build run with FDA_XPROBE=1
+    if xp and not xp.get("error"):
+        for b in list(bad):
+            kind = {"post_route:setup": "setup", "post_route:hold": "hold"}.get(b)
+            bad += [f"cross-probe: {p['text']}" for p in xp.get("paths", []) if kind and p["kind"] == kind][:2]
     return not bad, bad
 
 

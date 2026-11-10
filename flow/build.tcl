@@ -125,6 +125,13 @@ if {[info exists power_env] && $power_env ne ""} { set_operating_conditions {*}$
 report_power          -file $out/power.rpt
 report_io             -file $out/io.rpt
 stage reports
+# brief 18: machine-readable cross-probing (RTL file/line, clock region, routed tiles of the worst paths) as evidence;
+# off unless FDA_XPROBE=1, and it changes no report and no gate
+if {[info exists ::env(FDA_XPROBE)] && $::env(FDA_XPROBE) eq "1"} {
+    source $flow_dir/xprobe.tcl
+    xprobe_dump $out/xprobe.json
+    stage xprobe
+}
 if {$ila eq "0"} { stop_here route }
 
 # --- stage bitstream -----------------------------------------------------------

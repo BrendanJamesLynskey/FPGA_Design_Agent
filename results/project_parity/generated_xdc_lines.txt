@@ -1,0 +1,29 @@
+== clk_wiz s1_74: cw_s1_74/cw_s1_74.xdc (non-comment lines)
+create_clock -period 10.000 [get_ports clk_in1]
+set_input_jitter [get_clocks -of_objects [get_ports clk_in1]] 0.100
+set_property PHASESHIFT_MODE WAVEFORM [get_cells -hierarchical *adv*]
+-- cw_s1_74_ooc.xdc
+== clk_wiz s2_vga: cw_s2_vga/cw_s2_vga.xdc (non-comment lines)
+create_clock -period 10.000 [get_ports clk_in1]
+set_input_jitter [get_clocks -of_objects [get_ports clk_in1]] 0.100
+set_property PHASESHIFT_MODE WAVEFORM [get_cells -hierarchical *adv*]
+-- cw_s2_vga_ooc.xdc
+== clk_wiz s3_audio: cw_s3_audio/cw_s3_audio.xdc (non-comment lines)
+create_clock -period 10.000 [get_ports clk_in1]
+set_input_jitter [get_clocks -of_objects [get_ports clk_in1]] 0.100
+set_property PHASESHIFT_MODE WAVEFORM [get_cells -hierarchical *adv*]
+-- cw_s3_audio_ooc.xdc
+== clk_wiz s4_pll: cw_s4_pll/cw_s4_pll.xdc (non-comment lines)
+create_clock -period 10.000 [get_ports clk_in1]
+set_input_jitter [get_clocks -of_objects [get_ports clk_in1]] 0.100
+set_property PHASESHIFT_MODE WAVEFORM [get_cells -hierarchical *adv*]
+-- cw_s4_pll_ooc.xdc
+== fifo_generator fg.xdc (non-comment lines)
+== fg_clocks.xdc (non-comment lines)
+== fg_ooc.xdc
+create_clock -period 10 -name wr_clk [get_ports wr_clk]
+create_clock -period 10 -name rd_clk [get_ports rd_clk]
+== note
+The generated files carry AMD's copyright header and are not committed; these are only their executable (non-comment) lines.
+fg.xdc and fg_clocks.xdc of the FIFO Generator (independent clocks, block RAM) contain no executable line: its set_max_delay,
+set_bus_skew and set_false_path exceptions are present as commented-out text.
