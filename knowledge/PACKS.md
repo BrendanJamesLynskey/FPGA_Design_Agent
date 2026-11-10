@@ -4,7 +4,7 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `ab7fc4c` (main, 2026-11-10; merges PR #33 (brief 17: AMBA and AXI, new unit `vendor/amba_axi`), PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
+- Private repo commit: `68673cb` (main, 2026-11-10; merges PR #35 (brief 19: four ipgen adapter notes in `vendor/amd_ip_cores`, budget 46,000), PR #34 (AVAL-46 measured in the MMCM skill), and earlier at `ab7fc4c`: PR #33 (brief 17: AMBA and AXI, new unit `vendor/amba_axi`), PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
   LUT6 fabric design, Vivado synthesis attributes and inference templates, STA report interpretation; earlier: `d6679f5`
   PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
   `217c751` brief 04h, the Artix-7 family and device layers; earlier: `16696e6` PR #6 brief 04f, `6db99dd` PR #5 04e,
@@ -40,12 +40,12 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `vendor/free_simulators/` | vendor: free-simulator capabilities and cocotb_coverage usage (ours, from the owner's matrix and the cocotb-coverage 2.0 source) | 2 (2026-11-07, 07a2 fix 3) | 3 | 5 | 9,878 (<= 10,000) | 887 | 2,470 | `c347615e5d85ed66890b9a6e6167e4ea1466783c19979de3b53d8cbcfddf857d` |
 | `vendor/vivado_synthesis/` | vendor: Vivado synthesis attributes and inference templates (ours, from UG901/UG912/UG949) | 1 (2026-11-03, 04j) | 3 | 5 | 14,822 (<= 16,000) | 1,225 | 3,706 | `c13e776b78daf0e6ff070bd97a632cb05777a674d80ed1d8808b4cfc1fc9aeaf` |
 | `vendor/ross_shipped/` | vendor: Ross as shipped | Ross release 2026.10.1 | 50 | 1,195 | 918,458 (none) | 12,578 | 225,565 | `3d2cf1b50012d4676a3b432f0725b00848795059224f913935e37cc98846e773` |
-| `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 4 (2026-11-03, 04j) | 43 | 58 | 215,155 (<= 222,000) | 16,135 | 53,789 | `ba1131bd7d1b0b1795790b71134e420dc970008cef7b09eca560cdf8e6630223` |
+| `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 4 (2026-11-03, 04j) | 43 | 58 | 215,294 (<= 222,000) | 16,135 | 53,824 | `32ee497673aa44d48a3d027399066a3c3a7c3d99feb8accb3a61511ace06588d` |
 | `device/xc7a100tcsg324-1/` | device: the part on the Nexys A7-100T (xc7a100tcsg324-1) | 2 (2026-11-03, 04j: +1 primitives) | 5 | 11 | 16,295 (<= 18,000) | 2,992 | 4,074 | `a92427e0c7a38d2a6c4409c265cfdf19b5fbc37636d53234bac16e5d5b7ffad7` |
 | `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
 | `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 5 (2026-11-04: the V2 skill names the `V_*` checker macros) | 15 | 19 | 58,020 (<= 72,000) | 4,048 | 14,505 | `dd75d279863dd2e73d546d5990c61d0fbd2a6927b87791514068434cc5d85f15` |
 | `vendor/amd_constraints/` | vendor: AMD constraints (ours; clocks, I/O delays, exceptions; brief 13b) | 1 (2026-11-10, 13b) | 6 | 8 | 31,268 (<= 34,000) | 2,482 | 7,817 | `84d2ac6be94c7f71b3d426c2b63eaff5c7ba21db4c59e45a5e73ed68a54e2a5d` |
-| `vendor/amd_ip_cores/` | vendor: free AMD IP cores (ours; FIR, DDS, FFT, memory, DSP; brief 13) | 1 (2026-11-10, 13) | 6 | 8 | 32,993 (<= 36,000) | 2,409 | 8,248 | `8d395601e048a7d55988d83965112eee1f69be8912045d0a0791657ce5ea2833` |
+| `vendor/amd_ip_cores/` | vendor: free AMD IP cores (ours; FIR, DDS, FFT, memory, DSP; brief 13; brief 19: four ipgen adapter notes) | 2 (2026-11-10, 19) | 10 | 12 | 43,540 (<= 46,000) | 3,733 | 10,885 | `df352b6720c3e3a19298fef6709e3cd74e55934d5393d152c1697770a94c468d` |
 | `vendor/amba_axi/` | vendor: AMBA AXI4, AXI4-Lite, AXI4-Stream, APB/AHB rules, AMD AXI IP and verification (ours; brief 17) | 1 (2026-11-10, 17) | 15 | 19 | 61,524 (<= 80,000) | 5,465 | 15,381 | `1add990cc85f37a25cb94326dddf90849f720149918913d291f23e2c70e80e4a` |
 | `family/zynq7000/` | family: Zynq-7000 PS7 basics (ours, from UG585/UG470) | 1 (2026-11-09, 10 B0) | 8 | 14 | 23,897 (none) | 2,461 | 5,974 | `8ffdde319128122d994e6b79b000171c5ecc009f867299c9d2cfe8192e42318c` |
 | `family/zynq_ultrascale_plus/` | family: Zynq UltraScale+ (PS8, GTH, K26 SOM; ours) | 2 (2026-11-10, 13) | 12 | 21 | 41,462 (none) | 4,596 | 10,366 | `fc859c3be9a9f5f5bfa2a8b936e65041d00b2156d6d0f7bf0be9860558eb7043` |
@@ -56,7 +56,7 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `library/` | library (search_docs corpus: 1,783 chunks) | 2 (2026-11-02, 04h: +15 chunks) | - | 16 | see `library/MANIFEST.sha256` | - | - | `04ede99be370ae925d7596cc4a63af9c1a136500de661f6acfb8dfdf35c228d6` |
 
 Root files: `SECTIONS.yaml` sha256 `1ae5c8dbc3bb887f05b7377d3915959879abbcd3d8cd4a80d788aea71a253251`; `INDEX.md` sha256
-`9b6ae0e73f7af96f01854134f36f4a9b8fee4100d45b8b8d2570b3b6321556f0`.
+`18b64db3be36dc457f99d83fbfbab4d85564fa299fc03e77e4f1af708df12ec8`.
 
 ## The vocabulary
 
@@ -101,7 +101,7 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `functions/` | `serial-buses` | function | 2 | 8,328 | `035238ea6a7f94ab7202c98c0d6e813a5c2c25066f7fb7d7a029d9d5dc49e15c` |
 | `functions/` | `video` | function | 1 | 3,401 | `4a8f1d4d9b5b4414ad07a753e2aa7d8e37b58285478e14c2aeca8fd04739b069` |
 | `vendor/amd_constraints/` | `constraints` | tool-flow | 6 | 31,268 | `9d125aaccab223f9cbf3083503ca9301c345894d3b3a7ee4048dd4b5633595a7` |
-| `vendor/amd_ip_cores/` | `ip-cores` | tool-flow | 6 | 32,993 | `a873445bb2b510018e09e6619688102b8db77b2dd4bc89796900f387960c0002` |
+| `vendor/amd_ip_cores/` | `ip-cores` | tool-flow | 10 | 43,540 | `35c9bdb4bafe356a0c47d32f2adcafcd1ba58d43050b519d54596f2f417862db` |
 | `vendor/amba_axi/` | `amba` | tool-flow | 9 | 34,898 | `ccf425bc3cf1c3c03375ece826aceb7dc6fdab2021210cba0dc8b7413a40243e` |
 | `vendor/amba_axi/` | `ip-cores` | tool-flow | 3 | 13,321 | `8bb4aea3226501862b927fa33f92ae54a13a38d69307c4725a6a53ee9d395268` |
 | `vendor/amba_axi/` | `simulation` | tool-flow | 3 | 13,305 | `50ee9a41b12688a6722f7f94f09c15a5df79078a5508450d09c1f64b31119869` |
@@ -117,7 +117,7 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `vendor/vivado_synthesis/` | `synthesis-attributes` | tool-flow | 3 | 14,822 | `8bd801b4e758e32657dfa46e0dc9b117a8a76cb39bfc93a47de3aa553c886797` |
 | `family/artix7/` | `analog` | function | 1 | 4,513 | `67821cec9f1c40a7b5f1adcb5bb9d473f821789a5202c0e1d2e5c1c0332f9680` |
 | `family/artix7/` | `cdc` | technique | 6 | 33,341 | `620c0ac83211e3b69af231655513c9f20c336fea9fd1bce9a18be93298a6450a` |
-| `family/artix7/` | `clocking` | technique | 5 | 26,529 | `3a8ab89698b557cc3baba5108a2de603c57dbb477b82f695e1abe9faa5386903` |
+| `family/artix7/` | `clocking` | technique | 5 | 26,668 | `2d51b7f19ea2f9d9c1a112f6815e60b53aa259a71d88c5524d59f1391507f407` |
 | `family/artix7/` | `dram` | function | 1 | 3,661 | `24cb37aa9fd9f7eb1e02b77ab24f121770abdeacb5d04a360b5b4344dfd1cef1` |
 | `family/artix7/` | `dsp` | function | 2 | 9,600 | `05a316e77b7e68f741785974c44783fa9fc32b76600f358a468b3e00be037bfc` |
 | `family/artix7/` | `fsm` | technique | 3 | 15,949 | `2ff7244d19ec42878e4227d53edffab65d1efeb0aa33c287fe27ea765b5b6ad1` |
