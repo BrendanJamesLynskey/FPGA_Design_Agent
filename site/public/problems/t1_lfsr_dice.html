@@ -1,0 +1,1257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Electronic dice from an LFSR | End-to-end FPGA Agent</title>
+<meta name="description" content="Electronic dice from an LFSR: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task t1_lfsr_dice.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
+  --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --measure: 68ch; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+    --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+  --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); overflow-x: hidden; }
+a { color: var(--ink); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, kbd, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--panel); border: 1px solid var(--rule); padding: 0 .3em; border-radius: 2px; overflow-wrap: anywhere; }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; line-height: 1.45; margin: 0 0 1em; max-width: 100%; }
+pre code { border: 0; padding: 0; background: none; overflow-wrap: normal; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 3.2vw, 3rem); margin: .3em 0 .4em; font-weight: 700; }
+h2 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.8rem); margin: 2.2em 0 .5em; font-weight: 700; }
+h3 { font-size: 1.05rem; margin: 1.6em 0 .4em; }
+p, li { max-width: var(--measure); }
+p { margin: 0 0 1em; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-3); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
+.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.bar nav a { padding: 10px 8px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
+.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* sections, cards */
+.hero { padding: 36px 0 8px; }
+.eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
+.fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.fact .n { font: 700 2rem/1.1 var(--f-mono); letter-spacing: -.02em; }
+.fact p { margin: .4em 0 0; font-size: .92rem; color: var(--ink-2); }
+.tag { display: inline-block; font: 600 .75rem var(--f-mono); border: 1px solid var(--ink-3); padding: 1px 7px; border-radius: 2px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.tag.run { border-style: dashed; }
+figure { margin: 1.4em 0; }
+figcaption { font-size: .88rem; color: var(--ink-3); margin-top: 6px; max-width: var(--measure); }
+.panel { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.tablewrap { overflow-x: auto; margin: 0 0 1.2em; border: 1px solid var(--rule); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+img { max-width: 100%; height: auto; display: block; }
+footer { border-top: 1px solid var(--rule); margin-top: 56px; padding: 22px 0 40px; color: var(--ink-3); font-size: .9rem; }
+footer .wrap > * { max-width: var(--measure); }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
+
+/* pipeline player */
+.player { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0 0 12px; counter-reset: n; }
+.pipe li { max-width: none; border: 1px solid var(--mute); padding: 8px 10px; font-size: .86rem; line-height: 1.3; position: relative; color: var(--ink-3); min-height: 62px; }
+.pipe li b { display: block; font-size: .72rem; font-family: var(--f-mono); letter-spacing: .04em; margin-bottom: 2px; }
+.pipe li.done { color: var(--ink-2); border-color: var(--ink-3); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px); }
+.pipe li.active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.pipe li.stop { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.pipe li .v { position: absolute; right: 8px; top: 6px; font: .72rem var(--f-mono); }
+.cap { min-height: 3.2em; margin: 0 0 10px; color: var(--ink); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctl input[type=range] { flex: 1 1 140px; min-width: 120px; min-height: 44px; accent-color: var(--ink); }
+.ctl .pos { font: .85rem var(--f-mono); color: var(--ink-3); min-width: 6ch; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* charts */
+svg text { fill: var(--ink-2); font: 11px var(--f-mono); }
+svg .ink { stroke: var(--ink); fill: none; }
+svg .fillink { fill: var(--ink); }
+svg .rule { stroke: var(--rule); }
+svg .warn { stroke: var(--warn); fill: none; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; }
+.dot.p { background: var(--ink); }
+.dot.f { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.dot.n { border-style: dotted; border-color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.strip .t { font-family: var(--f-mono); overflow-wrap: anywhere; }
+.bars { display: grid; grid-template-columns: minmax(0, 14ch) 1fr auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.bars .b { height: 14px; background: var(--ink); min-width: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-3); margin-top: 8px; }
+.stub { border: 1px dashed var(--ink-3); padding: 18px; background: var(--panel); }
+@media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Home hero: FPGA fabric backdrop (canvas, monochrome, drawn by app.js; still under reduced motion). */
+.hero { position: relative; isolation: isolate; padding: 72px 0 40px; }
+#fabric { position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  mask-composite: intersect; }
+@media (max-width: 640px) { #fabric { opacity: .55; } }
+.hero h1 { font-size: clamp(2.4rem, 1.2rem + 5.6vw, 4.6rem); letter-spacing: -.025em; margin: .15em 0 .2em; }
+.strap { font-size: clamp(1.15rem, .9rem + 1.2vw, 1.6rem); line-height: 1.3; font-weight: 600; margin: 0 0 .8em; max-width: 40ch; }
+.boards { font: .9rem/1.5 var(--f-mono); color: var(--ink-2); max-width: 70ch; }
+.boards span { background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
+.hero h1, .hero .strap { text-shadow: 0 0 12px var(--bg), 0 0 4px var(--bg); }
+
+/* problems: index and task pages */
+.dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.dombars li { display: grid; grid-template-columns: minmax(0, 22ch) 1fr 3ch; gap: 10px; align-items: center; max-width: none; font-size: .88rem; }
+.dombars a { text-decoration: none; padding: 6px 0; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+.dombars a b { font-family: var(--f-mono); }
+.db { height: 12px; border: 1px solid var(--rule); display: block; }
+.db span { display: block; height: 100%; background: var(--ink); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0 12px; }
+.filters label { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; }
+.filters select { max-width: 70vw; }
+.plist { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.pcard { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; max-width: none; display: flex; flex-direction: column; gap: 2px; }
+.pcard a { font-weight: 600; text-decoration: none; }
+.pcard a:hover .pt { text-decoration: underline; }
+.pcard .pm { font-size: .82rem; color: var(--ink-3); }
+.made li { margin-bottom: .5em; }
+.crumbs { margin: 24px 0 0; color: var(--ink-3); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.spec { border-left: 3px solid var(--ink); padding: 2px 0 2px 16px; margin: 0 0 1em; }
+.spec h3, .spec h4 { margin-top: .8em; }
+.reqs li { margin-bottom: .3em; }
+details.rules, details.code { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 10px; }
+details.rules > summary, details.code > summary { padding: 10px 12px; cursor: pointer; min-height: 44px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+details.rules > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.code pre { margin: 0; border: 0; border-top: 1px solid var(--rule); max-height: 36em; }
+.codebar { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0 12px 8px; align-items: center; }
+.codebar a { min-height: 32px; display: inline-flex; align-items: center; }
+.hk { font-weight: 700; }
+.hc { color: var(--ink-3); font-style: italic; }
+.hs { color: var(--ink-2); }
+.note { border: 1px solid var(--ink-3); padding: 10px 12px; background: var(--panel); }
+.trace .hero-art { margin-bottom: 10px; }
+.wavewrap { overflow-x: auto; margin-bottom: 8px; }
+.wavesvg { min-width: 520px; }
+svg .future { fill: var(--panel); opacity: .62; }
+svg .cursor { fill: var(--ink); opacity: .08; }
+svg text.big { font-size: 15px; fill: var(--ink); }
+svg text.inv, svg text.big.inv { fill: var(--panel); }
+svg .pix { stroke: var(--ink-3); stroke-width: 1; }
+svg text.dark { fill: #000; } svg text.light { fill: #fff; }
+.vals { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 14px; margin: 0 0 8px; font-size: .85rem; }
+.vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
+.trace .hero-art svg { margin: 0 auto; display: block; }
+</style>
+</head>
+<body>
+<a class="visually-hidden" href="#main">Skip to content</a>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<main id="main" class="wrap">
+<p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
+<h1>Electronic dice from an LFSR</h1>
+<p class="tags"><code>t1_lfsr_dice</code> <span class="tag">Benchmark v1</span> <span class="tag">T1</span> <span class="tag">A Basic digital design drills</span> <span class="tag">Nexys A7-100T</span></p>
+<figure><div class="player trace" id="trace" aria-label="Golden model replay"><div class="wave"></div><p class="cap" aria-live="polite"></p></div><figcaption>The task's own golden model (<code>hidden/model.py</code>) run on a fixed input when the site is built, so this is what the hidden tests check. From the reset state, press the button six times, run a silent burst of 10 steps, press twice, reload the seed ACE1, press three times, then load a seed of zero. Space plays and pauses, arrow keys step.</figcaption></figure>
+<h2>The problem</h2>
+<p>An electronic dice. A linear-feedback shift register is a small circuit that steps through a long, repeatable scrambled sequence of numbers, and each button press steps it once and turns the new state into a roll from one to six. The roll shows on the right-hand digit of the display, and the design keeps the last four rolls and a count of rolls. The state can be loaded with a seed, and it is never allowed to stick at zero.</p>
+<p><strong>Where it is used.</strong> Shift-register generators of this kind are used for test patterns, data scrambling, error-check codes and cheap pseudo-random numbers in hardware. They are not suitable where unpredictability matters for security.</p>
+
+<h2>The spec the agent is given</h2>
+<div class="spec"><h3>Electronic dice from an LFSR</h3>
+<p>I want a dice on the Nexys A7-100T, driven by a 16-bit Galois LFSR.</p>
+<ul><li>Each press of BTNC (it bounces, so debounce it) steps the LFSR once and rolls a number from 1 to 6, taken from the LFSR state as (state mod 6) + 1. The roll shows on the rightmost 7-segment digit; the other digits stay dark.</li><li>The feedback taps are a register, starting at 0xB400. I can also load the state (a seed) and make the LFSR step any number of times without rolling. The state must never get stuck at zero.</li><li>Keep a history of the last four rolls and a count of rolls.</li><li>CPU_RESETN resets everything, the state to 0xACE1.</li><li>Over the test shell (USB-UART, 115200 baud) I can read the state, the last roll, the history and the roll count, set the seed and the taps, and ask for a number of steps. The design ID is &quot;DICE&quot;.</li></ul>
+<p>Test hooks: top module <code>t1_lfsr_dice_top</code>, ports named as in the board&#x27;s master XDC, the test shell&#x27;s <code>CLKS_PER_BIT</code>, <code>TIMEOUT_CYCLES</code> and <code>BUILD_STAMP</code> parameters, plus <code>DEBOUNCE_CYCLES</code> (debounce time in clocks) and <code>REFRESH_BITS</code> (each display digit is lit for 2^REFRESH_BITS clocks) as top-level parameters.</p></div>
+<p class="small muted">Exactly <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_lfsr_dice/spec.md"><code>spec.md</code></a>. Anything it leaves open, the agent has to ask about.</p>
+
+<h2>Interface</h2>
+<p>Top module <code>t1_lfsr_dice_top</code> on the Nexys A7-100T (<code>xc7a100tcsg324-1</code>). Clock: CLK100MHZ at 100 MHz (board oscillator). Reset: CPU_RESETN, active low: STATE = SEED = 0xACE1, TAPS = 0xB400, ROLL = HISTORY = ROLLS = 0, no step burst, display dark. Resources expected: about a hundred LUTs and FFs; no BRAM, no DSP.</p>
+<p>Top-level parameters (board values): <code>CLKS_PER_BIT</code> = 868, <code>DEBOUNCE_CYCLES</code> = 1000000, <code>REFRESH_BITS</code> = 17, <code>TIMEOUT_CYCLES</code> = 100000. The hidden bench shrinks them to <code>CLKS_PER_BIT</code> = 8, <code>DEBOUNCE_CYCLES</code> = 16, <code>REFRESH_BITS</code> = 3, <code>TIMEOUT_CYCLES</code> = 400.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Port</th><th>Direction</th><th class="num">Width</th><th>Note</th></tr></thead><tbody><tr><td><code>CLK100MHZ</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>CPU_RESETN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>BTNC</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>CA</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CB</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CC</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CD</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CE</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CF</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>CG</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>DP</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>AN</code></td><td>out</td><td class="num">8</td><td></td></tr><tr><td><code>UART_TXD_IN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>UART_RXD_OUT</code></td><td>out</td><td class="num">1</td><td></td></tr></tbody></table></div>
+<h3>Registers behind the test shell</h3><div class="tablewrap" tabindex="0"><table><thead><tr><th>Offset</th><th>Name</th><th>Access</th><th>Bits</th></tr></thead><tbody><tr><td><code>0x00</code></td><td><code>STATE</code></td><td>RO</td><td>[15:0] the LFSR state; [31:16] 0</td></tr><tr><td><code>0x01</code></td><td><code>SEED</code></td><td>RW</td><td>[15:0] a write loads S = wdata[15:0] (0 loads 0x0001) and ends any burst; reads the last value written</td></tr><tr><td><code>0x02</code></td><td><code>TAPS</code></td><td>RW</td><td>[15:0] feedback taps; [31:16] read 0</td></tr><tr><td><code>0x03</code></td><td><code>ROLL</code></td><td>RO</td><td>[2:0] last roll 1..6, 0 before the first; [31:3] 0</td></tr><tr><td><code>0x04</code></td><td><code>HISTORY</code></td><td>RO</td><td>[3:0] newest roll, [7:4], [11:8], [15:12] oldest; 0 nibbles before four rolls; [31:16] 0</td></tr><tr><td><code>0x05</code></td><td><code>STEP</code></td><td>RW</td><td>[15:0] a write starts a burst of wdata[15:0] steps; reads the steps left (0 when idle)</td></tr><tr><td><code>0x06</code></td><td><code>ROLLS</code></td><td>RO</td><td>[15:0] rolls since reset, wrapping; [31:16] 0</td></tr></tbody></table></div><p class="small muted">offsets 0x07-0x7F read 0; writes to them and to RO registers are ignored</p>
+<h2>What the hidden tests check</h2>
+<p>The requirements in the hidden spec, and how each is shown to hold:</p>
+<ul class="reqs"><li><span class="mono">REQ-01</span> Each press steps the Galois LFSR once and rolls (S mod 6) + 1 from the new state; HISTORY and ROLLS follow <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-02</span> S is never 0 - a step or SEED write that would give 0 gives 0x0001 <span class="muted">(shown by simulation, formal)</span></li><li><span class="mono">REQ-03</span> TAPS, SEED and STEP bursts behave as listed; with the reset taps the period is 65535 <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-04</span> Digit 0 shows the roll (dark before the first); other digits are dark <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-05</span> Bounces shorter than the debounce time never roll <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-06</span> The design closes timing at 100 MHz with no unconstrained path <span class="muted">(shown by report analysis)</span></li><li><span class="mono">REQ-07</span> On the board the register window answers as the model predicts (seeded sequence and burst) <span class="muted">(shown by on the board)</span></li></ul>
+<details class="rules"><summary>The full behaviour rules from <code>hidden/spec.yaml</code></summary><h4>lfsr</h4><ul><li>One step of the 16-bit state S (right-shifting Galois form): b = S[0]; S = S &gt;&gt; 1; if b = 1 then S = S xor TAPS.</li><li>If a step (or a SEED write) would make S = 0, S becomes 0x0001 instead, so S is never 0.</li><li>With TAPS = 0xB400 (x^16 + x^14 + x^13 + x^11 + 1) the sequence has the maximal period 65535.</li></ul><h4>roll</h4><ul><li>BTNC is synchronised (two flops), then debounced. The debounced level changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count. A press is a 0 -&gt; 1 change of the debounced level; holding does not repeat.</li><li>A press steps S once, then rolls from the new state: ROLL = (S mod 6) + 1, S read as an unsigned 16-bit integer.</li><li>Each roll shifts HISTORY left by one nibble and puts the new roll in HISTORY[3:0] (the oldest of four drops out), and adds 1 to ROLLS (16 bits, wrapping).</li><li>A press during a step burst, or on the same clock as a SEED write, is lost (no step, no roll).</li></ul><h4>burst</h4><ul><li>A write of n to STEP starts a burst of n = wdata[15:0] steps, one a clock, from the next clock. No rolls. A STEP write during a burst replaces the steps left; a SEED write ends the burst.</li></ul><h4>display</h4><ul><li>Digits are numbered 0 (rightmost, AN[0]) to 7, lit one at a time in order 0..7, each for 2^REFRESH_BITS clocks; while digit k is lit AN[k] = 0 and the other AN = 1.</li><li>Digit 0 shows ROLL; it is dark (all AN high in its slot) while ROLL = 0 (no roll since reset). Digits 1..7 are always dark. DP is always 1 (off).</li><li>Glyphs (segments lit): 1 bc, 2 abdeg, 3 abcdg, 4 bcfg, 5 acdfg, 6 acdefg; CA..CG active low.</li></ul></details>
+<h3>Settled assumptions</h3><ul><li>right-shifting Galois form, taps XORed in when the bit shifted out is 1. <span class="muted">0xB400 is the usual tap mask for that form.</span></li><li>the roll uses the state after the press&#x27;s step. <span class="muted">each press then shows a fresh state.</span></li><li>a burst steps once per clock, and a press during a burst is lost (no step, no roll). <span class="muted">the bench needs a definite rate and a definite collision rule; a press cannot be queued behind a burst.</span></li></ul>
+
+<h2>What the tests catch: the mutants</h2>
+<p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-04, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t1_lfsr_dice__icarus.json"><code>t1_lfsr_dice__icarus.json</code></a>) the reference passed all 11 hidden tests and 9 of 9 mutants failed them.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>zero_not_fixed</code></td><td><code>lfsr_dice.sv</code></td><td>a step can lock the LFSR at 0</td><td><code>test_never_stuck_at_zero</code></td></tr><tr><td><code>seed_zero_loads_zero</code></td><td><code>lfsr_dice.sv</code></td><td>a SEED write of 0 loads 0</td><td><code>test_seed_and_zero_seed</code></td></tr><tr><td><code>roll_from_old_state</code></td><td><code>lfsr_dice.sv</code></td><td>the roll uses the state before the step</td><td><code>test_press_rolls</code>, <code>test_seed_and_zero_seed</code>, <code>test_never_stuck_at_zero</code>, <code>test_press_lost_during_burst</code>, <code>test_taps_register</code>, <code>test_debounce_rejects_bounce</code>, <code>test_random_sequence</code>, <code>test_all_glyphs</code></td></tr><tr><td><code>history_reversed</code></td><td><code>lfsr_dice.sv</code></td><td>newest roll lands in the top nibble</td><td><code>test_press_rolls</code>, <code>test_seed_and_zero_seed</code>, <code>test_never_stuck_at_zero</code>, <code>test_press_lost_during_burst</code>, <code>test_taps_register</code>, <code>test_debounce_rejects_bounce</code>, <code>test_random_sequence</code>, <code>test_all_glyphs</code></td></tr><tr><td><code>wrong_feedback_bit</code></td><td><code>lfsr_dice.sv</code></td><td>taps applied on the wrong bit</td><td><code>test_press_rolls</code>, <code>test_seed_and_zero_seed</code>, <code>test_never_stuck_at_zero</code>, <code>test_step_burst_and_period</code>, <code>test_press_lost_during_burst</code>, <code>test_taps_register</code>, <code>test_debounce_rejects_bounce</code>, <code>test_all_glyphs</code></td></tr><tr><td><code>burst_one_extra</code></td><td><code>lfsr_dice.sv</code></td><td>a burst of n makes n + 1 steps</td><td><code>test_step_burst_and_period</code>, <code>test_press_lost_during_burst</code></td></tr><tr><td><code>dark_digit_shows_zero</code></td><td><code>t1_lfsr_dice_top.sv</code></td><td>digit 0 shows a 0 glyph before the first roll (v1.2: the v1 form, a lit digit with a blank glyph, is dark and so equivalent to the reference)</td><td><code>test_identity_and_reset</code></td></tr><tr><td><code>six_without_top</code></td><td><code>t1_lfsr_dice_top.sv</code></td><td>6 drawn without segment a</td><td><code>test_press_rolls</code>, <code>test_all_glyphs</code></td></tr><tr><td><code>debounce_half</code></td><td><code>bm_debounce.sv</code></td><td>debounce accepts pulses of half the time</td><td><code>test_debounce_rejects_bounce</code></td></tr></tbody></table></div>
+<h2>Sample solution</h2>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
+<details class="code"><summary><span class="mono">bm_debounce.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_lfsr_dice/bm_debounce.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_lfsr_dice/ref/rtl/bm_debounce.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level</span>
+<span class="hc">// changes only after the synchronised input has differed from it for CYCLES</span>
+<span class="hc">// consecutive clocks; a shorter difference restarts the count. rise is a</span>
+<span class="hc">// one-clock pulse on each 0 -&gt; 1 change of the level.</span>
+<span class="hk">module</span> bm_debounce #(
+    <span class="hk">parameter</span> <span class="hk">int</span> CYCLES = 1_000_000
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span> clk,
+    <span class="hk">input</span>  <span class="hk">logic</span> rst,
+    <span class="hk">input</span>  <span class="hk">logic</span> d_async,
+    <span class="hk">output</span> <span class="hk">logic</span> level,
+    <span class="hk">output</span> <span class="hk">logic</span> rise
+);
+    <span class="hk">localparam</span> <span class="hk">int</span> CW = $clog2(CYCLES + 1);
+    <span class="hk">logic</span>        d;
+    <span class="hk">logic</span> [CW-1:0] run;
+
+    sync2 u_sync (.clk(clk), .rst(rst), .d(d_async), .q(d));
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        rise &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (rst) <span class="hk">begin</span>
+            level &lt;= 1&#x27;b0;
+            run   &lt;= &#x27;0;
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">if</span> (d == level) <span class="hk">begin</span>
+            run &lt;= &#x27;0;
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">if</span> (run == CW&#x27;(CYCLES - 1)) <span class="hk">begin</span>
+            level &lt;= d;
+            run   &lt;= &#x27;0;
+            rise  &lt;= d;
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            run &lt;= run + 1&#x27;b1;
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">bm_scan8.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_lfsr_dice/bm_scan8.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_lfsr_dice/ref/rtl/bm_scan8.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// bm_scan8.sv: eight-digit multiplexed display. Digit k (0 = rightmost, AN[0])</span>
+<span class="hc">// is lit for 2^REFRESH_BITS clocks, in order 0..7. While digit k is lit its</span>
+<span class="hc">// anode is low unless blank[k] is set (then every anode stays high for that</span>
+<span class="hc">// slot). seg is active-low {g,f,e,d,c,b,a}; dp_n is active low.</span>
+<span class="hk">module</span> bm_scan8 #(
+    <span class="hk">parameter</span> <span class="hk">int</span> REFRESH_BITS = 17
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>        rst,
+    <span class="hk">input</span>  <span class="hk">logic</span>        enable,
+    <span class="hk">input</span>  <span class="hk">logic</span> [7:0][6:0] seg_lit,    <span class="hc">// per digit k: seg_lit[k]: 1 = segment lit, bit 0 = a</span>
+    <span class="hk">input</span>  <span class="hk">logic</span> [7:0]  blank,
+    <span class="hk">input</span>  <span class="hk">logic</span> [7:0]  dp_lit,
+    <span class="hk">output</span> <span class="hk">logic</span> [7:0]  an,
+    <span class="hk">output</span> <span class="hk">logic</span> [6:0]  seg_n,
+    <span class="hk">output</span> <span class="hk">logic</span>        dp_n
+);
+    <span class="hk">logic</span> [REFRESH_BITS+2:0] t;
+    <span class="hk">logic</span> [2:0] k;
+    <span class="hk">assign</span> k = t[REFRESH_BITS+2:REFRESH_BITS];
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (rst) <span class="hk">begin</span>
+            t     &lt;= &#x27;0;
+            an    &lt;= 8&#x27;hFF;
+            seg_n &lt;= 7&#x27;h7F;
+            dp_n  &lt;= 1&#x27;b1;
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            t     &lt;= t + 1&#x27;b1;
+            an    &lt;= (enable &amp;&amp; !blank[k]) ? ~(8&#x27;b1 &lt;&lt; k) : 8&#x27;hFF;
+            seg_n &lt;= ~seg_lit[k];
+            dp_n  &lt;= ~dp_lit[k];
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">lfsr_dice.sv</span> <span class="muted small">reference RTL, 81 lines</span></summary><div class="codebar small"><a href="t1_lfsr_dice/lfsr_dice.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_lfsr_dice/ref/rtl/lfsr_dice.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// lfsr_dice.sv: 16-bit Galois LFSR with settable taps and seed, step bursts,</span>
+<span class="hc">// and debounced BTNC rolls of (state mod 6) + 1, for t1_lfsr_dice.</span>
+<span class="hk">module</span> lfsr_dice #(
+    <span class="hk">parameter</span> <span class="hk">int</span> DEBOUNCE_CYCLES = 1_000_000
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>        rst,
+    <span class="hk">input</span>  <span class="hk">logic</span>        btn,
+    <span class="hk">output</span> <span class="hk">logic</span> [2:0]  roll,
+    <span class="hk">input</span>  <span class="hk">logic</span> [6:0]  win_addr,
+    <span class="hk">input</span>  <span class="hk">logic</span>        win_wr,
+    <span class="hk">input</span>  <span class="hk">logic</span>        win_rd,
+    <span class="hk">input</span>  <span class="hk">logic</span> [31:0] win_wdata,
+    <span class="hk">output</span> <span class="hk">logic</span> [31:0] win_rdata
+);
+    <span class="hk">localparam</span> <span class="hk">logic</span> [6:0] R_STATE = 7&#x27;h00, R_SEED = 7&#x27;h01, R_TAPS = 7&#x27;h02, R_ROLL = 7&#x27;h03,
+                           R_HIST = 7&#x27;h04, R_STEP = 7&#x27;h05, R_ROLLS = 7&#x27;h06;
+
+    <span class="hk">logic</span>        lvl, press;
+    <span class="hk">logic</span> [15:0] s, seed, taps, hist, left, rolls, ns;
+
+    bm_debounce #(.CYCLES(DEBOUNCE_CYCLES)) u_db (.clk(clk), .rst(rst), .d_async(btn), .level(lvl), .rise(press));
+
+    <span class="hk">function</span> <span class="hk">automatic</span> <span class="hk">logic</span> [15:0] lstep(<span class="hk">input</span> <span class="hk">logic</span> [15:0] v, <span class="hk">input</span> <span class="hk">logic</span> [15:0] t);
+        <span class="hk">logic</span> [15:0] r;
+        r = v &gt;&gt; 1;
+        <span class="hk">if</span> (v[0]) r = r ^ t;
+        <span class="hk">if</span> (r == 16&#x27;d0) r = 16&#x27;d1;
+        <span class="hk">return</span> r;
+    <span class="hk">endfunction</span>
+
+    <span class="hk">assign</span> ns = lstep(s, taps);
+
+    <span class="hk">wire</span> wr_seed = win_wr &amp;&amp; win_addr == R_SEED;
+    <span class="hk">wire</span> wr_step = win_wr &amp;&amp; win_addr == R_STEP;
+    <span class="hk">wire</span> busy    = left != 16&#x27;d0;
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (rst) <span class="hk">begin</span>
+            s &lt;= 16&#x27;hACE1; seed &lt;= 16&#x27;hACE1; taps &lt;= 16&#x27;hB400; roll &lt;= &#x27;0; hist &lt;= &#x27;0; left &lt;= &#x27;0; rolls &lt;= &#x27;0;
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            <span class="hk">if</span> (win_wr &amp;&amp; win_addr == R_TAPS) taps &lt;= win_wdata[15:0];
+            <span class="hk">if</span> (wr_seed) <span class="hk">begin</span>
+                seed &lt;= win_wdata[15:0];
+                s    &lt;= (win_wdata[15:0] == 16&#x27;d0) ? 16&#x27;d1 : win_wdata[15:0];
+                left &lt;= &#x27;0;
+            <span class="hk">end</span> <span class="hk">else</span> <span class="hk">if</span> (busy) <span class="hk">begin</span>
+                s    &lt;= ns;
+                left &lt;= wr_step ? win_wdata[15:0] : left - 16&#x27;d1;
+            <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+                <span class="hk">if</span> (wr_step) left &lt;= win_wdata[15:0];
+                <span class="hk">if</span> (press) <span class="hk">begin</span>
+                    s     &lt;= ns;
+                    roll  &lt;= 3&#x27;(ns % 16&#x27;d6) + 3&#x27;d1;
+                    hist  &lt;= {hist[11:0], 1&#x27;b0, 3&#x27;(ns % 16&#x27;d6) + 3&#x27;d1};
+                    rolls &lt;= rolls + 1&#x27;b1;
+                <span class="hk">end</span>
+            <span class="hk">end</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+
+<span class="hk">`ifdef</span> FORMAL
+    <span class="hk">always_comb</span> assert (rst || s != 16&#x27;d0);
+<span class="hk">`endif</span>
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (rst) win_rdata &lt;= &#x27;0;
+        <span class="hk">else</span> <span class="hk">if</span> (win_rd) <span class="hk">begin</span>
+            <span class="hk">case</span> (win_addr)
+                R_STATE: win_rdata &lt;= {16&#x27;d0, s};
+                R_SEED:  win_rdata &lt;= {16&#x27;d0, seed};
+                R_TAPS:  win_rdata &lt;= {16&#x27;d0, taps};
+                R_ROLL:  win_rdata &lt;= {29&#x27;d0, roll};
+                R_HIST:  win_rdata &lt;= {16&#x27;d0, hist};
+                R_STEP:  win_rdata &lt;= {16&#x27;d0, left};
+                R_ROLLS: win_rdata &lt;= {16&#x27;d0, rolls};
+                <span class="hk">default</span>: win_rdata &lt;= &#x27;0;
+            <span class="hk">endcase</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">t1_lfsr_dice_top.sv</span> <span class="muted small">reference RTL, 55 lines</span></summary><div class="codebar small"><a href="t1_lfsr_dice/t1_lfsr_dice_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_lfsr_dice/ref/rtl/t1_lfsr_dice_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t1_lfsr_dice_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+<span class="hc">// Reference design for benchmark task t1_lfsr_dice; DESIGN_ID &quot;DICE&quot;.</span>
+<span class="hk">module</span> t1_lfsr_dice_top #(
+    <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT    = 868,
+    <span class="hk">parameter</span> <span class="hk">int</span>          TIMEOUT_CYCLES  = 100_000,
+    <span class="hk">parameter</span> <span class="hk">int</span>          DEBOUNCE_CYCLES = 1_000_000,
+    <span class="hk">parameter</span> <span class="hk">int</span>          REFRESH_BITS    = 17,
+    <span class="hk">parameter</span> <span class="hk">logic</span> [31:0] BUILD_STAMP     = 32&#x27;h0
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        CLK100MHZ,
+    <span class="hk">input</span>  <span class="hk">logic</span>        CPU_RESETN,
+    <span class="hk">input</span>  <span class="hk">logic</span>        BTNC,
+    <span class="hk">output</span> <span class="hk">logic</span>        CA, CB, CC, CD, CE, CF, CG, DP,
+    <span class="hk">output</span> <span class="hk">logic</span> [7:0]  AN,
+    <span class="hk">input</span>  <span class="hk">logic</span>        UART_TXD_IN,
+    <span class="hk">output</span> <span class="hk">logic</span>        UART_RXD_OUT
+);
+    <span class="hk">logic</span>        clk, rst, win_wr, win_rd;
+    <span class="hk">logic</span> [6:0]  win_addr, seg_n;
+    <span class="hk">logic</span> [31:0] win_wdata, win_rdata;
+    <span class="hk">logic</span> [2:0]  roll;
+    <span class="hk">logic</span> [6:0]  glyph;
+    <span class="hk">logic</span> [7:0][6:0] seg_lit;
+
+    <span class="hk">assign</span> clk = CLK100MHZ;
+    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));
+
+    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),
+                 .DESIGN_ID(32&#x27;h4449_4345), .BUILD_STAMP(BUILD_STAMP)) u_shell (
+        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),
+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
+
+    lfsr_dice #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)) u_dice (
+        .clk(clk), .rst(rst), .btn(BTNC), .roll(roll),
+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
+
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        <span class="hk">case</span> (roll)                    <span class="hc">// bit 0 = a ... bit 6 = g, 1 = lit</span>
+            3&#x27;d1: glyph = 7&#x27;b0000110;
+            3&#x27;d2: glyph = 7&#x27;b1011011;
+            3&#x27;d3: glyph = 7&#x27;b1001111;
+            3&#x27;d4: glyph = 7&#x27;b1100110;
+            3&#x27;d5: glyph = 7&#x27;b1101101;
+            3&#x27;d6: glyph = 7&#x27;b1111101;
+            <span class="hk">default</span>: glyph = 7&#x27;b0000000;
+        <span class="hk">endcase</span>
+        seg_lit = &#x27;0;
+        seg_lit[0] = glyph;
+    <span class="hk">end</span>
+
+    bm_scan8 #(.REFRESH_BITS(REFRESH_BITS)) u_scan (
+        .clk(clk), .rst(rst), .enable(1&#x27;b1), .seg_lit(seg_lit), .blank({7&#x27;h7F, roll == 3&#x27;d0}), .dp_lit(8&#x27;h00),
+        .an(AN), .seg_n(seg_n), .dp_n(DP));
+    <span class="hk">assign</span> {CG, CF, CE, CD, CC, CB, CA} = seg_n;
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 211 lines</span></summary><div class="codebar small"><a href="t1_lfsr_dice/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_lfsr_dice/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_lfsr_dice against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+
+<span class="hk">from</span> __future__ <span class="hk">import</span> annotations
+
+<span class="hk">import</span> random
+
+<span class="hk">import</span> cocotb
+<span class="hk">from</span> benchmark.lib.bench <span class="hk">import</span> Board, scan_display
+<span class="hk">from</span> model <span class="hk">import</span> DESIGN_ID, HISTORY, ROLL, ROLLS, SEED, STATE, STEP, TAPS, Model
+
+IDLE = {<span class="hs">&quot;BTNC&quot;</span>: 0}
+NAMES = (<span class="hs">&quot;STATE&quot;</span>, <span class="hs">&quot;SEED&quot;</span>, <span class="hs">&quot;TAPS&quot;</span>, <span class="hs">&quot;ROLL&quot;</span>, <span class="hs">&quot;HISTORY&quot;</span>, <span class="hs">&quot;STEP&quot;</span>, <span class="hs">&quot;ROLLS&quot;</span>)
+
+
+<span class="hk">class</span> Env:
+    <span class="hk">def</span> __init__(self, dut) -&gt; <span class="hk">None</span>:
+        self.b = Board(dut, IDLE)
+        self.dut, self.m = dut, Model()
+        self.n = self.b.param(<span class="hs">&quot;DEBOUNCE_CYCLES&quot;</span>)
+        self.slot = 1 &lt;&lt; self.b.param(<span class="hs">&quot;REFRESH_BITS&quot;</span>)
+
+    <span class="hk">async</span> <span class="hk">def</span> start(self) -&gt; <span class="hk">None</span>:
+        <span class="hk">await</span> self.b.start()
+
+    <span class="hk">async</span> <span class="hk">def</span> wr(self, off: int, v: int) -&gt; <span class="hk">None</span>:
+        <span class="hk">await</span> self.b.write(off, v)
+        self.m.write(off, v)
+
+    <span class="hk">async</span> <span class="hk">def</span> press(self) -&gt; <span class="hk">None</span>:
+        self.dut.BTNC.value = 1
+        <span class="hk">await</span> self.b.cycles(self.n + 6)
+        self.dut.BTNC.value = 0
+        <span class="hk">await</span> self.b.cycles(self.n + 6)
+        self.m.press()
+
+    <span class="hk">async</span> <span class="hk">def</span> check_regs(self) -&gt; <span class="hk">None</span>:
+        <span class="hk">for</span> off <span class="hk">in</span> range(7):
+            <span class="hk">await</span> self.b.expect(off, self.m.read(off), NAMES[off])
+
+    <span class="hk">async</span> <span class="hk">def</span> check_display(self) -&gt; <span class="hk">None</span>:
+        seen = <span class="hk">await</span> scan_display(self.dut, self.b.clk, self.slot)
+        want = self.m.display()
+        <span class="hk">assert</span> {k: v[0] <span class="hk">for</span> k, v <span class="hk">in</span> seen.items()} == want, f<span class="hs">&quot;display {seen} != model {want}&quot;</span>
+        <span class="hk">assert</span> all(v[1] == 1 <span class="hk">for</span> v <span class="hk">in</span> seen.values()), <span class="hs">&quot;DP lit&quot;</span>
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_identity_and_reset(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">assert</span> <span class="hk">await</span> e.b.shell_id() == DESIGN_ID
+    <span class="hk">await</span> e.check_regs()
+    <span class="hk">await</span> e.check_display()
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_press_rolls(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">for</span> i <span class="hk">in</span> range(10):
+        <span class="hk">await</span> e.press()
+        <span class="hk">await</span> e.b.expect(ROLL, e.m.read(ROLL), <span class="hs">&quot;ROLL&quot;</span>)
+        <span class="hk">await</span> e.b.expect(STATE, e.m.read(STATE), <span class="hs">&quot;STATE&quot;</span>)
+        <span class="hk">if</span> i % 3 == 0:
+            <span class="hk">await</span> e.check_display()
+    <span class="hk">await</span> e.check_regs()
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_seed_and_zero_seed(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">for</span> seed <span class="hk">in</span> (0x1234, 0xFFFF, 0x0006, 0x0000, 0x0001):
+        <span class="hk">await</span> e.wr(SEED, seed)
+        <span class="hk">await</span> e.check_regs()
+        <span class="hk">await</span> e.press()
+        <span class="hk">await</span> e.check_regs()
+    <span class="hk">await</span> e.check_display()
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_never_stuck_at_zero(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.wr(TAPS, 0x0400)
+    <span class="hk">await</span> e.wr(SEED, 0x0801)            <span class="hc"># one step gives 0x0400 ^ 0x0400 = 0: must become 0x0001</span>
+    <span class="hk">await</span> e.press()
+    <span class="hk">await</span> e.check_regs()
+    <span class="hk">await</span> e.press()
+    <span class="hk">await</span> e.check_regs()
+    <span class="hk">await</span> e.wr(TAPS, 0x0000)            <span class="hc"># no taps: the state shifts down to 1 and stays there</span>
+    <span class="hk">await</span> e.wr(SEED, 0x8000)
+    <span class="hk">await</span> e.wr(STEP, 40)
+    <span class="hk">await</span> e.b.cycles(60)
+    <span class="hk">await</span> e.check_regs()
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_step_burst_and_period(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.wr(STEP, 1000)
+    <span class="hk">await</span> e.b.cycles(1010)
+    <span class="hk">await</span> e.check_regs()
+    <span class="hk">await</span> e.wr(STEP, 0xFFFF)            <span class="hc"># the reset taps are maximal: 65535 steps come back to the start</span>
+    left = <span class="hk">await</span> e.b.read(STEP)
+    <span class="hk">assert</span> 0 &lt; left &lt; 0xFFFF, f<span class="hs">&quot;STEP should read the steps left during a burst, got {left}&quot;</span>
+    <span class="hk">await</span> e.b.cycles(66000)
+    <span class="hk">await</span> e.check_regs()
+    s0 = <span class="hk">await</span> e.b.read(STATE)
+    <span class="hk">await</span> e.wr(STEP, 0xFFFF)
+    <span class="hk">await</span> e.b.cycles(66000)
+    <span class="hk">assert</span> <span class="hk">await</span> e.b.read(STATE) == s0
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_press_lost_during_burst(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.b.write(STEP, 20000)
+    dut.BTNC.value = 1                  <span class="hc"># this press lands inside the burst: lost</span>
+    <span class="hk">await</span> e.b.cycles(e.n + 6)
+    dut.BTNC.value = 0
+    <span class="hk">await</span> e.b.cycles(21000)
+    e.m.write(STEP, 20000)
+    <span class="hk">await</span> e.check_regs()
+    <span class="hk">await</span> e.press()                     <span class="hc"># and a later one counts</span>
+    <span class="hk">await</span> e.check_regs()
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_taps_register(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">for</span> taps <span class="hk">in</span> (0x8016, 0xD008, 0xB400):
+        <span class="hk">await</span> e.wr(TAPS, taps)
+        <span class="hk">for</span> _ <span class="hk">in</span> range(3):
+            <span class="hk">await</span> e.press()
+        <span class="hk">await</span> e.check_regs()
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_debounce_rejects_bounce(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    pin = dut.BTNC
+    <span class="hk">for</span> width <span class="hk">in</span> (1, 3, e.n // 2, e.n - 3):
+        pin.value = 1
+        <span class="hk">await</span> e.b.cycles(width)
+        pin.value = 0
+        <span class="hk">await</span> e.b.cycles(e.n + 4)
+    <span class="hk">await</span> e.check_regs()
+    <span class="hk">for</span> w <span class="hk">in</span> (2, 5, 3, 7):
+        pin.value = 1
+        <span class="hk">await</span> e.b.cycles(w)
+        pin.value = 0
+        <span class="hk">await</span> e.b.cycles(w)
+    pin.value = 1
+    <span class="hk">await</span> e.b.cycles(4 * e.n)
+    pin.value = 0
+    <span class="hk">await</span> e.b.cycles(e.n + 6)
+    e.m.press()
+    <span class="hk">await</span> e.check_regs()
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_register_rules(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.wr(SEED, 0xABCD_5A5A)
+    <span class="hk">await</span> e.wr(TAPS, 0x1_B400)
+    <span class="hk">await</span> e.b.write(STATE, 0x1111)      <span class="hc"># read-only</span>
+    <span class="hk">await</span> e.b.write(ROLL, 3)
+    <span class="hk">await</span> e.b.write(HISTORY, 0x4444)
+    <span class="hk">await</span> e.b.write(ROLLS, 9)
+    <span class="hk">await</span> e.check_regs()
+    <span class="hk">for</span> off <span class="hk">in</span> (0x07, 0x50, 0x7F):
+        <span class="hk">await</span> e.b.expect(off, 0, <span class="hs">&quot;unmapped&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_random_sequence(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    rng = random.Random(int(cocotb.RANDOM_SEED))
+    <span class="hk">for</span> _ <span class="hk">in</span> range(16):
+        r = rng.random()
+        <span class="hk">if</span> r &lt; 0.15:
+            <span class="hk">await</span> e.wr(SEED, rng.getrandbits(16))
+        <span class="hk">elif</span> r &lt; 0.3:
+            n = rng.randrange(1, 3000)
+            <span class="hk">await</span> e.wr(STEP, n)
+            <span class="hk">await</span> e.b.cycles(n + 10)
+        <span class="hk">else</span>:
+            <span class="hk">await</span> e.press()
+    <span class="hk">await</span> e.check_regs()
+    <span class="hk">await</span> e.check_display()
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_all_glyphs(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">from</span> model <span class="hk">import</span> lstep
+    <span class="hk">for</span> k <span class="hk">in</span> (6, 1, 2, 3, 4, 5):
+        seed = next(s <span class="hk">for</span> s <span class="hk">in</span> range(1, 200) <span class="hk">if</span> lstep(s, 0xB400) % 6 + 1 == k)
+        <span class="hk">await</span> e.wr(SEED, seed)
+        <span class="hk">await</span> e.press()
+        <span class="hk">assert</span> e.m.roll == k
+        <span class="hk">await</span> e.check_display()
+    <span class="hk">await</span> e.b.expect(HISTORY, e.m.read(HISTORY), <span class="hs">&quot;HISTORY&quot;</span>)
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 53 lines</span></summary><div class="codebar small"><a href="t1_lfsr_dice/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_lfsr_dice/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_lfsr_dice, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+
+<span class="hk">from</span> __future__ <span class="hk">import</span> annotations
+
+STATE, SEED, TAPS, ROLL, HISTORY, STEP, ROLLS = range(7)
+DESIGN_ID = 0x44494345          <span class="hc"># &quot;DICE&quot;</span>
+GLYPHS = {1: <span class="hs">&quot;bc&quot;</span>, 2: <span class="hs">&quot;abdeg&quot;</span>, 3: <span class="hs">&quot;abcdg&quot;</span>, 4: <span class="hs">&quot;bcfg&quot;</span>, 5: <span class="hs">&quot;acdfg&quot;</span>, 6: <span class="hs">&quot;acdefg&quot;</span>}
+
+
+<span class="hk">def</span> seg_pins(lit: str) -&gt; int:
+    <span class="hs">&quot;&quot;&quot;Active-low CA..CG, bit 0 = CA.&quot;&quot;&quot;</span>
+    <span class="hk">return</span> sum(0 <span class="hk">if</span> s <span class="hk">in</span> lit <span class="hk">else</span> 1 &lt;&lt; i <span class="hk">for</span> i, s <span class="hk">in</span> enumerate(<span class="hs">&quot;abcdefg&quot;</span>))
+
+
+<span class="hk">def</span> lstep(s: int, taps: int) -&gt; int:
+    b = s &amp; 1
+    s &gt;&gt;= 1
+    <span class="hk">if</span> b:
+        s ^= taps
+    <span class="hk">return</span> s <span class="hk">or</span> 1
+
+
+<span class="hk">class</span> Model:
+    <span class="hk">def</span> __init__(self) -&gt; <span class="hk">None</span>:
+        self.s = self.seed = 0xACE1
+        self.taps = 0xB400
+        self.roll = self.hist = self.rolls = 0
+
+    <span class="hk">def</span> step(self, n: int = 1) -&gt; <span class="hk">None</span>:
+        <span class="hk">for</span> _ <span class="hk">in</span> range(n):
+            self.s = lstep(self.s, self.taps)
+
+    <span class="hk">def</span> press(self) -&gt; <span class="hk">None</span>:
+        self.step()
+        self.roll = self.s % 6 + 1
+        self.hist = (self.hist &lt;&lt; 4 | self.roll) &amp; 0xFFFF
+        self.rolls = (self.rolls + 1) &amp; 0xFFFF
+
+    <span class="hk">def</span> read(self, off: int) -&gt; int:
+        <span class="hk">return</span> {STATE: self.s, SEED: self.seed, TAPS: self.taps, ROLL: self.roll, HISTORY: self.hist,
+                STEP: 0, ROLLS: self.rolls}.get(off, 0)
+
+    <span class="hk">def</span> write(self, off: int, v: int) -&gt; <span class="hk">None</span>:
+        <span class="hk">if</span> off == SEED:
+            self.seed = v &amp; 0xFFFF
+            self.s = self.seed <span class="hk">or</span> 1
+        <span class="hk">elif</span> off == TAPS:
+            self.taps = v &amp; 0xFFFF
+        <span class="hk">elif</span> off == STEP:
+            self.step(v &amp; 0xFFFF)          <span class="hc"># the burst, once it has finished</span>
+
+    <span class="hk">def</span> display(self) -&gt; dict[int, int]:
+        <span class="hk">return</span> {0: seg_pins(GLYPHS[self.roll])} <span class="hk">if</span> self.roll <span class="hk">else</span> {}
+</code></pre></details>
+<h2>The agent on this task</h2>
+<p>No development run of the agent on this task is committed yet.</p>
+<div class="pager"><a href="t1_gray_stepper.html">&larr; Gray-code stepper on the LEDs</a><a href="t1_pattern_sequencer.html">LED pattern sequencer &rarr;</a></div>
+
+<div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
+</main>
+<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<script type="application/json" data-key="trace">{"captions":["Start: the LFSR state is ACE1 (the reset value) and nothing has been rolled.","Press 1: the LFSR steps from ACE1 to E270, which rolls a 3. Rolls so far 1.","Press 2: the LFSR steps from E270 to 7138, which rolls a 5. Rolls so far 2.","Press 3: the LFSR steps from 7138 to 389C, which rolls a 3. Rolls so far 3.","Press 4: the LFSR steps from 389C to 1C4E, which rolls a 5. Rolls so far 4.","Press 5: the LFSR steps from 1C4E to 0E27, which rolls a 6. Rolls so far 5.","Press 6: the LFSR steps from 0E27 to B313, which rolls a 4. Rolls so far 6.","Event 7: a burst of 10 steps with no rolls moves the state from B313 to EB62.","Press 8: the LFSR steps from EB62 to 75B1, which rolls a 4. Rolls so far 7.","Press 9: the LFSR steps from 75B1 to 8ED8, which rolls a 5. Rolls so far 8.","Event 10: the seed ACE1 is loaded, so the state becomes ACE1.","Press 11: the LFSR steps from ACE1 to E270, which rolls a 3. Rolls so far 9.","Press 12: the LFSR steps from E270 to 7138, which rolls a 5. Rolls so far 10.","Press 13: the LFSR steps from 7138 to 389C, which rolls a 3. Rolls so far 11.","Event 14: the seed 0000 is loaded, so the state becomes 0001 (zero is replaced, so it never sticks at zero)."],"signals":[{"kind":"bus","name":"STATE","radix":"hex","v":[44257,57968,28984,14492,7246,3623,45843,60258,30129,36568,44257,57968,28984,14492,1],"width":16},{"kind":"bus","name":"ROLL","radix":"dec","v":[0,3,5,3,5,6,4,4,4,5,5,3,5,3,3]},{"kind":"bus","name":"HISTORY","radix":"hex","v":[0,3,53,851,13621,21334,13668,13668,22084,25669,25669,17491,17717,21331,21331],"width":16},{"kind":"bus","name":"ROLLS","radix":"dec","v":[0,1,2,3,4,5,6,6,7,8,8,9,10,11,11]}],"stimulus":"From the reset state, press the button six times, run a silent burst of 10 steps, press twice, reload the seed ACE1, press three times, then load a seed of zero.","unit":"event","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]}</script>
+<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+(function () {
+  "use strict";
+  var D = {};
+  document.querySelectorAll('script[type="application/json"][data-key]').forEach(function (s) {
+    try { D[s.dataset.key] = JSON.parse(s.textContent); } catch (e) { /* data missing: component skips */ }
+  });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* theme toggle: remembered per viewer, optional */
+  var tb = document.getElementById("theme");
+  function curTheme() {
+    var t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  if (tb) {
+    try { var st = localStorage.getItem("fda-theme"); if (st) document.documentElement.dataset.theme = st; } catch (e) {}
+    tb.addEventListener("click", function () {
+      var n = curTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = n;
+      try { localStorage.setItem("fda-theme", n); } catch (e) {}
+      tb.textContent = n === "dark" ? "Light" : "Dark";
+    });
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+  }
+
+  /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
+  function Player(root, n, onFrame, opts) {
+    opts = opts || {};
+    var i = 0, playing = false, timer = null, speed = 1, visible = true, base = opts.interval || 1100;
+    var live = root.querySelector(".cap");
+    var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
+    var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
+    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
+    var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
+    var pos = el("span", { class: "pos" });
+    var sp = el("select", { "aria-label": "Speed" });
+    [0.25, 0.5, 1, 2, 4].forEach(function (s) { var o = el("option", { value: s, text: s + "x" }); if (s === 1) o.selected = true; sp.appendChild(o); });
+    var ctl = el("div", { class: "ctl" }, [play, back, fwd, rst, rng, pos, sp]);
+    root.appendChild(ctl);
+    if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
+    function show() {
+      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      var c = onFrame(i);
+      if (live && c != null) live.textContent = c;
+    }
+    function stop() { playing = false; play.textContent = "Play"; play.setAttribute("aria-label", "Play"); clearTimeout(timer); }
+    function tick() {
+      if (!playing) return;
+      if (!visible) { timer = setTimeout(tick, 400); return; }
+      if (i >= n - 1) { stop(); return; }
+      i++; show(); timer = setTimeout(tick, base / speed);
+    }
+    function go() {
+      if (i >= n - 1) i = 0;
+      playing = true; play.textContent = "Pause"; play.setAttribute("aria-label", "Pause"); show(); timer = setTimeout(tick, base / speed);
+    }
+    play.onclick = function () { playing ? stop() : go(); };
+    back.onclick = function () { stop(); i = Math.max(0, i - 1); show(); };
+    fwd.onclick = function () { stop(); i = Math.min(n - 1, i + 1); show(); };
+    rst.onclick = function () { stop(); i = 0; show(); };
+    rng.oninput = function () { stop(); i = +rng.value; show(); };
+    sp.onchange = function () { speed = +sp.value; };
+    root.addEventListener("keydown", function (e) {
+      if (e.target !== root) return;
+      if (e.key === " ") { e.preventDefault(); play.onclick(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); fwd.onclick(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); back.onclick(); }
+      else if (e.key === "Home") { e.preventDefault(); rst.onclick(); }
+    });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+    show();
+    if (opts.autoplay && !reduce) go();
+    return { goto: function (k) { stop(); i = k; show(); } };
+  }
+
+  /* ---------- stage replay (hero and how-it-works): frames from the committed run record ---------- */
+  var GROUPS = [
+    { id: "clarify", label: "Interview", stages: [0] },
+    { id: "plan", label: "Plan", stages: [1] },
+    { id: "rtl", label: "RTL and gates V0 to V3", stages: [2] },
+    { id: "build", label: "Build", stages: [3, 4, 5] },
+    { id: "post", label: "Post-route gates", stages: [6, 7, 8] },
+    { id: "board", label: "Board", stages: [9] }
+  ];
+  var DETAIL = [
+    "Interview", "Plan", "RTL and V0 to V3", "Constraints", "Synthesis", "Implementation", "Timing closure",
+    "Power closure", "DRC closure", "Board and debug"
+  ];
+  function frameState(R, i) {
+    var s = R.steps[i];
+    return { stage: s.stage_no, step: s, last: i === R.steps.length - 1 };
+  }
+  function mountReplay(root, mode) {
+    var R = D.replay; if (!R) return;
+    var items = mode === "hero" ? GROUPS : DETAIL.map(function (l, k) { return { id: "s" + k, label: l, stages: [k] }; });
+    var ul = el("ul", { class: "pipe", "aria-label": "Stages" });
+    var lis = items.map(function (g, k) {
+      var li = el("li", {}, [el("b", { text: mode === "hero" ? String(k + 1) : String(g.stages[0]) }), document.createTextNode(g.label)]);
+      ul.appendChild(li); return li;
+    });
+    var cap = el("p", { class: "cap", "aria-live": "polite" });
+    root.appendChild(ul); root.appendChild(cap);
+    function frame(i) {
+      var st = frameState(R, i), cur = -1;
+      items.forEach(function (g, k) { if (g.stages.indexOf(st.stage) >= 0) cur = k; });
+      lis.forEach(function (li, k) {
+        li.className = k < cur ? "done" : (k === cur ? (st.last ? "stop" : "active") : "");
+        var old = li.querySelector(".v"); if (old) li.removeChild(old);
+      });
+      var visits = st.step.visits;
+      if (visits > 1) lis[cur].appendChild(el("span", { class: "v", text: st.step.visit + "/" + visits }));
+      return "Stage " + st.stage + ", " + DETAIL[st.stage] + (visits > 1 ? " (visit " + st.step.visit + " of " + visits + ")" : "") + ". " + st.step.fact;
+    }
+    Player(root, R.steps.length, frame, { autoplay: mode === "hero", interval: mode === "hero" ? 1300 : 1500 });
+  }
+
+  /* ---------- k-of-n strip, intervals, bars (shared by development data and eval1.json) ---------- */
+  function strip(root, rows) {
+    var g = el("div", { class: "strip", role: "list" });
+    rows.forEach(function (r) {
+      var dots = el("span", { class: "dots", "aria-hidden": "true" });
+      for (var j = 0; j < r.n; j++) dots.appendChild(el("span", { class: "dot " + (j < r.k ? "p" : "f") }));
+      for (var q = r.n; q < (r.of || r.n); q++) dots.appendChild(el("span", { class: "dot n", title: "not run" }));
+      g.appendChild(el("span", { class: "t", role: "listitem", text: r.task }));
+      g.appendChild(dots);
+      g.appendChild(el("span", { class: "k mono", text: r.k + " of " + r.n }));
+    });
+    root.appendChild(g);
+    root.appendChild(el("div", { class: "legend" }, [
+      el("span", { text: "filled: all hidden tests passed" }), el("span", { text: "hatched: failed" }), el("span", { text: "dotted: not run" })]));
+  }
+  function intervals(root, items) {
+    var W = 560, H = 36 + items.length * 52, L = 14, R = 14;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": items.map(function (x) { return x.label + " " + x.mid + " percent, interval " + x.lo + " to " + x.hi; }).join("; ") });
+    function X(v) { return L + (W - L - R) * v / 100; }
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      s.appendChild(sv("line", { x1: X(v), x2: X(v), y1: 6, y2: H - 20, class: "rule" }));
+      s.appendChild(sv("text", { x: X(v), y: H - 6, "text-anchor": "middle" }, v));
+    });
+    items.forEach(function (it, k) {
+      var y = 36 + k * 52;
+      s.appendChild(sv("text", { x: 0, y: y - 14 }, it.label));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.hi), y1: y, y2: y, class: "ink", "stroke-width": 2, "stroke-dasharray": it.dash ? "5 3" : "none" }));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.lo), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("line", { x1: X(it.hi), x2: X(it.hi), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("circle", { cx: X(it.mid), cy: y, r: 5, class: "fillink" }));
+    });
+    root.appendChild(s);
+    var t = el("div", { class: "tablewrap" });
+    var tb2 = el("table");
+    tb2.appendChild(el("tr", {}, ["Estimate", "Point", "95% interval"].map(function (h) { return el("th", { text: h }); })));
+    items.forEach(function (it) {
+      tb2.appendChild(el("tr", {}, [el("td", { text: it.label }), el("td", { class: "num", text: it.mid + "%" }), el("td", { class: "num", text: it.lo + " to " + it.hi + "%" })]));
+    });
+    t.appendChild(tb2); root.appendChild(t);
+  }
+  function bars(root, obj, total, unit) {
+    var g = el("div", { class: "bars" });
+    var max = Math.max.apply(null, Object.keys(obj).map(function (k) { return obj[k]; }).concat([1]));
+    Object.keys(obj).forEach(function (k) {
+      var b = el("span", { class: "b", "aria-hidden": "true" }); b.style.width = (100 * obj[k] / max) + "%"; b.style.display = "block";
+      g.appendChild(el("span", { text: k.replace(/_/g, " ").replace(/-/g, " ") }));
+      var cell = el("span", {}, [b]); g.appendChild(cell);
+      g.appendChild(el("span", { class: "mono", text: obj[k] + (total ? " of " + total : "") + (unit || "") }));
+    });
+    root.appendChild(g);
+  }
+  var OUTCOME_TEXT = { pass: "passed, no repair needed", caught_and_repaired: "an internal gate failed, the agent repaired it, hidden tests passed",
+    escape: "own checks passed, hidden tests failed (escape)", internal_stop_hidden_pass: "stopped on an internal gate, hidden tests pass on the RTL it left",
+    fail: "failed" };
+
+  function mountDev() {
+    var d = D.dev; if (!d) return;
+    var a = document.getElementById("dev-strip"); if (a) strip(a, d.per_task);
+    var b = document.getElementById("dev-int");
+    if (b) intervals(b, [
+      { label: "pass@1, bootstrap over tasks", mid: d.pass_at_1_tasks_pct, lo: d.bootstrap_tasks_pct[0], hi: d.bootstrap_tasks_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: d.pass_pct_runs, lo: d.wilson_runs_pct[0], hi: d.wilson_runs_pct[1], dash: true }]);
+    var c = document.getElementById("dev-out"); if (c) {
+      var o = {}; Object.keys(d.outcomes).forEach(function (k) { o[OUTCOME_TEXT[k] || k] = d.outcomes[k]; });
+      bars(c, o, d.runs);
+    }
+    var e = document.getElementById("dev-esc"); if (e) bars(e, d.escape_levels, d.escapes);
+  }
+  function mountEval1() {
+    var root = document.getElementById("eval1"); if (!root) return;
+    var E = D.eval1;
+    if (!E) {
+      root.appendChild(el("div", { class: "stub" }, [
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
+      return;
+    }
+    root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
+    var s = el("div"); root.appendChild(s); strip(s, E.per_task.map(function (t) { return { task: t.task, k: t.k, n: t.n, of: 3 }; }));
+    root.appendChild(el("h3", { text: "pass@1 with 95% intervals" }));
+    var i = el("div"); root.appendChild(i);
+    intervals(i, [
+      { label: "pass@1, bootstrap over tasks", mid: E.pass_at_1_pct, lo: E.bootstrap_pct[0], hi: E.bootstrap_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: E.wilson_mid_pct, lo: E.wilson_pct[0], hi: E.wilson_pct[1], dash: true }]);
+    root.appendChild(el("h3", { text: "Escapes by the check level that should have caught them" }));
+    var b = el("div"); root.appendChild(b); bars(b, E.escape_levels, E.escapes);
+  }
+
+  /* ---------- ILA capture player (T1 on the board): LED0 against the sample index ---------- */
+  function mountILA(root) {
+    var B = D.board; if (!B) return;
+    var keys = Object.keys(B.captures).sort(function (a, b) { return B.captures[a].duty - B.captures[b].duty; });
+    var W = 600, H = 120, L = 30, cur = keys[0], svg, cursor, trace, label;
+    var sel = el("div", { class: "ctl", role: "group", "aria-label": "Dimmer level" });
+    var btns = keys.map(function (k) {
+      var b = el("button", { type: "button", "aria-pressed": k === cur ? "true" : "false", text: "duty " + B.captures[k].duty });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", keys[j] === cur ? "true" : "false"); }); draw(); player.goto(0); };
+      return b;
+    });
+    btns.forEach(function (b) { sel.appendChild(b); });
+    root.appendChild(sel);
+    var holder = el("div"); root.appendChild(holder);
+    root.appendChild(el("p", { class: "cap", "aria-live": "polite" }));
+    function X(i) { return L + (W - L - 10) * i / (B.captures[cur].samples - 1); }
+    function draw() {
+      var c = B.captures[cur]; holder.innerHTML = "";
+      svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "ILA capture of LED 0 over " + c.samples + " samples at duty " + c.duty + ": on for " + c.on + " samples" });
+      svg.appendChild(sv("text", { x: 0, y: 34 }, "on"));
+      svg.appendChild(sv("text", { x: 0, y: 94 }, "off"));
+      var d = "", prev = 0;
+      c.edges.forEach(function (e, k) {
+        var y = e[1] ? 30 : 90;
+        d += (k === 0 ? "M" : "L") + X(e[0]) + " " + (k === 0 ? y : (e[1] ? 90 : 30)) + " L" + X(e[0]) + " " + y + " ";
+      });
+      d += "L" + X(c.samples - 1) + " " + (c.edges[c.edges.length - 1][1] ? 30 : 90);
+      svg.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      cursor = sv("line", { x1: X(0), x2: X(0), y1: 10, y2: 108, class: "warn", "stroke-width": 1.5 });
+      svg.appendChild(cursor);
+      svg.appendChild(sv("text", { x: L, y: H - 2 }, "sample 0"));
+      svg.appendChild(sv("text", { x: W - 10, y: H - 2, "text-anchor": "end" }, "sample " + (c.samples - 1)));
+      holder.appendChild(svg);
+    }
+    draw();
+    var marks = 64;
+    function onFrame(k) {
+      var c = B.captures[cur]; var idx = Math.round(k * (c.samples - 1) / 63);
+      cursor.setAttribute("x1", X(idx)); cursor.setAttribute("x2", X(idx));
+      var on = 0, v = 0; c.edges.forEach(function (e) { if (e[0] <= idx) { v = e[1]; } });
+      for (var q = 0; q < c.edges.length; q++) { var e = c.edges[q], nx = q + 1 < c.edges.length ? c.edges[q + 1][0] : c.samples; if (e[1]) on += Math.max(0, Math.min(nx, idx + 1) - e[0]); }
+      return "Sample " + idx + ": LED 0 is " + (v ? "on" : "off") + ". On for " + on + " of the " + (idx + 1) + " samples so far. The whole capture: " + c.on + " of " + c.samples + " samples on, the model says " + c.model_on + ".";
+    }
+    var player = Player(root, marks, onFrame, { interval: 220 });
+  }
+
+
+  /* ---------- golden-model trace viewer (problem pages): waveform + values at the cursor + bespoke hero ---------- */
+  function fmtv(sg, v) {
+    if (sg.kind === "bus") {
+      if (sg.radix === "hex") { var hd = sg.width ? Math.ceil(sg.width / 4) : 1; var hs = (v >>> 0).toString(16); if (v < 0) hs = "-" + (-v).toString(16); while (hs.length < hd) hs = "0" + hs; return "0x" + hs; }
+      if (sg.radix === "bin") { var bs = (v >>> 0).toString(2); while (sg.width && bs.length < sg.width) bs = "0" + bs; return bs; }
+      return String(v);
+    }
+    return String(v);
+  }
+  function mountWave(holder, T) {
+    var n = T.x.length, LW = 132, CW = Math.max(12, Math.min(28, Math.floor(620 / n))), W = LW + n * CW + 6, RH = 34;
+    var H = 22 + T.signals.length * RH;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "wavesvg",
+      "aria-label": "Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s" });
+    function X(i) { return LW + i * CW; }
+    for (var i = 0; i < n; i += Math.max(1, Math.ceil(n / 12))) s.appendChild(sv("text", { x: X(i) + 2, y: 12 }, T.x[i]));
+    T.signals.forEach(function (g, r) {
+      var y0 = 22 + r * RH, top = y0 + 5, bot = y0 + RH - 7, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4 }, g.name.length > 17 ? g.name.slice(0, 16) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      var d = "";
+      if (g.kind === "bit") {
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k) + " " + y + " L" + X(k + 1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); d += (k ? "L" : "M") + (X(k) + CW / 2) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); s.appendChild(sv("circle", { cx: X(k) + CW / 2, cy: y.toFixed(1), r: 1.8, class: "fillink" })); });
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), val = g.v[a], txt = fmtv(g, val), empty = g.kind === "text" ? val === "" : false;
+            if (empty) s.appendChild(sv("line", { x1: x1, x2: x2, y1: mid, y2: mid, class: "ink", "stroke-width": 1 }));
+            else {
+              s.appendChild(sv("path", { d: "M" + x1 + " " + mid + " L" + (x1 + 3) + " " + top + " L" + (x2 - 3) + " " + top + " L" + x2 + " " + mid + " L" + (x2 - 3) + " " + bot + " L" + (x1 + 3) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+              var room = Math.floor((x2 - x1 - 8) / 6.7);
+              if (room >= 1) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4 }, txt.length > room ? (room > 2 ? txt.slice(0, room - 1) + "." : "") : txt));
+            }
+            a = k;
+          }
+        }
+      }
+    });
+    var shade = sv("rect", { x: X(1), y: 16, width: W, height: H, class: "future" });
+    var cur = sv("rect", { x: X(0), y: 16, width: CW, height: H - 16, class: "cursor" });
+    s.appendChild(shade); s.appendChild(cur);
+    var wrap = el("div", { class: "wavewrap", tabindex: "0" }); wrap.appendChild(s); holder.appendChild(wrap);
+    var vals = el("dl", { class: "vals" }); holder.appendChild(vals);
+    return function (i) {
+      shade.setAttribute("x", X(i + 1)); cur.setAttribute("x", X(i));
+      vals.innerHTML = "";
+      vals.appendChild(el("div", {}, [el("dt", { text: T.unit }), el("dd", { class: "mono", text: String(T.x[i]) })]));
+      T.signals.forEach(function (g) { vals.appendChild(el("div", {}, [el("dt", { text: g.name }), el("dd", { class: "mono", text: g.kind === "text" && g.v[i] === "" ? "none" : fmtv(g, g.v[i]) })])); });
+    };
+  }
+  function sig(T, name) { for (var k = 0; k < T.signals.length; k++) if (T.signals[k].name === name) return T.signals[k].v; return null; }
+  function hx(b) { return (b < 16 ? "0" : "") + b.toString(16); }
+  var HEROES = {
+    t1_elevator_fsm: function (box, T) {
+      var F = T.hero.floors, W = 360, FH = 52, H = F * FH + 20, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Lift shaft: car position, door and calls from the model" });
+      box.appendChild(s);
+      var fl = sig(T, "FLOOR"), st = sig(T, "STATE"), pe = sig(T, "PENDING"), dr = sig(T, "DIR (1 = down)");
+      var lamps = [], labels = [];
+      for (var f = 0; f < F; f++) {
+        var y = 10 + (F - 1 - f) * FH;
+        s.appendChild(sv("line", { x1: 60, x2: 300, y1: y + FH, y2: y + FH, class: "rule" }));
+        s.appendChild(sv("text", { x: 4, y: y + FH / 2 + 4 }, "floor " + f));
+        lamps.push(sv("circle", { cx: 290, cy: y + FH / 2, r: 7, class: "ink", "stroke-width": 1.5 }));
+        s.appendChild(lamps[f]);
+      }
+      s.appendChild(sv("rect", { x: 120, y: 10, width: 90, height: F * FH, class: "ink", "stroke-width": 1 }));
+      var car = sv("g", {}), body = sv("rect", { x: 128, width: 74, height: FH - 10, class: "ink", "stroke-width": 2 });
+      var dl = sv("rect", { width: 0, height: FH - 18, class: "fillink" }), dr2 = sv("rect", { width: 0, height: FH - 18, class: "fillink" });
+      var arrow = sv("text", { x: 228, "text-anchor": "middle" }, "");
+      car.appendChild(body); car.appendChild(dl); car.appendChild(dr2); s.appendChild(car); s.appendChild(arrow);
+      s.appendChild(sv("text", { x: 290, y: H - 2, "text-anchor": "middle" }, "calls"));
+      return function (i) {
+        var y = 10 + (F - 1 - fl[i]) * FH + 5, open = st[i] === "door open";
+        body.setAttribute("y", y);
+        var dw = open ? 14 : 36;
+        dl.setAttribute("x", 132); dl.setAttribute("y", y + 4); dl.setAttribute("width", dw);
+        dr2.setAttribute("x", 198 - dw); dr2.setAttribute("y", y + 4); dr2.setAttribute("width", dw);
+        arrow.setAttribute("y", y + FH / 2); arrow.textContent = st[i] === "moving" ? (dr[i] ? "down" : "up") : (open ? "open" : "");
+        lamps.forEach(function (c, f) { c.setAttribute("class", (pe[i] >> f) & 1 ? "fillink" : "ink"); });
+      };
+    },
+    c10_dds_sine: function (box, T) {
+      var h = T.hero, W = 600, H = 200, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Phase wheel and sine output from the model" });
+      box.appendChild(s);
+      var cx = 90, cy = 100, R = 70, N = 1 << h.la;
+      s.appendChild(sv("circle", { cx: cx, cy: cy, r: R, class: "ink", "stroke-width": 1 }));
+      s.appendChild(sv("text", { x: cx, y: 192, "text-anchor": "middle" }, "phase (" + h.aw + " bits)"));
+      var hand = sv("line", { x1: cx, y1: cy, class: "ink", "stroke-width": 2 }); s.appendChild(hand);
+      var dot = sv("circle", { r: 5, class: "fillink" }); s.appendChild(dot);
+      var X0 = 200, PW = 390, ph = sig(T, "phase"), out = sig(T, "out"), ad = sig(T, "table address");
+      s.appendChild(sv("line", { x1: X0, x2: X0 + PW, y1: cy, y2: cy, class: "rule" }));
+      s.appendChild(sv("text", { x: X0 + PW, y: 192, "text-anchor": "end" }, "output samples"));
+      var stems = [];
+      for (var k = 0; k < out.length; k++) {
+        var x = X0 + PW * (k + .5) / out.length, y = cy - (R) * out[k] / h.amp;
+        var g = sv("g", {}); g.appendChild(sv("line", { x1: x, x2: x, y1: cy, y2: y, class: "ink", "stroke-width": 1 })); g.appendChild(sv("circle", { cx: x, cy: y, r: 2.5, class: "fillink" }));
+        stems.push(g); s.appendChild(g);
+      }
+      var lab = sv("text", { x: cx, y: 18, "text-anchor": "middle" }, ""); s.appendChild(lab);
+      return function (i) {
+        var a = 2 * Math.PI * ad[i] / N, x = cx + R * Math.cos(a), y = cy - R * Math.sin(a);
+        hand.setAttribute("x2", x); hand.setAttribute("y2", y); dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        lab.textContent = "entry " + ad[i] + " of " + N;
+        stems.forEach(function (g, k) { g.style.opacity = k <= i ? 1 : .15; });
+      };
+    },
+    c16_nexys_aes_uart: function (box, T) {
+      var h = T.hero, W = 420, C = 56, s = sv("svg", { viewBox: "0 0 " + W + " 250", width: "100%", role: "img", "aria-label": "AES state, 4 by 4 bytes, from the model's round functions" });
+      box.appendChild(s);
+      var cells = [], texts = [];
+      for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) {
+        var x = 10 + c * C, y = 26 + r * C;
+        var rc = sv("rect", { x: x, y: y, width: C - 6, height: C - 6, class: "ink", "stroke-width": 1 }), t = sv("text", { x: x + (C - 6) / 2, y: y + C / 2, "text-anchor": "middle", class: "big" }, "");
+        s.appendChild(rc); s.appendChild(t); cells[4 * c + r] = rc; texts[4 * c + r] = t;
+      }
+      var op = sv("text", { x: 250, y: 60, class: "big" }, ""), rd = sv("text", { x: 250, y: 90 }, ""), ch = sv("text", { x: 250, y: 120 }, "");
+      s.appendChild(op); s.appendChild(rd); s.appendChild(ch);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "state: bytes go down the columns"));
+      var rounds = sig(T, "round");
+      return function (i) {
+        var st = h.states[i], pr = i ? h.states[i - 1] : st, nch = 0;
+        for (var k = 0; k < 16; k++) {
+          var diff = st[k] !== pr[k]; if (diff) nch++;
+          cells[k].setAttribute("class", diff ? "fillink" : "ink"); texts[k].setAttribute("class", diff ? "big inv" : "big"); texts[k].textContent = hx(st[k]);
+        }
+        op.textContent = h.ops[i]; rd.textContent = "round " + rounds[i]; ch.textContent = i ? nch + " of 16 bytes changed" : "";
+      };
+    },
+    c9_median3x3: function (box, T) {
+      var h = T.hero, W = 600, s = sv("svg", { viewBox: "0 0 " + W + " 200", width: "100%", role: "img", "aria-label": "Window presented and median result, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "window presented this clock"));
+      s.appendChild(sv("text", { x: 230, y: 16 }, "window from " + h.lat + " clock earlier, sorted"));
+      s.appendChild(sv("text", { x: 230 + 4 * 40 + 18, y: 50, "text-anchor": "middle" }, "fifth"));
+      var g = [], gt = [];
+      for (var k = 0; k < 9; k++) {
+        var x = 10 + (k % 3) * 50, y = 26 + Math.floor(k / 3) * 50;
+        var r = sv("rect", { x: x, y: y, width: 46, height: 46, class: "pix" }), t = sv("text", { x: x + 23, y: y + 28, "text-anchor": "middle" }, "");
+        s.appendChild(r); s.appendChild(t); g.push(r); gt.push(t);
+      }
+      var srt = [], st2 = [];
+      for (var q = 0; q < 9; q++) {
+        var x2 = 230 + q * 40, r2 = sv("rect", { x: x2, y: 60, width: 36, height: 36, class: "pix" }), t2 = sv("text", { x: x2 + 18, y: 83, "text-anchor": "middle" }, "");
+        s.appendChild(r2); s.appendChild(t2); srt.push(r2); st2.push(t2);
+      }
+      var box5 = sv("rect", { x: 230 + 4 * 40 - 4, y: 56, width: 44, height: 44, class: "ink", "stroke-width": 2.5 }); s.appendChild(box5);
+      var res = sv("text", { x: 230, y: 130, class: "big" }, ""); s.appendChild(res);
+      return function (i) {
+        var w = h.in[i], so = h.sorted[i];
+        for (var k = 0; k < 9; k++) {
+          if (w) { g[k].style.fill = "rgb(" + w[k] + "," + w[k] + "," + w[k] + ")"; gt[k].textContent = w[k]; gt[k].setAttribute("class", w[k] > 127 ? "dark" : "light"); }
+          else { g[k].style.fill = "none"; gt[k].textContent = ""; }
+          if (so) { srt[k].style.fill = "rgb(" + so[k] + "," + so[k] + "," + so[k] + ")"; st2[k].textContent = so[k]; st2[k].setAttribute("class", so[k] > 127 ? "dark" : "light"); }
+          else { srt[k].style.fill = "none"; st2[k].textContent = ""; }
+        }
+        box5.style.opacity = so ? 1 : .2; res.textContent = so ? "median " + so[4] : "no result this clock";
+      };
+    },
+    c14_systolic_matmul: function (box, T) {
+      var h = T.hero, W = 600, n = h.rows.length, L = h.lat, s = sv("svg", { viewBox: "0 0 " + W + " 190", width: "100%", role: "img", "aria-label": "Rows entering, in flight for the latency, and results leaving, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "rows waiting"));
+      s.appendChild(sv("text", { x: 170, y: 16 }, "in flight for " + L + " clocks"));
+      s.appendChild(sv("text", { x: 170, y: 34 }, "(each row times the 4 x 4 weights)"));
+      s.appendChild(sv("text", { x: 480, y: 16 }, "results out"));
+      var slots = [];
+      for (var k = 0; k < L; k++) { var r = sv("rect", { x: 170 + k * 38, y: 70, width: 34, height: 34, class: "ink", "stroke-width": 1 }); s.appendChild(r); slots.push([r, sv("text", { x: 170 + k * 38 + 17, y: 92, "text-anchor": "middle" }, "")]); s.appendChild(slots[k][1]); }
+      var waiting = sv("text", { x: 10, y: 92 }, ""), done = sv("text", { x: 480, y: 92 }, ""), last = sv("text", { x: 170, y: 150 }, "");
+      s.appendChild(waiting); s.appendChild(done); s.appendChild(last);
+      return function (i) {
+        var nextIn = 0; for (var t = 0; t <= i; t++) if (h.in[t] != null) nextIn = h.in[t] + 1;
+        var outN = 0; for (var t2 = 0; t2 <= i; t2++) if (h.out[t2] != null) outN = h.out[t2] + 1;
+        waiting.textContent = nextIn < n ? (n - nextIn) + " rows" : "none";
+        done.textContent = outN + " of " + n + " rows";
+        slots.forEach(function (sl, k) {
+          var row = i - k >= 0 && h.in[i - k] != null ? h.in[i - k] : null;
+          sl[0].setAttribute("class", row != null ? "fillink" : "ink"); sl[1].textContent = row != null ? "r" + row : ""; sl[1].setAttribute("class", row != null ? "inv" : "");
+        });
+        var o = h.out[i]; last.textContent = o != null ? "row " + o + " x W = " + h.C[o].join("  ") : "";
+      };
+    }
+  };
+  function mountTrace(root) {
+    var T = D.trace; if (!T) return;
+    var heroFn = null, art = root.querySelector(".hero-art"), id = root.getAttribute("data-hero");
+    if (art && HEROES[id]) { heroFn = HEROES[id](art, T); var hs = art.querySelector("svg"); if (hs) hs.style.maxWidth = id === "t1_elevator_fsm" ? "400px" : "680px"; }
+    var wv = mountWave(root.querySelector(".wave"), T);
+    Player(root, T.x.length, function (i) { if (heroFn) heroFn(i); wv(i); return T.captions[i]; }, { autoplay: !!heroFn, interval: 900 });
+  }
+  var tr = document.getElementById("trace"); if (tr) mountTrace(tr);
+
+  /* ---------- problems index: filter by domain, tier, board (the list is complete without script) ---------- */
+  (function () {
+    var sels = document.querySelectorAll(".filters select"); if (!sels.length) return;
+    var cards = document.querySelectorAll(".pcard"), secs = document.querySelectorAll("section.dom"), cnt = document.getElementById("f-count");
+    function apply() {
+      var f = {}; sels.forEach(function (s) { f[s.dataset.f] = s.value; });
+      var shown = 0;
+      cards.forEach(function (c) { var ok = (!f.domain || c.dataset.domain === f.domain) && (!f.tier || c.dataset.tier === f.tier) && (!f.board || c.dataset.board === f.board); c.hidden = !ok; if (ok) shown++; });
+      secs.forEach(function (s) { s.hidden = !s.querySelector(".pcard:not([hidden])"); });
+      if (cnt) cnt.textContent = shown + " of " + cards.length + " shown";
+    }
+    sels.forEach(function (s) { s.addEventListener("change", apply); });
+    document.querySelectorAll(".dombars a.dl").forEach(function (a) {
+      a.addEventListener("click", function (e) { var d = document.getElementById("f-domain"); if (!d || !d.querySelector('option[value="' + a.dataset.dom + '"]')) return; e.preventDefault(); d.value = a.dataset.dom; apply(); document.querySelector(".filters").scrollIntoView(); });
+    });
+    apply();
+  })();
+  var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
+  var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
+  var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+  mountDev(); mountEval1();
+})();
+
+/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
+   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
+(function () {
+  var cv = document.getElementById("fabric");
+  if (!cv || !cv.getContext) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
+  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
+  function layout() {
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
+    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
+  }
+  function base() {
+    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
+    var hrow = Math.floor(rows / 2);
+    for (var c = 0; c < cols; c++) {
+      var x = c * T, k = kind[c];
+      for (var r = 0; r < rows; r++) {
+        var y = r * T;
+        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
+        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
+        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
+        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
+          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
+  function net() {
+    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
+    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
+    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
+    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
+    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
+  }
+  function drawNet(n, alpha) {
+    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
+    for (var i = 1; i < n.p.length && left > 0; i++) {
+      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
+      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
+    }
+    ctx.stroke();
+    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
+    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
+    ctx.globalAlpha = 1;
+  }
+  function frame(now) {
+    if (!run) return;
+    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
+    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
+    nets = nets.filter(function (n) {
+      n.t += dt; var done = n.len / n.speed, a = .42;
+      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
+      if (a <= 0) return false; drawNet(n, a); return true;
+    });
+    requestAnimationFrame(frame);
+  }
+  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
+  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
+  start();
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
+  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
+  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
+  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,617 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the LEDs stay off.",
+   "reason": "nothing is asked of them."
+  }
+ ],
+ "behaviour": [
+  [
+   "nco",
+   [
+    "acc 16 bits; idx = acc >> 8 before the update; s = S[idx]; c = S[(idx + 64) % 256]; acc += fw on enabled clocks only"
+   ]
+  ],
+  [
+   "mix",
+   [
+    "i = (x*c) >>> 14, q = (x*(-s)) >>> 14 (arithmetic shift; the result fits 12 bits)"
+   ]
+  ],
+  [
+   "latency",
+   [
+    "exactly 1 clock: the result of a sample presented in clock n is seen in clock n + 1 (VMASK records it)"
+   ]
+  ],
+  [
+   "stream",
+   [
+    "the phase persists across bursts; the enabled samples of all bursts form one stream"
+   ]
+  ],
+  [
+   "burst",
+   [
+    "GO starts a burst of 64 clocks; DONE is 0 from the GO until the burst has ended (then 1). In clock n < 32 of the burst the block is presented with a sample when MASK bit n is 1; the samples are taken from SAMP0, SAMP1, ... in order (at most 16 bits of MASK may be 1). FW is presented on every clock.",
+    "Each result is stored in OUT0, OUT1, ... in order and counted in NOUT (only the first 16 are stored); VMASK bit n is 1 when a result appeared in clock n + 1 of the burst (so VMASK = MASK for a correct block).",
+    "GO clears NOUT, VMASK and DONE; OUT registers read 0 beyond NOUT."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 2,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-07",
+  "mutants": {
+   "amplitude_16384": {
+    "failed_tests": [
+     "test_first_frequency_word",
+     "test_second_frequency_word",
+     "test_consecutive_clocks_and_single_sample"
+    ],
+    "killed": true
+   },
+   "cosine_offset_half_cycle": {
+    "failed_tests": [
+     "test_first_frequency_word",
+     "test_second_frequency_word",
+     "test_consecutive_clocks_and_single_sample"
+    ],
+    "killed": true
+   },
+   "q_shift_13": {
+    "failed_tests": [
+     "test_first_frequency_word",
+     "test_second_frequency_word",
+     "test_consecutive_clocks_and_single_sample"
+    ],
+    "killed": true
+   },
+   "q_sign": {
+    "failed_tests": [
+     "test_first_frequency_word",
+     "test_second_frequency_word",
+     "test_consecutive_clocks_and_single_sample"
+    ],
+    "killed": true
+   },
+   "rounded_not_floored": {
+    "failed_tests": [
+     "test_first_frequency_word",
+     "test_second_frequency_word",
+     "test_consecutive_clocks_and_single_sample"
+    ],
+    "killed": true
+   },
+   "runs_on_gaps": {
+    "failed_tests": [
+     "test_first_frequency_word",
+     "test_second_frequency_word",
+     "test_consecutive_clocks_and_single_sample"
+    ],
+    "killed": true
+   },
+   "valid_always_high": {
+    "failed_tests": [
+     "test_first_frequency_word",
+     "test_second_frequency_word",
+     "test_consecutive_clocks_and_single_sample"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c11_nco_mixer__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 4,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 2,
+ "domain": "B",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 35,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c11_nco_mixer/hidden/model.py",
+    "sha256": "e1911148c8bc",
+    "text": "\"\"\"Reference model for P11-1 (NCO and complex mixer), bit-exact. Standalone: python only.\"\"\"\nimport math\nimport random\n\nAW, LA, XW = 16, 8, 12\nFWS = [0x1A2B, 0xF000]\nLUT = [math.floor(16383 * math.sin(2 * math.pi * i / 2 ** LA) + 0.5) for i in range(2 ** LA)]\n\n\ndef stimulus(seed=11):\n    runs = []\n    for r, fw in enumerate(FWS):\n        rng = random.Random(seed + r)\n        xs = [rng.randrange(-2048, 2048) for _ in range(300)]\n        xs += [int(round(2000 * math.sin(2 * math.pi * fw / 2 ** AW * k))) for k in range(250)]\n        xs += [2047, -2048, 2047, -2048, 0, 1, -1] * 10 + [rng.randrange(-100, 100) for _ in range(130)]\n        runs.append({\"fw\": fw, \"x\": xs[:750]})\n    return runs\n\n\ndef mix(xs, fw):\n    acc, out = 0, []\n    for x in xs:\n        idx = acc >> (AW - LA)\n        s, c = LUT[idx], LUT[(idx + 2 ** (LA - 2)) % 2 ** LA]\n        out.append((((x * c) >> 14), ((x * -s) >> 14)))\n        acc = (acc + fw) % 2 ** AW\n    return out\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x4E434F4D          # \"NCOM\"\nMASK, GO, STATUS, NOUT, VMASK, FW = 0x00, 0x01, 0x02, 0x03, 0x04, 0x05\nSAMP, OUT = 0x10, 0x20\nLAT = 1\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 27,
+    "name": "burst_ctl.sv",
+    "path": "benchmark/course/tasks/c11_nco_mixer/ref/rtl/burst_ctl.sv",
+    "sha256": "42b7bfa69204",
+    "text": "// burst_ctl.sv: the burst sequencer of the shell window (course task): runs `TOTAL` clocks after GO; `en` is MASK[cnt] for the first 32 of them; `idx` counts the enables so far.\nmodule burst_ctl #(\n    parameter int TOTAL = 64\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        go,\n    input  logic [31:0] mask,\n    output logic        active,\n    output logic [6:0]  cnt,\n    output logic        en,\n    output logic [5:0]  idx,\n    output logic        done\n);\n    assign en = active && (cnt < 7'd32) && mask[cnt[4:0]];\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            active <= 1'b0; cnt <= '0; idx <= '0; done <= 1'b0;\n        end else if (go) begin\n            active <= 1'b1; cnt <= '0; idx <= '0; done <= 1'b0;\n        end else if (active) begin\n            cnt <= cnt + 1'b1;\n            if (en) idx <= idx + 1'b1;\n            if (cnt == TOTAL - 1) begin active <= 1'b0; done <= 1'b1; end\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 57,
+    "name": "c11_nco_mixer_regs.sv",
+    "path": "benchmark/course/tasks/c11_nco_mixer/ref/rtl/c11_nco_mixer_regs.sv",
+    "sha256": "71f4ca826732",
+    "text": "// c11_nco_mixer_regs.sv: the shell window of course task c11_nco_mixer (burst of samples, result pairs, a valid record).\nmodule c11_nco_mixer_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam int LAT = 1;\n    logic [31:0] mask_r, vmask;\n    logic [15:0] fw_r;\n    logic [11:0] samp [16];\n    logic [27:0] outq [16];\n    logic [5:0]  nout;\n    logic        go, active, en, done, ov;\n    logic [6:0]  cnt;\n    logic [5:0]  idx;\n    logic signed [11:0] io, qo;\n\n    assign led = 16'd0;\n\n    burst_ctl u_burst (.clk(clk), .rst(rst), .go(go), .mask(mask_r), .active(active), .cnt(cnt), .en(en), .idx(idx), .done(done));\n    nco_mixer u_core (.clk(clk), .rst_n(!rst), .en(en), .fw(fw_r), .x(samp[idx[3:0]]), .out_valid(ov), .i_out(io), .q_out(qo));\n\n    always_ff @(posedge clk) begin\n        go <= 1'b0;\n        if (go) begin nout <= '0; vmask <= '0; end\n        else if (active && ov) begin\n            if (nout < 6'd16) outq[nout[3:0]] <= {4'd0, qo[11:0], 4'd0, io[11:0]};\n            nout <= nout + 1'b1;\n            if (cnt >= LAT && cnt - LAT < 7'd32) vmask[cnt - LAT] <= 1'b1;\n        end\n        if (win_wr) begin\n            if (win_addr == 7'h00) mask_r <= win_wdata;\n            if (win_addr == 7'h01) go <= 1'b1;\n            if (win_addr == 7'h05) fw_r <= win_wdata[15:0];\n            if (win_addr[6:4] == 3'd1) samp[win_addr[3:0]] <= win_wdata[11:0];\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            if (win_addr == 7'h00) win_rdata <= mask_r;\n            if (win_addr == 7'h02) win_rdata <= {31'd0, done};\n            if (win_addr == 7'h03) win_rdata <= {26'd0, nout};\n            if (win_addr == 7'h04) win_rdata <= vmask;\n            if (win_addr == 7'h05) win_rdata <= {16'd0, fw_r};\n            if (win_addr[6:4] == 3'd1) win_rdata <= {20'd0, samp[win_addr[3:0]]};\n            if (win_addr[6:4] == 3'd2) win_rdata <= (6'(win_addr[3:0]) < nout) ? {4'd0, outq[win_addr[3:0]]} : 32'd0;\n        end\n        if (rst) begin\n            mask_r <= '0; vmask <= '0; fw_r <= '0; nout <= '0; go <= 1'b0; win_rdata <= 32'd0;\n            for (int i = 0; i < 16; i++) begin samp[i] <= '0; outq[i] <= '0; end\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c11_nco_mixer_top.sv",
+    "path": "benchmark/course/tasks/c11_nco_mixer/ref/rtl/c11_nco_mixer_top.sv",
+    "sha256": "56b1477aef45",
+    "text": "// c11_nco_mixer_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"NCOM\".\n// Reference design for course task c11_nco_mixer; the shell window is wired to c11_nco_mixer_regs.\nmodule c11_nco_mixer_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4e434f4d), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c11_nco_mixer_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 43,
+    "name": "nco_mixer.sv",
+    "path": "benchmark/course/tasks/c11_nco_mixer/ref/rtl/nco_mixer.sv",
+    "sha256": "75c74389afe7",
+    "text": "// Part 11 lesson 3 solution: an NCO and a complex mixer (digital down-conversion step).\nmodule nco_mixer #(\n    parameter int AW = 16,\n    parameter int LA = 8,\n    parameter int XW = 12\n) (\n    input  logic                 clk,\n    input  logic                 rst_n,\n    input  logic                 en,\n    input  logic [AW-1:0]        fw,\n    input  logic signed [XW-1:0] x,\n    output logic                 out_valid,\n    output logic signed [XW-1:0] i_out,\n    output logic signed [XW-1:0] q_out\n);\n    localparam int CW = 16;\n    logic signed [CW-1:0] lut [2**LA];\n    logic [AW-1:0] acc;\n\n    initial begin\n        for (int i = 0; i < 2**LA; i++)\n            lut[i] = CW'($rtoi($floor(16383.0 * $sin(6.283185307179586 * i / (2.0**LA)) + 0.5)));\n    end\n\n    wire [LA-1:0] idx = acc[AW-1 -: LA];\n    wire signed [CW-1:0] s = lut[idx];\n    wire signed [CW-1:0] c = lut[idx + LA'(2**(LA-2))];\n    wire signed [XW+CW-1:0] pi = x * c;\n    wire signed [XW+CW-1:0] pq = x * (-s);\n\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            acc <= '0; out_valid <= 1'b0; i_out <= '0; q_out <= '0;\n        end else begin\n            out_valid <= en;\n            if (en) begin\n                acc   <= acc + fw;\n                i_out <= XW'(pi >>> 14);\n                q_out <= XW'(pq >>> 14);\n            end\n        end\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 86,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c11_nco_mixer/hidden/acceptance.py",
+    "sha256": "5ed1354792df",
+    "text": "\"\"\"Acceptance tests of c11_nco_mixer against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board\nfrom model import DESIGN_ID, FW, FWS, GO, MASK, NOUT, OUT, SAMP, STATUS, VMASK, mix, stimulus\n\n\ndef s12(v: int) -> int:\n    return v - 4096 if v & 0x800 else v\n\n\nasync def burst(b: Board, xs: list[int], mask: int) -> list[tuple[int, int]]:\n    for k, x in enumerate(xs):\n        await b.write(SAMP + k, x & 0xFFF)\n    await b.write(MASK, mask)\n    await b.write(GO, 1)\n    for _ in range(50):\n        if await b.read(STATUS) & 1:\n            break\n    else:\n        raise AssertionError(\"DONE never rose\")\n    await b.expect(VMASK, mask, f\"VMASK: a result must appear exactly one clock after each enabled clock (mask {mask:08X})\")\n    await b.expect(NOUT, len(xs), \"NOUT\")\n    out = []\n    for k in range(len(xs)):\n        v = await b.read(OUT + k)\n        out.append((s12(v & 0xFFF), s12(v >> 16 & 0xFFF)))\n    return out\n\n\nasync def run(b: Board, fw: int, xs: list[int], rng: random.Random) -> None:\n    \"\"\"One run from a fresh reset: the whole sample stream in bursts of 16, compared with the model.\"\"\"\n    await b.reset()\n    await b.write(FW, fw)\n    want = mix(xs, fw)\n    got: list[tuple[int, int]] = []\n    for k in range(0, len(xs), 16):\n        chunk = xs[k:k + 16]\n        mask = sum(1 << p for p in rng.sample(range(32), len(chunk)))\n        got += await burst(b, chunk, mask)\n    bad = [k for k, (g, w) in enumerate(zip(got, want)) if g != w]\n    assert not bad, f\"fw {fw:#06x}: {len(bad)} of {len(want)} pairs differ, first at {bad[0]}: x {xs[bad[0]]}, RTL (i, q) {got[bad[0]]}, model {want[bad[0]]}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off, want in ((MASK, 0), (STATUS, 0), (NOUT, 0), (VMASK, 0), (FW, 0), (SAMP, 0), (OUT, 0)):\n        await b.expect(off, want, f\"reset value of {off:#x}\")\n\n\n@cocotb.test()\nasync def test_first_frequency_word(dut):\n    b = Board(dut, {})\n    await b.start()\n    r = stimulus()[0]\n    await run(b, r[\"fw\"], r[\"x\"], random.Random(int(cocotb.RANDOM_SEED)))\n\n\n@cocotb.test()\nasync def test_second_frequency_word(dut):\n    b = Board(dut, {})\n    await b.start()\n    r = stimulus()[1]\n    await run(b, r[\"fw\"], r[\"x\"], random.Random(int(cocotb.RANDOM_SEED) + 1))\n\n\n@cocotb.test()\nasync def test_consecutive_clocks_and_single_sample(dut):\n    b = Board(dut, {})\n    await b.start()\n    await b.write(FW, 0x4000)\n    xs = [1000, -1000, 2047, -2048]\n    want = mix(xs + [5], 0x4000)\n    got = await burst(b, xs, 0x0000000F)\n    assert got == want[:4], f\"consecutive clocks: RTL {got}, model {want[:4]}\"\n    got = await burst(b, [5], 0x80000000)\n    assert got == want[4:], f\"one sample at clock 31 continues the phase: RTL {got}, model {want[4:]}\"\n    await burst(b, [], 0)\n    await b.expect(NOUT, 0, \"no sample, no result\")\n"
+   }
+  ]
+ },
+ "heading": "NCO and mixer for a radio front end, behind the test shell",
+ "id": "c11_nco_mixer",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[31:0] clock n of the burst presents a sample when bit n is 1",
+    "name": "MASK",
+    "offset": "0x00"
+   },
+   {
+    "access": "WO",
+    "bits": "any write starts a burst; reads 0",
+    "name": "GO",
+    "offset": "0x01"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] DONE; other bits 0",
+    "name": "STATUS",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[5:0] number of results seen in the last burst",
+    "name": "NOUT",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[31:0] bit n = a result appeared in clock n + 1",
+    "name": "VMASK",
+    "offset": "0x04"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] phase step; [31:16] read 0",
+    "name": "FW",
+    "offset": "0x05"
+   },
+   {
+    "access": "RW",
+    "bits": "[11:0] signed sample, two's complement; [31:12] read 0. SAMP1-SAMP15 at 0x11-0x1F the same, in order",
+    "name": "SAMP0",
+    "offset": "0x10"
+   },
+   {
+    "access": "RO",
+    "bits": "[11:0] i_out, [27:16] q_out of the first result, two's complement; other bits 0. OUT1-OUT15 at 0x21-0x2F the same; 0 beyond NOUT",
+    "name": "OUT0",
+    "offset": "0x20"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: phase 0, FW 0, burst mask 0, sample registers 0, results cleared, DONE = 0",
+  "top": "c11_nco_mixer_top",
+  "unmapped": "offsets not listed read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "nco_mixer.sv",
+   "name": "cosine_offset_half_cycle",
+   "why": "cosine a half cycle off"
+  },
+  {
+   "file": "nco_mixer.sv",
+   "name": "q_shift_13",
+   "why": "q scaled by 2"
+  },
+  {
+   "file": "nco_mixer.sv",
+   "name": "q_sign",
+   "why": "the tone rotates the other way"
+  },
+  {
+   "file": "nco_mixer.sv",
+   "name": "runs_on_gaps",
+   "why": "the phase advances on clocks with no sample"
+  },
+  {
+   "file": "nco_mixer.sv",
+   "name": "amplitude_16384",
+   "why": "table scaled by 16384 instead of 16383"
+  },
+  {
+   "file": "nco_mixer.sv",
+   "name": "rounded_not_floored",
+   "why": "i rounds to nearest instead of towards minus infinity"
+  },
+  {
+   "file": "nco_mixer.sv",
+   "name": "valid_always_high",
+   "why": "a result on clocks with no sample"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c11_nco_mixer",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "every (i_out, q_out) equals the model's"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the phase advances only on enabled clocks; a result appears one clock after each enabled clock"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "analysis"
+   ],
+   "text": "timing closes at 100 MHz"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": 82,
+   "bram36": null,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-08",
+   "dsp": null,
+   "escape_level": null,
+   "failure_class": "model error (tests-role gate conventions)",
+   "ff": null,
+   "hidden_pass": true,
+   "lut": null,
+   "model": "claude-sonnet-5-5",
+   "outcome": "internal_stop_hidden_pass",
+   "run": 1,
+   "tests_passed": 4,
+   "tests_total": 4,
+   "wall_h": 1.5,
+   "wns_ns": null
+  },
+  {
+   "agent_turns": null,
+   "bram36": 0,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-09",
+   "dsp": 2,
+   "escape_level": null,
+   "failure_class": null,
+   "ff": 981,
+   "hidden_pass": true,
+   "lut": 933,
+   "model": "claude-sonnet-5-5",
+   "outcome": "pass",
+   "run": 2,
+   "tests_passed": 4,
+   "tests_total": 4,
+   "wall_h": 1.69,
+   "wns_ns": 0.628
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# NCO and mixer for a radio front end, behind the test shell\n\nI am building the first stage of a digital down-converter for the Nexys A7-100T's FPGA: take a stream of signed 12-bit real samples `x`, multiply them by a complex tone `exp(-j * phase)` that I can set the frequency of, and give the two products out as `i_out` and `q_out`, so a signal at the oscillator's frequency lands at zero hertz. I want to exercise it entirely from the test shell.\n\n- A sample `x` (signed 12 bits) is presented on any clock (an \"enabled\" clock); when no sample is presented everything holds, including the phase. The frequency word `fw` is 16 bits: the tone frequency is `fw / 2^16` times the rate of enabled samples. A result is the pair `i_out`, `q_out` (signed 12 bits each) and appears exactly one clock after each enabled clock, and on no other clock.\n- The phase is a 16-bit accumulator, 0 after reset, advancing by `fw` on each enabled clock, wrapping. The sine and cosine come from one table of 256 entries covering a full cycle: `S[k] = floor(16383 * sin(2 * pi * k / 256) + 0.5)` (signed, 16 bits); the cosine of an index `k` is `S[(k + 64) mod 256]`. The index is the top 8 bits of the phase **before** that clock's advance (lower bits dropped).\n- For each enabled sample with sine `s` and cosine `c`: `i_out = floor(x * c / 2^14)` and `q_out = floor(-x * s / 2^14)` (floor = arithmetic shift right, rounding towards minus infinity), as 12-bit signed values.\n- CPU_RESETN clears the oscillator phase and the loaded values.\n- The block must close timing at 100 MHz.\n- Over the shell I set `fw`, load up to 16 samples, give a 32-bit pattern that says on which of the next 32 clocks a sample is presented (a 1 bit presents the next sample, in order), and a \"go\". The phase keeps running from one such burst to the next. Afterwards I read the result pairs in order, how many came out, and a 32-bit record of the clocks on which a result appeared. I will send 1,500 samples (random values, a tone, full-scale values) with gaps where no sample is presented and with a couple of frequency words, and compare every output pair.\n- The shell runs at 115200 baud on the USB-UART. The design ID is \"NCOM\".\n\nTest hooks: top module `c11_nco_mixer_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "B13",
+  "B15"
+ ],
+ "tier": "C11",
+ "title": "NCO (16-bit phase, 256-entry table) and complex mixer, 12-bit in and out, behind the test shell",
+ "trace": {
+  "captions": [
+   "Sample 0: x = 0, table index 0 (sine 0, cosine 16383), so i_out = 0 and q_out = 0.",
+   "Sample 1: x = 1198, table index 26 (sine 9759, cosine 13159), so i_out = 962 and q_out = -714.",
+   "Sample 2: x = 1919, table index 52 (sine 15678, cosine 4756), so i_out = 557 and q_out = -1837.",
+   "Sample 3: x = 1875, table index 78 (sine 15425, cosine -5519), so i_out = -632 and q_out = -1766.",
+   "Sample 4: x = 1084, table index 104 (sine 9102, cosine -13622), so i_out = -902 and q_out = -603.",
+   "Sample 5: x = -139, table index 130 (sine -804, cosine -16363), so i_out = 138 and q_out = -7.",
+   "Sample 6: x = -1307, table index 157 (sine -10701, cosine -12405), so i_out = 989 and q_out = -854.",
+   "Sample 7: x = -1953, table index 183 (sine -15985, cosine -3590), so i_out = 427 and q_out = -1906.",
+   "Sample 8: x = -1822, table index 209 (sine -14977, cosine 6639), so i_out = -739 and q_out = -1666.",
+   "Sample 9: x = -964, table index 235 (sine -8075, cosine 14255), so i_out = -839 and q_out = -476.",
+   "Sample 10: x = 278, table index 5 (sine 2005, cosine 16260), so i_out = 275 and q_out = -35.",
+   "Sample 11: x = 1409, table index 31 (sine 11297, cosine 11865), so i_out = 1020 and q_out = -972.",
+   "Sample 12: x = 1978, table index 58 (sine 16206, cosine 2404), so i_out = 290 and q_out = -1957.",
+   "Sample 13: x = 1760, table index 84 (sine 14449, cosine -7723), so i_out = -830 and q_out = -1553.",
+   "Sample 14: x = 839, table index 110 (sine 7005, cosine -14810), so i_out = -759 and q_out = -359.",
+   "Sample 15: x = -415, table index 136 (sine -3196, cosine -16068), so i_out = 406 and q_out = -81.",
+   "Sample 16: x = -1504, table index 162 (sine -12139, cosine -11002), so i_out = 1009 and q_out = -1115.",
+   "Sample 17: x = -1994, table index 188 (sine -16304, cosine -1606), so i_out = 195 and q_out = -1985.",
+   "Sample 18: x = -1689, table index 215 (sine -13841, cosine 8765), so i_out = -904 and q_out = -1427.",
+   "Sample 19: x = -711, table index 241 (sine -5896, cosine 15285), so i_out = -664 and q_out = -256.",
+   "Sample 20: x = 550, table index 11 (sine 4370, cosine 15790), so i_out = 530 and q_out = -147.",
+   "Sample 21: x = 1592, table index 37 (sine 12915, cosine 10079), so i_out = 979 and q_out = -1255.",
+   "Sample 22: x = 2000, table index 63 (sine 16378, cosine 402), so i_out = 49 and q_out = -2000.",
+   "Sample 23: x = 1610, table index 89 (sine 13394, cosine -9433), so i_out = -927 and q_out = -1317.",
+   "Sample 24: x = 579, table index 116 (sine 4756, cosine -15678), so i_out = -555 and q_out = -169.",
+   "Sample 25: x = -683, table index 142 (sine -5519, cosine -15425), so i_out = 643 and q_out = -231.",
+   "Sample 26: x = -1673, table index 168 (sine -13622, cosine -9102), so i_out = 929 and q_out = -1391.",
+   "Sample 27: x = -1996, table index 194 (sine -16363, cosine 804), so i_out = -98 and q_out = -1994.",
+   "Sample 28: x = -1524, table index 220 (sine -12664, cosine 10393), so i_out = -967 and q_out = -1178.",
+   "Sample 29: x = -444, table index 246 (sine -3981, cosine 15892), so i_out = -431 and q_out = -108.",
+   "Sample 30: x = 812, table index 17 (sine 6639, cosine 14977), so i_out = 742 and q_out = -330.",
+   "Sample 31: x = 1745, table index 43 (sine 14255, cosine 8075), so i_out = 860 and q_out = -1519."
+  ],
+  "signals": [
+   {
+    "hi": 2047,
+    "kind": "wave",
+    "lo": -2048,
+    "name": "x",
+    "v": [
+     0,
+     1198,
+     1919,
+     1875,
+     1084,
+     -139,
+     -1307,
+     -1953,
+     -1822,
+     -964,
+     278,
+     1409,
+     1978,
+     1760,
+     839,
+     -415,
+     -1504,
+     -1994,
+     -1689,
+     -711,
+     550,
+     1592,
+     2000,
+     1610,
+     579,
+     -683,
+     -1673,
+     -1996,
+     -1524,
+     -444,
+     812,
+     1745
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "table index",
+    "radix": "dec",
+    "v": [
+     0,
+     26,
+     52,
+     78,
+     104,
+     130,
+     157,
+     183,
+     209,
+     235,
+     5,
+     31,
+     58,
+     84,
+     110,
+     136,
+     162,
+     188,
+     215,
+     241,
+     11,
+     37,
+     63,
+     89,
+     116,
+     142,
+     168,
+     194,
+     220,
+     246,
+     17,
+     43
+    ],
+    "width": 8
+   },
+   {
+    "hi": 2047,
+    "kind": "wave",
+    "lo": -2048,
+    "name": "i_out",
+    "v": [
+     0,
+     962,
+     557,
+     -632,
+     -902,
+     138,
+     989,
+     427,
+     -739,
+     -839,
+     275,
+     1020,
+     290,
+     -830,
+     -759,
+     406,
+     1009,
+     195,
+     -904,
+     -664,
+     530,
+     979,
+     49,
+     -927,
+     -555,
+     643,
+     929,
+     -98,
+     -967,
+     -431,
+     742,
+     860
+    ]
+   },
+   {
+    "hi": 2047,
+    "kind": "wave",
+    "lo": -2048,
+    "name": "q_out",
+    "v": [
+     0,
+     -714,
+     -1837,
+     -1766,
+     -603,
+     -7,
+     -854,
+     -1906,
+     -1666,
+     -476,
+     -35,
+     -972,
+     -1957,
+     -1553,
+     -359,
+     -81,
+     -1115,
+     -1985,
+     -1427,
+     -256,
+     -147,
+     -1255,
+     -2000,
+     -1317,
+     -169,
+     -231,
+     -1391,
+     -1994,
+     -1178,
+     -108,
+     -330,
+     -1519
+    ]
+   }
+  ],
+  "stimulus": "Frequency word 0x1a2b. The 32 samples are the tone part of the model's first run (its samples 300 to 331), fed to the mixer with the oscillator phase starting at 0.",
+  "unit": "sample",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31
+  ]
+ },
+ "what": "The first stage of a software-radio receiver. An oscillator (a phase counter plus a sine table) produces a sine and cosine at a chosen frequency, and each incoming sample is multiplied by both to give an in-phase and a quadrature output. A signal at the oscillator's frequency is thereby moved down to zero hertz. The phase only moves when a sample is presented, and each result appears exactly one clock later.",
+ "where": "Digital down-converters in radios, radar and software-defined-radio receivers, where an FPGA shifts a band of interest to baseband before filtering and decimation."
+}

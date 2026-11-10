@@ -1,0 +1,32 @@
+<h1>Results</h1>
+
+<h2>Held-out evaluation (<code>eval-1</code>)</h2>
+<p>The agent at tag <code>eval-1</code> was to be measured on {{eval.tasks}} tasks it never saw during development, {{eval.runs_per_task}} runs each. That evaluation was <strong>stopped before any result was analysed</strong>: a tool update partway through blocked some of its runs, and the owner chose to grow the benchmark (more tasks, boards and application areas) before measuring. The stop is recorded in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/eval/eval1_preregistration.md">the pre-registration</a>. A baseline evaluation on the larger benchmark comes later, with a new tag and a new pre-registration. The method is on the <a href="evaluation.html">evaluation page</a>.</p>
+<div id="eval1"></div>
+
+<h2>Development tasks</h2>
+<p><span class="tag">Development tasks, not the held-out score</span> {{dev.runs}} runs on {{dev.tasks}} development tasks, {{dev.model.0}}, {{dev.dates.0}} to {{dev.dates.1}}. The agent was changed between runs to fix what these runs exposed, so this is a record of the work, not a measure of how it will do on new tasks.</p>
+
+<div class="facts">
+<div class="fact"><div class="n">{{dev.hidden_pass}} of {{dev.runs}}</div><p>runs passed every hidden test ({{dev.pass_pct_runs}}%).</p></div>
+<div class="fact"><div class="n">{{dev.escapes}} of {{dev.runs}}</div><p>were escapes: own checks passed, hidden tests failed. All {{dev.escapes}} classed as spec interpretation.</p></div>
+<div class="fact"><div class="n">{{dev.mean_wall_h}} h</div><p>mean wall time per run (over {{dev.wall_n}} runs that recorded it). Mean plan-cost estimate ${{dev.mean_plan_cost_usd}} per run: Claude Code's own API-equivalent figure, since the plan has no per-call price.</p></div>
+</div>
+
+<h3>Per task: hidden tests passed in k of n runs</h3>
+<div id="dev-strip"></div>
+<p class="small muted">The number of runs differs by task because development tasks were re-run after fixes.</p>
+
+<h3>pass@1 over the development tasks</h3>
+<figure><div id="dev-int"></div><figcaption>Mean over tasks of each task's pass rate, with a 95% bootstrap interval over tasks ({{eval.resamples}} resamples, seed {{eval.seed}}); beside it the Wilson interval on the runs, which treats every run as independent and so is too narrow when tasks differ in difficulty. The intervals overlap heavily: this is what "a few tasks" looks like.</figcaption></figure>
+
+<h3>What happened in each run</h3>
+<div id="dev-out"></div>
+
+<h3>Escapes by the check that should have caught them</h3>
+<div id="dev-esc"></div>
+<p class="small muted">Each escape was a spec the agent read differently from the hidden tests (a pin named differently, an unasked register layout). The changes made in response went to the interview, the agent's own checks and, where a task's text was found to leave a behaviour unstated, to that task (dated, before eval-1 was frozen). Whether they help will be measured by the baseline evaluation, not claimed here.</p>
+
+<h3>Every run</h3>
+{{!dev_table}}
+<p class="small muted">Runs without timing or area stopped before place and route. Slack is post-route at 100 MHz. Source: <code>results/course/*/run_*.json</code>.</p>

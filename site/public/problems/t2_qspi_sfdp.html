@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Read the configuration flash&#x27;s ID and SFDP header | End-to-end FPGA Agent</title>
+<meta name="description" content="Read the configuration flash&#x27;s ID and SFDP header: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task t2_qspi_sfdp.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
+  --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --measure: 68ch; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+    --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+  --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); overflow-x: hidden; }
+a { color: var(--ink); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, kbd, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--panel); border: 1px solid var(--rule); padding: 0 .3em; border-radius: 2px; overflow-wrap: anywhere; }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; line-height: 1.45; margin: 0 0 1em; max-width: 100%; }
+pre code { border: 0; padding: 0; background: none; overflow-wrap: normal; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 3.2vw, 3rem); margin: .3em 0 .4em; font-weight: 700; }
+h2 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.8rem); margin: 2.2em 0 .5em; font-weight: 700; }
+h3 { font-size: 1.05rem; margin: 1.6em 0 .4em; }
+p, li { max-width: var(--measure); }
+p { margin: 0 0 1em; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-3); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
+.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.bar nav a { padding: 10px 8px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
+.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* sections, cards */
+.hero { padding: 36px 0 8px; }
+.eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
+.fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.fact .n { font: 700 2rem/1.1 var(--f-mono); letter-spacing: -.02em; }
+.fact p { margin: .4em 0 0; font-size: .92rem; color: var(--ink-2); }
+.tag { display: inline-block; font: 600 .75rem var(--f-mono); border: 1px solid var(--ink-3); padding: 1px 7px; border-radius: 2px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.tag.run { border-style: dashed; }
+figure { margin: 1.4em 0; }
+figcaption { font-size: .88rem; color: var(--ink-3); margin-top: 6px; max-width: var(--measure); }
+.panel { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.tablewrap { overflow-x: auto; margin: 0 0 1.2em; border: 1px solid var(--rule); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+img { max-width: 100%; height: auto; display: block; }
+footer { border-top: 1px solid var(--rule); margin-top: 56px; padding: 22px 0 40px; color: var(--ink-3); font-size: .9rem; }
+footer .wrap > * { max-width: var(--measure); }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
+
+/* pipeline player */
+.player { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0 0 12px; counter-reset: n; }
+.pipe li { max-width: none; border: 1px solid var(--mute); padding: 8px 10px; font-size: .86rem; line-height: 1.3; position: relative; color: var(--ink-3); min-height: 62px; }
+.pipe li b { display: block; font-size: .72rem; font-family: var(--f-mono); letter-spacing: .04em; margin-bottom: 2px; }
+.pipe li.done { color: var(--ink-2); border-color: var(--ink-3); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px); }
+.pipe li.active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.pipe li.stop { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.pipe li .v { position: absolute; right: 8px; top: 6px; font: .72rem var(--f-mono); }
+.cap { min-height: 3.2em; margin: 0 0 10px; color: var(--ink); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctl input[type=range] { flex: 1 1 140px; min-width: 120px; min-height: 44px; accent-color: var(--ink); }
+.ctl .pos { font: .85rem var(--f-mono); color: var(--ink-3); min-width: 6ch; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* charts */
+svg text { fill: var(--ink-2); font: 11px var(--f-mono); }
+svg .ink { stroke: var(--ink); fill: none; }
+svg .fillink { fill: var(--ink); }
+svg .rule { stroke: var(--rule); }
+svg .warn { stroke: var(--warn); fill: none; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; }
+.dot.p { background: var(--ink); }
+.dot.f { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.dot.n { border-style: dotted; border-color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.strip .t { font-family: var(--f-mono); overflow-wrap: anywhere; }
+.bars { display: grid; grid-template-columns: minmax(0, 14ch) 1fr auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.bars .b { height: 14px; background: var(--ink); min-width: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-3); margin-top: 8px; }
+.stub { border: 1px dashed var(--ink-3); padding: 18px; background: var(--panel); }
+@media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Home hero: FPGA fabric backdrop (canvas, monochrome, drawn by app.js; still under reduced motion). */
+.hero { position: relative; isolation: isolate; padding: 72px 0 40px; }
+#fabric { position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  mask-composite: intersect; }
+@media (max-width: 640px) { #fabric { opacity: .55; } }
+.hero h1 { font-size: clamp(2.4rem, 1.2rem + 5.6vw, 4.6rem); letter-spacing: -.025em; margin: .15em 0 .2em; }
+.strap { font-size: clamp(1.15rem, .9rem + 1.2vw, 1.6rem); line-height: 1.3; font-weight: 600; margin: 0 0 .8em; max-width: 40ch; }
+.boards { font: .9rem/1.5 var(--f-mono); color: var(--ink-2); max-width: 70ch; }
+.boards span { background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
+.hero h1, .hero .strap { text-shadow: 0 0 12px var(--bg), 0 0 4px var(--bg); }
+
+/* problems: index and task pages */
+.dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.dombars li { display: grid; grid-template-columns: minmax(0, 22ch) 1fr 3ch; gap: 10px; align-items: center; max-width: none; font-size: .88rem; }
+.dombars a { text-decoration: none; padding: 6px 0; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+.dombars a b { font-family: var(--f-mono); }
+.db { height: 12px; border: 1px solid var(--rule); display: block; }
+.db span { display: block; height: 100%; background: var(--ink); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0 12px; }
+.filters label { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; }
+.filters select { max-width: 70vw; }
+.plist { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.pcard { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; max-width: none; display: flex; flex-direction: column; gap: 2px; }
+.pcard a { font-weight: 600; text-decoration: none; }
+.pcard a:hover .pt { text-decoration: underline; }
+.pcard .pm { font-size: .82rem; color: var(--ink-3); }
+.made li { margin-bottom: .5em; }
+.crumbs { margin: 24px 0 0; color: var(--ink-3); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.spec { border-left: 3px solid var(--ink); padding: 2px 0 2px 16px; margin: 0 0 1em; }
+.spec h3, .spec h4 { margin-top: .8em; }
+.reqs li { margin-bottom: .3em; }
+details.rules, details.code { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 10px; }
+details.rules > summary, details.code > summary { padding: 10px 12px; cursor: pointer; min-height: 44px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+details.rules > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.code pre { margin: 0; border: 0; border-top: 1px solid var(--rule); max-height: 36em; }
+.codebar { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0 12px 8px; align-items: center; }
+.codebar a { min-height: 32px; display: inline-flex; align-items: center; }
+.hk { font-weight: 700; }
+.hc { color: var(--ink-3); font-style: italic; }
+.hs { color: var(--ink-2); }
+.note { border: 1px solid var(--ink-3); padding: 10px 12px; background: var(--panel); }
+.trace .hero-art { margin-bottom: 10px; }
+.wavewrap { overflow-x: auto; margin-bottom: 8px; }
+.wavesvg { min-width: 520px; }
+svg .future { fill: var(--panel); opacity: .62; }
+svg .cursor { fill: var(--ink); opacity: .08; }
+svg text.big { font-size: 15px; fill: var(--ink); }
+svg text.inv, svg text.big.inv { fill: var(--panel); }
+svg .pix { stroke: var(--ink-3); stroke-width: 1; }
+svg text.dark { fill: #000; } svg text.light { fill: #fff; }
+.vals { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 14px; margin: 0 0 8px; font-size: .85rem; }
+.vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
+.trace .hero-art svg { margin: 0 auto; display: block; }
+</style>
+</head>
+<body>
+<a class="visually-hidden" href="#main">Skip to content</a>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<main id="main" class="wrap">
+<p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-F">F. Interfaces and protocols</a></p>
+<h1>Read the configuration flash&#x27;s ID and SFDP header</h1>
+<p class="tags"><code>t2_qspi_sfdp</code> <span class="tag">Benchmark v1</span> <span class="tag">T2</span> <span class="tag">F Interfaces and protocols</span> <span class="tag">Nexys A7-100T</span></p>
+<figure><div class="player trace" id="trace" aria-label="Golden model replay"><div class="wave"></div><p class="cap" aria-live="polite"></p></div><figcaption>The task's own golden model (<code>hidden/model.py</code>) run on a fixed input when the site is built, so this is what the hidden tests check. A start command is given; the flash is the bench&#x27;s own flash model, answering ID 01 20 18 and an SFDP table whose first four bytes spell the signature. Two transactions follow, each shown byte by byte; MOSI is shown as 0 when the master sends nothing useful. Space plays and pauses, arrow keys step.</figcaption></figure>
+<h2>The problem</h2>
+<p>A small program in hardware that identifies the board&#x27;s configuration flash chip. On a start command it reads the chip&#x27;s three-byte JEDEC identifier and then the first sixteen bytes of its SFDP table, a standard self-description held in the flash. It reports the values and whether the table begins with the expected signature. Because the flash holds the board&#x27;s bitstream, the design may send only those two read commands and never anything that writes.</p>
+<p><strong>Where it is used.</strong> SFDP lets software discover the size, commands and timing of a serial flash without a per-chip driver, which is how boot loaders and operating systems support many flash parts. Reading the ID is the usual safe first check that a flash connection works.</p>
+
+<h2>The spec the agent is given</h2>
+<div class="spec"><h3>Read the configuration flash&#x27;s ID and SFDP header</h3>
+<p>I want to identify the Nexys A7-100T&#x27;s configuration flash from the FPGA after it has booted: read its JEDEC ID and the start of its SFDP table (the standard self-description), and show them over the test shell.</p>
+<ul><li>Single-bit SPI only, mode 0. The flash clock goes out through the configuration clock pin, so it has to go through the STARTUPE2 primitive. Keep the write-protect line low and the hold line high.</li><li>On a start command: read the 3-byte JEDEC ID, then read 16 bytes of SFDP data from address 0 (the SFDP header and the first parameter header), with the dummy clocks the SFDP read needs.</li><li>Registers: the ID, the 16 SFDP bytes as four words, and status (busy, done, and whether the first four SFDP bytes are the &quot;SFDP&quot; signature).</li><li>This flash holds the board&#x27;s bitstream: the design must never send anything but those two read commands.</li><li>The SPI clock half period is a parameter in clocks (5 MHz on the board is plenty).</li><li>Design ID &quot;SFDP&quot;.</li></ul>
+<p>Test hooks: top module <code>t2_qspi_sfdp_top</code>, ports named as in the board&#x27;s master XDC (<code>QSPI_CSN</code>, <code>QSPI_DQ0</code>.. <code>QSPI_DQ3</code>, the USB-UART pins, <code>CLK100MHZ</code>, <code>CPU_RESETN</code>), the test shell&#x27;s <code>CLKS_PER_BIT</code>, <code>TIMEOUT_CYCLES</code> and <code>BUILD_STAMP</code> parameters, plus <code>HALF</code> (SPI clock half period in clocks) as top-level parameters.</p></div>
+<p class="small muted">Exactly <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_qspi_sfdp/spec.md"><code>spec.md</code></a>. Anything it leaves open, the agent has to ask about.</p>
+
+<h2>Interface</h2>
+<p>Top module <code>t2_qspi_sfdp_top</code> on the Nexys A7-100T (<code>xc7a100tcsg324-1</code>). Clock: CLK100MHZ at 100 MHz (board oscillator). Reset: CPU_RESETN, active low: registers to reset values; QSPI_CSN high; SCK low; then the start-up SCK cycles (below). Resources expected: about a hundred and fifty LUTs and FFs; one STARTUPE2; no BRAM, no DSP.</p>
+<p>Top-level parameters (board values): <code>CLKS_PER_BIT</code> = 868, <code>HALF</code> = 10, <code>TIMEOUT_CYCLES</code> = 100000. The hidden bench shrinks them to <code>CLKS_PER_BIT</code> = 8, <code>HALF</code> = 8, <code>TIMEOUT_CYCLES</code> = 400.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Port</th><th>Direction</th><th class="num">Width</th><th>Note</th></tr></thead><tbody><tr><td><code>CLK100MHZ</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>CPU_RESETN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>QSPI_CSN</code></td><td>out</td><td class="num">1</td><td>4.7 kohm pull-up on the board</td></tr><tr><td><code>QSPI_DQ0</code></td><td>out</td><td class="num">1</td><td>flash SI (master out)</td></tr><tr><td><code>QSPI_DQ1</code></td><td>in</td><td class="num">1</td><td>flash SO (master in)</td></tr><tr><td><code>QSPI_DQ2</code></td><td>out</td><td class="num">1</td><td>WP# - drive 0</td></tr><tr><td><code>QSPI_DQ3</code></td><td>out</td><td class="num">1</td><td>HOLD# - drive 1</td></tr><tr><td><code>UART_TXD_IN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>UART_RXD_OUT</code></td><td>out</td><td class="num">1</td><td></td></tr></tbody></table></div>
+<h3>Registers behind the test shell</h3><div class="tablewrap" tabindex="0"><table><thead><tr><th>Offset</th><th>Name</th><th>Access</th><th>Bits</th></tr></thead><tbody><tr><td><code>0x00</code></td><td><code>CTRL</code></td><td>WO</td><td>[0] write 1 to start; reads return 0</td></tr><tr><td><code>0x01</code></td><td><code>STATUS</code></td><td>RO</td><td>[0] BUSY, [1] DONE, [2] SIG_OK; [31:3] 0</td></tr><tr><td><code>0x02</code></td><td><code>ID</code></td><td>RO</td><td>[23:16] first RDID byte (manufacturer), [15:8] second, [7:0] third; [31:24] 0</td></tr><tr><td><code>0x03</code></td><td><code>SFDP0</code></td><td>RO</td><td>SFDP bytes 0-3, byte 0 in [7:0] (little-endian; the signature reads 0x50444653)</td></tr><tr><td><code>0x04</code></td><td><code>SFDP1</code></td><td>RO</td><td>SFDP bytes 4-7, byte 4 in [7:0]</td></tr><tr><td><code>0x05</code></td><td><code>SFDP2</code></td><td>RO</td><td>SFDP bytes 8-11</td></tr><tr><td><code>0x06</code></td><td><code>SFDP3</code></td><td>RO</td><td>SFDP bytes 12-15</td></tr></tbody></table></div><p class="small muted">offsets 0x07-0x7F read 0; writes to them and to RO registers are ignored</p>
+<h2>What the hidden tests check</h2>
+<p>The requirements in the hidden spec, and how each is shown to hold:</p>
+<ul class="reqs"><li><span class="mono">REQ-01</span> RDID and RSFDP (address 0, 8 dummy cycles, 16 bytes) are sent exactly as listed, in mode 0 <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-02</span> No opcode other than 0x9F and 0x5A ever reaches the flash <span class="muted">(shown by simulation, report analysis)</span></li><li><span class="mono">REQ-03</span> ID, SFDP0-3 and SIG_OK hold what the flash returned <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-04</span> SCK leaves through STARTUPE2 USRCCLKO, with start-up cycles; WP# low, HOLD# high <span class="muted">(shown by simulation, report analysis)</span></li><li><span class="mono">REQ-05</span> On the board the ID reads 01 20 18 <span class="muted">(shown by on the board)</span></li><li><span class="mono">REQ-06</span> The design closes timing at 100 MHz with no unconstrained path <span class="muted">(shown by report analysis)</span></li></ul>
+<details class="rules"><summary>The full behaviour rules from <code>hidden/spec.yaml</code></summary><h4>sck</h4><ul><li>SCK reaches the flash only through STARTUPE2 - USRCCLKO = SCK, USRCCLKTS = 0; the other STARTUPE2 inputs inactive (GSR 0, GTS 0, KEYCLEARB 1, PACK 0, USRDONEO 1, USRDONETS 1). No QSPI_SCK port.</li><li>After reset, before any transaction, SCK makes at least 3 full cycles with QSPI_CSN high (STARTUPE2 drops the first 3 USRCCLKO edges after configuration).</li><li>SCK idles low (mode 0); each half period is HALF clocks.</li></ul><h4>transactions</h4><ul><li>Mode 0 - the flash samples DQ0 on SCK rising edges and changes DQ1 after falling edges; the master puts each bit on DQ0 before the rising edge and samples DQ1 (synchronised by two flops) at the rising edge. Bytes MSB first.</li><li>Each transaction - QSPI_CSN low, at least HALF clocks, the SCK cycles back to back, at least HALF clocks after the last falling edge QSPI_CSN high, and at least 4 * HALF clocks high before the next.</li><li>A write to CTRL with bit 0 = 1 while BUSY = 0 - BUSY set, DONE and SIG_OK cleared, then two transactions - RDID [0x9F, then 3 bytes read into ID] and RSFDP [0x5A, address 0x00 0x00 0x00, 8 dummy SCK cycles, then 16 bytes read into SFDP0-SFDP3]; then BUSY cleared, DONE set, SIG_OK = (SFDP0 == 0x50444653).</li><li>Writes to CTRL while BUSY are ignored. A later start reads both again.</li><li>No other opcode is ever sent (no write enable, program, erase, register write or reset); DQ0 is a don&#x27;t-care during the dummy and read bytes.</li></ul><h4>pins</h4><ul><li>QSPI_DQ2 (WP#) = 0 and QSPI_DQ3 (HOLD#) = 1 at all times.</li></ul></details>
+<h3>Settled assumptions</h3><ul><li>the start-up SCK cycles are sent once after reset, not before every start. <span class="muted">STARTUPE2 drops edges only after configuration; once is enough.</span></li><li>SIG_OK compares only the four signature bytes. <span class="muted">the request asks whether the signature matched.</span></li></ul>
+
+<h2>What the tests catch: the mutants</h2>
+<p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-04, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t2_qspi_sfdp__icarus.json"><code>t2_qspi_sfdp__icarus.json</code></a>) the reference passed all 5 hidden tests and 9 of 9 mutants failed them.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>no_dummy_byte</code></td><td><code>sfdp_ctl.sv</code></td><td>no dummy cycles: SFDP bytes shifted by one</td><td><code>test_jedec_id_and_sfdp</code>, <code>test_bad_signature</code>, <code>test_busy_and_repeat</code>, <code>test_random_contents</code></td></tr><tr><td><code>fast_read_opcode</code></td><td><code>sfdp_ctl.sv</code></td><td>a FAST_READ (0Bh) of address 0 instead of RSFDP</td><td><code>test_jedec_id_and_sfdp</code>, <code>test_bad_signature</code>, <code>test_busy_and_repeat</code>, <code>test_random_contents</code></td></tr><tr><td><code>words_big_endian</code></td><td><code>sfdp_ctl.sv</code></td><td>byte 0 ends in the top of SFDP3</td><td><code>test_jedec_id_and_sfdp</code>, <code>test_bad_signature</code>, <code>test_busy_and_repeat</code>, <code>test_random_contents</code></td></tr><tr><td><code>no_startup_cycles</code></td><td><code>sf_spi.sv</code></td><td>no SCK cycles with CS high after reset</td><td><code>test_identity_and_reset</code>, <code>test_jedec_id_and_sfdp</code>, <code>test_bad_signature</code>, <code>test_busy_and_repeat</code>, <code>test_random_contents</code></td></tr><tr><td><code>hold_low</code></td><td><code>t2_qspi_sfdp_top.sv</code></td><td>HOLD# low (the flash pauses)</td><td><code>test_identity_and_reset</code>, <code>test_jedec_id_and_sfdp</code>, <code>test_bad_signature</code>, <code>test_busy_and_repeat</code>, <code>test_random_contents</code></td></tr><tr><td><code>sig_check_off</code></td><td><code>sfdp_ctl.sv</code></td><td>SIG_OK set whatever the bytes</td><td><code>test_bad_signature</code></td></tr><tr><td><code>wp_high</code></td><td><code>t2_qspi_sfdp_top.sv</code></td><td>WP# driven high</td><td><code>test_identity_and_reset</code>, <code>test_jedec_id_and_sfdp</code>, <code>test_bad_signature</code>, <code>test_busy_and_repeat</code>, <code>test_random_contents</code></td></tr><tr><td><code>half_short</code></td><td><code>sf_spi.sv</code></td><td>SCK high phase shorter than HALF</td><td><code>test_jedec_id_and_sfdp</code>, <code>test_bad_signature</code>, <code>test_busy_and_repeat</code>, <code>test_random_contents</code></td></tr><tr><td><code>id_two_bytes</code></td><td><code>sfdp_ctl.sv</code></td><td>only two ID bytes read</td><td><code>test_jedec_id_and_sfdp</code>, <code>test_bad_signature</code>, <code>test_busy_and_repeat</code>, <code>test_random_contents</code></td></tr></tbody></table></div>
+<h2>Sample solution</h2>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
+<details class="code"><summary><span class="mono">sf_spi.sv</span> <span class="muted small">reference RTL, 95 lines</span></summary><div class="codebar small"><a href="t2_qspi_sfdp/sf_spi.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_qspi_sfdp/ref/rtl/sf_spi.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// sf_spi.sv: single-bit SPI mode-0 transaction engine for the configuration</span>
+<span class="hc">// flash. CS low, nhdr header bytes from hdr (MSB byte first), then nrd bytes</span>
+<span class="hc">// with DQ0 = 0 whose received values come out on rx_valid / rx_byte, CS high,</span>
+<span class="hc">// then a gap. Once after reset it first makes STARTUP SCK cycles with CS high.</span>
+<span class="hk">module</span> sf_spi #(
+    <span class="hk">parameter</span> <span class="hk">int</span> HALF    = 10,
+    <span class="hk">parameter</span> <span class="hk">int</span> STARTUP = 8
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>        rst,
+    <span class="hk">input</span>  <span class="hk">logic</span>        go,
+    <span class="hk">input</span>  <span class="hk">logic</span> [31:0] hdr,
+    <span class="hk">input</span>  <span class="hk">logic</span> [2:0]  nhdr,
+    <span class="hk">input</span>  <span class="hk">logic</span> [4:0]  nrd,
+    <span class="hk">input</span>  <span class="hk">logic</span>        miso,          <span class="hc">// synchronised</span>
+    <span class="hk">output</span> <span class="hk">logic</span>        sck,
+    <span class="hk">output</span> <span class="hk">logic</span>        mosi,
+    <span class="hk">output</span> <span class="hk">logic</span>        csn,
+    <span class="hk">output</span> <span class="hk">logic</span>        busy,          <span class="hc">// includes the start-up cycles</span>
+    <span class="hk">output</span> <span class="hk">logic</span>        rx_valid,
+    <span class="hk">output</span> <span class="hk">logic</span> [7:0]  rx_byte
+);
+    <span class="hk">localparam</span> <span class="hk">int</span> CW = $clog2(4 * HALF + 1);
+    <span class="hk">typedef</span> <span class="hk">enum</span> <span class="hk">logic</span> [2:0] {BOOT, IDLE, LEAD, LOW, HIGH, TAIL, GAP} st_t;
+    st_t st;
+
+    <span class="hk">logic</span> [CW-1:0] cnt;
+    <span class="hk">logic</span> [2:0]    bitn;
+    <span class="hk">logic</span> [5:0]    b, total;
+    <span class="hk">logic</span> [31:0]   h;
+    <span class="hk">logic</span> [2:0]    nh;
+    <span class="hk">logic</span> [7:0]    sh_out, sh_in;
+    <span class="hk">logic</span> [4:0]    boot_n;
+
+    <span class="hk">function</span> <span class="hk">automatic</span> <span class="hk">logic</span> [7:0] tx_byte(<span class="hk">input</span> <span class="hk">logic</span> [5:0] idx, <span class="hk">input</span> <span class="hk">logic</span> [31:0] hh, <span class="hk">input</span> <span class="hk">logic</span> [2:0] n);
+        <span class="hk">if</span> (idx &gt;= {3&#x27;d0, n}) tx_byte = 8&#x27;h00;
+        <span class="hk">else</span>                  tx_byte = hh[31 - 8 * idx[1:0] -: 8];
+    <span class="hk">endfunction</span>
+    <span class="hk">function</span> <span class="hk">automatic</span> <span class="hk">logic</span> msb(<span class="hk">input</span> <span class="hk">logic</span> [7:0] v);
+        msb = v[7];
+    <span class="hk">endfunction</span>
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        rx_valid &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (rst) <span class="hk">begin</span>
+            st &lt;= BOOT; cnt &lt;= CW&#x27;(HALF - 1); bitn &lt;= &#x27;0; b &lt;= &#x27;0; total &lt;= &#x27;0; h &lt;= &#x27;0; nh &lt;= &#x27;0;
+            sh_out &lt;= &#x27;0; sh_in &lt;= &#x27;0; sck &lt;= 1&#x27;b0; mosi &lt;= 1&#x27;b0; csn &lt;= 1&#x27;b1; busy &lt;= 1&#x27;b1; rx_byte &lt;= &#x27;0;
+            boot_n &lt;= &#x27;0;
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            <span class="hk">case</span> (st)
+                <span class="hc">// start-up: STARTUP SCK cycles with CS high</span>
+                BOOT: <span class="hk">if</span> (cnt == &#x27;0) <span class="hk">begin</span>
+                    cnt &lt;= CW&#x27;(HALF - 1);
+                    sck &lt;= ~sck;
+                    <span class="hk">if</span> (sck) <span class="hk">begin</span>
+                        <span class="hk">if</span> (boot_n == 5&#x27;(STARTUP - 1)) <span class="hk">begin</span> st &lt;= GAP; cnt &lt;= CW&#x27;(4 * HALF - 1); <span class="hk">end</span>
+                        boot_n &lt;= boot_n + 1&#x27;b1;
+                    <span class="hk">end</span>
+                <span class="hk">end</span> <span class="hk">else</span> cnt &lt;= cnt - 1&#x27;b1;
+                IDLE: <span class="hk">if</span> (go) <span class="hk">begin</span>
+                    busy &lt;= 1&#x27;b1; csn &lt;= 1&#x27;b0; h &lt;= hdr; nh &lt;= nhdr;
+                    total &lt;= {3&#x27;d0, nhdr} + {1&#x27;b0, nrd};
+                    b &lt;= &#x27;0; st &lt;= LEAD; cnt &lt;= CW&#x27;(HALF - 1);
+                <span class="hk">end</span>
+                LEAD: <span class="hk">if</span> (cnt == &#x27;0) <span class="hk">begin</span>
+                    st &lt;= LOW; cnt &lt;= CW&#x27;(HALF - 1); bitn &lt;= &#x27;0;
+                    sh_out &lt;= tx_byte(6&#x27;d0, h, nh); mosi &lt;= msb(tx_byte(6&#x27;d0, h, nh));
+                <span class="hk">end</span> <span class="hk">else</span> cnt &lt;= cnt - 1&#x27;b1;
+                LOW: <span class="hk">if</span> (cnt == &#x27;0) <span class="hk">begin</span>
+                    st &lt;= HIGH; cnt &lt;= CW&#x27;(HALF - 1); sck &lt;= 1&#x27;b1;
+                    sh_in &lt;= {sh_in[6:0], miso};
+                <span class="hk">end</span> <span class="hk">else</span> cnt &lt;= cnt - 1&#x27;b1;
+                HIGH: <span class="hk">if</span> (cnt == &#x27;0) <span class="hk">begin</span>
+                    sck &lt;= 1&#x27;b0; cnt &lt;= CW&#x27;(HALF - 1);
+                    <span class="hk">if</span> (bitn == 3&#x27;d7) <span class="hk">begin</span>
+                        <span class="hk">if</span> (b &gt;= {3&#x27;d0, nh}) <span class="hk">begin</span> rx_valid &lt;= 1&#x27;b1; rx_byte &lt;= sh_in; <span class="hk">end</span>
+                        <span class="hk">if</span> (b + 1&#x27;b1 == total) <span class="hk">begin</span>
+                            st &lt;= TAIL; mosi &lt;= 1&#x27;b0;
+                        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+                            b &lt;= b + 1&#x27;b1; bitn &lt;= &#x27;0; st &lt;= LOW;
+                            sh_out &lt;= tx_byte(b + 1&#x27;b1, h, nh); mosi &lt;= msb(tx_byte(b + 1&#x27;b1, h, nh));
+                        <span class="hk">end</span>
+                    <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+                        bitn &lt;= bitn + 1&#x27;b1; st &lt;= LOW;
+                        sh_out &lt;= {sh_out[6:0], 1&#x27;b0}; mosi &lt;= sh_out[6];
+                    <span class="hk">end</span>
+                <span class="hk">end</span> <span class="hk">else</span> cnt &lt;= cnt - 1&#x27;b1;
+                TAIL: <span class="hk">if</span> (cnt == &#x27;0) <span class="hk">begin</span> st &lt;= GAP; csn &lt;= 1&#x27;b1; cnt &lt;= CW&#x27;(4 * HALF - 1); <span class="hk">end</span>
+                      <span class="hk">else</span> cnt &lt;= cnt - 1&#x27;b1;
+                GAP: <span class="hk">if</span> (cnt == &#x27;0) <span class="hk">begin</span> st &lt;= IDLE; busy &lt;= 1&#x27;b0; <span class="hk">end</span> <span class="hk">else</span> cnt &lt;= cnt - 1&#x27;b1;
+                <span class="hk">default</span>: st &lt;= IDLE;
+            <span class="hk">endcase</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">sfdp_ctl.sv</span> <span class="muted small">reference RTL, 85 lines</span></summary><div class="codebar small"><a href="t2_qspi_sfdp/sfdp_ctl.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_qspi_sfdp/ref/rtl/sfdp_ctl.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// sfdp_ctl.sv: on a start command, RDID (9Fh, 3 bytes) then RSFDP (5Ah,</span>
+<span class="hc">// address 0, 8 dummy cycles, 16 bytes). The only opcodes are these two</span>
+<span class="hc">// constants; no write, erase, register-write or reset command exists here.</span>
+<span class="hk">module</span> sfdp_ctl #(
+    <span class="hk">parameter</span> <span class="hk">int</span> HALF = 10
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>        rst,
+    <span class="hk">input</span>  <span class="hk">logic</span>        miso,
+    <span class="hk">output</span> <span class="hk">logic</span>        sck,
+    <span class="hk">output</span> <span class="hk">logic</span>        mosi,
+    <span class="hk">output</span> <span class="hk">logic</span>        csn,
+    <span class="hk">input</span>  <span class="hk">logic</span> [6:0]  win_addr,
+    <span class="hk">input</span>  <span class="hk">logic</span>        win_wr,
+    <span class="hk">input</span>  <span class="hk">logic</span>        win_rd,
+    <span class="hk">input</span>  <span class="hk">logic</span> [31:0] win_wdata,
+    <span class="hk">output</span> <span class="hk">logic</span> [31:0] win_rdata
+);
+    <span class="hk">localparam</span> <span class="hk">logic</span> [7:0] OP_RDID = 8&#x27;h9F, OP_RSFDP = 8&#x27;h5A;
+
+    <span class="hk">typedef</span> <span class="hk">enum</span> <span class="hk">logic</span> [2:0] {IDLE, ID, ID_W, SF, SF_W} st_t;
+    st_t st;
+
+    <span class="hk">logic</span>         go, sbusy, rx_valid, busy, done, sig_ok;
+    <span class="hk">logic</span> [31:0]  hdr;
+    <span class="hk">logic</span> [2:0]   nhdr;
+    <span class="hk">logic</span> [4:0]   nrd, ridx;
+    <span class="hk">logic</span> [7:0]   rx_byte;
+    <span class="hk">logic</span> [23:0]  id;
+    <span class="hk">logic</span> [127:0] sf;
+
+    sf_spi #(.HALF(HALF)) u_spi (
+        .clk(clk), .rst(rst), .go(go), .hdr(hdr), .nhdr(nhdr), .nrd(nrd), .miso(miso),
+        .sck(sck), .mosi(mosi), .csn(csn), .busy(sbusy), .rx_valid(rx_valid), .rx_byte(rx_byte));
+
+    <span class="hk">wire</span> start = win_wr &amp;&amp; win_addr == 7&#x27;h00 &amp;&amp; win_wdata[0] &amp;&amp; !busy;
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        go &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (rst) <span class="hk">begin</span>
+            st &lt;= IDLE; hdr &lt;= &#x27;0; nhdr &lt;= &#x27;0; nrd &lt;= &#x27;0; ridx &lt;= &#x27;0; busy &lt;= 1&#x27;b0; done &lt;= 1&#x27;b0; sig_ok &lt;= 1&#x27;b0;
+            id &lt;= &#x27;0; sf &lt;= &#x27;0;
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            <span class="hk">case</span> (st)
+                IDLE: <span class="hk">if</span> (start) <span class="hk">begin</span> busy &lt;= 1&#x27;b1; done &lt;= 1&#x27;b0; sig_ok &lt;= 1&#x27;b0; st &lt;= ID; <span class="hk">end</span>
+                ID: <span class="hk">if</span> (!sbusy) <span class="hk">begin</span>
+                    hdr &lt;= {OP_RDID, 24&#x27;h0}; nhdr &lt;= 3&#x27;d1; nrd &lt;= 5&#x27;d3; go &lt;= 1&#x27;b1; ridx &lt;= &#x27;0; st &lt;= ID_W;
+                <span class="hk">end</span>
+                ID_W: <span class="hk">begin</span>
+                    <span class="hk">if</span> (rx_valid) id &lt;= {id[15:0], rx_byte};
+                    <span class="hk">if</span> (!go &amp;&amp; !sbusy) st &lt;= SF;
+                <span class="hk">end</span>
+                SF: <span class="hk">begin</span>
+                    hdr &lt;= {OP_RSFDP, 24&#x27;h000000}; nhdr &lt;= 3&#x27;d4; nrd &lt;= 5&#x27;d17; go &lt;= 1&#x27;b1; ridx &lt;= &#x27;0; st &lt;= SF_W;
+                <span class="hk">end</span>
+                SF_W: <span class="hk">begin</span>
+                    <span class="hk">if</span> (rx_valid) <span class="hk">begin</span>
+                        ridx &lt;= ridx + 1&#x27;b1;
+                        <span class="hk">if</span> (ridx != 5&#x27;d0) sf &lt;= {rx_byte, sf[127:8]};      <span class="hc">// byte 0 ends in [7:0]</span>
+                    <span class="hk">end</span>
+                    <span class="hk">if</span> (!go &amp;&amp; !sbusy) <span class="hk">begin</span>
+                        st &lt;= IDLE; busy &lt;= 1&#x27;b0; done &lt;= 1&#x27;b1;
+                        sig_ok &lt;= sf[31:0] == 32&#x27;h5044_4653;
+                    <span class="hk">end</span>
+                <span class="hk">end</span>
+                <span class="hk">default</span>: st &lt;= IDLE;
+            <span class="hk">endcase</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (rst) win_rdata &lt;= &#x27;0;
+        <span class="hk">else</span> <span class="hk">if</span> (win_rd) <span class="hk">begin</span>
+            <span class="hk">case</span> (win_addr)
+                7&#x27;h01:   win_rdata &lt;= {29&#x27;d0, sig_ok, done, busy};
+                7&#x27;h02:   win_rdata &lt;= {8&#x27;d0, id};
+                7&#x27;h03:   win_rdata &lt;= sf[31:0];
+                7&#x27;h04:   win_rdata &lt;= sf[63:32];
+                7&#x27;h05:   win_rdata &lt;= sf[95:64];
+                7&#x27;h06:   win_rdata &lt;= sf[127:96];
+                <span class="hk">default</span>: win_rdata &lt;= &#x27;0;
+            <span class="hk">endcase</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">t2_qspi_sfdp_top.sv</span> <span class="muted small">reference RTL, 49 lines</span></summary><div class="codebar small"><a href="t2_qspi_sfdp/t2_qspi_sfdp_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_qspi_sfdp/ref/rtl/t2_qspi_sfdp_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t2_qspi_sfdp_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+<span class="hc">// Reference design for benchmark task t2_qspi_sfdp; DESIGN_ID &quot;SFDP&quot;.</span>
+<span class="hc">// Reads the configuration flash&#x27;s JEDEC ID and SFDP header. SCK leaves through</span>
+<span class="hc">// STARTUPE2 USRCCLKO; WP# (DQ2) low, HOLD# (DQ3) high; single-bit SPI mode 0.</span>
+<span class="hk">module</span> t2_qspi_sfdp_top #(
+    <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
+    <span class="hk">parameter</span> <span class="hk">int</span>          TIMEOUT_CYCLES = 100_000,
+    <span class="hk">parameter</span> <span class="hk">int</span>          HALF           = 10,
+    <span class="hk">parameter</span> <span class="hk">logic</span> [31:0] BUILD_STAMP    = 32&#x27;h0
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span> CLK100MHZ,
+    <span class="hk">input</span>  <span class="hk">logic</span> CPU_RESETN,
+    <span class="hk">output</span> <span class="hk">logic</span> QSPI_CSN,
+    <span class="hk">output</span> <span class="hk">logic</span> QSPI_DQ0,
+    <span class="hk">input</span>  <span class="hk">logic</span> QSPI_DQ1,
+    <span class="hk">output</span> <span class="hk">logic</span> QSPI_DQ2,
+    <span class="hk">output</span> <span class="hk">logic</span> QSPI_DQ3,
+    <span class="hk">input</span>  <span class="hk">logic</span> UART_TXD_IN,
+    <span class="hk">output</span> <span class="hk">logic</span> UART_RXD_OUT
+);
+    <span class="hk">logic</span>        clk, rst, win_wr, win_rd, miso, sck;
+    <span class="hk">logic</span> [6:0]  win_addr;
+    <span class="hk">logic</span> [31:0] win_wdata, win_rdata;
+
+    <span class="hk">assign</span> clk = CLK100MHZ;
+    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));
+
+    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),
+                 .DESIGN_ID(32&#x27;h5346_4450), .BUILD_STAMP(BUILD_STAMP)) u_shell (
+        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),
+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
+
+    sync2 u_sync (.clk(clk), .rst(rst), .d(QSPI_DQ1), .q(miso));
+
+    <span class="hk">assign</span> QSPI_DQ2 = 1&#x27;b0;
+    <span class="hk">assign</span> QSPI_DQ3 = 1&#x27;b1;
+
+    sfdp_ctl #(.HALF(HALF)) u_ctl (
+        .clk(clk), .rst(rst), .miso(miso), .sck(sck), .mosi(QSPI_DQ0), .csn(QSPI_CSN),
+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
+
+    <span class="hc">/* verilator lint_off UNUSEDSIGNAL */</span>
+    <span class="hk">logic</span> cfgclk_nc, cfgmclk_nc, eos_nc, preq_nc;
+    <span class="hc">/* verilator lint_on UNUSEDSIGNAL */</span>
+    STARTUPE2 #(.PROG_USR(<span class="hs">&quot;FALSE&quot;</span>), .SIM_CCLK_FREQ(0.0)) u_startup (
+        .CFGCLK(cfgclk_nc), .CFGMCLK(cfgmclk_nc), .EOS(eos_nc), .PREQ(preq_nc),
+        .CLK(1&#x27;b0), .GSR(1&#x27;b0), .GTS(1&#x27;b0), .KEYCLEARB(1&#x27;b1), .PACK(1&#x27;b0),
+        .USRCCLKO(sck), .USRCCLKTS(1&#x27;b0), .USRDONEO(1&#x27;b1), .USRDONETS(1&#x27;b1));
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 114 lines</span></summary><div class="codebar small"><a href="t2_qspi_sfdp/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_qspi_sfdp/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t2_qspi_sfdp against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+
+<span class="hk">from</span> __future__ <span class="hk">import</span> annotations
+
+<span class="hk">import</span> random
+
+<span class="hk">import</span> cocotb
+<span class="hk">from</span> benchmark.lib.bench <span class="hk">import</span> Board
+<span class="hk">from</span> flash_model <span class="hk">import</span> IDENT, SFDP_TABLE, Flash
+<span class="hk">from</span> model <span class="hk">import</span> BUSY, CTRL, DESIGN_ID, ID, SFDP0, STATUS, Model
+
+
+<span class="hk">class</span> Env:
+    <span class="hk">def</span> __init__(self, dut) -&gt; <span class="hk">None</span>:
+        self.b = Board(dut, {<span class="hs">&quot;QSPI_DQ1&quot;</span>: 0})
+        self.dut, self.m = dut, Model()
+        self.half = self.b.param(<span class="hs">&quot;HALF&quot;</span>)
+
+    <span class="hk">async</span> <span class="hk">def</span> start(self, ident: bytes = IDENT, sfdp: bytes = SFDP_TABLE) -&gt; <span class="hk">None</span>:
+        <span class="hk">await</span> self.b.start()
+        self.f = Flash(self.dut, ident, sfdp)
+        self.ident, self.sfdp = ident, sfdp
+
+    <span class="hk">async</span> <span class="hk">def</span> regs(self) -&gt; <span class="hk">None</span>:
+        <span class="hk">for</span> off, name <span class="hk">in</span> ((STATUS, <span class="hs">&quot;STATUS&quot;</span>), (ID, <span class="hs">&quot;ID&quot;</span>), (SFDP0, <span class="hs">&quot;SFDP0&quot;</span>), (SFDP0 + 1, <span class="hs">&quot;SFDP1&quot;</span>),
+                          (SFDP0 + 2, <span class="hs">&quot;SFDP2&quot;</span>), (SFDP0 + 3, <span class="hs">&quot;SFDP3&quot;</span>)):
+            <span class="hk">await</span> self.b.expect(off, self.m.read(off), name)
+
+    <span class="hk">def</span> check_tx(self, want: list[tuple[list[int], int]]) -&gt; <span class="hk">None</span>:
+        <span class="hs">&quot;&quot;&quot;Opcode and address bytes exactly, byte count exactly; DQ0 during dummy and read bytes is free.&quot;&quot;&quot;</span>
+        got = self.f.transactions
+        <span class="hk">assert</span> len(got) == len(want), f<span class="hs">&quot;{len(got)} transactions, model {len(want)}&quot;</span>
+        <span class="hk">for</span> g, (fixed, n) <span class="hk">in</span> zip(got, want):
+            <span class="hk">assert</span> len(g) == n, f<span class="hs">&quot;transaction of {len(g)} bytes {g}, model {n}&quot;</span>
+            <span class="hk">assert</span> g[:len(fixed)] == fixed, f<span class="hs">&quot;opcode/address bytes {g[:len(fixed)]}, model {fixed}&quot;</span>
+
+    <span class="hk">async</span> <span class="hk">def</span> run(self) -&gt; list[tuple[list[int], int]]:
+        <span class="hk">await</span> self.b.write(CTRL, 1)
+        want = self.m.start(self.ident, self.sfdp)
+        <span class="hk">await</span> self.b.cycles(30 * 16 * self.half + 400)
+        <span class="hk">return</span> want
+
+    <span class="hk">def</span> check_flash(self) -&gt; <span class="hk">None</span>:
+        f = self.f
+        <span class="hk">assert</span> f.bad_opcodes == [], f<span class="hs">&quot;forbidden opcodes sent to the flash: {[hex(o) for o in f.bad_opcodes]}&quot;</span>
+        <span class="hk">assert</span> <span class="hk">not</span> f.wp_hold_bad, <span class="hs">&quot;WP# (DQ2) left 0 or HOLD# (DQ3) left 1&quot;</span>
+        <span class="hk">assert</span> <span class="hk">not</span> f.halves <span class="hk">or</span> min(f.halves) &gt;= self.half, f<span class="hs">&quot;SCK half period {min(f.halves)} &lt; HALF {self.half}&quot;</span>
+
+
+@cocotb.test(timeout_time=1244260, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_identity_and_reset(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">assert</span> <span class="hk">await</span> e.b.shell_id() == DESIGN_ID
+    <span class="hk">await</span> e.regs()
+    <span class="hk">for</span> off <span class="hk">in</span> (CTRL, 0x07, 0x7F):
+        <span class="hk">await</span> e.b.expect(off, 0, <span class="hs">&quot;unmapped / write-only&quot;</span>)
+    <span class="hk">assert</span> e.f.transactions == [], <span class="hs">&quot;flash traffic before the start command&quot;</span>
+    <span class="hk">assert</span> e.f.idle_cycles &gt;= 3, f<span class="hs">&quot;only {e.f.idle_cycles} SCK cycles with CS high after reset (STARTUPE2 drops 3)&quot;</span>
+    e.check_flash()
+
+
+@cocotb.test(timeout_time=1255880, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_jedec_id_and_sfdp(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    want = <span class="hk">await</span> e.run()
+    e.check_tx(want)
+    <span class="hk">await</span> e.regs()
+    <span class="hk">assert</span> e.m.sig
+    e.check_flash()
+
+
+@cocotb.test(timeout_time=1255880, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_bad_signature(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start(sfdp=bytes([0xFF] * 4) + SFDP_TABLE[4:])      <span class="hc"># an erased or non-SFDP part</span>
+    <span class="hk">await</span> e.run()
+    <span class="hk">await</span> e.regs()
+    <span class="hk">assert</span> <span class="hk">not</span> e.m.sig
+    e.check_flash()
+
+
+@cocotb.test(timeout_time=1552200, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_busy_and_repeat(dut):
+    e = Env(dut)
+    <span class="hk">await</span> e.start()
+    <span class="hk">await</span> e.b.write(CTRL, 1)
+    e.m.start(e.ident, e.sfdp)
+    st = <span class="hk">await</span> e.b.read(STATUS)
+    <span class="hk">assert</span> st == BUSY, f<span class="hs">&quot;STATUS 0x{st:X} during the reads, model BUSY only&quot;</span>
+    <span class="hk">await</span> e.b.write(CTRL, 1)                                  <span class="hc"># ignored while busy</span>
+    <span class="hk">await</span> e.b.cycles(30 * 16 * e.half)
+    <span class="hk">await</span> e.regs()
+    <span class="hk">assert</span> len(e.f.transactions) == 2, f<span class="hs">&quot;{len(e.f.transactions)} transactions; a start while busy was not ignored&quot;</span>
+    e.f.ident = bytes([0x01, 0x02, 0x19]) + IDENT[3:]        <span class="hc"># another part answers the second time</span>
+    e.ident = e.f.ident
+    <span class="hk">await</span> e.run()
+    <span class="hk">await</span> e.regs()
+    <span class="hk">assert</span> len(e.f.transactions) == 4
+    e.check_flash()
+
+
+@cocotb.test(timeout_time=1255880, timeout_unit=<span class="hs">&quot;ns&quot;</span>)
+<span class="hk">async</span> <span class="hk">def</span> test_random_contents(dut):
+    rng = random.Random(int(cocotb.RANDOM_SEED))
+    ident = bytes(rng.randrange(256) <span class="hk">for</span> _ <span class="hk">in</span> range(8))
+    sfdp = b<span class="hs">&quot;SFDP&quot;</span> + bytes(rng.randrange(256) <span class="hk">for</span> _ <span class="hk">in</span> range(60))
+    e = Env(dut)
+    <span class="hk">await</span> e.start(ident, sfdp)
+    want = <span class="hk">await</span> e.run()
+    e.check_tx(want)
+    <span class="hk">await</span> e.regs()
+    e.check_flash()
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 32 lines</span></summary><div class="codebar small"><a href="t2_qspi_sfdp/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_qspi_sfdp/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t2_qspi_sfdp, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+
+<span class="hk">from</span> __future__ <span class="hk">import</span> annotations
+
+DESIGN_ID = 0x53464450
+CTRL, STATUS, ID, SFDP0 = 0, 1, 2, 3
+BUSY, DONE, SIG_OK = 1, 2, 4
+
+
+<span class="hk">class</span> Model:
+    <span class="hk">def</span> __init__(self) -&gt; <span class="hk">None</span>:
+        self.id = 0
+        self.words = [0, 0, 0, 0]
+        self.done = self.sig = <span class="hk">False</span>
+
+    <span class="hk">def</span> start(self, ident: bytes, sfdp: bytes) -&gt; list[tuple[list[int], int]]:
+        <span class="hs">&quot;&quot;&quot;Returns, per transaction, the MOSI bytes the spec fixes (opcode, address) and the byte count. DQ0 during
+        the dummy and read bytes is a don&#x27;t-care (v1.2).&quot;&quot;&quot;</span>
+        self.id = ident[0] &lt;&lt; 16 | ident[1] &lt;&lt; 8 | ident[2]
+        self.words = [int.from_bytes(sfdp[4 * i:4 * i + 4], <span class="hs">&quot;little&quot;</span>) <span class="hk">for</span> i <span class="hk">in</span> range(4)]
+        self.done = <span class="hk">True</span>
+        self.sig = self.words[0] == 0x50444653
+        <span class="hk">return</span> [([0x9F], 4), ([0x5A, 0, 0, 0], 21)]
+
+    <span class="hk">def</span> read(self, off: int) -&gt; int:
+        <span class="hk">if</span> off == STATUS:
+            <span class="hk">return</span> (DONE <span class="hk">if</span> self.done <span class="hk">else</span> 0) | (SIG_OK <span class="hk">if</span> self.sig <span class="hk">else</span> 0)
+        <span class="hk">if</span> off == ID:
+            <span class="hk">return</span> self.id
+        <span class="hk">if</span> SFDP0 &lt;= off &lt; SFDP0 + 4:
+            <span class="hk">return</span> self.words[off - SFDP0]
+        <span class="hk">return</span> 0
+</code></pre></details>
+<h2>The agent on this task</h2>
+<p>No development run of the agent on this task is committed yet.</p>
+<div class="pager"><a href="t2_i2c_scanner.html">&larr; I2C bus scanner on the temperature-sensor bus</a><a href="t2_spi_master_modes.html">General-purpose SPI master on Pmod JB &rarr;</a></div>
+
+<div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
+</main>
+<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<script type="application/json" data-key="trace">{"captions":["Step 0: Chip select is high: the flash is not selected. The start command has just been written.","Step 1: Chip select goes low for transaction 1.","Step 2: The master sends command byte 0x9f.","Step 3: The flash returns ID byte 0: 0x01.","Step 4: The flash returns ID byte 1: 0x20.","Step 5: The flash returns ID byte 2: 0x18.","Step 6: Chip select goes high, ending the transaction. The ID register now reads 012018.","Step 7: Chip select goes low for transaction 2.","Step 8: The master sends command byte 0x5a.","Step 9: The master sends address byte 0x00.","Step 10: The master sends address byte 0x00.","Step 11: The master sends address byte 0x00.","Step 12: Eight dummy clocks: the flash needs them to prepare its data; nothing useful is sent or read.","Step 13: The flash returns SFDP byte 0: 0x53.","Step 14: The flash returns SFDP byte 1: 0x46.","Step 15: The flash returns SFDP byte 2: 0x44.","Step 16: The flash returns SFDP byte 3: 0x50.","Step 17: The flash returns SFDP byte 4: 0x06.","Step 18: The flash returns SFDP byte 5: 0x01.","Step 19: The flash returns SFDP byte 6: 0x00.","Step 20: The flash returns SFDP byte 7: 0xff.","Step 21: The flash returns SFDP byte 8: 0x00.","Step 22: The flash returns SFDP byte 9: 0x06.","Step 23: The flash returns SFDP byte 10: 0x01.","Step 24: The flash returns SFDP byte 11: 0x10.","Step 25: The flash returns SFDP byte 12: 0x80.","Step 26: The flash returns SFDP byte 13: 0x00.","Step 27: The flash returns SFDP byte 14: 0x00.","Step 28: The flash returns SFDP byte 15: 0xff.","Step 29: Chip select goes high, ending the transaction. Status: done, signature matches (SFDP word 0 reads 50444653)."],"signals":[{"kind":"text","name":"phase","v":["idle","select","command","ID byte","ID byte","ID byte","deselect","select","command","address","address","address","dummy","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","SFDP byte","deselect"]},{"kind":"bit","name":"QSPI_CSN","v":[1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]},{"kind":"bus","name":"MOSI byte","radix":"hex","v":[0,0,159,0,0,0,0,0,90,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"width":8},{"kind":"bus","name":"MISO byte","radix":"hex","v":[0,0,0,1,32,24,0,0,0,0,0,0,0,83,70,68,80,6,1,0,255,0,6,1,16,128,0,0,255,0],"width":8},{"kind":"bus","name":"ID","radix":"hex","v":[0,0,0,0,0,0,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752,73752],"width":24},{"kind":"bus","name":"SFDP0","radix":"hex","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1346651731],"width":32},{"kind":"bit","name":"SIG_OK","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]}],"stimulus":"A start command is given; the flash is the bench's own flash model, answering ID 01 20 18 and an SFDP table whose first four bytes spell the signature. Two transactions follow, each shown byte by byte; MOSI is shown as 0 when the master sends nothing useful.","unit":"step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]}</script>
+<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+(function () {
+  "use strict";
+  var D = {};
+  document.querySelectorAll('script[type="application/json"][data-key]').forEach(function (s) {
+    try { D[s.dataset.key] = JSON.parse(s.textContent); } catch (e) { /* data missing: component skips */ }
+  });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* theme toggle: remembered per viewer, optional */
+  var tb = document.getElementById("theme");
+  function curTheme() {
+    var t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  if (tb) {
+    try { var st = localStorage.getItem("fda-theme"); if (st) document.documentElement.dataset.theme = st; } catch (e) {}
+    tb.addEventListener("click", function () {
+      var n = curTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = n;
+      try { localStorage.setItem("fda-theme", n); } catch (e) {}
+      tb.textContent = n === "dark" ? "Light" : "Dark";
+    });
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+  }
+
+  /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
+  function Player(root, n, onFrame, opts) {
+    opts = opts || {};
+    var i = 0, playing = false, timer = null, speed = 1, visible = true, base = opts.interval || 1100;
+    var live = root.querySelector(".cap");
+    var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
+    var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
+    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
+    var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
+    var pos = el("span", { class: "pos" });
+    var sp = el("select", { "aria-label": "Speed" });
+    [0.25, 0.5, 1, 2, 4].forEach(function (s) { var o = el("option", { value: s, text: s + "x" }); if (s === 1) o.selected = true; sp.appendChild(o); });
+    var ctl = el("div", { class: "ctl" }, [play, back, fwd, rst, rng, pos, sp]);
+    root.appendChild(ctl);
+    if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
+    function show() {
+      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      var c = onFrame(i);
+      if (live && c != null) live.textContent = c;
+    }
+    function stop() { playing = false; play.textContent = "Play"; play.setAttribute("aria-label", "Play"); clearTimeout(timer); }
+    function tick() {
+      if (!playing) return;
+      if (!visible) { timer = setTimeout(tick, 400); return; }
+      if (i >= n - 1) { stop(); return; }
+      i++; show(); timer = setTimeout(tick, base / speed);
+    }
+    function go() {
+      if (i >= n - 1) i = 0;
+      playing = true; play.textContent = "Pause"; play.setAttribute("aria-label", "Pause"); show(); timer = setTimeout(tick, base / speed);
+    }
+    play.onclick = function () { playing ? stop() : go(); };
+    back.onclick = function () { stop(); i = Math.max(0, i - 1); show(); };
+    fwd.onclick = function () { stop(); i = Math.min(n - 1, i + 1); show(); };
+    rst.onclick = function () { stop(); i = 0; show(); };
+    rng.oninput = function () { stop(); i = +rng.value; show(); };
+    sp.onchange = function () { speed = +sp.value; };
+    root.addEventListener("keydown", function (e) {
+      if (e.target !== root) return;
+      if (e.key === " ") { e.preventDefault(); play.onclick(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); fwd.onclick(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); back.onclick(); }
+      else if (e.key === "Home") { e.preventDefault(); rst.onclick(); }
+    });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+    show();
+    if (opts.autoplay && !reduce) go();
+    return { goto: function (k) { stop(); i = k; show(); } };
+  }
+
+  /* ---------- stage replay (hero and how-it-works): frames from the committed run record ---------- */
+  var GROUPS = [
+    { id: "clarify", label: "Interview", stages: [0] },
+    { id: "plan", label: "Plan", stages: [1] },
+    { id: "rtl", label: "RTL and gates V0 to V3", stages: [2] },
+    { id: "build", label: "Build", stages: [3, 4, 5] },
+    { id: "post", label: "Post-route gates", stages: [6, 7, 8] },
+    { id: "board", label: "Board", stages: [9] }
+  ];
+  var DETAIL = [
+    "Interview", "Plan", "RTL and V0 to V3", "Constraints", "Synthesis", "Implementation", "Timing closure",
+    "Power closure", "DRC closure", "Board and debug"
+  ];
+  function frameState(R, i) {
+    var s = R.steps[i];
+    return { stage: s.stage_no, step: s, last: i === R.steps.length - 1 };
+  }
+  function mountReplay(root, mode) {
+    var R = D.replay; if (!R) return;
+    var items = mode === "hero" ? GROUPS : DETAIL.map(function (l, k) { return { id: "s" + k, label: l, stages: [k] }; });
+    var ul = el("ul", { class: "pipe", "aria-label": "Stages" });
+    var lis = items.map(function (g, k) {
+      var li = el("li", {}, [el("b", { text: mode === "hero" ? String(k + 1) : String(g.stages[0]) }), document.createTextNode(g.label)]);
+      ul.appendChild(li); return li;
+    });
+    var cap = el("p", { class: "cap", "aria-live": "polite" });
+    root.appendChild(ul); root.appendChild(cap);
+    function frame(i) {
+      var st = frameState(R, i), cur = -1;
+      items.forEach(function (g, k) { if (g.stages.indexOf(st.stage) >= 0) cur = k; });
+      lis.forEach(function (li, k) {
+        li.className = k < cur ? "done" : (k === cur ? (st.last ? "stop" : "active") : "");
+        var old = li.querySelector(".v"); if (old) li.removeChild(old);
+      });
+      var visits = st.step.visits;
+      if (visits > 1) lis[cur].appendChild(el("span", { class: "v", text: st.step.visit + "/" + visits }));
+      return "Stage " + st.stage + ", " + DETAIL[st.stage] + (visits > 1 ? " (visit " + st.step.visit + " of " + visits + ")" : "") + ". " + st.step.fact;
+    }
+    Player(root, R.steps.length, frame, { autoplay: mode === "hero", interval: mode === "hero" ? 1300 : 1500 });
+  }
+
+  /* ---------- k-of-n strip, intervals, bars (shared by development data and eval1.json) ---------- */
+  function strip(root, rows) {
+    var g = el("div", { class: "strip", role: "list" });
+    rows.forEach(function (r) {
+      var dots = el("span", { class: "dots", "aria-hidden": "true" });
+      for (var j = 0; j < r.n; j++) dots.appendChild(el("span", { class: "dot " + (j < r.k ? "p" : "f") }));
+      for (var q = r.n; q < (r.of || r.n); q++) dots.appendChild(el("span", { class: "dot n", title: "not run" }));
+      g.appendChild(el("span", { class: "t", role: "listitem", text: r.task }));
+      g.appendChild(dots);
+      g.appendChild(el("span", { class: "k mono", text: r.k + " of " + r.n }));
+    });
+    root.appendChild(g);
+    root.appendChild(el("div", { class: "legend" }, [
+      el("span", { text: "filled: all hidden tests passed" }), el("span", { text: "hatched: failed" }), el("span", { text: "dotted: not run" })]));
+  }
+  function intervals(root, items) {
+    var W = 560, H = 36 + items.length * 52, L = 14, R = 14;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": items.map(function (x) { return x.label + " " + x.mid + " percent, interval " + x.lo + " to " + x.hi; }).join("; ") });
+    function X(v) { return L + (W - L - R) * v / 100; }
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      s.appendChild(sv("line", { x1: X(v), x2: X(v), y1: 6, y2: H - 20, class: "rule" }));
+      s.appendChild(sv("text", { x: X(v), y: H - 6, "text-anchor": "middle" }, v));
+    });
+    items.forEach(function (it, k) {
+      var y = 36 + k * 52;
+      s.appendChild(sv("text", { x: 0, y: y - 14 }, it.label));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.hi), y1: y, y2: y, class: "ink", "stroke-width": 2, "stroke-dasharray": it.dash ? "5 3" : "none" }));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.lo), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("line", { x1: X(it.hi), x2: X(it.hi), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("circle", { cx: X(it.mid), cy: y, r: 5, class: "fillink" }));
+    });
+    root.appendChild(s);
+    var t = el("div", { class: "tablewrap" });
+    var tb2 = el("table");
+    tb2.appendChild(el("tr", {}, ["Estimate", "Point", "95% interval"].map(function (h) { return el("th", { text: h }); })));
+    items.forEach(function (it) {
+      tb2.appendChild(el("tr", {}, [el("td", { text: it.label }), el("td", { class: "num", text: it.mid + "%" }), el("td", { class: "num", text: it.lo + " to " + it.hi + "%" })]));
+    });
+    t.appendChild(tb2); root.appendChild(t);
+  }
+  function bars(root, obj, total, unit) {
+    var g = el("div", { class: "bars" });
+    var max = Math.max.apply(null, Object.keys(obj).map(function (k) { return obj[k]; }).concat([1]));
+    Object.keys(obj).forEach(function (k) {
+      var b = el("span", { class: "b", "aria-hidden": "true" }); b.style.width = (100 * obj[k] / max) + "%"; b.style.display = "block";
+      g.appendChild(el("span", { text: k.replace(/_/g, " ").replace(/-/g, " ") }));
+      var cell = el("span", {}, [b]); g.appendChild(cell);
+      g.appendChild(el("span", { class: "mono", text: obj[k] + (total ? " of " + total : "") + (unit || "") }));
+    });
+    root.appendChild(g);
+  }
+  var OUTCOME_TEXT = { pass: "passed, no repair needed", caught_and_repaired: "an internal gate failed, the agent repaired it, hidden tests passed",
+    escape: "own checks passed, hidden tests failed (escape)", internal_stop_hidden_pass: "stopped on an internal gate, hidden tests pass on the RTL it left",
+    fail: "failed" };
+
+  function mountDev() {
+    var d = D.dev; if (!d) return;
+    var a = document.getElementById("dev-strip"); if (a) strip(a, d.per_task);
+    var b = document.getElementById("dev-int");
+    if (b) intervals(b, [
+      { label: "pass@1, bootstrap over tasks", mid: d.pass_at_1_tasks_pct, lo: d.bootstrap_tasks_pct[0], hi: d.bootstrap_tasks_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: d.pass_pct_runs, lo: d.wilson_runs_pct[0], hi: d.wilson_runs_pct[1], dash: true }]);
+    var c = document.getElementById("dev-out"); if (c) {
+      var o = {}; Object.keys(d.outcomes).forEach(function (k) { o[OUTCOME_TEXT[k] || k] = d.outcomes[k]; });
+      bars(c, o, d.runs);
+    }
+    var e = document.getElementById("dev-esc"); if (e) bars(e, d.escape_levels, d.escapes);
+  }
+  function mountEval1() {
+    var root = document.getElementById("eval1"); if (!root) return;
+    var E = D.eval1;
+    if (!E) {
+      root.appendChild(el("div", { class: "stub" }, [
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
+      return;
+    }
+    root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
+    var s = el("div"); root.appendChild(s); strip(s, E.per_task.map(function (t) { return { task: t.task, k: t.k, n: t.n, of: 3 }; }));
+    root.appendChild(el("h3", { text: "pass@1 with 95% intervals" }));
+    var i = el("div"); root.appendChild(i);
+    intervals(i, [
+      { label: "pass@1, bootstrap over tasks", mid: E.pass_at_1_pct, lo: E.bootstrap_pct[0], hi: E.bootstrap_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: E.wilson_mid_pct, lo: E.wilson_pct[0], hi: E.wilson_pct[1], dash: true }]);
+    root.appendChild(el("h3", { text: "Escapes by the check level that should have caught them" }));
+    var b = el("div"); root.appendChild(b); bars(b, E.escape_levels, E.escapes);
+  }
+
+  /* ---------- ILA capture player (T1 on the board): LED0 against the sample index ---------- */
+  function mountILA(root) {
+    var B = D.board; if (!B) return;
+    var keys = Object.keys(B.captures).sort(function (a, b) { return B.captures[a].duty - B.captures[b].duty; });
+    var W = 600, H = 120, L = 30, cur = keys[0], svg, cursor, trace, label;
+    var sel = el("div", { class: "ctl", role: "group", "aria-label": "Dimmer level" });
+    var btns = keys.map(function (k) {
+      var b = el("button", { type: "button", "aria-pressed": k === cur ? "true" : "false", text: "duty " + B.captures[k].duty });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", keys[j] === cur ? "true" : "false"); }); draw(); player.goto(0); };
+      return b;
+    });
+    btns.forEach(function (b) { sel.appendChild(b); });
+    root.appendChild(sel);
+    var holder = el("div"); root.appendChild(holder);
+    root.appendChild(el("p", { class: "cap", "aria-live": "polite" }));
+    function X(i) { return L + (W - L - 10) * i / (B.captures[cur].samples - 1); }
+    function draw() {
+      var c = B.captures[cur]; holder.innerHTML = "";
+      svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "ILA capture of LED 0 over " + c.samples + " samples at duty " + c.duty + ": on for " + c.on + " samples" });
+      svg.appendChild(sv("text", { x: 0, y: 34 }, "on"));
+      svg.appendChild(sv("text", { x: 0, y: 94 }, "off"));
+      var d = "", prev = 0;
+      c.edges.forEach(function (e, k) {
+        var y = e[1] ? 30 : 90;
+        d += (k === 0 ? "M" : "L") + X(e[0]) + " " + (k === 0 ? y : (e[1] ? 90 : 30)) + " L" + X(e[0]) + " " + y + " ";
+      });
+      d += "L" + X(c.samples - 1) + " " + (c.edges[c.edges.length - 1][1] ? 30 : 90);
+      svg.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      cursor = sv("line", { x1: X(0), x2: X(0), y1: 10, y2: 108, class: "warn", "stroke-width": 1.5 });
+      svg.appendChild(cursor);
+      svg.appendChild(sv("text", { x: L, y: H - 2 }, "sample 0"));
+      svg.appendChild(sv("text", { x: W - 10, y: H - 2, "text-anchor": "end" }, "sample " + (c.samples - 1)));
+      holder.appendChild(svg);
+    }
+    draw();
+    var marks = 64;
+    function onFrame(k) {
+      var c = B.captures[cur]; var idx = Math.round(k * (c.samples - 1) / 63);
+      cursor.setAttribute("x1", X(idx)); cursor.setAttribute("x2", X(idx));
+      var on = 0, v = 0; c.edges.forEach(function (e) { if (e[0] <= idx) { v = e[1]; } });
+      for (var q = 0; q < c.edges.length; q++) { var e = c.edges[q], nx = q + 1 < c.edges.length ? c.edges[q + 1][0] : c.samples; if (e[1]) on += Math.max(0, Math.min(nx, idx + 1) - e[0]); }
+      return "Sample " + idx + ": LED 0 is " + (v ? "on" : "off") + ". On for " + on + " of the " + (idx + 1) + " samples so far. The whole capture: " + c.on + " of " + c.samples + " samples on, the model says " + c.model_on + ".";
+    }
+    var player = Player(root, marks, onFrame, { interval: 220 });
+  }
+
+
+  /* ---------- golden-model trace viewer (problem pages): waveform + values at the cursor + bespoke hero ---------- */
+  function fmtv(sg, v) {
+    if (sg.kind === "bus") {
+      if (sg.radix === "hex") { var hd = sg.width ? Math.ceil(sg.width / 4) : 1; var hs = (v >>> 0).toString(16); if (v < 0) hs = "-" + (-v).toString(16); while (hs.length < hd) hs = "0" + hs; return "0x" + hs; }
+      if (sg.radix === "bin") { var bs = (v >>> 0).toString(2); while (sg.width && bs.length < sg.width) bs = "0" + bs; return bs; }
+      return String(v);
+    }
+    return String(v);
+  }
+  function mountWave(holder, T) {
+    var n = T.x.length, LW = 132, CW = Math.max(12, Math.min(28, Math.floor(620 / n))), W = LW + n * CW + 6, RH = 34;
+    var H = 22 + T.signals.length * RH;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "wavesvg",
+      "aria-label": "Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s" });
+    function X(i) { return LW + i * CW; }
+    for (var i = 0; i < n; i += Math.max(1, Math.ceil(n / 12))) s.appendChild(sv("text", { x: X(i) + 2, y: 12 }, T.x[i]));
+    T.signals.forEach(function (g, r) {
+      var y0 = 22 + r * RH, top = y0 + 5, bot = y0 + RH - 7, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4 }, g.name.length > 17 ? g.name.slice(0, 16) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      var d = "";
+      if (g.kind === "bit") {
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k) + " " + y + " L" + X(k + 1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); d += (k ? "L" : "M") + (X(k) + CW / 2) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); s.appendChild(sv("circle", { cx: X(k) + CW / 2, cy: y.toFixed(1), r: 1.8, class: "fillink" })); });
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), val = g.v[a], txt = fmtv(g, val), empty = g.kind === "text" ? val === "" : false;
+            if (empty) s.appendChild(sv("line", { x1: x1, x2: x2, y1: mid, y2: mid, class: "ink", "stroke-width": 1 }));
+            else {
+              s.appendChild(sv("path", { d: "M" + x1 + " " + mid + " L" + (x1 + 3) + " " + top + " L" + (x2 - 3) + " " + top + " L" + x2 + " " + mid + " L" + (x2 - 3) + " " + bot + " L" + (x1 + 3) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+              var room = Math.floor((x2 - x1 - 8) / 6.7);
+              if (room >= 1) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4 }, txt.length > room ? (room > 2 ? txt.slice(0, room - 1) + "." : "") : txt));
+            }
+            a = k;
+          }
+        }
+      }
+    });
+    var shade = sv("rect", { x: X(1), y: 16, width: W, height: H, class: "future" });
+    var cur = sv("rect", { x: X(0), y: 16, width: CW, height: H - 16, class: "cursor" });
+    s.appendChild(shade); s.appendChild(cur);
+    var wrap = el("div", { class: "wavewrap", tabindex: "0" }); wrap.appendChild(s); holder.appendChild(wrap);
+    var vals = el("dl", { class: "vals" }); holder.appendChild(vals);
+    return function (i) {
+      shade.setAttribute("x", X(i + 1)); cur.setAttribute("x", X(i));
+      vals.innerHTML = "";
+      vals.appendChild(el("div", {}, [el("dt", { text: T.unit }), el("dd", { class: "mono", text: String(T.x[i]) })]));
+      T.signals.forEach(function (g) { vals.appendChild(el("div", {}, [el("dt", { text: g.name }), el("dd", { class: "mono", text: g.kind === "text" && g.v[i] === "" ? "none" : fmtv(g, g.v[i]) })])); });
+    };
+  }
+  function sig(T, name) { for (var k = 0; k < T.signals.length; k++) if (T.signals[k].name === name) return T.signals[k].v; return null; }
+  function hx(b) { return (b < 16 ? "0" : "") + b.toString(16); }
+  var HEROES = {
+    t1_elevator_fsm: function (box, T) {
+      var F = T.hero.floors, W = 360, FH = 52, H = F * FH + 20, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Lift shaft: car position, door and calls from the model" });
+      box.appendChild(s);
+      var fl = sig(T, "FLOOR"), st = sig(T, "STATE"), pe = sig(T, "PENDING"), dr = sig(T, "DIR (1 = down)");
+      var lamps = [], labels = [];
+      for (var f = 0; f < F; f++) {
+        var y = 10 + (F - 1 - f) * FH;
+        s.appendChild(sv("line", { x1: 60, x2: 300, y1: y + FH, y2: y + FH, class: "rule" }));
+        s.appendChild(sv("text", { x: 4, y: y + FH / 2 + 4 }, "floor " + f));
+        lamps.push(sv("circle", { cx: 290, cy: y + FH / 2, r: 7, class: "ink", "stroke-width": 1.5 }));
+        s.appendChild(lamps[f]);
+      }
+      s.appendChild(sv("rect", { x: 120, y: 10, width: 90, height: F * FH, class: "ink", "stroke-width": 1 }));
+      var car = sv("g", {}), body = sv("rect", { x: 128, width: 74, height: FH - 10, class: "ink", "stroke-width": 2 });
+      var dl = sv("rect", { width: 0, height: FH - 18, class: "fillink" }), dr2 = sv("rect", { width: 0, height: FH - 18, class: "fillink" });
+      var arrow = sv("text", { x: 228, "text-anchor": "middle" }, "");
+      car.appendChild(body); car.appendChild(dl); car.appendChild(dr2); s.appendChild(car); s.appendChild(arrow);
+      s.appendChild(sv("text", { x: 290, y: H - 2, "text-anchor": "middle" }, "calls"));
+      return function (i) {
+        var y = 10 + (F - 1 - fl[i]) * FH + 5, open = st[i] === "door open";
+        body.setAttribute("y", y);
+        var dw = open ? 14 : 36;
+        dl.setAttribute("x", 132); dl.setAttribute("y", y + 4); dl.setAttribute("width", dw);
+        dr2.setAttribute("x", 198 - dw); dr2.setAttribute("y", y + 4); dr2.setAttribute("width", dw);
+        arrow.setAttribute("y", y + FH / 2); arrow.textContent = st[i] === "moving" ? (dr[i] ? "down" : "up") : (open ? "open" : "");
+        lamps.forEach(function (c, f) { c.setAttribute("class", (pe[i] >> f) & 1 ? "fillink" : "ink"); });
+      };
+    },
+    c10_dds_sine: function (box, T) {
+      var h = T.hero, W = 600, H = 200, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Phase wheel and sine output from the model" });
+      box.appendChild(s);
+      var cx = 90, cy = 100, R = 70, N = 1 << h.la;
+      s.appendChild(sv("circle", { cx: cx, cy: cy, r: R, class: "ink", "stroke-width": 1 }));
+      s.appendChild(sv("text", { x: cx, y: 192, "text-anchor": "middle" }, "phase (" + h.aw + " bits)"));
+      var hand = sv("line", { x1: cx, y1: cy, class: "ink", "stroke-width": 2 }); s.appendChild(hand);
+      var dot = sv("circle", { r: 5, class: "fillink" }); s.appendChild(dot);
+      var X0 = 200, PW = 390, ph = sig(T, "phase"), out = sig(T, "out"), ad = sig(T, "table address");
+      s.appendChild(sv("line", { x1: X0, x2: X0 + PW, y1: cy, y2: cy, class: "rule" }));
+      s.appendChild(sv("text", { x: X0 + PW, y: 192, "text-anchor": "end" }, "output samples"));
+      var stems = [];
+      for (var k = 0; k < out.length; k++) {
+        var x = X0 + PW * (k + .5) / out.length, y = cy - (R) * out[k] / h.amp;
+        var g = sv("g", {}); g.appendChild(sv("line", { x1: x, x2: x, y1: cy, y2: y, class: "ink", "stroke-width": 1 })); g.appendChild(sv("circle", { cx: x, cy: y, r: 2.5, class: "fillink" }));
+        stems.push(g); s.appendChild(g);
+      }
+      var lab = sv("text", { x: cx, y: 18, "text-anchor": "middle" }, ""); s.appendChild(lab);
+      return function (i) {
+        var a = 2 * Math.PI * ad[i] / N, x = cx + R * Math.cos(a), y = cy - R * Math.sin(a);
+        hand.setAttribute("x2", x); hand.setAttribute("y2", y); dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        lab.textContent = "entry " + ad[i] + " of " + N;
+        stems.forEach(function (g, k) { g.style.opacity = k <= i ? 1 : .15; });
+      };
+    },
+    c16_nexys_aes_uart: function (box, T) {
+      var h = T.hero, W = 420, C = 56, s = sv("svg", { viewBox: "0 0 " + W + " 250", width: "100%", role: "img", "aria-label": "AES state, 4 by 4 bytes, from the model's round functions" });
+      box.appendChild(s);
+      var cells = [], texts = [];
+      for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) {
+        var x = 10 + c * C, y = 26 + r * C;
+        var rc = sv("rect", { x: x, y: y, width: C - 6, height: C - 6, class: "ink", "stroke-width": 1 }), t = sv("text", { x: x + (C - 6) / 2, y: y + C / 2, "text-anchor": "middle", class: "big" }, "");
+        s.appendChild(rc); s.appendChild(t); cells[4 * c + r] = rc; texts[4 * c + r] = t;
+      }
+      var op = sv("text", { x: 250, y: 60, class: "big" }, ""), rd = sv("text", { x: 250, y: 90 }, ""), ch = sv("text", { x: 250, y: 120 }, "");
+      s.appendChild(op); s.appendChild(rd); s.appendChild(ch);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "state: bytes go down the columns"));
+      var rounds = sig(T, "round");
+      return function (i) {
+        var st = h.states[i], pr = i ? h.states[i - 1] : st, nch = 0;
+        for (var k = 0; k < 16; k++) {
+          var diff = st[k] !== pr[k]; if (diff) nch++;
+          cells[k].setAttribute("class", diff ? "fillink" : "ink"); texts[k].setAttribute("class", diff ? "big inv" : "big"); texts[k].textContent = hx(st[k]);
+        }
+        op.textContent = h.ops[i]; rd.textContent = "round " + rounds[i]; ch.textContent = i ? nch + " of 16 bytes changed" : "";
+      };
+    },
+    c9_median3x3: function (box, T) {
+      var h = T.hero, W = 600, s = sv("svg", { viewBox: "0 0 " + W + " 200", width: "100%", role: "img", "aria-label": "Window presented and median result, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "window presented this clock"));
+      s.appendChild(sv("text", { x: 230, y: 16 }, "window from " + h.lat + " clock earlier, sorted"));
+      s.appendChild(sv("text", { x: 230 + 4 * 40 + 18, y: 50, "text-anchor": "middle" }, "fifth"));
+      var g = [], gt = [];
+      for (var k = 0; k < 9; k++) {
+        var x = 10 + (k % 3) * 50, y = 26 + Math.floor(k / 3) * 50;
+        var r = sv("rect", { x: x, y: y, width: 46, height: 46, class: "pix" }), t = sv("text", { x: x + 23, y: y + 28, "text-anchor": "middle" }, "");
+        s.appendChild(r); s.appendChild(t); g.push(r); gt.push(t);
+      }
+      var srt = [], st2 = [];
+      for (var q = 0; q < 9; q++) {
+        var x2 = 230 + q * 40, r2 = sv("rect", { x: x2, y: 60, width: 36, height: 36, class: "pix" }), t2 = sv("text", { x: x2 + 18, y: 83, "text-anchor": "middle" }, "");
+        s.appendChild(r2); s.appendChild(t2); srt.push(r2); st2.push(t2);
+      }
+      var box5 = sv("rect", { x: 230 + 4 * 40 - 4, y: 56, width: 44, height: 44, class: "ink", "stroke-width": 2.5 }); s.appendChild(box5);
+      var res = sv("text", { x: 230, y: 130, class: "big" }, ""); s.appendChild(res);
+      return function (i) {
+        var w = h.in[i], so = h.sorted[i];
+        for (var k = 0; k < 9; k++) {
+          if (w) { g[k].style.fill = "rgb(" + w[k] + "," + w[k] + "," + w[k] + ")"; gt[k].textContent = w[k]; gt[k].setAttribute("class", w[k] > 127 ? "dark" : "light"); }
+          else { g[k].style.fill = "none"; gt[k].textContent = ""; }
+          if (so) { srt[k].style.fill = "rgb(" + so[k] + "," + so[k] + "," + so[k] + ")"; st2[k].textContent = so[k]; st2[k].setAttribute("class", so[k] > 127 ? "dark" : "light"); }
+          else { srt[k].style.fill = "none"; st2[k].textContent = ""; }
+        }
+        box5.style.opacity = so ? 1 : .2; res.textContent = so ? "median " + so[4] : "no result this clock";
+      };
+    },
+    c14_systolic_matmul: function (box, T) {
+      var h = T.hero, W = 600, n = h.rows.length, L = h.lat, s = sv("svg", { viewBox: "0 0 " + W + " 190", width: "100%", role: "img", "aria-label": "Rows entering, in flight for the latency, and results leaving, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "rows waiting"));
+      s.appendChild(sv("text", { x: 170, y: 16 }, "in flight for " + L + " clocks"));
+      s.appendChild(sv("text", { x: 170, y: 34 }, "(each row times the 4 x 4 weights)"));
+      s.appendChild(sv("text", { x: 480, y: 16 }, "results out"));
+      var slots = [];
+      for (var k = 0; k < L; k++) { var r = sv("rect", { x: 170 + k * 38, y: 70, width: 34, height: 34, class: "ink", "stroke-width": 1 }); s.appendChild(r); slots.push([r, sv("text", { x: 170 + k * 38 + 17, y: 92, "text-anchor": "middle" }, "")]); s.appendChild(slots[k][1]); }
+      var waiting = sv("text", { x: 10, y: 92 }, ""), done = sv("text", { x: 480, y: 92 }, ""), last = sv("text", { x: 170, y: 150 }, "");
+      s.appendChild(waiting); s.appendChild(done); s.appendChild(last);
+      return function (i) {
+        var nextIn = 0; for (var t = 0; t <= i; t++) if (h.in[t] != null) nextIn = h.in[t] + 1;
+        var outN = 0; for (var t2 = 0; t2 <= i; t2++) if (h.out[t2] != null) outN = h.out[t2] + 1;
+        waiting.textContent = nextIn < n ? (n - nextIn) + " rows" : "none";
+        done.textContent = outN + " of " + n + " rows";
+        slots.forEach(function (sl, k) {
+          var row = i - k >= 0 && h.in[i - k] != null ? h.in[i - k] : null;
+          sl[0].setAttribute("class", row != null ? "fillink" : "ink"); sl[1].textContent = row != null ? "r" + row : ""; sl[1].setAttribute("class", row != null ? "inv" : "");
+        });
+        var o = h.out[i]; last.textContent = o != null ? "row " + o + " x W = " + h.C[o].join("  ") : "";
+      };
+    }
+  };
+  function mountTrace(root) {
+    var T = D.trace; if (!T) return;
+    var heroFn = null, art = root.querySelector(".hero-art"), id = root.getAttribute("data-hero");
+    if (art && HEROES[id]) { heroFn = HEROES[id](art, T); var hs = art.querySelector("svg"); if (hs) hs.style.maxWidth = id === "t1_elevator_fsm" ? "400px" : "680px"; }
+    var wv = mountWave(root.querySelector(".wave"), T);
+    Player(root, T.x.length, function (i) { if (heroFn) heroFn(i); wv(i); return T.captions[i]; }, { autoplay: !!heroFn, interval: 900 });
+  }
+  var tr = document.getElementById("trace"); if (tr) mountTrace(tr);
+
+  /* ---------- problems index: filter by domain, tier, board (the list is complete without script) ---------- */
+  (function () {
+    var sels = document.querySelectorAll(".filters select"); if (!sels.length) return;
+    var cards = document.querySelectorAll(".pcard"), secs = document.querySelectorAll("section.dom"), cnt = document.getElementById("f-count");
+    function apply() {
+      var f = {}; sels.forEach(function (s) { f[s.dataset.f] = s.value; });
+      var shown = 0;
+      cards.forEach(function (c) { var ok = (!f.domain || c.dataset.domain === f.domain) && (!f.tier || c.dataset.tier === f.tier) && (!f.board || c.dataset.board === f.board); c.hidden = !ok; if (ok) shown++; });
+      secs.forEach(function (s) { s.hidden = !s.querySelector(".pcard:not([hidden])"); });
+      if (cnt) cnt.textContent = shown + " of " + cards.length + " shown";
+    }
+    sels.forEach(function (s) { s.addEventListener("change", apply); });
+    document.querySelectorAll(".dombars a.dl").forEach(function (a) {
+      a.addEventListener("click", function (e) { var d = document.getElementById("f-domain"); if (!d || !d.querySelector('option[value="' + a.dataset.dom + '"]')) return; e.preventDefault(); d.value = a.dataset.dom; apply(); document.querySelector(".filters").scrollIntoView(); });
+    });
+    apply();
+  })();
+  var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
+  var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
+  var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+  mountDev(); mountEval1();
+})();
+
+/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
+   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
+(function () {
+  var cv = document.getElementById("fabric");
+  if (!cv || !cv.getContext) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
+  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
+  function layout() {
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
+    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
+  }
+  function base() {
+    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
+    var hrow = Math.floor(rows / 2);
+    for (var c = 0; c < cols; c++) {
+      var x = c * T, k = kind[c];
+      for (var r = 0; r < rows; r++) {
+        var y = r * T;
+        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
+        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
+        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
+        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
+          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
+  function net() {
+    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
+    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
+    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
+    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
+    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
+  }
+  function drawNet(n, alpha) {
+    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
+    for (var i = 1; i < n.p.length && left > 0; i++) {
+      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
+      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
+    }
+    ctx.stroke();
+    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
+    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
+    ctx.globalAlpha = 1;
+  }
+  function frame(now) {
+    if (!run) return;
+    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
+    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
+    nets = nets.filter(function (n) {
+      n.t += dt; var done = n.len / n.speed, a = .42;
+      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
+      if (a <= 0) return false; drawNet(n, a); return true;
+    });
+    requestAnimationFrame(frame);
+  }
+  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
+  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
+  start();
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
+  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
+  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
+  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+})();
+</script>
+</body>
+</html>

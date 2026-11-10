@@ -213,3 +213,15 @@ jobs:
             build/verif/**/sim.log
             build/verif/formal/*.log
             build/verif/*.json
+
+  site:
+    name: Site (data, pages, numbers)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pytest pyyaml==6.0.1 numpy==2.4.3 cocotb==2.0.1   # traces import the task models; the I2C ones use benchmark/lib (cocotb)
+      - name: Site data and pages are current; every number is in site/data; eval-1 section renders from a fixture
+        run: python3 -m pytest site/tests -q

@@ -1,0 +1,546 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the rate is in whole milliseconds (TICK_CYCLES clocks) per step, 16 bits.",
+   "reason": "the request gives milliseconds per step."
+  },
+  {
+   "assumption": "RATE resets to 250 (four steps a second) with AUTO off.",
+   "reason": "a visible default once automatic mode is turned on."
+  }
+ ],
+ "behaviour": [
+  [
+   "counter",
+   [
+    "BIN is a 10-bit binary count 0..1023; GRAY = BIN xor (BIN >> 1) (reflected binary Gray code).",
+    "A step sets BIN to (BIN + 1) mod 1024 when DIR = 0, (BIN - 1) mod 1024 when DIR = 1, so GRAY changes in exactly one bit, the wrap included.",
+    "DIR is SW[15], synchronised by two flops (not debounced); 1 = down.",
+    "Each step adds 1 to STEPS (16 bits, wrapping). Shell writes to BIN are not steps.",
+    "If a press and an automatic step fall on the same clock, the counter moves one step only (STEPS += 1).",
+    "A shell write to BIN on the same clock as a step wins (the step is lost and not counted)."
+   ]
+  ],
+  [
+   "button",
+   [
+    "BTNU is synchronised (two flops), then debounced. The debounced level changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count.",
+    "A press is a 0 -> 1 change of the debounced level and makes one step, in either mode; holding does not repeat."
+   ]
+  ],
+  [
+   "auto",
+   [
+    "While AUTO = 1 and RATE != 0, a tick occurs every TICK_CYCLES clocks and a step every RATE ticks, so steps are exactly RATE * TICK_CYCLES clocks apart.",
+    "The tick prescaler and the tick count are held at 0 while AUTO = 0 or RATE = 0, and restart from 0 on every write to CTRL or RATE; the first automatic step is RATE * TICK_CYCLES clocks after the write that enables it.",
+    "RATE = 0 stops automatic stepping (AUTO stays set)."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[9:0] = GRAY, registered from the same register as BIN so the pins change together on each step; LED[15] = AUTO; LED[14:10] = 0. No PWM."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "DEBOUNCE_CYCLES": 16,
+  "TICK_CYCLES": 4,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-04",
+  "mutants": {
+   "auto_ignored": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_press_steps_both_ways",
+     "test_wrap_changes_one_led",
+     "test_every_transition_one_bit",
+     "test_auto_rate_exact",
+     "test_press_during_auto",
+     "test_debounce_rejects_bounce",
+     "test_register_rules",
+     "test_random_sequence"
+    ],
+    "killed": true
+   },
+   "debounce_half": {
+    "failed_tests": [
+     "test_debounce_rejects_bounce"
+    ],
+    "killed": true
+   },
+   "direction_inverted": {
+    "failed_tests": [
+     "test_press_steps_both_ways",
+     "test_wrap_changes_one_led",
+     "test_every_transition_one_bit",
+     "test_auto_rate_exact",
+     "test_press_during_auto",
+     "test_debounce_rejects_bounce",
+     "test_random_sequence"
+    ],
+    "killed": true
+   },
+   "gray_wrong_shift": {
+    "failed_tests": [
+     "test_press_steps_both_ways",
+     "test_wrap_changes_one_led",
+     "test_every_transition_one_bit",
+     "test_auto_rate_exact",
+     "test_press_during_auto",
+     "test_debounce_rejects_bounce",
+     "test_random_sequence"
+    ],
+    "killed": true
+   },
+   "leds_binary": {
+    "failed_tests": [
+     "test_press_steps_both_ways",
+     "test_wrap_changes_one_led",
+     "test_every_transition_one_bit",
+     "test_auto_rate_exact",
+     "test_press_during_auto",
+     "test_register_rules",
+     "test_random_sequence"
+    ],
+    "killed": true
+   },
+   "press_restarts_prescaler": {
+    "failed_tests": [
+     "test_press_during_auto"
+    ],
+    "killed": true
+   },
+   "rate_off_by_one": {
+    "failed_tests": [
+     "test_every_transition_one_bit",
+     "test_auto_rate_exact",
+     "test_press_during_auto"
+    ],
+    "killed": true
+   },
+   "steps_count_writes": {
+    "failed_tests": [
+     "test_wrap_changes_one_led",
+     "test_auto_rate_exact",
+     "test_register_rules",
+     "test_random_sequence"
+    ],
+    "killed": true
+   },
+   "wrap_at_1000": {
+    "failed_tests": [
+     "test_press_steps_both_ways",
+     "test_wrap_changes_one_led",
+     "test_every_transition_one_bit",
+     "test_auto_rate_exact"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t1_gray_stepper__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 9,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "A",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 51,
+    "name": "model.py",
+    "path": "benchmark/tasks/t1_gray_stepper/hidden/model.py",
+    "sha256": "357c7c4bd159",
+    "text": "\"\"\"Golden model of t1_gray_stepper, written from spec.yaml alone (never from any RTL).\"\"\"\n\nfrom __future__ import annotations\n\nGRAY, BIN, CTRL, RATE, STEPS = 0, 1, 2, 3, 4\nDESIGN_ID = 0x47524159          # \"GRAY\"\n\n\ndef gray(b: int) -> int:\n    return b ^ (b >> 1)\n\n\ndef ungray(g: int) -> int:\n    b = 0\n    while g:\n        b ^= g\n        g >>= 1\n    return b\n\n\nclass Model:\n    def __init__(self) -> None:\n        self.bin = 0\n        self.auto = 0\n        self.rate = 250\n        self.steps = 0\n        self.dir = 0\n\n    def step(self, n: int = 1) -> None:\n        for _ in range(n):\n            self.bin = (self.bin + (-1 if self.dir else 1)) % 1024\n            self.steps = (self.steps + 1) & 0xFFFF\n\n    def next_gray(self, g: int) -> int:\n        \"\"\"The Gray code one step on from ``g`` in the current direction.\"\"\"\n        return gray((ungray(g) + (-1 if self.dir else 1)) % 1024)\n\n    def read(self, off: int) -> int:\n        return {GRAY: gray(self.bin), BIN: self.bin, CTRL: self.auto | self.dir << 8, RATE: self.rate,\n                STEPS: self.steps}.get(off, 0)\n\n    def write(self, off: int, v: int) -> None:\n        if off == BIN:\n            self.bin = v & 0x3FF\n        elif off == CTRL:\n            self.auto = v & 1\n        elif off == RATE:\n            self.rate = v & 0xFFFF\n\n    def leds(self) -> int:\n        return self.auto << 15 | gray(self.bin)\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 35,
+    "name": "bm_debounce.sv",
+    "path": "benchmark/tasks/t1_gray_stepper/ref/rtl/bm_debounce.sv",
+    "sha256": "bb439c819c2c",
+    "text": "// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level\n// changes only after the synchronised input has differed from it for CYCLES\n// consecutive clocks; a shorter difference restarts the count. rise is a\n// one-clock pulse on each 0 -> 1 change of the level.\nmodule bm_debounce #(\n    parameter int CYCLES = 1_000_000\n) (\n    input  logic clk,\n    input  logic rst,\n    input  logic d_async,\n    output logic level,\n    output logic rise\n);\n    localparam int CW = $clog2(CYCLES + 1);\n    logic        d;\n    logic [CW-1:0] run;\n\n    sync2 u_sync (.clk(clk), .rst(rst), .d(d_async), .q(d));\n\n    always_ff @(posedge clk) begin\n        rise <= 1'b0;\n        if (rst) begin\n            level <= 1'b0;\n            run   <= '0;\n        end else if (d == level) begin\n            run <= '0;\n        end else if (run == CW'(CYCLES - 1)) begin\n            level <= d;\n            run   <= '0;\n            rise  <= d;\n        end else begin\n            run <= run + 1'b1;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 94,
+    "name": "gray_stepper.sv",
+    "path": "benchmark/tasks/t1_gray_stepper/ref/rtl/gray_stepper.sv",
+    "sha256": "0b458a805833",
+    "text": "// gray_stepper.sv: 10-bit binary count shown as reflected Gray code, stepped by\n// debounced BTNU presses and by an automatic rate, for t1_gray_stepper.\nmodule gray_stepper #(\n    parameter int DEBOUNCE_CYCLES = 1_000_000,\n    parameter int TICK_CYCLES     = 100_000\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        btn,\n    input  logic        dir_async,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam logic [6:0] R_GRAY = 7'h00, R_BIN = 7'h01, R_CTRL = 7'h02, R_RATE = 7'h03, R_STEPS = 7'h04;\n    localparam int PW = $clog2(TICK_CYCLES + 1);\n\n    logic          lvl, press, dir, auto_on, run, astep, step;\n    logic [9:0]    bin, gray, bin_nx;\n    logic [15:0]   rate, tk, steps;\n    logic [PW-1:0] pre;\n\n    bm_debounce #(.CYCLES(DEBOUNCE_CYCLES)) u_db (.clk(clk), .rst(rst), .d_async(btn), .level(lvl), .rise(press));\n    sync2 u_dir (.clk(clk), .rst(rst), .d(dir_async), .q(dir));\n\n    wire wr_bin  = win_wr && win_addr == R_BIN;\n    wire wr_ctrl = win_wr && win_addr == R_CTRL;\n    wire wr_rate = win_wr && win_addr == R_RATE;\n\n    assign run    = auto_on && rate != 16'd0;\n    assign astep  = run && !wr_ctrl && !wr_rate && pre == PW'(TICK_CYCLES - 1) && tk == rate - 16'd1;\n    assign step   = press || astep;\n    assign bin_nx = dir ? bin - 10'd1 : bin + 10'd1;\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            pre <= '0; tk <= '0; auto_on <= 1'b0; rate <= 16'd250;\n        end else begin\n            if (wr_ctrl) auto_on <= win_wdata[0];\n            if (wr_rate) rate <= win_wdata[15:0];\n            if (wr_ctrl || wr_rate || !run) begin\n                pre <= '0;\n                tk  <= '0;\n            end else if (pre == PW'(TICK_CYCLES - 1)) begin\n                pre <= '0;\n                tk  <= (tk == rate - 16'd1) ? 16'd0 : tk + 16'd1;\n            end else begin\n                pre <= pre + 1'b1;\n            end\n        end\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            bin <= '0; gray <= '0; steps <= '0;\n        end else if (wr_bin) begin\n            bin  <= win_wdata[9:0];\n            gray <= win_wdata[9:0] ^ (win_wdata[9:0] >> 1);\n        end else if (step) begin\n            bin   <= bin_nx;\n            gray  <= bin_nx ^ (bin_nx >> 1);\n            steps <= steps + 1'b1;\n        end\n    end\n\n`ifdef FORMAL\n    // REQ-01: a step (no BIN write) changes exactly one bit of the Gray register.\n    logic past_valid = 1'b0;\n    always_ff @(posedge clk) past_valid <= 1'b1;\n    always_ff @(posedge clk)\n        if (past_valid && !$past(rst) && !rst && $past(step) && !$past(wr_bin))\n            assert ($countones(gray ^ $past(gray)) == 1);\n    always_comb assert (rst || gray == (bin ^ (bin >> 1)));\n`endif\n\n    assign led = {auto_on, 5'd0, gray};\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            case (win_addr)\n                R_GRAY:  win_rdata <= {22'd0, gray};\n                R_BIN:   win_rdata <= {22'd0, bin};\n                R_CTRL:  win_rdata <= {23'd0, dir, 7'd0, auto_on};\n                R_RATE:  win_rdata <= {16'd0, rate};\n                R_STEPS: win_rdata <= {16'd0, steps};\n                default: win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 33,
+    "name": "t1_gray_stepper_top.sv",
+    "path": "benchmark/tasks/t1_gray_stepper/ref/rtl/t1_gray_stepper_top.sv",
+    "sha256": "69e891287e1f",
+    "text": "// t1_gray_stepper_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t1_gray_stepper; DESIGN_ID \"GRAY\".\nmodule t1_gray_stepper_top #(\n    parameter int          CLKS_PER_BIT    = 868,\n    parameter int          TIMEOUT_CYCLES  = 100_000,\n    parameter int          DEBOUNCE_CYCLES = 1_000_000,\n    parameter int          TICK_CYCLES     = 100_000,\n    parameter logic [31:0] BUILD_STAMP     = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    input  logic        BTNU,\n    input  logic [15:0] SW,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4752_4159), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    gray_stepper #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES), .TICK_CYCLES(TICK_CYCLES)) u_gs (\n        .clk(clk), .rst(rst), .btn(BTNU), .dir_async(SW[15]), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 276,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t1_gray_stepper/hidden/acceptance.py",
+    "sha256": "8bed53defa2c",
+    "text": "\"\"\"Acceptance tests of t1_gray_stepper against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom cocotb.triggers import ReadOnly, RisingEdge\nfrom model import BIN, CTRL, DESIGN_ID, GRAY, RATE, STEPS, Model, gray\n\nIDLE = {\"BTNU\": 0, \"SW\": 0}\nNAMES = (\"GRAY\", \"BIN\", \"CTRL\", \"RATE\", \"STEPS\")\n\n\nclass Watch:\n    \"\"\"Records every change of LED[9:0] as (clock index, old, new).\"\"\"\n\n    def __init__(self, clk, led) -> None:\n        self.clk, self.led, self.events, self.t = clk, led, [], 0\n        self.task = cocotb.start_soon(self.run())\n\n    async def run(self) -> None:\n        prev = None\n        while True:\n            await RisingEdge(self.clk)\n            await ReadOnly()\n            self.t += 1\n            v = int(self.led.value) & 0x3FF\n            if prev is not None and v != prev:\n                self.events.append((self.t, prev, v))\n            prev = v\n\n    def take(self) -> list[tuple[int, int, int]]:\n        ev, self.events = self.events, []\n        return ev\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, IDLE)\n        self.dut, self.m = dut, Model()\n        self.n = self.b.param(\"DEBOUNCE_CYCLES\")\n        self.tick = self.b.param(\"TICK_CYCLES\")\n        self.w: Watch | None = None\n\n    async def start(self) -> None:\n        await self.b.start()\n        self.w = Watch(self.b.clk, self.dut.LED)\n\n    async def wr(self, off: int, v: int) -> None:\n        await self.b.write(off, v)\n        self.m.write(off, v)\n\n    async def press(self) -> None:\n        self.dut.BTNU.value = 1\n        await self.b.cycles(self.n + 6)\n        self.dut.BTNU.value = 0\n        await self.b.cycles(self.n + 6)\n        self.m.step()\n\n    async def direction(self, d: int) -> None:\n        self.dut.SW.value = d << 15\n        await self.b.cycles(4)\n        self.m.dir = d\n\n    def check_steps(self, ev, period: int | None = None) -> None:\n        \"\"\"Each event is one step of the model: one bit, the right next code; optionally evenly spaced.\"\"\"\n        for i, (t, old, new) in enumerate(ev):\n            assert bin(old ^ new).count(\"1\") == 1, f\"step {old:010b} -> {new:010b} changes more than one LED\"\n            assert new == self.m.next_gray(old), f\"step {old:010b} -> {new:010b}, model says {self.m.next_gray(old):010b}\"\n            if period and i:\n                assert t - ev[i - 1][0] == period, f\"automatic steps {t - ev[i - 1][0]} clocks apart, want {period}\"\n\n    async def check_regs(self) -> None:\n        for off in range(5):\n            await self.b.expect(off, self.m.read(off), NAMES[off])\n\n    async def check_leds(self) -> None:\n        led = await peek(self.b.clk, self.dut.LED)\n        assert led == self.m.leds(), f\"LED {led:04X} != model {self.m.leds():04X}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_press_steps_both_ways(dut):\n    e = Env(dut)\n    await e.start()\n    for d, k in ((0, 4), (1, 6), (0, 1)):\n        await e.direction(d)\n        for _ in range(k):\n            e.w.take()\n            await e.press()\n            ev = e.w.take()\n            assert len(ev) == 1, f\"one press gave {len(ev)} LED changes\"\n        await e.check_regs()\n        await e.check_leds()\n\n\n@cocotb.test()\nasync def test_wrap_changes_one_led(dut):\n    e = Env(dut)\n    await e.start()\n    await e.wr(BIN, 1022)\n    e.w.take()\n    for d, k in ((0, 3), (1, 3)):                # 1022 -> 1023 -> 0 -> 1, then back through the wrap\n        await e.direction(d)\n        for _ in range(k):\n            before = e.m.read(GRAY)\n            await e.press()\n            ev = e.w.take()\n            assert len(ev) == 1\n            assert ev[0][1] == before\n            assert bin(ev[0][1] ^ ev[0][2]).count(\"1\") == 1, f\"wrap step {ev[0][1]:010b} -> {ev[0][2]:010b}\"\n            assert ev[0][2] == e.m.read(GRAY)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_every_transition_one_bit(dut):\n    \"\"\"All 1024 transitions in each direction (REQ-01's simulation half): automatic mode at the fastest rate.\"\"\"\n    e = Env(dut)\n    await e.start()\n    for d in (0, 1):\n        await e.direction(d)\n        await e.wr(RATE, 1)\n        e.w.take()\n        await e.b.write(CTRL, 1)\n        e.m.write(CTRL, 1)\n        await e.b.cycles(1030 * e.tick)\n        await e.b.write(CTRL, 0)\n        e.m.write(CTRL, 0)\n        ev = e.w.take()\n        assert len(ev) > 1024, f\"only {len(ev)} automatic steps\"\n        e.check_steps(ev, period=e.tick)\n        e.m.step(len(ev))\n        await e.check_regs()\n\n\n@cocotb.test()\nasync def test_auto_rate_exact(dut):\n    e = Env(dut)\n    await e.start()\n    await e.wr(BIN, 1017)\n    await e.wr(RATE, 5)\n    e.w.take()\n    await e.b.write(CTRL, 1)\n    e.m.write(CTRL, 1)\n    await e.b.cycles(14 * 5 * e.tick)\n    await e.wr(RATE, 0)                          # stops; AUTO stays set\n    ev = e.w.take()\n    assert len(ev) >= 10, f\"only {len(ev)} automatic steps at RATE = 5\"\n    e.check_steps(ev, period=5 * e.tick)\n    e.m.step(len(ev))\n    await e.b.cycles(40 * e.tick)\n    assert not e.w.take(), \"RATE = 0 must stand still\"\n    await e.check_regs()\n    await e.check_leds()\n    await e.direction(1)                         # runs again, now down, and a press still steps\n    e.w.take()\n    await e.wr(RATE, 3)\n    await e.b.cycles(10 * 3 * e.tick)\n    ev = e.w.take()\n    assert len(ev) >= 6, f\"only {len(ev)} automatic steps at RATE = 3\"\n    e.check_steps(ev, period=3 * e.tick)\n    e.m.step(len(ev))\n    await e.b.write(CTRL, 0)\n    e.m.write(CTRL, 0)\n    e.m.step(len(e.w.take()))\n    await e.press()\n    assert len(e.w.take()) == 1\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_press_during_auto(dut):\n    \"\"\"v1.2: a press while AUTO = 1 makes one extra step and does not move the automatic grid (the prescaler restarts\n    only on a CTRL or RATE write): the automatic steps stay exactly RATE * TICK_CYCLES clocks apart across the press.\"\"\"\n    e = Env(dut)\n    await e.start()\n    await e.wr(RATE, 100)\n    period = 100 * e.tick\n    e.w.take()\n    await e.wr(CTRL, 1)\n    for _ in range(2 * period):\n        if e.w.events:\n            break\n        await e.b.cycles(1)\n    assert e.w.events, \"no automatic step\"\n    await e.b.cycles(period // 4)\n    t_press = e.w.t\n    await e.press()                              # about 2 * (DEBOUNCE_CYCLES + 6) clocks, inside one period\n    await e.b.cycles(3 * period)\n    await e.wr(CTRL, 0)\n    ev = e.w.take()\n    e.check_steps(ev)\n    window = (t_press, t_press + e.n + 12)\n    auto = [x for x in ev if not window[0] <= x[0] <= window[1]]\n    assert len(ev) - len(auto) == 1, f\"the press gave {len(ev) - len(auto)} LED changes\"\n    assert len(auto) >= 4, f\"only {len(auto)} automatic steps\"\n    for a, b in zip(auto, auto[1:]):\n        assert b[0] - a[0] == period, f\"automatic steps {b[0] - a[0]} clocks apart across a press, want {period}\"\n    e.m.step(len(ev) - 1)                        # the press was counted by press()\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_debounce_rejects_bounce(dut):\n    e = Env(dut)\n    await e.start()\n    pin = dut.BTNU\n    for width in (1, 3, e.n // 2, e.n - 3):\n        pin.value = 1\n        await e.b.cycles(width)\n        pin.value = 0\n        await e.b.cycles(e.n + 4)\n    await e.check_regs()\n    for w in (2, 5, 3, 7):\n        pin.value = 1\n        await e.b.cycles(w)\n        pin.value = 0\n        await e.b.cycles(w)\n    pin.value = 1\n    await e.b.cycles(4 * e.n)                    # held: no repeat\n    pin.value = 0\n    await e.b.cycles(e.n + 6)\n    e.m.step()\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_register_rules(dut):\n    e = Env(dut)\n    await e.start()\n    await e.wr(BIN, 0xFFFF_F2A5)                 # only [9:0] taken\n    await e.b.write(GRAY, 0x155)                 # read-only\n    await e.b.write(STEPS, 9)\n    await e.wr(RATE, 0x1_0007)                   # only [15:0]\n    await e.direction(1)\n    await e.check_regs()\n    await e.check_leds()\n    await e.wr(RATE, 0)\n    await e.wr(CTRL, 0x103)                      # AUTO set; DIR is read-only, other bits ignored\n    await e.check_regs()\n    await e.check_leds()\n    for off in (0x05, 0x40, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n\n\n@cocotb.test()\nasync def test_random_sequence(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    for _ in range(14):\n        r = rng.random()\n        if r < 0.2:\n            await e.wr(BIN, rng.randrange(1024))\n        elif r < 0.35:\n            await e.direction(rng.randrange(2))\n        else:\n            e.w.take()\n            await e.press()\n            assert len(e.w.take()) == 1\n    await e.check_regs()\n    await e.check_leds()\n"
+   }
+  ]
+ },
+ "heading": "Gray-code stepper on the LEDs",
+ "id": "t1_gray_stepper",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "DEBOUNCE_CYCLES": 1000000,
+   "TICK_CYCLES": 100000,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "BTNU",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "SW",
+    "note": "only SW[15] is used",
+    "width": 16
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RO",
+    "bits": "[9:0] Gray code of BIN; [31:10] 0",
+    "name": "GRAY",
+    "offset": "0x00"
+   },
+   {
+    "access": "RW",
+    "bits": "[9:0] binary count; a write sets it to wdata[9:0]; [31:10] read 0",
+    "name": "BIN",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[0] AUTO; [8] DIR (read-only, SW[15] synchronised); other bits read 0",
+    "name": "CTRL",
+    "offset": "0x02"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] ticks per automatic step, 0 = stopped; [31:16] read 0",
+    "name": "RATE",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] steps taken (press or automatic), wrapping; [31:16] 0",
+    "name": "STEPS",
+    "offset": "0x04"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: BIN = 0, AUTO = 0, RATE = 250, STEPS = 0, the tick and rate counters return to 0",
+  "top": "t1_gray_stepper_top",
+  "unmapped": "offsets 0x05-0x7F read 0; writes to them and to RO registers or bits are ignored"
+ },
+ "mutants": [
+  {
+   "file": "gray_stepper.sv",
+   "name": "gray_wrong_shift",
+   "why": "Gray conversion shifts the wrong way: several LEDs change per step"
+  },
+  {
+   "file": "gray_stepper.sv",
+   "name": "direction_inverted",
+   "why": "SW[15] = 1 counts up"
+  },
+  {
+   "file": "gray_stepper.sv",
+   "name": "leds_binary",
+   "why": "LEDs show the binary count"
+  },
+  {
+   "file": "gray_stepper.sv",
+   "name": "rate_off_by_one",
+   "why": "automatic steps RATE + 1 ticks apart"
+  },
+  {
+   "file": "gray_stepper.sv",
+   "name": "auto_ignored",
+   "why": "automatic stepping runs with AUTO off"
+  },
+  {
+   "file": "gray_stepper.sv",
+   "name": "wrap_at_1000",
+   "why": "counter wraps at 1000 (decimal habit): the wrap changes several LEDs"
+  },
+  {
+   "file": "gray_stepper.sv",
+   "name": "steps_count_writes",
+   "why": "a BIN write counts as a step"
+  },
+  {
+   "file": "bm_debounce.sv",
+   "name": "debounce_half",
+   "why": "debounce accepts pulses of half the time"
+  },
+  {
+   "file": "gray_stepper.sv",
+   "name": "press_restarts_prescaler",
+   "why": "a button press moves the automatic grid"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t1_gray_stepper",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "text": "Every step (press or automatic, either direction, wrap included) changes exactly one bit of LED[9:0] and of GRAY"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "text": "GRAY = BIN xor (BIN >> 1) at all times and a step moves BIN by one modulo 1024 in the SW[15] direction"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Automatic steps are exactly RATE * TICK_CYCLES clocks apart; RATE = 0 stops them"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation"
+   ],
+   "text": "One debounced press gives one step; bounces shorter than the debounce time do nothing"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "simulation"
+   ],
+   "text": "The register window has the listed map and reset values"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  },
+  {
+   "id": "REQ-07",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board the register window answers as the model predicts and automatic mode steps"
+  }
+ ],
+ "resources_expected": "about a hundred LUTs and FFs; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# Gray-code stepper on the LEDs\n\nI want a 10-bit Gray-code counter shown on LED[9:0] of the Nexys A7-100T.\n\n- Each press of BTNU steps the counter once. SW[15] picks the direction: down when it is up (1), up when it is\n  down (0). The button bounces, so one press must give exactly one step.\n- There is also an automatic mode that steps on its own at a rate I set over the shell, in milliseconds per\n  step; a rate of zero means it stands still. Buttons still work in automatic mode.\n- The whole point is that exactly one LED changes on every step, including when the count wraps round at either\n  end. I want that proved, not just tested.\n- LED[15] is lit while automatic mode is on. The other LEDs stay off.\n- CPU_RESETN resets everything.\n- Over the test shell (USB-UART, 115200 baud) I can read the Gray code, read and set the count in plain binary,\n  turn automatic mode on and off, set the rate, and read how many steps have been taken. The design ID is \"GRAY\".\n\nTest hooks: top module `t1_gray_stepper_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (debounce time in clocks) and\n`TICK_CYCLES` (clocks per unit of the rate, one millisecond on the board) as top-level parameters.\n",
+ "survey": [
+  "A02"
+ ],
+ "tier": "T1",
+ "title": "Gray-code stepper on the LEDs",
+ "trace": {
+  "captions": [
+   "Step 0: the count is set to 1019, so the LEDs show Gray code 1000000110.",
+   "Step 1: up to count 1020, Gray 1000000010; 1 LED changed.",
+   "Step 2: up to count 1021, Gray 1000000011; 1 LED changed.",
+   "Step 3: up to count 1022, Gray 1000000001; 1 LED changed.",
+   "Step 4: up to count 1023, Gray 1000000000; 1 LED changed.",
+   "Step 5: up to count 0, Gray 0000000000; 1 LED changed.",
+   "Step 6: up to count 1, Gray 0000000001; 1 LED changed.",
+   "Step 7: up to count 2, Gray 0000000011; 1 LED changed.",
+   "Step 8: up to count 3, Gray 0000000010; 1 LED changed.",
+   "Step 9: down to count 2, Gray 0000000011; 1 LED changed.",
+   "Step 10: down to count 1, Gray 0000000001; 1 LED changed.",
+   "Step 11: down to count 0, Gray 0000000000; 1 LED changed.",
+   "Step 12: down to count 1023, Gray 1000000000; 1 LED changed.",
+   "Step 13: down to count 1022, Gray 1000000001; 1 LED changed.",
+   "Step 14: down to count 1021, Gray 1000000011; 1 LED changed.",
+   "Step 15: down to count 1020, Gray 1000000010; 1 LED changed.",
+   "Step 16: down to count 1019, Gray 1000000110; 1 LED changed.",
+   "Step 17: down to count 1018, Gray 1000000111; 1 LED changed.",
+   "Step 18: down to count 1017, Gray 1000000101; 1 LED changed.",
+   "Step 19: down to count 1016, Gray 1000000100; 1 LED changed.",
+   "Step 20: down to count 1015, Gray 1000001100; 1 LED changed."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "BIN",
+    "radix": "dec",
+    "v": [
+     1019,
+     1020,
+     1021,
+     1022,
+     1023,
+     0,
+     1,
+     2,
+     3,
+     2,
+     1,
+     0,
+     1023,
+     1022,
+     1021,
+     1020,
+     1019,
+     1018,
+     1017,
+     1016,
+     1015
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "GRAY",
+    "radix": "bin",
+    "v": [
+     518,
+     514,
+     515,
+     513,
+     512,
+     0,
+     1,
+     3,
+     2,
+     3,
+     1,
+     0,
+     512,
+     513,
+     515,
+     514,
+     518,
+     519,
+     517,
+     516,
+     524
+    ],
+    "width": 10
+   },
+   {
+    "kind": "bus",
+    "name": "LEDs changed",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   }
+  ],
+  "stimulus": "The count is set to 1019, then stepped up 8 times (past the top of the range) and down 12 times (past the bottom of the range again).",
+  "unit": "step",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20
+  ]
+ },
+ "what": "A ten-bit Gray-code counter shown on the LEDs. Each button press steps it once, and a switch picks the direction. An automatic mode steps at a rate set over the shell, in milliseconds a step. In a Gray code only one bit changes on each step, including when the count wraps round, and the task asks for that to be proved rather than just tested.",
+ "where": "Gray codes are used in rotary and linear position encoders, where several bits changing at once could be misread, and in the pointers of asynchronous FIFOs that cross between clock domains."
+}

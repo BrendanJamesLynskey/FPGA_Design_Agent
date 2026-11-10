@@ -1,0 +1,1110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>4 x 4 row multiplier behind the test shell | End-to-end FPGA Agent</title>
+<meta name="description" content="4 x 4 row multiplier behind the test shell: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task c14_systolic_matmul.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
+  --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --measure: 68ch; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+    --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+  --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); overflow-x: hidden; }
+a { color: var(--ink); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, kbd, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--panel); border: 1px solid var(--rule); padding: 0 .3em; border-radius: 2px; overflow-wrap: anywhere; }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; line-height: 1.45; margin: 0 0 1em; max-width: 100%; }
+pre code { border: 0; padding: 0; background: none; overflow-wrap: normal; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 3.2vw, 3rem); margin: .3em 0 .4em; font-weight: 700; }
+h2 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.8rem); margin: 2.2em 0 .5em; font-weight: 700; }
+h3 { font-size: 1.05rem; margin: 1.6em 0 .4em; }
+p, li { max-width: var(--measure); }
+p { margin: 0 0 1em; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-3); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
+.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.bar nav a { padding: 10px 8px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
+.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* sections, cards */
+.hero { padding: 36px 0 8px; }
+.eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
+.fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.fact .n { font: 700 2rem/1.1 var(--f-mono); letter-spacing: -.02em; }
+.fact p { margin: .4em 0 0; font-size: .92rem; color: var(--ink-2); }
+.tag { display: inline-block; font: 600 .75rem var(--f-mono); border: 1px solid var(--ink-3); padding: 1px 7px; border-radius: 2px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.tag.run { border-style: dashed; }
+figure { margin: 1.4em 0; }
+figcaption { font-size: .88rem; color: var(--ink-3); margin-top: 6px; max-width: var(--measure); }
+.panel { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.tablewrap { overflow-x: auto; margin: 0 0 1.2em; border: 1px solid var(--rule); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+img { max-width: 100%; height: auto; display: block; }
+footer { border-top: 1px solid var(--rule); margin-top: 56px; padding: 22px 0 40px; color: var(--ink-3); font-size: .9rem; }
+footer .wrap > * { max-width: var(--measure); }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
+
+/* pipeline player */
+.player { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0 0 12px; counter-reset: n; }
+.pipe li { max-width: none; border: 1px solid var(--mute); padding: 8px 10px; font-size: .86rem; line-height: 1.3; position: relative; color: var(--ink-3); min-height: 62px; }
+.pipe li b { display: block; font-size: .72rem; font-family: var(--f-mono); letter-spacing: .04em; margin-bottom: 2px; }
+.pipe li.done { color: var(--ink-2); border-color: var(--ink-3); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px); }
+.pipe li.active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.pipe li.stop { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.pipe li .v { position: absolute; right: 8px; top: 6px; font: .72rem var(--f-mono); }
+.cap { min-height: 3.2em; margin: 0 0 10px; color: var(--ink); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctl input[type=range] { flex: 1 1 140px; min-width: 120px; min-height: 44px; accent-color: var(--ink); }
+.ctl .pos { font: .85rem var(--f-mono); color: var(--ink-3); min-width: 6ch; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* charts */
+svg text { fill: var(--ink-2); font: 11px var(--f-mono); }
+svg .ink { stroke: var(--ink); fill: none; }
+svg .fillink { fill: var(--ink); }
+svg .rule { stroke: var(--rule); }
+svg .warn { stroke: var(--warn); fill: none; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; }
+.dot.p { background: var(--ink); }
+.dot.f { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.dot.n { border-style: dotted; border-color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.strip .t { font-family: var(--f-mono); overflow-wrap: anywhere; }
+.bars { display: grid; grid-template-columns: minmax(0, 14ch) 1fr auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.bars .b { height: 14px; background: var(--ink); min-width: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-3); margin-top: 8px; }
+.stub { border: 1px dashed var(--ink-3); padding: 18px; background: var(--panel); }
+@media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Home hero: FPGA fabric backdrop (canvas, monochrome, drawn by app.js; still under reduced motion). */
+.hero { position: relative; isolation: isolate; padding: 72px 0 40px; }
+#fabric { position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  mask-composite: intersect; }
+@media (max-width: 640px) { #fabric { opacity: .55; } }
+.hero h1 { font-size: clamp(2.4rem, 1.2rem + 5.6vw, 4.6rem); letter-spacing: -.025em; margin: .15em 0 .2em; }
+.strap { font-size: clamp(1.15rem, .9rem + 1.2vw, 1.6rem); line-height: 1.3; font-weight: 600; margin: 0 0 .8em; max-width: 40ch; }
+.boards { font: .9rem/1.5 var(--f-mono); color: var(--ink-2); max-width: 70ch; }
+.boards span { background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
+.hero h1, .hero .strap { text-shadow: 0 0 12px var(--bg), 0 0 4px var(--bg); }
+
+/* problems: index and task pages */
+.dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.dombars li { display: grid; grid-template-columns: minmax(0, 22ch) 1fr 3ch; gap: 10px; align-items: center; max-width: none; font-size: .88rem; }
+.dombars a { text-decoration: none; padding: 6px 0; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+.dombars a b { font-family: var(--f-mono); }
+.db { height: 12px; border: 1px solid var(--rule); display: block; }
+.db span { display: block; height: 100%; background: var(--ink); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0 12px; }
+.filters label { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; }
+.filters select { max-width: 70vw; }
+.plist { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.pcard { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; max-width: none; display: flex; flex-direction: column; gap: 2px; }
+.pcard a { font-weight: 600; text-decoration: none; }
+.pcard a:hover .pt { text-decoration: underline; }
+.pcard .pm { font-size: .82rem; color: var(--ink-3); }
+.made li { margin-bottom: .5em; }
+.crumbs { margin: 24px 0 0; color: var(--ink-3); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.spec { border-left: 3px solid var(--ink); padding: 2px 0 2px 16px; margin: 0 0 1em; }
+.spec h3, .spec h4 { margin-top: .8em; }
+.reqs li { margin-bottom: .3em; }
+details.rules, details.code { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 10px; }
+details.rules > summary, details.code > summary { padding: 10px 12px; cursor: pointer; min-height: 44px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+details.rules > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.code pre { margin: 0; border: 0; border-top: 1px solid var(--rule); max-height: 36em; }
+.codebar { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0 12px 8px; align-items: center; }
+.codebar a { min-height: 32px; display: inline-flex; align-items: center; }
+.hk { font-weight: 700; }
+.hc { color: var(--ink-3); font-style: italic; }
+.hs { color: var(--ink-2); }
+.note { border: 1px solid var(--ink-3); padding: 10px 12px; background: var(--panel); }
+.trace .hero-art { margin-bottom: 10px; }
+.wavewrap { overflow-x: auto; margin-bottom: 8px; }
+.wavesvg { min-width: 520px; }
+svg .future { fill: var(--panel); opacity: .62; }
+svg .cursor { fill: var(--ink); opacity: .08; }
+svg text.big { font-size: 15px; fill: var(--ink); }
+svg text.inv, svg text.big.inv { fill: var(--panel); }
+svg .pix { stroke: var(--ink-3); stroke-width: 1; }
+svg text.dark { fill: #000; } svg text.light { fill: #fff; }
+.vals { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 14px; margin: 0 0 8px; font-size: .85rem; }
+.vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
+.trace .hero-art svg { margin: 0 auto; display: block; }
+</style>
+</head>
+<body>
+<a class="visually-hidden" href="#main">Skip to content</a>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<main id="main" class="wrap">
+<p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-I">I. Machine learning inference</a></p>
+<h1>4 x 4 row multiplier behind the test shell</h1>
+<p class="tags"><code>c14_systolic_matmul</code> <span class="tag">Course tier</span> <span class="tag">course part 14</span> <span class="tag">I Machine learning inference</span> <span class="tag">Nexys A7-100T</span></p>
+<figure><div class="player trace" id="trace" data-hero="c14_systolic_matmul" aria-label="Golden model replay"><div class="hero-art"></div><div class="wave"></div><p class="cap" aria-live="polite"></p></div><figcaption>The task's own golden model (<code>hidden/model.py</code>) run on a fixed input when the site is built, so this is what the hidden tests check. The model&#x27;s first 10 test rows of four signed 8-bit numbers, one row a clock, times its fixed 4 x 4 weight matrix; latency 7 clocks. Space plays and pauses, arrow keys step.</figcaption></figure>
+<h2>The problem</h2>
+<p>A block that multiplies short rows of numbers by a small fixed table. The table of signed 8-bit numbers is loaded once. Rows of four numbers are then fed in one per clock with no gaps, and for each row the block gives four exact 32-bit results, one per table column, in order. The spec fixes only the results and their timing; the course builds it as a systolic array, a grid of multiply-and-add cells passing data to their neighbours, but any structure that meets the timing passes.</p>
+<p><strong>Where it is used.</strong> This row-by-table product is the inner step of matrix multiplication, which dominates neural-network inference. Systolic grids are the matrix engines in many AI accelerators.</p>
+<p class="small muted">Adapted from a project in the owner's FPGA design course (the course itself is private).</p>
+<h2>The spec the agent is given</h2>
+<div class="spec"><h3>4 x 4 row multiplier behind the test shell</h3>
+<p>I want a block for the Nexys A7-100T&#x27;s FPGA that multiplies short rows of numbers by a fixed small table of numbers, as fast as one row per clock, and I want to exercise it entirely from the test shell.</p>
+<ul><li>The table is 4 by 4 signed 8-bit numbers. I load it once with a &quot;load&quot; command: all 16 numbers are loaded over the shell and applied together, and later a new table can be loaded the same way (not while rows are being processed).</li><li>A row is four signed 8-bit numbers presented together. Because the shell is slow, I can park up to 16 rows over the shell and then give a &quot;burst&quot; command with a row count; the block then presents those rows to the arithmetic on consecutive clocks, with no gaps, and keeps the results in order.</li><li>For each row, the block gives four signed results (each is the sum of the four row numbers times the four numbers of one column of the table, so each needs more than 8 bits; keep each as a 32-bit signed number). I read them back over the shell after the burst, and a flag tells me when all of them are in.</li><li>The results for a row must be ready within 8 clocks of the row being presented; every row must give its answer, in order, with no row lost even when rows come on consecutive clocks. I can read back how many clocks the first row took.</li><li>CPU_RESETN clears everything. Exact results only: I will compare every number with my own calculation. LED0 shows the done flag. The shell runs at 115200 baud on the USB-UART. The design ID is &quot;MM4X&quot;.</li></ul>
+<p>Test hooks: top module <code>c14_systolic_matmul_top</code>, ports named as in the board&#x27;s master XDC, and the test shell&#x27;s <code>CLKS_PER_BIT</code>, <code>TIMEOUT_CYCLES</code> and <code>BUILD_STAMP</code> parameters as top-level parameters. There are no other time constants.</p></div>
+<p class="small muted">Exactly <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_systolic_matmul/spec.md"><code>spec.md</code></a>. Anything it leaves open, the agent has to ask about.</p>
+
+<h2>Interface</h2>
+<p>Top module <code>c14_systolic_matmul_top</code> on the Nexys A7-100T (<code>xc7a100tcsg324-1</code>). Clock: CLK100MHZ at 100 MHz (board oscillator). Reset: CPU_RESETN, active low: table, parked rows and results 0, DONE = 0, array registers cleared.</p>
+<p>Top-level parameters (board values): <code>CLKS_PER_BIT</code> = 868, <code>TIMEOUT_CYCLES</code> = 100000. The hidden bench shrinks them to <code>CLKS_PER_BIT</code> = 4, <code>TIMEOUT_CYCLES</code> = 400.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Port</th><th>Direction</th><th class="num">Width</th><th>Note</th></tr></thead><tbody><tr><td><code>CLK100MHZ</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>CPU_RESETN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>LED</code></td><td>out</td><td class="num">16</td><td></td></tr><tr><td><code>UART_TXD_IN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>UART_RXD_OUT</code></td><td>out</td><td class="num">1</td><td></td></tr></tbody></table></div>
+<h3>Registers behind the test shell</h3><div class="tablewrap" tabindex="0"><table><thead><tr><th>Offset</th><th>Name</th><th>Access</th><th>Bits</th></tr></thead><tbody><tr><td><code>0x00-0x03</code></td><td><code>W0..W3</code></td><td>RW</td><td>[31:0] row i of the table: W[i][j] in bits [8j+7:8j] (signed 8-bit)</td></tr><tr><td><code>0x04</code></td><td><code>LOAD</code></td><td>WO</td><td>any write loads the table into the arithmetic for one clock; reads 0</td></tr><tr><td><code>0x08-0x17</code></td><td><code>ROW0..ROW15</code></td><td>RW</td><td>[31:0] parked row m: A[m][i] in bits [8i+7:8i] (signed 8-bit)</td></tr><tr><td><code>0x18</code></td><td><code>BURST</code></td><td>WO</td><td>[4:0] row count N (1..16; 0 counts as 1): presents ROW0..ROW(N-1) on N consecutive clocks, clears DONE; reads 0</td></tr><tr><td><code>0x19</code></td><td><code>STATUS</code></td><td>RO</td><td>[0] DONE: all N results captured (cleared by BURST)</td></tr><tr><td><code>0x1a</code></td><td><code>LAT</code></td><td>RO</td><td>[4:0] clocks from the clock in which ROW0 was presented to the clock in which its result was valid (reference: 8); a conforming design reports 1..8</td></tr><tr><td><code>0x1b</code></td><td><code>COUNT</code></td><td>RO</td><td>[4:0] results captured by the last burst</td></tr><tr><td><code>0x20-0x5F</code></td><td><code>RES</code></td><td>RO</td><td>address 0x20 + 4*m + j: [31:0] C[m][j], signed 32-bit; rows beyond the last burst keep older values</td></tr></tbody></table></div>
+<h2>What the hidden tests check</h2>
+<p>The requirements in the hidden spec, and how each is shown to hold:</p>
+<ul class="reqs"><li><span class="mono">REQ-01</span> every result row equals the model, in order, for bursts of 16, 8 and 1 rows on consecutive clocks <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-02</span> the latency of the first row is at most 8 clocks and every row of a burst gives a result <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-03</span> a second table loaded after the first gives results for the new table only <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-04</span> The design closes timing at 100 MHz with no unconstrained path <span class="muted">(shown by report analysis)</span></li></ul>
+<details class="rules"><summary>The full behaviour rules from <code>hidden/spec.yaml</code></summary><h4>product</h4><ul><li>C[m][j] = sum over i of A[m][i] * W[i][j], exact signed arithmetic, W and A signed 8-bit, C signed 32-bit</li></ul><h4>burst</h4><ul><li>BURST N presents ROW0..ROW(N-1) on N consecutive clocks (one row per clock, no gaps); the results arrive in order and are stored as RES rows 0..N-1; DONE rises when the Nth is stored.</li><li>Latency: a row presented in clock t has its result valid in clock t+L with L at most 8 (the reference has 8); LAT reports L for ROW0.</li><li>A table loaded with LOAD replaces the previous one for rows presented afterwards; LOAD is not issued while a burst runs.</li></ul><h4>leds</h4><ul><li>LED[0] = DONE, the other LEDs are 0.</li></ul></details>
+
+
+<h2>What the tests catch: the mutants</h2>
+<p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-06, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/results/c14_systolic_matmul__icarus.json"><code>c14_systolic_matmul__icarus.json</code></a>) the reference passed all 5 hidden tests and 6 of 6 mutants failed them.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>skew_row1</code></td><td><code>matmul4_rows.sv</code></td><td>row element 1 is skewed by the wrong amount</td><td><code>test_burst_random_rows</code>, <code>test_burst_extreme_rows</code>, <code>test_second_table_and_single_row</code>, <code>test_registers</code></td></tr><tr><td><code>deskew_col0</code></td><td><code>matmul4_rows.sv</code></td><td>output columns de-skewed by the wrong delay</td><td><code>test_burst_random_rows</code>, <code>test_burst_extreme_rows</code>, <code>test_second_table_and_single_row</code>, <code>test_registers</code></td></tr><tr><td><code>reload_ignored</code></td><td><code>systolic4.sv</code></td><td>a second table does not replace non-zero entries of the first</td><td><code>test_second_table_and_single_row</code></td></tr><tr><td><code>weights_unsigned</code></td><td><code>systolic4.sv</code></td><td>table entries treated as unsigned</td><td><code>test_burst_random_rows</code>, <code>test_burst_extreme_rows</code>, <code>test_second_table_and_single_row</code>, <code>test_registers</code></td></tr><tr><td><code>valid_early</code></td><td><code>matmul4_rows.sv</code></td><td>out_valid one clock before the results are ready</td><td><code>test_burst_random_rows</code>, <code>test_burst_extreme_rows</code>, <code>test_second_table_and_single_row</code>, <code>test_registers</code></td></tr><tr><td><code>valid_late</code></td><td><code>matmul4_rows.sv</code></td><td>the last row of a burst is not reported valid (out_valid needs two consecutive rows)</td><td><code>test_burst_random_rows</code>, <code>test_burst_extreme_rows</code>, <code>test_second_table_and_single_row</code>, <code>test_registers</code></td></tr></tbody></table></div>
+<h2>Sample solution</h2>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
+<details class="code"><summary><span class="mono">c14_systolic_matmul_regs.sv</span> <span class="muted small">reference RTL, 66 lines</span></summary><div class="codebar small"><a href="c14_systolic_matmul/c14_systolic_matmul_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_systolic_matmul/ref/rtl/c14_systolic_matmul_regs.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c14_systolic_matmul_regs.sv: the shell window of course task c14_systolic_matmul.</span>
+<span class="hk">module</span> c14_systolic_matmul_regs (
+    <span class="hk">input</span>  <span class="hk">logic</span>        clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>        rst,
+    <span class="hk">output</span> <span class="hk">logic</span> [15:0] led,
+    <span class="hk">input</span>  <span class="hk">logic</span> [6:0]  win_addr,
+    <span class="hk">input</span>  <span class="hk">logic</span>        win_wr,
+    <span class="hk">input</span>  <span class="hk">logic</span>        win_rd,
+    <span class="hk">input</span>  <span class="hk">logic</span> [31:0] win_wdata,
+    <span class="hk">output</span> <span class="hk">logic</span> [31:0] win_rdata
+);
+    <span class="hk">logic</span> [127:0] w_r, c_row;
+    <span class="hk">logic</span> [31:0]  rowm [0:15];
+    <span class="hk">logic</span> [127:0] resm [0:15];
+    <span class="hk">logic</span> [4:0]   n_tot, tx_i, rx_i;
+    <span class="hk">logic</span> [7:0]   cnt;
+    <span class="hk">logic</span> [4:0]   lat;
+    <span class="hk">logic</span>         txing, wl, ov, done, running, got_first;
+    <span class="hk">logic</span> [31:0]  a_row;
+
+    <span class="hk">assign</span> a_row = rowm[tx_i[3:0]];
+    <span class="hk">assign</span> led   = {15&#x27;d0, done};
+
+    matmul4_rows u_core (.clk(clk), .rst_n(!rst), .w_load(wl), .w_in(w_r), .row_valid(txing), .a_row(a_row),
+                         .out_valid(ov), .c_row(c_row));
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        wl &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (win_wr) <span class="hk">begin</span>
+            <span class="hk">if</span> (win_addr &lt;= 7&#x27;d3) w_r[win_addr[1:0]*32 +: 32] &lt;= win_wdata;
+            <span class="hk">else</span> <span class="hk">if</span> (win_addr == 7&#x27;d4) wl &lt;= 1&#x27;b1;
+            <span class="hk">else</span> <span class="hk">if</span> (win_addr &gt;= 7&#x27;h08 &amp;&amp; win_addr &lt;= 7&#x27;h17) rowm[4&#x27;(win_addr - 7&#x27;h08)] &lt;= win_wdata;
+            <span class="hk">else</span> <span class="hk">if</span> (win_addr == 7&#x27;h18) <span class="hk">begin</span>
+                n_tot &lt;= (win_wdata[4:0] == 5&#x27;d0) ? 5&#x27;d1 : win_wdata[4:0];
+                tx_i &lt;= 5&#x27;d0; rx_i &lt;= 5&#x27;d0; txing &lt;= 1&#x27;b1; done &lt;= 1&#x27;b0; running &lt;= 1&#x27;b0; got_first &lt;= 1&#x27;b0; cnt &lt;= 8&#x27;d0;
+            <span class="hk">end</span>
+        <span class="hk">end</span>
+        <span class="hk">if</span> (txing) <span class="hk">begin</span>
+            tx_i &lt;= tx_i + 5&#x27;d1;
+            <span class="hk">if</span> (tx_i + 5&#x27;d1 == n_tot) txing &lt;= 1&#x27;b0;
+            <span class="hk">if</span> (tx_i == 5&#x27;d0) <span class="hk">begin</span> running &lt;= 1&#x27;b1; cnt &lt;= 8&#x27;d1; <span class="hk">end</span>
+        <span class="hk">end</span>
+        <span class="hk">if</span> (running &amp;&amp; !(txing &amp;&amp; tx_i == 5&#x27;d0)) cnt &lt;= cnt + 8&#x27;d1;
+        <span class="hk">if</span> (ov &amp;&amp; !done) <span class="hk">begin</span>
+            resm[rx_i[3:0]] &lt;= c_row;
+            rx_i &lt;= rx_i + 5&#x27;d1;
+            <span class="hk">if</span> (!got_first) <span class="hk">begin</span> got_first &lt;= 1&#x27;b1; lat &lt;= cnt[4:0]; running &lt;= 1&#x27;b0; <span class="hk">end</span>
+            <span class="hk">if</span> (rx_i + 5&#x27;d1 == n_tot) done &lt;= 1&#x27;b1;
+        <span class="hk">end</span>
+        win_rdata &lt;= 32&#x27;d0;
+        <span class="hk">if</span> (win_rd) <span class="hk">begin</span>
+            <span class="hk">if</span> (win_addr &lt;= 7&#x27;d3) win_rdata &lt;= w_r[win_addr[1:0]*32 +: 32];
+            <span class="hk">else</span> <span class="hk">if</span> (win_addr &gt;= 7&#x27;h08 &amp;&amp; win_addr &lt;= 7&#x27;h17) win_rdata &lt;= rowm[4&#x27;(win_addr - 7&#x27;h08)];
+            <span class="hk">else</span> <span class="hk">if</span> (win_addr == 7&#x27;h19) win_rdata &lt;= {31&#x27;d0, done};
+            <span class="hk">else</span> <span class="hk">if</span> (win_addr == 7&#x27;h1A) win_rdata &lt;= {27&#x27;d0, lat};
+            <span class="hk">else</span> <span class="hk">if</span> (win_addr == 7&#x27;h1B) win_rdata &lt;= {27&#x27;d0, rx_i};
+            <span class="hk">else</span> <span class="hk">if</span> (win_addr &gt;= 7&#x27;h20 &amp;&amp; win_addr &lt;= 7&#x27;h5F)
+                win_rdata &lt;= resm[4&#x27;(win_addr[6:2] - 5&#x27;d8)][win_addr[1:0]*32 +: 32];
+        <span class="hk">end</span>
+        <span class="hk">if</span> (rst) <span class="hk">begin</span>
+            txing &lt;= 1&#x27;b0; done &lt;= 1&#x27;b0; running &lt;= 1&#x27;b0; got_first &lt;= 1&#x27;b0; wl &lt;= 1&#x27;b0; w_r &lt;= &#x27;0;
+            tx_i &lt;= &#x27;0; rx_i &lt;= &#x27;0; n_tot &lt;= &#x27;0; lat &lt;= &#x27;0; cnt &lt;= &#x27;0; win_rdata &lt;= 32&#x27;d0;
+            <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; 16; i++) <span class="hk">begin</span> rowm[i] &lt;= &#x27;0; resm[i] &lt;= &#x27;0; <span class="hk">end</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">c14_systolic_matmul_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c14_systolic_matmul/c14_systolic_matmul_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_systolic_matmul/ref/rtl/c14_systolic_matmul_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c14_systolic_matmul_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;MM4X&quot;.</span>
+<span class="hc">// Reference design for course task c14_systolic_matmul; the shell window is wired to c14_systolic_matmul_regs.</span>
+<span class="hk">module</span> c14_systolic_matmul_top #(
+    <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
+    <span class="hk">parameter</span> <span class="hk">int</span>          TIMEOUT_CYCLES = 100_000,
+    <span class="hk">parameter</span> <span class="hk">logic</span> [31:0] BUILD_STAMP    = 32&#x27;h0
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        CLK100MHZ,
+    <span class="hk">input</span>  <span class="hk">logic</span>        CPU_RESETN,
+    <span class="hk">output</span> <span class="hk">logic</span> [15:0] LED,
+    <span class="hk">input</span>  <span class="hk">logic</span>        UART_TXD_IN,
+    <span class="hk">output</span> <span class="hk">logic</span>        UART_RXD_OUT
+);
+    <span class="hk">logic</span>        clk, rst, win_wr, win_rd;
+    <span class="hk">logic</span> [6:0]  win_addr;
+    <span class="hk">logic</span> [31:0] win_wdata, win_rdata;
+
+    <span class="hk">assign</span> clk = CLK100MHZ;
+    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));
+
+    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),
+                 .DESIGN_ID(32&#x27;h4d4d3458), .BUILD_STAMP(BUILD_STAMP)) u_shell (
+        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),
+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
+
+    c14_systolic_matmul_regs u_regs (
+        .clk(clk), .rst(rst), .led(LED),
+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">matmul4_rows.sv</span> <span class="muted small">reference RTL, 39 lines</span></summary><div class="codebar small"><a href="c14_systolic_matmul/matmul4_rows.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_systolic_matmul/ref/rtl/matmul4_rows.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// P14-3 reference: a row-in, row-out 4 x 4 matrix multiplier. The weight-stationary array of the course (systolic4.sv) with the input rows skewed (element i delayed by i clocks) and the</span>
+<span class="hc">// output columns de-skewed (column j delayed by 3 - j clocks), so that C[m][*] appears together, 7 clocks after the edge that sampled A[m][*]. row_valid has no gaps requirement: a new row every clock.</span>
+<span class="hk">module</span> matmul4_rows (
+    <span class="hk">input</span>  <span class="hk">logic</span>          clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>          rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>          w_load,
+    <span class="hk">input</span>  <span class="hk">logic</span> [127:0]  w_in,             <span class="hc">// W[i][j] = w_in[(4*i + j)*8 +: 8], signed</span>
+    <span class="hk">input</span>  <span class="hk">logic</span>          row_valid,
+    <span class="hk">input</span>  <span class="hk">logic</span> [31:0]   a_row,            <span class="hc">// A[m][i] = a_row[i*8 +: 8], signed</span>
+    <span class="hk">output</span> <span class="hk">logic</span>          out_valid,
+    <span class="hk">output</span> <span class="hk">logic</span> [127:0]  c_row             <span class="hc">// C[m][j] = c_row[j*32 +: 32], signed</span>
+);
+    <span class="hk">logic</span> [7:0]   dly [0:3][0:3];           <span class="hc">// input skew: element i passes through i registers</span>
+    <span class="hk">logic</span> [31:0]  a_skew;
+    <span class="hk">logic</span> [127:0] c_raw;
+    <span class="hk">logic</span> [31:0]  odly [0:3][0:3];          <span class="hc">// output de-skew: column j passes through 3 - j registers</span>
+    <span class="hk">logic</span> [7:0]   vsr;
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; 4; i++) <span class="hk">begin</span>
+            dly[i][0] &lt;= row_valid ? a_row[i*8 +: 8] : 8&#x27;d0;
+            <span class="hk">for</span> (<span class="hk">int</span> k = 1; k &lt; 4; k++) dly[i][k] &lt;= dly[i][k-1];
+        <span class="hk">end</span>
+        <span class="hk">for</span> (<span class="hk">int</span> j = 0; j &lt; 4; j++) <span class="hk">begin</span>
+            odly[j][0] &lt;= c_raw[j*32 +: 32];
+            <span class="hk">for</span> (<span class="hk">int</span> k = 1; k &lt; 4; k++) odly[j][k] &lt;= odly[j][k-1];
+        <span class="hk">end</span>
+        vsr &lt;= rst_n ? {vsr[6:0], row_valid} : 8&#x27;d0;
+    <span class="hk">end</span>
+    <span class="hc">// element i uses i extra registers on top of the input register (so a_skew[i] is delayed by i + 1 in all; element 0 by one)</span>
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        a_skew[7:0]   = dly[0][0];
+        a_skew[15:8]  = dly[1][1];
+        a_skew[23:16] = dly[2][2];
+        a_skew[31:24] = dly[3][3];
+        <span class="hk">for</span> (<span class="hk">int</span> j = 0; j &lt; 4; j++) c_row[j*32 +: 32] = (j == 3) ? c_raw[j*32 +: 32] : odly[j][2 - j];
+    <span class="hk">end</span>
+    <span class="hk">assign</span> out_valid = vsr[7];
+    systolic4 u (.clk, .rst_n, .w_load, .w_in, .a_in(a_skew), .c_out(c_raw));
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">systolic4.sv</span> <span class="muted small">reference RTL, 44 lines</span></summary><div class="codebar small"><a href="c14_systolic_matmul/systolic4.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_systolic_matmul/ref/rtl/systolic4.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 14 lesson 4 exercise: a 4 x 4 weight-stationary systolic array computing C = A x W for signed 8-bit A and W (C[m][j] = sum over i of A[m][i] * W[i][j]).</span>
+<span class="hc">//</span>
+<span class="hc">// PE (i, j) holds the weight W[i][j]. Activations travel along a row (left to right, one register per PE); partial sums travel down a column (top to bottom, one</span>
+<span class="hc">// register per PE). In every PE, each clock:   a_reg &lt;= a_left;   p_reg &lt;= p_above + a_left * W[i][j]   (row 0 has p_above = 0, column 0 has a_left = a_in[i]).</span>
+<span class="hc">//</span>
+<span class="hc">// Weights: with w_load = 1 for one clock, all 16 weights are taken from w_in: W[i][j] = w_in[(4*i + j)*8 +: 8]. Reset (rst_n low, synchronous) clears every a_reg and</span>
+<span class="hc">// p_reg to zero. a_in[i*8 +: 8] is the activation entering row i; c_out[j*32 +: 32] is the signed sum leaving the bottom of column j (the p_reg of PE (3, j)).</span>
+<span class="hc">//</span>
+<span class="hc">// Timing: if A[m][i] is applied on a_in[i] in clock cycle m + i (sampled at the rising edge that ends that cycle; the rows are skewed by one cycle each), then</span>
+<span class="hc">// c_out[j] holds C[m][j] after the rising edge that ends cycle m + j + 3, so it can be read during cycle m + j + 4 (a cycle starts at a rising edge).</span>
+<span class="hc">// A zero on a_in is a bubble (it adds nothing). Only one multiply-accumulate per PE per clock: after the pipeline fills, all 16 multipliers work every clock.</span>
+<span class="hk">module</span> systolic4 (
+    <span class="hk">input</span>  <span class="hk">logic</span>          clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>          rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>          w_load,
+    <span class="hk">input</span>  <span class="hk">logic</span> [127:0]  w_in,
+    <span class="hk">input</span>  <span class="hk">logic</span> [31:0]   a_in,
+    <span class="hk">output</span> <span class="hk">logic</span> [127:0]  c_out
+);
+    <span class="hk">logic</span> <span class="hk">signed</span> [7:0]  wt   [0:3][0:3];
+    <span class="hk">logic</span> <span class="hk">signed</span> [7:0]  a_r  [0:3][0:3];
+    <span class="hk">logic</span> <span class="hk">signed</span> [31:0] p_r  [0:3][0:3];
+
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (!rst_n) <span class="hk">begin</span>
+            <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; 4; i++)
+                <span class="hk">for</span> (<span class="hk">int</span> j = 0; j &lt; 4; j++) <span class="hk">begin</span>
+                    a_r[i][j] &lt;= &#x27;0;
+                    p_r[i][j] &lt;= &#x27;0;
+                    wt[i][j]  &lt;= &#x27;0;
+                <span class="hk">end</span>
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; 4; i++)
+                <span class="hk">for</span> (<span class="hk">int</span> j = 0; j &lt; 4; j++) <span class="hk">begin</span>
+                    <span class="hk">if</span> (w_load) wt[i][j] &lt;= w_in[(4*i + j)*8 +: 8];
+                    a_r[i][j] &lt;= (j == 0) ? $signed(a_in[i*8 +: 8]) : a_r[i][j-1];
+                    p_r[i][j] &lt;= ((i == 0) ? 32&#x27;sd0 : p_r[i-1][j])
+                                 + ((j == 0) ? $signed(a_in[i*8 +: 8]) : a_r[i][j-1]) * wt[i][j];
+                <span class="hk">end</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+    <span class="hk">always_comb</span>
+        <span class="hk">for</span> (<span class="hk">int</span> j = 0; j &lt; 4; j++) c_out[j*32 +: 32] = p_r[3][j];
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 96 lines</span></summary><div class="codebar small"><a href="c14_systolic_matmul/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_systolic_matmul/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c14_systolic_matmul against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+
+<span class="hk">from</span> __future__ <span class="hk">import</span> annotations
+
+<span class="hk">import</span> cocotb
+<span class="hk">from</span> benchmark.lib.bench <span class="hk">import</span> Board, peek
+<span class="hk">from</span> model <span class="hk">import</span> (BURST, COUNT, DESIGN_ID, LAT, LOAD, RES0, ROW0, STATUS, W0, matmul, pack_row, rows, rows2, s32,
+                   weights, weights2)
+
+
+<span class="hk">async</span> <span class="hk">def</span> load_table(b: Board, W) -&gt; <span class="hk">None</span>:
+    <span class="hk">for</span> i <span class="hk">in</span> range(4):
+        <span class="hk">await</span> b.write(W0 + i, pack_row(W[i]))
+    <span class="hk">await</span> b.write(LOAD, 1)
+
+
+<span class="hk">async</span> <span class="hk">def</span> burst(b: Board, rs, W, what: str) -&gt; <span class="hk">None</span>:
+    want = matmul(rs, W)
+    <span class="hk">for</span> m, r <span class="hk">in</span> enumerate(rs):
+        <span class="hk">await</span> b.write(ROW0 + m, pack_row(r))
+    <span class="hk">await</span> b.write(BURST, len(rs))
+    <span class="hk">await</span> b.cycles(40)
+    <span class="hk">await</span> b.expect(STATUS, 1, f<span class="hs">&quot;DONE {what}&quot;</span>)
+    <span class="hk">await</span> b.expect(COUNT, len(rs), f<span class="hs">&quot;COUNT {what}&quot;</span>)
+    lat = <span class="hk">await</span> b.read(LAT)
+    <span class="hk">assert</span> 1 &lt;= lat &lt;= 8, f<span class="hs">&quot;{what}: first-row latency {lat} clocks (must be 1..8)&quot;</span>
+    <span class="hk">for</span> m <span class="hk">in</span> range(len(rs)):
+        <span class="hk">for</span> j <span class="hk">in</span> range(4):
+            <span class="hk">await</span> b.expect(RES0 + 4 * m + j, s32(want[m][j]), f<span class="hs">&quot;{what}: C[{m}][{j}] for row {rs[m]}&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_identity_and_reset(dut):
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    <span class="hk">assert</span> <span class="hk">await</span> b.shell_id() == DESIGN_ID
+    <span class="hk">for</span> off <span class="hk">in</span> (W0, ROW0, STATUS, LAT, COUNT, RES0):
+        <span class="hk">await</span> b.expect(off, 0, f<span class="hs">&quot;reset value of {off:#x}&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_burst_random_rows(dut):
+    <span class="hs">&quot;&quot;&quot;16 rows on 16 consecutive clocks, then 16 more, against the first table.&quot;&quot;&quot;</span>
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    <span class="hk">await</span> load_table(b, weights())
+    r = rows()
+    <span class="hk">await</span> burst(b, r[0:16], weights(), <span class="hs">&quot;rows 0-15&quot;</span>)
+    <span class="hk">await</span> burst(b, r[16:32], weights(), <span class="hs">&quot;rows 16-31&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_burst_extreme_rows(dut):
+    <span class="hs">&quot;&quot;&quot;-128 and 127 everywhere, zero rows and unit rows.&quot;&quot;&quot;</span>
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    <span class="hk">await</span> load_table(b, weights())
+    <span class="hk">await</span> burst(b, rows()[32:40], weights(), <span class="hs">&quot;extreme rows&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_second_table_and_single_row(dut):
+    <span class="hs">&quot;&quot;&quot;A new table replaces the old one; a one-row burst works; the old table can come back.&quot;&quot;&quot;</span>
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    <span class="hk">await</span> load_table(b, weights())
+    <span class="hk">await</span> burst(b, rows()[0:4], weights(), <span class="hs">&quot;table 1&quot;</span>)
+    <span class="hk">await</span> load_table(b, weights2())
+    <span class="hk">await</span> burst(b, rows2(), weights2(), <span class="hs">&quot;table 2&quot;</span>)
+    <span class="hk">await</span> burst(b, rows2()[5:6], weights2(), <span class="hs">&quot;one-row burst&quot;</span>)
+    <span class="hk">await</span> load_table(b, weights())
+    <span class="hk">await</span> burst(b, rows()[4:8], weights(), <span class="hs">&quot;table 1 again&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_registers(dut):
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    <span class="hk">await</span> b.write(ROW0 + 15, 0xDEADBEEF)
+    <span class="hk">await</span> b.expect(ROW0 + 15, 0xDEADBEEF, <span class="hs">&quot;ROW15&quot;</span>)
+    <span class="hk">await</span> b.write(W0 + 2, 0x01020304)
+    <span class="hk">await</span> b.expect(W0 + 2, 0x01020304, <span class="hs">&quot;W2&quot;</span>)
+    <span class="hk">await</span> b.write(STATUS, 1)
+    <span class="hk">await</span> b.expect(STATUS, 0, <span class="hs">&quot;STATUS is read-only&quot;</span>)
+    <span class="hk">await</span> load_table(b, weights())
+    <span class="hk">await</span> burst(b, rows()[0:3], weights(), <span class="hs">&quot;three rows&quot;</span>)
+    led = <span class="hk">await</span> peek(b.clk, dut.LED)
+    <span class="hk">assert</span> led == 1, f<span class="hs">&quot;LED {led:04X}: only LED0 (DONE) is lit&quot;</span>
+    <span class="hk">await</span> b.write(BURST, 2)
+    <span class="hk">await</span> b.cycles(40)
+    <span class="hk">await</span> b.expect(COUNT, 2, <span class="hs">&quot;COUNT of the second burst&quot;</span>)
+    <span class="hk">for</span> off <span class="hk">in</span> (0x1C, 0x60, 0x7F):
+        <span class="hk">await</span> b.expect(off, 0, <span class="hs">&quot;unmapped&quot;</span>)
+    <span class="hk">await</span> b.reset()
+    <span class="hk">await</span> b.expect(STATUS, 0, <span class="hs">&quot;DONE after reset&quot;</span>)
+    <span class="hk">await</span> b.expect(RES0, 0, <span class="hs">&quot;results after reset&quot;</span>)
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 49 lines</span></summary><div class="codebar small"><a href="c14_systolic_matmul/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_systolic_matmul/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Reference model for P14-3 (4 x 4 matrix multiplier, rows in and out). Plain Python integers.&quot;&quot;&quot;</span>
+<span class="hk">import</span> random
+
+LATENCY = 7                    <span class="hc"># clock edges between the edge that samples a row and the edge after which its results are visible with out_valid</span>
+MAX_LATENCY = 8                <span class="hc"># what the spec allows</span>
+
+
+<span class="hk">def</span> weights():
+    rng = random.Random(14)
+    <span class="hk">return</span> [[rng.randint(-128, 127) <span class="hk">for</span> _ <span class="hk">in</span> range(4)] <span class="hk">for</span> _ <span class="hk">in</span> range(4)]
+
+
+<span class="hk">def</span> rows():
+    <span class="hs">&quot;&quot;&quot;The fixed test set: 40 rows applied on 40 consecutive clocks, then a second batch of 12 rows after a gap with new weights (weights2()).&quot;&quot;&quot;</span>
+    rng = random.Random(15)
+    r = [[rng.randint(-128, 127) <span class="hk">for</span> _ <span class="hk">in</span> range(4)] <span class="hk">for</span> _ <span class="hk">in</span> range(34)]
+    r += [[-128] * 4, [127] * 4, [-128, 127, -128, 127], [0] * 4, [1, 0, 0, 0], [0, 0, 0, 1]]
+    <span class="hk">return</span> r
+
+
+<span class="hk">def</span> weights2():
+    rng = random.Random(16)
+    <span class="hk">return</span> [[rng.randint(-100, 100) <span class="hk">for</span> _ <span class="hk">in</span> range(4)] <span class="hk">for</span> _ <span class="hk">in</span> range(4)]
+
+
+<span class="hk">def</span> rows2():
+    rng = random.Random(17)
+    <span class="hk">return</span> [[rng.randint(-128, 127) <span class="hk">for</span> _ <span class="hk">in</span> range(4)] <span class="hk">for</span> _ <span class="hk">in</span> range(12)]
+
+
+<span class="hk">def</span> matmul(rs, W):
+    <span class="hk">return</span> [[sum(a[i] * W[i][j] <span class="hk">for</span> i <span class="hk">in</span> range(4)) <span class="hk">for</span> j <span class="hk">in</span> range(4)] <span class="hk">for</span> a <span class="hk">in</span> rs]
+
+
+<span class="hk">def</span> reference_output():
+    <span class="hk">return</span> {<span class="hs">&quot;C&quot;</span>: matmul(rows(), weights()), <span class="hs">&quot;C2&quot;</span>: matmul(rows2(), weights2()), <span class="hs">&quot;latency_clocks&quot;</span>: LATENCY, <span class="hs">&quot;accepted_every_clock&quot;</span>: <span class="hk">True</span>}
+
+
+<span class="hc"># ---- benchmark wrapper: the shell register map (from spec.yaml) ----</span>
+DESIGN_ID = 0x4D4D3458          <span class="hc"># &quot;MM4X&quot;</span>
+W0, LOAD, ROW0, BURST, STATUS, LAT, COUNT, RES0 = 0x00, 0x04, 0x08, 0x18, 0x19, 0x1A, 0x1B, 0x20
+
+
+<span class="hk">def</span> pack_row(r):
+    <span class="hk">return</span> sum((x &amp; 0xFF) &lt;&lt; (8 * i) <span class="hk">for</span> i, x <span class="hk">in</span> enumerate(r))
+
+
+<span class="hk">def</span> s32(v):
+    <span class="hk">return</span> v &amp; 0xFFFFFFFF
+</code></pre></details>
+<h2>The agent on this task</h2>
+<p><span class="tag">Development, not the held-out score</span> 1 of 1 committed development runs passed every hidden test (claude-sonnet-5-5). Partial credit is the hidden tests passed; slack is post-route at 100 MHz and the counts include the test shell.</p><div class="tablewrap" tabindex="0"><table><thead><tr><th>Record</th><th>Date</th><th>Outcome</th><th class="num">Hidden tests</th><th class="num">WNS (ns)</th><th class="num">LUT</th><th class="num">FF</th><th class="num">DSP</th><th>What went wrong</th></tr></thead><tbody><tr><td><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/course/c14_systolic_matmul/run_1.json">run 1</a></td><td>2026-11-08</td><td>gate failed, repaired, passed</td><td class="num">5 of 5</td><td class="num">+0.327</td><td class="num">2324</td><td class="num">2694</td><td class="num">0</td><td>none</td></tr></tbody></table></div><p class="small muted">Agent-written RTL is not committed per run, so only the reference RTL is shown above.</p>
+<div class="pager"><a href="c14_nexys_tiny_cnn.html">&larr; Tiny CNN shape classifier</a><a href="c15_pq_search.html">Compressed-database search behind the test shell &rarr;</a></div>
+
+<div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
+</main>
+<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<script type="application/json" data-key="trace">{"captions":["Clock 0: row 0 (-22 -123 -110 -48) goes in.","Clock 1: row 1 (-6 -120 -100 -53) goes in.","Clock 2: row 2 (60 -6 -69 45) goes in.","Clock 3: row 3 (110 54 15 72) goes in.","Clock 4: row 4 (6 48 -11 -23) goes in.","Clock 5: row 5 (53 32 -14 28) goes in.","Clock 6: row 6 (87 -10 105 86) goes in.","Clock 7: row 7 (122 -88 108 56) goes in; result row 0 comes out (-13343 3659 -22380 1475).","Clock 8: row 8 (96 33 102 79) goes in; result row 1 comes out (-13394 4174 -21349 633).","Clock 9: row 9 (-95 123 -119 -28) goes in; result row 2 comes out (-11886 -5379 -3564 7125).","Clock 10: result row 3 comes out (-4924 -5017 10079 4618).","Clock 11: result row 4 comes out (-784 -4883 3394 791).","Clock 12: result row 5 comes out (-4622 -4460 3696 3462).","Clock 13: result row 6 comes out (5418 7407 10353 -2506).","Clock 14: result row 7 comes out (1340 15080 1976 -6396).","Clock 15: result row 8 comes out (5283 3349 14379 -1508).","Clock 16: result row 9 comes out (-3645 -19536 1985 9683).","Clock 17: pipeline empty.","Clock 18: pipeline empty."],"hero":{"C":[[-13343,3659,-22380,1475],[-13394,4174,-21349,633],[-11886,-5379,-3564,7125],[-4924,-5017,10079,4618],[-784,-4883,3394,791],[-4622,-4460,3696,3462],[5418,7407,10353,-2506],[1340,15080,1976,-6396],[5283,3349,14379,-1508],[-3645,-19536,1985,9683]],"W":[[-74,-2,10,2],[21,-91,102,27],[110,75,73,-68],[6,-14,33,55]],"in":[0,1,2,3,4,5,6,7,8,9,null,null,null,null,null,null,null,null,null],"lat":7,"out":[null,null,null,null,null,null,null,0,1,2,3,4,5,6,7,8,9,null,null],"rows":[[-22,-123,-110,-48],[-6,-120,-100,-53],[60,-6,-69,45],[110,54,15,72],[6,48,-11,-23],[53,32,-14,28],[87,-10,105,86],[122,-88,108,56],[96,33,102,79],[-95,123,-119,-28]]},"signals":[{"kind":"bit","name":"row valid","v":[1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0]},{"kind":"text","name":"row in","v":["-22 -123 -110 -48","-6 -120 -100 -53","60 -6 -69 45","110 54 15 72","6 48 -11 -23","53 32 -14 28","87 -10 105 86","122 -88 108 56","96 33 102 79","-95 123 -119 -28","","","","","","","","",""]},{"kind":"bit","name":"out valid","v":[0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0]},{"kind":"text","name":"result row","v":["","","","","","","","-13343 3659 -22380 1475","-13394 4174 -21349 633","-11886 -5379 -3564 7125","-4924 -5017 10079 4618","-784 -4883 3394 791","-4622 -4460 3696 3462","5418 7407 10353 -2506","1340 15080 1976 -6396","5283 3349 14379 -1508","-3645 -19536 1985 9683","",""]}],"stimulus":"The model's first 10 test rows of four signed 8-bit numbers, one row a clock, times its fixed 4 x 4 weight matrix; latency 7 clocks.","unit":"clock","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]}</script>
+<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+(function () {
+  "use strict";
+  var D = {};
+  document.querySelectorAll('script[type="application/json"][data-key]').forEach(function (s) {
+    try { D[s.dataset.key] = JSON.parse(s.textContent); } catch (e) { /* data missing: component skips */ }
+  });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* theme toggle: remembered per viewer, optional */
+  var tb = document.getElementById("theme");
+  function curTheme() {
+    var t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  if (tb) {
+    try { var st = localStorage.getItem("fda-theme"); if (st) document.documentElement.dataset.theme = st; } catch (e) {}
+    tb.addEventListener("click", function () {
+      var n = curTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = n;
+      try { localStorage.setItem("fda-theme", n); } catch (e) {}
+      tb.textContent = n === "dark" ? "Light" : "Dark";
+    });
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+  }
+
+  /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
+  function Player(root, n, onFrame, opts) {
+    opts = opts || {};
+    var i = 0, playing = false, timer = null, speed = 1, visible = true, base = opts.interval || 1100;
+    var live = root.querySelector(".cap");
+    var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
+    var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
+    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
+    var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
+    var pos = el("span", { class: "pos" });
+    var sp = el("select", { "aria-label": "Speed" });
+    [0.25, 0.5, 1, 2, 4].forEach(function (s) { var o = el("option", { value: s, text: s + "x" }); if (s === 1) o.selected = true; sp.appendChild(o); });
+    var ctl = el("div", { class: "ctl" }, [play, back, fwd, rst, rng, pos, sp]);
+    root.appendChild(ctl);
+    if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
+    function show() {
+      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      var c = onFrame(i);
+      if (live && c != null) live.textContent = c;
+    }
+    function stop() { playing = false; play.textContent = "Play"; play.setAttribute("aria-label", "Play"); clearTimeout(timer); }
+    function tick() {
+      if (!playing) return;
+      if (!visible) { timer = setTimeout(tick, 400); return; }
+      if (i >= n - 1) { stop(); return; }
+      i++; show(); timer = setTimeout(tick, base / speed);
+    }
+    function go() {
+      if (i >= n - 1) i = 0;
+      playing = true; play.textContent = "Pause"; play.setAttribute("aria-label", "Pause"); show(); timer = setTimeout(tick, base / speed);
+    }
+    play.onclick = function () { playing ? stop() : go(); };
+    back.onclick = function () { stop(); i = Math.max(0, i - 1); show(); };
+    fwd.onclick = function () { stop(); i = Math.min(n - 1, i + 1); show(); };
+    rst.onclick = function () { stop(); i = 0; show(); };
+    rng.oninput = function () { stop(); i = +rng.value; show(); };
+    sp.onchange = function () { speed = +sp.value; };
+    root.addEventListener("keydown", function (e) {
+      if (e.target !== root) return;
+      if (e.key === " ") { e.preventDefault(); play.onclick(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); fwd.onclick(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); back.onclick(); }
+      else if (e.key === "Home") { e.preventDefault(); rst.onclick(); }
+    });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+    show();
+    if (opts.autoplay && !reduce) go();
+    return { goto: function (k) { stop(); i = k; show(); } };
+  }
+
+  /* ---------- stage replay (hero and how-it-works): frames from the committed run record ---------- */
+  var GROUPS = [
+    { id: "clarify", label: "Interview", stages: [0] },
+    { id: "plan", label: "Plan", stages: [1] },
+    { id: "rtl", label: "RTL and gates V0 to V3", stages: [2] },
+    { id: "build", label: "Build", stages: [3, 4, 5] },
+    { id: "post", label: "Post-route gates", stages: [6, 7, 8] },
+    { id: "board", label: "Board", stages: [9] }
+  ];
+  var DETAIL = [
+    "Interview", "Plan", "RTL and V0 to V3", "Constraints", "Synthesis", "Implementation", "Timing closure",
+    "Power closure", "DRC closure", "Board and debug"
+  ];
+  function frameState(R, i) {
+    var s = R.steps[i];
+    return { stage: s.stage_no, step: s, last: i === R.steps.length - 1 };
+  }
+  function mountReplay(root, mode) {
+    var R = D.replay; if (!R) return;
+    var items = mode === "hero" ? GROUPS : DETAIL.map(function (l, k) { return { id: "s" + k, label: l, stages: [k] }; });
+    var ul = el("ul", { class: "pipe", "aria-label": "Stages" });
+    var lis = items.map(function (g, k) {
+      var li = el("li", {}, [el("b", { text: mode === "hero" ? String(k + 1) : String(g.stages[0]) }), document.createTextNode(g.label)]);
+      ul.appendChild(li); return li;
+    });
+    var cap = el("p", { class: "cap", "aria-live": "polite" });
+    root.appendChild(ul); root.appendChild(cap);
+    function frame(i) {
+      var st = frameState(R, i), cur = -1;
+      items.forEach(function (g, k) { if (g.stages.indexOf(st.stage) >= 0) cur = k; });
+      lis.forEach(function (li, k) {
+        li.className = k < cur ? "done" : (k === cur ? (st.last ? "stop" : "active") : "");
+        var old = li.querySelector(".v"); if (old) li.removeChild(old);
+      });
+      var visits = st.step.visits;
+      if (visits > 1) lis[cur].appendChild(el("span", { class: "v", text: st.step.visit + "/" + visits }));
+      return "Stage " + st.stage + ", " + DETAIL[st.stage] + (visits > 1 ? " (visit " + st.step.visit + " of " + visits + ")" : "") + ". " + st.step.fact;
+    }
+    Player(root, R.steps.length, frame, { autoplay: mode === "hero", interval: mode === "hero" ? 1300 : 1500 });
+  }
+
+  /* ---------- k-of-n strip, intervals, bars (shared by development data and eval1.json) ---------- */
+  function strip(root, rows) {
+    var g = el("div", { class: "strip", role: "list" });
+    rows.forEach(function (r) {
+      var dots = el("span", { class: "dots", "aria-hidden": "true" });
+      for (var j = 0; j < r.n; j++) dots.appendChild(el("span", { class: "dot " + (j < r.k ? "p" : "f") }));
+      for (var q = r.n; q < (r.of || r.n); q++) dots.appendChild(el("span", { class: "dot n", title: "not run" }));
+      g.appendChild(el("span", { class: "t", role: "listitem", text: r.task }));
+      g.appendChild(dots);
+      g.appendChild(el("span", { class: "k mono", text: r.k + " of " + r.n }));
+    });
+    root.appendChild(g);
+    root.appendChild(el("div", { class: "legend" }, [
+      el("span", { text: "filled: all hidden tests passed" }), el("span", { text: "hatched: failed" }), el("span", { text: "dotted: not run" })]));
+  }
+  function intervals(root, items) {
+    var W = 560, H = 36 + items.length * 52, L = 14, R = 14;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": items.map(function (x) { return x.label + " " + x.mid + " percent, interval " + x.lo + " to " + x.hi; }).join("; ") });
+    function X(v) { return L + (W - L - R) * v / 100; }
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      s.appendChild(sv("line", { x1: X(v), x2: X(v), y1: 6, y2: H - 20, class: "rule" }));
+      s.appendChild(sv("text", { x: X(v), y: H - 6, "text-anchor": "middle" }, v));
+    });
+    items.forEach(function (it, k) {
+      var y = 36 + k * 52;
+      s.appendChild(sv("text", { x: 0, y: y - 14 }, it.label));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.hi), y1: y, y2: y, class: "ink", "stroke-width": 2, "stroke-dasharray": it.dash ? "5 3" : "none" }));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.lo), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("line", { x1: X(it.hi), x2: X(it.hi), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("circle", { cx: X(it.mid), cy: y, r: 5, class: "fillink" }));
+    });
+    root.appendChild(s);
+    var t = el("div", { class: "tablewrap" });
+    var tb2 = el("table");
+    tb2.appendChild(el("tr", {}, ["Estimate", "Point", "95% interval"].map(function (h) { return el("th", { text: h }); })));
+    items.forEach(function (it) {
+      tb2.appendChild(el("tr", {}, [el("td", { text: it.label }), el("td", { class: "num", text: it.mid + "%" }), el("td", { class: "num", text: it.lo + " to " + it.hi + "%" })]));
+    });
+    t.appendChild(tb2); root.appendChild(t);
+  }
+  function bars(root, obj, total, unit) {
+    var g = el("div", { class: "bars" });
+    var max = Math.max.apply(null, Object.keys(obj).map(function (k) { return obj[k]; }).concat([1]));
+    Object.keys(obj).forEach(function (k) {
+      var b = el("span", { class: "b", "aria-hidden": "true" }); b.style.width = (100 * obj[k] / max) + "%"; b.style.display = "block";
+      g.appendChild(el("span", { text: k.replace(/_/g, " ").replace(/-/g, " ") }));
+      var cell = el("span", {}, [b]); g.appendChild(cell);
+      g.appendChild(el("span", { class: "mono", text: obj[k] + (total ? " of " + total : "") + (unit || "") }));
+    });
+    root.appendChild(g);
+  }
+  var OUTCOME_TEXT = { pass: "passed, no repair needed", caught_and_repaired: "an internal gate failed, the agent repaired it, hidden tests passed",
+    escape: "own checks passed, hidden tests failed (escape)", internal_stop_hidden_pass: "stopped on an internal gate, hidden tests pass on the RTL it left",
+    fail: "failed" };
+
+  function mountDev() {
+    var d = D.dev; if (!d) return;
+    var a = document.getElementById("dev-strip"); if (a) strip(a, d.per_task);
+    var b = document.getElementById("dev-int");
+    if (b) intervals(b, [
+      { label: "pass@1, bootstrap over tasks", mid: d.pass_at_1_tasks_pct, lo: d.bootstrap_tasks_pct[0], hi: d.bootstrap_tasks_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: d.pass_pct_runs, lo: d.wilson_runs_pct[0], hi: d.wilson_runs_pct[1], dash: true }]);
+    var c = document.getElementById("dev-out"); if (c) {
+      var o = {}; Object.keys(d.outcomes).forEach(function (k) { o[OUTCOME_TEXT[k] || k] = d.outcomes[k]; });
+      bars(c, o, d.runs);
+    }
+    var e = document.getElementById("dev-esc"); if (e) bars(e, d.escape_levels, d.escapes);
+  }
+  function mountEval1() {
+    var root = document.getElementById("eval1"); if (!root) return;
+    var E = D.eval1;
+    if (!E) {
+      root.appendChild(el("div", { class: "stub" }, [
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
+      return;
+    }
+    root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
+    var s = el("div"); root.appendChild(s); strip(s, E.per_task.map(function (t) { return { task: t.task, k: t.k, n: t.n, of: 3 }; }));
+    root.appendChild(el("h3", { text: "pass@1 with 95% intervals" }));
+    var i = el("div"); root.appendChild(i);
+    intervals(i, [
+      { label: "pass@1, bootstrap over tasks", mid: E.pass_at_1_pct, lo: E.bootstrap_pct[0], hi: E.bootstrap_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: E.wilson_mid_pct, lo: E.wilson_pct[0], hi: E.wilson_pct[1], dash: true }]);
+    root.appendChild(el("h3", { text: "Escapes by the check level that should have caught them" }));
+    var b = el("div"); root.appendChild(b); bars(b, E.escape_levels, E.escapes);
+  }
+
+  /* ---------- ILA capture player (T1 on the board): LED0 against the sample index ---------- */
+  function mountILA(root) {
+    var B = D.board; if (!B) return;
+    var keys = Object.keys(B.captures).sort(function (a, b) { return B.captures[a].duty - B.captures[b].duty; });
+    var W = 600, H = 120, L = 30, cur = keys[0], svg, cursor, trace, label;
+    var sel = el("div", { class: "ctl", role: "group", "aria-label": "Dimmer level" });
+    var btns = keys.map(function (k) {
+      var b = el("button", { type: "button", "aria-pressed": k === cur ? "true" : "false", text: "duty " + B.captures[k].duty });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", keys[j] === cur ? "true" : "false"); }); draw(); player.goto(0); };
+      return b;
+    });
+    btns.forEach(function (b) { sel.appendChild(b); });
+    root.appendChild(sel);
+    var holder = el("div"); root.appendChild(holder);
+    root.appendChild(el("p", { class: "cap", "aria-live": "polite" }));
+    function X(i) { return L + (W - L - 10) * i / (B.captures[cur].samples - 1); }
+    function draw() {
+      var c = B.captures[cur]; holder.innerHTML = "";
+      svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "ILA capture of LED 0 over " + c.samples + " samples at duty " + c.duty + ": on for " + c.on + " samples" });
+      svg.appendChild(sv("text", { x: 0, y: 34 }, "on"));
+      svg.appendChild(sv("text", { x: 0, y: 94 }, "off"));
+      var d = "", prev = 0;
+      c.edges.forEach(function (e, k) {
+        var y = e[1] ? 30 : 90;
+        d += (k === 0 ? "M" : "L") + X(e[0]) + " " + (k === 0 ? y : (e[1] ? 90 : 30)) + " L" + X(e[0]) + " " + y + " ";
+      });
+      d += "L" + X(c.samples - 1) + " " + (c.edges[c.edges.length - 1][1] ? 30 : 90);
+      svg.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      cursor = sv("line", { x1: X(0), x2: X(0), y1: 10, y2: 108, class: "warn", "stroke-width": 1.5 });
+      svg.appendChild(cursor);
+      svg.appendChild(sv("text", { x: L, y: H - 2 }, "sample 0"));
+      svg.appendChild(sv("text", { x: W - 10, y: H - 2, "text-anchor": "end" }, "sample " + (c.samples - 1)));
+      holder.appendChild(svg);
+    }
+    draw();
+    var marks = 64;
+    function onFrame(k) {
+      var c = B.captures[cur]; var idx = Math.round(k * (c.samples - 1) / 63);
+      cursor.setAttribute("x1", X(idx)); cursor.setAttribute("x2", X(idx));
+      var on = 0, v = 0; c.edges.forEach(function (e) { if (e[0] <= idx) { v = e[1]; } });
+      for (var q = 0; q < c.edges.length; q++) { var e = c.edges[q], nx = q + 1 < c.edges.length ? c.edges[q + 1][0] : c.samples; if (e[1]) on += Math.max(0, Math.min(nx, idx + 1) - e[0]); }
+      return "Sample " + idx + ": LED 0 is " + (v ? "on" : "off") + ". On for " + on + " of the " + (idx + 1) + " samples so far. The whole capture: " + c.on + " of " + c.samples + " samples on, the model says " + c.model_on + ".";
+    }
+    var player = Player(root, marks, onFrame, { interval: 220 });
+  }
+
+
+  /* ---------- golden-model trace viewer (problem pages): waveform + values at the cursor + bespoke hero ---------- */
+  function fmtv(sg, v) {
+    if (sg.kind === "bus") {
+      if (sg.radix === "hex") { var hd = sg.width ? Math.ceil(sg.width / 4) : 1; var hs = (v >>> 0).toString(16); if (v < 0) hs = "-" + (-v).toString(16); while (hs.length < hd) hs = "0" + hs; return "0x" + hs; }
+      if (sg.radix === "bin") { var bs = (v >>> 0).toString(2); while (sg.width && bs.length < sg.width) bs = "0" + bs; return bs; }
+      return String(v);
+    }
+    return String(v);
+  }
+  function mountWave(holder, T) {
+    var n = T.x.length, LW = 132, CW = Math.max(12, Math.min(28, Math.floor(620 / n))), W = LW + n * CW + 6, RH = 34;
+    var H = 22 + T.signals.length * RH;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "wavesvg",
+      "aria-label": "Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s" });
+    function X(i) { return LW + i * CW; }
+    for (var i = 0; i < n; i += Math.max(1, Math.ceil(n / 12))) s.appendChild(sv("text", { x: X(i) + 2, y: 12 }, T.x[i]));
+    T.signals.forEach(function (g, r) {
+      var y0 = 22 + r * RH, top = y0 + 5, bot = y0 + RH - 7, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4 }, g.name.length > 17 ? g.name.slice(0, 16) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      var d = "";
+      if (g.kind === "bit") {
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k) + " " + y + " L" + X(k + 1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); d += (k ? "L" : "M") + (X(k) + CW / 2) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); s.appendChild(sv("circle", { cx: X(k) + CW / 2, cy: y.toFixed(1), r: 1.8, class: "fillink" })); });
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), val = g.v[a], txt = fmtv(g, val), empty = g.kind === "text" ? val === "" : false;
+            if (empty) s.appendChild(sv("line", { x1: x1, x2: x2, y1: mid, y2: mid, class: "ink", "stroke-width": 1 }));
+            else {
+              s.appendChild(sv("path", { d: "M" + x1 + " " + mid + " L" + (x1 + 3) + " " + top + " L" + (x2 - 3) + " " + top + " L" + x2 + " " + mid + " L" + (x2 - 3) + " " + bot + " L" + (x1 + 3) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+              var room = Math.floor((x2 - x1 - 8) / 6.7);
+              if (room >= 1) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4 }, txt.length > room ? (room > 2 ? txt.slice(0, room - 1) + "." : "") : txt));
+            }
+            a = k;
+          }
+        }
+      }
+    });
+    var shade = sv("rect", { x: X(1), y: 16, width: W, height: H, class: "future" });
+    var cur = sv("rect", { x: X(0), y: 16, width: CW, height: H - 16, class: "cursor" });
+    s.appendChild(shade); s.appendChild(cur);
+    var wrap = el("div", { class: "wavewrap", tabindex: "0" }); wrap.appendChild(s); holder.appendChild(wrap);
+    var vals = el("dl", { class: "vals" }); holder.appendChild(vals);
+    return function (i) {
+      shade.setAttribute("x", X(i + 1)); cur.setAttribute("x", X(i));
+      vals.innerHTML = "";
+      vals.appendChild(el("div", {}, [el("dt", { text: T.unit }), el("dd", { class: "mono", text: String(T.x[i]) })]));
+      T.signals.forEach(function (g) { vals.appendChild(el("div", {}, [el("dt", { text: g.name }), el("dd", { class: "mono", text: g.kind === "text" && g.v[i] === "" ? "none" : fmtv(g, g.v[i]) })])); });
+    };
+  }
+  function sig(T, name) { for (var k = 0; k < T.signals.length; k++) if (T.signals[k].name === name) return T.signals[k].v; return null; }
+  function hx(b) { return (b < 16 ? "0" : "") + b.toString(16); }
+  var HEROES = {
+    t1_elevator_fsm: function (box, T) {
+      var F = T.hero.floors, W = 360, FH = 52, H = F * FH + 20, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Lift shaft: car position, door and calls from the model" });
+      box.appendChild(s);
+      var fl = sig(T, "FLOOR"), st = sig(T, "STATE"), pe = sig(T, "PENDING"), dr = sig(T, "DIR (1 = down)");
+      var lamps = [], labels = [];
+      for (var f = 0; f < F; f++) {
+        var y = 10 + (F - 1 - f) * FH;
+        s.appendChild(sv("line", { x1: 60, x2: 300, y1: y + FH, y2: y + FH, class: "rule" }));
+        s.appendChild(sv("text", { x: 4, y: y + FH / 2 + 4 }, "floor " + f));
+        lamps.push(sv("circle", { cx: 290, cy: y + FH / 2, r: 7, class: "ink", "stroke-width": 1.5 }));
+        s.appendChild(lamps[f]);
+      }
+      s.appendChild(sv("rect", { x: 120, y: 10, width: 90, height: F * FH, class: "ink", "stroke-width": 1 }));
+      var car = sv("g", {}), body = sv("rect", { x: 128, width: 74, height: FH - 10, class: "ink", "stroke-width": 2 });
+      var dl = sv("rect", { width: 0, height: FH - 18, class: "fillink" }), dr2 = sv("rect", { width: 0, height: FH - 18, class: "fillink" });
+      var arrow = sv("text", { x: 228, "text-anchor": "middle" }, "");
+      car.appendChild(body); car.appendChild(dl); car.appendChild(dr2); s.appendChild(car); s.appendChild(arrow);
+      s.appendChild(sv("text", { x: 290, y: H - 2, "text-anchor": "middle" }, "calls"));
+      return function (i) {
+        var y = 10 + (F - 1 - fl[i]) * FH + 5, open = st[i] === "door open";
+        body.setAttribute("y", y);
+        var dw = open ? 14 : 36;
+        dl.setAttribute("x", 132); dl.setAttribute("y", y + 4); dl.setAttribute("width", dw);
+        dr2.setAttribute("x", 198 - dw); dr2.setAttribute("y", y + 4); dr2.setAttribute("width", dw);
+        arrow.setAttribute("y", y + FH / 2); arrow.textContent = st[i] === "moving" ? (dr[i] ? "down" : "up") : (open ? "open" : "");
+        lamps.forEach(function (c, f) { c.setAttribute("class", (pe[i] >> f) & 1 ? "fillink" : "ink"); });
+      };
+    },
+    c10_dds_sine: function (box, T) {
+      var h = T.hero, W = 600, H = 200, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Phase wheel and sine output from the model" });
+      box.appendChild(s);
+      var cx = 90, cy = 100, R = 70, N = 1 << h.la;
+      s.appendChild(sv("circle", { cx: cx, cy: cy, r: R, class: "ink", "stroke-width": 1 }));
+      s.appendChild(sv("text", { x: cx, y: 192, "text-anchor": "middle" }, "phase (" + h.aw + " bits)"));
+      var hand = sv("line", { x1: cx, y1: cy, class: "ink", "stroke-width": 2 }); s.appendChild(hand);
+      var dot = sv("circle", { r: 5, class: "fillink" }); s.appendChild(dot);
+      var X0 = 200, PW = 390, ph = sig(T, "phase"), out = sig(T, "out"), ad = sig(T, "table address");
+      s.appendChild(sv("line", { x1: X0, x2: X0 + PW, y1: cy, y2: cy, class: "rule" }));
+      s.appendChild(sv("text", { x: X0 + PW, y: 192, "text-anchor": "end" }, "output samples"));
+      var stems = [];
+      for (var k = 0; k < out.length; k++) {
+        var x = X0 + PW * (k + .5) / out.length, y = cy - (R) * out[k] / h.amp;
+        var g = sv("g", {}); g.appendChild(sv("line", { x1: x, x2: x, y1: cy, y2: y, class: "ink", "stroke-width": 1 })); g.appendChild(sv("circle", { cx: x, cy: y, r: 2.5, class: "fillink" }));
+        stems.push(g); s.appendChild(g);
+      }
+      var lab = sv("text", { x: cx, y: 18, "text-anchor": "middle" }, ""); s.appendChild(lab);
+      return function (i) {
+        var a = 2 * Math.PI * ad[i] / N, x = cx + R * Math.cos(a), y = cy - R * Math.sin(a);
+        hand.setAttribute("x2", x); hand.setAttribute("y2", y); dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        lab.textContent = "entry " + ad[i] + " of " + N;
+        stems.forEach(function (g, k) { g.style.opacity = k <= i ? 1 : .15; });
+      };
+    },
+    c16_nexys_aes_uart: function (box, T) {
+      var h = T.hero, W = 420, C = 56, s = sv("svg", { viewBox: "0 0 " + W + " 250", width: "100%", role: "img", "aria-label": "AES state, 4 by 4 bytes, from the model's round functions" });
+      box.appendChild(s);
+      var cells = [], texts = [];
+      for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) {
+        var x = 10 + c * C, y = 26 + r * C;
+        var rc = sv("rect", { x: x, y: y, width: C - 6, height: C - 6, class: "ink", "stroke-width": 1 }), t = sv("text", { x: x + (C - 6) / 2, y: y + C / 2, "text-anchor": "middle", class: "big" }, "");
+        s.appendChild(rc); s.appendChild(t); cells[4 * c + r] = rc; texts[4 * c + r] = t;
+      }
+      var op = sv("text", { x: 250, y: 60, class: "big" }, ""), rd = sv("text", { x: 250, y: 90 }, ""), ch = sv("text", { x: 250, y: 120 }, "");
+      s.appendChild(op); s.appendChild(rd); s.appendChild(ch);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "state: bytes go down the columns"));
+      var rounds = sig(T, "round");
+      return function (i) {
+        var st = h.states[i], pr = i ? h.states[i - 1] : st, nch = 0;
+        for (var k = 0; k < 16; k++) {
+          var diff = st[k] !== pr[k]; if (diff) nch++;
+          cells[k].setAttribute("class", diff ? "fillink" : "ink"); texts[k].setAttribute("class", diff ? "big inv" : "big"); texts[k].textContent = hx(st[k]);
+        }
+        op.textContent = h.ops[i]; rd.textContent = "round " + rounds[i]; ch.textContent = i ? nch + " of 16 bytes changed" : "";
+      };
+    },
+    c9_median3x3: function (box, T) {
+      var h = T.hero, W = 600, s = sv("svg", { viewBox: "0 0 " + W + " 200", width: "100%", role: "img", "aria-label": "Window presented and median result, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "window presented this clock"));
+      s.appendChild(sv("text", { x: 230, y: 16 }, "window from " + h.lat + " clock earlier, sorted"));
+      s.appendChild(sv("text", { x: 230 + 4 * 40 + 18, y: 50, "text-anchor": "middle" }, "fifth"));
+      var g = [], gt = [];
+      for (var k = 0; k < 9; k++) {
+        var x = 10 + (k % 3) * 50, y = 26 + Math.floor(k / 3) * 50;
+        var r = sv("rect", { x: x, y: y, width: 46, height: 46, class: "pix" }), t = sv("text", { x: x + 23, y: y + 28, "text-anchor": "middle" }, "");
+        s.appendChild(r); s.appendChild(t); g.push(r); gt.push(t);
+      }
+      var srt = [], st2 = [];
+      for (var q = 0; q < 9; q++) {
+        var x2 = 230 + q * 40, r2 = sv("rect", { x: x2, y: 60, width: 36, height: 36, class: "pix" }), t2 = sv("text", { x: x2 + 18, y: 83, "text-anchor": "middle" }, "");
+        s.appendChild(r2); s.appendChild(t2); srt.push(r2); st2.push(t2);
+      }
+      var box5 = sv("rect", { x: 230 + 4 * 40 - 4, y: 56, width: 44, height: 44, class: "ink", "stroke-width": 2.5 }); s.appendChild(box5);
+      var res = sv("text", { x: 230, y: 130, class: "big" }, ""); s.appendChild(res);
+      return function (i) {
+        var w = h.in[i], so = h.sorted[i];
+        for (var k = 0; k < 9; k++) {
+          if (w) { g[k].style.fill = "rgb(" + w[k] + "," + w[k] + "," + w[k] + ")"; gt[k].textContent = w[k]; gt[k].setAttribute("class", w[k] > 127 ? "dark" : "light"); }
+          else { g[k].style.fill = "none"; gt[k].textContent = ""; }
+          if (so) { srt[k].style.fill = "rgb(" + so[k] + "," + so[k] + "," + so[k] + ")"; st2[k].textContent = so[k]; st2[k].setAttribute("class", so[k] > 127 ? "dark" : "light"); }
+          else { srt[k].style.fill = "none"; st2[k].textContent = ""; }
+        }
+        box5.style.opacity = so ? 1 : .2; res.textContent = so ? "median " + so[4] : "no result this clock";
+      };
+    },
+    c14_systolic_matmul: function (box, T) {
+      var h = T.hero, W = 600, n = h.rows.length, L = h.lat, s = sv("svg", { viewBox: "0 0 " + W + " 190", width: "100%", role: "img", "aria-label": "Rows entering, in flight for the latency, and results leaving, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "rows waiting"));
+      s.appendChild(sv("text", { x: 170, y: 16 }, "in flight for " + L + " clocks"));
+      s.appendChild(sv("text", { x: 170, y: 34 }, "(each row times the 4 x 4 weights)"));
+      s.appendChild(sv("text", { x: 480, y: 16 }, "results out"));
+      var slots = [];
+      for (var k = 0; k < L; k++) { var r = sv("rect", { x: 170 + k * 38, y: 70, width: 34, height: 34, class: "ink", "stroke-width": 1 }); s.appendChild(r); slots.push([r, sv("text", { x: 170 + k * 38 + 17, y: 92, "text-anchor": "middle" }, "")]); s.appendChild(slots[k][1]); }
+      var waiting = sv("text", { x: 10, y: 92 }, ""), done = sv("text", { x: 480, y: 92 }, ""), last = sv("text", { x: 170, y: 150 }, "");
+      s.appendChild(waiting); s.appendChild(done); s.appendChild(last);
+      return function (i) {
+        var nextIn = 0; for (var t = 0; t <= i; t++) if (h.in[t] != null) nextIn = h.in[t] + 1;
+        var outN = 0; for (var t2 = 0; t2 <= i; t2++) if (h.out[t2] != null) outN = h.out[t2] + 1;
+        waiting.textContent = nextIn < n ? (n - nextIn) + " rows" : "none";
+        done.textContent = outN + " of " + n + " rows";
+        slots.forEach(function (sl, k) {
+          var row = i - k >= 0 && h.in[i - k] != null ? h.in[i - k] : null;
+          sl[0].setAttribute("class", row != null ? "fillink" : "ink"); sl[1].textContent = row != null ? "r" + row : ""; sl[1].setAttribute("class", row != null ? "inv" : "");
+        });
+        var o = h.out[i]; last.textContent = o != null ? "row " + o + " x W = " + h.C[o].join("  ") : "";
+      };
+    }
+  };
+  function mountTrace(root) {
+    var T = D.trace; if (!T) return;
+    var heroFn = null, art = root.querySelector(".hero-art"), id = root.getAttribute("data-hero");
+    if (art && HEROES[id]) { heroFn = HEROES[id](art, T); var hs = art.querySelector("svg"); if (hs) hs.style.maxWidth = id === "t1_elevator_fsm" ? "400px" : "680px"; }
+    var wv = mountWave(root.querySelector(".wave"), T);
+    Player(root, T.x.length, function (i) { if (heroFn) heroFn(i); wv(i); return T.captions[i]; }, { autoplay: !!heroFn, interval: 900 });
+  }
+  var tr = document.getElementById("trace"); if (tr) mountTrace(tr);
+
+  /* ---------- problems index: filter by domain, tier, board (the list is complete without script) ---------- */
+  (function () {
+    var sels = document.querySelectorAll(".filters select"); if (!sels.length) return;
+    var cards = document.querySelectorAll(".pcard"), secs = document.querySelectorAll("section.dom"), cnt = document.getElementById("f-count");
+    function apply() {
+      var f = {}; sels.forEach(function (s) { f[s.dataset.f] = s.value; });
+      var shown = 0;
+      cards.forEach(function (c) { var ok = (!f.domain || c.dataset.domain === f.domain) && (!f.tier || c.dataset.tier === f.tier) && (!f.board || c.dataset.board === f.board); c.hidden = !ok; if (ok) shown++; });
+      secs.forEach(function (s) { s.hidden = !s.querySelector(".pcard:not([hidden])"); });
+      if (cnt) cnt.textContent = shown + " of " + cards.length + " shown";
+    }
+    sels.forEach(function (s) { s.addEventListener("change", apply); });
+    document.querySelectorAll(".dombars a.dl").forEach(function (a) {
+      a.addEventListener("click", function (e) { var d = document.getElementById("f-domain"); if (!d || !d.querySelector('option[value="' + a.dataset.dom + '"]')) return; e.preventDefault(); d.value = a.dataset.dom; apply(); document.querySelector(".filters").scrollIntoView(); });
+    });
+    apply();
+  })();
+  var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
+  var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
+  var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+  mountDev(); mountEval1();
+})();
+
+/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
+   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
+(function () {
+  var cv = document.getElementById("fabric");
+  if (!cv || !cv.getContext) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
+  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
+  function layout() {
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
+    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
+  }
+  function base() {
+    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
+    var hrow = Math.floor(rows / 2);
+    for (var c = 0; c < cols; c++) {
+      var x = c * T, k = kind[c];
+      for (var r = 0; r < rows; r++) {
+        var y = r * T;
+        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
+        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
+        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
+        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
+          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
+  function net() {
+    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
+    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
+    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
+    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
+    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
+  }
+  function drawNet(n, alpha) {
+    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
+    for (var i = 1; i < n.p.length && left > 0; i++) {
+      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
+      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
+    }
+    ctx.stroke();
+    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
+    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
+    ctx.globalAlpha = 1;
+  }
+  function frame(now) {
+    if (!run) return;
+    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
+    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
+    nets = nets.filter(function (n) {
+      n.t += dt; var done = n.len / n.speed, a = .42;
+      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
+      if (a <= 0) return false; drawNet(n, a); return true;
+    });
+    requestAnimationFrame(frame);
+  }
+  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
+  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
+  start();
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
+  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
+  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
+  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+})();
+</script>
+</body>
+</html>

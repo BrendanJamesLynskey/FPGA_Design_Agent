@@ -1,0 +1,442 @@
+{
+ "assumptions": [],
+ "behaviour": [
+  [
+   "transform",
+   [
+    "q = 3329, zetas = 17^bitrev7(i) mod q. The forward transform is FIPS 203 algorithm 9; the inverse is algorithm 10 including the final multiplication of every coefficient by 3303. The transform replaces the 256 coefficients in place (natural order in and out as in the algorithms).",
+    "Coefficients are 0..3328; results are 0..3328."
+   ]
+  ],
+  [
+   "timing",
+   [
+    "BUSY is high for at most 1200 clocks per transform (reference 896 forward, 1152 inverse); CYCLES reports the count. No divide or remainder operators."
+   ]
+  ],
+  [
+   "access",
+   [
+    "Loads are accepted only while idle. The coefficient pair p is words {c[2p+1], c[2p]}; LD_PTR and RD_PTR count pairs 0..127."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] = DONE, LED[1] = BUSY, the other LEDs are 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 4,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "barrett_constant": {
+    "failed_tests": [
+     "test_inverse_random"
+    ],
+    "killed": true
+   },
+   "forward_scaled": {
+    "failed_tests": [],
+    "killed": true
+   },
+   "forward_sub_is_add": {
+    "failed_tests": [
+     "test_forward_random",
+     "test_forward_edge_polynomials"
+    ],
+    "killed": true
+   },
+   "inverse_scale": {
+    "failed_tests": [
+     "test_inverse_random"
+    ],
+    "killed": true
+   },
+   "inverse_zeta_index": {
+    "failed_tests": [
+     "test_inverse_random"
+    ],
+    "killed": true
+   },
+   "one_layer_short": {
+    "failed_tests": [
+     "test_forward_random",
+     "test_inverse_random",
+     "test_forward_edge_polynomials"
+    ],
+    "killed": true
+   },
+   "subq_unreduced": {
+    "failed_tests": [
+     "test_forward_random",
+     "test_inverse_random",
+     "test_forward_edge_polynomials"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c16_ntt_engine__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 5,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 3,
+ "domain": "D",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 97,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c16_ntt_engine/hidden/model.py",
+    "sha256": "7aa16fa07183",
+    "text": "\"\"\"P16-3 model: the number-theoretic transform of ML-KEM (FIPS 203 algorithms 9 and 10, q = 3329, 256 coefficients) and the transforms the block is asked for (standalone: python only).\"\"\"\nimport hashlib\nimport math\nimport random\nimport struct\n\n\nQ = 3329\n\n\ndef bitrev7(i: int) -> int:\n    return int(format(i, \"07b\")[::-1], 2)\n\n\nZETAS = [pow(17, bitrev7(i), Q) for i in range(128)]     # FIPS 203 Appendix A: 1, 1729, 2580, 3289, ...\n\n\ndef ntt(f: list[int]) -> list[int]:\n    \"\"\"FIPS 203 algorithm 9.\"\"\"\n    f = list(f)\n    k, ln = 1, 128\n    while ln >= 2:\n        for start in range(0, 256, 2 * ln):\n            z = ZETAS[k]\n            k += 1\n            for j in range(start, start + ln):\n                t = z * f[j + ln] % Q\n                f[j + ln] = (f[j] - t) % Q\n                f[j] = (f[j] + t) % Q\n        ln >>= 1\n    return f\n\n\ndef intt(f: list[int]) -> list[int]:\n    \"\"\"FIPS 203 algorithm 10.\"\"\"\n    f = list(f)\n    k, ln = 127, 2\n    while ln <= 128:\n        for start in range(0, 256, 2 * ln):\n            z = ZETAS[k]\n            k -= 1\n            for j in range(start, start + ln):\n                t = f[j]\n                f[j] = (t + f[j + ln]) % Q\n                f[j + ln] = z * (f[j + ln] - t) % Q\n        ln <<= 1\n    return [x * 3303 % Q for x in f]\n\n\ndef poly_mul_negacyclic(a: list[int], b: list[int]) -> list[int]:\n    \"\"\"Schoolbook product modulo x^256 + 1 (the ring of ML-KEM), the reference for the NTT's purpose.\"\"\"\n    r = [0] * 256\n    for i, x in enumerate(a):\n        for j, y in enumerate(b):\n            k = i + j\n            if k < 256:\n                r[k] = (r[k] + x * y) % Q\n            else:\n                r[k - 256] = (r[k - 256] - x * y) % Q\n    return r\n\n\ndef basecase_mul(a_hat: list[int], b_hat: list[int]) -> list[int]:\n    \"\"\"FIPS 203 algorithm 11 (MultiplyNTTs): 128 degree-1 products modulo x^2 - zeta^(2 bitrev7(i) + 1).\"\"\"\n    h = [0] * 256\n    for i in range(128):\n        g = pow(17, 2 * bitrev7(i) + 1, Q)\n        a0, a1, b0, b1 = a_hat[2 * i], a_hat[2 * i + 1], b_hat[2 * i], b_hat[2 * i + 1]\n        h[2 * i] = (a0 * b0 + a1 * b1 % Q * g) % Q\n        h[2 * i + 1] = (a0 * b1 + a1 * b0) % Q\n    return h\n\n\ndef polys():\n    rng = random.Random(18)\n    return [[0] * 256, [1] + [0] * 255, [Q - 1] * 256, [rng.randrange(Q) for _ in range(256)], [rng.randrange(Q) for _ in range(256)]]\n\n\ndef reference_output():\n    cases = []\n    for p in polys():\n        cases.append({\"op\": \"forward\", \"input\": p, \"output\": ntt(p), \"clocks\": 896})\n    for p in polys()[3:]:\n        cases.append({\"op\": \"inverse\", \"input\": p, \"output\": intt(p), \"clocks\": 1152})\n    return {\"cases\": cases}\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x4E545445          # \"NTTE\"\nLD_PTR, RD_PTR, LD_DATA, START_FWD, START_INV, STATUS, RD_DATA, CYCLES = range(8)\n\n\ndef bench_cases():\n    \"\"\"(name, op, input): forward of a single one, of all 3328, of a random polynomial; inverse of the other random one.\"\"\"\n    p = polys()\n    return [(\"single_one\", \"forward\", p[1]), (\"all_3328\", \"forward\", p[2]), (\"random_forward\", \"forward\", p[3]),\n            (\"random_inverse\", \"inverse\", p[4])]\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 137,
+    "name": "_ntt_zetas_pkg.sv",
+    "path": "benchmark/course/tasks/c16_ntt_engine/ref/rtl/_ntt_zetas_pkg.sv",
+    "sha256": "e13837d6da2c",
+    "text": "// source: solutions/p16l07_ntt/ntt_zetas_pkg.sv (course file, unchanged below this line)\n// GIVEN (generated by tools/gen_crypto_rtl.py): the 128 twiddle factors zeta^BitRev7(k) mod 3329 of FIPS 203 (zeta = 17), k = 0..127, and the constant 128^-1 mod q = 3303.\npackage ntt_zetas_pkg;\n    function automatic logic [11:0] zeta(input logic [6:0] k);\n        case (k)\n            7'd0: zeta = 12'd1;\n            7'd1: zeta = 12'd1729;\n            7'd2: zeta = 12'd2580;\n            7'd3: zeta = 12'd3289;\n            7'd4: zeta = 12'd2642;\n            7'd5: zeta = 12'd630;\n            7'd6: zeta = 12'd1897;\n            7'd7: zeta = 12'd848;\n            7'd8: zeta = 12'd1062;\n            7'd9: zeta = 12'd1919;\n            7'd10: zeta = 12'd193;\n            7'd11: zeta = 12'd797;\n            7'd12: zeta = 12'd2786;\n            7'd13: zeta = 12'd3260;\n            7'd14: zeta = 12'd569;\n            7'd15: zeta = 12'd1746;\n            7'd16: zeta = 12'd296;\n            7'd17: zeta = 12'd2447;\n            7'd18: zeta = 12'd1339;\n            7'd19: zeta = 12'd1476;\n            7'd20: zeta = 12'd3046;\n            7'd21: zeta = 12'd56;\n            7'd22: zeta = 12'd2240;\n            7'd23: zeta = 12'd1333;\n            7'd24: zeta = 12'd1426;\n            7'd25: zeta = 12'd2094;\n            7'd26: zeta = 12'd535;\n            7'd27: zeta = 12'd2882;\n            7'd28: zeta = 12'd2393;\n            7'd29: zeta = 12'd2879;\n            7'd30: zeta = 12'd1974;\n            7'd31: zeta = 12'd821;\n            7'd32: zeta = 12'd289;\n            7'd33: zeta = 12'd331;\n            7'd34: zeta = 12'd3253;\n            7'd35: zeta = 12'd1756;\n            7'd36: zeta = 12'd1197;\n            7'd37: zeta = 12'd2304;\n            7'd38: zeta = 12'd2277;\n            7'd39: zeta = 12'd2055;\n            7'd40: zeta = 12'd650;\n            7'd41: zeta = 12'd1977;\n            7'd42: zeta = 12'd2513;\n            7'd43: zeta = 12'd632;\n            7'd44: zeta = 12'd2865;\n            7'd45: zeta = 12'd33;\n            7'd46: zeta = 12'd1320;\n            7'd47: zeta = 12'd1915;\n            7'd48: zeta = 12'd2319;\n            7'd49: zeta = 12'd1435;\n            7'd50: zeta = 12'd807;\n            7'd51: zeta = 12'd452;\n            7'd52: zeta = 12'd1438;\n            7'd53: zeta = 12'd2868;\n            7'd54: zeta = 12'd1534;\n            7'd55: zeta = 12'd2402;\n            7'd56: zeta = 12'd2647;\n            7'd57: zeta = 12'd2617;\n            7'd58: zeta = 12'd1481;\n            7'd59: zeta = 12'd648;\n            7'd60: zeta = 12'd2474;\n            7'd61: zeta = 12'd3110;\n            7'd62: zeta = 12'd1227;\n            7'd63: zeta = 12'd910;\n            7'd64: zeta = 12'd17;\n            7'd65: zeta = 12'd2761;\n            7'd66: zeta = 12'd583;\n            7'd67: zeta = 12'd2649;\n            7'd68: zeta = 12'd1637;\n            7'd69: zeta = 12'd723;\n            7'd70: zeta = 12'd2288;\n            7'd71: zeta = 12'd1100;\n            7'd72: zeta = 12'd1409;\n            7'd73: zeta = 12'd2662;\n            7'd74: zeta = 12'd3281;\n            7'd75: zeta = 12'd233;\n            7'd76: zeta = 12'd756;\n            7'd77: zeta = 12'd2156;\n            7'd78: zeta = 12'd3015;\n            7'd79: zeta = 12'd3050;\n            7'd80: zeta = 12'd1703;\n            7'd81: zeta = 12'd1651;\n            7'd82: zeta = 12'd2789;\n            7'd83: zeta = 12'd1789;\n            7'd84: zeta = 12'd1847;\n            7'd85: zeta = 12'd952;\n            7'd86: zeta = 12'd1461;\n            7'd87: zeta = 12'd2687;\n            7'd88: zeta = 12'd939;\n            7'd89: zeta = 12'd2308;\n            7'd90: zeta = 12'd2437;\n            7'd91: zeta = 12'd2388;\n            7'd92: zeta = 12'd733;\n            7'd93: zeta = 12'd2337;\n            7'd94: zeta = 12'd268;\n            7'd95: zeta = 12'd641;\n            7'd96: zeta = 12'd1584;\n            7'd97: zeta = 12'd2298;\n            7'd98: zeta = 12'd2037;\n            7'd99: zeta = 12'd3220;\n            7'd100: zeta = 12'd375;\n            7'd101: zeta = 12'd2549;\n            7'd102: zeta = 12'd2090;\n            7'd103: zeta = 12'd1645;\n            7'd104: zeta = 12'd1063;\n            7'd105: zeta = 12'd319;\n            7'd106: zeta = 12'd2773;\n            7'd107: zeta = 12'd757;\n            7'd108: zeta = 12'd2099;\n            7'd109: zeta = 12'd561;\n            7'd110: zeta = 12'd2466;\n            7'd111: zeta = 12'd2594;\n            7'd112: zeta = 12'd2804;\n            7'd113: zeta = 12'd1092;\n            7'd114: zeta = 12'd403;\n            7'd115: zeta = 12'd1026;\n            7'd116: zeta = 12'd1143;\n            7'd117: zeta = 12'd2150;\n            7'd118: zeta = 12'd2775;\n            7'd119: zeta = 12'd886;\n            7'd120: zeta = 12'd1722;\n            7'd121: zeta = 12'd1212;\n            7'd122: zeta = 12'd1874;\n            7'd123: zeta = 12'd1029;\n            7'd124: zeta = 12'd2110;\n            7'd125: zeta = 12'd2935;\n            7'd126: zeta = 12'd885;\n            7'd127: zeta = 12'd2154;\n            default: zeta = 12'd0;\n        endcase\n    endfunction\nendpackage\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 62,
+    "name": "c16_ntt_engine_regs.sv",
+    "path": "benchmark/course/tasks/c16_ntt_engine/ref/rtl/c16_ntt_engine_regs.sv",
+    "sha256": "0744200e612b",
+    "text": "// c16_ntt_engine_regs.sv: the shell window of course task c16_ntt_engine.\nmodule c16_ntt_engine_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic [7:0]  rd_ptr;\n    logic [11:0] ld_lo, ld_hi, ld_d, rd_d, plo, phi;\n    logic [7:0]  ld_a;\n    logic [1:0]  ld_ph;\n    logic        ld_en, start, inv, busy, done, dn, rd_ph;\n    logic [11:0] cyc;\n\n    assign led = {14'd0, busy, dn};\n    logic [6:0] ld_ptr_q;\n    assign ld_a = {ld_ptr_q, ld_ph[1]};\n\n    ntt_engine u_core (.clk(clk), .rst_n(!rst), .ld_en(ld_en), .ld_addr(ld_a), .ld_data(ld_d), .start(start), .inverse(inv),\n                       .busy(busy), .done(done), .rd_addr({rd_ptr[6:0], rd_ph}), .rd_data(rd_d));\n\n    always_ff @(posedge clk) begin\n        start <= 1'b0;\n        rd_ph <= ~rd_ph;\n        if (rd_ph) phi <= rd_d; else plo <= rd_d;\n        if (ld_ph != 2'd0) begin\n            ld_ph <= ld_ph + 2'd1;\n            if (ld_ph == 2'd1) begin ld_d <= ld_hi; ld_en <= 1'b1; end\n            if (ld_ph == 2'd2) begin ld_en <= 1'b0; ld_ph <= 2'd0; ld_ptr_q <= ld_ptr_q + 7'd1; end\n        end\n        if (busy) cyc <= cyc + 12'd1;\n        if (done) dn <= 1'b1;\n        if (win_wr) begin\n            case (win_addr)\n                7'd0: ld_ptr_q <= win_wdata[6:0];\n                7'd1: rd_ptr <= win_wdata[7:0];\n                7'd2: begin ld_lo <= win_wdata[11:0]; ld_hi <= win_wdata[27:16]; ld_d <= win_wdata[11:0]; ld_en <= 1'b1; ld_ph <= 2'd1; end\n                7'd3: begin start <= 1'b1; inv <= 1'b0; dn <= 1'b0; cyc <= 12'd0; end\n                7'd4: begin start <= 1'b1; inv <= 1'b1; dn <= 1'b0; cyc <= 12'd0; end\n                default: ;\n            endcase\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            case (win_addr)\n                7'd0: win_rdata <= {25'd0, ld_ptr_q};\n                7'd1: win_rdata <= {24'd0, rd_ptr};\n                7'd5: win_rdata <= {30'd0, dn, busy};\n                7'd6: begin win_rdata <= {4'd0, phi, 4'd0, plo}; rd_ptr <= rd_ptr + 8'd1; end\n                7'd7: win_rdata <= {20'd0, cyc};\n                default: ;\n            endcase\n        end\n        if (rst) begin\n            ld_ptr_q <= '0; rd_ptr <= '0; rd_ph <= 1'b0; inv <= 1'b0; ld_en <= 1'b0; ld_ph <= '0; start <= 1'b0; dn <= 1'b0; cyc <= '0; win_rdata <= 32'd0;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c16_ntt_engine_top.sv",
+    "path": "benchmark/course/tasks/c16_ntt_engine/ref/rtl/c16_ntt_engine_top.sv",
+    "sha256": "7d7223b439c9",
+    "text": "// c16_ntt_engine_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"NTTE\".\n// Reference design for course task c16_ntt_engine; the shell window is wired to c16_ntt_engine_regs.\nmodule c16_ntt_engine_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4e545445), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c16_ntt_engine_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 93,
+    "name": "ntt_engine.sv",
+    "path": "benchmark/course/tasks/c16_ntt_engine/ref/rtl/ntt_engine.sv",
+    "sha256": "6b91ea5dde34",
+    "text": "// source: solutions/p16l07_ntt/ntt_engine.sv (course file, unchanged below this line)\n// Part 16 lesson 7 exercise: an NTT engine for ML-KEM (FIPS 203): 256 coefficients modulo q = 3329, one butterfly per clock, in place. Given: ntt_zetas_pkg.sv (function zeta(k): the table of FIPS 203 appendix A).\n//   ld_en with ld_addr / ld_data writes coefficient ld_addr (any time the engine is idle). rd_addr / rd_data is an asynchronous read of coefficient rd_addr (rd_data follows rd_addr within the same clock).\n//   start (one clock, only while !busy) with inverse = 0 runs the forward transform (algorithm 9), with inverse = 1 the inverse (algorithm 10, including the final multiplication of every coefficient by 128^-1 = 3303).\n//   Forward: 7 layers (len = 128, 64, ..., 2) of 128 butterflies, one per clock = 896 clocks. For layer l (l = 0..6) with len = 128 >> l and G = 1 << l groups of 2*len coefficients: group g = c / len, offset j = c % len\n//   (c = the butterfly counter 0..127 of the layer), the pair is (g*2*len + j, g*2*len + j + len) and the twiddle is zeta(G + g)  [k runs 1, 2, 3, ... through the layers].\n//   Inverse: 7 layers (len = 2, 4, ..., 128) of 128 butterflies with G = 128 / len groups and twiddle zeta(2*G - 1 - g) [k runs 127, 126, ... down to 1], then 256 clocks multiplying coefficient i by 3303: 896 + 256 = 1152 clocks.\n//   Butterfly, forward: t = zeta * f[hi] mod q; f[hi] = f[lo] - t; f[lo] = f[lo] + t.  Inverse: t = f[lo]; f[lo] = t + f[hi]; f[hi] = zeta * (f[hi] - t).  All mod q, with Barrett reduction (no % operator).\n//   busy is high from the clock after start for exactly 896 (forward) or 1152 (inverse) clocks; done is high for exactly one clock after the last. rst_n is synchronous, active low, clears busy and done only.\nmodule ntt_engine (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        ld_en,\n    input  logic [7:0]  ld_addr,\n    input  logic [11:0] ld_data,\n    input  logic        start,\n    input  logic        inverse,\n    output logic        busy,\n    output logic        done,\n    input  logic [7:0]  rd_addr,\n    output logic [11:0] rd_data\n);\n    import ntt_zetas_pkg::*;\n    localparam int Q = 3329;\n    logic [11:0] mem [0:255];\n    logic        inv_r, scaling;\n    logic [2:0]  layer;                    // 0..6\n    logic [6:0]  c;                        // butterfly counter in the layer\n    logic [7:0]  sc;                       // scaling counter\n    assign rd_data = mem[rd_addr];\n\n    function automatic logic [11:0] barrett(input logic [23:0] p);\n        logic [36:0] m;\n        logic [11:0] t;\n        logic [23:0] r;\n        m = p * 13'd5039;\n        t = m[35:24];\n        r = p - t * 12'd3329;\n        barrett = (r >= Q) ? 12'(r - Q) : r[11:0];\n    endfunction\n    function automatic logic [11:0] addq(input logic [11:0] u, input logic [11:0] v);\n        logic [12:0] s;\n        s = u + v;\n        addq = (s >= Q) ? 12'(s - Q) : s[11:0];\n    endfunction\n    function automatic logic [11:0] subq(input logic [11:0] u, input logic [11:0] v);\n        subq = (u >= v) ? (u - v) : 12'(u + Q - v);\n    endfunction\n\n    // address generation for the current butterfly\n    logic [7:0]  len, lo, hi;\n    logic [7:0]  g, j;\n    logic [7:0]  gcount;\n    logic [6:0]  kidx;\n    logic [11:0] z, vlo, vhi, tt, nlo, nhi;\n    always_comb begin\n        len = inv_r ? (8'd2 << layer) : (8'd128 >> layer);\n        gcount = 8'd128 / len;\n        g = {1'b0, c} / len;\n        j = {1'b0, c} % len;\n        lo = g * 2 * len + j;\n        hi = lo + len;\n        kidx = inv_r ? 7'(2 * gcount - 1 - g) : 7'(gcount + g);\n        z = zeta(kidx);\n        vlo = mem[lo];\n        vhi = mem[hi];\n        tt = barrett(z * vhi);\n        if (!inv_r) begin nlo = addq(vlo, tt); nhi = subq(vlo, tt); end\n        else begin nlo = addq(vlo, vhi); nhi = barrett(z * subq(vhi, vlo)); end\n    end\n    always_ff @(posedge clk) begin\n        done <= 1'b0;\n        if (ld_en && !busy) mem[ld_addr] <= ld_data;\n        if (!rst_n) busy <= 1'b0;\n        else if (!busy) begin\n            if (start) begin busy <= 1'b1; inv_r <= inverse; layer <= 3'd0; c <= 7'd0; scaling <= 1'b0; sc <= 8'd0; end\n        end else if (!scaling) begin\n            mem[lo] <= nlo;\n            mem[hi] <= nhi;\n            if (c == 7'd127) begin\n                c <= 7'd0;\n                if (layer == 3'd6) begin\n                    if (inv_r) scaling <= 1'b1;\n                    else begin busy <= 1'b0; done <= 1'b1; end\n                end else layer <= layer + 1'b1;\n            end else c <= c + 1'b1;\n        end else begin\n            mem[sc] <= barrett(mem[sc] * 12'd3303);\n            sc <= sc + 1'b1;\n            if (sc == 8'd255) begin busy <= 1'b0; done <= 1'b1; end\n        end\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 77,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c16_ntt_engine/hidden/acceptance.py",
+    "sha256": "bae96367d89d",
+    "text": "\"\"\"Acceptance tests of c16_ntt_engine against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import (CYCLES, DESIGN_ID, LD_DATA, LD_PTR, RD_DATA, RD_PTR, START_FWD, START_INV, STATUS, bench_cases,\n                   intt, ntt)\n\n\nasync def transform(b: Board, name: str, op: str, poly: list[int]) -> None:\n    await b.write(LD_PTR, 0)\n    for p in range(128):\n        await b.write(LD_DATA, poly[2 * p] | poly[2 * p + 1] << 16)\n    await b.write(START_INV if op == \"inverse\" else START_FWD, 1)\n    await b.cycles(1250)\n    await b.expect(STATUS, 2, f\"{name}: DONE and not BUSY\")\n    cyc = await b.read(CYCLES)\n    assert 100 <= cyc <= 1200, f\"{name}: BUSY for {cyc} clocks (must be at most 1200)\"\n    want = (intt if op == \"inverse\" else ntt)(poly)\n    await b.write(RD_PTR, 0)\n    for p in range(128):\n        got = await b.read(RD_DATA)\n        w = want[2 * p] | want[2 * p + 1] << 16\n        assert got == w, f\"{name}: {op} coefficients {2 * p},{2 * p + 1}: RTL 0x{got:08X}, model 0x{w:08X}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (LD_PTR, RD_PTR, STATUS, CYCLES):\n        await b.expect(off, 0, f\"reset value of {off}\")\n\n\n@cocotb.test()\nasync def test_forward_random(dut):\n    b = Board(dut, {})\n    await b.start()\n    await transform(b, *bench_cases()[2])\n\n\n@cocotb.test()\nasync def test_inverse_random(dut):\n    b = Board(dut, {})\n    await b.start()\n    await transform(b, *bench_cases()[3])\n\n\n@cocotb.test()\nasync def test_forward_edge_polynomials(dut):\n    \"\"\"A single one (the transform is all ones) and all coefficients 3328 (the largest values).\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    for c in bench_cases()[:2]:\n        await transform(b, *c)\n\n\n@cocotb.test()\nasync def test_registers_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    await b.write(LD_PTR, 5)\n    await b.write(LD_DATA, 0x0123_0456)\n    await b.expect(LD_PTR, 6, \"LD_PTR advances per write\")\n    await b.write(RD_PTR, 5)\n    await b.expect(RD_DATA, 0x0123_0456, \"pair 5 reads back\")\n    await b.expect(RD_PTR, 6, \"RD_PTR advances per read\")\n    await b.write(STATUS, 3)\n    await b.expect(STATUS, 0, \"STATUS is read-only\")\n    for off in (0x08, 0x41, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n    led = await peek(b.clk, dut.LED)\n    assert led == 0, f\"LED {led:04X}: idle, nothing done\"\n    await b.reset()\n    await b.expect(LD_PTR, 0, \"LD_PTR after reset\")\n"
+   }
+  ]
+ },
+ "heading": "NTT engine behind the test shell",
+ "id": "c16_ntt_engine",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[6:0] pair index of the next LD_DATA write; advances by one per write",
+    "name": "LD_PTR",
+    "offset": "0x00"
+   },
+   {
+    "access": "RW",
+    "bits": "[7:0] pair index of the next RD_DATA read; advances by one per read",
+    "name": "RD_PTR",
+    "offset": "0x01"
+   },
+   {
+    "access": "WO",
+    "bits": "[11:0] coefficient 2p, [27:16] coefficient 2p+1 for p = LD_PTR; stored while idle; reads 0",
+    "name": "LD_DATA",
+    "offset": "0x02"
+   },
+   {
+    "access": "WO",
+    "bits": "any write starts the forward transform and clears DONE",
+    "name": "START_FWD",
+    "offset": "0x03"
+   },
+   {
+    "access": "WO",
+    "bits": "any write starts the inverse transform and clears DONE",
+    "name": "START_INV",
+    "offset": "0x04"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] BUSY, [1] DONE (since the last start)",
+    "name": "STATUS",
+    "offset": "0x05"
+   },
+   {
+    "access": "RO",
+    "bits": "[11:0] coefficient 2p, [27:16] coefficient 2p+1 for p = RD_PTR; the read advances RD_PTR; other bits 0",
+    "name": "RD_DATA",
+    "offset": "0x06"
+   },
+   {
+    "access": "RO",
+    "bits": "[11:0] clocks BUSY was high during the last transform (reference: 896 forward, 1152 inverse)",
+    "name": "CYCLES",
+    "offset": "0x07"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: BUSY, DONE and CYCLES 0; the coefficient memory need not be cleared",
+  "top": "c16_ntt_engine_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "ntt_engine.sv",
+   "name": "barrett_constant",
+   "why": "the Barrett reduction constant is off by one"
+  },
+  {
+   "file": "ntt_engine.sv",
+   "name": "inverse_scale",
+   "why": "the final inverse scaling uses the wrong constant"
+  },
+  {
+   "file": "ntt_engine.sv",
+   "name": "inverse_zeta_index",
+   "why": "inverse butterflies use the wrong zeta"
+  },
+  {
+   "file": "ntt_engine.sv",
+   "name": "forward_sub_is_add",
+   "why": "the forward butterfly adds twice instead of add and subtract"
+  },
+  {
+   "file": "ntt_engine.sv",
+   "name": "one_layer_short",
+   "why": "the last of the seven layers is skipped"
+  },
+  {
+   "file": "ntt_engine.sv",
+   "name": "subq_unreduced",
+   "why": "the subtraction is not reduced when the result is already non-negative"
+  },
+  {
+   "file": "ntt_engine.sv",
+   "name": "forward_scaled",
+   "why": "the forward transform also runs the multiplication by 3303"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c16_ntt_engine",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the forward transform of each tested polynomial equals FIPS 203 algorithm 9"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the inverse transform of a random polynomial equals FIPS 203 algorithm 10 including the multiplication by 3303"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "a transform takes at most 1200 busy clocks in either direction"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# NTT engine behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that computes the \"number-theoretic transform\" used in the post-quantum key-exchange standard FIPS 203 (ML-KEM), forwards and backwards, on a polynomial of 256 coefficients, and I want to exercise it entirely from the test shell.\n\n- Every coefficient is a whole number from 0 to 3328 (arithmetic is modulo q = 3329). The transform is exactly the one in FIPS 203: \"NTT\" is algorithm 9 and \"NTT inverse\" is algorithm 10, including the final multiplication by 3303 at the end of the inverse.\n- The block holds the 256 coefficients itself. I load them over the shell while the block is idle, two coefficients to a shell write, ask for a forward or an inverse transform with a start command, and read the 256 results back\n  over the shell, two to a read, once the block says it is done. The transform replaces the coefficients (in place).\n- The block must raise a \"busy\" signal while it works and a \"done\" flag at the end. A new request will not come while it is busy.\n- Time limit: from the clock that takes the start request to the clock before the \"done\" pulse it must take no more than 1,200 clocks for either direction, and I can read back how many clocks the last transform took.\n  Use no divide operators and no remainder operators (they do not belong in a design for this part), and no floating-point blocks.\n- CPU_RESETN clears busy and done. I will check several transforms exactly: forward ones (a single one, all coefficients 3328, a random one) and an inverse (on a random polynomial).\n  LED0 shows done and LED1 shows busy. The shell runs at 115200 baud on the USB-UART. The design ID is \"NTTE\".\n\nTest hooks: top module `c16_ntt_engine_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "D20",
+  "D32"
+ ],
+ "tier": "C16",
+ "title": "NTT engine behind the test shell",
+ "trace": {
+  "captions": [
+   "Coefficient 0: input 742, forward transform 1856, inverse of that 742, back to the input.",
+   "Coefficient 1: input 503, forward transform 2954, inverse of that 503, back to the input.",
+   "Coefficient 2: input 2709, forward transform 2003, inverse of that 2709, back to the input.",
+   "Coefficient 3: input 1838, forward transform 1319, inverse of that 1838, back to the input.",
+   "Coefficient 4: input 1370, forward transform 2876, inverse of that 1370, back to the input.",
+   "Coefficient 5: input 980, forward transform 1932, inverse of that 980, back to the input.",
+   "Coefficient 6: input 810, forward transform 1146, inverse of that 810, back to the input.",
+   "Coefficient 7: input 2005, forward transform 2586, inverse of that 2005, back to the input.",
+   "Coefficient 8: input 2573, forward transform 1095, inverse of that 2573, back to the input.",
+   "Coefficient 9: input 2023, forward transform 3066, inverse of that 2023, back to the input.",
+   "Coefficient 10: input 749, forward transform 1456, inverse of that 749, back to the input.",
+   "Coefficient 11: input 1965, forward transform 2260, inverse of that 1965, back to the input.",
+   "Coefficient 12: input 1210, forward transform 44, inverse of that 1210, back to the input.",
+   "Coefficient 13: input 1877, forward transform 2467, inverse of that 1877, back to the input.",
+   "Coefficient 14: input 1083, forward transform 780, inverse of that 1083, back to the input.",
+   "Coefficient 15: input 803, forward transform 519, inverse of that 803, back to the input."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "input",
+    "radix": "dec",
+    "v": [
+     742,
+     503,
+     2709,
+     1838,
+     1370,
+     980,
+     810,
+     2005,
+     2573,
+     2023,
+     749,
+     1965,
+     1210,
+     1877,
+     1083,
+     803
+    ],
+    "width": 12
+   },
+   {
+    "kind": "bus",
+    "name": "after forward NTT",
+    "radix": "dec",
+    "v": [
+     1856,
+     2954,
+     2003,
+     1319,
+     2876,
+     1932,
+     1146,
+     2586,
+     1095,
+     3066,
+     1456,
+     2260,
+     44,
+     2467,
+     780,
+     519
+    ],
+    "width": 12
+   },
+   {
+    "kind": "bus",
+    "name": "after inverse NTT",
+    "radix": "dec",
+    "v": [
+     742,
+     503,
+     2709,
+     1838,
+     1370,
+     980,
+     810,
+     2005,
+     2573,
+     2023,
+     749,
+     1965,
+     1210,
+     1877,
+     1083,
+     803
+    ],
+    "width": 12
+   }
+  ],
+  "stimulus": "The random polynomial of 256 coefficients (modulo 3329) from the model, put through the forward transform and then the inverse; the first 16 coefficients are shown.",
+  "unit": "coefficient",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "what": "An engine for the number-theoretic transform used in the post-quantum key-exchange standard ML-KEM. It holds a polynomial of many coefficients, and transforms it forwards or backwards in place, with all arithmetic modulo a small prime. It avoids divide and remainder operators, stays within a clock limit and reports how long each transform took.",
+ "where": "The transform makes polynomial multiplication fast in lattice-based cryptography, and is the heaviest step in post-quantum key exchange and signature schemes. Hardware engines speed it up for servers and embedded devices."
+}

@@ -1,0 +1,9 @@
+t1_elevator_fsm:
+  what: >-
+    A controller for a lift serving four floors. Switches act as the call buttons; the lift travels a floor in a
+    fixed time, opens its door for a fixed time at each floor that was called, and keeps going in one direction
+    while there are calls further on before it turns round. LEDs show the floor, the outstanding calls, the door
+    and whether it is moving, and the test shell reads the same state as registers.
+  where: >-
+    Lift and elevator controllers, and the same pattern (serve requests in one sweep, then reverse) in disk-head
+    scheduling and in machine controllers. It is a standard exercise in writing a finite-state machine with timers.

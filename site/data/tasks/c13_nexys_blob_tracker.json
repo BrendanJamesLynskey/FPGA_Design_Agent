@@ -1,0 +1,493 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the picture buffer and the stream generator are part of the test wrapper, not of the block under test",
+   "reason": "the shell cannot present a stream; any design must provide the register map above"
+  }
+ ],
+ "behaviour": [
+  [
+   "stream",
+   [
+    "AXI4-Stream video slave (tdata[0] = pixel, tvalid, tready, tuser = start of picture, tlast = end of line), 40 x 30; the wrapper drives one pixel per clock and holds a pixel until tready."
+   ]
+  ],
+  [
+   "objects",
+   [
+    "4-connected groups of bright pixels (neighbours up, down, left, right); a diagonal contact does not join two objects; a U-shaped object is one object. Up to 64 provisional labels of a single-pass labeller are available."
+   ]
+  ],
+  [
+   "biggest",
+   [
+    "Largest area; on a tie the object with the smaller top row, then the smaller left edge."
+   ]
+  ],
+  [
+   "centroid",
+   [
+    "(sum x // area, sum y // area), integer division (floor), pixel coordinates from 0."
+   ]
+  ],
+  [
+   "empty picture",
+   [
+    "Not exercised by the bench (a picture with no bright pixel has no object)."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] = BUSY, the other LEDs are 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 2,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "area_counted_twice": {
+    "failed_tests": [
+     "test_animation_pictures",
+     "test_corner_pixel_comb_ring_and_tie",
+     "test_reset_forgets_the_report"
+    ],
+    "killed": true
+   },
+   "centroid_rounded": {
+    "failed_tests": [
+     "test_animation_pictures",
+     "test_corner_pixel_comb_ring_and_tie",
+     "test_reset_forgets_the_report"
+    ],
+    "killed": true
+   },
+   "left_neighbour_ignored": {
+    "failed_tests": [
+     "test_animation_pictures",
+     "test_corner_pixel_comb_ring_and_tie",
+     "test_reset_forgets_the_report"
+    ],
+    "killed": true
+   },
+   "merge_loses_sums": {
+    "failed_tests": [
+     "test_animation_pictures",
+     "test_reset_forgets_the_report"
+    ],
+    "killed": true
+   },
+   "new_picture_not_reset": {
+    "failed_tests": [
+     "test_animation_pictures",
+     "test_corner_pixel_comb_ring_and_tie"
+    ],
+    "killed": true
+   },
+   "no_merge": {
+    "failed_tests": [
+     "test_animation_pictures",
+     "test_reset_forgets_the_report"
+    ],
+    "killed": true
+   },
+   "stale_up_label": {
+    "failed_tests": [
+     "test_animation_pictures",
+     "test_corner_pixel_comb_ring_and_tie",
+     "test_reset_forgets_the_report"
+    ],
+    "killed": true
+   },
+   "tie_to_left_edge_loses": {
+    "failed_tests": [
+     "test_corner_pixel_comb_ring_and_tie"
+    ],
+    "killed": true
+   },
+   "tie_to_lower_row_loses": {
+    "failed_tests": [
+     "test_animation_pictures",
+     "test_corner_pixel_comb_ring_and_tie"
+    ],
+    "killed": true
+   },
+   "x_sum_from_y": {
+    "failed_tests": [
+     "test_animation_pictures",
+     "test_corner_pixel_comb_ring_and_tie",
+     "test_reset_forgets_the_report"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c13_nexys_blob_tracker__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 4,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 3,
+ "domain": "S",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 74,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c13_nexys_blob_tracker/hidden/model.py",
+    "sha256": "7d25f2453164",
+    "text": "\"\"\"P13-2 reference model: the biggest-blob list (numpy, flood fill; equal to the course exercise on every frame) and the bench pictures. Standalone copy of the course model.\"\"\"\nimport numpy as np\n\nW, H, N = 40, 30, 8\nNPIX = W * H\n\n\ndef label_ref(m):\n    \"\"\"Golden 4-connected blob list by flood fill: (area, sum_x, sum_y, xmin, xmax, ymin, ymax), sorted.\"\"\"\n    h, w = m.shape\n    seen = np.zeros_like(m, bool)\n    out = []\n    for y0 in range(h):\n        for x0 in range(w):\n            if m[y0, x0] and not seen[y0, x0]:\n                st, pts = [(x0, y0)], []\n                seen[y0, x0] = True\n                while st:\n                    x, y = st.pop()\n                    pts.append((x, y))\n                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):\n                        a, b = x + dx, y + dy\n                        if 0 <= a < w and 0 <= b < h and m[b, a] and not seen[b, a]:\n                            seen[b, a] = True\n                            st.append((a, b))\n                xs, ys = [p[0] for p in pts], [p[1] for p in pts]\n                out.append((len(pts), sum(xs), sum(ys), min(xs), max(xs), min(ys), max(ys)))\n    return sorted(out)\n\n\ndef frames():\n    out = []\n    for t in range(N):\n        m = np.zeros((H, W), np.uint8)\n        m[4:7 + t, 3 + 2 * t:11 + 2 * t] = 1                    # a rectangle, 8 wide, that grows downward and moves right (area 24, 32, 40, ... 80)\n        m[18:24, 22:24] = 1; m[18:24, 28:30] = 1; m[24:26, 22:30] = 1    # a U of area 40: two arms that join only at the bottom\n        m[8 + t:11 + t, 24:27] = 1                              # a 3 x 3 block moving down toward the U\n        m[14 + t // 2, 33 + t // 4] = 1                         # a stray pixel\n        m[7 + t:9 + t, 11 + 2 * t:13 + 2 * t] = 1               # touches the rectangle's bottom right corner diagonally only (not 4-connected)\n        out.append(m)\n    return out\n\n\ndef biggest(m):\n    blobs = label_ref(m)\n    best = max(blobs, key=lambda b: (b[0], -b[5], -b[3]))        # area; ties: the blob with the smaller top row, then the smaller left edge\n    area, sx, sy = best[0], best[1], best[2]\n    return {\"area\": area, \"cx\": sx // area, \"cy\": sy // area}\n\n\ndef extra_pictures():\n    \"\"\"Pictures the bench adds to the eight of the course: a single pixel in the last corner, a comb and a ring that need several merges, and three equal blobs (the top-left one wins).\"\"\"\n    empty = np.zeros((H, W), np.uint8)\n    empty[29, 39] = 1\n    merge = np.zeros((H, W), np.uint8)\n    merge[2:12, 2] = 1; merge[2:12, 6] = 1; merge[2:12, 10] = 1; merge[11, 2:11] = 1      # a comb: three teeth joined at the bottom (several equivalences)\n    merge[16:28, 20] = 1; merge[16, 20:36] = 1; merge[16:28, 35] = 1; merge[27, 20:36] = 1  # a ring (a closed loop)\n    tie = np.zeros((H, W), np.uint8)\n    tie[5:8, 5:11] = 1; tie[5:8, 25:31] = 1; tie[20:23, 15:21] = 1                          # three blobs of 18 pixels: the top-left one (smaller top row, smaller left edge) wins\n    return [empty, merge, tie]\n\n\ndef bench_pictures():\n    return [(f\"animation picture {i}\", f) for i, f in enumerate(frames())] + [(n, p) for n, p in zip((\"single pixel in the corner\", \"comb and ring\", \"three-way tie\"), extra_pictures())]\n\n\ndef pack_words(m):\n    flat = [int(v) for v in m.flatten()] + [0] * 16\n    return [sum(flat[32 * i + k] << k for k in range(32)) for i in range(38)]\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x424C4F42          # \"BLOB\"\nPTR, DATA, GO, STATUS, AREA, CX, CY = range(7)\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 71,
+    "name": "blob_report.sv",
+    "path": "benchmark/course/tasks/c13_nexys_blob_tracker/ref/rtl/blob_report.sv",
+    "sha256": "01e85417aca4",
+    "text": "// P13-2 reference glue (v1.1 scope): the labeller (ccl.sv, the course's single-pass union-find labeller) plus the choice of the biggest object and its centroid.\n// A picture goes in as a stream of 1-bit pixels (s_tdata[0], tuser on the first pixel); when the labeller has listed every object the report is final and `done` pulses for one clock.\n// Biggest = largest area; on a tie the smaller top row, then the smaller left edge. Centroid = (sum x // area, sum y // area).\nmodule blob_report #(\n    parameter int W = 40,\n    parameter int H = 30\n) (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic [7:0]  s_tdata,\n    input  logic        s_tvalid,\n    output logic        s_tready,\n    input  logic        s_tuser,\n    input  logic        s_tlast,\n    output logic        done,\n    output logic [15:0] area,\n    output logic [7:0]  cx,\n    output logic [7:0]  cy\n);\n    logic        ov, ovf, ccl_done, ccl_busy;\n    logic [15:0] o_area;\n    logic [19:0] o_sx, o_sy;\n    logic [7:0]  o_xmin, o_xmax, o_ymin, o_ymax;\n    logic [15:0] b_area;\n    logic [19:0] b_sx, b_sy;\n    logic [7:0]  b_xmin, b_ymin;\n    logic        have;\n    logic        dbusy;\n    logic [4:0]  dcnt;\n    logic [19:0] qx, qy;                    // numerator shifting out, quotient shifting in\n    logic [20:0] rx, ry;\n    wire  [20:0] nrx = {rx[19:0], qx[19]}, nry = {ry[19:0], qy[19]};\n\n    ccl #(.W(W), .H(H), .MAXL(64)) u_ccl (.clk(clk), .rst_n(rst_n), .s_tdata(s_tdata), .s_tvalid(s_tvalid), .s_tready(s_tready), .s_tuser(s_tuser), .s_tlast(s_tlast),\n        .busy(ccl_busy), .out_valid(ov), .out_area(o_area), .out_sx(o_sx), .out_sy(o_sy), .out_xmin(o_xmin), .out_xmax(o_xmax), .out_ymin(o_ymin), .out_ymax(o_ymax),\n        .done(ccl_done), .overflow(ovf));\n\n    wire better = !have || (o_area > b_area) || (o_area == b_area && (o_ymin < b_ymin || (o_ymin == b_ymin && o_xmin < b_xmin)));\n\n    always_ff @(posedge clk) begin\n        done <= 1'b0;\n        if (!rst_n) begin\n            have <= 1'b0; dbusy <= 1'b0; area <= 16'd0; cx <= 8'd0; cy <= 8'd0; b_area <= 16'd0;\n        end else begin\n            if (s_tvalid && s_tready && s_tuser) begin have <= 1'b0; b_area <= 16'd0; end   // a new picture: forget the previous choice\n            if (ov && better) begin\n                have <= 1'b1;\n                b_area <= o_area; b_sx <= o_sx; b_sy <= o_sy; b_xmin <= o_xmin; b_ymin <= o_ymin;\n            end\n            if (ccl_done) begin\n                area <= b_area;\n                if (b_area == 0) begin cx <= 8'd0; cy <= 8'd0; done <= 1'b1; end\n                else begin                                          // the centroid: two restoring divisions, one bit per clock\n                    dbusy <= 1'b1; dcnt <= 5'd19; qx <= b_sx; qy <= b_sy; rx <= '0; ry <= '0;\n                end\n            end\n            if (dbusy) begin\n                qx <= {qx[18:0], (nrx >= {5'd0, b_area})};\n                qy <= {qy[18:0], (nry >= {5'd0, b_area})};\n                rx <= (nrx >= {5'd0, b_area}) ? nrx - {5'd0, b_area} : nrx;\n                ry <= (nry >= {5'd0, b_area}) ? nry - {5'd0, b_area} : nry;\n                dcnt <= dcnt - 5'd1;\n                if (dcnt == 5'd0) begin\n                    dbusy <= 1'b0; done <= 1'b1;\n                    cx <= {qx[6:0], (nrx >= {5'd0, b_area})};\n                    cy <= {qy[6:0], (nry >= {5'd0, b_area})};\n                end\n            end\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 66,
+    "name": "c13_nexys_blob_tracker_regs.sv",
+    "path": "benchmark/course/tasks/c13_nexys_blob_tracker/ref/rtl/c13_nexys_blob_tracker_regs.sv",
+    "sha256": "751eeaba08d3",
+    "text": "// c13_nexys_blob_tracker_regs.sv: the shell window of course task c13_nexys_blob_tracker: a parked picture, a stream generator and the report registers.\nmodule c13_nexys_blob_tracker_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam int NPIX = 1200;\n    logic [31:0] ram [0:37];\n    logic [5:0]  ptr;\n    logic        streaming, have_report, rep_done;\n    logic [10:0] tx_i;\n    logic [7:0]  s_tdata, cx, cy;\n    logic        s_tvalid, s_tready, s_tuser, s_tlast;\n    logic [15:0] area;\n    logic [5:0]  tx_x;\n    logic [31:0] nxt_w;\n    wire busy = streaming;\n    assign led = {15'd0, busy};\n\n    blob_report #(.W(40), .H(30)) u_core (.clk(clk), .rst_n(!rst), .s_tdata(s_tdata), .s_tvalid(s_tvalid), .s_tready(s_tready), .s_tuser(s_tuser), .s_tlast(s_tlast),\n                                            .done(rep_done), .area(area), .cx(cx), .cy(cy));\n\n    assign nxt_w = ram[tx_i[10:5]];\n    wire slot_free = !s_tvalid || s_tready;\n\n    always_ff @(posedge clk) begin\n        if (win_wr) begin\n            case (win_addr)\n                7'd0: ptr <= win_wdata[5:0];\n                7'd1: begin ram[ptr] <= win_wdata; ptr <= ptr + 6'd1; end\n                7'd2: begin streaming <= 1'b1; have_report <= 1'b0; tx_i <= 11'd0; tx_x <= 6'd0; s_tvalid <= 1'b0; end\n                default: ;\n            endcase\n        end\n        if (streaming && slot_free) begin\n            if (tx_i < NPIX) begin\n                s_tvalid <= 1'b1;\n                s_tdata  <= {7'd0, nxt_w[tx_i[4:0]]};\n                s_tuser  <= (tx_i == 11'd0);\n                s_tlast  <= (tx_x == 6'd39);\n                tx_i     <= tx_i + 11'd1;\n                tx_x     <= (tx_x == 6'd39) ? 6'd0 : tx_x + 6'd1;\n            end else s_tvalid <= 1'b0;\n        end\n        if (rep_done) begin streaming <= 1'b0; have_report <= 1'b1; end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            case (win_addr)\n                7'd0: win_rdata <= {26'd0, ptr};\n                7'd3: win_rdata <= {30'd0, have_report, busy};\n                7'd4: win_rdata <= {16'd0, area};\n                7'd5: win_rdata <= {24'd0, cx};\n                7'd6: win_rdata <= {24'd0, cy};\n                default: ;\n            endcase\n        end\n        if (rst) begin\n            ptr <= '0; streaming <= 1'b0; have_report <= 1'b0; tx_i <= '0; tx_x <= '0; s_tvalid <= 1'b0; win_rdata <= 32'd0; s_tdata <= '0; s_tuser <= 1'b0; s_tlast <= 1'b0;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c13_nexys_blob_tracker_top.sv",
+    "path": "benchmark/course/tasks/c13_nexys_blob_tracker/ref/rtl/c13_nexys_blob_tracker_top.sv",
+    "sha256": "7f8995a95477",
+    "text": "// c13_nexys_blob_tracker_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"BLOB\".\n// Reference design for course task c13_nexys_blob_tracker; the shell window is wired to c13_nexys_blob_tracker_regs.\nmodule c13_nexys_blob_tracker_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h424c4f42), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c13_nexys_blob_tracker_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 179,
+    "name": "ccl.sv",
+    "path": "benchmark/course/tasks/c13_nexys_blob_tracker/ref/rtl/ccl.sv",
+    "sha256": "b4c381fc5653",
+    "text": "// Part 13 project reference (07a1c form): single-pass connected-component labelling with a union-find parent table and per-root statistics.\n// The first form of this reference was behavioural (32-bit integer arrays, two union-find searches unrolled to 64 steps in one clock, one clock per pixel); Vivado could not\n// finish it. This form takes a few clocks per pixel, follows the parent chain one step per clock, and uses sized registers. The labels, areas and sums are the same.\n// Per object (label 1 .. MAXL-1): area, sum of x, sum of y, bounding box. Pixels with s_tdata[0] = 1 are object pixels; s_tuser marks the first pixel of a picture.\nmodule ccl #(\n    parameter int W = 20,\n    parameter int H = 14,\n    parameter int MAXL = 64\n) (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic [7:0]  s_tdata,\n    input  logic        s_tvalid,\n    output logic        s_tready,\n    input  logic        s_tuser,\n    input  logic        s_tlast,\n    output logic        busy,\n    output logic        out_valid,\n    output logic [15:0] out_area,\n    output logic [19:0] out_sx,\n    output logic [19:0] out_sy,\n    output logic [7:0]  out_xmin,\n    output logic [7:0]  out_xmax,\n    output logic [7:0]  out_ymin,\n    output logic [7:0]  out_ymax,\n    output logic        done,\n    output logic        overflow\n);\n    localparam int LW = $clog2(MAXL);                 // label width\n    localparam int XW = $clog2(W);\n    localparam int YW = $clog2(H);\n    typedef enum logic [2:0] {S_IDLE, S_FIND_U, S_FIND_L, S_READ, S_APPLY, S_ADV, S_SCAN} state_t;\n    state_t st;\n\n    logic [LW-1:0] parent [0:MAXL-1];\n    logic [15:0]   area   [0:MAXL-1];\n    logic [19:0]   sx     [0:MAXL-1];\n    logic [19:0]   sy     [0:MAXL-1];\n    logic [7:0]    xmin   [0:MAXL-1];\n    logic [7:0]    xmax   [0:MAXL-1];\n    logic [7:0]    ymin   [0:MAXL-1];\n    logic [7:0]    ymax   [0:MAXL-1];\n    logic [LW-1:0] line_q [0:W-1];                    // labels of the previous row\n    logic [XW-1:0] x, xi;                             // position of the next pixel, and of the pixel being processed\n    logic [YW-1:0] y, yi;\n    logic [LW-1:0] left, cur, ru, rl, rootp;\n    logic [LW:0]   nxt_ext;                           // next free label, with a spare top bit so that MAXL is representable\n    logic [LW:0]   scan;\n    logic [LW:0]   it;                                // find steps taken\n    logic          pix;\n\n    assign busy     = (st == S_SCAN);\n    assign s_tready = (st == S_IDLE);\n\n    // statistics of the pixel being applied: the chosen root, optionally merged with the other root, plus this pixel\n    wire           both   = (ru != 0) && (rl != 0) && (ru != rl);\n    wire [LW-1:0]  r_lo   = (ru < rl) ? ru : rl;\n    wire [LW-1:0]  r_hi   = (ru < rl) ? rl : ru;\n    wire           is_new = (ru == 0) && (rl == 0);\n    wire  [LW-1:0] sel    = both ? r_lo : ((ru != 0) ? ru : rl);\n    wire  [15:0]   a_base_w = area[sel] + (both ? area[r_hi] : 16'd0);\n    wire  [19:0]   sx_base_w = sx[sel] + (both ? sx[r_hi] : 20'd0);\n    wire  [19:0]   sy_base_w = sy[sel] + (both ? sy[r_hi] : 20'd0);\n    wire  [7:0]    xmin_b_w = (both && xmin[r_hi] < xmin[sel]) ? xmin[r_hi] : xmin[sel];\n    wire  [7:0]    xmax_b_w = (both && xmax[r_hi] > xmax[sel]) ? xmax[r_hi] : xmax[sel];\n    wire  [7:0]    ymin_b_w = (both && ymin[r_hi] < ymin[sel]) ? ymin[r_hi] : ymin[sel];\n    wire  [7:0]    ymax_b_w = (both && ymax[r_hi] > ymax[sel]) ? ymax[r_hi] : ymax[sel];\n    logic [15:0] a_base;\n    logic [19:0] sx_base, sy_base;\n    logic [7:0]  xmin_b, xmax_b, ymin_b, ymax_b;\n    wire  [7:0]    xi8 = 8'(xi), yi8 = 8'(yi);\n\n    integer i;\n    always_ff @(posedge clk) begin\n        out_valid <= 1'b0;\n        done <= 1'b0;\n        if (!rst_n) begin\n            st <= S_IDLE; x <= '0; y <= '0; left <= '0; nxt_ext <= (LW+1)'(1); overflow <= 1'b0;\n        end else begin\n            case (st)\n                S_IDLE: if (s_tvalid) begin\n                    xi  <= s_tuser ? '0 : x;\n                    yi  <= s_tuser ? '0 : y;\n                    pix <= s_tdata[0];\n                    if (s_tuser) begin\n                        left <= '0; nxt_ext <= (LW+1)'(1); overflow <= 1'b0;\n                        for (i = 0; i < MAXL; i = i + 1) begin parent[i] <= LW'(i); area[i] <= 16'd0; end\n                    end\n                    if (s_tdata[0]) begin\n                        // up = previous row's label at this x (0 on the first row); the left label is 0 on the first column\n                        cur <= (s_tuser || y == 0) ? '0 : line_q[x];\n                        it  <= '0;\n                        st  <= S_FIND_U;\n                    end else begin\n                        rootp <= '0;                                  // a dark pixel has no label\n                        st <= S_ADV;\n                    end\n                end\n                S_FIND_U: begin\n                    if (cur != 0 && parent[cur] != cur && it < MAXL) begin cur <= parent[cur]; it <= it + 1'b1; end\n                    else begin\n                        ru  <= cur;\n                        cur <= (xi == 0) ? '0 : left;\n                        it  <= '0;\n                        st  <= S_FIND_L;\n                    end\n                end\n                S_FIND_L: begin\n                    if (cur != 0 && parent[cur] != cur && it < MAXL) begin cur <= parent[cur]; it <= it + 1'b1; end\n                    else begin\n                        rl <= cur;\n                        st <= S_READ;\n                    end\n                end\n                S_READ: begin                                      // read the chosen root (and the one merged into it) into registers\n                    a_base <= a_base_w; sx_base <= sx_base_w; sy_base <= sy_base_w;\n                    xmin_b <= xmin_b_w; xmax_b <= xmax_b_w; ymin_b <= ymin_b_w; ymax_b <= ymax_b_w;\n                    st <= S_APPLY;\n                end\n                S_APPLY: begin\n                    if (is_new) begin\n                        if (nxt_ext < MAXL) begin\n                            // a new object: label nxt_ext, statistics start from this pixel\n                            parent[nxt_ext[LW-1:0]] <= nxt_ext[LW-1:0];\n                            area[nxt_ext[LW-1:0]] <= 16'd1;\n                            sx[nxt_ext[LW-1:0]] <= 20'(xi); sy[nxt_ext[LW-1:0]] <= 20'(yi);\n                            xmin[nxt_ext[LW-1:0]] <= xi8; xmax[nxt_ext[LW-1:0]] <= xi8;\n                            ymin[nxt_ext[LW-1:0]] <= yi8; ymax[nxt_ext[LW-1:0]] <= yi8;\n                            rootp <= nxt_ext[LW-1:0];\n                            nxt_ext <= nxt_ext + 1'b1;\n                        end else begin\n                            rootp <= '0; overflow <= 1'b1;\n                        end\n                    end else begin\n                        if (both) begin\n                            parent[r_hi] <= r_lo;\n                            area[r_hi] <= 16'd0;\n                        end\n                        area[sel] <= a_base + 16'd1;\n                        sx[sel]   <= sx_base + 20'(xi);\n                        sy[sel]   <= sy_base + 20'(yi);\n                        xmin[sel] <= (xi8 < xmin_b) ? xi8 : xmin_b;\n                        xmax[sel] <= (xi8 > xmax_b) ? xi8 : xmax_b;\n                        ymin[sel] <= (yi8 < ymin_b) ? yi8 : ymin_b;\n                        ymax[sel] <= (yi8 > ymax_b) ? yi8 : ymax_b;\n                        rootp <= sel;\n                    end\n                    st <= S_ADV;\n                end\n                S_ADV: begin\n                    line_q[xi] <= rootp;\n                    y <= yi;                                        // (the first pixel of a picture restarts the row count)\n                    if (xi == W - 1) begin\n                        left <= '0; x <= '0;\n                        y <= yi + 1'b1;\n                    end else begin\n                        left <= rootp; x <= xi + 1'b1;\n                    end\n                    if (xi == W - 1 && yi == H - 1) begin st <= S_SCAN; scan <= (LW+1)'(1); end\n                    else st <= S_IDLE;\n                end\n                S_SCAN: begin\n                    if (scan < nxt_ext) begin\n                        if (parent[scan[LW-1:0]] == scan[LW-1:0] && area[scan[LW-1:0]] != 0) begin\n                            out_valid <= 1'b1;\n                            out_area <= area[scan[LW-1:0]]; out_sx <= sx[scan[LW-1:0]]; out_sy <= sy[scan[LW-1:0]];\n                            out_xmin <= xmin[scan[LW-1:0]]; out_xmax <= xmax[scan[LW-1:0]]; out_ymin <= ymin[scan[LW-1:0]]; out_ymax <= ymax[scan[LW-1:0]];\n                        end\n                        scan <= scan + 1'b1;\n                    end else begin\n                        st <= S_IDLE;\n                        done <= 1'b1;\n                    end\n                end\n                default: st <= S_IDLE;\n            endcase\n        end\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 70,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c13_nexys_blob_tracker/hidden/acceptance.py",
+    "sha256": "3cf12e73b140",
+    "text": "\"\"\"Acceptance tests of c13_nexys_blob_tracker against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import AREA, CX, CY, DATA, DESIGN_ID, GO, PTR, STATUS, bench_pictures, biggest, pack_words\n\n\nasync def report(b: Board, name: str, pic) -> None:\n    await b.write(PTR, 0)\n    for w in pack_words(pic):\n        await b.write(DATA, w)\n    await b.write(GO, 1)\n    await b.cycles(1300)\n    for _ in range(300):\n        if not (await b.read(STATUS)) & 1:\n            break\n    else:\n        raise AssertionError(f\"{name}: still busy long after the picture\")\n    st = await b.read(STATUS)\n    assert st & 2, f\"{name}: no report available after the picture (STATUS 0x{st:X})\"\n    exp = biggest(pic)\n    await b.expect(AREA, exp[\"area\"], f\"{name}: area of the biggest object\")\n    await b.expect(CX, exp[\"cx\"], f\"{name}: x of the middle point\")\n    await b.expect(CY, exp[\"cy\"], f\"{name}: y of the middle point\")\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (PTR, STATUS, AREA, CX, CY):\n        await b.expect(off, 0, f\"reset value of {off}\")\n    await b.write(PTR, 0x25)\n    await b.expect(PTR, 0x25, \"PTR is a plain register\")\n    led = await peek(b.clk, dut.LED)\n    assert led == 0, f\"LED {led:04X}: idle\"\n    for off in (0x07, 0x41, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n\n\n@cocotb.test()\nasync def test_animation_pictures(dut):\n    \"\"\"The eight pictures of the animation in turn: rectangle, U (one object), diagonal contact (two objects), a stray pixel, and a tie at the third.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    for name, pic in bench_pictures()[:8]:\n        await report(b, name, pic)\n\n\n@cocotb.test()\nasync def test_corner_pixel_comb_ring_and_tie(dut):\n    \"\"\"A single pixel in the last corner (nothing left over from the picture before), a comb and a ring (several merges), and three equal blobs (the top-left one wins).\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    await report(b, \"first\", bench_pictures()[3][1])\n    for name, pic in bench_pictures()[8:]:\n        await report(b, name, pic)\n\n\n@cocotb.test()\nasync def test_reset_forgets_the_report(dut):\n    b = Board(dut, {})\n    await b.start()\n    await report(b, \"before reset\", bench_pictures()[0][1])\n    await b.reset()\n    for off in (STATUS, AREA, CX, CY):\n        await b.expect(off, 0, f\"register {off} after reset\")\n"
+   }
+  ]
+ },
+ "heading": "Blob finder behind the test shell",
+ "id": "c13_nexys_blob_tracker",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[5:0] word index of the parked picture (0..37) that the next DATA write fills",
+    "name": "PTR",
+    "offset": "0x00"
+   },
+   {
+    "access": "WO",
+    "bits": "[31:0] 32 pixels of the parked picture at PTR (pixel i of the word in bit i, row by row, 1 = bright); PTR then increments; reads 0",
+    "name": "DATA",
+    "offset": "0x01"
+   },
+   {
+    "access": "WO",
+    "bits": "any write streams the parked picture (1200 pixels, row by row, tuser on pixel 0, tlast on the last pixel of each 40-pixel line) into the block, one per clock, and clears the report flag; reads 0",
+    "name": "GO",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] BUSY: from GO until the report is final; [1] REPORT: a report is available (set when BUSY falls, cleared by GO and reset)",
+    "name": "STATUS",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] area of the biggest object of the last picture (0 until a report exists)",
+    "name": "AREA",
+    "offset": "0x04"
+   },
+   {
+    "access": "RO",
+    "bits": "[7:0] x of the middle point (sum of x // area)",
+    "name": "CX",
+    "offset": "0x05"
+   },
+   {
+    "access": "RO",
+    "bits": "[7:0] y of the middle point (sum of y // area)",
+    "name": "CY",
+    "offset": "0x06"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: idle, no report, area and middle point 0",
+  "top": "c13_nexys_blob_tracker_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "ccl.sv",
+   "name": "left_neighbour_ignored",
+   "why": "the pixel to the left is not looked at, so a row of pixels is many objects"
+  },
+  {
+   "file": "ccl.sv",
+   "name": "no_merge",
+   "why": "two labels that meet are never merged (the U-shape and the comb split)"
+  },
+  {
+   "file": "ccl.sv",
+   "name": "stale_up_label",
+   "why": "a dark pixel keeps the label of the pixel above it, so objects bridge a gap"
+  },
+  {
+   "file": "ccl.sv",
+   "name": "area_counted_twice",
+   "why": "every pixel counts twice"
+  },
+  {
+   "file": "ccl.sv",
+   "name": "x_sum_from_y",
+   "why": "the x sum accumulates y"
+  },
+  {
+   "file": "ccl.sv",
+   "name": "merge_loses_sums",
+   "why": "merging two labels drops the y sum of the one merged away"
+  },
+  {
+   "file": "blob_report.sv",
+   "name": "centroid_rounded",
+   "why": "the middle point is rounded instead of rounded down"
+  },
+  {
+   "file": "blob_report.sv",
+   "name": "tie_to_lower_row_loses",
+   "why": "on equal areas the object that starts lower wins"
+  },
+  {
+   "file": "blob_report.sv",
+   "name": "tie_to_left_edge_loses",
+   "why": "on equal areas and top rows the object further right wins"
+  },
+  {
+   "file": "ccl.sv",
+   "name": "new_picture_not_reset",
+   "why": "the labeller tables are not cleared at the start of a picture, so objects of the earlier picture are reported again"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c13_nexys_blob_tracker",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "for every picture the reported area, x and y equal the reference"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "two objects that touch only diagonally are reported separately"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the U-shaped object is one object"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [],
+ "scope": {
+  "dropped": [
+   "the animation of 8 stored pictures shown one per video frame (the pictures are streamed in by the test wrapper)",
+   "the 640 x 480 VGA output at about 60 Hz with the 16 x enlargement and the MMCM pixel clock",
+   "the crosshair overlay through the middle point",
+   "the seven-segment display of x, y and area",
+   "SW0 (stop the animation) and the reset restarting the animation"
+  ],
+  "glue_added": "blob_report.sv picks the biggest object from the labeller list and divides the sums by the area; the register wrapper parks and streams the picture",
+  "kept": [
+   "single-pass labelling (4-connected, union-find)",
+   "area and centroid of the biggest object with the tie rule",
+   "the stream interface"
+  ],
+  "rescoped": "2026-11-06 (brief 07a1b), to what the course reference implements (the labeller ccl.sv plus the selection glue blob_report.sv)"
+ },
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Blob finder behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that finds the biggest bright object in a small picture and says where its middle point is, and I want to exercise it entirely from the test shell.\n\n- The picture is 40 pixels wide and 30 high, one bit per pixel (1 = bright), and arrives as a stream of pixels, one per clock when available, with a start-of-picture mark and an end-of-line mark.\n  The pictures contain a few bright rectangles on a dark background and a stray pixel or two; sometimes two touch only at a corner, and one object is U-shaped.\n- An object is a group of bright pixels that touch along their sides (up, down, left or right). Two groups that touch only at a corner are two objects; a U-shaped object is one object.\n- When a picture has gone by, tell me the area (the number of pixels) of the biggest object and its middle point: the average of its pixel coordinates in whole pixels, rounded down, x counted from 0 at the\n  left and y from 0 at the top. If two objects have the same area, the one that starts higher (the smaller top row), and if that is also equal, the one further left, is the biggest.\n- A new picture can follow a finished one, and nothing is left over from the earlier picture.\n\nThe shell is slow, so the stream is driven for me: I park a whole picture over the shell (32 pixels per write, row by row, the first pixel of a word in its lowest bit) and give a \"go\" command, and the block\nthen presents the pixels to the stream, one per clock. A status flag says busy from \"go\" until the report for that picture is final, and another says that a report is available. I read the area and the x and y of\nthe middle point over the shell. CPU_RESETN returns the block to idle and forgets the report. LED0 shows busy. The shell runs at 115200 baud on the USB-UART. The design ID is \"BLOB\".\n\nTest hooks: top module `c13_nexys_blob_tracker_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "S11"
+ ],
+ "tier": "C13",
+ "title": "Blob finder behind the test shell (re-scoped from the blob tracker with a crosshair)",
+ "trace": {
+  "captions": [
+   "Picture 0 (animation picture 0): 5 objects found. The biggest has 40 pixels and its middle point is x = 25, y = 22.",
+   "Picture 1 (animation picture 1): 5 objects found. The biggest has 40 pixels and its middle point is x = 25, y = 22.",
+   "Picture 2 (animation picture 2): 5 objects found. The biggest has 40 pixels and its middle point is x = 10, y = 6.",
+   "Picture 3 (animation picture 3): 5 objects found. The biggest has 48 pixels and its middle point is x = 12, y = 6.",
+   "Picture 4 (animation picture 4): 5 objects found. The biggest has 56 pixels and its middle point is x = 14, y = 7.",
+   "Picture 5 (animation picture 5): 5 objects found. The biggest has 64 pixels and its middle point is x = 16, y = 7.",
+   "Picture 6 (animation picture 6): 4 objects found. The biggest has 72 pixels and its middle point is x = 18, y = 8.",
+   "Picture 7 (animation picture 7): 4 objects found. The biggest has 80 pixels and its middle point is x = 20, y = 8.",
+   "Picture 8 (single pixel in the corner): 1 object found. The biggest has 1 pixel and its middle point is x = 39, y = 29.",
+   "Picture 9 (comb and ring): 2 objects found. The biggest has 52 pixels and its middle point is x = 27, y = 21.",
+   "Picture 10 (three-way tie): 3 objects found. The biggest has 18 pixels and its middle point is x = 7, y = 6."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "objects found",
+    "radix": "dec",
+    "v": [
+     5,
+     5,
+     5,
+     5,
+     5,
+     5,
+     4,
+     4,
+     1,
+     2,
+     3
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "AREA",
+    "radix": "dec",
+    "v": [
+     40,
+     40,
+     40,
+     48,
+     56,
+     64,
+     72,
+     80,
+     1,
+     52,
+     18
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "CX",
+    "radix": "dec",
+    "v": [
+     25,
+     25,
+     10,
+     12,
+     14,
+     16,
+     18,
+     20,
+     39,
+     27,
+     7
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "CY",
+    "radix": "dec",
+    "v": [
+     22,
+     22,
+     6,
+     6,
+     7,
+     7,
+     8,
+     8,
+     29,
+     21,
+     6
+    ]
+   }
+  ],
+  "stimulus": "11 pictures of 40 by 30 pixels (rectangles, a U-shape, stray pixels, a comb, a ring and a three-way tie), each given to the model's flood-fill labeller.",
+  "unit": "picture",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ]
+ },
+ "what": "A blob finder for a small black-and-white picture. Pixels arrive one at a time, and the block groups bright pixels that touch along their sides into objects, then reports the size of the biggest object and its middle point. Objects that touch only at a corner count as separate, and ties are settled by position. A new picture can follow without any leftovers from the last.",
+ "where": "Finding and following bright objects is used in robot vision, light-spot trackers, inspection cameras and laser-pointer or marker tracking. Doing the labelling in a single pass over the pixel stream suits FPGAs."
+}

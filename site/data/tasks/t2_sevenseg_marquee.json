@@ -1,0 +1,600 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the leftmost digit shows the message byte at POS.",
+   "reason": "a message reads left to right, so POS is where reading starts."
+  },
+  {
+   "assumption": "dimming keeps the slot length and shortens the lit part from the start of the slot.",
+   "reason": "a fixed scan rate avoids flicker changes when the brightness changes."
+  },
+  {
+   "assumption": "any write to POS restarts the scroll counter at 0, as a write to CTRL does, whether or not SCROLL is set.",
+   "reason": "a new start position then always shows for a full scroll period."
+  }
+ ],
+ "behaviour": [
+  [
+   "window",
+   [
+    "Digits are numbered 0 (rightmost, AN[0]) to 7 (leftmost). Digit k shows message byte MSG[(POS + 7 - k) mod LENGTH] - the leftmost digit shows MSG[POS], the rightmost MSG[(POS + 7) mod LENGTH].",
+    "A byte drives the segments directly - bit 0 a (CA), 1 b, 2 c, 3 d, 4 e, 5 f, 6 g (CG), 7 the decimal point (DP); 1 = lit. The pins are active low (CA = NOT bit 0, ..., DP = NOT bit 7). No decoding."
+   ]
+  ],
+  [
+   "scan",
+   [
+    "Digits are scanned in order 0..7, one slot of 2^REFRESH_BITS clocks each, starting with digit 0 after reset.",
+    "In digit k's slot, AN[k] = 0 for the first (DIM + 1) * 2^(REFRESH_BITS - 3) clocks of the slot and 1 for the rest; every other AN bit is 1 throughout. DIM = 7 lights the whole slot. Segment pins carry digit k's pattern for the whole slot."
+   ]
+  ],
+  [
+   "scrolling",
+   [
+    "A scroll counter counts clocks while CTRL.SCROLL = 1. When it reaches SCROLL_CYCLES - 1 it restarts at 0 and POS steps - POS = (POS + 1) mod LENGTH if CTRL.DIR = 0 (text moves left), (POS + LENGTH - 1) mod LENGTH if DIR = 1.",
+    "While CTRL.SCROLL = 0 the counter is held at 0. Any write to CTRL or POS restarts the counter at 0."
+   ]
+  ],
+  [
+   "registers rules",
+   [
+    "LENGTH accepts 1..16; writes of 0 or above 16 are ignored. If a new LENGTH is <= POS, POS becomes 0.",
+    "A write to POS of a value >= LENGTH is ignored."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "REFRESH_BITS": 4,
+  "SCROLL_CYCLES": 6000,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-03",
+  "mutants": {
+   "dim_off_by_one": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_raw_segment_bytes",
+     "test_window_wraps",
+     "test_dimming",
+     "test_scroll_steps",
+     "test_random_windows"
+    ],
+    "killed": true
+   },
+   "dir_inverted": {
+    "failed_tests": [
+     "test_scroll_steps"
+    ],
+    "killed": true
+   },
+   "dp_dropped": {
+    "failed_tests": [
+     "test_raw_segment_bytes",
+     "test_window_wraps",
+     "test_dimming",
+     "test_scroll_steps",
+     "test_random_windows"
+    ],
+    "killed": true
+   },
+   "length_17_accepted": {
+    "failed_tests": [
+     "test_length_and_pos_rules"
+    ],
+    "killed": true
+   },
+   "pos_kept_on_shorter_length": {
+    "failed_tests": [
+     "test_length_and_pos_rules"
+    ],
+    "killed": true
+   },
+   "scroll_half_period": {
+    "failed_tests": [
+     "test_scroll_steps"
+    ],
+    "killed": true
+   },
+   "scroll_restart_ignored": {
+    "failed_tests": [
+     "test_scroll_steps"
+    ],
+    "killed": true
+   },
+   "window_reversed": {
+    "failed_tests": [
+     "test_raw_segment_bytes",
+     "test_window_wraps",
+     "test_dimming",
+     "test_scroll_steps",
+     "test_random_windows"
+    ],
+    "killed": true
+   },
+   "wrap_at_16": {
+    "failed_tests": [
+     "test_window_wraps",
+     "test_random_windows"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t2_sevenseg_marquee__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 7,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "A",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 52,
+    "name": "model.py",
+    "path": "benchmark/tasks/t2_sevenseg_marquee/hidden/model.py",
+    "sha256": "5719336e58a6",
+    "text": "\"\"\"Golden model of t2_sevenseg_marquee, written from spec.yaml alone (never from any RTL).\"\"\"\n\nfrom __future__ import annotations\n\nDESIGN_ID = 0x4D415251\nCTRL, LENGTH, POS, DIM, MSG0 = 0x00, 0x01, 0x02, 0x03, 0x10\nSCROLL, DIR = 1, 2\n\n\nclass Model:\n    def __init__(self) -> None:\n        self.msg = [0] * 16\n        self.ctrl, self.length, self.pos, self.dim = 0, 8, 0, 7\n\n    def write(self, off: int, v: int) -> None:\n        v &= 0xFFFF_FFFF\n        if MSG0 <= off < MSG0 + 16:\n            self.msg[off - MSG0] = v & 0xFF\n        elif off == CTRL:\n            self.ctrl = v & 3\n        elif off == LENGTH:\n            if 1 <= v <= 16:\n                self.length = v\n                if v <= self.pos:\n                    self.pos = 0\n        elif off == POS:\n            if v < self.length:\n                self.pos = v\n        elif off == DIM:\n            self.dim = v & 7\n\n    def read(self, off: int) -> int:\n        if MSG0 <= off < MSG0 + 16:\n            return self.msg[off - MSG0]\n        return {CTRL: self.ctrl, LENGTH: self.length, POS: self.pos, DIM: self.dim}.get(off, 0)\n\n    def step(self, n: int = 1) -> None:\n        for _ in range(n):\n            if self.ctrl & DIR:\n                self.pos = (self.pos + self.length - 1) % self.length\n            else:\n                self.pos = (self.pos + 1) % self.length\n\n    def digit_byte(self, k: int) -> int:\n        return self.msg[(self.pos + 7 - k) % self.length]\n\n    def display(self) -> dict[int, int]:\n        \"\"\"{digit: (DP..A pin levels, active low: 8 bits, bit 0 = CA, bit 7 = DP)}.\"\"\"\n        return {k: ~self.digit_byte(k) & 0xFF for k in range(8)}\n\n    def lit_clocks(self, refresh_bits: int) -> int:\n        return (self.dim + 1) << (refresh_bits - 3)\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 101,
+    "name": "marquee.sv",
+    "path": "benchmark/tasks/t2_sevenseg_marquee/ref/rtl/marquee.sv",
+    "sha256": "c5484c53a082",
+    "text": "// marquee.sv: 16-byte raw-segment message, an 8-digit window that wraps\n// modulo LENGTH, scrolling every SCROLL_CYCLES, and a dimmed digit scan.\nmodule marquee #(\n    parameter int SCROLL_CYCLES = 25_000_000,\n    parameter int REFRESH_BITS  = 17\n) (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [7:0]  an,\n    output logic [7:0]  seg_n,        // {DP, G, F, E, D, C, B, A}, active low\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam int SW = $clog2(SCROLL_CYCLES + 1);\n\n    logic [7:0]  msg [16];\n    logic [1:0]  ctrl;\n    logic [4:0]  len;\n    logic [3:0]  pos;\n    logic [2:0]  dim;\n    logic [SW-1:0] sc;\n\n    wire wr_ctrl = win_wr && win_addr == 7'h00;\n    wire wr_len  = win_wr && win_addr == 7'h01 && win_wdata[4:0] != 5'd0 && win_wdata[31:0] <= 32'd16;\n    wire wr_pos  = win_wr && win_addr == 7'h02 && win_wdata[31:0] < {27'd0, len};\n    wire step    = ctrl[0] && sc == SW'(SCROLL_CYCLES - 1);\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            for (int i = 0; i < 16; i++) msg[i] <= 8'h00;\n            ctrl <= '0; len <= 5'd8; pos <= '0; dim <= 3'd7; sc <= '0;\n        end else begin\n            if (win_wr && win_addr[6:4] == 3'b001) msg[win_addr[3:0]] <= win_wdata[7:0];\n            if (wr_ctrl) ctrl <= win_wdata[1:0];\n            if (win_wr && win_addr == 7'h03) dim <= win_wdata[2:0];\n            // scroll counter\n            if (wr_ctrl || wr_pos || !ctrl[0] || step) sc <= '0;\n            else                                     sc <= sc + 1'b1;\n            // position\n            if (wr_len) begin\n                len <= win_wdata[4:0];\n                if (win_wdata[4:0] <= {1'b0, pos}) pos <= '0;\n            end else if (wr_pos) begin\n                pos <= win_wdata[3:0];\n            end else if (step) begin\n                if (!ctrl[1]) pos <= ({1'b0, pos} + 5'd1 >= len) ? 4'd0 : pos + 1'b1;\n                else          pos <= (pos == 4'd0) ? 4'(len - 5'd1) : pos - 1'b1;\n            end\n        end\n    end\n\n    // display scan. The message index of each digit comes from a short pipeline instead of a modulo:\n    // dix[7] = POS (the leftmost digit), dix[k-1] = dix[k] + 1 wrapped at LENGTH. Each stage is one\n    // increment and compare, so a change of POS or LENGTH settles within 8 clocks (far inside a digit slot).\n    logic [REFRESH_BITS+2:0] t;\n    logic [2:0] k;\n    logic       lit;\n    logic [3:0] dix [8];\n    logic [7:0] cur;\n\n    assign k   = t[REFRESH_BITS+2:REFRESH_BITS];\n    assign lit = t[REFRESH_BITS-1:REFRESH_BITS-3] <= dim;\n    assign cur = msg[dix[k]];\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            for (int i = 0; i < 8; i++) dix[i] <= '0;\n        end else begin\n            dix[7] <= pos;\n            for (int i = 0; i < 7; i++)\n                dix[i] <= ({1'b0, dix[i + 1]} + 5'd1 >= len) ? 4'd0 : dix[i + 1] + 4'd1;\n        end\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            t <= '0; an <= 8'hFF; seg_n <= 8'hFF;\n        end else begin\n            t     <= t + 1'b1;\n            an    <= lit ? ~(8'b1 << k) : 8'hFF;\n            seg_n <= ~cur;\n        end\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            if (win_addr[6:4] == 3'b001) win_rdata <= {24'd0, msg[win_addr[3:0]]};\n            else case (win_addr)\n                7'h00:   win_rdata <= {30'd0, ctrl};\n                7'h01:   win_rdata <= {27'd0, len};\n                7'h02:   win_rdata <= {28'd0, pos};\n                7'h03:   win_rdata <= {29'd0, dim};\n                default: win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 36,
+    "name": "t2_sevenseg_marquee_top.sv",
+    "path": "benchmark/tasks/t2_sevenseg_marquee/ref/rtl/t2_sevenseg_marquee_top.sv",
+    "sha256": "4aa9a461e93c",
+    "text": "// t2_sevenseg_marquee_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t2_sevenseg_marquee; DESIGN_ID \"MARQ\".\n// A scrolling message of raw segment bytes on the eight digits.\nmodule t2_sevenseg_marquee_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter int          SCROLL_CYCLES  = 25_000_000,\n    parameter int          REFRESH_BITS   = 17,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic       CLK100MHZ,\n    input  logic       CPU_RESETN,\n    output logic       CA, CB, CC, CD, CE, CF, CG, DP,\n    output logic [7:0] AN,\n    input  logic       UART_TXD_IN,\n    output logic       UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n    logic [7:0]  seg_n;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4D41_5251), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    marquee #(.SCROLL_CYCLES(SCROLL_CYCLES), .REFRESH_BITS(REFRESH_BITS)) u_mq (\n        .clk(clk), .rst(rst), .an(AN), .seg_n(seg_n),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    assign {DP, CG, CF, CE, CD, CC, CB, CA} = seg_n;\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 188,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t2_sevenseg_marquee/hidden/acceptance.py",
+    "sha256": "c99baa260122",
+    "text": "\"\"\"Acceptance tests of t2_sevenseg_marquee against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom cocotb.utils import get_sim_time\nfrom benchmark.lib.bench import Board\nfrom cocotb.triggers import FallingEdge, ReadOnly, RisingEdge\nfrom model import CTRL, DESIGN_ID, DIM, DIR, LENGTH, MSG0, POS, SCROLL, Model\n\nPINS = (\"CA\", \"CB\", \"CC\", \"CD\", \"CE\", \"CF\", \"CG\", \"DP\")\nODD = [0x49, 0x80, 0x36, 0x01, 0x7F, 0x63, 0x5C, 0xC9, 0x14, 0x22, 0x08, 0x41, 0x2A, 0x55, 0x9C, 0xF0]\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut)\n        self.dut, self.m = dut, Model()\n        self.rb = self.b.param(\"REFRESH_BITS\")\n        self.slot = 1 << self.rb\n        self.scroll = self.b.param(\"SCROLL_CYCLES\")\n\n    async def start(self) -> None:\n        await self.b.start()\n\n    async def wr(self, off: int, v: int) -> None:\n        await self.b.write(off, v)\n        self.m.write(off, v)\n\n    async def regs(self) -> None:\n        for off in (CTRL, LENGTH, POS, DIM):\n            await self.b.expect(off, self.m.read(off), f\"window 0x{off:02X}\")\n\n    async def scan(self) -> tuple[dict[int, set[int]], list[tuple[int | None, int]]]:\n        \"\"\"Watch 9 slots: per digit, the set of segment patterns while lit, and the runs (digit or None, clocks).\"\"\"\n        pats: dict[int, set[int]] = {}\n        runs: list[tuple[int | None, int]] = []\n        cur, n = -1, 0\n        for _ in range(9 * self.slot):\n            await RisingEdge(self.b.clk)\n            await ReadOnly()\n            an = int(self.dut.AN.value)\n            low = [k for k in range(8) if not (an >> k) & 1]\n            assert len(low) <= 1, f\"more than one digit lit: AN=0b{an:08b}\"\n            k = low[0] if low else None\n            if k is not None:\n                pats.setdefault(k, set()).add(sum(int(getattr(self.dut, p).value) << i for i, p in enumerate(PINS)))\n            if k != cur:\n                runs.append((cur, n))\n                cur, n = k, 0\n            n += 1\n        await FallingEdge(self.b.clk)\n        return pats, runs[2:]                    # drop the start-up entry and the first (partial) run\n\n    async def check_display(self, check_dim: bool = True) -> None:\n        pats, runs = await self.scan()\n        want = self.m.display()\n        got = {k: next(iter(v)) if len(v) == 1 else sorted(v) for k, v in pats.items()}\n        assert got == want, f\"digits (active-low DP..A) RTL {got} != model {want}\"\n        if check_dim:\n            lit = self.m.lit_clocks(self.rb)\n            lit_runs = [n for k, n in runs if k is not None]\n            assert len(lit_runs) >= 6 and all(n == lit for n in lit_runs), \\\n                f\"lit runs {lit_runs} clocks, model {lit} (DIM {self.m.dim})\"\n            order = [k for k, _ in runs if k is not None]\n            assert all((b - a) % 8 == 1 for a, b in zip(order, order[1:])), f\"scan order {order}\"\n\n\n@cocotb.test(timeout_time=1613150, timeout_unit=\"ns\")\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.regs()\n    for off in list(range(MSG0, MSG0 + 16)) + [0x04, 0x0F, 0x20, 0x7F]:\n        await e.b.expect(off, 0, f\"window 0x{off:02X}\")\n    await e.check_display()\n\n\n@cocotb.test(timeout_time=1393260, timeout_unit=\"ns\")\nasync def test_raw_segment_bytes(dut):\n    \"\"\"Trap: the textbook drives the digits through a hex-glyph decoder; here each byte is the raw segment pattern\n    (0x49 lights a, d and g, a symbol no hex digit uses; 0x80 is the decimal point alone).\"\"\"\n    e = Env(dut)\n    await e.start()\n    for i, v in enumerate(ODD[:8]):\n        await e.wr(MSG0 + i, v)\n    await e.check_display()\n    for i in range(8):\n        await e.b.expect(MSG0 + i, ODD[i], f\"MSG{i}\")\n\n\n@cocotb.test(timeout_time=2136090, timeout_unit=\"ns\")\nasync def test_window_wraps(dut):\n    e = Env(dut)\n    await e.start()\n    for i, v in enumerate(ODD):\n        await e.wr(MSG0 + i, v)\n    for length, pos in ((16, 12), (5, 3), (1, 0), (8, 7), (3, 2)):\n        await e.wr(LENGTH, length)\n        await e.wr(POS, pos)\n        await e.regs()\n        await e.check_display()\n\n\n@cocotb.test(timeout_time=2585780, timeout_unit=\"ns\")\nasync def test_length_and_pos_rules(dut):\n    e = Env(dut)\n    await e.start()\n    for off, v in ((LENGTH, 0), (LENGTH, 17), (LENGTH, 0x101), (LENGTH, 12), (POS, 12), (POS, 11), (POS, 0x10),\n                   (LENGTH, 11), (LENGTH, 4), (POS, 3), (LENGTH, 3), (CTRL, 0xFFFF_FFFC), (DIM, 0x0B)):\n        await e.wr(off, v)\n        await e.regs()\n\n\n@cocotb.test(timeout_time=1331410, timeout_unit=\"ns\")\nasync def test_dimming(dut):\n    e = Env(dut)\n    await e.start()\n    for i, v in enumerate(ODD[8:]):\n        await e.wr(MSG0 + i, v)\n    for d in (0, 3, 6, 7, 1):\n        await e.wr(DIM, d)\n        await e.check_display()\n\n\n@cocotb.test(timeout_time=2839520, timeout_unit=\"ns\")\nasync def test_scroll_steps(dut):\n    e = Env(dut)\n    await e.start()\n    for i, v in enumerate(ODD):\n        await e.wr(MSG0 + i, v)\n    await e.wr(LENGTH, 10)\n    await e.wr(POS, 8)\n    await e.wr(CTRL, SCROLL)                      # the counter restarts at this write (~560 clocks before it returns)\n    # POS read (its win_rd comes ~640 clocks into the access) at 2.5 steps after the write: between steps 2 and 3\n    await e.b.cycles(int(2.5 * e.scroll) - 560 - 640)\n    e.m.step(2)\n    await e.b.expect(POS, e.m.pos, \"POS after 2.5 scroll periods\")   # 8 -> 9 -> 0 (wraps at LENGTH 10)\n    # exact step period: watch POS change on the display (digit 7 shows MSG[POS])\n    times = []\n    last = None\n    while len(times) < 3:\n        await RisingEdge(e.b.clk)\n        await ReadOnly()\n        if not int(dut.AN.value) >> 7 & 1:\n            v = sum(int(getattr(dut, p).value) << i for i, p in enumerate(PINS))\n            if last is not None and v != last:\n                times.append(int(get_sim_time(\"ns\")) // 10)\n            last = v\n    await FallingEdge(e.b.clk)\n    gaps = [b - a for a, b in zip(times, times[1:])]\n    assert all(abs(g - e.scroll) <= 8 * e.slot for g in gaps), f\"scroll steps {gaps} clocks apart, model {e.scroll}\"\n    await e.wr(CTRL, SCROLL | DIR)                # now right: POS decreases; the counter restarts\n    pos_now = await e.b.read(POS)                 # ~1200 clocks after the write took effect\n    e.m.pos = pos_now\n    await e.b.cycles(int(1.5 * e.scroll) - 1760 - 640)\n    e.m.step(1)\n    await e.b.expect(POS, e.m.pos, \"POS 1.5 periods after DIR = 1\")\n    await e.wr(CTRL, 0)\n    await e.b.cycles(2 * e.scroll)\n    await e.regs()                                 # stopped\n    await e.check_display()\n    # a POS write restarts the scroll counter: write it 0.6 period after enabling, read it 0.8 period later\n    await e.wr(CTRL, SCROLL)\n    await e.b.cycles(int(0.6 * e.scroll) - 1200)\n    await e.wr(POS, 5)\n    await e.b.cycles(int(0.8 * e.scroll) - 1200)\n    await e.b.expect(POS, 5, \"POS 0.8 period after a POS write (the counter restarts)\")\n    await e.wr(CTRL, 0)\n\n\n@cocotb.test(timeout_time=2181770, timeout_unit=\"ns\")\nasync def test_random_windows(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    for i in range(16):\n        await e.wr(MSG0 + i, rng.randrange(256))\n    for _ in range(4):\n        await e.wr(LENGTH, rng.randrange(1, 17))\n        await e.wr(POS, rng.randrange(16))\n        await e.wr(DIM, rng.randrange(8))\n        await e.wr(MSG0 + rng.randrange(16), rng.randrange(256))\n        await e.regs()\n        await e.check_display()\n"
+   }
+  ]
+ },
+ "heading": "Scrolling message on the eight 7-segment digits",
+ "id": "t2_sevenseg_marquee",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "REFRESH_BITS": 17,
+   "SCROLL_CYCLES": 25000000,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CA",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CB",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CC",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CD",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CE",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CF",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CG",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "DP",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "AN",
+    "note": "",
+    "width": 8
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[0] SCROLL, [1] DIR (0 = POS increases); [31:2] read 0",
+    "name": "CTRL",
+    "offset": "0x00"
+   },
+   {
+    "access": "RW",
+    "bits": "[4:0] 1..16; [31:5] read 0",
+    "name": "LENGTH",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[3:0] index of the message byte on the leftmost digit; [31:4] read 0",
+    "name": "POS",
+    "offset": "0x02"
+   },
+   {
+    "access": "RW",
+    "bits": "[2:0] brightness 0..7; [31:3] read 0",
+    "name": "DIM",
+    "offset": "0x03"
+   },
+   {
+    "access": "RW",
+    "bits": "[7:0] raw segment byte of message character 0; MSG1-MSG15 at 0x11-0x1F the same; [31:8] read 0",
+    "name": "MSG0",
+    "offset": "0x10"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: registers to reset values (message all 0 = blank), scroll counter 0, display scan restarts at digit 0",
+  "top": "t2_sevenseg_marquee_top",
+  "unmapped": "offsets 0x04-0x0F and 0x20-0x7F read 0; writes to them are ignored"
+ },
+ "mutants": [
+  {
+   "file": "marquee.sv",
+   "name": "window_reversed",
+   "why": "the rightmost digit shows MSG[POS]: the message reads backwards"
+  },
+  {
+   "file": "marquee.sv",
+   "name": "dim_off_by_one",
+   "why": "each digit lit for DIM/8 of its slot (DIM 0 dark)"
+  },
+  {
+   "file": "marquee.sv",
+   "name": "dir_inverted",
+   "why": "the direction bit scrolls the other way"
+  },
+  {
+   "file": "marquee.sv",
+   "name": "length_17_accepted",
+   "why": "LENGTH 17 accepted"
+  },
+  {
+   "file": "marquee.sv",
+   "name": "pos_kept_on_shorter_length",
+   "why": "POS = new LENGTH is kept (out of range)"
+  },
+  {
+   "file": "marquee.sv",
+   "name": "scroll_half_period",
+   "why": "steps twice as often"
+  },
+  {
+   "file": "marquee.sv",
+   "name": "dp_dropped",
+   "why": "bit 7 never lights the decimal point"
+  },
+  {
+   "file": "marquee.sv",
+   "name": "wrap_at_16",
+   "why": "the window wraps at 16 whatever LENGTH is"
+  },
+  {
+   "file": "marquee.sv",
+   "name": "scroll_restart_ignored",
+   "why": "writes to CTRL / POS do not restart the scroll counter"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t2_sevenseg_marquee",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Every digit shows its window byte's raw segments with no decoding"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "The window wraps modulo LENGTH; POS steps every SCROLL_CYCLES in the chosen direction"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Each digit is lit for exactly (DIM + 1)/8 of its slot, one digit at a time"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation"
+   ],
+   "text": "LENGTH and POS write rules hold"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board the message scrolls visibly and DIM dims it"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": "about two hundred LUTs and FFs (the 16-byte buffer in flops or LUT RAM); no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# Scrolling message on the eight 7-segment digits\n\nI want to scroll a short message across the Nexys A7-100T's eight 7-segment digits, with full control of every\nsegment (it is for odd symbols and letters, not numbers).\n\n- The message is up to 16 characters, and each character is a raw segment pattern I write myself: one byte per\n  character, bit 0 = segment a through bit 6 = segment g, bit 7 = the decimal point, 1 = lit. No character\n  decoding of any kind in the FPGA. The message buffer sits at window offsets 0x10 to 0x1F of the test shell.\n- A length register (1 to 16) says how much of the buffer is the message. The digits show an 8-character window\n  onto the message, which wraps round continuously (a message shorter than 8 just repeats).\n- When scrolling is on, the window moves by one character every so often (a parameter, in clocks); a direction\n  bit chooses which way. I also want to read and set the current scroll position.\n- A brightness setting from 0 to 7 that dims the whole display by shortening how long each digit is lit.\n- Design ID \"MARQ\".\n\nTest hooks: top module `t2_sevenseg_marquee_top`, ports named as in the board's master XDC (`CA`..`CG`, `DP`,\n`AN`, the USB-UART pins, `CLK100MHZ`, `CPU_RESETN`), the test shell's `CLKS_PER_BIT`, `TIMEOUT_CYCLES` and\n`BUILD_STAMP` parameters, plus `SCROLL_CYCLES` (clocks between scroll steps) and `REFRESH_BITS` (each digit's\ntime slot is 2^REFRESH_BITS clocks) as top-level parameters.\n",
+ "survey": [
+  "A14"
+ ],
+ "tier": "T2",
+ "title": "Scrolling raw-segment message on the eight 7-segment digits",
+ "trace": {
+  "captions": [
+   "Step 0: Scrolling starts from the beginning of the message. Position 0; the eight digits show FPGA-7SE.",
+   "Step 1: The text moves one character left. Position 1; the eight digits show PGA-7SEG.",
+   "Step 2: The text moves one character left. Position 2; the eight digits show GA-7SEG-.",
+   "Step 3: The text moves one character left. Position 3; the eight digits show A-7SEG-F.",
+   "Step 4: The text moves one character left. Position 4; the eight digits show -7SEG-FP.",
+   "Step 5: The text moves one character left. Position 5; the eight digits show 7SEG-FPG.",
+   "Step 6: The text moves one character left. Position 6; the eight digits show SEG-FPGA.",
+   "Step 7: The text moves one character left. Position 7; the eight digits show EG-FPGA-.",
+   "Step 8: The text moves one character left. Position 8; the eight digits show G-FPGA-7.",
+   "Step 9: The text moves one character left. Position 9; the eight digits show -FPGA-7S.",
+   "Step 10: The text moves one character left. The message wraps round to its start. Position 0; the eight digits show FPGA-7SE.",
+   "Step 11: The text moves one character left. Position 1; the eight digits show PGA-7SEG.",
+   "Step 12: The text moves one character left. Position 2; the eight digits show GA-7SEG-.",
+   "Step 13: The direction is reversed, so the text moves right. Position 1; the eight digits show PGA-7SEG.",
+   "Step 14: The text moves one character right. Position 0; the eight digits show FPGA-7SE.",
+   "Step 15: The text moves one character right. The message wraps round to its end. Position 9; the eight digits show -FPGA-7S.",
+   "Step 16: The text moves one character right. Position 8; the eight digits show G-FPGA-7.",
+   "Step 17: The text moves one character right. Position 7; the eight digits show EG-FPGA-.",
+   "Step 18: The text moves one character right. Position 6; the eight digits show SEG-FPGA.",
+   "Step 19: The text moves one character right. Position 5; the eight digits show 7SEG-FPG.",
+   "Step 20: The text moves one character right. Position 4; the eight digits show -7SEG-FP."
+  ],
+  "signals": [
+   {
+    "kind": "text",
+    "name": "window (left to right)",
+    "v": [
+     "FPGA-7SE",
+     "PGA-7SEG",
+     "GA-7SEG-",
+     "A-7SEG-F",
+     "-7SEG-FP",
+     "7SEG-FPG",
+     "SEG-FPGA",
+     "EG-FPGA-",
+     "G-FPGA-7",
+     "-FPGA-7S",
+     "FPGA-7SE",
+     "PGA-7SEG",
+     "GA-7SEG-",
+     "PGA-7SEG",
+     "FPGA-7SE",
+     "-FPGA-7S",
+     "G-FPGA-7",
+     "EG-FPGA-",
+     "SEG-FPGA",
+     "7SEG-FPG",
+     "-7SEG-FP"
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "POS",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     0,
+     1,
+     2,
+     1,
+     0,
+     9,
+     8,
+     7,
+     6,
+     5,
+     4
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "leftmost digit",
+    "radix": "hex",
+    "v": [
+     113,
+     115,
+     61,
+     119,
+     64,
+     7,
+     109,
+     121,
+     61,
+     64,
+     113,
+     115,
+     61,
+     115,
+     113,
+     64,
+     61,
+     121,
+     109,
+     7,
+     64
+    ],
+    "width": 8
+   },
+   {
+    "kind": "bus",
+    "name": "rightmost digit",
+    "radix": "hex",
+    "v": [
+     121,
+     61,
+     64,
+     113,
+     115,
+     61,
+     119,
+     64,
+     7,
+     109,
+     121,
+     61,
+     64,
+     61,
+     121,
+     109,
+     7,
+     64,
+     119,
+     61,
+     115
+    ],
+    "width": 8
+   },
+   {
+    "kind": "bit",
+    "name": "DIR",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   }
+  ],
+  "stimulus": "The message FPGA-7SEG- (10 characters, each written as a raw segment byte) is scrolled 12 steps left and then 8 steps right. The window text below is those bytes shown as the letters they draw.",
+  "unit": "scroll step",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20
+  ]
+ },
+ "what": "A scrolling message on the eight seven-segment digits. Each character of the message is a raw pattern of segments that the user writes, so odd symbols are possible, and the digits show an eight-character window onto the message that wraps round. When scrolling is on, the window moves one character at a time in either direction, and a brightness setting dims the display by shortening how long each digit is lit.",
+ "where": "Segment displays with time-shared digits appear in clocks, appliances, test equipment and price displays, and scrolling text is how a short message is fitted onto a display that is too narrow for it."
+}

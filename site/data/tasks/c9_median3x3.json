@@ -1,0 +1,703 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the LEDs stay off.",
+   "reason": "nothing is asked of them."
+  }
+ ],
+ "behaviour": [
+  [
+   "median",
+   [
+    "the fifth smallest of the nine pixels"
+   ]
+  ],
+  [
+   "latency",
+   [
+    "exactly 1 clock: the result of a window presented in clock n is seen in clock n + 1 (VMASK records it)"
+   ]
+  ],
+  [
+   "window packing",
+   [
+    "a window is three consecutive registers; pixel p (0..8) is in bits [8*(p mod 3)+7 : 8*(p mod 3)] of register p div 3 of the window"
+   ]
+  ],
+  [
+   "burst",
+   [
+    "GO starts a burst of 64 clocks; DONE is 0 from the GO until the burst has ended (then 1). In clock n < 32 of the burst the block is presented with a window when MASK bit n is 1; the windows are taken from WIN0, WIN1, ... in order (at most 8 bits of MASK may be 1).",
+    "Each result is stored in MED0, MED1, ... in order and counted in NOUT (only the first 8 are stored); VMASK bit n is 1 when a result appeared in clock n + 1 of the burst (so VMASK = MASK for a correct block).",
+    "GO clears NOUT, VMASK and DONE; MED registers read 0 beyond NOUT."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 2,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-07",
+  "mutants": {
+   "exchange_dropped": {
+    "failed_tests": [
+     "test_all_windows_with_gaps",
+     "test_every_position_of_the_median",
+     "test_latency_and_no_extra_results"
+    ],
+    "killed": true
+   },
+   "first_stage_dropped": {
+    "failed_tests": [
+     "test_all_windows_with_gaps",
+     "test_every_position_of_the_median",
+     "test_latency_and_no_extra_results"
+    ],
+    "killed": true
+   },
+   "fourth_smallest": {
+    "failed_tests": [
+     "test_all_windows_with_gaps",
+     "test_every_position_of_the_median",
+     "test_latency_and_no_extra_results"
+    ],
+    "killed": true
+   },
+   "middle_exchange_dropped": {
+    "failed_tests": [
+     "test_all_windows_with_gaps",
+     "test_every_position_of_the_median"
+    ],
+    "killed": true
+   },
+   "valid_always_high": {
+    "failed_tests": [
+     "test_all_windows_with_gaps",
+     "test_every_position_of_the_median",
+     "test_latency_and_no_extra_results"
+    ],
+    "killed": true
+   },
+   "valid_not_registered": {
+    "failed_tests": [
+     "test_all_windows_with_gaps",
+     "test_every_position_of_the_median"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c9_median3x3__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 4,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 1,
+ "domain": "H",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 39,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c9_median3x3/hidden/model.py",
+    "sha256": "d9000a6616fe",
+    "text": "\"\"\"Reference model for P9-3 (3 x 3 median of nine 8-bit pixels). Standalone: python only.\"\"\"\nimport random\n\n\ndef windows(seed=33, n_random=100, n_equal=60, n_outlier=60, n_runs=40):\n    rng = random.Random(seed)\n    ws = [[rng.randrange(256) for _ in range(9)] for _ in range(n_random)]\n    ws += [[v] * 9 for v in (0, 1, 127, 128, 254, 255)]\n    ws += [[0] * 4 + [255] * 5, [255] * 4 + [0] * 5, [0] * 9, [255] * 8 + [0], [0] * 8 + [255]]\n    for _ in range(n_outlier):\n        base = rng.randrange(256)\n        w = [min(255, max(0, base + rng.randrange(-3, 4))) for _ in range(9)]\n        w[rng.randrange(9)] = rng.choice((0, 255))\n        ws.append(w)\n    for _ in range(n_runs):\n        ws.append([rng.choice((0, 255, 17)) for _ in range(9)])\n    for _ in range(n_equal):\n        base = rng.randrange(256)\n        w = [base] * 9\n        for k in rng.sample(range(9), rng.randrange(1, 5)):\n            w[k] = rng.randrange(256)\n        ws.append(w)\n    return ws\n\n\ndef median(w):\n    return sorted(w)[4]\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x4D45444E          # \"MEDN\"\nMASK, GO, STATUS, NOUT, VMASK = 0x00, 0x01, 0x02, 0x03, 0x04\nWIN, MED = 0x10, 0x30\nLAT = 1\n\n\ndef pack_win(w):\n    \"\"\"Three register words: pixels 0..2, 3..5, 6..8, pixel p in bits [8p+7:8p] of its word.\"\"\"\n    return [sum(w[3 * r + p] << (8 * p) for p in range(3)) for r in range(3)]\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 27,
+    "name": "burst_ctl.sv",
+    "path": "benchmark/course/tasks/c9_median3x3/ref/rtl/burst_ctl.sv",
+    "sha256": "42b7bfa69204",
+    "text": "// burst_ctl.sv: the burst sequencer of the shell window (course task): runs `TOTAL` clocks after GO; `en` is MASK[cnt] for the first 32 of them; `idx` counts the enables so far.\nmodule burst_ctl #(\n    parameter int TOTAL = 64\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        go,\n    input  logic [31:0] mask,\n    output logic        active,\n    output logic [6:0]  cnt,\n    output logic        en,\n    output logic [5:0]  idx,\n    output logic        done\n);\n    assign en = active && (cnt < 7'd32) && mask[cnt[4:0]];\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            active <= 1'b0; cnt <= '0; idx <= '0; done <= 1'b0;\n        end else if (go) begin\n            active <= 1'b1; cnt <= '0; idx <= '0; done <= 1'b0;\n        end else if (active) begin\n            cnt <= cnt + 1'b1;\n            if (en) idx <= idx + 1'b1;\n            if (cnt == TOTAL - 1) begin active <= 1'b0; done <= 1'b1; end\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 57,
+    "name": "c9_median3x3_regs.sv",
+    "path": "benchmark/course/tasks/c9_median3x3/ref/rtl/c9_median3x3_regs.sv",
+    "sha256": "7cc3dc67c16f",
+    "text": "// c9_median3x3_regs.sv: the shell window of course task c9_median3x3 (burst of windows, medians, a valid record).\nmodule c9_median3x3_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam int LAT = 1;\n    logic [31:0] mask_r, vmask;\n    logic [23:0] wd [24];\n    logic [7:0]  outq [8];\n    logic [5:0]  nout;\n    logic        go, active, en, done, ov;\n    logic [6:0]  cnt;\n    logic [5:0]  idx;\n    logic [7:0]  med;\n    wire  [4:0]  base = 5'({2'b00, idx[2:0]} * 3);\n    wire  [71:0] cur = {wd[base + 5'd2], wd[base + 5'd1], wd[base]};\n\n    assign led = 16'd0;\n\n    burst_ctl u_burst (.clk(clk), .rst(rst), .go(go), .mask(mask_r), .active(active), .cnt(cnt), .en(en), .idx(idx), .done(done));\n    median3x3 u_core (.clk(clk), .rst_n(!rst), .in_valid(en), .win(cur), .out_valid(ov), .med(med));\n\n    always_ff @(posedge clk) begin\n        go <= 1'b0;\n        if (go) begin nout <= '0; vmask <= '0; end\n        else if (active && ov) begin\n            if (nout < 6'd8) outq[nout[2:0]] <= med;\n            nout <= nout + 1'b1;\n            if (cnt >= LAT && cnt - LAT < 7'd32) vmask[cnt - LAT] <= 1'b1;\n        end\n        if (win_wr) begin\n            if (win_addr == 7'h00) mask_r <= win_wdata;\n            if (win_addr == 7'h01) go <= 1'b1;\n            if (win_addr >= 7'h10 && win_addr < 7'h28) wd[win_addr - 7'h10] <= win_wdata[23:0];\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            if (win_addr == 7'h00) win_rdata <= mask_r;\n            if (win_addr == 7'h02) win_rdata <= {31'd0, done};\n            if (win_addr == 7'h03) win_rdata <= {26'd0, nout};\n            if (win_addr == 7'h04) win_rdata <= vmask;\n            if (win_addr >= 7'h10 && win_addr < 7'h28) win_rdata <= {8'd0, wd[win_addr - 7'h10]};\n            if (win_addr >= 7'h30 && win_addr < 7'h38) win_rdata <= (6'(win_addr[2:0]) < nout) ? {24'd0, outq[win_addr[2:0]]} : 32'd0;\n        end\n        if (rst) begin\n            mask_r <= '0; vmask <= '0; nout <= '0; go <= 1'b0; win_rdata <= 32'd0;\n            for (int i = 0; i < 24; i++) wd[i] <= '0;\n            for (int i = 0; i < 8; i++) outq[i] <= '0;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c9_median3x3_top.sv",
+    "path": "benchmark/course/tasks/c9_median3x3/ref/rtl/c9_median3x3_top.sv",
+    "sha256": "3622e537528c",
+    "text": "// c9_median3x3_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"MEDN\".\n// Reference design for course task c9_median3x3; the shell window is wired to c9_median3x3_regs.\nmodule c9_median3x3_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4d45444e), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c9_median3x3_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "median3x3.sv",
+    "path": "benchmark/course/tasks/c9_median3x3/ref/rtl/median3x3.sv",
+    "sha256": "c1974f3f308e",
+    "text": "// Part 9 lesson 6 reference solution: the 19-compare-exchange median-of-nine network.\nmodule median3x3 (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        in_valid,\n    input  logic [71:0] win,\n    output logic        out_valid,\n    output logic [7:0]  med\n);\n    logic [7:0] v [0:8];\n    function automatic logic [15:0] ce(input logic [7:0] a, input logic [7:0] b);      // {smaller, larger}\n        ce = (a < b) ? {a, b} : {b, a};\n    endfunction\n    always_comb begin\n        for (int k = 0; k < 9; k++) v[k] = win[k*8 +: 8];\n        {v[1], v[2]} = ce(v[1], v[2]); {v[4], v[5]} = ce(v[4], v[5]); {v[7], v[8]} = ce(v[7], v[8]);\n        {v[0], v[1]} = ce(v[0], v[1]); {v[3], v[4]} = ce(v[3], v[4]); {v[6], v[7]} = ce(v[6], v[7]);\n        {v[1], v[2]} = ce(v[1], v[2]); {v[4], v[5]} = ce(v[4], v[5]); {v[7], v[8]} = ce(v[7], v[8]);\n        {v[0], v[3]} = ce(v[0], v[3]); {v[5], v[8]} = ce(v[5], v[8]); {v[4], v[7]} = ce(v[4], v[7]);\n        {v[3], v[6]} = ce(v[3], v[6]); {v[1], v[4]} = ce(v[1], v[4]); {v[2], v[5]} = ce(v[2], v[5]);\n        {v[4], v[7]} = ce(v[4], v[7]); {v[4], v[2]} = ce(v[4], v[2]); {v[6], v[4]} = ce(v[6], v[4]);\n        {v[4], v[2]} = ce(v[4], v[2]);\n    end\n    always_ff @(posedge clk) begin\n        med <= v[4];\n        if (!rst_n) out_valid <= 1'b0;\n        else        out_valid <= in_valid;\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 88,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c9_median3x3/hidden/acceptance.py",
+    "sha256": "d284511ca6b2",
+    "text": "\"\"\"Acceptance tests of c9_median3x3 against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board\nfrom model import DESIGN_ID, GO, MASK, MED, NOUT, STATUS, VMASK, WIN, median, pack_win, windows\n\n\ndef mask_of(n: int, rng: random.Random, style: str) -> int:\n    if style == \"run\":\n        return (1 << n) - 1\n    if style == \"alt\":\n        return sum(1 << (2 * k + 1) for k in range(n))\n    return sum(1 << p for p in rng.sample(range(32), n))\n\n\nasync def burst(b: Board, ws: list[list[int]], mask: int) -> list[int]:\n    for k, w in enumerate(ws):\n        for r, word in enumerate(pack_win(w)):\n            await b.write(WIN + 3 * k + r, word)\n    await b.write(MASK, mask)\n    await b.write(GO, 1)\n    for _ in range(50):\n        if await b.read(STATUS) & 1:\n            break\n    else:\n        raise AssertionError(\"DONE never rose\")\n    await b.expect(VMASK, mask, f\"VMASK: results must appear exactly one clock after the windows (mask {mask:08X})\")\n    await b.expect(NOUT, len(ws), \"NOUT\")\n    return [await b.read(MED + k) for k in range(len(ws))]\n\n\nasync def check_windows(b: Board, ws, mask: int, what: str) -> None:\n    got = await burst(b, ws, mask)\n    for k, (w, g) in enumerate(zip(ws, got)):\n        assert g == median(w), f\"{what}: window {w}: RTL median {g}, expected {median(w)}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off, want in ((MASK, 0), (STATUS, 0), (NOUT, 0), (VMASK, 0), (WIN, 0), (WIN + 23, 0), (MED, 0)):\n        await b.expect(off, want, f\"reset value of {off:#x}\")\n\n\n@cocotb.test()\nasync def test_all_windows_with_gaps(dut):\n    b = Board(dut, {})\n    await b.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    ws = windows()\n    for k in range(0, len(ws), 8):\n        chunk = ws[k:k + 8]\n        await check_windows(b, chunk, mask_of(len(chunk), rng, (\"run\", \"alt\", \"rand\", \"rand\")[k // 8 % 4]), f\"block {k // 8}\")\n\n\n@cocotb.test()\nasync def test_every_position_of_the_median(dut):\n    \"\"\"The median sits at each of the nine positions in turn (distinct values), so a network that mis-wires one input cannot hide.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    base = [10, 20, 30, 40, 50, 60, 70, 80, 90]\n    ws = []\n    for pos in range(9):\n        w = base[:]\n        w[pos], w[4] = w[4], w[pos]          # the median value 50 at position `pos`\n        ws.append(w)\n    await check_windows(b, ws[:8], 0x000000FF, \"median position 0..7\")\n    await check_windows(b, ws[8:] + [base[::-1]], 0x00000003, \"median position 8 and reversed\")\n\n\n@cocotb.test()\nasync def test_latency_and_no_extra_results(dut):\n    b = Board(dut, {})\n    await b.start()\n    w = [[3, 200, 9, 7, 100, 1, 254, 128, 64]]\n    await check_windows(b, w, 0x00000001, \"window at clock 0\")\n    await check_windows(b, w, 0x80000000, \"window at clock 31\")\n    await burst(b, [], 0)\n    await b.expect(NOUT, 0, \"no window, no result\")\n    await b.reset()\n    for off in (STATUS, NOUT, VMASK, MED, WIN):\n        await b.expect(off, 0, f\"{off:#x} after reset\")\n"
+   }
+  ]
+ },
+ "heading": "Median filter behind the test shell",
+ "id": "c9_median3x3",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[31:0] clock n of the burst presents a window when bit n is 1",
+    "name": "MASK",
+    "offset": "0x00"
+   },
+   {
+    "access": "WO",
+    "bits": "any write starts a burst; reads 0",
+    "name": "GO",
+    "offset": "0x01"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] DONE; other bits 0",
+    "name": "STATUS",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[5:0] number of results seen in the last burst",
+    "name": "NOUT",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[31:0] bit n = a result appeared in clock n + 1",
+    "name": "VMASK",
+    "offset": "0x04"
+   },
+   {
+    "access": "RW",
+    "bits": "[23:0] pixels 0..2 of window 0, pixel p in bits [8p+7:8p]; [31:24] read 0. Registers 0x11 and 0x12 hold pixels 3..5 and 6..8 of window 0; window k uses 0x10+3k .. 0x12+3k (k up to 7, to 0x27)",
+    "name": "WIN0",
+    "offset": "0x10"
+   },
+   {
+    "access": "RO",
+    "bits": "[7:0] median of the first result; [31:8] read 0. MED1-MED7 at 0x31-0x37 the same; 0 beyond NOUT",
+    "name": "MED0",
+    "offset": "0x30"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: burst mask 0, window registers 0, results cleared, DONE = 0, no result in flight",
+  "top": "c9_median3x3_top",
+  "unmapped": "offsets not listed read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "median3x3.sv",
+   "name": "fourth_smallest",
+   "why": "returns a neighbour of the median"
+  },
+  {
+   "file": "median3x3.sv",
+   "name": "valid_always_high",
+   "why": "a result on clocks with no window"
+  },
+  {
+   "file": "median3x3.sv",
+   "name": "valid_not_registered",
+   "why": "a back-to-back window gives no result"
+  },
+  {
+   "file": "median3x3.sv",
+   "name": "exchange_dropped",
+   "why": "one compare-exchange of the final stage is missing"
+  },
+  {
+   "file": "median3x3.sv",
+   "name": "first_stage_dropped",
+   "why": "the second round of row sorting is missing"
+  },
+  {
+   "file": "median3x3.sv",
+   "name": "middle_exchange_dropped",
+   "why": "the cross-row exchange of the middle column is missing"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c9_median3x3",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "every median equals the fifth smallest of the window"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "a result appears exactly one clock after the window and never otherwise"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "analysis"
+   ],
+   "text": "timing closes at 100 MHz"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": 157,
+   "bram36": 0,
+   "claude_code_version": "2.1.318",
+   "date": "2026-11-07",
+   "dsp": 0,
+   "escape_level": null,
+   "failure_class": null,
+   "ff": 1018,
+   "hidden_pass": true,
+   "lut": 1060,
+   "model": "claude-sonnet-5-5",
+   "outcome": "pass",
+   "run": 1,
+   "tests_passed": 4,
+   "tests_total": 4,
+   "wall_h": 1.85,
+   "wns_ns": 0.698
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": true,
+ "spec_md": "# Median filter behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that takes a 3 x 3 window of 8-bit pixels and returns the median value of the nine (the fifth smallest), to remove speckle noise from a video stream, and I want to exercise it entirely from the test shell. Nine multipliers or a software sort are out of the question: it has to be pure logic and run at 100 MHz.\n\n- The order of the nine pixels in a window is irrelevant to a median.\n- A window presented to the block at one clock gives its median as a result exactly one clock later (one clock of latency); there is no result on a clock unless a window was presented one clock earlier. A window can be presented on any clock or on consecutive clocks. CPU_RESETN clears the block and the loaded values.\n- The block must close timing at 100 MHz.\n- Over the shell I load up to 8 windows, give a 32-bit pattern that says on which of the next 32 clocks a window is presented (a 1 bit presents the next window, in order), and a \"go\". Afterwards I read the medians in order, how many results came out, and a 32-bit record of the clocks on which a result appeared, so that I can check the latency and that there are no extra results. I will compare a couple of hundred windows (random pixels, equal pixels, runs of 0 and 255, single outliers), with gaps.\n- The shell runs at 115200 baud on the USB-UART. The design ID is \"MEDN\".\n\nTest hooks: top module `c9_median3x3_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "H07",
+  "G15",
+  "S36"
+ ],
+ "tier": "C9",
+ "title": "3 x 3 median of nine 8-bit pixels, one clock of latency, behind the test shell",
+ "trace": {
+  "captions": [
+   "Clock 0: a window is presented (85 119 141 245 95 164 246 227 144).",
+   "Clock 1: a window is presented (87 91 255 85 86 88 91 85 91); the median of the window from clock 0 comes out: 144.",
+   "Clock 2: the median of the window from clock 1 comes out: 88.",
+   "Clock 3: a window is presented (19 255 20 18 20 22 18 18 18).",
+   "Clock 4: a window is presented (0 0 0 0 255 255 255 255 255); the median of the window from clock 3 comes out: 19.",
+   "Clock 5: the median of the window from clock 4 comes out: 255.",
+   "Clock 6: nothing presented, no result.",
+   "Clock 7: a window is presented (0 17 0 255 17 255 255 0 255).",
+   "Clock 8: a window is presented (201 201 193 201 61 201 201 6 201); the median of the window from clock 7 comes out: 17.",
+   "Clock 9: a window is presented (4 9 3 0 3 7 5 3 9); the median of the window from clock 8 comes out: 201.",
+   "Clock 10: the median of the window from clock 9 comes out: 4.",
+   "Clock 11: nothing presented, no result.",
+   "Clock 12: a window is presented (112 118 118 114 112 117 116 112 255).",
+   "Clock 13: the median of the window from clock 12 comes out: 116.",
+   "Clock 14: a window is presented (255 255 255 255 0 0 0 0 0).",
+   "Clock 15: the median of the window from clock 14 comes out: 0.",
+   "Clock 16: nothing presented, no result.",
+   "Clock 17: nothing presented, no result."
+  ],
+  "hero": {
+   "in": [
+    [
+     85,
+     119,
+     141,
+     245,
+     95,
+     164,
+     246,
+     227,
+     144
+    ],
+    [
+     87,
+     91,
+     255,
+     85,
+     86,
+     88,
+     91,
+     85,
+     91
+    ],
+    null,
+    [
+     19,
+     255,
+     20,
+     18,
+     20,
+     22,
+     18,
+     18,
+     18
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     255,
+     255,
+     255,
+     255,
+     255
+    ],
+    null,
+    null,
+    [
+     0,
+     17,
+     0,
+     255,
+     17,
+     255,
+     255,
+     0,
+     255
+    ],
+    [
+     201,
+     201,
+     193,
+     201,
+     61,
+     201,
+     201,
+     6,
+     201
+    ],
+    [
+     4,
+     9,
+     3,
+     0,
+     3,
+     7,
+     5,
+     3,
+     9
+    ],
+    null,
+    null,
+    [
+     112,
+     118,
+     118,
+     114,
+     112,
+     117,
+     116,
+     112,
+     255
+    ],
+    null,
+    [
+     255,
+     255,
+     255,
+     255,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    null,
+    null,
+    null
+   ],
+   "lat": 1,
+   "sorted": [
+    null,
+    [
+     85,
+     95,
+     119,
+     141,
+     144,
+     164,
+     227,
+     245,
+     246
+    ],
+    [
+     85,
+     85,
+     86,
+     87,
+     88,
+     91,
+     91,
+     91,
+     255
+    ],
+    null,
+    [
+     18,
+     18,
+     18,
+     18,
+     19,
+     20,
+     20,
+     22,
+     255
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     255,
+     255,
+     255,
+     255,
+     255
+    ],
+    null,
+    null,
+    [
+     0,
+     0,
+     0,
+     17,
+     17,
+     255,
+     255,
+     255,
+     255
+    ],
+    [
+     6,
+     61,
+     193,
+     201,
+     201,
+     201,
+     201,
+     201,
+     201
+    ],
+    [
+     0,
+     3,
+     3,
+     3,
+     4,
+     5,
+     7,
+     9,
+     9
+    ],
+    null,
+    null,
+    [
+     112,
+     112,
+     112,
+     114,
+     116,
+     117,
+     118,
+     118,
+     255
+    ],
+    null,
+    [
+     0,
+     0,
+     0,
+     0,
+     0,
+     255,
+     255,
+     255,
+     255
+    ],
+    null,
+    null
+   ]
+  },
+  "signals": [
+   {
+    "kind": "bit",
+    "name": "window valid",
+    "v": [
+     1,
+     1,
+     0,
+     1,
+     1,
+     0,
+     0,
+     1,
+     1,
+     1,
+     0,
+     0,
+     1,
+     0,
+     1,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "text",
+    "name": "window",
+    "v": [
+     "85 119 141 245 95 164 246 227 144",
+     "87 91 255 85 86 88 91 85 91",
+     "",
+     "19 255 20 18 20 22 18 18 18",
+     "0 0 0 0 255 255 255 255 255",
+     "",
+     "",
+     "0 17 0 255 17 255 255 0 255",
+     "201 201 193 201 61 201 201 6 201",
+     "4 9 3 0 3 7 5 3 9",
+     "",
+     "",
+     "112 118 118 114 112 117 116 112 255",
+     "",
+     "255 255 255 255 0 0 0 0 0",
+     "",
+     "",
+     ""
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "result valid",
+    "v": [
+     0,
+     1,
+     1,
+     0,
+     1,
+     1,
+     0,
+     0,
+     1,
+     1,
+     1,
+     0,
+     0,
+     1,
+     0,
+     1,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "text",
+    "name": "median",
+    "v": [
+     "",
+     "144",
+     "88",
+     "",
+     "19",
+     "255",
+     "",
+     "",
+     "17",
+     "201",
+     "4",
+     "",
+     "",
+     "116",
+     "",
+     "0",
+     "",
+     ""
+    ]
+   }
+  ],
+  "stimulus": "10 of the model's test windows presented on the clocks where the pattern 1101100111001010 has a 1; latency 1 clock.",
+  "unit": "clock",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17
+  ]
+ },
+ "what": "A median filter for pictures. For each pixel it looks at the pixel and its eight neighbours in a three by three window and outputs the middle value when they are sorted. Isolated noisy pixels are removed while edges stay sharp. It uses only comparison logic, with no multipliers, and gives each result one clock after its window.",
+ "where": "Median filters clean salt-and-pepper noise in cameras, scanners, medical images and machine-vision pipelines."
+}

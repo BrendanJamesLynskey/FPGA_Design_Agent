@@ -1,0 +1,568 @@
+{
+ "assumptions": [
+  {
+   "assumption": "steps wrap modulo 10000 rather than clamping at the ends.",
+   "reason": "the user asks for wrapping at both ends; modulo keeps each press a fixed step."
+  },
+  {
+   "assumption": "simultaneous up and down presses cancel.",
+   "reason": "neither direction is preferred in the request."
+  }
+ ],
+ "behaviour": [
+  [
+   "step",
+   [
+    "STEP is 1, 2, 5 or 10 for SW[1:0] = 00, 01, 10, 11 (switches synchronised by two flops, not debounced)."
+   ]
+  ],
+  [
+   "counter",
+   [
+    "COUNT is an integer 0..9999.",
+    "A press of BTNU sets COUNT to (COUNT + STEP) mod 10000; a press of BTND sets COUNT to (COUNT - STEP) mod 10000.",
+    "Each time an up or down press wraps (the sum is >= 10000 or the difference is < 0), WRAPS increments by one (8 bits, wraps at 256).",
+    "If an up press and a down press land on the same clock, neither acts and WRAPS is unchanged.",
+    "A shell write to COUNT on the same clock as a press wins (the press is lost)."
+   ]
+  ],
+  [
+   "debounce",
+   [
+    "Each button is synchronised (two flops), then debounced. The debounced level changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count.",
+    "A press is a 0 -> 1 change of the debounced level; releases do nothing; holding a button does not repeat."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[13:0] = COUNT in binary; LED[15:14] = 0. No PWM."
+   ]
+  ],
+  [
+   "display",
+   [
+    "Digits are numbered 0 (rightmost, AN[0]) to 7. They are lit one at a time in order 0..7, each for 2^REFRESH_BITS clocks; while digit k is lit AN[k] = 0 and the other AN = 1.",
+    "Digits 0..3 show the units, tens, hundreds and thousands of COUNT in decimal.",
+    "Leading zeros are blank - digit k (k = 1..3) is dark (all AN stay 1 in its slot) when COUNT < 10^k. Digit 0 is always lit (zero shows as 0).",
+    "Digits 4..7 are always dark. DP is always 1 (off).",
+    "Glyphs (segments lit): 0 abcdef, 1 bc, 2 abdeg, 3 abcdg, 4 bcfg, 5 acdfg, 6 acdefg, 7 abc, 8 abcdefg, 9 abcdfg; CA..CG active low."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "DEBOUNCE_CYCLES": 16,
+  "REFRESH_BITS": 3,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-04",
+  "mutants": {
+   "debounce_half": {
+    "failed_tests": [
+     "test_debounce_rejects_bounce"
+    ],
+    "killed": true
+   },
+   "simultaneous_up_wins": {
+    "failed_tests": [
+     "test_simultaneous_presses_cancel"
+    ],
+    "killed": true
+   },
+   "step_eight": {
+    "failed_tests": [
+     "test_steps_from_switches",
+     "test_wrap_both_ends"
+    ],
+    "killed": true
+   },
+   "wrap_off_by_one": {
+    "failed_tests": [
+     "test_wrap_both_ends"
+    ],
+    "killed": true
+   },
+   "wraps_not_cleared": {
+    "failed_tests": [
+     "test_wrap_both_ends"
+    ],
+    "killed": true
+   },
+   "write_range": {
+    "failed_tests": [
+     "test_register_rules"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t1_bcd_updown__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 9,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "A",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 65,
+    "name": "model.py",
+    "path": "benchmark/tasks/t1_bcd_updown/hidden/model.py",
+    "sha256": "798c0753e94c",
+    "text": "\"\"\"Golden model of t1_bcd_updown, written from spec.yaml alone (never from any RTL).\"\"\"\n\nfrom __future__ import annotations\n\nSTEPS = (1, 2, 5, 10)\nCOUNT, BCD, WRAPS, STEP = 0, 1, 2, 3\nDESIGN_ID = 0x42434455\nGLYPHS = (\"abcdef\", \"bc\", \"abdeg\", \"abcdg\", \"bcfg\", \"acdfg\", \"acdefg\", \"abc\", \"abcdefg\", \"abcdfg\")\n\n\ndef seg_pins(lit: str) -> int:\n    \"\"\"Active-low CA..CG, bit 0 = CA.\"\"\"\n    return sum(0 if s in lit else 1 << i for i, s in enumerate(\"abcdefg\"))\n\n\nclass Model:\n    def __init__(self) -> None:\n        self.count = 0\n        self.wraps = 0\n        self.sw = 0\n\n    @property\n    def step(self) -> int:\n        return STEPS[self.sw & 3]\n\n    def press(self, up: bool = False, down: bool = False) -> None:\n        if up and down:\n            return\n        if up:\n            n = self.count + self.step\n        elif down:\n            n = self.count - self.step\n        else:\n            return\n        if n >= 10000 or n < 0:\n            self.wraps = (self.wraps + 1) & 0xFF\n        self.count = n % 10000\n\n    def read(self, off: int) -> int:\n        if off == COUNT:\n            return self.count\n        if off == BCD:\n            return sum(((self.count // 10 ** k) % 10) << (4 * k) for k in range(4))\n        if off == WRAPS:\n            return self.wraps\n        if off == STEP:\n            return self.step\n        return 0\n\n    def write(self, off: int, v: int) -> None:\n        if off == COUNT and v < 10000:\n            self.count = v\n        elif off == WRAPS:\n            self.wraps = 0\n\n    def leds(self) -> int:\n        return self.count & 0x3FFF\n\n    def display(self) -> dict[int, int]:\n        \"\"\"{digit: active-low segments} for the digits that are lit; absent digits are dark.\"\"\"\n        out = {0: seg_pins(GLYPHS[self.count % 10])}\n        for k in range(1, 4):\n            if self.count >= 10 ** k:\n                out[k] = seg_pins(GLYPHS[(self.count // 10 ** k) % 10])\n        return out\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 132,
+    "name": "bcd_updown.sv",
+    "path": "benchmark/tasks/t1_bcd_updown/ref/rtl/bcd_updown.sv",
+    "sha256": "6c99adbd2324",
+    "text": "// bcd_updown.sv: the counter, wrap count, binary-to-BCD converter, LEDs and\n// display contents of t1_bcd_updown, behind the shell's register window.\nmodule bcd_updown #(\n    parameter int DEBOUNCE_CYCLES = 1_000_000\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        btn_up,\n    input  logic        btn_down,\n    input  logic [1:0]  sw_async,\n    output logic [15:0] led,\n    output logic [7:0][6:0] seg_lit,\n    output logic [7:0]  blank,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam logic [6:0] R_COUNT = 7'h00, R_BCD = 7'h01, R_WRAPS = 7'h02, R_STEP = 7'h03;\n\n    logic       up_lvl, dn_lvl, p_up, p_dn;\n    logic [1:0] sw;\n    logic [13:0] count, step;\n    logic [7:0]  wraps;\n    logic [14:0] sum;\n    logic signed [14:0] diff;\n\n    bm_debounce #(.CYCLES(DEBOUNCE_CYCLES)) u_up (.clk(clk), .rst(rst), .d_async(btn_up),   .level(up_lvl), .rise(p_up));\n    bm_debounce #(.CYCLES(DEBOUNCE_CYCLES)) u_dn (.clk(clk), .rst(rst), .d_async(btn_down), .level(dn_lvl), .rise(p_dn));\n    sync2 #(.WIDTH(2)) u_sw (.clk(clk), .rst(rst), .d(sw_async), .q(sw));\n\n    always_comb begin\n        case (sw)\n            2'd0: step = 14'd1;\n            2'd1: step = 14'd2;\n            2'd2: step = 14'd5;\n            default: step = 14'd10;\n        endcase\n    end\n\n    assign sum  = {1'b0, count} + {1'b0, step};\n    assign diff = $signed({1'b0, count}) - $signed({1'b0, step});\n\n    wire wr_count = win_wr && win_addr == R_COUNT && win_wdata < 32'd10000;\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            count <= '0;\n            wraps <= '0;\n        end else begin\n            if (wr_count) begin\n                count <= win_wdata[13:0];\n            end else if (p_up && !p_dn) begin\n                if (sum >= 15'd10000) begin\n                    count <= 14'(sum - 15'd10000);\n                    wraps <= wraps + 1'b1;\n                end else begin\n                    count <= sum[13:0];\n                end\n            end else if (p_dn && !p_up) begin\n                if (diff < 0) begin\n                    count <= 14'(diff + 15'sd10000);\n                    wraps <= wraps + 1'b1;\n                end else begin\n                    count <= diff[13:0];\n                end\n            end\n            if (win_wr && win_addr == R_WRAPS) wraps <= '0;\n        end\n    end\n\n    // Iterative binary-to-BCD (shift and add 3): one conversion every 15 clocks.\n    logic [13:0] sh_bin;\n    logic [15:0] sh_bcd, bcd;\n    logic [3:0]  sh_n;\n    function automatic logic [15:0] add3(input logic [15:0] b);\n        for (int i = 0; i < 4; i++)\n            if (b[4*i +: 4] >= 4'd5) b[4*i +: 4] = b[4*i +: 4] + 4'd3;\n        return b;\n    endfunction\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            sh_n <= '0; sh_bin <= '0; sh_bcd <= '0; bcd <= '0;\n        end else if (sh_n == 4'd0) begin\n            sh_bin <= count; sh_bcd <= '0; sh_n <= 4'd1;\n        end else begin\n            {sh_bcd, sh_bin} <= {add3(sh_bcd), sh_bin} << 1;\n            if (sh_n == 4'd14) begin\n                bcd  <= add3(sh_bcd) << 1 | 16'(sh_bin[13]);\n                sh_n <= 4'd0;\n            end else begin\n                sh_n <= sh_n + 1'b1;\n            end\n        end\n    end\n\n    function automatic logic [6:0] glyph(input logic [3:0] d);\n        case (d)                       // bit 0 = a ... bit 6 = g, 1 = lit\n            4'd0: glyph = 7'b0111111;  4'd1: glyph = 7'b0000110;\n            4'd2: glyph = 7'b1011011;  4'd3: glyph = 7'b1001111;\n            4'd4: glyph = 7'b1100110;  4'd5: glyph = 7'b1101101;\n            4'd6: glyph = 7'b1111101;  4'd7: glyph = 7'b0000111;\n            4'd8: glyph = 7'b1111111;  4'd9: glyph = 7'b1101111;\n            default: glyph = 7'b0000000;\n        endcase\n    endfunction\n\n    always_comb begin\n        for (int k = 0; k < 8; k++) seg_lit[k] = (k < 4) ? glyph(bcd[4*k +: 4]) : 7'b0;\n        blank[0] = 1'b0;\n        blank[1] = bcd[15:4] == 12'd0;\n        blank[2] = bcd[15:8] == 8'd0;\n        blank[3] = bcd[15:12] == 4'd0;\n        blank[7:4] = 4'hF;\n    end\n\n    assign led = {2'b00, count};\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            case (win_addr)\n                R_COUNT: win_rdata <= {18'd0, count};\n                R_BCD:   win_rdata <= {16'd0, bcd};\n                R_WRAPS: win_rdata <= {24'd0, wraps};\n                R_STEP:  win_rdata <= {28'd0, step[3:0]};\n                default: win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 35,
+    "name": "bm_debounce.sv",
+    "path": "benchmark/tasks/t1_bcd_updown/ref/rtl/bm_debounce.sv",
+    "sha256": "bb439c819c2c",
+    "text": "// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level\n// changes only after the synchronised input has differed from it for CYCLES\n// consecutive clocks; a shorter difference restarts the count. rise is a\n// one-clock pulse on each 0 -> 1 change of the level.\nmodule bm_debounce #(\n    parameter int CYCLES = 1_000_000\n) (\n    input  logic clk,\n    input  logic rst,\n    input  logic d_async,\n    output logic level,\n    output logic rise\n);\n    localparam int CW = $clog2(CYCLES + 1);\n    logic        d;\n    logic [CW-1:0] run;\n\n    sync2 u_sync (.clk(clk), .rst(rst), .d(d_async), .q(d));\n\n    always_ff @(posedge clk) begin\n        rise <= 1'b0;\n        if (rst) begin\n            level <= 1'b0;\n            run   <= '0;\n        end else if (d == level) begin\n            run <= '0;\n        end else if (run == CW'(CYCLES - 1)) begin\n            level <= d;\n            run   <= '0;\n            rise  <= d;\n        end else begin\n            run <= run + 1'b1;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 35,
+    "name": "bm_scan8.sv",
+    "path": "benchmark/tasks/t1_bcd_updown/ref/rtl/bm_scan8.sv",
+    "sha256": "e1c32aa46e8c",
+    "text": "// bm_scan8.sv: eight-digit multiplexed display. Digit k (0 = rightmost, AN[0])\n// is lit for 2^REFRESH_BITS clocks, in order 0..7. While digit k is lit its\n// anode is low unless blank[k] is set (then every anode stays high for that\n// slot). seg is active-low {g,f,e,d,c,b,a}; dp_n is active low.\nmodule bm_scan8 #(\n    parameter int REFRESH_BITS = 17\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        enable,\n    input  logic [7:0][6:0] seg_lit,    // per digit k: seg_lit[k]: 1 = segment lit, bit 0 = a\n    input  logic [7:0]  blank,\n    input  logic [7:0]  dp_lit,\n    output logic [7:0]  an,\n    output logic [6:0]  seg_n,\n    output logic        dp_n\n);\n    logic [REFRESH_BITS+2:0] t;\n    logic [2:0] k;\n    assign k = t[REFRESH_BITS+2:REFRESH_BITS];\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            t     <= '0;\n            an    <= 8'hFF;\n            seg_n <= 7'h7F;\n            dp_n  <= 1'b1;\n        end else begin\n            t     <= t + 1'b1;\n            an    <= (enable && !blank[k]) ? ~(8'b1 << k) : 8'hFF;\n            seg_n <= ~seg_lit[k];\n            dp_n  <= ~dp_lit[k];\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 44,
+    "name": "t1_bcd_updown_top.sv",
+    "path": "benchmark/tasks/t1_bcd_updown/ref/rtl/t1_bcd_updown_top.sv",
+    "sha256": "e274456ecf18",
+    "text": "// t1_bcd_updown_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t1_bcd_updown; DESIGN_ID \"BCDU\".\nmodule t1_bcd_updown_top #(\n    parameter int          CLKS_PER_BIT    = 868,\n    parameter int          TIMEOUT_CYCLES  = 100_000,\n    parameter int          DEBOUNCE_CYCLES = 1_000_000,\n    parameter int          REFRESH_BITS    = 17,\n    parameter logic [31:0] BUILD_STAMP     = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    input  logic        BTNU,\n    input  logic        BTND,\n    input  logic [15:0] SW,\n    output logic [15:0] LED,\n    output logic        CA, CB, CC, CD, CE, CF, CG, DP,\n    output logic [7:0]  AN,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr, seg_n;\n    logic [31:0] win_wdata, win_rdata;\n    logic [7:0][6:0] seg_lit;\n    logic [7:0]  blank;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4243_4455), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    bcd_updown #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES)) u_ctr (\n        .clk(clk), .rst(rst), .btn_up(BTNU), .btn_down(BTND), .sw_async(SW[1:0]),\n        .led(LED), .seg_lit(seg_lit), .blank(blank),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    bm_scan8 #(.REFRESH_BITS(REFRESH_BITS)) u_scan (\n        .clk(clk), .rst(rst), .enable(1'b1), .seg_lit(seg_lit), .blank(blank), .dp_lit(8'h00),\n        .an(AN), .seg_n(seg_n), .dp_n(DP));\n    assign {CG, CF, CE, CD, CC, CB, CA} = seg_n;\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 193,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t1_bcd_updown/hidden/acceptance.py",
+    "sha256": "6f4d252a306c",
+    "text": "\"\"\"Acceptance tests of t1_bcd_updown against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek, scan_display\nfrom model import BCD, COUNT, DESIGN_ID, STEP, WRAPS, Model\n\nIDLE = {\"BTNU\": 0, \"BTND\": 0, \"SW\": 0}\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, IDLE)\n        self.dut, self.m = dut, Model()\n        self.n = self.b.param(\"DEBOUNCE_CYCLES\")\n        self.slot = 1 << self.b.param(\"REFRESH_BITS\")\n\n    async def start(self) -> None:\n        await self.b.start()\n\n    async def press(self, btn: str) -> None:\n        pin = getattr(self.dut, btn)\n        pin.value = 1\n        await self.b.cycles(self.n + 6)\n        pin.value = 0\n        await self.b.cycles(self.n + 6)\n        self.m.press(up=btn == \"BTNU\", down=btn == \"BTND\")\n\n    async def switches(self, v: int) -> None:\n        self.dut.SW.value = v\n        await self.b.cycles(4)\n        self.m.sw = v\n\n    async def check_regs(self) -> None:\n        for off in (COUNT, BCD, WRAPS, STEP):\n            await self.b.expect(off, self.m.read(off), (\"COUNT\", \"BCD\", \"WRAPS\", \"STEP\")[off])\n\n    async def check_display(self) -> None:\n        seen = await scan_display(self.dut, self.b.clk, self.slot)\n        want = self.m.display()\n        assert {k: v[0] for k, v in seen.items()} == want, f\"display {seen} != model {want}\"\n        assert all(v[1] == 1 for v in seen.values()), \"DP lit\"\n\n    async def check_leds(self) -> None:\n        led = await peek(self.b.clk, self.dut.LED)\n        assert led == self.m.leds(), f\"LED {led:04X} != model {self.m.leds():04X}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.check_regs()\n    await e.check_display()\n\n\n@cocotb.test()\nasync def test_steps_from_switches(dut):\n    e = Env(dut)\n    await e.start()\n    for sw in (0, 1, 2, 3, 2, 1):\n        await e.switches(sw)\n        await e.press(\"BTNU\")\n        await e.check_regs()\n    await e.press(\"BTND\")\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_wrap_both_ends(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(COUNT, 9998)\n    e.m.write(COUNT, 9998)\n    await e.switches(2)            # step 5\n    await e.press(\"BTNU\")          # 9998 + 5 -> 3, one wrap\n    await e.check_regs()\n    await e.switches(3)            # step 10\n    await e.press(\"BTND\")          # 3 - 10 -> 9993, second wrap\n    await e.check_regs()\n    await e.b.write(COUNT, 9999)\n    e.m.write(COUNT, 9999)\n    await e.switches(0)            # step 1: 9999 -> 0 exactly at the boundary\n    await e.press(\"BTNU\")\n    await e.check_regs()\n    await e.press(\"BTND\")          # 0 -> 9999\n    await e.check_regs()\n    await e.b.write(WRAPS, 0x55)\n    e.m.write(WRAPS, 0x55)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_debounce_rejects_bounce(dut):\n    e = Env(dut)\n    await e.start()\n    pin = dut.BTNU\n    for width in (1, 3, e.n // 2, e.n - 3):      # every pulse shorter than the debounce time\n        pin.value = 1\n        await e.b.cycles(width)\n        pin.value = 0\n        await e.b.cycles(e.n + 4)\n    await e.check_regs()                         # no press yet\n    # a bouncy press: chatter then a long steady level counts once\n    for w in (2, 5, 3, 7):\n        pin.value = 1\n        await e.b.cycles(w)\n        pin.value = 0\n        await e.b.cycles(w)\n    pin.value = 1\n    await e.b.cycles(4 * e.n)                    # held: no repeat\n    pin.value = 0\n    await e.b.cycles(e.n + 6)\n    e.m.press(up=True)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_decimal_display(dut):\n    e = Env(dut)\n    await e.start()\n    for v in (4071, 9999, 1000, 806):\n        await e.b.write(COUNT, v)\n        e.m.write(COUNT, v)\n        await e.check_display()\n        await e.check_leds()\n\n\n@cocotb.test()\nasync def test_leading_zero_blanking(dut):\n    \"\"\"Trap: a textbook decimal display shows all four digits; this spec blanks leading zeros.\"\"\"\n    e = Env(dut)\n    await e.start()\n    for v in (0, 7, 42, 305):\n        await e.b.write(COUNT, v)\n        e.m.write(COUNT, v)\n        await e.check_display()\n\n\n@cocotb.test()\nasync def test_register_rules(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(COUNT, 1234)\n    e.m.write(COUNT, 1234)\n    await e.b.write(COUNT, 10000)      # out of range: ignored\n    e.m.write(COUNT, 10000)\n    await e.b.write(BCD, 0x9999)       # read-only\n    await e.b.write(STEP, 7)\n    await e.check_regs()\n    for off in (0x04, 0x10, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n\n\n@cocotb.test()\nasync def test_random_sequence(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    for _ in range(14):\n        r = rng.random()\n        if r < 0.15:\n            await e.switches(rng.randrange(4))\n        elif r < 0.3:\n            v = rng.choice([rng.randrange(10000), rng.randrange(9990, 10000), rng.randrange(10), 10000 + rng.randrange(6000)])\n            await e.b.write(COUNT, v)\n            e.m.write(COUNT, v)\n        else:\n            await e.press(rng.choice((\"BTNU\", \"BTND\")))\n    await e.check_regs()\n    await e.check_display()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_simultaneous_presses_cancel(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(COUNT, 50)\n    e.m.write(COUNT, 50)\n    dut.BTNU.value = 1\n    dut.BTND.value = 1\n    await e.b.cycles(e.n + 6)\n    dut.BTNU.value = 0\n    dut.BTND.value = 0\n    await e.b.cycles(e.n + 6)\n    e.m.press(up=True, down=True)\n    await e.check_regs()\n"
+   }
+  ]
+ },
+ "heading": "Decimal up/down counter with selectable step",
+ "id": "t1_bcd_updown",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "DEBOUNCE_CYCLES": 1000000,
+   "REFRESH_BITS": 17,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "BTNU",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "BTND",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "SW",
+    "note": "only SW[1:0] are used",
+    "width": 16
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "out",
+    "name": "CA",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CB",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CC",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CD",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CE",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CF",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CG",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "DP",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "AN",
+    "note": "",
+    "width": 8
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[13:0] count 0..9999; a write of 0..9999 sets it, a write of 10000 or more is ignored; [31:14] read 0",
+    "name": "COUNT",
+    "offset": "0x00"
+   },
+   {
+    "access": "RO",
+    "bits": "[3:0] units, [7:4] tens, [11:8] hundreds, [15:12] thousands; [31:16] 0",
+    "name": "BCD",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[7:0] wrap count; any write sets it to 0",
+    "name": "WRAPS",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[3:0] the step SW[1:0] selects (1, 2, 5 or 10)",
+    "name": "STEP",
+    "offset": "0x03"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: COUNT, WRAPS and every other register return to 0; debounced levels return to 0",
+  "top": "t1_bcd_updown_top",
+  "unmapped": "offsets 0x04-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "bcd_updown.sv",
+   "name": "step_eight",
+   "why": "SW = 11 steps by 8, not 10"
+  },
+  {
+   "file": "bcd_updown.sv",
+   "name": "wrap_off_by_one",
+   "why": "9999 + 1 shows 10000 instead of wrapping"
+  },
+  {
+   "file": "bm_debounce.sv",
+   "name": "debounce_half",
+   "why": "debounce accepts pulses of half the time"
+  },
+  {
+   "file": "bcd_updown.sv",
+   "name": "simultaneous_up_wins",
+   "why": "up wins when both press on one clock"
+  },
+  {
+   "file": "bcd_updown.sv",
+   "name": "write_range",
+   "why": "out-of-range COUNT writes accepted"
+  },
+  {
+   "file": "bcd_updown.sv",
+   "name": "wraps_not_cleared",
+   "why": "a write does not clear WRAPS"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t1_bcd_updown",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Up/down presses move COUNT by the selected step modulo 10000 and count wraps"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "A button change shorter than the debounce time never counts; holding does not repeat"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "The display shows COUNT in decimal with leading zeros blanked, one digit at a time"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation"
+   ],
+   "text": "The register window has the listed map, reset values and the out-of-range write rule"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board the register window answers as the model predicts"
+  }
+ ],
+ "resources_expected": "a few hundred LUTs and FFs; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# Decimal up/down counter with selectable step\n\nI want a four-digit decimal counter on the Nexys A7-100T.\n\n- BTNU counts up and BTND counts down. Each press moves the count by the step chosen on the two right-hand\n  switches: SW[1:0] = 00 gives 1, 01 gives 2, 10 gives 5 and 11 gives 10. The buttons bounce, so one press must\n  move it exactly once.\n- The count runs from 0000 to 9999 and wraps round at both ends (going up past 9999 carries on from the bottom,\n  going down past 0 carries on from the top). I'd like to know how many times it has wrapped.\n- The right-hand four digits of the 7-segment display show the count in decimal, without leading zeros: 7 shows\n  as a single 7, and zero shows as a single 0. The other digits stay dark.\n- LED[13:0] show the count in binary.\n- CPU_RESETN resets everything to zero.\n- Over the test shell (USB-UART, 115200 baud) I can read the count (binary and as BCD digits), set it, read the\n  wrap count, and read the step the switches select. The design ID is \"BCDU\".\n\nTest hooks: top module `t1_bcd_updown_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (debounce time in clocks) and\n`REFRESH_BITS` (each display digit is lit for 2^REFRESH_BITS clocks) as top-level parameters.\n",
+ "survey": [
+  "A01"
+ ],
+ "tier": "T1",
+ "title": "Decimal up/down counter with selectable step",
+ "trace": {
+  "captions": [
+   "Press 0: the count is set to 9985 over the shell, so the display shows 9985. No wraps yet.",
+   "Press 1: switches 00 give a step of 1; one press up takes 9985 to 9986.",
+   "Press 2: switches 00 give a step of 1; one press up takes 9986 to 9987.",
+   "Press 3: switches 01 give a step of 2; one press up takes 9987 to 9989.",
+   "Press 4: switches 10 give a step of 5; one press up takes 9989 to 9994.",
+   "Press 5: switches 11 give a step of 10; one press up takes 9994 to 4. That passes the end of the range, so the wrap count becomes 1.",
+   "Press 6: switches 11 give a step of 10; one press up takes 4 to 14.",
+   "Press 7: switches 11 give a step of 10; one press down takes 14 to 4.",
+   "Press 8: switches 10 give a step of 5; one press down takes 4 to 9999. That passes the end of the range, so the wrap count becomes 2.",
+   "Press 9: switches 01 give a step of 2; one press down takes 9999 to 9997.",
+   "Press 10: switches 00 give a step of 1; one press down takes 9997 to 9996.",
+   "Press 11: switches 00 give a step of 1; one press down takes 9996 to 9995.",
+   "Press 12: switches 11 give a step of 10; one press down takes 9995 to 9985.",
+   "Press 13: switches 11 give a step of 10; one press down takes 9985 to 9975.",
+   "Press 14: switches 11 give a step of 10; one press down takes 9975 to 9965.",
+   "Press 15: switches 10 give a step of 5; one press down takes 9965 to 9960.",
+   "Press 16: switches 10 give a step of 5; one press up takes 9960 to 9965.",
+   "Press 17: switches 11 give a step of 10; one press up takes 9965 to 9975.",
+   "Press 18: switches 11 give a step of 10; one press up takes 9975 to 9985.",
+   "Press 19: switches 11 give a step of 10; one press up takes 9985 to 9995.",
+   "Press 20: switches 00 give a step of 1; one press up takes 9995 to 9996."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "COUNT",
+    "radix": "dec",
+    "v": [
+     9985,
+     9986,
+     9987,
+     9989,
+     9994,
+     4,
+     14,
+     4,
+     9999,
+     9997,
+     9996,
+     9995,
+     9985,
+     9975,
+     9965,
+     9960,
+     9965,
+     9975,
+     9985,
+     9995,
+     9996
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "STEP",
+    "radix": "dec",
+    "v": [
+     1,
+     1,
+     1,
+     2,
+     5,
+     10,
+     10,
+     10,
+     5,
+     2,
+     1,
+     1,
+     10,
+     10,
+     10,
+     5,
+     5,
+     10,
+     10,
+     10,
+     1
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "WRAPS",
+    "radix": "dec",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "BCD",
+    "radix": "hex",
+    "v": [
+     39301,
+     39302,
+     39303,
+     39305,
+     39316,
+     4,
+     20,
+     4,
+     39321,
+     39319,
+     39318,
+     39317,
+     39301,
+     39285,
+     39269,
+     39264,
+     39269,
+     39285,
+     39301,
+     39317,
+     39318
+    ],
+    "width": 16
+   }
+  ],
+  "stimulus": "The count is set to 9985, then 20 clean button presses are applied (the debounced button, so one press is one step), up or down, with the step switches changed between presses.",
+  "unit": "press",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20
+  ]
+ },
+ "what": "A four-digit decimal counter driven by two push buttons. One button counts up and the other counts down, and each press changes the count by a step that two switches choose. The count wraps round at both ends and the design keeps a tally of how many times it has wrapped. The buttons are debounced so a bounce cannot count twice, and the value shows on the seven-segment display in decimal, on the LEDs in binary, and over the test shell.",
+ "where": "Up/down counters with a selectable step turn up in panel meters, production-line tallies, ticket and people counters, and setpoint dials. The debounced button input is needed in almost any product with a mechanical switch."
+}

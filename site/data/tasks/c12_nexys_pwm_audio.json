@@ -1,0 +1,464 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the LEDs stay off.",
+   "reason": "nothing is asked of them."
+  }
+ ],
+ "behaviour": [
+  [
+   "gain",
+   [
+    "reset 2068, clamp 8192 on write; sample_out = (sample * gain) >>> 15 (arithmetic shift)"
+   ]
+  ],
+  [
+   "pwm",
+   [
+    "10-bit counter; duty = 512 + (sample_out >>> 7) latched when the counter wraps (reset value 512); AUD_PWM pulled low while counter >= duty, otherwise high impedance (the board pull-up makes it high)"
+   ]
+  ],
+  [
+   "sd",
+   [
+    "AUD_SD = 1 always"
+   ]
+  ],
+  [
+   "data",
+   [
+    "the bench counts the clocks with AUD_PWM low over 4096 consecutive clocks (4 whole periods) after the sample has been held for 2048 clocks, and divides by 4"
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 2,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-09",
+  "mutants": {
+   "clamp_limit_8193": {
+    "failed_tests": [
+     "test_gain_clamp_and_pwm_duty"
+    ],
+    "killed": true
+   },
+   "clamp_missing": {
+    "failed_tests": [
+     "test_gain_clamp_and_pwm_duty"
+    ],
+    "killed": true
+   },
+   "compare_strict": {
+    "failed_tests": [
+     "test_gain_clamp_and_pwm_duty"
+    ],
+    "killed": true
+   },
+   "default_gain_wrong": {
+    "failed_tests": [
+     "test_gain_clamp_and_pwm_duty"
+    ],
+    "killed": true
+   },
+   "duty_offset_511": {
+    "failed_tests": [
+     "test_gain_clamp_and_pwm_duty"
+    ],
+    "killed": true
+   },
+   "gain_shift_14": {
+    "failed_tests": [
+     "test_gain_clamp_and_pwm_duty"
+    ],
+    "killed": true
+   },
+   "pin_driven_high": {
+    "failed_tests": [
+     "test_gain_clamp_and_pwm_duty"
+    ],
+    "killed": true
+   },
+   "sd_low": {
+    "failed_tests": [
+     "test_gain_clamp_and_pwm_duty"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c12_nexys_pwm_audio__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 2,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 2,
+ "domain": "O",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 34,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c12_nexys_pwm_audio/hidden/model.py",
+    "sha256": "f50294d73c75",
+    "text": "\"\"\"Reference model for P12-3 (PWM audio output stage with the hearing-safety gain register). Standalone: python only.\"\"\"\nGAIN_DEFAULT, GAIN_MAX = 2068, 8192\n\n\ndef steps():\n    \"\"\"Each step: reset first? / gain write (or None) / the sample held afterwards.\"\"\"\n    return [\n        {\"reset\": True, \"write\": None, \"sample\": 0},\n        {\"reset\": False, \"write\": None, \"sample\": 32767},\n        {\"reset\": False, \"write\": None, \"sample\": -32768},\n        {\"reset\": False, \"write\": 65535, \"sample\": 32767},\n        {\"reset\": False, \"write\": None, \"sample\": -32768},\n        {\"reset\": False, \"write\": 4000, \"sample\": 20000},\n        {\"reset\": False, \"write\": 8192, \"sample\": 12345},\n        {\"reset\": False, \"write\": 8193, \"sample\": 10000},\n        {\"reset\": True, \"write\": None, \"sample\": 32767},\n    ]\n\n\ndef expected(steps_):\n    gain, out = GAIN_DEFAULT, []\n    for s in steps_:\n        if s[\"reset\"]:\n            gain = GAIN_DEFAULT\n        if s[\"write\"] is not None:\n            gain = min(s[\"write\"], GAIN_MAX)\n        so = (s[\"sample\"] * gain) >> 15\n        out.append({\"sample_out\": so, \"low_per_period\": 1024 - (512 + (so >> 7))})\n    return out\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x5057_4D41          # \"PWMA\"\nSAMPLE, GAIN, SOUT = 0x00, 0x01, 0x02\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 40,
+    "name": "audio_pwm.sv",
+    "path": "benchmark/course/tasks/c12_nexys_pwm_audio/ref/rtl/audio_pwm.sv",
+    "sha256": "84c71da23715",
+    "text": "// Part 12 lab 1: the PWM audio output stage for the Nexys A7's AUD_PWM pin, with the hearing-safety gain register.\n//\n// sample_in: signed 16-bit audio at the sample rate (hold it between samples). Output: a 10-bit PWM at clk / 1024 (97.7 kHz at 100 MHz), open-drain style:\n// aud_pwm_drive_low = 1 drives the pin low, 0 releases it (the board's pull-up and its Sallen-Key low-pass do the rest; see the Nexys A7 reference manual,\n// section 15). aud_sd is held high (the amplifier enabled).\n// HEARING SAFETY: gain is a Q15 register. It RESETS to GAIN_DEFAULT (-24 dBFS = 2068) and a write can never raise it above GAIN_MAX (-12 dBFS = 8192).\n// Start the first listening at the lowest volume of the speaker, through speakers before headphones.\nmodule audio_pwm #(\n    parameter logic [15:0] GAIN_DEFAULT = 16'd2068,\n    parameter logic [15:0] GAIN_MAX     = 16'd8192\n) (\n    input  logic               clk,\n    input  logic               rst_n,\n    input  logic signed [15:0] sample_in,\n    input  logic               gain_wr,\n    input  logic [15:0]        gain_in,\n    output logic signed [15:0] sample_out,        // after the gain (for the testbench and for a VU meter)\n    output logic               aud_pwm_drive_low,\n    output logic               aud_sd\n);\n    logic [15:0] gain;\n    logic [9:0]  ctr;\n    logic [9:0]  duty;\n    logic signed [31:0] prod;\n    always_comb begin\n        prod = sample_in * $signed({1'b0, gain});\n        sample_out = 16'(prod >>> 15);\n    end\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin\n            gain <= GAIN_DEFAULT; ctr <= '0; duty <= 10'd512;\n        end else begin\n            if (gain_wr) gain <= (gain_in > GAIN_MAX) ? GAIN_MAX : gain_in;\n            ctr <= ctr + 1'b1;\n            if (ctr == 10'd1023) duty <= 10'(($signed({sample_out[15], sample_out}) >>> 7) + 17'sd512);   // 16-bit signed -> 10-bit offset binary\n        end\n    end\n    assign aud_pwm_drive_low = (ctr >= duty);\n    assign aud_sd = 1'b1;\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 38,
+    "name": "c12_nexys_pwm_audio_regs.sv",
+    "path": "benchmark/course/tasks/c12_nexys_pwm_audio/ref/rtl/c12_nexys_pwm_audio_regs.sv",
+    "sha256": "6cc528eee0f3",
+    "text": "// c12_nexys_pwm_audio_regs.sv: the shell window of course task c12_nexys_pwm_audio (sample register, gain write port, sample_out read-back).\nmodule c12_nexys_pwm_audio_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    output logic        drive_low,\n    output logic        aud_sd,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic signed [15:0] sample_r, sample_out;\n    logic               gain_wr;\n    logic [15:0]        gain_in;\n\n    assign led = 16'd0;\n\n    audio_pwm u_core (.clk(clk), .rst_n(!rst), .sample_in(sample_r), .gain_wr(gain_wr), .gain_in(gain_in), .sample_out(sample_out),\n                      .aud_pwm_drive_low(drive_low), .aud_sd(aud_sd));\n\n    always_ff @(posedge clk) begin\n        gain_wr <= 1'b0;\n        if (win_wr) begin\n            if (win_addr == 7'h00) sample_r <= win_wdata[15:0];\n            if (win_addr == 7'h01) begin gain_in <= win_wdata[15:0]; gain_wr <= 1'b1; end\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            if (win_addr == 7'h00) win_rdata <= {16'd0, sample_r};\n            if (win_addr == 7'h02) win_rdata <= {16'd0, sample_out};\n        end\n        if (rst) begin\n            sample_r <= '0; gain_in <= '0; gain_wr <= 1'b0; win_rdata <= 32'd0;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 33,
+    "name": "c12_nexys_pwm_audio_top.sv",
+    "path": "benchmark/course/tasks/c12_nexys_pwm_audio/ref/rtl/c12_nexys_pwm_audio_top.sv",
+    "sha256": "46046a0a1b7b",
+    "text": "// c12_nexys_pwm_audio_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"PWMA\".\n// Reference design for course task c12_nexys_pwm_audio: audio_pwm behind the shell window; AUD_PWM is open-drain style (pulled low or released).\nmodule c12_nexys_pwm_audio_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output wire         AUD_PWM,\n    output logic        AUD_SD,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd, drive_low;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h5057_4d41), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c12_nexys_pwm_audio_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED), .drive_low(drive_low), .aud_sd(AUD_SD),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    assign AUD_PWM = drive_low ? 1'b0 : 1'bz;\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 53,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c12_nexys_pwm_audio/hidden/acceptance.py",
+    "sha256": "a7511218d469",
+    "text": "\"\"\"Acceptance tests of c12_nexys_pwm_audio against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board\nfrom cocotb.triggers import ReadOnly, RisingEdge\nfrom model import DESIGN_ID, GAIN, SAMPLE, SOUT, expected, steps\n\n\ndef s16(v: int) -> int:\n    return v - 65536 if v & 0x8000 else v\n\n\nasync def measure(b: Board, dut, clocks: int = 4096) -> tuple[int, bool]:\n    \"\"\"Clocks with the (resolved) pin low over `clocks` consecutive clocks, and whether AUD_SD stayed 1.\"\"\"\n    low, sd = 0, True\n    for _ in range(clocks):\n        await RisingEdge(b.clk)\n        await ReadOnly()\n        low += int(dut.pwm.value) == 0\n        sd &= int(dut.AUD_SD.value) == 1\n        assert int(dut.pwm_pd.value) == 0, \"AUD_PWM was driven high (with a pull-down on the pin it read 1)\"\n    await RisingEdge(b.clk)\n    return low, sd\n\n\n@cocotb.test(timeout_time=400_000_000, timeout_unit=\"ns\")\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    await b.expect(SAMPLE, 0, \"SAMPLE after reset\")\n    await b.expect(SOUT, 0, \"SOUT after reset\")\n\n\n@cocotb.test(timeout_time=2_000_000_000, timeout_unit=\"ns\")\nasync def test_gain_clamp_and_pwm_duty(dut):\n    b = Board(dut, {})\n    await b.start()\n    st = steps()\n    for k, (s, e) in enumerate(zip(st, expected(st))):\n        what = f\"step {k} (reset {s['reset']}, write {s['write']}, sample {s['sample']})\"\n        if s[\"reset\"]:\n            await b.reset()\n        if s[\"write\"] is not None:\n            await b.write(GAIN, s[\"write\"])\n        await b.write(SAMPLE, s[\"sample\"] & 0xFFFF)\n        assert s16(await b.read(SOUT)) == e[\"sample_out\"], f\"{what}: sample_out {s16(await b.read(SOUT))}, expected {e['sample_out']}\"\n        await b.cycles(2048)\n        low, sd = await measure(b, dut)\n        assert sd, f\"{what}: AUD_SD was not always high\"\n        assert low == 4 * e[\"low_per_period\"], f\"{what}: {low / 4} clocks pulled low per period, expected {e['low_per_period']}\"\n"
+   }
+  ]
+ },
+ "heading": "Safe PWM audio output stage for the Nexys A7 speaker jack",
+ "id": "c12_nexys_pwm_audio",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "AUD_PWM",
+    "note": "open drain style: pulled low or high impedance, never driven high",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "AUD_SD",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[15:0] audio sample, two's complement; [31:16] read 0",
+    "name": "SAMPLE",
+    "offset": "0x00"
+   },
+   {
+    "access": "WO",
+    "bits": "[15:0] a write sets the gain register (values above 8192 give 8192); the register cannot be read back; reads 0",
+    "name": "GAIN",
+    "offset": "0x01"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] sample_out = sample after the gain, two's complement; [31:16] read 0",
+    "name": "SOUT",
+    "offset": "0x02"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: gain 2068, sample 0, PWM counter 0 and duty 512",
+  "top": "c12_nexys_pwm_audio_top",
+  "unmapped": "offsets not listed read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "audio_pwm.sv",
+   "name": "clamp_missing",
+   "why": "a write of 65535 is not limited"
+  },
+  {
+   "file": "audio_pwm.sv",
+   "name": "default_gain_wrong",
+   "why": "reset gain -18 dBFS instead of -24"
+  },
+  {
+   "file": "audio_pwm.sv",
+   "name": "clamp_limit_8193",
+   "why": "limit one above -12 dBFS"
+  },
+  {
+   "file": "audio_pwm.sv",
+   "name": "duty_offset_511",
+   "why": "duty one clock short"
+  },
+  {
+   "file": "audio_pwm.sv",
+   "name": "sd_low",
+   "why": "amplifier disabled"
+  },
+  {
+   "file": "audio_pwm.sv",
+   "name": "gain_shift_14",
+   "why": "the gain is twice what it should be"
+  },
+  {
+   "file": "audio_pwm.sv",
+   "name": "compare_strict",
+   "why": "one clock less low per period"
+  },
+  {
+   "file": "c12_nexys_pwm_audio_top.sv",
+   "name": "pin_driven_high",
+   "why": "the pin is driven high instead of released"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c12_nexys_pwm_audio",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "default gain 2068 after reset; writes clamp at 8192"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "sample_out and the low-clock count per period equal the model for every step; AUD_SD always 1; the pin is never driven high"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "analysis"
+   ],
+   "text": "timing closes at 100 MHz"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": 147,
+   "bram36": 0,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-09",
+   "dsp": 1,
+   "escape_level": "spec-interpretation",
+   "failure_class": "spec/task gap (hidden bench needs a port the public spec does not name)",
+   "ff": 301,
+   "hidden_pass": false,
+   "lut": 387,
+   "model": "claude-sonnet-5-5",
+   "outcome": "escape",
+   "run": 1,
+   "tests_passed": 0,
+   "tests_total": 0,
+   "wall_h": 1.2,
+   "wns_ns": 0.545
+  },
+  {
+   "agent_turns": null,
+   "bram36": 0,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-09",
+   "dsp": 1,
+   "escape_level": "spec-interpretation",
+   "failure_class": "spec-interpretation (open-drain pin, not confirmed)",
+   "ff": 303,
+   "hidden_pass": false,
+   "lut": 388,
+   "model": "claude-sonnet-5-5",
+   "outcome": "escape",
+   "run": 2,
+   "tests_passed": 1,
+   "tests_total": 2,
+   "wall_h": 1.23,
+   "wns_ns": 3.825
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Safe PWM audio output stage for the Nexys A7 speaker jack\n\nThe Nexys A7-100T has a mono audio output driven by a single pin (`AUD_PWM`) that feeds a low-pass filter and an amplifier (enabled by the pin `AUD_SD`). I want an output stage that takes signed 16-bit audio samples and turns them into a pulse-width-modulated waveform on that pin, with a volume control that cannot hurt anybody's ears.\n\n- The audio sample is a signed 16-bit number that may be changed at any time and is held between samples. There is a gain register and a way to write it. The sample after the volume, `sample_out` (signed 16 bits), is available combinationally from the sample and the gain register.\n- `AUD_PWM` is open-drain style: the design pulls the pin low or lets it go (high impedance), and the board's pull-up floats it high; the pin is never driven high. `AUD_SD`, the amplifier enable, is always high.\n- Volume: the gain register is unsigned Q15 (32768 = unity), `sample_out = floor(sample * gain / 2^15)`. It resets to **2068** (about -24 dBFS). Writing a value sets it, but any value above **8192** (about -12 dBFS) is replaced by 8192, so the output can never be louder than -12 dBFS whatever is written.\n- PWM: a free-running 10-bit counter divides the clock by 1024 (97.7 kHz carrier). The pin is pulled low on the clocks where the counter is at or above the duty value, and released below it, so in each period the pin is pulled low for 1024 minus the duty clocks. The duty value is `512 + floor(sample_out / 128)` (mid-scale 512 for silence), updated once per period.\n- CPU_RESETN resets the gain to its default and clears the sample.\n- The block must close timing at 100 MHz.\n- Over the shell I write the sample, write the gain, and read `sample_out` back. I will exercise it in simulation (reset, default gain, writes of 65535, 4000, 8192, 8193, a reset after a write; sample values of 0, +32767, -32768 and others; each held for several periods) and compare `sample_out`, the number of clocks the pin is pulled low per period (measured on the `AUD_PWM` pin), and `AUD_SD`.\n- The shell runs at 115200 baud on the USB-UART. The design ID is \"PWMA\".\n\nTest hooks: top module `c12_nexys_pwm_audio_top`, ports named as in the board's master XDC (`AUD_PWM`, `AUD_SD`, the USB-UART pins, `CLK100MHZ`, `CPU_RESETN`, and the 16-bit `LED` output, which the block leaves off), and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time constants.\n",
+ "survey": [
+  "O01",
+  "B28"
+ ],
+ "tier": "C12",
+ "title": "PWM audio output stage with a hearing-safety gain register (Nexys A7 AUD_PWM), behind the test shell",
+ "trace": {
+  "captions": [
+   "Step 0: Reset (gain back to the default). Sample 0 gives sample_out 0 and the pin is pulled low for 512 of 1024 clocks.",
+   "Step 1: Sample 32767 gives sample_out 2067 and the pin is pulled low for 496 of 1024 clocks.",
+   "Step 2: Sample -32768 gives sample_out -2068 and the pin is pulled low for 529 of 1024 clocks.",
+   "Step 3: Gain write 65535. Sample 32767 gives sample_out 8191 and the pin is pulled low for 449 of 1024 clocks.",
+   "Step 4: Sample -32768 gives sample_out -8192 and the pin is pulled low for 576 of 1024 clocks.",
+   "Step 5: Gain write 4000. Sample 20000 gives sample_out 2441 and the pin is pulled low for 493 of 1024 clocks.",
+   "Step 6: Gain write 8192. Sample 12345 gives sample_out 3086 and the pin is pulled low for 488 of 1024 clocks.",
+   "Step 7: Gain write 8193. Sample 10000 gives sample_out 2500 and the pin is pulled low for 493 of 1024 clocks.",
+   "Step 8: Reset (gain back to the default). Sample 32767 gives sample_out 2067 and the pin is pulled low for 496 of 1024 clocks.",
+   "Step 9: Sample 0 gives sample_out 0 and the pin is pulled low for 512 of 1024 clocks.",
+   "Step 10: Sample -1 gives sample_out -1 and the pin is pulled low for 513 of 1024 clocks.",
+   "Step 11: Sample 100 gives sample_out 6 and the pin is pulled low for 512 of 1024 clocks.",
+   "Step 12: Sample -20000 gives sample_out -1263 and the pin is pulled low for 522 of 1024 clocks."
+  ],
+  "signals": [
+   {
+    "hi": 32767,
+    "kind": "wave",
+    "lo": -32768,
+    "name": "sample",
+    "v": [
+     0,
+     32767,
+     -32768,
+     32767,
+     -32768,
+     20000,
+     12345,
+     10000,
+     32767,
+     0,
+     -1,
+     100,
+     -20000
+    ]
+   },
+   {
+    "kind": "text",
+    "name": "gain action",
+    "v": [
+     "reset",
+     "none",
+     "none",
+     "write 65535",
+     "none",
+     "write 4000",
+     "write 8192",
+     "write 8193",
+     "reset",
+     "none",
+     "none",
+     "none",
+     "none"
+    ]
+   },
+   {
+    "hi": 4096,
+    "kind": "wave",
+    "lo": -4096,
+    "name": "sample_out",
+    "v": [
+     0,
+     2067,
+     -2068,
+     8191,
+     -8192,
+     2441,
+     3086,
+     2500,
+     2067,
+     0,
+     -1,
+     6,
+     -1263
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "clocks low per period",
+    "radix": "dec",
+    "v": [
+     512,
+     496,
+     529,
+     449,
+     576,
+     493,
+     488,
+     493,
+     496,
+     512,
+     513,
+     512,
+     522
+    ],
+    "width": 11
+   }
+  ],
+  "stimulus": "The model's script of resets, gain writes (up to 65535, against a limit of 8192) and held samples, followed by 4 more samples at the last gain.",
+  "unit": "step",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12
+  ]
+ },
+ "what": "An audio output stage for the board's speaker connector. It takes signed 16-bit audio samples, scales them by a volume register, and turns the result into a pulse-width-modulated signal whose pulse widths follow the sound. The volume register starts at a quiet default and is clamped, so no value written to it can make the output louder than a safe limit. The pin is only ever pulled low or released, never driven high.",
+ "where": "Pulse-width modulation is a cheap way to make audio from a digital pin in microcontrollers, toys and small devices. Volume limits like this appear wherever a product could otherwise damage hearing."
+}
