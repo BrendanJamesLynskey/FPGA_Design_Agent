@@ -1,0 +1,17 @@
+# Mutants and the trap for v2_a_tick_gen (benchmark/tools/check_task.py)
+mutants:
+  - {name: period_one_long, file: tick_gen.sv, find: "end else if (cnt == div - 16'd1) begin", replace: "end else if (cnt == div) begin", why: "ticks are N+1 clocks apart"}
+  - {name: period_one_short, file: tick_gen.sv, find: "end else if (cnt == div - 16'd1) begin", replace: "end else if (cnt == div - 16'd2) begin", why: "ticks are N-1 clocks apart"}
+  - {name: tick_two_clocks, file: tick_gen.sv, find: "tick <= 1'b0; // default: a pulse lasts one clock", replace: "tick <= tick && cnt == 16'd0;", why: "the tick stays high for a second clock"}
+  - {name: zero_ticks_every_clock, file: tick_gen.sv, find: "end else if (div == 16'd0) begin\n                cnt <= '0;", replace: "end else if (div == 16'd0) begin\n                cnt <= '0; tick <= 1'b1;", why: "DIV = 0 ticks on every clock instead of stopping"}
+  - {name: div_8bit, file: tick_gen.sv, find: "div <= win_wdata[15:0];", replace: "div <= {8'd0, win_wdata[7:0]};", why: "DIV keeps only 8 bits"}
+  - {name: ticks_16bit, file: tick_gen.sv, find: "logic [31:0] ticks;", replace: "logic [15:0] ticks;", why: "the tick count wraps at 65536"}
+  - {name: ticks_clear_ignored, file: tick_gen.sv, find: "else if (wr_ticks) ticks <= '0;", replace: "else if (1'b0) ticks <= '0;", why: "a write to TICKS does not clear it"}
+  - {name: led1_never_flips, file: tick_gen.sv, find: "led1 <= ~led1;", replace: "led1 <= led1;", why: "LED[1] stays off"}
+trap:
+  twin: "textbook clock divider (an output that toggles, 50 per cent duty)"
+  why: "the textbook divider makes a square wave whose high time is N clocks; this spec wants a one-clock enable pulse every N clocks"
+  edits:
+    - {file: tick_gen.sv, find: "tick <= 1'b0; // default: a pulse lasts one clock", replace: "tick <= tick;"}
+    - {file: tick_gen.sv, find: "tick <= 1'b1;", replace: "tick <= ~tick;"}
+  must_fail: [test_pulse_one_clock_wide]

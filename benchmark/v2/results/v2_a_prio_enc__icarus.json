@@ -1,0 +1,124 @@
+{
+  "task": "v2_a_prio_enc",
+  "sim": "icarus",
+  "date": "2026-11-10",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_single_requests": true,
+      "test_highest_wins": true,
+      "test_mask": true,
+      "test_led_latency_and_random": true,
+      "test_register_rules": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "lowest_wins",
+      "why": "the lowest-numbered request wins",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_highest_wins",
+        "test_mask",
+        "test_led_latency_and_random"
+      ]
+    },
+    {
+      "name": "index_off_by_one",
+      "why": "INDEX is one too high",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_single_requests",
+        "test_highest_wins",
+        "test_mask",
+        "test_led_latency_and_random",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "valid_misses_bit15",
+      "why": "a lone request 15 does not set VALID",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_single_requests",
+        "test_highest_wins",
+        "test_mask",
+        "test_led_latency_and_random"
+      ]
+    },
+    {
+      "name": "grant_not_one_hot",
+      "why": "every active request is lit, not just the winner",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_highest_wins",
+        "test_mask",
+        "test_led_latency_and_random"
+      ]
+    },
+    {
+      "name": "mask_inverted",
+      "why": "a set mask bit keeps the request instead of dropping it",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_single_requests",
+        "test_highest_wins",
+        "test_mask",
+        "test_led_latency_and_random",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "mask_ignored",
+      "why": "the mask has no effect",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_mask",
+        "test_led_latency_and_random"
+      ]
+    },
+    {
+      "name": "led_shows_requests",
+      "why": "LEDs show every active request",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_highest_wins",
+        "test_mask",
+        "test_led_latency_and_random"
+      ]
+    },
+    {
+      "name": "one_sync_stage",
+      "why": "only one synchroniser stage: the LED answers a clock early",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_led_latency_and_random"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8,
+  "trap": {
+    "twin": "textbook priority encoder (casez / for loop with index 0 as the default)",
+    "why": "the textbook encoder returns index 0 with a valid flag when nothing is requested; this spec says all ones",
+    "must_fail": [
+      "test_single_requests"
+    ],
+    "failed_tests": [
+      "test_identity_and_reset",
+      "test_single_requests",
+      "test_mask",
+      "test_led_latency_and_random"
+    ],
+    "trap_fires": true
+  }
+}

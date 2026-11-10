@@ -1,0 +1,16 @@
+# Mutants and the trap for v2_a_bit_count (benchmark/tools/check_task.py)
+mutants:
+  - {name: pop_5bit, file: bit_count.sv, find: "logic [5:0]  pop, lzc;", replace: "logic [4:0]  pop; logic [5:0] lzc;", why: "the 1-bit count has 5 bits, so the all-ones word reads 0"}
+  - {name: lzc_is_msb_index, file: bit_count.sv, find: "lzc = 6'(31 - i);", replace: "lzc = 6'(i);", why: "LZC reports the index of the top 1 instead of the zeros above it"}
+  - {name: pop_misses_bit31, file: bit_count.sv, find: "if (w[i]) pop = pop + 6'd1;", replace: "if (w[i] && i != 31) pop = pop + 6'd1;", why: "bit 31 is not counted"}
+  - {name: rev_within_nibbles, file: bit_count.sv, find: "rev[i] = w[31 - i];", replace: "rev[i] = w[(i & 28) | (3 - (i & 3))];", why: "bits are reversed inside each nibble only"}
+  - {name: lzc_zero_is_31, file: bit_count.sv, find: "lzc = 6'd32; pop = '0;", replace: "lzc = 6'd31; pop = '0;", why: "a zero word reports 31 leading zeros"}
+  - {name: led_shows_lzc, file: bit_count.sv, find: "led <= 16'(pop);", replace: "led <= 16'(lzc);", why: "the LEDs show LZC"}
+  - {name: word_16bit, file: bit_count.sv, find: "if (win_wr && win_addr == 7'h00) w <= win_wdata;", replace: "if (win_wr && win_addr == 7'h00) w <= {16'd0, win_wdata[15:0]};", why: "WORD keeps only 16 bits"}
+  - {name: lzc_counts_from_lsb, file: bit_count.sv, find: "if (w[i]) lzc = 6'(31 - i);", replace: "if (w[i] && lzc == 6'd32) lzc = 6'(i);", why: "LZC counts the zeros below the lowest 1"}
+trap:
+  twin: "textbook priority-encoder style leading-zero count whose default (no 1 found) is 0"
+  why: "a case or loop with no 1 found falls through to 0; this spec says a zero word has 32 leading zeros"
+  edits:
+    - {file: bit_count.sv, find: "lzc = 6'd32; pop = '0;", replace: "lzc = 6'd0; pop = '0;"}
+  must_fail: [test_zero_word]

@@ -1,0 +1,122 @@
+{
+  "task": "v2_a_sat_add",
+  "sim": "icarus",
+  "date": "2026-11-10",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_unsigned_wrap_and_saturate": true,
+      "test_signed_overflow_flag": true,
+      "test_signed_saturation": true,
+      "test_random_operands": true,
+      "test_register_rules": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "signed_sat_swapped",
+      "why": "signed saturation goes to the wrong extreme",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_signed_saturation",
+        "test_random_operands",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "unsigned_sat_zero",
+      "why": "unsigned saturation clamps to 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_unsigned_wrap_and_saturate",
+        "test_random_operands"
+      ]
+    },
+    {
+      "name": "sat_ignored",
+      "why": "SAT has no effect",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_unsigned_wrap_and_saturate",
+        "test_signed_saturation",
+        "test_random_operands",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "zero_before_saturation",
+      "why": "ZERO is taken from the wrapped sum, not the saturated one",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_unsigned_wrap_and_saturate",
+        "test_signed_saturation"
+      ]
+    },
+    {
+      "name": "ovf_hidden_by_sat",
+      "why": "OVF is cleared when saturation hid the overflow",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_unsigned_wrap_and_saturate",
+        "test_signed_saturation",
+        "test_random_operands",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "neg_before_saturation",
+      "why": "NEG is taken from the wrapped sum",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_unsigned_wrap_and_saturate",
+        "test_signed_saturation",
+        "test_random_operands",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "carry_partial",
+      "why": "unsigned overflow only when both top bits are set (misses 0x8000 + 0x7FFF + carry cases)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_unsigned_wrap_and_saturate",
+        "test_random_operands"
+      ]
+    },
+    {
+      "name": "ctrl_bits_swapped",
+      "why": "SIGNED and SAT bits exchanged",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_unsigned_wrap_and_saturate",
+        "test_signed_overflow_flag",
+        "test_random_operands"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8,
+  "trap": {
+    "twin": "textbook adder whose overflow flag is the carry out of the top bit",
+    "why": "the carry out is the unsigned overflow; signed overflow needs the operand and result signs, and the two differ (0x7FFF + 1 overflows signed but has no carry; 0xFFFF + 1 carries but is fine signed)",
+    "must_fail": [
+      "test_signed_overflow_flag"
+    ],
+    "failed_tests": [
+      "test_signed_overflow_flag",
+      "test_signed_saturation",
+      "test_random_operands",
+      "test_register_rules"
+    ],
+    "trap_fires": true
+  }
+}

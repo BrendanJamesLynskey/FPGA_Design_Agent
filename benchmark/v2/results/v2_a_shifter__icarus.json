@@ -1,0 +1,116 @@
+{
+  "task": "v2_a_shifter",
+  "sim": "icarus",
+  "date": "2026-11-10",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_logical_shifts": true,
+      "test_arithmetic_right_shift": true,
+      "test_rotate_left": true,
+      "test_random_operations": true,
+      "test_register_rules": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "rotate_is_right",
+      "why": "mode 3 rotates right",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rotate_left",
+        "test_random_operations"
+      ]
+    },
+    {
+      "name": "rotate_big_zero",
+      "why": "rotating by 32 or more gives 0 instead of amount mod 32",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rotate_left",
+        "test_random_operations",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "sll_big_wraps",
+      "why": "a left shift by 32..63 uses only the low 5 bits of the amount",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_logical_shifts",
+        "test_random_operations"
+      ]
+    },
+    {
+      "name": "srl_big_wraps",
+      "why": "a logical right shift by 32..63 uses only the low 5 bits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_logical_shifts",
+        "test_random_operations"
+      ]
+    },
+    {
+      "name": "sra_big_zero",
+      "why": "arithmetic right shift by 32 or more gives 0 for a negative operand",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_arithmetic_right_shift",
+        "test_random_operations"
+      ]
+    },
+    {
+      "name": "led_high_half",
+      "why": "LEDs show the top half of the result",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_logical_shifts",
+        "test_arithmetic_right_shift",
+        "test_rotate_left",
+        "test_random_operations"
+      ]
+    },
+    {
+      "name": "sra_amount_off_by_one",
+      "why": "arithmetic shift is one place too far",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_arithmetic_right_shift",
+        "test_random_operations"
+      ]
+    },
+    {
+      "name": "mode_bit_swap",
+      "why": "operation bits swapped: modes 1 and 2 exchange",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_logical_shifts",
+        "test_arithmetic_right_shift",
+        "test_random_operations"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8,
+  "trap": {
+    "twin": "textbook arithmetic shift written with >>> on an unsigned vector",
+    "why": "in Verilog, >>> on an unsigned operand shifts in zeros, so the textbook line is a logical shift; the spec wants the sign kept",
+    "must_fail": [
+      "test_arithmetic_right_shift"
+    ],
+    "failed_tests": [
+      "test_arithmetic_right_shift",
+      "test_random_operations"
+    ],
+    "trap_fires": true
+  }
+}

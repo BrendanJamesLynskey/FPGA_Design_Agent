@@ -1,0 +1,129 @@
+{
+  "task": "v2_a_seq_detect",
+  "sim": "icarus",
+  "date": "2026-11-09",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_single_match_is_one_clock": true,
+      "test_near_misses": true,
+      "test_overlapping_matches": true,
+      "test_random_streams": true,
+      "test_count_wide_clear_and_write_ignored_bits": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "pattern_reversed",
+      "why": "pattern read newest-bit-first: 1,1,0,1 is spotted instead of 1,0,1,1",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_single_match_is_one_clock",
+        "test_near_misses",
+        "test_overlapping_matches",
+        "test_random_streams",
+        "test_count_wide_clear_and_write_ignored_bits"
+      ]
+    },
+    {
+      "name": "first_bit_ignored",
+      "why": "the oldest bit is not compared: 0,0,1,1 also matches",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_near_misses",
+        "test_random_streams",
+        "test_count_wide_clear_and_write_ignored_bits"
+      ]
+    },
+    {
+      "name": "no_second_sync",
+      "why": "only one synchroniser stage: LED[0] comes one clock early",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_single_match_is_one_clock",
+        "test_overlapping_matches",
+        "test_random_streams",
+        "test_count_wide_clear_and_write_ignored_bits"
+      ]
+    },
+    {
+      "name": "hit_sticky",
+      "why": "LED[0] stays lit after the first match instead of one clock",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_single_match_is_one_clock",
+        "test_overlapping_matches",
+        "test_random_streams",
+        "test_count_wide_clear_and_write_ignored_bits"
+      ]
+    },
+    {
+      "name": "clear_ignored",
+      "why": "a write to COUNT does not clear it",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_count_wide_clear_and_write_ignored_bits"
+      ]
+    },
+    {
+      "name": "count_8bit",
+      "why": "the count is 8 bits and wraps at 256",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_count_wide_clear_and_write_ignored_bits"
+      ]
+    },
+    {
+      "name": "count_survives_reset",
+      "why": "CPU_RESETN does not clear the count",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_single_match_is_one_clock",
+        "test_near_misses",
+        "test_overlapping_matches",
+        "test_random_streams",
+        "test_count_wide_clear_and_write_ignored_bits"
+      ]
+    },
+    {
+      "name": "level_inverted",
+      "why": "LEVEL reads the input inverted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_single_match_is_one_clock",
+        "test_near_misses",
+        "test_overlapping_matches",
+        "test_random_streams",
+        "test_count_wide_clear_and_write_ignored_bits"
+      ]
+    }
+  ],
+  "mutants_killed": 8,
+  "mutants_total": 8,
+  "trap": {
+    "twin": "textbook non-overlapping sequence detector (state machine that returns to idle after a match)",
+    "why": "the textbook detector restarts from nothing after a match, so 1,0,1,1,0,1,1 holds one match; this spec wants two",
+    "must_fail": [
+      "test_overlapping_matches"
+    ],
+    "failed_tests": [
+      "test_overlapping_matches",
+      "test_random_streams"
+    ],
+    "trap_fires": true
+  }
+}

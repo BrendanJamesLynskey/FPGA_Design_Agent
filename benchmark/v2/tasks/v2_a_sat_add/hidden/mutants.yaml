@@ -1,0 +1,16 @@
+# Mutants and the trap for v2_a_sat_add (benchmark/tools/check_task.py)
+mutants:
+  - {name: signed_sat_swapped, file: sat_add.sv, find: "(a[15] ? 16'h8000 : 16'h7FFF)", replace: "(a[15] ? 16'h7FFF : 16'h8000)", why: "signed saturation goes to the wrong extreme"}
+  - {name: unsigned_sat_zero, file: sat_add.sv, find: ": 16'hFFFF;", replace: ": 16'h0000;", why: "unsigned saturation clamps to 0"}
+  - {name: sat_ignored, file: sat_add.sv, find: "(sat && ovf) ? satv : raw[15:0]", replace: "(1'b0 && ovf) ? satv : raw[15:0]", why: "SAT has no effect"}
+  - {name: zero_before_saturation, file: sat_add.sv, find: "sum == 16'd0, ovf}", replace: "raw[15:0] == 16'd0, ovf}", why: "ZERO is taken from the wrapped sum, not the saturated one"}
+  - {name: ovf_hidden_by_sat, file: sat_add.sv, find: "wire [2:0]  flags = {sum[15], sum == 16'd0, ovf};", replace: "wire [2:0]  flags = {sum[15], sum == 16'd0, ovf && !sat};", why: "OVF is cleared when saturation hid the overflow"}
+  - {name: neg_before_saturation, file: sat_add.sv, find: "wire [2:0]  flags = {sum[15],", replace: "wire [2:0]  flags = {raw[15],", why: "NEG is taken from the wrapped sum"}
+  - {name: carry_partial, file: sat_add.sv, find: "wire        ovf_u = raw[16];", replace: "wire        ovf_u = a[15] && b[15];", why: "unsigned overflow only when both top bits are set (misses 0x8000 + 0x7FFF + carry cases)"}
+  - {name: ctrl_bits_swapped, file: sat_add.sv, find: "sgn <= win_wdata[0];\n                sat <= win_wdata[1];", replace: "sgn <= win_wdata[1];\n                sat <= win_wdata[0];", why: "SIGNED and SAT bits exchanged"}
+trap:
+  twin: "textbook adder whose overflow flag is the carry out of the top bit"
+  why: "the carry out is the unsigned overflow; signed overflow needs the operand and result signs, and the two differ (0x7FFF + 1 overflows signed but has no carry; 0xFFFF + 1 carries but is fine signed)"
+  edits:
+    - {file: sat_add.sv, find: "wire        ovf   = sgn ? ovf_s : ovf_u;", replace: "wire        ovf   = ovf_u;"}
+  must_fail: [test_signed_overflow_flag]

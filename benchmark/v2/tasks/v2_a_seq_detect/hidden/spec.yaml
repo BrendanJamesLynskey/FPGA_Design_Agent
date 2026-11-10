@@ -1,0 +1,76 @@
+# Hidden full spec (benchmark v2, batch 1). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: v2_a_seq_detect
+title: Serial pattern spotter
+source: spec.md
+tier: drill
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_a_seq_detect_top
+design_id: 0x53514454          # "SQDT"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: COUNT = 0, the detector's history is empty, LED = 0
+
+parameters:                     # board values; the bench shrinks the time constants
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: JA1, dir: in, width: 1, async: true, note: "serial bit input, one bit per clock", pins: [C17], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  input:
+    - JA1 is synchronised by two flops. Call the bit on JA1 at rising edge k bit k; the history register takes bit k at edge k+2.
+    - The history holds the last four taken-in bits (oldest first) and is all zeros at reset.
+  detector:
+    - "HIT is 1 after edge k+2 exactly when bits k-3, k-2, k-1, k (oldest first) are 1, 0, 1, 1. So LED[0] follows the input by two clocks, and it is high for one clock per match."
+    - The detector is overlapping - a match may share bits with the previous one: the stream 1,0,1,1,0,1,1 holds two matches. There is no dead time after a match.
+  count:
+    - COUNT (16 bits, wrapping) adds 1 for every clock in which HIT is 1.
+    - A shell write to COUNT (any data) clears it; if the write lands on the same clock as a match the clear wins.
+  leds:
+    - "LED[0] = HIT, registered; LED[15:1] = 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: COUNT, access: RW, reset: 0, bits: "[15:0] number of matches; any write clears it; [31:16] read 0"}
+    - {offset: 0x01, name: LEVEL, access: RO, reset: 0, bits: "[0] the synchronised level of JA1 (stage 2); [31:1] 0"}
+  unmapped: offsets 0x02-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  latency:
+    input_to_led: "2 clocks after the edge that took the last bit in (see behaviour)"
+  async_inputs: JA1, CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, text: "LED[0] is high for exactly one clock per match of 1,0,1,1 and at no other time, two clocks after the last bit", proof: [simulation]}
+  - {id: REQ-02, text: "Matches may overlap: 1,0,1,1,0,1,1 holds two", proof: [simulation]}
+  - {id: REQ-03, text: "COUNT counts every match (16 bits) and any write clears it", proof: [simulation]}
+  - {id: REQ-04, text: "The register window has the listed map and reset values", proof: [simulation]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-06, text: "On the board a pattern fed to JA1 is counted as the model predicts", proof: [hardware]}
+
+resources_expected: "about 40 LUTs and FFs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: matches overlap.
+    reason: a spotter that misses a pattern hidden inside the tail of the last one is surprising.
+  - assumption: LED[0] is one registered clock-wide pulse.
+    reason: the request says "for one clock".
+
+open_questions: []
