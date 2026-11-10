@@ -3,6 +3,7 @@
     python -m agent run <spec.md> --board nexys_a7_100t [--interview on|oracle|off] [--review on|off]
                         [--model openai/gpt-6-luna] [--hidden-spec <full spec>] [--replies <json>]
     python -m agent resume <run-id> [--rewind N] [--reply '<json>'] [--replies <json>]
+    python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
 
 A paused run (an interview question or a stage review) prints what it waits for; answer with ``resume --reply``
 ({"answer": ...} for a question; {"decision": "approve"|"edit"|"rewind", "note": ..., "to": N} for a review).
@@ -114,6 +115,10 @@ def config_from_json(c: dict):
 
 
 def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    if args[:1] == ["project"]:                      # brief 27B: the project layer (project/), not part of the agent graph
+        from project.cli import main as project_main
+        return project_main(args[1:])
     from agent.graph.role_models import parse_roles
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
     ap = argparse.ArgumentParser(prog="python -m agent")

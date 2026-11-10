@@ -1,0 +1,36 @@
+schema: fpga-design-agent/contract/v1
+module: fx_axil_regs
+summary: test fixture, two AXI4-Lite registers
+parameters:
+  - {name: MUT, default: 0, min: 0, max: 10}
+clocks:
+  - {name: clk, port: clk, max_mhz: 100}
+resets:
+  - {name: rst_n, port: rst_n, clock: clk, polarity: active_low, style: sync}
+ports:
+  - {name: clk, dir: in}
+  - {name: rst_n, dir: in}
+  - {name: s_axil_awaddr, dir: in, width: 4, clock: clk}
+  - {name: s_axil_awvalid, dir: in, clock: clk}
+  - {name: s_axil_awready, dir: out, clock: clk}
+  - {name: s_axil_wdata, dir: in, width: 32, clock: clk}
+  - {name: s_axil_wstrb, dir: in, width: 4, clock: clk}
+  - {name: s_axil_wvalid, dir: in, clock: clk}
+  - {name: s_axil_wready, dir: out, clock: clk}
+  - {name: s_axil_bresp, dir: out, width: 2, clock: clk}
+  - {name: s_axil_bvalid, dir: out, clock: clk, reset_value: 0}
+  - {name: s_axil_bready, dir: in, clock: clk}
+  - {name: s_axil_araddr, dir: in, width: 4, clock: clk}
+  - {name: s_axil_arvalid, dir: in, clock: clk}
+  - {name: s_axil_arready, dir: out, clock: clk}
+  - {name: s_axil_rdata, dir: out, width: 32, clock: clk}
+  - {name: s_axil_rresp, dir: out, width: 2, clock: clk}
+  - {name: s_axil_rvalid, dir: out, clock: clk, reset_value: 0}
+  - {name: s_axil_rready, dir: in, clock: clk}
+interfaces:
+  - {name: ctl, protocol: axi4-lite, role: slave, prefix: s_axil, clock: clk, reset: rst_n, addr_width: 4, data_width: 32}
+registers:
+  bus: ctl
+  map:
+    - {name: CTRL, offset: 0x0, access: RW, reset: 0x1}
+    - {name: STATUS, offset: 0x4, access: RO, reset: 0xA5}

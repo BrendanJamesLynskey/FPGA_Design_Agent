@@ -1,0 +1,17 @@
+# System requirements (hand-written for P0; phase 0 (P1) writes this file from system/spec.md with the user).
+schema: fpga-design-agent/requirements/v1
+requirements:
+  - {id: S-1, text: "1280 x 720 at 60 Hz on VGA: 1650 pixel clocks a line, 750 lines a frame, 74.25 MHz pixel clock",
+     proof: [simulation, hardware], modules: [video_src, top]}
+  - {id: S-2, text: "Both sync pulses are positive; the first active pixel is 220 clocks after the end of the horizontal sync and the first active line 20 lines after the end of the vertical sync, at the pins",
+     proof: [simulation], modules: [video_src, median3x3, top]}
+  - {id: S-3, text: "PATTERN.sel = 0 shows eight colour bars of 160 pixels: white, yellow, cyan, green, magenta, red, blue, black",
+     proof: [simulation, hardware], modules: [video_src]}
+  - {id: S-4, text: "Every output pixel is the per-channel median of the 3 x 3 neighbourhood of the input pixel it replaces",
+     proof: [simulation], modules: [median3x3]}
+  - {id: S-5, text: "Colour outputs are 0 outside the active picture, while BTNC is pressed and while the pixel clock is not locked; LED[0] shows lock",
+     proof: [simulation], modules: [median3x3, top]}
+  - {id: S-6, text: "The shell answers with design ID VMED; the PATTERN register selects the pattern and FRAMES counts frames",
+     proof: [simulation, hardware], modules: [video_src, top]}
+  - {id: S-7, text: "Timing closes at 74.25 MHz on the pixel clock and 100 MHz on the system clock",
+     proof: [analysis], modules: [video_src, median3x3, top]}

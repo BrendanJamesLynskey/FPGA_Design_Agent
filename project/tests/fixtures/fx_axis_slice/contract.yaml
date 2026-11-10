@@ -1,0 +1,30 @@
+schema: fpga-design-agent/contract/v1
+module: fx_axis_slice
+summary: test fixture, an AXI4-Stream register slice
+parameters:
+  - {name: W, default: 16, min: 1, max: 64}
+  - {name: MUT, default: 0, min: 0, max: 9}
+clocks:
+  - {name: clk, port: clk, max_mhz: 100}
+resets:
+  - {name: rst, port: rst, clock: clk, polarity: active_high, style: sync}
+ports:
+  - {name: clk, dir: in}
+  - {name: rst, dir: in}
+  - {name: s_axis_tvalid, dir: in, clock: clk}
+  - {name: s_axis_tready, dir: out, clock: clk}
+  - {name: s_axis_tdata, dir: in, width: W, clock: clk}
+  - {name: s_axis_tlast, dir: in, clock: clk}
+  - {name: m_axis_tvalid, dir: out, clock: clk, reset_value: 0}
+  - {name: m_axis_tready, dir: in, clock: clk}
+  - {name: m_axis_tdata, dir: out, width: W, clock: clk}
+  - {name: m_axis_tlast, dir: out, clock: clk}
+interfaces:
+  - {name: in, protocol: axi4-stream, role: slave, prefix: s_axis, clock: clk, reset: rst, tdata: {width: W},
+     tlast: "end of a packet", backpressure: true, source_gaps: true}
+  - {name: out, protocol: axi4-stream, role: master, prefix: m_axis, clock: clk, reset: rst, tdata: {width: W},
+     tlast: "end of a packet", backpressure: true, source_gaps: true}
+latency:
+  - {from: in, to: out, cycles: 1}
+throughput:
+  - {interface: out, beats_per_cycle: 1, from: in, out_per_in: 1}

@@ -9,6 +9,11 @@ skills it loaded. **No pack content is published here.**
   PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
   `217c751` brief 04h, the Artix-7 family and device layers; earlier: `16696e6` PR #6 brief 04f, `6db99dd` PR #5 04e,
   `5fa656fb8312` PR #4 04c, `238fec497e24` PR #3 04d, `6a677334d5c4` PR #2 F1A2).
+- **Vivado version the bank was measured on: 2025.2** (brief 21, 2026-11-10). Every version-bound fact (rule severities, command
+  options, IP versions, measured numbers, cited guide versions) is indexed with the version it was verified on in the private
+  repo's `claims/`; its `docs/VERSION_UPGRADE.md` is the procedure for a new version (probe, diff, review, re-pin here, regression,
+  switch). `flow/version_pin.py` holds this version; each build's `gates.json` carries `vivado_version`, `kb_measured_version` and
+  `kb_version_match`. Re-pinning for a new version updates this line, the hashes below and `KB_MEASURED_VERSION`.
 - Generic source: the private repository `BrendanJamesLynskey/RTL_Knowledge_Pack`, annotated tag `v3.0`, commit
   `b2ae875e0d7572fc16ff80a4576cac4de4b92efd` (33 skills; v3 adds five vendor-neutral RTL implementation skills from
   AMD UG949 chapter 3 and no sections). `v2.2` (`6f99fbdae4409e4f740ee17a61e4cdf797ac405f`, 28 skills) is superseded;
