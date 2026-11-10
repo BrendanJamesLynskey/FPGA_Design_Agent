@@ -4,7 +4,7 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `5214d50` (main, 2026-11-10; merges PR #29 `qr-area1-xpm` and PR #30 `qr-area3-kb`, after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
+- Private repo commit: `fb0108d` (main, 2026-11-10; merges PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
   LUT6 fabric design, Vivado synthesis attributes and inference templates, STA report interpretation; earlier: `d6679f5`
   PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
   `217c751` brief 04h, the Artix-7 family and device layers; earlier: `16696e6` PR #6 brief 04f, `6db99dd` PR #5 04e,
@@ -40,7 +40,7 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `vendor/free_simulators/` | vendor: free-simulator capabilities and cocotb_coverage usage (ours, from the owner's matrix and the cocotb-coverage 2.0 source) | 2 (2026-11-07, 07a2 fix 3) | 3 | 5 | 9,878 (<= 10,000) | 887 | 2,470 | `c347615e5d85ed66890b9a6e6167e4ea1466783c19979de3b53d8cbcfddf857d` |
 | `vendor/vivado_synthesis/` | vendor: Vivado synthesis attributes and inference templates (ours, from UG901/UG912/UG949) | 1 (2026-11-03, 04j) | 3 | 5 | 14,822 (<= 16,000) | 1,225 | 3,706 | `c13e776b78daf0e6ff070bd97a632cb05777a674d80ed1d8808b4cfc1fc9aeaf` |
 | `vendor/ross_shipped/` | vendor: Ross as shipped | Ross release 2026.10.1 | 50 | 1,195 | 918,458 (none) | 12,578 | 225,565 | `3d2cf1b50012d4676a3b432f0725b00848795059224f913935e37cc98846e773` |
-| `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 4 (2026-11-03, 04j) | 43 | 58 | 215,505 (<= 222,000) | 16,135 | 53,876 | `4c6ac5962261582fecdc7502263fd12af9fb313b1bb887f755667b05b8c031d0` |
+| `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 4 (2026-11-03, 04j) | 43 | 58 | 214,901 (<= 222,000) | 16,135 | 53,725 | `a322453c85f8b781283e2a65d83ab398d23d1e855206a24c41d6de7261d57ae6` |
 | `device/xc7a100tcsg324-1/` | device: the part on the Nexys A7-100T (xc7a100tcsg324-1) | 2 (2026-11-03, 04j: +1 primitives) | 5 | 11 | 16,295 (<= 18,000) | 2,992 | 4,074 | `a92427e0c7a38d2a6c4409c265cfdf19b5fbc37636d53234bac16e5d5b7ffad7` |
 | `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
 | `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 5 (2026-11-04: the V2 skill names the `V_*` checker macros) | 15 | 19 | 58,020 (<= 72,000) | 4,048 | 14,505 | `dd75d279863dd2e73d546d5990c61d0fbd2a6927b87791514068434cc5d85f15` |
@@ -112,7 +112,7 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `vendor/ross_distilled/` | `timing-methodology` | tool-flow | 4 | 17,913 | `2fbc4f783120d8b4f77fafae89d1af6eac79ec81a2c9eceb71ac7dba78897347` |
 | `vendor/vivado_synthesis/` | `synthesis-attributes` | tool-flow | 3 | 14,822 | `8bd801b4e758e32657dfa46e0dc9b117a8a76cb39bfc93a47de3aa553c886797` |
 | `family/artix7/` | `analog` | function | 1 | 4,513 | `67821cec9f1c40a7b5f1adcb5bb9d473f821789a5202c0e1d2e5c1c0332f9680` |
-| `family/artix7/` | `cdc` | technique | 6 | 33,691 | `6e30157292808711bb9dfee8f874dfa7d5dde537c9030b2c925addef94943186` |
+| `family/artix7/` | `cdc` | technique | 6 | 33,087 | `f2a4933f4632499679594afdb68c0b00511f277b0e548eb1ac3fc14b729be3de` |
 | `family/artix7/` | `clocking` | technique | 5 | 26,529 | `3a8ab89698b557cc3baba5108a2de603c57dbb477b82f695e1abe9faa5386903` |
 | `family/artix7/` | `dram` | function | 1 | 3,661 | `24cb37aa9fd9f7eb1e02b77ab24f121770abdeacb5d04a360b5b4344dfd1cef1` |
 | `family/artix7/` | `dsp` | function | 2 | 9,600 | `05a316e77b7e68f741785974c44783fa9fc32b76600f358a468b3e00be037bfc` |

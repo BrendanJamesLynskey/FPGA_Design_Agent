@@ -93,8 +93,9 @@ the power figures changed, for a reason unrelated to the added reports (see `res
    timed as a synchronous path. [flow/xpm_cdc.tcl](../flow/xpm_cdc.tcl), sourced by `flow/build.tcl` right after
    `synth_design`, applies the same rules by cell name (a false path to the first synchroniser stage, `max_delay
    -datapath_only` plus `set_bus_skew` for Gray buses, `max_delay -datapath_only` on handshake data). The rules come
-   from the CDC soak rig, where they were proven; **the flow's copy has not yet been re-run in Vivado**, and
-   `xpm_cdc_pulse` and `xpm_cdc_async_rst` get no exception. `report_cdc` alone is not the CDC gate: it does not flag
+   from the CDC soak rig, where they were proven. Re-run through the flow on the same probe (2026-11-10): both
+   `report_cdc` rows now carry their exception and the clk_a -> clk_b setup WNS is +8.891 ns (was -1.364 ns).
+   `xpm_cdc_pulse` and `xpm_cdc_async_rst` get no exception yet. `report_cdc` alone is not the CDC gate: it does not flag
    every mutant type the soak rig injects (see [hil/cdc_soak](../hil/cdc_soak/README.md)).
 
 ## The agent's stage machine (for brief 05, F2)
