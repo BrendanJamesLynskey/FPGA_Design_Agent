@@ -2,14 +2,14 @@
  "build": "full",
  "utilisation": {
   "lut": {
-   "used": 34658.0,
+   "used": 35872.0,
    "available": 63400,
-   "pct": "54.67"
+   "pct": "56.58"
   },
   "ff": {
-   "used": 55712.0,
+   "used": 56218.0,
    "available": 126800,
-   "pct": "43.94"
+   "pct": "44.34"
   },
   "lutram": {
    "used": 942.0,
@@ -33,23 +33,23 @@
   }
  },
  "power": {
-  "total_w": 0.827,
-  "dynamic_w": 0.727,
+  "total_w": 0.776,
+  "dynamic_w": 0.676,
   "static_w": 0.1,
-  "tj_c": 28.8,
+  "tj_c": 28.5,
   "theta_ja_c_per_w": 4.6,
-  "max_ambient_c": 81.2,
+  "max_ambient_c": 81.5,
   "confidence": "Medium"
  },
  "timing": {
-  "wns_ns": 0.328,
+  "wns_ns": 0.308,
   "tns_ns": 0.0,
   "setup_failing": 0,
-  "setup_endpoints": 103788,
-  "whs_ns": 0.034,
+  "setup_endpoints": 104099,
+  "whs_ns": 0.032,
   "ths_ns": 0.0,
   "hold_failing": 0,
-  "hold_endpoints": 101140,
+  "hold_endpoints": 101211,
   "wpws_ns": 1.5,
   "met": true
  },
@@ -58,10 +58,10 @@
   "waived_endpoints": {
    "CDC-1": 10,
    "CDC-2": 30,
-   "CDC-6": 2396,
+   "CDC-6": 2636,
    "CDC-7": 336,
    "CDC-10": 10,
-   "CDC-11": 20,
+   "CDC-11": 260,
    "CDC-15": 1088
   },
   "clock_pairs": [
@@ -71,8 +71,8 @@
     "to": "clk_a",
     "type": "No Common Primary Clock",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 140,
-    "safe": 140,
+    "endpoints": 145,
+    "safe": 145,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -83,8 +83,20 @@
     "to": "clk_a",
     "type": "Safely Timed",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 27,
-    "safe": 27,
+    "endpoints": 32,
+    "safe": 32,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_f_u",
+    "to": "clk_a",
+    "type": "User Ignored",
+    "exceptions": "False Path",
+    "endpoints": 1,
+    "safe": 1,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -95,8 +107,8 @@
     "to": "clk_b",
     "type": "No Common Primary Clock",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 173,
-    "safe": 173,
+    "endpoints": 181,
+    "safe": 181,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -107,8 +119,8 @@
     "to": "clk_c_u",
     "type": "Safely Timed",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 122,
-    "safe": 122,
+    "endpoints": 126,
+    "safe": 126,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -137,8 +149,8 @@
     "to": "clk_a",
     "type": "No Common Primary Clock",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 1218,
-    "safe": 1206,
+    "endpoints": 1223,
+    "safe": 1211,
     "unsafe": 9,
     "unknown": 3,
     "no_async_reg": 9
@@ -149,11 +161,23 @@
     "to": "clk_b",
     "type": "No Common Primary Clock",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 1543,
-    "safe": 1335,
+    "endpoints": 1551,
+    "safe": 1343,
     "unsafe": 12,
     "unknown": 196,
     "no_async_reg": 12
+   },
+   {
+    "severity": "Critical",
+    "from": "clk_f_u",
+    "to": "clk_b",
+    "type": "No Common Primary Clock",
+    "exceptions": "Max Delay Datapath Only",
+    "endpoints": 480,
+    "safe": 240,
+    "unsafe": 240,
+    "unknown": 0,
+    "no_async_reg": 0
    },
    {
     "severity": "Critical",
@@ -161,8 +185,8 @@
     "to": "clk_c_u",
     "type": "Safely Timed",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 1232,
-    "safe": 1076,
+    "endpoints": 1236,
+    "safe": 1080,
     "unsafe": 9,
     "unknown": 147,
     "no_async_reg": 9
@@ -173,20 +197,20 @@
     "to": "clk_a",
     "type": "Safely Timed",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 89,
-    "safe": 89,
+    "endpoints": 94,
+    "safe": 94,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
    },
    {
-    "severity": "Warning",
+    "severity": "Info",
     "from": "clk_f_u",
-    "to": "clk_b",
-    "type": "No Common Primary Clock",
+    "to": "clk_a",
+    "type": "User Ignored",
     "exceptions": "False Path",
-    "endpoints": 240,
-    "safe": 240,
+    "endpoints": 1,
+    "safe": 1,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -250,21 +274,21 @@
   }
  },
  "bus_skew": {
-  "constraints": 269,
-  "worst_slack_ns": 3.402,
-  "largest_skew_ns": 2.031,
+  "constraints": 289,
+  "worst_slack_ns": 0.295,
+  "largest_skew_ns": 3.629,
   "met": true
  },
  "stages_s": {
-  "synth": 398.2,
-  "constraints": 428.8,
-  "opt": 478.1,
-  "place": 762.9,
-  "phys_opt": 785.4,
-  "route": 967.6,
-  "reports": 1138.9,
-  "bitstream": 1205.3,
-  "delay_table": 1259.8
+  "synth": 556.9,
+  "constraints": 599.3,
+  "opt": 671.5,
+  "place": 1099.2,
+  "phys_opt": 1130.8,
+  "route": 1451.1,
+  "reports": 1695.0,
+  "bitstream": 1788.6,
+  "delay_table": 1879.9
  },
  "cdc_ids_by_variant": {
   "C1": {
@@ -281,8 +305,8 @@
    "CDC-3 Info": 21
   },
   "C13": {
+   "CDC-3 Info": 44,
    "CDC-6 Warning (waived)": 24,
-   "CDC-3 Info": 24,
    "CDC-15 Warning (waived)": 192
   },
   "C2": {
@@ -355,10 +379,12 @@
    "CDC-3 Info": 120
   },
   "M6B": {
-   "CDC-6 Warning (waived)": 10
+   "CDC-11 Critical (waived)": 120,
+   "CDC-6 Warning (waived)": 20
   },
   "M6C": {
-   "CDC-6 Warning (waived)": 10
+   "CDC-11 Critical (waived)": 120,
+   "CDC-6 Warning (waived)": 20
   },
   "M7": {
    "CDC-3 Info": 20
@@ -372,5 +398,5 @@
    "CDC-15 Warning (waived)": 160
   }
  },
- "vivado_peak_rss_mb": 3358
+ "vivado_peak_rss_mb": 3369
 }

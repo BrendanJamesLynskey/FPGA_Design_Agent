@@ -7,7 +7,7 @@
 #                       data path delay (max corner and min corner, ns)
 #   delays_copies.csv   one row per copy: crossing endpoints, the largest and smallest max-corner delay, and the
 #                       skew of each multi-bit bus (max - min over its bits, max corner); the largest such skew.
-#                       The checker's own reference crossings (u_ref, the storm-request synchroniser pbd_rq_s) are
+#                       The checker's own reference crossings (u_ref, the storm-request synchroniser pbd_rq_s, C13's reset-flag synchroniser pbs_rr_s, the M6b/M6c reference bank rsyn) are
 #                       listed in delays_paths.csv with role "reference" and left out of the per-copy figures.
 
 proc rig_delay_table {out counts} {
@@ -44,7 +44,7 @@ proc rig_delay_table {out counts} {
     dict for {key r} $rows {
         set g [dict get $r g]
         set cp [dict get $map $g]
-        set role [expr {[regexp {[./]u_ref/|[./]pbd_rq_s/} [dict get $r end]] ? "reference" : "crossing"}]
+        set role [expr {[regexp {[./]u_ref/|[./]pbd_rq_s/|[./]pbs_rr_s/|[./]pbd_rsyn_g} [dict get $r end]] ? "reference" : "crossing"}]
         puts $fh [join [list $g [lindex $cp 1] [lindex $cp 4] [lindex $cp 3] $role [dict get $r from] [dict get $r to] \
             [dict get $r start] [dict get $r end] [dict get $r max] [dict get $r min]] ,]
         if {[dict get $r max] ne "" && $role eq "crossing"} {

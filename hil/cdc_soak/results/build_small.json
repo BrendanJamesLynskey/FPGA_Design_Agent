@@ -2,14 +2,14 @@
  "build": "small",
  "utilisation": {
   "lut": {
-   "used": 3354.0,
+   "used": 3533.0,
    "available": 63400,
-   "pct": "5.29"
+   "pct": "5.57"
   },
   "ff": {
-   "used": 5305.0,
+   "used": 5405.0,
    "available": 126800,
-   "pct": "4.18"
+   "pct": "4.26"
   },
   "lutram": {
    "used": 79.0,
@@ -33,8 +33,8 @@
   }
  },
  "power": {
-  "total_w": 0.28,
-  "dynamic_w": 0.182,
+  "total_w": 0.277,
+  "dynamic_w": 0.18,
   "static_w": 0.098,
   "tj_c": 26.3,
   "theta_ja_c_per_w": 4.6,
@@ -42,14 +42,14 @@
   "confidence": "Medium"
  },
  "timing": {
-  "wns_ns": 0.689,
+  "wns_ns": 0.48,
   "tns_ns": 0.0,
   "setup_failing": 0,
-  "setup_endpoints": 9906,
-  "whs_ns": 0.019,
+  "setup_endpoints": 10050,
+  "whs_ns": 0.023,
   "ths_ns": 0.0,
   "hold_failing": 0,
-  "hold_endpoints": 9686,
+  "hold_endpoints": 9806,
   "wpws_ns": 1.5,
   "met": true
  },
@@ -58,10 +58,10 @@
   "waived_endpoints": {
    "CDC-1": 1,
    "CDC-2": 3,
-   "CDC-6": 202,
+   "CDC-6": 226,
    "CDC-7": 48,
    "CDC-10": 1,
-   "CDC-11": 2,
+   "CDC-11": 26,
    "CDC-15": 96
   },
   "clock_pairs": [
@@ -71,8 +71,8 @@
     "to": "clk_a",
     "type": "No Common Primary Clock",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 10,
-    "safe": 10,
+    "endpoints": 12,
+    "safe": 12,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -83,8 +83,20 @@
     "to": "clk_a",
     "type": "User Ignored",
     "exceptions": "False Path",
-    "endpoints": 2,
-    "safe": 2,
+    "endpoints": 3,
+    "safe": 3,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_f_u",
+    "to": "clk_a",
+    "type": "User Ignored",
+    "exceptions": "False Path",
+    "endpoints": 1,
+    "safe": 1,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -95,8 +107,8 @@
     "to": "clk_b",
     "type": "No Common Primary Clock",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 36,
-    "safe": 36,
+    "endpoints": 37,
+    "safe": 37,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -137,11 +149,23 @@
     "to": "clk_b",
     "type": "No Common Primary Clock",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 321,
-    "safe": 269,
+    "endpoints": 322,
+    "safe": 270,
     "unsafe": 3,
     "unknown": 49,
     "no_async_reg": 3
+   },
+   {
+    "severity": "Critical",
+    "from": "clk_f_u",
+    "to": "clk_b",
+    "type": "No Common Primary Clock",
+    "exceptions": "Max Delay Datapath Only",
+    "endpoints": 48,
+    "safe": 24,
+    "unsafe": 24,
+    "unknown": 0,
+    "no_async_reg": 0
    },
    {
     "severity": "Warning",
@@ -149,20 +173,8 @@
     "to": "clk_a",
     "type": "No Common Primary Clock",
     "exceptions": "Max Delay Datapath Only",
-    "endpoints": 51,
-    "safe": 51,
-    "unsafe": 0,
-    "unknown": 0,
-    "no_async_reg": 0
-   },
-   {
-    "severity": "Warning",
-    "from": "clk_f_u",
-    "to": "clk_b",
-    "type": "No Common Primary Clock",
-    "exceptions": "False Path",
-    "endpoints": 24,
-    "safe": 24,
+    "endpoints": 53,
+    "safe": 53,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -173,8 +185,20 @@
     "to": "clk_a",
     "type": "User Ignored",
     "exceptions": "False Path",
-    "endpoints": 2,
-    "safe": 2,
+    "endpoints": 3,
+    "safe": 3,
+    "unsafe": 0,
+    "unknown": 0,
+    "no_async_reg": 0
+   },
+   {
+    "severity": "Info",
+    "from": "clk_f_u",
+    "to": "clk_a",
+    "type": "User Ignored",
+    "exceptions": "False Path",
+    "endpoints": 1,
+    "safe": 1,
     "unsafe": 0,
     "unknown": 0,
     "no_async_reg": 0
@@ -240,21 +264,21 @@
   }
  },
  "bus_skew": {
-  "constraints": 21,
-  "worst_slack_ns": 3.511,
-  "largest_skew_ns": 1.575,
+  "constraints": 23,
+  "worst_slack_ns": 0.696,
+  "largest_skew_ns": 1.57,
   "met": true
  },
  "stages_s": {
-  "synth": 80.0,
-  "constraints": 88.8,
-  "opt": 97.0,
-  "place": 122.5,
-  "phys_opt": 124.6,
-  "route": 170.6,
-  "reports": 189.9,
-  "bitstream": 225.3,
-  "delay_table": 229.0
+  "synth": 125.4,
+  "constraints": 138.6,
+  "opt": 152.1,
+  "place": 193.7,
+  "phys_opt": 197.1,
+  "route": 274.3,
+  "reports": 308.7,
+  "bitstream": 355.8,
+  "delay_table": 362.0
  },
  "cdc_ids_by_variant": {
   "C1": {
@@ -271,8 +295,8 @@
    "CDC-3 Info": 3
   },
   "C13": {
+   "CDC-3 Info": 4,
    "CDC-6 Warning (waived)": 2,
-   "CDC-3 Info": 2,
    "CDC-15 Warning (waived)": 16
   },
   "C2": {
@@ -345,10 +369,12 @@
    "CDC-3 Info": 12
   },
   "M6B": {
-   "CDC-6 Warning (waived)": 1
+   "CDC-11 Critical (waived)": 12,
+   "CDC-6 Warning (waived)": 2
   },
   "M6C": {
-   "CDC-6 Warning (waived)": 1
+   "CDC-11 Critical (waived)": 12,
+   "CDC-6 Warning (waived)": 2
   },
   "M7": {
    "CDC-3 Info": 2
@@ -362,5 +388,5 @@
    "CDC-15 Warning (waived)": 16
   }
  },
- "vivado_peak_rss_mb": 2627
+ "vivado_peak_rss_mb": 2625
 }

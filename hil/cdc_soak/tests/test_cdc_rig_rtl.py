@@ -29,13 +29,14 @@ RTL = [RIG / "rtl" / f for f in ("rig_pkg.sv", "cdc_lib.sv", "rig_check.sv", "af
 
 QUICK = os.environ.get("CDC_SIM_QUICK") == "1"
 
-# Predictions (design section 2). "fast": caught within the run; "zero": expected 0 (reported, not asserted);
-# per-direction exceptions where the mechanism needs a slower destination.
+# Predictions (design section 2, updated by brief 11c). "fast": caught within the run; "zero": expected 0 (reported, not
+# asserted); per-direction exceptions where the mechanism needs a slower destination. M6c is caught by the tear check
+# (the padded Gray bank against a correct one on the same edges), 24 padded stages = three source periods in the model.
 FAST = {"M2", "M3", "M5", "M6c", "M7", "M8", "M9", "M10", "M11"}
 REPORT_ONLY = {"M1": "uncertain (real metastability; not modelled beyond one extra cycle)",
                "M1b": "probably 0 (a single flop with full slack behaves like a synchroniser)",
                "M6a": "probably 0 (skew below one source period)",
-               "M6b": "seconds once routed skew > 4 ns; the model's 4 x 1 ns padding sits exactly at the limit",
+               "M6b": "0 expected: 4 padded stages are about 2 ns in the model (0.5 ns a stage), under one source period",
                "M4": "seconds far/boundary, possibly 0 near"}
 
 

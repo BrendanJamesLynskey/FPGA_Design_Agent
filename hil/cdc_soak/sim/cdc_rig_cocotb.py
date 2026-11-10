@@ -73,6 +73,11 @@ async def run_rig(dut):
         def n_e():
             return sum(ln.startswith("E,") for ln in state["lines"])
 
+        if os.environ.get("CDC_DBG"):
+            await Timer(30, unit="us")
+            c = dut.u_core
+            dut._log.info("DBG q_run=%s rdy_x=%s qf=%s run_f=%s por_f=%s", c.q_run.value, c.rdy_x.value, c.qf.value,
+                          c.run_f.value, c.por_f.value)
         injected = False
         while not (n_e() >= epochs and c_after_last_e() >= ntot):
             await Timer(20, unit="us")

@@ -43,6 +43,26 @@ dict for {key cs} $groups {
 }
 puts "rig_cdc: max_delay + bus_skew on $ngray Gray buses"
 
+# --- 3b. M6b/M6c reference banks (rsyn_*, brief 11c): the undelayed Gray register captured by a correct bank. Its
+#         skew must stay below one period of the 250 MHz source (4 ns), or the reference itself tears: bus_skew 2 ns.
+set nrsyn 0
+set rgroups [dict create]
+foreach c [cells_like *rsyn_g*] {
+    if {[string match *rsyn_g2* [get_property NAME $c]]} { continue }
+    regsub {\[\d+\]$} [get_property NAME $c] {} key
+    regsub {/g\.r_reg$} $key {} key
+    dict lappend rgroups $key $c
+}
+dict for {key cs} $rgroups {
+    set ends [pins_of $cs D]
+    set starts [get_cells -quiet -of_objects [all_fanin -quiet -startpoints_only -flat $ends]]
+    if {[llength $starts] == 0} { continue }
+    set_max_delay -datapath_only -from $starts -to $ends 6.000
+    set_bus_skew -from $starts -to $ends 2.000
+    incr nrsyn
+}
+puts "rig_cdc: max_delay + bus_skew (2 ns) on $nrsyn M6b/M6c reference banks"
+
 # --- 4. data held stable by a handshake (C8, M11) or by FIFO pointers (C10, C13, M9 LUT RAM reads)
 set hs [cells_like *hsd_*]
 if {[llength $hs]} {
@@ -174,13 +194,21 @@ puts "rig_cdc: waivers on $nw mutant endpoint groups"
 #        CDC-15 (clock-enable controlled) rows of data held stable by a handshake or FIFO. AMD's XPM scripts waive
 #        the same rows for their macros; the hand-built C6/C8/C10/C13 (and M9/M11, whose data path is correct) get
 #        the same treatment, with the constraint that makes them safe named in the description.
-set gends [pins_of [cells_like *gsyn_*] D]
+set gends [pins_of [concat [cells_like *gsyn_*] [cells_like *rsyn_g*]] D]
 if {[llength $gends]} {
     create_waiver -quiet -type CDC -id CDC-6 -to $gends -description "correct: Gray-coded bus, set_max_delay -datapath_only + set_bus_skew per bus"
 }
 set xgends [pins_of [cells_like *dest_graysync_ff_reg?0?*] D]
 if {[llength $xgends]} {
     create_waiver -quiet -type CDC -id CDC-6 -to $xgends -description "correct: xpm_cdc_gray (as AMD's xpm_cdc_gray.tcl), max_delay + bus_skew applied here"
+}
+# the M6b/M6c reference bank (rsyn_g) shares its launch flops with the padded mutant bank: CDC-11 (fan-out from a
+# launch flop to the destination clock) is the deliberate shape of the measurement, so it is waived by name here
+set rcells {}
+foreach c [cells_like *rsyn_g*] { if {![string match *rsyn_g2* [get_property NAME $c]]} { lappend rcells $c } }
+set rends [pins_of $rcells D]
+if {[llength $rends]} {
+    create_waiver -quiet -type CDC -id CDC-11 -to $rends -description "M6b/M6c reference bank: the launch flops also feed the padded mutant bank (brief 11c)"
 }
 set hends [pins_of [concat [cells_like *hsd_*] [cells_like *ramrd_*] [cells_like *dest_hsdata_ff_reg*]] D]
 if {[llength $hends]} {

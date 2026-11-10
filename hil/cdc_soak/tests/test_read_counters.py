@@ -74,3 +74,30 @@ def test_follow_stops_when_epochs_are_missed() -> None:
 def test_follow_ends_cleanly() -> None:
     src = io.StringIO(line("H,CDCRIG,001,00000000") + line("E,0000,0000003C,9A0,555,0FDE8,0"))
     assert rc.follow(src, None, 60, 80.0) == 0
+
+
+def test_summary_reads_the_csv_it_wrote_and_only_complete_epochs(tmp_path: Path, capsys) -> None:
+    """Brief 11c: --summary accepts the CSV from --csv; an epoch is written over ~1.3 s, so a read that stops inside
+    one (here epoch 1 has 1 of 2 copies, with an error) must not count it."""
+    log = (line("H,CDCRIG,002,00000000") + line("E,0000,0000003C,9A0,555,0FDE8,0") +
+           line("C,000,00,0,0,000000,00000020,00,00,0") + line("C,001,0E,1,0,000000,00000010,00,00,0") +
+           line("E,0001,00000078,9A0,555,0FDE8,0") + line("C,000,00,0,0,000007,00000040,00,00,0"))
+    csv_path = tmp_path / "run.csv"
+    assert rc.follow(io.StringIO(log), csv_path, 60, 80.0) == 0
+    run = rc.run_from_csv(csv_path)
+    assert run.complete_epochs() == [0]
+    pv = run.per_variant()
+    assert pv["C1"]["errors"] == 0 and pv["C1"]["events"] == 0x20, "the partial epoch's error is not read"
+    assert rc.main(["--file", str(csv_path), "--summary"]) == 0
+    out = capsys.readouterr().out
+    assert "epoch 0 (latest complete)" in out and "complete 1" in out
+
+
+def test_csv_without_the_copy_count_still_finds_complete_epochs(tmp_path: Path) -> None:
+    """CSVs of the first smoke runs carry no copy count on the H row: the largest epoch is taken as complete."""
+    p = tmp_path / "old.csv"
+    p.write_text("host_time,kind,epoch,variant,copy,errors,events,lockups,relocks,sat\n"
+                 "1,H,,,,,,,,\n1,E,0,,,,,,,\n1,C,,C1,0,0,5,0,0,0\n1,C,,M1,1,0,6,0,0,0\n"
+                 "1,E,1,,,,,,,\n1,C,,C1,0,9,9,0,0,0\n")
+    run = rc.run_from_csv(p)
+    assert run.complete_epochs() == [0] and run.per_variant()["C1"]["errors"] == 0

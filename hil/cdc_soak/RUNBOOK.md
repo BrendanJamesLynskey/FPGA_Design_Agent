@@ -1,8 +1,9 @@
 # CDC soak rig: run plan for the owner
 
-This is the plan for the board runs of the CDC soak rig ([README](README.md)). **Nothing here has been run on the
-board yet.** Board runs need the owner's yes, and the owner must be at the board for every first smoke run and for
-the first 15 minutes of every soak.
+This is the plan for the board runs of the CDC soak rig ([README](README.md)). The 11b bitstreams had one smoke hour
+each on 2026-11-10 and failed three rules (an a->c start-up error, C13 under storms, M6c not caught); brief 11c fixed
+them in the RTL and the checkers, and **the 11c bitstreams have not been run on the board yet**. Board runs need the
+owner's yes, and the owner must be at the board for every first smoke run and for the first 15 minutes of every soak.
 
 ## Before any run
 
@@ -41,7 +42,10 @@ python3 hil/cdc_soak/host/read_counters.py --port /dev/serial/by-id/<the board's
   VCCINT codes, the measured CFGMCLK frequency, the storm mode) followed by one `C` line per copy (errors, events,
   lock-ups, relocks, saturation). About 14 kB per epoch for the full build, 1.3 s at 115,200 baud; traffic is paused while it is sent.
 - The script only reads. It checks every line's CRC-8, appends to the CSV with the host time, and prints one status
-  line per epoch. `--file <log> --summary` gives the per-variant totals afterwards.
+  line per epoch. `--file <log or csv> --summary` gives the per-variant totals afterwards; it takes the UART log or
+  the CSV the script wrote, and reads **only the latest complete epoch** (an epoch is written over about 1.3 s, so the
+  latest record of every copy can mix two epochs: an early summary of the first smoke runs read a partial epoch and
+  reported all C variants clean).
 - Join the CSV with `build/full/delays_copies.csv` (per-copy routed delay and skew) on the copy number.
 
 ## Smoke run (1 hour per bitstream, owner present)
@@ -49,13 +53,20 @@ python3 hil/cdc_soak/host/read_counters.py --port /dev/serial/by-id/<the board's
 1. Program the small build first (`rig_small.bit`, 28 copies), then the full build (`rig_full.bit`, 352 copies).
 2. Watch the first `E` line: Tj should read about room temperature plus a few degrees, VCCINT about 1,000 mV, and
    CFGMCLK somewhere in 32,000-98,000 kHz (typically about 65,000).
-3. Pass rules for the smoke hour (the rig is broken if any fails):
-   - every correct variant (C1-C13): 0 errors and 0 lock-ups (C8-C13 show relocks: one at power-up, and one per
-     reset event for the stormed ones; relocks are not errors);
+3. Pass rules for the smoke hour (the rig is broken if any fails). Read the last **complete** epoch (see above):
+   - every correct variant (C1-C13): 0 errors and 0 lock-ups, **from epoch 0** and in every direction including a->c
+     (the sources start only when all four domains are out of reset and settled, so the 11b start-up error in the
+     a->c copies must not appear; one error at epoch 0 that never grows is a failure of the start-up gate). C8-C13
+     show relocks (one at power-up and one per reset event for the stormed ones; relocks are not errors, and the
+     8-bit relock counter saturates at 255 within a second of the storms, so it says only that the storms arrived).
+     C13 is checked in the storms too (a->b, b->a, a->c: 0 errors);
    - the mutants the design predicts to fail in seconds (M2, M3, M5 into a slower clock, M6c, M7, and after the
      10-minute storm delay M8, M9, M11, and M10 except its b->a copies, whose raw reset is already
-     synchronous to their clock) have non-zero errors or lock-ups;
+     synchronous to their clock) have non-zero errors or lock-ups. M6c is caught by its tear check (padded Gray
+     bank against a correct one on the same edges, 24 padded stages), no longer by the step check alone;
    - M1, M1b, M4 (near copies), M6a and M6b are recorded as they come: the design predicts 0 or "uncertain" for them.
+     M6a (skew below one source period) and M6b (4 padded stages, a skew near one source period) are expected 0;
+     an error in either is a finding, not a failure.
 4. Tj must level off within the hour. Stop the run if it keeps rising past 70 degC.
 
 ## Soak (12-24 h)

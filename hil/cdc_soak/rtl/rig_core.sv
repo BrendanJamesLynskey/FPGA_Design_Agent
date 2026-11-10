@@ -19,6 +19,7 @@ module rig_core #(
     parameter int UART_DIV      = 868,
     parameter int DRAIN         = 1024,
     parameter int WDB           = 16,
+    parameter int SETTLE        = 255,          // start-up: cycles a domain settles after its reset (dom_rdy)
     parameter int TJ_STOP       = 2871,
     parameter logic [31:0] BUILD_ID = 32'h0
 ) (
@@ -104,8 +105,29 @@ module rig_core #(
     rst_bridge u_lock_f (.clk(clk_f), .arst_in(!locked), .sync_in(1'b0), .rst_out(lk_f));
     rst_bridge u_por_f  (.clk(clk_f), .arst_in(por_a), .sync_in(lk_f), .rst_out(por_f));
 
-    // ---------------------------------------------------------------- epoch control and readout
+    // ---------------------------------------------------------------- start-up gate
+    // Every domain reports ready (its reset released and SETTLE cycles gone) to clk_a; until all four have, the
+    // sources are held off through the same quiesce request the epochs use, so no checker counts before both of
+    // its domains are running and settled (brief 11c). Nothing is masked afterwards.
+    logic [3:0] rdy_x, rdy_s;
+    dom_rdy #(.SETTLE(SETTLE)) u_rdy_a (.clk(clk_a), .por(por_a), .rdy(rdy_x[0]));
+    dom_rdy #(.SETTLE(SETTLE)) u_rdy_b (.clk(clk_b), .por(por_b), .rdy(rdy_x[1]));
+    dom_rdy #(.SETTLE(SETTLE)) u_rdy_c (.clk(clk_c), .por(por_c), .rdy(rdy_x[2]));
+    dom_rdy #(.SETTLE(SETTLE)) u_rdy_f (.clk(clk_f), .por(por_f), .rdy(rdy_x[3]));
+    assign rdy_s[0] = rdy_x[0];
+    for (genvar d = 1; d < 4; d++) begin : g_rdy
+        wire dclk = d == 1 ? clk_b : d == 2 ? clk_c : clk_f;
+        xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1)) u_r (.src_clk(dclk), .src_in(rdy_x[d]), .dest_clk(clk_a), .dest_out(rdy_s[d]));
+    end
     logic q_req, storm_en, stopped;
+    logic q_run = 1'b1;
+`ifdef CDC_NO_STARTUP_GATE
+    always_ff @(posedge clk_a) q_run <= q_req;                    // simulation only: the first boards' behaviour
+`else
+    always_ff @(posedge clk_a) q_run <= q_req || !(&rdy_s);      // a clk_a register, as ro_dom expects
+`endif
+
+    // ---------------------------------------------------------------- epoch control and readout
     logic [2:0] sh_tgl, frz_s, bit_s, ack_s;
     logic [1:0] mode;
     logic [11:0] g;
@@ -118,11 +140,11 @@ module rig_core #(
     logic run_a, run_b, run_c, run_f, hold_a, hold_b, hold_c, frz_a, frz_b, frz_c, sh_a, sh_b, sh_c;
     wire  [NTOT:0] cha, chb, chc;           // wire: one driver per bit (Icarus merges a logic vector's drivers)
     logic [2:0] bit_x, ack_x, frz_x;
-    ro_dom #(.DRAIN(DRAIN)) u_ro_a (.clk(clk_a), .q_req_a(q_req), .sh_tgl_a(sh_tgl[0]), .tap(cha[NTOT]),
+    ro_dom #(.DRAIN(DRAIN)) u_ro_a (.clk(clk_a), .q_req_a(q_run), .sh_tgl_a(sh_tgl[0]), .tap(cha[NTOT]),
         .run(run_a), .hold(hold_a), .frz(frz_a), .sh(sh_a), .bit_o(bit_x[0]), .ack_o(ack_x[0]));
-    ro_dom #(.DRAIN(DRAIN)) u_ro_b (.clk(clk_b), .q_req_a(q_req), .sh_tgl_a(sh_tgl[1]), .tap(chb[NTOT]),
+    ro_dom #(.DRAIN(DRAIN)) u_ro_b (.clk(clk_b), .q_req_a(q_run), .sh_tgl_a(sh_tgl[1]), .tap(chb[NTOT]),
         .run(run_b), .hold(hold_b), .frz(frz_b), .sh(sh_b), .bit_o(bit_x[1]), .ack_o(ack_x[1]));
-    ro_dom #(.DRAIN(DRAIN)) u_ro_c (.clk(clk_c), .q_req_a(q_req), .sh_tgl_a(sh_tgl[2]), .tap(chc[NTOT]),
+    ro_dom #(.DRAIN(DRAIN)) u_ro_c (.clk(clk_c), .q_req_a(q_run), .sh_tgl_a(sh_tgl[2]), .tap(chc[NTOT]),
         .run(run_c), .hold(hold_c), .frz(frz_c), .sh(sh_c), .bit_o(bit_x[2]), .ack_o(ack_x[2]));
     assign frz_x = {frz_c, frz_b, frz_a};
     for (genvar d = 0; d < 3; d++) begin : g_back
@@ -132,7 +154,7 @@ module rig_core #(
         xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1)) u_k (.src_clk(dclk), .src_in(ack_x[d]), .dest_clk(clk_a), .dest_out(ack_s[d]));
     end
     logic qf;
-    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0)) u_qf (.src_clk(1'b0), .src_in(q_req), .dest_clk(clk_f), .dest_out(qf));
+    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0)) u_qf (.src_clk(1'b0), .src_in(q_run), .dest_clk(clk_f), .dest_out(qf));
     assign run_f = !qf;
 
     // CFGMCLK meter: clk_b cycles per MS_TICKS clk_a cycles (per millisecond = kHz in hardware)

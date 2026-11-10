@@ -137,6 +137,34 @@ module chk_count #(
     end
 endmodule
 
+// Tear checker (M6b, M6c; brief 11c). The step check above cannot see a Gray bus torn by a few source periods when
+// the destination is slower than the source: the decoded value moves by the true step plus a tear of a few counts,
+// which stays under MAXSTEP (the simulation saw M6c only through the 4095 -> 0 wrap, where a one-count tear decodes
+// 4094 counts away; the board's smaller skew never tore there). So the same source register is also captured, in the
+// same destination cycle, by a correct two-flop bank with a bus_skew below one source period (ref); the two decodes
+// must agree to within one count (the capture instants of the two banks differ by under a source period). A
+// stale bit of the padded bank then shows as a difference of two or more counts. err is also raised by the step
+// check, which stays as it was.
+module chk_tear #(
+    parameter int MAXSTEP = 10,
+    parameter int TOL     = 1
+) (
+    input  logic        clk,
+    input  logic [11:0] v,
+    input  logic [11:0] vref,
+    output logic        e_err,
+    output logic        e_ev
+);
+    logic        s_err, s_ev;
+    chk_count #(.MAXSTEP(MAXSTEP)) u_step (.clk(clk), .v(v), .raw(12'd0), .e_err(s_err), .e_ev(s_ev));
+    wire  [11:0] d  = v - vref;
+    wire         ad = d[11] ? (-d) > 12'(TOL) : d > 12'(TOL);           // |v - vref| > TOL (the wrap is not special here)
+    logic        t_err = 1'b0;
+    always_ff @(posedge clk) t_err <= ad;
+    assign e_err = s_err | t_err;
+    assign e_ev  = s_ev;
+endmodule
+
 // Word checker (handshakes and FIFOs): each word must be the PRBS-16 successor of the last. A mismatch is a relock
 // if the budget allows (one per reset event, armed by arm; one at power-up), otherwise an error. The watchdog counts
 // a lock-up when no word arrives for 2^WDB destination cycles while not held (quiesce).

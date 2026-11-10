@@ -133,14 +133,27 @@ class Run:
         else:
             self.bad += 1
 
+    def copy_count(self) -> int | None:
+        """The number of copies: the H line's, or (a CSV written before H carried it) the largest epoch seen."""
+        if self.hello and self.hello.get("copies"):
+            return self.hello["copies"]
+        return max((len(cs) for cs in self.by_epoch.values()), default=None)
+
     def complete_epochs(self) -> list[int]:
-        """Epochs whose C records cover every copy the H line announced."""
-        n = self.hello["copies"] if self.hello else None
+        """Epochs whose C records cover every copy. An epoch is written over about 1.3 s, so a summary that takes the
+        latest record of each copy can mix two epochs (and a read of a running log can stop inside one): summaries
+        use these epochs only."""
+        n = self.copy_count()
         return [e for e, cs in self.by_epoch.items() if n is not None and len(cs) == n]
 
-    def per_variant(self) -> dict[str, dict]:
+    def per_variant(self, epoch: int | None = None) -> dict[str, dict]:
+        """Totals per variant over one epoch's records (default: the latest complete epoch; with none complete, the
+        latest record of each copy)."""
         out: dict[str, dict] = {}
-        for r in self.copies.values():
+        if epoch is None and self.complete_epochs():
+            epoch = self.complete_epochs()[-1]
+        recs = self.by_epoch[epoch].values() if epoch is not None else self.copies.values()
+        for r in recs:
             s = out.setdefault(r["variant"], {"copies": 0, "errors": 0, "events": 0, "lockups": 0, "relocks": 0,
                                               "sat": 0, "copies_with_errors": 0})
             s["copies"] += 1
@@ -151,7 +164,27 @@ class Run:
 
 
 CSV_COLS = ["host_time", "kind", "epoch", "uptime_s", "tj_c", "vccint_mv", "cfgmclk_khz", "storm_mode", "copy",
-            "variant", "cls", "dir", "errors", "events", "lockups", "relocks", "sat", "line"]
+            "variant", "cls", "dir", "errors", "events", "lockups", "relocks", "sat", "line", "copies", "build"]
+_INT_COLS = ("epoch", "uptime_s", "cfgmclk_khz", "storm_mode", "copy", "errors", "events", "lockups", "relocks", "sat",
+             "copies")
+_FLOAT_COLS = ("tj_c", "vccint_mv")
+
+
+def run_from_csv(path: Path) -> Run:
+    """A Run rebuilt from a CSV this script wrote (follow() or --file --csv). C rows follow their E row; the H row
+    carries the copy count only in CSVs written since brief 11c (older ones: the largest epoch is taken as complete)."""
+    run = Run()
+    with path.open(newline="") as fh:
+        for row in csv.DictReader(fh):
+            rec: dict = {k: row[k] for k in row if row.get(k) not in (None, "")}
+            for k in _INT_COLS:
+                if k in rec:
+                    rec[k] = int(rec[k])
+            for k in _FLOAT_COLS:
+                if k in rec:
+                    rec[k] = float(rec[k])
+            run.add(rec)
+    return run
 
 
 def follow(src: TextIO, out_csv: Path | None, epoch_s: float, tj_limit: float, clock=time.monotonic) -> int:
@@ -199,7 +232,9 @@ def follow(src: TextIO, out_csv: Path | None, epoch_s: float, tj_limit: float, c
 
 
 def summary_text(run: Run) -> str:
-    rows = [f"{'variant':8} {'copies':>6} {'errors':>10} {'events':>12} {'lockups':>7} {'relocks':>7} "
+    done = run.complete_epochs()
+    rows = [f"epoch {done[-1]} (latest complete)" if done else "no complete epoch: latest record of each copy",
+            f"{'variant':8} {'copies':>6} {'errors':>10} {'events':>12} {'lockups':>7} {'relocks':>7} "
             f"{'sat':>4} {'copies_w_err':>12}"]
     for v, s in run.per_variant().items():
         rows.append(f"{v:8} {s['copies']:6d} {s['errors']:10d} {s['events']:12d} {s['lockups']:7d} "
@@ -211,7 +246,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     src = ap.add_mutually_exclusive_group(required=True)
     src.add_argument("--port", help="serial device (read only; the board is never programmed from here)")
-    src.add_argument("--file", type=Path, help="a saved UART log")
+    src.add_argument("--file", type=Path, help="a saved UART log, or a CSV this script wrote (--csv)")
     ap.add_argument("--baud", type=int, default=115200)
     ap.add_argument("--csv", type=Path, help="append records to this CSV")
     ap.add_argument("--epoch-s", type=float, default=60.0)
@@ -220,9 +255,13 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     if a.file:
         run = Run()
-        for r in parse_stream(a.file.read_text(errors="replace").splitlines()):
-            run.add(r)
-        if a.csv:
+        text = a.file.read_text(errors="replace")
+        if text.startswith("host_time,"):
+            run = run_from_csv(a.file)
+        else:
+            for r in parse_stream(text.splitlines()):
+                run.add(r)
+        if a.csv and not text.startswith("host_time,"):
             with a.csv.open("w", newline="") as fh:
                 w = csv.DictWriter(fh, fieldnames=CSV_COLS, extrasaction="ignore")
                 w.writeheader()
