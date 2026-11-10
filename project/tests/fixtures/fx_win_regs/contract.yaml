@@ -1,0 +1,25 @@
+schema: fpga-design-agent/contract/v1
+module: fx_win_regs
+summary: test fixture, registers behind the shell window
+parameters:
+  - {name: MUT, default: 0, min: 0, max: 9}
+clocks:
+  - {name: clk, port: clk, max_mhz: 100}
+resets:
+  - {name: rst, port: rst, clock: clk, polarity: active_high, style: sync}
+ports:
+  - {name: clk, dir: in}
+  - {name: rst, dir: in}
+  - {name: win_addr, dir: in, width: 7, clock: clk}
+  - {name: win_wr, dir: in, clock: clk}
+  - {name: win_rd, dir: in, clock: clk}
+  - {name: win_wdata, dir: in, width: 32, clock: clk}
+  - {name: win_rdata, dir: out, width: 32, clock: clk}
+interfaces:
+  - {name: window, protocol: simple, kind: shell-window, role: slave, prefix: win, clock: clk, reset: rst}
+registers:
+  bus: window
+  map:
+    - {name: ID, offset: 0x00, access: RO, reset: 0x46580001}
+    - {name: CTRL, offset: 0x01, access: RW, reset: 0x5, fields: [{name: en, bits: 0}, {name: mode, bits: [3, 1]}]}
+    - {name: SCRATCH, offset: 0x02, access: RW, reset: 0}

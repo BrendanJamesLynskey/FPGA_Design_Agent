@@ -1,0 +1,54 @@
+schema: fpga-design-agent/contract/v1
+module: fx_video_delay
+summary: test fixture, a full-raster video stream delayed by DEPTH clocks
+parameters:
+  - {name: DEPTH, default: 7, min: 1, max: 64}
+  - {name: LINE, default: 12, min: 2, max: 4096}
+  - {name: MUT, default: 0, min: 0, max: 9}
+clocks:
+  - {name: clk, port: clk, max_mhz: 74.25}
+resets:
+  - {name: rst, port: rst, clock: clk, polarity: active_high, style: sync}
+ports:
+  - {name: clk, dir: in}
+  - {name: rst, dir: in}
+  - {name: s_axis_video_tvalid, dir: in, clock: clk}
+  - {name: s_axis_video_tready, dir: out, clock: clk}
+  - {name: s_axis_video_tdata, dir: in, width: 24, clock: clk}
+  - {name: s_axis_video_tuser, dir: in, width: 3, clock: clk}
+  - {name: s_axis_video_tlast, dir: in, clock: clk}
+  - {name: m_axis_video_tvalid, dir: out, clock: clk, reset_value: 0}
+  - {name: m_axis_video_tready, dir: in, clock: clk}
+  - {name: m_axis_video_tdata, dir: out, width: 24, clock: clk}
+  - {name: m_axis_video_tuser, dir: out, width: 3, clock: clk}
+  - {name: m_axis_video_tlast, dir: out, clock: clk}
+interfaces:
+  - name: video_in
+    protocol: axi4-stream
+    role: slave
+    prefix: s_axis_video
+    clock: clk
+    reset: rst
+    tdata: {width: 24, fields: [{name: r, bits: [23, 16], format: u8}, {name: g, bits: [15, 8], format: u8},
+                                {name: b, bits: [7, 0], format: u8}]}
+    tuser: [{bit: 0, name: hs}, {bit: 1, name: vs}, {bit: 2, name: de}]
+    tlast: "last beat of a line"
+    packet_beats: LINE
+    backpressure: false
+    source_gaps: false
+  - name: video_out
+    protocol: axi4-stream
+    role: master
+    prefix: m_axis_video
+    clock: clk
+    reset: rst
+    tdata: {width: 24}
+    tuser: [{bit: 0, name: hs}, {bit: 1, name: vs}, {bit: 2, name: de}]
+    tlast: "last beat of a line"
+    packet_beats: LINE
+    backpressure: false
+    source_gaps: false
+latency:
+  - {from: video_in, to: video_out, cycles: DEPTH}
+throughput:
+  - {interface: video_out, beats_per_cycle: 1, from: video_in, out_per_in: 1}
