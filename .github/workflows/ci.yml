@@ -85,6 +85,8 @@ jobs:
         run: CDC_SIM_QUICK=1 python -m pytest -q hil/cdc_soak/tests
       - name: CDC gate fixtures - the rig's mutants and correct variants, plain and with synchroniser-delay injection (brief 16)
         run: python -m pytest -q flow/tests/test_16_cdc_inject_rtl.py
+      - name: Project layer (brief 27B P0) - generated contract tests on fixture RTL, the reference passes, each mutant fails
+        run: python -m pytest -q project/tests/test_27b_contract_tests_rtl.py
       - name: Mutants (each deliberate bug must fail the T1 tests)
         run: PYTHON=python designs/t1_dimmer_counter/tests/run_mutants.sh
       - name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (brief 06a)

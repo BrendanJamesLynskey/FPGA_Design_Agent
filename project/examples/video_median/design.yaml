@@ -1,0 +1,62 @@
+# Pilot 1 of brief 27 Part B: a two-module video pipeline on the Nexys A7-100T (stage P0: described, not built).
+# 720p colour bars from video_src, through a 3x3 median filter, to the VGA connector; the test shell's register
+# window on the USB-UART. Development-split subjects only (c9_nexys_vga_720p, c9_median3x3); no RGB-to-YCbCr stage.
+# Format: docs/project_layer.md. Check with: python -m project check project/examples/video_median
+schema: fpga-design-agent/project/v1
+name: video_median
+board: nexys_a7_100t
+
+clocks:                                   # one clock and reset plan for the whole design
+  - {name: clk_sys, source: board, port: CLK100MHZ, mhz: 100}
+  - {name: clk_pix, source: mmcm, from: clk_sys, mhz: 74.25}      # CEA-861 720p60 pixel clock
+resets:
+  - {name: rst_sys, domain: clk_sys, polarity: active_high, style: sync, from: BTNC, via: reset_sync}
+  - {name: rst_pix, domain: clk_pix, polarity: active_high, style: sync, from: rst_sys, via: reset_sync}
+
+shell: {design_id: VMED, clock: clk_sys, reset: rst_sys}          # shell/rtl/fpga_shell.sv, window 0x80-0xFF
+
+modules:
+  - name: video_src                       # 720p timing generator and test pattern
+    kind: rtl
+    clocks: {clk: clk_pix}
+    resets: {rst: rst_pix}
+    window_base: 0x00                     # its registers at shell addresses 0x80, 0x81
+    register_crossings: {PATTERN: xpm_cdc_array_single, FRAMES: xpm_cdc_gray}
+  - name: median3x3                       # 3x3 median per colour channel
+    kind: rtl
+    clocks: {clk: clk_pix}
+    resets: {rst: rst_pix}
+    params: {H_TOTAL: 1650}
+
+connections:
+  - {from: video_src.video_out, to: median3x3.video_in}
+
+board_ports:                              # names from the board's master XDC
+  - {name: CLK100MHZ,      dir: in,  drive: input,     to: clk_sys}
+  - {name: BTNC,           dir: in,  drive: input,     to: rst_sys}
+  - {name: UART_TXD_IN,    dir: in,  drive: input,     to: shell.uart_rx}
+  - {name: UART_RXD_OUT,   dir: out, drive: push-pull, from: shell.uart_tx}
+  - {name: "VGA_R[3:0]",   dir: out, drive: push-pull, from: "median3x3.video_out.tdata[23:20]"}
+  - {name: "VGA_G[3:0]",   dir: out, drive: push-pull, from: "median3x3.video_out.tdata[15:12]"}
+  - {name: "VGA_B[3:0]",   dir: out, drive: push-pull, from: "median3x3.video_out.tdata[7:4]"}
+  - {name: VGA_HS,         dir: out, drive: push-pull, from: median3x3.video_out.tuser.hs}
+  - {name: VGA_VS,         dir: out, drive: push-pull, from: median3x3.video_out.tuser.vs}
+  - {name: "LED[0]",       dir: out, drive: push-pull, from: clk_pix.locked}
+
+owned: []                                 # the engineer's own files and regions (none yet)
+
+assumptions:                              # open questions kept as assumptions (phase 0), not guesses
+  - id: A-1
+    text: At the picture's edges the 3x3 window includes blanking pixels, which are 0.
+    default: no special edge handling (blanking counts as black)
+    reason: the user's spec does not say how edges are treated; replicating edge pixels needs more line-buffer logic
+    affects: [S-4, median3x3]
+    status: open
+  - id: A-2
+    text: The pattern is chosen by the PATTERN register, not by the switches.
+    default: PATTERN.sel = 0 (colour bars) after reset; the switches are unused
+    reason: the shell register is testable from the host; the colour-bar spec tested only SW[1:0] = 00
+    affects: [S-3, video_src.contract.registers]
+    status: open
+
+settings: {interview: on, review: on, verif_level: V3}
