@@ -5,3 +5,4 @@ mutants:
   - {name: weights_unsigned, file: systolic4.sv, find: "logic signed [7:0]  wt   [0:3][0:3];", replace: "logic [7:0]  wt   [0:3][0:3];", why: "table entries treated as unsigned"}
   - {name: valid_early, file: matmul4_rows.sv, find: "assign out_valid = vsr[7];", replace: "assign out_valid = vsr[6];", why: "out_valid one clock before the results are ready"}
   - {name: valid_late, file: matmul4_rows.sv, find: "assign out_valid = vsr[7];", replace: "assign out_valid = vsr[7] & vsr[6];", why: "the last row of a burst is not reported valid (out_valid needs two consecutive rows)"}
+  - {name: lat_not_reset, file: c14_systolic_matmul_regs.sv, find: "n_tot <= '0; lat <= '0; cnt", replace: "n_tot <= '0; cnt", why: "CPU_RESETN does not reset lat (amended 2026-11-10: the reset test now kills a mutant)"}

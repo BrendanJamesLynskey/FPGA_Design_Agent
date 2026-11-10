@@ -103,10 +103,22 @@
       "failed_tests": [
         "test_led_latency_and_random"
       ]
+    },
+    {
+      "name": "mask_not_reset",
+      "why": "CPU_RESETN does not reset mask (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_single_requests",
+        "test_highest_wins",
+        "test_led_latency_and_random"
+      ]
     }
   ],
-  "mutants_killed": 8,
-  "mutants_total": 8,
+  "mutants_killed": 9,
+  "mutants_total": 9,
   "trap": {
     "twin": "textbook priority encoder (casez / for loop with index 0 as the default)",
     "why": "the textbook encoder returns index 0 with a valid flag when nothing is requested; this spec says all ones",

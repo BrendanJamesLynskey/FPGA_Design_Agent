@@ -2,14 +2,20 @@
 """The benchmark freeze: SHA-256 of every file per task, the split, the tool versions; and its verification.
 
     freeze.py make   [--private DIR] [--out benchmark/MANIFEST.json] [--private-out DIR/MANIFEST_full.json]
-    freeze.py verify [--private DIR] [--manifest benchmark/MANIFEST.json]
+    freeze.py verify [--private DIR] [--manifest benchmark/MANIFEST.json] [--grader-shell DIR]
+    freeze.py refreeze UNIT... [--manifest benchmark/MANIFEST.json]    # dated amendment: re-record named public units only
 
 A unit is one directory: a task (public benchmark/tasks/<id> or private <DIR>/tasks/<id>), a pool spec
 (benchmark/pool/<id>), a probe task (<DIR>/contamination/<id>), or the shared bench code (benchmark/lib, the
 benchmark/tools that scoring runs). Its digest is the SHA-256 of the sorted lines "<sha256>  <relative path>" of its
 files (__pycache__ skipped), so `sha256sum` reproduces every number. The public manifest lists, for a held-out or
 probe unit, only its digest and file count; the private copy lists every file. `verify` recomputes every unit it can
-reach (public units always; private ones when --private is given) and fails on any difference.
+reach (public units always; private ones when --private is given) and fails on any difference. It also checks the shell
+fingerprint recorded next to the manifest (``GRADER_DEPS.json``, benchmark/tools/shell_freeze.py): the shell a grader imports
+must be the frozen one, or ``--grader-shell DIR`` must point at a checked-out frozen copy that is.
+
+``refreeze`` rewrites the record of the named public units (``shared:<path>`` for the shared code) and nothing else; every
+use is a dated entry in benchmark/AMENDMENTS.md. Held-out and private units are never touched by it.
 """
 
 from __future__ import annotations
@@ -106,9 +112,36 @@ def make(private: Path, out: Path, private_out: Path) -> None:
     print(f"{len(pub)} units; manifest {out}; private manifest {private_out}")
 
 
-def verify(private: Path | None, manifest: Path) -> int:
+def shell_problems(manifest: Path, grader_shell: Path | None) -> list[str]:
+    """The shell fingerprint recorded beside the manifest (GRADER_DEPS.json) against the current or the given shell."""
+    sys.path.insert(0, str(ROOT))
+    from benchmark.tools import shell_freeze
+    deps = manifest.parent / "GRADER_DEPS.json"
+    if not deps.exists():
+        return [f"{deps.name} (missing: the shell fingerprint is not recorded)"]
+    return shell_freeze.verify_record(json.loads(deps.read_text()), grader_shell, label="shell")
+
+
+def refreeze(ids: list[str], manifest: Path) -> int:
+    """Re-record the named public units in an existing manifest; the digest rule and all other units stay as they are."""
+    m = json.loads(manifest.read_text())
+    by_id = {u["id"]: u for u in units(None) if u["where"] == "public"}
+    for i in ids:
+        rec = next((r for r in m["units"] if r["id"] == i), None)
+        if rec is None or rec["where"] != "public" or i not in by_id:
+            raise SystemExit(f"{i}: not a public unit of {manifest.name}")
+        f = files_of(by_id[i]["path"])
+        old = rec["digest"]
+        rec.update({"files": len(f), "digest": digest(f), "file_hashes": f})
+        print(f"{i}: {old[:16]} -> {rec['digest'][:16]} ({len(f)} files)")
+    manifest.write_text(json.dumps(m, indent=1) + "\n")
+    return 0
+
+
+def verify(private: Path | None, manifest: Path, grader_shell: Path | None = None) -> int:
     m = json.loads(manifest.read_text())
     bad, checked, skipped = [], 0, 0
+    bad += shell_problems(manifest, grader_shell)
     split_now = hashlib.sha256((BENCH / "split.yaml").read_bytes()).hexdigest()
     if split_now != m["split_sha256"]:
         bad.append("split.yaml")
@@ -130,7 +163,9 @@ def verify(private: Path | None, manifest: Path) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["make", "verify"])
+    ap.add_argument("cmd", choices=["make", "verify", "refreeze"])
+    ap.add_argument("units", nargs="*")
+    ap.add_argument("--grader-shell", type=Path, default=None)
     ap.add_argument("--private", type=Path, default=None)
     ap.add_argument("--out", type=Path, default=BENCH / "MANIFEST.json")
     ap.add_argument("--private-out", type=Path, default=None)
@@ -140,7 +175,9 @@ def main() -> int:
         priv = a.private or DEFAULT_PRIVATE
         make(priv, a.out, a.private_out or priv / "MANIFEST_full.json")
         return 0
-    return verify(a.private, a.manifest)
+    if a.cmd == "refreeze":
+        return refreeze(a.units, a.manifest)
+    return verify(a.private, a.manifest, a.grader_shell)
 
 
 if __name__ == "__main__":

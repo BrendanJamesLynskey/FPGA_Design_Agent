@@ -27,7 +27,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-06",
+  "date": "2026-11-10",
   "mutants": {
    "exponent_off": {
     "failed_tests": [
@@ -66,6 +66,13 @@
     "failed_tests": [
      "test_special_vectors",
      "test_random_vectors",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "x_r_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset",
      "test_registers"
     ],
     "killed": true
@@ -224,6 +231,11 @@
    "file": "rmsnorm_unit.sv",
    "name": "squares_unsigned",
    "why": "negative inputs are squared as unsigned numbers"
+  },
+  {
+   "file": "c15_rmsnorm_unit_regs.sv",
+   "name": "x_r_not_reset",
+   "why": "CPU_RESETN does not reset x_r (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

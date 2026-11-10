@@ -49,7 +49,7 @@ behaviour:
   counter:
     - COUNT is an integer 0..9999.
     - A press of BTNU sets COUNT to (COUNT + STEP) mod 10000; a press of BTND sets COUNT to (COUNT - STEP) mod 10000.
-    - Each time an up or down press wraps (the sum is >= 10000 or the difference is < 0), WRAPS increments by one (8 bits, wraps at 256).
+    - Each time an up or down press wraps (the sum is >= 10000 or the difference is < 0), WRAPS increments by one (8 bits, wraps at 256; spec.md says a single byte is plenty and that it can go round to zero after 255).
     - If an up press and a down press land on the same clock, neither acts and WRAPS is unchanged.
     - A shell write to COUNT on the same clock as a press wins (the press is lost).
   debounce:

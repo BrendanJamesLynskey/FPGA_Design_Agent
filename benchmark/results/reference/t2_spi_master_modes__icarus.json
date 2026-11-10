@@ -1,7 +1,7 @@
 {
   "task": "t2_spi_master_modes",
   "sim": "icarus",
-  "date": "2026-11-03",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -137,10 +137,20 @@
         "test_cs_hold_across_frames",
         "test_random_frames"
       ]
+    },
+    {
+      "name": "rxd_not_reset",
+      "why": "CPU_RESETN does not reset rxd (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_cs_hold_across_frames"
+      ]
     }
   ],
-  "mutants_killed": 10,
-  "mutants_total": 10,
+  "mutants_killed": 11,
+  "mutants_total": 11,
   "trap": {
     "twin": "textbook mode-0-only SPI master for the ADXL362",
     "why": "the textbook master only does CPOL = 0, CPHA = 0; mode 3 idles SCLK high and shifts on falling edges",

@@ -1,14 +1,29 @@
 # FPGA_Design_Agent
 
-An agent that turns a natural-language spec into a verified, bring-up-ready AMD FPGA bitstream, measured.
+An open-source agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGAs, with every result measured.
+Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)).
 
-Showcase site: what it is, how it works, examples, the problem catalogue (every development task with its spec, hidden tests, reference RTL, mutants and golden model animated; held-out tasks by id and tier only), a page on where the flow goes beyond the standard Vivado flow ([site/src/flow-notes.html](site/src/flow-notes.html)), how it is evaluated, results ([site/](site), static pages; the live link is added here when it is published).
+**What it does today.** Given a short request, the agent interviews the user (or, in an evaluation, a stand-in that
+answers only from a hidden full spec), plans the design, writes SystemVerilog and its tests, and drives Vivado 2025.2
+through synthesis and place and route to a bitstream, stage by stage in the order of AMD's UltraFast methodology. Each
+stage ends in a gate run by code, and the agent's own tests never count as a pass: hidden tests written against an
+independent model of the spec decide, and those tests are themselves checked by mutation testing. It targets a
+Digilent Nexys A7-100T (Artix-7) today. The development runs used Anthropic's Claude Sonnet (`claude-sonnet-5-5`)
+through Claude Code.
 
-The flow was proven first (milestones **F0A** and **F0B**): every tool step, by hand on one small design, with
-machine-checked gates, before any model touched it. The agent (milestone F2, below) now runs that flow on benchmark
-tasks. There is no held-out score yet: the first held-out evaluation (`eval-1`) was stopped on 2026-11-09 and reports
-nothing, and the baseline evaluation comes later. Everything the agent produces has the same shape as
-`designs/t1_dimmer_counter/`.
+**What has been measured.** On 11 development tasks, 13 of 21 agent runs passed every hidden test. In 6 more the
+agent's own checks passed and the hidden tests failed, each time because it read the spec differently from the test
+author; the fixes made since are not yet measured ([results](https://fpga-design-agent.vercel.app/results),
+from `results/course/*/run_*.json`). A hand-written reference design passes all its tests on the board
+([F0B](#bring-up-on-hardware-f0b)); no agent-built design has been on a board yet.
+
+**What is not yet shown.** There is no held-out score. Development tasks are the ones used to find and fix faults,
+so their results are a record of the work, not a measure of how the agent does on new tasks. The first held-out
+evaluation (`eval-1`) was stopped on 2026-11-09 before any result was analysed and reports nothing; a baseline
+evaluation on a larger benchmark comes next.
+
+The flow itself was proven first, by hand on one small design (milestones **F0A** and **F0B**), with machine-checked
+gates, before any model touched it. Everything the agent produces has the same shape as `designs/t1_dimmer_counter/`.
 
 ## The flow
 
@@ -17,9 +32,9 @@ nothing, and the baseline evaluation comes later. Everything the agent produces 
      |
      v
   [1] clarify ......... spec.yaml: ports, pins, clocks, reset, latency, assumptions + reasons,
-     |                  open questions; a human signs it off                          (agent: coming)
+     |                  open questions; a human signs it off
      v
-  [2] architecture .... block diagram, clocking plan, every clock-domain crossing      (agent: coming)
+  [2] architecture .... block diagram, clocking plan, every clock-domain crossing
      |
      +-------------------------------+
      v                               v
@@ -47,7 +62,7 @@ nothing, and the baseline evaluation comes later. Everything the agent produces 
                         the model, ILA captures against the model, one JSON result       (F0B)
 ```
 
-Steps 1-8 were done by hand for F0A. In F2 the agent does steps 1-8 itself (the `(agent: coming)` marks above predate it), and only the passes of the
+Steps 1-8 were done by hand for F0A. Since F2 the agent does steps 1-8 itself, and only the passes of the
 **independent** checks (the blind model's tests, the gates, the hardware) count; its own testbench never does.
 
 ## What F0A proves
@@ -272,9 +287,9 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 18 | Project-mode parity: inventory of what project mode and each wizard give, measured in batch (Clocking Wizard against the hand M/D/O search, MIG through implementation, FIFO/XADC/GT/PS7/block automation); machine-readable cross-probing (`xprobe.json`, SVG device map, evidence for the repair visit) ([docs/project_mode_parity.md](docs/project_mode_parity.md), [flow/xprobe.py](flow/xprobe.py), [results/project_parity](results/project_parity)) | merged (#89) |
 | 19 | External design tools driving AMD IP: xsim file-I/O harness, FIR and CIC adapters (spec to .coe to IP to bit-exact check), PDM-microphone signal chain with SINAD/ENOB per node ([docs/ipgen.md](docs/ipgen.md), [results/19_ipgen](results/19_ipgen)) | merged (#92) |
 | 20 | Timing exceptions proved, part A: 15 one-fault Vivado fixtures (multicycle, false path, max delay, clock groups, the slow-FSM clock-enable pattern), an exception gate after synthesis and routing (`report_exceptions -ignored/-coverage`, XDC messages, TIMING-24/29/47, XDCH-1, and our own clock-enable check because Vivado raised no TIMING-46 on tied CE), FDA-CON-5/-10, and a dev drill with a constraint grader ([flow/exceptions_check.py](flow/exceptions_check.py), [flow/tests/fixtures/timing_exceptions](flow/tests/fixtures/timing_exceptions), [results/20_timing_exceptions](results/20_timing_exceptions/exceptions_table.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
-| F2 | Agent v1 (T1-T2 designs) | coming |
+| F2 | Agent v1: interview, plan, RTL, tests and the full Vivado flow (05a-05g above); 21 development runs on 11 course-tier tasks ([results/course](results/course), [site results](https://fpga-design-agent.vercel.app/results)) | built; development runs recorded |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |
-| F3 | Scored runs | coming |
+| F3 | Scored runs | `eval-1` stopped 2026-11-09 before analysis, no score ([pre-registration](docs/eval/eval1_preregistration.md)); baseline evaluation on a larger benchmark next |
 
 ## Licence
 

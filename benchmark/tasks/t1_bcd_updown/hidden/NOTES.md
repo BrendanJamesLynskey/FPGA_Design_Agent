@@ -9,4 +9,7 @@
 - **Look at:** the wrap counter's width (8 bits) and that STEP is read from synchronised but not debounced switches.
 - **v1.2 (2026-11-04):** `scan_display` (benchmark/lib/bench.py) now treats a digit with every segment and DP off as
   dark whether or not its anode is low, so a design that blanks leading digits by segments passes; a leading digit that lights
-  any segment still fails (the trap `test_leading_zero_blanking`). Reset after activity is untested (deferred to v2).
+  any segment still fails (the trap `test_leading_zero_blanking`). Reset after activity was untested here until the 2026-11-10 amendment.
+- **Amended 2026-11-10 (benchmark/AMENDMENTS.md):** `test_reset_after_activity` (reset after presses, a COUNT write and a non-zero
+  WRAPS) and mutants `count_survives_reset` / `wraps_survive_reset`; `test_wrap_count_is_a_byte` (258 wraps read back as 2) and mutant
+  `wraps_nine_bits`, with one sentence in spec.md saying the wrap count is a single byte that can go round after 255.

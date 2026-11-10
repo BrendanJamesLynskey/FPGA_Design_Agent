@@ -5,6 +5,9 @@ mutants:
   - {name: simultaneous_up_wins, file: bcd_updown.sv, find: "end else if (p_up && !p_dn) begin", replace: "end else if (p_up) begin", why: "up wins when both press on one clock"}
   - {name: write_range, file: bcd_updown.sv, find: "win_wdata < 32'd10000;", replace: "win_wdata < 32'd16384;", why: "out-of-range COUNT writes accepted"}
   - {name: wraps_not_cleared, file: bcd_updown.sv, find: "if (win_wr && win_addr == R_WRAPS) wraps <= '0;", replace: "", why: "a write does not clear WRAPS"}
+  - {name: wraps_nine_bits, file: bcd_updown.sv, find: "logic [7:0]  wraps;", replace: "logic [8:0]  wraps;", why: "the wrap count is nine bits and reads 256 after 256 wraps (amended 2026-11-10)"}
+  - {name: count_survives_reset, file: bcd_updown.sv, find: "count <= '0;\n            wraps <= '0;", replace: "count <= (count === 14'bx) ? 14'd0 : count;\n            wraps <= '0;", why: "CPU_RESETN does not clear COUNT after activity (amended 2026-11-10)"}
+  - {name: wraps_survive_reset, file: bcd_updown.sv, find: "count <= '0;\n            wraps <= '0;", replace: "count <= '0;\n            wraps <= (wraps === 8'bx) ? 8'd0 : wraps;", why: "CPU_RESETN does not clear WRAPS after activity (amended 2026-11-10)"}
 trap:
   twin: "textbook button-press counter with a decimal 7-segment display"
   why: "the textbook display shows all four digits, leading zeros included; this spec blanks them"

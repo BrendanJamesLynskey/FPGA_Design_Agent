@@ -92,3 +92,11 @@ Two development-task changes and one grader-side bench repair; no split, model, 
 | scan | `benchmark/tools/pin_scan.py` (ids and yes/no flags only, safe over held-out tasks): over 93 hidden benches (v1, course, pool, and with `--private` all 19 held-out units) the only benches with a pulled net are the three I2C tasks (inout ports: a net by language rule, so not affected), the c12 task (repaired) and three unbuilt pool specs; no held-out task has a pulled net, a tri-state reference or a bench that reads Z, so no held-out bench was changed. `test_no_fragile_pulled_pin_bench` keeps it so |
 
 The two edits and the scan were made before any `eval-1` run. Only `c12_nexys_pwm_audio` and `c14_nexys_tiny_cnn` digests change in `MANIFEST.json`; the private course manifest is regenerated.
+
+## Shell fingerprint and amendments (2026-11-10, brief 15)
+
+`GRADER_DEPS.json` (this directory) records the hash of the shell files every course build compiles and imports; `freeze.py verify` fails if the
+shell differs, unless `--grader-shell DIR` names a checked-out frozen copy (how: [../FROZEN.md](../FROZEN.md)). `shared:benchmark/tools/run_task.py`
+changed (a file that shares a name with a shell file is now an error). `c16_ntt_engine`'s mutant `forward_scaled` was replaced by one that compiles,
+and development tasks without a reset-skipping mutant gained one; each change is dated in [../AMENDMENTS.md](../AMENDMENTS.md) with old and new digests.
+No held-out unit was touched; the private manifest's matching entries (the shared `run_task.py` unit and any amended public unit) are the owner's to re-record.

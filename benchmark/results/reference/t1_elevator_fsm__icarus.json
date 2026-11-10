@@ -1,7 +1,7 @@
 {
   "task": "t1_elevator_fsm",
   "sim": "icarus",
-  "date": "2026-11-03",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -131,8 +131,25 @@
       "failed_tests": [
         "test_call_on_the_way_and_behind"
       ]
+    },
+    {
+      "name": "pend_not_reset",
+      "why": "CPU_RESETN does not reset pend (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_single_call",
+        "test_scan_keeps_direction",
+        "test_call_on_the_way_and_behind",
+        "test_call_at_current_floor",
+        "test_switch_edges_only",
+        "test_turns_round_at_the_top",
+        "test_shell_calls_and_register_rules",
+        "test_random_calls"
+      ]
     }
   ],
-  "mutants_killed": 9,
-  "mutants_total": 9
+  "mutants_killed": 10,
+  "mutants_total": 10
 }

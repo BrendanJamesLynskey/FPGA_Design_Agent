@@ -191,3 +191,35 @@ async def test_simultaneous_presses_cancel(dut):
     await e.b.cycles(e.n + 6)
     e.m.press(up=True, down=True)
     await e.check_regs()
+
+
+@cocotb.test()
+async def test_wrap_count_is_a_byte(dut):
+    """Amended 2026-11-10: 258 wraps (BTND from 0, BTNU from 9999, alternately, step 1): WRAPS reads 258 mod 256 = 2."""
+    e = Env(dut)
+    await e.start()
+    for _ in range(129):
+        await e.press("BTND")
+        await e.press("BTNU")
+    await e.check_regs()
+    assert e.m.read(WRAPS) == 2
+
+
+@cocotb.test()
+async def test_reset_after_activity(dut):
+    """Amended 2026-11-10: CPU_RESETN after presses, a COUNT write and a non-zero WRAPS returns COUNT and WRAPS to zero."""
+    e = Env(dut)
+    await e.start()
+    await e.switches(2)
+    await e.b.write(COUNT, 9998)
+    e.m.write(COUNT, 9998)
+    await e.press("BTNU")                         # wraps once
+    await e.press("BTNU")
+    await e.check_regs()
+    assert e.m.read(WRAPS) == 1 and e.m.read(COUNT) == 8
+    await e.b.reset()
+    sw, e.m = e.m.sw, Model()
+    e.m.sw = sw                                    # the switches are still held at 2
+    await e.check_regs()
+    await e.check_display()
+    await e.check_leds()

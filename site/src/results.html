@@ -1,32 +1,33 @@
 <h1>Results</h1>
+<p class="lede">There is no held-out score yet. What this page has is every development run: the runs used to find and fix the agent's faults. They show how it works and fails, not how it will do on tasks it has never seen.</p>
 
-<h2>Held-out evaluation (<code>eval-1</code>)</h2>
-<p>The agent at tag <code>eval-1</code> was to be measured on {{eval.tasks}} tasks it never saw during development, {{eval.runs_per_task}} runs each. That evaluation was <strong>stopped before any result was analysed</strong>: the owner chose to grow the benchmark (more tasks, boards and application areas) and improve the agent before measuring, since it could not finish in time. A Claude Code auto-update partway through had also blocked nine of its runs, which the agent refuses to run on an untested version. Nothing from it is reported. The stop is recorded in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/eval/eval1_preregistration.md">the pre-registration</a>. A baseline evaluation on the larger benchmark comes later, with a new tag and a new pre-registration. The method is on the <a href="evaluation.html">evaluation page</a>.</p>
+<h2>Held-out evaluation</h2>
+<p>The agent at tag <code>eval-1</code> was to run {{eval.runs_per_task}} times on each of {{eval.tasks}} tasks it had never seen. That evaluation was <strong>stopped before any result was analysed</strong>. It could not finish in time, and the owner chose to grow the benchmark (more tasks, boards and application areas) and improve the agent first. An automatic update of Claude Code partway through had also blocked nine runs, since the agent refuses to run on an untested version. Nothing from it is reported; the stop is recorded in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/eval/eval1_preregistration.md">the pre-registration</a>. A baseline evaluation on the larger benchmark comes next, with a new tag and pre-registration, by the <a href="evaluation.html">same method</a>.</p>
 <div id="eval1"></div>
 
 <h2>Development tasks</h2>
-<p><span class="tag">Development tasks, not the held-out score</span> {{dev.runs}} runs on {{dev.tasks}} development tasks, {{dev.model.0}}, {{dev.dates.0}} to {{dev.dates.1}}. The agent was changed between runs to fix what these runs exposed, so this is a record of the work, not a measure of how it will do on new tasks.</p>
+<p><span class="tag">Development tasks, not the held-out score</span> {{dev.runs}} runs on {{dev.tasks}} tasks with <code>{{dev.model.0}}</code>, from {{dev.dates.0}} to {{dev.dates.1}}. The agent was changed between runs to fix what they exposed.</p>
 
 <div class="facts">
 <div class="fact"><div class="n">{{dev.hidden_pass}} of {{dev.runs}}</div><p>runs passed every hidden test ({{dev.pass_pct_runs}}%).</p></div>
-<div class="fact"><div class="n">{{dev.escapes}} of {{dev.runs}}</div><p>were escapes: own checks passed, hidden tests failed. All {{dev.escapes}} classed as spec interpretation.</p></div>
-<div class="fact"><div class="n">{{dev.mean_wall_h}} h</div><p>mean wall time per run (over {{dev.wall_n}} runs that recorded it). Mean plan-cost estimate ${{dev.mean_plan_cost_usd}} per run: Claude Code's own API-equivalent figure, since the plan has no per-call price.</p></div>
+<div class="fact"><div class="n">{{dev.escapes}} of {{dev.runs}}</div><p>were <a href="how.html#term-escape">escapes</a>, all from reading the spec differently.</p></div>
+<div class="fact"><div class="n">{{dev.mean_wall_h}} h</div><p>mean wall time per run ({{dev.wall_n}} runs recorded it). Mean cost ${{dev.mean_plan_cost_usd}}: Claude Code's own API-equivalent estimate, as the subscription has no per-call price.</p></div>
 </div>
 
 <h3>Per task: hidden tests passed in k of n runs</h3>
 <div id="dev-strip"></div>
-<p class="small muted">The number of runs differs by task because development tasks were re-run after fixes.</p>
+<p class="small muted">Tasks have different numbers of runs because some were re-run after fixes.</p>
 
-<h3>pass@1 over the development tasks</h3>
-<figure><div id="dev-int"></div><figcaption>Mean over tasks of each task's pass rate, with a 95% bootstrap interval over tasks ({{eval.resamples}} resamples, seed {{eval.seed}}); beside it the Wilson interval on the runs, which treats every run as independent and so is too narrow when tasks differ in difficulty. The intervals overlap heavily: this is what "a few tasks" looks like.</figcaption></figure>
+<h3>Pass rate over the development tasks</h3>
+<figure><div id="dev-int"></div><figcaption>pass@1 is the mean over tasks of each task's pass rate, shown with a 95% bootstrap interval over tasks ({{eval.resamples}} resamples, seed {{eval.seed}}). Beside it, the Wilson interval on runs treats every run as independent, so it is too narrow when tasks differ in difficulty. The two overlap heavily, which is what a handful of tasks looks like.</figcaption></figure>
 
 <h3>What happened in each run</h3>
 <div id="dev-out"></div>
 
 <h3>Escapes by the check that should have caught them</h3>
 <div id="dev-esc"></div>
-<p class="small muted">Each escape was a spec the agent read differently from the hidden tests (a pin named differently, an unasked register layout). The changes made in response went to the interview, the agent's own checks and, where a task's text was found to leave a behaviour unstated, to that task (dated, before eval-1 was frozen). Whether they help will be measured by the baseline evaluation, not claimed here.</p>
+<p class="small muted">Each escape was a spec the agent read differently from the hidden tests: a pin named differently, an unasked register layout. The responses went to the interview, the agent's own checks and, where a task left a behaviour unstated, to that task (dated, before eval-1 was frozen). Whether they help is for the baseline evaluation to measure.</p>
 
 <h3>Every run</h3>
 {{!dev_table}}
-<p class="small muted">Runs without timing or area stopped before place and route. Slack is post-route at 100 MHz. Source: <code>results/course/*/run_*.json</code>.</p>
+<p class="small muted">Runs without timing or area stopped before place and route. Slack is after routing, at 100 MHz. Source: <code>results/course/*/run_*.json</code>.</p>

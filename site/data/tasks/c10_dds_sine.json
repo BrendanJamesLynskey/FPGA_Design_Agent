@@ -37,11 +37,18 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-07",
+  "date": "2026-11-10",
   "mutants": {
    "amplitude_2048": {
     "failed_tests": [
      "test_each_frequency_word_sample_for_sample",
+     "test_restart_and_pointer"
+    ],
+    "killed": true
+   },
+   "fw_r_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset",
      "test_restart_and_pointer"
     ],
     "killed": true
@@ -246,6 +253,11 @@
    "file": "dds.sv",
    "name": "phase_one_clock_late",
    "why": "table read from the already advanced phase"
+  },
+  {
+   "file": "c10_dds_sine_regs.sv",
+   "name": "fw_r_not_reset",
+   "why": "CPU_RESETN does not reset fw_r (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

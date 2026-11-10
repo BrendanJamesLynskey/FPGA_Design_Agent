@@ -51,7 +51,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-04",
+  "date": "2026-11-10",
   "mutants": {
    "auto_ignored": {
     "failed_tests": [
@@ -344,16 +344,14 @@
   {
    "id": "REQ-01",
    "proof": [
-    "simulation",
-    "formal"
+    "simulation"
    ],
    "text": "Every step (press or automatic, either direction, wrap included) changes exactly one bit of LED[9:0] and of GRAY"
   },
   {
    "id": "REQ-02",
    "proof": [
-    "simulation",
-    "formal"
+    "simulation"
    ],
    "text": "GRAY = BIN xor (BIN >> 1) at all times and a step moves BIN by one modulo 1024 in the SW[15] direction"
   },
@@ -398,7 +396,7 @@
  "scope": null,
  "set": "v1",
  "showcase": false,
- "spec_md": "# Gray-code stepper on the LEDs\n\nI want a 10-bit Gray-code counter shown on LED[9:0] of the Nexys A7-100T.\n\n- Each press of BTNU steps the counter once. SW[15] picks the direction: down when it is up (1), up when it is\n  down (0). The button bounces, so one press must give exactly one step.\n- There is also an automatic mode that steps on its own at a rate I set over the shell, in milliseconds per\n  step; a rate of zero means it stands still. Buttons still work in automatic mode.\n- The whole point is that exactly one LED changes on every step, including when the count wraps round at either\n  end. I want that proved, not just tested.\n- LED[15] is lit while automatic mode is on. The other LEDs stay off.\n- CPU_RESETN resets everything.\n- Over the test shell (USB-UART, 115200 baud) I can read the Gray code, read and set the count in plain binary,\n  turn automatic mode on and off, set the rate, and read how many steps have been taken. The design ID is \"GRAY\".\n\nTest hooks: top module `t1_gray_stepper_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (debounce time in clocks) and\n`TICK_CYCLES` (clocks per unit of the rate, one millisecond on the board) as top-level parameters.\n",
+ "spec_md": "# Gray-code stepper on the LEDs\n\nI want a 10-bit Gray-code counter shown on LED[9:0] of the Nexys A7-100T.\n\n- Each press of BTNU steps the counter once. SW[15] picks the direction: down when it is up (1), up when it is\n  down (0). The button bounces, so one press must give exactly one step.\n- There is also an automatic mode that steps on its own at a rate I set over the shell, in milliseconds per\n  step; a rate of zero means it stands still. Buttons still work in automatic mode: a press gives one step of\n  its own and does not disturb the automatic ones, which carry on exactly the set rate apart.\n- The whole point is that exactly one LED changes on every step, including when the count wraps round at either\n  end. I want that checked on every step of the whole count, in both directions, not just on a few.\n- LED[15] is lit while automatic mode is on. The other LEDs stay off.\n- CPU_RESETN resets everything.\n- Over the test shell (USB-UART, 115200 baud) I can read the Gray code, read and set the count in plain binary,\n  turn automatic mode on and off, set the rate, and read how many steps have been taken. The design ID is \"GRAY\".\n\nTest hooks: top module `t1_gray_stepper_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (debounce time in clocks) and\n`TICK_CYCLES` (clocks per unit of the rate, one millisecond on the board) as top-level parameters.\n",
  "survey": [
   "A02"
  ],

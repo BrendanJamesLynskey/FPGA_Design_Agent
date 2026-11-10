@@ -37,7 +37,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-09",
+  "date": "2026-11-10",
   "mutants": {
    "clamp_limit_8193": {
     "failed_tests": [
@@ -65,6 +65,13 @@
    },
    "duty_offset_511": {
     "failed_tests": [
+     "test_gain_clamp_and_pwm_duty"
+    ],
+    "killed": true
+   },
+   "gain_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset",
      "test_gain_clamp_and_pwm_duty"
     ],
     "killed": true
@@ -262,6 +269,11 @@
    "file": "c12_nexys_pwm_audio_top.sv",
    "name": "pin_driven_high",
    "why": "the pin is driven high instead of released"
+  },
+  {
+   "file": "audio_pwm.sv",
+   "name": "gain_not_reset",
+   "why": "CPU_RESETN does not reset gain (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

@@ -248,6 +248,17 @@ details.area .kv { grid-template-columns: minmax(0, 12ch) minmax(0, 1fr); margin
 }
 details.area { scroll-margin-top: 110px; }
 @media (max-width: 640px) { details.area { scroll-margin-top: 250px; } }
+
+/* nested "Details" drawers (brief 32): specialist detail, closed by default */
+details.more { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 1em; }
+details.more > summary { padding: 8px 12px; cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: .9rem; color: var(--ink-2); }
+details.more > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.more[open] > summary { border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.card details.more, details.area details.more { background: var(--bg); }
+dl.gloss { margin: 0; }
+dl.gloss dt { font-weight: 700; margin-top: .8em; scroll-margin-top: 70px; }
+dl.gloss dd { margin: .1em 0 0; max-width: var(--measure); }
+.evsrc { font-size: .8rem; color: var(--ink-3); white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -255,10 +266,10 @@ details.area { scroll-margin-top: 110px; }
 <header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html">How it works</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html" aria-current="page">Examples</a><a href="problems.html">Problems</a><a href="evaluation.html">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>Examples</h1>
-<p class="lede">Development tasks and the hand-built reference design only. Every task here was used to find and fix problems in the agent, so these runs show how it works and fails, not how well it will do on tasks it has never seen. The held-out evaluation has its own page.</p>
+<p class="lede">Four stories from the development work: a clean first run, an interview that decided the outcome, a task that took five runs, and a hand-built design on the board. Each development task here was used to find and fix faults in the agent, so these runs show how it works and fails, not how it will do on new tasks.</p>
 
 <h2>1. A median filter, first time through</h2>
-<p><code>c9_median3x3</code>, run 1. The task text, in full:</p>
+<p>The task asks for a 3&times;3 median filter on a pixel stream. Its full text, as the agent received it:</p>
 <pre tabindex="0"><code># Median filter behind the test shell
 
 I want a block for the Nexys A7-100T&#x27;s FPGA that takes a 3 x 3 window of 8-bit pixels and returns the median value of the nine (the fifth smallest), to remove speckle noise from a video stream, and I want to exercise it entirely from the test shell. Nine multipliers or a software sort are out of the question: it has to be pure logic and run at 100 MHz.
@@ -272,33 +283,33 @@ I want a block for the Nexys A7-100T&#x27;s FPGA that takes a 3 x 3 window of 8-
 Test hooks: top module `c9_median3x3_top`, ports named as in the board&#x27;s master XDC, and the test shell&#x27;s
 `CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time
 constants.</code></pre>
-<p>The agent asked the oracle 5 questions across two interview visits, then built the design. Gate results, copied from the run record:</p>
+<p>In run 1 the agent asked the stand-in user 5 questions over two interview visits, then built the design. The run record's gate results:</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody><tr><td>V0</td><td>pass</td></tr><tr><td>V1</td><td>pass</td></tr><tr><td>V2</td><td>pass</td></tr><tr><td>V3</td><td>pass (3 seeds; functional bins 100% 16/16; cover properties 100%; line 100%; toggle 100%; mutation score 93.33%: 14 killed of 15 evaluated, 1 survivor c9_regs_L23 &#x27;-&#x27; to &#x27;+&#x27; on the window-address offset)</td></tr><tr><td>bitstream</td><td>built</td></tr><tr><td>stage_gates_post_route</td><td>all pass</td></tr></tbody></table></div>
-<p>Hidden tests: 4 of 4. After place and route at 100 MHz the setup slack was 0.698 ns, with 1,060 LUT, 1,018 FF, 0 DSP and 0 BRAM; the counts include the test shell. The run took 157 agent turns and 1.85 h. The run stopped at stage 9 as designed: no board was attached. Not a clean sweep: the mutation score was below 100% and one mutant (a changed offset in the window address) survived.</p>
+<p>It passed 4 of 4 hidden tests. After place and route at 100 MHz the setup slack was 0.698 ns, with 1,060 LUT, 1,018 FF, 0 DSP and 0 BRAM, test shell included, in 157 agent turns and 1.85 h. It stopped at the board stage as designed, with no board attached. It was not flawless: one <a href="how.html#term-mutation">mutant</a>, a changed offset in the window address, survived, so the mutation score was below 100%.</p>
 
-<h2>2. The same task, two outcomes: the interview decides</h2>
-<p><code>c10_dds_sine</code> ran twice with the same agent. The part of the task text that mattered:</p>
+<h2>2. The same task twice: the interview decides</h2>
+<p>A sine-wave generator task ran twice with the same agent. The part of its text that mattered:</p>
 <pre tabindex="0"><code># Sine-wave generator behind the test shell
 
 I want a numerically controlled sine oscillator for the Nexys A7-100T&#x27;s FPGA, to drive a DAC test: a frequency word in, a sampled sine wave out, one sample per clock. I want to exercise it entirely from the test shell.</code></pre>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th class="num">Run</th><th>Outcome</th><th>Hidden tests</th><th>What went wrong</th><th class="num">WNS (ns)</th><th class="num">LUT</th><th class="num">FF</th></tr></thead><tbody><tr><td class="num">1</td><td>escape (own checks passed, hidden failed)</td><td>1 of 3</td><td>harness gap (primary), model error (secondary)</td><td class="num">+3.607</td><td class="num">471</td><td class="num">357</td></tr><tr><td class="num">2</td><td>passed</td><td>3 of 3</td><td>none</td><td class="num">+0.775</td><td class="num">578</td><td class="num">366</td></tr></tbody></table></div>
-<p>Run 1 passed every check the agent ran and still scored 1 of 3 on the hidden tests: it did not settle how the sample is packed into the data register. Run 2 asked, was answered, and passed. This is an escape, and the reason the agent now asks about register layout whenever a task names registers without offsets.</p>
+<p>Run 1 passed every check the agent ran and still scored 1 of 3 on the hidden tests, because it never settled how a sample is packed into the data register. Run 2 asked, got an answer and passed. That escape is why the agent now asks about register layout whenever a task names registers without giving offsets.</p>
 
 <h2>3. Five runs of one task, each exposing the next problem</h2>
-<p><code>c14_int8_dot_requant</code> was run five times. After each failure a fix was made to the agent (not to the task) and the task was run again. This is how development tasks are used, and why their results are not a score.</p>
+<p>An int8 dot product with requantisation ran five times. After each failure the agent was fixed, never the task, and the task was run again. This is how development tasks are used, and why their results are not a score.</p>
 <pre tabindex="0"><code># Quantised-layer arithmetic unit behind the test shell
 
 I want a block that does the arithmetic of one output of a quantised neural-network layer, for the Nexys A7-100T&#x27;s FPGA, and I want to exercise it entirely from the test shell.</code></pre>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th class="num">Run</th><th>Outcome</th><th>Hidden tests</th><th>What went wrong (from the run record)</th></tr></thead><tbody><tr><td class="num">1</td><td>escape (own checks passed, hidden failed)</td><td>0 of 6</td><td>spec ambiguity plus clarify-stage gap (not a model error in the arithmetic)</td></tr><tr><td class="num">2</td><td>escape (own checks passed, hidden failed)</td><td>5 of 6</td><td>spec ambiguity (task text names the pin &#x27;LED0&#x27;; the master-XDC convention names the bus LED[15:0]) plus a weak port-name check; not an arithmetic or register error</td></tr><tr><td class="num">3</td><td>internal stop, hidden tests pass</td><td>6 of 6</td><td>model error (primary) plus a harness gap (the failure summary hides the root cause)</td></tr><tr><td class="num">4</td><td>internal stop, hidden tests pass</td><td>6 of 6</td><td>harness gap (tests-role convention) plus model error</td></tr><tr><td class="num">5</td><td>gate failed, repaired, passed</td><td>6 of 6</td><td>none</td></tr></tbody></table></div>
-<p>Run 5 passed all 6 hidden tests with every gate green; setup slack 0.495 ns, 737 LUT, 753 FF, 12 DSP. Runs 3 and 4 passed the hidden tests on the RTL they left, but stopped on an internal gate: the agent failed its own bar, and the bar was the problem.</p>
+<p>Run 5 passed all 6 hidden tests with every gate green: setup slack 0.495 ns, 737 LUT, 753 FF, 12 DSP. Runs 3 and 4 left RTL that passed the hidden tests but stopped on an internal gate: the agent failed its own bar, and the bar was the problem.</p>
 
-<h3>Timing and area of every development run that reached place and route</h3>
+<h3>Timing and area of every run above that reached place and route</h3>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Task</th><th class="num">Run</th><th>Hidden tests</th><th class="num">WNS (ns)</th><th class="num">LUT</th><th class="num">FF</th><th class="num">DSP</th><th class="num">BRAM36</th><th class="num">Wall (h)</th></tr></thead><tbody><tr><td>c9_median3x3</td><td class="num">1</td><td>4 of 4</td><td class="num">+0.698</td><td class="num">1060</td><td class="num">1018</td><td class="num">0</td><td class="num">0</td><td class="num">1.85</td></tr><tr><td>c10_dds_sine</td><td class="num">1</td><td>1 of 3</td><td class="num">+3.607</td><td class="num">471</td><td class="num">357</td><td class="num">0</td><td class="num">1.5</td><td class="num">1.26</td></tr><tr><td>c10_dds_sine</td><td class="num">2</td><td>3 of 3</td><td class="num">+0.775</td><td class="num">578</td><td class="num">366</td><td class="num">0</td><td class="num">0</td><td class="num">1.23</td></tr><tr><td>c14_int8_dot_requant</td><td class="num">1</td><td>0 of 6</td><td class="num">+0.849</td><td class="num">1359</td><td class="num">904</td><td class="num">2</td><td class="num">0</td><td class="num">not recorded</td></tr><tr><td>c14_int8_dot_requant</td><td class="num">2</td><td>5 of 6</td><td class="num">+2.146</td><td class="num">1290</td><td class="num">837</td><td class="num">2</td><td class="num">0</td><td class="num">not recorded</td></tr><tr><td>c14_int8_dot_requant</td><td class="num">5</td><td>6 of 6</td><td class="num">+0.495</td><td class="num">737</td><td class="num">753</td><td class="num">12</td><td class="num">0</td><td class="num">1.42</td></tr></tbody></table></div>
-<p class="small muted">Only the three tasks above; the full list of 21 runs is on the results page. Slack is at 100 MHz; counts include the test shell.</p>
+<p class="small muted">All 21 development runs are on the results page. Slack is at 100 MHz; counts include the test shell.</p>
 
 <h2>4. On the board: the hand-built reference design</h2>
-<p>Before the agent existed, one design (<code>t1_dimmer_counter</code>: a push-button counter driving 16 LEDs by a dimmer) was written by hand and taken through every step: gates, bitstream, programming and testing on a Nexys A7-100T. This proves the flow the agent drives. It is not agent output.</p>
-<figure><img src="t1_on_nexys_a7.jpg" width="900" height="1200" loading="lazy" alt="The T1 design running on the Nexys A7-100T board" style="max-width:min(100%,380px)"><figcaption>T1 running on the board.</figcaption></figure>
+<p>Before the agent existed, one design was written by hand and taken through every step to a Nexys A7-100T: a push-button counter driving 16 LEDs through a dimmer. It proves the flow the agent drives; it is not agent output.</p>
+<figure><img src="t1_on_nexys_a7.jpg" width="900" height="1200" loading="lazy" alt="The hand-built reference design running on the Nexys A7-100T board" style="max-width:min(100%,380px)"><figcaption>The reference design running on the board.</figcaption></figure>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Measure</th><th class="num">Base build</th><th class="num">With logic analyser</th></tr></thead><tbody>
 <tr><td>Setup slack (ns)</td><td class="num">3.911</td><td class="num">3.065</td></tr>
 <tr><td>Hold slack (ns)</td><td class="num">0.106</td><td class="num">0.04</td></tr>
@@ -307,12 +318,12 @@ I want a block that does the arithmetic of one output of a quantised neural-netw
 <tr><td>BRAM tiles</td><td class="num">0</td><td class="num">1.5</td></tr>
 <tr><td>Total power, vectorless (W)</td><td class="num">0.133</td><td class="num">0.147</td></tr>
 </tbody></table></div>
-<p>One command programs the board, runs 8 UART tests against the model and checks 4 captures of the on-chip logic analyser cycle by cycle. All 3 runs passed (0 failures), each in about 110.6 s. Below, the capture of LED 0 at three dimmer levels; the number of "on" samples equals the model's in every case.</p>
+<p>One command programs the board, runs 8 tests over the serial link against the model, and checks 4 captures from the on-chip logic analyser cycle by cycle. All 3 runs passed with 0 failures, each in about 110.6 s. Below is LED 0 at three dimmer levels; the number of samples with the LED on matches the model every time.</p>
 <figure>
 <div class="player" id="ila" aria-label="Logic analyser capture replay"></div>
-<figcaption>Logic-analyser capture of LED 0 from the board, 1024 samples per dimmer level, replayed with a cursor. Raw captures are in <code>results/f0b/captures</code>.</figcaption>
+<figcaption>Logic-analyser capture of LED 0 from the board, 1024 samples per dimmer level, with a cursor. Raw captures: <code>results/f0b/captures</code>.</figcaption>
 </figure>
-<p>A piece of the design, the push-button debouncer, as written:</p>
+<p>One piece of the design, the push-button debouncer, as written:</p>
 <pre tabindex="0"><code>// debounce.sv: synchronise and debounce one push button.
 // The debounced level changes only after the synchronised input has differed
 // from it for CYCLES consecutive clocks; a shorter difference restarts the
@@ -350,7 +361,7 @@ module debounce #(
         end
     end
 endmodule</code></pre>
-<p>4 more small designs (temperature sensor, accelerometer, flash ID, microphone) were also checked on the board, 30 runs in all, 30 passed; their results are in <code>results/board_v2</code>.</p>
+<p>4 more small designs, reading the temperature sensor, accelerometer, flash ID and microphone, were also checked on the board: 30 of 30 runs passed (<code>results/board_v2</code>).</p>
 
 <div class="pager"><a href="expertise.html">&larr; Expertise</a><a href="problems.html">Problems &rarr;</a></div>
 </main>

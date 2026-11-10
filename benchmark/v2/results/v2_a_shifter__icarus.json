@@ -97,10 +97,19 @@
         "test_arithmetic_right_shift",
         "test_random_operations"
       ]
+    },
+    {
+      "name": "a_not_reset",
+      "why": "CPU_RESETN does not reset a (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset"
+      ]
     }
   ],
-  "mutants_killed": 8,
-  "mutants_total": 8,
+  "mutants_killed": 9,
+  "mutants_total": 9,
   "trap": {
     "twin": "textbook arithmetic shift written with >>> on an unsigned vector",
     "why": "in Verilog, >>> on an unsigned operand shifts in zeros, so the textbook line is a logical shift; the spec wants the sign kept",

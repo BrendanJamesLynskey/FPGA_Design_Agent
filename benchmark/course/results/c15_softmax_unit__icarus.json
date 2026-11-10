@@ -1,7 +1,7 @@
 {
   "task": "c15_softmax_unit",
   "sim": "icarus",
-  "date": "2026-11-06",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -69,8 +69,18 @@
         "test_offset_invariance",
         "test_registers"
       ]
+    },
+    {
+      "name": "x_r_not_reset",
+      "why": "CPU_RESETN does not reset x_r (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_registers"
+      ]
     }
   ],
-  "mutants_killed": 5,
-  "mutants_total": 5
+  "mutants_killed": 6,
+  "mutants_total": 6
 }

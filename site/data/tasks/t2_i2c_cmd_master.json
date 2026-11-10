@@ -47,7 +47,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-04",
+  "date": "2026-11-10",
   "mutants": {
    "data_cmd_on_free_bus": {
     "failed_tests": [
@@ -119,6 +119,16 @@
      "test_clock_stretching",
      "test_bit_timing",
      "test_random_transactions"
+    ],
+    "killed": true
+   },
+   "scl_oe_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_id_via_repeated_start",
+     "test_temperature_two_bytes",
+     "test_write_then_read_back",
+     "test_nack_address"
     ],
     "killed": true
    },
@@ -321,6 +331,11 @@
    "file": "i2cm_regs.sv",
    "name": "read_never_nacks",
    "why": "READ never answers NACK"
+  },
+  {
+   "file": "i2cm_core.sv",
+   "name": "scl_oe_not_reset",
+   "why": "CPU_RESETN does not reset scl_oe (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

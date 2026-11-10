@@ -8,3 +8,4 @@ mutants:
   - {name: moves_count_stops, file: elevator_fsm.sv, find: "moves <= moves + 1'b1;\n                timer <= '0;\n                if (p1[nf]) begin", replace: "timer <= '0;\n                if (p1[nf]) begin\n                    moves <= moves + 1'b1;", why: "MOVES counts stops, not floors"}
   - {name: pending_write_replaces, file: elevator_fsm.sv, find: "p1 = pend | calls;", replace: "p1 = (win_wr && win_addr == R_PEND) ? win_wdata[3:0] : (pend | calls);", why: "a PENDING write replaces the calls instead of adding (not W1S)"}
   - {name: leds_no_pending, file: elevator_fsm.sv, find: "6'd0, pend, 4'b0001 << floor}", replace: "6'd0, 4'd0, 4'b0001 << floor}", why: "LED[7:4] do not show the calls"}
+  - {name: pend_not_reset, file: elevator_fsm.sv, find: "if (rst) begin\n            sw_q <= '0; pend <= '0; ", replace: "if (rst) begin\n            sw_q <= '0; ", why: "CPU_RESETN does not reset pend (amended 2026-11-10: the reset test now kills a mutant)"}

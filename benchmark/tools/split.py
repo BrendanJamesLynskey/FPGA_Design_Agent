@@ -15,6 +15,8 @@ ledger (`benchmark/v2/ledger.jsonl`); the v1 `draw` above is unchanged and the v
     split.py move-dev --task ID --reason TEXT                                    # append a held-out -> development move
     split.py verify                                                              # chain, seeds, draws, pending list
     split.py effective                                                           # v1 split files + moves + pending count
+    split.py shell-freeze --reason TEXT                                          # append the grader-dependency hash of shell/ (brief 15)
+    split.py amend --task ID --manifest FILE --reason TEXT                       # append a dated amendment of a development task
 
 A submitted task is **pending**: the ledger holds its cell, board and the SHA-256 of its manifest, never its id. When a cell has three pending tasks the block is
 drawn: the held-out one is `sorted(manifests)[Random(f"<seed>:<domain>:<tier>:<block>:" + "".join(sorted(manifests))).randrange(3)]`, with the seed published in
@@ -225,9 +227,73 @@ def verify_ledger(path: Path = LEDGER, seeds: dict | None = None) -> list[str]:
                 if d["task"] in names:
                     bad.append(f"entry {i}: task named twice")
                 names.add(d["task"])
+        elif e["kind"] == "amend":
+            now = current_manifests(entries[:i])
+            if e.get("task") not in now:
+                bad.append(f"entry {i}: amendment of a task that is not a development task")
+            elif e.get("old_manifest") != now[e["task"]] or e.get("new_manifest") == e.get("old_manifest"):
+                bad.append(f"entry {i}: amendment does not start from the task's current manifest hash")
+            if not str(e.get("reason", "")).strip() or not e.get("dated"):
+                bad.append(f"entry {i}: amendment without a date or a reason")
+        elif e["kind"] == "shell_freeze":
+            sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+            from benchmark.tools.freeze import digest as _digest
+            if _digest(e.get("files", {})) != e.get("shell_sha256") or not e.get("files"):
+                bad.append(f"entry {i}: shell_freeze hash does not match its file list")
         elif e["kind"] != "move":
             bad.append(f"entry {i}: unknown kind")
     return bad
+
+
+def verify_shell(entries: list[dict] | None = None, grader_shell: Path | None = None) -> list[str]:
+    """The current shell (or ``grader_shell``, a checked-out frozen copy) against the latest ``shell_freeze`` entry; a ledger
+    with no such entry is a problem too, so a v2 score cannot be tied to nothing."""
+    entries = read_ledger() if entries is None else entries
+    e = latest_shell_freeze(entries)
+    if e is None:
+        return ["no shell_freeze entry in the ledger"]
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from benchmark.tools import shell_freeze as SF
+    return SF.verify_record(e, grader_shell, label="shell (v2 ledger)")
+
+
+def current_manifests(entries: list[dict]) -> dict[str, str]:
+    """Development task -> the SHA-256 of the manifest it is frozen at now: the draw's, or the latest ``amend`` entry's."""
+    out = {d["task"]: d["manifest"] for e in entries if e["kind"] == "draw" for d in e["dev"]}
+    for e in entries:
+        if e["kind"] == "amend":
+            out[e["task"]] = e["new_manifest"]
+    return out
+
+
+def latest_shell_freeze(entries: list[dict]) -> dict | None:
+    return next((e for e in reversed(entries) if e["kind"] == "shell_freeze"), None)
+
+
+def shell_freeze(reason: str, *, path: Path = LEDGER, date: str | None = None) -> dict:
+    """Append the SHA-256 of everything a grader imports from shell/ (benchmark/tools/shell_freeze.py), with the file list.
+    A later entry supersedes an earlier one; the earlier stays in the chain."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from benchmark.tools import shell_freeze as SF
+    rec = SF.record(reason)
+    return _append({"kind": "shell_freeze", "dated": date or rec["dated"], "reason": reason, "shell_sha256": rec["shell_sha256"],
+                    "files": rec["files"]}, path)
+
+
+def amend(task: str, manifest: str, reason: str, *, digest: str, old_digest: str | None = None, path: Path = LEDGER,
+          date: str | None = None) -> dict:
+    """Append a dated amendment of a development task: its manifest hash changed from the one on record to ``manifest``.
+    Only a task a draw names as development can be amended (a held-out task has no public name and is never touched)."""
+    entries = read_ledger(path)
+    now = current_manifests(entries)
+    if task not in now:
+        raise SystemExit(f"{task!r} is not a development task in the ledger")
+    if now[task] == manifest:
+        raise SystemExit(f"{task!r} is already frozen at this manifest")
+    if not reason.strip():
+        raise SystemExit("an amendment needs a reason")
+    return _append({"kind": "amend", "task": task, "dated": date or time.strftime("%Y-%m-%d"), "reason": reason,
+                    "old_manifest": now[task], "new_manifest": manifest, "new_digest": digest}, path)
 
 
 def effective(bench: Path | None = None, path: Path = LEDGER) -> dict:
@@ -266,8 +332,15 @@ def main_v2(argv: list[str]) -> int:
     m.add_argument("--task", required=True)
     m.add_argument("--reason", required=True)
     m.add_argument("--unlisted", action="store_true", help="allow a task that no split file lists as held out")
-    sub.add_parser("verify")
+    v = sub.add_parser("verify")
+    v.add_argument("--grader-shell", type=Path, default=None, help="a checked-out frozen copy of the repository to check instead of this tree's shell/")
     sub.add_parser("effective")
+    sf = sub.add_parser("shell-freeze")
+    sf.add_argument("--reason", required=True)
+    am = sub.add_parser("amend")
+    am.add_argument("--task", required=True)
+    am.add_argument("--manifest", type=Path, required=True)
+    am.add_argument("--reason", required=True)
     r = ap.parse_args(argv)
     if r.cmd == "submit":
         e, d = submit(r.board, r.domain, r.tier, manifest_hash(r.manifest), r.task, private_dir=r.private_dir)
@@ -275,8 +348,18 @@ def main_v2(argv: list[str]) -> int:
     elif r.cmd == "move-dev":
         move_dev(r.task, r.reason, check=not r.unlisted)
         print(f"{r.task}: recorded as moved to development")
+    elif r.cmd == "shell-freeze":
+        e = shell_freeze(r.reason)
+        print(f"shell_freeze recorded: {e['shell_sha256']} ({len(e['files'])} files)")
+    elif r.cmd == "amend":
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        m = json.loads(r.manifest.read_text())["units"][0]
+        if r.task != m["id"]:
+            raise SystemExit(f"manifest is for {m['id']!r}, not {r.task!r}")
+        e = amend(r.task, manifest_hash(r.manifest), r.reason, digest=m["digest"])
+        print(f"{r.task}: amended, manifest {e['old_manifest'][:16]} -> {e['new_manifest'][:16]}")
     elif r.cmd == "verify":
-        bad = verify_ledger()
+        bad = verify_ledger() + verify_shell(grader_shell=r.grader_shell)
         pend = {k: len(v) for k, v in pending(read_ledger()).items()}
         print("\n".join(bad) or f"ledger ok: {len(read_ledger())} entries; pending {pend or 'none'}")
         return 1 if bad else 0
@@ -287,7 +370,7 @@ def main_v2(argv: list[str]) -> int:
 
 
 def main() -> int:
-    if len(sys.argv) > 1 and sys.argv[1] in {"submit", "move-dev", "verify", "effective"}:
+    if len(sys.argv) > 1 and sys.argv[1] in {"submit", "move-dev", "verify", "effective", "shell-freeze", "amend"}:
         return main_v2(sys.argv[1:])
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)

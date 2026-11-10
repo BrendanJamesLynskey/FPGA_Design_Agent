@@ -6,3 +6,4 @@ mutants:
   - {name: y_from_x, file: hough.sv, find: "x <= pt_x; y <= pt_y;", replace: "x <= pt_x; y <= pt_x;", why: "the y coordinate of a point is replaced by its x"}
   - {name: clear_ignored, file: hough.sv, find: "if (clear && !busy) begin", replace: "if (1'b0) begin", why: "CLEAR does not zero the table"}
   - {name: one_angle_missing, file: hough.sv, find: "k <= (k == NT - 1) ? 5'd0 : k + 5'd1;", replace: "k <= (k == NT - 2) ? 5'd0 : k + 5'd1;", why: "the last direction never votes"}
+  - {name: k_not_reset, file: hough.sv, find: "if (!rst_n) begin\n            k <= 5'd0; ", replace: "if (!rst_n) begin\n            ", why: "CPU_RESETN does not reset k (amended 2026-11-10: the reset test now kills a mutant)"}

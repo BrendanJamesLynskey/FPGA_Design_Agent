@@ -1,15 +1,16 @@
 {
  "areas": [
   {
-   "cap_reason": "The constraint-grading tasks (Brief 20, timing exceptions) are not merged, so the area is not yet credited with agent-run evidence.",
+   "about": "Constraints tell Vivado what the clocks are, when signals arrive at the pins and which paths need no timing; timing closure is the work of making every remaining path fast enough. The agent writes the constraints from its skills, and a gate after routing fails any run that misses setup, hold or pulse-width timing or leaves a path unconstrained. A separate checker looks for risky lines, such as a false path with no stated reason.",
+   "cap_reason": "Exceptions are now shown in agent runs, but one of the three wrote a wrong multicycle that the flow's own gate passed, and I/O delays, virtual clocks and clock uncertainty have no agent runs yet; the area as a whole stays at this level.",
    "cards": [
     {
      "href": "flow-notes.html#xpm-cdc",
-     "label": "Beyond the flow: CDC macro constraints"
+     "label": "Beyond the flow: AMD's crossing macros lose their exceptions"
     },
     {
      "href": "flow-notes.html#exceptions",
-     "label": "Beyond the flow: exceptions that hide failures"
+     "label": "Beyond the flow: over-broad exceptions hide failures"
     }
    ],
    "checks": [
@@ -52,7 +53,7 @@
    "counts": {
     "checks": 5,
     "enforced": 2,
-    "evidence": 3,
+    "evidence": 4,
     "sections": 7,
     "skills": 18
    },
@@ -75,7 +76,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/14_flow_notes/inputs.json"
       }
      ],
-     "text": "On a two-clock probe design, setup slack on the crossing was -1.364 ns without the macro exceptions and 8.891 ns with them (Vivado 2025.2)."
+     "text": "On a two-clock probe design, setup slack on the crossing was -1.364 ns without AMD's macro exceptions and 8.891 ns with them (Vivado 2025.2)."
     },
     {
      "kind": "agent",
@@ -85,7 +86,17 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
       }
      ],
-     "text": "16 development runs reached routing and recorded post-route setup slack; it was positive in 16."
+     "text": "Of the development runs, 16 reached routing and recorded setup slack there; it was positive in 16."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/20_timing_exceptions/drills/run_*.constraints.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/20_timing_exceptions/drills"
+      }
+     ],
+     "text": "In 3 agent runs of the slow-controller drill (one clock, a one-in-eight enable, an eight-clock multicycle), the constraint grader passed 2; the other run put a register that a write sets on any clock into the eight-clock group, which only the grader's simulation check caught."
     }
    ],
    "family": {
@@ -154,8 +165,9 @@
     ]
    },
    "gaps": [
-    "Exceptions that hide a real failure (a blanket false path, a clock group over a failing path) are designed as tasks but not built or run; Brief 20 settles this.",
-    "I/O delay constraints are written from skills; no committed run scores them against a data sheet."
+    "I/O delay constraints, virtual clocks and clock uncertainty are written from the skills; no committed run scores them against a data sheet.",
+    "The flow's multicycle check looks at each register's clock-enable logic, not at whether the register really changes only on the enable; the drill grader adds that check in simulation, the flow does not yet.",
+    "Only one exception drill is built (the slow controller); the two-cycle datapath, the quasi-static register and the seeded wrong false path are not."
    ],
    "id": "constraints",
    "level": "checked",
@@ -281,19 +293,20 @@
    "summary": "Writing clocks, I/O delays and exceptions that are right, and reading timing reports to close the paths that fail."
   },
   {
+   "about": "Signals that pass between unrelated clocks need synchronisers, and a mistake there can pass every simulation and still fail on the bench. The agent knows the standard circuits for single bits, buses, FIFOs and resets, and its flow checks each crossing three ways: Vivado's crossing report, a structural check of every flip-flop fed from another clock, and a simulation that makes synchronisers resolve late.",
    "cap_reason": null,
    "cards": [
     {
      "href": "flow-notes.html#cdc-gate",
-     "label": "Beyond the flow: report_cdc cannot see every unsafe crossing"
+     "label": "Beyond the flow: the crossing report passes some unsafe crossings"
     },
     {
      "href": "flow-notes.html#xpm-cdc",
-     "label": "Beyond the flow: CDC macro constraints"
+     "label": "Beyond the flow: AMD's crossing macros lose their exceptions"
     },
     {
      "href": "flow-notes.html#pblock",
-     "label": "Beyond the flow: pblocks after synthesis"
+     "label": "Beyond the flow: placement regions made after synthesis"
     }
    ],
    "checks": [
@@ -407,9 +420,9 @@
     ]
    },
    "gaps": [
-    "No agent run has used the stronger gate yet.",
-    "Resets cleared on one side only (an asynchronous FIFO, a handshake) are not caught by the gate; the rig's simulation catches them.",
-    "The model is cycle-level: it finds lost pulses and bits crossed separately, not route skew, glitches or true metastability."
+    "No agent run has used the stronger crossing gate yet.",
+    "A reset cleared on one side only, in an asynchronous FIFO or a handshake, gets past the gate; only the rig's simulation catches it.",
+    "The gate's simulation works cycle by cycle, so it finds lost pulses and bits crossed separately but not route skew, glitches or true metastability."
    ],
    "id": "cdc",
    "level": "checked",
@@ -519,11 +532,12 @@
    "summary": "Synchronisers, multi-bit crossings, asynchronous FIFOs, reset bridges and the checks that find a crossing report_cdc passes but that is still wrong."
   },
   {
+   "about": "Clocking covers the clock-management tiles (MMCM and PLL), clock buffers and safe switching between clocks. So that an MMCM setting is computed rather than guessed, the flow offers a search over the legal settings for a target frequency, and the design-rule check after synthesis fails any run whose setting is out of range.",
    "cap_reason": null,
    "cards": [
     {
      "href": "flow-notes.html#xpm-cdc",
-     "label": "Beyond the flow: CDC macro constraints"
+     "label": "Beyond the flow: AMD's crossing macros lose their exceptions"
     }
    ],
    "checks": [
@@ -565,7 +579,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/project_parity/cmt_check"
       }
      ],
-     "text": "Of 4 probe designs (one legal, three with an MMCM setting outside its range), Vivado's DRC after synthesis raised AVAL-46 on 3."
+     "text": "Of 4 probe designs (one legal, three with an MMCM setting outside its range), Vivado's design-rule check after synthesis flagged the setting as out of range on 3."
     }
    ],
    "family": {
@@ -673,7 +687,7 @@
     ]
    },
    "gaps": [
-    "The Clocking Wizard's own readback was compared with the flow's hand search on a few target sets only.",
+    "The Clocking Wizard's own settings were compared with the flow's search on only a few target frequencies.",
     "No agent run has been graded on a clocking task yet."
    ],
    "id": "clocking",
@@ -776,6 +790,7 @@
    "summary": "Choosing an MMCM or PLL setting, clock buffers, dynamic phase and glitch-free switching, and using the Clocking Wizard as a checker."
   },
   {
+   "about": "This area covers pin planning, I/O standards and banks, the delay and serialiser primitives at the pins, and transceivers, with the limits that differ between 7-series and UltraScale+ parts. The agent can compare every pin and standard in its constraints with the board's master file, but that comparison is a tool it may run, not a gate.",
    "cap_reason": null,
    "cards": [],
    "checks": [
@@ -799,7 +814,7 @@
     "enforced": 0,
     "evidence": 0,
     "sections": 15,
-    "skills": 27
+    "skills": 28
    },
    "evidence": [],
    "family": {
@@ -893,9 +908,9 @@
     ]
    },
    "gaps": [
-    "The I/O delay and eye-scan procedures are skills; the rig that would measure them is designed on paper only.",
+    "The I/O delay and eye-scan procedures exist as skills, and the rig that would measure them is designed on paper only.",
     "No transceiver design has been built or run.",
-    "Pin and standard checks are a tool the agent can run, not a stage gate."
+    "The pin and standard checks are a tool the agent can run, not a stage gate, so nothing in this area is enforced."
    ],
    "id": "io",
    "level": "knowledge",
@@ -1056,6 +1071,10 @@
       {
        "description": "Choosing or configuring memory, DSP or carry primitives on Zynq UltraScale+ (K26): RAMB36E2/RAMB18E2 changes from 7-series (built-in cascade, all SDP write modes), URAM288 (4K x 72 ...",
        "name": "zynqmp-bram-uram-dsp48e2-carry8"
+      },
+      {
+       "description": "Moving RTL, XDC or a block design from a 7-series board (Nexys A7, ZedBoard) to the K26/KR260: which 7-series primitives do not exist on Zynq UltraScale+, which Vivado retargets ...",
+       "name": "zynqmp-porting-from-7-series"
       }
      ],
      "section": "primitives",
@@ -1105,11 +1124,12 @@
    "summary": "Pin planning against the board's master constraints, I/O standards, DDR and delay primitives, and the limits of the 7-series and UltraScale+ I/O."
   },
   {
+   "about": "Memory runs from the choice between block RAM, distributed RAM and UltraRAM, through FIFOs and crossing clocks through memory, to external DDR and AMD's memory-controller generator, the MIG. A gate after synthesis compares the resources used with the plan, which catches a memory that was meant to be block RAM and became logic instead.",
    "cap_reason": null,
    "cards": [
     {
      "href": "flow-notes.html#mig",
-     "label": "Beyond the flow: the MIG wizard validates pins"
+     "label": "Beyond the flow: scripted DDR controller generation skips the pin check"
     }
    ],
    "checks": [
@@ -1144,7 +1164,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/project_parity/mig_impl"
       }
      ],
-     "text": "3 MIG example designs (good pins, a byte-group fault, a duplicated pin) went through placement; the placement DRC raised PLIO-3 on 1, the duplicated pin. The byte-group fault was not rejected."
+     "text": "3 example designs of the memory controller (good pins, a byte-group fault, a duplicated pin) went through placement; the design-rule check after placement flagged 1, the duplicated pin; the byte-group fault was not rejected."
     }
    ],
    "family": {
@@ -1226,9 +1246,9 @@
     ]
    },
    "gaps": [
-    "No committed run exercises ECC, dual-port or asynchronous memory behaviour on hardware or in Vivado; the skills give the rules.",
-    "The MIG's pin validation lives in the GUI and has no Tcl command, so pins are checked by rules, not by the tool; the rule checker is not in this repository yet.",
-    "Choice of DDR device, device count, width and speed rests on skills only; no memory-interface design has been run."
+    "No committed run exercises error correction, dual-port or asynchronous memory behaviour in Vivado or on hardware; the skills give the rules.",
+    "The memory controller's pin validation lives in the GUI and has no script command, so pins are checked against rules instead; that rule checker is not in this repository yet.",
+    "The choice of DDR device, count, width and speed rests on the skills alone; no memory-interface design has been run."
    ],
    "id": "memory",
    "level": "checked",
@@ -1430,6 +1450,7 @@
    "summary": "Block RAM, distributed RAM and UltraRAM choice, widths, ports and ECC; FIFOs and buffering; crossing clocks through memory; DDR devices, widths and speeds, and the MIG."
   },
   {
+   "about": "This area covers the on-chip analogue-to-digital converter (the XADC), its alarms, and external converters and sensors reached over SPI and I2C. On the board the flow checks the power and temperature budget before programming, and the board's own sensors are read by small self-checking designs.",
    "cap_reason": null,
    "cards": [],
    "checks": [
@@ -1438,7 +1459,7 @@
      "file": "flow/board_check.py",
      "gate": "power_ok",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/board_check.py",
-     "what": "On the board, checks the power and junction-temperature budget before programming; the self-checks read the board's sensors."
+     "what": "The board-check tool re-runs the power and junction-temperature check before programming and stops if it fails; the self-checks read the board's sensors. The stage gate that enforces it is under power and thermal."
     }
    ],
    "counts": {
@@ -1457,7 +1478,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/board_v2"
       }
      ],
-     "text": "4 hand-built designs that read the board's temperature sensor, accelerometer, SPI flash and PDM microphone each ran on the board and passed their pre-written self-checks."
+     "text": "4 hand-built designs that read the board's temperature sensor, accelerometer, SPI flash and PDM microphone each ran on the board and passed self-checks written in advance."
     },
     {
      "kind": "example",
@@ -1519,9 +1540,9 @@
     ]
    },
    "gaps": [
-    "The on-chip XADC is covered by skills; no committed design reads it or its alarms.",
-    "Analogue front ends and converter timing are not scored by any development task.",
-    "The audio tasks (PWM output) were development tasks; see the DSP area for their runs."
+    "The on-chip XADC is covered by skills only; no committed design reads it or its alarms.",
+    "No development task scores analogue front ends or converter timing.",
+    "The audio output tasks were development tasks; their runs are under signal processing."
    ],
    "id": "mixed",
    "level": "measured",
@@ -1625,6 +1646,7 @@
    "summary": "Reading the on-chip XADC, wiring analogue inputs and alarms, and interfacing external converters and sensors over SPI and I2C."
   },
   {
+   "about": "AXI is the family of on-chip bus protocols that AMD's IP and the Zynq processors use, and the usual way blocks connect. The design-standards gate requires every new block interface to be AXI4-Lite or AXI4-Stream with the standard port names. The skills also cover bursts, bridges, crossing clocks on a bus and the ports between a Zynq processor and the fabric.",
    "cap_reason": null,
    "cards": [],
    "checks": [
@@ -1700,9 +1722,9 @@
     ]
    },
    "gaps": [
-    "The gate checks interface names and declarations only; protocol behaviour (valid held until ready, no combinational path) is for review and for the skills' assertions.",
-    "No committed development task is an AXI design, so nothing measures this area end to end yet.",
-    "Zynq PS designs have skills but no built flow step; the flow targets the Nexys A7 first."
+    "The gate checks interface names and declarations only; protocol behaviour, such as holding valid until ready, is left to review and to the assertions the skills describe.",
+    "No development task is an AXI design, so nothing measures this area end to end yet.",
+    "Designs for the Zynq processors have skills but no flow step yet; the flow targets the Nexys A7 first."
    ],
    "id": "amba",
    "level": "checked",
@@ -1898,11 +1920,12 @@
    "summary": "AXI4, AXI4-Lite and AXI4-Stream handshakes, bursts, bridges and crossing clocks, AMD's AXI IP, and the PS-PL ports of Zynq-7000 and UltraScale+."
   },
   {
+   "about": "AMD supplies free IP cores, such as filters, signal generators, FFTs and memories, that are normally set up through GUI wizards. The agent has no GUI, so the flow drives the wizards from scripts and reads back what they generated. That lets their checks be tested without the GUI.",
    "cap_reason": null,
    "cards": [
     {
      "href": "flow-notes.html#xsim",
-     "label": "Beyond the flow: IP models need xsim"
+     "label": "Beyond the flow: AMD's IP models need xsim"
     }
    ],
    "checks": [
@@ -1930,7 +1953,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/project_parity/wizards/wizards.txt"
       }
      ],
-     "text": "Batch-mode generation of the Block Memory, FIFO, XADC, Transceiver, PS7, Clocking and other wizards was tried; the probe output is committed."
+     "text": "Scripted generation was tried for the Block Memory, FIFO, XADC, Transceiver, PS7, Clocking and other wizards, and the probe output is committed."
     },
     {
      "kind": "measured",
@@ -1940,7 +1963,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/19_ipgen/bmg_sine/sim.json"
       }
      ],
-     "text": "A generated block-memory sine ROM was read in xsim: 0 mismatches in 3090 reads, and its read latency measured 2 cycles."
+     "text": "A generated block-memory sine table read back in AMD's simulator with 0 mismatches in 3090 reads and a measured latency of 2 cycles."
     }
    ],
    "family": {
@@ -2020,8 +2043,8 @@
     ]
    },
    "gaps": [
-    "The encrypted cores run only in xsim; the xsim harness (Brief 19) drives four of them, and the others are skills only.",
-    "The Transceiver wizard's legal low-rate setting was not measured because of a property-name error."
+    "The encrypted cores run only in AMD's simulator; the file-driven harness drives four of them, and the rest are skills only.",
+    "The Transceiver wizard's legal low-rate setting was not measured, because of a property-name error."
    ],
    "id": "ip",
    "level": "measured",
@@ -2107,6 +2130,7 @@
    "summary": "The free IP cores (FIR, DDS, CORDIC, FFT, divider, memory, FIFO, clocking), their licences, and what the wizards do in batch mode."
   },
   {
+   "about": "Signal processing on an FPGA starts in software: the coefficients and word lengths of a filter or oscillator are designed first, then built into a datapath or an AMD core. The flow designs a filter in Python, measures what quantising it costs, generates the core and checks it word for word in AMD's simulator. These tools serve design work; none is a gate.",
    "cap_reason": null,
    "cards": [],
    "checks": [
@@ -2145,7 +2169,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
       }
      ],
-     "text": "Development runs of the DDS and NCO-mixer tasks: 4 runs, hidden tests all passed in 3; escapes (own checks passed, hidden tests did not): 1."
+     "text": "The sine generator and oscillator-mixer tasks had 4 development runs; 3 passed every hidden test and 1 ended in an escape."
     },
     {
      "kind": "measured",
@@ -2155,7 +2179,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/19_ipgen/fir/design.json"
       }
      ],
-     "text": "A decimating low-pass FIR designed in Python came to 153 taps; quantising its coefficients to the core's word length cost 6.34018 dB of stop-band attenuation and the specification was still met."
+     "text": "A decimating low-pass filter designed in Python came to 153 taps; rounding its coefficients to the core's word length cost 6.34018 dB of stop-band attenuation, and the specification was still met."
     },
     {
      "kind": "measured",
@@ -2165,7 +2189,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/19_ipgen/fir/sim.json"
       }
      ],
-     "text": "The generated FIR core, run in xsim, matched the integer model on all 1024 outputs: 0 mismatches with continuous input and 0 with random gaps."
+     "text": "The generated filter core matched the integer model on all 1024 outputs in AMD's simulator: 0 mismatches with continuous input and 0 with random gaps."
     },
     {
      "kind": "measured",
@@ -2175,7 +2199,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/19_ipgen/fir/ooc.json"
       }
      ],
-     "text": "Out-of-context synthesis of that core: 336 LUTs, 5 DSP slices, post-synthesis setup slack 7.051 ns at the target clock (an upper bound; no routing)."
+     "text": "Synthesised on its own, that core used 336 LUTs and 5 DSP slices, with 7.051 ns of setup slack at the target clock; that figure is before routing, so it is an upper bound."
     },
     {
      "kind": "measured",
@@ -2185,7 +2209,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/19_ipgen/dds/sim.json"
       }
      ],
-     "text": "The generated DDS core measured 96.2706 dB spurious-free dynamic range against a target of 90 dB."
+     "text": "The generated sine-generator core measured 96.2706 dB of spurious-free dynamic range against a target of 90 dB."
     }
    ],
    "family": {
@@ -2241,9 +2265,9 @@
     ]
    },
    "gaps": [
-    "Only the FIR, CIC, block memory and DDS cores have adapters; CORDIC, FFT and the Clocking Wizard do not, and the CIC and FIR are not simulated as a cascade.",
-    "The cores are exercised by hand-run examples (Brief 19), not by an agent run; no development task uses an AMD core yet.",
-    "One part (the Artix-7 device on the Nexys A7) and single examples only; development results are not the held-out score."
+    "Only the FIR, CIC, block memory and DDS cores have adapters; CORDIC, FFT and the Clocking Wizard do not, and the CIC and FIR have not been simulated in cascade.",
+    "The cores are exercised by examples run by hand, not by the agent; no development task uses an AMD core yet.",
+    "All of this is on one part, the Artix-7 on the Nexys A7, with one example each; development results are not the held-out score."
    ],
    "id": "dsp",
    "level": "agent",
@@ -2329,6 +2353,7 @@
    "summary": "Filters, NCOs and mixers; designing the coefficients and word lengths in Python, then building and checking the datapath or the AMD core."
   },
   {
+   "about": "Video designs generate display timing and move pixels through pipelines and line buffers to a VGA or HDMI-style output. No flow check is specific to video; the evidence is one agent run on a pixel filter and a hand-built design on the board.",
    "cap_reason": null,
    "cards": [],
    "checks": [],
@@ -2348,7 +2373,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
       }
      ],
-     "text": "The development task that filters a pixel stream (a median filter): 1 run, hidden tests all passed in 1."
+     "text": "The development task that filters a pixel stream with a median filter had 1 run, and 1 passed every hidden test."
     },
     {
      "kind": "example",
@@ -2405,8 +2430,8 @@
     ]
    },
    "gaps": [
-    "One development run only; the high-definition VGA task has not been run.",
-    "HDMI and DisplayPort have skills, no design."
+    "There is one development run only, and the high-definition VGA task has not been run.",
+    "HDMI and DisplayPort have skills but no design."
    ],
    "id": "video",
    "level": "agent",
@@ -2472,6 +2497,7 @@
    "summary": "Display timing, pixel pipelines and line buffers, VGA and HDMI-style output."
   },
   {
+   "about": "Arithmetic in hardware is mostly about widths: how many bits each step needs, how it rounds and when it saturates, across fixed-point datapaths, modular multipliers and quantised neural-network maths. No gate is specific to arithmetic; the hidden tests of the arithmetic tasks are the check.",
    "cap_reason": null,
    "cards": [],
    "checks": [],
@@ -2499,7 +2525,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
       }
      ],
-     "text": "Development runs of the int8 dot product, softmax and Montgomery multiplier tasks: 9 runs, hidden tests all passed in 6, escapes 2, failures 1."
+     "text": "The int8 dot-product, softmax and Montgomery-multiplier tasks had 9 development runs: 6 passed every hidden test, 2 were escapes and 1 failed."
     }
    ],
    "family": {
@@ -2550,8 +2576,8 @@
     ]
    },
    "gaps": [
-    "The int8 task escaped most often; the misreading was of the specification, not the arithmetic.",
-    "Rounding modes and saturation are covered by skills; only these tasks test them."
+    "The int8 task escaped most often, and the misreading was of the spec, not of the arithmetic.",
+    "Rounding modes and saturation are covered by skills, and only these tasks test them."
    ],
    "id": "arithmetic",
    "level": "agent",
@@ -2627,11 +2653,12 @@
    "summary": "Widths and rounding, saturation, fixed-point datapaths, modular multiplication and quantised neural-network arithmetic."
   },
   {
+   "about": "RTL design is the core of the work: reading a spec, writing synthesisable code, pipelines and handshakes, hierarchy and register boundaries, and acting on lint and synthesis messages. One gate enforces the design standards on every run (no latches, no combinational loops, no gated clocks, synchronous resets), and another requires Vivado's methodology checks to show no critical warning.",
    "cap_reason": null,
    "cards": [
     {
      "href": "flow-notes.html#gates",
-     "label": "Beyond the flow: gates beyond Vivado's own"
+     "label": "Beyond the flow: a missing report or skipped test looks like a pass"
     }
    ],
    "checks": [
@@ -2673,7 +2700,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
       }
      ],
-     "text": "Across all development runs: 21 runs, hidden tests all passed in 13, escapes (own checks passed, hidden tests failed) 6, failures 2."
+     "text": "Across all 21 development runs, 13 passed every hidden test, 6 were escapes (the agent's own checks passed, the hidden tests did not) and 2 failed."
     }
    ],
    "family": {
@@ -2737,7 +2764,7 @@
     ]
    },
    "gaps": [
-    "Every escape so far was a misreading of the specification; the gates cannot catch a spec error the agent's own tests share.",
+    "Every escape so far was a misreading of the spec, and no gate can catch a spec error that the agent's own tests share.",
     "These are development tasks, not the held-out score."
    ],
    "id": "rtl",
@@ -2924,6 +2951,7 @@
    "summary": "Reading a specification, synthesisable coding, pipelines and handshakes, hierarchy and register boundaries, lint and synthesis messages."
   },
   {
+   "about": "Finite state machines carry the control in most designs. The skills cover separating control from datapath, choosing an encoding and a reset, registering inputs and outputs, and covering every transition in test. The general design-standards rules apply to state machines, but nothing checks them specifically.",
    "cap_reason": null,
    "cards": [],
    "checks": [
@@ -2951,7 +2979,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/board_v2/t1_elevator_fsm.json"
       }
      ],
-     "text": "A hand-built elevator controller (an FSM with timers) passed its on-board self-check in 1 of 1 run."
+     "text": "A hand-built lift controller, a state machine with timers, passed its self-check on the board in 1 of 1 run."
     }
    ],
    "family": {
@@ -3012,9 +3040,9 @@
     ]
    },
    "gaps": [
-    "Brief 24 (FSM measurements and coverage) is not merged: no committed measurement compares encodings, registered outputs, reset styles or an FSM split from its counter.",
-    "No gate checks state or transition coverage; the owner's slow-FSM multicycle pattern is part of Brief 20.",
-    "There is no FSM lesson in the course yet."
+    "No committed measurement yet compares encodings, registered outputs, reset styles or a state machine split from its counter.",
+    "No gate checks state or transition coverage, and the multicycle pattern for slow state machines belongs to the timing-exception work still under way.",
+    "There is no state-machine lesson in the course yet."
    ],
    "id": "fsm",
    "level": "knowledge",
@@ -3084,11 +3112,12 @@
    "summary": "Separating control from datapath, choosing the clock and any multicycle ratio, registering inputs and outputs, encoding, reset, and coverage."
   },
   {
+   "about": "The agent writes its own tests, assertions and formal checks, and they must reach staged floors that it cannot lower: a plan, traced requirements, tests passing on every seed, then coverage and a mutation score. Formal proofs run where the test plan promises one. Even so, the agent's tests never decide a pass; the hidden tests do.",
    "cap_reason": null,
    "cards": [
     {
      "href": "flow-notes.html#gates",
-     "label": "Beyond the flow: gates beyond Vivado's own"
+     "label": "Beyond the flow: a missing report or skipped test looks like a pass"
     }
    ],
    "checks": [
@@ -3130,7 +3159,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/04f/mutation_t1.json"
       }
      ],
-     "text": "On the reference design, mutation testing made 21 valid changes; the first run caught 90.48 percent and, after the bench was fixed, 100 percent."
+     "text": "On the reference design, mutation testing made 21 valid changes; the tests caught 90.48 percent on the first run and 100 percent after the bench was fixed."
     },
     {
      "kind": "agent",
@@ -3140,7 +3169,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
       }
      ],
-     "text": "16 development runs passed the V3 gate (coverage and mutation floors) in the flow."
+     "text": "Of the development runs, 16 passed the coverage and mutation floors of the flow's last verification gate."
     }
    ],
    "family": {
@@ -3199,8 +3228,8 @@
     ]
    },
    "gaps": [
-    "The agent's own tests never count as a pass; the hidden tests are the judge, and several runs passed every gate yet failed them.",
-    "Formal checks are enforced only where the testplan promises a proof."
+    "The agent's own tests never count as a pass, and several runs passed every gate yet failed the hidden tests.",
+    "Formal checks are enforced only where the test plan promises a proof."
    ],
    "id": "verification",
    "level": "agent",
@@ -3310,11 +3339,12 @@
    "summary": "Self-checking tests, assertions, formal checks, mutation testing, coverage, and CDC fault injection, staged V0 to V3 with a hardware step."
   },
   {
+   "about": "Hardware in the loop means running designs on a real board: programming only the owner's board, into volatile memory only, then self-checks over the serial link and captures with an on-chip logic analyser. A soak rig exercises clock crossings on hardware. Board steps are done by the harness after a human approves, never by the model.",
    "cap_reason": null,
    "cards": [
     {
      "href": "flow-notes.html#pblock",
-     "label": "Beyond the flow: pblocks on the CDC rig"
+     "label": "Beyond the flow: placement regions on the crossing rig"
     }
    ],
    "checks": [
@@ -3323,7 +3353,7 @@
      "file": "flow/board_check.py",
      "gate": "power_ok",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/board_check.py",
-     "what": "Power budget gate, programming by cable serial and SRAM only, identify, self-check and still-alive steps."
+     "what": "The board-check tool: the power check again before programming, programming by cable serial and SRAM only, identify, self-check and still-alive steps. The stage gate that enforces the power check is under power and thermal."
     }
    ],
    "counts": {
@@ -3342,7 +3372,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/board_v2"
       }
      ],
-     "text": "20 board-check result files, each a design built by the flow and run on the board; 20 are marked pass."
+     "text": "There are 20 board-check result files, each a design built by the flow and run on the board, and 20 are marked pass."
     },
     {
      "kind": "measured",
@@ -3352,7 +3382,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/hil/cdc_soak/results/build_full.json"
       }
      ],
-     "text": "The CDC soak rig's full build uses 35,872 LUTs, meets timing with 0.308 ns of slack and has a Vivado power estimate of 0.776 W."
+     "text": "The full build of the crossing soak rig uses 35,872 LUTs, meets timing with 0.308 ns to spare and has a Vivado power estimate of 0.776 W."
     }
    ],
    "family": {
@@ -3424,9 +3454,9 @@
     ]
    },
    "gaps": [
-    "The soak's hardware logs are not among the committed results here; what is committed is the builds and the simulations.",
+    "The soak's hardware logs are not among the committed results; the builds and simulations are.",
     "Unattended soaks and board runs need the owner's approval.",
-    "The agent's development runs stop before programming; the board designs above were hand-built."
+    "The agent's development runs stop before programming; the designs on the board were built by hand."
    ],
    "id": "hil",
    "level": "measured",
@@ -3492,6 +3522,7 @@
    "summary": "Programming only the owner's board, self-checks over the UART, ILA capture, and the soak rig that exercises clock crossings on hardware."
   },
   {
+   "about": "The Nexys A7 has no heat sink, so power is a hard limit, not a nicety. Two checks in the power-closure stage gate enforce it: the junction temperature Vivado computes for the board's real cooling must stay within the limit, and the total on-chip power and temperature must fit the budget for the board's power source, which the board tools check again before programming.",
    "cap_reason": null,
    "cards": [],
    "checks": [
@@ -3504,10 +3535,10 @@
     },
     {
      "enforced": true,
-     "file": "flow/board_check.py",
+     "file": "agent/graph/stages.py",
      "gate": "power_ok",
-     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/board_check.py",
-     "what": "Before programming, total on-chip power and junction temperature must be within the board's limits."
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/graph/stages.py",
+     "what": "Part of the power-closure stage gate: total on-chip power and junction temperature must be within the limits for the board's power source, and the board tools refuse to program a build that fails."
     }
    ],
    "counts": {
@@ -3526,7 +3557,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/board_v2"
       }
      ],
-     "text": "Across the board-check results the highest on-chip power was 0.141 W and the highest junction temperature 42.6 C."
+     "text": "Across the board checks, the highest on-chip power was 0.141 W and the highest junction temperature 42.6 C."
     },
     {
      "kind": "agent",
@@ -3536,7 +3567,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
       }
      ],
-     "text": "4 development runs recorded post-route power and passed every post-route stage gate, the junction-temperature gate among them."
+     "text": "Of the development runs, 4 recorded power after routing and passed every gate at that stage, the junction-temperature gate among them."
     }
    ],
    "family": {
@@ -3595,8 +3626,8 @@
     ]
    },
    "gaps": [
-    "Power figures are Vivado's estimates, not measurements at the supply.",
-    "Low-power coding techniques have skills; no run compares them."
+    "The power figures are Vivado's estimates, not measurements at the supply.",
+    "Low-power coding techniques have skills, but no run compares them."
    ],
    "id": "power",
    "level": "agent",
@@ -3690,6 +3721,7 @@
    "summary": "Power and junction-temperature budgets for a board without a heat sink, power rails, and low-power coding."
   },
   {
+   "about": "The agent builds only through scripted, non-project Vivado under a memory cap and a thread limit, so every build is reproducible and writes the reports the gates read. A cross-probing tool traces a failing or tight path back to its source line, its place on the chip and its nets, so a repair starts from the right spot.",
    "cap_reason": null,
    "cards": [],
    "checks": [
@@ -3724,7 +3756,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/project_parity/xprobe"
       }
      ],
-     "text": "Cross-probe examples from 2 routed designs; the tighter had 2.024 ns of setup slack, and the output names source lines, locations and nets."
+     "text": "Cross-probing was run on 2 routed designs; the tighter had 2.024 ns of setup slack, and the output names the source lines, locations and nets."
     },
     {
      "kind": "agent",
@@ -3734,7 +3766,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/course"
       }
      ],
-     "text": "16 development runs went through every stage up to the configuration stage with every stage gate passed."
+     "text": "Of the development runs, 16 went through every stage up to configuration with every stage gate passed."
     }
    ],
    "family": {
@@ -3792,9 +3824,9 @@
     ]
    },
    "gaps": [
-    "Cross-probing found no failing path on any local design, so it is shown on passing ones.",
-    "Everything is measured on Vivado 2025.2; behaviour in other versions is not tested.",
-    "The block-design and project-mode steps are measured in batch but not part of the flow."
+    "No local design had a failing path to cross-probe, so it is shown on passing ones.",
+    "Everything is measured on Vivado 2025.2, and other versions are not tested.",
+    "The block-design and project-mode steps are measured in scripts but are not part of the flow."
    ],
    "id": "toolflow",
    "level": "agent",
@@ -3965,7 +3997,7 @@
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
   }
  ],
- "pin": "68673cb",
- "skills_total": 213,
- "skills_used": 187
+ "pin": "af81c89",
+ "skills_total": 214,
+ "skills_used": 188
 }

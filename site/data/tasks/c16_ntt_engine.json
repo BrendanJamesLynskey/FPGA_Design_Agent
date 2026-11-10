@@ -33,7 +33,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-06",
+  "date": "2026-11-10",
   "mutants": {
    "barrett_constant": {
     "failed_tests": [
@@ -42,7 +42,10 @@
     "killed": true
    },
    "forward_scaled": {
-    "failed_tests": [],
+    "failed_tests": [
+     "test_forward_random",
+     "test_forward_edge_polynomials"
+    ],
     "killed": true
    },
    "forward_sub_is_add": {
@@ -61,6 +64,13 @@
    "inverse_zeta_index": {
     "failed_tests": [
      "test_inverse_random"
+    ],
+    "killed": true
+   },
+   "ld_ptr_q_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_registers_and_reset"
     ],
     "killed": true
    },
@@ -275,7 +285,12 @@
   {
    "file": "ntt_engine.sv",
    "name": "forward_scaled",
-   "why": "the forward transform also runs the multiplication by 3303"
+   "why": "the forward transform also runs the multiplication by 3303 (amended 2026-11-10: the first form of this edit left a dangling else and never compiled)"
+  },
+  {
+   "file": "c16_ntt_engine_regs.sv",
+   "name": "ld_ptr_q_not_reset",
+   "why": "CPU_RESETN does not reset ld_ptr_q (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

@@ -5,3 +5,4 @@ mutants:
   - {name: phase_step_doubled, file: dds.sv, find: "acc <= acc + fw;", replace: "acc <= acc + {fw[AW-2:0], 1'b0};", why: "frequency twice the word"}
   - {name: reset_keeps_phase, file: dds.sv, find: "acc <= '0; out_valid <= 1'b0; out_data <= '0;", replace: "out_valid <= 1'b0; out_data <= '0;", why: "reset does not clear the phase, so a second run starts mid-cycle"}
   - {name: phase_one_clock_late, file: dds.sv, find: "out_data <= lut[acc[AW-1 -: LA]];", replace: "out_data <= lut[(acc + fw) >> (AW - LA)];", why: "table read from the already advanced phase"}
+  - {name: fw_r_not_reset, file: c10_dds_sine_regs.sv, find: "if (rst) begin\n            fw_r <= '0; ", replace: "if (rst) begin\n            ", why: "CPU_RESETN does not reset fw_r (amended 2026-11-10: the reset test now kills a mutant)"}
