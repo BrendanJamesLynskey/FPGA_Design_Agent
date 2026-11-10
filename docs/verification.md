@@ -165,6 +165,22 @@ lists each survivor in words (file, line, the change); `gates(kind=verif)` repea
 reason. The tool takes the machine's heavy-job lock (`$FDA_HEAVY_LOCK`) under a memory cap, and answers `busy, retry`
 when it is held. 
 
+### The CDC checks (brief 16)
+
+A design with a clock-domain crossing (an `ASYNC_REG` register, an XPM CDC macro, or several clock domains in
+`architecture.yaml`) gets two more V3 checks, because `report_cdc` alone passes a bus crossed bit by bit, two
+synchronisers whose outputs are combined, and a pulse into a level synchroniser (CDC rig 11b):
+
+- `cdc_structure_clean`: the post-synthesis structural check (`flow/cdc_paths.tcl` + `flow/cdc_structure.py`, read from the
+  flow's `gates.json`, gate `post_synth_cdc_structure_clean`). Every asynchronous path in the netlist is classified; a
+  CDC-6 Warning row is safe only on an XPM Gray/handshake/FIFO instance, or a hand-built bus, that carries its
+  `Max Delay Datapath Only` exception.
+- `cdc_injection_clean`: `flow/cdc_inject_run.py` runs the design's own `tests/test_*_rtl.py` plain and with 4 seeds of
+  synchroniser-delay injection; a test that passes plain and fails injected fails the gate. A missing report fails the check.
+
+The fixtures that prove both are in `flow/tests/fixtures/cdc_mutants/` (rig mutants M1-M8, M10 and correct variants C1-C12);
+the table is `results/16_cdc_gate/mutant_table.md`.
+
 ## Independent spec-only tests (brief 08f, `eval-2`)
 
 Every escape so far shares one cause: the agent's tests are written in the same context as the design, so they repeat its

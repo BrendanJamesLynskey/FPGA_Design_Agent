@@ -613,6 +613,8 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
             argv += ["--mutation", _rel(s, s.design / "build" / "verif" / "mutation.json")]
         if (s.design / "build" / "verif" / "v3_evidence.json").is_file():    # 05l: why a V3 step was not measured
             argv += ["--evidence", _rel(s, s.design / "build" / "verif" / "v3_evidence.json")]
+        if (s.design / "build" / "verif" / "cdc_inject.json").is_file():     # brief 16: the CDC injection result
+            argv += ["--cdc-inject", _rel(s, s.design / "build" / "verif" / "cdc_inject.json")]
         if (s.design / "build" / "base" / "gates.json").is_file():
             argv += ["--gates", _rel(s, s.design / "build" / "base" / "gates.json")]
         if (s.design / "build" / "bringup" / f"{s.design.name}_bringup.json").is_file():

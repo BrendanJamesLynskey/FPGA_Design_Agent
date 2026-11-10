@@ -22,6 +22,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 import uuid
 from collections import Counter
@@ -980,7 +981,9 @@ def v3_evidence(rt: Runtime, sim_ok: bool) -> dict:
     except (OSError, ValueError):
         old = {}
     mut_file = rt.design / "build" / "verif" / "mutation.json"
-    if (old.get("key") == key and old.get("coverage", {}).get("ok") and old.get("mutation", {}).get("ok")
+    from flow import cdc_inject as _ci
+    cdc_ok = (not _ci.design_crosses(rt.design)) or (rt.design / "build" / "verif" / "cdc_inject.json").is_file()
+    if (old.get("key") == key and old.get("coverage", {}).get("ok") and old.get("mutation", {}).get("ok") and cdc_ok
             and mut_file.is_file() and list((rt.design / "build" / "verif" / "sim").glob("seed*/coverage*.dat"))):
         return {**old, "reused": True}
     st: dict[str, Any] = {"key": key, "coverage": {"ok": False}, "mutation": {"ok": False}}
@@ -1018,6 +1021,19 @@ def v3_evidence(rt: Runtime, sim_ok: bool) -> dict:
                                      f"{V3_MUTATION_ARGS['lock_wait_s']} s the run waits (busy); it is retried at the next visit")
         elif not r.get("ok"):
             st["mutation"]["why"] = "the mutation run did not complete: " + st["mutation"]["text"][-300:].replace("\n", " ")
+    # brief 16: the CDC injection run (the design's own tests with synchroniser-delay injection), for a design with a crossing
+    # (not a registered tool: a new tool would change the model's tool list, which the eval-1 golden request test freezes)
+    from flow import cdc_inject
+    if cdc_inject.design_crosses(rt.design):
+        out = rt.design / "build" / "verif" / "cdc_inject.json"
+        out.unlink(missing_ok=True)
+        r = rt.session.runner.run("cdc_inject", [sys.executable, str(ROOT / "flow" / "cdc_inject_run.py"), str(rt.design),
+                                                 "--json", str(out)], ROOT, timeout=3600)
+        try:
+            ci = json.loads(out.read_text())
+        except (OSError, ValueError):
+            ci = {}
+        st["cdc_inject"] = {"ok": r.returncode == 0 and bool(ci), "why": ci.get("why") or None}
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(st, indent=1))
     return st

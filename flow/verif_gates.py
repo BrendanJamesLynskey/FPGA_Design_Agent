@@ -411,8 +411,46 @@ def trace_table(reqs: list[dict], entries: list[dict], res: dict[int, dict[str, 
     return rows
 
 
+def cdc_checks(design: Path, gates_json: dict | None, cdc_inject_file: Path | None) -> dict[str, Any]:
+    """Brief 16: the two CDC checks of V3, for a design that has a clock-domain crossing (an ASYNC_REG register, an XPM CDC macro or
+    several declared clock domains; none otherwise). ``cdc_structure_clean`` is the post-synthesis structural check
+    (flow/cdc_structure.py, in the flow's gates.json); ``cdc_injection_clean`` is the design's own tests run with synchroniser
+    delay injection (flow/cdc_inject_run.py). report_cdc alone passes a bus crossed bit by bit, reconverging synchronisers and a
+    pulse into a level synchroniser. A missing report fails its check."""
+    try:
+        from flow import cdc_inject
+    except ImportError:
+        import cdc_inject
+    if not cdc_inject.design_crosses(design):
+        return {}
+    how = "run flow/cdc_inject_run.py <design> (the harness does this in v3_evidence) and pass build/verif/cdc_inject.json as --cdc-inject"
+    out: dict[str, Any] = {}
+    gg = (((gates_json or {}).get("stages") or {}).get("post_synth") or {}).get("gates") or {}
+    cs = (((gates_json or {}).get("stages") or {}).get("post_synth") or {}).get("cdc_structure") or {}
+    if "post_synth_cdc_structure_clean" in gg:
+        bad = [f"{u['rule']} {u['cell']}: {u['why']}" for u in (cs.get("unsafe") or [])]
+        out["cdc_structure_clean"] = chk(bad if bad else "no unsafe crossing", "no unsafe crossing",
+                                         bool(gg["post_synth_cdc_structure_clean"]),
+                                         ("; ".join(bad[:4]) + (f" (+{len(bad) - 4} more in gates.json)" if len(bad) > 4 else "")) if bad
+                                         else "the structural CDC check could not read cdc_paths_synth.rpt")
+    else:
+        out["cdc_structure_clean"] = chk("missing", "no unsafe crossing", False,
+                                         "no structural CDC result: build the design through the post-synthesis stage "
+                                         "(flow/build.tcl writes cdc_paths_synth.rpt) and pass its gates.json as --gates")
+    try:
+        ev = json.loads(cdc_inject_file.read_text()) if cdc_inject_file and cdc_inject_file.exists() else None
+    except (OSError, ValueError):
+        ev = None
+    if ev is None:
+        out["cdc_injection_clean"] = chk("missing", "pass", False, "no CDC injection result: " + how)
+    else:
+        out["cdc_injection_clean"] = chk("pass" if ev.get("pass") else "fail", "pass", bool(ev.get("pass")),
+                                         ev.get("why") or None)
+    return out
+
+
 def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation: Path | None, hw: Path | None,
-             gates: Path | None = None, evidence: Path | None = None) -> dict:
+             gates: Path | None = None, evidence: Path | None = None, cdc_inject_file: Path | None = None) -> dict:
     plan_path = design / "verif" / "testplan.yaml"
     out: dict[str, Any] = {"design": design.name, "stages": {}}
     v0 = {"testplan_present": chk(plan_path.exists(), True, plan_path.exists(),
@@ -641,6 +679,8 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
         "mutation_score_pct": chk(mut["score_pct"] if mut else NOT_MEASURED, th["mutation_score_pct"], mut_ok,
                                   mutation_why(mut, mut_reason, need)),
     }
+    gj = json.loads(gates.read_text()) if gates and gates.exists() else None
+    v3.update(cdc_checks(design, gj, cdc_inject_file))           # brief 16: only for a design with a crossing
     # 05n: say on every check whose threshold the plan set below the floor that the floor applies
     for key, names in (("seeds_min", ("seeds_run",)), ("functional_bins_pct", ("functional_bins_pct", "functional_bins_unhit")),
                        ("cover_properties_pct", ("cover_properties_pct", "cover_properties_unhit")),
@@ -707,6 +747,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--formal", default="build/verif/formal")
     ap.add_argument("--mutation")
     ap.add_argument("--evidence", help="05l: build/verif/v3_evidence.json, the flow's own V3 steps (why a number is not measured)")
+    ap.add_argument("--cdc-inject", help="brief 16: build/verif/cdc_inject.json from flow/cdc_inject_run.py (needed by a design with a crossing)")
     ap.add_argument("--hw")
     ap.add_argument("--gates", help="gates.json of the build (flow/gates.py): evidence for analysis proofs")
     ap.add_argument("--json")
@@ -717,7 +758,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         rep = evaluate(rel(a.design), rel(a.runs), [rel(x) for x in a.also], rel(a.formal),
                        rel(a.mutation) if a.mutation else None, rel(a.hw) if a.hw else None,
-                       rel(a.gates) if a.gates else None, rel(a.evidence) if a.evidence else None)
+                       rel(a.gates) if a.gates else None, rel(a.evidence) if a.evidence else None,
+                       rel(a.cdc_inject) if a.cdc_inject else None)
     except (PlanError, OSError, KeyError, TypeError, ValueError, AttributeError, SyntaxError) as e:
         # whatever else a gate input throws, the answer is a failed gate with the message, not a traceback
         msg = e.args[0] if isinstance(e, PlanError) and e.args else f"{type(e).__name__}: {e}"
