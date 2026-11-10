@@ -1,32 +1,32 @@
 <h1>Examples</h1>
-<p class="lede">Development tasks and the hand-built reference design only. Every task here was used to find and fix problems in the agent, so these runs show how it works and fails, not how well it will do on tasks it has never seen. The held-out evaluation has its own page.</p>
+<p class="lede">Four stories from the development work: a clean first run, an interview that decided the outcome, a task that took five runs, and a hand-built design on the board. Each development task here was used to find and fix faults in the agent, so these runs show how it works and fails, not how it will do on new tasks.</p>
 
 <h2>1. A median filter, first time through</h2>
-<p><code>c9_median3x3</code>, run {{examples.0.runs.0.run}}. The task text, in full:</p>
+<p>The task asks for a 3&times;3 median filter on a pixel stream. Its full text, as the agent received it:</p>
 {{!spec_c9}}
-<p>The agent asked the oracle {{examples.0.runs.0.questions.oracle_calls}} questions across two interview visits, then built the design. Gate results, copied from the run record:</p>
+<p>In run {{examples.0.runs.0.run}} the agent asked the stand-in user {{examples.0.runs.0.questions.oracle_calls}} questions over two interview visits, then built the design. The run record's gate results:</p>
 {{!c9_gates}}
-<p>Hidden tests: {{examples.0.runs.0.tests_passed}} of {{examples.0.runs.0.tests_total}}. After place and route at 100 MHz the setup slack was {{examples.0.runs.0.wns_ns}} ns, with {{examples.0.runs.0.lut}} LUT, {{examples.0.runs.0.ff}} FF, {{examples.0.runs.0.dsp}} DSP and {{examples.0.runs.0.bram36}} BRAM; the counts include the test shell. The run took {{examples.0.runs.0.agent_turns}} agent turns and {{examples.0.runs.0.wall_h}} h. The run stopped at stage 9 as designed: no board was attached. Not a clean sweep: the mutation score was below 100% and one mutant (a changed offset in the window address) survived.</p>
+<p>It passed {{examples.0.runs.0.tests_passed}} of {{examples.0.runs.0.tests_total}} hidden tests. After place and route at 100 MHz the setup slack was {{examples.0.runs.0.wns_ns}} ns, with {{examples.0.runs.0.lut}} LUT, {{examples.0.runs.0.ff}} FF, {{examples.0.runs.0.dsp}} DSP and {{examples.0.runs.0.bram36}} BRAM, test shell included, in {{examples.0.runs.0.agent_turns}} agent turns and {{examples.0.runs.0.wall_h}} h. It stopped at the board stage as designed, with no board attached. It was not flawless: one <a href="how.html#term-mutation">mutant</a>, a changed offset in the window address, survived, so the mutation score was below 100%.</p>
 
-<h2>2. The same task, two outcomes: the interview decides</h2>
-<p><code>c10_dds_sine</code> ran twice with the same agent. The part of the task text that mattered:</p>
+<h2>2. The same task twice: the interview decides</h2>
+<p>A sine-wave generator task ran twice with the same agent. The part of its text that mattered:</p>
 {{!spec_c10}}
 {{!c10_runs}}
-<p>Run 1 passed every check the agent ran and still scored {{examples.1.runs.0.tests_passed}} of {{examples.1.runs.0.tests_total}} on the hidden tests: it did not settle how the sample is packed into the data register. Run 2 asked, was answered, and passed. This is an escape, and the reason the agent now asks about register layout whenever a task names registers without offsets.</p>
+<p>Run 1 passed every check the agent ran and still scored {{examples.1.runs.0.tests_passed}} of {{examples.1.runs.0.tests_total}} on the hidden tests, because it never settled how a sample is packed into the data register. Run 2 asked, got an answer and passed. That escape is why the agent now asks about register layout whenever a task names registers without giving offsets.</p>
 
 <h2>3. Five runs of one task, each exposing the next problem</h2>
-<p><code>c14_int8_dot_requant</code> was run five times. After each failure a fix was made to the agent (not to the task) and the task was run again. This is how development tasks are used, and why their results are not a score.</p>
+<p>An int8 dot product with requantisation ran five times. After each failure the agent was fixed, never the task, and the task was run again. This is how development tasks are used, and why their results are not a score.</p>
 {{!spec_c14}}
 {{!c14_table}}
-<p>Run 5 passed all {{examples.2.runs.4.tests_total}} hidden tests with every gate green; setup slack {{examples.2.runs.4.wns_ns}} ns, {{examples.2.runs.4.lut}} LUT, {{examples.2.runs.4.ff}} FF, {{examples.2.runs.4.dsp}} DSP. Runs 3 and 4 passed the hidden tests on the RTL they left, but stopped on an internal gate: the agent failed its own bar, and the bar was the problem.</p>
+<p>Run 5 passed all {{examples.2.runs.4.tests_total}} hidden tests with every gate green: setup slack {{examples.2.runs.4.wns_ns}} ns, {{examples.2.runs.4.lut}} LUT, {{examples.2.runs.4.ff}} FF, {{examples.2.runs.4.dsp}} DSP. Runs 3 and 4 left RTL that passed the hidden tests but stopped on an internal gate: the agent failed its own bar, and the bar was the problem.</p>
 
-<h3>Timing and area of every development run that reached place and route</h3>
+<h3>Timing and area of every run above that reached place and route</h3>
 {{!qor_table}}
-<p class="small muted">Only the three tasks above; the full list of {{dev.runs}} runs is on the results page. Slack is at 100 MHz; counts include the test shell.</p>
+<p class="small muted">All {{dev.runs}} development runs are on the results page. Slack is at 100 MHz; counts include the test shell.</p>
 
 <h2>4. On the board: the hand-built reference design</h2>
-<p>Before the agent existed, one design (<code>t1_dimmer_counter</code>: a push-button counter driving 16 LEDs by a dimmer) was written by hand and taken through every step: gates, bitstream, programming and testing on a Nexys A7-100T. This proves the flow the agent drives. It is not agent output.</p>
-<figure><img src="t1_on_nexys_a7.jpg" width="900" height="1200" loading="lazy" alt="The T1 design running on the Nexys A7-100T board" style="max-width:min(100%,380px)"><figcaption>T1 running on the board.</figcaption></figure>
+<p>Before the agent existed, one design was written by hand and taken through every step to a Nexys A7-100T: a push-button counter driving 16 LEDs through a dimmer. It proves the flow the agent drives; it is not agent output.</p>
+<figure><img src="t1_on_nexys_a7.jpg" width="900" height="1200" loading="lazy" alt="The hand-built reference design running on the Nexys A7-100T board" style="max-width:min(100%,380px)"><figcaption>The reference design running on the board.</figcaption></figure>
 <div class="tablewrap"><table><thead><tr><th>Measure</th><th class="num">Base build</th><th class="num">With logic analyser</th></tr></thead><tbody>
 <tr><td>Setup slack (ns)</td><td class="num">{{board.wns.0}}</td><td class="num">{{board.wns.1}}</td></tr>
 <tr><td>Hold slack (ns)</td><td class="num">{{board.whs.0}}</td><td class="num">{{board.whs.1}}</td></tr>
@@ -35,11 +35,11 @@
 <tr><td>BRAM tiles</td><td class="num">{{board.bram.0}}</td><td class="num">{{board.bram.1}}</td></tr>
 <tr><td>Total power, vectorless (W)</td><td class="num">{{board.power.0}}</td><td class="num">{{board.power.1}}</td></tr>
 </tbody></table></div>
-<p>One command programs the board, runs {{board.uart_tests}} UART tests against the model and checks {{board.ila_captures}} captures of the on-chip logic analyser cycle by cycle. All {{board.board_runs}} runs passed ({{board.uart_failures}} failures), each in about {{board.run_totals_s.1}} s. Below, the capture of LED 0 at three dimmer levels; the number of "on" samples equals the model's in every case.</p>
+<p>One command programs the board, runs {{board.uart_tests}} tests over the serial link against the model, and checks {{board.ila_captures}} captures from the on-chip logic analyser cycle by cycle. All {{board.board_runs}} runs passed with {{board.uart_failures}} failures, each in about {{board.run_totals_s.1}} s. Below is LED 0 at three dimmer levels; the number of samples with the LED on matches the model every time.</p>
 <figure>
 <div class="player" id="ila" aria-label="Logic analyser capture replay"></div>
-<figcaption>Logic-analyser capture of LED 0 from the board, 1024 samples per dimmer level, replayed with a cursor. Raw captures are in <code>results/f0b/captures</code>.</figcaption>
+<figcaption>Logic-analyser capture of LED 0 from the board, 1024 samples per dimmer level, with a cursor. Raw captures: <code>results/f0b/captures</code>.</figcaption>
 </figure>
-<p>A piece of the design, the push-button debouncer, as written:</p>
+<p>One piece of the design, the push-button debouncer, as written:</p>
 {{!t1_rtl}}
-<p>{{board.board_v2_designs}} more small designs (temperature sensor, accelerometer, flash ID, microphone) were also checked on the board, {{board.board_v2_runs}} runs in all, {{board.board_v2_passed}} passed; their results are in <code>results/board_v2</code>.</p>
+<p>{{board.board_v2_designs}} more small designs, reading the temperature sensor, accelerometer, flash ID and microphone, were also checked on the board: {{board.board_v2_passed}} of {{board.board_v2_runs}} runs passed (<code>results/board_v2</code>).</p>

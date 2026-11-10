@@ -1,34 +1,20 @@
 <h1>How it is evaluated</h1>
-<p class="lede">A held-out evaluation, written down and committed before any scored run. The agent at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> was frozen for that evaluation. The full text is <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/eval-1/docs/eval/eval1_preregistration.md">the pre-registration</a>. <strong>eval-1 was stopped before analysis</strong> (<a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/eval/eval1_preregistration.md">the dated note</a>); the next evaluation, the baseline, uses the same method on a larger benchmark.</p>
+<p class="lede">Tasks used to improve an agent cannot also measure it. So a set of tasks is put aside, the method is written down and committed before any scored run, and the agent is frozen at a tag. This page explains that method in plain words.</p>
+<p>The first such evaluation froze the agent at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a>, with its method in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/eval-1/docs/eval/eval1_preregistration.md">the pre-registration</a>. <strong>It was stopped before analysis</strong> (<a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/eval/eval1_preregistration.md">the dated note</a>). The next, the baseline, uses the same method on a larger benchmark.</p>
 
-<h2>The idea</h2>
-<p>Tasks used to improve an agent cannot also measure it. So {{eval.tasks}} tasks were set aside by a fixed random seed before any agent run, and the agent never sees them: not their text, not their tests, not their reference designs. Everything on the results page labelled "development" comes from the other tasks.</p>
+<h2>The method</h2>
+<p>{{eval.tasks}} tasks were drawn by a fixed random seed, before any agent run, from the first benchmark and the course tier, and the agent never sees them: not their text, tests or reference designs. Their files are frozen with checksums, and a check must find no mismatch before the first run. Everything labelled "development" elsewhere on this site comes from the other tasks.</p>
+<p>Each task has <a href="how.html#term-hidden">hidden tests</a>, written before any agent run against an independent golden model and run on the Icarus simulator. No language model grades anything, and a run passes only if every hidden test passes. The tests are themselves checked: the reference design must pass, and {{eval.mutants_per_task}} deliberately broken versions per task must fail.</p>
+<p>Each task runs {{eval.runs_per_task}} times, {{eval.runs}} runs in all, each from a clean checkout, in an order fixed in advance by a seed so that no task runs easiest first. The agent sees only the task text and the board's knowledge pack. Its questions go to an <a href="how.html#term-oracle">oracle</a> (<code>{{eval.oracle}}</code>) that answers from the hidden spec, with a check that each answer quotes it, and every exchange is logged.</p>
+<p>A run that ends for an infrastructure reason is reported as not run, with evidence, and never repeated into the result. Nothing changes during the evaluation: a bug found on the way is written down, fixed afterwards and measured as a second evaluation on the same tasks.</p>
 
-<h2>Steps</h2>
-<ol>
-<li><strong>Held-out split.</strong> {{eval.tasks}} tasks, drawn by seed from two sets (the first benchmark and the course tier). The files are frozen with checksums, and a check must show zero mismatches before the first run.</li>
-<li><strong>A hidden grader.</strong> Each task has hidden tests written before any agent run, against an independent golden model, run on Icarus. No language model grades anything. A run passes only if every hidden test passes.</li>
-<li><strong>The grader is itself checked.</strong> The reference design passes, and {{eval.mutants_per_task}} deliberately broken versions per task ("mutants") must fail.</li>
-<li><strong>Three runs per task.</strong> {{eval.runs}} runs in all, each from a clean checkout and a fresh directory, in an order fixed in advance by a seed so that no task is run easiest first.</li>
-<li><strong>The agent sees only the task text and the board pack.</strong> Questions go to an oracle ({{eval.oracle}}) that answers from the hidden spec with a quote check; every question and answer is logged.</li>
-<li><strong>Errors are "not run".</strong> A run that ends for an infrastructure reason is reported as not run, with evidence. It is never repeated into the result.</li>
-<li><strong>Tasks, not runs, are the unit.</strong> The headline is pass@1 with a 95% interval from a bootstrap over tasks ({{eval.resamples}} resamples). A Wilson interval on the runs is shown beside it and labelled as ignoring the clustering of runs within tasks.</li>
-<li><strong>Escapes.</strong> The share of runs where every check the agent ran passed and the hidden tests still failed, split by the check that should have caught it.</li>
-<li><strong>No changes during the evaluation.</strong> A bug found on the way is written down, fixed afterwards and measured as <code>eval-2</code> on the same tasks.</li>
-</ol>
-
-<h2>How wide will the interval be?</h2>
-<p>Planned in advance from the {{eval.dev_runs_for_width}} development runs on {{eval.dev_tasks_for_width}} tasks: an expected 95% half-width for pass@1 of about &plusmn;{{eval.planned_halfwidth}} points. The width comes from tasks differing in difficulty, so more runs per task barely narrow it. On {{eval.tasks}} tasks a pass rate is known to about that much, and precision for comparisons comes from pairing by task, later.</p>
+<h2>What is reported</h2>
+<p>Tasks, not runs, are the unit. The headline is pass@1, the mean of each task's pass rate, with a 95% interval from a bootstrap over tasks ({{eval.resamples}} resamples). A Wilson interval on runs sits beside it, labelled as ignoring that runs of one task are alike. The report also gives the share of escapes, runs whose own checks passed while the hidden tests failed, split by the check that should have caught them.</p>
+<p>The width was planned in advance from the {{eval.dev_runs_for_width}} development runs on {{eval.dev_tasks_for_width}} tasks: an expected half-width of about &plusmn;{{eval.planned_halfwidth}} points for the 95% interval. It comes from tasks differing in difficulty, so more runs per task barely narrow it. On {{eval.tasks}} tasks a pass rate is known to about that much; sharper comparisons will come later, from pairing results task by task.</p>
 
 <h2>What was fixed in advance</h2>
 {{!eval_table}}
 
 <h2>Limitations, stated up front</h2>
-<ul>
-<li>{{eval.tasks}} tasks give wide intervals.</li>
-<li>One board, one model, one harness.</li>
-<li>An LLM oracle stands in for the user during the interview.</li>
-<li>Icarus is the scoring simulator.</li>
-<li>Constants (gate floors, caps, timeouts) were all chosen on development tasks.</li>
-</ul>
-<p>Held-out task text stays private until the results are published. Nothing on this site comes from a held-out task; a leak scan of the published pages against the private held-out material is part of the release.</p>
+<p>{{eval.tasks}} tasks give wide intervals. There is one board, one model and one harness. A language model stands in for the user in the interview, Icarus is the scoring simulator, and every constant (gate floors, caps, timeouts) was chosen on development tasks.</p>
+<p>Held-out task text stays private until the results are published. Nothing on this site comes from a held-out task, and a scan of the published pages against the private held-out material is part of each release.</p>

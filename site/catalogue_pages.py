@@ -165,7 +165,7 @@ def index_body(C):
         v2 = ('<p>No benchmark v2 block has been drawn yet, so there is no v2 held-out task to count. When one is, this table gives '
               "the number of held-out tasks per domain and tier, and nothing else about them.</p>")
     return f"""<h1>Problems</h1>
-<p class="lede">Every task in the benchmark. Each development task has a page: the problem in plain words, the spec the agent is given, the hidden spec and tests, a hand-written reference solution, the mutants the tests must catch, the golden model running on a fixed input, and the agent's development runs. Held-out tasks are listed by id and tier only.</p>
+<p class="lede">Every task in the benchmark. Each development task has its own page with the request the agent is given, the hidden spec and tests, a hand-written solution, the planted bugs the tests must catch, its golden model running, and the agent's runs. Held-out tasks are kept private and listed here by id and tier only.</p>
 <div class="facts">
 <div class="fact"><div class="n">{n["dev_pages"]}</div><p>development tasks with a page: {n["v1_dev"]} from benchmark v1, {n["course_dev"]} from the course tier.</p></div>
 <div class="fact"><div class="n">{n["held_listed"]}</div><p>held-out tasks, listed by id and tier only (those ids are already public in the split files).</p></div>
@@ -183,12 +183,12 @@ def index_body(C):
 {v2}
 <h2 id="made">How the problems are made</h2>
 <ol class="made">
-<li><strong>The spec.</strong> A short request in plain English, written the way a user would ask (<code>spec.md</code>). It leaves things out on purpose: the agent has to ask. Everything it could ask is settled in a hidden full spec (<code>hidden/spec.yaml</code>: ports, clocks, reset, register map, behaviour rules, requirements), and a stand-in user answers its questions from that file only.</li>
-<li><strong>The hidden tests.</strong> A cocotb bench (<code>hidden/acceptance.py</code>) drives the design through the board's pins or the test shell on the USB-UART and compares it with the model. The agent never sees it.</li>
-<li><strong>The independent model.</strong> A golden model (<code>hidden/model.py</code>) written from the hidden spec alone, never from RTL. The animation on each page runs this model.</li>
-<li><strong>The reference design.</strong> Hand-written RTL (<code>ref/rtl/</code>) that passes every test and is taken through the flow gates. It proves the task can be done on the board; it is not agent output.</li>
-<li><strong>The mutants.</strong> Each task lists deliberate bugs (<code>hidden/mutants.yaml</code>), each a small edit to the reference. Every mutant must fail the hidden tests, which shows the tests can tell a right design from a nearly right one.</li>
-<li><strong>The held-out draw.</strong> A seeded draw holds out about a third of each tier; benchmark v2 draws one task in every block of three per domain and tier, from the frozen task files, so nobody can choose which task is held out. See <a href="{BLOB}benchmark/v2/README.md">benchmark/v2/README.md</a>.</li>
+<li><strong>The request.</strong> A short request in plain English, written as a user would ask. It leaves things out on purpose, so the agent has to ask. Every answer is settled in a hidden full spec (ports, clocks, reset, register map, behaviour, requirements), and a stand-in user answers only from that. <span class="small muted"><code>spec.md</code>, <code>hidden/spec.yaml</code></span></li>
+<li><strong>The hidden tests.</strong> A cocotb bench drives the design through the board's pins, or through the test shell over the serial link, and compares it with the model. The agent never sees it. <span class="small muted"><code>hidden/acceptance.py</code></span></li>
+<li><strong>The independent model.</strong> A golden model written from the hidden spec alone, never from RTL. The animation on each page runs it. <span class="small muted"><code>hidden/model.py</code></span></li>
+<li><strong>The reference design.</strong> Hand-written RTL that passes every test and every flow gate. It proves the task can be done on the board; it is not agent output. <span class="small muted"><code>ref/rtl/</code></span></li>
+<li><strong>The mutants.</strong> Deliberate bugs, each a small edit to the reference. Every one must fail the hidden tests, which shows the tests can tell a right design from a nearly right one. <span class="small muted"><code>hidden/mutants.yaml</code></span></li>
+<li><strong>The held-out draw.</strong> A seeded draw holds out about a third of each tier. Benchmark v2 holds out one task in every block of three per domain and tier, drawn from the frozen files, so nobody chooses which. <a href="{BLOB}benchmark/v2/README.md">More on benchmark v2</a>.</li>
 </ol>
 <p class="small muted">Course-tier tasks are adapted from the owner's FPGA design course (Parts 9 to 16; the course itself is private). Code on these pages is from the repository under its MIT licence.</p>
 """
