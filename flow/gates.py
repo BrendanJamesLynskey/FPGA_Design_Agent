@@ -288,15 +288,17 @@ def forwarded_clock_ports(d: Path, stage: str) -> set[str]:
     lists such a port under no_output_delay (fixture I7: an ODDR-forwarded clock with create_generated_clock on the port),
     but a clock output takes no output delay: the outputs are timed against the clock it carries."""
     f = d / f"io_paths_{stage}.txt"
-    if not f.exists():
-        return set()
+    return forwarded_clock_ports_text(f.read_text(errors="replace")) if f.exists() else set()
+
+
+def forwarded_clock_ports_text(dump: str) -> set[str]:
+    """The ports of a flow/io_paths.tcl dump that are the source of a generated clock."""
     out = set()
-    for line in f.read_text(errors="replace").splitlines():
+    for line in dump.splitlines():
         x = line.split("|")
         if x[0] == "CLOCK" and len(x) >= 7 and x[5] == "1":
             out |= set(x[6].split())
-    ports = {x.split("|")[1] for x in f.read_text(errors="replace").splitlines() if x.startswith("PORT|")}
-    return out & ports
+    return out & {x.split("|")[1] for x in dump.splitlines() if x.startswith("PORT|")}
 
 
 def unconstrained_ok(counts: dict[str, int], ports: dict[str, list[str]], fwd: set[str]) -> bool:

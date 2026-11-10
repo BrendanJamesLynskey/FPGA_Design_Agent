@@ -28,7 +28,8 @@ Rules (raw findings, rule id plus the offending line; no fix hints):
   above naming the data-sheet terms it comes from (tCO, tSU, tH, trace, skew, data valid). Brief 20 part A's agent
   runs gave such ports made-up delays and, once, negative output delays to pass timing.
 - ``FDA-CON-12`` (brief 20 part B) ``-min`` larger than ``-max`` on the same ports, clock and edge (Vivado says
-  nothing: fixture I3).
+  nothing: fixture I3), or a delay that a later line replaces because that line has no ``-add_delay`` (fixture I5b: a DDR
+  input's falling-edge lines without it left the rising edge untimed).
 - ``FDA-CON-13`` (brief 20 part B) a delay relative to a clock defined later in the file: Vivado drops the delay
   (CRITICAL WARNING 12-4739, fixture V4).
 - ``FDA-CON-8`` (``check_top_ports``) a port that ``spec.yaml`` declares is not a port of the top module. The hidden
@@ -163,7 +164,7 @@ def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
     return out
 
 
-_IO_RULE = {"IO-INVENTED": "FDA-CON-11", "IO-NO-FORMULA": "FDA-CON-11", "IO-MIN-GT-MAX": "FDA-CON-12",
+_IO_RULE = {"IO-INVENTED": "FDA-CON-11", "IO-NO-FORMULA": "FDA-CON-11", "IO-MIN-GT-MAX": "FDA-CON-12", "IO-REPLACED": "FDA-CON-12",
             "IO-CLOCK-ORDER": "FDA-CON-13"}
 
 

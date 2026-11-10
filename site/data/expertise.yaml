@@ -21,11 +21,17 @@ areas:
   - {file: flow/xpm_cdc.tcl, enforced: false, what: "Applies the exceptions that AMD ships as scoped files for its crossing macros, which the batch flow otherwise drops."}
   - {file: flow/exceptions_check.py, gate: post_synth_exceptions_clean, gate_in: flow/gates.py, enforced: true, what: "After synthesis and after routing: no exception ignored or covering no path, no constraint message from an XDC line, no TIMING-24/-29/-47 or XDCH-1, and every multicycle path's registers share a real clock enable."}
   - {file: agent/core/constraints.py, gate: FDA-CON-10, enforced: false, what: "Before Vivado: a -setup N multicycle needs its -hold N-1, and a multicycle or datapath-only max delay needs a comment naming the enable or the synchroniser."}
+  - {file: flow/io_check.py, gate: io_timing_clean, gate_in: flow/gates.py, enforced: true, what: "After synthesis and after routing: no made-up delay on a button, switch, LED or UART pin, every delay explained by its data-sheet formula, -min not above -max, no delay replaced for want of -add_delay; for the interfaces a design declares, both -min and -max, the data sheet's values, the right reference clock, and the registers in the I/O blocks."}
+  - {file: agent/core/constraints.py, gate: FDA-CON-11, enforced: false, what: "Before Vivado: the same made-up, unexplained, swapped or replaced I/O delays, and a virtual clock used before it is defined."}
   evidence:
   - kind: measured
     source: results/20_timing_exceptions/exceptions_table.json
     values: ["count@rows:expect_flag=true", "count@rows:expect_flag=true,vivado_flags=true", "count@rows:expect_flag=true,flow_flags=true", "count@rows:expect_flag=false", "count@rows:expect_flag=false,flow_flags=false"]
     text: "On {0} small designs with one timing-exception mistake each, Vivado itself said something about the exception in {1}; the flow's checks flagged {2}. They passed {4} of {3} correct designs."
+  - kind: measured
+    source: results/20_timing_exceptions/io_table.json
+    values: ["count@rows:fault=true", "count@rows:fault=true,vivado_flags=true", "count@rows:fault=true,flow_flags=true"]
+    text: "On {0} small designs with one I/O-delay or virtual-clock mistake each, Vivado itself said something in {1}; the flow's gates flagged {2}."
   - kind: measured
     source: results/14_flow_notes/inputs.json
     values: [get:xpm_probe.before.wns_ns, get:xpm_probe.after.wns_ns]

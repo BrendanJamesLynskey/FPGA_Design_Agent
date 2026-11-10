@@ -17,6 +17,8 @@ are asynchronous or slow. Fails on:
     IO-NO-FORMULA     a non-zero delay with no comment above it naming the data-sheet terms it comes from (tCO, tSU,
                       tH, trace, skew, data valid)
     IO-MIN-GT-MAX     -min larger than -max on the same port, clock and edge (fixture I3: Vivado says nothing)
+    IO-REPLACED       a delay that a later line on the same ports and clock replaces because that line has no -add_delay
+                      (I5b: the falling-edge lines of a DDR input written without -add_delay dropped the rising-edge ones)
     IO-MISSING-MINMAX a port of a synchronous interface without both -max and -min for each edge it uses (I2: with
                       -max only Vivado has no hold path from the port, and check_timing reports partial_input_delay)
     IO-PLACEHOLDER    a 0 ns placeholder, or a false path, on a port of a synchronous interface (I8)
@@ -132,6 +134,15 @@ def parse_xdc_delays(files: list[Path] | list[tuple[str, str]]) -> dict[str, Any
                         m = re.search(rf"-{side}\s+(\[get_ports[^\]]*\]|\$\w+)", stmt)
                         if m:
                             false_paths.append({"file": Path(f).name, "line": n, "ports": _ports_in(m.group(1), vars_)})
+    # a delay written without -add_delay replaces the earlier ones of the same kind (-max/-min) on the same ports and clock,
+    # whatever their clock edge (fixture I5b: falling-edge lines without -add_delay left only falling-edge launches timed)
+    for i, x in enumerate(delays):
+        if x["add"]:
+            continue
+        for y in delays[:i]:
+            if (y.get("replaced_by") is None and y["dir"] == x["dir"] and y["clock"] == x["clock"]
+                    and sorted(y["ports"]) == sorted(x["ports"]) and set(y["kinds"]) & set(x["kinds"])):
+                y["replaced_by"] = x["line"]
     return {"delays": delays, "clocks": clocks, "false_paths": false_paths}
 
 
@@ -266,10 +277,11 @@ def _iface_ports(i: dict[str, Any], names: list[str]) -> list[str]:
 
 def static_findings(xdc: list[tuple[str, str]], slow_ports: list[str] | None = None,
                     async_ports: list[str] | None = None) -> list[dict[str, Any]]:
-    """The rules that need only the XDC text (no Vivado): IO-INVENTED, IO-NO-FORMULA, IO-MIN-GT-MAX, and a clock used
+    """The rules that need only the XDC text (no Vivado): IO-INVENTED, IO-NO-FORMULA, IO-MIN-GT-MAX, IO-REPLACED, and a clock used
     by a delay before its create_clock (IO-CLOCK-ORDER: Vivado drops the delay with CRITICAL WARNING 12-4739)."""
     r = evaluate(None, "synth", xdc, [], async_ports, slow_ports)       # type: ignore[arg-type]
-    out = [f for f in r["failures"] if f["rule"] in ("IO-INVENTED", "IO-NO-FORMULA", "IO-MIN-GT-MAX", "IO-VCLK-UNRELATED")]
+    out = [f for f in r["failures"] if f["rule"] in ("IO-INVENTED", "IO-NO-FORMULA", "IO-MIN-GT-MAX", "IO-REPLACED",
+                                                     "IO-VCLK-UNRELATED")]
     parsed = parse_xdc_delays(xdc)
     first = {}
     for c in parsed["clocks"]:
@@ -346,6 +358,10 @@ def evaluate(build_dir: Path | None, stage: str = "route", xdc_files: list[Path]
         elif nonzero and not any(_FORMULA.search(c) for c in x["comments"]):
             fail("IO-NO-FORMULA", x, f"delay {x['value']:g} ns with no comment above naming the data-sheet terms "
                                      f"(tCO, tSU, tH, trace, skew, data valid) it is derived from")
+    for x in xdc["delays"]:
+        if x.get("replaced_by"):
+            fail("IO-REPLACED", x, f"replaced by line {x['replaced_by']}, which has no -add_delay: Vivado keeps only the later "
+                 f"{'/'.join('-' + k for k in x['kinds'])} delay on these ports and clock")
     # min > max on the same port set, clock and edge
     seen: dict[tuple, dict[str, Any]] = {}
     for x in xdc["delays"]:
@@ -373,7 +389,7 @@ def evaluate(build_dir: Path | None, stage: str = "route", xdc_files: list[Path]
     for i in interfaces:
         ps = _iface_ports(i, port_names) or [str(p) for p in (i.get("ports") or [])]
         kind, name = i.get("kind"), i.get("name") or "?"
-        mine = [x for x in xdc["delays"] if set(ports_of(x)) & set(ps)]
+        mine = [x for x in xdc["delays"] if set(ports_of(x)) & set(ps) and not x.get("replaced_by")]
         fp = [f for f in xdc["false_paths"] if any(port_match(p, n) for p in f["ports"] for n in ps)]
         entry: dict[str, Any] = {"name": name, "kind": kind, "ports": ps, "clock": i.get("clock")}
         if kind == "asynchronous":

@@ -12,7 +12,7 @@ declare -A G=(
   [fwd]="io_fwd|-|io_i7 io_i7c io_i7b"
   [ddr]="io_ddr|-|io_i5 io_i5b"
   [edge]="io_edge|USE_IDELAY=0|io_i6"
-  [edgedly]="io_edge|USE_IDELAY=1 TAPS=${FDA_IO_TAPS:-16}|io_i6b"
+  [edgedly]="io_edge|USE_IDELAY=1 TAPS=${FDA_IO_TAPS:-31}|io_i6b"
   [mmcm]="io_mmcm|-|io_v2 io_v2a"
 )
 groups=("$@"); [ ${#groups[@]} -eq 0 ] && groups=(adc dac fwd ddr edge edgedly mmcm)

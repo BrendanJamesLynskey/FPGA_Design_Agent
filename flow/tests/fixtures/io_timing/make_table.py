@@ -16,6 +16,9 @@ sys.path.insert(0, str(ROOT))
 from flow import exceptions_check, gates, io_check  # noqa: E402
 
 OUT = ROOT / "results" / "20_timing_exceptions"
+# the fixtures whose I/O constraint has a mistake (the others are right, though some interfaces still fail timing: I4, V1,
+# V3 at 100 MHz system-synchronous, I5/I6/I6b BUFIO DDR hold)
+FAULTS = {"io_i2", "io_i3", "io_i3b", "io_i8", "io_i9", "io_i10", "io_v6", "io_i4b", "io_v4", "io_v5", "io_i7b", "io_i5b", "io_v2a"}
 WHAT = {
     "io_i1": "system-synchronous ADC input, -max tCO_max+trace, -min tCO_min+trace",
     "io_i2": "same, -max only",
@@ -37,7 +40,7 @@ WHAT = {
     "io_i5": "source-synchronous DDR input, centre-aligned, both edges (-clock_fall -add_delay)",
     "io_i5b": "same, the falling-edge lines without -add_delay",
     "io_i6": "edge-aligned DDR input, direct BUFIO capture",
-    "io_i6b": "same with a fixed IDELAYE2 in each data input",
+    "io_i6b": "same with a fixed IDELAYE2 of 31 taps (the maximum) in each data input",
     "io_v2a": "input captured on a 125 MHz MMCM clock, delays relative to the 100 MHz board clock",
     "io_v2": "same, delays relative to a 125 MHz virtual clock",
 }
@@ -61,7 +64,15 @@ def row(name: str, ifs: list) -> dict:
             "iob": (p0 or {}).get("iob"), "wns_ns": ts["wns_ns"], "whs_ns": ts["whs_ns"],
             "check_timing": {k: v for k, v in ct.items() if v and k in gates.UNCONSTRAINED_CHECKS},
             "vivado_messages": sorted({f"{m['severity']} {m['id']}" for m in msgs}),
-            "flow_rules": sorted({f["rule"] for f in r["failures"]})}
+            "flow_rules": sorted({f["rule"] for f in r["failures"]}),
+            "fault": name in FAULTS,
+            # Vivado said something: a message on an XDC line, or a check_timing count other than a forwarded-clock port
+            "vivado_flags": bool(msgs) or any(k != "no_output_delay" or v > len(gates.forwarded_clock_ports_text(
+                (g / "io_paths.txt").read_text())) for k, v in ct.items() if v and k in gates.UNCONSTRAINED_CHECKS),
+            # a flow gate fails: the I/O check, the XDC-message check (EXC-XDC-MSG), check_timing, or setup/hold
+            "flow_flags": bool(r["failures"]) or bool(msgs) or (ts["wns_ns"] or 0) < 0 or (ts["whs_ns"] or 0) < 0
+                          or not gates.unconstrained_ok(ct, gates.parse_check_timing_ports((g / "check_timing.rpt").read_text()),
+                                                        gates.forwarded_clock_ports_text((g / "io_paths.txt").read_text()))}
 
 
 def build() -> list[dict]:
@@ -88,7 +99,7 @@ def md(rows: list[dict]) -> str:
 
 if __name__ == "__main__":
     rows = build()
-    text, js = md(rows), json.dumps(rows, indent=2) + "\n"
+    text, js = md(rows), json.dumps({"rows": rows}, indent=2) + "\n"
     if "--check" in sys.argv:
         ok = (OUT / "io_table.md").read_text() == text and (OUT / "io_table.json").read_text() == js
         sys.exit(0 if ok else 1)
