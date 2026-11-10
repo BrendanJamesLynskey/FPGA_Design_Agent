@@ -1,0 +1,48 @@
+# Brief 36: "skills a correct solution needs", planner-style labels for 12 development tasks.
+#
+# Labelled from each task's public spec.md only (never hidden/, ref/, benchmark_private/ or eval1/), against the skill
+# names of the knowledge bank at a598197 for the Nexys A7-100T (xc7a100tcsg324-1). Written and committed before any
+# retrieval was measured (results/36_skill_routing/PREREG.md). The lists name the skills specific to the task's design
+# work; procedures every task gets anyway (the UltraFast stage procedures, the verification-stage procedures,
+# spec-reading, self-check-and-cocotb) are left out, so recall measures whether the task's own knowledge surfaces.
+# The test shell's UART and register window are given by the flow and are not labelled.
+bank: FPGA_Design_Agent_Knowledge a598197
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+tasks:
+  t1_elevator_fsm:
+    spec: benchmark/tasks/t1_elevator_fsm/spec.md
+    needs: [fsm-design, counters-timers-and-edges, nexys-a7-leds-and-displays, nexys-a7-clock-reset-and-inputs, reset-strategy]
+  t1_sync_fifo_regs:
+    spec: benchmark/tasks/t1_sync_fifo_regs/spec.md
+    needs: [fifo-design, bus-and-register-interfaces, memories-and-register-files, nexys-a7-leds-and-displays, reset-strategy]
+  t1_debounce_bank:
+    spec: benchmark/tasks/t1_debounce_bank/spec.md
+    needs: [counters-timers-and-edges, clock-domain-crossing, artix7-synchronisers-and-mtbf, bus-and-register-interfaces, nexys-a7-clock-reset-and-inputs]
+  t2_i2c_cmd_master:
+    spec: benchmark/tasks/t2_i2c_cmd_master/spec.md
+    needs: [serial-and-network-protocols, serial-link-timing, nexys-a7-temperature-sensor-i2c, fsm-design, clock-domain-crossing]
+  t2_spi_master_modes:
+    spec: benchmark/tasks/t2_spi_master_modes/spec.md
+    needs: [serial-and-network-protocols, serial-link-timing, nexys-a7-uart-and-pmods, fsm-design, bus-and-register-interfaces]
+  t2_vga_sprite:
+    spec: benchmark/tasks/t2_vga_sprite/spec.md
+    needs: [display-and-video-timing, nexys-a7-buttons-displays-and-vga, counters-timers-and-edges, clock-enables-not-gated-clocks, memories-and-register-files]
+  t2_pdm_vu:
+    spec: benchmark/tasks/t2_pdm_vu/spec.md
+    needs: [nexys-a7-pdm-microphone, counters-timers-and-edges, nexys-a7-leds-and-displays, arithmetic-and-widths, clock-enables-not-gated-clocks]
+  c10_dds_sine:
+    spec: benchmark/course/tasks/c10_dds_sine/spec.md
+    needs: [memories-and-register-files, memory-and-arithmetic-inference, arithmetic-and-widths, pipelining-and-latency, artix7-block-ram-and-fifo]
+  c11_nco_mixer:
+    spec: benchmark/course/tasks/c11_nco_mixer/spec.md
+    needs: [fixed-point-and-dsp-datapaths, artix7-dsp48e1, arithmetic-and-widths, memories-and-register-files, pipelining-and-latency, vivado-inference-templates-datapath]
+  c14_systolic_matmul:
+    spec: benchmark/course/tasks/c14_systolic_matmul/spec.md
+    needs: [hardware-algorithms, fixed-point-and-dsp-datapaths, pipelining-and-latency, artix7-dsp48e1, arithmetic-and-widths, memories-and-register-files]
+  c16_ntt_engine:
+    spec: benchmark/course/tasks/c16_ntt_engine/spec.md
+    needs: [arithmetic-and-widths, hardware-algorithms, memories-and-register-files, artix7-block-ram-and-fifo, fsm-design, artix7-dsp48e1]
+  c9_nexys_vga_720p:
+    spec: benchmark/course/tasks/c9_nexys_vga_720p/spec.md
+    needs: [display-and-video-timing, artix7-mmcm-pll-configuration, clocking-ip-non-project, nexys-a7-buttons-displays-and-vga, artix7-clocking, artix7-reset-bridge-and-sequencing]
