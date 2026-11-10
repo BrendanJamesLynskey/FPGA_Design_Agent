@@ -3387,7 +3387,7 @@
    "counts": {
     "checks": 1,
     "enforced": 0,
-    "evidence": 2,
+    "evidence": 3,
     "sections": 5,
     "skills": 6
    },
@@ -3401,6 +3401,16 @@
       }
      ],
      "text": "There are 20 board-check result files, each a design built by the flow and run on the board, and 20 are marked pass."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/f2/agent_luna_05c2_run7_bringup.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/f2/agent_luna_05c2_run7_bringup.json"
+      }
+     ],
+     "text": "An agent-built design from a development run was programmed on the board: of its 3 UART self-checks, 0 failed; the run stopped at the step ila_captures."
     },
     {
      "kind": "measured",
@@ -3484,12 +3494,12 @@
    "gaps": [
     "The soak's hardware logs are not among the committed results; the builds and simulations are.",
     "Unattended soaks and board runs need the owner's approval.",
-    "The agent's development runs stop before programming; the designs on the board were built by hand."
+    "Agent-built bitstreams have been programmed on the board, but no agent-built design has yet passed every test on the board."
    ],
    "id": "hil",
-   "level": "measured",
-   "level_label": "Measured in Vivado",
-   "level_n": 2,
+   "level": "agent",
+   "level_label": "Shown in agent runs",
+   "level_n": 4,
    "name": "Hardware in the loop",
    "skills": [
     {
@@ -4007,7 +4017,7 @@
    "means": "Skills in the knowledge bank and nothing measured or enforced for this area yet."
   },
   {
-   "areas": 3,
+   "areas": 2,
    "id": "measured",
    "label": "Measured in Vivado",
    "means": "Committed results from Vivado runs (or the board) that the skills and checks rest on."
@@ -4019,7 +4029,7 @@
    "means": "A stage gate of the flow enforces part of the area on every run that reaches it."
   },
   {
-   "areas": 7,
+   "areas": 8,
    "id": "agent",
    "label": "Shown in agent runs",
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."

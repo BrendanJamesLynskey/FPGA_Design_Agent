@@ -348,6 +348,10 @@ areas:
     where: pass=true
     values: [nfiles, n]
     text: "There are {0} board-check result files, each a design built by the flow and run on the board, and {1} are marked pass."
+  - kind: agent
+    source: results/f2/agent_luna_05c2_run7_bringup.json
+    values: ["get:run_as_written.steps.uart_tests.tests", "get:run_as_written.steps.uart_tests.failures", "get:run_as_written.failed_step"]
+    text: "An agent-built design from a development run was programmed on the board: of its {0} UART self-checks, {1} failed; the run stopped at the step {2}."
   - kind: measured
     source: hil/cdc_soak/results/build_full.json
     values: ["get:utilisation.lut.used", "get:timing.wns_ns", "get:power.total_w"]
@@ -357,7 +361,7 @@ areas:
   gaps:
   - "The soak's hardware logs are not among the committed results; the builds and simulations are."
   - "Unattended soaks and board runs need the owner's approval."
-  - "Agent-built bitstreams have been programmed on the board (results/f2/agent_luna_05c2_run7_bringup.json: the UART self-checks passed 3 of 3, the ILA captures failed), but no agent-built design has yet passed every test on the board."
+  - "Agent-built bitstreams have been programmed on the board, but no agent-built design has yet passed every test on the board."
 - id: power
   name: Power and thermal
   summary: Power and junction-temperature budgets for a board without a heat sink, power rails, and low-power coding.
