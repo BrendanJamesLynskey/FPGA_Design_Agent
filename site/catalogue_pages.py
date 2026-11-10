@@ -117,7 +117,10 @@ def index_body(C):
     for d, name in doms.items():
         k = len(by_dom.get(d, []))
         w = 100 * k / mx if k else 0
-        bars.append(f'<li><a class="dl" href="#dom-{d}" data-dom="{d}"><b>{d}</b> {E(name)}</a>'
+        lab = f'<b>{d}</b> {E(name)}'
+        # an empty domain has no section to jump to: plain text, not a dead #dom-X link
+        head = f'<a class="dl" href="#dom-{d}" data-dom="{d}">{lab}</a>' if k else f'<span class="dl dl-empty">{lab}</span>'
+        bars.append(f'<li>{head}'
                     f'<span class="db" aria-hidden="true"><span style="width:{w:.1f}%"></span></span><span class="mono">{k}</span></li>')
     hero = ('<figure class="domfig"><ul class="dombars" aria-label="Development tasks per domain">' + "".join(bars) + "</ul>"
             '<figcaption>Development tasks with a page, per domain of the coverage survey. Empty rows are domains with no task yet; '

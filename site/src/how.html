@@ -33,7 +33,7 @@
 </tbody></table></div>
 
 <h2>Independent tests from the spec alone</h2>
-<p><span class="tag run">In evaluation</span> The agent's own testbench never counts as a pass. A planned second line of defence writes tests from the signed-off spec only, without seeing the RTL, and runs them against the design. It is built and replayed offline on development tasks. Whether it catches escapes on held-out tasks is a separate pre-registered comparison (<code>eval-2</code>), and no result is claimed for it here.</p>
+<p><span class="tag">Built, not yet measured</span> The agent's own testbench never counts as a pass. A planned second line of defence writes tests from the signed-off spec only, without seeing the RTL, and runs them against the design. It is built and replayed offline on development tasks. Whether it catches escapes on held-out tasks is a separate pre-registered comparison (<code>eval-2</code>), and no result is claimed for it here.</p>
 
 <h2>Mutation testing</h2>
 <p>A bench that passes proves little unless it can fail. Deliberate bugs ("mutants") are injected into the RTL and the bench must kill them. On the hand-built T1 design, {{board.mutants}} mutants were made. The first full run killed {{board.mutation_first_run_pct}}% and {{board.mutation_survivors_first}} survived, both in reset behaviour. A test for reset state was added because of those survivors, and then all {{board.mutants_killed}} of {{board.mutants}} were killed. The first number is the unbiased one.</p>

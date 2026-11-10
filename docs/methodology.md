@@ -86,6 +86,16 @@ the power figures changed, for a reason unrelated to the added reports (see `res
 6. **Programming is SRAM over JTAG only, by cable serial;** flash is never written (house rule), so UG949's
    indirect-programming flow is out of scope.
 7. **SSI and HBM** planning (ch. 2) does not apply to the Artix-7 100T or the Kria K26.
+8. **XPM CDC exceptions are applied by cell name.** AMD ships the timing exceptions of its `xpm_cdc_*` macros as scoped
+   constraint files. The non-project flow (`read_verilog` + `synth_design`) did not apply them in the quality review of
+   2026-11-10 (QR1): a design with one `xpm_cdc_single` and one `xpm_cdc_gray` between two clocks showed Exception
+   "None" for both crossings in `report_cdc` and a setup WNS of -1.364 ns on the crossing, i.e. each crossing was
+   timed as a synchronous path. [flow/xpm_cdc.tcl](../flow/xpm_cdc.tcl), sourced by `flow/build.tcl` right after
+   `synth_design`, applies the same rules by cell name (a false path to the first synchroniser stage, `max_delay
+   -datapath_only` plus `set_bus_skew` for Gray buses, `max_delay -datapath_only` on handshake data). The rules come
+   from the CDC soak rig, where they were proven; **the flow's copy has not yet been re-run in Vivado**, and
+   `xpm_cdc_pulse` and `xpm_cdc_async_rst` get no exception. `report_cdc` alone is not the CDC gate: it does not flag
+   every mutant type the soak rig injects (see [hil/cdc_soak](../hil/cdc_soak/README.md)).
 
 ## The agent's stage machine (for brief 05, F2)
 

@@ -136,8 +136,8 @@ svg .warn { stroke: var(--warn); fill: none; }
 /* problems: index and task pages */
 .dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
 .dombars li { display: grid; grid-template-columns: minmax(0, 22ch) 1fr 3ch; gap: 10px; align-items: center; max-width: none; font-size: .88rem; }
-.dombars a { text-decoration: none; padding: 6px 0; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
-.dombars a b { font-family: var(--f-mono); }
+.dombars a, .dombars .dl-empty { text-decoration: none; padding: 6px 0; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+.dombars a b, .dombars .dl-empty b { font-family: var(--f-mono); }
 .db { height: 12px; border: 1px solid var(--rule); display: block; }
 .db span { display: block; height: 100%; background: var(--ink); }
 .filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0 12px; }
@@ -186,7 +186,7 @@ svg text.dark { fill: #000; } svg text.light { fill: #fff; }
 <h1>Results</h1>
 
 <h2>Held-out evaluation (<code>eval-1</code>)</h2>
-<p>The agent at tag <code>eval-1</code> was to be measured on 19 tasks it never saw during development, 3 runs each. That evaluation was <strong>stopped before any result was analysed</strong>: a tool update partway through blocked some of its runs, and the owner chose to grow the benchmark (more tasks, boards and application areas) before measuring. The stop is recorded in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/eval/eval1_preregistration.md">the pre-registration</a>. A baseline evaluation on the larger benchmark comes later, with a new tag and a new pre-registration. The method is on the <a href="evaluation.html">evaluation page</a>.</p>
+<p>The agent at tag <code>eval-1</code> was to be measured on 19 tasks it never saw during development, 3 runs each. That evaluation was <strong>stopped before any result was analysed</strong>: the owner chose to grow the benchmark (more tasks, boards and application areas) and improve the agent before measuring, since it could not finish in time. A Claude Code auto-update partway through had also blocked nine of its runs, which the agent refuses to run on an untested version. Nothing from it is reported. The stop is recorded in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/eval/eval1_preregistration.md">the pre-registration</a>. A baseline evaluation on the larger benchmark comes later, with a new tag and a new pre-registration. The method is on the <a href="evaluation.html">evaluation page</a>.</p>
 <div id="eval1"></div>
 
 <h2>Development tasks</h2>

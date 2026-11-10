@@ -2,7 +2,7 @@
 """Leak guard for the site: fail if any 80-byte window of private held-out material is in site/.
 
     python3 site/leak_guard.py [PATH ...] --private <FPGA_Design_Agent_Knowledge>/benchmark_private [--private-v2 DIR]
-                               [--public DIR ...] [--public-ids SPLIT.yaml ...]
+                               [--public DIR ...] [--public-ids SPLIT.yaml|TASKDIR ...]
 
 Secrets: every text file under <private>/tasks and <private>/course/tasks (specs, hidden tests, models, reference RTL),
 plus the names of the held-out tasks. A target file leaks if it holds an 80-byte window of a secret (raw or with white
@@ -13,7 +13,8 @@ Exit 1 on any hit.
 Two exemptions, both counted in the summary (brief 09b S2):
 - a window hit is cleared when the same text, compared on letters and digits only, is in the --public text (public spec
   text re-quoted in JSON differs from the YAML only in punctuation);
-- --public-ids: held-out ids listed in these public split files may appear (the problem index lists them by id and
+- --public-ids: held-out ids listed in these public split files, and the task ids of any public task folder given
+  here (a v2 task drawn to development is public: its folder is in benchmark/v2/tasks), may appear (the problem index lists them by id and
   tier). Names from --private-v2 (benchmark v2 held-out tasks) are never exempt.
 """
 import argparse
@@ -65,10 +66,14 @@ def main():
     names = sorted({d.name for r in roots if r.exists() for d in r.iterdir() if d.is_dir()})
     v2names = {d.name for d in Path(a.private_v2).iterdir() if d.is_dir()} if a.private_v2 and Path(a.private_v2).exists() else set()
     pub_ids = set()
+    dir_ids = set()
     for f in a.public_ids:
+        if Path(f).is_dir():  # a public task folder (e.g. benchmark/v2/tasks): its task ids are public by being there
+            dir_ids |= {d.name for d in Path(f).iterdir() if d.is_dir() and not d.name.startswith("__")}
+            continue
         for blk in re.findall(r"held_out:\n((?:\s+- \S+\n)+)", Path(f).read_text()):
             pub_ids |= set(re.findall(r"- (\S+)", blk))
-    pub_ids -= v2names
+    pub_ids = (pub_ids - v2names) | dir_ids
     secret, nfiles = set(), 0
     for r in roots:
         if not r.exists():
