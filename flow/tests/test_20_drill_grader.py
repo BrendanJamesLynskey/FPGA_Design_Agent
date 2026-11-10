@@ -42,3 +42,4 @@ def test_xdc_rules_and_waivers_on_text(tmp_path: Path) -> None:
     assert not r["checks"]["no_broad_waivers"]["pass"]
     assert {f["rule"] for f in r["checks"]["xdc_rules"]["findings"]} == {"FDA-CON-5", "FDA-CON-10"}
     assert not r["pass"]
+

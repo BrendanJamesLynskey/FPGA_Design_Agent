@@ -1,0 +1,65 @@
+{
+ "run_id": "20261110-195112-20cf",
+ "writes": [
+  {
+   "stage": "board-and-device-planning",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set in_ports [get_ports {CPU_RESETN UART_TXD_IN}]",
+    "set_input_delay -clock sys_clk_pin -max 2.0 $in_ports",
+    "set_input_delay -clock sys_clk_pin -min 0.0 $in_ports",
+    "set out_ports [get_ports {LED[*] UART_RXD_OUT}]",
+    "set_output_delay -clock sys_clk_pin -max 2.0 $out_ports",
+    "set_output_delay -clock sys_clk_pin -min 0.0 $out_ports"
+   ]
+  },
+  {
+   "stage": "rtl-design-creation",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set in_ports [get_ports {CPU_RESETN UART_TXD_IN}]",
+    "set_input_delay -clock sys_clk_pin -max 2.0 $in_ports",
+    "set_input_delay -clock sys_clk_pin -min 0.0 $in_ports",
+    "set out_ports [get_ports {LED[*] UART_RXD_OUT}]",
+    "set_output_delay -clock sys_clk_pin -max 2.0 $out_ports",
+    "set_output_delay -clock sys_clk_pin -min 0.0 $out_ports",
+    "set ctrl_src [get_cells {state_q_reg* level_q_reg* pending_q_reg*}]",
+    "set ctrl_dst [get_cells {state_q_reg* level_q_reg* pending_q_reg* copy_q_reg*}]",
+    "set_multicycle_path 8 -setup -from $ctrl_src -to $ctrl_dst",
+    "set_multicycle_path 7 -hold  -from $ctrl_src -to $ctrl_dst"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set IN_PORTS [get_ports {CPU_RESETN UART_TXD_IN}]",
+    "set_input_delay -clock sys_clk_pin -max 5.0 $IN_PORTS",
+    "set_input_delay -clock sys_clk_pin -min 0.0 $IN_PORTS",
+    "set OUT_PORTS [get_ports {LED[*] UART_RXD_OUT}]",
+    "set_output_delay -clock sys_clk_pin -max 2.0 $OUT_PORTS",
+    "set_output_delay -clock sys_clk_pin -min 0.0 $OUT_PORTS",
+    "set CTRL_SRC [get_cells {state_q_reg[*] level_q_reg[*] pending_q_reg}]",
+    "set CTRL_DST [get_cells {state_q_reg[*] level_q_reg[*] pending_q_reg copy_q_reg[*]}]",
+    "set_multicycle_path 8 -setup -from $CTRL_SRC -to $CTRL_DST",
+    "set_multicycle_path 7 -hold -from $CTRL_SRC -to $CTRL_DST"
+   ]
+  },
+  {
+   "stage": "constraints",
+   "timing_lines": [
+    "create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];",
+    "set ASYNC_IN [get_ports {CPU_RESETN UART_TXD_IN}]",
+    "set_input_delay -clock sys_clk_pin 0.000 $ASYNC_IN",
+    "set_false_path -from $ASYNC_IN",
+    "set SLOW_OUT [get_ports {LED[*] UART_RXD_OUT}]",
+    "set_output_delay -clock sys_clk_pin 0.000 $SLOW_OUT",
+    "set_false_path -to $SLOW_OUT",
+    "set CTRL_SRC [get_cells {state_q_reg[*] level_q_reg[*] pending_q_reg}]",
+    "set CTRL_DST [get_cells {state_q_reg[*] level_q_reg[*] pending_q_reg copy_q_reg[*]}]",
+    "set_multicycle_path 8 -setup -from $CTRL_SRC -to $CTRL_DST",
+    "set_multicycle_path 7 -hold -from $CTRL_SRC -to $CTRL_DST"
+   ]
+  }
+ ]
+}

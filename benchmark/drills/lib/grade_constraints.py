@@ -17,6 +17,9 @@ with neither, the grader runs lib/mcp_paths.tcl on build/base/post_route.dcp, so
     multicycle       the multicycles are -setup N and -hold N-1 (N from constraints.yaml); every register they name has
                      a clock enable that is not tied and all share a register in their enable cones
                      (flow/exceptions_check.py EXC-MCP-ENABLE); no all_registers or bare * in a multicycle line
+    multicycle_sim   (when the design's RTL is beside the build) simulation with the task's hidden/mcp_stimulus.py: every
+                     register the multicycle names changes only on one phase of the N-clock enable (lib/
+                     sim_enable_check.py); catches a register whose CE merely includes the enable (CE = tick OR write)
     no_broad_waivers no set_clock_groups, and set_false_path only on ports (the board's asynchronous inputs)
 
 A design that met the spec another way (a pipeline instead of the multicycle) fails ``multicycle`` here but is recorded
@@ -55,7 +58,7 @@ def bufg_count(build: Path) -> int | None:
     return int(m.group(1)) if m else 0
 
 
-def grade(task: Path, design: Path, dump: Path | None = None) -> dict[str, Any]:
+def grade(task: Path, design: Path, dump: Path | None = None, sim: bool | None = None) -> dict[str, Any]:
     need = yaml.safe_load((task / "hidden" / "constraints.yaml").read_text())
     build = design / "build" / "base"
     xdc_p = design / "design.xdc"
@@ -126,12 +129,23 @@ def grade(task: Path, design: Path, dump: Path | None = None) -> dict[str, Any]:
 
     port_vars = {m.group(1) for l in lines for m in [re.match(r"\s*set\s+(\w+)\s+\[\s*(get_ports|all_inputs|all_outputs)\b", l)] if m}
     on_ports = lambda l: "get_ports" in l or any(re.search(rf"\${v}\b", l) for v in port_vars)
+    # the simulation check (lib/sim_enable_check.py): every named register changes on one phase of the N-clock enable
+    if sim is None:
+        sim = (design / "rtl").is_dir()
+    if need.get("multicycle") and sim and dump is not None and dump.exists():
+        from benchmark.drills.lib import sim_enable_check
+        r = sim_enable_check.check(task, design / "rtl", dump)
+        checks["multicycle_sim"] = {k: v for k, v in r.items() if k in ("pass", "n", "phase", "off_phase", "error", "signals")}
+    elif need.get("multicycle"):
+        checks["multicycle_sim"] = {"pass": None, "why": "not run (no RTL beside the build, or no dump)"}
+
     waivers = [l.strip() for l in lines if re.match(r"\s*set_clock_groups\b", l) or
                (re.match(r"\s*set_false_path\b", l) and not on_ports(l) and not need.get("false_path_cells_ok"))]
     checks["no_broad_waivers"] = {"pass": not waivers, "lines": waivers}
 
     choice = "multicycle" if mcp_lines else ("pipeline" if checks["routed"]["pass"] else "none")
-    return {"task": task.name, "design": str(design), "pass": all(c["pass"] for c in checks.values()), "choice": choice,
+    return {"task": task.name, "design": str(design), "pass": all(c["pass"] for c in checks.values() if c["pass"] is not None),
+            "choice": choice,
             "checks": checks}
 
 
@@ -148,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
         a.json.write_text(json.dumps(r, indent=2) + "\n")
     print(f"{r['task']}: {'PASS' if r['pass'] else 'FAIL'} (choice: {r['choice']})")
     for k, c in r["checks"].items():
-        print(f"  {'ok  ' if c['pass'] else 'FAIL'} {k}")
+        print(f"  {'ok  ' if c['pass'] else ('n/a ' if c['pass'] is None else 'FAIL')} {k}")
     return 0 if r["pass"] else 1
 
 
