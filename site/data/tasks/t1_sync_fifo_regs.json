@@ -1,0 +1,807 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the FIFO is built in fabric, not with the FIFO Generator IP.",
+   "reason": "first-word-fall-through over a register read is simplest in plain RTL."
+  },
+  {
+   "assumption": "a HEAD read of an empty FIFO is not an error.",
+   "reason": "peeking does not consume anything."
+  }
+ ],
+ "behaviour": [
+  [
+   "fifo",
+   [
+    "Depth 16, width 8. LEVEL is the number of bytes stored, 0..16.",
+    "A write to PUSH stores wdata[7:0] at the tail when LEVEL < 16; when LEVEL = 16 the byte is dropped, nothing changes and OVERFLOW is set.",
+    "Reads are first-word-fall-through: HEAD and POP return the byte at the head now, with no extra read. A read of POP returns the head byte and removes it (LEVEL - 1). A read of HEAD returns the same byte and removes nothing.",
+    "A read of POP or HEAD when empty returns 0; a POP read when empty also sets UNDERFLOW. A HEAD read when empty does not.",
+    "Bytes leave in the order they arrived, across any number of pointer wraps."
+   ]
+  ],
+  [
+   "flags",
+   [
+    "EMPTY = (LEVEL = 0), FULL = (LEVEL = 16), ALMOST_FULL = (LEVEL >= AF_THRESH).",
+    "OVERFLOW and UNDERFLOW are sticky: once set they stay set until a write to FLAGS with that bit 1 (write-1-to-clear); a 0 bit leaves its flag alone."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "Thermometer - LED[k] = 1 for k < LEVEL, so LEVEL = 16 lights all sixteen and LEVEL = 0 none. No PWM."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-03",
+  "mutants": {
+   "afull_strict": {
+    "failed_tests": [
+     "test_fill_and_overflow",
+     "test_almost_full_threshold"
+    ],
+    "killed": true
+   },
+   "empty_pop_stale": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_fwft_head_and_pop",
+     "test_fill_and_overflow",
+     "test_underflow_and_w1c",
+     "test_almost_full_threshold",
+     "test_register_rules"
+    ],
+    "killed": true
+   },
+   "full_at_15": {
+    "failed_tests": [
+     "test_fill_and_overflow",
+     "test_underflow_and_w1c",
+     "test_almost_full_threshold",
+     "test_leds_thermometer"
+    ],
+    "killed": true
+   },
+   "head_read_underflows": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_fwft_head_and_pop",
+     "test_fill_and_overflow",
+     "test_underflow_and_w1c",
+     "test_almost_full_threshold",
+     "test_pointer_wrap_order",
+     "test_register_rules",
+     "test_random_traffic"
+    ],
+    "killed": true
+   },
+   "leds_off_by_one": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_fill_and_overflow",
+     "test_pointer_wrap_order",
+     "test_leds_thermometer",
+     "test_random_traffic"
+    ],
+    "killed": true
+   },
+   "overflow_overwrites": {
+    "failed_tests": [
+     "test_fill_and_overflow"
+    ],
+    "killed": true
+   },
+   "underflow_not_sticky": {
+    "failed_tests": [
+     "test_fwft_head_and_pop",
+     "test_fill_and_overflow",
+     "test_underflow_and_w1c",
+     "test_almost_full_threshold",
+     "test_pointer_wrap_order",
+     "test_leds_thermometer",
+     "test_register_rules",
+     "test_random_traffic"
+    ],
+    "killed": true
+   },
+   "w1c_clears_both": {
+    "failed_tests": [
+     "test_underflow_and_w1c"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t1_sync_fifo_regs__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 9,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "A",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 55,
+    "name": "model.py",
+    "path": "benchmark/tasks/t1_sync_fifo_regs/hidden/model.py",
+    "sha256": "b1f5a7094b43",
+    "text": "\"\"\"Golden model of t1_sync_fifo_regs, written from spec.yaml alone (never from any RTL).\"\"\"\n\nfrom __future__ import annotations\n\nPUSH, POP, HEAD, LEVEL, FLAGS, AF_THRESH = range(6)\nDESIGN_ID = 0x4649464F          # \"FIFO\"\n\n\nclass Model:\n    def __init__(self) -> None:\n        self.q: list[int] = []\n        self.ovf = self.unf = 0\n        self.af = 12\n\n    def push(self, v: int) -> None:\n        if len(self.q) == 16:\n            self.ovf = 1\n        else:\n            self.q.append(v & 0xFF)\n\n    def pop(self) -> int:\n        if not self.q:\n            self.unf = 1\n            return 0\n        return self.q.pop(0)\n\n    def flags(self) -> int:\n        n = len(self.q)\n        return int(n == 0) | int(n == 16) << 1 | int(n >= self.af) << 2 | self.ovf << 8 | self.unf << 9\n\n    def read(self, off: int) -> int:\n        \"\"\"A side-effect-free read (POP is handled by pop()).\"\"\"\n        if off == HEAD:\n            return self.q[0] if self.q else 0\n        if off == LEVEL:\n            return len(self.q)\n        if off == FLAGS:\n            return self.flags()\n        if off == AF_THRESH:\n            return self.af\n        return 0\n\n    def write(self, off: int, v: int) -> None:\n        if off == PUSH:\n            self.push(v)\n        elif off == FLAGS:\n            if v >> 8 & 1:\n                self.ovf = 0\n            if v >> 9 & 1:\n                self.unf = 0\n        elif off == AF_THRESH:\n            self.af = v & 0x1F\n\n    def leds(self) -> int:\n        return (1 << len(self.q)) - 1\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 77,
+    "name": "sync_fifo_regs.sv",
+    "path": "benchmark/tasks/t1_sync_fifo_regs/ref/rtl/sync_fifo_regs.sv",
+    "sha256": "2fd4af1c5c12",
+    "text": "// sync_fifo_regs.sv: 16 x 8 first-word-fall-through FIFO driven from the\n// shell's register window, with sticky W1C error flags, for t1_sync_fifo_regs.\nmodule sync_fifo_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam logic [6:0] R_PUSH = 7'h00, R_POP = 7'h01, R_HEAD = 7'h02, R_LEVEL = 7'h03,\n                           R_FLAGS = 7'h04, R_AF = 7'h05;\n\n    logic [7:0]  mem [16];\n    logic [3:0]  wp, rp;\n    logic [4:0]  level, af_th;\n    logic        ovf, unf;\n    logic [7:0]  head;\n\n    wire empty = level == 5'd0;\n    wire full  = level == 5'd16;\n    wire afull = level >= af_th;\n    wire push  = win_wr && win_addr == R_PUSH;\n    wire pop   = win_rd && win_addr == R_POP;\n\n    assign head = empty ? 8'd0 : mem[rp];\n\n    always_ff @(posedge clk)\n        if (push && !full) mem[wp] <= win_wdata[7:0];\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            wp <= '0; rp <= '0; level <= '0; ovf <= 1'b0; unf <= 1'b0; af_th <= 5'd12;\n        end else begin\n            if (push) begin\n                if (full) ovf <= 1'b1;\n                else begin\n                    wp    <= wp + 4'd1;\n                    level <= level + 5'd1;\n                end\n            end\n            if (pop) begin\n                if (empty) unf <= 1'b1;\n                else begin\n                    rp    <= rp + 4'd1;\n                    level <= level - 5'd1;\n                end\n            end\n            if (win_wr && win_addr == R_FLAGS) begin\n                if (win_wdata[8]) ovf <= 1'b0;\n                if (win_wdata[9]) unf <= 1'b0;\n            end\n            if (win_wr && win_addr == R_AF) af_th <= win_wdata[4:0];\n        end\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) led <= '0;\n        else     for (int k = 0; k < 16; k++) led[k] <= 5'(k) < level;\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            case (win_addr)\n                R_POP:   win_rdata <= {24'd0, head};\n                R_HEAD:  win_rdata <= {24'd0, head};\n                R_LEVEL: win_rdata <= {27'd0, level};\n                R_FLAGS: win_rdata <= {22'd0, unf, ovf, 5'd0, afull, full, empty};\n                R_AF:    win_rdata <= {27'd0, af_th};\n                default: win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "t1_sync_fifo_regs_top.sv",
+    "path": "benchmark/tasks/t1_sync_fifo_regs/ref/rtl/t1_sync_fifo_regs_top.sv",
+    "sha256": "0f0f30e5139e",
+    "text": "// t1_sync_fifo_regs_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t1_sync_fifo_regs; DESIGN_ID \"FIFO\".\nmodule t1_sync_fifo_regs_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h4649_464F), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    sync_fifo_regs u_fifo (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 196,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t1_sync_fifo_regs/hidden/acceptance.py",
+    "sha256": "1c4f7fc9bb9a",
+    "text": "\"\"\"Acceptance tests of t1_sync_fifo_regs against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import AF_THRESH, DESIGN_ID, FLAGS, HEAD, LEVEL, POP, PUSH, Model\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, {})\n        self.dut, self.m = dut, Model()\n\n    async def start(self) -> None:\n        await self.b.start()\n\n    async def push(self, v: int) -> None:\n        await self.b.write(PUSH, v)\n        self.m.push(v)\n\n    async def pop(self) -> None:\n        want = self.m.pop()\n        await self.b.expect(POP, want, \"POP\")\n\n    async def wr(self, off: int, v: int) -> None:\n        await self.b.write(off, v)\n        self.m.write(off, v)\n\n    async def check_regs(self) -> None:\n        for off, name in ((HEAD, \"HEAD\"), (LEVEL, \"LEVEL\"), (FLAGS, \"FLAGS\"), (AF_THRESH, \"AF_THRESH\"),\n                          (PUSH, \"PUSH\")):\n            await self.b.expect(off, self.m.read(off), name)\n\n    async def check_leds(self) -> None:\n        led = await peek(self.b.clk, self.dut.LED)\n        assert led == self.m.leds(), f\"LED {led:04X} != model {self.m.leds():04X}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_fwft_head_and_pop(dut):\n    \"\"\"Trap: a FIFO Generator in standard (non-FWFT) read mode shows a byte one read late; HEAD and POP here must\n    return the head byte at once.\"\"\"\n    e = Env(dut)\n    await e.start()\n    await e.push(0xA1)\n    await e.b.expect(HEAD, 0xA1, \"HEAD right after the first push\")\n    await e.push(0xB2)\n    await e.push(0xC3)\n    await e.b.expect(HEAD, 0xA1, \"HEAD\")\n    await e.pop()                               # A1\n    await e.b.expect(HEAD, 0xB2, \"HEAD after one pop\")\n    await e.b.expect(HEAD, 0xB2, \"HEAD read twice removes nothing\")\n    await e.pop()                               # B2\n    await e.pop()                               # C3\n    await e.pop()                               # empty: 0, UNDERFLOW\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_fill_and_overflow(dut):\n    e = Env(dut)\n    await e.start()\n    for i in range(16):\n        await e.push(0x40 + i)\n        if i in (0, 7, 11, 15):\n            await e.check_regs()\n            await e.check_leds()\n    await e.push(0xEE)                          # dropped: OVERFLOW\n    await e.push(0xEF)\n    await e.check_regs()\n    await e.check_leds()\n    for _ in range(16):\n        await e.pop()\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_underflow_and_w1c(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.expect(HEAD, 0, \"HEAD when empty\")\n    await e.check_regs()                        # a HEAD read when empty is not an underflow\n    await e.pop()                               # UNDERFLOW\n    for _ in range(17):\n        await e.push(7)                         # OVERFLOW too\n    await e.check_regs()\n    await e.wr(FLAGS, 0)                        # 0 bits clear nothing\n    await e.check_regs()\n    await e.wr(FLAGS, 1 << 8)                   # clears only OVERFLOW\n    await e.check_regs()\n    await e.wr(FLAGS, 0x07)                     # read-only bits: ignored\n    await e.check_regs()\n    await e.wr(FLAGS, 1 << 9)\n    await e.check_regs()\n    await e.pop()\n    await e.wr(FLAGS, 0x300)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_almost_full_threshold(dut):\n    e = Env(dut)\n    await e.start()\n    for th in (0, 1, 5, 16, 17, 31, 12):\n        await e.wr(AF_THRESH, th)\n        await e.check_regs()\n    for i in range(16):                         # walk the level with the threshold at 12, then 4\n        await e.push(i)\n        await e.b.expect(FLAGS, e.m.read(FLAGS), \"FLAGS\")\n    await e.wr(AF_THRESH, 4)\n    for _ in range(14):\n        await e.pop()\n        await e.b.expect(FLAGS, e.m.read(FLAGS), \"FLAGS\")\n\n\n@cocotb.test()\nasync def test_pointer_wrap_order(dut):\n    e = Env(dut)\n    await e.start()\n    n = 0\n    for _ in range(7):                          # level hovers 3..8 while the pointers wrap several times\n        for _ in range(8):\n            await e.push(n & 0xFF)\n            n += 5\n        for _ in range(5):\n            await e.pop()\n        await e.b.expect(LEVEL, e.m.read(LEVEL), \"LEVEL\")\n        await e.b.expect(HEAD, e.m.read(HEAD), \"HEAD\")\n        if len(e.m.q) > 8:\n            for _ in range(len(e.m.q) - 3):\n                await e.pop()\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_leds_thermometer(dut):\n    e = Env(dut)\n    await e.start()\n    for i in range(16):\n        await e.push(i)\n        await e.check_leds()\n    for _ in range(16):\n        await e.pop()\n        await e.check_leds()\n\n\n@cocotb.test()\nasync def test_register_rules(dut):\n    e = Env(dut)\n    await e.start()\n    await e.push(0x1_2345_6789)                 # only [7:0] stored\n    await e.b.write(POP, 0x55)                  # writes to RO registers are ignored (no pop, no push)\n    await e.b.write(HEAD, 0x66)\n    await e.b.write(LEVEL, 3)\n    await e.wr(AF_THRESH, 0xFFFF_FFE3)          # [4:0] only\n    await e.check_regs()\n    for off in (0x06, 0x41, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n    await e.pop()\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_random_traffic(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    for _ in range(70):\n        r = rng.random()\n        bias = 0.6 if len(e.m.q) < 8 else 0.4\n        if r < 0.05:\n            await e.wr(AF_THRESH, rng.randrange(32))\n        elif r < 0.1:\n            await e.wr(FLAGS, rng.choice((0x100, 0x200, 0x300)))\n        elif r < 0.1 + bias:\n            await e.push(rng.getrandbits(8))\n        else:\n            await e.pop()\n        if rng.random() < 0.15:\n            await e.b.expect(FLAGS, e.m.read(FLAGS), \"FLAGS\")\n    await e.check_regs()\n    await e.check_leds()\n"
+   }
+  ]
+ },
+ "heading": "Byte FIFO behind the test shell",
+ "id": "t1_sync_fifo_regs",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "WO",
+    "bits": "a write pushes wdata[7:0]; reads 0",
+    "name": "PUSH",
+    "offset": "0x00"
+   },
+   {
+    "access": "RO",
+    "bits": "[7:0] head byte, removed by the read (0 when empty, sets UNDERFLOW); writes ignored",
+    "name": "POP",
+    "offset": "0x01"
+   },
+   {
+    "access": "RO",
+    "bits": "[7:0] head byte, not removed (0 when empty)",
+    "name": "HEAD",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[4:0] bytes stored 0..16",
+    "name": "LEVEL",
+    "offset": "0x03"
+   },
+   {
+    "access": "RW",
+    "bits": "[0] EMPTY, [1] FULL, [2] ALMOST_FULL (read-only); [8] OVERFLOW, [9] UNDERFLOW (sticky, write 1 to clear); other bits 0",
+    "name": "FLAGS",
+    "offset": "0x04"
+   },
+   {
+    "access": "RW",
+    "bits": "[4:0] almost-full threshold 0..31 (0 = always set, 17..31 = never); [31:5] read 0",
+    "name": "AF_THRESH",
+    "offset": "0x05"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: the FIFO empties (LEVEL = 0), OVERFLOW = UNDERFLOW = 0, AF_THRESH = 12; stored bytes need not be cleared",
+  "top": "t1_sync_fifo_regs_top",
+  "unmapped": "offsets 0x06-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "sync_fifo_regs.sv",
+   "name": "full_at_15",
+   "why": "FIFO full one entry early"
+  },
+  {
+   "file": "sync_fifo_regs.sv",
+   "name": "overflow_overwrites",
+   "why": "a push when full overwrites the head byte"
+  },
+  {
+   "file": "sync_fifo_regs.sv",
+   "name": "afull_strict",
+   "why": "almost full compares strictly"
+  },
+  {
+   "file": "sync_fifo_regs.sv",
+   "name": "w1c_clears_both",
+   "why": "clearing OVERFLOW also clears UNDERFLOW"
+  },
+  {
+   "file": "sync_fifo_regs.sv",
+   "name": "head_read_underflows",
+   "why": "a HEAD read removes the byte"
+  },
+  {
+   "file": "sync_fifo_regs.sv",
+   "name": "empty_pop_stale",
+   "why": "an empty pop returns a stale byte instead of 0"
+  },
+  {
+   "file": "sync_fifo_regs.sv",
+   "name": "leds_off_by_one",
+   "why": "thermometer lights one LED too many"
+  },
+  {
+   "file": "sync_fifo_regs.sv",
+   "name": "underflow_not_sticky",
+   "why": "UNDERFLOW clears on the next good pop"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t1_sync_fifo_regs",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "HEAD and POP are first-word-fall-through - the first read after a push returns that byte, never a lagged one"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Bytes leave in arrival order across pointer wraps; LEVEL and the flags follow the model"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Push when full is dropped and sets OVERFLOW; pop when empty returns 0 and sets UNDERFLOW; both are W1C sticky"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation"
+   ],
+   "text": "ALMOST_FULL compares LEVEL >= AF_THRESH for every threshold"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "simulation"
+   ],
+   "text": "LED[15:0] are the LEVEL thermometer"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  },
+  {
+   "id": "REQ-07",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board a push/pop sequence over the shell answers as the model predicts"
+  }
+ ],
+ "resources_expected": "about 100 LUTs (16x8 distributed RAM) and 50 FFs; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# Byte FIFO behind the test shell\n\nI want a small FIFO on the Nexys A7-100T that I can exercise entirely from the test shell: 16 entries of 8 bits.\n\n- Writing a byte to a push register adds it at the tail. Reading a pop register returns the byte at the head and\n  removes it. I also want to look at the head byte without removing it, and to read how many bytes are stored.\n- Flags: empty, full, and an almost-full flag whose threshold I can set over the shell.\n- Pushing into a full FIFO loses the byte; popping an empty FIFO returns 0. Both mistakes must be remembered in\n  sticky error flags until I clear them, each on its own.\n- The LEDs show the fill level as a bar graph growing from LED[0].\n- CPU_RESETN empties the FIFO and clears every flag.\n- The shell runs at 115200 baud on the USB-UART. The design ID is \"FIFO\".\n\nTest hooks: top module `t1_sync_fifo_regs_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "A28",
+  "A26",
+  "G01"
+ ],
+ "tier": "T1",
+ "title": "Byte FIFO behind the test shell",
+ "trace": {
+  "captions": [
+   "Op 0: Almost-full threshold set to 4.",
+   "Op 1: Push A0: stored, level 0 to 1.",
+   "Op 2: Push A1: stored, level 1 to 2.",
+   "Op 3: Push A2: stored, level 2 to 3.",
+   "Op 4: Push A3: stored, level 3 to 4. Almost-full flag is 1.",
+   "Op 5: Push A4: stored, level 4 to 5.",
+   "Op 6: Push A5: stored, level 5 to 6.",
+   "Op 7: Push A6: stored, level 6 to 7.",
+   "Op 8: Push A7: stored, level 7 to 8.",
+   "Op 9: Push A8: stored, level 8 to 9.",
+   "Op 10: Push A9: stored, level 9 to 10.",
+   "Op 11: Push AA: stored, level 10 to 11.",
+   "Op 12: Push AB: stored, level 11 to 12.",
+   "Op 13: Push AC: stored, level 12 to 13.",
+   "Op 14: Push AD: stored, level 13 to 14.",
+   "Op 15: Push AE: stored, level 14 to 15.",
+   "Op 16: Push AF: stored, level 15 to 16. The FIFO is now full.",
+   "Op 17: Push B0: the FIFO is full, so the byte is lost and the overflow flag is set.",
+   "Op 18: Read HEAD: A0, the oldest byte, which stays in the FIFO.",
+   "Op 19: Pop: returns A0, level 16 to 15.",
+   "Op 20: Pop: returns A1, level 15 to 14.",
+   "Op 21: Pop: returns A2, level 14 to 13.",
+   "Op 22: Pop: returns A3, level 13 to 12.",
+   "Op 23: Write FLAGS with 100: the overflow flag is cleared.",
+   "Op 24: Pop: returns A4, level 12 to 11.",
+   "Op 25: Pop: returns A5, level 11 to 10.",
+   "Op 26: Pop: returns A6, level 10 to 9.",
+   "Op 27: Pop: returns A7, level 9 to 8.",
+   "Op 28: Pop: returns A8, level 8 to 7.",
+   "Op 29: Pop: returns A9, level 7 to 6.",
+   "Op 30: Pop: returns AA, level 6 to 5.",
+   "Op 31: Pop: returns AB, level 5 to 4.",
+   "Op 32: Pop: returns AC, level 4 to 3. Almost-full flag is 0.",
+   "Op 33: Pop: returns AD, level 3 to 2.",
+   "Op 34: Pop: returns AE, level 2 to 1.",
+   "Op 35: Pop: returns AF, level 1 to 0. The FIFO is now empty.",
+   "Op 36: Pop of an empty FIFO returns 00 and sets the underflow flag.",
+   "Op 37: Write FLAGS with 200: the underflow flag is cleared."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "LEVEL",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15,
+     16,
+     16,
+     16,
+     15,
+     14,
+     13,
+     12,
+     12,
+     11,
+     10,
+     9,
+     8,
+     7,
+     6,
+     5,
+     4,
+     3,
+     2,
+     1,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "HEAD",
+    "radix": "hex",
+    "v": [
+     0,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     160,
+     161,
+     162,
+     163,
+     164,
+     164,
+     165,
+     166,
+     167,
+     168,
+     169,
+     170,
+     171,
+     172,
+     173,
+     174,
+     175,
+     0,
+     0,
+     0
+    ],
+    "width": 8
+   },
+   {
+    "kind": "bus",
+    "name": "data read",
+    "radix": "hex",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     160,
+     160,
+     161,
+     162,
+     163,
+     0,
+     164,
+     165,
+     166,
+     167,
+     168,
+     169,
+     170,
+     171,
+     172,
+     173,
+     174,
+     175,
+     0,
+     0
+    ],
+    "width": 8
+   },
+   {
+    "kind": "bit",
+    "name": "EMPTY",
+    "v": [
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "FULL",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "ALMOST_FULL",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "OVERFLOW",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "UNDERFLOW",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0
+    ]
+   }
+  ],
+  "stimulus": "The almost-full threshold is set to 4. Then 17 bytes are pushed (one more than fits), one is peeked, four are popped, the overflow flag is cleared, the rest are popped, one extra pop hits the empty FIFO and the underflow flag is cleared.",
+  "unit": "operation",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37
+  ]
+ },
+ "what": "A small first-in first-out buffer of sixteen bytes that is driven entirely through the test shell. Writing a byte pushes it on, reading a register removes the oldest byte, and another register lets the user look at the oldest byte without removing it. The design reports empty, full and an almost-full flag with a settable threshold, and keeps sticky error flags for pushing into a full buffer and popping an empty one. The LEDs show the fill level as a bar.",
+ "where": "FIFOs sit between nearly any two parts of a digital system that run at different rates, such as a UART and a processor, a sensor and a DMA engine, or network packet stages. Almost-full flags are what let a sender slow down in time."
+}

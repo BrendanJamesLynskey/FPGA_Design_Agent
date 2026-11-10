@@ -1,0 +1,158 @@
+c9_nexys_vga_720p:
+  what: >-
+    A video output for the Nexys A7 board that draws eight vertical colour bars on its VGA connector as a
+    high-definition picture. The design counts pixels and lines to make the horizontal and vertical sync pulses
+    that tell a monitor where each line and frame begins, and puts the bar colours out in step with them. The
+    picture is blank outside the visible area and while the reset button is held. A small status register
+    reports whether the video clock has locked.
+  where: >-
+    Every monitor, projector and capture device is driven by a timing generator like this one. FPGA boards use the
+    same structure for test patterns and as the first stage of a video pipeline.
+c11_nco_mixer:
+  what: >-
+    The first stage of a software-radio receiver. An oscillator (a phase counter plus a sine table) produces a
+    sine and cosine at a chosen frequency, and each incoming sample is multiplied by both to give an in-phase and a
+    quadrature output. A signal at the oscillator's frequency is thereby moved down to zero hertz. The phase only
+    moves when a sample is presented, and each result appears exactly one clock later.
+  where: >-
+    Digital down-converters in radios, radar and software-defined-radio receivers, where an FPGA shifts a band of
+    interest to baseband before filtering and decimation.
+c12_adsr_envelope:
+  what: >-
+    The envelope generator of a synthesiser voice. When the key goes down the level rises in steps (attack), then
+    falls to a held level (decay to sustain), and when the key is released it falls to zero (release). All steps
+    are straight lines and happen only on sample ticks. A new key press starts again from wherever the level
+    happens to be.
+  where: >-
+    Envelope generators shape the loudness or brightness of every note in hardware and software synthesisers, from
+    analogue modular systems to digital keyboards and plug-ins.
+c12_nexys_pwm_audio:
+  what: >-
+    An audio output stage for the board's speaker connector. It takes signed 16-bit audio samples, scales them by a
+    volume register, and turns the result into a pulse-width-modulated signal whose pulse widths follow the sound.
+    The volume register starts at a quiet default and is clamped, so no value written to it can make the output
+    louder than a safe limit. The pin is only ever pulled low or released, never driven high.
+  where: >-
+    Pulse-width modulation is a cheap way to make audio from a digital pin in microcontrollers, toys and small
+    devices. Volume limits like this appear wherever a product could otherwise damage hearing.
+c13_hough_lines:
+  what: >-
+    A line detector for a small edge picture. Each edge point votes for every straight line that could pass through
+    it, in a set of evenly spaced directions, and the votes are counted in a table of direction against distance
+    from the origin. Where many points lie on one line their votes pile up in one cell. The table can be cleared
+    and read back cell by cell.
+  where: >-
+    The Hough transform finds lane markings, edges of objects and straight features in machine vision, robotics and
+    document scanning. Hardware versions run it on video streams in real time.
+c13_nexys_blob_tracker:
+  what: >-
+    A blob finder for a small black-and-white picture. Pixels arrive one at a time, and the block groups bright
+    pixels that touch along their sides into objects, then reports the size of the biggest object and its middle
+    point. Objects that touch only at a corner count as separate, and ties are settled by position. A new picture
+    can follow without any leftovers from the last.
+  where: >-
+    Finding and following bright objects is used in robot vision, light-spot trackers, inspection cameras and
+    laser-pointer or marker tracking. Doing the labelling in a single pass over the pixel stream suits FPGAs.
+c13_nexys_harris_vga:
+  what: >-
+    A corner detector for a small grey-scale picture. It measures how brightness changes around each pixel in two
+    directions, combines the measurements into a corner score, and keeps only scores that are high and are the
+    largest nearby, so that each corner is reported once. The result is a list of corner positions, and the
+    LEDs show how many were found.
+  where: >-
+    Harris corner detection is a classic first step in feature tracking, image stitching, camera calibration and
+    visual odometry. FPGAs run it on streaming video where a processor would be too slow.
+c14_int8_dot_requant:
+  what: >-
+    The arithmetic of one output of a quantised neural-network layer. It multiplies eight small signed number
+    pairs, adds the products and a bias, then scales the total by a fraction written as a multiplier and a shift,
+    rounds to the nearest whole number and limits the answer to the range of a signed byte. An option turns
+    negative answers into zero, as a rectifier does.
+  where: >-
+    Integer multiply-accumulate with a rescaling step is the core of 8-bit neural-network inference on phones,
+    embedded processors and AI accelerators, because it needs far less area and power than floating point.
+c14_nexys_tiny_cnn:
+  what: >-
+    A very small convolutional neural network on the Nexys A7 that decides which of four simple shapes is in a
+    small grey picture. The network's numbers come from files and it uses only whole-number arithmetic: two
+    convolution layers with a pooling step between them, then a final layer that gives four scores. The board
+    shows the winning class on a display digit and sends a letter over the serial port.
+  where: >-
+    Small quantised networks like this run on cameras, sensors and microcontrollers for tasks such as gesture,
+    symbol and defect recognition, and are a common way to learn how neural-network hardware works.
+c14_systolic_matmul:
+  what: >-
+    A block that multiplies short rows of numbers by a small fixed table. The table of signed 8-bit numbers is
+    loaded once. Rows of four numbers are then fed in one per clock with no gaps, and for each row the block gives
+    four exact 32-bit results, one per table column, in order. The spec fixes only the results and their
+    timing; the course builds it as a systolic array, a grid of multiply-and-add cells passing data to their
+    neighbours, but any structure that meets the timing passes.
+  where: >-
+    This row-by-table product is the inner step of matrix multiplication, which dominates neural-network
+    inference. Systolic grids are the matrix engines in many AI accelerators.
+c15_pq_search:
+  what: >-
+    A nearest-neighbour search over a database stored in compressed form. Each entry is a few short codes, and for
+    each query a table says how far each code is from the query. The block adds up the table values for every
+    entry and keeps the eight closest, with ties settled by entry number, and raises a flag when the list is final.
+  where: >-
+    Product quantisation shrinks large vector databases so they fit in memory, and is used in similarity search for
+    images, text and recommendations. Hardware versions speed up the scan of the compressed entries.
+c15_rmsnorm_unit:
+  what: >-
+    A unit that rescales a vector of sixteen numbers so that their root-mean-square value becomes one. It squares
+    and sums the inputs, finds the reciprocal square root without a divider or floating-point block, and multiplies
+    each input by it. A tiny added constant makes an all-zero input give an all-zero output. Results must be within
+    one unit of the last place.
+  where: >-
+    Normalisation layers of this kind sit in front of nearly every layer of modern language models, so efficient
+    hardware for them matters in inference accelerators.
+c15_softmax_unit:
+  what: >-
+    A unit that turns eight scores into eight probabilities that add up to one, with bigger scores getting bigger
+    shares. It must cope with very large or very different scores, so it works relative to the largest score, and
+    it uses small tables and multipliers instead of floating-point or divider blocks. The result is checked to
+    within a stated error.
+  where: >-
+    Softmax ends classifiers and sits inside the attention step of transformer language models. Accelerators
+    implement it in fixed-point hardware because it is a bottleneck when done naively.
+c16_montgomery_mult:
+  what: >-
+    A multiplier for large numbers that works modulo a third number, using the Montgomery method, which replaces
+    division with shifts and additions. The time from start to done is the same whatever the inputs, so that timing
+    reveals nothing about the numbers, and the block reports how many clocks it took.
+  where: >-
+    Modular multiplication of this kind is the inner loop of RSA and elliptic-curve cryptography. Constant-time
+    behaviour is a standard requirement against timing attacks.
+c16_ntt_engine:
+  what: >-
+    An engine for the number-theoretic transform used in the post-quantum key-exchange standard ML-KEM. It holds a
+    polynomial of many coefficients, and transforms it forwards or backwards in place, with all arithmetic modulo
+    a small prime. It avoids divide and remainder operators, stays within a clock limit and reports how long each
+    transform took.
+  where: >-
+    The transform makes polynomial multiplication fast in lattice-based cryptography, and is the heaviest step in
+    post-quantum key exchange and signature schemes. Hardware engines speed it up for servers and embedded devices.
+c9_median3x3:
+  what: >-
+    A median filter for pictures. For each pixel it looks at the pixel and its eight neighbours in a three by three
+    window and outputs the middle value when they are sorted. Isolated noisy pixels are removed while edges stay
+    sharp. It uses only comparison logic, with no multipliers, and gives each result one clock after its window.
+  where: >-
+    Median filters clean salt-and-pepper noise in cameras, scanners, medical images and machine-vision pipelines.
+c10_dds_sine:
+  what: >-
+    A numerically controlled oscillator that makes a sine wave from numbers, one sample per clock. A phase counter steps by a set amount on
+    every clock, a table converts the phase to a sine value, and the frequency is set by the step size. The
+    test shell loads the frequency and reads back a recording of the samples.
+  where: >-
+    Direct digital synthesis generates the carriers and test signals in radios, signal generators, radar and
+    audio instruments, where frequency must be changed quickly and precisely.
+c16_nexys_aes_uart:
+  what: >-
+    An AES encryption engine on the Nexys A7 that reaches the outside world over the serial port. It takes a key
+    and a block of data from a PC over the USB serial port, runs the standard AES rounds in hardware and sends the encrypted
+    block back. Its output can be checked against published test vectors.
+  where: >-
+    AES protects disk encryption, network links, wireless standards and secure storage, and hardware cores are
+    built into processors and system-on-chip designs for speed and low power.

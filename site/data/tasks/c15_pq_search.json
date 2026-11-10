@@ -1,0 +1,511 @@
+{
+ "assumptions": [],
+ "behaviour": [
+  [
+   "distance",
+   [
+    "d(entry) = sum over j<8 of TABLE[j][code_j(entry)], code_j = entry[4j+3:4j]; table entries are below 2^20 so d < 2^23."
+   ]
+  ],
+  [
+   "ranking",
+   [
+    "The eight entries with the smallest distance, closest first; equal distances: the smaller entry number first. Entry numbers count the entries taken since START, from 0.",
+    "An unfilled place reads 0 with FILLED = 0; with fewer than eight entries only that many places are filled."
+   ]
+  ],
+  [
+   "protocol",
+   [
+    "START, then bursts of up to 16 entries on consecutive clocks, the last burst flagged LAST. DONE rises after the flagged entry has been taken into account and the list is final; it stays up until the next START or reset.",
+    "The table is written (TDATA) before the first burst of a query and unchanged during it; a second query may use a new table."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] = DONE, LED[1] = BUSY, the other LEDs are 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 4,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "farthest_not_closest": {
+    "failed_tests": [
+     "test_first_query",
+     "test_second_query_after_first",
+     "test_equal_distances_and_short_database",
+     "test_short_query_and_reset"
+    ],
+    "killed": true
+   },
+   "group7_dropped": {
+    "failed_tests": [
+     "test_first_query",
+     "test_second_query_after_first",
+     "test_equal_distances_and_short_database",
+     "test_short_query_and_reset"
+    ],
+    "killed": true
+   },
+   "numbering_not_restarted": {
+    "failed_tests": [
+     "test_second_query_after_first"
+    ],
+    "killed": true
+   },
+   "start_does_not_clear": {
+    "failed_tests": [
+     "test_second_query_after_first"
+    ],
+    "killed": true
+   },
+   "table_group_stride": {
+    "failed_tests": [
+     "test_first_query",
+     "test_second_query_after_first",
+     "test_equal_distances_and_short_database",
+     "test_short_query_and_reset"
+    ],
+    "killed": true
+   },
+   "tie_larger_index": {
+    "failed_tests": [
+     "test_second_query_after_first",
+     "test_equal_distances_and_short_database"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c15_pq_search__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 5,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 3,
+ "domain": "I",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 47,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c15_pq_search/hidden/model.py",
+    "sha256": "2a4a7cb43f77",
+    "text": "\"\"\"P15-4 model: the distance tables, the code stream and the reference result (standalone: python only; the data are in pq_data.json).\"\"\"\nimport json\nfrom pathlib import Path\n\nK = 8\nM = 8\n_DATA = json.loads((Path(__file__).with_name(\"pq_data.json\")).read_text())\n\n\ndef tables():\n    return _DATA[\"tables\"]\n\n\ndef codes():\n    return _DATA[\"codes\"]\n\n\ndef distances(table):\n    return [sum(table[j][(c >> (4 * j)) & 15] for j in range(M)) for c in codes()]\n\n\ndef reference_top(table):\n    d = distances(table)\n    return sorted(((d[i], i) for i in range(len(d))))[:K]            # smallest distance, then smaller index\n\n\ndef reference_output():\n    return {\"queries\": [{\"top\": [list(p) for p in reference_top(t)]} for t in tables()]}\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x50515352          # \"PQSR\"\nTADDR, TDATA, START, CODE, BURST, STATUS, RES_D, RES_I = 0x00, 0x01, 0x02, 0x08, 0x18, 0x19, 0x40, 0x48\n\n\ndef top_of(table, cs):\n    d = [sum(table[j][(c >> (4 * j)) & 15] for j in range(M)) for c in cs]\n    return sorted((d[i], i) for i in range(len(d)))[:K]\n\n\ndef bench_queries():\n    \"\"\"(table, entries, expected top-8): two course tables with 32 database entries each, and a constant table\n    (every distance equal, so the order is decided by the entry number alone).\"\"\"\n    ts, cs = tables(), codes()\n    flat = [[5] * 16 for _ in range(M)]\n    qs = [(ts[0], cs[:32]), (ts[3], cs[40:72]), (flat, cs[:20])]\n    return [(t, c, top_of(t, c)) for t, c in qs]\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 67,
+    "name": "c15_pq_search_regs.sv",
+    "path": "benchmark/course/tasks/c15_pq_search/ref/rtl/c15_pq_search_regs.sv",
+    "sha256": "917e683bc18d",
+    "text": "// c15_pq_search_regs.sv: the shell window of course task c15_pq_search.\nmodule c15_pq_search_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic [6:0]   ta_r;\n    logic [19:0]  td_r;\n    logic [31:0]  cd [0:15];\n    logic [4:0]   n_tot, tx_i;\n    logic         txing, last_f, we, st, done, in_v, last_c;\n    logic [2:0]   t_m;\n    logic [3:0]   t_k;\n    logic [8*23-1:0] best_dist;\n    logic [8*16-1:0] best_idx;\n    logic [7:0]   best_valid;\n\n    assign t_m  = ta_r[6:4];\n    assign t_k  = ta_r[3:0];\n    assign in_v = txing;\n    assign last_c = txing && last_f && (tx_i + 5'd1 == n_tot);\n    assign led  = {14'd0, txing, done};\n\n    pq_search u_core (.clk(clk), .rst_n(!rst), .t_we(we), .t_m(t_m), .t_k(t_k), .t_data(td_r), .start(st), .in_valid(in_v),\n                      .codes(cd[tx_i[3:0]]), .last(last_c), .done(done), .best_dist(best_dist), .best_idx(best_idx),\n                      .best_valid(best_valid));\n\n    always_ff @(posedge clk) begin\n        we <= 1'b0; st <= 1'b0;\n        if (win_wr) begin\n            case (win_addr)\n                7'h00: ta_r <= win_wdata[6:0];\n                7'h01: begin td_r <= win_wdata[19:0]; we <= 1'b1; end\n                7'h02: st <= 1'b1;\n                7'h18: begin\n                    n_tot <= (win_wdata[4:0] == 5'd0) ? 5'd1 : (win_wdata[4:0] > 5'd16 ? 5'd16 : win_wdata[4:0]);\n                    last_f <= win_wdata[8]; tx_i <= 5'd0; txing <= 1'b1;\n                end\n                default: if (win_addr >= 7'h08 && win_addr <= 7'h17) cd[4'(win_addr - 7'h08)] <= win_wdata;\n            endcase\n        end\n        if (we) ta_r <= ta_r + 7'd1;\n        if (txing) begin\n            tx_i <= tx_i + 5'd1;\n            if (tx_i + 5'd1 == n_tot) txing <= 1'b0;\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            if (win_addr == 7'h00) win_rdata <= {25'd0, ta_r};\n            else if (win_addr >= 7'h08 && win_addr <= 7'h17) win_rdata <= cd[4'(win_addr - 7'h08)];\n            else if (win_addr == 7'h19) win_rdata <= {30'd0, txing, done};\n            else if (win_addr >= 7'h40 && win_addr <= 7'h47)\n                win_rdata <= best_valid[win_addr[2:0]] ? {7'd0, 1'b1, 1'b0, best_dist[win_addr[2:0]*23 +: 23]} : 32'd0;\n            else if (win_addr >= 7'h48 && win_addr <= 7'h4F)\n                win_rdata <= best_valid[win_addr[2:0]] ? {16'd0, best_idx[win_addr[2:0]*16 +: 16]} : 32'd0;\n        end\n        if (rst) begin\n            ta_r <= '0; td_r <= '0; n_tot <= '0; tx_i <= '0; txing <= 1'b0; last_f <= 1'b0; we <= 1'b0; st <= 1'b0; win_rdata <= 32'd0;\n            for (int i = 0; i < 16; i++) cd[i] <= '0;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c15_pq_search_top.sv",
+    "path": "benchmark/course/tasks/c15_pq_search/ref/rtl/c15_pq_search_top.sv",
+    "sha256": "22fe7e6a383f",
+    "text": "// c15_pq_search_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"PQSR\".\n// Reference design for course task c15_pq_search; the shell window is wired to c15_pq_search_regs.\nmodule c15_pq_search_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h50515352), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c15_pq_search_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 40,
+    "name": "pq_adc.sv",
+    "path": "benchmark/course/tasks/c15_pq_search/ref/rtl/pq_adc.sv",
+    "sha256": "907f10fc7b49",
+    "text": "// P15-4 reference RTL: a copy of solutions/p15l04_pq_adc/pq_adc.sv (course exercise p15l04_pq_adc, M = 8, KB = 4).\n// Part 15 lesson 4 exercise: a product-quantisation asymmetric-distance (ADC) unit.\n//\n// A database vector is stored as M codes of KB bits each (default M = 8 codes of 4 bits, so 16 centres per sub-space), packed codes[j*KB +: KB] = code of sub-space j.\n// For one query the host computes a distance table: entry T[j][c] = squared distance between the query's j-th sub-vector and centre c of sub-space j, TW bits unsigned.\n// The unit holds the table (M * 2^KB words) and, for each database vector, adds up the M entries its codes pick:\n//   distance = sum over j of T[j][codes[j]]                        (DW = TW + $clog2(M) bits: no overflow)\n// Table write: with t_we high, T[t_m][t_k] <= t_data at the next clock edge (do not present in_valid for a vector that needs that entry in the same clock).\n// Lookups: with in_valid high, one clock later (out_valid high, one clock of latency; rst_n synchronous, active low, clears out_valid only) distance holds the sum.\n// The table is memory read asynchronously by the lookups (distributed RAM on an FPGA); lesson 4 says what changes with a block RAM (a registered read).\nmodule pq_adc #(\n    parameter int M  = 8,\n    parameter int KB = 4,\n    parameter int TW = 20,\n    parameter int DW = TW + $clog2(M)\n) (\n    input  logic                    clk,\n    input  logic                    rst_n,\n    input  logic                    t_we,\n    input  logic [$clog2(M)-1:0]    t_m,\n    input  logic [KB-1:0]           t_k,\n    input  logic [TW-1:0]           t_data,\n    input  logic                    in_valid,\n    input  logic [M*KB-1:0]         codes,\n    output logic                    out_valid,\n    output logic [DW-1:0]           distance\n);\n    logic [TW-1:0] tab [0:M*(1<<KB)-1];\n    logic [DW-1:0] sum;\n    always_comb begin\n        sum = '0;\n        for (int j = 0; j < M; j++) sum = sum + tab[(j << KB) + int'(codes[j*KB +: KB])];\n    end\n    always_ff @(posedge clk) begin\n        if (t_we) tab[(int'(t_m) << KB) + int'(t_k)] <= t_data;\n        if (!rst_n) out_valid <= 1'b0;\n        else out_valid <= in_valid;\n        if (in_valid) distance <= sum;\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 38,
+    "name": "pq_search.sv",
+    "path": "benchmark/course/tasks/c15_pq_search/ref/rtl/pq_search.sv",
+    "sha256": "1cf05a84c543",
+    "text": "// P15-4 reference top: the PQ distance unit (pq_adc.sv) feeding the top-8 list (topk.sv) with the negated distance, so the smallest distance is the best score.\n// Timing: pq_adc answers one clock after in_valid; topk inserts at the edge after that; done rises at that same edge for the last entry.\nmodule pq_search (\n    input  logic            clk,\n    input  logic            rst_n,\n    input  logic            t_we,\n    input  logic [2:0]      t_m,\n    input  logic [3:0]      t_k,\n    input  logic [19:0]     t_data,\n    input  logic            start,\n    input  logic            in_valid,\n    input  logic [31:0]     codes,\n    input  logic            last,\n    output logic            done,\n    output logic [8*23-1:0] best_dist,\n    output logic [8*16-1:0] best_idx,\n    output logic [7:0]      best_valid\n);\n    logic        d_valid, last_q;\n    logic [22:0] d;\n    logic [15:0] cnt, idx_q;\n    logic [8*24-1:0] top_score;\n    pq_adc #(.M(8), .KB(4), .TW(20)) u_adc (.clk, .rst_n, .t_we, .t_m, .t_k, .t_data, .in_valid, .codes, .out_valid(d_valid), .distance(d));\n    topk #(.K(8), .SW(24), .IW(16)) u_top (.clk, .rst_n, .clear(start), .in_valid(d_valid), .score(-$signed({1'b0, d})), .idx(idx_q), .top_score, .top_idx(best_idx), .top_valid(best_valid));\n    always_ff @(posedge clk) begin\n        if (!rst_n || start) begin\n            cnt <= 16'd0;\n            last_q <= 1'b0;\n            done <= 1'b0;\n        end else begin\n            if (in_valid) cnt <= cnt + 16'd1;\n            last_q <= in_valid && last;\n            done <= last_q || done;\n        end\n        if (in_valid) idx_q <= cnt;\n    end\n    always_comb for (int i = 0; i < 8; i++) best_dist[i*23 +: 23] = -top_score[i*24 +: 23];\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 49,
+    "name": "topk.sv",
+    "path": "benchmark/course/tasks/c15_pq_search/ref/rtl/topk.sv",
+    "sha256": "5faf326fe717",
+    "text": "// P15-4 reference RTL: a copy of solutions/p15l03_topk/topk.sv (course exercise p15l03_topk).\n// Part 15 lesson 3 exercise: a streaming top-K list (K = 8 by default), one candidate per clock, a deterministic tie rule.\n//\n// Candidates arrive as (score, idx): score signed SW bits, idx IW bits (unique per stream). The list holds the K best seen so far, best first:\n//   \"a is better than b\"  <=>  a.score > b.score,  or  a.score == b.score and a.idx < b.idx.        (so equal scores: the smaller index wins)\n// clear = 1 (one clock) empties the list (it wins over in_valid in the same clock). With in_valid high the candidate is inserted at the next clock edge: it takes the first slot\n// whose content it beats (an empty slot is beaten by anything), the slots below shift down by one and the old last slot falls off. rst_n (synchronous, active low) empties the list.\n// Outputs (registers, valid the clock after the edge that inserted): slot 0 is the best; top_valid[i] says slot i holds a candidate; slot i's score is\n// top_score[i*SW +: SW] and its index top_idx[i*IW +: IW]. Slots with top_valid = 0 are don't-care.\nmodule topk #(\n    parameter int K  = 8,\n    parameter int SW = 24,\n    parameter int IW = 16\n) (\n    input  logic                  clk,\n    input  logic                  rst_n,\n    input  logic                  clear,\n    input  logic                  in_valid,\n    input  logic signed [SW-1:0]  score,\n    input  logic [IW-1:0]         idx,\n    output logic [K*SW-1:0]       top_score,\n    output logic [K*IW-1:0]       top_idx,\n    output logic [K-1:0]          top_valid\n);\n    logic [K-1:0] better;\n    always_comb begin\n        for (int i = 0; i < K; i++)\n            better[i] = !top_valid[i] || (score > $signed(top_score[i*SW +: SW])) ||\n                        (score == $signed(top_score[i*SW +: SW]) && idx < top_idx[i*IW +: IW]);\n    end\n    always_ff @(posedge clk) begin\n        if (!rst_n || clear) top_valid <= '0;\n        else if (in_valid) begin\n            for (int i = 0; i < K; i++) begin\n                if (better[i]) begin\n                    if (i == 0 || !better[(i == 0) ? 0 : i - 1]) begin\n                        top_valid[i] <= 1'b1;\n                        top_score[i*SW +: SW] <= score;\n                        top_idx[i*IW +: IW] <= idx;\n                    end else begin\n                        top_valid[i] <= top_valid[((i == 0) ? 0 : i - 1)];\n                        top_score[i*SW +: SW] <= top_score[((i == 0) ? 0 : i - 1)*SW +: SW];\n                        top_idx[i*IW +: IW] <= top_idx[((i == 0) ? 0 : i - 1)*IW +: IW];\n                    end\n                end\n            end\n        end\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 86,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c15_pq_search/hidden/acceptance.py",
+    "sha256": "a8d621b86f1a",
+    "text": "\"\"\"Acceptance tests of c15_pq_search against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import BURST, CODE, DESIGN_ID, RES_D, RES_I, START, STATUS, TADDR, TDATA, bench_queries\n\n\nasync def load_table(b: Board, table) -> None:\n    await b.write(TADDR, 0)\n    for g in range(8):\n        for c in range(16):\n            await b.write(TDATA, table[g][c])\n\n\nasync def run_query(b: Board, table, entries, want, what: str) -> None:\n    await load_table(b, table)\n    await b.expect(TADDR, 128 & 0x7F, \"TADDR advanced past the table\")\n    await b.write(START, 1)\n    for c in range(0, len(entries), 16):\n        chunk = entries[c:c + 16]\n        for k, e in enumerate(chunk):\n            await b.write(CODE + k, e)\n        last = c + 16 >= len(entries)\n        await b.write(BURST, len(chunk) | (0x100 if last else 0))\n        await b.cycles(len(chunk) + 12)\n        if not last:\n            await b.expect(STATUS, 0, f\"{what}: DONE must stay low before the last entry\")\n    await b.expect(STATUS, 1, f\"{what}: DONE\")\n    for k in range(8):\n        if k < len(want):\n            await b.expect(RES_D + k, 1 << 24 | want[k][0], f\"{what}: place {k} distance\")\n            await b.expect(RES_I + k, want[k][1], f\"{what}: place {k} entry\")\n        else:\n            await b.expect(RES_D + k, 0, f\"{what}: place {k} unfilled\")\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (TADDR, STATUS, RES_D, RES_I + 7):\n        await b.expect(off, 0, f\"reset value of {off:#x}\")\n\n\n@cocotb.test()\nasync def test_first_query(dut):\n    b = Board(dut, {})\n    await b.start()\n    t, e, w = bench_queries()[0]\n    await run_query(b, t, e, w, \"query 0\")\n\n\n@cocotb.test()\nasync def test_second_query_after_first(dut):\n    \"\"\"START forgets the first result and restarts the numbering; the table is replaced.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    qs = bench_queries()\n    await run_query(b, *qs[0], \"query 0\")\n    await run_query(b, *qs[1], \"query 1\")\n\n\n@cocotb.test()\nasync def test_equal_distances_and_short_database(dut):\n    \"\"\"Every distance equal (order by entry number) and a database of 20 entries (two bursts).\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    await run_query(b, *bench_queries()[2], \"equal distances\")\n\n\n@cocotb.test()\nasync def test_short_query_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    t, e, w = bench_queries()[1]\n    await run_query(b, t, e[:5], [p for p in __import__(\"model\").top_of(t, e[:5])], \"five entries\")\n    led = await peek(b.clk, dut.LED)\n    assert led & 3 == 1, f\"LED {led:04X}: LED0 (DONE) lit, LED1 (BUSY) dark\"\n    await b.reset()\n    await b.expect(STATUS, 0, \"DONE after reset\")\n    await b.expect(RES_D, 0, \"result after reset\")\n    for off in (0x03, 0x50, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n"
+   }
+  ]
+ },
+ "heading": "Compressed-database search behind the test shell",
+ "id": "c15_pq_search",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[6:0] table position: group in [6:4], code in [3:0]; advances by one after each TDATA write",
+    "name": "TADDR",
+    "offset": "0x00"
+   },
+   {
+    "access": "WO",
+    "bits": "[19:0] distance table entry stored at TADDR; TADDR then increments; reads 0",
+    "name": "TDATA",
+    "offset": "0x01"
+   },
+   {
+    "access": "WO",
+    "bits": "any write forgets the previous result, clears DONE and restarts entry numbering at 0",
+    "name": "START",
+    "offset": "0x02"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] parked entry k: code j in bits [4j+3:4j]",
+    "name": "CODE0..15",
+    "offset": "0x08-0x17"
+   },
+   {
+    "access": "WO",
+    "bits": "[4:0] count N (1..16): presents parked entries 0..N-1 on N consecutive clocks; [8] LAST marks the final entry of the query",
+    "name": "BURST",
+    "offset": "0x18"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] DONE, [1] BUSY (a burst is running)",
+    "name": "STATUS",
+    "offset": "0x19"
+   },
+   {
+    "access": "RO",
+    "bits": "place k (0 = closest): [22:0] distance, [24] FILLED; 0 when not filled",
+    "name": "RES_D0..7",
+    "offset": "0x40-0x47"
+   },
+   {
+    "access": "RO",
+    "bits": "place k: [15:0] entry number; 0 when not filled",
+    "name": "RES_I0..7",
+    "offset": "0x48-0x4F"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: DONE = 0, the result is forgotten",
+  "top": "c15_pq_search_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "pq_adc.sv",
+   "name": "group7_dropped",
+   "why": "the last group is left out of the distance sum"
+  },
+  {
+   "file": "pq_adc.sv",
+   "name": "table_group_stride",
+   "why": "table entries of different groups overlap when written"
+  },
+  {
+   "file": "pq_search.sv",
+   "name": "farthest_not_closest",
+   "why": "the farthest entries are kept instead of the closest"
+  },
+  {
+   "file": "pq_search.sv",
+   "name": "start_does_not_clear",
+   "why": "START does not forget the previous result"
+  },
+  {
+   "file": "topk.sv",
+   "name": "tie_larger_index",
+   "why": "of two equal distances the larger entry number comes first"
+  },
+  {
+   "file": "pq_search.sv",
+   "name": "numbering_not_restarted",
+   "why": "START does not restart the entry numbering"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c15_pq_search",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the eight places (distance and entry number) equal the model for each tested query"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "entries with equal distance are ordered by entry number, and START restarts the numbering and forgets the previous result"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "bursts of entries on consecutive clocks lose none and DONE is high only when the result is final"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": 114,
+   "bram36": 0,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-08",
+   "dsp": 0,
+   "escape_level": null,
+   "failure_class": null,
+   "ff": 1532,
+   "hidden_pass": true,
+   "lut": 1440,
+   "model": "claude-sonnet-5-5",
+   "outcome": "pass",
+   "run": 1,
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 1.4,
+   "wns_ns": 2.621
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Compressed-database search behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that finds the database entries closest to a query when the database is stored in a compressed form, and I want to exercise it entirely from the test shell.\n\n- Each database entry is stored as eight small codes of 4 bits each (so a 32-bit word per entry, code j in bits 4j to 4j+3). There are up to 1000 entries, numbered 0 upwards in the order they arrive.\n- For each query I give the block a table of distances: 8 groups of 16 numbers, each a whole number below 2^20 (the table entry for group g and code c is the distance contribution of code c in group g).\n  I write the table in over the shell: I set a table position (group and code) and then write the values one after another, each write storing the value and moving on to the next position (the next code, and after code 15 the next group).\n- The distance of a database entry to the query is the sum over its eight codes of the table entry that code picks in its group. Smaller is closer.\n- A \"start\" command, before the entries of a new query, forgets the previous result and restarts the entry numbering at 0. Then I park up to 16 entries over the shell and give a \"burst\" command with a count, which presents them on\n  consecutive clocks, one per clock; several bursts follow each other, and the burst that carries the final entry is marked \"last\". The table is fully written before the first entry of a query and does not change during it.\n- When the last entry has been taken into account the block raises a \"done\" flag (it stays up until the next start) and I read the eight closest entries closest first: for each place a \"filled\" flag,\n  the distance (up to 23 bits) and the entry number. If two entries have the same distance the one with the smaller number comes first. The result must be right at the moment done is high.\n- CPU_RESETN clears done and forgets the result. I will run several queries and check every place of the result exactly. LED0 shows done and LED1 shows that a burst is running.\n  The shell runs at 115200 baud on the USB-UART. The design ID is \"PQSR\".\n\nTest hooks: top module `c15_pq_search_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "I10"
+ ],
+ "tier": "C15",
+ "title": "Compressed-database search behind the test shell",
+ "trace": {
+  "captions": [
+   "Query 0, place 0: entry 1 (codes 4EE98CAD) has distance 20368, the sum of eight table lookups.",
+   "Query 0, place 1: entry 23 (codes 4EE95CAD) has distance 24172, the sum of eight table lookups.",
+   "Query 0, place 2: entry 24 (codes 91E42CDB) has distance 130115, the sum of eight table lookups.",
+   "Query 0, place 3: entry 20 (codes E1002D9B) has distance 158467, the sum of eight table lookups.",
+   "Query 0, place 4: entry 21 (codes 50ED9049) has distance 188174, the sum of eight table lookups.",
+   "Query 0, place 5: entry 31 (codes 15DBE93C) has distance 193589, the sum of eight table lookups.",
+   "Query 0, place 6: entry 30 (codes A36C34DA) has distance 195354, the sum of eight table lookups.",
+   "Query 0, place 7: entry 8 (codes AC984489) has distance 206192, the sum of eight table lookups.",
+   "Query 1, place 0: entry 26 (codes A38C3EDA) has distance 24690, the sum of eight table lookups.",
+   "Query 1, place 1: entry 16 (codes 4EE95CAF) has distance 135557, the sum of eight table lookups.",
+   "Query 1, place 2: entry 15 (codes 4E098CAD) has distance 160003, the sum of eight table lookups.",
+   "Query 1, place 3: entry 11 (codes 9104259B) has distance 167757, the sum of eight table lookups.",
+   "Query 1, place 4: entry 19 (codes 91D23BB4) has distance 174060, the sum of eight table lookups.",
+   "Query 1, place 5: entry 12 (codes 154B593C) has distance 175959, the sum of eight table lookups.",
+   "Query 1, place 6: entry 20 (codes 9F7EE310) has distance 179001, the sum of eight table lookups.",
+   "Query 1, place 7: entry 7 (codes 6F7EE310) has distance 188270, the sum of eight table lookups."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "query",
+    "radix": "dec",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "place",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "entry number",
+    "radix": "dec",
+    "v": [
+     1,
+     23,
+     24,
+     20,
+     21,
+     31,
+     30,
+     8,
+     26,
+     16,
+     15,
+     11,
+     19,
+     12,
+     20,
+     7
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "entry codes",
+    "radix": "hex",
+    "v": [
+     1323928749,
+     1323916461,
+     2447650011,
+     3774885275,
+     1357746249,
+     366733628,
+     2741777626,
+     2895660169,
+     2743877338,
+     1323916463,
+     1309248685,
+     2432968091,
+     2446474164,
+     357259580,
+     2675893008,
+     1870586640
+    ],
+    "width": 32
+   },
+   {
+    "kind": "bus",
+    "name": "distance",
+    "radix": "dec",
+    "v": [
+     20368,
+     24172,
+     130115,
+     158467,
+     188174,
+     193589,
+     195354,
+     206192,
+     24690,
+     135557,
+     160003,
+     167757,
+     174060,
+     175959,
+     179001,
+     188270
+    ],
+    "width": 23
+   }
+  ],
+  "stimulus": "Two queries, with 32 and 32 compressed database entries. The model adds up eight table values per entry and keeps the 8 smallest.",
+  "unit": "result place",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "what": "A nearest-neighbour search over a database stored in compressed form. Each entry is a few short codes, and for each query a table says how far each code is from the query. The block adds up the table values for every entry and keeps the eight closest, with ties settled by entry number, and raises a flag when the list is final.",
+ "where": "Product quantisation shrinks large vector databases so they fit in memory, and is used in similarity search for images, text and recommendations. Hardware versions speed up the scan of the compressed entries."
+}

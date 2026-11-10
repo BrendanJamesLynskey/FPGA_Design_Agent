@@ -1,0 +1,526 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the threshold is inclusive (held exactly LONG_CYCLES is LONG).",
+   "reason": "the request says at least half a second."
+  },
+  {
+   "assumption": "the press length is floored to whole TICK_CYCLES units and saturates rather than wraps.",
+   "reason": "a length that wraps would mislead; milliseconds are whole units."
+  }
+ ],
+ "behaviour": [
+  [
+   "debounce",
+   [
+    "BTNC is synchronised (two flops), then debounced. The debounced level changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count.",
+    "Both edges are delayed by the same amount, so the debounced level is high for exactly as many clocks as a clean (bounce-free) press holds the pin high."
+   ]
+  ],
+  [
+   "press",
+   [
+    "A press starts on a 0 -> 1 change of the debounced level and ends on the next 1 -> 0 change.",
+    "H, the press's high time, is the number of clocks on which the debounced level is 1 during the press.",
+    "On the release the press is classified: LONG if H >= LONG_CYCLES, otherwise SHORT. Nothing is classified while the button is held.",
+    "LAST is floor(H / TICK_CYCLES), saturating at 0xFFFF; LAST_LONG is 1 for a LONG press, 0 for a SHORT one. Both update on every release.",
+    "A SHORT release adds 1 to SHORT_COUNT; a LONG release adds 1 to LONG_COUNT (16 bits each, wrapping at 65536).",
+    "A shell write to SHORT_COUNT or LONG_COUNT on the same clock as a release that would increment it wins (the count reads 0)."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] toggles on every SHORT release; LED[1] toggles on every LONG release. Writes to the counts do not affect them.",
+    "LED[15:8] = SHORT_COUNT[7:0]; LED[7:2] = 0. No PWM."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "DEBOUNCE_CYCLES": 16,
+  "LONG_CYCLES": 300,
+  "TICK_CYCLES": 3,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-03",
+  "mutants": {
+   "debounce_half": {
+    "failed_tests": [
+     "test_debounce_rejects_bounce"
+    ],
+    "killed": true
+   },
+   "last_long_inverted": {
+    "failed_tests": [
+     "test_short_presses",
+     "test_long_press_not_short",
+     "test_threshold_boundary",
+     "test_length_units",
+     "test_debounce_rejects_bounce",
+     "test_length_saturates",
+     "test_register_rules",
+     "test_random_presses"
+    ],
+    "killed": true
+   },
+   "led_byte_long": {
+    "failed_tests": [
+     "test_short_presses",
+     "test_long_press_not_short",
+     "test_threshold_boundary",
+     "test_debounce_rejects_bounce",
+     "test_register_rules",
+     "test_random_presses"
+    ],
+    "killed": true
+   },
+   "leds_swapped": {
+    "failed_tests": [
+     "test_short_presses",
+     "test_long_press_not_short",
+     "test_threshold_boundary",
+     "test_debounce_rejects_bounce"
+    ],
+    "killed": true
+   },
+   "prescaler_off_by_one": {
+    "failed_tests": [
+     "test_short_presses",
+     "test_long_press_not_short",
+     "test_threshold_boundary",
+     "test_length_units",
+     "test_debounce_rejects_bounce",
+     "test_length_saturates",
+     "test_register_rules",
+     "test_random_presses"
+    ],
+    "killed": true
+   },
+   "threshold_strict": {
+    "failed_tests": [
+     "test_long_press_not_short",
+     "test_threshold_boundary",
+     "test_length_saturates",
+     "test_register_rules",
+     "test_random_presses"
+    ],
+    "killed": true
+   },
+   "ticks_wrap": {
+    "failed_tests": [
+     "test_length_saturates"
+    ],
+    "killed": true
+   },
+   "write_clears_both": {
+    "failed_tests": [
+     "test_register_rules"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t1_press_classifier__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 9,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "A",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 46,
+    "name": "model.py",
+    "path": "benchmark/tasks/t1_press_classifier/hidden/model.py",
+    "sha256": "e9fbe940c0f0",
+    "text": "\"\"\"Golden model of t1_press_classifier, written from spec.yaml alone (never from any RTL).\"\"\"\n\nfrom __future__ import annotations\n\nSHORT_COUNT, LONG_COUNT, LAST, STATUS = 0, 1, 2, 3\nDESIGN_ID = 0x50525343          # \"PRSC\"\n\n\nclass Model:\n    def __init__(self, long_cycles: int, tick_cycles: int) -> None:\n        self.long_cycles, self.tick = long_cycles, tick_cycles\n        self.short = self.long = 0\n        self.last = self.last_long = 0\n        self.led0 = self.led1 = 0\n\n    def press(self, h: int) -> None:\n        \"\"\"A clean press whose debounced level is high for ``h`` clocks, then released.\"\"\"\n        is_long = h >= self.long_cycles\n        self.last = min(h // self.tick, 0xFFFF)\n        self.last_long = int(is_long)\n        if is_long:\n            self.long = (self.long + 1) & 0xFFFF\n            self.led1 ^= 1\n        else:\n            self.short = (self.short + 1) & 0xFFFF\n            self.led0 ^= 1\n\n    def read(self, off: int, level: int = 0) -> int:\n        if off == SHORT_COUNT:\n            return self.short\n        if off == LONG_COUNT:\n            return self.long\n        if off == LAST:\n            return self.last | self.last_long << 16\n        if off == STATUS:\n            return level | self.led0 << 1 | self.led1 << 2\n        return 0\n\n    def write(self, off: int, v: int) -> None:\n        if off == SHORT_COUNT:\n            self.short = 0\n        elif off == LONG_COUNT:\n            self.long = 0\n\n    def leds(self) -> int:\n        return (self.short & 0xFF) << 8 | self.led1 << 1 | self.led0\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 35,
+    "name": "bm_debounce.sv",
+    "path": "benchmark/tasks/t1_press_classifier/ref/rtl/bm_debounce.sv",
+    "sha256": "bb439c819c2c",
+    "text": "// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level\n// changes only after the synchronised input has differed from it for CYCLES\n// consecutive clocks; a shorter difference restarts the count. rise is a\n// one-clock pulse on each 0 -> 1 change of the level.\nmodule bm_debounce #(\n    parameter int CYCLES = 1_000_000\n) (\n    input  logic clk,\n    input  logic rst,\n    input  logic d_async,\n    output logic level,\n    output logic rise\n);\n    localparam int CW = $clog2(CYCLES + 1);\n    logic        d;\n    logic [CW-1:0] run;\n\n    sync2 u_sync (.clk(clk), .rst(rst), .d(d_async), .q(d));\n\n    always_ff @(posedge clk) begin\n        rise <= 1'b0;\n        if (rst) begin\n            level <= 1'b0;\n            run   <= '0;\n        end else if (d == level) begin\n            run <= '0;\n        end else if (run == CW'(CYCLES - 1)) begin\n            level <= d;\n            run   <= '0;\n            rise  <= d;\n        end else begin\n            run <= run + 1'b1;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 81,
+    "name": "press_classifier.sv",
+    "path": "benchmark/tasks/t1_press_classifier/ref/rtl/press_classifier.sv",
+    "sha256": "f5f7f6bc8176",
+    "text": "// press_classifier.sv: debounced BTNC press timing and short/long classification\n// for t1_press_classifier, behind the shell's register window.\nmodule press_classifier #(\n    parameter int DEBOUNCE_CYCLES = 1_000_000,\n    parameter int LONG_CYCLES     = 50_000_000,\n    parameter int TICK_CYCLES     = 100_000\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        btn,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam logic [6:0] R_SHORT = 7'h00, R_LONG = 7'h01, R_LAST = 7'h02, R_STATUS = 7'h03;\n    localparam int HW = $clog2(LONG_CYCLES + 1);\n    localparam int TW = $clog2(TICK_CYCLES + 1);\n\n    logic          lvl, lvl_d, rise, fall;\n    logic [HW-1:0] hi;\n    logic [TW-1:0] pre;\n    logic [15:0]   ticks, short_cnt, long_cnt, last;\n    logic          last_long, tog_s, tog_l, is_long;\n\n    bm_debounce #(.CYCLES(DEBOUNCE_CYCLES)) u_db (.clk(clk), .rst(rst), .d_async(btn), .level(lvl), .rise(rise));\n\n    assign fall    = lvl_d && !lvl;\n    assign is_long = hi >= HW'(LONG_CYCLES);\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            lvl_d <= 1'b0; hi <= '0; pre <= '0; ticks <= '0;\n            short_cnt <= '0; long_cnt <= '0; last <= '0; last_long <= 1'b0;\n            tog_s <= 1'b0; tog_l <= 1'b0;\n        end else begin\n            lvl_d <= lvl;\n            if (lvl) begin\n                if (hi != HW'(LONG_CYCLES)) hi <= hi + 1'b1;\n                if (pre == TW'(TICK_CYCLES - 1)) begin\n                    pre <= '0;\n                    if (ticks != 16'hFFFF) ticks <= ticks + 1'b1;\n                end else begin\n                    pre <= pre + 1'b1;\n                end\n            end else begin\n                hi <= '0; pre <= '0; ticks <= '0;\n            end\n            if (fall) begin\n                last      <= ticks;\n                last_long <= is_long;\n                if (is_long) begin\n                    long_cnt <= long_cnt + 1'b1;\n                    tog_l    <= ~tog_l;\n                end else begin\n                    short_cnt <= short_cnt + 1'b1;\n                    tog_s     <= ~tog_s;\n                end\n            end\n            if (win_wr && win_addr == R_SHORT) short_cnt <= '0;\n            if (win_wr && win_addr == R_LONG)  long_cnt  <= '0;\n        end\n    end\n\n    assign led = {short_cnt[7:0], 6'd0, tog_l, tog_s};\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            case (win_addr)\n                R_SHORT:  win_rdata <= {16'd0, short_cnt};\n                R_LONG:   win_rdata <= {16'd0, long_cnt};\n                R_LAST:   win_rdata <= {15'd0, last_long, last};\n                R_STATUS: win_rdata <= {29'd0, tog_l, tog_s, lvl};\n                default:  win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 33,
+    "name": "t1_press_classifier_top.sv",
+    "path": "benchmark/tasks/t1_press_classifier/ref/rtl/t1_press_classifier_top.sv",
+    "sha256": "3cf02869f81e",
+    "text": "// t1_press_classifier_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t1_press_classifier; DESIGN_ID \"PRSC\".\nmodule t1_press_classifier_top #(\n    parameter int          CLKS_PER_BIT    = 868,\n    parameter int          TIMEOUT_CYCLES  = 100_000,\n    parameter int          DEBOUNCE_CYCLES = 1_000_000,\n    parameter int          LONG_CYCLES     = 50_000_000,\n    parameter int          TICK_CYCLES     = 100_000,\n    parameter logic [31:0] BUILD_STAMP     = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    input  logic        BTNC,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h5052_5343), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    press_classifier #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES), .LONG_CYCLES(LONG_CYCLES), .TICK_CYCLES(TICK_CYCLES)) u_pc (\n        .clk(clk), .rst(rst), .btn(BTNC), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 186,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t1_press_classifier/hidden/acceptance.py",
+    "sha256": "33c60315ab15",
+    "text": "\"\"\"Acceptance tests of t1_press_classifier against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import DESIGN_ID, LAST, LONG_COUNT, SHORT_COUNT, STATUS, Model\n\nIDLE = {\"BTNC\": 0}\nNAMES = (\"SHORT_COUNT\", \"LONG_COUNT\", \"LAST\", \"STATUS\")\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, IDLE)\n        self.dut = dut\n        self.n = self.b.param(\"DEBOUNCE_CYCLES\")\n        self.long = self.b.param(\"LONG_CYCLES\")\n        self.tick = self.b.param(\"TICK_CYCLES\")\n        self.m = Model(self.long, self.tick)\n\n    async def start(self) -> None:\n        await self.b.start()\n\n    async def press(self, h: int) -> None:\n        \"\"\"A clean press: BTNC high for exactly h clocks.\"\"\"\n        self.dut.BTNC.value = 1\n        await self.b.cycles(h)\n        self.dut.BTNC.value = 0\n        await self.b.cycles(self.n + 6)\n        self.m.press(h)\n\n    async def check_regs(self) -> None:\n        for off in (SHORT_COUNT, LONG_COUNT, LAST, STATUS):\n            await self.b.expect(off, self.m.read(off), NAMES[off])\n\n    async def check_leds(self) -> None:\n        led = await peek(self.b.clk, self.dut.LED)\n        assert led == self.m.leds(), f\"LED {led:04X} != model {self.m.leds():04X}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_short_presses(dut):\n    e = Env(dut)\n    await e.start()\n    for h in (e.n + 2, 40, 100, e.long // 2 + 1):\n        await e.press(h)\n        await e.check_regs()\n        await e.check_leds()\n\n\n@cocotb.test()\nasync def test_long_press_not_short(dut):\n    \"\"\"Trap: the textbook button-press counter counts every press; a long press here must never count as SHORT.\"\"\"\n    e = Env(dut)\n    await e.start()\n    for h in (e.long + 50, 2 * e.long + 1, e.long + 7):\n        await e.press(h)\n        await e.check_regs()\n        await e.check_leds()\n    await e.press(60)                       # one short in between\n    await e.press(3 * e.long)\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_threshold_boundary(dut):\n    e = Env(dut)\n    await e.start()\n    await e.press(e.long - 1)               # one clock short of the threshold: SHORT\n    await e.check_regs()\n    await e.press(e.long)                   # exactly the threshold: LONG\n    await e.check_regs()\n    await e.press(e.long + 1)\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_length_units(dut):\n    e = Env(dut)\n    await e.start()\n    for h in (3 * e.tick - 1, 3 * e.tick, 3 * e.tick + 1, 10 * e.tick + e.tick - 1):\n        await e.press(h + e.n)              # keep above the debounce time\n        await e.check_regs()\n\n\n@cocotb.test()\nasync def test_debounce_rejects_bounce(dut):\n    e = Env(dut)\n    await e.start()\n    pin = dut.BTNC\n    for width in (1, 3, e.n // 2, e.n - 3):     # glitches shorter than the debounce time never start a press\n        pin.value = 1\n        await e.b.cycles(width)\n        pin.value = 0\n        await e.b.cycles(e.n + 4)\n    await e.check_regs()\n    # chatter at the start, a short dip in the middle, chatter at the release: one press\n    for w in (2, 5, 3, 7):\n        pin.value = 1\n        await e.b.cycles(w)\n        pin.value = 0\n        await e.b.cycles(w)\n    pin.value = 1\n    await e.b.cycles(80)\n    pin.value = 0\n    await e.b.cycles(e.n - 4)                   # dip shorter than the debounce time\n    pin.value = 1\n    await e.b.cycles(70)\n    pin.value = 0\n    await e.b.cycles(4)\n    pin.value = 1\n    await e.b.cycles(3)\n    pin.value = 0\n    await e.b.cycles(e.n + 6)\n    e.m.press(80 + (e.n - 4) + 70 + 4 + 3)      # high from the steady start to the last release\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_length_saturates(dut):\n    e = Env(dut)\n    await e.start()\n    await e.press(0xFFFF * e.tick + 5 * e.tick)\n    await e.check_regs()\n    await e.press(e.long // 3)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_register_rules(dut):\n    e = Env(dut)\n    await e.start()\n    for h in (50, e.long + 10, 70, 2 * e.long):\n        await e.press(h)\n    await e.check_regs()\n    await e.b.write(SHORT_COUNT, 0x1234)        # any write clears; the LED toggles keep their state\n    e.m.write(SHORT_COUNT, 0x1234)\n    await e.check_regs()\n    await e.check_leds()\n    await e.b.write(LONG_COUNT, 0)\n    e.m.write(LONG_COUNT, 0)\n    await e.b.write(LAST, 0xFFFF)               # read-only\n    await e.b.write(STATUS, 7)\n    await e.check_regs()\n    await e.check_leds()\n    for off in (0x04, 0x20, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n    dut.BTNC.value = 1                          # STATUS[0] shows the debounced level while held\n    await e.b.cycles(e.n + 4)\n    await e.b.expect(STATUS, e.m.read(STATUS, level=1), \"STATUS while held\")\n    await e.b.expect(SHORT_COUNT, e.m.read(SHORT_COUNT), \"nothing classified while held\")\n    await e.b.expect(LONG_COUNT, e.m.read(LONG_COUNT), \"nothing classified while held\")\n\n\n@cocotb.test()\nasync def test_random_presses(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    for _ in range(16):\n        r = rng.random()\n        if r < 0.1:\n            off = rng.choice((SHORT_COUNT, LONG_COUNT))\n            await e.b.write(off, rng.getrandbits(32))\n            e.m.write(off, 0)\n        elif r < 0.55:\n            await e.press(rng.randrange(e.n + 1, e.long))\n        else:\n            await e.press(rng.randrange(e.long - 3, 3 * e.long))\n    await e.check_regs()\n    await e.check_leds()\n"
+   }
+  ]
+ },
+ "heading": "Short and long press classifier",
+ "id": "t1_press_classifier",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "DEBOUNCE_CYCLES": 1000000,
+   "LONG_CYCLES": 50000000,
+   "TICK_CYCLES": 100000,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "BTNC",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[15:0] short presses; any write sets it to 0; [31:16] read 0",
+    "name": "SHORT_COUNT",
+    "offset": "0x00"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] long presses; any write sets it to 0; [31:16] read 0",
+    "name": "LONG_COUNT",
+    "offset": "0x01"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] last press length in TICK_CYCLES units (saturating); [16] LAST_LONG; [31:17] 0",
+    "name": "LAST",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] debounced BTNC level now; [2:1] LED[1:0]; [31:3] 0",
+    "name": "STATUS",
+    "offset": "0x03"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: every register, both counts, LAST, the LED toggles and the debounced level return to 0",
+  "top": "t1_press_classifier_top",
+  "unmapped": "offsets 0x04-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "press_classifier.sv",
+   "name": "threshold_strict",
+   "why": "a press held exactly LONG_CYCLES classed SHORT"
+  },
+  {
+   "file": "press_classifier.sv",
+   "name": "ticks_wrap",
+   "why": "the press length wraps instead of saturating"
+  },
+  {
+   "file": "press_classifier.sv",
+   "name": "leds_swapped",
+   "why": "LED[0] toggles on long presses"
+  },
+  {
+   "file": "press_classifier.sv",
+   "name": "led_byte_long",
+   "why": "LED[15:8] show the long count"
+  },
+  {
+   "file": "press_classifier.sv",
+   "name": "write_clears_both",
+   "why": "a write to SHORT_COUNT also clears LONG_COUNT"
+  },
+  {
+   "file": "press_classifier.sv",
+   "name": "prescaler_off_by_one",
+   "why": "a length unit is TICK_CYCLES + 1 clocks"
+  },
+  {
+   "file": "bm_debounce.sv",
+   "name": "debounce_half",
+   "why": "debounce accepts pulses of half the time"
+  },
+  {
+   "file": "press_classifier.sv",
+   "name": "last_long_inverted",
+   "why": "LAST_LONG flag inverted"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t1_press_classifier",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "A release with H >= LONG_CYCLES counts as LONG and never as SHORT; H < LONG_CYCLES counts as SHORT"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "LAST holds floor(H / TICK_CYCLES), saturating at 0xFFFF, and LAST_LONG the class"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Bounces shorter than the debounce time neither start nor end a press"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation"
+   ],
+   "text": "LED[0], LED[1] toggle per short and long press; LED[15:8] show SHORT_COUNT[7:0]"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "simulation"
+   ],
+   "text": "The register window has the listed map, reset values and write-to-clear rule"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  },
+  {
+   "id": "REQ-07",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board the register window answers as the model predicts"
+  }
+ ],
+ "resources_expected": "about a hundred LUTs and FFs; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# Short and long press classifier\n\nI want the centre button of the Nexys A7-100T to tell short presses from long ones.\n\n- BTNC bounces, so debounce it first. When the button is let go, the press is classed as LONG if it was held for\n  at least the long-press time (half a second on the board), otherwise SHORT. Nothing is decided while it is\n  still held.\n- Keep a count of short presses and a count of long presses, and remember how long the last press lasted, in\n  milliseconds.\n- LED[0] changes state on every short press and LED[1] on every long press, so I can see each one land.\n  LED[15:8] show the low byte of the short-press count. The other LEDs stay off.\n- CPU_RESETN resets everything.\n- Over the test shell (USB-UART, 115200 baud) I can read both counts (writing either one clears it), the last\n  press's length and whether it was long, and a status word (the debounced button level and the two LED states).\n  The design ID is \"PRSC\".\n\nTest hooks: top module `t1_press_classifier_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (debounce time in clocks),\n`LONG_CYCLES` (the long-press threshold in clocks) and `TICK_CYCLES` (clocks per unit of the press length, one\nmillisecond on the board) as top-level parameters.\n",
+ "survey": [
+  "A07"
+ ],
+ "tier": "T1",
+ "title": "Short and long press classifier",
+ "trace": {
+  "captions": [
+   "Start: both counts are 0 and both LEDs are off.",
+   "Press 1: held 6 clocks, with the long-press time at 20 clocks, so it is short. The length reads 1 (units of 4 clocks); short count 1, long count 0.",
+   "Press 2: held 25 clocks, with the long-press time at 20 clocks, so it is long. The length reads 6 (units of 4 clocks); short count 1, long count 1.",
+   "Press 3: held 19 clocks, with the long-press time at 20 clocks, so it is short. The length reads 4 (units of 4 clocks); short count 2, long count 1.",
+   "Press 4: held 20 clocks, with the long-press time at 20 clocks, so it is long. The length reads 5 (units of 4 clocks); short count 2, long count 2.",
+   "Press 5: held 40 clocks, with the long-press time at 20 clocks, so it is long. The length reads 10 (units of 4 clocks); short count 2, long count 3.",
+   "Press 6: held 8 clocks, with the long-press time at 20 clocks, so it is short. The length reads 2 (units of 4 clocks); short count 3, long count 3.",
+   "Press 7: held 100 clocks, with the long-press time at 20 clocks, so it is long. The length reads 25 (units of 4 clocks); short count 3, long count 4.",
+   "Press 8: held 3 clocks, with the long-press time at 20 clocks, so it is short. The length reads 0 (units of 4 clocks); short count 1, long count 4 (the short count was cleared by a shell write just before).",
+   "Press 9: held 21 clocks, with the long-press time at 20 clocks, so it is long. The length reads 5 (units of 4 clocks); short count 1, long count 5.",
+   "Press 10: held 12 clocks, with the long-press time at 20 clocks, so it is short. The length reads 3 (units of 4 clocks); short count 2, long count 5."
+  ],
+  "signals": [
+   {
+    "kind": "wave",
+    "lo": 0,
+    "name": "held (clocks)",
+    "v": [
+     0,
+     6,
+     25,
+     19,
+     20,
+     40,
+     8,
+     100,
+     3,
+     21,
+     12
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "LAST",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     6,
+     4,
+     5,
+     10,
+     2,
+     25,
+     0,
+     5,
+     3
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "LAST_LONG",
+    "v": [
+     0,
+     0,
+     1,
+     0,
+     1,
+     1,
+     0,
+     1,
+     0,
+     1,
+     0
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "SHORT_COUNT",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     1,
+     2,
+     2,
+     2,
+     3,
+     3,
+     1,
+     1,
+     2
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "LONG_COUNT",
+    "radix": "dec",
+    "v": [
+     0,
+     0,
+     1,
+     1,
+     2,
+     3,
+     3,
+     4,
+     4,
+     5,
+     5
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "LED[0]",
+    "v": [
+     0,
+     1,
+     1,
+     0,
+     0,
+     0,
+     1,
+     1,
+     0,
+     0,
+     1
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "LED[1]",
+    "v": [
+     0,
+     0,
+     1,
+     1,
+     0,
+     1,
+     1,
+     0,
+     0,
+     1,
+     1
+    ]
+   }
+  ],
+  "stimulus": "Clean presses are held for 6, 25, 19, 20, 40, 8, 100, 3, 21, 12 clocks in turn. The long-press time is 20 clocks and one length unit is 4 clocks (both shrunk). The short count is cleared over the shell before press 8.",
+  "unit": "press",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ]
+ },
+ "what": "A button interpreter that tells short presses from long ones. After debouncing, it waits until the button is let go and then decides: held at least as long as the long-press time means long, otherwise short. It keeps a count of each kind, remembers how long the last press lasted, and toggles an LED for each kind so every press is visible.",
+ "where": "Press-and-hold behaviour is how many devices fit more functions on one button, such as a power button that needs a long hold, a reset or pairing button on a gadget, or a key that repeats or changes meaning when held."
+}

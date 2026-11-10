@@ -1,0 +1,1451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AES-128 encryption over the USB-UART | End-to-end FPGA Agent</title>
+<meta name="description" content="AES-128 encryption over the USB-UART: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task c16_nexys_aes_uart.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<style>/* FPGA Design Agent site: sober monochrome, dark and light, no glow. Same manner as the CVDP RTL Agent site. */
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --rule: #d6d6d2; --ink: #161616; --ink-2: #4a4a4a; --ink-3: #6b6b6b;
+  --mark: #161616; --mute: #b9b9b4; --warn: #b3261e; --ok: #161616;
+  --f-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --measure: 68ch; color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+    --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c0c0c; --panel: #141414; --rule: #2c2c2c; --ink: #ececec; --ink-2: #b4b4b4; --ink-3: #8c8c8c;
+  --mark: #f2f2f2; --mute: #444444; --warn: #ff6b5e; --ok: #f2f2f2; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 64px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body);
+  padding: 0 max(16px, env(safe-area-inset-right)) 0 max(16px, env(safe-area-inset-left)); overflow-x: hidden; }
+a { color: var(--ink); text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, kbd, .mono { font-family: var(--f-mono); font-size: .88em; }
+code { background: var(--panel); border: 1px solid var(--rule); padding: 0 .3em; border-radius: 2px; overflow-wrap: anywhere; }
+pre { background: var(--panel); border: 1px solid var(--rule); padding: 12px 14px; overflow-x: auto; line-height: 1.45; margin: 0 0 1em; max-width: 100%; }
+pre code { border: 0; padding: 0; background: none; overflow-wrap: normal; }
+h1, h2, h3 { line-height: 1.2; text-wrap: balance; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 1.2rem + 3.2vw, 3rem); margin: .3em 0 .4em; font-weight: 700; }
+h2 { font-size: clamp(1.35rem, 1rem + 1.6vw, 1.8rem); margin: 2.2em 0 .5em; font-weight: 700; }
+h3 { font-size: 1.05rem; margin: 1.6em 0 .4em; }
+p, li { max-width: var(--measure); }
+p { margin: 0 0 1em; }
+.wrap { max-width: 980px; margin: 0 auto; }
+.lede { font-size: 1.15rem; color: var(--ink-2); max-width: 60ch; }
+.muted { color: var(--ink-3); }
+.small { font-size: .88rem; }
+
+/* top bar */
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
+  margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
+.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
+.bar nav a { padding: 10px 8px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
+.bar nav a[aria-current="page"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--ink); }
+button, select { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); border-radius: 3px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* sections, cards */
+.hero { padding: 36px 0 8px; }
+.eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
+.fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.fact .n { font: 700 2rem/1.1 var(--f-mono); letter-spacing: -.02em; }
+.fact p { margin: .4em 0 0; font-size: .92rem; color: var(--ink-2); }
+.tag { display: inline-block; font: 600 .75rem var(--f-mono); border: 1px solid var(--ink-3); padding: 1px 7px; border-radius: 2px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.tag.run { border-style: dashed; }
+figure { margin: 1.4em 0; }
+figcaption { font-size: .88rem; color: var(--ink-3); margin-top: 6px; max-width: var(--measure); }
+.panel { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.tablewrap { overflow-x: auto; margin: 0 0 1.2em; border: 1px solid var(--rule); background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+img { max-width: 100%; height: auto; display: block; }
+footer { border-top: 1px solid var(--rule); margin-top: 56px; padding: 22px 0 40px; color: var(--ink-3); font-size: .9rem; }
+footer .wrap > * { max-width: var(--measure); }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 48px; }
+
+/* pipeline player */
+.player { border: 1px solid var(--rule); background: var(--panel); padding: 14px; }
+.pipe { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; list-style: none; padding: 0; margin: 0 0 12px; counter-reset: n; }
+.pipe li { max-width: none; border: 1px solid var(--mute); padding: 8px 10px; font-size: .86rem; line-height: 1.3; position: relative; color: var(--ink-3); min-height: 62px; }
+.pipe li b { display: block; font-size: .72rem; font-family: var(--f-mono); letter-spacing: .04em; margin-bottom: 2px; }
+.pipe li.done { color: var(--ink-2); border-color: var(--ink-3); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--rule) 6px 7px); }
+.pipe li.active { color: var(--bg); background: var(--ink); border-color: var(--ink); }
+.pipe li.stop { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.pipe li .v { position: absolute; right: 8px; top: 6px; font: .72rem var(--f-mono); }
+.cap { min-height: 3.2em; margin: 0 0 10px; color: var(--ink); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ctl input[type=range] { flex: 1 1 140px; min-width: 120px; min-height: 44px; accent-color: var(--ink); }
+.ctl .pos { font: .85rem var(--f-mono); color: var(--ink-3); min-width: 6ch; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* charts */
+svg text { fill: var(--ink-2); font: 11px var(--f-mono); }
+svg .ink { stroke: var(--ink); fill: none; }
+svg .fillink { fill: var(--ink); }
+svg .rule { stroke: var(--rule); }
+svg .warn { stroke: var(--warn); fill: none; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 14px; height: 14px; border: 1.5px solid var(--ink); display: inline-block; }
+.dot.p { background: var(--ink); }
+.dot.f { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.dot.n { border-style: dotted; border-color: var(--ink-3); }
+.strip { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.strip .t { font-family: var(--f-mono); overflow-wrap: anywhere; }
+.bars { display: grid; grid-template-columns: minmax(0, 14ch) 1fr auto; gap: 6px 10px; align-items: center; font-size: .88rem; }
+.bars .b { height: 14px; background: var(--ink); min-width: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-3); margin-top: 8px; }
+.stub { border: 1px dashed var(--ink-3); padding: 18px; background: var(--panel); }
+@media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Home hero: FPGA fabric backdrop (canvas, monochrome, drawn by app.js; still under reduced motion). */
+.hero { position: relative; isolation: isolate; padding: 72px 0 40px; }
+#fabric { position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
+  mask-composite: intersect; }
+@media (max-width: 640px) { #fabric { opacity: .55; } }
+.hero h1 { font-size: clamp(2.4rem, 1.2rem + 5.6vw, 4.6rem); letter-spacing: -.025em; margin: .15em 0 .2em; }
+.strap { font-size: clamp(1.15rem, .9rem + 1.2vw, 1.6rem); line-height: 1.3; font-weight: 600; margin: 0 0 .8em; max-width: 40ch; }
+.boards { font: .9rem/1.5 var(--f-mono); color: var(--ink-2); max-width: 70ch; }
+.boards span { background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
+.hero h1, .hero .strap { text-shadow: 0 0 12px var(--bg), 0 0 4px var(--bg); }
+
+/* problems: index and task pages */
+.dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.dombars li { display: grid; grid-template-columns: minmax(0, 22ch) 1fr 3ch; gap: 10px; align-items: center; max-width: none; font-size: .88rem; }
+.dombars a { text-decoration: none; padding: 6px 0; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+.dombars a b { font-family: var(--f-mono); }
+.db { height: 12px; border: 1px solid var(--rule); display: block; }
+.db span { display: block; height: 100%; background: var(--ink); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0 12px; }
+.filters label { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; }
+.filters select { max-width: 70vw; }
+.plist { list-style: none; padding: 0; margin: 0 0 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.pcard { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; max-width: none; display: flex; flex-direction: column; gap: 2px; }
+.pcard a { font-weight: 600; text-decoration: none; }
+.pcard a:hover .pt { text-decoration: underline; }
+.pcard .pm { font-size: .82rem; color: var(--ink-3); }
+.made li { margin-bottom: .5em; }
+.crumbs { margin: 24px 0 0; color: var(--ink-3); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.spec { border-left: 3px solid var(--ink); padding: 2px 0 2px 16px; margin: 0 0 1em; }
+.spec h3, .spec h4 { margin-top: .8em; }
+.reqs li { margin-bottom: .3em; }
+details.rules, details.code { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 10px; }
+details.rules > summary, details.code > summary { padding: 10px 12px; cursor: pointer; min-height: 44px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+details.rules > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.code pre { margin: 0; border: 0; border-top: 1px solid var(--rule); max-height: 36em; }
+.codebar { display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 0 12px 8px; align-items: center; }
+.codebar a { min-height: 32px; display: inline-flex; align-items: center; }
+.hk { font-weight: 700; }
+.hc { color: var(--ink-3); font-style: italic; }
+.hs { color: var(--ink-2); }
+.note { border: 1px solid var(--ink-3); padding: 10px 12px; background: var(--panel); }
+.trace .hero-art { margin-bottom: 10px; }
+.wavewrap { overflow-x: auto; margin-bottom: 8px; }
+.wavesvg { min-width: 520px; }
+svg .future { fill: var(--panel); opacity: .62; }
+svg .cursor { fill: var(--ink); opacity: .08; }
+svg text.big { font-size: 15px; fill: var(--ink); }
+svg text.inv, svg text.big.inv { fill: var(--panel); }
+svg .pix { stroke: var(--ink-3); stroke-width: 1; }
+svg text.dark { fill: #000; } svg text.light { fill: #fff; }
+.vals { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 14px; margin: 0 0 8px; font-size: .85rem; }
+.vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
+.trace .hero-art svg { margin: 0 auto; display: block; }
+</style>
+</head>
+<body>
+<a class="visually-hidden" href="#main">Skip to content</a>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<main id="main" class="wrap">
+<p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-D">D. Cryptography and security</a></p>
+<h1>AES-128 encryption over the USB-UART</h1>
+<p class="tags"><code>c16_nexys_aes_uart</code> <span class="tag">Course tier</span> <span class="tag">course part 16</span> <span class="tag">D Cryptography and security</span> <span class="tag">Nexys A7-100T</span></p>
+<figure><div class="player trace" id="trace" data-hero="c16_nexys_aes_uart" aria-label="Golden model replay"><div class="hero-art"></div><div class="wave"></div><p class="cap" aria-live="polite"></p></div><figcaption>The task's own golden model (<code>hidden/model.py</code>) run on a fixed input when the site is built, so this is what the hidden tests check. Key 2b7e151628aed2a6abf7158809cf4f3c and plaintext 3243f6a8885a308d313198a2e0370734 (FIPS 197 appendix B), one AES-128 operation per step. Space plays and pauses, arrow keys step.</figcaption></figure>
+<h2>The problem</h2>
+<p>An AES encryption engine on the Nexys A7 that reaches the outside world over the serial port. It takes a key and a block of data from a PC over the USB serial port, runs the standard AES rounds in hardware and sends the encrypted block back. Its output can be checked against published test vectors.</p>
+<p><strong>Where it is used.</strong> AES protects disk encryption, network links, wireless standards and secure storage, and hardware cores are built into processors and system-on-chip designs for speed and low power.</p>
+<p class="small muted">Adapted from a project in the owner's FPGA design course (the course itself is private).</p>
+<h2>The spec the agent is given</h2>
+<div class="spec"><h3>AES-128 encryption over the USB-UART</h3>
+<p>I want the Nexys A7-100T to encrypt one block of data with the AES-128 cipher when my PC sends it a key and a block over the USB serial port, and to send the encrypted block back.</p>
+<ul><li>The cipher is AES with a 128-bit key, exactly as published in FIPS 197 (encryption only, one 16-byte block at a time, no chaining). Bytes are in the order the standard writes them: byte 0 first.</li><li>The serial link: 115200 baud, 8 data bits, no parity, 1 stop bit, on the board&#x27;s USB-serial port.</li><li>The request is 32 bytes: the 16 key bytes, byte 0 first, and then the 16 plaintext bytes, byte 0 first. As soon as the 32nd byte has arrived the board encrypts and then sends back exactly 16 bytes, the ciphertext, byte 0 first. Nothing is remembered from one request to the next: every request carries its own key. (This is a bench demonstration; I know a key sent over a serial cable is not secret.) While it is working, further input bytes can be ignored. The PC always waits for the reply before the next request.</li><li>The active-low reset button (CPU_RESETN) returns the board to waiting for the first byte of a request. Show on LED0 that the board is busy (from the 32nd byte until the reply is sent).</li><li>The subject of this design is the USB-UART itself, so it does not embed the test shell; I will test it with a serial driver at the real protocol and a faster baud rate.</li></ul>
+<p>Test hooks: top module <code>c16_nexys_aes_uart_top</code>, ports named as in the board&#x27;s master XDC, and a <code>CLKS_PER_BIT</code> parameter as a top-level parameter (868 on the board; the bench shrinks it). There are no other time constants.</p></div>
+<p class="small muted">Exactly <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_nexys_aes_uart/spec.md"><code>spec.md</code></a>. Anything it leaves open, the agent has to ask about.</p>
+
+<h2>Interface</h2>
+<p>Top module <code>c16_nexys_aes_uart_top</code> on the Nexys A7-100T (<code>xc7a100tcsg324-1</code>). Clock: CLK100MHZ at 100 MHz (board oscillator). Reset: CPU_RESETN, active low: waiting for the first byte of a request, busy low.</p>
+<p>Top-level parameters (board values): <code>CLKS_PER_BIT</code> = 868. The hidden bench shrinks them to <code>CLKS_PER_BIT</code> = 8. The bench builds it without the test shell, since its subject is the USB-UART itself.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Port</th><th>Direction</th><th class="num">Width</th><th>Note</th></tr></thead><tbody><tr><td><code>CLK100MHZ</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>CPU_RESETN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>UART_TXD_IN</code></td><td>in</td><td class="num">1</td><td></td></tr><tr><td><code>UART_RXD_OUT</code></td><td>out</td><td class="num">1</td><td></td></tr><tr><td><code>LED</code></td><td>out</td><td class="num">1</td><td>LED[0] only</td></tr></tbody></table></div>
+<h3>Registers behind the test shell</h3><div class="tablewrap" tabindex="0"><table><thead><tr><th>Offset</th><th>Name</th><th>Access</th><th>Bits</th></tr></thead><tbody><tr><td><code>none</code></td><td><code>UART_PROTOCOL</code></td><td>serial</td><td>115200 8N1 on UART_TXD_IN (host to FPGA) and UART_RXD_OUT (FPGA to host); request = 16 key bytes + 16 plaintext bytes; reply = 16 ciphertext bytes</td></tr></tbody></table></div>
+<h2>What the hidden tests check</h2>
+<p>The requirements in the hidden spec, and how each is shown to hold:</p>
+<ul class="reqs"><li><span class="mono">REQ-01</span> the reply equals AES-128 of the request for the two FIPS 197 examples and six more requests <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-02</span> every request carries its own key: consecutive requests with different keys are all answered correctly <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-03</span> CPU_RESETN drops a part-received request, and LED0 is high only while busy <span class="muted">(shown by simulation)</span></li><li><span class="mono">REQ-04</span> The design closes timing at 100 MHz with no unconstrained path <span class="muted">(shown by report analysis)</span></li></ul>
+<details class="rules"><summary>The full behaviour rules from <code>hidden/spec.yaml</code></summary><h4>cipher</h4><ul><li>reply = AES-128 encryption (FIPS 197) of the 16 plaintext bytes under the 16 key bytes of the same request; byte 0 first in the request and in the reply.</li></ul><h4>protocol</h4><ul><li>request: 32 bytes, key then plaintext; reply: 16 ciphertext bytes sent after the 32nd byte; nothing is remembered between requests. Input bytes during work may be ignored.</li><li>CPU_RESETN returns the board to waiting for the first byte of a request, dropping a partly received request.</li></ul><h4>leds</h4><ul><li>LED[0] = busy, from the 32nd byte until the reply has been sent.</li></ul></details>
+
+
+<h2>What the tests catch: the mutants</h2>
+<p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-06, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/results/c16_nexys_aes_uart__icarus.json"><code>c16_nexys_aes_uart__icarus.json</code></a>) the reference passed all 5 hidden tests and 8 of 8 mutants failed them.</p>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>sbox_entry</code></td><td><code>aes_sbox_tab.sv</code></td><td>one S-box entry is wrong</td><td><code>test_fips_197_examples</code>, <code>test_random_requests_a</code>, <code>test_random_requests_b</code>, <code>test_no_state_between_requests</code>, <code>test_reset_and_busy_led</code></td></tr><tr><td><code>no_shiftrows</code></td><td><code>aes128.sv</code></td><td>ShiftRows is missing</td><td><code>test_fips_197_examples</code>, <code>test_random_requests_a</code>, <code>test_random_requests_b</code>, <code>test_no_state_between_requests</code>, <code>test_reset_and_busy_led</code></td></tr><tr><td><code>mixcolumns_row0</code></td><td><code>aes128.sv</code></td><td>MixColumns row 0 lost a term</td><td><code>test_fips_197_examples</code>, <code>test_random_requests_a</code>, <code>test_random_requests_b</code>, <code>test_no_state_between_requests</code>, <code>test_reset_and_busy_led</code></td></tr><tr><td><code>last_round_mixes</code></td><td><code>aes128.sv</code></td><td>the last round also applies MixColumns</td><td><code>test_fips_197_examples</code>, <code>test_random_requests_a</code>, <code>test_random_requests_b</code>, <code>test_no_state_between_requests</code>, <code>test_reset_and_busy_led</code></td></tr><tr><td><code>rcon_9</code></td><td><code>aes128.sv</code></td><td>the round constant of round 9 is wrong</td><td><code>test_fips_197_examples</code>, <code>test_random_requests_a</code>, <code>test_random_requests_b</code>, <code>test_no_state_between_requests</code>, <code>test_reset_and_busy_led</code></td></tr><tr><td><code>key_mix_in</code></td><td><code>aes128.sv</code></td><td>the initial AddRoundKey is missing</td><td><code>test_fips_197_examples</code>, <code>test_random_requests_a</code>, <code>test_random_requests_b</code>, <code>test_no_state_between_requests</code>, <code>test_reset_and_busy_led</code></td></tr><tr><td><code>byte_order_out</code></td><td><code>aes_uart_system.sv</code></td><td>the ciphertext is sent last byte first</td><td><code>test_fips_197_examples</code>, <code>test_random_requests_a</code>, <code>test_random_requests_b</code>, <code>test_no_state_between_requests</code>, <code>test_reset_and_busy_led</code></td></tr><tr><td><code>short_reply</code></td><td><code>aes_uart_system.sv</code></td><td>only 15 reply bytes are sent</td><td><code>test_fips_197_examples</code>, <code>test_random_requests_a</code>, <code>test_random_requests_b</code>, <code>test_no_state_between_requests</code>, <code>test_reset_and_busy_led</code></td></tr></tbody></table></div>
+<h2>Sample solution</h2>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
+<details class="code"><summary><span class="mono">aes128.sv</span> <span class="muted small">reference RTL, 73 lines</span></summary><div class="codebar small"><a href="c16_nexys_aes_uart/aes128.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_nexys_aes_uart/ref/rtl/aes128.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// source: solutions/p16l02_aes128/aes128.sv (course file, unchanged below this line)</span>
+<span class="hc">// Part 16 lesson 2 exercise: an iterative AES-128 encryptor, one round per clock, round keys expanded on the fly (FIPS 197). The S-box is given (aes_sbox_tab.sv, a look-up table).</span>
+<span class="hc">//</span>
+<span class="hc">// Blocks are 128-bit vectors in FIPS 197 byte order: byte 0 (state row 0, column 0) is bits [127:120], byte 1 is [119:112], ... byte 15 is [7:0]; byte i is row i%4, column i/4. A key is the same.</span>
+<span class="hc">// start (one clock, while !busy) samples key and pt: round 0 (AddRoundKey) is done in that clock. Rounds 1..10 take one clock each (round 10 has no MixColumns). busy is high from the clock after start until the</span>
+<span class="hc">// result is ready. done is high for exactly one clock when ct is valid; ct then keeps its value until the next start. The latency is constant: done is high 10 rising edges after the edge that sampled start,</span>
+<span class="hc">// whatever the key and data. rst_n is synchronous, active low, and clears busy and done.</span>
+<span class="hk">module</span> aes128 (
+    <span class="hk">input</span>  <span class="hk">logic</span>         clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>         rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>         start,
+    <span class="hk">input</span>  <span class="hk">logic</span> [127:0] key,
+    <span class="hk">input</span>  <span class="hk">logic</span> [127:0] pt,
+    <span class="hk">output</span> <span class="hk">logic</span>         busy,
+    <span class="hk">output</span> <span class="hk">logic</span>         done,
+    <span class="hk">output</span> <span class="hk">logic</span> [127:0] ct
+);
+    <span class="hk">logic</span> [127:0] st, rk;
+    <span class="hk">logic</span> [3:0]   rnd;
+    <span class="hk">logic</span> [7:0]   rcon;
+    <span class="hk">logic</span> [7:0]   sb [0:15];
+    <span class="hk">logic</span> [7:0]   kb [0:3];
+    <span class="hk">for</span> (<span class="hk">genvar</span> i = 0; i &lt; 16; i++) <span class="hk">begin</span> : g_sb
+        aes_sbox_tab u (.x(st[127 - 8*i -: 8]), .y(sb[i]));
+    <span class="hk">end</span>
+    <span class="hk">for</span> (<span class="hk">genvar</span> i = 0; i &lt; 4; i++) <span class="hk">begin</span> : g_kb
+        aes_sbox_tab u (.x(rk[(3 - ((i + 1) % 4)) * 8 +: 8]), .y(kb[i]));      <span class="hc">// SubWord(RotWord(w3)): w3 = rk[31:0], byte 0 of w3 is rk[31:24]</span>
+    <span class="hk">end</span>
+    <span class="hk">function</span> <span class="hk">automatic</span> <span class="hk">logic</span> [7:0] xt(<span class="hk">input</span> <span class="hk">logic</span> [7:0] a);
+        xt = {a[6:0], 1&#x27;b0} ^ (a[7] ? 8&#x27;h1B : 8&#x27;h00);
+    <span class="hk">endfunction</span>
+    <span class="hc">// next round key</span>
+    <span class="hk">logic</span> [31:0] w0, w1, w2, w3, t, n0, n1, n2, n3;
+    <span class="hk">logic</span> [127:0] rk_n;
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        {w0, w1, w2, w3} = rk;
+        t = {kb[0] ^ rcon, kb[1], kb[2], kb[3]};
+        n0 = w0 ^ t; n1 = w1 ^ n0; n2 = w2 ^ n1; n3 = w3 ^ n2;
+        rk_n = {n0, n1, n2, n3};
+    <span class="hk">end</span>
+    <span class="hc">// round function</span>
+    <span class="hk">logic</span> [7:0] sr [0:15];
+    <span class="hk">logic</span> [7:0] mc [0:15];
+    <span class="hk">logic</span> [127:0] st_n;
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        <span class="hk">for</span> (<span class="hk">int</span> c = 0; c &lt; 4; c++)
+            <span class="hk">for</span> (<span class="hk">int</span> r = 0; r &lt; 4; r++) sr[4*c + r] = sb[4*((c + r) % 4) + r];
+        <span class="hk">for</span> (<span class="hk">int</span> c = 0; c &lt; 4; c++) <span class="hk">begin</span>
+            mc[4*c + 0] = xt(sr[4*c]) ^ (xt(sr[4*c + 1]) ^ sr[4*c + 1]) ^ sr[4*c + 2] ^ sr[4*c + 3];
+            mc[4*c + 1] = sr[4*c] ^ xt(sr[4*c + 1]) ^ (xt(sr[4*c + 2]) ^ sr[4*c + 2]) ^ sr[4*c + 3];
+            mc[4*c + 2] = sr[4*c] ^ sr[4*c + 1] ^ xt(sr[4*c + 2]) ^ (xt(sr[4*c + 3]) ^ sr[4*c + 3]);
+            mc[4*c + 3] = (xt(sr[4*c]) ^ sr[4*c]) ^ sr[4*c + 1] ^ sr[4*c + 2] ^ xt(sr[4*c + 3]);
+        <span class="hk">end</span>
+        <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; 16; i++) st_n[127 - 8*i -: 8] = (rnd == 4&#x27;d10) ? sr[i] : mc[i];
+        st_n = st_n ^ rk_n;
+    <span class="hk">end</span>
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        <span class="hk">case</span> (rnd)
+            4&#x27;d1: rcon = 8&#x27;h01; 4&#x27;d2: rcon = 8&#x27;h02; 4&#x27;d3: rcon = 8&#x27;h04; 4&#x27;d4: rcon = 8&#x27;h08; 4&#x27;d5: rcon = 8&#x27;h10;
+            4&#x27;d6: rcon = 8&#x27;h20; 4&#x27;d7: rcon = 8&#x27;h40; 4&#x27;d8: rcon = 8&#x27;h80; 4&#x27;d9: rcon = 8&#x27;h1B; <span class="hk">default</span>: rcon = 8&#x27;h36;
+        <span class="hk">endcase</span>
+    <span class="hk">end</span>
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        done &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (!rst_n) busy &lt;= 1&#x27;b0;
+        <span class="hk">else</span> <span class="hk">if</span> (!busy) <span class="hk">begin</span>
+            <span class="hk">if</span> (start) <span class="hk">begin</span> st &lt;= pt ^ key; rk &lt;= key; rnd &lt;= 4&#x27;d1; busy &lt;= 1&#x27;b1; <span class="hk">end</span>
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            st &lt;= st_n; rk &lt;= rk_n; rnd &lt;= rnd + 1&#x27;b1;
+            <span class="hk">if</span> (rnd == 4&#x27;d10) <span class="hk">begin</span> busy &lt;= 1&#x27;b0; done &lt;= 1&#x27;b1; ct &lt;= st_n; <span class="hk">end</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">aes_sbox_tab.sv</span> <span class="muted small">reference RTL, 268 lines</span></summary><div class="codebar small"><a href="c16_nexys_aes_uart/aes_sbox_tab.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_nexys_aes_uart/ref/rtl/aes_sbox_tab.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// source: solutions/p16l02_aes128/aes_sbox_tab.sv (course file, unchanged below this line)</span>
+<span class="hc">// GIVEN (generated by tools/gen_crypto_rtl.py from the FIPS 197 definition): the AES S-box as a 256 x 8 look-up table.</span>
+<span class="hk">module</span> aes_sbox_tab (
+    <span class="hk">input</span>  <span class="hk">logic</span> [7:0] x,
+    <span class="hk">output</span> <span class="hk">logic</span> [7:0] y
+);
+    <span class="hk">always_comb</span> <span class="hk">begin</span>
+        <span class="hk">case</span> (x)
+            8&#x27;h00: y = 8&#x27;h63;
+            8&#x27;h01: y = 8&#x27;h7c;
+            8&#x27;h02: y = 8&#x27;h77;
+            8&#x27;h03: y = 8&#x27;h7b;
+            8&#x27;h04: y = 8&#x27;hf2;
+            8&#x27;h05: y = 8&#x27;h6b;
+            8&#x27;h06: y = 8&#x27;h6f;
+            8&#x27;h07: y = 8&#x27;hc5;
+            8&#x27;h08: y = 8&#x27;h30;
+            8&#x27;h09: y = 8&#x27;h01;
+            8&#x27;h0a: y = 8&#x27;h67;
+            8&#x27;h0b: y = 8&#x27;h2b;
+            8&#x27;h0c: y = 8&#x27;hfe;
+            8&#x27;h0d: y = 8&#x27;hd7;
+            8&#x27;h0e: y = 8&#x27;hab;
+            8&#x27;h0f: y = 8&#x27;h76;
+            8&#x27;h10: y = 8&#x27;hca;
+            8&#x27;h11: y = 8&#x27;h82;
+            8&#x27;h12: y = 8&#x27;hc9;
+            8&#x27;h13: y = 8&#x27;h7d;
+            8&#x27;h14: y = 8&#x27;hfa;
+            8&#x27;h15: y = 8&#x27;h59;
+            8&#x27;h16: y = 8&#x27;h47;
+            8&#x27;h17: y = 8&#x27;hf0;
+            8&#x27;h18: y = 8&#x27;had;
+            8&#x27;h19: y = 8&#x27;hd4;
+            8&#x27;h1a: y = 8&#x27;ha2;
+            8&#x27;h1b: y = 8&#x27;haf;
+            8&#x27;h1c: y = 8&#x27;h9c;
+            8&#x27;h1d: y = 8&#x27;ha4;
+            8&#x27;h1e: y = 8&#x27;h72;
+            8&#x27;h1f: y = 8&#x27;hc0;
+            8&#x27;h20: y = 8&#x27;hb7;
+            8&#x27;h21: y = 8&#x27;hfd;
+            8&#x27;h22: y = 8&#x27;h93;
+            8&#x27;h23: y = 8&#x27;h26;
+            8&#x27;h24: y = 8&#x27;h36;
+            8&#x27;h25: y = 8&#x27;h3f;
+            8&#x27;h26: y = 8&#x27;hf7;
+            8&#x27;h27: y = 8&#x27;hcc;
+            8&#x27;h28: y = 8&#x27;h34;
+            8&#x27;h29: y = 8&#x27;ha5;
+            8&#x27;h2a: y = 8&#x27;he5;
+            8&#x27;h2b: y = 8&#x27;hf1;
+            8&#x27;h2c: y = 8&#x27;h71;
+            8&#x27;h2d: y = 8&#x27;hd8;
+            8&#x27;h2e: y = 8&#x27;h31;
+            8&#x27;h2f: y = 8&#x27;h15;
+            8&#x27;h30: y = 8&#x27;h04;
+            8&#x27;h31: y = 8&#x27;hc7;
+            8&#x27;h32: y = 8&#x27;h23;
+            8&#x27;h33: y = 8&#x27;hc3;
+            8&#x27;h34: y = 8&#x27;h18;
+            8&#x27;h35: y = 8&#x27;h96;
+            8&#x27;h36: y = 8&#x27;h05;
+            8&#x27;h37: y = 8&#x27;h9a;
+            8&#x27;h38: y = 8&#x27;h07;
+            8&#x27;h39: y = 8&#x27;h12;
+            8&#x27;h3a: y = 8&#x27;h80;
+            8&#x27;h3b: y = 8&#x27;he2;
+            8&#x27;h3c: y = 8&#x27;heb;
+            8&#x27;h3d: y = 8&#x27;h27;
+            8&#x27;h3e: y = 8&#x27;hb2;
+            8&#x27;h3f: y = 8&#x27;h75;
+            8&#x27;h40: y = 8&#x27;h09;
+            8&#x27;h41: y = 8&#x27;h83;
+            8&#x27;h42: y = 8&#x27;h2c;
+            8&#x27;h43: y = 8&#x27;h1a;
+            8&#x27;h44: y = 8&#x27;h1b;
+            8&#x27;h45: y = 8&#x27;h6e;
+            8&#x27;h46: y = 8&#x27;h5a;
+            8&#x27;h47: y = 8&#x27;ha0;
+            8&#x27;h48: y = 8&#x27;h52;
+            8&#x27;h49: y = 8&#x27;h3b;
+            8&#x27;h4a: y = 8&#x27;hd6;
+            8&#x27;h4b: y = 8&#x27;hb3;
+            8&#x27;h4c: y = 8&#x27;h29;
+            8&#x27;h4d: y = 8&#x27;he3;
+            8&#x27;h4e: y = 8&#x27;h2f;
+            8&#x27;h4f: y = 8&#x27;h84;
+            8&#x27;h50: y = 8&#x27;h53;
+            8&#x27;h51: y = 8&#x27;hd1;
+            8&#x27;h52: y = 8&#x27;h00;
+            8&#x27;h53: y = 8&#x27;hed;
+            8&#x27;h54: y = 8&#x27;h20;
+            8&#x27;h55: y = 8&#x27;hfc;
+            8&#x27;h56: y = 8&#x27;hb1;
+            8&#x27;h57: y = 8&#x27;h5b;
+            8&#x27;h58: y = 8&#x27;h6a;
+            8&#x27;h59: y = 8&#x27;hcb;
+            8&#x27;h5a: y = 8&#x27;hbe;
+            8&#x27;h5b: y = 8&#x27;h39;
+            8&#x27;h5c: y = 8&#x27;h4a;
+            8&#x27;h5d: y = 8&#x27;h4c;
+            8&#x27;h5e: y = 8&#x27;h58;
+            8&#x27;h5f: y = 8&#x27;hcf;
+            8&#x27;h60: y = 8&#x27;hd0;
+            8&#x27;h61: y = 8&#x27;hef;
+            8&#x27;h62: y = 8&#x27;haa;
+            8&#x27;h63: y = 8&#x27;hfb;
+            8&#x27;h64: y = 8&#x27;h43;
+            8&#x27;h65: y = 8&#x27;h4d;
+            8&#x27;h66: y = 8&#x27;h33;
+            8&#x27;h67: y = 8&#x27;h85;
+            8&#x27;h68: y = 8&#x27;h45;
+            8&#x27;h69: y = 8&#x27;hf9;
+            8&#x27;h6a: y = 8&#x27;h02;
+            8&#x27;h6b: y = 8&#x27;h7f;
+            8&#x27;h6c: y = 8&#x27;h50;
+            8&#x27;h6d: y = 8&#x27;h3c;
+            8&#x27;h6e: y = 8&#x27;h9f;
+            8&#x27;h6f: y = 8&#x27;ha8;
+            8&#x27;h70: y = 8&#x27;h51;
+            8&#x27;h71: y = 8&#x27;ha3;
+            8&#x27;h72: y = 8&#x27;h40;
+            8&#x27;h73: y = 8&#x27;h8f;
+            8&#x27;h74: y = 8&#x27;h92;
+            8&#x27;h75: y = 8&#x27;h9d;
+            8&#x27;h76: y = 8&#x27;h38;
+            8&#x27;h77: y = 8&#x27;hf5;
+            8&#x27;h78: y = 8&#x27;hbc;
+            8&#x27;h79: y = 8&#x27;hb6;
+            8&#x27;h7a: y = 8&#x27;hda;
+            8&#x27;h7b: y = 8&#x27;h21;
+            8&#x27;h7c: y = 8&#x27;h10;
+            8&#x27;h7d: y = 8&#x27;hff;
+            8&#x27;h7e: y = 8&#x27;hf3;
+            8&#x27;h7f: y = 8&#x27;hd2;
+            8&#x27;h80: y = 8&#x27;hcd;
+            8&#x27;h81: y = 8&#x27;h0c;
+            8&#x27;h82: y = 8&#x27;h13;
+            8&#x27;h83: y = 8&#x27;hec;
+            8&#x27;h84: y = 8&#x27;h5f;
+            8&#x27;h85: y = 8&#x27;h97;
+            8&#x27;h86: y = 8&#x27;h44;
+            8&#x27;h87: y = 8&#x27;h17;
+            8&#x27;h88: y = 8&#x27;hc4;
+            8&#x27;h89: y = 8&#x27;ha7;
+            8&#x27;h8a: y = 8&#x27;h7e;
+            8&#x27;h8b: y = 8&#x27;h3d;
+            8&#x27;h8c: y = 8&#x27;h64;
+            8&#x27;h8d: y = 8&#x27;h5d;
+            8&#x27;h8e: y = 8&#x27;h19;
+            8&#x27;h8f: y = 8&#x27;h73;
+            8&#x27;h90: y = 8&#x27;h60;
+            8&#x27;h91: y = 8&#x27;h81;
+            8&#x27;h92: y = 8&#x27;h4f;
+            8&#x27;h93: y = 8&#x27;hdc;
+            8&#x27;h94: y = 8&#x27;h22;
+            8&#x27;h95: y = 8&#x27;h2a;
+            8&#x27;h96: y = 8&#x27;h90;
+            8&#x27;h97: y = 8&#x27;h88;
+            8&#x27;h98: y = 8&#x27;h46;
+            8&#x27;h99: y = 8&#x27;hee;
+            8&#x27;h9a: y = 8&#x27;hb8;
+            8&#x27;h9b: y = 8&#x27;h14;
+            8&#x27;h9c: y = 8&#x27;hde;
+            8&#x27;h9d: y = 8&#x27;h5e;
+            8&#x27;h9e: y = 8&#x27;h0b;
+            8&#x27;h9f: y = 8&#x27;hdb;
+            8&#x27;ha0: y = 8&#x27;he0;
+            8&#x27;ha1: y = 8&#x27;h32;
+            8&#x27;ha2: y = 8&#x27;h3a;
+            8&#x27;ha3: y = 8&#x27;h0a;
+            8&#x27;ha4: y = 8&#x27;h49;
+            8&#x27;ha5: y = 8&#x27;h06;
+            8&#x27;ha6: y = 8&#x27;h24;
+            8&#x27;ha7: y = 8&#x27;h5c;
+            8&#x27;ha8: y = 8&#x27;hc2;
+            8&#x27;ha9: y = 8&#x27;hd3;
+            8&#x27;haa: y = 8&#x27;hac;
+            8&#x27;hab: y = 8&#x27;h62;
+            8&#x27;hac: y = 8&#x27;h91;
+            8&#x27;had: y = 8&#x27;h95;
+            8&#x27;hae: y = 8&#x27;he4;
+            8&#x27;haf: y = 8&#x27;h79;
+            8&#x27;hb0: y = 8&#x27;he7;
+            8&#x27;hb1: y = 8&#x27;hc8;
+            8&#x27;hb2: y = 8&#x27;h37;
+            8&#x27;hb3: y = 8&#x27;h6d;
+            8&#x27;hb4: y = 8&#x27;h8d;
+            8&#x27;hb5: y = 8&#x27;hd5;
+            8&#x27;hb6: y = 8&#x27;h4e;
+            8&#x27;hb7: y = 8&#x27;ha9;
+            8&#x27;hb8: y = 8&#x27;h6c;
+            8&#x27;hb9: y = 8&#x27;h56;
+            8&#x27;hba: y = 8&#x27;hf4;
+            8&#x27;hbb: y = 8&#x27;hea;
+            8&#x27;hbc: y = 8&#x27;h65;
+            8&#x27;hbd: y = 8&#x27;h7a;
+            8&#x27;hbe: y = 8&#x27;hae;
+            8&#x27;hbf: y = 8&#x27;h08;
+            8&#x27;hc0: y = 8&#x27;hba;
+            8&#x27;hc1: y = 8&#x27;h78;
+            8&#x27;hc2: y = 8&#x27;h25;
+            8&#x27;hc3: y = 8&#x27;h2e;
+            8&#x27;hc4: y = 8&#x27;h1c;
+            8&#x27;hc5: y = 8&#x27;ha6;
+            8&#x27;hc6: y = 8&#x27;hb4;
+            8&#x27;hc7: y = 8&#x27;hc6;
+            8&#x27;hc8: y = 8&#x27;he8;
+            8&#x27;hc9: y = 8&#x27;hdd;
+            8&#x27;hca: y = 8&#x27;h74;
+            8&#x27;hcb: y = 8&#x27;h1f;
+            8&#x27;hcc: y = 8&#x27;h4b;
+            8&#x27;hcd: y = 8&#x27;hbd;
+            8&#x27;hce: y = 8&#x27;h8b;
+            8&#x27;hcf: y = 8&#x27;h8a;
+            8&#x27;hd0: y = 8&#x27;h70;
+            8&#x27;hd1: y = 8&#x27;h3e;
+            8&#x27;hd2: y = 8&#x27;hb5;
+            8&#x27;hd3: y = 8&#x27;h66;
+            8&#x27;hd4: y = 8&#x27;h48;
+            8&#x27;hd5: y = 8&#x27;h03;
+            8&#x27;hd6: y = 8&#x27;hf6;
+            8&#x27;hd7: y = 8&#x27;h0e;
+            8&#x27;hd8: y = 8&#x27;h61;
+            8&#x27;hd9: y = 8&#x27;h35;
+            8&#x27;hda: y = 8&#x27;h57;
+            8&#x27;hdb: y = 8&#x27;hb9;
+            8&#x27;hdc: y = 8&#x27;h86;
+            8&#x27;hdd: y = 8&#x27;hc1;
+            8&#x27;hde: y = 8&#x27;h1d;
+            8&#x27;hdf: y = 8&#x27;h9e;
+            8&#x27;he0: y = 8&#x27;he1;
+            8&#x27;he1: y = 8&#x27;hf8;
+            8&#x27;he2: y = 8&#x27;h98;
+            8&#x27;he3: y = 8&#x27;h11;
+            8&#x27;he4: y = 8&#x27;h69;
+            8&#x27;he5: y = 8&#x27;hd9;
+            8&#x27;he6: y = 8&#x27;h8e;
+            8&#x27;he7: y = 8&#x27;h94;
+            8&#x27;he8: y = 8&#x27;h9b;
+            8&#x27;he9: y = 8&#x27;h1e;
+            8&#x27;hea: y = 8&#x27;h87;
+            8&#x27;heb: y = 8&#x27;he9;
+            8&#x27;hec: y = 8&#x27;hce;
+            8&#x27;hed: y = 8&#x27;h55;
+            8&#x27;hee: y = 8&#x27;h28;
+            8&#x27;hef: y = 8&#x27;hdf;
+            8&#x27;hf0: y = 8&#x27;h8c;
+            8&#x27;hf1: y = 8&#x27;ha1;
+            8&#x27;hf2: y = 8&#x27;h89;
+            8&#x27;hf3: y = 8&#x27;h0d;
+            8&#x27;hf4: y = 8&#x27;hbf;
+            8&#x27;hf5: y = 8&#x27;he6;
+            8&#x27;hf6: y = 8&#x27;h42;
+            8&#x27;hf7: y = 8&#x27;h68;
+            8&#x27;hf8: y = 8&#x27;h41;
+            8&#x27;hf9: y = 8&#x27;h99;
+            8&#x27;hfa: y = 8&#x27;h2d;
+            8&#x27;hfb: y = 8&#x27;h0f;
+            8&#x27;hfc: y = 8&#x27;hb0;
+            8&#x27;hfd: y = 8&#x27;h54;
+            8&#x27;hfe: y = 8&#x27;hbb;
+            8&#x27;hff: y = 8&#x27;h16;
+            <span class="hk">default</span>: y = 8&#x27;h00;
+        <span class="hk">endcase</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">aes_uart_system.sv</span> <span class="muted small">reference RTL, 54 lines</span></summary><div class="codebar small"><a href="c16_nexys_aes_uart/aes_uart_system.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_nexys_aes_uart/ref/rtl/aes_uart_system.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// source: labs/p16_crypto/aes_uart_system.sv (course file, unchanged below this line)</span>
+<span class="hc">// Part 16 lab 1 and agent project p16_nexys_aes_uart, the working core (checked in Icarus by test_lab_uart.py): AES-128 encryption over a UART. Protocol (8N1): the host sends 32 bytes, the key (16 bytes, byte 0</span>
+<span class="hc">// first) and then the plaintext block (16 bytes, byte 0 first); about 270 clocks of UART-independent latency later the board answers with the 16 ciphertext bytes (byte 0 first). Nothing is stored between blocks.</span>
+<span class="hc">// Uses the course&#x27;s iterative AES-128 (solutions/p16l02_aes128 with its S-box table). THE KEY ARRIVES OVER THE UART: this is a bench demonstration of the datapath, not a way to protect a key.</span>
+<span class="hk">module</span> aes_uart_system #(
+    <span class="hk">parameter</span> <span class="hk">int</span> CLKS_PER_BIT = 868
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span> clk,
+    <span class="hk">input</span>  <span class="hk">logic</span> rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span> rxd,
+    <span class="hk">output</span> <span class="hk">logic</span> txd,
+    <span class="hk">output</span> <span class="hk">logic</span> busy
+);
+    <span class="hk">logic</span>        rx_vld, tx_busy, tx_go;
+    <span class="hk">logic</span> [7:0]  rx_data, tx_data;
+    uart_rx #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_rx (.clk, .rst_n, .rxd, .vld(rx_vld), .data(rx_data));
+    uart_tx #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_tx (.clk, .rst_n, .go(tx_go), .data(tx_data), .busy(tx_busy), .txd);
+    <span class="hk">logic</span> [255:0] sh;
+    <span class="hk">logic</span> [5:0]   nrx;
+    <span class="hk">logic</span>         a_start, a_busy, a_done;
+    <span class="hk">logic</span> [127:0] ct;
+    aes128 u_aes (.clk, .rst_n, .start(a_start), .key(sh[255:128]), .pt(sh[127:0]), .busy(a_busy), .done(a_done), .ct);
+    <span class="hk">typedef</span> <span class="hk">enum</span> <span class="hk">logic</span> [1:0] {S_RX, S_RUN, S_TX} st_t;
+    st_t st;
+    <span class="hk">logic</span> [4:0] k;
+    <span class="hk">logic</span> [1:0] ph;
+    <span class="hk">assign</span> busy = (st != S_RX);
+    <span class="hk">assign</span> a_start = (st == S_RUN) &amp;&amp; (ph == 2&#x27;d0);
+    <span class="hk">assign</span> tx_go = (st == S_TX) &amp;&amp; (ph == 2&#x27;d0) &amp;&amp; !tx_busy;
+    <span class="hk">assign</span> tx_data = ct[127 - 8*k -: 8];
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (!rst_n) <span class="hk">begin</span> st &lt;= S_RX; nrx &lt;= &#x27;0; ph &lt;= &#x27;0; k &lt;= &#x27;0; <span class="hk">end</span>
+        <span class="hk">else</span> <span class="hk">case</span> (st)
+            S_RX: <span class="hk">if</span> (rx_vld) <span class="hk">begin</span>
+                sh &lt;= {sh[247:0], rx_data};
+                <span class="hk">if</span> (nrx == 6&#x27;d31) <span class="hk">begin</span> nrx &lt;= &#x27;0; st &lt;= S_RUN; ph &lt;= 2&#x27;d0; <span class="hk">end</span> <span class="hk">else</span> nrx &lt;= nrx + 1&#x27;b1;
+            <span class="hk">end</span>
+            S_RUN: <span class="hk">case</span> (ph)
+                2&#x27;d0: ph &lt;= 2&#x27;d1;                                   <span class="hc">// start pulse is high in this clock</span>
+                <span class="hk">default</span>: <span class="hk">if</span> (a_done) <span class="hk">begin</span> st &lt;= S_TX; ph &lt;= 2&#x27;d0; k &lt;= &#x27;0; <span class="hk">end</span>
+            <span class="hk">endcase</span>
+            S_TX: <span class="hk">case</span> (ph)
+                2&#x27;d0: <span class="hk">if</span> (tx_go) ph &lt;= 2&#x27;d1;
+                2&#x27;d1: <span class="hk">if</span> (tx_busy) ph &lt;= 2&#x27;d2;
+                <span class="hk">default</span>: <span class="hk">if</span> (!tx_busy) <span class="hk">begin</span>
+                    ph &lt;= 2&#x27;d0;
+                    k &lt;= k + 1&#x27;b1;
+                    <span class="hk">if</span> (k == 5&#x27;d15) st &lt;= S_RX;
+                <span class="hk">end</span>
+            <span class="hk">endcase</span>
+            <span class="hk">default</span>: st &lt;= S_RX;
+        <span class="hk">endcase</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">c16_nexys_aes_uart_top.sv</span> <span class="muted small">reference RTL, 14 lines</span></summary><div class="codebar small"><a href="c16_nexys_aes_uart/c16_nexys_aes_uart_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_nexys_aes_uart/ref/rtl/c16_nexys_aes_uart_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// P16 reference top-level for the Nexys A7-100T: AES-128 over the UART. Reset synchroniser and busy LED filled in (the lab skeleton leaves them as blanks).</span>
+<span class="hk">module</span> c16_nexys_aes_uart_top #(
+    <span class="hk">parameter</span> <span class="hk">int</span> CLKS_PER_BIT = 868
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>        CLK100MHZ,
+    <span class="hk">input</span>  <span class="hk">logic</span>        CPU_RESETN,
+    <span class="hk">input</span>  <span class="hk">logic</span>        UART_TXD_IN,
+    <span class="hk">output</span> <span class="hk">logic</span>        UART_RXD_OUT,
+    <span class="hk">output</span> <span class="hk">logic</span> [0:0]  LED
+);
+    <span class="hk">logic</span> r1, r2;
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> CLK100MHZ) <span class="hk">begin</span> r1 &lt;= CPU_RESETN; r2 &lt;= r1; <span class="hk">end</span>
+    aes_uart_system #(.CLKS_PER_BIT(CLKS_PER_BIT)) u (.clk(CLK100MHZ), .rst_n(r2), .rxd(UART_TXD_IN), .txd(UART_RXD_OUT), .busy(LED[0]));
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">uart_rxtx.sv</span> <span class="muted small">reference RTL, 62 lines</span></summary><div class="codebar small"><a href="c16_nexys_aes_uart/uart_rxtx.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_nexys_aes_uart/ref/rtl/uart_rxtx.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// source: labs/p16_crypto/uart_rxtx.sv (course file, unchanged below this line)</span>
+<span class="hc">// Part 16 labs: a minimal 8N1 UART receiver and transmitter (the same style as Part 15&#x27;s vector-search lab). CLKS_PER_BIT = 868 for 115200 baud at 100 MHz.</span>
+<span class="hk">module</span> uart_rx #(
+    <span class="hk">parameter</span> <span class="hk">int</span> CLKS_PER_BIT = 868
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>       clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>       rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>       rxd,
+    <span class="hk">output</span> <span class="hk">logic</span>       vld,
+    <span class="hk">output</span> <span class="hk">logic</span> [7:0] data
+);
+    <span class="hk">logic</span>        s1, s2, run;
+    <span class="hk">logic</span> [15:0] cnt;
+    <span class="hk">logic</span> [3:0]  bitn;
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        s1 &lt;= rxd;
+        s2 &lt;= s1;
+        vld &lt;= 1&#x27;b0;
+        <span class="hk">if</span> (!rst_n) run &lt;= 1&#x27;b0;
+        <span class="hk">else</span> <span class="hk">if</span> (!run) <span class="hk">begin</span>
+            <span class="hk">if</span> (!s2) <span class="hk">begin</span> run &lt;= 1&#x27;b1; cnt &lt;= CLKS_PER_BIT / 2; bitn &lt;= 4&#x27;d0; <span class="hk">end</span>
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">if</span> (cnt != 0) cnt &lt;= cnt - 1&#x27;b1;
+        <span class="hk">else</span> <span class="hk">begin</span>
+            cnt &lt;= CLKS_PER_BIT - 1;
+            bitn &lt;= bitn + 1&#x27;b1;
+            <span class="hk">if</span> (bitn == 4&#x27;d0) <span class="hk">begin</span> <span class="hk">if</span> (s2) run &lt;= 1&#x27;b0; <span class="hk">end</span>
+            <span class="hk">else</span> <span class="hk">if</span> (bitn &lt;= 4&#x27;d8) data &lt;= {s2, data[7:1]};
+            <span class="hk">else</span> <span class="hk">begin</span> run &lt;= 1&#x27;b0; vld &lt;= s2; <span class="hk">end</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+
+<span class="hk">module</span> uart_tx #(
+    <span class="hk">parameter</span> <span class="hk">int</span> CLKS_PER_BIT = 868
+) (
+    <span class="hk">input</span>  <span class="hk">logic</span>       clk,
+    <span class="hk">input</span>  <span class="hk">logic</span>       rst_n,
+    <span class="hk">input</span>  <span class="hk">logic</span>       go,
+    <span class="hk">input</span>  <span class="hk">logic</span> [7:0] data,
+    <span class="hk">output</span> <span class="hk">logic</span>       busy,
+    <span class="hk">output</span> <span class="hk">logic</span>       txd
+);
+    <span class="hk">logic</span> [9:0]  sh;
+    <span class="hk">logic</span> [15:0] cnt;
+    <span class="hk">logic</span> [3:0]  n;
+    <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
+        <span class="hk">if</span> (!rst_n) <span class="hk">begin</span> busy &lt;= 1&#x27;b0; txd &lt;= 1&#x27;b1; <span class="hk">end</span>
+        <span class="hk">else</span> <span class="hk">if</span> (!busy) <span class="hk">begin</span>
+            txd &lt;= 1&#x27;b1;
+            <span class="hk">if</span> (go) <span class="hk">begin</span> busy &lt;= 1&#x27;b1; sh &lt;= {1&#x27;b1, data, 1&#x27;b0}; cnt &lt;= CLKS_PER_BIT - 1; n &lt;= 4&#x27;d0; <span class="hk">end</span>
+        <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
+            txd &lt;= sh[0];
+            <span class="hk">if</span> (cnt != 0) cnt &lt;= cnt - 1&#x27;b1;
+            <span class="hk">else</span> <span class="hk">begin</span>
+                cnt &lt;= CLKS_PER_BIT - 1;
+                sh &lt;= {1&#x27;b1, sh[9:1]};
+                n &lt;= n + 1&#x27;b1;
+                <span class="hk">if</span> (n == 4&#x27;d9) busy &lt;= 1&#x27;b0;
+            <span class="hk">end</span>
+        <span class="hk">end</span>
+    <span class="hk">end</span>
+<span class="hk">endmodule</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 83 lines</span></summary><div class="codebar small"><a href="c16_nexys_aes_uart/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_nexys_aes_uart/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c16_nexys_aes_uart against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+
+<span class="hk">from</span> __future__ <span class="hk">import</span> annotations
+
+<span class="hk">import</span> cocotb
+<span class="hk">from</span> benchmark.lib.bench <span class="hk">import</span> Board
+<span class="hk">from</span> cocotb.triggers <span class="hk">import</span> ClockCycles, ReadOnly
+<span class="hk">from</span> model <span class="hk">import</span> bench_requests
+
+REPLY_TIMEOUT = 60_000
+
+
+<span class="hk">async</span> <span class="hk">def</span> ask(b: Board, req_hex: str, reply_hex: str, what: str) -&gt; <span class="hk">None</span>:
+    <span class="hk">await</span> b.uart.send(bytes.fromhex(req_hex))
+    got = <span class="hk">await</span> b.uart.recv(16, REPLY_TIMEOUT)
+    <span class="hk">assert</span> got.hex() == reply_hex, f<span class="hs">&quot;{what}: request {req_hex}: RTL {got.hex()}, model {reply_hex}&quot;</span>
+
+
+<span class="hk">async</span> <span class="hk">def</span> busy_bit(b: Board) -&gt; int:
+    <span class="hk">await</span> ReadOnly()
+    v = int(b.dut.LED.value) &amp; 1
+    <span class="hk">await</span> ClockCycles(b.clk, 1)
+    <span class="hk">return</span> v
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_fips_197_examples(dut):
+    <span class="hs">&quot;&quot;&quot;The two example blocks printed in FIPS 197 (appendix B and C.1).&quot;&quot;&quot;</span>
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    r = bench_requests()
+    <span class="hk">for</span> i <span class="hk">in</span> (0, 1):
+        <span class="hk">await</span> ask(b, *r[i], f<span class="hs">&quot;FIPS 197 example {i}&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_random_requests_a(dut):
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    r = bench_requests()
+    <span class="hk">for</span> i <span class="hk">in</span> (2, 3, 4):
+        <span class="hk">await</span> ask(b, *r[i], f<span class="hs">&quot;request {i}&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_random_requests_b(dut):
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    r = bench_requests()
+    <span class="hk">for</span> i <span class="hk">in</span> (5, 6, 7):
+        <span class="hk">await</span> ask(b, *r[i], f<span class="hs">&quot;request {i}&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_no_state_between_requests(dut):
+    <span class="hs">&quot;&quot;&quot;Different keys on consecutive requests, then the first request again.&quot;&quot;&quot;</span>
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    r = bench_requests()
+    <span class="hk">for</span> i <span class="hk">in</span> (1, 0, 5, 1):
+        <span class="hk">await</span> ask(b, *r[i], f<span class="hs">&quot;request {i} in a mixed order&quot;</span>)
+
+
+@cocotb.test()
+<span class="hk">async</span> <span class="hk">def</span> test_reset_and_busy_led(dut):
+    b = Board(dut, {})
+    <span class="hk">await</span> b.start()
+    r = bench_requests()
+    <span class="hk">await</span> b.uart.send(bytes(range(20)))               <span class="hc"># a part-received request</span>
+    <span class="hk">await</span> b.reset()
+    <span class="hk">await</span> ask(b, *r[0], <span class="hs">&quot;request after reset&quot;</span>)
+    <span class="hk">await</span> b.cycles(200)
+    <span class="hk">assert</span> <span class="hk">await</span> busy_bit(b) == 0, <span class="hs">&quot;LED0 must be low when idle&quot;</span>
+    <span class="hk">await</span> b.uart.send(bytes.fromhex(r[2][0]))
+    seen = 0
+    <span class="hk">for</span> _ <span class="hk">in</span> range(2000):
+        seen |= <span class="hk">await</span> busy_bit(b)
+        <span class="hk">if</span> seen:
+            <span class="hk">break</span>
+    <span class="hk">assert</span> seen, <span class="hs">&quot;LED0 was never high while the block was encrypted&quot;</span>
+    <span class="hk">await</span> b.uart.recv(16, REPLY_TIMEOUT)
+    <span class="hk">await</span> b.cycles(200)
+    <span class="hk">assert</span> <span class="hk">await</span> busy_bit(b) == 0, <span class="hs">&quot;LED0 must be low after the reply&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 110 lines</span></summary><div class="codebar small"><a href="c16_nexys_aes_uart/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_nexys_aes_uart/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;P16-1 model: AES-128 requests (key then plaintext, 32 bytes) and the replies the board must send (standalone: python only).&quot;&quot;&quot;</span>
+<span class="hk">import</span> hashlib
+<span class="hk">import</span> math
+<span class="hk">import</span> random
+<span class="hk">import</span> struct
+
+
+<span class="hk">def</span> xtime(a: int) -&gt; int:
+    a &lt;&lt;= 1
+    <span class="hk">return</span> (a ^ 0x11B) &amp; 0xFF <span class="hk">if</span> a &amp; 0x100 <span class="hk">else</span> a
+
+
+<span class="hk">def</span> gmul(a: int, b: int) -&gt; int:
+    <span class="hs">&quot;&quot;&quot;Multiplication in GF(2^8) modulo x^8 + x^4 + x^3 + x + 1.&quot;&quot;&quot;</span>
+    r = 0
+    <span class="hk">while</span> b:
+        <span class="hk">if</span> b &amp; 1:
+            r ^= a
+        a = xtime(a)
+        b &gt;&gt;= 1
+    <span class="hk">return</span> r
+
+
+<span class="hk">def</span> _build_sbox():
+    inv = [0] * 256
+    <span class="hk">for</span> a <span class="hk">in</span> range(1, 256):
+        <span class="hk">for</span> b <span class="hk">in</span> range(1, 256):
+            <span class="hk">if</span> gmul(a, b) == 1:
+                inv[a] = b
+                <span class="hk">break</span>
+    sb = []
+    <span class="hk">for</span> a <span class="hk">in</span> range(256):
+        x = inv[a]
+        y = x
+        <span class="hk">for</span> s <span class="hk">in</span> (1, 2, 3, 4):
+            y ^= ((x &lt;&lt; s) | (x &gt;&gt; (8 - s))) &amp; 0xFF
+        sb.append(y ^ 0x63)
+    <span class="hk">return</span> sb
+
+
+SBOX = _build_sbox()
+
+
+RCON = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
+
+
+<span class="hk">def</span> expand_key(key: bytes) -&gt; list[bytes]:
+    <span class="hs">&quot;&quot;&quot;The 11 round keys of AES-128 (16 bytes each).&quot;&quot;&quot;</span>
+    w = [list(key[4 * i:4 * i + 4]) <span class="hk">for</span> i <span class="hk">in</span> range(4)]
+    <span class="hk">for</span> i <span class="hk">in</span> range(4, 44):
+        t = list(w[i - 1])
+        <span class="hk">if</span> i % 4 == 0:
+            t = t[1:] + t[:1]
+            t = [SBOX[b] <span class="hk">for</span> b <span class="hk">in</span> t]
+            t[0] ^= RCON[i // 4 - 1]
+        w.append([a ^ b <span class="hk">for</span> a, b <span class="hk">in</span> zip(w[i - 4], t)])
+    <span class="hk">return</span> [bytes(sum(w[4 * r:4 * r + 4], [])) <span class="hk">for</span> r <span class="hk">in</span> range(11)]
+
+
+<span class="hk">def</span> _shift_rows(s):
+    <span class="hk">return</span> [s[4 * ((c + r) % 4) + r] <span class="hk">for</span> c <span class="hk">in</span> range(4) <span class="hk">for</span> r <span class="hk">in</span> range(4)]
+
+
+<span class="hk">def</span> _mix_columns(s):
+    out = []
+    <span class="hk">for</span> c <span class="hk">in</span> range(4):
+        a = s[4 * c:4 * c + 4]
+        out += [gmul(a[0], 2) ^ gmul(a[1], 3) ^ a[2] ^ a[3], a[0] ^ gmul(a[1], 2) ^ gmul(a[2], 3) ^ a[3],
+                a[0] ^ a[1] ^ gmul(a[2], 2) ^ gmul(a[3], 3), gmul(a[0], 3) ^ a[1] ^ a[2] ^ gmul(a[3], 2)]
+    <span class="hk">return</span> out
+
+
+<span class="hk">def</span> aes128_encrypt(key: bytes, block: bytes, trace: list | <span class="hk">None</span> = <span class="hk">None</span>) -&gt; bytes:
+    <span class="hs">&quot;&quot;&quot;AES-128 encryption of one block. `trace`, if given, receives the state after every round.&quot;&quot;&quot;</span>
+    rk = expand_key(key)
+    s = [a ^ b <span class="hk">for</span> a, b <span class="hk">in</span> zip(block, rk[0])]
+    <span class="hk">if</span> trace <span class="hk">is</span> <span class="hk">not</span> <span class="hk">None</span>:
+        trace.append(bytes(s))
+    <span class="hk">for</span> r <span class="hk">in</span> range(1, 11):
+        s = [SBOX[b] <span class="hk">for</span> b <span class="hk">in</span> s]
+        s = _shift_rows(s)
+        <span class="hk">if</span> r != 10:
+            s = _mix_columns(s)
+        s = [a ^ b <span class="hk">for</span> a, b <span class="hk">in</span> zip(s, rk[r])]
+        <span class="hk">if</span> trace <span class="hk">is</span> <span class="hk">not</span> <span class="hk">None</span>:
+            trace.append(bytes(s))
+    <span class="hk">return</span> bytes(s)
+
+
+<span class="hk">def</span> requests():
+    kats = [(<span class="hs">&quot;2b7e151628aed2a6abf7158809cf4f3c&quot;</span> + <span class="hs">&quot;3243f6a8885a308d313198a2e0370734&quot;</span>), (<span class="hs">&quot;000102030405060708090a0b0c0d0e0f&quot;</span> + <span class="hs">&quot;00112233445566778899aabbccddeeff&quot;</span>)]   <span class="hc"># FIPS 197 appendix B and C.1</span>
+    rng = random.Random(16)
+    <span class="hk">return</span> kats + [rng.randbytes(32).hex() <span class="hk">for</span> _ <span class="hk">in</span> range(6)]
+
+
+<span class="hk">def</span> reply_for(req_hex):
+    b = bytes.fromhex(req_hex)
+    <span class="hk">return</span> aes128_encrypt(b[:16], b[16:]).hex()
+
+
+<span class="hk">def</span> reference_output():
+    <span class="hk">return</span> {<span class="hs">&quot;cases&quot;</span>: [{<span class="hs">&quot;request&quot;</span>: r, <span class="hs">&quot;reply&quot;</span>: reply_for(r)} <span class="hk">for</span> r <span class="hk">in</span> requests()]}
+
+
+<span class="hc"># ---- benchmark wrapper (from spec.yaml) ----</span>
+DESIGN_ID = <span class="hk">None</span>
+
+
+<span class="hk">def</span> bench_requests():
+    <span class="hk">return</span> [(r, reply_for(r)) <span class="hk">for</span> r <span class="hk">in</span> requests()]
+</code></pre></details>
+<h2>The agent on this task</h2>
+<p>No development run of the agent on this task is committed yet.</p>
+<div class="pager"><a href="c16_montgomery_mult.html">&larr; Montgomery multiplier behind the test shell</a><a href="c16_ntt_engine.html">NTT engine behind the test shell &rarr;</a></div>
+
+<div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
+</main>
+<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<script type="application/json" data-key="trace">{"captions":["Round 0, input: the plaintext as the 4 x 4 state (bytes go down the columns).","Round 0, AddRoundKey: round key XORed in (round key 2b7e151628aed2a6abf7158809cf4f3c).","Round 1, SubBytes: every byte replaced through the S-box.","Round 1, ShiftRows: row r rotated left by r bytes.","Round 1, MixColumns: each column mixed in GF(2^8).","Round 1, AddRoundKey: round key XORed in (round key a0fafe1788542cb123a339392a6c7605).","Round 2, SubBytes: every byte replaced through the S-box.","Round 2, ShiftRows: row r rotated left by r bytes.","Round 2, MixColumns: each column mixed in GF(2^8).","Round 2, AddRoundKey: round key XORed in (round key f2c295f27a96b9435935807a7359f67f).","Round 3, SubBytes: every byte replaced through the S-box.","Round 3, ShiftRows: row r rotated left by r bytes.","Round 3, MixColumns: each column mixed in GF(2^8).","Round 3, AddRoundKey: round key XORed in (round key 3d80477d4716fe3e1e237e446d7a883b).","Round 4, SubBytes: every byte replaced through the S-box.","Round 4, ShiftRows: row r rotated left by r bytes.","Round 4, MixColumns: each column mixed in GF(2^8).","Round 4, AddRoundKey: round key XORed in (round key ef44a541a8525b7fb671253bdb0bad00).","Round 5, SubBytes: every byte replaced through the S-box.","Round 5, ShiftRows: row r rotated left by r bytes.","Round 5, MixColumns: each column mixed in GF(2^8).","Round 5, AddRoundKey: round key XORed in (round key d4d1c6f87c839d87caf2b8bc11f915bc).","Round 6, SubBytes: every byte replaced through the S-box.","Round 6, ShiftRows: row r rotated left by r bytes.","Round 6, MixColumns: each column mixed in GF(2^8).","Round 6, AddRoundKey: round key XORed in (round key 6d88a37a110b3efddbf98641ca0093fd).","Round 7, SubBytes: every byte replaced through the S-box.","Round 7, ShiftRows: row r rotated left by r bytes.","Round 7, MixColumns: each column mixed in GF(2^8).","Round 7, AddRoundKey: round key XORed in (round key 4e54f70e5f5fc9f384a64fb24ea6dc4f).","Round 8, SubBytes: every byte replaced through the S-box.","Round 8, ShiftRows: row r rotated left by r bytes.","Round 8, MixColumns: each column mixed in GF(2^8).","Round 8, AddRoundKey: round key XORed in (round key ead27321b58dbad2312bf5607f8d292f).","Round 9, SubBytes: every byte replaced through the S-box.","Round 9, ShiftRows: row r rotated left by r bytes.","Round 9, MixColumns: each column mixed in GF(2^8).","Round 9, AddRoundKey: round key XORed in (round key ac7766f319fadc2128d12941575c006e).","Round 10, SubBytes: every byte replaced through the S-box.","Round 10, ShiftRows: row r rotated left by r bytes.","Round 10, AddRoundKey: round key XORed in (round key d014f9a8c9ee2589e13f0cc8b6630ca6). Ciphertext 3925841d02dc09fbdc118597196a0b32, the reply the board must send."],"hero":{"ops":["input","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","AddRoundKey"],"states":[[50,67,246,168,136,90,48,141,49,49,152,162,224,55,7,52],[25,61,227,190,160,244,226,43,154,198,141,42,233,248,72,8],[212,39,17,174,224,191,152,241,184,180,93,229,30,65,82,48],[212,191,93,48,224,180,82,174,184,65,17,241,30,39,152,229],[4,102,129,229,224,203,25,154,72,248,211,122,40,6,38,76],[164,156,127,242,104,159,53,43,107,91,234,67,2,106,80,73],[73,222,210,137,69,219,150,241,127,57,135,26,119,2,83,59],[73,219,135,59,69,57,83,137,127,2,210,241,119,222,150,26],[88,77,202,241,27,75,90,172,219,231,202,168,27,107,176,229],[170,143,95,3,97,221,227,239,130,210,74,210,104,50,70,154],[172,115,207,123,239,193,17,223,19,181,214,181,69,35,90,184],[172,193,214,184,239,181,90,123,19,35,207,223,69,115,17,181],[117,236,9,147,32,11,99,51,83,192,207,124,187,37,208,220],[72,108,78,238,103,29,157,13,77,227,177,56,214,95,88,231],[82,80,47,40,133,164,94,215,227,17,200,7,246,207,106,148],[82,164,200,148,133,17,106,40,227,207,47,215,246,80,94,7],[15,214,218,169,96,49,56,191,111,192,16,107,94,179,19,1],[224,146,127,232,200,99,99,192,217,177,53,80,133,184,190,1],[225,79,210,155,232,251,251,186,53,200,150,83,151,108,174,124],[225,251,150,124,232,200,174,155,53,108,210,186,151,79,251,83],[37,209,169,173,189,17,209,104,182,58,51,142,76,76,192,176],[241,0,111,85,193,146,76,239,124,200,139,50,93,181,213,12],[161,99,168,252,120,79,41,223,16,232,61,35,76,213,3,254],[161,79,61,254,120,232,3,252,16,213,168,223,76,99,41,35],[75,134,141,109,44,74,137,128,51,157,244,232,55,210,24,216],[38,14,46,23,61,65,183,125,232,100,114,169,253,210,139,37],[247,171,49,240,39,131,169,255,155,67,64,211,84,181,61,63],[247,131,64,63,39,67,61,240,155,181,49,255,84,171,169,211],[20,21,181,191,70,22,21,236,39,70,86,215,52,42,216,67],[90,65,66,177,25,73,220,31,163,224,25,101,122,140,4,12],[190,131,44,200,212,59,134,192,10,225,212,77,218,100,242,254],[190,59,212,254,212,225,242,200,10,100,44,192,218,131,134,77],[0,81,47,209,177,200,137,255,84,118,109,205,250,27,153,234],[234,131,92,240,4,69,51,45,101,93,152,173,133,150,176,197],[135,236,74,140,242,110,195,216,77,76,70,149,151,144,231,166],[135,110,70,166,242,76,231,140,77,144,74,216,151,236,195,149],[71,55,148,237,64,212,228,165,163,112,58,166,76,159,66,188],[235,64,242,30,89,46,56,132,139,161,19,231,27,195,66,210],[233,9,137,114,203,49,7,95,61,50,125,148,175,46,44,181],[233,49,125,181,203,50,44,114,61,46,137,95,175,9,7,148],[57,37,132,29,2,220,9,251,220,17,133,151,25,106,11,50]]},"signals":[{"kind":"bus","name":"round","radix":"dec","v":[0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10]},{"kind":"text","name":"operation","v":["input","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","MixColumns","AddRoundKey","SubBytes","ShiftRows","AddRoundKey"]},{"kind":"text","name":"state","v":["3243f6a8885a308d313198a2e0370734","193de3bea0f4e22b9ac68d2ae9f84808","d42711aee0bf98f1b8b45de51e415230","d4bf5d30e0b452aeb84111f11e2798e5","046681e5e0cb199a48f8d37a2806264c","a49c7ff2689f352b6b5bea43026a5049","49ded28945db96f17f39871a7702533b","49db873b453953897f02d2f177de961a","584dcaf11b4b5aacdbe7caa81b6bb0e5","aa8f5f0361dde3ef82d24ad26832469a","ac73cf7befc111df13b5d6b545235ab8","acc1d6b8efb55a7b1323cfdf457311b5","75ec0993200b633353c0cf7cbb25d0dc","486c4eee671d9d0d4de3b138d65f58e7","52502f2885a45ed7e311c807f6cf6a94","52a4c89485116a28e3cf2fd7f6505e07","0fd6daa9603138bf6fc0106b5eb31301","e0927fe8c86363c0d9b1355085b8be01","e14fd29be8fbfbba35c89653976cae7c","e1fb967ce8c8ae9b356cd2ba974ffb53","25d1a9adbd11d168b63a338e4c4cc0b0","f1006f55c1924cef7cc88b325db5d50c","a163a8fc784f29df10e83d234cd503fe","a14f3dfe78e803fc10d5a8df4c632923","4b868d6d2c4a8980339df4e837d218d8","260e2e173d41b77de86472a9fdd28b25","f7ab31f02783a9ff9b4340d354b53d3f","f783403f27433df09bb531ff54aba9d3","1415b5bf461615ec274656d7342ad843","5a4142b11949dc1fa3e019657a8c040c","be832cc8d43b86c00ae1d44dda64f2fe","be3bd4fed4e1f2c80a642cc0da83864d","00512fd1b1c889ff54766dcdfa1b99ea","ea835cf00445332d655d98ad8596b0c5","87ec4a8cf26ec3d84d4c46959790e7a6","876e46a6f24ce78c4d904ad897ecc395","473794ed40d4e4a5a3703aa64c9f42bc","eb40f21e592e38848ba113e71bc342d2","e9098972cb31075f3d327d94af2e2cb5","e9317db5cb322c723d2e895faf090794","3925841d02dc09fbdc118597196a0b32"]}],"stimulus":"Key 2b7e151628aed2a6abf7158809cf4f3c and plaintext 3243f6a8885a308d313198a2e0370734 (FIPS 197 appendix B), one AES-128 operation per step.","unit":"step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]}</script>
+<script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
+(function () {
+  "use strict";
+  var D = {};
+  document.querySelectorAll('script[type="application/json"][data-key]').forEach(function (s) {
+    try { D[s.dataset.key] = JSON.parse(s.textContent); } catch (e) { /* data missing: component skips */ }
+  });
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    for (var k in (attrs || {})) { if (k === "text") e.textContent = attrs[k]; else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { e.appendChild(c); });
+    return e;
+  }
+  function sv(tag, attrs, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in (attrs || {})) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  /* theme toggle: remembered per viewer, optional */
+  var tb = document.getElementById("theme");
+  function curTheme() {
+    var t = document.documentElement.dataset.theme;
+    if (t) return t;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  if (tb) {
+    try { var st = localStorage.getItem("fda-theme"); if (st) document.documentElement.dataset.theme = st; } catch (e) {}
+    tb.addEventListener("click", function () {
+      var n = curTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = n;
+      try { localStorage.setItem("fda-theme", n); } catch (e) {}
+      tb.textContent = n === "dark" ? "Light" : "Dark";
+    });
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+  }
+
+  /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
+  function Player(root, n, onFrame, opts) {
+    opts = opts || {};
+    var i = 0, playing = false, timer = null, speed = 1, visible = true, base = opts.interval || 1100;
+    var live = root.querySelector(".cap");
+    var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
+    var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
+    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
+    var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
+    var pos = el("span", { class: "pos" });
+    var sp = el("select", { "aria-label": "Speed" });
+    [0.25, 0.5, 1, 2, 4].forEach(function (s) { var o = el("option", { value: s, text: s + "x" }); if (s === 1) o.selected = true; sp.appendChild(o); });
+    var ctl = el("div", { class: "ctl" }, [play, back, fwd, rst, rng, pos, sp]);
+    root.appendChild(ctl);
+    if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
+    function show() {
+      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      var c = onFrame(i);
+      if (live && c != null) live.textContent = c;
+    }
+    function stop() { playing = false; play.textContent = "Play"; play.setAttribute("aria-label", "Play"); clearTimeout(timer); }
+    function tick() {
+      if (!playing) return;
+      if (!visible) { timer = setTimeout(tick, 400); return; }
+      if (i >= n - 1) { stop(); return; }
+      i++; show(); timer = setTimeout(tick, base / speed);
+    }
+    function go() {
+      if (i >= n - 1) i = 0;
+      playing = true; play.textContent = "Pause"; play.setAttribute("aria-label", "Pause"); show(); timer = setTimeout(tick, base / speed);
+    }
+    play.onclick = function () { playing ? stop() : go(); };
+    back.onclick = function () { stop(); i = Math.max(0, i - 1); show(); };
+    fwd.onclick = function () { stop(); i = Math.min(n - 1, i + 1); show(); };
+    rst.onclick = function () { stop(); i = 0; show(); };
+    rng.oninput = function () { stop(); i = +rng.value; show(); };
+    sp.onchange = function () { speed = +sp.value; };
+    root.addEventListener("keydown", function (e) {
+      if (e.target !== root) return;
+      if (e.key === " ") { e.preventDefault(); play.onclick(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); fwd.onclick(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); back.onclick(); }
+      else if (e.key === "Home") { e.preventDefault(); rst.onclick(); }
+    });
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }).observe(root);
+    show();
+    if (opts.autoplay && !reduce) go();
+    return { goto: function (k) { stop(); i = k; show(); } };
+  }
+
+  /* ---------- stage replay (hero and how-it-works): frames from the committed run record ---------- */
+  var GROUPS = [
+    { id: "clarify", label: "Interview", stages: [0] },
+    { id: "plan", label: "Plan", stages: [1] },
+    { id: "rtl", label: "RTL and gates V0 to V3", stages: [2] },
+    { id: "build", label: "Build", stages: [3, 4, 5] },
+    { id: "post", label: "Post-route gates", stages: [6, 7, 8] },
+    { id: "board", label: "Board", stages: [9] }
+  ];
+  var DETAIL = [
+    "Interview", "Plan", "RTL and V0 to V3", "Constraints", "Synthesis", "Implementation", "Timing closure",
+    "Power closure", "DRC closure", "Board and debug"
+  ];
+  function frameState(R, i) {
+    var s = R.steps[i];
+    return { stage: s.stage_no, step: s, last: i === R.steps.length - 1 };
+  }
+  function mountReplay(root, mode) {
+    var R = D.replay; if (!R) return;
+    var items = mode === "hero" ? GROUPS : DETAIL.map(function (l, k) { return { id: "s" + k, label: l, stages: [k] }; });
+    var ul = el("ul", { class: "pipe", "aria-label": "Stages" });
+    var lis = items.map(function (g, k) {
+      var li = el("li", {}, [el("b", { text: mode === "hero" ? String(k + 1) : String(g.stages[0]) }), document.createTextNode(g.label)]);
+      ul.appendChild(li); return li;
+    });
+    var cap = el("p", { class: "cap", "aria-live": "polite" });
+    root.appendChild(ul); root.appendChild(cap);
+    function frame(i) {
+      var st = frameState(R, i), cur = -1;
+      items.forEach(function (g, k) { if (g.stages.indexOf(st.stage) >= 0) cur = k; });
+      lis.forEach(function (li, k) {
+        li.className = k < cur ? "done" : (k === cur ? (st.last ? "stop" : "active") : "");
+        var old = li.querySelector(".v"); if (old) li.removeChild(old);
+      });
+      var visits = st.step.visits;
+      if (visits > 1) lis[cur].appendChild(el("span", { class: "v", text: st.step.visit + "/" + visits }));
+      return "Stage " + st.stage + ", " + DETAIL[st.stage] + (visits > 1 ? " (visit " + st.step.visit + " of " + visits + ")" : "") + ". " + st.step.fact;
+    }
+    Player(root, R.steps.length, frame, { autoplay: mode === "hero", interval: mode === "hero" ? 1300 : 1500 });
+  }
+
+  /* ---------- k-of-n strip, intervals, bars (shared by development data and eval1.json) ---------- */
+  function strip(root, rows) {
+    var g = el("div", { class: "strip", role: "list" });
+    rows.forEach(function (r) {
+      var dots = el("span", { class: "dots", "aria-hidden": "true" });
+      for (var j = 0; j < r.n; j++) dots.appendChild(el("span", { class: "dot " + (j < r.k ? "p" : "f") }));
+      for (var q = r.n; q < (r.of || r.n); q++) dots.appendChild(el("span", { class: "dot n", title: "not run" }));
+      g.appendChild(el("span", { class: "t", role: "listitem", text: r.task }));
+      g.appendChild(dots);
+      g.appendChild(el("span", { class: "k mono", text: r.k + " of " + r.n }));
+    });
+    root.appendChild(g);
+    root.appendChild(el("div", { class: "legend" }, [
+      el("span", { text: "filled: all hidden tests passed" }), el("span", { text: "hatched: failed" }), el("span", { text: "dotted: not run" })]));
+  }
+  function intervals(root, items) {
+    var W = 560, H = 36 + items.length * 52, L = 14, R = 14;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": items.map(function (x) { return x.label + " " + x.mid + " percent, interval " + x.lo + " to " + x.hi; }).join("; ") });
+    function X(v) { return L + (W - L - R) * v / 100; }
+    [0, 25, 50, 75, 100].forEach(function (v) {
+      s.appendChild(sv("line", { x1: X(v), x2: X(v), y1: 6, y2: H - 20, class: "rule" }));
+      s.appendChild(sv("text", { x: X(v), y: H - 6, "text-anchor": "middle" }, v));
+    });
+    items.forEach(function (it, k) {
+      var y = 36 + k * 52;
+      s.appendChild(sv("text", { x: 0, y: y - 14 }, it.label));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.hi), y1: y, y2: y, class: "ink", "stroke-width": 2, "stroke-dasharray": it.dash ? "5 3" : "none" }));
+      s.appendChild(sv("line", { x1: X(it.lo), x2: X(it.lo), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("line", { x1: X(it.hi), x2: X(it.hi), y1: y - 6, y2: y + 6, class: "ink", "stroke-width": 2 }));
+      s.appendChild(sv("circle", { cx: X(it.mid), cy: y, r: 5, class: "fillink" }));
+    });
+    root.appendChild(s);
+    var t = el("div", { class: "tablewrap" });
+    var tb2 = el("table");
+    tb2.appendChild(el("tr", {}, ["Estimate", "Point", "95% interval"].map(function (h) { return el("th", { text: h }); })));
+    items.forEach(function (it) {
+      tb2.appendChild(el("tr", {}, [el("td", { text: it.label }), el("td", { class: "num", text: it.mid + "%" }), el("td", { class: "num", text: it.lo + " to " + it.hi + "%" })]));
+    });
+    t.appendChild(tb2); root.appendChild(t);
+  }
+  function bars(root, obj, total, unit) {
+    var g = el("div", { class: "bars" });
+    var max = Math.max.apply(null, Object.keys(obj).map(function (k) { return obj[k]; }).concat([1]));
+    Object.keys(obj).forEach(function (k) {
+      var b = el("span", { class: "b", "aria-hidden": "true" }); b.style.width = (100 * obj[k] / max) + "%"; b.style.display = "block";
+      g.appendChild(el("span", { text: k.replace(/_/g, " ").replace(/-/g, " ") }));
+      var cell = el("span", {}, [b]); g.appendChild(cell);
+      g.appendChild(el("span", { class: "mono", text: obj[k] + (total ? " of " + total : "") + (unit || "") }));
+    });
+    root.appendChild(g);
+  }
+  var OUTCOME_TEXT = { pass: "passed, no repair needed", caught_and_repaired: "an internal gate failed, the agent repaired it, hidden tests passed",
+    escape: "own checks passed, hidden tests failed (escape)", internal_stop_hidden_pass: "stopped on an internal gate, hidden tests pass on the RTL it left",
+    fail: "failed" };
+
+  function mountDev() {
+    var d = D.dev; if (!d) return;
+    var a = document.getElementById("dev-strip"); if (a) strip(a, d.per_task);
+    var b = document.getElementById("dev-int");
+    if (b) intervals(b, [
+      { label: "pass@1, bootstrap over tasks", mid: d.pass_at_1_tasks_pct, lo: d.bootstrap_tasks_pct[0], hi: d.bootstrap_tasks_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: d.pass_pct_runs, lo: d.wilson_runs_pct[0], hi: d.wilson_runs_pct[1], dash: true }]);
+    var c = document.getElementById("dev-out"); if (c) {
+      var o = {}; Object.keys(d.outcomes).forEach(function (k) { o[OUTCOME_TEXT[k] || k] = d.outcomes[k]; });
+      bars(c, o, d.runs);
+    }
+    var e = document.getElementById("dev-esc"); if (e) bars(e, d.escape_levels, d.escapes);
+  }
+  function mountEval1() {
+    var root = document.getElementById("eval1"); if (!root) return;
+    var E = D.eval1;
+    if (!E) {
+      root.appendChild(el("div", { class: "stub" }, [
+        el("span", { class: "tag run", text: "Stopped" }),
+        el("p", { text: "No held-out score. eval-1 was stopped before any result was analysed; the baseline evaluation on the larger benchmark will be shown here when it is scored." })]));
+      return;
+    }
+    root.appendChild(el("h3", { text: "Per task, hidden tests passed in k of 3 runs" }));
+    var s = el("div"); root.appendChild(s); strip(s, E.per_task.map(function (t) { return { task: t.task, k: t.k, n: t.n, of: 3 }; }));
+    root.appendChild(el("h3", { text: "pass@1 with 95% intervals" }));
+    var i = el("div"); root.appendChild(i);
+    intervals(i, [
+      { label: "pass@1, bootstrap over tasks", mid: E.pass_at_1_pct, lo: E.bootstrap_pct[0], hi: E.bootstrap_pct[1] },
+      { label: "Wilson on runs (ignores tasks)", mid: E.wilson_mid_pct, lo: E.wilson_pct[0], hi: E.wilson_pct[1], dash: true }]);
+    root.appendChild(el("h3", { text: "Escapes by the check level that should have caught them" }));
+    var b = el("div"); root.appendChild(b); bars(b, E.escape_levels, E.escapes);
+  }
+
+  /* ---------- ILA capture player (T1 on the board): LED0 against the sample index ---------- */
+  function mountILA(root) {
+    var B = D.board; if (!B) return;
+    var keys = Object.keys(B.captures).sort(function (a, b) { return B.captures[a].duty - B.captures[b].duty; });
+    var W = 600, H = 120, L = 30, cur = keys[0], svg, cursor, trace, label;
+    var sel = el("div", { class: "ctl", role: "group", "aria-label": "Dimmer level" });
+    var btns = keys.map(function (k) {
+      var b = el("button", { type: "button", "aria-pressed": k === cur ? "true" : "false", text: "duty " + B.captures[k].duty });
+      b.onclick = function () { cur = k; btns.forEach(function (x, j) { x.setAttribute("aria-pressed", keys[j] === cur ? "true" : "false"); }); draw(); player.goto(0); };
+      return b;
+    });
+    btns.forEach(function (b) { sel.appendChild(b); });
+    root.appendChild(sel);
+    var holder = el("div"); root.appendChild(holder);
+    root.appendChild(el("p", { class: "cap", "aria-live": "polite" }));
+    function X(i) { return L + (W - L - 10) * i / (B.captures[cur].samples - 1); }
+    function draw() {
+      var c = B.captures[cur]; holder.innerHTML = "";
+      svg = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "ILA capture of LED 0 over " + c.samples + " samples at duty " + c.duty + ": on for " + c.on + " samples" });
+      svg.appendChild(sv("text", { x: 0, y: 34 }, "on"));
+      svg.appendChild(sv("text", { x: 0, y: 94 }, "off"));
+      var d = "", prev = 0;
+      c.edges.forEach(function (e, k) {
+        var y = e[1] ? 30 : 90;
+        d += (k === 0 ? "M" : "L") + X(e[0]) + " " + (k === 0 ? y : (e[1] ? 90 : 30)) + " L" + X(e[0]) + " " + y + " ";
+      });
+      d += "L" + X(c.samples - 1) + " " + (c.edges[c.edges.length - 1][1] ? 30 : 90);
+      svg.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      cursor = sv("line", { x1: X(0), x2: X(0), y1: 10, y2: 108, class: "warn", "stroke-width": 1.5 });
+      svg.appendChild(cursor);
+      svg.appendChild(sv("text", { x: L, y: H - 2 }, "sample 0"));
+      svg.appendChild(sv("text", { x: W - 10, y: H - 2, "text-anchor": "end" }, "sample " + (c.samples - 1)));
+      holder.appendChild(svg);
+    }
+    draw();
+    var marks = 64;
+    function onFrame(k) {
+      var c = B.captures[cur]; var idx = Math.round(k * (c.samples - 1) / 63);
+      cursor.setAttribute("x1", X(idx)); cursor.setAttribute("x2", X(idx));
+      var on = 0, v = 0; c.edges.forEach(function (e) { if (e[0] <= idx) { v = e[1]; } });
+      for (var q = 0; q < c.edges.length; q++) { var e = c.edges[q], nx = q + 1 < c.edges.length ? c.edges[q + 1][0] : c.samples; if (e[1]) on += Math.max(0, Math.min(nx, idx + 1) - e[0]); }
+      return "Sample " + idx + ": LED 0 is " + (v ? "on" : "off") + ". On for " + on + " of the " + (idx + 1) + " samples so far. The whole capture: " + c.on + " of " + c.samples + " samples on, the model says " + c.model_on + ".";
+    }
+    var player = Player(root, marks, onFrame, { interval: 220 });
+  }
+
+
+  /* ---------- golden-model trace viewer (problem pages): waveform + values at the cursor + bespoke hero ---------- */
+  function fmtv(sg, v) {
+    if (sg.kind === "bus") {
+      if (sg.radix === "hex") { var hd = sg.width ? Math.ceil(sg.width / 4) : 1; var hs = (v >>> 0).toString(16); if (v < 0) hs = "-" + (-v).toString(16); while (hs.length < hd) hs = "0" + hs; return "0x" + hs; }
+      if (sg.radix === "bin") { var bs = (v >>> 0).toString(2); while (sg.width && bs.length < sg.width) bs = "0" + bs; return bs; }
+      return String(v);
+    }
+    return String(v);
+  }
+  function mountWave(holder, T) {
+    var n = T.x.length, LW = 132, CW = Math.max(12, Math.min(28, Math.floor(620 / n))), W = LW + n * CW + 6, RH = 34;
+    var H = 22 + T.signals.length * RH;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "wavesvg",
+      "aria-label": "Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s" });
+    function X(i) { return LW + i * CW; }
+    for (var i = 0; i < n; i += Math.max(1, Math.ceil(n / 12))) s.appendChild(sv("text", { x: X(i) + 2, y: 12 }, T.x[i]));
+    T.signals.forEach(function (g, r) {
+      var y0 = 22 + r * RH, top = y0 + 5, bot = y0 + RH - 7, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4 }, g.name.length > 17 ? g.name.slice(0, 16) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      var d = "";
+      if (g.kind === "bit") {
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k) + " " + y + " L" + X(k + 1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); d += (k ? "L" : "M") + (X(k) + CW / 2) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); s.appendChild(sv("circle", { cx: X(k) + CW / 2, cy: y.toFixed(1), r: 1.8, class: "fillink" })); });
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), val = g.v[a], txt = fmtv(g, val), empty = g.kind === "text" ? val === "" : false;
+            if (empty) s.appendChild(sv("line", { x1: x1, x2: x2, y1: mid, y2: mid, class: "ink", "stroke-width": 1 }));
+            else {
+              s.appendChild(sv("path", { d: "M" + x1 + " " + mid + " L" + (x1 + 3) + " " + top + " L" + (x2 - 3) + " " + top + " L" + x2 + " " + mid + " L" + (x2 - 3) + " " + bot + " L" + (x1 + 3) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+              var room = Math.floor((x2 - x1 - 8) / 6.7);
+              if (room >= 1) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4 }, txt.length > room ? (room > 2 ? txt.slice(0, room - 1) + "." : "") : txt));
+            }
+            a = k;
+          }
+        }
+      }
+    });
+    var shade = sv("rect", { x: X(1), y: 16, width: W, height: H, class: "future" });
+    var cur = sv("rect", { x: X(0), y: 16, width: CW, height: H - 16, class: "cursor" });
+    s.appendChild(shade); s.appendChild(cur);
+    var wrap = el("div", { class: "wavewrap", tabindex: "0" }); wrap.appendChild(s); holder.appendChild(wrap);
+    var vals = el("dl", { class: "vals" }); holder.appendChild(vals);
+    return function (i) {
+      shade.setAttribute("x", X(i + 1)); cur.setAttribute("x", X(i));
+      vals.innerHTML = "";
+      vals.appendChild(el("div", {}, [el("dt", { text: T.unit }), el("dd", { class: "mono", text: String(T.x[i]) })]));
+      T.signals.forEach(function (g) { vals.appendChild(el("div", {}, [el("dt", { text: g.name }), el("dd", { class: "mono", text: g.kind === "text" && g.v[i] === "" ? "none" : fmtv(g, g.v[i]) })])); });
+    };
+  }
+  function sig(T, name) { for (var k = 0; k < T.signals.length; k++) if (T.signals[k].name === name) return T.signals[k].v; return null; }
+  function hx(b) { return (b < 16 ? "0" : "") + b.toString(16); }
+  var HEROES = {
+    t1_elevator_fsm: function (box, T) {
+      var F = T.hero.floors, W = 360, FH = 52, H = F * FH + 20, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Lift shaft: car position, door and calls from the model" });
+      box.appendChild(s);
+      var fl = sig(T, "FLOOR"), st = sig(T, "STATE"), pe = sig(T, "PENDING"), dr = sig(T, "DIR (1 = down)");
+      var lamps = [], labels = [];
+      for (var f = 0; f < F; f++) {
+        var y = 10 + (F - 1 - f) * FH;
+        s.appendChild(sv("line", { x1: 60, x2: 300, y1: y + FH, y2: y + FH, class: "rule" }));
+        s.appendChild(sv("text", { x: 4, y: y + FH / 2 + 4 }, "floor " + f));
+        lamps.push(sv("circle", { cx: 290, cy: y + FH / 2, r: 7, class: "ink", "stroke-width": 1.5 }));
+        s.appendChild(lamps[f]);
+      }
+      s.appendChild(sv("rect", { x: 120, y: 10, width: 90, height: F * FH, class: "ink", "stroke-width": 1 }));
+      var car = sv("g", {}), body = sv("rect", { x: 128, width: 74, height: FH - 10, class: "ink", "stroke-width": 2 });
+      var dl = sv("rect", { width: 0, height: FH - 18, class: "fillink" }), dr2 = sv("rect", { width: 0, height: FH - 18, class: "fillink" });
+      var arrow = sv("text", { x: 228, "text-anchor": "middle" }, "");
+      car.appendChild(body); car.appendChild(dl); car.appendChild(dr2); s.appendChild(car); s.appendChild(arrow);
+      s.appendChild(sv("text", { x: 290, y: H - 2, "text-anchor": "middle" }, "calls"));
+      return function (i) {
+        var y = 10 + (F - 1 - fl[i]) * FH + 5, open = st[i] === "door open";
+        body.setAttribute("y", y);
+        var dw = open ? 14 : 36;
+        dl.setAttribute("x", 132); dl.setAttribute("y", y + 4); dl.setAttribute("width", dw);
+        dr2.setAttribute("x", 198 - dw); dr2.setAttribute("y", y + 4); dr2.setAttribute("width", dw);
+        arrow.setAttribute("y", y + FH / 2); arrow.textContent = st[i] === "moving" ? (dr[i] ? "down" : "up") : (open ? "open" : "");
+        lamps.forEach(function (c, f) { c.setAttribute("class", (pe[i] >> f) & 1 ? "fillink" : "ink"); });
+      };
+    },
+    c10_dds_sine: function (box, T) {
+      var h = T.hero, W = 600, H = 200, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Phase wheel and sine output from the model" });
+      box.appendChild(s);
+      var cx = 90, cy = 100, R = 70, N = 1 << h.la;
+      s.appendChild(sv("circle", { cx: cx, cy: cy, r: R, class: "ink", "stroke-width": 1 }));
+      s.appendChild(sv("text", { x: cx, y: 192, "text-anchor": "middle" }, "phase (" + h.aw + " bits)"));
+      var hand = sv("line", { x1: cx, y1: cy, class: "ink", "stroke-width": 2 }); s.appendChild(hand);
+      var dot = sv("circle", { r: 5, class: "fillink" }); s.appendChild(dot);
+      var X0 = 200, PW = 390, ph = sig(T, "phase"), out = sig(T, "out"), ad = sig(T, "table address");
+      s.appendChild(sv("line", { x1: X0, x2: X0 + PW, y1: cy, y2: cy, class: "rule" }));
+      s.appendChild(sv("text", { x: X0 + PW, y: 192, "text-anchor": "end" }, "output samples"));
+      var stems = [];
+      for (var k = 0; k < out.length; k++) {
+        var x = X0 + PW * (k + .5) / out.length, y = cy - (R) * out[k] / h.amp;
+        var g = sv("g", {}); g.appendChild(sv("line", { x1: x, x2: x, y1: cy, y2: y, class: "ink", "stroke-width": 1 })); g.appendChild(sv("circle", { cx: x, cy: y, r: 2.5, class: "fillink" }));
+        stems.push(g); s.appendChild(g);
+      }
+      var lab = sv("text", { x: cx, y: 18, "text-anchor": "middle" }, ""); s.appendChild(lab);
+      return function (i) {
+        var a = 2 * Math.PI * ad[i] / N, x = cx + R * Math.cos(a), y = cy - R * Math.sin(a);
+        hand.setAttribute("x2", x); hand.setAttribute("y2", y); dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        lab.textContent = "entry " + ad[i] + " of " + N;
+        stems.forEach(function (g, k) { g.style.opacity = k <= i ? 1 : .15; });
+      };
+    },
+    c16_nexys_aes_uart: function (box, T) {
+      var h = T.hero, W = 420, C = 56, s = sv("svg", { viewBox: "0 0 " + W + " 250", width: "100%", role: "img", "aria-label": "AES state, 4 by 4 bytes, from the model's round functions" });
+      box.appendChild(s);
+      var cells = [], texts = [];
+      for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) {
+        var x = 10 + c * C, y = 26 + r * C;
+        var rc = sv("rect", { x: x, y: y, width: C - 6, height: C - 6, class: "ink", "stroke-width": 1 }), t = sv("text", { x: x + (C - 6) / 2, y: y + C / 2, "text-anchor": "middle", class: "big" }, "");
+        s.appendChild(rc); s.appendChild(t); cells[4 * c + r] = rc; texts[4 * c + r] = t;
+      }
+      var op = sv("text", { x: 250, y: 60, class: "big" }, ""), rd = sv("text", { x: 250, y: 90 }, ""), ch = sv("text", { x: 250, y: 120 }, "");
+      s.appendChild(op); s.appendChild(rd); s.appendChild(ch);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "state: bytes go down the columns"));
+      var rounds = sig(T, "round");
+      return function (i) {
+        var st = h.states[i], pr = i ? h.states[i - 1] : st, nch = 0;
+        for (var k = 0; k < 16; k++) {
+          var diff = st[k] !== pr[k]; if (diff) nch++;
+          cells[k].setAttribute("class", diff ? "fillink" : "ink"); texts[k].setAttribute("class", diff ? "big inv" : "big"); texts[k].textContent = hx(st[k]);
+        }
+        op.textContent = h.ops[i]; rd.textContent = "round " + rounds[i]; ch.textContent = i ? nch + " of 16 bytes changed" : "";
+      };
+    },
+    c9_median3x3: function (box, T) {
+      var h = T.hero, W = 600, s = sv("svg", { viewBox: "0 0 " + W + " 200", width: "100%", role: "img", "aria-label": "Window presented and median result, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "window presented this clock"));
+      s.appendChild(sv("text", { x: 230, y: 16 }, "window from " + h.lat + " clock earlier, sorted"));
+      s.appendChild(sv("text", { x: 230 + 4 * 40 + 18, y: 50, "text-anchor": "middle" }, "fifth"));
+      var g = [], gt = [];
+      for (var k = 0; k < 9; k++) {
+        var x = 10 + (k % 3) * 50, y = 26 + Math.floor(k / 3) * 50;
+        var r = sv("rect", { x: x, y: y, width: 46, height: 46, class: "pix" }), t = sv("text", { x: x + 23, y: y + 28, "text-anchor": "middle" }, "");
+        s.appendChild(r); s.appendChild(t); g.push(r); gt.push(t);
+      }
+      var srt = [], st2 = [];
+      for (var q = 0; q < 9; q++) {
+        var x2 = 230 + q * 40, r2 = sv("rect", { x: x2, y: 60, width: 36, height: 36, class: "pix" }), t2 = sv("text", { x: x2 + 18, y: 83, "text-anchor": "middle" }, "");
+        s.appendChild(r2); s.appendChild(t2); srt.push(r2); st2.push(t2);
+      }
+      var box5 = sv("rect", { x: 230 + 4 * 40 - 4, y: 56, width: 44, height: 44, class: "ink", "stroke-width": 2.5 }); s.appendChild(box5);
+      var res = sv("text", { x: 230, y: 130, class: "big" }, ""); s.appendChild(res);
+      return function (i) {
+        var w = h.in[i], so = h.sorted[i];
+        for (var k = 0; k < 9; k++) {
+          if (w) { g[k].style.fill = "rgb(" + w[k] + "," + w[k] + "," + w[k] + ")"; gt[k].textContent = w[k]; gt[k].setAttribute("class", w[k] > 127 ? "dark" : "light"); }
+          else { g[k].style.fill = "none"; gt[k].textContent = ""; }
+          if (so) { srt[k].style.fill = "rgb(" + so[k] + "," + so[k] + "," + so[k] + ")"; st2[k].textContent = so[k]; st2[k].setAttribute("class", so[k] > 127 ? "dark" : "light"); }
+          else { srt[k].style.fill = "none"; st2[k].textContent = ""; }
+        }
+        box5.style.opacity = so ? 1 : .2; res.textContent = so ? "median " + so[4] : "no result this clock";
+      };
+    },
+    c14_systolic_matmul: function (box, T) {
+      var h = T.hero, W = 600, n = h.rows.length, L = h.lat, s = sv("svg", { viewBox: "0 0 " + W + " 190", width: "100%", role: "img", "aria-label": "Rows entering, in flight for the latency, and results leaving, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "rows waiting"));
+      s.appendChild(sv("text", { x: 170, y: 16 }, "in flight for " + L + " clocks"));
+      s.appendChild(sv("text", { x: 170, y: 34 }, "(each row times the 4 x 4 weights)"));
+      s.appendChild(sv("text", { x: 480, y: 16 }, "results out"));
+      var slots = [];
+      for (var k = 0; k < L; k++) { var r = sv("rect", { x: 170 + k * 38, y: 70, width: 34, height: 34, class: "ink", "stroke-width": 1 }); s.appendChild(r); slots.push([r, sv("text", { x: 170 + k * 38 + 17, y: 92, "text-anchor": "middle" }, "")]); s.appendChild(slots[k][1]); }
+      var waiting = sv("text", { x: 10, y: 92 }, ""), done = sv("text", { x: 480, y: 92 }, ""), last = sv("text", { x: 170, y: 150 }, "");
+      s.appendChild(waiting); s.appendChild(done); s.appendChild(last);
+      return function (i) {
+        var nextIn = 0; for (var t = 0; t <= i; t++) if (h.in[t] != null) nextIn = h.in[t] + 1;
+        var outN = 0; for (var t2 = 0; t2 <= i; t2++) if (h.out[t2] != null) outN = h.out[t2] + 1;
+        waiting.textContent = nextIn < n ? (n - nextIn) + " rows" : "none";
+        done.textContent = outN + " of " + n + " rows";
+        slots.forEach(function (sl, k) {
+          var row = i - k >= 0 && h.in[i - k] != null ? h.in[i - k] : null;
+          sl[0].setAttribute("class", row != null ? "fillink" : "ink"); sl[1].textContent = row != null ? "r" + row : ""; sl[1].setAttribute("class", row != null ? "inv" : "");
+        });
+        var o = h.out[i]; last.textContent = o != null ? "row " + o + " x W = " + h.C[o].join("  ") : "";
+      };
+    }
+  };
+  function mountTrace(root) {
+    var T = D.trace; if (!T) return;
+    var heroFn = null, art = root.querySelector(".hero-art"), id = root.getAttribute("data-hero");
+    if (art && HEROES[id]) { heroFn = HEROES[id](art, T); var hs = art.querySelector("svg"); if (hs) hs.style.maxWidth = id === "t1_elevator_fsm" ? "400px" : "680px"; }
+    var wv = mountWave(root.querySelector(".wave"), T);
+    Player(root, T.x.length, function (i) { if (heroFn) heroFn(i); wv(i); return T.captions[i]; }, { autoplay: !!heroFn, interval: 900 });
+  }
+  var tr = document.getElementById("trace"); if (tr) mountTrace(tr);
+
+  /* ---------- problems index: filter by domain, tier, board (the list is complete without script) ---------- */
+  (function () {
+    var sels = document.querySelectorAll(".filters select"); if (!sels.length) return;
+    var cards = document.querySelectorAll(".pcard"), secs = document.querySelectorAll("section.dom"), cnt = document.getElementById("f-count");
+    function apply() {
+      var f = {}; sels.forEach(function (s) { f[s.dataset.f] = s.value; });
+      var shown = 0;
+      cards.forEach(function (c) { var ok = (!f.domain || c.dataset.domain === f.domain) && (!f.tier || c.dataset.tier === f.tier) && (!f.board || c.dataset.board === f.board); c.hidden = !ok; if (ok) shown++; });
+      secs.forEach(function (s) { s.hidden = !s.querySelector(".pcard:not([hidden])"); });
+      if (cnt) cnt.textContent = shown + " of " + cards.length + " shown";
+    }
+    sels.forEach(function (s) { s.addEventListener("change", apply); });
+    document.querySelectorAll(".dombars a.dl").forEach(function (a) {
+      a.addEventListener("click", function (e) { var d = document.getElementById("f-domain"); if (!d || !d.querySelector('option[value="' + a.dataset.dom + '"]')) return; e.preventDefault(); d.value = a.dataset.dom; apply(); document.querySelector(".filters").scrollIntoView(); });
+    });
+    apply();
+  })();
+  var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
+  var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
+  var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+  mountDev(); mountEval1();
+})();
+
+/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
+   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
+(function () {
+  var cv = document.getElementById("fabric");
+  if (!cv || !cv.getContext) return;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
+  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
+  function layout() {
+    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
+    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
+    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
+  }
+  function base() {
+    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
+    var hrow = Math.floor(rows / 2);
+    for (var c = 0; c < cols; c++) {
+      var x = c * T, k = kind[c];
+      for (var r = 0; r < rows; r++) {
+        var y = r * T;
+        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
+        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
+        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
+        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
+          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
+  function net() {
+    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
+    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
+    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
+    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
+    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
+  }
+  function drawNet(n, alpha) {
+    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
+    for (var i = 1; i < n.p.length && left > 0; i++) {
+      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
+      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
+    }
+    ctx.stroke();
+    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
+    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
+    ctx.globalAlpha = 1;
+  }
+  function frame(now) {
+    if (!run) return;
+    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
+    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
+    nets = nets.filter(function (n) {
+      n.t += dt; var done = n.len / n.speed, a = .42;
+      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
+      if (a <= 0) return false; drawNet(n, a); return true;
+    });
+    requestAnimationFrame(frame);
+  }
+  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
+  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
+  start();
+  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
+  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
+  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
+  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
+})();
+</script>
+</body>
+</html>

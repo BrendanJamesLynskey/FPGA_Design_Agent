@@ -29,6 +29,7 @@ PAGES = [  # file, nav label, title, description, data keys inlined
     ("index.html", "Home", "End-to-end FPGA Agent", "An open agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGA boards, measured.", ["replay"]),
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
     ("examples.html", "Examples", "Examples", "Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.", ["board"]),
+    ("problems.html", "Problems", "Problems", "Every benchmark task: development tasks in full with spec, hidden tests, reference RTL, mutants and the golden model running; held-out tasks by id and tier only.", ["catalogue_index"]),
     ("evaluation.html", "How it is evaluated", "How it is evaluated", "The held-out evaluation in plain words: split, hidden grader, three runs per task, task-level bootstrap.", []),
     ("results.html", "Results", "Results", "Development results; held-out results come with the baseline evaluation.", ["dev", "eval1"]),
 ]
@@ -36,6 +37,7 @@ PAGES = [  # file, nav label, title, description, data keys inlined
 
 def load_data(fixture: Path | None):
     d = {p.stem: json.loads(p.read_text()) for p in DATA.glob("*.json")}
+    d["tasks"] = {p.stem: json.loads(p.read_text()) for p in sorted((DATA / "tasks").glob("*.json"))}
     if fixture:
         d["eval1"] = json.loads(fixture.read_text())
     return d
@@ -121,6 +123,9 @@ def block(name, d):
         return table(["Run", "Outcome", "Hidden tests", "What went wrong", "WNS (ns)", "LUT", "FF"], rows, num=(0, 4, 5, 6))
     if name == "t1_rtl":
         return f'<pre tabindex="0"><code>{html.escape(d["board"]["rtl"])}</code></pre>'
+    if name == "problems_index":
+        import catalogue_pages
+        return catalogue_pages.index_body(d["catalogue"])
     if name == "dev_table":
         rows = [[r["task"], r["run"], OUT_TEXT[r["outcome"]], f'{r["tests_passed"]} of {r["tests_total"]}',
                  "" if r["wns_ns"] is None else f'{r["wns_ns"]:+.3f}', "" if r["lut"] is None else r["lut"]] for r in d["dev"]["runs_list"]]
@@ -134,15 +139,17 @@ def render_template(text, d):
     return re.sub(r"\{\{([\w.]+)\}\}", lambda m: html.escape(fmt(lookup(d, m.group(1)))), text)
 
 
-def layout(fname, title, desc, body, keys, d, css, js):
-    nav = "".join(f'<a href="{f}"{" aria-current=\"page\"" if f == fname else ""}>{html.escape(n)}</a>' for f, n, *_ in PAGES)
+def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, pager=None):
+    cur = current or fname
+    nav = "".join(f'<a href="{prefix}{f}"{" aria-current=\"page\"" if f == cur else ""}>{html.escape(n)}</a>' for f, n, *_ in PAGES)
     scripts = "".join(f'<script type="application/json" data-key="{k}">{json.dumps(d[k], separators=(",", ":")).replace("</", "<\\/")}</script>'
                       for k in keys if k in d)
-    idx = [p[0] for p in PAGES].index(fname)
-    prev = PAGES[idx - 1] if idx else None
-    nxt = PAGES[idx + 1] if idx + 1 < len(PAGES) else None
-    pager = '<div class="pager">' + (f'<a href="{prev[0]}">&larr; {html.escape(prev[1])}</a>' if prev else "<span></span>") + \
-            (f'<a href="{nxt[0]}">{html.escape(nxt[1])} &rarr;</a>' if nxt else "<span></span>") + "</div>"
+    if pager is None:
+        idx = [p[0] for p in PAGES].index(fname)
+        prev = PAGES[idx - 1] if idx else None
+        nxt = PAGES[idx + 1] if idx + 1 < len(PAGES) else None
+        pager = '<div class="pager">' + (f'<a href="{prev[0]}">&larr; {html.escape(prev[1])}</a>' if prev else "<span></span>") + \
+                (f'<a href="{nxt[0]}">{html.escape(nxt[1])} &rarr;</a>' if nxt else "<span></span>") + "</div>"
     full = title if fname == "index.html" else f"{title} | End-to-end FPGA Agent"
     return f"""<!doctype html>
 <html lang="en">
@@ -152,12 +159,12 @@ def layout(fname, title, desc, body, keys, d, css, js):
 <title>{html.escape(full)}</title>
 <meta name="description" content="{html.escape(desc)}">
 <meta name="color-scheme" content="light dark">
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{prefix}favicon.svg" type="image/svg+xml">
 <style>{css}</style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">End-to-end FPGA Agent</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
 <main id="main" class="wrap">
 {body}
 {pager}
@@ -204,22 +211,64 @@ def allow_tokens():
     return out
 
 
+def task_order(d):
+    C = d["catalogue"]
+    doms = list(C["domains"])
+    return sorted(C["tasks"], key=lambda r: (doms.index(r["domain"]), r["set"] != "v1", r["id"]))
+
+
 def build(outdir: Path, d, check_numbers=True):
+    """Pages {relative path: html}. Number check per page: the shared data (without the per-task files) plus, on a task
+    page, that task's own data file only; so a number on one task page must come from that task's committed files."""
+    import catalogue_pages
     css = (SRC / "site.css").read_text()
     js = (SRC / "app.js").read_text()
-    pages = {}
+    shared = {k: v for k, v in d.items() if k != "tasks"}
+    if "catalogue" in d:
+        shared["catalogue_index"] = {"domains": d["catalogue"]["domains"]}
+    pages, page_data = {}, {}
     for fname, label, title, desc, keys in PAGES:
         body = render_template((SRC / fname).read_text(), d)
-        pages[fname] = layout(fname, title, desc, body, keys, d, css, js)
+        pages[fname] = layout(fname, title, desc, body, keys, shared, css, js)
+        page_data[fname] = shared
+    if "catalogue" in d:
+        order = task_order(d)
+        for i, r in enumerate(order):
+            T = d["tasks"][r["id"]]
+            prev = order[i - 1] if i else None
+            nxt = order[i + 1] if i + 1 < len(order) else None
+            body = catalogue_pages.task_body(T, d["catalogue"], prev, nxt)
+            pd = dict(shared); pd["trace"] = T["trace"]
+            desc = f'{T["heading"]}: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task {T["id"]}.'
+            fn = f'problems/{T["id"]}.html'
+            pages[fn] = layout("problems.html", T["heading"], desc, body, ["trace"], pd, css, js, prefix="../", current="problems.html",
+                               pager='<div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>')
+            page_data[fn] = {"shared": {k: v for k, v in shared.items() if k != "catalogue_index"}, "task": T}
     bad = []
     if check_numbers:
-        ok = data_tokens(d) | allow_tokens()
+        allow = allow_tokens()
+        cache = {}
         for fname, page in pages.items():
+            key = fname if fname.startswith("problems/") else "_shared"
+            if key not in cache:
+                cache[key] = data_tokens(page_data[fname]) | allow
+            ok = cache[key]
             for tok in visible_numbers(page):
                 t = tok.lstrip("+-") if tok[0] in "+-" else tok
                 if tok not in ok and t not in ok and tok.rstrip(",") not in ok:
                     bad.append((fname, tok))
     return pages, bad
+
+
+def static_files(d):
+    """Binary and download files written beside the pages: the code of each development task, for its Download links."""
+    out = {"favicon.svg": (SRC / "favicon.svg").read_bytes(), "t1_on_nexys_a7.jpg": (ROOT / "docs/img/t1_on_nexys_a7.jpg").read_bytes(),
+           "vercel.json": b'{"cleanUrls": true, "trailingSlash": false}\n'}
+    for tid, T in d.get("tasks", {}).items():
+        for grp in T["files"].values():
+            for f in grp:
+                out[f"problems/{tid}/{f['name']}"] = (ROOT / f["path"]).read_bytes()
+    return out
 
 
 def main():
@@ -233,20 +282,23 @@ def main():
         for b in sorted(set(bad)):
             print("  ", b)
         sys.exit(1)
-    static = {"favicon.svg": (SRC / "favicon.svg").read_bytes(), "t1_on_nexys_a7.jpg": (ROOT / "docs/img/t1_on_nexys_a7.jpg").read_bytes(),
-              "vercel.json": b'{"cleanUrls": true, "trailingSlash": false}\n'}
+    static = static_files(d)
     if "--check" in args:
         stale = [f for f, p in pages.items() if not (out / f).exists() or (out / f).read_text() != p]
         stale += [f for f, b in static.items() if not (out / f).exists() or (out / f).read_bytes() != b]
-        if stale:
-            print("stale:", stale)
+        known = set(pages) | set(static)
+        extra = [p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file() and p.relative_to(out).as_posix() not in known]
+        if stale or extra:
+            print("stale:", stale, "unexpected:", extra)
             sys.exit(1)
         print("ok:", len(pages), "pages, numbers all in data")
         return
     out.mkdir(parents=True, exist_ok=True)
     for f, p in pages.items():
+        (out / f).parent.mkdir(parents=True, exist_ok=True)
         (out / f).write_text(p)
     for f, b in static.items():
+        (out / f).parent.mkdir(parents=True, exist_ok=True)
         (out / f).write_bytes(b)
     print("wrote", len(pages), "pages to", out)
 

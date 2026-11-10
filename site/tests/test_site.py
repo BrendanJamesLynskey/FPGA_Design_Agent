@@ -39,18 +39,52 @@ def test_eval1_section_stub_and_fixture():
     assert '"synthetic_task_a"' not in build.build(SITE / "public", d)[0]["results.html"]
 
 
-def test_no_held_out_split_names_in_site():
+def _held_out_ids():
     import re
     held = set()
     for f in (SITE.parent / "benchmark" / "split.yaml", SITE.parent / "benchmark" / "course" / "split.yaml",
               SITE.parent / "benchmark" / "course" / "split_c9_c12.yaml"):
-        if not f.exists():
-            continue
-        txt = f.read_text()
-        for blk in re.findall(r"held_out:\n((?:\s+- \S+\n)+)", txt):
+        for blk in re.findall(r"held_out:\n((?:\s+- \S+\n)+)", f.read_text()):
             held |= set(re.findall(r"- (\S+)", blk))
     assert held
-    for p in list((SITE / "public").glob("*.html")) + list((SITE / "data").glob("*.json")):
+    return held
+
+
+def test_held_out_ids_only_in_the_index_listing():
+    """v1 and course held-out ids (public in the split files) appear only in the held-out list of problems.html and in
+    catalogue.json's held_out/moved lists; nowhere else in the pages or the data."""
+    import re
+    held = _held_out_ids()
+    for p in list((SITE / "public").rglob("*.html")) + list((SITE / "data").rglob("*.json")):
         t = p.read_text()
+        if p.name == "problems.html":
+            t = re.sub(r'(?s)<h2 id="held-out">.*?<h3>Benchmark v2</h3>', "", t)
+        if p.name == "catalogue.json":
+            c = json.loads(t)
+            assert all(set(h) == {"id", "set", "tier", "status"} for h in c["held_out"] + c["moved"]), "held-out entries carry only id, set, tier, status"
+            c.pop("held_out"); c.pop("moved"); t = json.dumps(c)
         for h in held:
-            assert h not in t, (p.name, "held-out task name")
+            assert h not in t, (str(p.relative_to(SITE)), "held-out id outside the held-out listing")
+
+
+def test_no_held_out_task_has_a_page_or_data():
+    held = _held_out_ids()
+    pages = {p.stem for p in (SITE / "public" / "problems").glob("*.html")}
+    data = {p.stem for p in (SITE / "data" / "tasks").glob("*.json")}
+    dirs = {p.name for p in (SITE / "public" / "problems").iterdir() if p.is_dir()}
+    assert pages and pages == data == dirs
+    assert not held & (pages | data | dirs)
+
+
+def test_v2_held_out_is_counts_only():
+    c = json.loads((SITE / "data" / "catalogue.json").read_text())
+    for cell in c["v2_cells"]:
+        assert set(cell) == {"domain", "tier", "dev", "held_out"} and isinstance(cell["held_out"], int)
+
+
+def test_every_trace_is_valid_and_from_its_model():
+    sys.path.insert(0, str(SITE))
+    import traces
+    for p in (SITE / "data" / "tasks").glob("*.json"):
+        t = json.loads(p.read_text())
+        traces.validate(t["id"], t["trace"])

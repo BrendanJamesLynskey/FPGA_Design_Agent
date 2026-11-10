@@ -1,0 +1,693 @@
+{
+ "assumptions": [
+  {
+   "assumption": "a call for the floor the car is idle at opens the door there without moving.",
+   "reason": "a real lift opens for a call at its own floor."
+  },
+  {
+   "assumption": "the car starts upwards after reset.",
+   "reason": "it starts at the bottom floor."
+  }
+ ],
+ "behaviour": [
+  [
+   "calls",
+   [
+    "SW[3:0] are synchronised by two flops (not debounced). A call for floor k is a 0 -> 1 change of synchronised SW[k]; a switch already up after reset calls once.",
+    "A shell write to PENDING with bit k = 1 is a call for floor k (write-1-to-set; 0 bits do nothing).",
+    "A call sets PENDING[k], except a call for the floor where the door is open now, which is ignored."
+   ]
+  ],
+  [
+   "motion",
+   [
+    "States - IDLE (0), MOVING (1), DOOR (2). DIR is 0 for up, 1 for down. ahead(d) = some PENDING bit beyond FLOOR in direction d.",
+    "Decision (taken every clock in IDLE, and on the clock the door closes) - if PENDING[FLOOR] then clear it and open the door (DOOR); else if ahead(DIR) then start MOVING in DIR; else if ahead(not DIR) then flip DIR and start MOVING; else IDLE.",
+    "MOVING - after exactly FLOOR_CYCLES clocks FLOOR changes by one in DIR and MOVES += 1 (16 bits, wrapping). If PENDING[FLOOR] is then set, it is cleared and the door opens; otherwise the next floor's travel starts on the same clock (calls remain ahead, so DIR never flips while moving).",
+    "DOOR - the door is open for exactly DOOR_CYCLES clocks, then closes and the decision is taken on that clock.",
+    "So travel from floor a to floor b without stops takes |a - b| * FLOOR_CYCLES clocks, and LED[15] is high for exactly DOOR_CYCLES clocks a stop."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[3:0] one-hot FLOOR (LED[FLOOR] = 1); LED[7:4] = PENDING; LED[14] = MOVING; LED[15] = door open; LED[13:8] = 0. Registered, no PWM."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "DOOR_CYCLES": 300,
+  "FLOOR_CYCLES": 400,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-03",
+  "mutants": {
+   "always_turns": {
+    "failed_tests": [
+     "test_single_call",
+     "test_scan_keeps_direction",
+     "test_call_on_the_way_and_behind",
+     "test_call_at_current_floor",
+     "test_switch_edges_only",
+     "test_turns_round_at_the_top",
+     "test_shell_calls_and_register_rules",
+     "test_random_calls"
+    ],
+    "killed": true
+   },
+   "door_floor_call_kept": {
+    "failed_tests": [
+     "test_call_at_current_floor"
+    ],
+    "killed": true
+   },
+   "door_short": {
+    "failed_tests": [
+     "test_single_call",
+     "test_scan_keeps_direction",
+     "test_call_on_the_way_and_behind",
+     "test_call_at_current_floor",
+     "test_switch_edges_only",
+     "test_turns_round_at_the_top",
+     "test_shell_calls_and_register_rules",
+     "test_random_calls"
+    ],
+    "killed": true
+   },
+   "floor_long": {
+    "failed_tests": [
+     "test_single_call",
+     "test_scan_keeps_direction",
+     "test_call_on_the_way_and_behind",
+     "test_call_at_current_floor",
+     "test_switch_edges_only",
+     "test_turns_round_at_the_top",
+     "test_shell_calls_and_register_rules",
+     "test_random_calls"
+    ],
+    "killed": true
+   },
+   "leds_no_pending": {
+    "failed_tests": [
+     "test_call_on_the_way_and_behind"
+    ],
+    "killed": true
+   },
+   "level_calls": {
+    "failed_tests": [
+     "test_switch_edges_only"
+    ],
+    "killed": true
+   },
+   "moves_count_stops": {
+    "failed_tests": [
+     "test_single_call",
+     "test_scan_keeps_direction",
+     "test_call_on_the_way_and_behind",
+     "test_switch_edges_only",
+     "test_turns_round_at_the_top",
+     "test_shell_calls_and_register_rules",
+     "test_random_calls"
+    ],
+    "killed": true
+   },
+   "no_stop_passing": {
+    "failed_tests": [
+     "test_single_call",
+     "test_scan_keeps_direction",
+     "test_call_on_the_way_and_behind",
+     "test_call_at_current_floor",
+     "test_switch_edges_only",
+     "test_turns_round_at_the_top",
+     "test_shell_calls_and_register_rules",
+     "test_random_calls"
+    ],
+    "killed": true
+   },
+   "pending_write_replaces": {
+    "failed_tests": [
+     "test_shell_calls_and_register_rules"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t1_elevator_fsm__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 9,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "A",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 81,
+    "name": "model.py",
+    "path": "benchmark/tasks/t1_elevator_fsm/hidden/model.py",
+    "sha256": "94920476b740",
+    "text": "\"\"\"Golden model of t1_elevator_fsm, written from spec.yaml alone (never from any RTL).\n\nA clocked model: run_to(t) steps the spec's rules one clock at a time and logs events (time, kind, floor) with\nkind in \"depart\", \"arrive\", \"open\", \"close\". Calls are scheduled at the clock they are seen.\"\"\"\n\nfrom __future__ import annotations\n\nFLOOR, DIR, PENDING, STATE, MOVES = range(5)\nIDLE, MOVING, DOOR = 0, 1, 2\nDESIGN_ID = 0x454C4556          # \"ELEV\"\n\n\nclass Model:\n    def __init__(self, floor_cycles: int, door_cycles: int) -> None:\n        self.fc, self.dc = floor_cycles, door_cycles\n        self.floor, self.dir, self.pend, self.state, self.moves = 0, 0, 0, IDLE, 0\n        self.timer = 0\n        self.t = 0\n        self.sched: dict[int, int] = {}\n        self.events: list[tuple[int, str, int]] = []\n\n    def call(self, at: int, mask: int) -> None:\n        assert at >= self.t, \"a call scheduled in the model's past\"\n        self.sched[at] = self.sched.get(at, 0) | mask\n\n    def _ahead(self, d: int, p: int) -> bool:\n        return any(p >> k & 1 for k in range(4) if (k > self.floor if d == 0 else k < self.floor))\n\n    def _decide(self, p: int) -> int:\n        if p >> self.floor & 1:\n            p &= ~(1 << self.floor)\n            self.state, self.timer = DOOR, 0\n            self.events.append((self.t, \"open\", self.floor))\n        elif self._ahead(self.dir, p):\n            self.state, self.timer = MOVING, 0\n            self.events.append((self.t, \"depart\", self.floor))\n        elif self._ahead(1 - self.dir, p):\n            self.dir ^= 1\n            self.state, self.timer = MOVING, 0\n            self.events.append((self.t, \"depart\", self.floor))\n        else:\n            self.state = IDLE\n        return p\n\n    def step(self) -> None:\n        c = self.sched.pop(self.t, 0)\n        if self.state == DOOR:\n            c &= ~(1 << self.floor)\n        p = self.pend | c\n        if self.state == MOVING:\n            self.timer += 1\n            if self.timer == self.fc:\n                self.floor += -1 if self.dir else 1\n                assert 0 <= self.floor <= 3\n                self.moves = (self.moves + 1) & 0xFFFF\n                self.timer = 0\n                self.events.append((self.t, \"arrive\", self.floor))\n                if p >> self.floor & 1:\n                    p &= ~(1 << self.floor)\n                    self.state = DOOR\n                    self.events.append((self.t, \"open\", self.floor))\n        elif self.state == DOOR:\n            self.timer += 1\n            if self.timer == self.dc:\n                self.events.append((self.t, \"close\", self.floor))\n                p = self._decide(p)\n        else:\n            p = self._decide(p)\n        self.pend = p\n        self.t += 1\n\n    def run_to(self, t: int) -> None:\n        while self.t < t:\n            self.step()\n\n    def read(self, off: int) -> int:\n        return {FLOOR: self.floor, DIR: self.dir, PENDING: self.pend, STATE: self.state,\n                MOVES: self.moves}.get(off, 0)\n\n    def leds(self) -> int:\n        return (self.state == DOOR) << 15 | (self.state == MOVING) << 14 | self.pend << 4 | 1 << self.floor\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 97,
+    "name": "elevator_fsm.sv",
+    "path": "benchmark/tasks/t1_elevator_fsm/ref/rtl/elevator_fsm.sv",
+    "sha256": "d0e67cbdd466",
+    "text": "// elevator_fsm.sv: four-floor SCAN lift controller with travel and door timers,\n// for t1_elevator_fsm, behind the shell's register window.\nmodule elevator_fsm #(\n    parameter int FLOOR_CYCLES = 150_000_000,\n    parameter int DOOR_CYCLES  = 200_000_000\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic [3:0]  sw_async,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam logic [6:0] R_FLOOR = 7'h00, R_DIR = 7'h01, R_PEND = 7'h02, R_STATE = 7'h03, R_MOVES = 7'h04;\n    localparam logic [1:0] IDLE = 2'd0, MOVING = 2'd1, DOOR = 2'd2;\n\n    logic [3:0]  sw, sw_q, pend, calls, p1, above, below;\n    logic [1:0]  state, floor, nf;\n    logic        dir;\n    logic [15:0] moves;\n    logic [31:0] timer;\n\n    sync2 #(.WIDTH(4)) u_sw (.clk(clk), .rst(rst), .d(sw_async), .q(sw));\n\n    // calls this clock; one for the floor with the door open is dropped\n    always_comb begin\n        calls = (sw & ~sw_q) | ((win_wr && win_addr == R_PEND) ? win_wdata[3:0] : 4'd0);\n        if (state == DOOR) calls[floor] = 1'b0;\n        p1 = pend | calls;\n        for (int k = 0; k < 4; k++) begin\n            above[k] = 2'(k) > floor;\n            below[k] = 2'(k) < floor;\n        end\n    end\n\n    wire ahead_up = (p1 & above) != 4'd0;\n    wire ahead_dn = (p1 & below) != 4'd0;\n    assign nf = dir ? floor - 2'd1 : floor + 2'd1;\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            sw_q <= '0; pend <= '0; state <= IDLE; floor <= '0; dir <= 1'b0; moves <= '0; timer <= '0;\n        end else begin\n            sw_q <= sw;\n            pend <= p1;\n            timer <= timer + 1'b1;\n            if (state == MOVING && timer == 32'(FLOOR_CYCLES - 1)) begin\n                floor <= nf;\n                moves <= moves + 1'b1;\n                timer <= '0;\n                if (p1[nf]) begin\n                    pend[nf] <= 1'b0;\n                    state    <= DOOR;\n                end\n            end else if (state == IDLE || (state == DOOR && timer == 32'(DOOR_CYCLES - 1))) begin\n                timer <= '0;\n                if (p1[floor]) begin\n                    pend[floor] <= 1'b0;\n                    state       <= DOOR;\n                end else if (dir ? ahead_dn : ahead_up) begin\n                    state <= MOVING;\n                end else if (dir ? ahead_up : ahead_dn) begin\n                    dir   <= !dir;\n                    state <= MOVING;\n                end else begin\n                    state <= IDLE;\n                end\n            end\n        end\n    end\n\n`ifdef FORMAL\n    always_comb assert (state != 2'd3);\n`endif\n\n    always_ff @(posedge clk) begin\n        if (rst) led <= '0;\n        else     led <= {state == DOOR, state == MOVING, 6'd0, pend, 4'b0001 << floor};\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            case (win_addr)\n                R_FLOOR: win_rdata <= {30'd0, floor};\n                R_DIR:   win_rdata <= {31'd0, dir};\n                R_PEND:  win_rdata <= {28'd0, pend};\n                R_STATE: win_rdata <= {30'd0, state};\n                R_MOVES: win_rdata <= {16'd0, moves};\n                default: win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 32,
+    "name": "t1_elevator_fsm_top.sv",
+    "path": "benchmark/tasks/t1_elevator_fsm/ref/rtl/t1_elevator_fsm_top.sv",
+    "sha256": "a287c6a5dfca",
+    "text": "// t1_elevator_fsm_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t1_elevator_fsm; DESIGN_ID \"ELEV\".\nmodule t1_elevator_fsm_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter int          FLOOR_CYCLES   = 150_000_000,\n    parameter int          DOOR_CYCLES    = 200_000_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    input  logic [15:0] SW,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h454C_4556), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    elevator_fsm #(.FLOOR_CYCLES(FLOOR_CYCLES), .DOOR_CYCLES(DOOR_CYCLES)) u_lift (\n        .clk(clk), .rst(rst), .sw_async(SW[3:0]), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 266,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t1_elevator_fsm/hidden/acceptance.py",
+    "sha256": "a8fed8f4cf56",
+    "text": "\"\"\"Acceptance tests of t1_elevator_fsm against model.py (hidden from the agent).\n\nThe clocked model and the RTL run side by side. Events seen on the pins (LED[14] rise = depart, LED[3:0] change =\narrive, LED[15] rise/fall = door open/close) must match the model's events in order and floor, and every interval\nthat does not include idle time must match exactly (FLOOR_CYCLES, DOOR_CYCLES, 0). Calls are placed well away from\nthe car's decision clocks, so a design whose call latency differs by a few clocks gets the same order.\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom cocotb.triggers import ReadOnly, RisingEdge\nfrom cocotb.utils import get_sim_time\nfrom model import DESIGN_ID, DIR, DOOR, FLOOR, IDLE, MOVES, MOVING, PENDING, STATE, Model\n\nNAMES = (\"FLOOR\", \"DIR\", \"PENDING\", \"STATE\", \"MOVES\")\nSW_LAT = 2              # clocks from a switch change to the call being seen (model time base)\n\n\nclass Watch:\n    def __init__(self, dut, clk) -> None:\n        self.events: list[tuple[int, str, int]] = []\n        cocotb.start_soon(self.run(dut, clk))\n\n    async def run(self, dut, clk) -> None:\n        prev = None\n        while True:\n            await RisingEdge(clk)\n            await ReadOnly()\n            v = int(dut.LED.value)\n            t = int(get_sim_time(\"ns\")) // 10\n            if prev is not None and v != prev:\n                fl = [k for k in range(4) if v >> k & 1]\n                assert len(fl) == 1, f\"LED[3:0] = {v & 15:04b} is not one-hot\"\n                assert not (v >> 15 & 1 and v >> 14 & 1), \"door open while moving\"\n                f = fl[0]\n                if prev >> 15 & 1 and not v >> 15 & 1:\n                    self.events.append((t, \"close\", f))\n                if v >> 14 & 1 and not prev >> 14 & 1:\n                    self.events.append((t, \"depart\", f))\n                if v & 15 != prev & 15:\n                    self.events.append((t, \"arrive\", f))\n                if v >> 15 & 1 and not prev >> 15 & 1:\n                    self.events.append((t, \"open\", f))\n            prev = v\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, {\"SW\": 0})\n        self.dut = dut\n        self.fc = self.b.param(\"FLOOR_CYCLES\")\n        self.dc = self.b.param(\"DOOR_CYCLES\")\n        self.cpb = self.b.param(\"CLKS_PER_BIT\")\n        self.m = Model(self.fc, self.dc)\n        self.sw = 0\n        self.w: Watch | None = None\n\n    def now(self) -> int:\n        return int(get_sim_time(\"ns\")) // 10\n\n    async def start(self) -> None:\n        await self.b.start()\n        self.m.t = self.now()\n        self.w = Watch(self.dut, self.b.clk)\n\n    async def switch(self, k: int, v: int) -> None:\n        old = self.sw >> k & 1\n        self.sw = (self.sw & ~(1 << k)) | v << k\n        self.dut.SW.value = self.sw\n        if v and not old:\n            self.m.call(self.now() + SW_LAT, 1 << k)\n        await self.b.cycles(1)\n\n    async def flick(self, *floors: int) -> None:\n        \"\"\"Switches up together then down again: one call each, all seen on the same clock.\"\"\"\n        mask = sum(1 << k for k in floors)\n        new = mask & ~self.sw\n        self.sw |= mask\n        self.dut.SW.value = self.sw\n        if new:\n            self.m.call(self.now() + SW_LAT, new)\n        await self.b.cycles(6)\n        self.sw &= ~mask\n        self.dut.SW.value = self.sw\n        await self.b.cycles(1)\n\n    async def shell_call(self, mask: int) -> None:\n        await self.b.write(PENDING, mask)\n        self.m.call(self.now() - 70 * self.cpb - 3, mask & 15)   # the write acted before the 7-byte response\n\n    async def wait(self, n: int) -> None:\n        await self.b.cycles(n)\n\n    async def settle(self, limit: int = 20000) -> None:\n        \"\"\"Wait until the model says the car is idle with nothing pending, then a little more.\"\"\"\n        self.m.run_to(self.now())\n        n = 0\n        while not (self.m.state == IDLE and self.m.pend == 0 and not self.m.sched):\n            self.m.step()\n            n += 1\n            assert n < limit\n        await self.b.cycles(max(0, self.m.t - self.now()) + 20)\n        self.m.run_to(self.now())\n\n    def check_events(self) -> None:\n        self.m.run_to(self.now() - 4)\n        got = [(k, f) for _, k, f in self.w.events]\n        want = [(k, f) for _, k, f in self.m.events]\n        assert got == want, f\"events {got} != model {want}\"\n        for i in range(1, len(want)):\n            dm = self.m.events[i][0] - self.m.events[i - 1][0]\n            dr = self.w.events[i][0] - self.w.events[i - 1][0]\n            if want[i][0] in (\"depart\", \"open\") and dm != 0:\n                continue                                       # idle time before a call: not compared\n            assert dr == dm, f\"{want[i - 1]} -> {want[i]} took {dr} clocks, model {dm}\"\n\n    async def check_regs(self) -> None:\n        self.m.run_to(self.now())\n        for off in range(5):\n            await self.b.expect(off, self.m.read(off), NAMES[off])\n\n    async def check_leds(self) -> None:\n        self.m.run_to(self.now())\n        led = await peek(self.b.clk, self.dut.LED)\n        self.m.run_to(self.now())\n        assert led == self.m.leds(), f\"LED {led:04X} != model {self.m.leds():04X}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_single_call(dut):\n    e = Env(dut)\n    await e.start()\n    await e.flick(2)\n    await e.settle()\n    e.check_events()\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_scan_keeps_direction(dut):\n    \"\"\"From floor 1 going up, calls for 0 and 3 together: SCAN goes up to 3 first (nearest-first would go to 0).\"\"\"\n    e = Env(dut)\n    await e.start()\n    await e.flick(1)\n    await e.settle()\n    await e.flick(0, 3)\n    await e.settle()\n    e.check_events()\n    assert [f for _, k, f in e.w.events if k == \"open\"] == [1, 3, 0]\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_call_on_the_way_and_behind(dut):\n    e = Env(dut)\n    await e.start()\n    await e.flick(3)\n    await e.wait(e.fc // 2)                       # between 0 and 1: call 2 (ahead) and 0 (behind)\n    await e.flick(2)\n    await e.check_leds()                          # mid-move: LED[7:4] show the calls, LED[14] moving\n    await e.wait(e.fc)\n    await e.flick(0)\n    await e.settle()\n    e.check_events()\n    assert [f for _, k, f in e.w.events if k == \"open\"] == [2, 3, 0]\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_call_at_current_floor(dut):\n    e = Env(dut)\n    await e.start()\n    await e.flick(0)                              # idle at 0: the door opens, no move\n    await e.wait(e.dc // 3)\n    await e.flick(0)                              # door open here: ignored\n    await e.wait(e.dc // 3)\n    await e.check_leds()\n    await e.flick(1)                              # another floor during the door: kept\n    await e.settle()\n    e.check_events()\n    assert [f for _, k, f in e.w.events if k == \"open\"] == [0, 1]\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_switch_edges_only(dut):\n    e = Env(dut)\n    await e.start()\n    await e.switch(2, 1)\n    await e.settle()\n    await e.wait(2 * e.fc)                        # held up: no second call\n    await e.switch(2, 0)\n    await e.wait(e.fc)\n    await e.check_regs()\n    await e.switch(2, 1)                          # up again at floor 2 (idle): door opens again\n    await e.settle()\n    await e.switch(2, 0)\n    e.check_events()\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_turns_round_at_the_top(dut):\n    e = Env(dut)\n    await e.start()\n    await e.flick(3)\n    await e.settle()\n    await e.flick(1)\n    await e.wait(e.fc // 2)\n    e.m.run_to(e.now())\n    assert e.m.state == MOVING and e.m.dir == 1\n    await e.b.expect(DIR, 1, \"DIR while moving down\")\n    await e.settle()\n    e.check_events()\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_shell_calls_and_register_rules(dut):\n    e = Env(dut)\n    await e.start()\n    await e.shell_call(0b0100)                    # W1S: call 2\n    await e.b.write(PENDING, 0)                   # zeros do nothing\n    for off in (FLOOR, DIR, STATE, MOVES):\n        await e.b.write(off, 3)                   # read-only\n    await e.settle()\n    await e.flick(0)                              # from 2 down to 0 (800 clocks): a shell call for 3\n    await e.shell_call(0b1000)                    # lands mid-way and must add to the calls, not replace them\n    await e.settle()\n    e.check_events()\n    await e.check_regs()\n    for off in (0x05, 0x22, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n\n\n@cocotb.test()\nasync def test_random_calls(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    for _ in range(12):\n        await e.wait(rng.randrange(50, e.fc + e.dc))\n        e.m.run_to(e.now())\n        # keep calls away from the model's decision clocks\n        lim = e.fc if e.m.state == MOVING else e.dc if e.m.state == DOOR else None\n        if lim is not None and not (12 < e.m.timer < lim - 12):\n            await e.wait(30)\n        await e.flick(*rng.sample(range(4), rng.randrange(1, 3)))\n    await e.settle(60000)\n    e.check_events()\n    await e.check_regs()\n    await e.check_leds()\n"
+   }
+  ]
+ },
+ "heading": "Four-floor lift controller",
+ "id": "t1_elevator_fsm",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "DOOR_CYCLES": 200000000,
+   "FLOOR_CYCLES": 150000000,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "SW",
+    "note": "only SW[3:0] are used",
+    "width": 16
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RO",
+    "bits": "[1:0] current floor (the floor last reached while moving)",
+    "name": "FLOOR",
+    "offset": "0x00"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] 0 up, 1 down",
+    "name": "DIR",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[3:0] outstanding calls; a write of 1 to bit k calls floor k",
+    "name": "PENDING",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[1:0] 0 IDLE, 1 MOVING, 2 DOOR",
+    "name": "STATE",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] floors travelled, wrapping",
+    "name": "MOVES",
+    "offset": "0x04"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: FLOOR = 0, DIR = up, PENDING = 0, STATE = IDLE, MOVES = 0; the switch edge detector's previous value is 0",
+  "top": "t1_elevator_fsm_top",
+  "unmapped": "offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "elevator_fsm.sv",
+   "name": "always_turns",
+   "why": "the car never keeps its direction at a decision (always turns)"
+  },
+  {
+   "file": "elevator_fsm.sv",
+   "name": "door_short",
+   "why": "door open one clock short"
+  },
+  {
+   "file": "elevator_fsm.sv",
+   "name": "floor_long",
+   "why": "a floor takes FLOOR_CYCLES + 1 clocks"
+  },
+  {
+   "file": "elevator_fsm.sv",
+   "name": "no_stop_passing",
+   "why": "calls passed on the way are not served until the turn"
+  },
+  {
+   "file": "elevator_fsm.sv",
+   "name": "door_floor_call_kept",
+   "why": "a call at the open-door floor reopens the door afterwards"
+  },
+  {
+   "file": "elevator_fsm.sv",
+   "name": "level_calls",
+   "why": "a switch left up keeps calling"
+  },
+  {
+   "file": "elevator_fsm.sv",
+   "name": "moves_count_stops",
+   "why": "MOVES counts stops, not floors"
+  },
+  {
+   "file": "elevator_fsm.sv",
+   "name": "pending_write_replaces",
+   "why": "a PENDING write replaces the calls instead of adding (not W1S)"
+  },
+  {
+   "file": "elevator_fsm.sv",
+   "name": "leds_no_pending",
+   "why": "LED[7:4] do not show the calls"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t1_elevator_fsm",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "The car serves calls in SCAN order - it keeps its direction while calls remain ahead, then turns"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Travel takes exactly FLOOR_CYCLES a floor and each stop opens the door for exactly DOOR_CYCLES"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Calls are switch 0 -> 1 edges or shell W1S writes; a call for the open-door floor is ignored"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation"
+   ],
+   "text": "FLOOR, DIR, PENDING, STATE, MOVES and the LEDs follow the model"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "text": "The car never leaves floors 0..3 and the door is never open while moving"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  },
+  {
+   "id": "REQ-07",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board a shell call is served and MOVES and FLOOR change as the model predicts"
+  }
+ ],
+ "resources_expected": "under a hundred LUTs and FFs; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": true,
+ "spec_md": "# Four-floor lift controller\n\nI want a model of a lift serving four floors (0 to 3) on the Nexys A7-100T.\n\n- SW[3:0] are the call buttons, one per floor: flicking a switch up calls the lift to that floor. Leaving it up\n  doesn't call again; it has to go down and up again.\n- The lift takes a fixed time to travel one floor, and when it stops at a floor that was called its door stays\n  open for a fixed time. It should behave like a real lift: keep going in the same direction while there are calls\n  further on, and only then turn round. It starts at floor 0 with the door shut.\n- LED[3:0] show which floor the lift is at (one LED lit) and LED[15] is lit while the door is open. Also show the\n  outstanding calls on LED[7:4]. LED[14] is lit while the lift is moving between floors.\n- CPU_RESETN resets everything.\n- Over the test shell (USB-UART, 115200 baud) I can read the floor, the direction, the outstanding calls, what the\n  lift is doing and how many floors it has travelled, and place calls. The design ID is \"ELEV\".\n\nTest hooks: top module `t1_elevator_fsm_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `FLOOR_CYCLES` (clocks to travel one floor) and\n`DOOR_CYCLES` (clocks the door stays open) as top-level parameters.\n",
+ "survey": [
+  "A10"
+ ],
+ "tier": "T1",
+ "title": "Four-floor lift controller",
+ "trace": {
+  "captions": [
+   "Clock 0: idle at floor 0. Outstanding calls 0000, floors travelled 0.",
+   "Clock 1: call for floor 3; leaves floor 0. Outstanding calls 1000, floors travelled 0.",
+   "Clock 2: moving up from floor 0. Outstanding calls 1000, floors travelled 0.",
+   "Clock 3: call for floor 1. Outstanding calls 1010, floors travelled 0.",
+   "Clock 4: moving up from floor 0. Outstanding calls 1010, floors travelled 0.",
+   "Clock 5: reaches floor 1; door opens at floor 1. Outstanding calls 1000, floors travelled 1.",
+   "Clock 6: door open at floor 1. Outstanding calls 1000, floors travelled 1.",
+   "Clock 7: door open at floor 1. Outstanding calls 1000, floors travelled 1.",
+   "Clock 8: door closes at floor 1; leaves floor 1. Outstanding calls 1000, floors travelled 1.",
+   "Clock 9: moving up from floor 1. Outstanding calls 1000, floors travelled 1.",
+   "Clock 10: moving up from floor 1. Outstanding calls 1000, floors travelled 1.",
+   "Clock 11: moving up from floor 1. Outstanding calls 1000, floors travelled 1.",
+   "Clock 12: reaches floor 2. Outstanding calls 1000, floors travelled 2.",
+   "Clock 13: moving up from floor 2. Outstanding calls 1000, floors travelled 2.",
+   "Clock 14: call for floor 0. Outstanding calls 1001, floors travelled 2.",
+   "Clock 15: moving up from floor 2. Outstanding calls 1001, floors travelled 2.",
+   "Clock 16: reaches floor 3; door opens at floor 3. Outstanding calls 0001, floors travelled 3.",
+   "Clock 17: door open at floor 3. Outstanding calls 0001, floors travelled 3.",
+   "Clock 18: door open at floor 3. Outstanding calls 0001, floors travelled 3.",
+   "Clock 19: door closes at floor 3; leaves floor 3. Outstanding calls 0001, floors travelled 3.",
+   "Clock 20: moving down from floor 3. Outstanding calls 0001, floors travelled 3.",
+   "Clock 21: moving down from floor 3. Outstanding calls 0001, floors travelled 3.",
+   "Clock 22: moving down from floor 3. Outstanding calls 0001, floors travelled 3.",
+   "Clock 23: reaches floor 2. Outstanding calls 0001, floors travelled 4.",
+   "Clock 24: moving down from floor 2. Outstanding calls 0001, floors travelled 4.",
+   "Clock 25: moving down from floor 2. Outstanding calls 0001, floors travelled 4.",
+   "Clock 26: moving down from floor 2. Outstanding calls 0001, floors travelled 4.",
+   "Clock 27: reaches floor 1. Outstanding calls 0001, floors travelled 5.",
+   "Clock 28: moving down from floor 1. Outstanding calls 0001, floors travelled 5.",
+   "Clock 29: moving down from floor 1. Outstanding calls 0001, floors travelled 5.",
+   "Clock 30: moving down from floor 1. Outstanding calls 0001, floors travelled 5.",
+   "Clock 31: reaches floor 0; door opens at floor 0. Outstanding calls 0000, floors travelled 6.",
+   "Clock 32: door open at floor 0. Outstanding calls 0000, floors travelled 6.",
+   "Clock 33: door open at floor 0. Outstanding calls 0000, floors travelled 6.",
+   "Clock 34: door closes at floor 0. Outstanding calls 0000, floors travelled 6.",
+   "Clock 35: idle at floor 0. Outstanding calls 0000, floors travelled 6.",
+   "Clock 36: idle at floor 0. Outstanding calls 0000, floors travelled 6."
+  ],
+  "hero": {
+   "floor_cycles": 4,
+   "floors": 4
+  },
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "FLOOR",
+    "radix": "dec",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     2,
+     2,
+     2,
+     2,
+     1,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "text",
+    "name": "STATE",
+    "v": [
+     "idle",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "door open",
+     "door open",
+     "door open",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "door open",
+     "door open",
+     "door open",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "moving",
+     "door open",
+     "door open",
+     "door open",
+     "idle",
+     "idle",
+     "idle"
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "DIR (1 = down)",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "PENDING",
+    "radix": "bin",
+    "v": [
+     0,
+     8,
+     8,
+     10,
+     10,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     8,
+     9,
+     9,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "width": 4
+   },
+   {
+    "kind": "bus",
+    "name": "MOVES",
+    "radix": "dec",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     4,
+     4,
+     4,
+     4,
+     5,
+     5,
+     5,
+     5,
+     6,
+     6,
+     6,
+     6,
+     6,
+     6
+    ]
+   }
+  ],
+  "stimulus": "Travel time 4 clocks a floor and door time 3 clocks (shrunk, as the bench does). Calls: floor 3 at clock 1; floor 1 at clock 3; floor 0 at clock 14.",
+  "unit": "clock",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36
+  ]
+ },
+ "what": "A controller for a lift serving four floors. Switches act as the call buttons; the lift travels a floor in a fixed time, opens its door for a fixed time at each floor that was called, and keeps going in one direction while there are calls further on before it turns round. LEDs show the floor, the outstanding calls, the door and whether it is moving, and the test shell reads the same state as registers.",
+ "where": "Lift and elevator controllers, and the same pattern (serve requests in one sweep, then reverse) in disk-head scheduling and in machine controllers. It is a standard exercise in writing a finite-state machine with timers."
+}

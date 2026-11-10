@@ -1,0 +1,154 @@
+t1_bcd_updown:
+  what: >-
+    A four-digit decimal counter driven by two push buttons. One button counts up and the other counts down, and each
+    press changes the count by a step that two switches choose. The count wraps round at both ends and the design
+    keeps a tally of how many times it has wrapped. The buttons are debounced so a bounce cannot count twice, and the
+    value shows on the seven-segment display in decimal, on the LEDs in binary, and over the test shell.
+  where: >-
+    Up/down counters with a selectable step turn up in panel meters, production-line tallies, ticket and people
+    counters, and setpoint dials. The debounced button input is needed in almost any product with a mechanical switch.
+
+t1_debounce_bank:
+  what: >-
+    A bank that cleans up every slide switch on the board separately. A switch's clean level only changes after it has
+    held its new position for the whole debounce time, so shorter glitches are ignored however they line up. For each
+    switch the design counts how many times the clean level changed, and keeps a sticky flag for rising and falling
+    edges that the user can choose per switch and clear by writing ones.
+  where: >-
+    Switch and button inputs on nearly every embedded product need this kind of conditioning, from front-panel keypads
+    to limit switches on machines. Per-input edge flags and event counters are the usual way a processor is told that
+    something changed.
+
+t1_gray_stepper:
+  what: >-
+    A ten-bit Gray-code counter shown on the LEDs. Each button press steps it once, and a switch picks the direction.
+    An automatic mode steps at a rate set over the shell, in milliseconds a step. In a Gray code only one bit changes
+    on each step, including when the count wraps round, and the task asks for that to be proved rather than just
+    tested.
+  where: >-
+    Gray codes are used in rotary and linear position encoders, where several bits changing at once could be misread,
+    and in the pointers of asynchronous FIFOs that cross between clock domains.
+
+t1_lfsr_dice:
+  what: >-
+    An electronic dice. A linear-feedback shift register is a small circuit that steps through a long, repeatable
+    scrambled sequence of numbers, and each button press steps it once and turns the new state into a roll from one to
+    six. The roll shows on the right-hand digit of the display, and the design keeps the last four rolls and a count
+    of rolls. The state can be loaded with a seed, and it is never allowed to stick at zero.
+  where: >-
+    Shift-register generators of this kind are used for test patterns, data scrambling, error-check codes and cheap
+    pseudo-random numbers in hardware. They are not suitable where unpredictability matters for security.
+
+t1_pattern_sequencer:
+  what: >-
+    A programmable light show for the sixteen LEDs. The user writes up to sixteen steps, each with an LED pattern and a
+    time to show it, then starts the show over the shell. It can loop for ever or play once and stop. A button pauses
+    and resumes it, and changing the pattern of the step that is playing shows on the LEDs straight away.
+  where: >-
+    The same table-driven idea sits behind status-light sequences, indicator and display animations, stage and sign
+    lighting, and small waveform or stimulus generators that replay a stored list of values with timing.
+
+t1_press_classifier:
+  what: >-
+    A button interpreter that tells short presses from long ones. After debouncing, it waits until the button is let
+    go and then decides: held at least as long as the long-press time means long, otherwise short. It keeps a count of
+    each kind, remembers how long the last press lasted, and toggles an LED for each kind so every press is visible.
+  where: >-
+    Press-and-hold behaviour is how many devices fit more functions on one button, such as a power button that needs a
+    long hold, a reset or pairing button on a gadget, or a key that repeats or changes meaning when held.
+
+t1_sync_fifo_regs:
+  what: >-
+    A small first-in first-out buffer of sixteen bytes that is driven entirely through the test shell. Writing a byte
+    pushes it on, reading a register removes the oldest byte, and another register lets the user look at the oldest
+    byte without removing it. The design reports empty, full and an almost-full flag with a settable threshold, and
+    keeps sticky error flags for pushing into a full buffer and popping an empty one. The LEDs show the fill level as
+    a bar.
+  where: >-
+    FIFOs sit between nearly any two parts of a digital system that run at different rates, such as a UART and a
+    processor, a sensor and a DMA engine, or network packet stages. Almost-full flags are what let a sender slow down
+    in time.
+
+t2_adt7420_alarm:
+  what: >-
+    A temperature monitor that talks over I2C to the sensor chip on the board. On a configure command it sets the
+    sensor to its high-resolution mode and loads the high and low limits the user wrote beforehand. After that it reads
+    the temperature at regular intervals and keeps the latest, highest and lowest readings and a count. The alarm is
+    the sensor's own interrupt pin, shown in a status bit and on an LED, and any missing acknowledgement from the
+    sensor is reported.
+  where: >-
+    Digital temperature sensors with a limit pin are used in computers, servers, power supplies and battery packs to
+    raise an over-temperature alert without the processor polling. Thermal protection in an FPGA board or a data-centre
+    server follows the same pattern.
+
+t2_i2c_cmd_master:
+  what: >-
+    An I2C bus master that is controlled one bus operation at a time from the test shell. The user can issue a start,
+    write a byte, read a byte or send a stop, and a start while the bus is already held becomes a repeated start. The
+    design records whether each written byte was acknowledged and keeps the last byte read. The lines are open drain,
+    so it only ever pulls them low or lets go, and it waits whenever a slave holds the clock low.
+  where: >-
+    I2C is the common two-wire bus for sensors, memory chips, real-time clocks, display controllers and power-management
+    chips. A command-level master like this is what bring-up tools use to poke at a part before any driver exists.
+
+t2_i2c_scanner:
+  what: >-
+    A bus scanner in the style of the i2cdetect tool. When started, it tries every normal seven-bit I2C address in
+    turn by sending the address with a write request, checking whether anything acknowledges, and then sending a stop.
+    It never sends a data byte. The results are a map with one bit per address, a count of devices that answered, the
+    lowest address that answered, and busy and done flags, and the LEDs show the count.
+  where: >-
+    Scanning is the first step when bringing up a board with unknown or mis-wired I2C parts, and the same probe appears
+    in operating-system tools and in firmware that detects which optional chips are fitted.
+
+t2_pdm_vu:
+  what: >-
+    A sound-level meter using the board's digital microphone. The microphone sends a fast stream of single bits where
+    the density of ones follows the sound. The design counts the ones in each block of bits, and since silence gives
+    about half ones, the level is how far the count is from half. A peak value holds for a while after a loud block and
+    then falls slowly, and a bar of LEDs shows the level.
+  where: >-
+    Pulse-density microphones are standard in phones, laptops and smart speakers, and level meters and voice-activity
+    detectors are built on exactly this kind of ones counting before any heavier audio processing.
+
+t2_qspi_sfdp:
+  what: >-
+    A small program in hardware that identifies the board's configuration flash chip. On a start command it reads the
+    chip's three-byte JEDEC identifier and then the first sixteen bytes of its SFDP table, a standard self-description
+    held in the flash. It reports the values and whether the table begins with the expected signature. Because the
+    flash holds the board's bitstream, the design may send only those two read commands and never anything that writes.
+  where: >-
+    SFDP lets software discover the size, commands and timing of a serial flash without a per-chip driver, which is how
+    boot loaders and operating systems support many flash parts. Reading the ID is the usual safe first check that a
+    flash connection works.
+
+t2_sevenseg_marquee:
+  what: >-
+    A scrolling message on the eight seven-segment digits. Each character of the message is a raw pattern of segments
+    that the user writes, so odd symbols are possible, and the digits show an eight-character window onto the message
+    that wraps round. When scrolling is on, the window moves one character at a time in either direction, and a
+    brightness setting dims the display by shortening how long each digit is lit.
+  where: >-
+    Segment displays with time-shared digits appear in clocks, appliances, test equipment and price displays, and
+    scrolling text is how a short message is fitted onto a display that is too narrow for it.
+
+t2_spi_master_modes:
+  what: >-
+    A general-purpose SPI master for whatever chip is plugged in later. It supports all four clock polarity and phase
+    modes, most-significant or least-significant bit first, and eight-bit or sixteen-bit frames, with a settable clock
+    speed. Writing the transmit register starts a frame, and chip select can be held low across several frames. An
+    internal loopback feeds the data output back to the input, so it can be tested with nothing connected.
+  where: >-
+    SPI is the usual fast link to flash memory, ADCs and DACs, displays, sensors and radio chips, and the four modes
+    exist because different chips expect the clock and data to line up differently. A flexible master like this is a
+    standard part of any microcontroller or FPGA toolkit.
+
+t2_vga_sprite:
+  what: >-
+    A small image drawn over a plain background on a VGA monitor. The image is a sixteen by sixteen block of pixels,
+    loaded row by row over the shell, with a position and two colours that the user can set. A bounce mode moves it by
+    one pixel in each direction every frame and turns it round at the screen edges, like an old screen saver. Parts of
+    it that fall off the screen are simply not drawn, and the design counts frames.
+  where: >-
+    Hardware sprites were how home computers and games consoles moved characters and cursors cheaply, and the same
+    idea survives in mouse pointers, on-screen overlays and the simple video generators used in FPGA teaching boards.

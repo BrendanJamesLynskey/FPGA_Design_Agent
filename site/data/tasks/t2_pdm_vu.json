@@ -1,0 +1,579 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the hold and decay are counted in blocks.",
+   "reason": "the level only changes at block ends, so blocks are the natural unit."
+  },
+  {
+   "assumption": "the bar shows the level, not the peak.",
+   "reason": "the request asks for a bar graph of the level."
+  }
+ ],
+ "behaviour": [
+  [
+   "microphone",
+   [
+    "M_CLK is a registered output - low for CLK_HALF clocks, then high for CLK_HALF clocks, repeating; after reset it is low and first rises CLK_HALF clocks after reset ends.",
+    "M_LRSEL is driven 1 at all times. With M_LRSEL = 1 the microphone drives M_DATA after each M_CLK rising edge and releases it after the falling edge (SPK0833 data sheet), so data is valid during the high half.",
+    "M_DATA is synchronised by two flops; the sample of each M_CLK cycle is the synchronised value on the clock at which the design drives M_CLK from 1 to 0 (the falling edge). (For CLK_HALF >= 4 this is the pin as of 2 clocks before the fall, inside the valid window.)"
+   ]
+  ],
+  [
+   "level",
+   [
+    "Samples are taken in blocks of WINDOW consecutive samples, the first block starting with the first sample after reset. At each block end - ONES = number of 1 samples in the block, LEVEL = |ONES - WINDOW/2|, BLOCKS += 1, then the peak update.",
+    "Peak update, in order - if LEVEL > PEAK then PEAK = LEVEL and the hold counter = HOLD; else if the hold counter > 0 it decreases by 1; else PEAK = PEAK - DECAY, or 0 if PEAK < DECAY.",
+    "A write to PEAK sets PEAK and the hold counter to 0."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[i] = 1 when LEVEL >= (i + 1) * WINDOW / 32, for i = 0..15 (a bar from LED0 up; all 16 at LEVEL = WINDOW/2). Updated at each block end."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "CLK_HALF": 4,
+  "TIMEOUT_CYCLES": 400,
+  "WINDOW": 256
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-03",
+  "mutants": {
+   "decay_wraps": {
+    "failed_tests": [
+     "test_peak_hold_and_decay"
+    ],
+    "killed": true
+   },
+   "hold_reload_ctrl": {
+    "failed_tests": [
+     "test_peak_hold_and_decay"
+    ],
+    "killed": true
+   },
+   "last_sample_lost": {
+    "failed_tests": [
+     "test_levels_and_leds"
+    ],
+    "killed": true
+   },
+   "led_strict": {
+    "failed_tests": [
+     "test_levels_and_leds"
+    ],
+    "killed": true
+   },
+   "mclk_period": {
+    "failed_tests": [
+     "test_mclk_timing"
+    ],
+    "killed": true
+   },
+   "no_hold": {
+    "failed_tests": [
+     "test_peak_hold_and_decay",
+     "test_random_stream"
+    ],
+    "killed": true
+   },
+   "peak_clear_ignored": {
+    "failed_tests": [
+     "test_peak_hold_and_decay"
+    ],
+    "killed": true
+   },
+   "window_short": {
+    "failed_tests": [
+     "test_lrsel_high_falling_edge",
+     "test_levels_and_leds",
+     "test_peak_hold_and_decay",
+     "test_random_stream"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t2_pdm_vu__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 6,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "O",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 41,
+    "name": "model.py",
+    "path": "benchmark/tasks/t2_pdm_vu/hidden/model.py",
+    "sha256": "53cc83085a43",
+    "text": "\"\"\"Golden model of t2_pdm_vu, written from spec.yaml alone (never from any RTL).\"\"\"\n\nfrom __future__ import annotations\n\nDESIGN_ID = 0x50444D56\nCTRL, LEVEL, PEAK, ONES, BLOCKS = range(5)\n\n\nclass Model:\n    \"\"\"Per-block history from the microphone bit stream; registers as of any block count.\"\"\"\n\n    def __init__(self, window: int) -> None:\n        self.w = window\n        self.hold_set, self.decay = 8, 1\n        self.history: list[dict] = [{\"level\": 0, \"peak\": 0, \"ones\": 0, \"hold\": 0, \"led\": 0}]\n\n    def ctrl(self) -> int:\n        return self.decay << 8 | self.hold_set\n\n    def write_ctrl(self, v: int) -> None:\n        self.hold_set, self.decay = v & 0xFF, (v >> 8) & 0xF\n\n    def clear_peak(self) -> None:\n        self.history[-1] = dict(self.history[-1], peak=0, hold=0)\n\n    def block(self, ones: int) -> None:\n        prev = self.history[-1]\n        level = abs(ones - self.w // 2)\n        peak, hold = prev[\"peak\"], prev[\"hold\"]\n        if level > peak:\n            peak, hold = level, self.hold_set\n        elif hold > 0:\n            hold -= 1\n        else:\n            peak = max(0, peak - self.decay)\n        led = sum(1 << i for i in range(16) if level >= (i + 1) * self.w // 32)\n        self.history.append({\"level\": level, \"peak\": peak, \"ones\": ones, \"hold\": hold, \"led\": led})\n\n    def regs(self, k: int) -> dict[int, int]:\n        h = self.history[k]\n        return {LEVEL: h[\"level\"], PEAK: h[\"peak\"], ONES: h[\"ones\"], BLOCKS: k}\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 75,
+    "name": "pdm_vu.sv",
+    "path": "benchmark/tasks/t2_pdm_vu/ref/rtl/pdm_vu.sv",
+    "sha256": "2decb5e7d549",
+    "text": "// pdm_vu.sv: PDM microphone clock (registered, period 2 * CLK_HALF), samples at\n// the M_CLK falling edge (M_LRSEL = 1 channel), ones per WINDOW-sample block,\n// LEVEL = |ones - WINDOW/2|, PEAK with hold and decay, LED bar.\nmodule pdm_vu #(\n    parameter int CLK_HALF = 20,\n    parameter int WINDOW   = 4096\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        mdata,       // synchronised\n    output logic        mclk,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam int HW = $clog2(CLK_HALF + 1);\n    localparam int NW = $clog2(WINDOW + 1);\n    localparam int STEP = WINDOW / 32;\n\n    logic [HW-1:0] hc;\n    logic [NW-1:0] n, ones, ones_last;\n    logic [15:0]   level, peak;\n    logic [7:0]    hold_set, hold;\n    logic [3:0]    decay;\n    logic [31:0]   blocks;\n\n    wire fall = mclk && hc == HW'(CLK_HALF - 1);\n    wire last = fall && n == NW'(WINDOW - 1);\n    wire [NW-1:0] ones_n = ones + {{(NW-1){1'b0}}, mdata};\n    wire [15:0] lvl_n = (ones_n >= NW'(WINDOW / 2)) ? 16'(ones_n - NW'(WINDOW / 2)) : 16'(NW'(WINDOW / 2) - ones_n);\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            hc <= '0; mclk <= 1'b0; n <= '0; ones <= '0; ones_last <= '0; level <= '0; peak <= '0;\n            hold_set <= 8'd8; decay <= 4'd1; hold <= '0; blocks <= '0; led <= '0;\n        end else begin\n            if (win_wr && win_addr == 7'h00) {decay, hold_set} <= win_wdata[11:0];\n            if (hc == HW'(CLK_HALF - 1)) begin\n                hc <= '0;\n                mclk <= ~mclk;\n            end else begin\n                hc <= hc + 1'b1;\n            end\n            if (fall) begin\n                if (last) begin\n                    n <= '0; ones <= '0; ones_last <= ones_n; level <= lvl_n; blocks <= blocks + 1'b1;\n                    for (int i = 0; i < 16; i++) led[i] <= lvl_n >= 16'((i + 1) * STEP);\n                    if (lvl_n > peak)      begin peak <= lvl_n; hold <= hold_set; end\n                    else if (hold != '0)   hold <= hold - 1'b1;\n                    else                   peak <= (peak < {12'd0, decay}) ? 16'd0 : peak - {12'd0, decay};\n                end else begin\n                    n <= n + 1'b1; ones <= ones_n;\n                end\n            end\n            if (win_wr && win_addr == 7'h02) begin peak <= '0; hold <= '0; end\n        end\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            case (win_addr)\n                7'h00:   win_rdata <= {20'd0, decay, hold_set};\n                7'h01:   win_rdata <= {16'd0, level};\n                7'h02:   win_rdata <= {16'd0, peak};\n                7'h03:   win_rdata <= 32'(ones_last);\n                7'h04:   win_rdata <= blocks;\n                default: win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 42,
+    "name": "t2_pdm_vu_top.sv",
+    "path": "benchmark/tasks/t2_pdm_vu/ref/rtl/t2_pdm_vu_top.sv",
+    "sha256": "2939299cbcaa",
+    "text": "// t2_pdm_vu_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t2_pdm_vu; DESIGN_ID \"PDMV\".\n// PDM microphone level meter (M_LRSEL high, data at M_CLK falling edges), LED bar.\nmodule t2_pdm_vu_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter int          CLK_HALF       = 20,\n    parameter int          WINDOW         = 4096,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic        M_CLK,\n    input  logic        M_DATA,\n    output logic        M_LRSEL,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd, mdata;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h5044_4D56), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    sync2 u_sync (.clk(clk), .rst(rst), .d(M_DATA), .q(mdata));\n\n    always_ff @(posedge clk) begin\n        if (rst) M_LRSEL <= 1'b1;\n        else     M_LRSEL <= 1'b1;\n    end\n\n    pdm_vu #(.CLK_HALF(CLK_HALF), .WINDOW(WINDOW)) u_vu (\n        .clk(clk), .rst(rst), .mdata(mdata), .mclk(M_CLK), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 148,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t2_pdm_vu/hidden/acceptance.py",
+    "sha256": "fb5133fdb0fb",
+    "text": "\"\"\"Acceptance tests of t2_pdm_vu against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom mic_model import Mic\nfrom model import BLOCKS, CTRL, DESIGN_ID, LEVEL, ONES, PEAK, Model\n\n\ndef periodic(pattern: list[int]):\n    return lambda j: pattern[j % len(pattern)]\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, {\"M_DATA\": 0})\n        self.dut = dut\n        self.half = self.b.param(\"CLK_HALF\")\n        self.w = self.b.param(\"WINDOW\")\n        self.m = Model(self.w)\n        self.block_clocks = self.w * 2 * self.half\n\n    async def start(self, bit=None) -> None:\n        self.bits = bit or periodic([0, 1])\n        self.mic = Mic(self.dut, lambda j: self.bits(j))      # before reset ends: it must see the first M_CLK rise\n        await self.b.start()\n\n    def advance_model(self, upto: int) -> None:\n        while len(self.m.history) - 1 < upto:\n            k = len(self.m.history) - 1\n            self.m.block(sum(self.bits(j) for j in range(k * self.w, (k + 1) * self.w)))\n\n    async def check_reg(self, off: int, name: str) -> None:\n        \"\"\"BLOCKS, the register, BLOCKS: the register must match the model at one block count in between.\"\"\"\n        k0 = await self.b.read(BLOCKS)\n        v = await self.b.read(off)\n        k1 = await self.b.read(BLOCKS)\n        assert k0 <= k1 <= k0 + 3, f\"BLOCKS went from {k0} to {k1}\"\n        self.advance_model(k1)\n        ok = [k for k in range(k0, k1 + 1) if self.m.regs(k)[off] == v]\n        assert ok, f\"{name} = {v}, model {[self.m.regs(k)[off] for k in range(k0, k1 + 1)]} for blocks {k0}..{k1}\"\n\n    async def wait_blocks(self, n: int) -> None:\n        await self.b.cycles(n * self.block_clocks)\n\n\n@cocotb.test(timeout_time=1097890, timeout_unit=\"ns\")\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.b.expect(CTRL, e.m.ctrl(), \"CTRL\")\n    for off in (0x05, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n    assert await peek(e.b.clk, dut.M_LRSEL) == 1\n\n\n@cocotb.test(timeout_time=1003500, timeout_unit=\"ns\")\nasync def test_mclk_timing(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.cycles(40 * e.half)\n    highs, lows = e.mic.highs[1:], e.mic.lows[1:]          # the first phase starts at reset\n    assert highs and set(highs) == {e.half} and set(lows) == {e.half}, \\\n        f\"M_CLK high {sorted(set(highs))} low {sorted(set(lows))}, model {e.half} each\"\n\n\n@cocotb.test(timeout_time=1228640, timeout_unit=\"ns\")\nasync def test_lrsel_high_falling_edge(dut):\n    \"\"\"Trap: the textbook drives M_LRSEL low and samples at the rising edge; this spec uses the M_LRSEL = 1 channel,\n    whose data is valid in the high half and taken at the falling edge (the other half carries garbage here).\"\"\"\n    pat = [1, 1, 1, 0] * 4                                  # 75 % ones: ONES = 3/4 WINDOW, LEVEL = WINDOW/4\n    e = Env(dut)\n    await e.start(periodic(pat))\n    await e.wait_blocks(2)\n    assert not e.mic.lrsel_low_seen, \"M_LRSEL was driven low\"\n    await e.check_reg(ONES, \"ONES\")\n    await e.check_reg(LEVEL, \"LEVEL\")\n\n\n@cocotb.test(timeout_time=2795630, timeout_unit=\"ns\")\nasync def test_levels_and_leds(dut):\n    e = Env(dut)\n    await e.start()\n    for ones_per_32 in (16, 0, 32, 20, 9):                  # density in 32-bit patterns\n        pat = [1] * ones_per_32 + [0] * (32 - ones_per_32)\n        start = (await e.b.read(BLOCKS) + 2) * e.w          # from a block boundary well ahead\n        old = e.bits\n        e.bits = (lambda p, s, o: (lambda j: p[j % 32] if j >= s else o(j)))(pat, start, old)\n        await e.wait_blocks(4)\n        await e.check_reg(LEVEL, \"LEVEL\")\n        await e.check_reg(ONES, \"ONES\")\n        e.advance_model(await e.b.read(BLOCKS))\n        led = await peek(e.b.clk, dut.LED)\n        assert led == e.m.history[-1][\"led\"], f\"LED {led:016b}, model {e.m.history[-1]['led']:016b}\"\n\n\n@cocotb.test(timeout_time=2795630, timeout_unit=\"ns\")\nasync def test_peak_hold_and_decay(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(CTRL, 0x302)                            # HOLD 2 blocks, DECAY 3\n    e.m.write_ctrl(0x302)\n    await e.b.expect(CTRL, 0x302, \"CTRL\")\n    k = await e.b.read(BLOCKS) + 2\n    loud = [1] * 18 + [0] * 14                              # LEVEL = WINDOW/16 (two LEDs), blocks k and k+1 only\n    quiet = periodic([0, 1])\n    e.bits = (lambda j: loud[j % 32] if k * e.w <= j < (k + 2) * e.w else quiet(j))\n    await e.b.cycles((k + 2 - await e.b.read(BLOCKS)) * e.block_clocks)\n    for _ in range(10):                                     # hold, then decay to 0\n        await e.check_reg(PEAK, \"PEAK\")\n    # a write clears PEAK: with a long hold the peak would otherwise stay\n    e.advance_model(await e.b.read(BLOCKS) + 1)             # blocks so far use the old settings\n    await e.b.write(CTRL, 0x1C8)                            # HOLD 200 blocks, DECAY 1\n    e.m.write_ctrl(0x1C8)\n    k = await e.b.read(BLOCKS) + 2\n    e.bits = (lambda j: loud[j % 32] if k * e.w - 8 <= j < (k + 1) * e.w + 8 else quiet(j))   # 8 spare samples\n    await e.b.cycles((k + 2 - await e.b.read(BLOCKS)) * e.block_clocks)\n    await e.check_reg(PEAK, \"PEAK held\")\n    await e.b.write(PEAK, 1)\n    await e.b.expect(PEAK, 0, \"PEAK after a write\")\n    await e.b.cycles(2 * e.block_clocks)\n    await e.b.expect(PEAK, 0, \"PEAK two blocks after the clear (quiet input)\")\n\n\n@cocotb.test(timeout_time=1481320, timeout_unit=\"ns\")\nasync def test_random_stream(dut):\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    dens = [rng.random() for _ in range(64)]\n    cache: dict[int, int] = {}\n\n    def bit(j: int) -> int:\n        if j not in cache:\n            cache[j] = int(random.Random(j * 7919 + 13).random() < dens[(j // 97) % 64])\n        return cache[j]\n\n    e = Env(dut)\n    await e.start(bit)\n    v = rng.randrange(1 << 12)\n    e.advance_model(await e.b.read(BLOCKS) + 1)\n    await e.b.write(CTRL, v)\n    e.m.write_ctrl(v)\n    for _ in range(4):\n        await e.wait_blocks(1)\n        await e.check_reg(rng.choice((LEVEL, ONES, PEAK)), \"register\")\n"
+   }
+  ]
+ },
+ "heading": "Sound-level meter from the PDM microphone",
+ "id": "t2_pdm_vu",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "CLK_HALF": 20,
+   "TIMEOUT_CYCLES": 100000,
+   "WINDOW": 4096
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "M_CLK",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "M_DATA",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "M_LRSEL",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[7:0] HOLD (blocks), [11:8] DECAY (per block); [31:12] read 0",
+    "name": "CTRL",
+    "offset": "0x00"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] level of the last block",
+    "name": "LEVEL",
+    "offset": "0x01"
+   },
+   {
+    "access": "RO + write clears",
+    "bits": "[15:0] peak; any write sets it (and the hold) to 0",
+    "name": "PEAK",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] ones in the last block",
+    "name": "ONES",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[31:0] blocks completed since reset",
+    "name": "BLOCKS",
+    "offset": "0x04"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: registers to reset values; M_CLK low; the first block starts with the first sample after reset",
+  "top": "t2_pdm_vu_top",
+  "unmapped": "offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "pdm_vu.sv",
+   "name": "mclk_period",
+   "why": "M_CLK half period one clock long (and the sample point off)"
+  },
+  {
+   "file": "pdm_vu.sv",
+   "name": "window_short",
+   "why": "a block is one sample short"
+  },
+  {
+   "file": "pdm_vu.sv",
+   "name": "no_hold",
+   "why": "the peak decays at once, without the hold"
+  },
+  {
+   "file": "pdm_vu.sv",
+   "name": "decay_wraps",
+   "why": "the peak wraps below zero instead of stopping at 0"
+  },
+  {
+   "file": "pdm_vu.sv",
+   "name": "led_strict",
+   "why": "an LED needs a level above its threshold, not at it"
+  },
+  {
+   "file": "pdm_vu.sv",
+   "name": "peak_clear_ignored",
+   "why": "a write does not clear PEAK"
+  },
+  {
+   "file": "pdm_vu.sv",
+   "name": "last_sample_lost",
+   "why": "ONES misses the block's last sample"
+  },
+  {
+   "file": "pdm_vu.sv",
+   "name": "hold_reload_ctrl",
+   "why": "the hold ignores CTRL.HOLD"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t2_pdm_vu",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "M_CLK has period 2 * CLK_HALF clocks with 50 % duty; M_LRSEL is always 1"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Data is taken at M_CLK falling edges (the channel M_LRSEL = 1 selects)"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "ONES, LEVEL and BLOCKS follow every block"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation"
+   ],
+   "text": "PEAK holds for HOLD blocks and then decays by DECAY per block; a write clears it"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "text": "The LED bar shows LEVEL against the listed thresholds"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board a quiet room gives a low level with bit activity, and a clap raises the peak"
+  },
+  {
+   "id": "REQ-07",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": "under a hundred LUTs and FFs; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# Sound-level meter from the PDM microphone\n\nI'd like a simple sound-level meter on the Nexys A7-100T using its PDM microphone, shown as a bar graph on the 16\nLEDs, with the numbers readable over the test shell.\n\n- Clock the microphone from the 100 MHz board clock divided down (a parameter sets the half period of M_CLK in\n  clocks; about 2.5 MHz on the board). Use the microphone channel that has M_LRSEL driven high, and take the data\n  on the correct clock edge for that channel.\n- Count the ones in each block of a fixed number of bits (a parameter). Silence gives about half ones, so the level\n  of a block is how far the count is from half the block size.\n- Keep a peak value that holds for a while after a loud block and then falls back slowly; how long it holds and how\n  fast it falls should be settable.\n- LEDs: a bar graph of the level, all 16 lit at full scale.\n- Registers for the level, the peak (which I can reset), the settings, and how many blocks have gone by.\n- Design ID \"PDMV\".\n\nTest hooks: top module `t2_pdm_vu_top`, ports named as in the board's master XDC (`M_CLK`, `M_DATA`, `M_LRSEL`,\n`LED`, the USB-UART pins, `CLK100MHZ`, `CPU_RESETN`), the test shell's `CLKS_PER_BIT`, `TIMEOUT_CYCLES` and\n`BUILD_STAMP` parameters, plus `CLK_HALF` (M_CLK half period in clocks) and `WINDOW` (bits per block, a multiple\nof 32) as top-level parameters.\n",
+ "survey": [
+  "O06",
+  "B29",
+  "L08"
+ ],
+ "tier": "T2",
+ "title": "PDM microphone sound-level meter with peak hold",
+ "trace": {
+  "captions": [
+   "Block 1: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak stays at 0.",
+   "Block 2: 33 ones out of 64, level 1 (distance from 32). 0 of 16 LEDs lit. New peak 1, held for 3 blocks.",
+   "Block 3: 31 ones out of 64, level 1 (distance from 32). 0 of 16 LEDs lit. Peak 1 is held (hold blocks left: 2).",
+   "Block 4: 34 ones out of 64, level 2 (distance from 32). 1 of 16 LEDs lit. New peak 2, held for 3 blocks.",
+   "Block 5: 30 ones out of 64, level 2 (distance from 32). 1 of 16 LEDs lit. Peak 2 is held (hold blocks left: 2).",
+   "Block 6: 40 ones out of 64, level 8 (distance from 32). 4 of 16 LEDs lit. New peak 8, held for 3 blocks.",
+   "Block 7: 36 ones out of 64, level 4 (distance from 32). 2 of 16 LEDs lit. Peak 8 is held (hold blocks left: 2).",
+   "Block 8: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak 8 is held (hold blocks left: 1).",
+   "Block 9: 31 ones out of 64, level 1 (distance from 32). 0 of 16 LEDs lit. Peak 8 is held (hold blocks left: 0).",
+   "Block 10: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 6.",
+   "Block 11: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 4.",
+   "Block 12: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 2.",
+   "Block 13: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 0.",
+   "Block 14: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak stays at 0.",
+   "Block 15: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak stays at 0.",
+   "Block 16: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak stays at 0.",
+   "Block 17: 58 ones out of 64, level 26 (distance from 32). 13 of 16 LEDs lit. New peak 26, held for 3 blocks.",
+   "Block 18: 34 ones out of 64, level 2 (distance from 32). 1 of 16 LEDs lit. Peak 26 is held (hold blocks left: 2).",
+   "Block 19: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak 26 is held (hold blocks left: 1).",
+   "Block 20: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak 26 is held (hold blocks left: 0).",
+   "Block 21: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 24.",
+   "Block 22: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 22.",
+   "Block 23: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 20.",
+   "Block 24: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 18.",
+   "Block 25: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 16.",
+   "Block 26: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 14.",
+   "Block 27: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 12.",
+   "Block 28: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak falls by 2 to 10.",
+   "Block 29: 45 ones out of 64, level 13 (distance from 32). 6 of 16 LEDs lit. New peak 13, held for 3 blocks.",
+   "Block 30: 32 ones out of 64, level 0 (distance from 32). 0 of 16 LEDs lit. Peak 13 is held (hold blocks left: 2)."
+  ],
+  "signals": [
+   {
+    "hi": 64,
+    "kind": "wave",
+    "lo": 0,
+    "name": "ONES",
+    "v": [
+     32,
+     33,
+     31,
+     34,
+     30,
+     40,
+     36,
+     32,
+     31,
+     32,
+     32,
+     32,
+     32,
+     32,
+     32,
+     32,
+     58,
+     34,
+     32,
+     32,
+     32,
+     32,
+     32,
+     32,
+     32,
+     32,
+     32,
+     32,
+     45,
+     32
+    ]
+   },
+   {
+    "hi": 32,
+    "kind": "wave",
+    "lo": 0,
+    "name": "LEVEL",
+    "v": [
+     0,
+     1,
+     1,
+     2,
+     2,
+     8,
+     4,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     26,
+     2,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     13,
+     0
+    ]
+   },
+   {
+    "hi": 32,
+    "kind": "wave",
+    "lo": 0,
+    "name": "PEAK",
+    "v": [
+     0,
+     1,
+     1,
+     2,
+     2,
+     8,
+     8,
+     8,
+     8,
+     6,
+     4,
+     2,
+     0,
+     0,
+     0,
+     0,
+     26,
+     26,
+     26,
+     26,
+     24,
+     22,
+     20,
+     18,
+     16,
+     14,
+     12,
+     10,
+     13,
+     13
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "LED[15:0]",
+    "radix": "bin",
+    "v": [
+     0,
+     0,
+     0,
+     1,
+     1,
+     15,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     8191,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     63,
+     0
+    ],
+    "width": 16
+   }
+  ],
+  "stimulus": "Blocks of 64 microphone samples (shrunk) with the given number of ones: near 32 for quiet, a loud burst of 58 ones, then quiet again and a smaller burst of 45. Peak hold is 3 blocks and decay is 2 a block.",
+  "unit": "block",
+  "x": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30
+  ]
+ },
+ "what": "A sound-level meter using the board's digital microphone. The microphone sends a fast stream of single bits where the density of ones follows the sound. The design counts the ones in each block of bits, and since silence gives about half ones, the level is how far the count is from half. A peak value holds for a while after a loud block and then falls slowly, and a bar of LEDs shows the level.",
+ "where": "Pulse-density microphones are standard in phones, laptops and smart speakers, and level meters and voice-activity detectors are built on exactly this kind of ones counting before any heavier audio processing."
+}

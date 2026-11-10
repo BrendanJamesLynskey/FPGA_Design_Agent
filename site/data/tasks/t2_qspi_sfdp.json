@@ -1,0 +1,739 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the start-up SCK cycles are sent once after reset, not before every start.",
+   "reason": "STARTUPE2 drops edges only after configuration; once is enough."
+  },
+  {
+   "assumption": "SIG_OK compares only the four signature bytes.",
+   "reason": "the request asks whether the signature matched."
+  }
+ ],
+ "behaviour": [
+  [
+   "sck",
+   [
+    "SCK reaches the flash only through STARTUPE2 - USRCCLKO = SCK, USRCCLKTS = 0; the other STARTUPE2 inputs inactive (GSR 0, GTS 0, KEYCLEARB 1, PACK 0, USRDONEO 1, USRDONETS 1). No QSPI_SCK port.",
+    "After reset, before any transaction, SCK makes at least 3 full cycles with QSPI_CSN high (STARTUPE2 drops the first 3 USRCCLKO edges after configuration).",
+    "SCK idles low (mode 0); each half period is HALF clocks."
+   ]
+  ],
+  [
+   "transactions",
+   [
+    "Mode 0 - the flash samples DQ0 on SCK rising edges and changes DQ1 after falling edges; the master puts each bit on DQ0 before the rising edge and samples DQ1 (synchronised by two flops) at the rising edge. Bytes MSB first.",
+    "Each transaction - QSPI_CSN low, at least HALF clocks, the SCK cycles back to back, at least HALF clocks after the last falling edge QSPI_CSN high, and at least 4 * HALF clocks high before the next.",
+    "A write to CTRL with bit 0 = 1 while BUSY = 0 - BUSY set, DONE and SIG_OK cleared, then two transactions - RDID [0x9F, then 3 bytes read into ID] and RSFDP [0x5A, address 0x00 0x00 0x00, 8 dummy SCK cycles, then 16 bytes read into SFDP0-SFDP3]; then BUSY cleared, DONE set, SIG_OK = (SFDP0 == 0x50444653).",
+    "Writes to CTRL while BUSY are ignored. A later start reads both again.",
+    "No other opcode is ever sent (no write enable, program, erase, register write or reset); DQ0 is a don't-care during the dummy and read bytes."
+   ]
+  ],
+  [
+   "pins",
+   [
+    "QSPI_DQ2 (WP#) = 0 and QSPI_DQ3 (HOLD#) = 1 at all times."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "HALF": 8,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-04",
+  "mutants": {
+   "fast_read_opcode": {
+    "failed_tests": [
+     "test_jedec_id_and_sfdp",
+     "test_bad_signature",
+     "test_busy_and_repeat",
+     "test_random_contents"
+    ],
+    "killed": true
+   },
+   "half_short": {
+    "failed_tests": [
+     "test_jedec_id_and_sfdp",
+     "test_bad_signature",
+     "test_busy_and_repeat",
+     "test_random_contents"
+    ],
+    "killed": true
+   },
+   "hold_low": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_jedec_id_and_sfdp",
+     "test_bad_signature",
+     "test_busy_and_repeat",
+     "test_random_contents"
+    ],
+    "killed": true
+   },
+   "id_two_bytes": {
+    "failed_tests": [
+     "test_jedec_id_and_sfdp",
+     "test_bad_signature",
+     "test_busy_and_repeat",
+     "test_random_contents"
+    ],
+    "killed": true
+   },
+   "no_dummy_byte": {
+    "failed_tests": [
+     "test_jedec_id_and_sfdp",
+     "test_bad_signature",
+     "test_busy_and_repeat",
+     "test_random_contents"
+    ],
+    "killed": true
+   },
+   "no_startup_cycles": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_jedec_id_and_sfdp",
+     "test_bad_signature",
+     "test_busy_and_repeat",
+     "test_random_contents"
+    ],
+    "killed": true
+   },
+   "sig_check_off": {
+    "failed_tests": [
+     "test_bad_signature"
+    ],
+    "killed": true
+   },
+   "words_big_endian": {
+    "failed_tests": [
+     "test_jedec_id_and_sfdp",
+     "test_bad_signature",
+     "test_busy_and_repeat",
+     "test_random_contents"
+    ],
+    "killed": true
+   },
+   "wp_high": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_jedec_id_and_sfdp",
+     "test_bad_signature",
+     "test_busy_and_repeat",
+     "test_random_contents"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t2_qspi_sfdp__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 5,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "F",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 32,
+    "name": "model.py",
+    "path": "benchmark/tasks/t2_qspi_sfdp/hidden/model.py",
+    "sha256": "b563b67948bd",
+    "text": "\"\"\"Golden model of t2_qspi_sfdp, written from spec.yaml alone (never from any RTL).\"\"\"\n\nfrom __future__ import annotations\n\nDESIGN_ID = 0x53464450\nCTRL, STATUS, ID, SFDP0 = 0, 1, 2, 3\nBUSY, DONE, SIG_OK = 1, 2, 4\n\n\nclass Model:\n    def __init__(self) -> None:\n        self.id = 0\n        self.words = [0, 0, 0, 0]\n        self.done = self.sig = False\n\n    def start(self, ident: bytes, sfdp: bytes) -> list[tuple[list[int], int]]:\n        \"\"\"Returns, per transaction, the MOSI bytes the spec fixes (opcode, address) and the byte count. DQ0 during\n        the dummy and read bytes is a don't-care (v1.2).\"\"\"\n        self.id = ident[0] << 16 | ident[1] << 8 | ident[2]\n        self.words = [int.from_bytes(sfdp[4 * i:4 * i + 4], \"little\") for i in range(4)]\n        self.done = True\n        self.sig = self.words[0] == 0x50444653\n        return [([0x9F], 4), ([0x5A, 0, 0, 0], 21)]\n\n    def read(self, off: int) -> int:\n        if off == STATUS:\n            return (DONE if self.done else 0) | (SIG_OK if self.sig else 0)\n        if off == ID:\n            return self.id\n        if SFDP0 <= off < SFDP0 + 4:\n            return self.words[off - SFDP0]\n        return 0\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 95,
+    "name": "sf_spi.sv",
+    "path": "benchmark/tasks/t2_qspi_sfdp/ref/rtl/sf_spi.sv",
+    "sha256": "82d80dce975d",
+    "text": "// sf_spi.sv: single-bit SPI mode-0 transaction engine for the configuration\n// flash. CS low, nhdr header bytes from hdr (MSB byte first), then nrd bytes\n// with DQ0 = 0 whose received values come out on rx_valid / rx_byte, CS high,\n// then a gap. Once after reset it first makes STARTUP SCK cycles with CS high.\nmodule sf_spi #(\n    parameter int HALF    = 10,\n    parameter int STARTUP = 8\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        go,\n    input  logic [31:0] hdr,\n    input  logic [2:0]  nhdr,\n    input  logic [4:0]  nrd,\n    input  logic        miso,          // synchronised\n    output logic        sck,\n    output logic        mosi,\n    output logic        csn,\n    output logic        busy,          // includes the start-up cycles\n    output logic        rx_valid,\n    output logic [7:0]  rx_byte\n);\n    localparam int CW = $clog2(4 * HALF + 1);\n    typedef enum logic [2:0] {BOOT, IDLE, LEAD, LOW, HIGH, TAIL, GAP} st_t;\n    st_t st;\n\n    logic [CW-1:0] cnt;\n    logic [2:0]    bitn;\n    logic [5:0]    b, total;\n    logic [31:0]   h;\n    logic [2:0]    nh;\n    logic [7:0]    sh_out, sh_in;\n    logic [4:0]    boot_n;\n\n    function automatic logic [7:0] tx_byte(input logic [5:0] idx, input logic [31:0] hh, input logic [2:0] n);\n        if (idx >= {3'd0, n}) tx_byte = 8'h00;\n        else                  tx_byte = hh[31 - 8 * idx[1:0] -: 8];\n    endfunction\n    function automatic logic msb(input logic [7:0] v);\n        msb = v[7];\n    endfunction\n\n    always_ff @(posedge clk) begin\n        rx_valid <= 1'b0;\n        if (rst) begin\n            st <= BOOT; cnt <= CW'(HALF - 1); bitn <= '0; b <= '0; total <= '0; h <= '0; nh <= '0;\n            sh_out <= '0; sh_in <= '0; sck <= 1'b0; mosi <= 1'b0; csn <= 1'b1; busy <= 1'b1; rx_byte <= '0;\n            boot_n <= '0;\n        end else begin\n            case (st)\n                // start-up: STARTUP SCK cycles with CS high\n                BOOT: if (cnt == '0) begin\n                    cnt <= CW'(HALF - 1);\n                    sck <= ~sck;\n                    if (sck) begin\n                        if (boot_n == 5'(STARTUP - 1)) begin st <= GAP; cnt <= CW'(4 * HALF - 1); end\n                        boot_n <= boot_n + 1'b1;\n                    end\n                end else cnt <= cnt - 1'b1;\n                IDLE: if (go) begin\n                    busy <= 1'b1; csn <= 1'b0; h <= hdr; nh <= nhdr;\n                    total <= {3'd0, nhdr} + {1'b0, nrd};\n                    b <= '0; st <= LEAD; cnt <= CW'(HALF - 1);\n                end\n                LEAD: if (cnt == '0) begin\n                    st <= LOW; cnt <= CW'(HALF - 1); bitn <= '0;\n                    sh_out <= tx_byte(6'd0, h, nh); mosi <= msb(tx_byte(6'd0, h, nh));\n                end else cnt <= cnt - 1'b1;\n                LOW: if (cnt == '0) begin\n                    st <= HIGH; cnt <= CW'(HALF - 1); sck <= 1'b1;\n                    sh_in <= {sh_in[6:0], miso};\n                end else cnt <= cnt - 1'b1;\n                HIGH: if (cnt == '0) begin\n                    sck <= 1'b0; cnt <= CW'(HALF - 1);\n                    if (bitn == 3'd7) begin\n                        if (b >= {3'd0, nh}) begin rx_valid <= 1'b1; rx_byte <= sh_in; end\n                        if (b + 1'b1 == total) begin\n                            st <= TAIL; mosi <= 1'b0;\n                        end else begin\n                            b <= b + 1'b1; bitn <= '0; st <= LOW;\n                            sh_out <= tx_byte(b + 1'b1, h, nh); mosi <= msb(tx_byte(b + 1'b1, h, nh));\n                        end\n                    end else begin\n                        bitn <= bitn + 1'b1; st <= LOW;\n                        sh_out <= {sh_out[6:0], 1'b0}; mosi <= sh_out[6];\n                    end\n                end else cnt <= cnt - 1'b1;\n                TAIL: if (cnt == '0) begin st <= GAP; csn <= 1'b1; cnt <= CW'(4 * HALF - 1); end\n                      else cnt <= cnt - 1'b1;\n                GAP: if (cnt == '0) begin st <= IDLE; busy <= 1'b0; end else cnt <= cnt - 1'b1;\n                default: st <= IDLE;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 85,
+    "name": "sfdp_ctl.sv",
+    "path": "benchmark/tasks/t2_qspi_sfdp/ref/rtl/sfdp_ctl.sv",
+    "sha256": "c79275543f3c",
+    "text": "// sfdp_ctl.sv: on a start command, RDID (9Fh, 3 bytes) then RSFDP (5Ah,\n// address 0, 8 dummy cycles, 16 bytes). The only opcodes are these two\n// constants; no write, erase, register-write or reset command exists here.\nmodule sfdp_ctl #(\n    parameter int HALF = 10\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        miso,\n    output logic        sck,\n    output logic        mosi,\n    output logic        csn,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam logic [7:0] OP_RDID = 8'h9F, OP_RSFDP = 8'h5A;\n\n    typedef enum logic [2:0] {IDLE, ID, ID_W, SF, SF_W} st_t;\n    st_t st;\n\n    logic         go, sbusy, rx_valid, busy, done, sig_ok;\n    logic [31:0]  hdr;\n    logic [2:0]   nhdr;\n    logic [4:0]   nrd, ridx;\n    logic [7:0]   rx_byte;\n    logic [23:0]  id;\n    logic [127:0] sf;\n\n    sf_spi #(.HALF(HALF)) u_spi (\n        .clk(clk), .rst(rst), .go(go), .hdr(hdr), .nhdr(nhdr), .nrd(nrd), .miso(miso),\n        .sck(sck), .mosi(mosi), .csn(csn), .busy(sbusy), .rx_valid(rx_valid), .rx_byte(rx_byte));\n\n    wire start = win_wr && win_addr == 7'h00 && win_wdata[0] && !busy;\n\n    always_ff @(posedge clk) begin\n        go <= 1'b0;\n        if (rst) begin\n            st <= IDLE; hdr <= '0; nhdr <= '0; nrd <= '0; ridx <= '0; busy <= 1'b0; done <= 1'b0; sig_ok <= 1'b0;\n            id <= '0; sf <= '0;\n        end else begin\n            case (st)\n                IDLE: if (start) begin busy <= 1'b1; done <= 1'b0; sig_ok <= 1'b0; st <= ID; end\n                ID: if (!sbusy) begin\n                    hdr <= {OP_RDID, 24'h0}; nhdr <= 3'd1; nrd <= 5'd3; go <= 1'b1; ridx <= '0; st <= ID_W;\n                end\n                ID_W: begin\n                    if (rx_valid) id <= {id[15:0], rx_byte};\n                    if (!go && !sbusy) st <= SF;\n                end\n                SF: begin\n                    hdr <= {OP_RSFDP, 24'h000000}; nhdr <= 3'd4; nrd <= 5'd17; go <= 1'b1; ridx <= '0; st <= SF_W;\n                end\n                SF_W: begin\n                    if (rx_valid) begin\n                        ridx <= ridx + 1'b1;\n                        if (ridx != 5'd0) sf <= {rx_byte, sf[127:8]};      // byte 0 ends in [7:0]\n                    end\n                    if (!go && !sbusy) begin\n                        st <= IDLE; busy <= 1'b0; done <= 1'b1;\n                        sig_ok <= sf[31:0] == 32'h5044_4653;\n                    end\n                end\n                default: st <= IDLE;\n            endcase\n        end\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            case (win_addr)\n                7'h01:   win_rdata <= {29'd0, sig_ok, done, busy};\n                7'h02:   win_rdata <= {8'd0, id};\n                7'h03:   win_rdata <= sf[31:0];\n                7'h04:   win_rdata <= sf[63:32];\n                7'h05:   win_rdata <= sf[95:64];\n                7'h06:   win_rdata <= sf[127:96];\n                default: win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 49,
+    "name": "t2_qspi_sfdp_top.sv",
+    "path": "benchmark/tasks/t2_qspi_sfdp/ref/rtl/t2_qspi_sfdp_top.sv",
+    "sha256": "afb0a9bc95ba",
+    "text": "// t2_qspi_sfdp_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t2_qspi_sfdp; DESIGN_ID \"SFDP\".\n// Reads the configuration flash's JEDEC ID and SFDP header. SCK leaves through\n// STARTUPE2 USRCCLKO; WP# (DQ2) low, HOLD# (DQ3) high; single-bit SPI mode 0.\nmodule t2_qspi_sfdp_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter int          HALF           = 10,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic CLK100MHZ,\n    input  logic CPU_RESETN,\n    output logic QSPI_CSN,\n    output logic QSPI_DQ0,\n    input  logic QSPI_DQ1,\n    output logic QSPI_DQ2,\n    output logic QSPI_DQ3,\n    input  logic UART_TXD_IN,\n    output logic UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd, miso, sck;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h5346_4450), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    sync2 u_sync (.clk(clk), .rst(rst), .d(QSPI_DQ1), .q(miso));\n\n    assign QSPI_DQ2 = 1'b0;\n    assign QSPI_DQ3 = 1'b1;\n\n    sfdp_ctl #(.HALF(HALF)) u_ctl (\n        .clk(clk), .rst(rst), .miso(miso), .sck(sck), .mosi(QSPI_DQ0), .csn(QSPI_CSN),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    /* verilator lint_off UNUSEDSIGNAL */\n    logic cfgclk_nc, cfgmclk_nc, eos_nc, preq_nc;\n    /* verilator lint_on UNUSEDSIGNAL */\n    STARTUPE2 #(.PROG_USR(\"FALSE\"), .SIM_CCLK_FREQ(0.0)) u_startup (\n        .CFGCLK(cfgclk_nc), .CFGMCLK(cfgmclk_nc), .EOS(eos_nc), .PREQ(preq_nc),\n        .CLK(1'b0), .GSR(1'b0), .GTS(1'b0), .KEYCLEARB(1'b1), .PACK(1'b0),\n        .USRCCLKO(sck), .USRCCLKTS(1'b0), .USRDONEO(1'b1), .USRDONETS(1'b1));\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 114,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t2_qspi_sfdp/hidden/acceptance.py",
+    "sha256": "ae5487ff8f2a",
+    "text": "\"\"\"Acceptance tests of t2_qspi_sfdp against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board\nfrom flash_model import IDENT, SFDP_TABLE, Flash\nfrom model import BUSY, CTRL, DESIGN_ID, ID, SFDP0, STATUS, Model\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, {\"QSPI_DQ1\": 0})\n        self.dut, self.m = dut, Model()\n        self.half = self.b.param(\"HALF\")\n\n    async def start(self, ident: bytes = IDENT, sfdp: bytes = SFDP_TABLE) -> None:\n        await self.b.start()\n        self.f = Flash(self.dut, ident, sfdp)\n        self.ident, self.sfdp = ident, sfdp\n\n    async def regs(self) -> None:\n        for off, name in ((STATUS, \"STATUS\"), (ID, \"ID\"), (SFDP0, \"SFDP0\"), (SFDP0 + 1, \"SFDP1\"),\n                          (SFDP0 + 2, \"SFDP2\"), (SFDP0 + 3, \"SFDP3\")):\n            await self.b.expect(off, self.m.read(off), name)\n\n    def check_tx(self, want: list[tuple[list[int], int]]) -> None:\n        \"\"\"Opcode and address bytes exactly, byte count exactly; DQ0 during dummy and read bytes is free.\"\"\"\n        got = self.f.transactions\n        assert len(got) == len(want), f\"{len(got)} transactions, model {len(want)}\"\n        for g, (fixed, n) in zip(got, want):\n            assert len(g) == n, f\"transaction of {len(g)} bytes {g}, model {n}\"\n            assert g[:len(fixed)] == fixed, f\"opcode/address bytes {g[:len(fixed)]}, model {fixed}\"\n\n    async def run(self) -> list[tuple[list[int], int]]:\n        await self.b.write(CTRL, 1)\n        want = self.m.start(self.ident, self.sfdp)\n        await self.b.cycles(30 * 16 * self.half + 400)\n        return want\n\n    def check_flash(self) -> None:\n        f = self.f\n        assert f.bad_opcodes == [], f\"forbidden opcodes sent to the flash: {[hex(o) for o in f.bad_opcodes]}\"\n        assert not f.wp_hold_bad, \"WP# (DQ2) left 0 or HOLD# (DQ3) left 1\"\n        assert not f.halves or min(f.halves) >= self.half, f\"SCK half period {min(f.halves)} < HALF {self.half}\"\n\n\n@cocotb.test(timeout_time=1244260, timeout_unit=\"ns\")\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.regs()\n    for off in (CTRL, 0x07, 0x7F):\n        await e.b.expect(off, 0, \"unmapped / write-only\")\n    assert e.f.transactions == [], \"flash traffic before the start command\"\n    assert e.f.idle_cycles >= 3, f\"only {e.f.idle_cycles} SCK cycles with CS high after reset (STARTUPE2 drops 3)\"\n    e.check_flash()\n\n\n@cocotb.test(timeout_time=1255880, timeout_unit=\"ns\")\nasync def test_jedec_id_and_sfdp(dut):\n    e = Env(dut)\n    await e.start()\n    want = await e.run()\n    e.check_tx(want)\n    await e.regs()\n    assert e.m.sig\n    e.check_flash()\n\n\n@cocotb.test(timeout_time=1255880, timeout_unit=\"ns\")\nasync def test_bad_signature(dut):\n    e = Env(dut)\n    await e.start(sfdp=bytes([0xFF] * 4) + SFDP_TABLE[4:])      # an erased or non-SFDP part\n    await e.run()\n    await e.regs()\n    assert not e.m.sig\n    e.check_flash()\n\n\n@cocotb.test(timeout_time=1552200, timeout_unit=\"ns\")\nasync def test_busy_and_repeat(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(CTRL, 1)\n    e.m.start(e.ident, e.sfdp)\n    st = await e.b.read(STATUS)\n    assert st == BUSY, f\"STATUS 0x{st:X} during the reads, model BUSY only\"\n    await e.b.write(CTRL, 1)                                  # ignored while busy\n    await e.b.cycles(30 * 16 * e.half)\n    await e.regs()\n    assert len(e.f.transactions) == 2, f\"{len(e.f.transactions)} transactions; a start while busy was not ignored\"\n    e.f.ident = bytes([0x01, 0x02, 0x19]) + IDENT[3:]        # another part answers the second time\n    e.ident = e.f.ident\n    await e.run()\n    await e.regs()\n    assert len(e.f.transactions) == 4\n    e.check_flash()\n\n\n@cocotb.test(timeout_time=1255880, timeout_unit=\"ns\")\nasync def test_random_contents(dut):\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    ident = bytes(rng.randrange(256) for _ in range(8))\n    sfdp = b\"SFDP\" + bytes(rng.randrange(256) for _ in range(60))\n    e = Env(dut)\n    await e.start(ident, sfdp)\n    want = await e.run()\n    e.check_tx(want)\n    await e.regs()\n    e.check_flash()\n"
+   }
+  ]
+ },
+ "heading": "Read the configuration flash's ID and SFDP header",
+ "id": "t2_qspi_sfdp",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "HALF": 10,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "QSPI_CSN",
+    "note": "4.7 kohm pull-up on the board",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "QSPI_DQ0",
+    "note": "flash SI (master out)",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "QSPI_DQ1",
+    "note": "flash SO (master in)",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "QSPI_DQ2",
+    "note": "WP# - drive 0",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "QSPI_DQ3",
+    "note": "HOLD# - drive 1",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "WO",
+    "bits": "[0] write 1 to start; reads return 0",
+    "name": "CTRL",
+    "offset": "0x00"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] BUSY, [1] DONE, [2] SIG_OK; [31:3] 0",
+    "name": "STATUS",
+    "offset": "0x01"
+   },
+   {
+    "access": "RO",
+    "bits": "[23:16] first RDID byte (manufacturer), [15:8] second, [7:0] third; [31:24] 0",
+    "name": "ID",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "SFDP bytes 0-3, byte 0 in [7:0] (little-endian; the signature reads 0x50444653)",
+    "name": "SFDP0",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "SFDP bytes 4-7, byte 4 in [7:0]",
+    "name": "SFDP1",
+    "offset": "0x04"
+   },
+   {
+    "access": "RO",
+    "bits": "SFDP bytes 8-11",
+    "name": "SFDP2",
+    "offset": "0x05"
+   },
+   {
+    "access": "RO",
+    "bits": "SFDP bytes 12-15",
+    "name": "SFDP3",
+    "offset": "0x06"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: registers to reset values; QSPI_CSN high; SCK low; then the start-up SCK cycles (below)",
+  "top": "t2_qspi_sfdp_top",
+  "unmapped": "offsets 0x07-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "sfdp_ctl.sv",
+   "name": "no_dummy_byte",
+   "why": "no dummy cycles: SFDP bytes shifted by one"
+  },
+  {
+   "file": "sfdp_ctl.sv",
+   "name": "fast_read_opcode",
+   "why": "a FAST_READ (0Bh) of address 0 instead of RSFDP"
+  },
+  {
+   "file": "sfdp_ctl.sv",
+   "name": "words_big_endian",
+   "why": "byte 0 ends in the top of SFDP3"
+  },
+  {
+   "file": "sf_spi.sv",
+   "name": "no_startup_cycles",
+   "why": "no SCK cycles with CS high after reset"
+  },
+  {
+   "file": "t2_qspi_sfdp_top.sv",
+   "name": "hold_low",
+   "why": "HOLD# low (the flash pauses)"
+  },
+  {
+   "file": "sfdp_ctl.sv",
+   "name": "sig_check_off",
+   "why": "SIG_OK set whatever the bytes"
+  },
+  {
+   "file": "t2_qspi_sfdp_top.sv",
+   "name": "wp_high",
+   "why": "WP# driven high"
+  },
+  {
+   "file": "sf_spi.sv",
+   "name": "half_short",
+   "why": "SCK high phase shorter than HALF"
+  },
+  {
+   "file": "sfdp_ctl.sv",
+   "name": "id_two_bytes",
+   "why": "only two ID bytes read"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t2_qspi_sfdp",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "RDID and RSFDP (address 0, 8 dummy cycles, 16 bytes) are sent exactly as listed, in mode 0"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation",
+    "analysis"
+   ],
+   "text": "No opcode other than 0x9F and 0x5A ever reaches the flash"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "ID, SFDP0-3 and SIG_OK hold what the flash returned"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation",
+    "analysis"
+   ],
+   "text": "SCK leaves through STARTUPE2 USRCCLKO, with start-up cycles; WP# low, HOLD# high"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board the ID reads 01 20 18"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": "about a hundred and fifty LUTs and FFs; one STARTUPE2; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# Read the configuration flash's ID and SFDP header\n\nI want to identify the Nexys A7-100T's configuration flash from the FPGA after it has booted: read its JEDEC ID\nand the start of its SFDP table (the standard self-description), and show them over the test shell.\n\n- Single-bit SPI only, mode 0. The flash clock goes out through the configuration clock pin, so it has to go\n  through the STARTUPE2 primitive. Keep the write-protect line low and the hold line high.\n- On a start command: read the 3-byte JEDEC ID, then read 16 bytes of SFDP data from address 0 (the SFDP header and\n  the first parameter header), with the dummy clocks the SFDP read needs.\n- Registers: the ID, the 16 SFDP bytes as four words, and status (busy, done, and whether the first four SFDP bytes\n  are the \"SFDP\" signature).\n- This flash holds the board's bitstream: the design must never send anything but those two read commands.\n- The SPI clock half period is a parameter in clocks (5 MHz on the board is plenty).\n- Design ID \"SFDP\".\n\nTest hooks: top module `t2_qspi_sfdp_top`, ports named as in the board's master XDC (`QSPI_CSN`, `QSPI_DQ0`..\n`QSPI_DQ3`, the USB-UART pins, `CLK100MHZ`, `CPU_RESETN`), the test shell's `CLKS_PER_BIT`, `TIMEOUT_CYCLES` and\n`BUILD_STAMP` parameters, plus `HALF` (SPI clock half period in clocks) as top-level parameters.\n",
+ "survey": [
+  "F42"
+ ],
+ "tier": "T2",
+ "title": "Configuration flash JEDEC ID and SFDP header reader",
+ "trace": {
+  "captions": [
+   "Step 0: Chip select is high: the flash is not selected. The start command has just been written.",
+   "Step 1: Chip select goes low for transaction 1.",
+   "Step 2: The master sends command byte 0x9f.",
+   "Step 3: The flash returns ID byte 0: 0x01.",
+   "Step 4: The flash returns ID byte 1: 0x20.",
+   "Step 5: The flash returns ID byte 2: 0x18.",
+   "Step 6: Chip select goes high, ending the transaction. The ID register now reads 012018.",
+   "Step 7: Chip select goes low for transaction 2.",
+   "Step 8: The master sends command byte 0x5a.",
+   "Step 9: The master sends address byte 0x00.",
+   "Step 10: The master sends address byte 0x00.",
+   "Step 11: The master sends address byte 0x00.",
+   "Step 12: Eight dummy clocks: the flash needs them to prepare its data; nothing useful is sent or read.",
+   "Step 13: The flash returns SFDP byte 0: 0x53.",
+   "Step 14: The flash returns SFDP byte 1: 0x46.",
+   "Step 15: The flash returns SFDP byte 2: 0x44.",
+   "Step 16: The flash returns SFDP byte 3: 0x50.",
+   "Step 17: The flash returns SFDP byte 4: 0x06.",
+   "Step 18: The flash returns SFDP byte 5: 0x01.",
+   "Step 19: The flash returns SFDP byte 6: 0x00.",
+   "Step 20: The flash returns SFDP byte 7: 0xff.",
+   "Step 21: The flash returns SFDP byte 8: 0x00.",
+   "Step 22: The flash returns SFDP byte 9: 0x06.",
+   "Step 23: The flash returns SFDP byte 10: 0x01.",
+   "Step 24: The flash returns SFDP byte 11: 0x10.",
+   "Step 25: The flash returns SFDP byte 12: 0x80.",
+   "Step 26: The flash returns SFDP byte 13: 0x00.",
+   "Step 27: The flash returns SFDP byte 14: 0x00.",
+   "Step 28: The flash returns SFDP byte 15: 0xff.",
+   "Step 29: Chip select goes high, ending the transaction. Status: done, signature matches (SFDP word 0 reads 50444653)."
+  ],
+  "signals": [
+   {
+    "kind": "text",
+    "name": "phase",
+    "v": [
+     "idle",
+     "select",
+     "command",
+     "ID byte",
+     "ID byte",
+     "ID byte",
+     "deselect",
+     "select",
+     "command",
+     "address",
+     "address",
+     "address",
+     "dummy",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "SFDP byte",
+     "deselect"
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "QSPI_CSN",
+    "v": [
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "MOSI byte",
+    "radix": "hex",
+    "v": [
+     0,
+     0,
+     159,
+     0,
+     0,
+     0,
+     0,
+     0,
+     90,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "width": 8
+   },
+   {
+    "kind": "bus",
+    "name": "MISO byte",
+    "radix": "hex",
+    "v": [
+     0,
+     0,
+     0,
+     1,
+     32,
+     24,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     83,
+     70,
+     68,
+     80,
+     6,
+     1,
+     0,
+     255,
+     0,
+     6,
+     1,
+     16,
+     128,
+     0,
+     0,
+     255,
+     0
+    ],
+    "width": 8
+   },
+   {
+    "kind": "bus",
+    "name": "ID",
+    "radix": "hex",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752,
+     73752
+    ],
+    "width": 24
+   },
+   {
+    "kind": "bus",
+    "name": "SFDP0",
+    "radix": "hex",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1346651731
+    ],
+    "width": 32
+   },
+   {
+    "kind": "bit",
+    "name": "SIG_OK",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1
+    ]
+   }
+  ],
+  "stimulus": "A start command is given; the flash is the bench's own flash model, answering ID 01 20 18 and an SFDP table whose first four bytes spell the signature. Two transactions follow, each shown byte by byte; MOSI is shown as 0 when the master sends nothing useful.",
+  "unit": "step",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29
+  ]
+ },
+ "what": "A small program in hardware that identifies the board's configuration flash chip. On a start command it reads the chip's three-byte JEDEC identifier and then the first sixteen bytes of its SFDP table, a standard self-description held in the flash. It reports the values and whether the table begins with the expected signature. Because the flash holds the board's bitstream, the design may send only those two read commands and never anything that writes.",
+ "where": "SFDP lets software discover the size, commands and timing of a serial flash without a per-chip driver, which is how boot loaders and operating systems support many flash parts. Reading the ID is the usual safe first check that a flash connection works."
+}

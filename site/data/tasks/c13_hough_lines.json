@@ -1,0 +1,444 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the table is not cleared by CPU_RESETN.",
+   "reason": "only the clear command zeroes the counts; the bench always clears first."
+  }
+ ],
+ "behaviour": [
+  [
+   "voting",
+   [
+    "For each presented point (x, y) and each direction index k in 0..15: rho = ((x*CT[k] + y*ST[k] + 64) >>> 7) + 48 with CT[k] = round(128 cos(k*pi/16)) and ST[k] = round(128 sin(k*pi/16)) (arithmetic shift, round-half-up); if 0 <= rho < 96 the count of (k, rho) increases by one.",
+    "CT = [128, 126, 118, 106, 91, 71, 49, 25, 0, -25, -49, -71, -91, -106, -118, -126]; ST = [0, 25, 49, 71, 91, 106, 118, 126, 128, 126, 118, 106, 91, 71, 49, 25]."
+   ]
+  ],
+  [
+   "handshake",
+   [
+    "A point written while BUSY is ignored; BUSY is high for about 17 clocks per point (the reference). The shell is slower than a point, so the bench never overlaps points."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] = BUSY, the other LEDs are 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 4,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "clear_ignored": {
+    "failed_tests": [
+     "test_diagonal_line",
+     "test_vertical_line",
+     "test_four_lines_then_clear",
+     "test_corners_and_registers"
+    ],
+    "killed": true
+   },
+   "cos_entry": {
+    "failed_tests": [
+     "test_four_lines_then_clear"
+    ],
+    "killed": true
+   },
+   "no_rounding": {
+    "failed_tests": [
+     "test_diagonal_line",
+     "test_vertical_line",
+     "test_four_lines_then_clear"
+    ],
+    "killed": true
+   },
+   "one_angle_missing": {
+    "failed_tests": [
+     "test_vertical_line",
+     "test_four_lines_then_clear",
+     "test_corners_and_registers"
+    ],
+    "killed": true
+   },
+   "rho_offset": {
+    "failed_tests": [
+     "test_diagonal_line",
+     "test_vertical_line",
+     "test_four_lines_then_clear",
+     "test_corners_and_registers"
+    ],
+    "killed": true
+   },
+   "sin_entry": {
+    "failed_tests": [
+     "test_four_lines_then_clear"
+    ],
+    "killed": true
+   },
+   "y_from_x": {
+    "failed_tests": [
+     "test_diagonal_line",
+     "test_vertical_line",
+     "test_four_lines_then_clear",
+     "test_corners_and_registers"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c13_hough_lines__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 5,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 2,
+ "domain": "S",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 70,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c13_hough_lines/hidden/model.py",
+    "sha256": "6286b87ecf00",
+    "text": "\"\"\"P13-5 reference model: the Hough accumulator of the reference picture (numpy; bit-exact with the course exercise p13l08_hough).\"\"\"\nimport numpy as np\n\n\ndef line_image(w, h, lines):\n    \"\"\"Edge pixels (0/1) of lines given as (theta_deg, rho): points with x cos t + y sin t = rho, drawn by rounding along the longer axis.\"\"\"\n    img = np.zeros((h, w), np.uint8)\n    for th, rho in lines:\n        c, s = np.cos(np.radians(th)), np.sin(np.radians(th))\n        if abs(s) >= abs(c):\n            for x in range(w):\n                y = int(round((rho - x * c) / s))\n                if 0 <= y < h:\n                    img[y, x] = 1\n        else:\n            for y in range(h):\n                x = int(round((rho - y * s) / c))\n                if 0 <= x < w:\n                    img[y, x] = 1\n    return img\n\nNT, NR, ROFF = 16, 96, 48\nCT = [int(round(128 * np.cos(k * np.pi / NT))) for k in range(NT)]\nST = [int(round(128 * np.sin(k * np.pi / NT))) for k in range(NT)]\nLINES = [(0, 10), (90, 20), (45, 28), (135, 4)]\n\n\ndef points():\n    img = line_image(32, 32, LINES)\n    return [(int(x), int(y)) for y, x in np.argwhere(img)]\n\n\ndef accumulate(pts):\n    acc = np.zeros((NT, NR), np.int64)\n    for x, y in pts:\n        for k in range(NT):\n            rho = ((x * CT[k] + y * ST[k] + 64) >> 7) + ROFF\n            if 0 <= rho < NR:\n                acc[k, rho] += 1\n    return acc\n\n\ndef reference_output():\n    return {\"acc\": accumulate(points()).tolist()}\n\n\nif __name__ == \"__main__\":\n    print(\"cos\", CT, \"sin\", ST)\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x484F5547          # \"HOUG\"\nPT, CLEAR, RD_SEL, RD_CNT, STATUS = 0x00, 0x01, 0x02, 0x03, 0x04\n\n\ndef pts_of(lines):\n    img = line_image(32, 32, lines)\n    return [(int(x), int(y)) for y, x in np.argwhere(img)]\n\n\ndef bench_pictures():\n    \"\"\"(name, points): one diagonal line, one vertical line, and the four-line picture of the course.\"\"\"\n    return [(\"diagonal\", pts_of([(45, 28)])), (\"vertical\", pts_of([(0, 20)])), (\"four_lines\", points())]\n\n\ndef read_bins(acc):\n    \"\"\"The bins the bench reads back: every bin with a count of at least 5 (the peaks), and a fixed sample of 40 other bins.\"\"\"\n    peaks = [(k, r) for k in range(NT) for r in range(NR) if acc[k][r] >= 5]\n    other = [(k, r) for k in range(NT) for r in range(NR) if acc[k][r] < 5][::37][:40]\n    return peaks + other\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 44,
+    "name": "c13_hough_lines_regs.sv",
+    "path": "benchmark/course/tasks/c13_hough_lines/ref/rtl/c13_hough_lines_regs.sv",
+    "sha256": "65a4200c295d",
+    "text": "// c13_hough_lines_regs.sv: the shell window of course task c13_hough_lines.\nmodule c13_hough_lines_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic        pt_v, clr, busy;\n    logic [7:0]  pt_x, pt_y;\n    logic [3:0]  rd_theta;\n    logic [6:0]  rd_rho;\n    logic [15:0] rd_cnt;\n\n    assign led = {15'd0, busy};\n\n    hough #(.NT(16), .NR(96), .ROFF(48)) u_core (.clk(clk), .rst_n(!rst), .pt_valid(pt_v), .pt_x(pt_x), .pt_y(pt_y), .busy(busy),\n                                                  .clear(clr), .rd_theta(rd_theta), .rd_rho(rd_rho), .rd_cnt(rd_cnt));\n\n    always_ff @(posedge clk) begin\n        pt_v <= 1'b0; clr <= 1'b0;\n        if (win_wr) begin\n            case (win_addr)\n                7'd0: begin pt_x <= win_wdata[7:0]; pt_y <= win_wdata[15:8]; pt_v <= 1'b1; end\n                7'd1: clr <= 1'b1;\n                7'd2: begin rd_theta <= win_wdata[3:0]; rd_rho <= win_wdata[14:8]; end\n                default: ;\n            endcase\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            case (win_addr)\n                7'd2: win_rdata <= {17'd0, rd_rho, 4'd0, rd_theta};\n                7'd3: win_rdata <= {16'd0, rd_cnt};\n                7'd4: win_rdata <= {31'd0, busy};\n                default: ;\n            endcase\n        end\n        if (rst) begin pt_v <= 1'b0; clr <= 1'b0; rd_theta <= '0; rd_rho <= '0; win_rdata <= 32'd0; end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c13_hough_lines_top.sv",
+    "path": "benchmark/course/tasks/c13_hough_lines/ref/rtl/c13_hough_lines_top.sv",
+    "sha256": "685e6088dae9",
+    "text": "// c13_hough_lines_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"HOUG\".\n// Reference design for course task c13_hough_lines; the shell window is wired to c13_hough_lines_regs.\nmodule c13_hough_lines_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h484f5547), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c13_hough_lines_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 143,
+    "name": "hough.sv",
+    "path": "benchmark/course/tasks/c13_hough_lines/ref/rtl/hough.sv",
+    "sha256": "17cab0b27460",
+    "text": "// Part 13 lesson 8 reference solution: a Hough transform accumulator for straight lines, 16 angles, one angle per clock.\n//\n// A line is the set of points (x, y) with x*cos(t) + y*sin(t) = rho. For each edge point and each of the NT = 16 angles t_k = k * pi / 16 (k = 0 .. 15, in steps of\n// 11.25 degrees) the block computes   rho_k = ((x * ctab(k) + y * stab(k) + 64) >>> 7) + ROFF   (cos and sin are in Q7: ctab(k) = round(128 cos t_k), given below;\n// >>> is the arithmetic shift, floor) and adds one to the accumulator cell acc[k][rho_k]. ROFF = 48 makes the index non-negative for x, y in 0 .. 63 (rho runs from\n// about -64 to +64, of which cells 0 .. NR-1 = 0 .. 95 are kept; a point whose index falls outside is not counted).\n// Handshake: pt_valid with busy low presents a point (pt_x, pt_y 8 bits each); the block then sets busy for the NT clocks it takes (one angle per clock, k = 0 first)\n// and clears it at the end; a point presented while busy is ignored. clear (a one-clock pulse, only when not busy) zeroes every cell in ONE clock.\n// Read port: rd_theta (k), rd_rho (cell) select a cell and rd_cnt shows its 16-bit count one clock later. rst_n is synchronous, active low (it does not clear the cells).\n// The tables are computed by a CORDIC or a small ROM; lesson 8 discusses which and the cost.\n//\n// Block-RAM form (07a1c): the 1536 counts live in two block RAMs written together (one read port each: the read-modify-write of a vote, and the read port), and one\n// valid bit per cell in flip-flops. A cell whose valid bit is 0 reads as 0, so `clear` still zeroes every cell in ONE clock (it clears the valid bits, not the RAMs).\n// A vote takes four clocks after its angle clock (distance register, index register, read, write), so busy stays high four clocks longer than before; a read sees the same value one clock after the select.\nmodule hough_cell_ram #(\n    parameter int N = 1536\n) (\n    input  logic        clk,\n    input  logic        we,\n    input  logic [10:0] waddr,\n    input  logic [15:0] wdata,\n    input  logic [10:0] raddr,\n    output logic [15:0] rdata\n);\n    (* ram_style = \"block\" *) logic [15:0] mem [0:N-1];\n    always_ff @(posedge clk) begin\n        if (we) mem[waddr] <= wdata;\n        rdata <= mem[raddr];\n    end\nendmodule\n\nmodule hough #(\n    parameter int NT = 16,\n    parameter int NR = 96,\n    parameter int ROFF = 48\n) (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        pt_valid,\n    input  logic [7:0]  pt_x,\n    input  logic [7:0]  pt_y,\n    output logic        busy,\n    input  logic        clear,\n    input  logic [3:0]  rd_theta,\n    input  logic [6:0]  rd_rho,\n    output logic [15:0] rd_cnt\n);\n    function automatic signed [8:0] ctab(input [3:0] k);\n        case (k)\n            4'd0: ctab = 128;\n            4'd1: ctab = 126;\n            4'd2: ctab = 118;\n            4'd3: ctab = 106;\n            4'd4: ctab = 91;\n            4'd5: ctab = 71;\n            4'd6: ctab = 49;\n            4'd7: ctab = 25;\n            4'd8: ctab = 0;\n            4'd9: ctab = -25;\n            4'd10: ctab = -49;\n            4'd11: ctab = -71;\n            4'd12: ctab = -91;\n            4'd13: ctab = -106;\n            4'd14: ctab = -118;\n            4'd15: ctab = -126;\n            default: ctab = 0;\n        endcase\n    endfunction\n    function automatic signed [8:0] stab(input [3:0] k);\n        case (k)\n            4'd0: stab = 0;\n            4'd1: stab = 25;\n            4'd2: stab = 49;\n            4'd3: stab = 71;\n            4'd4: stab = 91;\n            4'd5: stab = 106;\n            4'd6: stab = 118;\n            4'd7: stab = 126;\n            4'd8: stab = 128;\n            4'd9: stab = 126;\n            4'd10: stab = 118;\n            4'd11: stab = 106;\n            4'd12: stab = 91;\n            4'd13: stab = 71;\n            4'd14: stab = 49;\n            4'd15: stab = 25;\n            default: stab = 0;\n        endcase\n    endfunction\n    localparam int NC = NT * NR;\n    logic [NC-1:0] vld;       // a cell that was never voted since the last clear reads as 0\n    initial vld = '0;\n    logic [7:0]  x, y;\n    logic [4:0]  k;          // 0 .. NT-1 while busy\n    integer rho;\n    logic start_q;\n    logic signed [15:0] rho_r;  logic [3:0] k_r;  logic p_en;   // stage P: the distance, registered\n    logic        s0_en, s0_vote, s1_en, s1_vote, vld_a, vld_b;   // stage 0: index registered; stage 1: the vote's RAM read is on q_a\n    logic [10:0] s0_idx, s1_idx;\n    logic [15:0] q_a, q_b;\n    assign busy = (k != 0) || start_q || p_en || s0_en || s1_en;\n\n    // stage 0 (the angle clock): the cell index of this angle's vote\n    always_comb rho = (($signed({1'b0, x}) * ctab(k[3:0]) + $signed({1'b0, y}) * stab(k[3:0]) + 64) >>> 7) + ROFF;\n    wire         vote0 = p_en && rho_r >= 0 && rho_r < NR;\n    wire  [10:0] idx0  = 11'(k_r * NR + rho_r);\n    wire  [10:0] ridx  = 11'(rd_theta * NR + rd_rho);\n    wire  [15:0] newc  = (vld_a ? q_a : 16'd0) + 16'd1;\n\n    hough_cell_ram #(.N(NC)) u_a (.clk(clk), .we(s1_vote), .waddr(s1_idx), .wdata(newc), .raddr(s0_idx), .rdata(q_a));\n    hough_cell_ram #(.N(NC)) u_b (.clk(clk), .we(s1_vote), .waddr(s1_idx), .wdata(newc), .raddr(ridx), .rdata(q_b));\n    assign rd_cnt = vld_b ? q_b : 16'd0;\n\n    always_ff @(posedge clk) begin\n        vld_b <= vld[ridx];\n        vld_a <= vld[s0_idx];\n        p_en <= start_q || k != 0;\n        rho_r <= 16'(rho);\n        k_r <= k[3:0];\n        s0_en <= p_en;\n        s0_vote <= vote0;\n        s0_idx <= idx0;\n        s1_en <= s0_en;\n        s1_vote <= s0_vote;\n        s1_idx <= s0_idx;\n        if (!rst_n) begin\n            k <= 5'd0; start_q <= 1'b0; p_en <= 1'b0; s0_en <= 1'b0; s0_vote <= 1'b0; s1_en <= 1'b0; s1_vote <= 1'b0;\n        end else begin\n            start_q <= 1'b0;\n            if (clear && !busy) begin\n                vld <= '0;\n            end\n            if (s1_vote) vld[s1_idx] <= 1'b1;\n            if (pt_valid && !busy) begin\n                x <= pt_x; y <= pt_y;\n                start_q <= 1'b1;\n            end\n            if (start_q || k != 0) begin\n                k <= (k == NT - 1) ? 5'd0 : k + 5'd1;\n            end\n        end\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 76,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c13_hough_lines/hidden/acceptance.py",
+    "sha256": "9d28848717eb",
+    "text": "\"\"\"Acceptance tests of c13_hough_lines against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import CLEAR, DESIGN_ID, PT, RD_CNT, RD_SEL, STATUS, accumulate, bench_pictures, read_bins\n\n\nasync def picture(b: Board, name: str, pts) -> None:\n    await b.write(CLEAR, 1)\n    for x, y in pts:\n        await b.write(PT, x | y << 8)\n    await b.expect(STATUS, 0, f\"{name}: not busy after the last point\")\n    acc = accumulate(pts)\n    for k, r in read_bins(acc):\n        await b.write(RD_SEL, k | r << 8)\n        await b.expect(RD_CNT, int(acc[k][r]), f\"{name}: count of direction {k}, distance index {r}\")\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (RD_SEL, STATUS):\n        await b.expect(off, 0, f\"reset value of {off}\")\n\n\n@cocotb.test()\nasync def test_diagonal_line(dut):\n    b = Board(dut, {})\n    await b.start()\n    n, p = bench_pictures()[0]\n    await picture(b, n, p)\n\n\n@cocotb.test()\nasync def test_vertical_line(dut):\n    b = Board(dut, {})\n    await b.start()\n    n, p = bench_pictures()[1]\n    await picture(b, n, p)\n\n\n@cocotb.test()\nasync def test_four_lines_then_clear(dut):\n    \"\"\"Several lines at once, then CLEAR and a different picture: nothing is left over.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    n, p = bench_pictures()[2]\n    await picture(b, n, p)\n    n2, p2 = bench_pictures()[0]\n    await picture(b, n2 + \" after clear\", p2)\n\n\n@cocotb.test()\nasync def test_corners_and_registers(dut):\n    \"\"\"Points at the picture corners reach the table edges (rho = -48 and +47 are inside), RD_SEL is a plain register.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    pts = [(0, 0), (31, 31), (31, 0), (0, 31), (16, 16)]\n    await b.write(CLEAR, 1)\n    for x, y in pts:\n        await b.write(PT, x | y << 8)\n    acc = accumulate(pts)\n    for k in range(16):\n        for r in (0, 1, 47, 48, 94, 95):\n            await b.write(RD_SEL, k | r << 8)\n            await b.expect(RD_CNT, int(acc[k][r]), f\"corners: direction {k}, distance index {r}\")\n    await b.write(RD_SEL, 0xFFFF_FFFF)\n    await b.expect(RD_SEL, 0x7F0F, \"RD_SEL keeps k and r\")\n    led = await peek(b.clk, dut.LED)\n    assert led == 0, f\"LED {led:04X}: idle\"\n    for off in (0x05, 0x41, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n"
+   }
+  ]
+ },
+ "heading": "Hough line accumulator behind the test shell",
+ "id": "c13_hough_lines",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "WO",
+    "bits": "[7:0] x, [15:8] y (0..31): presents the point for one clock; ignored while BUSY; reads 0",
+    "name": "PT",
+    "offset": "0x00"
+   },
+   {
+    "access": "WO",
+    "bits": "any write zeroes all counts (only when not busy); reads 0",
+    "name": "CLEAR",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[3:0] direction index k (0..15), [14:8] distance index r = rho + 48 (0..95)",
+    "name": "RD_SEL",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] vote count of (k, r), valid a few clocks after RD_SEL is written",
+    "name": "RD_CNT",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] BUSY: a point is being processed",
+    "name": "STATUS",
+    "offset": "0x04"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: idle, selection 0",
+  "top": "c13_hough_lines_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "c13_hough_lines_regs.sv",
+   "name": "rho_offset",
+   "why": "the distance table is offset by one"
+  },
+  {
+   "file": "hough.sv",
+   "name": "no_rounding",
+   "why": "the distance is truncated instead of rounded"
+  },
+  {
+   "file": "hough.sv",
+   "name": "cos_entry",
+   "why": "one cosine table entry is wrong"
+  },
+  {
+   "file": "hough.sv",
+   "name": "sin_entry",
+   "why": "one sine table entry is wrong"
+  },
+  {
+   "file": "hough.sv",
+   "name": "y_from_x",
+   "why": "the y coordinate of a point is replaced by its x"
+  },
+  {
+   "file": "hough.sv",
+   "name": "clear_ignored",
+   "why": "CLEAR does not zero the table"
+  },
+  {
+   "file": "hough.sv",
+   "name": "one_angle_missing",
+   "why": "the last direction never votes"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c13_hough_lines",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the counts read back equal the model's accumulator for pictures of single lines (diagonal, vertical) and for several lines at once"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "CLEAR zeroes all counts and a new picture starts from zero"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the 96-entry distance table (-48 to +47) covers every vote of a 32 x 32 picture, and votes outside it would be dropped"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Hough line accumulator behind the test shell\n\nI want a block that is told where the edge points of a small picture are and then tells me which straight lines they form, and I want to exercise it entirely from the test shell.\n\n- The picture is 32 by 32. I give the block the edge points one at a time over the shell: x and y (0 to 31) in one write, which presents the point to the block for one clock; the block takes a new point only when it is not busy,\n  and it says so in a status register.\n- The block looks for lines at 16 directions spaced evenly over 180 degrees (0, 11.25, 22.5 ... degrees, the angle of the line's normal) and records, for each direction, how many points would lie on\n  each possible distance from the origin (whole numbers, from -48 to +47). I want to be able to read any of these counts back: I select a direction and a distance and then read the count.\n- A \"clear\" command starts a new picture by zeroing all counts.\n- I will test it with pictures of single straight lines at known angles, and with several lines at once. CPU_RESETN returns the block to idle. LED0 shows that the block is busy.\n  The shell runs at 115200 baud on the USB-UART. The design ID is \"HOUG\".\n\nTest hooks: top module `c13_hough_lines_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "S14"
+ ],
+ "tier": "C13",
+ "title": "Hough line accumulator behind the test shell",
+ "trace": {
+  "captions": [
+   "Direction 0 (0 degrees): the busiest distance is 10, where 32 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 1 (11.25 degrees): the busiest distance is 15, where 8 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 2 (22.5 degrees): the busiest distance is 10, where 6 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 3 (33.75 degrees): the busiest distance is 25, where 7 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 4 (45 degrees): the busiest distance is 28, where 25 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 5 (56.25 degrees): the busiest distance is 25, where 8 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 6 (67.5 degrees): the busiest distance is 20, where 7 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 7 (78.75 degrees): the busiest distance is 20, where 9 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 8 (90 degrees): the busiest distance is 20, where 32 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 9 (101.25 degrees): the busiest distance is 15, where 9 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 10 (112.5 degrees): the busiest distance is 7, where 7 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 11 (123.75 degrees): the busiest distance is 7, where 8 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 12 (135 degrees): the busiest distance is 4, where 28 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 13 (146.25 degrees): the busiest distance is -3, where 7 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 14 (157.5 degrees): the busiest distance is -8, where 7 of the 107 points agree; 107 votes were cast in all.",
+   "Direction 15 (168.75 degrees): the busiest distance is -8, where 9 of the 107 points agree; 107 votes were cast in all."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "direction index",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     15
+    ]
+   },
+   {
+    "kind": "wave",
+    "lo": 0,
+    "name": "peak count",
+    "v": [
+     32,
+     8,
+     6,
+     7,
+     25,
+     8,
+     7,
+     9,
+     32,
+     9,
+     7,
+     8,
+     28,
+     7,
+     7,
+     9
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "peak distance",
+    "radix": "dec",
+    "v": [
+     10,
+     15,
+     10,
+     25,
+     28,
+     25,
+     20,
+     20,
+     20,
+     15,
+     7,
+     7,
+     4,
+     -3,
+     -8,
+     -8
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "votes in range",
+    "radix": "dec",
+    "v": [
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107,
+     107
+    ]
+   }
+  ],
+  "stimulus": "The picture of 4 straight lines on a 32 by 32 grid, which has 107 edge points. Each point votes in all 16 directions.",
+  "unit": "direction",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "what": "A line detector for a small edge picture. Each edge point votes for every straight line that could pass through it, in a set of evenly spaced directions, and the votes are counted in a table of direction against distance from the origin. Where many points lie on one line their votes pile up in one cell. The table can be cleared and read back cell by cell.",
+ "where": "The Hough transform finds lane markings, edges of objects and straight features in machine vision, robotics and document scanning. Hardware versions run it on video streams in real time."
+}

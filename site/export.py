@@ -10,6 +10,7 @@ Development tasks and the hand-built T1 design only: no held-out task is read (s
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import random
 import re
@@ -212,10 +213,187 @@ def evaldata():
             "model": "claude-sonnet-5-5", "oracle": "claude-haiku-5-5", "mutants_per_task": "5-8"}
 
 
+# ---------------------------------------------------------------- problem catalogue (brief 09b S2)
+# Development tasks get a page with spec, hidden spec, reference RTL, tests, model, mutants, a model trace and the
+# development run records. Held-out tasks of v1 and the course tier: id and tier only (already public in the split
+# files). Held-out tasks of v2: a count per (domain, tier) cell from the public ledger. Nothing else about them.
+BENCH = ROOT / "benchmark"
+SPLITS = [("v1", BENCH / "split.yaml", BENCH / "tasks"),
+          ("course", BENCH / "course" / "split.yaml", BENCH / "course" / "tasks"),
+          ("course", BENCH / "course" / "split_c9_c12.yaml", BENCH / "course" / "tasks")]
+V2 = BENCH / "v2"
+CODE_EXT = {".sv": "systemverilog", ".v": "verilog", ".py": "python"}
+
+
+def _yaml(p):
+    import yaml
+    return yaml.safe_load(Path(p).read_text())
+
+
+def ledger():
+    p = V2 / "ledger.jsonl"
+    return [json.loads(x) for x in p.read_text().splitlines() if x.strip()] if p.exists() else []
+
+
+def split_lists():
+    """[(set, tier, id, 'dev'|'held_out', task_dir)] from the public split files, with the ledger's moves applied."""
+    moved = {e["task"] for e in ledger() if e["kind"] == "move"}
+    out = []
+    for setname, f, tdir in SPLITS:
+        for tier, v in _yaml(f)["tiers"].items():
+            for t in v["dev"]:
+                out.append((setname, tier, t, "dev", tdir / t))
+            for t in v["held_out"]:
+                out.append((setname, tier, t, "moved" if t in moved else "held_out", None))
+    return out
+
+
+DIGIT = re.compile(r"\d+")
+
+
+def descriptions():
+    d = {}
+    for p in sorted((Path(__file__).resolve().parent / "catalogue_parts").glob("*.yaml")):
+        if p.name == "example.yaml":
+            continue
+        d.update(_yaml(p))
+    d.update({k: v for k, v in _yaml(Path(__file__).resolve().parent / "catalogue_parts" / "example.yaml").items() if k not in d})
+    return d
+
+
+def code_file(p, rel):
+    return {"path": rel, "name": p.name, "lang": CODE_EXT.get(p.suffix, "text"), "text": p.read_text(),
+            "lines": p.read_text().count("\n"), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()[:12]}
+
+
+def interface(y):
+    ports = [{"name": p["name"], "dir": p["dir"], "width": p["width"], "note": p.get("note", "")} for p in y["ports"]]
+    regs = y["registers"].get("map") or []
+    regs = [{"offset": f'{r["offset"]:#04x}' if isinstance(r["offset"], int) else str(r["offset"]), "name": r["name"],
+             "access": r.get("access", ""), "bits": str(r.get("bits", ""))} for r in regs]
+    params = {k: v for k, v in (y.get("parameters") or {}).items()}
+    clocks = [f'{c["port"]} at {c["freq_mhz"]} MHz ({c.get("source", "")})' for c in y["clocks"]]
+    rs = y["reset"]
+    reset = f'{rs.get("port")}, {str(rs.get("polarity", "")).replace("_", " ")}: {rs.get("effect", "")}'
+    return {"ports": ports, "registers": regs, "unmapped": y["registers"].get("unmapped", ""), "parameters": params,
+            "clocks": clocks, "reset": reset, "top": y["top"]}
+
+
+def flat_behaviour(b):
+    """The spec.yaml behaviour section as (heading, [lines]) in file order."""
+    out = []
+    if isinstance(b, dict):
+        for k, v in b.items():
+            lines = v if isinstance(v, list) else [v]
+            out.append([str(k).replace("_", " "), [str(x) if not isinstance(x, dict) else "; ".join(f"{a}: {c}" for a, c in x.items()) for x in lines]])
+    elif isinstance(b, list):
+        out.append(["behaviour", [str(x) for x in b]])
+    return out
+
+
+def check_result(tid):
+    """The newest committed check_task.py result (icarus) for the reference and its mutants, or None."""
+    cands = [p for p in (BENCH / "results" / "reference" / f"{tid}__icarus.json", BENCH / "course" / "results" / f"{tid}__icarus.json") if p.exists()]
+    if not cands:
+        return None
+    rs = sorted((jload(p) | {"_path": p.relative_to(ROOT).as_posix()} for p in cands), key=lambda r: r.get("date", ""))
+    r = rs[-1]
+    return {"date": r.get("date"), "sim": r.get("sim"), "path": r["_path"], "ref_pass": bool(r["ref"]["pass"]),
+            "ref_tests": len(r["ref"].get("tests", {})),
+            "mutants": {m["name"]: {"killed": bool(m.get("killed")), "failed_tests": m.get("failed_tests", [])} for m in r.get("mutants", [])}}
+
+
+def task_page(setname, tier, tid, tdir, cat, desc, runs):
+    from traces import build as build_trace
+    y = _yaml(tdir / "hidden" / "spec.yaml")
+    spec_md = (tdir / "spec.md").read_text()
+    allowed = set(DIGIT.findall(spec_md)) | set(DIGIT.findall((tdir / "hidden" / "spec.yaml").read_text()))
+    for k in ("what", "where"):
+        bad = [x for x in DIGIT.findall(desc[k]) if x not in allowed]
+        assert not bad, (tid, k, "digits not in the spec", bad)
+    mut = _yaml(tdir / "hidden" / "mutants.yaml")["mutants"]
+    rel = tdir.relative_to(ROOT).as_posix()
+    files = {"rtl": [code_file(p, f"{rel}/ref/rtl/{p.name}") for p in sorted((tdir / "ref" / "rtl").glob("*")) if p.is_file()],
+             "tests": [code_file(tdir / "hidden" / "acceptance.py", f"{rel}/hidden/acceptance.py")],
+             "model": [code_file(tdir / "hidden" / "model.py", f"{rel}/hidden/model.py")]}
+    data_files = sorted(p.name for p in (tdir / "data").glob("*")) if (tdir / "data").exists() else []
+    bench = _yaml(tdir / "hidden" / "bench.yaml")
+    my = [r for r in runs if r["task"] == tid]
+    return {
+        "id": tid, "set": setname, "tier": tier, "title": y["title"], "heading": spec_md.splitlines()[0].lstrip("# ").strip(),
+        "board": y["board"], "part": y["part"], "domain": cat["domain"], "survey": cat["survey"],
+        "difficulty": y.get("difficulty"), "what": desc["what"].strip(), "where": desc["where"].strip(),
+        "spec_md": spec_md, "data_files": data_files, "path": rel,
+        "interface": interface(y), "behaviour": flat_behaviour(y.get("behaviour")),
+        "requirements": [{"id": r["id"], "text": r["text"], "proof": r.get("proof", [])} for r in y["requirements"]],
+        "assumptions": [{"assumption": a.get("assumption", ""), "reason": a.get("reason", "")} for a in (y.get("assumptions") or [])],
+        "resources_expected": y.get("resources_expected"), "scope": y.get("scope"),
+        "bench_parameters": bench.get("parameters") or {}, "no_shell": bool(bench.get("no_shell")),
+        "mutants": [{"name": x["name"], "file": x.get("file", ""), "why": x.get("why", "")} for x in mut],
+        "files": files,
+        "runs": [{k: r[k] for k in ("run", "date", "outcome", "escape_level", "tests_passed", "tests_total", "hidden_pass",
+                                    "failure_class", "wns_ns", "lut", "ff", "dsp", "bram36", "agent_turns", "wall_h", "model",
+                                    "claude_code_version")} for r in my],
+        "trace": build_trace(tid, tdir),
+        "check": check_result(tid),
+        "showcase": tid in cat.get("_showcase", []),
+    }
+
+
+def catalogue(runs):
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    cy = _yaml(Path(__file__).resolve().parent / "catalogue.yaml")
+    desc = descriptions()
+    pages, rows, held = {}, [], []
+    for setname, tier, tid, status, tdir in split_lists():
+        if status == "dev":
+            cat = dict(cy["tasks"][tid]); cat["_showcase"] = cy["showcase"]
+            pg = task_page(setname, tier, tid, tdir, cat, desc[tid], runs)
+            pages[tid] = pg
+            rows.append({k: pg[k] for k in ("id", "set", "tier", "title", "heading", "board", "domain", "showcase")} |
+                        {"runs": len(pg["runs"]), "hidden_passes": sum(1 for r in pg["runs"] if r["hidden_pass"]),
+                         "mutants": len(pg["mutants"]), "trace_steps": len(pg["trace"]["x"]) if pg["trace"] else 0})
+        else:
+            held.append({"id": tid, "set": setname, "tier": tier, "status": status})
+    # v2: development task pages once benchmark/v2/tasks/<id> exists and the ledger lists it as development; held-out
+    # tasks only as a count per (domain, tier) cell.
+    v2cells = {}
+    for e in ledger():
+        if e["kind"] == "draw":
+            c = v2cells.setdefault(f'{e["domain"]}/{e["tier"]}', {"domain": e["domain"], "tier": e["tier"], "dev": 0, "held_out": 0})
+            c["held_out"] += 1
+            c["dev"] += len(e["dev"])
+            for dv in e["dev"]:
+                tdir = V2 / "tasks" / dv["task"]
+                if tdir.exists() and dv["task"] in cy["tasks"] and dv["task"] in desc:
+                    cat = dict(cy["tasks"][dv["task"]]); cat["_showcase"] = cy["showcase"]
+                    pg = task_page("v2", e["tier"], dv["task"], tdir, cat, desc[dv["task"]], runs)
+                    pages[dv["task"]] = pg
+                    rows.append({k: pg[k] for k in ("id", "set", "tier", "title", "heading", "board", "domain", "showcase")} |
+                                {"runs": len(pg["runs"]), "hidden_passes": sum(1 for r in pg["runs"] if r["hidden_pass"]),
+                                 "mutants": len(pg["mutants"]), "trace_steps": len(pg["trace"]["x"]) if pg["trace"] else 0})
+    held_ids = {h["id"] for h in held}
+    assert not held_ids & set(pages), "a held-out task has a page"
+    idx = {
+        "domains": cy["domains"], "boards": cy["boards"], "showcase": cy["showcase"], "tasks": rows,
+        "held_out": [h for h in held if h["status"] == "held_out"], "moved": [h for h in held if h["status"] == "moved"],
+        "v2_cells": sorted(v2cells.values(), key=lambda c: (c["domain"], c["tier"])),
+        "counts": {"dev_pages": len(pages), "v1_dev": sum(1 for r in rows if r["set"] == "v1"),
+                   "course_dev": sum(1 for r in rows if r["set"] == "course"), "v2_dev": sum(1 for r in rows if r["set"] == "v2"),
+                   "held_listed": sum(1 for h in held if h["status"] == "held_out"), "moved": sum(1 for h in held if h["status"] == "moved"),
+                   "v2_held_out": sum(c["held_out"] for c in v2cells.values()), "with_runs": sum(1 for r in rows if r["runs"]),
+                   "mutants": sum(r["mutants"] for r in rows)},
+    }
+    return idx, pages
+
+
 def main():
     runs = dev_runs()
+    cat, pages = catalogue(runs)
     out = {"dev": build_dev(runs), "replay": replay(runs), "examples": examples(runs), "board": board(),
-           "packs": packs(), "eval": evaldata()}
+           "packs": packs(), "eval": evaldata(), "catalogue": cat}
+    out.update({f"tasks/{k}": v for k, v in pages.items()})
+    (OUT / "tasks").mkdir(exist_ok=True)
     bad = 0
     for k, v in out.items():
         s = json.dumps(v, indent=1, sort_keys=True) + "\n"
@@ -226,6 +404,10 @@ def main():
                 bad = 1
         else:
             p.write_text(s)
+    extra = sorted(set(p.stem for p in (OUT / "tasks").glob("*.json")) - set(pages))
+    if extra:
+        print("task data with no development page (delete it):", extra)
+        bad = 1
     sys.exit(bad)
 
 

@@ -1,0 +1,577 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the 16 LEDs other than LED[0] stay off.",
+   "reason": "only the ready flag is asked for."
+  }
+ ],
+ "behaviour": [
+  [
+   "arithmetic",
+   [
+    "acc = sum over i<8 of a_i * w_i + bias (signed arithmetic; a_i and w_i signed 8-bit, bias signed 32-bit; the sum never overflows for the allowed inputs)",
+    "r = (acc * mult + 2^(shift-1)) >>> shift, with a 64-bit signed product and the arithmetic (floor) shift, so exact halves round towards plus infinity",
+    "y = clamp(r, lo, 127) with lo = 0 when relu = 1 and -128 when relu = 0"
+   ]
+  ],
+  [
+   "handshake",
+   [
+    "A write to GO (any value) clears READY and presents the loaded operands to the arithmetic for one clock; READY becomes 1 within 8 clocks and stays 1 until the next GO; Y and ACC hold the result until the next GO and read 0 while READY is 0.",
+    "The core's own latency is one clock after the presented clock; the shell window needs no more than READY."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] = READY, the other LEDs are 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 4,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "bias_dropped": {
+    "failed_tests": [
+     "test_random_cases",
+     "test_extremes_halves_and_bias",
+     "test_tail_cases",
+     "test_shift_and_mult_ranges",
+     "test_ready_clears_on_go_and_regs"
+    ],
+    "killed": true
+   },
+   "mult_signed": {
+    "failed_tests": [
+     "test_random_cases",
+     "test_extremes_halves_and_bias",
+     "test_tail_cases",
+     "test_shift_and_mult_ranges",
+     "test_ready_clears_on_go_and_regs"
+    ],
+    "killed": true
+   },
+   "no_rounding": {
+    "failed_tests": [
+     "test_random_cases",
+     "test_extremes_halves_and_bias",
+     "test_shift_and_mult_ranges"
+    ],
+    "killed": true
+   },
+   "relu_ignored": {
+    "failed_tests": [
+     "test_random_cases",
+     "test_extremes_halves_and_bias",
+     "test_tail_cases",
+     "test_shift_and_mult_ranges",
+     "test_ready_clears_on_go_and_regs"
+    ],
+    "killed": true
+   },
+   "round_wrong_bit": {
+    "failed_tests": [
+     "test_extremes_halves_and_bias",
+     "test_shift_and_mult_ranges"
+    ],
+    "killed": true
+   },
+   "weights_unsigned": {
+    "failed_tests": [
+     "test_random_cases",
+     "test_extremes_halves_and_bias",
+     "test_tail_cases",
+     "test_shift_and_mult_ranges",
+     "test_ready_clears_on_go_and_regs"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c14_int8_dot_requant__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 6,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 1,
+ "domain": "I",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 53,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c14_int8_dot_requant/hidden/model.py",
+    "sha256": "4971c17e37f3",
+    "text": "\"\"\"Reference model for P14-2 (int8 dot product with requantisation). Plain Python integers, no dependencies.\"\"\"\nimport random\n\nN = 8\n\n\ndef requant(acc, mult, shift):\n    return (acc * mult + (1 << (shift - 1))) >> shift          # Python >> on a negative int is the arithmetic (floor) shift\n\n\ndef compute(a, w, bias, mult, shift, relu):\n    acc = sum(x * y for x, y in zip(a, w)) + bias\n    y = max(0 if relu else -128, min(127, requant(acc, mult, shift)))\n    return acc, y\n\n\ndef vectors():\n    \"\"\"The fixed test set (400 cases): random cases, then extremes, exact halves and both saturations. The agent's testbench must apply these in this order.\"\"\"\n    rng = random.Random(5)\n    cases = []\n    for _ in range(300):\n        cases.append(dict(a=[rng.randint(-128, 127) for _ in range(N)], w=[rng.randint(-127, 127) for _ in range(N)], bias=rng.randint(-5000, 5000),\n                          mult=rng.randint(1 << 14, (1 << 16) - 1), shift=rng.randint(8, 26), relu=rng.randint(0, 1)))\n    big, small = [127] * N, [-128] * N\n    for a, w in ((small, small), (big, big), (big, small)):\n        for relu in (0, 1):\n            cases.append(dict(a=a, w=w, bias=0, mult=65535, shift=15, relu=relu))\n    for acc in (1, 3, -1, -3, 5, -5):\n        cases.append(dict(a=[acc] + [0] * (N - 1), w=[1] + [0] * (N - 1), bias=0, mult=1, shift=1, relu=0))\n    cases.append(dict(a=[0] * N, w=[0] * N, bias=-1, mult=40000, shift=16, relu=0))\n    cases.append(dict(a=[0] * N, w=[0] * N, bias=2 ** 31 - 1 - 100, mult=1, shift=1, relu=0))\n    while len(cases) < 400:\n        cases.append(dict(a=[rng.choice((-128, 127)) for _ in range(N)], w=[rng.choice((-127, 127)) for _ in range(N)], bias=rng.choice((-10 ** 6, 10 ** 6)),\n                          mult=rng.randint(1 << 14, (1 << 16) - 1), shift=rng.randint(8, 26), relu=rng.randint(0, 1)))\n    return cases\n\n\ndef reference_output():\n    out = []\n    for c in vectors():\n        acc, y = compute(**c)\n        out.append({\"acc\": acc, \"y\": y})\n    return {\"cases\": out}\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x444F5451          # \"DOTQ\"\nA_LO, A_HI, W_LO, W_HI, BIAS, MULT, CTRL, GO, Y, ACC, STATUS = range(11)\n\n\ndef pack8(v):\n    return sum((x & 0xFF) << (8 * i) for i, x in enumerate(v))\n\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 62,
+    "name": "c14_int8_dot_requant_regs.sv",
+    "path": "benchmark/course/tasks/c14_int8_dot_requant/ref/rtl/c14_int8_dot_requant_regs.sv",
+    "sha256": "619e6c1e2337",
+    "text": "// c14_int8_dot_requant_regs.sv: the shell window of course task c14_int8_dot_requant.\nmodule c14_int8_dot_requant_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic [63:0]        a_r, w_r;\n    logic [31:0]        bias_r, acc;\n    logic [15:0]        mult_r;\n    logic [4:0]         shift_r;\n    logic               relu_r, go, ov, vld;\n    logic signed [7:0]  y;\n    logic [31:0]        acc_s;\n\n    assign led = {15'd0, vld};\n\n    dot_requant #(.N(8)) u_core (.clk(clk), .rst_n(!rst), .in_valid(go), .a(a_r), .w(w_r), .bias(bias_r),\n                                 .mult(mult_r), .shift(shift_r), .relu(relu_r), .out_valid(ov), .y(y), .acc(acc_s));\n\n    always_ff @(posedge clk) begin\n        go <= 1'b0;\n        if (ov) vld <= 1'b1;\n        if (win_wr) begin\n            case (win_addr)\n                7'd0: a_r[31:0]   <= win_wdata;\n                7'd1: a_r[63:32]  <= win_wdata;\n                7'd2: w_r[31:0]   <= win_wdata;\n                7'd3: w_r[63:32]  <= win_wdata;\n                7'd4: bias_r      <= win_wdata;\n                7'd5: mult_r      <= win_wdata[15:0];\n                7'd6: begin shift_r <= win_wdata[4:0]; relu_r <= win_wdata[8]; end\n                7'd7: begin go <= 1'b1; vld <= 1'b0; end\n                default: ;\n            endcase\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            case (win_addr)\n                7'd0:  win_rdata <= a_r[31:0];\n                7'd1:  win_rdata <= a_r[63:32];\n                7'd2:  win_rdata <= w_r[31:0];\n                7'd3:  win_rdata <= w_r[63:32];\n                7'd4:  win_rdata <= bias_r;\n                7'd5:  win_rdata <= {16'd0, mult_r};\n                7'd6:  win_rdata <= {23'd0, relu_r, 3'd0, shift_r};\n                7'd8:  win_rdata <= vld ? {24'd0, y} : 32'd0;\n                7'd9:  win_rdata <= vld ? acc_s : 32'd0;\n                7'd10: win_rdata <= {31'd0, vld};\n                default: ;\n            endcase\n        end\n        if (rst) begin\n            a_r <= '0; w_r <= '0; bias_r <= '0; mult_r <= '0; shift_r <= 5'd1; relu_r <= 1'b0;\n            go <= 1'b0; vld <= 1'b0; win_rdata <= 32'd0;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c14_int8_dot_requant_top.sv",
+    "path": "benchmark/course/tasks/c14_int8_dot_requant/ref/rtl/c14_int8_dot_requant_top.sv",
+    "sha256": "19ce808353ef",
+    "text": "// c14_int8_dot_requant_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"DOTQ\".\n// Reference design for course task c14_int8_dot_requant; the shell window is wired to c14_int8_dot_requant_regs.\nmodule c14_int8_dot_requant_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h444f5451), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c14_int8_dot_requant_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 45,
+    "name": "dot_requant.sv",
+    "path": "benchmark/course/tasks/c14_int8_dot_requant/ref/rtl/dot_requant.sv",
+    "sha256": "f4801b1538ff",
+    "text": "// Part 14 lesson 3 exercise: an int8 dot-product unit with requantisation and saturation (the core of one output of a quantised layer).\n//\n// N pairs of signed 8-bit numbers a[i] (activations) and w[i] (weights), packed a[i*8 +: 8], w[i*8 +: 8]. With in_valid high, one clock later (out_valid high, one clock\n// of latency, rst_n clears out_valid only; synchronous, active low):\n//   acc = sum(a[i] * w[i]) + bias                      (bias: signed 32 bit; the sum fits 32 bits for N up to 4096)\n//   r   = (acc * mult + 2^(shift-1)) >>> shift         (mult: UNSIGNED 16 bit; shift: 1 .. 31; 64-bit signed product; >>> is the arithmetic (floor) shift)\n//   y   = clamp(r, lo, 127)   with lo = 0 when relu = 1 and -128 when relu = 0\n// Outputs: y (signed 8 bit) and acc (the signed 32-bit accumulator including the bias). Same ordering rule as the golden model tools/ml_models.requant.\nmodule dot_requant #(\n    parameter int N = 8\n) (\n    input  logic                  clk,\n    input  logic                  rst_n,\n    input  logic                  in_valid,\n    input  logic [N*8-1:0]        a,\n    input  logic [N*8-1:0]        w,\n    input  logic signed [31:0]    bias,\n    input  logic [15:0]           mult,\n    input  logic [4:0]            shift,\n    input  logic                  relu,\n    output logic                  out_valid,\n    output logic signed [7:0]     y,\n    output logic signed [31:0]    acc\n);\n    logic signed [31:0] s;\n    logic signed [63:0] p, r;\n    logic signed [63:0] rnd;\n    always_comb begin\n        s = bias;\n        for (int i = 0; i < N; i++) s = s + $signed(a[i*8 +: 8]) * $signed(w[i*8 +: 8]);\n        p = s * $signed({1'b0, mult});\n        rnd = 64'sd1 <<< (shift - 5'd1);\n        r = (p + rnd) >>> shift;\n    end\n    always_ff @(posedge clk) begin\n        if (!rst_n) out_valid <= 1'b0;\n        else out_valid <= in_valid;\n        if (in_valid) begin\n            acc <= s;\n            if (r > 64'sd127) y <= 8'sd127;\n            else if (r < (relu ? 64'sd0 : -64'sd128)) y <= relu ? 8'sd0 : -8'sd128;\n            else y <= r[7:0];\n        end\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 96,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c14_int8_dot_requant/hidden/acceptance.py",
+    "sha256": "bd2749eccfb0",
+    "text": "\"\"\"Acceptance tests of c14_int8_dot_requant against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import (ACC, A_HI, A_LO, BIAS, CTRL, DESIGN_ID, GO, MULT, STATUS, W_HI, W_LO, Y, compute, pack8,\n                   vectors)\n\n\nasync def run_case(b: Board, c: dict, what: str = \"\") -> None:\n    acc, y = compute(**c)\n    a, w = pack8(c[\"a\"]), pack8(c[\"w\"])\n    await b.write(A_LO, a & 0xFFFFFFFF)\n    await b.write(A_HI, a >> 32)\n    await b.write(W_LO, w & 0xFFFFFFFF)\n    await b.write(W_HI, w >> 32)\n    await b.write(BIAS, c[\"bias\"] & 0xFFFFFFFF)\n    await b.write(MULT, c[\"mult\"])\n    await b.write(CTRL, c[\"shift\"] | c[\"relu\"] << 8)\n    await b.write(GO, 1)\n    await b.expect(STATUS, 1, f\"READY {what}\")\n    await b.expect(Y, y & 0xFF, f\"Y {what} {c}\")\n    await b.expect(ACC, acc & 0xFFFFFFFF, f\"ACC {what} {c}\")\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off, want in ((A_LO, 0), (W_HI, 0), (BIAS, 0), (MULT, 0), (CTRL, 1), (Y, 0), (ACC, 0), (STATUS, 0)):\n        await b.expect(off, want, f\"reset value of {off}\")\n\n\n@cocotb.test()\nasync def test_random_cases(dut):\n    b = Board(dut, {})\n    await b.start()\n    for k, c in enumerate(vectors()[:10]):\n        await run_case(b, c, f\"random {k}\")\n\n\n@cocotb.test()\nasync def test_extremes_halves_and_bias(dut):\n    \"\"\"Extreme operands (both saturations, both relu settings), exact halves of both signs, bias -1 and a large positive bias.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    for k, c in enumerate(vectors()[300:316]):\n        await run_case(b, c, f\"special {k}\")\n\n\n@cocotb.test()\nasync def test_tail_cases(dut):\n    b = Board(dut, {})\n    await b.start()\n    for k, c in enumerate(vectors()[316:320]):\n        await run_case(b, c, f\"tail {k}\")\n\n\n@cocotb.test()\nasync def test_shift_and_mult_ranges(dut):\n    \"\"\"Every shift 1..31 with large and small multipliers; mult above 32767 is unsigned.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    for shift in (1, 2, 3, 5, 8, 13, 15, 16, 17, 24, 29, 30, 31):\n        c = dict(a=[rng.randint(-128, 127) for _ in range(8)], w=[rng.randint(-127, 127) for _ in range(8)],\n                 bias=rng.randint(-3000, 3000), mult=rng.choice((65535, 40000, 3, 32768)), shift=shift,\n                 relu=rng.randint(0, 1))\n        await run_case(b, c, f\"shift {shift}\")\n\n\n@cocotb.test()\nasync def test_ready_clears_on_go_and_regs(dut):\n    b = Board(dut, {})\n    await b.start()\n    c = vectors()[3]\n    await run_case(b, c, \"first\")\n    await b.write(A_LO, 0x01010101)               # operands are plain registers\n    await b.expect(A_LO, 0x01010101, \"A_LO\")\n    await b.expect(STATUS, 1, \"READY holds until the next GO\")\n    await b.write(Y, 0x55)                         # RO: ignored\n    await b.write(MULT, 0xFFFF_FFFF)\n    await b.expect(MULT, 0xFFFF, \"MULT keeps 16 bits\")\n    await b.write(CTRL, 0xFFFF_FFFF)\n    await b.expect(CTRL, 0x11F, \"CTRL keeps shift and relu\")\n    led = await peek(b.clk, dut.LED)\n    assert led == 1, f\"LED {led:04X}: only LED0 (READY) is lit\"\n    for off in (0x0B, 0x41, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n    await b.reset()\n    await b.expect(STATUS, 0, \"READY after reset\")\n    await b.expect(CTRL, 1, \"CTRL after reset\")\n"
+   }
+  ]
+ },
+ "heading": "Quantised-layer arithmetic unit behind the test shell",
+ "id": "c14_int8_dot_requant",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[31:0] activations 0..3, a_i in bits [8i+7:8i]",
+    "name": "A_LO",
+    "offset": "0x00"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] activations 4..7, a_(4+i) in bits [8i+7:8i]",
+    "name": "A_HI",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] weights 0..3, same packing",
+    "name": "W_LO",
+    "offset": "0x02"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] weights 4..7, same packing",
+    "name": "W_HI",
+    "offset": "0x03"
+   },
+   {
+    "access": "RW",
+    "bits": "[31:0] signed bias",
+    "name": "BIAS",
+    "offset": "0x04"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] unsigned multiplier; [31:16] read 0",
+    "name": "MULT",
+    "offset": "0x05"
+   },
+   {
+    "access": "RW",
+    "bits": "[4:0] shift (1..31), [8] relu; other bits read 0",
+    "name": "CTRL",
+    "offset": "0x06"
+   },
+   {
+    "access": "WO",
+    "bits": "any write starts one computation; reads 0",
+    "name": "GO",
+    "offset": "0x07"
+   },
+   {
+    "access": "RO",
+    "bits": "[7:0] limited answer (two's complement); [31:8] read 0",
+    "name": "Y",
+    "offset": "0x08"
+   },
+   {
+    "access": "RO",
+    "bits": "[31:0] the signed accumulator including the bias",
+    "name": "ACC",
+    "offset": "0x09"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] READY; other bits 0",
+    "name": "STATUS",
+    "offset": "0x0a"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: operand registers 0, SHIFT = 1, RELU = 0, READY = 0",
+  "top": "c14_int8_dot_requant_top",
+  "unmapped": "offsets 0x0B-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "dot_requant.sv",
+   "name": "no_rounding",
+   "why": "scaling truncates instead of rounding halves up"
+  },
+  {
+   "file": "dot_requant.sv",
+   "name": "relu_ignored",
+   "why": "the relu switch no longer limits at 0"
+  },
+  {
+   "file": "dot_requant.sv",
+   "name": "mult_signed",
+   "why": "mult treated as signed, wrong above 32767"
+  },
+  {
+   "file": "dot_requant.sv",
+   "name": "weights_unsigned",
+   "why": "weights read as unsigned"
+  },
+  {
+   "file": "dot_requant.sv",
+   "name": "bias_dropped",
+   "why": "bias not added"
+  },
+  {
+   "file": "dot_requant.sv",
+   "name": "round_wrong_bit",
+   "why": "rounding constant is 2^shift, not 2^(shift-1)"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c14_int8_dot_requant",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Y and ACC equal the model for every tested case, including extremes, both saturations and exact halves"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "READY is 0 after GO is written and 1 when the result is available"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "relu limits the answer at 0; without relu the lower limit is -128; mult is unsigned"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": 140,
+   "bram36": 0,
+   "claude_code_version": "2.1.316-2.1.318 (per call in claude_code_calls.jsonl)",
+   "date": "2026-11-06",
+   "dsp": 2,
+   "escape_level": "spec-interpretation",
+   "failure_class": "spec ambiguity plus clarify-stage gap (not a model error in the arithmetic)",
+   "ff": 904,
+   "hidden_pass": false,
+   "lut": 1359,
+   "model": "claude-sonnet-5-5",
+   "outcome": "escape",
+   "run": 1,
+   "tests_passed": 0,
+   "tests_total": 6,
+   "wall_h": "unknown",
+   "wns_ns": 0.849
+  },
+  {
+   "agent_turns": 125,
+   "bram36": 0,
+   "claude_code_version": "2.1.318",
+   "date": "2026-11-06",
+   "dsp": 2,
+   "escape_level": "spec-interpretation",
+   "failure_class": "spec ambiguity (task text names the pin 'LED0'; the master-XDC convention names the bus LED[15:0]) plus a weak port-name check; not an arithmetic or register error",
+   "ff": 837,
+   "hidden_pass": false,
+   "lut": 1290,
+   "model": "claude-sonnet-5-5",
+   "outcome": "escape",
+   "run": 2,
+   "tests_passed": 5,
+   "tests_total": 6,
+   "wall_h": "unknown",
+   "wns_ns": 2.146
+  },
+  {
+   "agent_turns": 158,
+   "bram36": null,
+   "claude_code_version": "2.1.318",
+   "date": "2026-11-06",
+   "dsp": null,
+   "escape_level": null,
+   "failure_class": "model error (primary) plus a harness gap (the failure summary hides the root cause)",
+   "ff": null,
+   "hidden_pass": true,
+   "lut": null,
+   "model": "claude-sonnet-5-5",
+   "outcome": "internal_stop_hidden_pass",
+   "run": 3,
+   "tests_passed": 6,
+   "tests_total": 6,
+   "wall_h": "unknown",
+   "wns_ns": null
+  },
+  {
+   "agent_turns": 101,
+   "bram36": null,
+   "claude_code_version": "2.1.318 (Claude Code)",
+   "date": "2026-11-07",
+   "dsp": null,
+   "escape_level": null,
+   "failure_class": "harness gap (tests-role convention) plus model error",
+   "ff": null,
+   "hidden_pass": true,
+   "lut": null,
+   "model": "claude-sonnet-5-5",
+   "outcome": "internal_stop_hidden_pass",
+   "run": 4,
+   "tests_passed": 6,
+   "tests_total": 6,
+   "wall_h": 0.94,
+   "wns_ns": null
+  },
+  {
+   "agent_turns": 152,
+   "bram36": 0,
+   "claude_code_version": "2.1.318",
+   "date": "2026-11-07",
+   "dsp": 12,
+   "escape_level": null,
+   "failure_class": null,
+   "ff": 753,
+   "hidden_pass": true,
+   "lut": 737,
+   "model": "claude-sonnet-5-5",
+   "outcome": "caught_and_repaired",
+   "run": 5,
+   "tests_passed": 6,
+   "tests_total": 6,
+   "wall_h": 1.42,
+   "wns_ns": 0.495
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Quantised-layer arithmetic unit behind the test shell\n\nI want a block that does the arithmetic of one output of a quantised neural-network layer, for the Nexys A7-100T's FPGA, and I want to exercise it entirely from the test shell.\n\n- It takes eight activation numbers and eight weight numbers, all signed 8-bit (activations -128 to 127, weights -127 to 127), plus a signed 32-bit bias, a 16-bit unsigned multiplier \"mult\",\n  a shift \"shift\" (1 to 31) and a one-bit \"relu\" switch. I load these over the shell and then give a \"go\" command that presents them to the block for one clock.\n- It multiplies the eight pairs, adds the eight products and the bias, and calls the total \"acc\".\n- It then scales acc by the fraction mult / 2^shift, rounding to the nearest whole number with exact halves going up (towards plus infinity; for example 2.5 gives 3 and -2.5 gives -2),\n  and limits the answer to the range -128 to 127 (to 0 to 127 when relu is 1).\n- When the work is done I can read the limited answer y (signed 8-bit) and, as a second output, acc (signed 32-bit), and a flag that says the result is ready.\n- It must be exact: I will compare every output with my own calculation, including extreme inputs, results that need limiting at both ends and exact halves. CPU_RESETN clears the loaded numbers and the ready flag.\n- LED0 shows the ready flag. The shell runs at 115200 baud on the USB-UART. The design ID is \"DOTQ\".\n\nTest hooks: top module `c14_int8_dot_requant_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "I01",
+  "I17",
+  "B23",
+  "A30"
+ ],
+ "tier": "C14",
+ "title": "Quantised-layer arithmetic unit behind the test shell",
+ "trace": {
+  "captions": [
+   "Case 9: eight products plus bias 919 give acc = 402. Scaled by 20519 / 2^19 and rounded it is 16; relu is off. y = 16.",
+   "Case 14: eight products plus bias 3399 give acc = 24386. Scaled by 38625 / 2^26 and rounded it is 14; relu is on. y = 14.",
+   "Case 19: eight products plus bias -4954 give acc = 6093. Scaled by 32926 / 2^25 and rounded it is 6; relu is on. y = 6.",
+   "Case 24: eight products plus bias 3287 give acc = -25280. Scaled by 35404 / 2^25 and rounded it is -27; relu is off. y = -27.",
+   "Case 25: eight products plus bias 596 give acc = -6700. Scaled by 21970 / 2^26 and rounded it is -2; relu is off. y = -2.",
+   "Case 29: eight products plus bias 2694 give acc = -16159. Scaled by 26352 / 2^25 and rounded it is -13; relu is on. It is limited to 0. y = 0.",
+   "Case 0: eight products plus bias -915 give acc = -16929. Scaled by 17243 / 2^14 and rounded it is -17817; relu is on. It is limited to 0. y = 0.",
+   "Case 11: eight products plus bias 931 give acc = -18502. Scaled by 47660 / 2^17 and rounded it is -6728; relu is off. It is limited to -128. y = -128.",
+   "Case 304: eight products plus bias 0 give acc = -130048. Scaled by 65535 / 2^15 and rounded it is -260092; relu is off. It is limited to -128. y = -128.",
+   "Case 305: eight products plus bias 0 give acc = -130048. Scaled by 65535 / 2^15 and rounded it is -260092; relu is on. It is limited to 0. y = 0.",
+   "Case 306: eight products plus bias 0 give acc = 1. Scaled by 1 / 2^1 and rounded it is 1; relu is off. y = 1.",
+   "Case 307: eight products plus bias 0 give acc = 3. Scaled by 1 / 2^1 and rounded it is 2; relu is off. y = 2.",
+   "Case 308: eight products plus bias 0 give acc = -1. Scaled by 1 / 2^1 and rounded it is 0; relu is off. y = 0.",
+   "Case 309: eight products plus bias 0 give acc = -3. Scaled by 1 / 2^1 and rounded it is -1; relu is off. y = -1.",
+   "Case 310: eight products plus bias 0 give acc = 5. Scaled by 1 / 2^1 and rounded it is 3; relu is off. y = 3.",
+   "Case 311: eight products plus bias 0 give acc = -5. Scaled by 1 / 2^1 and rounded it is -2; relu is off. y = -2."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "acc",
+    "radix": "dec",
+    "v": [
+     402,
+     24386,
+     6093,
+     -25280,
+     -6700,
+     -16159,
+     -16929,
+     -18502,
+     -130048,
+     -130048,
+     1,
+     3,
+     -1,
+     -3,
+     5,
+     -5
+    ],
+    "width": 32
+   },
+   {
+    "kind": "bus",
+    "name": "scaled (before limit)",
+    "radix": "dec",
+    "v": [
+     16,
+     14,
+     6,
+     -27,
+     -2,
+     -13,
+     -17817,
+     -6728,
+     -260092,
+     -260092,
+     1,
+     2,
+     0,
+     -1,
+     3,
+     -2
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "relu",
+    "v": [
+     0,
+     1,
+     1,
+     0,
+     0,
+     1,
+     1,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "y",
+    "radix": "dec",
+    "v": [
+     16,
+     14,
+     6,
+     -27,
+     -2,
+     0,
+     0,
+     -128,
+     -128,
+     0,
+     1,
+     2,
+     0,
+     -1,
+     3,
+     -2
+    ],
+    "width": 8
+   }
+  ],
+  "stimulus": "16 cases picked from the model's fixed test set of 400: random ones that fit the range, random ones that are limited, and the hand-made cases for limiting and for exact halves (cases 304 to 311).",
+  "unit": "test case",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "what": "The arithmetic of one output of a quantised neural-network layer. It multiplies eight small signed number pairs, adds the products and a bias, then scales the total by a fraction written as a multiplier and a shift, rounds to the nearest whole number and limits the answer to the range of a signed byte. An option turns negative answers into zero, as a rectifier does.",
+ "where": "Integer multiply-accumulate with a rescaling step is the core of 8-bit neural-network inference on phones, embedded processors and AI accelerators, because it needs far less area and power than floating point."
+}
