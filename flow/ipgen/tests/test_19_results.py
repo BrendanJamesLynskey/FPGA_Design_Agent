@@ -59,3 +59,25 @@ def test_cic_example_ip_output_equals_python_golden():
     d = json.loads((ROOT / "cic" / "design.json").read_text())["design"]
     y = cic_design.golden(x, d["rate"], d["diff_delay"], d["stages"])[::d["rate"]]
     assert np.array_equal(got, y)
+
+
+@needs
+def test_bmg_example_every_word_matches_and_latency_is_recorded():
+    sim = json.loads((ROOT / "bmg_sine" / "sim.json").read_text())["sim"]["mem"]
+    assert sim["match"] and sim["latency_cycles"] == 2 and sim["n_mismatch"] == 0 and sim["n_words"] > 3000
+    rb = json.loads((ROOT / "bmg_sine" / "readback.json").read_text())
+    assert int(rb["selected"]["CONFIG.Write_Depth_A"]) == 1024 and int(rb["selected"]["CONFIG.Write_Width_A"]) == 16
+
+
+@needs
+def test_dds_examples_phase_is_exact_and_sfdr_meets_the_spec():
+    for name in ("dds", "dds_no_margin"):
+        d = json.loads((ROOT / name / "design.json").read_text())
+        s = json.loads((ROOT / name / "sim.json").read_text())["sim"]["continuous"]
+        rb = json.loads((ROOT / name / "readback.json").read_text())["selected"]
+        assert s["phase_exact"] and s["match"]
+        assert s["sfdr_db"] >= s["sfdr_spec_db"]
+        # the Python tool sized the core the way the core reports it
+        assert int(rb["CONFIG.Phase_Width"]) == d["design"]["phase_width"]
+        assert int(rb["CONFIG.Output_Width"]) == d["design"]["output_width"]
+        assert s["max_abs_err_sin_lsb"] <= 3

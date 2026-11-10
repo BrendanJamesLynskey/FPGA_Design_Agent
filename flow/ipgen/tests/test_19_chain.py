@@ -70,6 +70,6 @@ def test_cic_design_picks_fewest_stages_and_bit_growth():
 def test_svg_renders_with_numbers():
     blocks = [{"title": "A", "sub": "x", "lines": ["one", "-", "two"], "external": True}, {"title": "B", "sub": "y", "lines": ["z"]}]
     links = [{"lines": ["l0", "l1", "l2", "l3"]}]
-    strip = {"title": "t", "sub": "s", "rows": [{"label": "n", "measured": 60.0, "predicted": 61.0, "enob": 10.0}]}
+    strip = {"axis": (50, 70), "reference": (63, "ref"), "title": "t", "sub": "s", "rows": [{"label": "n", "measured": 60.0, "predicted": 61.0, "enob": 10.0}]}
     svg = chain_svg.render("T", blocks, links, strip, ("f0", "f1"))
     assert svg.startswith("<svg") and "60.0 dB" in svg and "predicted 61.0 dB" in svg

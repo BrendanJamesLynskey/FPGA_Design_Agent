@@ -20,6 +20,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 VIVADO = os.environ.get("VIVADO", "/opt/Xilinx/2025.2/Vivado/bin/vivado")
 TB_TEMPLATE = HERE / "tb" / "tb_axis_io.sv.tmpl"
+TB_MEM_TEMPLATE = HERE / "tb" / "tb_mem_read.sv.tmpl"
 
 
 def to_unsigned(v: int, width: int) -> int:
@@ -73,6 +74,29 @@ def render_tb(path: Path, *, dut_inst: str, in_w: int, out_w: int, n_in: int, st
     for k, v in rep.items():
         text = text.replace(f"@{k}@", str(v))
     Path(path).write_text(text)
+
+
+def render_tb_mem(path: Path, *, dut_inst: str, addr_w: int, data_w: int, n_addr: int, addr_file: Path, resp: Path,
+                  period_ns: float = 10.0, tail: int = 16) -> None:
+    """The memory-read testbench: `dut_inst` uses the fixed names clka, addra, douta."""
+    text = TB_MEM_TEMPLATE.read_text()
+    rep = {"ADDR_W": addr_w, "DATA_W": data_w, "N_ADDR": n_addr, "TAIL": tail, "ADDR_FILE": str(Path(addr_file).resolve()),
+           "RESP_FILE": str(Path(resp).resolve()), "HALF_PERIOD_NS": period_ns / 2, "DUT_INST": dut_inst}
+    for k, v in rep.items():
+        text = text.replace(f"@{k}@", str(v))
+    Path(path).write_text(text)
+
+
+def read_mem_response(path: Path):
+    """-> (addresses issued per cycle, data per cycle) from the memory testbench's response file."""
+    addr, data = [], []
+    for line in Path(path).read_text().splitlines():
+        if line.startswith("#"):
+            continue
+        _, a, d = line.split()
+        addr.append(int(a, 16))
+        data.append(int(d, 16))
+    return addr, data
 
 
 def read_response(path: Path, out_w: int, signed: bool = True) -> dict:

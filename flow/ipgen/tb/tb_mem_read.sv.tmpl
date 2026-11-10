@@ -1,0 +1,48 @@
+// tb_mem_read: the file-driven memory read testbench (brief 19). Generated from a template by flow/ipgen/harness.py.
+// It issues one address per clock from a file and records, every clock, the address issued and the data output, so that
+// Python can work out the read latency and compare every word with the table. It judges nothing.
+//
+// Address file : one address per line, hex.
+// Response file: "<cycle> <address issued this cycle, hex> <data output this cycle, hex>", then "# n_addr <N>".
+`timescale 1ns/1ps
+module tb_mem_read;
+    localparam int ADDR_W = @ADDR_W@;
+    localparam int DATA_W = @DATA_W@;
+    localparam int N_ADDR = @N_ADDR@;
+    localparam int TAIL = @TAIL@;       // idle cycles after the last address, for the output pipeline to drain
+    localparam string ADDR_FILE = "@ADDR_FILE@";
+    localparam string RESP_FILE = "@RESP_FILE@";
+
+    reg clka = 1'b0;
+    always #(@HALF_PERIOD_NS@) clka = ~clka;
+
+    reg  [ADDR_W-1:0] addra = '0;
+    wire [DATA_W-1:0] douta;
+    reg  [ADDR_W-1:0] addrs [0:N_ADDR-1];
+
+@DUT_INST@
+
+    integer fd, rc, i, cyc;
+    reg [ADDR_W-1:0] a;
+    integer ofd;
+    initial begin
+        fd = $fopen(ADDR_FILE, "r");
+        if (fd == 0) begin $display("TB_ERROR cannot open %s", ADDR_FILE); $finish; end
+        for (i = 0; i < N_ADDR; i = i + 1) begin
+            rc = $fscanf(fd, "%h\n", a);
+            addrs[i] = a;
+        end
+        $fclose(fd);
+        ofd = $fopen(RESP_FILE, "w");
+        for (cyc = 0; cyc < N_ADDR + TAIL; cyc = cyc + 1) begin
+            @(posedge clka);
+            // values sampled here are those of the previous cycle's inputs and the current output
+            $fdisplay(ofd, "%0d %h %h", cyc, addra, douta);
+            addra <= (cyc < N_ADDR) ? addrs[cyc] : '0;
+        end
+        $fdisplay(ofd, "# n_addr %0d", N_ADDR);
+        $fclose(ofd);
+        $display("TB_DONE n_addr=%0d", N_ADDR);
+        $finish;
+    end
+endmodule

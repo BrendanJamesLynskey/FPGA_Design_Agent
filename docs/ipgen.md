@@ -46,6 +46,10 @@ Icarus, Verilator and GHDL cannot run them; only xsim can.
 5. Two schedules run: continuous (every cycle valid and ready) and random (seeded gaps). Both must match the golden, and
    they must agree with each other.
 
+Two more shapes use the same runner. A memory (`tb/tb_mem_read.sv.tmpl`): addresses from a file, one per clock, and the address and
+data of every clock recorded; Python finds the read latency and compares every word. A source with no input channel (the DDS): the
+testbench is given one dummy beat and records the outputs for a stated number of cycles, with the concatenated output channels split in Python.
+
 The latency recorded is from the first accepted input beat to the first output beat, in clock cycles. It is **not** the
 IP's `C_LATENCY` parameter (which is read back too): for a decimator the first output also waits for the filter to fill.
 
@@ -100,21 +104,70 @@ changes the model's tool list, which the eval-1 golden request test freezes: bri
 list of unwired project-mode features). One KB note per adapter is in the private knowledge repository
 (`vendor/amd_ip_cores/ip-cores/ipgen-<ip>-adapter`).
 
-## Candidates beyond FIR and CIC (listed, not built)
+## Adapters built, and where their evidence is
+
+| Adapter | IP | Example (spec, design, read-back, simulation, synthesis) | Check |
+|---|---|---|---|
+| `fir` | FIR Compiler 7.2 | [results/19_ipgen/fir](../results/19_ipgen/fir): 20 MS/s decimate by 4, 153 taps | every output word equals the integer convolution |
+| `fir` (compensating) | FIR Compiler 7.2 | [results/19_ipgen/chain_fir](../results/19_ipgen/chain_fir): 96 kS/s decimate by 2 behind a CIC | as above |
+| `cic` | CIC Compiler 4.0 | [results/19_ipgen/cic](../results/19_ipgen/cic): 2.4 MS/s PDM, R = 25, N = 4 | every output word equals the integer model |
+| `bmg` | Block Memory Generator 8.4 | [results/19_ipgen/bmg_sine](../results/19_ipgen/bmg_sine): a 1024 x 16 sine table as a ROM | every word read back; latency measured |
+| `dds` | DDS Compiler 6.0 | [results/19_ipgen/dds](../results/19_ipgen/dds) (and `dds_no_margin`, `dds_coherent`): a 34-bit-phase NCO | the phase output equals a Python accumulator; sine and cosine within 2 LSB of ideal; SFDR measured by FFT |
+| (chain) | the PDM microphone, CIC and FIR above | [results/19_ipgen/chain](../results/19_ipgen/chain): `chain.svg`, `chain_results.json` | predicted and measured SINAD at each node |
+
+The DDS adapter does not have a bit-accurate model of the sine and cosine tables (the core's C model was not built into
+the flow), so its sine and cosine are judged against the ideal curve and by SFDR, not word for word.
+
+## Measured facts that cost a rerun (all Vivado 2025.2)
+
+- **Test bench:** a beat offered and not accepted must stay offered; and a core with no output `tready` (the CIC, the DDS) must
+  not have a ready schedule applied to its recorder, or beats are lost.
+- **Block Memory Generator:** its `.mif` is found in the working directory, so out-of-context synthesis must run from the IP's own
+  directory (the stage does), or the memory comes out empty and optimises away. Its `CONFIG.READ_LATENCY_A` read-back stays 1 with the output
+  register on; the measured read latency was 2.
+- **DDS Compiler:** `Noise_Shaping Auto` is refused in `Hardware_Parameters` mode (use `None` or the dither choices); in the data word the
+  cosine is the low half and the sine the high half; its `System_Parameters` mode sizes the core the way the Python rule does (34-bit phase and
+  15-bit output for 100 MHz, 0.01 Hz and 90 dB), but its read-back of the SFDR and resolution is not meaningful in hardware mode.
+  A tone whose phase increment has its low bits zero (a coherent power-of-two record) has no phase-truncation error and measures a flattering SFDR
+  (115.6 dB at 15 bits in `dds_coherent`); `dds` uses a record of 16411 points so that every phase bit is in use.
+- **FIR Compiler:** the read-back `C_NUM_MADDS` (4) is the multiplier-adds the schedule needs; synthesis used 5 DSP slices.
+- **Reading properties:** `list_property $ip` shows no `CONFIG.*` until the IP has a `-dir`; use `[get_ips name]`.
+  `CONFIG.HardwareOversamplingRate` is not recomputed in batch; `C_OVERSAMPLING_RATE` in the `.xci` is.
+- **Reports:** `report_utilization` rows are `Slice LUTs*` and `Block RAM Tile` with values like `7.5`: parse the decimals.
+
+## Candidates beyond these (listed, not built)
 
 | IP | What an external tool would compute | Config it feeds |
 |---|---|---|
-| DDS Compiler 6.0 | phase width and output width from an SFDR and a frequency-resolution target; phase increment | `Phase_Width`, `Output_Width`, `PINC` |
 | CORDIC 6.0 | iterations and widths from a precision target | `Functional_Selection`, `Input_Width`, `Output_Width`, iterations |
 | FFT 9.1 | point size and a scaling schedule from an overflow analysis | `transform_length`, `scaling_options`, `scaling_schedule` |
-| Block Memory Generator | a sine or window table from Python | `.coe` initial contents |
-| Clocking Wizard | a clock plan from an M/D/O solver; jitter read back | `PRIM_IN_FREQ`, `CLKOUTn_REQUESTED_OUT_FREQ`, read `MMCM_*` (brief 18: batch read-back works) |
+| Clocking Wizard | a clock plan from an M/D/O solver; jitter read back | `PRIM_IN_FREQ`, `CLKOUTn_REQUESTED_OUT_FREQ`, read `MMCM_*` (brief 18: batch read-back works; `flow/mmcm_search.py` is the solver) |
 | MIG (7-series) | a `.prj` from the pin planner | the `.prj` file (no Tcl validation command exists: brief 18) |
 | XADC wizard | the channel sequencer, alarm limits | `CONFIG.CHANNEL_ENABLE_*`, `CONFIG.*_ALARM_*` |
 | Transceiver wizard | line rate and reference clock from a link budget | `CONFIG.*LINE_RATE`, `REFCLK` |
 | Multiplier, divider, floating point | widths from a range analysis | `CONFIG.*Width` |
 
+## The signal chain
+
+`flow/ipgen/chain.py` reads a YAML chain (the converter from data-sheet numbers, the IP stages from their result directories),
+runs the integer chain on test tones (a reference tone at the data sheet's 94 dB SPL level, a loud tone, two tones), measures SNR, SINAD,
+THD, SFDR, IMD3 and ENOB by FFT at each node, predicts the same numbers from a noise budget, and draws `chain.svg`. The numbers on
+the diagram are read from `chain_results.json` and the stage result directories. The converter is a model (a 4th-order one-bit
+modulator plus white noise at the data-sheet SNR): the microphone's data sheet gives no noise density. The stages' integer models are
+the ones each adapter matched to its IP in xsim; the cascade itself is not simulated in xsim.
+
+## Proposed "Beyond the flow" card (not added to the site)
+
+> **9. Filter IP configured from a design tool, checked bit for bit.** *Problem:* the filter IP wants coefficients, widths and rates; a
+> spec has band edges and attenuation. *Standard Vivado:* the GUI takes the numbers a human typed; nothing re-checks the quantised
+> coefficients against the spec or the IP's output against a model. *This flow:* a Python design tool makes the coefficients from the spec,
+> re-checks the quantised response (the 16-bit example lost 6.3 dB of attenuation and still met 80 dB), sets the IP in batch, reads back
+> what the IP computed, and an xsim run compares every output word with an integer model. *Not done:* coefficient reload, rounded outputs,
+> and a bit-accurate model for the DDS tables.
+>
+> Card 8 ("AMD IP models need xsim, which cocotb cannot drive", Planned) can move to Built: `flow/ipgen/harness.py` is that harness.
+
 ## What is not done
 
-DDS, CORDIC, FFT, Block Memory Generator and Clocking Wizard adapters (the brief's step 3, "as far as the budget allows").
-The chain's xsim runs are per stage, not for the cascade. Output rounding and coefficient reload are not exercised.
+CORDIC, FFT and Clocking Wizard adapters. The chain's xsim runs are per stage, not for the cascade. Output rounding and coefficient
+reload are not exercised. The pyfda front end was not installed.

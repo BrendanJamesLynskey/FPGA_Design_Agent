@@ -79,3 +79,24 @@ def test_tb_renders_with_no_placeholders_left(tmp_path):
     import re
     body = "\n".join(ln for ln in out.read_text().splitlines() if not ln.lstrip().startswith("//"))
     assert not re.search(r"@[A-Z_]+@", body)
+
+
+def test_bmg_table_coe_and_check(tmp_path):
+    from flow.ipgen.bmg_adapter import BmgAdapter, make_table
+    spec = dict(kind="sine", points=64, width=8)
+    t = make_table(spec)
+    assert t[0] == 0 and t[16] == 127 and t[48] == -127 and len(t) == 64
+    ad = BmgAdapter()
+    d = ad.design(spec)
+    art = ad.design_artifacts(spec, d, tmp_path)
+    lines = art["coe"].read_text().split("\n")
+    assert lines[0] == "memory_initialization_radix=16;" and lines[2] == "00,"
+    assert lines[2 + 48] == "81,"  # -127 in 8-bit two's complement
+    addrs = list(range(64)) * 2
+    # a ROM with latency 2: D[r + 2] = table[A[r]]
+    data = [0, 0] + [int(t[a]) & 0xFF for a in addrs]
+    r = ad.check_mem(spec, d, addrs, data[: len(addrs)] + [0, 0, 0], 8)
+    assert r["match"] and r["latency_cycles"] == 2
+    bad = list(data)
+    bad[30] ^= 1
+    assert not ad.check_mem(spec, d, addrs, bad[: len(addrs)] + [0, 0, 0], 8)["match"]

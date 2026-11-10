@@ -67,6 +67,9 @@ if {[lsearch $stages synth] >= 0} {
     read_ip $wd/ip/$m/$m.xci
     set top $m
     if {[info exists ipgen(synth_top)]} { set top $ipgen(synth_top) }
+    # run from the IP's own directory: cores that initialise memory (Block Memory Generator) look for their .mif in the
+    # working directory, and without it synthesise an empty memory that optimises to nothing
+    cd $wd/ip/$m
     synth_design -top $top -part $ipgen(part) -mode out_of_context
     create_clock -period $ipgen(clock_period_ns) -name ipclk [get_ports $ipgen(clock_port)]
     report_utilization -file $wd/utilization.rpt
