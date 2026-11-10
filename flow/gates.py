@@ -48,6 +48,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+try:
+    from flow import version_pin
+except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+    import version_pin
+
 # --- copied and extended from HW_Design_Space_Agent -----------------------------
 
 # From BrendanJamesLynskey/HW_Design_Space_Agent @ 80415c6, scripts/vivado_points.py
@@ -470,6 +475,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             first_failed = name
     return {
         "build_dir": str(d),
+        **version_pin.record(d, json.loads((d / "run.json").read_text()) if strict else None),
         "top": top,
         "variant": variant,
         "pass": bool(gates) and all(gates.values()),   # nothing ran is not a pass
@@ -526,6 +532,8 @@ def main(argv: list[str] | None = None) -> int:
         a.json.parent.mkdir(parents=True, exist_ok=True)
         a.json.write_text(json.dumps(r, indent=2) + "\n")
     t, u = r["timing"] or {}, r["utilization"] or {}
+    if (n := version_pin.note(r)):
+        print(f"gates: {n}")
     print(f"gates: {r['top']} ({r['variant']}): {'PASS' if r['pass'] else 'FAIL'}  "
           f"WNS {t.get('wns_ns')} ns, TNS {t.get('tns_ns')}, WHS {t.get('whs_ns')} ns, THS {t.get('ths_ns')}; "
           f"LUT {u.get('lut')}, FF {u.get('ff')}, BRAM {u.get('bram_tile')}, DSP {u.get('dsp')}")
