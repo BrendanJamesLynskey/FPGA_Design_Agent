@@ -53,3 +53,12 @@ the public repo lists them by id and hash only, and publishes their `spec.md` on
 | `tools/bank_grep.py` | the knowledge bank must not contain any spec's distinctive phrases |
 | `tools/similarity.py` | pool/benchmark spec similarity; RTL similarity to a local clone of the textbook repos (contamination probe) |
 | `tools/pin_scan.py` | grader-validity scan (08a2): which hidden benches read a pulled-up or tri-state pin and would fail a legal `1'bz` driver; prints only ids and yes/no flags (`--private` adds the held-out tasks) |
+
+## Tests
+
+| Test file | What |
+|---|---|
+| `tests/test_bench_static.py`, `tests/test_bench_rtl.py` | v1 tasks well formed, split and manifest verify; the reference passes (Icarus or Verilator) |
+| `tests/test_split_v2.py` | the v2 ledger tool: blocks, draws, tamper evidence, the five moves |
+| `tests/test_task_quality.py` | every v1, course and v2 task: mutant and trap edits well formed, no new mutant killed only by a build failure; v2 tasks well formed, still equal to their manifests and the ledger, ledger only grows against the base commit |
+| `tests/test_tool_guards.py` | `bank_grep`, `similarity` and `split` fail loudly on missing input |

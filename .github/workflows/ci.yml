@@ -93,6 +93,14 @@ jobs:
           echo "v1 tasks: $sel"
           for t in $dirs; do python benchmark/tools/check_task.py "$t" --out build/bench_ci || rc=1; done
           exit $rc
+      - name: Benchmark v2 development tasks - reference RTL, every mutant killed, every trap fires (quality review 12)
+        run: |
+          rc=0
+          sel=$(python tools/ci_select.py v2)
+          if [ "$sel" = ALL ]; then dirs=$(ls -d benchmark/v2/tasks/*/); else dirs=$(for t in $sel; do echo benchmark/v2/tasks/$t/; done); fi
+          echo "v2 tasks: $sel"
+          for t in $dirs; do python benchmark/tools/check_task.py "$t" --out build/bench_ci_v2 || rc=1; done
+          exit $rc
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4

@@ -48,3 +48,21 @@ def test_command_line_modes(monkeypatch, capsys) -> None:
     assert cs.main(["v1", "--k"]) == 0
     out = capsys.readouterr().out.strip()
     assert out == " or ".join(sorted(["t1_bcd_updown", "t1_elevator_fsm", "t2_i2c_scanner"]))
+
+
+def test_a_change_to_shared_grader_code_runs_every_task() -> None:
+    """Quality review 12, area 2: a pull request that edits the bench library, the scoring tools or the shell used to run
+    only the smoke set, so a break in a task it did not name was found on main."""
+    for f in ("benchmark/lib/bench.py", "benchmark/tools/run_task.py", "shell/rtl/fpga_shell.sv", "shell/host/protocol.py",
+              "tools/ci_select.py"):
+        for tier in ("v1", "course", "v2"):
+            assert cs.select(tier, "pull_request", "base", [f]) is None, (tier, f)
+    assert cs.select("pool", "pull_request", "base", ["benchmark/lib/bench.py"]) is not None
+
+
+def test_v2_is_a_tier_with_a_smoke_task() -> None:
+    assert "v2" in cs.TIER_DIRS and cs.all_tasks("v2")
+    assert cs.select("v2", "pull_request", "base", ["README.md"]) == sorted(
+        yaml.safe_load((ROOT / "tools" / "ci_smoke.yaml").read_text())["v2"])
+    assert cs.select("v2", "pull_request", "base", ["benchmark/v2/tasks/v2_a_shifter/hidden/model.py"]) == sorted(
+        {"v2_a_shifter"} | set(yaml.safe_load((ROOT / "tools" / "ci_smoke.yaml").read_text())["v2"]))
