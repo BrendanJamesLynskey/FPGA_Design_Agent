@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import signal
 import subprocess
 import time
 import uuid
@@ -106,13 +107,23 @@ class LocalRunner:
         t0 = time.monotonic()
         full_env = scrubbed_env(env)
         argv = [resolve_tool(argv[0], full_env), *argv[1:]]
+        # own session/process group: on a timeout the whole group is killed. subprocess.run(timeout=) kills only the
+        # direct child, so a timed-out flow/run_vivado.sh left its Vivado (in the systemd scope) running (QR1, verified)
+        proc = subprocess.Popen(argv, cwd=cwd, env=full_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                errors="replace", start_new_session=True, stdin=subprocess.DEVNULL)
         try:
-            p = subprocess.run(argv, cwd=cwd, env=full_env, capture_output=True, text=True,
-                               timeout=timeout, errors="replace")
-            rc, out, err = p.returncode, p.stdout, p.stderr
-        except subprocess.TimeoutExpired as e:
-            rc, out, err = 124, (e.stdout or b"").decode(errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or ""), \
-                f"timed out after {timeout} s"
+            out, err = proc.communicate(timeout=timeout)
+            rc = proc.returncode
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                out, _ = proc.communicate(timeout=15)       # partial output; a grandchild that left the group may hold the pipes
+            except subprocess.TimeoutExpired:
+                out = ""
+            rc, err = 124, f"timed out after {timeout} s"
         return RunResult(rc, out, err, round(time.monotonic() - t0, 2))
 
 

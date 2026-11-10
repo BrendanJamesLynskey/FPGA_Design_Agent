@@ -54,6 +54,9 @@ stage rtl_reports
 # --- stage post_synth ----------------------------------------------------------
 synth_design -top $top -part $part {*}$gen_args
 stage synth
+# AMD's scoped XPM constraints are not applied in this non-project flow (QR1, docs/methodology.md): apply them by cell name
+source $flow_dir/xpm_cdc.tcl
+apply_xpm_cdc_constraints
 write_checkpoint -force $out/post_synth.dcp
 # UG949 ch. 5 "Moving Past Synthesis": DRCs, methodology, timing constraints,
 # QoR assessment, utilisation, clock trees; ch. 6 "Baselining and Timing

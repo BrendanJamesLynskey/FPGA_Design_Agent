@@ -8,6 +8,7 @@ Python code only.
 | `run_vivado.sh` | The memory-safe runner. `flow/run_vivado.sh designs/<name> [base\|ila\|both]` |
 | `prepare.py` | `build.yaml` (+ `probes.yaml`) to `inputs.tcl` / `probes.tcl`; computes the build stamp |
 | `build.tcl` | Non-project flow in UltraFast stages ([docs/methodology.md](../docs/methodology.md)): read, `synth_design -rtl` + RTL methodology DRCs, `synth_design` + post-synthesis reports (incl. `report_qor_assessment`), (ILA), `opt_design`, `place_design`, `phys_opt_design` + post-placement timing, `route_design`, closure reports, `write_bitstream` |
+| `xpm_cdc.tcl` | The timing exceptions of AMD's `xpm_cdc_*` macros, applied by cell name right after `synth_design` (the non-project flow does not apply their scoped constraints; QR1 measured -1.364 ns on a correct crossing without it); sourced by `build.tcl` |
 | `debug.tcl` | Post-synthesis ILA insertion from `probes.yaml` (`create_debug_core`, `connect_debug_port`); writes `probe_map.txt` and, at the end, the `.ltx` |
 | `gates.py` | Parses the reports into one JSON and passes or fails the build, stage by stage (`rtl`, `post_synth`, `post_place`, `post_route`, `bitstream`), naming the first stage that failed |
 | `summarise.py` | Collects `gates.json` + `run.json` of the variants into `results/<milestone>/` |

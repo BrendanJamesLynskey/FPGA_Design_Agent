@@ -116,3 +116,14 @@ def test_signoff_stage_fails_until_all_evidence_passes(tmp_path):
     so = rep["stages"]["SIGNOFF"]
     assert so["pass"] is False and len(rep["traceability"]) == 16
     assert "REQ-08:hardware=pending" in so["checks"]["every_method_has_passing_evidence"]["value"]
+
+
+def test_a_skipped_testcase_is_not_a_pass(tmp_path):
+    """QR1: cocotb writes <skipped/> for skip=True; it must not count as a passing test (V2 planned tests, random test)."""
+    d = tmp_path / "seed1"
+    d.mkdir()
+    (d / "results.xml").write_text('<testsuites><testsuite name="s">'
+                                   '<testcase classname="m" name="test_ok"/>'
+                                   '<testcase classname="m" name="test_random_traffic"><skipped/></testcase>'
+                                   '<testcase classname="m" name="test_bad"><failure/></testcase></testsuite></testsuites>')
+    assert G.read_results([tmp_path]) == {1: {"m.test_ok": True, "m.test_random_traffic": False, "m.test_bad": False}}

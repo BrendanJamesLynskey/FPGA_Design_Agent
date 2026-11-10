@@ -130,7 +130,7 @@ def load_build_cfg(s: Session) -> dict[str, Any]:
     return cfg
 
 
-_SV_BAD = re.compile(r"\$system\b|\$fopen\b|\$fwrite\b|\$readmem[bh]\s*\(\s*\"/|`include\s+\"/|\$dumpfile\s*\(\s*\"/")
+_SV_BAD = re.compile(r"\$system\b|\$fopen\b|\$fwrite\b|\$readmem[bh]\s*\(\s*\"(?:/|[^\"]*\.\.)|`include\s+\"(?:/|[^\"]*\.\.)|\$dumpfile\s*\(\s*\"/")
 _PY_BAD = re.compile(r"\b(subprocess|os\.system|os\.popen|os\.exec\w*|os\.spawn\w*|socket|urllib|requests|http\.client|"
                      r"ctypes|shutil\.rmtree|importlib|__import__|pty|ftplib|smtplib|pickle)\b|\b(eval|exec|compile)\s*\(")
 
