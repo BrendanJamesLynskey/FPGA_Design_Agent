@@ -248,6 +248,17 @@ details.area .kv { grid-template-columns: minmax(0, 12ch) minmax(0, 1fr); margin
 }
 details.area { scroll-margin-top: 110px; }
 @media (max-width: 640px) { details.area { scroll-margin-top: 250px; } }
+
+/* nested "Details" drawers (brief 32): specialist detail, closed by default */
+details.more { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 1em; }
+details.more > summary { padding: 8px 12px; cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: .9rem; color: var(--ink-2); }
+details.more > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.more[open] > summary { border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.card details.more, details.area details.more { background: var(--bg); }
+dl.gloss { margin: 0; }
+dl.gloss dt { font-weight: 700; margin-top: .8em; scroll-margin-top: 70px; }
+dl.gloss dd { margin: .1em 0 0; max-width: var(--measure); }
+.evsrc { font-size: .8rem; color: var(--ink-3); white-space: nowrap; }
 </style>
 </head>
 <body>

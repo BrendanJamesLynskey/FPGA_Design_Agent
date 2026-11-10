@@ -248,6 +248,17 @@ details.area .kv { grid-template-columns: minmax(0, 12ch) minmax(0, 1fr); margin
 }
 details.area { scroll-margin-top: 110px; }
 @media (max-width: 640px) { details.area { scroll-margin-top: 250px; } }
+
+/* nested "Details" drawers (brief 32): specialist detail, closed by default */
+details.more { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 1em; }
+details.more > summary { padding: 8px 12px; cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: .9rem; color: var(--ink-2); }
+details.more > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.more[open] > summary { border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.card details.more, details.area details.more { background: var(--bg); }
+dl.gloss { margin: 0; }
+dl.gloss dt { font-weight: 700; margin-top: .8em; scroll-margin-top: 70px; }
+dl.gloss dd { margin: .1em 0 0; max-width: var(--measure); }
+.evsrc { font-size: .8rem; color: var(--ink-3); white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -255,27 +266,24 @@ details.area { scroll-margin-top: 110px; }
 <header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html">How it works</a><a href="flow-notes.html" aria-current="page">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="problems.html">Problems</a><a href="evaluation.html">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>Beyond the standard flow</h1>
-<p class="lede">Places where Vivado, run in batch mode the way the agent runs it, does less than a design needs, and what this flow does about each. Every card says what was measured, where the files are, and whether the fix is built, measured or only planned.</p>
+<p class="lede">The agent drives Vivado from scripts, with no GUI, and in that mode Vivado sometimes does less than a design needs. Each card tells one such story: what goes wrong, why, what the flow does, and what has been measured.</p>
 
-<div class="tablewrap" tabindex="0"><table class="index"><thead><tr><th>Card</th><th>Issue</th><th>Status</th></tr></thead><tbody>
-<tr><td><a href="#xpm-cdc">1</a></td><td>AMD's CDC macro constraints are missing in the batch flow</td><td>Built, verified on one probe design</td></tr>
-<tr><td><a href="#cdc-gate">2</a></td><td><code>report_cdc</code> cannot see every unsafe crossing</td><td>Built, verified on fixtures, no agent run yet</td></tr>
-<tr><td><a href="#exceptions">3</a></td><td>Over-broad timing exceptions hide real failures</td><td>Designed, not built as tasks</td></tr>
-<tr><td><a href="#gates">4</a></td><td>Gates that go further than Vivado's own pass or fail</td><td>Built, covered by unit tests</td></tr>
-<tr><td><a href="#pblock">5</a></td><td>Pblocks made after synthesis are soft</td><td>Measured on the CDC rig</td></tr>
-<tr><td><a href="#mig">6</a></td><td>The MIG wizard validates pins; scripted generation does not</td><td>Measured; rule checker built</td></tr>
-<tr><td><a href="#ssn">7</a></td><td><code>report_ssn</code> is not available for every part</td><td>Measured; no substitute built</td></tr>
-<tr><td><a href="#xsim">8</a></td><td>AMD IP models need xsim, which cocotb cannot drive</td><td>Planned</td></tr>
+<div class="tablewrap" tabindex="0"><table class="index"><thead><tr><th>Card</th><th>What goes wrong</th><th>Status</th></tr></thead><tbody>
+<tr><td><a href="#xpm-cdc">1</a></td><td>AMD's crossing macros lose their timing exceptions</td><td>Built, verified on one probe design</td></tr>
+<tr><td><a href="#cdc-gate">2</a></td><td>Vivado's crossing report passes some unsafe crossings</td><td>Built, verified on test designs, no agent run yet</td></tr>
+<tr><td><a href="#exceptions">3</a></td><td>Over-broad timing exceptions hide real failures</td><td>Designed, not built</td></tr>
+<tr><td><a href="#gates">4</a></td><td>A missing report or a skipped test looks like a pass</td><td>Built, covered by unit tests</td></tr>
+<tr><td><a href="#pblock">5</a></td><td>Placement regions made after synthesis are only hints</td><td>Measured on the crossing test rig</td></tr>
+<tr><td><a href="#mig">6</a></td><td>Scripted DDR controller generation skips the pin check</td><td>Measured; rule checker built</td></tr>
+<tr><td><a href="#ssn">7</a></td><td>The switching-noise report is missing on some parts</td><td>Measured; no substitute built</td></tr>
+<tr><td><a href="#xsim">8</a></td><td>AMD's IP models need a simulator the tests cannot drive</td><td>Planned</td></tr>
 </tbody></table></div>
 
 <article class="card" id="xpm-cdc">
-<h2>1. AMD's CDC macro constraints are missing in the batch flow</h2>
+<h2>1. AMD's crossing macros lose their timing exceptions</h2>
 <p class="tags"><span class="tag built">Built and verified</span><span class="muted small">one probe design, two macros</span></p>
-<dl class="kv">
-<dt>Problem</dt><dd><p>The <code>xpm_cdc</code> macros are AMD's ready-made clock-crossing circuits (UG974). Each one relies on timing exceptions that AMD ships as scoped constraint files, not inside the RTL. If those exceptions are not applied, the tools time the crossing as an ordinary synchronous path between two unrelated clocks, and a correct design fails timing.</p></dd>
-<dt>Standard Vivado</dt><dd><p>The agent builds in non-project mode (<code>read_verilog</code> then <code>synth_design</code>). There the scoped files were not applied. On a probe design with one <code>xpm_cdc_single</code> and one <code>xpm_cdc_gray</code> between a 10 ns and a 7 ns clock (Vivado 2025.2, xc7a100tcsg324-1), <code>report_cdc</code> showed Exception "None" on both crossings and the clk_a to clk_b setup slack was -1.364 ns on 5 failing endpoints. The CDC gate did not notice: <code>report_cdc</code> says nothing about an exception that is absent. The only sign was the negative slack, which the agent could only have cleared by writing its own exceptions or a blanket asynchronous clock group, the very thing that hides real crossing bugs (card 3).</p></dd>
-<dt>This flow</dt><dd><p><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl"><code>flow/xpm_cdc.tcl</code></a> runs right after <code>synth_design</code> and applies the same rules by cell name: a false path to the first stage of each <code>xpm_cdc_single</code> and reset synchroniser; <code>set_max_delay -datapath_only</code> plus <code>set_bus_skew</code> for each <code>xpm_cdc_gray</code>; <code>set_max_delay -datapath_only</code> on the data of each <code>xpm_cdc_handshake</code>. A design with no XPM macros gets no exception. The rules were first proven in the CDC soak rig build.</p></dd>
-<dt>Evidence</dt><dd>
+<p>AMD's ready-made <a href="how.html#term-cdc">clock-crossing</a> circuits, the XPM macros, rely on timing exceptions shipped in separate constraint files. In the scripted flow those files were not applied, so Vivado timed each crossing as an ordinary path between unrelated clocks and a correct design failed timing. Neither Vivado's crossing report nor the agent's crossing gate noticed, because neither reports an exception that is missing. The only sign was negative <a href="how.html#term-slack">slack</a>, and the easy cure, a blanket exception, is the one that hides real bugs (<a href="#exceptions">card 3</a>).</p>
+<p>The flow now re-applies AMD's rules by cell name straight after synthesis; a design without the macros gets no exception. On a probe design with a 10 ns and a 7 ns clock (Vivado 2025.2), setup slack on the crossing went from -1.364 ns, with 5 failing endpoints, to 8.891 ns.</p>
 <div class="fig"><svg viewBox="0 0 400 190" role="img" aria-labelledby="xp1t xp1d">
 <title id="xp1t">The probe design: two clock domains joined by two XPM crossings</title>
 <desc id="xp1d">A clk_a domain with a 10 ns period feeds clk_b, with a 7 ns period, through one xpm_cdc_single and one xpm_cdc_gray.</desc>
@@ -300,106 +308,78 @@ details.area { scroll-margin-top: 110px; }
 <rect class="barpos" x="120" y="82" width="151.1" height="26"/>
 <text x="128" y="99" class="inv">after: +8.891</text>
 </svg></div>
-<p class="small muted">Setup slack on the clk_a to clk_b path of the probe design. Hatched bar: a violation.</p>
+<p class="small muted">Setup slack on the crossing, one build before the fix and one after. Hatched bar: a violation.</p>
+<p>One design with two macros shows the gap and the fix, not a rate. The pulse and asynchronous-reset macros get no exception yet, and the array macro is unchecked.</p>
+<details class="more"><summary>Details: the rules, the report rows and the sources</summary>
+<p><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl"><code>flow/xpm_cdc.tcl</code></a> runs after <code>synth_design</code>: a false path to the first stage of each <code>xpm_cdc_single</code> and reset synchroniser; <code>set_max_delay -datapath_only</code> plus <code>set_bus_skew</code> for each <code>xpm_cdc_gray</code>; <code>set_max_delay -datapath_only</code> on the data of each <code>xpm_cdc_handshake</code>. The rules were first proven in the crossing soak rig. Before the fix (<code>read_verilog</code>, <code>synth_design</code>, xc7a100tcsg324-1) <code>report_cdc</code> showed Exception "None" on both crossings. Not covered: <code>xpm_cdc_pulse</code>, <code>xpm_cdc_async_rst</code>; not checked: <code>xpm_cdc_array_single</code>.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Measure</th><th>Without the fix</th><th>With xpm_cdc.tcl</th></tr></thead><tbody><tr><td>report_cdc, xpm_cdc_single row</td><td>None</td><td>False Path</td></tr><tr><td>report_cdc, xpm_cdc_gray row</td><td>None</td><td>Max Delay Datapath Only</td></tr><tr><td>clk_a to clk_b setup WNS (ns)</td><td>-1.364</td><td>+8.891</td></tr><tr><td>Failing endpoints on that path</td><td>5</td><td>not recorded</td></tr></tbody></table></div>
-<p class="small muted">The same probe was run once before the fix and once after, through the flow's own build script. The probe is one design with two macros; it shows the gap and the fix, not a rate. <code>xpm_cdc_pulse</code> and <code>xpm_cdc_async_rst</code> get no exception yet, and <code>xpm_cdc_array_single</code> has not been checked.</p></dd>
-<dt>Sources</dt><dd class="small">Deviation 8 in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/methodology.md"><code>docs/methodology.md</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests/fixtures/xpm_probe"><code>flow/tests/fixtures/xpm_probe</code></a> (the probe and how to repeat it); <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/14_flow_notes/inputs.json"><code>results/14_flow_notes/inputs.json</code></a> (the numbers above, with where each was read).</dd>
-</dl>
+<p class="small">Sources: deviation 8 in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/methodology.md"><code>docs/methodology.md</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests/fixtures/xpm_probe"><code>flow/tests/fixtures/xpm_probe</code></a> (the probe and how to repeat it); <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/14_flow_notes/inputs.json"><code>results/14_flow_notes/inputs.json</code></a> (each number and where it was read).</p>
+</details>
 </article>
 
 <article class="card" id="cdc-gate">
-<h2>2. <code>report_cdc</code> cannot see every unsafe crossing</h2>
-<p class="tags"><span class="tag built">Built and verified</span><span class="muted small">on fixtures; no agent run yet; no board result yet</span></p>
-<dl class="kv">
-<dt>Problem</dt><dd><p>A crossing can be wrong while every synchroniser looks valid to the tool: a multi-bit binary counter crossed bit by bit, a one-cycle pulse into a level synchroniser, two flags synchronised separately and then compared. <code>report_cdc</code> checks the structure it recognises and the constraints it can see; it does not run the design.</p></dd>
-<dt>Standard Vivado</dt><dd><p>On 12 of the mutants of the CDC soak rig (deliberately broken crossings, one fault each), <code>report_cdc</code> alone flagged 5. It passes M3, M5, M6a, M7, M9 and M11 as structurally valid synchronisers, and gives M1 only a warning. Before this work the agent's CDC gate was <code>report_cdc</code> Critical rows plus a text check that only looked inside one module.</p></dd>
-<dt>This flow</dt><dd><p>Two further checks sit in the V3 gate. <strong>Structure:</strong> after synthesis the flow lists every flip-flop pin reached from another clock and classifies the crossing (synchroniser chain, XPM macro, constrained Gray or handshake, reset bridge, or unsafe), joining it with the exception <code>report_cdc</code> found. <strong>Simulation with injection:</strong> the design's own tests run again with every first synchroniser stage, and every XPM macro, replaced by a version that sometimes holds its old value for one extra destination cycle. A design that passes plain and fails injected fails the gate.</p></dd>
-<dt>Evidence</dt><dd>
-<p>On the fixtures, <code>report_cdc</code> alone flagged 5 of the 10 ported mutants. The new gate flagged 10 of 10 and passed all 12 correct variants. M9 and M11 (a FIFO or handshake reset on one side only) are not covered: the rig catches them by injecting on the release of an asynchronous reset, which the cycle-level model does not have.</p>
+<h2>2. Vivado's crossing report passes some unsafe crossings</h2>
+<p class="tags"><span class="tag built">Built and verified</span><span class="muted small">on test designs; no agent run or board result yet</span></p>
+<p>A crossing can be wrong while every synchroniser in it looks valid: a binary counter crossed bit by bit, a one-cycle pulse into a synchroniser meant for slow levels, two flags synchronised apart and then compared. Vivado's <code>report_cdc</code> checks structure and constraints; it does not run the design. Of the 12 broken crossings on the soak rig, a hardware test bed for crossings, it flagged 5. The agent's crossing gate used to rest on that report.</p>
+<p>The gate now adds two checks. After synthesis it classifies every flip-flop fed from another clock, as a synchroniser chain, an AMD macro, a constrained Gray bus or handshake, a reset bridge, or unsafe. Then it reruns the design's own tests with each first synchroniser stage, and each AMD macro, sometimes holding its old value for an extra cycle, as a late-resolving flop would. A design that passes the plain run but fails this one fails the gate.</p>
+<p>On 10 broken crossings ported to the test set, the report alone flagged 5 and the new gate 10, and the gate passed all 12 correct variants. A FIFO or handshake reset on one side only is not covered: the rig catches those by disturbing a reset's release, which the gate's cycle-level model lacks.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>What is wrong</th><th>report_cdc alone flags it</th><th>Rig simulation with injection</th><th>Gate&#x27;s own injected simulation</th><th>New gate flags it</th></tr></thead><tbody><tr><td>M1</td><td>two flops, no ASYNC_REG</td><td>no</td><td>no</td><td>no</td><td>yes</td></tr><tr><td>M1b</td><td>one flop, no synchroniser</td><td>yes</td><td>no</td><td>no</td><td>yes</td></tr><tr><td>M2</td><td>one asynchronous bit into two flops, compared</td><td>yes</td><td>yes</td><td>no</td><td>yes</td></tr><tr><td>M3</td><td>binary counter crossed bit by bit</td><td>no</td><td>yes</td><td>yes</td><td>yes</td></tr><tr><td>M4</td><td>two toggles XORed before the synchroniser</td><td>yes</td><td>yes</td><td>no</td><td>yes</td></tr><tr><td>M5</td><td>one-cycle pulse into a level synchroniser</td><td>no</td><td>yes</td><td>yes</td><td>yes</td></tr><tr><td>M6a</td><td>Gray bus with no max-delay or bus-skew exception</td><td>no</td><td>no</td><td>no</td><td>yes</td></tr><tr><td>M7</td><td>two flags synchronised separately, then compared</td><td>no</td><td>yes</td><td>yes</td><td>yes</td></tr><tr><td>M8</td><td>source reset clears a destination register</td><td>yes</td><td>yes</td><td>no</td><td>yes</td></tr><tr><td>M9</td><td>async FIFO reset on the write side only</td><td>no</td><td>yes</td><td>not covered</td><td>not covered</td></tr><tr><td>M10</td><td>raw reset released asynchronously into destination flops</td><td>yes</td><td>yes</td><td>no</td><td>yes</td></tr><tr><td>M11</td><td>2-phase handshake, source side reset alone</td><td>no</td><td>yes</td><td>not covered</td><td>not covered</td></tr></tbody></table></div>
-<p class="small muted">"Rig simulation": the rig's own simulation, which injects a late-resolving first stage inside a 1 ns window before the clock edge. M4 is caught there only because a transport delay is modelled on its path. "Gate's own injected simulation": the cycle-level injection of the gate, run on the fixtures. M6b and M6c (the same RTL as M6a with route-through padding, a hardware skew effect) are not ported to the fixtures.</p>
-<h3>Why a simulation with an extra cycle finds the tear</h3>
-<p>A bus crossed bit by bit is safe only if at most one bit changes at a time. A binary counter changes several bits at once, and each bit's first flop may resolve a cycle late. Step through a 4-bit counter crossing into a two-flop synchroniser, with and without the extra cycle, as a binary counter and as a Gray counter. Hatched cells are first-stage flops holding their old value for one extra cycle.</p>
+<p class="small muted">"Rig simulation" lets the first stage resolve late within 1 ns of the clock edge; it catches M4 only because a delay is modelled on its path. "Gate's own injected simulation" is the gate's cycle-level version, run on the test set. M6b and M6c (M6a with route padding, a hardware skew effect) are not ported.</p>
+<h3>Why an extra cycle finds the tear</h3>
+<p>A bus crossed bit by bit is safe only if one bit changes at a time. A binary counter changes several, and if one bit arrives a cycle late the destination sees a value that never existed: a torn value. Step through a 4-bit counter crossing a two-flop synchroniser, binary or Gray-coded, with and without the extra cycle. Hatched cells are first-stage flops holding their old value.</p>
 <div class="player tear" id="tear" aria-label="Bus crossing a two-flop synchroniser"></div>
-<p class="small muted">The frames come from <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/flow_model.py"><code>site/flow_model.py</code></a>, a small model of the same rule as the gate's injection. The source value changes every 4 destination cycles. A sampled value is torn when it equals neither the current nor the previous source value.</p>
+<p class="small muted">Frames from <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/flow_model.py"><code>site/flow_model.py</code></a>, a small model of the gate's rule. The source changes every 4 destination cycles; a sample is torn when it equals neither the current nor the previous source value.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Bus</th><th>Extra cycle</th><th class="num">Cycles simulated</th><th class="num">Cycles with a torn value</th></tr></thead><tbody><tr><td>binary counter</td><td>off</td><td class="num">4000</td><td class="num">0</td></tr><tr><td>binary counter</td><td>on</td><td class="num">4000</td><td class="num">313</td></tr><tr><td>Gray counter</td><td>off</td><td class="num">4000</td><td class="num">0</td></tr><tr><td>Gray counter</td><td>on</td><td class="num">4000</td><td class="num">0</td></tr></tbody></table></div>
-<p class="small muted">Over a longer run of the same model. A Gray counter changes one bit per step, so a late bit can only make the sampled value the old or the new one. This is a cycle-level model: it finds lost pulses, bits crossed separately and reconvergence, not route skew, glitches or true metastability.</p>
-</dd>
-<dt>Not done</dt><dd><p>No agent run has used the new gate yet. The CDC rig's board results are not part of this page. The gate checks that a hand-built Gray bus carries its exception; it does not check the coding, so only simulation can catch a binary bus with a correct exception.</p></dd>
-<dt>Sources</dt><dd class="small"><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/16_cdc_gate/mutant_table.md"><code>results/16_cdc_gate/mutant_table.md</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests/fixtures/cdc_mutants"><code>flow/tests/fixtures/cdc_mutants</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_structure.py"><code>flow/cdc_structure.py</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_inject.py"><code>flow/cdc_inject.py</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/hil/cdc_soak"><code>hil/cdc_soak</code></a> and its <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/hil/cdc_soak/results/cdc_rig_sim.json"><code>cdc_rig_sim.json</code></a>.</dd>
-</dl>
+<p class="small muted">A longer run of the same model. A Gray counter changes one bit per step, so a late bit gives only the old value or the new one. The model is cycle-level: it finds lost pulses, separately crossed bits and reconvergence, not route skew, glitches or true metastability.</p>
+<p>Not yet shown: no agent run has used the new gate, and the rig's board results are not here. The gate checks that a hand-built Gray bus carries its exception, not that it is Gray-coded, so only simulation catches a binary bus with a correct exception.</p>
+<details class="more"><summary>Details: what the report misses, and the sources</summary>
+<p>On the rig, <code>report_cdc</code> passes M3, M5, M6a, M7, M9 and M11 as valid synchronisers and gives M1 only a warning. The old gate was its Critical rows plus a text check inside one module. The new checks sit in the V3 gate; M9 and M11 are the one-sided resets it does not cover.</p>
+<p class="small">Sources: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/16_cdc_gate/mutant_table.md"><code>results/16_cdc_gate/mutant_table.md</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests/fixtures/cdc_mutants"><code>flow/tests/fixtures/cdc_mutants</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_structure.py"><code>flow/cdc_structure.py</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_inject.py"><code>flow/cdc_inject.py</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/hil/cdc_soak"><code>hil/cdc_soak</code></a> and its <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/hil/cdc_soak/results/cdc_rig_sim.json"><code>cdc_rig_sim.json</code></a>.</p>
+</details>
 </article>
 
 <article class="card" id="exceptions">
 <h2>3. Over-broad timing exceptions hide real failures</h2>
-<p class="tags"><span class="tag plan">Designed, not built as tasks</span></p>
-<dl class="kv">
-<dt>Problem</dt><dd><p>A model that cannot meet timing can make the failure disappear by writing a blanket <code>set_false_path</code>, a multicycle path or an asynchronous clock group over the failing path. The timing summary then reads clean.</p></dd>
-<dt>Standard Vivado</dt><dd><p>Vivado applies any exception it is given and reports the remaining paths. Its methodology checks (TIMING-46 and TIMING-47 among them) flag some of these cases, but a passing slack figure alone does not tell a real pass from a hidden failure.</p></dd>
-<dt>This flow</dt><dd><p>The planned constraint-grading tasks seed a real violation into the design: a true synchronous path that fails, a failing path between related clocks, an unsynchronised crossing. The task passes only if that violation stays visible after the agent's constraints are applied. A blanket false path, a clock group or a waiver on the seeded path fails the task, and a repaired twin of the design must meet timing with the same constraints.</p></dd>
-<dt>Evidence</dt><dd>
+<p class="tags"><span class="tag plan">Designed, not built</span></p>
+<p>A model that cannot meet timing has an easy way out: declare the failing path a false path, a multicycle path or part of an asynchronous clock group. Vivado applies any exception it is given, and the timing summary reads clean. Its methodology checks catch some cases, but a passing slack figure alone cannot tell a real pass from a hidden failure.</p>
+<p>The planned grading tasks each seed a real violation: a slow synchronous path, a failing path between related clocks, or an unsynchronised crossing. A task passes only if the violation stays visible after the agent's constraints are applied, and a repaired twin of the design must meet timing with the same constraints.</p>
 <div class="cols"><div class="fig"><svg viewBox="0 0 400 124" role="img" aria-label="Without an exception: a path that fails setup" ><text x="6" y="16" class="big">Without an exception</text><rect class="boxink" x="14" y="36" width="64" height="30"/><text x="22" y="55">launch</text><rect class="box" x="132" y="36" width="116" height="30"/><text x="146" y="55">logic, too slow</text><rect class="boxink" x="302" y="36" width="64" height="30"/><text x="308" y="55">capture</text><line class="ink" x1="78" y1="51" x2="132" y2="51"/><line class="ink" x1="248" y1="51" x2="302" y2="51"/><text x="10" y="92">no exception on this path</text><text x="10" y="112">timing report: negative slack, violation listed</text></svg></div><div class="fig"><svg viewBox="0 0 400 124" role="img" aria-label="With a blanket false path: a path that fails setup" ><text x="6" y="16" class="big">With a blanket false path</text><rect class="boxink" x="14" y="36" width="64" height="30"/><text x="22" y="55">launch</text><rect class="box" x="132" y="36" width="116" height="30"/><text x="146" y="55">logic, too slow</text><rect class="boxink" x="302" y="36" width="64" height="30"/><text x="308" y="55">capture</text><line class="ink" x1="78" y1="51" x2="132" y2="51"/><line class="ink" x1="248" y1="51" x2="302" y2="51"/><rect class="dash" x="6" y="26" width="368" height="50"/><text x="10" y="92">set_false_path covers this path</text><text x="10" y="112">timing report: path not timed, no violation listed</text></svg></div></div>
-<p class="small muted">Schematic of the check: the same failing path, with and without a false path over it. No measured values.</p>
-<p class="small muted">The design is written down; the tasks are not built or run, so there are no results.</p></dd>
-</dl>
+<p class="small muted">The check in outline: one failing path, with and without a false path over it. No measured values.</p>
+<p>The tasks are written down but not built or run, so there are no results. Among the methodology checks that catch some cases are TIMING-46 and TIMING-47.</p>
 </article>
 
 <article class="card" id="gates">
-<h2>4. Gates that go further than Vivado's own pass or fail</h2>
+<h2>4. A missing report or a skipped test looks like a pass</h2>
 <p class="tags"><span class="tag built">Built</span><span class="muted small">covered by unit tests; no live run of the changed gates</span></p>
-<dl class="kv">
-<dt>Problem</dt><dd><p>A run can finish with a bitstream while a report is missing or the quality of the result is poor, and a test framework can report a skipped test without calling it a failure.</p></dd>
-<dt>This flow</dt><dd><ul>
-<li><strong>Quality-of-results gate.</strong> After routing, the score from <code>report_qor_assessment</code> must be at least 4 of 5.</li>
-<li><strong>A missing report fails its gate.</strong> A quality review found that a report which did not exist made its gate skip, and a skipped gate counted as a pass. When the build wrote its run record, a missing report now fails the gate.</li>
-<li><strong>A skipped test is not a pass.</strong> The review found that a cocotb test marked as skipped counted as passing the planned-test check, and that tests marked expected-to-fail turned a real failure into a pass. Both now fail, and a scan of the bench source flags the markers.</li>
-</ul></dd>
-<dt>Sources</dt><dd class="small"><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/gates.py"><code>flow/gates.py</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/verif_gates.py"><code>flow/verif_gates.py</code></a>; tests under <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests"><code>flow/tests</code></a>.</dd>
-</dl>
+<p>A quality review of the flow found three ways a weak run could pass. A missing report made its gate skip, and a skipped gate counted as a pass. A cocotb test marked as skipped counted towards the planned tests. A test marked as expected to fail turned a real failure into a pass. All three now fail (a missing report, once the build has written its run record), and a scan of the test source flags the markers. After routing, Vivado's quality-of-results score (<code>report_qor_assessment</code>) must also be at least 4 out of 5.</p>
+<p class="small">Sources: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/gates.py"><code>flow/gates.py</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/verif_gates.py"><code>flow/verif_gates.py</code></a>; tests under <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests"><code>flow/tests</code></a>.</p>
 </article>
 
 <article class="card" id="pblock">
-<h2>5. Pblocks made after synthesis are soft</h2>
-<p class="tags"><span class="tag built">Measured</span><span class="muted small">on the CDC rig</span></p>
-<dl class="kv">
-<dt>Problem</dt><dd><p>A pblock is a placement region. The CDC rig builds its regions in Tcl after synthesis to put each crossing at a known distance. Regions made at that point came out soft (<code>IS_SOFT</code> = 1), so the placer treats them as a hint.</p></dd>
-<dt>Standard Vivado</dt><dd><p>About half of the destination cells were placed outside their region until <code>IS_SOFT</code> was set to <code>FALSE</code>.</p></dd>
-<dt>This flow</dt><dd><p>The rig sets <code>IS_SOFT FALSE</code> on every pblock it creates. The agent's own flow creates no pblocks, and pblocks in its constraint file are read before synthesis, where they default to hard. Any future step that makes pblocks in Tcl after synthesis must set it too.</p></dd>
-<dt>Sources</dt><dd class="small"><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/hil/cdc_soak/tcl"><code>hil/cdc_soak/tcl</code></a> (the build scripts).</dd>
-</dl>
+<h2>5. Placement regions made after synthesis are only hints</h2>
+<p class="tags"><span class="tag built">Measured</span><span class="muted small">on the crossing test rig</span></p>
+<p>A pblock is a region of the chip that some cells must be placed in. The soak rig makes its pblocks by script after synthesis, to put each crossing at a known distance. Pblocks made at that point came out soft, a hint to the placer: about half of the destination cells landed outside their region until the rig set <code>IS_SOFT</code> to <code>FALSE</code>. It now does so for every pblock. The agent's own flow makes none, and pblocks in its constraint file are read before synthesis, where they are hard by default; any future step that makes them later must set the property too.</p>
+<p class="small">Source: the build scripts in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/hil/cdc_soak/tcl"><code>hil/cdc_soak/tcl</code></a>.</p>
 </article>
 
 <article class="card" id="mig">
-<h2>6. The MIG wizard validates pins; scripted generation does not</h2>
+<h2>6. Scripted DDR controller generation skips the pin check</h2>
 <p class="tags"><span class="tag built">Measured</span><span class="muted small">two seeded faults; rule checker built</span></p>
-<dl class="kv">
-<dt>Problem</dt><dd><p>The DDR memory controller wizard (MIG) validates the chosen pinout against the memory's byte-group and bank rules on its pin-selection page, before it will generate the core. The agent works without the GUI: it writes the MIG project file and generates the core from a script.</p></dd>
-<dt>Standard Vivado</dt><dd><p>In the wizard, a bad pinout is caught at that validation step. Generating the same core from a script (<code>create_ip</code>, the project file, then <code>generate_target</code>) skips it: the pins were not validated. A pinout with a byte-group fault generated with no message and the bad pins were written to the constraints file. A pinout with a duplicated pin also generated with no message, and the line for one data pin was silently dropped.</p></dd>
-<dt>This flow</dt><dd><p>The knowledge bank's <code>mig_pin_rules.py</code> checks the memory pin rules itself. It flagged both seeded faults and passed the good configuration.</p></dd>
-<dt>Not done</dt><dd><p>Whether implementing the MIG example design rejects a bad byte group has not been run.</p></dd>
-<dt>Sources</dt><dd class="small">Pin-check results in the private knowledge repository (<code>tools/pin_xdc_check</code>); the pin-planning grading design.</dd>
-</dl>
+<p>AMD's DDR controller wizard, the MIG, checks a pinout against the memory's byte-group and bank rules before it generates the core. Generating the same core from a script, as the agent must, skips that check. A pinout with a byte-group fault generated silently, with the bad pins in the constraints file; one with a pin used twice also generated silently, and one data pin's line was dropped. The knowledge bank's own pin-rule checker flagged both and passed the good pinout. Not yet run: whether implementing the example design would reject a bad byte group.</p>
+<p class="small">Source: pin-check results in the private knowledge repository (<code>tools/pin_xdc_check</code>, <code>mig_pin_rules.py</code>) and the pin-planning grading design.</p>
 </article>
 
 <article class="card" id="ssn">
-<h2>7. <code>report_ssn</code> is not available for every part</h2>
+<h2>7. The switching-noise report is missing on some parts</h2>
 <p class="tags"><span class="tag built">Measured</span><span class="muted small">availability only; no substitute built</span></p>
-<dl class="kv">
-<dt>Problem</dt><dd><p>Simultaneous switching noise (SSN) limits how many fast outputs can share a bank. Vivado's <code>report_ssn</code> estimates the margin for a pinout.</p></dd>
-<dt>Standard Vivado</dt><dd><p>The report works on the Artix-7 100T part and on the Zynq-7000 part checked, and it flagged a deliberately overloaded bank. On the Kria K26 part it is not available.</p></dd>
-<dt>This flow</dt><dd><p>The pin checks use <code>report_ssn</code> where the part supports it. The design-rule check and the spread metrics do not depend on it and stay on every part. No substitute for the SSN margin on the K26 part has been built.</p></dd>
-<dt>Sources</dt><dd class="small">Pin-check results in the private knowledge repository (<code>tools/pin_xdc_check</code>).</dd>
-</dl>
+<p>Simultaneous switching noise limits how many fast outputs can share an I/O bank, and Vivado's <code>report_ssn</code> estimates the margin. It works on the Artix-7 100T and on the Zynq-7000 part checked, and it flagged a deliberately overloaded bank. On the Kria K26 it is not available. The pin checks use it where they can; the other pin checks run on every part. Nothing yet replaces the noise margin on the K26.</p>
+<p class="small">Source: pin-check results in the private knowledge repository (<code>tools/pin_xdc_check</code>).</p>
 </article>
 
 <article class="card" id="xsim">
-<h2>8. AMD IP models need xsim, which cocotb cannot drive</h2>
+<h2>8. AMD's IP models need a simulator the tests cannot drive</h2>
 <p class="tags"><span class="tag plan">Planned</span></p>
-<dl class="kv">
-<dt>Problem</dt><dd><p>AMD's DSP cores (FIR, FFT, DDS and others) ship their simulation models in encrypted form. Only AMD's own simulator, xsim, and licensed commercial simulators can run them. Icarus, Verilator and GHDL cannot, and cocotb has no xsim back end, so the agent's usual test method does not reach a design that uses these cores.</p></dd>
-<dt>This flow</dt><dd><p>Planned, not built: a file-based harness. Python writes the stimulus as text files and a seeded schedule of back-pressure; a generic SystemVerilog testbench reads them in xsim and writes every output beat to a response file; Python compares the response word for word with AMD's bit-accurate C model of the core where one ships. A synthesis run at the target clock checks timing and resources.</p></dd>
-<dt>Status</dt><dd><p>Specified in the expertise survey. No code and no measurements yet.</p></dd>
-</dl>
+<p>AMD's DSP cores (FIR, FFT, DDS and others) ship encrypted simulation models that only AMD's xsim and licensed commercial simulators can run. The free simulators the agent uses cannot, and the cocotb test framework has no xsim back end. The plan is a harness that works through files: Python writes the stimulus and a seeded back-pressure pattern, a generic test bench replays it in xsim, and Python compares every output word with AMD's bit-accurate C model where one exists. A synthesis run at the target clock checks timing and resources. The harness is specified in the expertise survey but not built: no code or measurements yet.</p>
 </article>
 
 <div class="pager"><a href="how.html">&larr; How it works</a><a href="expertise.html">Expertise &rarr;</a></div>

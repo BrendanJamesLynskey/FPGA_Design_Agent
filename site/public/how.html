@@ -248,6 +248,17 @@ details.area .kv { grid-template-columns: minmax(0, 12ch) minmax(0, 1fr); margin
 }
 details.area { scroll-margin-top: 110px; }
 @media (max-width: 640px) { details.area { scroll-margin-top: 250px; } }
+
+/* nested "Details" drawers (brief 32): specialist detail, closed by default */
+details.more { border: 1px solid var(--rule); background: var(--panel); margin: 0 0 1em; }
+details.more > summary { padding: 8px 12px; cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: .9rem; color: var(--ink-2); }
+details.more > *:not(summary) { margin-left: 12px; margin-right: 12px; }
+details.more[open] > summary { border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+.card details.more, details.area details.more { background: var(--bg); }
+dl.gloss { margin: 0; }
+dl.gloss dt { font-weight: 700; margin-top: .8em; scroll-margin-top: 70px; }
+dl.gloss dd { margin: .1em 0 0; max-width: var(--measure); }
+.evsrc { font-size: .8rem; color: var(--ink-3); white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -255,31 +266,32 @@ details.area { scroll-margin-top: 110px; }
 <header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html" aria-current="page">How it works</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="problems.html">Problems</a><a href="evaluation.html">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>How it works</h1>
-<p class="lede">A staged flow with a gate at the end of each stage. The model proposes; scripts and tools judge. Nothing the model wrote about its own work counts.</p>
+<p class="lede">A design moves through fixed stages, and each stage ends in a gate: a check run by code, not by the model. The model proposes; the tools judge. A short glossary closes the page.</p>
 
 <h2>A real run, step by step</h2>
 <figure>
 <div class="player" id="replay" aria-label="Stage replay from a real run record"></div>
-<figcaption>Replay of <code>c14_int8_dot_requant</code>, run 5 (2026-11-07, claude-sonnet-5-5), a development task. The steps are the stage visits in the run record; a stage visited more than once shows "visit k of n". The record keeps the visit counts, not the order inside a repeated stage. Run 1 of this same task scored 0 of 6; the examples page shows all five runs.</figcaption>
+<figcaption>Run 5 of the int8 dot-product development task (2026-11-07, <code>claude-sonnet-5-5</code>): 152 agent turns, 1.42 h, 6 of 6 hidden tests passed. Each step is one stage visit from the run record; the record keeps visit counts, not the order of work inside a repeated stage. The first run of this task passed none of its hidden tests; the <a href="examples.html">examples</a> show all five.</figcaption>
 </figure>
 
-<h2>Stages</h2>
-<p>Stages 0 to 9 follow the AMD UltraFast methodology (UG949) for implementation. Each stage ends in checks run by code, and a failed check sends the run back to the stage that can fix it.</p>
+<h2>The stages</h2>
+<p>The stages follow AMD's UltraFast design methodology (UG949). A failed check sends the run back to the stage that can fix it.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th class="num">Stage</th><th>Name</th><th>What it produces</th></tr></thead><tbody>
-<tr><td class="num">0</td><td>Interview</td><td>A signed-off <code>spec.yaml</code>: ports, clocks, reset, latency, assumptions with reasons, open questions. The user, or a stand-in oracle in evaluations, answers.</td></tr>
-<tr><td class="num">1</td><td>Plan</td><td>Block diagram, clocking plan, every clock-domain crossing, resource budget for the xc7a100t.</td></tr>
-<tr><td class="num">2</td><td>RTL, bench, gates V0 to V3</td><td>SystemVerilog and constraints; a bench compared with a golden model written from the spec alone; the four verification gates below.</td></tr>
-<tr><td class="num">3</td><td>Constraints</td><td>Pins and clocks checked against the board's master XDC.</td></tr>
-<tr><td class="num">4</td><td>Synthesis</td><td>Synthesis reports and gates.</td></tr>
-<tr><td class="num">5</td><td>Implementation</td><td>Place and route, bitstream.</td></tr>
-<tr><td class="num">6</td><td>Timing closure</td><td>Setup and hold slack at the target clock.</td></tr>
-<tr><td class="num">7</td><td>Power closure</td><td>Vectorless power estimate and its gate.</td></tr>
-<tr><td class="num">8</td><td>DRC closure</td><td>Design rule, methodology and clock-domain-crossing reports.</td></tr>
-<tr><td class="num">9</td><td>Board and debug</td><td>Program the board, run tests over its USB-UART, capture internal signals with a logic analyser core. Always waits for a human to approve programming.</td></tr>
+<tr><td class="num">0</td><td>Interview</td><td>A signed-off spec: ports, clocks, reset, latency, and each assumption with its reason. The user answers, or in an evaluation an <a href="#term-oracle">oracle</a>.</td></tr>
+<tr><td class="num">1</td><td>Plan</td><td>Block diagram, clocking, every clock crossing, a resource budget.</td></tr>
+<tr><td class="num">2</td><td>RTL and tests</td><td>SystemVerilog, constraints, and tests checked against a <a href="#term-golden">golden model</a>.</td></tr>
+<tr><td class="num">3</td><td>Constraints</td><td>Pins and clocks checked against the board's master file.</td></tr>
+<tr><td class="num">4</td><td>Synthesis</td><td>The netlist, its reports and their gates.</td></tr>
+<tr><td class="num">5</td><td>Implementation</td><td>Place and route, and the bitstream.</td></tr>
+<tr><td class="num">6</td><td>Timing closure</td><td>Setup and hold <a href="#term-slack">slack</a> at the target clock.</td></tr>
+<tr><td class="num">7</td><td>Power closure</td><td>A power estimate and its gate.</td></tr>
+<tr><td class="num">8</td><td>Design-rule closure</td><td>Design-rule, methodology and <a href="#term-cdc">clock-crossing</a> reports.</td></tr>
+<tr><td class="num">9</td><td>Board and debug</td><td>Program the board, test over its serial link, capture internal signals. A human approves programming every time.</td></tr>
 </tbody></table></div>
 
-<h2>The gates V0 to V3</h2>
-<p>Adopted from OpenTitan's development stages, replacing the parts that need a paid simulator. They sit inside stage 2: the stage cannot end until V3 passes and lint is clean.</p>
+<h2>Verification</h2>
+<p>Inside the RTL stage, verification is staged as the OpenTitan project does it, with free tools in place of a paid simulator: a test plan, every spec statement traced to a test or proof, tests passing on every seed, then closed coverage and a mutation score at its floor. The stage cannot end until all four hold and lint is clean. Some checks go further than Vivado does alone; <a href="flow-notes.html">Beyond the flow</a> tells those stories.</p>
+<details class="more"><summary>Details: the gates V0 to V3</summary>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Gate</th><th>What it requires</th></tr></thead><tbody>
 <tr><td>V0 plan</td><td>A test plan, the blind golden model and the bench modules exist.</td></tr>
 <tr><td>V1 test plan</td><td>Every statement in the spec is traced to a test, an assertion, a cover point or a formal task, and each requirement names how it will be shown to hold (simulation, formal, hardware or analysis).</td></tr>
@@ -287,22 +299,34 @@ details.area { scroll-margin-top: 110px; }
 <tr><td>V3 coverage closed</td><td>Functional bins and cover properties all hit, line and toggle coverage at stated thresholds, several seeds passing, and a mutation score at its threshold.</td></tr>
 <tr><td>V-HW</td><td>Stage 9: the board bring-up against the model passes.</td></tr>
 </tbody></table></div>
-
-<p>Some checks go further than what Vivado reports by itself, for example the clock-domain-crossing gate and the handling of AMD's crossing macros. They are collected, with their evidence and status, on <a href="flow-notes.html">Beyond the standard flow</a>.</p>
-
-<h2>Independent tests from the spec alone</h2>
-<p><span class="tag">Built, not yet measured</span> The agent's own testbench never counts as a pass. A planned second line of defence writes tests from the signed-off spec only, without seeing the RTL, and runs them against the design. It is built and replayed offline on development tasks. Whether it catches escapes on held-out tasks is a separate pre-registered comparison (<code>eval-2</code>), and no result is claimed for it here.</p>
+</details>
+<p><span class="tag">Built, not yet measured</span> A second line of defence writes tests from the signed-off spec without seeing the RTL. It has been replayed offline on development tasks; whether it catches escapes on unseen tasks is a separate comparison, fixed in advance, with no result yet.</p>
 
 <h2>Mutation testing</h2>
-<p>A bench that passes proves little unless it can fail. Deliberate bugs ("mutants") are injected into the RTL and the bench must kill them. On the hand-built T1 design, 21 mutants were made. The first full run killed 90.48% and 2 survived, both in reset behaviour. A test for reset state was added because of those survivors, and then all 21 of 21 were killed. The first number is the unbiased one.</p>
+<p>A bench that passes proves little unless it can fail, so <a href="#term-mutation">mutation testing</a> plants bugs and requires the tests to catch them. On the hand-built reference design the first run caught 90.48% of 21 mutants. The 2 survivors were both in reset behaviour; a reset test was added, and then all 21 were caught. The first figure is the unbiased one.</p>
 
-<h2>The knowledge bank</h2>
-<p>A private bank of Agent Skills the agent loads on demand: generic RTL techniques, AMD-vendor know-how, Artix-7 family and device facts, the Nexys A7 board, and the procedures above. The bank has 61 section ids. Its contents stay private; layers and sizes are public, with hashes, so a scored run can prove which version it read.</p>
+<h2>What the agent knows</h2>
+<p>The agent loads know-how on demand from a private bank of Agent Skills (61 sections), in layers: RTL technique, AMD tool practice, the Artix-7 family and device, the Nexys A7 board, and the stage procedures. The text stays private because it summarises AMD and Digilent documents; each layer's size and hash are public, so a scored run can prove which version it read.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Layer</th><th class="num">Skills</th><th class="num">Skill bytes</th></tr></thead><tbody><tr><td>techniques/</td><td class="num">22</td><td class="num">91,739</td></tr><tr><td>functions/</td><td class="num">11</td><td class="num">45,956</td></tr><tr><td>bundle generic</td><td class="num">33</td><td class="num">137,695</td></tr><tr><td>vendor/ross_distilled/</td><td class="num">14</td><td class="num">57,716</td></tr><tr><td>vendor/free_simulators/</td><td class="num">3</td><td class="num">9,878</td></tr><tr><td>vendor/vivado_synthesis/</td><td class="num">3</td><td class="num">15,138</td></tr><tr><td>vendor/ross_shipped/</td><td class="num">50</td><td class="num">918,458</td></tr><tr><td>family/artix7/</td><td class="num">43</td><td class="num">217,202</td></tr><tr><td>device/xc7a100tcsg324-1/</td><td class="num">5</td><td class="num">16,295</td></tr><tr><td>board/nexys_a7_100t/</td><td class="num">13</td><td class="num">39,073</td></tr><tr><td>procedures/</td><td class="num">15</td><td class="num">58,749</td></tr><tr><td>vendor/amd_constraints/</td><td class="num">6</td><td class="num">31,268</td></tr><tr><td>vendor/amd_ip_cores/</td><td class="num">10</td><td class="num">43,982</td></tr><tr><td>vendor/amba_axi/</td><td class="num">15</td><td class="num">61,524</td></tr><tr><td>family/zynq7000/</td><td class="num">8</td><td class="num">24,218</td></tr><tr><td>family/zynq_ultrascale_plus/</td><td class="num">13</td><td class="num">45,121</td></tr><tr><td>device/xc7z020clg484-1/</td><td class="num">3</td><td class="num">7,062</td></tr><tr><td>device/xck26/</td><td class="num">3</td><td class="num">6,497</td></tr><tr><td>board/kr260/</td><td class="num">12</td><td class="num">27,087</td></tr><tr><td>board/zedboard/</td><td class="num">15</td><td class="num">36,556</td></tr></tbody></table></div>
-<p class="small muted">Source: <code>knowledge/PACKS.md</code> in the repository. "Ross shipped" is AMD's published Ross assistant, included as shipped for comparison arms; the distilled layer is ours.</p>
+<p class="small muted">From <code>knowledge/PACKS.md</code>. "Ross shipped" is AMD's published Ross assistant, unchanged, for comparison; the distilled layer is ours.</p>
 
-<h2>The Claude Code arm and the tools</h2>
-<p>The model runs as headless Claude Code, one call per turn, with every built-in tool switched off. It sees only our MCP server, which gives each role only the tools its stage needs: <code>lint</code>, <code>simulate</code>, <code>mutate</code>, <code>formal</code>, <code>build</code>, <code>gates</code>, <code>search_docs</code>, <code>load_skill</code>, and file tools limited to the role's own directories. Programming the board and bring-up are never exposed to the model; the harness does those after a human approves. The same stage graph also runs with other models, so harness and model can be compared. Development runs on this site used claude-sonnet-5-5, Vivado 2025.2.</p>
+<h2>What the model may touch</h2>
+<p>The model runs as headless Claude Code, one call per turn, with every built-in tool off. It reaches only our MCP server, which gives each role just the tools its stage needs (lint, simulate, mutate, formal, build, gates, document search, skill loading, and files in its own directories). The board is never offered to the model: the harness programs it after a human approves. The same stages run with other models, so harness and model can be compared. Development runs here used <code>claude-sonnet-5-5</code> and Vivado 2025.2.</p>
+
+<h2 id="glossary">Glossary</h2>
+<dl class="gloss">
+<dt id="term-rtl">RTL</dt><dd>Register-transfer level: hardware written as registers and the logic between them, here in SystemVerilog.</dd>
+<dt id="term-bitstream">Bitstream</dt><dd>The file that configures the FPGA, produced at the end of the Vivado flow.</dd>
+<dt id="term-cdc">Clock-domain crossing (CDC)</dt><dd>A signal passing between unrelated clocks. It needs a synchroniser and the right constraints, or it can be sampled mid-change.</dd>
+<dt id="term-slack">Slack</dt><dd>The time a signal has to spare before the clock edge that captures it. Negative slack fails timing.</dd>
+<dt id="term-ooc">Out-of-context synthesis</dt><dd>Synthesising one block alone, without pins or the rest of the design, for its size and an early view of its timing.</dd>
+<dt id="term-mutation">Mutation testing</dt><dd>Planting small bugs (mutants) in a design to see whether its tests catch them.</dd>
+<dt id="term-golden">Golden model</dt><dd>A short program, written from the spec alone, that says what the design should output.</dd>
+<dt id="term-hidden">Hidden tests</dt><dd>Tests written for each task before any agent run and never shown to the agent. A run passes only if all of them pass.</dd>
+<dt id="term-escape">Escape</dt><dd>A run whose own checks all passed while the hidden tests failed.</dd>
+<dt id="term-heldout">Held-out set</dt><dd>Tasks set aside before development and never used to improve the agent, so a score on them is fair.</dd>
+<dt id="term-oracle">Oracle</dt><dd>A language model that plays the user in an evaluation's interview, answering only from the hidden full spec.</dd>
+</dl>
 
 <div class="pager"><a href="index.html">&larr; Home</a><a href="flow-notes.html">Beyond the flow &rarr;</a></div>
 </main>

@@ -4,7 +4,8 @@
     site/data/skills.json      every skill at the KB pin (unit, section, name, one-line description from the front matter)
     site/data/expertise.json   what the page reads (written by site/export.py)
 
-Nothing on the page is typed by hand except the area's name, plain sentence, known gaps and the evidence wording:
+Nothing on the page is typed by hand except the area's name, plain sentence, opening paragraph (`about`), known gaps
+and the evidence wording:
 - skills come from skills.json, which export.py regenerates from the private bank at the commit pinned in
   knowledge/PACKS.md when a checkout is present (FDA_KNOWLEDGE_REPO, default ~/Claude_sandbox/FPGA_Design_Agent_Knowledge)
   and otherwise leaves as committed; site/tests checks its counts against PACKS.md, so a skill that is not at the pin
@@ -312,7 +313,7 @@ def build() -> dict:
     for a in y["areas"]:
         assert a["id"] not in seen, a["id"]
         seen.add(a["id"])
-        for k in ("summary", "gaps", "name"):
+        for k in ("summary", "about", "gaps", "name"):
             for t in ([a[k]] if isinstance(a[k], str) else a[k]):
                 assert not prose_numbers(t), (a["id"], k, prose_numbers(t), "numbers belong in evidence items")
         picked, groups = [], {}
@@ -360,7 +361,7 @@ def build() -> dict:
         elif cap:
             cap = None
         areas.append({
-            "id": a["id"], "name": a["name"], "summary": a["summary"], "level": level, "level_label": LEVEL_LABEL[level],
+            "id": a["id"], "name": a["name"], "summary": a["summary"], "about": a["about"], "level": level, "level_label": LEVEL_LABEL[level],
             "level_n": LEVELS.index(level) + 1, "cap_reason": cap["why"] if cap else None,
             "skills": [{"unit": u, "section": s, "items": [{"name": x["name"], "description": x["description"]} for x in v]}
                        for (u, s), v in groups.items()],
