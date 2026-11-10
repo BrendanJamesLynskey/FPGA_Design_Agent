@@ -225,7 +225,7 @@ svg .line-seen { stroke: var(--ink-3); fill: none; stroke-width: 1.5; stroke-das
 <tr><td><a href="#exceptions">3</a></td><td>Over-broad timing exceptions hide real failures</td><td>Designed, not built as tasks</td></tr>
 <tr><td><a href="#gates">4</a></td><td>Gates that go further than Vivado's own pass or fail</td><td>Built, covered by unit tests</td></tr>
 <tr><td><a href="#pblock">5</a></td><td>Pblocks made after synthesis are soft</td><td>Measured on the CDC rig</td></tr>
-<tr><td><a href="#mig">6</a></td><td>MIG pin validation is not run by batch generation</td><td>Measured; rule checker built</td></tr>
+<tr><td><a href="#mig">6</a></td><td>The MIG wizard validates pins; scripted generation does not</td><td>Measured; rule checker built</td></tr>
 <tr><td><a href="#ssn">7</a></td><td><code>report_ssn</code> is not available for every part</td><td>Measured; no substitute built</td></tr>
 <tr><td><a href="#xsim">8</a></td><td>AMD IP models need xsim, which cocotb cannot drive</td><td>Planned</td></tr>
 </tbody></table></div>
@@ -332,11 +332,11 @@ svg .line-seen { stroke: var(--ink-3); fill: none; stroke-width: 1.5; stroke-das
 </article>
 
 <article class="card" id="mig">
-<h2>6. MIG pin validation is not run by batch generation</h2>
+<h2>6. The MIG wizard validates pins; scripted generation does not</h2>
 <p class="tags"><span class="tag built">Measured</span><span class="muted small">two seeded faults; rule checker built</span></p>
 <dl class="kv">
-<dt>Problem</dt><dd><p>The DDR memory controller wizard (MIG) checks that the chosen pins obey the memory's byte-group and bank rules. The agent has to produce such a pinout without the GUI.</p></dd>
-<dt>Standard Vivado</dt><dd><p>Generating the core from a script (<code>generate_target</code>) did not validate the pins. A pinout with a byte-group fault generated with no message and the bad pins were written to the constraints file. A pinout with a duplicated pin also generated with no message, and the line for one data pin was silently dropped.</p></dd>
+<dt>Problem</dt><dd><p>The DDR memory controller wizard (MIG) validates the chosen pinout against the memory's byte-group and bank rules on its pin-selection page, before it will generate the core. The agent works without the GUI: it writes the MIG project file and generates the core from a script.</p></dd>
+<dt>Standard Vivado</dt><dd><p>In the wizard, a bad pinout is caught at that validation step. Generating the same core from a script (<code>create_ip</code>, the project file, then <code>generate_target</code>) skips it: the pins were not validated. A pinout with a byte-group fault generated with no message and the bad pins were written to the constraints file. A pinout with a duplicated pin also generated with no message, and the line for one data pin was silently dropped.</p></dd>
 <dt>This flow</dt><dd><p>The knowledge bank's <code>mig_pin_rules.py</code> checks the memory pin rules itself. It flagged both seeded faults and passed the good configuration.</p></dd>
 <dt>Not done</dt><dd><p>Whether implementing the MIG example design rejects a bad byte group has not been run.</p></dd>
 <dt>Sources</dt><dd class="small">Pin-check results in the private knowledge repository (<code>tools/pin_xdc_check</code>); the pin-planning grading design.</dd>
