@@ -1,0 +1,11 @@
+# io_fwd pins (JC/JD: dac_clk on JC[1], dac_d on JC[2..10], JD[1])
+set_property -dict { PACKAGE_PIN E3 IOSTANDARD LVCMOS33 } [get_ports { CLK100MHZ }]
+set_property -dict { PACKAGE_PIN K1 IOSTANDARD LVCMOS33 } [get_ports { dac_clk }]
+set_property -dict { PACKAGE_PIN F6 IOSTANDARD LVCMOS33 } [get_ports { dac_d[0] }]
+set_property -dict { PACKAGE_PIN J2 IOSTANDARD LVCMOS33 } [get_ports { dac_d[1] }]
+set_property -dict { PACKAGE_PIN G6 IOSTANDARD LVCMOS33 } [get_ports { dac_d[2] }]
+set_property -dict { PACKAGE_PIN E7 IOSTANDARD LVCMOS33 } [get_ports { dac_d[3] }]
+set_property -dict { PACKAGE_PIN J3 IOSTANDARD LVCMOS33 } [get_ports { dac_d[4] }]
+set_property -dict { PACKAGE_PIN J4 IOSTANDARD LVCMOS33 } [get_ports { dac_d[5] }]
+set_property -dict { PACKAGE_PIN E6 IOSTANDARD LVCMOS33 } [get_ports { dac_d[6] }]
+set_property -dict { PACKAGE_PIN H4 IOSTANDARD LVCMOS33 } [get_ports { dac_d[7] }]

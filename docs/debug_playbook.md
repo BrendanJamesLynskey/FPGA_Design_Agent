@@ -65,6 +65,23 @@ Each failure names the XDC file and line. Measured on Vivado 2025.2 (`results/20
 | XDCH-1 | `-setup N` with no `-hold N-1`: the hold check moves N-1 cycles and fails | add `set_multicycle_path N-1 -hold` on the same `-from`/`-to` (FDA-CON-10 catches this before Vivado) |
 | EXC-MCP-ENABLE | a multicycle path whose start or end register loads on every clock (CE tied), or whose registers share no enable; or `-start`/`-end` counting the slower clock | write the multicycle only on registers the enable loads, named by a property or by the enable; Vivado raised no TIMING-46 for this in 2025.2 |
 
+## I/O timing (gates `post_synth_io_constraints_clean`, `io_timing_clean`; brief 20 part B)
+
+Each failure names the XDC file and line. Measured on Vivado 2025.2 (`results/20_timing_exceptions/io_table.md`).
+
+| Finding | What it usually means | What to try |
+|---|---|---|
+| IO-INVENTED (FDA-CON-11) | a non-zero delay on a button, switch, LED or UART pin: there is no data sheet for these, and a negative output delay only hides the path | a 0 ns placeholder plus a commented false path (`set_false_path -from`/`-to` the port); a placeholder alone failed timing on the UART pin (-3.977 ns) |
+| IO-NO-FORMULA (FDA-CON-11) | a non-zero delay with no comment saying where it comes from | write the formula above it: input -max = tCO_max + trace, -min = tCO_min + trace; output -max = tSU + trace, -min = trace - tH |
+| IO-MIN-GT-MAX (FDA-CON-12) | -min and -max swapped: Vivado says nothing and the setup slack looked 4 ns better than it is | swap them back |
+| IO-MISSING-MINMAX, IO-NO-PATH | only -max given (check_timing partial_input_delay): no hold path is analysed at all; or a DDR edge missing | give both -max and -min for each clock edge used (`-clock_fall -add_delay` for the second edge) |
+| IO-PLACEHOLDER | 0 ns or a false path on a synchronous interface port: it passes timing and hides the device's tCO | derive the delays from the data sheet |
+| IO-VALUE | a value differs from the interface's data-sheet formula (often the sign of tH or of tCO_min) | recompute; a wrong sign on -min made hold 1 ns optimistic on an output |
+| IO-CLOCK | the delay is relative to the wrong clock, or the clock's period is not the interface's (a 12 ns virtual clock for a 10 ns device gave a 2 ns requirement) | reference the clock the external device uses: the board clock, a virtual clock at the capturing clock's period (non-integer ratio), or the generated clock on a forwarded-clock port |
+| IO-ASYNC-CLOCK | the device has its own oscillator; a virtual clock "times" it but there is no fixed phase | a synchroniser or FIFO, and a clock-group or false-path decision instead of a delay |
+| IO-IOB | an interface register was not packed into the I/O block | `(* IOB = "TRUE" *)` (or `set_property IOB TRUE`) on a register that the pad alone drives (input) or that drives only the pad (output) |
+| EXC-XDC-MSG (12-4739) on a delay | a virtual clock used before its `create_clock` (FDA-CON-13): the delay was dropped | define every virtual clock before the delays that use it |
+
 ## Methodology checks (`methodology.rpt`)
 
 Rule meanings from UG906 (v2025.2) Appendix A; resolution steps mined from Ross

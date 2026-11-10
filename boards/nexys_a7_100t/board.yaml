@@ -29,6 +29,19 @@ resources:                        # 05c2: names a design maps its ports to (core
   seg: [CA, CB, CC, CD, CE, CF, CG, DP]    # 7-segment cathodes, active low: seg[0]=CA (a) ... seg[6]=CG (g), seg[7]=DP
   uart_rx: UART_TXD_IN            # the FPGA's receive pin (the FTDI chip's transmit), 3.3 V
   uart_tx: UART_RXD_OUT           # the FPGA's transmit pin
+slow_ports:                       # brief 20 part B (flow/io_check.py): user I/O with no timing relationship to any clock
+                                  # (buttons, switches, LEDs, 7-segment, the USB-UART): a 0 ns placeholder delay and a
+                                  # commented false path are right; a non-zero delay on them is invented (IO-INVENTED)
+  - 'BTN[CUDLR]'
+  - 'CPU_RESETN'
+  - 'SW\[\d+\]'
+  - 'LED\[\d+\]'
+  - 'LED1[67]_[RGB]'
+  - 'AN\[\d+\]'
+  - 'C[A-G]'
+  - 'DP'
+  - 'UART_\w+'
+  - 'seg\[\d+\]'
 iostandards:
   default: LVCMOS33
   exceptions:

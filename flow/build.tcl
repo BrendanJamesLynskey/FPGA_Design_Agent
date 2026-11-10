@@ -86,6 +86,10 @@ proc exception_reports {out sfx} {
     report_exceptions -coverage -file $out/exceptions_coverage_$sfx.rpt
 }
 exception_reports $out synth
+# brief 20 part B: each port's delays, IOB register and synchroniser, the clocks (virtual, generated, input jitter), for
+# flow/io_check.py (gates post_synth_io_constraints_clean and io_timing_clean)
+source $flow_dir/io_paths.tcl
+io_dump_paths $out/io_paths_synth.txt
 stage synth_reports
 # stage-limited build (FDA_STOP_AFTER via flow/prepare.py): stop here after the post_synth reports
 proc stop_here {name} {
@@ -105,6 +109,17 @@ if {$ila} {
 }
 
 # --- implementation ----------------------------------------------------------
+# brief 20 part B: build.yaml timing_margin_ns, an implementation-only setup margin on every design clock (UG949 v2025.2
+# ch. 6 "Overconstraining the Design": -setup only, reset to 0 before the router), taken off before routing
+set margin_clocks {}
+if {[info exists timing_margin_ns] && $timing_margin_ns > 0} {
+    foreach c [get_clocks -quiet] { if {[get_property -quiet SOURCE_PINS $c] ne ""} { lappend margin_clocks $c } }
+    if {[llength $margin_clocks]} { set_clock_uncertainty -setup $timing_margin_ns $margin_clocks }
+    set mf [open $out/timing_margin.txt w]
+    puts $mf "margin_ns $timing_margin_ns"
+    puts $mf "clocks [join $margin_clocks { }]"
+    close $mf
+}
 opt_design
 stage opt
 place_design
@@ -114,6 +129,10 @@ stage phys_opt
 # stage post_place: UG949 ch. 6 "Pre- and Post-Placement" (large hold violations
 # must be fixed before routing) and figure 113 "Baselining the Design"
 report_timing_summary -max_paths 10 -file $out/timing_summary_place.rpt
+if {[llength $margin_clocks]} {
+    set_clock_uncertainty -setup 0 $margin_clocks
+    report_timing_summary -max_paths 3 -file $out/timing_summary_place_nomargin.rpt
+}
 stage place_reports
 if {$ila eq "0"} { stop_here place }
 route_design
@@ -130,6 +149,9 @@ report_cdc -details   -file $out/cdc.rpt
 report_drc            -file $out/drc.rpt
 report_qor_assessment -file $out/qor_assessment_route.rpt
 exception_reports $out route
+io_dump_paths $out/io_paths_route.txt
+report_timing -delay_type max -max_paths 1 -file $out/timing_worst_setup.rpt
+report_timing -delay_type min -max_paths 1 -file $out/timing_worst_hold.rpt
 # the board's thermal environment (boards/<board>/board.yaml, via prepare.py) so that the
 # junction temperature is the board's, not Vivado's default heat sink and 250 LFM airflow
 if {[info exists power_env] && $power_env ne ""} { set_operating_conditions {*}$power_env }

@@ -4,7 +4,7 @@
     python3 flow/prepare.py designs/t1_dimmer_counter --variant base|ila --out <build dir>
 
 Writes ``<out>/inputs.tcl`` (top, part, sources, constraints, generics, out
-dir, ILA switch, and the board's thermal environment for report_power) and, for the ``ila`` variant, ``<out>/probes.tcl``. Prints a
+dir, ILA switch, the board's thermal environment for report_power, and the implementation-only timing margin) and, for the ``ila`` variant, ``<out>/probes.tcl``. Prints a
 JSON line with the build stamp: the first 8 hex digits of the SHA-256 over
 every source and constraint file (path and content), so the same sources give
 the same stamp in any clone and the shell's BUILD_STAMP register identifies them.
@@ -115,6 +115,24 @@ def power_env_tcl(board: str | None) -> str:
 STOP_AFTER = ("synth", "place", "route", "bitstream")
 
 
+def timing_margin(cfg: dict, xdcs: list[Path]) -> float:
+    """Brief 20 part B: build.yaml ``timing_margin_ns``, an implementation-only setup margin (UG949 v2025.2 ch. 6
+    "Overconstraining the Design", which warns against more than 0.5 ns): flow/build.tcl adds it to every design clock's setup uncertainty for opt, place and
+    phys_opt and takes it off before routing, so sign-off timing is without it. Refused beside an XDC
+    ``set_clock_uncertainty -setup``, which the removal would overwrite."""
+    m = float(cfg.get("timing_margin_ns") or 0.0)
+    if m < 0 or m > 0.5:
+        raise SystemExit(f"prepare.py: timing_margin_ns must be between 0 and 0.5 ns (UG949 ch. 6), not {m}")
+    if m:
+        for x in xdcs:
+            for line in x.read_text(errors="replace").splitlines():
+                code = line.split("#", 1)[0]
+                if "set_clock_uncertainty" in code and "-hold" not in code:
+                    raise SystemExit(f"prepare.py: timing_margin_ns and a set_clock_uncertainty setup line in {x.name} "
+                                     f"cannot be used together (the flow removes its margin by setting 0)")
+    return m
+
+
 def stop_after() -> str:
     """The stage a stage-limited build stops after (``FDA_STOP_AFTER`` in the environment; default: run to the
     bitstream). The agent core's ``build`` tool sets it (brief 05a)."""
@@ -159,14 +177,16 @@ def main(argv: list[str] | None = None) -> int:
            f"set out {{{out}}}",
            f"set ila {int(ila)}",
            f"set power_env {{{power_env_tcl(board_for(cfg))}}}",
-           f"set stop_after {{{stop_after()}}}"]
+           f"set stop_after {{{stop_after()}}}",
+           f"set timing_margin_ns {timing_margin(cfg, xdcs):g}"]
     if ila:
         (out / "probes.tcl").write_text(probes_tcl(ROOT / cfg["probes"]))
         tcl.append(f"set probes_tcl {{{out / 'probes.tcl'}}}")
     (out / "inputs.tcl").write_text("\n".join(tcl) + "\n")
     json.dump({"design": str(design.relative_to(ROOT)), "variant": a.variant, "top": cfg["top"],
                "part": cfg["part"], "sources_sha256": stamp, "build_stamp": stamp[:8],
-               "files": [str(f.relative_to(ROOT)) for f in srcs + xdcs + data]}, sys.stdout)
+               "files": [str(f.relative_to(ROOT)) for f in srcs + xdcs + data],
+               "board": board_for(cfg), "timing_margin_ns": timing_margin(cfg, xdcs)}, sys.stdout)
     print()
     return 0
 

@@ -22,6 +22,12 @@ that failed:
                 the exception check (brief 20, flow/exceptions_check.py) after
                 synthesis and after routing: no exception ignored or covering no
                 path, no XDC message dropping one, no TIMING-29/-46/-47
+                the I/O check (brief 20 part B, flow/io_check.py) after synthesis and
+                after routing: no invented delay on a slow port, synchronous
+                interfaces (io_interfaces) with -min and -max from the data sheet,
+                relative to the right clock, IOB-packed; I/O setup and hold slack,
+                the worst paths' uncertainty breakdown and corner, and the
+                implementation-only timing margin (timing_margin_ns) recorded
                 report_power run for the board's thermal environment with the
                 junction at or below 85 C
     bitstream   the bitstream (and, for an ILA build, the .ltx) present
@@ -277,6 +283,33 @@ PLACE_WHS_MIN_NS = -0.5    # UG949 ch. 6 "Pre- and Post-Placement": hold violati
 JUNCTION_MAX_C = 85.0      # commercial grade; the power gate flow/hw.py uses the same limit
 
 
+def forwarded_clock_ports(d: Path, stage: str) -> set[str]:
+    """Brief 20 part B: output ports that carry a generated (forwarded) clock, from flow/io_paths.tcl's dump. check_timing
+    lists such a port under no_output_delay (fixture I7: an ODDR-forwarded clock with create_generated_clock on the port),
+    but a clock output takes no output delay: the outputs are timed against the clock it carries."""
+    f = d / f"io_paths_{stage}.txt"
+    if not f.exists():
+        return set()
+    out = set()
+    for line in f.read_text(errors="replace").splitlines():
+        x = line.split("|")
+        if x[0] == "CLOCK" and len(x) >= 7 and x[5] == "1":
+            out |= set(x[6].split())
+    ports = {x.split("|")[1] for x in f.read_text(errors="replace").splitlines() if x.startswith("PORT|")}
+    return out & ports
+
+
+def unconstrained_ok(counts: dict[str, int], ports: dict[str, list[str]], fwd: set[str]) -> bool:
+    """Every check_timing unconstrained count is zero, except no_output_delay entries that are forwarded-clock ports."""
+    for k in UNCONSTRAINED_CHECKS:
+        n = counts.get(k, 0)
+        if k == "no_output_delay" and n and fwd:
+            n = len([p for p in ports.get(k, []) if p not in fwd]) if ports.get(k) else n
+        if n:
+            return False
+    return True
+
+
 def unconstrained_text(ports: dict[str, list[str]], limit: int = 40) -> str:
     """The ports check_timing lists, one clause per check, in plain form (raw names, no advice)."""
     what = {"no_input_delay": "input ports with no input delay", "no_output_delay": "output ports with no output delay",
@@ -357,6 +390,68 @@ def _exceptions(d: Path, stage: str, strict: bool, g: dict[str, bool], name: str
     return r
 
 
+def _io(d: Path, stage: str, strict: bool, g: dict[str, bool], name: str) -> dict[str, Any] | None:
+    """Brief 20 part B: flow/io_check.py for one stage (``synth`` or ``route``) into gate ``name``. The interfaces come
+    from the design's spec.yaml / build.yaml ``io_interfaces``, the slow ports from the board's ``slow_ports``. A build
+    of this flow version (``strict``) without the dump fails the gate; an older build skips it."""
+    try:
+        from flow import io_check
+    except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+        import io_check
+    import yaml
+    if not (d / f"io_paths_{stage}.txt").exists():
+        if strict and (d / f"exceptions_{stage}.rpt").exists():
+            g[name] = False
+            return {"pass": False, "missing_report": f"io_paths_{stage}.txt"}
+        return None
+    prep = json.loads((d / "prepare.json").read_text()) if (d / "prepare.json").exists() else {}
+    root = Path(__file__).resolve().parents[1]
+    design = root / prep["design"] if prep.get("design") else d.parent.parent
+    ifs, asy, errs = io_check.load_interfaces(design / "spec.yaml", design / "build.yaml")
+    slow = None
+    board = prep.get("board")
+    bdata: dict[str, Any] = {}
+    if board and (root / "boards" / board / "board.yaml").is_file():
+        bdata = yaml.safe_load((root / "boards" / board / "board.yaml").read_text()) or {}
+        slow = bdata.get("slow_ports")
+    try:
+        r = io_check.evaluate(d, stage, None, ifs, asy, slow)
+    except (OSError, ValueError) as e:
+        g[name] = False
+        return {"pass": False, "error": f"{type(e).__name__}: {e}"}
+    for e in errs:
+        r["failures"].append({"rule": "IO-INTERFACES", "file": None, "line": None, "text": None, "message": e})
+        r["pass"] = False
+    # a published input jitter for the board clock and no set_input_jitter: a warning (never a made-up number)
+    ij = (bdata.get("clock") or {}).get("input_jitter_ns")
+    if ij is not None and stage == "route":
+        bc = [c for c, v in (r.get("clocks") or {}).items() if (bdata.get("clock") or {}).get("port") in (v.get("source") or "")]
+        if bc and not any((r["clocks"][c].get("input_jitter") or 0) > 0 for c in bc):
+            r.setdefault("warnings", []).append({"name": "board_clock_input_jitter", "stage": "post_route",
+                                                 "clock": bc[0], "published_ns": ij,
+                                                 "note": "the board's oscillator jitter is published; no set_input_jitter"})
+    g[name] = r["pass"]
+    return r
+
+
+def _margin(d: Path) -> dict[str, Any] | None:
+    """Brief 20 part B: the implementation-only setup margin (timing_margin.txt from flow/build.tcl) and the placed WNS
+    with and without it. Sign-off (timing_summary.rpt) is after its removal."""
+    f = d / "timing_margin.txt"
+    if not f.exists():
+        return None
+    kv = dict(line.split(" ", 1) for line in f.read_text().splitlines() if " " in line)
+    out: dict[str, Any] = {"margin_ns": float(kv.get("margin_ns", 0)), "clocks": kv.get("clocks", "").split()}
+    for k, n in (("place_wns_with_margin_ns", "timing_summary_place.rpt"),
+                 ("place_wns_without_margin_ns", "timing_summary_place_nomargin.rpt")):
+        if (d / n).exists():
+            try:
+                out[k] = parse_timing_summary(_read(d, n))["wns_ns"]
+            except ValueError:
+                out[k] = None
+    return out
+
+
 def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any]:
     d = build_dir
     prep = json.loads((d / "prepare.json").read_text()) if (d / "prepare.json").exists() else {}
@@ -386,7 +481,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         m_s = parse_rule_table(_read(d, "methodology_synth.rpt"))
         d_s = parse_rule_table(_read(d, "drc_synth.rpt"))
         q_s = parse_qor_assessment(_read(d, "qor_assessment_synth.rpt")) if (d / "qor_assessment_synth.rpt").exists() else None
-        g = {"post_synth_no_unconstrained_endpoints": all(c_s.get(k, 0) == 0 for k in UNCONSTRAINED_CHECKS),
+        g = {"post_synth_no_unconstrained_endpoints": unconstrained_ok(c_s, parse_check_timing_ports(c_s_text),
+                                                                       forwarded_clock_ports(d, "synth")),
              "post_synth_methodology_no_critical": _n_sev(m_s, "Critical Warning") == 0,
              "post_synth_drc_clean": _n_sev(d_s, "Error") == 0 and _n_sev(d_s, "Critical Warning") == 0}
         warn: list[dict[str, Any]] = []
@@ -411,6 +507,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         elif strict:
             g["post_synth_cdc_structure_clean"] = False
         exc_s = _exceptions(d, "synth", strict, g, "post_synth_exceptions_clean")
+        io_s = _io(d, "synth", strict, g, "post_synth_io_constraints_clean")
         util_s = parse_utilization(_read(d, "utilization_synth.rpt")) if (d / "utilization_synth.rpt").exists() else {}
         arch = _architecture_for(d, architecture)
         sanity = None
@@ -424,7 +521,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         stages["post_synth"] = {"ran": True, "gates": g, "warnings": warn, "timing": t_s, "check_timing": c_s,
                                 "unconstrained_ports": parse_check_timing_ports(c_s_text),
                                 "methodology": _rule_summary(m_s), "drc": _rule_summary(d_s), "qor_assessment": q_s,
-                                "cdc": cdc_s, "cdc_structure": cdc_struct, "exceptions": exc_s, "resource_sanity": sanity,
+                                "cdc": cdc_s, "cdc_structure": cdc_struct, "exceptions": exc_s, "io_timing": io_s,
+                                "resource_sanity": sanity,
                                 "utilization": util_s}
     else:
         stages["post_synth"] = {"ran": False, "gates": {}}
@@ -463,7 +561,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             "setup": _slack_ok(timing["wns_ns"], timing["tns_ns"]),
             "hold": _slack_ok(timing["whs_ns"], timing["ths_ns"]),
             "pulse_width": _slack_ok(timing["wpws_ns"], timing["tpws_ns"]),
-            "no_unconstrained_endpoints": all(checks.get(k, 0) == 0 for k in UNCONSTRAINED_CHECKS),
+            "no_unconstrained_endpoints": unconstrained_ok(checks, parse_check_timing_ports(checks_text),
+                                                           forwarded_clock_ports(d, "route")),
             # NSTD-1/UCIO-1 are critical warnings in report_drc but errors at write_bitstream
             "drc_clean": _n_sev(drc, "Error") == 0 and _n_sev(drc, "Critical Warning") == 0,
             "methodology_no_critical": _n_sev(meth, "Critical Warning") == 0,
@@ -479,7 +578,10 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             route_gates["power_junction_ok"] = (env["airflow_lfm"] == 0 and env["heatsink"] == "none"
                                                 and env["junction_c"] is not None and env["junction_c"] <= JUNCTION_MAX_C)
         exc_r = _exceptions(d, "route", strict, route_gates, "exceptions_clean")
+        io_r = _io(d, "route", strict, route_gates, "io_timing_clean")
         stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r, "exceptions": exc_r,
+                                "io_timing": io_r, "timing_margin": _margin(d),
+                                "warnings": (io_r or {}).get("warnings", []),
                                 "unconstrained_ports": parse_check_timing_ports(checks_text)}
 
         # --- bitstream ---
@@ -575,7 +677,8 @@ def main(argv: list[str] | None = None) -> int:
             if not ok and "unconstrained" in g and st.get("unconstrained_ports"):
                 print(f"         check_timing: {unconstrained_text(st['unconstrained_ports'])}")
         for w in st.get("warnings", []):
-            print(f"    warn {w['name']}: score {w['score']} < {w['min']} (recorded, not a gate)")
+            print(f"    warn {w['name']}: " + (f"score {w['score']} < {w['min']}" if "score" in w else w.get("note", ""))
+                  + " (recorded, not a gate)")
     if r["first_failed_stage"]:
         print(f"first failed stage: {r['first_failed_stage']}")
     return 0 if r["pass"] else 1
