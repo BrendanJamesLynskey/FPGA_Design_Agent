@@ -177,11 +177,44 @@ svg text.dark { fill: #000; } svg text.light { fill: #fff; }
 .vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
 @media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
 .trace .hero-art svg { margin: 0 auto; display: block; }
+
+/* flow notes: cards, status, figures */
+.card { border: 1px solid var(--rule); background: var(--panel); padding: 4px 16px 14px; margin: 0 0 28px; }
+.card h2 { margin-top: .8em; font-size: clamp(1.2rem, 1rem + 1vw, 1.5rem); }
+.kv { display: grid; grid-template-columns: minmax(0, 11ch) minmax(0, 1fr); gap: 10px 16px; margin: 0; }
+.kv dt { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); padding-top: .25em; }
+.kv dd { margin: 0; min-width: 0; }
+.kv dd > :last-child { margin-bottom: 0; }
+@media (max-width: 640px) { .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; } .kv dd { margin-bottom: 12px; } }
+.tag.built { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tag.part { border-style: solid; }
+.tag.plan { border-style: dashed; }
+.index td:first-child { white-space: nowrap; }
+.fig { margin: 1em 0; }
+.fig svg { display: block; width: 100%; height: auto; max-width: 560px; }
+.fig svg .hatch line { stroke: var(--warn); stroke-width: 1.2; }
+svg .barneg { fill: url(#hatchwarn); stroke: var(--warn); }
+svg .barpos { fill: var(--ink); }
+svg .box { fill: var(--bg); stroke: var(--ink-3); }
+svg .boxink { fill: var(--bg); stroke: var(--ink); }
+svg .dash { stroke: var(--ink-3); stroke-dasharray: 4 3; fill: none; }
+svg .held { fill: url(#hatchhold); stroke: var(--ink); }
+svg .bit0 { fill: var(--bg); stroke: var(--ink-3); }
+svg .bit1 { fill: var(--ink); stroke: var(--ink); }
+svg text.b1 { fill: var(--bg); }
+svg .torn { fill: none; stroke: var(--warn); stroke-width: 2; }
+svg .line-ink { stroke: var(--ink); fill: none; stroke-width: 1.5; }
+svg .line-seen { stroke: var(--ink-3); fill: none; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.tear .tog { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 10px; align-items: center; }
+.tear .tog .grp { display: inline-flex; gap: 0; align-items: center; flex-wrap: wrap; }
+.tear .tog .grp > span { font-size: .85rem; color: var(--ink-3); margin-right: 8px; }
+.tear .tog button { border-radius: 0; margin-left: -1px; }
+.tear svg { display: block; width: 100%; height: auto; max-width: 560px; }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html" aria-current="page">How it works</a><a href="examples.html">Examples</a><a href="problems.html">Problems</a><a href="evaluation.html">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="how.html" aria-current="page">How it works</a><a href="flow-notes.html">Beyond the flow</a><a href="examples.html">Examples</a><a href="problems.html">Problems</a><a href="evaluation.html">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>How it works</h1>
 <p class="lede">A staged flow with a gate at the end of each stage. The model proposes; scripts and tools judge. Nothing the model wrote about its own work counts.</p>
@@ -217,6 +250,8 @@ svg text.dark { fill: #000; } svg text.light { fill: #fff; }
 <tr><td>V-HW</td><td>Stage 9: the board bring-up against the model passes.</td></tr>
 </tbody></table></div>
 
+<p>Some checks go further than what Vivado reports by itself, for example the clock-domain-crossing gate and the handling of AMD's crossing macros. They are collected, with their evidence and status, on <a href="flow-notes.html">Beyond the standard flow</a>.</p>
+
 <h2>Independent tests from the spec alone</h2>
 <p><span class="tag">Built, not yet measured</span> The agent's own testbench never counts as a pass. A planned second line of defence writes tests from the signed-off spec only, without seeing the RTL, and runs them against the design. It is built and replayed offline on development tasks. Whether it catches escapes on held-out tasks is a separate pre-registered comparison (<code>eval-2</code>), and no result is claimed for it here.</p>
 
@@ -231,7 +266,7 @@ svg text.dark { fill: #000; } svg text.light { fill: #fff; }
 <h2>The Claude Code arm and the tools</h2>
 <p>The model runs as headless Claude Code, one call per turn, with every built-in tool switched off. It sees only our MCP server, which gives each role only the tools its stage needs: <code>lint</code>, <code>simulate</code>, <code>mutate</code>, <code>formal</code>, <code>build</code>, <code>gates</code>, <code>search_docs</code>, <code>load_skill</code>, and file tools limited to the role's own directories. Programming the board and bring-up are never exposed to the model; the harness does those after a human approves. The same stage graph also runs with other models, so harness and model can be compared. Development runs on this site used claude-sonnet-5-5, Vivado 2025.2.</p>
 
-<div class="pager"><a href="index.html">&larr; Home</a><a href="examples.html">Examples &rarr;</a></div>
+<div class="pager"><a href="index.html">&larr; Home</a><a href="flow-notes.html">Beyond the flow &rarr;</a></div>
 </main>
 <footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="replay">{"date":"2026-11-07","hidden":"6 of 6","model":"claude-sonnet-5-5","run":5,"stages":["clarify","board-and-device-planning","rtl-design-creation","constraints","synthesis","implementation","timing-closure","power-closure","drc-closure","configuration-and-debug"],"steps":[{"fact":"6 questions asked; 3 answered by the oracle, 3 defaulted; the register map was asked for and the final spec carries 11 registers.","stage":"clarify","stage_no":0,"visit":1,"visits":2},{"fact":"6 questions asked; 3 answered by the oracle, 3 defaulted; the register map was asked for and the final spec carries 11 registers.","stage":"clarify","stage_no":0,"visit":2,"visits":2},{"fact":"Architecture, clocking plan, resource budget on the xc7a100t.","stage":"board-and-device-planning","stage_no":1,"visit":1,"visits":2},{"fact":"Architecture, clocking plan, resource budget on the xc7a100t.","stage":"board-and-device-planning","stage_no":1,"visit":2,"visits":2},{"fact":"RTL, constraints and the independent bench are written; the checks V0 to V3 run here. V3: pass; mutation score 95.0%: 19 killed of 20 evaluated, 0 survived.","stage":"rtl-design-creation","stage_no":2,"visit":1,"visits":3},{"fact":"RTL, constraints and the independent bench are written; the checks V0 to V3 run here. V3: pass; mutation score 95.0%: 19 killed of 20 evaluated, 0 survived.","stage":"rtl-design-creation","stage_no":2,"visit":2,"visits":3},{"fact":"RTL, constraints and the independent bench are written; the checks V0 to V3 run here. V3: pass; mutation score 95.0%: 19 killed of 20 evaluated, 0 survived.","stage":"rtl-design-creation","stage_no":2,"visit":3,"visits":3},{"fact":"Pin and clock constraints checked against the board's master XDC.","stage":"constraints","stage_no":3,"visit":1,"visits":1},{"fact":"Synthesis gates: all pass by the end of the run.","stage":"synthesis","stage_no":4,"visit":1,"visits":1},{"fact":"Place and route; bitstream built.","stage":"implementation","stage_no":5,"visit":1,"visits":1},{"fact":"Post-route setup slack +0.495 ns, hold slack +0.099 ns at 100 MHz.","stage":"timing-closure","stage_no":6,"visit":1,"visits":1},{"fact":"Vectorless power estimate 0.118 W.","stage":"power-closure","stage_no":7,"visit":1,"visits":1},{"fact":"737 LUT, 753 FF, 12 DSP, 0 BRAM after place and route (test shell included).","stage":"drc-closure","stage_no":8,"visit":1,"visits":1},{"fact":"Stops here: hardware: awaiting approval before programming (no board in this run).","stage":"configuration-and-debug","stage_no":9,"visit":1,"visits":2},{"fact":"Stops here: hardware: awaiting approval before programming (no board in this run).","stage":"configuration-and-debug","stage_no":9,"visit":2,"visits":2}],"task":"c14_int8_dot_requant","turns":152,"wall_h":1.42}</script>
@@ -270,9 +305,9 @@ svg text.dark { fill: #000; } svg text.light { fill: #fff; }
       var n = curTheme() === "dark" ? "light" : "dark";
       document.documentElement.dataset.theme = n;
       try { localStorage.setItem("fda-theme", n); } catch (e) {}
-      tb.textContent = n === "dark" ? "Light" : "Dark";
+      tb.textContent = n === "dark" ? "Light" : "Dark"; tb.setAttribute("aria-label", "Switch to " + tb.textContent.toLowerCase() + " theme");
     });
-    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark"; tb.setAttribute("aria-label", "Switch to " + tb.textContent.toLowerCase() + " theme");
   }
 
   /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
@@ -282,7 +317,7 @@ svg text.dark { fill: #000; } svg text.light { fill: #fff; }
     var live = root.querySelector(".cap");
     var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
     var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
-    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var fwd = el("button", { type: "button", "aria-label": "Next step", text: "Next" });
     var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
     var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
     var pos = el("span", { class: "pos" });
@@ -720,6 +755,91 @@ svg text.dark { fill: #000; } svg text.light { fill: #fff; }
   var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
   var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
   var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+
+  /* ---------- flow notes: a bus crossing a two-flop synchroniser (frames from site/flow_model.py) ---------- */
+  function mountTear(root) {
+    var T = D.flow_notes && D.flow_notes.tear; if (!T) return;
+    var bus = "binary", extra = true, Fr = T.configs.binary_extra, p;
+    var tog = el("div", { class: "tog" });
+    function group(label, opts, cur, set) {
+      var g = el("div", { class: "grp", role: "group", "aria-label": label }, [el("span", { text: label })]), bs = [];
+      opts.forEach(function (o) {
+        var b = el("button", { type: "button", text: o[1], "aria-pressed": String(o[0] === cur) });
+        b.onclick = function () { set(o[0]); bs.forEach(function (x, k) { x.setAttribute("aria-pressed", String(opts[k][0] === o[0])); }); };
+        bs.push(b); g.appendChild(b);
+      });
+      tog.appendChild(g);
+    }
+    group("Bus", [["binary", "Binary counter"], ["gray", "Gray counter"]], bus, function (v) { bus = v; reload(); });
+    group("Extra cycle", [[false, "Off"], [true, "On"]], extra, function (v) { extra = v; reload(); });
+    root.appendChild(tog);
+    var W = 400, svg = sv("svg", { viewBox: "0 0 400 190", role: "img", "aria-label": "Source bus, first flop and second flop of the synchroniser" });
+    var defs = sv("defs"); var pat = sv("pattern", { id: "hatchhold", width: 5, height: 5, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+    pat.appendChild(sv("rect", { width: 5, height: 5, fill: "var(--bg)" })); pat.appendChild(sv("line", { x1: 0, y1: 0, x2: 0, y2: 5, stroke: "var(--ink)", "stroke-width": 2 }));
+    defs.appendChild(pat); svg.appendChild(defs);
+    var rowY = [14, 74, 134], names = ["source bus", "flop 1", "flop 2"], cells = [];
+    names.forEach(function (n, r) {
+      svg.appendChild(sv("text", { x: 6, y: rowY[r] + 23 }, n));
+      var row = [];
+      for (var j = 0; j < 4; j++) {
+        var g = sv("g"), x = 150 + j * 60;
+        var rc = sv("rect", { x: x, y: rowY[r], width: 40, height: 36, class: "bit0" });
+        var tx = sv("text", { x: x + 16, y: rowY[r] + 23, class: "big" }, "0");
+        g.appendChild(rc); g.appendChild(tx); svg.appendChild(g); row.push([rc, tx]);
+      }
+      cells.push(row);
+    });
+    [0, 1].forEach(function (r) { for (var j = 0; j < 4; j++) { var x = 170 + j * 60; svg.appendChild(sv("path", { class: "ink", d: "M" + x + " " + (rowY[r] + 36) + " L" + x + " " + (rowY[r + 1]) })); } });
+    root.appendChild(svg);
+    var cap = el("p", { class: "cap", "aria-live": "polite" }); root.appendChild(cap);
+    var ch = sv("svg", { viewBox: "0 0 400 132", role: "img", "aria-label": "Source value and sampled value over the cycles" });
+    var X0 = 34, DX = 360 / T.frames, Y = function (v) { return 108 - v * 6; };
+    ch.appendChild(sv("text", { x: 6, y: 10 }, "value, 0 to 15"));
+    var cursor = sv("rect", { class: "cursor", x: X0, y: 14, width: DX, height: 96 }); ch.appendChild(cursor);
+    ch.appendChild(sv("line", { class: "rule", x1: X0, y1: 108, x2: 394, y2: 108 }));
+    ch.appendChild(sv("text", { x: 290, y: 126 }, "destination cycle"));
+    var lSrc = sv("path", { class: "line-ink" }), lSeen = sv("path", { class: "line-seen" }); ch.appendChild(lSrc); ch.appendChild(lSeen);
+    var marks = sv("g"); ch.appendChild(marks);
+    ch.appendChild(sv("text", { x: 6, y: 126 }, "cycle 0 at left"));
+    root.appendChild(ch);
+    var leg = el("p", { class: "small muted", text: "Chart: solid line is the source value, dashed line is the value the destination sees, a ringed point is a torn value." });
+    root.appendChild(leg);
+    function path(vals) {
+      var d = ""; vals.forEach(function (v, t) { var x = X0 + t * DX; d += (t ? "L" : "M") + x.toFixed(1) + " " + Y(v) + " L" + (x + DX).toFixed(1) + " " + Y(v) + " "; });
+      return d;
+    }
+    function reload() {
+      Fr = T.configs[bus + "_" + (extra ? "extra" : "plain")];
+      lSrc.setAttribute("d", path(Fr.map(function (f) { return f.cur; })));
+      lSeen.setAttribute("d", path(Fr.map(function (f) { return f.seen; })));
+      while (marks.firstChild) marks.removeChild(marks.firstChild);
+      Fr.forEach(function (f, t) { if (f.torn) marks.appendChild(sv("circle", { class: "torn", cx: (X0 + t * DX + DX / 2).toFixed(1), cy: Y(f.seen), r: 5 })); });
+      if (p) p.goto(0);
+    }
+    function draw(rowI, bits, held) {
+      for (var j = 0; j < 4; j++) {
+        var c = cells[rowI][j], b = bits[j];
+        var isHeld = held && held[j];
+        c[0].setAttribute("class", isHeld ? "held" : (b ? "bit1" : "bit0"));
+        c[1].textContent = b; c[1].setAttribute("class", "big" + (b && !isHeld ? " b1" : ""));
+      }
+    }
+    function frame(i) {
+      var f = Fr[i];
+      draw(0, f.src); draw(1, f.f1, f.held); draw(2, f.f2);
+      cursor.setAttribute("x", (X0 + i * DX).toFixed(1));
+      var h = []; f.held.forEach(function (x, k) { if (x) h.push(k + 1); });
+      var code = bus === "gray" ? "Gray code" : "binary";
+      var c = "Cycle " + i + ": the source value is " + f.cur + " (" + code + " bits " + f.src.join("") + ")" +
+        (i % T.hold === 0 && i ? ", just changed from " + f.prev : "") + ". ";
+      c += h.length ? "Flop 1 keeps its old value for bit" + (h.length > 1 ? "s " : " ") + h.join(" and ") + " (counting from the left). " : "";
+      c += "The destination sees " + f.seen + (f.torn ? ", which is neither " + f.cur + " nor " + f.prev + ": a torn value." : (f.seen === f.cur ? "." : ", the previous value."));
+      return c;
+    }
+    p = Player(root, T.frames, frame, { interval: 700 });
+    reload();
+  }
+  var tr = document.getElementById("tear"); if (tr) mountTear(tr);
   mountDev(); mountEval1();
 })();
 

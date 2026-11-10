@@ -387,11 +387,49 @@ def catalogue(runs):
     return idx, pages
 
 
+RIG_WHAT = {  # one line per mutant of the CDC soak rig (hil/cdc_soak/README.md)
+    "M1": "two flops, no ASYNC_REG", "M1b": "one flop, no synchroniser", "M2": "one asynchronous bit into two flops, compared",
+    "M3": "binary counter crossed bit by bit", "M4": "two toggles XORed before the synchroniser", "M5": "one-cycle pulse into a level synchroniser",
+    "M6a": "Gray bus with no max-delay or bus-skew exception", "M7": "two flags synchronised separately, then compared",
+    "M8": "source reset clears a destination register", "M9": "async FIFO reset on the write side only",
+    "M10": "raw reset released asynchronously into destination flops", "M11": "2-phase handshake, source side reset alone",
+}
+
+
+def flow_notes():
+    """Data for flow-notes.html: the XPM probe, the CDC mutant table (rig and gate) and the synchroniser-tearing model."""
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import flow_model
+    inp = jload(ROOT / "results" / "14_flow_notes" / "inputs.json")
+    gate = {r["fixture"].lower(): r for r in jload(ROOT / "results" / "16_cdc_gate" / "mutant_table.json")["rows"]}
+    rig = jload(ROOT / "hil" / "cdc_soak" / "results" / "cdc_rig_sim.json")["variants"]
+    rows = []
+    for k, what in RIG_WHAT.items():
+        g = gate.get(k.lower())
+        rep = g["report_cdc_alone_flags"] if g else inp["rig_report_cdc_alone"][k]
+        rig_err = sum(c["errors"] for c in rig[k]["copies"])
+        rows.append({"id": k, "what": what, "report_cdc": rep, "rig_sim": rig_err > 0,
+                     "gate_sim": g["sim_flags"] if g else None, "gate": g["gate_flags"] if g else None, "ported": g is not None})
+    mut = [r for r in gate.values() if r["kind"] == "mutant"]
+    cor = [r for r in gate.values() if r["kind"] == "correct"]
+    xp = inp["xpm_probe"]
+    return {
+        "xpm": xp,
+        "mutants": rows,
+        "counts": {"ported": len(mut), "report_cdc_flags": sum(r["report_cdc_alone_flags"] for r in mut),
+                   "gate_flags": sum(r["gate_flags"] for r in mut), "correct": len(cor),
+                   "correct_pass": sum(not r["gate_flags"] for r in cor), "rig_mutants": len(rows),
+                   "rig_report_cdc_flags": sum(r["report_cdc"] for r in rows),
+                   "rig_sim_flags": sum(r["rig_sim"] for r in rows)},
+        "tear": flow_model.export(),
+    }
+
+
 def main():
     runs = dev_runs()
     cat, pages = catalogue(runs)
     out = {"dev": build_dev(runs), "replay": replay(runs), "examples": examples(runs), "board": board(),
-           "packs": packs(), "eval": evaldata(), "catalogue": cat}
+           "packs": packs(), "eval": evaldata(), "catalogue": cat, "flow_notes": flow_notes()}
     out.update({f"tasks/{k}": v for k, v in pages.items()})
     (OUT / "tasks").mkdir(exist_ok=True)
     bad = 0

@@ -168,3 +168,36 @@ svg text.dark { fill: #000; } svg text.light { fill: #fff; }
 .vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
 @media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
 .trace .hero-art svg { margin: 0 auto; display: block; }
+
+/* flow notes: cards, status, figures */
+.card { border: 1px solid var(--rule); background: var(--panel); padding: 4px 16px 14px; margin: 0 0 28px; }
+.card h2 { margin-top: .8em; font-size: clamp(1.2rem, 1rem + 1vw, 1.5rem); }
+.kv { display: grid; grid-template-columns: minmax(0, 11ch) minmax(0, 1fr); gap: 10px 16px; margin: 0; }
+.kv dt { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); padding-top: .25em; }
+.kv dd { margin: 0; min-width: 0; }
+.kv dd > :last-child { margin-bottom: 0; }
+@media (max-width: 640px) { .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; } .kv dd { margin-bottom: 12px; } }
+.tag.built { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tag.part { border-style: solid; }
+.tag.plan { border-style: dashed; }
+.index td:first-child { white-space: nowrap; }
+.fig { margin: 1em 0; }
+.fig svg { display: block; width: 100%; height: auto; max-width: 560px; }
+.fig svg .hatch line { stroke: var(--warn); stroke-width: 1.2; }
+svg .barneg { fill: url(#hatchwarn); stroke: var(--warn); }
+svg .barpos { fill: var(--ink); }
+svg .box { fill: var(--bg); stroke: var(--ink-3); }
+svg .boxink { fill: var(--bg); stroke: var(--ink); }
+svg .dash { stroke: var(--ink-3); stroke-dasharray: 4 3; fill: none; }
+svg .held { fill: url(#hatchhold); stroke: var(--ink); }
+svg .bit0 { fill: var(--bg); stroke: var(--ink-3); }
+svg .bit1 { fill: var(--ink); stroke: var(--ink); }
+svg text.b1 { fill: var(--bg); }
+svg .torn { fill: none; stroke: var(--warn); stroke-width: 2; }
+svg .line-ink { stroke: var(--ink); fill: none; stroke-width: 1.5; }
+svg .line-seen { stroke: var(--ink-3); fill: none; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.tear .tog { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 10px; align-items: center; }
+.tear .tog .grp { display: inline-flex; gap: 0; align-items: center; flex-wrap: wrap; }
+.tear .tog .grp > span { font-size: .85rem; color: var(--ink-3); margin-right: 8px; }
+.tear .tog button { border-radius: 0; margin-left: -1px; }
+.tear svg { display: block; width: 100%; height: auto; max-width: 560px; }

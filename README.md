@@ -2,7 +2,7 @@
 
 An agent that turns a natural-language spec into a verified, bring-up-ready AMD FPGA bitstream, measured.
 
-Showcase site: what it is, how it works, examples, the problem catalogue (every development task with its spec, hidden tests, reference RTL, mutants and golden model animated; held-out tasks by id and tier only), how it is evaluated, results ([site/](site), static pages; the live link is added here when it is published).
+Showcase site: what it is, how it works, examples, the problem catalogue (every development task with its spec, hidden tests, reference RTL, mutants and golden model animated; held-out tasks by id and tier only), a page on where the flow goes beyond the standard Vivado flow ([site/src/flow-notes.html](site/src/flow-notes.html)), how it is evaluated, results ([site/](site), static pages; the live link is added here when it is published).
 
 The flow was proven first (milestones **F0A** and **F0B**): every tool step, by hand on one small design, with
 machine-checked gates, before any model touched it. The agent (milestone F2, below) now runs that flow on benchmark

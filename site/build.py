@@ -28,6 +28,7 @@ REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 PAGES = [  # file, nav label, title, description, data keys inlined
     ("index.html", "Home", "End-to-end FPGA Agent", "An open agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGA boards, measured.", ["replay"]),
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
+    ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
     ("examples.html", "Examples", "Examples", "Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.", ["board"]),
     ("problems.html", "Problems", "Problems", "Every benchmark task: development tasks in full with spec, hidden tests, reference RTL, mutants and the golden model running; held-out tasks by id and tier only.", ["catalogue_index"]),
     ("evaluation.html", "How it is evaluated", "How it is evaluated", "The held-out evaluation in plain words: split, hidden grader, three runs per task, task-level bootstrap.", []),
@@ -130,7 +131,79 @@ def block(name, d):
         rows = [[r["task"], r["run"], OUT_TEXT[r["outcome"]], f'{r["tests_passed"]} of {r["tests_total"]}',
                  "" if r["wns_ns"] is None else f'{r["wns_ns"]:+.3f}', "" if r["lut"] is None else r["lut"]] for r in d["dev"]["runs_list"]]
         return table(["Task", "Run", "Outcome", "Hidden tests", "WNS (ns)", "LUT"], rows, num=(1, 4, 5))
+    if name == "repo":
+        return REPO
+    if name == "xpm_figure":
+        return xpm_figure(d["flow_notes"]["xpm"])
+    if name == "xpm_table":
+        x = d["flow_notes"]["xpm"]
+        return table(["Measure", "Without the fix", "With xpm_cdc.tcl"], [
+            ["report_cdc, xpm_cdc_single row", x["before"]["report_cdc_exception"]["single"], x["after"]["report_cdc_exception"]["single"]],
+            ["report_cdc, xpm_cdc_gray row", x["before"]["report_cdc_exception"]["gray"], x["after"]["report_cdc_exception"]["gray"]],
+            ["clk_a to clk_b setup WNS (ns)", f'{x["before"]["wns_ns"]:+.3f}', f'{x["after"]["wns_ns"]:+.3f}'],
+            ["Failing endpoints on that path", x["before"]["failing_endpoints"], "not recorded"],
+        ], num=())
+    if name == "mutant_table":
+        def yn(v):
+            return "not covered" if v is None else ("yes" if v else "no")
+        rows = [[m["id"], m["what"], yn(m["report_cdc"]), yn(m["rig_sim"]), yn(m["gate_sim"]), yn(m["gate"])] for m in d["flow_notes"]["mutants"]]
+        return table(["Mutant", "What is wrong", "report_cdc alone flags it", "Rig simulation with injection", "Gate's own injected simulation", "New gate flags it"], rows)
+    if name == "tear_table":
+        rows = [[("binary counter" if s["bus"] == "binary" else "Gray counter"), "on" if s["extra_cycle"] else "off", s["cycles"], s["torn_cycles"]]
+                for s in d["flow_notes"]["tear"]["stats"]]
+        return table(["Bus", "Extra cycle", "Cycles simulated", "Cycles with a torn value"], rows, num=(2, 3))
+    if name == "exception_figure":
+        return exception_figure()
     raise KeyError(name)
+
+
+def xpm_figure(x):
+    """Two-clock probe and the setup slack on the crossing, before and after; all numbers from the data."""
+    b, a = x["before"]["wns_ns"], x["after"]["wns_ns"]
+    zero, k = 120, 17.0
+    xb, xa = zero + b * k, zero + a * k
+    return f"""<div class="fig"><svg viewBox="0 0 400 190" role="img" aria-labelledby="xp1t xp1d">
+<title id="xp1t">The probe design: two clock domains joined by two XPM crossings</title>
+<desc id="xp1d">A clk_a domain with a {x["clk_a_period_ns"]} ns period feeds clk_b, with a {x["clk_b_period_ns"]} ns period, through one xpm_cdc_single and one xpm_cdc_gray.</desc>
+<rect class="box" x="6" y="6" width="120" height="178"/><text x="14" y="24">clk_a, {x["clk_a_period_ns"]} ns</text>
+<rect class="box" x="274" y="6" width="120" height="178"/><text x="282" y="24">clk_b, {x["clk_b_period_ns"]} ns</text>
+<rect class="boxink" x="18" y="52" width="86" height="30"/><text x="26" y="71">source flop</text>
+<rect class="boxink" x="18" y="122" width="86" height="30"/><text x="28" y="141">source bus</text>
+<rect class="boxink" x="296" y="52" width="76" height="30"/><text x="304" y="71">stage 1, 2</text>
+<rect class="boxink" x="296" y="122" width="76" height="30"/><text x="304" y="141">Gray stage</text>
+<line class="ink" x1="104" y1="67" x2="296" y2="67"/><path class="ink" d="M290 62 L296 67 L290 72"/>
+<line class="ink" x1="104" y1="137" x2="296" y2="137"/><path class="ink" d="M290 132 L296 137 L290 142"/>
+<text x="134" y="58">xpm_cdc_single</text><text x="140" y="128">xpm_cdc_gray</text>
+</svg></div>
+<div class="fig"><svg viewBox="0 0 400 130" role="img" aria-labelledby="xp2t xp2d">
+<title id="xp2t">Setup slack on the clk_a to clk_b path, before and after</title>
+<desc id="xp2d">Before the fix the worst setup slack is {b:+.3f} ns. After it is {a:+.3f} ns.</desc>
+<defs><pattern id="hatchwarn" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--warn)" stroke-width="2"/></pattern></defs>
+<line class="rule" x1="{zero}" y1="22" x2="{zero}" y2="118"/>
+<text x="6" y="14">worst setup slack, clk_a to clk_b (ns)</text>
+<rect class="barneg" x="{xb:.1f}" y="32" width="{zero - xb:.1f}" height="26"/>
+<text x="6" y="75">before: {b:+.3f}</text>
+<rect class="barpos" x="{zero}" y="82" width="{xa - zero:.1f}" height="26"/>
+<text x="{zero + 8}" y="99" class="inv">after: {a:+.3f}</text>
+</svg></div>"""
+
+
+def exception_figure():
+    """A timing path with and without an over-broad false path (schematic, no measured values)."""
+    def panel(covered, ident):
+        path = '<rect class="boxink" x="14" y="36" width="64" height="30"/><text x="22" y="55">launch</text>' \
+               '<rect class="box" x="132" y="36" width="116" height="30"/><text x="146" y="55">logic, too slow</text>' \
+               '<rect class="boxink" x="302" y="36" width="64" height="30"/><text x="308" y="55">capture</text>' \
+               '<line class="ink" x1="78" y1="51" x2="132" y2="51"/><line class="ink" x1="248" y1="51" x2="302" y2="51"/>'
+        if covered:
+            cover = '<rect class="dash" x="6" y="26" width="368" height="50"/><text x="10" y="92">set_false_path covers this path</text>' \
+                    '<text x="10" y="112">timing report: path not timed, no violation listed</text>'
+        else:
+            cover = '<text x="10" y="92">no exception on this path</text>' \
+                    '<text x="10" y="112">timing report: negative slack, violation listed</text>'
+        label = "With a blanket false path" if covered else "Without an exception"
+        return f'<div class="fig"><svg viewBox="0 0 400 124" role="img" aria-label="{label}: a path that fails setup" ><text x="6" y="16" class="big">{label}</text>{path}{cover}</svg></div>'
+    return '<div class="cols">' + panel(False, "a") + panel(True, "b") + "</div>"
 
 
 def render_template(text, d):
@@ -164,7 +237,7 @@ def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, 
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">End-to-end FPGA Agent</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">End-to-end FPGA Agent</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 {body}
 {pager}

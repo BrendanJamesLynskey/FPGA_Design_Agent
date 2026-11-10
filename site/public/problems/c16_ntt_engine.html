@@ -177,11 +177,44 @@ svg text.dark { fill: #000; } svg text.light { fill: #fff; }
 .vals dt { color: var(--ink-3); } .vals dd { margin: 0 0 4px; overflow-wrap: anywhere; }
 @media (max-width: 520px) { .dombars li { grid-template-columns: minmax(0, 1fr) 30% 3ch; } }
 .trace .hero-art svg { margin: 0 auto; display: block; }
+
+/* flow notes: cards, status, figures */
+.card { border: 1px solid var(--rule); background: var(--panel); padding: 4px 16px 14px; margin: 0 0 28px; }
+.card h2 { margin-top: .8em; font-size: clamp(1.2rem, 1rem + 1vw, 1.5rem); }
+.kv { display: grid; grid-template-columns: minmax(0, 11ch) minmax(0, 1fr); gap: 10px 16px; margin: 0; }
+.kv dt { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); padding-top: .25em; }
+.kv dd { margin: 0; min-width: 0; }
+.kv dd > :last-child { margin-bottom: 0; }
+@media (max-width: 640px) { .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; } .kv dd { margin-bottom: 12px; } }
+.tag.built { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tag.part { border-style: solid; }
+.tag.plan { border-style: dashed; }
+.index td:first-child { white-space: nowrap; }
+.fig { margin: 1em 0; }
+.fig svg { display: block; width: 100%; height: auto; max-width: 560px; }
+.fig svg .hatch line { stroke: var(--warn); stroke-width: 1.2; }
+svg .barneg { fill: url(#hatchwarn); stroke: var(--warn); }
+svg .barpos { fill: var(--ink); }
+svg .box { fill: var(--bg); stroke: var(--ink-3); }
+svg .boxink { fill: var(--bg); stroke: var(--ink); }
+svg .dash { stroke: var(--ink-3); stroke-dasharray: 4 3; fill: none; }
+svg .held { fill: url(#hatchhold); stroke: var(--ink); }
+svg .bit0 { fill: var(--bg); stroke: var(--ink-3); }
+svg .bit1 { fill: var(--ink); stroke: var(--ink); }
+svg text.b1 { fill: var(--bg); }
+svg .torn { fill: none; stroke: var(--warn); stroke-width: 2; }
+svg .line-ink { stroke: var(--ink); fill: none; stroke-width: 1.5; }
+svg .line-seen { stroke: var(--ink-3); fill: none; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.tear .tog { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 10px; align-items: center; }
+.tear .tog .grp { display: inline-flex; gap: 0; align-items: center; flex-wrap: wrap; }
+.tear .tog .grp > span { font-size: .85rem; color: var(--ink-3); margin-right: 8px; }
+.tear .tog button { border-radius: 0; margin-left: -1px; }
+.tear svg { display: block; width: 100%; height: auto; max-width: 560px; }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch colour theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-D">D. Cryptography and security</a></p>
 <h1>NTT engine behind the test shell</h1>
@@ -753,9 +786,9 @@ LD_PTR, RD_PTR, LD_DATA, START_FWD, START_INV, STATUS, RD_DATA, CYCLES = range(8
       var n = curTheme() === "dark" ? "light" : "dark";
       document.documentElement.dataset.theme = n;
       try { localStorage.setItem("fda-theme", n); } catch (e) {}
-      tb.textContent = n === "dark" ? "Light" : "Dark";
+      tb.textContent = n === "dark" ? "Light" : "Dark"; tb.setAttribute("aria-label", "Switch to " + tb.textContent.toLowerCase() + " theme");
     });
-    tb.textContent = curTheme() === "dark" ? "Light" : "Dark";
+    tb.textContent = curTheme() === "dark" ? "Light" : "Dark"; tb.setAttribute("aria-label", "Switch to " + tb.textContent.toLowerCase() + " theme");
   }
 
   /* generic player: n steps, play/pause, step, scrub, speed, reset; keyboard when focused; pauses off-screen */
@@ -765,7 +798,7 @@ LD_PTR, RD_PTR, LD_DATA, START_FWD, START_INV, STATUS, RD_DATA, CYCLES = range(8
     var live = root.querySelector(".cap");
     var play = el("button", { type: "button", "aria-label": "Play", text: "Play" });
     var back = el("button", { type: "button", "aria-label": "Step back", text: "Back" });
-    var fwd = el("button", { type: "button", "aria-label": "Step forward", text: "Next" });
+    var fwd = el("button", { type: "button", "aria-label": "Next step", text: "Next" });
     var rst = el("button", { type: "button", "aria-label": "Reset", text: "Reset" });
     var rng = el("input", { type: "range", min: 0, max: n - 1, value: 0, step: 1, "aria-label": "Step" });
     var pos = el("span", { class: "pos" });
@@ -1203,6 +1236,91 @@ LD_PTR, RD_PTR, LD_DATA, START_FWD, START_INV, STATUS, RD_DATA, CYCLES = range(8
   var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
   var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
   var ila = document.getElementById("ila"); if (ila) mountILA(ila);
+
+  /* ---------- flow notes: a bus crossing a two-flop synchroniser (frames from site/flow_model.py) ---------- */
+  function mountTear(root) {
+    var T = D.flow_notes && D.flow_notes.tear; if (!T) return;
+    var bus = "binary", extra = true, Fr = T.configs.binary_extra, p;
+    var tog = el("div", { class: "tog" });
+    function group(label, opts, cur, set) {
+      var g = el("div", { class: "grp", role: "group", "aria-label": label }, [el("span", { text: label })]), bs = [];
+      opts.forEach(function (o) {
+        var b = el("button", { type: "button", text: o[1], "aria-pressed": String(o[0] === cur) });
+        b.onclick = function () { set(o[0]); bs.forEach(function (x, k) { x.setAttribute("aria-pressed", String(opts[k][0] === o[0])); }); };
+        bs.push(b); g.appendChild(b);
+      });
+      tog.appendChild(g);
+    }
+    group("Bus", [["binary", "Binary counter"], ["gray", "Gray counter"]], bus, function (v) { bus = v; reload(); });
+    group("Extra cycle", [[false, "Off"], [true, "On"]], extra, function (v) { extra = v; reload(); });
+    root.appendChild(tog);
+    var W = 400, svg = sv("svg", { viewBox: "0 0 400 190", role: "img", "aria-label": "Source bus, first flop and second flop of the synchroniser" });
+    var defs = sv("defs"); var pat = sv("pattern", { id: "hatchhold", width: 5, height: 5, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+    pat.appendChild(sv("rect", { width: 5, height: 5, fill: "var(--bg)" })); pat.appendChild(sv("line", { x1: 0, y1: 0, x2: 0, y2: 5, stroke: "var(--ink)", "stroke-width": 2 }));
+    defs.appendChild(pat); svg.appendChild(defs);
+    var rowY = [14, 74, 134], names = ["source bus", "flop 1", "flop 2"], cells = [];
+    names.forEach(function (n, r) {
+      svg.appendChild(sv("text", { x: 6, y: rowY[r] + 23 }, n));
+      var row = [];
+      for (var j = 0; j < 4; j++) {
+        var g = sv("g"), x = 150 + j * 60;
+        var rc = sv("rect", { x: x, y: rowY[r], width: 40, height: 36, class: "bit0" });
+        var tx = sv("text", { x: x + 16, y: rowY[r] + 23, class: "big" }, "0");
+        g.appendChild(rc); g.appendChild(tx); svg.appendChild(g); row.push([rc, tx]);
+      }
+      cells.push(row);
+    });
+    [0, 1].forEach(function (r) { for (var j = 0; j < 4; j++) { var x = 170 + j * 60; svg.appendChild(sv("path", { class: "ink", d: "M" + x + " " + (rowY[r] + 36) + " L" + x + " " + (rowY[r + 1]) })); } });
+    root.appendChild(svg);
+    var cap = el("p", { class: "cap", "aria-live": "polite" }); root.appendChild(cap);
+    var ch = sv("svg", { viewBox: "0 0 400 132", role: "img", "aria-label": "Source value and sampled value over the cycles" });
+    var X0 = 34, DX = 360 / T.frames, Y = function (v) { return 108 - v * 6; };
+    ch.appendChild(sv("text", { x: 6, y: 10 }, "value, 0 to 15"));
+    var cursor = sv("rect", { class: "cursor", x: X0, y: 14, width: DX, height: 96 }); ch.appendChild(cursor);
+    ch.appendChild(sv("line", { class: "rule", x1: X0, y1: 108, x2: 394, y2: 108 }));
+    ch.appendChild(sv("text", { x: 290, y: 126 }, "destination cycle"));
+    var lSrc = sv("path", { class: "line-ink" }), lSeen = sv("path", { class: "line-seen" }); ch.appendChild(lSrc); ch.appendChild(lSeen);
+    var marks = sv("g"); ch.appendChild(marks);
+    ch.appendChild(sv("text", { x: 6, y: 126 }, "cycle 0 at left"));
+    root.appendChild(ch);
+    var leg = el("p", { class: "small muted", text: "Chart: solid line is the source value, dashed line is the value the destination sees, a ringed point is a torn value." });
+    root.appendChild(leg);
+    function path(vals) {
+      var d = ""; vals.forEach(function (v, t) { var x = X0 + t * DX; d += (t ? "L" : "M") + x.toFixed(1) + " " + Y(v) + " L" + (x + DX).toFixed(1) + " " + Y(v) + " "; });
+      return d;
+    }
+    function reload() {
+      Fr = T.configs[bus + "_" + (extra ? "extra" : "plain")];
+      lSrc.setAttribute("d", path(Fr.map(function (f) { return f.cur; })));
+      lSeen.setAttribute("d", path(Fr.map(function (f) { return f.seen; })));
+      while (marks.firstChild) marks.removeChild(marks.firstChild);
+      Fr.forEach(function (f, t) { if (f.torn) marks.appendChild(sv("circle", { class: "torn", cx: (X0 + t * DX + DX / 2).toFixed(1), cy: Y(f.seen), r: 5 })); });
+      if (p) p.goto(0);
+    }
+    function draw(rowI, bits, held) {
+      for (var j = 0; j < 4; j++) {
+        var c = cells[rowI][j], b = bits[j];
+        var isHeld = held && held[j];
+        c[0].setAttribute("class", isHeld ? "held" : (b ? "bit1" : "bit0"));
+        c[1].textContent = b; c[1].setAttribute("class", "big" + (b && !isHeld ? " b1" : ""));
+      }
+    }
+    function frame(i) {
+      var f = Fr[i];
+      draw(0, f.src); draw(1, f.f1, f.held); draw(2, f.f2);
+      cursor.setAttribute("x", (X0 + i * DX).toFixed(1));
+      var h = []; f.held.forEach(function (x, k) { if (x) h.push(k + 1); });
+      var code = bus === "gray" ? "Gray code" : "binary";
+      var c = "Cycle " + i + ": the source value is " + f.cur + " (" + code + " bits " + f.src.join("") + ")" +
+        (i % T.hold === 0 && i ? ", just changed from " + f.prev : "") + ". ";
+      c += h.length ? "Flop 1 keeps its old value for bit" + (h.length > 1 ? "s " : " ") + h.join(" and ") + " (counting from the left). " : "";
+      c += "The destination sees " + f.seen + (f.torn ? ", which is neither " + f.cur + " nor " + f.prev + ": a torn value." : (f.seen === f.cur ? "." : ", the previous value."));
+      return c;
+    }
+    p = Player(root, T.frames, frame, { interval: 700 });
+    reload();
+  }
+  var tr = document.getElementById("tear"); if (tr) mountTear(tr);
   mountDev(); mountEval1();
 })();
 
