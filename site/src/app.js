@@ -264,6 +264,222 @@
     var player = Player(root, marks, onFrame, { interval: 220 });
   }
 
+
+  /* ---------- golden-model trace viewer (problem pages): waveform + values at the cursor + bespoke hero ---------- */
+  function fmtv(sg, v) {
+    if (sg.kind === "bus") {
+      if (sg.radix === "hex") { var hd = sg.width ? Math.ceil(sg.width / 4) : 1; var hs = (v >>> 0).toString(16); if (v < 0) hs = "-" + (-v).toString(16); while (hs.length < hd) hs = "0" + hs; return "0x" + hs; }
+      if (sg.radix === "bin") { var bs = (v >>> 0).toString(2); while (sg.width && bs.length < sg.width) bs = "0" + bs; return bs; }
+      return String(v);
+    }
+    return String(v);
+  }
+  function mountWave(holder, T) {
+    var n = T.x.length, LW = 132, CW = Math.max(12, Math.min(28, Math.floor(620 / n))), W = LW + n * CW + 6, RH = 34;
+    var H = 22 + T.signals.length * RH;
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "wavesvg",
+      "aria-label": "Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s" });
+    function X(i) { return LW + i * CW; }
+    for (var i = 0; i < n; i += Math.max(1, Math.ceil(n / 12))) s.appendChild(sv("text", { x: X(i) + 2, y: 12 }, T.x[i]));
+    T.signals.forEach(function (g, r) {
+      var y0 = 22 + r * RH, top = y0 + 5, bot = y0 + RH - 7, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4 }, g.name.length > 17 ? g.name.slice(0, 16) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      var d = "";
+      if (g.kind === "bit") {
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k) + " " + y + " L" + X(k + 1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); d += (k ? "L" : "M") + (X(k) + CW / 2) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.5 }));
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); s.appendChild(sv("circle", { cx: X(k) + CW / 2, cy: y.toFixed(1), r: 1.8, class: "fillink" })); });
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), val = g.v[a], txt = fmtv(g, val), empty = g.kind === "text" ? val === "" : false;
+            if (empty) s.appendChild(sv("line", { x1: x1, x2: x2, y1: mid, y2: mid, class: "ink", "stroke-width": 1 }));
+            else {
+              s.appendChild(sv("path", { d: "M" + x1 + " " + mid + " L" + (x1 + 3) + " " + top + " L" + (x2 - 3) + " " + top + " L" + x2 + " " + mid + " L" + (x2 - 3) + " " + bot + " L" + (x1 + 3) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+              var room = Math.floor((x2 - x1 - 8) / 6.7);
+              if (room >= 1) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4 }, txt.length > room ? (room > 2 ? txt.slice(0, room - 1) + "." : "") : txt));
+            }
+            a = k;
+          }
+        }
+      }
+    });
+    var shade = sv("rect", { x: X(1), y: 16, width: W, height: H, class: "future" });
+    var cur = sv("rect", { x: X(0), y: 16, width: CW, height: H - 16, class: "cursor" });
+    s.appendChild(shade); s.appendChild(cur);
+    var wrap = el("div", { class: "wavewrap", tabindex: "0" }); wrap.appendChild(s); holder.appendChild(wrap);
+    var vals = el("dl", { class: "vals" }); holder.appendChild(vals);
+    return function (i) {
+      shade.setAttribute("x", X(i + 1)); cur.setAttribute("x", X(i));
+      vals.innerHTML = "";
+      vals.appendChild(el("div", {}, [el("dt", { text: T.unit }), el("dd", { class: "mono", text: String(T.x[i]) })]));
+      T.signals.forEach(function (g) { vals.appendChild(el("div", {}, [el("dt", { text: g.name }), el("dd", { class: "mono", text: g.kind === "text" && g.v[i] === "" ? "none" : fmtv(g, g.v[i]) })])); });
+    };
+  }
+  function sig(T, name) { for (var k = 0; k < T.signals.length; k++) if (T.signals[k].name === name) return T.signals[k].v; return null; }
+  function hx(b) { return (b < 16 ? "0" : "") + b.toString(16); }
+  var HEROES = {
+    t1_elevator_fsm: function (box, T) {
+      var F = T.hero.floors, W = 360, FH = 52, H = F * FH + 20, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Lift shaft: car position, door and calls from the model" });
+      box.appendChild(s);
+      var fl = sig(T, "FLOOR"), st = sig(T, "STATE"), pe = sig(T, "PENDING"), dr = sig(T, "DIR (1 = down)");
+      var lamps = [], labels = [];
+      for (var f = 0; f < F; f++) {
+        var y = 10 + (F - 1 - f) * FH;
+        s.appendChild(sv("line", { x1: 60, x2: 300, y1: y + FH, y2: y + FH, class: "rule" }));
+        s.appendChild(sv("text", { x: 4, y: y + FH / 2 + 4 }, "floor " + f));
+        lamps.push(sv("circle", { cx: 290, cy: y + FH / 2, r: 7, class: "ink", "stroke-width": 1.5 }));
+        s.appendChild(lamps[f]);
+      }
+      s.appendChild(sv("rect", { x: 120, y: 10, width: 90, height: F * FH, class: "ink", "stroke-width": 1 }));
+      var car = sv("g", {}), body = sv("rect", { x: 128, width: 74, height: FH - 10, class: "ink", "stroke-width": 2 });
+      var dl = sv("rect", { width: 0, height: FH - 18, class: "fillink" }), dr2 = sv("rect", { width: 0, height: FH - 18, class: "fillink" });
+      var arrow = sv("text", { x: 228, "text-anchor": "middle" }, "");
+      car.appendChild(body); car.appendChild(dl); car.appendChild(dr2); s.appendChild(car); s.appendChild(arrow);
+      s.appendChild(sv("text", { x: 290, y: H - 2, "text-anchor": "middle" }, "calls"));
+      return function (i) {
+        var y = 10 + (F - 1 - fl[i]) * FH + 5, open = st[i] === "door open";
+        body.setAttribute("y", y);
+        var dw = open ? 14 : 36;
+        dl.setAttribute("x", 132); dl.setAttribute("y", y + 4); dl.setAttribute("width", dw);
+        dr2.setAttribute("x", 198 - dw); dr2.setAttribute("y", y + 4); dr2.setAttribute("width", dw);
+        arrow.setAttribute("y", y + FH / 2); arrow.textContent = st[i] === "moving" ? (dr[i] ? "down" : "up") : (open ? "open" : "");
+        lamps.forEach(function (c, f) { c.setAttribute("class", (pe[i] >> f) & 1 ? "fillink" : "ink"); });
+      };
+    },
+    c10_dds_sine: function (box, T) {
+      var h = T.hero, W = 600, H = 200, s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", "aria-label": "Phase wheel and sine output from the model" });
+      box.appendChild(s);
+      var cx = 90, cy = 100, R = 70, N = 1 << h.la;
+      s.appendChild(sv("circle", { cx: cx, cy: cy, r: R, class: "ink", "stroke-width": 1 }));
+      s.appendChild(sv("text", { x: cx, y: 192, "text-anchor": "middle" }, "phase (" + h.aw + " bits)"));
+      var hand = sv("line", { x1: cx, y1: cy, class: "ink", "stroke-width": 2 }); s.appendChild(hand);
+      var dot = sv("circle", { r: 5, class: "fillink" }); s.appendChild(dot);
+      var X0 = 200, PW = 390, ph = sig(T, "phase"), out = sig(T, "out"), ad = sig(T, "table address");
+      s.appendChild(sv("line", { x1: X0, x2: X0 + PW, y1: cy, y2: cy, class: "rule" }));
+      s.appendChild(sv("text", { x: X0 + PW, y: 192, "text-anchor": "end" }, "output samples"));
+      var stems = [];
+      for (var k = 0; k < out.length; k++) {
+        var x = X0 + PW * (k + .5) / out.length, y = cy - (R) * out[k] / h.amp;
+        var g = sv("g", {}); g.appendChild(sv("line", { x1: x, x2: x, y1: cy, y2: y, class: "ink", "stroke-width": 1 })); g.appendChild(sv("circle", { cx: x, cy: y, r: 2.5, class: "fillink" }));
+        stems.push(g); s.appendChild(g);
+      }
+      var lab = sv("text", { x: cx, y: 18, "text-anchor": "middle" }, ""); s.appendChild(lab);
+      return function (i) {
+        var a = 2 * Math.PI * ad[i] / N, x = cx + R * Math.cos(a), y = cy - R * Math.sin(a);
+        hand.setAttribute("x2", x); hand.setAttribute("y2", y); dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        lab.textContent = "entry " + ad[i] + " of " + N;
+        stems.forEach(function (g, k) { g.style.opacity = k <= i ? 1 : .15; });
+      };
+    },
+    c16_nexys_aes_uart: function (box, T) {
+      var h = T.hero, W = 420, C = 56, s = sv("svg", { viewBox: "0 0 " + W + " 250", width: "100%", role: "img", "aria-label": "AES state, 4 by 4 bytes, from the model's round functions" });
+      box.appendChild(s);
+      var cells = [], texts = [];
+      for (var c = 0; c < 4; c++) for (var r = 0; r < 4; r++) {
+        var x = 10 + c * C, y = 26 + r * C;
+        var rc = sv("rect", { x: x, y: y, width: C - 6, height: C - 6, class: "ink", "stroke-width": 1 }), t = sv("text", { x: x + (C - 6) / 2, y: y + C / 2, "text-anchor": "middle", class: "big" }, "");
+        s.appendChild(rc); s.appendChild(t); cells[4 * c + r] = rc; texts[4 * c + r] = t;
+      }
+      var op = sv("text", { x: 250, y: 60, class: "big" }, ""), rd = sv("text", { x: 250, y: 90 }, ""), ch = sv("text", { x: 250, y: 120 }, "");
+      s.appendChild(op); s.appendChild(rd); s.appendChild(ch);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "state: bytes go down the columns"));
+      var rounds = sig(T, "round");
+      return function (i) {
+        var st = h.states[i], pr = i ? h.states[i - 1] : st, nch = 0;
+        for (var k = 0; k < 16; k++) {
+          var diff = st[k] !== pr[k]; if (diff) nch++;
+          cells[k].setAttribute("class", diff ? "fillink" : "ink"); texts[k].setAttribute("class", diff ? "big inv" : "big"); texts[k].textContent = hx(st[k]);
+        }
+        op.textContent = h.ops[i]; rd.textContent = "round " + rounds[i]; ch.textContent = i ? nch + " of 16 bytes changed" : "";
+      };
+    },
+    c9_median3x3: function (box, T) {
+      var h = T.hero, W = 600, s = sv("svg", { viewBox: "0 0 " + W + " 200", width: "100%", role: "img", "aria-label": "Window presented and median result, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "window presented this clock"));
+      s.appendChild(sv("text", { x: 230, y: 16 }, "window from " + h.lat + " clock earlier, sorted"));
+      s.appendChild(sv("text", { x: 230 + 4 * 40 + 18, y: 50, "text-anchor": "middle" }, "fifth"));
+      var g = [], gt = [];
+      for (var k = 0; k < 9; k++) {
+        var x = 10 + (k % 3) * 50, y = 26 + Math.floor(k / 3) * 50;
+        var r = sv("rect", { x: x, y: y, width: 46, height: 46, class: "pix" }), t = sv("text", { x: x + 23, y: y + 28, "text-anchor": "middle" }, "");
+        s.appendChild(r); s.appendChild(t); g.push(r); gt.push(t);
+      }
+      var srt = [], st2 = [];
+      for (var q = 0; q < 9; q++) {
+        var x2 = 230 + q * 40, r2 = sv("rect", { x: x2, y: 60, width: 36, height: 36, class: "pix" }), t2 = sv("text", { x: x2 + 18, y: 83, "text-anchor": "middle" }, "");
+        s.appendChild(r2); s.appendChild(t2); srt.push(r2); st2.push(t2);
+      }
+      var box5 = sv("rect", { x: 230 + 4 * 40 - 4, y: 56, width: 44, height: 44, class: "ink", "stroke-width": 2.5 }); s.appendChild(box5);
+      var res = sv("text", { x: 230, y: 130, class: "big" }, ""); s.appendChild(res);
+      return function (i) {
+        var w = h.in[i], so = h.sorted[i];
+        for (var k = 0; k < 9; k++) {
+          if (w) { g[k].style.fill = "rgb(" + w[k] + "," + w[k] + "," + w[k] + ")"; gt[k].textContent = w[k]; gt[k].setAttribute("class", w[k] > 127 ? "dark" : "light"); }
+          else { g[k].style.fill = "none"; gt[k].textContent = ""; }
+          if (so) { srt[k].style.fill = "rgb(" + so[k] + "," + so[k] + "," + so[k] + ")"; st2[k].textContent = so[k]; st2[k].setAttribute("class", so[k] > 127 ? "dark" : "light"); }
+          else { srt[k].style.fill = "none"; st2[k].textContent = ""; }
+        }
+        box5.style.opacity = so ? 1 : .2; res.textContent = so ? "median " + so[4] : "no result this clock";
+      };
+    },
+    c14_systolic_matmul: function (box, T) {
+      var h = T.hero, W = 600, n = h.rows.length, L = h.lat, s = sv("svg", { viewBox: "0 0 " + W + " 190", width: "100%", role: "img", "aria-label": "Rows entering, in flight for the latency, and results leaving, from the model" });
+      box.appendChild(s);
+      s.appendChild(sv("text", { x: 10, y: 16 }, "rows waiting"));
+      s.appendChild(sv("text", { x: 170, y: 16 }, "in flight for " + L + " clocks"));
+      s.appendChild(sv("text", { x: 170, y: 34 }, "(each row times the 4 x 4 weights)"));
+      s.appendChild(sv("text", { x: 480, y: 16 }, "results out"));
+      var slots = [];
+      for (var k = 0; k < L; k++) { var r = sv("rect", { x: 170 + k * 38, y: 70, width: 34, height: 34, class: "ink", "stroke-width": 1 }); s.appendChild(r); slots.push([r, sv("text", { x: 170 + k * 38 + 17, y: 92, "text-anchor": "middle" }, "")]); s.appendChild(slots[k][1]); }
+      var waiting = sv("text", { x: 10, y: 92 }, ""), done = sv("text", { x: 480, y: 92 }, ""), last = sv("text", { x: 170, y: 150 }, "");
+      s.appendChild(waiting); s.appendChild(done); s.appendChild(last);
+      return function (i) {
+        var nextIn = 0; for (var t = 0; t <= i; t++) if (h.in[t] != null) nextIn = h.in[t] + 1;
+        var outN = 0; for (var t2 = 0; t2 <= i; t2++) if (h.out[t2] != null) outN = h.out[t2] + 1;
+        waiting.textContent = nextIn < n ? (n - nextIn) + " rows" : "none";
+        done.textContent = outN + " of " + n + " rows";
+        slots.forEach(function (sl, k) {
+          var row = i - k >= 0 && h.in[i - k] != null ? h.in[i - k] : null;
+          sl[0].setAttribute("class", row != null ? "fillink" : "ink"); sl[1].textContent = row != null ? "r" + row : ""; sl[1].setAttribute("class", row != null ? "inv" : "");
+        });
+        var o = h.out[i]; last.textContent = o != null ? "row " + o + " x W = " + h.C[o].join("  ") : "";
+      };
+    }
+  };
+  function mountTrace(root) {
+    var T = D.trace; if (!T) return;
+    var heroFn = null, art = root.querySelector(".hero-art"), id = root.getAttribute("data-hero");
+    if (art && HEROES[id]) { heroFn = HEROES[id](art, T); var hs = art.querySelector("svg"); if (hs) hs.style.maxWidth = id === "t1_elevator_fsm" ? "400px" : "680px"; }
+    var wv = mountWave(root.querySelector(".wave"), T);
+    Player(root, T.x.length, function (i) { if (heroFn) heroFn(i); wv(i); return T.captions[i]; }, { autoplay: !!heroFn, interval: 900 });
+  }
+  var tr = document.getElementById("trace"); if (tr) mountTrace(tr);
+
+  /* ---------- problems index: filter by domain, tier, board (the list is complete without script) ---------- */
+  (function () {
+    var sels = document.querySelectorAll(".filters select"); if (!sels.length) return;
+    var cards = document.querySelectorAll(".pcard"), secs = document.querySelectorAll("section.dom"), cnt = document.getElementById("f-count");
+    function apply() {
+      var f = {}; sels.forEach(function (s) { f[s.dataset.f] = s.value; });
+      var shown = 0;
+      cards.forEach(function (c) { var ok = (!f.domain || c.dataset.domain === f.domain) && (!f.tier || c.dataset.tier === f.tier) && (!f.board || c.dataset.board === f.board); c.hidden = !ok; if (ok) shown++; });
+      secs.forEach(function (s) { s.hidden = !s.querySelector(".pcard:not([hidden])"); });
+      if (cnt) cnt.textContent = shown + " of " + cards.length + " shown";
+    }
+    sels.forEach(function (s) { s.addEventListener("change", apply); });
+    document.querySelectorAll(".dombars a.dl").forEach(function (a) {
+      a.addEventListener("click", function (e) { var d = document.getElementById("f-domain"); if (!d || !d.querySelector('option[value="' + a.dataset.dom + '"]')) return; e.preventDefault(); d.value = a.dataset.dom; apply(); document.querySelector(".filters").scrollIntoView(); });
+    });
+    apply();
+  })();
   var h = document.getElementById("hero-player"); if (h) mountReplay(h, "hero");
   var r = document.getElementById("replay"); if (r) mountReplay(r, "full");
   var ila = document.getElementById("ila"); if (ila) mountILA(ila);

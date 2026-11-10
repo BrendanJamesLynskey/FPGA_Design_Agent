@@ -1,0 +1,521 @@
+{
+ "assumptions": [
+  {
+   "assumption": "a duration of 0 means 256 ticks.",
+   "reason": "an 8-bit field with no useless zero-length step."
+  },
+  {
+   "assumption": "the LEDs go dark when stopped but hold the last step after a one-shot finishes.",
+   "reason": "the request says a one-shot stops on the last step."
+  },
+  {
+   "assumption": "reset keeps the sixteen pattern entries (they power up 0) and stops playback; everything else returns to its reset value.",
+   "reason": "the entries are configuration the user loaded; the request does not say that a reset erases them."
+  },
+  {
+   "assumption": "LENGTH is read at the end of each entry, so a change while running takes effect at the next entry end.",
+   "reason": "the request does not say when a changed length applies; the end of an entry never cuts one short."
+  }
+ ],
+ "behaviour": [
+  [
+   "entries",
+   [
+    "Sixteen entries, each PATTERN (16 bits) and DUR (8 bits, ticks of TICK_CYCLES clocks; DUR = 0 means 256 ticks).",
+    "LENGTH (1..16) entries are played - indices 0..LENGTH-1."
+   ]
+  ],
+  [
+   "playback",
+   [
+    "Start - a CTRL write with RUN = 1 while stopped begins at entry 0 (PAUSED = 0, DONE = 0). A write with RUN = 1 while running only updates ONESHOT. A write with RUN = 0 stops (RUN = PAUSED = DONE = 0) and the LEDs go dark.",
+    "Entry i is shown for exactly DUR_i * TICK_CYCLES clocks of running, unpaused time; DUR_i is latched when the entry starts, the pattern is read live, so a write to the playing entry's PATTERN shows on the LEDs at once.",
+    "At the end of entry i - if i + 1 < LENGTH the next entry starts on the next clock; otherwise LOOPS += 1 (16 bits, wrapping) and either entry 0 starts (loop) or, with ONESHOT = 1, playback stops with DONE = 1 and the LEDs keep showing the last entry's pattern.",
+    "LENGTH is read at each entry end, so changing it while running takes effect at the next entry end."
+   ]
+  ],
+  [
+   "pause",
+   [
+    "BTNC is synchronised (two flops), then debounced. The debounced level changes only after the synchronised input has differed from it for DEBOUNCE_CYCLES consecutive clocks; a shorter difference restarts the count. A press is a 0 -> 1 change of the debounced level.",
+    "A press while RUN = 1 toggles PAUSED. While paused the entry's tick counter and prescaler stand still and the LEDs keep the pattern; the clock of the pausing press still counts and the clock of the resuming press does not, so a pause adds exactly the clocks between the two presses. A press while stopped does nothing."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[15:0] = PATTERN of the current entry while running (paused or not) or DONE; 0 when stopped and not DONE."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "DEBOUNCE_CYCLES": 16,
+  "TICK_CYCLES": 16,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-03",
+  "mutants": {
+   "debounce_half": {
+    "failed_tests": [
+     "test_debounce_rejects_bounce"
+    ],
+    "killed": true
+   },
+   "dur_zero_not_256": {
+    "failed_tests": [
+     "test_zero_duration_is_256"
+    ],
+    "killed": true
+   },
+   "length_accepts_17": {
+    "failed_tests": [
+     "test_length_rules"
+    ],
+    "killed": true
+   },
+   "oneshot_goes_dark": {
+    "failed_tests": [
+     "test_one_shot_holds_last"
+    ],
+    "killed": true
+   },
+   "oneshot_no_loop_count": {
+    "failed_tests": [
+     "test_one_shot_holds_last"
+    ],
+    "killed": true
+   },
+   "pause_keeps_time": {
+    "failed_tests": [
+     "test_pause_button"
+    ],
+    "killed": true
+   },
+   "plays_one_extra": {
+    "failed_tests": [
+     "test_loop_playback",
+     "test_one_shot_holds_last",
+     "test_length_rules"
+    ],
+    "killed": true
+   },
+   "run_write_restarts": {
+    "failed_tests": [
+     "test_start_is_from_entry_zero"
+    ],
+    "killed": true
+   },
+   "tick_off_by_one": {
+    "failed_tests": [
+     "test_loop_playback",
+     "test_one_shot_holds_last",
+     "test_pause_button",
+     "test_zero_duration_is_256",
+     "test_live_pattern_edit",
+     "test_random_program"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t1_pattern_sequencer__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 11,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "A",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 43,
+    "name": "model.py",
+    "path": "benchmark/tasks/t1_pattern_sequencer/hidden/model.py",
+    "sha256": "32ea4a98256d",
+    "text": "\"\"\"Golden model of t1_pattern_sequencer, written from spec.yaml alone (never from any RTL).\"\"\"\n\nfrom __future__ import annotations\n\nCTRL, LENGTH, INDEX, STATUS, LOOPS = range(5)\nENTRY0 = 0x10\nDESIGN_ID = 0x50534551          # \"PSEQ\"\n\n\nclass Model:\n    def __init__(self, tick: int) -> None:\n        self.tick = tick\n        self.pat = [0] * 16\n        self.dur = [0] * 16\n        self.length = 4\n        self.oneshot = 0\n\n    def write(self, off: int, v: int) -> None:\n        if ENTRY0 <= off < ENTRY0 + 16:\n            self.pat[off - ENTRY0] = v & 0xFFFF\n            self.dur[off - ENTRY0] = (v >> 16) & 0xFF\n        elif off == LENGTH and 1 <= (v & 0x1F) <= 16:\n            self.length = v & 0x1F\n        elif off == CTRL:\n            self.oneshot = (v >> 1) & 1\n\n    def read_entry(self, i: int) -> int:\n        return self.pat[i] | self.dur[i] << 16\n\n    def clocks(self, i: int) -> int:\n        return (self.dur[i] or 256) * self.tick\n\n    def show(self, n: int) -> list[tuple[int, int]]:\n        \"\"\"The first n (pattern, clocks shown) of a playback started now, with no pause and no writes.\"\"\"\n        out, i = [], 0\n        while len(out) < n:\n            out.append((self.pat[i], self.clocks(i)))\n            i += 1\n            if i >= self.length:\n                if self.oneshot:\n                    break\n                i = 0\n        return out\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 35,
+    "name": "bm_debounce.sv",
+    "path": "benchmark/tasks/t1_pattern_sequencer/ref/rtl/bm_debounce.sv",
+    "sha256": "bb439c819c2c",
+    "text": "// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level\n// changes only after the synchronised input has differed from it for CYCLES\n// consecutive clocks; a shorter difference restarts the count. rise is a\n// one-clock pulse on each 0 -> 1 change of the level.\nmodule bm_debounce #(\n    parameter int CYCLES = 1_000_000\n) (\n    input  logic clk,\n    input  logic rst,\n    input  logic d_async,\n    output logic level,\n    output logic rise\n);\n    localparam int CW = $clog2(CYCLES + 1);\n    logic        d;\n    logic [CW-1:0] run;\n\n    sync2 u_sync (.clk(clk), .rst(rst), .d(d_async), .q(d));\n\n    always_ff @(posedge clk) begin\n        rise <= 1'b0;\n        if (rst) begin\n            level <= 1'b0;\n            run   <= '0;\n        end else if (d == level) begin\n            run <= '0;\n        end else if (run == CW'(CYCLES - 1)) begin\n            level <= d;\n            run   <= '0;\n            rise  <= d;\n        end else begin\n            run <= run + 1'b1;\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 104,
+    "name": "pattern_sequencer.sv",
+    "path": "benchmark/tasks/t1_pattern_sequencer/ref/rtl/pattern_sequencer.sv",
+    "sha256": "e9ab2f7eda43",
+    "text": "// pattern_sequencer.sv: 16-entry LED pattern/duration memory played in loop or\n// one-shot mode, paused by BTNC, for t1_pattern_sequencer.\nmodule pattern_sequencer #(\n    parameter int DEBOUNCE_CYCLES = 1_000_000,\n    parameter int TICK_CYCLES     = 100_000\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        btn,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam logic [6:0] R_CTRL = 7'h00, R_LEN = 7'h01, R_INDEX = 7'h02, R_STATUS = 7'h03, R_LOOPS = 7'h04;\n    localparam int PW = $clog2(TICK_CYCLES + 1);\n\n    logic [15:0]   pat [16];\n    logic [7:0]    dur [16];\n    logic          lvl, press, run, oneshot, paused, done;\n    logic [4:0]    len;\n    logic [3:0]    idx;\n    logic [8:0]    left;            // ticks left in this entry, 1..256\n    logic [15:0]   loops;\n    logic [PW-1:0] pre;\n\n    bm_debounce #(.CYCLES(DEBOUNCE_CYCLES)) u_db (.clk(clk), .rst(rst), .d_async(btn), .level(lvl), .rise(press));\n\n    wire wr_entry = win_wr && win_addr[6:4] == 3'b001;\n    wire wr_ctrl  = win_wr && win_addr == R_CTRL;\n    wire tick     = pre == PW'(TICK_CYCLES - 1);\n\n    function automatic logic [8:0] ticks(input logic [7:0] d);\n        return (d == 8'd0) ? 9'd256 : {1'b0, d};\n    endfunction\n\n    initial for (int i = 0; i < 16; i++) begin pat[i] = '0; dur[i] = '0; end\n\n    always_ff @(posedge clk)\n        if (wr_entry) begin\n            pat[win_addr[3:0]] <= win_wdata[15:0];\n            dur[win_addr[3:0]] <= win_wdata[23:16];\n        end\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            run <= 1'b0; oneshot <= 1'b0; paused <= 1'b0; done <= 1'b0; len <= 5'd4; idx <= '0;\n            left <= '0; loops <= '0; pre <= '0;\n        end else begin\n            if (win_wr && win_addr == R_LEN && win_wdata[4:0] != 5'd0 && win_wdata[4:0] <= 5'd16)\n                len <= win_wdata[4:0];\n            if (wr_ctrl) oneshot <= win_wdata[1];\n            if (wr_ctrl && !win_wdata[0]) begin\n                run <= 1'b0; paused <= 1'b0; done <= 1'b0;\n            end else if (wr_ctrl && !run) begin\n                run <= 1'b1; paused <= 1'b0; done <= 1'b0; idx <= '0; pre <= '0;\n                left <= ticks(dur[0]);\n            end else if (run) begin\n                if (press) paused <= !paused;\n                if (!paused) begin\n                    pre <= tick ? '0 : pre + 1'b1;\n                    if (tick) begin\n                        if (left != 9'd1) left <= left - 9'd1;\n                        else if (5'(idx) + 5'd1 < len) begin\n                            idx  <= idx + 4'd1;\n                            left <= ticks(dur[idx + 4'd1]);\n                        end else begin\n                            loops <= loops + 1'b1;\n                            if (oneshot) begin\n                                run  <= 1'b0;\n                                done <= 1'b1;\n                            end else begin\n                                idx  <= '0;\n                                left <= ticks(dur[0]);\n                            end\n                        end\n                    end\n                end\n            end\n        end\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) led <= '0;\n        else     led <= (run || done) ? pat[idx] : 16'd0;\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            if (win_addr[6:4] == 3'b001) win_rdata <= {8'd0, dur[win_addr[3:0]], pat[win_addr[3:0]]};\n            else case (win_addr)\n                R_CTRL:   win_rdata <= {30'd0, oneshot, run};\n                R_LEN:    win_rdata <= {27'd0, len};\n                R_INDEX:  win_rdata <= {28'd0, idx};\n                R_STATUS: win_rdata <= {29'd0, done, paused, run};\n                R_LOOPS:  win_rdata <= {16'd0, loops};\n                default:  win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 32,
+    "name": "t1_pattern_sequencer_top.sv",
+    "path": "benchmark/tasks/t1_pattern_sequencer/ref/rtl/t1_pattern_sequencer_top.sv",
+    "sha256": "ade836e2f590",
+    "text": "// t1_pattern_sequencer_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t1_pattern_sequencer; DESIGN_ID \"PSEQ\".\nmodule t1_pattern_sequencer_top #(\n    parameter int          CLKS_PER_BIT    = 868,\n    parameter int          TIMEOUT_CYCLES  = 100_000,\n    parameter int          DEBOUNCE_CYCLES = 1_000_000,\n    parameter int          TICK_CYCLES     = 100_000,\n    parameter logic [31:0] BUILD_STAMP     = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    input  logic        BTNC,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h5053_4551), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    pattern_sequencer #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES), .TICK_CYCLES(TICK_CYCLES)) u_seq (\n        .clk(clk), .rst(rst), .btn(BTNC), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 270,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t1_pattern_sequencer/hidden/acceptance.py",
+    "sha256": "d4897504898c",
+    "text": "\"\"\"Acceptance tests of t1_pattern_sequencer against model.py (hidden from the agent).\n\nA watcher logs every LED change with its clock; a playback is checked as the sequence of patterns shown and the\nexact number of clocks each was shown (the first change is the start, so no absolute timing is needed).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom cocotb.triggers import ReadOnly, RisingEdge\nfrom cocotb.utils import get_sim_time\nfrom model import CTRL, DESIGN_ID, ENTRY0, INDEX, LENGTH, LOOPS, STATUS, Model\n\n\nclass Watch:\n    def __init__(self, dut, clk) -> None:\n        self.ev: list[tuple[int, int]] = []\n        cocotb.start_soon(self.run(dut, clk))\n\n    async def run(self, dut, clk) -> None:\n        prev = None\n        while True:\n            await RisingEdge(clk)\n            await ReadOnly()\n            v = int(dut.LED.value)\n            if v != prev:\n                self.ev.append((int(get_sim_time(\"ns\")) // 10, v))\n            prev = v\n\n    def take(self) -> list[tuple[int, int]]:\n        ev, self.ev = self.ev, []\n        return ev\n\n\ndef shown(ev: list[tuple[int, int]]) -> list[tuple[int, int]]:\n    \"\"\"(pattern, clocks) for every change except the last (whose length is not yet known).\"\"\"\n    return [(v, ev[i + 1][0] - t) for i, (t, v) in enumerate(ev[:-1])]\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, {\"BTNC\": 0})\n        self.dut = dut\n        self.n = self.b.param(\"DEBOUNCE_CYCLES\")\n        self.tick = self.b.param(\"TICK_CYCLES\")\n        self.m = Model(self.tick)\n        self.w: Watch | None = None\n\n    def now(self) -> int:\n        return int(get_sim_time(\"ns\")) // 10\n\n    async def start(self) -> None:\n        await self.b.start()\n        self.w = Watch(self.dut, self.b.clk)\n        await self.b.cycles(2)\n        self.w.take()\n\n    async def wr(self, off: int, v: int) -> None:\n        await self.b.write(off, v)\n        self.m.write(off, v)\n\n    async def program(self, entries: list[tuple[int, int]], length: int | None = None) -> None:\n        for i, (pat, dur) in enumerate(entries):\n            await self.wr(ENTRY0 + i, pat | dur << 16)\n        if length is not None:\n            await self.wr(LENGTH, length)\n\n    async def play(self, ctrl: int, clocks: int) -> list[tuple[int, int]]:\n        \"\"\"Start (from stopped) and watch for ``clocks``; returns the LED changes from the start on.\"\"\"\n        self.w.take()\n        await self.wr(CTRL, ctrl)\n        await self.b.cycles(clocks)\n        return self.w.take()\n\n    async def press(self) -> int:\n        self.dut.BTNC.value = 1\n        t = self.now()\n        await self.b.cycles(self.n + 6)\n        self.dut.BTNC.value = 0\n        await self.b.cycles(self.n + 6)\n        return t\n\n    async def wait_for(self, pattern: int, limit: int = 20000) -> int:\n        for _ in range(limit):\n            await RisingEdge(self.b.clk)\n            if self.w.ev and self.w.ev[-1][1] == pattern:\n                return self.w.ev[-1][0]\n        raise AssertionError(f\"pattern {pattern:04X} never shown\")\n\n\nPATS = [0x0001, 0x8000, 0x00F0, 0x0F0F, 0xAAAA, 0x5555, 0xFF00, 0x1234, 0x0420, 0xC003, 0x7E7E, 0x0101, 0x8421,\n        0x3C3C, 0x6006, 0x0FF0]\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    for off, want in ((CTRL, 0), (LENGTH, 4), (INDEX, 0), (STATUS, 0), (LOOPS, 0), (ENTRY0, 0), (ENTRY0 + 15, 0)):\n        await e.b.expect(off, want)\n    assert await peek(e.b.clk, dut.LED) == 0\n\n\n@cocotb.test()\nasync def test_loop_playback(dut):\n    e = Env(dut)\n    await e.start()\n    durs = [3, 1, 5, 2, 4]\n    await e.program([(PATS[i], d) for i, d in enumerate(durs)], length=5)\n    total = sum(durs) * e.tick\n    ev = await e.play(1, 2 * total + total // 2)\n    want = e.m.show(len(ev) - 1)\n    assert shown(ev) == want, f\"shown {shown(ev)} != model {want}\"\n    await e.b.expect(STATUS, 1, \"STATUS running\")\n    await e.wr(CTRL, 0)                         # stop: LEDs dark\n    await e.b.expect(STATUS, 0, \"STATUS stopped\")\n    assert await peek(e.b.clk, dut.LED) == 0\n    loops = await e.b.read(LOOPS)\n    assert loops >= 2, f\"LOOPS {loops} after more than two passes\"\n\n\n@cocotb.test()\nasync def test_one_shot_holds_last(dut):\n    e = Env(dut)\n    await e.start()\n    await e.program([(PATS[i], 2 + i) for i in range(6)], length=3)\n    ev = await e.play(0b11, 20 * e.tick + 2000)\n    assert [v for _, v in ev] == PATS[:3], f\"one-shot showed {[hex(v) for _, v in ev]}\"\n    assert shown(ev) == e.m.show(2)\n    await e.b.expect(STATUS, 0b100, \"STATUS DONE\")\n    await e.b.expect(INDEX, 2, \"INDEX of the last entry\")\n    await e.b.expect(LOOPS, 1, \"LOOPS\")\n    await e.b.expect(CTRL, 0b10, \"CTRL after one-shot\")\n    assert await peek(e.b.clk, dut.LED) == PATS[2], \"LEDs must hold the last pattern\"\n    ev = await e.play(0b11, 20 * e.tick)        # starts again from entry 0\n    assert ev and ev[0][1] == PATS[0]\n    await e.wr(CTRL, 0)                         # stop clears DONE and darkens\n    await e.b.expect(STATUS, 0, \"STATUS\")\n    assert await peek(e.b.clk, dut.LED) == 0\n\n\n@cocotb.test()\nasync def test_pause_button(dut):\n    e = Env(dut)\n    await e.start()\n    await e.program([(PATS[i], 100) for i in range(3)], length=3)\n    e.w.take()\n    await e.wr(CTRL, 1)\n    t_on = await e.wait_for(PATS[0])\n    await e.b.cycles(3 * e.tick)\n    r1 = await e.press()                        # pause\n    await e.b.expect(STATUS, 0b011, \"STATUS paused\")\n    assert await peek(e.b.clk, dut.LED) == PATS[0]\n    await e.b.cycles(2000)\n    r2 = await e.press()                        # resume\n    t_next = await e.wait_for(PATS[1])\n    assert t_next - t_on == 100 * e.tick + (r2 - r1), \\\n        f\"entry 0 lasted {t_next - t_on} clocks, want {100 * e.tick} + paused {r2 - r1}\"\n    await e.b.expect(STATUS, 0b001, \"STATUS resumed\")\n    await e.wr(CTRL, 0)\n    await e.press()                             # stopped: a press does nothing\n    await e.b.expect(STATUS, 0, \"STATUS\")\n\n\n@cocotb.test()\nasync def test_zero_duration_is_256(dut):\n    e = Env(dut)\n    await e.start()\n    await e.program([(PATS[0], 0), (PATS[1], 3)], length=2)\n    ev = await e.play(1, 256 * e.tick + 3 * e.tick + 200)\n    assert shown(ev)[:2] == e.m.show(2), f\"shown {shown(ev)[:2]}, want {e.m.show(2)}\"\n\n\n@cocotb.test()\nasync def test_length_rules(dut):\n    e = Env(dut)\n    await e.start()\n    await e.program([(PATS[i], 4) for i in range(4)] + [(PATS[4], 120)], length=5)\n    await e.wr(LENGTH, 0)                       # ignored\n    await e.wr(LENGTH, 17)                      # ignored\n    await e.b.expect(LENGTH, 5, \"LENGTH\")\n    e.w.take()\n    await e.wr(CTRL, 1)\n    await e.wait_for(PATS[4])                   # entry 4 is long: change LENGTH while it plays\n    await e.wr(LENGTH, 2)\n    await e.b.cycles(120 * e.tick + 20 * e.tick)\n    ev = e.w.take()\n    vals = [v for _, v in ev]\n    assert vals[:5] == PATS[:5] and vals[5:9] == [PATS[0], PATS[1], PATS[0], PATS[1]], \\\n        f\"after LENGTH = 2 the show must wrap after entry 1: {[hex(v) for v in vals]}\"\n\n\n@cocotb.test()\nasync def test_live_pattern_edit(dut):\n    e = Env(dut)\n    await e.start()\n    await e.program([(PATS[0], 3), (PATS[1], 150), (PATS[2], 3)], length=3)\n    e.w.take()\n    await e.wr(CTRL, 1)\n    t1 = await e.wait_for(PATS[1])\n    await e.wr(ENTRY0 + 1, 0x0BAD | 150 << 16)  # shows at once; the entry's timing is unchanged\n    assert await peek(e.b.clk, dut.LED) == 0x0BAD\n    t2 = await e.wait_for(PATS[2])\n    assert t2 - t1 == 150 * e.tick, f\"entry 1 lasted {t2 - t1} clocks after a live edit\"\n    await e.b.expect(ENTRY0 + 1, 0x0BAD | 150 << 16, \"ENTRY1\")\n\n\n@cocotb.test()\nasync def test_start_is_from_entry_zero(dut):\n    e = Env(dut)\n    await e.start()\n    await e.program([(PATS[i], 200) for i in range(4)], length=4)\n    e.w.take()\n    await e.wr(CTRL, 1)\n    await e.wait_for(PATS[2])\n    await e.wr(CTRL, 0b11)                      # RUN = 1 while running: no restart, now one-shot\n    await e.b.expect(INDEX, 2, \"INDEX\")\n    await e.wr(CTRL, 0)\n    assert await peek(e.b.clk, dut.LED) == 0\n    ev = await e.play(1, 200)                   # restart: entry 0 first\n    assert ev[0][1] == PATS[0]\n\n\n@cocotb.test()\nasync def test_debounce_rejects_bounce(dut):\n    e = Env(dut)\n    await e.start()\n    await e.program([(PATS[i], 20) for i in range(2)], length=2)\n    await e.wr(CTRL, 1)\n    for width in (1, 3, e.n // 2, e.n - 3):\n        dut.BTNC.value = 1\n        await e.b.cycles(width)\n        dut.BTNC.value = 0\n        await e.b.cycles(e.n + 4)\n    await e.b.expect(STATUS, 1, \"glitches must not pause\")\n\n\n@cocotb.test()\nasync def test_register_rules(dut):\n    e = Env(dut)\n    await e.start()\n    await e.wr(ENTRY0 + 7, 0xFFFF_FFFF)\n    await e.b.expect(ENTRY0 + 7, 0x00FF_FFFF, \"ENTRY7 keeps [23:0]\")\n    await e.wr(CTRL, 0xFFFF_FFFC)               # RUN 0, ONESHOT 0\n    await e.b.expect(CTRL, 0, \"CTRL\")\n    for off in (INDEX, STATUS, LOOPS):\n        await e.b.write(off, 3)\n    await e.b.expect(INDEX, 0)\n    await e.b.expect(STATUS, 0)\n    await e.b.expect(LOOPS, 0)\n    for off in (0x05, 0x0F, 0x20, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n\n\n@cocotb.test()\nasync def test_random_program(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    n = rng.randrange(2, 17)\n    pats = rng.sample(range(1, 65536), n)\n    entries = [(p, rng.randrange(1, 12)) for p in pats]\n    await e.program(entries, length=n)\n    total = sum(d for _, d in entries) * e.tick\n    ev = await e.play(1, total + total // 2 + 200)\n    want = e.m.show(len(ev) - 1)\n    assert shown(ev) == want, f\"shown {shown(ev)} != model {want}\"\n"
+   }
+  ]
+ },
+ "heading": "LED pattern sequencer",
+ "id": "t1_pattern_sequencer",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "DEBOUNCE_CYCLES": 1000000,
+   "TICK_CYCLES": 100000,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "BTNC",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[0] RUN (see playback), [1] ONESHOT; reads RUN and ONESHOT",
+    "name": "CTRL",
+    "offset": "0x00"
+   },
+   {
+    "access": "RW",
+    "bits": "[4:0] entries played, 1..16; a write of 0 or 17..31 is ignored",
+    "name": "LENGTH",
+    "offset": "0x01"
+   },
+   {
+    "access": "RO",
+    "bits": "[3:0] the entry playing (or the last one, when DONE or stopped)",
+    "name": "INDEX",
+    "offset": "0x02"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] RUN, [1] PAUSED, [2] DONE",
+    "name": "STATUS",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] passes completed",
+    "name": "LOOPS",
+    "offset": "0x04"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] PATTERN, [23:16] DUR of entry 0; entries 1..15 at 0x11..0x1F likewise; [31:24] read 0",
+    "name": "ENTRY0",
+    "offset": "0x10"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: stopped (RUN = 0, PAUSED = 0, DONE = 0), ONESHOT = 0, LENGTH = 4, INDEX = 0, LOOPS = 0, LED = 0; the entries are not changed by reset (they power up 0)",
+  "top": "t1_pattern_sequencer_top",
+  "unmapped": "offsets 0x05-0x0F and 0x20-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "pattern_sequencer.sv",
+   "name": "dur_zero_not_256",
+   "why": "DUR 0 is not 256 ticks"
+  },
+  {
+   "file": "pattern_sequencer.sv",
+   "name": "tick_off_by_one",
+   "why": "a tick is TICK_CYCLES + 1 clocks"
+  },
+  {
+   "file": "pattern_sequencer.sv",
+   "name": "plays_one_extra",
+   "why": "LENGTH + 1 entries played"
+  },
+  {
+   "file": "pattern_sequencer.sv",
+   "name": "oneshot_goes_dark",
+   "why": "one-shot does not hold the last pattern"
+  },
+  {
+   "file": "pattern_sequencer.sv",
+   "name": "run_write_restarts",
+   "why": "a RUN = 1 write while running restarts the show"
+  },
+  {
+   "file": "pattern_sequencer.sv",
+   "name": "pause_keeps_time",
+   "why": "time keeps running while paused"
+  },
+  {
+   "file": "pattern_sequencer.sv",
+   "name": "oneshot_no_loop_count",
+   "why": "a finished one-shot is not counted in LOOPS"
+  },
+  {
+   "file": "pattern_sequencer.sv",
+   "name": "length_accepts_17",
+   "why": "LENGTH 17 accepted"
+  },
+  {
+   "file": "bm_debounce.sv",
+   "name": "debounce_half",
+   "why": "debounce accepts pulses of half the time"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t1_pattern_sequencer",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Each entry is shown for exactly DUR * TICK_CYCLES running clocks (DUR 0 = 256 ticks) in index order"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Loop mode wraps after LENGTH entries; one-shot stops on the last entry with DONE and the pattern held"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "BTNC pauses and resumes; paused time does not count"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation"
+   ],
+   "text": "A pattern write to the playing entry shows at once; start always begins at entry 0"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "simulation"
+   ],
+   "text": "The register window has the listed map and rules"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  },
+  {
+   "id": "REQ-07",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board a programmed one-shot show ends DONE on the last entry after the expected time"
+  }
+ ],
+ "resources_expected": "about 150 LUTs (16 x 24 distributed RAM) and 60 FFs; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# LED pattern sequencer\n\nI want the Nexys A7-100T's sixteen LEDs to play back a little light show that I program over the test shell.\n\n- The show is up to sixteen steps. Each step is a 16-bit LED pattern and how long to show it, in milliseconds, up\n  to a couple of hundred. I choose how many steps are in use.\n- It can loop for ever or play once and stop on the last step. I start and stop it over the shell; starting\n  always begins at the first step.\n- BTNC pauses and resumes the show (it bounces, so debounce it).\n- When I change a step's pattern while the show runs, I want to see the change straight away.\n- CPU_RESETN resets everything.\n- Over the test shell (USB-UART, 115200 baud) I can write the steps, set the length and the mode, start and stop,\n  and read which step is playing, whether it is running, paused or finished, and how many times it has gone round.\n  The design ID is \"PSEQ\".\n\nTest hooks: top module `t1_pattern_sequencer_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (debounce time in clocks) and\n`TICK_CYCLES` (clocks per millisecond, the unit of step durations) as top-level parameters.\n",
+ "survey": [
+  "A08",
+  "A11"
+ ],
+ "tier": "T1",
+ "title": "LED pattern sequencer",
+ "trace": {
+  "captions": [
+   "Entry 0 (pass 0): the LEDs show 0000000000001111 for 12 clocks, from clock 0 to 11.",
+   "Entry 1 (pass 0): the LEDs show 0000000011110000 for 8 clocks, from clock 12 to 19.",
+   "Entry 2 (pass 0): the LEDs show 0000111100000000 for 16 clocks, from clock 20 to 35.",
+   "Entry 3 (pass 0): the LEDs show 1111000000000000 for 4 clocks, from clock 36 to 39.",
+   "Entry 4 (pass 0): the LEDs show 1010101010101010 for 20 clocks, from clock 40 to 59. The last entry is done, so playback goes round again.",
+   "Entry 0 (pass 1): the LEDs show 0000000000001111 for 12 clocks, from clock 60 to 71.",
+   "Entry 1 (pass 1): the LEDs show 0000000011110000 for 8 clocks, from clock 72 to 79.",
+   "Entry 2 (pass 1): the LEDs show 0000111100000000 for 16 clocks, from clock 80 to 95.",
+   "Entry 3 (pass 1): the LEDs show 1111000000000000 for 4 clocks, from clock 96 to 99.",
+   "Entry 4 (pass 1): the LEDs show 1010101010101010 for 20 clocks, from clock 100 to 119. The last entry is done, so playback goes round again.",
+   "Entry 0 (pass 2): the LEDs show 0000000000001111 for 12 clocks, from clock 120 to 131.",
+   "Entry 1 (pass 2): the LEDs show 0000000011110000 for 8 clocks, from clock 132 to 139.",
+   "Entry 2 (pass 2): the LEDs show 0000111100000000 for 16 clocks, from clock 140 to 155.",
+   "Entry 3 (pass 2): the LEDs show 1111000000000000 for 4 clocks, from clock 156 to 159.",
+   "Entry 4 (pass 2): the LEDs show 1010101010101010 for 20 clocks, from clock 160 to 179. The last entry is done, so playback goes round again.",
+   "Entry 0 (pass 3): the LEDs show 0000000000001111 for 12 clocks, from clock 180 to 191."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "INDEX",
+    "radix": "dec",
+    "v": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     0,
+     1,
+     2,
+     3,
+     4,
+     0,
+     1,
+     2,
+     3,
+     4,
+     0
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "LED[15:0]",
+    "radix": "bin",
+    "v": [
+     15,
+     240,
+     3840,
+     61440,
+     43690,
+     15,
+     240,
+     3840,
+     61440,
+     43690,
+     15,
+     240,
+     3840,
+     61440,
+     43690,
+     15
+    ],
+    "width": 16
+   },
+   {
+    "kind": "wave",
+    "lo": 0,
+    "name": "clocks shown",
+    "v": [
+     12,
+     8,
+     16,
+     4,
+     20,
+     12,
+     8,
+     16,
+     4,
+     20,
+     12,
+     8,
+     16,
+     4,
+     20,
+     12
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "LOOPS",
+    "radix": "dec",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     3
+    ]
+   }
+  ],
+  "stimulus": "5 entries are written (patterns and durations in ticks), length 5, loop mode, then playback is started. One tick is 4 clocks (shrunk). No pause and no changes while it runs. The first 16 entries shown are listed.",
+  "unit": "entry",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "what": "A programmable light show for the sixteen LEDs. The user writes up to sixteen steps, each with an LED pattern and a time to show it, then starts the show over the shell. It can loop for ever or play once and stop. A button pauses and resumes it, and changing the pattern of the step that is playing shows on the LEDs straight away.",
+ "where": "The same table-driven idea sits behind status-light sequences, indicator and display animations, stage and sign lighting, and small waveform or stimulus generators that replay a stored list of values with timing."
+}

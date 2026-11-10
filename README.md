@@ -2,7 +2,7 @@
 
 An agent that turns a natural-language spec into a verified, bring-up-ready AMD FPGA bitstream, measured.
 
-Showcase site: what it is, how it works, examples, how it is evaluated, results ([site/](site), static pages; the live link is added here when it is published).
+Showcase site: what it is, how it works, examples, the problem catalogue (every development task with its spec, hidden tests, reference RTL, mutants and golden model animated; held-out tasks by id and tier only), how it is evaluated, results ([site/](site), static pages; the live link is added here when it is published).
 
 The agent is **coming**. What exists today (milestones **F0A** and **F0B**) is the ground it will stand on: every tool step of
 the flow, proven by hand on one small design, with machine-checked gates, before any model touches it. Everything
@@ -207,7 +207,9 @@ benchmark/   benchmark v1: tasks (development split), training pool, bench libra
              benchmark/course/: the course-tier tasks (Parts 9-16), splits, manifest
 results/     committed build and bring-up results, per milestone
 site/        the showcase site (static, Vercel): export.py (results -> data), build.py (pages, number check),
-             leak_guard.py, src/, data/, public/, tests/; the preview link is in the pull request
+             leak_guard.py, src/, data/, public/, tests/; the preview link is in the pull request;
+             problem catalogue: catalogue.yaml + catalogue_parts/ (domains, descriptions), catalogue_pages.py,
+             traces/ (one adapter per task that runs its hidden/model.py for the page animation)
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);

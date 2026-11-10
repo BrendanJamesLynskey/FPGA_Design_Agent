@@ -1,0 +1,447 @@
+{
+ "assumptions": [],
+ "behaviour": [
+  [
+   "function",
+   [
+    "p_i = exp(x_i/256 - max) / sum_j exp(x_j/256 - max) for the eight scores x_i (signed 16-bit, real value times 256); output lane i is round(p_i * 32768) as an unsigned 16-bit number.",
+    "Accuracy: |p_i/32768 - true_i| <= 1/128 for every lane and |sum(p)/32768 - 1| <= 1/128; adding one constant to all scores gives the same probabilities (to within the same budget)."
+   ]
+  ],
+  [
+   "handshake",
+   [
+    "A write to GO clears READY and presents the loaded scores for one clock; READY is 1 within 8 clocks and stays 1 until the next GO; OUT reads 0 while READY is 0."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "LED[0] = READY, the other LEDs are 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 4,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-06",
+  "mutants": {
+   "max_zero": {
+    "failed_tests": [
+     "test_special_score_sets",
+     "test_offset_invariance"
+    ],
+    "killed": true
+   },
+   "min_not_max": {
+    "failed_tests": [
+     "test_special_score_sets",
+     "test_random_score_sets",
+     "test_offset_invariance",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "recip_index": {
+    "failed_tests": [
+     "test_special_score_sets",
+     "test_random_score_sets",
+     "test_offset_invariance"
+    ],
+    "killed": true
+   },
+   "scale_double_shift": {
+    "failed_tests": [
+     "test_special_score_sets",
+     "test_random_score_sets",
+     "test_offset_invariance",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "sum_drops_last": {
+    "failed_tests": [
+     "test_special_score_sets",
+     "test_random_score_sets",
+     "test_offset_invariance",
+     "test_registers"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c15_softmax_unit__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 5,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": 2,
+ "domain": "I",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 45,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c15_softmax_unit/hidden/model.py",
+    "sha256": "8bd7d5f60bd6",
+    "text": "\"\"\"P15-2 model: the score sets and the float reference with the error budget (standalone: numpy only).\"\"\"\nimport numpy as np\n\nN = 8\nBUDGET = 1 / 128\n\n\ndef inputs():\n    \"\"\"330 deterministic sets of eight signed 16-bit Q8.8 scores.\"\"\"\n    rng = np.random.default_rng(15)\n    cases = [[0] * N, [32767] + [-32768] * (N - 1), [-32768] * N, [1000] + [0] * (N - 1), list(range(0, N * 256, 256))]\n    for scale in (0.5, 2.0, 6.0, 30.0):\n        for _ in range(80):\n            cases.append([int(v) for v in np.clip(np.round(rng.normal(0, scale, N) * 256), -32768, 32767)])\n    base = cases[10]\n    for off in (-20000, 20000, -777, 5000, 12000):                     # the same differences, shifted: the answer must not move\n        cases.append([int(np.clip(v + off, -32768, 32767)) for v in base])\n    return cases\n\n\ndef softmax_float(x):\n    z = np.asarray(x, dtype=float) / 256.0\n    e = np.exp(z - z.max())\n    return e / e.sum()\n\n\ndef reference_output():\n    \"\"\"A perfect answer (the float result rounded to Q0.15).\"\"\"\n    return {\"p\": [[int(round(v * 32768)) for v in softmax_float(x)] for x in inputs()]}\n\n\n# ---- benchmark wrapper: the shell register map (from spec.yaml) ----\nDESIGN_ID = 0x534D4158          # \"SMAX\"\nX0, GO, STATUS, OUT0 = 0x00, 0x10, 0x11, 0x20\n\n\ndef bench_inputs():\n    \"\"\"30 of the course score sets: the five specials, 16 random across the four scales, the five shifted copies, and 4 more.\"\"\"\n    xs = inputs()\n    return xs[:5] + xs[5:85:6] + xs[85:325:60] + xs[-5:]\n\n\ndef lanes_to_regs(v, bits=16):\n    m = (1 << bits) - 1\n    return [sum((v[i + k] & m) << (bits * k) for k in range(32 // bits) if i + k < len(v)) for i in range(0, len(v), 32 // bits)]\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 35,
+    "name": "c15_softmax_unit_regs.sv",
+    "path": "benchmark/course/tasks/c15_softmax_unit/ref/rtl/c15_softmax_unit_regs.sv",
+    "sha256": "7d060678bc60",
+    "text": "// c15_softmax_unit_regs.sv: the shell window of course task c15_softmax_unit.\nmodule c15_softmax_unit_regs (\n    input  logic        clk,\n    input  logic        rst,\n    output logic [15:0] led,\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    logic [127:0] x_r;\n    logic [127:0] o_w;\n    logic go, ov, vld;\n    \n    assign led = {15'd0, vld};\n\n    softmax_unit #(.N(8)) u_core (.clk(clk), .rst_n(!rst), .in_valid(go), .x(x_r[127:0]), .out_valid(ov), .p(o_w[127:0]));\n    \n    always_ff @(posedge clk) begin\n        go <= 1'b0;\n        if (ov) vld <= 1'b1;\n        if (win_wr) begin\n            if (win_addr < 7'd4) x_r[win_addr*32 +: 32] <= win_wdata;\n            else if (win_addr == 7'h10) begin go <= 1'b1; vld <= 1'b0; end\n        end\n        win_rdata <= 32'd0;\n        if (win_rd) begin\n            if (win_addr < 7'd4) win_rdata <= x_r[win_addr*32 +: 32];\n            else if (win_addr == 7'h11) win_rdata <= {31'd0, vld};\n            else if (win_addr >= 7'h20 && win_addr < 7'd36) win_rdata <= vld ? o_w[(win_addr - 7'h20)*32 +: 32] : 32'd0;\n        end\n        if (rst) begin x_r <= '0; go <= 1'b0; vld <= 1'b0; win_rdata <= 32'd0; end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 29,
+    "name": "c15_softmax_unit_top.sv",
+    "path": "benchmark/course/tasks/c15_softmax_unit/ref/rtl/c15_softmax_unit_top.sv",
+    "sha256": "e52542cfe693",
+    "text": "// c15_softmax_unit_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID \"SMAX\".\n// Reference design for course task c15_softmax_unit; the shell window is wired to c15_softmax_unit_regs.\nmodule c15_softmax_unit_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h534d4158), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    c15_softmax_unit_regs u_regs (\n        .clk(clk), .rst(rst), .led(LED),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 272,
+    "name": "softmax_unit.sv",
+    "path": "benchmark/course/tasks/c15_softmax_unit/ref/rtl/softmax_unit.sv",
+    "sha256": "6b408ec59ad1",
+    "text": "// P15-2 reference RTL: a copy of solutions/p15l06_softmax/softmax_unit.sv (course exercise p15l06_softmax).\n// Part 15 lesson 6 exercise: a softmax unit for N = 8 scores, within a stated error budget, using only integer arithmetic, a 64-entry exp table and a 128-entry reciprocal table.\n//\n// Input: N signed 16-bit scores in Q8.8 (x_i / 256 is the real score), packed x[i*16 +: 16]. Output: N unsigned 16-bit probabilities in Q0.15 (32768 = 1.0), packed p[i*16 +: 16].\n// With in_valid high, one clock later (out_valid high; rst_n synchronous, active low, clears out_valid only), p holds:\n//   1. m = max(x_i)                                         (the max subtraction: every exponent argument is then <= 0, so the exp never overflows)\n//   2. e_i = exp2neg(m - x_i), a 17-bit Q0.16 value:  d = m - x_i (0 .. 65535, Q8.8);  d = 0 gives exactly 65536;\n//        otherwise t = (d * 23637 + 8192) >> 14 (d * log2(e) in Q8.8), n = t >> 8, f = t & 255;  e = 0 if n >= 17, else EXP_LUT[f >> 2] >> n,\n//        with EXP_LUT[k] = round(65536 * 2^(-(k + 0.5) / 64)), k = 0..63.\n//   3. S = sum e_i (at least 65536);  p = index of the highest set bit of S (16 .. 19);  ms = S >> (p - 15) (16 bits, 32768 .. 65535);\n//        L = RECIP_LUT[(ms - 32768) >> 8] with RECIP_LUT[k] = round(2^31 / (32768 + 256 k + 128)), k = 0..127  (so 1/S is about L / 2^(p+16)).\n//   4. P_i = (e_i * L + 2^p) >> (p + 1)                      (the probability times 32768, rounded)\n// Golden model: tools/ai_models.softmax_int (bit-exact). Error budget against the float softmax of the same scores: every probability within 1/128 (0.0078) absolute; the probabilities\n// sum to 1 within 1/128. Two sources: the 64-step exp table (at most 0.54 % relative) and the 128-step reciprocal table (at most 0.39 % relative).\nmodule softmax_unit #(\n    parameter int N = 8\n) (\n    input  logic            clk,\n    input  logic            rst_n,\n    input  logic            in_valid,\n    input  logic [N*16-1:0] x,\n    output logic            out_valid,\n    output logic [N*16-1:0] p\n);\n    function automatic [15:0] exp_lut(input [5:0] k);\n        case (k)\n            6'd0: exp_lut = 16'd65182;\n            6'd1: exp_lut = 16'd64480;\n            6'd2: exp_lut = 16'd63785;\n            6'd3: exp_lut = 16'd63098;\n            6'd4: exp_lut = 16'd62419;\n            6'd5: exp_lut = 16'd61746;\n            6'd6: exp_lut = 16'd61081;\n            6'd7: exp_lut = 16'd60423;\n            6'd8: exp_lut = 16'd59772;\n            6'd9: exp_lut = 16'd59128;\n            6'd10: exp_lut = 16'd58491;\n            6'd11: exp_lut = 16'd57861;\n            6'd12: exp_lut = 16'd57238;\n            6'd13: exp_lut = 16'd56622;\n            6'd14: exp_lut = 16'd56012;\n            6'd15: exp_lut = 16'd55408;\n            6'd16: exp_lut = 16'd54811;\n            6'd17: exp_lut = 16'd54221;\n            6'd18: exp_lut = 16'd53637;\n            6'd19: exp_lut = 16'd53059;\n            6'd20: exp_lut = 16'd52488;\n            6'd21: exp_lut = 16'd51922;\n            6'd22: exp_lut = 16'd51363;\n            6'd23: exp_lut = 16'd50810;\n            6'd24: exp_lut = 16'd50262;\n            6'd25: exp_lut = 16'd49721;\n            6'd26: exp_lut = 16'd49185;\n            6'd27: exp_lut = 16'd48655;\n            6'd28: exp_lut = 16'd48131;\n            6'd29: exp_lut = 16'd47613;\n            6'd30: exp_lut = 16'd47100;\n            6'd31: exp_lut = 16'd46593;\n            6'd32: exp_lut = 16'd46091;\n            6'd33: exp_lut = 16'd45594;\n            6'd34: exp_lut = 16'd45103;\n            6'd35: exp_lut = 16'd44617;\n            6'd36: exp_lut = 16'd44137;\n            6'd37: exp_lut = 16'd43661;\n            6'd38: exp_lut = 16'd43191;\n            6'd39: exp_lut = 16'd42726;\n            6'd40: exp_lut = 16'd42265;\n            6'd41: exp_lut = 16'd41810;\n            6'd42: exp_lut = 16'd41360;\n            6'd43: exp_lut = 16'd40914;\n            6'd44: exp_lut = 16'd40473;\n            6'd45: exp_lut = 16'd40037;\n            6'd46: exp_lut = 16'd39606;\n            6'd47: exp_lut = 16'd39180;\n            6'd48: exp_lut = 16'd38757;\n            6'd49: exp_lut = 16'd38340;\n            6'd50: exp_lut = 16'd37927;\n            6'd51: exp_lut = 16'd37518;\n            6'd52: exp_lut = 16'd37114;\n            6'd53: exp_lut = 16'd36715;\n            6'd54: exp_lut = 16'd36319;\n            6'd55: exp_lut = 16'd35928;\n            6'd56: exp_lut = 16'd35541;\n            6'd57: exp_lut = 16'd35158;\n            6'd58: exp_lut = 16'd34779;\n            6'd59: exp_lut = 16'd34405;\n            6'd60: exp_lut = 16'd34034;\n            6'd61: exp_lut = 16'd33667;\n            6'd62: exp_lut = 16'd33305;\n            6'd63: exp_lut = 16'd32946;\n            default: exp_lut = 16'd0;\n        endcase\n    endfunction\n\n    // exp(-d/256) in Q0.16 for d >= 0 in Q8.8 (65536 = 1.0): t = d * log2(e) in Q8.8; n = whole octaves, f = fraction (top 6 bits index the table)\n    function automatic [16:0] exp2neg(input [15:0] d);\n        reg [31:0] t;\n        begin\n            if (d == 16'd0) exp2neg = 17'd65536;\n            else begin\n                t = (d * 32'd23637 + 32'd8192) >> 14;\n                if (t[31:8] >= 24'd17) exp2neg = 17'd0;\n                else exp2neg = {1'b0, exp_lut(t[7:2])} >> t[12:8];\n            end\n        end\n    endfunction\n\n    function automatic [15:0] recip_lut(input [6:0] k);\n        case (k)\n            7'd0: recip_lut = 16'd65281;\n            7'd1: recip_lut = 16'd64777;\n            7'd2: recip_lut = 16'd64281;\n            7'd3: recip_lut = 16'd63792;\n            7'd4: recip_lut = 16'd63310;\n            7'd5: recip_lut = 16'd62836;\n            7'd6: recip_lut = 16'd62369;\n            7'd7: recip_lut = 16'd61909;\n            7'd8: recip_lut = 16'd61455;\n            7'd9: recip_lut = 16'd61008;\n            7'd10: recip_lut = 16'd60568;\n            7'd11: recip_lut = 16'd60133;\n            7'd12: recip_lut = 16'd59705;\n            7'd13: recip_lut = 16'd59283;\n            7'd14: recip_lut = 16'd58867;\n            7'd15: recip_lut = 16'd58457;\n            7'd16: recip_lut = 16'd58053;\n            7'd17: recip_lut = 16'd57654;\n            7'd18: recip_lut = 16'd57260;\n            7'd19: recip_lut = 16'd56872;\n            7'd20: recip_lut = 16'd56489;\n            7'd21: recip_lut = 16'd56111;\n            7'd22: recip_lut = 16'd55738;\n            7'd23: recip_lut = 16'd55370;\n            7'd24: recip_lut = 16'd55007;\n            7'd25: recip_lut = 16'd54649;\n            7'd26: recip_lut = 16'd54295;\n            7'd27: recip_lut = 16'd53946;\n            7'd28: recip_lut = 16'd53601;\n            7'd29: recip_lut = 16'd53261;\n            7'd30: recip_lut = 16'd52925;\n            7'd31: recip_lut = 16'd52593;\n            7'd32: recip_lut = 16'd52265;\n            7'd33: recip_lut = 16'd51942;\n            7'd34: recip_lut = 16'd51622;\n            7'd35: recip_lut = 16'd51306;\n            7'd36: recip_lut = 16'd50995;\n            7'd37: recip_lut = 16'd50686;\n            7'd38: recip_lut = 16'd50382;\n            7'd39: recip_lut = 16'd50081;\n            7'd40: recip_lut = 16'd49784;\n            7'd41: recip_lut = 16'd49490;\n            7'd42: recip_lut = 16'd49200;\n            7'd43: recip_lut = 16'd48913;\n            7'd44: recip_lut = 16'd48630;\n            7'd45: recip_lut = 16'd48349;\n            7'd46: recip_lut = 16'd48072;\n            7'd47: recip_lut = 16'd47798;\n            7'd48: recip_lut = 16'd47528;\n            7'd49: recip_lut = 16'd47260;\n            7'd50: recip_lut = 16'd46995;\n            7'd51: recip_lut = 16'd46733;\n            7'd52: recip_lut = 16'd46474;\n            7'd53: recip_lut = 16'd46218;\n            7'd54: recip_lut = 16'd45965;\n            7'd55: recip_lut = 16'd45714;\n            7'd56: recip_lut = 16'd45467;\n            7'd57: recip_lut = 16'd45222;\n            7'd58: recip_lut = 16'd44979;\n            7'd59: recip_lut = 16'd44739;\n            7'd60: recip_lut = 16'd44502;\n            7'd61: recip_lut = 16'd44267;\n            7'd62: recip_lut = 16'd44035;\n            7'd63: recip_lut = 16'd43805;\n            7'd64: recip_lut = 16'd43577;\n            7'd65: recip_lut = 16'd43352;\n            7'd66: recip_lut = 16'd43129;\n            7'd67: recip_lut = 16'd42908;\n            7'd68: recip_lut = 16'd42690;\n            7'd69: recip_lut = 16'd42474;\n            7'd70: recip_lut = 16'd42260;\n            7'd71: recip_lut = 16'd42048;\n            7'd72: recip_lut = 16'd41838;\n            7'd73: recip_lut = 16'd41631;\n            7'd74: recip_lut = 16'd41425;\n            7'd75: recip_lut = 16'd41222;\n            7'd76: recip_lut = 16'd41020;\n            7'd77: recip_lut = 16'd40820;\n            7'd78: recip_lut = 16'd40623;\n            7'd79: recip_lut = 16'd40427;\n            7'd80: recip_lut = 16'd40233;\n            7'd81: recip_lut = 16'd40041;\n            7'd82: recip_lut = 16'd39851;\n            7'd83: recip_lut = 16'd39662;\n            7'd84: recip_lut = 16'd39476;\n            7'd85: recip_lut = 16'd39291;\n            7'd86: recip_lut = 16'd39108;\n            7'd87: recip_lut = 16'd38926;\n            7'd88: recip_lut = 16'd38746;\n            7'd89: recip_lut = 16'd38568;\n            7'd90: recip_lut = 16'd38392;\n            7'd91: recip_lut = 16'd38217;\n            7'd92: recip_lut = 16'd38044;\n            7'd93: recip_lut = 16'd37872;\n            7'd94: recip_lut = 16'd37702;\n            7'd95: recip_lut = 16'd37533;\n            7'd96: recip_lut = 16'd37366;\n            7'd97: recip_lut = 16'd37200;\n            7'd98: recip_lut = 16'd37036;\n            7'd99: recip_lut = 16'd36873;\n            7'd100: recip_lut = 16'd36712;\n            7'd101: recip_lut = 16'd36552;\n            7'd102: recip_lut = 16'd36393;\n            7'd103: recip_lut = 16'd36236;\n            7'd104: recip_lut = 16'd36080;\n            7'd105: recip_lut = 16'd35926;\n            7'd106: recip_lut = 16'd35772;\n            7'd107: recip_lut = 16'd35620;\n            7'd108: recip_lut = 16'd35470;\n            7'd109: recip_lut = 16'd35320;\n            7'd110: recip_lut = 16'd35172;\n            7'd111: recip_lut = 16'd35026;\n            7'd112: recip_lut = 16'd34880;\n            7'd113: recip_lut = 16'd34735;\n            7'd114: recip_lut = 16'd34592;\n            7'd115: recip_lut = 16'd34450;\n            7'd116: recip_lut = 16'd34309;\n            7'd117: recip_lut = 16'd34169;\n            7'd118: recip_lut = 16'd34031;\n            7'd119: recip_lut = 16'd33893;\n            7'd120: recip_lut = 16'd33757;\n            7'd121: recip_lut = 16'd33622;\n            7'd122: recip_lut = 16'd33487;\n            7'd123: recip_lut = 16'd33354;\n            7'd124: recip_lut = 16'd33222;\n            7'd125: recip_lut = 16'd33091;\n            7'd126: recip_lut = 16'd32961;\n            7'd127: recip_lut = 16'd32832;\n            default: recip_lut = 16'd0;\n        endcase\n    endfunction\n\n    logic signed [15:0] mx;\n    logic [N*17-1:0]    ev;\n    logic [31:0]        ssum;\n    logic [5:0]         pb;\n    logic [31:0]        ms;\n    logic [15:0]        rl;\n    logic [63:0]        prod;\n    logic [N*16-1:0]    pout;\n    always_comb begin\n        mx = $signed(x[15:0]);\n        for (int i = 1; i < N; i++) if ($signed(x[i*16 +: 16]) > mx) mx = $signed(x[i*16 +: 16]);\n        ssum = 32'd0;\n        for (int i = 0; i < N; i++) begin\n            ev[i*17 +: 17] = exp2neg(16'(mx - $signed(x[i*16 +: 16])));\n            ssum = ssum + ev[i*17 +: 17];\n        end\n        pb = 6'd0;\n        for (int j = 0; j < 32; j++) if (ssum[j]) pb = j;\n        ms = ssum >> (pb - 6'd15);\n        rl = recip_lut(ms[14:8]);\n        for (int i = 0; i < N; i++) begin\n            prod = {47'd0, ev[i*17 +: 17]} * {48'd0, rl} + (64'd1 << pb);\n            pout[i*16 +: 16] = prod >> (pb + 6'd1);\n        end\n    end\n    always_ff @(posedge clk) begin\n        if (!rst_n) out_valid <= 1'b0;\n        else out_valid <= in_valid;\n        if (in_valid) p <= pout;\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 79,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c15_softmax_unit/hidden/acceptance.py",
+    "sha256": "73c3e9702856",
+    "text": "\"\"\"Acceptance tests of c15_softmax_unit against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek\nfrom model import BUDGET, DESIGN_ID, GO, OUT0, STATUS, X0, bench_inputs, lanes_to_regs, softmax_float\n\n\nasync def run_x(b: Board, x: list[int], what: str) -> list[int]:\n    for k, w in enumerate(lanes_to_regs(x)):\n        await b.write(X0 + k, w)\n    await b.write(GO, 1)\n    await b.expect(STATUS, 1, f\"READY {what}\")\n    p = []\n    for k in range(4):\n        w = await b.read(OUT0 + k)\n        p += [w & 0xFFFF, w >> 16]\n    ref = softmax_float(x)\n    err = max(abs(v / 32768 - r) for v, r in zip(p, ref))\n    assert err <= BUDGET, f\"{what} scores {x}: worst error {err:.5f} above {BUDGET:.5f}; got {p}\"\n    assert abs(sum(p) / 32768 - 1) <= BUDGET, f\"{what} scores {x}: probabilities sum to {sum(p) / 32768:.5f}\"\n    return p\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    b = Board(dut, {})\n    await b.start()\n    assert await b.shell_id() == DESIGN_ID\n    for off in (X0, X0 + 3, STATUS, OUT0, OUT0 + 3):\n        await b.expect(off, 0, f\"reset value of {off:#x}\")\n\n\n@cocotb.test()\nasync def test_special_score_sets(dut):\n    \"\"\"All zero, one large and seven minimum, all minimum, one 1000, a ramp.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    for k, x in enumerate(bench_inputs()[:5]):\n        await run_x(b, x, f\"special {k}\")\n\n\n@cocotb.test()\nasync def test_random_score_sets(dut):\n    b = Board(dut, {})\n    await b.start()\n    xs = bench_inputs()\n    for k, x in enumerate(xs[5:-5]):\n        await run_x(b, x, f\"random {k}\")\n\n\n@cocotb.test()\nasync def test_offset_invariance(dut):\n    \"\"\"The same differences shifted by large offsets (the course's five shifted copies): the answer must not move.\"\"\"\n    b = Board(dut, {})\n    await b.start()\n    xs = bench_inputs()\n    for k, x in enumerate(xs[-5:]):\n        await run_x(b, x, f\"shifted {k}\")\n\n\n@cocotb.test()\nasync def test_registers(dut):\n    b = Board(dut, {})\n    await b.start()\n    x = bench_inputs()[7]\n    await run_x(b, x, \"first\")\n    await b.write(X0, 0x12345678)\n    await b.expect(X0, 0x12345678, \"X0\")\n    await b.expect(STATUS, 1, \"READY holds until the next GO\")\n    await b.write(OUT0, 0xFFFF)\n    led = await peek(b.clk, dut.LED)\n    assert led == 1, f\"LED {led:04X}: only LED0 (READY) is lit\"\n    for off in (0x04, 0x12, 0x24, 0x7F):\n        await b.expect(off, 0, \"unmapped\")\n    await b.reset()\n    await b.expect(STATUS, 0, \"READY after reset\")\n    await b.expect(X0, 0, \"X0 after reset\")\n"
+   }
+  ]
+ },
+ "heading": "Softmax unit behind the test shell",
+ "id": "c15_softmax_unit",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "RW",
+    "bits": "[31:0] input lanes: lane i (signed 16-bit) in register i//2, bits [16*(i%2)+15:16*(i%2)]",
+    "name": "X0..X3",
+    "offset": "0x00-0x03"
+   },
+   {
+    "access": "WO",
+    "bits": "any write presents the loaded inputs to the block for one clock and clears READY; reads 0",
+    "name": "GO",
+    "offset": "0x10"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] READY: the outputs are valid (set within 8 clocks of GO, held until the next GO)",
+    "name": "STATUS",
+    "offset": "0x11"
+   },
+   {
+    "access": "RO",
+    "bits": "[31:0] output lanes: lane i in register i//2, bits [16*(i%2)+15:16*(i%2)] (unsigned probability times 32768); read 0 while READY is 0",
+    "name": "OUT0..OUT3",
+    "offset": "0x20-0x23"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: loaded scores 0, READY = 0",
+  "top": "c15_softmax_unit_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "softmax_unit.sv",
+   "name": "max_zero",
+   "why": "no max subtraction: scores are not shifted by their maximum"
+  },
+  {
+   "file": "softmax_unit.sv",
+   "name": "min_not_max",
+   "why": "the minimum is subtracted instead of the maximum"
+  },
+  {
+   "file": "softmax_unit.sv",
+   "name": "scale_double_shift",
+   "why": "probabilities come out half size"
+  },
+  {
+   "file": "softmax_unit.sv",
+   "name": "recip_index",
+   "why": "reciprocal table indexed by the wrong bits"
+  },
+  {
+   "file": "softmax_unit.sv",
+   "name": "sum_drops_last",
+   "why": "the last score is left out of the denominator"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c15_softmax_unit",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "every probability is within 1/128 of the true value and the eight sum to 1 within 1/128, for each tested score set"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "large scores and all-equal scores do not overflow, and a common offset on all scores does not change the answer"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "READY is 0 after GO is written and 1 when OUT is valid"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": 190,
+   "bram36": 0,
+   "claude_code_version": "2.1.318",
+   "date": "2026-11-07",
+   "dsp": 17,
+   "escape_level": null,
+   "failure_class": null,
+   "ff": 945,
+   "hidden_pass": true,
+   "lut": 1788,
+   "model": "claude-sonnet-5-5",
+   "outcome": "caught_and_repaired",
+   "run": 1,
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 3.88,
+   "wns_ns": 0.521
+  },
+  {
+   "agent_turns": null,
+   "bram36": null,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-08",
+   "dsp": null,
+   "escape_level": null,
+   "failure_class": "model error (clarify skipped the map question) plus harness gap (nothing forces the map question or supplies the map)",
+   "ff": null,
+   "hidden_pass": false,
+   "lut": null,
+   "model": "claude-sonnet-5-5",
+   "outcome": "fail",
+   "run": 2,
+   "tests_passed": 0,
+   "tests_total": 5,
+   "wall_h": 1.68,
+   "wns_ns": null
+  },
+  {
+   "agent_turns": 152,
+   "bram36": 0.5,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-09",
+   "dsp": 1,
+   "escape_level": null,
+   "failure_class": null,
+   "ff": 780,
+   "hidden_pass": true,
+   "lut": 752,
+   "model": "claude-sonnet-5-5",
+   "outcome": "caught_and_repaired",
+   "run": 3,
+   "tests_passed": 5,
+   "tests_total": 5,
+   "wall_h": 1.72,
+   "wns_ns": 2.749
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Softmax unit behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that turns eight scores into eight probabilities the way a neural network does (\"softmax\"): each probability is e raised to the power of its score, divided by the sum of those\nnumbers over all eight, so the eight probabilities add up to one and a bigger score gets a bigger probability. I want to exercise it entirely from the test shell.\n\n- The input is eight scores loaded over the shell, each a signed 16-bit number that is the real score times 256 (so 256 means a score of 1.0, -128 means -0.5), followed by a \"go\" command.\n- The output is the eight probabilities that I read back over the shell, each an unsigned 16-bit number that is the probability times 32768 (so 32768 means 1.0), with a flag that says they are ready.\n- The scores can be anywhere in the 16-bit range, including all eight equal, one score far above the rest, and large values that would overflow a naive calculation (adding the same amount to every score must not change\n  the answer). Use no floating-point blocks and no division blocks; a few small tables and multipliers are fine.\n- Accuracy I need: every probability within 1/128 of the true value, and the eight probabilities adding up to 1 within 1/128. Anything inside that is acceptable; I do not need a particular design.\n- I will check the outputs for a few dozen score sets against my own calculation with real numbers. CPU_RESETN clears the loaded scores and the ready flag. LED0 shows the ready flag.\n  The shell runs at 115200 baud on the USB-UART. The design ID is \"SMAX\".\n\nTest hooks: top module `c15_softmax_unit_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.\n",
+ "survey": [
+  "I06",
+  "I05",
+  "B25"
+ ],
+ "tier": "C15",
+ "title": "Softmax unit behind the test shell",
+ "trace": {
+  "captions": [
+   "Set 4, lane 0: score 0 (0.00 in real units) gets probability 19 out of 32768 (0.1 per cent).",
+   "Set 4, lane 1: score 256 (1.00 in real units) gets probability 51 out of 32768 (0.2 per cent).",
+   "Set 4, lane 2: score 512 (2.00 in real units) gets probability 140 out of 32768 (0.4 per cent).",
+   "Set 4, lane 3: score 768 (3.00 in real units) gets probability 380 out of 32768 (1.2 per cent).",
+   "Set 4, lane 4: score 1024 (4.00 in real units) gets probability 1032 out of 32768 (3.1 per cent).",
+   "Set 4, lane 5: score 1280 (5.00 in real units) gets probability 2804 out of 32768 (8.6 per cent).",
+   "Set 4, lane 6: score 1536 (6.00 in real units) gets probability 7623 out of 32768 (23.3 per cent).",
+   "Set 4, lane 7: score 1792 (7.00 in real units) gets probability 20720 out of 32768 (63.2 per cent).",
+   "Set 100, lane 0: score -935 (-3.65 in real units) gets probability 67 out of 32768 (0.2 per cent).",
+   "Set 100, lane 1: score 177 (0.69 in real units) gets probability 5177 out of 32768 (15.8 per cent).",
+   "Set 100, lane 2: score -494 (-1.93 in real units) gets probability 376 out of 32768 (1.1 per cent).",
+   "Set 100, lane 3: score -510 (-1.99 in real units) gets probability 354 out of 32768 (1.1 per cent).",
+   "Set 100, lane 4: score 460 (1.80 in real units) gets probability 15636 out of 32768 (47.7 per cent).",
+   "Set 100, lane 5: score 341 (1.33 in real units) gets probability 9823 out of 32768 (30.0 per cent).",
+   "Set 100, lane 6: score -314 (-1.23 in real units) gets probability 760 out of 32768 (2.3 per cent).",
+   "Set 100, lane 7: score -386 (-1.51 in real units) gets probability 574 out of 32768 (1.8 per cent)."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "set",
+    "radix": "dec",
+    "v": [
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     4,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100
+    ]
+   },
+   {
+    "kind": "wave",
+    "name": "score x256",
+    "v": [
+     0,
+     256,
+     512,
+     768,
+     1024,
+     1280,
+     1536,
+     1792,
+     -935,
+     177,
+     -494,
+     -510,
+     460,
+     341,
+     -314,
+     -386
+    ]
+   },
+   {
+    "hi": 32768,
+    "kind": "wave",
+    "lo": 0,
+    "name": "probability x32768",
+    "v": [
+     19,
+     51,
+     140,
+     380,
+     1032,
+     2804,
+     7623,
+     20720,
+     67,
+     5177,
+     376,
+     354,
+     15636,
+     9823,
+     760,
+     574
+    ]
+   }
+  ],
+  "stimulus": "Two score sets of 8 lanes from the model: set 4 and set 100. Each probability is the exponential of the lane's score divided by the sum over the lanes.",
+  "unit": "lane",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15
+  ]
+ },
+ "what": "A unit that turns eight scores into eight probabilities that add up to one, with bigger scores getting bigger shares. It must cope with very large or very different scores, so it works relative to the largest score, and it uses small tables and multipliers instead of floating-point or divider blocks. The result is checked to within a stated error.",
+ "where": "Softmax ends classifiers and sits inside the attention step of transformer language models. Accelerators implement it in fixed-point hardware because it is a bottleneck when done naively."
+}

@@ -1,0 +1,848 @@
+{
+ "assumptions": [
+  {
+   "assumption": "the fault queue is left at 1 (CONFIG[1:0] = 00).",
+   "reason": "the request does not ask for filtering of the alarm."
+  },
+  {
+   "assumption": "T_HYST stays at its power-on value (5 C).",
+   "reason": "no hysteresis setting was requested."
+  }
+ ],
+ "behaviour": [
+  [
+   "bus",
+   [
+    "I2C waveforms as an open-drain master with Q = QUARTER clocks - START SDA low, wait 2Q, SCL low, wait Q; each of the 9 bits of a byte - set SDA, wait Q, release SCL and wait until it is seen high (stretching), wait 2Q, sample, SCL low, wait Q; repeated START - release SDA, wait Q, release SCL and wait high, wait 2Q, SDA low, wait 2Q, SCL low, wait Q; STOP - SDA low, wait Q, release SCL and wait high, wait 2Q, release SDA, wait 2Q.",
+    "The lines are only pulled low or released."
+   ]
+  ],
+  [
+   "configure",
+   [
+    "A write to CTRL with bit 0 = 1 while BUSY = 0 configures - TEMP, MAX, MIN, SAMPLES and VALID are cleared, NACK cleared, then three write transactions to address 0x4B in this order - [START, 0x96, 0x03, 0x90, STOP] (CONFIG - 16-bit resolution, comparator mode, INT active low, fault queue 1); [START, 0x96, 0x04, THIGH[15:8], THIGH[7:0], STOP]; [START, 0x96, 0x06, TLOW[15:8], TLOW[7:0], STOP].",
+    "After the third transaction CONFIGURED is set (even if a NACK occurred) and polling begins. Writes to CTRL while BUSY are ignored; a later configure repeats the sequence and restarts the statistics."
+   ]
+  ],
+  [
+   "polling",
+   [
+    "While CONFIGURED, a reading starts PERIOD_CYCLES clocks after the previous one started (the first PERIOD_CYCLES clocks after the configure sequence ends) - [START, 0x96, 0x00, repeated START, 0x97, read MSB with ACK, read LSB with NACK, STOP]. Never a STOP between the pointer write and the read (the sensor would lose its pointer).",
+    "A reading with no NACK sets TEMP = {MSB, LSB}, SAMPLES += 1, and MAX / MIN (compared as signed 16-bit) - the first reading after a configure sets both; VALID is set.",
+    "If any byte of a transaction is NACKed, the master sends STOP after that byte, NACK is set (sticky until the next configure), and a reading is discarded.",
+    "BUSY is 1 during the configure sequence and during each reading."
+   ]
+  ],
+  [
+   "alarm",
+   [
+    "ALARM = NOT TMP_INT (synchronised by two flops) - the pin is active low. LED[0] = ALARM; LED[15:1] = 0."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "PERIOD_CYCLES": 8000,
+  "QUARTER": 3,
+  "TIMEOUT_CYCLES": 400
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-04",
+  "mutants": {
+   "alarm_active_high": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_configure_sequence",
+     "test_max_min_samples",
+     "test_alarm_follows_int",
+     "test_missing_sensor_nack",
+     "test_clock_stretching"
+    ],
+    "killed": true
+   },
+   "byte_order": {
+    "failed_tests": [
+     "test_configure_sequence",
+     "test_full_16bit_resolution",
+     "test_max_min_samples",
+     "test_clock_stretching",
+     "test_random_temperatures"
+    ],
+    "killed": true
+   },
+   "interrupt_mode": {
+    "failed_tests": [
+     "test_configure_sequence",
+     "test_full_16bit_resolution",
+     "test_max_min_samples",
+     "test_alarm_follows_int",
+     "test_clock_stretching",
+     "test_random_temperatures"
+    ],
+    "killed": true
+   },
+   "limits_swapped": {
+    "failed_tests": [
+     "test_configure_sequence",
+     "test_full_16bit_resolution",
+     "test_max_min_samples",
+     "test_alarm_follows_int",
+     "test_clock_stretching",
+     "test_random_temperatures"
+    ],
+    "killed": true
+   },
+   "max_unsigned": {
+    "failed_tests": [
+     "test_full_16bit_resolution",
+     "test_max_min_samples",
+     "test_random_temperatures"
+    ],
+    "killed": true
+   },
+   "min_not_seeded": {
+    "failed_tests": [
+     "test_configure_sequence",
+     "test_max_min_samples",
+     "test_clock_stretching"
+    ],
+    "killed": true
+   },
+   "nack_ignored": {
+    "failed_tests": [
+     "test_missing_sensor_nack"
+    ],
+    "killed": true
+   },
+   "period_double": {
+    "failed_tests": [
+     "test_max_min_samples"
+    ],
+    "killed": true
+   },
+   "stop_before_read": {
+    "failed_tests": [
+     "test_configure_sequence",
+     "test_full_16bit_resolution",
+     "test_max_min_samples",
+     "test_alarm_follows_int",
+     "test_clock_stretching",
+     "test_random_temperatures"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/results/reference/t2_adt7420_alarm__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 8,
+  "sim": "icarus"
+ },
+ "data_files": [],
+ "difficulty": null,
+ "domain": "F",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 68,
+    "name": "model.py",
+    "path": "benchmark/tasks/t2_adt7420_alarm/hidden/model.py",
+    "sha256": "91ffc6457c65",
+    "text": "\"\"\"Golden model of t2_adt7420_alarm, written from spec.yaml alone (never from any RTL).\n\nRegister effects, and the bus transactions (benchmark/lib/i2c_devices.I2cBus log entries) of the configure\nsequence and of each reading.\"\"\"\n\nfrom __future__ import annotations\n\nDESIGN_ID = 0x54414C4D\nCTRL, STATUS, THIGH, TLOW, TEMP, MAX, MIN, SAMPLES = range(8)\nBUSY, CONFIGURED, VALID, NACK, ALARM = 1, 2, 4, 8, 16\nADDR = 0x4B\n\n\ndef s16(v: int) -> int:\n    return v - 0x10000 if v & 0x8000 else v\n\n\nclass Model:\n    def __init__(self) -> None:\n        self.thigh, self.tlow = 0x2000, 0x0500\n        self.temp = self.max = self.min = 0\n        self.samples = 0\n        self.configured = self.valid = self.nack = False\n        self.alarm = False\n\n    def write(self, off: int, v: int) -> None:\n        if off == THIGH:\n            self.thigh = v & 0xFFFF\n        elif off == TLOW:\n            self.tlow = v & 0xFFFF\n\n    def configure(self, present: bool = True) -> list[tuple]:\n        self.temp = self.max = self.min = self.samples = 0\n        self.valid = self.nack = False\n        self.configured = True\n        txs = [[0x03, 0x90], [0x04, self.thigh >> 8, self.thigh & 0xFF], [0x06, self.tlow >> 8, self.tlow & 0xFF]]\n        log: list[tuple] = []\n        for t in txs:\n            if present:\n                log += [(\"S\",), (\"A\", ADDR, 0, True)] + [(\"W\", b, True) for b in t] + [(\"P\",)]\n            else:\n                log += [(\"S\",), (\"A\", ADDR, 0, False), (\"P\",)]\n        if not present:\n            self.nack = True\n        return log\n\n    def reading(self, code: int | None) -> list[tuple]:\n        \"\"\"One reading; ``code`` is the 16-bit value the sensor returns (None: no device, the address NACKs).\"\"\"\n        if code is None:\n            self.nack = True\n            return [(\"S\",), (\"A\", ADDR, 0, False), (\"P\",)]\n        self.temp = code\n        if not self.valid or s16(code) > s16(self.max):\n            self.max = code\n        if not self.valid or s16(code) < s16(self.min):\n            self.min = code\n        self.valid = True\n        self.samples += 1\n        return [(\"S\",), (\"A\", ADDR, 0, True), (\"W\", 0x00, True), (\"Sr\",), (\"A\", ADDR, 1, True),\n                (\"R\", code >> 8, True), (\"R\", code & 0xFF, False), (\"P\",)]\n\n    def status(self) -> int:\n        return (CONFIGURED if self.configured else 0) | (VALID if self.valid else 0) | \\\n            (NACK if self.nack else 0) | (ALARM if self.alarm else 0)\n\n    def read(self, off: int) -> int:\n        return {STATUS: self.status(), THIGH: self.thigh, TLOW: self.tlow, TEMP: self.temp, MAX: self.max,\n                MIN: self.min, SAMPLES: self.samples}.get(off, 0)\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 47,
+    "name": "t2_adt7420_alarm_top.sv",
+    "path": "benchmark/tasks/t2_adt7420_alarm/ref/rtl/t2_adt7420_alarm_top.sv",
+    "sha256": "4a989602fa48",
+    "text": "// t2_adt7420_alarm_top.sv: board top (Nexys A7-100T, master-XDC port names).\n// Reference design for benchmark task t2_adt7420_alarm; DESIGN_ID \"TALM\".\n// ADT7420 in 16-bit mode, comparator-mode alarm on TMP_INT (active low), readings over the shell.\nmodule t2_adt7420_alarm_top #(\n    parameter int          CLKS_PER_BIT   = 868,\n    parameter int          TIMEOUT_CYCLES = 100_000,\n    parameter int          QUARTER        = 250,\n    parameter int          PERIOD_CYCLES  = 25_000_000,\n    parameter logic [31:0] BUILD_STAMP    = 32'h0\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    inout  wire         TMP_SCL,\n    inout  wire         TMP_SDA,\n    input  logic        TMP_INT,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic        clk, rst, win_wr, win_rd, scl_oe, sda_oe, int_n;\n    logic [1:0]  lines;\n    logic [6:0]  win_addr;\n    logic [31:0] win_wdata, win_rdata;\n\n    assign clk = CLK100MHZ;\n    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst));\n\n    fpga_shell #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),\n                 .DESIGN_ID(32'h5441_4C4D), .BUILD_STAMP(BUILD_STAMP)) u_shell (\n        .clk(clk), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    assign TMP_SCL = scl_oe ? 1'b0 : 1'bz;\n    assign TMP_SDA = sda_oe ? 1'b0 : 1'bz;\n    sync2 #(.WIDTH(2), .RESET_VALUE(2'b11)) u_sync (.clk(clk), .rst(rst), .d({TMP_SCL, TMP_SDA}), .q(lines));\n    sync2 #(.WIDTH(1), .RESET_VALUE(1'b1)) u_int (.clk(clk), .rst(rst), .d(TMP_INT), .q(int_n));\n\n    talm_ctl #(.QUARTER(QUARTER), .PERIOD_CYCLES(PERIOD_CYCLES)) u_ctl (\n        .clk(clk), .rst(rst), .scl_in(lines[1]), .sda_in(lines[0]), .scl_oe(scl_oe), .sda_oe(sda_oe),\n        .alarm(!int_n),\n        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));\n\n    always_ff @(posedge clk) begin\n        if (rst) LED <= '0;\n        else     LED <= {15'd0, !int_n};\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 164,
+    "name": "talm_ctl.sv",
+    "path": "benchmark/tasks/t2_adt7420_alarm/ref/rtl/talm_ctl.sv",
+    "sha256": "94f2c7d12e5a",
+    "text": "// talm_ctl.sv: ADT7420 alarm monitor. Configure: CONFIG = 0x90 (16-bit,\n// comparator, INT active low), T_HIGH, T_LOW. Then a reading every\n// PERIOD_CYCLES: pointer 0x00, repeated START, two bytes. MAX/MIN/SAMPLES.\nmodule talm_ctl #(\n    parameter int QUARTER       = 250,\n    parameter int PERIOD_CYCLES = 25_000_000\n) (\n    input  logic        clk,\n    input  logic        rst,\n    input  logic        scl_in,\n    input  logic        sda_in,\n    output logic        scl_oe,\n    output logic        sda_oe,\n    input  logic        alarm,          // synchronised, active high\n    input  logic [6:0]  win_addr,\n    input  logic        win_wr,\n    input  logic        win_rd,\n    input  logic [31:0] win_wdata,\n    output logic [31:0] win_rdata\n);\n    localparam logic [2:0] S = 3'd1, W = 3'd2, R = 3'd3, P = 3'd4;\n    localparam logic [7:0] AW = 8'h96, AR = 8'h97, CONFIG_VAL = 8'h90;\n    localparam int PW = $clog2(PERIOD_CYCLES + 1);\n\n    typedef enum logic [2:0] {IDLE, ISSUE, WAIT1, WAIT, ABORT, ABORT_W} st_t;\n    st_t st;\n\n    logic        go, cbusy, cnack, configured, valid, nack, busy, reading;\n    logic [2:0]  op;\n    logic [7:0]  wd, rx, msb;\n    logic        rn, last;\n    logic [4:0]  step;\n    logic [15:0] thigh, tlow, temp, tmax, tmin;\n    logic [31:0] samples;\n    logic [PW-1:0] pc;\n    logic        pend;\n\n    tm_i2c_core #(.QUARTER(QUARTER)) u_i2c (\n        .clk(clk), .rst(rst), .go(go), .op(op), .wdata(wd), .rnack(rn), .scl_in(scl_in), .sda_in(sda_in),\n        .scl_oe(scl_oe), .sda_oe(sda_oe), .busy(cbusy), .owned(), .nack(cnack), .rxdata(rx));\n\n    // the two programs: configure (17 steps) and reading (8 steps)\n    always_comb begin\n        op = P; wd = 8'h00; rn = 1'b0; last = 1'b0;\n        if (!reading) begin\n            case (step)\n                5'd0:  op = S;\n                5'd1:  begin op = W; wd = AW; end\n                5'd2:  begin op = W; wd = 8'h03; end\n                5'd3:  begin op = W; wd = CONFIG_VAL; end\n                5'd4:  op = P;\n                5'd5:  op = S;\n                5'd6:  begin op = W; wd = AW; end\n                5'd7:  begin op = W; wd = 8'h04; end\n                5'd8:  begin op = W; wd = thigh[15:8]; end\n                5'd9:  begin op = W; wd = thigh[7:0]; end\n                5'd10: op = P;\n                5'd11: op = S;\n                5'd12: begin op = W; wd = AW; end\n                5'd13: begin op = W; wd = 8'h06; end\n                5'd14: begin op = W; wd = tlow[15:8]; end\n                5'd15: begin op = W; wd = tlow[7:0]; end\n                default: begin op = P; last = 1'b1; end\n            endcase\n        end else begin\n            case (step)\n                5'd0: op = S;\n                5'd1: begin op = W; wd = AW; end\n                5'd2: begin op = W; wd = 8'h00; end\n                5'd3: op = S;                                 // repeated START (the bus is owned)\n                5'd4: begin op = W; wd = AR; end\n                5'd5: begin op = R; rn = 1'b0; end\n                5'd6: begin op = R; rn = 1'b1; end\n                default: begin op = P; last = 1'b1; end\n            endcase\n        end\n    end\n\n    wire start_cfg = win_wr && win_addr == 7'h00 && win_wdata[0] && !busy;\n\n    // reading timer: from the start of the previous reading\n    always_ff @(posedge clk) begin\n        if (rst || !configured) begin\n            pc <= '0; pend <= 1'b0;\n        end else if (st == IDLE && pend && !start_cfg) begin\n            pc <= '0; pend <= 1'b0;\n        end else if (pc == PW'(PERIOD_CYCLES - 1)) begin\n            pc <= '0; pend <= 1'b1;\n        end else begin\n            pc <= pc + 1'b1;\n        end\n    end\n\n    always_ff @(posedge clk) begin\n        go <= 1'b0;\n        if (rst) begin\n            st <= IDLE; step <= '0; reading <= 1'b0; busy <= 1'b0; configured <= 1'b0; valid <= 1'b0;\n            nack <= 1'b0; thigh <= 16'h2000; tlow <= 16'h0500; temp <= '0; tmax <= '0; tmin <= '0;\n            samples <= '0; msb <= '0;\n        end else begin\n            if (win_wr && win_addr == 7'h02) thigh <= win_wdata[15:0];\n            if (win_wr && win_addr == 7'h03) tlow  <= win_wdata[15:0];\n            case (st)\n                IDLE: if (start_cfg) begin\n                    busy <= 1'b1; reading <= 1'b0; step <= '0; configured <= 1'b0;\n                    valid <= 1'b0; nack <= 1'b0; temp <= '0; tmax <= '0; tmin <= '0; samples <= '0;\n                    st <= ISSUE;\n                end else if (configured && pend) begin\n                    busy <= 1'b1; reading <= 1'b1; step <= '0; st <= ISSUE;\n                end\n                ISSUE: begin go <= 1'b1; st <= WAIT1; end\n                WAIT1: st <= WAIT;\n                WAIT: if (!cbusy) begin\n                    if (op == W && cnack) begin\n                        nack <= 1'b1;\n                        st <= ABORT;\n                    end else if (last) begin\n                        st <= IDLE; busy <= 1'b0;\n                        if (!reading) configured <= 1'b1;\n                    end else begin\n                        if (reading && step == 5'd5) msb <= rx;\n                        if (reading && step == 5'd6) begin\n                            temp <= {msb, rx};\n                            samples <= samples + 1'b1;\n                            valid <= 1'b1;\n                            if (!valid || $signed({msb, rx}) > $signed(tmax)) tmax <= {msb, rx};\n                            if (!valid || $signed({msb, rx}) < $signed(tmin)) tmin <= {msb, rx};\n                        end\n                        step <= step + 1'b1;\n                        st <= ISSUE;\n                    end\n                end\n                // a NACK: STOP, then end this program (a configure still completes its remaining transactions)\n                ABORT: begin\n                    if (!reading && step < 5'd11) begin\n                        step <= (step < 5'd5) ? 5'd4 : 5'd10;     // the STOP of this transaction, then go on\n                        st <= ISSUE;\n                    end else begin\n                        step <= 5'd16;                           // the final STOP\n                        if (reading) step <= 5'd7;\n                        st <= ISSUE;\n                    end\n                end\n                default: st <= IDLE;\n            endcase\n        end\n    end\n\n    always_ff @(posedge clk) begin\n        if (rst) win_rdata <= '0;\n        else if (win_rd) begin\n            case (win_addr)\n                7'h01:   win_rdata <= {27'd0, alarm, nack, valid, configured, busy};\n                7'h02:   win_rdata <= {16'd0, thigh};\n                7'h03:   win_rdata <= {16'd0, tlow};\n                7'h04:   win_rdata <= {16'd0, temp};\n                7'h05:   win_rdata <= {16'd0, tmax};\n                7'h06:   win_rdata <= {16'd0, tmin};\n                7'h07:   win_rdata <= samples;\n                default: win_rdata <= '0;\n            endcase\n        end\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 105,
+    "name": "tm_i2c_core.sv",
+    "path": "benchmark/tasks/t2_adt7420_alarm/ref/rtl/tm_i2c_core.sv",
+    "sha256": "0202f985bc52",
+    "text": "// tm_i2c_core.sv: byte-command I2C master (open drain). One command at a time:\n// START (repeated START when the bus is owned), WRITE byte, READ byte, STOP.\n// Q = QUARTER clocks. Every SCL high time counts from SCL seen high, so a\n// slave that stretches the clock is waited for.\nmodule tm_i2c_core #(\n    parameter int QUARTER = 250\n) (\n    input  logic       clk,\n    input  logic       rst,\n    input  logic       go,          // one clock; ignored while busy\n    input  logic [2:0] op,\n    input  logic [7:0] wdata,\n    input  logic       rnack,\n    input  logic       scl_in,      // synchronised bus levels\n    input  logic       sda_in,\n    output logic       scl_oe,      // 1 = pull low\n    output logic       sda_oe,\n    output logic       busy,\n    output logic       owned,\n    output logic       nack,\n    output logic [7:0] rxdata\n);\n    localparam logic [2:0] OP_START = 3'd1, OP_WRITE = 3'd2, OP_READ = 3'd3, OP_STOP = 3'd4;\n    localparam int CW = $clog2(2 * QUARTER + 1);\n\n    typedef enum logic [3:0] {\n        IDLE, S1, S2, R1, R2, R3, R4, B1, B2, B3, P1, P2, P3\n    } st_t;\n    st_t st;\n\n    logic [CW-1:0] cnt;\n    logic [3:0]    k;               // bit 0..8 of a byte command\n    logic          rd, ack_n;\n    logic [7:0]    sh;\n\n    localparam logic [CW-1:0] Q1 = CW'(QUARTER - 1), Q2 = CW'(2 * QUARTER - 1);\n\n    always_ff @(posedge clk) begin\n        if (rst) begin\n            st <= IDLE; cnt <= '0; k <= '0; rd <= 1'b0; ack_n <= 1'b0; sh <= '0;\n            scl_oe <= 1'b0; sda_oe <= 1'b0; busy <= 1'b0; owned <= 1'b0; nack <= 1'b0; rxdata <= '0;\n        end else begin\n            case (st)\n                IDLE: if (go) begin\n                    case (op)\n                        OP_START: begin\n                            busy <= 1'b1;\n                            if (owned) begin st <= R1; sda_oe <= 1'b0; cnt <= Q1; end\n                            else       begin st <= S1; sda_oe <= 1'b1; cnt <= Q2; end\n                        end\n                        OP_WRITE, OP_READ: if (owned) begin\n                            busy <= 1'b1;\n                            st <= B1; k <= '0; rd <= op == OP_READ; ack_n <= rnack; sh <= wdata;\n                            sda_oe <= (op == OP_WRITE) ? !wdata[7] : 1'b0;\n                            cnt <= Q1;\n                        end\n                        OP_STOP: if (owned) begin\n                            busy <= 1'b1;\n                            st <= P1; sda_oe <= 1'b1; cnt <= Q1;\n                        end\n                        default: ;\n                    endcase\n                end\n                // START on a free bus: SDA low (2Q), SCL low (Q)\n                S1: if (cnt == '0) begin st <= S2; scl_oe <= 1'b1; cnt <= Q1; end else cnt <= cnt - 1'b1;\n                S2: if (cnt == '0) begin st <= IDLE; busy <= 1'b0; owned <= 1'b1; end else cnt <= cnt - 1'b1;\n                // repeated START\n                R1: if (cnt == '0) begin st <= R2; scl_oe <= 1'b0; cnt <= Q2; end else cnt <= cnt - 1'b1;\n                R2: if (!scl_in) cnt <= Q2;\n                    else if (cnt == '0) begin st <= R3; sda_oe <= 1'b1; cnt <= Q2; end\n                    else cnt <= cnt - 1'b1;\n                R3: if (cnt == '0) begin st <= R4; scl_oe <= 1'b1; cnt <= Q1; end else cnt <= cnt - 1'b1;\n                R4: if (cnt == '0) begin st <= IDLE; busy <= 1'b0; end else cnt <= cnt - 1'b1;\n                // one bit of WRITE / READ: SDA set (Q), SCL high (2Q, sample), SCL low (Q)\n                B1: if (cnt == '0) begin st <= B2; scl_oe <= 1'b0; cnt <= Q2; end else cnt <= cnt - 1'b1;\n                B2: if (!scl_in) cnt <= Q2;\n                    else if (cnt == '0) begin\n                        st <= B3; scl_oe <= 1'b1; cnt <= Q1;\n                        if (k == 4'd8) begin\n                            if (!rd) nack <= sda_in;\n                        end else begin\n                            sh <= {sh[6:0], sda_in};\n                        end\n                    end else cnt <= cnt - 1'b1;\n                B3: if (cnt == '0) begin\n                        if (k == 4'd8) begin\n                            st <= IDLE; busy <= 1'b0;\n                            if (rd) rxdata <= sh;\n                        end else begin\n                            st <= B1; k <= k + 1'b1; cnt <= Q1;\n                            if (k == 4'd7) sda_oe <= rd ? !ack_n : 1'b0;          // the ACK bit\n                            else           sda_oe <= rd ? 1'b0 : !sh[7];           // sh already shifted\n                        end\n                    end else cnt <= cnt - 1'b1;\n                // STOP: SDA low (Q), SCL high (2Q), SDA released (2Q)\n                P1: if (cnt == '0) begin st <= P2; scl_oe <= 1'b0; cnt <= Q2; end else cnt <= cnt - 1'b1;\n                P2: if (!scl_in) cnt <= Q2;\n                    else if (cnt == '0) begin st <= P3; sda_oe <= 1'b0; cnt <= Q2; end\n                    else cnt <= cnt - 1'b1;\n                P3: if (cnt == '0) begin st <= IDLE; busy <= 1'b0; owned <= 1'b0; end else cnt <= cnt - 1'b1;\n                default: st <= IDLE;\n            endcase\n        end\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 194,
+    "name": "acceptance.py",
+    "path": "benchmark/tasks/t2_adt7420_alarm/hidden/acceptance.py",
+    "sha256": "f390b3cbc47d",
+    "text": "\"\"\"Acceptance tests of t2_adt7420_alarm against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom cocotb.utils import get_sim_time\nfrom benchmark.lib.bench import Board, peek\nfrom benchmark.lib.i2c_devices import Adt7420, I2cBus\nfrom model import ALARM, BUSY, CTRL, DESIGN_ID, MAX, MIN, SAMPLES, STATUS, TEMP, THIGH, TLOW, Model\n\nREADING_LEN = 8                                   # log entries of one reading\n\n\n# v1.2: SCL high time is 2Q to 2Q + SYNC_SLACK clocks. The spec says wait until SCL is seen high through a two-flop\n# synchroniser, then 2Q: 2-3 clocks of synchroniser plus 1-3 of state and registered-output latency; 8 allows for that.\nSYNC_SLACK = 8\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, {\"dev_scl_pull\": 0, \"dev_sda_pull\": 0, \"TMP_INT\": 1})\n        self.dut, self.m = dut, Model()\n        self.q = self.b.param(\"QUARTER\")\n        self.period = self.b.param(\"PERIOD_CYCLES\")\n\n    async def start(self, temp_q7: int = 0x0D87, present: bool = True) -> None:\n        await self.b.start()\n        self.dev = Adt7420(temp_q7, int_pin=self.dut.TMP_INT)\n        self.bus = I2cBus(self.dut, [self.dev] if present else [])\n        self.present = present\n        self.pos = 0                               # log entries already checked\n        self.done_at: list[int] = []               # clock at which each reading was seen complete\n\n    def take(self, n: int) -> list[tuple]:\n        seg = self.bus.log[self.pos:self.pos + n]\n        self.pos += n\n        return seg\n\n    async def configure(self) -> None:\n        await self.b.write(CTRL, 1)\n        want = self.m.configure(self.present)\n        await self.b.cycles(40 * 9 * (4 * self.q + 4))\n        got = self.take(len(want))\n        assert got == want, f\"configure: bus {got} != model {want}\"\n        assert not self.bus.errors, self.bus.errors[:3]\n\n    async def readings(self, n: int) -> None:\n        \"\"\"Wait for ``n`` more readings (each checked against the model as it ends).\"\"\"\n        per = READING_LEN if self.present else 3\n        for _ in range(n):\n            while len(self.bus.log) < self.pos + per:\n                await self.b.cycles(50)\n            code = (self.dev.temp_q7 & 0xFFFF) if self.present else None\n            want = self.m.reading(code)\n            got = self.take(per)\n            assert got == want, f\"reading: bus {got} != model {want}\"\n            self.done_at.append(int(get_sim_time(\"ns\")) // 10)\n        assert not self.bus.errors, self.bus.errors[:3]\n\n    async def regs(self, offs=(STATUS, TEMP, MAX, MIN, SAMPLES)) -> None:\n        \"\"\"Right after a reading: the registers (read before the next reading is due).\"\"\"\n        for off in offs:\n            got = await self.b.read(off)\n            want = self.m.read(off)\n            if off == STATUS:\n                got &= ~BUSY\n            assert got == want, f\"window 0x{off:02X}: RTL 0x{got:08X}, model 0x{want:08X}\"\n\n\n@cocotb.test(timeout_time=1588660, timeout_unit=\"ns\")\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    for off in (CTRL, STATUS, THIGH, TLOW, TEMP, MAX, MIN, SAMPLES, 0x08, 0x7F):\n        await e.b.expect(off, e.m.read(off), f\"window 0x{off:02X}\")\n    await e.b.cycles(2 * e.period)\n    assert e.bus.log == [], \"I2C traffic before the configure command\"\n\n\n@cocotb.test(timeout_time=1388600, timeout_unit=\"ns\")\nasync def test_configure_sequence(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(THIGH, 0x0F80)                # 31 C\n    e.m.write(THIGH, 0x0F80)\n    await e.b.write(TLOW, 0xFF00)                 # -2 C\n    e.m.write(TLOW, 0xFF00)\n    await e.configure()\n    assert e.dev.regs[0x03] == 0x90 and (e.dev.regs[0x04], e.dev.regs[0x05]) == (0x0F, 0x80) \\\n        and (e.dev.regs[0x06], e.dev.regs[0x07]) == (0xFF, 0x00), \"sensor registers after configure\"\n    await e.readings(1)\n    await e.regs()\n\n\n@cocotb.test(timeout_time=1610880, timeout_unit=\"ns\")\nasync def test_full_16bit_resolution(dut):\n    \"\"\"Trap: the textbook reads the sensor in its power-on 13-bit mode; here CONFIG bit 7 selects 16 bits, so the\n    three low bits of a reading are temperature (0x0D87 = 27.05 C), not the 13-bit mode's limit flags.\"\"\"\n    e = Env(dut)\n    await e.start(temp_q7=0x0D87)\n    await e.configure()\n    await e.readings(1)\n    await e.regs((TEMP,))\n    e.dev.set_temp(-0x0123)                       # a negative reading with odd low bits\n    await e.readings(1)\n    await e.regs((TEMP,))\n    await e.readings(1)\n    await e.regs((TEMP, MAX, MIN))\n\n\n@cocotb.test(timeout_time=2639440, timeout_unit=\"ns\")\nasync def test_max_min_samples(dut):\n    e = Env(dut)\n    await e.start(temp_q7=0x0C00)\n    await e.configure()\n    for t in (0x0C00, 0x0C81, 0xFF7F, 0x0001, 0x8000, 0x7FFF, 0x0C00):\n        e.dev.set_temp(t - 0x10000 if t & 0x8000 else t)\n        await e.readings(1)\n    gaps = [b - a for a, b in zip(e.done_at, e.done_at[1:])]\n    assert all(abs(g - e.period) <= 60 for g in gaps), f\"readings {gaps} clocks apart, PERIOD_CYCLES {e.period}\"\n    await e.regs()\n    await e.configure()                           # restarts the statistics\n    await e.readings(1)\n    await e.regs()\n\n\n@cocotb.test(timeout_time=1746300, timeout_unit=\"ns\")\nasync def test_alarm_follows_int(dut):\n    e = Env(dut)\n    await e.start(temp_q7=25 * 128)\n    await e.b.write(THIGH, 30 * 128)\n    e.m.write(THIGH, 30 * 128)\n    await e.configure()\n    await e.readings(1)\n    await e.regs((STATUS,))\n    assert await peek(e.b.clk, dut.LED) == 0\n    e.dev.set_temp(31 * 128)                      # above T_HIGH: the sensor pulls INT low\n    e.m.alarm = True\n    await e.b.cycles(10)\n    assert int(dut.TMP_INT.value) == 0, \"device model: INT should be active (low)\"\n    assert await peek(e.b.clk, dut.LED) == 1, \"LED0 does not show the alarm\"\n    await e.readings(1)\n    await e.regs((STATUS,))\n    e.dev.set_temp(27 * 128)                      # still above T_HIGH - T_HYST (5 C): INT stays active\n    await e.readings(1)\n    await e.regs((STATUS,))\n    e.dev.set_temp(24 * 128)                      # below T_HIGH - T_HYST: INT released\n    e.m.alarm = False\n    await e.b.cycles(10)\n    assert await peek(e.b.clk, dut.LED) == 0\n    await e.readings(1)\n    await e.regs((STATUS,))\n\n\n@cocotb.test(timeout_time=1468880, timeout_unit=\"ns\")\nasync def test_missing_sensor_nack(dut):\n    e = Env(dut)\n    await e.start(present=False)\n    await e.configure()\n    await e.readings(2)\n    await e.regs()\n\n\n@cocotb.test(timeout_time=1505880, timeout_unit=\"ns\")\nasync def test_clock_stretching(dut):\n    e = Env(dut)\n    await e.start()\n    await e.configure()\n    e.bus.stretch_next = 500\n    await e.readings(1)\n    e.bus.stretch_next = 300\n    await e.readings(1)\n    await e.regs()\n    hi = 2 * e.q\n    assert all(hi <= h <= hi + SYNC_SLACK for h in e.bus.high), f\"SCL high times {sorted(set(e.bus.high))}, 2Q = {hi}\"\n\n\n@cocotb.test(timeout_time=2004240, timeout_unit=\"ns\")\nasync def test_random_temperatures(dut):\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    e = Env(dut)\n    await e.start(temp_q7=rng.randrange(-40 * 128, 125 * 128))\n    v = rng.randrange(1 << 16)\n    await e.b.write(TLOW, v)\n    e.m.write(TLOW, v)\n    await e.b.expect(TLOW, e.m.read(TLOW), \"TLOW\")\n    await e.configure()\n    for _ in range(5):\n        e.dev.set_temp(rng.randrange(-40 * 128, 125 * 128))\n        await e.readings(1)\n    await e.regs((TEMP, MAX, MIN, SAMPLES))\n"
+   }
+  ]
+ },
+ "heading": "Temperature alarm with the on-board ADT7420",
+ "id": "t2_adt7420_alarm",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868,
+   "PERIOD_CYCLES": 25000000,
+   "QUARTER": 250,
+   "TIMEOUT_CYCLES": 100000
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "inout",
+    "name": "TMP_SCL",
+    "note": "open drain - drive 0 or high-Z only",
+    "width": 1
+   },
+   {
+    "dir": "inout",
+    "name": "TMP_SDA",
+    "note": "open drain - drive 0 or high-Z only",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "TMP_INT",
+    "note": "sensor INT, open drain, no board pull-up - enable the FPGA pull-up (PULLUP true in the XDC)",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   }
+  ],
+  "registers": [
+   {
+    "access": "WO",
+    "bits": "[0] write 1 to configure; reads return 0",
+    "name": "CTRL",
+    "offset": "0x00"
+   },
+   {
+    "access": "RO",
+    "bits": "[0] BUSY, [1] CONFIGURED, [2] VALID, [3] NACK, [4] ALARM; [31:5] 0",
+    "name": "STATUS",
+    "offset": "0x01"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] T_HIGH in the sensor's 16-bit format (0x2000 = 64 C); [31:16] read 0",
+    "name": "THIGH",
+    "offset": "0x02"
+   },
+   {
+    "access": "RW",
+    "bits": "[15:0] T_LOW (0x0500 = 10 C); [31:16] read 0",
+    "name": "TLOW",
+    "offset": "0x03"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] last raw reading (16-bit mode - two's complement, 1/128 C); [31:16] 0",
+    "name": "TEMP",
+    "offset": "0x04"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] highest reading since configure",
+    "name": "MAX",
+    "offset": "0x05"
+   },
+   {
+    "access": "RO",
+    "bits": "[15:0] lowest reading since configure",
+    "name": "MIN",
+    "offset": "0x06"
+   },
+   {
+    "access": "RO",
+    "bits": "[31:0] readings since configure",
+    "name": "SAMPLES",
+    "offset": "0x07"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: registers to reset values; no I2C traffic until a configure command; both lines released",
+  "top": "t2_adt7420_alarm_top",
+  "unmapped": "offsets 0x08-0x7F read 0; writes to them and to RO registers are ignored"
+ },
+ "mutants": [
+  {
+   "file": "talm_ctl.sv",
+   "name": "interrupt_mode",
+   "why": "INT left in interrupt mode (CONFIG bit 4 clear)"
+  },
+  {
+   "file": "talm_ctl.sv",
+   "name": "limits_swapped",
+   "why": "T_HIGH written to the T_LOW register"
+  },
+  {
+   "file": "talm_ctl.sv",
+   "name": "stop_before_read",
+   "why": "a STOP instead of the repeated START (the sensor loses its pointer)"
+  },
+  {
+   "file": "talm_ctl.sv",
+   "name": "max_unsigned",
+   "why": "MAX compared unsigned (negative readings look hot)"
+  },
+  {
+   "file": "talm_ctl.sv",
+   "name": "min_not_seeded",
+   "why": "MIN starts from 0, not the first reading"
+  },
+  {
+   "file": "t2_adt7420_alarm_top.sv",
+   "name": "alarm_active_high",
+   "why": "ALARM taken as active high"
+  },
+  {
+   "file": "talm_ctl.sv",
+   "name": "nack_ignored",
+   "why": "a NACK neither aborts nor is reported"
+  },
+  {
+   "file": "talm_ctl.sv",
+   "name": "byte_order",
+   "why": "MSB and LSB swapped in TEMP"
+  },
+  {
+   "file": "talm_ctl.sv",
+   "name": "period_double",
+   "why": "readings twice as far apart"
+  }
+ ],
+ "no_shell": false,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/tasks/t2_adt7420_alarm",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Configure writes CONFIG 0x90, T_HIGH and T_LOW in that order"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "Readings use a repeated START and keep the full 16-bit value"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "MAX, MIN, SAMPLES and VALID follow the readings; NACKs are reported and discard the reading"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "text": "ALARM and LED0 follow TMP_INT, active low"
+  },
+  {
+   "id": "REQ-05",
+   "proof": [
+    "hardware"
+   ],
+   "text": "On the board the reading is a plausible room temperature with odd low bits seen over time"
+  },
+  {
+   "id": "REQ-06",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz with no unconstrained path"
+  }
+ ],
+ "resources_expected": "a few hundred LUTs and FFs; no BRAM, no DSP",
+ "runs": [],
+ "scope": null,
+ "set": "v1",
+ "showcase": false,
+ "spec_md": "# Temperature alarm with the on-board ADT7420\n\nUsing the Nexys A7-100T's ADT7420 temperature sensor (I2C on TMP_SCL / TMP_SDA, address 0x4B), I want a\ntemperature monitor with a hardware alarm.\n\n- On a configure command, set the sensor to its high-resolution 16-bit mode with the interrupt pin in comparator\n  mode, active low, and load its high and low limits from two registers I write beforehand (raw sensor format).\n- After that, read the temperature regularly (a parameter gives the period in clocks) and keep the raw 16-bit\n  reading, the highest and lowest readings since configuring, and a count of readings.\n- The alarm is the sensor's own TMP_INT pin: show it in a status bit and on LED0.\n- Report I2C failures (no acknowledge) in the status.\n- The usual open-drain care on the bus; the sensor may stretch the clock. SCL speed from a parameter giving a\n  quarter of the SCL period in clocks (100 kHz on the board).\n- Through the test shell; design ID \"TALM\".\n\nTest hooks: top module `t2_adt7420_alarm_top`, ports named as in the board's master XDC (`TMP_SCL`, `TMP_SDA`,\n`TMP_INT`, `LED`, the USB-UART pins, `CLK100MHZ`, `CPU_RESETN`), the test shell's `CLKS_PER_BIT`,\n`TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `QUARTER` (a quarter of the SCL period, in clocks) and\n`PERIOD_CYCLES` (clocks between temperature readings) as top-level parameters.\n",
+ "survey": [
+  "F09",
+  "K15",
+  "L15"
+ ],
+ "tier": "T2",
+ "title": "ADT7420 16-bit temperature monitor with a comparator-mode alarm",
+ "trace": {
+  "captions": [
+   "Event 0: START on the bus.",
+   "Event 1: Address byte 0x96 (write to 0x4b): acknowledged.",
+   "Event 2: Write 0x03: selects the CONFIG register.",
+   "Event 3: Write 0x90: data for the CONFIG register.",
+   "Event 4: STOP.",
+   "Event 5: START on the bus.",
+   "Event 6: Address byte 0x96 (write to 0x4b): acknowledged.",
+   "Event 7: Write 0x04: selects the T_HIGH register.",
+   "Event 8: Write 0x20: data for the T_HIGH register.",
+   "Event 9: Write 0x00: data for the T_HIGH register.",
+   "Event 10: STOP.",
+   "Event 11: START on the bus.",
+   "Event 12: Address byte 0x96 (write to 0x4b): acknowledged.",
+   "Event 13: Write 0x06: selects the T_LOW register.",
+   "Event 14: Write 0x05: data for the T_LOW register.",
+   "Event 15: Write 0x00: data for the T_LOW register.",
+   "Event 16: STOP.",
+   "Event 17: START on the bus.",
+   "Event 18: Address byte 0x96 (write to 0x4b): acknowledged.",
+   "Event 19: Write 0x00: selects the temperature register.",
+   "Event 20: Repeated START, with no STOP, so the sensor keeps its register pointer.",
+   "Event 21: Address byte 0x97 (read from 0x4b): acknowledged.",
+   "Event 22: Read 0x0c, answered with ACK, one more byte to come.",
+   "Event 23: Read 0x80, answered with NACK, the last byte.",
+   "Event 24: STOP. The reading is stored: TEMP 0C80, highest 0C80, lowest 0C80, readings so far 1, alarm off.",
+   "Event 25: START on the bus.",
+   "Event 26: Address byte 0x96 (write to 0x4b): acknowledged.",
+   "Event 27: Write 0x00: selects the temperature register.",
+   "Event 28: Repeated START, with no STOP, so the sensor keeps its register pointer.",
+   "Event 29: Address byte 0x97 (read from 0x4b): acknowledged.",
+   "Event 30: Read 0x21, answered with ACK, one more byte to come.",
+   "Event 31: Read 0x00, answered with NACK, the last byte.",
+   "Event 32: STOP. The reading is stored: TEMP 2100, highest 2100, lowest 0C80, readings so far 2, alarm on.",
+   "Event 33: START on the bus.",
+   "Event 34: Address byte 0x96 (write to 0x4b): acknowledged.",
+   "Event 35: Write 0x00: selects the temperature register.",
+   "Event 36: Repeated START, with no STOP, so the sensor keeps its register pointer.",
+   "Event 37: Address byte 0x97 (read from 0x4b): acknowledged.",
+   "Event 38: Read 0x0a, answered with ACK, one more byte to come.",
+   "Event 39: Read 0x00, answered with NACK, the last byte.",
+   "Event 40: STOP. The reading is stored: TEMP 0A00, highest 2100, lowest 0A00, readings so far 3, alarm off."
+  ],
+  "signals": [
+   {
+    "kind": "text",
+    "name": "bus",
+    "v": [
+     "START",
+     "address W",
+     "pointer",
+     "data",
+     "STOP",
+     "START",
+     "address W",
+     "pointer",
+     "data",
+     "data",
+     "STOP",
+     "START",
+     "address W",
+     "pointer",
+     "data",
+     "data",
+     "STOP",
+     "START",
+     "address W",
+     "pointer",
+     "repeated START",
+     "address R",
+     "data read",
+     "data read",
+     "STOP",
+     "START",
+     "address W",
+     "pointer",
+     "repeated START",
+     "address R",
+     "data read",
+     "data read",
+     "STOP",
+     "START",
+     "address W",
+     "pointer",
+     "repeated START",
+     "address R",
+     "data read",
+     "data read",
+     "STOP"
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "byte",
+    "radix": "hex",
+    "v": [
+     0,
+     150,
+     3,
+     144,
+     0,
+     0,
+     150,
+     4,
+     32,
+     0,
+     0,
+     0,
+     150,
+     6,
+     5,
+     0,
+     0,
+     0,
+     150,
+     0,
+     0,
+     151,
+     12,
+     128,
+     0,
+     0,
+     150,
+     0,
+     0,
+     151,
+     33,
+     0,
+     0,
+     0,
+     150,
+     0,
+     0,
+     151,
+     10,
+     0,
+     0
+    ],
+    "width": 8
+   },
+   {
+    "kind": "bus",
+    "name": "TEMP",
+    "radix": "hex",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     8448,
+     8448,
+     8448,
+     8448,
+     8448,
+     8448,
+     8448,
+     8448,
+     2560
+    ],
+    "width": 16
+   },
+   {
+    "kind": "bus",
+    "name": "MAX",
+    "radix": "hex",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     8448,
+     8448,
+     8448,
+     8448,
+     8448,
+     8448,
+     8448,
+     8448,
+     8448
+    ],
+    "width": 16
+   },
+   {
+    "kind": "bus",
+    "name": "MIN",
+    "radix": "hex",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     3200,
+     2560
+    ],
+    "width": 16
+   },
+   {
+    "kind": "bus",
+    "name": "SAMPLES",
+    "radix": "dec",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     3
+    ]
+   },
+   {
+    "kind": "bit",
+    "name": "ALARM",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     0
+    ]
+   }
+  ],
+  "stimulus": "The configure command writes three register blocks (CONFIG, T_HIGH, T_LOW) to the sensor, then the model takes 3 readings that the sensor returns as 0x0c80, 0x2100, 0x0a00. The sensor's INT pin is part of the stimulus: it is held active while a reading is above T_HIGH (comparator mode), and ALARM follows it.",
+  "unit": "bus event",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40
+  ]
+ },
+ "what": "A temperature monitor that talks over I2C to the sensor chip on the board. On a configure command it sets the sensor to its high-resolution mode and loads the high and low limits the user wrote beforehand. After that it reads the temperature at regular intervals and keeps the latest, highest and lowest readings and a count. The alarm is the sensor's own interrupt pin, shown in a status bit and on an LED, and any missing acknowledgement from the sensor is reported.",
+ "where": "Digital temperature sensors with a limit pin are used in computers, servers, power supplies and battery packs to raise an over-temperature alert without the processor polling. Thermal protection in an FPGA board or a data-centre server follows the same pattern."
+}

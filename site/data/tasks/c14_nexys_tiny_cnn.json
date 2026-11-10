@@ -1,0 +1,520 @@
+{
+ "assumptions": [],
+ "behaviour": [
+  [
+   "network",
+   [
+    "Exactly the course network: conv 3x3 1->4 with requantisation (acc*M1 + 2^(S1-1)) >>> S1 clamped to 0..127; 2x2 max-pool; conv 3x3 4->8 with requantisation by M2/S2 and clamp 0..127; dense 72->4 raw int32; class = argmax, lowest index on a tie.",
+    "Parameters and pictures: data/cnn_params.hex (612 weights, 16 biases, M1, S1, M2, S2) and data/cnn_images.hex (8 x 144 pixels).",
+    "Weight encoding: each of the 612 weights is a signed 8-bit two's complement number stored zero-extended in the low byte of its 32-bit word of cnn_params.hex (80..FF are negative, bit 7 is the sign); biases are 32-bit signed; M1, S1, M2, S2 are non-negative."
+   ]
+  ],
+  [
+   "board",
+   [
+    "SW[2:0] choose the picture; a debounced rising edge of BTNC (stable for DEBOUNCE_CYCLES clocks) classifies it.",
+    "When the answer is ready: the class digit (0..3) on the right-hand digit (AN = 8'hFE; segments 0x40, 0x79, 0x24, 0x30 active low as {CG..CA}); all segments off before the first answer; one letter H, V, B or X then 0x0A on UART_RXD_OUT at 115200 8N1.",
+    "The reference loads its parameter memories after reset (about 650 clocks) before it accepts a press (LED15 is its ready flag)."
+   ]
+  ],
+  [
+   "leds",
+   [
+    "The reference shows ready on LED15 and the class on LED[1:0]; the bench does not check the LEDs."
+   ]
+  ]
+ ],
+ "bench_parameters": {
+  "CLKS_PER_BIT": 8,
+  "DEBOUNCE_CYCLES": 20
+ },
+ "board": "nexys_a7_100t",
+ "check": {
+  "date": "2026-11-09",
+  "mutants": {
+   "argmin": {
+    "failed_tests": [
+     "test_pictures_0_to_3",
+     "test_pictures_4_to_7",
+     "test_glitch_is_not_a_press",
+     "test_reset_blanks_the_display"
+    ],
+    "killed": true
+   },
+   "debounce_ignored": {
+    "failed_tests": [
+     "test_glitch_is_not_a_press"
+    ],
+    "killed": true
+   },
+   "digit_pattern": {
+    "failed_tests": [
+     "test_pictures_4_to_7",
+     "test_glitch_is_not_a_press"
+    ],
+    "killed": true
+   },
+   "extra_shift": {
+    "failed_tests": [
+     "test_pictures_4_to_7"
+    ],
+    "killed": true
+   },
+   "letters_swapped": {
+    "failed_tests": [
+     "test_pictures_4_to_7",
+     "test_glitch_is_not_a_press"
+    ],
+    "killed": true
+   },
+   "min_pool": {
+    "failed_tests": [
+     "test_pictures_0_to_3",
+     "test_pictures_4_to_7",
+     "test_glitch_is_not_a_press",
+     "test_reset_blanks_the_display"
+    ],
+    "killed": true
+   },
+   "no_relu_clamp": {
+    "failed_tests": [
+     "test_pictures_0_to_3",
+     "test_pictures_4_to_7",
+     "test_reset_blanks_the_display"
+    ],
+    "killed": true
+   }
+  },
+  "path": "benchmark/course/results/c14_nexys_tiny_cnn__icarus.json",
+  "ref_pass": true,
+  "ref_tests": 5,
+  "sim": "icarus"
+ },
+ "data_files": [
+  "cnn_images.hex",
+  "cnn_params.hex"
+ ],
+ "difficulty": 3,
+ "domain": "I",
+ "files": {
+  "model": [
+   {
+    "lang": "python",
+    "lines": 66,
+    "name": "model.py",
+    "path": "benchmark/course/tasks/c14_nexys_tiny_cnn/hidden/model.py",
+    "sha256": "a6e10fd81a76",
+    "text": "\"\"\"Reference model for P14-1 (the Nexys tiny CNN). Standalone numpy: it rebuilds the integer network from cnn_params.hex and cnn_images.hex (the files the design loads) and\nevaluates it. Layout: 612 weights (conv1 36: [oc][ky][kx]; conv2 288: [oc][ic][ky][kx]; dense 288: [o][i], i = c*9 + y*3 + x), 16 int32 biases, then M1, S1, M2, S2.\"\"\"\nfrom pathlib import Path\n\nimport numpy as np\n\nHERE = Path(__file__).resolve().parent\nLETTERS = \"HVBX\"\n\n\ndef _s8(v):\n    return v - 256 if v >= 128 else v\n\n\ndef _s32(v):\n    return v - (1 << 32) if v >= (1 << 31) else v\n\n\ndef load():\n    p = [int(t, 16) for t in (HERE / \"cnn_params.hex\").read_text().split()]\n    w = np.array([_s8(v & 0xFF) for v in p[:612]], dtype=np.int64)\n    b = np.array([_s32(v) for v in p[612:628]], dtype=np.int64)\n    m1, s1, m2, s2 = p[628:632]\n    imgs = np.array([_s8(int(t, 16)) for t in (HERE / \"cnn_images.hex\").read_text().split()], dtype=np.int64).reshape(8, 12, 12)\n    return w, b, (m1, s1, m2, s2), imgs\n\n\ndef requant_relu(acc, m, s):\n    return np.clip((acc * m + (1 << (s - 1))) >> s, 0, 127)\n\n\ndef forward(img, w, b, cfg):\n    m1, s1, m2, s2 = cfg\n    w1, w2, w3 = w[:36].reshape(4, 3, 3), w[36:324].reshape(8, 4, 3, 3), w[324:].reshape(4, 72)\n    a1 = np.zeros((4, 10, 10), dtype=np.int64)\n    for oc in range(4):\n        for ky in range(3):\n            for kx in range(3):\n                a1[oc] += w1[oc, ky, kx] * img[ky:ky + 10, kx:kx + 10]\n        a1[oc] += b[oc]\n    a1 = requant_relu(a1, m1, s1)\n    p1 = a1.reshape(4, 5, 2, 5, 2).max(axis=(2, 4))\n    a2 = np.zeros((8, 3, 3), dtype=np.int64)\n    for oc in range(8):\n        for ic in range(4):\n            for ky in range(3):\n                for kx in range(3):\n                    a2[oc] += w2[oc, ic, ky, kx] * p1[ic, ky:ky + 3, kx:kx + 3]\n        a2[oc] += b[4 + oc]\n    a2 = requant_relu(a2, m2, s2)\n    return w3 @ a2.reshape(72) + b[12:16]\n\n\ndef reference_output():\n    w, b, cfg, imgs = load()\n    out = []\n    for k in range(8):\n        lg = forward(imgs[k], w, b, cfg)\n        cls = int(np.argmax(lg))                             # numpy picks the lowest index on a tie, as the design does\n        out.append({\"image\": k, \"logits\": [int(v) for v in lg], \"uart\": LETTERS[cls] + \"\\n\", \"digit\": cls})\n    return {\"images\": out}\n\n\n# ---- benchmark wrapper (from spec.yaml) ----\nDESIGN_ID = None\nSEG_OF = {0: 0x40, 1: 0x79, 2: 0x24, 3: 0x30}\n"
+   }
+  ],
+  "rtl": [
+   {
+    "lang": "systemverilog",
+    "lines": 22,
+    "name": "c14_nexys_tiny_cnn_top.sv",
+    "path": "benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/c14_nexys_tiny_cnn_top.sv",
+    "sha256": "81871b9b5ec6",
+    "text": "// c14_nexys_tiny_cnn_top.sv: board top (Nexys A7-100T, master-XDC port names) around the course reference's tiny CNN system.\nmodule c14_nexys_tiny_cnn_top #(\n    parameter int DEBOUNCE_CYCLES = 1_000_000,\n    parameter int CLKS_PER_BIT    = 868\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    input  logic        BTNC,\n    input  logic [15:0] SW,\n    output logic [7:0]  AN,\n    output logic        CA, CB, CC, CD, CE, CF, CG, DP,\n    output logic [15:0] LED,\n    input  logic        UART_TXD_IN,\n    output logic        UART_RXD_OUT\n);\n    logic [6:0] seg;\n    cnn_nexys_top_ref #(.DEBOUNCE_CYCLES(DEBOUNCE_CYCLES), .CLKS_PER_BIT(CLKS_PER_BIT)) u_ref (\n        .CLK100MHZ(CLK100MHZ), .CPU_RESETN(CPU_RESETN), .BTNC(BTNC), .SW(SW[2:0]), .AN(AN), .SEG(seg), .LED(LED),\n        .UART_RXD_OUT(UART_RXD_OUT));\n    assign {CG, CF, CE, CD, CC, CB, CA} = seg;\n    assign DP = 1'b1;\nendmodule\n"
+   },
+   {
+    "lang": "text",
+    "lines": 1784,
+    "name": "cnn_init.svh",
+    "path": "benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_init.svh",
+    "sha256": "df690054cc63",
+    "text": "prom[0] = 32'h00000022;\nprom[1] = 32'h0000002e;\nprom[2] = 32'h0000003d;\nprom[3] = 32'h000000e0;\nprom[4] = 32'h00000015;\nprom[5] = 32'h0000003f;\nprom[6] = 32'h000000fa;\nprom[7] = 32'h00000010;\nprom[8] = 32'h00000030;\nprom[9] = 32'h00000010;\nprom[10] = 32'h0000001a;\nprom[11] = 32'h00000025;\nprom[12] = 32'h000000d6;\nprom[13] = 32'h000000dd;\nprom[14] = 32'h000000db;\nprom[15] = 32'h0000002a;\nprom[16] = 32'h00000018;\nprom[17] = 32'h00000011;\nprom[18] = 32'h000000f1;\nprom[19] = 32'h000000e9;\nprom[20] = 32'h000000eb;\nprom[21] = 32'h00000037;\nprom[22] = 32'h00000054;\nprom[23] = 32'h0000004e;\nprom[24] = 32'h000000ee;\nprom[25] = 32'h000000d5;\nprom[26] = 32'h000000ea;\nprom[27] = 32'h0000003a;\nprom[28] = 32'h00000014;\nprom[29] = 32'h0000000f;\nprom[30] = 32'h00000076;\nprom[31] = 32'h000000f9;\nprom[32] = 32'h000000f6;\nprom[33] = 32'h0000007f;\nprom[34] = 32'h0000003e;\nprom[35] = 32'h0000002d;\nprom[36] = 32'h000000a9;\nprom[37] = 32'h0000008f;\nprom[38] = 32'h000000c0;\nprom[39] = 32'h000000dd;\nprom[40] = 32'h000000cc;\nprom[41] = 32'h000000b9;\nprom[42] = 32'h0000000d;\nprom[43] = 32'h00000018;\nprom[44] = 32'h00000012;\nprom[45] = 32'h000000e6;\nprom[46] = 32'h000000dd;\nprom[47] = 32'h000000cc;\nprom[48] = 32'h00000027;\nprom[49] = 32'h0000002e;\nprom[50] = 32'h00000020;\nprom[51] = 32'h00000015;\nprom[52] = 32'h00000053;\nprom[53] = 32'h0000003d;\nprom[54] = 32'h000000d4;\nprom[55] = 32'h000000af;\nprom[56] = 32'h000000d6;\nprom[57] = 32'h00000008;\nprom[58] = 32'h00000004;\nprom[59] = 32'h000000ed;\nprom[60] = 32'h0000002b;\nprom[61] = 32'h00000048;\nprom[62] = 32'h00000027;\nprom[63] = 32'h000000d6;\nprom[64] = 32'h000000de;\nprom[65] = 32'h000000d7;\nprom[66] = 32'h00000012;\nprom[67] = 32'h0000001f;\nprom[68] = 32'h0000000a;\nprom[69] = 32'h00000021;\nprom[70] = 32'h00000041;\nprom[71] = 32'h0000003c;\nprom[72] = 32'h0000001a;\nprom[73] = 32'h0000002b;\nprom[74] = 32'h00000016;\nprom[75] = 32'h00000036;\nprom[76] = 32'h00000003;\nprom[77] = 32'h000000e3;\nprom[78] = 32'h00000029;\nprom[79] = 32'h0000000b;\nprom[80] = 32'h00000015;\nprom[81] = 32'h00000042;\nprom[82] = 32'h00000004;\nprom[83] = 32'h000000f5;\nprom[84] = 32'h00000041;\nprom[85] = 32'h0000002e;\nprom[86] = 32'h00000005;\nprom[87] = 32'h0000003a;\nprom[88] = 32'h00000038;\nprom[89] = 32'h00000032;\nprom[90] = 32'h00000034;\nprom[91] = 32'h0000000e;\nprom[92] = 32'h00000003;\nprom[93] = 32'h0000001f;\nprom[94] = 32'h00000031;\nprom[95] = 32'h000000e3;\nprom[96] = 32'h00000042;\nprom[97] = 32'h0000003e;\nprom[98] = 32'h0000001b;\nprom[99] = 32'h0000003b;\nprom[100] = 32'h000000ff;\nprom[101] = 32'h0000000f;\nprom[102] = 32'h0000002b;\nprom[103] = 32'h0000001b;\nprom[104] = 32'h00000014;\nprom[105] = 32'h00000044;\nprom[106] = 32'h00000011;\nprom[107] = 32'h000000dc;\nprom[108] = 32'h00000028;\nprom[109] = 32'h000000cf;\nprom[110] = 32'h000000c6;\nprom[111] = 32'h000000ff;\nprom[112] = 32'h000000c9;\nprom[113] = 32'h000000d8;\nprom[114] = 32'h000000f0;\nprom[115] = 32'h000000c5;\nprom[116] = 32'h0000009d;\nprom[117] = 32'h0000001a;\nprom[118] = 32'h000000f5;\nprom[119] = 32'h000000fe;\nprom[120] = 32'h00000051;\nprom[121] = 32'h000000e1;\nprom[122] = 32'h000000c3;\nprom[123] = 32'h0000001e;\nprom[124] = 32'h00000037;\nprom[125] = 32'h000000bd;\nprom[126] = 32'h000000dc;\nprom[127] = 32'h0000000b;\nprom[128] = 32'h000000dd;\nprom[129] = 32'h000000e2;\nprom[130] = 32'h000000eb;\nprom[131] = 32'h000000ec;\nprom[132] = 32'h000000df;\nprom[133] = 32'h000000fe;\nprom[134] = 32'h000000e0;\nprom[135] = 32'h00000026;\nprom[136] = 32'h000000ee;\nprom[137] = 32'h000000de;\nprom[138] = 32'h00000045;\nprom[139] = 32'h000000d6;\nprom[140] = 32'h00000006;\nprom[141] = 32'h0000004c;\nprom[142] = 32'h000000d5;\nprom[143] = 32'h000000d3;\nprom[144] = 32'h0000001d;\nprom[145] = 32'h00000022;\nprom[146] = 32'h0000001e;\nprom[147] = 32'h00000025;\nprom[148] = 32'h0000003d;\nprom[149] = 32'h0000001c;\nprom[150] = 32'h00000023;\nprom[151] = 32'h00000023;\nprom[152] = 32'h00000028;\nprom[153] = 32'h000000a9;\nprom[154] = 32'h000000ca;\nprom[155] = 32'h00000011;\nprom[156] = 32'h000000ba;\nprom[157] = 32'h000000f4;\nprom[158] = 32'h000000b4;\nprom[159] = 32'h000000e5;\nprom[160] = 32'h00000005;\nprom[161] = 32'h000000da;\nprom[162] = 32'h000000e8;\nprom[163] = 32'h000000ec;\nprom[164] = 32'h000000e9;\nprom[165] = 32'h000000e7;\nprom[166] = 32'h0000000d;\nprom[167] = 32'h000000d8;\nprom[168] = 32'h000000d2;\nprom[169] = 32'h000000ec;\nprom[170] = 32'h000000e8;\nprom[171] = 32'h000000c5;\nprom[172] = 32'h0000002a;\nprom[173] = 32'h00000035;\nprom[174] = 32'h0000009e;\nprom[175] = 32'h00000042;\nprom[176] = 32'h0000002c;\nprom[177] = 32'h000000ad;\nprom[178] = 32'h0000001f;\nprom[179] = 32'h00000049;\nprom[180] = 32'h00000020;\nprom[181] = 32'h0000002b;\nprom[182] = 32'h00000015;\nprom[183] = 32'h00000045;\nprom[184] = 32'h0000001b;\nprom[185] = 32'h000000f2;\nprom[186] = 32'h000000e1;\nprom[187] = 32'h000000f6;\nprom[188] = 32'h000000d0;\nprom[189] = 32'h00000044;\nprom[190] = 32'h00000038;\nprom[191] = 32'h00000071;\nprom[192] = 32'h0000003e;\nprom[193] = 32'h000000e8;\nprom[194] = 32'h0000003b;\nprom[195] = 32'h000000e1;\nprom[196] = 32'h00000022;\nprom[197] = 32'h0000001b;\nprom[198] = 32'h00000053;\nprom[199] = 32'h0000003e;\nprom[200] = 32'h0000007f;\nprom[201] = 32'h00000074;\nprom[202] = 32'h00000037;\nprom[203] = 32'h0000005d;\nprom[204] = 32'h000000c3;\nprom[205] = 32'h000000ca;\nprom[206] = 32'h000000ae;\nprom[207] = 32'h00000031;\nprom[208] = 32'h000000f3;\nprom[209] = 32'h00000017;\nprom[210] = 32'h000000f9;\nprom[211] = 32'h000000e4;\nprom[212] = 32'h00000002;\nprom[213] = 32'h000000cf;\nprom[214] = 32'h000000db;\nprom[215] = 32'h000000c7;\nprom[216] = 32'h00000000;\nprom[217] = 32'h000000fe;\nprom[218] = 32'h000000cb;\nprom[219] = 32'h00000015;\nprom[220] = 32'h00000005;\nprom[221] = 32'h000000fb;\nprom[222] = 32'h0000000d;\nprom[223] = 32'h000000ff;\nprom[224] = 32'h000000cb;\nprom[225] = 32'h000000bb;\nprom[226] = 32'h000000ac;\nprom[227] = 32'h000000e3;\nprom[228] = 32'h000000ae;\nprom[229] = 32'h000000bc;\nprom[230] = 32'h000000e6;\nprom[231] = 32'h000000e6;\nprom[232] = 32'h000000c4;\nprom[233] = 32'h000000af;\nprom[234] = 32'h00000008;\nprom[235] = 32'h000000bd;\nprom[236] = 32'h000000d1;\nprom[237] = 32'h0000001b;\nprom[238] = 32'h000000b1;\nprom[239] = 32'h000000f6;\nprom[240] = 32'h0000001c;\nprom[241] = 32'h000000c6;\nprom[242] = 32'h000000ed;\nprom[243] = 32'h000000bd;\nprom[244] = 32'h00000049;\nprom[245] = 32'h000000d8;\nprom[246] = 32'h000000be;\nprom[247] = 32'h0000003a;\nprom[248] = 32'h000000d9;\nprom[249] = 32'h000000f0;\nprom[250] = 32'h00000021;\nprom[251] = 32'h000000e4;\nprom[252] = 32'h00000028;\nprom[253] = 32'h000000d4;\nprom[254] = 32'h000000ca;\nprom[255] = 32'h00000034;\nprom[256] = 32'h000000e1;\nprom[257] = 32'h000000c9;\nprom[258] = 32'h00000041;\nprom[259] = 32'h000000fa;\nprom[260] = 32'h000000bb;\nprom[261] = 32'h0000001a;\nprom[262] = 32'h000000d9;\nprom[263] = 32'h000000cf;\nprom[264] = 32'h00000016;\nprom[265] = 32'h000000d6;\nprom[266] = 32'h000000ef;\nprom[267] = 32'h000000f2;\nprom[268] = 32'h00000002;\nprom[269] = 32'h000000d2;\nprom[270] = 32'h00000005;\nprom[271] = 32'h000000f7;\nprom[272] = 32'h000000b9;\nprom[273] = 32'h00000038;\nprom[274] = 32'h000000b3;\nprom[275] = 32'h000000b4;\nprom[276] = 32'h00000002;\nprom[277] = 32'h000000e3;\nprom[278] = 32'h000000c9;\nprom[279] = 32'h00000028;\nprom[280] = 32'h00000039;\nprom[281] = 32'h000000d3;\nprom[282] = 32'h00000027;\nprom[283] = 32'h0000003e;\nprom[284] = 32'h000000d8;\nprom[285] = 32'h0000000e;\nprom[286] = 32'h00000018;\nprom[287] = 32'h000000dd;\nprom[288] = 32'h000000ce;\nprom[289] = 32'h000000d4;\nprom[290] = 32'h000000b9;\nprom[291] = 32'h0000002e;\nprom[292] = 32'h00000019;\nprom[293] = 32'h0000001c;\nprom[294] = 32'h00000006;\nprom[295] = 32'h00000016;\nprom[296] = 32'h000000f6;\nprom[297] = 32'h0000001f;\nprom[298] = 32'h00000039;\nprom[299] = 32'h000000fb;\nprom[300] = 32'h00000008;\nprom[301] = 32'h0000001c;\nprom[302] = 32'h00000014;\nprom[303] = 32'h0000000a;\nprom[304] = 32'h0000001f;\nprom[305] = 32'h00000019;\nprom[306] = 32'h00000024;\nprom[307] = 32'h00000009;\nprom[308] = 32'h0000000e;\nprom[309] = 32'h00000035;\nprom[310] = 32'h00000022;\nprom[311] = 32'h00000043;\nprom[312] = 32'h0000000b;\nprom[313] = 32'h0000000a;\nprom[314] = 32'h0000000a;\nprom[315] = 32'h00000008;\nprom[316] = 32'h000000df;\nprom[317] = 32'h000000fe;\nprom[318] = 32'h000000f0;\nprom[319] = 32'h00000039;\nprom[320] = 32'h0000001b;\nprom[321] = 32'h000000cd;\nprom[322] = 32'h000000d2;\nprom[323] = 32'h000000dc;\nprom[324] = 32'h00000030;\nprom[325] = 32'h00000029;\nprom[326] = 32'h0000002a;\nprom[327] = 32'h00000015;\nprom[328] = 32'h00000014;\nprom[329] = 32'h0000003a;\nprom[330] = 32'h00000047;\nprom[331] = 32'h00000033;\nprom[332] = 32'h00000038;\nprom[333] = 32'h000000de;\nprom[334] = 32'h00000010;\nprom[335] = 32'h000000fb;\nprom[336] = 32'h0000000b;\nprom[337] = 32'h00000021;\nprom[338] = 32'h000000c9;\nprom[339] = 32'h00000018;\nprom[340] = 32'h000000fd;\nprom[341] = 32'h0000000c;\nprom[342] = 32'h000000ab;\nprom[343] = 32'h000000af;\nprom[344] = 32'h000000ce;\nprom[345] = 32'h000000f9;\nprom[346] = 32'h000000ce;\nprom[347] = 32'h000000c3;\nprom[348] = 32'h000000ce;\nprom[349] = 32'h000000ce;\nprom[350] = 32'h000000cb;\nprom[351] = 32'h000000c7;\nprom[352] = 32'h000000ca;\nprom[353] = 32'h00000096;\nprom[354] = 32'h000000eb;\nprom[355] = 32'h000000b8;\nprom[356] = 32'h000000a6;\nprom[357] = 32'h000000b1;\nprom[358] = 32'h000000bb;\nprom[359] = 32'h00000090;\nprom[360] = 32'h0000004e;\nprom[361] = 32'h00000052;\nprom[362] = 32'h00000030;\nprom[363] = 32'h00000018;\nprom[364] = 32'h00000010;\nprom[365] = 32'h00000022;\nprom[366] = 32'h00000027;\nprom[367] = 32'h00000013;\nprom[368] = 32'h0000002e;\nprom[369] = 32'h00000008;\nprom[370] = 32'h000000f8;\nprom[371] = 32'h000000bb;\nprom[372] = 32'h000000ea;\nprom[373] = 32'h000000ed;\nprom[374] = 32'h000000b9;\nprom[375] = 32'h000000ca;\nprom[376] = 32'h000000fc;\nprom[377] = 32'h000000e9;\nprom[378] = 32'h000000ad;\nprom[379] = 32'h000000ba;\nprom[380] = 32'h000000c3;\nprom[381] = 32'h000000f9;\nprom[382] = 32'h000000c9;\nprom[383] = 32'h000000e1;\nprom[384] = 32'h0000009b;\nprom[385] = 32'h000000b2;\nprom[386] = 32'h000000ca;\nprom[387] = 32'h00000040;\nprom[388] = 32'h0000003d;\nprom[389] = 32'h00000008;\nprom[390] = 32'h00000040;\nprom[391] = 32'h00000038;\nprom[392] = 32'h00000014;\nprom[393] = 32'h0000001b;\nprom[394] = 32'h0000002d;\nprom[395] = 32'h0000001e;\nprom[396] = 32'h00000021;\nprom[397] = 32'h00000013;\nprom[398] = 32'h000000af;\nprom[399] = 32'h00000005;\nprom[400] = 32'h000000d7;\nprom[401] = 32'h00000090;\nprom[402] = 32'h000000f7;\nprom[403] = 32'h00000009;\nprom[404] = 32'h00000081;\nprom[405] = 32'h000000c2;\nprom[406] = 32'h000000dc;\nprom[407] = 32'h000000e2;\nprom[408] = 32'h000000d5;\nprom[409] = 32'h000000ca;\nprom[410] = 32'h000000d5;\nprom[411] = 32'h000000d3;\nprom[412] = 32'h000000c0;\nprom[413] = 32'h000000e2;\nprom[414] = 32'h00000038;\nprom[415] = 32'h0000000f;\nprom[416] = 32'h00000027;\nprom[417] = 32'h00000030;\nprom[418] = 32'h000000f6;\nprom[419] = 32'h00000007;\nprom[420] = 32'h0000003e;\nprom[421] = 32'h00000005;\nprom[422] = 32'h000000fe;\nprom[423] = 32'h00000043;\nprom[424] = 32'h00000042;\nprom[425] = 32'h0000004b;\nprom[426] = 32'h0000004c;\nprom[427] = 32'h00000027;\nprom[428] = 32'h00000047;\nprom[429] = 32'h00000032;\nprom[430] = 32'h00000056;\nprom[431] = 32'h00000039;\nprom[432] = 32'h000000d7;\nprom[433] = 32'h000000b4;\nprom[434] = 32'h000000a2;\nprom[435] = 32'h000000c8;\nprom[436] = 32'h000000ba;\nprom[437] = 32'h000000a0;\nprom[438] = 32'h000000e3;\nprom[439] = 32'h000000b6;\nprom[440] = 32'h000000bf;\nprom[441] = 32'h0000003b;\nprom[442] = 32'h0000004e;\nprom[443] = 32'h00000047;\nprom[444] = 32'h0000004c;\nprom[445] = 32'h00000043;\nprom[446] = 32'h00000027;\nprom[447] = 32'h0000004a;\nprom[448] = 32'h0000004d;\nprom[449] = 32'h00000052;\nprom[450] = 32'h0000003d;\nprom[451] = 32'h00000026;\nprom[452] = 32'h0000000a;\nprom[453] = 32'h00000022;\nprom[454] = 32'h00000020;\nprom[455] = 32'h0000000f;\nprom[456] = 32'h0000002c;\nprom[457] = 32'h0000004c;\nprom[458] = 32'h00000013;\nprom[459] = 32'h000000d3;\nprom[460] = 32'h000000f8;\nprom[461] = 32'h000000be;\nprom[462] = 32'h000000f4;\nprom[463] = 32'h000000be;\nprom[464] = 32'h00000086;\nprom[465] = 32'h000000cb;\nprom[466] = 32'h000000dd;\nprom[467] = 32'h000000a0;\nprom[468] = 32'h000000d9;\nprom[469] = 32'h000000d2;\nprom[470] = 32'h000000de;\nprom[471] = 32'h000000b8;\nprom[472] = 32'h000000ce;\nprom[473] = 32'h000000bd;\nprom[474] = 32'h000000c0;\nprom[475] = 32'h000000dd;\nprom[476] = 32'h000000ef;\nprom[477] = 32'h00000042;\nprom[478] = 32'h00000022;\nprom[479] = 32'h00000010;\nprom[480] = 32'h00000030;\nprom[481] = 32'h00000015;\nprom[482] = 32'h0000002a;\nprom[483] = 32'h00000040;\nprom[484] = 32'h00000047;\nprom[485] = 32'h0000002a;\nprom[486] = 32'h000000d8;\nprom[487] = 32'h000000eb;\nprom[488] = 32'h000000dd;\nprom[489] = 32'h000000d0;\nprom[490] = 32'h000000c3;\nprom[491] = 32'h000000de;\nprom[492] = 32'h000000d3;\nprom[493] = 32'h000000d3;\nprom[494] = 32'h000000fb;\nprom[495] = 32'h000000e8;\nprom[496] = 32'h00000004;\nprom[497] = 32'h000000be;\nprom[498] = 32'h00000000;\nprom[499] = 32'h00000006;\nprom[500] = 32'h000000d9;\nprom[501] = 32'h00000033;\nprom[502] = 32'h000000f7;\nprom[503] = 32'h000000ca;\nprom[504] = 32'h000000b6;\nprom[505] = 32'h000000e5;\nprom[506] = 32'h000000d9;\nprom[507] = 32'h000000fe;\nprom[508] = 32'h0000000a;\nprom[509] = 32'h00000016;\nprom[510] = 32'h000000e9;\nprom[511] = 32'h000000ea;\nprom[512] = 32'h0000001c;\nprom[513] = 32'h000000d7;\nprom[514] = 32'h000000e6;\nprom[515] = 32'h000000ee;\nprom[516] = 32'h00000009;\nprom[517] = 32'h000000f4;\nprom[518] = 32'h00000002;\nprom[519] = 32'h000000e0;\nprom[520] = 32'h00000011;\nprom[521] = 32'h0000000e;\nprom[522] = 32'h000000b2;\nprom[523] = 32'h000000fa;\nprom[524] = 32'h00000002;\nprom[525] = 32'h000000d2;\nprom[526] = 32'h000000ef;\nprom[527] = 32'h000000fd;\nprom[528] = 32'h000000c3;\nprom[529] = 32'h000000c6;\nprom[530] = 32'h000000d6;\nprom[531] = 32'h000000bf;\nprom[532] = 32'h000000d5;\nprom[533] = 32'h000000fe;\nprom[534] = 32'h000000e7;\nprom[535] = 32'h000000d7;\nprom[536] = 32'h00000002;\nprom[537] = 32'h00000007;\nprom[538] = 32'h000000f4;\nprom[539] = 32'h000000f7;\nprom[540] = 32'h000000e8;\nprom[541] = 32'h00000012;\nprom[542] = 32'h00000017;\nprom[543] = 32'h00000022;\nprom[544] = 32'h00000015;\nprom[545] = 32'h00000051;\nprom[546] = 32'h000000fd;\nprom[547] = 32'h000000eb;\nprom[548] = 32'h0000000c;\nprom[549] = 32'h000000fc;\nprom[550] = 32'h000000ef;\nprom[551] = 32'h000000f3;\nprom[552] = 32'h000000cd;\nprom[553] = 32'h000000ed;\nprom[554] = 32'h000000fe;\nprom[555] = 32'h000000e6;\nprom[556] = 32'h000000ff;\nprom[557] = 32'h000000dc;\nprom[558] = 32'h000000b5;\nprom[559] = 32'h00000036;\nprom[560] = 32'h00000018;\nprom[561] = 32'h000000bf;\nprom[562] = 32'h00000042;\nprom[563] = 32'h0000003d;\nprom[564] = 32'h000000b9;\nprom[565] = 32'h00000022;\nprom[566] = 32'h00000015;\nprom[567] = 32'h0000001e;\nprom[568] = 32'h00000019;\nprom[569] = 32'h00000010;\nprom[570] = 32'h000000fd;\nprom[571] = 32'h0000001f;\nprom[572] = 32'h00000030;\nprom[573] = 32'h00000003;\nprom[574] = 32'h000000f5;\nprom[575] = 32'h000000fb;\nprom[576] = 32'h000000e5;\nprom[577] = 32'h00000003;\nprom[578] = 32'h00000006;\nprom[579] = 32'h0000000b;\nprom[580] = 32'h00000030;\nprom[581] = 32'h00000010;\nprom[582] = 32'h000000f0;\nprom[583] = 32'h000000fb;\nprom[584] = 32'h000000f3;\nprom[585] = 32'h000000cb;\nprom[586] = 32'h000000bb;\nprom[587] = 32'h000000ad;\nprom[588] = 32'h000000a8;\nprom[589] = 32'h000000c1;\nprom[590] = 32'h000000a5;\nprom[591] = 32'h000000ae;\nprom[592] = 32'h000000a8;\nprom[593] = 32'h000000b6;\nprom[594] = 32'h00000000;\nprom[595] = 32'h00000023;\nprom[596] = 32'h00000035;\nprom[597] = 32'h00000018;\nprom[598] = 32'h00000017;\nprom[599] = 32'h0000001a;\nprom[600] = 32'h0000000f;\nprom[601] = 32'h00000026;\nprom[602] = 32'h0000004c;\nprom[603] = 32'h00000015;\nprom[604] = 32'h000000fa;\nprom[605] = 32'h00000030;\nprom[606] = 32'h000000eb;\nprom[607] = 32'h000000eb;\nprom[608] = 32'h000000fe;\nprom[609] = 32'h000000f2;\nprom[610] = 32'h00000007;\nprom[611] = 32'h000000e5;\nprom[612] = 32'hfffff209;\nprom[613] = 32'hfffff777;\nprom[614] = 32'hfffff15a;\nprom[615] = 32'hffffefb3;\nprom[616] = 32'h000004c1;\nprom[617] = 32'hfffffca5;\nprom[618] = 32'h000002d8;\nprom[619] = 32'h0000005f;\nprom[620] = 32'h00000066;\nprom[621] = 32'h000005fb;\nprom[622] = 32'h000003b1;\nprom[623] = 32'h000000e1;\nprom[624] = 32'h000000cd;\nprom[625] = 32'h0000013a;\nprom[626] = 32'hffffff30;\nprom[627] = 32'hffffff17;\nprom[628] = 32'h0000ab89;\nprom[629] = 32'h00000018;\nprom[630] = 32'h0000c560;\nprom[631] = 32'h00000018;\nirom[0] = 8'h22;\nirom[1] = 8'h0d;\nirom[2] = 8'h16;\nirom[3] = 8'h00;\nirom[4] = 8'h05;\nirom[5] = 8'h14;\nirom[6] = 8'h00;\nirom[7] = 8'h32;\nirom[8] = 8'h0a;\nirom[9] = 8'h05;\nirom[10] = 8'h16;\nirom[11] = 8'h07;\nirom[12] = 8'h00;\nirom[13] = 8'h00;\nirom[14] = 8'h00;\nirom[15] = 8'h15;\nirom[16] = 8'h01;\nirom[17] = 8'h00;\nirom[18] = 8'h00;\nirom[19] = 8'h04;\nirom[20] = 8'h00;\nirom[21] = 8'h00;\nirom[22] = 8'h00;\nirom[23] = 8'h00;\nirom[24] = 8'h18;\nirom[25] = 8'h00;\nirom[26] = 8'h00;\nirom[27] = 8'h1e;\nirom[28] = 8'h00;\nirom[29] = 8'h05;\nirom[30] = 8'h02;\nirom[31] = 8'h00;\nirom[32] = 8'h00;\nirom[33] = 8'h17;\nirom[34] = 8'h06;\nirom[35] = 8'h00;\nirom[36] = 8'h19;\nirom[37] = 8'h00;\nirom[38] = 8'h03;\nirom[39] = 8'h00;\nirom[40] = 8'h00;\nirom[41] = 8'h1c;\nirom[42] = 8'h1d;\nirom[43] = 8'h19;\nirom[44] = 8'h01;\nirom[45] = 8'h00;\nirom[46] = 8'h0c;\nirom[47] = 8'h00;\nirom[48] = 8'h03;\nirom[49] = 8'h06;\nirom[50] = 8'h00;\nirom[51] = 8'h00;\nirom[52] = 8'h7a;\nirom[53] = 8'h6e;\nirom[54] = 8'h7f;\nirom[55] = 8'h7f;\nirom[56] = 8'h7f;\nirom[57] = 8'h6d;\nirom[58] = 8'h70;\nirom[59] = 8'h77;\nirom[60] = 8'h00;\nirom[61] = 8'h00;\nirom[62] = 8'h00;\nirom[63] = 8'h00;\nirom[64] = 8'h00;\nirom[65] = 8'h00;\nirom[66] = 8'h01;\nirom[67] = 8'h11;\nirom[68] = 8'h00;\nirom[69] = 8'h00;\nirom[70] = 8'h0c;\nirom[71] = 8'h09;\nirom[72] = 8'h06;\nirom[73] = 8'h06;\nirom[74] = 8'h07;\nirom[75] = 8'h09;\nirom[76] = 8'h05;\nirom[77] = 8'h00;\nirom[78] = 8'h09;\nirom[79] = 8'h24;\nirom[80] = 8'h0e;\nirom[81] = 8'h00;\nirom[82] = 8'h12;\nirom[83] = 8'h13;\nirom[84] = 8'h28;\nirom[85] = 8'h00;\nirom[86] = 8'h00;\nirom[87] = 8'h00;\nirom[88] = 8'h00;\nirom[89] = 8'h00;\nirom[90] = 8'h38;\nirom[91] = 8'h1e;\nirom[92] = 8'h09;\nirom[93] = 8'h00;\nirom[94] = 8'h03;\nirom[95] = 8'h00;\nirom[96] = 8'h00;\nirom[97] = 8'h00;\nirom[98] = 8'h00;\nirom[99] = 8'h00;\nirom[100] = 8'h00;\nirom[101] = 8'h0f;\nirom[102] = 8'h00;\nirom[103] = 8'h00;\nirom[104] = 8'h04;\nirom[105] = 8'h00;\nirom[106] = 8'h03;\nirom[107] = 8'h00;\nirom[108] = 8'h00;\nirom[109] = 8'h0d;\nirom[110] = 8'h04;\nirom[111] = 8'h00;\nirom[112] = 8'h00;\nirom[113] = 8'h05;\nirom[114] = 8'h24;\nirom[115] = 8'h00;\nirom[116] = 8'h11;\nirom[117] = 8'h00;\nirom[118] = 8'h00;\nirom[119] = 8'h07;\nirom[120] = 8'h17;\nirom[121] = 8'h00;\nirom[122] = 8'h00;\nirom[123] = 8'h15;\nirom[124] = 8'h00;\nirom[125] = 8'h30;\nirom[126] = 8'h03;\nirom[127] = 8'h00;\nirom[128] = 8'h21;\nirom[129] = 8'h00;\nirom[130] = 8'h00;\nirom[131] = 8'h00;\nirom[132] = 8'h00;\nirom[133] = 8'h00;\nirom[134] = 8'h00;\nirom[135] = 8'h19;\nirom[136] = 8'h12;\nirom[137] = 8'h04;\nirom[138] = 8'h0b;\nirom[139] = 8'h07;\nirom[140] = 8'h00;\nirom[141] = 8'h00;\nirom[142] = 8'h0d;\nirom[143] = 8'h00;\nirom[144] = 8'h00;\nirom[145] = 8'h00;\nirom[146] = 8'h27;\nirom[147] = 8'h0d;\nirom[148] = 8'h00;\nirom[149] = 8'h00;\nirom[150] = 8'h0a;\nirom[151] = 8'h00;\nirom[152] = 8'h00;\nirom[153] = 8'h00;\nirom[154] = 8'h00;\nirom[155] = 8'h00;\nirom[156] = 8'h07;\nirom[157] = 8'h1b;\nirom[158] = 8'h00;\nirom[159] = 8'h17;\nirom[160] = 8'h1d;\nirom[161] = 8'h07;\nirom[162] = 8'h0e;\nirom[163] = 8'h01;\nirom[164] = 8'h00;\nirom[165] = 8'h00;\nirom[166] = 8'h00;\nirom[167] = 8'h0b;\nirom[168] = 8'h17;\nirom[169] = 8'h12;\nirom[170] = 8'h1c;\nirom[171] = 8'h00;\nirom[172] = 8'h05;\nirom[173] = 8'h00;\nirom[174] = 8'h00;\nirom[175] = 8'h09;\nirom[176] = 8'h00;\nirom[177] = 8'h00;\nirom[178] = 8'h00;\nirom[179] = 8'h1c;\nirom[180] = 8'h0f;\nirom[181] = 8'h01;\nirom[182] = 8'h00;\nirom[183] = 8'h18;\nirom[184] = 8'h16;\nirom[185] = 8'h00;\nirom[186] = 8'h00;\nirom[187] = 8'h00;\nirom[188] = 8'h1a;\nirom[189] = 8'h14;\nirom[190] = 8'h13;\nirom[191] = 8'h00;\nirom[192] = 8'h26;\nirom[193] = 8'h00;\nirom[194] = 8'h08;\nirom[195] = 8'h00;\nirom[196] = 8'h00;\nirom[197] = 8'h00;\nirom[198] = 8'h00;\nirom[199] = 8'h0e;\nirom[200] = 8'h00;\nirom[201] = 8'h00;\nirom[202] = 8'h00;\nirom[203] = 8'h08;\nirom[204] = 8'h0c;\nirom[205] = 8'h00;\nirom[206] = 8'h14;\nirom[207] = 8'h00;\nirom[208] = 8'h00;\nirom[209] = 8'h07;\nirom[210] = 8'h00;\nirom[211] = 8'h00;\nirom[212] = 8'h00;\nirom[213] = 8'h00;\nirom[214] = 8'h12;\nirom[215] = 8'h05;\nirom[216] = 8'h00;\nirom[217] = 8'h15;\nirom[218] = 8'h11;\nirom[219] = 8'h0a;\nirom[220] = 8'h0b;\nirom[221] = 8'h00;\nirom[222] = 8'h27;\nirom[223] = 8'h11;\nirom[224] = 8'h00;\nirom[225] = 8'h00;\nirom[226] = 8'h21;\nirom[227] = 8'h00;\nirom[228] = 8'h05;\nirom[229] = 8'h00;\nirom[230] = 8'h15;\nirom[231] = 8'h00;\nirom[232] = 8'h00;\nirom[233] = 8'h03;\nirom[234] = 8'h00;\nirom[235] = 8'h00;\nirom[236] = 8'h00;\nirom[237] = 8'h00;\nirom[238] = 8'h00;\nirom[239] = 8'h00;\nirom[240] = 8'h00;\nirom[241] = 8'h00;\nirom[242] = 8'h0c;\nirom[243] = 8'h00;\nirom[244] = 8'h2d;\nirom[245] = 8'h00;\nirom[246] = 8'h04;\nirom[247] = 8'h20;\nirom[248] = 8'h00;\nirom[249] = 8'h07;\nirom[250] = 8'h22;\nirom[251] = 8'h02;\nirom[252] = 8'h1c;\nirom[253] = 8'h00;\nirom[254] = 8'h24;\nirom[255] = 8'h00;\nirom[256] = 8'h0e;\nirom[257] = 8'h0e;\nirom[258] = 8'h0c;\nirom[259] = 8'h0f;\nirom[260] = 8'h00;\nirom[261] = 8'h00;\nirom[262] = 8'h0c;\nirom[263] = 8'h00;\nirom[264] = 8'h00;\nirom[265] = 8'h59;\nirom[266] = 8'h5d;\nirom[267] = 8'h7f;\nirom[268] = 8'h61;\nirom[269] = 8'h7a;\nirom[270] = 8'h2d;\nirom[271] = 8'h69;\nirom[272] = 8'h7f;\nirom[273] = 8'h11;\nirom[274] = 8'h00;\nirom[275] = 8'h02;\nirom[276] = 8'h00;\nirom[277] = 8'h00;\nirom[278] = 8'h00;\nirom[279] = 8'h01;\nirom[280] = 8'h21;\nirom[281] = 8'h00;\nirom[282] = 8'h00;\nirom[283] = 8'h00;\nirom[284] = 8'h1c;\nirom[285] = 8'h0f;\nirom[286] = 8'h0f;\nirom[287] = 8'h00;\nirom[288] = 8'h01;\nirom[289] = 8'h00;\nirom[290] = 8'h00;\nirom[291] = 8'h00;\nirom[292] = 8'h0d;\nirom[293] = 8'h1c;\nirom[294] = 8'h00;\nirom[295] = 8'h0c;\nirom[296] = 8'h00;\nirom[297] = 8'h0e;\nirom[298] = 8'h08;\nirom[299] = 8'h0c;\nirom[300] = 8'h17;\nirom[301] = 8'h00;\nirom[302] = 8'h00;\nirom[303] = 8'h00;\nirom[304] = 8'h00;\nirom[305] = 8'h00;\nirom[306] = 8'h1b;\nirom[307] = 8'h1d;\nirom[308] = 8'h2e;\nirom[309] = 8'h00;\nirom[310] = 8'h1d;\nirom[311] = 8'h00;\nirom[312] = 8'h00;\nirom[313] = 8'h00;\nirom[314] = 8'h09;\nirom[315] = 8'h00;\nirom[316] = 8'h01;\nirom[317] = 8'h07;\nirom[318] = 8'h1b;\nirom[319] = 8'h00;\nirom[320] = 8'h11;\nirom[321] = 8'h0a;\nirom[322] = 8'h0c;\nirom[323] = 8'h00;\nirom[324] = 8'h15;\nirom[325] = 8'h00;\nirom[326] = 8'h00;\nirom[327] = 8'h06;\nirom[328] = 8'h03;\nirom[329] = 8'h00;\nirom[330] = 8'h00;\nirom[331] = 8'h0e;\nirom[332] = 8'h00;\nirom[333] = 8'h0b;\nirom[334] = 8'h05;\nirom[335] = 8'h04;\nirom[336] = 8'h1d;\nirom[337] = 8'h64;\nirom[338] = 8'h00;\nirom[339] = 8'h11;\nirom[340] = 8'h00;\nirom[341] = 8'h00;\nirom[342] = 8'h00;\nirom[343] = 8'h22;\nirom[344] = 8'h15;\nirom[345] = 8'h0e;\nirom[346] = 8'h00;\nirom[347] = 8'h00;\nirom[348] = 8'h00;\nirom[349] = 8'h51;\nirom[350] = 8'h07;\nirom[351] = 8'h0b;\nirom[352] = 8'h00;\nirom[353] = 8'h00;\nirom[354] = 8'h00;\nirom[355] = 8'h00;\nirom[356] = 8'h00;\nirom[357] = 8'h0b;\nirom[358] = 8'h00;\nirom[359] = 8'h00;\nirom[360] = 8'h00;\nirom[361] = 8'h7d;\nirom[362] = 8'h12;\nirom[363] = 8'h1d;\nirom[364] = 8'h00;\nirom[365] = 8'h00;\nirom[366] = 8'h04;\nirom[367] = 8'h00;\nirom[368] = 8'h00;\nirom[369] = 8'h11;\nirom[370] = 8'h00;\nirom[371] = 8'h00;\nirom[372] = 8'h00;\nirom[373] = 8'h75;\nirom[374] = 8'h0e;\nirom[375] = 8'h00;\nirom[376] = 8'h15;\nirom[377] = 8'h07;\nirom[378] = 8'h00;\nirom[379] = 8'h02;\nirom[380] = 8'h00;\nirom[381] = 8'h0d;\nirom[382] = 8'h00;\nirom[383] = 8'h11;\nirom[384] = 8'h15;\nirom[385] = 8'h7e;\nirom[386] = 8'h00;\nirom[387] = 8'h00;\nirom[388] = 8'h02;\nirom[389] = 8'h00;\nirom[390] = 8'h00;\nirom[391] = 8'h19;\nirom[392] = 8'h10;\nirom[393] = 8'h00;\nirom[394] = 8'h09;\nirom[395] = 8'h00;\nirom[396] = 8'h00;\nirom[397] = 8'h70;\nirom[398] = 8'h05;\nirom[399] = 8'h00;\nirom[400] = 8'h0b;\nirom[401] = 8'h10;\nirom[402] = 8'h00;\nirom[403] = 8'h09;\nirom[404] = 8'h02;\nirom[405] = 8'h00;\nirom[406] = 8'h00;\nirom[407] = 8'h00;\nirom[408] = 8'h27;\nirom[409] = 8'h7e;\nirom[410] = 8'h0e;\nirom[411] = 8'h00;\nirom[412] = 8'h00;\nirom[413] = 8'h11;\nirom[414] = 8'h00;\nirom[415] = 8'h09;\nirom[416] = 8'h14;\nirom[417] = 8'h05;\nirom[418] = 8'h1b;\nirom[419] = 8'h17;\nirom[420] = 8'h0b;\nirom[421] = 8'h62;\nirom[422] = 8'h19;\nirom[423] = 8'h00;\nirom[424] = 8'h00;\nirom[425] = 8'h00;\nirom[426] = 8'h03;\nirom[427] = 8'h00;\nirom[428] = 8'h00;\nirom[429] = 8'h19;\nirom[430] = 8'h00;\nirom[431] = 8'h10;\nirom[432] = 8'h16;\nirom[433] = 8'h2a;\nirom[434] = 8'h00;\nirom[435] = 8'h05;\nirom[436] = 8'h01;\nirom[437] = 8'h00;\nirom[438] = 8'h00;\nirom[439] = 8'h00;\nirom[440] = 8'h00;\nirom[441] = 8'h11;\nirom[442] = 8'h00;\nirom[443] = 8'h00;\nirom[444] = 8'h07;\nirom[445] = 8'h00;\nirom[446] = 8'h00;\nirom[447] = 8'h0a;\nirom[448] = 8'h00;\nirom[449] = 8'h17;\nirom[450] = 8'h00;\nirom[451] = 8'h12;\nirom[452] = 8'h17;\nirom[453] = 8'h00;\nirom[454] = 8'h14;\nirom[455] = 8'h00;\nirom[456] = 8'h02;\nirom[457] = 8'h06;\nirom[458] = 8'h17;\nirom[459] = 8'h00;\nirom[460] = 8'h02;\nirom[461] = 8'h03;\nirom[462] = 8'h16;\nirom[463] = 8'h00;\nirom[464] = 8'h0f;\nirom[465] = 8'h19;\nirom[466] = 8'h16;\nirom[467] = 8'h00;\nirom[468] = 8'h05;\nirom[469] = 8'h00;\nirom[470] = 8'h00;\nirom[471] = 8'h05;\nirom[472] = 8'h00;\nirom[473] = 8'h00;\nirom[474] = 8'h00;\nirom[475] = 8'h00;\nirom[476] = 8'h02;\nirom[477] = 8'h00;\nirom[478] = 8'h03;\nirom[479] = 8'h00;\nirom[480] = 8'h05;\nirom[481] = 8'h18;\nirom[482] = 8'h29;\nirom[483] = 8'h00;\nirom[484] = 8'h04;\nirom[485] = 8'h00;\nirom[486] = 8'h00;\nirom[487] = 8'h11;\nirom[488] = 8'h04;\nirom[489] = 8'h00;\nirom[490] = 8'h71;\nirom[491] = 8'h00;\nirom[492] = 8'h04;\nirom[493] = 8'h03;\nirom[494] = 8'h00;\nirom[495] = 8'h0d;\nirom[496] = 8'h01;\nirom[497] = 8'h20;\nirom[498] = 8'h16;\nirom[499] = 8'h1e;\nirom[500] = 8'h00;\nirom[501] = 8'h00;\nirom[502] = 8'h79;\nirom[503] = 8'h30;\nirom[504] = 8'h05;\nirom[505] = 8'h00;\nirom[506] = 8'h00;\nirom[507] = 8'h00;\nirom[508] = 8'h00;\nirom[509] = 8'h01;\nirom[510] = 8'h10;\nirom[511] = 8'h00;\nirom[512] = 8'h0d;\nirom[513] = 8'h0a;\nirom[514] = 8'h52;\nirom[515] = 8'h00;\nirom[516] = 8'h00;\nirom[517] = 8'h16;\nirom[518] = 8'h00;\nirom[519] = 8'h13;\nirom[520] = 8'h00;\nirom[521] = 8'h00;\nirom[522] = 8'h00;\nirom[523] = 8'h29;\nirom[524] = 8'h00;\nirom[525] = 8'h00;\nirom[526] = 8'h51;\nirom[527] = 8'h00;\nirom[528] = 8'h03;\nirom[529] = 8'h00;\nirom[530] = 8'h06;\nirom[531] = 8'h22;\nirom[532] = 8'h08;\nirom[533] = 8'h00;\nirom[534] = 8'h07;\nirom[535] = 8'h04;\nirom[536] = 8'h00;\nirom[537] = 8'h04;\nirom[538] = 8'h7f;\nirom[539] = 8'h0c;\nirom[540] = 8'h08;\nirom[541] = 8'h00;\nirom[542] = 8'h00;\nirom[543] = 8'h15;\nirom[544] = 8'h0d;\nirom[545] = 8'h1f;\nirom[546] = 8'h00;\nirom[547] = 8'h00;\nirom[548] = 8'h02;\nirom[549] = 8'h00;\nirom[550] = 8'h75;\nirom[551] = 8'h00;\nirom[552] = 8'h2c;\nirom[553] = 8'h00;\nirom[554] = 8'h08;\nirom[555] = 8'h04;\nirom[556] = 8'h24;\nirom[557] = 8'h08;\nirom[558] = 8'h00;\nirom[559] = 8'h09;\nirom[560] = 8'h01;\nirom[561] = 8'h00;\nirom[562] = 8'h5b;\nirom[563] = 8'h00;\nirom[564] = 8'h00;\nirom[565] = 8'h10;\nirom[566] = 8'h00;\nirom[567] = 8'h00;\nirom[568] = 8'h00;\nirom[569] = 8'h1c;\nirom[570] = 8'h07;\nirom[571] = 8'h11;\nirom[572] = 8'h0c;\nirom[573] = 8'h00;\nirom[574] = 8'h7f;\nirom[575] = 8'h19;\nirom[576] = 8'h06;\nirom[577] = 8'h00;\nirom[578] = 8'h00;\nirom[579] = 8'h0b;\nirom[580] = 8'h0d;\nirom[581] = 8'h05;\nirom[582] = 8'h00;\nirom[583] = 8'h00;\nirom[584] = 8'h0b;\nirom[585] = 8'h0a;\nirom[586] = 8'h05;\nirom[587] = 8'h00;\nirom[588] = 8'h09;\nirom[589] = 8'h00;\nirom[590] = 8'h00;\nirom[591] = 8'h00;\nirom[592] = 8'h19;\nirom[593] = 8'h00;\nirom[594] = 8'h14;\nirom[595] = 8'h05;\nirom[596] = 8'h08;\nirom[597] = 8'h06;\nirom[598] = 8'h00;\nirom[599] = 8'h22;\nirom[600] = 8'h00;\nirom[601] = 8'h00;\nirom[602] = 8'h01;\nirom[603] = 8'h0b;\nirom[604] = 8'h00;\nirom[605] = 8'h00;\nirom[606] = 8'h07;\nirom[607] = 8'h00;\nirom[608] = 8'h11;\nirom[609] = 8'h0f;\nirom[610] = 8'h00;\nirom[611] = 8'h00;\nirom[612] = 8'h00;\nirom[613] = 8'h07;\nirom[614] = 8'h51;\nirom[615] = 8'h59;\nirom[616] = 8'h3d;\nirom[617] = 8'h76;\nirom[618] = 8'h56;\nirom[619] = 8'h56;\nirom[620] = 8'h00;\nirom[621] = 8'h12;\nirom[622] = 8'h04;\nirom[623] = 8'h00;\nirom[624] = 8'h09;\nirom[625] = 8'h0a;\nirom[626] = 8'h57;\nirom[627] = 8'h04;\nirom[628] = 8'h12;\nirom[629] = 8'h00;\nirom[630] = 8'h0f;\nirom[631] = 8'h67;\nirom[632] = 8'h00;\nirom[633] = 8'h00;\nirom[634] = 8'h01;\nirom[635] = 8'h19;\nirom[636] = 8'h00;\nirom[637] = 8'h00;\nirom[638] = 8'h78;\nirom[639] = 8'h01;\nirom[640] = 8'h00;\nirom[641] = 8'h00;\nirom[642] = 8'h09;\nirom[643] = 8'h62;\nirom[644] = 8'h00;\nirom[645] = 8'h00;\nirom[646] = 8'h08;\nirom[647] = 8'h00;\nirom[648] = 8'h09;\nirom[649] = 8'h00;\nirom[650] = 8'h77;\nirom[651] = 8'h00;\nirom[652] = 8'h00;\nirom[653] = 8'h11;\nirom[654] = 8'h07;\nirom[655] = 8'h6e;\nirom[656] = 8'h00;\nirom[657] = 8'h15;\nirom[658] = 8'h00;\nirom[659] = 8'h1a;\nirom[660] = 8'h00;\nirom[661] = 8'h1a;\nirom[662] = 8'h59;\nirom[663] = 8'h00;\nirom[664] = 8'h00;\nirom[665] = 8'h00;\nirom[666] = 8'h00;\nirom[667] = 8'h5f;\nirom[668] = 8'h02;\nirom[669] = 8'h00;\nirom[670] = 8'h04;\nirom[671] = 8'h00;\nirom[672] = 8'h0a;\nirom[673] = 8'h11;\nirom[674] = 8'h56;\nirom[675] = 8'h7c;\nirom[676] = 8'h57;\nirom[677] = 8'h7f;\nirom[678] = 8'h6c;\nirom[679] = 8'h60;\nirom[680] = 8'h00;\nirom[681] = 8'h00;\nirom[682] = 8'h05;\nirom[683] = 8'h00;\nirom[684] = 8'h1b;\nirom[685] = 8'h00;\nirom[686] = 8'h24;\nirom[687] = 8'h08;\nirom[688] = 8'h00;\nirom[689] = 8'h00;\nirom[690] = 8'h27;\nirom[691] = 8'h0b;\nirom[692] = 8'h13;\nirom[693] = 8'h1e;\nirom[694] = 8'h07;\nirom[695] = 8'h06;\nirom[696] = 8'h0d;\nirom[697] = 8'h0a;\nirom[698] = 8'h0e;\nirom[699] = 8'h00;\nirom[700] = 8'h00;\nirom[701] = 8'h04;\nirom[702] = 8'h00;\nirom[703] = 8'h00;\nirom[704] = 8'h00;\nirom[705] = 8'h07;\nirom[706] = 8'h00;\nirom[707] = 8'h00;\nirom[708] = 8'h00;\nirom[709] = 8'h03;\nirom[710] = 8'h00;\nirom[711] = 8'h15;\nirom[712] = 8'h00;\nirom[713] = 8'h00;\nirom[714] = 8'h00;\nirom[715] = 8'h2b;\nirom[716] = 8'h00;\nirom[717] = 8'h05;\nirom[718] = 8'h00;\nirom[719] = 8'h00;\nirom[720] = 8'h00;\nirom[721] = 8'h00;\nirom[722] = 8'h09;\nirom[723] = 8'h00;\nirom[724] = 8'h1c;\nirom[725] = 8'h22;\nirom[726] = 8'h1c;\nirom[727] = 8'h17;\nirom[728] = 8'h0e;\nirom[729] = 8'h0a;\nirom[730] = 8'h00;\nirom[731] = 8'h17;\nirom[732] = 8'h0d;\nirom[733] = 8'h00;\nirom[734] = 8'h00;\nirom[735] = 8'h00;\nirom[736] = 8'h55;\nirom[737] = 8'h42;\nirom[738] = 8'h5a;\nirom[739] = 8'h48;\nirom[740] = 8'h46;\nirom[741] = 8'h57;\nirom[742] = 8'h0a;\nirom[743] = 8'h03;\nirom[744] = 8'h00;\nirom[745] = 8'h00;\nirom[746] = 8'h00;\nirom[747] = 8'h15;\nirom[748] = 8'h6f;\nirom[749] = 8'h02;\nirom[750] = 8'h00;\nirom[751] = 8'h00;\nirom[752] = 8'h00;\nirom[753] = 8'h55;\nirom[754] = 8'h12;\nirom[755] = 8'h0f;\nirom[756] = 8'h08;\nirom[757] = 8'h00;\nirom[758] = 8'h00;\nirom[759] = 8'h00;\nirom[760] = 8'h67;\nirom[761] = 8'h00;\nirom[762] = 8'h00;\nirom[763] = 8'h21;\nirom[764] = 8'h00;\nirom[765] = 8'h5e;\nirom[766] = 8'h09;\nirom[767] = 8'h0c;\nirom[768] = 8'h08;\nirom[769] = 8'h00;\nirom[770] = 8'h00;\nirom[771] = 8'h00;\nirom[772] = 8'h3c;\nirom[773] = 8'h0f;\nirom[774] = 8'h00;\nirom[775] = 8'h00;\nirom[776] = 8'h16;\nirom[777] = 8'h6b;\nirom[778] = 8'h0b;\nirom[779] = 8'h17;\nirom[780] = 8'h02;\nirom[781] = 8'h2c;\nirom[782] = 8'h01;\nirom[783] = 8'h00;\nirom[784] = 8'h69;\nirom[785] = 8'h18;\nirom[786] = 8'h18;\nirom[787] = 8'h00;\nirom[788] = 8'h08;\nirom[789] = 8'h54;\nirom[790] = 8'h00;\nirom[791] = 8'h00;\nirom[792] = 8'h07;\nirom[793] = 8'h04;\nirom[794] = 8'h00;\nirom[795] = 8'h13;\nirom[796] = 8'h74;\nirom[797] = 8'h4d;\nirom[798] = 8'h72;\nirom[799] = 8'h43;\nirom[800] = 8'h38;\nirom[801] = 8'h50;\nirom[802] = 8'h00;\nirom[803] = 8'h0b;\nirom[804] = 8'h16;\nirom[805] = 8'h00;\nirom[806] = 8'h09;\nirom[807] = 8'h00;\nirom[808] = 8'h0b;\nirom[809] = 8'h0f;\nirom[810] = 8'h12;\nirom[811] = 8'h0c;\nirom[812] = 8'h00;\nirom[813] = 8'h00;\nirom[814] = 8'h14;\nirom[815] = 8'h16;\nirom[816] = 8'h0b;\nirom[817] = 8'h00;\nirom[818] = 8'h00;\nirom[819] = 8'h07;\nirom[820] = 8'h00;\nirom[821] = 8'h00;\nirom[822] = 8'h0f;\nirom[823] = 8'h20;\nirom[824] = 8'h02;\nirom[825] = 8'h00;\nirom[826] = 8'h14;\nirom[827] = 8'h04;\nirom[828] = 8'h00;\nirom[829] = 8'h00;\nirom[830] = 8'h15;\nirom[831] = 8'h00;\nirom[832] = 8'h00;\nirom[833] = 8'h10;\nirom[834] = 8'h11;\nirom[835] = 8'h00;\nirom[836] = 8'h11;\nirom[837] = 8'h00;\nirom[838] = 8'h00;\nirom[839] = 8'h15;\nirom[840] = 8'h00;\nirom[841] = 8'h03;\nirom[842] = 8'h00;\nirom[843] = 8'h00;\nirom[844] = 8'h0c;\nirom[845] = 8'h0c;\nirom[846] = 8'h0a;\nirom[847] = 8'h0d;\nirom[848] = 8'h00;\nirom[849] = 8'h0f;\nirom[850] = 8'h00;\nirom[851] = 8'h00;\nirom[852] = 8'h00;\nirom[853] = 8'h00;\nirom[854] = 8'h17;\nirom[855] = 8'h02;\nirom[856] = 8'h00;\nirom[857] = 8'h00;\nirom[858] = 8'h00;\nirom[859] = 8'h00;\nirom[860] = 8'h00;\nirom[861] = 8'h03;\nirom[862] = 8'h00;\nirom[863] = 8'h00;\nirom[864] = 8'h0b;\nirom[865] = 8'h00;\nirom[866] = 8'h00;\nirom[867] = 8'h17;\nirom[868] = 8'h00;\nirom[869] = 8'h0f;\nirom[870] = 8'h00;\nirom[871] = 8'h06;\nirom[872] = 8'h00;\nirom[873] = 8'h1c;\nirom[874] = 8'h00;\nirom[875] = 8'h04;\nirom[876] = 8'h11;\nirom[877] = 8'h01;\nirom[878] = 8'h08;\nirom[879] = 8'h21;\nirom[880] = 8'h00;\nirom[881] = 8'h0c;\nirom[882] = 8'h00;\nirom[883] = 8'h00;\nirom[884] = 8'h06;\nirom[885] = 8'h1e;\nirom[886] = 8'h0b;\nirom[887] = 8'h10;\nirom[888] = 8'h00;\nirom[889] = 8'h00;\nirom[890] = 8'h04;\nirom[891] = 8'h11;\nirom[892] = 8'h07;\nirom[893] = 8'h1c;\nirom[894] = 8'h00;\nirom[895] = 8'h05;\nirom[896] = 8'h00;\nirom[897] = 8'h00;\nirom[898] = 8'h04;\nirom[899] = 8'h0d;\nirom[900] = 8'h00;\nirom[901] = 8'h00;\nirom[902] = 8'h09;\nirom[903] = 8'h09;\nirom[904] = 8'h00;\nirom[905] = 8'h11;\nirom[906] = 8'h0f;\nirom[907] = 8'h05;\nirom[908] = 8'h1e;\nirom[909] = 8'h00;\nirom[910] = 8'h00;\nirom[911] = 8'h00;\nirom[912] = 8'h00;\nirom[913] = 8'h00;\nirom[914] = 8'h0b;\nirom[915] = 8'h00;\nirom[916] = 8'h06;\nirom[917] = 8'h06;\nirom[918] = 8'h10;\nirom[919] = 8'h1e;\nirom[920] = 8'h29;\nirom[921] = 8'h00;\nirom[922] = 8'h11;\nirom[923] = 8'h01;\nirom[924] = 8'h0e;\nirom[925] = 8'h00;\nirom[926] = 8'h0c;\nirom[927] = 8'h02;\nirom[928] = 8'h08;\nirom[929] = 8'h0e;\nirom[930] = 8'h08;\nirom[931] = 8'h01;\nirom[932] = 8'h0f;\nirom[933] = 8'h1d;\nirom[934] = 8'h12;\nirom[935] = 8'h0a;\nirom[936] = 8'h0b;\nirom[937] = 8'h0a;\nirom[938] = 8'h00;\nirom[939] = 8'h00;\nirom[940] = 8'h15;\nirom[941] = 8'h00;\nirom[942] = 8'h00;\nirom[943] = 8'h53;\nirom[944] = 8'h08;\nirom[945] = 8'h16;\nirom[946] = 8'h00;\nirom[947] = 8'h22;\nirom[948] = 8'h00;\nirom[949] = 8'h09;\nirom[950] = 8'h0e;\nirom[951] = 8'h12;\nirom[952] = 8'h0a;\nirom[953] = 8'h00;\nirom[954] = 8'h00;\nirom[955] = 8'h7f;\nirom[956] = 8'h0f;\nirom[957] = 8'h00;\nirom[958] = 8'h21;\nirom[959] = 8'h03;\nirom[960] = 8'h00;\nirom[961] = 8'h00;\nirom[962] = 8'h23;\nirom[963] = 8'h19;\nirom[964] = 8'h00;\nirom[965] = 8'h4c;\nirom[966] = 8'h69;\nirom[967] = 8'h55;\nirom[968] = 8'h6e;\nirom[969] = 8'h54;\nirom[970] = 8'h00;\nirom[971] = 8'h00;\nirom[972] = 8'h00;\nirom[973] = 8'h00;\nirom[974] = 8'h03;\nirom[975] = 8'h00;\nirom[976] = 8'h16;\nirom[977] = 8'h00;\nirom[978] = 8'h00;\nirom[979] = 8'h4a;\nirom[980] = 8'h00;\nirom[981] = 8'h00;\nirom[982] = 8'h04;\nirom[983] = 8'h00;\nirom[984] = 8'h08;\nirom[985] = 8'h07;\nirom[986] = 8'h00;\nirom[987] = 8'h0a;\nirom[988] = 8'h25;\nirom[989] = 8'h14;\nirom[990] = 8'h00;\nirom[991] = 8'h75;\nirom[992] = 8'h00;\nirom[993] = 8'h0b;\nirom[994] = 8'h25;\nirom[995] = 8'h00;\nirom[996] = 8'h13;\nirom[997] = 8'h14;\nirom[998] = 8'h00;\nirom[999] = 8'h00;\nirom[1000] = 8'h05;\nirom[1001] = 8'h01;\nirom[1002] = 8'h26;\nirom[1003] = 8'h00;\nirom[1004] = 8'h00;\nirom[1005] = 8'h00;\nirom[1006] = 8'h1f;\nirom[1007] = 8'h00;\nirom[1008] = 8'h13;\nirom[1009] = 8'h00;\nirom[1010] = 8'h07;\nirom[1011] = 8'h0c;\nirom[1012] = 8'h07;\nirom[1013] = 8'h00;\nirom[1014] = 8'h00;\nirom[1015] = 8'h00;\nirom[1016] = 8'h10;\nirom[1017] = 8'h06;\nirom[1018] = 8'h0d;\nirom[1019] = 8'h00;\nirom[1020] = 8'h00;\nirom[1021] = 8'h00;\nirom[1022] = 8'h00;\nirom[1023] = 8'h01;\nirom[1024] = 8'h0d;\nirom[1025] = 8'h00;\nirom[1026] = 8'h00;\nirom[1027] = 8'h7f;\nirom[1028] = 8'h0c;\nirom[1029] = 8'h0f;\nirom[1030] = 8'h00;\nirom[1031] = 8'h00;\nirom[1032] = 8'h08;\nirom[1033] = 8'h07;\nirom[1034] = 8'h00;\nirom[1035] = 8'h00;\nirom[1036] = 8'h05;\nirom[1037] = 8'h09;\nirom[1038] = 8'h00;\nirom[1039] = 8'h7f;\nirom[1040] = 8'h20;\nirom[1041] = 8'h00;\nirom[1042] = 8'h24;\nirom[1043] = 8'h00;\nirom[1044] = 8'h10;\nirom[1045] = 8'h00;\nirom[1046] = 8'h0a;\nirom[1047] = 8'h1d;\nirom[1048] = 8'h0d;\nirom[1049] = 8'h7f;\nirom[1050] = 8'h7f;\nirom[1051] = 8'h37;\nirom[1052] = 8'h7f;\nirom[1053] = 8'h7f;\nirom[1054] = 8'h00;\nirom[1055] = 8'h00;\nirom[1056] = 8'h00;\nirom[1057] = 8'h00;\nirom[1058] = 8'h00;\nirom[1059] = 8'h00;\nirom[1060] = 8'h2a;\nirom[1061] = 8'h00;\nirom[1062] = 8'h00;\nirom[1063] = 8'h7e;\nirom[1064] = 8'h00;\nirom[1065] = 8'h06;\nirom[1066] = 8'h00;\nirom[1067] = 8'h00;\nirom[1068] = 8'h00;\nirom[1069] = 8'h0d;\nirom[1070] = 8'h00;\nirom[1071] = 8'h04;\nirom[1072] = 8'h1e;\nirom[1073] = 8'h02;\nirom[1074] = 8'h00;\nirom[1075] = 8'h77;\nirom[1076] = 8'h10;\nirom[1077] = 8'h00;\nirom[1078] = 8'h07;\nirom[1079] = 8'h11;\nirom[1080] = 8'h00;\nirom[1081] = 8'h00;\nirom[1082] = 8'h00;\nirom[1083] = 8'h00;\nirom[1084] = 8'h00;\nirom[1085] = 8'h00;\nirom[1086] = 8'h00;\nirom[1087] = 8'h00;\nirom[1088] = 8'h00;\nirom[1089] = 8'h19;\nirom[1090] = 8'h12;\nirom[1091] = 8'h00;\nirom[1092] = 8'h09;\nirom[1093] = 8'h00;\nirom[1094] = 8'h00;\nirom[1095] = 8'h00;\nirom[1096] = 8'h18;\nirom[1097] = 8'h14;\nirom[1098] = 8'h00;\nirom[1099] = 8'h00;\nirom[1100] = 8'h00;\nirom[1101] = 8'h0f;\nirom[1102] = 8'h08;\nirom[1103] = 8'h00;\nirom[1104] = 8'h2f;\nirom[1105] = 8'h00;\nirom[1106] = 8'h00;\nirom[1107] = 8'h1c;\nirom[1108] = 8'h2a;\nirom[1109] = 8'h00;\nirom[1110] = 8'h00;\nirom[1111] = 8'h00;\nirom[1112] = 8'h00;\nirom[1113] = 8'h00;\nirom[1114] = 8'h0b;\nirom[1115] = 8'h0c;\nirom[1116] = 8'h11;\nirom[1117] = 8'h0a;\nirom[1118] = 8'h00;\nirom[1119] = 8'h1d;\nirom[1120] = 8'h05;\nirom[1121] = 8'h00;\nirom[1122] = 8'h0e;\nirom[1123] = 8'h15;\nirom[1124] = 8'h00;\nirom[1125] = 8'h00;\nirom[1126] = 8'h00;\nirom[1127] = 8'h31;\nirom[1128] = 8'h04;\nirom[1129] = 8'h00;\nirom[1130] = 8'h0a;\nirom[1131] = 8'h00;\nirom[1132] = 8'h00;\nirom[1133] = 8'h0b;\nirom[1134] = 8'h00;\nirom[1135] = 8'h00;\nirom[1136] = 8'h00;\nirom[1137] = 8'h00;\nirom[1138] = 8'h16;\nirom[1139] = 8'h12;\nirom[1140] = 8'h00;\nirom[1141] = 8'h06;\nirom[1142] = 8'h09;\nirom[1143] = 8'h0a;\nirom[1144] = 8'h0f;\nirom[1145] = 8'h30;\nirom[1146] = 8'h00;\nirom[1147] = 8'h15;\nirom[1148] = 8'h00;\nirom[1149] = 8'h00;\nirom[1150] = 8'h10;\nirom[1151] = 8'h0a;\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 55,
+    "name": "cnn_nexys_top_ref.sv",
+    "path": "benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_nexys_top_ref.sv",
+    "sha256": "d616d409b175",
+    "text": "// P14-1 reference top for the Nexys A7-100T: the course's tiny CNN (tiny_cnn.sv) with the parameters and eight images in block-RAM files (cnn_system.sv loads them), a debounced\n// button to classify the picture chosen on SW[2:0], the class (0 .. 3) on the right-hand seven-segment digit, and one letter (H, V, B, X) plus a newline over the USB-UART at 115200 baud.\n// Not run on a board; simulated in Icarus by projects/test_p14_projects.py with a shortened debounce and baud divider.\nmodule cnn_nexys_top_ref #(\n    parameter DEBOUNCE_CYCLES = 1000000,        // 10 ms at 100 MHz\n    parameter CLKS_PER_BIT    = 868,            // 115200 baud at 100 MHz\n    parameter PARAMS = \"cnn_params.hex\",\n    parameter IMAGES = \"cnn_images.hex\"\n) (\n    input  logic        CLK100MHZ,\n    input  logic        CPU_RESETN,\n    input  logic        BTNC,\n    input  logic [2:0]  SW,\n    output logic [7:0]  AN,\n    output logic [6:0]  SEG,\n    output logic [15:0] LED,\n    output logic        UART_RXD_OUT\n);\n    logic [2:0] rst_sr = '0;\n    always_ff @(posedge CLK100MHZ) rst_sr <= {rst_sr[1:0], CPU_RESETN};\n    wire rst_n = rst_sr[2];\n    // debounce: the button value is accepted when it has been stable for DEBOUNCE_CYCLES clocks\n    logic b_sync0 = 1'b0, b_sync1 = 1'b0, b_stable = 1'b0, b_prev = 1'b0;\n    logic [$clog2(DEBOUNCE_CYCLES+1):0] cnt = '0;\n    always_ff @(posedge CLK100MHZ) begin\n        b_sync0 <= BTNC; b_sync1 <= b_sync0;\n        if (b_sync1 == b_stable) cnt <= '0;\n        else if (cnt == DEBOUNCE_CYCLES - 1) begin b_stable <= b_sync1; cnt <= '0; end\n        else cnt <= cnt + 1;\n        b_prev <= b_stable;\n    end\n    wire go = b_stable & ~b_prev;\n    logic ready, result_valid;\n    logic [1:0] cls, cls_q;\n    logic have;\n    logic [127:0] logits;\n    cnn_system #(.CLKS_PER_BIT(CLKS_PER_BIT), .PARAMS(PARAMS), .IMAGES(IMAGES)) u_sys (\n        .clk(CLK100MHZ), .rst_n, .go(go & ready), .img_sel(SW), .ready, .result_valid, .cls, .logits, .uart_tx(UART_RXD_OUT));\n    always_ff @(posedge CLK100MHZ) begin\n        if (!rst_n) have <= 1'b0;\n        else if (result_valid) begin cls_q <= cls; have <= 1'b1; end\n    end\n    assign AN = 8'hFE;                                         // the right-hand digit only (active low)\n    always_comb begin\n        SEG = 7'h7F;                                           // blank until the first result\n        if (have)\n            case (cls_q)                                       // SEG[6:0] = {CG, CF, CE, CD, CC, CB, CA}, active low\n                2'd0: SEG = 7'h40;\n                2'd1: SEG = 7'h79;\n                2'd2: SEG = 7'h24;\n                default: SEG = 7'h30;\n            endcase\n    end\n    assign LED = {ready, 13'd0, have ? cls_q : 2'd0};\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 94,
+    "name": "cnn_system.sv",
+    "path": "benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_system.sv",
+    "sha256": "e4975e250789",
+    "text": "// Part 14 lab 1, the working core (checked in Icarus by test_lab_cnn.py): block-RAM parameters and eight test images, a loader that writes them into the course tiny CNN\n// (solutions/p14l10_tiny_cnn/tiny_cnn.sv), a start on `go`, and a UART transmitter that sends the class letter (H, V, B or X for a horizontal bar, a vertical bar, a box\n// or a cross) and a newline. After reset the 632 parameter words are loaded once (about 650 clocks); `ready` goes high when the system can take a `go`.\nmodule cnn_system #(\n    parameter CLKS_PER_BIT = 868,\n    parameter PARAMS = \"cnn_params.hex\",\n    parameter IMAGES = \"cnn_images.hex\"\n) (\n    input  logic        clk,\n    input  logic        rst_n,\n    input  logic        go,                 // one clock: classify image img_sel\n    input  logic [2:0]  img_sel,\n    output logic        ready,\n    output logic        result_valid,       // one clock when cls is new\n    output logic [1:0]  cls,\n    output logic [127:0] logits,\n    output logic        uart_tx\n);\n    logic [31:0] prom [0:631];\n    logic [7:0]  irom [0:1151];\n    initial begin\n`include \"cnn_init.svh\"\n    end\n    logic        ld_we, start, busy, done;\n    logic [1:0]  ld_sel;\n    logic [9:0]  ld_addr;\n    logic [31:0] ld_data;\n    tiny_cnn u_cnn (.clk, .rst_n, .ld_we, .ld_sel, .ld_addr, .ld_data, .start, .busy, .done, .logits, .cls);\n\n    typedef enum logic [2:0] {LOAD, IDLE, IMG, RUN, WAIT, SEND} st_t;\n    st_t st;\n    logic [9:0] n;\n    logic [2:0] sel_q;\n    always_comb begin\n        ld_we = 1'b0; ld_sel = 2'd0; ld_addr = 10'd0; ld_data = 32'd0;\n        if (st == LOAD) begin\n            ld_we = 1'b1;\n            ld_data = prom[n];\n            if (n < 612) begin ld_sel = 2'd0; ld_addr = n; end\n            else if (n < 628) begin ld_sel = 2'd1; ld_addr = n - 612; end\n            else begin ld_sel = 2'd2; ld_addr = n - 628; end\n        end else if (st == IMG) begin\n            ld_we = 1'b1; ld_sel = 2'd3; ld_addr = n;\n            ld_data = {24'd0, irom[11'({sel_q, 7'd0}) + 11'({sel_q, 4'd0}) + 11'(n)]};     // sel * 144 + n  (144 = 128 + 16)\n        end\n    end\n    assign ready = (st == IDLE);\n    logic tx_start, tx_busy;\n    logic [7:0] tx_byte;\n    logic send_nl;\n    uart_tx #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_tx (.clk, .rst_n, .start(tx_start), .data(tx_byte), .busy(tx_busy), .tx(uart_tx));\n    always_ff @(posedge clk) begin\n        start <= 1'b0; tx_start <= 1'b0; result_valid <= 1'b0;\n        if (!rst_n) begin st <= LOAD; n <= '0; send_nl <= 1'b0; end\n        else case (st)\n            LOAD: if (n == 631) begin st <= IDLE; n <= '0; end else n <= n + 10'd1;\n            IDLE: if (go) begin sel_q <= img_sel; n <= '0; st <= IMG; end\n            IMG:  if (n == 143) begin st <= RUN; end else n <= n + 10'd1;\n            RUN:  begin start <= 1'b1; st <= WAIT; end\n            WAIT: if (done) begin result_valid <= 1'b1; st <= SEND; send_nl <= 1'b0; tx_start <= 1'b1; tx_byte <= \"HVBX\" >> ((3 - cls) * 8); end\n            SEND: if (!tx_busy && !tx_start) begin\n                      if (!send_nl) begin send_nl <= 1'b1; tx_start <= 1'b1; tx_byte <= 8'h0A; end\n                      else st <= IDLE;\n                  end\n            default: st <= IDLE;\n        endcase\n    end\nendmodule\n\n// 8N1 UART transmitter, LSB first. start (one clock, only when busy is low) sends data.\nmodule uart_tx #(\n    parameter CLKS_PER_BIT = 868\n) (\n    input  logic       clk,\n    input  logic       rst_n,\n    input  logic       start,\n    input  logic [7:0] data,\n    output logic       busy,\n    output logic       tx\n);\n    logic [9:0] sh;\n    logic [3:0] bits;\n    logic [$clog2(CLKS_PER_BIT+1):0] cnt;\n    assign busy = (bits != 0);\n    always_ff @(posedge clk) begin\n        if (!rst_n) begin tx <= 1'b1; bits <= '0; cnt <= '0; end\n        else if (start && !busy) begin sh <= {1'b1, data, 1'b0}; bits <= 4'd10; cnt <= '0; end\n        else if (busy) begin\n            tx <= sh[0];\n            if (cnt == CLKS_PER_BIT - 1) begin cnt <= '0; sh <= {1'b1, sh[9:1]}; bits <= bits - 4'd1; end\n            else cnt <= cnt + 1;\n        end else tx <= 1'b1;\n    end\nendmodule\n"
+   },
+   {
+    "lang": "systemverilog",
+    "lines": 238,
+    "name": "tiny_cnn.sv",
+    "path": "benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/tiny_cnn.sv",
+    "sha256": "2241c5d1963a",
+    "text": "// Part 14 lesson 10 exercise: a whole tiny CNN in RTL, one multiply-accumulate unit, bit-exact against the numpy integer model (tools/ml_models.int_forward).\n//\n// The network (12 x 12 grey image, int8 values 0 .. 127) is   conv 3x3, 1 -> 4 channels, ReLU, requantise   (4 x 10 x 10)\n//                                                             max-pool 2 x 2                                 (4 x 5 x 5)\n//                                                             conv 3x3, 4 -> 8 channels, ReLU, requantise   (8 x 3 x 3)\n//                                                             dense 72 -> 4, raw int32 logits (no requantisation); cls = index of the largest (the lowest index wins a tie).\n// Layout, all row-major with the channel first: image[y*12 + x]; conv1 weights w[oc*9 + ky*3 + kx]; conv2 weights w[oc*36 + ic*9 + ky*3 + kx]; dense weights w[o*72 + i] where i is the\n// flatten index c*9 + y*3 + x of the 8 x 3 x 3 map. A layer output y = clamp(requant(acc), 0, 127) with requant(acc) = (acc * M + 2^(S-1)) >>> S (M unsigned 16 bit, S 1 .. 31).\n//\n// Loading (any time while busy = 0): write ld_we = 1 with ld_sel and ld_addr, ld_data (the low bits are used, as signed numbers):\n//   ld_sel 0: weight memory, addresses 0 .. 611 (conv1 0 .. 35, conv2 36 .. 323, dense 324 .. 611), 8-bit signed;\n//   ld_sel 1: bias memory, addresses 0 .. 15 (conv1 0 .. 3, conv2 4 .. 11, dense 12 .. 15), 32-bit signed;\n//   ld_sel 2: configuration, address 0 = M1, 1 = S1, 2 = M2, 3 = S2;\n//   ld_sel 3: image, addresses 0 .. 143, 8-bit signed.\n// Run: start = 1 for one clock (while busy = 0) begins an inference; busy is high until done pulses high for one clock; then logits[k*32 +: 32] (signed) and cls hold the result\n// until the next start. The weights and the image stay loaded.\nmodule tiny_cnn (\n    input  logic          clk,\n    input  logic          rst_n,\n    input  logic          ld_we,\n    input  logic [1:0]    ld_sel,\n    input  logic [9:0]    ld_addr,\n    input  logic [31:0]   ld_data,\n    input  logic          start,\n    output logic          busy,\n    output logic          done,\n    output logic [127:0]  logits,\n    output logic [1:0]    cls\n);\n    logic signed [7:0]  wmem [0:611];\n    logic signed [31:0] bmem [0:15];\n    logic [15:0]        cfg_m1, cfg_m2;\n    logic [4:0]         cfg_s1, cfg_s2;\n    logic signed [7:0]  img [0:143];\n    logic signed [7:0]  a1  [0:399];\n    logic signed [7:0]  p1  [0:99];\n    logic signed [7:0]  a2  [0:71];\n    logic signed [31:0] lg  [0:3];\n\n    always_ff @(posedge clk) begin\n        if (ld_we) begin\n            case (ld_sel)\n                2'd0: wmem[ld_addr] <= ld_data[7:0];\n                2'd1: bmem[ld_addr[3:0]] <= ld_data;\n                2'd2: case (ld_addr[1:0])\n                          2'd0: cfg_m1 <= ld_data[15:0];\n                          2'd1: cfg_s1 <= ld_data[4:0];\n                          2'd2: cfg_m2 <= ld_data[15:0];\n                          default: cfg_s2 <= ld_data[4:0];\n                      endcase\n                default: img[ld_addr[7:0]] <= ld_data[7:0];\n            endcase\n        end\n    end\n\n    // ---- layer 1: conv, 1 -> 4, 12 x 12 -> 10 x 10\n    logic l1_start, l1_done, l1_we;\n    logic [15:0] l1_ia, l1_wa, l1_oa;\n    logic [7:0]  l1_ba;\n    logic signed [31:0] l1_od;\n    mac_layer #(.CIN(1), .COUT(4), .IH(12), .IW(12), .K(3), .WB(0), .BB(0), .RAW(0)) u_l1 (\n        .clk, .rst_n, .start(l1_start), .done(l1_done), .in_addr(l1_ia), .in_data(img[l1_ia[7:0]]), .w_addr(l1_wa), .w_data(wmem[l1_wa[9:0]]),\n        .b_addr(l1_ba), .b_data(bmem[l1_ba[3:0]]), .mult(cfg_m1), .shift(cfg_s1), .out_we(l1_we), .out_addr(l1_oa), .out_data(l1_od));\n    always_ff @(posedge clk) if (l1_we) a1[l1_oa[8:0]] <= l1_od[7:0];\n\n    // ---- pool: 4 x 10 x 10 -> 4 x 5 x 5\n    logic pl_start, pl_done, pl_we;\n    logic [15:0] pl_ia, pl_oa;\n    logic signed [7:0] pl_od;\n    pool_layer #(.C(4), .IH(10), .IW(10)) u_pl (\n        .clk, .rst_n, .start(pl_start), .done(pl_done), .in_addr(pl_ia), .in_data(a1[pl_ia[8:0]]), .out_we(pl_we), .out_addr(pl_oa), .out_data(pl_od));\n    always_ff @(posedge clk) if (pl_we) p1[pl_oa[6:0]] <= pl_od;\n\n    // ---- layer 2: conv, 4 -> 8, 5 x 5 -> 3 x 3\n    logic l2_start, l2_done, l2_we;\n    logic [15:0] l2_ia, l2_wa, l2_oa;\n    logic [7:0]  l2_ba;\n    logic signed [31:0] l2_od;\n    mac_layer #(.CIN(4), .COUT(8), .IH(5), .IW(5), .K(3), .WB(36), .BB(4), .RAW(0)) u_l2 (\n        .clk, .rst_n, .start(l2_start), .done(l2_done), .in_addr(l2_ia), .in_data(p1[l2_ia[6:0]]), .w_addr(l2_wa), .w_data(wmem[l2_wa[9:0]]),\n        .b_addr(l2_ba), .b_data(bmem[l2_ba[3:0]]), .mult(cfg_m2), .shift(cfg_s2), .out_we(l2_we), .out_addr(l2_oa), .out_data(l2_od));\n    always_ff @(posedge clk) if (l2_we) a2[l2_oa[6:0]] <= l2_od[7:0];\n\n    // ---- layer 3: dense 72 -> 4 (a convolution with K = 1 over a 1 x 1 map), raw logits\n    logic l3_start, l3_done, l3_we;\n    logic [15:0] l3_ia, l3_wa, l3_oa;\n    logic [7:0]  l3_ba;\n    logic signed [31:0] l3_od;\n    mac_layer #(.CIN(72), .COUT(4), .IH(1), .IW(1), .K(1), .WB(324), .BB(12), .RAW(1)) u_l3 (\n        .clk, .rst_n, .start(l3_start), .done(l3_done), .in_addr(l3_ia), .in_data(a2[l3_ia[6:0]]), .w_addr(l3_wa), .w_data(wmem[l3_wa[9:0]]),\n        .b_addr(l3_ba), .b_data(bmem[l3_ba[3:0]]), .mult(16'd0), .shift(5'd1), .out_we(l3_we), .out_addr(l3_oa), .out_data(l3_od));\n    always_ff @(posedge clk) if (l3_we) lg[l3_oa[1:0]] <= l3_od;\n\n    // ---- sequencer\n    typedef enum logic [2:0] {IDLE, S1, SP, S2, S3, FIN} st_t;\n    st_t st;\n    assign busy = (st != IDLE);\n    always_ff @(posedge clk) begin\n        l1_start <= 1'b0; pl_start <= 1'b0; l2_start <= 1'b0; l3_start <= 1'b0; done <= 1'b0;\n        if (!rst_n) st <= IDLE;\n        else case (st)\n            IDLE: if (start) begin st <= S1; l1_start <= 1'b1; end\n            S1:   if (l1_done) begin st <= SP; pl_start <= 1'b1; end\n            SP:   if (pl_done) begin st <= S2; l2_start <= 1'b1; end\n            S2:   if (l2_done) begin st <= S3; l3_start <= 1'b1; end\n            S3:   if (l3_done) begin st <= FIN; end\n            FIN:  begin st <= IDLE; done <= 1'b1; end\n            default: st <= IDLE;\n        endcase\n    end\n    always_comb begin\n        for (int k = 0; k < 4; k++) logits[k*32 +: 32] = lg[k];\n        cls = 2'd0;\n        for (int k = 1; k < 4; k++) if (lg[k] > lg[cls]) cls = 2'(k);\n    end\nendmodule\n\n// A sequential convolution / dense layer: one MAC per clock. For every output (oc, oy, ox): load the bias, accumulate CIN*K*K products, then (unless RAW) requantise\n// with mult and shift and clamp to 0 .. 127 (the ReLU), and write. Reads are combinational (in_addr -> in_data and w_addr -> w_data in the same clock).\nmodule mac_layer #(\n    parameter int CIN = 1, COUT = 1, IH = 4, IW = 4, K = 3, WB = 0, BB = 0, RAW = 0\n) (\n    input  logic                clk,\n    input  logic                rst_n,\n    input  logic                start,\n    output logic                done,\n    output logic [15:0]         in_addr,\n    input  logic signed [7:0]   in_data,\n    output logic [15:0]         w_addr,\n    input  logic signed [7:0]   w_data,\n    output logic [7:0]          b_addr,\n    input  logic signed [31:0]  b_data,\n    input  logic [15:0]         mult,\n    input  logic [4:0]          shift,\n    output logic                out_we,\n    output logic [15:0]         out_addr,\n    output logic signed [31:0]  out_data\n);\n    localparam int OH = IH - K + 1, OW = IW - K + 1;\n    typedef enum logic [1:0] {IDLE, INIT, MAC, WR} st_t;\n    st_t st;\n    int oc, oy, ox, ic, ky, kx;\n    logic signed [31:0] acc;\n    assign in_addr = 16'(ic * IH * IW + (oy + ky) * IW + ox + kx);\n    assign w_addr  = 16'(WB + oc * CIN * K * K + ic * K * K + ky * K + kx);\n    assign b_addr  = 8'(BB + oc);\n    assign out_addr = 16'(oc * OH * OW + oy * OW + ox);\n    logic signed [63:0] p, r, rnd;\n    always_comb begin\n        p = acc * $signed({1'b0, mult});\n        rnd = 64'sd1 <<< (shift - 5'd1);\n        r = (p + rnd) >>> shift;\n        if (RAW) out_data = acc;\n        else if (r > 64'sd127) out_data = 32'sd127;\n        else if (r < 64'sd0) out_data = 32'sd0;\n        else out_data = r[31:0];\n    end\n    assign out_we = (st == WR);\n    always_ff @(posedge clk) begin\n        done <= 1'b0;\n        if (!rst_n) st <= IDLE;\n        else case (st)\n            IDLE: if (start) begin oc <= 0; oy <= 0; ox <= 0; st <= INIT; end\n            INIT: begin acc <= b_data; ic <= 0; ky <= 0; kx <= 0; st <= MAC; end\n            MAC: begin\n                acc <= acc + in_data * w_data;\n                if (kx == K - 1) begin\n                    kx <= 0;\n                    if (ky == K - 1) begin\n                        ky <= 0;\n                        if (ic == CIN - 1) st <= WR;\n                        else ic <= ic + 1;\n                    end else ky <= ky + 1;\n                end else kx <= kx + 1;\n            end\n            WR: begin\n                if (ox == OW - 1) begin\n                    ox <= 0;\n                    if (oy == OH - 1) begin\n                        oy <= 0;\n                        if (oc == COUT - 1) begin st <= IDLE; done <= 1'b1; end\n                        else begin oc <= oc + 1; st <= INIT; end\n                    end else begin oy <= oy + 1; st <= INIT; end\n                end else begin ox <= ox + 1; st <= INIT; end\n            end\n        endcase\n    end\nendmodule\n\n// 2 x 2 max-pool, stride 2, over C maps of IH x IW values (read from a memory, written to another), four reads per output.\nmodule pool_layer #(\n    parameter int C = 1, IH = 4, IW = 4\n) (\n    input  logic                clk,\n    input  logic                rst_n,\n    input  logic                start,\n    output logic                done,\n    output logic [15:0]         in_addr,\n    input  logic signed [7:0]   in_data,\n    output logic                out_we,\n    output logic [15:0]         out_addr,\n    output logic signed [7:0]   out_data\n);\n    localparam int OH = IH / 2, OW = IW / 2;\n    typedef enum logic [1:0] {IDLE, RD, WR} st_t;\n    st_t st;\n    int c, y, x, k;\n    logic signed [7:0] m;\n    assign in_addr = 16'(c * IH * IW + (2 * y + k / 2) * IW + 2 * x + (k % 2));\n    assign out_addr = 16'(c * OH * OW + y * OW + x);\n    assign out_we = (st == WR);\n    assign out_data = m;\n    always_ff @(posedge clk) begin\n        done <= 1'b0;\n        if (!rst_n) st <= IDLE;\n        else case (st)\n            IDLE: if (start) begin c <= 0; y <= 0; x <= 0; k <= 0; st <= RD; end\n            RD: begin\n                m <= (k == 0 || in_data > m) ? in_data : m;\n                if (k == 3) st <= WR;\n                else k <= k + 1;\n            end\n            WR: begin\n                k <= 0;\n                st <= RD;\n                if (x == OW - 1) begin\n                    x <= 0;\n                    if (y == OH - 1) begin\n                        y <= 0;\n                        if (c == C - 1) begin st <= IDLE; done <= 1'b1; end\n                        else c <= c + 1;\n                    end else y <= y + 1;\n                end else x <= x + 1;\n            end\n            default: st <= IDLE;\n        endcase\n    end\nendmodule\n"
+   }
+  ],
+  "tests": [
+   {
+    "lang": "python",
+    "lines": 88,
+    "name": "acceptance.py",
+    "path": "benchmark/course/tasks/c14_nexys_tiny_cnn/hidden/acceptance.py",
+    "sha256": "de0d74c81db7",
+    "text": "\"\"\"Acceptance tests of c14_nexys_tiny_cnn against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek, seg_pins\nfrom cocotb.triggers import ClockCycles\nfrom model import LETTERS, SEG_OF, forward, load\n\n\ndef expected():\n    w, b, cfg, imgs = load()\n    out = []\n    for k in range(8):\n        lg = forward(imgs[k], w, b, cfg)\n        cls = max(range(4), key=lambda i: (lg[i], -i))          # the lowest index wins a tie\n        out.append(cls)\n    return out\n\n\nasync def press(b: Board, k: int, what: str) -> None:\n    dut = b.dut\n    dut.SW.value = k\n    await ClockCycles(b.clk, 5)\n    dut.BTNC.value = 1\n    await ClockCycles(b.clk, 60)\n    dut.BTNC.value = 0\n    cls = EXP[k]\n    got = await b.uart.recv(2, 60_000)\n    assert got == (LETTERS[cls] + \"\\n\").encode(), f\"{what}: picture {k}: UART {got!r}, expected {LETTERS[cls]!r} + LF\"\n    await ClockCycles(b.clk, 40)\n    seg = seg_pins(dut)\n    assert seg == SEG_OF[cls], f\"{what}: picture {k}: display segments 0x{seg:02X}, expected 0x{SEG_OF[cls]:02X} (digit {cls})\"\n    assert int(dut.AN.value) == 0xFE, f\"{what}: only the right-hand digit may be lit (AN=0x{int(dut.AN.value):02X})\"\n    await ClockCycles(b.clk, 100)\n\n\nEXP = expected()\n\n\nasync def boot(dut) -> Board:\n    b = Board(dut, {\"BTNC\": 0, \"SW\": 0})\n    await b.start()\n    await b.cycles(1500)                  # the reference loads its parameter memories after reset\n    return b\n\n\n@cocotb.test()\nasync def test_blank_before_first_answer(dut):\n    b = await boot(dut)\n    seg = seg_pins(dut)\n    assert seg == 0x7F, f\"display must be blank before the first answer (segments 0x{seg:02X})\"\n    await b.uart.expect_silence(2000)\n\n\n@cocotb.test()\nasync def test_pictures_0_to_3(dut):\n    b = await boot(dut)\n    for k in range(4):\n        await press(b, k, \"first half\")\n\n\n@cocotb.test()\nasync def test_pictures_4_to_7(dut):\n    b = await boot(dut)\n    for k in range(4, 8):\n        await press(b, k, \"second half\")\n\n\n@cocotb.test()\nasync def test_glitch_is_not_a_press(dut):\n    \"\"\"A button pulse shorter than the debounce time starts nothing.\"\"\"\n    b = await boot(dut)\n    dut.SW.value = 2\n    dut.BTNC.value = 1\n    await ClockCycles(b.clk, 6)\n    dut.BTNC.value = 0\n    await b.uart.expect_silence(3000)\n    await press(b, 5, \"after a glitch\")\n\n\n@cocotb.test()\nasync def test_reset_blanks_the_display(dut):\n    b = await boot(dut)\n    await press(b, 1, \"before reset\")\n    await b.reset()\n    await b.cycles(20)\n    assert seg_pins(dut) == 0x7F, \"reset must blank the display\"\n"
+   }
+  ]
+ },
+ "heading": "Tiny CNN shape classifier",
+ "id": "c14_nexys_tiny_cnn",
+ "interface": {
+  "clocks": [
+   "CLK100MHZ at 100 MHz (board oscillator)"
+  ],
+  "parameters": {
+   "CLKS_PER_BIT": 868
+  },
+  "ports": [
+   {
+    "dir": "in",
+    "name": "CLK100MHZ",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "CPU_RESETN",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "UART_TXD_IN",
+    "note": "unused (the design only sends)",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "UART_RXD_OUT",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "BTNC",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "in",
+    "name": "SW",
+    "note": "only SW[2:0] are used",
+    "width": 16
+   },
+   {
+    "dir": "out",
+    "name": "AN",
+    "note": "AN[0] is the right-hand digit",
+    "width": 8
+   },
+   {
+    "dir": "out",
+    "name": "CA",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CB",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CC",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CD",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CE",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CF",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "CG",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "DP",
+    "note": "",
+    "width": 1
+   },
+   {
+    "dir": "out",
+    "name": "LED",
+    "note": "",
+    "width": 16
+   }
+  ],
+  "registers": [
+   {
+    "access": "serial",
+    "bits": "UART_RXD_OUT carries H, V, B or X then 0x0A at 115200 8N1; no input protocol",
+    "name": "UART_PROTOCOL",
+    "offset": "none"
+   }
+  ],
+  "reset": "CPU_RESETN, active low: the display is blank, no answer yet",
+  "top": "c14_nexys_tiny_cnn_top",
+  "unmapped": ""
+ },
+ "mutants": [
+  {
+   "file": "cnn_system.sv",
+   "name": "letters_swapped",
+   "why": "the letters of classes 2 and 3 are swapped"
+  },
+  {
+   "file": "cnn_nexys_top_ref.sv",
+   "name": "digit_pattern",
+   "why": "the segment pattern for 2 is wrong"
+  },
+  {
+   "file": "tiny_cnn.sv",
+   "name": "min_pool",
+   "why": "min-pooling instead of max-pooling"
+  },
+  {
+   "file": "tiny_cnn.sv",
+   "name": "no_relu_clamp",
+   "why": "negative values are not limited to 0"
+  },
+  {
+   "file": "tiny_cnn.sv",
+   "name": "extra_shift",
+   "why": "every layer output is scaled down four times too far"
+  },
+  {
+   "file": "tiny_cnn.sv",
+   "name": "argmin",
+   "why": "the class is the smallest score, not the biggest"
+  },
+  {
+   "file": "cnn_nexys_top_ref.sv",
+   "name": "debounce_ignored",
+   "why": "the button is not debounced: the press starts before it is stable"
+  }
+ ],
+ "no_shell": true,
+ "part": "xc7a100tcsg324-1",
+ "path": "benchmark/course/tasks/c14_nexys_tiny_cnn",
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "proof": [
+    "simulation"
+   ],
+   "text": "for each of the eight pictures the letter and the display digit equal the reference class"
+  },
+  {
+   "id": "REQ-02",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the display is blank before the first answer and shows only the right-hand digit"
+  },
+  {
+   "id": "REQ-03",
+   "proof": [
+    "simulation"
+   ],
+   "text": "the four scores of each picture equal the reference exactly (checked by the designer's own simulation; the bench sees the class only)"
+  },
+  {
+   "id": "REQ-04",
+   "proof": [
+    "analysis"
+   ],
+   "text": "The design closes timing at 100 MHz and fits the XC7A100T"
+  }
+ ],
+ "resources_expected": null,
+ "runs": [
+  {
+   "agent_turns": null,
+   "bram36": null,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-08",
+   "dsp": null,
+   "escape_level": null,
+   "failure_class": "spec/task gap (score) plus model error (stage-2 mutation loop)",
+   "ff": null,
+   "hidden_pass": false,
+   "lut": null,
+   "model": "claude-sonnet-5-5",
+   "outcome": "fail",
+   "run": 1,
+   "tests_passed": 0,
+   "tests_total": 5,
+   "wall_h": 5.83,
+   "wns_ns": null
+  },
+  {
+   "agent_turns": null,
+   "bram36": 0,
+   "claude_code_version": "2.1.319",
+   "date": "2026-11-09",
+   "dsp": 2,
+   "escape_level": "spec-interpretation",
+   "failure_class": "spec-interpretation (data format, shared by model and RTL)",
+   "ff": 577,
+   "hidden_pass": false,
+   "lut": 1108,
+   "model": "claude-sonnet-5-5",
+   "outcome": "escape",
+   "run": 2,
+   "tests_passed": 2,
+   "tests_total": 5,
+   "wall_h": 4.59,
+   "wns_ns": 1.993
+  }
+ ],
+ "scope": null,
+ "set": "course",
+ "showcase": false,
+ "spec_md": "# Tiny CNN shape classifier\n\nI want the Nexys A7-100T to recognise which of four simple shapes is in a small grey picture, using a tiny neural network whose numbers I give you in files.\n\n- The pictures: eight of them, each 12 by 12 pixels, each pixel a signed 8-bit number from 0 to 127 (`data/cnn_images.hex`, one number per line, picture after picture, row by row). They show a horizontal bar, a vertical\n  bar, a box outline or a cross; the four classes are numbered 0 (horizontal bar), 1 (vertical bar), 2 (box), 3 (cross).\n- The network, which must be followed exactly (all numbers are whole numbers):\n  1. Layer 1: four filters of 3 by 3, each sliding over the picture without going over the edge (so the result is 10 by 10 for each filter). For each place, multiply the nine pixels by the filter's nine\n     weights, add them and add the filter's bias. Then scale the total by the fraction M1 / 2^S1, rounding to the nearest whole number with exact halves going up, and limit it to 0 to 127 (so negatives become 0).\n  2. Shrink each 10 by 10 result to 5 by 5 by keeping the largest of every 2 by 2 block.\n  3. Layer 2: eight filters of 3 by 3 over all four 5 by 5 results at once (each filter has 36 weights, one 3 by 3 per input result; add everything and a bias), giving 3 by 3 for each filter; then scale by M2 / 2^S2, round and\n     limit to 0 to 127 in the same way.\n  4. Final layer: four sums, each of the 72 numbers from step 3 (taken filter by filter, row by row) times 72 weights, plus a bias. These four whole numbers (\"scores\") are not scaled or limited. The answer is the number of\n     the biggest score (if two tie, the lower number).\n- The file `data/cnn_params.hex` holds all 612 weights, 16 biases (a 32-bit signed number each) and M1, S1, M2, S2 (one 32-bit hexadecimal word per line; each weight is a signed 8-bit number in two's complement stored in the low byte of its word with the upper 24 bits zero, so a word from 80 to FF is a negative weight and bit 7 is the sign; a bias is a full 32-bit signed number; M1, S1, M2, S2 are plain non-negative numbers; the order is: layer 1 weights, layer 2 weights, final\n  layer weights, then the 16 biases, then M1, S1, M2, S2; the weights of a layer are ordered by filter, then input result, then row, then column).\n- Using the board: switches SW0 to SW2 choose the picture (0 to 7). Pressing the centre button (it needs debouncing) classifies that picture. When the answer is ready, show its number (0 to 3) on the right-hand\n  seven-segment digit (blank before the first answer) and send one letter on the USB serial port at 115200 baud, 8 data bits, no parity, 1 stop bit, followed by a line feed: H for 0, V for 1, B for 2, X for 3.\n- I will check the letter and the digit for each of the eight pictures. The USB-UART carries the answer, so this design does not embed the test shell.\n\nTest hooks: top module `c14_nexys_tiny_cnn_top`, ports named as in the board's master XDC, and the parameters `DEBOUNCE_CYCLES` (the button must be stable for this many clocks, 10 ms on the board) and `CLKS_PER_BIT` (868 on the board)\nas top-level parameters; the bench shrinks both. There are no other time constants.\n",
+ "survey": [
+  "I03",
+  "I09"
+ ],
+ "tier": "C14",
+ "title": "Tiny CNN shape classifier",
+ "trace": {
+  "captions": [
+   "Picture 0: the scores are 0: 11955, 1: -36784, 2: -1141, 3: 6100. The biggest is class 0 (horizontal bar), so the board shows 0 and sends the letter H.",
+   "Picture 1: the scores are 0: 9680, 1: -11429, 2: -3435, 3: -2750. The biggest is class 0 (horizontal bar), so the board shows 0 and sends the letter H.",
+   "Picture 2: the scores are 0: -10783, 1: 6838, 2: -6631, 3: -11783. The biggest is class 1 (vertical bar), so the board shows 1 and sends the letter V.",
+   "Picture 3: the scores are 0: -5018, 1: 4413, 2: -5122, 3: 459. The biggest is class 1 (vertical bar), so the board shows 1 and sends the letter V.",
+   "Picture 4: the scores are 0: -7887, 1: -26065, 2: 15368, 3: -3667. The biggest is class 2 (box), so the board shows 2 and sends the letter B.",
+   "Picture 5: the scores are 0: -7742, 1: -15851, 2: 10919, 3: -1115. The biggest is class 2 (box), so the board shows 2 and sends the letter B.",
+   "Picture 6: the scores are 0: -12524, 1: -4157, 2: -8301, 3: 7462. The biggest is class 3 (cross), so the board shows 3 and sends the letter X.",
+   "Picture 7: the scores are 0: -3491, 1: -20039, 2: -2207, 3: 9932. The biggest is class 3 (cross), so the board shows 3 and sends the letter X."
+  ],
+  "signals": [
+   {
+    "kind": "bus",
+    "name": "score 0",
+    "radix": "dec",
+    "v": [
+     11955,
+     9680,
+     -10783,
+     -5018,
+     -7887,
+     -7742,
+     -12524,
+     -3491
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "score 1",
+    "radix": "dec",
+    "v": [
+     -36784,
+     -11429,
+     6838,
+     4413,
+     -26065,
+     -15851,
+     -4157,
+     -20039
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "score 2",
+    "radix": "dec",
+    "v": [
+     -1141,
+     -3435,
+     -6631,
+     -5122,
+     15368,
+     10919,
+     -8301,
+     -2207
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "score 3",
+    "radix": "dec",
+    "v": [
+     6100,
+     -2750,
+     -11783,
+     459,
+     -3667,
+     -1115,
+     7462,
+     9932
+    ]
+   },
+   {
+    "kind": "bus",
+    "name": "class (digit)",
+    "radix": "dec",
+    "v": [
+     0,
+     0,
+     1,
+     1,
+     2,
+     2,
+     3,
+     3
+    ]
+   },
+   {
+    "kind": "text",
+    "name": "UART letter",
+    "v": [
+     "H",
+     "H",
+     "V",
+     "V",
+     "B",
+     "B",
+     "X",
+     "X"
+    ]
+   }
+  ],
+  "stimulus": "The 8 pictures of 12 by 12 pixels from the data file, each run through the model's integer network (two convolution layers, a pooling step and a final layer).",
+  "unit": "picture",
+  "x": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ]
+ },
+ "what": "A very small convolutional neural network on the Nexys A7 that decides which of four simple shapes is in a small grey picture. The network's numbers come from files and it uses only whole-number arithmetic: two convolution layers with a pooling step between them, then a final layer that gives four scores. The board shows the winning class on a display digit and sends a letter over the serial port.",
+ "where": "Small quantised networks like this run on cameras, sensors and microcontrollers for tasks such as gesture, symbol and defect recognition, and are a common way to learn how neural-network hardware works."
+}
