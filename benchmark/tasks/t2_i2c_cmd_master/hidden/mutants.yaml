@@ -8,6 +8,7 @@ mutants:
   - {name: short_low, file: i2cm_core.sv, find: "st <= B1; k <= k + 1'b1; cnt <= Q1;", replace: "st <= B1; k <= k + 1'b1; cnt <= '0;", why: "SCL low time between bits is Q + 1 clocks instead of 2Q"}
   - {name: rx_not_updated, file: i2cm_core.sv, find: "if (rd) rxdata <= sh;", replace: "if (rd) rxdata <= {sh[6:0], 1'b0};", why: "RXDATA loses its LSB"}
   - {name: read_never_nacks, file: i2cm_regs.sv, find: "rnack(win_wdata[16])", replace: "rnack(1'b0)", why: "READ never answers NACK"}
+  - {name: scl_oe_not_reset, file: i2cm_core.sv, find: "if (rst) begin\n            st <= IDLE; cnt <= '0; k <= '0; rd <= 1'b0; ack_n <= 1'b0; sh <= '0;\n            scl_oe <= 1'b0; ", replace: "if (rst) begin\n            st <= IDLE; cnt <= '0; k <= '0; rd <= 1'b0; ack_n <= 1'b0; sh <= '0;\n            ", why: "CPU_RESETN does not reset scl_oe (amended 2026-11-10: the reset test now kills a mutant)"}
 trap:
   twin: "textbook fixed ADT7420 read sequence (STOP after the pointer write, then a fresh START)"
   why: "the board's ADT7420 loses its register pointer on a STOP (Nexys A7 RM 12.1), so a pointer write must be followed by a repeated START"

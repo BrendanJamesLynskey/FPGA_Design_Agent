@@ -5,3 +5,4 @@ mutants:
   - {name: exchange_dropped, file: median3x3.sv, find: "{v[6], v[4]} = ce(v[6], v[4]);", replace: "", why: "one compare-exchange of the final stage is missing"}
   - {name: first_stage_dropped, file: median3x3.sv, find: "{v[0], v[1]} = ce(v[0], v[1]); {v[3], v[4]} = ce(v[3], v[4]); {v[6], v[7]} = ce(v[6], v[7]);", replace: "", why: "the second round of row sorting is missing"}
   - {name: middle_exchange_dropped, file: median3x3.sv, find: "{v[1], v[4]} = ce(v[1], v[4]);", replace: "", why: "the cross-row exchange of the middle column is missing"}
+  - {name: vmask_not_reset, file: c9_median3x3_regs.sv, find: "mask_r <= '0; vmask <= '0; nout", replace: "mask_r <= '0; nout", why: "CPU_RESETN does not reset vmask (amended 2026-11-10: the reset test now kills a mutant)"}

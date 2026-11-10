@@ -60,7 +60,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-03",
+  "date": "2026-11-10",
   "mutants": {
    "always_sample_leading": {
     "failed_tests": [
@@ -132,6 +132,13 @@
      "test_busy_and_done",
      "test_loopback",
      "test_random_frames"
+    ],
+    "killed": true
+   },
+   "rxd_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset",
+     "test_cs_hold_across_frames"
     ],
     "killed": true
    },
@@ -355,6 +362,11 @@
    "file": "spim_core.sv",
    "name": "cpha0_first_bit_late",
    "why": "in CPHA 0 the first bit is not on MOSI before the first edge"
+  },
+  {
+   "file": "spim_core.sv",
+   "name": "rxd_not_reset",
+   "why": "CPU_RESETN does not reset rxd (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

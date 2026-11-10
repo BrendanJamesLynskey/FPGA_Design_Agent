@@ -27,7 +27,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-06",
+  "date": "2026-11-10",
   "mutants": {
    "max_zero": {
     "failed_tests": [
@@ -67,6 +67,13 @@
      "test_special_score_sets",
      "test_random_score_sets",
      "test_offset_invariance",
+     "test_registers"
+    ],
+    "killed": true
+   },
+   "x_r_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset",
      "test_registers"
     ],
     "killed": true
@@ -225,6 +232,11 @@
    "file": "softmax_unit.sv",
    "name": "sum_drops_last",
    "why": "the last score is left out of the denominator"
+  },
+  {
+   "file": "c15_softmax_unit_regs.sv",
+   "name": "x_r_not_reset",
+   "why": "CPU_RESETN does not reset x_r (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

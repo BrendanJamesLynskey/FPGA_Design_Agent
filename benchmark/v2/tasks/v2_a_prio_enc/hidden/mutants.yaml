@@ -8,6 +8,7 @@ mutants:
   - {name: mask_ignored, file: prio_enc.sv, find: "wire [15:0] eff = req & ~mask;", replace: "wire [15:0] eff = req;", why: "the mask has no effect"}
   - {name: led_shows_requests, file: prio_enc.sv, find: "led <= grant;", replace: "led <= eff;", why: "LEDs show every active request"}
   - {name: one_sync_stage, file: prio_enc.sv, find: "req <= s1;", replace: "req <= sw_async;", why: "only one synchroniser stage: the LED answers a clock early"}
+  - {name: mask_not_reset, file: prio_enc.sv, find: "mask <= '0; led <= '0;", replace: "led <= '0;", why: "CPU_RESETN does not reset mask (amended 2026-11-10: the reset test now kills a mutant)"}
 trap:
   twin: "textbook priority encoder (casez / for loop with index 0 as the default)"
   why: "the textbook encoder returns index 0 with a valid flag when nothing is requested; this spec says all ones"

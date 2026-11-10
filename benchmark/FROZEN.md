@@ -86,3 +86,32 @@ Re-frozen: `lib/bench.py` and the shared-unit digests; the digests of the 14 pub
 regenerated for the tasks whose tests changed. `freeze.py verify --private`: 86 units, 0 mismatches. Pool specs have no
 reference RTL and are not run; their `scan_display` users (`p_bin2bcd`, `p_digital_clock`, `p_tennis_score`) are spec
 units only.
+
+## Shell fingerprint and amendments (2026-11-10, brief 15; before any scored run)
+
+The test shell is a scoring dependency: every task build compiles `shell/rtl/*.sv` (`tools/run_task.py`) and every bench imports
+`shell.host.protocol` and `shell.tests.uart_bfm` (`lib/bench.py`). It is also the agent's own working copy, so it can move on. Until now it
+was outside the freeze (quality review 12, R2). Now:
+
+- `GRADER_DEPS.json` records one SHA-256 over the eleven files a grader reads from `shell/` (the three packages' `__init__.py`,
+  `host/protocol.py`, `tests/uart_bfm.py`, `rtl/*.sv`), the file list with each file's hash, and the newest commit that touched them.
+  `freeze.py verify` fails if the shell it finds differs. The course tier has its own copy (`course/GRADER_DEPS.json`) and the v2 ledger a
+  `shell_freeze` entry, all with the same value today.
+- The agent may keep editing its own `shell/`. A scored run uses the frozen one: check out the commit named in `GRADER_DEPS.json` as a second work
+  tree and point the grader at it,
+
+  ```bash
+  git worktree add /tmp/frozen_shell <last_changed_in_commit from GRADER_DEPS.json>
+  FDA_GRADER_SHELL=/tmp/frozen_shell python3 benchmark/tools/run_task.py <task> --rtl <rtl dir>     # compiles and imports that copy's shell
+  python3 benchmark/tools/freeze.py verify --grader-shell /tmp/frozen_shell                          # the copy is the recorded one
+  python3 benchmark/tools/split.py verify --grader-shell /tmp/frozen_shell                           # same check against the v2 ledger
+  ```
+
+  `--grader-shell` and `FDA_GRADER_SHELL` take a repository root that holds `shell/` (or a `shell/` directory itself).
+- A deliberate shell change is a new record: re-run `shell_freeze.py make` for v1 and course (a dated amendment in [AMENDMENTS.md](AMENDMENTS.md)) and
+  `split.py shell-freeze --reason ...` for v2 (a new ledger entry; the old one stays in the chain).
+- `run_task.sources()` raises an error when an agent file has the same name as a shell file (it used to drop the agent's file and use the shell's).
+  Its digest, `shared:tools/run_task.py`, is re-recorded in the manifest with the amendment.
+
+Development-task amendments of the same date (spec clarifications, replacement and added mutants, added tests) are listed in
+[AMENDMENTS.md](AMENDMENTS.md) with old and new unit digests; `freeze.py refreeze` re-recorded those units. No held-out unit was touched.

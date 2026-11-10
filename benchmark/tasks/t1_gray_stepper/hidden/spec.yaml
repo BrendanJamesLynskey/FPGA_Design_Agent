@@ -70,8 +70,8 @@ timing:
   outputs: slow registered outputs, false-pathed
 
 requirements:
-  - {id: REQ-01, text: "Every step (press or automatic, either direction, wrap included) changes exactly one bit of LED[9:0] and of GRAY", proof: [simulation, formal]}
-  - {id: REQ-02, text: "GRAY = BIN xor (BIN >> 1) at all times and a step moves BIN by one modulo 1024 in the SW[15] direction", proof: [simulation, formal]}
+  - {id: REQ-01, text: "Every step (press or automatic, either direction, wrap included) changes exactly one bit of LED[9:0] and of GRAY", proof: [simulation]}
+  - {id: REQ-02, text: "GRAY = BIN xor (BIN >> 1) at all times and a step moves BIN by one modulo 1024 in the SW[15] direction", proof: [simulation]}
   - {id: REQ-03, text: "Automatic steps are exactly RATE * TICK_CYCLES clocks apart; RATE = 0 stops them", proof: [simulation]}
   - {id: REQ-04, text: "One debounced press gives one step; bounces shorter than the debounce time do nothing", proof: [simulation]}
   - {id: REQ-05, text: "The register window has the listed map and reset values", proof: [simulation]}

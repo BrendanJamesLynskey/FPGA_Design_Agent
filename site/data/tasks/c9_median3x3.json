@@ -39,7 +39,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-07",
+  "date": "2026-11-10",
   "mutants": {
    "exchange_dropped": {
     "failed_tests": [
@@ -84,6 +84,12 @@
     "failed_tests": [
      "test_all_windows_with_gaps",
      "test_every_position_of_the_median"
+    ],
+    "killed": true
+   },
+   "vmask_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset"
     ],
     "killed": true
    }
@@ -272,6 +278,11 @@
    "file": "median3x3.sv",
    "name": "middle_exchange_dropped",
    "why": "the cross-row exchange of the middle column is missing"
+  },
+  {
+   "file": "c9_median3x3_regs.sv",
+   "name": "vmask_not_reset",
+   "why": "CPU_RESETN does not reset vmask (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

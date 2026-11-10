@@ -1,7 +1,7 @@
 {
   "task": "c16_ntt_engine",
   "sim": "icarus",
-  "date": "2026-11-06",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -74,12 +74,25 @@
     },
     {
       "name": "forward_scaled",
-      "why": "the forward transform also runs the multiplication by 3303",
+      "why": "the forward transform also runs the multiplication by 3303 (amended 2026-11-10: the first form of this edit left a dangling else and never compiled)",
       "killed": true,
-      "built": false,
-      "failed_tests": []
+      "built": true,
+      "failed_tests": [
+        "test_forward_random",
+        "test_forward_edge_polynomials"
+      ]
+    },
+    {
+      "name": "ld_ptr_q_not_reset",
+      "why": "CPU_RESETN does not reset ld_ptr_q (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_registers_and_reset"
+      ]
     }
   ],
-  "mutants_killed": 7,
-  "mutants_total": 7
+  "mutants_killed": 8,
+  "mutants_total": 8
 }

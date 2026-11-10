@@ -45,7 +45,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-07",
+  "date": "2026-11-10",
   "mutants": {
    "amplitude_16384": {
     "failed_tests": [
@@ -60,6 +60,12 @@
      "test_first_frequency_word",
      "test_second_frequency_word",
      "test_consecutive_clocks_and_single_sample"
+    ],
+    "killed": true
+   },
+   "fw_r_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset"
     ],
     "killed": true
    },
@@ -299,6 +305,11 @@
    "file": "nco_mixer.sv",
    "name": "valid_always_high",
    "why": "a result on clocks with no sample"
+  },
+  {
+   "file": "c11_nco_mixer_regs.sv",
+   "name": "fw_r_not_reset",
+   "why": "CPU_RESETN does not reset fw_r (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

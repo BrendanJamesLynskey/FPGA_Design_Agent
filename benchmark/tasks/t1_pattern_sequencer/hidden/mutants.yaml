@@ -8,3 +8,4 @@ mutants:
   - {name: oneshot_no_loop_count, file: pattern_sequencer.sv, find: "loops <= loops + 1'b1;", replace: "if (!oneshot) loops <= loops + 1'b1;", why: "a finished one-shot is not counted in LOOPS"}
   - {name: length_accepts_17, file: pattern_sequencer.sv, find: "win_wdata[4:0] <= 5'd16)", replace: "win_wdata[4:0] <= 5'd17)", why: "LENGTH 17 accepted"}
   - {name: debounce_half, file: bm_debounce.sv, find: "end else if (run == CW'(CYCLES - 1)) begin", replace: "end else if (run == CW'(CYCLES / 2)) begin", why: "debounce accepts pulses of half the time"}
+  - {name: run_not_reset, file: pattern_sequencer.sv, find: "if (rst) begin\n            run <= 1'b0; ", replace: "if (rst) begin\n            ", why: "CPU_RESETN does not reset run (amended 2026-11-10: the reset test now kills a mutant)"}

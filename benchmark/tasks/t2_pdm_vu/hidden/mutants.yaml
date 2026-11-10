@@ -7,6 +7,7 @@ mutants:
   - {name: peak_clear_ignored, file: pdm_vu.sv, find: "if (win_wr && win_addr == 7'h02) begin peak <= '0; hold <= '0; end", replace: "", why: "a write does not clear PEAK"}
   - {name: last_sample_lost, file: pdm_vu.sv, find: "ones_last <= ones_n;", replace: "ones_last <= ones;", why: "ONES misses the block's last sample"}
   - {name: hold_reload_ctrl, file: pdm_vu.sv, find: "if (lvl_n > peak)      begin peak <= lvl_n; hold <= hold_set; end", replace: "if (lvl_n > peak)      begin peak <= lvl_n; hold <= 8'd8; end", why: "the hold ignores CTRL.HOLD"}
+  - {name: hold_set_not_reset, file: pdm_vu.sv, find: "if (rst) begin\n            hc <= '0; mclk <= 1'b0; n <= '0; ones <= '0; ones_last <= '0; level <= '0; peak <= '0;\n            hold_set <= 8'd8; ", replace: "if (rst) begin\n            hc <= '0; mclk <= 1'b0; n <= '0; ones <= '0; ones_last <= '0; level <= '0; peak <= '0;\n            ", why: "CPU_RESETN does not reset hold_set (amended 2026-11-10: the reset test now kills a mutant)"}
 trap:
   twin: "textbook PDM capture (M_LRSEL low, data taken at the M_CLK rising edge)"
   why: "this spec uses the M_LRSEL = 1 channel, valid in the high half and taken at the falling edge"

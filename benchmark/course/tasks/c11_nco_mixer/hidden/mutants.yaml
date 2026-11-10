@@ -6,3 +6,4 @@ mutants:
   - {name: amplitude_16384, file: nco_mixer.sv, find: "16383.0 * $sin", replace: "16384.0 * $sin", why: "table scaled by 16384 instead of 16383"}
   - {name: rounded_not_floored, file: nco_mixer.sv, find: "i_out <= XW'(pi >>> 14);", replace: "i_out <= XW'((pi + 8192) >>> 14);", why: "i rounds to nearest instead of towards minus infinity"}
   - {name: valid_always_high, file: nco_mixer.sv, find: "out_valid <= en;", replace: "out_valid <= 1'b1;", why: "a result on clocks with no sample"}
+  - {name: fw_r_not_reset, file: c11_nco_mixer_regs.sv, find: "vmask <= '0; fw_r <= '0; nout", replace: "vmask <= '0; nout", why: "CPU_RESETN does not reset fw_r (amended 2026-11-10: the reset test now kills a mutant)"}

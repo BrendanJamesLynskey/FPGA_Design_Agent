@@ -21,7 +21,7 @@
    [
     "COUNT is an integer 0..9999.",
     "A press of BTNU sets COUNT to (COUNT + STEP) mod 10000; a press of BTND sets COUNT to (COUNT - STEP) mod 10000.",
-    "Each time an up or down press wraps (the sum is >= 10000 or the difference is < 0), WRAPS increments by one (8 bits, wraps at 256).",
+    "Each time an up or down press wraps (the sum is >= 10000 or the difference is < 0), WRAPS increments by one (8 bits, wraps at 256; spec.md says a single byte is plenty and that it can go round to zero after 255).",
     "If an up press and a down press land on the same clock, neither acts and WRAPS is unchanged.",
     "A shell write to COUNT on the same clock as a press wins (the press is lost)."
    ]
@@ -58,8 +58,16 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-04",
+  "date": "2026-11-10",
   "mutants": {
+   "count_survives_reset": {
+    "failed_tests": [
+     "test_debounce_rejects_bounce",
+     "test_wrap_count_is_a_byte",
+     "test_reset_after_activity"
+    ],
+    "killed": true
+   },
    "debounce_half": {
     "failed_tests": [
      "test_debounce_rejects_bounce"
@@ -81,13 +89,26 @@
    },
    "wrap_off_by_one": {
     "failed_tests": [
-     "test_wrap_both_ends"
+     "test_wrap_both_ends",
+     "test_wrap_count_is_a_byte"
+    ],
+    "killed": true
+   },
+   "wraps_nine_bits": {
+    "failed_tests": [
+     "test_wrap_count_is_a_byte"
     ],
     "killed": true
    },
    "wraps_not_cleared": {
     "failed_tests": [
      "test_wrap_both_ends"
+    ],
+    "killed": true
+   },
+   "wraps_survive_reset": {
+    "failed_tests": [
+     "test_reset_after_activity"
     ],
     "killed": true
    },
@@ -100,7 +121,7 @@
   },
   "path": "benchmark/results/reference/t1_bcd_updown__icarus.json",
   "ref_pass": true,
-  "ref_tests": 9,
+  "ref_tests": 11,
   "sim": "icarus"
  },
  "data_files": [],
@@ -154,11 +175,11 @@
   "tests": [
    {
     "lang": "python",
-    "lines": 193,
+    "lines": 225,
     "name": "acceptance.py",
     "path": "benchmark/tasks/t1_bcd_updown/hidden/acceptance.py",
-    "sha256": "6f4d252a306c",
-    "text": "\"\"\"Acceptance tests of t1_bcd_updown against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek, scan_display\nfrom model import BCD, COUNT, DESIGN_ID, STEP, WRAPS, Model\n\nIDLE = {\"BTNU\": 0, \"BTND\": 0, \"SW\": 0}\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, IDLE)\n        self.dut, self.m = dut, Model()\n        self.n = self.b.param(\"DEBOUNCE_CYCLES\")\n        self.slot = 1 << self.b.param(\"REFRESH_BITS\")\n\n    async def start(self) -> None:\n        await self.b.start()\n\n    async def press(self, btn: str) -> None:\n        pin = getattr(self.dut, btn)\n        pin.value = 1\n        await self.b.cycles(self.n + 6)\n        pin.value = 0\n        await self.b.cycles(self.n + 6)\n        self.m.press(up=btn == \"BTNU\", down=btn == \"BTND\")\n\n    async def switches(self, v: int) -> None:\n        self.dut.SW.value = v\n        await self.b.cycles(4)\n        self.m.sw = v\n\n    async def check_regs(self) -> None:\n        for off in (COUNT, BCD, WRAPS, STEP):\n            await self.b.expect(off, self.m.read(off), (\"COUNT\", \"BCD\", \"WRAPS\", \"STEP\")[off])\n\n    async def check_display(self) -> None:\n        seen = await scan_display(self.dut, self.b.clk, self.slot)\n        want = self.m.display()\n        assert {k: v[0] for k, v in seen.items()} == want, f\"display {seen} != model {want}\"\n        assert all(v[1] == 1 for v in seen.values()), \"DP lit\"\n\n    async def check_leds(self) -> None:\n        led = await peek(self.b.clk, self.dut.LED)\n        assert led == self.m.leds(), f\"LED {led:04X} != model {self.m.leds():04X}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.check_regs()\n    await e.check_display()\n\n\n@cocotb.test()\nasync def test_steps_from_switches(dut):\n    e = Env(dut)\n    await e.start()\n    for sw in (0, 1, 2, 3, 2, 1):\n        await e.switches(sw)\n        await e.press(\"BTNU\")\n        await e.check_regs()\n    await e.press(\"BTND\")\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_wrap_both_ends(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(COUNT, 9998)\n    e.m.write(COUNT, 9998)\n    await e.switches(2)            # step 5\n    await e.press(\"BTNU\")          # 9998 + 5 -> 3, one wrap\n    await e.check_regs()\n    await e.switches(3)            # step 10\n    await e.press(\"BTND\")          # 3 - 10 -> 9993, second wrap\n    await e.check_regs()\n    await e.b.write(COUNT, 9999)\n    e.m.write(COUNT, 9999)\n    await e.switches(0)            # step 1: 9999 -> 0 exactly at the boundary\n    await e.press(\"BTNU\")\n    await e.check_regs()\n    await e.press(\"BTND\")          # 0 -> 9999\n    await e.check_regs()\n    await e.b.write(WRAPS, 0x55)\n    e.m.write(WRAPS, 0x55)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_debounce_rejects_bounce(dut):\n    e = Env(dut)\n    await e.start()\n    pin = dut.BTNU\n    for width in (1, 3, e.n // 2, e.n - 3):      # every pulse shorter than the debounce time\n        pin.value = 1\n        await e.b.cycles(width)\n        pin.value = 0\n        await e.b.cycles(e.n + 4)\n    await e.check_regs()                         # no press yet\n    # a bouncy press: chatter then a long steady level counts once\n    for w in (2, 5, 3, 7):\n        pin.value = 1\n        await e.b.cycles(w)\n        pin.value = 0\n        await e.b.cycles(w)\n    pin.value = 1\n    await e.b.cycles(4 * e.n)                    # held: no repeat\n    pin.value = 0\n    await e.b.cycles(e.n + 6)\n    e.m.press(up=True)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_decimal_display(dut):\n    e = Env(dut)\n    await e.start()\n    for v in (4071, 9999, 1000, 806):\n        await e.b.write(COUNT, v)\n        e.m.write(COUNT, v)\n        await e.check_display()\n        await e.check_leds()\n\n\n@cocotb.test()\nasync def test_leading_zero_blanking(dut):\n    \"\"\"Trap: a textbook decimal display shows all four digits; this spec blanks leading zeros.\"\"\"\n    e = Env(dut)\n    await e.start()\n    for v in (0, 7, 42, 305):\n        await e.b.write(COUNT, v)\n        e.m.write(COUNT, v)\n        await e.check_display()\n\n\n@cocotb.test()\nasync def test_register_rules(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(COUNT, 1234)\n    e.m.write(COUNT, 1234)\n    await e.b.write(COUNT, 10000)      # out of range: ignored\n    e.m.write(COUNT, 10000)\n    await e.b.write(BCD, 0x9999)       # read-only\n    await e.b.write(STEP, 7)\n    await e.check_regs()\n    for off in (0x04, 0x10, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n\n\n@cocotb.test()\nasync def test_random_sequence(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    for _ in range(14):\n        r = rng.random()\n        if r < 0.15:\n            await e.switches(rng.randrange(4))\n        elif r < 0.3:\n            v = rng.choice([rng.randrange(10000), rng.randrange(9990, 10000), rng.randrange(10), 10000 + rng.randrange(6000)])\n            await e.b.write(COUNT, v)\n            e.m.write(COUNT, v)\n        else:\n            await e.press(rng.choice((\"BTNU\", \"BTND\")))\n    await e.check_regs()\n    await e.check_display()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_simultaneous_presses_cancel(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(COUNT, 50)\n    e.m.write(COUNT, 50)\n    dut.BTNU.value = 1\n    dut.BTND.value = 1\n    await e.b.cycles(e.n + 6)\n    dut.BTNU.value = 0\n    dut.BTND.value = 0\n    await e.b.cycles(e.n + 6)\n    e.m.press(up=True, down=True)\n    await e.check_regs()\n"
+    "sha256": "b8e196a0046e",
+    "text": "\"\"\"Acceptance tests of t1_bcd_updown against model.py (hidden from the agent).\"\"\"\n\nfrom __future__ import annotations\n\nimport random\n\nimport cocotb\nfrom benchmark.lib.bench import Board, peek, scan_display\nfrom model import BCD, COUNT, DESIGN_ID, STEP, WRAPS, Model\n\nIDLE = {\"BTNU\": 0, \"BTND\": 0, \"SW\": 0}\n\n\nclass Env:\n    def __init__(self, dut) -> None:\n        self.b = Board(dut, IDLE)\n        self.dut, self.m = dut, Model()\n        self.n = self.b.param(\"DEBOUNCE_CYCLES\")\n        self.slot = 1 << self.b.param(\"REFRESH_BITS\")\n\n    async def start(self) -> None:\n        await self.b.start()\n\n    async def press(self, btn: str) -> None:\n        pin = getattr(self.dut, btn)\n        pin.value = 1\n        await self.b.cycles(self.n + 6)\n        pin.value = 0\n        await self.b.cycles(self.n + 6)\n        self.m.press(up=btn == \"BTNU\", down=btn == \"BTND\")\n\n    async def switches(self, v: int) -> None:\n        self.dut.SW.value = v\n        await self.b.cycles(4)\n        self.m.sw = v\n\n    async def check_regs(self) -> None:\n        for off in (COUNT, BCD, WRAPS, STEP):\n            await self.b.expect(off, self.m.read(off), (\"COUNT\", \"BCD\", \"WRAPS\", \"STEP\")[off])\n\n    async def check_display(self) -> None:\n        seen = await scan_display(self.dut, self.b.clk, self.slot)\n        want = self.m.display()\n        assert {k: v[0] for k, v in seen.items()} == want, f\"display {seen} != model {want}\"\n        assert all(v[1] == 1 for v in seen.values()), \"DP lit\"\n\n    async def check_leds(self) -> None:\n        led = await peek(self.b.clk, self.dut.LED)\n        assert led == self.m.leds(), f\"LED {led:04X} != model {self.m.leds():04X}\"\n\n\n@cocotb.test()\nasync def test_identity_and_reset(dut):\n    e = Env(dut)\n    await e.start()\n    assert await e.b.shell_id() == DESIGN_ID\n    await e.check_regs()\n    await e.check_display()\n\n\n@cocotb.test()\nasync def test_steps_from_switches(dut):\n    e = Env(dut)\n    await e.start()\n    for sw in (0, 1, 2, 3, 2, 1):\n        await e.switches(sw)\n        await e.press(\"BTNU\")\n        await e.check_regs()\n    await e.press(\"BTND\")\n    await e.check_regs()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_wrap_both_ends(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(COUNT, 9998)\n    e.m.write(COUNT, 9998)\n    await e.switches(2)            # step 5\n    await e.press(\"BTNU\")          # 9998 + 5 -> 3, one wrap\n    await e.check_regs()\n    await e.switches(3)            # step 10\n    await e.press(\"BTND\")          # 3 - 10 -> 9993, second wrap\n    await e.check_regs()\n    await e.b.write(COUNT, 9999)\n    e.m.write(COUNT, 9999)\n    await e.switches(0)            # step 1: 9999 -> 0 exactly at the boundary\n    await e.press(\"BTNU\")\n    await e.check_regs()\n    await e.press(\"BTND\")          # 0 -> 9999\n    await e.check_regs()\n    await e.b.write(WRAPS, 0x55)\n    e.m.write(WRAPS, 0x55)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_debounce_rejects_bounce(dut):\n    e = Env(dut)\n    await e.start()\n    pin = dut.BTNU\n    for width in (1, 3, e.n // 2, e.n - 3):      # every pulse shorter than the debounce time\n        pin.value = 1\n        await e.b.cycles(width)\n        pin.value = 0\n        await e.b.cycles(e.n + 4)\n    await e.check_regs()                         # no press yet\n    # a bouncy press: chatter then a long steady level counts once\n    for w in (2, 5, 3, 7):\n        pin.value = 1\n        await e.b.cycles(w)\n        pin.value = 0\n        await e.b.cycles(w)\n    pin.value = 1\n    await e.b.cycles(4 * e.n)                    # held: no repeat\n    pin.value = 0\n    await e.b.cycles(e.n + 6)\n    e.m.press(up=True)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_decimal_display(dut):\n    e = Env(dut)\n    await e.start()\n    for v in (4071, 9999, 1000, 806):\n        await e.b.write(COUNT, v)\n        e.m.write(COUNT, v)\n        await e.check_display()\n        await e.check_leds()\n\n\n@cocotb.test()\nasync def test_leading_zero_blanking(dut):\n    \"\"\"Trap: a textbook decimal display shows all four digits; this spec blanks leading zeros.\"\"\"\n    e = Env(dut)\n    await e.start()\n    for v in (0, 7, 42, 305):\n        await e.b.write(COUNT, v)\n        e.m.write(COUNT, v)\n        await e.check_display()\n\n\n@cocotb.test()\nasync def test_register_rules(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(COUNT, 1234)\n    e.m.write(COUNT, 1234)\n    await e.b.write(COUNT, 10000)      # out of range: ignored\n    e.m.write(COUNT, 10000)\n    await e.b.write(BCD, 0x9999)       # read-only\n    await e.b.write(STEP, 7)\n    await e.check_regs()\n    for off in (0x04, 0x10, 0x7F):\n        await e.b.expect(off, 0, \"unmapped\")\n\n\n@cocotb.test()\nasync def test_random_sequence(dut):\n    e = Env(dut)\n    await e.start()\n    rng = random.Random(int(cocotb.RANDOM_SEED))\n    for _ in range(14):\n        r = rng.random()\n        if r < 0.15:\n            await e.switches(rng.randrange(4))\n        elif r < 0.3:\n            v = rng.choice([rng.randrange(10000), rng.randrange(9990, 10000), rng.randrange(10), 10000 + rng.randrange(6000)])\n            await e.b.write(COUNT, v)\n            e.m.write(COUNT, v)\n        else:\n            await e.press(rng.choice((\"BTNU\", \"BTND\")))\n    await e.check_regs()\n    await e.check_display()\n    await e.check_leds()\n\n\n@cocotb.test()\nasync def test_simultaneous_presses_cancel(dut):\n    e = Env(dut)\n    await e.start()\n    await e.b.write(COUNT, 50)\n    e.m.write(COUNT, 50)\n    dut.BTNU.value = 1\n    dut.BTND.value = 1\n    await e.b.cycles(e.n + 6)\n    dut.BTNU.value = 0\n    dut.BTND.value = 0\n    await e.b.cycles(e.n + 6)\n    e.m.press(up=True, down=True)\n    await e.check_regs()\n\n\n@cocotb.test()\nasync def test_wrap_count_is_a_byte(dut):\n    \"\"\"Amended 2026-11-10: 258 wraps (BTND from 0, BTNU from 9999, alternately, step 1): WRAPS reads 258 mod 256 = 2.\"\"\"\n    e = Env(dut)\n    await e.start()\n    for _ in range(129):\n        await e.press(\"BTND\")\n        await e.press(\"BTNU\")\n    await e.check_regs()\n    assert e.m.read(WRAPS) == 2\n\n\n@cocotb.test()\nasync def test_reset_after_activity(dut):\n    \"\"\"Amended 2026-11-10: CPU_RESETN after presses, a COUNT write and a non-zero WRAPS returns COUNT and WRAPS to zero.\"\"\"\n    e = Env(dut)\n    await e.start()\n    await e.switches(2)\n    await e.b.write(COUNT, 9998)\n    e.m.write(COUNT, 9998)\n    await e.press(\"BTNU\")                         # wraps once\n    await e.press(\"BTNU\")\n    await e.check_regs()\n    assert e.m.read(WRAPS) == 1 and e.m.read(COUNT) == 8\n    await e.b.reset()\n    sw, e.m = e.m.sw, Model()\n    e.m.sw = sw                                    # the switches are still held at 2\n    await e.check_regs()\n    await e.check_display()\n    await e.check_leds()\n"
    }
   ]
  },
@@ -338,6 +359,21 @@
    "file": "bcd_updown.sv",
    "name": "wraps_not_cleared",
    "why": "a write does not clear WRAPS"
+  },
+  {
+   "file": "bcd_updown.sv",
+   "name": "wraps_nine_bits",
+   "why": "the wrap count is nine bits and reads 256 after 256 wraps (amended 2026-11-10)"
+  },
+  {
+   "file": "bcd_updown.sv",
+   "name": "count_survives_reset",
+   "why": "CPU_RESETN does not clear COUNT after activity (amended 2026-11-10)"
+  },
+  {
+   "file": "bcd_updown.sv",
+   "name": "wraps_survive_reset",
+   "why": "CPU_RESETN does not clear WRAPS after activity (amended 2026-11-10)"
   }
  ],
  "no_shell": false,
@@ -392,7 +428,7 @@
  "scope": null,
  "set": "v1",
  "showcase": false,
- "spec_md": "# Decimal up/down counter with selectable step\n\nI want a four-digit decimal counter on the Nexys A7-100T.\n\n- BTNU counts up and BTND counts down. Each press moves the count by the step chosen on the two right-hand\n  switches: SW[1:0] = 00 gives 1, 01 gives 2, 10 gives 5 and 11 gives 10. The buttons bounce, so one press must\n  move it exactly once.\n- The count runs from 0000 to 9999 and wraps round at both ends (going up past 9999 carries on from the bottom,\n  going down past 0 carries on from the top). I'd like to know how many times it has wrapped.\n- The right-hand four digits of the 7-segment display show the count in decimal, without leading zeros: 7 shows\n  as a single 7, and zero shows as a single 0. The other digits stay dark.\n- LED[13:0] show the count in binary.\n- CPU_RESETN resets everything to zero.\n- Over the test shell (USB-UART, 115200 baud) I can read the count (binary and as BCD digits), set it, read the\n  wrap count, and read the step the switches select. The design ID is \"BCDU\".\n\nTest hooks: top module `t1_bcd_updown_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (debounce time in clocks) and\n`REFRESH_BITS` (each display digit is lit for 2^REFRESH_BITS clocks) as top-level parameters.\n",
+ "spec_md": "# Decimal up/down counter with selectable step\n\nI want a four-digit decimal counter on the Nexys A7-100T.\n\n- BTNU counts up and BTND counts down. Each press moves the count by the step chosen on the two right-hand\n  switches: SW[1:0] = 00 gives 1, 01 gives 2, 10 gives 5 and 11 gives 10. The buttons bounce, so one press must\n  move it exactly once.\n- The count runs from 0000 to 9999 and wraps round at both ends (going up past 9999 carries on from the bottom,\n  going down past 0 carries on from the top). I'd like to know how many times it has wrapped; a single byte is\n  plenty, so after 255 that count can go round to zero.\n- The right-hand four digits of the 7-segment display show the count in decimal, without leading zeros: 7 shows\n  as a single 7, and zero shows as a single 0. The other digits stay dark.\n- LED[13:0] show the count in binary.\n- CPU_RESETN resets everything to zero.\n- Over the test shell (USB-UART, 115200 baud) I can read the count (binary and as BCD digits), set it, read the\n  wrap count, and read the step the switches select. The design ID is \"BCDU\".\n\nTest hooks: top module `t1_bcd_updown_top`, ports named as in the board's master XDC, the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters, plus `DEBOUNCE_CYCLES` (debounce time in clocks) and\n`REFRESH_BITS` (each display digit is lit for 2^REFRESH_BITS clocks) as top-level parameters.\n",
  "survey": [
   "A01"
  ],

@@ -25,6 +25,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
+# The shell a score is tied to. Normally this tree's; FDA_GRADER_SHELL names a checked-out frozen copy (a repository root that
+# holds shell/) while the agent's own shell moves on (benchmark/tools/shell_freeze.py, brief 15).
+SHELL_ROOT = Path(os.environ.get("FDA_GRADER_SHELL") or ROOT).resolve()
 SIM_STUBS = ROOT / "benchmark" / "lib" / "sim"
 
 
@@ -34,8 +37,13 @@ def load_bench(task: Path) -> dict:
 
 def sources(task: Path, rtl: Path) -> list[Path]:
     b = load_bench(task)
-    src = sorted((ROOT / "shell" / "rtl").glob("*.sv"))
-    own = sorted(p for p in rtl.iterdir() if p.suffix in (".sv", ".v") and p.name not in {s.name for s in src})
+    src = sorted((SHELL_ROOT / "shell" / "rtl").glob("*.sv"))
+    taken = {s.name for s in src}
+    own = sorted(p for p in rtl.iterdir() if p.suffix in (".sv", ".v"))
+    clash = sorted(p.name for p in own if p.name in taken)
+    if clash:                   # used to be dropped silently in favour of the shell's file, which hid the collision
+        raise ValueError(f"{rtl}: file name(s) {', '.join(clash)} also name a test-shell file; rename them (the shell's own "
+                         f"modules are compiled into every build)")
     src += own
     for stub in b.get("sim_stubs", []):
         src.append(SIM_STUBS / stub)
@@ -69,7 +77,12 @@ def run(task: Path, rtl: Path | None = None, sim: str | None = None, seed: int =
         args = ["-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD", "-j", "2"]
     else:
         args = ["-g2012"]
-    srcs = sources(task, rtl)
+    try:
+        srcs = sources(task, rtl)
+    except ValueError as e:                         # a name that collides with the shell: an error, not a silent swap
+        result = {"task": task.name, "tag": tag, "sim": simname, "seed": seed, "rtl": str(rtl), "built": False,
+                  "tests": {}, "pass": False, "error": f"build failed: {e}"}
+        return result
     args += [f"-I{d}" for d in sorted({str(s.parent) for s in srcs})]
     params = dict(b.get("parameters") or {})
     result = {"task": task.name, "tag": tag, "sim": simname, "seed": seed, "rtl": str(rtl), "built": False,
@@ -82,7 +95,17 @@ def run(task: Path, rtl: Path | None = None, sim: str | None = None, seed: int =
         result["error"] = f"build failed: {e}"
         return result
     result["built"] = True
-    env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(task / "hidden"), os.environ.get("PYTHONPATH", "")]),
+    pre = [str(ROOT)]
+    if SHELL_ROOT != ROOT:                          # only the shell package comes from the frozen copy, not the whole tree
+        link = build_dir / "grader_shell"
+        link.mkdir(parents=True, exist_ok=True)
+        target = SHELL_ROOT / "shell"
+        if (link / "shell").is_symlink() and (link / "shell").resolve() != target:
+            (link / "shell").unlink()
+        if not (link / "shell").is_symlink():
+            (link / "shell").symlink_to(target)
+        pre.insert(0, str(link))
+    env = {"PYTHONPATH": os.pathsep.join([*pre, str(task / "hidden"), os.environ.get("PYTHONPATH", "")]),
            "BENCH_TASK": str(task)}
     xml = build_dir / "results.xml"
     xml.unlink(missing_ok=True)

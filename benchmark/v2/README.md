@@ -16,6 +16,19 @@ it is written; `python3 benchmark/tools/split.py verify` checks the chain and th
 - The five tasks whose eval-1 counts were seen are `move` entries (held-out to development). The v1 split files are not edited;
   `split.py effective` shows them with the moves, the v2 draws and the pending manifests.
 
+## Shell freeze and amendments
+
+Two more entry kinds, both appended with `split.py` and both part of the hash chain:
+
+- `shell_freeze`: the SHA-256 of everything a grader imports from `shell/` (`shell/rtl/*.sv`, `shell/host/protocol.py`, `shell/tests/uart_bfm.py` and the
+  packages' `__init__.py`), with the file list. `split.py verify` fails if the current shell differs from the latest entry, unless
+  `--grader-shell DIR` names a checked-out frozen copy (how a scored run uses one: [../FROZEN.md](../FROZEN.md)). Record: `split.py shell-freeze --reason TEXT`.
+- `amend`: a dated change to a **development** task (task id, the manifest hash it had, the new manifest hash, new unit digest, date, reason). Record:
+  `split.py amend --task ID --manifest FILE --reason TEXT` after regenerating the task's manifest with `freeze_v2.py make`. `verify` checks that each
+  amendment starts from the task's current manifest hash (the draw's, or the previous amendment's), and
+  `tests/test_task_quality.py` accepts a task's files and manifest only if the manifest's SHA-256 is that current hash. The draw is not redone and held-out
+  tasks are never amended. Each amendment is also written up in [../AMENDMENTS.md](../AMENDMENTS.md).
+
 ## Pending tasks
 
 A pending task is **neither development nor held-out**. `verify` and `effective` list pending manifests per cell; **the agent must not run, read or tune on a pending task**

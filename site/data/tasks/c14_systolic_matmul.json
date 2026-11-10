@@ -28,7 +28,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-06",
+  "date": "2026-11-10",
   "mutants": {
    "deskew_col0": {
     "failed_tests": [
@@ -36,6 +36,12 @@
      "test_burst_extreme_rows",
      "test_second_table_and_single_row",
      "test_registers"
+    ],
+    "killed": true
+   },
+   "lat_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset"
     ],
     "killed": true
    },
@@ -272,6 +278,11 @@
    "file": "matmul4_rows.sv",
    "name": "valid_late",
    "why": "the last row of a burst is not reported valid (out_valid needs two consecutive rows)"
+  },
+  {
+   "file": "c14_systolic_matmul_regs.sv",
+   "name": "lat_not_reset",
+   "why": "CPU_RESETN does not reset lat (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

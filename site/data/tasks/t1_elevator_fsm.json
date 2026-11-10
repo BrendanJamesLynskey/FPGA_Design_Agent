@@ -43,7 +43,7 @@
  },
  "board": "nexys_a7_100t",
  "check": {
-  "date": "2026-11-03",
+  "date": "2026-11-10",
   "mutants": {
    "always_turns": {
     "failed_tests": [
@@ -116,6 +116,20 @@
    },
    "no_stop_passing": {
     "failed_tests": [
+     "test_single_call",
+     "test_scan_keeps_direction",
+     "test_call_on_the_way_and_behind",
+     "test_call_at_current_floor",
+     "test_switch_edges_only",
+     "test_turns_round_at_the_top",
+     "test_shell_calls_and_register_rules",
+     "test_random_calls"
+    ],
+    "killed": true
+   },
+   "pend_not_reset": {
+    "failed_tests": [
+     "test_identity_and_reset",
      "test_single_call",
      "test_scan_keeps_direction",
      "test_call_on_the_way_and_behind",
@@ -313,6 +327,11 @@
    "file": "elevator_fsm.sv",
    "name": "leds_no_pending",
    "why": "LED[7:4] do not show the calls"
+  },
+  {
+   "file": "elevator_fsm.sv",
+   "name": "pend_not_reset",
+   "why": "CPU_RESETN does not reset pend (amended 2026-11-10: the reset test now kills a mutant)"
   }
  ],
  "no_shell": false,

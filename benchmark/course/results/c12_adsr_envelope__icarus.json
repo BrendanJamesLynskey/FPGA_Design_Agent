@@ -1,7 +1,7 @@
 {
   "task": "c12_adsr_envelope",
   "sim": "icarus",
-  "date": "2026-11-07",
+  "date": "2026-11-10",
   "ref": {
     "pass": true,
     "tests": {
@@ -81,8 +81,20 @@
         "test_course_script",
         "test_boundaries"
       ]
+    },
+    {
+      "name": "level_not_reset",
+      "why": "CPU_RESETN does not reset level (amended 2026-11-10: the reset test now kills a mutant)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_course_script",
+        "test_boundaries",
+        "test_holds_between_ticks_and_consecutive_tick_clocks"
+      ]
     }
   ],
-  "mutants_killed": 7,
-  "mutants_total": 7
+  "mutants_killed": 8,
+  "mutants_total": 8
 }
