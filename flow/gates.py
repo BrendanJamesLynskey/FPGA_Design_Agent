@@ -18,6 +18,7 @@ that failed:
                 report_qor_assessment score >= 4 (the QoR gate, after routing);
                 no unconstrained endpoints; no DRC errors or critical warnings;
                 no critical methodology violations; no critical CDC violations;
+                (post_synth also: the structural CDC check, brief 16: no unsafe crossing)
                 report_power run for the board's thermal environment with the
                 junction at or below 85 C
     bitstream   the bitstream (and, for an ILA build, the .ltx) present
@@ -308,6 +309,25 @@ def _architecture_for(d: Path, architecture: Path | None) -> dict[str, Any] | No
     return data if isinstance(data, dict) and isinstance(data.get("predicted_resources"), dict) else None
 
 
+def _cdc_structure(d: Path, architecture: Path | None) -> dict[str, Any]:
+    """flow/cdc_structure.py on the build's cdc_paths_synth.rpt and cdc_synth.rpt; the design's architecture.yaml
+    ``cdc_waivers`` (each ``{cell: <regex>, reason: <text>}``, a reason required) excuse named crossings."""
+    import yaml
+    try:
+        from flow import cdc_structure
+    except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+        import cdc_structure
+    waivers: list[dict[str, str]] = []
+    p = architecture or d.parent.parent / "architecture.yaml"
+    try:
+        data = yaml.safe_load(p.read_text()) if p.is_file() else None
+        if isinstance(data, dict):
+            waivers = [w for w in (data.get("cdc_waivers") or []) if isinstance(w, dict)]
+    except yaml.YAMLError:
+        pass
+    return cdc_structure.evaluate(d / "cdc_paths_synth.rpt", d / "cdc_synth.rpt", waivers)
+
+
 def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any]:
     d = build_dir
     prep = json.loads((d / "prepare.json").read_text()) if (d / "prepare.json").exists() else {}
@@ -350,6 +370,17 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             g["post_synth_cdc_no_critical"] = False
         if cdc_s is not None:              # design standard STD-CDC-02 (brief 05d): report_cdc at post-synthesis
             g["post_synth_cdc_no_critical"] = sum(r["count"] for r in cdc_s["rules"] if r["severity"] == "Critical") == 0
+        # brief 16: the structural CDC check (flow/cdc_structure.py) on every asynchronous crossing of the netlist, of every
+        # severity; report_cdc alone passes a bus crossed bit by bit, reconverging synchronisers and a bit sampled twice
+        cdc_struct = None
+        if (d / "cdc_paths_synth.rpt").exists():
+            try:
+                cdc_struct = _cdc_structure(d, architecture)
+                g["post_synth_cdc_structure_clean"] = cdc_struct["pass"]
+            except ValueError:
+                g["post_synth_cdc_structure_clean"] = False
+        elif strict:
+            g["post_synth_cdc_structure_clean"] = False
         util_s = parse_utilization(_read(d, "utilization_synth.rpt")) if (d / "utilization_synth.rpt").exists() else {}
         arch = _architecture_for(d, architecture)
         sanity = None
@@ -363,7 +394,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         stages["post_synth"] = {"ran": True, "gates": g, "warnings": warn, "timing": t_s, "check_timing": c_s,
                                 "unconstrained_ports": parse_check_timing_ports(c_s_text),
                                 "methodology": _rule_summary(m_s), "drc": _rule_summary(d_s), "qor_assessment": q_s,
-                                "cdc": cdc_s, "resource_sanity": sanity, "utilization": util_s}
+                                "cdc": cdc_s, "cdc_structure": cdc_struct, "resource_sanity": sanity, "utilization": util_s}
     else:
         stages["post_synth"] = {"ran": False, "gates": {}}
 

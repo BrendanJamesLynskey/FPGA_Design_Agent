@@ -15,7 +15,7 @@ from pathlib import Path
 
 from cocotb_tools.runner import get_results, get_runner
 
-from flow import srcorder
+from flow import cdc_inject, srcorder
 
 ROOT = Path(__file__).resolve().parents[1]
 SHELL_RTL = sorted((ROOT / "shell" / "rtl").glob("*.sv"))
@@ -143,6 +143,13 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
         coverage = os.environ.get("FDA_COVERAGE") == "1"
     sources = swap_mutant_sources(sources)
     design = srcorder.design_of(test_dir)
+    # brief 16: stand-ins for the XPM macros a build instantiates (Icarus and Verilator have none) and, with
+    # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
+    inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
+    sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or ROOT / "build" / "sim") / f"{name}_cdcinj",
+                                                     int(inj_env) if inj_env not in (None, "") else None)
+    if inj_env not in (None, "") and os.environ.get("FDA_CDC_INJECT_INFO"):
+        Path(os.environ["FDA_CDC_INJECT_INFO"]).write_text(__import__("json").dumps(inj_info, indent=1))
     if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
         sources = srcorder.drop_shell(sources)
     if simname == "verilator":                            # 07a2 fix 4: bound checkers belong to every Verilator build
@@ -163,6 +170,7 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
     env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
     env.update(extra_env or {})
     plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
+    plus += inj_plus
     try:
         # 07a2-prep: the simulator starts in test_dir; the task's data files are linked there for the run ($readmemh)
         with srcorder.linked_data(design / "data", test_dir):
