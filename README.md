@@ -1,7 +1,7 @@
 # FPGA_Design_Agent
 
 An open-source agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGAs, with every result measured.
-Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)); [the agent](https://fpga-design-agent.vercel.app/agent) shows its architecture and LangGraph.
+Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)); the home page draws the agent's feedback loop on the bench, with a recorded run replayed through it; [the agent](https://fpga-design-agent.vercel.app/agent) shows its architecture, LangGraph and [harness](https://fpga-design-agent.vercel.app/agent#harness).
 
 **What it does today.** Given a short request, the agent interviews the user (or, in an evaluation, a stand-in that
 answers only from a hidden full spec), plans the design, writes SystemVerilog and its tests, and drives Vivado 2025.2
@@ -281,7 +281,11 @@ site/        the showcase site (static, Vercel): export.py (results -> data), bu
              problem catalogue: catalogue.yaml + catalogue_parts/ (domains, descriptions), catalogue_pages.py,
              traces/ (one adapter per task that runs its hidden/model.py for the page animation)
              agent page ("The agent"): agent_arch.py (the LangGraph and role agents read from agent/graph -> data/agent_graph.json),
-             agent_page.py (its SVG figures); a site test fails if the drawn graph differs from the compiled one
+             agent_page.py (its SVG figures); a site test fails if the drawn graph differs from the compiled one;
+             its harness section reads the role agent's middleware, tools and limits from the code (agent_arch.harness)
+             home page's feedback loop (brief 47): [loop.py](site/loop.py) (stations, labels from run records, the replayed
+             tour -> data/loop.json), [loop_page.py](site/loop_page.py) (the SVG), [data/loop_legs.yaml](site/data/loop_legs.yaml)
+             (each leg of the loop: automated, being built, or needs a person, with evidence; "legs automated: N of M")
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);

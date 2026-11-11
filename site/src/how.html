@@ -50,7 +50,10 @@
 <dl class="gloss">
 <dt id="term-agent">Agent</dt><dd>A language model working in a loop: it reads, calls a tool, reads the result and decides what to do next.</dd>
 <dt id="term-langgraph">LangGraph</dt><dd>An open-source library for writing such loops as a graph of steps; here it holds the controller that runs the stages.</dd>
-<dt id="term-harness">Harness</dt><dd>The program that runs a model's tool loop: here either Deep Agents (an open-source library built on LangGraph) or Claude Code.</dd>
+<dt id="term-harness">Harness</dt><dd>Everything around a model that runs its tool loop: the tools, how its context is kept, the prompts, the limits and stop rules, and the sandbox. Here either Deep Agents (an open-source library built on LangGraph) or Claude Code.</dd>
+<dt id="term-middleware">Middleware</dt><dd>Code that the harness runs around every model call or tool call, for example to summarise old turns or to repair a malformed call.</dd>
+<dt id="term-eviction">Context eviction</dt><dd>Taking old or bulky material out of what the model is sent each turn, such as a long report saved to a file and replaced by a short preview and its path.</dd>
+<dt id="term-caching">Prompt caching</dt><dd>A provider feature that keeps the unchanged start of a prompt between calls, so a repeated transcript costs less and returns sooner.</dd>
 <dt id="term-mcp">MCP</dt><dd>The Model Context Protocol, an open standard by which a model's harness calls tools served by another program.</dd>
 <dt id="term-rtl">RTL</dt><dd>Register-transfer level: hardware written as registers and the logic between them, here in SystemVerilog.</dd>
 <dt id="term-bitstream">Bitstream</dt><dd>The file that configures the FPGA, produced at the end of the Vivado flow.</dd>

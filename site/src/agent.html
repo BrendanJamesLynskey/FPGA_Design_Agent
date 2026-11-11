@@ -52,5 +52,24 @@
 <p>Several other shapes of workflow are planned as variants of this graph, each behind a flag, to be compared on the same development tasks with the same budgets. None has been run yet, so nothing is claimed for any of them.</p>
 {{!agent_variants}}
 
+<h2 id="harness">Harness engineering</h2>
+<p>A <a href="how.html#term-harness">harness</a> is everything around the model: the tools it is offered, how its context is kept as the work goes on, the prompts, the limits, the rules for when to stop, and the sandbox it works in. The model sees only what the harness passes it, and acts only through what the harness lets it call.</p>
+<p>So the harness matters as much as the model. The same model costs more and finishes less in a harness that resends a long transcript every turn, or that lets a hung simulation run for half an hour. The controller and the gates above are one half of this agent's harness. This section is about the other half: what runs inside each role agent, and the experiments to improve it.</p>
+
+<h3>What ours is today</h3>
+<p>An audit on {{agent_graph.harness.audit_date}} built a Deep Agents role agent exactly as the agent builds it and read what it is given. It is close to a bare tool loop. The model gets our role prompt and nothing else, a handful of file tools and the stage's own tools, and no to-do list or sub-agents. The library stacks six <a href="how.html#term-middleware">middleware</a> around it, but for our models only two change what the model sees. One answers tool calls left without a result. The other summarises older turns, but only once the transcript reaches about {{agent_graph.harness.settings.summarise_trigger_tokens}} tokens; before that it only shortens the file contents the model wrote in older turns. Tool results, such as Vivado reports and simulation logs, stay in full, and every turn resends them: there is no <a href="how.html#term-eviction">context eviction</a> of results and no <a href="how.html#term-caching">prompt caching</a>.</p>
+<figure>{{!harness_layers}}
+<figcaption>Read from the code: the middleware as <code>create_deep_agent</code> stacks it, the tools a role agent is offered, and our own limits. A site test rebuilds the role agent and fails if this picture and the code differ.</figcaption></figure>
+{{!harness_audit}}
+<p class="small muted">The first reading of this audit counted only the middleware that show as steps in the agent's graph and so missed the summarisation and caching middleware, which act inside each model call. Both are in the stack; the table says what each does for these models.</p>
+
+<h3>The experiments</h3>
+<p>Eight changes to the harness are planned, each behind a flag with the baseline left as it is, to be compared on the same development tasks with three seeds each. With three seeds only large effects can show. None has been run yet, so no result is claimed for any of them.</p>
+{{!harness_arms}}
+
+<h3>Fixes already made</h3>
+<p>Three findings about the harness have already been fixed, each with its evidence. Protection against hung simulations goes no further than the time limit in the table above; a better one is the second experiment.</p>
+{{!harness_fixes}}
+
 <h2>What the agent cannot do yet</h2>
 <p>It has no held-out score: the development runs are a record of the work, not a measure of how it does on new tasks. No design the agent built has yet passed every test on the board: the one programmed so far passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its internal signal captures. It designs one module at a time; the project layer for multi-module designs is not yet driven by the controller. And the Deep Agents harness has been run only on the small T1 design, with one model; how it compares with Claude Code on the benchmark has not been measured.</p>

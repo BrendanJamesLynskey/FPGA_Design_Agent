@@ -356,3 +356,105 @@ def test_agent_page_is_second_and_linked():
     assert names[1] == "agent.html"
     for f in ("index.html", "how.html"):
         assert 'href="agent.html"' in re.sub(r"(?s)<header.*?</header>", "", (SITE / "public" / f).read_text()), f
+
+
+# ---- brief 47: the feedback loop on the home page, and the harness section ----------------------------------------------
+
+def _loop():
+    return json.loads((SITE / "data" / "loop.json").read_text())
+
+
+def _hero_svgs():
+    page = (SITE / "public" / "index.html").read_text()
+    figs = re.findall(r'<svg class="ag loop".*?</svg>', page, re.S)
+    assert len(figs) == 2
+    return figs
+
+
+def test_loop_labels_come_from_data():
+    """Each label on a returning arrow, in both layouts, is the data's text; every number in it occurs in its source record."""
+    import html as h
+    L = _loop()
+    for f in _hero_svgs():
+        for s in L["stations"]:
+            if not s["fb"]:
+                assert f'data-fb="{s["id"]}"' not in f
+                continue
+            g = re.search(rf'<g class="fb" data-fb="{s["id"]}"[^>]*>(.*?)</g>', f, re.S).group(1)
+            shown = [h.unescape(x) for x in re.findall(r"<text[^>]*>([^<]*)</text>", g)]
+            assert shown[-len(s["fb"]["values"]):] == s["fb"]["values"]
+            assert " ".join(shown[:-len(s["fb"]["values"])]) == "returns " + s["fb"]["kind"]
+    for s in L["stations"]:
+        if s["fb"] and s["fb"]["src"]:
+            src = (SITE.parent / s["fb"]["src"]["record"]).read_text()
+            have = set(re.findall(r"\d+(?:\.\d+)?", src))
+            for v in s["fb"]["values"]:
+                for n in re.findall(r"\d+(?:\.\d+)?", v):
+                    assert n.lstrip("+") in have or n.rstrip("0").rstrip(".") in have, (s["id"], v, n)
+        elif s["fb"]:
+            assert all(not re.search(r"\d", v) for v in s["fb"]["values"]), "a label with no source carries no number"
+
+
+def test_loop_legs_evidence_resolves_and_counts():
+    import loop
+    L = _loop()
+    y = yaml.safe_load((SITE / "data" / "loop_legs.yaml").read_text())["legs"]
+    assert [x["id"] for x in L["legs"]] == [x["id"] for x in y]
+    for x in L["legs"]:
+        assert x["status"] in loop.STATUS
+        assert x["evidence"] or x["status"] != "automated", x["id"]
+        for p in x["evidence"]:
+            assert (SITE.parent / p).is_file(), (x["id"], p)
+    c = L["counts"]
+    assert c["automated"] == sum(x["status"] == "automated" for x in L["legs"]) and c["total"] == len(L["legs"])
+    page = (SITE / "public" / "index.html").read_text()
+    assert f'{c["automated"]} of {c["total"]}' in page
+    src = (SITE / "src" / "index.html").read_text()
+    assert "{{loop.counts.automated}} of {{loop.counts.total}}" in src, "the count is filled from data, never typed"
+
+
+def test_drawn_legs_match_their_status():
+    status = {x["id"]: x["status"] for x in _loop()["legs"]}
+    for f in _hero_svgs():
+        legs = set(re.findall(r'data-leg="([^"]+)"', f))
+        assert legs <= set(status) and {"repair", "approve", "wiring", "instruments", "hil_gate"} <= legs
+        for cls, leg in re.findall(r'<(?:path|rect) class="[^"]*lg-(\w+)[^"]*"[^>]*data-leg="([^"]+)"', f):
+            assert cls == status[leg], leg
+        for leg in re.findall(r'data-person="([^"]+)"', f):
+            assert status[leg] == "person"
+        for p in ("f-spec", "f-sim", "f-viv", "f-board", "f-instr", "o-sim", "o-vivado", "o-board", "r-board"):
+            assert f'data-p="{p}"' in f
+
+
+def test_tour_follows_its_record():
+    L = _loop()
+    import loop
+    rec = json.loads((SITE.parent / loop.TOUR_RUN).read_text())
+    work = [(f["stage"], f["visit"]) for f in L["tour"] if f["ph"] == "work"]
+    assert [s for s, _ in work] == rec["stages_visited"]
+    figs = _hero_svgs()
+    for f in L["tour"]:
+        for pid, _ in f["path"]:
+            assert all(f'data-p="{pid}"' in g for g in figs), pid
+    board = json.loads((SITE.parent / loop.TOUR_BOARD).read_text())["run_as_written"]
+    assert [f["ph"] for f in L["tour"][-5:]] == ["approve", "act", "observe", "decide", "end"]
+    assert L["tour"][-2]["gate"] == ("pass" if board["pass"] else "fail")
+
+
+def test_harness_section_equals_the_code():
+    import agent_arch
+    A = _agent()
+    inner = agent_arch.inner_from_code()
+    assert A["harness"]["settings"] == agent_arch.harness_settings()
+    assert [m["name"] for m in A["harness"]["middleware"]] == inner["middleware"]
+    assert set(inner["middleware"]) <= set(agent_arch.MIDDLEWARE_WORDS)
+    if not (SITE.parent / "results" / "42_workflows").exists():
+        assert all(a["status"] == "not yet measured" for a in A["harness"]["arms"])
+    assert [a["id"] for a in A["harness"]["arms"]] == [f"H{k}" for k in range(1, 9)]
+    page = (SITE / "public" / "agent.html").read_text()
+    assert 'id="harness"' in page and page.count('svg class="ag harn"') == 2
+    for f in ("index.html", "how.html", "results.html"):
+        assert 'href="agent.html#harness"' in (SITE / "public" / f).read_text(), f
+    how = (SITE / "public" / "how.html").read_text()
+    for t in ("term-harness", "term-middleware", "term-eviction", "term-caching"):
+        assert f'id="{t}"' in how

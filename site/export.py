@@ -442,6 +442,8 @@ def main():
            "packs": packs(), "eval": evaldata(), "catalogue": cat, "flow_notes": flow_notes(),
            "skills": expertise.skills_doc(), "expertise": expertise.build()}
     out["agent_graph"] = agent_arch.build(out["replay"], out["skills"])     # brief 43: the agent's graph, roles and two replays, from the code
+    import loop
+    out["loop"] = loop.build(dict(out["agent_graph"], vivado=out["board"]["vivado"]))     # brief 47: the home page's feedback loop
     out.update({f"tasks/{k}": v for k, v in pages.items()})
     (OUT / "tasks").mkdir(exist_ok=True)
     bad = 0

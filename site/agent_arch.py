@@ -45,7 +45,7 @@ EDGE_WORDS = {
 }
 INNER_WORDS = {
     "__start__": "the role's prompt and files", "PatchToolCallsMiddleware.before_agent": "tidy unanswered tool calls",
-    "model": "model call", "tools": "tool calls", "_ParentNotifierMiddleware.after_agent": "report back",
+    "model": "model call", "tools": "tool calls", "_ParentNotifierMiddleware.after_agent": "notify a parent (unused here)",
     "__end__": "back to the controller",
 }
 STAGE_WORDS = ["Interview", "Plan", "RTL and tests", "Constraints", "Synthesis", "Implementation", "Timing closure",
@@ -116,6 +116,55 @@ ARMS = [
      "at": "the constraints stage", "status": "not yet measured"},
 ]
 
+#: brief 47: plain words for each middleware in a role agent's stack, in the stack's order (a test fails on a new one).
+MIDDLEWARE_WORDS = {
+    "FilesystemMiddleware": "the built-in file tools on the jailed folder; moves a tool result of {evict_tool_result_chars:,} characters or more to a file",
+    "_ParentNotifierMiddleware": "wakes a parent agent that started this one in the background; does nothing here",
+    "SummarizationMiddleware": "summarises older turns once the transcript reaches about {summarise_trigger_tokens:,} tokens, keeping the last {summarise_keep_messages} messages; before that, cuts file contents the model wrote (over {truncate_args_over_chars:,} characters) out of all but the last {truncate_args_keep_messages} messages",
+    "PatchToolCallsMiddleware": "answers any tool call left without a result, so the transcript stays valid",
+    "AnthropicPromptCachingMiddleware": "prompt caching, for Anthropic chat models only; other models pass straight through",
+    "UnsupportedContentMiddleware": "replaces content the model cannot take, such as images",
+}
+#: brief 42's harness arms (addendum, 2026-11-11). Each `evidence` number must occur in its `source` file (checked in build).
+HARNESS_ARMS = [
+    {"id": "H1", "name": "Context management", "source": "results/36_skill_routing/e2e.md",
+     "change": "Large tool results, such as Vivado reports and simulation logs, go to a file in the jail and the model gets a head, a tail and the path; older turns are summarised much earlier.",
+     "evidence": "Token totals are dominated by long repair visits: one 80-turn visit of the RTL writer used 6.6 M tokens."},
+    {"id": "H2", "name": "Hang protection", "source": "results/24_fsm/README.md",
+     "change": "A per-test simulation limit from the test's own simulated-time budget, a result that says where a test hung, and a check that refuses tests with unbounded waits before they run.",
+     "evidence": "In one drill run three simulate calls each ran to the 1800 s limit on the agent's own tests, which waited on conditions that never came."},
+    {"id": "H3", "name": "Diagnose before repair", "source": None,
+     "change": "Before each repair visit the role writes a short hypothesis, its evidence and the planned change; the repair visit receives it.",
+     "evidence": "Repair visits that edit without stating what they think is wrong."},
+    {"id": "H4", "name": "Budget and stall rule", "source": None,
+     "change": "A token budget per stage; the same gate failing the same way three times sends the stage back to its plan instead of another edit.",
+     "evidence": "Repair loops whose cost has no limit but the visit count."},
+    {"id": "H5", "name": "Prompts and tool descriptions", "source": "results/36_skill_routing/e2e.md",
+     "change": "Stage prompts aligned with the skill shortlist; every tool description says when to use it and when not to.",
+     "evidence": "In the skill-routing runs the roles hardly used the new skill tools and kept loading whole sections."},
+    {"id": "H6", "name": "Report reader", "source": None,
+     "change": "A narrow, read-only helper agent reads a Vivado report and returns a structured finding instead of the raw text.",
+     "evidence": "Raw reports in the main transcript."},
+    {"id": "H7", "name": "Prompt caching", "source": None,
+     "change": "Prompt caching on the OpenRouter models that support it.",
+     "evidence": "The caching in the stack today acts on Anthropic chat models only, and every turn resends the whole prompt."},
+    {"id": "H8", "name": "To-do list", "source": None,
+     "change": "A to-do list tool for the RTL writer.",
+     "evidence": "Planning on long stages; the role agents are offered no to-do tool today."},
+]
+#: fixes already made from harness findings, each with its evidence (repository paths and the pull request).
+HARNESS_FIXES = [
+    {"name": "Whole skills from load_skill", "pr": 115, "files": ["agent/core/tools.py", "agent/tests/test_36_skill_routing.py"],
+     "text": "When a role loaded several skills at once, the tool layer's output limit cut the middle out of them without saying so. "
+             "load_skill now returns whole skills up to the limit and names the ones it held back, so the role can load each by name."},
+    {"name": "The debug core's own timing exceptions", "pr": 120, "files": ["flow/exceptions_check.py", "flow/tests/test_45_ila_exceptions.py"],
+     "text": "The exceptions gate failed every build with a logic analyser in it, because the analyser core brings timing exceptions "
+             "that Vivado ignores. The gate now reports those as information and still fails on the design's own."},
+    {"name": "A build cache for Vivado", "pr": 118, "files": ["flow/build_cache.py", "results/33_vivado_speed/summary.json"],
+     "text": "A repeated build of an unchanged design now comes from a cache, and a later stage resumes from the last checkpoint. "
+             "One agent run's build sequence on the c10 task took {with_cache_s} s instead of a modelled {without_cache_model_s} s, with the same result."},
+]
+
 
 def _imports():
     sys.path.insert(0, str(ROOT))
@@ -145,18 +194,62 @@ def inner_from_code():
     from deepagents.profiles.harness.harness_profiles import GeneralPurposeSubagentProfile
 
     from agent.graph.llm import Meter, Reply, chat_model
+    import deepagents.graph as dg
     register_harness_profile("fda", HarnessProfile(general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False)))
-    seen = {}
+    seen, stack = {}, {}
 
     def client(msgs, tools=None):
         seen["tools"] = [t["function"]["name"] for t in (tools or [])]
+        seen["msgs"] = [(m.get("role"), m.get("content")) for m in msgs if isinstance(m, dict)]
         return Reply(text="done", tool_calls=[])
-    a = create_deep_agent(model=chat_model(client, Meter(run_limits={"turns": 3}), []), tools=[], system_prompt="x",
-                          backend=StateBackend())
+
+    real = dg.create_agent
+
+    def spy(*a, **k):                      # brief 47: the whole middleware stack, not only the ones that are graph nodes
+        stack["mw"] = list(k.get("middleware") or [])
+        return real(*a, **k)
+    dg.create_agent = spy
+    try:
+        a = create_deep_agent(model=chat_model(client, Meter(run_limits={"turns": 3}), []), tools=[], system_prompt="ROLE PROMPT",
+                              backend=StateBackend())
+    finally:
+        dg.create_agent = real
     a.invoke({"messages": [{"role": "user", "content": "x"}]})
     g = a.get_graph()
     return {"nodes": list(g.nodes), "edges": sorted({(e.source, e.target, bool(e.conditional)) for e in g.edges}),
-            "builtin_tools": seen["tools"], "todo_tool": "write_todos" in seen["tools"], "subagent_tool": "task" in seen["tools"]}
+            "builtin_tools": seen["tools"], "todo_tool": "write_todos" in seen["tools"], "subagent_tool": "task" in seen["tools"],
+            "middleware": [m.name for m in stack["mw"]],
+            "system_prompt_only_ours": [r for r, c in seen["msgs"] if r == "system"] == ["system"]
+                                       and dict(seen["msgs"])["system"] == "ROLE PROMPT"}
+
+
+def harness_settings():
+    """The settings that decide how a Deep Agents role agent handles its context, read from the libraries and our code."""
+    TOOLS, _, run, *_ = _imports()
+    import deepagents.graph as dg
+    from deepagents.backends import StateBackend
+    from deepagents.middleware import filesystem as fsm
+    from deepagents.middleware.summarization import create_summarization_middleware
+
+    from agent.core import tools as core_tools
+    from agent.core.registry import MAX_OUTPUT
+    from agent.graph.llm import Meter, Reply, chat_model
+    model = chat_model(lambda m, tools=None: Reply(text="", tool_calls=[]), Meter(run_limits={"turns": 1}), [])
+    sm = create_summarization_middleware(model, StateBackend())   # as create_deep_agent builds it for this model
+    trig, keep = sm._lc_helper.trigger, sm._lc_helper.keep
+    fs = fsm.FilesystemMiddleware(backend=StateBackend())
+    assert dg.create_summarization_middleware is create_summarization_middleware
+    rec = [int(x) for x in re.findall(r'"recursion_limit": (\d+)', (ROOT / "agent/graph/run.py").read_text())]
+    assert len(rec) == 2                                 # rtl first (the real folder), then the other roles
+    assert trig[0] == "tokens" and keep[0] == "messages" and sm._truncate_args_trigger[0] == "messages"
+    return {"summarise_trigger_tokens": trig[1], "summarise_keep_messages": keep[1],
+            "truncate_args_after_messages": sm._truncate_args_trigger[1], "truncate_args_keep_messages": sm._truncate_args_keep[1],
+            "truncate_args_over_chars": sm._max_arg_length,
+            "model_profile": model.profile is not None,
+            "evict_tool_result_chars": fsm.NUM_CHARS_PER_TOKEN * fs._tool_token_limit_before_evict,
+            "registry_clip_chars": MAX_OUTPUT,
+            "recursion_limit": {"rtl": rec[0], "others": rec[1]},
+            "sim_timeout_s": {"default": core_tools.SIM_TIMEOUT_DEFAULT, "min": core_tools.SIM_TIMEOUT_MIN, "max": core_tools.SIM_TIMEOUT_MAX}}
 
 
 def versions():
@@ -354,4 +447,35 @@ def build(replay, skills):
         "arms": ARMS,
         "bank": bank(skills),
         "inner_words": {n: INNER_WORDS[n] for n in inner["nodes"]},
+        "harness": harness(inner),
     }
+
+
+def harness(inner):
+    """Brief 47: the harness section of agent.html. Settings from the code, arms from brief 42, fixes with evidence."""
+    s = harness_settings()
+    from deepagents.middleware._utils import is_anthropic_chat_model
+
+    from agent.graph.llm import Meter, Reply, chat_model
+    anth = is_anthropic_chat_model(chat_model(lambda m, tools=None: Reply(text="", tool_calls=[]), Meter(run_limits={"turns": 1}), []))
+    idle = {"_ParentNotifierMiddleware": True, "AnthropicPromptCachingMiddleware": not anth}    # present, but no effect here
+    mw = [{"name": m, "words": MIDDLEWARE_WORDS[m].format(**s), "acts": not idle.get(m, False)} for m in inner["middleware"]]
+    arms = []
+    for a in HARNESS_ARMS:
+        if a["source"]:
+            src = (ROOT / a["source"]).read_text()
+            for n in re.findall(r"\d+(?:\.\d+)?", a["evidence"]):
+                assert n in src, (a["id"], n, a["source"])
+        res = ROOT / "results" / "42_workflows" / f'{a["id"]}.json'
+        status = json.loads(res.read_text())["summary"] if res.exists() else "not yet measured"
+        arms.append({**a, "status": status})
+    cache = json.loads((ROOT / "results/33_vivado_speed/summary.json").read_text())["cache"]["c10"]
+    assert cache["same_result"]
+    fixes = []
+    for f in HARNESS_FIXES:
+        for p in f["files"]:
+            assert (ROOT / p).exists(), p
+        fixes.append({**f, "text": f["text"].format(**cache)})
+    return {"settings": s, "middleware": mw, "arms": arms, "fixes": fixes,
+            "todo_tool": inner["todo_tool"], "subagent_tool": inner["subagent_tool"],
+            "system_prompt_only_ours": inner["system_prompt_only_ours"], "audit_date": "2026-11-11"}
