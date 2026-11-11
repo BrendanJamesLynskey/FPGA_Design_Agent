@@ -1,0 +1,23 @@
+# Seeded faults (brief 40); see eth_mac_rmii/faults.yaml.
+faults:
+  - name: no_learning
+    file: l2_switch.sv
+    old: "if (!smac[40] && member[ing_sel]) begin"
+    new: "if (1'b0) begin"
+    class: path
+    why: source addresses are never learnt, so everything floods
+    test: flow/net/tests/test_40_switch_rtl.py -k bit_exact
+  - name: flood_back_to_ingress
+    file: l2_switch.sv
+    old: "m = member & ~(NP'(1) << ing_sel);"
+    new: "m = member;"
+    class: logic
+    why: floods go back out of the port they came in on
+    test: flow/net/tests/test_40_switch_rtl.py -k bit_exact
+  - name: no_ingress_vlan_filter
+    file: l2_switch.sv
+    old: "if (!member[ing_sel])                                  m = '0;"
+    new: "if (1'b0)                                  m = '0;"
+    class: condition
+    why: a port outside the VLAN can inject into it
+    test: flow/net/tests/test_40_switch_rtl.py -k bit_exact

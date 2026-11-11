@@ -1,0 +1,54 @@
+# ip.yaml for pkt_rewrite: the declared parameter space and contract (brief 28 rules; brief 40 entry).
+name: pkt_rewrite
+version: 0.1.0
+status: simulated (brief 40); OOC cost table pending
+summary: 'Applies a match-action result as the packet streams: drop, MAC rewrite, VLAN push/pop/VID, TTL/hop-limit decrement,
+  IPv4 destination rewrite, with IPv4 and TCP/UDP checksums updated incrementally (RFC 1624 eqn 3).'
+top: pkt_rewrite
+rtl:
+- rtl/pkt_rewrite.sv
+depends: []
+interfaces:
+- name: s_axis
+  type: axis
+  dir: slave
+  tdata: 8
+  tuser: 1
+- name: s_meta
+  type: axis
+  dir: slave
+  tdata: 640
+  note: '{parsed header, action}, one a packet'
+- name: m_axis
+  type: axis
+  dir: master
+  tdata: 8
+  tuser: 1
+  tdest: 7
+clocks:
+- name: clk
+parameters: {}
+latency:
+  data: 3 clocks (measured; a two-byte window lets a checksum's high byte be patched)
+throughput: 1 byte a clock; a VLAN push costs 4 clocks of input stall
+guards: []
+sweep_tested:
+- {}
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none
+limits: no IPv6 address rewrite; the action word is 160 bits (tables usually store an index into an action RAM)
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - flow/net/tests/test_40_rewrite_rtl.py
+  faults: ip_lib/pkt_rewrite/faults.yaml
+  results: results/b40/measure.json, results/b40/faults.json
+  simulator: Icarus Verilog 12 (local and CI); xsim cross-check pending
+cost_table: 'pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11)'
+licence: MIT (this repository)
+constraints: []

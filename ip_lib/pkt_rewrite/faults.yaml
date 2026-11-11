@@ -1,0 +1,23 @@
+# Seeded faults (brief 40); see eth_mac_rmii/faults.yaml.
+faults:
+  - name: rfc1624_without_complement
+    file: pkt_rewrite.sv
+    old: "new_ip  = ~oc_add(oc_add(~old_ck, p_ttl_d), p_dip_d);"
+    new: "new_ip  = oc_add(oc_add(old_ck, p_ttl_d), p_dip_d);"
+    class: arithmetic
+    why: the incremental update adds the deltas to the checksum itself rather than to its complement
+    test: flow/net/tests/test_40_rewrite_rtl.py -k bit_exact
+  - name: udp_zero_checksum_rewritten
+    file: pkt_rewrite.sv
+    old: "new_l4  = (p_udp && old_ck == 16'h0000) ? 16'h0000 :"
+    new: "new_l4  = (1'b0) ? 16'h0000 :"
+    class: protocol
+    why: a UDP datagram sent without a checksum gets one (RFC 768 says leave zero)
+    test: flow/net/tests/test_40_rewrite_rtl.py -k bit_exact
+  - name: pop_loses_tlast
+    file: pkt_rewrite.sv
+    old: "end else if (take && skip && !p_drop && s_axis_tlast) begin"
+    new: "end else if (1'b0) begin"
+    class: path
+    why: a frame that ends inside the popped tag loses its end (a bug found and fixed in this brief)
+    test: flow/net/tests/test_40_rewrite_rtl.py -k bit_exact

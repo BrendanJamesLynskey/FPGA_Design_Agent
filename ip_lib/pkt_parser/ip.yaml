@@ -1,0 +1,64 @@
+# ip.yaml for pkt_parser: the declared parameter space and contract (brief 28 rules; brief 40 entry).
+name: pkt_parser
+version: 0.1.0
+status: simulated (brief 40); OOC cost table pending
+summary: 'Streaming header parser, one byte a clock, no store-and-forward: Ethernet, 0-2 VLAN tags, IPv4 (checksum check,
+  options skipped by IHL, fragments), IPv6, UDP/TCP ports; a parsed-header word beside the unchanged stream.'
+top: pkt_parser
+rtl:
+- rtl/pkt_parser.sv
+depends: []
+interfaces:
+- name: s_axis
+  type: axis
+  dir: slave
+  tdata: 8
+  tuser: 1
+- name: m_axis
+  type: axis
+  dir: master
+  tdata: 8
+  tuser: 1
+- name: m_hdr
+  type: axis
+  dir: master
+  tdata: 480
+  note: one word a packet, in packet order; layout in the RTL header and flow/net/model.py HDR_FIELDS
+clocks:
+- name: clk
+parameters:
+  MAX_VLAN:
+    type: int
+    default: 2
+    set:
+    - 0
+    - 1
+    - 2
+latency:
+  data: 1 clock
+  header: 1 clock after the last byte it needs (L4 destination port, end of IP header, EtherType, or tlast)
+throughput: 1 byte a clock with no per-packet gap (60 clocks per 60-byte frame measured)
+guards:
+- MAX_VLAN: 3
+sweep_tested:
+- MAX_VLAN: 0
+- MAX_VLAN: 1
+- MAX_VLAN: 2
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none
+limits: IPv6 extension headers are not walked (l4 flag 0); IPv4 total length is not checked against the frame
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - flow/net/tests/test_40_parser_rtl.py
+  faults: ip_lib/pkt_parser/faults.yaml
+  results: results/b40/measure.json, results/b40/faults.json
+  simulator: Icarus Verilog 12 (local and CI); xsim cross-check pending
+cost_table: 'pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11)'
+licence: MIT (this repository)
+constraints: []

@@ -1,0 +1,23 @@
+# Seeded faults (brief 40); see eth_mac_rmii/faults.yaml.
+faults:
+  - name: stash_never_searched
+    file: match_exact.sv
+    old: "if (STASH > 0 && s_valid[i] && s_key[i] == l2_k) begin l2_shit = 1'b1; l2_sact = s_act[i]; end"
+    new: "if (1'b0) begin l2_shit = 1'b1; l2_sact = s_act[i]; end"
+    class: path
+    why: the hash-collision path (keys in the stash) is never looked up (the brief's example)
+    test: flow/net/tests/test_40_tables_rtl.py -k exact_updates
+  - name: bank1_never_used
+    file: match_exact.sv
+    old: "else if (!ms && !qb1[EW-1])      begin we1 = 1'b1; wd1 = {2'b11, ck, ca}; end"
+    new: "else if (1'b0)      begin we1 = 1'b1; wd1 = {2'b11, ck, ca}; end"
+    class: path
+    why: a key whose bank-0 bucket is taken is reported inserted but never written
+    test: flow/net/tests/test_40_tables_rtl.py -k exact_updates
+  - name: age_removes_used
+    file: match_exact.sv
+    old: "wd0 = used0 ? {2'b10, qb0[EW-3:0]} : '0;"
+    new: "wd0 = '0;"
+    class: condition
+    why: the AGE sweep removes recently used entries too
+    test: flow/net/tests/test_40_tables_rtl.py -k exact_updates

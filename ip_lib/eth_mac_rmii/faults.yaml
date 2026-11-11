@@ -1,0 +1,38 @@
+# Seeded faults (brief 40): each replaces `old` (exactly once) by `new` in a copy of rtl/; the tests named in `test`
+# must fail. Run: python3 flow/net/faults.py. The real RTL is never touched.
+faults:
+  - name: rx_crc_skips_first_byte
+    file: rmii_rx.sv
+    old: "crc_en    = byte_done;"
+    new: "crc_en    = byte_done && nbytes != 11'd0;"
+    class: off-by-one
+    why: the FCS check is computed over one byte too few (the brief's example)
+    test: flow/net/tests/test_40_mac_rtl.py -k rx_bit_exact
+  - name: rx_ends_on_first_low_crs_dv
+    file: rmii_rx.sv
+    old: "eof       = (st == S_DATA) && de && v1 && !dv1 && !crs_dv;"
+    new: "eof       = (st == S_DATA) && de && v1 && !crs_dv;"
+    class: protocol
+    why: CRS_DV toggling at the end of a frame is taken as the end of the frame
+    test: flow/net/tests/test_40_mac_rtl.py -k rx_bit_exact
+  - name: rx_runt_not_flagged
+    file: rmii_rx.sv
+    old: "m_axis_tuser  <= !crc_ok || (dcnt != 2'd0) || (nbytes < 11'(MIN_FRAME)) || err;"
+    new: "m_axis_tuser  <= !crc_ok || (dcnt != 2'd0) || err;"
+    class: condition
+    why: frames shorter than 64 bytes pass as good
+    test: flow/net/tests/test_40_mac_rtl.py -k rx_bit_exact
+  - name: tx_pad_fcs_not_inverted
+    file: rmii_tx.sv
+    old: "else begin st <= S_FCS; bcnt <= '0; sh <= ~crc_q[7:0]; fcs <= crc_q; end"
+    new: "else begin st <= S_FCS; bcnt <= '0; sh <= crc_q[7:0]; fcs <= crc_q; end"
+    class: constant
+    why: padded frames go out with the wrong first FCS byte
+    test: flow/net/tests/test_40_mac_rtl.py -k tx_bit_exact
+  - name: tx_short_ifg
+    file: rmii_tx.sv
+    old: "if (bcnt == 11'(IFG_BYTES - 1)) begin"
+    new: "if (bcnt == 11'(IFG_BYTES - 2)) begin"
+    class: off-by-one
+    why: the inter-frame gap is one byte time short
+    test: flow/net/tests/test_40_mac_rtl.py -k tx_bit_exact
