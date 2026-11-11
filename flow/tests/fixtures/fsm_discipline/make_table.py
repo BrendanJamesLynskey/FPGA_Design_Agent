@@ -52,6 +52,7 @@ def fmax(period: float, slack: str | None) -> str:
 def main() -> int:
     d, md, js = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
     period = float(sys.argv[sys.argv.index("--period") + 1]) if "--period" in sys.argv else 2.5
+    sfx = sys.argv[sys.argv.index("--suffix") + 1] if "--suffix" in sys.argv else ""      # "_route": the numbers after opt/place/route
     rows = {p.stem: read_kv(p) for p in sorted(d.glob("*.kv"))}
     for n, r in rows.items():
         r["fsm"] = fsm_info(d / f"{n}.log")
@@ -70,17 +71,17 @@ def main() -> int:
             cells = []
             for c in cols:
                 if c == "Fmax":
-                    cells.append(fmax(period, r.get("WNS_r2r")))
+                    cells.append(fmax(period, r.get("WNS_r2r" + sfx)))
                 elif c.startswith("WNS"):
-                    cells.append(fnum(r.get(c)))
+                    cells.append(fnum(r.get(c + sfx)))
                 else:
-                    cells.append(r.get(c, "-"))
+                    cells.append(r.get(c if c == "fsm" else c + sfx, "-"))
             out.append(f"| {n} | " + " | ".join(cells) + f" | {r.get('FDRE','-')}/{r.get('FDCE','-')}/{r.get('FDPE','-')}/{r.get('FDSE','-')} |")
         return "\n".join(out) + "\n"
 
     parts = [f"# Reference controller measurements (Vivado 2025.2, out of context, xc7a100tcsg324-1)\n\n"
              f"Clock {period} ns, input and output delay 0.5 ns. Slack in ns; negative = the path is longer than the budget. "
-             "Synthesis only unless the name ends _route (no placement, so wire delay is an estimate: use it for order, not for Fmax).\n"]
+             + ("After opt_design, place_design and route_design (routed timing).\n" if sfx else "Synthesis only (no placement, so wire delay is an estimate: use it for order, not for Fmax).\n")]
     parts.append(tbl("Separation", ["sep_base", "sep_z1", "mono_base"], "Separated FSM (11 states + 4-bit counter, zero flag combinational or registered) against the "
                                                                      "monolithic FSM (23 states, no counter)."))
     parts.append(tbl("Outputs", ["sep_base", "sep_out1", "sep_out2", "mono_base", "mono_out1", "mono_out2"],

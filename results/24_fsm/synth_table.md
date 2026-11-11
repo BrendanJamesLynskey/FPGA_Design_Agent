@@ -1,6 +1,6 @@
 # Reference controller measurements (Vivado 2025.2, out of context, xc7a100tcsg324-1)
 
-Clock 2.5 ns, input and output delay 0.5 ns. Slack in ns; negative = the path is longer than the budget. Synthesis only unless the name ends _route (no placement, so wire delay is an estimate: use it for order, not for Fmax).
+Clock 2.5 ns, input and output delay 0.5 ns. Slack in ns; negative = the path is longer than the budget. Synthesis only (no placement, so wire delay is an estimate: use it for order, not for Fmax).
 
 ### Separation
 
@@ -10,7 +10,7 @@ Separated FSM (11 states + 4-bit counter, zero flag combinational or registered)
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | sep_base | 31 | 8 | 2 | 2 | -1.01 | 285 | 0.01 | -2.14 | -0.60 | 11 states, sequential | 4/3/1/0 |
 | sep_z1 | 30 | 9 | 2 | 3 | -0.51 | 333 | 0.52 | -1.62 | -0.60 | 11 states, sequential | 5/3/1/0 |
-| mono_base | 23 | 5 | 1 | 2 | -0.66 | 317 | 0.52 | -1.78 | -0.60 | not extracted | 0/5/0/0 |
+| mono_base | 26 | 23 | 1 | 2 | -0.97 | 288 | 0.27 | -1.74 | -0.60 | 23 states, one-hot | 0/22/1/0 |
 
 ### Outputs
 
@@ -21,9 +21,9 @@ OUT 0 combinational Moore decode, 1 registered decode (one cycle later), 2 looka
 | sep_base | 31 | 8 | 2 | 2 | -1.01 | 285 | 0.01 | -2.14 | -0.60 | 11 states, sequential | 4/3/1/0 |
 | sep_out1 | 33 | 16 | 3 | 2 | -1.01 | 285 | 0.01 | -0.46 | - | 11 states, sequential | 4/10/2/0 |
 | sep_out2 | 70 | 22 | 2 | 3 | -1.05 | 281 | 0.12 | -0.46 | - | 11 states, one-hot | 3/17/2/0 |
-| mono_base | 23 | 5 | 1 | 2 | -0.66 | 317 | 0.52 | -1.78 | -0.60 | not extracted | 0/5/0/0 |
-| mono_out1 | 25 | 13 | 2 | 2 | -0.66 | 317 | 0.52 | -0.46 | - | not extracted | 0/12/1/0 |
-| mono_out2 | 28 | 13 | 1 | 2 | -0.19 | 372 | 0.98 | -0.46 | - | not extracted | 0/12/1/0 |
+| mono_base | 26 | 23 | 1 | 2 | -0.97 | 288 | 0.27 | -1.74 | -0.60 | 23 states, one-hot | 0/22/1/0 |
+| mono_out1 | 26 | 31 | 2 | 3 | -1.03 | 283 | -0.06 | -0.46 | - | 23 states, one-hot | 0/29/2/0 |
+| mono_out2 | 26 | 13 | 1 | 2 | -0.19 | 371 | 0.97 | -0.50 | - | 23 states, sequential | 0/12/1/0 |
 
 ### Inputs
 
@@ -47,7 +47,7 @@ IN 0 raw, 1 one register, 2 two ASYNC_REG registers.
 | sep_enc_off | 28 | 8 | 2 | 2 | -0.94 | 291 | 0.24 | -2.13 | -0.60 | not extracted | 4/4/0/0 |
 | sep_enc_one_hot | 24 | 15 | 2 | 2 | -0.79 | 304 | 0.20 | -1.59 | -0.60 | 11 states, one-hot | 4/10/1/0 |
 | sep_enc_sequential | 31 | 8 | 2 | 2 | -1.01 | 285 | 0.01 | -2.14 | -0.60 | 11 states, sequential | 4/3/1/0 |
-| mono_base | 23 | 5 | 1 | 2 | -0.66 | 317 | 0.52 | -1.78 | -0.60 | not extracted | 0/5/0/0 |
+| mono_base | 26 | 23 | 1 | 2 | -0.97 | 288 | 0.27 | -1.74 | -0.60 | 23 states, one-hot | 0/22/1/0 |
 | mono_enc_gray | 20 | 5 | 1 | 2 | -0.65 | 317 | 0.52 | -1.77 | -0.60 | 23 states, gray | 0/1/4/0 |
 | mono_enc_johnson | 84 | 12 | 1 | 3 | -1.51 | 250 | -0.12 | -3.27 | -1.18 | 23 states, johnson | 0/2/10/0 |
 | mono_enc_off | 21 | 5 | 1 | 2 | -0.65 | 317 | 0.52 | -1.77 | -0.60 | not extracted | 0/5/0/0 |

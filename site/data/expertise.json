@@ -3059,7 +3059,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/24_fsm/summary.json"
       }
      ],
-     "text": "One controller built in Vivado two ways with the same behaviour: 11 states plus a counter (31 LUTs) and 23 states with the counter folded in (23 LUTs). Folding was the smaller; the split machine has 13 transitions to cover instead of 39."
+     "text": "One controller built in Vivado two ways with the same behaviour: 11 states plus a counter (29 LUTs) and 23 states with the counter folded in (24 LUTs). Folding was the smaller; the split machine has 13 transitions to cover instead of 39."
     },
     {
      "kind": "measured",
@@ -3069,7 +3069,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/24_fsm/summary.json"
       }
      ],
-     "text": "At the test clock the slack from the state flops to an output pin was -2.136 ns with a decoded output and -0.459 ns with a registered one. A registered decode adds 1 clock of latency; registering the decode of the next state adds 0."
+     "text": "At the test clock the slack from the state flops to an output pin was -1.544 ns with a decoded output and -0.437 ns with a registered one. A registered decode adds 1 clock of latency; registering the decode of the next state adds 0."
     },
     {
      "kind": "measured",
@@ -3079,7 +3079,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/24_fsm/summary.json"
       }
      ],
-     "text": "A state machine on a one-in-N clock enable, constrained with the multicycle pair on its own registers: slack between its registers was -1 ns without the exception and 1.5, 6.5 and 16.5 ns at three enable ratios."
+     "text": "A state machine on a one-in-N clock enable, constrained with the multicycle pair on its own registers: slack between its registers was -0.659 ns without the exception and 1.283, 6.267 and 16.359 ns at three enable ratios."
     },
     {
      "kind": "measured",
@@ -3156,11 +3156,6 @@
       "confirmed": "doc",
       "summary": "POST_CRC (continuous readback CRC) is a 7-series property; UltraScale+ uses its own configuration settings for the same check.",
       "topic": "Readback CRC"
-     },
-     {
-      "confirmed": "tool",
-      "summary": "One 23-state controller under -fsm_extraction auto: not extracted on xc7a100t, one-hot on xc7z020 and xck26; an 11-state one was sequential on all three. Name the encoding instead of relying on auto.",
-      "topic": "FSM extraction under auto (same RTL)"
      },
      {
       "confirmed": "tool",

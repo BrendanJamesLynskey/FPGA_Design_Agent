@@ -1,0 +1,15 @@
+OUT cmd_ready LUT4 SLICE_X0Y101 SLICEL.A6LUT datapath=7.438 levels=2 slack=-6.796
+OUT cmd_ack LUT5 SLICE_X1Y101 SLICEL.D6LUT datapath=7.221 levels=2 slack=-6.579
+OUT bus_req LUT4 SLICE_X1Y101 SLICEL.A6LUT datapath=7.496 levels=2 slack=-6.854
+OUT bus_addr_v LUT4 SLICE_X1Y87 SLICEL.B6LUT datapath=6.734 levels=2 slack=-6.094
+OUT bus_valid LUT4 SLICE_X0Y87 SLICEL.B6LUT datapath=6.714 levels=2 slack=-6.074
+OUT bus_last LUT5 SLICE_X2Y63 SLICEM.B6LUT datapath=7.485 levels=2 slack=-6.843
+OUT rsp_valid LUT3 SLICE_X1Y87 SLICEL.D6LUT datapath=7.366 levels=2 slack=-6.724
+OUT rsp_err LUT4 SLICE_X1Y87 SLICEL.A6LUT datapath=7.372 levels=2 slack=-6.73
+IN cmd_valid cmd_ack datapath=8.17 slack=-6.205
+IN gnt u_ctl/FSM_sequential_g_st_sync.st_reg[2]/CE datapath=6.65 slack=4.135
+IN ack u_ctl/cnt_reg[0]/CE datapath=6.814 slack=3.96
+IN nack u_ctl/cnt_reg[0]/CE datapath=6.832 slack=3.941
+IN rsp_ready u_ctl/cnt_reg[0]/CE datapath=6.46 slack=4.314
+WS_setup -6.854
+WS_hold 0.241
