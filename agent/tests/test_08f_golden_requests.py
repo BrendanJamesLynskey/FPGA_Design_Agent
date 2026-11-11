@@ -10,7 +10,9 @@ Goldens, oldest first:
   ``load_skill`` gained an optional ``name`` (``sections`` no longer required). With ``--skill-routing off`` (the default)
   every other hash still equals eval-1's: the prompts, plans, per-role tool lists, Claude Code argv and MCP arguments are
   unchanged, and no role is offered the new tools. The tool registry hash differs, and the ``load_skill`` schema a role sees
-  differs with it, so eval-1's hashes no longer cover a whole run: a new baseline (brief 34) re-records against this file."""
+  differs with it, so eval-1's hashes no longer cover a whole run: a new baseline (brief 34) re-records against this file.
+- ``b42_request_golden.json`` (brief 42 H9, 2026-11-11): the registry gained ``report_digest`` (schema 1.8.0). No role is offered
+  it unless ``--harness-arm H9`` is on, so every hash other than ``tool_registry`` still equals the brief 36 golden's."""
 
 from __future__ import annotations
 
@@ -21,9 +23,9 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b36_request_golden.json"           # the newest golden
+GOLDEN = FIXTURES / "b42_request_golden.json"           # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
-CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=)"}
+CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest"}
 
 
 def test_every_request_path_is_unchanged_from_the_golden() -> None:

@@ -1,5 +1,5 @@
 {
- "schema_version": "1.7.0",
+ "schema_version": "1.8.0",
  "tools": [
   {
    "name": "board_constraints",
@@ -36,7 +36,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "bringup",
@@ -47,7 +47,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "build",
@@ -75,7 +75,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "check_constraints",
@@ -86,7 +86,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "formal",
@@ -97,7 +97,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "gates",
@@ -126,7 +126,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "lint",
@@ -137,7 +137,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "list_files",
@@ -153,7 +153,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "load_skill",
@@ -181,7 +181,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "mutate",
@@ -208,7 +208,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "program",
@@ -230,7 +230,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "read_file",
@@ -257,7 +257,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "report",
@@ -291,7 +291,44 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
+  },
+  {
+   "name": "report_digest",
+   "description": "A typed digest of a named Vivado report or log from build/<variant>/, computed by the flow's own parsers (no model). level=summary: the verdict and key numbers; standard: plus the top 5 paths and one example per rule ID; detail: plus the top 20 paths and every rule instance. focus: a path index, a rule ID, a clock pair (clk_a,clk_b) or a test name. The digest ends with the report's path; `report` reads the raw text.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-]{1,60}\\.(rpt|txt|log|json|xdc|tcl)$"
+     },
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     },
+     "level": {
+      "type": "string",
+      "enum": [
+       "summary",
+       "standard",
+       "detail"
+      ]
+     },
+     "focus": {
+      "type": "string",
+      "maxLength": 80
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.8.0"
   },
   {
    "name": "search_docs",
@@ -322,7 +359,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "simulate",
@@ -345,7 +382,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "skill_excerpt",
@@ -368,7 +405,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "skill_index",
@@ -391,7 +428,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "spec_items",
@@ -402,7 +439,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "stage_note",
@@ -436,7 +473,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   },
   {
    "name": "write_file",
@@ -459,7 +496,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.7.0"
+   "version": "1.8.0"
   }
  ]
 }

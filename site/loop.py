@@ -106,7 +106,7 @@ def stations(A):
                            "caught a pin fault", "scope, SDR, video: next"],
                 "src": {"record": HIL_RUN, "what": f'the brief 30 hardware-in-the-loop run on {hil["design"].split("/")[-1]} ({hil["started"][:10]})'},
                 "leg": "audio_capture"},
-         "gate": {"title": "HIL checks", "line": "scripted, not in loop yet", "leg": "hil_gate"}},
+         "gate": {"title": "instrument tests", "line": "scripted, not in loop yet", "leg": "hil_gate"}},
     ]
 
 
