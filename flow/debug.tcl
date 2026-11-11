@@ -121,6 +121,13 @@ proc insert_ila_ip {probes_tcl out} {
         incr i
     }
     close $map
+    # opt_design adds the debug hub by itself, but cannot find its clock for an ILA that was put into the netlist this way
+    # (Chipscope 16-213: dbg_hub/clk has 1 unconnected channels). Make the hub now and give it the same clock as insert_ila_core.
+    implement_debug_core
+    set_property C_CLK_INPUT_FREQ_HZ 100000000 [get_debug_cores dbg_hub]
+    set_property C_ENABLE_CLK_DIVIDER false     [get_debug_cores dbg_hub]
+    set_property C_USER_SCAN_CHAIN 1            [get_debug_cores dbg_hub]
+    connect_debug_port dbg_hub/clk [get_nets $ila_clock_net]
     puts "debug.tcl: ILA IP $ila_name ($ipname) with $nprobes probes packed into $n ports, depth $ila_depth"
 }
 
