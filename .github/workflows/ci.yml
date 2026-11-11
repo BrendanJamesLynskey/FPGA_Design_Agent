@@ -84,6 +84,10 @@ jobs:
         run: >-
           python -m pytest -q designs/b2_tmp_adt7420/tests/test_tmp_rtl.py designs/b2_acl_adxl362/tests/test_acl_rtl.py
           designs/b2_qspi_jedec/tests/test_qspi_rtl.py designs/b2_mic_pdm/tests/test_mic_rtl.py
+      - name: HIL instruments (brief 30) - library blocks against their models, the b30 demonstration design, seeded faults
+        run: |
+          python -m pytest -q hil/tests/test_30_ip_rtl.py designs/b30_hil_audio/tests/test_hil_audio_rtl.py
+          python hil/ip_faults.py
       - name: CDC soak rig (brief 11b) - checkers, host reader, the rig with metastability injection and reset storms (one copy a variant)
         run: CDC_SIM_QUICK=1 python -m pytest -q hil/cdc_soak/tests
       - name: CDC gate fixtures - the rig's mutants and correct variants, plain and with synchroniser-delay injection (brief 16)

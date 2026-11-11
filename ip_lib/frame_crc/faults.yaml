@@ -1,0 +1,30 @@
+# Seeded faults (brief 30); run by hil/ip_faults.py: each must make the block's tests fail.
+faults:
+- name: compare_unfinalised
+  file: frame_crc.sv
+  old: if (~crc != crc_expect)
+  new: if (crc != crc_expect)
+  class: value
+  why: the compare uses the CRC before the final inversion, so every good frame is flagged
+  test: hil/tests/test_30_ip_rtl.py -k test_block and frame_crc
+- name: wrong_polynomial
+  file: frame_crc.sv
+  old: '32''hEDB88320) : (r >> 1);'
+  new: '32''hEDB88321) : (r >> 1);'
+  class: value
+  why: one bit of the polynomial wrong
+  test: hil/tests/test_30_ip_rtl.py -k test_block and frame_crc
+- name: sum_misses_first_pixel
+  file: frame_crc.sv
+  old: 'sum <= pix_valid ? 32''(pix_data) : 32''d0;'
+  new: sum <= 32'd0;
+  class: path
+  why: the first pixel of a frame is left out of the sum
+  test: hil/tests/test_30_ip_rtl.py -k test_block and frame_crc
+- name: mismatch_not_counted
+  file: frame_crc.sv
+  old: mismatches <= mismatches + 1'b1;
+  new: mismatches <= mismatches;
+  class: path
+  why: a bad frame is never counted
+  test: hil/tests/test_30_ip_rtl.py -k test_block and frame_crc

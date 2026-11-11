@@ -1,0 +1,76 @@
+# ip.yaml for adc_histogram: the declared parameter space and contract (brief 28 rules; brief 30 entry).
+name: adc_histogram
+version: 0.1.0
+status: 'simulated bit-exact against hil/instruments/models.py; not yet run on a board (needs a converter input: the XADC or the Pluto/Red Pitaya
+  link)'
+summary: 'Code-density histogram for converter tests: counts samples by their top BIN_W bits with min, max and total; DNL and INL are computed
+  on the host (hil/instruments/models.py dnl_inl).'
+top: adc_histogram
+rtl:
+- rtl/adc_histogram.sv
+depends: []
+interfaces:
+- name: samples
+  type: native
+  signals: s_valid, s_data
+- name: readout
+  type: native
+  signals: rd_bin -> rd_count (one clock later), min_code, max_code, total, overflow, busy
+clocks:
+- name: clk
+parameters:
+  SAMP_W:
+    type: int
+    default: 12
+    range:
+    - 4
+    - 16
+    note: sample bits
+  BIN_W:
+    type: int
+    default: 8
+    range:
+    - 2
+    - 12
+    note: 2**BIN_W bins (must not exceed SAMP_W)
+  CNT_W:
+    type: int
+    default: 20
+    range:
+    - 8
+    - 32
+    note: counter bits per bin; saturates and sets overflow
+latency:
+  sample_to_count: 3 clocks (read, add, write; back-to-back hits on one bin are forwarded)
+  clear: 2**BIN_W clocks
+throughput: one sample per clock
+guards:
+- BIN_W: 1
+sweep_tested:
+- SAMP_W: 12
+  BIN_W: 6
+  CNT_W: 16
+- SAMP_W: 8
+  BIN_W: 8
+  CNT_W: 12
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none (three read ports, so it maps to distributed RAM, not block RAM)
+limits: 'bin RAM is distributed RAM: use BIN_W <= 8 for a small cost; a converter with a transfer function that is not offset binary must be converted
+  first'
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - hil/tests/test_30_ip_rtl.py
+  faults: ip_lib/adc_histogram/faults.yaml
+  results: results/b30/faults.json, results/b30/hil_runs/
+  simulator: Icarus Verilog 12 (local and CI)
+  summary: Bit-exact against the Python models in `hil/instruments/models.py` (plain Python written from the definitions, not from the RTL); cocotb
+    with Icarus Verilog 12.
+cost_table: 'pending: no OOC synthesis sweep yet; the cost inside the b30_hil_audio build is in results/b30/builds.json'
+constraints: []
+licence: MIT (this repository)

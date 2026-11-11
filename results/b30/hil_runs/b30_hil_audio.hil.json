@@ -1,0 +1,190 @@
+{
+ "design": "designs/b30_hil_audio",
+ "board": "nexys_a7_100t",
+ "started": "2026-11-11T11:15:25",
+ "checks": {
+  "identity": {
+   "pass": true,
+   "measured": "H30A",
+   "expected": "H30A",
+   "tolerance": null,
+   "path": "shell"
+  },
+  "frame_crc_known_answer": {
+   "pass": true,
+   "measured": {
+    "crc": "93c30c48",
+    "pix": 128,
+    "new_mismatches": 0,
+    "frames": 59219
+   },
+   "expected": {
+    "crc": "93c30c48",
+    "pix": 128,
+    "new_mismatches": 0
+   },
+   "tolerance": "exact",
+   "path": "shell"
+  },
+  "frame_crc_seeded_pixel_fault": {
+   "pass": true,
+   "measured": {
+    "new_mismatches": 14453,
+    "crc_equals_model": false
+   },
+   "expected": {
+    "new_mismatches": ">0",
+    "crc_equals_model": false
+   },
+   "tolerance": "exact",
+   "note": "the seeded fault must be seen",
+   "path": "shell"
+  },
+  "tone_frequency_in_fpga": {
+   "pass": true,
+   "measured": 1000.0,
+   "expected": 1000.0,
+   "tolerance": 4.0,
+   "edges": 500,
+   "duty": 0.5039,
+   "path": "shell"
+  },
+  "la_matches_dds_model": {
+   "pass": true,
+   "measured": "256 samples, a run of the DDS output starting at tick 26573",
+   "expected": "a contiguous run of the DDS model (start tick unknown)",
+   "tolerance": "exact",
+   "first_samples": [
+    -402,
+    -1401,
+    -2570,
+    -3503,
+    -4383,
+    -5351
+   ],
+   "path": "logic-analyser"
+  },
+  "la_pretrigger": {
+   "pass": true,
+   "measured": {
+    "sample7_sign": 0,
+    "sample8_sign": 1
+   },
+   "expected": {
+    "sample7_sign": 0,
+    "sample8_sign": 1
+   },
+   "tolerance": "exact",
+   "path": "logic-analyser"
+  },
+  "xadc_vs_jtag": {
+   "pass": true,
+   "measured": {
+    "tj_c": 25.716,
+    "vccint_v": 1.0063,
+    "vccaux_v": 1.7944,
+    "vccbram_v": 1.0063
+   },
+   "expected": {
+    "tj_c": 25.6,
+    "vccint_v": 1.006,
+    "vccaux_v": 1.794,
+    "vccbram_v": 1.006
+   },
+   "tolerance": {
+    "tj_c": 2.0,
+    "vccint_v": 0.02,
+    "vccaux_v": 0.03,
+    "vccbram_v": 0.02
+   },
+   "differences": {
+    "tj_c": 0.116,
+    "vccint_v": 0.0003,
+    "vccaux_v": 0.0004,
+    "vccbram_v": 0.0003
+   },
+   "note": "measured = fabric DRP readout, expected = JTAG sysmon",
+   "path": "xadc"
+  },
+  "tone_at_the_jack": {
+   "pass": true,
+   "measured": {
+    "freq_hz": 999.99,
+    "level_dbfs_rms": -29.27,
+    "thd_percent": 1.32,
+    "sinad_db": 32.65,
+    "noise_floor_dbfs_per_bin": -139.1,
+    "freq_error_hz": -0.01
+   },
+   "expected": {
+    "freq_hz": 1000.0,
+    "min_level_dbfs": -75.0,
+    "max_thd_percent": 5.0,
+    "min_sinad_db": 15.0
+   },
+   "tolerance": {
+    "f_tol_hz": 2.0
+   },
+   "failed": [],
+   "path": "audio"
+  }
+ },
+ "program": {
+  "variant": "base",
+  "build_stamp": "5b490a9f",
+  "cable_serial": "...B73A",
+  "power_ok": {
+   "pass": true,
+   "source": "wall",
+   "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+   "limit_w": 2.0,
+   "junction_limit_c": 85.0,
+   "total_w": 0.128,
+   "junction_c": 42.3,
+   "dynamic_w": 0.015,
+   "static_w": 0.113,
+   "confidence": "Medium",
+   "environment": {
+    "ambient_c": 40.0,
+    "airflow_lfm": 0.0,
+    "heatsink": "none",
+    "theta_ja_c_per_w": 18.2,
+    "board": "small (4\"x4\")",
+    "board_layers": "4to7 (4 to 7 Layers)"
+   },
+   "supplies_a": {
+    "vccint": 0.041,
+    "vccaux": 0.02,
+    "vcco33": 0.004,
+    "vccbram": 0.001,
+    "vccadc": 0.021
+   },
+   "rails": {
+    "vccint": {
+     "a": 0.041,
+     "limit_a": 2.4
+    },
+    "rail_1v8": {
+     "a": 0.041,
+     "limit_a": 0.38
+    },
+    "vcco33": {
+     "a": 0.004,
+     "limit_a": 1.9
+    }
+   },
+   "why": ""
+  },
+  "pass": true,
+  "device": "xc7a100t_0",
+  "part": "xc7a100t",
+  "done_pin": "1",
+  "program_ms": 494,
+  "ila_cores": 0,
+  "vivado_version": "2025.2",
+  "seconds": 19.0
+ },
+ "lock_released": false,
+ "pass": true,
+ "feedback": []
+}

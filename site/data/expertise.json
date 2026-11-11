@@ -3482,7 +3482,7 @@
    "summary": "Self-checking tests, assertions, formal checks, mutation testing, coverage, and CDC fault injection, staged V0 to V3 with a hardware step."
   },
   {
-   "about": "Hardware in the loop means running designs on a real board: programming only the owner's board, into volatile memory only, then self-checks over the serial link and captures with an on-chip logic analyser. A soak rig exercises clock crossings on hardware. Board steps are done by the harness after a human approves, never by the model.",
+   "about": "Hardware in the loop means running designs on a real board and checking what they do against the same Python model the simulation uses. The board is programmed into volatile memory only. Each sensing path has a known answer, a pass rule and a seeded fault that must fail: registers over the serial link, an on-chip logic analyser run from a script, the die sensors, instruments built into the design (frequency, frame checksum, logic analyser), and a tone captured at the audio jack. A seeded pin fault passed simulation and every in-FPGA check and was caught only at the jack. Drivers for a USB scope and logic analyser, a spectrum analyser and a Red Pitaya exist but have only been tested on synthetic data, because none was connected. Board steps are done by the harness, never by the model.",
    "cap_reason": null,
    "cards": [
     {
@@ -3502,7 +3502,7 @@
    "counts": {
     "checks": 1,
     "enforced": 0,
-    "evidence": 3,
+    "evidence": 5,
     "sections": 5,
     "skills": 6
    },
@@ -3526,6 +3526,26 @@
       }
      ],
      "text": "An agent-built design from a development run was programmed on the board: of its 3 UART self-checks, 0 failed; the run stopped at the step ila_captures."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/b30/hil_runs/b30_hil_audio.hil.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b30/hil_runs/b30_hil_audio.hil.json"
+      }
+     ],
+     "text": "On the board, a tone made by the design's own signal generator was read at the audio jack at 999.99 Hz with 1.32 percent distortion, and the fabric temperature readout gave 25.716 degrees C against the JTAG reading."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/b30/hil_runs/b30_hil_audio_pinfault.hil.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b30/hil_runs/b30_hil_audio_pinfault.hil.json"
+      }
+     ],
+     "text": "The same design with one output pin moved passes simulation and every check inside the chip, and fails at the jack: level -90.5 dBFS, signal-to-noise-and-distortion -2.89 dB."
     },
     {
      "kind": "measured",
@@ -3607,6 +3627,7 @@
     ]
    },
    "gaps": [
+    "No USB scope, logic analyser, spectrum analyser, Red Pitaya or video capture was connected on the day, so those paths are drivers tested on synthetic data, not measurements.",
     "The soak's hardware logs are not among the committed results; the builds and simulations are.",
     "Unattended soaks and board runs need the owner's approval.",
     "Agent-built bitstreams have been programmed on the board, but no agent-built design has yet passed every test on the board."
@@ -3672,7 +3693,7 @@
      "unit": "techniques"
     }
    ],
-   "summary": "Programming only the owner's board, self-checks over the UART, ILA capture, and the soak rig that exercises clock crossings on hardware."
+   "summary": "Sensing a design on the board and feeding the result back - UART self-checks, ILA in batch, XADC, in-FPGA instruments, audio at the jack - with a known answer and a seeded fault for each path, plus the soak rig for clock crossings."
   },
   {
    "about": "The Nexys A7 has no heat sink, so power is a hard limit, not a nicety. Two checks in the power-closure stage gate enforce it: the junction temperature Vivado computes for the board's real cooling must stay within the limit, and the total on-chip power and temperature must fit the budget for the board's power source, which the board tools check again before programming.",

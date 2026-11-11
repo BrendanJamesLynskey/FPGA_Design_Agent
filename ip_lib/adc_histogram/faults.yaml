@@ -1,0 +1,23 @@
+# Seeded faults (brief 30); run by hil/ip_faults.py: each must make the block's tests fail.
+faults:
+- name: no_forwarding
+  file: adc_histogram.sv
+  old: 'cur = (vw && bw == b1) ? cw : c1;'
+  new: cur = c1;
+  class: timing
+  why: back-to-back samples in one bin lose a count
+  test: hil/tests/test_30_ip_rtl.py -k test_block and adc_histogram
+- name: bin_from_low_bits
+  file: adc_histogram.sv
+  old: 'b1 <= s_data[SAMP_W-1 -: BIN_W];'
+  new: b1 <= s_data[BIN_W-1:0];
+  class: value
+  why: the bin index uses the low bits of the code
+  test: hil/tests/test_30_ip_rtl.py -k test_block and adc_histogram
+- name: min_wrong_way
+  file: adc_histogram.sv
+  old: if (d1 < min_code) min_code <= d1;
+  new: if (d1 > min_code) min_code <= d1;
+  class: value
+  why: the minimum is tracked the wrong way
+  test: hil/tests/test_30_ip_rtl.py -k test_block and adc_histogram

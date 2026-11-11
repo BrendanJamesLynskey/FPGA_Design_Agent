@@ -359,8 +359,8 @@ areas:
   - "Formal checks are enforced only where the test plan promises a proof."
 - id: hil
   name: Hardware in the loop
-  summary: Programming only the owner's board, self-checks over the UART, ILA capture, and the soak rig that exercises clock crossings on hardware.
-  about: "Hardware in the loop means running designs on a real board: programming only the owner's board, into volatile memory only, then self-checks over the serial link and captures with an on-chip logic analyser. A soak rig exercises clock crossings on hardware. Board steps are done by the harness after a human approves, never by the model."
+  summary: Sensing a design on the board and feeding the result back - UART self-checks, ILA in batch, XADC, in-FPGA instruments, audio at the jack - with a known answer and a seeded fault for each path, plus the soak rig for clock crossings.
+  about: "Hardware in the loop means running designs on a real board and checking what they do against the same Python model the simulation uses. The board is programmed into volatile memory only. Each sensing path has a known answer, a pass rule and a seeded fault that must fail: registers over the serial link, an on-chip logic analyser run from a script, the die sensors, instruments built into the design (frequency, frame checksum, logic analyser), and a tone captured at the audio jack. A seeded pin fault passed simulation and every in-FPGA check and was caught only at the jack. Drivers for a USB scope and logic analyser, a spectrum analyser and a Red Pitaya exist but have only been tested on synthetic data, because none was connected. Board steps are done by the harness, never by the model."
   kb: [procedures/board-onboarding, vendor/ross_distilled/debug-ila-vio, procedures/verification-stages~hw, procedures/ultrafast~configuration, techniques/debugging]
   checks:
   - {file: flow/board_check.py, gate: power_ok, enforced: false, what: "The board-check tool: the power check again before programming, programming by cable serial and SRAM only, identify, self-check and still-alive steps. The stage gate that enforces the power check is under power and thermal."}
@@ -375,12 +375,21 @@ areas:
     values: ["get:run_as_written.steps.uart_tests.tests", "get:run_as_written.steps.uart_tests.failures", "get:run_as_written.failed_step"]
     text: "An agent-built design from a development run was programmed on the board: of its {0} UART self-checks, {1} failed; the run stopped at the step {2}."
   - kind: measured
+    source: results/b30/hil_runs/b30_hil_audio.hil.json
+    values: ["get:checks.tone_at_the_jack.measured.freq_hz", "get:checks.tone_at_the_jack.measured.thd_percent", "get:checks.xadc_vs_jtag.measured.tj_c"]
+    text: "On the board, a tone made by the design's own signal generator was read at the audio jack at {0} Hz with {1} percent distortion, and the fabric temperature readout gave {2} degrees C against the JTAG reading."
+  - kind: measured
+    source: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json
+    values: ["get:checks.tone_at_the_jack.measured.level_dbfs_rms", "get:checks.tone_at_the_jack.measured.sinad_db"]
+    text: "The same design with one output pin moved passes simulation and every check inside the chip, and fails at the jack: level {0} dBFS, signal-to-noise-and-distortion {1} dB."
+  - kind: measured
     source: hil/cdc_soak/results/build_full.json
     values: ["get:utilisation.lut.used", "get:timing.wns_ns", "get:power.total_w"]
     text: "The full build of the crossing soak rig uses {0} LUTs, meets timing with {1} ns to spare and has a Vivado power estimate of {2} W."
   cards:
   - {href: "flow-notes.html#pblock", label: "Beyond the flow: placement regions on the crossing rig"}
   gaps:
+  - "No USB scope, logic analyser, spectrum analyser, Red Pitaya or video capture was connected on the day, so those paths are drivers tested on synthetic data, not measurements."
   - "The soak's hardware logs are not among the committed results; the builds and simulations are."
   - "Unattended soaks and board runs need the owner's approval."
   - "Agent-built bitstreams have been programmed on the board, but no agent-built design has yet passed every test on the board."

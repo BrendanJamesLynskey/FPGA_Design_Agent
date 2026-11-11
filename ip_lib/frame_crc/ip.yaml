@@ -1,0 +1,58 @@
+# ip.yaml for frame_crc: the declared parameter space and contract (brief 28 rules; brief 30 entry).
+name: frame_crc
+version: 0.1.0
+status: simulated bit-exact against zlib.crc32; measured on the Nexys A7-100T inside b30_hil_audio (the model's CRC read back, a seeded one-bit
+  pixel fault counted)
+summary: 'Frame CRC and statistics for video: CRC-32 (IEEE 802.3), pixel count and pixel sum of every frame, compared with the model''s CRC at
+  each frame end; counts mismatches.'
+top: frame_crc
+rtl:
+- rtl/frame_crc.sv
+depends: []
+interfaces:
+- name: pixels
+  type: native
+  signals: frame_start, pix_valid, pix_data -> crc_last, pix_last, sum_last, frames, mismatches, frame_done
+clocks:
+- name: clk
+parameters:
+  PIX_W:
+    type: int
+    default: 24
+    set:
+    - 8
+    - 16
+    - 24
+    - 32
+    note: pixel word width in bits
+latency:
+  result: the clock after the next frame_start (the frame ends there)
+throughput: one pixel word per clock
+guards:
+- PIX_W: 12
+sweep_tested:
+- PIX_W: 24
+- PIX_W: 8
+- PIX_W: 32
+boundary:
+  registered_outputs: 'yes'
+  cdc: none (one clock; the pixel clock is the caller's)
+  part_specific: none
+limits: the CRC is bitwise per word (a combinational loop of PIX_W steps), fine to about 150 MHz at PIX_W 24 on a -1 part; frame_start must precede
+  the first pixel by at least zero clocks
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - hil/tests/test_30_ip_rtl.py
+  - designs/b30_hil_audio/tests/test_hil_audio_rtl.py
+  faults: ip_lib/frame_crc/faults.yaml
+  results: results/b30/faults.json, results/b30/hil_runs/
+  simulator: Icarus Verilog 12 (local and CI)
+  summary: Bit-exact against the Python models in `hil/instruments/models.py` (plain Python written from the definitions, not from the RTL); cocotb
+    with Icarus Verilog 12.
+cost_table: 'in-context cost (not an OOC sweep): 274 LUT, 257 FF at PIX_W 24 inside b30_hil_audio (Vivado 2025.2, xc7a100t -1, 100 MHz met); the OOC sweep is still to do'
+constraints: []
+licence: MIT (this repository)
