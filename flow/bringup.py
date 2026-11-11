@@ -157,7 +157,9 @@ class Run:
         out = {"pass": bool(ok), **counts, "cases": {n: float(t) for n, t in names},
                "files": [str(t.relative_to(hw.ROOT)) for t in tests]}
         if not ok:
-            out["why"] = self.scrub("\n".join(l for l in r.stdout.splitlines() if "Error" in l or "assert" in l)[-1500:])
+            both = (r.stdout + "\n" + r.stderr).splitlines()
+            why = "\n".join(l for l in both if "Error" in l or "assert" in l)[-1500:]
+            out["why"] = self.scrub(why or "\n".join(both)[-600:] or f"pytest exit {r.returncode}, no output")   # never an empty reason
         return out
 
     def ila_captures(self) -> dict[str, Any]:
@@ -289,10 +291,13 @@ class Run:
 
 
 def tool_versions(vivado: str | None) -> dict[str, str | None]:
-    import pytest
-    import serial
-    return {"vivado": vivado, "python": platform.python_version(), "pyserial": serial.VERSION,
-            "pytest": pytest.__version__}
+    def ver(mod: str, attr: str) -> str | None:
+        try:
+            return str(getattr(importlib.import_module(mod), attr))
+        except Exception:                          # a missing module is recorded as null, never a crash of the run record
+            return None
+    return {"vivado": vivado, "python": platform.python_version(), "pyserial": ver("serial", "VERSION"),
+            "pytest": ver("pytest", "__version__")}
 
 
 def main(argv: list[str] | None = None) -> int:
