@@ -1,9 +1,9 @@
 {
  "counts": {
-  "automated": 11,
+  "automated": 12,
   "building": 2,
   "person": 5,
-  "total": 18
+  "total": 19
  },
  "legs": [
   {
@@ -125,17 +125,28 @@
    "status": "automated"
   },
   {
+   "evidence": [
+    "results/b30/hil_runs/b30_hil_audio.hil.json",
+    "results/b30/hil_runs/b30_hil_audio_pinfault.hil.json",
+    "flow/hil.py"
+   ],
+   "id": "audio_capture",
+   "leg": "Audio measured at the board's jack",
+   "note": "A USB audio interface records the output and a program reads frequency, level, distortion and noise; a seeded pin fault that passed simulation and every in-chip check was caught only here.",
+   "status": "automated"
+  },
+  {
    "evidence": [],
    "id": "instruments",
-   "leg": "Instrument captures at the pins",
-   "note": "Scope, logic analyser, spectrum, video frames and audio, each read by a program; being measured.",
+   "leg": "Instrument captures at the pins (scope, logic analyser, spectrum, video frames)",
+   "note": "Drivers written and tested on synthetic data; waiting for the instruments to be connected.",
    "status": "building"
   },
   {
    "evidence": [],
    "id": "hil_gate",
    "leg": "A hardware-in-the-loop stage that feeds measurements to the repair loop",
-   "note": "Each design would declare what to measure and the tolerance, from the same model the simulation uses.",
+   "note": "The stage runs each design's declared checks with tolerances and records measured against expected (flow/hil.py); it is not yet wired into the agent's repair loop.",
    "status": "building"
   },
   {
@@ -255,7 +266,7 @@
     "values": [
      "UART 3 of 3 passed",
      "ILA trigger did not fit",
-     "XADC: being measured"
+     "XADC matches JTAG"
     ]
    },
    "gate": {
@@ -270,15 +281,21 @@
    "desc": "ADALM2000, Red Pitaya, HDMI and audio capture, Pluto and RTL-SDR",
    "fb": {
     "kind": "waveforms, spectra, frames, audio",
-    "leg": "instruments",
-    "src": null,
+    "leg": "audio_capture",
+    "src": {
+     "record": "results/b30/hil_runs/b30_hil_audio.hil.json",
+     "what": "the brief 30 hardware-in-the-loop run on b30_hil_audio (2026-11-11)"
+    },
     "values": [
-     "being measured"
+     "audio 999.99 Hz",
+     "THD 1.32 %",
+     "caught a pin fault",
+     "scope, SDR, video: next"
     ]
    },
    "gate": {
     "leg": "hil_gate",
-    "line": "being built",
+    "line": "scripted, not in loop yet",
     "title": "HIL checks"
    },
    "id": "instr",

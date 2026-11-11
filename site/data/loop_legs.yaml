@@ -70,14 +70,19 @@ legs:
   status: automated
   note: Hours of checked crossings with no one at the board, counted in hardware and read over the UART; a person says yes before a new bitstream is left to soak.
   evidence: [hil/cdc_soak/README.md, hil/cdc_soak/RUNBOOK.md]
+- id: audio_capture
+  leg: Audio measured at the board's jack
+  status: automated
+  note: A USB audio interface records the output and a program reads frequency, level, distortion and noise; a seeded pin fault that passed simulation and every in-chip check was caught only here.
+  evidence: [results/b30/hil_runs/b30_hil_audio.hil.json, results/b30/hil_runs/b30_hil_audio_pinfault.hil.json, flow/hil.py]
 - id: instruments
-  leg: Instrument captures at the pins
+  leg: Instrument captures at the pins (scope, logic analyser, spectrum, video frames)
   status: building
-  note: Scope, logic analyser, spectrum, video frames and audio, each read by a program; being measured.
+  note: Drivers written and tested on synthetic data; waiting for the instruments to be connected.
 - id: hil_gate
   leg: A hardware-in-the-loop stage that feeds measurements to the repair loop
   status: building
-  note: Each design would declare what to measure and the tolerance, from the same model the simulation uses.
+  note: The stage runs each design's declared checks with tolerances and records measured against expected (flow/hil.py); it is not yet wired into the agent's repair loop.
 - id: wiring
   leg: Wiring an instrument to the board
   status: person
