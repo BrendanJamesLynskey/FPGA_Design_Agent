@@ -1,0 +1,37 @@
+# Seeded faults (brief 40); see eth_mac_rmii/faults.yaml.
+faults:
+  - name: ipv4_options_ignored
+    file: pkt_parser.sv
+    old: "if (r3 == {5'd0, hl} - 11'd1) begin"
+    new: "if (r3 == 11'd19) begin"
+    class: protocol
+    why: the IPv4 header is taken as 20 bytes whatever the IHL (the brief's example)
+    test: flow/net/tests/test_40_parser_rtl.py -k bit_exact
+  - name: csum_carry_dropped
+    file: pkt_parser.sv
+    old: "csum_next = s17[15:0] + {15'd0, s17[16]};"
+    new: "csum_next = s17[15:0];"
+    class: arithmetic
+    why: the ones' complement end-around carry is lost
+    test: flow/net/tests/test_40_parser_rtl.py -k bit_exact
+  - name: one_vlan_tag_only
+    file: pkt_parser.sv
+    old: "if (is_tpid && vlan_n < 2'(MAX_VLAN)) begin"
+    new: "if (is_tpid && vlan_n < 2'd1) begin"
+    class: protocol
+    why: the inner tag of a double-tagged frame is taken as the EtherType
+    test: flow/net/tests/test_40_parser_rtl.py -k bit_exact
+  - name: fragment_offset_ignored
+    file: pkt_parser.sv
+    old: "if ((proto == 8'd6 || proto == 8'd17) && !off_nz) begin"
+    new: "if (proto == 8'd6 || proto == 8'd17) begin"
+    class: protocol
+    why: non-first fragments report payload bytes as ports
+    test: flow/net/tests/test_40_parser_rtl.py -k bit_exact
+  - name: truncation_not_flagged
+    file: pkt_parser.sv
+    old: "if (s_axis_tlast && !emit_now) f_trunc <= 1'b1;"
+    new: "if (1'b0) f_trunc <= 1'b1;"
+    class: condition
+    why: a frame that ends inside a header is not marked
+    test: flow/net/tests/test_40_parser_rtl.py -k bit_exact

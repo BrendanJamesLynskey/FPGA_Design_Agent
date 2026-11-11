@@ -1,0 +1,91 @@
+# ip.yaml for eth_mac_rmii: the declared parameter space and contract (brief 28 rules; brief 40 entry).
+name: eth_mac_rmii
+version: 0.1.0
+status: simulated (brief 40); OOC cost table pending
+summary: '10/100 Ethernet MAC for an RMII PHY: preamble/SFD, FCS (CRC-32) generate and check/strip, padding, inter-frame
+  gap; byte-wide AXI-Stream user ports.'
+top: eth_mac_rmii
+rtl:
+- rtl/eth_crc32.sv
+- rtl/rmii_rx.sv
+- rtl/rmii_tx.sv
+- rtl/eth_mac_rmii.sv
+depends: []
+interfaces:
+- name: rmii
+  type: native
+  signals: rmii_crs_dv, rmii_rxd[1:0], rmii_rx_er, rmii_tx_en, rmii_txd[1:0]
+- name: rx_axis
+  type: axis
+  dir: master
+  tdata: 8
+  tuser: 1
+  tready: false
+  note: 'no back-pressure: the line cannot wait; put a FIFO after it'
+- name: tx_axis
+  type: axis
+  dir: slave
+  tdata: 8
+  tuser: 1
+  note: a frame must be supplied without gaps once started (underrun = aborted frame with bad FCS)
+clocks:
+- name: clk
+  note: the 50 MHz RMII reference clock (the PHY's REF_CLK)
+parameters:
+  MIN_FRAME:
+    type: int
+    default: 64
+    range:
+    - 5
+    - 1522
+    note: 'receive: shortest good frame, FCS included'
+  MIN_DATA:
+    type: int
+    default: 60
+    range:
+    - 1
+    - 1514
+    note: 'transmit: pad to this many bytes before the FCS'
+  IFG_BYTES:
+    type: int
+    default: 12
+    range:
+    - 1
+    - 255
+    note: 'transmit: inter-frame gap in byte times'
+latency:
+  rx: the stream lags the wire by 5 bytes (FCS strip) plus 2 registers
+  tx: first dibit 1 dibit time after the first beat is offered (when idle)
+throughput: 'line rate at 10 and 100 Mb/s; back-to-back minimum frames: 148,809 frames/s at 100 Mb/s measured (results/b40/measure.json
+  mac_rx)'
+guards:
+- MIN_FRAME: 4
+- MIN_DATA: 0
+- IFG_BYTES: 0
+- MIN_FRAME: 2000
+sweep_tested:
+- MIN_FRAME: 64
+  MIN_DATA: 60
+  IFG_BYTES: 12
+- MIN_DATA: 46
+  IFG_BYTES: 16
+- MIN_DATA: 1
+  IFG_BYTES: 1
+boundary:
+  registered_outputs: rmii_tx_en/txd and rx_axis are registers; RMII inputs registered once (IOB candidates)
+  cdc: none (one clock)
+  part_specific: none in RTL; the 50 MHz clock, its 45-degree copy to the PHY and the pins are the board's (KB board/nexys_a7_100t/ethernet)
+limits: full duplex only; no pause frames, no MDIO, no half-duplex collision handling
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - flow/net/tests/test_40_mac_rtl.py
+  faults: ip_lib/eth_mac_rmii/faults.yaml
+  results: results/b40/measure.json, results/b40/faults.json
+  simulator: Icarus Verilog 12 (local and CI); xsim cross-check pending
+cost_table: 'pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11)'
+licence: MIT (this repository)
+constraints: []

@@ -1,0 +1,99 @@
+# ip.yaml for pkt_queue_sched: the declared parameter space and contract (brief 28 rules; brief 40 entry).
+name: pkt_queue_sched
+version: 0.1.0
+status: simulated (brief 40); OOC cost table pending
+summary: Packet buffer with a ring region and descriptor FIFO per queue, whole-packet tail drop with counters, and a round-robin
+  / strict-priority / deficit-round-robin scheduler.
+top: pkt_queue_sched
+rtl:
+- rtl/pkt_queue_sched.sv
+depends: []
+interfaces:
+- name: s_axis
+  type: axis
+  dir: slave
+  tdata: 8
+  tuser: 1
+  tdest: 3
+  note: tready always 1
+- name: m_axis
+  type: axis
+  dir: master
+  tdata: 8
+  tuser: 1
+  tdest: 3
+clocks:
+- name: clk
+parameters:
+  NQ:
+    type: int
+    default: 4
+    set:
+    - 2
+    - 4
+    - 8
+  QBYTES:
+    type: int
+    default: 2048
+    range:
+    - 64
+    - 65536
+    pow2: true
+  DESC:
+    type: int
+    default: 16
+    range:
+    - 2
+    - 256
+    pow2: true
+  MAX_LEN:
+    type: int
+    default: 1522
+    range:
+    - 1
+    - 65536
+constraints:
+- MAX_LEN <= QBYTES
+latency:
+  store_and_forward: first byte out = packet length + 3 clocks after the first byte in (63 for 60 bytes, measured)
+throughput: output 62 clocks per 60-byte packet (2 clocks a packet overhead, measured)
+guards:
+- NQ: 3
+- QBYTES: 1000
+- DESC: 1
+- MAX_LEN: 5000
+  QBYTES: 2048
+sweep_tested:
+- NQ: 4
+  QBYTES: 8192
+  DESC: 32
+- NQ: 2
+  QBYTES: 256
+  DESC: 4
+  MAX_LEN: 200
+- NQ: 4
+  QBYTES: 512
+  DESC: 2
+  MAX_LEN: 512
+- NQ: 8
+  QBYTES: 1024
+  DESC: 8
+  MAX_LEN: 1000
+boundary:
+  registered_outputs: m_axis from a 2-entry skid buffer
+  cdc: none
+  part_specific: none
+limits: static per-queue regions (no shared buffer); no cut-through
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - flow/net/tests/test_40_queues_rtl.py
+  - flow/net/tests/test_40_switch_rtl.py
+  faults: ip_lib/pkt_queue_sched/faults.yaml
+  results: results/b40/measure.json, results/b40/faults.json
+  simulator: Icarus Verilog 12 (local and CI); xsim cross-check pending
+cost_table: 'pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11)'
+licence: MIT (this repository)

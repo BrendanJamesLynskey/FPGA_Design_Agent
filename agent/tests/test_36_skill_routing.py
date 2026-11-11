@@ -204,3 +204,14 @@ def test_config_defaults_off() -> None:
     from agent.tests.request_golden import T1
     c = Config(spec_md=T1 / "spec.md", name="t")
     assert c.skill_routing == "off" and c.router_model is None
+
+
+def test_load_skill_returns_whole_skills_under_the_output_limit(sess, monkeypatch) -> None:
+    """Six full bodies overflowed MAX_OUTPUT and the clip cut the middle out; now whole skills only, the rest named."""
+    from agent.core import tools as T
+    monkeypatch.setattr(T, "MAX_OUTPUT", 1200)
+    r = dispatch(sess, "load_skill", {"sections": ["amba", "ip-cores"]})
+    assert r["ok"] and r["skills"] and r.get("held_for_size")
+    assert "characters omitted" not in r["output"]                    # never clipped mid-skill
+    assert "load_skill(name=...)" in r["output"]
+    assert len(r["skills"]) + len(r["held_for_size"]) == 6
