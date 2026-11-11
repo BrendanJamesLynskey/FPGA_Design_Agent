@@ -7,8 +7,12 @@
 # for (report_cdc, report_methodology, report_bus_skew, report_power, utilisation, timing), the bitstream, and the
 # per-copy routed delay and skew table (tcl/delay_table.tcl). Nothing here opens the hardware manager.
 
-set_param general.maxThreads 2
-set_param synth.maxThreads   2
+# Threads: FDA_VIVADO_THREADS (1-8; set by _handoff/take_heavy_slot.sh --env on the shared PC), else 2 as before
+# (brief 33 measured 1, 2 and 4 on this build: results/33_vivado_speed).
+set nthreads [expr {[info exists ::env(FDA_VIVADO_THREADS)] && $::env(FDA_VIVADO_THREADS) ne "" ? $::env(FDA_VIVADO_THREADS) : 2}]
+if {![string is integer -strict $nthreads] || $nthreads < 1 || $nthreads > 8} { error "FDA_VIVADO_THREADS must be 1-8, not '$nthreads'" }
+set_param general.maxThreads $nthreads
+set_param synth.maxThreads   $nthreads
 
 set here [file dirname [file normalize [info script]]]
 set rig  [file dirname $here]
@@ -52,6 +56,12 @@ stage phys_opt
 route_design -directive $rdir
 stage route
 write_checkpoint -force $out/post_route.dcp
+# brief 33: the placed and routed result as text (flow/result_hash.py), only when FDA_RESULT_HASH=1
+if {[info exists ::env(FDA_RESULT_HASH)] && $::env(FDA_RESULT_HASH) eq "1"} {
+    source [file join [file dirname $rig] .. flow result_hash.tcl]
+    result_dump $out/result_dump.txt
+    stage result_dump
+}
 
 report_timing_summary -max_paths 20 -file $out/timing_summary.rpt
 report_clock_interaction -file $out/clock_interaction.rpt
