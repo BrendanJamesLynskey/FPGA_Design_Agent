@@ -129,16 +129,9 @@ proc insert_ila_ip {probes_tcl out} {
         incr i
     }
     close $map
-    # opt_design adds the debug hub by itself, but cannot find its clock for an ILA that was put into the netlist this way
-    # (Chipscope 16-213: dbg_hub/clk has 1 unconnected channels). Make the hub now and give it the same clock as insert_ila_core.
-    set hv [expr {[info exists ::env(FDA_HUB_VARIANT)] ? $::env(FDA_HUB_VARIANT) : "D"}]
-    if {$hv ne "A"} { implement_debug_core }
-    if {$hv eq "D"} {
-        set_property C_CLK_INPUT_FREQ_HZ 100000000 [get_debug_cores dbg_hub]
-        set_property C_ENABLE_CLK_DIVIDER false     [get_debug_cores dbg_hub]
-        set_property C_USER_SCAN_CHAIN 1            [get_debug_cores dbg_hub]
-    }
-    if {$hv ne "A"} { connect_debug_port dbg_hub/clk [get_nets $ila_clock_net] }
+    # The debug hub is left to opt_design: with the probes connected, it finds the ILA's clock itself. (Measured, brief 48: making
+    # the hub here with implement_debug_core, with or without its properties, changed nothing; the hub's own constraint script
+    # prints CRITICAL WARNINGs either way, which flow/exceptions_check.py lists as EXC-XDC-DEBUG-HUB.)
     puts "debug.tcl: ILA IP $ila_name ($ipname) with $nprobes probes packed into $n ports, depth $ila_depth"
 }
 

@@ -32,6 +32,8 @@ log (``vivado.log``) for constraint messages raised while reading the XDC. It fa
     XDCH-1          a -setup multicycle with no -hold multicycle (a Warning; brief 20 E2 measured it, and the hold check
                     then fails by about N-1 periods)
 
+EXC-XDC-DEBUG-HUB (information only, ILA builds only, brief 48): CRITICAL WARNINGs printed by the debug hub IP's own xsdbm_*.xdc script.
+
 EXC-IGNORED-DEBUG-IP (information only, listed under ``info``, never a failure): an ignored exception (its coverage-0 entry follows it) that is
 not one of ours and names only debug-core cells. The ILA core's own scoped constraints (brief 45, measured on
 t1_dimmer_counter: 15 "Non-existent path" rows after routing) take positions after every XDC file of ours, and every
@@ -159,6 +161,12 @@ def is_debug_ip_exception(row: dict[str, Any], last_own_position: int) -> bool:
 _LOG_MSG = re.compile(r"^(CRITICAL WARNING|ERROR): \[([^\]]+)\] (.*?)\s*\[([^\[\]]+\.xdc):(\d+)\]\s*$", re.M)
 
 
+def is_debug_hub_message(m: dict[str, Any]) -> bool:
+    """A message from the debug hub IP's own constraint script: an xsdbm_*.xdc file inside a dbg_hub directory under .Xil."""
+    path = m.get("path") or ""
+    return bool(re.fullmatch(r"xsdbm_\w+\.xdc", m["file"])) and "/.Xil/" in path and "/dbg_hub" in path
+
+
 def xdc_messages(log_text: str) -> list[dict[str, Any]]:
     """CRITICAL WARNING / ERROR messages the log ties to an XDC line (file and line as Vivado prints them)."""
     out, seen = [], set()
@@ -166,7 +174,7 @@ def xdc_messages(log_text: str) -> list[dict[str, Any]]:
         key = (mid, Path(f).name, int(n))
         if key not in seen:                     # Vivado repeats a message (the log and the end-of-command summary)
             seen.add(key)
-            out.append({"severity": sev, "id": mid, "message": msg, "file": Path(f).name, "line": int(n)})
+            out.append({"severity": sev, "id": mid, "message": msg, "file": Path(f).name, "line": int(n), "path": f})
     return out
 
 
@@ -309,6 +317,15 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
         except (OSError, IndexError):
             return None
 
+    # brief 48: on Vivado 2026.1 an ILA put in as IP makes the debug hub's own constraint script (xsdbm_cc_late_late.xdc, in the
+    # hub IP's generated directory under .Xil/.../dbg_hub...) print CRITICAL WARNINGs (Common 17-55, 17-1548: a clock lookup
+    # comes back empty). They are not ours: ILA builds only (probe_map.txt is written only by them), and only a message whose
+    # file is an xsdbm_*.xdc inside a dbg_hub IP directory. Counted as info EXC-XDC-DEBUG-HUB; any other message still fails.
+    hub = [m for m in msgs if is_debug_hub_message(m)] if (d / "probe_map.txt").exists() else []
+    if hub:
+        info.append({"rule": "EXC-XDC-DEBUG-HUB", "count": len(hub),
+                     "vivado": {"files": sorted({m["file"] for m in hub}), "ids": sorted({m["id"] for m in hub})}})
+    msgs = [m for m in msgs if m not in hub]
     for m in msgs:
         fails.append({"rule": "EXC-XDC-MSG", "position": None, "file": m["file"], "line": m["line"],
                       "text": line_text(m["file"], m["line"]),
