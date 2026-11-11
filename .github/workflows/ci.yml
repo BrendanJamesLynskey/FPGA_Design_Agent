@@ -40,7 +40,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y tcl          # prepare.py's Tcl is loaded by a real tclsh
           pip install pyyaml pyserial pytest cocotb==2.0.1 mcp==2.3.0 jsonschema \
-            langgraph==1.2.19 langgraph-checkpoint-sqlite==3.1.3 deepagents==0.7.32 langchain-openai==1.7.3 scipy
+            langgraph==1.2.19 langgraph-checkpoint-sqlite==3.1.3 deepagents==0.7.32 langchain-openai==1.7.3 scipy \
+            boto3==1.44.0 moto==5.2.5
       - name: pytest (no simulator; agent core + the 05b agent graph - isolation, interview, review, rewind, T1 episode)
         run: python -m pytest -q --ignore-glob='*_rtl.py'
       - name: Board inventory against the master XDC (brief 04c)

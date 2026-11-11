@@ -1,0 +1,9 @@
+# brief 33 trial: the same two course reference designs as results/33_vivado_speed, full builds without the cache.
+# Stage them first on the build PC (benchmark/tools/ref_build.py <task> --stage-only) and name them to sync.
+# Run with parallel_jobs: 1 so each build has the machine to itself (an extra FDA_VIVADO_THREADS overrides threads_per_job).
+c10_t1   build/bench/c10_dds_sine           bitstream FDA_BUILD_CACHE=0 FDA_VIVADO_THREADS=1
+c10_t4   build/bench/c10_dds_sine           bitstream FDA_BUILD_CACHE=0 FDA_VIVADO_THREADS=4
+c10_t8   build/bench/c10_dds_sine           bitstream FDA_BUILD_CACHE=0 FDA_VIVADO_THREADS=8
+c13_t1   build/bench/c13_nexys_harris_vga   bitstream FDA_BUILD_CACHE=0 FDA_VIVADO_THREADS=1
+c13_t4   build/bench/c13_nexys_harris_vga   bitstream FDA_BUILD_CACHE=0 FDA_VIVADO_THREADS=4
+c13_t8   build/bench/c13_nexys_harris_vga   bitstream FDA_BUILD_CACHE=0 FDA_VIVADO_THREADS=8

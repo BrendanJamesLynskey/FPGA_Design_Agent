@@ -10,13 +10,20 @@
 #   1. refuses to start if another Vivado is running, or if MemAvailable is
 #      below MIN_AVAIL_GB (default 7), and says why;
 #   2. writes build/<variant>/inputs.tcl (flow/prepare.py);
-#   3. runs Vivado in batch mode in a transient systemd scope capped at
-#      MemoryMax=6G, under nice 15, with general.maxThreads 1 (set in build.tcl);
-#   4. records wall time, the Vivado process's peak RSS (/usr/bin/time -v) and,
+#   3. reuses an earlier build of the same inputs where it can (flow/build_cache.py,
+#      brief 33): the same flow key and the requested stage already reached is a
+#      cache hit (no Vivado, the gates re-run); an earlier stage reached resumes
+#      from its post_synth.dcp or post_route.dcp; FDA_BUILD_CACHE=0 turns this off;
+#   4. otherwise runs Vivado in batch mode in a transient systemd scope capped at
+#      MemoryMax=6G, under nice 15, with FDA_VIVADO_THREADS threads (default 2;
+#      flow/build.tcl; _handoff/take_heavy_slot.sh --env sets it on the shared PC);
+#   5. records wall time, the Vivado process's peak RSS (/usr/bin/time -v) and,
 #      from the scope's cgroup (polled every 2 s), its peak charged memory
 #      (memory.peak, page cache included), its peak anonymous memory (all
-#      processes), its peak swap, and how often the cap was hit, in run.json;
-#   5. runs the gates (flow/gates.py) into gates.json.
+#      processes), its peak swap, how often the cap was hit, the thread count and
+#      the cache decision, in run.json (FDA_RESULT_HASH=1 adds the placement and
+#      routing hashes of flow/result_hash.py);
+#   6. runs the gates (flow/gates.py) into gates.json.
 # Variants run one after the other, never together. Logs: designs/<name>/build/<variant>/.
 set -euo pipefail
 
@@ -25,6 +32,11 @@ VIVADO="${VIVADO:-/opt/Xilinx/2025.2/Vivado/bin/vivado}"
 PY="${PYTHON:-python3}"
 MIN_AVAIL_GB="${MIN_AVAIL_GB:-7}"
 MEM_MAX="${MEM_MAX:-6G}"
+# brief 33: 1, 2 and 4 threads gave the same placement, routing and WNS on three designs (results/33_vivado_speed), so the
+# default is 2, safe beside a second Vivado job on the 4-core build PC; take_heavy_slot.sh --env sets 4 when it runs alone
+THREADS="${FDA_VIVADO_THREADS:-2}"
+case "$THREADS" in [1-8]) ;; *) echo "run_vivado: FDA_VIVADO_THREADS must be 1-8, not $THREADS" >&2; exit 1 ;; esac
+export FDA_VIVADO_THREADS="$THREADS"
 
 die() { echo "run_vivado: $*" >&2; exit 1; }
 
@@ -64,12 +76,41 @@ preflight() {
 run_variant() {
   local variant="$1"
   local out="$DESIGN/build/$variant"
-  preflight
-  rm -rf "$out"
+  local prev="$DESIGN/build/$variant.prev"
+  # brief 33: the earlier build of this variant is kept aside until the decision (flow/build_cache.py) is made
+  rm -rf "$prev"
+  if [ -d "$out" ]; then mv "$out" "$prev"; fi
   mkdir -p "$out"
   local prep
   prep="$("$PY" "$ROOT/flow/prepare.py" "$DESIGN" --variant "$variant" --out "$out")"
   echo "$prep" >"$out/prepare.json"
+  local decision action
+  decision="$("$PY" "$ROOT/flow/build_cache.py" "$out" --prev "$prev" --base "$DESIGN/build/base" \
+      --variant "$variant" --vivado "$VIVADO" --threads "$THREADS")"
+  action="$("$PY" -c 'import json, sys; print(json.loads(sys.argv[1])["action"])' "$decision")"
+  echo "run_vivado: build cache: $action"
+  if [ "$action" = "hit" ]; then
+    # the same inputs already reached the requested stage: put that build back and re-run its gates
+    rm -rf "$out"
+    mv "$prev" "$out"
+    "$PY" -c 'import json, sys, time
+from pathlib import Path
+rj = Path(sys.argv[1]) / "run.json"
+run = json.loads(rj.read_text()) if rj.is_file() else {}
+run.setdefault("cache_hits", []).append({"at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                                         "requested_rank": json.loads(sys.argv[2])["requested"]})
+rj.write_text(json.dumps(run, indent=2) + "\n")' "$out" "$decision"
+    echo "run_vivado: $REL $variant: cache hit, Vivado not run (the build in $out has the same inputs)"
+    "$PY" "$ROOT/flow/gates.py" "$out" --json "$out/gates.json"
+    return
+  fi
+  # Vivado will run: check the machine first, and put the earlier build back if it refuses
+  if ! (preflight); then
+    rm -rf "$out"
+    if [ -d "$prev" ]; then mv "$prev" "$out"; fi
+    exit 1
+  fi
+  echo "$decision" >"$out/cache.json"
 
   local unit="fda-vivado-$$-$variant"
   local t_start t_end
@@ -106,12 +147,17 @@ run_variant() {
   local rc=0
   wait "$pid" || rc=$?
   t_end="$(date +%s.%N)"
+  # the earlier build is no longer needed: a resumed build copied what it used, and an incremental one has finished
+  rm -rf "$prev"
+  if [ "${FDA_RESULT_HASH:-0}" = "1" ] && [ -f "$out/result_dump.txt" ]; then
+    "$PY" "$ROOT/flow/result_hash.py" "$out/result_dump.txt" --json "$out/result_hash.json" >/dev/null || true
+  fi
 
   "$PY" - "$out" "$rc" "$t_start" "$t_end" "$peak" "$MEM_MAX" "$REL" "$variant" "$VIVADO" \
-      "$anon" "$swap" "$hits" "$ooms" <<'EOF'
+      "$anon" "$swap" "$hits" "$ooms" "$THREADS" "$unit" <<'EOF'
 import json, re, subprocess, sys
 from pathlib import Path
-out, rc, t0, t1, peak, cap, rel, variant, vivado, anon, swap, hits, ooms = sys.argv[1:]
+out, rc, t0, t1, peak, cap, rel, variant, vivado, anon, swap, hits, ooms, threads, unit = sys.argv[1:]
 out = Path(out)
 t = (out / "time.txt").read_text() if (out / "time.txt").exists() else ""
 m = re.search(r"Maximum resident set size \(kbytes\): (\d+)", t)
@@ -130,13 +176,17 @@ run = {
     "scope_anon_peak_mib": round(int(anon) / 2**20) if int(anon) else None,
     "scope_swap_peak_mib": round(int(swap) / 2**20),
     "scope_cap_hits": int(hits), "scope_oom_kills": int(ooms),
-    "memory_cap": cap, "max_threads": 1, "nice": 15,
+    "memory_cap": cap, "max_threads": int(threads), "nice": 15, "scope_unit": unit,
     "vivado_version": ver.group(1) if ver else None,
     "git_commit": git("rev-parse", "HEAD"), "git_dirty": bool(git("status", "--porcelain")),
     "build_stamp": prep["build_stamp"], "sources_sha256": prep["sources_sha256"],
     "stages_s": {l.split()[0]: float(l.split()[1]) for l in (out / "stages.txt").read_text().splitlines()}
                 if (out / "stages.txt").exists() else {},
+    "cache": json.loads((out / "cache.json").read_text()).get("action") if (out / "cache.json").exists() else None,
+    "flow_key": (out / "flow_key.txt").read_text().strip() if (out / "flow_key.txt").exists() else None,
 }
+if (out / "result_hash.json").exists():
+    run["result_hash"] = json.loads((out / "result_hash.json").read_text())
 (out / "run.json").write_text(json.dumps(run, indent=2) + "\n")
 print(f"run_vivado: {rel} {variant}: exit {rc}, {run['wall_s']} s, "
       f"Vivado peak RSS {run['vivado_peak_rss_mib']} MiB, scope peak {run['scope_memory_peak_mib']} MiB "

@@ -1,0 +1,21 @@
+# cloud/cloud.yaml (copy this file; cloud.yaml is not committed). Defaults: cloud/fda_cloud.py DEFAULTS.
+profile: null                 # your AWS CLI profile, or null for the default
+region: eu-west-2
+ami_id: ami-REPLACE           # from cloud/BUILD_AMI.md step 5
+instance_type: c7a.2xlarge
+spot: true
+allow_on_demand: false
+on_demand_usd_per_hour: 0.49  # check the current eu-west-2 on-demand price for instance_type
+budget_usd: 20.0              # per calendar month, enforced by start
+max_hours: 4.0                # the instance terminates itself after this
+idle_minutes: 20
+key_name: fda-burst
+ssh_key: ~/.ssh/fda_burst.pem
+ssh_user: ubuntu
+security_group_id: sg-REPLACE
+subnet_id: null
+root_volume_gb: 160
+remote_dir: /home/ubuntu/fda
+parallel_jobs: 2
+threads_per_job: 4
+mem_max_per_job: 7G

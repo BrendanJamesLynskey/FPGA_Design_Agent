@@ -26,19 +26,40 @@ Python code only.
 | `hw_discover.py`, `hw_list.tcl` | Find the one JTAG target (refuses if there are several), check it is an xc7a100t, find its UART (FT2232 interface 1, same USB serial); record both in `~/.config/fpga_design_agent/boards.yaml`, outside the repo |
 | `program.py`, `program.tcl` | Program a build into SRAM by cable serial, after the `power_ok` gate (report_power total and junction temperature within the limits for the board's power source) and a build-stamp check; flash requests are refused. Also `run_vivado.sh designs/<name> program\|program-ila` |
 | `ila_capture.tcl`, `ila.py` | Arm the ILA by Tcl, wait, upload, export CSV + VCD, in step with the UART stimulus; read the CSV back into probe values |
+| `build_cache.py` | Brief 33: decides whether a build reuses the previous build of the same inputs (hit, resume from a checkpoint, or fresh) |
+| `result_hash.tcl`, `result_hash.py` | Brief 33: dump and hash a build's placement and routing, to compare builds |
 | `hw.py` | Shared hardware pieces: the Vivado hardware-manager runner (same guard rails), `hw_server`, the board file, the power gate, serial redaction |
 
-## The runner's guard rails (16 GB build PC)
+## The runner's guard rails (32 GB build PC since 2026-11-04)
 
-- Refuses to start while another Vivado runs (`pgrep -x vivado`) or when `MemAvailable` is below `MIN_AVAIL_GB`
-  (default 7), and says why.
+- Refuses to start while more Vivado jobs run than `FDA_VIVADO_MAX` allows (default 1) or when `MemAvailable` is below
+  `MIN_AVAIL_GB` (default 7), and says why.
 - Runs Vivado in a transient user scope: `systemd-run --user --scope -p MemoryMax=6G nice -n 15`, with
-  `set_param general.maxThreads 1`, `synth.maxThreads 1` and `chipscope.maxJobs 1` in `build.tcl` (the first does not
-  lower the other two). Multi-threaded Vivado gets OOM-killed on this PC.
-- Records in `run.json`: the wall time; the largest Vivado process's peak RSS (`/usr/bin/time -v`); and, from the
-  scope's cgroup polled every 2 s, the peak anonymous memory summed over all its processes (the ILA build spawns
-  helper Vivado processes), the peak charged memory (`memory.peak`, page cache included), the peak swap, and how
-  often the cap was reached and whether anything was OOM-killed (`memory.events`).
+  `general.maxThreads` and `synth.maxThreads` set from `FDA_VIVADO_THREADS` (1-8; the runner's default is 2,
+  `build.tcl` on its own uses 1; the first does not lower the second) and `chipscope.maxJobs 1` at every thread count
+  (the ILA build otherwise synthesises its debug cores in parallel helper processes). On the shared PC,
+  `eval "$(_handoff/take_heavy_slot.sh --env "<text>")"` takes a heavy slot and sets `FDA_VIVADO_THREADS`: 4 when the
+  other slot runs no Vivado job, 2 when it does. Brief 33 measured 1, 2 and 4 threads on three designs
+  ([results/33_vivado_speed](../results/33_vivado_speed/results.md)): the same placement, routing and WNS at every
+  count. Peak memory was flat on the small and mid designs (about 2.1 and 2.3 GB) but grew on the 36k-LUT CDC rig
+  (3.6, 5.1 and 8.2 GB at 1, 2 and 4 threads), so give a large design a larger `MEM_MAX`. The old pin of 1 dated from
+  the 16 GB PC, where builds above one thread were OOM-killed at 5-6 GB.
+- **Build cache** (brief 33, `build_cache.py`): a build whose inputs (sources, XDC and data contents, build.yaml
+  settings, every `flow/*.tcl`, the thread count, the Vivado binary, the FDA_XPROBE/FDA_RESULT_HASH/FDA_INCREMENTAL
+  switches) match the previous build of the same variant reuses it. If that build already reached the requested
+  stage, Vivado is not run and only the gates re-run (`cache_hits` in run.json); if it reached an earlier stage, the
+  new build opens its `post_synth.dcp` or `post_route.dcp` and copies that build's reports for the stages it skips.
+  The ILA variant starts from the base build's `post_synth.dcp` when the synthesis inputs match. `FDA_BUILD_CACHE=0`
+  turns it off. The resumed builds gave the same placement, routing and WNS as fresh builds (results/33_vivado_speed).
+- `FDA_INCREMENTAL=1` (off by default) runs `read_checkpoint -incremental` against the previous build's
+  `post_route.dcp` when the inputs changed; the gates' reference builds never use it.
+- `FDA_RESULT_HASH=1` writes `result_dump.txt` (`result_hash.tcl`) and the placement and routing hashes
+  (`result_hash.py`) into run.json, for checking that two builds gave the same result.
+- Records in `run.json`: the wall time; the thread count; the cache decision; the scope unit; the largest Vivado
+  process's peak RSS (`/usr/bin/time -v`); and, from the scope's cgroup polled every 2 s, the peak anonymous memory
+  summed over all its processes (the ILA build spawns helper Vivado processes), the peak charged memory
+  (`memory.peak`, page cache included), the peak swap, and how often the cap was reached and whether anything was
+  OOM-killed (`memory.events`).
 - Variants (`both`) run one after the other.
 
 ## Build stamp

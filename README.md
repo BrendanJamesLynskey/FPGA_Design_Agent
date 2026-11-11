@@ -235,6 +235,12 @@ python3 flow/summarise.py designs/t1_dimmer_counter --out results/f0a
 
 Vivado does not run in GitHub Actions (the install is about 100 GB); its results are committed under `results/`.
 
+Faster Vivado (brief 33): the runner reuses an earlier build of the same inputs (a cache hit runs no Vivado; an earlier
+stage reached resumes from its checkpoint), takes its thread count from `FDA_VIVADO_THREADS`, and can hash a build's
+placement and routing. Measured on three designs in [results/33_vivado_speed](results/33_vivado_speed/results.md).
+For batches too big for the build PC, [cloud/](cloud/README.md) has a design and scripts for an AWS EC2 burst runner
+(owner-run; not yet run against AWS).
+
 ## Layout
 
 ```
@@ -255,6 +261,8 @@ designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, desig
 benchmark/   benchmark v1: tasks (development split), training pool, bench library and tools, manifest, owner review;
              benchmark/course/: the course-tier tasks (Parts 9-16), splits, manifest
 results/     committed build and bring-up results, per milestone
+cloud/       the AWS EC2 burst runner for Vivado batches (brief 33): fda_cloud.py (start, status, sync, run-batch,
+             fetch-results, stop; budget, auto-stop), instance/ scripts, BUILD_AMI.md; tests against mocked EC2
 hil/         hardware-in-the-loop rigs: cdc_soak/ (the CDC soak rig, brief 11b: RTL, simulation, Vivado builds, run plan)
 site/        the showcase site (static, Vercel): export.py (results -> data), build.py (pages, number check),
              leak_guard.py, src/, data/, public/, tests/; the preview link is in the pull request;
