@@ -1,0 +1,67 @@
+# ip.yaml for logic_analyser: the declared parameter space and contract (brief 28 rules; brief 30 entry).
+name: logic_analyser
+version: 0.1.0
+status: simulated; measured on the Nexys A7-100T inside b30_hil_audio (256 tone samples read back, matched to the DDS model; pre-trigger edge
+  test)
+summary: 'Register-mapped logic analyser: captures WIDTH internal signals into RAM at the sample rate, with a level or edge trigger and a pre-trigger
+  depth, and reads the buffer back through the test shell window.'
+top: logic_analyser
+rtl:
+- rtl/logic_analyser.sv
+depends: []
+interfaces:
+- name: probe
+  type: native
+  signals: sample, sample_en
+- name: window
+  type: native
+  note: the test shell window (win_addr, win_wr, win_rd, win_wdata, win_rdata); read data is combinational on win_addr
+clocks:
+- name: clk
+parameters:
+  WIDTH:
+    type: int
+    default: 16
+    range:
+    - 1
+    - 32
+    note: probed bits
+  ADDR_W:
+    type: int
+    default: 10
+    range:
+    - 2
+    - 14
+    note: DEPTH = 2**ADDR_W samples
+latency:
+  trigger_to_capture_end: DEPTH - 1 - PRE samples after the trigger sample
+throughput: one sample per clock when sample_en is 1
+guards:
+- ADDR_W: 1
+sweep_tested:
+- WIDTH: 16
+  ADDR_W: 6
+- WIDTH: 8
+  ADDR_W: 4
+boundary:
+  registered_outputs: no (read data is combinational from the RAM and registers)
+  cdc: none (the probes must be in the capture clock domain)
+  part_specific: none (inferred RAM)
+limits: one trigger stage (no sequencer); depth is fixed at build time; compare with the ILA in ip.yaml limits of ila-in-batch for the full-rate,
+  multi-probe case
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - hil/tests/test_30_ip_rtl.py
+  - designs/b30_hil_audio/tests/test_hil_audio_rtl.py
+  faults: ip_lib/logic_analyser/faults.yaml
+  results: results/b30/faults.json, results/b30/hil_runs/
+  simulator: Icarus Verilog 12 (local and CI)
+  summary: Bit-exact against the Python models in `hil/instruments/models.py` (plain Python written from the definitions, not from the RTL); cocotb
+    with Icarus Verilog 12.
+cost_table: 'in-context cost (not an OOC sweep): 132 LUT plus 88 LUTRAM, 142 FF, no block RAM at WIDTH 16, ADDR_W 8 inside b30_hil_audio (Vivado 2025.2, xc7a100t -1); the OOC sweep is still to do. For comparison the tool-inserted ILA on T1 (14 probes, 1024 deep) cost 1583 LUT, 2582 FF and 2 block RAM tiles'
+constraints: []
+licence: MIT (this repository)

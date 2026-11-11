@@ -40,3 +40,20 @@ Run: `pip install scapy==2.8.0 pytest pyyaml`, Icarus Verilog 12, then `python3 
 and dissect frames; it is not imported by, copied into or shipped with any RTL, generated design or library entry, and
 the repository does not redistribute it (CI installs it from PyPI). The library and its tests stay MIT. (Decision
 recorded in brief 40, 2026-11-11.)
+
+## Instruments for hardware-in-the-loop (brief 30)
+
+Small blocks that sit in the unit under test (behind the test shell) or in another device, and are read from the host.
+Simulated against Python models with seeded faults; measured on the Nexys A7-100T inside
+[designs/b30_hil_audio](../designs/b30_hil_audio) ([results/b30](../results/b30/README.md)).
+
+| Entry | What | Tests |
+|---|---|---|
+| [freq_duty_counter](freq_duty_counter/README.md) | edges and high clocks of an asynchronous input over a fixed gate | against generated square waves; 1000.0 Hz read on the board |
+| [frame_crc](frame_crc/README.md) | CRC-32, pixel count and sum of every frame, compared with the model's CRC | bit-exact against `zlib.crc32`; the model's CRC read back on the board, a seeded pixel fault counted |
+| [dds_awg](dds_awg/README.md) | DDS stimulus: sine, triangle, saw, square, amplitude shift | bit-exact against the model; 1 kHz sine measured at the audio jack |
+| [logic_analyser](logic_analyser/README.md) | register-mapped capture with level or edge trigger and pre-trigger, read over the shell | known counter; 256 tone samples matched to the DDS model on the board |
+| [adc_histogram](adc_histogram/README.md) | code-density histogram for converter DNL and INL | against the model; not yet on a board |
+
+Run: `python -m pytest hil/tests/test_30_ip_rtl.py` (Icarus Verilog 12, cocotb 2.0.1); faults: `python hil/ip_faults.py`;
+READMEs: `python flow/net/ipdoc.py`.

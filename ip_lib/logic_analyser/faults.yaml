@@ -1,0 +1,23 @@
+# Seeded faults (brief 30); run by hil/ip_faults.py: each must make the block's tests fail.
+faults:
+- name: pretrigger_off_by_one
+  file: logic_analyser.sv
+  old: start_idx <= wptr - pre_r;
+  new: start_idx <= wptr - pre_r + 1'b1;
+  class: value
+  why: capture sample 0 is one sample late
+  test: hil/tests/test_30_ip_rtl.py -k test_block and logic_analyser
+- name: edge_mode_both_edges
+  file: logic_analyser.sv
+  old: '|((sample & ~prev) & mask_r)'
+  new: '|((sample ^ prev) & mask_r)'
+  class: path
+  why: edge mode also triggers on falling edges
+  test: hil/tests/test_30_ip_rtl.py -k test_block and logic_analyser
+- name: post_trigger_short
+  file: logic_analyser.sv
+  old: post_left <= (ADDR_W+1)'(DEPTH - 1) - {1'b0, pre_r};
+  new: post_left <= (ADDR_W+1)'(DEPTH - 2) - {1'b0, pre_r};
+  class: timing
+  why: capture ends one sample early, so the last sample is stale
+  test: hil/tests/test_30_ip_rtl.py -k test_block and logic_analyser

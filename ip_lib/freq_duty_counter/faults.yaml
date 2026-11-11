@@ -1,0 +1,23 @@
+# Seeded faults (brief 30); run by hil/ip_faults.py: each must make the block's tests fail.
+faults:
+- name: counts_both_edges
+  file: freq_duty_counter.sv
+  old: e_acc    <= e_acc + CNT_W'(rise);
+  new: e_acc    <= e_acc + CNT_W'(s2 ^ s3);
+  class: path
+  why: falling edges counted too, so the frequency reads double
+  test: hil/tests/test_30_ip_rtl.py -k test_block and freq_duty_counter
+- name: duty_counts_low
+  file: freq_duty_counter.sv
+  old: h_acc    <= h_acc + CNT_W'(s2);
+  new: h_acc    <= h_acc + CNT_W'(~s2);
+  class: value
+  why: the duty counter counts the low clocks
+  test: hil/tests/test_30_ip_rtl.py -k test_block and freq_duty_counter
+- name: gate_half_length
+  file: freq_duty_counter.sv
+  old: if (gate_cnt == GATE_CLKS - 1) begin
+  new: if (gate_cnt == GATE_CLKS / 2) begin
+  class: timing
+  why: the gate is half as long as declared, so the duty and frequency scale are wrong
+  test: hil/tests/test_30_ip_rtl.py -k test_block and freq_duty_counter

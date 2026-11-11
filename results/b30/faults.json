@@ -1,0 +1,150 @@
+{
+ "caught": 16,
+ "valid": 16,
+ "faults": [
+  {
+   "name": "no_forwarding",
+   "block": "adc_histogram",
+   "class": "timing",
+   "why": "back-to-back samples in one bin lose a count",
+   "status": "caught",
+   "seconds": 1.2,
+   "pytest": "1 failed, 15 deselected in 0.99s"
+  },
+  {
+   "name": "bin_from_low_bits",
+   "block": "adc_histogram",
+   "class": "value",
+   "why": "the bin index uses the low bits of the code",
+   "status": "caught",
+   "seconds": 1.1,
+   "pytest": "1 failed, 15 deselected in 0.90s"
+  },
+  {
+   "name": "min_wrong_way",
+   "block": "adc_histogram",
+   "class": "value",
+   "why": "the minimum is tracked the wrong way",
+   "status": "caught",
+   "seconds": 1.1,
+   "pytest": "1 failed, 15 deselected in 0.91s"
+  },
+  {
+   "name": "sine_wrong_slice",
+   "block": "dds_awg",
+   "class": "value",
+   "why": "the table address skips the top phase bit, so the sine runs at twice the frequency",
+   "status": "caught",
+   "seconds": 0.7,
+   "pytest": "1 failed, 15 deselected in 0.42s"
+  },
+  {
+   "name": "triangle_no_fold",
+   "block": "dds_awg",
+   "class": "path",
+   "why": "the triangle is a saw at twice the rate",
+   "status": "caught",
+   "seconds": 0.7,
+   "pytest": "1 failed, 15 deselected in 0.47s"
+  },
+  {
+   "name": "shift_logical",
+   "block": "dds_awg",
+   "class": "value",
+   "why": "amplitude scaling shifts zeros into negative samples",
+   "status": "caught",
+   "seconds": 0.7,
+   "pytest": "1 failed, 15 deselected in 0.44s"
+  },
+  {
+   "name": "compare_unfinalised",
+   "block": "frame_crc",
+   "class": "value",
+   "why": "the compare uses the CRC before the final inversion, so every good frame is flagged",
+   "status": "caught",
+   "seconds": 0.7,
+   "pytest": "1 failed, 14 deselected in 0.45s"
+  },
+  {
+   "name": "wrong_polynomial",
+   "block": "frame_crc",
+   "class": "value",
+   "why": "one bit of the polynomial wrong",
+   "status": "caught",
+   "seconds": 0.7,
+   "pytest": "1 failed, 14 deselected in 0.46s"
+  },
+  {
+   "name": "sum_misses_first_pixel",
+   "block": "frame_crc",
+   "class": "path",
+   "why": "the first pixel of a frame is left out of the sum",
+   "status": "caught",
+   "seconds": 0.7,
+   "pytest": "1 failed, 14 deselected in 0.49s"
+  },
+  {
+   "name": "mismatch_not_counted",
+   "block": "frame_crc",
+   "class": "path",
+   "why": "a bad frame is never counted",
+   "status": "caught",
+   "seconds": 0.7,
+   "pytest": "1 failed, 14 deselected in 0.46s"
+  },
+  {
+   "name": "counts_both_edges",
+   "block": "freq_duty_counter",
+   "class": "path",
+   "why": "falling edges counted too, so the frequency reads double",
+   "status": "caught",
+   "seconds": 1.2,
+   "pytest": "1 failed, 15 deselected in 0.95s"
+  },
+  {
+   "name": "duty_counts_low",
+   "block": "freq_duty_counter",
+   "class": "value",
+   "why": "the duty counter counts the low clocks",
+   "status": "caught",
+   "seconds": 1.2,
+   "pytest": "1 failed, 15 deselected in 0.94s"
+  },
+  {
+   "name": "gate_half_length",
+   "block": "freq_duty_counter",
+   "class": "timing",
+   "why": "the gate is half as long as declared, so the duty and frequency scale are wrong",
+   "status": "caught",
+   "seconds": 0.9,
+   "pytest": "1 failed, 15 deselected in 0.67s"
+  },
+  {
+   "name": "pretrigger_off_by_one",
+   "block": "logic_analyser",
+   "class": "value",
+   "why": "capture sample 0 is one sample late",
+   "status": "caught",
+   "seconds": 0.6,
+   "pytest": "1 failed, 15 deselected in 0.40s"
+  },
+  {
+   "name": "edge_mode_both_edges",
+   "block": "logic_analyser",
+   "class": "path",
+   "why": "edge mode also triggers on falling edges",
+   "status": "caught",
+   "seconds": 0.7,
+   "pytest": "1 failed, 15 deselected in 0.47s"
+  },
+  {
+   "name": "post_trigger_short",
+   "block": "logic_analyser",
+   "class": "timing",
+   "why": "capture ends one sample early, so the last sample is stale",
+   "status": "caught",
+   "seconds": 0.6,
+   "pytest": "1 failed, 15 deselected in 0.41s"
+  }
+ ]
+}

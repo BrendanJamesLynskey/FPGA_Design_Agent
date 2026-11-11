@@ -5,7 +5,7 @@ from flow.net import ipdoc
 
 def test_ip_yaml_matches_rtl_and_readmes_current():
     errs = []
-    for b in ipdoc.NET:
+    for b in ipdoc.NET + ipdoc.HIL:
         errs += ipdoc.check(b)
         p = ipdoc.IP / b / "README.md"
         if not p.exists() or p.read_text() != ipdoc.readme(b):

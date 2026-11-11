@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 IP = ROOT / "ip_lib"
 NET = ["eth_mac_rmii", "pkt_parser", "match_exact", "match_lpm", "match_ternary", "axil_table_ctrl", "pkt_rewrite",
        "pkt_queue_sched", "l2_switch"]
+HIL = ["freq_duty_counter", "frame_crc", "dds_awg", "logic_analyser", "adc_histogram"]       # brief 30 instruments
 REQUIRED = ["name", "version", "summary", "top", "rtl", "depends", "interfaces", "clocks", "resets", "parameters",
             "constraints", "latency", "throughput", "guards", "sweep_tested", "evidence", "cost_table", "boundary",
             "limits", "licence"]
@@ -93,17 +94,17 @@ def readme(block: str) -> str:
           ". Reset: `rst`, active high, synchronous.", "", "## Latency and throughput", ""]
     L += [f"- {k}: {v}" for k, v in y["latency"].items()] + [f"- throughput: {y['throughput']}", "",
           "## Evidence", "",
-          "Bit-exact against the Python golden model (`flow/net/model.py`), file-driven bench (the brief-19 harness method), "
-          f"Icarus Verilog 12. Tests: {', '.join('`' + t + '`' for t in y['evidence']['tests'])}.",
+          (y['evidence'].get('summary') or "Bit-exact against the Python golden model (`flow/net/model.py`), file-driven bench (the brief-19 harness method), "
+           "Icarus Verilog 12.") + f" Tests: {', '.join('`' + t + '`' for t in y['evidence']['tests'])}.",
           "Parameter points simulated: " + "; ".join("`" + (", ".join(f"{k}={v}" for k, v in p.items()) or "defaults") + "`"
                                                    for p in y["sweep_tested"]) + "."]
     if faults.exists():
         fl = yaml.safe_load(faults.read_text())["faults"]
         res = {}
-        fj = ROOT / "results" / "b40" / "faults.json"
+        fj = ROOT / "results" / ("b30" if block in HIL else "b40") / "faults.json"
         if fj.exists():
             res = {f["name"]: f["status"] for f in json.loads(fj.read_text())["faults"]}
-        L += ["", "Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):", "", "| Fault | What it breaks | Result |", "|---|---|---|"]
+        L += ["", "Seeded faults (`faults.yaml`, run by `" + ("hil/ip_faults.py" if block in HIL else "flow/net/faults.py") + "`):", "", "| Fault | What it breaks | Result |", "|---|---|---|"]
         L += [f"| `{f['name']}` | {f['why']} | {res.get(f['name'], 'not run')} |" for f in fl]
     b = y["boundary"]
     L += ["", "## Boundary and reuse", "", f"- Registered outputs: {b['registered_outputs']}.", f"- Clock crossings: {b['cdc']}.",
@@ -115,7 +116,7 @@ def readme(block: str) -> str:
 def main() -> int:
     chk = "--check" in sys.argv
     errs, stale = [], []
-    for b in NET:
+    for b in NET + HIL:
         errs += check(b)
         text = readme(b)
         p = IP / b / "README.md"

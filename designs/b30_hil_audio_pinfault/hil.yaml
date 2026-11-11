@@ -1,0 +1,51 @@
+# hil.yaml of the seeded-fault variant: identical checks (brief 30). The tone_at_the_jack check must FAIL here: the RTL is the same, AUD_PWM sits on the LED0 pin.
+design: designs/b30_hil_audio_pinfault
+board: nexys_a7_100t
+variant: base
+checks:
+  - name: identity
+    path: shell
+    type: design_id
+    expect: H30A
+  - name: frame_crc_known_answer
+    path: shell
+    type: frame_crc
+    stimulus: none (the design sends one 128-pixel LFSR frame every 4096 clocks)
+    expect: models.frame_crc32 of the LFSR frame
+    tolerance: exact
+  - name: frame_crc_seeded_pixel_fault
+    path: shell
+    type: frame_crc_fault
+    stimulus: CTRL bit 1 flips one pixel bit of every frame
+    expect: mismatches rise and the CRC differs from the model's
+    tolerance: exact
+  - name: tone_frequency_in_fpga
+    path: shell
+    type: freq
+    expect_hz: 1000.0
+    tolerance_hz: 4.0            # gate 0.5 s: resolution 2 Hz, plus the 100 MHz oscillator's tolerance
+  - name: la_matches_dds_model
+    path: logic-analyser
+    type: la_dds
+    expect: the 256 captured samples are a contiguous run of models.dds_stream (sine, 1 kHz at 48.008 kHz, shift 2)
+    tolerance: exact
+  - name: la_pretrigger
+    path: logic-analyser
+    type: la_pretrigger
+    expect: a rising edge of the sample sign bit sits at buffer index PRE (8)
+    tolerance: exact
+  - name: xadc_vs_jtag
+    path: xadc
+    type: xadc_vs_jtag
+    tolerance: {tj_c: 2.0, vccint_v: 0.02, vccaux_v: 0.03, vccbram_v: 0.02}
+    limits: {tj_c_max: 85.0}
+  - name: tone_at_the_jack
+    path: audio
+    type: audio_tone
+    device: plughw:CODEC          # the UMC22, input 2, Hi-Z, gain about 50 % (capture/audio/README.md)
+    channel: 1                    # the right channel
+    f_expect_hz: 1000.0
+    f_tol_hz: 2.0
+    min_level_dbfs: -75.0
+    max_thd_percent: 5.0
+    min_sinad_db: 15.0
