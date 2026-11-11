@@ -45,10 +45,14 @@ areas:
     source: results/20_timing_exceptions/drills/run_*.constraints.json
     values: [n, "count:pass=true"]
     text: "In {0} agent runs of the slow-controller drill (one clock, a one-in-eight enable, an eight-clock multicycle), the constraint grader passed {1}; the other run put a register that a write sets on any clock into the eight-clock group, which only the grader's simulation check caught."
+  - kind: agent
+    source: results/20_timing_exceptions/drills/run_b*.io.json
+    values: [n, "count:checks.interface.pass=true", "count:checks.no_invented.pass=true", "count:checks.input_jitter.pass=true", "count:checks.margin.pass=true"]
+    text: "In {0} agent runs of the ADC-capture drill (input delays from a data sheet, the oscillator's jitter, a margin for implementation only), the delays were right in {1}, free of made-up delays in {2} and carried the jitter in {3}; the implementation-only margin was right in {4}."
   cards:
   - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: AMD's crossing macros lose their exceptions"}
   - {href: "flow-notes.html#exceptions", label: "Beyond the flow: over-broad exceptions hide failures"}
-  cap: {level: checked, why: "Exceptions are now shown in agent runs, but one of the three wrote a wrong multicycle that the flow's own gate passed, and I/O delays, virtual clocks and clock uncertainty have no agent runs yet; the area as a whole stays at this level."}
+  cap: {level: checked, why: "Exceptions and I/O delays are now shown in agent runs, but one exception run wrote a wrong multicycle that the flow passed, and no I/O run kept its implementation margin out of sign-off the way asked; virtual clocks have no agent runs yet."}
   gaps:
   - "I/O delay constraints, virtual clocks and clock uncertainty are written from the skills; no committed run scores them against a data sheet."
   - "The flow's multicycle check looks at each register's clock-enable logic, not at whether the register really changes only on the enable; the drill grader adds that check in simulation, the flow does not yet."

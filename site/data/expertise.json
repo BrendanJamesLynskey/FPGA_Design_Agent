@@ -2,7 +2,7 @@
  "areas": [
   {
    "about": "Constraints tell Vivado what the clocks are, when signals arrive at the pins and which paths need no timing; timing closure is the work of making every remaining path fast enough. The agent writes the constraints from its skills, and a gate after routing fails any run that misses setup, hold or pulse-width timing or leaves a path unconstrained. A separate checker looks for risky lines, such as a false path with no stated reason.",
-   "cap_reason": "Exceptions are now shown in agent runs, but one of the three wrote a wrong multicycle that the flow's own gate passed, and I/O delays, virtual clocks and clock uncertainty have no agent runs yet; the area as a whole stays at this level.",
+   "cap_reason": "Exceptions and I/O delays are now shown in agent runs, but one exception run wrote a wrong multicycle that the flow passed, and no I/O run kept its implementation margin out of sign-off the way asked; virtual clocks have no agent runs yet.",
    "cards": [
     {
      "href": "flow-notes.html#xpm-cdc",
@@ -67,7 +67,7 @@
    "counts": {
     "checks": 7,
     "enforced": 3,
-    "evidence": 5,
+    "evidence": 6,
     "sections": 7,
     "skills": 19
    },
@@ -121,6 +121,16 @@
       }
      ],
      "text": "In 3 agent runs of the slow-controller drill (one clock, a one-in-eight enable, an eight-clock multicycle), the constraint grader passed 2; the other run put a register that a write sets on any clock into the eight-clock group, which only the grader's simulation check caught."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/20_timing_exceptions/drills/run_b*.io.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/20_timing_exceptions/drills"
+      }
+     ],
+     "text": "In 3 agent runs of the ADC-capture drill (input delays from a data sheet, the oscillator's jitter, a margin for implementation only), the delays were right in 3, free of made-up delays in 3 and carried the jitter in 3; the implementation-only margin was right in 0."
     }
    ],
    "family": {
