@@ -4,7 +4,7 @@
     python3 results/42_workflows/driver.py run --code <frozen worktree> [--tag w1]     # claims blocks, runs, scores, records
     python3 results/42_workflows/driver.py table                                       # runs.md from runs.jsonl
 
-A block is (seed, task): the three arms A0 / H1 / H2 run one after another (order rotated by block number), so the
+A block is (seed, task): the four arms A0 / H1 / H2 / H9 run one after another (order rotated by block number), so the
 comparison is paired. Blocks are claimed by an atomic mkdir in claims/, so two workers never take the same one. Each run:
 ``python -m agent run <spec> --stop-after 2 --verif-level V1 --max-usd <cap> --harness-arm <arm>`` from the frozen code tree,
 a hard wall-clock limit, then the task's hidden bench on the run's rtl/ (no LLM scores anything), then the record.
@@ -38,7 +38,7 @@ TASKS = {                                   # priority order; all development sp
     "t1_lfsr_dice": "benchmark/tasks/t1_lfsr_dice",
     "t1_sync_fifo_regs": "benchmark/tasks/t1_sync_fifo_regs",
 }
-ARMS = {"A0": "", "H1": "H1", "H2": "H2"}
+ARMS = {"A0": "", "H1": "H1", "H2": "H2", "H9": "H9"}
 SEEDS = (1, 2, 3)
 MODEL = "openai/gpt-6-luna"
 RUN_USD = 0.75                              # per-run cap given to the agent
@@ -195,7 +195,7 @@ def run_all(root: Path, tag: str, extension: bool = False) -> int:
             continue
         seed, task = block
         order = list(ARMS)
-        k = (i + seed) % 3
+        k = (i + seed) % len(ARMS)
         order = order[k:] + order[:k]                          # rotate the arm order block by block
         for arm in order:
             head = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()

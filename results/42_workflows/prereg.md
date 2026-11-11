@@ -110,3 +110,29 @@ tests passed as a fraction of the task's tests, and pass count: an arm that lowe
 - H1's summariser is the same model, so it adds model calls (counted in tokens and cost) and can drop a fact the role needed.
 - luna's pass rate on these tasks was 0 of 6 in brief 36: pass counts may be zero in every arm, in which case the tests-passed
   fraction and the stage-2 gates carry the comparison and the report says the pass-rate comparison has no information.
+
+## Amendment 1 (2026-11-11, before any scored run): arm H9, typed report digests (owner idea, brief addendum "Arm H9")
+
+Stated before any H9 run; no scored run of any arm had started when this was written, so the code freeze below replaces the
+one named above (the arms H1 and H2 are unchanged; only H9 and its golden regeneration were added).
+
+| Arm | Flag | What changes |
+|---|---|---|
+| H9 | `--harness-arm H9` | New registered tool `report_digest(name, variant, level, focus)` (`agent/core/report_digest.py`, deterministic, no model; levels summary / standard / detail; focus = path index, rule ID, clock pair or test name; always ends with the report's path). It reuses the gate parsers in `flow/gates.py` (timing summary, utilisation, power, DRC and methodology rule tables, CDC) and has regular-expression digesters for simulation output, lint, `vivado.log`, with a head/tail fallback. With the arm on, a role that may call `report` is also offered `report_digest`, and a **large** (over 4,000 characters) result of `build`, `gates`, `simulate` or `lint` is replaced by the `summary` digest plus the small structured fields (for `gates`: pass, first failed stage, failed gate names) plus the path of the full result (`build/tool_results/NNN_<tool>.json`; named only for the rtl role, the only role whose file tools can read it). |
+
+- **Tests:** per report type, fixtures are the real Vivado reports of the flow's good and seeded-fault builds
+  (`flow/tests/data`); a seeded fault (negative WNS, critical methodology and DRC rules, unsafe CDC crossings) appears at `summary`
+  level; numbers equal the gate parsers' (`agent/tests/test_42_harness.py`, H9 section).
+- **Golden requests:** the tool registry gained a tool, so `tool_registry` differs; the golden (`b42_request_golden.json`) and the MCP
+  schema snapshot (schema 1.8.0) are regenerated in their own commit, and only `tool_registry` differs from the brief 36 golden.
+  With H9 off no role is offered the tool; the baseline's prompts, plans and per-role tool lists are unchanged.
+- **What round 1 can and cannot show for H9:** scored runs stop after stage 2, where no Vivado report exists and `report` is not a
+  stage-2 tool, so `report_digest` itself is not called and the Vivado digesters are exercised only by the fixture tests. Round 1 measures
+  the part that does act in stage 2: typed summary digests of large `simulate`, `lint` and `gates` results against H1's generic
+  head-and-tail offload and summarisation (the comparison the addendum asks for). A stage-3-and-later run would be needed to measure
+  the Vivado digests; it is not in this run.
+- **Primary metric:** tokens per run (and cost); safety metric: tests passed fraction. Same adopt rule as H1.
+- **Round 1 is now 4 arms:** 4 tasks x 3 seeds x 4 arms = 48 runs, about USD 11.2 at the brief-36 mean of 0.233 a run (ceiling
+  USD 36.0 at the 0.75 cap), inside USD 60; no task is cut for cost. Time is the binding limit: 48 runs x about 45 minutes is 36
+  hours for one worker, 18 with two. Blocks stay seed-major (all four tasks at repeat 1 first), so a run stopped for time has equal
+  repeats for every task; if only one or two repeats complete, the report says that only a very large effect could be seen.
