@@ -86,6 +86,18 @@ proc copy_reports {from to patterns} {
     }
     return $n
 }
+# report_qor_assessment needs more than the free Basic licence tier on Vivado 2026.1 (ERROR Implflow 47-2944; 2025.2 ran it
+# on the same tier; brief 48). On that error, write qor_unavailable_<stage>.txt instead, so flow/gates.py records the QoR gate
+# as not available rather than as a failure; any other error still stops the build.
+proc fda_qor {out stage} {
+    if {[catch {report_qor_assessment -file $out/qor_assessment_$stage.rpt} err]} {
+        if {![string match "*license is BASIC*" $err] && ![string match "*47-2944*" $err]} { error $err }
+        set f [open $out/qor_unavailable_$stage.txt w]
+        puts $f "report_qor_assessment not run: $err"
+        close $f
+        puts "FLOW-QOR-UNAVAILABLE ($stage): licence tier"
+    }
+}
 # every file the rtl and post_synth stages write (the gates read these)
 set synth_files {methodology_rtl.rpt *_synth.rpt *_synth.txt post_synth.dcp}
 if {$resume_from ni {"" synth route}} { error "build.tcl: resume_from must be synth or route, not '$resume_from'" }
@@ -125,7 +137,7 @@ if {$resume_from eq ""} {
     # brief 16: every asynchronous register-to-register path of the netlist, for flow/cdc_structure.py (gate post_synth_cdc_structure_clean)
     cdc_dump_paths $out/cdc_paths_synth.rpt
     report_drc            -file $out/drc_synth.rpt
-    report_qor_assessment -file $out/qor_assessment_synth.rpt
+    fda_qor $out synth
     report_utilization    -file $out/utilization_synth.rpt
     report_clock_networks -file $out/clock_networks_synth.rpt
     report_clock_interaction -delay_type min_max -file $out/clock_interaction_synth.rpt
@@ -206,7 +218,7 @@ if {$resume_from ne "route"} {
     report_methodology    -file $out/methodology.rpt
     report_cdc -details   -file $out/cdc.rpt
     report_drc            -file $out/drc.rpt
-    report_qor_assessment -file $out/qor_assessment_route.rpt
+    fda_qor $out route
     exception_reports $out route
     io_dump_paths $out/io_paths_route.txt
     report_timing -delay_type max -max_paths 1 -file $out/timing_worst_setup.rpt

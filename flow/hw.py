@@ -25,10 +25,10 @@ from typing import Any
 
 import yaml
 
-from flow import gates
+from flow import gates, version_pin
 
 ROOT = Path(__file__).resolve().parents[1]
-VIVADO = os.environ.get("VIVADO", "/opt/Xilinx/2025.2/Vivado/bin/vivado")
+VIVADO = version_pin.vivado_path()
 HW_SERVER = os.environ.get("HW_SERVER", str(Path(VIVADO).with_name("hw_server")))
 HW_PORT = 3121
 MEM_MAX = os.environ.get("MEM_MAX", "6G")

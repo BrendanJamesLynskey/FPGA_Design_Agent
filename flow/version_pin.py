@@ -9,10 +9,26 @@ review, the re-pin and a clean regression on the new version.
 
 from __future__ import annotations
 
+import os
 import re
+import sys
 from pathlib import Path
 
-KB_MEASURED_VERSION = "2025.2"
+KB_MEASURED_VERSION = "2026.1"
+
+# The one place the Vivado install path comes from (brief 48). Order: $VIVADO (a full path to the vivado binary), else
+# $FDA_VIVADO_VERSION (a version under /opt/Xilinx), else DEFAULT_VIVADO_VERSION. Keep 2025.2 runnable with
+# FDA_VIVADO_VERSION=2025.2 to reproduce old results. flow/run_vivado.sh, hil/cdc_soak/run_build.sh and flow/hw.py all read it.
+DEFAULT_VIVADO_VERSION = "2026.1"
+VIVADO_ROOT = "/opt/Xilinx"
+
+def vivado_path(env: dict | None = None) -> str:
+    """Path of the vivado binary: $VIVADO, else $FDA_VIVADO_VERSION under /opt/Xilinx, else the default version."""
+    env = os.environ if env is None else env
+    if env.get("VIVADO"):
+        return env["VIVADO"]
+    return f"{VIVADO_ROOT}/{env.get('FDA_VIVADO_VERSION') or DEFAULT_VIVADO_VERSION}/Vivado/bin/vivado"
+
 
 _TOOL = re.compile(r"Tool Version\s*:\s*Vivado v\.?(\d{4}\.\d)")
 _LOG = re.compile(r"Vivado v(\d{4}\.\d)")
@@ -46,3 +62,11 @@ def note(rec: dict) -> str | None:
         return (f"note: built with Vivado {rec['vivado_version']}, but the knowledge bank's measured numbers, rule severities and "
                 f"option names are for {rec['kb_measured_version']}; see the bank's docs/VERSION_UPGRADE.md")
     return None
+
+
+if __name__ == "__main__":
+    # shell callers: python3 flow/version_pin.py --vivado
+    if sys.argv[1:] == ["--vivado"]:
+        print(vivado_path())
+    else:
+        sys.exit("usage: version_pin.py --vivado")

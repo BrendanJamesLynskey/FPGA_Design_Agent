@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Vivado 2025.2 runs of the I/O-timing fixtures (brief 20 part B): one Vivado per group (synthesis, place and route, then
+# Vivado runs (2025.2 when the goldens were made; VIVADO or FDA_VIVADO_VERSION picks the version, default flow/version_pin.py) of the I/O-timing fixtures (brief 20 part B): one Vivado per group (synthesis, place and route, then
 # every variant re-timed on the routed netlist). run_all.sh <out dir> [group ...]
 # Needs a heavy slot with "Vivado impl" in the text (_handoff/take_heavy_slot.sh); the caller holds it.
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 flow="$(cd "$here/../../.." && pwd)"
+V="${VIVADO:-$(python3 "$flow/version_pin.py" --vivado)}"
 out="$1"; shift; mkdir -p "$out"
 declare -A G=(
   [adc]="io_adc|-|io_i1 io_i2 io_i3 io_i3b io_i8 io_i9 io_i10 io_v6"
@@ -20,7 +21,7 @@ for g in "${groups[@]}"; do
   IFS='|' read -r top gen vars <<< "${G[$g]}"
   [ "$gen" = "-" ] && gen=""
   ( cd "$out" && systemd-run --user --scope -q --unit="fda-b20b-io-$g-$$" -p MemoryMax=6G nice -n 15 \
-    /opt/Xilinx/2025.2/Vivado/bin/vivado -mode batch -nojournal -log "$out/$g.log" -source "$here/measure_io.tcl" \
+    "$V" -mode batch -nojournal -log "$out/$g.log" -source "$here/measure_io.tcl" \
     -tclargs "$flow" "$here" "$top" "$out/$g" "$gen" $vars > /dev/null 2>&1 ) || echo "FAILED $g"
   echo "done $g $(date +%H:%M:%S)"
 done

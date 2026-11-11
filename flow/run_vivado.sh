@@ -28,7 +28,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VIVADO="${VIVADO:-/opt/Xilinx/2025.2/Vivado/bin/vivado}"
+VIVADO="${VIVADO:-$(python3 "$ROOT/flow/version_pin.py" --vivado)}"
 PY="${PYTHON:-python3}"
 MIN_AVAIL_GB="${MIN_AVAIL_GB:-7}"
 MEM_MAX="${MEM_MAX:-6G}"

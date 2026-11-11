@@ -570,8 +570,12 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             "methodology_no_critical": _n_sev(meth, "Critical Warning") == 0,
             "cdc_no_critical": sum(r["count"] for r in cdc["rules"] if r["severity"] == "Critical") == 0,
         }
+        qor_na = (d / "qor_unavailable_route.txt").exists()   # brief 48: Vivado 2026.1 on the Basic licence tier cannot run it
         if q_r is not None:        # the QoR gate (brief 05g): judged after routing, from qor_assessment_route.rpt
             route_gates["post_route_qor_assessment"] = q_r["score"] >= QOR_SCORE_MIN
+        elif qor_na:
+            q_r = {"available": False, "reason": "report_qor_assessment needs a licence tier above Basic (Implflow 47-2944); "
+                                                 "the QoR gate is not judged"}
         elif strict:
             route_gates["post_route_qor_assessment"] = False
         # UG949 ch. 6 "Power Closure": the junction temperature must fit the thermal budget, computed for the
