@@ -28,3 +28,30 @@ Development runs, not a scored evaluation: the drills are outside every benchmar
 - Run 1's in-run exception gate read a multicycle dump from an earlier `flow/mcp_paths.tcl` (it failed to parse the
   agent's wrapped `get_cells` query and the gate then ignored the error). Run 1 is graded on a re-dump of its routed
   checkpoint with the final Tcl; dump errors now fail the gate.
+
+## Part B (written 2026-11-10 22:50, before the first part B run)
+
+- **Drill:** `d20_adc_capture` (system-synchronous ADC on the board clock from a data-sheet excerpt: tCO 1.0/5.0 ns, trace 0.5
+  ns; the oscillator's 50 ps peak-to-peak jitter; a 0.3 ns implementation-only setup margin; buttons, LEDs and the UART as
+  slow ports). Outside every split, like part A's drill. The DAC/forwarded-clock, source-synchronous DDR and virtual-clock
+  drills of the brief are not built in this PR.
+- **Arm:** as part A (Claude Code Sonnet 5.5 medium, Haiku oracle, CLI 2.1.319 pinned copy, V2, review off, normal run limits),
+  one run at a time holding heavy slot 1.
+- **Knowledge:** the knowledge bank at the part B KB branch (`b20b-io-uncertainty`, commit recorded per run), which adds
+  `xdc-io-timing-measured` and `xdc-clock-uncertainty-budget`; `VENDOR_SETS` as on main (ross_distilled, amd_constraints).
+- **Runs:** 3 seeds. **Graded by:** the hidden acceptance bench (Icarus) and `benchmark/drills/lib/grade_io.py` on the routed
+  build (interface delays equal the data-sheet formula, setup and hold met, IOB-packed; FDA-CON-11/-12/-13 clean; the board
+  clock's `set_input_jitter` 0.05 or 0.025; build.yaml `timing_margin_ns` 0.3 applied by the flow and no setup
+  `set_clock_uncertainty` in design.xdc). A seed passes when both pass. Recorded per seed: the agent's I/O and jitter lines,
+  every invented delay the agent wrote at any stage (from the build history) even if a gate caught it.
+- **Stopping rules:** as part A (70 % of the 5-hour window; one re-run of a harness failure).
+
+## Part B amendment 1 (2026-11-11 00:10, after run b1, during run b2)
+
+- Run b1 declared the ADC pins as the bus `JA[7:0]` (pins right: JA[0..3] on JA1-JA4, JA[4..7] on JA7-JA10) where the hidden
+  bench drives the scalar ports `JA1`...`JA10`; the spec says "ports named as in the board's master XDC" and the master XDC's
+  own names are `JA[1]`...`JA[10]`, so the drill's wording, not only the agent, is at fault. Runs b2 and b3 keep the frozen
+  spec (pre-registered). The hidden bench result as written is reported; a descriptive second bench run wraps the agent's top
+  in a scalar-port adapter (`run_b<N>.hidden_adapted.json`) to show the behaviour.
+- The I/O grader's interface now also accepts the bus form (`JA[*]`): it judges the delay values, the clock and the IOB, not
+  the port naming. Run b1 was regraded with it (`run_b1.io.json`).

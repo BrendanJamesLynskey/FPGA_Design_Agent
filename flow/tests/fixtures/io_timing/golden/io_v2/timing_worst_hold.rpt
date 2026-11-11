@@ -1,0 +1,72 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Tue Nov 10 22:57:04 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -delay_type min -max_paths 1 -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b20b/io_out/mmcm/io_v2/timing_worst_hold.rpt
+| Design       : io_mmcm
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.196ns  (arrival time - required time)
+  Source:                 acc_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by c125  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Destination:            par_reg/D
+                            (rising edge-triggered cell FDRE clocked by c125  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Path Group:             c125
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (c125 rise@0.000ns - c125 rise@0.000ns)
+  Data Path Delay:        0.316ns  (logic 0.212ns (67.022%)  route 0.104ns (32.978%))
+  Logic Levels:           1  (LUT4=1)
+  Clock Path Skew:        0.013ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    -0.800ns
+    Source Clock Delay      (SCD):    -0.563ns
+    Clock Pessimism Removal (CPR):    -0.250ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock c125 rise edge)       0.000     0.000 r  
+    E3                                                0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         0.250     0.250 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.440     0.690    CLK100MHZ_IBUF
+    MMCME2_ADV_X1Y2      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                     -2.379    -1.689 r  mmcm/CLKOUT0
+                         net (fo=1, routed)           0.499    -1.190    c125
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026    -1.164 r  b/O
+                         net (fo=9, routed)           0.601    -0.563    clk125
+    SLICE_X88Y105        FDRE                                         r  acc_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X88Y105        FDRE (Prop_fdre_C_Q)         0.164    -0.399 r  acc_reg[1]/Q
+                         net (fo=4, routed)           0.104    -0.295    acc_reg[1]
+    SLICE_X89Y105        LUT4 (Prop_lut4_I3_O)        0.048    -0.247 r  par_i_1/O
+                         net (fo=1, routed)           0.000    -0.247    p_0_in
+    SLICE_X89Y105        FDRE                                         r  par_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c125 rise edge)       0.000     0.000 r  
+    E3                                                0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         0.438     0.438 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.480     0.918    CLK100MHZ_IBUF
+    MMCME2_ADV_X1Y2      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                     -3.163    -2.245 r  mmcm/CLKOUT0
+                         net (fo=1, routed)           0.544    -1.702    c125
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029    -1.673 r  b/O
+                         net (fo=9, routed)           0.872    -0.800    clk125
+    SLICE_X89Y105        FDRE                                         r  par_reg/C
+                         clock pessimism              0.250    -0.550    
+    SLICE_X89Y105        FDRE (Hold_fdre_C_D)         0.107    -0.443    par_reg
+  -------------------------------------------------------------------
+                         required time                          0.443    
+                         arrival time                          -0.247    
+  -------------------------------------------------------------------
+                         slack                                  0.196    
+
+
+
+

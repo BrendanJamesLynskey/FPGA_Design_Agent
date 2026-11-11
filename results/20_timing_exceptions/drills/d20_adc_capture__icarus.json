@@ -1,0 +1,71 @@
+{
+  "task": "d20_adc_capture",
+  "sim": "icarus",
+  "date": "2026-11-10",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_last_and_leds_follow_the_pins": true,
+      "test_min_max_and_clear": true,
+      "test_short_pulses_reach_min_max": true,
+      "test_random_samples": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "min_wrong_sense",
+      "why": "MIN keeps the largest sample",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_min_max_and_clear",
+        "test_short_pulses_reach_min_max",
+        "test_random_samples"
+      ]
+    },
+    {
+      "name": "clear_keeps_max",
+      "why": "CLEAR does not reset MAX",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_min_max_and_clear"
+      ]
+    },
+    {
+      "name": "nibbles_swapped",
+      "why": "D[3:0] and D[7:4] swapped",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_last_and_leds_follow_the_pins",
+        "test_min_max_and_clear",
+        "test_short_pulses_reach_min_max",
+        "test_random_samples"
+      ]
+    },
+    {
+      "name": "leds_high_byte",
+      "why": "LAST on LED[15:8]",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_last_and_leds_follow_the_pins"
+      ]
+    },
+    {
+      "name": "reset_min_zero",
+      "why": "reset leaves MIN at 0, below every sample",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_min_max_and_clear"
+      ]
+    }
+  ],
+  "mutants_killed": 5,
+  "mutants_total": 5
+}

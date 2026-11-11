@@ -1,0 +1,60 @@
+{
+  "task": "d20_adc_capture",
+  "design": "runs/20261110-230242-1b2d/d20_adc_capture",
+  "pass": false,
+  "checks": {
+    "routed": {
+      "pass": true,
+      "wns_ns": 0.809,
+      "whs_ns": 0.094
+    },
+    "interface": {
+      "pass": true,
+      "failures": [],
+      "interfaces": [
+        {
+          "name": "adc",
+          "kind": "system_synchronous",
+          "ports": [
+            "JA[0]",
+            "JA[1]",
+            "JA[2]",
+            "JA[3]",
+            "JA[4]",
+            "JA[5]",
+            "JA[6]",
+            "JA[7]"
+          ],
+          "clock": "sys_clk_pin",
+          "setup_slack_ns": 0.809,
+          "hold_slack_ns": 1.904,
+          "iob_packed": true
+        }
+      ],
+      "board_clock": "sys_clk_pin"
+    },
+    "no_invented": {
+      "pass": true,
+      "findings": []
+    },
+    "input_jitter": {
+      "pass": true,
+      "input_jitter_ns": 0.05,
+      "want_ns": 0.05
+    },
+    "margin": {
+      "pass": false,
+      "build_yaml_margin_ns": 0.0,
+      "applied_by_flow": false,
+      "xdc_uncertainty_lines": [],
+      "want_ns": 0.3
+    }
+  },
+  "xdc_timing_lines": [
+    "set_input_jitter [get_clocks sys_clk_pin] 0.05",
+    "set_input_delay -clock sys_clk_pin -max 5.5 $adc_in",
+    "set_input_delay -clock sys_clk_pin -min 1.5 $adc_in",
+    "set_input_delay -clock sys_clk_pin 0.000 $async_in",
+    "set_output_delay -clock sys_clk_pin 0.000 $slow_out"
+  ]
+}

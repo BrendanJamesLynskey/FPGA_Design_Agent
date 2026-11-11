@@ -2,7 +2,7 @@
  "areas": [
   {
    "about": "Constraints tell Vivado what the clocks are, when signals arrive at the pins and which paths need no timing; timing closure is the work of making every remaining path fast enough. The agent writes the constraints from its skills, and a gate after routing fails any run that misses setup, hold or pulse-width timing or leaves a path unconstrained. A separate checker looks for risky lines, such as a false path with no stated reason.",
-   "cap_reason": "Exceptions are now shown in agent runs, but one of the three wrote a wrong multicycle that the flow's own gate passed, and I/O delays, virtual clocks and clock uncertainty have no agent runs yet; the area as a whole stays at this level.",
+   "cap_reason": "Exceptions and I/O delays are now shown in agent runs, but one exception run wrote a wrong multicycle that the flow passed, and no I/O run kept its implementation margin out of sign-off the way asked; virtual clocks have no agent runs yet.",
    "cards": [
     {
      "href": "flow-notes.html#xpm-cdc",
@@ -48,12 +48,26 @@
      "gate": "FDA-CON-10",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/core/constraints.py",
      "what": "Before Vivado: a -setup N multicycle needs its -hold N-1, and a multicycle or datapath-only max delay needs a comment naming the enable or the synchroniser."
+    },
+    {
+     "enforced": true,
+     "file": "flow/io_check.py",
+     "gate": "io_timing_clean",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/io_check.py",
+     "what": "After synthesis and after routing: no made-up delay on a button, switch, LED or UART pin, every delay explained by its data-sheet formula, -min not above -max, no delay replaced for want of -add_delay; for the interfaces a design declares, both -min and -max, the data sheet's values, the right reference clock, and the registers in the I/O blocks."
+    },
+    {
+     "enforced": false,
+     "file": "agent/core/constraints.py",
+     "gate": "FDA-CON-11",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/core/constraints.py",
+     "what": "Before Vivado: the same made-up, unexplained, swapped or replaced I/O delays, and a virtual clock used before it is defined."
     }
    ],
    "counts": {
-    "checks": 5,
-    "enforced": 2,
-    "evidence": 4,
+    "checks": 7,
+    "enforced": 3,
+    "evidence": 6,
     "sections": 7,
     "skills": 19
    },
@@ -67,6 +81,16 @@
       }
      ],
      "text": "On 10 small designs with one timing-exception mistake each, Vivado itself said something about the exception in 5; the flow's checks flagged 10. They passed 4 of 4 correct designs."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/20_timing_exceptions/io_table.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/20_timing_exceptions/io_table.json"
+      }
+     ],
+     "text": "On 13 small designs with one I/O-delay or virtual-clock mistake each, Vivado itself said something in 2; the flow's gates flagged 13."
     },
     {
      "kind": "measured",
@@ -97,6 +121,16 @@
       }
      ],
      "text": "In 3 agent runs of the slow-controller drill (one clock, a one-in-eight enable, an eight-clock multicycle), the constraint grader passed 2; the other run put a register that a write sets on any clock into the eight-clock group, which only the grader's simulation check caught."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/20_timing_exceptions/drills/run_b*.io.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/20_timing_exceptions/drills"
+      }
+     ],
+     "text": "In 3 agent runs of the ADC-capture drill (input delays from a data sheet, the oscillator's jitter, a margin for implementation only), the delays were right in 3, free of made-up delays in 3 and carried the jitter in 3; the implementation-only margin was right in 0."
     }
    ],
    "family": {
@@ -3363,7 +3397,7 @@
    "counts": {
     "checks": 1,
     "enforced": 0,
-    "evidence": 2,
+    "evidence": 3,
     "sections": 5,
     "skills": 6
    },
@@ -3377,6 +3411,16 @@
       }
      ],
      "text": "There are 20 board-check result files, each a design built by the flow and run on the board, and 20 are marked pass."
+    },
+    {
+     "kind": "agent",
+     "sources": [
+      {
+       "path": "results/f2/agent_luna_05c2_run7_bringup.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/f2/agent_luna_05c2_run7_bringup.json"
+      }
+     ],
+     "text": "An agent-built design from a development run was programmed on the board: of its 3 UART self-checks, 0 failed; the run stopped at the step ila_captures."
     },
     {
      "kind": "measured",
@@ -3460,12 +3504,12 @@
    "gaps": [
     "The soak's hardware logs are not among the committed results; the builds and simulations are.",
     "Unattended soaks and board runs need the owner's approval.",
-    "The agent's development runs stop before programming; the designs on the board were built by hand."
+    "Agent-built bitstreams have been programmed on the board, but no agent-built design has yet passed every test on the board."
    ],
    "id": "hil",
-   "level": "measured",
-   "level_label": "Measured in Vivado",
-   "level_n": 2,
+   "level": "agent",
+   "level_label": "Shown in agent runs",
+   "level_n": 4,
    "name": "Hardware in the loop",
    "skills": [
     {
@@ -3983,7 +4027,7 @@
    "means": "Skills in the knowledge bank and nothing measured or enforced for this area yet."
   },
   {
-   "areas": 3,
+   "areas": 2,
    "id": "measured",
    "label": "Measured in Vivado",
    "means": "Committed results from Vivado runs (or the board) that the skills and checks rest on."
@@ -3995,7 +4039,7 @@
    "means": "A stage gate of the flow enforces part of the area on every run that reaches it."
   },
   {
-   "areas": 7,
+   "areas": 8,
    "id": "agent",
    "label": "Shown in agent runs",
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
