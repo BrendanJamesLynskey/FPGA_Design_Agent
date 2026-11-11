@@ -1,0 +1,86 @@
+# ip.yaml for l2_switch: the declared parameter space and contract (brief 28 rules; brief 40 entry).
+name: l2_switch
+version: 0.1.0
+status: simulated (brief 40); OOC cost table pending
+summary: 'Learning, VLAN-aware Layer-2 switch of NP ports: per-port ingress buffers, MAC learning and ageing in match_exact,
+  flood/forward/filter, one pkt_queue_sched per egress port.'
+top: l2_switch
+rtl:
+- rtl/l2_switch.sv
+depends:
+- match_exact
+- pkt_queue_sched
+interfaces:
+- name: s_*
+  type: axis
+  dir: slave
+  tdata: 8 a port
+  tuser: 1
+- name: m_*
+  type: axis
+  dir: master
+  tdata: 8 a port
+- name: config
+  type: native
+  signals: pvid, cfg_we/cfg_vid/cfg_mask, age_tick
+clocks:
+- name: clk
+parameters:
+  NP:
+    type: int
+    default: 4
+    range:
+    - 2
+    - 8
+  IN_BYTES:
+    type: int
+    default: 4096
+    range:
+    - 128
+    - 65536
+    pow2: true
+  EG_BYTES:
+    type: int
+    default: 4096
+    range:
+    - 128
+    - 65536
+    pow2: true
+  IDX_W:
+    type: int
+    default: 9
+    range:
+    - 2
+    - 16
+  STASH:
+    type: int
+    default: 4
+    range:
+    - 0
+    - 16
+latency:
+  store_and_forward: ingress stores the whole frame; core 72 clocks per 60-byte frame under backlog (measured)
+throughput: 'core 72 clocks per minimum frame: 4.67 ports of 100 Mb/s at minimum frames at 50 MHz (measured)'
+guards:
+- IDX_W: 1
+sweep_tested:
+- NP: 4
+  IDX_W: 9
+boundary:
+  registered_outputs: from pkt_queue_sched
+  cdc: none
+  part_specific: none
+limits: no egress tag push/pop (use pkt_rewrite); no STP; ingress filter only; tested at NP 4 only
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - flow/net/tests/test_40_switch_rtl.py
+  faults: ip_lib/l2_switch/faults.yaml
+  results: results/b40/measure.json, results/b40/faults.json
+  simulator: Icarus Verilog 12 (local and CI); xsim cross-check pending
+cost_table: 'pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11)'
+licence: MIT (this repository)
+constraints: []

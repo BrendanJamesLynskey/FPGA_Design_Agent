@@ -4,11 +4,15 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `a598197` (main, 2026-11-10; merges PR #40 (index and test fixes), PR #39 (brief 41: fanout/replication skill from the 2014 training cross-check), PR #37 (brief 20 part A: measured multicycle and slow-FSM skill), and earlier at `af81c89`: PR #38 (brief 31: family-difference matrix `family_matrix/`, family notes in 10 skills, new skill `zynqmp-porting-from-7-series`, part-aware selection), PR #36 (brief 21: version claims sidecar and probe), and earlier at `68673cb`: PR #35 (brief 19: four ipgen adapter notes in `vendor/amd_ip_cores`, budget 46,000), PR #34 (AVAL-46 measured in the MMCM skill), and earlier at `ab7fc4c`: PR #33 (brief 17: AMBA and AXI, new unit `vendor/amba_axi`), PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
+- Private repo commit: `e709554` (main, 2026-11-11; merges PR #42 (brief 36: skill-index vectors under `indexes/`, outside every layer), PR #43 (brief 40: packet-processing unit `vendor/packet_processing`, section `packet-processing`, two family-matrix rows), and earlier at `e3cf892`: PR #41 (brief 20 part B: measured I/O timing, virtual clocks, uncertainty; family-matrix rows), and earlier at `a598197`: PR #40 (index and test fixes), PR #39 (brief 41: fanout/replication skill from the 2014 training cross-check), PR #37 (brief 20 part A: measured multicycle and slow-FSM skill), and earlier at `af81c89`: PR #38 (brief 31: family-difference matrix `family_matrix/`, family notes in 10 skills, new skill `zynqmp-porting-from-7-series`, part-aware selection), PR #36 (brief 21: version claims sidecar and probe), and earlier at `68673cb`: PR #35 (brief 19: four ipgen adapter notes in `vendor/amd_ip_cores`, budget 46,000), PR #34 (AVAL-46 measured in the MMCM skill), and earlier at `ab7fc4c`: PR #33 (brief 17: AMBA and AXI, new unit `vendor/amba_axi`), PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
   LUT6 fabric design, Vivado synthesis attributes and inference templates, STA report interpretation; earlier: `d6679f5`
   PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
   `217c751` brief 04h, the Artix-7 family and device layers; earlier: `16696e6` PR #6 brief 04f, `6db99dd` PR #5 04e,
   `5fa656fb8312` PR #4 04c, `238fec497e24` PR #3 04d, `6a677334d5c4` PR #2 F1A2).
+- **Skill-index vectors (brief 36):** `indexes/skill_vectors.npz` sha256 `8cffa6ab47ad2379a8c01dd58f6d33dd08c82c20bbc2be3fa7dd89f674bb9558`,
+  `indexes/skill_vectors.json` sha256 `52492523aad97a236648abaf1fa534768e411447f5f6ee44d7de2a12d64b0c26` (222 skills,
+  BAAI/bge-small-en-v1.5, 384 dimensions; knowledge PR `b36-skill-routing`, merged with `e3cf892`). Derived data, in no unit's hash;
+  `agent/core/skill_index.py` checks each skill's SHA-256 against the manifest and searches a changed skill by BM25 alone.
 - **Vivado version the bank was measured on: 2025.2** (brief 21, 2026-11-10). Every version-bound fact (rule severities, command
   options, IP versions, measured numbers, cited guide versions) is indexed with the version it was verified on in the private
   repo's `claims/`; its `docs/VERSION_UPGRADE.md` is the procedure for a new version (probe, diff, review, re-pin here, regression,
@@ -49,9 +53,10 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `device/xc7a100tcsg324-1/` | device: the part on the Nexys A7-100T (xc7a100tcsg324-1) | 2 (2026-11-03, 04j: +1 primitives) | 5 | 11 | 16,295 (<= 18,000) | 2,992 | 4,074 | `a92427e0c7a38d2a6c4409c265cfdf19b5fbc37636d53234bac16e5d5b7ffad7` |
 | `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
 | `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 5 (2026-11-04: the V2 skill names the `V_*` checker macros) | 15 | 19 | 58,749 (<= 72,000) | 4,048 | 14,687 | `7f1d3c10d7b25589ea75b99e15f036d3ad0b528bc9f26ef415358f53efb1fa80` |
-| `vendor/amd_constraints/` | vendor: AMD constraints (ours; clocks, I/O delays, exceptions; brief 13b) | 1 (2026-11-10, 13b) | 7 | 9 | 36,874 (<= 46,000) | 2,837 | 9,218 | `0efb51d2073fc6585cdecc7675ca7acfa7aa5c2d656de9b244f0bb004a468f55` |
+| `vendor/amd_constraints/` | vendor: AMD constraints (ours; clocks, I/O delays, exceptions; brief 13b) | 1 (2026-11-10, 13b) | 9 | 11 | 48,653 (<= 52,000) | 3,771 | 12,163 | `74691c9011cd252b2c4ec85af9a64367f870ea8dafa31f44801c4bce2160c8b4` |
 | `vendor/amd_ip_cores/` | vendor: free AMD IP cores (ours; FIR, DDS, FFT, memory, DSP; brief 13; brief 19: four ipgen adapter notes) | 2 (2026-11-10, 19) | 10 | 12 | 43,982 (<= 46,000) | 3,733 | 10,996 | `5ca745ee0ab9352077c3c876851caad8ea0e8a737bb3adb682b828e11f61e992` |
 | `vendor/amba_axi/` | vendor: AMBA AXI4, AXI4-Lite, AXI4-Stream, APB/AHB rules, AMD AXI IP and verification (ours; brief 17) | 1 (2026-11-10, 17) | 15 | 19 | 61,524 (<= 80,000) | 5,465 | 15,381 | `1add990cc85f37a25cb94326dddf90849f720149918913d291f23e2c70e80e4a` |
+| `vendor/packet_processing/` | vendor: packet processing (ours; MAC framing and FCS, parsing, match-action, rewrite, queues, switching; brief 40) | 1 (2026-11-11, 40) | 4 | 6 | 16,473 (<= 30,000) | 1,839 | 4,118 | `b6264c4501596f3a1565cd205792f851a9ec26dc3f4a502821dc624d2fd5280f` |
 | `family/zynq7000/` | family: Zynq-7000 PS7 basics (ours, from UG585/UG470) | 1 (2026-11-09, 10 B0) | 8 | 14 | 24,218 (none) | 2,461 | 6,054 | `5f581b4648505a6d4346d4cf3c694332c2c11dd793c360cefae11839cb1b5d7d` |
 | `family/zynq_ultrascale_plus/` | family: Zynq UltraScale+ (PS8, GTH, K26 SOM; ours) | 2 (2026-11-10, 13) | 13 | 22 | 45,121 (none) | 4,929 | 11,280 | `bd536c669416de63c8786016aafef4fcaadb017a67220c91a9de0f8d2d4bb282` |
 | `device/xc7z020clg484-1/` | device: the Zynq-7020 part on the ZedBoard (xc7z020clg484-1) | 1 (2026-11-09, 10 B0) | 3 | 7 | 7,062 (none) | 1,153 | 1,766 | `541c7bbd3add40d205c65840f038d96e17b023b061fa4c65a1887658e9488a6f` |
@@ -60,13 +65,13 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `board/zedboard/` | board: Avnet/Digilent ZedBoard | 1 (2026-11-09, 10 B0) | 15 | 28 | 36,556 (none) | 4,634 | 9,139 | `9fa5567f88f707b07efc84c456e8027a76064fd0981b0642739f85a90f42c18b` |
 | `library/` | library (search_docs corpus: 1,783 chunks) | 2 (2026-11-02, 04h: +15 chunks) | - | 16 | see `library/MANIFEST.sha256` | - | - | `04ede99be370ae925d7596cc4a63af9c1a136500de661f6acfb8dfdf35c228d6` |
 
-Root files: `SECTIONS.yaml` sha256 `1ae5c8dbc3bb887f05b7377d3915959879abbcd3d8cd4a80d788aea71a253251`; `INDEX.md` sha256
-`8016e805970f9249352df39230f2496f7dc600d2f16ecc9249babc66711a0b1b`.
+Root files: `SECTIONS.yaml` sha256 `34a423824b06b789681ed2dfa543da592d6baca0a1d43e32e3794c13e536116e`; `INDEX.md` sha256
+`1757c9b1b9e75a28d45d848724e82f19845c2be6cf7f89bf5c8d264273c42dfa`.
 
 ## The vocabulary
 
-`SECTIONS.yaml` defines 62 section ids: 19 techniques and 21 functional areas (generic; their ids,
-kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 device (04j added `primitives`), 15 tool-flow (vendor topics; 04j added `synthesis-attributes`, brief 13 `ip-cores`, brief 17 `amba`) and
+`SECTIONS.yaml` defines 63 section ids: 19 techniques and 21 functional areas (generic; their ids,
+kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 device (04j added `primitives`), 16 tool-flow (vendor topics; 04j added `synthesis-attributes`, brief 13 `ip-cores`, brief 17 `amba`, brief 40 `packet-processing`) and
 3 procedures (`board-onboarding`, `ultrafast`, `verification-stages`). One id means one thing on every axis. Sections with no skill yet (gaps; this list is as of 2026-11-03 and is not re-derived here: the bank's root `INDEX.md` marks the current gaps with "(none yet)"):
 
 - generic (15): `low-power`, `synthesis-and-dft`, `ethernet`, `high-speed-serial`, `usb`, `user-io`, `processors`, `dram`, `flash`, `sd-card`, `audio`, `sensors`, `analog`, `expansion-io`, `power-config` (`clocking` and `timing-concepts` were filled by v3.0).
@@ -105,11 +110,12 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `functions/` | `on-chip-memory` | function | 2 | 8,547 | `794d37f27a48727da47794adfad43fe0b4a680682f7f939d02b825adfaa28f7b` |
 | `functions/` | `serial-buses` | function | 2 | 8,328 | `035238ea6a7f94ab7202c98c0d6e813a5c2c25066f7fb7d7a029d9d5dc49e15c` |
 | `functions/` | `video` | function | 1 | 3,401 | `4a8f1d4d9b5b4414ad07a753e2aa7d8e37b58285478e14c2aeca8fd04739b069` |
-| `vendor/amd_constraints/` | `constraints` | tool-flow | 7 | 36,874 | `0e2a216daff6ec5f810ba6c0f8cd92a7ec41eaec74d145161e70654a6039c5ed` |
+| `vendor/amd_constraints/` | `constraints` | tool-flow | 9 | 48,653 | `3b584f2ad3df698c3d018b7a0a974a652dcb3428080a29a293828166934a3daa` |
 | `vendor/amd_ip_cores/` | `ip-cores` | tool-flow | 10 | 43,982 | `c3cce770057fcc9f5278ccb35ed0a0680c4ae588770aeabe9b8da7856888262f` |
 | `vendor/amba_axi/` | `amba` | tool-flow | 9 | 34,898 | `ccf425bc3cf1c3c03375ece826aceb7dc6fdab2021210cba0dc8b7413a40243e` |
 | `vendor/amba_axi/` | `ip-cores` | tool-flow | 3 | 13,321 | `8bb4aea3226501862b927fa33f92ae54a13a38d69307c4725a6a53ee9d395268` |
 | `vendor/amba_axi/` | `simulation` | tool-flow | 3 | 13,305 | `50ee9a41b12688a6722f7f94f09c15a5df79078a5508450d09c1f64b31119869` |
+| `vendor/packet_processing/` | `packet-processing` | tool-flow | 4 | 16,473 | `2bc013f6fea3b56f677f99a517b20cf0ed8c60a0ee5e89f6ef215bf715354835` |
 | `vendor/free_simulators/` | `simulation` | tool-flow | 3 | 9,878 | `8718cc4fde03e66a48d192f53057e3a26c8c8ff70b86b740941709f030b71e20` |
 | `vendor/ross_distilled/` | `clocking-ip` | tool-flow | 1 | 4,495 | `9cb66d5f9a42742c53be67e8270c1c81229132dc49ba1602986b9ecd4044e13f` |
 | `vendor/ross_distilled/` | `constraints` | tool-flow | 1 | 4,495 | `2dfb95cff49e1da9a6edf6b2d4dc192306f6bffd1d363326b2655871979ecd57` |

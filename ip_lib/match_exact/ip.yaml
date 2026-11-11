@@ -1,0 +1,90 @@
+# ip.yaml for match_exact: the declared parameter space and contract (brief 28 rules; brief 40 entry).
+name: match_exact
+version: 0.1.0
+status: simulated (brief 40); OOC cost table pending
+summary: 'Exact-match table: two-way d-left hash (CRC-32 and CRC-32C bucket indexes) in block RAM plus a small CAM stash
+  for collisions; INSERT/DELETE/AGE/CLEAR on a second port while lookups run every clock.'
+top: match_exact
+rtl:
+- rtl/match_exact.sv
+depends: []
+interfaces:
+- name: lookup
+  type: native
+  signals: lk_valid/lk_key/lk_tag -> res_valid/res_hit/res_act/res_tag
+- name: cmd
+  type: native
+  note: valid/ready command port; axil_table_ctrl adds AXI4-Lite
+clocks:
+- name: clk
+parameters:
+  KEY_W:
+    type: int
+    default: 48
+    range:
+    - 1
+    - 256
+  ACT_W:
+    type: int
+    default: 16
+    range:
+    - 1
+    - 128
+  IDX_W:
+    type: int
+    default: 10
+    range:
+    - 2
+    - 16
+  STASH:
+    type: int
+    default: 4
+    range:
+    - 0
+    - 16
+  TAG_W:
+    type: int
+    default: 8
+    range:
+    - 1
+    - 64
+latency:
+  lookup: 3 clocks (measured)
+  insert_delete: 5 clocks at the core (measured)
+  age_clear: 2 * 2**IDX_W + 2 clocks (2050 measured at IDX_W 10)
+throughput: one lookup a clock
+guards:
+- IDX_W: 1
+- STASH: 17
+- KEY_W: 0
+sweep_tested:
+- IDX_W: 6
+  STASH: 4
+- IDX_W: 4
+  STASH: 0
+- IDX_W: 7
+  STASH: 16
+- KEY_W: 60
+  ACT_W: 8
+  IDX_W: 9
+  STASH: 4
+  TAG_W: 1
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none (ram_style block)
+limits: placement is left-first (not least-loaded); no cuckoo moves, so the stash absorbs double collisions
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - flow/net/tests/test_40_tables_rtl.py
+  - flow/net/tests/test_40_switch_rtl.py
+  faults: ip_lib/match_exact/faults.yaml
+  results: results/b40/measure.json, results/b40/faults.json
+  simulator: Icarus Verilog 12 (local and CI); xsim cross-check pending
+cost_table: 'pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11)'
+licence: MIT (this repository)
+constraints: []

@@ -83,9 +83,29 @@ class LocalBank:
                 except Exception:                      # a bank without that set: nothing to add
                     continue
                 items = list(items) + [x for x in more if x.path not in known]
+        return self._rows(items)
+
+    def _rows(self, items) -> list[dict[str, Any]]:
         out = []
         for s in items:
             p = self.root / s.path
             out.append({"path": s.path, "axis": s.axis, "section": s.section, "name": s.name,
                         "description": s.description, "text": p.read_text(errors="replace")})
         return out
+
+    def catalogue(self, board: str | None, family: str | None, part: str | None = None) -> list[dict[str, Any]]:
+        """Every skill the board and part may use, any section (brief 36's skill index): the generic, family, board and
+        procedures axes from ``select`` without sections, then every sectioned vendor unit. Same rows as ``skills``."""
+        if part and "part" in inspect.signature(self._select.select).parameters:
+            items = list(self._select.select(board=board, part=part, procedures=True, root=self.root))
+        else:
+            items = list(self._select.select(board=board, family=family, procedures=True, root=self.root))
+        known = {x.path for x in items}
+        for v in vendor_units(self.root):
+            try:
+                more = self._select.select(vendor=v, generic=False, procedures=False, root=self.root)
+            except Exception:
+                continue
+            items += [x for x in more if x.path not in known]
+            known |= {x.path for x in more}
+        return self._rows(items)

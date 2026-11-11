@@ -145,6 +145,29 @@ jobs:
           for t in $dirs; do python benchmark/course/tools/check_task.py "$t" --out build/course_ci || rc=1; done
           exit $rc
 
+  packet-processing:
+    name: Packet processing library (brief 40) - bit-exact sims, seeded faults, lint, ip.yaml
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install (scapy is GPL-2.0, a test-time tool only; see ip_lib/README.md)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog verilator
+          pip install pyyaml pytest scapy==2.8.0
+      - name: ip.yaml against the RTL, generated READMEs current
+        run: python flow/net/ipdoc.py --check
+      - name: Bench runs against the golden models (Icarus)
+        run: python -m pytest -q flow/net/tests
+      - name: Seeded faults - every one must be caught
+        run: python flow/net/faults.py --json build/net/faults.json
+      - name: Verilator lint of the library entries
+        run: flow/net/lint.sh
+
   lint:
     name: Verilator lint
     runs-on: ubuntu-24.04

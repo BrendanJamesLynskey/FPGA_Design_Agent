@@ -154,6 +154,13 @@ and the two Zynq processing systems). The agent reads the target `part` from `bu
 family's layer ([agent/tests/test_31_family_selection.py](agent/tests/test_31_family_selection.py)); each area on the
 expertise page lists its family differences from [site/data/family_diffs.json](site/data/family_diffs.json).
 
+Brief 36 adds skill routing behind a flag (`--skill-routing router`, off by default): a router node before each stage puts a
+ranked shortlist of skill names and one-line descriptions into the role's prompt, and the roles load bodies on demand
+(`load_skill(name=...)`, `skill_excerpt`, `skill_index`), over a hybrid BM25 plus embeddings index that also runs as a small
+container. Measured on 12 labelled development tasks it did not beat today's section-filtered `load_skill` on recall, but it
+cuts what a role reads from the knowledge tools ([docs/skill_routing.md](docs/skill_routing.md),
+[results/36_skill_routing](results/36_skill_routing/retrieval.md)).
+
 ## The agent core (05a, F2 part 1)
 
 The flow's tools as a harness-neutral core: typed functions with JSON schemas, the same tools as an MCP server
@@ -249,6 +256,10 @@ flow/        runner, Tcl flow, ILA insertion, gates, summaries, lint, cocotb hel
 flow/ipgen/  external design tools driving AMD IP configuration (brief 19): the xsim file-I/O harness, FIR and CIC adapters
              (scipy design -> .coe/CONFIG.* -> create_ip read-back -> bit-exact xsim check -> OOC synthesis), the signal-chain
              model and diagram; worked examples in results/19_ipgen/
+flow/net/    packet-processing evidence (brief 40): scapy traffic, Python golden models, the bench runner (Icarus; xsim
+             optional), seeded-fault runner, line-rate measurement, ip.yaml checker and README generator
+ip_lib/      the project's own IP library ([ip_lib/README.md](ip_lib/README.md)); first entries: the brief-40 networking
+             blocks (RMII MAC, parser, exact/LPM/ternary tables, rewrite, queues and schedulers, L2 switch)
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T): board.yaml, master XDC, inventory.yaml, power_budget.md
 tools/       inventory_check.py (board inventory against the master XDC)
@@ -306,6 +317,8 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 18 | Project-mode parity: inventory of what project mode and each wizard give, measured in batch (Clocking Wizard against the hand M/D/O search, MIG through implementation, FIFO/XADC/GT/PS7/block automation); machine-readable cross-probing (`xprobe.json`, SVG device map, evidence for the repair visit) ([docs/project_mode_parity.md](docs/project_mode_parity.md), [flow/xprobe.py](flow/xprobe.py), [results/project_parity](results/project_parity)) | merged (#89) |
 | 19 | External design tools driving AMD IP: xsim file-I/O harness, FIR and CIC adapters (spec to .coe to IP to bit-exact check), PDM-microphone signal chain with SINAD/ENOB per node ([docs/ipgen.md](docs/ipgen.md), [results/19_ipgen](results/19_ipgen)) | merged (#92) |
 | 20 | Timing exceptions proved, part A: 15 one-fault Vivado fixtures (multicycle, false path, max delay, clock groups, the slow-FSM clock-enable pattern), an exception gate after synthesis and routing (`report_exceptions -ignored/-coverage`, XDC messages, TIMING-24/29/47, XDCH-1, and our own clock-enable check because Vivado raised no TIMING-46 on tied CE), FDA-CON-5/-10, and a dev drill with a constraint grader ([flow/exceptions_check.py](flow/exceptions_check.py), [flow/tests/fixtures/timing_exceptions](flow/tests/fixtures/timing_exceptions), [results/20_timing_exceptions](results/20_timing_exceptions/exceptions_table.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
+| 40 | Networking and packet processing, simulation phase: RMII MAC with FCS, streaming parser, exact/LPM/ternary match-action with AXI4-Lite updates under traffic, RFC 1624 rewrite, queues with RR/SP/DRR, a learning VLAN-aware 4-port switch; bit-exact against Python models with scapy traffic, 28 seeded faults, line rate and latency in simulation ([ip_lib/README.md](ip_lib/README.md), [results/b40](results/b40/README.md)); OOC cost tables, xsim cross-check and HIL to do | PR open |
+| 36 | Skill routing and retrieval behind a flag: router node with a names-and-descriptions shortlist, `skill_index` / `skill_excerpt` / `load_skill(name=)`, hybrid BM25 plus embeddings index (in process, or the container in [agent/skill_service](agent/skill_service)), cited notes instead of bodies in the state; recall, context and a small end-to-end run on dev tasks; golden requests regenerated ([docs/skill_routing.md](docs/skill_routing.md), [results/36_skill_routing](results/36_skill_routing/retrieval.md)) | PR open |
 | 20B | Timing constraints proved, part B: I/O delays, virtual clocks and clock uncertainty measured on one-fault Vivado tops (system- and source-synchronous, DDR, forwarded clock, virtual clocks, MMCM jitter, corners), an I/O gate after synthesis and routing (invented delays on slow ports, data-sheet values, -min/-max, reference clock, IOB), an implementation-only timing margin (`timing_margin_ns`) kept out of sign-off, FDA-CON-11/-12/-13, and an ADC drill with an I/O grader ([flow/io_check.py](flow/io_check.py), [flow/tests/fixtures/io_timing](flow/tests/fixtures/io_timing), [results/20_timing_exceptions/io_table.md](results/20_timing_exceptions/io_table.md), [uncertainty](results/20_timing_exceptions/uncertainty.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
 | F2 | Agent v1: interview, plan, RTL, tests and the full Vivado flow (05a-05g above); 21 development runs on 11 course-tier tasks ([results/course](results/course), [site results](https://fpga-design-agent.vercel.app/results)) | built; development runs recorded |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |

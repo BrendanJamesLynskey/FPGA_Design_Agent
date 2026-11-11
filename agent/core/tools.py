@@ -31,7 +31,7 @@ import yaml
 
 from agent.core import constraints as con
 from agent.core.artefacts import check_artefact
-from agent.core.registry import clip, tool
+from agent.core.registry import MAX_OUTPUT, clip, tool
 from agent.core.security import FLASH_WORDS, SecurityError
 from agent.core.session import STAGES, Session
 from flow import srcorder
@@ -783,14 +783,28 @@ def _bank_skills(s: Session, sections: list[str], procedures: bool) -> list[dict
 
 
 @tool("load_skill", "Load the frozen bank's skills for this board and family, filtered to bank section ids "
-                    "(SECTIONS.yaml). Returns SKILL.md text as data.",
+                    "(SECTIONS.yaml), or one skill by name (brief 36). Returns SKILL.md text as data.",
       {"sections": {"type": "array", "items": {"type": "string", "pattern": "^[a-z0-9\\-]{1,40}$"},
                     "minItems": 1, "maxItems": 4},
-       "procedures": {"type": "boolean"}}, ["sections"], refine=_sections_refine)
-def load_skill(s: Session, sections: list[str], procedures: bool = False) -> dict:
+       "procedures": {"type": "boolean"},
+       "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9\\-]{0,79}$"}}, [], refine=_sections_refine)
+def load_skill(s: Session, sections: list[str] | None = None, procedures: bool = False, name: str | None = None) -> dict:
     if s.bank is None:
         return {"ok": False, "output": "no knowledge bank configured"}
-    sk = _bank_skills(s, sections, procedures)[:6]
+    if name is not None:
+        if sections:
+            return {"ok": False, "output": "give either sections or name, not both"}
+        e = _skill_entry(s, name)
+        if e is None:
+            return {"ok": False, "output": f"no skill named {name!r} for this board and part; skill_index(query) lists names",
+                    "skills": [], "untrusted": True}
+        return {"output": f"{DATA_NOTE}\n[{e.path}]\n{e.text}", "skills": [e.path], "name": name, "untrusted": True}
+    if not sections:
+        return {"ok": False, "output": "give sections (bank section ids) or name (one skill)"}
+    every = _bank_skills(s, sections, procedures)
+    if s.skill_routing != "off":            # brief 36: rank inside the cap by relevance, not unit-name order
+        every = _rank_rows(s, every, sections)
+    sk = every[:6]
     # Brief 05g: some sections (verification-stages, debug-ila-vio...) live only in the procedures layer; asking for
     # them without ``procedures`` returned nothing and the agents (and the 05f log) saw an empty list. A section that
     # matched nothing is retried in the procedures layer, and the log says so.
@@ -805,12 +819,91 @@ def load_skill(s: Session, sections: list[str], procedures: bool = False) -> dic
             if more:
                 sk = (sk + more)[:6]
                 fallback = sorted({x["section"] for x in more})
+    # Brief 36 finding: six bodies average about 24k characters, so the registry's MAX_OUTPUT clip cut the middle out
+    # of every full call (half a skill lost, unannounced). Return whole skills up to the limit instead, in order, and
+    # name the ones held back so the role can load each by name. The first skill always goes (clipped if it alone is
+    # over the limit).
+    budget = MAX_OUTPUT - 1000
+    blocks, held = [], []
+    for x in sk:
+        b = f"{DATA_NOTE}\n[{x['path']}]\n{x['text']}"
+        if blocks and (held or sum(len(y) + 2 for y in blocks) + len(b) > budget):
+            held.append(x)
+            continue
+        blocks.append(b)
+    sk = [x for x in sk if x not in held]
     paths = [x["path"] for x in sk]
-    text = "\n\n".join(f"{DATA_NOTE}\n[{x['path']}]\n{x['text']}" for x in sk)
-    empty = [x for x in sections if not any(x == y["section"] for y in sk)]
+    text = "\n\n".join(blocks)
+    if held:
+        text += ("\n\n[not returned, output limit: " + ", ".join(x["name"] for x in held)
+                 + ". Call load_skill(name=...) for each one you need.]")
+    empty = [x for x in sections if not any(x == y["section"] for y in sk + held)]
     note = ("" if not fallback else f"[sections {', '.join(fallback)} are procedures: returned from the procedures layer]\n\n")
-    return {"output": (note + text) if text else f"no skill matches for {', '.join(sections)}", "skills": paths,
-            "sections_asked": list(sections), "sections_empty": empty, "procedures_fallback": fallback,
+    out = {"output": (note + text) if text else f"no skill matches for {', '.join(sections)}", "skills": paths,
+           "sections_asked": list(sections), "sections_empty": empty, "procedures_fallback": fallback,
+           "untrusted": True}
+    if held:
+        out["held_for_size"] = [x["name"] for x in held]
+    if s.skill_routing != "off" and len(every) > 6:      # brief 36 only: the off path's result is unchanged
+        out["not_returned"] = [x["name"] for x in every[6:]]
+    return out
+
+
+# --- brief 36: the skill index (names and descriptions first, bodies on demand) -------------------------------------------
+
+def _index(s: Session):
+    from agent.core.skill_index import open_index
+    return open_index(s.bank, s.board, s.family, part=getattr(s, "part", None))
+
+
+def _skill_entry(s: Session, name: str):
+    return _index(s).by_name.get(name)
+
+
+def task_text(s: Session) -> str:
+    """The design request as the tools see it (spec.md in the design), for ranking."""
+    p = s.design / "spec.md"
+    return p.read_text(errors="replace")[:3000] if p.is_file() else ""
+
+
+def _rank_rows(s: Session, rows: list[dict], sections: list[str]) -> list[dict]:
+    """``rows`` in the skill index's order for the task text plus the asked sections (unknown names keep their place)."""
+    idx = _index(s)
+    q = f"{s.stage}. {' '.join(sections)}\n{task_text(s)}"
+    order = {e.name: i for i, (e, _) in enumerate(idx.local.ranked(q, sections) if hasattr(idx, "local") else idx.ranked(q, sections))}
+    return sorted(rows, key=lambda x: (order.get(x["name"], len(order)), rows.index(x)))
+
+
+@tool("skill_index", "Rank the frozen bank's skills for a query (names, sections and one-line descriptions, no bodies). "
+                     "Then load_skill(name=...) for one body or skill_excerpt(name, heading) for one section.",
+      {"query": {"type": "string", "maxLength": 300}, "k": {"type": "integer", "minimum": 1, "maximum": 15}}, ["query"])
+def skill_index(s: Session, query: str, k: int = 8) -> dict:
+    if s.bank is None:
+        return {"ok": False, "output": "no knowledge bank configured"}
+    idx = _index(s)
+    hits = idx.search(query, k=k)
+    lines = [f"{i + 1}. {h['name']} [{h['section']}]: {h['description']}" for i, h in enumerate(hits)]
+    return {"output": DATA_NOTE + "\n" + ("\n".join(lines) or "no hits"), "mode": idx.mode,
+            "ranked": [h["name"] for h in hits], "untrusted": True}
+
+
+@tool("skill_excerpt", "One section of one skill: the text under a heading of its SKILL.md (exact heading or a unique "
+                       "prefix). Without a match, lists the skill's headings.",
+      {"name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9\\-]{0,79}$"}, "heading": {"type": "string", "maxLength": 120}},
+      ["name", "heading"])
+def skill_excerpt(s: Session, name: str, heading: str) -> dict:
+    if s.bank is None:
+        return {"ok": False, "output": "no knowledge bank configured"}
+    from agent.core.skill_index import excerpt, headings
+    e = _skill_entry(s, name)
+    if e is None:
+        return {"ok": False, "output": f"no skill named {name!r} for this board and part", "skills": []}
+    body = e.body
+    t = excerpt(body, heading)
+    if t is None:
+        return {"ok": False, "output": f"no heading {heading!r} in {name}; headings: " + " | ".join(headings(body)),
+                "skills": []}
+    return {"output": f"{DATA_NOTE}\n[{e.path} :: {heading}]\n{t}", "skills": [e.path], "heading": heading,
             "untrusted": True}
 
 
