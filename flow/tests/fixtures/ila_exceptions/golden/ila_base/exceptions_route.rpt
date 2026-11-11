@@ -1,0 +1,30 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Wed Nov 11 10:31:43 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_exceptions -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/wt/designs/t1_dimmer_counter/build/ila/exceptions_route.rpt
+| Design       : t1_dimmer_counter_top
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Exceptions Report
+
+Position  From                                                                              Through         To                                                                                Setup           Hold            Status           
+--------  --------------------------------------------------------------------------------  --------------  --------------------------------------------------------------------------------  --------------  --------------  -----------------
+3         [get_ports {CPU_RESETN BTNC BTNU BTND {SW[*]} UART_TXD_IN}]                       *               *                                                                                 false           false           
+5         *                                                                                 *               [get_ports {{LED[*]} CA CB CC CD CE CF CG DP {AN[*]} UART_RXD_OUT}]               false           false           
+7         [get_pins -filter REF_PIN_NAME=~CLK* -of_objects [get_cells -hierarchical -filte  *               [get_pins -filter REF_PIN_NAME=~D* -of_objects [get_cells -hierarchical -filter   false           false           
+          r {NAME =~ "*allx_typeA_match_detection.ltlib_v1_0_3_allx_typeA_inst/DUT/I_WHOLE                  {NAME =~ "*allx_typeA_match_detection.ltlib_v1_0_3_allx_typeA_inst/DUT/I_WHOLE_S                                  
+          _SLICE.G_SLICE_IDX[*].U_ALL_SRL_SLICE/u_srl*/S*"}]]                                               LICE.G_SLICE_IDX[*].U_ALL_SRL_SLICE/I_IS_TERMINATION_SLICE_W_OUTPUT_REG.DOUT_O_r                                  
+                                                                                                            eg*"}]]                                                                                                           
+8         [get_pins -filter REF_PIN_NAME=~CLK* -of_objects [get_cells -hierarchical -filte  *               [get_cells -hierarchical -filter { NAME =~  "*ila_core_inst/u_ila_cap_ctrl/u_cap  false           false           
+          r { NAME =~  "*ila_core_inst/u_ila_cap_ctrl/u_cap_addrgen/u_cap_sample_counter/u                  _addrgen/u_cap_sample_counter/u_scnt_cmp_q*" && IS_SEQUENTIAL }]                                                  
+          _scnt_cmp/allx_typeA_match_detection.ltlib_v1_0_3_allx_typeA_inst/DUT/I_WHOLE_SL                                                                                                                                    
+          ICE.G_SLICE_IDX[*].U_ALL_SRL_SLICE/u_srl*/S*"}]]                                                                                                                                                                    
+9         [get_pins -filter REF_PIN_NAME=~CLK* -of_objects [get_cells -hierarchical -filte  *               [get_cells -hierarchical -filter { NAME =~  "*ila_core_inst/u_ila_cap_ctrl/u_cap  false           false           
+          r { NAME =~  "*ila_core_inst/u_ila_cap_ctrl/u_cap_addrgen/u_cap_window_counter/u                  _addrgen/u_cap_window_counter/u_wcnt_lcmp_q*" && IS_SEQUENTIAL }]                                                 
+          _wcnt_lcmp/allx_typeA_match_detection.ltlib_v1_0_3_allx_typeA_inst/DUT/I_WHOLE_S                                                                                                                                    
+          LICE.G_SLICE_IDX[*].U_ALL_SRL_SLICE/u_srl*/S*"}]]                                                                                                                                                                   

@@ -16,6 +16,7 @@ log (``vivado.log``) for constraint messages raised while reading the XDC. It fa
 
     EXC-IGNORED     an exception in report_exceptions -ignored (overridden by a higher-priority one, or no path)
     EXC-NO-PATH     an exception that covers no endpoint (report_exceptions -coverage: Endpoints 0)
+    (exceptions of AMD's debug cores are not failures: EXC-IGNORED-DEBUG-IP below, brief 45)
     EXC-XDC-MSG     a CRITICAL WARNING or ERROR from reading an XDC exception line (an empty object list drops the
                     exception: brief 20 E6, Vivado 12-4739)
     TIMING-29/46/47 the methodology rules for an inconsistent multicycle pair, a multicycle with tied CE pins, and a
@@ -30,6 +31,13 @@ log (``vivado.log``) for constraint messages raised while reading the XDC. It fa
                     multicycle on tied-CE registers (brief 20 E3, after synthesis and after routing)
     XDCH-1          a -setup multicycle with no -hold multicycle (a Warning; brief 20 E2 measured it, and the hold check
                     then fails by about N-1 periods)
+
+EXC-IGNORED-DEBUG-IP (information only, listed under ``info``, never a failure): an ignored exception (its coverage-0 entry follows it) that is
+not one of ours and names only debug-core cells. The ILA core's own scoped constraints (brief 45, measured on
+t1_dimmer_counter: 15 "Non-existent path" rows after routing) take positions after every XDC file of ours, and every
+cell pattern in them is inside ``*ila_core_inst/...``. Both must hold: the Position is beyond the last timing command
+of our XDC files, and every ``NAME =~`` pattern of the From/Through/To text names a debug core (``DEBUG_CORE_TOKENS``).
+A row at one of our positions fails as before whatever its text; a row beyond them that names anything else fails.
 
 Each failure names the exception's XDC file and line where it can be found: report_exceptions numbers exceptions by
 ``Position``, the order in which timing constraints were read (``xdc_positions``, checked against the fixtures of
@@ -53,6 +61,8 @@ TIMING_COMMANDS = ("create_clock", "create_generated_clock", "set_input_delay", 
                    "set_disable_timing", "set_bus_skew", "set_max_time_borrow", "group_path", "set_clock_sense",
                    "set_data_check", "set_external_delay", "set_propagated_clock")
 EXCEPTION_COMMANDS = ("set_false_path", "set_multicycle_path", "set_max_delay", "set_min_delay", "set_clock_groups")
+# Cell-name fragments of AMD's debug cores. ILA/dbg_hub measured (brief 45); VIO taken from the core's naming, not measured.
+DEBUG_CORE_TOKENS = ("ila_core_inst", "u_ila_", "dbg_hub", "ltlib_v", "u_vio", "vio_inst")
 METHODOLOGY_RULES = ("TIMING-24", "TIMING-29", "TIMING-46", "TIMING-47", "XDCH-1")
 
 
@@ -122,6 +132,26 @@ def xdc_positions(xdc_files: list[Path]) -> dict[int, dict[str, Any]]:
                     pos += 1
                     out[pos] = {"file": Path(f).name, "line": n, "text": raw.strip()}
     return out
+
+
+def _name_patterns(row: dict[str, Any]) -> list[str]:
+    """The ``NAME =~ <pattern>`` patterns of a report_exceptions row's From, Through and To text (whitespace removed:
+    the table wraps long cell names anywhere)."""
+    out: list[str] = []
+    for col in ("From", "Through", "To"):
+        text = re.sub(r"\s+", "", row.get(col, ""))
+        out += [a or b for a, b in re.findall(r'NAME=~(?:"([^"]*)"|([^}]+))', text)]
+    return out
+
+
+def is_debug_ip_exception(row: dict[str, Any], last_own_position: int) -> bool:
+    """Brief 45: an exception from an AMD debug core's scoped constraints, not from our XDC: its Position is after
+    the last timing command of our XDC files, and every cell pattern it names is inside a debug core. A row with no
+    ``NAME =~`` pattern (a port list, ``*``) is never classified here."""
+    if row["position"] <= last_own_position:
+        return False
+    pats = _name_patterns(row)
+    return bool(pats) and all(any(t in p for t in DEBUG_CORE_TOKENS) for p in pats)
 
 
 # "CRITICAL WARNING: [Vivado 12-4739] set_multicycle_path:No valid object(s) found for '-to [get_cells p_rgx[*]]'.
@@ -253,10 +283,20 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
     def at(pos: int) -> dict[str, Any]:
         return where.get(pos, {"file": None, "line": None, "text": None})
 
+    ign_all = ign
+    last_own = max(where) if where else 0
+    info: list[dict[str, Any]] = []
+    debug_ip: set[int] = set()
+    for r in ign:
+        if is_debug_ip_exception(r, last_own) and r["position"] not in debug_ip:
+            debug_ip.add(r["position"])
+            info.append({"rule": "EXC-IGNORED-DEBUG-IP", "position": r["position"], "status": r.get("Status"),
+                         "vivado": {k: v for k, v in r.items() if k in ("From", "Through", "To", "Setup", "Hold")}})
+    ign = [r for r in ign if r["position"] not in debug_ip]
     for r in ign:
         fails.append({"rule": "EXC-IGNORED", "position": r["position"], **at(r["position"]),
                       "vivado": {k: v for k, v in r.items() if k not in ("position",)}})
-    ignored = {r["position"] for r in ign}
+    ignored = {r["position"] for r in ign} | debug_ip
     for r in cov:
         if r["endpoints"] == 0 and r["position"] not in ignored:
             fails.append({"rule": "EXC-NO-PATH", "position": r["position"], **at(r["position"]),
@@ -289,7 +329,8 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
         fails.append({"rule": r["rule"], "position": r["position"], "file": r["file"], "line": r["line"],
                       "text": line_text(r["file"], r["line"]),
                       "vivado": {"severity": r["severity"], "detail": r["detail"]}})
-    return {"stage": stage, "pass": not fails, "exceptions": len(exc), "ignored": len(ign),
+    return {"stage": stage, "pass": not fails, "exceptions": len(exc), "ignored": len(ign) + len(debug_ip & {r["position"] for r in parse_exceptions((d / f"exceptions_ignored_{stage}.rpt").read_text(errors="replace"))}),
+            "info": info,
             "covered": {r["position"]: r["endpoints"] for r in cov}, "failures": fails}
 
 
