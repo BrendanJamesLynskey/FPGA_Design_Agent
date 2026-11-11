@@ -131,11 +131,17 @@ proc insert_ila_ip {probes_tcl out} {
         incr i
     }
     close $map
+    close $pn
     # The debug hub: opt_design adds it, but cannot find its clock for an ILA put into the netlist this way (Chipscope 16-213:
     # dbg_hub/clk has 1 unconnected channels, which stops opt_design). So make the hub now and give it the ILA's clock, as
-    # insert_ila_core does. (Measured, brief 48: with or without the hub's own properties the hub's constraint script prints the same
-    # CRITICAL WARNINGs, which flow/exceptions_check.py lists as EXC-XDC-DEBUG-HUB.)
+    # insert_ila_core does. (The hub's constraint script prints CRITICAL WARNINGs either way; flow/exceptions_check.py lists them as
+    # EXC-XDC-DEBUG-HUB only together with the gate that no dbg_hub cross-clock path is timed as synchronous.)
     implement_debug_core
+    # the hub's own properties, as insert_ila_core sets them (brief 48: the build WITHOUT them left the hub's JTAG-to-fabric
+    # crossing timed as synchronous, WNS -2.993 ns inside dbg_hub; with them it met timing, WNS +3.866 ns)
+    set_property C_CLK_INPUT_FREQ_HZ 100000000 [get_debug_cores dbg_hub]
+    set_property C_ENABLE_CLK_DIVIDER false     [get_debug_cores dbg_hub]
+    set_property C_USER_SCAN_CHAIN 1            [get_debug_cores dbg_hub]
     connect_debug_port dbg_hub/clk [get_nets $ila_clock_net]
     # checked here, not 20 s later in opt_design: the hub clock port must now be on the clock net
     set hubclk [get_nets -quiet -of_objects [get_pins -quiet dbg_hub/clk]]

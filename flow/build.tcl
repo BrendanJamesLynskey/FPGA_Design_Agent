@@ -214,6 +214,8 @@ if {$resume_from ne "route"} {
 
     # --- stage post_route: reports (the gates read these) ------------------------
     report_timing_summary -max_paths 10 -report_unconstrained -file $out/timing_summary.rpt
+    # brief 48: every clock pair as timed after routing; flow/gates.py reads it to fail an ILA build whose debug hub crossing is timed as synchronous
+    report_clock_interaction -delay_type min_max -file $out/clock_interaction_route.rpt
     check_timing -verbose -file $out/check_timing.rpt
     report_utilization    -file $out/utilization.rpt
     report_utilization    -hierarchical -file $out/utilization_hier.rpt
