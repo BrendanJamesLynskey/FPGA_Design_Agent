@@ -288,3 +288,108 @@ async def test_hang(dut):
     assert p.returncode == 124, p.stdout[-800:]
     h = json.loads(p.stdout.split("FDA_HANG ", 1)[1].splitlines()[0])
     assert h["test"]["name"].endswith("test_hang") and h["sim_time_ns"] > 0 and h["sim_time_advancing"] is True
+
+
+# ---- H9: typed digests ---------------------------------------------------------------------------------------------
+
+DATA = ROOT / "flow" / "tests" / "data"
+
+
+def _dg(name: str, level: str = "summary", focus: str | None = None) -> dict:
+    from agent.core.report_digest import digest
+    return digest(name + ".rpt", (DATA / (name + ".rpt")).read_text(), level, focus, path=f"build/base/{name}.rpt")
+
+
+@pytest.mark.parametrize("bad,good,needle", [
+    ("bad_timing_summary", "good_timing_summary", "TIMING NOT MET"),
+    ("bad_methodology", "good_methodology", "2 critical or error"),
+    ("bad_drc", "good_drc", "2 critical or error"),
+    ("bad_cdc", "good_cdc", "2 critical crossings"),
+])
+def test_a_seeded_fault_is_in_the_summary_digest(bad: str, good: str, needle: str) -> None:
+    """Fixtures are the real Vivado reports of the flow's good and seeded-fault builds (flow/tests/data)."""
+    b, g = _dg(bad), _dg(good)
+    assert needle in b["verdict"] and needle not in g["verdict"]
+    assert b["output"].rstrip().endswith(f"report: build/base/{bad}.rpt") and not b["rows"]
+
+
+def test_digest_numbers_come_from_the_gate_parsers() -> None:
+    from flow import gates
+    t = (DATA / "bad_timing_summary.rpt").read_text()
+    n = _dg("bad_timing_summary")["numbers"]
+    assert n["wns_ns"] == gates.parse_timing_summary(t)["wns_ns"] and n["tns_failing_endpoints"] > 0
+    assert _dg("good_power")["numbers"]["total_w"] == gates.parse_report_power((DATA / "good_power.rpt").read_text())["total_w"]
+    assert "lut" in _dg("good_utilization")["numbers"] and "highest use" in _dg("good_utilization")["verdict"]
+
+
+def test_levels_and_focus_on_rule_reports() -> None:
+    s, st, de = (_dg("bad_methodology", lv) for lv in ("summary", "standard", "detail"))
+    assert len(s["rows"]) == 0
+    assert len({r["rule"] for r in st["rows"]}) == len(st["rows"]) == 3 or len(st["rows"]) == len({r["rule"] for r in st["rows"]})
+    assert len(de["rows"]) >= len(st["rows"])
+    f = _dg("bad_methodology", "standard", "TIMING-6")
+    assert f["rows"] and all(r["rule"] == "TIMING-6" for r in f["rows"])
+
+
+def test_timing_paths_top_n_and_focus() -> None:
+    from agent.core.report_digest import digest
+    blocks = "".join(f"Slack (VIOLATED) :        -{i}.000ns  (required time - arrival time)\n  Source:                 a{i}_reg/C\n"
+                     f"  Destination:            b{i}_reg/D\n  Path Group:             clk\n\n" for i in range(1, 31))
+    text = (DATA / "bad_timing_summary.rpt").read_text() + "\n" + blocks
+    assert len(digest("t_timing_summary.rpt", text, "summary")["rows"]) == 0
+    assert len(digest("t_timing_summary.rpt", text, "standard")["rows"]) == 5
+    d = digest("t_timing_summary.rpt", text, "detail")
+    assert len(d["rows"]) == 20 and d["rows"][0]["slack_ns"] == -30.0          # worst first
+    assert digest("t_timing_summary.rpt", text, "standard", "2")["rows"][0]["slack_ns"] == -29.0
+
+
+def test_simulation_and_lint_digests() -> None:
+    from agent.core.report_digest import digest
+    sim = ("[first failure] test_x\n  assert 3 == 4\n[end first failure]\n...\nFAILED tests/test_t_rtl.py::test_x - AssertionError\n"
+           "1 failed, 4 passed in 3.2s\n")
+    d = digest("simulate.txt", sim)
+    assert d["kind"] == "simulation" and d["verdict"] == "simulation FAILED" and d["numbers"]["failed"] == 1
+    assert "assert 3 == 4" in d["output"] and d["numbers"]["failing_tests"] == ["tests/test_t_rtl.py::test_x"]
+    assert digest("simulate.txt", "5 passed in 1s")["verdict"] == "simulation passed"
+    lint = "%Warning-WIDTH: a.sv:3: width\n%Warning-WIDTH: a.sv:9: width\n%Error: a.sv:12: syntax error\n"
+    ld = digest("lint.txt", lint, "standard")
+    assert ld["kind"] == "lint" and "1 errors, 2 warnings" in ld["verdict"] and ld["numbers"]["WIDTH"] == 2
+    hang = digest("simulate.txt", "[simulation hung] x\n1 failed in 600s")
+    assert hang["verdict"].startswith("[simulation hung]")
+
+
+def test_vivado_log_and_generic_fallback() -> None:
+    from agent.core.report_digest import digest
+    log = "INFO: x\nERROR: [Synth 8-1] boom\nCRITICAL WARNING: [Vivado 12-1] w\nWARNING: [x] y\n"
+    d = digest("vivado.log", log)
+    assert d["numbers"]["errors"] == 1 and d["rows"][0]["line"].startswith("ERROR:")
+    g = digest("notes.txt", "\n".join(f"l{i}" for i in range(100)), "summary")
+    assert g["kind"] == "generic" and g["output"].count("\n") < 20 and g["output"].rstrip().endswith("report: notes.txt")
+
+
+def test_report_digest_tool_and_compaction(session: Session, tmp_path: Path) -> None:
+    from agent.core.report_digest import compact_result
+    b = session.design / "build" / "base"
+    b.mkdir(parents=True, exist_ok=True)
+    shutil.copy(DATA / "bad_methodology.rpt", b / "methodology.rpt")
+    r = dispatch(session, "report_digest", {"name": "methodology.rpt", "level": "standard"})
+    assert r["ok"] and r["kind"] == "methodology" and r["output"].rstrip().endswith("report: build/base/methodology.rpt")
+    assert not dispatch(session, "report_digest", {"name": "nope.rpt"})["ok"]
+    res = {"ok": False, "tool": "simulate", "returncode": 1, "output": "FAILED t::x\n" + "noise\n" * 3000 + "1 failed, 2 passed in 3s"}
+    text = compact_result(res, "simulate", session.design, 4, readable=True)
+    p = json.loads(text)
+    assert len(text) < 2500 and "simulation FAILED" in p["digest"] and "/build/tool_results/004_simulate.json" in p["digest"]
+    assert (session.design / "build" / "tool_results" / "004_simulate.json").is_file()
+    g = {"ok": False, "output": "x" * 9000, "gates": {"pass": False, "first_failed_stage": "post_synth",
+                                                         "gates": {"a": True, "wns_ok": False}}}
+    pg = json.loads(compact_result(g, "gates", session.design, 5, readable=False))
+    assert pg["gate_summary"]["failed_gates"] == ["wns_ok"] and "not readable" in pg["digest"]
+
+
+def test_h9_offers_report_digest_only_with_the_arm() -> None:
+    from agent.core.registry import TOOLS
+    import agent.core.tools  # noqa: F401
+    assert "report_digest" in TOOLS
+    from agent.graph.run import FLOW_TOOLS, effective_tools
+    assert "report_digest" in FLOW_TOOLS
+    assert all("report_digest" not in effective_tools(r, n, "V3") for r in ("rtl", "tests") for n in (2, 3, 4))

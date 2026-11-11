@@ -702,6 +702,22 @@ def report(s: Session, name: str, variant: str = "base", offset: int = 0, max_by
             "truncated": offset + max_bytes < len(data)}
 
 
+@tool("report_digest", "A typed digest of a named Vivado report or log from build/<variant>/, computed by the flow's own parsers "
+                       "(no model). level=summary: the verdict and key numbers; standard: plus the top 5 paths and one example "
+                       "per rule ID; detail: plus the top 20 paths and every rule instance. focus: a path index, a rule ID, a "
+                       "clock pair (clk_a,clk_b) or a test name. The digest ends with the report's path; `report` reads the raw text.",
+      {"name": {"type": "string", "pattern": _REPORT.pattern}, "variant": {"type": "string", "enum": ["base", "ila"]},
+       "level": {"type": "string", "enum": ["summary", "standard", "detail"]}, "focus": {"type": "string", "maxLength": 80}},
+      ["name"])
+def report_digest(s: Session, name: str, variant: str = "base", level: str = "summary", focus: str | None = None) -> dict:
+    from agent.core.report_digest import digest
+    p = s.jail.resolve(f"build/{variant}/{name}")
+    if not p.is_file():
+        return {"ok": False, "output": f"no report build/{variant}/{name}"}
+    d = digest(name, p.read_text(errors="replace"), level, focus, path=f"build/{variant}/{name}")
+    return {"output": d["output"], "kind": d["kind"], "verdict": d["verdict"], "report": d["report"]}
+
+
 @tool("check_constraints", "Check design.xdc against the board: clocks only on the board's clock input, no "
                            "CLOCK_DEDICATED_ROUTE FALSE, pins and I/O standards as in the master XDC, commands in the "
                            "XDC allow-list.", {})

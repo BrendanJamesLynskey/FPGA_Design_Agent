@@ -54,7 +54,7 @@ from flow import srcorder
 
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "mutate", "build", "gates", "report", "check_constraints", "search_docs",
-              "load_skill", "board_constraints", "spec_items", "skill_index", "skill_excerpt")
+              "load_skill", "board_constraints", "spec_items", "skill_index", "skill_excerpt", "report_digest")
 
 
 class ArmBlocked(Exception):
@@ -400,6 +400,10 @@ def _core_tools(rt: Runtime, sess: Session, allowed: tuple[str, ...]):
 
         def fn(_n=name, **kw):
             res = dispatch(sess, _n, kw)
+            if "H9" in rt.cfg.arms and _n in H9_COMPACT:
+                from agent.core.report_digest import compact_result     # brief 42 H9: the typed summary digest plus the path
+                rt.offload_seq += 1
+                return compact_result(res, _n, rt.design, rt.offload_seq, getattr(sess.jail, "role", None) == "rtl")[:20000]
             if "H1" in rt.cfg.arms and getattr(sess.jail, "role", None) == "rtl" and _n not in KNOWLEDGE_TOOLS:
                 from agent.graph.context import offload_result       # brief 42 H1
                 rt.offload_seq += 1
@@ -481,6 +485,7 @@ def drop_superseded(design: Path, jail, before: list[Path], written: dict[str, s
     return gone
 
 
+H9_COMPACT = ("build", "gates", "simulate", "lint")      # brief 42 H9: results of these tools become a summary digest when large
 KNOWLEDGE_TOOLS = ("load_skill", "search_docs", "board_constraints", "skill_index", "skill_excerpt")  # never removed or reduced for any role (05f)
 SKILL_TOOLS = ("skill_index", "skill_excerpt")      # brief 36: given beside load_skill only when skill routing is on
 FILE_TOOLS = ("read_file", "write_file", "list_files")
@@ -652,6 +657,8 @@ def run_role(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (),
     n = next((st.n for st in MACHINE if st.name == rt.session.stage), -1)
     allowed = role_tools(role, n, rt.cfg.verif_level, allowed)
     allowed, prompt = with_skill_routing(rt, allowed, prompt)
+    if "H9" in rt.cfg.arms and "report" in allowed:          # brief 42 H9: typed digests beside the raw report tool
+        allowed = tuple(dict.fromkeys([*allowed, "report_digest"]))
     rt.meter.reserved = ROLE_TURN_RESERVE.get(n, {}).get(role, 0)
     try:
         return run_subagent(rt, role, prompt, allowed, repair)
