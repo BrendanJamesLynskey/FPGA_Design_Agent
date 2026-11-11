@@ -14,6 +14,7 @@
 //   0x20-0x28    logic_analyser registers (see ip_lib/logic_analyser)
 //   0x40 XT, 0x41 XVCCINT, 0x42 XVCCAUX, 0x43 XVCCBRAM   R   raw 12-bit XADC codes (UG480)
 //   0x50 FC_CRC, 0x51 FC_FRAMES, 0x52 FC_PIX, 0x53 FC_SUM, 0x54 FC_EXPECT (RW), 0x55 FC_MISMATCH   R/RW   frame_crc
+/* verilator lint_off UNUSEDSIGNAL */   // fd_valid, fc_done and the low XADC data bits are not used
 module b30_hil_audio_top #(
     parameter int          CLKS_PER_BIT   = 868,
     parameter int          TIMEOUT_CYCLES = 100_000,
@@ -121,6 +122,7 @@ module b30_hil_audio_top #(
     logic [1:0]  xsel = '0;
     logic [19:0] xpc = '0;
     initial begin xcode[0] = '0; xcode[1] = '0; xcode[2] = '0; xcode[3] = '0; end
+    /* verilator lint_off PINCONNECTEMPTY */
     XADC #(
         .INIT_40(16'h1000), .INIT_41(16'h2EF0), .INIT_42(16'h0400), .INIT_48(16'h4700), .INIT_49(16'h0000),
         .INIT_4A(16'h4700), .INIT_4B(16'h0000), .INIT_4C(16'h0000), .INIT_4D(16'h0000), .INIT_4E(16'h0000),
@@ -131,6 +133,7 @@ module b30_hil_audio_top #(
         .DCLK(clk), .DEN(den), .DWE(1'b0), .DADDR(daddr), .DI(16'h0000), .DO(do_x), .DRDY(drdy),
         .RESET(1'b0), .CONVST(1'b0), .CONVSTCLK(1'b0), .VP(1'b0), .VN(1'b0), .VAUXP(16'h0000), .VAUXN(16'h0000),
         .ALM(), .OT(), .BUSY(), .CHANNEL(), .EOC(), .EOS(), .JTAGBUSY(), .JTAGLOCKED(), .JTAGMODIFIED(), .MUXADDR());
+    /* verilator lint_on PINCONNECTEMPTY */
     always_ff @(posedge clk) begin
         den <= 1'b0;
         xpc <= xpc + 1'b1;
@@ -167,3 +170,4 @@ module b30_hil_audio_top #(
         endcase
     end
 endmodule
+/* verilator lint_on UNUSEDSIGNAL */

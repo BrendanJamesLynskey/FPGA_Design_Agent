@@ -13,6 +13,8 @@ for d in designs/*/; do
   top="$(python3 -c "import yaml,sys; print(yaml.safe_load(open(sys.argv[1]))['top'])" "$d/build.yaml")"
   echo "lint: $d ($top)"
   stubs=(); [ -d "$d/lint" ] && stubs=("$d"lint/*.sv)    # lint-only stand-ins for vendor primitives
-  verilator --lint-only -Wall --top-module "$top" shell/rtl/*.sv "$d"rtl/*.sv "${stubs[@]}"
+  # the sources are the ones the build uses (build.yaml): brief 30's designs also read ip_lib blocks and share RTL
+  mapfile -t srcs < <(python3 -c "import yaml,sys,glob; [print(f) for g in yaml.safe_load(open(sys.argv[1]))['sources'] for f in sorted(glob.glob(g))]" "$d/build.yaml")
+  verilator --lint-only -Wall --top-module "$top" "${srcs[@]}" "${stubs[@]}"
 done
 echo "lint: clean"

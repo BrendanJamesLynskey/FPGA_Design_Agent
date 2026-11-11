@@ -15,6 +15,7 @@
 //   8 RAWCOUNT  R: samples written since arm
 // A capture is DEPTH samples: PRE before the trigger sample, the trigger sample, DEPTH-1-PRE after it. After done,
 // reading RD_DATA at RD_ADDR = k gives capture sample k (the block renumbers the ring for you).
+/* verilator lint_off UNUSEDSIGNAL */   // the window bus is shared: not every address bit, read strobe or data bit is used here
 module logic_analyser #(
     parameter int WIDTH   = 16,
     parameter int ADDR_W  = 10                 // DEPTH = 2**ADDR_W
@@ -44,10 +45,8 @@ module logic_analyser #(
     logic             done, edge_mode;
     localparam logic [1:0] IDLE = 2'd0, FILL = 2'd1, WAIT = 2'd2, POST = 2'd3;
 
-    logic [WIDTH-1:0] cur;
     logic hit;
     always_comb begin
-        cur = sample;
         hit = edge_mode ? |((sample & ~prev) & mask_r) : ((sample & mask_r) == (value_r & mask_r));
     end
 
@@ -68,7 +67,7 @@ module logic_analyser #(
                     end
                     4'd2: mask_r  <= win_wdata[WIDTH-1:0];
                     4'd3: value_r <= win_wdata[WIDTH-1:0];
-                    4'd4: pre_r   <= (win_wdata[ADDR_W-1:0] >= DEPTH - 1) ? ADDR_W'(DEPTH - 2) : win_wdata[ADDR_W-1:0];
+                    4'd4: pre_r   <= (32'(win_wdata[ADDR_W-1:0]) >= DEPTH - 1) ? ADDR_W'(DEPTH - 2) : win_wdata[ADDR_W-1:0];
                     4'd6: rd_addr <= win_wdata[ADDR_W-1:0];
                     default: ;
                 endcase
@@ -87,8 +86,8 @@ module logic_analyser #(
                         trig_idx  <= wptr;
                         start_idx <= wptr - pre_r;
                         post_left <= (ADDR_W+1)'(DEPTH - 1) - {1'b0, pre_r};
-                        state     <= (DEPTH - 1 - pre_r == 0) ? IDLE : POST;
-                        done      <= (DEPTH - 1 - pre_r == 0);
+                        state     <= (DEPTH - 1 - 32'(pre_r) == 0) ? IDLE : POST;
+                        done      <= (DEPTH - 1 - 32'(pre_r) == 0);
                     end
                     POST: begin
                         post_left <= post_left - 1'b1;
@@ -116,3 +115,4 @@ module logic_analyser #(
         endcase
     end
 endmodule
+/* verilator lint_on UNUSEDSIGNAL */

@@ -2,7 +2,7 @@
 faults:
 - name: counts_both_edges
   file: freq_duty_counter.sv
-  old: e_acc    <= e_acc + CNT_W'(s2 & ~s3);
+  old: e_acc    <= e_acc + CNT_W'(rise);
   new: e_acc    <= e_acc + CNT_W'(s2 ^ s3);
   class: path
   why: falling edges counted too, so the frequency reads double

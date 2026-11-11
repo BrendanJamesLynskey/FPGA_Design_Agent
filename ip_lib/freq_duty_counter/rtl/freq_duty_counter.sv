@@ -21,6 +21,8 @@ module freq_duty_counter #(
 
     (* ASYNC_REG = "TRUE" *) logic s1, s2;
     logic s3;
+    logic rise;
+    assign rise = s2 & ~s3;
     always_ff @(posedge clk) begin
         s1 <= sig; s2 <= s1; s3 <= s2;
     end
@@ -34,7 +36,7 @@ module freq_duty_counter #(
         end else begin
             if (gate_cnt == GATE_CLKS - 1) begin
                 gate_cnt  <= '0;
-                edges     <= e_acc + CNT_W'(s2 & ~s3);
+                edges     <= e_acc + CNT_W'(rise);
                 high_clks <= h_acc + CNT_W'(s2);
                 e_acc     <= '0;
                 h_acc     <= '0;
@@ -42,7 +44,7 @@ module freq_duty_counter #(
                 valid     <= 1'b1;
             end else begin
                 gate_cnt <= gate_cnt + 1'b1;
-                e_acc    <= e_acc + CNT_W'(s2 & ~s3);
+                e_acc    <= e_acc + CNT_W'(rise);
                 h_acc    <= h_acc + CNT_W'(s2);
             end
         end
