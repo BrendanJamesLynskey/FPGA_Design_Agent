@@ -58,6 +58,8 @@ class Session:
     #: brief 36: ``"router"`` ranks ``load_skill(sections)`` by relevance inside its cap; ``"off"`` (default) keeps the
     #: eval-1 order. Set from Config.skill_routing (Deep Agents) or FDA_SKILL_ROUTING (the Claude Code arm's MCP server).
     skill_routing: str = "off"
+    #: brief 42: harness arms on for this session, e.g. ``("H1", "H2")``; empty (default) is the unchanged baseline.
+    harness_arms: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         self.design = Path(self.design).resolve()

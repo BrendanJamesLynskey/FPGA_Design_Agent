@@ -161,6 +161,14 @@ container. Measured on 12 labelled development tasks it did not beat today's sec
 cuts what a role reads from the knowledge tools ([docs/skill_routing.md](docs/skill_routing.md),
 [results/36_skill_routing](results/36_skill_routing/retrieval.md)).
 
+Brief 42 (harness engineering) adds two more flags, both off by default (`--harness-arm H1` and `H2`; the baseline graph is
+unchanged). H1 manages the role agents' context: large tool results go to a file with a head-and-tail preview, and the
+conversation is summarised from 40,000 tokens instead of 170,000. H2 protects against hangs: a static check refuses a cocotb
+bench with an unbounded wait loop, `simulate` runs under a wall-clock watchdog derived from the bench's own simulation-time
+budget, and a hang comes back as a structured result naming the test and the simulation time. The pre-registration is in
+[results/42_workflows/prereg.md](results/42_workflows/prereg.md); the audit script is
+[agent/tools/harness_audit.py](agent/tools/harness_audit.py).
+
 ## The agent core (05a, F2 part 1)
 
 The flow's tools as a harness-neutral core: typed functions with JSON schemas, the same tools as an MCP server
@@ -321,6 +329,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 40 | Networking and packet processing, simulation phase: RMII MAC with FCS, streaming parser, exact/LPM/ternary match-action with AXI4-Lite updates under traffic, RFC 1624 rewrite, queues with RR/SP/DRR, a learning VLAN-aware 4-port switch; bit-exact against Python models with scapy traffic, 28 seeded faults, line rate and latency in simulation ([ip_lib/README.md](ip_lib/README.md), [results/b40](results/b40/README.md)); OOC cost tables, xsim cross-check and HIL to do | PR open |
 | 24 | FSMs as an area of expertise: a reference burst controller measured in variants (separated and 23-state monolithic, output and input registering, reset styles and a reset inside an enable, encodings, the one-in-N enable, an input from another clock) in Vivado, Icarus and SymbiYosys; an FSM state and transition coverage check from a trace of the state register (off by default, `--fsm-coverage` on the V2 gate) with test-removal mutants; two drills; a course lesson and two knowledge-bank skills ([docs/fsm.md](docs/fsm.md), [results/24_fsm](results/24_fsm/README.md)) | PRs open |
 | 36 | Skill routing and retrieval behind a flag: router node with a names-and-descriptions shortlist, `skill_index` / `skill_excerpt` / `load_skill(name=)`, hybrid BM25 plus embeddings index (in process, or the container in [agent/skill_service](agent/skill_service)), cited notes instead of bodies in the state; recall, context and a small end-to-end run on dev tasks; golden requests regenerated ([docs/skill_routing.md](docs/skill_routing.md), [results/36_skill_routing](results/36_skill_routing/retrieval.md)) | PR open |
+| 42 | Harness engineering arms H1 (context management) and H2 (hang protection) behind flags, with a harness audit script, a driver and a pre-registration; round 1 against the baseline ([results/42_workflows](results/42_workflows/prereg.md), [agent/tools/harness_audit.py](agent/tools/harness_audit.py)) | PR open |
 | 20B | Timing constraints proved, part B: I/O delays, virtual clocks and clock uncertainty measured on one-fault Vivado tops (system- and source-synchronous, DDR, forwarded clock, virtual clocks, MMCM jitter, corners), an I/O gate after synthesis and routing (invented delays on slow ports, data-sheet values, -min/-max, reference clock, IOB), an implementation-only timing margin (`timing_margin_ns`) kept out of sign-off, FDA-CON-11/-12/-13, and an ADC drill with an I/O grader ([flow/io_check.py](flow/io_check.py), [flow/tests/fixtures/io_timing](flow/tests/fixtures/io_timing), [results/20_timing_exceptions/io_table.md](results/20_timing_exceptions/io_table.md), [uncertainty](results/20_timing_exceptions/uncertainty.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
 | F2 | Agent v1: interview, plan, RTL, tests and the full Vivado flow (05a-05g above); 21 development runs on 11 course-tier tasks ([results/course](results/course), [site results](https://fpga-design-agent.vercel.app/results)) | built; development runs recorded |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |

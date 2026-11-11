@@ -407,7 +407,20 @@ def simulate(s: Session, sim: str = "auto", coverage: bool = False) -> dict:
     bad = _import_check_tests(s)
     if bad:
         return bad
+    h2 = "H2" in s.harness_arms
+    if h2:                                  # brief 42 H2: refuse a bench with an unbounded wait before it can hang the simulator
+        from agent.core.cocotb_lint import refusal_text, unbounded_waits
+        found = [f for t in sorted((s.design / "tests").rglob("*.py")) for f in unbounded_waits(t)]
+        if found:
+            return {"ok": False, "kind": "unbounded_wait", "output": refusal_text(found, s.design), "unbounded_waits": found,
+                    "returncode": 2}
     argv = [PY, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *[_rel(s, t) for t in tests]]
+    limit = sim_timeout(s.design, sim)
+    if h2:
+        from agent.core.cocotb_lint import h2_wall_limit
+        base = _baseline(s.design, sim)
+        limit, _why = h2_wall_limit(s.design / "tests", base, coverage)
+        argv = [PY, str(s.root / "flow" / "sim_watchdog.py"), "--limit", str(limit), "--root", str(s.root), "--", *argv]
     # the V2/V3 gate reads <design>/build/verif/sim/seed<N>/results.xml; flow.cocotb_run.run writes it there when this
     # variable is set (05h: a bench that passed `simulate` left the gate with no seeded results). Cleared per call so
     # an old result is never read as the new one.
@@ -415,10 +428,14 @@ def simulate(s: Session, sim: str = "auto", coverage: bool = False) -> dict:
     shutil.rmtree(results, ignore_errors=True)
     r = s.runner.run("simulate", argv, s.root, {"SIM": sim, "FDA_SIM_RESULTS_DIR": _rel(s, results),
                                                 **({"FDA_COVERAGE": "1"} if coverage else {})},
-                     timeout=sim_timeout(s.design, sim))
+                     timeout=limit + 90 if h2 else limit)
     out = _text_out(r)
     res: dict[str, Any] = {"ok": r.returncode == 0}
-    if r.returncode != 0:
+    hang = _parse_hang(out) if h2 else None
+    if hang:                                # brief 42 H2: a structured result instead of a silent timeout
+        res.update({"kind": "sim_hang", "hang": hang})
+        out = hang_text(hang) + "\n" + out[-3000:]
+    if r.returncode != 0 and not hang:
         # structured and raw: the first failing assertion as the log prints it, and the log's tail (never the clipped middle)
         ff = first_failure(out)
         res["first_failure"], res["log_tail"] = ff, out[-4000:]
@@ -437,6 +454,37 @@ def simulate(s: Session, sim: str = "auto", coverage: bool = False) -> dict:
 #: fixed 1800 s: 4 x the last passing run + 120 s, never under 600 s, never over 7200 s; without a measurement, 1800 s.
 SIM_TIMEOUT_DEFAULT, SIM_TIMEOUT_MIN, SIM_TIMEOUT_MAX = 1800, 600, 7200
 _BASELINE_FILE = ("build", "verif", "sim_baseline.json")
+
+
+def _baseline(design: Path, sim: str) -> float | None:
+    try:
+        return float(json.loads(design.joinpath(*_BASELINE_FILE).read_text())[sim])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def _parse_hang(out: str) -> dict | None:
+    m = re.search(r"^FDA_HANG (\{.*\})\s*$", out, re.M)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(1))
+    except ValueError:
+        return None
+
+
+def hang_text(h: dict) -> str:
+    t = (h.get("test") or {}).get("name")
+    st = h.get("sim_time_ns")
+    if st is None:
+        head = (f"[simulation hung] no simulation time was logged within {h['limit_s']:.0f} s of wall time "
+                f"(the build or the first test never started)")
+    else:
+        why = ("simulation time was still advancing (a loop waiting for an event that never comes)" if h.get("sim_time_advancing")
+               else "simulation time was stuck (a loop with no delay, or the simulator itself)")
+        head = (f"[simulation hung] test {t or 'unknown'} did not finish within {h['limit_s']:.0f} s of wall time; "
+                f"hung at simulation time {st:.0f} ns in test {t or 'unknown'}; {why}")
+    return head + ".\n[log tail]\n" + (h.get("tail") or "") + "\n[end log tail]"
 
 
 def sim_timeout(design: Path, sim: str) -> int:
