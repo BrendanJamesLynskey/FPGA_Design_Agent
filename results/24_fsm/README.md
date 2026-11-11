@@ -34,9 +34,24 @@ The two forms are cycle-equivalent under 40,000 clocks of random inputs and rese
 | `formal.json`, `run_formal.py` | SymbiYosys: bounded depth 40, cover, k-induction at depths 1 to 6, separated and monolithic |
 | `simprobe/` | what Icarus, Verilator (two versions) and xsim give for covergroups, cover properties, code coverage |
 | `coverage/` | the FSM coverage check on the I2C engine, the flash reader and the reference controller, each with one test removed |
+| `drills/` | the drill references graded on their routed checkpoints, run A1 graded, run B1 interim (below), `PREREG.md` |
 | `impl_table.md`, `impl/` | routed numbers (opt, place, route) for the main variants, out of context |
 | `io_table.md`, `io/` | the controller on real pins, routed: what drives each pad, whether the flop is in the I/O block, clock-to-pad |
 | `summary.json`, `make_summary.py` | the numbers the site's FSM drawer quotes |
 
 Reproduce: `flow/tests/fixtures/fsm_discipline/run_all.sh <dir> 0`, `make_table.py`, `run_io.sh`, `make_coverage.py`, `run_formal.py`,
 `simprobe/run_probe.sh`. Tests: `flow/tests/test_24_*.py`.
+
+## Drill runs (development arm, no brief 24 skills in the pinned bank)
+
+Pre-registration: `drills/PREREG.md` (3 seeds a drill planned). **Run: 1 seed of the first drill, 1 of the second, the second not finished.** Each run holds the
+heavy slot for its whole length (about an hour when it goes well), so three seeds each was not possible in the session.
+
+| Run | Drill | Result | What the design chose |
+|---|---|---|---|
+| A1 `20261111-063438-bc8f` | `d24_registered_outputs` | **pass**: hidden bench 3/3, lag 1, all 8 JB pins flop-driven in the routed checkpoint (`drills/run_a1.json`); 61 min, plan estimate $3.1, reached V2 | registered decode of the state (one clock late); 11-state enum (extracted sequential) with a separate 3-bit counter; its own tests include the timeout |
+| B1 `20261111-073532-07cd` | `d24_no_extra_latency` | **not complete**: still in stage 2 after 2 h because three of its `simulate` calls timed out at 1800 s (unbounded `while` waits in its own cocotb bench). The RTL it had written passes the hidden bench (lag 0), graded interim (`drills/run_b1_interim.json`) | combinational Moore decode with a Mealy `cmd_ack` (the right choice; it did not register the outputs) |
+
+Both references: `reference_d24_*.json` (hidden bench passes, mutants killed, routed through `ref_build.py`: WNS +4.24 and +3.54 ns, the grader reads the pin drivers: all flops for the first, all LUTs for the second).
+One seed each says nothing about a rate; it says the drills are gradeable and that the agent without the new skills picked the registered decode when the spec said flip-flops and the
+combinational/Mealy form when the spec said no added latency.
