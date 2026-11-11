@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 HERE = Path(__file__).resolve().parent
 
 PASS_RUN = "results/course/c14_int8_dot_requant/run_5.json"      # the development run whose numbers label the arrows
+HIL_RUN = "results/b30/hil_runs/b30_hil_audio.hil.json"
 TOUR_RUN = "results/f2/agent_luna_05c2_run7.json"                  # interview to bitstream, visit order recorded
 TOUR_BOARD = "results/f2/agent_luna_05c2_run7_bringup.json"        # the board run on that run's files, as written
 STATUS = ("automated", "building", "person")
@@ -69,6 +70,8 @@ def stations(A):
     ut = b["uart_tests"]
     ila_fit = "Unable to fit compare values" in b["ila_captures"]["why"]
     vivado = A["vivado"]
+    hil = jload(HIL_RUN)
+    jack = hil["checks"]["tone_at_the_jack"]["measured"]
     pass_src = {"record": PASS_RUN, "what": f'{r["task"]}, development run {r["run"]} ({r["date"]}): Claude Code {r["claude_code_version"]}, {r["model"]}'}
     tour = jload(TOUR_RUN)
     board_src = {"record": TOUR_BOARD, "what": f'the board run on the files of T1 Deep Agents run {tour["run"].split("run")[-1]} '
@@ -94,12 +97,16 @@ def stations(A):
          "fb": {"kind": "UART tests, ILA captures, XADC temperature and voltage",
                 "values": [f'UART {ut["tests"] - ut["failures"]} of {ut["tests"]} passed',
                            "ILA trigger did not fit" if ila_fit else ("ILA captures passed" if b["ila_captures"]["pass"] else "ILA captures failed"),
-                           "XADC: being measured"],
+                           "XADC: checked against JTAG in the HIL run"],
                 "src": board_src, "leg": "uart"},
          "gate": {"title": "board tests", "line": "registers, captures", "leg": "uart"}},
         {"id": "instr", "title": "Instruments", "desc": "ADALM2000, Red Pitaya, HDMI and audio capture, Pluto and RTL-SDR",
-         "fb": {"kind": "waveforms, spectra, frames, audio", "values": ["being measured"], "src": None, "leg": "instruments"},
-         "gate": {"title": "HIL checks", "line": "being built", "leg": "hil_gate"}},
+         "fb": {"kind": "waveforms, spectra, frames, audio",
+                "values": [f'audio at the jack {jack["freq_hz"]} Hz, THD {jack["thd_percent"]} %',
+                           "a pin fault caught only here", "scope, SDR, video: being measured"],
+                "src": {"record": HIL_RUN, "what": f'the brief 30 hardware-in-the-loop run on {hil["design"].split("/")[-1]} ({hil["started"][:10]})'},
+                "leg": "audio_capture"},
+         "gate": {"title": "HIL checks", "line": "run by script; not yet in the repair loop", "leg": "hil_gate"}},
     ]
 
 
