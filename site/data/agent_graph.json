@@ -186,6 +186,158 @@
    }
   ]
  },
+ "harness": {
+  "arms": [
+   {
+    "change": "Large tool results, such as Vivado reports and simulation logs, go to a file in the jail and the model gets a head, a tail and the path; older turns are summarised much earlier.",
+    "evidence": "Token totals are dominated by long repair visits: one 80-turn visit of the RTL writer used 6.6 M tokens.",
+    "id": "H1",
+    "name": "Context management",
+    "source": "results/36_skill_routing/e2e.md",
+    "status": "not yet measured"
+   },
+   {
+    "change": "A per-test simulation limit from the test's own simulated-time budget, a result that says where a test hung, and a check that refuses tests with unbounded waits before they run.",
+    "evidence": "In one drill run three simulate calls each ran to the 1800 s limit on the agent's own tests, which waited on conditions that never came.",
+    "id": "H2",
+    "name": "Hang protection",
+    "source": "results/24_fsm/README.md",
+    "status": "not yet measured"
+   },
+   {
+    "change": "Before each repair visit the role writes a short hypothesis, its evidence and the planned change; the repair visit receives it.",
+    "evidence": "Repair visits that edit without stating what they think is wrong.",
+    "id": "H3",
+    "name": "Diagnose before repair",
+    "source": null,
+    "status": "not yet measured"
+   },
+   {
+    "change": "A token budget per stage; the same gate failing the same way three times sends the stage back to its plan instead of another edit.",
+    "evidence": "Repair loops whose cost has no limit but the visit count.",
+    "id": "H4",
+    "name": "Budget and stall rule",
+    "source": null,
+    "status": "not yet measured"
+   },
+   {
+    "change": "Stage prompts aligned with the skill shortlist; every tool description says when to use it and when not to.",
+    "evidence": "In the skill-routing runs the roles hardly used the new skill tools and kept loading whole sections.",
+    "id": "H5",
+    "name": "Prompts and tool descriptions",
+    "source": "results/36_skill_routing/e2e.md",
+    "status": "not yet measured"
+   },
+   {
+    "change": "A narrow, read-only helper agent reads a Vivado report and returns a structured finding instead of the raw text.",
+    "evidence": "Raw reports in the main transcript.",
+    "id": "H6",
+    "name": "Report reader",
+    "source": null,
+    "status": "not yet measured"
+   },
+   {
+    "change": "Prompt caching on the OpenRouter models that support it.",
+    "evidence": "The caching in the stack today acts on Anthropic chat models only, and every turn resends the whole prompt.",
+    "id": "H7",
+    "name": "Prompt caching",
+    "source": null,
+    "status": "not yet measured"
+   },
+   {
+    "change": "A to-do list tool for the RTL writer.",
+    "evidence": "Planning on long stages; the role agents are offered no to-do tool today.",
+    "id": "H8",
+    "name": "To-do list",
+    "source": null,
+    "status": "not yet measured"
+   }
+  ],
+  "audit_date": "2026-11-11",
+  "fixes": [
+   {
+    "files": [
+     "agent/core/tools.py",
+     "agent/tests/test_36_skill_routing.py"
+    ],
+    "name": "Whole skills from load_skill",
+    "pr": 115,
+    "text": "When a role loaded several skills at once, the tool layer's output limit cut the middle out of them without saying so. load_skill now returns whole skills up to the limit and names the ones it held back, so the role can load each by name."
+   },
+   {
+    "files": [
+     "flow/exceptions_check.py",
+     "flow/tests/test_45_ila_exceptions.py"
+    ],
+    "name": "The debug core's own timing exceptions",
+    "pr": 120,
+    "text": "The exceptions gate failed every build with a logic analyser in it, because the analyser core brings timing exceptions that Vivado ignores. The gate now reports those as information and still fails on the design's own."
+   },
+   {
+    "files": [
+     "flow/build_cache.py",
+     "results/33_vivado_speed/summary.json"
+    ],
+    "name": "A build cache for Vivado",
+    "pr": 118,
+    "text": "A repeated build of an unchanged design now comes from a cache, and a later stage resumes from the last checkpoint. One agent run's build sequence on the c10 task took 207.5 s instead of a modelled 880.2 s, with the same result."
+   }
+  ],
+  "middleware": [
+   {
+    "acts": true,
+    "name": "FilesystemMiddleware",
+    "words": "the built-in file tools on the jailed folder; moves a tool result of 80,000 characters or more to a file"
+   },
+   {
+    "acts": false,
+    "name": "_ParentNotifierMiddleware",
+    "words": "wakes a parent agent that started this one in the background; does nothing here"
+   },
+   {
+    "acts": true,
+    "name": "SummarizationMiddleware",
+    "words": "summarises older turns once the transcript reaches about 170,000 tokens, keeping the last 6 messages; before that, cuts file contents the model wrote (over 2,000 characters) out of all but the last 20 messages"
+   },
+   {
+    "acts": true,
+    "name": "PatchToolCallsMiddleware",
+    "words": "answers any tool call left without a result, so the transcript stays valid"
+   },
+   {
+    "acts": false,
+    "name": "AnthropicPromptCachingMiddleware",
+    "words": "prompt caching, for Anthropic chat models only; other models pass straight through"
+   },
+   {
+    "acts": true,
+    "name": "UnsupportedContentMiddleware",
+    "words": "replaces content the model cannot take, such as images"
+   }
+  ],
+  "settings": {
+   "evict_tool_result_chars": 80000,
+   "model_profile": false,
+   "recursion_limit": {
+    "others": 120,
+    "rtl": 200
+   },
+   "registry_clip_chars": 20000,
+   "sim_timeout_s": {
+    "default": 1800,
+    "max": 7200,
+    "min": 600
+   },
+   "summarise_keep_messages": 6,
+   "summarise_trigger_tokens": 170000,
+   "truncate_args_after_messages": 20,
+   "truncate_args_keep_messages": 20,
+   "truncate_args_over_chars": 2000
+  },
+  "subagent_tool": false,
+  "system_prompt_only_ours": true,
+  "todo_tool": false
+ },
  "inner": {
   "builtin_tools": [
    "ls",
@@ -233,6 +385,14 @@
     true
    ]
   ],
+  "middleware": [
+   "FilesystemMiddleware",
+   "_ParentNotifierMiddleware",
+   "SummarizationMiddleware",
+   "PatchToolCallsMiddleware",
+   "AnthropicPromptCachingMiddleware",
+   "UnsupportedContentMiddleware"
+  ],
   "nodes": [
    "__start__",
    "model",
@@ -242,11 +402,12 @@
    "__end__"
   ],
   "subagent_tool": false,
+  "system_prompt_only_ours": true,
   "todo_tool": false
  },
  "inner_words": {
   "PatchToolCallsMiddleware.before_agent": "tidy unanswered tool calls",
-  "_ParentNotifierMiddleware.after_agent": "report back",
+  "_ParentNotifierMiddleware.after_agent": "notify a parent (unused here)",
   "__end__": "back to the controller",
   "__start__": "the role's prompt and files",
   "model": "model call",

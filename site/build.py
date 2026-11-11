@@ -26,7 +26,7 @@ SRC = HERE / "src"
 REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 
 PAGES = [  # file, nav label, title, description, data keys inlined
-    ("index.html", "Home", "End-to-end FPGA Agent", "An open agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGA boards, measured.", ["replay"]),
+    ("index.html", "Home", "End-to-end FPGA Agent", "An open agent that turns a plain-English spec into a bitstream for AMD FPGA boards, measures its work on real hardware and uses what it measures to decide its next step.", ["loop"]),
     ("agent.html", "The agent", "The agent", "The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.", ["agent_graph"]),
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
     ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
@@ -36,6 +36,9 @@ PAGES = [  # file, nav label, title, description, data keys inlined
     ("evaluation.html", "How it is evaluated", "How it is evaluated", "The held-out evaluation in plain words: split, hidden grader, three runs per task, task-level bootstrap.", []),
     ("results.html", "Results", "Results", "Development results; held-out results come with the baseline evaluation.", ["dev", "eval1"]),
 ]
+
+
+NAV_SUB = [("agent.html", "agent.html#harness", "Harness")]     # brief 47: a section linked from the nav, after its page
 
 
 def load_data(fixture: Path | None):
@@ -157,8 +160,10 @@ def block(name, d):
     if name in ("expertise_levels", "expertise_ladder", "expertise_drawers"):
         import expertise_page
         return getattr(expertise_page, name.split("_", 1)[1])(d["expertise"])
-    if name.startswith("agent_"):
+    if name.startswith("agent_") or name.startswith("harness_"):
         return agent_block(name, d)
+    if name.startswith("loop_"):
+        return loop_block(name, d)
     if name == "exception_figure":
         return exception_figure()
     raise KeyError(name)
@@ -197,6 +202,47 @@ def agent_block(name, d):
             out.append(f'<li><div class="vh"><b>{html.escape(a["name"])}</b> <span class="tag run">{html.escape(a["status"])}</span></div>'
                        f'<p>Adds {html.escape(a["adds"])}.</p><div class="vfig">{ap.variant(a)}</div></li>')
         return "".join(out) + "</ul>"
+    if name == "harness_layers":
+        return ap.both(ap.harness_layers(A, "wide"), ap.harness_layers(A, "narrow"))
+    if name == "harness_audit":
+        h, s = A["harness"], A["harness"]["settings"]
+        mw = "; ".join(m["name"].lstrip("_") for m in h["middleware"])
+        return table(["Question", "What the code builds today"], [
+            ["Libraries", f'deepagents {A["versions"]["deepagents"]}, LangGraph {A["versions"]["langgraph"]}, langchain-openai {A["versions"]["langchain-openai"]} (pinned)'],
+            ["System prompt", "only ours: the role's prompt, with no Deep Agents base prompt" if h["system_prompt_only_ours"] else "ours plus the library's"],
+            ["Tools offered", "the built-in file tools (" + ", ".join(A["inner"]["builtin_tools"]) + ") and the stage's own tools; "
+             + ("a to-do tool" if h["todo_tool"] else "no to-do tool") + ", " + ("a sub-agent tool" if h["subagent_tool"] else "no sub-agent tool")],
+            ["Middleware", mw],
+            ["When old turns are summarised", f'at about {s["summarise_trigger_tokens"]:,} tokens, keeping the last {s["summarise_keep_messages"]} messages: the fixed default, as our model wrapper reports no context size'],
+            ["File contents in older turns", f'once there are more than {s["truncate_args_after_messages"]} messages, anything over {s["truncate_args_over_chars"]:,} characters that the model wrote with write_file or edit_file is cut from all but the last {s["truncate_args_keep_messages"]} messages'],
+            ["Large tool results", f'our tool layer clips every result at {s["registry_clip_chars"]:,} characters (the full text stays in the build folder), so the library\'s move to a file at {s["evict_tool_result_chars"]:,} characters never happens'],
+            ["Prompt caching", "none in effect: the library's caching acts on Anthropic chat models only, and the role agents use OpenRouter models"],
+            ["Limits", f'{s["recursion_limit"]["rtl"]} graph steps for the RTL writer, {s["recursion_limit"]["others"]} for the other roles; a simulation stops after four times its last passing run time plus two minutes, between {s["sim_timeout_s"]["min"]} s and {s["sim_timeout_s"]["max"]:,} s, and after {s["sim_timeout_s"]["default"]:,} s when there is no passing run yet'],
+        ])
+    if name == "harness_arms":
+        rows = [[a["id"], a["name"], a["change"], a["evidence"], a["status"]] for a in A["harness"]["arms"]]
+        return table(["Arm", "Change", "What it does", "Evidence that motivated it", "Result"], rows)
+    if name == "harness_fixes":
+        out = ['<ul class="fixes">']
+        for f in A["harness"]["fixes"]:
+            ev = " ".join(f'<a class="evsrc" href="{REPO}/blob/main/{html.escape(x)}">{html.escape(x.split("/")[-1])}</a>' for x in f["files"])
+            out.append(f'<li><b>{html.escape(f["name"])}.</b> {html.escape(f["text"])} <span class="evl">Evidence: '
+                       f'<a class="evsrc" href="{REPO}/pull/{f["pr"]}">pull request {f["pr"]}</a> {ev}</span></li>')
+        return "".join(out) + "</ul>"
+    raise KeyError(name)
+
+
+def loop_block(name, d):
+    """index.html (brief 47): the feedback loop on the bench, the legs and where each label comes from."""
+    import loop_page as lp
+    L = d["loop"]
+    if name == "loop_hero":
+        import agent_page as ap
+        return ap.both(lp.hero(L, "wide"), lp.hero(L, "narrow"))
+    if name == "loop_legs":
+        return lp.legs_table(L, REPO)
+    if name == "loop_sources":
+        return table(["Station", "Label", "Read from"], lp.sources_table(L))
     raise KeyError(name)
 
 
@@ -257,7 +303,8 @@ def render_template(text, d):
 
 def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, pager=None):
     cur = current or fname
-    nav = "".join(f'<a href="{prefix}{f}"{" aria-current=\"page\"" if f == cur else ""}>{html.escape(n)}</a>' for f, n, *_ in PAGES)
+    nav = "".join(f'<a href="{prefix}{f}"{" aria-current=\"page\"" if f == cur else ""}>{html.escape(n)}</a>' +
+                  "".join(f'<a class="sub" href="{prefix}{h}">{html.escape(w)}</a>' for a, h, w in NAV_SUB if a == f) for f, n, *_ in PAGES)
     scripts = "".join(f'<script type="application/json" data-key="{k}">{json.dumps(d[k], separators=(",", ":")).replace("</", "<\\/")}</script>'
                       for k in keys if k in d)
     if pager is None:

@@ -683,6 +683,62 @@
     }
     start();
   }
+  /* ---------- the home page's feedback loop (brief 47): a recorded run travels the bench; frames from loop.json ---------- */
+  function mountLoop(root) {
+    var L = D.loop; if (!L) return;
+    var host = root.querySelector(".phost"), svgs = host.querySelectorAll("svg.loop"), F = L.tour, raf = null;
+    function all(q) { var o = []; svgs.forEach(function (s) { s.querySelectorAll(q).forEach(function (e) { o.push(e); }); }); return o; }
+    function cls(e, c, on) { if (on) e.classList.add(c); else e.classList.remove(c); }
+    function anchor(s, at) {                       /* where the token rests at a station: off the text */
+      var p = at === "agents" ? s.querySelector('[data-p^="r-"]') : s.querySelector('[data-p="o-' + at + '"]');
+      if (!p) return null;
+      var n = p.getTotalLength(), q = p.getPointAtLength(at === "agents" ? n : 0);
+      return [q.x, q.y];
+    }
+    function move(f, animate) {
+      if (raf) cancelAnimationFrame(raf);
+      var items = [];
+      svgs.forEach(function (s) {
+        var tok = s.querySelector("[data-tok]"), segs = [], tot = 0;
+        f.path.forEach(function (pp) { var el = s.querySelector('[data-p="' + pp[0] + '"]'); if (el) { var n = el.getTotalLength(); segs.push([el, n, pp[1]]); tot += n; } });
+        items.push([tok, segs, tot, s]);
+        tok.classList.remove("idle");
+      });
+      function put(e) {
+        items.forEach(function (it) {
+          var tok = it[0], segs = it[1], d = it[2] * e, q = null;
+          if (!segs.length) { var a = anchor(it[3], f.at); if (a) { tok.setAttribute("cx", a[0].toFixed(1)); tok.setAttribute("cy", a[1].toFixed(1)); } return; }
+          for (var k = 0; k < segs.length; k++) {
+            if (d <= segs[k][1] || k === segs.length - 1) { var u = Math.min(d, segs[k][1]); q = segs[k][0].getPointAtLength(segs[k][2] ? segs[k][1] - u : u); break; }
+            d -= segs[k][1];
+          }
+          tok.setAttribute("cx", q.x.toFixed(1)); tok.setAttribute("cy", q.y.toFixed(1));
+        });
+      }
+      if (!animate || !f.path.length) { put(1); return; }
+      var t0 = null, dur = 520 + 140 * Math.max(0, f.path.length - 1);
+      function step(ts) {
+        if (t0 === null) t0 = ts;
+        var u = Math.min(1, (ts - t0) / dur), e = u < .5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+        put(e); if (u < 1) raf = requestAnimationFrame(step);
+      }
+      put(0); raf = requestAnimationFrame(step);
+    }
+    function frame(i) {
+      var f = F[i], on = {};
+      f.path.forEach(function (pp) { on[pp[0]] = 1; });
+      all("[data-s]").forEach(function (g) { cls(g, "on", g.dataset.s === f.at || (f.ph === "work" && g.dataset.s === "agents")); });
+      all("[data-fb]").forEach(function (g) { cls(g, "on", g.dataset.fb === f.fb); });
+      all("[data-g]").forEach(function (g) { var me = f.ph === "decide" && g.dataset.g === f.at; cls(g, "pass", me && f.gate === "pass"); cls(g, "fail", me && f.gate === "fail"); });
+      all("path[data-p]").forEach(function (p) { cls(p, "on", !!on[p.dataset.p]); cls(p, "fail", !!on[p.dataset.p] && f.rail === "fail");
+        if (on[p.dataset.p]) p.parentNode.insertBefore(p, p.parentNode.querySelector("[data-tok]")); });   /* lit paths drawn over the shared rail */
+      all("[data-person]").forEach(function (g) { cls(g, "on", g.dataset.person === f.person); });
+      move(f, !reduce);
+      return f.cap;
+    }
+    Player(host, F.length, frame, { autoplay: true, interval: 1150 });
+  }
+  var lpr = document.getElementById("loop-player"); if (lpr) mountLoop(lpr);
   var agr = document.getElementById("agent-replay"); if (agr) mountAgent(agr);
   /* pipeline: a focused or clicked stage shows where its failures go back to */
   document.querySelectorAll("svg.pipe").forEach(function (s) {

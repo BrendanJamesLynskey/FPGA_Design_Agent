@@ -471,3 +471,63 @@ def variant(arm):
             out.append(edge(f"M{x + w + 2} 19 L{x + w + 13} 19", p))
         x += w + 16
     return svg(p, x, 38, "".join(out), f"{arm['name']}: {arm['adds']}", "var").replace("<svg ", f'<svg style="max-width:{x:g}px" ', 1)
+
+
+# ---------------------------------------------------------------- 7. the harness, layer by layer (brief 47)
+
+MW_SHORT = {"FilesystemMiddleware": "file tools", "_ParentNotifierMiddleware": "parent notifier",
+            "SummarizationMiddleware": "summarisation", "PatchToolCallsMiddleware": "patch tool calls",
+            "AnthropicPromptCachingMiddleware": "Anthropic prompt caching", "UnsupportedContentMiddleware": "unsupported content"}
+
+
+def harness_layers(A, lay):
+    """Model, middleware, tools, jailed filesystem, our tool layer and gates: what a Deep Agents role agent runs inside."""
+    wide = lay == "wide"
+    p = f"hl{lay[0]}"
+    W = 940 if wide else 360
+    h, s = A["harness"], A["harness"]["settings"]
+    roles = {r["id"]: r for r in A["roles"]}
+    groups = []
+    for g in ("Files", "Knowledge", "Verification", "Vivado"):
+        groups.append(g + ": " + ", ".join(t["name"] for t in A["tools"] if t["group"] == g and t["model_may_call"]))
+    layers = [
+        ("model", "Model", [(f'{A["defaults"]["model"]}, through OpenRouter', "chip")],
+         "one call per turn; the system prompt is the role's prompt alone" if h["system_prompt_only_ours"] else "one call per turn"),
+        ("mw", "Middleware, in stack order", [(MW_SHORT[m["name"]], "chip" if m["acts"] else "tchip0") for m in h["middleware"]],
+         f'summarises older turns at about {s["summarise_trigger_tokens"]:,} tokens; dotted: present, but does nothing for these models; '
+         + ("no to-do list" if not h["todo_tool"] else "a to-do list") + ", " + ("no sub-agents" if not h["subagent_tool"] else "sub-agents")),
+        ("tools", "Tools the model is offered", [("built-in: " + ", ".join(A["inner"]["builtin_tools"]), "chip")] + [(g, "chip") for g in groups],
+         "the stage decides which of ours a role gets"),
+        ("fs", "Jailed filesystem", [("RTL writer: the design folder", "chip"), ("other roles: an in-memory copy of their inputs", "chip")],
+         "every path checked against the role's read and write lists; a write outside them is refused and logged"),
+        ("ours", "Our tool layer and gates", [("argument check", "chip"), (f'output clipped at {s["registry_clip_chars"]:,} characters', "chip"),
+                                               ("audit log", "chip"), ("gates in code", "chip")],
+         f'fixed Vivado and simulator commands; a simulation stops after at most {s["sim_timeout_s"]["max"]:,} s'),
+    ]
+    out, y = [], 4
+    for k, (lid, title, chips, note) in enumerate(layers):
+        inner_ = [text(14, y + 24, title, "t")]
+        items = []
+        for lab, cls in chips:
+            rows = wrap(lab, W - 60, 13) if tw(lab) + 22 > W - 28 else [lab]
+            items.append((rows, cls))
+        cx, cy, used = 14, y + 36, 0
+        for rows, cls in items:
+            w = max(tw(r) for r in rows) + 22
+            hh = 14 + 16 * len(rows)
+            if cx > 14 and cx + w > W - 14:
+                cx, cy = 14, cy + used + 8
+                used = 0
+            inner_.append(box(cx, cy, w, hh, cls, 4) + lines(cx + 11, cy + 19, rows, "", 16))
+            cx += w + 8
+            used = max(used, hh)
+        hgt = cy + used - y + 10
+        nl = wrap(note, W - 28)
+        inner_.append(lines(14, y + hgt + 4, nl))
+        hgt += 15 * len(nl) + 6
+        out.append(f'<g data-hl="{lid}">{box(0, y, W, hgt, "band", 8)}{"".join(inner_)}</g>')
+        y += hgt
+        if k < len(layers) - 1:
+            out.append(edge(f"M40 {y + 2} L40 {y + 22}", p) + text(52, y + 16, ["each call and its reply pass through", "the tool calls it asks for", "built-in tools: reads and writes", "our tools: through the registry"][k], "s"))
+            y += 26
+    return svg(p, W, y + 4, "".join(out), "The harness of a Deep Agents role agent, layer by layer: model, middleware, tools, jailed filesystem, our tool layer and gates", "harn")

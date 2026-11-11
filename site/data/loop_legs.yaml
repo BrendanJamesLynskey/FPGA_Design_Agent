@@ -1,0 +1,97 @@
+# The legs of the agent's feedback loop (brief 47), for the home page's "legs automated: N of M" figure and table.
+# site/loop.py reads this file and writes site/data/loop.json; the count is computed there, never typed in a page.
+#
+#   id:        used by the hero graphic (data-leg) and the tests
+#   leg:       the leg in plain words (no numbers)
+#   status:    automated   - runs with no person today
+#              building    - being built or measured; not yet automated
+#              person      - needs a person today
+#   evidence:  repository paths that show it (a run record, a result file, or the code that does it). A site test
+#              checks that every path exists. Required for every automated leg.
+#   note:      one short sentence shown beside the leg (no numbers; numbers come from the run records)
+legs:
+- id: interview
+  leg: Interview to a signed-off spec
+  status: automated
+  note: In development runs an oracle model answers the questions; for a real request the person who asked answers them.
+  evidence: [results/course/c14_int8_dot_requant/run_5.json, agent/graph/interview.py]
+- id: write
+  leg: Role agents write the model, the tests, the RTL and the constraints
+  status: automated
+  note: Each role writes only the files it owns, through a path jail in code.
+  evidence: [results/f2/agent_luna_05c2_run7.json, agent/graph/roles.py]
+- id: simulate
+  leg: Lint, simulation and formal checks
+  status: automated
+  note: Verilator lint, cocotb tests on Icarus or Verilator, SymbiYosys proofs, coverage and mutation testing.
+  evidence: [results/course/c14_int8_dot_requant/run_5.json, flow/verif_gates.py]
+- id: build
+  leg: Vivado synthesis, place and route, and the bitstream
+  status: automated
+  note: The tools build fixed commands; the model never writes Tcl or shell.
+  evidence: [results/f2/agent_luna_05c2_run7.json, flow/build.tcl]
+- id: gates
+  leg: Gates that read the reports
+  status: automated
+  note: Code parses timing, design-rule, clock-crossing, methodology and exception reports into pass or fail.
+  evidence: [flow/gates.py, flow/exceptions_check.py]
+- id: repair
+  leg: The repair loop
+  status: automated
+  note: A failed gate sends the work back to the stage and role that own the failure, within a visit budget.
+  evidence: [results/f2/agent_luna_05c2_run7.json, agent/graph/stages.py]
+- id: approve
+  leg: A yes before a new bitstream is programmed
+  status: person
+  note: The controller always pauses here and waits for an answer.
+  evidence: [agent/graph/run.py]
+- id: program
+  leg: Programming the board over JTAG into SRAM
+  status: automated
+  note: Selected by the cable's serial number; volatile memory only.
+  evidence: [results/f2/agent_luna_05c2_run7_bringup.json, flow/program.tcl]
+- id: uart
+  leg: Tests over the board's UART shell
+  status: automated
+  note: Register reads and writes through a small shell built into every design.
+  evidence: [results/f2/agent_luna_05c2_run7_bringup.json, shell/README.md]
+- id: ila
+  leg: Captures of internal signals with the ILA, in batch
+  status: automated
+  note: Vivado's logic analyser, armed and read by script; the hand-built reference design passes all its captures.
+  evidence: [results/f0b/t1_dimmer_counter_bringup.json, flow/bringup.py]
+- id: xadc
+  leg: XADC readout of die temperature and core voltage
+  status: automated
+  note: Read over the UART every epoch of a soak; a temperature limit stops the design.
+  evidence: [hil/cdc_soak/host/read_counters.py]
+- id: soak
+  leg: The clock-crossing soak rig
+  status: automated
+  note: Hours of checked crossings with no one at the board, counted in hardware and read over the UART; a person says yes before a new bitstream is left to soak.
+  evidence: [hil/cdc_soak/README.md, hil/cdc_soak/RUNBOOK.md]
+- id: instruments
+  leg: Instrument captures at the pins
+  status: building
+  note: Scope, logic analyser, spectrum, video frames and audio, each read by a program; being measured.
+- id: hil_gate
+  leg: A hardware-in-the-loop stage that feeds measurements to the repair loop
+  status: building
+  note: Each design would declare what to measure and the tolerance, from the same model the simulation uses.
+- id: wiring
+  leg: Wiring an instrument to the board
+  status: person
+  note: Cables and attenuators are connected by hand, and video cables only with the board off.
+- id: flash
+  leg: Approving anything that writes flash
+  status: person
+  note: The flow refuses any flash write; it programs volatile memory only.
+  evidence: [flow/program.tcl]
+- id: merge
+  leg: Merging changes and deploying the site
+  status: person
+  note: The owner merges every change and runs every deploy.
+- id: buy
+  leg: Buying parts and boards
+  status: person
+  note: New instruments are bought only when a measurement shows a gap.

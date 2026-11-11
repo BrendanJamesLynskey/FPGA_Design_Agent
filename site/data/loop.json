@@ -1,0 +1,1313 @@
+{
+ "counts": {
+  "automated": 11,
+  "building": 2,
+  "person": 5,
+  "total": 18
+ },
+ "legs": [
+  {
+   "evidence": [
+    "results/course/c14_int8_dot_requant/run_5.json",
+    "agent/graph/interview.py"
+   ],
+   "id": "interview",
+   "leg": "Interview to a signed-off spec",
+   "note": "In development runs an oracle model answers the questions; for a real request the person who asked answers them.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "results/f2/agent_luna_05c2_run7.json",
+    "agent/graph/roles.py"
+   ],
+   "id": "write",
+   "leg": "Role agents write the model, the tests, the RTL and the constraints",
+   "note": "Each role writes only the files it owns, through a path jail in code.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "results/course/c14_int8_dot_requant/run_5.json",
+    "flow/verif_gates.py"
+   ],
+   "id": "simulate",
+   "leg": "Lint, simulation and formal checks",
+   "note": "Verilator lint, cocotb tests on Icarus or Verilator, SymbiYosys proofs, coverage and mutation testing.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "results/f2/agent_luna_05c2_run7.json",
+    "flow/build.tcl"
+   ],
+   "id": "build",
+   "leg": "Vivado synthesis, place and route, and the bitstream",
+   "note": "The tools build fixed commands; the model never writes Tcl or shell.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "flow/gates.py",
+    "flow/exceptions_check.py"
+   ],
+   "id": "gates",
+   "leg": "Gates that read the reports",
+   "note": "Code parses timing, design-rule, clock-crossing, methodology and exception reports into pass or fail.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "results/f2/agent_luna_05c2_run7.json",
+    "agent/graph/stages.py"
+   ],
+   "id": "repair",
+   "leg": "The repair loop",
+   "note": "A failed gate sends the work back to the stage and role that own the failure, within a visit budget.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "agent/graph/run.py"
+   ],
+   "id": "approve",
+   "leg": "A yes before a new bitstream is programmed",
+   "note": "The controller always pauses here and waits for an answer.",
+   "status": "person"
+  },
+  {
+   "evidence": [
+    "results/f2/agent_luna_05c2_run7_bringup.json",
+    "flow/program.tcl"
+   ],
+   "id": "program",
+   "leg": "Programming the board over JTAG into SRAM",
+   "note": "Selected by the cable's serial number; volatile memory only.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "results/f2/agent_luna_05c2_run7_bringup.json",
+    "shell/README.md"
+   ],
+   "id": "uart",
+   "leg": "Tests over the board's UART shell",
+   "note": "Register reads and writes through a small shell built into every design.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "results/f0b/t1_dimmer_counter_bringup.json",
+    "flow/bringup.py"
+   ],
+   "id": "ila",
+   "leg": "Captures of internal signals with the ILA, in batch",
+   "note": "Vivado's logic analyser, armed and read by script; the hand-built reference design passes all its captures.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "hil/cdc_soak/host/read_counters.py"
+   ],
+   "id": "xadc",
+   "leg": "XADC readout of die temperature and core voltage",
+   "note": "Read over the UART every epoch of a soak; a temperature limit stops the design.",
+   "status": "automated"
+  },
+  {
+   "evidence": [
+    "hil/cdc_soak/README.md",
+    "hil/cdc_soak/RUNBOOK.md"
+   ],
+   "id": "soak",
+   "leg": "The clock-crossing soak rig",
+   "note": "Hours of checked crossings with no one at the board, counted in hardware and read over the UART; a person says yes before a new bitstream is left to soak.",
+   "status": "automated"
+  },
+  {
+   "evidence": [],
+   "id": "instruments",
+   "leg": "Instrument captures at the pins",
+   "note": "Scope, logic analyser, spectrum, video frames and audio, each read by a program; being measured.",
+   "status": "building"
+  },
+  {
+   "evidence": [],
+   "id": "hil_gate",
+   "leg": "A hardware-in-the-loop stage that feeds measurements to the repair loop",
+   "note": "Each design would declare what to measure and the tolerance, from the same model the simulation uses.",
+   "status": "building"
+  },
+  {
+   "evidence": [],
+   "id": "wiring",
+   "leg": "Wiring an instrument to the board",
+   "note": "Cables and attenuators are connected by hand, and video cables only with the board off.",
+   "status": "person"
+  },
+  {
+   "evidence": [
+    "flow/program.tcl"
+   ],
+   "id": "flash",
+   "leg": "Approving anything that writes flash",
+   "note": "The flow refuses any flash write; it programs volatile memory only.",
+   "status": "person"
+  },
+  {
+   "evidence": [],
+   "id": "merge",
+   "leg": "Merging changes and deploying the site",
+   "note": "The owner merges every change and runs every deploy.",
+   "status": "person"
+  },
+  {
+   "evidence": [],
+   "id": "buy",
+   "leg": "Buying parts and boards",
+   "note": "New instruments are bought only when a measurement shows a gap.",
+   "status": "person"
+  }
+ ],
+ "stations": [
+  {
+   "desc": "the request in plain English, and questions on what it leaves open",
+   "fb": {
+    "kind": "answers to its questions",
+    "leg": "interview",
+    "src": {
+     "record": "results/course/c14_int8_dot_requant/run_5.json",
+     "what": "c14_int8_dot_requant, development run 5 (2026-11-07): Claude Code 2.1.318, claude-sonnet-5-5"
+    },
+    "values": [
+     "6 questions asked",
+     "3 answered, 3 defaulted"
+    ]
+   },
+   "gate": {
+    "leg": "interview",
+    "line": "no question left open",
+    "title": "spec signed off"
+   },
+   "id": "spec",
+   "title": "Spec and interview"
+  },
+  {
+   "desc": "Deep Agents or Claude Code; four roles, each in its own jail",
+   "fb": null,
+   "gate": null,
+   "id": "agents",
+   "title": "Role agents"
+  },
+  {
+   "desc": "cocotb on Icarus or Verilator; SymbiYosys for proofs",
+   "fb": {
+    "kind": "test results, coverage, mutation score",
+    "leg": "simulate",
+    "src": {
+     "record": "results/course/c14_int8_dot_requant/run_5.json",
+     "what": "c14_int8_dot_requant, development run 5 (2026-11-07): Claude Code 2.1.318, claude-sonnet-5-5"
+    },
+    "values": [
+     "functional bins 23 of 23",
+     "mutation score 95.0%"
+    ]
+   },
+   "gate": {
+    "leg": "gates",
+    "line": "test plan to mutation",
+    "title": "V0 to V3"
+   },
+   "id": "sim",
+   "title": "Simulators and formal"
+  },
+  {
+   "desc": "synthesis, place and route, and the bitstream",
+   "fb": {
+    "kind": "timing, DRC, CDC, methodology and exception reports",
+    "leg": "gates",
+    "src": {
+     "record": "results/course/c14_int8_dot_requant/run_5.json",
+     "what": "c14_int8_dot_requant, development run 5 (2026-11-07): Claude Code 2.1.318, claude-sonnet-5-5"
+    },
+    "values": [
+     "WNS +0.495 ns",
+     "power 0.118 W"
+    ]
+   },
+   "gate": {
+    "leg": "gates",
+    "line": "UltraFast stages",
+    "title": "stage gates"
+   },
+   "id": "vivado",
+   "title": "Vivado 2025.2"
+  },
+  {
+   "desc": "Artix-7, programmed over JTAG into SRAM; UART shell, ILA, XADC",
+   "fb": {
+    "kind": "UART tests, ILA captures, XADC temperature and voltage",
+    "leg": "uart",
+    "src": {
+     "record": "results/f2/agent_luna_05c2_run7_bringup.json",
+     "what": "the board run on the files of T1 Deep Agents run 7 (openai/gpt-6-luna), as written"
+    },
+    "values": [
+     "UART 3 of 3 passed",
+     "ILA trigger did not fit",
+     "XADC: being measured"
+    ]
+   },
+   "gate": {
+    "leg": "uart",
+    "line": "registers, captures",
+    "title": "board tests"
+   },
+   "id": "board",
+   "title": "Nexys A7 board"
+  },
+  {
+   "desc": "ADALM2000, Red Pitaya, HDMI and audio capture, Pluto and RTL-SDR",
+   "fb": {
+    "kind": "waveforms, spectra, frames, audio",
+    "leg": "instruments",
+    "src": null,
+    "values": [
+     "being measured"
+    ]
+   },
+   "gate": {
+    "leg": "hil_gate",
+    "line": "being built",
+    "title": "HIL checks"
+   },
+   "id": "instr",
+   "title": "Instruments"
+  }
+ ],
+ "tour": [
+  {
+   "at": "agents",
+   "cap": "Stage 0, Interview, visit 1 of 1. Plan and write: the clarify role turns the request into a spec and asks about what it leaves open.",
+   "path": [],
+   "ph": "work",
+   "stage": 0,
+   "station": "spec",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "spec",
+   "cap": "Stage 0, Interview, visit 1 of 1. Act: the clarify role's questions go to the person who asked, or in a development run to an oracle model.",
+   "path": [
+    [
+     "f-spec",
+     1
+    ]
+   ],
+   "ph": "act",
+   "stage": 0,
+   "station": "spec",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "spec",
+   "cap": "Stage 0, Interview, visit 1 of 1. Observe: the answers come back, and code checks that no question is left open.",
+   "fb": "spec",
+   "path": [
+    [
+     "o-spec",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 0,
+   "station": "spec",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "spec",
+   "cap": "Stage 0, Interview, visit 1 of 1. Decide: the stage's gates pass, so the controller moves on to stage 1, Plan.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-spec",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 0,
+   "station": "spec",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 1, Plan, visit 1 of 1. Plan and write: the RTL writer plans the architecture, clocks and resources.",
+   "path": [],
+   "ph": "work",
+   "stage": 1,
+   "station": "agents",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 1, Plan, visit 1 of 1. Decide: the stage's gates pass, so the controller moves on to stage 2, RTL and tests.",
+   "gate": "pass",
+   "path": [],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 1,
+   "station": "agents",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 2, RTL and tests, visit 1 of 4. Plan and write: the blind model, the test writer and the RTL writer write.",
+   "path": [],
+   "ph": "work",
+   "stage": 2,
+   "station": "sim",
+   "visit": 1,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 1 of 4. Act: they run lint and their own tests on the simulators (this run asked for verification to level V1).",
+   "path": [
+    [
+     "f-sim",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 2,
+   "station": "sim",
+   "visit": 1,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 1 of 4. Observe: lint and test results come back; code reads them, and no model judges them.",
+   "fb": "sim",
+   "path": [
+    [
+     "o-sim",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 2,
+   "station": "sim",
+   "visit": 1,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 1 of 4. Decide: not passed on this visit, so the controller sends the work back to stage 2, RTL and tests, for a repair. The record keeps the order of visits, not each failure's text.",
+   "gate": "fail",
+   "path": [
+    [
+     "r-sim",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "fail",
+   "stage": 2,
+   "station": "sim",
+   "visit": 1,
+   "visits": 4
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 2, RTL and tests, visit 2 of 4. Plan and write: the blind model, the test writer and the RTL writer write again, to repair what failed.",
+   "path": [],
+   "ph": "work",
+   "stage": 2,
+   "station": "sim",
+   "visit": 2,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 2 of 4. Act: they run lint and their own tests on the simulators (this run asked for verification to level V1).",
+   "path": [
+    [
+     "f-sim",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 2,
+   "station": "sim",
+   "visit": 2,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 2 of 4. Observe: lint and test results come back; code reads them, and no model judges them.",
+   "fb": "sim",
+   "path": [
+    [
+     "o-sim",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 2,
+   "station": "sim",
+   "visit": 2,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 2 of 4. Decide: the stage's gates pass, so the controller moves on to stage 3, Constraints.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-sim",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 2,
+   "station": "sim",
+   "visit": 2,
+   "visits": 4
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 3, Constraints, visit 1 of 3. Plan and write: the RTL writer writes.",
+   "path": [],
+   "ph": "work",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 3
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 3, Constraints, visit 1 of 3. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 3
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 3, Constraints, visit 1 of 3. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 3
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 3, Constraints, visit 1 of 3. Decide: the stage's gates pass, so the controller moves on to stage 4, Synthesis.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 3
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 4, Synthesis, visit 1 of 2. Plan and write: the RTL writer writes.",
+   "path": [],
+   "ph": "work",
+   "stage": 4,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 2
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 4, Synthesis, visit 1 of 2. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 4,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 2
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 4, Synthesis, visit 1 of 2. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 4,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 2
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 4, Synthesis, visit 1 of 2. Decide: not passed on this visit, so the controller sends the work back to stage 2, RTL and tests, for a repair. The record keeps the order of visits, not each failure's text.",
+   "gate": "fail",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "fail",
+   "stage": 4,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 2
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 2, RTL and tests, visit 3 of 4. Plan and write: the blind model, the test writer and the RTL writer write again, to repair what failed.",
+   "path": [],
+   "ph": "work",
+   "stage": 2,
+   "station": "sim",
+   "visit": 3,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 3 of 4. Act: they run lint and their own tests on the simulators (this run asked for verification to level V1).",
+   "path": [
+    [
+     "f-sim",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 2,
+   "station": "sim",
+   "visit": 3,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 3 of 4. Observe: lint and test results come back; code reads them, and no model judges them.",
+   "fb": "sim",
+   "path": [
+    [
+     "o-sim",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 2,
+   "station": "sim",
+   "visit": 3,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 3 of 4. Decide: not passed on this visit, so the controller sends the work back to stage 2, RTL and tests, for a repair. The record keeps the order of visits, not each failure's text.",
+   "gate": "fail",
+   "path": [
+    [
+     "r-sim",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "fail",
+   "stage": 2,
+   "station": "sim",
+   "visit": 3,
+   "visits": 4
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 2, RTL and tests, visit 4 of 4. Plan and write: the blind model, the test writer and the RTL writer write again, to repair what failed.",
+   "path": [],
+   "ph": "work",
+   "stage": 2,
+   "station": "sim",
+   "visit": 4,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 4 of 4. Act: they run lint and their own tests on the simulators (this run asked for verification to level V1).",
+   "path": [
+    [
+     "f-sim",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 2,
+   "station": "sim",
+   "visit": 4,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 4 of 4. Observe: lint and test results come back; code reads them, and no model judges them.",
+   "fb": "sim",
+   "path": [
+    [
+     "o-sim",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 2,
+   "station": "sim",
+   "visit": 4,
+   "visits": 4
+  },
+  {
+   "at": "sim",
+   "cap": "Stage 2, RTL and tests, visit 4 of 4. Decide: the stage's gates pass, so the controller moves on to stage 3, Constraints.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-sim",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 2,
+   "station": "sim",
+   "visit": 4,
+   "visits": 4
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 3, Constraints, visit 2 of 3. Plan and write: the RTL writer writes again, to repair what failed.",
+   "path": [],
+   "ph": "work",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 2,
+   "visits": 3
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 3, Constraints, visit 2 of 3. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 2,
+   "visits": 3
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 3, Constraints, visit 2 of 3. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 2,
+   "visits": 3
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 3, Constraints, visit 2 of 3. Decide: not passed on this visit, so the controller sends the work back to stage 3, Constraints, for a repair. The record keeps the order of visits, not each failure's text.",
+   "gate": "fail",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "fail",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 2,
+   "visits": 3
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 3, Constraints, visit 3 of 3. Plan and write: the RTL writer writes again, to repair what failed.",
+   "path": [],
+   "ph": "work",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 3,
+   "visits": 3
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 3, Constraints, visit 3 of 3. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 3,
+   "visits": 3
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 3, Constraints, visit 3 of 3. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 3,
+   "visits": 3
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 3, Constraints, visit 3 of 3. Decide: the stage's gates pass, so the controller moves on to stage 4, Synthesis.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 3,
+   "station": "vivado",
+   "visit": 3,
+   "visits": 3
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 4, Synthesis, visit 2 of 2. Plan and write: the RTL writer writes again, to repair what failed.",
+   "path": [],
+   "ph": "work",
+   "stage": 4,
+   "station": "vivado",
+   "visit": 2,
+   "visits": 2
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 4, Synthesis, visit 2 of 2. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 4,
+   "station": "vivado",
+   "visit": 2,
+   "visits": 2
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 4, Synthesis, visit 2 of 2. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 4,
+   "station": "vivado",
+   "visit": 2,
+   "visits": 2
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 4, Synthesis, visit 2 of 2. Decide: the stage's gates pass, so the controller moves on to stage 5, Implementation.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 4,
+   "station": "vivado",
+   "visit": 2,
+   "visits": 2
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 5, Implementation, visit 1 of 1. Plan and write: the RTL writer writes.",
+   "path": [],
+   "ph": "work",
+   "stage": 5,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 5, Implementation, visit 1 of 1. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 5,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 5, Implementation, visit 1 of 1. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 5,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 5, Implementation, visit 1 of 1. Decide: the stage's gates pass, so the controller moves on to stage 6, Timing closure.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 5,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 6, Timing closure, visit 1 of 1. Plan and write: the RTL writer writes.",
+   "path": [],
+   "ph": "work",
+   "stage": 6,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 6, Timing closure, visit 1 of 1. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 6,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 6, Timing closure, visit 1 of 1. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 6,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 6, Timing closure, visit 1 of 1. Decide: the stage's gates pass, so the controller moves on to stage 7, Power closure.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 6,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 7, Power closure, visit 1 of 1. Plan and write: the RTL writer writes.",
+   "path": [],
+   "ph": "work",
+   "stage": 7,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 7, Power closure, visit 1 of 1. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 7,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 7, Power closure, visit 1 of 1. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 7,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 7, Power closure, visit 1 of 1. Decide: the stage's gates pass, so the controller moves on to stage 8, Design-rule closure.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 7,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 8, Design-rule closure, visit 1 of 1. Plan and write: the RTL writer writes.",
+   "path": [],
+   "ph": "work",
+   "stage": 8,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 8, Design-rule closure, visit 1 of 1. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 8,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 8, Design-rule closure, visit 1 of 1. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 8,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 8, Design-rule closure, visit 1 of 1. Decide: the stage's gates pass, so the controller moves on to stage 9, Board and debug.",
+   "gate": "pass",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 8,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "agents",
+   "cap": "Stage 9, Board and debug, visit 1 of 1. Plan and write: the RTL writer and the test writer prepare the bring-up files.",
+   "path": [],
+   "ph": "work",
+   "stage": 9,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 9, Board and debug, visit 1 of 1. Act: they run Vivado on the design.",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 9,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 9, Board and debug, visit 1 of 1. Observe: Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them.",
+   "fb": "vivado",
+   "path": [
+    [
+     "o-vivado",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 9,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "vivado",
+   "cap": "Stage 9, Board and debug, visit 1 of 1. Decide: both bitstreams built and every gate passed (all 15 build gates pass).",
+   "gate": "pass",
+   "path": [
+    [
+     "r-vivado",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "pass",
+   "stage": 9,
+   "station": "vivado",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "agents",
+   "cap": "The run pauses for a yes before anything is programmed, as it always does. With the owner's yes, the board tests then ran on the agent's files as written.",
+   "path": [],
+   "person": "approve",
+   "ph": "approve",
+   "stage": 9,
+   "station": "board",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "board",
+   "cap": "Act: the bitstream is programmed over JTAG into the board's SRAM, selected by the cable's serial number (2.2 s).",
+   "path": [
+    [
+     "f-sim",
+     0
+    ],
+    [
+     "f-viv",
+     0
+    ],
+    [
+     "f-board",
+     0
+    ]
+   ],
+   "ph": "act",
+   "stage": 9,
+   "station": "board",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "board",
+   "cap": "Observe: 3 of 3 tests over the UART shell pass. The ILA trigger the agent wrote needs more comparators than the core has, so Vivado never arms it and the captures fail.",
+   "fb": "board",
+   "path": [
+    [
+     "o-board",
+     0
+    ]
+   ],
+   "ph": "observe",
+   "stage": 9,
+   "station": "board",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "board",
+   "cap": "Decide: the board tests fail. Since this run, such a failure goes back to stage 9 with Vivado's error lines, and a dry check before programming catches this kind of trigger.",
+   "gate": "fail",
+   "path": [
+    [
+     "r-board",
+     0
+    ]
+   ],
+   "ph": "decide",
+   "rail": "fail",
+   "stage": 9,
+   "station": "board",
+   "visit": 1,
+   "visits": 1
+  },
+  {
+   "at": "instr",
+   "cap": "The instruments were not used in this run: their captures are being measured, and a stage that feeds them to the repair loop is being built.",
+   "path": [],
+   "ph": "end",
+   "stage": 9,
+   "station": "instr",
+   "visit": 1,
+   "visits": 1
+  }
+ ],
+ "tour_info": {
+  "board_record": "results/f2/agent_luna_05c2_run7_bringup.json",
+  "date": "2026-11-03",
+  "design": "t1_dimmer_counter",
+  "harness": "deepagents",
+  "model": "openai/gpt-6-luna",
+  "program_s": 2.2,
+  "record": "results/f2/agent_luna_05c2_run7.json",
+  "repairs": 4,
+  "run": "luna_run7",
+  "usd": 0.19,
+  "visits": 16,
+  "wall_h": 1.46
+ }
+}
