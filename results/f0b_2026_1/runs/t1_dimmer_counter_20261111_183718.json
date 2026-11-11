@@ -1,0 +1,255 @@
+{
+  "design": "designs/t1_dimmer_counter",
+  "started": "2026-11-11T18:37:18",
+  "git_commit": "16e18bcc70f4eb160378f39f120426d4ec766884",
+  "git_dirty": false,
+  "steps": {
+    "power_ok": {
+      "pass": true,
+      "base": {
+        "pass": true,
+        "source": "wall",
+        "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+        "limit_w": 2.0,
+        "junction_limit_c": 85.0,
+        "total_w": 0.15,
+        "junction_c": 42.7,
+        "dynamic_w": 0.036,
+        "static_w": 0.114,
+        "confidence": "Low",
+        "environment": {
+          "ambient_c": 40.0,
+          "airflow_lfm": 0.0,
+          "heatsink": "none",
+          "theta_ja_c_per_w": 18.2,
+          "board": "small (4\"x4\")",
+          "board_layers": "4to7 (4 to 7 Layers)"
+        },
+        "supplies_a": {
+          "vccint": 0.034,
+          "vccaux": 0.021,
+          "vcco33": 0.013,
+          "vccbram": 0.001,
+          "vccadc": 0.02
+        },
+        "rails": {
+          "vccint": {
+            "a": 0.034,
+            "limit_a": 2.4
+          },
+          "rail_1v8": {
+            "a": 0.041,
+            "limit_a": 0.38
+          },
+          "vcco33": {
+            "a": 0.013,
+            "limit_a": 1.9
+          }
+        },
+        "why": ""
+      },
+      "ila": {
+        "pass": true,
+        "source": "wall",
+        "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+        "limit_w": 2.0,
+        "junction_limit_c": 85.0,
+        "total_w": 0.163,
+        "junction_c": 43.0,
+        "dynamic_w": 0.049,
+        "static_w": 0.114,
+        "confidence": "Low",
+        "environment": {
+          "ambient_c": 40.0,
+          "airflow_lfm": 0.0,
+          "heatsink": "none",
+          "theta_ja_c_per_w": 18.2,
+          "board": "small (4\"x4\")",
+          "board_layers": "4to7 (4 to 7 Layers)"
+        },
+        "supplies_a": {
+          "vccint": 0.048,
+          "vccaux": 0.021,
+          "vcco33": 0.013,
+          "vccbram": 0.001,
+          "vccadc": 0.02
+        },
+        "rails": {
+          "vccint": {
+            "a": 0.048,
+            "limit_a": 2.4
+          },
+          "rail_1v8": {
+            "a": 0.041,
+            "limit_a": 0.38
+          },
+          "vcco33": {
+            "a": 0.013,
+            "limit_a": 1.9
+          }
+        },
+        "why": ""
+      },
+      "seconds": 0.0
+    },
+    "discover": {
+      "pass": true,
+      "board": "nexys_a7_100t",
+      "cable_serial": "...B73A",
+      "part": "xc7a100t",
+      "idcode": "13631093",
+      "uart": "FT2232 interface 1 (found)",
+      "targets_seen": 1,
+      "vivado_version": "2026.1",
+      "seconds": 20.5
+    },
+    "program_base": {
+      "variant": "base",
+      "build_stamp": "dfd4624e",
+      "cable_serial": "...B73A",
+      "power_ok": {
+        "pass": true,
+        "source": "wall",
+        "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+        "limit_w": 2.0,
+        "junction_limit_c": 85.0,
+        "total_w": 0.15,
+        "junction_c": 42.7,
+        "dynamic_w": 0.036,
+        "static_w": 0.114,
+        "confidence": "Low",
+        "environment": {
+          "ambient_c": 40.0,
+          "airflow_lfm": 0.0,
+          "heatsink": "none",
+          "theta_ja_c_per_w": 18.2,
+          "board": "small (4\"x4\")",
+          "board_layers": "4to7 (4 to 7 Layers)"
+        },
+        "supplies_a": {
+          "vccint": 0.034,
+          "vccaux": 0.021,
+          "vcco33": 0.013,
+          "vccbram": 0.001,
+          "vccadc": 0.02
+        },
+        "rails": {
+          "vccint": {
+            "a": 0.034,
+            "limit_a": 2.4
+          },
+          "rail_1v8": {
+            "a": 0.041,
+            "limit_a": 0.38
+          },
+          "vcco33": {
+            "a": 0.013,
+            "limit_a": 1.9
+          }
+        },
+        "why": ""
+      },
+      "pass": true,
+      "device": "xc7a100t_0",
+      "part": "xc7a100t",
+      "done_pin": "1",
+      "program_ms": 401,
+      "ila_cores": 0,
+      "vivado_version": "2026.1",
+      "seconds": 21.3
+    },
+    "uart_tests": {
+      "pass": true,
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "cases": {
+        "test_identity_and_build_stamp": 0.131,
+        "test_worked_bytes_from_protocol_md": 0.052,
+        "test_scratch_loopback_random": 32.158,
+        "test_error_responses_and_counters": 0.207,
+        "test_sync_hunting": 0.015,
+        "test_part_frame_times_out": 0.255,
+        "test_framing_error_drops_the_part_frame": 0.271,
+        "test_t1_registers_against_the_model": 5.205
+      },
+      "files": [
+        "designs/t1_dimmer_counter/tests/test_t1_hw.py"
+      ],
+      "seconds": 38.7
+    },
+    "program_ila": {
+      "variant": "ila",
+      "build_stamp": "dfd4624e",
+      "cable_serial": "...B73A",
+      "power_ok": {
+        "pass": true,
+        "source": "wall",
+        "source_from": "/home/brendan/.config/fpga_design_agent/boards.yaml boards.nexys_a7_100t.power_source",
+        "limit_w": 2.0,
+        "junction_limit_c": 85.0,
+        "total_w": 0.163,
+        "junction_c": 43.0,
+        "dynamic_w": 0.049,
+        "static_w": 0.114,
+        "confidence": "Low",
+        "environment": {
+          "ambient_c": 40.0,
+          "airflow_lfm": 0.0,
+          "heatsink": "none",
+          "theta_ja_c_per_w": 18.2,
+          "board": "small (4\"x4\")",
+          "board_layers": "4to7 (4 to 7 Layers)"
+        },
+        "supplies_a": {
+          "vccint": 0.048,
+          "vccaux": 0.021,
+          "vcco33": 0.013,
+          "vccbram": 0.001,
+          "vccadc": 0.02
+        },
+        "rails": {
+          "vccint": {
+            "a": 0.048,
+            "limit_a": 2.4
+          },
+          "rail_1v8": {
+            "a": 0.041,
+            "limit_a": 0.38
+          },
+          "vcco33": {
+            "a": 0.013,
+            "limit_a": 1.9
+          }
+        },
+        "why": ""
+      },
+      "pass": true,
+      "device": "xc7a100t_0",
+      "part": "xc7a100t",
+      "done_pin": "1",
+      "program_ms": 633,
+      "ila_cores": 1,
+      "vivado_version": "2026.1",
+      "seconds": 21.5
+    },
+    "ila_captures": {
+      "pass": false,
+      "why": "StepFailed: count_write: the ILA was never armed (see ila_capture.stdout.txt)",
+      "seconds": 20.7
+    }
+  },
+  "pass": false,
+  "cable_serial": "...B73A",
+  "vivado_version": "2026.1",
+  "build_stamp": "dfd4624e",
+  "failed_step": "ila_captures",
+  "seconds": 123.1,
+  "tools": {
+    "vivado": "2026.1",
+    "python": "3.12.3",
+    "pyserial": "3.5",
+    "pytest": "9.2.0"
+  }
+}
