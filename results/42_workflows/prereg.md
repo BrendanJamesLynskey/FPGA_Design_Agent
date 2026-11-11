@@ -151,3 +151,37 @@ not from graph nodes. For the record of what H1 is measured against:
   that variant is not in this run.
 - **H7 (prompt caching) is not run here.** It needs an OpenRouter caching path for the model in use; luna's provider behaviour was
   not checked, so no claim is made.
+
+## Amendment 3 (2026-11-11 about 14:00, after 7 recorded runs; before any further run): infrastructure failures and a retry
+
+**What happened.** 3 of the first 7 recorded runs ended with rc 1 and a `json.decoder.JSONDecodeError: Expecting ':' delimiter` at a
+character position of 132,528 or more, inside the `model` node of the graph (the blind model writer): `t1_gray_stepper` H2,
+`t1_gray_stepper` H9 and `d24_registered_outputs` A0, so the baseline is hit as often as the arms. **Cause, as far as the logs
+show:** the driver kept only the last 800 characters of each run's output, so the full traceback was not kept; what is known is the
+exception, the node, and that the document being parsed was 130,000 characters or more, which no legitimate tool call or response
+here is. It is therefore a malformed or padded provider response (the body, or a tool call's `arguments` string); the model client
+parses both with `json.loads`. This is not confirmed to the caller line. Not an arm effect.
+
+**Handling (fixed now, applied equally to all arms):**
+
+1. A run that ends with rc != 0, no summary and `JSONDecodeError` in its output is an **infrastructure failure**
+   (`infra_failure` in `runs.jsonl`). It is not an arm failure: it is listed in the analysis, left out of every paired comparison, and
+   its slot is **re-run**, up to 3 attempts per (task, repeat, arm); a slot with 3 infrastructure failures is reported as not run.
+   The three runs above are marked this way. Their tokens and cost are the lower bound recovered from the finished role visits'
+   `role_usage.jsonl`; their ledger rows carry the 0.75 ceiling already charged (conservative, left as is).
+2. `OpenRouterClient` (`agent/graph/llm.py`) asks for the response again, up to 2 extra times, when the body or a tool call's
+   `arguments` fails to parse, and prints `FDA_MALFORMED attempt N: ...`. This changes **no request**, so no golden hash changes; it
+   only matters when a response is malformed. It is in the new frozen code for every arm from now on. Runs recorded before it
+   (valid ones) ran under the previous commit; the retry cannot have changed a run that never saw a malformed response, and the
+   per-run record names the code commit (`code`). The driver now keeps the last 2,500 characters of every failed run's output and counts
+   `FDA_MALFORMED` lines per run (`malformed_retries`), so the next occurrence can be traced.
+3. Re-running a failed slot is allowed to change which of the arm's repeats is run later than its block-mates; the pairing is by
+   (task, repeat), so the block is complete only when all four arms have a valid run.
+
+## Amendment 4 (2026-11-11, environment, owner rule "Exempt sim-only runs"; does not touch the arms)
+
+Sim-only agent runs (no Vivado, no Verilator build of a large design) no longer take a heavy slot. Both of this brief's slot
+locks were released at 13:53 (owner-checked case release). The driver takes none; before each run it waits until the 1-minute load is
+under 6 and more than 12 GiB is available. Workers run as before under `systemd-run --user --scope -p MemoryMax=6G` (scope names
+`b42-w1`, `b42-w2`, created by this session). Workers are restarted for amendment 3 with repeat 1 only (`--seeds 1`) and per-run
+claims; repeats 2 and 3 are not run in this session for lack of time (see the report), stated here and not changed later.

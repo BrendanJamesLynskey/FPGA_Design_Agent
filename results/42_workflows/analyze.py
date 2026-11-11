@@ -51,13 +51,16 @@ METRICS = {   # name: (getter, stat, unit)
 
 
 def main() -> None:
-    rs = rows()
+    allrows = rows()
+    infra = [r for r in allrows if r.get('infra_failure')]
+    rs = [r for r in allrows if not r.get('infra_failure')]
     by = {}
     for r in rs:
         by.setdefault((r["task"], r["seed"]), {})[r["arm"]] = r
     full = {k: v for k, v in by.items() if all(a in v for a in ARMS)}
     md = ["# Brief 42 round 1: paired analysis (written by analyze.py)", "",
-          f"Runs recorded: {len(rs)}. Complete blocks (all four arms): {len(full)} of {len(by)} started; "
+          f"Runs recorded: {len(allrows)}, of which {len(infra)} infrastructure failures (malformed provider response; re-run, not counted: "
+          + ", ".join(f"{r['task']} {r['arm']}" for r in infra) + f"). Valid runs: {len(rs)}. Complete blocks (all four arms): {len(full)} of {len(by)} started; "
           "blocks with a missing arm are left out of the paired rows.", ""]
     if not full:
         md.append("No complete block yet.")

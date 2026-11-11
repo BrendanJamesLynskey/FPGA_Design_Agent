@@ -393,3 +393,38 @@ def test_h9_offers_report_digest_only_with_the_arm() -> None:
     from agent.graph.run import FLOW_TOOLS, effective_tools
     assert "report_digest" in FLOW_TOOLS
     assert all("report_digest" not in effective_tools(r, n, "V3") for r in ("rtl", "tests") for n in (2, 3, 4))
+
+
+# ---- amendment 3: malformed provider responses are asked for again ---------------------------------------------------
+
+
+def test_malformed_response_is_retried_for_every_arm() -> None:
+    from types import SimpleNamespace as NS
+
+    from agent.graph.llm import OpenRouterClient
+
+    def resp(args: str):
+        call = NS(id="c1", function=NS(name="write_file", arguments=args))
+        msg = NS(content="", tool_calls=[call])
+        return NS(usage=NS(prompt_tokens=3, completion_tokens=2, model_extra={"cost": 0.001}), choices=[NS(message=msg)],
+                  model_extra={}, provider="p")
+
+    seq = ["{\n\n\n", '{"path": "a"', '{"path": "a"}']          # two malformed bodies, then a good one
+
+    class Chat:
+        n = 0
+
+        def create(self, **kw):
+            a = seq[self.n]
+            self.n += 1
+            return resp(a)
+
+    c = OpenRouterClient.__new__(OpenRouterClient)
+    c.model, c._c = "x/y", NS(chat=NS(completions=Chat()))
+    r = c([{"role": "user", "content": "hi"}], None)
+    assert r.tool_calls[0]["args"] == {"path": "a"} and c.malformed_retries == 2
+
+    seq[:] = ["{"] * 3                                         # always malformed: the third failure is raised
+    c._c.chat.completions.n = 0
+    with pytest.raises(json.JSONDecodeError):
+        c([{"role": "user", "content": "hi"}], None)

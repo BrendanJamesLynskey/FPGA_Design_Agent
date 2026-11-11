@@ -54,14 +54,35 @@ def rows() -> list[dict]:
 ROUND1_TASKS = 4                            # tasks cut, not seeds (brief): the first four of TASKS; the rest only with --extension
 
 
-def blocks(extension: bool = False) -> list[tuple[int, str]]:
+def blocks(extension: bool = False, seeds: tuple[int, ...] = SEEDS) -> list[tuple[int, str]]:
     ts = list(TASKS) if extension else list(TASKS)[:ROUND1_TASKS]
-    return [(s, t) for s in SEEDS for t in ts]
+    return [(s, t) for s in seeds for t in ts]
 
 
-def claim(block: tuple[int, str], tag: str) -> bool:
+def valid(r: dict) -> bool:
+    """A record that counts: not an infrastructure failure (amendment 3)."""
+    return not r.get("infra_failure")
+
+
+def needed(seed: int, task: str, arm: str) -> bool:
+    rs = [r for r in rows() if (r["seed"], r["task"], r["arm"]) == (seed, task, arm)]
+    return not any(valid(r) for r in rs) and sum(1 for r in rs if r.get("infra_failure")) < 3
+
+
+def wait_for_headroom() -> None:
+    """Exempt sim-only runs (owner, 2026-11-11): no heavy slot, but only while load is under 6 and over 12 GB is free."""
+    while True:
+        load = float(Path("/proc/loadavg").read_text().split()[0])
+        avail = next(int(x.split()[1]) for x in Path("/proc/meminfo").read_text().splitlines() if x.startswith("MemAvailable"))
+        if load < 6 and avail > 12 * 1024 * 1024:
+            return
+        print(f"waiting: load {load}, MemAvailable {avail // 1048576} GiB", flush=True)
+        time.sleep(60)
+
+
+def claim(block: tuple[int, str], arm: str, tag: str) -> bool:
     CLAIMS.mkdir(exist_ok=True)
-    d = CLAIMS / f"s{block[0]}_{block[1]}"
+    d = CLAIMS / f"s{block[0]}_{block[1]}_{arm}"
     try:
         d.mkdir()
     except FileExistsError:
@@ -166,7 +187,7 @@ def one_run(root: Path, task: str, seed: int, arm: str, tag: str) -> dict:
     new = sorted({q.name for q in runs.iterdir()} - before) if runs.is_dir() else []
     rid = next((n for n in new if (runs / n / "config.json").is_file()), None)
     rec = {"task": task, "seed": seed, "arm": arm, "run_id": rid, "rc": p.returncode, "wall_s": wall, "hard_limit": hard,
-           "worker": tag}
+           "worker": tag, "malformed_retries": (out or "").count("FDA_MALFORMED"), "code": FROZEN.read_text().strip()[:8]}
     summ = runs / str(rid) / "summary.json" if rid else None
     if summ and summ.is_file():
         s = json.loads(summ.read_text())
@@ -177,9 +198,15 @@ def one_run(root: Path, task: str, seed: int, arm: str, tag: str) -> dict:
                    per_stage={k: {"tokens": v["tokens"], "cost_usd": v["cost_usd"], "calls": v["calls"]}
                               for k, v in (s.get("per_stage") or {}).items()})
     else:
-        rec["error"] = (out or "")[-800:]
-        cfg = runs / str(rid) / "config.json" if rid else None
-        if cfg and cfg.is_file():                                # a hard-killed run: the meter's last state is not saved
+        rec["error"] = (out or "")[-2500:]
+        if rid and p.returncode and "JSONDecodeError" in (out or ""):
+            rec["infra_failure"] = "malformed provider response (JSONDecodeError in the model client)"
+        ru = runs / str(rid) / "role_usage.jsonl" if rid else None
+        if ru and ru.is_file():                                  # no summary: the finished role visits' usage is a lower bound
+            vs = [json.loads(x) for x in ru.read_text().splitlines() if x.strip()]
+            rec.update(cost_usd=round(sum(v.get("cost_usd") or 0 for v in vs), 6), tokens=sum(v.get("tokens") or 0 for v in vs),
+                       cost_lower_bound=True)
+        else:
             rec["cost_usd"] = None
     if rid:
         design = runs / rid / task
@@ -188,16 +215,19 @@ def one_run(root: Path, task: str, seed: int, arm: str, tag: str) -> dict:
     return rec
 
 
-def run_all(root: Path, tag: str, extension: bool = False) -> int:
+def run_all(root: Path, tag: str, extension: bool = False, seeds: tuple[int, ...] = (1,)) -> int:
     sha = FROZEN.read_text().strip()
-    for i, block in enumerate(blocks(extension)):
-        if not claim(block, tag):
-            continue
+    for i, block in enumerate(blocks(extension, seeds)):
         seed, task = block
         order = list(ARMS)
         k = (i + seed) % len(ARMS)
         order = order[k:] + order[:k]                          # rotate the arm order block by block
         for arm in order:
+            if (HERE / "STOP").exists():
+                print("STOP file: no new run", flush=True)
+                return 0
+            if not needed(seed, task, arm) or not claim(block, arm, tag):
+                continue
             head = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
             if head != sha or subprocess.run(["git", "-C", str(root), "status", "--porcelain", "--", "agent", "flow"],
                                              capture_output=True, text=True).stdout.strip():
@@ -206,17 +236,16 @@ def run_all(root: Path, tag: str, extension: bool = False) -> int:
             if spent() + RUN_USD > CAP_USD:
                 print(f"cap: spent {spent():.4f}, the next run could pass {CAP_USD}", flush=True)
                 return 3
+            wait_for_headroom()
             rec = one_run(root, task, seed, arm, tag)
             append(LOG, json.dumps(rec) + "\n")
             append(LEDGER, f"{time.strftime('%F')},{BRIEF},{rec.get('run_id')},{MODEL},{task}_s{seed}_{arm},,"
                            f"{charged(rec)},"
                            f"\"{'provider-reported' if rec.get('cost_usd') is not None else 'CEILING charged: cost lost to a hard kill'}; "
-                           f"deny; stop: {rec.get('stop')}; hard_limit {rec['hard_limit']}\"\n")
-            print(json.dumps({k: rec.get(k) for k in ("task", "seed", "arm", "run_id", "wall_s", "cost_usd", "stop", "score")}),
-                  flush=True)
-            if (HERE / "STOP").exists():
-                print("STOP file: finishing after this run", flush=True)
-                return 0
+                           f"deny; stop: {rec.get('stop')}; hard_limit {rec['hard_limit']}"
+                           f"{'; INFRA FAILURE ' + rec['infra_failure'] if rec.get('infra_failure') else ''}\"\n")
+            print(json.dumps({k: rec.get(k) for k in ("task", "seed", "arm", "run_id", "wall_s", "cost_usd", "stop", "score",
+                                                      "infra_failure")}), flush=True)
     return 0
 
 
@@ -244,8 +273,9 @@ if __name__ == "__main__":
     ap.add_argument("cmd", choices=["run", "table"])
     ap.add_argument("--code", type=Path)
     ap.add_argument("--tag", default="w1")
+    ap.add_argument("--seeds", default="1", help="comma-separated repeat indices to run (default 1)")
     ap.add_argument("--extension", action="store_true", help="also the other four tasks (only after round 1 is complete)")
     a = ap.parse_args()
     if a.cmd == "table":
         raise SystemExit(table())
-    raise SystemExit(run_all(a.code.resolve(), a.tag, a.extension))
+    raise SystemExit(run_all(a.code.resolve(), a.tag, a.extension, tuple(int(x) for x in a.seeds.split(','))))
