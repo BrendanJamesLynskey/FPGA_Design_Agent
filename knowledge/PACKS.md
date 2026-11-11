@@ -9,9 +9,9 @@ skills it loaded. **No pack content is published here.**
   PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
   `217c751` brief 04h, the Artix-7 family and device layers; earlier: `16696e6` PR #6 brief 04f, `6db99dd` PR #5 04e,
   `5fa656fb8312` PR #4 04c, `238fec497e24` PR #3 04d, `6a677334d5c4` PR #2 F1A2).
-- **Skill-index vectors (brief 36):** `indexes/skill_vectors.npz` sha256 `69438fdd63f44b23a59c75509d66d4daeffcb9798de2097886643d238c123c95`,
-  `indexes/skill_vectors.json` sha256 `01dd54b09d7297e240cbd106ee2a29ff13b57bd3f6fac47581f719e6b31f6051` (216 skills,
-  BAAI/bge-small-en-v1.5, 384 dimensions; knowledge PR `b36-skill-routing`, based on `a598197`). Derived data, in no unit's hash;
+- **Skill-index vectors (brief 36):** `indexes/skill_vectors.npz` sha256 `8cffa6ab47ad2379a8c01dd58f6d33dd08c82c20bbc2be3fa7dd89f674bb9558`,
+  `indexes/skill_vectors.json` sha256 `52492523aad97a236648abaf1fa534768e411447f5f6ee44d7de2a12d64b0c26` (222 skills,
+  BAAI/bge-small-en-v1.5, 384 dimensions; knowledge PR `b36-skill-routing`, merged with `e3cf892`). Derived data, in no unit's hash;
   `agent/core/skill_index.py` checks each skill's SHA-256 against the manifest and searches a changed skill by BM25 alone.
 - **Vivado version the bank was measured on: 2025.2** (brief 21, 2026-11-10). Every version-bound fact (rule severities, command
   options, IP versions, measured numbers, cited guide versions) is indexed with the version it was verified on in the private
