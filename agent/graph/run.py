@@ -54,7 +54,7 @@ from flow import srcorder
 
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "mutate", "build", "gates", "report", "check_constraints", "search_docs",
-              "load_skill", "board_constraints", "spec_items")
+              "load_skill", "board_constraints", "spec_items", "skill_index", "skill_excerpt")
 
 
 class ArmBlocked(Exception):
@@ -79,6 +79,8 @@ class State(TypedDict, total=False):
     note_role: str      # the owner's edit prompt goes to this role (default: the stage's writer)
     arch_source: str    # who wrote the approved architecture: agent | owner
     hand_edit_only: bool  # the owner edited by hand and gave no prompt: re-run the gates on their files, no agent turn
+    skill_shortlist: dict  # brief 36 (skill routing on): this stage's ranked skill names + descriptions, never bodies
+    skill_notes: list     # brief 36: {stage, skill, heading} citations of what earlier stages loaded
 
 
 @dataclass
@@ -106,6 +108,9 @@ class Config:
     spectest_model: str = "claude-sonnet-5-5"       # the spec-test role and its triage step (own Claude Code calls, not a role of the map)
     spectest_effort: str = "medium"
     spectest_max_loops: int = 2     # design_wrong round trips per run before the result is recorded as unresolved
+    skill_routing: str = "off"      # brief 36: off (eval-1 path) | router (shortlist node + skill_index/skill_excerpt + ranked load_skill)
+    router_model: str | None = None  # brief 36: the cheap classifier's OpenRouter model (None: rules only)
+    router_k: int = 8               # brief 36: skills in the shortlist
 
     def role_models(self, stage: str | None = None) -> dict:
         """role -> {harness, model, effort}, with the ``role@stage`` overrides of ``stage`` applied. The interview
@@ -132,6 +137,8 @@ class Runtime:
     budget_notes: list = field(default_factory=list)        # roles whose turn budget ended this visit (05g)
     spectest_llm: Callable[[str, str], str] | None = None   # 08f: the spec-test role's model call (None: a Claude Code call per cfg)
     spectest_triage_llm: Callable[[str, str], str] | None = None
+    skill_shortlist: dict | None = None                     # brief 36: set by node_route_skills, read by run_role
+    skill_notes: list = field(default_factory=list)
 
 
 _RT: dict[str, Runtime] = {}
@@ -453,7 +460,8 @@ def drop_superseded(design: Path, jail, before: list[Path], written: dict[str, s
     return gone
 
 
-KNOWLEDGE_TOOLS = ("load_skill", "search_docs", "board_constraints")     # never removed or reduced for any role (05f)
+KNOWLEDGE_TOOLS = ("load_skill", "search_docs", "board_constraints", "skill_index", "skill_excerpt")  # never removed or reduced for any role (05f)
+SKILL_TOOLS = ("skill_index", "skill_excerpt")      # brief 36: given beside load_skill only when skill routing is on
 FILE_TOOLS = ("read_file", "write_file", "list_files")
 
 
@@ -607,12 +615,22 @@ def effective_tools(role: str, stage_n: int, verif_level: str) -> tuple[str, ...
     return tuple(dict.fromkeys([*files, *(n for n in allowed if n in FLOW_TOOLS and n in TOOLS)]))
 
 
+def with_skill_routing(rt: Runtime, allowed: tuple[str, ...], prompt: str) -> tuple[tuple[str, ...], str]:
+    """Brief 36: with skill routing on, a role that may load skills also gets ``skill_index`` and ``skill_excerpt`` and
+    the stage's shortlist (names and descriptions) at the end of its prompt. Off: both come back unchanged."""
+    if rt.cfg.skill_routing == "off" or "load_skill" not in allowed:
+        return allowed, prompt
+    from agent.graph.router import shortlist_text
+    return tuple(dict.fromkeys([*allowed, *SKILL_TOOLS])), prompt + shortlist_text(rt.skill_shortlist or {}, rt.skill_notes)
+
+
 def run_role(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (), repair: bool = False) -> dict[str, str]:
     """``run_subagent`` with the stage's turn reserve for the roles after this one. A role that ends on the stage turn
     budget does not stop the visit: the roles after it still run (the gate decides). The run-wide limit still stops the
     run, but only once the real limit (without the reserve) is reached."""
     n = next((st.n for st in MACHINE if st.name == rt.session.stage), -1)
     allowed = role_tools(role, n, rt.cfg.verif_level, allowed)
+    allowed, prompt = with_skill_routing(rt, allowed, prompt)
     rt.meter.reserved = ROLE_TURN_RESERVE.get(n, {}).get(role, 0)
     try:
         return run_subagent(rt, role, prompt, allowed, repair)
@@ -1339,18 +1357,66 @@ def node_advance(state: State) -> dict:
     return {"stage": n + 1}
 
 
-def build_graph(checkpointer):
+def node_route_skills(state: State) -> dict:
+    """Brief 36 router (``Config.skill_routing = "router"`` only): the stage's ranked shortlist of skill names and
+    descriptions (rules + optional cheap model + the hybrid skill index), and the cited notes of earlier stages. The state
+    keeps names, descriptions and citations only; a skill body lives only inside the role turn that loaded it."""
+    rt, n = _rt(state), state["stage"]
+    st = MACHINE[n]
+    notes = list(state.get("skill_notes") or [])
+    if rt.session.bank is None:
+        rt.skill_shortlist, rt.skill_notes = {}, notes
+        return {"skill_shortlist": {}, "skill_notes": notes}
+    from agent.core.skill_index import open_index
+    from agent.graph import router
+    audit = rt.design / "build" / "audit.jsonl"
+    seen = {(x["stage"], x["skill"], x.get("heading")) for x in notes}
+    for prev in MACHINE:                                    # context hygiene: citations of what earlier stages loaded
+        if prev.name != st.name:
+            for x in router.stage_notes(audit, prev.name):
+                if (x["stage"], x["skill"], x.get("heading")) not in seen:
+                    seen.add((x["stage"], x["skill"], x.get("heading")))
+                    notes.append(x)
+    spec = (rt.design / "spec.md").read_text(errors="replace") if (rt.design / "spec.md").is_file() else ""
+    vocab = router.section_vocab(rt.session.bank.root)
+    extra: list[str] = []
+    if rt.cfg.router_model:
+        try:
+            extra, reply = router.classify(role_client(rt, rt.cfg.router_model), spec, n, st.name, vocab)
+            rt.meter.add(reply)
+            rt.llm_log.append({"role": "router", "stage": n, "cost": reply.cost,
+                               "tokens": reply.prompt_tokens + reply.completion_tokens, "sections": extra})
+        except BudgetExceeded:
+            raise
+        except Exception as e:                              # a failed classifier call adds nothing; the rules still apply
+            rt.llm_log.append({"role": "router", "stage": n, "error": f"{type(e).__name__}: {e}"[:200]})
+    idx = open_index(rt.session.bank, rt.session.board, rt.session.family, part=rt.session.part)
+    sl = router.shortlist(idx, spec, n, st.name, vocab, k=rt.cfg.router_k, extra_sections=extra)
+    rt.skill_shortlist, rt.skill_notes = sl, notes
+    with (rt.run_dir / "skill_routing.jsonl").open("a") as f:
+        f.write(json.dumps({"stage": n, "visit": (state.get("visits") or {}).get(str(n), 0) + 1, **sl,
+                            "notes": len(notes)}) + "\n")
+    return {"skill_shortlist": sl, "skill_notes": notes}
+
+
+def build_graph(checkpointer, routing: bool = False):
+    """``routing`` (brief 36): a ``route_skills`` node before every ``work``; off, the graph is exactly the eval-1 one."""
     from langgraph.graph import END, START, StateGraph
     g = StateGraph(State)
     g.add_node("work", node_work)
     g.add_node("gate", node_gate)
     g.add_node("review", node_review)
     g.add_node("advance", node_advance)
-    g.add_edge(START, "work")
+    first = "work"
+    if routing:
+        g.add_node("route_skills", node_route_skills)
+        g.add_edge("route_skills", "work")
+        first = "route_skills"
+    g.add_edge(START, first)
     g.add_edge("work", "gate")
     g.add_edge("gate", "review")
     g.add_edge("review", "advance")
-    g.add_conditional_edges("advance", route, {"work": "work", "end": END})
+    g.add_conditional_edges("advance", route, {"work": first, "end": END})
     return g.compile(checkpointer=checkpointer)
 
 
@@ -1416,7 +1482,7 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
         bank = LocalBank()
     except Exception:                                      # CI: no private knowledge bank
         bank = None
-    sess = Session(design=design, board=cfg.board, runner=runner, bank=bank)
+    sess = Session(design=design, board=cfg.board, runner=runner, bank=bank, skill_routing=cfg.skill_routing)
     rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits), Snapshots(run_dir, design),
                  oracle_llm=oracle_llm)
     _RT[run_id] = rt

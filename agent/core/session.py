@@ -55,6 +55,9 @@ class Session:
     audit: AuditLog = None                         # type: ignore[assignment]
     jail: PathJail = None                          # type: ignore[assignment]
     hw: HardwarePolicy = None                      # type: ignore[assignment]
+    #: brief 36: ``"router"`` ranks ``load_skill(sections)`` by relevance inside its cap; ``"off"`` (default) keeps the
+    #: eval-1 order. Set from Config.skill_routing (Deep Agents) or FDA_SKILL_ROUTING (the Claude Code arm's MCP server).
+    skill_routing: str = "off"
 
     def __post_init__(self) -> None:
         self.design = Path(self.design).resolve()

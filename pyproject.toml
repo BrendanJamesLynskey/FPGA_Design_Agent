@@ -17,6 +17,9 @@ graph = ["langgraph==1.2.19", "langgraph-checkpoint-sqlite==3.1.3", "deepagents=
 ipgen = ["numpy>=2", "scipy>=1.14"]
 # the packet-processing tests (brief 40): scapy is GPL-2.0-only, a test-time tool, never shipped (ip_lib/README.md)
 net = ["scapy==2.8.0"]
+# the skill index's embeddings (brief 36): fastembed Apache-2.0 (onnxruntime MIT, tokenizers Apache-2.0); optional, without
+# it the index is BM25 only. Vectors are built only on the owner's PC (never a work machine).
+retrieval = ["fastembed==0.9.1", "numpy>=2"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
