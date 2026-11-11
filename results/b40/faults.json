@@ -9,7 +9,7 @@
    "why": "the FCS check is computed over one byte too few (the brief's example)",
    "status": "caught",
    "seconds": 2.7,
-   "pytest": "1 failed, 10 deselected in 2.19s"
+   "pytest": "1 failed, 10 deselected in 2.17s"
   },
   {
    "name": "rx_ends_on_first_low_crs_dv",
@@ -18,7 +18,7 @@
    "why": "CRS_DV toggling at the end of a frame is taken as the end of the frame",
    "status": "caught",
    "seconds": 2.7,
-   "pytest": "1 failed, 10 deselected in 2.19s"
+   "pytest": "1 failed, 10 deselected in 2.20s"
   },
   {
    "name": "rx_runt_not_flagged",
@@ -27,7 +27,7 @@
    "why": "frames shorter than 64 bytes pass as good",
    "status": "caught",
    "seconds": 2.7,
-   "pytest": "1 failed, 10 deselected in 2.21s"
+   "pytest": "1 failed, 10 deselected in 2.16s"
   },
   {
    "name": "tx_pad_fcs_not_inverted",
@@ -35,8 +35,8 @@
    "class": "constant",
    "why": "padded frames go out with the wrong first FCS byte",
    "status": "caught",
-   "seconds": 2.0,
-   "pytest": "1 failed, 9 deselected in 1.46s"
+   "seconds": 1.9,
+   "pytest": "1 failed, 9 deselected in 1.44s"
   },
   {
    "name": "tx_short_ifg",
@@ -44,8 +44,8 @@
    "class": "off-by-one",
    "why": "the inter-frame gap is one byte time short",
    "status": "caught",
-   "seconds": 2.0,
-   "pytest": "1 failed, 9 deselected in 1.47s"
+   "seconds": 1.9,
+   "pytest": "1 failed, 9 deselected in 1.43s"
   },
   {
    "name": "no_learning",
@@ -53,8 +53,8 @@
    "class": "path",
    "why": "source addresses are never learnt, so everything floods",
    "status": "caught",
-   "seconds": 4.5,
-   "pytest": "1 failed, 2 deselected in 4.26s"
+   "seconds": 4.4,
+   "pytest": "1 failed, 2 deselected in 4.20s"
   },
   {
    "name": "flood_back_to_ingress",
@@ -62,8 +62,8 @@
    "class": "logic",
    "why": "floods go back out of the port they came in on",
    "status": "caught",
-   "seconds": 4.6,
-   "pytest": "1 failed, 2 deselected in 4.31s"
+   "seconds": 4.4,
+   "pytest": "1 failed, 2 deselected in 4.18s"
   },
   {
    "name": "no_ingress_vlan_filter",
@@ -71,8 +71,8 @@
    "class": "condition",
    "why": "a port outside the VLAN can inject into it",
    "status": "caught",
-   "seconds": 5.3,
-   "pytest": "1 failed, 2 deselected in 5.05s"
+   "seconds": 4.6,
+   "pytest": "1 failed, 2 deselected in 4.38s"
   },
   {
    "name": "stash_never_searched",
@@ -81,7 +81,7 @@
    "why": "the hash-collision path (keys in the stash) is never looked up (the brief's example)",
    "status": "caught",
    "seconds": 2.2,
-   "pytest": "1 failed, 13 deselected in 1.96s"
+   "pytest": "1 failed, 13 deselected in 1.92s"
   },
   {
    "name": "bank1_never_used",
@@ -98,8 +98,8 @@
    "class": "condition",
    "why": "the AGE sweep removes recently used entries too",
    "status": "caught",
-   "seconds": 2.4,
-   "pytest": "1 failed, 13 deselected in 2.21s"
+   "seconds": 2.5,
+   "pytest": "1 failed, 13 deselected in 2.26s"
   },
   {
    "name": "best_match_not_kept",
@@ -107,8 +107,8 @@
    "class": "algorithm",
    "why": "a shorter prefix found higher in the trie is forgotten when a deeper level has no route",
    "status": "caught",
-   "seconds": 5.0,
-   "pytest": "1 failed, 15 deselected in 4.80s"
+   "seconds": 5.1,
+   "pytest": "1 failed, 15 deselected in 4.82s"
   },
   {
    "name": "wrong_key_byte_level2",
@@ -117,7 +117,7 @@
    "why": "level 2 is indexed by the wrong address byte",
    "status": "caught",
    "seconds": 5.1,
-   "pytest": "1 failed, 15 deselected in 4.81s"
+   "pytest": "1 failed, 15 deselected in 4.83s"
   },
   {
    "name": "highest_index_wins",
@@ -126,7 +126,7 @@
    "why": "overlapping rules resolve to the wrong one",
    "status": "caught",
    "seconds": 2.1,
-   "pytest": "1 failed, 12 deselected in 1.83s"
+   "pytest": "1 failed, 12 deselected in 1.82s"
   },
   {
    "name": "care_mask_ignored",
@@ -144,7 +144,7 @@
    "why": "the new action is visible while a lookup that matched the old rule is still in flight (a race found and fixed in this brief)",
    "status": "caught",
    "seconds": 2.1,
-   "pytest": "1 failed, 12 deselected in 1.84s"
+   "pytest": "1 failed, 12 deselected in 1.86s"
   },
   {
    "name": "ipv4_options_ignored",
@@ -152,8 +152,8 @@
    "class": "protocol",
    "why": "the IPv4 header is taken as 20 bytes whatever the IHL (the brief's example)",
    "status": "caught",
-   "seconds": 2.3,
-   "pytest": "1 failed, 5 deselected in 1.86s"
+   "seconds": 2.4,
+   "pytest": "1 failed, 6 deselected in 1.93s"
   },
   {
    "name": "csum_carry_dropped",
@@ -161,8 +161,8 @@
    "class": "arithmetic",
    "why": "the ones' complement end-around carry is lost",
    "status": "caught",
-   "seconds": 2.4,
-   "pytest": "1 failed, 5 deselected in 1.88s"
+   "seconds": 2.5,
+   "pytest": "1 failed, 6 deselected in 1.97s"
   },
   {
    "name": "one_vlan_tag_only",
@@ -170,8 +170,8 @@
    "class": "protocol",
    "why": "the inner tag of a double-tagged frame is taken as the EtherType",
    "status": "caught",
-   "seconds": 2.4,
-   "pytest": "1 failed, 5 deselected in 1.86s"
+   "seconds": 2.5,
+   "pytest": "1 failed, 6 deselected in 1.98s"
   },
   {
    "name": "fragment_offset_ignored",
@@ -180,7 +180,7 @@
    "why": "non-first fragments report payload bytes as ports",
    "status": "caught",
    "seconds": 2.4,
-   "pytest": "1 failed, 5 deselected in 1.88s"
+   "pytest": "1 failed, 6 deselected in 1.90s"
   },
   {
    "name": "truncation_not_flagged",
@@ -189,7 +189,7 @@
    "why": "a frame that ends inside a header is not marked",
    "status": "caught",
    "seconds": 2.4,
-   "pytest": "1 failed, 5 deselected in 1.89s"
+   "pytest": "1 failed, 6 deselected in 1.89s"
   },
   {
    "name": "overflow_not_counted",
@@ -197,8 +197,8 @@
    "class": "counter",
    "why": "packets dropped on a full queue are not counted (the brief's example)",
    "status": "caught",
-   "seconds": 1.2,
-   "pytest": "1 failed, 6 deselected in 1.01s"
+   "seconds": 1.3,
+   "pytest": "1 failed, 6 deselected in 1.03s"
   },
   {
    "name": "drr_no_subtract",
@@ -225,7 +225,7 @@
    "why": "a full region is overwritten instead of dropping the packet",
    "status": "caught",
    "seconds": 1.3,
-   "pytest": "1 failed, 6 deselected in 1.02s"
+   "pytest": "1 failed, 6 deselected in 1.03s"
   },
   {
    "name": "rfc1624_without_complement",
@@ -233,8 +233,8 @@
    "class": "arithmetic",
    "why": "the incremental update adds the deltas to the checksum itself rather than to its complement",
    "status": "caught",
-   "seconds": 2.6,
-   "pytest": "1 failed, 2 deselected in 2.16s"
+   "seconds": 2.7,
+   "pytest": "1 failed, 3 deselected in 2.18s"
   },
   {
    "name": "udp_zero_checksum_rewritten",
@@ -242,8 +242,8 @@
    "class": "protocol",
    "why": "a UDP datagram sent without a checksum gets one (RFC 768 says leave zero)",
    "status": "caught",
-   "seconds": 6.2,
-   "pytest": "1 failed, 2 passed, 2 deselected in 5.69s"
+   "seconds": 2.7,
+   "pytest": "1 failed, 3 deselected in 2.19s"
   },
   {
    "name": "pop_loses_tlast",
@@ -251,8 +251,8 @@
    "class": "path",
    "why": "a frame that ends inside the popped tag loses its end (a bug found and fixed in this brief)",
    "status": "caught",
-   "seconds": 9.2,
-   "pytest": "1 failed, 2 passed, 2 deselected in 8.63s"
+   "seconds": 2.7,
+   "pytest": "1 failed, 3 deselected in 2.18s"
   }
  ]
 }

@@ -48,8 +48,13 @@ def case(seed, n=400):
         h = model.parse(frames[i])
         if model.flags(h)["udp"] and model.flags(h)["l4"] and h["l4off"] + 8 <= len(frames[i]):
             b = bytearray(frames[i]); b[h["l4off"] + 6] = b[h["l4off"] + 7] = 0; frames[i] = bytes(b)
-    hdrs = [model.parse(f) for f in frames]
     acts = [rand_act(r) for _ in frames]
+    # directed: tagged frames that end inside the outer tag, with a pop (the frame must still end)
+    for k, i in enumerate(range(5, n, 60)):
+        tag = b"\x81\x00" + bytes([0x20, k + 1])
+        frames[i] = (frames[i][:12] + tag + frames[i][12:])[:13 + k % 4]
+        acts[i] = model.pack_act(port=k % 16, pop_vlan=1)
+    hdrs = [model.parse(f) for f in frames]
     return frames, hdrs, acts
 
 
@@ -150,7 +155,8 @@ def test_rewrite_matches_committed_expected_pcap(tmp_path):
     """The committed input capture through pkt_rewrite gives the committed expected capture, byte for byte."""
     d = sim.ROOT / "results" / "b40" / "pcap"
     frames = traffic.read_pcap(d / "rewrite_seed41_in.pcap")
-    f2, hdrs, acts = case(41)
-    assert frames == f2
+    # the actions come from their own seeded RNG; the frames from the file (scapy's output can differ by host)
+    _, _, acts = case(41)
+    hdrs = [model.parse(f) for f in frames]
     r = run(tmp_path, frames, hdrs, acts, "random", 4)
     assert [g[0] for g in r["pkts"]["D"]] == traffic.read_pcap(d / "rewrite_seed41_expected.pcap")

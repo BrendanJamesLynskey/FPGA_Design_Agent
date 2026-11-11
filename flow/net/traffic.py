@@ -72,7 +72,7 @@ def frame(kind: str, r: random.Random, max_payload: int = 200, macs=None) -> byt
     elif kind == "icmp4":
         p = eth / IP(src=_ip4(r), dst=_ip4(r)) / ICMP() / Raw(pl)
     elif kind == "arp":
-        p = eth / ARP(psrc=_ip4(r), pdst=_ip4(r))
+        p = eth / ARP(hwsrc=_mac(r), hwdst="00:00:00:00:00:00", psrc=_ip4(r), pdst=_ip4(r))   # no host defaults
     elif kind == "vlan1":
         p = eth / Dot1Q(vlan=r.randrange(4096), prio=r.randrange(8)) / IP(src=_ip4(r), dst=_ip4(r)) / l4 / Raw(pl)
     elif kind == "vlan2":
