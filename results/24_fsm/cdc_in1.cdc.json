@@ -1,0 +1,49 @@
+{
+  "crossings": [
+    {
+      "cell": "u_ctl/u_i2/g_one.q_reg",
+      "pin": "D",
+      "src": "ack_reg",
+      "src_clock": "aclk",
+      "dst_clock": "clk",
+      "class": "unsafe",
+      "rule": "U2",
+      "why": "no synchroniser: the capture flop is not the first of an ASYNC_REG chain (add (* ASYNC_REG = \"TRUE\" *) and a second flop, or use an XPM macro)",
+      "exception": "None",
+      "report_cdc_rules": [
+        "CDC-1"
+      ]
+    }
+  ],
+  "summary": {
+    "unsafe": 1
+  },
+  "unsafe": [
+    {
+      "cell": "u_ctl/u_i2/g_one.q_reg",
+      "pin": "D",
+      "src": "ack_reg",
+      "src_clock": "aclk",
+      "dst_clock": "clk",
+      "class": "unsafe",
+      "rule": "U2",
+      "why": "no synchroniser: the capture flop is not the first of an ASYNC_REG chain (add (* ASYNC_REG = \"TRUE\" *) and a second flop, or use an XPM macro)",
+      "exception": "None",
+      "report_cdc_rules": [
+        "CDC-1"
+      ]
+    }
+  ],
+  "n_crossings": 1,
+  "clocks": {
+    "clk": {
+      "period": 2.5,
+      "root": "clk"
+    },
+    "aclk": {
+      "period": 3.25,
+      "root": "aclk"
+    }
+  },
+  "pass": false
+}

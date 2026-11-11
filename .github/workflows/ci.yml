@@ -89,6 +89,8 @@ jobs:
         run: python -m pytest -q flow/tests/test_16_cdc_inject_rtl.py
       - name: Timing-exception drill - the multicycle registers change on one phase of the enable (brief 20)
         run: python -m pytest -q flow/tests/test_20_drill_sim_rtl.py
+      - name: FSM discipline - reference controller variants, FSM coverage on real designs and the test-removal mutants (brief 24)
+        run: python -m pytest -q flow/tests/test_24_fsm_rtl.py flow/tests/test_24_drills_rtl.py
       - name: Project layer (brief 27B P0) - generated contract tests on fixture RTL, the reference passes, each mutant fails
         run: python -m pytest -q project/tests/test_27b_contract_tests_rtl.py
       - name: Mutants (each deliberate bug must fail the T1 tests)
@@ -213,6 +215,12 @@ jobs:
         run: SIM=icarus T1_SEEDS=1,2,3 python -m pytest -q designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
       - name: Formal (SymbiYosys bmc + cover)
         run: flow/formal.sh designs/t1_dimmer_counter
+      - name: Reference FSM controller, separated and monolithic - bounded, cover and k-induction depth (brief 24)
+        run: python -m pytest -q flow/tests/test_24_fsm_formal.py
+      - name: Simulator support for FSM coverage constructs (Verilator 5.048, brief 24)
+        run: |
+          export PATH=$HOME/verilator-5.048/bin:$PATH
+          python -m pytest -q flow/tests/test_24_fsm_verilator.py
       - name: Portability of the checkers (Icarus, Verilator 5.020 and 5.048, slang; xsim skipped)
         run: |
           export PORT_VERILATORS="$(which verilator):$HOME/verilator-5.048/bin/verilator"

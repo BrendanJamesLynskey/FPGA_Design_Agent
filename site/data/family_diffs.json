@@ -466,6 +466,16 @@
      "topic": "Readback CRC",
      "summary": "POST_CRC (continuous readback CRC) is a 7-series property; UltraScale+ uses its own configuration settings for the same check.",
      "confirmed": "doc"
+    },
+    {
+     "topic": "FSM extraction under auto (same RTL)",
+     "summary": "One 23-state controller under -fsm_extraction auto: not extracted on xc7a100t, one-hot on xc7z020 and xck26; an 11-state one was sequential on all three. Name the encoding instead of relying on auto.",
+     "confirmed": "tool"
+    },
+    {
+     "topic": "Reset styles and flop primitives for a state register",
+     "summary": "Async reset maps to FDCE/FDPE, sync to FDRE/FDSE, none to FDRE with an initial value, with the same LUT, flop and control-set counts on 7-series and UltraScale+ for the same RTL (synthesis only).",
+     "confirmed": "tool"
     }
    ],
    "docs": {
@@ -608,6 +618,16 @@
      "topic": "Logic primitives",
      "summary": "7-series slices have CARRY4 and MUXF7/F8; UltraScale+ CLBs have one CARRY8 and MUXF9, and a 7-series CARRY4 instance has no ZU+ lib cell.",
      "confirmed": "tool"
+    },
+    {
+     "topic": "Ethernet MAC attachment",
+     "summary": "Artix-7 and the ZU+ PL have no hard Ethernet MAC: a fabric MAC drives a PHY through SelectIO (RMII, MII, RGMII). Both Zynq PS families have hard GEMs: RGMII through MIO, GMII through EMIO to PL logic.",
+     "confirmed": "doc"
+    },
+    {
+     "topic": "LUT RAM shapes for table emulation",
+     "summary": "Both families have 32-, 64-, 128- and 256-deep single-bit LUT RAMs; UltraScale+ adds RAM32M16, RAM64M8, RAM256X1D and RAM512X1S, so wide multi-port shapes and 512-deep columns exist only there.",
+     "confirmed": "doc"
     }
    ],
    "docs": {

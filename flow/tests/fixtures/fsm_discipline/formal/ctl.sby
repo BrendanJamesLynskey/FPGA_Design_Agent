@@ -1,0 +1,152 @@
+# SymbiYosys jobs of the reference controller (brief 24): the same properties on the separated and the monolithic machine.
+#   *_bmc: bounded (depth 40); *_prove_kN: k-induction at depth N (smallest N that closes = how much history the proof needs);
+#   sep_inv_prove_k1: depth 1 with the counter's range invariants (`ifdef FORMAL_INV in ctl_sep.sv); *_cover: error response and
+#   fourth beat reachable.  Generated from the task table in make_sby.py.
+[tasks]
+sep_prove_k1
+sep_prove_k2
+sep_prove_k3
+sep_prove_k4
+sep_prove_k5
+sep_prove_k6
+mono_prove_k1
+mono_prove_k2
+mono_prove_k3
+mono_prove_k4
+mono_prove_k5
+mono_prove_k6
+sep_inv_prove_k2
+sep_inv_prove_k3
+sep_inv_prove_k4
+sep_inv_prove_k5
+sep_inv_prove_k6
+sep_inv_prove_k1
+sep_bmc
+mono_bmc
+sep_cover
+mono_cover
+
+[options]
+sep_prove_k1: mode prove
+sep_prove_k1: depth 1
+sep_prove_k2: mode prove
+sep_prove_k2: depth 2
+sep_prove_k3: mode prove
+sep_prove_k3: depth 3
+sep_prove_k4: mode prove
+sep_prove_k4: depth 4
+sep_prove_k5: mode prove
+sep_prove_k5: depth 5
+sep_prove_k6: mode prove
+sep_prove_k6: depth 6
+mono_prove_k1: mode prove
+mono_prove_k1: depth 1
+sep_inv_prove_k1: mode prove
+sep_inv_prove_k1: depth 1
+sep_bmc: mode bmc
+sep_bmc: depth 40
+mono_bmc: mode bmc
+mono_bmc: depth 40
+sep_cover: mode cover
+sep_cover: depth 40
+mono_cover: mode cover
+mono_cover: depth 40
+
+mono_prove_k2: mode prove
+mono_prove_k2: depth 2
+mono_prove_k3: mode prove
+mono_prove_k3: depth 3
+mono_prove_k4: mode prove
+mono_prove_k4: depth 4
+mono_prove_k5: mode prove
+mono_prove_k5: depth 5
+mono_prove_k6: mode prove
+mono_prove_k6: depth 6
+sep_inv_prove_k2: mode prove
+sep_inv_prove_k2: depth 2
+sep_inv_prove_k3: mode prove
+sep_inv_prove_k3: depth 3
+sep_inv_prove_k4: mode prove
+sep_inv_prove_k4: depth 4
+sep_inv_prove_k5: mode prove
+sep_inv_prove_k5: depth 5
+sep_inv_prove_k6: mode prove
+sep_inv_prove_k6: depth 6
+
+[engines]
+smtbmc z3
+
+[script]
+sep_prove_k1: read_verilog -formal -sv fsm_front.sv
+sep_prove_k1: read_verilog -formal -sv ctl_sep.sv
+sep_prove_k1: read_verilog -formal -sv formal_ctl.sv
+sep_prove_k2: read_verilog -formal -sv fsm_front.sv
+sep_prove_k2: read_verilog -formal -sv ctl_sep.sv
+sep_prove_k2: read_verilog -formal -sv formal_ctl.sv
+sep_prove_k3: read_verilog -formal -sv fsm_front.sv
+sep_prove_k3: read_verilog -formal -sv ctl_sep.sv
+sep_prove_k3: read_verilog -formal -sv formal_ctl.sv
+sep_prove_k4: read_verilog -formal -sv fsm_front.sv
+sep_prove_k4: read_verilog -formal -sv ctl_sep.sv
+sep_prove_k4: read_verilog -formal -sv formal_ctl.sv
+sep_prove_k5: read_verilog -formal -sv fsm_front.sv
+sep_prove_k5: read_verilog -formal -sv ctl_sep.sv
+sep_prove_k5: read_verilog -formal -sv formal_ctl.sv
+sep_prove_k6: read_verilog -formal -sv fsm_front.sv
+sep_prove_k6: read_verilog -formal -sv ctl_sep.sv
+sep_prove_k6: read_verilog -formal -sv formal_ctl.sv
+mono_prove_k1: read_verilog -formal -sv fsm_front.sv
+mono_prove_k1: read_verilog -formal -sv ctl_mono.sv
+mono_prove_k1: read_verilog -formal -sv -DMONO formal_ctl.sv
+sep_inv_prove_k1: read_verilog -formal -sv fsm_front.sv
+sep_inv_prove_k1: read_verilog -formal -sv -DFORMAL_INV ctl_sep.sv
+sep_inv_prove_k1: read_verilog -formal -sv formal_ctl.sv
+sep_bmc: read_verilog -formal -sv fsm_front.sv
+sep_bmc: read_verilog -formal -sv ctl_sep.sv
+sep_bmc: read_verilog -formal -sv formal_ctl.sv
+mono_bmc: read_verilog -formal -sv fsm_front.sv
+mono_bmc: read_verilog -formal -sv ctl_mono.sv
+mono_bmc: read_verilog -formal -sv -DMONO formal_ctl.sv
+sep_cover: read_verilog -formal -sv fsm_front.sv
+sep_cover: read_verilog -formal -sv ctl_sep.sv
+sep_cover: read_verilog -formal -sv -DCOVER formal_ctl.sv
+mono_cover: read_verilog -formal -sv fsm_front.sv
+mono_cover: read_verilog -formal -sv ctl_mono.sv
+mono_cover: read_verilog -formal -sv -DMONO -DCOVER formal_ctl.sv
+mono_prove_k2: read_verilog -formal -sv fsm_front.sv
+mono_prove_k2: read_verilog -formal -sv ctl_mono.sv
+mono_prove_k2: read_verilog -formal -sv -DMONO formal_ctl.sv
+mono_prove_k3: read_verilog -formal -sv fsm_front.sv
+mono_prove_k3: read_verilog -formal -sv ctl_mono.sv
+mono_prove_k3: read_verilog -formal -sv -DMONO formal_ctl.sv
+mono_prove_k4: read_verilog -formal -sv fsm_front.sv
+mono_prove_k4: read_verilog -formal -sv ctl_mono.sv
+mono_prove_k4: read_verilog -formal -sv -DMONO formal_ctl.sv
+mono_prove_k5: read_verilog -formal -sv fsm_front.sv
+mono_prove_k5: read_verilog -formal -sv ctl_mono.sv
+mono_prove_k5: read_verilog -formal -sv -DMONO formal_ctl.sv
+mono_prove_k6: read_verilog -formal -sv fsm_front.sv
+mono_prove_k6: read_verilog -formal -sv ctl_mono.sv
+mono_prove_k6: read_verilog -formal -sv -DMONO formal_ctl.sv
+sep_inv_prove_k2: read_verilog -formal -sv fsm_front.sv
+sep_inv_prove_k2: read_verilog -formal -sv -DFORMAL_INV ctl_sep.sv
+sep_inv_prove_k2: read_verilog -formal -sv formal_ctl.sv
+sep_inv_prove_k3: read_verilog -formal -sv fsm_front.sv
+sep_inv_prove_k3: read_verilog -formal -sv -DFORMAL_INV ctl_sep.sv
+sep_inv_prove_k3: read_verilog -formal -sv formal_ctl.sv
+sep_inv_prove_k4: read_verilog -formal -sv fsm_front.sv
+sep_inv_prove_k4: read_verilog -formal -sv -DFORMAL_INV ctl_sep.sv
+sep_inv_prove_k4: read_verilog -formal -sv formal_ctl.sv
+sep_inv_prove_k5: read_verilog -formal -sv fsm_front.sv
+sep_inv_prove_k5: read_verilog -formal -sv -DFORMAL_INV ctl_sep.sv
+sep_inv_prove_k5: read_verilog -formal -sv formal_ctl.sv
+sep_inv_prove_k6: read_verilog -formal -sv fsm_front.sv
+sep_inv_prove_k6: read_verilog -formal -sv -DFORMAL_INV ctl_sep.sv
+sep_inv_prove_k6: read_verilog -formal -sv formal_ctl.sv
+prep -top formal_ctl
+
+[files]
+../rtl/fsm_front.sv
+../rtl/ctl_sep.sv
+../rtl/ctl_mono.sv
+formal_ctl.sv

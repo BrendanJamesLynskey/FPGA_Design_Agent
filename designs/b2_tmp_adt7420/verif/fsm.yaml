@@ -1,0 +1,20 @@
+# The state table of i2c_ptr_read (read from rtl/i2c_ptr_read.sv; brief 24 FSM coverage check, flow/fsm_coverage.py).
+# Self-loops (waiting for the quarter tick, clock stretching) are not listed. A reset changes the state to S_IDLE from anywhere.
+fsms:
+  - name: i2c_ptr_read
+    signal: tb_tmp.u_regs.u_i2c.st
+    file: rtl/i2c_ptr_read.sv
+    enum: st_t
+    reset_state: S_IDLE
+    transitions:
+      - [S_IDLE, S_START]
+      - [S_START, S_WBIT]
+      - [S_WBIT, S_RACK]
+      - [S_RACK, S_WBIT]        # address acknowledged, send the pointer byte
+      - [S_RACK, S_START]       # pointer acknowledged: repeated START
+      - [S_RACK, S_RBIT]        # address+R acknowledged
+      - [S_RACK, S_STOP]        # not acknowledged
+      - [S_RBIT, S_WACK]
+      - [S_WACK, S_RBIT]        # one more byte
+      - [S_WACK, S_STOP]
+      - [S_STOP, S_IDLE]
