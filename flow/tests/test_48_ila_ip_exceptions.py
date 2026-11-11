@@ -69,3 +69,26 @@ def test_a_design_touching_exception_still_fails(tmp_path: Path) -> None:
     p.write_text(p.read_text().replace("2         [get_cells {{a_reg", "60        [get_cells {{a_reg"))
     r = ec.evaluate(d, "route", XDC)      # after our positions but naming design cells: still a failure
     assert not r["pass"]
+
+
+# --- the debug hub's JTAG crossing (flow/gates.py hub_crossings) --------------------------------------------------------------
+from flow import gates
+
+CI = GOLD / "clock_interaction_route.rpt"
+
+
+def test_hub_crossing_of_the_real_ila_build_is_asynchronous() -> None:
+    hub = gates.hub_crossings(gates.parse_clock_interaction(CI.read_text()))
+    assert hub["pairs"] == 2 and hub["ok"] and hub["timed_as_synchronous"] == []
+
+
+def test_hub_crossing_timed_as_synchronous_fails() -> None:
+    """Vivado 2026.1 without the hub's properties timed TCK against sys_clk_pin (WNS -2.993 ns inside dbg_hub)."""
+    for bad in ("Timed", "Partial False Path"):
+        txt = CI.read_text().replace("Max Delay Datapath Only", bad, 1)
+        hub = gates.hub_crossings(gates.parse_clock_interaction(txt))
+        assert not hub["ok"] and len(hub["timed_as_synchronous"]) == 1 and bad in hub["timed_as_synchronous"][0]
+
+
+def test_an_ila_build_without_hub_clock_pairs_fails() -> None:
+    assert not gates.hub_crossings(gates.parse_clock_interaction("no table here"))["ok"]
