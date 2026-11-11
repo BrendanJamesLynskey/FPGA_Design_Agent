@@ -80,6 +80,7 @@ proc insert_ila_ip {probes_tcl out} {
     set n [llength $ila_ports]
     if {$n > 5} { error "debug.tcl: $n ILA ports; the Basic licence tier allows 5 (Chipscope 16-620)" }
     set ipdir $out/ila_ip
+    file delete -force $ipdir      ;# a clean IP directory per build (filemgmt 20-1440: the dcp was already in the project)
     file mkdir $ipdir
     set ipname fda_ila
     create_ip -name ila -vendor xilinx.com -library ip -module_name $ipname -dir $ipdir
@@ -112,9 +113,16 @@ proc insert_ila_ip {probes_tcl out} {
         foreach sl [lrange $port 1 end] {
             lassign $sl name pattern width offset
             set nets [probe_nets $pattern $width]
+            # every connection is checked: the pin must exist, and must be on a net afterwards (a connect_net that only warns
+            # leaves the probe port open, which opt_design reports much later as Chipscope 16-213)
+            set ok 0
             for {set b 0} {$b < $width} {incr b} {
-                connect_net -net [lindex $nets $b] -objects [get_pins "$ila_name/probe${i}\[[expr {$offset + $b}]\]"]
+                set pin [get_pins -quiet "$ila_name/probe${i}\[[expr {$offset + $b}]\]"]
+                if {$pin eq ""} { error "debug.tcl: no pin $ila_name/probe${i}\[[expr {$offset + $b}]\] (pins: [lrange [get_pins -of_objects [get_cells $ila_name]] 0 8])" }
+                connect_net -hier -net [lindex $nets $b] -objects $pin
+                if {[get_nets -quiet -of_objects $pin] ne ""} { incr ok }
             }
+            if {$ok != $width} { error "debug.tcl: probe $name: connected $ok of $width bits to $ila_name/probe$i at offset $offset" }
             puts $map [format "probe%-3d %-12s %3d %3d  %s" $i $name $width $offset $pattern]
             incr nprobes
         }
