@@ -254,6 +254,12 @@ if {$ila eq "0"} { stop_here route }
 write_bitstream -force $out/$top.bit
 if {$ila} {
     write_debug_probes -force $out/$top.ltx
+    # brief 48: an ILA that is an IP can get a .ltx the hardware manager calls inconsistent; repair what is safe, fail the build on
+    # any gap (flow/ltx_fix.py). The core-inserted ILA of 2025.2 has no probe_nets.txt and is not touched.
+    if {[file exists $out/probe_nets.txt]} {
+        if {[catch {exec python3 $flow_dir/ltx_fix.py $out} msg]} { error "ltx_fix failed: $msg" }
+        puts "FLOW-LTX $msg"
+    }
 }
 stage bitstream
 close $stage_log

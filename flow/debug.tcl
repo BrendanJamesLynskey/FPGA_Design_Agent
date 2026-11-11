@@ -107,6 +107,7 @@ proc insert_ila_ip {probes_tcl out} {
 
     # probe_map.txt: one line per named probe: probe<port> <name> <width> <bit offset in the port> <pins>
     set map [open $out/probe_map.txt w]
+    set pn [open $out/probe_nets.txt w]      ;# <port> <bit> <net name>: flow/ltx_fix.py needs it (write_debug_probes can lose a bus bit's name)
     set i 0
     set nprobes 0
     foreach port $ila_ports {
@@ -120,7 +121,8 @@ proc insert_ila_ip {probes_tcl out} {
                 set pin [get_pins -quiet "$ila_name/probe${i}\[[expr {$offset + $b}]\]"]
                 if {$pin eq ""} { error "debug.tcl: no pin $ila_name/probe${i}\[[expr {$offset + $b}]\] (pins: [lrange [get_pins -of_objects [get_cells $ila_name]] 0 8])" }
                 connect_net -hier -net [lindex $nets $b] -objects $pin
-                if {[get_nets -quiet -of_objects $pin] ne ""} { incr ok }
+                set onnet [get_nets -quiet -of_objects $pin]
+                if {$onnet ne ""} { incr ok; puts $pn "$i [expr {$offset + $b}] $onnet" }
             }
             if {$ok != $width} { error "debug.tcl: probe $name: connected $ok of $width bits to $ila_name/probe$i at offset $offset" }
             puts $map [format "probe%-3d %-12s %3d %3d  %s" $i $name $width $offset $pattern]

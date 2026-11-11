@@ -86,6 +86,9 @@ foreach p [get_hw_probes -of_objects $ila] {
     incr nprobes
 }
 close $map
+if {$nprobes == 0} {
+    error "ila_capture.tcl: the hardware manager found no probes for the ILA (hw_probes=0): the .ltx does not match the core in the programmed bitstream (see the Labtools 27-1979 warning above, or a .ltx from another build). Not arming anything."
+}
 puts "FDA-ILA $ila depth_max=[get_property STATIC.MAX_DATA_DEPTH $ila] ports=[array size probes] hw_probes=$nprobes"
 
 foreach cap $fda_captures {

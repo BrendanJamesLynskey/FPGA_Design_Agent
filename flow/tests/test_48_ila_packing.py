@@ -74,3 +74,36 @@ def test_old_probe_map_without_offsets_still_reads(tmp_path: Path):
     pm.write_text("probe0   count        16  u_dut/count_reg[*]/Q\nprobe1   press_up      1  u_dut/u_db_up/press_reg/Q\n")
     assert ila.read_probe_slices(pm) == [("count", 0, 0, 16), ("press_up", 1, 0, 1)]
     assert ila.read_probe_map(pm) == {0: ("count", 16), 1: ("press_up", 1)}
+
+
+# --- the .ltx of an ILA that is an IP (flow/ltx_fix.py) ----------------------------------------------------------------------
+FXD = ROOT / "flow" / "tests" / "fixtures" / "ila_ip_exceptions" / "ila_ip_base"
+
+
+def _ltx_build(tmp: Path, with_names: bool = True) -> Path:
+    import shutil
+    d = tmp / "b"
+    d.mkdir()
+    for f in ("t1_dimmer_counter_top.ltx", "probe_map.txt"):
+        shutil.copy(FXD / f, d / f)
+    if with_names:
+        shutil.copy(FXD / "probe_nets.txt", d / "probe_nets.txt")
+    return d
+
+
+def test_ltx_with_a_bus_net_without_subnets_is_repaired(tmp_path: Path):
+    """Vivado 2026.1 wrote win_addr as {isBus: true} with no subnets for three bits; the hardware manager then rejected the file
+    (Labtools 27-1979) and found no probes. The real file of the T1 ILA build is the fixture."""
+    from flow import ltx_fix
+    d = _ltx_build(tmp_path)
+    fixed, problems = ltx_fix.fix_and_check(d)
+    assert fixed == 3 and problems == []
+    assert ltx_fix.fix_and_check(d) == (0, [])           # a repaired file passes untouched
+
+
+def test_ltx_gap_is_an_error_not_a_silent_file(tmp_path: Path):
+    from flow import ltx_fix
+    fixed, problems = ltx_fix.fix_and_check(_ltx_build(tmp_path, with_names=False))
+    assert fixed == 0 and len(problems) == 1 and "probe0[24:30]" in problems[0] and "without subnets" in problems[0]
+    (tmp_path / "x").mkdir()
+    assert ltx_fix.main([str(_ltx_build(tmp_path / "x", with_names=False))]) == 1
