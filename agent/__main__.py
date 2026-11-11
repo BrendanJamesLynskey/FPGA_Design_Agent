@@ -111,7 +111,10 @@ def config_from_json(c: dict):
                   data_dir=Path(c["data_dir"]) if c.get("data_dir") not in (None, "None") else None,
                   oracle=c.get("oracle", "openrouter"), oracle_cc_model=c.get("oracle_cc_model", "claude-haiku-5-5"),
                   spec_tests=flag("spec_tests"), spectest_model=c.get("spectest_model", "claude-sonnet-5-5"),
-                  spectest_effort=c.get("spectest_effort", "medium"), spectest_max_loops=int(c.get("spectest_max_loops", 2)))
+                  spectest_effort=c.get("spectest_effort", "medium"), spectest_max_loops=int(c.get("spectest_max_loops", 2)),
+                  skill_routing=c.get("skill_routing", "off"),
+                  router_model=c.get("router_model") if c.get("router_model") not in (None, "None") else None,
+                  router_k=int(c.get("router_k", 8)))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -161,6 +164,10 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
                         "V3 needs multi-seed runs; the graph itself runs the Verilator coverage run and the mutation run)")
+    r.add_argument("--skill-routing", choices=["off", "router"], default="off",
+                   help="brief 36: router = a skill shortlist before each stage, skill_index/skill_excerpt, ranked load_skill")
+    r.add_argument("--router-model", help="brief 36: OpenRouter model of the router's section classifier (default: rules only)")
+    r.add_argument("--router-k", type=int, default=8, help="brief 36: skills in the router's shortlist")
     for p in (r, sub.add_parser("resume")):
         p.add_argument("--replies", type=Path)
         p.add_argument("--reply")
@@ -184,7 +191,8 @@ def main(argv: list[str] | None = None) -> int:
                      verif_level=a.verif_level, profile=a.profile, roles=parse_roles(a.roles),
                      no_shell=a.no_shell or task_no_shell(a.hidden_spec), data_dir=a.data_dir or task_data_dir(a.spec),
                      oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=a.spec_tests,
-                     spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops)
+                     spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops,
+                     skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k)
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd
@@ -194,7 +202,7 @@ def main(argv: list[str] | None = None) -> int:
         if cfg.oracle == "claude_code":
             from agent.claude_code_arm.oracle import cc_oracle
             rt.oracle_llm = cc_oracle(cfg.oracle_cc_model, rt.run_dir / "oracle_calls.jsonl")
-        graph = build_graph(checkpointer_for(rt.run_dir))
+        graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
         _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
                {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
         return 0
@@ -210,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
     if cfg.oracle == "claude_code":
         from agent.claude_code_arm.oracle import cc_oracle
         rt.oracle_llm = cc_oracle(cfg.oracle_cc_model, rt.run_dir / "oracle_calls.jsonl")
-    graph = build_graph(checkpointer_for(run_dir))
+    graph = build_graph(checkpointer_for(run_dir), routing=cfg.skill_routing != "off")
     lg = {"configurable": {"thread_id": a.run_id}}
     from langgraph.types import Command
     first = Command(resume=replies.pop(0)) if replies else None

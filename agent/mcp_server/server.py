@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -79,6 +80,8 @@ def main(argv: list[str] | None = None) -> int:
     session = Session(design=a.design, board=a.board, bank=bank, hw_budget=a.hw_budget)
     if a.stage:
         session.stage = a.stage
+    if os.environ.get("FDA_SKILL_ROUTING") in ("router",):       # brief 36, set by the arm only when the flag is on
+        session.skill_routing = os.environ["FDA_SKILL_ROUTING"]
     if a.role:
         from agent.graph.roles import role_session
         session = role_session(session, a.role)

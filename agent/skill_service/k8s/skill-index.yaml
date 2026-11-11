@@ -1,0 +1,49 @@
+# Skill-index service (brief 36) on kind or k3d. The agent points at it with
+#   FDA_SKILL_INDEX_URL=http://localhost:8088   (after: kubectl port-forward svc/fda-skill-index 8088:8088)
+# Without it the agent uses the in-process index (same code), so CI and local runs need no cluster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fda-skill-index
+  labels: {app: fda-skill-index}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: fda-skill-index}
+  template:
+    metadata:
+      labels: {app: fda-skill-index}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, runAsUser: 10001}
+      containers:
+        - name: skill-index
+          image: fda-skill-index:1
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8088}]
+          env:
+            - {name: FDA_BOARD, value: nexys_a7_100t}
+            - {name: FDA_PART, value: xc7a100tcsg324-1}
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8088}
+            initialDelaySeconds: 5
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1Gi}
+          securityContext: {readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts:
+            - {name: bank, mountPath: /bank, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: bank
+          hostPath: {path: /bank, type: Directory}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fda-skill-index
+spec:
+  selector: {app: fda-skill-index}
+  ports: [{port: 8088, targetPort: 8088}]
