@@ -1,6 +1,6 @@
 # flow/: the Vivado flow and its gates
 
-Everything here runs **locally**: Vivado 2025.2 cannot run in GitHub Actions. CI covers simulation, lint and the
+Everything here runs **locally**: Vivado (2026.1 since brief 48; `version_pin.py` picks the install) cannot run in GitHub Actions. CI covers simulation, lint and the
 Python code only.
 
 | File | What it does |
@@ -98,6 +98,7 @@ The post-route gates (unchanged since F0A):
 | no unconstrained endpoints (a false path alone does not satisfy `no_input_delay`; see `designs/t1_dimmer_counter/design.xdc`): `no_clock`, `unconstrained_internal_endpoints`, `no_input_delay`, `no_output_delay`, `partial_input_delay`, `partial_output_delay`, `multiple_clock`, `loops`, `latch_loops` all 0 | `check_timing.rpt` |
 | DRC errors = 0 and DRC critical warnings = 0 (`NSTD-1`/`UCIO-1` are critical warnings in `report_drc` but stop `write_bitstream`) | `drc.rpt` |
 | no critical-warning methodology violations | `methodology.rpt` |
+| `post_route_qor_assessment` (routed `report_qor_assessment` score >= 4) | `qor_assessment_route.rpt`. **Not run on Vivado 2026.1 with the free Basic licence tier** (Implflow 47-2944): `build.tcl` writes `qor_unavailable_route.txt`, `gates.json` records `qor_assessment: {available: false}` and the gate is absent, not passed (owner's decision, 2026-11-11, brief 48: no licence upgrade, no 2025.2 fallback). |
 | no critical CDC violations | `cdc.rpt` |
 | bitstream present (and `.ltx` for the ILA variant) | build directory |
 

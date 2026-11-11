@@ -86,12 +86,14 @@ proc copy_reports {from to patterns} {
     }
     return $n
 }
-# report_qor_assessment needs more than the free Basic licence tier on Vivado 2026.1 (ERROR Implflow 47-2944; 2025.2 ran it
+# report_qor_assessment needs more than the free Basic licence tier on Vivado 2026.1 (ERROR Implflow 47-2944, empty Tcl error string; 2025.2 ran it
 # on the same tier; brief 48). On that error, write qor_unavailable_<stage>.txt instead, so flow/gates.py records the QoR gate
 # as not available rather than as a failure; any other error still stops the build.
 proc fda_qor {out stage} {
     if {[catch {report_qor_assessment -file $out/qor_assessment_$stage.rpt} err]} {
-        if {![string match "*license is BASIC*" $err] && ![string match "*47-2944*" $err]} { error $err }
+        # Vivado returns an empty error string here (the message goes to the log), so the tier is read from get_vivado_tier
+        # (a 2026.1 command; absent on 2025.2, where the report always ran)
+        if {[catch {get_vivado_tier} tier] || [string toupper $tier] ne "BASIC"} { error "report_qor_assessment failed: $err" }
         set f [open $out/qor_unavailable_$stage.txt w]
         puts $f "report_qor_assessment not run: $err"
         close $f
