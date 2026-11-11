@@ -100,3 +100,6 @@ shell differs, unless `--grader-shell DIR` names a checked-out frozen copy (how:
 changed (a file that shares a name with a shell file is now an error). `c16_ntt_engine`'s mutant `forward_scaled` was replaced by one that compiles,
 and development tasks without a reset-skipping mutant gained one; each change is dated in [../AMENDMENTS.md](../AMENDMENTS.md) with old and new digests.
 No held-out unit was touched; the private manifest's matching entries (the shared `run_task.py` unit and any amended public unit) are the owner's to re-record.
+
+Re-recording amended public units in the private course manifest: `freeze.py refreeze UNIT... --private-manifest <private>/benchmark_private/course/MANIFEST_full.json [--dry-run]`
+(only the named public or `shared:` entries change, held-out ones never; the owner command with the 2026-11-10 unit ids is in [../FROZEN.md](../FROZEN.md)).
