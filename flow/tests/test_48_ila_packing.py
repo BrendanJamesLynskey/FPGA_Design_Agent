@@ -107,3 +107,12 @@ def test_ltx_gap_is_an_error_not_a_silent_file(tmp_path: Path):
     assert fixed == 0 and len(problems) == 1 and "probe0[24:30]" in problems[0] and "without subnets" in problems[0]
     (tmp_path / "x").mkdir()
     assert ltx_fix.main([str(_ltx_build(tmp_path / "x", with_names=False))]) == 1
+
+
+def test_a_probe_in_another_clock_domain_is_refused():
+    """One ILA instance, one clock (Basic tier): a probe that names another clock is refused, with the reason."""
+    probes = [{"name": "a", "pins": "x", "width": 4, "clock": "clk_a"}, {"name": "b", "pins": "y", "width": 4, "clock": "clk_b"}]
+    with pytest.raises(ValueError, match="clock domain clk_b.*never add a CDC path"):
+        prepare.pack_probes(probes, clock_net="clk_a")
+    assert len(prepare.pack_probes(probes[:1], clock_net="clk_a")) == 1
+    assert len(prepare.pack_probes(probes)) == 1                 # no clock_net given: nothing to compare with

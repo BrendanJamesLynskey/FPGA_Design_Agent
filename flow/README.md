@@ -150,3 +150,22 @@ design's `selfcheck.py` over the UART, check the design is still alive; one JSON
 `results/board_v2/runs/`, the last in `results/board_v2/<name>.json`. Used by the read-only peripheral checks
 `designs/b2_*` (temperature sensor, accelerometer, flash JEDEC ID).
 
+
+## The ILA on Vivado 2026.1 with the free Basic licence tier (brief 48)
+
+Measured on 2026.1 Basic (exact texts in the knowledge repo's `docs/VIVADO_2026_1_BASIC_TIER.md`): `create_debug_core` is refused
+(Vivado 12-29205), and an ILA IP is allowed, but only **one instance, at most 5 probe ports**, with no width or depth limit
+found up to 256 bits by 4096 samples. So the ILA build (`flow/debug.tcl`, `insert_ila_ip`, the default; `FDA_ILA_INSERT=core`
+selects the old `create_debug_core` path for a tier or version that allows it):
+
+- packs the probes of `probes.yaml` into at most 5 ports (`flow/prepare.py` `pack_probes`: a `group` key names a port, else
+  1-bit probes share `flags` and wider ones `data`) and writes `probe_map.txt` with each probe's port, offset and width; the host
+  side (`flow/ila.py`, `flow/bringup.py`, `flow/ila_capture.tcl`) cuts the named probes back out, so designs and gates still see
+  every named probe;
+- keeps one clock domain: a probe whose optional `clock` differs from `ila.clock_net` is refused, and no CDC path is added for debug;
+- fixes the `.ltx` (`flow/ltx_fix.py`) where `write_debug_probes` loses the name of a bus bit, and fails the build on any gap;
+- passes the build only if the debug hub's TCK crossings are timed as asynchronous (`ila_hub_crossing_async`, from
+  `clock_interaction_route.rpt`). The hub's own constraint script prints CRITICAL WARNINGs on this route; the exception gate lists
+  those from the hub's `xsdbm_*.xdc` as `EXC-XDC-DEBUG-HUB` (info) only in an ILA build, and every other message still fails.
+
+`report_qor_assessment` is also not run on the Basic tier, so the `post_route_qor_assessment` gate is absent (see the gate table).

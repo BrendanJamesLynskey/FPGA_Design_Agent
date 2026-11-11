@@ -72,7 +72,7 @@ def check_probes(data: dict[str, Any]) -> list[str]:
 ILA_MAX_PORTS = 5      # brief 48: the free Basic licence tier on Vivado 2026.1 refuses an ILA with more than 5 probe ports (Chipscope 16-620)
 
 
-def pack_probes(probes: list[dict[str, Any]], max_ports: int = ILA_MAX_PORTS) -> list[dict[str, Any]]:
+def pack_probes(probes: list[dict[str, Any]], max_ports: int = ILA_MAX_PORTS, clock_net: str | None = None) -> list[dict[str, Any]]:
     """Pack the named probes into at most ``max_ports`` ILA probe ports (brief 48).
 
     A probe's ``group`` (optional) names its port; without one, a 1-bit probe goes to the ``flags`` port and a wider one to
@@ -83,6 +83,10 @@ def pack_probes(probes: list[dict[str, Any]], max_ports: int = ILA_MAX_PORTS) ->
     ports: list[dict[str, Any]] = []
     by_group: dict[str, dict[str, Any]] = {}
     for idx, pr in enumerate(probes):
+        if clock_net and pr.get("clock") and str(pr["clock"]) != str(clock_net):
+            raise ValueError(f"probe {pr['name']} is in clock domain {pr['clock']}, but the one ILA of the Basic licence tier "
+                             f"runs on {clock_net}; probe a register in that domain (or the design's own synchronised copy), "
+                             "never add a CDC path just for debug")
         w = int(pr["width"])
         g = str(pr.get("group") or ("flags" if w == 1 else "data"))
         if g not in by_group:
@@ -115,7 +119,7 @@ def probes_tcl(probes_yaml: Path) -> str:
     # {width {name pins width offset ?index?} ...}; the old one-port-per-probe list above is for the 2025.2 core route
     lines.append("set ila_ports {}")
     try:
-        packed = pack_probes(cfg["probes"])
+        packed = pack_probes(cfg["probes"], clock_net=ila["clock_net"])
     except ValueError as e:
         raise SystemExit(f"prepare: {probes_yaml.name}: {e}")
     for port in packed:
