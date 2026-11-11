@@ -51,3 +51,9 @@ areas voted the generic procedures and coding skills above the task's own. A sec
 `retrieval.md`: the spec's sections first in relevance order, then the stage's areas, procedures left out) was written
 and measured post hoc on the same 12 tasks (recall@6 0.361). The end-to-end router arm uses `version=2` (the default in
 `agent/graph/router.py`); everything else in section 3 is unchanged.
+
+## Amendment 2 (2026-11-11 00:25, after run 1 was scored and while run 2 ran)
+
+Runs take 25-60 minutes each (stage 2 repeats up to its 6-visit limit), so 18 runs would take about 14 hours. The run is cut
+to seed 1 of each task (6 runs, 3 pairs); the driver is stopped after the sixth record, and a run it had started is
+discarded. Seeds 2 and 3 move to brief 42 arm A1. Nothing else changes.
