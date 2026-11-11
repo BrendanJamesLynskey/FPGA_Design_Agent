@@ -136,3 +136,18 @@ one named above (the arms H1 and H2 are unchanged; only H9 and its golden regene
   USD 36.0 at the 0.75 cap), inside USD 60; no task is cut for cost. Time is the binding limit: 48 runs x about 45 minutes is 36
   hours for one worker, 18 with two. Blocks stay seed-major (all four tasks at repeat 1 first), so a run stopped for time has equal
   repeats for every task; if only one or two repeats complete, the report says that only a very large effect could be seen.
+
+## Amendment 2 (2026-11-11, planner correction of the H0 audit; recorded for H1 and H7)
+
+The planner's correction agrees with the section "Correction to the planner's audit" above, which was committed before any run
+and was verified from `deepagents/graph.py`'s middleware assembly and the `create_agent` call (`agent/tools/harness_audit.py`),
+not from graph nodes. For the record of what H1 is measured against:
+
+- **A0's baseline for H1 is summarisation at about 170,000 tokens** (fixed fallback because `FdaChatModel` reports no context size),
+  large-result eviction at 20,000 tokens (never reached behind the 20,000-character clip), and Anthropic-only prompt caching
+  (no effect on OpenRouter models).
+- **H1 sets the thresholds deliberately**: summarisation trigger 40,000 tokens with 10 messages kept, and our own offload at
+  6,000 characters for the rtl role. It does **not** give `FdaChatModel` a real per-model context size (a fraction-based trigger);
+  that variant is not in this run.
+- **H7 (prompt caching) is not run here.** It needs an OpenRouter caching path for the model in use; luna's provider behaviour was
+  not checked, so no claim is made.
