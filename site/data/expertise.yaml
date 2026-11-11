@@ -301,7 +301,7 @@ areas:
   name: Finite state machines
   summary: Separating control from datapath, choosing the clock and any multicycle ratio, registering inputs and outputs, encoding, reset, and coverage.
   about: "Finite state machines carry the control in most designs. The skills cover separating control from counters, what a register on an input or an output costs in latency and timing, choosing an encoding and a reset (including a reset inside a clock-enable branch), running a slow machine on one fast clock, and checking that the tests reach every state and every legal transition. The coverage check is an evidence file that the flow can add to the second verification stage; it is off unless asked for."
-  kb: [techniques/fsm, family/artix7/fsm, techniques/reset~reset-strategy, techniques/counters-and-timers, techniques/pipelining-handshakes~valid-ready]
+  kb: [techniques/fsm, family/artix7/fsm, techniques/reset~reset-strategy, techniques/counters-and-timers, techniques/pipelining-handshakes~valid-ready, vendor/free_simulators/simulation~fsm-coverage]
   checks:
   - {file: flow/standards_check.py, gate: STD-RST-01, enforced: false, what: "Synchronous-reset rule, no latch and no combinational loop; part of the standards stage gate that covers all RTL."}
   - {file: flow/fsm_coverage.py, gate: fsm_state_transition_coverage, gate_in: flow/verif_gates.py, enforced: false, what: "Reads the state register's value changes against the machine's state table: every state visited, every legal transition taken, none outside the table. Off unless the flag is given."}

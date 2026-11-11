@@ -4,7 +4,7 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `e709554` (main, 2026-11-11; merges PR #42 (brief 36: skill-index vectors under `indexes/`, outside every layer), PR #43 (brief 40: packet-processing unit `vendor/packet_processing`, section `packet-processing`, two family-matrix rows), and earlier at `e3cf892`: PR #41 (brief 20 part B: measured I/O timing, virtual clocks, uncertainty; family-matrix rows), and earlier at `a598197`: PR #40 (index and test fixes), PR #39 (brief 41: fanout/replication skill from the 2014 training cross-check), PR #37 (brief 20 part A: measured multicycle and slow-FSM skill), and earlier at `af81c89`: PR #38 (brief 31: family-difference matrix `family_matrix/`, family notes in 10 skills, new skill `zynqmp-porting-from-7-series`, part-aware selection), PR #36 (brief 21: version claims sidecar and probe), and earlier at `68673cb`: PR #35 (brief 19: four ipgen adapter notes in `vendor/amd_ip_cores`, budget 46,000), PR #34 (AVAL-46 measured in the MMCM skill), and earlier at `ab7fc4c`: PR #33 (brief 17: AMBA and AXI, new unit `vendor/amba_axi`), PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
+- Private repo commit: `283afd9` (main, 2026-11-11; merges PR #44 (brief 24: FSM discipline skill `artix7-fsm-discipline` in `family/artix7`, `fsm-coverage` in `vendor/free_simulators`, budgets 229,000 and 16,000, one family-matrix row), and earlier at `e709554`: PR #42 (brief 36: skill-index vectors under `indexes/`, outside every layer), PR #43 (brief 40: packet-processing unit `vendor/packet_processing`, section `packet-processing`, two family-matrix rows), and earlier at `e3cf892`: PR #41 (brief 20 part B: measured I/O timing, virtual clocks, uncertainty; family-matrix rows), and earlier at `a598197`: PR #40 (index and test fixes), PR #39 (brief 41: fanout/replication skill from the 2014 training cross-check), PR #37 (brief 20 part A: measured multicycle and slow-FSM skill), and earlier at `af81c89`: PR #38 (brief 31: family-difference matrix `family_matrix/`, family notes in 10 skills, new skill `zynqmp-porting-from-7-series`, part-aware selection), PR #36 (brief 21: version claims sidecar and probe), and earlier at `68673cb`: PR #35 (brief 19: four ipgen adapter notes in `vendor/amd_ip_cores`, budget 46,000), PR #34 (AVAL-46 measured in the MMCM skill), and earlier at `ab7fc4c`: PR #33 (brief 17: AMBA and AXI, new unit `vendor/amba_axi`), PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
   LUT6 fabric design, Vivado synthesis attributes and inference templates, STA report interpretation; earlier: `d6679f5`
   PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
   `217c751` brief 04h, the Artix-7 family and device layers; earlier: `16696e6` PR #6 brief 04f, `6db99dd` PR #5 04e,
@@ -46,10 +46,10 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `functions/` | generic: functional areas | RTL_Knowledge_Pack `v3.0` @ `b2ae875` (2026-11-02) | 11 | 20 | 45,956 (none) | 3,826 | 11,489 | `daea2321a397f7e4dfcdca2f5741c8f421854ebe0e85ddfd6a5485309b21a540` |
 | **bundle `generic`** | techniques + functions | `v3.0` | 33 | - | 137,695 (<= 152,000; was 116,872 <= 120,000 at v2.2) | 12,113 | 34,424 | `d5819522e0ff050785b2191b3bc333e9560da0924a2e8b796090783935e8b6b5` |
 | `vendor/ross_distilled/` | vendor: Ross distilled | 1 (2026-10-30; sectioned 2026-10-31) | 14 | 24 | 57,716 (<= 60,000) | 4,429 | 14,429 | `71b0be3612dd70311a092aaf9e108dbc68fe9efd324253a25eba2607ec9e3175` |
-| `vendor/free_simulators/` | vendor: free-simulator capabilities and cocotb_coverage usage (ours, from the owner's matrix and the cocotb-coverage 2.0 source) | 2 (2026-11-07, 07a2 fix 3) | 3 | 5 | 9,878 (<= 10,000) | 887 | 2,470 | `c347615e5d85ed66890b9a6e6167e4ea1466783c19979de3b53d8cbcfddf857d` |
+| `vendor/free_simulators/` | vendor: free-simulator capabilities and cocotb_coverage usage (ours, from the owner's matrix and the cocotb-coverage 2.0 source) | 3 (2026-11-11, 24: fsm-coverage) | 4 | 6 | 14,449 (<= 16,000) | 1,183 | 3,612 | `eb33c59d3f68448098d06c215c7afa886377e335a8a3435d3e1c8f299df7e803` |
 | `vendor/vivado_synthesis/` | vendor: Vivado synthesis attributes and inference templates (ours, from UG901/UG912/UG949) | 1 (2026-11-03, 04j) | 4 | 7 | 20,965 (<= 22,000) | 1,845 | 5,241 | `469e9d29c156f2ef8dfdff723e8a80a254e3ff805b7ac4b7d0667098213eef61` |
 | `vendor/ross_shipped/` | vendor: Ross as shipped | Ross release 2026.10.1 | 50 | 1,195 | 918,458 (none) | 12,578 | 225,565 | `3d2cf1b50012d4676a3b432f0725b00848795059224f913935e37cc98846e773` |
-| `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 4 (2026-11-03, 04j) | 43 | 58 | 217,990 (<= 222,000) | 16,135 | 54,498 | `5835708f3dfe1ba71be4ac86d1baed38637f774345afca4a2eb4fe719fa7574d` |
+| `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 5 (2026-11-11, 24: FSM discipline) | 44 | 59 | 224,751 (<= 229,000) | 16,455 | 56,188 | `1f67ec37d768ca0595f2c50995f1b7faf12ec44afe407183a37dd56ad489ec99` |
 | `device/xc7a100tcsg324-1/` | device: the part on the Nexys A7-100T (xc7a100tcsg324-1) | 2 (2026-11-03, 04j: +1 primitives) | 5 | 11 | 16,295 (<= 18,000) | 2,992 | 4,074 | `a92427e0c7a38d2a6c4409c265cfdf19b5fbc37636d53234bac16e5d5b7ffad7` |
 | `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
 | `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 5 (2026-11-04: the V2 skill names the `V_*` checker macros) | 15 | 19 | 58,749 (<= 72,000) | 4,048 | 14,687 | `7f1d3c10d7b25589ea75b99e15f036d3ad0b528bc9f26ef415358f53efb1fa80` |
@@ -66,7 +66,7 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `library/` | library (search_docs corpus: 1,783 chunks) | 2 (2026-11-02, 04h: +15 chunks) | - | 16 | see `library/MANIFEST.sha256` | - | - | `04ede99be370ae925d7596cc4a63af9c1a136500de661f6acfb8dfdf35c228d6` |
 
 Root files: `SECTIONS.yaml` sha256 `34a423824b06b789681ed2dfa543da592d6baca0a1d43e32e3794c13e536116e`; `INDEX.md` sha256
-`1757c9b1b9e75a28d45d848724e82f19845c2be6cf7f89bf5c8d264273c42dfa`.
+`e9b6f6a76461d0674c4f68f0cf0d84739aecaf15d8c7f19d406ee5d11436c05e`.
 
 ## The vocabulary
 
@@ -116,7 +116,7 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `vendor/amba_axi/` | `ip-cores` | tool-flow | 3 | 13,321 | `8bb4aea3226501862b927fa33f92ae54a13a38d69307c4725a6a53ee9d395268` |
 | `vendor/amba_axi/` | `simulation` | tool-flow | 3 | 13,305 | `50ee9a41b12688a6722f7f94f09c15a5df79078a5508450d09c1f64b31119869` |
 | `vendor/packet_processing/` | `packet-processing` | tool-flow | 4 | 16,473 | `2bc013f6fea3b56f677f99a517b20cf0ed8c60a0ee5e89f6ef215bf715354835` |
-| `vendor/free_simulators/` | `simulation` | tool-flow | 3 | 9,878 | `8718cc4fde03e66a48d192f53057e3a26c8c8ff70b86b740941709f030b71e20` |
+| `vendor/free_simulators/` | `simulation` | tool-flow | 4 | 14,449 | `cb3be883de11e549bd074c404ecf8162f53426b1f18eec668024224b064a2ab9` |
 | `vendor/ross_distilled/` | `clocking-ip` | tool-flow | 1 | 4,495 | `9cb66d5f9a42742c53be67e8270c1c81229132dc49ba1602986b9ecd4044e13f` |
 | `vendor/ross_distilled/` | `constraints` | tool-flow | 1 | 4,495 | `2dfb95cff49e1da9a6edf6b2d4dc192306f6bffd1d363326b2655871979ecd57` |
 | `vendor/ross_distilled/` | `debug-ila-vio` | tool-flow | 2 | 7,023 | `2be1ea67875613b39f7fa6cb9d7c0c4abd49a0c82599b7f1e69d992e72a717af` |
@@ -132,7 +132,7 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `family/artix7/` | `clocking` | technique | 5 | 27,223 | `cd05dc1c3016a00d5484038932a6ee92a35de9343dcb09bacf56e78fa4aaa70b` |
 | `family/artix7/` | `dram` | function | 1 | 3,661 | `24cb37aa9fd9f7eb1e02b77ab24f121770abdeacb5d04a360b5b4344dfd1cef1` |
 | `family/artix7/` | `dsp` | function | 2 | 9,896 | `289af58c8172d22e678a5cf1748f58b983b37c2258bffe5843f3cc65a37f9ae1` |
-| `family/artix7/` | `fsm` | technique | 3 | 15,949 | `2ff7244d19ec42878e4227d53edffab65d1efeb0aa33c287fe27ea765b5b6ad1` |
+| `family/artix7/` | `fsm` | technique | 4 | 22,710 | `f7ef5ed659ba17e35ca7b492e7526a5c5d15c626269f52622cfc35a84030c3e0` |
 | `family/artix7/` | `io-standards` | device | 3 | 15,895 | `e9d03ac87c513e9e34dcd533e9298f2128b657fc3b88decbf13d8fc72d0a2c9c` |
 | `family/artix7/` | `logic-fabric` | device | 4 | 19,605 | `9e86ae2caa9dc8aa8fe702973802a8ab79b39313a5794484f2ecb49ef38fabab` |
 | `family/artix7/` | `on-chip-memory` | function | 2 | 9,437 | `3def687be06300a50b4ae01830e6bc5effd1bf55415768c93fc42d2ed2d127ab` |
