@@ -1,0 +1,45 @@
+# ip.yaml for axil_table_ctrl: the declared parameter space and contract (brief 28 rules; brief 40 entry).
+name: axil_table_ctrl
+version: 0.1.0
+status: simulated (brief 40); OOC cost table pending
+summary: 'AXI4-Lite front end for the match tables: 512-bit staging DATA, CMD and STATUS registers; one command at a time.'
+top: axil_table_ctrl
+rtl:
+- rtl/axil_table_ctrl.sv
+depends: []
+interfaces:
+- name: s_axil
+  type: axi4-lite
+  dir: slave
+  addr: 7
+  data: 32
+- name: cmd
+  type: native
+  dir: master
+clocks:
+- name: clk
+parameters: {}
+latency:
+  command: about 37 clocks a table command including the AXI4-Lite writes and the STATUS poll (median, exact table)
+throughput: software-bound
+guards: []
+sweep_tested:
+- {}
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none
+limits: no write strobes; one outstanding read and write
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - flow/net/tests/test_40_tables_rtl.py
+  faults: null
+  results: results/b40/measure.json, results/b40/faults.json
+  simulator: Icarus Verilog 12 (local and CI); xsim cross-check pending
+cost_table: 'pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11)'
+licence: MIT (this repository)
+constraints: []

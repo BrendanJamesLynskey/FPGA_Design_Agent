@@ -1,0 +1,30 @@
+# Seeded faults (brief 40); see eth_mac_rmii/faults.yaml.
+faults:
+  - name: overflow_not_counted
+    file: pkt_queue_sched.sv
+    old: "drop_cnt[16 * cq +: 16] <= drop_cnt[16 * cq +: 16] + 16'd1;"
+    new: "drop_cnt[16 * cq +: 16] <= drop_cnt[16 * cq +: 16];"
+    class: counter
+    why: packets dropped on a full queue are not counted (the brief's example)
+    test: flow/net/tests/test_40_queues_rtl.py -k concurrent
+  - name: drr_no_subtract
+    file: pkt_queue_sched.sv
+    old: "deficit[cur] <= deficit[cur] - {1'b0, head[cur][AW +: LW]};"
+    new: "deficit[cur] <= deficit[cur];"
+    class: algorithm
+    why: DRR never charges a queue for what it sent
+    test: flow/net/tests/test_40_queues_rtl.py -k departure
+  - name: strict_priority_inverted
+    file: pkt_queue_sched.sv
+    old: "for (int q = NQ - 1; q >= 0; q--) if (nonempty[q]) sp_sel = QW'(q);"
+    new: "for (int q = 0; q < NQ; q++) if (nonempty[q]) sp_sel = QW'(q);"
+    class: priority
+    why: the highest-numbered queue is served first
+    test: flow/net/tests/test_40_queues_rtl.py -k departure
+  - name: space_freed_early
+    file: pkt_queue_sched.sv
+    old: "room = (used < (AW + 1)'(QBYTES));"
+    new: "room = 1'b1;"
+    class: condition
+    why: a full region is overwritten instead of dropping the packet
+    test: flow/net/tests/test_40_queues_rtl.py -k concurrent

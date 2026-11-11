@@ -15,8 +15,10 @@ graph = ["langgraph==1.2.19", "langgraph-checkpoint-sqlite==3.1.3", "deepagents=
 
 # the ipgen design tools (brief 19): numpy and scipy, both BSD-3
 ipgen = ["numpy>=2", "scipy>=1.14"]
+# the packet-processing tests (brief 40): scapy is GPL-2.0-only, a test-time tool, never shipped (ip_lib/README.md)
+net = ["scapy==2.8.0"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["flow/tests", "flow/ipgen/tests", "shell/tests", "designs", "tools/tests", "agent/tests", "benchmark/tests", "project/tests"]
+testpaths = ["flow/tests", "flow/ipgen/tests", "shell/tests", "designs", "tools/tests", "agent/tests", "benchmark/tests", "project/tests", "flow/net/tests"]
 python_files = ["test_*.py"]

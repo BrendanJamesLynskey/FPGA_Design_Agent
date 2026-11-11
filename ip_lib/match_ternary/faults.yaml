@@ -1,0 +1,23 @@
+# Seeded faults (brief 40); see eth_mac_rmii/faults.yaml.
+faults:
+  - name: highest_index_wins
+    file: match_ternary.sv
+    old: "for (int e = ENTRIES - 1; e >= 0; e--) if (l2_m[e]) l3_idx <= EI_W'(e);"
+    new: "for (int e = 0; e < ENTRIES; e++) if (l2_m[e]) l3_idx <= EI_W'(e);"
+    class: priority
+    why: overlapping rules resolve to the wrong one
+    test: flow/net/tests/test_40_tables_rtl.py -k ternary
+  - name: care_mask_ignored
+    file: match_ternary.sv
+    old: "w_care[gc * CHUNK_W +: CHUNK_W]) == '0;"
+    new: "{CHUNK_W{1'b1}}) == '0;"
+    class: logic
+    why: every bit is compared (no wildcards)
+    test: flow/net/tests/test_40_tables_rtl.py -k ternary
+  - name: action_written_early
+    file: match_ternary.sv
+    old: "                        w_act <= cmd_data[256 +: ACT_W];"
+    new: "                        w_act <= cmd_data[256 +: ACT_W]; act_ram[cmd_addr[EI_W-1:0]] <= cmd_data[256 +: ACT_W];"
+    class: race
+    why: the new action is visible while a lookup that matched the old rule is still in flight (a race found and fixed in this brief)
+    test: flow/net/tests/test_40_tables_rtl.py -k ternary
