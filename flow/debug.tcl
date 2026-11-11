@@ -81,7 +81,8 @@ proc insert_ila_ip {probes_tcl out} {
     set ipdir $out/ila_ip
     file mkdir $ipdir
     set ipname fda_ila
-    set ip [create_ip -name ila -vendor xilinx.com -library ip -module_name $ipname -dir $ipdir]
+    create_ip -name ila -vendor xilinx.com -library ip -module_name $ipname -dir $ipdir
+    set ip [get_ips $ipname]
     set cfg [list CONFIG.C_NUM_OF_PROBES $n CONFIG.C_DATA_DEPTH $ila_depth CONFIG.C_INPUT_PIPE_STAGES $ila_pipe \
                  CONFIG.C_TRIGIN_EN false CONFIG.C_TRIGOUT_EN false CONFIG.C_ADV_TRIGGER false CONFIG.C_EN_STRG_QUAL false \
                  CONFIG.ALL_PROBE_SAME_MU true CONFIG.ALL_PROBE_SAME_MU_CNT 1]
