@@ -86,6 +86,20 @@ proc copy_reports {from to patterns} {
     }
     return $n
 }
+# report_qor_assessment needs more than the free Basic licence tier on Vivado 2026.1 (ERROR Implflow 47-2944, empty Tcl error string; 2025.2 ran it
+# on the same tier; brief 48). On that error, write qor_unavailable_<stage>.txt instead, so flow/gates.py records the QoR gate
+# as not available rather than as a failure; any other error still stops the build.
+proc fda_qor {out stage} {
+    if {[catch {report_qor_assessment -file $out/qor_assessment_$stage.rpt} err]} {
+        # Vivado returns an empty error string here (the message goes to the log), so the tier is read from get_vivado_tier
+        # (a 2026.1 command; absent on 2025.2, where the report always ran)
+        if {[catch {get_vivado_tier} tier] || [string toupper $tier] ne "BASIC"} { error "report_qor_assessment failed: $err" }
+        set f [open $out/qor_unavailable_$stage.txt w]
+        puts $f "report_qor_assessment not run: $err"
+        close $f
+        puts "FLOW-QOR-UNAVAILABLE ($stage): licence tier"
+    }
+}
 # every file the rtl and post_synth stages write (the gates read these)
 set synth_files {methodology_rtl.rpt *_synth.rpt *_synth.txt post_synth.dcp}
 if {$resume_from ni {"" synth route}} { error "build.tcl: resume_from must be synth or route, not '$resume_from'" }
@@ -125,7 +139,7 @@ if {$resume_from eq ""} {
     # brief 16: every asynchronous register-to-register path of the netlist, for flow/cdc_structure.py (gate post_synth_cdc_structure_clean)
     cdc_dump_paths $out/cdc_paths_synth.rpt
     report_drc            -file $out/drc_synth.rpt
-    report_qor_assessment -file $out/qor_assessment_synth.rpt
+    fda_qor $out synth
     report_utilization    -file $out/utilization_synth.rpt
     report_clock_networks -file $out/clock_networks_synth.rpt
     report_clock_interaction -delay_type min_max -file $out/clock_interaction_synth.rpt
@@ -200,13 +214,15 @@ if {$resume_from ne "route"} {
 
     # --- stage post_route: reports (the gates read these) ------------------------
     report_timing_summary -max_paths 10 -report_unconstrained -file $out/timing_summary.rpt
+    # brief 48: every clock pair as timed after routing; flow/gates.py reads it to fail an ILA build whose debug hub crossing is timed as synchronous
+    report_clock_interaction -delay_type min_max -file $out/clock_interaction_route.rpt
     check_timing -verbose -file $out/check_timing.rpt
     report_utilization    -file $out/utilization.rpt
     report_utilization    -hierarchical -file $out/utilization_hier.rpt
     report_methodology    -file $out/methodology.rpt
     report_cdc -details   -file $out/cdc.rpt
     report_drc            -file $out/drc.rpt
-    report_qor_assessment -file $out/qor_assessment_route.rpt
+    fda_qor $out route
     exception_reports $out route
     io_dump_paths $out/io_paths_route.txt
     report_timing -delay_type max -max_paths 1 -file $out/timing_worst_setup.rpt
@@ -240,6 +256,12 @@ if {$ila eq "0"} { stop_here route }
 write_bitstream -force $out/$top.bit
 if {$ila} {
     write_debug_probes -force $out/$top.ltx
+    # brief 48: an ILA that is an IP can get a .ltx the hardware manager calls inconsistent; repair what is safe, fail the build on
+    # any gap (flow/ltx_fix.py). The core-inserted ILA of 2025.2 has no probe_nets.txt and is not touched.
+    if {[file exists $out/probe_nets.txt]} {
+        if {[catch {exec python3 $flow_dir/ltx_fix.py $out} msg]} { error "ltx_fix failed: $msg" }
+        puts "FLOW-LTX $msg"
+    }
 }
 stage bitstream
 close $stage_log

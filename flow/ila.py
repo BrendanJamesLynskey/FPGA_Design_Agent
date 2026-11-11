@@ -3,7 +3,9 @@
 The CSV's columns are hardware probes, named after nets in the .ltx, and one ILA probe
 port can be split over several of them (a bus whose bits sit on differently named nets
 after synthesis). Two map files join them back up:
-- ``probe_map.txt`` from the build (flow/debug.tcl): ``probe<i> <name> <width> <pins>``
+- ``probe_map.txt`` from the build (flow/debug.tcl): ``probe<i> <name> <width> <offset> <pins>``. Several named probes can
+  share one port (brief 48: the Basic licence tier allows 5 ports, so flow/prepare.py packs the probes); ``offset`` is the
+  probe's lowest bit in the port. Older files have no ``offset`` column: one probe per port, offset 0.
 - ``hw_probes.txt`` from the capture session: ``<port> <width> <map> <hw probe name>``,
   where ``<map>`` is the hw_probe's MAP property, e.g. ``probe8[6:3]`` (comma-joined
   if it has several ranges), most significant bit first. The CSV header is the hw probe
@@ -18,13 +20,25 @@ import re
 from pathlib import Path
 
 
-def read_probe_map(path: Path) -> dict[int, tuple[str, int]]:
-    """probe_map.txt -> {port: (name, width)}."""
-    out = {}
+def read_probe_slices(path: Path) -> list[tuple[str, int, int, int]]:
+    """probe_map.txt -> [(name, port, bit offset, width)] in file order (offset 0 when the file has no offset column)."""
+    out = []
     for line in path.read_text().splitlines():
         f = line.split()
         if len(f) >= 3 and f[0].startswith("probe"):
-            out[int(f[0][5:])] = (f[1], int(f[2]))
+            off = int(f[3]) if len(f) > 3 and f[3].isdigit() else 0
+            out.append((f[1], int(f[0][5:]), off, int(f[2])))
+    return out
+
+
+def read_probe_map(path: Path) -> dict[int, tuple[str, int]]:
+    """probe_map.txt -> {port: (name, width)} for a file with one probe per port (the 2025.2 core route); with packed
+    ports use :func:`read_probe_slices`."""
+    out = {}
+    for name, port, off, width in read_probe_slices(path):
+        if port in out or off:
+            raise ValueError(f"{path}: port {port} holds several probes; use read_probe_slices")
+        out[port] = (name, width)
     return out
 
 
@@ -81,8 +95,11 @@ def _value(text: str, radix: str) -> int:
 
 
 def load_capture(csv_path: Path, probe_map: Path, hw_probes: Path) -> dict[str, list[int]]:
-    """{name: samples} for every probe port, plus 'TRIGGER' and 'sample' (sample in window)."""
-    names = read_probe_map(probe_map)
+    """{name: samples} for every named probe (sliced out of its port), plus 'TRIGGER' and 'sample' (sample in window)."""
+    slices = read_probe_slices(probe_map)
+    port_width: dict[int, int] = {}
+    for _n, port, off, width in slices:
+        port_width[port] = max(port_width.get(port, 0), off + width)
     hwl = read_hw_probe_list(hw_probes)
     hwp = dict(hwl)
     dup = {n for n in hwp if sum(1 for m, _ in hwl if m == n) > 1}
@@ -93,8 +110,8 @@ def load_capture(csv_path: Path, probe_map: Path, hw_probes: Path) -> dict[str, 
     if not radix[0].lower().startswith("radix"):
         raise ValueError(f"{csv_path}: second row is not the radix row: {radix[:3]}")
     n = len(data)
-    ports: dict[int, list[int]] = {port: [0] * n for port in names}
-    covered: dict[int, set[int]] = {port: set() for port in names}
+    ports: dict[int, list[int]] = {port: [0] * n for port in port_width}
+    covered: dict[int, set[int]] = {port: set() for port in port_width}
     out: dict[str, list[int]] = {}
     for col, h in enumerate(header):
         vals = [_value(r[col], radix[col]) for r in data]
@@ -125,9 +142,11 @@ def load_capture(csv_path: Path, probe_map: Path, hw_probes: Path) -> dict[str, 
                         acc |= 1 << b
                 ports[port][k] = acc
             covered[port] |= set(bits)
-    for port, (name, width) in names.items():
-        if covered[port] != set(range(width)):
-            missing = sorted(set(range(width)) - covered[port])
+    for name, port, off, width in slices:
+        need = set(range(off, off + width))
+        if not need <= covered[port]:
+            missing = sorted(need - covered[port])
             raise ValueError(f"{csv_path}: probe {name} (port {port}) bits {missing} are in no CSV column")
-        out[name] = ports[port]
+        mask = (1 << width) - 1
+        out[name] = [(v >> off) & mask for v in ports[port]]
     return out

@@ -4,7 +4,7 @@ An open-source agent that turns a plain-English spec into verified RTL and a bit
 Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)); the home page draws the agent's feedback loop on the bench, with a recorded run replayed through it; [the agent](https://fpga-design-agent.vercel.app/agent) shows its architecture, LangGraph and [harness](https://fpga-design-agent.vercel.app/agent#harness).
 
 **What it does today.** Given a short request, the agent interviews the user (or, in an evaluation, a stand-in that
-answers only from a hidden full spec), plans the design, writes SystemVerilog and its tests, and drives Vivado 2025.2
+answers only from a hidden full spec), plans the design, writes SystemVerilog and its tests, and drives Vivado 2026.1
 through synthesis and place and route to a bitstream, stage by stage in the order of AMD's UltraFast methodology. Each
 stage ends in a gate run by code, and the agent's own tests never count as a pass: hidden tests written against an
 independent model of the spec decide, and those tests are themselves checked by mutation testing. It targets a
@@ -240,7 +240,7 @@ designs/t1_dimmer_counter/tests/run_mutants.sh                  # every delibera
 flow/lint.sh                                                    # needs Verilator
 ```
 
-The bitstream (local only: **Vivado 2025.2** at `/opt/Xilinx/2025.2`, at least 7 GB of available memory (the runner checks), Linux
+The bitstream (local only: **Vivado 2026.1** at `/opt/Xilinx/2026.1`, at least 7 GB of available memory (the runner checks), Linux
 with `systemd-run --user`):
 
 ```bash

@@ -272,3 +272,16 @@ def test_qr1_missing_reports_fail_their_gates_in_a_build_with_run_json(tmp_path:
     assert gates.evaluate(d)["gates"]["post_route_qor_assessment"] is False
     (d / "methodology_rtl.rpt").unlink()
     assert gates.evaluate(d)["gates"]["rtl_methodology_no_critical"] is False
+
+
+def test_qor_unavailable_on_the_basic_licence_tier(tmp_path: Path) -> None:
+    """Brief 48. Vivado 2026.1 on the free Basic tier cannot run report_qor_assessment (Implflow 47-2944); build.tcl writes
+    qor_unavailable_<stage>.txt, and the QoR gate is then recorded as not available, never as a pass or a failure."""
+    d = _build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True)
+    (d / "qor_assessment_synth.rpt").unlink()
+    (d / "qor_assessment_route.rpt").unlink()
+    (d / "qor_unavailable_synth.txt").write_text("ERROR: [Implflow 47-2944]\n")
+    (d / "qor_unavailable_route.txt").write_text("ERROR: [Implflow 47-2944]\n")
+    r = gates.evaluate(d)
+    assert "post_route_qor_assessment" not in r["gates"] and r["pass"]
+    assert r["stages"]["post_route"]["qor_assessment"]["available"] is False

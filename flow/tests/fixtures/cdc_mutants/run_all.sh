@@ -4,11 +4,12 @@
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 flow="$(cd "$here/../../.." && pwd)"
+V="${VIVADO:-$(python3 "$flow/version_pin.py" --vivado)}"
 out="$1"; shift; mkdir -p "$out"
 names=("$@")
 [ ${#names[@]} -eq 0 ] && names=($(cd "$here/rtl" && ls *.sv | sed 's/\.sv$//'))
 for n in "${names[@]}"; do
   systemd-run --user --scope -q -p MemoryMax=6G nice -n 15 \
-    /opt/Xilinx/2025.2/Vivado/bin/vivado -mode batch -nojournal -nolog -source "$here/synth_fixture.tcl" \
+    "$V" -mode batch -nojournal -nolog -source "$here/synth_fixture.tcl" \
     -tclargs "$flow" "$here" "$n" "$out/$n" > "$out/$n.log" 2>&1 || echo "FAILED $n"
 done

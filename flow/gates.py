@@ -254,6 +254,32 @@ def parse_cdc(text: str) -> dict[str, Any]:
     return out
 
 
+HUB_OK = ("Max Delay Datapath Only", "Asynchronous Groups", "User Ignored")
+
+
+def parse_clock_interaction(text: str) -> list[dict[str, str]]:
+    """report_clock_interaction rows: {from, to, classification, constraints} (the table is column-aligned, two or more spaces apart)."""
+    rows = []
+    for line in text.splitlines():
+        f = re.split(r"\s{2,}", line.strip())
+        if len(f) >= 4 and f[0] and not set(f[0]) <= {"-"} and f[0] != "From Clock" and f[-2] != "Clock-Pair":
+            rows.append({"from": f[0], "to": f[1], "classification": f[-2], "constraints": f[-1]})
+    return rows
+
+
+def hub_crossings(rows: list[dict[str, str]]) -> dict[str, Any]:
+    """Brief 48. Every clock pair between the debug hub's JTAG clock (a name with dbg_hub and TCK) and another clock must be
+    constrained as asynchronous: Max Delay Datapath Only, Asynchronous Groups or User Ignored (plain False Path is accepted too;
+    a Partial False Path is not, nor is Timed). Measured on the T1 ILA build, Vivado 2026.1: TCK to sys_clk_pin and back are
+    Ignored / Max Delay Datapath Only (WNS +31.34 and +8.63 ns); the build without the hub's properties timed the crossing
+    as synchronous (WNS -2.993 ns inside dbg_hub)."""
+    def is_hub(n: str) -> bool:
+        return "dbg_hub" in n and "TCK" in n
+    pairs = [r for r in rows if (is_hub(r["from"]) or is_hub(r["to"])) and r["from"] != r["to"]]
+    bad = [r for r in pairs if not (r["constraints"] in ("False Path",) or any(o in r["constraints"] for o in HUB_OK))]
+    return {"pairs": len(pairs), "ok": bool(pairs) and not bad, "timed_as_synchronous": [f"{r['from']} -> {r['to']}: {r['constraints']}" for r in bad]}
+
+
 def parse_qor_assessment(text: str) -> dict[str, Any]:
     """report_qor_assessment: the 1-5 score, its text, the flow guidance and the detail rows marked REVIEW."""
     m = re.search(r"^\|\s*QoR Assessment Score\s*\|\s*(\d)\s*-\s*(.*?)\s*\|", text, re.M)
@@ -570,8 +596,12 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             "methodology_no_critical": _n_sev(meth, "Critical Warning") == 0,
             "cdc_no_critical": sum(r["count"] for r in cdc["rules"] if r["severity"] == "Critical") == 0,
         }
+        qor_na = (d / "qor_unavailable_route.txt").exists()   # brief 48: Vivado 2026.1 on the Basic licence tier cannot run it
         if q_r is not None:        # the QoR gate (brief 05g): judged after routing, from qor_assessment_route.rpt
             route_gates["post_route_qor_assessment"] = q_r["score"] >= QOR_SCORE_MIN
+        elif qor_na:
+            q_r = {"available": False, "reason": "report_qor_assessment needs a licence tier above Basic (Implflow 47-2944); "
+                                                 "the QoR gate is not judged"}
         elif strict:
             route_gates["post_route_qor_assessment"] = False
         # UG949 ch. 6 "Power Closure": the junction temperature must fit the thermal budget, computed for the
@@ -579,10 +609,17 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         if (d / "methodology_rtl.rpt").exists() or strict:      # a build of this flow version: the environment is set
             route_gates["power_junction_ok"] = (env["airflow_lfm"] == 0 and env["heatsink"] == "none"
                                                 and env["junction_c"] is not None and env["junction_c"] <= JUNCTION_MAX_C)
+        ci = d / "clock_interaction_route.rpt"
+        if (d / "probe_nets.txt").exists():      # an ILA that is an IP (brief 48): the hub's JTAG crossing must be constrained as asynchronous
+            hub = hub_crossings(parse_clock_interaction(_read(d, "clock_interaction_route.rpt")) if ci.exists() else [])
+            route_gates["ila_hub_crossing_async"] = hub["ok"]
+            hub_info = hub
+        else:
+            hub_info = None
         exc_r = _exceptions(d, "route", strict, route_gates, "exceptions_clean")
         io_r = _io(d, "route", strict, route_gates, "io_timing_clean")
         stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r, "exceptions": exc_r,
-                                "io_timing": io_r, "timing_margin": _margin(d),
+                                "io_timing": io_r, "timing_margin": _margin(d), "ila_hub_crossing": hub_info,
                                 "warnings": (io_r or {}).get("warnings", []),
                                 "unconstrained_ports": parse_check_timing_ports(checks_text)}
 

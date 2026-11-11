@@ -8,7 +8,7 @@
 # manager and never programs a board. On the shared PC, take a heavy slot first (_handoff/take_heavy_slot.sh).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
-VIVADO="${VIVADO:-/opt/Xilinx/2025.2/Vivado/bin/vivado}"
+VIVADO="${VIVADO:-$(python3 "$HERE/../../flow/version_pin.py" --vivado)}"
 MODE="${1:?usage: run_build.sh <small|full> [place directive] [route directive]}"
 PD="${2:-Default}"
 RD="${3:-Default}"
