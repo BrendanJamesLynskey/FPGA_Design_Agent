@@ -31,7 +31,7 @@ import yaml
 
 from agent.core import constraints as con
 from agent.core.artefacts import check_artefact
-from agent.core.registry import clip, tool
+from agent.core.registry import MAX_OUTPUT, clip, tool
 from agent.core.security import FLASH_WORDS, SecurityError
 from agent.core.session import STAGES, Session
 from flow import srcorder
@@ -819,13 +819,31 @@ def load_skill(s: Session, sections: list[str] | None = None, procedures: bool =
             if more:
                 sk = (sk + more)[:6]
                 fallback = sorted({x["section"] for x in more})
+    # Brief 36 finding: six bodies average about 24k characters, so the registry's MAX_OUTPUT clip cut the middle out
+    # of every full call (half a skill lost, unannounced). Return whole skills up to the limit instead, in order, and
+    # name the ones held back so the role can load each by name. The first skill always goes (clipped if it alone is
+    # over the limit).
+    budget = MAX_OUTPUT - 1000
+    blocks, held = [], []
+    for x in sk:
+        b = f"{DATA_NOTE}\n[{x['path']}]\n{x['text']}"
+        if blocks and (held or sum(len(y) + 2 for y in blocks) + len(b) > budget):
+            held.append(x)
+            continue
+        blocks.append(b)
+    sk = [x for x in sk if x not in held]
     paths = [x["path"] for x in sk]
-    text = "\n\n".join(f"{DATA_NOTE}\n[{x['path']}]\n{x['text']}" for x in sk)
-    empty = [x for x in sections if not any(x == y["section"] for y in sk)]
+    text = "\n\n".join(blocks)
+    if held:
+        text += ("\n\n[not returned, output limit: " + ", ".join(x["name"] for x in held)
+                 + ". Call load_skill(name=...) for each one you need.]")
+    empty = [x for x in sections if not any(x == y["section"] for y in sk + held)]
     note = ("" if not fallback else f"[sections {', '.join(fallback)} are procedures: returned from the procedures layer]\n\n")
     out = {"output": (note + text) if text else f"no skill matches for {', '.join(sections)}", "skills": paths,
            "sections_asked": list(sections), "sections_empty": empty, "procedures_fallback": fallback,
            "untrusted": True}
+    if held:
+        out["held_for_size"] = [x["name"] for x in held]
     if s.skill_routing != "off" and len(every) > 6:      # brief 36 only: the off path's result is unchanged
         out["not_returned"] = [x["name"] for x in every[6:]]
     return out
