@@ -69,7 +69,7 @@
     "enforced": 3,
     "evidence": 6,
     "sections": 7,
-    "skills": 19
+    "skills": 21
    },
    "evidence": [
     {
@@ -195,6 +195,16 @@
       "confirmed": "doc",
       "summary": "AUTOPIPELINE_* properties are for UltraScale, UltraScale+ and Versal only; 7-series has no auto-pipelining.",
       "topic": "Auto-pipelining and SLR constraints"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "The same uncertainty fields (system, input, discrete jitter, phase error, user) on every family; the MMCM's jitter and phase error, and so the numbers, are per family and speed grade.",
+      "topic": "Clock uncertainty parts and MMCM jitter"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "On 7-series a BUFG-clocked IOB input flip-flop gets a fixed hold-compensating delay; BUFIO and MMCM captures do not, so their hold must be designed (IDELAY, feedback BUFG).",
+      "topic": "Input capture hold at the IOB"
      }
     ]
    },
@@ -216,6 +226,10 @@
        "name": "xdc-clock-definitions"
       },
       {
+       "description": "A spec gives an oscillator's jitter or asks for timing margin, or a timing report's Clock Uncertainty line needs explaining: the parts (system jitter, input jitter, MMCM discrete jitter ...",
+       "name": "xdc-clock-uncertainty-budget"
+      },
+      {
        "description": "Proving an XDC is complete and honest before trusting timing: what each check_timing category means and its usual fix, report_exceptions -ignored/-coverage/-ignored_objects ...",
        "name": "xdc-coverage-and-audit-checks"
       },
@@ -226,6 +240,10 @@
       {
        "description": "Turning an external device's data-sheet numbers and the board's trace delays into set_input_delay/set_output_delay -min/-max values: the derivation for system-synchronous and ...",
        "name": "xdc-io-delay-derivation"
+      },
+      {
+       "description": "Writing or reviewing set_input_delay/set_output_delay, a virtual clock or a forwarded clock, or deciding what a button, LED or UART pin needs ...",
+       "name": "xdc-io-timing-measured"
       },
       {
        "description": "Writing or reviewing set_multicycle_path for a clock-enable design, in particular a slow control FSM advanced by a 1-in-N enable on a shared fast clock ...",
@@ -4045,7 +4063,7 @@
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
   }
  ],
- "pin": "a598197",
- "skills_total": 216,
- "skills_used": 189
+ "pin": "e3cf892",
+ "skills_total": 218,
+ "skills_used": 191
 }
