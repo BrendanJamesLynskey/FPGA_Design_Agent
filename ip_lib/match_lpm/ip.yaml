@@ -1,0 +1,80 @@
+# ip.yaml for match_lpm: the declared parameter space and contract (brief 28 rules; brief 40 entry).
+name: match_lpm
+version: 0.1.0
+status: simulated (brief 40); OOC cost table pending
+summary: 'IPv4 longest-prefix match: an 8-8-8-8 multibit trie in block RAM, one lookup a clock; the control plane (flow/net/model.py
+  lpm_compile) expands prefixes and writes raw words, deepest first, so updates never stop traffic.'
+top: match_lpm
+rtl:
+- rtl/match_lpm.sv
+depends: []
+interfaces:
+- name: lookup
+  type: native
+- name: cmd
+  type: native
+  note: op 1 WRITE {level, index}, op 2 CLEAR
+clocks:
+- name: clk
+parameters:
+  ACT_W:
+    type: int
+    default: 16
+    range:
+    - 1
+    - 64
+  L1_NODES:
+    type: int
+    default: 64
+    range:
+    - 1
+    - 64
+  L2_NODES:
+    type: int
+    default: 64
+    range:
+    - 1
+    - 64
+  L3_NODES:
+    type: int
+    default: 64
+    range:
+    - 1
+    - 64
+  TAG_W:
+    type: int
+    default: 8
+    range:
+    - 1
+    - 64
+latency:
+  lookup: 10 clocks (measured)
+  word_write: 1 clock at the core (measured)
+throughput: one lookup a clock
+guards:
+- L1_NODES: 65
+- ACT_W: 0
+sweep_tested:
+- ACT_W: 12
+  L1_NODES: 16
+  L2_NODES: 32
+  L3_NODES: 64
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none (ram_style block)
+limits: no route delete in the compiler yet (CLEAR and reload); node indices must stay stable across incremental compiles
+  (found in this brief)
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - flow/net/tests/test_40_tables_rtl.py
+  faults: ip_lib/match_lpm/faults.yaml
+  results: results/b40/measure.json, results/b40/faults.json
+  simulator: Icarus Verilog 12 (local and CI); xsim cross-check pending
+cost_table: 'pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11)'
+licence: MIT (this repository)
+constraints: []

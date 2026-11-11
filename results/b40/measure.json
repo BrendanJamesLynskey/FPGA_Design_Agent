@@ -1,0 +1,87 @@
+{
+ "mac_rx": {
+  "frames_in": 200,
+  "frames_out_ok": 200,
+  "clocks_per_frame": 336.0,
+  "frames_per_s_at_50MHz": 148809.52380952382,
+  "theory_100M": 148809.52380952382,
+  "latency_note": "receive output lags the wire by 5 bytes (FCS strip) plus 2 register stages"
+ },
+ "parser": {
+  "frames": 300,
+  "clocks_per_60B_frame": 60.0,
+  "bytes_per_clock": 1.0,
+  "data_latency_clocks": 1,
+  "hdr_after_first_byte_out_clocks": [
+   38
+  ]
+ },
+ "rewrite": {
+  "clocks_per_60B_frame": 60.0,
+  "latency_clocks": 3
+ },
+ "queues": {
+  "out_clocks_per_60B_frame": 62.0,
+  "latency_first_byte_clocks": 63
+ },
+ "tables": {
+  "exact": {
+   "params": "KEY_W 48, IDX_W 10 (2 x 1024 buckets), STASH 4",
+   "lookup_latency_clocks": 3,
+   "lookups_per_clock": 1,
+   "core_clocks_per_command": {
+    "insert": [
+     5
+    ],
+    "delete": [
+     5
+    ],
+    "age_sweep": [
+     2050
+    ],
+    "bad_op": [
+     2
+    ]
+   },
+   "capacity_entries": 2052,
+   "inserted_ok_of_600": 600,
+   "median_clocks_per_command_through_axil_incl_poll": 37.0
+  },
+  "lpm": {
+   "params": "strides 8-8-8-8, L1/L2/L3 = 16/32/64 nodes",
+   "words_for_250_routes": 5513,
+   "lookups_per_clock": 1,
+   "update": "one word a command; a route add touches 1..256 words",
+   "core_clocks_per_word_write": [
+    1
+   ],
+   "lookup_latency_clocks": 10
+  },
+  "ternary": {
+   "params": "KEY_W 40, CHUNK_W 5, 32 entries",
+   "lookups_per_clock": 1,
+   "lookup_latency_clocks": 4,
+   "core_clocks_per_write": [
+    34
+   ],
+   "core_clocks_per_delete": [
+    1
+   ]
+  }
+ },
+ "switch": {
+  "frames_offered": 240,
+  "frames_taken": 113,
+  "in_drops": 127,
+  "core_clocks_per_60B_frame": 72.0,
+  "frames_per_s_at_50MHz": 694444.4444444445,
+  "frames_per_s_at_100MHz": 1388888.888888889,
+  "ports_at_100M_line_rate_supported_at_50MHz": 4.67,
+  "ports_at_100M_line_rate_supported_at_100MHz": 9.33
+ },
+ "theory": {
+  "min_frames_per_s_100M": 148809.52380952382,
+  "min_frames_per_s_1G": 1488095.238095238,
+  "byte_wide_1G_needs_MHz": 125.0
+ }
+}

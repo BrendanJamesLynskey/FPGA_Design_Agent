@@ -1,0 +1,16 @@
+# Seeded faults (brief 40); see eth_mac_rmii/faults.yaml.
+faults:
+  - name: best_match_not_kept
+    file: match_lpm.sv
+    old: "else                      begin bh[s + 1] <= bh2[s]; bn[s + 1] <= bn2[s]; end"
+    new: "else                      begin bh[s + 1] <= 1'b0; bn[s + 1] <= '0; end"
+    class: algorithm
+    why: a shorter prefix found higher in the trie is forgotten when a deeper level has no route
+    test: flow/net/tests/test_40_tables_rtl.py -k lpm
+  - name: wrong_key_byte_level2
+    file: match_lpm.sv
+    old: "ad[2] = {ch[2], k[2][15:8]};"
+    new: "ad[2] = {ch[2], k[2][23:16]};"
+    class: index
+    why: level 2 is indexed by the wrong address byte
+    test: flow/net/tests/test_40_tables_rtl.py -k lpm
