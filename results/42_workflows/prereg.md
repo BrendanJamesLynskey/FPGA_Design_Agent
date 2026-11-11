@@ -185,3 +185,12 @@ locks were released at 13:53 (owner-checked case release). The driver takes none
 under 6 and more than 12 GiB is available. Workers run as before under `systemd-run --user --scope -p MemoryMax=6G` (scope names
 `b42-w1`, `b42-w2`, created by this session). Workers are restarted for amendment 3 with repeat 1 only (`--seeds 1`) and per-run
 claims; repeats 2 and 3 are not run in this session for lack of time (see the report), stated here and not changed later.
+
+## Amendment 5 (2026-11-11 16:05, data repair, no change to arms or analysis)
+
+Two workers restarted in the same second (14:32:01) after amendment 3, and each took the lexically first new run directory as its
+own, so the record of `t1_gray_stepper` H9 repeat 1 pointed at the H2 run's directory (`...-9301`) and carried a lower bound of its
+tokens and cost. The record was re-derived from the correct run directory (`...-f218`) with `repair_records.py` (kept in the
+folder; the record is tagged `repaired`); the H2 record was correct. `run_id` uniqueness and a match of each run's `config.json`
+(task, arm) with its record were then checked for every record, and are checked again before the final analysis. The driver is not
+changed: the collision needs a same-second start, and workers are not restarted again.
