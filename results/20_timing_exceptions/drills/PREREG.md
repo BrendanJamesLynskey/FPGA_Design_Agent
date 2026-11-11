@@ -45,3 +45,13 @@ Development runs, not a scored evaluation: the drills are outside every benchmar
   `set_clock_uncertainty` in design.xdc). A seed passes when both pass. Recorded per seed: the agent's I/O and jitter lines,
   every invented delay the agent wrote at any stage (from the build history) even if a gate caught it.
 - **Stopping rules:** as part A (70 % of the 5-hour window; one re-run of a harness failure).
+
+## Part B amendment 1 (2026-11-11 00:10, after run b1, during run b2)
+
+- Run b1 declared the ADC pins as the bus `JA[7:0]` (pins right: JA[0..3] on JA1-JA4, JA[4..7] on JA7-JA10) where the hidden
+  bench drives the scalar ports `JA1`...`JA10`; the spec says "ports named as in the board's master XDC" and the master XDC's
+  own names are `JA[1]`...`JA[10]`, so the drill's wording, not only the agent, is at fault. Runs b2 and b3 keep the frozen
+  spec (pre-registered). The hidden bench result as written is reported; a descriptive second bench run wraps the agent's top
+  in a scalar-port adapter (`run_b<N>.hidden_adapted.json`) to show the behaviour.
+- The I/O grader's interface now also accepts the bus form (`JA[*]`): it judges the delay values, the clock and the IOB, not
+  the port naming. Run b1 was regraded with it (`run_b1.io.json`).
