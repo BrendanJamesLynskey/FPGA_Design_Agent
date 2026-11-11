@@ -97,16 +97,16 @@ def stations(A):
          "fb": {"kind": "UART tests, ILA captures, XADC temperature and voltage",
                 "values": [f'UART {ut["tests"] - ut["failures"]} of {ut["tests"]} passed',
                            "ILA trigger did not fit" if ila_fit else ("ILA captures passed" if b["ila_captures"]["pass"] else "ILA captures failed"),
-                           "XADC: checked against JTAG in the HIL run"],
+                           "XADC matches JTAG"],
                 "src": board_src, "leg": "uart"},
          "gate": {"title": "board tests", "line": "registers, captures", "leg": "uart"}},
         {"id": "instr", "title": "Instruments", "desc": "ADALM2000, Red Pitaya, HDMI and audio capture, Pluto and RTL-SDR",
          "fb": {"kind": "waveforms, spectra, frames, audio",
-                "values": [f'audio at the jack {jack["freq_hz"]} Hz, THD {jack["thd_percent"]} %',
-                           "a pin fault caught only here", "scope, SDR, video: being measured"],
+                "values": [f'audio {jack["freq_hz"]} Hz', f'THD {jack["thd_percent"]} %',
+                           "caught a pin fault", "scope, SDR, video: next"],
                 "src": {"record": HIL_RUN, "what": f'the brief 30 hardware-in-the-loop run on {hil["design"].split("/")[-1]} ({hil["started"][:10]})'},
                 "leg": "audio_capture"},
-         "gate": {"title": "HIL checks", "line": "run by script; not yet in the repair loop", "leg": "hil_gate"}},
+         "gate": {"title": "HIL checks", "line": "scripted, not in loop yet", "leg": "hil_gate"}},
     ]
 
 
