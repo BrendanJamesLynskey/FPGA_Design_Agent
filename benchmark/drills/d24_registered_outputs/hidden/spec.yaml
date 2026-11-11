@@ -1,0 +1,63 @@
+# Hidden full spec (brief 24 development drill). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: d24_registered_outputs
+title: Burst sequencer whose pins come straight from flip-flops
+source: spec.md
+tier: drill
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: d24_registered_outputs_top
+design_id: 0x52474F55          # "RGOU"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+  - "Only this clock."
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: state IDLE, BURSTS 0, ERRS 0
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: JA1, dir: in, width: 1, pins: [C17], iostandard: LVCMOS33, note: "cmd_valid"}
+  - {name: JA2, dir: in, width: 1, pins: [D18], iostandard: LVCMOS33, note: "gnt"}
+  - {name: JA3, dir: in, width: 1, pins: [E18], iostandard: LVCMOS33, note: "ack"}
+  - {name: JA4, dir: in, width: 1, pins: [G17], iostandard: LVCMOS33, note: "nack"}
+  - {name: JA7, dir: in, width: 1, pins: [D17], iostandard: LVCMOS33, note: "rsp_ready"}
+  - {name: JB1, dir: out, width: 1, pins: [D14], iostandard: LVCMOS33, note: "req"}
+  - {name: JB2, dir: out, width: 1, pins: [F16], iostandard: LVCMOS33, note: "addr_v"}
+  - {name: JB3, dir: out, width: 1, pins: [G16], iostandard: LVCMOS33, note: "valid"}
+  - {name: JB4, dir: out, width: 1, pins: [H14], iostandard: LVCMOS33, note: "last"}
+  - {name: JB7, dir: out, width: 1, pins: [E16], iostandard: LVCMOS33, note: "rsp_valid"}
+  - {name: JB8, dir: out, width: 1, pins: [F13], iostandard: LVCMOS33, note: "rsp_err"}
+  - {name: JB9, dir: out, width: 1, pins: [G13], iostandard: LVCMOS33, note: "cmd_ready"}
+  - {name: JB10, dir: out, width: 1, pins: [H16], iostandard: LVCMOS33, note: "cmd_ack"}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  states:
+    - "IDLE: cmd_valid gives LOAD. LOAD: always REQ. REQ: gnt gives ADDR, else waits. ADDR: always DATA."
+    - "DATA lasts exactly 4 clocks, then TURN (1 clock), then WACK."
+    - "WACK waits up to 8 clocks: ack gives RESP, else nack gives RETRY, else (no ack or nack in all 8 clocks) ERR. ack wins over nack. RETRY (1 clock) gives REQ."
+    - "RESP and ERR wait for rsp_ready, then COOL (exactly 3 clocks), then IDLE."
+  outputs:
+    - "req = REQ, ADDR or DATA; addr_v = ADDR; valid = DATA; last = the fourth DATA clock; rsp_valid = RESP or ERR; rsp_err = ERR; cmd_ready = IDLE."
+    - "cmd_ack = LOAD. Every JB output pin is the output of a flip-flop and nothing else; all eight pins show the state table delayed by the same number of clocks (0 or 1)."
+  counts:
+    - "BURSTS counts clocks in RESP with rsp_ready high; ERRS the same for ERR; 16 bits, wrapping; CLEAR zeroes both."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: BURSTS, access: R, reset: 0, bits: "[15:0]; [31:16] read 0"}
+    - {offset: 0x01, name: ERRS, access: R, reset: 0, bits: "[15:0]; [31:16] read 0"}
+    - {offset: 0x02, name: CLEAR, access: W, reset: 0, bits: "a write (any data) zeroes both counts; reads 0"}
+  unmapped: offsets 0x03-0x7F read 0; writes to them are ignored

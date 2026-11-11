@@ -1,0 +1,12 @@
+# Functional mutants for d24_no_extra_latency (benchmark/tools/check_task.py conventions). The pin-structure grader is ../lib/grade_fsm.py.
+mutants:
+  - {name: timeout_7, file: burst_ctl.sv, find: "cnt <= 4'd7;", replace: "cnt <= 4'd6;", why: "the acknowledge window is 7 clocks"}
+  - {name: beats_3, file: burst_ctl.sv, find: "cnt <= 4'd3;", replace: "cnt <= 4'd2;", why: "a burst has three beats"}
+  - {name: nack_to_err, file: burst_ctl.sv, find: "else if (nack) nx = RETRY;", replace: "else if (nack) nx = ERR;", why: "a negative acknowledge ends in ERR instead of a retry"}
+  - {name: cool_2, file: burst_ctl.sv, find: "cnt <= 4'd2;", replace: "cnt <= 4'd1;", why: "the cool-down is two clocks"}
+  - {name: errs_count_ok, file: burst_ctl.sv, find: "if (st == ERR && rsp_ready) errs <= errs + 16'd1;", replace: "if (st == ERR && rsp_ready) bursts <= bursts + 16'd1;", why: "ERR responses are counted in BURSTS"}
+  - {name: clear_ignored, file: burst_ctl.sv, find: "if (rst || clear) begin bursts <= '0; errs <= '0; end", replace: "if (rst) begin bursts <= '0; errs <= '0; end", why: "CLEAR does not clear"}
+  - {name: ack_loses_to_nack, file: burst_ctl.sv, find: "if (ack) nx = RESP; else if (nack) nx = RETRY;", replace: "if (nack) nx = RETRY; else if (ack) nx = RESP;", why: "nack wins over ack"}
+  - {name: last_early, file: burst_ctl.sv, find: "assign o_last      = (st == DATA) && zero;", replace: "assign o_last      = (st == DATA) && (cnt == 4'd1);", why: "last on the third beat"}
+  - {name: cmd_ack_late, file: burst_ctl.sv, find: "assign o_cmd_ack   = (st == IDLE) && cmd_valid;", replace: "logic ack_q; always_ff @(posedge clk) ack_q <= (st == IDLE) && cmd_valid;\n    assign o_cmd_ack   = ack_q;", why: "cmd_ack is registered: a clock late"}
+  - {name: rsp_valid_late, file: burst_ctl.sv, find: "assign o_rsp_valid = (st == RESP || st == ERR);", replace: "logic rv_q; always_ff @(posedge clk) rv_q <= (st == RESP || st == ERR);\n    assign o_rsp_valid = rv_q;", why: "one output is registered: a clock late"}

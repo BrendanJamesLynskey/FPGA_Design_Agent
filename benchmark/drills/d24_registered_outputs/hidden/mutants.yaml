@@ -1,0 +1,12 @@
+# Functional mutants for d24_registered_outputs (benchmark/tools/check_task.py conventions). The pin-structure grader is ../lib/grade_fsm.py.
+mutants:
+  - {name: timeout_7, file: burst_ctl.sv, find: "cnt <= 4'd7;", replace: "cnt <= 4'd6;", why: "the acknowledge window is 7 clocks"}
+  - {name: beats_3, file: burst_ctl.sv, find: "cnt <= 4'd3;", replace: "cnt <= 4'd2;", why: "a burst has three beats"}
+  - {name: nack_to_err, file: burst_ctl.sv, find: "else if (nack) nx = RETRY;", replace: "else if (nack) nx = ERR;", why: "a negative acknowledge ends in ERR instead of a retry"}
+  - {name: cool_2, file: burst_ctl.sv, find: "cnt <= 4'd2;", replace: "cnt <= 4'd1;", why: "the cool-down is two clocks"}
+  - {name: errs_count_ok, file: burst_ctl.sv, find: "if (st == ERR && rsp_ready) errs <= errs + 16'd1;", replace: "if (st == ERR && rsp_ready) bursts <= bursts + 16'd1;", why: "ERR responses are counted in BURSTS"}
+  - {name: clear_ignored, file: burst_ctl.sv, find: "if (rst || clear) begin bursts <= '0; errs <= '0; end", replace: "if (rst) begin bursts <= '0; errs <= '0; end", why: "CLEAR does not clear"}
+  - {name: ack_loses_to_nack, file: burst_ctl.sv, find: "if (ack) nx = RESP; else if (nack) nx = RETRY;", replace: "if (nack) nx = RETRY; else if (ack) nx = RESP;", why: "nack wins over ack"}
+  - {name: last_early, file: burst_ctl.sv, find: "o_last      <= (st == DATA) && zero;", replace: "o_last      <= (st == DATA) && (cnt == 4'd1);", why: "last on the third beat"}
+  - {name: one_output_ahead, file: burst_ctl.sv, find: "o_valid     <= (st == DATA);", replace: "o_valid     <= (nx == DATA);", why: "one output is a lookahead decode, the others are late: lags differ"}
+  - {name: rsp_err_missing, file: burst_ctl.sv, find: "o_rsp_err   <= (st == ERR);", replace: "o_rsp_err   <= 1'b0;", why: "the error flag never rises"}

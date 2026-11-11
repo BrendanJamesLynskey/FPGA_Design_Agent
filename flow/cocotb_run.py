@@ -15,7 +15,7 @@ from pathlib import Path
 
 from cocotb_tools.runner import get_results, get_runner
 
-from flow import cdc_inject, srcorder
+from flow import cdc_inject, fsm_coverage, srcorder
 
 ROOT = Path(__file__).resolve().parents[1]
 SHELL_RTL = sorted((ROOT / "shell" / "rtl").glob("*.sv"))
@@ -163,6 +163,16 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
             args += ["--coverage-line", "--coverage-toggle", "--coverage-user"]
     else:
         args = ["-g2012"]
+        trace_dir = os.environ.get("FDA_FSM_TRACE")        # brief 24: the state register's value changes, for flow/fsm_coverage.py
+        if trace_dir:
+            Path(trace_dir).mkdir(parents=True, exist_ok=True)
+            dump = fsm_coverage.trace_module(design, Path(trace_dir) / f"{name}{'' if seed is None else f'_seed{seed}'}.fsmtrace")
+            if dump:
+                dsrc = (build_root or ROOT / "build" / "sim") / f"{name}_fsm_trace" / "fsm_trace_dump.sv"
+                dsrc.parent.mkdir(parents=True, exist_ok=True)
+                dsrc.write_text(dump)
+                sources = list(sources) + [dsrc]
+                args += ["-s", "fsm_trace_dump"]
     args += [f"-I{d}" for d in sorted({str(Path(s).parent) for s in sources})]     # `include "x.svh" next to a source
     sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
               build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)

@@ -3017,7 +3017,7 @@
    "summary": "Reading a specification, synthesisable coding, pipelines and handshakes, hierarchy and register boundaries, lint and synthesis messages."
   },
   {
-   "about": "Finite state machines carry the control in most designs. The skills cover separating control from datapath, choosing an encoding and a reset, registering inputs and outputs, and covering every transition in test. The general design-standards rules apply to state machines, but nothing checks them specifically.",
+   "about": "Finite state machines carry the control in most designs. The skills cover separating control from counters, what a register on an input or an output costs in latency and timing, choosing an encoding and a reset (including a reset inside a clock-enable branch), running a slow machine on one fast clock, and checking that the tests reach every state and every legal transition. The coverage check is an evidence file that the flow can add to the second verification stage; it is off unless asked for.",
    "cap_reason": null,
    "cards": [],
    "checks": [
@@ -3027,16 +3027,70 @@
      "gate": "STD-RST-01",
      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/standards_check.py",
      "what": "Synchronous-reset rule, no latch and no combinational loop; part of the standards stage gate that covers all RTL."
+    },
+    {
+     "enforced": false,
+     "file": "flow/fsm_coverage.py",
+     "gate": "fsm_state_transition_coverage",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/fsm_coverage.py",
+     "what": "Reads the state register's value changes against the machine's state table: every state visited, every legal transition taken, none outside the table. Off unless the flag is given."
+    },
+    {
+     "enforced": false,
+     "file": "flow/cdc_structure.py",
+     "gate": "synchroniser",
+     "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/cdc_structure.py",
+     "what": "An input launched by another clock must pass two synchroniser registers; a direct use or a single register is flagged."
     }
    ],
    "counts": {
-    "checks": 1,
+    "checks": 3,
     "enforced": 0,
-    "evidence": 1,
+    "evidence": 5,
     "sections": 5,
     "skills": 7
    },
    "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/24_fsm/summary.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/24_fsm/summary.json"
+      }
+     ],
+     "text": "One controller built in Vivado two ways with the same behaviour: 11 states plus a counter (29 LUTs) and 23 states with the counter folded in (24 LUTs). Folding was the smaller; the split machine has 13 transitions to cover instead of 39."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/24_fsm/summary.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/24_fsm/summary.json"
+      }
+     ],
+     "text": "At the test clock the slack from the state flops to an output pin was -1.544 ns with a decoded output and -0.437 ns with a registered one. A registered decode adds 1 clock of latency; registering the decode of the next state adds 0."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/24_fsm/summary.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/24_fsm/summary.json"
+      }
+     ],
+     "text": "A state machine on a one-in-N clock enable, constrained with the multicycle pair on its own registers: slack between its registers was -0.659 ns without the exception and 1.283, 6.267 and 16.359 ns at three enable ratios."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/24_fsm/summary.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/24_fsm/summary.json"
+      }
+     ],
+     "text": "The coverage check passed on 3 designs with their real tests, and failed, naming the missed state or transition, in 3 of 3 runs with one test removed."
+    },
     {
      "kind": "example",
      "sources": [
@@ -3102,18 +3156,23 @@
       "confirmed": "doc",
       "summary": "POST_CRC (continuous readback CRC) is a 7-series property; UltraScale+ uses its own configuration settings for the same check.",
       "topic": "Readback CRC"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "Async reset maps to FDCE/FDPE, sync to FDRE/FDSE, none to FDRE with an initial value, with the same LUT, flop and control-set counts on 7-series and UltraScale+ for the same RTL (synthesis only).",
+      "topic": "Reset styles and flop primitives for a state register"
      }
     ]
    },
    "gaps": [
-    "No committed measurement yet compares encodings, registered outputs, reset styles or a state machine split from its counter.",
-    "No gate checks state or transition coverage, and the multicycle pattern for slow state machines belongs to the timing-exception work still under way.",
-    "There is no state-machine lesson in the course yet."
+    "The coverage check is not an agent tool and is off by default, so the agent does not yet know its state table or write one.",
+    "Routed numbers for output and input registering come from one controller on one part; the other families were probed in synthesis only.",
+    "Two drills were built for the registered-output and zero-latency choices; see the brief report for how many agent runs were made."
    ],
    "id": "fsm",
-   "level": "knowledge",
-   "level_label": "Knowledge only",
-   "level_n": 1,
+   "level": "measured",
+   "level_label": "Measured in Vivado",
+   "level_n": 2,
    "name": "Finite state machines",
    "skills": [
     {
@@ -4049,13 +4108,13 @@
  },
  "levels": [
   {
-   "areas": 2,
+   "areas": 1,
    "id": "knowledge",
    "label": "Knowledge only",
    "means": "Skills in the knowledge bank and nothing measured or enforced for this area yet."
   },
   {
-   "areas": 2,
+   "areas": 3,
    "id": "measured",
    "label": "Measured in Vivado",
    "means": "Committed results from Vivado runs (or the board) that the skills and checks rest on."

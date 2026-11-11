@@ -1,0 +1,20 @@
+# The state table of qspi_rdid (read from rtl/qspi_rdid.sv; brief 24 FSM coverage check, flow/fsm_coverage.py).
+# Self-loops (waiting for `tick`) are not listed. A reset changes the state to S_IDLE from anywhere (reset_state).
+fsms:
+  - name: qspi_rdid
+    signal: tb_qspi.u_regs.u_rdid.st
+    file: rtl/qspi_rdid.sv
+    enum: st_t
+    reset_state: S_IDLE
+    transitions:
+      - [S_IDLE, S_PRE_LO]      # go, preamble not yet sent
+      - [S_IDLE, S_SETUP]       # go, preamble already sent (a second read)
+      - [S_PRE_LO, S_PRE_HI]
+      - [S_PRE_LO, S_SETUP]     # preamble pulses done
+      - [S_PRE_HI, S_PRE_LO]
+      - [S_SETUP, S_HIGH]
+      - [S_HIGH, S_LOW]
+      - [S_HIGH, S_HOLD]        # bit 71 sampled
+      - [S_LOW, S_HIGH]
+      - [S_HOLD, S_GAP]
+      - [S_GAP, S_IDLE]

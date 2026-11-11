@@ -1,0 +1,21 @@
+# The state table of the reference burst controller ctl_sep (brief 24; flow/fsm_coverage.py).
+fsms:
+  - name: ctl_sep
+    signal: tb_ctl.g.dut.st
+    file: rtl/ctl_sep.sv
+    enum: st_t
+    reset_state: IDLE
+    transitions:
+      - [IDLE, LOAD]
+      - [LOAD, REQ]
+      - [REQ, ADDR]
+      - [ADDR, DATA]
+      - [DATA, TURN]
+      - [TURN, WACK]
+      - [WACK, RESP]      # ack
+      - [WACK, RETRY]     # nack
+      - [WACK, ERR]       # timeout
+      - [RETRY, REQ]
+      - [RESP, COOL]
+      - [ERR, COOL]
+      - [COOL, IDLE]

@@ -411,6 +411,29 @@ def trace_table(reqs: list[dict], entries: list[dict], res: dict[int, dict[str, 
     return rows
 
 
+def fsm_cov_check(path: Path) -> dict[str, Any]:
+    """Brief 24: the evidence file of ``python -m flow.fsm_coverage`` (every state visited, every legal transition of the
+    spec's state table taken, none outside it). A missing or unreadable file fails with the command that makes it."""
+    how = ("run the bench with FDA_FSM_TRACE=<dir> and then `python -m flow.fsm_coverage <design> --trace <dir>/<run>.fsmtrace "
+           "--json <evidence>.json` (design needs verif/fsm.yaml: the state table)")
+    try:
+        rep = json.loads(path.read_text())
+    except (OSError, ValueError):
+        return chk("no evidence", "every state and legal transition hit", False, f"{path} is missing or not JSON: {how}")
+    if rep.get("error"):
+        return chk("no state table", "every state and legal transition hit", False, str(rep["error"]))
+    fsms = rep.get("fsms") or []
+    val = ", ".join(f"{f['name']}: states {f['states_hit']}/{f['n_states']}, transitions {f['transitions_hit']}/{f['transitions_listed']}"
+                    for f in fsms) or "no FSMs listed"
+    miss = [f"{f['name']}: " + "; ".join(
+        [f"state {s} never visited" for s in f["states_missed"]] + [f"transition {t} never taken" for t in f["transitions_missed"]]
+        + [f"transition {t} taken but not in the table" for t in f["unexpected_transitions"]]
+        + [f"waiver without a reason: {w}" for w in f["waivers_without_reason"]]) for f in fsms if not f["pass"]]
+    return chk(val, "every state and legal transition hit", bool(fsms) and not miss,
+               ("; ".join(miss) + ". Add a test that reaches it (a stimulus that drives the machine there), or waive it in "
+                "verif/fsm.yaml with a reason; an illegal transition is for formal, not for simulation") if miss else None)
+
+
 def cdc_checks(design: Path, gates_json: dict | None, cdc_inject_file: Path | None) -> dict[str, Any]:
     """Brief 16: the two CDC checks of V3, for a design that has a clock-domain crossing (an ASYNC_REG register, an XPM CDC macro or
     several declared clock domains; none otherwise). ``cdc_structure_clean`` is the post-synthesis structural check
@@ -450,7 +473,8 @@ def cdc_checks(design: Path, gates_json: dict | None, cdc_inject_file: Path | No
 
 
 def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation: Path | None, hw: Path | None,
-             gates: Path | None = None, evidence: Path | None = None, cdc_inject_file: Path | None = None) -> dict:
+             gates: Path | None = None, evidence: Path | None = None, cdc_inject_file: Path | None = None,
+             fsm_cov: Path | None = None) -> dict:
     plan_path = design / "verif" / "testplan.yaml"
     out: dict[str, Any] = {"design": design.name, "stages": {}}
     v0 = {"testplan_present": chk(plan_path.exists(), True, plan_path.exists(),
@@ -596,6 +620,8 @@ def evaluate(design: Path, runs: Path, also: list[Path], formal: Path, mutation:
                                             "a planned formal job has no PASS: run the `formal` tool, or re-plan the method "
                                             "(replan: in the testplan) when sby is not installed"),
         }
+    if fsm_cov is not None:                              # brief 24, behind --fsm-coverage: state and transition coverage of the FSMs
+        v2["fsm_state_transition_coverage"] = fsm_cov_check(fsm_cov)
     out["stages"]["V2"] = {"checks": v2}
     # ---- V3: coverage closure
     waive = plan.get("waivers", {})
@@ -748,6 +774,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--mutation")
     ap.add_argument("--evidence", help="05l: build/verif/v3_evidence.json, the flow's own V3 steps (why a number is not measured)")
     ap.add_argument("--cdc-inject", help="brief 16: build/verif/cdc_inject.json from flow/cdc_inject_run.py (needed by a design with a crossing)")
+    ap.add_argument("--fsm-coverage", help="brief 24 (off unless given): the evidence JSON of flow/fsm_coverage.py; adds the V2 check "
+                    "fsm_state_transition_coverage")
     ap.add_argument("--hw")
     ap.add_argument("--gates", help="gates.json of the build (flow/gates.py): evidence for analysis proofs")
     ap.add_argument("--json")
@@ -759,7 +787,7 @@ def main(argv: list[str] | None = None) -> int:
         rep = evaluate(rel(a.design), rel(a.runs), [rel(x) for x in a.also], rel(a.formal),
                        rel(a.mutation) if a.mutation else None, rel(a.hw) if a.hw else None,
                        rel(a.gates) if a.gates else None, rel(a.evidence) if a.evidence else None,
-                       rel(a.cdc_inject) if a.cdc_inject else None)
+                       rel(a.cdc_inject) if a.cdc_inject else None, rel(a.fsm_coverage) if a.fsm_coverage else None)
     except (PlanError, OSError, KeyError, TypeError, ValueError, AttributeError, SyntaxError) as e:
         # whatever else a gate input throws, the answer is a failed gate with the message, not a traceback
         msg = e.args[0] if isinstance(e, PlanError) and e.args else f"{type(e).__name__}: {e}"

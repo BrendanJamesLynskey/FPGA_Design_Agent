@@ -1,0 +1,53 @@
+[
+ {
+  "design": "b2_qspi_jedec",
+  "states": "8/8",
+  "transitions": "11/11",
+  "pass": true,
+  "mutants": [
+   {
+    "removed": "without_test_rdid_only",
+    "pass": false,
+    "states_missed": [],
+    "transitions_missed": [
+     "S_IDLE->S_SETUP"
+    ]
+   }
+  ]
+ },
+ {
+  "design": "b2_tmp_adt7420",
+  "states": "7/7",
+  "transitions": "11/11",
+  "pass": true,
+  "mutants": [
+   {
+    "removed": "without_test_wrong_address_nacks",
+    "pass": false,
+    "states_missed": [],
+    "transitions_missed": [
+     "S_RACK->S_STOP"
+    ]
+   }
+  ]
+ },
+ {
+  "design": "fsm_discipline_ref",
+  "states": "11/11",
+  "transitions": "13/13",
+  "pass": true,
+  "mutants": [
+   {
+    "removed": "without_test_timeout",
+    "pass": false,
+    "states_missed": [
+     "ERR"
+    ],
+    "transitions_missed": [
+     "ERR->COOL",
+     "WACK->ERR"
+    ]
+   }
+  ]
+ }
+]
