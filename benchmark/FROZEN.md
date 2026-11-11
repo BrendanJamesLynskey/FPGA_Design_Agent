@@ -115,3 +115,28 @@ was outside the freeze (quality review 12, R2). Now:
 
 Development-task amendments of the same date (spec clarifications, replacement and added mutants, added tests) are listed in
 [AMENDMENTS.md](AMENDMENTS.md) with old and new unit digests; `freeze.py refreeze` re-recorded those units. No held-out unit was touched.
+
+## Re-recording amended units in the private manifest (owner command)
+
+`freeze.py make` regenerates every entry of the private manifest, held-out ones included, so it would accept a held-out change unseen. After a
+dated amendment (the public manifests are updated with `refreeze`), use `refreeze --private-manifest` instead. It
+
+- rewrites only the named public or `shared:` entries, with digests computed from the public files only (the same rule as the public `refreeze`);
+- leaves every other entry byte for byte as it was (it refuses a manifest that is not in the form `make` writes, so a rewrite cannot change anything else);
+- refuses any id that is not a public or shared unit of that manifest (held-out and probe ids, unknown ids), writing nothing;
+- prints the old and new digest of each unit; `--dry-run` prints them and writes nothing.
+
+The amendment of 2026-11-10 (brief 15; unit ids as in the "New hashes" table of [AMENDMENTS.md](AMENDMENTS.md)). Run from the repository root; dry run first:
+
+```bash
+V1="t1_bcd_updown t1_elevator_fsm t1_gray_stepper t1_pattern_sequencer t1_press_classifier t2_i2c_cmd_master t2_pdm_vu t2_spi_master_modes shared:tools/run_task.py"
+python3 benchmark/tools/freeze.py refreeze $V1 --private-manifest <private>/benchmark_private/MANIFEST_full.json --dry-run
+python3 benchmark/tools/freeze.py refreeze $V1 --private-manifest <private>/benchmark_private/MANIFEST_full.json
+
+CO="c10_dds_sine c11_nco_mixer c12_adsr_envelope c12_nexys_pwm_audio c13_hough_lines c14_int8_dot_requant c14_systolic_matmul c15_rmsnorm_unit c15_softmax_unit c16_ntt_engine c9_median3x3 shared:benchmark/tools/run_task.py"
+python3 benchmark/course/tools/freeze.py refreeze $CO --private-manifest <private>/benchmark_private/course/MANIFEST_full.json --dry-run
+python3 benchmark/course/tools/freeze.py refreeze $CO --private-manifest <private>/benchmark_private/course/MANIFEST_full.json
+```
+
+Afterwards `freeze.py verify --private <private>/benchmark_private` (and the course one) should report 0 mismatches; the new digests printed must equal the ones in
+AMENDMENTS.md. The v2 development tasks are not in these manifests (their record is the ledger).
