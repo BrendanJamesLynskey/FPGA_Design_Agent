@@ -124,8 +124,9 @@ if {$resume_from eq ""} {
     # --- stage post_synth ----------------------------------------------------------
     synth_design -top $top -part $part {*}$gen_args
     stage synth
-    # AMD's scoped XPM constraints are not applied in this non-project flow (QR1, docs/methodology.md): apply them by cell name
-    apply_xpm_cdc_constraints
+    # AMD's scoped XPM constraints are not applied in this non-project flow (QR1, docs/methodology.md): apply them by cell name.
+    # FDA_XPM_CDC=0 skips this, only to measure the gap (brief 49 re-measured the QR1 probe both ways); never set it in a real build.
+    if {![info exists ::env(FDA_XPM_CDC)] || $::env(FDA_XPM_CDC) ne "0"} { apply_xpm_cdc_constraints }
     write_checkpoint -force $out/post_synth.dcp
     # UG949 ch. 5 "Moving Past Synthesis": DRCs, methodology, timing constraints,
     # QoR assessment, utilisation, clock trees; ch. 6 "Baselining and Timing

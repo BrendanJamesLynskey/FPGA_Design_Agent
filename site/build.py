@@ -100,7 +100,7 @@ def block(name, d):
         e = d["eval"]; v = e["tool_versions"]
         return table(["Fixed before the first scored run", "Value"], [
             ["Agent under test", f'tag {e["tag"]}, model {e["model"]}, Claude Code {v["claude_code"]}'],
-            ["Tools", f'Vivado {v["vivado"]}, Icarus Verilog {v["icarus"]}, cocotb {v["cocotb"]}, Verilator {v["verilator"]}'],
+            ["Tools", f'Icarus Verilog {v["icarus"]}, cocotb {v["cocotb"]}, Verilator {v["verilator"]}, and the Vivado release the pre-registration pins (the next evaluation pins Vivado 2026.1)'],
             ["Tasks and runs", f'{e["tasks"]} tasks x {e["runs_per_task"]} runs = {e["runs"]} runs'],
             ["Interval", f'bootstrap over tasks, {e["resamples"]:,} resamples; planned half-width {e["planned_halfwidth"]} points'],
             ["Randomness", f'task order seed {e["seed"]}'],
@@ -124,9 +124,8 @@ def block(name, d):
         return table(["Check", "Result"], [[k, v] for k, v in g.items()])
     if name == "c10_runs":
         e = [x for x in d["examples"] if x["task"] == "c10_dds_sine"][0]
-        rows = [[r["run"], OUT_TEXT[r["outcome"]], f'{r["tests_passed"]} of {r["tests_total"]}', r["failure_class"] or "none",
-                 f'{r["wns_ns"]:+.3f}', r["lut"], r["ff"]] for r in e["runs"]]
-        return table(["Run", "Outcome", "Hidden tests", "What went wrong", "WNS (ns)", "LUT", "FF"], rows, num=(0, 4, 5, 6))
+        rows = [[r["run"], OUT_TEXT[r["outcome"]], f'{r["tests_passed"]} of {r["tests_total"]}', r["failure_class"] or "none"] for r in e["runs"]]
+        return table(["Run", "Outcome", "Hidden tests", "What went wrong"], rows, num=(0,))
     if name == "t1_rtl":
         return f'<pre tabindex="0"><code>{html.escape(d["board"]["rtl"])}</code></pre>'
     if name == "problems_index":

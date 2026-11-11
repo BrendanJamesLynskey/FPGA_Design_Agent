@@ -41,5 +41,11 @@ def test_vivado_path_has_one_source():
     assert version_pin.vivado_path({"FDA_VIVADO_VERSION": "2025.2"}) == "/opt/Xilinx/2025.2/Vivado/bin/vivado"
     assert version_pin.vivado_path({"VIVADO": "/x/vivado", "FDA_VIVADO_VERSION": "2025.2"}) == "/x/vivado"
     root = Path(__file__).resolve().parents[2]
-    for f in ("flow/run_vivado.sh", "flow/hw.py", "hil/cdc_soak/run_build.sh"):
+    for f in ("flow/run_vivado.sh", "flow/hw.py", "hil/cdc_soak/run_build.sh",
+              "flow/ipgen/harness.py", "flow/net/sim.py", "benchmark/drills/lib/grade_constraints.py"):  # brief 49 found the last three
         assert "Xilinx/20" not in (root / f).read_text(), f
+    # no flow or benchmark code outside the version pin and its tests names an install path (raw results keep theirs)
+    for f in [*root.glob("flow/**/*.py"), *root.glob("flow/**/*.sh"), *root.glob("benchmark/**/*.py"), *root.glob("hil/**/*.sh"), *root.glob("cloud/*.py")]:
+        if "tests" in f.parts or f.name == "version_pin.py":
+            continue
+        assert "Xilinx/20" not in f.read_text(errors="replace"), f

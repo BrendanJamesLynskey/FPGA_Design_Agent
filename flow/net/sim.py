@@ -14,12 +14,16 @@ import hashlib
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 IP = ROOT / "ip_lib"
 BUILD = Path(os.environ.get("NET_BUILD", ROOT / "build" / "net")).resolve()
-XILINX_BIN = Path(os.environ.get("XILINX_BIN", "/opt/Xilinx/2025.2/Vivado/bin"))
+sys.path.insert(0, str(ROOT))
+from flow.version_pin import vivado_path  # noqa: E402  (the one source of the install path, brief 48)
+
+XILINX_BIN = Path(os.environ.get("XILINX_BIN", str(Path(vivado_path()).parent)))
 
 
 def sim_name() -> str:

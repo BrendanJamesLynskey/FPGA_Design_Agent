@@ -1,5 +1,7 @@
 # results/f0b
 
+Measured on 2025.2, superseded by [results/f0b_2026_1](../f0b_2026_1/README.md).
+
 Bring-up of T1 on the owner's Nexys A7-100T (USB-powered), milestone F0B. Builds and runs are all at commit
 `4587566`, clean tree, Vivado 2025.2, build stamp `dfd4624e`. The cable serial appears only as its last 4
 characters.
