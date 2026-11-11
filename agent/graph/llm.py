@@ -65,16 +65,28 @@ class OpenRouterClient:
         self.model = model
         self._c = openai.OpenAI(api_key=key, base_url=OPENROUTER_BASE, timeout=timeout_s, max_retries=1)
 
+    #: brief 42 amendment 3: a response that cannot be parsed (the SDK's body parse, or a tool call whose ``arguments`` are not
+    #: JSON) is asked for again, up to this many extra times; every arm gets it. Three of the first six brief 42 runs died on one.
+    MALFORMED_RETRIES = 2
+
     def __call__(self, messages: list[dict], tools: list[dict] | None = None) -> Reply:
         t0 = time.monotonic()
         body = {"usage": {"include": True}, "provider": {"data_collection": "deny"}}
-        r = self._c.chat.completions.create(model=self.model, messages=messages, temperature=0.2, extra_body=body,
-                                            **({"tools": tools} if tools else {}))
-        u = r.usage
-        extra = (getattr(u, "model_extra", None) or {}) if u else {}
-        m = r.choices[0].message if r.choices else None
-        calls = [{"id": c.id, "name": c.function.name, "args": json.loads(c.function.arguments or "{}")}
-                 for c in (getattr(m, "tool_calls", None) or [])]
+        for attempt in range(self.MALFORMED_RETRIES + 1):
+            try:
+                r = self._c.chat.completions.create(model=self.model, messages=messages, temperature=0.2, extra_body=body,
+                                                    **({"tools": tools} if tools else {}))
+                u = r.usage
+                extra = (getattr(u, "model_extra", None) or {}) if u else {}
+                m = r.choices[0].message if r.choices else None
+                calls = [{"id": c.id, "name": c.function.name, "args": json.loads(c.function.arguments or "{}")}
+                         for c in (getattr(m, "tool_calls", None) or [])]
+                break
+            except json.JSONDecodeError as e:
+                self.malformed_retries = getattr(self, "malformed_retries", 0) + 1
+                print(f"FDA_MALFORMED attempt {attempt + 1}: {type(e).__name__}: {str(e)[:160]}", file=__import__('sys').stderr, flush=True)
+                if attempt == self.MALFORMED_RETRIES:
+                    raise
         return Reply(text=(m.content if m else "") or "", tool_calls=calls,
                      prompt_tokens=getattr(u, "prompt_tokens", 0) or 0,
                      completion_tokens=getattr(u, "completion_tokens", 0) or 0,

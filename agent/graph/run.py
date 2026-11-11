@@ -54,7 +54,7 @@ from flow import srcorder
 
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "mutate", "build", "gates", "report", "check_constraints", "search_docs",
-              "load_skill", "board_constraints", "spec_items", "skill_index", "skill_excerpt")
+              "load_skill", "board_constraints", "spec_items", "skill_index", "skill_excerpt", "report_digest")
 
 
 class ArmBlocked(Exception):
@@ -111,6 +111,11 @@ class Config:
     skill_routing: str = "off"      # brief 36: off (eval-1 path) | router (shortlist node + skill_index/skill_excerpt + ranked load_skill)
     router_model: str | None = None  # brief 36: the cheap classifier's OpenRouter model (None: rules only)
     router_k: int = 8               # brief 36: skills in the shortlist
+    harness_arms: str = ""          # brief 42: comma-separated harness arms (H1 context management, H2 hang protection); "" = baseline
+
+    @property
+    def arms(self) -> tuple[str, ...]:
+        return tuple(a for a in (x.strip().upper() for x in self.harness_arms.split(",")) if a)
 
     def role_models(self, stage: str | None = None) -> dict:
         """role -> {harness, model, effort}, with the ``role@stage`` overrides of ``stage`` applied. The interview
@@ -133,6 +138,7 @@ class Runtime:
     llm_log: list = field(default_factory=list)
     last_build_output: str = ""
     client_for: Callable[[str], Callable] | None = None     # OpenRouter client for a deepagents role on another model
+    offload_seq: int = 0                                    # brief 42 H1: numbers the offloaded tool results
     visit: int = 0                                          # the current stage's visit number (for the turn trace)
     budget_notes: list = field(default_factory=list)        # roles whose turn budget ended this visit (05g)
     spectest_llm: Callable[[str, str], str] | None = None   # 08f: the spec-test role's model call (None: a Claude Code call per cfg)
@@ -393,11 +399,30 @@ def _core_tools(rt: Runtime, sess: Session, allowed: tuple[str, ...]):
         t = TOOLS[name]
 
         def fn(_n=name, **kw):
-            return json.dumps(dispatch(sess, _n, kw))[:20000]
+            res = dispatch(sess, _n, kw)
+            if "H9" in rt.cfg.arms and _n in H9_COMPACT:
+                from agent.core.report_digest import compact_result     # brief 42 H9: the typed summary digest plus the path
+                rt.offload_seq += 1
+                return compact_result(res, _n, rt.design, rt.offload_seq, getattr(sess.jail, "role", None) == "rtl")[:20000]
+            if "H1" in rt.cfg.arms and getattr(sess.jail, "role", None) == "rtl" and _n not in KNOWLEDGE_TOOLS:
+                from agent.graph.context import offload_result       # brief 42 H1
+                rt.offload_seq += 1
+                return offload_result(res, rt.design, _n, rt.offload_seq)[:20000]
+            return json.dumps(res)[:20000]
         out.append(StructuredTool.from_function(func=fn, name=f"fda_{name}", description=t.describe(),
                                                 args_schema={"type": "object", "properties": t.schema().get(
                                                     "properties", {}), "additionalProperties": False}))
     return out
+
+
+def _h1_middleware(rt: Runtime, model) -> list:
+    """Brief 42 H1: the earlier-summarisation middleware, replacing deepagents' default of the same name; none otherwise."""
+    if "H1" not in rt.cfg.arms:
+        return []
+    from deepagents.backends import StateBackend
+
+    from agent.graph.context import summarisation_middleware
+    return [summarisation_middleware(model, StateBackend())]
 
 
 def _jail_backend(rt: Runtime, role: str):
@@ -460,6 +485,7 @@ def drop_superseded(design: Path, jail, before: list[Path], written: dict[str, s
     return gone
 
 
+H9_COMPACT = ("build", "gates", "simulate", "lint")      # brief 42 H9: results of these tools become a summary digest when large
 KNOWLEDGE_TOOLS = ("load_skill", "search_docs", "board_constraints", "skill_index", "skill_excerpt")  # never removed or reduced for any role (05f)
 SKILL_TOOLS = ("skill_index", "skill_excerpt")      # brief 36: given beside load_skill only when skill routing is on
 FILE_TOOLS = ("read_file", "write_file", "list_files")
@@ -631,6 +657,8 @@ def run_role(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] = (),
     n = next((st.n for st in MACHINE if st.name == rt.session.stage), -1)
     allowed = role_tools(role, n, rt.cfg.verif_level, allowed)
     allowed, prompt = with_skill_routing(rt, allowed, prompt)
+    if "H9" in rt.cfg.arms and "report" in allowed:          # brief 42 H9: typed digests beside the raw report tool
+        allowed = tuple(dict.fromkeys([*allowed, "report_digest"]))
     rt.meter.reserved = ROLE_TURN_RESERVE.get(n, {}).get(role, 0)
     try:
         return run_subagent(rt, role, prompt, allowed, repair)
@@ -663,13 +691,14 @@ def _run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...],
     model = chat_model(role_client(rt, spec["model"]), rt.meter, rt.llm_log)
     plan = subagent_plan(rt, role, prompt, allowed, repair)
     prompt, msg, inputs = plan["system_prompt"], plan["user_message"], plan["inputs"]
+    mw = _h1_middleware(rt, model)
     if role == "rtl":
         agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt,
-                                  backend=_jail_backend(rt, role))
+                                  backend=_jail_backend(rt, role), **({"middleware": mw} if mw else {}))
         agent.invoke({"messages": [{"role": "user", "content": msg}]}, {"recursion_limit": 200})
         return {}
     agent = create_deep_agent(model=model, tools=_core_tools(rt, sess, allowed), system_prompt=prompt,
-                              backend=_validating_state_backend(rt))
+                              backend=_validating_state_backend(rt), **({"middleware": mw} if mw else {}))
     out = agent.invoke({"messages": [{"role": "user", "content": msg}],
                         "files": {f"/{k}": create_file_data(v) for k, v in inputs.items()}},
                        {"recursion_limit": 120})
@@ -1482,7 +1511,8 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
         bank = LocalBank()
     except Exception:                                      # CI: no private knowledge bank
         bank = None
-    sess = Session(design=design, board=cfg.board, runner=runner, bank=bank, skill_routing=cfg.skill_routing)
+    sess = Session(design=design, board=cfg.board, runner=runner, bank=bank, skill_routing=cfg.skill_routing,
+                   harness_arms=cfg.arms)
     rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits), Snapshots(run_dir, design),
                  oracle_llm=oracle_llm)
     _RT[run_id] = rt

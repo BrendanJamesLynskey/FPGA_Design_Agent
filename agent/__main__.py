@@ -114,7 +114,8 @@ def config_from_json(c: dict):
                   spectest_effort=c.get("spectest_effort", "medium"), spectest_max_loops=int(c.get("spectest_max_loops", 2)),
                   skill_routing=c.get("skill_routing", "off"),
                   router_model=c.get("router_model") if c.get("router_model") not in (None, "None") else None,
-                  router_k=int(c.get("router_k", 8)))
+                  router_k=int(c.get("router_k", 8)),
+                  harness_arms=c.get("harness_arms", "") if c.get("harness_arms") not in (None, "None") else "")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -167,6 +168,10 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--skill-routing", choices=["off", "router"], default="off",
                    help="brief 36: router = a skill shortlist before each stage, skill_index/skill_excerpt, ranked load_skill")
     r.add_argument("--router-model", help="brief 36: OpenRouter model of the router's section classifier (default: rules only)")
+    r.add_argument("--harness-arm", default="",
+                   help="brief 42: comma-separated harness arms, default none (the baseline): H1 = context management "
+                        "(offload of large tool results, earlier summarisation), H2 = hang protection (unbounded-wait check, "
+                        "wall limit from the bench's sim-time budget, structured hang result)")
     r.add_argument("--router-k", type=int, default=8, help="brief 36: skills in the router's shortlist")
     for p in (r, sub.add_parser("resume")):
         p.add_argument("--replies", type=Path)
@@ -192,7 +197,8 @@ def main(argv: list[str] | None = None) -> int:
                      no_shell=a.no_shell or task_no_shell(a.hidden_spec), data_dir=a.data_dir or task_data_dir(a.spec),
                      oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=a.spec_tests,
                      spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops,
-                     skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k)
+                     skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k,
+                     harness_arms=a.harness_arm)
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd
