@@ -21,11 +21,17 @@ areas:
   - {file: flow/xpm_cdc.tcl, enforced: false, what: "Applies the exceptions that AMD ships as scoped files for its crossing macros, which the batch flow otherwise drops."}
   - {file: flow/exceptions_check.py, gate: post_synth_exceptions_clean, gate_in: flow/gates.py, enforced: true, what: "After synthesis and after routing: no exception ignored or covering no path, no constraint message from an XDC line, no TIMING-24/-29/-47 or XDCH-1, and every multicycle path's registers share a real clock enable."}
   - {file: agent/core/constraints.py, gate: FDA-CON-10, enforced: false, what: "Before Vivado: a -setup N multicycle needs its -hold N-1, and a multicycle or datapath-only max delay needs a comment naming the enable or the synchroniser."}
+  - {file: flow/io_check.py, gate: io_timing_clean, gate_in: flow/gates.py, enforced: true, what: "After synthesis and after routing: no made-up delay on a button, switch, LED or UART pin, every delay explained by its data-sheet formula, -min not above -max, no delay replaced for want of -add_delay; for the interfaces a design declares, both -min and -max, the data sheet's values, the right reference clock, and the registers in the I/O blocks."}
+  - {file: agent/core/constraints.py, gate: FDA-CON-11, enforced: false, what: "Before Vivado: the same made-up, unexplained, swapped or replaced I/O delays, and a virtual clock used before it is defined."}
   evidence:
   - kind: measured
     source: results/20_timing_exceptions/exceptions_table.json
     values: ["count@rows:expect_flag=true", "count@rows:expect_flag=true,vivado_flags=true", "count@rows:expect_flag=true,flow_flags=true", "count@rows:expect_flag=false", "count@rows:expect_flag=false,flow_flags=false"]
     text: "On {0} small designs with one timing-exception mistake each, Vivado itself said something about the exception in {1}; the flow's checks flagged {2}. They passed {4} of {3} correct designs."
+  - kind: measured
+    source: results/20_timing_exceptions/io_table.json
+    values: ["count@rows:fault=true", "count@rows:fault=true,vivado_flags=true", "count@rows:fault=true,flow_flags=true"]
+    text: "On {0} small designs with one I/O-delay or virtual-clock mistake each, Vivado itself said something in {1}; the flow's gates flagged {2}."
   - kind: measured
     source: results/14_flow_notes/inputs.json
     values: [get:xpm_probe.before.wns_ns, get:xpm_probe.after.wns_ns]
@@ -39,10 +45,14 @@ areas:
     source: results/20_timing_exceptions/drills/run_*.constraints.json
     values: [n, "count:pass=true"]
     text: "In {0} agent runs of the slow-controller drill (one clock, a one-in-eight enable, an eight-clock multicycle), the constraint grader passed {1}; the other run put a register that a write sets on any clock into the eight-clock group, which only the grader's simulation check caught."
+  - kind: agent
+    source: results/20_timing_exceptions/drills/run_b*.io.json
+    values: [n, "count:checks.interface.pass=true", "count:checks.no_invented.pass=true", "count:checks.input_jitter.pass=true", "count:checks.margin.pass=true"]
+    text: "In {0} agent runs of the ADC-capture drill (input delays from a data sheet, the oscillator's jitter, a margin for implementation only), the delays were right in {1}, free of made-up delays in {2} and carried the jitter in {3}; the implementation-only margin was right in {4}."
   cards:
   - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: AMD's crossing macros lose their exceptions"}
   - {href: "flow-notes.html#exceptions", label: "Beyond the flow: over-broad exceptions hide failures"}
-  cap: {level: checked, why: "Exceptions are now shown in agent runs, but one of the three wrote a wrong multicycle that the flow's own gate passed, and I/O delays, virtual clocks and clock uncertainty have no agent runs yet; the area as a whole stays at this level."}
+  cap: {level: checked, why: "Exceptions and I/O delays are now shown in agent runs, but one exception run wrote a wrong multicycle that the flow passed, and no I/O run kept its implementation margin out of sign-off the way asked; virtual clocks have no agent runs yet."}
   gaps:
   - "I/O delay constraints, virtual clocks and clock uncertainty are written from the skills; no committed run scores them against a data sheet."
   - "The flow's multicycle check looks at each register's clock-enable logic, not at whether the register really changes only on the enable; the drill grader adds that check in simulation, the flow does not yet."
@@ -342,6 +352,10 @@ areas:
     where: pass=true
     values: [nfiles, n]
     text: "There are {0} board-check result files, each a design built by the flow and run on the board, and {1} are marked pass."
+  - kind: agent
+    source: results/f2/agent_luna_05c2_run7_bringup.json
+    values: ["get:run_as_written.steps.uart_tests.tests", "get:run_as_written.steps.uart_tests.failures", "get:run_as_written.failed_step"]
+    text: "An agent-built design from a development run was programmed on the board: of its {0} UART self-checks, {1} failed; the run stopped at the step {2}."
   - kind: measured
     source: hil/cdc_soak/results/build_full.json
     values: ["get:utilisation.lut.used", "get:timing.wns_ns", "get:power.total_w"]
@@ -351,7 +365,7 @@ areas:
   gaps:
   - "The soak's hardware logs are not among the committed results; the builds and simulations are."
   - "Unattended soaks and board runs need the owner's approval."
-  - "The agent's development runs stop before programming; the designs on the board were built by hand."
+  - "Agent-built bitstreams have been programmed on the board, but no agent-built design has yet passed every test on the board."
 - id: power
   name: Power and thermal
   summary: Power and junction-temperature budgets for a board without a heat sink, power rails, and low-power coding.

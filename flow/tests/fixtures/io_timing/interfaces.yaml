@@ -1,0 +1,49 @@
+# The I/O interfaces each fixture declares (as a design's spec.yaml or build.yaml io_interfaces would), for
+# flow/io_check.py in flow/tests/test_20b_io_timing.py. Anchors keep one definition per interface.
+adc: &adc
+  - {name: adc, kind: system_synchronous, direction: in, ports: ["adc_d[*]"], clock: sys_clk, clock_period_ns: 10.0,
+     iob: true, data_sheet: {tco_min_ns: 1.0, tco_max_ns: 5.0, trace_ns: 0.5}}
+adc_own_osc: &adc_own_osc
+  - {name: adc, kind: asynchronous, direction: in, ports: ["adc_d[*]"], clock: adc_osc, clock_period_ns: 10.0}
+dac: &dac
+  - {name: dac, kind: system_synchronous, direction: out, ports: ["dac_d[*]"], clock: sys_clk, clock_period_ns: 10.0,
+     iob: true, data_sheet: {tsu_ns: 1.5, th_ns: 0.5, trace_ns: 0.4}}
+dac_v: &dac_v
+  - {name: dac, kind: system_synchronous, direction: out, ports: ["dac_d[*]"], clock: dac_vclk, clock_period_ns: 10.0,
+     iob: true, data_sheet: {tsu_ns: 1.5, th_ns: 0.5, trace_ns: 0.4}}
+fwd: &fwd
+  - {name: dac, kind: forwarded_clock, direction: out, ports: ["dac_d[*]"], clock: dac_clk, clock_period_ns: 10.0,
+     iob: true, data_sheet: {tsu_ns: 1.5, th_ns: 0.5, trace_ns: 0.0}}
+ddr: &ddr
+  - {name: rx, kind: source_synchronous, direction: in, ports: ["rx_d[*]"], clock: rx_clk, clock_period_ns: 10.0,
+     ddr: true, iob: true, data_sheet: {dv_before_ns: 2.0, dv_after_ns: 2.0}}
+edge: &edge
+  - {name: rx, kind: source_synchronous, direction: in, ports: ["rx_d[*]"], clock: rx_clk, clock_period_ns: 10.0,
+     ddr: true, data_sheet: {skew_before_ns: 0.5, skew_after_ns: 0.5}}
+mmcm: &mmcm
+  - {name: din, kind: system_synchronous, direction: in, ports: ["din[*]"], clock: vclk125, clock_period_ns: 8.0,
+     iob: true, data_sheet: {tco_min_ns: 0.5, tco_max_ns: 2.5, trace_ns: 0.5}}
+fixtures:
+  io_i1: *adc
+  io_i2: *adc
+  io_i3: *adc
+  io_i3b: *adc
+  io_i8: *adc
+  io_i9: *adc
+  io_i10: *adc
+  io_v6: *adc_own_osc
+  io_i4: *dac
+  io_i4b: *dac
+  io_v1: *dac_v
+  io_v3: *dac_v
+  io_v4: *dac_v
+  io_v5: *dac_v
+  io_i7: *fwd
+  io_i7c: *fwd
+  io_i7b: *fwd
+  io_i5: *ddr
+  io_i5b: *ddr
+  io_i6: *edge
+  io_i6b: *edge
+  io_v2a: *mmcm
+  io_v2: *mmcm

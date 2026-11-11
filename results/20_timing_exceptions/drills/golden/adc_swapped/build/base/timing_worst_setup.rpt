@@ -1,0 +1,81 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Tue Nov 10 22:49:23 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -delay_type max -max_paths 1 -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b20b-pub/designs/_b20b_adc_swapped/build/base/timing_worst_setup.rpt
+| Design       : d20_adc_capture_top
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             3.975ns  (required time - arrival time)
+  Source:                 u_shell/u_core/frame_reg[4][4]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk_pin  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_shell/u_core/cnt_timeout_reg[2]/CE
+                            (rising edge-triggered cell FDRE clocked by sys_clk_pin  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk_pin
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (sys_clk_pin rise@10.000ns - sys_clk_pin rise@0.000ns)
+  Data Path Delay:        5.735ns  (logic 1.185ns (20.663%)  route 4.550ns (79.337%))
+  Logic Levels:           4  (LUT4=1 LUT6=3)
+  Clock Path Skew:        -0.042ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.000ns = ( 15.000 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.301ns
+    Clock Pessimism Removal (CPR):    0.259ns
+  Clock Uncertainty:      0.043ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE + UU
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.050ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+    User Uncertainty         (UU):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk_pin rise edge)
+                                                      0.000     0.000 r  
+    E3                                                0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         1.482     1.482 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           2.025     3.506    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.096     3.602 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=296, routed)         1.699     5.301    u_shell/u_core/CLK100MHZ_IBUF_BUFG
+    SLICE_X7Y117         FDRE                                         r  u_shell/u_core/frame_reg[4][4]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X7Y117         FDRE (Prop_fdre_C_Q)         0.456     5.757 r  u_shell/u_core/frame_reg[4][4]/Q
+                         net (fo=5, routed)           1.056     6.813    u_shell/u_core/win_wdata[20]
+    SLICE_X9Y118         LUT4 (Prop_lut4_I0_O)        0.154     6.967 r  u_shell/u_core/FSM_sequential_state[2]_i_16/O
+                         net (fo=2, routed)           0.820     7.786    u_shell/u_core/FSM_sequential_state[2]_i_16_n_0
+    SLICE_X9Y117         LUT6 (Prop_lut6_I0_O)        0.327     8.113 f  u_shell/u_core/FSM_sequential_state[2]_i_6/O
+                         net (fo=1, routed)           0.824     8.937    u_shell/u_core/FSM_sequential_state[2]_i_6_n_0
+    SLICE_X6Y117         LUT6 (Prop_lut6_I0_O)        0.124     9.061 f  u_shell/u_core/FSM_sequential_state[2]_i_2/O
+                         net (fo=24, routed)          1.171    10.232    u_shell/u_core/FSM_sequential_state[2]_i_2_n_0
+    SLICE_X1Y116         LUT6 (Prop_lut6_I4_O)        0.124    10.356 r  u_shell/u_core/cnt_timeout[7]_i_1/O
+                         net (fo=8, routed)           0.680    11.036    u_shell/u_core/cnt_timeout[7]_i_1_n_0
+    SLICE_X1Y120         FDRE                                         r  u_shell/u_core/cnt_timeout_reg[2]/CE
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk_pin rise edge)
+                                                     10.000    10.000 r  
+    E3                                                0.000    10.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000    10.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         1.411    11.411 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.920    13.331    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.091    13.422 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=296, routed)         1.578    15.000    u_shell/u_core/CLK100MHZ_IBUF_BUFG
+    SLICE_X1Y120         FDRE                                         r  u_shell/u_core/cnt_timeout_reg[2]/C
+                         clock pessimism              0.259    15.259    
+                         clock uncertainty           -0.043    15.216    
+    SLICE_X1Y120         FDRE (Setup_fdre_C_CE)      -0.205    15.011    u_shell/u_core/cnt_timeout_reg[2]
+  -------------------------------------------------------------------
+                         required time                         15.011    
+                         arrival time                         -11.036    
+  -------------------------------------------------------------------
+                         slack                                  3.975    
+
+
+
+

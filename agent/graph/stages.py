@@ -69,12 +69,25 @@ _FLOW_STAGES = {"stage_rtl": ["rtl"], "stage_post_synth": ["post_synth"], "stage
 _ROUTE_RULES = {"setup", "hold", "pulse_width"}
 # brief 20: the exception check (flow/exceptions_check.py) joins the constraints and timing gates where the build has it
 _EXC_GATES = {"post_synth": "post_synth_exceptions_clean", "post_route": "exceptions_clean"}
+# brief 20 part B: the I/O check (flow/io_check.py) likewise
+_IO_GATES = {"post_synth": "post_synth_io_constraints_clean", "post_route": "io_timing_clean"}
 
 
 def _with_exceptions(gates: dict | None, flow_stage: str, only: set[str]) -> set[str]:
     st = ((gates or {}).get("stages") or {}).get(flow_stage) or {}
-    name = _EXC_GATES[flow_stage]
-    return only | {name} if name in (st.get("gates") or {}) else only
+    have = st.get("gates") or {}
+    return only | {n for n in (_EXC_GATES[flow_stage], _IO_GATES[flow_stage]) if n in have}
+
+
+def io_text(st: dict, limit: int = 6) -> str:
+    """The failing findings of a stage's I/O check, one clause each (rule, XDC file:line, the finding)."""
+    fails = ((st.get("io_timing") or {}).get("failures") or [])
+    out = []
+    for f in fails[:limit]:
+        where = f"{f['file']}:{f['line']}" if f.get("file") else ""
+        out.append(" ".join(x for x in (f["rule"], where, (f.get("text") or ""), (f.get("message") or "")[:240]) if x))
+    more = f"; ... {len(fails) - limit} more" if len(fails) > limit else ""
+    return "; ".join(out) + more
 
 
 def exceptions_text(st: dict, limit: int = 6) -> str:
@@ -107,6 +120,8 @@ def _stage_pass(gates: dict | None, flow_stage: str, only: set[str] | None = Non
         bad = [b + (f" ({unconstrained_text(st['unconstrained_ports'])})" if "unconstrained" in b else "") for b in bad]
     if st.get("exceptions"):                   # brief 20: which exception, where in the XDC, and Vivado's words
         bad = [b + (f" ({exceptions_text(st)})" if b.endswith("exceptions_clean") else "") for b in bad]
+    if st.get("io_timing"):                    # brief 20 part B: which delay, where in the XDC, and why
+        bad = [b + (f" ({io_text(st)})" if b.endswith(("io_timing_clean", "io_constraints_clean")) else "") for b in bad]
     xp = (gates or {}).get("xprobe")           # brief 18: present only for a build run with FDA_XPROBE=1
     if xp and not xp.get("error"):
         for b in list(bad):

@@ -1,0 +1,65 @@
+# Hidden full spec (brief 20 part B development drill). The spec oracle answers the agent's questions from this file only.
+schema: fpga-design-agent/spec/v0
+name: d20_adc_capture
+title: Capture an external ADC on the board clock
+source: spec.md
+tier: drill
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: d20_adc_capture_top
+design_id: 0x41444338          # "ADC8"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator, jitter: "50 ps period jitter, peak-to-peak (oscillator data sheet)"}
+  - "Only this clock: no MMCM or PLL is needed or wanted."
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: LAST 0; MIN 255 and MAX 0 as a CLEAR does (the samples taken after reset then update them on every clock)
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: JA1, dir: in, width: 1, pins: [C17], iostandard: LVCMOS33, note: "ADC D0"}
+  - {name: JA2, dir: in, width: 1, pins: [D18], iostandard: LVCMOS33, note: "ADC D1"}
+  - {name: JA3, dir: in, width: 1, pins: [E18], iostandard: LVCMOS33, note: "ADC D2"}
+  - {name: JA4, dir: in, width: 1, pins: [G17], iostandard: LVCMOS33, note: "ADC D3"}
+  - {name: JA7, dir: in, width: 1, pins: [D17], iostandard: LVCMOS33, note: "ADC D4"}
+  - {name: JA8, dir: in, width: 1, pins: [E17], iostandard: LVCMOS33, note: "ADC D5"}
+  - {name: JA9, dir: in, width: 1, pins: [F18], iostandard: LVCMOS33, note: "ADC D6"}
+  - {name: JA10, dir: in, width: 1, pins: [G18], iostandard: LVCMOS33, note: "ADC D7"}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  capture:
+    - "SAMPLE = {JA10, JA9, JA8, JA7, JA4, JA3, JA2, JA1} (D7..D0), registered on every rising edge of CLK100MHZ in input flip-flops packed into the I/O blocks (IOB)."
+  fast_unit:
+    - "LAST = the latest captured sample (it may lag the pins by the capture register and one more register)."
+    - "MIN = the smallest and MAX = the largest sample since the last CLEAR or reset; they are updated on every clock from the captured samples."
+    - "A CLEAR write sets MIN to 255 and MAX to 0 (on that clock; samples after it update them again)."
+  leds:
+    - "LED[7:0] = LAST, LED[15:8] = 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.0)
+  map:
+    - {offset: 0x00, name: LAST, access: R, reset: 0, bits: "[7:0]; [31:8] read 0"}
+    - {offset: 0x01, name: MIN, access: R, reset: 255, bits: "[7:0]; [31:8] read 0"}
+    - {offset: 0x02, name: MAX, access: R, reset: 0, bits: "[7:0]; [31:8] read 0"}
+    - {offset: 0x03, name: CLEAR, access: W, reset: 0, bits: "a write (any data) sets MIN 255 and MAX 0; reads 0"}
+  unmapped: offsets 0x04-0x7F read 0; writes to them are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  adc_interface: "System-synchronous: the ADC and the FPGA share the board oscillator; clock traces matched; ADC tCO 1.0 ns min, 5.0 ns max; data trace 0.5 ns. Setup and hold must both be constrained and both met."
+  jitter: "The oscillator's period jitter is 50 ps peak-to-peak."
+  margin: "The implementation tools should work to 0.3 ns more setup margin than the real requirement on every clock. Sign-off (the final routed timing the gates judge) is against the real requirement: the margin must not be part of the signed-off constraints in design.xdc."
+  other_ports: "CPU_RESETN and UART_TXD_IN are asynchronous (they enter synchronisers); LED and UART_RXD_OUT are slow outputs (a person, a 115200-baud receiver). They have no timing relationship to the clock."
