@@ -131,7 +131,11 @@ def score(root: Path, tdir: str, rtl: Path, out: Path) -> dict:
     except Exception:
         return {"pass": False, "reason": f"scorer rc {r.returncode}: {r.stderr[-300:]}"}
     tests = j.get("tests") or {}
-    return {"pass": bool(j.get("pass")), "tests_passed": sum(1 for v in tests.values() if v is True), "tests": len(tests)}
+    out = {"pass": bool(j.get("pass")), "tests_passed": sum(1 for v in tests.values() if v is True), "tests": len(tests)}
+    if j.get("built") is False:                              # amendment 6: the design did not build under the bench's Icarus: not "0 tests ran"
+        out["built"] = False
+        out["build_error_head"] = str(j.get("error", ""))[-300:]
+    return out
 
 
 def audit_metrics(design: Path) -> dict:
@@ -185,7 +189,18 @@ def one_run(root: Path, task: str, seed: int, arm: str, tag: str) -> dict:
         for n in dead_fda_containers(t0):
             subprocess.run(["docker", "rm", "-f", n], capture_output=True, timeout=60)
     new = sorted({q.name for q in runs.iterdir()} - before) if runs.is_dir() else []
-    rid = next((n for n in new if (runs / n / "config.json").is_file()), None)
+    taken = {r.get("run_id") for r in rows()}
+
+    def mine(n: str) -> bool:
+        """Amendment 6: a new run directory is this run's only when its config names this task and exactly this arm and no
+        record has it (two workers starting in the same second no longer share one)."""
+        f = runs / n / "config.json"
+        if n in taken or not f.is_file():
+            return False
+        c = json.loads(f.read_text())
+        return c.get("name") == task and (c.get("harness_arms") or "") in ("", "None") if not ARMS[arm] else (
+            c.get("name") == task and c.get("harness_arms") == ARMS[arm])
+    rid = next((n for n in new if mine(n)), None)
     rec = {"task": task, "seed": seed, "arm": arm, "run_id": rid, "rc": p.returncode, "wall_s": wall, "hard_limit": hard,
            "worker": tag, "malformed_retries": (out or "").count("FDA_MALFORMED"), "code": FROZEN.read_text().strip()[:8]}
     summ = runs / str(rid) / "summary.json" if rid else None

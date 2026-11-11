@@ -194,3 +194,17 @@ tokens and cost. The record was re-derived from the correct run directory (`...-
 folder; the record is tagged `repaired`); the H2 record was correct. `run_id` uniqueness and a match of each run's `config.json`
 (task, arm) with its record were then checked for every record, and are checked again before the final analysis. The driver is not
 changed: the collision needs a same-second start, and workers are not restarted again.
+
+## Amendment 6 (2026-11-11 evening, planner decision: repeats 2 and 3 of round 1; driver fix; the two 0-of-0 scores)
+
+- **Repeats 2 and 3 are run now**: the same 4 tasks and A0/H1/H2/H9, seeds 2 and 3, the same frozen code (a64be93), prereg,
+  analysis and adopt rule; amendment 4's time cut is lifted for round 1 only. Round 2 and 3 arms stay unrun. Cost estimate: 32 runs x
+  about 0.23 = about USD 7 at the repeat-1 mean (repeat 1: 0.19 mean over valid runs), ceiling 24; inside the cap. luna only; the
+  malformed-response retry stays in. Sim-only rule: no slot; the driver waits while load is 6 or more or under 12 GiB is free.
+- **Driver fix (no effect on the arms):** a new run directory is taken as a run's only if its `config.json` names this task and this
+  exact arm and no record already has it (amendment 5's collision cannot recur). `built: false` is recorded in the score.
+- **The two 0-of-0 hidden-bench scores** (`t1_gray_stepper`, runs ...-f218 H9 valid and ...-0fc7 H2 infrastructure-failed) are not a scoring
+  bug. The scorer's own record says `built: false`: the agent's RTL does not elaborate under the bench's Icarus build (`Unresolved
+  net/uwire UART_RXD_OUT cannot have multiple drivers`: the design drives the port the test shell's `uart_tx` also drives), reproduced by
+  hand with `iverilog` on both designs. They stay counted as fails (a design that does not build in the bench's simulator failed), now
+  recorded as `built: false` and reported separately from 0 of N tests passing.
