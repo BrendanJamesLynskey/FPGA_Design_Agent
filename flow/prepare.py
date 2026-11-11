@@ -69,6 +69,33 @@ def check_probes(data: dict[str, Any]) -> list[str]:
     return [*errs, PROBES_FORM] if errs else []
 
 
+ILA_MAX_PORTS = 5      # brief 48: the free Basic licence tier on Vivado 2026.1 refuses an ILA with more than 5 probe ports (Chipscope 16-620)
+
+
+def pack_probes(probes: list[dict[str, Any]], max_ports: int = ILA_MAX_PORTS) -> list[dict[str, Any]]:
+    """Pack the named probes into at most ``max_ports`` ILA probe ports (brief 48).
+
+    A probe's ``group`` (optional) names its port; without one, a 1-bit probe goes to the ``flags`` port and a wider one to
+    the ``data`` port. Ports come in order of first use; inside a port the probes follow the probes.yaml order, the first at
+    bit 0. Returns ``[{"port": i, "group": g, "width": W, "slices": [{"name", "offset", "width", "index"}]}]`` where
+    ``index`` is the probe's position in ``probes``. Raises ValueError when more than ``max_ports`` ports would be needed.
+    """
+    ports: list[dict[str, Any]] = []
+    by_group: dict[str, dict[str, Any]] = {}
+    for idx, pr in enumerate(probes):
+        w = int(pr["width"])
+        g = str(pr.get("group") or ("flags" if w == 1 else "data"))
+        if g not in by_group:
+            by_group[g] = {"port": len(ports), "group": g, "width": 0, "slices": []}
+            ports.append(by_group[g])
+        port = by_group[g]
+        port["slices"].append({"name": pr["name"], "offset": port["width"], "width": w, "index": idx})
+        port["width"] += w
+    if len(ports) > max_ports:
+        raise ValueError(f"probes need {len(ports)} ILA ports ({', '.join(p['group'] for p in ports)}); the limit is {max_ports}")
+    return ports
+
+
 def probes_tcl(probes_yaml: Path) -> str:
     cfg = yaml.safe_load(probes_yaml.read_text())
     bad = check_probes(cfg) if isinstance(cfg, dict) else ["not a YAML mapping"]
@@ -84,6 +111,17 @@ def probes_tcl(probes_yaml: Path) -> str:
     # one lappend per probe: a newline inside [list ...] would start a new Tcl command
     for pr in cfg["probes"]:
         lines.append(f"lappend ila_probes [list {{{pr['name']}}} {{{pr['pins']}}} {int(pr['width'])}]")
+    # brief 48: the same probes packed into <= 5 ports for the ILA IP route (flow/debug.tcl insert_ila_ip): one entry per port,
+    # {width {name pins width offset ?index?} ...}; the old one-port-per-probe list above is for the 2025.2 core route
+    lines.append("set ila_ports {}")
+    try:
+        packed = pack_probes(cfg["probes"])
+    except ValueError as e:
+        raise SystemExit(f"prepare: {probes_yaml.name}: {e}")
+    for port in packed:
+        sl = " ".join(f"[list {{{cfg['probes'][x['index']]['name']}}} {{{cfg['probes'][x['index']]['pins']}}} {x['width']} {x['offset']}]"
+                      for x in port["slices"])
+        lines.append(f"lappend ila_ports [list {port['width']} {sl}]")
     return "\n".join(lines) + "\n"
 
 

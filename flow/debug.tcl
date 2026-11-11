@@ -55,7 +55,7 @@ proc insert_ila_core {probes_tcl out} {
         set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports $port]
         set_property port_width $width [get_debug_ports $port]
         connect_debug_port $port $nets
-        puts $map [format "probe%-3d %-12s %3d  %s" $i $name $width $pattern]
+        puts $map [format "probe%-3d %-12s %3d %3d  %s" $i $name $width 0 $pattern]
         incr i
     }
     close $map
@@ -73,11 +73,12 @@ proc insert_ila_core {probes_tcl out} {
 # generates, synthesises, places, routes and writes a bitstream for the ILA *IP* (measured, brief 48). So the same probe list
 # is built as an ILA IP with matching probe widths, added to the synthesised netlist as a black box that is filled from the
 # IP's checkpoint (create_cell -black_box, read_checkpoint -cell), with every probe pin wired to the same register-output nets
-# as insert_ila_core would have used. Only the debug build gets it. The debug hub is added by opt_design. probe_map.txt, the
+# as insert_ila_core would have used, packed into at most 5 probe ports (the Basic tier's limit, flow/prepare.py pack_probes). Only the debug build gets it. The debug hub is added by opt_design. probe_map.txt, the
 # probe order and the .ltx keep their meaning, so flow/ila_capture.tcl, flow/ila.py and the exception gate are unchanged.
 proc insert_ila_ip {probes_tcl out} {
     source $probes_tcl
-    set n [llength $ila_probes]
+    set n [llength $ila_ports]
+    if {$n > 5} { error "debug.tcl: $n ILA ports; the Basic licence tier allows 5 (Chipscope 16-620)" }
     set ipdir $out/ila_ip
     file mkdir $ipdir
     set ipname fda_ila
@@ -87,7 +88,7 @@ proc insert_ila_ip {probes_tcl out} {
                  CONFIG.C_TRIGIN_EN false CONFIG.C_TRIGOUT_EN false CONFIG.C_ADV_TRIGGER false CONFIG.C_EN_STRG_QUAL false \
                  CONFIG.ALL_PROBE_SAME_MU true CONFIG.ALL_PROBE_SAME_MU_CNT 1]
     set i 0
-    foreach pr $ila_probes { lappend cfg CONFIG.C_PROBE${i}_WIDTH [lindex $pr 2]; incr i }
+    foreach port $ila_ports { lappend cfg CONFIG.C_PROBE${i}_WIDTH [lindex $port 0]; incr i }
     set_property -dict $cfg $ip
     generate_target all $ip
     synth_ip $ip
@@ -96,27 +97,31 @@ proc insert_ila_ip {probes_tcl out} {
     create_cell -reference $ipname -black_box $ila_name
     create_pin -direction IN $ila_name/clk
     set i 0
-    foreach pr $ila_probes {
-        set w [lindex $pr 2]
-        create_pin -direction IN -from 0 -to [expr {$w - 1}] $ila_name/probe$i
+    foreach port $ila_ports {
+        create_pin -direction IN -from 0 -to [expr {[lindex $port 0] - 1}] $ila_name/probe$i
         incr i
     }
     read_checkpoint -cell $ila_name $dcp
     connect_net -net [get_nets $ila_clock_net] -objects [get_pins $ila_name/clk]
 
+    # probe_map.txt: one line per named probe: probe<port> <name> <width> <bit offset in the port> <pins>
     set map [open $out/probe_map.txt w]
     set i 0
-    foreach pr $ila_probes {
-        lassign $pr name pattern width
-        set nets [probe_nets $pattern $width]
-        for {set b 0} {$b < $width} {incr b} {
-            connect_net -net [lindex $nets $b] -objects [get_pins "$ila_name/probe${i}\[$b\]"]
+    set nprobes 0
+    foreach port $ila_ports {
+        foreach sl [lrange $port 1 end] {
+            lassign $sl name pattern width offset
+            set nets [probe_nets $pattern $width]
+            for {set b 0} {$b < $width} {incr b} {
+                connect_net -net [lindex $nets $b] -objects [get_pins "$ila_name/probe${i}\[[expr {$offset + $b}]\]"]
+            }
+            puts $map [format "probe%-3d %-12s %3d %3d  %s" $i $name $width $offset $pattern]
+            incr nprobes
         }
-        puts $map [format "probe%-3d %-12s %3d  %s" $i $name $width $pattern]
         incr i
     }
     close $map
-    puts "debug.tcl: ILA IP $ila_name ($ipname) with $i probes, depth $ila_depth"
+    puts "debug.tcl: ILA IP $ila_name ($ipname) with $nprobes probes packed into $n ports, depth $ila_depth"
 }
 
 # FDA_ILA_INSERT=core selects the old create_debug_core path (needs a licence tier that allows it, for example 2025.2 Basic);

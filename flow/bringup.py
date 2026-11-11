@@ -165,12 +165,12 @@ class Run:
         build = self.design / "build" / "ila"
         top = json.loads((build / "prepare.json").read_text())["top"]
         ltx = build / f"{top}.ltx"
-        names = {n: port for port, (n, _) in ila.read_probe_map(build / "probe_map.txt").items()}
+        names = {n: (port, off, w) for n, port, off, w in ila.read_probe_slices(build / "probe_map.txt")}
         cap_dir = self.log_dir / "ila"
         cap_dir.mkdir(parents=True, exist_ok=True)
         plan = ["set fda_depth 1024", "set fda_captures {}"]
         for c in checks.CAPTURES:
-            comps = " ".join(f"[list {names[k]} {int(v)}]" for k, v in c.compares.items())
+            comps = " ".join(f"[list {names[k][0]} {int(v)} {names[k][1]} {names[k][2]}]" for k, v in c.compares.items())
             plan.append(f"lappend fda_captures [list {c.name} {c.condition} {c.position} [list {comps}]]")
         (cap_dir / "plan.tcl").write_text("\n".join(plan) + "\n")
 

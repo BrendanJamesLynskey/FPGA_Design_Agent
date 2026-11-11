@@ -9,8 +9,9 @@
 #   <name>.csv / <name>.vcd   the uploaded capture (write_hw_ila_data)
 #   <name>.done   written here after the export (or <name>.timeout if it never triggered)
 # plan.tcl sets fda_depth and appends to fda_captures:
-#   lappend fda_captures [list <name> <AND|OR> <trigger position> [list [list <probe port> <value>] ...]]
-# Each named probe port must equal <value> (an integer); ports not named are don't-care.
+#   lappend fda_captures [list <name> <AND|OR> <trigger position> [list [list <probe port> <value> ?<offset> <width>?] ...]]
+# Each named probe (bits offset..offset+width-1 of its port; the whole port without them) must equal <value> (an integer);
+# bits not named are don't-care.
 #
 # One ILA probe port can show up as several hw_probes: the .ltx names probes after
 # nets, and a register bus's bits can sit on nets with different names after
@@ -103,13 +104,26 @@ foreach cap $fda_captures {
     set_property CONTROL.DATA_DEPTH $fda_depth $ila
     set_property CONTROL.TRIGGER_POSITION $pos $ila
     set_property CONTROL.TRIGGER_CONDITION $cond $ila
+    # each compare is [list port value ?offset width?]: the named probe's bits of the port (brief 48: a port can hold
+    # several named probes); the bits no compare names stay X. Without offset and width, the whole port.
+    array unset want
     foreach c $compares {
-        lassign $c port value
+        lassign $c port value off wid
+        foreach pb $probes($port) {
+            lassign $pb p bits
+            foreach i $bits {
+                if {$off eq ""} { set want($port,$i) [expr {($value >> $i) & 1}]
+                } elseif {$i >= $off && $i < $off + $wid} { set want($port,$i) [expr {($value >> ($i - $off)) & 1}] }
+            }
+        }
+    }
+    foreach port [array names probes] {
         foreach pb $probes($port) {
             lassign $pb p bits
             set b ""
-            foreach i $bits { append b [expr {($value >> $i) & 1}] }
-            set_property TRIGGER_COMPARE_VALUE "eq[llength $bits]'b$b" $p
+            set any 0
+            foreach i $bits { if {[info exists want($port,$i)]} { append b $want($port,$i); set any 1 } else { append b X } }
+            if {$any} { set_property TRIGGER_COMPARE_VALUE "eq[llength $bits]'b$b" $p }
         }
     }
     run_hw_ila $ila
