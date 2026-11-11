@@ -1,0 +1,67 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Tue Nov 10 22:53:56 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -delay_type max -max_paths 1 -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b20b/io_out/dac/io_v3/timing_worst_setup.rpt
+| Design       : io_dac
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -1.039ns  (required time - arrival time)
+  Source:                 dac_q_reg[5]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dac_d[5]
+                            (output port clocked by dac_vclk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             dac_vclk
+  Path Type:              Max at Slow Process Corner
+  Requirement:            10.000ns  (dac_vclk rise@10.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        4.024ns  (logic 4.023ns (99.975%)  route 0.001ns (0.025%))
+  Logic Levels:           1  (OBUF=1)
+  Output Delay:           1.900ns
+  Clock Path Skew:        -5.015ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.300ns = ( 10.300 - 10.000 ) 
+    Source Clock Delay      (SCD):    5.315ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.100ns
+  Clock Domain Crossing:  Inter clock paths are considered valid unless explicitly excluded by timing constraints such as set_clock_groups or set_false_path.
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  
+    E3                                                0.000     0.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         1.482     1.482 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           2.025     3.506    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.096     3.602 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=16, routed)          1.712     5.315    CLK100MHZ_IBUF_BUFG
+    OLOGIC_X0Y140        FDRE                                         r  dac_q_reg[5]/C
+  -------------------------------------------------------------------    -------------------
+    OLOGIC_X0Y140        FDRE (Prop_fdre_C_Q)         0.472     5.787 r  dac_q_reg[5]/Q
+                         net (fo=1, routed)           0.001     5.788    dac_d_OBUF[5]
+    F13                  OBUF (Prop_obuf_I_O)         3.551     9.339 r  dac_d_OBUF[5]_inst/O
+                         net (fo=0)                   0.000     9.339    dac_d[5]
+    F13                                                               r  dac_d[5] (OUT)
+  -------------------------------------------------------------------    -------------------
+
+                         (clock dac_vclk rise edge)
+                                                     10.000    10.000 r  
+                         clock source latency         0.300    10.300    
+                         ideal clock network latency
+                                                      0.000    10.300    
+                         clock pessimism              0.000    10.300    
+                         clock uncertainty           -0.100    10.200    
+                         output delay                -1.900     8.300    
+  -------------------------------------------------------------------
+                         required time                          8.300    
+                         arrival time                          -9.339    
+  -------------------------------------------------------------------
+                         slack                                 -1.039    
+
+
+
+

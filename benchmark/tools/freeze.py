@@ -4,6 +4,7 @@
     freeze.py make   [--private DIR] [--out benchmark/MANIFEST.json] [--private-out DIR/MANIFEST_full.json]
     freeze.py verify [--private DIR] [--manifest benchmark/MANIFEST.json] [--grader-shell DIR]
     freeze.py refreeze UNIT... [--manifest benchmark/MANIFEST.json]    # dated amendment: re-record named public units only
+    freeze.py refreeze UNIT... --private-manifest DIR/MANIFEST_full.json [--dry-run]    # the same, in the owner's private manifest
 
 A unit is one directory: a task (public benchmark/tasks/<id> or private <DIR>/tasks/<id>), a pool spec
 (benchmark/pool/<id>), a probe task (<DIR>/contamination/<id>), or the shared bench code (benchmark/lib, the
@@ -16,6 +17,11 @@ must be the frozen one, or ``--grader-shell DIR`` must point at a checked-out fr
 
 ``refreeze`` rewrites the record of the named public units (``shared:<path>`` for the shared code) and nothing else; every
 use is a dated entry in benchmark/AMENDMENTS.md. Held-out and private units are never touched by it.
+
+``refreeze --private-manifest PATH`` does the same in a private manifest (``make`` would regenerate every entry, held-out ones included, and
+so accept a held-out change unseen). It takes each digest from the public files only, rewrites only the named public or ``shared:`` entries,
+leaves every other entry byte for byte as it was, refuses any id that is not a public or shared unit of that manifest, and prints old and
+new digests. ``--dry-run`` prints them and writes nothing.
 """
 
 from __future__ import annotations
@@ -138,6 +144,41 @@ def refreeze(ids: list[str], manifest: Path) -> int:
     return 0
 
 
+def refreeze_private(ids: list[str], public_units: dict[str, dict], manifest: Path, dry_run: bool = False) -> int:
+    """Re-record the named public/shared units in a private manifest; every other entry stays byte for byte.
+
+    ``public_units`` maps id -> unit for the public units only (so a held-out or probe id can never be named). The file is read
+    for the manifest's JSON, and the digests come from the public files; no private directory is opened. The manifest must be in the
+    canonical form ``make`` writes, so the rewrite can change nothing but the named entries.
+    """
+    text = manifest.read_text()
+    m = json.loads(text)
+    if json.dumps(m, indent=1) + "\n" != text:
+        raise SystemExit(f"{manifest.name}: not in the form freeze.py make writes; refusing to rewrite it")
+    if not ids:
+        raise SystemExit("no unit named")
+    if len(set(ids)) != len(ids):
+        raise SystemExit("a unit is named twice")
+    recs = {}
+    for i in ids:
+        rec = next((r for r in m["units"] if r["id"] == i), None)
+        if i not in public_units or rec is None or rec["where"] != "public" or rec["kind"] == "probe":
+            raise SystemExit(f"{i}: not a public or shared unit of {manifest.name}; nothing written")
+        recs[i] = rec
+    for i in ids:
+        rec = recs[i]
+        f = files_of(public_units[i]["path"])
+        old = rec["digest"]
+        rec.update({"files": len(f), "digest": digest(f), "file_hashes": f})
+        print(f"{i}: {old} -> {rec['digest']} ({len(f)} files)" + ("  [unchanged]" if old == rec["digest"] else ""))
+    if dry_run:
+        print("dry run: nothing written")
+    else:
+        manifest.write_text(json.dumps(m, indent=1) + "\n")
+        print(f"{len(ids)} entries re-recorded in {manifest.name}")
+    return 0
+
+
 def verify(private: Path | None, manifest: Path, grader_shell: Path | None = None) -> int:
     m = json.loads(manifest.read_text())
     bad, checked, skipped = [], 0, 0
@@ -170,11 +211,17 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=BENCH / "MANIFEST.json")
     ap.add_argument("--private-out", type=Path, default=None)
     ap.add_argument("--manifest", type=Path, default=BENCH / "MANIFEST.json")
+    ap.add_argument("--private-manifest", type=Path, default=None)
+    ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
+    if a.dry_run and not a.private_manifest:
+        ap.error("--dry-run needs --private-manifest")
     if a.cmd == "make":
         priv = a.private or DEFAULT_PRIVATE
         make(priv, a.out, a.private_out or priv / "MANIFEST_full.json")
         return 0
+    if a.cmd == "refreeze" and a.private_manifest:
+        return refreeze_private(a.units, {u["id"]: u for u in units(None) if u["where"] == "public"}, a.private_manifest, a.dry_run)
     if a.cmd == "refreeze":
         return refreeze(a.units, a.manifest)
     return verify(a.private, a.manifest, a.grader_shell)

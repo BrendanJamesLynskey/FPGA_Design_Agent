@@ -1,0 +1,8 @@
+# Hidden acceptance bench for d20_adc_capture (benchmark/tools/run_task.py); I/O-timing grader: ../lib/grade_io.py
+toplevel: d20_adc_capture_top
+module: acceptance
+parameters: {CLKS_PER_BIT: 8, TIMEOUT_CYCLES: 400}
+phrases:
+  - "take a sample on every rising edge of CLK100MHZ, in input flip-flops in the FPGA's I/O blocks"
+  - "constrain the ADC inputs from the data sheet for setup and for hold"
+  - "the timing sign-off must be against the real requirement, without that margin"

@@ -22,6 +22,16 @@ Rules (raw findings, rule id plus the offending line; no fix hints):
   200 MHz). Allowed only
   when a comment above says the hold check stays at its default on purpose ("hold" with "default", "intentional" or
   "on purpose").
+- ``FDA-CON-11`` (brief 20 part B, ``flow/io_check.py`` static rules) an input or output delay that is invented: a
+  non-zero delay on a port the board lists as slow or asynchronous (``board.yaml`` ``slow_ports``: buttons, switches,
+  LEDs, the USB-UART; these take a 0 ns placeholder and a commented false path), or a non-zero delay with no comment
+  above naming the data-sheet terms it comes from (tCO, tSU, tH, trace, skew, data valid). Brief 20 part A's agent
+  runs gave such ports made-up delays and, once, negative output delays to pass timing.
+- ``FDA-CON-12`` (brief 20 part B) ``-min`` larger than ``-max`` on the same ports, clock and edge (Vivado says
+  nothing: fixture I3), or a delay that a later line replaces because that line has no ``-add_delay`` (fixture I5b: a DDR
+  input's falling-edge lines without it left the rising edge untimed).
+- ``FDA-CON-13`` (brief 20 part B) a delay relative to a clock defined later in the file: Vivado drops the delay
+  (CRITICAL WARNING 12-4739, fixture V4).
 - ``FDA-CON-8`` (``check_top_ports``) a port that ``spec.yaml`` declares is not a port of the top module. The hidden
   bench of a task is written against the spec's ports, so a port the design "does not need" must still exist.
 - ``FDA-CON-9`` (``check_top_ports``) the board's USB-UART is a pair (``board.yaml`` ``uart``): when the design uses the
@@ -131,6 +141,7 @@ def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
             add("FDA-CON-5", n, "set_max_delay -datapath_only without a comment above it that names the synchroniser or "
                                 "crossing it bounds")
     out += _multicycle_pairs(lines)
+    out += io_delay_findings(xdc_text, board)
     seen: dict[str, str] = {}
     master_ports = set(master)
     for port, (pin, std) in mine.items():
@@ -150,6 +161,22 @@ def check_xdc(xdc_text: str, board_dir: Path) -> list[dict[str, Any]]:
         if pin in seen and seen[pin] != port:
             add("FDA-CON-4", n, f"{port} on {pin}, which port {seen[pin]} already uses")
         seen.setdefault(pin, port)
+    return out
+
+
+_IO_RULE = {"IO-INVENTED": "FDA-CON-11", "IO-NO-FORMULA": "FDA-CON-11", "IO-MIN-GT-MAX": "FDA-CON-12", "IO-REPLACED": "FDA-CON-12",
+            "IO-CLOCK-ORDER": "FDA-CON-13"}
+
+
+def io_delay_findings(xdc_text: str, board: dict) -> list[dict[str, Any]]:
+    """FDA-CON-11/-12/-13: flow/io_check.py's XDC-only rules, under this checker's rule ids."""
+    from flow.io_check import static_findings
+    out = []
+    for f in static_findings([("design.xdc", xdc_text)], board.get("slow_ports")):
+        rule = _IO_RULE.get(f["rule"])
+        if rule:
+            out.append({"rule": rule, "line": f["line"] or 1, "text": f["text"] or "",
+                        "message": f"{f['rule']}: {f['message']}"})
     return out
 
 

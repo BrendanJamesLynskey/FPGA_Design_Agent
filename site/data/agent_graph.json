@@ -1,0 +1,2051 @@
+{
+ "arms": [
+  {
+   "adds": "a step that shortlists skills before each role, which then loads them on demand",
+   "at": "before work",
+   "id": "A1",
+   "name": "Skill router",
+   "status": "not yet measured"
+  },
+  {
+   "adds": "a second agent, on another model, that challenges the signed-off spec before any RTL",
+   "at": "after the interview",
+   "id": "A2",
+   "name": "Independent spec reviewer",
+   "status": "not yet measured"
+  },
+  {
+   "adds": "several RTL candidates in parallel; the agent's own gates pick one (hidden tests never)",
+   "at": "the RTL writer",
+   "id": "A3",
+   "name": "Best of N",
+   "status": "not yet measured"
+  },
+  {
+   "adds": "a split into modules with contracts, built in parallel and then integrated",
+   "at": "the plan",
+   "id": "A4",
+   "name": "Plan and decompose",
+   "status": "not yet measured"
+  },
+  {
+   "adds": "a search for the closest verified component, which is adapted instead of writing from nothing",
+   "at": "the RTL writer",
+   "id": "A5",
+   "name": "Retrieve, then adapt",
+   "status": "not yet measured"
+  },
+  {
+   "adds": "a narrow agent that reviews timing exceptions against known rules",
+   "at": "the constraints stage",
+   "id": "A6",
+   "name": "Constraints critic",
+   "status": "not yet measured"
+  }
+ ],
+ "bank": {
+  "layers": [
+   {
+    "layer": "techniques",
+    "skills": 22
+   },
+   {
+    "layer": "functions",
+    "skills": 11
+   },
+   {
+    "layer": "vendor",
+    "skills": 55
+   },
+   {
+    "layer": "family",
+    "skills": 64
+   },
+   {
+    "layer": "device",
+    "skills": 11
+   },
+   {
+    "layer": "board",
+    "skills": 40
+   },
+   {
+    "layer": "procedures",
+    "skills": 15
+   }
+  ],
+  "pin": "e3cf892",
+  "skills": 218,
+  "units": 18
+ },
+ "defaults": {
+  "cc_model": "claude-haiku-5-5",
+  "harness": "deepagents",
+  "model": "openai/gpt-6-luna",
+  "profiles": {
+   "cvdp": {
+    "clarify": {
+     "effort": "medium",
+     "harness": "claude_code",
+     "model": "claude-sonnet-5-5"
+    },
+    "model": {
+     "effort": "medium",
+     "harness": "claude_code",
+     "model": "claude-sonnet-5-5"
+    },
+    "rtl": {
+     "effort": null,
+     "harness": "claude_code",
+     "model": "claude-opus-5-5"
+    },
+    "tests": {
+     "effort": "medium",
+     "harness": "claude_code",
+     "model": "claude-sonnet-5-5"
+    }
+   },
+   "single": {}
+  }
+ },
+ "graph": {
+  "edges": [
+   {
+    "conditional": false,
+    "key": null,
+    "label": "spec.md",
+    "source": "__start__",
+    "target": "work"
+   },
+   {
+    "conditional": true,
+    "key": "end",
+    "label": "done, or give up",
+    "source": "advance",
+    "target": "__end__"
+   },
+   {
+    "conditional": true,
+    "key": null,
+    "label": "next stage, or repair",
+    "source": "advance",
+    "target": "work"
+   },
+   {
+    "conditional": false,
+    "key": null,
+    "label": "gate JSON",
+    "source": "gate",
+    "target": "review"
+   },
+   {
+    "conditional": false,
+    "key": null,
+    "label": "snapshot, approval",
+    "source": "review",
+    "target": "advance"
+   },
+   {
+    "conditional": false,
+    "key": null,
+    "label": "files written",
+    "source": "work",
+    "target": "gate"
+   }
+  ],
+  "nodes": [
+   {
+    "id": "__start__",
+    "label": "start",
+    "what": "A run begins at the interview."
+   },
+   {
+    "id": "work",
+    "label": "work",
+    "what": "The stage's role agents act: each writes only the files its role owns."
+   },
+   {
+    "id": "gate",
+    "label": "gate",
+    "what": "The flow's own checks run: lint, simulation, Vivado reports, the stage gates. No model decides."
+   },
+   {
+    "id": "review",
+    "label": "review",
+    "what": "A snapshot of the design is taken; a person may approve, edit or rewind. Always pauses before the board."
+   },
+   {
+    "id": "advance",
+    "label": "advance",
+    "what": "Code picks the next stage from the gate result: the next stage, or the stage that owns the failure."
+   },
+   {
+    "id": "__end__",
+    "label": "end",
+    "what": "The run stops: every stage passed, or a limit was reached."
+   }
+  ]
+ },
+ "inner": {
+  "builtin_tools": [
+   "ls",
+   "read_file",
+   "write_file",
+   "edit_file",
+   "delete",
+   "glob",
+   "grep"
+  ],
+  "edges": [
+   [
+    "PatchToolCallsMiddleware.before_agent",
+    "model",
+    false
+   ],
+   [
+    "_ParentNotifierMiddleware.after_agent",
+    "__end__",
+    false
+   ],
+   [
+    "__start__",
+    "PatchToolCallsMiddleware.before_agent",
+    false
+   ],
+   [
+    "model",
+    "_ParentNotifierMiddleware.after_agent",
+    true
+   ],
+   [
+    "model",
+    "model",
+    true
+   ],
+   [
+    "model",
+    "tools",
+    true
+   ],
+   [
+    "tools",
+    "model",
+    true
+   ]
+  ],
+  "nodes": [
+   "__start__",
+   "model",
+   "tools",
+   "_ParentNotifierMiddleware.after_agent",
+   "PatchToolCallsMiddleware.before_agent",
+   "__end__"
+  ],
+  "subagent_tool": false,
+  "todo_tool": false
+ },
+ "inner_words": {
+  "PatchToolCallsMiddleware.before_agent": "tidy unanswered tool calls",
+  "_ParentNotifierMiddleware.after_agent": "report back",
+  "__end__": "back to the controller",
+  "__start__": "the role's prompt and files",
+  "model": "model call",
+  "tools": "tool calls"
+ },
+ "replays": [
+  {
+   "claude_code": "2.1.318",
+   "date": "2026-11-07",
+   "harness": "claude_code",
+   "hidden": "6 of 6",
+   "id": "pass",
+   "model": "claude-sonnet-5-5",
+   "oracle": "claude_code (claude-haiku-5-5)",
+   "order_recorded": false,
+   "per_visit_tools": false,
+   "run": 5,
+   "source": "results/course/c14_int8_dot_requant/run_5.json",
+   "task": "c14_int8_dot_requant",
+   "title": "A run that passed",
+   "tool_totals": {
+    "build": 9,
+    "gates": 13,
+    "lint": 2,
+    "simulate": 1
+   },
+   "turns": 152,
+   "visits": [
+    {
+     "gate": {
+      "pass": false,
+      "text": "Not passed on this visit; the stage was entered 2 times in all."
+     },
+     "next": {
+      "kind": "repair",
+      "text": "visit the stage again",
+      "to": 0
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill"
+       ],
+       "role": "clarify",
+       "tools": {}
+      }
+     ],
+     "stage": 0,
+     "visit": 1,
+     "visits": 2
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "6 questions asked; 3 answered by the oracle, 3 defaulted; the register map was asked for and the final spec carries 11 registers."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 1
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill"
+       ],
+       "role": "clarify",
+       "tools": {}
+      }
+     ],
+     "stage": 0,
+     "visit": 2,
+     "visits": 2
+    },
+    {
+     "gate": {
+      "pass": false,
+      "text": "Not passed on this visit; the stage was entered 2 times in all."
+     },
+     "next": {
+      "kind": "repair",
+      "text": "visit the stage again",
+      "to": 1
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "board_constraints",
+        "check_constraints",
+        "gates"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 1,
+     "visit": 1,
+     "visits": 2
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "Architecture, clocking plan, resource budget on the xc7a100t."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 2
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "board_constraints",
+        "check_constraints",
+        "gates"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 1,
+     "visit": 2,
+     "visits": 2
+    },
+    {
+     "gate": {
+      "pass": false,
+      "text": "Not passed on this visit; the stage was entered 3 times in all."
+     },
+     "next": {
+      "kind": "repair",
+      "text": "visit the stage again",
+      "to": 2
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file"
+       ],
+       "role": "model",
+       "tools": {}
+      },
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "spec_items",
+        "formal"
+       ],
+       "role": "tests",
+       "tools": {}
+      },
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "lint",
+        "simulate",
+        "formal",
+        "gates"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 2,
+     "visit": 1,
+     "visits": 3
+    },
+    {
+     "gate": {
+      "pass": false,
+      "text": "Not passed on this visit; the stage was entered 3 times in all."
+     },
+     "next": {
+      "kind": "repair",
+      "text": "visit the stage again",
+      "to": 2
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file"
+       ],
+       "role": "model",
+       "tools": {}
+      },
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "spec_items",
+        "formal"
+       ],
+       "role": "tests",
+       "tools": {}
+      },
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "lint",
+        "simulate",
+        "formal",
+        "gates"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 2,
+     "visit": 2,
+     "visits": 3
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "RTL, constraints and the independent bench are written; the checks V0 to V3 run here. V3: pass; mutation score 95.0%: 19 killed of 20 evaluated, 0 survived."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 3
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file"
+       ],
+       "role": "model",
+       "tools": {}
+      },
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "spec_items",
+        "formal"
+       ],
+       "role": "tests",
+       "tools": {}
+      },
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "lint",
+        "simulate",
+        "formal",
+        "gates"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 2,
+     "visit": 3,
+     "visits": 3
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "Pin and clock constraints checked against the board's master XDC."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 4
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "board_constraints",
+        "check_constraints",
+        "build",
+        "gates",
+        "report"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 3,
+     "visit": 1,
+     "visits": 1
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "Synthesis gates: all pass by the end of the run."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 5
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "build",
+        "gates",
+        "report"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 4,
+     "visit": 1,
+     "visits": 1
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "Place and route; bitstream built."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 6
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "build",
+        "gates",
+        "report"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 5,
+     "visit": 1,
+     "visits": 1
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "Post-route setup slack +0.495 ns, hold slack +0.099 ns at 100 MHz."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 7
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "build",
+        "gates",
+        "report"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 6,
+     "visit": 1,
+     "visits": 1
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "Vectorless power estimate 0.118 W."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 8
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "build",
+        "gates",
+        "report"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 7,
+     "visit": 1,
+     "visits": 1
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "737 LUT, 753 FF, 12 DSP, 0 BRAM after place and route (test shell included)."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 9
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "build",
+        "gates",
+        "report"
+       ],
+       "role": "rtl",
+       "tools": {}
+      }
+     ],
+     "stage": 8,
+     "visit": 1,
+     "visits": 1
+    },
+    {
+     "gate": {
+      "pass": false,
+      "text": "Not passed on this visit; the stage was entered 2 times in all."
+     },
+     "next": {
+      "kind": "repair",
+      "text": "visit the stage again",
+      "to": 9
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "build",
+        "gates",
+        "report"
+       ],
+       "role": "rtl",
+       "tools": {}
+      },
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "gates"
+       ],
+       "role": "tests",
+       "tools": {}
+      }
+     ],
+     "stage": 9,
+     "visit": 1,
+     "visits": 2
+    },
+    {
+     "gate": {
+      "pass": null,
+      "text": "Stops here: hardware: awaiting approval before programming (no board in this run)."
+     },
+     "next": {
+      "kind": "end",
+      "text": "paused before the board, as no board was attached",
+      "to": null
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "build",
+        "gates",
+        "report"
+       ],
+       "role": "rtl",
+       "tools": {}
+      },
+      {
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "gates"
+       ],
+       "role": "tests",
+       "tools": {}
+      }
+     ],
+     "stage": 9,
+     "visit": 2,
+     "visits": 2
+    }
+   ],
+   "wall_h": 1.42
+  },
+  {
+   "date": "2026-11-03",
+   "harness": "deepagents",
+   "id": "giveup",
+   "model": "openai/gpt-6-luna",
+   "oracle": "openai/gpt-6-luna",
+   "order_recorded": true,
+   "per_visit_tools": true,
+   "result": "NULL: stage 2 not passed in 5 visits (visit cap); no build reached synthesis, stage 9 not reached",
+   "run": "20261103-104103-5298",
+   "source": "results/f2/agent_luna_05g_run1.json",
+   "task": "t1_dimmer_counter",
+   "title": "A run that gave up",
+   "turns": 289,
+   "usd": 0.331,
+   "visits": [
+    {
+     "gate": {
+      "pass": true,
+      "text": "Spec signed off: 10 questions asked, 6 answered by the oracle, 4 left at their defaults."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 1
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "allowed": 20,
+       "ended": "done",
+       "files": [
+        "spec.yaml"
+       ],
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill"
+       ],
+       "refused": {},
+       "repair": false,
+       "role": "clarify",
+       "tools": {
+        "write_file": 1
+       },
+       "turns": 5
+      }
+     ],
+     "stage": 0,
+     "visit": 1,
+     "visits": 1
+    },
+    {
+     "gate": {
+      "pass": true,
+      "text": "Stage gates pass."
+     },
+     "next": {
+      "kind": "next",
+      "text": "stage passed",
+      "to": 2
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "allowed": 30,
+       "ended": "done",
+       "files": [],
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "board_constraints",
+        "check_constraints",
+        "gates"
+       ],
+       "refused": {
+        "arguments": 2,
+        "path-jail": 1
+       },
+       "repair": false,
+       "role": "rtl",
+       "tools": {
+        "board_constraints": 2,
+        "check_constraints": 2,
+        "gates": 3,
+        "list_files": 7,
+        "load_skill": 5,
+        "read_file": 14,
+        "search_docs": 3
+       },
+       "turns": 21
+      }
+     ],
+     "stage": 1,
+     "visit": 1,
+     "visits": 1
+    },
+    {
+     "gate": {
+      "pass": false,
+      "text": "Stage gates failed; the next visit repairs the RTL writer's work."
+     },
+     "next": {
+      "kind": "repair",
+      "text": "repair",
+      "to": 2
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "allowed": 45,
+       "ended": "done",
+       "files": [
+        "model.py"
+       ],
+       "offered": [
+        "read_file",
+        "write_file"
+       ],
+       "refused": {},
+       "repair": false,
+       "role": "model",
+       "tools": {
+        "write_file": 1
+       },
+       "turns": 2
+      },
+      {
+       "allowed": 53,
+       "ended": "done",
+       "files": [
+        "tests/test_t1_dimmer_counter.py",
+        "tests/test_t1_dimmer_counter_rtl.py",
+        "verif/testplan.yaml"
+       ],
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "spec_items",
+        "formal"
+       ],
+       "refused": {
+        "arguments": 1
+       },
+       "repair": false,
+       "role": "tests",
+       "tools": {
+        "load_skill": 2,
+        "spec_items": 1,
+        "write_file": 3
+       },
+       "turns": 15
+      },
+      {
+       "allowed": 63,
+       "ended": "stage_budget",
+       "files": [],
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "lint",
+        "simulate",
+        "formal",
+        "gates"
+       ],
+       "refused": {
+        "build-yaml": 2,
+        "path-jail": 1
+       },
+       "repair": false,
+       "role": "rtl",
+       "tools": {
+        "gates": 5,
+        "lint": 8,
+        "list_files": 6,
+        "load_skill": 1,
+        "read_file": 17,
+        "simulate": 6
+       },
+       "turns": 63
+      }
+     ],
+     "stage": 2,
+     "visit": 1,
+     "visits": 5
+    },
+    {
+     "gate": {
+      "pass": false,
+      "text": "Stage gates failed; the next visit repairs the RTL writer's work."
+     },
+     "next": {
+      "kind": "repair",
+      "text": "repair",
+      "to": 2
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "allowed": 80,
+       "ended": "done",
+       "files": [],
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "lint",
+        "simulate",
+        "formal",
+        "gates"
+       ],
+       "refused": {},
+       "repair": true,
+       "role": "rtl",
+       "tools": {
+        "lint": 3,
+        "list_files": 2,
+        "load_skill": 1,
+        "read_file": 12,
+        "simulate": 2
+       },
+       "turns": 23
+      }
+     ],
+     "stage": 2,
+     "visit": 2,
+     "visits": 5
+    },
+    {
+     "gate": {
+      "pass": false,
+      "text": "Stage gates failed; the next visit repairs the test writer and RTL writer's work."
+     },
+     "next": {
+      "kind": "repair",
+      "text": "repair",
+      "to": 2
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "allowed": 80,
+       "ended": "stage_budget",
+       "files": [],
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "lint",
+        "simulate",
+        "formal",
+        "gates"
+       ],
+       "refused": {},
+       "repair": true,
+       "role": "rtl",
+       "tools": {
+        "gates": 1,
+        "lint": 1,
+        "list_files": 2,
+        "load_skill": 2,
+        "read_file": 20,
+        "simulate": 15
+       },
+       "turns": 80
+      }
+     ],
+     "stage": 2,
+     "visit": 3,
+     "visits": 5
+    },
+    {
+     "gate": {
+      "pass": false,
+      "text": "lint and the tests against the model failed; the RTL writer owns the fix."
+     },
+     "next": {
+      "kind": "repair",
+      "text": "repair",
+      "to": 2
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [
+      {
+       "allowed": 55,
+       "ended": "done",
+       "files": [
+        "tests/test_t1_dimmer_counter.py"
+       ],
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "spec_items",
+        "formal"
+       ],
+       "refused": {},
+       "repair": true,
+       "role": "tests",
+       "tools": {
+        "load_skill": 1,
+        "spec_items": 1,
+        "write_file": 1
+       },
+       "turns": 4
+      },
+      {
+       "allowed": 76,
+       "ended": "stage_budget",
+       "files": [],
+       "offered": [
+        "read_file",
+        "write_file",
+        "list_files",
+        "search_docs",
+        "load_skill",
+        "lint",
+        "simulate",
+        "formal",
+        "gates"
+       ],
+       "refused": {},
+       "repair": true,
+       "role": "rtl",
+       "tools": {
+        "lint": 1,
+        "load_skill": 1,
+        "read_file": 5,
+        "simulate": 11
+       },
+       "turns": 76
+      }
+     ],
+     "stage": 2,
+     "visit": 4,
+     "visits": 5
+    },
+    {
+     "gate": {
+      "pass": null,
+      "text": "No work: the stage had already used its visits."
+     },
+     "next": {
+      "kind": "end",
+      "text": "give up: stage 2 visited more than 4 times",
+      "to": null
+     },
+     "review": "snapshot taken; approved automatically (review off)",
+     "roles": [],
+     "stage": 2,
+     "visit": 5,
+     "visits": 5
+    }
+   ],
+   "wall_h": 0.79
+  }
+ ],
+ "roles": [
+  {
+   "backend": "an in-memory folder seeded with only the role's inputs; outputs copied in through the jail",
+   "id": "clarify",
+   "label": "Clarify",
+   "reads": [
+    "spec.md",
+    "spec.yaml",
+    "data/*"
+   ],
+   "what": "Turns the plain-English request into a structured spec, asking about what it leaves open.",
+   "writes": [
+    "spec.yaml"
+   ]
+  },
+  {
+   "backend": "an in-memory folder seeded with only the role's inputs; outputs copied in through the jail",
+   "id": "model",
+   "label": "Blind model",
+   "reads": [
+    "spec.yaml",
+    "model.py",
+    "data/*"
+   ],
+   "what": "Writes a short Python model of the design from the spec alone. Never sees the RTL.",
+   "writes": [
+    "model.py"
+   ]
+  },
+  {
+   "backend": "an in-memory folder seeded with only the role's inputs; outputs copied in through the jail",
+   "id": "tests",
+   "label": "Test writer",
+   "reads": [
+    "spec.yaml",
+    "model.py",
+    "data/*",
+    "tests/*",
+    "verif/*",
+    "probes.yaml",
+    "BRINGUP.md",
+    "hw_checks.py"
+   ],
+   "what": "Writes the tests and the test plan from the spec and the model. Never sees the RTL.",
+   "writes": [
+    "tests/*",
+    "verif/*",
+    "hw_checks.py"
+   ]
+  },
+  {
+   "backend": "the real design folder, every path checked by the role's jail",
+   "id": "rtl",
+   "label": "RTL writer",
+   "reads": [
+    "*"
+   ],
+   "what": "Writes the SystemVerilog and constraints, and repairs what the later stages find.",
+   "writes": [
+    "rtl/*",
+    "build.yaml",
+    "design.xdc",
+    "probes.yaml",
+    "BRINGUP.md",
+    "ARCHITECTURE.md",
+    "architecture.yaml",
+    "hw_checks.py",
+    "lint/*",
+    "BUILD_NOTE.md"
+   ]
+  }
+ ],
+ "run_limits": {
+  "seconds": 21600,
+  "turns": 300,
+  "usd": 3.0,
+  "visits_per_stage": 4
+ },
+ "runs": [
+  {
+   "files": [
+    "c10_dds_sine run 1",
+    "c10_dds_sine run 2",
+    "c11_nco_mixer run 1",
+    "c11_nco_mixer run 2",
+    "c12_adsr_envelope run 1",
+    "c12_nexys_pwm_audio run 1",
+    "c12_nexys_pwm_audio run 2",
+    "c14_int8_dot_requant run 1",
+    "c14_int8_dot_requant run 2",
+    "c14_int8_dot_requant run 3",
+    "c14_int8_dot_requant run 4",
+    "c14_int8_dot_requant run 5",
+    "c14_nexys_tiny_cnn run 1",
+    "c14_nexys_tiny_cnn run 2",
+    "c14_systolic_matmul run 1",
+    "c15_pq_search run 1",
+    "c15_softmax_unit run 1",
+    "c15_softmax_unit run 2",
+    "c15_softmax_unit run 3",
+    "c16_montgomery_mult run 1",
+    "c9_median3x3 run 1"
+   ],
+   "harness": "claude_code",
+   "models": "claude-sonnet-5-5",
+   "records": 21,
+   "set": "Development tasks"
+  },
+  {
+   "files": [
+    "agent_cc_haiku_05c2_run1_crash",
+    "agent_cc_haiku_05c2_run2",
+    "agent_cc_haiku_05c2_run3",
+    "agent_cc_haiku_t1",
+    "agent_cc_haiku_t1_mcpcheck",
+    "agent_cc_haiku_t1_run2"
+   ],
+   "harness": "claude_code",
+   "models": "claude-haiku-5-5",
+   "records": 6,
+   "set": "T1 smoke runs"
+  },
+  {
+   "files": [
+    "agent_cc_opus_05c2_run1",
+    "agent_cc_opus_05c2_run2_interrupted",
+    "agent_cc_opus_t1",
+    "agent_cc_opus_t1_05j_v2",
+    "agent_cc_opus_t1_05k_v3",
+    "agent_cc_opus_t1_remeasure1",
+    "agent_cc_opus_t1_run2"
+   ],
+   "harness": "claude_code",
+   "models": "claude-opus-5-5",
+   "records": 7,
+   "set": "T1 smoke runs"
+  },
+  {
+   "files": [
+    "agent_cvdp_profile_05f_run1",
+    "agent_cvdp_profile_05f_run2",
+    "agent_cvdp_profile_05g_run1"
+   ],
+   "harness": "claude_code",
+   "models": "claude-opus-5-5, claude-sonnet-5-5",
+   "records": 3,
+   "set": "T1 smoke runs"
+  },
+  {
+   "files": [
+    "agent_cc_sonnet_t1_05h",
+    "agent_cc_sonnet_t1_05i",
+    "agent_cc_sonnet_t1_05j_v2",
+    "agent_cc_sonnet_t1_05k_v3",
+    "agent_cc_sonnet_t1_05l_v3_e811",
+    "agent_cc_sonnet_t1_05m_v3_dd0e",
+    "agent_cc_sonnet_t1_05n_v3_390c",
+    "agent_cc_sonnet_t1_05n_v3_f10f",
+    "agent_cc_sonnet_t1_remeasure1"
+   ],
+   "harness": "claude_code",
+   "models": "claude-sonnet-5-5",
+   "records": 9,
+   "set": "T1 smoke runs"
+  },
+  {
+   "files": [
+    "agent_luna_05c2_run1",
+    "agent_luna_05c2_run2",
+    "agent_luna_05c2_run3",
+    "agent_luna_05c2_run4",
+    "agent_luna_05c2_run5",
+    "agent_luna_05c2_run6",
+    "agent_luna_05c2_run7",
+    "agent_luna_05d",
+    "agent_luna_05g_run1",
+    "agent_luna_d59dbf4_run1",
+    "agent_luna_run1",
+    "agent_luna_run2",
+    "agent_luna_run3",
+    "agent_luna_run4",
+    "agent_luna_t1_v2_parity"
+   ],
+   "harness": "deepagents",
+   "models": "openai/gpt-6-luna",
+   "records": 15,
+   "set": "T1 smoke runs"
+  }
+ ],
+ "stages": [
+  {
+   "gates": [
+    {
+     "id": "spec_signed",
+     "words": "spec signed off, no open questions"
+    }
+   ],
+   "label": "Interview",
+   "limits": {
+    "seconds": 900,
+    "turns": 20,
+    "usd": 0.2
+   },
+   "loops_to": [],
+   "n": 0,
+   "name": "clarify",
+   "roles": [
+    "clarify"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill"
+   ],
+   "tools": {
+    "clarify": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill"
+    ]
+   },
+   "ultrafast": false,
+   "visits": 4
+  },
+  {
+   "gates": [
+    {
+     "id": "arch_note",
+     "words": "architecture note written"
+    },
+    {
+     "id": "arch_yaml",
+     "words": "architecture file valid"
+    },
+    {
+     "id": "inventory",
+     "words": "pins and clocks match the board"
+    }
+   ],
+   "label": "Plan",
+   "limits": {
+    "seconds": 1800,
+    "turns": 30,
+    "usd": 0.4
+   },
+   "loops_to": [
+    0
+   ],
+   "n": 1,
+   "name": "board-and-device-planning",
+   "roles": [
+    "rtl"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill",
+    "board_constraints",
+    "check_constraints",
+    "gates"
+   ],
+   "tools": {
+    "rtl": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "board_constraints",
+     "check_constraints",
+     "gates"
+    ]
+   },
+   "ultrafast": true,
+   "visits": 4
+  },
+  {
+   "gates": [
+    {
+     "id": "arch_approved",
+     "words": "architecture approved"
+    },
+    {
+     "id": "lint",
+     "words": "lint clean"
+    },
+    {
+     "id": "model_contract",
+     "words": "golden model keeps its contract"
+    },
+    {
+     "id": "simulate",
+     "words": "tests pass against the model"
+    },
+    {
+     "id": "standards_rtl",
+     "words": "design standards on the RTL"
+    },
+    {
+     "id": "verif_v3",
+     "words": "verification V0 to V3"
+    },
+    {
+     "id": "stage_rtl",
+     "words": "RTL methodology checks"
+    }
+   ],
+   "label": "RTL and tests",
+   "limits": {
+    "seconds": 3600,
+    "turns": 80,
+    "usd": 0.8
+   },
+   "loops_to": [
+    0,
+    1
+   ],
+   "n": 2,
+   "name": "rtl-design-creation",
+   "roles": [
+    "model",
+    "tests",
+    "rtl"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill",
+    "lint",
+    "simulate",
+    "formal",
+    "gates"
+   ],
+   "tools": {
+    "model": [
+     "read_file",
+     "write_file"
+    ],
+    "rtl": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "lint",
+     "simulate",
+     "formal",
+     "gates"
+    ],
+    "tests": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "spec_items",
+     "formal"
+    ]
+   },
+   "ultrafast": true,
+   "visits": 6
+  },
+  {
+   "gates": [
+    {
+     "id": "constraints_post_synth",
+     "words": "every timing endpoint constrained"
+    }
+   ],
+   "label": "Constraints",
+   "limits": {
+    "seconds": 1800,
+    "turns": 30,
+    "usd": 0.4
+   },
+   "loops_to": [
+    2
+   ],
+   "n": 3,
+   "name": "constraints",
+   "roles": [
+    "rtl"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill",
+    "board_constraints",
+    "check_constraints",
+    "build",
+    "gates",
+    "report"
+   ],
+   "tools": {
+    "rtl": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "board_constraints",
+     "check_constraints",
+     "build",
+     "gates",
+     "report"
+    ]
+   },
+   "ultrafast": true,
+   "visits": 4
+  },
+  {
+   "gates": [
+    {
+     "id": "stage_post_synth",
+     "words": "post-synthesis gates"
+    },
+    {
+     "id": "standards_post_synth",
+     "words": "design standards on the netlist"
+    }
+   ],
+   "label": "Synthesis",
+   "limits": {
+    "seconds": 1800,
+    "turns": 30,
+    "usd": 0.4
+   },
+   "loops_to": [
+    1,
+    2,
+    3
+   ],
+   "n": 4,
+   "name": "synthesis",
+   "roles": [
+    "rtl"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill",
+    "build",
+    "gates",
+    "report"
+   ],
+   "tools": {
+    "rtl": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "build",
+     "gates",
+     "report"
+    ]
+   },
+   "ultrafast": true,
+   "visits": 4
+  },
+  {
+   "gates": [
+    {
+     "id": "stage_post_place",
+     "words": "post-place gates"
+    },
+    {
+     "id": "stage_post_route",
+     "words": "post-route gates"
+    }
+   ],
+   "label": "Implementation",
+   "limits": {
+    "seconds": 1800,
+    "turns": 30,
+    "usd": 0.4
+   },
+   "loops_to": [
+    6
+   ],
+   "n": 5,
+   "name": "implementation",
+   "roles": [
+    "rtl"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill",
+    "build",
+    "gates",
+    "report"
+   ],
+   "tools": {
+    "rtl": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "build",
+     "gates",
+     "report"
+    ]
+   },
+   "ultrafast": true,
+   "visits": 4
+  },
+  {
+   "gates": [
+    {
+     "id": "timing",
+     "words": "setup and hold met"
+    }
+   ],
+   "label": "Timing closure",
+   "limits": {
+    "seconds": 1800,
+    "turns": 30,
+    "usd": 0.4
+   },
+   "loops_to": [
+    3,
+    2,
+    5
+   ],
+   "n": 6,
+   "name": "timing-closure",
+   "roles": [
+    "rtl"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill",
+    "build",
+    "gates",
+    "report"
+   ],
+   "tools": {
+    "rtl": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "build",
+     "gates",
+     "report"
+    ]
+   },
+   "ultrafast": true,
+   "visits": 4
+  },
+  {
+   "gates": [
+    {
+     "id": "power",
+     "words": "power and junction temperature"
+    }
+   ],
+   "label": "Power closure",
+   "limits": {
+    "seconds": 1800,
+    "turns": 30,
+    "usd": 0.4
+   },
+   "loops_to": [
+    2,
+    0
+   ],
+   "n": 7,
+   "name": "power-closure",
+   "roles": [
+    "rtl"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill",
+    "build",
+    "gates",
+    "report"
+   ],
+   "tools": {
+    "rtl": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "build",
+     "gates",
+     "report"
+    ]
+   },
+   "ultrafast": true,
+   "visits": 4
+  },
+  {
+   "gates": [
+    {
+     "id": "drc",
+     "words": "DRC, CDC and methodology clean"
+    }
+   ],
+   "label": "Design-rule closure",
+   "limits": {
+    "seconds": 1800,
+    "turns": 30,
+    "usd": 0.4
+   },
+   "loops_to": [
+    3,
+    2
+   ],
+   "n": 8,
+   "name": "drc-closure",
+   "roles": [
+    "rtl"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill",
+    "build",
+    "gates",
+    "report"
+   ],
+   "tools": {
+    "rtl": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "build",
+     "gates",
+     "report"
+    ]
+   },
+   "ultrafast": true,
+   "visits": 4
+  },
+  {
+   "gates": [
+    {
+     "id": "bitstream_base",
+     "words": "bitstream built"
+    },
+    {
+     "id": "bitstream_ila",
+     "words": "debug bitstream built"
+    },
+    {
+     "id": "bringup_ready",
+     "words": "bring-up files ready"
+    },
+    {
+     "id": "bringup",
+     "words": "board tests pass"
+    },
+    {
+     "id": "signoff",
+     "words": "every requirement has evidence"
+    }
+   ],
+   "label": "Board and debug",
+   "limits": {
+    "seconds": 3600,
+    "turns": 45,
+    "usd": 0.4
+   },
+   "loops_to": [
+    6,
+    2,
+    0
+   ],
+   "n": 9,
+   "name": "configuration-and-debug",
+   "roles": [
+    "rtl",
+    "tests"
+   ],
+   "stage_tools": [
+    "read_file",
+    "write_file",
+    "list_files",
+    "search_docs",
+    "load_skill",
+    "build",
+    "gates",
+    "report",
+    "program",
+    "bringup"
+   ],
+   "tools": {
+    "rtl": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "build",
+     "gates",
+     "report"
+    ],
+    "tests": [
+     "read_file",
+     "write_file",
+     "list_files",
+     "search_docs",
+     "load_skill",
+     "gates"
+    ]
+   },
+   "ultrafast": true,
+   "visits": 4
+  }
+ ],
+ "tools": [
+  {
+   "group": "Files",
+   "model_may_call": true,
+   "name": "read_file",
+   "what": "read a file in the design"
+  },
+  {
+   "group": "Files",
+   "model_may_call": false,
+   "name": "write_file",
+   "what": "write a file the role owns"
+  },
+  {
+   "group": "Files",
+   "model_may_call": true,
+   "name": "list_files",
+   "what": "list the design"
+  },
+  {
+   "group": "Knowledge",
+   "model_may_call": true,
+   "name": "search_docs",
+   "what": "search the frozen documents"
+  },
+  {
+   "group": "Knowledge",
+   "model_may_call": true,
+   "name": "load_skill",
+   "what": "load know-how from the bank"
+  },
+  {
+   "group": "Verification",
+   "model_may_call": true,
+   "name": "lint",
+   "what": "Verilator lint"
+  },
+  {
+   "group": "Verification",
+   "model_may_call": true,
+   "name": "simulate",
+   "what": "cocotb tests on a simulator"
+  },
+  {
+   "group": "Verification",
+   "model_may_call": true,
+   "name": "formal",
+   "what": "SymbiYosys proofs"
+  },
+  {
+   "group": "Verification",
+   "model_may_call": true,
+   "name": "spec_items",
+   "what": "the spec items to trace"
+  },
+  {
+   "group": "Vivado",
+   "model_may_call": true,
+   "name": "board_constraints",
+   "what": "pins from the board file"
+  },
+  {
+   "group": "Vivado",
+   "model_may_call": true,
+   "name": "check_constraints",
+   "what": "check the XDC"
+  },
+  {
+   "group": "Vivado",
+   "model_may_call": true,
+   "name": "build",
+   "what": "run Vivado to a stage"
+  },
+  {
+   "group": "Vivado",
+   "model_may_call": true,
+   "name": "gates",
+   "what": "parse reports into gates"
+  },
+  {
+   "group": "Vivado",
+   "model_may_call": true,
+   "name": "report",
+   "what": "read a Vivado report"
+  },
+  {
+   "group": "Board",
+   "model_may_call": false,
+   "name": "program",
+   "what": "program the board (harness only)"
+  },
+  {
+   "group": "Board",
+   "model_may_call": false,
+   "name": "bringup",
+   "what": "board tests (harness only)"
+  }
+ ],
+ "versions": {
+  "deepagents": "0.7.32",
+  "langchain-openai": "1.7.3",
+  "langgraph": "1.2.19",
+  "langgraph-checkpoint-sqlite": "3.1.3",
+  "mcp": "2.3.0"
+ }
+}

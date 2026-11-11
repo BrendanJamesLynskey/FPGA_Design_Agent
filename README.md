@@ -1,7 +1,7 @@
 # FPGA_Design_Agent
 
 An open-source agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGAs, with every result measured.
-Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)).
+Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)); [the agent](https://fpga-design-agent.vercel.app/agent) shows its architecture and LangGraph.
 
 **What it does today.** Given a short request, the agent interviews the user (or, in an evaluation, a stand-in that
 answers only from a hidden full spec), plans the design, writes SystemVerilog and its tests, and drives Vivado 2025.2
@@ -15,7 +15,9 @@ through Claude Code.
 agent's own checks passed and the hidden tests failed, each time because it read the spec differently from the test
 author; the fixes made since are not yet measured ([results](https://fpga-design-agent.vercel.app/results),
 from `results/course/*/run_*.json`). A hand-written reference design passes all its tests on the board
-([F0B](#bring-up-on-hardware-f0b)); no agent-built design has been on a board yet.
+([F0B](#bring-up-on-hardware-f0b)). One agent-built design (Deep Agents smoke run luna 7 on T1) has been programmed onto the
+board: UART tests 3 of 3 passed and the ILA captures failed ([record](results/f2/agent_luna_05c2_run7_bringup.json)), so no
+design the agent built has yet passed every test on the board.
 
 **What is not yet shown.** There is no held-out score. Development tasks are the ones used to find and fix faults,
 so their results are a record of the work, not a measure of how the agent does on new tasks. The first held-out
@@ -265,6 +267,8 @@ site/        the showcase site (static, Vercel): export.py (results -> data), bu
              leak_guard.py, src/, data/, public/, tests/; the preview link is in the pull request;
              problem catalogue: catalogue.yaml + catalogue_parts/ (domains, descriptions), catalogue_pages.py,
              traces/ (one adapter per task that runs its hidden/model.py for the page animation)
+             agent page ("The agent"): agent_arch.py (the LangGraph and role agents read from agent/graph -> data/agent_graph.json),
+             agent_page.py (its SVG figures); a site test fails if the drawn graph differs from the compiled one
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
@@ -302,6 +306,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 19 | External design tools driving AMD IP: xsim file-I/O harness, FIR and CIC adapters (spec to .coe to IP to bit-exact check), PDM-microphone signal chain with SINAD/ENOB per node ([docs/ipgen.md](docs/ipgen.md), [results/19_ipgen](results/19_ipgen)) | merged (#92) |
 | 20 | Timing exceptions proved, part A: 15 one-fault Vivado fixtures (multicycle, false path, max delay, clock groups, the slow-FSM clock-enable pattern), an exception gate after synthesis and routing (`report_exceptions -ignored/-coverage`, XDC messages, TIMING-24/29/47, XDCH-1, and our own clock-enable check because Vivado raised no TIMING-46 on tied CE), FDA-CON-5/-10, and a dev drill with a constraint grader ([flow/exceptions_check.py](flow/exceptions_check.py), [flow/tests/fixtures/timing_exceptions](flow/tests/fixtures/timing_exceptions), [results/20_timing_exceptions](results/20_timing_exceptions/exceptions_table.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
 | 36 | Skill routing and retrieval behind a flag: router node with a names-and-descriptions shortlist, `skill_index` / `skill_excerpt` / `load_skill(name=)`, hybrid BM25 plus embeddings index (in process, or the container in [agent/skill_service](agent/skill_service)), cited notes instead of bodies in the state; recall, context and a small end-to-end run on dev tasks; golden requests regenerated ([docs/skill_routing.md](docs/skill_routing.md), [results/36_skill_routing](results/36_skill_routing/retrieval.md)) | PR open |
+| 20B | Timing constraints proved, part B: I/O delays, virtual clocks and clock uncertainty measured on one-fault Vivado tops (system- and source-synchronous, DDR, forwarded clock, virtual clocks, MMCM jitter, corners), an I/O gate after synthesis and routing (invented delays on slow ports, data-sheet values, -min/-max, reference clock, IOB), an implementation-only timing margin (`timing_margin_ns`) kept out of sign-off, FDA-CON-11/-12/-13, and an ADC drill with an I/O grader ([flow/io_check.py](flow/io_check.py), [flow/tests/fixtures/io_timing](flow/tests/fixtures/io_timing), [results/20_timing_exceptions/io_table.md](results/20_timing_exceptions/io_table.md), [uncertainty](results/20_timing_exceptions/uncertainty.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
 | F2 | Agent v1: interview, plan, RTL, tests and the full Vivado flow (05a-05g above); 21 development runs on 11 course-tier tasks ([results/course](results/course), [site results](https://fpga-design-agent.vercel.app/results)) | built; development runs recorded |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |
 | F3 | Scored runs | `eval-1` stopped 2026-11-09 before analysis, no score ([pre-registration](docs/eval/eval1_preregistration.md)); baseline evaluation on a larger benchmark next |

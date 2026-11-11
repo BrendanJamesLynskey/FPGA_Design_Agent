@@ -1,0 +1,8 @@
+# Functional mutants for d20_adc_capture (benchmark/tools/check_task.py conventions). The constraint faults (invented
+# delays, a min/max swap, the margin in design.xdc, no input jitter) are graded by ../lib/grade_io.py, see ../README.md.
+mutants:
+  - {name: min_wrong_sense, file: adc_capture.sv, find: "if (adc_q < mn) mn <= adc_q;", replace: "if (adc_q > mn) mn <= adc_q;", why: "MIN keeps the largest sample"}
+  - {name: clear_keeps_max, file: adc_capture.sv, find: "mn <= 8'hFF; mx <= '0;\n            end else begin", replace: "mn <= 8'hFF;\n            end else begin", why: "CLEAR does not reset MAX"}
+  - {name: nibbles_swapped, file: d20_adc_capture_top.sv, find: ".adc_d({JA10, JA9, JA8, JA7, JA4, JA3, JA2, JA1})", replace: ".adc_d({JA4, JA3, JA2, JA1, JA10, JA9, JA8, JA7})", why: "D[3:0] and D[7:4] swapped"}
+  - {name: leds_high_byte, file: adc_capture.sv, find: "assign led = {8'd0, last};", replace: "assign led = {last, 8'd0};", why: "LAST on LED[15:8]"}
+  - {name: reset_min_zero, file: adc_capture.sv, find: "last <= '0; mn <= 8'hFF; mx <= '0;", replace: "last <= '0; mn <= 8'h00; mx <= '0;", why: "reset leaves MIN at 0, below every sample"}

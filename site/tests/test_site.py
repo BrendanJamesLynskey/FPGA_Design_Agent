@@ -6,6 +6,7 @@ from pathlib import Path
 
 SITE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SITE))
+sys.path.insert(0, str(SITE.parent))
 import build  # noqa: E402
 
 
@@ -278,3 +279,80 @@ def test_family_diffs_match_the_bank_matrix(tmp_path):
     r = subprocess.run([sys.executable, str(kb / "tools" / "family_matrix.py"), "--site-json", str(out)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert json.loads(out.read_text()) == json.loads((SITE / "data" / "family_diffs.json").read_text())
+
+
+# ---- brief 43: the agent page (graph drawn from the code) ---------------------------------------------------------------
+
+def _agent():
+    return json.loads((SITE / "data" / "agent_graph.json").read_text())
+
+
+def test_agent_graph_equals_the_code():
+    """The graph in agent_graph.json is the graph the code compiles, and every node and edge has its words."""
+    import agent_arch
+    nodes, edges = agent_arch.graph_from_code()
+    A = _agent()
+    assert [n["id"] for n in A["graph"]["nodes"]] == nodes
+    assert sorted((e["source"], e["target"], e["conditional"], e["key"]) for e in A["graph"]["edges"]) == edges
+    assert set(agent_arch.NODE_WORDS) == set(nodes)
+    assert set(agent_arch.EDGE_WORDS) == {(s, t) for s, t, _, _ in edges}
+    inner = agent_arch.inner_from_code()
+    assert inner == {k: (v if k != "edges" else [tuple(x) for x in v]) for k, v in A["inner"].items()}
+
+
+def test_drawn_graph_equals_the_data():
+    """The LangGraph figure on agent.html (both layouts) has exactly the data's nodes and edges."""
+    A = _agent()
+    page = (SITE / "public" / "agent.html").read_text()
+    figs = re.findall(r'<svg class="ag lg".*?</svg>', page, re.S)
+    assert len(figs) == 2
+    want_e = {f'{e["source"]}~{e["target"]}' for e in A["graph"]["edges"]}
+    want_n = {n["id"] for n in A["graph"]["nodes"]}
+    for f in figs:
+        assert set(re.findall(r'data-e="([^"]+)"', f)) == want_e
+        assert set(re.findall(r'data-n="([^"]+)"', f)) == want_n
+    import agent_page
+    for lay in ("wide", "narrow"):
+        assert set(agent_page.GPOS[lay]) == want_n
+
+
+def test_every_gate_and_stage_has_words():
+    import agent_arch
+    from agent.graph.stages import MACHINE
+    assert {g for st in MACHINE for g in st.gates} <= set(agent_arch.GATE_WORDS)
+    assert len(agent_arch.STAGE_WORDS) == len(MACHINE)
+
+
+def test_role_stages_match_the_recorded_traces():
+    """Every (stage, role) a recorded run's turn trace shows is one ROLE_STAGES says node_work runs."""
+    import agent_arch
+    from agent.graph.stages import MACHINE
+    n_of = {st.name: st.n for st in MACHINE}
+    seen = 0
+    for p in (SITE.parent / "results" / "f2").glob("agent_*.json"):
+        r = json.loads(p.read_text())
+        for t in r.get("turn_trace", []) if isinstance(r, dict) else []:
+            n = n_of[t["stage"]]
+            assert t["role"] in agent_arch.ROLE_STAGES.get(n, ["rtl"]), (p.name, t["stage"], t["role"])
+            seen += 1
+    assert seen
+
+
+def test_replays_follow_their_records():
+    A = _agent()
+    pas, giv = A["replays"]
+    rec = json.loads((SITE.parent / giv["source"]).read_text())
+    assert [v["stage"] for v in giv["visits"]] == rec["stages_visited"]
+    calls = sum(sum(r["tools"].values()) for v in giv["visits"] for r in v["roles"])
+    assert calls == sum(sum(t["tools"].values()) for t in rec["turn_trace"])
+    assert giv["visits"][-1]["next"]["kind"] == "end" and pas["visits"][-1]["next"]["kind"] == "end"
+    rp = json.loads((SITE / "data" / "replay.json").read_text())
+    assert [(v["stage"], v["visit"]) for v in pas["visits"]] == [(s["stage_no"], s["visit"]) for s in rp["steps"]]
+    assert all(a["status"] == "not yet measured" for a in A["arms"])
+
+
+def test_agent_page_is_second_and_linked():
+    names = [p[0] for p in build.PAGES]
+    assert names[1] == "agent.html"
+    for f in ("index.html", "how.html"):
+        assert 'href="agent.html"' in re.sub(r"(?s)<header.*?</header>", "", (SITE / "public" / f).read_text()), f

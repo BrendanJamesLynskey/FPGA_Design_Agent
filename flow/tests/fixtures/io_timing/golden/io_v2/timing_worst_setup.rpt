@@ -1,0 +1,71 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Tue Nov 10 22:57:04 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -delay_type max -max_paths 1 -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b20b/io_out/mmcm/io_v2/timing_worst_setup.rpt
+| Design       : io_mmcm
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             1.889ns  (required time - arrival time)
+  Source:                 din[3]
+                            (input port clocked by vclk125  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Destination:            dq_reg[3]/D
+                            (rising edge-triggered cell FDRE clocked by c125  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Path Group:             c125
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            8.000ns  (c125 rise@8.000ns - vclk125 rise@0.000ns)
+  Data Path Delay:        1.487ns  (logic 1.487ns (100.000%)  route 0.000ns (0.000%))
+  Logic Levels:           1  (IBUF=1)
+  Input Delay:            3.000ns
+  Clock Path Skew:        -1.447ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    -1.447ns = ( 6.553 - 8.000 ) 
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.165ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.050ns
+    Discrete Jitter          (DJ):    0.124ns
+    Phase Error              (PE):    0.099ns
+  Clock Domain Crossing:  Inter clock paths are considered valid unless explicitly excluded by timing constraints such as set_clock_groups or set_false_path.
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock vclk125 rise edge)    0.000     0.000 r  
+                         ideal clock network latency
+                                                      0.000     0.000    
+                         input delay                  3.000     3.000    
+    G6                                                0.000     3.000 r  din[3] (IN)
+                         net (fo=0)                   0.000     3.000    din[3]
+    G6                   IBUF (Prop_ibuf_I_O)         1.487     4.487 r  din_IBUF[3]_inst/O
+                         net (fo=1, routed)           0.000     4.487    din_IBUF[3]
+    ILOGIC_X1Y112        FDRE                                         r  dq_reg[3]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c125 rise edge)       8.000     8.000 r  
+    E3                                                0.000     8.000 r  CLK100MHZ (IN)
+                         net (fo=0)                   0.000     8.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         1.411     9.411 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.162    10.573    CLK100MHZ_IBUF
+    MMCME2_ADV_X1Y2      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                     -7.324     3.249 r  mmcm/CLKOUT0
+                         net (fo=1, routed)           1.639     4.888    c125
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.091     4.979 r  b/O
+                         net (fo=9, routed)           1.573     6.553    clk125
+    ILOGIC_X1Y112        FDRE                                         r  dq_reg[3]/C
+                         clock pessimism              0.000     6.553    
+                         clock uncertainty           -0.165     6.387    
+    ILOGIC_X1Y112        FDRE (Setup_fdre_C_D)       -0.011     6.376    dq_reg[3]
+  -------------------------------------------------------------------
+                         required time                          6.376    
+                         arrival time                          -4.487    
+  -------------------------------------------------------------------
+                         slack                                  1.889    
+
+
+
+

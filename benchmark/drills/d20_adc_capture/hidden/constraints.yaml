@@ -1,0 +1,14 @@
+# What lib/grade_io.py requires of d20_adc_capture (brief 20 part B drill).
+board: nexys_a7_100t
+board_clock_port: CLK100MHZ
+io_interfaces:
+  - name: adc
+    kind: system_synchronous
+    direction: in
+    ports: [JA1, JA2, JA3, JA4, JA7, JA8, JA9, JA10, "JA[*]"]   # scalar (benchmark convention) or the bus JA[7:0] (pins checked by FDA-CON-3)
+    clock: <board clock>          # the clock created on CLK100MHZ, whatever its name
+    clock_period_ns: 10.0
+    iob: true
+    data_sheet: {tco_min_ns: 1.0, tco_max_ns: 5.0, trace_ns: 0.5}
+input_jitter_ns: 0.05             # set_input_jitter on the board clock (peak-to-peak period jitter)
+timing_margin_ns: 0.3             # build.yaml timing_margin_ns (the flow's implementation-only margin), not in design.xdc
