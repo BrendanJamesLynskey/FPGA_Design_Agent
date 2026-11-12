@@ -29,6 +29,11 @@ are asynchronous or slow. Fails on:
                       synchroniser: no fixed phase, so the delay means nothing (V6)
     IO-NO-PATH        a port of a synchronous interface with no setup or no hold path in Vivado's analysis
     IO-IOB            an interface register that should be in the IOB (``iob: true``) and is not
+    IO-DDR-REQUIREMENT a DDR interface whose setup or hold requirement in Vivado's analysis is not the intended edge
+                      pairing's (a full-period setup requirement: the wrong edges are paired), or that declares nothing
+                      to check it against
+    IO-DDR-UNDECLARED a DDR port (a DDR primitive next to the pin, or delays on both clock edges) that is not in a
+                      declared DDR interface with data-sheet values: the pairing check would otherwise be skipped
     IO-VCLK-UNRELATED a virtual clock whose period is neither equal to nor an integer ratio of a design clock, with no
                       comment above its create_clock saying why
     IO-DUMP           flow/io_paths.tcl could not run, or its dump is truncated
@@ -173,7 +178,8 @@ def parse_io_dump(text: str) -> dict[str, Any]:
             out["clocks"][f[1]] = {"period": num(f[2]), "waveform": f[3], "virtual": f[4] == "1",
                                    "generated": f[5] == "1", "source": f[6], "input_jitter": num(f[7]) if len(f) > 7 else None}
         elif f[0] == "PORT" and len(f) >= 6:
-            out["ports"][f[1]] = {"dir": f[2], "iob": f[3], "register": f[4], "sync": f[5] == "1", "paths": {}}
+            out["ports"][f[1]] = {"dir": f[2], "iob": f[3], "register": f[4], "sync": f[5] == "1",
+                                  "prim": f[6] if len(f) > 6 else "", "paths": {}}
         elif f[0] == "IO" and len(f) >= 11 and f[1] in out["ports"]:
             out["ports"][f[1]]["paths"][f[3]] = {"slack": num(f[4]), "requirement": num(f[5]), "io_delay": num(f[6]),
                                                  "start_clock": f[7], "end_clock": f[8], "corner": f[9],
@@ -247,6 +253,9 @@ def load_interfaces(*yaml_files: Path) -> tuple[list[dict[str, Any]], list[str],
     return ifs, async_ports, errs
 
 
+_DDR_PRIM = re.compile(r"^(IDDR|ODDR|IDDR_2CLK|IDDRE1|ODDRE1|ISERDESE[1-3]|OSERDESE[1-3])$")
+
+
 def expected_delays(i: dict[str, Any]) -> dict[str, float] | None:
     """The -max and -min the interface's data sheet gives (None when it gives no numbers):
     input, SDR: max = tCO_max + trace_max, min = tCO_min + trace_min; output: max = tSU + trace_max, min = -tH + trace_min;
@@ -281,7 +290,7 @@ def ddr_requirements(i: dict[str, Any]) -> dict[str, float] | None:
     paired as intended (None when the interface declares nothing to check):
     centre-aligned input (data_sheet dv_before/dv_after): each edge's data is captured by the next opposite edge, setup
       requirement T/2, and must hold past the same edge it was launched around, hold requirement 0;
-    edge-aligned output (data_sheet skew_before/skew_after, the clock forwarded in phase): the same, T/2 and 0;
+    edge-aligned input or output (data_sheet skew_before/skew_after, the clock in phase): the same, T/2 and 0;
     output with a forwarded clock forwarded_phase_deg later than the data clock: the same-edge forwarded clock captures,
       setup requirement T * phase / 360, hold requirement that minus T/2.
     A full-period setup requirement means the exceptions keep the wrong edge pairs (the flow's B3 finding)."""
@@ -290,6 +299,8 @@ def ddr_requirements(i: dict[str, Any]) -> dict[str, float] | None:
     t = float(i["clock_period_ns"])
     ds = i.get("data_sheet") or {}
     if i.get("direction") != "out" and "dv_before_ns" in ds:
+        return {"max": t / 2, "min": 0.0}
+    if i.get("direction") != "out" and "skew_before_ns" in ds:       # edge-aligned input: the same pairing
         return {"max": t / 2, "min": 0.0}
     if i.get("direction") == "out" and "skew_after_ns" in ds:       # edge-aligned output: the opposite edge sets up,
         return {"max": t / 2, "min": 0.0}                           # the same edge holds
@@ -369,6 +380,25 @@ def evaluate(build_dir: Path | None, stage: str = "route", xdc_files: list[Path]
     for i in interfaces:
         for n in _iface_ports(i, port_names or [p for x in xdc["delays"] for p in ports_of(x)]):
             iface_of[n] = i
+
+    # IO-DDR-UNDECLARED: every DDR data port must belong to a declared DDR interface with data-sheet values, so the
+    # edge-pairing check (IO-DDR-REQUIREMENT) cannot be skipped by leaving the declaration out. A DDR port is one
+    # whose register next to the pin is a DDR primitive (Vivado's dump), or that has delays on both clock edges; a
+    # forwarded clock's own pin (a clock defined on the port) is not data.
+    edges: dict[str, set[bool]] = {}
+    for x in xdc["delays"]:
+        for n in ports_of(x):
+            edges.setdefault(n, set()).add(bool(x["fall"]))
+    ddr_ports = {n for n, e in edges.items() if e == {True, False}}
+    if io:
+        ddr_ports |= {n for n, v in io["ports"].items() if _DDR_PRIM.match(v.get("prim") or "")}
+        ddr_ports -= {c["source"] for c in io["clocks"].values()}
+    undeclared = [n for n in sorted(ddr_ports)
+                  if not (iface_of.get(n, {}).get("ddr") and iface_of.get(n, {}).get("data_sheet"))]
+    if undeclared:
+        fail("IO-DDR-UNDECLARED", None, f"{len(undeclared)} DDR port(s) not in a declared DDR interface with data-sheet "
+             f"values (io_interfaces: ddr: true, data_sheet), so their edge pairing is unchecked: "
+             f"{', '.join(undeclared[:6])}")
 
     def is_slow(n: str) -> bool:
         base = re.sub(r"\[.*$", "", n)
@@ -478,6 +508,9 @@ def evaluate(build_dir: Path | None, stage: str = "route", xdc_files: list[Path]
             h = [p["slack"] for p in hold if p and p["slack"] is not None]
             entry.update({"setup_slack_ns": min(s) if s else None, "hold_slack_ns": min(h) if h else None})
             req = ddr_requirements(i)
+            if i.get("ddr") and not req:
+                fail("IO-DDR-REQUIREMENT", None, f"interface {name} is DDR but declares nothing its edge pairing can be "
+                     f"checked against (data_sheet dv_before/dv_after or skew_before/skew_after, or forwarded_phase_deg)")
             if req:
                 got = {"max": sorted({p["requirement"] for p in setup if p and p.get("requirement") is not None}),
                        "min": sorted({p["requirement"] for p in hold if p and p.get("requirement") is not None})}

@@ -142,15 +142,58 @@ def test_whole_clock_waiver_fails(tmp_path: Path) -> None:
     assert not r["pass"] and any(f["rule"] == "EXC-WAIVER" for f in r["failures"])
 
 
-def test_tx_output_delays_match_the_skew_window() -> None:
-    """The design's TX -max/-min equal what the interface's skew window gives: -min is +skew_before (an output's hold
-    required time is the edge minus -min). A build with -min -0.5 demanded each change 0.5 ns after the TXC edge and
-    reported 1 ns of false hold violation; the IO-VALUE check now flags that value."""
+def test_tx_output_delays_match_the_interface() -> None:
+    """The design's TX -max/-min equal what its interface entry gives (the data-sheet formula of io_check), on both edges
+    of both ports. Regression for the sign error of one build: an edge-aligned output's -min is +skew_before (an
+    output's hold required time is the edge minus -min); -0.5 there demanded each change 0.5 ns after the TXC edge."""
     import re
     tx = {i["name"]: i for i in interfaces()}
     xdc = (ROOT / "designs" / "b58a_trigger" / "design.xdc").read_text()
     for port, clk in (("rgmii_tx_a", "a_txc"), ("rgmii_tx_b", "b_txc")):
         exp = io_check.expected_delays(tx[port])
-        assert exp == {"max": 3.5, "min": 0.5}
+        assert exp is not None
         got = re.findall(rf"set_output_delay -clock {clk} (?:-clock_fall )?-(max|min) (-?[\d.]+)", xdc)
-        assert len(got) == 4 and all(float(v) == exp[k] for k, v in got), got
+        assert len(got) == 4 and all(abs(float(v) - exp[k]) < 1e-9 for k, v in got), (got, exp)
+    edge = {"direction": "out", "clock_period_ns": 8.0, "data_sheet": {"skew_before_ns": 0.5, "skew_after_ns": 0.5}}
+    assert io_check.expected_delays(edge) == {"max": 3.5, "min": 0.5}
+
+
+@pytest.mark.parametrize("how", ["declared", "no_data_sheet", "ddr_false", "no_interfaces"])
+def test_undeclared_ddr_ports_fail(how: str) -> None:
+    """G1: the old-B3 fixture (wrong edge pairs) must fail however the DDR interfaces are (not) declared: leaving the
+    declaration out, or its data-sheet values, or marking it not DDR, must not skip the edge-pairing check."""
+    ifs = interfaces()
+    if how == "no_data_sheet":
+        ifs = [{k: v for k, v in i.items() if k != "data_sheet"} for i in ifs]
+    elif how == "ddr_false":
+        ifs = [{**i, "ddr": False} for i in ifs]
+    elif how == "no_interfaces":
+        ifs = []
+    r = io_check.evaluate(FX / "reports", "route", [XDC], ifs, [], slow())
+    rules = {f["rule"] for f in r["failures"]}
+    if how == "declared":
+        assert "IO-DDR-REQUIREMENT" in rules and "IO-DDR-UNDECLARED" not in rules, r["failures"]
+    else:
+        und = [f for f in r["failures"] if f["rule"] == "IO-DDR-UNDECLARED"]
+        assert und, r["failures"]
+        msg = und[0]["message"]
+        assert msg.startswith("20 DDR port") and "a_rxd[0]" in msg          # all 20 RGMII data ports, never TXC itself
+        assert "a_txc" not in msg and "b_txc" not in msg
+
+
+def test_ddr_primitive_marks_a_port_ddr(tmp_path: Path) -> None:
+    """A port whose register is a DDR primitive (the dump's seventh PORT field) is DDR even with one-edge delays."""
+    d = tmp_path / "rep"
+    shutil.copytree(FX / "reports", d)
+    lines = []
+    for ln in (d / "io_paths_route.txt").read_text().splitlines():
+        f = ln.split("|")
+        if f[0] == "PORT" and f[1].startswith("a_rxd"):
+            f.append("IDDRE1")
+        lines.append("|".join(f))
+    (d / "io_paths_route.txt").write_text("\n".join(lines) + "\n")
+    xdc = tmp_path / "one_edge.xdc"
+    xdc.write_text("\n".join(l for l in XDC.read_text().splitlines() if "-clock_fall" not in l) + "\n")
+    r = io_check.evaluate(d, "route", [xdc], [], [], slow())
+    und = [f for f in r["failures"] if f["rule"] == "IO-DDR-UNDECLARED"]
+    assert und and "a_rxd[0]" in und[0]["message"] and "b_rxd" not in und[0]["message"], r["failures"]
