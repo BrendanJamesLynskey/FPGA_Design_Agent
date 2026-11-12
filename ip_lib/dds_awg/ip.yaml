@@ -69,7 +69,7 @@ variants:
     summary: sine table in block RAM, addressed one clock early so the RAM's output register delivers the sample on time
     when: 'measured: at LUT_W 12, 113 LUTs against 871 and faster (187 against 148 MHz); at LUT_W 8 still the fewer LUTs (113 against 171) but slower (183 against 204 MHz)'
     uses:
-      bram_tiles: 0.5 * ceil(2**LUT_W * OUT_W / 18432)
+      bram_tiles: 0.5 * ceil(pow2(LUT_W) * OUT_W / 18432)
       dsp: 0
     latency: 1
     ii: 1

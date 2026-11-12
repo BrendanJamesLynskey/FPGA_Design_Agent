@@ -14,7 +14,7 @@ Status: simulated bit-exact against ip_lib/fir/model.py: every variant at four p
 | `TAPS` | 16 | 2..256 | number of taps (lut_mult up to 64) |
 | `DATA_W` | 16 | 4..24 | sample bits, signed |
 | `COEF_W` | 16 | 4..18 | coefficient bits, signed |
-| `FOLD` | 4 | 2..256 | taps per multiply-accumulate engine for dsp_bram and dist_ram (at most TAPS); serial and lut_mult ignore it |
+| `FOLD` | 4 | 1..256 | taps per multiply-accumulate engine for dsp_bram and dist_ram (2..min(TAPS, 256) there); serial and lut_mult ignore it |
 
 Constraints: `DATA_W + COEF_W + clog2(TAPS) <= 48`.
 

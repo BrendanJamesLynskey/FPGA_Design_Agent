@@ -18,7 +18,8 @@ def test_every_entry_with_variants_validates():
     assert not errs, errs
 
 
-@pytest.mark.parametrize("expr", ["__import__('os')", "TAPS.real", "open('x')", "[1, 2]", "lambda: 1", "TAPS if x else 1", "TAPS +"])
+@pytest.mark.parametrize("expr", ["__import__('os')", "TAPS.real", "open('x')", "[1, 2]", "lambda: 1", "TAPS if x else 1", "TAPS +",
+                                  "2 ** TAPS", "9 ** 9 ** 9", "pow2(65)", "pow2(TAPS * 10)"])
 def test_expressions_refuse_anything_but_arithmetic(expr):
     with pytest.raises(ValueError):
         iv.evaluate(expr, {"TAPS": 16})
@@ -27,7 +28,7 @@ def test_expressions_refuse_anything_but_arithmetic(expr):
 def test_expression_functions():
     assert iv.evaluate("clog2(ceil(TAPS / FOLD))", {"TAPS": 33, "FOLD": 8}) == 3
     assert iv.evaluate("clog2(1)", {}) == 0
-    assert iv.evaluate("0.5 * ceil(2**LUT_W * OUT_W / 18432)", {"LUT_W": 12, "OUT_W": 16}) == 2.0
+    assert iv.evaluate("0.5 * ceil(pow2(LUT_W) * OUT_W / 18432)", {"LUT_W": 12, "OUT_W": 16}) == 2.0
 
 
 def test_fir_declared_timing_matches_the_model():
@@ -100,6 +101,20 @@ def test_lut_mult_at_128_taps_is_not_offered():
 def test_fold_is_ignored_where_it_is_not_used():
     assert iv.check_point("fir", "serial", {"TAPS": 2, "FOLD": 4}) == []
     assert iv.check_point("fir", "lut_mult", {"TAPS": 2, "FOLD": 4}) == []
+    assert iv.check_point("fir", "serial", {"FOLD": 1}) == []
+    assert iv.check_point("fir", "lut_mult", {"FOLD": 1}) == []
+    for v in ("dsp_bram", "dist_ram"):
+        assert any("FOLD >= 2" in w for w in iv.check_point("fir", v, {"FOLD": 1}))
+
+
+@pytest.mark.parametrize("params,needle", [
+    ({"TAPS": "16"}, "TAPS='16' is a str, not an int"),
+    ({"TAPS": 16.0}, "TAPS=16.0 is a float, not an int"),
+    ({"TAPS": True}, "TAPS=True is a bool, not an int"),
+])
+def test_a_wrong_type_is_named_as_such(params, needle):
+    why = iv.check_point("fir", "serial", params)
+    assert any(needle in w for w in why) and not any("outside" in w for w in why), why
 
 
 def test_choose_on_a_part_without_data_says_so_and_ranks_on_predictions():

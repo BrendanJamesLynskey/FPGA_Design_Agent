@@ -51,7 +51,7 @@ variants:
     latency: FOLD + 8 + clog2(ceil(TAPS / FOLD))      # clocks, an expression; must equal the RTL's own figure
     ii: FOLD + 3                  # initiation interval in clocks (1 = a new input every clock)
     requires:                     # optional: expressions that must hold for this variant (its RTL guard refuses the rest)
-    - FOLD <= TAPS
+    - FOLD >= 2 and FOLD <= TAPS
     params: {}                    # optional: parameters the variant fixes (none in the first three entries)
 constraints:                      # expressions that must hold for every variant
 - DATA_W + COEF_W + clog2(TAPS) <= 48
@@ -70,7 +70,8 @@ Rules, checked by `python3 -m flow.ipvariants` and by `python3 flow/net/ipdoc.py
   is a variant. The RTL top has the same parameter with the same default (ipdoc compares them).
 - Every variant has `summary`, `when`, `uses`, `latency` and `ii`. `uses` keys are among `lut`, `ff`, `lutram`,
   `bram_tiles`, `dsp`.
-- Expressions use the entry's numeric parameters, `+ - * / // % **`, `ceil`, `floor`, `min`, `max`, `clog2`, `log2`,
+- Expressions use the entry's numeric parameters, `+ - * / // %`, `ceil`, `floor`, `min`, `max`, `clog2`, `log2`,
+  `pow2` (2 to the power 0..64; there is no `**` operator, so an expression cannot build a huge number),
   comparisons, `and`/`or`/`not` and `a if c else b`. They are parsed, never executed as code. They must evaluate at the defaults, at every
   `sweep_tested` point and at every characterisation point.
 - Every variant has its own RTL branch (its name appears as a string literal in the entry's RTL, which is also what
@@ -82,6 +83,9 @@ Rules, checked by `python3 -m flow.ipvariants` and by `python3 flow/net/ipdoc.py
   fails the check).
 - Malformed input (a variant that is not a mapping, an expression that does not parse) is reported as a problem, not
   as a traceback.
+- Known limit: the RTL and test ties are text matches. A variant whose name appears only in an RTL comment and a test
+  comment would pass them; a stronger check would read the test module's variant list or the `IMPL ==` comparisons.
+  Review catches the deliberate case; the check catches the honest mistake of declaring a variant and building nothing.
 - **Latency is part of the contract only as a declared number.** A variant may have its own latency, but the RTL then
   exposes it (the `fir` top has `LATENCY` and `II` localparams; `dds_awg` and `adc_histogram` keep the same latency in
   every variant) and the tests measure it. A caller reads it and never assumes it.

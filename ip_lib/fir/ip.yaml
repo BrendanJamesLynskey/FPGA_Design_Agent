@@ -62,9 +62,9 @@ parameters:
     type: int
     default: 4
     range:
-    - 2
+    - 1
     - 256
-    note: taps per multiply-accumulate engine for dsp_bram and dist_ram (at most TAPS); serial and lut_mult ignore it
+    note: taps per multiply-accumulate engine for dsp_bram and dist_ram (2..min(TAPS, 256) there); serial and lut_mult ignore it
 latency:
   sample_to_result: the LATENCY localparam of fir (clocks from the accepting clock to m_valid, with m_ready high); per variant below
   after_reset: busy for FOLD clocks (folded variants) or one clock (lut_mult)
@@ -116,7 +116,7 @@ variants:
     latency: FOLD + 8 + clog2(ceil(TAPS / FOLD))
     ii: FOLD + 3
     requires:
-    - FOLD <= TAPS
+    - FOLD >= 2 and FOLD <= TAPS
   dist_ram:
     summary: the same engines with the samples and coefficients in LUT RAM
     when: 'guidance: short coefficient sets, or block RAM already spoken for'
@@ -126,7 +126,7 @@ variants:
     latency: FOLD + 8 + clog2(ceil(TAPS / FOLD))
     ii: FOLD + 3
     requires:
-    - FOLD <= TAPS
+    - FOLD >= 2 and FOLD <= TAPS
   serial:
     summary: one DSP MAC engine time-shared over every tap; memory type left to synthesis
     when: the fewest DSP slices, when a new sample every TAPS + 3 clocks is fast enough

@@ -82,7 +82,7 @@ variants:
     summary: two block RAM copies of the bins written together, one per read port
     when: 'measured: at BIN_W 10, 91 LUTs and 2 block RAM tiles against 1184 LUTs for dist_ram; guidance: from about BIN_W 9, or LUTs scarce'
     uses:
-      bram_tiles: 2 * 0.5 * ceil(2**BIN_W * CNT_W / 18432)
+      bram_tiles: 2 * 0.5 * ceil(pow2(BIN_W) * CNT_W / 18432)
       dsp: 0
     latency: 3
     ii: 1

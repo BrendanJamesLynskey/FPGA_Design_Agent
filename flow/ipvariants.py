@@ -42,15 +42,22 @@ ROW_KEYS = {"variant", "params", "status", *COST_KEYS, "wns_ns", "fmax_mhz", "po
 
 
 # ---- expressions ---------------------------------------------------------------------------------------------------
-_FUNCS = {"ceil": math.ceil, "floor": math.floor, "min": min, "max": max,
+def _pow2(n):
+    """2**n for 0 <= n <= 64: the only power the expressions allow (no `**` operator, so no huge numbers)."""
+    if not isinstance(n, int) or not 0 <= n <= 64:
+        raise ValueError(f"pow2({n!r}): the argument must be an integer from 0 to 64")
+    return 1 << n
+
+
+_FUNCS = {"ceil": math.ceil, "floor": math.floor, "min": min, "max": max, "pow2": _pow2,
           "clog2": lambda n: max(0, math.ceil(math.log2(n))) if n > 0 else 0, "log2": math.log2}
 _NODES = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Constant, ast.Name, ast.Load, ast.Call, ast.Add, ast.Sub,
-          ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.Pow, ast.USub, ast.UAdd, ast.IfExp, ast.Compare, ast.Eq,
+          ast.Mult, ast.Div, ast.FloorDiv, ast.Mod, ast.USub, ast.UAdd, ast.IfExp, ast.Compare, ast.Eq,
           ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE, ast.BoolOp, ast.And, ast.Or, ast.Not)
 
 
 def evaluate(expr, params: dict):
-    """An integer-valued expression over the entry's parameters: + - * / // % **, ceil, floor, min, max, clog2, log2,
+    """An integer-valued expression over the entry's parameters: + - * / // %, ceil, floor, min, max, clog2, log2, pow2,
     comparisons, and/or/not and `a if c else b`. A number is returned unchanged. Anything else is refused: the text is
     parsed and checked, never run as code."""
     if isinstance(expr, (int, float)):
@@ -68,7 +75,10 @@ def evaluate(expr, params: dict):
         if isinstance(n, ast.Name) and n.id not in _FUNCS and n.id not in params:
             raise ValueError(f"expression {expr!r}: unknown name {n.id} (use the entry's numeric parameters "
                              f"{', '.join(sorted(params))} or the functions {', '.join(sorted(_FUNCS))})")
-    v = eval(compile(tree, "<ip.yaml>", "eval"), {"__builtins__": {}}, {**_FUNCS, **params})   # noqa: S307 (checked above)
+    try:
+        v = eval(compile(tree, "<ip.yaml>", "eval"), {"__builtins__": {}}, {**_FUNCS, **params})   # noqa: S307 (checked above)
+    except (ArithmeticError, TypeError) as ex:
+        raise ValueError(f"expression {expr!r} fails: {ex}") from None
     return int(v) if isinstance(v, float) and v.is_integer() else v
 
 
@@ -132,6 +142,13 @@ def check_point(block: str, variant: str, params: dict | None = None) -> list[st
     p = point(block, {k: v for k, v in (params or {}).items() if k in pars}, variant)
     for k, s in pars.items():
         v = p.get(k)
+        t = s.get("type")
+        if t == "int" and (isinstance(v, bool) or not isinstance(v, int)):
+            why.append(f"{k}={v!r} is a {type(v).__name__}, not an int")
+            continue
+        if t == "string" and not isinstance(v, str):
+            why.append(f"{k}={v!r} is a {type(v).__name__}, not a string")
+            continue
         if "range" in s and not (isinstance(v, (int, float)) and s["range"][0] <= v <= s["range"][1]):
             why.append(f"{k}={v} outside {s['range'][0]}..{s['range'][1]}")
         if "set" in s and v not in s["set"]:
