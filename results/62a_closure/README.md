@@ -57,8 +57,9 @@ never sees.
   designs.
 - **G5 (the board) was not run**, and area and power strategies are not offered yet.
 - **Two runs predate the synthesis guard and the carry-run rule:** c13 without the plan, and the c14 seed. The last
-  build of every run was scanned afterwards (`synth_scan.json`: no multi-driven nets, nothing removed). The build
-  directory keeps only the last build, so c14's earlier accepted builds are not covered.
+  build of every run was scanned afterwards, and c11's accepted design was rebuilt and scanned too (`synth_scan.json`:
+  no multi-driven nets, nothing removed). The build directory keeps only the last build, so c14's earlier accepted
+  builds are not covered.
 - **`c13_orig_plan_unguarded/` is not counted.** It is an early with-plan run that accepted a design whose core
   synthesis had removed: two always_ff blocks drove the same registers, which Icarus allowed and Vivado tied to ground.
   `INVALID.json` says why. That run is the reason for the synthesis guard.
