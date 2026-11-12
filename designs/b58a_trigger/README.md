@@ -123,14 +123,14 @@ measurement.
 
 ## Build (Vivado 2026.1, xck26-sfvc784-2LV-c)
 
-Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): 7,231 LUTs (6.2 %), 10,313 flip-flops
-(4.4 %), 6.5 block RAM tiles, 0.50 W estimated on chip. **Timing is not met, on the transmit pins only.** Gates this build fails (`summary.json`, generated from
-`gates.json`): `post_synth_cdc_no_critical`, `setup`, `hold`, `cdc_no_critical`. The two CDC gates are a reset
-synchroniser fed through logic (fixed in the RTL since; the next recorded build re-checks them).
+Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): 7,219 LUTs (6.2 %), 10,318 flip-flops
+(4.4 %), 6.5 block RAM tiles, 0.50 W estimated on chip. **Timing is not met, on the transmit pins only.** Gates this
+build fails (`summary.json`, generated from `gates.json`): `setup`, `hold`. Every other gate passes, the CDC gates
+included.
 
 | RGMII worst slack (ns) | Port A setup | Port A hold | Port B setup | Port B hold |
 |---|---|---|---|---|
-| Receive (centre-aligned, PHY RX delay on, 1000 ps IDELAY on each input) | +0.668 | +0.134 | +0.420 | +0.679 |
+| Receive (centre-aligned, PHY RX delay on, 1000 ps IDELAY on each input) | +0.360 | +0.697 | +0.642 | +0.238 |
 | Transmit (TXC edge-aligned, PHY TX delay on, 0.5 ns skew window) | -0.198 | -0.167 | -0.163 | -0.184 |
 
 The constraints and their derivation are in `design.xdc`: no false paths or other exceptions on the RGMII ports, and

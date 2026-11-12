@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
-| Date              : Thu Nov 12 17:02:21 2026
+| Date              : Thu Nov 12 17:59:47 2026
 | Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
 | Command           : report_timing -delay_type max -max_paths 1 -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b58a/designs/b58a_trigger/build/base/timing_worst_setup.rpt
 | Design            : kr260_top
@@ -25,14 +25,14 @@ Slack (VIOLATED) :        -0.198ns  (required time - arrival time)
   Logic Levels:           1  (OBUF=1)
   Output Delay:           3.500ns
   Clock Path Skew:        0.918ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    4.838ns = ( 8.838 - 4.000 ) 
-    Source Clock Delay      (SCD):    3.649ns
-    Clock Pessimism Removal (CPR):    -0.272ns
+    Destination Clock Delay (DCD):    4.102ns = ( 8.102 - 4.000 ) 
+    Source Clock Delay      (SCD):    2.852ns
+    Clock Pessimism Removal (CPR):    -0.333ns
   Clock Uncertainty:      0.109ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
     Total System Jitter     (TSJ):    0.071ns
     Discrete Jitter          (DJ):    0.205ns
     Phase Error              (PE):    0.000ns
-  Clock Net Delay (Source):      2.271ns (routing 0.962ns, distribution 1.309ns)
+  Clock Net Delay (Source):      1.474ns (routing 0.234ns, distribution 1.240ns)
 
     Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
   -------------------------------------------------------------------    -------------------
@@ -50,17 +50,17 @@ Slack (VIOLATED) :        -0.198ns  (required time - arrival time)
                          net (fo=1, routed)           0.348     1.334    clk0_u
     BUFGCE_X0Y76         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
                                                       0.044     1.378 r  u_bg0/O
-    X1Y2 (CLOCK_ROOT)    net (fo=10048, routed)       2.271     3.649    u_atx/clk
+    X1Y3 (CLOCK_ROOT)    net (fo=10053, routed)       1.474     2.852    u_atx/clk
     BITSLICE_RX_TX_X0Y158
                          OSERDESE3                                    r  u_atx/g_oddr[0].u_oddr/CLK
   -------------------------------------------------------------------    -------------------
     BITSLICE_RX_TX_X0Y158
                          OSERDESE3 (Prop_OSERDES_BITSLICE_COMPONENT_RX_TX_CLK_OQ)
-                                                      0.522     4.171 r  u_atx/g_oddr[0].u_oddr/OQ
-                         net (fo=1, routed)           0.285     4.456    a_txd_OBUF[0]
+                                                      0.522     3.374 r  u_atx/g_oddr[0].u_oddr/OQ
+                         net (fo=1, routed)           0.285     3.659    a_txd_OBUF[0]
     E1                   OBUF (Prop_OUTBUF_HPIOB_M_I_O)
-                                                      0.700     5.155 r  a_txd_OBUF[0]_inst/O
-                         net (fo=0)                   0.000     5.155    a_txd[0]
+                                                      0.700     4.358 r  a_txd_OBUF[0]_inst/O
+                         net (fo=0)                   0.000     4.358    a_txd[0]
     E1                                                                r  a_txd[0]
   -------------------------------------------------------------------    -------------------
 
@@ -78,21 +78,21 @@ Slack (VIOLATED) :        -0.198ns  (required time - arrival time)
                          net (fo=1, routed)           0.307     5.769    clk0_u
     BUFGCE_X0Y76         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
                                                       0.039     5.808 f  u_bg0/O
-                         net (fo=10048, routed)       1.967     7.775    u_atx/clk
+                         net (fo=10053, routed)       1.231     7.039    u_atx/clk
     BITSLICE_RX_TX_X0Y171
                          OSERDESE3 (Prop_OSERDES_BITSLICE_COMPONENT_RX_TX_CLK_OQ)
-                                                      0.341     8.116 f  u_atx/u_txc/OQ
-                         net (fo=1, routed)           0.176     8.292    a_txc_OBUF
+                                                      0.341     7.380 f  u_atx/u_txc/OQ
+                         net (fo=1, routed)           0.176     7.556    a_txc_OBUF
     A2                   OBUF (Prop_OUTBUF_HPIOB_M_I_O)
-                                                      0.546     8.838 f  a_txc_OBUF_inst/O
-                         net (fo=0)                   0.000     8.838    a_txc
+                                                      0.546     8.102 f  a_txc_OBUF_inst/O
+                         net (fo=0)                   0.000     8.102    a_txc
     A2                                                                f  a_txc
-                         clock pessimism             -0.272     8.566    <hidden>
-                         clock uncertainty           -0.109     8.458    <hidden>
-                         output delay                -3.500     4.958    <hidden>
+                         clock pessimism             -0.333     7.769    <hidden>
+                         clock uncertainty           -0.109     7.661    <hidden>
+                         output delay                -3.500     4.161    <hidden>
   -------------------------------------------------------------------
-                         required time                          4.958    <hidden>
-                         arrival time                          -5.155    <hidden>
+                         required time                          4.161    <hidden>
+                         arrival time                          -4.358    <hidden>
   -------------------------------------------------------------------
                          slack                                 -0.198    <hidden>
 
