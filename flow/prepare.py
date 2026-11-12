@@ -31,6 +31,10 @@ try:
     from flow import vhdl
 except ImportError:
     import vhdl                         # type: ignore[no-redef]
+try:
+    from flow import ip_tcl_allow
+except ImportError:
+    import ip_tcl_allow                 # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -204,9 +208,21 @@ def main(argv: list[str] | None = None) -> int:
     srcs = vhdl.order_sources(srcs)                     # brief 55: VHDL after the SystemVerilog, packages first
     data = srcorder.data_files(design)                  # 07a2-prep: the task's data files, for $readmemh
     xdcs = expand(cfg["constraints"])
-    stamp = sources_sha256(srcs + xdcs + data)
+    # brief 59A: Tcl that creates AMD IP in the in-memory project (create_ip, global synthesis), sourced by build.tcl
+    # after the sources are read; hashed with them, so a change to the IP configuration is a new build stamp
+    # only Tcl listed with its SHA-256 in flow/ip_tcl_allow.yaml (maintainer-owned) may be sourced: no agent-written Tcl
+    try:
+        ip_tcls = ip_tcl_allow.check(cfg.get("ip_tcl", []) or [], ROOT)      # hashed into the stamp as before
+    except ip_tcl_allow.IpTclRefused as e:
+        raise SystemExit(f"prepare: {e}") from None
+    stamp = sources_sha256(srcs + xdcs + data + ip_tcls)
     out = a.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
+    # the build sources verified copies in the build directory, not the files in the tree (flow/ip_tcl_allow.materialise)
+    try:
+        ip_copies = ip_tcl_allow.materialise(cfg.get("ip_tcl", []) or [], out, ROOT)
+    except ip_tcl_allow.IpTclRefused as e:
+        raise SystemExit(f"prepare: {e}") from None
     for f in data:       # Vivado runs in the build directory: $readmemh("x.hex") and $readmemh("data/x.hex") both open the copy
         for dst in (out / "data" / f.relative_to(design / "data"), out / f.relative_to(design / "data")):
             dst.parent.mkdir(parents=True, exist_ok=True)
@@ -220,6 +236,7 @@ def main(argv: list[str] | None = None) -> int:
            f"set part {{{cfg['part']}}}",
            f"set sources {tcl_list([str(s) for s in srcs])}",
            f"set constraints {tcl_list([str(x) for x in xdcs])}",
+           f"set ip_tcls {tcl_list([str(t) for t in ip_copies])}",
            f"set generics {tcl_list([f'{k}={v}' for k, v in generics.items()])}",
            f"set out {{{out}}}",
            f"set ila {int(ila)}",
@@ -232,7 +249,7 @@ def main(argv: list[str] | None = None) -> int:
     (out / "inputs.tcl").write_text("\n".join(tcl) + "\n")
     json.dump({"design": str(design.relative_to(ROOT)), "variant": a.variant, "top": cfg["top"],
                "part": cfg["part"], "sources_sha256": stamp, "build_stamp": stamp[:8],
-               "files": [str(f.relative_to(ROOT)) for f in srcs + xdcs + data],
+               "files": [str(f.relative_to(ROOT)) for f in srcs + xdcs + data + ip_tcls],
                "board": board_for(cfg), "timing_margin_ns": timing_margin(cfg, xdcs)}, sys.stdout)
     print()
     return 0

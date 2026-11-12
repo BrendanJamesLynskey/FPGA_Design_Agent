@@ -1,0 +1,68 @@
+{
+ "scenarios": 11,
+ "cycles": 67,
+ "fired": 0,
+ "rules": "10 AXI4-Lite, 3 AXI4-Stream protocol rules (profile rules off)",
+ "results": [
+  {
+   "scenario": "W three cycles before AW, B the cycle after the AW handshake",
+   "cycles": 6,
+   "fired": []
+  },
+  {
+   "scenario": "two W beats ahead of their AWs",
+   "cycles": 6,
+   "fired": []
+  },
+  {
+   "scenario": "back-to-back writes and reads with zero delay, a response every cycle",
+   "cycles": 5,
+   "fired": []
+  },
+  {
+   "scenario": "READY before VALID, and READY toggling with no VALID",
+   "cycles": 7,
+   "fired": []
+  },
+  {
+   "scenario": "long BREADY and RREADY stalls with stable payload",
+   "cycles": 11,
+   "fired": []
+  },
+  {
+   "scenario": "VALID raised on the second edge after reset release",
+   "cycles": 7,
+   "fired": []
+  },
+  {
+   "scenario": "reset in the middle of a transaction (VALIDs cleared at the first reset edge)",
+   "cycles": 9,
+   "fired": []
+  },
+  {
+   "scenario": "a B handshake in the same cycle as the next AW and W handshakes",
+   "cycles": 4,
+   "fired": []
+  },
+  {
+   "scenario": "a stream null beat (TKEEP and TSTRB zero) carrying TLAST",
+   "cycles": 3,
+   "fired": []
+  },
+  {
+   "scenario": "stream position bytes (TKEEP high, TSTRB low)",
+   "cycles": 3,
+   "fired": []
+  },
+  {
+   "scenario": "non-contiguous TKEEP and TREADY stalls with a stable beat",
+   "cycles": 6,
+   "fired": []
+  }
+ ],
+ "positive_control": {
+  "scenario": "control: BVALID with no write outstanding (illegal)",
+  "expect": "B_EARLY",
+  "fired": true
+ }
+}

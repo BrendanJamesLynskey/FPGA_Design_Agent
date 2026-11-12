@@ -1,0 +1,23 @@
+# Our AXI4-Lite peripheral: every register, every write order, sub-word strobes, the error responses, with
+# back-pressure on both sides. The same program runs with each seeded bug selected (lite_bug).
+name: periph_regs
+target: periph
+requirements: [AXT-REQ-02, AXT-REQ-04]
+steps:
+  - set: {seed_data: 0x0BAD, seed_lite: 0x77, valid_p: 48, ready_p: 96, sb_base: 0x0}
+  - read: {addr: 0x00, expect: {data: 0x59504C31}, resp: OKAY}
+  - loop: 8
+    body:
+      - write: {addr: 0x04, rand_data: true, sb: true, order: aw_first, gap: 3, resp: OKAY}
+      - write: {addr: 0x08, rand_data: true, sb: true, order: w_first, gap: 2, resp: OKAY}
+      - write: {addr: 0x0C, data: 0xA5A5A5A5, strb: 0x1, sb: true, resp: OKAY}
+      - write: {addr: 0x0C, data: 0x5A5A5A5A, strb: 0x6, sb: true, resp: OKAY}
+      - write: {addr: 0x10, rand_data: true, sb: true, resp: OKAY}
+      - read: {addr: 0x04, sb: true, resp: OKAY}
+      - read: {addr: 0x08, sb: true, resp: OKAY}
+      - read: {addr: 0x0C, sb: true, resp: OKAY}
+      - read: {addr: 0x10, sb: true, resp: OKAY}
+      - read: {addr: 0x14, resp: OKAY}
+      - write: {addr: 0x00, data: 0x1, resp: SLVERR}
+      - read: {addr: 0x40, resp: DECERR}
+      - write: {addr: 0x40, data: 0x1, resp: DECERR}

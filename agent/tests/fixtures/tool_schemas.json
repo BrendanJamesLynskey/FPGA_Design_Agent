@@ -1,6 +1,69 @@
 {
- "schema_version": "1.9.0",
+ "schema_version": "1.10.0",
  "tools": [
+  {
+   "name": "axi_board_run",
+   "description": "Run an AXI transaction program on the board's transactor design (designs/b59a_axi_tx, SRAM only, by the local board file's cable serial), with operating conditions logged before and after. Needs stage configuration-and-debug, a passing power_ok for that build, and hardware budget.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "program": {
+      "description": "A transaction program (axi_tx/host/program.py): a mapping with name, target (bram | periph), optional lite_bug / stream_bug, and steps; or the same as YAML text.",
+      "type": [
+       "object",
+       "string"
+      ]
+     }
+    },
+    "required": [
+     "program"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.10.0"
+  },
+  {
+   "name": "axi_program_check",
+   "description": "Assemble an AXI transaction program for the on-chip transactor (axi_tx) and run its transaction-level model: the instruction count, the disassembly and the predicted transactions and verdict counters. No simulator, no board.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "program": {
+      "description": "A transaction program (axi_tx/host/program.py): a mapping with name, target (bram | periph), optional lite_bug / stream_bug, and steps; or the same as YAML text.",
+      "type": [
+       "object",
+       "string"
+      ]
+     }
+    },
+    "required": [
+     "program"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.10.0"
+  },
+  {
+   "name": "axi_simulate",
+   "description": "Run an AXI transaction program on the transactor RTL in simulation (cocotb + Icarus: the transactor, the protocol checkers, the scoreboard, our AXI4-Lite peripheral, a memory model and the stream FIFO), through the same host code as the board. Returns verdicts, rule counts, coverage and latency counters.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "program": {
+      "description": "A transaction program (axi_tx/host/program.py): a mapping with name, target (bram | periph), optional lite_bug / stream_bug, and steps; or the same as YAML text.",
+      "type": [
+       "object",
+       "string"
+      ]
+     }
+    },
+    "required": [
+     "program"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.10.0"
+  },
   {
    "name": "board_constraints",
    "description": "Write design.xdc from the board's resource names; you never write pin numbers. 'map' is a list of {resource, port}: resource is a board resource (clk100, led[0:15], sw[0:15], seg, an, btnc, uart_rx, ...; name, name[i] or name[a:b]), port is YOUR design's port name (a bus name for a range, or name[i] for one bit of a bus). Pins, I/O standards and the create_clock on the board clock come from the board's master XDC. With no 'map', returns the board's resource list.",
@@ -36,7 +99,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "bringup",
@@ -47,7 +110,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "build",
@@ -75,7 +138,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "check_constraints",
@@ -86,7 +149,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "debug_capture",
@@ -108,7 +171,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "debug_plan",
@@ -130,7 +193,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "debug_query",
@@ -156,7 +219,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "formal",
@@ -167,7 +230,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "gates",
@@ -196,7 +259,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "lint",
@@ -207,7 +270,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "list_files",
@@ -223,7 +286,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "load_skill",
@@ -251,7 +314,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "mutate",
@@ -278,7 +341,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "program",
@@ -300,7 +363,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "read_file",
@@ -327,7 +390,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "report",
@@ -361,7 +424,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "report_digest",
@@ -398,7 +461,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "search_docs",
@@ -429,7 +492,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "simulate",
@@ -452,7 +515,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "skill_excerpt",
@@ -475,7 +538,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "skill_index",
@@ -498,7 +561,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "spec_items",
@@ -509,7 +572,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "stage_note",
@@ -543,7 +606,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   },
   {
    "name": "write_file",
@@ -566,7 +629,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.9.0"
+   "version": "1.10.0"
   }
  ]
 }

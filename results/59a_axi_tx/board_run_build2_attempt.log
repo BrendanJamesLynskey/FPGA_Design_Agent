@@ -1,0 +1,20 @@
+# Board plan attempt 1 (build 2, build stamp a3c1f853), 2026-11-12 10:42: the run lines as printed. The model then assumed block RAM
+# starts at zero, so BRAM repeats #1 and #2 failed model_match; the final JTAG conditions read was refused (another Vivado ran) and
+# no JSON was written. Superseded by board_run.json (build 3).
+run_board: bram_random_rw #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=[][] 30.47s digest=0x70fe5a9a
+run_board: bram_random_rw #1: FAIL {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': False} rules=[][] 30.47s digest=0xdf367dd4
+run_board: bram_random_rw #2: FAIL {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': False} rules=[][] 30.47s digest=0xdf367dd4
+run_board: bram_strobes #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=[][] 10.31s digest=0x5503ae77
+run_board: periph_regs #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=[][] 16.1s digest=0x0494cb59
+run_board: periph_regs #1: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=[][] 16.1s digest=0x0d8440fe
+run_board: periph_regs #2: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=[][] 16.1s digest=0xf98c5418
+run_board: periph_regs_b_early #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=['B_EARLY'][] 32.52s digest=0xc34fb5e5
+run_board: periph_regs_r_live #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=['R_HOLD'][] 32.52s digest=0x043b509f
+run_board: periph_regs_r_glitch #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=['R_HOLD'][] 32.52s digest=0xe9138c35
+run_board: periph_regs_exokay #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=['EXOKAY'][] 32.52s digest=0x6cef6a59
+run_board: periph_regs_no_strb #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True, 'sb_mism': True} rules=[][] 16.1s digest=0x24500293
+run_board: master_inject #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=['AR_HOLD', 'AW_HOLD', 'W_HOLD'][] 26.22s digest=0x3764c49f
+run_board: stream_packets #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=[][] 6.73s digest=0x83c7a5f5
+run_board: stream_packets #1: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=[][] 6.73s digest=0x7ff801d5
+run_board: stream_packets_lose_last #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True, 'sink_last_mism': True} rules=[][] 6.73s digest=0x507bbc74
+run_board: stream_packets_keep_wire #0: PASS {'done': True, 'lite_rules': True, 'stream_rules': True, 'model_match': True} rules=[]['HOLD'] 23.15s digest=0x89d77138

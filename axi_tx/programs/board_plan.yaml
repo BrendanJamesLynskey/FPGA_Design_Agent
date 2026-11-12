@@ -1,0 +1,18 @@
+# Brief 59A board plan, fixed before the first board run. Each run: the program, the seeded bug, what must happen.
+# Pass rule per run: the program ends (no hang, no error); exactly the listed rules fire (none for a clean run);
+# the transaction log matches the model (axi_tx/host/model.py); the listed scoreboard or sink verdict.
+# Comparison with simulation (recorded, not a pass condition): for target periph the digest and cycle count must equal the
+# simulation's (same RTL); for target bram they differ by design (the AMD BRAM Controller replaces the simulation model).
+runs:
+  - {program: bram_random_rw, repeat: 3, expect: {}}
+  - {program: bram_strobes, expect: {}}
+  - {program: periph_regs, repeat: 3, expect: {}}
+  - {program: periph_regs, lite_bug: b_early,  tag: periph_regs_b_early,  expect: {lite_rules: [B_EARLY]}}
+  - {program: periph_regs, lite_bug: r_live,   tag: periph_regs_r_live,   expect: {lite_rules: [R_HOLD]}}
+  - {program: periph_regs, lite_bug: r_glitch, tag: periph_regs_r_glitch, expect: {lite_rules: [R_HOLD]}}
+  - {program: periph_regs, lite_bug: exokay,   tag: periph_regs_exokay,   expect: {lite_rules: [EXOKAY]}}
+  - {program: periph_regs, lite_bug: no_strb,  tag: periph_regs_no_strb,  expect: {sb_mism: true}}
+  - {program: master_inject, expect: {lite_rules: [AW_HOLD, W_HOLD, AR_HOLD]}}
+  - {program: stream_packets, repeat: 2, expect: {}}
+  - {program: stream_packets, stream_bug: lose_last, tag: stream_packets_lose_last, expect: {sink_last_mism: true}}
+  - {program: stream_packets, stream_bug: keep_wire, tag: stream_packets_keep_wire, expect: {stream_rules: [HOLD]}}

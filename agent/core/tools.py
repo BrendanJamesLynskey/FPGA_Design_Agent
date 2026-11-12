@@ -89,6 +89,11 @@ def first_failure(text: str) -> dict[str, Any] | None:
 
 # --- build.yaml and source validation (the Tcl allow-list) ---------------------------------------------------
 
+#: every build.yaml key the flow reads (flow/prepare.py, flow/vhdl.py); anything else is refused in agent sessions
+BUILD_YAML_KEYS = frozenset({"top", "part", "board", "sources", "constraints", "generics", "probes", "timing_margin_ns",
+                             "hdl", "ip_tcl"})
+
+
 def load_build_cfg(s: Session) -> dict[str, Any]:
     """build.yaml with every value that reaches Tcl or a command line validated. Raises SecurityError."""
     f = s.design / "build.yaml"
@@ -96,6 +101,15 @@ def load_build_cfg(s: Session) -> dict[str, Any]:
         raise SecurityError("build-yaml", "the design has no build.yaml: create it with write_file (keys top, part, "
                                           "sources, constraints, generics; the format is in the flow conventions)")
     cfg = yaml.safe_load(f.read_text()) or {}
+    unknown = sorted(set(cfg) - BUILD_YAML_KEYS)
+    if unknown:
+        raise SecurityError("build-yaml", f"build.yaml has unknown key(s) {unknown}; allowed: {sorted(BUILD_YAML_KEYS)}")
+    if cfg.get("ip_tcl"):
+        from flow import ip_tcl_allow
+        try:
+            ip_tcl_allow.check(cfg["ip_tcl"], s.root)
+        except ip_tcl_allow.IpTclRefused as e:
+            raise SecurityError("build-yaml-ip-tcl", str(e)) from None
     for k in ("top", "part", "sources", "constraints"):
         if k not in cfg:
             raise SecurityError("build-yaml", f"build.yaml has no {k!r}")
@@ -1094,3 +1108,4 @@ def bringup(s: Session) -> dict:
 
 # brief 50A: the debug tools (debug_plan, debug_capture, debug_query) register themselves on import
 from agent.core import debug_tools as _debug_tools  # noqa: E402,F401
+from agent.core import axi_tools as _axi_tools  # noqa: E402,F401  (brief 59A: registers axi_program_check, axi_simulate, axi_board_run)

@@ -1,0 +1,17 @@
+# Byte strobes: fill 16 words, overwrite them with random data under random strobes, read them back against the scoreboard.
+name: bram_strobes
+target: bram
+requirements: [AXT-REQ-03]
+steps:
+  - set: {seed_data: 0x5717, seed_lite: 0x3, valid_p: 32, ready_p: 128, areg: 0x100}
+  - loop: 16
+    body:
+      - write: {areg: true, rand_data: true, sb: true}
+  - set: {areg: 0x100}
+  - loop: 16
+    body:
+      - write: {areg: true, rand_data: true, rand_strb: true, sb: true}
+  - set: {areg: 0x100}
+  - loop: 16
+    body:
+      - read: {areg: true, sb: true}
