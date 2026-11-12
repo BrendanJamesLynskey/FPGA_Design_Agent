@@ -170,10 +170,11 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--skill-routing", choices=["off", "router"], default="off",
                    help="brief 36: router = a skill shortlist before each stage, skill_index/skill_excerpt, ranked load_skill")
     r.add_argument("--router-model", help="brief 36: OpenRouter model of the router's section classifier (default: rules only)")
-    r.add_argument("--harness-arm", default="",
-                   help="brief 42: comma-separated harness arms, default none (the baseline): H1 = context management "
-                        "(offload of large tool results, earlier summarisation), H2 = hang protection (unbounded-wait check, "
-                        "wall limit from the bench's sim-time budget, structured hang result)")
+    r.add_argument("--harness-arm", default="H1",
+                   help="brief 42: comma-separated harness arms, default H1 (owner decision 2026-11-12, made after the data): "
+                        "H1 = context management (offload of large tool results, earlier summarisation), "
+                        "H2 = hang protection (unbounded-wait check, wall limit from the bench's sim-time budget, structured "
+                        "hang result), H9 = typed digests; A0 = the baseline with no arm (pin it for comparisons with earlier runs)")
     r.add_argument("--router-k", type=int, default=8, help="brief 36: skills in the router's shortlist")
     r.add_argument("--design-plan", action="store_true",
                    help="plan before building: stage 1 lists the datapaths, and the timing plan maps each operation to a DSP slice, "

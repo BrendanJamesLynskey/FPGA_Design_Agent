@@ -111,14 +111,14 @@ class Config:
     skill_routing: str = "off"      # brief 36: off (eval-1 path) | router (shortlist node + skill_index/skill_excerpt + ranked load_skill)
     router_model: str | None = None  # brief 36: the cheap classifier's OpenRouter model (None: rules only)
     router_k: int = 8               # brief 36: skills in the shortlist
-    harness_arms: str = ""          # brief 42: comma-separated harness arms (H1 context management, H2 hang protection); "" = baseline
+    harness_arms: str = ""          # brief 42: comma-separated harness arms (H1 context management, H2 hang protection); "" or "A0" = baseline; the CLI default is H1 (2026-11-12)
     hdl: str = "sv"                 # brief 55: the design language, sv (SystemVerilog) | vhdl (VHDL-2008; the test shell stays SystemVerilog)
     design_plan: bool = False       # closure loop: stage 1 declares datapaths; flow/timing_plan.py maps and pipelines them before any build
     closure: str = "off"            # closure loop: on = stage 6 runs the closure controller (agent/graph/closure.py)
 
     @property
     def arms(self) -> tuple[str, ...]:
-        return tuple(a for a in (x.strip().upper() for x in self.harness_arms.split(",")) if a)
+        return tuple(a for a in (x.strip().upper() for x in self.harness_arms.split(",")) if a and a != "A0")
 
     def role_models(self, stage: str | None = None) -> dict:
         """role -> {harness, model, effort}, with the ``role@stage`` overrides of ``stage`` applied. The interview
@@ -1749,6 +1749,7 @@ def summary(rt: Runtime, state: dict) -> dict:
                      oracle_model=oracle_model_name(rt.cfg))
     usage = role_usage(rt)
     return {"run_id": rt.run_id, "design": rt.cfg.name, "model": models[0] if len(models) == 1 else "per-role", **extra,
+            "harness_arm": ",".join(rt.cfg.arms) or "A0",      # the arm this run used (H1 is the CLI default since 2026-11-12)
             "profile": rt.cfg.profile, "role_models": roles, "oracle_model": oracle_model_name(rt.cfg), "oracle": rt.cfg.oracle,
             "stage_overrides": __import__("agent.graph.role_models", fromlist=["x"]).stage_overrides(rt.cfg),
             "knowledge_use": knowledge_use(rt), "knowledge_bank": knowledge_bank_status(rt),
