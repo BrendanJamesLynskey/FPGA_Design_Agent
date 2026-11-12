@@ -103,13 +103,17 @@ prints it for the person or the agent before anything is built:
   1 bit; `<` and `<=` only when the bound is a power of two (`x < 64` on 8 bits is `00XXXXXX`); `>`/`>=` are refused.
   This is because a packed port holds several named probes and one probe can be split over several hardware probes (brief
   48), so the compare is per bit. Conditions on the same probe under AND are merged (a contradiction is an error). OR is
-  allowed only across 1-bit terms, because OR over a bus split across hardware probes would fire on part of the value.
+  allowed only across 1-bit terms, because OR over a bus split across hardware probes would fire on part of the value,
+  and each OR term gets a probe port of its own: the build gives each port one comparator, and on the board Vivado 2026.1
+  refused two OR compares on one port (`Labtools 27-3239`, `27-3241`: compares share a comparator only under AND with
+  `eq`). A plan with one condition is always AND. The rising-edge letter `R` was measured to work on the Basic-tier ILA
+  IP (the sync-byte and COUNT-write runs in the results).
 - **Window:** the ILA depth is the smallest of 1024, 2048, ... 131072 samples that holds `pre + post + 1`; the trigger
   position is `pre`; the capture keeps the whole depth and the answer covers the cycles that were asked for.
 - **Ports:** 1-bit probes share a `flags` port; wider ones fill `data`, `data2`, ... (at most 1024 bits each), packed by
   `flow/prepare.py pack_probes` exactly as the build will pack them.
-- **Fit:** one clock domain, at most 5 ports, and a block-RAM estimate (`ceil(bits x depth / 36864)` BRAM36 tiles; T1's
-  measured ILA builds agree, see the report) within a budget (32 tiles by default; the xc7a100t has 135). Wider than 256
+- **Fit:** one clock domain, at most 5 ports, and a block-RAM estimate (`ceil(bits x depth / 36864)` BRAM36 tiles; for T1's four
+  measured debug builds the estimate, 1 tile, was at or above the 0.5 to 1 tile Vivado used) within a budget (32 tiles by default; the xc7a100t has 135). Wider than 256
   bits per port or deeper than 4096 is allowed by the IP but flagged as not measured on the Basic tier.
 - **Errors with the cut that would fit:** probes in two clock domains (keep the trigger's domain, drop the others, or a
   second build); more than 5 ports (keep the trigger probes, then the requested data probes in order); too much block RAM
@@ -142,6 +146,10 @@ VCCBRAM now, the min and max latched since configuration, and the alarm flags). 
 programming, armed and done, and a verdict against the recommended operating conditions (ROC: VCCINT and VCCBRAM 0.95 to
 1.05 V, VCCAUX 1.71 to 1.89 V, Tj at most 85 C on this board; from the knowledge bank's Artix-7 skills via
 `flow/program.py`). The XADC samples at about 1 MSPS across channels, so it cannot see nanosecond supply droop.
+
+`flow/hw.py preflight` refuses a hardware session while another Vivado runs; brief 50A made it count the real Vivado
+binaries the way `flow/run_vivado.sh` does and honour `FDA_VIVADO_MAX` (default 1), so a capture can run beside another
+session's build when `_handoff/take_heavy_slot.sh` admits it.
 
 The whole capture runs inside `board.lock` (`hil/instruments/board_lock.py`), one board job at a time.
 

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capture viewer</title>
+<style>
+:root { --bg: #ffffff; --fg: #111111; --muted: #666666; --line: #d0d0d0; --wave: #111111; --bus: #f2f2f2; --cursor: #888888; --trig: #111111; }
+@media (prefers-color-scheme: dark) { :root { --bg: #111111; --fg: #e8e8e8; --muted: #9a9a9a; --line: #333333; --wave: #e8e8e8; --bus: #1d1d1d; --cursor: #777777; --trig: #e8e8e8; } }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+h1 { font-size: 17px; margin: 0 0 4px; font-weight: 600; }
+.meta, .muted { color: var(--muted); font-size: 12.5px; }
+pre.answer { white-space: pre-wrap; border-left: 2px solid var(--line); padding: 4px 10px; margin: 12px 0; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0; }
+button, label.file { font: inherit; font-size: 13px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 3px 10px; cursor: pointer; }
+button:hover, label.file:hover { border-color: var(--fg); }
+input[type=file] { display: none; }
+#wrap { display: grid; grid-template-columns: minmax(90px, 160px) 1fr; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+#names { font: 12.5px ui-monospace, Menlo, monospace; }
+#names div { height: 28px; line-height: 28px; padding-right: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid var(--line); }
+#names div.axis { height: 22px; line-height: 22px; color: var(--muted); }
+#scroll { overflow-x: auto; overflow-y: hidden; }
+canvas { display: block; }
+#readout { font: 12.5px ui-monospace, Menlo, monospace; min-height: 1.5em; margin-top: 6px; }
+table { border-collapse: collapse; font-size: 12.5px; margin-top: 12px; }
+td, th { border-bottom: 1px solid var(--line); padding: 2px 10px 2px 0; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<h1 id="title">Capture viewer</h1>
+<div class="meta" id="meta"></div>
+<pre class="answer" id="answer"></pre>
+<div class="bar">
+  <button id="zin" title="zoom in">Zoom in</button>
+  <button id="zout" title="zoom out">Zoom out</button>
+  <button id="fit">Fit</button>
+  <button id="asked" title="the cycles the request asked for">Asked window</button>
+  <button id="trig">Go to trigger</button>
+  <label class="file">Open capture JSON<input type="file" id="file" accept=".json,application/json"></label>
+  <span class="muted">wheel or pinch to zoom, drag to scroll, click to place the cursor</span>
+</div>
+<div id="wrap"><div id="names"></div><div id="scroll"><canvas id="cv"></canvas></div></div>
+<div id="readout"></div>
+<table id="cond"></table>
+<script>
+"use strict";
+const CAPTURE = {"schema":"fda-capture/1","instrument":{"kind":"vendor_ila","driver":"debug_core.instruments.VendorIla","mock":false,"settings":{"depth":1024,"position":0,"combine":"AND","compares":{"phase":"00000000"},"board":"nexys_a7_100t","cable_serial":"...B73A"}},"design":"designs/t1_dimmer_counter","build":{"dir":"designs/t1_dimmer_counter/build/debug/a6a9590e41ad/build/ila","build_id":"ff89fe4c","build_stamp":"819c49ef","probeset":"a6a9590e41ad","vivado":"2026.1","program_seconds":31.6,"power_ok":{"pass":true,"total_w":0.16,"junction_c":42.9,"source":"wall"},"reused":false,"build_probeset":"a6a9590e41ad"},"request":"With COUNT set to 0x8421 and DUTY set to 0x40, record led and phase for one whole PWM period starting when phase wraps to 0: no cycles before the trigger, 1023 after. Then read DUTY and COUNT back.","question":"How do led and phase behave over one PWM period after phase wraps to 0 with COUNT set to 0x8421 and DUTY set to 0x40?","plan_probeset":"a6a9590e41ad","timebase":{"unit":"cycle","clock":"CLK100MHZ","mhz":100.0,"samples":1024,"trigger_sample":0,"alignment_uncertainty_cycles":0,"trigger_sample_from":"TRIGGER column"},"channels":[{"name":"phase","path":"u_dut.phase","kind":"digital","width":8,"samples":[0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,7,7,7,7,8,8,8,8,9,9,9,9,10,10,10,10,11,11,11,11,12,12,12,12,13,13,13,13,14,14,14,14,15,15,15,15,16,16,16,16,17,17,17,17,18,18,18,18,19,19,19,19,20,20,20,20,21,21,21,21,22,22,22,22,23,23,23,23,24,24,24,24,25,25,25,25,26,26,26,26,27,27,27,27,28,28,28,28,29,29,29,29,30,30,30,30,31,31,31,31,32,32,32,32,33,33,33,33,34,34,34,34,35,35,35,35,36,36,36,36,37,37,37,37,38,38,38,38,39,39,39,39,40,40,40,40,41,41,41,41,42,42,42,42,43,43,43,43,44,44,44,44,45,45,45,45,46,46,46,46,47,47,47,47,48,48,48,48,49,49,49,49,50,50,50,50,51,51,51,51,52,52,52,52,53,53,53,53,54,54,54,54,55,55,55,55,56,56,56,56,57,57,57,57,58,58,58,58,59,59,59,59,60,60,60,60,61,61,61,61,62,62,62,62,63,63,63,63,64,64,64,64,65,65,65,65,66,66,66,66,67,67,67,67,68,68,68,68,69,69,69,69,70,70,70,70,71,71,71,71,72,72,72,72,73,73,73,73,74,74,74,74,75,75,75,75,76,76,76,76,77,77,77,77,78,78,78,78,79,79,79,79,80,80,80,80,81,81,81,81,82,82,82,82,83,83,83,83,84,84,84,84,85,85,85,85,86,86,86,86,87,87,87,87,88,88,88,88,89,89,89,89,90,90,90,90,91,91,91,91,92,92,92,92,93,93,93,93,94,94,94,94,95,95,95,95,96,96,96,96,97,97,97,97,98,98,98,98,99,99,99,99,100,100,100,100,101,101,101,101,102,102,102,102,103,103,103,103,104,104,104,104,105,105,105,105,106,106,106,106,107,107,107,107,108,108,108,108,109,109,109,109,110,110,110,110,111,111,111,111,112,112,112,112,113,113,113,113,114,114,114,114,115,115,115,115,116,116,116,116,117,117,117,117,118,118,118,118,119,119,119,119,120,120,120,120,121,121,121,121,122,122,122,122,123,123,123,123,124,124,124,124,125,125,125,125,126,126,126,126,127,127,127,127,128,128,128,128,129,129,129,129,130,130,130,130,131,131,131,131,132,132,132,132,133,133,133,133,134,134,134,134,135,135,135,135,136,136,136,136,137,137,137,137,138,138,138,138,139,139,139,139,140,140,140,140,141,141,141,141,142,142,142,142,143,143,143,143,144,144,144,144,145,145,145,145,146,146,146,146,147,147,147,147,148,148,148,148,149,149,149,149,150,150,150,150,151,151,151,151,152,152,152,152,153,153,153,153,154,154,154,154,155,155,155,155,156,156,156,156,157,157,157,157,158,158,158,158,159,159,159,159,160,160,160,160,161,161,161,161,162,162,162,162,163,163,163,163,164,164,164,164,165,165,165,165,166,166,166,166,167,167,167,167,168,168,168,168,169,169,169,169,170,170,170,170,171,171,171,171,172,172,172,172,173,173,173,173,174,174,174,174,175,175,175,175,176,176,176,176,177,177,177,177,178,178,178,178,179,179,179,179,180,180,180,180,181,181,181,181,182,182,182,182,183,183,183,183,184,184,184,184,185,185,185,185,186,186,186,186,187,187,187,187,188,188,188,188,189,189,189,189,190,190,190,190,191,191,191,191,192,192,192,192,193,193,193,193,194,194,194,194,195,195,195,195,196,196,196,196,197,197,197,197,198,198,198,198,199,199,199,199,200,200,200,200,201,201,201,201,202,202,202,202,203,203,203,203,204,204,204,204,205,205,205,205,206,206,206,206,207,207,207,207,208,208,208,208,209,209,209,209,210,210,210,210,211,211,211,211,212,212,212,212,213,213,213,213,214,214,214,214,215,215,215,215,216,216,216,216,217,217,217,217,218,218,218,218,219,219,219,219,220,220,220,220,221,221,221,221,222,222,222,222,223,223,223,223,224,224,224,224,225,225,225,225,226,226,226,226,227,227,227,227,228,228,228,228,229,229,229,229,230,230,230,230,231,231,231,231,232,232,232,232,233,233,233,233,234,234,234,234,235,235,235,235,236,236,236,236,237,237,237,237,238,238,238,238,239,239,239,239,240,240,240,240,241,241,241,241,242,242,242,242,243,243,243,243,244,244,244,244,245,245,245,245,246,246,246,246,247,247,247,247,248,248,248,248,249,249,249,249,250,250,250,250,251,251,251,251,252,252,252,252,253,253,253,253,254,254,254,254,255,255,255,255]},{"name":"led","path":"u_dut.led","kind":"digital","width":16,"samples":[0,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,33825,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}],"trigger":{"combine":"AND","conditions":[{"probe":"phase","op":"==","value":"0","pattern":"00000000","text":"phase == 0x00"}]},"window":{"pre":0,"post":1023,"depth":1024,"position":0,"requested":{"pre":0,"post":1023}},"conditions":{"armed":{"read":true,"now":{"TEMPERATURE":24.9,"VCCINT":1.006,"VCCAUX":1.794,"VCCBRAM":1.006},"max":{"TEMPERATURE":25.72,"VCCINT":1.0071,"VCCAUX":1.7952,"VCCBRAM":1.0071},"min":{"TEMPERATURE":24.24,"VCCINT":1.0042,"VCCAUX":1.7812,"VCCBRAM":1.0042},"flags":"0000","inside_roc":true,"outside":[],"limits":{"VCCINT":[0.95,1.05],"VCCAUX":[1.71,1.89],"VCCBRAM":[0.95,1.05],"TEMPERATURE":[null,85.0]},"note":"XADC through JTAG at programming time; min/max are latched since this configuration; the XADC samples at about 1 MSPS across channels, so nanosecond supply droop is not visible to it","alarm_bits":[]},"done":{"read":true,"now":{"TEMPERATURE":24.7,"VCCINT":1.006,"VCCAUX":1.794,"VCCBRAM":1.006},"max":{"TEMPERATURE":25.72,"VCCINT":1.0071,"VCCAUX":1.7952,"VCCBRAM":1.0071},"min":{"TEMPERATURE":24.24,"VCCINT":1.0042,"VCCAUX":1.7812,"VCCBRAM":1.0042},"flags":"0000","inside_roc":true,"outside":[],"limits":{"VCCINT":[0.95,1.05],"VCCAUX":[1.71,1.89],"VCCBRAM":[0.95,1.05],"TEMPERATURE":[null,85.0]},"note":"XADC through JTAG at programming time; min/max are latched since this configuration; the XADC samples at about 1 MSPS across channels, so nanosecond supply droop is not visible to it","alarm_bits":[]},"alarms":[],"verdict":"inside ROC","outside":[],"limits":{"VCCINT":[0.95,1.05],"VCCAUX":[1.71,1.89],"VCCBRAM":[0.95,1.05],"TEMPERATURE":[null,85.0]},"programmed":{"read":true,"now":{"TEMPERATURE":24.7,"VCCINT":1.006,"VCCAUX":1.793,"VCCBRAM":1.006},"max":{"TEMPERATURE":25.72,"VCCINT":1.0063,"VCCAUX":1.7952,"VCCBRAM":1.0071},"min":{"TEMPERATURE":24.61,"VCCINT":1.0049,"VCCAUX":1.7812,"VCCBRAM":1.0049},"flags":"0000","inside_roc":true,"outside":[],"limits":{"VCCINT":[0.95,1.05],"VCCAUX":[1.71,1.89],"VCCBRAM":[0.95,1.05],"TEMPERATURE":[null,85.0]},"note":"XADC through JTAG at programming time; min/max are latched since this configuration; the XADC samples at about 1 MSPS across channels, so nanosecond supply droop is not visible to it"}},"stimulus_log":[{"phase":"setup","op":"write","register":"COUNT","value":33825,"address":128,"t_s":0.059},{"phase":"setup","op":"write","register":"DUTY","value":64,"address":129,"t_s":0.065},{"phase":"readback","op":"read","register":"DUTY","address":129,"read":64,"t_s":31.676},{"phase":"readback","op":"read","register":"COUNT","address":128,"read":33825,"t_s":31.68}],"readback":{"DUTY":64,"COUNT":33825},"requirement":null,"created":"2026-11-12T10:10:11"};
+const ANSWER = "Triggered on phase == 0x00: cycle 0 is sample 0 of 1024 at 100 MHz (window cycles 0 to 1023). At cycle 0: phase = 0x00, led = 0x0000.\nphase was 0x00 at the trigger and changed 255 times (256 values, 0x00 to 0xFF); first changes: cycle 4: 0x00 -> 0x01, cycle 8: 0x01 -> 0x02, cycle 12: 0x02 -> 0x03.\nled was 0x0000 from cycle 0 to 0, then 0x8421 from cycle 1 to 256, then 0x0000 from cycle 257 to 1023.\nRead back over the shell after the capture: DUTY = 0x00000040, COUNT = 0x00008421.\nOperating conditions (XADC over JTAG) armed: die 24.9 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; done: die 24.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside ROC.";
+const ROW = 28, AXIS = 22;
+let cap = null, px = 4, cursor = null;
+const cv = document.getElementById("cv"), sc = document.getElementById("scroll");
+function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function hex(v, w) { return w === 1 ? String(v) : "0x" + v.toString(16).toUpperCase().padStart(Math.ceil(w / 4), "0"); }
+function load(c, answer) {
+  cap = c;
+  document.getElementById("title").textContent = c.request || "Capture";
+  const tb = c.timebase, b = c.build || {}, ins = c.instrument || {};
+  document.getElementById("meta").textContent =
+    `${ins.kind || ""}${ins.mock ? " (mock)" : ""} | ${tb.samples} samples, trigger at sample ${tb.trigger_sample} (cycle 0)` +
+    (tb.mhz ? `, ${tb.mhz} MHz ${tb.clock || ""}` : "") + (b.build_id ? ` | build ${b.build_id}` : "") +
+    (c.plan_probeset ? ` | probe set ${c.plan_probeset}` : "") + (c.created ? ` | ${c.created}` : "");
+  document.getElementById("answer").textContent = answer || "";
+  document.getElementById("answer").style.display = answer ? "" : "none";
+  const names = document.getElementById("names");
+  names.innerHTML = "";
+  const ax = document.createElement("div"); ax.className = "axis"; ax.textContent = "cycle"; names.appendChild(ax);
+  for (const ch of c.channels) {
+    const d = document.createElement("div");
+    d.textContent = ch.width > 1 ? `${ch.name}[${ch.width - 1}:0]` : ch.name;
+    d.title = ch.path || ch.name; names.appendChild(d);
+  }
+  const t = document.getElementById("cond"); t.innerHTML = "";
+  const cond = c.conditions || {};
+  for (const when of ["programmed", "armed", "done"]) {
+    const x = cond[when]; if (!x || !x.now) continue;
+    const r = t.insertRow(); r.insertCell().textContent = "XADC " + when;
+    r.insertCell().textContent = Object.entries(x.now).map(([k, v]) => `${k} ${v}`).join("  ");
+  }
+  if (cond.verdict) { const r = t.insertRow(); r.insertCell().textContent = "verdict"; r.insertCell().textContent = cond.verdict + (cond.alarms && cond.alarms.length ? " (alarms: " + cond.alarms.join(", ") + ")" : ""); }
+  for (const [k, v] of Object.entries(c.readback || {})) { const r = t.insertRow(); r.insertCell().textContent = "read back " + k; r.insertCell().textContent = "0x" + Number(v).toString(16).toUpperCase().padStart(8, "0"); }
+  asked();
+}
+// open on the window the request asked for (the ILA window is a power of two and usually much longer)
+function asked() {
+  if (!cap) return;
+  const r = (cap.window || {}).requested || {}, t0 = cap.timebase.trigger_sample, n = cap.timebase.samples;
+  if (r.pre == null && r.post == null) { fit(); toTrigger(); return; }
+  const lo = Math.max(0, t0 - (r.pre == null ? t0 : r.pre)), hi = Math.min(n - 1, t0 + (r.post == null ? n : r.post));
+  px = Math.min(40, Math.max(0.05, (sc.clientWidth - 4) / (hi - lo + 1))); draw(); sc.scrollLeft = lo * px;
+}
+function fit() { if (!cap) return; px = Math.max(0.05, (sc.clientWidth - 4) / cap.timebase.samples); draw(); }
+function toTrigger() { if (!cap) return; sc.scrollLeft = cap.timebase.trigger_sample * px - sc.clientWidth / 2; }
+function zoom(f, at) {
+  if (!cap) return;
+  const x = at === undefined ? sc.scrollLeft + sc.clientWidth / 2 : at, s = x / px;
+  px = Math.min(40, Math.max(0.05, px * f)); draw(); sc.scrollLeft = s * px - (x - sc.scrollLeft);
+}
+function draw() {
+  if (!cap) return;
+  const n = cap.timebase.samples, W = Math.max(sc.clientWidth, Math.ceil(n * px) + 2), H = AXIS + ROW * cap.channels.length;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = css("--bg"); g.fillRect(0, 0, W, H);
+  const t0 = cap.timebase.trigger_sample, fg = css("--wave"), line = css("--line"), muted = css("--muted");
+  g.font = "11px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
+  // axis ticks every power-of-ten-ish step of cycles
+  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
+  const step = steps.find(s => s * px >= 60) || 100000;
+  g.strokeStyle = line; g.fillStyle = muted; g.lineWidth = 1;
+  for (let cy = Math.ceil(-t0 / step) * step; cy <= n - 1 - t0; cy += step) {
+    const x = (cy + t0) * px + 0.5; g.beginPath(); g.moveTo(x, AXIS - 6); g.lineTo(x, H); g.stroke(); g.fillText(String(cy), x + 3, AXIS / 2);
+  }
+  g.strokeStyle = line; g.beginPath(); g.moveTo(0, AXIS - 0.5); g.lineTo(W, AXIS - 0.5); g.stroke();
+  cap.channels.forEach((ch, i) => {
+    const y = AXIS + i * ROW, hi = y + 6, lo = y + ROW - 6, s = ch.samples;
+    g.strokeStyle = line; g.beginPath(); g.moveTo(0, y + ROW - 0.5); g.lineTo(W, y + ROW - 0.5); g.stroke();
+    g.strokeStyle = fg; g.lineWidth = 1.25;
+    if (ch.width === 1) {
+      g.beginPath(); g.moveTo(0, s[0] ? hi : lo);
+      for (let k = 1; k < n; k++) { if (s[k] !== s[k - 1]) { const x = k * px; g.lineTo(x, s[k - 1] ? hi : lo); g.lineTo(x, s[k] ? hi : lo); } }
+      g.lineTo(n * px, s[n - 1] ? hi : lo); g.stroke();
+    } else {
+      let a = 0;
+      for (let k = 1; k <= n; k++) {
+        if (k === n || s[k] !== s[a]) {
+          const x0 = a * px, x1 = k * px, m = Math.min(3, (x1 - x0) / 2), yc = (hi + lo) / 2;
+          g.fillStyle = css("--bus"); g.beginPath();
+          g.moveTo(x0, yc); g.lineTo(x0 + m, hi); g.lineTo(x1 - m, hi); g.lineTo(x1, yc); g.lineTo(x1 - m, lo); g.lineTo(x0 + m, lo); g.closePath(); g.fill(); g.stroke();
+          const txt = hex(s[a], ch.width);
+          if (g.measureText(txt).width + 6 < x1 - x0) { g.fillStyle = fg; g.fillText(txt, x0 + 4, yc); }
+          a = k;
+        }
+      }
+    }
+  });
+  // trigger and cursor
+  g.strokeStyle = css("--trig"); g.setLineDash([4, 3]); g.lineWidth = 1;
+  const xt = t0 * px + 0.5; g.beginPath(); g.moveTo(xt, 0); g.lineTo(xt, H); g.stroke(); g.setLineDash([]);
+  g.fillStyle = css("--trig"); g.fillText("trigger", xt + 16, AXIS / 2);
+  if (cursor !== null) { const xc = (cursor + 0.5) * px; g.strokeStyle = css("--cursor"); g.beginPath(); g.moveTo(xc, AXIS); g.lineTo(xc, H); g.stroke(); }
+}
+function readout(k) {
+  if (!cap || k < 0 || k >= cap.timebase.samples) return;
+  const cy = k - cap.timebase.trigger_sample;
+  document.getElementById("readout").textContent = `cycle ${cy}: ` + cap.channels.map(ch => `${ch.name}=${hex(ch.samples[k], ch.width)}`).join("  ");
+}
+const sampleAt = e => Math.floor((e.clientX - cv.getBoundingClientRect().left) / px);
+cv.addEventListener("mousemove", e => readout(sampleAt(e)));
+cv.addEventListener("click", e => { cursor = sampleAt(e); readout(cursor); draw(); });
+sc.addEventListener("wheel", e => { if (e.ctrlKey || Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.preventDefault(); zoom(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - cv.getBoundingClientRect().left); } }, { passive: false });
+let drag = null;
+cv.addEventListener("pointerdown", e => { drag = { x: e.clientX, s: sc.scrollLeft }; });
+window.addEventListener("pointerup", () => { drag = null; });
+window.addEventListener("pointermove", e => { if (drag) sc.scrollLeft = drag.s - (e.clientX - drag.x); });
+document.getElementById("zin").onclick = () => zoom(2);
+document.getElementById("zout").onclick = () => zoom(0.5);
+document.getElementById("fit").onclick = fit;
+document.getElementById("asked").onclick = asked;
+document.getElementById("trig").onclick = toTrigger;
+document.getElementById("file").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => { cursor = null; load(JSON.parse(t), ""); }).catch(err => alert("Not a capture JSON: " + err));
+};
+window.addEventListener("resize", () => draw());
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+if (CAPTURE) load(CAPTURE, ANSWER);
+</script>
+</body>
+</html>

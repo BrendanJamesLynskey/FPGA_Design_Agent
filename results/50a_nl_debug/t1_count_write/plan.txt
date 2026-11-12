@@ -1,0 +1,16 @@
+Request: First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.
+Back end: vendor ILA (one ILA IP, Basic tier), clock domain CLK100MHZ (net CLK100MHZ_IBUF_BUFG, 100 MHz).
+Probes:
+  win_wr           1 bit   u_shell.u_core.win_wr        <- 'win_wr' (register, trigger) pins u_shell/u_core/win_wr_reg/Q
+                 note: the shell writes a design register
+  addr             8 bits  u_shell.u_core.frame[1]      <- 'addr' (register, trigger) pins u_shell/u_core/frame_reg[1][*]/Q
+                 note: the request's ADDR byte (0x80 + offset for the design's registers)
+  count           16 bits  u_dut.count                  <- 'count' (register, data) pins u_dut/count_reg[*]/Q
+                 note: the counter itself
+Trigger (AND): win_wr == 1 AND addr == 0x80
+Window: 16 cycles before the trigger and 1007 after (1024 samples; asked for 16 before, 32 after).
+Ports: probe0 flags 1 bits = win_wr[1]; probe1 data 24 bits = addr[8] + count[16] (2 of 5 ports; about 1 BRAM36).
+Before arming: write COUNT (0x80) = 0x3
+After arming: write COUNT (0x80) = 0x1234
+After the capture: read COUNT (0x80)
+Probe set ad3b58a920a1: buildable.

@@ -1,0 +1,173 @@
+{
+ "schema": "fda-debug-plan/1",
+ "design": "designs/t1_dimmer_counter",
+ "request": "Trigger on the rising edge of rx_valid when the received byte rx_data is 0xA5, and show rx_data and the raw UART receive line, 900 cycles before and 100 after. Make it happen by reading SCRATCH.",
+ "backend": "vendor_ila",
+ "clock": {
+  "domain": "CLK100MHZ",
+  "net": "CLK100MHZ_IBUF_BUFG",
+  "mhz": 100.0
+ },
+ "probes": [
+  {
+   "label": "rx_valid",
+   "path": "u_shell.u_rx.valid",
+   "width": 1,
+   "pins": "u_shell/u_rx/valid_reg/Q",
+   "kind": "register",
+   "requested_as": "rx_valid",
+   "clock": "CLK100MHZ",
+   "role": "trigger",
+   "notes": [
+    "a byte arrived from the host"
+   ],
+   "group": "flags"
+  },
+  {
+   "label": "rx_data",
+   "path": "u_shell.u_rx.data",
+   "width": 8,
+   "pins": "u_shell/u_rx/data_reg[*]/Q",
+   "kind": "register",
+   "requested_as": "rx_data",
+   "clock": "CLK100MHZ",
+   "role": "trigger",
+   "notes": [],
+   "group": "data"
+  },
+  {
+   "label": "uart_rx_pin",
+   "path": "uart_rx_pin",
+   "width": 1,
+   "pins": "UART_TXD_IN_IBUF_inst/O",
+   "kind": "pin",
+   "requested_as": "uart_rx_pin",
+   "clock": "CLK100MHZ",
+   "role": "data",
+   "notes": [
+    "the raw serial line from the host"
+   ],
+   "group": "flags"
+  }
+ ],
+ "trigger": {
+  "combine": "AND",
+  "conditions": [
+   {
+    "probe": "rx_valid",
+    "op": "rise",
+    "value": null,
+    "pattern": "R",
+    "text": "rx_valid rises"
+   },
+   {
+    "probe": "rx_data",
+    "op": "==",
+    "value": "0xA5",
+    "pattern": "10100101",
+    "text": "rx_data == 0xA5"
+   }
+  ]
+ },
+ "window": {
+  "pre": 900,
+  "post": 123,
+  "depth": 1024,
+  "position": 900,
+  "requested": {
+   "pre": 900,
+   "post": 100
+  }
+ },
+ "ports": [
+  {
+   "port": 0,
+   "group": "flags",
+   "width": 2,
+   "slices": [
+    {
+     "label": "rx_valid",
+     "offset": 0,
+     "width": 1
+    },
+    {
+     "label": "uart_rx_pin",
+     "offset": 1,
+     "width": 1
+    }
+   ]
+  },
+  {
+   "port": 1,
+   "group": "data",
+   "width": 8,
+   "slices": [
+    {
+     "label": "rx_data",
+     "offset": 0,
+     "width": 8
+    }
+   ]
+  }
+ ],
+ "setup": [],
+ "stimulus": [
+  {
+   "op": "read",
+   "register": "SCRATCH",
+   "address": 3
+  }
+ ],
+ "readback": [],
+ "fit": {
+  "ok": true,
+  "max_ports": 5,
+  "bram_budget": 32,
+  "ports_used": 2,
+  "total_bits": 10,
+  "bram36_estimate": 1
+ },
+ "errors": [],
+ "warnings": [],
+ "question": "What are rx_data and the raw UART receive line around the arrival of byte 0xA5?",
+ "unclear": [],
+ "probeset": "7b2af61c97ae",
+ "intent": {
+  "probes": [
+   "uart_rx_pin"
+  ],
+  "trigger": {
+   "combine": "AND",
+   "conditions": [
+    {
+     "signal": "rx_valid",
+     "op": "rise"
+    },
+    {
+     "signal": "rx_data",
+     "op": "==",
+     "value": "0xA5"
+    }
+   ]
+  },
+  "pre": 900,
+  "post": 100,
+  "clock": null,
+  "stimulus": [
+   {
+    "op": "read",
+    "register": "SCRATCH"
+   }
+  ],
+  "question": "What are rx_data and the raw UART receive line around the arrival of byte 0xA5?",
+  "unclear": []
+ },
+ "parse": {
+  "model": "openai/gpt-6-luna",
+  "cost": 0.00013935,
+  "prompt_tokens": 1458,
+  "completion_tokens": 249,
+  "attempts": 1,
+  "parser": "llm"
+ }
+}

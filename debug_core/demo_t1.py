@@ -96,6 +96,16 @@ def scrub_tree(d: Path, secrets: list[str]) -> None:
             f.write_text(t)
 
 
+def clean_outputs(out: Path, secrets: list[str]) -> None:
+    """Keep the raw files a capture came from, without the Vivado and hw_server logs and the programming transcript (they
+    name the cable), and with any other mention of the cable serial shortened to its last 4 characters."""
+    for f in (list(out.rglob("*.log")) + list(out.glob("program/*.stdout.txt"))
+              + [out / "ila" / x for x in ("cap.go", "cap.armed", "cap.done")]):
+        if f.is_file():
+            f.unlink()
+    scrub_tree(out, secrets)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("--only", nargs="*")
@@ -134,9 +144,13 @@ def main(argv: list[str] | None = None) -> int:
             continue
         ov, labels, info = R.ensure_build(plan, allow_build=False)
         t_cap = time.monotonic()
-        cap = R.hardware_capture(plan, ov, labels, out, a.board,
-                                 lock_text=f"FPGA b50a: debug demo {name}, {time.strftime('%H:%M')}, expected end "
-                                           f"{time.strftime('%H:%M', time.localtime(time.time() + 300))}")
+        try:
+            cap = R.hardware_capture(plan, ov, labels, out, a.board,
+                                     lock_text=f"FPGA b50a: debug demo {name}, {time.strftime('%H:%M')}, expected end "
+                                               f"{time.strftime('%H:%M', time.localtime(time.time() + 300))}")
+        except Exception:
+            clean_outputs(out, secrets)          # a failed run's files are kept as evidence, never with the cable named
+            raise
         cap["build"]["reused"] = info["reused"] and ov.name != plan["probeset"]
         cap["build"]["build_probeset"] = ov.name
         ans = R.finish(cap, plan, out)
@@ -152,10 +166,7 @@ def main(argv: list[str] | None = None) -> int:
                          "seconds_total": round(time.monotonic() - t0, 1), "seconds_program_capture": round(time.monotonic() - t_cap, 1),
                          "pass": chk["pass"], "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
         rc |= 0 if chk["pass"] else 1
-        # keep the raw files the capture came from, without the Vivado logs (they name the cable)
-        for f in list((out / "ila").glob("*.log")) + list((out / "program").glob("*.log")) + list(out.glob("hw_server.log")):
-            f.unlink()
-        scrub_tree(out, secrets)
+        clean_outputs(out, secrets)
         (a.results / "demo.json").write_text(json.dumps(summary, indent=1, default=str) + "\n")
     return rc
 

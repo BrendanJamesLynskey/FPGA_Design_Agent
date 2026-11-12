@@ -69,9 +69,13 @@ def redact(serial: str | None) -> str | None:
 # --- guard rails ------------------------------------------------------------------
 
 def preflight(min_avail_gb: float = HW_MIN_AVAIL_GB) -> int:
-    running = subprocess.run(["pgrep", "-x", "vivado"], capture_output=True, text=True).stdout.split()
-    if running:
-        raise HwError(f"another Vivado is running (PIDs {','.join(running)}); one Vivado job at a time on this PC")
+    # brief 50A: count the real Vivado binaries as flow/run_vivado.sh does (not the wrapper scripts, not synthesis helpers),
+    # and allow FDA_VIVADO_MAX of them (default 1; a caller sets 2 only when _handoff/take_heavy_slot.sh admitted the job)
+    out = subprocess.run(["pgrep", "-af", "unwrapped/lnx64.o/vivado"], capture_output=True, text=True).stdout.splitlines()
+    running = [l.split()[0] for l in out if "task_worker.tcl" not in l]
+    limit = int(os.environ.get("FDA_VIVADO_MAX", "1") or 1)
+    if len(running) >= limit:
+        raise HwError(f"another Vivado is running (PIDs {','.join(running)}); limit FDA_VIVADO_MAX={limit} on this PC")
     avail_kb = next(int(l.split()[1]) for l in Path("/proc/meminfo").read_text().splitlines()
                     if l.startswith("MemAvailable:"))
     if avail_kb < min_avail_gb * 2**20:

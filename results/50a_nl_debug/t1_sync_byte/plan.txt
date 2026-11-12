@@ -1,0 +1,13 @@
+Request: Trigger on the rising edge of rx_valid when the received byte rx_data is 0xA5, and show rx_data and the raw UART receive line, 900 cycles before and 100 after. Make it happen by reading SCRATCH.
+Back end: vendor ILA (one ILA IP, Basic tier), clock domain CLK100MHZ (net CLK100MHZ_IBUF_BUFG, 100 MHz).
+Probes:
+  rx_valid         1 bit   u_shell.u_rx.valid           <- 'rx_valid' (register, trigger) pins u_shell/u_rx/valid_reg/Q
+                 note: a byte arrived from the host
+  rx_data          8 bits  u_shell.u_rx.data            <- 'rx_data' (register, trigger) pins u_shell/u_rx/data_reg[*]/Q
+  uart_rx_pin      1 bit   uart_rx_pin                  <- 'uart_rx_pin' (pin, data) pins UART_TXD_IN_IBUF_inst/O
+                 note: the raw serial line from the host
+Trigger (AND): rx_valid rises AND rx_data == 0xA5
+Window: 900 cycles before the trigger and 123 after (1024 samples; asked for 900 before, 100 after).
+Ports: probe0 flags 2 bits = rx_valid[1] + uart_rx_pin[1]; probe1 data 8 bits = rx_data[8] (2 of 5 ports; about 1 BRAM36).
+After arming: read SCRATCH (0x03)
+Probe set 7b2af61c97ae: buildable.

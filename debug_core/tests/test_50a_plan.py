@@ -181,3 +181,15 @@ def test_find_build_reuses_a_build_that_holds_the_probes(tmp_path: Path) -> None
 
 def small_intent() -> dict:
     return {"probes": ["count"], "trigger": {"combine": "AND", "conditions": [{"signal": "win_wr", "op": "rise"}]}}
+
+
+def test_or_terms_get_a_port_each() -> None:
+    """Measured on Vivado 2026.1 Basic (brief 50A board run): two OR compares on one packed port were refused
+    (Labtools 27-3239, 27-3241: one comparator per port; compares merge into it only under AND)."""
+    p = make_plan(T1, {"probes": ["count"], "trigger": {"combine": "OR", "conditions": [
+        {"signal": "win_wr", "op": "rise"}, {"signal": "press_clear", "op": "rise"}]}})
+    groups = {s["label"]: pt["group"] for pt in p["ports"] for s in pt["slices"]}
+    assert groups["win_wr"] != groups["press_clear"] and len(p["ports"]) == 3
+    a = make_plan(T1, {"probes": ["count"], "trigger": {"combine": "AND", "conditions": [
+        {"signal": "win_wr", "op": "rise"}, {"signal": "press_clear", "op": "==", "value": 0}]}})
+    assert len(a["ports"]) == 2                                  # AND shares the flags port

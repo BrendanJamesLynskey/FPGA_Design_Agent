@@ -1,0 +1,200 @@
+{
+ "schema": "fda-debug-plan/1",
+ "design": "designs/t1_dimmer_counter",
+ "request": "Capture count and duty when either win_wr or press_clear goes to 1, 8 cycles before and 64 after. To make it happen, wait 300 ms and then write 0x22 to DUTY.",
+ "backend": "vendor_ila",
+ "clock": {
+  "domain": "CLK100MHZ",
+  "net": "CLK100MHZ_IBUF_BUFG",
+  "mhz": 100.0
+ },
+ "probes": [
+  {
+   "label": "win_wr",
+   "path": "u_shell.u_core.win_wr",
+   "width": 1,
+   "pins": "u_shell/u_core/win_wr_reg/Q",
+   "kind": "register",
+   "requested_as": "win_wr",
+   "clock": "CLK100MHZ",
+   "role": "trigger",
+   "notes": [
+    "the shell writes a design register"
+   ],
+   "group": "flags"
+  },
+  {
+   "label": "press_clear",
+   "path": "u_dut.u_db_clear.press",
+   "width": 1,
+   "pins": "u_dut/u_db_clear/press_reg/Q",
+   "kind": "register",
+   "requested_as": "press_clear",
+   "clock": "CLK100MHZ",
+   "role": "trigger",
+   "notes": [],
+   "group": "flags"
+  },
+  {
+   "label": "count",
+   "path": "u_dut.count",
+   "width": 16,
+   "pins": "u_dut/count_reg[*]/Q",
+   "kind": "register",
+   "requested_as": "count",
+   "clock": "CLK100MHZ",
+   "role": "data",
+   "notes": [
+    "the counter itself"
+   ],
+   "group": "data"
+  },
+  {
+   "label": "duty",
+   "path": "u_dut.duty",
+   "width": 8,
+   "pins": "u_dut/duty_reg[*]/Q",
+   "kind": "register",
+   "requested_as": "u_dut.duty",
+   "clock": "CLK100MHZ",
+   "role": "data",
+   "notes": [],
+   "group": "data"
+  }
+ ],
+ "trigger": {
+  "combine": "OR",
+  "conditions": [
+   {
+    "probe": "win_wr",
+    "op": "rise",
+    "value": null,
+    "pattern": "R",
+    "text": "win_wr rises"
+   },
+   {
+    "probe": "press_clear",
+    "op": "rise",
+    "value": null,
+    "pattern": "R",
+    "text": "press_clear rises"
+   }
+  ]
+ },
+ "window": {
+  "pre": 8,
+  "post": 1015,
+  "depth": 1024,
+  "position": 8,
+  "requested": {
+   "pre": 8,
+   "post": 64
+  }
+ },
+ "ports": [
+  {
+   "port": 0,
+   "group": "flags",
+   "width": 2,
+   "slices": [
+    {
+     "label": "win_wr",
+     "offset": 0,
+     "width": 1
+    },
+    {
+     "label": "press_clear",
+     "offset": 1,
+     "width": 1
+    }
+   ]
+  },
+  {
+   "port": 1,
+   "group": "data",
+   "width": 24,
+   "slices": [
+    {
+     "label": "count",
+     "offset": 0,
+     "width": 16
+    },
+    {
+     "label": "duty",
+     "offset": 16,
+     "width": 8
+    }
+   ]
+  }
+ ],
+ "setup": [],
+ "stimulus": [
+  {
+   "op": "wait_ms",
+   "ms": 300.0
+  },
+  {
+   "op": "write",
+   "register": "DUTY",
+   "value": 34,
+   "address": 129
+  }
+ ],
+ "readback": [],
+ "fit": {
+  "ok": true,
+  "max_ports": 5,
+  "bram_budget": 32,
+  "ports_used": 2,
+  "total_bits": 26,
+  "bram36_estimate": 1
+ },
+ "errors": [],
+ "warnings": [],
+ "question": "What are count and duty when win_wr or press_clear rises?",
+ "unclear": [],
+ "probeset": "adcf8c7d382b",
+ "intent": {
+  "probes": [
+   "count",
+   "u_dut.duty"
+  ],
+  "trigger": {
+   "combine": "OR",
+   "conditions": [
+    {
+     "signal": "win_wr",
+     "op": "rise"
+    },
+    {
+     "signal": "press_clear",
+     "op": "rise"
+    }
+   ]
+  },
+  "pre": 8,
+  "post": 64,
+  "clock": null,
+  "stimulus": [
+   {
+    "op": "wait_ms",
+    "ms": 300
+   },
+   {
+    "op": "write",
+    "register": "DUTY",
+    "value": "0x22"
+   }
+  ],
+  "question": "What are count and duty when win_wr or press_clear rises?",
+  "unclear": []
+ },
+ "parse": {
+  "model": "openai/gpt-6-luna",
+  "cost": 0.000165945,
+  "prompt_tokens": 1454,
+  "completion_tokens": 291,
+  "attempts": 1,
+  "parser": "llm"
+ }
+}

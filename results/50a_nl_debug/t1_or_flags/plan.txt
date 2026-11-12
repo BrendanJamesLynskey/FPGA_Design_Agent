@@ -1,0 +1,14 @@
+Request: Capture count and duty when either win_wr or press_clear goes to 1, 8 cycles before and 64 after. To make it happen, wait 300 ms and then write 0x22 to DUTY.
+Back end: vendor ILA (one ILA IP, Basic tier), clock domain CLK100MHZ (net CLK100MHZ_IBUF_BUFG, 100 MHz).
+Probes:
+  win_wr           1 bit   u_shell.u_core.win_wr        <- 'win_wr' (register, trigger) pins u_shell/u_core/win_wr_reg/Q
+                 note: the shell writes a design register
+  press_clear      1 bit   u_dut.u_db_clear.press       <- 'press_clear' (register, trigger) pins u_dut/u_db_clear/press_reg/Q
+  count           16 bits  u_dut.count                  <- 'count' (register, data) pins u_dut/count_reg[*]/Q
+                 note: the counter itself
+  duty             8 bits  u_dut.duty                   <- 'duty' (register, data) pins u_dut/duty_reg[*]/Q
+Trigger (OR): win_wr rises OR press_clear rises
+Window: 8 cycles before the trigger and 1015 after (1024 samples; asked for 8 before, 64 after).
+Ports: probe0 or_win_wr 1 bits = win_wr[1]; probe1 or_press_clear 1 bits = press_clear[1]; probe2 data 24 bits = count[16] + duty[8] (3 of 5 ports; about 1 BRAM36).
+After arming: wait 300 ms; write DUTY (0x81) = 0x22
+Probe set 5786d4f73d78: buildable.

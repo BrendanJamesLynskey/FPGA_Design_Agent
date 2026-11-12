@@ -361,6 +361,12 @@ def make_plan(design: Path | str, intent: dict[str, Any], request: str | None = 
     fit: dict[str, Any] = {"ok": True, "max_ports": max_ports, "bram_budget": bram_budget}
     if plist:
         _assign_groups(plist)
+        if combine == "OR" and len(conds) > 1:
+            # measured on Vivado 2026.1 Basic (brief 50A): the ILA is built with one comparator per port, and compares on
+            # one port merge into that comparator only under AND (Labtools 27-3239 / 27-3241), so each OR term gets a port
+            for c in conds:
+                p = next(x for x in plist if x["label"] == c["probe"])
+                p["group"] = f"or_{p['label']}"
         try:
             ports = pack_probes([{**p, "name": p["label"]} for p in plist], max_ports=max_ports, clock_net=None)
         except ValueError as e:

@@ -239,7 +239,9 @@ class VendorIla(Instrument):
     def _errors(self) -> str:
         f = self.work / "ila_capture.stdout.txt"
         lines = f.read_text(errors="replace").splitlines() if f.is_file() else []
-        return " | ".join(l.strip() for l in lines if l.startswith("ERROR") or "ila_capture.tcl:" in l)[:800] or "(no Vivado error line)"
+        errs = [l.strip() for l in lines if l.startswith("ERROR")]
+        errs += [l.strip() for l in lines if "ila_capture.tcl:" in l and not l.lstrip().startswith("#")]
+        return " | ".join(errs)[:1200] or "(no Vivado error line)"
 
     def capture(self) -> dict[str, Any]:
         assert self.plan is not None and self.shell is not None

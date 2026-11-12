@@ -1,0 +1,6 @@
+Triggered on win_wr == 1 AND addr == 0x80: cycle 0 is sample 16 of 1024 at 100 MHz (the capture holds cycles -16 to 1007; this answer covers cycles -16 to 32 as asked). At cycle 0: win_wr = 1, addr = 0x80, count = 0x0003.
+win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).
+addr held 0x80 for the whole window (cycles -16 to 32).
+count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.
+Read back over the shell after the capture: COUNT = 0x00001234.
+Operating conditions (XADC over JTAG) armed: die 24.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; done: die 24.9 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside ROC.
