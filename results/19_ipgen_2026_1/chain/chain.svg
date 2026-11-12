@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1188 589" width="1188" height="589" role="img" aria-label="Nexys A7 microphone to 48 kS/s: PDM -&gt; CIC (R=25) -&gt; compensating FIR (R=2)">
+<style>
+:root{--bg:#ffffff;--fg:#111111;--mut:#555555;--line:#111111;--fill:#f4f4f4;--acc:#111111}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0d0d;--fg:#eeeeee;--mut:#a5a5a5;--line:#eeeeee;--fill:#1a1a1a;--acc:#eeeeee}}
+:root[data-theme="dark"]{--bg:#0d0d0d;--fg:#eeeeee;--mut:#a5a5a5;--line:#eeeeee;--fill:#1a1a1a;--acc:#eeeeee}
+svg{background:var(--bg)} text{fill:var(--fg);font-family:Georgia,'Times New Roman',serif}
+.t{font-size:13px;font-weight:bold} .s{font-size:11px} .m{font-size:10.5px;fill:var(--mut)} .n{font-size:12px;font-weight:bold}
+.mono{font-family:'DejaVu Sans Mono',Menlo,monospace}
+.blk{fill:var(--fill);stroke:var(--line);stroke-width:1.2} .lnk{stroke:var(--line);stroke-width:1.4;fill:none}
+.ext{stroke-dasharray:5 3} .rule{stroke:var(--mut);stroke-width:.6}
+</style>
+<text x="28" y="26" class="t" style="font-size:16px">Nexys A7 microphone to 48 kS/s: PDM -&gt; CIC (R=25) -&gt; compensating FIR (R=2)</text>
+<text x="28" y="44" class="m">Reference tone 1016.6 Hz at -26 dBFS (94 dB SPL). ENOB is full-scale referenced: (SINAD - 1.76 - tone level in dBFS) / 6.02.</text>
+<rect x="28" y="150" width="214" height="214" rx="2" class="blk ext"/>
+<text x="38" y="170" class="t">Microphone</text>
+<text x="38" y="185" class="m">Knowles SPK0833LM4H (data sheet)</text>
+<line x1="28" x2="242" y1="193" y2="193" class="rule"/>
+<text x="38" y="209" class="s">PDM, 1 bit, clock 2.4 MHz</text>
+<text x="38" y="224" class="s">SNR 63 dB(A) at 94 dB SPL</text>
+<text x="38" y="239" class="s">sensitivity -26 dBFS</text>
+<text x="38" y="254" class="s">THD &lt;= 1.0 % at 94 dB SPL</text>
+<text x="38" y="269" class="s">AOP 122 dB SPL</text>
+<line x1="36" x2="234" y1="275" y2="275" class="rule"/>
+<text x="38" y="288" class="s">model: 4th-order 1-bit</text>
+<text x="38" y="303" class="s">modulator + white noise at</text>
+<text x="38" y="318" class="s">the data-sheet SNR</text>
+<rect x="334" y="150" width="214" height="214" rx="2" class="blk"/>
+<text x="344" y="170" class="t">CIC decimator</text>
+<text x="344" y="185" class="m">CIC Compiler 4.0</text>
+<line x1="334" x2="548" y1="193" y2="193" class="rule"/>
+<text x="344" y="209" class="s">N=4  R=25  M=1</text>
+<text x="344" y="224" class="s">in 2 b, out 21 b (full)</text>
+<text x="344" y="239" class="s">gain 390625 (111.8 dB)</text>
+<text x="344" y="254" class="s">droop -2.51 dB at 20 kHz</text>
+<line x1="342" x2="540" y1="260" y2="260" class="rule"/>
+<text x="344" y="273" class="s">202 LUT  199 FF  0 DSP  0 BRAM</text>
+<text x="344" y="288" class="s">Fmax est. 286.0 MHz (synth, OOC)</text>
+<text x="344" y="303" class="s">latency 14 clocks (xsim)</text>
+<text x="344" y="318" class="s">xsim vs Python: 400 of 400 outputs identical</text>
+<rect x="640" y="150" width="214" height="214" rx="2" class="blk"/>
+<text x="650" y="170" class="t">Compensating FIR</text>
+<text x="650" y="185" class="m">FIR Compiler 7.2</text>
+<line x1="640" x2="854" y1="193" y2="193" class="rule"/>
+<text x="650" y="209" class="s">51 taps, 16-bit coefficients</text>
+<text x="650" y="224" class="s">decimate by 2, symmetric</text>
+<text x="650" y="239" class="s">FIR x CIC ripple 0.030 dB</text>
+<text x="650" y="254" class="s">alias rejection 46.4 dB</text>
+<text x="650" y="269" class="s">out 38 b (full precision)</text>
+<line x1="648" x2="846" y1="275" y2="275" class="rule"/>
+<text x="650" y="288" class="s">192 LUT  274 FF  1 DSP  0 BRAM</text>
+<text x="650" y="303" class="s">Fmax est. 340.6 MHz (synth, OOC)</text>
+<text x="650" y="318" class="s">latency 37 clocks (xsim)</text>
+<text x="650" y="333" class="s">xsim vs Python: 600 of 600 outputs identical</text>
+<rect x="946" y="150" width="214" height="214" rx="2" class="blk"/>
+<text x="956" y="170" class="t">Audio stream</text>
+<text x="956" y="185" class="m">to the rest of the design</text>
+<line x1="946" x2="1160" y1="193" y2="193" class="rule"/>
+<text x="956" y="209" class="s">48 kS/s</text>
+<text x="956" y="224" class="s">38 bit two&#x27;s complement</text>
+<text x="956" y="239" class="s">band 20 Hz - 20 kHz</text>
+<line x1="954" x2="1152" y1="245" y2="245" class="rule"/>
+<text x="956" y="258" class="s">reference tone 1016.6 Hz</text>
+<text x="956" y="273" class="s">at -26 dBFS</text>
+<text x="956" y="288" class="s">output SINAD 60.9 dB</text>
+<text x="956" y="303" class="s">SFDR (loud tone) 99.2 dB</text>
+<text x="956" y="318" class="s">THD (loud tone) -101.5 dB</text>
+<line x1="242" x2="328" y1="257" y2="257" class="lnk"/>
+<path d="M328 253 L334 257 L328 261" class="lnk"/>
+<text x="288.0" y="100" text-anchor="middle" class="n mono" style="font-size:10.5px">1-bit stream</text>
+<text x="288.0" y="114" text-anchor="middle" class="s mono" style="font-size:10.5px">2.4 MS/s  1 bit</text>
+<text x="288.0" y="128" text-anchor="middle" class="m mono" style="font-size:10.5px">SINAD 62.0 dB  ENOB 14.32 b</text>
+<text x="288.0" y="142" text-anchor="middle" class="m mono" style="font-size:10.5px">(predicted 61.7 dB)</text>
+<line x1="288.0" x2="288.0" y1="144" y2="255" class="rule" stroke-dasharray="2 2"/>
+<line x1="548" x2="634" y1="257" y2="257" class="lnk"/>
+<path d="M634 253 L640 257 L634 261" class="lnk"/>
+<text x="594.0" y="100" text-anchor="middle" class="n mono" style="font-size:10.5px">CIC output</text>
+<text x="594.0" y="114" text-anchor="middle" class="s mono" style="font-size:10.5px">96 kS/s  21 bit</text>
+<text x="594.0" y="128" text-anchor="middle" class="m mono" style="font-size:10.5px">SINAD 62.1 dB  ENOB 14.35 b</text>
+<text x="594.0" y="142" text-anchor="middle" class="m mono" style="font-size:10.5px">(predicted 61.8 dB)</text>
+<line x1="594.0" x2="594.0" y1="144" y2="255" class="rule" stroke-dasharray="2 2"/>
+<line x1="854" x2="940" y1="257" y2="257" class="lnk"/>
+<path d="M940 253 L946 257 L940 261" class="lnk"/>
+<text x="900.0" y="100" text-anchor="middle" class="n mono" style="font-size:10.5px">FIR output</text>
+<text x="900.0" y="114" text-anchor="middle" class="s mono" style="font-size:10.5px">48 kS/s  38 bit</text>
+<text x="900.0" y="128" text-anchor="middle" class="m mono" style="font-size:10.5px">SINAD 60.9 dB  ENOB 14.15 b</text>
+<text x="900.0" y="142" text-anchor="middle" class="m mono" style="font-size:10.5px">(predicted 60.7 dB)</text>
+<line x1="900.0" x2="900.0" y1="144" y2="255" class="rule" stroke-dasharray="2 2"/>
+<text x="28" y="398" class="t">Where the chain loses quality</text>
+<text x="28" y="413" class="m">SINAD of the reference tone in 20 Hz - 20 kHz (filled: measured on the integer chain; outline: noise-budget prediction)</text>
+<text x="28" y="443" class="s">microphone stream (2.4 MS/s)</text>
+<rect x="218" y="432" width="473.3" height="11" fill="var(--acc)"/>
+<rect x="218" y="446" width="462.2" height="7" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="1026.0" y="442" class="s mono">62.0 dB  ENOB 14.32 b</text>
+<text x="1026.0" y="454" class="m mono">predicted 61.7 dB</text>
+<text x="28" y="477" class="s">CIC output (96 kS/s)</text>
+<rect x="218" y="466" width="480.4" height="11" fill="var(--acc)"/>
+<rect x="218" y="480" width="468.3" height="7" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="1026.0" y="476" class="s mono">62.1 dB  ENOB 14.35 b</text>
+<text x="1026.0" y="488" class="m mono">predicted 61.8 dB</text>
+<text x="28" y="511" class="s">FIR output (48 kS/s)</text>
+<rect x="218" y="500" width="433.1" height="11" fill="var(--acc)"/>
+<rect x="218" y="514" width="425.4" height="7" fill="none" stroke="var(--line)" stroke-width="1"/>
+<text x="1026.0" y="510" class="s mono">60.9 dB  ENOB 14.15 b</text>
+<text x="1026.0" y="522" class="m mono">predicted 60.7 dB</text>
+<line x1="218.0" x2="218.0" y1="426" y2="528" class="rule" stroke-dasharray="1 3"/>
+<text x="218.0" y="540" text-anchor="middle" class="m mono">50</text>
+<line x1="416.0" x2="416.0" y1="426" y2="528" class="rule" stroke-dasharray="1 3"/>
+<text x="416.0" y="540" text-anchor="middle" class="m mono">55</text>
+<line x1="614.0" x2="614.0" y1="426" y2="528" class="rule" stroke-dasharray="1 3"/>
+<text x="614.0" y="540" text-anchor="middle" class="m mono">60</text>
+<line x1="812.0" x2="812.0" y1="426" y2="528" class="rule" stroke-dasharray="1 3"/>
+<text x="812.0" y="540" text-anchor="middle" class="m mono">65</text>
+<line x1="1010.0" x2="1010.0" y1="426" y2="528" class="rule" stroke-dasharray="1 3"/>
+<text x="1010.0" y="540" text-anchor="middle" class="m mono">70</text>
+<text x="196" y="540" text-anchor="end" class="m">SINAD, dB (axis starts at 50)</text>
+<line x1="732.8" x2="732.8" y1="424" y2="530" class="lnk" stroke-dasharray="4 3"/>
+<text x="736.8" y="422" class="m">data-sheet SNR 63 dB</text>
+<text x="28" y="577" class="m">Numbers: results/19_ipgen/chain/chain_results.json, results/19_ipgen/cic, results/19_ipgen/chain_fir (synthesis for xc7a100t, out of context).</text>
+</svg>

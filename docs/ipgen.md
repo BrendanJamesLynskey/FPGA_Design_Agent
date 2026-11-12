@@ -14,13 +14,13 @@ spec (plain numbers)
   -> read back what the IP computed        readback.json (CONFIG.* and the generated model parameters of the .xci)
   -> bit-accurate check in xsim            flow/ipgen/harness.py       stage "sim"   (file-driven AXI-Stream testbench)
   -> out-of-context synthesis              ip_flow.tcl stage "synth"   utilisation, post-synthesis WNS
-  -> record                                results/19_ipgen/<example>/*.json
+  -> record                                results/19_ipgen_2026_1/<example>/*.json
 ```
 
 ```
-python3 -m flow.ipgen.run fir results/19_ipgen/fir/spec.yaml results/19_ipgen/fir          # design, create, sim, synth
-python3 -m flow.ipgen.run cic results/19_ipgen/cic/spec.yaml results/19_ipgen/cic --stages design,create,sim
-python3 -m flow.ipgen.chain results/19_ipgen/chain/chain.yaml results/19_ipgen/chain      # no Vivado: the chain model
+python3 -m flow.ipgen.run fir results/19_ipgen_2026_1/fir/spec.yaml results/19_ipgen_2026_1/fir          # design, create, sim, synth
+python3 -m flow.ipgen.run cic results/19_ipgen_2026_1/cic/spec.yaml results/19_ipgen_2026_1/cic --stages design,create,sim
+python3 -m flow.ipgen.chain results/19_ipgen_2026_1/chain/chain.yaml results/19_ipgen_2026_1/chain      # no Vivado: the chain model
 ```
 
 The Vivado stages need a heavy slot (`_handoff/take_heavy_slot.sh`; put `Vivado impl` in the text for the synthesis stage)
@@ -78,7 +78,9 @@ What the runner provides: the Vivado `create`/`sim`/`synth` stages, the read-bac
 parameters parsed from the `.xci`), the port widths (parsed from the generated `sim/<ip>.vhd`), the schedules, the OOC
 numbers, and the JSON records.
 
-Facts worth knowing, measured in 2025.2:
+Facts worth knowing (measured first on an earlier release; brief 49 re-ran every example on Vivado 2026.1 and got the same
+read-backs and the same simulations, so the facts below hold on 2026.1 unless marked *, which marks a refusal seen on the earlier
+release and not provoked again):
 
 - `list_property $ip` shows no `CONFIG.*` until the IP has a `-dir`; use `[get_ips name]`, not the object `create_ip` returns.
 - The IP's output width and the generated parameters (`C_LATENCY`, `C_NUM_MADDS`, `C_OVERSAMPLING_RATE`) are in the `.xci`
@@ -86,7 +88,7 @@ Facts worth knowing, measured in 2025.2:
   `C_OVERSAMPLING_RATE` is.
 - `Clock_Frequency` and `Sample_Frequency` are in MHz; the oversampling and the number of DSP slices follow their ratio.
 - `tdata` is padded to whole bytes (a 35-bit output is a 40-bit `m_axis_data_tdata`, sign-extended).
-- An IP instance may not be named like a unisim primitive (`fd`).
+- An IP instance may not be named like a unisim primitive (`fd`).*
 
 ## Where pyfda fits
 
@@ -108,26 +110,28 @@ list of unwired project-mode features). One KB note per adapter is in the privat
 
 | Adapter | IP | Example (spec, design, read-back, simulation, synthesis) | Check |
 |---|---|---|---|
-| `fir` | FIR Compiler 7.2 | [results/19_ipgen/fir](../results/19_ipgen/fir): 20 MS/s decimate by 4, 153 taps | every output word equals the integer convolution |
-| `fir` (compensating) | FIR Compiler 7.2 | [results/19_ipgen/chain_fir](../results/19_ipgen/chain_fir): 96 kS/s decimate by 2 behind a CIC | as above |
-| `cic` | CIC Compiler 4.0 | [results/19_ipgen/cic](../results/19_ipgen/cic): 2.4 MS/s PDM, R = 25, N = 4 | every output word equals the integer model |
-| `bmg` | Block Memory Generator 8.4 | [results/19_ipgen/bmg_sine](../results/19_ipgen/bmg_sine): a 1024 x 16 sine table as a ROM | every word read back; latency measured |
-| `dds` | DDS Compiler 6.0 | [results/19_ipgen/dds](../results/19_ipgen/dds) (and `dds_no_margin`, `dds_coherent`): a 34-bit-phase NCO | the phase output equals a Python accumulator; sine and cosine within 2 LSB of ideal; SFDR measured by FFT |
-| (chain) | the PDM microphone, CIC and FIR above | [results/19_ipgen/chain](../results/19_ipgen/chain): `chain.svg`, `chain_results.json` | predicted and measured SINAD at each node |
+| `fir` | FIR Compiler 7.2 | [results/19_ipgen_2026_1/fir](../results/19_ipgen_2026_1/fir): 20 MS/s decimate by 4, 153 taps | every output word equals the integer convolution |
+| `fir` (compensating) | FIR Compiler 7.2 | [results/19_ipgen_2026_1/chain_fir](../results/19_ipgen_2026_1/chain_fir): 96 kS/s decimate by 2 behind a CIC | as above |
+| `cic` | CIC Compiler 4.0 | [results/19_ipgen_2026_1/cic](../results/19_ipgen_2026_1/cic): 2.4 MS/s PDM, R = 25, N = 4 | every output word equals the integer model |
+| `bmg` | Block Memory Generator 8.4 | [results/19_ipgen_2026_1/bmg_sine](../results/19_ipgen_2026_1/bmg_sine): a 1024 x 16 sine table as a ROM | every word read back; latency measured |
+| `dds` | DDS Compiler 6.0 | [results/19_ipgen_2026_1/dds](../results/19_ipgen_2026_1/dds) (and `dds_no_margin`, `dds_coherent`): a 34-bit-phase NCO | the phase output equals a Python accumulator; sine and cosine within 2 LSB of ideal; SFDR measured by FFT |
+| (chain) | the PDM microphone, CIC and FIR above | [results/19_ipgen_2026_1/chain](../results/19_ipgen_2026_1/chain): `chain.svg`, `chain_results.json` | predicted and measured SINAD at each node |
 
 The DDS adapter does not have a bit-accurate model of the sine and cosine tables (the core's C model was not built into
 the flow), so its sine and cosine are judged against the ideal curve and by SFDR, not word for word.
 
-## Measured facts that cost a rerun (all Vivado 2025.2)
+## Measured facts that cost a rerun (re-checked on Vivado 2026.1 unless marked *)
 
 - **Test bench:** a beat offered and not accepted must stay offered; and a core with no output `tready` (the CIC, the DDS) must
   not have a ready schedule applied to its recorder, or beats are lost.
 - **Block Memory Generator:** its `.mif` is found in the working directory, so out-of-context synthesis must run from the IP's own
   directory (the stage does), or the memory comes out empty and optimises away. Its `CONFIG.READ_LATENCY_A` read-back stays 1 with the output
-  register on; the measured read latency was 2.
-- **DDS Compiler:** `Noise_Shaping Auto` is refused in `Hardware_Parameters` mode (use `None` or the dither choices); in the data word the
+  register on; the measured read latency was 2. 2026.1 also reads back a new `CONFIG.MEMORY_OPTIMIZATION` (true).
+- **DDS Compiler:** `Noise_Shaping Auto` is refused in `Hardware_Parameters` mode (use `None` or the dither choices)*; in the data word the
   cosine is the low half and the sine the high half; its `System_Parameters` mode sizes the core the way the Python rule does (34-bit phase and
-  15-bit output for 100 MHz, 0.01 Hz and 90 dB), but its read-back of the SFDR and resolution is not meaningful in hardware mode.
+  15-bit output for 100 MHz, 0.01 Hz and 90 dB), but its read-back of the SFDR and resolution is not meaningful in hardware mode. On 2026.1 the read-back `C_PHASE_INCREMENT_VALUE` of `dds` and
+  `dds_no_margin` is one and the same value, unlike the earlier release; the simulated phase and sine outputs are identical to the earlier
+  release's, so the core uses the increment it is given at run time (not investigated further).
   A tone whose phase increment has its low bits zero (a coherent power-of-two record) has no phase-truncation error and measures a flattering SFDR
   (115.6 dB at 15 bits in `dds_coherent`); `dds` uses a record of 16411 points so that every phase bit is in use.
 - **FIR Compiler:** the read-back `C_NUM_MADDS` (4) is the multiplier-adds the schedule needs; synthesis used 5 DSP slices.

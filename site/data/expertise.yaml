@@ -195,7 +195,7 @@ areas:
     source: results/project_parity_2026_1/wizards/wizards.txt
     text: "Scripted generation was tried for the Block Memory, FIFO, XADC, Transceiver, PS7, Clocking and other wizards, and the probe output is committed."
   - kind: measured
-    source: results/19_ipgen/bmg_sine/sim.json
+    source: results/19_ipgen_2026_1/bmg_sine/sim.json
     values: [get:sim.mem.n_words, get:sim.mem.n_mismatch, get:sim.mem.latency_cycles]
     text: "A generated block-memory sine table read back in AMD's simulator with {1} mismatches in {0} reads and a measured latency of {2} cycles."
   cards:
@@ -218,19 +218,19 @@ areas:
     values: [n, "count:hidden_pass=true", "count:outcome=escape"]
     text: "The sine generator and oscillator-mixer tasks had {0} development runs; {1} passed every hidden test and {2} ended in an escape."
   - kind: measured
-    source: results/19_ipgen/fir/design.json
+    source: results/19_ipgen_2026_1/fir/design.json
     values: [get:design.taps, get:design.attenuation_lost_db]
     text: "A decimating low-pass filter designed in Python came to {0} taps; rounding its coefficients to the core's word length cost {1} dB of stop-band attenuation, and the specification was still met."
   - kind: measured
-    source: results/19_ipgen/fir/sim.json
+    source: results/19_ipgen_2026_1/fir/sim.json
     values: [get:sim.continuous.n_got, get:sim.continuous.n_mismatch, get:sim.random.n_mismatch]
     text: "The generated filter core matched the integer model on all {0} outputs in AMD's simulator: {1} mismatches with continuous input and {2} with random gaps."
   - kind: measured
-    source: results/19_ipgen/fir/ooc.json
+    source: results/19_ipgen_2026_1/fir/ooc.json
     values: [get:luts, get:dsp, get:wns_ns]
     text: "Synthesised on its own, that core used {0} LUTs and {1} DSP slices, with {2} ns of setup slack at the target clock; that figure is before routing, so it is an upper bound."
   - kind: measured
-    source: results/19_ipgen/dds/sim.json
+    source: results/19_ipgen_2026_1/dds/sim.json
     values: [get:sim.continuous.sfdr_db, get:sim.continuous.sfdr_spec_db]
     text: "The generated sine-generator core measured {0} dB of spurious-free dynamic range against a target of {1} dB."
   cards: []
