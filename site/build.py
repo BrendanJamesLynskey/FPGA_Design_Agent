@@ -59,6 +59,10 @@ def lookup(d, path):
 
 
 def fmt(v):
+    if v is None:                       # every page: blank for none, yes/no for a boolean, never a Python repr
+        return ""
+    if isinstance(v, bool):
+        return "yes" if v else "no"
     if isinstance(v, float):
         return f"{v:g}"
     if isinstance(v, int) and abs(v) >= 1000:
@@ -70,11 +74,21 @@ def wh(v):
     return f"{v:.2f}" if isinstance(v, (int, float)) else "not recorded"
 
 
+def exc(v):
+    """report_cdc's exception column: Vivado prints the word None when no exception applies; say so in words."""
+    return "none (no exception)" if v in (None, "None") else v
+
+
+def cell(c):
+    """A table cell: yes/no for a boolean, blank for none, otherwise as given."""
+    return "" if c is None else ("yes" if c else "no") if isinstance(c, bool) else str(c)
+
+
 def table(head, rows, num=()):
     h = "".join(f'<th class="num">{html.escape(x)}</th>' if i in num else f"<th>{html.escape(x)}</th>" for i, x in enumerate(head))
     b = ""
     for r in rows:
-        b += "<tr>" + "".join(f'<td class="num">{html.escape(str(c))}</td>' if i in num else f"<td>{html.escape(str(c))}</td>" for i, c in enumerate(r)) + "</tr>"
+        b += "<tr>" + "".join(f'<td class="num">{html.escape(cell(c))}</td>' if i in num else f"<td>{html.escape(cell(c))}</td>" for i, c in enumerate(r)) + "</tr>"
     return f'<div class="tablewrap" tabindex="0"><table><thead><tr>{h}</tr></thead><tbody>{b}</tbody></table></div>'
 
 
@@ -147,8 +161,8 @@ def block(name, d):
     if name == "xpm_table":
         x = d["flow_notes"]["xpm"]
         return table(["Measure", "Without the fix", "With xpm_cdc.tcl"], [
-            ["report_cdc, xpm_cdc_single row", x["before"]["report_cdc_exception"]["single"], x["after"]["report_cdc_exception"]["single"]],
-            ["report_cdc, xpm_cdc_gray row", x["before"]["report_cdc_exception"]["gray"], x["after"]["report_cdc_exception"]["gray"]],
+            ["report_cdc, xpm_cdc_single row", exc(x["before"]["report_cdc_exception"]["single"]), exc(x["after"]["report_cdc_exception"]["single"])],
+            ["report_cdc, xpm_cdc_gray row", exc(x["before"]["report_cdc_exception"]["gray"]), exc(x["after"]["report_cdc_exception"]["gray"])],
             ["clk_a to clk_b setup WNS (ns)", f'{x["before"]["wns_ns"]:+.3f}', f'{x["after"]["wns_ns"]:+.3f}'],
             ["Failing endpoints on that path", x["before"]["failing_endpoints"], x["after"].get("failing_endpoints", "not recorded")],
         ], num=())

@@ -1,8 +1,8 @@
 {
  "counts": {
-  "in_progress": 1,
+  "in_progress": 0,
   "planned": 0,
-  "published": 1
+  "published": 2
  },
  "projects": [
   {
@@ -661,14 +661,1306 @@
   },
   {
    "board": "Digilent Nexys A7-100T",
+   "description": "An on-chip AXI4-Lite and AXI4-Stream traffic generator, protocol checker and scoreboard on the Nexys A7: seeded bugs caught on the board, the same traffic cycle for cycle in simulation, the checker checked formally to a bounded depth.",
+   "evidence": [
+    {
+     "kind": "record",
+     "label": "Board runs: verdicts, counters, captures and the simulation comparison",
+     "path": "results/59a_axi_tx/board_run.json",
+     "text": ""
+    },
+    {
+     "kind": "record",
+     "label": "False-alarm probe: legal but unusual traffic in simulation",
+     "path": "results/59a_axi_tx/false_fire.json",
+     "text": ""
+    },
+    {
+     "kind": "record",
+     "label": "Earlier board attempts, and what changed after them",
+     "path": "results/59a_axi_tx/board_run_attempts.md",
+     "text": ""
+    },
+    {
+     "kind": "record",
+     "label": "Simulation records of the same programs",
+     "path": "results/59a_axi_tx/sim",
+     "text": ""
+    },
+    {
+     "kind": "record",
+     "label": "Formal proofs and checker mutants",
+     "path": "results/59a_axi_tx/formal.json",
+     "text": ""
+    },
+    {
+     "kind": "record",
+     "label": "Resource cost per configuration and the AMD IP build test",
+     "path": "results/59a_axi_tx/resources.json",
+     "text": ""
+    },
+    {
+     "kind": "conditions",
+     "label": "Die temperature and rails before, during and after the runs, against the recommended operating conditions",
+     "path": "results/59a_axi_tx/board_run.json",
+     "text": ""
+    },
+    {
+     "kind": "versions",
+     "label": "Vivado 2026.1, build ID 44b780c9 (built from commit e562dd3; a build of this pull request, checked at commit ad99917, gives build ID 94eca24c because build inputs changed, though no logic did), timing, power and gate results",
+     "path": "results/59a_axi_tx/board_build.json",
+     "text": ""
+    },
+    {
+     "kind": "requirements",
+     "label": "Requirements traced",
+     "path": null,
+     "text": "Not done yet: the programs carry requirement tags, but nothing reads them yet."
+    }
+   ],
+   "headline": "A hardware checker that watches an AXI bus and names the rule a bug breaks. On the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) it flagged the expected rule in all 6 runs with a seeded protocol bug (8 faults), and against our own peripheral and stream FIFO the board's traffic matched simulation cycle for cycle in 13 of 13 runs.",
+   "hero": {
+    "caption": "One capture from the board, one seeded bug: our peripheral raises the write-response valid signal (BVALID) before any write data has arrived, and the checker flags it in that cycle.",
+    "data": {
+     "alt": "A waveform captured on the board: after the address handshake the peripheral raises BVALID, its write response, before any write data; the checker's B_EARLY rule goes high in that cycle and the write data arrives afterwards.",
+     "captions": [
+      "Bus quiet before the write",
+      "Bus quiet before the write",
+      "Bus quiet before the write",
+      "AW accepted: the address is taken; no write data yet",
+      "Address held by the peripheral, waiting for its data",
+      "Violation: BVALID rises before any W handshake; the checker flags B_EARLY and starts this capture",
+      "BVALID held, still no write data: B_EARLY stays flagged",
+      "W accepted: the write data arrives, after the response was raised",
+      "BVALID held; the master is not ready for the response yet",
+      "BVALID held; the master is not ready for the response yet",
+      "BVALID held; the master is not ready for the response yet",
+      "BVALID held; the master is not ready for the response yet",
+      "BVALID held; the master is not ready for the response yet",
+      "BVALID held; the master is not ready for the response yet",
+      "B accepted: the master takes the early response",
+      "Write complete: the bus is quiet again"
+     ],
+     "key": "VALID: the sender offers a transfer; READY: the receiver takes it. AW = write address, W = write data, B = write response. B_EARLY: the checker's rule for a response raised before its data.",
+     "marks": [
+      {
+       "label": "trigger: B_EARLY",
+       "signal": "BVALID",
+       "x": 0
+      },
+      {
+       "label": "write data arrives",
+       "signal": "WVALID",
+       "x": 2
+      }
+     ],
+     "signals": [
+      {
+       "kind": "bit",
+       "name": "AWVALID",
+       "v": [
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "kind": "bit",
+       "name": "AWREADY",
+       "v": [
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+       ]
+      },
+      {
+       "kind": "bit",
+       "name": "WVALID",
+       "v": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "kind": "bit",
+       "name": "WREADY",
+       "v": [
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+       ]
+      },
+      {
+       "kind": "bit",
+       "name": "BVALID",
+       "v": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+       ]
+      },
+      {
+       "kind": "bit",
+       "name": "BREADY",
+       "v": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0
+       ]
+      },
+      {
+       "kind": "bit",
+       "name": "B_EARLY",
+       "v": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+       ]
+      }
+     ],
+     "source_run": "periph_regs_b_early",
+     "stages": [
+      {
+       "captions": [
+        "The transactor runs a register program against our peripheral with its early-response bug switched on. The checker watches the bus wires and has armed a capture on its first violation."
+       ],
+       "fact": "build 44b780c9",
+       "name": "Run",
+       "phase": "before"
+      },
+      {
+       "captions": [
+        "The capture from the board, replayed cycle by cycle around the trigger."
+       ],
+       "fact": "16 cycles",
+       "name": "Capture",
+       "phase": "during"
+      },
+      {
+       "captions": [
+        "The checker names the rule broken: B_EARLY, a write response raised before its write data had arrived. AMD's AXI Protocol Checker on the same bus also flagged this run."
+       ],
+       "fact": "cycle 1070 of the run",
+       "name": "Verdict",
+       "phase": "after"
+      }
+     ],
+     "tick": 5,
+     "trigger_at_x": 0,
+     "unit": "cycle",
+     "x": [
+      -5,
+      -4,
+      -3,
+      -2,
+      -1,
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ]
+    },
+    "kind": "wave",
+    "source": "results/59a_axi_tx/hero.json"
+   },
    "id": "axi_transactor",
-   "one_line": "A block that sits on the chip beside the IP under test, drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time, and checks every protocol rule in hardware while the traffic runs.",
+   "limits": {
+    "next": [
+     "Full AXI4 with IDs and a DMA target, and a soak mode that steers random traffic towards untested combinations.",
+     "Decode the AMD checker's status bits to rule names, and read the counters faster than the serial link allows."
+    ],
+    "not_measured": [
+     "Coverage of real-world bugs: the bugs were planted by us to demonstrate the checker; this is not a measure of how many unknown bugs it would find.",
+     "Full AXI4 (bursts, IDs, outstanding transactions), the slave side and a long soak: the next phase.",
+     "Runs against the block-RAM controller IP core are checked against a model, not cycle for cycle with simulation: the free simulator we used cannot simulate that core.",
+     "One board, one clock: the stream path is 32 bits wide (the stand-alone stream checker was also synthesised at wider widths), and the bus runs at the board's single system clock.",
+     "The proofs are bounded, and the property restatement shares its author with the checker; the AMD checker is the independent check."
+    ],
+    "nulls": []
+   },
+   "one_line": "A block that sits on the chip beside the design under test, drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time, and checks a set of named protocol rules in hardware while the traffic runs.",
    "order": 2,
    "part": "xc7a100tcsg324-1",
-   "status": "in_progress",
-   "status_label": "In progress",
+   "status": "published",
+   "status_label": "Measured",
+   "story": {
+    "agent": {
+     "approvals": [
+      "The owner authorised hardware use (volatile configuration only, wall power)",
+      "Independent reviewers checked the work, and the owner merges it"
+     ],
+     "gates": [
+      "Every rule checked quiet and firing, every broken copy of the checker caught",
+      "Simulation of every program, seeded bug and memory fault",
+      "Vivado 2026.1 gates: methodology, timing, design rule checks, power",
+      "The board plan written in advance, with die temperature and rails logged"
+     ],
+     "plan": "The owner chose the project and set the rules. A language-model coding agent wrote the RTL, the rule monitors (from the specification, in its own words), the seeded bugs, the proofs, the simulation and the board runs. The bugs were seeded by the same agent that wrote the checker; AMD's checker is the part it did not write.",
+     "request": "The owner asked for an on-chip AMBA AXI traffic generator and protocol checker that exercises on-chip modules with transactions of any complexity while verifying protocol correctness."
+    },
+    "architecture": {
+     "blocks": [
+      [
+       "host",
+       "Host (serial)"
+      ],
+      [
+       "seq",
+       "Sequencer"
+      ],
+      [
+       "eng",
+       "AXI masters"
+      ],
+      [
+       "dut",
+       "Targets"
+      ],
+      [
+       "chk",
+       "Checkers"
+      ],
+      [
+       "cap",
+       "Capture"
+      ]
+     ],
+     "links": [
+      [
+       "host",
+       "seq",
+       "YAML"
+      ],
+      [
+       "seq",
+       "eng",
+       "txns"
+      ],
+      [
+       "eng",
+       "dut",
+       "AXI"
+      ],
+      [
+       "dut",
+       "chk",
+       "bus"
+      ],
+      [
+       "chk",
+       "cap",
+       "trigger"
+      ],
+      [
+       "chk",
+       "host",
+       "verdicts"
+      ]
+     ]
+    },
+    "details": [
+     {
+      "text": "Checked on AXI4-Lite: AW_HOLD, W_HOLD, B_HOLD, AR_HOLD and R_HOLD (VALID held, payload stable, until READY); B_EARLY and R_EARLY (a response only after its request); RESET and IN_RESET (every VALID low at and during reset); EXOKAY (no exclusive-access response on AXI4-Lite). Checked on AXI4-Stream: HOLD, KEEP_STRB (a reserved byte marking) and RESET; two profile rules (a maximum packet length, packed bytes) are off unless an IP core documents them. Not checked: bursts, IDs, wrapping bursts, the four-kilobyte boundary and exclusive access, which belong to full AXI4; a combinational path from READY to VALID inside a block, of which only its effect at the ports shows; and data correctness, which the reference memory and the stream receiver check instead. False alarms matter as much as misses: each rule is proved quiet on all legal traffic within 20 cycles; in simulation, 11 scenarios of legal but unusual traffic (W before AW, a response in the same cycle as the next request, READY before VALID, a reset in mid-transaction, null and position stream bytes, non-contiguous byte-keeps) fired 0 rules; and the 9 clean board runs fired none.",
+      "title": "Rules checked and not checked"
+     }
+    ],
+    "how": "A transaction program, written in plain YAML and loaded over the serial link, drives AXI4-Lite traffic (a simple register-access bus) and AXI4-Stream traffic (a packet stream) with seeded random addresses, data and byte-enables (which bytes of a word to write), pauses by the sender and refusals by the receiver (back-pressure).\n\nMonitors that watch only the bus wires check 10 AXI4-Lite and 5 AXI4-Stream rules every cycle. A reference copy of the memory checks reads of every word written in the run, counters record latency, stalls and which cases were covered, and the first violation starts a capture. The same program runs on the board and in simulation.",
+    "problem": "AXI is the on-chip bus defined by the AMBA specification IHI 0022H (its stream variant: IHI 0051B). A bus interface that breaks its handshake rules often passes a quick test and fails in a system: read data that is not held while the master stalls, or a write response sent before the data. Such bugs show only under the right timing, and a logic analyser shows the waveform but not which rule it breaks.\n\nThe hard part is the checker, not the traffic. A wrong checker passes bad designs or flags good ones, so this one is checked formally, attacked with deliberately broken copies of itself, and compared on the board with AMD's own checker.\n\nThe other hard part is making the board and the simulation see identical traffic: every random choice has to be seeded, and every counter has to start with the run.",
+    "results": [
+     "17 of 17 board runs, written in a plan before the board was used, gave the verdict the plan expected. The table says what each kind of run was checked against.",
+     "In one run against the board's block-RAM controller IP core, under random back-pressure, write latency ran from 2 to 12 cycles and read latency from 1 to 8.",
+     "Design size and timing: the whole board design used 7043 LUTs and met timing with 0.169 ns of slack; Vivado estimated 0.185 W. Measured on the die: at most 26.45 C, core supply (VCCINT) 1.0042 to 1.0078 V, inside the recommended operating conditions, 0 alarms latched.",
+     "Earlier attempts: the first, on an earlier build, passed 15 of 17; the transaction model and the RTL were then fixed and the whole plan run again on the final build (evidence: earlier board attempts)."
+    ],
+    "results_table": {
+     "caption": "What each kind of run was checked against, and the result.",
+     "head": [
+      "What ran",
+      "Checked against",
+      "Result"
+     ],
+     "rows": [
+      [
+       "6 runs with a seeded protocol bug (8 faults)",
+       "the rule each bug breaks",
+       "the expected rule, and no other, in 6 of 6"
+      ],
+      [
+       "2 runs with a seeded data bug",
+       "the reference memory or the stream receiver",
+       "caught in 2 of 2, with no rule firing"
+      ],
+      [
+       "9 clean runs",
+       "every enabled rule",
+       "9 of 9 fired nothing"
+      ],
+      [
+       "13 runs on our own peripheral and stream FIFO",
+       "the same RTL in simulation",
+       "identical cycle for cycle in 13 of 13; 0 of 936 logged transactions differ"
+      ],
+      [
+       "Runs on the block-RAM controller IP core",
+       "the transaction model",
+       "every read of a word written in the run matched (107 in one run)"
+      ],
+      [
+       "The AXI4-Lite bus in all 17 runs",
+       "AMD's AXI Protocol Checker",
+       "the same verdict in 17 of 17; it flagged 5 of the 6 seeded-bug runs, because the remaining one broke a stream rule and it watches AXI4-Lite only"
+      ],
+      [
+       "The checker itself",
+       "formal proofs, bounded to 20 cycles, and deliberately broken copies of it",
+       "32 of 32 proofs hold; 53 of 53 broken copies caught"
+      ],
+      [
+       "Legal but unusual traffic in simulation, 11 scenarios",
+       "every enabled rule (false alarms)",
+       "0 fired"
+      ]
+     ]
+    },
+    "table": {
+     "caption": "Every board run of the final plan, all with the verdict the plan expected: the fault seeded, every rule that fired (blank when none did), and AMD's checker.",
+     "columns": [
+      [
+       "tag",
+       "Run"
+      ],
+      [
+       "repeat",
+       "Repeat"
+      ],
+      [
+       "fault",
+       "Seeded fault"
+      ],
+      [
+       "rules_fired",
+       "Rules fired"
+      ],
+      [
+       "n_txn",
+       "Transactions"
+      ],
+      [
+       "amd",
+       "AMD checker"
+      ]
+     ],
+     "link": null,
+     "link_column": "tag",
+     "rows": [
+      {
+       "amd": "quiet",
+       "amd_pc_asserted": false,
+       "digest": "70fe5a9a",
+       "fault": "none",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 432,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": null,
+       "sb_checked": 107,
+       "sb_mism": 0,
+       "seconds": 30.5,
+       "sim_equal": {
+        "cycles": false,
+        "digest": false,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 256,
+        "data_not_compared": 30,
+        "differences": 225,
+        "first": [
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 0
+         },
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 1
+         },
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 2
+         }
+        ]
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "bram_random_rw",
+       "target": "bram"
+      },
+      {
+       "amd": "quiet",
+       "amd_pc_asserted": false,
+       "digest": "df367dd4",
+       "fault": "none",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 432,
+       "pass": true,
+       "repeat": 1,
+       "rules_fired": null,
+       "sb_checked": 107,
+       "sb_mism": 0,
+       "seconds": 30.5,
+       "sim_equal": {
+        "cycles": false,
+        "digest": false,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 256,
+        "data_not_compared": 30,
+        "differences": 225,
+        "first": [
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 0
+         },
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 1
+         },
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 2
+         }
+        ]
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "bram_random_rw",
+       "target": "bram"
+      },
+      {
+       "amd": "quiet",
+       "amd_pc_asserted": false,
+       "digest": "df367dd4",
+       "fault": "none",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 432,
+       "pass": true,
+       "repeat": 2,
+       "rules_fired": null,
+       "sb_checked": 107,
+       "sb_mism": 0,
+       "seconds": 30.51,
+       "sim_equal": {
+        "cycles": false,
+        "digest": false,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 256,
+        "data_not_compared": 30,
+        "differences": 225,
+        "first": [
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 0
+         },
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 1
+         },
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 2
+         }
+        ]
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "bram_random_rw",
+       "target": "bram"
+      },
+      {
+       "amd": "quiet",
+       "amd_pc_asserted": false,
+       "digest": "5503ae77",
+       "fault": "none",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 48,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": null,
+       "sb_checked": 16,
+       "sb_mism": 0,
+       "seconds": 10.35,
+       "sim_equal": {
+        "cycles": false,
+        "digest": false,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 48,
+        "data_not_compared": 0,
+        "differences": 39,
+        "first": [
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 3
+         },
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 5
+         },
+         {
+          "fields": [
+           "latency"
+          ],
+          "txn": 6
+         }
+        ]
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "bram_strobes",
+       "target": "bram"
+      },
+      {
+       "amd": "quiet",
+       "amd_pc_asserted": false,
+       "digest": "02abed03",
+       "fault": "none",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 105,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": null,
+       "sb_checked": 32,
+       "sb_mism": 0,
+       "seconds": 16.13,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 105,
+        "data_not_compared": 8,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "periph_regs",
+       "target": "periph"
+      },
+      {
+       "amd": "quiet",
+       "amd_pc_asserted": false,
+       "digest": "02abed03",
+       "fault": "none",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 105,
+       "pass": true,
+       "repeat": 1,
+       "rules_fired": null,
+       "sb_checked": 32,
+       "sb_mism": 0,
+       "seconds": 16.14,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 105,
+        "data_not_compared": 8,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "periph_regs",
+       "target": "periph"
+      },
+      {
+       "amd": "quiet",
+       "amd_pc_asserted": false,
+       "digest": "02abed03",
+       "fault": "none",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 105,
+       "pass": true,
+       "repeat": 2,
+       "rules_fired": null,
+       "sb_checked": 32,
+       "sb_mism": 0,
+       "seconds": 16.14,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 105,
+        "data_not_compared": 8,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "periph_regs",
+       "target": "periph"
+      },
+      {
+       "amd": "flagged",
+       "amd_pc_asserted": true,
+       "digest": "979f6b2d",
+       "fault": "early write response",
+       "first_rule": "B_EARLY",
+       "first_rule_cycle": 1070,
+       "lite_rules": {
+        "B_EARLY": 8
+       },
+       "model_match": true,
+       "n_txn": 105,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": "B_EARLY",
+       "sb_checked": 32,
+       "sb_mism": 0,
+       "seconds": 32.55,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 105,
+        "data_not_compared": 8,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "periph_regs_b_early",
+       "target": "periph"
+      },
+      {
+       "amd": "flagged",
+       "amd_pc_asserted": true,
+       "digest": "839d4fe8",
+       "fault": "read data not held",
+       "first_rule": "R_HOLD",
+       "first_rule_cycle": 1229,
+       "lite_rules": {
+        "R_HOLD": 4
+       },
+       "model_match": true,
+       "n_txn": 105,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": "R_HOLD",
+       "sb_checked": 32,
+       "sb_mism": 0,
+       "seconds": 32.56,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 105,
+        "data_not_compared": 8,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "periph_regs_r_live",
+       "target": "periph"
+      },
+      {
+       "amd": "flagged",
+       "amd_pc_asserted": true,
+       "digest": "77e72e0a",
+       "fault": "read VALID dropped once",
+       "first_rule": "R_HOLD",
+       "first_rule_cycle": 1048,
+       "lite_rules": {
+        "R_HOLD": 31
+       },
+       "model_match": true,
+       "n_txn": 105,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": "R_HOLD",
+       "sb_checked": 32,
+       "sb_mism": 0,
+       "seconds": 32.55,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 105,
+        "data_not_compared": 8,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "periph_regs_r_glitch",
+       "target": "periph"
+      },
+      {
+       "amd": "flagged",
+       "amd_pc_asserted": true,
+       "digest": "8b932084",
+       "fault": "EXOKAY response",
+       "first_rule": "EXOKAY",
+       "first_rule_cycle": 1156,
+       "lite_rules": {
+        "EXOKAY": 8
+       },
+       "model_match": true,
+       "n_txn": 105,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": "EXOKAY",
+       "sb_checked": 24,
+       "sb_mism": 0,
+       "seconds": 32.55,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 105,
+        "data_not_compared": 8,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "periph_regs_exokay",
+       "target": "periph"
+      },
+      {
+       "amd": "quiet",
+       "amd_pc_asserted": false,
+       "digest": "f5786d94",
+       "fault": "write strobes ignored",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 105,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": null,
+       "sb_checked": 32,
+       "sb_mism": 8,
+       "seconds": 16.14,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 105,
+        "data_not_compared": 8,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "periph_regs_no_strb",
+       "target": "periph"
+      },
+      {
+       "amd": "flagged",
+       "amd_pc_asserted": true,
+       "digest": "35d12410",
+       "fault": "transactor drops or changes its own requests",
+       "first_rule": "AW_HOLD",
+       "first_rule_cycle": 1145,
+       "lite_rules": {
+        "AR_HOLD": 2,
+        "AW_HOLD": 2,
+        "W_HOLD": 2
+       },
+       "model_match": true,
+       "n_txn": 48,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": "AR_HOLD, AW_HOLD, W_HOLD",
+       "sb_checked": 0,
+       "sb_mism": 0,
+       "seconds": 26.25,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 48,
+        "data_not_compared": 0,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 0,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 0,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "master_inject",
+       "target": "periph"
+      },
+      {
+       "amd": "quiet; it does not watch the stream",
+       "amd_pc_asserted": false,
+       "digest": "12556460",
+       "fault": "none",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 12,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": null,
+       "sb_checked": 0,
+       "sb_mism": 0,
+       "seconds": 6.76,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 12,
+        "data_not_compared": 0,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 246,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 30,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "stream_packets",
+       "target": "periph"
+      },
+      {
+       "amd": "quiet; it does not watch the stream",
+       "amd_pc_asserted": false,
+       "digest": "12556460",
+       "fault": "none",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 12,
+       "pass": true,
+       "repeat": 1,
+       "rules_fired": null,
+       "sb_checked": 0,
+       "sb_mism": 0,
+       "seconds": 6.76,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 12,
+        "data_not_compared": 0,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 246,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 0,
+        "packets": 30,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "stream_packets",
+       "target": "periph"
+      },
+      {
+       "amd": "quiet; it does not watch the stream",
+       "amd_pc_asserted": false,
+       "digest": "12556460",
+       "fault": "TLAST lost",
+       "first_rule": null,
+       "first_rule_cycle": null,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 12,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": null,
+       "sb_checked": 0,
+       "sb_mism": 0,
+       "seconds": 6.76,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 12,
+        "data_not_compared": 0,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 246,
+        "data_mism": 0,
+        "keep_mism": 0,
+        "last_mism": 12,
+        "packets": 18,
+        "unexpected": 0
+       },
+       "stream_rules": {},
+       "tag": "stream_packets_lose_last",
+       "target": "periph"
+      },
+      {
+       "amd": "quiet; it does not watch the stream",
+       "amd_pc_asserted": false,
+       "digest": "12556460",
+       "fault": "TKEEP wired to the input",
+       "first_rule": "HOLD",
+       "first_rule_cycle": 1049,
+       "lite_rules": {},
+       "model_match": true,
+       "n_txn": 12,
+       "pass": true,
+       "repeat": 0,
+       "rules_fired": "HOLD",
+       "sb_checked": 0,
+       "sb_mism": 0,
+       "seconds": 23.18,
+       "sim_equal": {
+        "cycles": true,
+        "digest": true,
+        "n_txn": true
+       },
+       "sim_log": {
+        "compared": 12,
+        "data_not_compared": 0,
+        "differences": 0,
+        "first": []
+       },
+       "sink": {
+        "beats": 246,
+        "data_mism": 0,
+        "keep_mism": 75,
+        "last_mism": 0,
+        "packets": 30,
+        "unexpected": 0
+       },
+       "stream_rules": {
+        "HOLD": 22
+       },
+       "tag": "stream_packets_keep_wire",
+       "target": "periph"
+      }
+     ]
+    }
+   },
    "title": "An on-chip AXI traffic generator and protocol checker",
-   "what_it_will_show": "The checker catching a bug seeded in a peripheral on the board, with the same traffic run in simulation so the first point where the two differ marks the bug."
+   "try_it": {
+    "command": "python -m pytest -q axi_tx/tests/test_59a_rtl.py && python axi_tx/formal/run_formal.py",
+    "note": "Simulation and formal checks only (open-source Icarus Verilog, cocotb, Yosys, SymbiYosys; the repository README lists how to install them). The simulation takes about a minute; the formal checks take about 19 minutes of solver time, about half that with two jobs in parallel. The board runs need the board and are recorded in the evidence above."
+   },
+   "values": {
+    "a1_pass": 15,
+    "alarms": 0,
+    "amd_agree": 17,
+    "amd_asserted": 5,
+    "b_early_cycle": 1070,
+    "board_commit": "e562dd3",
+    "bug_runs": 6,
+    "bug_runs_right": 6,
+    "build_id": "44b780c9",
+    "clean": 9,
+    "clean_quiet": 9,
+    "depth": 20,
+    "faults": 8,
+    "ff_fired": 0,
+    "ff_scen": 11,
+    "func_caught": 2,
+    "func_runs": 2,
+    "later_commit": "ad99917",
+    "later_id": "94eca24c",
+    "lite_rules": 10,
+    "lite_runs": 17,
+    "lut": 7043,
+    "mutants": 53,
+    "mutants_killed": 53,
+    "parity": 13,
+    "parity_eq": 13,
+    "power": 0.185,
+    "proofs": 32,
+    "proofs_pass": 32,
+    "reads_checked": 107,
+    "rlat_max": 8,
+    "rlat_min": 1,
+    "runs": 17,
+    "runs_pass": 17,
+    "solver_min": 19,
+    "stream_bits": 32,
+    "stream_rules": 5,
+    "tj_max": 26.45,
+    "txn_diff": 0,
+    "txns": 936,
+    "vccint_max": 1.0078,
+    "vccint_min": 1.0042,
+    "wlat_max": 12,
+    "wlat_min": 2,
+    "wns": 0.169
+   },
+   "vivado": "2026.1"
   }
  ]
 }
