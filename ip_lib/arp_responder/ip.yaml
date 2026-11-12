@@ -84,8 +84,9 @@ boundary:
   registered_outputs: 'yes'
   cdc: none
   part_specific: none
-limits: Ethernet and IPv4 only; one own address; entries never age (flush from outside); no gratuitous ARP or address-conflict
-  detection (RFC 5227); one reply waits while one is sent, a third request is not answered
+limits: 'Ethernet and IPv4 only; one own address; entries never age (flush from outside); no gratuitous ARP or address-conflict
+  detection (RFC 5227); one reply waits while one is sent, a third request is not answered; measured: 133 MHz with 4 cache
+  entries, 120 MHz with 16 (the parallel compare)'
 evidence:
   summary: 'cocotb against ip_lib/arp_responder/model.py (RFC 826, plain Python) with scapy decoding every frame sent: random
     requests, replies, probes, malformed packets, padded frames, bad and short frames, lookups and flushes under input gaps

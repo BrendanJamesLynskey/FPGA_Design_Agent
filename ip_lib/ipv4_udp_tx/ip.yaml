@@ -68,15 +68,15 @@ variant_param: RAM
 variants:
   bram:
     summary: the payload buffer in block RAM
-    when: the default
+    when: 'the default; measured: one RAMB18 at MAX_PAYLOAD 1472, 4 RAMB36 at 8972 (the depth rounds up to a power of two)'
     uses:
       dsp: 0
-      bram_tiles: max(0.5, ceil((MAX_PAYLOAD + 1) / 4096))
+      bram_tiles: max(0.5, pow2(clog2(MAX_PAYLOAD + 1)) / 4096)
     latency: 4
     ii: 1
   lutram:
     summary: the payload buffer in LUT RAM
-    when: small buffers, or block RAM spoken for
+    when: 'block RAM spoken for; measured: 276 LUTs as RAM at MAX_PAYLOAD 1472, 1692 at 8972'
     uses:
       dsp: 0
       bram_tiles: 0
@@ -116,8 +116,9 @@ boundary:
   registered_outputs: 'yes'
   cdc: none
   part_specific: none (memories inferred; ram_style steers the variants)
-limits: no fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller's
-  (from arp_responder, or the multicast mapping)
+limits: 'no fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller''s
+  (from arp_responder, or the multicast mapping); measured Fmax estimates are 74-82 MHz out of context: it closes at the 50
+  MHz of the RMII MAC but not at the 125 MHz of the RGMII MAC (the checksum adders are not pipelined)'
 evidence:
   summary: 'cocotb against ip_lib/ipv4_udp_tx/model.py (RFC 791, 768, 1071) with scapy recomputing both checksums of every
     frame: random lengths up to and over MAX_PAYLOAD, payloads whose checksum computes to zero (sent as 0xFFFF), unicast and

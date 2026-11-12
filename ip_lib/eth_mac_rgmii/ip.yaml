@@ -270,7 +270,7 @@ variant_param: RX_RAM
 variants:
   bram:
     summary: the store-and-forward buffer in block RAM
-    when: the default; buffers of 4 KB and more
+    when: 'the default; measured: 1 block RAM tile at SF_DEPTH 4096, 8 at 32768, about 138-144 MHz'
     uses:
       dsp: 0
       bram_tiles: 0 if CUT_THROUGH == 1 else max(0.5, SF_DEPTH / 4096)
@@ -278,7 +278,8 @@ variants:
     ii: 1
   lutram:
     summary: the store-and-forward buffer in LUT RAM
-    when: block RAM spoken for; small buffers (each 4 KB costs about 512 LUTs as RAM)
+    when: 'block RAM spoken for and small buffers; measured: 796 LUTs as RAM at 4096 (about 136 MHz), 6174 at 32768, where
+      it misses 125 MHz by 7 ps'
     uses:
       dsp: 0
       bram_tiles: 0
