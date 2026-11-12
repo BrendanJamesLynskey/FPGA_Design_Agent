@@ -16,7 +16,10 @@ Goldens, oldest first:
 - ``b53_request_golden.json`` (brief 53, 2026-11-11): the clarify prompt asks for one checkable statement per requirement and
   no vague words; the tests prompt asks for requirement tags on every test, property and formal job. An intended change to what
   the clarify and tests roles are asked: ``prompts`` and the two formatted-prompt hashes differ from the brief 42 golden, nothing
-  else. Runs before this change belong to the earlier goldens."""
+  else. Runs before this change belong to the earlier goldens.
+- ``b54b_request_golden.json`` (2026-11-12): the test shell's protocol 1.1 adds the BUILD_ID register at 0x05 (recorded in
+  benchmark/AMENDMENTS.md). The tests role reads the shell's PROTOCOL.md and host driver, so its plan and Claude Code argv
+  hashes (``plan_tests_*``, ``cli_argv_tests_*``) differ from the brief 53 golden; nothing else does."""
 
 from __future__ import annotations
 
@@ -27,12 +30,16 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b53_request_golden.json"           # the newest golden
+GOLDEN = FIXTURES / "b54b_request_golden.json"          # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest",
                        "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests)",
                        "prompts_formatted_noshell_False": "brief 53: as prompts",
-                       "prompts_formatted_noshell_True": "brief 53: as prompts"}
+                       "prompts_formatted_noshell_True": "brief 53: as prompts",
+                       "plan_tests_False": "shell 1.1 (BUILD_ID at 0x05): the tests role reads the shell's protocol and driver",
+                       "plan_tests_True": "shell 1.1: as plan_tests_False",
+                       "cli_argv_tests_False": "shell 1.1: as plan_tests_False",
+                       "cli_argv_tests_True": "shell 1.1: as plan_tests_False"}
 
 
 def test_every_request_path_is_unchanged_from_the_golden() -> None:

@@ -80,7 +80,7 @@ Run the shell commands from the repo root; `P=` the UART from section 1 (for exa
 
 | # | Do | Pass if | Fail means |
 |---|---|---|---|
-| 1 | `$SH id` | `design_id T1DC`, `shell_version 1.0`, `build_stamp` = `build_stamp` in `results/f0a_2026_1/t1_dimmer_counter_base.json` (`dfd4624e` on the F0B board) | wrong bitstream, or the UART is not working (see section 6) |
+| 1 | `$SH id` | `design_id T1DC`, `shell_version 1.1`, `build_stamp` = `build_stamp` in `results/f0a_2026_1/t1_dimmer_counter_base.json` (`dfd4624e` on the F0B board), `build_id` = `build_id` in the build's `manifest.json` (a bitstream built before shell 1.1 shows `shell_version 1.0` and `build_id -`) | wrong bitstream, or the UART is not working (see section 6) |
 | 2 | `$SH scratch` | `scratch PASS` | UART bit errors (cable, baud) |
 | 3 | `$SH status` | all four counters 0 | errors on the line: note which counter |
 | 4 | Press **BTNU** (up) 3 times, slowly | display right digits `0003`; LD0 and LD1 lit; `$SH read 0x84` = `0x00000003` | 4+ or 1-2 counts: debounce problem; nothing: buttons or reset |

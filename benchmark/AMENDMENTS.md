@@ -5,6 +5,28 @@ finding), the change and the new hash. Only **development** tasks are amended; n
 v1 and course units are re-recorded with `freeze.py refreeze`; v2 development tasks through a hash-chained `amend` entry in `v2/ledger.jsonl`.
 Reviews: `reports/12_quality_review_area2.md` (planner repository), items R2, R5-R9, B2, Q2.
 
+## 2026-11-12: shell protocol 1.1, the BUILD_ID register
+
+**Amended 2026-11-12 (owner: "don't be held back by benchmarks" at this stage; house rules, "Benchmarks do not block
+improvements"), shell freeze.** What: the test shell gains a read-only register **BUILD_ID at 0x05**, the bitstream's
+USR_ACCESS word read through the `USR_ACCESSE2` primitive (`SIM_BUILD_ID` in simulation, default 0); `SHELL_VERSION` becomes
+`0x00010001`; 0x05 now answers OK on a read and READ_ONLY on a write (it was BAD_ADDRESS); 0x06-0x7F stay reserved. Why: the
+board flow can then check, over the UART, that the bitstream on the board is the one its build manifest describes. Files:
+`shell/rtl/fpga_shell.sv`, `shell/rtl/shell_core.sv`, `shell/host/protocol.py` (and, outside the fingerprint, the model, the
+host driver, PROTOCOL.md and the shell tests). The window (0x80-0xFF), the frames and the timing are unchanged, so no task's
+spec, reference RTL, test or mutant changed.
+
+Re-recorded with the repository's tools:
+- `benchmark/GRADER_DEPS.json` and `benchmark/course/GRADER_DEPS.json` (`shell_freeze.py make`), and a new `shell_freeze`
+  entry in `v2/ledger.jsonl` (`split.py shell-freeze`): shell fingerprint `80ef214e...` -> **`b70ca608e445f8d567e2fb45fd1911e89d06d67ee1702b0c1f728ebaabc21f87`**,
+  last changed in commit `8e971392667615a662b48fb4c86e6bc60769faaf`. The splits themselves are unchanged (`split.py verify` passes).
+- The request golden: `agent/tests/fixtures/b54b_request_golden.json`. The tests role reads the shell's PROTOCOL.md and
+  host driver, so `plan_tests_*` and `cli_argv_tests_*` differ from the brief 53 golden; nothing else does.
+
+Not comparable: any result scored or graded with the 1.0 shell (fingerprint `80ef214e...`, everything recorded before this
+date, including the eval-1 runs) belongs to that shell; such results stay as they are and are from before this change.
+To re-grade one exactly as it was, check out the earlier commit as a frozen shell (`--grader-shell`, see FROZEN.md).
+
 ## 2026-11-10: shell fingerprint, spec gaps, mutants (brief 15)
 
 **Amended 2026-11-10 (planner, before any scored run), shell freeze.** Reason (R2): "the shell is a scoring dependency that can [change]": `shell/rtl/*.sv`,
