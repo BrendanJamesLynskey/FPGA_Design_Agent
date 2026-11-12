@@ -145,9 +145,12 @@ def test_portfolio_card_numbers_are_the_site_values() -> None:
         parts = path.split(".")
         assert parts[0] == "showcase"
         for p in parts[1:]:
-            node = node[int(p)] if isinstance(node, list) else node[p]
+            if isinstance(node, list):
+                node = next(x for x in node if x.get("id") == p[3:]) if p.startswith("id=") else node[int(p)]
+            else:
+                node = node[p]
         return node
-    assert at("site/data:showcase.projects.0.id") == "axi_transactor"
+    assert at("site/data:showcase.projects.id=axi_transactor.id") == "axi_transactor"
     for fact in card["facts"]:
         allowed = {str(at(r)) for r in [fact["source"], *fact.get("also", [])]}
         nums = set(re.findall(r"\d+(?:\.\d+)?", re.sub(r"AXI4-Lite|AXI4-Stream|Nexys A7", "", fact["text"])))

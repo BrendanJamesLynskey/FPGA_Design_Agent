@@ -67,6 +67,11 @@ story:
     - "In one run against the board's block-RAM controller IP core, under random back-pressure, write latency ran from {wlat_min} to {wlat_max} cycles and read latency from {rlat_min} to {rlat_max}; {reads_checked} reads of written words were checked against the reference memory with no mismatch."
     - "Design size and timing: the whole board design used {lut} LUTs and met timing with {wns} ns of slack; Vivado estimated {power} W."
     - "Measured conditions: the die stayed at or below {tj_max} C and the core supply rail (VCCINT) between {vccint_min} and {vccint_max} V, inside the recommended operating conditions, with {alarms} alarms latched."
+  table:
+    caption: "Every board run of the final plan, with the rule that fired first (blank when none did)."
+    source: results/59a_axi_tx/page_data.json
+    path: board_runs
+    columns: [[tag, Run], [repeat, Repeat], [pass, Expected verdict], [first_rule, First rule fired], [n_txn, Transactions], [amd_pc_asserted, AMD checker flagged]]
   agent:
     request: "The owner asked for an on-chip AMBA AXI traffic generator and protocol checker that exercises on-chip modules with transactions of any complexity while verifying protocol correctness."
     plan: "The owner chose the project and set the rules. A language-model coding agent wrote the RTL, the rule monitors (from the specification, in its own words), the seeded bugs, the proofs, the simulation and the board runs. The bugs were seeded by the same agent that wrote the checker; AMD's checker is the part it did not write."

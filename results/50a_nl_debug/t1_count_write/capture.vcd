@@ -1,0 +1,24 @@
+$date 2026-11-12T10:08:51 $end
+$version fda debug_core (brief 50A) $end
+$comment First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back. $end
+$timescale 10000 ps $end
+$scope module capture $end
+$var wire 1 ! win_wr $end
+$var wire 8 " addr $end
+$var wire 16 # count $end
+$var wire 1 $ TRIGGER $end
+$upscope $end
+$enddefinitions $end
+#0
+0!
+b10000000 "
+b11 #
+0$
+#16
+1!
+1$
+#17
+0!
+b1001000110100 #
+0$
+#1024

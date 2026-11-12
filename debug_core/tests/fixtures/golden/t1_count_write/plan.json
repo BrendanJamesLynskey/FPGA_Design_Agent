@@ -1,0 +1,204 @@
+{
+ "schema": "fda-debug-plan/1",
+ "design": "designs/t1_dimmer_counter",
+ "request": "First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.",
+ "backend": "vendor_ila",
+ "clock": {
+  "domain": "CLK100MHZ",
+  "net": "CLK100MHZ_IBUF_BUFG",
+  "mhz": 100.0
+ },
+ "probes": [
+  {
+   "label": "win_wr",
+   "path": "u_shell.u_core.win_wr",
+   "width": 1,
+   "pins": "u_shell/u_core/win_wr_reg/Q",
+   "kind": "register",
+   "requested_as": "win_wr",
+   "clock": "CLK100MHZ",
+   "role": "trigger",
+   "notes": [
+    "the shell writes a design register"
+   ],
+   "group": "flags"
+  },
+  {
+   "label": "addr",
+   "path": "u_shell.u_core.frame[1]",
+   "width": 8,
+   "pins": "u_shell/u_core/frame_reg[1][*]/Q",
+   "kind": "register",
+   "requested_as": "addr",
+   "clock": "CLK100MHZ",
+   "role": "trigger",
+   "notes": [
+    "the request's ADDR byte (0x80 + offset for the design's registers)"
+   ],
+   "group": "data"
+  },
+  {
+   "label": "count",
+   "path": "u_dut.count",
+   "width": 16,
+   "pins": "u_dut/count_reg[*]/Q",
+   "kind": "register",
+   "requested_as": "count",
+   "clock": "CLK100MHZ",
+   "role": "data",
+   "notes": [
+    "the counter itself"
+   ],
+   "group": "data"
+  }
+ ],
+ "trigger": {
+  "combine": "AND",
+  "conditions": [
+   {
+    "probe": "win_wr",
+    "op": "==",
+    "value": 1,
+    "pattern": "1",
+    "text": "win_wr == 1"
+   },
+   {
+    "probe": "addr",
+    "op": "==",
+    "value": "0x80",
+    "pattern": "10000000",
+    "text": "addr == 0x80"
+   }
+  ]
+ },
+ "window": {
+  "pre": 16,
+  "post": 1007,
+  "depth": 1024,
+  "position": 16,
+  "requested": {
+   "pre": 16,
+   "post": 32
+  }
+ },
+ "ports": [
+  {
+   "port": 0,
+   "group": "flags",
+   "width": 1,
+   "slices": [
+    {
+     "label": "win_wr",
+     "offset": 0,
+     "width": 1
+    }
+   ]
+  },
+  {
+   "port": 1,
+   "group": "data",
+   "width": 24,
+   "slices": [
+    {
+     "label": "addr",
+     "offset": 0,
+     "width": 8
+    },
+    {
+     "label": "count",
+     "offset": 8,
+     "width": 16
+    }
+   ]
+  }
+ ],
+ "setup": [
+  {
+   "op": "write",
+   "register": "COUNT",
+   "value": 3,
+   "address": 128
+  }
+ ],
+ "stimulus": [
+  {
+   "op": "write",
+   "register": "COUNT",
+   "value": 4660,
+   "address": 128
+  }
+ ],
+ "readback": [
+  {
+   "op": "read",
+   "register": "COUNT",
+   "address": 128
+  }
+ ],
+ "fit": {
+  "ok": true,
+  "max_ports": 5,
+  "bram_budget": 32,
+  "ports_used": 2,
+  "total_bits": 25,
+  "bram36_estimate": 1
+ },
+ "errors": [],
+ "warnings": [],
+ "question": "What are count, win_wr, and the shell ADDR byte around the write to COUNT?",
+ "unclear": [],
+ "probeset": "ad3b58a920a1",
+ "intent": {
+  "probes": [
+   "count"
+  ],
+  "trigger": {
+   "combine": "AND",
+   "conditions": [
+    {
+     "signal": "win_wr",
+     "op": "==",
+     "value": 1
+    },
+    {
+     "signal": "addr",
+     "op": "==",
+     "value": "0x80"
+    }
+   ]
+  },
+  "pre": 16,
+  "post": 32,
+  "clock": null,
+  "setup": [
+   {
+    "op": "write",
+    "register": "COUNT",
+    "value": 3
+   }
+  ],
+  "stimulus": [
+   {
+    "op": "write",
+    "register": "COUNT",
+    "value": "0x1234"
+   }
+  ],
+  "readback": [
+   {
+    "op": "read",
+    "register": "COUNT"
+   }
+  ],
+  "question": "What are count, win_wr, and the shell ADDR byte around the write to COUNT?",
+  "unclear": []
+ },
+ "parse": {
+  "model": "openai/gpt-6-luna",
+  "cost": 0.000139945,
+  "prompt_tokens": 1478,
+  "completion_tokens": 233,
+  "attempts": 1,
+  "parser": "llm"
+ }
+}

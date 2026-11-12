@@ -1,0 +1,26 @@
+{
+  "t1_count_write": {
+    "design": "designs/t1_dimmer_counter",
+    "request": "First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back."
+  },
+  "t1_pwm_period": {
+    "design": "designs/t1_dimmer_counter",
+    "request": "With COUNT set to 0x8421 and DUTY set to 0x40, record led and phase for one whole PWM period starting when phase wraps to 0: no cycles before the trigger, 1023 after. Then read DUTY and COUNT back."
+  },
+  "t1_sync_byte": {
+    "design": "designs/t1_dimmer_counter",
+    "request": "Trigger on the rising edge of rx_valid when the received byte rx_data is 0xA5, and show rx_data and the raw UART receive line, 900 cycles before and 100 after. Make it happen by reading SCRATCH."
+  },
+  "brief_fifo_example": {
+    "design": "designs/t1_dimmer_counter",
+    "request": "capture the UART byte when the FIFO overflows, 200 cycles before and 50 after"
+  },
+  "t1_or_flags": {
+    "design": "designs/t1_dimmer_counter",
+    "request": "Capture count and duty when either win_wr or press_clear goes to 1, 8 cycles before and 64 after. To make it happen, wait 300 ms and then write 0x22 to DUTY."
+  },
+  "t1_reuse_rise": {
+    "design": "designs/t1_dimmer_counter",
+    "request": "After arming, write 0x0042 to COUNT. Capture count on the rising edge of win_wr, 4 cycles before and 8 after, then read COUNT back."
+  }
+}

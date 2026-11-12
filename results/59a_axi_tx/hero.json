@@ -193,7 +193,47 @@
    "B accepted: the master takes the early response",
    "Write complete: the bus is quiet again"
   ],
+  "stages": [
+   {
+    "name": "Run",
+    "fact": "build 44b780c9",
+    "phase": "before",
+    "captions": [
+     "The transactor runs a register program against our peripheral with its early-response bug switched on. The checker watches the bus wires and has armed a capture on its first violation."
+    ]
+   },
+   {
+    "name": "Capture",
+    "fact": "16 cycles",
+    "phase": "during",
+    "captions": [
+     "The capture from the board, replayed cycle by cycle around the trigger."
+    ]
+   },
+   {
+    "name": "Verdict",
+    "fact": "cycle 1070 of the run",
+    "phase": "after",
+    "captions": [
+     "The checker names the rule broken: B_EARLY, a write response raised before its write data had arrived. AMD's AXI Protocol Checker on the same bus also flagged this run."
+    ]
+   }
+  ],
+  "marks": [
+   {
+    "x": 0,
+    "label": "trigger: B_EARLY",
+    "signal": "BVALID"
+   },
+   {
+    "x": 2,
+    "label": "write data arrives",
+    "signal": "WVALID"
+   }
+  ],
+  "tick": 5,
   "source_run": "periph_regs_b_early",
-  "trigger_at_x": 0
+  "trigger_at_x": 0,
+  "alt": "A waveform captured on the board: after the address handshake the peripheral raises BVALID, its write response, before any write data; the checker's B_EARLY rule goes high in that cycle and the write data arrives afterwards."
  }
 }

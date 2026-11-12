@@ -268,8 +268,27 @@ def showcase_files() -> None:
         else:
             c = "Address held by the peripheral, waiting for its data"
         caps.append(c)
-    hero = {"wave": {"unit": "cycle", "x": [i + lo - t for i in range(len(rows))], "signals": signals, "captions": caps,
-                     "source_run": hero_run["tag"], "trigger_at_x": 0}}
+    xs = [i + lo - t for i in range(len(rows))]
+    w_at = next((x for x, r in zip(xs, rows) if r["wvalid"] and r["wready"]), None)
+    amd = hero_run.get("amd_pc_asserted")
+    stages = [
+        {"name": "Run", "fact": f"build {board['build_id']}", "phase": "before",
+         "captions": ["The transactor runs a register program against our peripheral with its early-response bug switched on. "
+                      "The checker watches the bus wires and has armed a capture on its first violation."]},
+        {"name": "Capture", "fact": f"{len(rows)} cycles", "phase": "during",
+         "captions": ["The capture from the board, replayed cycle by cycle around the trigger."]},
+        {"name": "Verdict", "fact": f"cycle {hero_run['lite_rules']['first_time']} of the run", "phase": "after",
+         "captions": ["The checker names the rule broken: B_EARLY, a write response raised before its write data had arrived."
+                      + (" AMD's AXI Protocol Checker on the same bus also flagged this run." if amd else "")]},
+    ]
+    marks = [{"x": 0, "label": "trigger: B_EARLY", "signal": "BVALID"}]
+    if w_at is not None:
+        marks.append({"x": w_at, "label": "write data arrives", "signal": "WVALID"})
+    hero = {"wave": {"unit": "cycle", "x": xs, "signals": signals, "captions": caps, "stages": stages, "marks": marks,
+                     "tick": 5, "source_run": hero_run["tag"], "trigger_at_x": 0,
+                     "alt": "A waveform captured on the board: after the address handshake the peripheral raises BVALID, its "
+                            "write response, before any write data; the checker's B_EARLY rule goes high in that cycle and the "
+                            "write data arrives afterwards."}}
     (RES / "hero.json").write_text(json.dumps(hero, indent=1) + "\n")
 
     def flagged(r):
@@ -327,7 +346,7 @@ def portfolio_card() -> None:
     """site/portfolio/axi_transactor/portfolio.json: three facts, every number from summary.json and named by its source in
     site/data (the page's resolved values), checked by axi_tx/tests/test_59a_host.py."""
     s = _load("summary.json")
-    v = "site/data:showcase.projects.0.values."
+    v = "site/data:showcase.projects.id=axi_transactor.values."
     card = {
         "id": "axi_transactor", "title": "An on-chip AXI traffic generator and protocol checker",
         "tagline": "A block beside the design under test that drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run "

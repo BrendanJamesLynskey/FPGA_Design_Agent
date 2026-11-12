@@ -60,9 +60,16 @@ preflight() {
   # FDA_VIVADO_MAX (default 1) is how many Vivado jobs may run at once; the owner may raise it to 2 on the 32 GB PC
   # (2026-11-07 trial, measured by _handoff/fpga_agent/resources/vivado_monitor.sh). It counts the real binaries.
   local running n max="${FDA_VIVADO_MAX:-1}"
+  # capped at 2: the owner's limit of two heavy jobs on this PC (a non-number counts as 1)
+  case "$max" in ''|*[!0-9]*) max=1 ;; esac
+  [ "$max" -ge 1 ] || max=1
+  [ "$max" -le 2 ] || max=2
   # Vivado's own task_worker.tcl helpers (synthesis children) are part of their parent job, so they are not counted
   running="$(pgrep -af 'unwrapped/lnx64.o/vivado' | grep -v task_worker.tcl | awk '{print $1}' | paste -sd, - || true)"
   n="$(pgrep -af 'unwrapped/lnx64.o/vivado' | grep -vc task_worker.tcl || true)"
+  # tests only: a test that runs a fake Vivado sets the count it wants, so other sessions' real jobs on the PC do not
+  # decide its result (flow/tests/test_33_build_cache.py)
+  if [ -n "${FDA_TEST_VIVADO_RUNNING:-}" ]; then n="$FDA_TEST_VIVADO_RUNNING"; running="(test override)"; fi
   [ "${n:-0}" -lt "$max" ] || die "$n Vivado job(s) running (PIDs $running), limit FDA_VIVADO_MAX=$max on this PC"
   local avail_kb need_kb
   avail_kb="$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)"

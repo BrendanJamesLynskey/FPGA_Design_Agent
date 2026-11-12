@@ -1,0 +1,13 @@
+Request: After arming, write 0x0042 to COUNT. Capture count on the rising edge of win_wr, 4 cycles before and 8 after, then read COUNT back.
+Back end: vendor ILA (one ILA IP, Basic tier), clock domain CLK100MHZ (net CLK100MHZ_IBUF_BUFG, 100 MHz).
+Probes:
+  win_wr           1 bit   u_shell.u_core.win_wr        <- 'win_wr' (register, trigger) pins u_shell/u_core/win_wr_reg/Q
+                 note: the shell writes a design register
+  count           16 bits  u_dut.count                  <- 'count' (register, data) pins u_dut/count_reg[*]/Q
+                 note: the counter itself
+Trigger (AND): win_wr rises
+Window: 1024 samples, 4 before the trigger and 1019 after (the smallest size that holds the 4 before and 8 after you asked for; the answer covers your window).
+Ports: probe0 flags 1 bit = win_wr[1]; probe1 data 16 bits = count[16] (2 of the 5 allowed ports; about 1 block RAM tile).
+After arming: write COUNT (0x80) = 0x42
+After the capture: read COUNT (0x80)
+Can be built (probe set 597f16f6d572).

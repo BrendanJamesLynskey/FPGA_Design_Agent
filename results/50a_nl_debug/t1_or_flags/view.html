@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capture viewer</title>
+<style>
+:root { --bg: #ffffff; --fg: #111111; --muted: #666666; --line: #d0d0d0; --wave: #111111; --bus: #f2f2f2; --cursor: #888888; --trig: #111111; }
+@media (prefers-color-scheme: dark) { :root { --bg: #111111; --fg: #e8e8e8; --muted: #9a9a9a; --line: #333333; --wave: #e8e8e8; --bus: #1d1d1d; --cursor: #777777; --trig: #e8e8e8; } }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+h1 { font-size: 17px; margin: 0 0 4px; font-weight: 600; }
+.meta, .muted { color: var(--muted); font-size: 12.5px; }
+pre.answer { white-space: pre-wrap; border-left: 2px solid var(--line); padding: 4px 10px; margin: 12px 0; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0; }
+button, label.file { font: inherit; font-size: 13px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 3px 10px; cursor: pointer; }
+button:hover, label.file:hover { border-color: var(--fg); }
+input[type=file] { display: none; }
+#wrap { display: grid; grid-template-columns: minmax(90px, 160px) 1fr; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+#names { font: 12.5px ui-monospace, Menlo, monospace; }
+#names div { height: 28px; line-height: 28px; padding-right: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid var(--line); }
+#names div.axis { height: 22px; line-height: 22px; color: var(--muted); }
+#scroll { overflow-x: auto; overflow-y: hidden; }
+canvas { display: block; }
+#readout { font: 12.5px ui-monospace, Menlo, monospace; min-height: 1.5em; margin-top: 6px; }
+table { border-collapse: collapse; font-size: 12.5px; margin-top: 12px; }
+td, th { border-bottom: 1px solid var(--line); padding: 2px 10px 2px 0; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<h1 id="title">Capture viewer</h1>
+<div class="meta" id="meta"></div>
+<pre class="answer" id="answer"></pre>
+<div class="bar">
+  <button id="zin" title="zoom in">Zoom in</button>
+  <button id="zout" title="zoom out">Zoom out</button>
+  <button id="fit">Fit</button>
+  <button id="asked" title="the cycles the request asked for">Requested window</button>
+  <button id="trig">Go to trigger</button>
+  <label class="file">Open capture JSON<input type="file" id="file" accept=".json,application/json"></label>
+  <span class="muted">wheel or pinch to zoom, drag to scroll, click to place the cursor</span>
+</div>
+<div id="wrap"><div id="names"></div><div id="scroll"><canvas id="cv"></canvas></div></div>
+<div id="readout"></div>
+<table id="cond"></table>
+<script>
+"use strict";
+const CAPTURE = {"schema":"fda-capture/1","instrument":{"kind":"vendor_ila","driver":"debug_core.instruments.VendorIla","mock":false,"settings":{"depth":1024,"position":8,"combine":"OR","compares":{"win_wr":"R","press_clear":"R"},"board":"nexys_a7_100t","cable_serial":"...B73A"}},"design":"designs/t1_dimmer_counter","build":{"dir":"designs/t1_dimmer_counter/build/debug/5786d4f73d78/build/ila","build_id":"a6f3c5d2","build_stamp":"819c49ef","probeset":"5786d4f73d78","vivado":"2026.1","program_seconds":35.2,"power_ok":{"pass":true,"total_w":0.162,"junction_c":42.9,"source":"wall"},"reused":false,"build_probeset":"5786d4f73d78"},"request":"Capture count and duty when either win_wr or press_clear goes to 1, 8 cycles before and 64 after. To make it happen, wait 300 ms and then write 0x22 to DUTY.","question":"What are count and duty when win_wr or press_clear rises?","plan_probeset":"5786d4f73d78","timebase":{"unit":"cycle","clock":"CLK100MHZ","mhz":100.0,"samples":1024,"trigger_sample":8,"alignment_uncertainty_cycles":0,"trigger_sample_from":"TRIGGER column"},"channels":[{"name":"win_wr","path":"u_shell.u_core.win_wr","kind":"digital","width":1,"samples":[0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"name":"press_clear","path":"u_dut.u_db_clear.press","kind":"digital","width":1,"samples":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"name":"count","path":"u_dut.count","kind":"digital","width":16,"samples":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"name":"duty","path":"u_dut.duty","kind":"digital","width":8,"samples":[64,64,64,64,64,64,64,64,64,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34,34]}],"trigger":{"combine":"OR","conditions":[{"probe":"win_wr","op":"rise","value":null,"pattern":"R","text":"win_wr rises"},{"probe":"press_clear","op":"rise","value":null,"pattern":"R","text":"press_clear rises"}]},"window":{"pre":8,"post":1015,"depth":1024,"position":8,"requested":{"pre":8,"post":64}},"conditions":{"armed":{"read":true,"now":{"TEMPERATURE":26.5,"VCCINT":1.006,"VCCAUX":1.794,"VCCBRAM":1.006},"max":{"TEMPERATURE":27.68,"VCCINT":1.0071,"VCCAUX":1.7959,"VCCBRAM":1.0071},"min":{"TEMPERATURE":25.84,"VCCINT":1.0042,"VCCAUX":1.7812,"VCCBRAM":1.0049},"flags":"0000","inside_roc":true,"outside":[],"limits":{"VCCINT":[0.95,1.05],"VCCAUX":[1.71,1.89],"VCCBRAM":[0.95,1.05],"TEMPERATURE":[null,85.0]},"note":"XADC through JTAG at programming time; min/max are latched since this configuration; the XADC samples at about 1 MSPS across channels, so nanosecond supply droop is not visible to it","alarm_bits":[]},"done":{"read":true,"now":{"TEMPERATURE":26.5,"VCCINT":1.006,"VCCAUX":1.794,"VCCBRAM":1.006},"max":{"TEMPERATURE":27.68,"VCCINT":1.0071,"VCCAUX":1.7959,"VCCBRAM":1.0071},"min":{"TEMPERATURE":25.84,"VCCINT":1.0042,"VCCAUX":1.7812,"VCCBRAM":1.0049},"flags":"0000","inside_roc":true,"outside":[],"limits":{"VCCINT":[0.95,1.05],"VCCAUX":[1.71,1.89],"VCCBRAM":[0.95,1.05],"TEMPERATURE":[null,85.0]},"note":"XADC through JTAG at programming time; min/max are latched since this configuration; the XADC samples at about 1 MSPS across channels, so nanosecond supply droop is not visible to it","alarm_bits":[]},"alarms":[],"verdict":"inside ROC","outside":[],"limits":{"VCCINT":[0.95,1.05],"VCCAUX":[1.71,1.89],"VCCBRAM":[0.95,1.05],"TEMPERATURE":[null,85.0]},"programmed":{"read":true,"now":{"TEMPERATURE":26.9,"VCCINT":1.006,"VCCAUX":1.794,"VCCBRAM":1.006},"max":{"TEMPERATURE":27.68,"VCCINT":1.0071,"VCCAUX":1.7959,"VCCBRAM":1.0071},"min":{"TEMPERATURE":26.58,"VCCINT":1.0049,"VCCAUX":1.7812,"VCCBRAM":1.0049},"flags":"0000","inside_roc":true,"outside":[],"limits":{"VCCINT":[0.95,1.05],"VCCAUX":[1.71,1.89],"VCCBRAM":[0.95,1.05],"TEMPERATURE":[null,85.0]},"note":"XADC through JTAG at programming time; min/max are latched since this configuration; the XADC samples at about 1 MSPS across channels, so nanosecond supply droop is not visible to it"}},"stimulus_log":[{"phase":"stimulus","op":"wait_ms","ms":300.0,"t_s":25.6},{"phase":"stimulus","op":"write","register":"DUTY","value":34,"address":129,"t_s":25.9}],"readback":{},"requirement":null,"created":"2026-11-12T11:20:11"};
+const ANSWER = "Triggered on win_wr rises OR press_clear rises. Cycle 0 is sample 8 of 1024 at 100 MHz. The capture holds cycles -8 to 1015; this answer covers cycles -8 to 64, as asked.\nAt cycle 0: win_wr = 1, press_clear = 0, count = 0x0000, duty = 0x40.\nwin_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 73 samples high).\npress_clear held 0 for the whole window (cycles -8 to 64).\ncount held 0x0000 for the whole window (cycles -8 to 64).\nduty was 0x40 from cycle -8 to 0, then 0x22 from cycle 1 to 64.\nSupply and temperature from the chip's own monitor (XADC) when armed: die 26.5 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; after upload: die 26.5 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside the recommended operating conditions (ROC: the data sheet's supply and temperature ranges).";
+const ROW = 28, AXIS = 22;
+let cap = null, px = 4, cursor = null;
+const cv = document.getElementById("cv"), sc = document.getElementById("scroll");
+function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function hex(v, w) { return w === 1 ? String(v) : "0x" + v.toString(16).toUpperCase().padStart(Math.ceil(w / 4), "0"); }
+function load(c, answer) {
+  cap = c;
+  document.getElementById("title").textContent = c.request || "Capture";
+  const tb = c.timebase, b = c.build || {}, ins = c.instrument || {};
+  document.getElementById("meta").textContent =
+    `${ins.kind || ""}${ins.mock ? " (mock)" : ""} | ${tb.samples} samples, trigger at sample ${tb.trigger_sample} (cycle 0)` +
+    (tb.mhz ? `, ${tb.mhz} MHz ${tb.clock || ""}` : "") + (b.build_id ? ` | build ${b.build_id}` : "") +
+    (c.plan_probeset ? ` | probe set ${c.plan_probeset}` : "") + (c.created ? ` | ${c.created}` : "");
+  document.getElementById("answer").textContent = answer || "";
+  document.getElementById("answer").style.display = answer ? "" : "none";
+  const names = document.getElementById("names");
+  names.innerHTML = "";
+  const ax = document.createElement("div"); ax.className = "axis"; ax.textContent = "cycle"; names.appendChild(ax);
+  for (const ch of c.channels) {
+    const d = document.createElement("div");
+    d.textContent = ch.width > 1 ? `${ch.name}[${ch.width - 1}:0]` : ch.name;
+    d.title = ch.path || ch.name; names.appendChild(d);
+  }
+  const t = document.getElementById("cond"); t.innerHTML = "";
+  const cond = c.conditions || {};
+  const WHEN = {programmed: "Supply and temperature at programming", armed: "Supply and temperature when armed", done: "Supply and temperature after upload"};
+  for (const when of ["programmed", "armed", "done"]) {
+    const x = cond[when]; if (!x || !x.now) continue;
+    const r = t.insertRow(); r.insertCell().textContent = WHEN[when];
+    r.insertCell().textContent = Object.entries(x.now).map(([k, v]) => `${k} ${v}`).join("  ");
+  }
+  if (cond.verdict) { const r = t.insertRow(); r.insertCell().textContent = "Operating conditions"; r.insertCell().textContent = ({"inside ROC": "inside the recommended operating conditions", "outside ROC": "OUTSIDE the recommended operating conditions"}[cond.verdict] || cond.verdict) + (cond.alarms && cond.alarms.length ? " (alarms: " + cond.alarms.join(", ") + ")" : ""); }
+  for (const [k, v] of Object.entries(c.readback || {})) { const r = t.insertRow(); r.insertCell().textContent = "read back " + k; r.insertCell().textContent = "0x" + Number(v).toString(16).toUpperCase().padStart(8, "0"); }
+  asked();
+}
+// open on the window the request asked for (the ILA window is a power of two and usually much longer)
+function asked() {
+  if (!cap) return;
+  const r = (cap.window || {}).requested || {}, t0 = cap.timebase.trigger_sample, n = cap.timebase.samples;
+  if (r.pre == null && r.post == null) { fit(); toTrigger(); return; }
+  const lo = Math.max(0, t0 - (r.pre == null ? t0 : r.pre)), hi = Math.min(n - 1, t0 + (r.post == null ? n : r.post));
+  px = Math.min(40, Math.max(0.05, (sc.clientWidth - 4) / (hi - lo + 1))); draw(); sc.scrollLeft = lo * px;
+}
+function fit() { if (!cap) return; px = Math.max(0.05, (sc.clientWidth - 4) / cap.timebase.samples); draw(); }
+function toTrigger() { if (!cap) return; sc.scrollLeft = cap.timebase.trigger_sample * px - sc.clientWidth / 2; }
+function zoom(f, at) {
+  if (!cap) return;
+  const x = at === undefined ? sc.scrollLeft + sc.clientWidth / 2 : at, s = x / px;
+  px = Math.min(40, Math.max(0.05, px * f)); draw(); sc.scrollLeft = s * px - (x - sc.scrollLeft);
+}
+function draw() {
+  if (!cap) return;
+  const n = cap.timebase.samples, W = Math.max(sc.clientWidth, Math.ceil(n * px) + 2), H = AXIS + ROW * cap.channels.length;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = css("--bg"); g.fillRect(0, 0, W, H);
+  const t0 = cap.timebase.trigger_sample, fg = css("--wave"), line = css("--line"), muted = css("--muted");
+  g.font = "11px ui-monospace, Menlo, monospace"; g.textBaseline = "middle";
+  // axis ticks every power-of-ten-ish step of cycles
+  const steps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
+  const step = steps.find(s => s * px >= 60) || 100000;
+  g.strokeStyle = line; g.fillStyle = muted; g.lineWidth = 1;
+  for (let cy = Math.ceil(-t0 / step) * step; cy <= n - 1 - t0; cy += step) {
+    const x = (cy + t0) * px + 0.5; g.beginPath(); g.moveTo(x, AXIS - 6); g.lineTo(x, H); g.stroke(); g.fillText(String(cy), x + 3, AXIS / 2);
+  }
+  g.strokeStyle = line; g.beginPath(); g.moveTo(0, AXIS - 0.5); g.lineTo(W, AXIS - 0.5); g.stroke();
+  cap.channels.forEach((ch, i) => {
+    const y = AXIS + i * ROW, hi = y + 6, lo = y + ROW - 6, s = ch.samples;
+    g.strokeStyle = line; g.beginPath(); g.moveTo(0, y + ROW - 0.5); g.lineTo(W, y + ROW - 0.5); g.stroke();
+    g.strokeStyle = fg; g.lineWidth = 1.25;
+    if (ch.width === 1) {
+      g.beginPath(); g.moveTo(0, s[0] ? hi : lo);
+      for (let k = 1; k < n; k++) { if (s[k] !== s[k - 1]) { const x = k * px; g.lineTo(x, s[k - 1] ? hi : lo); g.lineTo(x, s[k] ? hi : lo); } }
+      g.lineTo(n * px, s[n - 1] ? hi : lo); g.stroke();
+    } else {
+      let a = 0;
+      for (let k = 1; k <= n; k++) {
+        if (k === n || s[k] !== s[a]) {
+          const x0 = a * px, x1 = k * px, m = Math.min(3, (x1 - x0) / 2), yc = (hi + lo) / 2;
+          g.fillStyle = css("--bus"); g.beginPath();
+          g.moveTo(x0, yc); g.lineTo(x0 + m, hi); g.lineTo(x1 - m, hi); g.lineTo(x1, yc); g.lineTo(x1 - m, lo); g.lineTo(x0 + m, lo); g.closePath(); g.fill(); g.stroke();
+          const txt = hex(s[a], ch.width);
+          if (g.measureText(txt).width + 6 < x1 - x0) { g.fillStyle = fg; g.fillText(txt, x0 + 4, yc); }
+          a = k;
+        }
+      }
+    }
+  });
+  // trigger and cursor
+  g.strokeStyle = css("--trig"); g.setLineDash([4, 3]); g.lineWidth = 1;
+  const xt = t0 * px + 0.5; g.beginPath(); g.moveTo(xt, 0); g.lineTo(xt, H); g.stroke(); g.setLineDash([]);
+  g.fillStyle = css("--trig"); g.fillText("trigger", xt + 16, AXIS / 2);
+  if (cursor !== null) { const xc = (cursor + 0.5) * px; g.strokeStyle = css("--cursor"); g.beginPath(); g.moveTo(xc, AXIS); g.lineTo(xc, H); g.stroke(); }
+}
+function readout(k) {
+  if (!cap || k < 0 || k >= cap.timebase.samples) return;
+  const cy = k - cap.timebase.trigger_sample;
+  document.getElementById("readout").textContent = `cycle ${cy}: ` + cap.channels.map(ch => `${ch.name}=${hex(ch.samples[k], ch.width)}`).join("  ");
+}
+const sampleAt = e => Math.floor((e.clientX - cv.getBoundingClientRect().left) / px);
+cv.addEventListener("mousemove", e => readout(sampleAt(e)));
+cv.addEventListener("click", e => { cursor = sampleAt(e); readout(cursor); draw(); });
+sc.addEventListener("wheel", e => { if (e.ctrlKey || Math.abs(e.deltaY) > Math.abs(e.deltaX)) { e.preventDefault(); zoom(e.deltaY < 0 ? 1.25 : 0.8, e.clientX - cv.getBoundingClientRect().left); } }, { passive: false });
+let drag = null;
+cv.addEventListener("pointerdown", e => { drag = { x: e.clientX, s: sc.scrollLeft }; });
+window.addEventListener("pointerup", () => { drag = null; });
+window.addEventListener("pointermove", e => { if (drag) sc.scrollLeft = drag.s - (e.clientX - drag.x); });
+document.getElementById("zin").onclick = () => zoom(2);
+document.getElementById("zout").onclick = () => zoom(0.5);
+document.getElementById("fit").onclick = fit;
+document.getElementById("asked").onclick = asked;
+document.getElementById("trig").onclick = toTrigger;
+document.getElementById("file").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => { cursor = null; load(JSON.parse(t), ""); }).catch(err => alert("This file is not a capture (fda-capture/1 JSON): " + err));
+};
+window.addEventListener("resize", () => draw());
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+if (CAPTURE) load(CAPTURE, ANSWER);
+</script>
+</body>
+</html>
