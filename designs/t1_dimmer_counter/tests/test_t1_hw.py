@@ -83,7 +83,7 @@ def board(request: pytest.FixtureRequest):
 def test_identity_and_build_stamp(board: Board) -> None:
     assert board.stamp_given, "--hw-stamp is required: the bitstream's build_stamp"
     assert board.rd(p.REG_DESIGN_ID) == m.DESIGN_ID              # "T1DC"
-    assert board.rd(p.REG_SHELL_VERSION) == p.SHELL_VERSION      # 1.1
+    assert board.rd(p.REG_SHELL_VERSION) == p.SHELL_VERSION      # 1.0
     board.rd(p.REG_BUILD_STAMP)                                  # equals --hw-stamp (via the model)
 
 
@@ -111,11 +111,11 @@ def test_error_responses_and_counters(board: Board) -> None:
     board.check(p.encode_request(p.CMD_READ, p.REG_SCRATCH)[:-1] + b"\x00")     # bad checksum
     board.check(p.encode_request(0x03, p.REG_SCRATCH))                          # bad command
     board.check(p.encode_request(0x00, p.REG_DESIGN_ID))                        # bad command
-    for addr in (0x06, 0x40, 0x7F):                                             # reserved addresses
+    for addr in (0x05, 0x40, 0x7F):                                             # reserved addresses
         board.check(p.encode_request(p.CMD_READ, addr))
-    for addr in (p.REG_DESIGN_ID, p.REG_SHELL_VERSION, p.REG_BUILD_STAMP, p.REG_BUILD_ID):     # read-only
+    for addr in (p.REG_DESIGN_ID, p.REG_SHELL_VERSION, p.REG_BUILD_STAMP):     # read-only
         board.check(p.encode_request(p.CMD_WRITE, addr, 0x1234))
-    assert board.rd(p.REG_STATUS) == 1 | 9 << 8                                 # 1 checksum, 9 request errors
+    assert board.rd(p.REG_STATUS) == 1 | 8 << 8                                 # 1 checksum, 8 request errors
     board.wr(p.REG_STATUS, 0)
     assert board.rd(p.REG_STATUS) == 0
 

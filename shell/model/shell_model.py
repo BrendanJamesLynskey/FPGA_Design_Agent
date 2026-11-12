@@ -37,11 +37,10 @@ class RamWindow:
 
 class ShellModel:
     def __init__(self, design_id: int = 0, build_stamp: int = 0, window: Window | None = None,
-                 timeout_s: float = 1e-3, build_id: int = 0) -> None:
+                 timeout_s: float = 1e-3) -> None:
         self.timeout_s = timeout_s   # TIMEOUT_CYCLES = 100_000 at 100 MHz
         self.design_id = design_id
         self.build_stamp = build_stamp
-        self.build_id = build_id     # register 0x05: the USR_ACCESS word (SIM_BUILD_ID in simulation)
         self.window = window if window is not None else RamWindow()
         self.reset()
 
@@ -103,7 +102,7 @@ class ShellModel:
                 return p.encode_response(p.ST_OK, data)
             return p.encode_response(p.ST_OK, self.window.window_read(addr - p.WINDOW_BASE) & 0xFFFF_FFFF)
         ro = {p.REG_DESIGN_ID: self.design_id, p.REG_SHELL_VERSION: p.SHELL_VERSION,
-              p.REG_BUILD_STAMP: self.build_stamp, p.REG_BUILD_ID: self.build_id}
+              p.REG_BUILD_STAMP: self.build_stamp}
         if addr in ro:
             if write:
                 self._inc("req")

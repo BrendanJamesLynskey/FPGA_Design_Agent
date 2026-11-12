@@ -19,7 +19,6 @@ from shell.model.shell_model import RamWindow, ShellModel
 from shell.tests.uart_bfm import UartBfm
 
 DESIGN_ID = 0x5348_4C54   # "SHLT", set in shell_tb_top.sv
-SIM_BUILD_ID = 0xB54D_0001   # register 0x05 in simulation, set in shell_tb_top.sv
 
 
 async def setup(dut) -> tuple[UartBfm, ShellModel, int, int]:
@@ -31,7 +30,7 @@ async def setup(dut) -> tuple[UartBfm, ShellModel, int, int]:
     await ClockCycles(dut.clk, 5)
     dut.rst.value = 0
     await ClockCycles(dut.clk, 5)
-    return bfm, ShellModel(DESIGN_ID, 0, RamWindow(16), timeout_s=timeout * 10e-9, build_id=SIM_BUILD_ID), cpb, timeout
+    return bfm, ShellModel(DESIGN_ID, 0, RamWindow(16), timeout_s=timeout * 10e-9), cpb, timeout
 
 
 async def check(bfm: UartBfm, model: ShellModel, req: bytes) -> bytes:
@@ -45,8 +44,7 @@ async def check(bfm: UartBfm, model: ShellModel, req: bytes) -> bytes:
 async def fixed_registers_and_worked_bytes(dut):
     bfm, model, _, _ = await setup(dut)
     assert p.decode_response(await check(bfm, model, p.encode_request(p.CMD_READ, 0x00))).data == DESIGN_ID
-    assert p.decode_response(await check(bfm, model, p.encode_request(p.CMD_READ, 0x01))).data == 0x0001_0001
-    assert p.decode_response(await check(bfm, model, p.encode_request(p.CMD_READ, 0x05))).data == SIM_BUILD_ID
+    assert p.decode_response(await check(bfm, model, p.encode_request(p.CMD_READ, 0x01))).data == 0x0001_0000
     assert p.decode_response(await check(bfm, model, p.encode_request(p.CMD_READ, 0x02))).data == 0
     # The worked bytes in PROTOCOL.md
     assert await check(bfm, model, bytes.fromhex("A5 02 03 78 56 34 12 09")) == bytes.fromhex("5A 00 78 56 34 12 08")
@@ -58,12 +56,11 @@ async def fixed_registers_and_worked_bytes(dut):
 async def errors_are_answered_and_counted(dut):
     bfm, model, _, _ = await setup(dut)
     bad_chk = p.encode_request(p.CMD_READ, 0x03)[:-1] + b"\x77"
-    for req in [bad_chk, p.encode_request(0x07, 0x03), p.encode_request(p.CMD_READ, 0x06),
-                p.encode_request(p.CMD_READ, 0x7F), p.encode_request(p.CMD_WRITE, 0x01, 5),
-                p.encode_request(p.CMD_WRITE, 0x05, 5)]:
+    for req in [bad_chk, p.encode_request(0x07, 0x03), p.encode_request(p.CMD_READ, 0x05),
+                p.encode_request(p.CMD_READ, 0x7F), p.encode_request(p.CMD_WRITE, 0x01, 5)]:
         await check(bfm, model, req)
     st = p.decode_response(await check(bfm, model, p.encode_request(p.CMD_READ, p.REG_STATUS))).data
-    assert st == 1 | 5 << 8, hex(st)
+    assert st == 1 | 4 << 8, hex(st)
     await check(bfm, model, p.encode_request(p.CMD_WRITE, p.REG_STATUS, 0xFFFF_FFFF))   # clears
     assert p.decode_response(await check(bfm, model, p.encode_request(p.CMD_READ, p.REG_STATUS))).data == 0
 
@@ -112,7 +109,7 @@ async def framing_error_drops_the_frame(dut):
 async def random_transactions_match_the_model(dut):
     bfm, model, _, _ = await setup(dut)
     rng = random.Random(int(cocotb.RANDOM_SEED))
-    addrs = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x40, 0x7F] + list(range(0x80, 0x92)) + [0xC0, 0xFF]
+    addrs = [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x40, 0x7F] + list(range(0x80, 0x92)) + [0xC0, 0xFF]
     for _ in range(150):
         cmd = rng.choice([p.CMD_READ, p.CMD_WRITE, p.CMD_WRITE, 0x00, 0x03])
         req = p.encode_request(cmd, rng.choice(addrs), rng.getrandbits(32))

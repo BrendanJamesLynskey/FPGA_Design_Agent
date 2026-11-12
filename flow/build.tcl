@@ -260,8 +260,8 @@ if {$ila eq "0"} { stop_here route }
 # --- stage bitstream -----------------------------------------------------------
 # brief 54: the build ID (flow/manifest.py: the first 8 hex digits of the manifest's hash, appended to inputs.tcl as
 # build_id) goes into the USR_ACCESS register (AMD XAPP1232). The configuration logic holds it after loading, the hardware
-# manager reads it as REGISTER.USR_ACCESS and the test shell through USR_ACCESSE2 (register 0x05). Set here, not in the
-# XDC, so the routed checkpoint is the same whatever the build ID.
+# manager reads it as REGISTER.USR_ACCESS (flow/program.tcl), and fabric logic could read it through USR_ACCESSE2. Set
+# here, not in the XDC, so the routed checkpoint is the same whatever the build ID.
 if {[info exists build_id] && $build_id ne ""} {
     if {![regexp {^[0-9a-f]{8}$} $build_id]} { error "build.tcl: build_id must be 8 hex digits, not '$build_id'" }
     set_property BITSTREAM.CONFIG.USR_ACCESS 0x$build_id [current_design]

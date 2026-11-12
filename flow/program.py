@@ -17,8 +17,10 @@ xc7a100t, program SRAM, attach the ``.ltx``) under the memory-safe Vivado settin
 
 **Build ID (brief 54).** After programming, program.tcl reads the device's USR_ACCESS register over JTAG; it must equal
 the ``build_id`` of the build's ``manifest.json`` (flow/manifest.py), or the run stops (``HwError``) before any board
-test. The test shell's register 0x05 (the same word, read by the fabric through USR_ACCESSE2) is checked by
-:func:`check_shell_build_id`, which flow/board_check.py and flow/bringup.py call in their identify step. A build made
+test. Over the UART, :func:`check_shell_build_id` compares the shell's BUILD_STAMP register (0x02) with the stamp the
+manifest recorded (``settings.build_stamp``, which the build ID covers); flow/board_check.py and flow/bringup.py call it
+right after programming. The shell has no register for the build ID itself: its register map is frozen with the
+benchmark (benchmark/GRADER_DEPS.json shell fingerprint), so adding one needs a dated benchmark amendment. A build made
 before brief 54 has no manifest: it is programmed with a note, and nothing is compared. program.tcl also logs the
 operating conditions (XADC temperature, VCCINT, VCCAUX, VCCBRAM, the latched min/max and the alarm flags), with a verdict
 against the Artix-7 -1 recommended operating conditions (AMD DS181 table 2) and the board's 85 C junction limit.
@@ -60,9 +62,12 @@ def build_info(design: Path, variant: str) -> dict[str, Any]:
          "--out", str(hw.ROOT / "build" / "hw" / "stamp_check")],
         capture_output=True, text=True, check=True).stdout)
     mf = bdir / "manifest.json"
-    build_id = json.loads(mf.read_text()).get("build_id") if mf.is_file() else None
+    man = json.loads(mf.read_text()) if mf.is_file() else {}
+    build_id = man.get("build_id")
+    manifest_stamp = (man.get("settings") or {}).get("build_stamp")
     return {"dir": bdir, "bit": bdir / f"{top}.bit", "ltx": bdir / f"{top}.ltx", "top": top,
-            "build_stamp": prep["build_stamp"], "tree_stamp": now["build_stamp"], "build_id": build_id}
+            "build_stamp": prep["build_stamp"], "tree_stamp": now["build_stamp"], "build_id": build_id,
+            "manifest_stamp": manifest_stamp}
 
 
 def parse_conditions(text: str) -> dict[str, Any]:
@@ -102,14 +107,16 @@ def check_build_id(expected: str | None, got: str | int | None, where: str) -> d
     return {"checked": True, "where": where, "expected": expected, "read": g or None, "match": ok}
 
 
-def check_shell_build_id(ident: dict[str, Any], expected: str | None) -> dict[str, Any]:
-    """The shell's register 0x05 (shell 1.1) against the manifest. Raises HwError on a mismatch: no board test runs."""
-    if ident.get("build_id") is None:
-        return {"checked": False, "where": "uart", "note": "shell older than 1.1 (no register 0x05) or no shell"}
-    r = check_build_id(expected, ident["build_id"], "uart")
+def check_shell_build_id(ident: dict[str, Any], manifest_stamp: str | None) -> dict[str, Any]:
+    """The shell's BUILD_STAMP (register 0x02) against the stamp in the manifest (``settings.build_stamp``, covered by
+    the build ID). Raises HwError on a mismatch: no board test runs."""
+    if ident.get("build_stamp") is None:
+        return {"checked": False, "where": "uart", "note": "no shell"}
+    r = check_build_id(manifest_stamp, ident["build_stamp"], "uart")
+    r["register"] = "BUILD_STAMP (0x02)"
     if r["checked"] and not r["match"]:
-        raise hw.HwError(f"build ID mismatch over the UART shell: the board reports {r['read']}, the manifest says "
-                         f"{expected}; stopping before any board test")
+        raise hw.HwError(f"build stamp mismatch over the UART shell: the board reports {r['read']}, the manifest says "
+                         f"{manifest_stamp}; stopping before any board test")
     return r
 
 
@@ -118,6 +125,7 @@ def program(design: Path, variant: str, board: str | None = None, log_dir: Path 
     b = hw.load_board(board)
     info = build_info(design, variant)
     res: dict[str, Any] = {"variant": variant, "build_stamp": info["build_stamp"], "build_id": info["build_id"],
+                           "manifest_stamp": info["manifest_stamp"],
                            "cable_serial": hw.redact(b["cable_serial"])}
     if not info["bit"].is_file():
         raise hw.HwError(f"no bitstream {info['bit']}")

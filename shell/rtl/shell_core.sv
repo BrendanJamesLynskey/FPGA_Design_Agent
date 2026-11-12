@@ -14,7 +14,6 @@ module shell_core #(
 ) (
     input  logic        clk,
     input  logic        rst,
-    input  logic [31:0] build_id,     // register 0x05: the bitstream's USR_ACCESS word (fpga_shell.sv), static
     // from uart_rx
     input  logic        rx_valid,
     input  logic [7:0]  rx_data,
@@ -39,7 +38,7 @@ module shell_core #(
     localparam logic [7:0] ST_BAD_CMD   = 8'h02;
     localparam logic [7:0] ST_BAD_ADDR  = 8'h03;
     localparam logic [7:0] ST_READ_ONLY = 8'h04;
-    localparam logic [31:0] SHELL_VERSION = 32'h0001_0001;   // 1.1 (brief 54: BUILD_ID at 0x05)
+    localparam logic [31:0] SHELL_VERSION = 32'h0001_0000;   // 1.0
     localparam int TW = $clog2(TIMEOUT_CYCLES + 1);
 
     typedef enum logic [2:0] {S_HUNT, S_RECV, S_EXEC, S_WIN_WAIT, S_WIN_CAP, S_SEND, S_SEND_WAIT} state_t;
@@ -154,8 +153,6 @@ module shell_core #(
                                        cnt_timeout <= '0;
                                        respond(ST_OK, 32'h0);
                                    end
-                            8'h05: if (cmd == CMD_READ) respond(ST_OK, build_id);
-                                   else begin cnt_req <= sat_inc(cnt_req); respond(ST_READ_ONLY, 32'h0); end
                             default: begin
                                 cnt_req <= sat_inc(cnt_req);
                                 respond(ST_BAD_ADDR, 32'h0);

@@ -85,7 +85,7 @@ def release_md(m: dict, gates: dict, files: list[str]) -> str:
         f"# Release: {m['design'].split('/')[-1]} ({m['variant']}), build ID `{m['build_id']}`", "",
         f"- Design `{m['design']}`, top `{m['top']}`, part `{m['part']}`.",
         f"- **Build ID `{m['build_id']}`**: the first 8 hex digits of the SHA-256 of the manifest's identity "
-        f"(`{m['build_id_sha256']}`). The bitstream carries it in USR_ACCESS; the test shell reads it at register 0x05.",
+        f"(`{m['build_id_sha256']}`). The bitstream carries it in USR_ACCESS (read over JTAG as REGISTER.USR_ACCESS).",
         f"- Flow commit `{fl.get('commit')}`{' (**dirty tree**)' if fl.get('dirty') else ' (clean tree)'}; "
         f"knowledge-bank pin `{m.get('kb_pin')}`.",
         f"- Vivado {tools.get('vivado')} (ran {tools.get('vivado_ran')}, SW build {tools.get('vivado_sw_build')}, "

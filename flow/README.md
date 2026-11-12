@@ -75,9 +75,9 @@ also records the git commit and whether the tree was dirty.
 inputs, flow scripts, normalised `inputs.tcl`, thread count, directives, result-changing switches, Vivado version). It
 covers more than the stamp (the flow, the settings and the tool, not just the sources) and lives in the bitstream, not
 the netlist: `build.tcl` sets `BITSTREAM.CONFIG.USR_ACCESS` just before `write_bitstream`, the hardware manager reads it
-as `REGISTER.USR_ACCESS`, and the shell reads it through `USR_ACCESSE2` at register 0x05 (protocol 1.1). `program.py`
-compares the JTAG value with the manifest after programming and `board_check.py` / `bringup.py` the UART value; a
-mismatch stops the run before any board test. [docs/reproducibility.md](../docs/reproducibility.md)
+as `REGISTER.USR_ACCESS`. `program.py` compares the JTAG value with the manifest after programming, and
+`board_check.py` / `bringup.py` compare the shell's `BUILD_STAMP` with the manifest's stamp; a mismatch stops the run
+before any board test. (The shell has no build-ID register: it is frozen with the benchmark.) [docs/reproducibility.md](../docs/reproducibility.md)
 
 ## Gates (`gates.py`)
 

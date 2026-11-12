@@ -76,14 +76,10 @@ class FpgaShell:
         if not r.ok:
             raise ShellError(f"write 0x{addr:02X}: {r.status_name}")
 
-    def identify(self) -> dict[str, int | None]:
-        """The fixed registers. ``build_id`` (0x05, the bitstream's USR_ACCESS word) needs shell 1.1 or later; it is
-        None on an older shell, which answers BAD_ADDRESS there."""
-        ver = self.read(p.REG_SHELL_VERSION)
+    def identify(self) -> dict[str, int]:
         return {"design_id": self.read(p.REG_DESIGN_ID),
-                "shell_version": ver,
-                "build_stamp": self.read(p.REG_BUILD_STAMP),
-                "build_id": self.read(p.REG_BUILD_ID) if ver >= 0x0001_0001 else None}
+                "shell_version": self.read(p.REG_SHELL_VERSION),
+                "build_stamp": self.read(p.REG_BUILD_STAMP)}
 
     def status(self) -> dict[str, int]:
         v = self.read(p.REG_STATUS)
@@ -118,7 +114,6 @@ def main(argv: list[str] | None = None) -> int:
             print(f"design_id     {design_id_text(i['design_id'])} (0x{i['design_id']:08X})")
             print(f"shell_version {i['shell_version'] >> 16}.{i['shell_version'] & 0xFFFF}")
             print(f"build_stamp   {i['build_stamp']:08x}")
-            print(f"build_id      {'-' if i['build_id'] is None else format(i['build_id'], '08x')}")
         elif a.cmd == "scratch":
             ok = sh.scratch_test()
             print("scratch PASS" if ok else "scratch FAIL")

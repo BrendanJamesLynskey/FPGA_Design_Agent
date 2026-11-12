@@ -14,8 +14,6 @@ from pathlib import Path
 import pytest
 
 from flow import bitstream, manifest, program, release
-from shell.host import protocol as p
-from shell.model.shell_model import ShellModel
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLE = ROOT / "results" / "54_reproducible" / "sample_bundle"
@@ -278,10 +276,10 @@ def test_build_id_comparison_and_conditions() -> None:
     assert program.check_build_id("ae066748", "0xAE066748", "jtag")["match"]
     assert not program.check_build_id("ae066748", "0x00000000", "jtag")["match"]
     assert program.check_build_id(None, "0x1", "jtag")["checked"] is False
-    assert program.check_shell_build_id({"build_id": 0xAE066748}, "ae066748")["match"]
+    assert program.check_shell_build_id({"build_stamp": 0xDFD4624E}, "dfd4624e")["match"]
     with pytest.raises(program.hw.HwError, match="mismatch"):
-        program.check_shell_build_id({"build_id": 0x1}, "ae066748")
-    assert program.check_shell_build_id({"build_id": None}, "ae066748")["checked"] is False
+        program.check_shell_build_id({"build_stamp": 0x1}, "dfd4624e")
+    assert program.check_shell_build_id({"build_stamp": 0x1}, None)["checked"] is False
     text = ("FDA-COND NOW TEMPERATURE=41.2 VCCINT=0.998 VCCAUX=1.79 VCCBRAM=0.999\n"
             "FDA-COND MAX TEMPERATURE=41.5 VCCINT=1.0011 VCCAUX=1.7988 VCCBRAM=1.0005\n"
             "FDA-COND MIN TEMPERATURE=40.9 VCCINT=0.9961 VCCAUX=1.7871 VCCBRAM=0.9968\nFDA-COND FLAGS 0000\n")
@@ -290,12 +288,3 @@ def test_build_id_comparison_and_conditions() -> None:
     c = program.parse_conditions(text.replace("VCCAUX=1.79 ", "VCCAUX=1.95 "))
     assert not c["inside_roc"] and c["outside"] == ["now VCCAUX 1.95"]
     assert program.parse_conditions("")["read"] is False
-
-
-def test_shell_model_build_id_register() -> None:
-    m = ShellModel(0x54314443, 0x1234, build_id=0xAE066748)
-    r = p.decode_response(m.feed(p.encode_request(p.CMD_READ, p.REG_BUILD_ID)))
-    assert r.ok and r.data == 0xAE066748
-    assert p.decode_response(m.feed(p.encode_request(p.CMD_WRITE, p.REG_BUILD_ID, 5))).status == p.ST_READ_ONLY
-    assert p.decode_response(m.feed(p.encode_request(p.CMD_READ, 0x06))).status == p.ST_BAD_ADDR
-    assert p.decode_response(m.feed(p.encode_request(p.CMD_READ, p.REG_SHELL_VERSION))).data == 0x0001_0001

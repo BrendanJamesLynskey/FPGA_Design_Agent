@@ -58,10 +58,15 @@ whose identity changed is never served from the cache.
   the build if it is not the manifest's build ID.
 - **JTAG:** `flow/program.tcl` reads `REGISTER.USR_ACCESS` of the configured device after programming;
   `flow/program.py` compares it with the manifest and raises before any test if they differ.
-- **UART:** the test shell (protocol 1.1) has a read-only register 0x05, `BUILD_ID`, driven by the `USR_ACCESSE2`
-  primitive, so the fabric reports the configuration register itself, not a constant compiled into the netlist.
-  `flow/board_check.py` and `flow/bringup.py` compare it with the manifest in their identify/program step; a mismatch
-  stops the run. In simulation (no `SYNTHESIS` macro) the register returns the `SIM_BUILD_ID` parameter.
+- **UART:** `flow/board_check.py` and `flow/bringup.py` read the shell's `BUILD_STAMP` (register 0x02) right after
+  programming and compare it with the stamp the manifest recorded (`settings.build_stamp`, which the build ID covers); a
+  mismatch stops the run.
+- **Why the shell has no build-ID register.** The shell's address map has free addresses (0x05-0x7F), and a register
+  fed by the `USR_ACCESSE2` primitive would let the fabric report the configuration word itself. It was built and
+  passed the shell's cocotb tests, then withdrawn: the shell is frozen with the benchmark (`benchmark/GRADER_DEPS.json`
+  holds its fingerprint, and the v1 and course splits and the eval-1 golden requests depend on it), so changing it
+  needs a dated benchmark amendment, which is the planner's decision. Until then the UART check is the stamp, and the
+  build ID is checked over JTAG.
 - A build made before brief 54 has no manifest: it is programmed with a note and nothing is compared.
 
 `BUILD_STAMP` (register 0x02) stays: it identifies the sources and is a netlist constant; the build ID identifies the

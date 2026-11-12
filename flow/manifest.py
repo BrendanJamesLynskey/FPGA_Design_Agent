@@ -10,8 +10,8 @@
 
 ``pre`` reads the build directory that flow/prepare.py filled (``inputs.tcl``, ``prepare.json``), writes
 ``manifest.json`` and appends ``set build_id <8 hex>`` to ``inputs.tcl``; flow/build.tcl puts it in the bitstream's
-USR_ACCESS register (``BITSTREAM.CONFIG.USR_ACCESS``), which the configuration logic holds and the test shell reads back
-through the USR_ACCESSE2 primitive (register 0x05). Because the line is in inputs.tcl, the build cache's flow key
+USR_ACCESS register (``BITSTREAM.CONFIG.USR_ACCESS``), which the configuration logic holds and the hardware manager
+reads back over JTAG (flow/program.py). Because the line is in inputs.tcl, the build cache's flow key
 (flow/build_cache.py) covers the build ID: a build whose identity changed is never a cache hit.
 
 **What the build ID covers** (``build_id_covers``): every input file's SHA-256 (RTL, XDC, data, IP, probes, build.yaml,

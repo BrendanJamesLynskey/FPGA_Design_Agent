@@ -17,8 +17,7 @@ module shell_tb_top #(
 
     fpga_shell #(
         .CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),
-        .DESIGN_ID(32'h5348_4C54), .BUILD_STAMP(32'h0),          // "SHLT"
-        .SIM_BUILD_ID(32'hB54D_0001)                            // register 0x05 in simulation (brief 54)
+        .DESIGN_ID(32'h5348_4C54), .BUILD_STAMP(32'h0)          // "SHLT"
     ) u_shell (
         .clk(clk), .rst(rst), .uart_rx(uart_rx), .uart_tx(uart_tx),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd),
