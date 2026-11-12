@@ -109,4 +109,4 @@ The MAC points have FILTER, VLAN 2, PAUSE and STATS on, CUT_THROUGH 0 and IO_FAM
 
 ## Board design
 
-[designs/b63d_nexys_net](../../designs/b63d_nexys_net/README.md): simulated through the shell; its Vivado 2026.1 build summary is in `nexys_build/` when present. Not run on the board.
+[designs/b63d_nexys_net](../../designs/b63d_nexys_net/README.md): simulated through the shell and built with Vivado 2026.1 ([nexys_build/b63d_nexys_net.md](nexys_build/b63d_nexys_net.md)): every flow gate passes, WNS 0.651 ns and WHS 0.054 ns at 50 MHz, 4093 LUTs, 4312 FFs, 2 block RAM tiles, 0.251 W on chip (vectorless), Tj 44.6 C predicted. Two build fixes came from the gates: the RMII transmit pins now leave from falling-edge registers (a rising-edge launch failed hold by 1.94 ns against the PHY's REF_CLK, 45 degrees later), and the button and the MMCM lock each have their own reset synchroniser (a CDC-10 critical warning). Not run on the board.

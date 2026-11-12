@@ -1,0 +1,608 @@
+{
+  "design": "designs/b63d_nexys_net",
+  "variant": "base",
+  "gates": {
+    "build_dir": "designs/b63d_nexys_net/build/base",
+    "vivado_version": "2026.1",
+    "kb_measured_version": "2026.1",
+    "kb_version_match": true,
+    "top": "b63d_nexys_net_top",
+    "variant": "base",
+    "pass": true,
+    "first_failed_stage": null,
+    "gates": {
+      "rtl_methodology_no_critical": true,
+      "post_synth_no_unconstrained_endpoints": true,
+      "post_synth_methodology_no_critical": true,
+      "post_synth_drc_clean": true,
+      "post_synth_cdc_no_critical": true,
+      "post_synth_cdc_structure_clean": true,
+      "post_synth_exceptions_clean": true,
+      "post_synth_io_constraints_clean": true,
+      "post_place_hold": true,
+      "setup": true,
+      "hold": true,
+      "pulse_width": true,
+      "no_unconstrained_endpoints": true,
+      "drc_clean": true,
+      "methodology_no_critical": true,
+      "cdc_no_critical": true,
+      "power_junction_ok": true,
+      "exceptions_clean": true,
+      "io_timing_clean": true,
+      "bitstream_present": true
+    },
+    "warnings": [],
+    "stages": {
+      "rtl": {
+        "ran": true,
+        "gates": {
+          "rtl_methodology_no_critical": true
+        },
+        "methodology": {
+          "errors": 0,
+          "critical_warnings": 0,
+          "warnings": 11,
+          "rules": [
+            {
+              "rule": "XDCH-2",
+              "severity": "Warning",
+              "description": "Same min and max delay values on IO port",
+              "count": 11
+            },
+            {
+              "rule": "RFFH-1",
+              "severity": "Advisory",
+              "description": "The register driving a high fanout",
+              "count": 1
+            },
+            {
+              "rule": "RRRS-1",
+              "severity": "Advisory",
+              "description": "Found user attribute ram_style",
+              "count": 2
+            }
+          ]
+        },
+        "pass": true
+      },
+      "post_synth": {
+        "ran": true,
+        "gates": {
+          "post_synth_no_unconstrained_endpoints": true,
+          "post_synth_methodology_no_critical": true,
+          "post_synth_drc_clean": true,
+          "post_synth_cdc_no_critical": true,
+          "post_synth_cdc_structure_clean": true,
+          "post_synth_exceptions_clean": true,
+          "post_synth_io_constraints_clean": true
+        },
+        "warnings": [],
+        "timing": {
+          "wns_ns": 2.648,
+          "tns_ns": 0.0,
+          "tns_failing_endpoints": 0,
+          "tns_total_endpoints": 11894,
+          "whs_ns": 0.033,
+          "ths_ns": 0.0,
+          "ths_failing_endpoints": 0,
+          "ths_total_endpoints": 11894,
+          "wpws_ns": 3.0,
+          "tpws_ns": 0.0,
+          "tpws_failing_endpoints": 0,
+          "tpws_total_endpoints": 4336,
+          "timing_met": true
+        },
+        "check_timing": {
+          "no_clock": 0,
+          "constant_clock": 0,
+          "pulse_width_clock": 0,
+          "unconstrained_internal_endpoints": 0,
+          "no_input_delay": 0,
+          "no_output_delay": 1,
+          "multiple_clock": 0,
+          "generated_clocks": 0,
+          "loops": 0,
+          "partial_input_delay": 0,
+          "partial_output_delay": 0,
+          "latch_loops": 0
+        },
+        "unconstrained_ports": {
+          "no_output_delay": [
+            "ETH_REFCLK"
+          ]
+        },
+        "methodology": {
+          "errors": 0,
+          "critical_warnings": 0,
+          "warnings": 15,
+          "rules": [
+            {
+              "rule": "SYNTH-6",
+              "severity": "Warning",
+              "description": "Timing of a RAM block might be sub-optimal",
+              "count": 4
+            },
+            {
+              "rule": "XDCH-2",
+              "severity": "Warning",
+              "description": "Same min and max delay values on IO port",
+              "count": 11
+            }
+          ]
+        },
+        "drc": {
+          "errors": 0,
+          "critical_warnings": 0,
+          "warnings": 0,
+          "rules": []
+        },
+        "qor_assessment": null,
+        "cdc": {
+          "safely_timed": false,
+          "rules": [
+            {
+              "rule": "CDC-3",
+              "severity": "Info",
+              "count": 2,
+              "description": "1-bit synchronized with ASYNC_REG property"
+            },
+            {
+              "rule": "CDC-9",
+              "severity": "Info",
+              "count": 1,
+              "description": "Asynchronous reset synchronized with ASYNC_REG property"
+            }
+          ]
+        },
+        "cdc_structure": {
+          "crossings": [],
+          "summary": {},
+          "unsafe": [],
+          "n_crossings": 0,
+          "clocks": {
+            "sys_clk_pin": {
+              "period": 10.0,
+              "root": "sys_clk_pin"
+            },
+            "fb": {
+              "period": 10.0,
+              "root": "sys_clk_pin"
+            },
+            "c0": {
+              "period": 20.0,
+              "root": "sys_clk_pin"
+            },
+            "c1": {
+              "period": 20.0,
+              "root": "sys_clk_pin"
+            },
+            "eth_refclk": {
+              "period": 20.0,
+              "root": "sys_clk_pin"
+            }
+          },
+          "pass": true
+        },
+        "exceptions": {
+          "stage": "synth",
+          "pass": true,
+          "status": "pass",
+          "waived": 0,
+          "waived_rules": [],
+          "exceptions": 2,
+          "ignored": 0,
+          "info": [],
+          "covered": {
+            "8": 4,
+            "10": 8
+          },
+          "failures": []
+        },
+        "io_timing": {
+          "stage": "synth",
+          "pass": true,
+          "interfaces": [],
+          "failures": [],
+          "delays": 6,
+          "clocks": {
+            "sys_clk_pin": {
+              "period": 10.0,
+              "waveform": "0.000 5.000",
+              "virtual": false,
+              "generated": false,
+              "source": "CLK100MHZ",
+              "input_jitter": 0.0
+            },
+            "fb": {
+              "period": 10.0,
+              "waveform": "0.000 5.000",
+              "virtual": false,
+              "generated": true,
+              "source": "u_mmcm/CLKFBOUT",
+              "input_jitter": 0.0
+            },
+            "c0": {
+              "period": 20.0,
+              "waveform": "0.000 10.000",
+              "virtual": false,
+              "generated": true,
+              "source": "u_mmcm/CLKOUT0",
+              "input_jitter": 0.0
+            },
+            "c1": {
+              "period": 20.0,
+              "waveform": "2.500 12.500",
+              "virtual": false,
+              "generated": true,
+              "source": "u_mmcm/CLKOUT1",
+              "input_jitter": 0.0
+            },
+            "eth_refclk": {
+              "period": 20.0,
+              "waveform": "2.500 12.500",
+              "virtual": false,
+              "generated": true,
+              "source": "ETH_REFCLK",
+              "input_jitter": 0.0
+            }
+          },
+          "worst": {
+            "setup": {
+              "slack": 2.648,
+              "requirement": 10.0,
+              "start_clock": "c0",
+              "end_clock": "c0",
+              "corner": "Slow",
+              "uncertainty": 0.082,
+              "pessimism": 0.221,
+              "from": "ETH_TXD_reg[1]/C",
+              "to": "ETH_TXD[1]"
+            },
+            "hold": {
+              "slack": 0.033,
+              "requirement": 0.0,
+              "start_clock": "c0",
+              "end_clock": "c0",
+              "corner": "Fast",
+              "uncertainty": null,
+              "pessimism": -0.357,
+              "from": "rst_reg/C",
+              "to": "u_mac/crs_q_reg/R"
+            }
+          }
+        },
+        "resource_sanity": null,
+        "utilization": {
+          "lut": 4166,
+          "lut_available": 63400,
+          "lutram": 0,
+          "lutram_available": 19000,
+          "ff": 4319,
+          "ff_available": 126800,
+          "carry4": 690,
+          "bram_tile": 2,
+          "bram_tile_available": 135,
+          "dsp": 0,
+          "dsp_available": 240,
+          "iob": 19,
+          "iob_available": 210,
+          "bufg": 2,
+          "bufg_available": 32
+        },
+        "pass": true
+      },
+      "post_place": {
+        "ran": true,
+        "gates": {
+          "post_place_hold": true
+        },
+        "timing": {
+          "wns_ns": 0.268,
+          "tns_ns": 0.0,
+          "tns_failing_endpoints": 0,
+          "tns_total_endpoints": 11894,
+          "whs_ns": -0.069,
+          "ths_ns": -0.498,
+          "ths_failing_endpoints": 17,
+          "ths_total_endpoints": 11894,
+          "wpws_ns": 3.0,
+          "tpws_ns": 0.0,
+          "tpws_failing_endpoints": 0,
+          "tpws_total_endpoints": 4336,
+          "timing_met": false
+        },
+        "pass": true
+      },
+      "post_route": {
+        "ran": true,
+        "gates": {
+          "setup": true,
+          "hold": true,
+          "pulse_width": true,
+          "no_unconstrained_endpoints": true,
+          "drc_clean": true,
+          "methodology_no_critical": true,
+          "cdc_no_critical": true,
+          "power_junction_ok": true,
+          "exceptions_clean": true,
+          "io_timing_clean": true
+        },
+        "qor_assessment": {
+          "available": false,
+          "reason": "report_qor_assessment needs a licence tier above Basic (Implflow 47-2944); the QoR gate is not judged"
+        },
+        "exceptions": {
+          "stage": "route",
+          "pass": true,
+          "status": "pass",
+          "waived": 0,
+          "waived_rules": [],
+          "exceptions": 2,
+          "ignored": 0,
+          "info": [],
+          "covered": {
+            "8": 4,
+            "10": 8
+          },
+          "failures": []
+        },
+        "io_timing": {
+          "stage": "route",
+          "pass": true,
+          "interfaces": [],
+          "failures": [],
+          "delays": 6,
+          "clocks": {
+            "sys_clk_pin": {
+              "period": 10.0,
+              "waveform": "0.000 5.000",
+              "virtual": false,
+              "generated": false,
+              "source": "CLK100MHZ",
+              "input_jitter": 0.0
+            },
+            "fb": {
+              "period": 10.0,
+              "waveform": "0.000 5.000",
+              "virtual": false,
+              "generated": true,
+              "source": "u_mmcm/CLKFBOUT",
+              "input_jitter": 0.0
+            },
+            "c0": {
+              "period": 20.0,
+              "waveform": "0.000 10.000",
+              "virtual": false,
+              "generated": true,
+              "source": "u_mmcm/CLKOUT0",
+              "input_jitter": 0.0
+            },
+            "c1": {
+              "period": 20.0,
+              "waveform": "2.500 12.500",
+              "virtual": false,
+              "generated": true,
+              "source": "u_mmcm/CLKOUT1",
+              "input_jitter": 0.0
+            },
+            "eth_refclk": {
+              "period": 20.0,
+              "waveform": "2.500 12.500",
+              "virtual": false,
+              "generated": true,
+              "source": "ETH_REFCLK",
+              "input_jitter": 0.0
+            }
+          },
+          "worst": {
+            "setup": {
+              "slack": 0.651,
+              "requirement": 10.0,
+              "start_clock": "c0",
+              "end_clock": "c0",
+              "corner": "Slow",
+              "uncertainty": 0.082,
+              "pessimism": 0.147,
+              "from": "ETH_TXD_reg[1]/C",
+              "to": "ETH_TXD[1]"
+            },
+            "hold": {
+              "slack": 0.054,
+              "requirement": 0.0,
+              "start_clock": "c0",
+              "end_clock": "c0",
+              "corner": "Fast",
+              "uncertainty": null,
+              "pessimism": -0.283,
+              "from": "n_uok_reg[6]/C",
+              "to": "n_uok_reg[12]/D"
+            }
+          },
+          "uncertainty": {
+            "setup": {
+              "total_ns": 0.082,
+              "formula": "((TSJ^2 + DJ^2)^1/2) / 2 + PE",
+              "tsj_ns": 0.071,
+              "dj_ns": 0.147,
+              "pe_ns": 0.0,
+              "pessimism_ns": 0.147,
+              "requirement_ns": 10.0,
+              "slack_ns": 0.651
+            },
+            "hold": null
+          }
+        },
+        "timing_margin": null,
+        "ila_hub_crossing": null,
+        "warnings": [],
+        "unconstrained_ports": {
+          "no_output_delay": [
+            "ETH_REFCLK"
+          ]
+        },
+        "pass": true
+      },
+      "bitstream": {
+        "ran": true,
+        "gates": {
+          "bitstream_present": true
+        },
+        "pass": true
+      }
+    },
+    "timing": {
+      "wns_ns": 0.651,
+      "tns_ns": 0.0,
+      "tns_failing_endpoints": 0,
+      "tns_total_endpoints": 11894,
+      "whs_ns": 0.054,
+      "ths_ns": 0.0,
+      "ths_failing_endpoints": 0,
+      "ths_total_endpoints": 11894,
+      "wpws_ns": 3.0,
+      "tpws_ns": 0.0,
+      "tpws_failing_endpoints": 0,
+      "tpws_total_endpoints": 4336,
+      "timing_met": true
+    },
+    "check_timing": {
+      "no_clock": 0,
+      "constant_clock": 0,
+      "pulse_width_clock": 0,
+      "unconstrained_internal_endpoints": 0,
+      "no_input_delay": 0,
+      "no_output_delay": 1,
+      "multiple_clock": 0,
+      "generated_clocks": 0,
+      "loops": 0,
+      "partial_input_delay": 0,
+      "partial_output_delay": 0,
+      "latch_loops": 0
+    },
+    "utilization": {
+      "lut": 4093,
+      "lut_available": 63400,
+      "lutram": 0,
+      "lutram_available": 19000,
+      "ff": 4312,
+      "ff_available": 126800,
+      "carry4": 690,
+      "bram_tile": 2,
+      "bram_tile_available": 135,
+      "dsp": 0,
+      "dsp_available": 240,
+      "iob": 19,
+      "iob_available": 210,
+      "bufg": 2,
+      "bufg_available": 32
+    },
+    "drc": {
+      "errors": 0,
+      "critical_warnings": 0,
+      "warnings": 0,
+      "rules": []
+    },
+    "methodology": {
+      "errors": 0,
+      "critical_warnings": 0,
+      "warnings": 15,
+      "rules": [
+        {
+          "rule": "SYNTH-6",
+          "severity": "Warning",
+          "description": "Timing of a RAM block might be sub-optimal",
+          "count": 4
+        },
+        {
+          "rule": "XDCH-2",
+          "severity": "Warning",
+          "description": "Same min and max delay values on IO port",
+          "count": 11
+        }
+      ]
+    },
+    "cdc": {
+      "safely_timed": false,
+      "rules": [
+        {
+          "rule": "CDC-3",
+          "severity": "Info",
+          "count": 2,
+          "description": "1-bit synchronized with ASYNC_REG property"
+        },
+        {
+          "rule": "CDC-9",
+          "severity": "Info",
+          "count": 1,
+          "description": "Asynchronous reset synchronized with ASYNC_REG property"
+        }
+      ]
+    },
+    "power": {
+      "total_w": 0.251,
+      "dynamic_w": 0.134,
+      "static_w": 0.117,
+      "confidence": "Low",
+      "clocks_w": 0.008,
+      "slice_logic_w": 0.005,
+      "signals_w": 0.006,
+      "io_w": 0.008,
+      "core_w": 0.1265
+    },
+    "power_environment": {
+      "junction_c": 44.6,
+      "max_ambient_c": 80.4,
+      "theta_ja_c_per_w": 18.2,
+      "ambient_c": 40.0,
+      "airflow_lfm": 0.0,
+      "heatsink": "none",
+      "board": "small (4\"x4\")",
+      "board_layers": "4to7 (4 to 7 Layers)"
+    },
+    "bitstream": {
+      "file": "b63d_nexys_net_top.bit",
+      "bytes": 1344372
+    },
+    "build_stamp": "4c5e2b7a",
+    "sources_sha256": "4c5e2b7ad6a599db64d44de22804398b74e684d6607dbb3ff442a0f5b91ba335"
+  },
+  "run": {
+    "design": "designs/b63d_nexys_net",
+    "variant": "base",
+    "exit_code": 0,
+    "wall_s": 291.5,
+    "vivado_peak_rss_mib": 3054,
+    "scope_memory_peak_mib": 2448,
+    "scope_anon_peak_mib": 2390,
+    "scope_swap_peak_mib": 0,
+    "scope_cap_hits": 0,
+    "scope_oom_kills": 0,
+    "memory_cap": "6G",
+    "max_threads": 2,
+    "nice": 15,
+    "scope_unit": "fda-vivado-3170253-base",
+    "vivado_version": "2026.1",
+    "git_commit": "4de1e2c81d853998d697a0999ebdfeab6a7d90fb",
+    "git_dirty": false,
+    "build_stamp": "4c5e2b7a",
+    "sources_sha256": "4c5e2b7ad6a599db64d44de22804398b74e684d6607dbb3ff442a0f5b91ba335",
+    "stages_s": {
+      "read": 6.4,
+      "elaborate": 24.6,
+      "rtl_reports": 25.0,
+      "synth": 121.4,
+      "synth_reports": 136.7,
+      "opt": 143.6,
+      "place": 169.0,
+      "phys_opt": 171.2,
+      "place_reports": 174.2,
+      "route": 219.5,
+      "reports": 239.4,
+      "bitstream": 284.1
+    },
+    "cache": "fresh",
+    "flow_key": "9a00a96b0d2c7d6d4141c3bdc5b1a620e1294c1dc4c85106a61342f86cb1ee64",
+    "build_id": "3ea9db5b"
+  }
+}
