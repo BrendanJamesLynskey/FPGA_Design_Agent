@@ -47,9 +47,9 @@ def boot(per_task, seed=20261109, b=2000):
 
 
 # Brief 49: the site shows only Vivado 2026.1 numbers. A run's timing, area and power come from a rebuild of that run's saved
-# design on 2026.1 (results/49_vivado_2026_1/dev_rebuilds.json); a run whose design files were not kept has none (withdrawn).
+# design on 2026.1 (results/vivado_2026_1_remeasure/dev_rebuilds.json); a run whose design files were not kept has none (withdrawn).
 # The run records themselves (results/course/*/run_*.json) keep the numbers their own Vivado reported.
-REBUILDS = ROOT / "results" / "49_vivado_2026_1" / "dev_rebuilds.json"
+REBUILDS = ROOT / "results" / "vivado_2026_1_remeasure" / "dev_rebuilds.json"
 
 
 def dev_rebuilds():
@@ -419,7 +419,7 @@ def flow_notes():
     """Data for flow-notes.html: the XPM probe, the CDC mutant table (rig and gate) and the synchroniser-tearing model."""
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import flow_model
-    inp = jload(ROOT / "results" / "49_vivado_2026_1" / "xpm_probe.json")     # brief 49: the QR1 probe re-measured on 2026.1
+    inp = jload(ROOT / "results" / "vivado_2026_1_remeasure" / "xpm_probe.json")     # brief 49: the QR1 probe re-measured on 2026.1
     gate = {r["fixture"].lower(): r for r in jload(ROOT / "results" / "16_cdc_gate_2026_1" / "mutant_table.json")["rows"]}
     rig = jload(ROOT / "hil" / "cdc_soak" / "results" / "cdc_rig_sim.json")["variants"]
     rows = []
@@ -457,6 +457,8 @@ def main():
     out["agent_graph"] = agent_arch.build(out["replay"], out["skills"])     # brief 43: the agent's graph, roles and two replays, from the code
     import loop
     out["loop"] = loop.build(dict(out["agent_graph"], vivado=out["board"]["vivado"]))     # brief 47: the home page's feedback loop
+    import showcase
+    out["showcase"] = showcase.build()                                   # brief 61: the Showcase section, from site/showcase/*.yaml
     out.update({f"tasks/{k}": v for k, v in pages.items()})
     (OUT / "tasks").mkdir(exist_ok=True)
     bad = 0

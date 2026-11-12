@@ -448,9 +448,9 @@ def test_harness_section_equals_the_code():
     assert A["harness"]["settings"] == agent_arch.harness_settings()
     assert [m["name"] for m in A["harness"]["middleware"]] == inner["middleware"]
     assert set(inner["middleware"]) <= set(agent_arch.MIDDLEWARE_WORDS)
-    if not (SITE.parent / "results" / "42_workflows").exists():
-        assert all(a["status"] == "not yet measured" for a in A["harness"]["arms"])
-    assert [a["id"] for a in A["harness"]["arms"]] == [f"H{k}" for k in range(1, 9)]
+    assert [a["id"] for a in A["harness"]["arms"]] == [f"H{k}" for k in range(1, 10)]
+    measured = {a["id"] for a in A["harness"]["arms"] if a.get("result")}
+    assert all(a["status"] == "not yet measured" for a in A["harness"]["arms"] if a["id"] not in measured)
     page = (SITE / "public" / "agent.html").read_text()
     assert 'id="harness"' in page and page.count('svg class="ag harn"') == 2
     for f in ("index.html", "how.html", "results.html"):
@@ -458,6 +458,31 @@ def test_harness_section_equals_the_code():
     how = (SITE / "public" / "how.html").read_text()
     for t in ("term-harness", "term-middleware", "term-eviction", "term-caching"):
         assert f'id="{t}"' in how
+
+
+def test_harness_results_are_the_analysis_file():
+    """Brief 61: the measured arms (H1, H2, H9) and their intervals are read from results/42_workflows/analysis.md, the
+    ambiguity of the pre-registered rule is stated, and the chart draws one interval per arm and metric."""
+    import agent_arch
+    A = _agent()
+    r = agent_arch.harness_results()
+    arms = {a["id"]: a for a in A["harness"]["arms"]}
+    assert {k for k in r if not k.startswith("_")} == {"H1", "H2", "H9"}
+    for k in ("H1", "H2", "H9"):
+        assert arms[k]["result"] == {x: v for x, v in r[k].items()}
+        for m, p in arms[k]["result"]["paired"].items():
+            assert p["lo"] <= p["diff"] <= p["hi"] and p["excludes_0"] == (p["hi"] < 0 or p["lo"] > 0), (k, m)
+    src = (SITE.parent / agent_arch.HARNESS_RESULTS).read_text()
+    assert "| H1 | cost_usd | 11 | 0.302 | -0.099 | -32.8 % | [-0.161, -0.013] | yes |" in src
+    assert arms["H1"]["result"]["paired"]["cost_usd"]["rel_pct"] == -32.8
+    assert arms["H1"]["result"]["verdict"] == {"reading_t": False, "reading_c": True}
+    assert "did not say whether cost alone counts" in arms["H1"]["status"]
+    assert "tokens fell 32.8 % but the interval includes 0; cost fell 16.1 %, under the 30 % bar" in arms["H9"]["status"]
+    page = (SITE / "public" / "agent.html").read_text()
+    assert page.count('class="ag hres"') == 2
+    wide = page.split('class="ag hres"')[1].split("</svg>")[0]
+    assert wide.count("<circle") == 9 and wide.count('class="hci') == 9
+    assert "The 6 arms not yet measured" in page
 
 
 # Brief 49 (owner, 2026-11-11: "all published material from now on should refer only to this Vivado release"): no built
