@@ -1,0 +1,72 @@
+# Seeded faults; run by hil/ip_faults.py --blocks fir: each must make the block's tests fail.
+faults:
+- name: delay_no_shift
+  file: fir_fold.sv
+  old: 'if (M > 1) d_wd = {d_q[(M-1)*DATA_W-1:0], xin};'
+  new: 'if (M > 1) d_wd = {d_q[M*DATA_W-1:DATA_W], xin};'
+  class: value
+  why: the sample leaving one engine's segment does not reach the next engine (folded variants with more than one MAC)
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
+- name: acc_not_cleared
+  file: fir_mac.sv
+  old: "if (ld_p) acc <= (first ? '0 : acc) + ACC_W'(m);"
+  new: "if (ld_p) acc <= acc + ACC_W'(m);"
+  class: value
+  why: each output adds onto the last one's partial sums
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
+- name: sweep_wrong_way
+  file: fir_fold.sv
+  old: 'rp <= dec(rp);'
+  new: 'rp <= inc(rp);'
+  class: path
+  why: the delay line is read forwards, so the taps meet the wrong samples
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
+- name: coef_wrong_field
+  file: fir_fold.sv
+  old: 'c_wd[ce*COEF_W +: COEF_W] = cin;'
+  new: 'c_wd[cj*COEF_W +: COEF_W] = cin;'
+  class: value
+  why: a coefficient is written into the field of the wrong MAC engine
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
+- name: sample_with_coef
+  file: fir_fold.sv
+  old: "assign s_ready = (st == S_IDLE) && !c_valid && (cnt < NW'(OQ));"
+  new: "assign s_ready = (st == S_IDLE) && (cnt < NW'(OQ));"
+  class: protocol
+  why: a sample offered beside a coefficient beat is acknowledged and then dropped
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
+- name: ram_one_read_register
+  file: fir_ram.sv
+  old: 'always_ff @(posedge clk) q <= q1;'
+  new: 'assign q = q1;'
+  class: timing
+  why: the RAM's read latency drops to one clock, so data and the MAC pipeline flags are a clock apart
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
+- name: product_unsigned
+  file: fir_parallel.sv
+  old: 'tree[0][k] <= d[k] * h[k];'
+  new: 'tree[0][k] <= $unsigned(d[k]) * h[k];'
+  class: value
+  why: the LUT multipliers treat negative samples as large positive ones
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
+- name: delay_line_broadcast
+  file: fir_parallel.sv
+  old: 'for (int k = 1; k < TAPS; k++) d[k] <= d[k-1];'
+  new: 'for (int k = 1; k < TAPS; k++) d[k] <= d[0];'
+  class: path
+  why: every tap sees the previous sample instead of its own delay
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
+- name: latency_declared_short
+  file: fir.sv
+  old: 'F_EFF + 8 + TREE;'
+  new: 'F_EFF + 7 + TREE;'
+  class: contract
+  why: the declared LATENCY no longer matches the clocks the folded variants take, so a caller reading it would be wrong
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
+- name: coef_while_products_form
+  file: fir_parallel.sv
+  old: 'assign c_ready = !busy && !va;'
+  new: 'assign c_ready = !busy;'
+  class: protocol
+  why: a coefficient can land while a sample's products are being formed, so that sample mixes old and new coefficients
+  test: ip_lib/fir/tb/test_fir_rtl.py -k test_adversarial and lut_mult
