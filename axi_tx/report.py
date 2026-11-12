@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Brief 59A results: collect the raw records into results/59a_axi_tx/, derive the showcase files, write the README.
+"""AXI transactor results: collect the raw records into results/59a_axi_tx/, derive the showcase files, write the README.
 
     python3 axi_tx/report.py collect      # copy build/59a records (formal, simulation, AMD IP probe, resources) into results/
     python3 axi_tx/report.py write        # results/59a_axi_tx/README.md and page_data.json
@@ -31,6 +31,8 @@ def collect() -> None:
     RES.mkdir(parents=True, exist_ok=True)
     (RES / "sim").mkdir(exist_ok=True)
     shutil.copy(BUILD / "formal.json", RES / "formal.json")
+    if (BUILD / "false_fire.json").is_file():
+        shutil.copy(BUILD / "false_fire.json", RES / "false_fire.json")
     for f in sorted((BUILD / "sim").glob("*.json")):
         d = json.loads(f.read_text())
         (RES / "sim" / f.name).write_text(json.dumps(d, indent=1) + "\n")
@@ -62,7 +64,7 @@ def collect() -> None:
         m = re.match(r"FDA-RES (\S+) top (\S+) generics \{(.*)\} LUT (\d+) FF (\d+) BRAM ([0-9.]+) seconds (\d+)", line)
         if m and m.group(1) == "core_full_s64":
             excluded = {"config": m.group(1), "lut": int(m.group(4)), "ff": int(m.group(5)), "bram_tiles": float(m.group(6)),
-                        "why": "synthesis trimmed the sequencer at SDATA_W = 64 (not root-caused); 59A's core is 32-bit only"}
+                        "why": "synthesis removed part of the sequencer at SDATA_W = 64 (cause not investigated); the core is 32-bit only"}
         elif m:
             rows.append({"config": m.group(1), "top": m.group(2), "generics": m.group(3), "lut": int(m.group(4)),
                          "ff": int(m.group(5)), "bram_tiles": float(m.group(6))})
@@ -83,7 +85,7 @@ def page_data() -> dict[str, Any]:
     resources = _load("resources.json")
     probe = _load("amd_ip_probe.json")
     impl = _load("board_build.json")
-    d: dict[str, Any] = {"brief": "59A", "board": "Nexys A7-100T", "part": "xc7a100tcsg324-1", "vivado": "2026.1",
+    d: dict[str, Any] = {"project": "axi_transactor", "board": "Nexys A7-100T", "part": "xc7a100tcsg324-1", "vivado": "2026.1",
                          "sources": ["results/59a_axi_tx/board_run.json", "results/59a_axi_tx/formal.json",
                                      "results/59a_axi_tx/resources.json", "results/59a_axi_tx/amd_ip_probe.json",
                                      "results/59a_axi_tx/board_build.json"]}
@@ -98,7 +100,18 @@ def page_data() -> dict[str, Any]:
         d["implementation"] = impl
     if board:
         runs = board["runs"]
+        def fault(r):
+            if r["program"] == "master_inject":
+                return "transactor drops or changes its own requests"
+            return {"none": None, "b_early": "early write response", "r_live": "read data not held", "r_glitch":
+                    "read VALID dropped once", "exokay": "EXOKAY response", "no_strb": "write strobes ignored"}.get(
+                r["lite_bug"]) or {"none": None, "lose_last": "TLAST lost", "keep_wire": "TKEEP wired to the input"}.get(r["stream_bug"])
+        def fired(r):
+            return ", ".join(sorted(k for k, v in {**r["lite_rules"]["counts"], **r["stream_rules"]["counts"]}.items() if v)) or None
         d["board_runs"] = [{"tag": r["tag"], "repeat": r["repeat"], "pass": r["pass"], "seconds": r["seconds"],
+                            "fault": fault(r) or "none", "rules_fired": fired(r),
+                            "amd": ("flagged" if r.get("amd_pc_asserted") else
+                                    "quiet; it does not watch the stream" if r["tag"].startswith("stream") else "quiet"),
                             "n_txn": r["summary"]["n_txn"], "digest": f"{r['summary']['digest']:08x}",
                             "lite_rules": {k: v for k, v in r["lite_rules"]["counts"].items() if v},
                             "stream_rules": {k: v for k, v in r["stream_rules"]["counts"].items() if v},
@@ -286,6 +299,8 @@ def showcase_files() -> None:
         marks.append({"x": w_at, "label": "write data arrives", "signal": "WVALID"})
     hero = {"wave": {"unit": "cycle", "x": xs, "signals": signals, "captions": caps, "stages": stages, "marks": marks,
                      "tick": 5, "source_run": hero_run["tag"], "trigger_at_x": 0,
+                     "key": "VALID: the sender offers a transfer; READY: the receiver takes it. AW = write address, W = write data, "
+                            "B = write response. B_EARLY: the checker's rule for a response raised before its data.",
                      "alt": "A waveform captured on the board: after the address handshake the peripheral raises BVALID, its "
                             "write response, before any write data; the checker's B_EARLY rule goes high in that cycle and the "
                             "write data arrives afterwards."}}
@@ -316,6 +331,12 @@ def showcase_files() -> None:
         "functional_bug_runs_caught": len([r for r in data if r["pass"] and not flagged(r)]),
         "clean_runs": len(clean), "clean_runs_quiet": len([r for r in clean if not flagged(r)]),
         "latency_from_run": "bram_random_rw #0",
+        "false_fire_scenarios": (_load("false_fire.json") or {}).get("scenarios"),
+        "false_fire_fired": (_load("false_fire.json") or {}).get("fired"),
+        "first_attempt_pass": sum(" PASS " in l for l in (RES / "board_run_build2_attempt.log").read_text().splitlines()
+                                  if l.startswith("run_board:")) if (RES / "board_run_build2_attempt.log").is_file() else None,
+        "formal_solver_minutes": round(sum(r["seconds"] for u in formal["units"].values()
+                                           for r in u["proofs"] + u["mutants"]) / 60),
         "parity_runs": len(compared),
         "parity_digest_equal": len([r for r in compared if r["sim_compare"]["digest"]["equal"] and r["sim_compare"]["cycles"]["equal"]]),
         "parity_txn_compared": sum(r["sim_compare"]["log"]["compared"] for r in compared),

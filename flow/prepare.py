@@ -212,12 +212,17 @@ def main(argv: list[str] | None = None) -> int:
     # after the sources are read; hashed with them, so a change to the IP configuration is a new build stamp
     # only Tcl listed with its SHA-256 in flow/ip_tcl_allow.yaml (maintainer-owned) may be sourced: no agent-written Tcl
     try:
-        ip_tcls = ip_tcl_allow.check(cfg.get("ip_tcl", []) or [], ROOT)
+        ip_tcls = ip_tcl_allow.check(cfg.get("ip_tcl", []) or [], ROOT)      # hashed into the stamp as before
     except ip_tcl_allow.IpTclRefused as e:
         raise SystemExit(f"prepare: {e}") from None
     stamp = sources_sha256(srcs + xdcs + data + ip_tcls)
     out = a.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
+    # the build sources verified copies in the build directory, not the files in the tree (flow/ip_tcl_allow.materialise)
+    try:
+        ip_copies = ip_tcl_allow.materialise(cfg.get("ip_tcl", []) or [], out, ROOT)
+    except ip_tcl_allow.IpTclRefused as e:
+        raise SystemExit(f"prepare: {e}") from None
     for f in data:       # Vivado runs in the build directory: $readmemh("x.hex") and $readmemh("data/x.hex") both open the copy
         for dst in (out / "data" / f.relative_to(design / "data"), out / f.relative_to(design / "data")):
             dst.parent.mkdir(parents=True, exist_ok=True)
@@ -231,7 +236,7 @@ def main(argv: list[str] | None = None) -> int:
            f"set part {{{cfg['part']}}}",
            f"set sources {tcl_list([str(s) for s in srcs])}",
            f"set constraints {tcl_list([str(x) for x in xdcs])}",
-           f"set ip_tcls {tcl_list([str(t) for t in ip_tcls])}",
+           f"set ip_tcls {tcl_list([str(t) for t in ip_copies])}",
            f"set generics {tcl_list([f'{k}={v}' for k, v in generics.items()])}",
            f"set out {{{out}}}",
            f"set ila {int(ila)}",

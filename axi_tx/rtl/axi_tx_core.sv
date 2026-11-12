@@ -24,7 +24,7 @@
 // Random fields come from the data LFSR, one step per field, in the order address, data, WSTRB (axi_tx/host/model.py).
 /* verilator lint_off UNUSEDSIGNAL */   // the window read strobe, the master's busy flag, spare instruction bits and the low bits of SB_BASE are not used
 module axi_tx_core #(
-    parameter int SDATA_W = 32,              // stream data width: 32 only in 59A (see the initial check below)
+    parameter int SDATA_W = 32,              // stream data width: 32 only in this version (elaboration check below)
     parameter int LCHK    = 1,               // 1: the AXI4-Lite rule monitor and its log are built
     parameter int SCHK    = 1,               // 1: the AXI4-Stream rule monitor and its log are built
     parameter int MON     = 1                // 1: the performance and coverage counters are built

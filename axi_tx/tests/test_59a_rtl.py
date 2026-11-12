@@ -17,3 +17,13 @@ def test_axi_tx_transactor_checker_scoreboard() -> None:
 
 def test_axi_tx_scoreboard_catches_a_memory_mutant() -> None:
     cocotb_run.run("axi_tx_59a_mut", "axi_tx_tb", SRC, "axi_tx_mutant_cocotb", HERE, parameters={"MEM_BUG": 1}, seed=1)
+
+
+def test_axi_tx_false_fire_probe() -> None:
+    """Legal but unusual traffic fires no rule; the record goes to build/59a/false_fire.json (copied to results/)."""
+    import os
+    out = ROOT / "build" / "59a" / "false_fire.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    src = [ROOT / "axi_tx" / "rtl" / "axil_rules.sv", ROOT / "axi_tx" / "rtl" / "axis_rules.sv", HERE / "false_fire_tb.sv"]
+    cocotb_run.run("axi_tx_59a_ff", "false_fire_tb", src, "axi_tx_false_fire_cocotb", HERE, seed=1,
+                   extra_env={"AXI_TX_FF_OUT": str(out)})

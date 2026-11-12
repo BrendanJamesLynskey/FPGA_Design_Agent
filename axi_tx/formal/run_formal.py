@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Formal proof of the brief 59A rule checkers (SymbiYosys, Yosys 0.33, z3), in the mutation style of brief 05k.
+"""Bounded formal check of the AXI transactor's rule checkers (SymbiYosys, Yosys 0.33, z3), with checker mutants.
 
-For axil_rules (9 rules) and axis_rules (5 rules), against the property restatements in formal_axil_rules.sv and
+For axil_rules (10 rules) and axis_rules (5 rules), against the property restatements in formal_axil_rules.sv and
 formal_axis_rules.sv:
   quiet     bounded proof: on legal traffic (every rule assumed to hold, resets anywhere) the checker never fires
   seed k    bounded proof: with every rule but k assumed, whenever rule k is broken the checker flags k, and only k;

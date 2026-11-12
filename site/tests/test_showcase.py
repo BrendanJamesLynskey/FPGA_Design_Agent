@@ -405,7 +405,10 @@ def test_kit_has_the_staged_wave_option():
     js = (SITE / "src" / "app.js").read_text()
     assert "return stagedWave(art, T);" in js.split("var KIT = {")[1].split("hist: function")[0]
     sw = js.split("function stagedWave")[1].split("function nf(")[0]
-    for k in ("stagestrip", "future solid", "kmarkg", "visually-hidden", "aria-label"):
+    # stage strip, marks with their label band, the faint whole capture before the reveal (no empty grid), the axis sized
+    # to the revealed samples, names above the traces on a phone, the SVG title and the one-line key
+    for k in ("stagestrip", "kmarkg", "visually-hidden", "aria-label", '"ghost"', "Math.max(m, MINV)", "narrow ? 0",
+              '"title"', "wavekey"):
         assert k in sw, k
 
 
@@ -464,3 +467,23 @@ def test_malformed_placeholders_are_refused(tmp_path, text):
                                              ("<p>{{runs}}</p>", ["{runs}"]), ("<pre>{y}</pre><p>ok</p>", [])])
 def test_leftover_placeholder_scan_catches_malformed_forms(html_text, found):
     assert build.leftover_placeholders(html_text) == found
+
+
+
+def test_cells_paragraphs_and_results_table(tmp_path):
+    """Booleans read yes/no and none is blank in every table; blank lines make paragraphs; results_table cells are prose."""
+    assert showcase.cell_text(True) == "yes" and showcase.cell_text(False) == "no" and showcase.cell_text(None) == ""
+    assert showcase.cell_text(58.0) == "58.0"
+    assert build.cell(True) == "yes" and build.cell(None) == "" and build.fmt(None) == "" and build.fmt(False) == "no"
+    assert showcase.paras("one\n\ntwo") == "<p>one</p><p>two</p>"
+    y = _demo()
+    y["story"]["results_table"] = {"caption": "c", "head": ["a", "b"], "rows": [["{n} runs", "x"]]}
+    S = showcase.build(_write(tmp_path, y), allow_fixtures=True)
+    rt = S["projects"][0]["story"]["results_table"]
+    assert rt["rows"][0][0] != "{n} runs" and "{" not in rt["rows"][0][0]
+    y["story"]["results_table"]["rows"] = [["4096 typed", "x"]]
+    with pytest.raises(showcase.ContractError, match="typed number"):
+        showcase.build(_write(tmp_path, y), allow_fixtures=True)
+    y["story"]["results_table"]["rows"] = [["one cell only"]]
+    with pytest.raises(showcase.ContractError, match="same length"):
+        showcase.build(_write(tmp_path, y), allow_fixtures=True)

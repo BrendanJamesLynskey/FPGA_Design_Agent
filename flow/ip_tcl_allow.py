@@ -42,3 +42,22 @@ def check(entries: list, root: Path = ROOT) -> list[Path]:
             raise IpTclRefused(f"ip_tcl entry {e!r} differs from its reviewed version (SHA-256 in flow/ip_tcl_allow.yaml)")
         out.append(f)
     return out
+
+
+def materialise(entries: list, out: Path, root: Path = ROOT) -> list[Path]:
+    """Read each allowed file once, check the SHA-256 of exactly those bytes, and write them to <out>/ip_tcl/: Vivado
+    sources the copy, so the file that was checked is the file that runs (no window between check and use)."""
+    files = check(entries, root)                # path rules and the allow-list entry
+    ok = allowed()
+    dst_dir = Path(out) / "ip_tcl"
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    copies = []
+    for i, f in enumerate(files):
+        data = f.read_bytes()
+        rel = str(f.relative_to(root.resolve()))
+        if hashlib.sha256(data).hexdigest() != ok[rel]:
+            raise IpTclRefused(f"ip_tcl entry {rel!r} changed while it was being read; not building")
+        dst = dst_dir / f"{i:02d}_{f.name}"
+        dst.write_bytes(data)
+        copies.append(dst)
+    return copies

@@ -25,7 +25,19 @@ const [pub, pagesArg] = process.argv.slice(2);
       const runs = document.querySelector('#home-runs') ? document.querySelectorAll('#home-runs .m').length : -1;
       const bare = [...document.querySelectorAll('.player')].filter(x => !x.querySelector('.ctl')).length;
       const playing = [...document.querySelectorAll('.player button')].filter(x => x.textContent === 'Pause').length;
-      return {ov, kits, runs, bare, playing};
+      // no two visible text boxes in a hero's SVG may overlap (labels overprinting one another read as a bug)
+      const overlap = [];
+      for (const svg of document.querySelectorAll('.kitart svg')) {
+        const sr = svg.getBoundingClientRect();
+        const ts = [...svg.querySelectorAll('text')].filter(t => t.textContent.trim() && getComputedStyle(t).visibility !== 'hidden')
+          .map(t => ({t: t.textContent.trim(), r: t.getBoundingClientRect()})).filter(x => x.r.width > 0 && sr.width > 0);
+        for (let i = 0; i < ts.length; i++) for (let j = i + 1; j < ts.length; j++) {
+          const a = ts[i].r, b = ts[j].r;
+          const ix = Math.min(a.right, b.right) - Math.max(a.left, b.left), iy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (ix > 1 && iy > 1) overlap.push(ts[i].t + ' / ' + ts[j].t);
+        }
+      }
+      return {ov, kits, runs, bare, playing, overlap};
     });
     const tag = `${page} ${w} ${dark ? 'dark' : 'light'}${rm ? ' reduced' : ''}`;
     if (errs.length) fails.push(`${tag}: errors ${errs.join(' | ')}`);
@@ -34,6 +46,7 @@ const [pub, pagesArg] = process.argv.slice(2);
     if (r.runs === 0) fails.push(`${tag}: runs chart empty`);
     if (r.bare) fails.push(`${tag}: ${r.bare} player(s) without controls`);
     if (rm && r.playing) fails.push(`${tag}: ${r.playing} player(s) playing under reduced motion`);
+    if (r.overlap.length) fails.push(`${tag}: overlapping SVG text: ${r.overlap.slice(0, 3).join('; ')}`);
     console.log(tag, JSON.stringify(r));
     await p.close();
   }

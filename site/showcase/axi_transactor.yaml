@@ -46,6 +46,11 @@ values:
   rlat_min: {source: results/59a_axi_tx/summary.json, expr: "get:bram_read_latency_min"}
   rlat_max: {source: results/59a_axi_tx/summary.json, expr: "get:bram_read_latency_max"}
   reads_checked: {source: results/59a_axi_tx/summary.json, expr: "get:bram_reads_checked"}
+  ff_scen: {source: results/59a_axi_tx/summary.json, expr: "get:false_fire_scenarios"}
+  ff_fired: {source: results/59a_axi_tx/summary.json, expr: "get:false_fire_fired"}
+  a1_pass: {source: results/59a_axi_tx/summary.json, expr: "get:first_attempt_pass"}
+  solver_min: {source: results/59a_axi_tx/summary.json, expr: "get:formal_solver_minutes"}
+  stream_bits: {source: axi_tx/rtl/axi_tx_core.sv, expr: "re:SDATA_W != (\\d+)"}
 headline: "A hardware checker that watches an AXI bus and names the rule a bug breaks. On the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) it flagged the expected rule in all {bug_runs} runs with a seeded protocol bug ({faults} faults), and against our own peripheral and stream FIFO the board's traffic matched simulation cycle for cycle in {parity_eq} of {parity} runs."
 hero:
   kind: wave
@@ -53,32 +58,44 @@ hero:
   path: wave
   caption: "One capture from the board, one seeded bug: our peripheral raises the write-response valid signal (BVALID) before any write data has arrived, and the checker flags it in that cycle."
 story:
-  problem: "AXI is the standard on-chip bus of Arm and AMD designs. A bus interface that breaks its handshake rules often passes a quick test and fails in a system: read data that is not held while the master stalls, or a write response sent before the data. Such bugs show only under the right timing, and a logic analyser shows the waveform but not which rule it breaks.\n\nThe hard part is the checker, not the traffic. A wrong checker passes bad designs or flags good ones, so this one is checked formally, attacked with deliberately broken copies of itself, and compared on the board with AMD's own checker.\n\nThe other hard part is making the board and the simulation see identical traffic: every random choice has to be seeded, and every counter has to start with the run."
-  how: "A transaction program, written in plain YAML and loaded over the serial link, drives AXI4-Lite traffic (a simple register-access bus) and AXI4-Stream traffic (a packet stream) with seeded random addresses, data and byte-enables (which bytes of a word to write), pauses by the sender and refusals by the receiver (back-pressure). Monitors that watch only the bus wires check {lite_rules} AXI4-Lite and {stream_rules} AXI4-Stream rules every cycle. A reference copy of the memory checks reads of every word written in the run, counters record latency, stalls and which cases were covered, and the first violation starts a capture. The same program runs on the board and in simulation."
+  problem: "AXI is the on-chip bus defined by the AMBA specification IHI 0022H (its stream variant: IHI 0051B). A bus interface that breaks its handshake rules often passes a quick test and fails in a system: read data that is not held while the master stalls, or a write response sent before the data. Such bugs show only under the right timing, and a logic analyser shows the waveform but not which rule it breaks.\n\nThe hard part is the checker, not the traffic. A wrong checker passes bad designs or flags good ones, so this one is checked formally, attacked with deliberately broken copies of itself, and compared on the board with AMD's own checker.\n\nThe other hard part is making the board and the simulation see identical traffic: every random choice has to be seeded, and every counter has to start with the run."
+  how: "A transaction program, written in plain YAML and loaded over the serial link, drives AXI4-Lite traffic (a simple register-access bus) and AXI4-Stream traffic (a packet stream) with seeded random addresses, data and byte-enables (which bytes of a word to write), pauses by the sender and refusals by the receiver (back-pressure).\n\nMonitors that watch only the bus wires check {lite_rules} AXI4-Lite and {stream_rules} AXI4-Stream rules every cycle. A reference copy of the memory checks reads of every word written in the run, counters record latency, stalls and which cases were covered, and the first violation starts a capture. The same program runs on the board and in simulation."
   architecture:
     blocks: [[host, Host (serial)], [seq, Sequencer], [eng, AXI masters], [dut, Targets], [chk, Checkers], [cap, Capture]]
     links: [[host, seq, YAML], [seq, eng, txns], [eng, dut, AXI], [dut, chk, bus], [chk, cap, trigger], [chk, host, verdicts]]
   results:
-    - "{runs} board runs, written in a plan before the board was used: {bug_runs} with a seeded protocol bug ({faults} faults in all), {func_runs} with a seeded data bug, {clean} clean. All {runs_pass} gave the verdict the plan expected. Earlier attempts on earlier builds are listed in the evidence: after them the transaction model and the RTL were changed, and the whole plan was run again on the final build."
-    - "Each protocol-bug run was flagged by the rule we expected, and by no other rule. The data bugs (write byte-enables ignored, the end-of-packet marker TLAST lost) were caught by the reference memory or the stream receiver alone ({func_caught} of {func_runs}), and all {clean_quiet} clean runs fired nothing. A demonstration on bugs we planted, not a measure of coverage."
-    - "Board against simulation, for our own peripheral and stream FIFO (a first-in, first-out buffer): a checksum over every transaction, including its latency in cycles, and the run's length in cycles were identical in {parity_eq} of {parity} runs; {txn_diff} of {txns} logged transactions differed."
-    - "Independent check: AMD's AXI Protocol Checker, watching the same AXI4-Lite bus (not the stream), raised its flag in exactly the {amd_asserted} runs where ours flagged an AXI4-Lite rule; on the AXI4-Lite bus the two agree in {amd_agree} of {lite_runs} runs."
-    - "The checker is checked formally to depth {depth} (bounded): {proofs_pass} of {proofs} proofs show each rule quiet on legal traffic and firing on its own seeded violation within that many clock cycles, and {mutants_killed} of {mutants} deliberately broken copies of the checker were caught. The properties were written by the same author as the checker, which is why the AMD checker matters."
-    - "In one run against the board's block-RAM controller IP core, under random back-pressure, write latency ran from {wlat_min} to {wlat_max} cycles and read latency from {rlat_min} to {rlat_max}; {reads_checked} reads of written words were checked against the reference memory with no mismatch."
-    - "Design size and timing: the whole board design used {lut} LUTs and met timing with {wns} ns of slack; Vivado estimated {power} W."
-    - "Measured conditions: the die stayed at or below {tj_max} C and the core supply rail (VCCINT) between {vccint_min} and {vccint_max} V, inside the recommended operating conditions, with {alarms} alarms latched."
+    - "{runs_pass} of {runs} board runs, written in a plan before the board was used, gave the verdict the plan expected. The table says what each kind of run was checked against."
+    - "In one run against the board's block-RAM controller IP core, under random back-pressure, write latency ran from {wlat_min} to {wlat_max} cycles and read latency from {rlat_min} to {rlat_max}."
+    - "Design size and timing: the whole board design used {lut} LUTs and met timing with {wns} ns of slack; Vivado estimated {power} W. Measured on the die: at most {tj_max} C, core supply (VCCINT) {vccint_min} to {vccint_max} V, inside the recommended operating conditions, {alarms} alarms latched."
+    - "Earlier attempts: the first, on an earlier build, passed {a1_pass} of {runs}; the transaction model and the RTL were then fixed and the whole plan run again on the final build (evidence: earlier board attempts)."
+  results_table:
+    caption: "What each kind of run was checked against, and the result."
+    head: ["What ran", "Checked against", "Result"]
+    rows:
+      - ["{bug_runs} runs with a seeded protocol bug ({faults} faults)", "the rule each bug breaks", "the expected rule, and no other, in {bug_runs_right} of {bug_runs}"]
+      - ["{func_runs} runs with a seeded data bug", "the reference memory or the stream receiver", "caught in {func_caught} of {func_runs}, with no rule firing"]
+      - ["{clean} clean runs", "every enabled rule", "{clean_quiet} of {clean} fired nothing"]
+      - ["{parity} runs on our own peripheral and stream FIFO", "the same RTL in simulation", "identical cycle for cycle in {parity_eq} of {parity}; {txn_diff} of {txns} logged transactions differ"]
+      - ["Runs on the block-RAM controller IP core", "the transaction model", "every read of a word written in the run matched ({reads_checked} in one run)"]
+      - ["The AXI4-Lite bus in all {runs} runs", "AMD's AXI Protocol Checker", "the same verdict in {amd_agree} of {runs}; it flagged {amd_asserted} of the {bug_runs} seeded-bug runs, because the remaining one broke a stream rule and it watches AXI4-Lite only"]
+      - ["The checker itself", "formal proofs, bounded to {depth} cycles, and deliberately broken copies of it", "{proofs_pass} of {proofs} proofs hold; {mutants_killed} of {mutants} broken copies caught"]
+      - ["Legal but unusual traffic in simulation, {ff_scen} scenarios", "every enabled rule (false alarms)", "{ff_fired} fired"]
   table:
-    caption: "Every board run of the final plan, with the rule that fired first (blank when none did)."
+    caption: "Every board run of the final plan, all with the verdict the plan expected: the fault seeded, every rule that fired (blank when none did), and AMD's checker."
     source: results/59a_axi_tx/page_data.json
     path: board_runs
-    columns: [[tag, Run], [repeat, Repeat], [pass, Expected verdict], [first_rule, First rule fired], [n_txn, Transactions], [amd_pc_asserted, AMD checker flagged]]
+    columns: [[tag, Run], [repeat, Repeat], [fault, Seeded fault], [rules_fired, Rules fired], [n_txn, Transactions], [amd, AMD checker]]
   agent:
     request: "The owner asked for an on-chip AMBA AXI traffic generator and protocol checker that exercises on-chip modules with transactions of any complexity while verifying protocol correctness."
     plan: "The owner chose the project and set the rules. A language-model coding agent wrote the RTL, the rule monitors (from the specification, in its own words), the seeded bugs, the proofs, the simulation and the board runs. The bugs were seeded by the same agent that wrote the checker; AMD's checker is the part it did not write."
     gates: ["Every rule checked quiet and firing, every broken copy of the checker caught", "Simulation of every program, seeded bug and memory fault", "Vivado 2026.1 gates: methodology, timing, design rule checks, power", "The board plan written in advance, with die temperature and rails logged"]
     approvals: ["The owner authorised hardware use (volatile configuration only, wall power)", "Independent reviewers checked the work, and the owner merges it"]
+  details:
+    - title: "Rules checked and not checked"
+      text: "Checked on AXI4-Lite: AW_HOLD, W_HOLD, B_HOLD, AR_HOLD and R_HOLD (VALID held, payload stable, until READY); B_EARLY and R_EARLY (a response only after its request); RESET and IN_RESET (every VALID low at and during reset); EXOKAY (no exclusive-access response on AXI4-Lite). Checked on AXI4-Stream: HOLD, KEEP_STRB (a reserved byte marking) and RESET; two profile rules (a maximum packet length, packed bytes) are off unless an IP core documents them. Not checked: bursts, IDs, wrapping bursts, the four-kilobyte boundary and exclusive access, which belong to full AXI4; a combinational path from READY to VALID inside a block, of which only its effect at the ports shows; and data correctness, which the reference memory and the stream receiver check instead. False alarms matter as much as misses: each rule is proved quiet on all legal traffic within {depth} cycles; in simulation, {ff_scen} scenarios of legal but unusual traffic (W before AW, a response in the same cycle as the next request, READY before VALID, a reset in mid-transaction, null and position stream bytes, non-contiguous byte-keeps) fired {ff_fired} rules; and the {clean} clean board runs fired none."
 evidence:
   - {kind: record, label: "Board runs: verdicts, counters, captures and the simulation comparison", path: results/59a_axi_tx/board_run.json}
+  - {kind: record, label: "False-alarm probe: legal but unusual traffic in simulation", path: results/59a_axi_tx/false_fire.json}
   - {kind: record, label: "Earlier board attempts, and what changed after them", path: results/59a_axi_tx/board_run_attempts.md}
   - {kind: record, label: "Simulation records of the same programs", path: results/59a_axi_tx/sim}
   - {kind: record, label: "Formal proofs and checker mutants", path: results/59a_axi_tx/formal.json}
@@ -91,7 +108,7 @@ limits:
     - "Coverage of real-world bugs: the bugs were planted by us to demonstrate the checker; this is not a measure of how many unknown bugs it would find."
     - "Full AXI4 (bursts, IDs, outstanding transactions), the slave side and a long soak: the next phase."
     - "Runs against the block-RAM controller IP core are checked against a model, not cycle for cycle with simulation: the free simulator we used cannot simulate that core."
-    - "One board, one clock: the stream path is a single width (the stand-alone stream checker was also synthesised at wider widths), and the bus runs at the board's single system clock."
+    - "One board, one clock: the stream path is {stream_bits} bits wide (the stand-alone stream checker was also synthesised at wider widths), and the bus runs at the board's single system clock."
     - "The proofs are bounded, and the property restatement shares its author with the checker; the AMD checker is the independent check."
   nulls: []
   next:
@@ -99,4 +116,4 @@ limits:
     - "Decode the AMD checker's status bits to rule names, and read the counters faster than the serial link allows."
 try_it:
   command: "python -m pytest -q axi_tx/tests/test_59a_rtl.py && python axi_tx/formal/run_formal.py"
-  note: "Simulation and formal checks only (open-source Icarus Verilog, cocotb, Yosys, SymbiYosys): every program, seeded bug and broken checker. The board runs need the board and are recorded in the evidence above."
+  note: "Simulation and formal checks only (open-source Icarus Verilog, cocotb, Yosys, SymbiYosys; the repository README lists how to install them). The simulation takes about a minute; the formal checks take about {solver_min} minutes of solver time, about half that with two jobs in parallel. The board runs need the board and are recorded in the evidence above."

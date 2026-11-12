@@ -113,3 +113,27 @@ def test_axi_board_run_refuses_while_the_board_is_locked(session, tmp_path, monk
     assert e.value.rule == "hardware-board-busy"
     assert lock.read_text() == "FPGA other: a board job\n"
     assert not session.runner.calls
+
+
+def test_the_build_sources_the_verified_copy_not_the_tree(tmp_path, monkeypatch) -> None:
+    """R1: the bytes that were checked are the bytes Vivado sources. A change to the tree file after prepare cannot reach
+    the build, and a change during the read is refused."""
+    import flow.prepare as prep
+    out = tmp_path / "o"
+    rc = prep.main(["designs/b59a_axi_tx", "--out", str(out)])
+    assert rc == 0
+    inputs = (out / "inputs.tcl").read_text()
+    line = next(l for l in inputs.splitlines() if l.startswith("set ip_tcls"))
+    assert str(out / "ip_tcl") in line and ALLOWED not in line
+    copy = next((out / "ip_tcl").glob("*_amd_ip.tcl"))
+    assert copy.read_bytes() == (ROOT / ALLOWED).read_bytes()
+    # the tree file changes after the check: the copy the build sources is untouched
+    orig = (ROOT / ALLOWED).read_bytes()
+    try:
+        (ROOT / ALLOWED).write_bytes(orig + b"\nexec sh -c true\n")
+        assert copy.read_bytes() == orig
+        # and a change between the allow-list check and the read is refused
+        with pytest.raises(ip_tcl_allow.IpTclRefused):
+            ip_tcl_allow.materialise([ALLOWED], tmp_path / "o2")
+    finally:
+        (ROOT / ALLOWED).write_bytes(orig)

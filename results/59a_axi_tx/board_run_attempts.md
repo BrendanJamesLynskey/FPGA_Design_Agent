@@ -1,11 +1,12 @@
 # Earlier board attempts
 
-The board plan ([board_plan.yaml](../../axi_tx/programs/board_plan.yaml)) was written before the first board run and has
-not changed. It was run three times; only the last run, on the final build, is the result
-([board_run.json](board_run.json)). The earlier runs are kept as they were.
+The board plan ([board_plan.yaml](../../axi_tx/programs/board_plan.yaml)) lists every run and the verdict each must give. It
+was written before the board was first used and has not changed since. The plan was run on three builds of the design.
+The result is the last run, [board_run.json](board_run.json); the two earlier runs are kept as they were. Each build is
+named here by its build stamp, a hash of the design's source and constraint files.
 
-| Attempt | Build (stamp) | Outcome | What changed after it |
+| Attempt | Build stamp | Outcome | What was fixed before the next attempt |
 |---|---|---|---|
-| 1 | build 2 (`a3c1f853`) | 15 of 17 runs passed; the 2nd and 3rd repeats of `bram_random_rw` failed the model comparison, and the 3 repeats of `periph_regs` gave 3 different digests. The final operating-conditions read was refused (another Vivado job was running), so no JSON was written: [board_run_build2_attempt.log](board_run_build2_attempt.log) has the run lines. | The transaction model treated block RAM as zero at the start of a run; it now treats words not written in the run as unknown (block RAM keeps its contents). The demo peripheral's free-running counter and stall pattern made runs unrepeatable; they now run only while a program runs (RTL change, build 3). |
-| 2 | build 3 (`c3ed8fb8`, build ID `05236f86`) | 17 of 17 runs passed, inside the recommended operating conditions: [board_run_build3.json](board_run_build3.json). | A review found the checker did not check that VALID stays low while reset is held, and that its reset-exit rule overlapped the write- and read-response rules. Rule 9 (IN_RESET) was added, rule 7 narrowed, and the core's width check moved to elaboration time (RTL change, build 4). |
-| 3 | build 4 | the result: [board_run.json](board_run.json) | |
+| 1 | `a3c1f853` | 15 of 17 runs gave the expected verdict. The 2nd and 3rd repeats of `bram_random_rw` failed the model comparison: the board's read data differed from what the transaction model predicted. The 3 repeats of `periph_regs` passed, but gave 3 different digests, so the runs were not repeatable. The run lines are in [board_run_build2_attempt.log](board_run_build2_attempt.log). | The model assumed block RAM starts each run at zero. Block RAM keeps its contents between runs, so the model now treats words not written in the run as unknown. The demo peripheral had a free-running counter and stall pattern; they now advance only while a program runs, so a run repeats exactly. |
+| 2 | `c3ed8fb8` | 17 of 17 runs gave the expected verdict, inside the recommended operating conditions: [board_run_build3.json](board_run_build3.json). | The checker did not yet check that every VALID stays low while reset is held, and its reset-exit rule overlapped the write-response and read-response rules. A rule for VALID during reset was added, the reset-exit rule was narrowed so no two rules overlap, and the core's width check moved to elaboration time. |
+| 3 | `19a86593` | 17 of 17: the result, [board_run.json](board_run.json). | |

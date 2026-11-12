@@ -320,7 +320,7 @@ benchmark/   benchmark v1: tasks (development split), training pool, bench libra
 results/     committed build and bring-up results, per milestone
 cloud/       the AWS EC2 burst runner for Vivado batches (brief 33): fda_cloud.py (start, status, sync, run-batch,
              fetch-results, stop; budget, auto-stop), instance/ scripts, BUILD_AMI.md; tests against mocked EC2
-axi_tx/      the on-chip AXI transactor (brief 59A): rtl/ (sequencer, AXI4-Lite master, stream source and sink, rule monitors,
+axi_tx/      the on-chip AXI transactor: rtl/ (sequencer, AXI4-Lite master, stream source and sink, rule monitors,
              counters, scoreboard, demo targets), host/ (program format, model, host, board runner), programs/, tests/,
              formal/ (rule proofs and checker mutants), vivado/ (AMD IP probe, resource table); board design designs/b59a_axi_tx
 hil/         hardware-in-the-loop ([hil/README.md](hil/README.md)): cdc_soak/ (the CDC soak rig, brief 11b: RTL, simulation, Vivado builds, run plan);
