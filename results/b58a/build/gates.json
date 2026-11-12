@@ -6,13 +6,13 @@
   "top": "kr260_top",
   "variant": "base",
   "pass": false,
-  "first_failed_stage": "post_route",
+  "first_failed_stage": "post_synth",
   "gates": {
     "rtl_methodology_no_critical": true,
     "post_synth_no_unconstrained_endpoints": true,
     "post_synth_methodology_no_critical": true,
     "post_synth_drc_clean": true,
-    "post_synth_cdc_no_critical": true,
+    "post_synth_cdc_no_critical": false,
     "post_synth_cdc_structure_clean": true,
     "post_synth_exceptions_clean": true,
     "post_synth_io_constraints_clean": true,
@@ -23,7 +23,7 @@
     "no_unconstrained_endpoints": true,
     "drc_clean": true,
     "methodology_no_critical": true,
-    "cdc_no_critical": true,
+    "cdc_no_critical": false,
     "power_junction_ok": true,
     "exceptions_clean": true,
     "io_timing_clean": true,
@@ -81,7 +81,7 @@
         "post_synth_no_unconstrained_endpoints": true,
         "post_synth_methodology_no_critical": true,
         "post_synth_drc_clean": true,
-        "post_synth_cdc_no_critical": true,
+        "post_synth_cdc_no_critical": false,
         "post_synth_cdc_structure_clean": true,
         "post_synth_exceptions_clean": true,
         "post_synth_io_constraints_clean": true
@@ -91,15 +91,15 @@
         "wns_ns": -0.369,
         "tns_ns": -3.042,
         "tns_failing_endpoints": 10,
-        "tns_total_endpoints": 30318,
+        "tns_total_endpoints": 30288,
         "whs_ns": -0.856,
-        "ths_ns": -172.391,
-        "ths_failing_endpoints": 6568,
-        "ths_total_endpoints": 30218,
+        "ths_ns": -171.097,
+        "ths_failing_endpoints": 6415,
+        "ths_total_endpoints": 30188,
         "wpws_ns": 0.333,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 10626,
+        "tpws_total_endpoints": 10617,
         "timing_met": false
       },
       "check_timing": {
@@ -167,7 +167,7 @@
           {
             "rule": "CDC-3",
             "severity": "Info",
-            "count": 9,
+            "count": 7,
             "description": "1-bit synchronized with ASYNC_REG property"
           },
           {
@@ -175,6 +175,12 @@
             "severity": "Warning",
             "count": 12,
             "description": "Multi-bit synchronized with ASYNC_REG property"
+          },
+          {
+            "rule": "CDC-10",
+            "severity": "Critical",
+            "count": 2,
+            "description": "Combinational logic detected before a synchronizer"
           },
           {
             "rule": "CDC-15",
@@ -3139,7 +3145,7 @@
             "why": "xpm_single instance, exception 'False Path'",
             "exception": "False Path",
             "report_cdc_rules": [
-              "CDC-3"
+              "CDC-10"
             ]
           },
           {
@@ -3153,7 +3159,7 @@
             "why": "xpm_single instance, exception 'False Path'",
             "exception": "False Path",
             "report_cdc_rules": [
-              "CDC-3"
+              "CDC-10"
             ]
           }
         ],
@@ -3435,7 +3441,7 @@
         "bufg": 0,
         "bufg_available": 32
       },
-      "pass": true
+      "pass": false
     },
     "post_place": {
       "ran": true,
@@ -3446,15 +3452,15 @@
         "wns_ns": -0.198,
         "tns_ns": -1.397,
         "tns_failing_endpoints": 10,
-        "tns_total_endpoints": 30255,
+        "tns_total_endpoints": 30225,
         "whs_ns": -0.184,
-        "ths_ns": -4.459,
-        "ths_failing_endpoints": 124,
-        "ths_total_endpoints": 30175,
+        "ths_ns": -3.739,
+        "ths_failing_endpoints": 77,
+        "ths_total_endpoints": 30145,
         "wpws_ns": 0.333,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 10561,
+        "tpws_total_endpoints": 10552,
         "timing_met": false
       },
       "pass": true
@@ -3468,7 +3474,7 @@
         "no_unconstrained_endpoints": true,
         "drc_clean": true,
         "methodology_no_critical": true,
-        "cdc_no_critical": true,
+        "cdc_no_critical": false,
         "power_junction_ok": true,
         "exceptions_clean": true,
         "io_timing_clean": true
@@ -3516,8 +3522,8 @@
               "a_rxd[3]"
             ],
             "clock": "a_rxc_v",
-            "setup_slack_ns": 0.36,
-            "hold_slack_ns": 0.697,
+            "setup_slack_ns": 0.668,
+            "hold_slack_ns": 0.134,
             "requirements_ns": {
               "max": [
                 4.0
@@ -3538,8 +3544,8 @@
               "b_rxd[3]"
             ],
             "clock": "b_rxc_v",
-            "setup_slack_ns": 0.642,
-            "hold_slack_ns": 0.238,
+            "setup_slack_ns": 0.42,
+            "hold_slack_ns": 0.679,
             "requirements_ns": {
               "max": [
                 4.0
@@ -3694,7 +3700,7 @@
             "end_clock": "a_txc",
             "corner": "Slow",
             "uncertainty": 0.109,
-            "pessimism": -0.333,
+            "pessimism": -0.272,
             "from": "u_atx/g_oddr[0].u_oddr/CLK",
             "to": "a_txd[0]"
           },
@@ -3705,7 +3711,7 @@
             "end_clock": "b_txc",
             "corner": "Slow",
             "uncertainty": null,
-            "pessimism": 0.338,
+            "pessimism": 0.275,
             "from": "u_btx/u_ctl/CLK",
             "to": "b_tx_ctl"
           }
@@ -3717,7 +3723,7 @@
             "tsj_ns": 0.071,
             "dj_ns": 0.205,
             "pe_ns": 0.0,
-            "pessimism_ns": -0.333,
+            "pessimism_ns": -0.272,
             "requirement_ns": 4.0,
             "slack_ns": -0.198
           },
@@ -3747,15 +3753,15 @@
     "wns_ns": -0.198,
     "tns_ns": -1.397,
     "tns_failing_endpoints": 10,
-    "tns_total_endpoints": 30255,
+    "tns_total_endpoints": 30225,
     "whs_ns": -0.184,
     "ths_ns": -1.501,
     "ths_failing_endpoints": 10,
-    "ths_total_endpoints": 30175,
+    "ths_total_endpoints": 30145,
     "wpws_ns": 0.333,
     "tpws_ns": 0.0,
     "tpws_failing_endpoints": 0,
-    "tpws_total_endpoints": 10561,
+    "tpws_total_endpoints": 10552,
     "timing_met": false
   },
   "check_timing": {
@@ -3815,7 +3821,7 @@
       {
         "rule": "CDC-3",
         "severity": "Info",
-        "count": 9,
+        "count": 7,
         "description": "1-bit synchronized with ASYNC_REG property"
       },
       {
@@ -3823,6 +3829,12 @@
         "severity": "Warning",
         "count": 8,
         "description": "Multi-bit synchronized with ASYNC_REG property"
+      },
+      {
+        "rule": "CDC-10",
+        "severity": "Critical",
+        "count": 2,
+        "description": "Combinational logic detected before a synchronizer"
       },
       {
         "rule": "CDC-15",
@@ -3833,14 +3845,14 @@
     ]
   },
   "power": {
-    "total_w": 0.499,
-    "dynamic_w": 0.162,
+    "total_w": 0.502,
+    "dynamic_w": 0.165,
     "static_w": 0.337,
     "confidence": "Low",
-    "clocks_w": 0.021,
-    "signals_w": 0.01,
+    "clocks_w": 0.024,
+    "signals_w": 0.011,
     "io_w": 0.016,
-    "core_w": 0.145
+    "core_w": 0.148
   },
   "power_environment": {
     "junction_c": 43.7,
@@ -3856,6 +3868,6 @@
     "file": "kr260_top.bit",
     "bytes": 7797900
   },
-  "build_stamp": "d0a3d956",
-  "sources_sha256": "d0a3d956c1d6c56ceafdd0961dd454e26b0e8b06933932686c3db6c308aed7bb"
+  "build_stamp": "ddb1b68a",
+  "sources_sha256": "ddb1b68a6e245fe3254667f60c6e4a22bd8c28289943b1e8d7a1a25210cd9b54"
 }

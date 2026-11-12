@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
-| Date              : Thu Nov 12 15:41:14 2026
+| Date              : Thu Nov 12 17:02:05 2026
 | Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
 | Command           : report_cdc -details -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b58a/designs/b58a_trigger/build/base/cdc.rpt
 | Design            : kr260_top
@@ -14,30 +14,31 @@ Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanc
 CDC Report
 
 ID      Severity  Count  Description
-------  --------  -----  ----------------------------------------------
-CDC-3   Info          9  1-bit synchronized with ASYNC_REG property
+------  --------  -----  --------------------------------------------------
+CDC-3   Info          7  1-bit synchronized with ASYNC_REG property
 CDC-6   Warning       8  Multi-bit synchronized with ASYNC_REG property
+CDC-10  Critical      2  Combinational logic detected before a synchronizer
 CDC-15  Warning      20  Clock enable controlled CDC structure detected
 
 Source Clock: clk0_u
 Destination Clock: a_rxc
 CDC Type: No Common Primary Clock
 
-Row  ID     Severity  Description                                     Depth  Exception                Source (From)                                                                                            Destination (To)
----  -----  --------  ----------------------------------------------  -----  -----------------------  -------------------------------------------------------------------------------------------------------  -------------------------------------------------------------------------------------------------------------------
-  1  CDC-6  Warning   Multi-bit synchronized with ASYNC_REG property      2  Max Delay Datapath Only  u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[3:0]/C  u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][3:0]/D
-  2  CDC-3  Info      1-bit synchronized with ASYNC_REG property          2  False Path               u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_rd_rst_ic_reg/C     u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.rrst_wr_inst/syncstages_ff_reg[0]/D
-  3  CDC-3  Info      1-bit synchronized with ASYNC_REG property          4  False Path               u_rst/syncstages_ff_reg[3]/C                                                                             u_rsta/syncstages_ff_reg[0]/D
+Row  ID      Severity  Description                                         Depth  Exception                Source (From)                                                                                            Destination (To)
+---  ------  --------  --------------------------------------------------  -----  -----------------------  -------------------------------------------------------------------------------------------------------  -------------------------------------------------------------------------------------------------------------------
+  1  CDC-6   Warning   Multi-bit synchronized with ASYNC_REG property          2  Max Delay Datapath Only  u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[3:0]/C  u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][3:0]/D
+  2  CDC-3   Info      1-bit synchronized with ASYNC_REG property              2  False Path               u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_rd_rst_ic_reg/C     u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.rrst_wr_inst/syncstages_ff_reg[0]/D
+  3  CDC-10  Critical  Combinational logic detected before a synchronizer      4  False Path               u_rst/syncstages_ff_reg[3]/C                                                                             u_rsta/syncstages_ff_reg[0]/D
 
 Source Clock: clk0_u
 Destination Clock: b_rxc
 CDC Type: No Common Primary Clock
 
-Row  ID     Severity  Description                                     Depth  Exception                Source (From)                                                                                            Destination (To)
----  -----  --------  ----------------------------------------------  -----  -----------------------  -------------------------------------------------------------------------------------------------------  -------------------------------------------------------------------------------------------------------------------
-  1  CDC-6  Warning   Multi-bit synchronized with ASYNC_REG property      2  Max Delay Datapath Only  u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[3:0]/C  u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][3:0]/D
-  2  CDC-3  Info      1-bit synchronized with ASYNC_REG property          2  False Path               u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_rd_rst_ic_reg/C     u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.rrst_wr_inst/syncstages_ff_reg[0]/D
-  3  CDC-3  Info      1-bit synchronized with ASYNC_REG property          4  False Path               u_rst/syncstages_ff_reg[3]/C                                                                             u_rstb/syncstages_ff_reg[0]/D
+Row  ID      Severity  Description                                         Depth  Exception                Source (From)                                                                                            Destination (To)
+---  ------  --------  --------------------------------------------------  -----  -----------------------  -------------------------------------------------------------------------------------------------------  -------------------------------------------------------------------------------------------------------------------
+  1  CDC-6   Warning   Multi-bit synchronized with ASYNC_REG property          2  Max Delay Datapath Only  u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[3:0]/C  u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][3:0]/D
+  2  CDC-3   Info      1-bit synchronized with ASYNC_REG property              2  False Path               u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_rd_rst_ic_reg/C     u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.rrst_wr_inst/syncstages_ff_reg[0]/D
+  3  CDC-10  Critical  Combinational logic detected before a synchronizer      4  False Path               u_rst/syncstages_ff_reg[3]/C                                                                             u_rstb/syncstages_ff_reg[0]/D
 
 Source Clock: a_rxc
 Destination Clock: clk0_u

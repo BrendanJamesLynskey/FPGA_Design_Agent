@@ -1,5 +1,5 @@
 {
- "run": "2026-11-12, local: yosys 0.33, z3 4.8.12, SymbiYosys (formal-deb env); review-fix reruns of interlocks (with req_noref) and order_ctl on the final RTL",
+ "run": "2026-11-12, local: yosys 0.33, z3 4.8.12, SymbiYosys (formal-deb env); order_ctl rerun on the final RTL (soft reset free, 2-bit frame counter); interlocks rerun with req_noref",
  "jobs": [
   {
    "job": "interlocks",
@@ -58,7 +58,7 @@
    "depth": 30,
    "engine": "smtbmc --unroll z3",
    "status": "PASS",
-   "seconds": 682
+   "seconds": 1172
   },
   {
    "job": "order_ctl",
@@ -66,14 +66,15 @@
    "depth": 30,
    "engine": "smtbmc --unroll z3",
    "status": "PASS",
-   "seconds": 8
+   "seconds": 10
   }
  ],
  "assumptions": {
   "interlocks": "configuration stable after reset; bucket <= 4; refill 3..6 clocks; reload not used; every other input free (including the no-band-reference request flag)",
   "mac_tx": "MIN_DATA 4, IFG 3, frame length 1..6 bytes, a byte every clock (1000 Mb/s)",
   "mac_rx": "MIN_FRAME 5, MAX_FRAME 8; the CRC abstracted as a free value (checked against zlib in simulation)",
-  "order_ctl": "every input free; an abstract MAC (3-clock frames); watchdog 8 clocks; one ghost order tracked from its request (anyconst choice); bounded check, not a proof: a bad-frame order is never started once known, a good-FCS one is followed by a cancel within 12 clocks, a cancel only follows a bad frame or the watchdog, safe mode never sends before a good verdict, the slot is never busy for more than 24 clocks"
+  "order_ctl": "every input free, soft resets included; an abstract MAC (3-clock frames); watchdog 8 clocks; frame counter 2 bits (GEN_W = 2, so its wrap is reachable); one ghost order chosen by the solver. Bounded check (depth 30), not a proof: a bad-frame order is never started once known; one that left with a good FCS is followed by a cancel within 12 clocks, across soft resets; a cancel only follows a bad frame or the watchdog; safe mode never sends before a good verdict; one request per frame, and a trigger in a frame that has not asked always makes one when the slot is free; the slot is never busy for more than 24 clocks."
  },
- "not_proved": "k-induction of the MAC FSMs (needs invariants on internal state); returned UNKNOWN, so those tasks were removed"
+ "not_proved": "k-induction of the MAC FSMs (needs invariants on internal state); returned UNKNOWN, so those tasks were removed",
+ "order_ctl_limits": "outside the 30-clock bound: backlogs of several orders (an earlier order's cancel pending plus an ARP reply plus a new order needs about 33 clocks) and the 16-bit age counter's saturation; the RTL's 8-bit frame counter is checked only through the 2-bit one"
 }
