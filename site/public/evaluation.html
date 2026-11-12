@@ -1281,7 +1281,8 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
        below 520 units the signal names sit above their traces and the traces get the full width */
     var n = T.x.length, W = Math.max(360, Math.min(720, Math.round(art.clientWidth || 360))), narrow = W < 520;
     var LW = narrow ? 0 : 76, RH = narrow ? 52 : 44, marksIn = T.marks || [];
-    var MB = marksIn.length ? 16 * Math.min(2, marksIn.length) + 4 : 0;      /* a band above the axis for the mark labels */
+    var ROWH = narrow ? 22 : 16;                     /* a mark-label row: the text size (16 or 13 units) plus a gap */
+    var MB = marksIn.length ? ROWH * Math.min(2, marksIn.length) + 4 : 0;    /* a band above the axis for the mark labels */
     var AX = 24 + MB, H = AX + T.signals.length * RH + 6, MINV = Math.min(n, 6);
     var frames = [];
     if (!staged) for (var q = 0; q < n; q++) frames.push({ stage: -1, show: q, m: n, ghost: false, cap: (T.captions && T.captions[q]) || null });
@@ -1359,7 +1360,7 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
         var k = T.x.indexOf(mk.x);
         if (k < 0 || (staged && !ghost && k >= m) || ghost) return;
         var r = mk.signal ? T.signals.map(function (q) { return q.name; }).indexOf(mk.signal) : -1;
-        var x = r >= 0 ? X(k) : X(k) + CW / 2, ly = 13 + (j % 2) * 16;
+        var x = r >= 0 ? X(k) : X(k) + CW / 2, ly = (narrow ? 16 : 13) + (j % 2) * ROWH;
         var g = sv("g", { class: "kmarkg" });
         g.appendChild(sv("line", { x1: x, x2: x, y1: ly + 3, y2: AX + T.signals.length * RH, class: "kmark" }));
         if (r >= 0) g.appendChild(sv("rect", { x: x - 4, y: AX + r * RH + (narrow ? 17 : 5), width: 8, height: RH - (narrow ? 24 : 12), class: "kring" }));

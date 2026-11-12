@@ -65,7 +65,7 @@ const [pub, pagesArg] = process.argv.slice(2);
       }
       return out;
     });
-    r.overlap = steps.overlap; r.steps = steps.steps; r.minPx = steps.minPx === Infinity ? null : +steps.minPx.toFixed(1);
+    r.overlap = steps.overlap; r.steps = steps.steps; r.minPx = (steps.minPx === null || steps.minPx === Infinity) ? null : +steps.minPx.toFixed(1);   // Infinity arrives as null (JSON)
     r.titles = steps.titles;
     const tag = `${page} ${w} ${dark ? 'dark' : 'light'}${rm ? ' reduced' : ''}`;
     record.push({page, width: w, dark, reduced: rm, playing_at_load: r.playing, steps: r.steps, overlaps: r.overlap.length,
