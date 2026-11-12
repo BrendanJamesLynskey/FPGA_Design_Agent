@@ -1,9 +1,89 @@
-# Showcase project (brief 59A). Contract: docs/showcase_pages.md. In progress: no numbers until a board result is committed.
+# Showcase project (brief 59A). Contract: docs/showcase_pages.md. Every number comes from a {name} placeholder; the values
+# are derived by axi_tx/report.py from the committed records in results/59a_axi_tx/.
 id: axi_transactor
 order: 2
-status: in_progress
+status: published
 title: An on-chip AXI traffic generator and protocol checker
 one_line: "A block that sits on the chip beside the IP under test, drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time, and checks every protocol rule in hardware while the traffic runs."
+description: "An on-chip AXI4-Lite and AXI4-Stream transactor, protocol checker and scoreboard on the Nexys A7: seeded bugs caught on the board, the same traffic cycle for cycle in simulation, the checker proved formally."
 board: Digilent Nexys A7-100T
 part: xc7a100tcsg324-1
-what_it_will_show: "The checker catching a bug seeded in a peripheral on the board, with the same traffic run in simulation so the first point where the two differ marks the bug."
+values:
+  runs: {source: results/59a_axi_tx/summary.json, expr: "get:runs"}
+  runs_pass: {source: results/59a_axi_tx/summary.json, expr: "get:runs_pass"}
+  bug_runs: {source: results/59a_axi_tx/summary.json, expr: "get:protocol_bug_runs"}
+  bug_runs_right: {source: results/59a_axi_tx/summary.json, expr: "get:protocol_bug_runs_expected_rule"}
+  func_runs: {source: results/59a_axi_tx/summary.json, expr: "get:functional_bug_runs"}
+  clean: {source: results/59a_axi_tx/summary.json, expr: "get:clean_runs"}
+  clean_quiet: {source: results/59a_axi_tx/summary.json, expr: "get:clean_runs_quiet"}
+  parity: {source: results/59a_axi_tx/summary.json, expr: "get:parity_runs"}
+  parity_eq: {source: results/59a_axi_tx/summary.json, expr: "get:parity_digest_equal"}
+  txns: {source: results/59a_axi_tx/summary.json, expr: "get:parity_txn_compared"}
+  txn_diff: {source: results/59a_axi_tx/summary.json, expr: "get:parity_txn_differences"}
+  amd_agree: {source: results/59a_axi_tx/summary.json, expr: "get:amd_agree"}
+  amd_asserted: {source: results/59a_axi_tx/summary.json, expr: "get:amd_asserted"}
+  b_early_cycle: {source: results/59a_axi_tx/summary.json, expr: "get:b_early_cycle"}
+  proofs: {source: results/59a_axi_tx/summary.json, expr: "get:formal_proofs"}
+  proofs_pass: {source: results/59a_axi_tx/summary.json, expr: "get:formal_proofs_pass"}
+  mutants: {source: results/59a_axi_tx/summary.json, expr: "get:formal_mutants"}
+  mutants_killed: {source: results/59a_axi_tx/summary.json, expr: "get:formal_mutants_killed"}
+  depth: {source: results/59a_axi_tx/summary.json, expr: "get:formal_depth"}
+  lite_rules: {source: results/59a_axi_tx/summary.json, expr: "get:lite_rules"}
+  stream_rules: {source: results/59a_axi_tx/summary.json, expr: "get:stream_rules"}
+  wns: {source: results/59a_axi_tx/summary.json, expr: "get:wns_ns"}
+  power: {source: results/59a_axi_tx/summary.json, expr: "get:power_w"}
+  lut: {source: results/59a_axi_tx/summary.json, expr: "get:lut"}
+  build_id: {source: results/59a_axi_tx/summary.json, expr: "get:build_id"}
+  tj_max: {source: results/59a_axi_tx/summary.json, expr: "get:tj_max_c"}
+  vccint_min: {source: results/59a_axi_tx/summary.json, expr: "get:vccint_min_v"}
+  vccint_max: {source: results/59a_axi_tx/summary.json, expr: "get:vccint_max_v"}
+  alarms: {source: results/59a_axi_tx/summary.json, expr: "get:alarms_latched"}
+  wlat_min: {source: results/59a_axi_tx/summary.json, expr: "get:bram_write_latency_min"}
+  wlat_max: {source: results/59a_axi_tx/summary.json, expr: "get:bram_write_latency_max"}
+  rlat_min: {source: results/59a_axi_tx/summary.json, expr: "get:bram_read_latency_min"}
+  rlat_max: {source: results/59a_axi_tx/summary.json, expr: "get:bram_read_latency_max"}
+  reads_checked: {source: results/59a_axi_tx/summary.json, expr: "get:bram_reads_checked"}
+headline: "On the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) the on-chip checker caught all {bug_runs} seeded protocol bugs on the board, each by the rule it breaks, and the board's traffic matched simulation cycle for cycle in {parity_eq} of {parity} runs."
+hero:
+  kind: wave
+  source: results/59a_axi_tx/hero.json
+  path: wave
+  caption: "Captured on the board: our peripheral, with its early-response bug switched on, raises BVALID after the address handshake but before any write data. The checker flags B_EARLY in that cycle and triggers this capture; the data arrives later."
+story:
+  problem: "A bus interface that breaks the AXI handshake rules often works in a quick test and fails in a system: read data that is not held while the master stalls, or a write response sent before the data. Such bugs show only under the right timing, and a logic analyser cannot say which rule was broken."
+  how: "A transaction program, written in plain YAML and loaded over the serial link, drives AXI4-Lite and AXI4-Stream traffic with seeded random addresses, data, strobes, VALID gaps and READY back-pressure. Port-only monitors check {lite_rules} AXI4-Lite and {stream_rules} AXI4-Stream rules every cycle, a reference memory checks every read, counters record latency, stalls and coverage, and the first violation triggers a capture. Because every random choice comes from seeded generators, the same program gives the same traffic on the board and in simulation."
+  architecture:
+    blocks: [[host, Host over UART], [seq, Program and sequencer], [eng, AXI masters], [dut, Targets under test], [chk, Rule checkers and counters], [cap, Capture]]
+    links: [[host, seq, program], [seq, eng, transactions], [eng, dut, AXI traffic], [dut, chk, bus signals], [chk, cap, trigger], [chk, host, verdicts]]
+  results:
+    - "{runs_pass} of {runs} pre-registered board runs passed. Each of the {bug_runs} runs with a seeded protocol bug was flagged by exactly the rule that bug breaks; the {func_runs} runs with a data bug (ignored write strobes, a lost TLAST) were caught by the scoreboard or the stream sink alone; all {clean_quiet} clean runs fired nothing."
+    - "Simulation parity: in {parity_eq} of {parity} runs against our own peripheral and stream FIFO, the board's checksum over every transaction, latency included, and its cycle count equal the cocotb simulation's; {txn_diff} differences in {txns} logged transactions."
+    - "Cross-check: AMD's AXI Protocol Checker on the same bus asserted in exactly the {amd_asserted} runs where ours flagged an AXI4-Lite rule; the two verdicts agree in {amd_agree} of {runs} runs."
+    - "The checker itself is proved: {proofs_pass} of {proofs} bounded proofs (depth {depth}) that each rule stays quiet on legal traffic and fires on its own seeded violation, and {mutants_killed} of {mutants} deliberately broken checkers caught."
+    - "Against AMD's AXI BRAM Controller, write latency ran from {wlat_min} to {wlat_max} cycles and read latency from {rlat_min} to {rlat_max} under random back-pressure; {reads_checked} reads were checked against the reference memory with no mismatch."
+    - "The design used {lut} LUTs, met timing with {wns} ns of slack and was estimated at {power} W; the die stayed at or below {tj_max} C and VCCINT within {vccint_min} to {vccint_max} V, inside the recommended operating conditions, with {alarms} alarms latched."
+  agent:
+    request: "The owner asked for an on-chip AMBA AXI transactor and analyser that exercises on-chip modules with transactions of any complexity while verifying protocol correctness."
+    plan: "An AI executor (Claude Code) built the AXI4-Lite and AXI4-Stream phase from the planner's brief: the transactor, the rule monitors written from the specification in its own words, formal proofs and checker mutants, a cocotb model driven by the same host code, and a board demonstration with seeded bugs and an AMD checker as an independent cross-check."
+    gates: ["Every rule proved quiet and firing, every checker mutant caught", "Simulation of every program, seeded bug and memory mutant", "Vivado 2026.1 gates: methodology, timing, design rule checks, power", "The pre-registered board plan, with operating conditions logged"]
+    approvals: ["The owner authorised autonomous hardware use for the day (SRAM only, wall power)", "The planner reviews and merges; nothing was merged by the executor"]
+evidence:
+  - {kind: record, label: "Board runs: verdicts, counters, captures and the simulation comparison", path: results/59a_axi_tx/board_run.json}
+  - {kind: record, label: "Simulation records of the same programs", path: results/59a_axi_tx/sim}
+  - {kind: record, label: "Formal proofs and checker mutants", path: results/59a_axi_tx/formal.json}
+  - {kind: record, label: "Resource cost per configuration and the AMD IP build test", path: results/59a_axi_tx/resources.json}
+  - {kind: conditions, label: "Die temperature and rails before, during and after the runs, against the recommended operating conditions", path: results/59a_axi_tx/board_run.json}
+  - {kind: versions, label: "Vivado 2026.1, build ID {build_id}, timing, power and gate results", path: results/59a_axi_tx/board_build.json}
+  - {kind: requirements, label: "Requirements traced", text: "not recorded: the transaction programs name requirement tags, which the traceability matrix does not read yet"}
+limits:
+  not_measured:
+    - "Full AXI4 (bursts, IDs, outstanding transactions), the slave side and a long soak: the next phase."
+    - "Runs against AMD's BRAM controller are compared with the transaction model, not cycle for cycle with simulation: the simulator used cannot run the AMD core."
+    - "The proofs are bounded, and the property restatement shares its author with the checker; the AMD checker is the independent check."
+  nulls: []
+  next:
+    - "Full AXI4 with IDs and a DMA target, and a soak mode that steers random traffic towards untested combinations."
+    - "Decode the AMD checker's status bits to rule names, and read the counters faster than the serial link allows."
+try_it:
+  command: "python -m pytest -q axi_tx/tests/test_59a_rtl.py && python axi_tx/formal/run_formal.py"
+  note: "Runs every program, seeded bug and mutant in simulation, then the formal proofs (needs Icarus, cocotb, Yosys and SymbiYosys)."

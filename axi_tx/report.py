@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Brief 59A results: collect the raw records into results/59a_axi_tx/ and write its README and the showcase page data.
+"""Brief 59A results: collect the raw records into results/59a_axi_tx/, derive the showcase files, write the README.
 
     python3 axi_tx/report.py collect      # copy build/59a records (formal, simulation, AMD IP probe, resources) into results/
-    python3 axi_tx/report.py write        # results/59a_axi_tx/README.md and site/data/showcase_59a_axi_tx.json
+    python3 axi_tx/report.py write        # results/59a_axi_tx/README.md and page_data.json
     python3 axi_tx/report.py check        # both written files equal what `write` would produce now (CI)
 
 Every number in the README and in the page data comes from a JSON file in results/59a_axi_tx/.
@@ -19,7 +19,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "results" / "59a_axi_tx"
 BUILD = ROOT / "build" / "59a"
-SITE = ROOT / "site" / "data" / "showcase_59a_axi_tx.json"
+SITE = ROOT / "results" / "59a_axi_tx" / "page_data.json"     # the full record; the showcase page reads summary.json, hero.json
 sys.path.insert(0, str(ROOT))
 
 from axi_tx.host import regs  # noqa: E402
@@ -54,7 +54,9 @@ def collect() -> None:
                 c["bram_tiles"] = float(b.group(1)) if b else None
     (RES / "amd_ip_probe.json").write_text(json.dumps(probe, indent=1) + "\n")
     rows, excluded = [], None
-    for line in (BUILD / "resources" / "vivado.log").read_text().splitlines():
+    import os
+    res_dir = BUILD / os.environ.get("AXI_TX_RES_DIR", "resources")
+    for line in (res_dir / "vivado.log").read_text().splitlines():
         m = re.match(r"FDA-RES (\S+) top (\S+) generics \{(.*)\} LUT (\d+) FF (\d+) BRAM ([0-9.]+) seconds (\d+)", line)
         if m and m.group(1) == "core_full_s64":
             excluded = {"config": m.group(1), "lut": int(m.group(4)), "ff": int(m.group(5)), "bram_tiles": float(m.group(6)),
@@ -133,7 +135,7 @@ def readme(d: dict[str, Any]) -> str:
     L = ["# Brief 59A: the on-chip AXI transactor, protocol checker and scoreboard",
          "",
          "Design and method: [docs/axi_tx.md](../../docs/axi_tx.md). Every number below is read from a JSON file in this folder by",
-         "[axi_tx/report.py](../../axi_tx/report.py); the page data is [site/data/showcase_59a_axi_tx.json](../../site/data/showcase_59a_axi_tx.json).",
+         "[axi_tx/report.py](../../axi_tx/report.py); the showcase page (site/showcase/axi_transactor.yaml) reads [summary.json](summary.json) and [hero.json](hero.json).",
          ""]
     if "board_runs" in d:
         ok = sum(r["pass"] for r in d["board_runs"])
@@ -185,10 +187,88 @@ def readme(d: dict[str, Any]) -> str:
     return "\n".join(L) + "\n"
 
 
+def showcase_files() -> None:
+    """results/59a_axi_tx/hero.json (the wave hero: the board capture around the seeded B_EARLY bug) and summary.json
+    (the page's numbers, each derived here from board_run.json, formal.json, board_build.json and resources.json)."""
+    board, formal, build = _load("board_run.json"), _load("formal.json"), _load("board_build.json")
+    runs = board["runs"]
+    hero_run = next(r for r in runs if r["tag"] == "periph_regs_b_early")
+    cap = hero_run["capture"]
+    t = cap["trigger_index"]
+    lo, hi = max(0, t - 16), min(len(cap["rows"]), t + 12)
+    rows = cap["rows"][lo:hi]
+    rule_bit = [n for n, _, _ in regs.LITE_RULES].index("B_EARLY")
+    sig = [("AWVALID", "awvalid"), ("AWREADY", "awready"), ("WVALID", "wvalid"), ("WREADY", "wready"),
+           ("BVALID", "bvalid"), ("BREADY", "bready")]
+    signals = [{"name": n, "kind": "bit", "v": [r[k] for r in rows]} for n, k in sig]
+    signals.append({"name": "B_EARLY rule", "kind": "bit", "v": [r["lite_viol"] >> rule_bit & 1 for r in rows]})
+    caps, aw_done, w_done = [], False, False
+    for i, r in enumerate(rows):
+        c = []
+        if r["awvalid"] and r["awready"]:
+            c.append("AW handshake: the address is accepted")
+            aw_done = True
+        if r["wvalid"] and r["wready"]:
+            c.append("W handshake: the data arrives, after the response")
+            w_done = True
+        if r["lite_viol"] >> rule_bit & 1 and r["trig"]:
+            c.append("BVALID is high but no W handshake has happened: the checker flags B_EARLY and triggers this capture")
+        elif r["bvalid"] and r["bready"]:
+            c.append("B handshake: the master takes the early response")
+        elif r["lite_viol"] >> rule_bit & 1:
+            c.append("still flagged: BVALID waits while the write data has not arrived")
+        if not c:
+            c.append("idle" if not (aw_done or r["awvalid"] or r["bvalid"]) else "waiting")
+        caps.append("; ".join(c))
+    hero = {"wave": {"unit": "cycle", "x": [i + lo - t for i in range(len(rows))], "signals": signals, "captions": caps,
+                     "source_run": hero_run["tag"], "trigger_at_x": 0}}
+    (RES / "hero.json").write_text(json.dumps(hero, indent=1) + "\n")
+
+    def flagged(r):
+        return sorted(k for k, v in {**r["lite_rules"]["counts"], **r["stream_rules"]["counts"]}.items() if v)
+    periph = [r for r in runs if not r["tag"].startswith("bram")]
+    compared = [r for r in periph if "sim_compare" in r]
+    lite_flag = [r for r in runs if any(r["lite_rules"]["counts"].values())]
+    clean = [r for r in runs if r["lite_bug"] == "none" and r["stream_bug"] == "none" and r["program"] != "master_inject"]
+    m = next(r for r in runs if r["tag"] == "bram_random_rw")["lite_mon"]
+    jt = board["conditions_jtag"]
+    summ = {
+        "runs": len(runs), "runs_pass": sum(r["pass"] for r in runs),
+        "protocol_bug_runs": len([r for r in runs if flagged(r)]),
+        "protocol_bug_runs_expected_rule": len([r for r in runs if flagged(r) and r["checks"]["lite_rules"] and r["checks"]["stream_rules"]]),
+        "functional_bug_runs": len([r for r in runs if (r["lite_bug"] == "no_strb" or r["stream_bug"] == "lose_last")]),
+        "clean_runs": len(clean), "clean_runs_quiet": len([r for r in clean if not flagged(r)]),
+        "parity_runs": len(compared),
+        "parity_digest_equal": len([r for r in compared if r["sim_compare"]["digest"]["equal"] and r["sim_compare"]["cycles"]["equal"]]),
+        "parity_txn_compared": sum(r["sim_compare"]["log"]["compared"] for r in compared),
+        "parity_txn_differences": sum(r["sim_compare"]["log"]["differences"] for r in compared),
+        "amd_agree": len([r for r in runs if bool(r.get("amd_pc_asserted")) == any(r["lite_rules"]["counts"].values())]),
+        "amd_asserted": len([r for r in runs if r.get("amd_pc_asserted")]), "ours_lite_flagged": len(lite_flag),
+        "b_early_cycle": hero_run["lite_rules"]["first_time"],
+        "formal_proofs": sum(u["summary"]["proofs"] for u in formal["units"].values()),
+        "formal_proofs_pass": sum(u["summary"]["proofs_pass"] for u in formal["units"].values()),
+        "formal_mutants": sum(u["summary"]["mutants"] for u in formal["units"].values()),
+        "formal_mutants_killed": sum(u["summary"]["mutants_killed"] for u in formal["units"].values()),
+        "formal_depth": formal["depth"],
+        "lite_rules": len(regs.LITE_RULES), "stream_rules": len(regs.STREAM_RULES),
+        "wns_ns": build["timing"]["wns_ns"], "power_w": build["power"]["total_w"], "lut": build["utilization"]["lut"],
+        "ff": build["utilization"]["ff"], "build_id": build["build_id"],
+        "tj_max_c": max(s["max"]["TEMPERATURE"] for s in jt if "max" in s),
+        "vccint_min_v": min(s["min"]["VCCINT"] for s in jt if "min" in s), "vccint_max_v": max(s["max"]["VCCINT"] for s in jt if "max" in s),
+        "alarms_latched": sum(len(s.get("alarms_latched", [])) for s in board["conditions_fabric"]),
+        "inside_roc": board["inside_roc"],
+        "bram_write_latency_min": m["wlat_min"], "bram_write_latency_max": m["wlat_max"],
+        "bram_read_latency_min": m["rlat_min"], "bram_read_latency_max": m["rlat_max"],
+        "bram_reads_checked": next(r for r in runs if r["tag"] == "bram_random_rw")["summary"]["sb_checked"],
+    }
+    (RES / "summary.json").write_text(json.dumps(summ, indent=1) + "\n")
+
+
 def main(argv: list[str]) -> int:
     cmd = argv[0] if argv else "write"
     if cmd == "collect":
         collect()
+        showcase_files()
         return 0
     d = page_data()
     text, js = readme(d), json.dumps(d, indent=1) + "\n"
