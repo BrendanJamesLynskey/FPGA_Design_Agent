@@ -138,7 +138,6 @@ requirements:
 proof:
   - {requirement: REQ-01, method: simulation, artefact: t1_cocotb.count_wraps_both_ways}
   - {requirement: REQ-01, method: simulation, artefact: t1_verif.simultaneous_presses_priority}
-  - {requirement: REQ-01, method: simulation, artefact: t1_cocotb.register_write_and_press_on_the_same_clock}
   - {requirement: REQ-02, method: simulation, artefact: t1_verif.short_glitches_are_ignored}
   - {requirement: REQ-02, method: simulation, artefact: t1_cocotb.debounce_boundary_is_exact}
   - {requirement: REQ-02, method: formal, artefact: debounce}
@@ -151,4 +150,7 @@ proof:
   - {requirement: REQ-06, method: analysis, artefact: "post_route:no_unconstrained_endpoints"}
   - {requirement: REQ-07, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
   - {requirement: REQ-08, method: hardware, artefact: "uart_tests:test_t1_registers_against_the_model"}
-  - {requirement: REQ-08, method: hardware, artefact: ila_captures}
+  - {requirement: REQ-09, method: simulation, artefact: t1_cocotb.register_write_and_press_on_the_same_clock}
+  - {requirement: REQ-10, method: simulation, artefact: t1_cocotb.debounce_boundary_is_exact}
+  - {requirement: REQ-10, method: formal, artefact: debounce}
+  - {requirement: REQ-11, method: hardware, artefact: ila_captures}

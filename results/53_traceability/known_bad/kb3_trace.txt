@@ -1,0 +1,21 @@
+ok  requirements_verified: none missing
+ok  artefacts_cite_requirements: none missing
+BAD coverage_holes_justified: ['branch dimmer_counter.sv:54 if', 'toggle dimmer_counter.sv:51 sticky:0->1', 'toggle dimmer_counter.sv:51 sticky:1->0']
+    why: 3 coverage hole(s) neither closed nor justified: branch dimmer_counter.sv:54 if, toggle dimmer_counter.sv:51 sticky:0->1, toggle dimmer_counter.sv:51 sticky:1->0. Close each with a test, or justify it in verif/justifications.yaml (coverage: [{kind, item (a glob), reason, owner, date}])
+ok  waivers_complete: none missing
+ok  changed_requirements_reverified: none missing
+    REQ-01   simulation pass     t1_cocotb.bouncy_buttons_match_the_model, t1_cocotb.count_wraps_both_ways, t1_cocotb.random_operations_match_the_model, t1_verif.simultaneous_presses_priority, t1_verif.directed_closure_sweep, t1_verif.constrained_random_operations
+    REQ-02   simulation pass     t1_cocotb.debounce_boundary_is_exact, t1_cocotb.bouncy_buttons_match_the_model, t1_verif.short_glitches_are_ignored
+    REQ-02   formal     pass     debounce
+    REQ-03   simulation pass     t1_cocotb.pwm_on_time_matches_duty
+    REQ-04   simulation pass     t1_cocotb.display_shows_count_and_duty, t1_verif.directed_closure_sweep
+    REQ-04   formal     pass     scan
+    REQ-05   simulation pass     t1_cocotb.identity_and_reset_values, t1_cocotb.inputs_register_shows_levels, t1_cocotb.random_operations_match_the_model, t1_verif.directed_closure_sweep, t1_verif.reset_state_of_outputs, t1_verif.constrained_random_operations
+    REQ-06   analysis   pending  post_route:setup, post_route:hold, post_route:no_unconstrained_endpoints
+    REQ-07   analysis   pending  post_synth:post_synth_resources_in_range
+    REQ-08   hardware   pass     uart_tests:test_t1_registers_against_the_model
+    REQ-09   simulation pass     t1_cocotb.register_write_and_press_on_the_same_clock, t1_verif.constrained_random_operations
+    REQ-10   simulation pass     t1_cocotb.debounce_boundary_is_exact
+    REQ-10   formal     pass     debounce
+    REQ-11   hardware   pass     ila_captures
+trace: FAIL

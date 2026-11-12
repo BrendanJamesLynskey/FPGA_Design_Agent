@@ -22,6 +22,11 @@ Python code only.
 | `summarise.py` | Collects `gates.json` + `run.json` of the variants into `results/<milestone>/` |
 | `cocotb_run.py` | Runs a cocotb module under Icarus from pytest (used by every RTL test) |
 | `lint.sh` | Verilator `--lint-only -Wall` on the shell and every design's top |
+| `traceability.py` | Builds the traceability matrix (requirement, design element, test or proof, result, coverage) and its five gates, each naming the ids it misses. [docs/traceability.md](../docs/traceability.md) |
+| `req.py` | The `@req("REQ-01")` decorator for cocotb tests (a `# req:` comment does the same) |
+| `trace_tag.py` | Adds `req:` tags to an existing design from its testplan |
+| `change_record.py` | Records what the evidence was made from: input hashes, tool versions, knowledge-bank pin, flow commit. Reads the build manifest (`manifest.json`) when there is one, else computes the same. Also the requirement and evidence fingerprints a baseline diff uses |
+| `lint_ruleset.py`, `hdl_rules.yaml` | FDA-HDL, the versioned HDL coding standard: each rule's rationale and its Verilator, Vivado and design-standards checks. Waivers go in `designs/<d>/lint/waivers.yaml`. [docs/hdl_coding_standard.md](../docs/hdl_coding_standard.md) |
 | `bringup.py` | **F0B.** One command on the attached board: power gate, discover, program base, UART tests, program ILA, ILA captures, still alive; writes `<design>_bringup.json` and `runs/` to `--out` (default the F0B record folder; agent runs pass their own) |
 | `hw_discover.py`, `hw_list.tcl` | Find the one JTAG target (refuses if there are several), check it is an xc7a100t, find its UART (FT2232 interface 1, same USB serial); record both in `~/.config/fpga_design_agent/boards.yaml`, outside the repo |
 | `program.py`, `program.tcl` | Program a build into SRAM by cable serial, after the `power_ok` gate (report_power total and junction temperature within the limits for the board's power source) and a build-stamp check; flash requests are refused. Also `run_vivado.sh designs/<name> program\|program-ila` |

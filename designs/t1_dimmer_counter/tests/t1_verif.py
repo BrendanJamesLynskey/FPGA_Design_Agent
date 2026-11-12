@@ -31,6 +31,7 @@ async def press_together(e: Env, buttons: tuple[str, ...]) -> None:
         t1_cov.sample_trace(dict(zip(BUTTONS, t1_cov.BTN))[b], "clean")
 
 
+# req: REQ-01
 @cocotb.test()
 async def simultaneous_presses_priority(dut):
     """spec behaviour.counter: presses on one clock act by priority clear > up > down; each still counts."""
@@ -44,6 +45,7 @@ async def simultaneous_presses_priority(dut):
         await e.write(m.COUNT, 100)
 
 
+# req: REQ-02
 @cocotb.test()
 async def short_glitches_are_ignored(dut):
     """spec behaviour.debounce: a difference shorter than DEBOUNCE_CYCLES is ignored, on every button."""
@@ -55,6 +57,7 @@ async def short_glitches_are_ignored(dut):
     assert await e.read(m.PRESSES) == 0 and await e.read(m.COUNT) == 0
 
 
+# req: REQ-01, REQ-04, REQ-05
 @cocotb.test()
 async def directed_closure_sweep(dut):
     """Every operation at count 0, 0xFFFF and a middle value; every duty class from both sources; every
@@ -80,6 +83,7 @@ async def directed_closure_sweep(dut):
         await e.write(m.COUNT, count)
 
 
+# req: REQ-05
 @cocotb.test()
 async def reset_state_of_outputs(dut):
     """spec reset: every register returns to its reset value. While reset is held the display is dark; right
@@ -145,6 +149,7 @@ async def run_ops(e: Env, n: int, rng: random.Random, bias=None) -> None:
             await e.read(op.reg)
 
 
+# req: REQ-01, REQ-05, REQ-09
 @cocotb.test()
 async def constrained_random_operations(dut):
     """Constrained-random operation mix (cocotb-coverage crv), then a presses-and-bounces-heavy second phase;
@@ -159,6 +164,7 @@ async def constrained_random_operations(dut):
         await e.read(off)
 
 
+# structural: writes the functional-coverage database for the gates; it checks nothing itself
 @cocotb.test()
 async def zz_dump_coverage(dut):
     """Last test of a run: write the functional-coverage database for flow/verif_gates.py."""

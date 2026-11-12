@@ -2,6 +2,7 @@
 // display scan, and the registers in the test shell's window
 // (designs/t1_dimmer_counter/spec.yaml).
 
+// req: REQ-01, REQ-03, REQ-05, REQ-09
 module dimmer_counter #(
     parameter int DEBOUNCE_CYCLES = 1_000_000,
     parameter int PWM_PRESCALE    = 4,

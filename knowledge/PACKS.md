@@ -13,6 +13,8 @@ skills it loaded. **No pack content is published here.**
   `indexes/skill_vectors.json` sha256 `52492523aad97a236648abaf1fa534768e411447f5f6ee44d7de2a12d64b0c26` (222 skills,
   BAAI/bge-small-en-v1.5, 384 dimensions; knowledge PR `b36-skill-routing`, merged with `e3cf892`). Derived data, in no unit's hash;
   `agent/core/skill_index.py` checks each skill's SHA-256 against the manifest and searches a changed skill by BM25 alone.
+  Unchanged at `8809175`: not rebuilt for the skills added since (brief 30's four, the eight VHDL skills and the five
+  assurance skills), which are therefore searched by BM25 alone until the vectors are rebuilt in the knowledge repo.
 - **Vivado version the bank was measured on: 2026.1** (brief 48, 2026-11-11; 2025.2 before, brief 21). The 2026.1 probe and diff are in the private repo's `reports/` and `tools/version_probe/baseline/probe_2026.1.json`; measured numbers marked `manual` in the claims were not re-measured by brief 48. Every version-bound fact (rule severities, command
   options, IP versions, measured numbers, cited guide versions) is indexed with the version it was verified on in the private
   repo's `claims/`; its `docs/VERSION_UPGRADE.md` is the procedure for a new version (probe, diff, review, re-pin here, regression,
@@ -58,9 +60,9 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `vendor/amba_axi/` | vendor: AMBA AXI4, AXI4-Lite, AXI4-Stream, APB/AHB rules, AMD AXI IP and verification (ours; brief 17) | 1 (2026-11-10, 17) | 15 | 19 | 61,945 (<= 80,000) | 5,465 | 15,486 | `7672022ab564ceb7c38279754f6334daf825cf1b6759421aa7a55527ac2e4423` |
 | `vendor/packet_processing/` | vendor: packet processing (ours; MAC framing and FCS, parsing, match-action, rewrite, queues, switching; brief 40) | 1 (2026-11-11, 40) | 4 | 6 | 16,473 (<= 30,000) | 1,839 | 4,118 | `b6264c4501596f3a1565cd205792f851a9ec26dc3f4a502821dc624d2fd5280f` |
 | `vendor/hil_verification/` | vendor: hardware-in-the-loop verification (ours; on-board instruments, instrument drivers, measured-against-model checks; brief 30) | 1 (2026-11-11, 30) | 4 | 6 | 14,502 (<= 30,000) | 1,787 | 3,626 | `6fcc7e9eef5884c06ffdda7e813babccaa237c4f2ff0809f211b0e317f6bc7ff` |
-| `vendor/vhdl_design/` | vendor: VHDL design in the vendor flow (ours; brief 55, KB PR #49) | 1 (2026-11-11, 55) | 5 | 7 | 25,314 (<= 30,000) | 2,162 | 6,328 | `2c9d16f98258807395d813a62eecfcea3c9dd7ba612f1b99343cadfd1604ee69` |
-| `vendor/vhdl_verification/` | vendor: VHDL verification (ours; GHDL, cocotb and formal on VHDL; brief 55, KB PR #49) | 1 (2026-11-11, 55) | 3 | 5 | 12,576 (<= 20,000) | 1,304 | 3,144 | `ac5f405eb2afac2f394395098e5285f6a52209d02385f7b1ce8d21eafa6221cd` |
-| `vendor/assurance/` | vendor: assurance and traceability (ours; requirement quality, independence, coverage justification, tool assessment; brief 53, KB PR #47) | 1 (2026-11-12, 53) | 5 | 7 | 21,795 (<= 30,000) | 2,427 | 5,449 | `1e9e43f7e74f1c111b707d77e1cd3accaed70ad15cff72bc3f24e34f3122e36c` |
+| `vendor/vhdl_design/` | vendor: VHDL-2008 design in the vendor flow (ours; the subset Vivado 2026.1 accepts, types and drivers, processes, resets and FSMs, records and generics, mixed-language boundary; brief 55) | 1 (2026-11-12, 55) | 5 | 7 | 25,314 (<= 30,000) | 2,162 | 6,328 | `2c9d16f98258807395d813a62eecfcea3c9dd7ba612f1b99343cadfd1604ee69` |
+| `vendor/vhdl_verification/` | vendor: VHDL verification (ours; GHDL and xsim, VUnit/OSVVM/UVVM, cocotb, PSL and formal; brief 55) | 1 (2026-11-12, 55) | 3 | 5 | 12,576 (<= 20,000) | 1,304 | 3,144 | `ac5f405eb2afac2f394395098e5285f6a52209d02385f7b1ce8d21eafa6221cd` |
+| `vendor/assurance/` | vendor: assurance and traceability (ours; requirement quality and methods, coverage justification, independence and change control, tool assessment, assurance levels; brief 53) | 1 (2026-11-12, 53) | 5 | 7 | 21,795 (<= 30,000) | 2,427 | 5,449 | `1e9e43f7e74f1c111b707d77e1cd3accaed70ad15cff72bc3f24e34f3122e36c` |
 | `family/zynq7000/` | family: Zynq-7000 PS7 basics (ours, from UG585/UG470) | 1 (2026-11-09, 10 B0) | 8 | 14 | 24,218 (none) | 2,461 | 6,054 | `5f581b4648505a6d4346d4cf3c694332c2c11dd793c360cefae11839cb1b5d7d` |
 | `family/zynq_ultrascale_plus/` | family: Zynq UltraScale+ (PS8, GTH, K26 SOM; ours) | 2 (2026-11-10, 13) | 13 | 22 | 45,121 (none) | 4,929 | 11,280 | `bd536c669416de63c8786016aafef4fcaadb017a67220c91a9de0f8d2d4bb282` |
 | `device/xc7z020clg484-1/` | device: the Zynq-7020 part on the ZedBoard (xc7z020clg484-1) | 1 (2026-11-09, 10 B0) | 3 | 7 | 7,062 (none) | 1,153 | 1,766 | `541c7bbd3add40d205c65840f038d96e17b023b061fa4c65a1887658e9488a6f` |
@@ -74,8 +76,8 @@ Root files: `SECTIONS.yaml` sha256 `e3869cf88b8796b1f5e62dfaad541d86f22622c53970
 
 ## The vocabulary
 
-`SECTIONS.yaml` defines 64 section ids: 19 techniques and 21 functional areas (generic; their ids,
-kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 device (04j added `primitives`), 17 tool-flow (vendor topics; 04j added `synthesis-attributes`, brief 13 `ip-cores`, brief 17 `amba`, brief 40 `packet-processing`, brief 30 `hardware-in-the-loop`) and
+`SECTIONS.yaml` defines 66 section ids: 19 techniques and 21 functional areas (generic; their ids,
+kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 device (04j added `primitives`), 19 tool-flow (vendor topics; 04j added `synthesis-attributes`, brief 13 `ip-cores`, brief 17 `amba`, brief 40 `packet-processing`, brief 30 `hardware-in-the-loop`, brief 55 `vhdl`, brief 53 `assurance-traceability`) and
 3 procedures (`board-onboarding`, `ultrafast`, `verification-stages`). One id means one thing on every axis. Sections with no skill yet (gaps; this list is as of 2026-11-03 and is not re-derived here: the bank's root `INDEX.md` marks the current gaps with "(none yet)"):
 
 - generic (15): `low-power`, `synthesis-and-dft`, `ethernet`, `high-speed-serial`, `usb`, `user-io`, `processors`, `dram`, `flash`, `sd-card`, `audio`, `sensors`, `analog`, `expansion-io`, `power-config` (`clocking` and `timing-concepts` were filled by v3.0).

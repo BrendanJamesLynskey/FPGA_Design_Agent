@@ -1,0 +1,18 @@
+# Brief 53 test fixture: the smallest design the traceability tool reads (no simulator needed; the test writes the
+# run records). Shape as in designs/t1_dimmer_counter/spec.yaml.
+schema: fpga-design-agent/spec/v0
+name: mini
+top: mini
+behaviour:
+  count:
+    - COUNT adds one on each enabled clock and wraps modulo 256.
+    - COUNT holds when enable is low.
+registers:
+  map:
+    - {offset: 0x00, name: COUNT, access: RO, reset: 0, bits: "[7:0]"}
+timing:
+  latency: {count: "1 clock"}
+requirements:
+  - {id: REQ-01, text: "COUNT adds one on each enabled clock and wraps modulo 256", proof: [simulation, formal]}
+  - {id: REQ-02, text: "COUNT holds its value while enable is low", proof: [simulation]}
+  - {id: REQ-03, text: "The design closes timing at 100 MHz", proof: [analysis]}
