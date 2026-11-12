@@ -50,9 +50,11 @@ TEMPLATES = {
                    "(synthesis pulls them into AREG/BREG/PREG when it can)", "artix7-dsp48e1"),
     "dsp_mul_p1": ("DSP48E1 multiply with input and output registers: registered operands, `p <= a_r * b_r;` in the next "
                    "clock (AREG/BREG + PREG); no reset, or a synchronous reset, on those registers", "artix7-dsp48e1"),
-    "dsp_mul_p2": ("DSP48E1 multiply fully pipelined: registered operands, then `m <= a_r * b_r;`, then `p <= m (+ c);` "
-                   "(AREG/BREG, MREG, PREG; a following add of another product or a constant can go in the P stage); "
-                   "no asynchronous reset on any of them, or synthesis builds them in fabric", "artix7-dsp48e1"),
+    "dsp_mul_p2": ("DSP48E1 multiply fully pipelined: free-running registered operands, then `m <= a_r * b_r;`, then "
+                   "`p <= m (+ c);` (AREG/BREG, MREG, PREG; a following add of another product or a constant can go in the P "
+                   "stage; a MAC is `acc <= (first ? 0 : acc) + m`); no asynchronous reset on any of them, and no "
+                   "`use_dsp` attribute on the module (measured: it pulls other arithmetic into DSPs, 21 slices for 4 MACs; "
+                   "use it on the product signal only if inference fails)", "artix7-dsp48e1"),
     "lut_mul": ("multiply in LUTs and carry chains: mark the product `(* use_dsp = \"no\" *)`", "artix7-design-for-lut6"),
     "carry_add": ("adder or subtractor `s <= a + b;` on the carry chain (CARRY4); a sum of three or more terms is "
                   "a tree of two-input adds, registered between levels if the plan says so", "artix7-clb-and-carry"),

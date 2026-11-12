@@ -92,7 +92,11 @@ def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dic
         sf = 0.0 if g1.get("pass") else (1.0 - ok / n if n else 1.0)
         v["G1"] = {"met": bool(g1.get("pass")), "value": f"{ok}/{n}" if n else ("pass" if g1.get("pass") else "fail"),
                    "target": "all pass", "shortfall": round(sf, 4), "detail": str(g1.get("detail") or "")[:300]}
-    if not dg or not dg.get("ran"):
+    if dg is not None and not dg.get("ran"):            # the build was attempted and produced no gates (killed, failed)
+        for k in ("G2", "G3", "G4"):
+            v[k] = {"met": False, "value": None, "target": None, "shortfall": 1.0,
+                    "detail": "the build did not finish (no gates.json; see build/last_build.out)"}
+    elif not dg or not dg.get("ran"):
         for k in ("G2", "G3", "G4"):
             v[k] = {"met": None, "value": None, "target": None, "shortfall": None, "detail": "no build"}
     else:
@@ -362,6 +366,8 @@ class Closure:
         stop = None
         if not g1.get("pass"):
             stop = "G1 fails at the start: functional repair belongs to stage 2, not the closure loop"
+        elif dg is not None and not dg.get("ran"):
+            stop = "the first build did not finish (no gates.json): nothing to measure; see build/last_build.out"
         it = 0
         while stop is None:
             if all_met(vec):

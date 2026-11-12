@@ -307,3 +307,10 @@ def test_plan_takes_a_variant_cost_source():
     p2 = tp.plan(C13_ARCH, tp.load_model(path=MODEL), variants=big)
     assert {o["name"]: o for o in p2["datapaths"][0]["ops"]}["x_cos"]["resource"] == "lut"
     assert tp.plan(C13_ARCH, tp.load_model(path=MODEL), variants=lambda op: 1 / 0)["datapaths"][0]["ops"][1]["resource"] == "dsp"
+
+
+def test_closure_reports_a_build_that_did_not_finish(tmp_path):
+    c = cl.Closure(ws=_ws(tmp_path), goals=cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), g1=lambda r: {"pass": True},
+                   build=lambda d: {"ran": False}, editor=_editor([]), contract="", log=lambda s: None)
+    r = c.run()
+    assert r["stop"].startswith("the first build did not finish") and r["final"]["G2"]["met"] is False
