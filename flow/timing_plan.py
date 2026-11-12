@@ -84,7 +84,8 @@ def kb_root() -> Path:
 def load_model(family: str = "7series", path: Path | None = None) -> dict[str, Any]:
     """The family's delay model from the knowledge bank (or ``path``). Raises FileNotFoundError when absent: the plan is
     never made from built-in numbers."""
-    p = Path(path) if path else kb_root() / "family_matrix" / "delay_model" / f"{family}.yaml"
+    env = os.environ.get("FDA_DELAY_MODEL")          # a model file outside the bank (a calibration in progress)
+    p = Path(path) if path else Path(env) if env else kb_root() / "family_matrix" / "delay_model" / f"{family}.yaml"
     m = yaml.safe_load(p.read_text())
     if m.get("schema") != "fpga-design-agent/delay-model/v1":
         raise ValueError(f"{p}: not a delay model (schema {m.get('schema')!r})")
@@ -142,8 +143,43 @@ def op_delay(op: dict[str, Any], resource: str, m: dict[str, Any]) -> list[dict[
 
 # --- the resource plan ------------------------------------------------------------------------------------------
 
-def choose_resource(op: dict[str, Any], part: dict[str, Any], left: dict[str, float]) -> tuple[str, str, str]:
-    """(resource, template, reason): hard resource first when the part has it and the budget allows."""
+#: A variant-cost source (brief 63A's flow/ipvariants.py when it lands, or a test stub): ``source(op) -> list of
+#: {variant, resource, lut, ff, dsp, bram_tile, fmax_mhz?, source}`` measured for an operation of that kind and size,
+#: or ``[]``. When given, the planner records the measured cost of the variant it picks and of the plain-logic
+#: alternative in the reason, and refuses a hard-resource variant whose measured cost does not fit what is left.
+VariantSource = "Callable[[dict], list[dict]]"
+
+
+def _variant_note(op: dict[str, Any], resource: str, source, left: dict[str, float]) -> tuple[bool, str]:
+    """(fits, note) for the chosen resource from the variant-cost source; (True, "") when there is no source or no data."""
+    if source is None:
+        return True, ""
+    try:
+        vs = source(op) or []
+    except Exception as e:                                       # noqa: BLE001 (a cost source must never stop the plan)
+        return True, f"; variant costs unavailable ({type(e).__name__})"
+    if not vs:
+        return True, ""
+    mine = [v for v in vs if v.get("resource") == resource]
+    logic = [v for v in vs if v.get("resource") in ("lut", "carry")]
+    fmt = lambda v: f"{v.get('variant')}: LUT {v.get('lut')} FF {v.get('ff')} DSP {v.get('dsp', 0)} BRAM {v.get('bram_tile', 0)}"  # noqa: E731
+    note = "; measured " + ", ".join(fmt(v) for v in (mine[:1] + logic[:1])) + f" ({(mine or logic)[0].get('source', 'variant table')})"
+    if mine and (mine[0].get("dsp", 0) > left.get("dsp", 1e9) or mine[0].get("bram_tile", 0) > left.get("bram_tile", 1e9)):
+        return False, note
+    return True, note
+
+def choose_resource(op: dict[str, Any], part: dict[str, Any], left: dict[str, float], variants=None) -> tuple[str, str, str]:
+    """(resource, template, reason): hard resource first when the part has it and the budget allows; with a
+    variant-cost source, the measured costs are quoted and a variant that does not fit falls back to logic."""
+    res, tpl, why = _choose(op, part, left)
+    fits, note = _variant_note(op, res, variants, left)
+    if not fits:
+        return ("lut", "lut_mul" if op["op"] == "mul" else "lut_logic",
+                f"measured cost of the {res} variant does not fit what is left of the budget{note}")
+    return res, tpl, why + note
+
+
+def _choose(op: dict[str, Any], part: dict[str, Any], left: dict[str, float]) -> tuple[str, str, str]:
     k = op["op"]
     if op.get("map"):                     # the architect's override, with its reason
         r = op["map"]
@@ -236,8 +272,8 @@ def pipeline(seq: list[dict[str, Any]], budget_ns: float, overhead_ns: float) ->
 
 
 def plan_datapath(dp: dict[str, Any], period_ns: float, m: dict[str, Any], part: dict[str, Any], left: dict[str, float],
-                  fraction: float = TARGET_FRACTION) -> dict[str, Any]:
-    maps = {op["name"]: choose_resource(op, part, left) for op in dp["ops"]}
+                  fraction: float = TARGET_FRACTION, variants=None) -> dict[str, Any]:
+    maps = {op["name"]: choose_resource(op, part, left, variants) for op in dp["ops"]}
     overhead = float(m["ff"]["clk_to_q_ns"]) + float(m["ff"]["setup_ns"]) + float(m.get("uncertainty_ns", 0.035))
     budget = round(period_ns * fraction, 3)
     seq = _chain(dp["ops"], maps, m)
@@ -299,15 +335,16 @@ def check_datapaths(arch: dict[str, Any]) -> list[str]:
 
 
 def plan(arch: dict[str, Any], model: dict[str, Any], part_name: str = "xc7a100tcsg324-1",
-         budget: dict[str, float] | None = None, fraction: float = TARGET_FRACTION) -> dict[str, Any]:
+         budget: dict[str, float] | None = None, fraction: float = TARGET_FRACTION, variants=None) -> dict[str, Any]:
     """The whole plan for an architecture: every datapath mapped and pipelined. ``budget`` caps the hard resources
     (default: the part's count less what ``predicted_resources`` already reserves for other uses is NOT subtracted; the
     architect's prediction is checked after synthesis instead)."""
     part = PARTS[part_name]
     left = {"dsp": float((budget or {}).get("dsp", part["dsp"])), "bram_tile": float((budget or {}).get("bram_tile", part["bram_tile"]))}
-    dps = [plan_datapath(dp, _period(arch, dp.get("clock")), model, part, left, fraction) for dp in arch.get("datapaths") or []]
+    dps = [plan_datapath(dp, _period(arch, dp.get("clock")), model, part, left, fraction, variants) for dp in arch.get("datapaths") or []]
     return {"schema": PLAN_SCHEMA, "family": part["family"], "part": part_name, "model": Path(model.get("_path", "")).name,
             "model_version": model.get("version"), "target_fraction": fraction, "datapaths": dps,
+            "variant_costs": variants is not None,
             "planned": {"dsp": sum(d["planned"]["dsp"] for d in dps), "bram": sum(d["planned"]["bram"] for d in dps)},
             "fits": all(d["fits"] for d in dps), "problems": plan_problems(dps)}
 
@@ -420,14 +457,19 @@ DATAPATHS_CONVENTION = """
 """
 
 
-def plan_design(design: Path, model: dict[str, Any] | None = None) -> dict[str, Any]:
+def plan_design(design: Path, model: dict[str, Any] | None = None, require: bool = False) -> dict[str, Any]:
     """Plan the design's architecture.yaml datapaths and write build/plan/timing_plan.json and TIMING_PLAN.md (the RTL
-    writer reads it). Returns ``{ok, problems, plan}``; ``ok`` is True with no plan when there are no datapaths."""
+    writer reads it). Returns ``{ok, problems, plan}``; ``ok`` is True with no plan when there are no datapaths, unless
+    ``require`` (the graph's ``--design-plan``) and the key is absent altogether."""
     design = Path(design)
     try:
         arch = yaml.safe_load((design / "architecture.yaml").read_text()) or {}
     except (OSError, yaml.YAMLError) as e:
         return {"ok": False, "problems": [f"plan: architecture.yaml unreadable: {e}"], "plan": None}
+    if require and "datapaths" not in arch:
+        return {"ok": False, "plan": None, "problems": [
+            "plan: architecture.yaml has no 'datapaths': list the arithmetic and wide-logic chains of the critical paths "
+            "(or write 'datapaths: []' if there are none)"]}
     if not arch.get("datapaths"):
         return {"ok": True, "problems": [], "plan": None}
     errs = check_datapaths(arch)

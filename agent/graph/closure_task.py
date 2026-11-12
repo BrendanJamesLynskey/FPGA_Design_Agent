@@ -38,18 +38,33 @@ from flow.digest.build import digest_build  # noqa: E402
 SLOT_SCRIPT = Path(os.environ.get("FDA_SLOT_SCRIPT", "/home/brendan/Claude_sandbox/_handoff/take_heavy_slot.sh"))
 
 
-def stage(task: Path, rtl: Path, case: str, arch: Path | None = None) -> Path:
+def task_spec(task: Path, clock_mhz: float | None = None) -> dict:
+    """The task's hidden spec.yaml, with the board clock raised to ``clock_mhz`` for a seeded timing miss."""
+    spec = yaml.safe_load((task / "hidden" / "spec.yaml").read_text())
+    if clock_mhz:
+        for c in spec.get("clocks") or []:
+            c["freq_mhz"] = clock_mhz
+    return spec
+
+
+def stage(task: Path, rtl: Path, case: str, arch: Path | None = None, clock_mhz: float | None = None) -> Path:
     from benchmark.tools.board_xdc import make_xdc
     from benchmark.tools.ref_build import architecture
-    spec = yaml.safe_load((task / "hidden" / "spec.yaml").read_text())
+    spec = task_spec(task, clock_mhz)
     d = ROOT / "build" / "closure" / case
     shutil.rmtree(d, ignore_errors=True)
     (d / "rtl").mkdir(parents=True)
     for f in sorted(rtl.iterdir()):
         if f.suffix in (".sv", ".v", ".svh"):
             shutil.copy2(f, d / "rtl" / f.name)
-    (d / "design.xdc").write_text(make_xdc(spec))
+    xdc = make_xdc(spec)
+    if clock_mhz:                                       # board_xdc writes a 10 ns waveform; keep 50 % duty at the seeded clock
+        per = 1000 / clock_mhz
+        xdc = xdc.replace("-waveform {0 5}", f"-waveform {{0 {per / 2:.3f}}}")
+    (d / "design.xdc").write_text(xdc)
     a = architecture(spec, d / "rtl")
+    if clock_mhz:
+        a["clock_domains"][0]["freq_mhz"] = clock_mhz
     if arch:
         extra = yaml.safe_load(arch.read_text()) or {}
         for k in ("datapaths",):
@@ -127,13 +142,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", type=Path)
     ap.add_argument("--slot-prefix", default="FPGA b62a")
     ap.add_argument("--build-only", action="store_true", help="stage, check G1 and build once; no edits")
+    ap.add_argument("--clock-mhz", type=float, help="seeded timing miss: raise the board clock to this frequency")
     a = ap.parse_args(argv)
     task = a.task.resolve()
     out = (a.out or ROOT / "results" / "62a_closure" / a.case).resolve()
     out.mkdir(parents=True, exist_ok=True)
     (out / "history.jsonl").unlink(missing_ok=True)
-    d = stage(task, a.rtl.resolve(), a.case, a.arch)
-    spec = yaml.safe_load((task / "hidden" / "spec.yaml").read_text())
+    d = stage(task, a.rtl.resolve(), a.case, a.arch, a.clock_mhz)
+    spec = task_spec(task, a.clock_mhz)
     pl = timing_plan.plan_design(d) if a.arch else {"plan": None}
     if pl.get("plan"):
         (out / "timing_plan.json").write_text(json.dumps(pl["plan"], indent=1) + "\n")
@@ -150,7 +166,8 @@ def main(argv: list[str] | None = None) -> int:
                    if pl.get("plan") else None,
                    max_iter=0 if a.build_only else a.max_iter, max_usd=a.max_usd, record=out)
     rep = c.run()
-    rep.update({"case": a.case, "task": task.name, "model": a.model, "rtl_in": str(a.rtl), "plan": bool(pl.get("plan"))})
+    rep.update({"case": a.case, "task": task.name, "model": a.model, "rtl_in": str(a.rtl), "plan": bool(pl.get("plan")),
+                "clock_mhz": a.clock_mhz or (spec.get("clocks") or [{}])[0].get("freq_mhz")})
     (out / "summary.json").write_text(json.dumps(rep, indent=1, default=str) + "\n")
     with (out / "llm_calls.jsonl").open("w") as f:
         for r in calls:

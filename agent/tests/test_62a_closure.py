@@ -289,3 +289,20 @@ def test_stage_hooks():
     assert classify(st, why) == "rtl"
     ok2, _ = exit_check(st, {"gates_base": gates, "standards": {"rules": []}})
     assert ok2
+
+
+def test_plan_takes_a_variant_cost_source():
+    def src(op):
+        if op["op"] != "mul":
+            return []
+        return [{"variant": "dsp_mult", "resource": "dsp", "lut": 0, "ff": 18, "dsp": 1, "source": "stub"},
+                {"variant": "lut_mult", "resource": "lut", "lut": 95, "ff": 18, "dsp": 0, "source": "stub"}]
+    p = tp.plan(C13_ARCH, tp.load_model(path=MODEL), variants=src)
+    x = {o["name"]: o for o in p["datapaths"][0]["ops"]}["x_cos"]
+    assert x["resource"] == "dsp" and "measured dsp_mult: LUT 0 FF 18 DSP 1" in x["reason"] and "lut_mult: LUT 95" in x["reason"]
+
+    def big(op):
+        return [{"variant": "dsp_wide", "resource": "dsp", "lut": 0, "ff": 0, "dsp": 500, "source": "stub"}] if op["op"] == "mul" else []
+    p2 = tp.plan(C13_ARCH, tp.load_model(path=MODEL), variants=big)
+    assert {o["name"]: o for o in p2["datapaths"][0]["ops"]}["x_cos"]["resource"] == "lut"
+    assert tp.plan(C13_ARCH, tp.load_model(path=MODEL), variants=lambda op: 1 / 0)["datapaths"][0]["ops"][1]["resource"] == "dsp"

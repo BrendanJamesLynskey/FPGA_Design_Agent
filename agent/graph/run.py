@@ -1234,7 +1234,7 @@ def node_gate(state: State) -> dict:
         ev["arch_check"] = arch_mod.check_design(rt.design)
         if rt.cfg.design_plan and ev["arch_check"].get("ok"):      # brief 62A hook: plan the datapaths before any build
             from flow import timing_plan as _tp
-            pr = _tp.plan_design(rt.design)
+            pr = _tp.plan_design(rt.design, require=True)
             ev["arch_check"] = {**ev["arch_check"], "ok": pr["ok"], "errors": list(ev["arch_check"].get("errors") or []) + pr["problems"]}
         ev["inventory"] = {"ok": bool(d("check_constraints", dispatch(rt.session, "check_constraints", {})).get("ok"))}
     elif n == 2 and not arch_mod.approval_status(rt.design)[0]:     # nothing below this line runs without an approval
