@@ -1,0 +1,158 @@
+{
+  "design": "cdcfx_c10",
+  "mode": "generic",
+  "mutant_source": "generated",
+  "rng_seed": 55,
+  "baseline_seconds": 1.2,
+  "sim": "ghdl",
+  "sim_note": null,
+  "sandbox": "container",
+  "caps": {
+    "max_mutants": 12,
+    "sample": 12,
+    "wall_s": 1500,
+    "wall_auto": true,
+    "mutant_timeout_s": 30,
+    "min_evaluated": 10
+  },
+  "candidates": 29,
+  "sampled": 12,
+  "evaluated": 12,
+  "killed": 10,
+  "survived": 0,
+  "timed_out": 2,
+  "skipped": 0,
+  "invalid": 0,
+  "score_pct": 83.33,
+  "survivors": [],
+  "survivor_text": [],
+  "timed_out_text": [
+    "rtl/cdcfx_c10.vhd line 82: `full <= '0';` became `full <= '1';` (constant '0' replaced by '1')",
+    "rtl/cdcfx_c10.vhd line 100: `empty <= '0';` became `empty <= '1';` (constant '0' replaced by '1')"
+  ],
+  "skipped_text": [],
+  "note": "score = killed / (killed + survived + timed_out); invalid and skipped mutants are excluded and listed; an equivalent mutant (no visible behaviour change) shows as a survivor",
+  "wall_seconds": 77.6,
+  "rows": [
+    {
+      "name": "cdcfx_c10_L50_eq_to_ne_42",
+      "file": "cdcfx_c10.vhd",
+      "line": 50,
+      "class": "eq_to_ne",
+      "why": "'=' replaced by '/='",
+      "change": "rtl/cdcfx_c10.vhd line 50: `when winc = '1' and full = '0' else wbin;` became `when winc = '1' and full /= '0' else wbin;` ('=' replaced by '/=')",
+      "status": "killed",
+      "seconds": 1.2
+    },
+    {
+      "name": "cdcfx_c10_L50_bit0_to_1_44",
+      "file": "cdcfx_c10.vhd",
+      "line": 50,
+      "class": "bit0_to_1",
+      "why": "constant '0' replaced by '1'",
+      "change": "rtl/cdcfx_c10.vhd line 50: `when winc = '1' and full = '0' else wbin;` became `when winc = '1' and full = '1' else wbin;` (constant '0' replaced by '1')",
+      "status": "killed",
+      "seconds": 1.2
+    },
+    {
+      "name": "cdcfx_c10_L50_bit1_to_0_29",
+      "file": "cdcfx_c10.vhd",
+      "line": 50,
+      "class": "bit1_to_0",
+      "why": "constant '1' replaced by '0'",
+      "change": "rtl/cdcfx_c10.vhd line 50: `when winc = '1' and full = '0' else wbin;` became `when winc = '0' and full = '0' else wbin;` (constant '1' replaced by '0')",
+      "status": "killed",
+      "seconds": 1.2
+    },
+    {
+      "name": "cdcfx_c10_L53_plus_to_minus_48",
+      "file": "cdcfx_c10.vhd",
+      "line": 53,
+      "class": "plus_to_minus",
+      "why": "'+' replaced by '-'",
+      "change": "rtl/cdcfx_c10.vhd line 53: `rbin_next <= std_logic_vector(unsigned(rbin) + 1)` became `rbin_next <= std_logic_vector(unsigned(rbin) - 1)` ('+' replaced by '-')",
+      "status": "killed",
+      "seconds": 1.1
+    },
+    {
+      "name": "cdcfx_c10_L54_and_to_or_33",
+      "file": "cdcfx_c10.vhd",
+      "line": 54,
+      "class": "and_to_or",
+      "why": "'and' replaced by 'or'",
+      "change": "rtl/cdcfx_c10.vhd line 54: `when rinc = '1' and empty = '0' else rbin;` became `when rinc = '1' or empty = '0' else rbin;` ('and' replaced by 'or')",
+      "status": "killed",
+      "seconds": 1.1
+    },
+    {
+      "name": "cdcfx_c10_L54_bit1_to_0_29",
+      "file": "cdcfx_c10.vhd",
+      "line": 54,
+      "class": "bit1_to_0",
+      "why": "constant '1' replaced by '0'",
+      "change": "rtl/cdcfx_c10.vhd line 54: `when rinc = '1' and empty = '0' else rbin;` became `when rinc = '0' and empty = '0' else rbin;` (constant '1' replaced by '0')",
+      "status": "killed",
+      "seconds": 1.2
+    },
+    {
+      "name": "cdcfx_c10_L82_bit0_to_1_24",
+      "file": "cdcfx_c10.vhd",
+      "line": 82,
+      "class": "bit0_to_1",
+      "why": "constant '0' replaced by '1'",
+      "change": "rtl/cdcfx_c10.vhd line 82: `full <= '0';` became `full <= '1';` (constant '0' replaced by '1')",
+      "status": "timed_out",
+      "seconds": 30.2
+    },
+    {
+      "name": "cdcfx_c10_L85_eq_to_ne_35",
+      "file": "cdcfx_c10.vhd",
+      "line": 85,
+      "class": "eq_to_ne",
+      "why": "'=' replaced by '/='",
+      "change": "rtl/cdcfx_c10.vhd line 85: `if winc = '1' and full = '0' then` became `if winc = '1' and full /= '0' then` ('=' replaced by '/=')",
+      "status": "killed",
+      "seconds": 1.1
+    },
+    {
+      "name": "cdcfx_c10_L100_bit0_to_1_25",
+      "file": "cdcfx_c10.vhd",
+      "line": 100,
+      "class": "bit0_to_1",
+      "why": "constant '0' replaced by '1'",
+      "change": "rtl/cdcfx_c10.vhd line 100: `empty <= '0';` became `empty <= '1';` (constant '0' replaced by '1')",
+      "status": "timed_out",
+      "seconds": 30.2
+    },
+    {
+      "name": "cdcfx_c10_L103_eq_to_ne_20",
+      "file": "cdcfx_c10.vhd",
+      "line": 103,
+      "class": "eq_to_ne",
+      "why": "'=' replaced by '/='",
+      "change": "rtl/cdcfx_c10.vhd line 103: `if rinc = '1' and empty = '0' then` became `if rinc /= '1' and empty = '0' then` ('=' replaced by '/=')",
+      "status": "killed",
+      "seconds": 1.2
+    },
+    {
+      "name": "cdcfx_c10_L103_eq_to_ne_36",
+      "file": "cdcfx_c10.vhd",
+      "line": 103,
+      "class": "eq_to_ne",
+      "why": "'=' replaced by '/='",
+      "change": "rtl/cdcfx_c10.vhd line 103: `if rinc = '1' and empty = '0' then` became `if rinc = '1' and empty /= '0' then` ('=' replaced by '/=')",
+      "status": "killed",
+      "seconds": 1.2
+    },
+    {
+      "name": "cdcfx_c10_L103_bit1_to_0_22",
+      "file": "cdcfx_c10.vhd",
+      "line": 103,
+      "class": "bit1_to_0",
+      "why": "constant '1' replaced by '0'",
+      "change": "rtl/cdcfx_c10.vhd line 103: `if rinc = '1' and empty = '0' then` became `if rinc = '0' and empty = '0' then` (constant '1' replaced by '0')",
+      "status": "killed",
+      "seconds": 1.3
+    }
+  ]
+}

@@ -46,6 +46,11 @@ try:
 except ImportError:
     import srcorder                     # type: ignore[no-redef]
 
+try:
+    from flow import vhdl
+except ImportError:
+    import vhdl                         # type: ignore[no-redef]
+
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = "1.0"
 
@@ -304,6 +309,9 @@ class Check:
         self.not_run: dict[str, str] = {}
         self.arch = arch_mod.load(self.design) if (self.design / "architecture.yaml").is_file() else {}
         self.rtl_files = sorted(glob.glob(str(self.design / "rtl" / "*.sv")) + glob.glob(str(self.design / "rtl" / "*.v")))
+        self.vhdl_error: str | None = None
+        if vhdl.design_language(self.design) == "vhdl":   # brief 55: the rules read the GHDL netlist of the VHDL
+            self.rtl_files = self._vhdl_netlist()
         self.waivers: dict[str, dict[int, tuple[str, str]]] = {}
         self.texts: dict[str, str] = {}
         self.modules: list[Module] = []
@@ -317,6 +325,32 @@ class Check:
             for m in parse_modules(Path(f).read_text(errors="replace"), f):
                 self.lib[m.name] = m
         self.by_name = {**self.lib, **{m.name: m for m in self.modules}}
+
+    def _vhdl_netlist(self) -> list[str]:
+        """Brief 55: the design's VHDL as one Verilog netlist (GHDL synthesis, hierarchy kept, generics at their
+        defaults), which the static rules read like SystemVerilog. GHDL turns every VHDL signal initial value into an
+        ``initial`` assignment; those are configuration INIT values (VHDL has no initial blocks), so they are removed
+        before STD-INIT-01 looks. On a GHDL failure the RTL rules report it as not run."""
+        vh = sorted(p for p in (self.design / "rtl").glob("*") if vhdl.is_vhdl(p))
+        top = self.top()
+        if not vh or not top:
+            return []
+        try:
+            net = vhdl.to_verilog(vh, vhdl.top_entity(vh, top), {}, self.design / "build" / "vhdl_std")
+        except RuntimeError as e:
+            self.vhdl_error = str(e)[:300]
+            return []
+        text = re.sub(r"^\s*initial\s*\n\s*[^;]*;\n", "", net.read_text(), flags=re.M)
+        # a VHDL signal with an initial value comes out as `reg x; always @* x = y; // (isignal)`: a plain alias, so it is
+        # written as `wire x; assign x = y;`, which the clock and reset rules follow (a clock alias is not a derived clock)
+        alias = re.findall(r"^\s*always @\*\s*\n\s*(\w+) = ([^;]+); // \(isignal\)", text, flags=re.M)
+        text = re.sub(r"^(\s*)always @\*\s*\n\s*(\w+) = ([^;]+); // \(isignal\)", r"\1assign \2 = \3;", text, flags=re.M)
+        for name, _ in alias:
+            text = re.sub(rf"^(\s*)reg((?:\s*\[[^\]]*\])?\s+{re.escape(name)};)", r"\1wire\2", text, flags=re.M)
+        out = net.with_name(f"{top}_standards.v")
+        out.write_text(text)
+        self.notes["vhdl"] = f"VHDL design: the rules read the GHDL netlist {out.name}; line numbers are the netlist's"
+        return [str(out)]
 
     # -- helpers
     def rel(self, f: str) -> str:
@@ -587,6 +621,8 @@ class Check:
         noshell = srcorder.no_shell(self.design)         # 07a2-prep: a UART-subject design has no test shell
         srcs = sorted({p for pat in (cfg or {}).get("sources", []) for p in glob.glob(str(self.root / pat))}) or \
             ([] if noshell else sorted(glob.glob(str(self.root / "shell" / "rtl" / "*.sv")))) + self.rtl_files
+        if any(vhdl.is_vhdl(s) for s in srcs):            # brief 55: the VHDL is read as its netlist (self.rtl_files)
+            srcs = [s for s in srcs if not vhdl.is_vhdl(s)] + self.rtl_files
         if noshell:
             srcs = [str(p) for p in srcorder.drop_shell(srcs)]
         srcs = [str(p) for p in srcorder.order_sv(srcs)]     # 07a2-prep: packages and interfaces first, not name order
@@ -680,6 +716,10 @@ class Check:
                              f"clock {m.group(1)} from {m.group(2).lower()} {src} is not a declared clock domain")
 
     def run(self, stages: tuple[str, ...] = ("rtl", "post_synth")) -> dict[str, Any]:
+        if self.vhdl_error:
+            for r, (st, _, _) in RULES.items():
+                if st == "rtl" and r != "STD-ARCH-00":
+                    self.not_run[r] = f"GHDL could not synthesise the VHDL for the checker: {self.vhdl_error}"
         self.rule_arch()
         if "rtl" in stages:
             self.rule_clocks()
