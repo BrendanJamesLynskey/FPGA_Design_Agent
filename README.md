@@ -301,7 +301,7 @@ ip_lib/      the project's own IP library ([ip_lib/README.md](ip_lib/README.md))
              blocks (RMII MAC, parser, exact/LPM/ternary tables, rewrite, queues and schedulers, L2 switch)
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T): board.yaml, master XDC, inventory.yaml, power_budget.md
-tools/       inventory_check.py (board inventory against the master XDC)
+tools/       inventory_check.py (board inventory against the master XDC); git_guard.py (the tests must not move the checkout they run from; checked at the end of every pytest session by conftest.py)
 agent/       core/ (tools, security, trace, replay, smoke) and mcp_server/ (05a); tests/ with the replay fixture
 project/     the project layer (brief 27 P0): design.yaml and contract.yaml checkers, stage keys, status and dashboard,
              the contract-test generator; examples/video_median (pilot 1, described); tests/ with fixture RTL;
