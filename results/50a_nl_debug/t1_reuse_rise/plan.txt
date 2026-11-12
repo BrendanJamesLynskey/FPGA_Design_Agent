@@ -6,8 +6,8 @@ Probes:
   count           16 bits  u_dut.count                  <- 'count' (register, data) pins u_dut/count_reg[*]/Q
                  note: the counter itself
 Trigger (AND): win_wr rises
-Window: 4 cycles before the trigger and 1019 after (1024 samples; asked for 4 before, 8 after).
-Ports: probe0 flags 1 bits = win_wr[1]; probe1 data 16 bits = count[16] (2 of 5 ports; about 1 BRAM36).
+Window: 1024 samples, 4 before the trigger and 1019 after (the smallest size that holds the 4 before and 8 after you asked for; the answer covers your window).
+Ports: probe0 flags 1 bit = win_wr[1]; probe1 data 16 bits = count[16] (2 of the 5 allowed ports; about 1 block RAM tile).
 After arming: write COUNT (0x80) = 0x42
 After the capture: read COUNT (0x80)
-Probe set 597f16f6d572: buildable.
+Can be built (probe set 597f16f6d572).

@@ -26,7 +26,7 @@ are `additionalProperties: false`; they are snapshot-tested in `agent/tests/fixt
 | `program` | `flow/program.py`: SRAM only, by the board's cable serial | variant (`target` accepts only `sram`) |
 | `bringup` | `flow/bringup.py` | none |
 | `stage_note` | append to `BUILD_NOTE.md` and move the session to a stage | stage, text |
-| `debug_plan`, `debug_capture`, `debug_query` | brief 50A, not offered to any role yet: a structured capture request to a checked plan; the plan's debug ILA build (optional Vivado run), SRAM programming and a capture with the answer and XADC conditions (hardware rules as `program`, cost 1); questions to a capture ([docs/debug.md](debug.md)) | intent, request; probeset, build; capture, query, other |
+| `debug_plan`, `debug_capture`, `debug_query` | Not offered to any role yet. `debug_plan` turns a structured request into a checked plan; `debug_capture` builds (optional), programs SRAM and captures, with the same hardware rules as `program`, cost 1; `debug_query` answers questions about a saved capture ([docs/debug.md](debug.md)) | `debug_plan`: intent, request; `debug_capture`: probeset, build; `debug_query`: capture, query, other |
 
 Stage-limited builds: `flow/prepare.py` reads `FDA_STOP_AFTER` (`synth`, `place`, `route`, `bitstream`) into
 `inputs.tcl`, and `flow/build.tcl` exits cleanly after that stage's reports. The gates mark later stages `ran: false`.

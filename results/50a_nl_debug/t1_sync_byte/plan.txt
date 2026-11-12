@@ -7,7 +7,7 @@ Probes:
   uart_rx_pin      1 bit   uart_rx_pin                  <- 'uart_rx_pin' (pin, data) pins UART_TXD_IN_IBUF_inst/O
                  note: the raw serial line from the host
 Trigger (AND): rx_valid rises AND rx_data == 0xA5
-Window: 900 cycles before the trigger and 123 after (1024 samples; asked for 900 before, 100 after).
-Ports: probe0 flags 2 bits = rx_valid[1] + uart_rx_pin[1]; probe1 data 8 bits = rx_data[8] (2 of 5 ports; about 1 BRAM36).
+Window: 1024 samples, 900 before the trigger and 123 after (the smallest size that holds the 900 before and 100 after you asked for; the answer covers your window).
+Ports: probe0 flags 2 bits = rx_valid[1] + uart_rx_pin[1]; probe1 data 8 bits = rx_data[8] (2 of the 5 allowed ports; about 1 block RAM tile).
 After arming: read SCRATCH (0x03)
-Probe set 7b2af61c97ae: buildable.
+Can be built (probe set 7b2af61c97ae).

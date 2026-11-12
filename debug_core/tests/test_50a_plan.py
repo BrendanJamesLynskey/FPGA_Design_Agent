@@ -61,7 +61,8 @@ def test_count_write_plan() -> None:
     assert p["stimulus"][0]["value"] == 0x1234 and p["readback"][0]["address"] == 0x80
     assert p["fit"]["bram36_estimate"] == 1 and p["fit"]["ok"]
     text = render(p)
-    assert "Probe set" in text and "buildable" in text and "win_wr == 1 AND addr == 0x80" in text
+    assert "Can be built (probe set" in text and "win_wr == 1 AND addr == 0x80" in text
+    assert "1024 samples, 16 before the trigger and 1007 after (the smallest size that holds the 16 before and 32 after" in text
 
 
 def test_probeset_ignores_run_time_settings() -> None:
@@ -92,7 +93,7 @@ def test_unresolvable_names_are_errors_with_suggestions() -> None:
     assert "signal 'fifo overflow'" in what and "signal 'cnt'" in what and "signal 'duty_eff'" in what
     assert "u_shell.u_rx.cnt" in what["signal 'cnt'"]["candidates"]
     assert "u_dut.duty" in what["signal 'duty_eff'"]["suggestions"]
-    assert not p["fit"]["ok"] and "NOT BUILDABLE" in render(p)
+    assert not p["fit"]["ok"] and "CANNOT BE BUILT" in render(p)
 
 
 def test_multi_bit_or_and_magnitude_are_refused_with_a_proposal() -> None:
@@ -164,19 +165,22 @@ def test_find_build_reuses_a_build_that_holds_the_probes(tmp_path: Path) -> None
         {"signal": "win_wr", "op": "rise"}]}, "pre": 4, "post": 8})
     for p in (big, small):
         p["design"] = str(tmp_path)
-    assert find_build(small) is None
+    assert find_build(small, stamp="aaaa0000") is None
     b = tmp_path / "build" / "debug" / big["probeset"] / "build" / "ila"
     b.mkdir(parents=True)
     (b.parents[1] / "plan.json").write_text(_json.dumps(big))
-    (b / "prepare.json").write_text(_json.dumps({"top": "top"}))
-    assert find_build(small) is None                       # not finished: no bitstream yet
-    for f in ("top.bit", "top.ltx", "probe_map.txt"):
+    (b / "prepare.json").write_text(_json.dumps({"top": "top", "build_stamp": "aaaa0000"}))
+    (tmp_path / "build.yaml").write_text("top: top\n")
+    assert find_build(small, stamp="aaaa0000") is None     # not finished: no bitstream yet
+    for f in ("top.bit", "top.ltx"):
         (b / f).write_text("x")
-    ov, labels = find_build(small)
+    _probe_map(b, big)
+    ov, labels = find_build(small, stamp="aaaa0000")
     assert ov.name == big["probeset"] and labels == {"win_wr": "win_wr", "count": "count"}
     deep = make_plan(T1, {**small_intent(), "pre": 3000, "post": 3000})
     deep["design"] = str(tmp_path)
-    assert find_build(deep) is None                        # the build is only 1024 deep
+    assert find_build(deep, stamp="aaaa0000") is None      # the build is only 1024 deep
+    assert find_build(small, stamp="bbbb1111") is None     # stale: the design's sources changed since the build
 
 
 def small_intent() -> dict:
@@ -193,3 +197,87 @@ def test_or_terms_get_a_port_each() -> None:
     a = make_plan(T1, {"probes": ["count"], "trigger": {"combine": "AND", "conditions": [
         {"signal": "win_wr", "op": "rise"}, {"signal": "press_clear", "op": "==", "value": 0}]}})
     assert len(a["ports"]) == 2                                  # AND shares the flags port
+
+
+def _probe_map(b: Path, plan: dict) -> None:
+    lines = [f"probe{pt['port']} {s['label']} {s['width']} {s['offset']} x" for pt in plan["ports"] for s in pt["slices"]]
+    (b / "probe_map.txt").write_text("\n".join(lines) + "\n")
+
+
+def _fake_build(root: Path, plan: dict, stamp: str = "aaaa0000") -> Path:
+    import json as _json
+    b = root / "build" / "debug" / plan["probeset"] / "build" / "ila"
+    b.mkdir(parents=True)
+    (b.parents[1] / "plan.json").write_text(_json.dumps(plan))
+    (b / "prepare.json").write_text(_json.dumps({"top": "top", "build_stamp": stamp}))
+    for f in ("top.bit", "top.ltx"):
+        (b / f).write_text("x")
+    _probe_map(b, plan)
+    (root / "build.yaml").write_text("top: top\n")
+    return b.parents[1]
+
+
+OR_INTENT = {"probes": ["count", "duty"], "trigger": {"combine": "OR", "conditions": [
+    {"signal": "win_wr", "op": "rise"}, {"signal": "press_clear", "op": "rise"}]}}
+
+
+def test_an_or_plan_never_reuses_a_build_whose_or_terms_share_a_port(tmp_path: Path) -> None:
+    """Review of brief 50A, blocker 2: with only the AND build of the same probes present, the OR plan must not reuse it
+    (its OR terms share the flags port, which the Basic tier refuses to arm)."""
+    from debug_core.build import find_build
+    from debug_core.instruments import plan_tcl
+    andp = make_plan(T1, {**OR_INTENT, "trigger": {**OR_INTENT["trigger"], "combine": "AND"}})
+    orp = make_plan(T1, OR_INTENT)
+    for p in (andp, orp):
+        p["design"] = str(tmp_path)
+    _fake_build(tmp_path, andp)
+    assert find_build(orp, stamp="aaaa0000") is None
+    sl = {s["label"]: (pt["port"], s["offset"], s["width"]) for pt in andp["ports"] for s in pt["slices"]}
+    with pytest.raises(ValueError, match="two OR compares on port"):
+        plan_tcl(orp, sl, 1024)                                 # and the capture step refuses it too
+    good = _fake_build(tmp_path, orp)
+    ov, _ = find_build(orp, stamp="aaaa0000")
+    assert ov == good                                           # chosen by layout, not by the order of the names
+
+
+def test_the_or_build_is_chosen_whatever_the_names_sort_to(tmp_path: Path) -> None:
+    from debug_core.build import find_build
+    orp = make_plan(T1, OR_INTENT)
+    andp = make_plan(T1, {**OR_INTENT, "trigger": {**OR_INTENT["trigger"], "combine": "AND"}})
+    for p in (andp, orp):
+        p["design"] = str(tmp_path)
+    andp["probeset"] = "000000000000"                           # sorts first
+    orp["probeset"] = "ffffffffffff"
+    _fake_build(tmp_path, andp)
+    _fake_build(tmp_path, orp)
+    assert find_build(orp, stamp="aaaa0000")[0].name == "ffffffffffff"
+
+
+def test_or_on_the_same_signal_is_merged_or_refused() -> None:
+    """Review of brief 50A, blocker 1: ila_capture.tcl keeps one compare per hardware probe, so two OR terms on one signal
+    would arm only the last. Rise OR fall is one 'change' compare; anything else is refused."""
+    from debug_core.instruments import plan_tcl
+    rf = make_plan(T1, {"probes": [], "trigger": {"combine": "OR", "conditions": [
+        {"signal": "win_wr", "op": "rise"}, {"signal": "win_wr", "op": "fall"}]}})
+    assert not rf["errors"] and [(c["probe"], c["pattern"]) for c in rf["trigger"]["conditions"]] == [("win_wr", "B")]
+    assert rf["trigger"]["combine"] == "AND" and rf["trigger"]["conditions"][0]["text"] == "win_wr changes"
+    alias = make_plan(T1, {"probes": [], "trigger": {"combine": "OR", "conditions": [
+        {"signal": "win_wr", "op": "rise"}, {"signal": "u_dut.win_wr", "op": "==", "value": 1}]}})
+    e = next(x for x in alias["errors"] if x["what"].startswith("trigger OR on"))
+    assert "only one of them would be armed" in e["why"] and "change" in e["proposal"]
+    # the capture step refuses two compares on the same bits whatever the plan says
+    bad = make_plan(T1, {"probes": [], "trigger": {"combine": "AND", "conditions": [{"signal": "win_wr", "op": "rise"}]}})
+    bad["trigger"]["conditions"].append(dict(bad["trigger"]["conditions"][0], pattern="F"))
+    with pytest.raises(ValueError, match="same bits"):
+        plan_tcl(bad, {"win_wr": (0, 0, 1)}, 1024)
+
+
+def test_an_edge_and_its_level_merge_under_and() -> None:
+    p = make_plan(T1, {"probes": [], "trigger": {"combine": "AND", "conditions": [
+        {"signal": "win_wr", "op": "rise"}, {"signal": "win_wr", "op": "==", "value": 1}]}})
+    assert not p["errors"] and p["trigger"]["conditions"][0]["pattern"] == "R"
+
+
+def test_an_always_true_bound_is_refused() -> None:
+    with pytest.raises(PlanError, match="always true"):
+        compile_condition("<", 256, 8)

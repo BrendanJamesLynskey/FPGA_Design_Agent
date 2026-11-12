@@ -55,17 +55,21 @@ def test_answer_names_what_was_seen_with_values_from_the_capture(cap) -> None:
     assert a["check"] == []
     assert "At cycle 0: win_wr = 1, addr = 0x80, count = 0x0003" in t
     assert "count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32." in t     # the asked window, -16..32
-    assert "the capture holds cycles -16 to 1007" in t
+    assert "The capture holds cycles -16 to 1007; this answer covers cycles -16 to 32, as asked." in t
     assert "COUNT = 0x00001234" in t
     assert t.index("count was") < t.index("win_wr was")          # the channel the question names comes first
     assert a["facts"]["trigger"]["holds"] is True
 
 
-def test_the_number_check_catches_an_invented_value(cap) -> None:
-    assert unquoted_numbers("count became 0x1234 at cycle 1", cap) == []
-    assert unquoted_numbers("count became 0x4321 at cycle 1", cap) == ["0x4321"]
-    assert unquoted_numbers("wr_en held high for 3 cycles", cap) == []        # 3 is a small count every answer may use
-    assert unquoted_numbers("it overflowed after 77 cycles", cap) != []
+def test_the_number_check_attributes_each_number_to_its_signal(cap) -> None:
+    from debug_core.capture import trim
+    asked = trim(cap, -16, 32)
+    assert unquoted_numbers("count became 0x1234 at cycle 1", cap, asked) == []
+    assert unquoted_numbers("count became 0x4321 at cycle 1", cap, asked) == ["0x4321"]
+    assert unquoted_numbers("addr was 0x1234", cap, asked) == ["0x1234"]          # a real value, on the wrong signal
+    assert unquoted_numbers("win_wr held high for 3 cycles", cap, asked) == ["3"]  # no blanket small numbers
+    assert unquoted_numbers("it overflowed after 77 cycles", cap, asked) == ["77"]
+    assert unquoted_numbers("addr was 0x80 at cycle 90", cap, asked) == ["90"]   # outside the answered window
 
 
 def test_a_trigger_that_does_not_hold_at_cycle_0_is_flagged(plan) -> None:
@@ -155,3 +159,39 @@ def test_conditions_and_alarms(tmp_path) -> None:
 def test_facts_of_a_one_bit_signal(cap) -> None:
     f = facts(cap)["channels"]["win_wr"]
     assert f["high_samples"] == 1 and f["high_runs"] == [(0, 1)] and f["n"] == N
+
+
+@pytest.mark.parametrize("bad,match", [({"count": 0x1FFFF}, "16-bit"), ({"count": -5}, "16-bit"),
+                                       ({"count": 1.5}, "16-bit")])
+def test_make_capture_refuses_samples_that_do_not_fit(plan, bad, match) -> None:
+    s = samples()
+    for k, v in bad.items():
+        s[k] = list(s[k])
+        s[k][3] = v
+    with pytest.raises(ValueError, match=match):
+        C.make_capture(plan=plan, samples=s, trigger_sample=T0, instrument={"kind": "x", "driver": "x"})
+
+
+def test_make_capture_refuses_a_trigger_past_the_end(plan) -> None:
+    with pytest.raises(ValueError, match="outside"):
+        C.make_capture(plan=plan, samples=samples(), trigger_sample=N, instrument={"kind": "x", "driver": "x"})
+
+
+def test_load_refuses_out_of_range_samples(tmp_path, cap) -> None:
+    bad = json.loads(json.dumps(cap))
+    bad["channels"][2]["samples"][0] = 1 << 16
+    (tmp_path / "b.json").write_text(json.dumps(bad))
+    with pytest.raises(ValueError, match="16-bit"):
+        C.load(tmp_path / "b.json")
+
+
+def test_number_check_on_the_board_pwm_capture() -> None:
+    """Review of brief 50A: on the committed PWM capture (phase sweeps 0..255) invented counts and values on led fail."""
+    from debug_core.capture import trim
+    d = Path(__file__).parent / "fixtures" / "golden" / "t1_pwm_period"
+    c = C.load(d / "capture.json")
+    asked = trim(c, 0, 1023)
+    assert unquoted_numbers("led was lit for 200 cycles", c, asked) == ["200"]
+    assert unquoted_numbers("led was 0x00C8 at cycle 5", c, asked) == ["0x00C8", "5"]
+    assert unquoted_numbers("led was 0x8421 from cycle 1 to 256", c, asked) == []
+    assert answer(c)["check"] == []

@@ -35,3 +35,15 @@ def test_no_vivado(monkeypatch) -> None:
     monkeypatch.setattr(hw.subprocess, "run", fake(""))
     monkeypatch.delenv("FDA_VIVADO_MAX", raising=False)
     assert hw.preflight(min_avail_gb=0) >= 0
+
+
+@pytest.mark.parametrize("env,want", [("5", 2), ("2", 2), ("1", 1), ("0", 1), ("x", 1), ("", 1)])
+def test_vivado_max_is_capped_at_two(monkeypatch, env, want) -> None:
+    monkeypatch.setenv("FDA_VIVADO_MAX", env)
+    assert hw.vivado_max() == want
+
+
+def test_run_vivado_sh_caps_the_limit_too() -> None:
+    from pathlib import Path
+    text = (Path(hw.ROOT) / "flow" / "run_vivado.sh").read_text()
+    assert '[ "$max" -le 2 ] || max=2' in text

@@ -1,8 +1,8 @@
-"""Command line for the natural-language debug front end (brief 50A).
+"""Plain-English debug on the board: plan, build, capture, answer.
 
     python -m debug_core plan    designs/t1_dimmer_counter "capture count when the shell writes COUNT, 16 before, 32 after"
     python -m debug_core plan    designs/t1_dimmer_counter --intent intent.json      (no language model)
-    python -m debug_core build   <plan.json>                  (Vivado; run it under a heavy slot)
+    python -m debug_core build   <plan.json>                  (runs Vivado, several minutes)
     python -m debug_core capture <plan.json> [--board nexys_a7_100t] [--no-program]   (board.lock, SRAM only)
     python -m debug_core run     designs/<d> "<request>" [--build] [--yes]
     python -m debug_core answer  <capture.json>
@@ -29,38 +29,45 @@ def _design(p: str) -> Path:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m debug_core", description=__doc__.split("\n", 1)[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("plan")
-    p.add_argument("design")
-    p.add_argument("request", nargs="?")
-    p.add_argument("--intent", type=Path)
-    p.add_argument("--model")
-    p.add_argument("-o", "--out", type=Path)
-    b = sub.add_parser("build")
-    b.add_argument("plan", type=Path)
-    c = sub.add_parser("capture")
-    c.add_argument("plan", type=Path)
-    c.add_argument("--board")
-    c.add_argument("--no-program", action="store_true")
-    c.add_argument("--out", type=Path)
-    r = sub.add_parser("run")
-    r.add_argument("design")
-    r.add_argument("request", nargs="?")
-    r.add_argument("--intent", type=Path)
-    r.add_argument("--model")
-    r.add_argument("--build", action="store_true", help="build the probe set if no debug build holds it (heavy slot!)")
+    H = {"design": "the design directory, e.g. designs/t1_dimmer_counter",
+         "request": "what to capture, in plain English (sent to the language model to be read)",
+         "intent": "the request as structured JSON (intent schema); skips the language model",
+         "model": "the model that reads the request (default: the project's cheap default)",
+         "board": "board name from the local board file (default nexys_a7_100t)"}
+    p = sub.add_parser("plan", help="show the plan for a request; builds nothing")
+    p.add_argument("design", help=H["design"])
+    p.add_argument("request", nargs="?", help=H["request"])
+    p.add_argument("--intent", type=Path, help=H["intent"])
+    p.add_argument("--model", help=H["model"])
+    p.add_argument("-o", "--out", type=Path, help="where to write plan.json")
+    b = sub.add_parser("build", help="make the debug build for a plan (runs Vivado, several minutes)")
+    b.add_argument("plan", type=Path, help="a plan.json from 'plan'")
+    c = sub.add_parser("capture", help="program the debug build and capture on the board (SRAM only)")
+    c.add_argument("plan", type=Path, help="a plan.json from 'plan'")
+    c.add_argument("--board", help=H["board"])
+    c.add_argument("--no-program", action="store_true",
+                   help="capture with the bitstream already on the board (its build ID must match the debug build)")
+    c.add_argument("--out", type=Path, help="output directory")
+    r = sub.add_parser("run", help="plan, build if needed, capture and answer")
+    r.add_argument("design", help=H["design"])
+    r.add_argument("request", nargs="?", help=H["request"])
+    r.add_argument("--intent", type=Path, help=H["intent"])
+    r.add_argument("--model", help=H["model"])
+    r.add_argument("--build", action="store_true",
+                   help="make the debug build if none holds these probes (runs Vivado, several minutes)")
     r.add_argument("--yes", action="store_true", help="go on from the plan without asking")
-    r.add_argument("--board")
-    r.add_argument("--out", type=Path)
-    a = sub.add_parser("answer")
-    a.add_argument("capture", type=Path)
-    v = sub.add_parser("view")
-    v.add_argument("capture", type=Path)
-    v.add_argument("-o", "--out", type=Path)
-    q = sub.add_parser("query")
-    q.add_argument("capture", type=Path)
-    q.add_argument("query")
-    q.add_argument("--other", type=Path)
-    s = sub.add_parser("schema")
+    r.add_argument("--board", help=H["board"])
+    r.add_argument("--out", type=Path, help="output directory")
+    a = sub.add_parser("answer", help="the plain-words answer for a saved capture (no board needed)")
+    a.add_argument("capture", type=Path, help="a capture.json")
+    v = sub.add_parser("view", help="write the waveform page for a saved capture (no board needed)")
+    v.add_argument("capture", type=Path, help="a capture.json")
+    v.add_argument("-o", "--out", type=Path, help="the HTML file to write (default: next to the capture)")
+    q = sub.add_parser("query", help="ask a question of a saved capture (JSON query)")
+    q.add_argument("capture", type=Path, help="a capture.json")
+    q.add_argument("query", help='e.g. {"op": "first", "channel": "count", "cmp": "==", "value": "0x1234"}')
+    q.add_argument("--other", type=Path, help="a second capture of the same probes, for the diverge query")
+    s = sub.add_parser("schema", help="print a JSON schema")
     s.add_argument("name", choices=["intent", "plan", "capture"])
     x = ap.parse_args(argv)
 
@@ -122,7 +129,7 @@ def main(argv: list[str] | None = None) -> int:
         ans = A.answer(cap)
         print(ans["text"])
         if ans["check"]:
-            print(f"UNQUOTED NUMBERS: {ans['check']}", file=sys.stderr)
+            print(f"the answer contains numbers not found in the capture: {ans['check']}", file=sys.stderr)
             return 1
         return 0
     if x.cmd == "view":

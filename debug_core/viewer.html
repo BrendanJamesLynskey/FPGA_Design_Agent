@@ -35,7 +35,7 @@ td, th { border-bottom: 1px solid var(--line); padding: 2px 10px 2px 0; text-ali
   <button id="zin" title="zoom in">Zoom in</button>
   <button id="zout" title="zoom out">Zoom out</button>
   <button id="fit">Fit</button>
-  <button id="asked" title="the cycles the request asked for">Asked window</button>
+  <button id="asked" title="the cycles the request asked for">Requested window</button>
   <button id="trig">Go to trigger</button>
   <label class="file">Open capture JSON<input type="file" id="file" accept=".json,application/json"></label>
   <span class="muted">wheel or pinch to zoom, drag to scroll, click to place the cursor</span>
@@ -72,12 +72,13 @@ function load(c, answer) {
   }
   const t = document.getElementById("cond"); t.innerHTML = "";
   const cond = c.conditions || {};
+  const WHEN = {programmed: "Supply and temperature at programming", armed: "Supply and temperature when armed", done: "Supply and temperature after upload"};
   for (const when of ["programmed", "armed", "done"]) {
     const x = cond[when]; if (!x || !x.now) continue;
-    const r = t.insertRow(); r.insertCell().textContent = "XADC " + when;
+    const r = t.insertRow(); r.insertCell().textContent = WHEN[when];
     r.insertCell().textContent = Object.entries(x.now).map(([k, v]) => `${k} ${v}`).join("  ");
   }
-  if (cond.verdict) { const r = t.insertRow(); r.insertCell().textContent = "verdict"; r.insertCell().textContent = cond.verdict + (cond.alarms && cond.alarms.length ? " (alarms: " + cond.alarms.join(", ") + ")" : ""); }
+  if (cond.verdict) { const r = t.insertRow(); r.insertCell().textContent = "Operating conditions"; r.insertCell().textContent = ({"inside ROC": "inside the recommended operating conditions", "outside ROC": "OUTSIDE the recommended operating conditions"}[cond.verdict] || cond.verdict) + (cond.alarms && cond.alarms.length ? " (alarms: " + cond.alarms.join(", ") + ")" : ""); }
   for (const [k, v] of Object.entries(c.readback || {})) { const r = t.insertRow(); r.insertCell().textContent = "read back " + k; r.insertCell().textContent = "0x" + Number(v).toString(16).toUpperCase().padStart(8, "0"); }
   asked();
 }
@@ -161,7 +162,7 @@ document.getElementById("asked").onclick = asked;
 document.getElementById("trig").onclick = toTrigger;
 document.getElementById("file").onchange = e => {
   const f = e.target.files[0]; if (!f) return;
-  f.text().then(t => { cursor = null; load(JSON.parse(t), ""); }).catch(err => alert("Not a capture JSON: " + err));
+  f.text().then(t => { cursor = null; load(JSON.parse(t), ""); }).catch(err => alert("This file is not a capture (fda-capture/1 JSON): " + err));
 };
 window.addEventListener("resize", () => draw());
 if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);

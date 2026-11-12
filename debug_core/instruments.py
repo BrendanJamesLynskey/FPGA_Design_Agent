@@ -54,7 +54,7 @@ def ila_limits() -> dict[str, Any]:
     return {"ila_instances": 1, "ports_max": P.ILA_MAX_PORTS, "clock_domains": 1, "depths": list(P.DEPTHS),
             "measured_port_bits": P.MEASURED_PORT_BITS, "measured_depth": P.MEASURED_DEPTH,
             "compare_chars": "0 1 X R F B (per bit)", "combine": ["AND", "OR (1-bit terms only)"],
-            "source": "brief 48 (Vivado 2026.1, Basic licence tier)"}
+            "source": "measured on Vivado 2026.1, Basic licence tier"}
 
 
 class MockIla(Instrument):
@@ -142,11 +142,22 @@ def plan_tcl(plan: dict[str, Any], slices: dict[str, tuple[int, int, int]], dept
     probe (``slices``: build probe name -> (port, offset, width) from probe_map.txt)."""
     labels = labels or {}
     comps = []
+    used_bits: set[tuple[int, int]] = set()
+    used_ports: set[int] = set()
     for c in plan["trigger"]["conditions"]:
         bl = labels.get(c["probe"], c["probe"])
         if bl not in slices:
             raise ValueError(f"the build has no probe {bl} (has {sorted(slices)})")
         port, off, w = slices[bl]
+        bits = {(port, off + i) for i in range(w)}
+        if bits & used_bits:
+            # ila_capture.tcl would keep only the last compare on these bits: the armed trigger would not be the plan's
+            raise ValueError(f"two trigger compares on the same bits of port {port} ({bl}); refused")
+        if plan["trigger"]["combine"] == "OR" and port in used_ports:
+            # measured on the Basic tier: one comparator per port, OR compares cannot share it (Labtools 27-3239/27-3241)
+            raise ValueError(f"two OR compares on port {port}; this build cannot arm them (one comparator per port)")
+        used_bits |= bits
+        used_ports.add(port)
         if len(c["pattern"]) != w or not set(c["pattern"]) <= set("01XRFB"):
             raise ValueError(f"trigger pattern {c['pattern']!r} for {bl} does not fit the {w}-bit probe")
         comps.append(f"[list {port} 0 {off} {w} {c['pattern']}]")
@@ -215,11 +226,13 @@ class VendorIla(Instrument):
         if self.plan is None:
             raise RuntimeError("configure first")
         ltx = next(self.build_dir.glob("*.ltx"))
+        man = self.build_dir / "manifest.json"
+        expect = (json.loads(man.read_text()).get("build_id") or "") if man.is_file() else ""
         self.hw.preflight()
         self._out = open(self.work / "ila_capture.stdout.txt", "w")
         self.proc = subprocess.Popen(self.hw.vivado_cmd(ROOT / "flow" / "ila_capture.tcl",
                                                         [self.board["cable_serial"], str(ltx), str(self.work),
-                                                         str(self.work / "plan.tcl")], self.work / "ila_capture.log"),
+                                                         str(self.work / "plan.tcl"), expect], self.work / "ila_capture.log"),
                                      cwd=self.work, stdout=self._out, stderr=subprocess.STDOUT, start_new_session=True)
         self.shell = FpgaShell.open(self.board["uart"])
         self._ops(self.plan.get("setup", []), "setup")

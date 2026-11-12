@@ -125,3 +125,62 @@ def test_synthetic_parameters_clocks_and_aliases(tmp_path: Path) -> None:
     assert p.ok and p.pins == "u_l/pipe_reg[2][*]/Q"
     a = idx.resolve("alias_ra")
     assert a.ok and a.path == "ra" and a.clock == "clk_a"
+
+
+def test_two_declarations_on_one_line(tmp_path: Path) -> None:
+    """Review of brief 50A: the declaration after a ';' on the same line was dropped."""
+    for decl, w in (("logic rb, fa;", 1), ("logic rb; logic fa;", 1), ("reg rb, fa;", 1), ("logic [3:0] rb, fa;", 4)):
+        f = tmp_path / "t.sv"
+        f.write_text("module top (input logic clk_a, input logic [7:0] din, output logic dout);\n  " + decl + "\n"
+                     "  always_ff @(posedge clk_a) begin rb <= din[0]; fa <= din[1]; end\n  assign dout = rb;\nendmodule\n")
+        idx = RtlIndex.from_files([f], "top")
+        assert [(idx.resolve(q).ok, idx.resolve(q).width) for q in ("rb", "fa")] == [(True, w), (True, w)], decl
+    f = tmp_path / "two.sv"
+    f.write_text(SRC)
+    assert RtlIndex.from_files([f], "two").resolve("rb").pins == "rb_reg/Q"
+
+
+GEN = """
+module leaf #(parameter int W = 4) (input logic clk, input logic [W-1:0] d, output logic [W-1:0] q);
+  always_ff @(posedge clk) q <= d;
+endmodule
+module top (input logic clk, input logic clk2, input logic [7:0] din, output logic [7:0] dout, output logic [3:0] o4,
+            output logic [7:0] plain);
+  logic [7:0] gq [4];
+  logic [3:0] r;
+  genvar i;
+  generate
+    for (i = 0; i < 4; i++) begin : g
+      leaf #(.W(8)) u_l (.clk(clk), .d(din), .q(gq[i]));
+      logic gx;
+      always_ff @(posedge clk) gx <= din[i];
+      always_ff @(posedge clk) r[i] <= din[i];
+    end
+  endgenerate
+  if (1) begin : gif
+    leaf #(.W(8)) u_c (.clk(clk2), .d(din), .q(dout));
+  end
+  always_ff @(posedge clk) begin
+    for (int k = 0; k < 8; k++) plain[k] <= din[k];
+  end
+  assign o4 = r;
+endmodule
+"""
+
+
+@pytest.mark.parametrize("q", ["u_l.q", "g[0].u_l.q", "g.u_l.q", "gx", "g[1].gx", "r", "r[2]", "gq[1]", "dout", "u_c.q",
+                               "gif.u_c.q", "o4"])
+def test_names_in_generate_blocks_are_refused_not_guessed(tmp_path: Path, q: str) -> None:
+    """Review of brief 50A: Vivado names cells in generate blocks after the block (g[0].u_l/...), so the flat names this
+    index would have made were wrong; they are refused before any synthesis."""
+    f = tmp_path / "gen.sv"
+    f.write_text(GEN)
+    r = RtlIndex.from_files([f], "top").resolve(q)
+    assert not r.ok and r.pins == "" and any("generate block" in n for n in r.notes), r.as_dict()
+
+
+def test_a_for_loop_inside_always_is_not_a_generate_block(tmp_path: Path) -> None:
+    f = tmp_path / "gen.sv"
+    f.write_text(GEN)
+    r = RtlIndex.from_files([f], "top").resolve("plain")
+    assert r.ok and r.pins == "plain_reg[*]/Q" and r.width == 8

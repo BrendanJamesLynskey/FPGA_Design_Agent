@@ -143,10 +143,14 @@ def answer(cap: dict[str, Any], question: str | None = None) -> dict[str, Any]:
     ttext = tw.join(c["text"] or c["probe"] for c in trig["conditions"]) or "(no condition)"
     mhz = f" at {F['mhz']:g} MHz" if F.get("mhz") else ""
     at0 = ", ".join(f"{n} = {fmt(f['at_trigger'], f['width'])}" for n, f in F["channels"].items())
-    span = (f"the capture holds cycles {full[0]} to {full[-1]}; this answer covers cycles {cyc0} to {cyc1} as asked"
-            if cap is not whole else f"window cycles {cyc0} to {cyc1}")
-    L.append(f"Triggered on {ttext}: cycle 0 is sample {whole['timebase']['trigger_sample']} of "
-             f"{whole['timebase']['samples']}{mhz} ({span}). At cycle 0: {at0}.")
+    span = (f"The capture holds cycles {full[0]} to {full[-1]}; this answer covers cycles {cyc0} to {cyc1}, as asked."
+            if cap is not whole else f"The window is cycles {cyc0} to {cyc1}.")
+    first = (f"Triggered on {ttext}. Cycle 0 is sample {whole['timebase']['trigger_sample']} of "
+             f"{whole['timebase']['samples']}{mhz}. {span}")
+    if whole["timebase"].get("trigger_sample_from") == "trigger position":
+        first += " (The capture file had no trigger column, so cycle 0 is the planned trigger position.)"
+    L.append(first)
+    L.append(f"At cycle 0: {at0}.")
     if trig["holds"] is False:
         bad = [c["probe"] for c in trig["conditions"] if not c["holds"]]
         L.append(f"WARNING: the trigger condition does not hold at cycle 0 (not met: {', '.join(bad)}); the capture "
@@ -173,73 +177,90 @@ def conditions_text(cond: dict[str, Any]) -> str:
         c = cond.get(when) or {}
         if c.get("read"):
             now = c.get("now", {})
-            parts.append(f"{when}: die {now.get('TEMPERATURE')} C, VCCINT {now.get('VCCINT')} V, VCCAUX "
+            parts.append(f"{'when armed' if when == 'armed' else 'after upload'}: die {now.get('TEMPERATURE')} C, VCCINT {now.get('VCCINT')} V, VCCAUX "
                          f"{now.get('VCCAUX')} V, VCCBRAM {now.get('VCCBRAM')} V")
     if not parts:
         return ""
-    v = cond.get("verdict")
-    return "Operating conditions (XADC over JTAG) " + "; ".join(parts) + (f"; {v}." if v else ".")
+    v = VERDICT_TEXT.get(cond.get("verdict"), cond.get("verdict"))
+    return ("Supply and temperature from the chip's own monitor (XADC) " + "; ".join(parts) + (f"; {v}." if v else "."))
 
 
-def _allowed_numbers(cap: dict[str, Any]) -> set[str]:
-    F = facts(cap)
-    ok: set[str] = set()
-
-    def add(x: Any) -> None:
-        if isinstance(x, bool) or x is None:
-            return
-        if isinstance(x, (int, float)):
-            ok.add(f"{x:g}" if isinstance(x, float) else str(x))
-        elif isinstance(x, str):
-            ok.update(re.findall(r"-?\d+(?:\.\d+)?", x))
-    for k in ("samples", "trigger_sample", "first_cycle", "last_cycle", "mhz"):
-        add(F.get(k))
-    for c in cap["channels"]:
-        w = c["width"]
-        for v in set(c["samples"]):
-            ok.add(fmt(v, w).lower())
-            ok.add(str(v))
-    for f in F["channels"].values():
-        for k, v in f.items():
-            if isinstance(v, int):
-                add(v)
-            elif isinstance(v, list):
-                for item in v:
-                    for x in (item if isinstance(item, (tuple, list)) else [item]):
-                        add(x)
-                        if isinstance(x, int):
-                            add(x - 1)       # "to cycle c-1"
-    for v in (cap.get("readback") or {}).values():
-        if isinstance(v, int):
-            ok.add(f"0x{v:08x}")
-            ok.add(str(v))
-    for when in ("armed", "done"):
-        for grp in ("now", "max", "min"):
-            for v in (((cap.get("conditions") or {}).get(when) or {}).get(grp) or {}).values():
-                add(float(v))
-                ok.add(str(v))
-    for c in cap["trigger"].get("conditions", []):
-        add(c.get("text"))
-    ok.update({"0", "1", "2", "3"})
-    return {x.lower() for x in ok}
+VERDICT_TEXT = {"inside ROC": "inside the recommended operating conditions (ROC: the data sheet's supply and temperature ranges)",
+                "outside ROC": "OUTSIDE the recommended operating conditions (ROC: the data sheet's supply and temperature ranges)",
+                "not read": "conditions not read"}
 
 
-def unquoted_numbers(text: str, cap: dict[str, Any], *more: dict[str, Any]) -> list[str]:
-    """Numbers in ``text`` that are not values, cycles, counts or conditions of the capture (or of its trimmed views in
-    ``more``); empty means every number is quoted from the capture."""
-    allowed = set().union(*(_allowed_numbers(c) for c in (cap, *more)))
+_NUM = re.compile(r"0x[0-9a-fA-F]+|-?\d+(?:\.\d+)?")
+
+
+def _dec(x: Any) -> str:
+    return f"{float(x):g}"
+
+
+def _channel_numbers(F: dict[str, Any], cap: dict[str, Any], name: str) -> tuple[set[int], set[str]]:
+    """(values a hex number may quote, decimal numbers a sentence may quote) for one channel in the answered window:
+    its values (in decimal only for a 1-bit signal), its change cycles (and the cycle before each), run starts and
+    lengths, and its counts. Nothing from other channels or from outside the window."""
+    f = F["channels"][name]
+    ch = channel(cap, name)
+    values = set(ch["samples"])
+    dec: set[str] = set()
+    if f["width"] == 1:
+        dec |= {_dec(v) for v in values}
+    for c, _old, _new in f["changes"]:
+        dec |= {_dec(c), _dec(c - 1)}
+    for st, ln in f.get("high_runs", []):
+        dec |= {_dec(st), _dec(ln), _dec(st + ln - 1)}
+    for k in ("n_changes", "n", "high_samples", "n_high_runs", "n_values"):
+        if isinstance(f.get(k), int):
+            dec.add(_dec(f[k]))
+    for _v, k in f.get("values", []):
+        dec.add(_dec(k))
+    return values, dec
+
+
+def unquoted_numbers(text: str, cap: dict[str, Any], asked: dict[str, Any] | None = None) -> list[str]:
+    """Numbers in ``text`` that the capture does not support where they are quoted. Line by line, a number must be: a
+    value of a channel the line names (hex; decimal only for 1-bit signals), a change cycle, run or count of such a
+    channel within the answered window (``asked``, the trimmed capture; default the whole capture), a window bound, the
+    trigger sample, the sample count, the clock, a value in the trigger condition (on the line that states it), a readback
+    value (on the readback line) or an operating-condition reading (on the conditions line). Empty means every number is
+    attributed. Any phrasing step must keep one channel per line or name the channel in the line it quotes."""
+    asked = asked or cap
+    F = facts(asked)
+    full = cycles(cap)
+    glob = {_dec(x) for x in (0, cap["timebase"]["trigger_sample"], cap["timebase"]["samples"], full[0], full[-1],
+                               F["first_cycle"], F["last_cycle"]) if x is not None}
+    if cap["timebase"].get("mhz"):
+        glob.add(_dec(cap["timebase"]["mhz"]))
+    per = {c["name"]: _channel_numbers(F, asked, c["name"]) for c in asked["channels"]}
+    trig_nums = {t for c in cap["trigger"].get("conditions", []) for t in _NUM.findall(c.get("text") or "")}
     bad = []
-    for tok in re.findall(r"0x[0-9a-fA-F]+|-?\d+(?:\.\d+)?", text):
-        t = tok.lower()
-        if t in allowed or (t.startswith("0x") and str(int(t, 16)) in allowed and
-                            any(a.startswith("0x") and int(a, 16) == int(t, 16) for a in allowed if a.startswith("0x"))):
-            continue
-        try:
-            if not t.startswith("0x") and f"{float(t):g}" in allowed:
-                continue
-        except ValueError:
-            pass
-        bad.append(tok)
+    for line in text.splitlines():
+        hexok: set[int] = set()
+        decok = set(glob)
+        for name, (vals, dec) in per.items():
+            if re.search(r"(?<![\w.])" + re.escape(name) + r"(?![\w])", line):
+                hexok |= vals
+                decok |= dec
+        if line.startswith("Triggered on"):
+            for t in trig_nums:
+                if t.lower().startswith("0x"):
+                    hexok.add(int(t, 16))
+                else:
+                    decok.add(_dec(t))
+        if line.startswith("Read back"):
+            hexok |= {v for v in (cap.get("readback") or {}).values() if isinstance(v, int)}
+        if "VCCINT" in line:
+            for when in ("armed", "done"):
+                for grp in ("now", "max", "min"):
+                    decok |= {_dec(v) for v in (((cap.get("conditions") or {}).get(when) or {}).get(grp) or {}).values()}
+        for tok in _NUM.findall(line):
+            if tok.lower().startswith("0x"):
+                if int(tok, 16) not in hexok:
+                    bad.append(tok)
+            elif _dec(tok) not in decok:
+                bad.append(tok)
     return bad
 
 

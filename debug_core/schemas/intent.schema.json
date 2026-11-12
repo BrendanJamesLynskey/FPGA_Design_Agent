@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "fda-debug-intent/1",
   "title": "Debug request, parsed (the only thing the language model produces)",
-  "description": "What the user asked for, in the user's own signal words. Names are resolved against the RTL afterwards by debug_core/rtl_index.py; nothing here is trusted to exist.",
+  "description": "What the user asked for, in the user's own signal words. Names are resolved against the RTL afterwards by debug_core/rtl_index.py; nothing here is assumed to exist; names are checked against the RTL afterwards.",
   "type": "object",
   "additionalProperties": false,
   "required": ["probes", "trigger"],
@@ -17,7 +17,7 @@
           "properties": {
             "signal": {"type": "string", "minLength": 1},
             "op": {"enum": ["==", "!=", "<", "<=", ">", ">=", "rise", "fall", "change"]},
-            "value": {"type": ["integer", "string", "null"], "description": "integer, or a string such as 0x41, 0b10x1, 'A'"}
+            "value": {"type": ["integer", "string", "null"], "description": "integer, or a string such as 0x41, 0b10x1 (x = don't care), 'A'"}
           }}}
       }
     },

@@ -24,7 +24,7 @@ def test_debug_plan_resolves_and_saves(session) -> None:
 def test_debug_plan_reports_unknown_names(session) -> None:
     r = dispatch(session, "debug_plan", {"intent": {"probes": ["fifo_overflow"], "trigger": {"combine": "AND", "conditions": [
         {"signal": "uart_byte", "op": "==", "value": 65}]}}})
-    assert not r["ok"] and not r["buildable"] and "NOT BUILDABLE" in r["output"]
+    assert not r["ok"] and not r["buildable"] and "CANNOT BE BUILT" in r["output"]
     assert {e["what"] for e in r["errors"]} >= {"signal 'fifo_overflow'", "signal 'uart_byte'"}
 
 

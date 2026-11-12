@@ -85,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
         "runs": runs, "builds": builds["builds"],
         "limits": [
             "Vivado 2026.1 Basic licence tier: one ILA instance per design, so one clock domain per build, and at most 5 "
-            "probe ports (brief 48, measured).",
+            "probe ports, and each port has one comparator (measured).",
             "Trigger compares are per bit (0, 1, X and rising/falling/either edge); != and magnitude compares on buses are "
             "refused unless they reduce to a per-bit pattern; OR only across 1-bit terms.",
             f"A new probe set is a new build ({min(walls):g} to {max(walls):g} s for these {len(walls)} T1 builds, one each); "
@@ -93,8 +93,8 @@ def main(argv: list[str] | None = None) -> int:
             "One design (T1) and five requests; the parser was not measured on a held-out set of requests.",
             "Clocks made inside the design (MMCM outputs) and signals inside generate blocks are not resolved yet.",
             "XADC samples are read through JTAG at arm and after upload, not on the capture timeline.",
-            "The agent tools are not offered to the repair loop yet: that is a pre-registered A/B for a later brief."],
-        "agent_vs_owner": {"owner": "asked for the capability (brief 50), the order (front end first) and the safety rules "
+            "No agent role is offered the debug tools yet: offering them needs its own pre-registered evaluation first."],
+        "agent_vs_owner": {"owner": "asked for the capability, the order (front end first) and the safety rules "
                                     "(SRAM only, power and temperature limits, DRCs never skipped)",
                            "agent": "wrote the front end, the tests and the docs, ran the builds and board runs; a language "
                                     "model (the project's cheap default) only turned each request into the intent JSON"},

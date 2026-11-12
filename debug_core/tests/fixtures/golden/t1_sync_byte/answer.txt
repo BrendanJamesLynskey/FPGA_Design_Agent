@@ -1,5 +1,6 @@
-Triggered on rx_valid rises AND rx_data == 0xA5: cycle 0 is sample 900 of 1024 at 100 MHz (the capture holds cycles -900 to 123; this answer covers cycles -900 to 100 as asked). At cycle 0: rx_valid = 1, rx_data = 0xA5, uart_rx_pin = 1.
+Triggered on rx_valid rises AND rx_data == 0xA5. Cycle 0 is sample 900 of 1024 at 100 MHz. The capture holds cycles -900 to 123; this answer covers cycles -900 to 100, as asked.
+At cycle 0: rx_valid = 1, rx_data = 0xA5, uart_rx_pin = 1.
 rx_data was 0x4A from cycle -900 to -869, then 0xA5 from cycle -868 to 100.
 rx_valid was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 1001 samples high).
 uart_rx_pin held 1 for the whole window (cycles -900 to 100).
-Operating conditions (XADC over JTAG) armed: die 25.6 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; done: die 25.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside ROC.
+Supply and temperature from the chip's own monitor (XADC) when armed: die 25.6 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; after upload: die 25.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside the recommended operating conditions (ROC: the data sheet's supply and temperature ranges).

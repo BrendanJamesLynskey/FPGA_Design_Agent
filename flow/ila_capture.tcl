@@ -1,6 +1,6 @@
 # ila_capture.tcl: arm the ILA of an already-programmed board, capture, export.
 #
-#   vivado -mode batch -source flow/ila_capture.tcl -tclargs <serial> <file.ltx> <out dir> <plan.tcl>
+#   vivado -mode batch -source flow/ila_capture.tcl -tclargs <serial> <file.ltx> <out dir> <plan.tcl> ?<expected build ID>?
 #
 # Run by flow/bringup.py, which writes plan.tcl (one entry per capture) and drives
 # the board over the UART in step with this script through small files in <out dir>:
@@ -29,8 +29,8 @@
 # skills/hw-ila-debug/SKILL.md and REFERENCE.md; MIT, Copyright (c) 2026 Advanced Micro Devices, Inc.).
 # It programs nothing: the board must already hold the ILA build (flow/program.py ... ila).
 
-lassign $argv serial ltx out plan
-if {$plan eq ""} { error "usage: -tclargs <serial> <file.ltx> <out dir> <plan.tcl>" }
+lassign $argv serial ltx out plan expect_id
+if {$plan eq ""} { error "usage: -tclargs <serial> <file.ltx> <out dir> <plan.tcl> ?<expected build ID>?" }
 set fda_depth 1024
 set fda_captures {}
 source $plan
@@ -57,6 +57,15 @@ if {[llength $devs] != 1 || [get_property PART [lindex $devs 0]] ne "xc7a100t"} 
 }
 set dev [lindex $devs 0]
 current_hw_device $dev
+# brief 50A: the build ID in the bitstream's USR_ACCESS register (flow/build.tcl) must be the one the caller expects, so a
+# capture never runs on a different bitstream than the .ltx and probe map describe (for example after --no-program)
+set ua ?
+catch {set ua [string tolower [get_property REGISTER.USR_ACCESS $dev]]}
+regsub {^0x} $ua {} ua
+puts "FDA-USR_ACCESS $ua"
+if {$expect_id ne "" && $ua ne [string tolower $expect_id]} {
+    error "ila_capture.tcl: the board holds build $ua, not the expected $expect_id; program the matching debug build first. Not arming anything."
+}
 set_property PROBES.FILE $ltx $dev
 set_property FULL_PROBES.FILE $ltx $dev
 refresh_hw_device $dev

@@ -8,7 +8,7 @@ deterministic resolver (debug_core/rtl_index.py), and an unknown name is an erro
     intent, meta = parse("capture count when the shell writes COUNT, 16 before and 32 after", Path("designs/t1_dimmer_counter"))
 
 The client is the project's OpenRouter client (agent/graph/llm.py: ``provider: {data_collection: deny}``, cost only as the
-provider reports it, Fable and Opus refused). Tests replay recorded replies (``Replay``), so CI makes no model call.
+provider reports it; ``--model`` chooses another model). Tests replay recorded replies (``Replay``), so CI makes no model call.
 """
 
 from __future__ import annotations
@@ -129,4 +129,6 @@ def parse(request: str, design: Path, client: Any = None, model: str = DEFAULT_M
             last = str(e)
         messages += [{"role": "assistant", "content": r.text},
                      {"role": "user", "content": f"That is not valid for the schema ({last}). Reply with the JSON object only."}]
-    raise ValueError(f"the request parser did not return a valid intent after {meta['attempts']} attempts: {last}")
+    err = ValueError(f"the request parser did not return a valid intent after {meta['attempts']} attempts: {last}")
+    err.meta = meta                       # the spend of a failed parse is still recorded by the caller
+    raise err

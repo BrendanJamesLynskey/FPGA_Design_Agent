@@ -115,6 +115,9 @@ def compile_condition(op: str, value: Any, width: int) -> str:
         if lim <= 0:
             raise PlanError(f"{op} {value} is never true")
         k = int(math.log2(lim))
+        if 1 << k == lim and k >= width:
+            raise PlanError(f"'{op} {value}' is always true on a {width}-bit signal, so it would trigger at once; "
+                            "use a smaller bound or another condition")
         if 1 << k != lim or k > width:
             raise PlanError(f"'{op} {value}' is a per-bit pattern only when the bound is a power of two (x < 2^k means "
                             f"the top bits are 0); use < {1 << k} or < {1 << (k + 1)}, or == with X bits")
@@ -126,12 +129,18 @@ def compile_condition(op: str, value: Any, width: int) -> str:
 
 
 def merge_patterns(a: str, b: str) -> str:
+    """AND of two per-bit patterns. An edge implies the level after it (R with 1 is R, F with 0 is F)."""
+    implied = {"R": "1", "F": "0"}
     out = []
     for x, y in zip(a, b):
         if x == "X":
             out.append(y)
         elif y == "X" or x == y:
             out.append(x)
+        elif implied.get(x) == y:
+            out.append(x)
+        elif implied.get(y) == x:
+            out.append(y)
         else:
             raise PlanError(f"two conditions on the same signal contradict each other ({a} and {b})")
     return "".join(out)
@@ -314,11 +323,27 @@ def make_plan(design: Path | str, intent: dict[str, Any], request: str | None = 
         except PlanError as e:
             errors.append({"what": f"trigger on '{c['signal']}' {c['op']} {c.get('value', '')}".strip(), "why": str(e)})
             continue
-        if p["label"] in merged and trig["combine"] == "AND":
-            try:
-                merged[p["label"]]["pattern"] = merge_patterns(merged[p["label"]]["pattern"], pat)
-            except PlanError as e:
-                errors.append({"what": f"trigger on '{c['signal']}'", "why": str(e)})
+        if p["label"] in merged:
+            prev = merged[p["label"]]
+            if trig["combine"] == "AND":
+                try:
+                    prev["pattern"] = merge_patterns(prev["pattern"], pat)
+                except PlanError as e:
+                    errors.append({"what": f"trigger on '{c['signal']}'", "why": str(e)})
+                continue
+            # OR on a signal that already has a term. The ILA arms one compare value per hardware probe, so two OR terms
+            # on one signal would leave only the last one armed (review of brief 50A). Rising OR falling is "either edge";
+            # the same term twice is one term; anything else is refused.
+            both = {prev["pattern"], pat}
+            if both == {"R", "F"}:
+                prev.update({"pattern": "B", "op": "change", "value": None})
+            elif prev["pattern"] != pat:
+                errors.append({"what": f"trigger OR on '{c['signal']}'",
+                               "why": f"two OR terms on the same signal ({p['label']} {pattern_text(prev['pattern'])} OR "
+                                      f"{pattern_text(pat)}); the logic analyser holds one compare value per signal, so "
+                                      "only one of them would be armed",
+                               "proposal": "use 'change' for rising OR falling; otherwise capture each term separately, "
+                                           "or trigger on a register that combines them"})
             continue
         cond = {"probe": p["label"], "op": c["op"], "value": c.get("value"), "pattern": pat}
         merged[p["label"]] = cond
@@ -326,7 +351,7 @@ def make_plan(design: Path | str, intent: dict[str, Any], request: str | None = 
     for c in conds:
         c["text"] = f"{c['probe']} {pattern_text(c['pattern'])}"
     combine = trig["combine"]
-    if len(trig["conditions"]) <= 1 and combine == "OR":
+    if len(conds) <= 1 and combine == "OR":
         combine = "AND"          # one condition: the same meaning, and the ILA's AND never involves the probes not named
     if not trig["conditions"]:
         errors.append({"what": "trigger", "why": "the request gives no trigger condition",
@@ -354,7 +379,7 @@ def make_plan(design: Path | str, intent: dict[str, Any], request: str | None = 
     window = {"pre": pre, "post": depth - pre - 1, "depth": depth, "position": min(pre, depth - 1),
               "requested": {"pre": intent.get("pre"), "post": intent.get("post")}}
     if depth > MEASURED_DEPTH:
-        warnings.append(f"depth {depth} is more than the {MEASURED_DEPTH} measured on the Basic tier (brief 48)")
+        warnings.append(f"depth {depth} is more than the {MEASURED_DEPTH} built so far on the Basic tier; untested beyond that")
 
     # 5. pack into ports, check the port count and the block RAM
     ports: list[dict[str, Any]] = []
@@ -377,7 +402,7 @@ def make_plan(design: Path | str, intent: dict[str, Any], request: str | None = 
         bram = math.ceil(width * depth / BRAM36_BITS)
         fit.update({"ports_used": len(ports), "total_bits": width, "bram36_estimate": bram})
         if any(pt["width"] > MEASURED_PORT_BITS for pt in ports):
-            warnings.append(f"a port wider than the {MEASURED_PORT_BITS} bits measured on the Basic tier (brief 48)")
+            warnings.append(f"a port wider than the {MEASURED_PORT_BITS} bits built so far on the Basic tier; untested beyond that")
         if bram > bram_budget:
             d_ok = max((d for d in DEPTHS if math.ceil(width * d / BRAM36_BITS) <= bram_budget and d >= need), default=None)
             prop: dict[str, Any] = {}
@@ -489,21 +514,23 @@ def render(plan: dict[str, Any]) -> str:
         L.append(f"Trigger ({t['combine']}): " + f" {t['combine']} ".join(c["text"] for c in t["conditions"]))
     w = plan["window"]
     req = w.get("requested") or {}
-    L.append(f"Window: {w['pre']} cycles before the trigger and {w['post']} after ({w['depth']} samples; asked for "
-             f"{req.get('pre', 'default')} before, {req.get('post', 'default')} after).")
+    asked = (f"the smallest size that holds the {req.get('pre')} before and {req.get('post')} after you asked for; "
+             "the answer covers your window" if req.get("pre") is not None or req.get("post") is not None
+             else "no window was asked for, so the default is used")
+    L.append(f"Window: {w['depth']} samples, {w['pre']} before the trigger and {w['post']} after ({asked}).")
     if plan["ports"]:
-        L.append("Ports: " + "; ".join(f"probe{pt['port']} {pt['group']} {pt['width']} bits = "
+        L.append("Ports: " + "; ".join(f"probe{pt['port']} {pt['group']} {pt['width']} bit{'s' if pt['width'] != 1 else ''} = "
                                         + " + ".join(f"{s['label']}[{s['width']}]" for s in pt["slices"])
                                         for pt in plan["ports"])
-                 + f" ({len(plan['ports'])} of {plan['fit']['max_ports']} ports; about "
-                   f"{plan['fit'].get('bram36_estimate', '?')} BRAM36).")
+                 + f" ({len(plan['ports'])} of the {plan['fit']['max_ports']} allowed ports; about "
+                   f"{plan['fit'].get('bram36_estimate', '?')} block RAM tile{'s' if plan['fit'].get('bram36_estimate') != 1 else ''}).")
     for k, title in (("setup", "Before arming"), ("stimulus", "After arming"), ("readback", "After the capture")):
         if plan.get(k):
             L.append(f"{title}: " + "; ".join(_op_text(o) for o in plan[k]))
     for wtxt in plan["warnings"]:
         L.append(f"Warning: {wtxt}")
     if plan["errors"]:
-        L.append("NOT BUILDABLE:")
+        L.append("CANNOT BE BUILT:")
         for e in plan["errors"]:
             L.append(f"  - {e['what']}: {e['why']}")
             for k in ("suggestions", "candidates"):
@@ -512,7 +539,7 @@ def render(plan: dict[str, Any]) -> str:
             if e.get("proposal"):
                 L.append(f"      proposal: {json.dumps(e['proposal'])}")
     else:
-        L.append(f"Probe set {plan['probeset']}: buildable.")
+        L.append(f"Can be built (probe set {plan['probeset']}).")
     return "\n".join(L)
 
 

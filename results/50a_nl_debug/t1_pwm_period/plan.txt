@@ -6,8 +6,8 @@ Probes:
   led             16 bits  u_dut.led                    <- 'led' (register, data) pins u_dut/led_reg[*]/Q
                  note: the LED outputs (PWM); added in F0B so the ILA can check duty against level
 Trigger (AND): phase == 0x00
-Window: 0 cycles before the trigger and 1023 after (1024 samples; asked for 0 before, 1023 after).
-Ports: probe0 data 24 bits = phase[8] + led[16] (1 of 5 ports; about 1 BRAM36).
+Window: 1024 samples, 0 before the trigger and 1023 after (the smallest size that holds the 0 before and 1023 after you asked for; the answer covers your window).
+Ports: probe0 data 24 bits = phase[8] + led[16] (1 of the 5 allowed ports; about 1 block RAM tile).
 Before arming: write COUNT (0x80) = 0x8421; write DUTY (0x81) = 0x40
 After the capture: read DUTY (0x81); read COUNT (0x80)
-Probe set a6a9590e41ad: buildable.
+Can be built (probe set a6a9590e41ad).

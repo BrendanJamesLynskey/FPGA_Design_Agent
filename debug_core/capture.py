@@ -25,7 +25,7 @@ def make_capture(*, plan: dict[str, Any], samples: dict[str, list[int]], trigger
     for p in plan["probes"]:
         if p["label"] not in samples:
             raise ValueError(f"the capture has no samples for probe {p['label']}")
-        s = [int(x) for x in samples[p["label"]]]
+        s = list(samples[p["label"]])
         if len(s) != n:
             raise ValueError(f"probe {p['label']} has {len(s)} samples, others {n}")
         chans.append({"name": p["label"], "path": p["path"], "kind": "digital", "width": p["width"], "samples": s})
@@ -36,15 +36,35 @@ def make_capture(*, plan: dict[str, Any], samples: dict[str, list[int]], trigger
            "channels": chans, "trigger": dict(plan["trigger"]), "window": dict(plan["window"]),
            "conditions": conditions or {}, "stimulus_log": stimulus_log or [], "readback": readback or {},
            "requirement": requirement, "created": time.strftime("%Y-%m-%dT%H:%M:%S")}
-    bad = validate(cap, "capture")
+    bad = validate(cap, "capture") + check_samples(cap)
     if bad:
         raise ValueError("capture does not match its schema: " + "; ".join(bad))
     return cap
 
 
+def check_samples(cap: dict[str, Any]) -> list[str]:
+    """What the schema cannot say: every digital sample is an integer in 0 .. 2**width - 1, every channel has
+    ``timebase.samples`` samples, and the trigger sample is inside the window."""
+    errs = []
+    n = cap["timebase"]["samples"]
+    if not 0 <= cap["timebase"]["trigger_sample"] < n:
+        errs.append(f"trigger sample {cap['timebase']['trigger_sample']} is outside the {n} samples")
+    for c in cap["channels"]:
+        if len(c["samples"]) != n:
+            errs.append(f"channel {c['name']} has {len(c['samples'])} samples, the time base says {n}")
+        if c["kind"] == "digital":
+            top = 1 << c["width"]
+            bad = next((v for v in c["samples"] if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v < top), None)
+            if bad is not None:
+                errs.append(f"channel {c['name']}: sample {bad!r} is not a {c['width']}-bit unsigned value")
+    return errs
+
+
 def load(path: Path | str) -> dict[str, Any]:
     cap = json.loads(Path(path).read_text())
     bad = validate(cap, "capture")
+    if not bad:
+        bad = check_samples(cap)
     if bad:
         raise ValueError(f"{path}: not an fda-capture/1 file: " + "; ".join(bad))
     return cap
@@ -86,7 +106,7 @@ def to_vcd(cap: dict[str, Any]) -> str:
     is 1 on the trigger sample, signals under a scope named after their RTL path."""
     mhz = cap["timebase"].get("mhz") or 100.0
     ps = int(round(1e6 / mhz))
-    L = [f"$date {cap.get('created', '')} $end", "$version fda debug_core (brief 50A) $end",
+    L = [f"$date {cap.get('created', '')} $end", "$version FPGA_Design_Agent debug_core $end",
          f"$comment {cap.get('request') or ''} $end".replace("\n", " "), f"$timescale {ps} ps $end",
          "$scope module capture $end"]
     ids = {}

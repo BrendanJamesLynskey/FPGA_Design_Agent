@@ -8,7 +8,7 @@ Probes:
                  note: the counter itself
   duty             8 bits  u_dut.duty                   <- 'duty' (register, data) pins u_dut/duty_reg[*]/Q
 Trigger (OR): win_wr rises OR press_clear rises
-Window: 8 cycles before the trigger and 1015 after (1024 samples; asked for 8 before, 64 after).
-Ports: probe0 or_win_wr 1 bits = win_wr[1]; probe1 or_press_clear 1 bits = press_clear[1]; probe2 data 24 bits = count[16] + duty[8] (3 of 5 ports; about 1 BRAM36).
+Window: 1024 samples, 8 before the trigger and 1015 after (the smallest size that holds the 8 before and 64 after you asked for; the answer covers your window).
+Ports: probe0 or_win_wr 1 bit = win_wr[1]; probe1 or_press_clear 1 bit = press_clear[1]; probe2 data 24 bits = count[16] + duty[8] (3 of the 5 allowed ports; about 1 block RAM tile).
 After arming: wait 300 ms; write DUTY (0x81) = 0x22
-Probe set 5786d4f73d78: buildable.
+Can be built (probe set 5786d4f73d78).

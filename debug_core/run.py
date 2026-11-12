@@ -49,7 +49,7 @@ def ensure_build(plan: dict[str, Any], allow_build: bool) -> tuple[Path, dict[st
         return ov, labels, {"reused": True, "probeset": ov.name, "rebuild": False}
     if not allow_build:
         raise RuntimeError(f"no debug build holds these probes yet; build probe set {plan['probeset']} first "
-                           "(python -m debug_core build <plan.json>, under a heavy slot)")
+                           "(python -m debug_core build <plan.json>; a Vivado run of several minutes)")
     st = B.run_build(plan)
     if not st.get("built"):
         raise RuntimeError(f"the debug build failed (exit {st.get('returncode')}); see {st.get('log')}")

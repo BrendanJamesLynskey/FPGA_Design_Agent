@@ -8,8 +8,9 @@ Used by the debug front end (brief 50A) to turn a signal name from a request int
 
 It is not a full SystemVerilog front end. It reads ANSI port lists, ``logic``/``reg``/``wire``/``bit`` and enum
 declarations, parameters (with ``$clog2`` and instance overrides), named-port instances of modules in the source list,
-``always_ff`` (and ``always @(posedge ...)``) left-hand sides, and ``assign`` aliases. Generate blocks, interfaces and
-structs are not elaborated (a name inside them is reported as unresolved, never guessed).
+``always_ff`` (and ``always @(posedge ...)``) left-hand sides, and ``assign`` aliases. Generate blocks (``generate``
+regions and module-level ``for``/``if``/``case``) are found and blanked, and any name declared, instanced or driven in
+them is refused with a note, never guessed. Interfaces and structs are not elaborated.
 
 Probe pins follow the flow's rule (flow/debug.tcl, designs/*/probes.yaml): probe **register output pins**, because cell
 names survive synthesis and net names do not. A register ``x`` of instance path ``a.b`` is ``a/b/x_reg[*]/Q`` (``x_reg/Q`` for
@@ -155,6 +156,8 @@ class Module:
     aliases: dict[str, str] = field(default_factory=dict)                  # assign a = b
     comb: dict[str, str] = field(default_factory=dict)                     # a = <expression> (not a plain alias)
     enums: dict[str, tuple[str, str] | None] = field(default_factory=dict) # enum type -> packed range
+    gen: dict[str, str] = field(default_factory=dict)                      # name declared/instanced in a generate block -> label
+    gen_touched: dict[str, str] = field(default_factory=dict)              # name driven or connected inside one -> label
 
 
 def _parse_params(text: str) -> list[tuple[str, str]]:
@@ -208,7 +211,7 @@ def parse_module(name: str, header_params: str, ports_text: str, body: str, file
     for m in re.finditer(r"\b(localparam|parameter)\b([^;]*);", body):
         mod.localparams += _parse_params(m.group(2))
     # declarations
-    for m in re.finditer(r"(?:^|;|\bbegin\b|\bend\b)\s*(" + _TYPE_RE + r"|[A-Za-z_]\w*_t)\s+(signed\s+|unsigned\s+)?((?:\[[^\]]*\]\s*)*)([A-Za-z_][^;]*);",
+    for m in re.finditer(r"(?:^|(?<=;)|(?<=\bbegin)|(?<=\bend))\s*(" + _TYPE_RE + r"|[A-Za-z_]\w*_t)\s+(signed\s+|unsigned\s+)?((?:\[[^\]]*\]\s*)*)([A-Za-z_][^;]*);",
                          body, re.M):
         t, packed_s, rest = m.group(1), m.group(3) or "", m.group(4)
         if t in _KEYWORDS - {"logic", "reg", "wire", "bit"}:
@@ -260,6 +263,85 @@ def _block_after(body: str, i: int) -> str:
     return body[j:end + 1]
 
 
+_PROC = re.compile(r"\b(always_ff|always_comb|always_latch|always|initial|function|task|generate|for|if|case)\b")
+
+
+def _construct_end(body: str, i: int) -> int:
+    """End of a generate construct (for/if/case) that starts at body[i]: its condition, then a begin...end block or one
+    item, then any else branches."""
+    kw = re.compile(r"\w+").match(body, i).group(0)
+    if kw == "case":
+        m = re.compile(r"\bendcase\b").search(body, i)
+        return m.end() if m else len(body)
+    j = body.index("(", i)
+    j = _matching(body, j) + 1
+    k = j + len(_block_after(body, j))
+    m = re.compile(r"\s*else\b").match(body, k)
+    if m:
+        nxt = re.compile(r"\s*").match(body, m.end()).end()
+        if body.startswith("if", nxt):
+            return _construct_end(body, nxt)
+        return m.end() + len(_block_after(body, m.end()))
+    return k
+
+
+def split_generate(body: str) -> tuple[str, list[tuple[str, str]]]:
+    """The module body with every generate region blanked (same length), and the regions as (label, text). A region is a
+    generate ... endgenerate block or a for/if/case at module level (outside always, initial, function and task bodies).
+    Generate blocks are not elaborated: names inside them are refused by the resolver, never guessed."""
+    regions: list[tuple[int, int]] = []
+    i = 0
+    while True:
+        m = _PROC.search(body, i)
+        if not m:
+            break
+        kw = m.group(1)
+        if kw in ("function", "task"):
+            e = re.compile(r"\bend" + kw + r"\b").search(body, m.end())
+            i = e.end() if e else len(body)
+        elif kw.startswith("always") or kw == "initial":
+            at = re.compile(r"\s*@\s*\(").match(body, m.end())
+            j = _matching(body, at.end() - 1) + 1 if at else m.end()
+            i = j + len(_block_after(body, j))
+        elif kw == "generate":
+            e = re.compile(r"\bendgenerate\b").search(body, m.end())
+            end = e.end() if e else len(body)
+            regions.append((m.start(), end))
+            i = end
+        else:
+            try:
+                end = _construct_end(body, m.start())
+            except (ValueError, AttributeError):
+                i = m.end()
+                continue
+            regions.append((m.start(), end))
+            i = end
+    out, parts = list(body), []
+    for a, b in regions:
+        text = body[a:b]
+        lab = re.search(r"\bbegin\s*:\s*([A-Za-z_]\w*)", text)
+        parts.append((lab.group(1) if lab else "(unnamed generate block)", text))
+        out[a:b] = " " * (b - a)
+    return "".join(out), parts
+
+
+def _record_generate(mod: Module, regions: list[tuple[str, str]]) -> None:
+    for label, text in regions:
+        for lab in re.findall(r"\bbegin\s*:\s*([A-Za-z_]\w*)", text):
+            mod.gen.setdefault(lab, label)
+        for m in re.finditer(r"(?:^|(?<=;)|(?<=\bbegin)|(?<=\bend))\s*(?:" + _TYPE_RE + r"|genvar)\s+(?:signed\s+|unsigned\s+)?(?:\[[^\]]*\]\s*)*([^;]*);",
+                             text, re.M):
+            for nm, _u, _i in _parse_decl_names(m.group(1)):
+                mod.gen.setdefault(nm, label)
+        for m in re.finditer(r"^\s*[A-Za-z_]\w*\s*(?:#\s*\((?:[^;]*?)\))?\s+([A-Za-z_]\w*)\s*\(", text, re.M):
+            if m.group(1) not in _KEYWORDS:
+                mod.gen.setdefault(m.group(1), label)
+        for lhs in re.findall(r"([A-Za-z_]\w*)\s*(?:\[[^\]]*\]\s*)*(?:<=|=(?!=))", text):
+            mod.gen_touched.setdefault(lhs, label)
+        for e in re.findall(r"\.\s*[A-Za-z_]\w*\s*\(\s*([A-Za-z_]\w*)", text):
+            mod.gen_touched.setdefault(e, label)
+
+
 def parse_text(text: str, file: str = "") -> list[Module]:
     src = strip_comments(text)
     mods = []
@@ -284,7 +366,9 @@ def parse_text(text: str, file: str = "") -> list[Module]:
             ports, i = src[i + 1:e], e + 1
         endm = src.find("endmodule", i)
         body = src[src.find(";", i) + 1:endm]
-        mod = parse_module(name, header, ports, body, file)
+        flat, regions = split_generate(body)
+        mod = parse_module(name, header, ports, flat, file)
+        _record_generate(mod, regions)
         mods.append(mod)
     return mods
 
@@ -367,8 +451,8 @@ class RtlIndex:
         known = set(mods)
         for name, m in mods.items():
             body = bodies[name]
-            # instances are searched after the port list's closing ';'
-            find_instances(m, body[body.find(";") + 1:] if ";" in body else body, known)
+            # instances are searched after the port list's closing ';', outside generate blocks
+            find_instances(m, split_generate(body[body.find(";") + 1:] if ";" in body else body)[0], known)
         return cls(mods, top, generics, aliases)
 
     @classmethod
@@ -560,6 +644,10 @@ class RtlIndex:
                               suggestions=self._regs_in(path, mod.comb[sig]))
         if s is None:
             return Resolution(query, False, "unresolved", here, trace=trace, notes=[f"no signal {sig} in {mod.name}"])
+        if sig in mod.gen_touched:
+            return Resolution(query, False, "unresolved", here, trace=trace,
+                              notes=[f"{sig} in {mod.name} is driven inside the generate block '{mod.gen_touched[sig]}'; "
+                                     "generate blocks are not elaborated, so it is refused rather than guessed"])
         return Resolution(query, False, "unresolved", here, trace=trace,
                           notes=[f"{sig} in {mod.name} has no register, alias or driver this index can follow"])
 
@@ -622,6 +710,9 @@ class RtlIndex:
             if res.clock is None:
                 res.clock = self._default_clock()
             return res
+        g = self._in_generate(q)
+        if g:
+            return g
         m = re.fullmatch(r"(.*?)([A-Za-z_]\w*)(?:\[(\d+)\])?", q)
         if not m:
             return Resolution(query, False, "unresolved", notes=["not a signal name"], suggestions=self.suggest(query))
@@ -653,6 +744,34 @@ class RtlIndex:
         return res[0] if len(res) == 1 else Resolution(query, False, res[0].kind, res[0].path, notes=res[0].notes,
                                                        suggestions=sorted({s for r in res for s in r.suggestions}),
                                                        candidates=sorted(r.path for r in res))
+
+    def _in_generate(self, q: str) -> Resolution | None:
+        """A name inside a generate block (or a bare name only found in one) is refused before any synthesis: the index
+        does not elaborate generate blocks, and Vivado names their cells after the block (g[0].u_l/...)."""
+        parts = [re.sub(r"\[[^\]]*\]$", "", x) for x in q.split(".")]
+        path = ""
+        for comp in parts:
+            mod = self.insts[path][0]
+            if comp in mod.gen:
+                where = (f"'{comp}' is a generate block of {mod.name}" if comp == mod.gen[comp] else
+                         f"'{comp}' is inside the generate block '{mod.gen[comp]}' of {mod.name}")
+                return Resolution(q, False, "unresolved", q, notes=[
+                    f"{where}; generate blocks are not "
+                    "elaborated by this index, so names in them are refused rather than guessed (probe a register outside "
+                    "the block, or one it drives through a port)"])
+            nxt = f"{path}.{comp}" if path else comp
+            if nxt not in self.insts:
+                break
+            path = nxt
+        if "." not in q:
+            leaf = parts[-1]
+            homes = [p for p, (mod, _, _, _) in self.insts.items() if leaf in mod.gen]
+            if homes and not any(leaf in mod.signals for mod, _, _, _ in self.insts.values()):
+                mod = self.insts[homes[0]][0]
+                return Resolution(q, False, "unresolved", q, notes=[
+                    f"'{leaf}' is only declared inside the generate block '{mod.gen[leaf]}' of {mod.name}; generate "
+                    "blocks are not elaborated, so it is refused rather than guessed"])
+        return None
 
     def _alias_rtl(self, pins: str) -> str | None:
         m = re.fullmatch(r"(.*?)([A-Za-z_]\w*)_reg((?:\[\d+\])?)(?:\[\*\])?/Q", pins)

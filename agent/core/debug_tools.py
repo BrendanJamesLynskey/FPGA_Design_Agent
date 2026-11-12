@@ -56,7 +56,7 @@ def _capture_file(s: Session, path: str) -> Path:
 
 
 @tool("debug_plan", "Plan a logic-analyser capture on the board (vendor ILA, Basic licence tier: one clock domain, at most "
-                    "5 probe ports). Give the request as structured intent; signal names are resolved against the RTL "
+                    "5 probe ports, one comparator per port, so each OR term needs its own port; the planner arranges this). Give the request as structured intent; signal names are resolved against the RTL "
                     "(registers by hierarchical name, e.g. u_dut.count, or a probes.yaml name); unknown names come back as "
                     "errors with suggestions. Returns the plan in plain words and its probeset id. Builds nothing.",
       {"intent": INTENT_PROPS, "request": {"type": "string", "description": "the request in words, kept for the record"}},
@@ -80,7 +80,9 @@ def debug_plan(s: Session, intent: dict, request: str | None = None) -> dict:
                        "answers in plain words from the capture. build=true makes the debug build first if none holds the "
                        "probes (a Vivado run of several minutes). Needs stage configuration-and-debug, power_ok and "
                        "hardware budget. Returns the answer, facts and the capture path, not raw samples.",
-      {"probeset": {"type": "string"}, "build": {"type": "boolean"}}, required=["probeset"], hardware=True)
+      {"probeset": {"type": "string", "description": "the 12-character id debug_plan returned"},
+       "build": {"type": "boolean", "description": "make the debug build first if none holds the probes (a Vivado run)"}},
+      required=["probeset"], hardware=True)
 def debug_capture(s: Session, probeset: str, build: bool = False) -> dict:
     from flow import hw
     from debug_core import build as B
@@ -137,7 +139,10 @@ def debug_capture(s: Session, probeset: str, build: bool = False) -> dict:
                      "{channel, cmp, value, from_cycle}; count {channel, cmp, value}; changes {channel, limit}; runs "
                      "{channel, value}; summary; diverge (with other: a second capture of the same probes, e.g. simulation) "
                      "-> the first cycle where they differ. Cycles are relative to the trigger (cycle 0).",
-      {"capture": {"type": "string"}, "query": {"type": "object"}, "other": {"type": "string"}}, required=["capture", "query"])
+      {"capture": {"type": "string", "description": "the capture path under build/debug/ that debug_capture returned"},
+       "query": {"type": "object"},
+       "other": {"type": "string", "description": "a second capture of the same probes, for op diverge"}},
+      required=["capture", "query"])
 def debug_query(s: Session, capture: str, query: dict, other: str | None = None) -> dict:
     from debug_core import answer as A
     from debug_core import capture as C

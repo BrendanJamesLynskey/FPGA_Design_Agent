@@ -11,7 +11,7 @@
    "prompt_tokens": 1478,
    "completion_tokens": 233
   },
-  "answer": "Triggered on win_wr == 1 AND addr == 0x80: cycle 0 is sample 16 of 1024 at 100 MHz (the capture holds cycles -16 to 1007; this answer covers cycles -16 to 32 as asked). At cycle 0: win_wr = 1, addr = 0x80, count = 0x0003.\nwin_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).\naddr held 0x80 for the whole window (cycles -16 to 32).\ncount was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.\nRead back over the shell after the capture: COUNT = 0x00001234.\nOperating conditions (XADC over JTAG) armed: die 24.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; done: die 24.9 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside ROC.",
+  "answer": "Triggered on win_wr == 1 AND addr == 0x80. Cycle 0 is sample 16 of 1024 at 100 MHz. The capture holds cycles -16 to 1007; this answer covers cycles -16 to 32, as asked.\nAt cycle 0: win_wr = 1, addr = 0x80, count = 0x0003.\nwin_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).\naddr held 0x80 for the whole window (cycles -16 to 32).\ncount was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.\nRead back over the shell after the capture: COUNT = 0x00001234.\nSupply and temperature from the chip's own monitor (XADC) when armed: die 24.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; after upload: die 24.9 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside the recommended operating conditions (ROC: the data sheet's supply and temperature ranges).",
   "check": {
    "want": {
     "count_at_trigger": 3,
@@ -56,7 +56,7 @@
    "prompt_tokens": 1464,
    "completion_tokens": 385
   },
-  "answer": "Triggered on phase == 0x00: cycle 0 is sample 0 of 1024 at 100 MHz (window cycles 0 to 1023). At cycle 0: phase = 0x00, led = 0x0000.\nphase was 0x00 at the trigger and changed 255 times (256 values, 0x00 to 0xFF); first changes: cycle 4: 0x00 -> 0x01, cycle 8: 0x01 -> 0x02, cycle 12: 0x02 -> 0x03.\nled was 0x0000 from cycle 0 to 0, then 0x8421 from cycle 1 to 256, then 0x0000 from cycle 257 to 1023.\nRead back over the shell after the capture: DUTY = 0x00000040, COUNT = 0x00008421.\nOperating conditions (XADC over JTAG) armed: die 24.9 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; done: die 24.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside ROC.",
+  "answer": "Triggered on phase == 0x00. Cycle 0 is sample 0 of 1024 at 100 MHz. The window is cycles 0 to 1023.\nAt cycle 0: phase = 0x00, led = 0x0000.\nphase was 0x00 at the trigger and changed 255 times (256 values, 0x00 to 0xFF); first changes: cycle 4: 0x00 -> 0x01, cycle 8: 0x01 -> 0x02, cycle 12: 0x02 -> 0x03.\nled was 0x0000 from cycle 0 to 0, then 0x8421 from cycle 1 to 256, then 0x0000 from cycle 257 to 1023.\nRead back over the shell after the capture: DUTY = 0x00000040, COUNT = 0x00008421.\nSupply and temperature from the chip's own monitor (XADC) when armed: die 24.9 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; after upload: die 24.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside the recommended operating conditions (ROC: the data sheet's supply and temperature ranges).",
   "check": {
    "want": {
     "phase_at_trigger": 0,
@@ -93,7 +93,7 @@
    "prompt_tokens": 1458,
    "completion_tokens": 249
   },
-  "answer": "Triggered on rx_valid rises AND rx_data == 0xA5: cycle 0 is sample 900 of 1024 at 100 MHz (the capture holds cycles -900 to 123; this answer covers cycles -900 to 100 as asked). At cycle 0: rx_valid = 1, rx_data = 0xA5, uart_rx_pin = 1.\nrx_data was 0x4A from cycle -900 to -869, then 0xA5 from cycle -868 to 100.\nrx_valid was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 1001 samples high).\nuart_rx_pin held 1 for the whole window (cycles -900 to 100).\nOperating conditions (XADC over JTAG) armed: die 25.6 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; done: die 25.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside ROC.",
+  "answer": "Triggered on rx_valid rises AND rx_data == 0xA5. Cycle 0 is sample 900 of 1024 at 100 MHz. The capture holds cycles -900 to 123; this answer covers cycles -900 to 100, as asked.\nAt cycle 0: rx_valid = 1, rx_data = 0xA5, uart_rx_pin = 1.\nrx_data was 0x4A from cycle -900 to -869, then 0xA5 from cycle -868 to 100.\nrx_valid was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 1001 samples high).\nuart_rx_pin held 1 for the whole window (cycles -900 to 100).\nSupply and temperature from the chip's own monitor (XADC) when armed: die 25.6 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; after upload: die 25.7 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside the recommended operating conditions (ROC: the data sheet's supply and temperature ranges).",
   "check": {
    "want": {
     "rx_data_at_trigger": 165,
@@ -126,7 +126,7 @@
    "prompt_tokens": 1446,
    "completion_tokens": 184
   },
-  "answer": "Triggered on win_wr rises: cycle 0 is sample 4 of 1024 at 100 MHz (the capture holds cycles -4 to 1019; this answer covers cycles -4 to 8 as asked). At cycle 0: win_wr = 1, count = 0x0000.\nwin_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 13 samples high).\ncount was 0x0000 from cycle -4 to 0, then 0x0042 from cycle 1 to 8.\nRead back over the shell after the capture: COUNT = 0x00000042.\nOperating conditions (XADC over JTAG) armed: die 25.8 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; done: die 25.8 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside ROC.",
+  "answer": "Triggered on win_wr rises. Cycle 0 is sample 4 of 1024 at 100 MHz. The capture holds cycles -4 to 1019; this answer covers cycles -4 to 8, as asked.\nAt cycle 0: win_wr = 1, count = 0x0000.\nwin_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 13 samples high).\ncount was 0x0000 from cycle -4 to 0, then 0x0042 from cycle 1 to 8.\nRead back over the shell after the capture: COUNT = 0x00000042.\nSupply and temperature from the chip's own monitor (XADC) when armed: die 25.8 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; after upload: die 25.8 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside the recommended operating conditions (ROC: the data sheet's supply and temperature ranges).",
   "check": {
    "want": {
     "count_after": 66,
@@ -159,7 +159,7 @@
    "prompt_tokens": 1454,
    "completion_tokens": 186
   },
-  "answer": "Triggered on win_wr rises OR press_clear rises: cycle 0 is sample 8 of 1024 at 100 MHz (the capture holds cycles -8 to 1015; this answer covers cycles -8 to 64 as asked). At cycle 0: win_wr = 1, press_clear = 0, count = 0x0000, duty = 0x40.\nwin_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 73 samples high).\npress_clear held 0 for the whole window (cycles -8 to 64).\ncount held 0x0000 for the whole window (cycles -8 to 64).\nduty was 0x40 from cycle -8 to 0, then 0x22 from cycle 1 to 64.\nOperating conditions (XADC over JTAG) armed: die 26.5 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; done: die 26.5 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside ROC.",
+  "answer": "Triggered on win_wr rises OR press_clear rises. Cycle 0 is sample 8 of 1024 at 100 MHz. The capture holds cycles -8 to 1015; this answer covers cycles -8 to 64, as asked.\nAt cycle 0: win_wr = 1, press_clear = 0, count = 0x0000, duty = 0x40.\nwin_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 73 samples high).\npress_clear held 0 for the whole window (cycles -8 to 64).\ncount held 0x0000 for the whole window (cycles -8 to 64).\nduty was 0x40 from cycle -8 to 0, then 0x22 from cycle 1 to 64.\nSupply and temperature from the chip's own monitor (XADC) when armed: die 26.5 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; after upload: die 26.5 C, VCCINT 1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; inside the recommended operating conditions (ROC: the data sheet's supply and temperature ranges).",
   "check": {
    "want": {
     "trigger_holds": true,

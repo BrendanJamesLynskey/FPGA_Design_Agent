@@ -95,10 +95,12 @@
     "type": "object",
     "properties": {
      "probeset": {
-      "type": "string"
+      "type": "string",
+      "description": "the 12-character id debug_plan returned"
      },
      "build": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "make the debug build first if none holds the probes (a Vivado run)"
      }
     },
     "required": [
@@ -110,7 +112,7 @@
   },
   {
    "name": "debug_plan",
-   "description": "Plan a logic-analyser capture on the board (vendor ILA, Basic licence tier: one clock domain, at most 5 probe ports). Give the request as structured intent; signal names are resolved against the RTL (registers by hierarchical name, e.g. u_dut.count, or a probes.yaml name); unknown names come back as errors with suggestions. Returns the plan in plain words and its probeset id. Builds nothing.",
+   "description": "Plan a logic-analyser capture on the board (vendor ILA, Basic licence tier: one clock domain, at most 5 probe ports, one comparator per port, so each OR term needs its own port; the planner arranges this). Give the request as structured intent; signal names are resolved against the RTL (registers by hierarchical name, e.g. u_dut.count, or a probes.yaml name); unknown names come back as errors with suggestions. Returns the plan in plain words and its probeset id. Builds nothing.",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -137,13 +139,15 @@
     "type": "object",
     "properties": {
      "capture": {
-      "type": "string"
+      "type": "string",
+      "description": "the capture path under build/debug/ that debug_capture returned"
      },
      "query": {
       "type": "object"
      },
      "other": {
-      "type": "string"
+      "type": "string",
+      "description": "a second capture of the same probes, for op diverge"
      }
     },
     "required": [
