@@ -111,7 +111,7 @@ svg .warn { stroke: var(--warn); fill: none; }
 
 
 .hero { padding: 40px 0 8px; }
-.hero h1 { font-size: clamp(1.9rem, 1.1rem + 3.4vw, 3.2rem); letter-spacing: -.02em; margin: .1em 0 .35em; max-width: 24ch; }
+.hero h1 { font-size: clamp(1.9rem, 1.1rem + 3.4vw, 3.2rem); letter-spacing: -.02em; margin: .1em 0 .35em; max-width: 30ch; }
 .hero .lede { color: var(--ink); }
 .status { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 20px 0 8px; }
 .status .fact .n { font-size: 1.7rem; }
@@ -397,3 +397,11 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 .visits .vb.rep { border-color: var(--warn); background: repeating-linear-gradient(135deg, transparent 0 4px, var(--rule) 4px 5px); }
 .visits .vb.past { border-color: var(--ink); color: var(--ink); }
 .visits .vb.now { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* phones: the page links become one row that scrolls sideways, so the first screen starts with the page */
+@media (max-width: 640px) {
+  .bar .wrap { flex-wrap: nowrap; gap: 0 8px; }
+  .bar nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; min-width: 0; flex: 1 1 auto; }
+  .bar nav a { white-space: nowrap; }
+  .brand { margin-right: 4px; white-space: nowrap; }
+}

@@ -120,7 +120,7 @@ svg .warn { stroke: var(--warn); fill: none; }
 
 
 .hero { padding: 40px 0 8px; }
-.hero h1 { font-size: clamp(1.9rem, 1.1rem + 3.4vw, 3.2rem); letter-spacing: -.02em; margin: .1em 0 .35em; max-width: 24ch; }
+.hero h1 { font-size: clamp(1.9rem, 1.1rem + 3.4vw, 3.2rem); letter-spacing: -.02em; margin: .1em 0 .35em; max-width: 30ch; }
 .hero .lede { color: var(--ink); }
 .status { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 20px 0 8px; }
 .status .fact .n { font-size: 1.7rem; }
@@ -406,6 +406,14 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 .visits .vb.rep { border-color: var(--warn); background: repeating-linear-gradient(135deg, transparent 0 4px, var(--rule) 4px 5px); }
 .visits .vb.past { border-color: var(--ink); color: var(--ink); }
 .visits .vb.now { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* phones: the page links become one row that scrolls sideways, so the first screen starts with the page */
+@media (max-width: 640px) {
+  .bar .wrap { flex-wrap: nowrap; gap: 0 8px; }
+  .bar nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; min-width: 0; flex: 1 1 auto; }
+  .bar nav a { white-space: nowrap; }
+  .brand { margin-right: 4px; white-space: nowrap; }
+}
 </style>
 </head>
 <body>
@@ -414,7 +422,7 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 <main id="main" class="wrap">
 <h1>Showcase</h1>
 <p class="lede">Projects built with the agent and run on the board. Each page leads with one measured result, replays the recorded data in its opening graphic, and then tells the story in four parts: the problem, how it works, the results and what the agent did. Run records, operating conditions and tool versions sit in a drawer, and every page ends with what was not measured.</p>
-<h2 id="in-progress">Being built now</h2><p>These have no measured result yet, so they show no numbers. Each gets its own page, in the format below, when its first board result is committed.</p><ul class="sc-grid"><li class="sc-card sc-in_progress" id="sc-nl_debug"><div class="vh"><h3>Debugging in plain English</h3> <span class="tag run">In progress</span></div><p class="small muted">Digilent Nexys A7-100T (xc7a100tcsg324-1)</p><p>Ask for a capture in words, such as &quot;show me the UART byte when the FIFO overflows&quot;: the agent picks the signals by their RTL names, sets the trigger, rebuilds with a logic analyser, captures on the board and answers in plain words beside the waveform.</p><p class="small"><span class="muted">What it will show:</span> A real capture from the board answering a question asked in words, the waveform it rests on, and the capture handed back to the agent&#x27;s repair loop.</p></li><li class="sc-card sc-in_progress" id="sc-axi_transactor"><div class="vh"><h3>An on-chip AXI traffic generator and protocol checker</h3> <span class="tag run">In progress</span></div><p class="small muted">Digilent Nexys A7-100T (xc7a100tcsg324-1)</p><p>A block that sits on the chip beside the IP under test, drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time, and checks every protocol rule in hardware while the traffic runs.</p><p class="small"><span class="muted">What it will show:</span> The checker catching a bug seeded in a peripheral on the board, with the same traffic run in simulation so the first point where the two differ marks the bug.</p></li></ul>
+<h2 id="in-progress">Being built now</h2><p>These have no measured result yet, so they show no numbers. Each gets its own page when its first board result is committed: the measured result in one line, a replay of the recorded data, the story in four parts, the evidence in a drawer and what was not measured.</p><ul class="sc-grid"><li class="sc-card sc-in_progress" id="sc-nl_debug"><div class="vh"><h3>Debugging in plain English</h3> <span class="tag run">In progress</span></div><p class="small muted">Digilent Nexys A7-100T (xc7a100tcsg324-1)</p><p>Ask for a capture in words, such as &quot;show me the UART byte when the FIFO overflows&quot;: the agent picks the signals by their RTL names, sets the trigger, rebuilds with a logic analyser, captures on the board and answers in plain words beside the waveform.</p><p class="small"><span class="muted">What it will show:</span> A real capture from the board answering a question asked in words, the waveform it rests on, and the capture handed back to the agent&#x27;s repair loop.</p></li><li class="sc-card sc-in_progress" id="sc-axi_transactor"><div class="vh"><h3>An on-chip AXI traffic generator and protocol checker</h3> <span class="tag run">In progress</span></div><p class="small muted">Digilent Nexys A7-100T (xc7a100tcsg324-1)</p><p>A block that sits on the chip beside the IP under test, drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time, and checks every protocol rule in hardware while the traffic runs.</p><p class="small"><span class="muted">What it will show:</span> The checker catching a bug seeded in a peripheral on the board, with the same traffic run in simulation so the first point where the two differ marks the bug.</p></li></ul>
 <details class="more"><summary>Planned next</summary><ul class="sc-plan"><li><b>Margin of one particular chip.</b> How far one chip on the bench runs past its signed-off clock at a measured temperature and voltage, found by stepping the clock at run time; valid for that device only.</li><li><b>A mock low-latency trading path.</b> Our own Ethernet processing parses a packet of a made-up market-data format while it is still arriving, a rule set at run time fires, and a reply leaves, with the time from first bit in to first bit out measured as a full distribution. Everything is a mock: no real exchange, market or broker.</li><li><b>A load stepper for power integrity.</b> Banks of logic switched on and off together to step the chip&#x27;s supply current, with the rail disturbance measured on an oscilloscope.</li></ul></details>
 <p class="next">Next: <a href="problems.html">Problems</a> has every benchmark task, with its spec, hidden tests and reference design.</p>
 
