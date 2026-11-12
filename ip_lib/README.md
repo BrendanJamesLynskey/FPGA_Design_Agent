@@ -20,6 +20,9 @@ read API are in [docs/ip_variants.md](../docs/ip_variants.md).
 | [fir](fir/README.md) | `dsp_bram`, `dist_ram`, `serial`, `lut_mult`: folded DSP MACs with block RAM or LUT RAM, one time-shared DSP MAC, a fully parallel LUT-multiplier form | all four bit-exact against `fir/model.py` at four parameter points, measured latency and II equal the declared ones, a differential test across the variants, an adversarial bench (coefficient beats between samples, reloads with results in flight, resets mid-stream), ten seeded faults |
 | [dds_awg](dds_awg/README.md) | `bram`, `lut`: the sine table in block RAM or in LUTs | the existing tests at both variants |
 | [adc_histogram](adc_histogram/README.md) | `dist_ram`, `bram`: the bins in LUT RAM, or in two block RAM copies | the existing tests at both variants |
+| [eth_mac_rgmii](eth_mac_rgmii/README.md) | `bram`, `lutram` (`RX_RAM`): the store-and-forward buffer | 0.2's filter and statistics tests at both; jumbo at `bram` |
+| [icmp_echo](icmp_echo/README.md) | `bram`, `lutram` (`RAM`): the frame buffer | the echo tests at both |
+| [ipv4_udp_tx](ipv4_udp_tx/README.md) | `bram`, `lutram` (`RAM`): the payload buffer | the transmit tests at both |
 
 Run: `python3 -m pytest ip_lib/fir/tb/test_fir_rtl.py flow/tests/test_63a_ipvariants.py` (Icarus Verilog 12, cocotb
 2.0.1); faults: `python3 hil/ip_faults.py --blocks fir`.
