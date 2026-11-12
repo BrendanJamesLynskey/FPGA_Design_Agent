@@ -8,13 +8,13 @@ whole programme.
 
 ## The matrix
 
-`flow/trace.py` builds, for one design, requirement -> design elements -> test or proof -> result -> coverage, and
+`flow/traceability.py` builds, for one design, requirement -> design elements -> test or proof -> result -> coverage, and
 writes `trace.json` (schema `fpga-design-agent/trace/v1`) and a Markdown table. The agent writes both to
 `build/trace/` at stage 2 and at every later review, and the review index (`build/review/review_index.html`) shows the
 matrix with its gates.
 
 ```
-python3 flow/trace.py designs/t1_dimmer_counter --runs build/verif/verilator --also build/verif/icarus \
+python3 flow/traceability.py designs/t1_dimmer_counter --runs build/verif/verilator --also build/verif/icarus \
     --formal build/verif/formal --gates designs/t1_dimmer_counter/build/base/gates.json \
     --hw results/f0b/t1_dimmer_counter_bringup.json --json build/trace/t1.json --md build/trace/t1.md
 ```

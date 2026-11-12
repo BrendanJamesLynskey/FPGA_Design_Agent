@@ -2,7 +2,7 @@
 """Requirements traceability matrix and its gates (brief 53): requirement -> design element -> test or proof -> result
 -> coverage, with DO-254-style evidence checks. It is evidence of a process, not a claim of compliance with any standard.
 
-    python3 flow/trace.py designs/t1_dimmer_counter --runs build/verif/verilator [--also build/verif/icarus]
+    python3 flow/traceability.py designs/t1_dimmer_counter --runs build/verif/verilator [--also build/verif/icarus]
         [--coverage build/verif/verilator] [--formal build/verif/formal] [--gates build/base/gates.json]
         [--hw results/f0b/t1_dimmer_counter_bringup.json] [--baseline old/trace.json] [--defer hardware,analysis]
         [--json build/trace/trace.json] [--md build/trace/trace.md]
@@ -607,7 +607,7 @@ def _cell(x: Any) -> str:
 def to_markdown(t: dict) -> str:
     """The matrix as Markdown: one row per requirement and method, then the artefacts, holes, waivers and gates."""
     out = [f"# Traceability matrix: {t['design']}", "",
-           f"Generated {t['generated']} by `flow/trace.py` ({t['schema']}). {t['note']}", ""]
+           f"Generated {t['generated']} by `flow/traceability.py` ({t['schema']}). {t['note']}", ""]
     inp = t.get("inputs") or {}
     fl = inp.get("flow") or {}
     out += [f"Inputs: {inp.get('source')} record; flow commit `{fl.get('commit')}`{' (dirty tree)' if fl.get('dirty') else ''}; "

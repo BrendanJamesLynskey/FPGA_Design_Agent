@@ -2,23 +2,24 @@
 
     from flow.req import req
 
-    @cocotb.test()
     @req("REQ-03")                       # this test verifies REQ-03 (several ids allowed)
+    @cocotb.test()
     async def pwm_on_time_matches_duty(dut): ...
 
-    @cocotb.test()
     @req(robustness="malformed frames: the spec says nothing, the shell must not hang")
+    @cocotb.test()
     async def garbage_frames(dut): ...
 
 The decorator only records the ids on the function; it never changes what the test does. The traceability tool
-(flow/trace.py) reads the tags statically from the source, so a comment does the same job where an import is not
+(flow/traceability.py) reads the tags statically from the source, so a comment does the same job where an import is not
 wanted:
 
     # req: REQ-03
     @cocotb.test()
     async def pwm_on_time_matches_duty(dut): ...
 
-A test that verifies no requirement is marked ``robustness`` (behaviour outside the spec: bad inputs, stress) or
+Put ``@req`` above ``@cocotb.test()``: flow/verif_gates.py finds a test by ``@cocotb.test(...)`` directly above its
+``async def``. A test that verifies no requirement is marked ``robustness`` (behaviour outside the spec: bad inputs, stress) or
 ``structural`` (it exists to reach code or coverage, for example the coverage dump), each with a reason.
 """
 

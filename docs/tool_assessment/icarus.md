@@ -6,7 +6,7 @@
 simulator) and the cross-check run of every bench.
 
 **How its output is checked independently.**
-- The same bench runs on Verilator; a test must pass on both (`flow/trace.py --also`, `flow/verif_gates.py --also`).
+- The same bench runs on Verilator; a test must pass on both (`flow/traceability.py --also`, `flow/verif_gates.py --also`).
   A disagreement between the two is a finding (a race in the bench, an X the two-state simulator hides, or a tool
   defect), never averaged away.
 - The tests themselves are checked by mutation testing (`flow/mutate.py`): changes to the RTL must make a test fail.

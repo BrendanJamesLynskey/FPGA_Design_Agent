@@ -1,4 +1,4 @@
-"""Brief 53: the traceability matrix and its gates (flow/trace.py), the change record (flow/change_record.py), the
+"""Brief 53: the traceability matrix and its gates (flow/traceability.py), the change record (flow/change_record.py), the
 migration helper (flow/trace_tag.py) and the HDL coding standard (flow/lint_ruleset.py).
 
 The fixture design (fixtures/trace53/mini) is copied to a temporary directory and given run records written here, so
@@ -16,7 +16,7 @@ import yaml
 
 from flow import change_record as cr
 from flow import lint_ruleset as lr
-from flow import trace as tr
+from flow import traceability as tr
 from flow import trace_tag as tt
 
 HERE = Path(__file__).parent

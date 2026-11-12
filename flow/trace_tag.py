@@ -17,10 +17,10 @@ import sys
 from pathlib import Path
 
 try:
-    from flow import trace as tr
+    from flow import traceability as tr
     from flow import verif_gates as vg
 except ImportError:
-    import trace as tr                                  # type: ignore[no-redef]
+    import traceability as tr                                  # type: ignore[no-redef]
     import verif_gates as vg                            # type: ignore[no-redef]
 
 

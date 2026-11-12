@@ -35,9 +35,9 @@ from typing import Any
 import yaml
 
 try:
-    from flow.trace import match_item
+    from flow.traceability import match_item
 except ImportError:                                     # run as a script
-    from trace import match_item                        # type: ignore[no-redef]
+    from traceability import match_item                        # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 RULES_FILE = Path(__file__).with_name("hdl_rules.yaml")

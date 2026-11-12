@@ -9,7 +9,7 @@ coding standard.
 
 **How its output is checked independently.**
 - Simulation results are cross-checked on Icarus (the same bench must pass on both).
-- Coverage numbers are read by `flow/verif_gates.py` and `flow/trace.py`; CI tests the readers on a committed
+- Coverage numbers are read by `flow/verif_gates.py` and `flow/traceability.py`; CI tests the readers on a committed
   coverage database (`flow/tests/data/ref_t1_sim`) and on generated ones with known holes (`flow/tests/test_53_trace.py`).
 - Assertions are checked for vacuity by cover properties on the same conditions, and by formal cover tasks where a
   formal job exists.

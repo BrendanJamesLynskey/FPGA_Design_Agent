@@ -201,7 +201,7 @@ PROMPTS = {
 PROMPTS["clarify"] += (" Each requirement is ONE checkable statement: no ';' or ', and' joining two statements (split them, "
                        "each with its own id), and no vague word (should, fast, robust, appropriate, support, etc): state a "
                        "value, a count of clocks or an exact behaviour.")
-PROMPTS["tests"] += ("\nTag every check with the spec.yaml requirement ids it verifies (brief 53, flow/trace.py): a "
+PROMPTS["tests"] += ("\nTag every check with the spec.yaml requirement ids it verifies (brief 53, flow/traceability.py): a "
                      "`# req: REQ-01, REQ-02` comment directly above each @cocotb.test() (or @req(\"REQ-01\") from flow.req, "
                      "above @cocotb.test()), `// req: REQ-01` on the line of each `V_*(...)` assertion or cover, and a "
                      "`# req: REQ-01` line in each .sby job. A test that verifies no requirement says "
@@ -246,10 +246,10 @@ SELF_CHECK_PASSES = 2          # 07a2 fix 7: repair passes the tests role gets i
 
 
 def trace_record(design: Path, root: Path) -> dict:
-    """Brief 53: build the traceability matrix (flow/trace.py) from the evidence that exists now and write
+    """Brief 53: build the traceability matrix (flow/traceability.py) from the evidence that exists now and write
     build/trace/trace.json and trace.md (the review index shows it). Recorded, not a stage-exit gate; evidence a later
     stage makes (analysis, hardware, coverage) is deferred while its file is absent. Never raises."""
-    from flow import trace as tr
+    from flow import traceability as tr
     b = design / "build"
     gates, hw = b / "base" / "gates.json", b / "bringup" / f"{design.name}_bringup.json"
     runs = b / "verif" / "sim"
@@ -279,7 +279,7 @@ def selfcheck_tests_role(rt: Runtime, repair_fn: Callable[[list[str]], Any], pas
         try:
             left = static_check(rt.design, rt.cfg.verif_level)
             if not left and rt.cfg.verif_level in ("V2", "V3"):   # brief 53: every test and property cites a requirement
-                from flow.trace import static_problems
+                from flow.traceability import static_problems
                 left = static_problems(rt.design)
         except Exception as e:                                   # a self-check must never stop the run
             left = []

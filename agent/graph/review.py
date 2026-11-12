@@ -400,10 +400,10 @@ def _page(title: str, body: str) -> str:
 
 
 def trace_matrix_html(t: dict | None) -> str:
-    """Brief 53: the traceability matrix (build/trace/trace.json, flow/trace.py): requirement -> design elements ->
+    """Brief 53: the traceability matrix (build/trace/trace.json, flow/traceability.py): requirement -> design elements ->
     method -> verifications -> result, then the gates with the ids each is missing."""
     if not t or "requirements" not in t:
-        return '<p class="mut">No traceability matrix yet (flow/trace.py writes build/trace/trace.json at stage 2).</p>'
+        return '<p class="mut">No traceability matrix yet (flow/traceability.py writes build/trace/trace.json at stage 2).</p>'
     res = lambda r: chip(True if r == "pass" else None if r in ("pending",) else False)
     rows = []
     for r in t["requirements"]:

@@ -1,7 +1,7 @@
 # Our gates and checkers
 
 **Kind.** Verification tools: `flow/gates.py` (Vivado reports), `flow/verif_gates.py` (V0-V3 and sign-off),
-`flow/trace.py` (traceability), `flow/standards_check.py` (design standards), `flow/lint_ruleset.py` (FDA-HDL),
+`flow/traceability.py` (traceability), `flow/standards_check.py` (design standards), `flow/lint_ruleset.py` (FDA-HDL),
 `flow/cdc_structure.py`, `flow/fsm_coverage.py`, `flow/exceptions_check.py`. They decide pass or fail, so an error in
 one hides a fault.
 
