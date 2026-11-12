@@ -58,6 +58,18 @@ from the board run's timestamps; the simulation of the XPM FIFO is a model, not 
   measured.
 - **Mock venue**: `host/mock_venue.py` makes the stimulus in simulation and is the PC side of the bench run.
 
-## Build
+## Build (Vivado 2026.1, xck26-sfvc784-2LV-c)
 
-`flow/run_vivado.sh designs/b58a_trigger` (xck26-sfvc784-2LV-c, Vivado 2026.1): results in `results/b58a`.
+`flow/run_vivado.sh designs/b58a_trigger`; records in `results/b58a/build` (`summary.json`).
+
+| | |
+|---|---|
+| Timing after routing | all constraints met: WNS +0.803 ns, WHS +0.010 ns, at 125 MHz with the RGMII I/O constrained |
+| Resources | 6,980 LUTs (5.96 %), 10,191 registers, 6.5 block RAM tiles, 1 MMCM, 7 global buffers |
+| Power estimate | 0.495 W on chip, junction 43.7 C in still air with no heat sink (the pessimistic bound; the SOM's fansink is not modelled) |
+| Gates | all pass except `exceptions_clean`: Vivado flags (TIMING-47) the false paths that pair each RGMII DDR edge with its capture edge, the standard pattern for centre-aligned DDR I/O |
+| Build | 1,321 s, peak 4.3 GB (one 6 GB-capped Vivado, 2 threads) |
+
+The RGMII receive timing assumes the PHY's internal RX delay is on and RGMII v2.0's 1.2 ns set-up and hold; both
+are owner questions for the board run. After placement the hold slack was negative on the RGMII inputs in the
+second build and the router repaired it; in this build placement and routing both met hold.

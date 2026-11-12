@@ -13,5 +13,5 @@ Clock counts are 125 MHz clocks (8 ns).
 | `mac_rgmii_faults.json` | the 10 seeded faults of `ip_lib/eth_mac_rgmii`, each caught | `flow/net/faults.py --only ...` |
 | `formal.json` | SymbiYosys results: interlocks (bmc, k-induction prove, cover), mac_rx and mac_tx (bmc, cover) | `designs/b58a_trigger/tests/test_b58a_formal.py` |
 | `nl_rules.json` | the natural-language rule fixtures checked offline (which meant what was asked, which were refused) | `python3 -m designs.b58a_trigger.host.nl_rule --check` |
-| `build/` | the KR260 build: timing summary, utilisation, power, gates, run record (time, peak memory) | `flow/run_vivado.sh designs/b58a_trigger` |
+| `build/` | the KR260 build: `summary.json` (timing, resources, power, gates), the timing summary, utilisation, power, CDC and methodology reports, gates, the run record (time, peak memory) | `flow/run_vivado.sh designs/b58a_trigger` |
 | `showcase_sim.json` | the page data in the graphics kit's shapes, from the files above (simulation only) | `python3 results/b58a/export.py` |
