@@ -1,0 +1,172 @@
+{
+ "schema": "fda-debug-plan/1",
+ "design": "designs/t1_dimmer_counter",
+ "request": "With COUNT set to 0x8421 and DUTY set to 0x40, record led and phase for one whole PWM period starting when phase wraps to 0: no cycles before the trigger, 1023 after. Then read DUTY and COUNT back.",
+ "backend": "vendor_ila",
+ "clock": {
+  "domain": "CLK100MHZ",
+  "net": "CLK100MHZ_IBUF_BUFG",
+  "mhz": 100.0
+ },
+ "probes": [
+  {
+   "label": "phase",
+   "path": "u_dut.phase",
+   "width": 8,
+   "pins": "u_dut/phase_reg[*]/Q",
+   "kind": "register",
+   "requested_as": "phase",
+   "clock": "CLK100MHZ",
+   "role": "trigger",
+   "notes": [
+    "the PWM phase counter; LED[i] is lit on the clock after phase < duty while count[i] is 1"
+   ],
+   "group": "data"
+  },
+  {
+   "label": "led",
+   "path": "u_dut.led",
+   "width": 16,
+   "pins": "u_dut/led_reg[*]/Q",
+   "kind": "register",
+   "requested_as": "led",
+   "clock": "CLK100MHZ",
+   "role": "data",
+   "notes": [
+    "the LED outputs (PWM); added in F0B so the ILA can check duty against level"
+   ],
+   "group": "data"
+  }
+ ],
+ "trigger": {
+  "combine": "AND",
+  "conditions": [
+   {
+    "probe": "phase",
+    "op": "==",
+    "value": "0",
+    "pattern": "00000000",
+    "text": "phase == 0x00"
+   }
+  ]
+ },
+ "window": {
+  "pre": 0,
+  "post": 1023,
+  "depth": 1024,
+  "position": 0,
+  "requested": {
+   "pre": 0,
+   "post": 1023
+  }
+ },
+ "ports": [
+  {
+   "port": 0,
+   "group": "data",
+   "width": 24,
+   "slices": [
+    {
+     "label": "phase",
+     "offset": 0,
+     "width": 8
+    },
+    {
+     "label": "led",
+     "offset": 8,
+     "width": 16
+    }
+   ]
+  }
+ ],
+ "setup": [
+  {
+   "op": "write",
+   "register": "COUNT",
+   "value": 33825,
+   "address": 128
+  },
+  {
+   "op": "write",
+   "register": "DUTY",
+   "value": 64,
+   "address": 129
+  }
+ ],
+ "stimulus": [],
+ "readback": [
+  {
+   "op": "read",
+   "register": "DUTY",
+   "address": 129
+  },
+  {
+   "op": "read",
+   "register": "COUNT",
+   "address": 128
+  }
+ ],
+ "fit": {
+  "ok": true,
+  "max_ports": 5,
+  "bram_budget": 32,
+  "ports_used": 1,
+  "total_bits": 24,
+  "bram36_estimate": 1
+ },
+ "errors": [],
+ "warnings": [],
+ "question": "How do led and phase behave over one PWM period after phase wraps to 0 with COUNT set to 0x8421 and DUTY set to 0x40?",
+ "unclear": [],
+ "probeset": "a6a9590e41ad",
+ "intent": {
+  "probes": [
+   "led"
+  ],
+  "trigger": {
+   "combine": "AND",
+   "conditions": [
+    {
+     "signal": "phase",
+     "op": "==",
+     "value": "0"
+    }
+   ]
+  },
+  "pre": 0,
+  "post": 1023,
+  "clock": null,
+  "setup": [
+   {
+    "op": "write",
+    "register": "COUNT",
+    "value": "0x8421"
+   },
+   {
+    "op": "write",
+    "register": "DUTY",
+    "value": "0x40"
+   }
+  ],
+  "readback": [
+   {
+    "op": "read",
+    "register": "DUTY"
+   },
+   {
+    "op": "read",
+    "register": "COUNT"
+   }
+  ],
+  "question": "How do led and phase behave over one PWM period after phase wraps to 0 with COUNT set to 0x8421 and DUTY set to 0x40?",
+  "unclear": []
+ },
+ "parse": {
+  "model": "openai/gpt-6-luna",
+  "cost": 0.000214195,
+  "prompt_tokens": 1464,
+  "completion_tokens": 385,
+  "attempts": 1,
+  "parser": "llm"
+ }
+}

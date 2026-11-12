@@ -382,6 +382,38 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 .kitsvg .kfail { fill: var(--bg); stroke: var(--warn); stroke-width: 1.5; }
 .kitsvg .kcur { fill: none; stroke: var(--accent); stroke-width: 2.5; }
 .kitsvg .kcount { font-weight: 600; }
+/* wave with stages (showcase kit): the stage strip, the progressive reveal, marks; text at least 12 units in a 360-unit plot */
+.stagestrip { list-style: none; padding: 0; margin: 0 0 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; }
+.stagestrip li { max-width: none; border: 1px solid var(--rule); padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; color: var(--ink-2); background: var(--panel); }
+.stagestrip .sn { font-weight: 600; font-size: .9rem; }
+.stagestrip .sf { font: .78rem/1.3 var(--f-mono); overflow-wrap: anywhere; }
+.stagestrip li.done { color: var(--ink); }
+.stagestrip li.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.stagedwave text { font-size: 13px; }
+.stagedwave .cursor { fill: var(--ink); opacity: .1; }
+.stagedwave .kl { fill: var(--ink); }
+.stagedwave .kv { fill: var(--ink); }
+.kitsvg .future.solid { fill: var(--panel); opacity: 1; }
+.kitsvg .kring { fill: none; stroke: var(--warn); stroke-width: 1.6; }
+.kit .kitart:has(.stagedwave) { max-width: none; }
+/* showcase pages: a wider text column; commands wrap rather than run off a phone screen */
+.sc-page p, .sc-page li, .sc-page dd, .sc-page figcaption { max-width: 74ch; }
+.sc-page pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sc-page table { border-collapse: collapse; font-size: .9rem; margin: .4em 0 1em; }
+.sc-page th, .sc-page td { border-bottom: 1px solid var(--rule); padding: 4px 10px 4px 0; text-align: left; vertical-align: top; }
+.sc-page .tbl { overflow-x: auto; max-width: 100%; }
+.sc-page details.more p { margin: .5em 0; }
+/* showcase drawers: a visible expander cue (+ closed, - open) and full-ink titles, so a closed drawer never looks empty */
+.sc-page details.more > summary { list-style: none; cursor: pointer; color: var(--ink); font-weight: 600; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.sc-page details.more > summary::-webkit-details-marker { display: none; }
+.sc-page details.more > summary::before { content: "+"; font: 700 1rem var(--f-mono); width: 1ch; }
+.sc-page details.more[open] > summary::before { content: "-"; }
+/* the run table: the first column never breaks inside a run name; on narrow screens it scrolls inside its box, with a hint */
+.sc-page td:first-child, .sc-page th:first-child { white-space: nowrap; }
+.sc-page .tblhint { display: none; font-size: .85rem; color: var(--ink-2); margin: 0 0 .3em; }
+@media (max-width: 900px) { .sc-page .tblhint { display: block; } .sc-page .tbl { border-right: 3px solid var(--rule); } }
+.sc-page caption { color: var(--ink-2); }
+
 .hres .hgrid { stroke: var(--rule); stroke-width: 1; }
 .hres .hzero { stroke: var(--ink); stroke-width: 1.5; }
 .hres .hbar30 { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 4; }
@@ -408,3 +440,16 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 .toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
 .toc a { color: var(--ink-2); }
 .chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
+/* header (brief 50A page review): up to 1000 px the page links are one row that scrolls sideways, fading at the right
+   edge as the cue; on phones that row sits under the brand and the theme button, so nothing overlaps it */
+@media (max-width: 1000px) {
+  .bar .wrap { flex-wrap: nowrap; }
+  .bar nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; flex: 1 1 auto; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); padding-right: 22px; }
+  .bar nav a { white-space: nowrap; }
+  .bar .brand { white-space: nowrap; flex: 0 0 auto; }
+}
+@media (max-width: 640px) {
+  .bar .wrap { flex-wrap: wrap; row-gap: 0; }
+  .bar .brand { flex: 1 1 auto; }
+  .bar nav { order: 3; flex: 1 0 100%; }
+}

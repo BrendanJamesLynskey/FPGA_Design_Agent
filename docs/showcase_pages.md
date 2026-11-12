@@ -81,9 +81,11 @@ Every status: `id` (lower case, digits and `_`; the page name), `title`, `one_li
 | `story.how` | how it works |
 | `story.architecture` | optional diagram: `blocks: [[id, label], ...]` left to right, `links: [[from, to, label], ...]`; a link back or across two blocks is drawn under the row |
 | `story.results` | a list of result sentences, every number a placeholder, uncertainty stated |
-| `story.agent` | what the agent did: a mapping such as `request`, `plan`, `gates` (list), `approvals` (list) |
+| `story.agent` | what the agent did: a mapping such as `request`, `plan`, `gates` (list), `approvals` (list); the page shows these four in that order (the run's order), then any other keys |
+| `story.table` | optional table read from a committed file: `{caption, source: results/..., path, columns: [[key, header], ...], link?: key holding a repo path, link_column?}`; the rows' numbers are data, so the number check accepts them |
+| `story.details` | optional short drawers after "What the agent did": `[{title, text}]`, numbers through placeholders |
 | `evidence` | a list of `{kind, label, path?, text?}`; `kind` is `record` (run records, raw captures), `conditions` (die temperature and rails against the recommended operating conditions), `versions` (tool versions, build ID), `requirements` (requirements traced). Every kind must appear at least once: write "not recorded" in `text` rather than leave one out. Paths must exist. |
-| `limits` | `not_measured`, `nulls`, `next`: lists of sentences |
+| `limits` | `not_measured`, `nulls`, `next`: lists of sentences. `nulls` are measured results with no effect (shown as "Measured, no effect found"); a request refused by design belongs in `not_measured` |
 | `try_it` | optional `{command, note}` |
 
 **What `site/export.py` refuses** (each raises `showcase.ContractError`):
@@ -132,6 +134,26 @@ it is legible at 390 px, and is capped at 640 px wide on desktop.
 | `wave` | `{unit, x: [...], signals: [{name, kind: bit\|bus\|wave\|text, v: [...], radix?, width?, lo?, hi?}], captions?: [...]}`; every `v` has `len(x)` values | a cursor steps through the capture; the values at the cursor are listed beside it |
 | `hist` | `{unit, label, bins, samples: [...], lo?, hi?, marks?: [{v, label}]}`; samples in the order recorded | the histogram accumulates the samples in order; the caption gives the count, median and largest so far |
 | `shmoo` | `{x: {label, values}, y: {label, values}, unit?, points: [{x, y, v}]}`; `v` is `"pass"`, `0` (pass) or an error count; points in the order measured | the grid fills point by point; pass is a filled cell, fail an outlined one (not colour alone) |
+
+**`wave` with stages (an option for any page).** Add `stages` to the wave data and the hero tells the run as a story:
+a strip of the run's stages above the plot (the current one inverted, the done ones in full ink), then the samples
+revealed one at a time while the `during` stage is lit, then the answer. Fields:
+
+- `stages`: `[{name, fact, phase, captions}]` in order. `phase` is `before` (one frame per caption, nothing drawn yet),
+  `during` (one frame per caption, then one frame per sample, revealed left to right; exactly one stage) or `after`
+  (one frame per caption with everything drawn; at least one, so the last frame is the answer). `fact` is the short
+  real number shown in the strip (for example the build time and ID).
+- `captions` (per sample, optional; `null` entries get "cycle k: values" from the data): captions for the samples.
+  Narrative steps go in the stages, not on sample cycles.
+- `marks`: `[{x, label, signal?}]`: a vertical line at sample `x` (a trigger), or, with `signal`, a ring round that
+  signal's change at `x`; each appears when the reveal reaches it, with its label under the plot.
+- `tick` (the axis label step, in x units; labels sit at the centre of their sample) and `alt` (a text alternative read
+  by screen readers; the strip is a list and the caption is `aria-live`).
+
+Every `wave` hero, staged or not, is drawn as wide as its box (360 to 720 units) with text of 13 units, so its labels
+stay about 12 to 13 px from a 390 px phone to a desktop and the plot uses the page's width. Without `stages` a cursor
+band steps through the samples and nothing is dimmed. Reduced motion shows the last frame (everything drawn, the answer stage lit). `site/showcase.py` checks the
+phases, the caption count and that every mark is on the axis and names a signal of the hero.
 
 The project's own export (in its `results/` folder) writes this normalised JSON from its raw captures and commits it.
 

@@ -1090,3 +1090,7 @@ def bringup(s: Session) -> dict:
                                  "--results-dir", str(out)], s.root, timeout=1800)
     res = _read_json(out / f"{s.design.name}_bringup.json")
     return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "bringup": res, **pre}
+
+
+# brief 50A: the debug tools (debug_plan, debug_capture, debug_query) register themselves on import
+from agent.core import debug_tools as _debug_tools  # noqa: E402,F401

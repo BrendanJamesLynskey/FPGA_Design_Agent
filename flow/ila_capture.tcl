@@ -1,6 +1,6 @@
 # ila_capture.tcl: arm the ILA of an already-programmed board, capture, export.
 #
-#   vivado -mode batch -source flow/ila_capture.tcl -tclargs <serial> <file.ltx> <out dir> <plan.tcl>
+#   vivado -mode batch -source flow/ila_capture.tcl -tclargs <serial> <file.ltx> <out dir> <plan.tcl> ?<expected build ID>?
 #
 # Run by flow/bringup.py, which writes plan.tcl (one entry per capture) and drives
 # the board over the UART in step with this script through small files in <out dir>:
@@ -9,9 +9,12 @@
 #   <name>.csv / <name>.vcd   the uploaded capture (write_hw_ila_data)
 #   <name>.done   written here after the export (or <name>.timeout if it never triggered)
 # plan.tcl sets fda_depth and appends to fda_captures:
-#   lappend fda_captures [list <name> <AND|OR> <trigger position> [list [list <probe port> <value> ?<offset> <width>?] ...]]
+#   lappend fda_captures [list <name> <AND|OR> <trigger position> [list [list <probe port> <value> ?<offset> <width> ?<pattern>??] ...]]
 # Each named probe (bits offset..offset+width-1 of its port; the whole port without them) must equal <value> (an integer);
-# bits not named are don't-care.
+# bits not named are don't-care. Brief 50A: an optional <pattern> (width characters, most significant bit first, each one
+# of 0 1 X R F B: rising, falling, either edge) replaces <value>, so a trigger can be an edge or have don't-care bits.
+# Brief 50A also writes <name>.cond_armed.txt and <name>.cond_done.txt: the XADC operating conditions (now, latched min
+# and max, alarm flags; the FDA-COND lines of flow/program.tcl) read through JTAG when the ILA is armed and after upload.
 #
 # One ILA probe port can show up as several hw_probes: the .ltx names probes after
 # nets, and a register bus's bits can sit on nets with different names after
@@ -26,8 +29,8 @@
 # skills/hw-ila-debug/SKILL.md and REFERENCE.md; MIT, Copyright (c) 2026 Advanced Micro Devices, Inc.).
 # It programs nothing: the board must already hold the ILA build (flow/program.py ... ila).
 
-lassign $argv serial ltx out plan
-if {$plan eq ""} { error "usage: -tclargs <serial> <file.ltx> <out dir> <plan.tcl>" }
+lassign $argv serial ltx out plan expect_id
+if {$plan eq ""} { error "usage: -tclargs <serial> <file.ltx> <out dir> <plan.tcl> ?<expected build ID>?" }
 set fda_depth 1024
 set fda_captures {}
 source $plan
@@ -54,12 +57,42 @@ if {[llength $devs] != 1 || [get_property PART [lindex $devs 0]] ne "xc7a100t"} 
 }
 set dev [lindex $devs 0]
 current_hw_device $dev
+# brief 50A: the build ID in the bitstream's USR_ACCESS register (flow/build.tcl) must be the one the caller expects, so a
+# capture never runs on a different bitstream than the .ltx and probe map describe (for example after --no-program)
+set ua ?
+catch {set ua [string tolower [get_property REGISTER.USR_ACCESS $dev]]}
+regsub {^0x} $ua {} ua
+puts "FDA-USR_ACCESS $ua"
+if {$expect_id ne "" && $ua ne [string tolower $expect_id]} {
+    error "ila_capture.tcl: the board holds build $ua, not the expected $expect_id; program the matching debug build first. Not arming anything."
+}
 set_property PROBES.FILE $ltx $dev
 set_property FULL_PROBES.FILE $ltx $dev
 refresh_hw_device $dev
 set ilas [get_hw_ilas -quiet -of_objects $dev]
 if {[llength $ilas] != 1} { error "ila_capture.tcl: expected one ILA core, found [llength $ilas] (is the ILA build programmed?)" }
 set ila [lindex $ilas 0]
+
+# brief 50A: the operating conditions through JTAG (read-only), in the FDA-COND format of flow/program.tcl
+proc fda_cond {dev path} {
+    set f [open $path w]
+    if {![catch {get_hw_sysmons -of_objects $dev} sm] && $sm ne ""} {
+        proc fda_code {sm addr} { return [expr {([scan [get_hw_sysmon_reg $sm $addr] %x] >> 4) & 0xFFF}] }
+        proc fda_t {c} { return [format %.2f [expr {$c * 503.975 / 4096.0 - 273.15}]] }
+        proc fda_v {c} { return [format %.4f [expr {$c * 3.0 / 4096.0}]] }
+        if {[catch {
+            refresh_hw_sysmon $sm
+            puts $f "FDA-COND NOW TEMPERATURE=[get_property TEMPERATURE $sm] VCCINT=[get_property VCCINT $sm] VCCAUX=[get_property VCCAUX $sm] VCCBRAM=[get_property VCCBRAM $sm]"
+            puts $f "FDA-COND MAX TEMPERATURE=[fda_t [fda_code $sm 0x20]] VCCINT=[fda_v [fda_code $sm 0x21]] VCCAUX=[fda_v [fda_code $sm 0x22]] VCCBRAM=[fda_v [fda_code $sm 0x23]]"
+            puts $f "FDA-COND MIN TEMPERATURE=[fda_t [fda_code $sm 0x24]] VCCINT=[fda_v [fda_code $sm 0x25]] VCCAUX=[fda_v [fda_code $sm 0x26]] VCCBRAM=[fda_v [fda_code $sm 0x27]]"
+            puts $f "FDA-COND FLAGS [get_hw_sysmon_reg $sm 0x3F]"
+            puts $f "FDA-COND-TIME [clock milliseconds]"
+        } msg]} { puts $f "FDA-COND-ERROR $msg" }
+    } else {
+        puts $f "FDA-COND-ERROR no hw_sysmon on the device"
+    }
+    close $f
+}
 
 # probe port -> its hw_probes, and a map file for the CSV columns
 proc fda_map_bits {map} {
@@ -111,12 +144,16 @@ foreach cap $fda_captures {
     # several named probes); the bits no compare names stay X. Without offset and width, the whole port.
     array unset want
     foreach c $compares {
-        lassign $c port value off wid
+        lassign $c port value off wid pat
         foreach pb $probes($port) {
             lassign $pb p bits
             foreach i $bits {
                 if {$off eq ""} { set want($port,$i) [expr {($value >> $i) & 1}]
-                } elseif {$i >= $off && $i < $off + $wid} { set want($port,$i) [expr {($value >> ($i - $off)) & 1}] }
+                } elseif {$i >= $off && $i < $off + $wid} {
+                    if {$pat ne ""} {
+                        set want($port,$i) [string index $pat [expr {$wid - 1 - ($i - $off)}]]
+                    } else { set want($port,$i) [expr {($value >> ($i - $off)) & 1}] }
+                }
             }
         }
     }
@@ -130,6 +167,7 @@ foreach cap $fda_captures {
         }
     }
     run_hw_ila $ila
+    fda_cond $dev $out/$name.cond_armed.txt
     fda_touch $out/$name.armed [get_property STATUS.CORE_STATUS $ila]
     puts "FDA-ARMED $name [get_property STATUS.CORE_STATUS $ila]"
     # -timeout is in minutes
@@ -142,6 +180,7 @@ foreach cap $fda_captures {
     set data [upload_hw_ila_data $ila]
     write_hw_ila_data -force -csv_file $out/$name.csv $data
     write_hw_ila_data -force -vcd_file $out/$name.vcd $data
+    fda_cond $dev $out/$name.cond_done.txt
     fda_touch $out/$name.done [get_property STATUS.CORE_STATUS $ila]
     puts "FDA-CAPTURED $name"
 }

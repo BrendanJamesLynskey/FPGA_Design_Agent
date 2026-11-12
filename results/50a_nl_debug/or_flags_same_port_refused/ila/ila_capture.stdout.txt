@@ -1,0 +1,33 @@
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Thu Nov 12 10:39:41 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_wt_fda_b50a/flow/ila_capture.tcl
+open_hw_manager: Time (s): cpu = 00:00:14 ; elapsed = 00:00:14 . Memory (MB): peak = 1702.664 ; gain = 215.844 ; free physical = 3243 ; free virtual = 18973
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:0
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+****** Xilinx cs_server v2026.1
+  **** Build Info : #60 | 2026-06-15 19:15 UTC | a9691a9
+    ** Copyright 2017-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+
+
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Digilent/...B73A
+INFO: [Labtools 27-2302] Device xc7a100t (JTAG device index = 0) is programmed with a design that has 1 ILA core(s).
+FDA-ILA hw_ila_1 depth_max=1024 ports=2 hw_probes=4
+ERROR: [Labtools 27-3239] Trigger needs too many comparators for ILA port(index=0). Port has 1 comparators available, but 2 are needed for compare values:
+	win_wr=='bR
+	p_clear=='bR
+ERROR: [Labtools 27-3241] Unable to fit compare values for hw_ila 'hw_ila_1'.
+Multiple compare values for the same ILA trigger port, can only be merged into the same comparator if 1) the overall trigger condition is 'AND', 'NAND' and 2) the compare value operator for multi-bit hw_probes is 'eq'.
+INFO: [Common 17-206] Exiting Vivado at Thu Nov 12 10:40:04 2026...

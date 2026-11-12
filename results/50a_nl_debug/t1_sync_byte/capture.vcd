@@ -1,0 +1,25 @@
+$date 2026-11-12T10:39:07 $end
+$version fda debug_core (brief 50A) $end
+$comment Trigger on the rising edge of rx_valid when the received byte rx_data is 0xA5, and show rx_data and the raw UART receive line, 900 cycles before and 100 after. Make it happen by reading SCRATCH. $end
+$timescale 10000 ps $end
+$scope module capture $end
+$var wire 1 ! rx_valid $end
+$var wire 8 " rx_data $end
+$var wire 1 # uart_rx_pin $end
+$var wire 1 $ TRIGGER $end
+$upscope $end
+$enddefinitions $end
+#0
+0!
+b1001010 "
+1#
+0$
+#32
+b10100101 "
+#900
+1!
+1$
+#901
+0!
+0$
+#1024
