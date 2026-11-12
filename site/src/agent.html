@@ -1,21 +1,24 @@
 <h1>The agent</h1>
 <p class="lede">This page shows the agent itself: a controller written in code that walks a design through fixed stages, and a small team of language-model agents that do the writing inside each stage. The diagrams are drawn from the agent's own code and its run records, and a recorded run plays through them at the end.</p>
+<nav class="toc small" aria-label="On this page"><a href="#architecture">Architecture</a> · <a href="#controller">Controller loop</a> · <a href="#roles">Role agents</a> · <a href="#stages">Stages and gates</a> · <a href="#replay">A recorded run</a> · <a href="#harness">Harness and its experiments</a></nav>
+<p><b>What it cannot do yet.</b> It has no held-out score: the development runs are a record of the work, not a measure of how it does on new tasks. No design the agent built has yet passed every test on the board: the one programmed so far passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its internal signal captures. It designs one module at a time; the project layer for multi-module designs is not yet driven by the controller. The one agent-built design on the board reached it at verification level V1 (the seed and mutation gates, V2 and V3, were not run in that run), and a diagnostic copy showed its RTL hard-wires the shell's build stamp, which its own hardware test never checked. The Deep Agents harness has been run on the small T1 design and, in the harness experiments, on four small tasks up to simulation, with one model; how it compares with Claude Code on the benchmark has not been measured.</p>
+
 
 <h2>What "agent" means here</h2>
 <p>An <a href="how.html#term-agent">agent</a> is a language model that works in a loop: it reads, calls a tool, reads the result and decides what to do next. Left to itself, such a loop drifts, and a model that writes both a design and its tests can make the same mistake in both. So the agent here is two things. A controller, written in Python with <a href="how.html#term-langgraph">LangGraph</a>, decides which stage comes next and whether a stage has passed, from the tools' results alone. Inside each stage, one or more role agents, each a model with a narrow job and a narrow view of the files, do the work.</p>
 
-<h2>The architecture</h2>
+<h2 id="architecture">The architecture</h2>
 <p>A request comes in as plain English. The interview turns it into a signed-off spec. From then on the controller runs the stages; the role agents write files and call tools; the tools drive Vivado and the simulators; code turns the reports into gate results; and those results, not the models, decide what happens next. Beside the stack sit the private knowledge bank, which the agent reads through two tools, and the project layer for multi-module designs, which today has its own commands and is not yet called by the controller.</p>
 <figure>{{!agent_arch}}
 <figcaption>Labels on the arrows say what passes between the layers. The return path on the left carries the gate results and the failures each role owns back to the controller. Library versions are the ones pinned in <code>pyproject.toml</code>.</figcaption></figure>
 
-<h2>The controller loop</h2>
+<h2 id="controller">The controller loop</h2>
 <p>The controller is a LangGraph state graph with four steps that repeat once per stage visit. <b>Work</b> runs the stage's role agents. <b>Gate</b> runs the flow's own checks. <b>Review</b> takes a snapshot of the design, so any stage can be rewound, and, when review is on, lets a person approve, edit or rewind; it always pauses before anything touches the board. <b>Advance</b> picks the next stage in code: the next one if the gates passed, or the stage that owns the failure if they did not. A run ends when every stage has passed, or when a stage has used its visits and the run gives up.</p>
 <figure>{{!agent_langgraph}}
 <figcaption>Drawn from the graph the code compiles (<code>build_graph().get_graph()</code>, exported to <code>site/data/agent_graph.json</code>). Dashed edges are conditional: the code chooses one at run time. A site test fails if this drawing and the code's graph ever differ.</figcaption></figure>
 <p>The loop exists because language models are good at writing and poor at judging their own work. Putting the judgement in code means a model cannot talk its way past a failed check, and the same stages, limits and gates apply whichever model is doing the writing.</p>
 
-<h2>The role agents</h2>
+<h2 id="roles">The role agents</h2>
 <p>There are four roles. The clarify role turns the request into a spec. The blind model writes a short Python model of the design from the spec alone. The test writer writes the tests and the test plan from the spec and the model. The RTL writer writes the SystemVerilog and constraints and repairs whatever the later stages find. The blind model and the test writer never see the RTL, so a misreading of the spec in the RTL is not copied into the tests that judge it. Even so, the agent's own tests never decide a result: <a href="how.html#term-hidden">hidden tests</a>, written in advance and checked by <a href="how.html#term-mutation">mutation testing</a>, do.</p>
 {{!agent_roles}}
 <p class="small muted">What each role may read and write is enforced by a path jail in code (<code>agent/graph/roles.py</code>, <code>agent/core/security.py</code>); a write outside its list is refused and logged.</p>
@@ -30,14 +33,14 @@
 
 <h3>Which harness each recorded run used</h3>
 {{!agent_runs}}
-<p class="small muted">Counted from the committed run records (<code>results/course/*/run_*.json</code> and <code>results/f2/agent_*.json</code>; summary files that repeat a run are not counted again). Every development-task result on this site came from Claude Code with <code>claude-sonnet-5-5</code>. The Deep Agents runs are smoke runs on the hand-built T1 design.</p>
+<p class="small muted">Counted from the committed run records (<code>results/course/*/run_*.json</code> and <code>results/f2/agent_*.json</code>; summary files that repeat a run are not counted again). Every result in the development-run table on the results page came from Claude Code with <code>claude-sonnet-5-5</code>. The Deep Agents runs are the smoke runs on the hand-built T1 design and the harness experiments below, which used <code>{{agent_graph.harness.round1.model}}</code>.</p>
 
-<h2>The stages and their gates</h2>
+<h2 id="stages">The stages and their gates</h2>
 <p>Each stage ends in gates. Stage 2 holds the verification stages V0 to V3, from a test plan to closed coverage and a mutation score; stages 1 to 9 follow AMD's UltraFast methodology. Every stage visit has a turn budget, each stage a number of visits, and each failure a list of earlier stages it may go back to; all three come from <code>agent/graph/stages.py</code>. The whole run is capped at {{agent_graph.run_limits.turns}} turns.</p>
 <figure>{{!agent_pipeline}}
 <figcaption>Select a stage to show where its failures may go back to. A stage that has used its visits ends the run.</figcaption></figure>
 
-<h2>A recorded run, replayed</h2>
+<h2 id="replay">A recorded run, replayed</h2>
 <p>Choose a run. The first passed every hidden test and stopped at the board, as none was attached; its record keeps how often each stage was visited, not the order of the repeats, so repeats are shown back to back. The second is a Deep Agents run that recorded the order of its visits and every tool call of every role; it could not get stage 2 to pass and gave up.</p>
 <div class="player agplay" id="agent-replay" aria-label="Replay of a recorded run through the agent's diagrams">
 <div class="runsel" role="group" aria-label="Run"></div>
@@ -48,9 +51,11 @@
 </div>
 </div>
 
-<h2>Workflow variants under test</h2>
+<h2>Workflow variants, planned</h2>
 <p>Several other shapes of workflow are planned as variants of this graph, each behind a flag, to be compared on the same development tasks with the same budgets. None has been run yet, so nothing is claimed for any of them.</p>
+<details class="more"><summary>The planned variants (none run yet)</summary>
 {{!agent_variants}}
+</details>
 
 <h2 id="harness">Harness engineering</h2>
 <p>A <a href="how.html#term-harness">harness</a> is everything around the model: the tools it is offered, how its context is kept as the work goes on, the prompts, the limits, the rules for when to stop, and the sandbox it works in. The model sees only what the harness passes it, and acts only through what the harness lets it call.</p>
@@ -64,12 +69,13 @@
 <p class="small muted">The first reading of this audit counted only the middleware that show as steps in the agent's graph and so missed the summarisation and caching middleware, which act inside each model call. Both are in the stack; the table says what each does for these models.</p>
 
 <h3>The experiments</h3>
-<p>Eight changes to the harness are planned, each behind a flag with the baseline left as it is, to be compared on the same development tasks with three seeds each. With three seeds only large effects can show. None has been run yet, so no result is claimed for any of them.</p>
+<p>Each change to the harness sits behind a flag, with the baseline left as it is. The first round ran three of them against the baseline: {{agent_graph.harness.round1.n_runs}} valid runs in {{agent_graph.harness.round1.blocks}} blocks, each block one task and one repeat with all four arms, on four small tasks, one low-cost model (<code>{{agent_graph.harness.round1.model}}</code>) for every role, stopping after RTL and simulation. The rule, fixed before any run, was to adopt an arm only if its primary measure falls by at least 30 % with a 95 % interval that excludes zero, its share of hidden tests passed does not fall (the interval of the change does not lie below zero), and it has at most one more task-repeat that only the baseline passed than the other way round.</p>
+<figure>{{!harness_results}}
+<figcaption>Dots are the median paired change against the baseline; bars are 95 % bootstrap intervals over the blocks. A filled dot and solid bar exclude zero; a hollow dot and dotted bar include it. From <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/42_workflows/analysis.md"><code>results/42_workflows/analysis.md</code></a>.</figcaption></figure>
+<p>No arm is adopted yet. The clearest effect is H1, which moves large tool results to a file and summarises old turns earlier: it cut cost by about a third, with an interval that excludes zero, and passed as many hidden tests as the baseline. But the rule asked for a saving in "tokens per run (and cost)" without saying whether cost alone counts, and on tokens the interval includes zero; both readings are reported and neither is chosen after the fact. The typed digests of H9 cut cost by less than the bar, and their token saving, about a third, has an interval that includes zero. Hang protection (H2) showed no difference; the baseline hung only once, so this round could not test the protection itself. Two of the four tasks were never passed by any arm, so the pass counts rest on the other two. The other arms have not been run.</p>
 {{!harness_arms}}
 
 <h3>Fixes already made</h3>
-<p>Three findings about the harness have already been fixed, each with its evidence. Protection against hung simulations goes no further than the time limit in the table above; a better one is the second experiment.</p>
+<p>Three findings about the harness have already been fixed, each with its evidence. Protection against hung simulations is the time limit in the table above; a stronger one (H2) was tried in the first round of experiments.</p>
 {{!harness_fixes}}
-
-<h2>What the agent cannot do yet</h2>
-<p>It has no held-out score: the development runs are a record of the work, not a measure of how it does on new tasks. No design the agent built has yet passed every test on the board: the one programmed so far passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its internal signal captures. It designs one module at a time; the project layer for multi-module designs is not yet driven by the controller. And the Deep Agents harness has been run only on the small T1 design, with one model; how it compares with Claude Code on the benchmark has not been measured.</p>
+<p class="next">Next: <a href="how.html">How it works</a> follows a design through the stages and their checks, with a glossary of the terms used here.</p>

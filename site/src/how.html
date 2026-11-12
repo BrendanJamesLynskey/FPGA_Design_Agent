@@ -8,7 +8,7 @@
 </figure>
 
 <h2>The stages</h2>
-<p>The stages follow AMD's UltraFast design methodology (UG949). A failed check sends the run back to the stage that can fix it.</p>
+<p>The stages follow AMD's UltraFast design methodology (its guide is UG949). A failed check sends the run back to the stage that can fix it.</p>
 <div class="tablewrap"><table><thead><tr><th class="num">Stage</th><th>Name</th><th>What it produces</th></tr></thead><tbody>
 <tr><td class="num">0</td><td>Interview</td><td>A signed-off spec: ports, clocks, reset, latency, and each assumption with its reason. The user answers, or in an evaluation an <a href="#term-oracle">oracle</a>.</td></tr>
 <tr><td class="num">1</td><td>Plan</td><td>Block diagram, clocking, every clock crossing, a resource budget.</td></tr>
@@ -23,7 +23,7 @@
 </tbody></table></div>
 
 <h2>Verification</h2>
-<p>Inside the RTL stage, verification is staged as the OpenTitan project does it, with free tools in place of a paid simulator: a test plan, every spec statement traced to a test or proof, tests passing on every seed, then closed coverage and a mutation score at its floor. The stage cannot end until all four hold and lint is clean. Some checks go further than Vivado does alone; <a href="flow-notes.html">Beyond the flow</a> tells those stories.</p>
+<p>Inside the RTL stage, verification is staged the way the open-source OpenTitan chip project stages it, with free tools in place of a paid simulator: a test plan, every spec statement traced to a test or proof, tests passing on every seed, then closed coverage and a mutation score at its floor. The stage cannot end until all four hold and lint is clean. Some checks go further than Vivado does alone; <a href="flow-notes.html">Beyond the flow</a> tells those stories.</p>
 <details class="more"><summary>Details: the gates V0 to V3</summary>
 <div class="tablewrap"><table><thead><tr><th>Gate</th><th>What it requires</th></tr></thead><tbody>
 <tr><td>V0 plan</td><td>A test plan, the blind golden model and the bench modules exist.</td></tr>
@@ -40,11 +40,13 @@
 
 <h2>What the agent knows</h2>
 <p>The agent loads know-how on demand from a private bank of Agent Skills ({{packs.sections}} sections), in layers: RTL technique, AMD tool practice, the Artix-7 family and device, the Nexys A7 board, and the stage procedures. The text stays private because it summarises AMD and Digilent documents; each layer's size and hash are public, so a scored run can prove which version it read.</p>
+<details class="more"><summary>Details: every layer, its size and its hash</summary>
 {{!packs_table}}
-<p class="small muted">From <code>knowledge/PACKS.md</code>. "Ross shipped" is AMD's published Ross assistant, unchanged, for comparison; the distilled layer is ours.</p>
+<p class="small muted">From <code>knowledge/PACKS.md</code>. "Ross shipped" is the knowledge set of an assistant AMD publishes, kept unchanged for comparison; the distilled layer is ours.</p>
+</details>
 
 <h2>What the model may touch</h2>
-<p>The model runs as headless Claude Code, one call per turn, with every built-in tool off. It reaches only our MCP server, which gives each role just the tools its stage needs (lint, simulate, mutate, formal, build, gates, document search, skill loading, and files in its own directories). The board is never offered to the model: the harness programs it after a human approves. The same stages run with other models, so harness and model can be compared. Development runs here used <code>{{dev.model.0}}</code>. They ran on an earlier Vivado release; every timing, area and power figure this site shows for them is a rebuild of the run's saved design on Vivado {{board.vivado}}, and a run whose design files were not kept shows none.</p>
+<p>In the development runs the model ran as headless Claude Code, one call per turn, with every built-in tool off; the Deep Agents harness offers the same tools through its own loop. Either way the model reaches only our MCP server, which gives each role just the tools its stage needs (lint, simulate, mutate, formal, build, gates, document search, skill loading, and files in its own directories). The board is never offered to the model: the harness programs it after a human approves. The same stages run with other models, so harness and model can be compared. Development runs here used <code>{{dev.model.0}}</code>. They ran before the move to Vivado {{board.vivado}}; every timing, area and power figure this site shows for them is a rebuild of the run's saved design on Vivado {{board.vivado}}, and a run whose design files were not kept shows none.</p>
 
 <h2 id="glossary">Glossary</h2>
 <dl class="gloss">
@@ -67,3 +69,4 @@
 <dt id="term-heldout">Held-out set</dt><dd>Tasks set aside before development and never used to improve the agent, so a score on them is fair.</dd>
 <dt id="term-oracle">Oracle</dt><dd>A language model that plays the user in an evaluation's interview, answering only from the hidden full spec.</dd>
 </dl>
+<p class="next">Next: <a href="flow-notes.html">Beyond the flow</a> shows where Vivado run from a script does less than a careful engineer would, and what the environment adds.</p>

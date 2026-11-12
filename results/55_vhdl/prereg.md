@@ -24,12 +24,12 @@ Whether openai/gpt-6-luna (OpenRouter, `data_collection: deny`) writes VHDL-2008
 |---|---|---|---|
 | t1_gray_stepper | T1 | `benchmark/tasks/t1_gray_stepper/ref/rtl` | hidden bench (cocotb, shell), Vivado build |
 | t1_elevator_fsm | FSM | `benchmark/tasks/t1_elevator_fsm/ref/rtl` | hidden bench, Vivado build |
-| d24_registered_outputs | FSM (brief 24 drill) | `benchmark/drills/d24_registered_outputs/ref/rtl` | hidden bench + `lib/grade_fsm.py` pin drivers, Vivado build |
+| d24_registered_outputs | FSM (registered-outputs drill) | `benchmark/drills/d24_registered_outputs/ref/rtl` | hidden bench + `lib/grade_fsm.py` pin drivers, Vivado build |
 | t1_sync_fifo_regs | memory | `benchmark/tasks/t1_sync_fifo_regs/ref/rtl` | hidden bench, Vivado build |
 | t1_debounce_bank | T1 (asynchronous inputs) | `benchmark/tasks/t1_debounce_bank/ref/rtl` | hidden bench, Vivado build |
-| cdcfx_c10 | CDC (asynchronous FIFO, Gray pointers) | `flow/tests/fixtures/cdc_mutants/rtl/cdcfx_c10.sv` | the fixture's own cocotb test (GHDL native), Vivado synthesis + the brief 16 CDC gate |
+| cdcfx_c10 | CDC (asynchronous FIFO, Gray pointers) | `flow/tests/fixtures/cdc_mutants/rtl/cdcfx_c10.sv` | the fixture's own cocotb test (GHDL native), Vivado synthesis + the CDC structure gate |
 | cdcfx_c8 | CDC (4-phase handshake) | `flow/tests/fixtures/cdc_mutants/rtl/cdcfx_c8.sv` | as cdcfx_c10 |
-| axil_regs | AXI4-Lite slave | knowledge bank `tools/axi_examples/axil_regs.v` (ours, brief 17) | the bank's AXI-Lite cocotb tests (GHDL native), Vivado out-of-context synthesis |
+| axil_regs | AXI4-Lite slave | knowledge bank `tools/axi_examples/axil_regs.v` (ours) | the bank's AXI-Lite cocotb tests (GHDL native), Vivado out-of-context synthesis |
 
 ## Arms and runs
 
@@ -46,11 +46,11 @@ Whether openai/gpt-6-luna (OpenRouter, `data_collection: deny`) writes VHDL-2008
   seed 1. Pass = every test passes.
 - Vivado 2026.1 build of each passing board design through `flow/run_vivado.sh` (base variant): every gate of `flow/gates.py`
   compared with the SystemVerilog reference's build of the same day (LUT, FF, BRAM, WNS, gate pass).
-- Block drills: Vivado synthesis (out of context) and, for CDC, the brief 16 CDC structure gate on the VHDL.
+- Block drills: Vivado synthesis (out of context) and, for CDC, the CDC structure gate on the VHDL.
 
 ## Stopping rules
 
-- Brief cap $10 by provider-reported cost; stop new runs at $9.
+- Spend cap $10 by provider-reported cost; stop new runs at $9.
 - No re-run of a passing drill. A failure in B is reported as a failure.
 
 ## Amendments (written after both arms ran)

@@ -73,6 +73,6 @@ Tool: Vivado 2026.1 (build 6511674). Fmax is 1000 / (period - WNS) from one rout
 
 ## Cost table
 
-out-of-context, per variant: see the Variants table (char/xc7a100tcsg324-1.json); in context inside b30_hil_audio the 0.1.0 design measured 115 LUT, 48 FF, 1 RAMB18 at PHASE_W 32, LUT_W 8, OUT_W 16 (Vivado 2026.1, results/49_vivado_2026_1/b30_hil_audio.json).
+out-of-context, per variant: see the Variants table (char/xc7a100tcsg324-1.json); in context inside b30_hil_audio the 0.1.0 design measured 115 LUT, 48 FF, 1 RAMB18 at PHASE_W 32, LUT_W 8, OUT_W 16 (Vivado 2026.1, xc7a100t -1, timing met at 100 MHz; results/vivado_2026_1_remeasure/b30_hil_audio.json).
 
 Licence: MIT (this repository).
