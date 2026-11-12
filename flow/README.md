@@ -31,6 +31,9 @@ Python code only.
 | `hw_discover.py`, `hw_list.tcl` | Find the one JTAG target (refuses if there are several), check it is an xc7a100t, find its UART (FT2232 interface 1, same USB serial); record both in `~/.config/fpga_design_agent/boards.yaml`, outside the repo |
 | `program.py`, `program.tcl` | Program a build into SRAM by cable serial, after the `power_ok` gate (report_power total and junction temperature within the limits for the board's power source) and a build-stamp check; flash requests are refused. Also `run_vivado.sh designs/<name> program\|program-ila` |
 | `ila_capture.tcl`, `ila.py` | Arm the ILA by Tcl, wait, upload, export CSV + VCD, in step with the UART stimulus; read the CSV back into probe values |
+| `manifest.py` | Writes the build manifest (a JSON record of the build's input hashes, settings, tool and commit) and the build ID (an 8-digit hash of the part that can change the bitstream, written into its USR_ACCESS register); `show designs/<name>` computes them without Vivado, `check` verifies them. [docs/reproducibility.md](../docs/reproducibility.md) |
+| `bitstream.py` | Reads a 7-series `.bit` as data (header fields, every configuration register write, the USR_ACCESS value, the configuration CRC recomputed); `diff` names every difference between two bitstreams |
+| `release.py` | `make` puts one build's bitstream and its evidence into a release bundle with `RELEASE.md` and `SHA256SUMS`; `check` verifies a bundle using only its own files (integrity, not authenticity) |
 | `build_cache.py` | Brief 33: decides whether a build reuses the previous build of the same inputs (hit, resume from a checkpoint, or fresh) |
 | `result_hash.tcl`, `result_hash.py` | Brief 33: dump and hash a build's placement and routing, to compare builds |
 | `hw.py` | Shared hardware pieces: the Vivado hardware-manager runner (same guard rails), `hw_server`, the board file, the power gate, serial redaction |
@@ -58,7 +61,9 @@ Python code only.
   The ILA variant starts from the base build's `post_synth.dcp` when the synthesis inputs match. `FDA_BUILD_CACHE=0`
   turns it off. The resumed builds gave the same placement, routing and WNS as fresh builds (results/33_vivado_speed_2026_1).
 - `FDA_INCREMENTAL=1` (off by default) runs `read_checkpoint -incremental` against the previous build's
-  `post_route.dcp` when the inputs changed; the gates' reference builds never use it.
+  `post_route.dcp` when the inputs changed; the gates' reference builds never use it. The build ID includes the hash of
+  that reference checkpoint, so with `FDA_INCREMENTAL=1` no build is a cache hit or resumes: each one differs from the
+  one before ([docs/reproducibility.md](../docs/reproducibility.md)).
 - `FDA_RESULT_HASH=1` writes `result_dump.txt` (`result_hash.tcl`) and the placement and routing hashes
   (`result_hash.py`) into run.json, for checking that two builds gave the same result.
 - Records in `run.json`: the wall time; the thread count; the cache decision; the scope unit; the largest Vivado
@@ -68,11 +73,20 @@ Python code only.
   OOM-killed (`memory.events`).
 - Variants (`both`) run one after the other.
 
-## Build stamp
+## Build stamp and build ID
 
 `BUILD_STAMP` (shell register 0x02) is the first 8 hex digits of a SHA-256 over every source and constraint file
 (path and content). The same sources give the same stamp, and therefore the same netlist, in any clone; `run.json`
 also records the git commit and whether the tree was dirty.
+
+**Build ID**: the first 8 hex digits of the SHA-256 of the build manifest's identity part (`flow/manifest.py`: inputs,
+flow scripts, the Tcl settings file with paths normalised, thread count, directives, result-changing switches, Vivado
+version). It covers more than the build stamp (the flow, the settings and the tool, not only the sources) and lives in
+the bitstream, not the netlist: `build.tcl` sets `BITSTREAM.CONFIG.USR_ACCESS` just before `write_bitstream`, and the
+hardware manager reads it back as `REGISTER.USR_ACCESS`. `program.py` compares that value with the manifest after
+programming, and `board_check.py` / `bringup.py` compare the build stamp read over the UART with the manifest's stamp
+(the test shell is fixed, so the UART check uses the stamp); a mismatch stops the run before any board test.
+[docs/reproducibility.md](../docs/reproducibility.md)
 
 ## Gates (`gates.py`)
 
