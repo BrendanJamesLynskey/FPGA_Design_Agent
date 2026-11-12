@@ -245,7 +245,7 @@ def showcase_files() -> None:
     sig = [("AWVALID", "awvalid"), ("AWREADY", "awready"), ("WVALID", "wvalid"), ("WREADY", "wready"),
            ("BVALID", "bvalid"), ("BREADY", "bready")]
     signals = [{"name": n, "kind": "bit", "v": [r[k] for r in rows]} for n, k in sig]
-    signals.append({"name": "checker: B_EARLY", "kind": "bit", "v": [r["lite_viol"] >> rule_bit & 1 for r in rows]})
+    signals.append({"name": "B_EARLY", "kind": "bit", "v": [r["lite_viol"] >> rule_bit & 1 for r in rows]})
     caps, aw_done, w_done, b_done = [], False, False, False
     for r in rows:
         viol = r["lite_viol"] >> rule_bit & 1
