@@ -291,6 +291,13 @@ def test_rule_set_is_well_formed():
     assert lr.rule_for(rs, "vivado", "CFGBVS-1") == "HDL-DRC-01"
     assert lr.rule_for(rs, "vivado", "ZZZZ-9") == "HDL-VIV-00"
     assert lr.rule_for(rs, "standards", "STD-CDC-01") == "HDL-CDC-01"
+    assert lr.rule_for(rs, "standards", "STD-NEW-99") == "HDL-STD-00"
+
+
+def test_rule_set_with_nothing_run_is_not_a_pass(mini):
+    rep = lr.evaluate(mini, None, None, run_verilator=False)
+    assert rep["counts"]["not_run"] == len(rep["rules"]) and not rep["pass"] and not rep["complete"]
+    assert lr.main([str(mini), "--no-verilator"]) == 1
 
 
 def test_rule_set_waivers(mini):
@@ -307,8 +314,73 @@ def test_rule_set_waivers(mini):
          "owner": "a reviewer", "date": "2026-11-11"}]}))
     rep = lr.evaluate(mini, gates, None, run_verilator=False)
     xdc = next(r for r in rep["rules"] if r["id"] == "HDL-XDC-01")
-    assert xdc["status"] == "waived" and rep["pass"] and rep["unused_waivers"] == []
+    assert xdc["status"] == "waived" and rep["unused_waivers"] == []
+    assert not rep["pass"] and not rep["complete"]          # Verilator and standards rules not run: never a pass
     (mini / "lint" / "waivers.yaml").write_text(yaml.safe_dump({"waivers": [{"rule": "HDL-XDC-01", "match": "vivado:XDCH-2@*"}]}))
     rep = lr.evaluate(mini, gates, None, run_verilator=False)
     assert not rep["pass"] and rep["bad_waivers"]
     assert next(r for r in rep["rules"] if r["id"] == "HDL-WAIVE-01")["status"] == "fail"
+
+
+# ---- review fixes ---------------------------------------------------------------------------------------------------
+def test_one_failing_test_of_two_fails_the_requirement(mini):
+    """Two tests cite REQ-01; one fails on a seed: the method and the requirement fail, whatever the other test did."""
+    bench = mini / "tests" / "mini_bench.py"
+    bench.write_text(bench.read_text().replace("# req: REQ-02\n", "# req: REQ-01, REQ-02\n"))
+    make_run(mini, {**{t: True for t in TESTS}, "holds_when_disabled": False})
+    t = build(mini)
+    rows = {r["id"]: r for r in t["requirements"]}
+    sim = rows["REQ-01"]["methods"][0]
+    assert [v["result"] for v in sim["verifications"]] == ["pass", "fail"] and sim["status"] == "fail"
+    assert rows["REQ-01"]["status"] == "fail" and not t["pass"]
+    assert "REQ-01:simulation=fail" in t["gates"]["requirements_verified"]["value"]
+
+
+def test_cover_hits_match_exact_names(mini):
+    chk = mini / "verif" / "checkers" / "mini_checker.sv"
+    chk.write_text(chk.read_text().replace("endmodule", "    `V_COVER(C_WRAP_ONCE, 1'b0)   // req: REQ-01\nendmodule"))
+    make_run(mini)                                     # coverage.dat holds C_WRAP only (3 hits)
+    run = mini / "build" / "sim" / "seed1" / "coverage.dat"
+    run.write_text(run.read_text() + cov_line(f"/x/{mini.name}/verif/checkers/mini_checker.sv", 9, "user", "C_WRAP_ONCE", 0))
+    t = build(mini)
+    res = {a["name"]: a["result"] for a in t["artefacts"]}
+    assert res["C_WRAP"] == "pass" and res["C_WRAP_ONCE"] == "fail"
+    assert t["gates"]["coverage_holes_justified"]["value"] == ["cover C_WRAP_ONCE"]
+
+
+def test_raw_sva_and_multiline_macros_are_artefacts(mini):
+    chk = mini / "verif" / "checkers" / "mini_checker.sv"
+    chk.write_text(chk.read_text().replace("endmodule", (
+        "    `V_NEXT(\n        A_SPLIT, en,\n        count != 8'hFF)\n"
+        "    P_RAW: assert property (@(posedge clk) rst |=> count == 0);\n"
+        "    cover property (@(posedge clk) en);\n"
+        "endmodule")))
+    make_run(mini)
+    g = build(mini)["gates"]["artefacts_cite_requirements"]
+    names = " ".join(g["value"])
+    assert not g["pass"] and "assertion A_SPLIT" in names and "assertion P_RAW" in names and "cover mini_checker.sv:" in names
+
+
+def test_unreadable_bench_and_no_tests_fail_the_tag_gate(mini):
+    (mini / "tests" / "mini_bench.py").write_text("def broken(:\n")
+    make_run(mini)
+    v = build(mini)["gates"]["artefacts_cite_requirements"]["value"]
+    assert any(x.startswith("bench module mini_bench.py unreadable (SyntaxError") for x in v)
+    assert "no cocotb test found in the bench modules" in v
+
+
+def test_prose_mentioning_an_id_is_not_a_tag(mini):
+    bench = mini / "tests" / "mini_bench.py"
+    bench.write_text(bench.read_text().replace("# req: REQ-02\n", "# unlike REQ-01, this one only holds\n"))
+    make_run(mini)
+    g = build(mini)["gates"]["artefacts_cite_requirements"]
+    assert any("mini_bench.holds_when_disabled" in x for x in g["value"])
+
+
+def test_formal_tasks_are_matched_by_exact_name(mini):
+    make_run(mini)
+    for task in ("bmc", "cover"):                      # a job whose name starts with the fixture's job name
+        (mini / "build" / "formal" / f"mini_ext_{task}").mkdir()
+        (mini / "build" / "formal" / f"mini_ext_{task}" / "status").write_text("FAIL 1\n")
+    t = build(mini)
+    assert next(a for a in t["artefacts"] if a["kind"] == "formal")["detail"] == "bmc=PASS, cover=PASS"

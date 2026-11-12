@@ -14,9 +14,9 @@ coverage:
   - kind: toggle
     item: "re:dimmer_counter\\.sv:\\d+ n_(up|down|clear)\\[[4-7]\\]:.*"
     reason: >-
-      Open gap, justified by elemental analysis only: no seed presses one button 16 or more times, so bits 7:4 of the
-      three 8-bit PRESSES counters never change. Each counter is one incrementer whose low bits and wrap are exercised;
-      a test with 256 presses of each button would close it.
+      Open gap, justified only by similarity (not elemental analysis): no seed presses one button 16 or more times, so
+      bits 7:4 of the three 8-bit PRESSES counters never change. Each counter is one incrementer whose low bits are
+      exercised; a test with 256 presses of each button would close it.
     owner: brief 53 executor (owner review pending)
     date: 2026-11-11
   - kind: toggle
@@ -63,4 +63,21 @@ coverage:
       and A_SC_BLANK would also fire).
     owner: brief 53 executor (owner review pending)
     date: 2026-11-11
-reconfirmed: []
+# Hardware evidence made for the earlier requirement text: the F0B bring-up (results/f0b) was run against the old REQ-08
+# ("the register window answers as the model predicts and the ILA captures agree"), which REQ-08 and REQ-11 split.
+# Re-confirmed for the new texts below (req_hash: the first 12 hex digits of flow/change_record.req_hash).
+reconfirmed:
+  - requirement: REQ-08
+    req_hash: "00505fbf1a4f"
+    reason: >-
+      The new REQ-08 is the register-window half of the old text; the bring-up step uart_tests case
+      test_t1_registers_against_the_model checked exactly that. The bitstream predates the comment-only RTL changes.
+    owner: brief 53 executor (owner review pending)
+    date: 2026-11-12
+  - requirement: REQ-11
+    req_hash: "709cc86f2fb7"
+    reason: >-
+      The new REQ-11 is the ILA half of the old REQ-08; the bring-up step ila_captures compared the count-write and three
+      PWM captures with the model cycle by cycle. The bitstream predates the comment-only RTL changes.
+    owner: brief 53 executor (owner review pending)
+    date: 2026-11-12

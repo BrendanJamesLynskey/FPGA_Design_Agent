@@ -16,7 +16,7 @@ from cocotb.triggers import ClockCycles, ReadOnly, RisingEdge
 
 from designs.t1_dimmer_counter import model as m
 from designs.t1_dimmer_counter.tests import t1_cov
-from flow.req import req                 # brief 53: @req names the requirement ids a test verifies
+from flow.req import req                 # @req names the requirement ids a test verifies
 from shell.host import protocol as p
 from shell.model.shell_model import ShellModel
 from shell.tests.uart_bfm import UartBfm

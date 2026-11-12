@@ -229,28 +229,28 @@ from the user's `system/spec.md` it writes the requirements, `design.yaml` and t
 asks one question per contract field the spec does not state, and every unanswered question is written down as an
 assumption. Measured on two development-split specs with the spec oracle: [results/27b_p1](results/27b_p1/results.md).
 
-## Assurance and traceability (brief 53)
+## Assurance and traceability
 
-DO-254-style evidence for every design (a record of what was verified and how; not a claim of compliance with any
-standard): [docs/traceability.md](docs/traceability.md).
+For every requirement of a design, which test or proof shows it is met, did that evidence pass, and what did it cover:
+[docs/traceability.md](docs/traceability.md). The output is DO-254-style evidence (DO-254 is the design-assurance
+guidance for airborne hardware), a record of what was verified and how; it is not a claim of compliance with any
+standard.
 
-- **The matrix.** [flow/traceability.py](flow/traceability.py) builds requirement -> design element -> test or proof -> result ->
-  coverage from `spec.yaml`, requirement tags in the tests, assertions and formal jobs ([flow/req.py](flow/req.py):
-  `@req("REQ-03")` or `# req: REQ-03`), and the run records, and writes `trace.json` plus a table that the review index
-  shows. Five gates name the ids they miss: every requirement verified by its stated method, every test and property
-  citing a requirement (or marked robustness/structural with a reason), every coverage hole closed or justified, every
-  waiver with owner, reason and date, and no changed requirement left with old evidence. [flow/trace_tag.py](flow/trace_tag.py)
-  migrates an existing design from its testplan.
-- **Requirement quality.** The clarify gate rejects compound and vague requirements; T1's three compound ones were split.
+- **The matrix.** [flow/traceability.py](flow/traceability.py) builds requirement to design element to test or proof to
+  result to coverage, from `spec.yaml`, requirement tags in the source (above a cocotb test: `@req("REQ-03")` from
+  [flow/req.py](flow/req.py) or a `# req: REQ-03` comment; `// req:` on an assertion; `# req:` in a formal job) and the
+  run records. Its gates name any requirement, test or coverage hole left without evidence (the gate table is in
+  docs/traceability.md). [flow/trace_tag.py](flow/trace_tag.py) migrates an existing design from its testplan.
+- **Requirement quality.** The clarify stage rejects compound and vague requirements; T1's three compound ones were split.
 - **Change record.** [flow/change_record.py](flow/change_record.py): input hashes, tool versions, knowledge-bank pin
-  and flow commit (from brief 54's build manifest when present), and what changed since a baseline.
+  and flow commit (from the build manifest when present), and what changed since a baseline.
 - **HDL coding standard FDA-HDL v1.0.** [docs/hdl_coding_standard.md](docs/hdl_coding_standard.md),
   [flow/hdl_rules.yaml](flow/hdl_rules.yaml), checked by [flow/lint_ruleset.py](flow/lint_ruleset.py) (Verilator lint,
   Vivado methodology, DRC and CDC, the design-standards checker), with waivers recorded.
 - **Tool-assessment notes** for Vivado 2026.1, Icarus, Verilator, SymbiYosys, cocotb and our gates:
   [docs/tool_assessment/](docs/tool_assessment/README.md).
-- **Results:** the matrices of T1 and two dev-set agent designs and the known-bad runs, in
-  [results/53_traceability](results/53_traceability/README.md).
+- **Results:** the matrices of T1 and two agent-built development designs, and three deliberately broken runs that
+  each fail the right gate: [results/53_traceability](results/53_traceability/README.md).
 
 ## Reproduce
 
@@ -321,7 +321,7 @@ knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (n
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
              design_standards.md (v1.0: the rule table and how each rule is checked);
-             traceability.md (brief 53: the matrix, tags, gates, change record); hdl_coding_standard.md (FDA-HDL v1.0);
+             traceability.md (the requirements matrix, tags, gates, change record); hdl_coding_standard.md (FDA-HDL v1.0);
              tool_assessment/ (one page per tool: trusted for, independent checks, limits);
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph; benchmark tasks as agent runs, 07a2-prep); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing); test_writer.md (the 05g test-writer diagnosis, turn trace, formal re-plan, QoR gate);
              project_mode_parity.md (what project mode and the wizards give that non-project mode does not, measured; cross-probing);

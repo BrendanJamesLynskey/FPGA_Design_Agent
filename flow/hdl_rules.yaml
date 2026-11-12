@@ -1,4 +1,4 @@
-# FDA-HDL: the HDL coding standard for the agent's output (brief 53). Human text: docs/hdl_coding_standard.md.
+# FDA-HDL: the HDL coding standard for the agent's output. Human text: docs/hdl_coding_standard.md.
 # Checked by flow/lint_ruleset.py. A change to a rule bumps `version` (and the document's version line).
 #
 # Each rule: id, title, rationale (why the rule exists, in one or two sentences), and checks: the tool findings that
@@ -7,7 +7,7 @@
 #   vivado:    rule-ID patterns (fnmatch) from report_methodology, report_drc and report_cdc in the build's gates.json;
 #              severities Error, Critical Warning and Warning count, Info and Advisory do not
 #   standards: rule ids of flow/standards_check.py (docs/design_standards.md), status fail or not_run
-# A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00), so nothing is lost.
+# A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
 version: "1.0"
@@ -15,8 +15,8 @@ date: 2026-11-11
 rules:
   - id: HDL-SYN-01
     title: No latches
-    rationale: A latch is level-sensitive storage the timing tools treat as a loop of special cases; in a synchronous
-      FPGA design it is almost always an incomplete combinational assignment, and it hides as a simulation match.
+    rationale: A latch is level-sensitive storage; static timing analysis handles it with special cases, and in a
+      synchronous design it almost always comes from an incomplete combinational assignment, where simulation can look correct.
     checks: {verilator: [LATCH, NOLATCH], standards: [STD-LATCH-01]}
   - id: HDL-SYN-02
     title: No combinational loops
@@ -83,9 +83,13 @@ rules:
     checks: {standards: [STD-WAIVE-01]}
   - id: HDL-LINT-00
     title: Verilator -Wall clean (any warning no other rule maps)
-    rationale: Every lint warning is either fixed or a recorded decision.
+    rationale: A new Verilator warning code is never dropped for want of a rule; it is fixed or waived with a reason.
     checks: {verilator: ["*"]}
   - id: HDL-VIV-00
     title: Vivado methodology, DRC and CDC clean (any finding no other rule maps)
-    rationale: Every vendor finding at Warning or above is either fixed or a recorded decision.
+    rationale: A vendor rule ID no other rule names is still fixed or waived with a reason, not ignored.
     checks: {vivado: ["*"]}
+  - id: HDL-STD-00
+    title: Design-standards checker clean (any rule no other maps)
+    rationale: A design-standards rule added later still reaches the coding standard instead of being dropped.
+    checks: {standards: ["*"]}

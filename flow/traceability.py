@@ -69,14 +69,15 @@ GATES = ("requirements_verified", "artefacts_cite_requirements", "coverage_holes
          "changed_requirements_reverified")
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _BARE_ID = re.compile(r"\bREQ-[A-Za-z0-9_.]*[A-Za-z0-9_]")
+_ONLY_IDS = re.compile(r"^REQ-[A-Za-z0-9_.-]+(?:[\s,;]+REQ-[A-Za-z0-9_.-]+)*\.?$")
 _TAG = re.compile(r"\b(req|robustness|structural)\s*:\s*(.*)$", re.I)
-_MACRO = re.compile(r"`V_(SAME|NEXT|RST|COVER)\s*\(\s*(\w+)\s*,")
+_MACRO = re.compile(r"`V_(SAME|NEXT|RST|COVER)\s*\(\s*(\w+)\s*,", re.S)
 
 
 # ---- tags ---------------------------------------------------------------------------------------------------------
 def _parse_tag_text(texts: list[str], known: set[str]) -> dict[str, Any]:
-    """Tags from comment texts (without the comment marker). ``req:`` lists ids; bare ``REQ-xx`` tokens and known
-    ids in a ``req:`` line count; ``robustness:``/``structural:`` carry the reason."""
+    """Tags from comment texts (without the comment marker). ``req:`` lists ids; a comment line holding only ids
+    (``// REQ-03``) counts too, prose that mentions an id does not; ``robustness:``/``structural:`` carry the reason."""
     ids: list[str] = []
     cls = reason = None
     for t in texts:
@@ -88,7 +89,8 @@ def _parse_tag_text(texts: list[str], known: set[str]) -> dict[str, Any]:
                 continue
             cls, reason = kind, rest
             continue
-        ids += _BARE_ID.findall(t)
+        if _ONLY_IDS.match(t.strip()):                  # a bare `// REQ-03` line; prose that mentions an id is not a tag
+            ids += _BARE_ID.findall(t)
     seen: list[str] = []
     for i in ids:
         i = i.strip().rstrip(".")
@@ -136,7 +138,10 @@ def bench_artefacts(bench_dir: Path, modules: list[str], known: set[str]) -> lis
         try:
             src = f.read_text()
             tree = ast.parse(src)
-        except (OSError, SyntaxError):
+        except (OSError, SyntaxError) as e:             # never a silent skip: its tests would vanish from the gates
+            out.append({"kind": "unreadable", "name": f"{m}.py", "file": cr._rel(f), "path": str(f), "line": 0,
+                        "source_sha256": "", "cites": [], "class": None, "reason": None,
+                        "error": f"{type(e).__name__}: {e}"[:200]})
             continue
         lines = src.splitlines()
         for node in ast.walk(tree):
@@ -160,26 +165,36 @@ def bench_artefacts(bench_dir: Path, modules: list[str], known: set[str]) -> lis
     return out
 
 
+_RAW_SVA = re.compile(r"(?:\b(\w+)\s*:\s*)?\b(assert|cover|assume)\s+property\b")
+
+
 def checker_artefacts(chk_dir: Path, known: set[str]) -> list[dict[str, Any]]:
-    """Every `V_*(NAME, ...)` assertion and cover property in the checker files, with its tags and its checker module."""
+    """Every assertion and cover property in the checker files, with its tags and its checker module: the
+    `V_SAME/V_NEXT/V_RST/V_COVER(NAME, ...)` macros (also when the name is on a later line) and raw
+    ``[label:] assert|cover|assume property`` statements (an unlabelled one is named ``<file>:<line>``)."""
     out = []
     for f in sorted(chk_dir.glob("*.sv")):
         try:
-            lines = f.read_text().splitlines()
+            text = f.read_text()
         except OSError:
             continue
-        module = None
-        for i, l in enumerate(lines):
-            mm = re.match(r"\s*module\s+(\w+)", l)
-            if mm:
-                module = mm.group(1)
-            for m in _MACRO.finditer(l.split("//", 1)[0]):
-                texts = _comment_block_above(lines, i, "//")
-                if "//" in l:
-                    texts.append(l.split("//", 1)[1])
-                kind = "cover" if m.group(1) == "COVER" else "assertion"
-                out.append({"kind": kind, "name": m.group(2), "file": cr._rel(f), "path": str(f), "line": i + 1, "checker": module,
-                            "source_sha256": cr.sha256_text(l.strip()), **_parse_tag_text(texts, known)})
+        lines = text.splitlines()
+        code = re.sub(r"/\*.*?\*/", lambda m: re.sub(r"[^\n]", " ", m.group()), text, flags=re.S)
+        code = re.sub(r"//[^\n]*", lambda m: " " * len(m.group()), code)
+        mods = [(m.start(), m.group(1)) for m in re.finditer(r"\bmodule\s+(\w+)", code)]
+        found = [(m.start(), "cover" if m.group(1) == "COVER" else "assertion", m.group(2)) for m in _MACRO.finditer(code)]
+        for m in _RAW_SVA.finditer(code):
+            line = code.count("\n", 0, m.start()) + 1
+            found.append((m.start(), "assertion" if m.group(2) in ("assert", "assume") else "cover",
+                          m.group(1) or f"{f.name}:{line}"))
+        for pos, kind, name in sorted(found):
+            i = code.count("\n", 0, pos)
+            texts = _comment_block_above(lines, i, "//")
+            if "//" in lines[i]:
+                texts.append(lines[i].split("//", 1)[1])
+            module = next((n for p, n in reversed(mods) if p < pos), None)
+            out.append({"kind": kind, "name": name, "file": cr._rel(f), "path": str(f), "line": i + 1, "checker": module,
+                        "source_sha256": cr.sha256_text(lines[i].strip()), **_parse_tag_text(texts, known)})
     return out
 
 
@@ -346,7 +361,8 @@ def coverage_holes(plan: dict, design: Path, cov_dir: Path | None, covers: list[
                 holes.append({"kind": "bin", "item": f"{g}:{b}"})
     summary["bins"] = {"points": tot, "hit": hit, "pct": round(100 * hit / tot, 2) if tot else None}
     user = code.get("user") or {}
-    hits = {c["name"]: sum(v for k, v in user.items() if c["name"] in k) for c in covers}
+    # exact name (the point's own name, or the last component of its hierarchical name): C_WRAP never takes C_WRAP_UP's hits
+    hits = {c["name"]: sum(v for k, v in user.items() if k == c["name"] or k.rsplit(".", 1)[-1] == c["name"]) for c in covers}
     if code:
         holes += [{"kind": "cover", "item": n} for n, h in sorted(hits.items()) if h == 0]
         summary["cover"] = {"points": len(hits), "hit": sum(1 for h in hits.values() if h), "pct":
@@ -392,8 +408,18 @@ def test_result(name: str, res: dict[int, dict[str, bool]], also: dict[str, dict
     return out
 
 
-def formal_result(job: str, fr: dict[str, str]) -> dict[str, Any]:
-    tasks = {k[len(job) + 1:]: v for k, v in fr.items() if k.startswith(job + "_")}
+def sby_tasks(path: Path) -> list[str]:
+    """The task names of a .sby file's [tasks] section (bmc, cover, ...); empty if none."""
+    try:
+        m = re.search(r"^\[tasks\]\s*\n(.*?)(?=^\[|\Z)", path.read_text(), re.M | re.S)
+    except OSError:
+        return []
+    return [l.split(":")[0].split()[0] for l in (m.group(1).splitlines() if m else []) if l.strip() and not l.strip().startswith("#")]
+
+
+def formal_result(job: str, fr: dict[str, str], tasks_of: list[str] | None = None) -> dict[str, Any]:
+    names = tasks_of or ["bmc", "cover"]                 # exact names: jobs `scan` and `scan_ext` never share results
+    tasks = {t: fr[f"{job}_{t}"] for t in names if f"{job}_{t}" in fr}
     if not fr:
         return {"result": "pending", "detail": "no formal results"}
     if not tasks:
@@ -429,7 +455,9 @@ def build(design: Path, runs: Path | None, also: list[Path] | None = None, cover
         if a["kind"] == "test":
             a.update(test_result(a["name"], res, also_res))
         elif a["kind"] == "formal":
-            a.update(formal_result(a["name"], fr))
+            a.update(formal_result(a["name"], fr, sby_tasks(Path(a["path"]))))
+        elif a["kind"] == "unreadable":
+            a.update({"result": "fail", "detail": a["error"]})
         elif a["kind"] == "cover":
             h = cov["cover_hits"].get(a["name"])
             a.update({"result": "pending", "detail": "no coverage data"} if h is None else
@@ -490,14 +518,14 @@ def build(design: Path, runs: Path | None, also: list[Path] | None = None, cover
                     if row["artefact"] != "-":
                         ver.append({"artefact": row["artefact"], "via": "testplan proof", "result": row["result"],
                                     "detail": row["detail"]})
-            if any(v["result"] == "pass" for v in ver):
-                status = "pass"
-            elif not ver:
+            if not ver:
                 status = "missing"
-            elif all(v["result"] == "pending" for v in ver):
-                status = "pending"
-            else:
+            elif any(v["result"] == "fail" for v in ver):   # one failing cited verification fails the method
                 status = "fail"
+            elif any(v["result"] == "pass" for v in ver):
+                status = "pass"
+            else:
+                status = "pending"
             methods.append({"method": m, "status": status, "verifications": ver})
         support = [{"kind": a["kind"], "name": a["name"], "result": a["result"], "detail": a["detail"]}
                    for a in cites if a["kind"] in ("assertion", "cover")]
@@ -531,13 +559,17 @@ def build(design: Path, runs: Path | None, also: list[Path] | None = None, cover
                  + (" (" + " | ".join(reasons[:6]) + ")" if reasons else "") + ". For each, add or fix a test or property that cites it (simulation: a test tagged with the id that passes "
                    "on every seed; formal: a .sby job tagged with it whose tasks PASS; analysis/hardware: a testplan proof "
                    "entry naming the flow gate or bring-up step)") if rows else "spec.yaml has no requirements")
-    untagged = [f"{a['kind']} {a['name']} ({a['file']}:{a['line']})" for a in arts if not a["cites"] and not a["class"]]
+    unreadable = [f"bench module {a['name']} unreadable ({a['error']})" for a in arts if a["kind"] == "unreadable"]
+    no_tests = [] if any(a["kind"] == "test" for a in arts) else ["no cocotb test found in the bench modules"]
+    untagged = [f"{a['kind']} {a['name']} ({a['file']}:{a['line']})" for a in arts
+                if a["kind"] != "unreadable" and not a["cites"] and not a["class"]]
     unknown = [f"{a['kind']} {a['name']} cites {i}" for a in arts for i in a["cites"] if i not in known]
     no_reason = [f"{a['kind']} {a['name']} is {a['class']} without a reason" for a in arts
                  if a["class"] and len(str(a["reason"] or "").strip()) < MIN_REASON and not a["cites"]]
-    bad2 = untagged + unknown + no_reason
+    bad2 = unreadable + no_tests + untagged + unknown + no_reason
     g2 = vg.chk(bad2, [], not bad2,
-                ("; ".join(x for x in (("untagged: " + vg._more(untagged, 10)) if untagged else "",
+                ("; ".join(x for x in ("; ".join(unreadable + no_tests),
+                                       ("untagged: " + vg._more(untagged, 10)) if untagged else "",
                                        ("unknown requirement ids: " + vg._more(unknown, 10)) if unknown else "",
                                        ("no reason: " + vg._more(no_reason, 10)) if no_reason else "") if x)
                  + ". Tag each test with @req(\"<id>\") or a `# req: <id>` comment, each property with `// req: <id>`, each "

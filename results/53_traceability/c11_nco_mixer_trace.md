@@ -1,8 +1,8 @@
 # Traceability matrix: c11_nco_mixer
 
-Generated 2026-11-12T02:03:33Z by `flow/traceability.py` (fpga-design-agent/trace/v1). DO-254-style evidence: a record of what was verified and how; not a claim of compliance with any standard.
+Generated 2026-11-12T04:19:24Z by `flow/traceability.py` (fpga-design-agent/trace/v1). DO-254-style evidence: a record of what was verified and how; not a claim of compliance with any standard.
 
-Inputs: computed record; flow commit `6d4603a9bc10` (dirty tree); knowledge-bank pin `811b840`; 21 input files hashed.
+Inputs: computed record; flow commit `5aa14219b8c6` (dirty tree); knowledge-bank pin `811b840`; 21 input files hashed.
 
 | Requirement | Design elements | Method | Verification (how linked) | Result | Supporting properties |
 |---|---|---|---|---|---|

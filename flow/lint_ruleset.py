@@ -15,8 +15,8 @@ Three sources of findings, each mapped to a rule:
 A finding is waived by an entry of ``lint/waivers.yaml`` whose ``rule`` is its rule id and whose ``match`` (a glob)
 matches its key (glob with literal brackets, or ``re:<regex>``: ``verilator:CODE file:line``, ``vivado:RULE-ID@stage``, ``standards:STD-ID file:line``); the waiver
 needs ``reason``, ``owner`` and ``date`` or it does not count. Each rule ends ``pass``, ``waived`` (every finding
-waived), ``fail`` or ``not_run`` (its tool or report was not available: not a pass). Exit 0 only if no rule failed
-and none that had an input to check went unrun.
+waived), ``fail`` or ``not_run`` (its tool or report was not available). Exit 0 only if no rule failed and every rule
+was evaluated: a run with a rule ``not_run`` prints INCOMPLETE and exits 1.
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ def rule_problems(rs: dict[str, Any]) -> list[str]:
             out.append(f"{rid}: no title")
         if not r.get("checks") or not any(r["checks"].get(k) for k in ("verilator", "vivado", "standards")):
             out.append(f"{rid}: maps to no tool check")
-    for tool in ("verilator", "vivado"):
+    for tool in ("verilator", "vivado", "standards"):
         n = sum(1 for r in rs.get("rules") or [] if "*" in ((r.get("checks") or {}).get(tool) or []))
         if n != 1:
             out.append(f"{tool}: {n} catch-all rules (need exactly one)")
@@ -225,7 +225,9 @@ def evaluate(design: Path, gates: Path | None, standards: Path | None, run_veril
             "rules": rules, "bad_waivers": bad_waivers,
             "unused_waivers": [f"{w['rule']} {w['match']}" for w in unused],
             "counts": {s: sum(1 for r in rules if r["status"] == s) for s in ("pass", "waived", "fail", "not_run")},
-            "pass": not fails and not bad_waivers and (ran["verilator"] or not run_verilator)}
+            # a rule that could not be checked is not a pass: the result is complete only when every rule was evaluated
+            "complete": not any(r["status"] == "not_run" for r in rules),
+            "pass": not fails and not bad_waivers and not any(r["status"] == "not_run" for r in rules)}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -254,7 +256,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  BAD waiver: {b}")
     for u in rep["unused_waivers"]:
         print(f"  unused waiver: {u}")
-    print(f"lint ruleset: {'PASS' if rep['pass'] else 'FAIL'} {rep['counts']}")
+    verdict = "PASS" if rep["pass"] else ("FAIL" if [r for r in rep["rules"] if r["status"] == "fail"] or rep["bad_waivers"]
+                                          else "INCOMPLETE (rules not run: not a pass)")
+    print(f"lint ruleset: {verdict} {rep['counts']}")
     if a.json:
         Path(a.json).parent.mkdir(parents=True, exist_ok=True)
         Path(a.json).write_text(json.dumps(rep, indent=1, default=str) + "\n")

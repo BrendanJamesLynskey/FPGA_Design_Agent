@@ -1,16 +1,33 @@
-# 53: traceability matrices, the HDL coding standard and the known-bad runs
+# Traceability matrices, the HDL coding standard and the known-bad runs
 
-Brief 53 (2026-11-11/12). Method: [docs/traceability.md](../../docs/traceability.md),
+Run on 2026-11-11 and 12. Method: [docs/traceability.md](../../docs/traceability.md),
 [docs/hdl_coding_standard.md](../../docs/hdl_coding_standard.md). Every number below is in `summary.json` or the file it
 names. This is DO-254-style evidence, not a claim of compliance with any standard.
+
+Terms used here: *hidden tests* are tests written by a separate author against an independent model of the full spec,
+which decide whether an agent run passed; the *V3 floor* is the minimum coverage the verification stage V3 accepts
+([docs/verification.md](../../docs/verification.md)); a *spec-interpretation escape* is a run whose own checks pass
+while the hidden tests fail because the agent read the spec differently; *dev-set* tasks are the ones used for
+development, not for scoring.
+
+**What was and was not exercised.** The agent-side pieces (the clarify-stage quality check, the tagging prompt and
+self-check, the matrix in the review index, the fixed baseline) are covered by unit tests
+(`agent/tests/test_53_agent.py`) only: no new agent run used them. The two agent designs below are earlier agent runs
+re-traced after their tags were migrated by tool. An end-to-end agent run with traceability on is a follow-up: at V3
+the agent's stage 2 needs a Verilator coverage build and a Vivado synthesis, so it cannot run as a simulation-only job.
 
 ## The three designs
 
 | Design | Source | Requirements (methods) | Methods passing | Pending | Tests and properties (cite a requirement / structural / untagged) | Coverage holes (justified) | Matrix gates | FDA-HDL v1.0 |
 |---|---|---|---|---|---|---|---|---|
 | T1 dimmer counter | hand-written reference, tags added by hand | 11 (14) | 14 | 0 | 57 (56 / 1 / 0) | 113 (113) | all pass | pass (1 rule waived: XDCH-2) |
-| c11 NCO mixer | agent dev-set run 20261109-083226-ecc1, tags migrated from its testplan | 12 (20) | 14 | 6 hardware | 14 (13 / 1 / 0) | 0 | all pass | fail: HDL-METH-01 (DPIP-1, DPOP-2), HDL-DRC-01 (CFGBVS-1) |
-| c12 PWM audio | agent dev-set run 20261109-141014-43e3, tags migrated from its testplan | 10 (18) | 15 | 3 hardware | 19 (18 / 1 / 0) | 75 (0) | `coverage_holes_justified` fails | fail: HDL-XDC-01 (XDCH-2), HDL-METH-01 (DPOP-1, DPOP-2) |
+| c11 NCO mixer | agent dev-set run 20261109-083226-ecc1, tags migrated from its testplan ([c11_nco_mixer_tags.diff](c11_nco_mixer_tags.diff)) | 12 (20) | 14 | 6 hardware | 14 (13 / 1 / 0) | 0 | all pass | fail: HDL-METH-01 (DPIP-1, DPOP-2), HDL-DRC-01 (CFGBVS-1) |
+| c12 PWM audio | agent dev-set run 20261109-141014-43e3, tags migrated from its testplan ([c12_nexys_pwm_audio_tags.diff](c12_nexys_pwm_audio_tags.diff)) | 10 (18) | 15 | 3 hardware | 19 (18 / 1 / 0) | 75 (0) | `coverage_holes_justified` fails | fail: HDL-XDC-01 (XDCH-2), HDL-METH-01 (DPOP-1, DPOP-2) |
+
+A passing matrix means every stated requirement has passing evidence; it does not mean the design meets requirements
+nobody wrote. c11 and c12 are copies of the agent's run directories (`runs/` is not in the repository), so their
+matrices name the copies' paths (`build/b53/...`); the only other change to the copies is `build.yaml` pointing at
+them.
 
 Files per design: `<design>_trace.json` (the matrix, schema `fpga-design-agent/trace/v1`), `<design>_trace.md` (the
 table), `<design>_trace.txt` (the gate output), `<design>_lint.json` and `_lint.txt` (FDA-HDL v1.0).
@@ -29,8 +46,10 @@ Evidence each matrix read (all made in this brief):
   `io_timing_clean`) added by brief 20 part B after its run. No requirement of c11 names those gates, so the matrix does
   not show the failure: a gap in that agent's requirements, not in the build record.
 - **Hardware:** T1 only, from the committed F0B bring-up (`results/f0b/t1_dimmer_counter_bringup.json`). That bitstream
-  predates this brief; the RTL has changed since only by comment lines, which this record cannot prove on its own (the
-  build ID of brief 54 closes this). c11 and c12 were not run on the board: their hardware rows are `pending`
+  predates this work; the RTL has changed since only by comment lines, which this record cannot prove on its own (a
+  build ID read back from the board would). The bring-up was also run against the old REQ-08, which the split turned
+  into REQ-08 (register window) and REQ-11 (ILA captures): both are re-confirmed for their new text, with reasons, in
+  `designs/t1_dimmer_counter/verif/justifications.yaml` (`reconfirmed:`). c11 and c12 were not run on the board: their hardware rows are `pending`
   (`--defer hardware`).
 
 What the matrices say:
@@ -54,10 +73,10 @@ What the matrices say:
 Each design's coverage-export test was then marked `structural` by hand (the testplan does not map it). The simulations
 were re-run after tagging (above) to show the tags change nothing.
 
-The clarify check (`agent/graph/spec_schema.py requirement_quality_errors`) on recorded agent specs: c11 2 of 12
-requirements compound, c12 3 of 10, the c14 run-4 fixture 5 of 12, the T1 run `dd0e` fixture 2 of 13 (12 of 47). Today's
-clarify gate would have sent each back to be split. T1's own three compound requirements were split (REQ-01, -02, -08
-kept their ids; REQ-09, -10, -11 added).
+The clarify check (`agent/graph/spec_schema.py requirement_quality_errors`) flags, on recorded agent specs: c11 2 of
+12 requirements compound, c12 5 of 10, the c14 run-4 fixture 3 of 12, the T1 run `dd0e` fixture 1 of 13 (11 of 47).
+T1's own three compound requirements were split (REQ-01, -02, -08 kept their ids; REQ-09, -10, -11 added), and REQ-07
+was reworded to one statement.
 
 ## Known-bad runs (T1, real simulations)
 
@@ -87,9 +106,6 @@ python3 flow/traceability.py designs/t1_dimmer_counter --runs build/verif/verila
 python3 flow/lint_ruleset.py designs/t1_dimmer_counter --gates designs/t1_dimmer_counter/build/base/gates.json \
     --standards build/t1_standards.json
 ```
-
-c11 and c12 were copies of the agent's run directories (`runs/` is not in the repository) with `build.yaml` pointed at
-the copy; their matrices name the copies' paths (`build/b53/...`).
 
 The matrices are baselines: a later `flow/traceability.py ... --baseline results/53_traceability/t1_dimmer_counter_trace.json`
 lists what changed since, and fails `changed_requirements_reverified` for a requirement whose text changed while its

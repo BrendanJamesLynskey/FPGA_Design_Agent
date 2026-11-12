@@ -2,7 +2,7 @@
 
 **Kind.** Verification tool: the Python test framework the benches are written in, and the functional-coverage library.
 
-**Trusted for.** Driving the RTL, comparing every output with the blind golden model, reporting each test's pass or
+**Used for.** Driving the RTL, comparing every output with the blind golden model, reporting each test's pass or
 fail per seed (`results.xml`), and recording functional-coverage bins (`coverage*.yml`).
 
 **How its output is checked independently.**

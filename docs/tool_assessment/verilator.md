@@ -3,7 +3,7 @@
 **Kind.** Verification tool: cycle-based two-state simulator (with cocotb), code-coverage recorder, and lint
 (`--lint-only -Wall`).
 
-**Trusted for.** The seeded runs that count for V2 and V3 with the bound checkers (assertions fire as failures),
+**Used for.** The seeded runs that count for V2 and V3 with the bound checkers (assertions fire as failures),
 line, branch, toggle and cover-property coverage (`coverage.dat` per seed), and the Verilator part of the FDA-HDL
 coding standard.
 
@@ -17,6 +17,7 @@ coding standard.
 
 **Known limits.**
 - Two-state: X and Z are not modelled; a reset bug that leaves X can pass.
+- Delays and timing controls run only with `--timing`; the flow's builds do not pass it (the RTL has none).
 - Covergroups are parsed and ignored: functional coverage comes from the Python bench (cocotb-coverage).
-- cocotb 2 needs Verilator 5.036 or newer; the apt version (5.020) cannot run the benches.
-- A Verilator build is a heavy job on the build PC (memory), so coverage runs take a heavy slot.
+- cocotb 2 needs Verilator 5.036 or newer; the flow uses 5.048.
+- A Verilator build needs a lot of memory, so coverage runs are scheduled like other large jobs.

@@ -256,19 +256,25 @@ def trace_record(design: Path, root: Path) -> dict:
     defer = tuple(m for m, f in (("analysis", gates), ("hardware", hw)) if not f.is_file())
     if not list(runs.glob("seed*/coverage*")):
         defer += ("coverage",)
-    prev = b / "trace" / "trace.json"                            # the last record is the baseline: the change list
+    # the baseline is fixed: the last record with no stale requirement (the first record, the first time). It moves on only
+    # when nothing is stale, so a requirement whose text changed stays stale on every later record (gate and review alike)
+    # until its evidence changes or a person re-confirms it; comparing with the previous record would clear it by itself
+    base = b / "trace" / "baseline.json"
     try:
-        json.loads(prev.read_text())
+        json.loads(base.read_text())
     except (OSError, ValueError):                                # absent or unreadable: no baseline this time
-        prev = b / "trace" / "none.json"
+        base = None
     try:
         t = tr.build(design, runs, coverage=runs, formal=root / "build" / "verif" / "formal", gates=gates if gates.is_file() else None,
-                     hw=hw if hw.is_file() else None, baseline=prev if prev.is_file() else None, defer=defer)
+                     hw=hw if hw.is_file() else None, baseline=base, defer=defer)
     except Exception as e:                                       # noqa: BLE001 (a record must never stop the run)
         return {"ok": False, "error": f"{type(e).__name__}: {e}"[:400]}
     (b / "trace").mkdir(parents=True, exist_ok=True)
-    (b / "trace" / "trace.json").write_text(json.dumps(t, indent=1, default=str) + "\n")
+    text = json.dumps(t, indent=1, default=str) + "\n"
+    (b / "trace" / "trace.json").write_text(text)
     (b / "trace" / "trace.md").write_text(tr.to_markdown(t))
+    if t["gates"]["changed_requirements_reverified"]["pass"]:
+        (b / "trace" / "baseline.json").write_text(text)
     return {"ok": t["pass"], "gates": {k: v["pass"] for k, v in t["gates"].items()}, "defer": list(defer),
             "changed": {k: t["change"][k] for k in ("text_changed", "evidence_changed", "stale")}}
 

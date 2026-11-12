@@ -2,7 +2,7 @@
 
 **Kind.** Verification tool: bounded model checking and cover of SVA properties on small blocks.
 
-**Trusted for.** The `formal` proof method: a job in `verif/formal/*.sby` whose `bmc` and `cover` tasks both PASS
+**Used for.** The `formal` proof method: a job in `verif/formal/*.sby` whose `bmc` and `cover` tasks both PASS
 (`flow/formal.sh`).
 
 **How its output is checked independently.**

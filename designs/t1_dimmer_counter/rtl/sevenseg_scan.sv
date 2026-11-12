@@ -3,7 +3,7 @@
 // blank bit is set stays dark. Anodes and segments are active low and
 // registered together, so they always change on the same clock.
 
-// req: REQ-04   (brief 53: the requirements this module implements)
+// req: REQ-04
 module sevenseg_scan #(
     parameter int REFRESH_BITS = 17           // 2^17 clocks = 1.31 ms a digit at 100 MHz
 ) (

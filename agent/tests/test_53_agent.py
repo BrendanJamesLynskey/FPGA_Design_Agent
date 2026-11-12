@@ -23,16 +23,32 @@ def test_compound_and_vague_requirements_are_rejected():
     errs = requirement_quality_errors(_spec(
         "COUNT wraps modulo 65536 on an up press",                                 # fine
         "The counter counts up and down; a release makes no press",                # compound: ';'
-        "The display shows COUNT, and the LEDs show the duty",                     # compound: ', and'
+        "The display shows COUNT, and the LEDs show the duty",                     # compound: ', and' + a second verb
         "The UART should respond quickly",                                         # vague: should, quickly
         "Handles errors",                                                          # vague and too short
-        "The design closes timing at 100 MHz. Power stays below 1 W"))             # compound: two sentences
+        "The design closes timing at 100 MHz. Power stays below 1 W",              # compound: two sentences
+        "Latency is at most 3 clocks and throughput is one sample per clock",      # compound without a comma
+        "The counter counts up when UP is pressed and down when DOWN is pressed",  # compound without a comma
+        "Latency is approx. 3 clocks"))                                            # vague: approx
     text = "\n".join(errs)
     assert "REQ-01" not in text
     assert "REQ-02 is compound (';'" in text and "REQ-03 is compound (', and'" in text
     assert "REQ-04 is vague ('quickly', 'should')" in text
     assert "REQ-05 is vague ('handles')" in text and "REQ-05 is too short" in text
-    assert "REQ-06 is compound" in text
+    assert "REQ-06 is compound ('a second sentence'" in text
+    assert "REQ-07 is compound ('and'" in text and "REQ-08 is compound ('and'" in text
+    assert "REQ-09 is vague ('approx')" in text
+
+
+def test_good_requirements_pass_the_quality_check():
+    """Review finding 5: lists, 'may not', short exact statements and a trailing reference are not rejected."""
+    assert requirement_quality_errors(_spec(
+        "The LED outputs R, G, and B are driven from the PWM duty register",
+        "The UART runs at 115200 baud, 8 data bits, no parity, and one stop bit",
+        "The core may not assert valid while reset is high",
+        "LED0 mirrors SW0",
+        "The window follows the register map per spec v1.2. See section 3",
+        "The display lights exactly one digit at a time, in order, showing COUNT and the duty in hex")) == []
 
 
 def test_the_clarify_gate_applies_the_quality_check_and_validate_does_not():
@@ -71,3 +87,25 @@ def test_trace_record_and_review_index(tmp_path):
 def test_review_index_without_a_matrix(tmp_path):
     page = rv.write_index(tmp_path, [], None).read_text()
     assert "No traceability matrix yet" in page
+
+
+def test_a_stale_requirement_stays_stale_until_reverified(tmp_path):
+    """Review finding 2: the record runs at the gate and again at the review; a changed requirement must stay stale on
+    both until its evidence changes, not clear itself on the second record."""
+    d = tmp_path / "mini"
+    shutil.copytree(MINI, d)
+    run = d / "build" / "verif" / "sim" / "seed1"
+    run.mkdir(parents=True)
+    cases = "".join(f'<testcase classname="mini_bench" name="{n}"></testcase>'
+                    for n in ("counts_and_wraps", "holds_when_disabled", "reset_mid_count", "zz_export"))
+    (run / "results.xml").write_text(f"<testsuites><testsuite>{cases}</testsuite></testsuites>")
+    assert R.trace_record(d, tmp_path)["changed"]["stale"] == []
+    spec = d / "spec.yaml"
+    spec.write_text(spec.read_text().replace("while enable is low", "while enable is low or reset is high"))
+    assert R.trace_record(d, tmp_path)["changed"]["stale"] == ["REQ-02"]          # node_gate
+    assert R.trace_record(d, tmp_path)["changed"]["stale"] == ["REQ-02"]          # node_review, same stage
+    bench = d / "tests" / "mini_bench.py"
+    bench.write_text(bench.read_text().replace("async def holds_when_disabled(dut):\n    pass",
+                                               "async def holds_when_disabled(dut):\n    pass  # now also under reset"))
+    assert R.trace_record(d, tmp_path)["changed"]["stale"] == []                  # evidence changed: re-verified
+    assert R.trace_record(d, tmp_path)["changed"]["stale"] == []

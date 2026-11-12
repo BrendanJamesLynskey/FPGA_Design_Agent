@@ -4,9 +4,9 @@
 (`report_timing_summary`, `check_timing`, `report_drc`, `report_methodology`, `report_cdc`, `report_power`,
 `report_utilization`).
 
-**Trusted for.** Producing a bitstream whose function matches the RTL; the timing, utilisation, power, DRC,
-methodology and CDC reports that `flow/gates.py` reads for the `analysis` proof method (timing closure, resources,
-no unconstrained path).
+**Used for.** Producing the bitstream, and the timing, utilisation, power, DRC, methodology and CDC reports that
+`flow/gates.py` reads for the `analysis` proof method (timing closure, resources, no unconstrained path). That the
+bitstream's function matches the RTL is checked only through the board tests below, for the behaviours they exercise.
 
 **How its output is checked independently.**
 - Function: the design built from the same RTL is tested on the board against the blind golden model
@@ -26,5 +26,5 @@ no unconstrained path).
 - A run is deterministic only for fixed inputs, options and thread count; brief 54 measures what changes.
 - Memory: it needs `general.maxThreads`, `synth.maxThreads` and `chipscope.maxJobs` limits on the build PC
   (`flow/build.tcl`).
-- Licence tier: the free tier limits some debug and IP features; a feature outside it fails the build rather than
-  being silently dropped.
+- Licence edition: the edition in use limits some debug and IP features; a feature outside it fails the build rather
+  than being silently dropped.
