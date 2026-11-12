@@ -391,6 +391,38 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 .kitsvg .kfail { fill: var(--bg); stroke: var(--warn); stroke-width: 1.5; }
 .kitsvg .kcur { fill: none; stroke: var(--accent); stroke-width: 2.5; }
 .kitsvg .kcount { font-weight: 600; }
+/* wave with stages (showcase kit): the stage strip, the progressive reveal, marks; text at least 12 units in a 360-unit plot */
+.stagestrip { list-style: none; padding: 0; margin: 0 0 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; }
+.stagestrip li { max-width: none; border: 1px solid var(--rule); padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; color: var(--ink-2); background: var(--panel); }
+.stagestrip .sn { font-weight: 600; font-size: .9rem; }
+.stagestrip .sf { font: .78rem/1.3 var(--f-mono); overflow-wrap: anywhere; }
+.stagestrip li.done { color: var(--ink); }
+.stagestrip li.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.stagedwave text { font-size: 13px; }
+.stagedwave .cursor { fill: var(--ink); opacity: .1; }
+.stagedwave .kl { fill: var(--ink); }
+.stagedwave .kv { fill: var(--ink); }
+.kitsvg .future.solid { fill: var(--panel); opacity: 1; }
+.kitsvg .kring { fill: none; stroke: var(--warn); stroke-width: 1.6; }
+.kit .kitart:has(.stagedwave) { max-width: none; }
+/* showcase pages: a wider text column; commands wrap rather than run off a phone screen */
+.sc-page p, .sc-page li, .sc-page dd, .sc-page figcaption { max-width: 74ch; }
+.sc-page pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sc-page table { border-collapse: collapse; font-size: .9rem; margin: .4em 0 1em; }
+.sc-page th, .sc-page td { border-bottom: 1px solid var(--rule); padding: 4px 10px 4px 0; text-align: left; vertical-align: top; }
+.sc-page .tbl { overflow-x: auto; max-width: 100%; }
+.sc-page details.more p { margin: .5em 0; }
+/* showcase drawers: a visible expander cue (+ closed, - open) and full-ink titles, so a closed drawer never looks empty */
+.sc-page details.more > summary { list-style: none; cursor: pointer; color: var(--ink); font-weight: 600; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.sc-page details.more > summary::-webkit-details-marker { display: none; }
+.sc-page details.more > summary::before { content: "+"; font: 700 1rem var(--f-mono); width: 1ch; }
+.sc-page details.more[open] > summary::before { content: "-"; }
+/* the run table: the first column never breaks inside a run name; on narrow screens it scrolls inside its box, with a hint */
+.sc-page td:first-child, .sc-page th:first-child { white-space: nowrap; }
+.sc-page .tblhint { display: none; font-size: .85rem; color: var(--ink-2); margin: 0 0 .3em; }
+@media (max-width: 900px) { .sc-page .tblhint { display: block; } .sc-page .tbl { border-right: 3px solid var(--rule); } }
+.sc-page caption { color: var(--ink-2); }
+
 .hres .hgrid { stroke: var(--rule); stroke-width: 1; }
 .hres .hzero { stroke: var(--ink); stroke-width: 1.5; }
 .hres .hbar30 { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 4; }
@@ -417,6 +449,19 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 .toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
 .toc a { color: var(--ink-2); }
 .chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
+/* header (brief 50A page review): up to 1000 px the page links are one row that scrolls sideways, fading at the right
+   edge as the cue; on phones that row sits under the brand and the theme button, so nothing overlaps it */
+@media (max-width: 1000px) {
+  .bar .wrap { flex-wrap: nowrap; }
+  .bar nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; flex: 1 1 auto; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); padding-right: 22px; }
+  .bar nav a { white-space: nowrap; }
+  .bar .brand { white-space: nowrap; flex: 0 0 auto; }
+}
+@media (max-width: 640px) {
+  .bar .wrap { flex-wrap: wrap; row-gap: 0; }
+  .bar .brand { flex: 1 1 auto; }
+  .bar nav { order: 3; flex: 1 0 100%; }
+}
 </style>
 </head>
 <body>
@@ -1308,11 +1353,100 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
   /* ---------- showcase graphics kit (brief 61): a hero replayed from a project's committed data ----------
      Contract: docs/showcase_pages.md. Each kind returns {n, frame(i) -> caption}; the Player gives play, step, scrub,
      speed and reset; under reduced motion nothing plays and the last frame (the whole result) is shown. */
+  /* wave with stages (docs/showcase_pages.md, "wave" options): a strip of the run's stages above the plot, the samples
+     revealed as the capture runs, marks (trigger, a change) that appear when the reveal reaches them. Frames: one per
+     stage caption before the capture, one per sample while the "during" stage is lit, one per caption after it. The last
+     frame shows everything, so reduced motion (which jumps to it) loses nothing. Text in the plot is at least 11 units in
+     a 360-unit-wide drawing, so it stays legible at 390 px. */
+  function stagedWave(art, T) {
+    var staged = !!T.stages;
+    /* the drawing is as wide as its box (360 to 720 units), so 13-unit text is about 12 to 13 px from a phone to a desktop */
+    var n = T.x.length, LW = 64, W = Math.max(360, Math.min(720, Math.round(art.clientWidth || 360))), CW = (W - LW - 4) / n, RH = 44, AX = 26;
+    var H = AX + T.signals.length * RH + ((T.marks || []).length ? 44 : 10);   /* room for the mark labels, one row each */
+    var frames = [];
+    if (!staged) for (var q = 0; q < n; q++) frames.push({ stage: -1, show: q, cap: (T.captions && T.captions[q]) || null });
+    (T.stages || []).forEach(function (st, si) {
+      var caps = st.captions || [];
+      if (st.phase === "before" || st.phase === "during") caps.forEach(function (c) { frames.push({ stage: si, show: -1, cap: c }); });
+      if (st.phase === "during") for (var k = 0; k < n; k++) frames.push({ stage: si, show: k, cap: (T.captions && T.captions[k]) || null });
+      if (st.phase === "after") caps.forEach(function (c) { frames.push({ stage: si, show: n - 1, cap: c }); });
+    });
+    var items = [];
+    if (staged) {
+      var strip = el("ol", { class: "stagestrip", "aria-label": "Stages of the run" });
+      items = T.stages.map(function (st) {
+        var li = el("li", {}, [el("span", { class: "sn", text: st.name }), el("span", { class: "sf", text: st.fact || "" })]);
+        strip.appendChild(li); return li;
+      });
+      art.appendChild(strip);
+    }
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "kitsvg stagedwave",
+      "aria-label": T.alt || ("Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s") });
+    function X(i) { return LW + i * CW; }
+    var step = T.tick || Math.max(1, Math.ceil(n / 6));
+    for (var i = 0; i < n; i++) if (T.x[i] % step === 0) {
+      s.appendChild(sv("line", { x1: X(i) + CW / 2, x2: X(i) + CW / 2, y1: AX - 6, y2: AX - 2, class: "rule" }));
+      s.appendChild(sv("text", { x: X(i) + CW / 2, y: AX - 9, "text-anchor": "middle", class: "kt" }, T.x[i]));
+    }
+    s.appendChild(sv("text", { x: 0, y: AX - 9, class: "kt" }, T.unit));
+    T.signals.forEach(function (g, r) {
+      var y0 = AX + r * RH, top = y0 + 8, bot = y0 + RH - 10, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4, class: "kl" }, g.name.length > 8 ? g.name.slice(0, 7) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      if (g.kind === "bit") {
+        var d = "";
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k).toFixed(1) + " " + y + " L" + X(k + 1).toFixed(1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.6 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        var dw = "";
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); dw += (k ? "L" : "M") + (X(k) + CW / 2).toFixed(1) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: dw, class: "ink", "stroke-width": 1.6 }));
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), txt = g.kind === "text" ? String(g.v[a]) : fmtv(g, g.v[a]);
+            s.appendChild(sv("path", { d: "M" + x1.toFixed(1) + " " + mid + " L" + (x1 + 3).toFixed(1) + " " + top + " L" + (x2 - 3).toFixed(1) + " " + top + " L" + x2.toFixed(1) + " " + mid + " L" + (x2 - 3).toFixed(1) + " " + bot + " L" + (x1 + 3).toFixed(1) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+            if (x2 - x1 > txt.length * 8 + 8) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4, class: "kv" }, txt));
+            a = k;
+          }
+        }
+      }
+    });
+    /* staged: the samples not yet captured are hidden; plain: a cursor band and line, nothing dimmed */
+    var shade = staged ? sv("rect", { x: X(0), y: AX - 2, width: W, height: H, class: "future solid" })
+                       : sv("rect", { x: X(0), y: AX - 2, width: CW, height: T.signals.length * RH + 2, class: "cursor" });
+    s.appendChild(shade);
+    var marks = (T.marks || []).map(function (m) {
+      var k = T.x.indexOf(m.x), g = sv("g", { class: "kmarkg" });
+      var r0 = m.signal ? 1 : 0, x = X(k) + (m.signal ? 0 : CW / 2), r = m.signal ? T.signals.map(function (q) { return q.name; }).indexOf(m.signal) : -1;
+      if (r < 0) {
+        g.appendChild(sv("line", { x1: x, x2: x, y1: AX - 2, y2: H - 38, class: "kmark" }));
+        g.appendChild(sv("text", { x: x + 3, y: H - 24, class: "kt" }, m.label));
+      } else {
+        var y0 = AX + r * RH;
+        g.appendChild(sv("rect", { x: x - 4, y: y0 + 3, width: 8, height: RH - 8, class: "kring" }));
+        g.appendChild(sv("text", { x: Math.min(x + 7, W - 4), y: H - 5, class: "kt", "text-anchor": x > W * 0.6 ? "end" : "start" }, m.label));
+      }
+      s.appendChild(g); return { k: k, g: g };
+    });
+    art.appendChild(s);
+    if (T.alt) art.appendChild(el("p", { class: "visually-hidden", text: T.alt }));
+    return { n: frames.length, interval: 650, frame: function (i) {
+      var F = frames[i], k = F.show;
+      items.forEach(function (li, j) { li.classList.toggle("on", j === F.stage); li.classList.toggle("done", j < F.stage); });
+      shade.setAttribute("x", (staged ? (k < 0 ? X(0) : X(k + 1)) : X(k)).toFixed(1));
+      marks.forEach(function (m) { m.g.style.visibility = (!staged || k >= m.k) ? "visible" : "hidden"; });
+      if (F.cap) return F.cap;
+      var vals = T.signals.map(function (g) { return g.name + " " + fmtv(g, g.v[k]); }).join(", ");
+      return T.unit + " " + T.x[k] + ": " + vals + ".";
+    } };
+  }
   function nf(v) { return Math.abs(v) >= 100 ? String(Math.round(v)) : String(+v.toPrecision(3)); }
   var KIT = {
     wave: function (art, T) {
-      var f = mountWave(art, T);
-      return { n: T.x.length, interval: 700, frame: function (i) { f(i); return (T.captions && T.captions[i]) || (T.unit + " " + T.x[i]); } };
+      return stagedWave(art, T);        /* with or without stages: the legible kit plot (docs/showcase_pages.md) */
     },
     hist: function (art, H) {
       var xs = H.samples, N = xs.length, B = H.bins;

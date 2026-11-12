@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fda-debug-plan/1",
+  "title": "Debug plan (what will be built and armed)",
+  "type": "object",
+  "required": ["schema", "design", "backend", "clock", "probes", "trigger", "window", "ports", "fit", "errors", "warnings", "probeset"],
+  "properties": {
+    "schema": {"const": "fda-debug-plan/1"},
+    "design": {"type": "string"},
+    "request": {"type": ["string", "null"]},
+    "backend": {"enum": ["vendor_ila"]},
+    "clock": {"type": "object", "required": ["domain", "net"], "properties": {
+      "domain": {"type": ["string", "null"]}, "net": {"type": ["string", "null"]}, "mhz": {"type": ["number", "null"]}}},
+    "probes": {"type": "array", "items": {"type": "object", "required": ["label", "path", "width", "pins", "kind", "requested_as", "role"],
+      "properties": {
+        "label": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+        "path": {"type": "string"}, "width": {"type": "integer", "minimum": 1, "maximum": 1024},
+        "pins": {"type": "string"}, "kind": {"type": "string"}, "requested_as": {"type": "string"},
+        "clock": {"type": ["string", "null"]}, "role": {"enum": ["trigger", "data", "trigger+data"]},
+        "group": {"type": "string"}, "notes": {"type": "array", "items": {"type": "string"}}}}},
+    "trigger": {"type": "object", "required": ["combine", "conditions"], "properties": {
+      "combine": {"enum": ["AND", "OR"]},
+      "conditions": {"type": "array", "items": {"type": "object", "required": ["probe", "op", "pattern"], "properties": {
+        "probe": {"type": "string"}, "op": {"type": "string"}, "value": {},
+        "pattern": {"type": "string", "pattern": "^[01XRFB]+$"}, "text": {"type": "string"}}}}}},
+    "window": {"type": "object", "required": ["pre", "post", "depth", "position"], "properties": {
+      "pre": {"type": "integer", "minimum": 0}, "post": {"type": "integer", "minimum": 0},
+      "depth": {"enum": [1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072]},
+      "position": {"type": "integer", "minimum": 0}, "requested": {"type": "object"}}},
+    "ports": {"type": "array", "maxItems": 5},
+    "setup": {"type": "array"}, "stimulus": {"type": "array"}, "readback": {"type": "array"},
+    "fit": {"type": "object", "required": ["ok"]},
+    "errors": {"type": "array", "items": {"type": "object", "required": ["what", "why"]}},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "probeset": {"type": "string"},
+    "question": {"type": ["string", "null"]}
+  }
+}
