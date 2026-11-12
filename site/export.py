@@ -453,6 +453,7 @@ def main():
     out = {"dev": build_dev(runs), "replay": replay(runs), "examples": examples(runs), "board": board(),
            "packs": packs(), "eval": evaldata(), "catalogue": cat, "flow_notes": flow_notes(),
            "skills": expertise.skills_doc(), "expertise": expertise.build()}
+    out["dev"]["rebuild_vivado"] = jload(REBUILDS)["vivado"] if REBUILDS.exists() else None   # the release the saved designs were rebuilt on
     out["agent_graph"] = agent_arch.build(out["replay"], out["skills"])     # brief 43: the agent's graph, roles and two replays, from the code
     import loop
     out["loop"] = loop.build(dict(out["agent_graph"], vivado=out["board"]["vivado"]))     # brief 47: the home page's feedback loop

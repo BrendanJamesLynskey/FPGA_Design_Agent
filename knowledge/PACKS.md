@@ -15,7 +15,7 @@ skills it loaded. **No pack content is published here.**
   `agent/core/skill_index.py` checks each skill's SHA-256 against the manifest and searches a changed skill by BM25 alone.
   Unchanged at `8809175`: not rebuilt for the skills added since (brief 30's four, the eight VHDL skills and the five
   assurance skills), which are therefore searched by BM25 alone until the vectors are rebuilt in the knowledge repo.
-- **Vivado version the bank was measured on: 2026.1** (brief 48, 2026-11-11; 2025.2 before, brief 21). The 2026.1 probe and diff are in the private repo's `reports/` and `tools/version_probe/baseline/probe_2026.1.json`; measured numbers marked `manual` in the claims were not re-measured by brief 48. Every version-bound fact (rule severities, command
+- **Vivado version the bank was measured on: 2026.1** (brief 48, 2026-11-11; an earlier release before that, brief 21). The 2026.1 probe and diff are in the private repo's `reports/` and `tools/version_probe/baseline/probe_2026.1.json`; measured numbers marked `manual` in the claims were not re-measured by brief 48. Every version-bound fact (rule severities, command
   options, IP versions, measured numbers, cited guide versions) is indexed with the version it was verified on in the private
   repo's `claims/`; its `docs/VERSION_UPGRADE.md` is the procedure for a new version (probe, diff, review, re-pin here, regression,
   switch). `flow/version_pin.py` holds this version; each build's `gates.json` carries `vivado_version`, `kb_measured_version` and

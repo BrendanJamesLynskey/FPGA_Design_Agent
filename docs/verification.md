@@ -61,7 +61,8 @@ T1's table is in `designs/t1_dimmer_counter/verif/testplan.yaml` (8 requirements
 ## The stack and why
 
 The owner's simulator matrix (`SystemVerilog_Simulators`, `index.html`, `FEATURES`, columns Icarus 12 / Verilator
-5.020 / xsim from an earlier Vivado release / Questa Starter; commit 485f024) decides it. Free tools only (owner decision).
+5.020 / xsim / Questa Starter; commit 485f024) decides it. The matrix's xsim column was made on an earlier Vivado release and
+has not been re-checked on 2026.1 as a whole; the covergroup row has ([results/24_fsm_2026_1/simprobe](../results/24_fsm_2026_1/simprobe/survey.txt)). Free tools only (owner decision).
 
 | Need | Matrix says | Decision |
 |---|---|---|

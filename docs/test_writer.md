@@ -43,8 +43,8 @@ gate where the report runs; no 2026.1 QoR figures exist, so none are quoted.
 
 `post_route_qor_assessment` (score >= 4 in `qor_assessment_route.rpt`) is the gate, in the `post_route` stage.
 `post_synth_qor_assessment` is a recorded warning (`stages.post_synth.warnings`, top-level `warnings`, the review page's
-"Warnings" table), not a gate. Reason: on small designs the post-synthesis predicted-congestion item scored below the routed
-score (benchmark 06a).
+"Warnings" table), not a gate. Reason: on an earlier Vivado release, on small designs the post-synthesis predicted-congestion
+item scored below the routed score (benchmark 06a); this cannot be re-checked on the 2026.1 Basic tier.
 
 ## Live checks (T1, oracle, review off, V1; records in `results/f2/`)
 

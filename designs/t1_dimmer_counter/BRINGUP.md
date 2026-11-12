@@ -21,7 +21,7 @@ and its UART), checks the USB-power gate, programs the base build into SRAM, run
 error responses and counters, sync hunting, frame timeout, framing error, the T1 registers against `model.py`),
 programs the ILA build, captures four ILA windows and checks them against the model (`hw_checks.py`: a COUNT
 write, and the PWM at three dimmer levels), and checks the design is still running. It writes
-`results/f0b/t1_dimmer_counter_bringup.json` and exits non-zero on any failure. Sections 1-6 are the same checks
+`t1_dimmer_counter_bringup.json` to its `--out` folder (default `results/f0b/`) and exits non-zero on any failure. Sections 1-6 are the same checks
 by hand, and what a person checks that the script cannot (buttons, what the display and LEDs look like).
 
 **Power.** Written when the board was powered from its PROG/UART USB cable. A bitstream is programmed only if
@@ -80,7 +80,7 @@ Run the shell commands from the repo root; `P=` the UART from section 1 (for exa
 
 | # | Do | Pass if | Fail means |
 |---|---|---|---|
-| 1 | `$SH id` | `design_id T1DC`, `shell_version 1.0`, `build_stamp` = `build_stamp` in `results/f0a/t1_dimmer_counter_base.json` (`dfd4624e` on the F0B board) | wrong bitstream, or the UART is not working (see section 6) |
+| 1 | `$SH id` | `design_id T1DC`, `shell_version 1.0`, `build_stamp` = `build_stamp` in `results/f0a_2026_1/t1_dimmer_counter_base.json` (`dfd4624e` on the F0B board) | wrong bitstream, or the UART is not working (see section 6) |
 | 2 | `$SH scratch` | `scratch PASS` | UART bit errors (cable, baud) |
 | 3 | `$SH status` | all four counters 0 | errors on the line: note which counter |
 | 4 | Press **BTNU** (up) 3 times, slowly | display right digits `0003`; LD0 and LD1 lit; `$SH read 0x84` = `0x00000003` | 4+ or 1-2 counts: debounce problem; nothing: buttons or reset |
