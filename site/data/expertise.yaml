@@ -33,11 +33,11 @@ areas:
     values: ["count@rows:fault=true", "count@rows:fault=true,vivado_flags=true", "count@rows:fault=true,flow_flags=true"]
     text: "On {0} small designs with one I/O-delay or virtual-clock mistake each, Vivado itself said something in {1}; the flow's gates flagged {2}."
   - kind: measured
-    source: results/49_vivado_2026_1/xpm_probe.json
+    source: results/vivado_2026_1_remeasure/xpm_probe.json
     values: [get:xpm_probe.before.wns_ns, get:xpm_probe.after.wns_ns]
     text: "On a two-clock probe design, setup slack on the crossing was {0} ns without AMD's macro exceptions and {1} ns with them (Vivado 2026.1)."
   - kind: agent
-    source: results/49_vivado_2026_1/dev_rebuilds.json
+    source: results/vivado_2026_1_remeasure/dev_rebuilds.json
     values: ["count@rows:wns_ns?", "count@rows:wns_ns>0"]
     text: "Of the development runs whose saved designs were rebuilt on Vivado 2026.1, {0} reached routing; setup slack was positive in {1}."
   - kind: agent

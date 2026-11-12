@@ -531,3 +531,58 @@ def harness_layers(A, lay):
             out.append(edge(f"M40 {y + 2} L40 {y + 22}", p) + text(52, y + 16, ["each call and its reply pass through", "the tool calls it asks for", "built-in tools: reads and writes", "our tools: through the registry"][k], "s"))
             y += 26
     return svg(p, W, y + 4, "".join(out), "The harness of a Deep Agents role agent, layer by layer: model, middleware, tools, jailed filesystem, our tool layer and gates", "harn")
+
+
+# ---------------------------------------------------------------- 8. harness experiment results (brief 61, from brief 42 round 1)
+
+def harness_results(A, lay):
+    """Paired change against the baseline for each measured arm and metric: the median (dot) and its 95 % bootstrap
+    interval (bar), as a percentage of the baseline's median; 0 and the pre-registered 30 % bar drawn as rules."""
+    arms = [a for a in A["harness"]["arms"] if a.get("result")]
+    mets = [("cost_usd", "cost"), ("tokens", "tokens"), ("wall_s", "wall time")]
+    import math
+    ends = [v for a in arms for k, _ in mets for v in (a["result"]["paired"][k]["lo_pct"], a["result"]["paired"][k]["hi_pct"])]
+    lo = min(-40, 20 * math.floor(min(ends) / 20))     # the axis always holds every interval: nothing is clamped
+    hi = max(20, 20 * math.ceil(max(ends) / 20))
+    wide = lay == "wide"
+    W = 940 if wide else 360
+    L = 250 if wide else 92
+    R = 20
+    X = lambda v: L + (W - L - R) * (v - lo) / (hi - lo)
+    rh, gap, top = 22, 18, 40
+    out = []
+    y = top
+    rows = []
+    for a in arms:
+        rows.append(("arm", a, None, y))
+        y += rh
+        for k, w in mets:
+            rows.append(("row", a, (k, w), y))
+            y += rh
+        y += gap
+    H = y + 30
+    ytop, ybot = top - 6, y - gap + 4
+    for v in range(lo, hi + 1, 20):
+        out.append(f'<line class="hgrid" x1="{X(v):.1f}" x2="{X(v):.1f}" y1="{ytop}" y2="{ybot}"/>')
+        out.append(text(X(v), ybot + 16, f"{v:+d} %" if v else "0", "s", "middle"))
+    out.append(f'<line class="hzero" x1="{X(0):.1f}" x2="{X(0):.1f}" y1="{ytop - 8}" y2="{ybot}"/>')
+    out.append(f'<line class="hbar30" x1="{X(-30):.1f}" x2="{X(-30):.1f}" y1="{ytop - 8}" y2="{ybot}"/>')
+    out.append(text(X(-30) - 4, ytop - 12, "adopt bar: 30 % less", "s", "end"))
+    out.append(text(X(0) + 4, ytop - 12, "no change", "s"))
+    out.append(text(W - R, ybot + 32, "change against the baseline, % of its median (95 % interval)", "s", "end"))
+    for kind, a, m, yy in rows:
+        if kind == "arm":
+            r = a["result"]
+            out.append(text(0, yy + 14, f'{a["id"]} {a["name"]}', "t" if wide else ""))
+            continue
+        k, w = m
+        p = a["result"]["paired"][k]
+        out.append(text(L - 10 if wide else L - 6, yy + 14, w, "s", "end"))
+        ok = p["excludes_0"]
+        out.append(f'<line class="{"hci" if ok else "hci0"}" x1="{X(p["lo_pct"]):.1f}" x2="{X(p["hi_pct"]):.1f}" y1="{yy + 10}" y2="{yy + 10}"/>')
+        out.append(f'<circle class="{"hpt" if ok else "hpt0"}" cx="{X(p["rel_pct"]):.1f}" cy="{yy + 10}" r="5"/>')
+        if wide:
+            out.append(text(X(hi) + 0, yy + 14, "", "s"))
+    label = "; ".join(f'{a["id"]}: ' + ", ".join(f'{w} {a["result"]["paired"][k]["rel_pct"]:+g} % (interval {a["result"]["paired"][k]["lo_pct"]:+g} to {a["result"]["paired"][k]["hi_pct"]:+g} %)'
+                                               for k, w in mets) for a in arms)
+    return svg(f"hr{lay[0]}", W, H, "".join(out), "Harness experiments, paired change against the baseline: " + label, "hres")

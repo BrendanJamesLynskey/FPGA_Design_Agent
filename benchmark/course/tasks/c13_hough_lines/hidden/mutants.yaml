@@ -1,6 +1,6 @@
 mutants:
   - {name: rho_offset, file: c13_hough_lines_regs.sv, find: ".ROFF(48)", replace: ".ROFF(47)", why: "the distance table is offset by one"}
-  - {name: no_rounding, file: hough.sv, find: "* stab(k[3:0]) + 64) >>> 7)", replace: "* stab(k[3:0]) + 0) >>> 7)", why: "the distance is truncated instead of rounded"}
+  - {name: no_rounding, file: hough.sv, find: "px_r + py_r + 64) >>> 7)", replace: "px_r + py_r + 0) >>> 7)", why: "the distance is truncated instead of rounded"}
   - {name: cos_entry, file: hough.sv, find: "4'd2: ctab = 118;", replace: "4'd2: ctab = 117;", why: "one cosine table entry is wrong"}
   - {name: sin_entry, file: hough.sv, find: "4'd13: stab = 71;", replace: "4'd13: stab = 70;", why: "one sine table entry is wrong"}
   - {name: y_from_x, file: hough.sv, find: "x <= pt_x; y <= pt_y;", replace: "x <= pt_x; y <= pt_x;", why: "the y coordinate of a point is replaced by its x"}

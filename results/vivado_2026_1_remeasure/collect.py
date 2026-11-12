@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Brief 49: collect the Vivado 2026.1 re-measurements made outside the fixture tables into this folder.
 
-    python3 results/49_vivado_2026_1/collect.py <xpm_before build dir> <xpm_after build dir>
+    python3 results/vivado_2026_1_remeasure/collect.py <xpm_before build dir> <xpm_after build dir>
 
 - dev_rebuilds.json: each development run whose saved design was kept (runs/<run_id>/<task>, git-ignored), rebuilt with
   `FDA_BUILD_CACHE=0 flow/run_vivado.sh runs/<run_id>/<task> base` on 2026.1, today's flow and test shell. Read from each

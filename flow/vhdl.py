@@ -483,3 +483,22 @@ def fit_generics(files: list[Path], top: str, generics: dict | None) -> dict:
             val = int(lit.group(3).replace("_", ""), {"h": 16, "b": 2, "d": 10}[lit.group(2).lower()])
             out[k] = format(val & ((1 << n) - 1), f"0{n}b")
     return out
+
+
+def main(argv: list[str] | None = None) -> int:
+    """``python -m flow.vhdl lint <dir or files...> [--top NAME]``: GHDL lint of a VHDL design, as the agent's lint tool runs it."""
+    import argparse
+    ap = argparse.ArgumentParser(prog="python -m flow.vhdl", description="GHDL lint of a VHDL-2008 design.")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    lp = sub.add_parser("lint", help="analyse every file, then synthesis-elaborate the top")
+    lp.add_argument("paths", nargs="+", type=Path, help="VHDL files, or directories whose *.vhd files are read")
+    lp.add_argument("--top", default=None, help="top entity (default: analysis only)")
+    a = ap.parse_args(argv)
+    files = sorted(f for p in a.paths for f in (p.glob("*.vhd*") if p.is_dir() else [p]))
+    r = lint(files, a.top)
+    print(r["output"] or ("ok" if r["ok"] else "failed"))
+    return 0 if r["ok"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

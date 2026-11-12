@@ -2,19 +2,19 @@
 <p class="lede">The agent drives Vivado from scripts, with no GUI, and in that mode Vivado sometimes does less than a design needs. Each card tells one such story: what goes wrong, why, what the flow does, and what has been measured.</p>
 
 <div class="tablewrap" tabindex="0"><table class="index"><thead><tr><th>Card</th><th>What goes wrong</th><th>Status</th></tr></thead><tbody>
-<tr><td><a href="#xpm-cdc">1</a></td><td>AMD's crossing macros lose their timing exceptions</td><td>Built, verified on one probe design</td></tr>
-<tr><td><a href="#cdc-gate">2</a></td><td>Vivado's crossing report passes some unsafe crossings</td><td>Built, verified on test designs, no agent run yet</td></tr>
-<tr><td><a href="#exceptions">3</a></td><td>Over-broad timing exceptions hide real failures</td><td>Designed, not built</td></tr>
-<tr><td><a href="#gates">4</a></td><td>A missing report or a skipped test looks like a pass</td><td>Built, covered by unit tests</td></tr>
-<tr><td><a href="#pblock">5</a></td><td>Placement regions made after synthesis are only hints</td><td>Seen on the crossing test rig; not re-checked on 2026.1</td></tr>
+<tr><td><a href="#xpm-cdc">1</a></td><td>AMD's crossing macros lose their timing exceptions</td><td>Measured on one probe design</td></tr>
+<tr><td><a href="#cdc-gate">2</a></td><td>Vivado's crossing report passes some unsafe crossings</td><td>Measured on test designs; no agent run yet</td></tr>
+<tr><td><a href="#exceptions">3</a></td><td>Over-broad timing exceptions hide real failures</td><td>Gate measured on test designs; grading tasks not built</td></tr>
+<tr><td><a href="#gates">4</a></td><td>A missing report or a skipped test looks like a pass</td><td>Built; covered by unit tests</td></tr>
+<tr><td><a href="#pblock">5</a></td><td>Placement regions made after synthesis are only hints</td><td>Seen on the crossing test rig; not re-measured on 2026.1</td></tr>
 <tr><td><a href="#mig">6</a></td><td>Scripted DDR controller generation skips the pin check</td><td>Measured through placement; rule checker built</td></tr>
 <tr><td><a href="#ssn">7</a></td><td>The switching-noise report is missing on some parts</td><td>Measured; no substitute built</td></tr>
-<tr><td><a href="#xsim">8</a></td><td>AMD's IP models need a simulator the tests cannot drive</td><td>Planned</td></tr>
+<tr><td><a href="#xsim">8</a></td><td>AMD's IP models need a simulator the tests cannot drive</td><td>Not built (planned)</td></tr>
 </tbody></table></div>
 
 <article class="card" id="xpm-cdc">
 <h2>1. AMD's crossing macros lose their timing exceptions</h2>
-<p class="tags"><span class="tag built">Built and verified</span><span class="muted small">one probe design, two macros</span></p>
+<p class="tags"><span class="tag built">Measured</span><span class="muted small">one probe design, two macros</span></p>
 <p>AMD's ready-made <a href="how.html#term-cdc">clock-crossing</a> circuits, the XPM macros, rely on timing exceptions shipped in separate constraint files. In the scripted flow those files were not applied, so Vivado timed each crossing as an ordinary path between unrelated clocks and a correct design failed timing. Neither Vivado's crossing report nor the agent's crossing gate noticed, because neither reports an exception that is missing. The only sign was negative <a href="how.html#term-slack">slack</a>, and the easy cure, a blanket exception, is the one that hides real bugs (<a href="#exceptions">card 3</a>).</p>
 <p>The flow now re-applies AMD's rules by cell name straight after synthesis; a design without the macros gets no exception. On a probe design with a {{flow_notes.xpm.clk_a_period_ns}} ns and a {{flow_notes.xpm.clk_b_period_ns}} ns clock (Vivado {{flow_notes.xpm.vivado}}), setup slack on the crossing went from {{flow_notes.xpm.before.wns_ns}} ns, with {{flow_notes.xpm.before.failing_endpoints}} failing endpoints, to {{flow_notes.xpm.after.wns_ns}} ns.</p>
 {{!xpm_figure}}
@@ -23,13 +23,13 @@
 <details class="more"><summary>Details: the rules, the report rows and the sources</summary>
 <p><a href="{{!repo}}/blob/main/flow/xpm_cdc.tcl"><code>flow/xpm_cdc.tcl</code></a> runs after <code>synth_design</code>: a false path to the first stage of each <code>xpm_cdc_single</code> and reset synchroniser; <code>set_max_delay -datapath_only</code> plus <code>set_bus_skew</code> for each <code>xpm_cdc_gray</code>; <code>set_max_delay -datapath_only</code> on the data of each <code>xpm_cdc_handshake</code>. The rules were first proven in the crossing soak rig. Before the fix (<code>read_verilog</code>, <code>synth_design</code>, {{flow_notes.xpm.part}}) <code>report_cdc</code> showed Exception "None" on both crossings. Not covered: <code>xpm_cdc_pulse</code>, <code>xpm_cdc_async_rst</code>; not checked: <code>xpm_cdc_array_single</code>.</p>
 {{!xpm_table}}
-<p class="small">Sources: deviation 8 in <a href="{{!repo}}/blob/main/docs/methodology.md"><code>docs/methodology.md</code></a>; <a href="{{!repo}}/tree/main/flow/tests/fixtures/xpm_probe"><code>flow/tests/fixtures/xpm_probe</code></a> (the probe and how to repeat it); <a href="{{!repo}}/blob/main/results/49_vivado_2026_1/xpm_probe.json"><code>results/49_vivado_2026_1/xpm_probe.json</code></a> (each number and where it was read).</p>
+<p class="small">Sources: deviation 8 in <a href="{{!repo}}/blob/main/docs/methodology.md"><code>docs/methodology.md</code></a>; <a href="{{!repo}}/tree/main/flow/tests/fixtures/xpm_probe"><code>flow/tests/fixtures/xpm_probe</code></a> (the probe and how to repeat it); <a href="{{!repo}}/blob/main/results/vivado_2026_1_remeasure/xpm_probe.json"><code>results/vivado_2026_1_remeasure/xpm_probe.json</code></a> (each number and where it was read).</p>
 </details>
 </article>
 
 <article class="card" id="cdc-gate">
 <h2>2. Vivado's crossing report passes some unsafe crossings</h2>
-<p class="tags"><span class="tag built">Built and verified</span><span class="muted small">on test designs; no agent run or board result yet</span></p>
+<p class="tags"><span class="tag built">Measured</span><span class="muted small">on test designs; no agent run or board result yet</span></p>
 <p>A crossing can be wrong while every synchroniser in it looks valid: a binary counter crossed bit by bit, a one-cycle pulse into a synchroniser meant for slow levels, two flags synchronised apart and then compared. Vivado's <code>report_cdc</code> checks structure and constraints; it does not run the design. The agent's crossing gate used to rest on that report alone.</p>
 <p>The gate now adds two checks. After synthesis it classifies every flip-flop fed from another clock, as a synchroniser chain, an AMD macro, a constrained Gray bus or handshake, a reset bridge, or unsafe. Then it reruns the design's own tests with each first synchroniser stage, and each AMD macro, sometimes holding its old value for an extra cycle, as a late-resolving flop would. A design that passes the plain run but fails this one fails the gate.</p>
 <p>On {{flow_notes.counts.ported}} broken crossings ported to the test set, the report alone flagged {{flow_notes.counts.report_cdc_flags}} and the new gate {{flow_notes.counts.gate_flags}}, and the gate passed all {{flow_notes.counts.correct_pass}} correct variants. A FIFO or handshake reset on one side only is not covered: the rig catches those by disturbing a reset's release, which the gate's cycle-level model lacks.</p>
@@ -51,12 +51,13 @@
 
 <article class="card" id="exceptions">
 <h2>3. Over-broad timing exceptions hide real failures</h2>
-<p class="tags"><span class="tag plan">Designed, not built</span></p>
+<p class="tags"><span class="tag built">Gate measured</span><span class="muted small">grading tasks not built</span></p>
 <p>A model that cannot meet timing has an easy way out: declare the failing path a false path, a multicycle path or part of an asynchronous clock group. Vivado applies any exception it is given, and the timing summary reads clean. Its methodology checks catch some cases, but a passing slack figure alone cannot tell a real pass from a hidden failure.</p>
-<p>The planned grading tasks each seed a real violation: a slow synchronous path, a failing path between related clocks, or an unsynchronised crossing. A task passes only if the violation stays visible after the agent's constraints are applied, and a repaired twin of the design must meet timing with the same constraints.</p>
+<p>The flow now has a gate for this. After synthesis and after routing it fails a run with an exception that Vivado ignored or that covers no path, a constraint message from an XDC line, or a multicycle path whose registers do not share a real clock enable; a separate check before Vivado asks for a stated reason beside every false path. It was measured on small designs with one exception mistake each: the results are in <a href="expertise.html#constraints">Expertise, constraints</a>.</p>
+<p>What is still missing is the benchmark side. The planned grading tasks each seed a real violation: a slow synchronous path, a failing path between related clocks, or an unsynchronised crossing. A task passes only if the violation stays visible after the agent's constraints are applied, and a repaired twin of the design must meet timing with the same constraints.</p>
 {{!exception_figure}}
 <p class="small muted">The check in outline: one failing path, with and without a false path over it. No measured values.</p>
-<p>The tasks are written down but not built or run, so there are no results. Among the methodology checks that catch some cases are TIMING-46 and TIMING-47.</p>
+<p>The grading tasks are written down but not built or run, so the agent has not yet been scored on this. Among the methodology checks that catch some cases are TIMING-46 and TIMING-47.</p>
 </article>
 
 <article class="card" id="gates">
@@ -90,6 +91,7 @@
 
 <article class="card" id="xsim">
 <h2>8. AMD's IP models need a simulator the tests cannot drive</h2>
-<p class="tags"><span class="tag plan">Planned</span></p>
+<p class="tags"><span class="tag plan">Not built</span></p>
 <p>AMD's DSP cores (FIR, FFT, DDS and others) ship encrypted simulation models that only AMD's xsim and licensed commercial simulators can run. The free simulators the agent uses cannot, and the cocotb test framework has no xsim back end. The plan is a harness that works through files: Python writes the stimulus and a seeded back-pressure pattern, a generic test bench replays it in xsim, and Python compares every output word with AMD's bit-accurate C model where one exists. A synthesis run at the target clock checks timing and resources. The harness is specified in the expertise survey but not built: no code or measurements yet.</p>
 </article>
+<p class="next">Next: <a href="expertise.html">Expertise</a> sets out what the agent knows and checks in each area of FPGA design, and how far the evidence goes.</p>
