@@ -113,6 +113,8 @@ class Config:
     router_k: int = 8               # brief 36: skills in the shortlist
     harness_arms: str = ""          # brief 42: comma-separated harness arms (H1 context management, H2 hang protection); "" = baseline
     hdl: str = "sv"                 # brief 55: the design language, sv (SystemVerilog) | vhdl (VHDL-2008; the test shell stays SystemVerilog)
+    design_plan: bool = False       # brief 62A: stage 1 declares datapaths; flow/timing_plan.py maps and pipelines them before any build
+    closure: str = "off"            # brief 62A: on = stage 6 runs the closure controller (agent/graph/closure.py)
 
     @property
     def arms(self) -> tuple[str, ...]:
@@ -909,6 +911,9 @@ def node_work(state: State) -> dict:
            "note": state.get("note") or "none",
            "design_rel": str(rt.design.relative_to(ROOT)), "no_shell": rt.cfg.no_shell, "hdl": rt.cfg.hdl}
     conv0 = conventions_text(fmt)
+    if rt.cfg.design_plan:                   # brief 62A hook: the datapaths bullet (stage 1) and the computed plan (later stages)
+        from flow import timing_plan as _tp
+        conv0 += _tp.DATAPATHS_CONVENTION + (("\n" + (rt.design / _tp.PLAN_MD).read_text()) if (rt.design / _tp.PLAN_MD).is_file() else "")
     conv_tests = tests_conventions_text(fmt)
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     # the owner's edit prompt (brief 05d, addition 6) goes to the role it names, default the stage's writer
@@ -916,6 +921,9 @@ def node_work(state: State) -> dict:
     def prompt_note(role: str) -> str:
         return (f"\n\nThe owner reviewed the last result and asks (their prompt, follow it): {state['note']}"
                 if state.get("note") and role == note_for else "")
+    if n == 6 and rt.cfg.closure == "on":    # brief 62A hook: the closure controller owns stage 6
+        from agent.graph import closure as _cl
+        return {"visits": visits, **_cl.graph_stage(rt, state)}
     try:
         if n == 1:
             (rt.design / arch_mod.APPROVAL).unlink(missing_ok=True)     # the architecture is open again: approve it anew
@@ -1224,6 +1232,10 @@ def node_gate(state: State) -> dict:
     elif n == 1:
         ev["arch"] = (rt.design / "ARCHITECTURE.md").is_file()
         ev["arch_check"] = arch_mod.check_design(rt.design)
+        if rt.cfg.design_plan and ev["arch_check"].get("ok"):      # brief 62A hook: plan the datapaths before any build
+            from flow import timing_plan as _tp
+            pr = _tp.plan_design(rt.design)
+            ev["arch_check"] = {**ev["arch_check"], "ok": pr["ok"], "errors": list(ev["arch_check"].get("errors") or []) + pr["problems"]}
         ev["inventory"] = {"ok": bool(d("check_constraints", dispatch(rt.session, "check_constraints", {})).get("ok"))}
     elif n == 2 and not arch_mod.approval_status(rt.design)[0]:     # nothing below this line runs without an approval
         ok_a, why_a = arch_mod.approval_status(rt.design)
@@ -1266,6 +1278,9 @@ def node_gate(state: State) -> dict:
             ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n in (3, 4):
         ev["gates_base"] = _build(rt, "synth")["gates"]
+        if n == 4 and rt.cfg.design_plan:                        # brief 62A hook: inferred primitives against the plan
+            from flow import timing_plan as _tp
+            ev["plan_fails"] = _tp.post_synth_failures(rt.design, ev["gates_base"])
         if n == 4:
             std = dispatch(rt.session, "gates", {"kind": "standards"})
             ev["standards"] = std.get("gates")
@@ -1273,6 +1288,9 @@ def node_gate(state: State) -> dict:
         ev["gates_base"] = _build(rt, "route")["gates"]
     elif n in (6, 7, 8):
         ev["gates_base"] = _build(rt, "route")["gates"]
+        if n == 6 and rt.cfg.design_plan:                        # brief 62A hook: planned stage delay against the routed path
+            from flow import timing_plan as _tp
+            _tp.record_calibration(rt.design, rt.run_dir / "plan_calibration.jsonl")
     elif n == 9:
         from flow import hw_dry_check
         ev["bringup_ready"] = hw_dry_check.check_design(rt.design)     # before the approval pause, not after it
