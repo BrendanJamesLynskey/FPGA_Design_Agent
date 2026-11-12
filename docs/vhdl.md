@@ -2,7 +2,8 @@
 
 The flow supports VHDL-2008 designs; the agent can write them, but it has not yet passed an end-to-end VHDL task. Model
 translations of five development tasks passed the same hidden tests and Vivado 2026.1 gates as their SystemVerilog references,
-after the model's first attempt failed all five on one naming mistake ([measured](#measured)).
+but only in an exploratory (post hoc) second arm, run after the model's first attempt failed all five on one naming mistake
+([measured](#measured)).
 
 The agent and the flow are SystemVerilog-first. A design may instead be written in VHDL-2008. The test shell (the UART register
 window every board design instantiates) stays SystemVerilog. This page says how to ask for VHDL, what runs where, and where the
@@ -82,7 +83,7 @@ only where SymbiYosys is installed (it is not in the CI image), so VHDL formal i
 ## Measured
 
 - First translations by a model (openai/gpt-6-luna, given the spec and the SystemVerilog): 0 of 5 board tasks, all on the
-  shell-name clash. With that rule and the VHDL skills in the prompt: 5 of 5 passed the unchanged hidden tests and every Vivado 2026.1
+  shell-name clash. With that rule and the VHDL skills in the prompt (an exploratory, post hoc arm): 5 of 5 passed the unchanged hidden tests and every Vivado 2026.1
   gate, with equal flip-flops and LUTs within 14 of the references; one ran on the board.
 - The end-to-end agent with `--hdl vhdl`: 0 of 4 runs passed; the VHDL built but failed the register tests, as the same model's
   SystemVerilog runs do.

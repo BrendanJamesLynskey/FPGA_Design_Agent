@@ -53,7 +53,7 @@ Whether openai/gpt-6-luna (OpenRouter, `data_collection: deny`) writes VHDL-2008
 - Brief cap $10 by provider-reported cost; stop new runs at $9.
 - No re-run of a passing drill. A failure in B is reported as a failure.
 
-## Amendments (dated, before the runs they affect)
+## Amendments (written after both arms ran)
 
 1. **Written after both arms ran (see the correction above).** Arm A's prompt carried the boundary notes of `flow/vhdl.py` as they were then.
    Arm B's prompt carries the notes as amended from A's mistakes (a bullet on the shell's `sync2`/`reset_sync` names, a bullet on

@@ -101,7 +101,8 @@ if __name__ == "__main__":
 
 def test_mutation_compile_check_in_the_sandbox_container(tmp_path):
     """Review fix B1: the VHDL compile check of flow/mutate.py inside fda-sim:2-ghdl (its work library must be in the mounted
-    design tree). Skipped where the image is absent."""
+    design tree). Skipped where the image or the agent's dependencies are absent."""
+    pytest.importorskip("jsonschema")  # agent.core.runner imports the agent's security module, which needs it
     from agent.core.runner import SIM_IMAGE_VHDL, ContainerRunner, container_available
     from flow import mutate
     if not container_available(image=SIM_IMAGE_VHDL):
