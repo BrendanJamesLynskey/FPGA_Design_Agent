@@ -145,12 +145,12 @@ def block(name, d):
             ["report_cdc, xpm_cdc_single row", x["before"]["report_cdc_exception"]["single"], x["after"]["report_cdc_exception"]["single"]],
             ["report_cdc, xpm_cdc_gray row", x["before"]["report_cdc_exception"]["gray"], x["after"]["report_cdc_exception"]["gray"]],
             ["clk_a to clk_b setup WNS (ns)", f'{x["before"]["wns_ns"]:+.3f}', f'{x["after"]["wns_ns"]:+.3f}'],
-            ["Failing endpoints on that path", x["before"]["failing_endpoints"], "not recorded"],
+            ["Failing endpoints on that path", x["before"]["failing_endpoints"], x["after"].get("failing_endpoints", "not recorded")],
         ], num=())
     if name == "mutant_table":
         def yn(v):
             return "not covered" if v is None else ("yes" if v else "no")
-        rows = [[m["id"], m["what"], yn(m["report_cdc"]), yn(m["rig_sim"]), yn(m["gate_sim"]), yn(m["gate"])] for m in d["flow_notes"]["mutants"]]
+        rows = [[m["id"], m["what"], "not re-measured" if m["report_cdc"] is None else yn(m["report_cdc"]), yn(m["rig_sim"]), yn(m["gate_sim"]), yn(m["gate"])] for m in d["flow_notes"]["mutants"]]
         return table(["Mutant", "What is wrong", "report_cdc alone flags it", "Rig simulation with injection", "Gate's own injected simulation", "New gate flags it"], rows)
     if name == "tear_table":
         rows = [[("binary counter" if s["bus"] == "binary" else "Gray counter"), "on" if s["extra_cycle"] else "off", s["cycles"], s["torn_cycles"]]

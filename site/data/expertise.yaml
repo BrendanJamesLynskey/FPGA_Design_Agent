@@ -33,14 +33,13 @@ areas:
     values: ["count@rows:fault=true", "count@rows:fault=true,vivado_flags=true", "count@rows:fault=true,flow_flags=true"]
     text: "On {0} small designs with one I/O-delay or virtual-clock mistake each, Vivado itself said something in {1}; the flow's gates flagged {2}."
   - kind: measured
-    source: results/14_flow_notes/inputs.json
+    source: results/49_vivado_2026_1/xpm_probe.json
     values: [get:xpm_probe.before.wns_ns, get:xpm_probe.after.wns_ns]
-    text: "On a two-clock probe design, setup slack on the crossing was {0} ns without AMD's macro exceptions and {1} ns with them (Vivado 2025.2)."
+    text: "On a two-clock probe design, setup slack on the crossing was {0} ns without AMD's macro exceptions and {1} ns with them (Vivado 2026.1)."
   - kind: agent
-    source: results/course/*/run_*.json
-    where: split=dev,qor.wns_ns_at_100MHz_post_route?
-    values: [n, "count:qor.wns_ns_at_100MHz_post_route>0"]
-    text: "Of the development runs, {0} reached routing and recorded setup slack there; it was positive in {1}."
+    source: results/49_vivado_2026_1/dev_rebuilds.json
+    values: ["count@rows:wns_ns?", "count@rows:wns_ns>0"]
+    text: "Of the development runs whose saved designs were rebuilt on Vivado 2026.1, {0} reached routing; setup slack was positive in {1}."
   - kind: agent
     source: results/20_timing_exceptions/drills/run_*.constraints.json
     values: [n, "count:pass=true"]
@@ -76,8 +75,8 @@ areas:
   - kind: measured
     source: site/data/flow_notes.json
     link: [hil/cdc_soak/results/cdc_rig_sim.json]
-    values: ["get:counts.rig_mutants", "get:counts.rig_sim_flags", "get:counts.rig_report_cdc_flags"]
-    text: "On the {0} mutants of the soak rig, its simulation with injection flagged {1}; report_cdc alone flagged {2}."
+    values: ["get:counts.rig_mutants", "get:counts.rig_sim_flags"]
+    text: "On the {0} mutants of the soak rig, its simulation with injection flagged {1}."
   cards:
   - {href: "flow-notes.html#cdc-gate", label: "Beyond the flow: the crossing report passes some unsafe crossings"}
   - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: AMD's crossing macros lose their exceptions"}
@@ -382,10 +381,6 @@ areas:
     source: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json
     values: ["get:checks.tone_at_the_jack.measured.level_dbfs_rms", "get:checks.tone_at_the_jack.measured.sinad_db"]
     text: "The same design with one output pin moved passes simulation and every check inside the chip, and fails at the jack: level {0} dBFS, signal-to-noise-and-distortion {1} dB."
-  - kind: measured
-    source: hil/cdc_soak/results/build_full.json
-    values: ["get:utilisation.lut.used", "get:timing.wns_ns", "get:power.total_w"]
-    text: "The full build of the crossing soak rig uses {0} LUTs, meets timing with {1} ns to spare and has a Vivado power estimate of {2} W."
   cards:
   - {href: "flow-notes.html#pblock", label: "Beyond the flow: placement regions on the crossing rig"}
   gaps:
@@ -403,10 +398,6 @@ areas:
   - {file: flow/gates.py, gate: power_junction_ok, enforced: true, what: "The junction temperature computed for the board's real cooling must fit the limit."}
   - {file: agent/graph/stages.py, gate: power_ok, enforced: true, what: "Part of the power-closure stage gate: total on-chip power and junction temperature must be within the limits for the board's power source, and the board tools refuse to program a build that fails."}
   evidence:
-  - kind: measured
-    source: results/board_v2/*.json
-    values: ["max@results:steps.power_ok.total_w", "max@results:steps.power_ok.junction_c"]
-    text: "Across the board checks, the highest on-chip power was {0} W and the highest junction temperature {1} C."
   - kind: agent
     source: results/course/*/run_*.json
     where: split=dev,qor.power_w?,gates.stage_gates_post_route=pass
@@ -438,5 +429,5 @@ areas:
   cards: []
   gaps:
   - "No local design had a failing path to cross-probe, so it is shown on passing ones."
-  - "Everything is measured on Vivado 2025.2, and other versions are not tested."
+  - "Every Vivado number on this page is measured on Vivado 2026.1, and other versions are not tested here."
   - "The block-design and project-mode steps are measured in scripts but are not part of the flow."

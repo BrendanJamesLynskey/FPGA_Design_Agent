@@ -6,7 +6,6 @@
   "ported": 10,
   "report_cdc_flags": 5,
   "rig_mutants": 12,
-  "rig_report_cdc_flags": 5,
   "rig_sim_flags": 9
  },
  "mutants": [
@@ -96,7 +95,7 @@
    "gate_sim": null,
    "id": "M9",
    "ported": false,
-   "report_cdc": false,
+   "report_cdc": null,
    "rig_sim": true,
    "what": "async FIFO reset on the write side only"
   },
@@ -114,7 +113,7 @@
    "gate_sim": null,
    "id": "M11",
    "ported": false,
-   "report_cdc": false,
+   "report_cdc": null,
    "rig_sim": true,
    "what": "2-phase handshake, source side reset alone"
   }
@@ -6115,11 +6114,14 @@
  },
  "xpm": {
   "after": {
+   "failing_endpoints": 0,
    "report_cdc_exception": {
     "gray": "Max Delay Datapath Only",
     "single": "False Path"
    },
-   "what": "same probe through flow/run_vivado.sh with flow/xpm_cdc.tcl (planner verification, 2026-11-10)",
+   "tns_ns": 0.0,
+   "total_endpoints": 4,
+   "what": "FDA_STOP_AFTER=route flow/run_vivado.sh (with flow/xpm_cdc.tcl)",
    "wns_ns": 8.891
   },
   "before": {
@@ -6129,13 +6131,14 @@
     "single": "None"
    },
    "tns_ns": -6.222,
-   "what": "flow/build.tcl without flow/xpm_cdc.tcl (quality review QR1, 2026-11-10)",
+   "total_endpoints": 5,
+   "what": "FDA_XPM_CDC=0 FDA_STOP_AFTER=route flow/run_vivado.sh (without flow/xpm_cdc.tcl)",
    "wns_ns": -1.364
   },
   "clk_a_period_ns": 10,
   "clk_b_period_ns": 7,
-  "design": "flow/tests/fixtures/xpm_probe (two clocks, one xpm_cdc_single, one xpm_cdc_gray)",
+  "design": "flow/tests/fixtures/xpm_probe (two clocks, one xpm_cdc_single, one xpm_cdc_gray), built as designs/qr_xpm_probe",
   "part": "xc7a100tcsg324-1",
-  "vivado": "2025.2"
+  "vivado": "2026.1"
  }
 }

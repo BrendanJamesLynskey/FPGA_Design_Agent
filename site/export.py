@@ -130,9 +130,9 @@ def replay(runs):
         "constraints": "Pin and clock constraints checked against the board's master XDC.",
         "synthesis": "Synthesis gates: " + g["stage_gates_post_route"].split(" (")[0] + " by the end of the run.",
         "implementation": "Place and route; bitstream built.",
-        "timing-closure": f"Post-route setup slack {qo['wns_ns_at_100MHz_post_route']:+.3f} ns, hold slack {qo['whs_ns']:+.3f} ns at 100 MHz.",
-        "power-closure": f"Vectorless power estimate {qo['power_w']:.3f} W.",
-        "drc-closure": f"{qo['lut']} LUT, {qo['ff']} FF, {qo['dsp']} DSP, {qo['bram36']} BRAM after place and route (test shell included).",
+        "timing-closure": f"Gates passed. The saved design rebuilt on Vivado {qo['vivado']}: post-route setup slack {qo['wns_ns_at_100MHz_post_route']:+.3f} ns, hold slack {qo['whs_ns']:+.3f} ns at 100 MHz.",
+        "power-closure": f"Gates passed. Rebuilt on Vivado {qo['vivado']}: vectorless power estimate {qo['power_w']:.3f} W.",
+        "drc-closure": f"Gates passed. Rebuilt on Vivado {qo['vivado']}: {qo['lut']} LUT, {qo['ff']} FF, {qo['dsp']} DSP, {qo['bram36']} BRAM after place and route (today's test shell included).",
         "configuration-and-debug": "Stops here: " + r["stop"]["reason"] + ".",
     }
     steps = []
@@ -175,7 +175,7 @@ def board():
     cap = {}
     for n, duty in (("08", 8), ("40", 64), ("a0", 160)):
         rows = list(csv.reader(open(ROOT / f"results/f0b_2026_1/captures/t1_dimmer_counter_pwm_{n}.csv")))
-        i = [j for j, x in enumerate(rows[0]) if "led_reg" in x][0]
+        i = [j for j, x in enumerate(rows[0]) if "led_reg" in x or x.startswith("LED_OBUF")][0]   # 2026.1 IP-route captures name the LED bus LED_OBUF
         v = [int(r[i], 16) & 1 for r in rows[2:]]
         edges = [[0, v[0]]] + [[j, v[j]] for j in range(1, len(v)) if v[j] != v[j - 1]]
         cap[n] = {"duty": duty, "samples": len(v), "on": sum(v), "edges": edges}
@@ -418,13 +418,14 @@ def flow_notes():
     """Data for flow-notes.html: the XPM probe, the CDC mutant table (rig and gate) and the synchroniser-tearing model."""
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import flow_model
-    inp = jload(ROOT / "results" / "14_flow_notes" / "inputs.json")
-    gate = {r["fixture"].lower(): r for r in jload(ROOT / "results" / "16_cdc_gate" / "mutant_table.json")["rows"]}
+    inp = jload(ROOT / "results" / "49_vivado_2026_1" / "xpm_probe.json")     # brief 49: the QR1 probe re-measured on 2026.1
+    gate = {r["fixture"].lower(): r for r in jload(ROOT / "results" / "16_cdc_gate_2026_1" / "mutant_table.json")["rows"]}
     rig = jload(ROOT / "hil" / "cdc_soak" / "results" / "cdc_rig_sim.json")["variants"]
     rows = []
     for k, what in RIG_WHAT.items():
         g = gate.get(k.lower())
-        rep = g["report_cdc_alone_flags"] if g else inp["rig_report_cdc_alone"][k]
+        # brief 49: a rig-only mutant's report_cdc verdict came from the rig build on an earlier release: withdrawn (None)
+        rep = g["report_cdc_alone_flags"] if g else None
         rig_err = sum(c["errors"] for c in rig[k]["copies"])
         rows.append({"id": k, "what": what, "report_cdc": rep, "rig_sim": rig_err > 0,
                      "gate_sim": g["sim_flags"] if g else None, "gate": g["gate_flags"] if g else None, "ported": g is not None})
@@ -437,7 +438,6 @@ def flow_notes():
         "counts": {"ported": len(mut), "report_cdc_flags": sum(r["report_cdc_alone_flags"] for r in mut),
                    "gate_flags": sum(r["gate_flags"] for r in mut), "correct": len(cor),
                    "correct_pass": sum(not r["gate_flags"] for r in cor), "rig_mutants": len(rows),
-                   "rig_report_cdc_flags": sum(r["report_cdc"] for r in rows),
                    "rig_sim_flags": sum(r["rig_sim"] for r in rows)},
         "tear": flow_model.export(),
     }

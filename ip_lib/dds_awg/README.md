@@ -44,12 +44,12 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py`):
 
 - Registered outputs: yes.
 - Clock crossings: none.
-- Part, board or pin: none (the sine table is built in an initial block with $sin; Vivado 2025.2 synthesises it).
+- Part, board or pin: none (the sine table is built in an initial block with $sin; Vivado 2026.1 synthesises it).
 - Depends on: nothing.
 - Limits: no table interpolation: the sine's spurs are set by LUT_W (about -6 dB per bit below the carrier, 8 bits: SFDR near 48 dB for the table alone); no phase offset input.
 
 ## Cost table
 
-in-context cost (not an OOC sweep): 115 LUT, 48 FF, 1 RAMB18 at PHASE_W 32, LUT_W 8, OUT_W 16, inside b30_hil_audio (Vivado 2025.2, xc7a100t -1, timing met at 100 MHz; results/b30/builds.json); the OOC sweep over the parameter space is still to do.
+in-context cost (not an OOC sweep): 115 LUT, 48 FF, 1 RAMB18 at PHASE_W 32, LUT_W 8, OUT_W 16, inside b30_hil_audio (Vivado 2026.1, xc7a100t -1, timing met at 100 MHz; results/49_vivado_2026_1/b30_hil_audio.json); the OOC sweep over the parameter space is still to do.
 
 Licence: MIT (this repository).

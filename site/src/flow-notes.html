@@ -6,7 +6,7 @@
 <tr><td><a href="#cdc-gate">2</a></td><td>Vivado's crossing report passes some unsafe crossings</td><td>Built, verified on test designs, no agent run yet</td></tr>
 <tr><td><a href="#exceptions">3</a></td><td>Over-broad timing exceptions hide real failures</td><td>Designed, not built</td></tr>
 <tr><td><a href="#gates">4</a></td><td>A missing report or a skipped test looks like a pass</td><td>Built, covered by unit tests</td></tr>
-<tr><td><a href="#pblock">5</a></td><td>Placement regions made after synthesis are only hints</td><td>Measured on the crossing test rig</td></tr>
+<tr><td><a href="#pblock">5</a></td><td>Placement regions made after synthesis are only hints</td><td>Seen on the crossing test rig on an earlier Vivado release; not re-measured on 2026.1</td></tr>
 <tr><td><a href="#mig">6</a></td><td>Scripted DDR controller generation skips the pin check</td><td>Measured through placement; rule checker built</td></tr>
 <tr><td><a href="#ssn">7</a></td><td>The switching-noise report is missing on some parts</td><td>Measured; no substitute built</td></tr>
 <tr><td><a href="#xsim">8</a></td><td>AMD's IP models need a simulator the tests cannot drive</td><td>Planned</td></tr>
@@ -23,14 +23,14 @@
 <details class="more"><summary>Details: the rules, the report rows and the sources</summary>
 <p><a href="{{!repo}}/blob/main/flow/xpm_cdc.tcl"><code>flow/xpm_cdc.tcl</code></a> runs after <code>synth_design</code>: a false path to the first stage of each <code>xpm_cdc_single</code> and reset synchroniser; <code>set_max_delay -datapath_only</code> plus <code>set_bus_skew</code> for each <code>xpm_cdc_gray</code>; <code>set_max_delay -datapath_only</code> on the data of each <code>xpm_cdc_handshake</code>. The rules were first proven in the crossing soak rig. Before the fix (<code>read_verilog</code>, <code>synth_design</code>, {{flow_notes.xpm.part}}) <code>report_cdc</code> showed Exception "None" on both crossings. Not covered: <code>xpm_cdc_pulse</code>, <code>xpm_cdc_async_rst</code>; not checked: <code>xpm_cdc_array_single</code>.</p>
 {{!xpm_table}}
-<p class="small">Sources: deviation 8 in <a href="{{!repo}}/blob/main/docs/methodology.md"><code>docs/methodology.md</code></a>; <a href="{{!repo}}/tree/main/flow/tests/fixtures/xpm_probe"><code>flow/tests/fixtures/xpm_probe</code></a> (the probe and how to repeat it); <a href="{{!repo}}/blob/main/results/14_flow_notes/inputs.json"><code>results/14_flow_notes/inputs.json</code></a> (each number and where it was read).</p>
+<p class="small">Sources: deviation 8 in <a href="{{!repo}}/blob/main/docs/methodology.md"><code>docs/methodology.md</code></a>; <a href="{{!repo}}/tree/main/flow/tests/fixtures/xpm_probe"><code>flow/tests/fixtures/xpm_probe</code></a> (the probe and how to repeat it); <a href="{{!repo}}/blob/main/results/49_vivado_2026_1/xpm_probe.json"><code>results/49_vivado_2026_1/xpm_probe.json</code></a> (each number and where it was read).</p>
 </details>
 </article>
 
 <article class="card" id="cdc-gate">
 <h2>2. Vivado's crossing report passes some unsafe crossings</h2>
 <p class="tags"><span class="tag built">Built and verified</span><span class="muted small">on test designs; no agent run or board result yet</span></p>
-<p>A crossing can be wrong while every synchroniser in it looks valid: a binary counter crossed bit by bit, a one-cycle pulse into a synchroniser meant for slow levels, two flags synchronised apart and then compared. Vivado's <code>report_cdc</code> checks structure and constraints; it does not run the design. Of the {{flow_notes.counts.rig_mutants}} broken crossings on the soak rig, a hardware test bed for crossings, it flagged {{flow_notes.counts.rig_report_cdc_flags}}. The agent's crossing gate used to rest on that report.</p>
+<p>A crossing can be wrong while every synchroniser in it looks valid: a binary counter crossed bit by bit, a one-cycle pulse into a synchroniser meant for slow levels, two flags synchronised apart and then compared. Vivado's <code>report_cdc</code> checks structure and constraints; it does not run the design. The agent's crossing gate used to rest on that report alone.</p>
 <p>The gate now adds two checks. After synthesis it classifies every flip-flop fed from another clock, as a synchroniser chain, an AMD macro, a constrained Gray bus or handshake, a reset bridge, or unsafe. Then it reruns the design's own tests with each first synchroniser stage, and each AMD macro, sometimes holding its old value for an extra cycle, as a late-resolving flop would. A design that passes the plain run but fails this one fails the gate.</p>
 <p>On {{flow_notes.counts.ported}} broken crossings ported to the test set, the report alone flagged {{flow_notes.counts.report_cdc_flags}} and the new gate {{flow_notes.counts.gate_flags}}, and the gate passed all {{flow_notes.counts.correct_pass}} correct variants. A FIFO or handshake reset on one side only is not covered: the rig catches those by disturbing a reset's release, which the gate's cycle-level model lacks.</p>
 {{!mutant_table}}
@@ -44,7 +44,7 @@
 <p>Not yet shown: no agent run has used the new gate, and the rig's board results are not here. The gate checks that a hand-built Gray bus carries its exception, not that it is Gray-coded, so only simulation catches a binary bus with a correct exception.</p>
 <details class="more"><summary>Details: what the report misses, and the sources</summary>
 <p>On the rig, <code>report_cdc</code> passes M3, M5, M6a, M7, M9 and M11 as valid synchronisers and gives M1 only a warning. The old gate was its Critical rows plus a text check inside one module. The new checks sit in the V3 gate; M9 and M11 are the one-sided resets it does not cover.</p>
-<p class="small">Sources: <a href="{{!repo}}/blob/main/results/16_cdc_gate/mutant_table.md"><code>results/16_cdc_gate/mutant_table.md</code></a>; <a href="{{!repo}}/tree/main/flow/tests/fixtures/cdc_mutants"><code>flow/tests/fixtures/cdc_mutants</code></a>; <a href="{{!repo}}/blob/main/flow/cdc_structure.py"><code>flow/cdc_structure.py</code></a>; <a href="{{!repo}}/blob/main/flow/cdc_inject.py"><code>flow/cdc_inject.py</code></a>; <a href="{{!repo}}/tree/main/hil/cdc_soak"><code>hil/cdc_soak</code></a> and its <a href="{{!repo}}/blob/main/hil/cdc_soak/results/cdc_rig_sim.json"><code>cdc_rig_sim.json</code></a>.</p>
+<p class="small">Sources: <a href="{{!repo}}/blob/main/results/16_cdc_gate_2026_1/mutant_table.md"><code>results/16_cdc_gate_2026_1/mutant_table.md</code></a>; <a href="{{!repo}}/tree/main/flow/tests/fixtures/cdc_mutants"><code>flow/tests/fixtures/cdc_mutants</code></a>; <a href="{{!repo}}/blob/main/flow/cdc_structure.py"><code>flow/cdc_structure.py</code></a>; <a href="{{!repo}}/blob/main/flow/cdc_inject.py"><code>flow/cdc_inject.py</code></a>; <a href="{{!repo}}/tree/main/hil/cdc_soak"><code>hil/cdc_soak</code></a> and its <a href="{{!repo}}/blob/main/hil/cdc_soak/results/cdc_rig_sim.json"><code>cdc_rig_sim.json</code></a>.</p>
 </details>
 </article>
 
@@ -67,8 +67,8 @@
 
 <article class="card" id="pblock">
 <h2>5. Placement regions made after synthesis are only hints</h2>
-<p class="tags"><span class="tag built">Measured</span><span class="muted small">on the crossing test rig</span></p>
-<p>A pblock is a region of the chip that some cells must be placed in. The soak rig makes its pblocks by script after synthesis, to put each crossing at a known distance. Pblocks made at that point came out soft, a hint to the placer: about half of the destination cells landed outside their region until the rig set <code>IS_SOFT</code> to <code>FALSE</code>. It now does so for every pblock. The agent's own flow makes none, and pblocks in its constraint file are read before synthesis, where they are hard by default; any future step that makes them later must set the property too.</p>
+<p class="tags"><span class="tag plan">Not re-measured</span><span class="muted small">seen on the crossing test rig on an earlier Vivado release</span></p>
+<p>A pblock is a region of the chip that some cells must be placed in. The soak rig makes its pblocks by script after synthesis, to put each crossing at a known distance. Pblocks made at that point came out soft, a hint to the placer: destination cells landed outside their region until the rig set <code>IS_SOFT</code> to <code>FALSE</code> (seen on an earlier Vivado release; the count is not quoted because it has not been re-measured on 2026.1). It now does so for every pblock. The agent's own flow makes none, and pblocks in its constraint file are read before synthesis, where they are hard by default; any future step that makes them later must set the property too.</p>
 <p class="small">Source: the build scripts in <a href="{{!repo}}/tree/main/hil/cdc_soak/tcl"><code>hil/cdc_soak/tcl</code></a>.</p>
 </article>
 
