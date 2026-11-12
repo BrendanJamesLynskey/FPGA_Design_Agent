@@ -26,7 +26,7 @@ In this folder:
 | `xpm_probe.json` | the QR1 probe (two clocks, `xpm_cdc_single`, `xpm_cdc_gray`) built to route with and without `flow/xpm_cdc.tcl` (`FDA_XPM_CDC=0`, a switch added for this measurement): -1.364 ns with 5 failing endpoints, then +8.891 ns, the same as the earlier release |
 | `b30_hil_audio.json` | `designs/b30_hil_audio` base build and the per-instance utilisation the `ip_lib` READMEs quote (frame_crc 275 LUT, was 274; the others identical) |
 | `b2_builds.json` | the four read-only board self-check designs built on 2026.1: every gate passes (not programmed) |
-| `course_ref/` | `benchmark/tools/ref_build.py` whole-board builds of four development course tasks the course's project pages quote. `c13_hough_lines` now misses 100 MHz by 0.166 ns (setup gate fails; it met timing by 0.013 ns on the earlier release) |
+| `course_ref/` | `benchmark/tools/ref_build.py` whole-board builds of four development course tasks the course's project pages quote. `c13_hough_lines` missed 100 MHz by 0.166 ns here (setup gate fails); the reference was then amended and meets it by 2.565 ns ([../61_c13_amend_2026_1](../61_c13_amend_2026_1/)) |
 | `lint/` | a probe: `synth_design -lint -file` still writes a text table on 2026.1, and the Tcl interpreter is 8.6.13 |
 | `cells/` | the course's lesson 1.2 cell census on the 2026.1 blink checkpoint: identical |
 

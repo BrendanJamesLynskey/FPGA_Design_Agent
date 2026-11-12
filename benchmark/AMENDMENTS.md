@@ -50,6 +50,14 @@ one-clock match, which the shell's timing does not let a bench aim; a mutant wit
 (listed below); each is killed by `test_identity_and_reset` (the `t1_bcd_updown` ones by the new `test_reset_after_activity`). Q2: `v2_a_sat_add` `led_wrapped_sum` (LED shows the wrapped sum). In Icarus an unreset
 register starts as X and the test's read of it fails; the `t1_bcd_updown` mutants hold the old value, so they need the new reset-after-activity test.
 
+## 2026-11-12: `c13_hough_lines` reference timing on Vivado 2026.1
+
+**Amended 2026-11-12 (planner, owner approval 2026-11-12: "Approve the c13 benchmark amendment, apply the fix"; before any scored run), `c13_hough_lines` (course tier C13, development).**
+Reason: on Vivado 2026.1 the whole-board reference misses 100 MHz (WNS -0.166 ns; +0.013 ns on the earlier release). The critical path runs from the angle counter `k` through the cosine/sine table into two 9 x 9 multiplies built from LUTs and carry chains, the add and the `>>> 7`, into `rho_r`: 10.17 ns, 13 logic levels, all in one stage.
+Change: `ref/rtl/hough.sv` splits that stage in two registered stages (table entries, then the two products), so `busy` stays high two clocks longer; the arithmetic is unchanged. Acceptance still passes 5/5 unchanged and all 8 mutants are killed (run with `check_task.py`).
+Affected: `ref/rtl/hough.sv`; `hidden/mutants.yaml` (`no_rounding` re-anchored on `px_r + py_r + 64) >>> 7)`, the same rounding term); the unit digest in `MANIFEST.json` (`df6e2378...` -> `28bd5a2de19c740868482995c1de7a67c6205994ee1577e01e70f073679801a9`); `hidden/reference_qor.md` (new 2026.1 numbers, [results/61_c13_amend_2026_1](../results/61_c13_amend_2026_1/)); the published copy `site/public/problems/c13_hough_lines/hough.sv`. `GRADER_DEPS.json` and `split.yaml` are unchanged. The private manifest entry is for the owner to re-record (`freeze.py refreeze c13_hough_lines --private-manifest ...`).
+Comparability: no scored run of this task is recorded in the repository, so no earlier result is affected; a later scoring sees a reference that is two clocks slower per vote.
+
 ## New hashes
 
 v1 and course units (SHA-256 of the unit's sorted file lines, as in MANIFEST.json):
