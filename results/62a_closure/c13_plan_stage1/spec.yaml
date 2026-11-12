@@ -1,0 +1,294 @@
+name: hough_line_accumulator
+title: Hough line accumulator behind the test shell
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: c13_hough_lines_top
+clocks:
+- name: CLK100MHZ
+  frequency_hz: 100000000
+  source: Nexys A7 100 MHz oscillator
+reset:
+  signal: CPU_RESETN
+  active_level: 0
+  behavior: CPU_RESETN returns the block to idle.
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  BUILD_STAMP: 1213157719
+ports:
+- name: CLK100MHZ
+  direction: input
+  width: 1
+  board_pin_role: 100 MHz system clock, pin E3
+- name: CPU_RESETN
+  direction: input
+  width: 1
+  board_pin_role: active-low CPU reset, pin C12
+- name: UART_TXD_IN
+  direction: input
+  width: 1
+  board_pin_role: USB-UART receive into FPGA, pin C4
+- name: UART_RXD_OUT
+  direction: output
+  width: 1
+  board_pin_role: USB-UART transmit from FPGA, pin D4
+- name: LED
+  direction: output
+  width: 16
+  board_pin_role: Board LEDs; LED[0] is busy, pin H17
+behaviour:
+  point_input:
+  - The test shell supplies x and y in one write, with each coordinate in the range
+    0 through 31.
+  - Each point write presents the point for one clock.
+  - The block accepts a new point only while it is not busy.
+  - The STATUS register reports whether the block is busy.
+  - The block asserts busy when it accepts a point and deasserts busy after all 16
+    bin updates complete.
+  - The block ignores point writes while busy.
+  accumulation:
+  - The accumulator has 16 line-normal directions indexed 0 through 15.
+  - Direction 0 has normal angle 0 degrees; each successive direction advances by
+    11.25 degrees over the 180-degree range.
+  - Each direction has 96 integer-distance bins covering -48 through +47.
+  - For each accepted point and direction k, the block computes rho = ((x*CT[k] +
+    y*ST[k] + 64) >>> 7), then uses bin index rho + 48.
+  - The fixed-point direction coefficients are CT = [128, 126, 118, 106, 91, 71, 49,
+    25, 0, -25, -49, -71, -91, -106, -118, -126] and ST = [0, 25, 49, 71, 91, 106,
+    118, 126, 128, 126, 118, 106, 91, 71, 49, 25].
+  - Each accepted point increments one distance-bin count in each of the 16 directions.
+  - The shell selects a direction and distance and reads the corresponding count.
+  commands:
+  - A CLEAR command zeroes all accumulator counts when the block is not busy.
+  - The block ignores CLEAR while busy.
+  - CPU_RESETN returns the block to idle.
+  board_and_shell:
+  - LED[0] is asserted while the block is busy.
+  - LED[15:1] are driven low.
+  - The test shell communicates over USB-UART at 115200 baud.
+  - The design ID is HOUG.
+  - All point writes, clear commands, status reads, and count reads are performed
+    through the test shell.
+  - The top module is c13_hough_lines_top.
+  - The top-level parameters are CLKS_PER_BIT, TIMEOUT_CYCLES, and BUILD_STAMP.
+registers:
+  map:
+  - offset: 0
+    name: PT
+    access: WO
+    reset: 0
+    bits: '[7:0] x, [15:8] y (0..31): presents the point for one clock; ignored while
+      BUSY; reads 0'
+  - offset: 1
+    name: CLEAR
+    access: WO
+    reset: 0
+    bits: any write zeroes all counts (only when not busy); reads 0
+  - offset: 2
+    name: RD_SEL
+    access: RW
+    reset: 0
+    bits: '[3:0] direction index k (0..15), [14:8] distance index r = rho + 48 (0..95)'
+  - offset: 3
+    name: RD_CNT
+    access: RO
+    reset: 0
+    bits: '[15:0] vote count of (k, r), valid a few clocks after RD_SEL is written'
+  - offset: 4
+    name: STATUS
+    access: RO
+    reset: 0
+    bits: '[0] BUSY: a point is being processed'
+timing:
+  clock: CLK100MHZ
+  baud_rate: 115200
+  parameters:
+    CLKS_PER_BIT: 868
+    TIMEOUT_CYCLES: 100000
+  latency:
+    point_presentation: One clock per point write.
+    busy_interval: Busy asserts on point acceptance and deasserts after all 16 bin
+      updates complete.
+    readback: RD_CNT is valid a few clocks after RD_SEL is written; exact cycle count
+      is unspecified.
+resources_expected:
+  logic: Small control FSM, fixed-point point projection arithmetic, test-shell interface,
+    and address selection logic; exact utilization requires synthesis.
+  memory: 1536 bins, with 16 directions by 96 distances; count width and overflow
+    behavior are not specified.
+  timing: 100 MHz CLK100MHZ target; timing closure requires an implementation report.
+assumptions:
+- assumption: The target device is xc7a100tcsg324-1.
+  reason: This is the device corresponding to the requested Nexys A7-100T board.
+- assumption: Point coordinate fields are unsigned 5-bit values.
+  reason: The specified coordinate values range from 0 through 31.
+- assumption: Accumulator counts are 11 bits wide and repeated coordinates count as
+    separate points.
+  reason: A 32 by 32 image has 1024 locations, so 11 bits can represent one vote per
+    location; duplicate handling and overflow are unspecified.
+- assumption: CLKS_PER_BIT defaults to 868 cycles of CLK100MHZ.
+  reason: This is the nearest integer divider for 115200 baud from a 100 MHz clock.
+- assumption: TIMEOUT_CYCLES defaults to 100000 cycles of CLK100MHZ.
+  reason: No timeout value is specified; 100000 cycles is 1 ms at 100 MHz.
+- assumption: BUILD_STAMP defaults to the 32-bit integer 1213157719 (0x484F5547).
+  reason: This encodes the requested design ID HOUG as ASCII, but the parameter encoding
+    is not specified.
+- assumption: UART signals use the Nexys A7 master-XDC names UART_TXD_IN and UART_RXD_OUT.
+  reason: The request requires the test shell and top-level ports named as in the
+    board master XDC.
+open_questions: []
+requirements:
+- id: REQ-01
+  text: The picture coordinate domain is 32 by 32.
+  proof:
+  - simulation
+- id: REQ-02
+  text: Each point write presents an x value in the range 0 through 31.
+  proof:
+  - simulation
+- id: REQ-03
+  text: Each point write presents a y value in the range 0 through 31.
+  proof:
+  - simulation
+- id: REQ-04
+  text: Each point write presents the point for one clock.
+  proof:
+  - simulation
+- id: REQ-05
+  text: The block accepts a new point only while it is not busy.
+  proof:
+  - simulation
+  - formal
+- id: REQ-06
+  text: The STATUS register reports whether the block is busy.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-07
+  text: The accumulator contains 16 directions.
+  proof:
+  - simulation
+- id: REQ-08
+  text: Direction 0 has a normal angle of 0 degrees.
+  proof:
+  - simulation
+- id: REQ-09
+  text: Successive direction normals are spaced 11.25 degrees apart.
+  proof:
+  - simulation
+- id: REQ-10
+  text: Each direction contains 96 integer-distance bins.
+  proof:
+  - simulation
+- id: REQ-11
+  text: The distance bins cover every integer from -48 through +47.
+  proof:
+  - simulation
+- id: REQ-12
+  text: Each accepted point increments one distance-bin count in each direction.
+  proof:
+  - simulation
+  - formal
+- id: REQ-13
+  text: A direction can be selected for count readback.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-14
+  text: A distance can be selected for count readback.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-15
+  text: A clear command sets every accumulator count to zero.
+  proof:
+  - simulation
+  - formal
+- id: REQ-16
+  text: CPU_RESETN returns the block to idle.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-17
+  text: LED[0] is asserted while the block is busy.
+  proof:
+  - hardware
+  - simulation
+- id: REQ-18
+  text: The test shell communicates over USB-UART at 115200 baud.
+  proof:
+  - hardware
+- id: REQ-19
+  text: The design ID is HOUG.
+  proof:
+  - hardware
+- id: REQ-20
+  text: The top module name is c13_hough_lines_top.
+  proof:
+  - analysis
+- id: REQ-21
+  text: The top-level parameters include CLKS_PER_BIT, TIMEOUT_CYCLES, and BUILD_STAMP.
+  proof:
+  - analysis
+- id: REQ-22
+  text: LED[15:1] are driven low.
+  proof:
+  - hardware
+- id: REQ-23
+  text: Point writes, clear commands, status reads, and count reads are performed
+    through the test shell.
+  proof:
+  - hardware
+resolved_questions:
+- question: What is the register map, including offset, width, reset value, and access
+    for every register?
+  answer: 'PT: offset 0x00, WO, reset 0: [7:0] x, [15:8] y (0..31): presents the point
+    for one clock; ignored while BUSY; reads 0
+
+    CLEAR: offset 0x01, WO, reset 0: any write zeroes all counts (only when not busy);
+    reads 0
+
+    RD_SEL: offset 0x02, RW, reset 0: [3:0] direction index k (0..15), [14:8] distance
+    index r = rho + 48 (0..95)
+
+    RD_CNT: offset 0x03, RO, reset 0: [15:0] vote count of (k, r), valid a few clocks
+    after RD_SEL is written
+
+    STATUS: offset 0x04, RO, reset 0: [0] BUSY: a point is being processed
+
+    shell: shell/PROTOCOL.md (version 1.0)'
+  status: answered
+  by: oracle
+  default_reason: spec.md requires shell register accesses but does not specify offsets,
+    widths, reset values, or access modes; the existing map is a proposed default.
+- question: What test-shell command protocol maps host commands to register accesses?
+  answer: Use the repository test-shell protocol and expose the registers using the
+    confirmed register map.
+  status: defaulted
+  by: oracle
+  default_reason: The request specifies test-shell use and the UART baud but does
+    not specify command framing or transaction format.
+- question: How many CLK100MHZ cycles after the final bin update does BUSY deassert?
+  answer: BUSY deasserts on the cycle after all 16 direction-bin updates have completed.
+  status: defaulted
+  by: oracle
+  default_reason: The request does not specify the exact busy duration or cycle of
+    deassertion.
+- question: What is the width and overflow behavior of each accumulator count?
+  answer: Use an unsigned 11-bit saturating count.
+  status: defaulted
+  by: oracle
+  default_reason: The request gives no count width or overflow rule; 11 bits represents
+    up to 1024 votes.
+- question: What is the maximum number of cycles from an RD_SEL write until RD_CNT
+    is valid?
+  answer: Make RD_CNT valid within 3 CLK100MHZ cycles after the RD_SEL write.
+  status: defaulted
+  by: oracle
+  default_reason: The answered register description says only that readback is valid
+    a few clocks later.
+- question: What integer encoding should BUILD_STAMP use?
+  answer: Use the 32-bit ASCII encoding of HOUG, 0x484F5547.
+  status: defaulted
+  by: oracle
+  default_reason: The request specifies the design ID but not the parameter encoding.

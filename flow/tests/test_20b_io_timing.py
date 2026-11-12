@@ -143,6 +143,9 @@ def test_expected_delays_formulas() -> None:
     assert e({"direction": "out", "data_sheet": {"tsu_ns": 1.5, "th_ns": 0.5, "trace_ns": 0.4}}) == pytest.approx({"max": 1.9, "min": -0.1})
     assert e({"direction": "in", "clock_period_ns": 10.0, "data_sheet": {"dv_before_ns": 2.0, "dv_after_ns": 2.0}}) == {"max": 3.0, "min": 2.0}
     assert e({"direction": "in", "data_sheet": {"skew_before_ns": 0.5, "skew_after_ns": 0.5}}) == {"max": 0.5, "min": -0.5}
+    # edge-aligned DDR output with a forwarded clock: -min is +skew_before (the b58a TX hold sign, review B3)
+    assert e({"direction": "out", "clock_period_ns": 8.0, "data_sheet": {"skew_before_ns": 0.5, "skew_after_ns": 0.5}}) \
+        == {"max": 3.5, "min": 0.5}
 
 
 def test_uncertainty_breakdown_parse() -> None:

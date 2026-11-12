@@ -1,0 +1,107 @@
+CLOCK|clk_25|40.000|0.000 20.000|0|0|clk_25|0.000
+CLOCK|a_rxc|8.000|0.000 4.000|0|0|a_rxc|0.000
+CLOCK|b_rxc|8.000|0.000 4.000|0|0|b_rxc|0.000
+CLOCK|a_rxc_v|8.000|0.000 4.000|1|0||0.000
+CLOCK|b_rxc_v|8.000|0.000 4.000|1|0||0.000
+CLOCK|a_txc|8.000|0.000 4.000|0|1|a_txc|0.000
+CLOCK|b_txc|8.000|0.000 4.000|0|1|b_txc|0.000
+CLOCK|tck|33.333|0.000 16.667|0|0|u_jtag/u_bscan/INTERNAL_TCK|0.000
+CLOCK|tck_out|33.333|0.000 16.667|0|1|u_jtag/u_bscan/TCK|0.000
+CLOCK|clk0_u|8.000|0.000 4.000|0|1|u_mmcm/CLKOUT0|0.000
+CLOCK|ref333_u|3.000|0.000 1.500|0|1|u_mmcm/CLKOUT2|0.000
+PORT|a_mdc|out|0|u_core/u_amd/mdc_reg|0|FDRE
+IO|a_mdc|out|max|||0.0|clk0_u|clk0_u|Slow|0.109
+IO|a_mdc|out|min|||0.0|clk0_u|clk0_u|Fast|0.109
+PORT|a_rst_n|out|none|2 registers|0|
+IO|a_rst_n|out|max|||0.0|clk0_u|clk0_u|Slow|0.109
+IO|a_rst_n|out|min|||0.0|clk0_u|clk0_u|Fast|0.109
+PORT|a_rx_ctl|in|0|u_arx/g_iddr[4].u_iddr|0|IDDRE1
+IO|a_rx_ctl|in|max|0.372|4.000|2.8|a_rxc_v|a_rxc|Fast|0.025
+IO|a_rx_ctl|in|min|0.701|0.000|1.2|a_rxc_v|a_rxc|Slow|0.025
+PORT|a_rxc|in|none|144 registers|0|
+NOIO|a_rxc|in|max
+NOIO|a_rxc|in|min
+PORT|a_rxd[0]|in|0|u_arx/g_iddr[0].u_iddr|0|IDDRE1
+IO|a_rxd[0]|in|max|0.377|4.000|2.8|a_rxc_v|a_rxc|Fast|0.025
+IO|a_rxd[0]|in|min|0.709|0.000|1.2|a_rxc_v|a_rxc|Slow|0.025
+PORT|a_rxd[1]|in|0|u_arx/g_iddr[1].u_iddr|0|IDDRE1
+IO|a_rxd[1]|in|max|0.392|4.000|2.8|a_rxc_v|a_rxc|Fast|0.025
+IO|a_rxd[1]|in|min|0.697|0.000|1.2|a_rxc_v|a_rxc|Slow|0.025
+PORT|a_rxd[2]|in|0|u_arx/g_iddr[2].u_iddr|0|IDDRE1
+IO|a_rxd[2]|in|max|0.387|4.000|2.8|a_rxc_v|a_rxc|Fast|0.025
+IO|a_rxd[2]|in|min|0.705|0.000|1.2|a_rxc_v|a_rxc|Slow|0.025
+PORT|a_rxd[3]|in|0|u_arx/g_iddr[3].u_iddr|0|IDDRE1
+IO|a_rxd[3]|in|max|0.360|4.000|2.8|a_rxc_v|a_rxc|Fast|0.025
+IO|a_rxd[3]|in|min|0.713|0.000|1.2|a_rxc_v|a_rxc|Slow|0.025
+PORT|a_tx_ctl|out|0|u_atx/u_ctl|0|OSERDESE3
+IO|a_tx_ctl|out|max|-0.101|4.000|3.5|clk0_u|a_txc|Slow|0.109
+IO|a_tx_ctl|out|min|-0.167|0.000|0.5|clk0_u|a_txc|Slow|
+PORT|a_txc|out|0|u_atx/u_txc|0|OSERDESE3
+IO|a_txc|out|max||||clk0_u||Slow|0.343
+IO|a_txc|out|min||||clk0_u||Fast|0.343
+PORT|a_txd[0]|out|0|u_atx/g_oddr[0].u_oddr|0|OSERDESE3
+IO|a_txd[0]|out|max|-0.198|4.000|3.5|clk0_u|a_txc|Slow|0.109
+IO|a_txd[0]|out|min|-0.108|0.000|0.5|clk0_u|a_txc|Slow|
+PORT|a_txd[1]|out|0|u_atx/g_oddr[1].u_oddr|0|OSERDESE3
+IO|a_txd[1]|out|max|-0.166|4.000|3.5|clk0_u|a_txc|Slow|0.109
+IO|a_txd[1]|out|min|-0.135|0.000|0.5|clk0_u|a_txc|Slow|
+PORT|a_txd[2]|out|0|u_atx/g_oddr[2].u_oddr|0|OSERDESE3
+IO|a_txd[2]|out|max|-0.173|4.000|3.5|clk0_u|a_txc|Slow|0.109
+IO|a_txd[2]|out|min|-0.124|0.000|0.5|clk0_u|a_txc|Slow|
+PORT|a_txd[3]|out|0|u_atx/g_oddr[3].u_oddr|0|OSERDESE3
+IO|a_txd[3]|out|max|-0.126|4.000|3.5|clk0_u|a_txc|Slow|0.109
+IO|a_txd[3]|out|min|-0.153|0.000|0.5|clk0_u|a_txc|Slow|
+PORT|b_mdc|out|0|u_core/u_bmd/mdc_reg|0|FDRE
+IO|b_mdc|out|max|||0.0|clk0_u|clk0_u|Slow|0.109
+IO|b_mdc|out|min|||0.0|clk0_u|clk0_u|Fast|0.109
+PORT|b_rst_n|out|none|2 registers|0|
+IO|b_rst_n|out|max|||0.0|clk0_u|clk0_u|Slow|0.109
+IO|b_rst_n|out|min|||0.0|clk0_u|clk0_u|Fast|0.109
+PORT|b_rx_ctl|in|0|u_brx/g_iddr[4].u_iddr|0|IDDRE1
+IO|b_rx_ctl|in|max|0.654|4.000|2.8|b_rxc_v|b_rxc|Fast|0.025
+IO|b_rx_ctl|in|min|0.238|0.000|1.2|b_rxc_v|b_rxc|Slow|0.025
+PORT|b_rxc|in|none|144 registers|0|
+NOIO|b_rxc|in|max
+NOIO|b_rxc|in|min
+PORT|b_rxd[0]|in|0|u_brx/g_iddr[0].u_iddr|0|IDDRE1
+IO|b_rxd[0]|in|max|0.651|4.000|2.8|b_rxc_v|b_rxc|Fast|0.025
+IO|b_rxd[0]|in|min|0.255|0.000|1.2|b_rxc_v|b_rxc|Slow|0.025
+PORT|b_rxd[1]|in|0|u_brx/g_iddr[1].u_iddr|0|IDDRE1
+IO|b_rxd[1]|in|max|0.661|4.000|2.8|b_rxc_v|b_rxc|Fast|0.025
+IO|b_rxd[1]|in|min|0.248|0.000|1.2|b_rxc_v|b_rxc|Slow|0.025
+PORT|b_rxd[2]|in|0|u_brx/g_iddr[2].u_iddr|0|IDDRE1
+IO|b_rxd[2]|in|max|0.657|4.000|2.8|b_rxc_v|b_rxc|Fast|0.025
+IO|b_rxd[2]|in|min|0.255|0.000|1.2|b_rxc_v|b_rxc|Slow|0.025
+PORT|b_rxd[3]|in|0|u_brx/g_iddr[3].u_iddr|0|IDDRE1
+IO|b_rxd[3]|in|max|0.642|4.000|2.8|b_rxc_v|b_rxc|Fast|0.025
+IO|b_rxd[3]|in|min|0.250|0.000|1.2|b_rxc_v|b_rxc|Slow|0.025
+PORT|b_tx_ctl|out|0|u_btx/u_ctl|0|OSERDESE3
+IO|b_tx_ctl|out|max|-0.084|4.000|3.5|clk0_u|b_txc|Slow|0.109
+IO|b_tx_ctl|out|min|-0.184|0.000|0.5|clk0_u|b_txc|Slow|
+PORT|b_txc|out|0|u_btx/u_txc|0|OSERDESE3
+IO|b_txc|out|max||||clk0_u||Slow|0.343
+IO|b_txc|out|min||||clk0_u||Fast|0.343
+PORT|b_txd[0]|out|0|u_btx/g_oddr[0].u_oddr|0|OSERDESE3
+IO|b_txd[0]|out|max|-0.163|4.000|3.5|clk0_u|b_txc|Slow|0.109
+IO|b_txd[0]|out|min|-0.142|0.000|0.5|clk0_u|b_txc|Slow|
+PORT|b_txd[1]|out|0|u_btx/g_oddr[1].u_oddr|0|OSERDESE3
+IO|b_txd[1]|out|max|-0.131|4.000|3.5|clk0_u|b_txc|Slow|0.109
+IO|b_txd[1]|out|min|-0.169|0.000|0.5|clk0_u|b_txc|Slow|
+PORT|b_txd[2]|out|0|u_btx/g_oddr[2].u_oddr|0|OSERDESE3
+IO|b_txd[2]|out|max|-0.152|4.000|3.5|clk0_u|b_txc|Slow|0.109
+IO|b_txd[2]|out|min|-0.145|0.000|0.5|clk0_u|b_txc|Slow|
+PORT|b_txd[3]|out|0|u_btx/g_oddr[3].u_oddr|0|OSERDESE3
+IO|b_txd[3]|out|max|-0.103|4.000|3.5|clk0_u|b_txc|Slow|0.109
+IO|b_txd[3]|out|min|-0.175|0.000|0.5|clk0_u|b_txc|Slow|
+PORT|clk_25|in|0|u_mmcm|0|MMCME4_ADV
+IO|clk_25|in|max||||clk_25||Slow|0.025
+IO|clk_25|in|min||||clk_25||Fast|0.025
+PORT|led[0]|out|none|32 registers|0|
+IO|led[0]|out|max|||0.0|clk0_u|clk0_u|Slow|0.109
+IO|led[0]|out|min|||0.0|clk0_u|clk0_u|Fast|0.109
+PORT|led[1]|out|none|32 registers|0|
+IO|led[1]|out|max|||0.0|clk0_u|clk0_u|Slow|0.109
+IO|led[1]|out|min|||0.0|clk0_u|clk0_u|Fast|0.109
+WORST|setup|-0.198|4.000|clk0_u|a_txc|Slow|0.109|-0.333|u_atx/g_oddr[0].u_oddr/CLK|a_txd[0]
+WORST|hold|-0.184|0.000|clk0_u|b_txc|Slow||0.338|u_btx/u_ctl/CLK|b_tx_ctl
+# end

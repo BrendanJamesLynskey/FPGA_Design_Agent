@@ -1,0 +1,475 @@
+"""Brief 62A: report digests, the design-time plan, the goal vector and the closure controller (no Vivado, no model)."""
+
+from __future__ import annotations
+
+import copy
+import json
+from pathlib import Path
+
+import pytest
+import yaml
+
+from agent.graph import closure as cl
+from agent.graph import closure_playbook as pb
+from flow import timing_plan as tp
+from flow.digest import power, synth, timing, utilization
+from flow.digest.build import digest_build, digest_text
+
+FX = Path(__file__).parent / "fixtures" / "closure"
+C13 = FX / "c13_orig" / "reports"
+MODEL = FX / "delay_model_test.yaml"
+
+
+@pytest.fixture(scope="module")
+def dg():
+    return digest_build(C13)
+
+
+# --- digests ------------------------------------------------------------------------------------------------------
+
+def test_c13_critical_path(dg):
+    p = dg["setup_path"]
+    assert p["slack_ns"] == -0.166 and p["data_path_ns"] == 10.165 and p["logic_levels"] == 13
+    assert p["levels_by_type"] == {"CARRY4": 7, "LUT4": 2, "LUT5": 2, "LUT6": 2}
+    assert p["source_reg"] == {"instance": "u_regs/u_core", "signal": "k", "bit": 2}
+    assert p["dest_reg"]["signal"] == "rho_r" and p["dest_reg"]["bit"] == 15
+    assert [n["fanout"] for n in p["nets"]][:2] == [103, 8]
+    f = dg["setup_features"]
+    assert f["lut_arith"] and f["high_fanout"] and not f["dsp_on_path"] and f["same_instance"]
+    assert dg["timing"]["period_ns"] == 10.0 and dg["timing"]["wns_ns"] == -0.166
+
+
+def test_hold_path_parses():
+    h = timing.parse_paths((C13 / "timing_worst_hold.rpt").read_text())
+    assert h and h[0]["kind"] == "hold" and h[0]["met"]
+
+
+def test_utilization_and_power(dg):
+    rows = utilization.parse_hier((C13 / "utilization_hier.rpt").read_text())
+    assert rows[0]["lut"] == 3069 and rows[0]["ramb36"] == 2
+    assert dg["hier_modules"]["u_regs/u_core"] == "hough"
+    assert dg["util_top"]["lut"][0]["path"] == "u_regs/u_core" and dg["util_top"]["lut"][0]["lut"] == 2699
+    comp = power.parse_components((C13 / "power.rpt").read_text())
+    assert comp["Total"] == 0.15 and comp["Static Power"] == 0.114
+    hier = power.parse_hierarchy((C13 / "power.rpt").read_text())
+    assert hier[0] == {"name": "c13_hough_lines_top", "depth": 0, "power_w": 0.036} and hier[2]["name"] == "u_core"
+    text = digest_text(dg, "G2")
+    assert text.startswith("TIMING: WNS -0.166") and "RTL signal k" in text and "DSP 0/240" in text
+
+
+def test_synth_scan():
+    log = ("WARNING: [Synth 8-327] inferring latch for variable 'q_reg' [x.sv:3]\n"
+           "WARNING: [Synth 8-4767] Trying to implement RAM 'mem_reg' in registers. Block RAM or DRAM implementation is not possible\n")
+    s = synth.scan(log)
+    assert s["latches"] == ["q_reg"] and s["ram_in_registers"] == ["mem_reg"] and not s["clean"] and s["multi_driven"] == 0
+    assert synth.scan("INFO: nothing")["clean"]
+
+
+# --- goals and the vector ------------------------------------------------------------------------------------------
+
+def test_goal_defaults_and_vector(dg):
+    spec = {"clocks": [{"name": "sys", "freq_mhz": 100}], "budget": {"dsp": 4}}
+    g = cl.goals_from_spec(spec)
+    assert g["G3"]["budget"]["dsp"] == 4 and g["G3"]["budget"]["lut"] == 63400 * 0.8
+    assert "default 80 %" in g["G3"]["why"]["lut"] and g["G4"]["power_w"] == 2.0
+    v = cl.goal_vector({"pass": True, "tests": {"a": True}}, dg, g)
+    assert v["G1"]["met"] and not v["G2"]["met"] and v["G3"]["met"] and v["G4"]["met"] and v["G5"]["met"] is None
+    assert v["G2"]["shortfall"] == pytest.approx(0.0166)
+    assert cl.choose_goal(v) == "G2"
+
+
+def test_g3_over_budget_and_latch(dg):
+    g = cl.goals_from_spec({"clocks": [{"freq_mhz": 100}], "budget": {"lut": 2000}})
+    v = cl.goal_vector({"pass": True}, dg, g)
+    assert not v["G3"]["met"] and v["G3"]["shortfall"] == pytest.approx(3069 / 2000 - 1, abs=1e-4)
+    d2 = copy.deepcopy(dg)
+    d2["synth"] = {"latches": ["x"], "ram_in_registers": [], "clean": False}
+    v2 = cl.goal_vector({"pass": True}, d2, cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}))
+    assert not v2["G3"]["met"] and "latches" in v2["G3"]["detail"]
+
+
+def _vec(wns, ff=2000, g1=True, ffb=126800 * 0.8):
+    g = cl.goals_from_spec({"clocks": [{"freq_mhz": 100}], "budget": {"ff": ffb}})
+    dgx = {"ran": True, "timing": {"wns_ns": wns, "whs_ns": 0.04, "period_ns": 10.0}, "gates": {},
+           "utilization": {"lut": 3000, "ff": ff, "bram_tile": 2, "dsp": 0, "iob": 20}, "power": {"total_w": 0.15, "junction_c": 40}}
+    return cl.goal_vector({"pass": g1}, dgx, g)
+
+
+def test_judge():
+    assert cl.judge(_vec(-0.166), _vec(-0.05))[0] == "accept"
+    assert cl.judge(_vec(-0.166), _vec(0.3, ff=2100))[0] == "accept"           # FFs up but still inside the budget
+    assert cl.judge(_vec(-0.166), _vec(-0.3))[0] == "revert"
+    assert cl.judge(_vec(-0.166), _vec(-0.166))[0] == "revert"                 # no progress
+    d, imp, wor = cl.judge(_vec(-0.166, ffb=2050), _vec(0.1, ff=2100, ffb=2050))
+    assert d == "revert" and wor == ["G3"] and imp == ["G2"]                  # timing bought with a broken area budget
+
+
+# --- the playbook ---------------------------------------------------------------------------------------------------
+
+def test_playbook_c13_order(dg):
+    v = cl.goal_vector({"pass": True}, dg, cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}))
+    ids = [s.id for s, _ in pb.applicable("G2", dg, v)]
+    assert ids[:3] == ["t_dsp_map", "t_pipeline", "t_fanout"]
+    assert "t_exception" not in ids                                           # no multicycle protocol in the spec
+    ids2 = [s.id for s, _ in pb.applicable("G2", dg, v, plan_fails=["plan: x"])]
+    assert ids2[0] == "t_plan_map"
+    v0 = cl.goal_vector({"pass": True}, dg, cl.goals_from_spec({"clocks": [{"freq_mhz": 100}], "budget": {"dsp": 0}}))
+    assert "t_dsp_map" not in [s.id for s, _ in pb.applicable("G2", dg, v0)]   # no DSP headroom: not offered
+    assert pb.applicable("G3", dg, v) == []                                    # area strategies are 62B
+
+
+# --- the controller -------------------------------------------------------------------------------------------------
+
+class FakeBuild:
+    def __init__(self, base, wns_seq):
+        self.base, self.wns, self.n = base, list(wns_seq), 0
+
+    def __call__(self, d):
+        x = copy.deepcopy(self.base)
+        x["timing"]["wns_ns"] = self.wns[min(self.n, len(self.wns) - 1)]
+        self.n += 1
+        return x
+
+
+def _ws(tmp_path):
+    (tmp_path / "rtl").mkdir()
+    for f in (FX / "c13_orig" / "rtl").glob("*.sv"):
+        (tmp_path / "rtl" / f.name).write_text(f.read_text())
+    return cl.Workspace(tmp_path)
+
+
+def _editor(seq):
+    it = iter(seq)
+
+    def edit(req):
+        tag = next(it)
+        assert "rtl/hough.sv" in req.files and "c13_hough_lines_top" not in "".join(req.files)   # only the path's file
+        txt = req.files["rtl/hough.sv"] + f"\n// edit {tag}\n"
+        return cl.EditResult(files={"rtl/hough.sv": txt}, note=f"edit {tag}", usd=0.01, tokens=100, calls=1)
+    return edit
+
+
+def test_closure_closes_and_records(tmp_path, dg):
+    ws = _ws(tmp_path)
+    c = cl.Closure(ws=ws, goals=cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), g1=lambda r: {"pass": True, "tests": {"t": True}},
+                   build=FakeBuild(dg, [-0.166, 0.35]), editor=_editor([1]), contract="keep ports", record=tmp_path / "rec",
+                   log=lambda s: None)
+    r = c.run()
+    assert r["all_met"] and r["iterations"] == 1 and r["accepted"] == 1 and r["strategies"] == [("t_dsp_map", "accept")]
+    hist = [json.loads(l) for l in (tmp_path / "rec" / "history.jsonl").read_text().splitlines()]
+    assert hist[1]["delta"]["G2"]["wns_ns"] == pytest.approx(0.516) and "+// edit 1" in hist[1]["diff"]
+    assert "// edit 1" in (ws.rtl / "hough.sv").read_text()
+
+
+def test_closure_reverts_and_stalls(tmp_path, dg):
+    ws = _ws(tmp_path)
+    orig = (ws.rtl / "hough.sv").read_text()
+    c = cl.Closure(ws=ws, goals=cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), g1=lambda r: {"pass": True},
+                   build=FakeBuild(dg, [-0.166, -0.3, -0.2, -0.4, -0.5, -0.6, -0.7, -0.8, -0.9, -1, -1, -1, -1, -1]),
+                   editor=_editor(range(100)), contract="", max_iter=20, stall_n=2, log=lambda s: None)
+    r = c.run()
+    assert not r["all_met"] and r["accepted"] == 0 and (ws.rtl / "hough.sv").read_text() == orig      # every change reverted
+    classes = [pb.BY_ID[s].cls for s, _ in r["strategies"]]
+    assert all(classes.count(k) == 2 for k in set(classes))                     # the stall rule: two tries per class
+    assert r["stop"] == "goal G2 not met; strategy classes exhausted"
+    assert r["unmet_text"][0].startswith("goal G2 not met; best value {'wns_ns': -0.166")
+
+
+def test_closure_g1_failure_retries_then_reverts(tmp_path, dg):
+    ws = _ws(tmp_path)
+    calls = {"g1": 0}
+
+    def g1(_r):
+        calls["g1"] += 1
+        return {"pass": calls["g1"] == 1, "tests": {"t": calls["g1"] == 1}, "detail": "assert failed"}
+    c = cl.Closure(ws=ws, goals=cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), g1=g1, build=FakeBuild(dg, [-0.166]),
+                   editor=_editor(range(10)), contract="", max_iter=1, log=lambda s: None)
+    r = c.run()
+    h = c.history[1]
+    assert h["decision"] == "revert" and h["g1_retries"] == 1 and h["worsened"] == ["G1"]
+    assert r["llm_calls"] == 2 and "// edit" not in (ws.rtl / "hough.sv").read_text()
+
+
+def test_closure_refuses_without_g1(tmp_path, dg):
+    c = cl.Closure(ws=_ws(tmp_path), goals=cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), g1=lambda r: {"pass": False},
+                   build=FakeBuild(dg, [0]), editor=_editor([]), contract="", log=lambda s: None)
+    assert c.run()["stop"].startswith("G1 fails at the start")
+
+
+def test_parse_reply():
+    t = "x\n=== FILE: rtl/a.sv ===\n```systemverilog\nmodule a; endmodule\n```\n=== FILE: rtl/zz.sv ===\n```\nno\n```\nNOTE: one clock"
+    files, note = cl.parse_reply(t, {"rtl/a.sv"})
+    assert files == {"rtl/a.sv": "module a; endmodule\n"} and note == "one clock"
+    assert cl.parse_reply("=== FILE: rtl/a.sv\n```systemverilog\nmodule a; endmodule\n```", {"rtl/a.sv"})[0]   # no closing ===
+
+
+def test_contract_from_spec():
+    spec = yaml.safe_load((Path(__file__).parents[2] / "benchmark/course/tasks/c13_hough_lines/hidden/spec.yaml").read_text())
+    assert "BUSY is high for about 17 clocks" in cl.contract_from_spec(spec)
+
+
+# --- the design-time plan -------------------------------------------------------------------------------------------
+
+C13_ARCH = {
+    "clock_domains": [{"name": "sys", "clock": "CLK100MHZ", "freq_mhz": 100}],
+    "datapaths": [{"name": "rho", "clock": "sys", "instance": "u_regs/u_core", "ops": [
+        {"name": "angle_table", "op": "table", "index_bits": 4, "width": 9},
+        {"name": "x_cos", "op": "mul", "a_bits": 9, "b_bits": 9},
+        {"name": "y_sin", "op": "mul", "a_bits": 9, "b_bits": 9, "parallel": True},
+        {"name": "sum", "op": "add", "bits": 19, "inputs": 3},
+        {"name": "shift", "op": "shift"},
+        {"name": "offset", "op": "add", "bits": 16}]}],
+}
+
+
+def test_plan_c13_puts_multiplies_on_dsp():
+    p = tp.plan(C13_ARCH, tp.load_model(path=MODEL))
+    d = p["datapaths"][0]
+    res = {o["name"]: o["resource"] for o in d["ops"]}
+    assert res["x_cos"] == "dsp" and res["y_sin"] == "dsp" and res["sum"] == "carry" and p["planned"]["dsp"] == 2
+    assert d["fits"] and all(s["est_ns"] <= d["budget_ns"] for s in d["stages"]) and d["budget_ns"] == 7.0
+    assert d["unpipelined_est_ns"] > 10.0 and d["latency_cycles"] >= 2
+    assert "dsp_mul_p2" in {o["template"] for o in d["ops"]}
+    assert "stage 1" in tp.plan_text(p) and "DSP48E1" in tp.plan_text(p)
+
+
+def test_plan_fallbacks_and_forced_latency():
+    arch = {"clock_domains": [{"name": "s", "freq_mhz": 100}], "datapaths": [{"name": "d", "latency_fixed": 1, "ops": [
+        {"name": "small", "op": "mul", "a_bits": 3, "b_bits": 12},
+        {"name": "big", "op": "mul", "a_bits": 16, "b_bits": 16},
+        {"name": "mem", "op": "memory", "depth": 1024, "width": 16},
+        {"name": "tiny", "op": "memory", "depth": 16, "width": 8},
+        {"name": "dl", "op": "delay", "depth": 12, "width": 4}]}]}
+    p = tp.plan(arch, tp.load_model(path=MODEL), budget={"dsp": 0})
+    ops = {o["name"]: o for o in p["datapaths"][0]["ops"]}
+    assert ops["small"]["resource"] == "lut" and "too small" in ops["small"]["reason"]
+    assert ops["big"]["resource"] == "lut" and "budget exhausted" in ops["big"]["reason"]
+    assert ops["mem"]["resource"] == "bram" and ops["tiny"]["resource"] == "lutram" and ops["dl"]["resource"] == "srl"
+    assert any("fixes the latency at 1" in x for x in p["problems"])
+
+
+def test_check_datapaths_and_architecture_hook():
+    from flow.architecture import check_architecture
+    assert tp.check_datapaths({"datapaths": [{"name": "a", "ops": [{"name": "m", "op": "divide"}]}]})
+    assert tp.check_datapaths({"datapaths": [{"name": "a", "ops": [{"name": "m", "op": "mul", "map": "lut"}]}]}) == [
+        "datapaths[a].ops[m]: a map override needs a reason"]
+    errs = check_architecture({"datapaths": "x"})
+    assert "'datapaths' must be a list" in errs
+
+
+def test_plan_check_after_synthesis_fails_c13_reference(tmp_path):
+    p = tp.plan(C13_ARCH, tp.load_model(path=MODEL))
+    rows = utilization.parse_hier((C13 / "utilization_hier.rpt").read_text())
+    g = json.loads((C13 / "gates.json").read_text())
+    fails = tp.check_post_synth(p, g["utilization"], rows)
+    assert len(fails) == 1 and "instance u_regs/u_core has 0 DSP48E1" in fails[0] and "2 multiplies" in fails[0]
+    rows[4]["dsp"] = 2                                         # the u_core row: as if the multiplies had mapped
+    assert tp.check_post_synth(p, g["utilization"], rows) == []
+
+
+def test_calibration_row(dg):
+    p = tp.plan(C13_ARCH, tp.load_model(path=MODEL))
+    rows = tp.compare_post_route(p, dg["setup_path"])
+    assert rows and rows[0]["datapath"] == "rho" and rows[0]["measured_ns"] == pytest.approx(10.166) and rows[0]["miss"]
+
+
+def test_plan_design_writes_files(tmp_path):
+    (tmp_path / "architecture.yaml").write_text(yaml.safe_dump(C13_ARCH))
+    r = tp.plan_design(tmp_path, tp.load_model(path=MODEL))
+    assert r["ok"] and (tmp_path / tp.PLAN_MD).is_file() and tp.load_plan(tmp_path)["planned"]["dsp"] == 2
+    (tmp_path / "architecture.yaml").write_text(yaml.safe_dump({"clock_domains": C13_ARCH["clock_domains"]}))
+    assert tp.plan_design(tmp_path, tp.load_model(path=MODEL)) == {"ok": True, "problems": [], "plan": None}
+
+
+def test_stage_hooks():
+    from agent.graph.stages import MACHINE, classify, exit_check
+    st = MACHINE[4]
+    gates = {"stages": {"post_synth": {"ran": True, "gates": {"post_synth_drc_clean": True}}}}
+    ok, why = exit_check(st, {"gates_base": gates, "standards": {"rules": []}, "plan_fails": ["plan: instance x has 0 DSP48E1"]})
+    assert not ok and "plan: instance x has 0 DSP48E1" in why
+    assert classify(st, why) == "rtl"
+    ok2, _ = exit_check(st, {"gates_base": gates, "standards": {"rules": []}})
+    assert ok2
+
+
+def test_plan_takes_a_variant_cost_source():
+    def src(op):
+        if op["op"] != "mul":
+            return []
+        return [{"variant": "dsp_mult", "resource": "dsp", "lut": 0, "ff": 18, "dsp": 1, "source": "stub"},
+                {"variant": "lut_mult", "resource": "lut", "lut": 95, "ff": 18, "dsp": 0, "source": "stub"}]
+    p = tp.plan(C13_ARCH, tp.load_model(path=MODEL), variants=src)
+    x = {o["name"]: o for o in p["datapaths"][0]["ops"]}["x_cos"]
+    assert x["resource"] == "dsp" and "measured dsp_mult: LUT 0 FF 18 DSP 1" in x["reason"] and "lut_mult: LUT 95" in x["reason"]
+
+    def big(op):
+        return [{"variant": "dsp_wide", "resource": "dsp", "lut": 0, "ff": 0, "dsp": 500, "source": "stub"}] if op["op"] == "mul" else []
+    p2 = tp.plan(C13_ARCH, tp.load_model(path=MODEL), variants=big)
+    assert {o["name"]: o for o in p2["datapaths"][0]["ops"]}["x_cos"]["resource"] == "lut"
+    assert tp.plan(C13_ARCH, tp.load_model(path=MODEL), variants=lambda op: 1 / 0)["datapaths"][0]["ops"][1]["resource"] == "dsp"
+
+
+def test_closure_reports_a_build_that_did_not_finish(tmp_path):
+    c = cl.Closure(ws=_ws(tmp_path), goals=cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), g1=lambda r: {"pass": True},
+                   build=lambda d: {"ran": False}, editor=_editor([]), contract="", log=lambda s: None)
+    r = c.run()
+    assert r["stop"].startswith("the first build did not finish") and r["final"]["G2"]["met"] is False
+
+
+def test_synthesis_disagreeing_with_simulation_fails_g1(dg, tmp_path):
+    log = ("CRITICAL WARNING: [Synth 8-6859] multi-driven net on pin Q with 1st driver pin 'u_regs/u_core/valid0_reg/Q'\n"
+           "WARNING: [Synth 8-13374] Removed Unreachable instance \\u_regs/u_core/u_a\n")
+    s = synth.scan(log)
+    assert s["multi_driven"] == 1 and s["removed_instances"] and not s["clean"]
+    d2 = copy.deepcopy(dg)
+    d2["synth"] = s
+    g = cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]})
+    v = cl.goal_vector({"pass": True, "tests": {"t": True}}, d2, g, baseline_synth={})      # the start build was clean
+    assert v["G1"]["met"] is False and "synthesis disagrees with simulation" in v["G1"]["detail"]
+    assert cl.goal_vector({"pass": True}, d2, g)["G1"]["met"]                                 # no baseline: the start build
+    # the c13_orig_plan case: timing "met" on a design whose core was removed, and the plan's DSPs missing: reverted
+    before = cl.goal_vector({"pass": True}, dg, g)
+    d3 = copy.deepcopy(d2)
+    d3["timing"]["wns_ns"] = 3.5
+    after = cl.goal_vector({"pass": True}, d3, g, ["plan: the design has 0 DSP48E1 where the plan put 2"], {})
+    assert not after["G3"]["met"] and cl.judge(before, after)[0] == "revert"
+
+
+def test_lut_arith_tells_a_multiply_from_an_adder_chain(dg):
+    assert dg["setup_features"]["carry_runs"] >= 3 and dg["setup_features"]["lut_arith"]       # c13: multiply in LUTs
+    adder = {"levels_by_type": {"CARRY4": 18, "LUT3": 2}, "nets": [{"fanout": 3, "name": "n"}],
+             "cells": [{"type": "FDRE"}, {"type": "LUT3"}] + [{"type": "CARRY4"}] * 9 + [{"type": "LUT3"}] + [{"type": "CARRY4"}] * 9}
+    f = timing.features(adder)
+    assert f["carry_runs"] == 2 and not f["lut_arith"]                                          # c16: a 66-bit add chain
+
+
+def _fir_arch(params, **extra):
+    return {"clock_domains": [{"name": "s", "freq_mhz": 250}], "datapaths": [{"name": "filt", "ops": [
+        {"name": "fir", "op": "ip", "block": "fir", "params": params, **extra}]}]}
+
+
+FIR16 = {"TAPS": 16, "DATA_W": 16, "COEF_W": 16, "FOLD": 4}
+
+
+def test_plan_uses_ipvariants_choose_for_an_ip_lib_entry():
+    p = tp.plan(_fir_arch(FIR16), tp.load_model(path=MODEL))
+    op = p["datapaths"][0]["ops"][0]
+    assert op["resource"].startswith("ip:") and "flow.ipvariants.choose" in op["reason"] and "measured at this point" in op["reason"]
+    assert p["datapaths"][0]["latency_cycles"] > 1                       # the variant's own pipeline latency is counted
+
+
+def test_plan_falls_back_to_the_delay_model_when_no_variant_is_known():
+    # TAPS 24 has no measured row: choose() will not borrow Fmax from a nearby point, so the fallback ops are planned
+    p = tp.plan(_fir_arch({**FIR16, "TAPS": 24}, fallback=[{"name": "mac", "op": "mul", "a_bits": 16, "b_bits": 16}]),
+                tp.load_model(path=MODEL))
+    op = p["datapaths"][0]["ops"][0]
+    assert op["name"] == "fir.mac" and op["resource"] == "dsp" and "ip_lib fallback" in op["reason"]
+    p2 = tp.plan(_fir_arch({**FIR16, "TAPS": 24}), tp.load_model(path=MODEL))
+    assert any("give the op 'fallback' ops" in x for x in p2["problems"])
+    assert tp.check_datapaths({"datapaths": [{"name": "a", "ops": [{"name": "f", "op": "ip"}]}]})
+
+
+def test_a_ram_removed_in_the_starting_design_does_not_fail_g1(dg):
+    rom = {"latches": [], "ram_in_registers": [], "multi_driven": 0, "clean": False,
+           "removed_instances": ["WARNING: [Synth 8-13374] Removed Unreachable instance \\u_core/u_unused_rom"]}
+    d2 = copy.deepcopy(dg)
+    d2["synth"] = rom
+    g = cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]})
+    assert cl.goal_vector({"pass": True}, d2, g, baseline_synth=rom)["G1"]["met"]         # removed before any change: fine
+    d3 = copy.deepcopy(d2)
+    d3["synth"] = {**rom, "removed_instances": rom["removed_instances"] + ["Removed Unreachable instance \\u_core/u_a"]}
+    v = cl.goal_vector({"pass": True}, d3, g, baseline_synth=rom)
+    assert v["G1"]["met"] is False and "u_a" in v["G1"]["detail"] and "u_unused_rom" not in v["G1"]["detail"]
+    assert cl.synth_regressions({"multi_driven": 2}, {"multi_driven": 2}) == (0, [])
+    assert cl.synth_regressions({"multi_driven": 1}, {}) == (1, [])                       # N1: no removed_instances key
+
+
+def test_plan_failure_with_a_small_timing_miss_tries_the_plan_mapping(tmp_path, dg):
+    # review S1: G3 (plan check, shortfall 0.01) outranks a WNS of -0.05 ns (shortfall 0.005) but G3 has no area strategy
+    # in this phase; the loop must still try the plan's mapping instead of stopping
+    d = copy.deepcopy(dg)
+    d["timing"]["wns_ns"] = -0.05
+    c = cl.Closure(ws=_ws(tmp_path), goals=cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), g1=lambda r: {"pass": True},
+                   build=FakeBuild(d, [-0.05, 0.4]), editor=_editor([1]), contract="", log=lambda s: None, max_iter=1,
+                   plan_check=lambda _dg: ["plan: instance u_core has 0 DSP48E1 where the plan put 2 multiplies"])
+    r = c.run()
+    assert r["iterations"] >= 1 and r["strategies"][0][0] == "t_plan_map"
+
+
+def test_parallel_op_longer_than_the_previous_one_keeps_every_segment():
+    # review S10: a DSP multiply (4 segments) beside a one-segment add must not merge into the op before the add
+    arch = {"clock_domains": [{"name": "s", "freq_mhz": 100}], "datapaths": [{"name": "d", "ops": [
+        {"name": "t", "op": "table", "index_bits": 4, "width": 9},
+        {"name": "a", "op": "add", "bits": 16},
+        {"name": "m", "op": "mul", "a_bits": 9, "b_bits": 9, "parallel": True}]}]}
+    d = tp.plan(arch, tp.load_model(path=MODEL))["datapaths"][0]
+    segs = [s for st in d["stages"] for s in st["segments"]]
+    assert segs[0].startswith("t: ") and not any(s.startswith("t|") for s in segs)        # the table is untouched
+    assert sum("a|m" in s or s.startswith("m: ") for s in segs) == 4                       # all four DSP segments kept
+    assert d["latency_cycles"] >= 4
+
+
+def test_dsp_counted_in_slices_and_unknown_instance_fails_the_plan_check():
+    arch = {"clock_domains": [{"name": "s", "freq_mhz": 100}], "datapaths": [{"name": "d", "instance": "u_nowhere", "ops": [
+        {"name": "m", "op": "mul", "a_bits": 32, "b_bits": 32}]}]}
+    p = tp.plan(arch, tp.load_model(path=MODEL))
+    assert p["planned"]["dsp"] == 4                                                        # review N4: slices, not operations
+    rows = utilization.parse_hier((C13 / "utilization_hier.rpt").read_text())
+    fails = tp.check_post_synth(p, {"dsp": 4}, rows)
+    assert fails and "names instance u_nowhere, which the design does not have" in fails[0]  # review S5
+
+
+def test_calibration_row_uses_the_stage_time_definition(dg):
+    p = tp.plan(C13_ARCH, tp.load_model(path=MODEL))
+    r = tp.compare_post_route(p, dg["setup_path"])[0]
+    assert r["measured_ns"] == pytest.approx(10.166)                                       # requirement 10 - slack -0.166
+
+
+def test_reg_name_handles_replicas_and_dsp_pins():
+    assert timing.reg_name("u_regs/u_core/k_reg_rep[2]/C") == {"instance": "u_regs/u_core", "signal": "k", "bit": 2}
+    assert timing.reg_name("u_mul/p_reg/CLK")["signal"] == "p"
+
+
+def test_spend_ledger_rows_parse_to_the_header_width():
+    import csv
+    rows = list(csv.reader((Path(__file__).parents[2] / "results" / "spend_ledger.csv").open()))
+    bad = [(i + 1, len(r)) for i, r in enumerate(rows) if r and len(r) != len(rows[0])]
+    assert not bad, f"rows with the wrong number of fields (line, fields): {bad[:10]}"
+
+
+def test_latency_record_matches_the_report():
+    lat = json.loads((Path(__file__).parents[2] / "results" / "62a_closure" / "latency" / "latency.json").read_text())
+    assert [lat[k]["added_clocks"] for k in ("hand fix (PR #134)", "closure, no plan", "closure, with plan")] == [2, 3, 4]
+    assert all(r["same_counts_as_original"] for r in lat.values())
+
+
+def test_removed_instances_compare_on_stable_paths():
+    # review R1: synthesis numbers its generated levels (i_1, i_7) per run; the same removal must compare equal
+    a = synth.scan("[Synth 8-13373] Removed Macro Instance : \\u_regs/u_core /i_1/\\u_rom/mem_reg , of type : RAMB18E1 in constant propagation\n")
+    b = synth.scan("[Synth 8-13373] Removed Macro Instance : \\u_regs/u_core /i_7/\\u_rom/mem_reg , of type : RAMB18E1 in constant propagation\n")
+    assert a["removed_instances"] == b["removed_instances"] == ["u_regs/u_core/u_rom/mem_reg (RAMB18E1)"]
+    assert cl.synth_regressions(b, a) == (0, [])
+
+
+def test_plan_map_is_offered_under_one_goal_only(dg):
+    v = cl.goal_vector({"pass": True}, dg, cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), ["plan: x"])
+    assert pb.applicable("G3", dg, v, plan_fails=["plan: x"]) == []
+    assert pb.applicable("G2", dg, v, plan_fails=["plan: x"])[0][0].id == "t_plan_map"
+
+
+def test_plan_check_ignores_a_stale_hierarchy_report(tmp_path):
+    import os
+    import shutil
+    d = tmp_path / "design"
+    b = d / "build" / "base"
+    b.mkdir(parents=True)
+    (d / "architecture.yaml").write_text(yaml.safe_dump({**C13_ARCH, "datapaths": [{**C13_ARCH["datapaths"][0], "instance": "u_gone"}]}))
+    tp.plan_design(d, tp.load_model(path=MODEL))
+    shutil.copy(C13 / "utilization_hier.rpt", b / "utilization_hier.rpt")
+    (b / "gates.json").write_text("{}")
+    old = (b / "gates.json").stat().st_mtime - 100
+    os.utime(b / "utilization_hier.rpt", (old, old))                       # a previous build's report
+    fails = tp.post_synth_failures(d, {"utilization": {"dsp": 0}})
+    assert fails and not any("u_gone" in f for f in fails)                 # checked on the current totals instead
+    os.utime(b / "utilization_hier.rpt", None)                             # fresh: the per-instance check runs
+    assert any("names instance u_gone" in f for f in tp.post_synth_failures(d, {"utilization": {"dsp": 0}}))

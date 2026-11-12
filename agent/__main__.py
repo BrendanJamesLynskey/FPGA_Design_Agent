@@ -116,7 +116,8 @@ def config_from_json(c: dict):
                   router_model=c.get("router_model") if c.get("router_model") not in (None, "None") else None,
                   router_k=int(c.get("router_k", 8)),
                   harness_arms=c.get("harness_arms", "") if c.get("harness_arms") not in (None, "None") else "",
-                  hdl=c.get("hdl", "sv") or "sv")
+                  hdl=c.get("hdl", "sv") or "sv",
+                  design_plan=flag("design_plan"), closure=c.get("closure", "off") or "off")     # closure loop
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -174,6 +175,12 @@ def main(argv: list[str] | None = None) -> int:
                         "(offload of large tool results, earlier summarisation), H2 = hang protection (unbounded-wait check, "
                         "wall limit from the bench's sim-time budget, structured hang result)")
     r.add_argument("--router-k", type=int, default=8, help="brief 36: skills in the router's shortlist")
+    r.add_argument("--design-plan", action="store_true",
+                   help="plan before building: stage 1 lists the datapaths, and the timing plan maps each operation to a DSP slice, "
+                        "block RAM, carry chain or LUTs and picks the pipeline depth (needs a delay model for the device family)")
+    r.add_argument("--closure", choices=["on", "off"], default="off",
+                   help="after the build, loop on timing, area and power, re-checking simulation after every change, until all hold "
+                        "or the loop stalls (stage 6; tested with fakes only; default off)")
     r.add_argument("--hdl", choices=["sv", "vhdl"], default="sv",
                    help="the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
                         "read_vhdl -vhdl2008 in Vivado); the test shell stays SystemVerilog")
@@ -202,7 +209,8 @@ def main(argv: list[str] | None = None) -> int:
                      oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=a.spec_tests,
                      spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops,
                      skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k,
-                     harness_arms=a.harness_arm, hdl=a.hdl)
+                     harness_arms=a.harness_arm, hdl=a.hdl,
+                     design_plan=a.design_plan, closure=a.closure)          # closure loop
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd

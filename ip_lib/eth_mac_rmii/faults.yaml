@@ -1,5 +1,6 @@
 # Seeded faults (brief 40): each replaces `old` (exactly once) by `new` in a copy of rtl/; the tests named in `test`
 # must fail. Run: python3 flow/net/faults.py. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults (the other runner skips it)
 faults:
   - name: rx_crc_skips_first_byte
     file: rmii_rx.sv

@@ -1,0 +1,97 @@
+{
+ "caught": 10,
+ "valid": 10,
+ "faults": [
+  {
+   "name": "rx_ddr_nibbles_swapped",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "at 1000 Mb/s the rising-edge nibble is taken as the upper half of the byte",
+   "status": "caught",
+   "seconds": 66.9,
+   "pytest": "1 failed, 8 deselected in 65.46s (0:01:05)"
+  },
+  {
+   "name": "rx_nibble_alignment_ignores_sfd",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "at 10/100 Mb/s bytes are aligned on the preamble instead of the SFD",
+   "status": "caught",
+   "seconds": 66.6,
+   "pytest": "1 failed, 8 deselected in 65.44s (0:01:05)"
+  },
+  {
+   "name": "rgmii_rx_crc_skips_first_byte",
+   "block": "eth_mac_rgmii",
+   "class": "off-by-one",
+   "why": "the FCS check is computed over one byte too few",
+   "status": "caught",
+   "seconds": 47.3,
+   "pytest": "1 failed, 8 deselected in 46.31s"
+  },
+  {
+   "name": "rgmii_rx_runt_not_flagged",
+   "block": "eth_mac_rgmii",
+   "class": "missing check",
+   "why": "frames shorter than MIN_FRAME are not reported as runts",
+   "status": "caught",
+   "seconds": 45.8,
+   "pytest": "1 failed, 8 deselected in 44.74s"
+  },
+  {
+   "name": "rgmii_tx_short_ifg",
+   "block": "eth_mac_rgmii",
+   "class": "off-by-one",
+   "why": "the inter-frame gap is one byte time short",
+   "status": "caught",
+   "seconds": 50.3,
+   "pytest": "1 failed, 8 deselected in 49.32s"
+  },
+  {
+   "name": "tx_no_padding",
+   "block": "eth_mac_rgmii",
+   "class": "missing check",
+   "why": "short frames are sent without padding to MIN_DATA",
+   "status": "caught",
+   "seconds": 54.9,
+   "pytest": "1 failed, 8 deselected in 53.47s"
+  },
+  {
+   "name": "tx_underrun_not_poisoned",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "a frame cut short by an AXI-Stream underrun leaves with a good FCS",
+   "status": "caught",
+   "seconds": 60.9,
+   "pytest": "1 failed, 8 deselected in 59.85s"
+  },
+  {
+   "name": "tx_10_100_nibbles_swapped",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "at 10/100 Mb/s the upper nibble is sent first",
+   "status": "caught",
+   "seconds": 60.0,
+   "pytest": "1 failed, 8 deselected in 58.63s"
+  },
+  {
+   "name": "sf_commits_bad_frames",
+   "block": "eth_mac_rgmii",
+   "class": "missing check",
+   "why": "the store-and-forward buffer passes frames with a bad FCS",
+   "status": "caught",
+   "seconds": 20.5,
+   "pytest": "1 failed, 8 deselected in 19.24s"
+  },
+  {
+   "name": "sf_keeps_fcs",
+   "block": "eth_mac_rgmii",
+   "class": "off-by-one",
+   "why": "the store-and-forward output includes the FCS bytes",
+   "status": "caught",
+   "seconds": 17.7,
+   "pytest": "1 failed, 8 deselected in 16.64s"
+  }
+ ],
+ "note": "run 2026-11-12 with flow/net/faults.py --only (three faults were named like eth_mac_rmii's and renamed after the run with the same old/new text; eth_mac_rmii rows removed: not this entry)"
+}
