@@ -1,5 +1,8 @@
 # Brief 30: hardware-in-the-loop verification (2026-11-11)
 
+The Vivado builds (`builds.json`) were measured on 2025.2; the base build is superseded by `results/vivado_2026_1_remeasure/b30_hil_audio.json`. The board runs (`hil_runs/`) used the earlier release's bitstreams and stay as recorded.
+Still current: `hil_runs/`, `faults.json`, `ila_t1/`, `README.md` (board outcomes and fault records; no Vivado figure).
+
 What was connected to the PC on 2026-11-11 (`lsusb`, `/dev/video*`, ALSA, libm2k/iio, the LAN):
 
 | Item | State |

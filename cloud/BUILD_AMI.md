@@ -16,18 +16,22 @@ builder instance for about two hours, then the AMI's snapshot storage). Region e
 3. **Builder instance:** Ubuntu 24.04 LTS (x86_64), `c7a.2xlarge`, on-demand, 200 GB gp3 root volume, the key pair
    and security group above. Find the current Ubuntu AMI id in the EC2 console's launch wizard (Canonical, owner
    099720109477).
-4. **Install Vivado 2025.2** on the builder, the same version as the build PC (`/opt/Xilinx/2025.2`):
+4. **Install Vivado 2026.1** on the builder, the same version as the build PC (`/opt/Xilinx/2026.1`):
    - `sudo apt-get update && sudo apt-get install -y rsync git python3-yaml python3-pip libtinfo6 libncurses6 libx11-6 libxext6 libxrender1 libxtst6 libxi6 locales && sudo locale-gen en_US.UTF-8`
-   - download AMD's Linux self-extracting web installer for 2025.2 (it needs your AMD account), then in batch mode:
-     `./FPGAs_AdaptiveSoCs_Unified_SDI_2025.2_*_Lin64.bin --keep --noexec --target installer`,
-     `installer/xsetup -b AuthTokenGen` (your AMD login), `installer/xsetup -b ConfigGen` (choose **Vivado**, edition
-     **Vivado ML Standard**), edit the generated `install_config.txt` so that only the families we use are selected
+   - download AMD's Linux self-extracting web installer for 2026.1 (it needs your AMD account), then in batch mode:
+     `./FPGAs_AdaptiveSoCs_Unified_SDI_2026.1_*_Lin64.bin --keep --noexec --target installer`,
+     `installer/xsetup -b AuthTokenGen` (your AMD login), `installer/xsetup -b ConfigGen` (choose **Vivado** and its no-cost
+     edition; the build PC runs 2026.1 on the free Basic licence tier, so check the edition names the installer offers), edit the generated `install_config.txt` so that only the families we use are selected
      (7 Series, Zynq-7000, Zynq UltraScale+ MPSoC / Kria), `Destination=/tools/Xilinx`, then
      `sudo installer/xsetup -b Install -a XilinxEULA,3rdPartyEULA -c install_config.txt`.
-   - check: `/tools/Xilinx/2025.2/Vivado/bin/vivado -version` prints `v2025.2`. No licence file is installed.
+   - check: `/tools/Xilinx/2026.1/Vivado/bin/vivado -version` prints `v2026.1`.
+   - **Open question, settle before building the AMI: the licence.** Vivado 2026.1 does not start without a licence, even on
+     the free Basic tier (`results/33_vivado_speed_2026_1/README.md`). A node-locked Basic licence is tied to the host it was
+     generated for, so one installed on this builder will not carry over to instances launched from the image, which get
+     different host IDs. How cloud builds are licensed is the owner's decision; this page gives no recipe for it.
    - remove the installer files and `~/.Xilinx` login tokens before imaging.
 5. **Make the AMI:** stop the builder, then
-   `aws ec2 create-image --instance-id <id> --name fda-vivado-2025.2-<date> --description "Vivado 2025.2 ML Standard, 7 series + Zynq + ZU+"`;
+   `aws ec2 create-image --instance-id <id> --name fda-vivado-2026.1-<date> --description "Vivado 2026.1 no-cost edition, 7 series + Zynq + ZU+"`;
    when it is `available`, terminate the builder and put the AMI id in `cloud/cloud.yaml`.
 6. **Budget alert (recommended):** AWS Budgets, a monthly cost budget of about $25 with an email at 80%.
 

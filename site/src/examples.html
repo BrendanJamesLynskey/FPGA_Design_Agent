@@ -6,7 +6,7 @@
 {{!spec_c9}}
 <p>In run {{examples.0.runs.0.run}} the agent asked the stand-in user {{examples.0.runs.0.questions.oracle_calls}} questions over two interview visits, then built the design. The run record's gate results:</p>
 {{!c9_gates}}
-<p>It passed {{examples.0.runs.0.tests_passed}} of {{examples.0.runs.0.tests_total}} hidden tests. After place and route at 100 MHz the setup slack was {{examples.0.runs.0.wns_ns}} ns, with {{examples.0.runs.0.lut}} LUT, {{examples.0.runs.0.ff}} FF, {{examples.0.runs.0.dsp}} DSP and {{examples.0.runs.0.bram36}} BRAM, test shell included, in {{examples.0.runs.0.agent_turns}} agent turns and {{examples.0.runs.0.wall_h}} h. It stopped at the board stage as designed, with no board attached. It was not flawless: one <a href="how.html#term-mutation">mutant</a>, a changed offset in the window address, survived, so the mutation score was below 100%.</p>
+<p>It passed {{examples.0.runs.0.tests_passed}} of {{examples.0.runs.0.tests_total}} hidden tests, with every post-route gate passing at 100 MHz, in {{examples.0.runs.0.agent_turns}} agent turns and {{examples.0.runs.0.wall_h}} h. It stopped at the board stage as designed, with no board attached. It was not flawless: one <a href="how.html#term-mutation">mutant</a>, a changed offset in the window address, survived, so the mutation score was below 100%.</p>
 
 <h2>2. The same task twice: the interview decides</h2>
 <p>A sine-wave generator task ran twice with the same agent. The part of its text that mattered:</p>
@@ -18,11 +18,11 @@
 <p>An int8 dot product with requantisation ran five times. After each failure the agent was fixed, never the task, and the task was run again. This is how development tasks are used, and why their results are not a score.</p>
 {{!spec_c14}}
 {{!c14_table}}
-<p>Run 5 passed all {{examples.2.runs.4.tests_total}} hidden tests with every gate green: setup slack {{examples.2.runs.4.wns_ns}} ns, {{examples.2.runs.4.lut}} LUT, {{examples.2.runs.4.ff}} FF, {{examples.2.runs.4.dsp}} DSP. Runs 3 and 4 left RTL that passed the hidden tests but stopped on an internal gate: the agent failed its own bar, and the bar was the problem.</p>
+<p>Run 5 passed all {{examples.2.runs.4.tests_total}} hidden tests with every gate of the flow at the time green. Its saved design, rebuilt on Vivado {{dev.rebuild_vivado}}, has setup slack {{examples.2.runs.4.wns_ns}} ns, {{examples.2.runs.4.lut}} LUT, {{examples.2.runs.4.ff}} FF and {{examples.2.runs.4.dsp}} DSP, and fails one gate added after the run: the I/O-constraint check, because its XDC gives slow pins invented input delays. Runs 3 and 4 left RTL that passed the hidden tests but stopped on an internal gate: the agent failed its own bar, and the bar was the problem.</p>
 
-<h3>Timing and area of every run above that reached place and route</h3>
+<h3>Timing and area of the runs above whose designs were kept</h3>
 {{!qor_table}}
-<p class="small muted">All {{dev.runs}} development runs are on the results page. Slack is at 100 MHz; counts include the test shell.</p>
+<p class="small muted">All {{dev.runs}} development runs are on the results page. Each row is the run's saved design rebuilt on Vivado {{dev.rebuild_vivado}} (worst setup slack after routing at 100 MHz, where positive means timing is met; LUT, FF, DSP and BRAM36 are the look-up tables, flip-flops, DSP slices and 36 Kb block RAMs used, counting the test shell). Runs whose design files were not kept have no row, because there is nothing to rebuild on 2026.1.</p>
 
 <h2>4. On the board: the hand-built reference design</h2>
 <p>Before the agent existed, one design was written by hand and taken through every step to a Nexys A7-100T: a push-button counter driving 16 LEDs through a dimmer. It proves the flow the agent drives; it is not agent output.</p>
@@ -35,11 +35,13 @@
 <tr><td>BRAM tiles</td><td class="num">{{board.bram.0}}</td><td class="num">{{board.bram.1}}</td></tr>
 <tr><td>Total power, vectorless (W)</td><td class="num">{{board.power.0}}</td><td class="num">{{board.power.1}}</td></tr>
 </tbody></table></div>
-<p>One command programs the board, runs {{board.uart_tests}} tests over the serial link against the model, and checks {{board.ila_captures}} captures from the on-chip logic analyser cycle by cycle. All {{board.board_runs}} runs passed with {{board.uart_failures}} failures, each in about {{board.run_totals_s.1}} s. Below is LED 0 at three dimmer levels; the number of samples with the LED on matches the model every time.</p>
+<p class="small muted">One build each. The logic-analyser build happens to have more setup slack than the base build; between single builds a few hundred picoseconds of slack is placement noise.</p>
+<p>One command programs the board, runs {{board.uart_tests}} tests over the serial link against the model, and checks {{board.ila_captures}} captures from the on-chip logic analyser cycle by cycle. On the Vivado 2026.1 builds above, the first recorded run stopped at the logic-analyser step on a probe-file fault (a bus bit had lost its name) that the flow now repairs; the rerun passed with {{board.uart_failures}} test failures in {{board.pass_total_s}} s. Below is LED 0 at three dimmer levels; the number of samples with the LED on matches the model every time.</p>
 <figure>
 <div class="player" id="ila" aria-label="Logic analyser capture replay"></div>
-<figcaption>Logic-analyser capture of LED 0 from the board, 1024 samples per dimmer level, with a cursor. Raw captures: <code>results/f0b/captures</code>.</figcaption>
+<figcaption>Logic-analyser capture of LED 0 from the board, 1024 samples per dimmer level, with a cursor. Raw captures: <code>results/f0b_2026_1/captures</code>.</figcaption>
 </figure>
 <p>One piece of the design, the push-button debouncer, as written:</p>
 {{!t1_rtl}}
 <p>{{board.board_v2_designs}} more small designs, reading the temperature sensor, accelerometer, flash ID and microphone, were also checked on the board: {{board.board_v2_passed}} of {{board.board_v2_runs}} runs passed (<code>results/board_v2</code>).</p>
+<p class="next">Next: <a href="showcase.html">Showcase</a> lists the projects being built with the agent and measured on the board.</p>

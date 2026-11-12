@@ -1,0 +1,36 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Design       : cdcfx_c11
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Synthesized
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CDC Report
+
+ID     Severity  Count  Description
+-----  --------  -----  ----------------------------------------------
+CDC-3  Info          2  1-bit synchronized with ASYNC_REG property
+CDC-6  Warning       4  Multi-bit synchronized with ASYNC_REG property
+
+Source Clock: clk_b
+Destination Clock: clk_a
+CDC Type: No Common Primary Clock
+
+Row  ID     Severity  Description                                     Depth  Exception                Source (From)                                                                                        Destination (To)
+---  -----  --------  ----------------------------------------------  -----  -----------------------  ---------------------------------------------------------------------------------------------------  ------------------------------------------------------------------------------------------------------------
+  1  CDC-6  Warning   Multi-bit synchronized with ASYNC_REG property      2  Max Delay Datapath Only  u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[9:0]/C  u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][9:0]/D
+  2  CDC-6  Warning   Multi-bit synchronized with ASYNC_REG property      2  Max Delay Datapath Only  u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[8:0]/C     u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][8:0]/D
+  3  CDC-3  Info      1-bit synchronized with ASYNC_REG property          2  False Path               u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_rd_rst_ic_reg/C        u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.rrst_wr_inst/syncstages_ff_reg[0]/D
+
+Source Clock: clk_a
+Destination Clock: clk_b
+CDC Type: No Common Primary Clock
+
+Row  ID     Severity  Description                                     Depth  Exception                Source (From)                                                                                        Destination (To)
+---  -----  --------  ----------------------------------------------  -----  -----------------------  ---------------------------------------------------------------------------------------------------  ------------------------------------------------------------------------------------------------------------
+  1  CDC-6  Warning   Multi-bit synchronized with ASYNC_REG property      2  Max Delay Datapath Only  u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[9:0]/C  u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][9:0]/D
+  2  CDC-6  Warning   Multi-bit synchronized with ASYNC_REG property      2  Max Delay Datapath Only  u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/src_gray_ff_reg[8:0]/C     u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/dest_graysync_ff_reg[0][8:0]/D
+  3  CDC-3  Info      1-bit synchronized with ASYNC_REG property          2  False Path               u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_wr_rst_ic_reg/C        u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.wrst_rd_inst/syncstages_ff_reg[0]/D
+

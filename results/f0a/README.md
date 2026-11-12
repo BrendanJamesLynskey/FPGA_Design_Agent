@@ -1,5 +1,7 @@
 # results/f0a
 
+Measured on 2025.2, superseded by [results/f0a_2026_1](../f0a_2026_1/README.md).
+
 Build results for milestone F0A. Built with `flow/run_vivado.sh designs/t1_dimmer_counter both` in a fresh clone
 of the branch at commit `98d2de3`, then collected with `flow/summarise.py`. Vivado 2025.2, local build PC.
 

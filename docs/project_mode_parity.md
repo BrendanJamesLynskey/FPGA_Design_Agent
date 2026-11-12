@@ -1,13 +1,13 @@
 # Project mode, non-project mode, and what this flow keeps from both (brief 18)
 
 The agent builds in **non-project mode**: [flow/build.tcl](../flow/build.tcl) reads sources and XDC, runs every stage and writes
-every report itself. UG892 (v2025.2, "Project Mode Advantages") lists what project mode adds on top: automatic management of
+every report itself. UG892 (v2026.1, "Project Mode Advantages") lists what project mode adds on top: automatic management of
 sources, IP and block designs, stored synthesis and implementation results, "cross probing from implementation results to RTL
 source files", run strategies with standard reports, and multiple runs. The Vivado wizards are a second group of project-mode
 conveniences: several compute or check something that a scripted flow does not get unless it asks.
 
-This page is the inventory, measured on Vivado 2025.2 (the owner's personal install, `xc7a100tcsg324-1`, Zynq-7020 for the PS7
-rows). Numbers come from the files under [results/project_parity/](../results/project_parity/); each section names its script.
+This page is the inventory, measured on **Vivado 2026.1** (free Basic licence tier; the owner's personal install, `xc7a100tcsg324-1`, Zynq-7020 for the PS7
+rows). Numbers come from the 2026.1 files under [results/project_parity_2026_1/](../results/project_parity_2026_1/); each section names its script.
 Nothing here needs the GUI. Where a result could not be got in batch it is marked **not measured** with the reason.
 
 Status words: **kept** (the flow already has it), **beaten** (the flow does it better for an agent), **added** (this brief),
@@ -26,7 +26,7 @@ Status words: **kept** (the flow already has it), **beaten** (the flow does it b
 | Block designs (IP Integrator, block automation, connection automation, address editor) | none | **Measured:** every step runs in batch on a Zynq-7020: `create_bd_design`, `apply_bd_automation -rule xilinx.com:bd_rule:processing_system7`, the AXI connection rule, `assign_bd_address` (GPIO at 0x41200000), `validate_bd_design` all succeed (section 3). Using it needs `build.yaml` support for a Tcl block-design script: **gap** | **gap** |
 | Wizard-only checks (MIG pin validation and others) | rule checker `mig_pin_rules.py` (13b); other wizards: section 3 | the MIG wizard's pin verification has no Tcl command; implementation did not reject a byte-group fault (section 2). Per-wizard results in section 3 | see sections 2 and 3 |
 | Cross-probing: RTL, elaborated and synthesised netlist, timing reports, device view | **added:** [flow/xprobe.tcl](../flow/xprobe.tcl), [flow/xprobe.py](../flow/xprobe.py): JSON per build and an SVG device map | section 4 | **added** |
-| ECO and debug-probe insertion (Set Up Debug, ECO Navigator) | debug cores by Tcl ([flow/debug.tcl](../flow/debug.tcl): `create_debug_core`, `connect_debug_port`, `implement_debug_core`), ILA variant build | Set Up Debug is the same commands the wizard runs; the flow already does it from `probes.yaml`. ECO (edit a routed checkpoint) is not used: **gap**, no use case yet | kept (debug), **gap** (ECO) |
+| ECO and debug-probe insertion (Set Up Debug, ECO Navigator) | debug cores by Tcl ([flow/debug.tcl](../flow/debug.tcl)): on Vivado 2026.1's free Basic tier `create_debug_core` is refused, so the flow adds one ILA IP to the netlist with the probes packed into at most 5 ports; the `create_debug_core` route is kept for a tier that allows it | Set Up Debug runs `create_debug_core`, which the Basic tier refuses; the flow inserts the ILA from `probes.yaml` as IP instead. ECO (edit a routed checkpoint) is not used: **gap**, no use case yet | kept (debug), **gap** (ECO) |
 | Source file management, out-of-date status, hierarchy view | `build.yaml` plus `sources_sha256` and `BUILD_STAMP` in every build | a build is reproducible from the sources by hash; project mode tracks time stamps | beaten |
 | Timing Constraints Wizard (missing clocks, I/O delays, clock groups) | `check_timing -verbose` after synthesis and routing, the XDC checker and the CDC gate | see section 3 | kept |
 
@@ -52,7 +52,9 @@ scripted generation (13b: `generate_target` accepts a swapped byte group and a d
 
 - The Vivado Tcl interpreter has no MIG command: `info commands *mig*` returns only `implement_mig_cores` and
   `migrate_pblock` (not pin validation); `*verify*` returns `platform_verify pr_verify tandem_verify`
-  ([results/project_parity/wizards/wizards2.txt](../results/project_parity/wizards/wizards2.txt)).
+  ([results/project_parity_2026_1/wizards/wizards2.txt](../results/project_parity_2026_1/wizards/wizards2.txt)). Vivado 2026.1 also has a
+  `validate_ip` command (`info commands validate_*`). Whether it checks a MIG pinout was **not tested**: the batch generation
+  below still accepts both faulty pinouts without a message.
 - The MIG IP's Tcl (`data/ip/xilinx/mig_7series_v4_2/xgui/xgui.tcl`) only checks that the `.prj` file exists and is readable
   (`validate_XML_INPUT_FILE`); `updateAllModelParams` calls the native generator (`generateMig`).
 - The engine library `libxv_mig7.so` contains the classes behind the GUI's pin page (`PinVerification::verifyPinSet`,
@@ -63,13 +65,13 @@ scripted generation (13b: `generate_target` accepts a swapped byte group and a d
 **Step 2: implementation as the check.** [flow/mig_impl_check.tcl](../flow/mig_impl_check.tcl): `create_ip mig_7series` from the
 `.prj`, `open_example_project`, synthesis, `opt_design`, `place_design`, then `report_drc` (default and `bitstream_checks`).
 The three `.prj` files are the private KB's (good; `mig_mut_bytegroup`: DQ0 and DQ8 swapped; `mig_mut_dup`: DQ0 on the A0
-pin). Vivado 2025.2, one thread, `MemoryMax=6G`, results in [results/project_parity/mig_impl/](../results/project_parity/mig_impl/).
+pin). Vivado 2026.1, one thread, `MemoryMax=6G`, results in [results/project_parity_2026_1/mig_impl/](../results/project_parity_2026_1/mig_impl/).
 
 | .prj | synth | place | `report_drc` after place | `bitstream_checks` |
 |---|---|---|---|---|
-| good | ok (349 s) | ok (88 s) | NSTD-1, UCIO-1 (the same 5 of 51 ports have no LOC or I/O standard; the DRC text does not name them), CFGBVS-1, REQP-1709 | NSTD-1, UCIO-1, RTSTAT-12 (not routed), CFGBVS-1, REQP-1709 |
-| bytegroup | ok (509 s) | ok (50 s) | **the same rules and counts as good** | **the same as good** |
-| dup | ok (378 s) | ok (50 s) | the same rules, with 6 of 51 ports (not 5) without LOC and I/O standard, plus **PLIO-3** ("Partially locked IO Bus ddr2_dq[15:0]: ddr2_dq[0] not locked") and BUFC-1 (the DQ0 input buffer has no loads) | as good, plus BUFC-1; UCIO-1 and NSTD-1 are Errors here |
+| good | ok (253 s) | ok (26 s) | NSTD-1, UCIO-1 (the same 5 of 51 ports have no LOC or I/O standard; the DRC text does not name them), CFGBVS-1, REQP-1709 | NSTD-1, UCIO-1, RTSTAT-12 (not routed), CFGBVS-1, REQP-1709 |
+| bytegroup | ok (242 s) | ok (27 s) | **the same rules and counts as good** | **the same as good** |
+| dup | ok (247 s) | ok (26 s) | the same rules, with 6 of 51 ports (not 5) without LOC and I/O standard, plus **PLIO-3** ("Partially locked IO Bus ddr2_dq[15:0]: ddr2_dq[0] not locked") and BUFC-1 (the DQ0 input buffer has no loads) | as good, plus BUFC-1; UCIO-1 and NSTD-1 are Errors here |
 
 **Result:** the duplicate-pin fault shows up, but only as warnings and a count: no placer error, and the Critical Warnings (NSTD-1, UCIO-1) are already present in the baseline because the example design's own system ports have no LOC, so the signal is **PLIO-3 naming `ddr2_dq[0]`**, BUFC-1 on the DQ0 buffer, and 6 against 5 unplaced ports. A wrapper that constrains every system port would turn UCIO-1 into a clean pass/fail; that was not built. The byte-group fault is **not** rejected by synthesis, placement or either DRC deck. The
 generator re-derives the PHY's byte-lane parameters from the pins it is given, so the design is consistent with the wrong
@@ -98,11 +100,11 @@ Scripts: [flow/clkwiz_probe.tcl](../flow/clkwiz_probe.tcl), [flow/wizard_probe.t
 | **Memory: Block Memory Generator** | primitive choice, latency, port widths; resource estimate | **Measured partly:** `CONFIG.Primitive` (8kx2 for the 4096 x 32 test), `READ_LATENCY_A`, register options readable; **no block-RAM count property** (`report_utilization` after synthesis gives it) | inference from RTL and `report_utilization` | none: nothing the wizard computes is needed beyond what synthesis reports |
 | **FIFO Generator** | native or XPM FIFO, flags, thresholds, depth rules | **Measured yes** for `Output_Depth`, `Full_Threshold_*`, `Data_Count_Width`, `synchronization_stages`. The generated `fg.xdc` for an independent-clock FIFO has the CDC exceptions (`set_max_delay -datapath_only`, `set_bus_skew`, `set_false_path`) **all commented out**, the clock file has two `create_clock` lines | XPM FIFOs only (`xpm_fifo_*`), exceptions from `flow/xpm_cdc.tcl` | gap if the native generator were used: its exceptions would not apply. Not used |
 | **XADC / System Management Wizard** | channel sequencer, alarm thresholds, DCLK limits | **Measured yes:** `CONFIG.CHANNEL_ENABLE_*`, `TEMPERATURE_ALARM_*`, `VCC*_ALARM_*`, `ADC_CONVERSION_RATE`, `DCLK_FREQUENCY` (100) readable and settable; `generate_target` ok | designs read XADC through DRP primitives only if a task needs it (none does) | none now |
-| **Transceivers Wizard** | line-rate and reference-clock legality, PLL dividers, protocol presets | **Measured yes** on `xc7a200tfbg484-1` (GTP): `create_ip gtwizard`; a 12.5 Gb/s request on a GTP is **refused**; the PLL dividers (`gt0_pll0_fbdiv`, `refclk_div`, `rxout_div`, `txout_div`) and `gt_val_*` read back. A legal 3.125 Gb/s set did not apply in the probe (property names guessed wrongly), so the legal-case numbers are **not measured** | no transceiver design (the Nexys A7 and KV260 targets have none in use) | none now; the batch route exists |
+| **Transceivers Wizard** | line-rate and reference-clock legality, PLL dividers, protocol presets | **Measured yes** on `xc7a200tfbg484-1` (GTP): `create_ip gtwizard`; a 12.5 Gb/s request on a GTP is **refused**; the PLL dividers (`gt0_pll0_fbdiv`, `refclk_div`, `rxout_div`, `txout_div`) and `gt_val_*` read back (2026.1 also lists a `gt0_val_*` set of CPLL and QPLL properties). A legal 3.125 Gb/s set did not apply in the probe (property names guessed wrongly), so the legal-case numbers are **not measured** | no transceiver design (the Nexys A7 and KV260 targets have none in use) | none now; the batch route exists |
 | **Zynq PS7 configuration** | clock tree (actual PLL-derived frequencies), DDR parameters, MIO | **Measured yes:** `PCW_FPGA0_PERIPHERAL_FREQMHZ 100` gave `PCW_ACT_FPGA0_PERIPHERAL_FREQMHZ = 100.000000`, `PCW_ACT_APU_PERIPHERAL_FREQMHZ = 666.666687`, `PCW_UIPARAM_DDR_FREQ_MHZ = 533.333333`, DDR bus width and capacity from the part number | ZedBoard work is not started; no PS design in the flow | none now |
 | **Block / connection automation, address editor** | wiring, address map, validation | **Measured yes** (table above) | none | **gap:** no block-design input in `build.yaml` |
 | **Timing Constraints Wizard** | finds missing clocks, I/O delays, clock groups, CDC constraints on a synthesised design and recommends XDC | **No Tcl command** (`info commands *wizard* *recommend* create_timing*` return nothing). Its detection is `check_timing -verbose`, `report_clock_interaction`, `report_cdc` and `report_exceptions` (Tcl, parseable) | `check_timing -verbose` (gate `no_unconstrained_endpoints` with the missing-port list), `report_clock_interaction`, `report_cdc`, the XDC checker | kept: the detections are the same reports. What the wizard adds, a suggested XDC, is the agent's job (and the repair loop's) |
-| **Set Up Debug** | ILA insertion and probe connection | `create_debug_core`, `connect_debug_port`, `implement_debug_core` exist in batch; the `ila` IP also customises with `CONFIG.C_NUM_OF_PROBES` | **kept:** `flow/debug.tcl` from `probes.yaml` (the ILA variant) | none |
+| **Set Up Debug** | ILA insertion and probe connection | `create_debug_core` and `connect_debug_port` exist in batch but are refused on 2026.1 Basic; the `ila` IP customises with `CONFIG.C_NUM_OF_PROBES` and is what the flow uses there (one ILA, at most 5 ports, one clock) | **kept:** `flow/debug.tcl` from `probes.yaml` (the ILA variant, IP route) | none |
 | **I/O Planning** | pin assignment checks (bank voltage, SSN, clock-capable pins) | `place_ports`, `report_drc`, `report_ssn`, `report_io` exist; 13b ran them netlist-free (BIVC-1 caught a 3.3 V port in a 1.8 V bank; SSN works on xc7a100t; clock-capable-pin rules **need a netlist**) | `check_constraints` (master XDC) plus the report set; 13b checks in the KB | the netlist-free clock check is a known hole (13b, F2) |
 | **MIG** | pin verification (byte groups, banks), controller parameters, example design | section 2: generation yes, **pin validation no Tcl command**; implementation does not reject a byte-group fault | `mig_pin_rules.py` (KB) | rule checker stays the gate |
 | **Open Example Project** | an IP's example design with constraints | `open_example_project -in_process` **measured yes** (used in section 2) | not used | none |
@@ -113,7 +115,7 @@ Scripts: [flow/clkwiz_probe.tcl](../flow/clkwiz_probe.tcl), [flow/wizard_probe.t
 [flow/mmcm_search.py](../flow/mmcm_search.py) is the KB skill `artix7-mmcm-pll-configuration`'s search rule (smallest frequency
 error, then highest legal VCO, then smallest D; -1 limits), with a unit test on the skill's worked values. Three target sets
 from a 100 MHz input, plus two more; the wizard's own answer is from `generate_target` of the same request
-([results/project_parity/clkwiz/clkwiz.jsonl](../results/project_parity/clkwiz/clkwiz.jsonl)):
+([results/project_parity_2026_1/clkwiz/clkwiz.jsonl](../results/project_parity_2026_1/clkwiz/clkwiz.jsonl)):
 
 | Target set (MHz) | Wizard: D / M / O | Hand search: D / M / O | Same? | Wizard output (MHz), jitter pk-pk ps, phase error ps |
 |---|---|---|---|---|
@@ -131,14 +133,14 @@ from a 100 MHz input, plus two more; the wizard's own answer is from `generate_t
   `Discrete Jitter (DJ)` and `Phase Error (PE)`, and DJ differs with the setting: 0.239 ns at VCO 928 MHz and 0.408 ns at VCO
   600 MHz (D5 M30 O12); VGA 0.287 ns (wizard values) against 0.305 ns (hand values); audio 0.210 ns. PE reads 0.000 before routing
   (it needs the clock tree). So timing sees jitter and phase error without the wizard
-  ([results/project_parity/mmcm_timing/](../results/project_parity/mmcm_timing/)). The wizard's `CLKOUTn_JITTER` is a different,
+  ([results/project_parity_2026_1/mmcm_timing/](../results/project_parity_2026_1/mmcm_timing/)). The wizard's `CLKOUTn_JITTER` is a different,
   peak-to-peak figure for the user's information; the generated XDC adds only `set_input_jitter 0.100` on the input (a UI figure
   from the wizard's default) and `create_clock`.
 - **VCO legality of a hand-instantiated MMCM.** The KB skill says neither `report_drc` nor `report_methodology` rejects an
   out-of-range VCO (checked 2026-11-03 with M13, D1 at 100 MHz). **This run found otherwise:** after `synth_design` with the input
   clock constrained, `report_drc` raises `AVAL-46` (Critical Warning, `v7v8_mmcm_fvco_rule1`: "The computed FVCO is 1300.000 MHz.
   The valid FVCO range for speed grade -1 is 600MHz to 1200MHz") for VCO 1300 MHz, 500 MHz and 454 MHz (PFD 9.1 MHz), and
-  nothing for the legal setting 1000 MHz ([results/project_parity/cmt_check/](../results/project_parity/cmt_check/)). The flow's
+  nothing for the legal setting 1000 MHz ([results/project_parity_2026_1/cmt_check/](../results/project_parity_2026_1/cmt_check/)). The flow's
   `post_synth_drc_clean` and `drc_clean` gates already count Critical Warnings, so an illegal MMCM VCO **is already a gate failure**.
   The KB note needs correcting by the planner (the KB is private and was not edited here). A separate VCO checker
   (`flow/cmt_check.tcl`, written for this probe) was therefore **not** wired into the flow: it duplicates AVAL-46.
@@ -159,7 +161,7 @@ from a 100 MHz input, plus two more; the wizard's own answer is from `generate_t
 draws the device map. Set `FDA_XPROBE=1` for `flow/run_vivado.sh` (or run `flow/xprobe_run.tcl` on a `post_route.dcp`): the
 step is off by default and changes no report or gate.
 
-What 2025.2 gives, from a routed checkpoint:
+What Vivado 2026.1 gives, from a routed checkpoint (the two examples below):
 
 | Wanted | Where it came from | Got it? |
 |---|---|---|
@@ -169,21 +171,21 @@ What 2025.2 gives, from a routed checkpoint:
 | Worst setup and hold paths per clock group | `get_timing_paths -setup/-hold -nworst 1 -unique_pins`; properties `SLACK`, `DATAPATH_DELAY`, `DATAPATH_LOGIC_DELAY`, `DATAPATH_NET_DELAY`, `STARTPOINT_PIN`, `ENDPOINT_PIN`, `STARTPOINT_CLOCK`, `ENDPOINT_CLOCK` | yes. `LOGIC_LEVELS` is present (0 on the reset path of `b2_acl_adxl362`, 3 on the worst `b2_qspi_jedec` paths) |
 | Routed tiles of a path's nets | `get_nodes -of_objects <net>`, tile = prefix of the node name | only for nets with fanout up to 50 (whole net, not only the branch to one sink); a walk uphill from one sink node took minutes per path and was dropped; `ROUTE` is a list of node names without tile coordinates |
 | High-fanout nets | `FLAT_PIN_COUNT > 50`, one row per driver pin (`get_nets -hier` lists a net under every hierarchical alias); driver cell with file and line; loads counted by clock region | yes |
-| Congested cells | not collected. `report_design_analysis -congestion` is not parsed | **not available** in this version of the tool; listed as follow-up |
+| Congested cells | not collected. `report_design_analysis -congestion` is not parsed | **not collected** yet; listed as follow-up |
 | Device map | clock-region slice extent from `get_sites -of_objects <region>`; each placed slice-level primitive as (module, X, Y) | yes (SVG) |
 
-Two examples, committed with the JSON and SVG ([results/project_parity/xprobe/](../results/project_parity/xprobe/)): from the
-repo's local builds `b2_qspi_jedec` (WNS 4.177 ns, WHS 0.099 ns) and `b2_acl_adxl362` (WNS 2.024 ns, WHS 0.106 ns: the tightest of
-the five routed builds on this PC). The only design with a negative or near-zero slack among them would have been the better
+Two examples on Vivado 2026.1, committed with the JSON and SVG ([results/project_parity_2026_1/xprobe/](../results/project_parity_2026_1/xprobe/)): from the
+repo's local builds `b2_qspi_jedec` (WNS 4.278 ns, WHS 0.075 ns) and `b2_acl_adxl362` (WNS 3.335 ns, WHS 0.122 ns: the tighter of
+the two). The only design with a negative or near-zero slack among them would have been the better
 "real critical path"; none exists locally, so `b2_acl_adxl362` stands in. Its worst setup path (from the summary):
 
 ```
-setup slack 2.024 ns: u_rst reset_sync.sv:14 (X0Y2, SLICE_X4Y129) -> u_shell shell_core.sv:86 (X0Y2, SLICE_X10Y122)
+setup slack 3.335 ns: u_rst reset_sync.sv:14 (X0Y2, SLICE_X2Y132) -> u_regs spi_burst.sv:30 (X0Y2, SLICE_X0Y106)
 rst: fanout 552, driven in u_rst reset_sync.sv:14; all 551 loads in clock region X0Y2
 ```
 
 so "the critical path is the synchronised reset leaving `reset_sync.sv` line 14 and fanning out to 552 registers", which is what
-the timing report's 6.7 ns of net delay (of 7.1 ns datapath) says in other words. The same data reaches the agent as evidence:
+the timing report's 5.4 ns of route delay (of a 6.2 ns data path) says in other words. The same data reaches the agent as evidence:
 `flow/gates.py` adds an `xprobe` key to `gates.json` when `xprobe.json` exists, and `agent/graph/stages.py` appends
 `cross-probe: ...` lines to the failing `post_route:setup` / `post_route:hold` gate in the repair visit's list. No tool was
 added (the registered-tool golden test is untouched); the existing `report` tool can read `xprobe.json`.
@@ -191,7 +193,7 @@ added (the registered-tool golden test is untouched); the existing `report` tool
 ## Reproduce
 
 ```
-python3 flow/mmcm_search.py --compare results/project_parity/clkwiz/clkwiz.jsonl      # the table in section 3
+python3 flow/mmcm_search.py --compare results/project_parity_2026_1/clkwiz/clkwiz.jsonl      # the table in section 3
 vivado -mode batch -source flow/clkwiz_probe.tcl -tclargs xc7a100tcsg324-1 <out> s1:100:MMCM:74.25 ...
 vivado -mode batch -source flow/wizard_probe.tcl -tclargs <out>                       # one block per wizard
 vivado -mode batch -source flow/mig_impl_check.tcl -tclargs xc7a100tcsg324-1 <.prj> <out>

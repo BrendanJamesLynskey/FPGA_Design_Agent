@@ -43,8 +43,9 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 from agent.core import constraints as con  # noqa: E402
 from flow import exceptions_check, gates  # noqa: E402
+from flow.version_pin import vivado_path  # noqa: E402
 
-VIVADO = "/opt/Xilinx/2025.2/Vivado/bin/vivado"
+VIVADO = vivado_path()
 
 
 parse_dump = exceptions_check.parse_mcp_dump

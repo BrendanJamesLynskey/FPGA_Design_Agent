@@ -38,10 +38,13 @@ was refused for the tests role.
 
 ## The QoR gate
 
+On Vivado 2026.1's free Basic tier this gate is absent, not passed ([methodology](methodology.md#qor-on-basic)). This section describes the
+gate where the report runs; no 2026.1 QoR figures exist, so none are quoted.
+
 `post_route_qor_assessment` (score >= 4 in `qor_assessment_route.rpt`) is the gate, in the `post_route` stage.
 `post_synth_qor_assessment` is a recorded warning (`stages.post_synth.warnings`, top-level `warnings`, the review page's
-"Warnings" table), not a gate. Reason: on small designs Vivado's post-synthesis predicted-congestion item reads 3 while the
-routed score is 5 (benchmark 06a: 11 of 24 reference designs, all at most 1.2 % of the device, timing met).
+"Warnings" table), not a gate. Reason: on an earlier Vivado release, on small designs the post-synthesis predicted-congestion
+item scored below the routed score (benchmark 06a); this cannot be re-checked on the 2026.1 Basic tier.
 
 ## Live checks (T1, oracle, review off, V1; records in `results/f2/`)
 

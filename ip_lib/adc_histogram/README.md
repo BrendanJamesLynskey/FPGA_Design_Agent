@@ -52,6 +52,6 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py`):
 
 ## Cost table
 
-pending: no OOC synthesis sweep yet; the cost inside the b30_hil_audio build is in results/b30/builds.json.
+pending: no OOC synthesis sweep yet, and the block is not in the b30_hil_audio build, so no Vivado cost is recorded.
 
 Licence: MIT (this repository).

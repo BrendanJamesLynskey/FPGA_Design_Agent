@@ -67,9 +67,10 @@ def scrub(text: str) -> str:
     return text
 
 
-def collect(src: Path) -> None:
+def collect(src: Path, gdir: Path | None = None) -> None:
+    gdir = gdir or HERE / "golden"
     for d in sorted(p for p in src.iterdir() if p.is_dir() and p.name.startswith("tex_")):
-        dst = HERE / "golden" / d.name
+        dst = gdir / d.name
         shutil.rmtree(dst, ignore_errors=True)
         dst.mkdir(parents=True)
         for name in KEEP:
@@ -91,8 +92,8 @@ def rules(path: Path) -> list[dict]:
     return gates.parse_rule_table(path.read_text()) if path.exists() else []
 
 
-def fixture(name: str) -> dict:
-    g = HERE / "golden" / name
+def fixture(name: str, gdir: Path | None = None) -> dict:
+    g = (gdir or HERE / "golden") / name
     xdcs = [HERE / "xdc" / f"{name}.clocks.xdc", HERE / "xdc" / f"{name}.xdc"]
     exc = exceptions_check.evaluate(g, "synth", xdcs)
     place = rules(g / "methodology_place.rpt")
@@ -134,12 +135,14 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("--collect", type=Path)
     ap.add_argument("--out", type=Path, default=ROOT / "results" / "20_timing_exceptions")
+    ap.add_argument("--golden", type=Path, default=HERE / "golden", help="report directory (brief 49: a 2026.1 set lives under results/)")
+    ap.add_argument("--vivado", default="2025.2", help="the Vivado version the reports in --golden came from")
     a = ap.parse_args(argv)
     if a.collect:
-        collect(a.collect)
-    rows = [fixture(n) for n in DESCR if (HERE / "golden" / n).is_dir()]
+        collect(a.collect, a.golden)
+    rows = [fixture(n, a.golden) for n in DESCR if (a.golden / n).is_dir()]
     a.out.mkdir(parents=True, exist_ok=True)
-    (a.out / "exceptions_table.json").write_text(json.dumps({"vivado": "2025.2", "part": "xc7a100tcsg324-1",
+    (a.out / "exceptions_table.json").write_text(json.dumps({"vivado": a.vivado, "part": "xc7a100tcsg324-1",
                                                              "mode": "out_of_context", "rows": rows}, indent=2) + "\n")
     f = lambda v: "-" if v is None else f"{v:+.3f}"
     md = ["| id | what | Vivado rules | ignored / coverage | WNS / WHS after synthesis | without the exception (re-timed after routing where routed) | after routing | flow flags (why) | expected |",

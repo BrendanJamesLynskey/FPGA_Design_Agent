@@ -7,8 +7,8 @@
 
 Sources: AMD's Ross skills (github.com/Xilinx/ross-ai-assistant at commit `dce0fb9`, release 2026.10.1, MIT,
 Copyright (C) 2026 Advanced Micro Devices, Inc.), mined and rewritten for this project's batch, non-project flow on
-Vivado 2025.2; and AMD UG903, UG906, UG835, UG949 (all v2025.2), cited by chapter. Ross was tested by AMD on Vivado
-2026.1; differences that matter here are noted.
+Vivado 2026.1; and AMD UG903, UG906, UG835, UG949 (all v2026.1), cited by chapter. Ross was tested by AMD on Vivado
+2026.1, the release this flow uses.
 
 ## How to use it
 
@@ -54,7 +54,7 @@ logic. Ross resolves its "group 1" checks first for the same reason: clock fixes
 
 ## Timing exceptions (gates `post_synth_exceptions_clean`, `exceptions_clean`; brief 20)
 
-Each failure names the XDC file and line. Measured on Vivado 2025.2 (`results/20_timing_exceptions/exceptions_table.md`).
+Each failure names the XDC file and line. Measured on Vivado 2026.1 (`results/20_timing_exceptions_2026_1/exceptions_table.md`).
 
 | Finding | What it usually means | What to try |
 |---|---|---|
@@ -63,11 +63,11 @@ Each failure names the XDC file and line. Measured on Vivado 2025.2 (`results/20
 | EXC-IGNORED "Totally overridden ... by CG", TIMING-24 | a clock group (or a false path) beats the max delay or multicycle | a clock group overrides every exception between its clocks: drop the group and keep the max delay, or the reverse |
 | TIMING-47 | false path, clock group or datapath-only max delay between clocks from one MMCM | the clocks are synchronous: let the tool time the path, or use a real CDC circuit and constrain it as one |
 | XDCH-1 | `-setup N` with no `-hold N-1`: the hold check moves N-1 cycles and fails | add `set_multicycle_path N-1 -hold` on the same `-from`/`-to` (FDA-CON-10 catches this before Vivado) |
-| EXC-MCP-ENABLE | a multicycle path whose start or end register loads on every clock (CE tied), or whose registers share no enable; or `-start`/`-end` counting the slower clock | write the multicycle only on registers the enable loads, named by a property or by the enable; Vivado raised no TIMING-46 for this in 2025.2 |
+| EXC-MCP-ENABLE | a multicycle path whose start or end register loads on every clock (CE tied), or whose registers share no enable; or `-start`/`-end` counting the slower clock | write the multicycle only on registers the enable loads, named by a property or by the enable; Vivado 2026.1 raised no TIMING-46 for this, after synthesis or placement |
 
 ## I/O timing (gates `post_synth_io_constraints_clean`, `io_timing_clean`; brief 20 part B)
 
-Each failure names the XDC file and line. Measured on Vivado 2025.2 (`results/20_timing_exceptions/io_table.md`).
+Each failure names the XDC file and line. Measured on Vivado 2026.1 (`results/20_timing_exceptions_2026_1/io_table.md`).
 
 | Finding | What it usually means | What to try |
 |---|---|---|
@@ -84,7 +84,7 @@ Each failure names the XDC file and line. Measured on Vivado 2025.2 (`results/20
 
 ## Methodology checks (`methodology.rpt`)
 
-Rule meanings from UG906 (v2025.2) Appendix A; resolution steps mined from Ross
+Rule meanings from UG906 (v2026.1) Appendix A; resolution steps mined from Ross
 `skills/vivado-timing-methodology-checks/references/TIMING-<n>.md` where Ross has a file (marked R).
 
 | ID | Meaning | What to try |
@@ -113,8 +113,9 @@ Rule meanings from UG906 (v2025.2) Appendix A; resolution steps mined from Ross
 | LUTAR-1 | a LUT drives an asynchronous reset | register the reset (reset synchroniser) so no logic sits on the reset path |
 | SYNTH-6, -11, -12, -13 | RAMB or DSP primitive without its optional pipeline registers | enable the registers if the path is critical (not reported when slack is ample, UG906 ch. 5) |
 
-Version note: Ross's TIMING skill declares "Requires Vivado 2026.1+", but the TIMING-n IDs and meanings above are
-the same in the 2025.2 UG906 appendix.
+Version note: Ross's TIMING skill declares "Requires Vivado 2026.1+", the release this flow uses; the TIMING-n IDs and
+meanings above are those of the 2026.1 UG906 appendix (AMD's 2026.1 revisions to UG906 added RQS_CLOCK-25/-26 and a clock
+uncertainty note, and changed no TIMING rule).
 
 ## DRC (`drc.rpt`)
 
@@ -167,8 +168,9 @@ at `dce0fb9`. Fix the first error first: later ones often cascade.
 | lint CLOCK-1 | both edges of one clock in a module | use one edge |
 | lint RESET-1 / RESET-2 | several async resets / some registers not reset | one reset; reset all registers of the block or none |
 
-Version note: `synth_design -lint -file` writes a text table on 2025.2 (Ross reads a CSV from 2026.1), and UG835
-v2025.2 lists only ASSIGN-1 to -7, QOR-1, INFER-1 to -3, CLOCK-1 and RESET-1/-2.
+Version note: `synth_design -lint -file` writes a text table on Vivado 2026.1 too (checked on this PC, Basic licence tier:
+`results/vivado_2026_1_remeasure/lint/`), although Ross reads a CSV, and UG835 v2026.1 lists only ASSIGN-1 to -7, QOR-1, INFER-1 to -3,
+CLOCK-1 and RESET-1/-2.
 
 Verilator (`flow/lint.sh`, `-Wall`) reports its own names for the same problems: `WIDTH*` (widths), `UNUSED*` and
 `UNDRIVEN` (unused or undriven signals), `LATCH` and `CASEINCOMPLETE` (latches and incomplete case),

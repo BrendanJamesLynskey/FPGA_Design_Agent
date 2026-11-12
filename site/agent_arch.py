@@ -130,7 +130,7 @@ HARNESS_ARMS = [
     {"id": "H1", "name": "Context management", "source": "results/36_skill_routing/e2e.md",
      "change": "Large tool results, such as Vivado reports and simulation logs, go to a file in the jail and the model gets a head, a tail and the path; older turns are summarised much earlier.",
      "evidence": "Token totals are dominated by long repair visits: one 80-turn visit of the RTL writer used 6.6 M tokens."},
-    {"id": "H2", "name": "Hang protection", "source": "results/24_fsm/README.md",
+    {"id": "H2", "name": "Hang protection", "source": "results/24_fsm/drills/run_b1.meta.json",
      "change": "A per-test simulation limit from the test's own simulated-time budget, a result that says where a test hung, and a check that refuses tests with unbounded waits before they run.",
      "evidence": "In one drill run three simulate calls each ran to the 1800 s limit on the agent's own tests, which waited on conditions that never came."},
     {"id": "H3", "name": "Diagnose before repair", "source": None,
@@ -151,7 +151,14 @@ HARNESS_ARMS = [
     {"id": "H8", "name": "To-do list", "source": None,
      "change": "A to-do list tool for the RTL writer.",
      "evidence": "Planning on long stages; the role agents are offered no to-do tool today."},
+    {"id": "H9", "name": "Typed digests", "source": None,
+     "change": "A large build, gates, simulation or lint result is replaced by a short typed digest made by code from the gate parsers, plus the path of the full result.",
+     "evidence": "Raw logs and reports fill the transcript that every turn resends."},
 ]
+#: brief 42 round 1 (results/42_workflows/analysis.md, written by analyze.py): the paired table is read from that file.
+HARNESS_RESULTS = "results/42_workflows/analysis.md"
+#: each arm's pre-registered primary metrics (results/42_workflows/prereg.md): H2 is judged on wall time, the others on tokens and cost
+PRIMARY = {"H2": ("wall_s",), "H1": ("tokens", "cost_usd"), "H9": ("tokens", "cost_usd")}
 #: fixes already made from harness findings, each with its evidence (repository paths and the pull request).
 HARNESS_FIXES = [
     {"name": "Whole skills from load_skill", "pr": 115, "files": ["agent/core/tools.py", "agent/tests/test_36_skill_routing.py"],
@@ -160,7 +167,7 @@ HARNESS_FIXES = [
     {"name": "The debug core's own timing exceptions", "pr": 120, "files": ["flow/exceptions_check.py", "flow/tests/test_45_ila_exceptions.py"],
      "text": "The exceptions gate failed every build with a logic analyser in it, because the analyser core brings timing exceptions "
              "that Vivado ignores. The gate now reports those as information and still fails on the design's own."},
-    {"name": "A build cache for Vivado", "pr": 118, "files": ["flow/build_cache.py", "results/33_vivado_speed/summary.json"],
+    {"name": "A build cache for Vivado", "pr": 118, "files": ["flow/build_cache.py", "results/33_vivado_speed_2026_1/summary.json"],
      "text": "A repeated build of an unchanged design now comes from a cache, and a later stage resumes from the last checkpoint. "
              "One agent run's build sequence on the c10 task took {with_cache_s} s instead of a modelled {without_cache_model_s} s, with the same result."},
 ]
@@ -451,6 +458,75 @@ def build(replay, skills):
     }
 
 
+def _cells(line):
+    return [c.strip() for c in line.strip().strip("|").split("|")]
+
+
+def harness_results():
+    """Brief 42 round 1, read from analysis.md (written by analyze.py): per arm, the paired change against the baseline
+    A0 for tokens, cost and wall time (median, 95 % bootstrap interval, both also as a percentage of A0's median), the
+    pass counts, and the verdict under both readings of the pre-registered rule. Nothing here is computed but the
+    percentages of the interval ends."""
+    src = (ROOT / HARNESS_RESULTS).read_text()
+    lines = src.splitlines()
+    env = (ROOT / HARNESS_RESULTS).with_name("environment.txt").read_text()
+    head = {"n_runs": int(re.search(r"Valid runs: (\d+)", src).group(1)), "blocks": int(re.search(r"(\d+) of \d+ started", src).group(1)),
+            "source": HARNESS_RESULTS, "model": re.search(r"^model: (\S+)", env, re.M).group(1)}
+    totals, paired, verdict, sens = {}, {}, {}, {}
+    for l in lines:
+        c = _cells(l) if l.startswith("|") else []
+        if len(c) == 10 and re.fullmatch(r"A0|H\d", c[0]) and c[1].isdigit():
+            totals[c[0]] = {"runs": int(c[1]), "hidden_passes": int(c[2]), "cost_usd": float(c[7])}
+        elif len(c) == 10 and re.fullmatch(r"H\d", c[0]) and c[1] in ("tokens", "cost_usd", "wall_s"):
+            lo, hi = (float(x) for x in c[6].strip("[]").split(","))
+            base = float(c[3])
+            paired.setdefault(c[0], {})[c[1]] = {"n": int(c[2]), "a0": base, "diff": float(c[4]), "rel_pct": float(c[5].rstrip(" %")),
+                                                "lo": lo, "hi": hi, "lo_pct": round(100 * lo / base, 1), "hi_pct": round(100 * hi / base, 1),
+                                                "excludes_0": c[7] == "yes"}
+        elif len(c) == 6 and re.fullmatch(r"H\d", c[0]) and c[4] in ("yes", "no"):     # wall time without the censored blocks
+            sens[c[0]] = {"n": int(c[1]), "diff": float(c[2]), "excludes_0": c[4] == "yes"}
+        elif len(c) == 8 and re.fullmatch(r"H\d", c[0]) and c[6] in ("yes", "no"):
+            verdict[c[0]] = {"reading_t": c[6] == "yes", "reading_c": c[7] == "yes"}
+    words = {"tokens": "tokens", "cost_usd": "cost", "wall_s": "wall time"}
+    out = {}
+    for arm, m in paired.items():
+        parts = []
+        for k in ("cost_usd", "tokens", "wall_s"):
+            x = m[k]
+            lh = lambda p: f'{abs(p):g} % {"lower" if p < 0 else "higher"}'
+            t = f'{words[k]} {lh(x["rel_pct"])} (95 % interval {lh(x["lo_pct"])} to {lh(x["hi_pct"])})'
+            if k == "wall_s" and x["excludes_0"] and not sens[arm]["excludes_0"]:
+                t += ", but the interval includes 0 once the blocks with a run stopped by the time limit are left out"
+            parts.append(t)
+        v = verdict[arm]
+        def why(k):        # one primary metric against the rule: at least 30 % lower AND an interval that excludes 0
+            x = m[k]
+            if x["rel_pct"] <= -30 and x["excludes_0"]:
+                return f'{words[k]} meets it ({abs(x["rel_pct"]):g} % lower, interval excludes 0)'
+            if x["rel_pct"] <= -30:
+                return f'{words[k]} fell {abs(x["rel_pct"]):g} % but the interval includes 0'
+            if x["excludes_0"]:
+                return f'{words[k]} fell {abs(x["rel_pct"]):g} %, under the 30 % bar'
+            return f'{words[k]} changed by {x["rel_pct"]:+g} % with an interval that includes 0'
+        prim = PRIMARY.get(arm, ("tokens", "cost_usd"))
+        if v["reading_c"] and not v["reading_t"]:
+            rule = ("Not adopted: " + "; ".join(why(k) for k in prim) +
+                    "; the pre-registered rule did not say whether cost alone counts")
+        elif v["reading_t"]:
+            rule = "Meets the adopt rule"
+        else:
+            rule = "Not adopted against the rule (at least 30 % lower with an interval that excludes 0): " + "; ".join(why(k) for k in prim)
+            if arm == "H2":
+                rule += "; hangs, its other primary measure, were too rare in this round to compare"
+        status = ("; ".join(parts).capitalize() + f'. Hidden-test passes {totals[arm]["hidden_passes"]} of {totals[arm]["runs"]} '
+                  f'(baseline {totals["A0"]["hidden_passes"]} of {totals["A0"]["runs"]}). ' + rule + ".")
+        out[arm] = {"status": status, "paired": m, "verdict": v, "wall_without_censored": sens[arm],
+                    "hidden_passes": totals[arm]["hidden_passes"], "runs": totals[arm]["runs"]}
+    if out:
+        out["_run"] = {**head, "a0_hidden_passes": totals["A0"]["hidden_passes"], "a0_runs": totals["A0"]["runs"]}
+    return out
+
+
 def harness(inner):
     """Brief 47: the harness section of agent.html. Settings from the code, arms from brief 42, fixes with evidence."""
     s = harness_settings()
@@ -460,22 +536,22 @@ def harness(inner):
     anth = is_anthropic_chat_model(chat_model(lambda m, tools=None: Reply(text="", tool_calls=[]), Meter(run_limits={"turns": 1}), []))
     idle = {"_ParentNotifierMiddleware": True, "AnthropicPromptCachingMiddleware": not anth}    # present, but no effect here
     mw = [{"name": m, "words": MIDDLEWARE_WORDS[m].format(**s), "acts": not idle.get(m, False)} for m in inner["middleware"]]
+    measured = harness_results()
     arms = []
     for a in HARNESS_ARMS:
         if a["source"]:
             src = (ROOT / a["source"]).read_text()
             for n in re.findall(r"\d+(?:\.\d+)?", a["evidence"]):
                 assert n in src, (a["id"], n, a["source"])
-        res = ROOT / "results" / "42_workflows" / f'{a["id"]}.json'
-        status = json.loads(res.read_text())["summary"] if res.exists() else "not yet measured"
-        arms.append({**a, "status": status})
-    cache = json.loads((ROOT / "results/33_vivado_speed/summary.json").read_text())["cache"]["c10"]
+        r = measured.get(a["id"])
+        arms.append({**a, "status": r["status"] if r else "not yet measured", "result": r})
+    cache = json.loads((ROOT / "results/33_vivado_speed_2026_1/summary.json").read_text())["cache"]["c10"]
     assert cache["same_result"]
     fixes = []
     for f in HARNESS_FIXES:
         for p in f["files"]:
             assert (ROOT / p).exists(), p
         fixes.append({**f, "text": f["text"].format(**cache)})
-    return {"settings": s, "middleware": mw, "arms": arms, "fixes": fixes,
+    return {"settings": s, "middleware": mw, "arms": arms, "fixes": fixes, "round1": measured.get("_run"),
             "todo_tool": inner["todo_tool"], "subagent_tool": inner["subagent_tool"],
             "system_prompt_only_ours": inner["system_prompt_only_ours"], "audit_date": "2026-11-11"}

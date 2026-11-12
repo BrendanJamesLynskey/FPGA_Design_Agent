@@ -1,5 +1,5 @@
 # mcp_paths.tcl (brief 20): every multicycle exception of the open design, the registers it names, and their clock enables.
-# Vivado 2025.2 raised no TIMING-46 for a multicycle on registers whose CE is tied high (fixture E3, after synthesis and
+# Vivado 2026.1 raised no TIMING-46 for a multicycle on registers whose CE is tied high (fixture E3, after synthesis and
 # after routing), so flow/exceptions_check.py checks the enables itself from this dump (rule EXC-MCP-ENABLE).
 #   source flow/mcp_paths.tcl; mcp_dump_paths <out file>
 # CLOCK|<name>|<period>

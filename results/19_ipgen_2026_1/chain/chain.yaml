@@ -1,0 +1,38 @@
+# Signal chain (brief 19, section 7): the Nexys A7 PDM microphone to a 48 kS/s audio stream.
+# Each stage lists where its numbers come from. IP stages point at the results directory of their adapter run.
+name: pdm_mic_to_48k
+title: "Nexys A7 microphone to 48 kS/s: PDM -> CIC (R=25) -> compensating FIR (R=2)"
+band_hz: [20, 20000]          # the measurement band
+fft_points_out: 16384         # FFT length at the 48 kS/s output (the other nodes use the same duration)
+settle_out_samples: 2048      # output samples discarded before the FFT record
+seed: 19
+modulator:                    # converter model: the microphone's own modulator is not in its data sheet
+  order: 4
+  hinf: 1.5                   # peak noise-transfer gain; 1-bit, error-feedback form
+stages:
+  - id: mic
+    kind: converter
+    part: "Knowles SPK0833LM4H"
+    board: "Nexys A7-100T on-board microphone"
+    rate_hz: 2400000          # microphone clock = PDM bit rate (data sheet 1.0-3.25 MHz)
+    width_bits: 1
+    snr_db: 63                # data sheet typical, 94 dB SPL at 1 kHz, A-weighted; the model treats it as unweighted
+    sensitivity_dbfs: -26     # at 94 dB SPL
+    thd_max_pct: 1.0          # at 94 dB SPL (data sheet limit); the model adds none
+    aop_db_spl: 122
+    source: "SPK0833LM4H data sheet rev D, electrical table"
+  - id: cic
+    kind: ip
+    adapter: cic
+    results: results/19_ipgen_2026_1/cic
+    rate: 25
+  - id: fir
+    kind: ip
+    adapter: fir
+    results: results/19_ipgen_2026_1/chain_fir
+    decimation: 2
+cases:
+  # all tones are coherent with the 16384-point output record (k x 48000 / 16384 Hz)
+  reference: {tones_hz: [1016.6015625], levels_dbfs: [-26]}              # 94 dB SPL, the data sheet's reference level
+  loud: {tones_hz: [1016.6015625], levels_dbfs: [-6]}                    # about 114 dB SPL: distortion and spurs
+  two_tone: {tones_hz: [1016.6015625, 1338.8671875], levels_dbfs: [-12, -12]}

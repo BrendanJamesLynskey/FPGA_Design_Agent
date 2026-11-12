@@ -55,7 +55,7 @@
     root.appendChild(ctl);
     if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
     function show() {
-      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      rng.value = i; pos.textContent = (i + 1) + " / " + n; rng.setAttribute("aria-valuetext", "step " + (i + 1) + " of " + n);
       var c = onFrame(i);
       if (live && c != null) live.textContent = c;
     }
@@ -734,10 +734,130 @@
         if (on[p.dataset.p]) p.parentNode.insertBefore(p, p.parentNode.querySelector("[data-tok]")); });   /* lit paths drawn over the shared rail */
       all("[data-person]").forEach(function (g) { cls(g, "on", g.dataset.person === f.person); });
       move(f, !reduce);
+      if (strip) { var vi = vOf[i]; vbox.forEach(function (b, k) { cls(b, "now", k === vi); cls(b, "past", vi != null && k < vi); }); }
       return f.cap;
+    }
+    /* the run's stage visits in order, one box each; a repair (a visit to the same or an earlier stage, as loop.py counts it) is hatched */
+    var V = [], vOf = [], key = null;
+    F.forEach(function (f, i) {
+      if (f.stage == null) { vOf.push(V.length ? V.length - 1 : null); return; }
+      var k = f.stage + "/" + f.visit;
+      if (k !== key) { V.push({ stage: f.stage, visit: f.visit, visits: f.visits, rep: V.length > 0 && f.stage <= V[V.length - 1].stage }); key = k; }
+      vOf.push(V.length - 1);
+    });
+    var strip = null, vbox = [];
+    if (V.length > 1) {
+      var nrep = V.filter(function (v) { return v.rep; }).length;
+      strip = el("div", { class: "visits", role: "img", "aria-label": "Stage visits in this run: " + V.length + ", of them " + nrep + " repairs" });
+      strip.appendChild(el("span", { class: "vlab small muted", text: V.length + " stage visits by stage number; hatched, the " + nrep + " repairs:" }));
+      V.forEach(function (v) { var b = el("span", { class: "vb" + (v.rep ? " rep" : ""), text: String(v.stage), title: "stage " + v.stage + ", visit " + v.visit + " of " + v.visits + (v.rep ? ", a repair" : "") }); vbox.push(b); strip.appendChild(b); });
+      host.insertBefore(strip, host.querySelector(".cap"));
     }
     Player(host, F.length, frame, { autoplay: true, interval: 1150 });
   }
+  /* ---------- showcase graphics kit (brief 61): a hero replayed from a project's committed data ----------
+     Contract: docs/showcase_pages.md. Each kind returns {n, frame(i) -> caption}; the Player gives play, step, scrub,
+     speed and reset; under reduced motion nothing plays and the last frame (the whole result) is shown. */
+  function nf(v) { return Math.abs(v) >= 100 ? String(Math.round(v)) : String(+v.toPrecision(3)); }
+  var KIT = {
+    wave: function (art, T) {
+      var f = mountWave(art, T);
+      return { n: T.x.length, interval: 700, frame: function (i) { f(i); return (T.captions && T.captions[i]) || (T.unit + " " + T.x[i]); } };
+    },
+    hist: function (art, H) {
+      var xs = H.samples, N = xs.length, B = H.bins;
+      var lo = H.lo != null ? H.lo : Math.min.apply(null, xs), hi = H.hi != null ? H.hi : Math.max.apply(null, xs); if (hi === lo) hi = lo + 1;
+      function bin(v) { return Math.min(B - 1, Math.max(0, Math.floor((v - lo) / (hi - lo) * B))); }
+      var full = new Array(B).fill(0); xs.forEach(function (v) { full[bin(v)]++; });
+      var top = Math.max.apply(null, full);
+      var W = 360, Ht = 210, L = 34, R = 10, T0 = 26, Bo = 174, bw = (W - L - R) / B;
+      var s = sv("svg", { viewBox: "0 0 " + W + " " + Ht, width: "100%", role: "img", class: "kitsvg",
+        "aria-label": "Histogram of " + N + " " + (H.label || "samples") + " in " + H.unit + ", from " + nf(lo) + " to " + nf(hi) });
+      s.appendChild(sv("line", { x1: L, x2: W - R, y1: Bo, y2: Bo, class: "ink" }));
+      [lo, (lo + hi) / 2, hi].forEach(function (v, k) { s.appendChild(sv("text", { x: L + (W - L - R) * k / 2, y: Bo + 15, "text-anchor": ["start", "middle", "end"][k] }, nf(v))); });
+      s.appendChild(sv("text", { x: (W + L) / 2, y: Bo + 31, "text-anchor": "middle" }, (H.label || "value") + " (" + H.unit + ")"));
+      s.appendChild(sv("text", { x: L - 4, y: T0 + 4, "text-anchor": "end" }, String(top)));
+      s.appendChild(sv("text", { x: L - 4, y: Bo, "text-anchor": "end" }, "0"));
+      var bars = full.map(function (_, k) { var r = sv("rect", { x: (L + k * bw + .5).toFixed(1), width: Math.max(1, bw - 1).toFixed(1), y: Bo, height: 0, class: "kbar" }); s.appendChild(r); return r; });
+      (H.marks || []).forEach(function (m) {
+        var x = L + (W - L - R) * (m.v - lo) / (hi - lo);
+        s.appendChild(sv("line", { x1: x, x2: x, y1: T0 - 8, y2: Bo, class: "kmark" }));
+        s.appendChild(sv("text", { x: x + 3, y: T0 - 10 }, m.label));
+      });
+      var head = sv("text", { x: W - R, y: 12, "text-anchor": "end", class: "kcount" }, "");
+      s.appendChild(head); art.appendChild(s);
+      var steps = Math.min(N, 60);
+      return { n: steps, interval: 260, frame: function (i) {
+        var m = Math.ceil((i + 1) * N / steps), c = new Array(B).fill(0), seen = xs.slice(0, m);
+        seen.forEach(function (v) { c[bin(v)]++; });
+        c.forEach(function (v, k) { var h = (Bo - T0) * v / top; bars[k].setAttribute("y", (Bo - h).toFixed(1)); bars[k].setAttribute("height", h.toFixed(1)); });
+        var last = xs[m - 1]; bars.forEach(function (b, k) { b.classList.toggle("now", k === bin(last)); });
+        var srt = seen.slice().sort(function (a, b) { return a - b; });
+        head.textContent = m + " of " + N;
+        return m + " of " + N + " " + (H.label || "samples") + " so far; median " + nf(srt[Math.floor((m - 1) / 2)]) + " " + H.unit +
+          ", largest " + nf(srt[m - 1]) + " " + H.unit + "; latest " + nf(last) + " " + H.unit + ".";
+      } };
+    },
+    shmoo: function (art, S) {
+      var xv = S.x.values, yv = S.y.values, P = S.points, nx = xv.length, ny = yv.length;
+      var L = 58, T0 = 10, W = 360, cw = (W - L - 8) / nx, ch = Math.min(26, Math.max(12, 200 / ny)), Ht = T0 + ny * ch + 44;
+      var s = sv("svg", { viewBox: "0 0 " + W + " " + Ht, width: "100%", role: "img", class: "kitsvg",
+        "aria-label": "Shmoo plot: " + S.y.label + " against " + S.x.label + ", " + P.length + " points measured" });
+      function X(v) { return L + xv.indexOf(v) * cw; }
+      function Y(v) { return T0 + (ny - 1 - yv.indexOf(v)) * ch; }
+      for (var a = 0; a < nx; a++) for (var b = 0; b < ny; b++) s.appendChild(sv("rect", { x: L + a * cw + .5, y: T0 + b * ch + .5, width: cw - 1, height: ch - 1, class: "kcell" }));
+      var lab = Math.max(1, Math.ceil(nx / 6));
+      xv.forEach(function (v, k) { if (k % lab === 0 || k === nx - 1) s.appendChild(sv("text", { x: L + k * cw + cw / 2, y: T0 + ny * ch + 14, "text-anchor": "middle" }, String(v))); });
+      var laby = Math.max(1, Math.ceil(ny / 8));
+      yv.forEach(function (v, k) { if (k % laby === 0 || k === ny - 1) s.appendChild(sv("text", { x: L - 5, y: Y(v) + ch / 2 + 4, "text-anchor": "end" }, String(v))); });
+      s.appendChild(sv("text", { x: (W + L) / 2, y: T0 + ny * ch + 32, "text-anchor": "middle" }, S.x.label));
+      s.appendChild(sv("text", { x: 2, y: T0 - 0, class: "kaxis" }, S.y.label));
+      function pass(p) { return p.v === "pass" || p.v === 0; }
+      var cells = P.map(function (p) { var r = sv("rect", { x: X(p.x) + 1.5, y: Y(p.y) + 1.5, width: cw - 3, height: ch - 3, class: pass(p) ? "kpass" : "kfail" }); r.style.display = "none"; s.appendChild(r); return r; });
+      var cur = sv("rect", { x: 0, y: 0, width: cw, height: ch, class: "kcur" }); s.appendChild(cur); art.appendChild(s);
+      return { n: P.length, interval: 300, frame: function (i) {
+        cells.forEach(function (c, k) { c.style.display = k <= i ? "" : "none"; });
+        var p = P[i]; cur.setAttribute("x", X(p.x)); cur.setAttribute("y", Y(p.y));
+        var np = 0; for (var k = 0; k <= i; k++) if (pass(P[k])) np++;
+        return "Point " + (i + 1) + " of " + P.length + ": " + S.x.label + " " + p.x + ", " + S.y.label + " " + p.y + ": " +
+          (pass(p) ? "pass" : "fail" + (typeof p.v === "number" ? " (" + p.v + " " + (S.unit || "errors") + ")" : "")) + ". " + np + " passed so far.";
+      } };
+    }
+  };
+  function mountKit(root) {
+    var kind = root.getAttribute("data-kit"), d = D[root.getAttribute("data-key")], art = root.querySelector(".kitart");
+    if (!d || !KIT[kind] || !art) return;
+    var k = KIT[kind](art, d);
+    var pl = Player(root, k.n, k.frame, { autoplay: true, interval: k.interval });
+    if (reduce) pl.goto(k.n - 1);
+  }
+  document.querySelectorAll(".kit[data-kit]").forEach(mountKit);
+  /* ---------- every development run, by outcome (home): squares added in the order of the run records ---------- */
+  var LANES = [["pass", "passed"], ["caught_and_repaired", "gate failed, repaired, passed"], ["internal_stop_hidden_pass", "stopped early, hidden tests pass"],
+    ["escape", "escape: own checks passed, hidden failed"], ["fail", "failed"]];
+  function mountRuns(root) {
+    var d = D.dev, host = root.querySelector(".lanes"); if (!d || !host) return;
+    var R = d.runs_list, lanes = {};
+    LANES.forEach(function (l) {
+      var marks = el("div", { class: "marks" }), cnt = el("span", { class: "cnt" });
+      host.appendChild(el("div", { class: "lane" }, [el("span", { class: "lab", text: l[1] }), marks, cnt]));
+      lanes[l[0]] = { marks: marks, cnt: cnt };
+    });
+    var sq = R.map(function (r) {
+      var m = el("span", { class: "m " + r.outcome, title: r.task + " run " + r.run + ": hidden tests " + r.tests_passed + " of " + r.tests_total });
+      (lanes[r.outcome] || lanes.fail).marks.appendChild(m); return m;
+    });
+    function frame(i) {
+      var c = {};
+      sq.forEach(function (m, k) { m.style.visibility = k <= i ? "visible" : "hidden"; m.classList.toggle("now", k === i); if (k <= i) c[R[k].outcome] = (c[R[k].outcome] || 0) + 1; });
+      LANES.forEach(function (l) { lanes[l[0]].cnt.textContent = String(c[l[0]] || 0); });
+      var r = R[i];
+      return "Run " + (i + 1) + " of " + R.length + ": " + r.task + ", attempt " + r.run + ", hidden tests " + r.tests_passed + " of " + r.tests_total + ".";
+    }
+    var pl = Player(root, R.length, frame, { autoplay: true, interval: 450 });
+    if (reduce) pl.goto(R.length - 1);
+  }
+  var hr = document.getElementById("home-runs"); if (hr) mountRuns(hr);
   var lpr = document.getElementById("loop-player"); if (lpr) mountLoop(lpr);
   var agr = document.getElementById("agent-replay"); if (agr) mountAgent(agr);
   /* pipeline: a focused or clicked stage shows where its failures go back to */
@@ -754,78 +874,6 @@
   mountDev(); mountEval1();
 })();
 
-/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
-   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
-(function () {
-  var cv = document.getElementById("fabric");
-  if (!cv || !cv.getContext) return;
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
-  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
-  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
-  function layout() {
-    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
-    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
-    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
-    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
-  }
-  function base() {
-    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
-    var hrow = Math.floor(rows / 2);
-    for (var c = 0; c < cols; c++) {
-      var x = c * T, k = kind[c];
-      for (var r = 0; r < rows; r++) {
-        var y = r * T;
-        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
-        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
-        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
-        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
-          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
-      }
-    }
-    ctx.globalAlpha = 1;
-  }
-  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
-  function net() {
-    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
-    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
-    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
-    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
-    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
-  }
-  function drawNet(n, alpha) {
-    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
-    for (var i = 1; i < n.p.length && left > 0; i++) {
-      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
-      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
-    }
-    ctx.stroke();
-    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
-    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
-    ctx.globalAlpha = 1;
-  }
-  function frame(now) {
-    if (!run) return;
-    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
-    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
-    nets = nets.filter(function (n) {
-      n.t += dt; var done = n.len / n.speed, a = .42;
-      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
-      if (a <= 0) return false; drawNet(n, a); return true;
-    });
-    requestAnimationFrame(frame);
-  }
-  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
-  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
-  start();
-  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
-  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
-  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
-  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
-
-})();
 
 /* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
 (function () {

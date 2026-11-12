@@ -1,0 +1,20 @@
+CLOCK|rx_clk|10.000|0.000 5.000|0|0|rx_clk|0.000
+CLOCK|sys_clk|10.000|0.000 5.000|0|0|CLK100MHZ|0.000
+PORT|CLK100MHZ|in|none||0
+NOIO|CLK100MHZ|in|max
+NOIO|CLK100MHZ|in|min
+PORT|LED[0]|out|0|par_reg|0
+IO|LED[0]|out|max|||0.0|rx_clk|rx_clk|Slow|0.035
+IO|LED[0]|out|min|||0.0|rx_clk|rx_clk|Fast|0.035
+PORT|rx_clk|in|none|7 registers|0
+NOIO|rx_clk|in|max
+NOIO|rx_clk|in|min
+PORT|rx_d[0]|in|1|g[0].iddr|0
+IO|rx_d[0]|in|max|5.023|5.000|0.5|rx_clk|rx_clk|Fast|0.035
+IO|rx_d[0]|in|min|-3.045|0.000|-0.5|rx_clk|rx_clk|Slow|0.035
+PORT|rx_d[1]|in|1|g[1].iddr|0
+IO|rx_d[1]|in|max|5.025|5.000|0.5|rx_clk|rx_clk|Fast|0.035
+IO|rx_d[1]|in|min|-3.043|0.000|-0.5|rx_clk|rx_clk|Slow|0.035
+WORST|setup|5.023|5.000|rx_clk|rx_clk|Fast|0.035|0.000|rx_d[0]|g[0].iddr/D
+WORST|hold|-3.045|0.000|rx_clk|rx_clk|Slow|0.035|0.000|rx_d[0]|g[0].iddr/D
+# end

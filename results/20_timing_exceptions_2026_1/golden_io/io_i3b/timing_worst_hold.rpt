@@ -1,0 +1,66 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Design       : io_adc
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -1.088ns  (arrival time - required time)
+  Source:                 adc_d[3]
+                            (input port clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            adc_q_reg[3]/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (sys_clk rise@0.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        2.615ns  (logic 2.615ns (100.000%)  route 0.000ns (0.000%))
+  Logic Levels:           2  (IBUF=1 ZHOLD_DELAY=1)
+  Input Delay:            -1.500ns
+  Clock Path Skew:        2.026ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.026ns
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  <hidden>
+                         input delay                 -1.500    -1.500    <hidden>
+    G17                                               0.000    -1.500 r  adc_d[3]
+                         net (fo=0)                   0.000    -1.500    adc_d[3]
+    G17                  IBUF (Prop_ibuf_I_O)         0.234    -1.266 r  adc_d_IBUF[3]_inst/O
+                         net (fo=1, routed)           0.000    -1.266    adc_d_IBUF[3]
+    ILOGIC_X0Y113        ZHOLD_DELAY (Prop_zhold_delay_DLYIN_DLYIFF)
+                                                      2.381     1.115 r  adc_q_reg[3]_OPT_INSERTED/DLYIFF
+                         net (fo=1, routed)           0.000     1.115    OPT_ZHD_N_adc_q_reg[3]
+    ILOGIC_X0Y113        FDRE                                         r  adc_q_reg[3]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)    0.000     0.000 r  <hidden>
+    E3                                                0.000     0.000 r  CLK100MHZ
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         0.438     0.438 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.699     1.136    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.165 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=20, routed)          0.861     2.026    CLK100MHZ_IBUF_BUFG
+    ILOGIC_X0Y113        FDRE                                         r  adc_q_reg[3]/C
+                         clock pessimism              0.000     2.026    <hidden>
+                         clock uncertainty            0.035     2.061    <hidden>
+    ILOGIC_X0Y113        FDRE (Hold_fdre_C_D)         0.142     2.203    adc_q_reg[3]
+  -------------------------------------------------------------------
+                         required time                         -2.203    <hidden>
+                         arrival time                           1.115    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -1.088    <hidden>
+
+
+
+

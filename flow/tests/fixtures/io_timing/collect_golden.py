@@ -4,6 +4,7 @@
 Per fixture: io_paths.txt, check_timing.rpt, timing_summary.rpt, timing_worst_setup.rpt, timing_worst_hold.rpt,
 timing_inputs_edges.rpt (trimmed), clocks.rpt, and vivado.log = that fixture's XDC messages from the group log (the lines
 after its "VARIANT <name>" marker, CRITICAL WARNING / ERROR / WARNING lines that name an XDC file)."""
+import os
 import re
 import shutil
 import sys
@@ -39,7 +40,7 @@ def main(out: Path) -> None:
         for d in sorted((out / group).glob("io_*")):
             if not d.is_dir():
                 continue
-            g = HERE / "golden" / d.name
+            g = Path(os.environ.get("FDA_IO_GOLDEN", HERE / "golden")) / d.name
             g.mkdir(parents=True, exist_ok=True)
             for k in KEEP:
                 if (d / k).exists():

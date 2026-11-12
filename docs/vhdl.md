@@ -19,7 +19,7 @@ Or put `language: vhdl` in the design's `spec.yaml`; from the next stage on the 
 conventions in the prompts, the sandbox image with GHDL). For an existing VHDL design, run the `lint` tool first, or directly:
 
 ```
-python -c "from flow import vhdl; from pathlib import Path; print(vhdl.lint(sorted(Path('rtl').glob('*.vhd')), 'my_top'))"
+python -m flow.vhdl lint rtl --top my_top
 ```
 
 Score a VHDL design against a task's hidden tests: `python -m flow.vhdl_score <task_dir> --rtl <dir with *.vhd>`.
@@ -31,7 +31,7 @@ Score a VHDL design against a task's hidden tests: `python -m flow.vhdl_score <t
 - The shell (`shell/rtl/fpga_shell.sv`) is instantiated from VHDL through a **component declaration**
   ([flow/vhdl.py](../flow/vhdl.py) `SHELL_COMPONENT`). Vivado binds a component to a Verilog module of the same name. Do not use
   `entity work.fpga_shell`: there is no such VHDL entity for GHDL, so the flow's lint and simulation fail on it. (AMD's synthesis
-  guide UG901, 2025.2 edition, calls direct entity instantiation of a Verilog module unsupported; Vivado 2026.1 accepted it in a
+  guide UG901, in the edition brief 55 read (not re-read for 2026.1), calls direct entity instantiation of a Verilog module unsupported; Vivado 2026.1 accepted it in a
   probe. The component works in both tools.)
 - VHDL and Verilog share one library, so no VHDL entity may take the name of a shell module (`fpga_shell`, `shell_core`,
   `uart_rx`, `uart_tx`, `sync2`, `reset_sync`). This was the most common error in the first translations.
