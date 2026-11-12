@@ -1,0 +1,21 @@
+# Brief 55: formal on VHDL with PSL properties, through the GHDL Yosys plugin (flow/formal.sh runs bmc and cover)
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 24
+cover: mode cover
+cover: depth 24
+
+[engines]
+smtbmc z3
+
+[script]
+plugin -i ghdl
+ghdl --std=08 -fpsl psl_cnt.vhd -e psl_cnt
+prep -top psl_cnt
+
+[files]
+../../rtl/psl_cnt.vhd

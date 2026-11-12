@@ -133,6 +133,10 @@ def propose_proof(text: str) -> tuple[list[str], str]:
     return ["simulation"], "behaviour of the design: a cocotb test against the blind model"
 
 
+#: brief 55: the values of the optional ``language`` key (absent = SystemVerilog)
+LANGUAGES = {"systemverilog", "sv", "vhdl", "vhdl-2008", "vhdl2008"}
+
+
 def validate(spec: dict[str, Any], allow_rates: bool = False, need_proof: bool = True) -> list[str]:
     """Why this spec cannot be signed off (empty list: it can). ``need_proof=False``: the first pass, before the
     interview has settled each requirement's proof method."""
@@ -144,6 +148,9 @@ def validate(spec: dict[str, Any], allow_rates: bool = False, need_proof: bool =
         if spec.get(k) and not isinstance(spec[k], (list, dict)):
             errs.append(f"{k!r} must be a list or mapping")
     errs += shape_errors(spec)
+    lang = spec.get("language")                      # brief 55: optional design language
+    if lang is not None and str(lang).strip().lower() not in LANGUAGES:
+        errs.append(f"'language' must be one of {', '.join(sorted(LANGUAGES))} (or absent: SystemVerilog), not {lang!r}")
     params = spec.get("parameters") or {}
     if not isinstance(params, dict):
         errs.append("'parameters' must be a mapping")

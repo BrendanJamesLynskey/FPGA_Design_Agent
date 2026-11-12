@@ -1,0 +1,45 @@
+{
+ "model": "openai/gpt-6-luna",
+ "sv": [
+  "benchmark/tasks/t1_elevator_fsm/ref/rtl/elevator_fsm.sv",
+  "benchmark/tasks/t1_elevator_fsm/ref/rtl/t1_elevator_fsm_top.sv"
+ ],
+ "spec": "benchmark/tasks/t1_elevator_fsm/spec.md",
+ "skills": [
+  "FPGA_Design_Agent_Knowledge/vendor/vhdl_design/vhdl/vhdl-mixed-language-boundary/SKILL.md",
+  "FPGA_Design_Agent_Knowledge/vendor/vhdl_design/vhdl/vhdl-types-drivers-and-numeric-std/SKILL.md",
+  "FPGA_Design_Agent_Knowledge/vendor/vhdl_design/vhdl/vhdl-processes-resets-and-fsms/SKILL.md"
+ ],
+ "block": false,
+ "ghdl": "GHDL 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]",
+ "rounds": [
+  {
+   "round": 1,
+   "files": [
+    "rtl/elevator_fsm.vhd",
+    "rtl/t1_elevator_fsm_top.vhd"
+   ],
+   "lint_ok": false,
+   "lint": "\n      ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:194:13:error: missing entity, architecture, package or configuration\n            rdata_reg(1 downto 0) <= std_logic_vector(floor);\n            ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:195:11:error: missing entity, architecture, package or configuration\n          when R_DIR =>\n          ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:197:13:error: missing entity, architecture, package or configuration\n            rdata_reg(0) <= dir;\n            ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:198:11:error: missing entity, architecture, package or configuration\n          when R_PEND =>\n          ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:200:13:error: missing entity, architecture, package or configuration\n            rdata_reg(3 downto 0) <= pend;\n            ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:201:11:error: missing entity, architecture, package or configuration\n          when R_STATE =>\n          ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:203:13:error: missing entity, architecture, package or configuration\n            rdata_reg(1 downto 0) <= state;\n            ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:204:11:error: missing entity, architecture, package or configuration\n          when R_MOVES =>\n          ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:206:13:error: missing entity, architecture, package or configuration\n            rdata_reg(15 downto 0) <= std_logic_vector(moves);\n            ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:207:11:error: missing entity, architecture, package or configuration\n          when others =>\n          ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:209:9:error: missing entity, architecture, package or configuration\n        end case;\n        ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:210:7:error: missing entity, architecture, package or configuration\n      end if;\n      ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:211:5:error: missing entity, architecture, package or configuration\n    end if;\n    ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:212:3:error: missing entity, architecture, package or configuration\n  end process;\n  ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:214:3:error: missing entity, architecture, package or configuration\n  led       <= led_reg;\n  ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:215:3:error: missing entity, architecture, package or configuration\n  win_rdata <= rdata_reg;\n  ^\nresults/55_vhdl/translations/B/t1_elevator_fsm/rtl/elevator_fsm.vhd:216:1:error: missing entity, architecture, package or configuration\nend architecture rtl;\n^",
+   "cost": 0.00312405,
+   "answer_chars": 9514
+  },
+  {
+   "round": 2,
+   "files": [
+    "rtl/elevator_fsm.vhd",
+    "rtl/t1_elevator_fsm_top.vhd"
+   ],
+   "lint_ok": true,
+   "lint": "",
+   "cost": 0.001776285,
+   "answer_chars": 6801
+  }
+ ],
+ "cost_usd": 0.0049003350000000005,
+ "prompt_tokens": 17763,
+ "completion_tokens": 6967,
+ "started": "2026-11-12T00:14:05",
+ "lint_ok": true,
+ "finished": "2026-11-12T00:14:51"
+}
