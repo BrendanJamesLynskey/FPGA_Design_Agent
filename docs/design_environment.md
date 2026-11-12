@@ -282,8 +282,8 @@ The work falls into resource classes with fixed limits:
 The scheduler (new, in the project layer, not in the graph) is plain code. Model and simulation work runs as wide as
 the caps allow. Vivado jobs are queued longest first: the module with the largest predicted resources
 (`architecture.yaml` prediction) and its OOC synthesis go first, so the long jobs do not end up last on two slots.
-Recorded scale on this PC: the T1 base build took 187.0 s of Vivado wall time and the ILA build 381.9 s
-(`results/f0a/t1_dimmer_counter.md`); MIG example synthesis took 349 to 509 s (`docs/project_mode_parity.md`, section 2).
+Recorded scale on this PC (Vivado 2026.1): the T1 base build took 168.9 s of Vivado wall time and the ILA build 424.1 s
+(`results/f0a_2026_1/t1_dimmer_counter.md`); MIG example synthesis took 349 to 509 s (`docs/project_mode_parity.md`, section 2).
 Modules never share a worktree, so parallel module work cannot write the same file.
 
 ### Promotion to the library

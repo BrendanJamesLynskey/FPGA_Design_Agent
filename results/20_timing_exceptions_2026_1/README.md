@@ -14,8 +14,11 @@ Re-run on **Vivado 2026.1** (Basic licence tier), xc7a100tcsg324-1, on 2026-11-1
 |---|---|
 | `exceptions_table.md`, `.json`, `golden/` | the 15 one-fault exception fixtures (7 placed and routed) |
 | `io_table.md`, `.json`, `golden_io/` | the I/O-delay and virtual-clock fixtures, routed |
+| `uncertainty.md`, `.json`, `golden_u/` | the clock-uncertainty runs U1-U8 (`measure_u.tcl` on `io_u`) and the Clocking Wizard read-back (`flow/clkwiz_probe.tcl u:100:MMCM:200,100`) |
 
-**Result: both tables are identical to the earlier release's** (`results/20_timing_exceptions`): every Vivado rule, ignored
+    FDA_IO_GOLDEN_U=results/20_timing_exceptions_2026_1/golden_u FDA_IO_OUT=... FDA_IO_VIVADO=2026.1 flow/tests/fixtures/io_timing/make_uncertainty.py --collect <measure_u out> <clkwiz.jsonl>
+
+**Result: all three tables are identical to the earlier release's** (`results/20_timing_exceptions`): every Vivado rule, ignored
 status, coverage count, slack before and after routing, and every flow verdict. 2026.1 also raised no TIMING-46 for a multicycle on
-registers with a tied clock enable, after synthesis or after placement (followup.tcl, E3, E10B, E10C). The clock-uncertainty
-table (U1-U8) and the agent drill runs were not re-run here; see `results/49_vivado_2026_1/README.md`.
+registers with a tied clock enable, after synthesis or after placement (followup.tcl, E3, E10B, E10C). The agent drill runs (agent
+outcomes, not Vivado measurements) were not re-run.

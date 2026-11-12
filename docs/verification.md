@@ -179,7 +179,7 @@ synchronisers whose outputs are combined, and a pulse into a level synchroniser 
   synchroniser-delay injection; a test that passes plain and fails injected fails the gate. A missing report fails the check.
 
 The fixtures that prove both are in `flow/tests/fixtures/cdc_mutants/` (rig mutants M1-M8, M10 and correct variants C1-C12);
-the table is `results/16_cdc_gate/mutant_table.md`.
+the table is `results/16_cdc_gate_2026_1/mutant_table.md` (re-measured on Vivado 2026.1, identical).
 
 ## Independent spec-only tests (brief 08f, `eval-2`)
 
