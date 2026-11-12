@@ -1,0 +1,74 @@
+{
+ "build_mode": 1,
+ "clock_ns": 8,
+ "modes": {
+  "speculative_1msg": {
+   "frame_bytes": 70,
+   "messages": 1,
+   "sfd_in": 0,
+   "price_complete_in": 58,
+   "fcs_last_in": 70,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> fire)": 1,
+    "interlocks (fire -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 69,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "decision_to_first_byte": 75,
+   "tick_to_trade_sfd_to_first_byte": 133,
+   "tick_to_trade_sfd_to_sfd": 140
+  },
+  "speculative_20msg": {
+   "frame_bytes": 374,
+   "messages": 20,
+   "sfd_in": 0,
+   "price_complete_in": 58,
+   "fcs_last_in": 374,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> fire)": 1,
+    "interlocks (fire -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 69,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "decision_to_first_byte": 75,
+   "tick_to_trade_sfd_to_first_byte": 133,
+   "tick_to_trade_sfd_to_sfd": 140
+  },
+  "safe_1msg": {
+   "frame_bytes": 70,
+   "messages": 1,
+   "sfd_in": 0,
+   "price_complete_in": 58,
+   "fcs_last_in": 70,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> fire)": 1,
+    "interlocks (fire -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 80,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "decision_to_first_byte": 86,
+   "tick_to_trade_sfd_to_first_byte": 144,
+   "tick_to_trade_sfd_to_sfd": 151
+  },
+  "safe_20msg": {
+   "frame_bytes": 374,
+   "messages": 20,
+   "sfd_in": 0,
+   "price_complete_in": 58,
+   "fcs_last_in": 374,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> fire)": 1,
+    "interlocks (fire -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 384,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "decision_to_first_byte": 390,
+   "tick_to_trade_sfd_to_first_byte": 448,
+   "tick_to_trade_sfd_to_sfd": 455
+  }
+ }
+}

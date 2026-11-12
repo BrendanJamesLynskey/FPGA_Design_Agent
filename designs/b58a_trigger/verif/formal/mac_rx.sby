@@ -1,0 +1,25 @@
+# SymbiYosys: the receive frame FSM of mac_rx.sv (brief 58A step 0). --unroll: without it z3 4.8.12 (the local
+# Ubuntu package) does not return from the first step on this model; with it the same checks finish.
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 20
+cover: mode cover
+cover: depth 14
+
+[engines]
+smtbmc --unroll z3
+
+[script]
+read_verilog -formal -sv eth_crc32_free.sv
+read_verilog -formal -sv mac_rx.sv
+read_verilog -formal -sv formal_mac_rx.sv
+prep -top formal_mac_rx
+
+[files]
+eth_crc32_free.sv
+../../../../ip_lib/eth_mac_rgmii/rtl/mac_rx.sv
+formal_mac_rx.sv

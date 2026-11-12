@@ -1,0 +1,62 @@
+{
+ "run": "2026-11-12, local: yosys 0.33, z3 4.8.12, SymbiYosys (formal-deb env); pytest designs/b58a_trigger/tests/test_b58a_formal.py: 7 passed in 313 s",
+ "jobs": [
+  {
+   "job": "interlocks",
+   "task": "bmc",
+   "depth": 30,
+   "status": "PASS",
+   "seconds": 117.5
+  },
+  {
+   "job": "interlocks",
+   "task": "prove",
+   "method": "k-induction, depth 30",
+   "status": "PASS",
+   "seconds": 103.5
+  },
+  {
+   "job": "interlocks",
+   "task": "cover",
+   "depth": 30,
+   "status": "PASS",
+   "seconds": 0.9
+  },
+  {
+   "job": "mac_tx",
+   "task": "bmc",
+   "depth": 40,
+   "status": "PASS",
+   "seconds": 73.2
+  },
+  {
+   "job": "mac_tx",
+   "task": "cover",
+   "depth": 50,
+   "status": "PASS",
+   "seconds": 3.5
+  },
+  {
+   "job": "mac_rx",
+   "task": "bmc",
+   "depth": 20,
+   "engine": "smtbmc --unroll z3",
+   "status": "PASS",
+   "seconds": 13.4
+  },
+  {
+   "job": "mac_rx",
+   "task": "cover",
+   "depth": 14,
+   "engine": "smtbmc --unroll z3",
+   "status": "PASS",
+   "seconds": 1.5
+  }
+ ],
+ "assumptions": {
+  "interlocks": "configuration stable after reset; bucket <= 4; refill 3..6 clocks; reload not used; every other input free",
+  "mac_tx": "MIN_DATA 4, IFG 3, frame length 1..6 bytes, a byte every clock (1000 Mb/s)",
+  "mac_rx": "MIN_FRAME 5, MAX_FRAME 8; the CRC abstracted as a free value (checked against zlib in simulation)"
+ },
+ "not_proved": "k-induction of the MAC FSMs (needs invariants on internal state); returned UNKNOWN, so those tasks were removed"
+}

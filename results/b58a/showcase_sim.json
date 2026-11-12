@@ -1,0 +1,104 @@
+{
+ "source": "simulation (Icarus Verilog 12, cocotb 2.0.1); not a board measurement",
+ "stages": {
+  "trigger": "one ADD on the ask side below the rule's threshold, first message of its frame",
+  "rows": [
+   {
+    "stage": "mac_rx + feed_rx (price byte in -> msg_px_v)",
+    "clocks": 2,
+    "ns": 16
+   },
+   {
+    "stage": "rules (msg_px_v -> fire)",
+    "clocks": 1,
+    "ns": 8
+   },
+   {
+    "stage": "interlocks (fire -> grant)",
+    "clocks": 1,
+    "ns": 8
+   },
+   {
+    "stage": "order_ctl (grant -> tx_start)",
+    "clocks": 2,
+    "ns": 16
+   },
+   {
+    "stage": "mac_tx (tx_start -> first preamble byte)",
+    "clocks": 2,
+    "ns": 16
+   }
+  ],
+  "price_complete_in_clocks": 58,
+  "decision_to_first_byte_clocks": 8,
+  "sfd_to_first_byte_clocks": 66
+ },
+ "modes": {
+  "speculative_1msg": {
+   "decision_to_first_byte_clocks": 8,
+   "sfd_to_first_byte_clocks": 66
+  },
+  "speculative_20msg": {
+   "decision_to_first_byte_clocks": 8,
+   "sfd_to_first_byte_clocks": 66
+  },
+  "safe_1msg": {
+   "decision_to_first_byte_clocks": 19,
+   "sfd_to_first_byte_clocks": 77
+  },
+  "safe_20msg": {
+   "decision_to_first_byte_clocks": 323,
+   "sfd_to_first_byte_clocks": 381
+  }
+ },
+ "assemble_then_send": {
+  "speculative_1msg": {
+   "decision_to_first_byte_clocks": 75
+  },
+  "speculative_20msg": {
+   "decision_to_first_byte_clocks": 75
+  },
+  "safe_1msg": {
+   "decision_to_first_byte_clocks": 86
+  },
+  "safe_20msg": {
+   "decision_to_first_byte_clocks": 390
+  }
+ },
+ "hist": {
+  "unit": "ns",
+  "label": "tick-to-trade in simulation (receive SFD to first byte out), port B loop",
+  "bins": 8,
+  "samples": [
+   520,
+   520,
+   520,
+   520,
+   520,
+   520,
+   648,
+   648,
+   648,
+   648,
+   648,
+   648,
+   648,
+   648,
+   648
+  ]
+ },
+ "stale": {
+  "old_threshold": 9975,
+  "new_threshold": 10175,
+  "stale_message_price": 10050,
+  "stale_message_fired": false,
+  "would_fire_on_new_table": true,
+  "tick_sfd_cycle": 437,
+  "host_saw_tick_cycle": 526,
+  "commit_cycle": 2562,
+  "commit_ts_reg": 2562,
+  "bus_writes": 7,
+  "software_cycles_assumed": 2000,
+  "tick_to_config_cycles_in_sim": 2125
+ }
+}

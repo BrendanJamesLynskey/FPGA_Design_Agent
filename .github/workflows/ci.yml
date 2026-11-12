@@ -179,7 +179,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y iverilog verilator
-          pip install pyyaml pytest scapy==2.8.0
+          pip install pyyaml pytest scapy==2.8.0 cocotb==2.0.1   # cocotb: eth_mac_rgmii's bench (brief 58A)
       - name: ip.yaml against the RTL, generated READMEs current
         run: python flow/net/ipdoc.py --check
       - name: Bench runs against the golden models (Icarus)
@@ -188,6 +188,31 @@ jobs:
         run: python flow/net/faults.py --json build/net/faults.json
       - name: Verilator lint of the library entries
         run: flow/net/lint.sh
+
+  trading-path:
+    name: Mock trading path (brief 58A) - cocotb against the reference model, pin-level RGMII loop
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          pip install pyyaml pytest cocotb==2.0.1 jsonschema
+      - name: Model, rule validator, recorded natural-language rules (no simulator)
+        run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_model.py
+      - name: trigger_core against the model; assemble-then-send comparison; kr260_top RGMII loop
+        run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_rtl.py
+      - name: Upload simulation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b58a-sim
+          path: build/sim/**/sim.log
 
   lint:
     name: Verilator lint
@@ -258,6 +283,8 @@ jobs:
         run: SIM=icarus T1_SEEDS=1,2,3 python -m pytest -q designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
       - name: Formal (SymbiYosys bmc + cover)
         run: flow/formal.sh designs/t1_dimmer_counter
+      - name: Formal, brief 58A - the trading interlocks (k-induction) and the MAC frame FSMs
+        run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_formal.py
       - name: Reference FSM controller, separated and monolithic - bounded, cover and k-induction depth (brief 24)
         run: python -m pytest -q flow/tests/test_24_fsm_formal.py
       - name: Simulator support for FSM coverage constructs (Verilator 5.048, brief 24)

@@ -1,0 +1,56 @@
+{
+ "id": "nl02",
+ "nl": "If anything trades above 99.50, sell 3 at one tick (0.01) under the trade price.",
+ "model": "openai/gpt-6-luna",
+ "run_id": "20261112-104922",
+ "limits": {
+  "max_qty": 100,
+  "band": 500,
+  "max_pos": 1000
+ },
+ "turns": [
+  {
+   "reply": "{\"match\":{\"types\":[\"TRADE\"],\"side\":\"any\",\"price\":{\"op\":\">\",\"value\":99.5}},\"action\":{\"order\":{\"side\":\"sell\",\"qty\":3,\"price\":{\"mode\":\"offset\",\"value\":-0.01}}}}",
+   "cost_usd": 0.0001524,
+   "prompt_tokens": 949,
+   "completion_tokens": 115,
+   "rule": {
+    "match": {
+     "types": [
+      "TRADE"
+     ],
+     "side": "any",
+     "price": {
+      "op": ">",
+      "value": 99.5
+     }
+    },
+    "action": {
+     "order": {
+      "side": "sell",
+      "qty": 3,
+      "price": {
+       "mode": "offset",
+       "value": -0.01
+      }
+     }
+    }
+   },
+   "validator": "ok"
+  }
+ ],
+ "expect": {
+  "types": [
+   "TRADE"
+  ],
+  "inst": null,
+  "op": 3,
+  "threshold": 9950,
+  "order": {
+   "side": "sell",
+   "qty": 3,
+   "mode": "offset",
+   "value": -1
+  }
+ }
+}
