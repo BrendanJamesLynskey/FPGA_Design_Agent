@@ -94,11 +94,19 @@ def run_table(res: Path, runs: list[str], demo: dict, builds: dict) -> list[dict
         out.append({"run": n, "capture": f"results/50a_nl_debug/{n}/capture.json", "what": WHAT.get(n, n),
                     "trigger": " AND ".join(c["text"] for c in plan["trigger"]["conditions"]) if plan["trigger"]["combine"] == "AND"
                     else " OR ".join(c["text"] for c in plan["trigger"]["conditions"]),
-                    "build": "reused" if demo[n].get("reused_build") else f"new, {b['wall_s']} s",
+                    "build": "reused" if demo[n].get("reused_build")
+                    else f"new{' (rebuilt)' if _rebuilt(cap['build']['probeset'], runs, res, builds) else ''}, {b['wall_s']} s",
                     "capture_s": demo[n]["seconds_program_capture"],
                     "readback": ", ".join(f"{k} 0x{v:X}" for k, v in (cap.get("readback") or {}).items()) or "none",
                     "result": "matched" if chk["pass"] else "did not match"})
     return out
+
+
+def _rebuilt(probeset: str, runs: list[str], res: Path, builds: dict) -> bool:
+    """A build is a rebuild when another build of the same probes (same pins) exists that no run used (a refused layout)."""
+    used = {json.loads((res / n / "capture.json").read_text())["build"]["probeset"] for n in runs}
+    pins = {p["pins"] for p in builds[probeset]["probes"]}
+    return any(k not in used and {p["pins"] for p in b["probes"]} == pins for k, b in builds.items())
 
 
 def trust(res: Path) -> dict[str, Any]:
@@ -110,8 +118,13 @@ def trust(res: Path) -> dict[str, Any]:
     plan, cap, _ = _load(res / HERO_RUN)
     req = plan["window"]["requested"]
     asked = trim(cap, -int(req["pre"]), int(req["post"]))
-    good = "count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32."
-    bad = "count was 0x0003 from cycle -16 to 0, then 0x4321 from cycle 1 to 32."
+    # the good sentence is the answer's own line for count; the bad one changes its last value
+    good = next(l for l in (res / HERO_RUN / "answer.txt").read_text().splitlines() if l.startswith("count "))
+    last = [c for c in cap["channels"] if c["name"] == "count"][0]["samples"][-1]
+    wrong = last ^ 0x5115 if last ^ 0x5115 not in set([c for c in cap["channels"] if c["name"] == "count"][0]["samples"]) else last + 1
+    bad = good.replace(f"0x{last:04X}", f"0x{wrong:04X}")
+    if unquoted_numbers(good, cap, asked) or not unquoted_numbers(bad, cap, asked) or good == bad:
+        raise ValueError("the answer-check example no longer behaves as the page says (the good line must pass, the bad fail)")
     addr = next(p for p in plan["probes"] if p["label"] == "addr")
     k0 = cap["timebase"]["trigger_sample"]
     ch = {c["name"]: c["samples"] for c in cap["channels"]}
@@ -185,12 +198,17 @@ def hero(res: Path) -> dict[str, Any]:
             "source": {"run": f"results/50a_nl_debug/{HERO_RUN}", "check_pass": chk["pass"]}}
 
 
+def render(res: Path) -> dict[str, str]:
+    """The two files' exact text (a test compares it with the committed files, byte for byte)."""
+    return {"summary.json": json.dumps(summary(res), indent=1) + "\n", "hero.json": json.dumps(hero(res), indent=1) + "\n"}
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("--results", type=Path, default=ROOT / "results" / "50a_nl_debug")
     a = ap.parse_args(argv)
-    (a.results / "summary.json").write_text(json.dumps(summary(a.results), indent=1) + "\n")
-    (a.results / "hero.json").write_text(json.dumps(hero(a.results), indent=1) + "\n")
+    for name, text in render(a.results).items():
+        (a.results / name).write_text(text)
     print(a.results / "summary.json", a.results / "hero.json")
     return 0
 

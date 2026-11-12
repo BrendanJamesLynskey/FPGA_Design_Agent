@@ -488,7 +488,7 @@
     },
     "details": [
      {
-      "text": "The resolver reads the RTL, not the model. Asked for 'cnt', it finds 5 different registers with that name (u_dut.u_db_clear.cnt, u_dut.u_db_down.cnt, u_dut.u_db_up.cnt, u_shell.u_rx.cnt, u_shell.u_tx.cnt) and refuses the plan with the list, instead of picking one. A phrase is the model's only job: 'the shell's ADDR byte' came back from the model as 'addr', which the resolver then traced to u_shell.u_core.frame[1] (pins u_shell/u_core/frame_reg[1][*]/Q); a name it cannot trace is an error with suggestions, never a guess.",
+      "text": "The resolver reads the RTL, not the model. Asked for 'cnt', it finds 5 different registers with that name (u_dut.u_db_clear.cnt, u_dut.u_db_down.cnt, u_dut.u_db_up.cnt, u_shell.u_rx.cnt, u_shell.u_tx.cnt) and refuses the plan with the list, instead of picking one. The model's only job is to turn a phrase into a name: 'the shell's ADDR byte' came back from the model as 'addr', which the resolver then traced to u_shell.u_core.frame[1] (pins u_shell/u_core/frame_reg[1][*]/Q); a name it cannot trace is an error with suggestions, never a guess.",
       "title": "When a name is ambiguous, the plan stops and asks"
      },
      {
@@ -496,11 +496,11 @@
       "title": "The answer check refuses a made-up number"
      },
      {
-      "text": "The resolver, planner, build reuse, capture driver, answer writer and answer check are ordinary deterministic Python. They were written by an AI coding assistant (Claude, in Claude Code) to the owner's brief and checked by independent reviewers and the tests. At run time the only model call is reading the request, by openai/gpt-6-luna through a provider; nothing it says is trusted until the resolver has traced it in the RTL.",
+      "text": "The resolver, planner, build reuse, capture driver, answer writer and answer check are ordinary deterministic Python. They were written by an AI coding assistant to the owner's brief and checked by independent reviewers and the tests. At run time the only model call is reading the request, by openai/gpt-6-luna through a provider; nothing it says is trusted until the resolver has traced it in the RTL.",
       "title": "Who wrote what"
      },
      {
-      "text": "Cycle 0 is the sample in which the trigger condition holds: there win_wr = 1 and addr = 0x80. The counter still shows 0x0003 in that sample and 0x1234 one clock later, because the register loads on the clock edge that ends the write strobe. An earlier version of the plot labelled the left edge of each sample, which made the strobe look one cycle early.",
+      "text": "Cycle 0 is the sample in which the trigger condition holds: there win_wr = 1 and addr = 0x80. The counter still shows 0x0003 in that sample and 0x1234 one clock later, because the register loads on the clock edge that ends the write strobe.",
       "title": "Where the trigger is, and why the counter changes one clock later"
      },
      {
@@ -513,7 +513,7 @@
     "results": [
      "5 of 5 known-answer requests on one design passed: the answer matched the known result each time, and the value read back over the serial link in the 3 runs that read a register back. One run each, so no spread is stated. All five are in the table below.",
      "5 debug builds of 418.1 to 531.8 seconds each (about 7 to 9 minutes): 4 served the requests and 1 was the OR layout that Vivado refused to arm, rebuilt with one port per OR term. 1 of the 5 requests needed no new build because an earlier build already held its signals. Every build met timing (worst setup slack at least 3.06 ns), at most 0.162 W estimated by Vivado.",
-     "Programming and capture took 48.3 to 64.7 seconds per request. Reading each request cost $0.0001 to $0.0003, as the model provider reported.",
+     "Programming and capture took 48.3 to 64.7 seconds per request. Reading each request cost $0.00011 to $0.00027 per request, as the model provider reported.",
      "All 5 captures ran inside the recommended operating conditions: die 24.7 to 26.9 C at the readings (latched maximum 27.68 C), core supply 1.006 V, 0 alarms."
     ],
     "table": {
@@ -582,7 +582,7 @@
        "what": "the serial sync byte, on a rising edge"
       },
       {
-       "build": "new, 505.1 s",
+       "build": "new (rebuilt), 505.1 s",
        "capture": "results/50a_nl_debug/t1_or_flags/capture.json",
        "capture_s": 62.1,
        "readback": "none",
@@ -628,8 +628,8 @@
     "check_bad": "count was 0x0003 from cycle -16 to 0, then 0x4321 from cycle 1 to 32.",
     "check_bad_refused": "0x4321",
     "check_good": "count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-    "cost_hi": 0.0003,
-    "cost_lo": 0.0001,
+    "cost_hi": 0.00027,
+    "cost_lo": 0.00011,
     "die_hi": 26.9,
     "die_latched": 27.68,
     "die_lo": 24.7,

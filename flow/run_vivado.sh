@@ -67,6 +67,9 @@ preflight() {
   # Vivado's own task_worker.tcl helpers (synthesis children) are part of their parent job, so they are not counted
   running="$(pgrep -af 'unwrapped/lnx64.o/vivado' | grep -v task_worker.tcl | awk '{print $1}' | paste -sd, - || true)"
   n="$(pgrep -af 'unwrapped/lnx64.o/vivado' | grep -vc task_worker.tcl || true)"
+  # tests only: a test that runs a fake Vivado sets the count it wants, so other sessions' real jobs on the PC do not
+  # decide its result (flow/tests/test_33_build_cache.py)
+  if [ -n "${FDA_TEST_VIVADO_RUNNING:-}" ]; then n="$FDA_TEST_VIVADO_RUNNING"; running="(test override)"; fi
   [ "${n:-0}" -lt "$max" ] || die "$n Vivado job(s) running (PIDs $running), limit FDA_VIVADO_MAX=$max on this PC"
   local avail_kb need_kb
   avail_kb="$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)"

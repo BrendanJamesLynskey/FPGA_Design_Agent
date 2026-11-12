@@ -68,6 +68,9 @@ def _no_typed_numbers(where: str, s: str):
 
 
 def _fill(where: str, text: str, values: dict) -> str:
+    bad = [m for m in re.findall(r"\{[^{}]*\}|\{|\}", re.sub(r"\{\w+\}", "", str(text)))]
+    if bad:
+        raise ContractError(f"{where}: malformed placeholder(s) {bad}; write {{name}} with letters, digits and _ only")
     _no_typed_numbers(where, text)
     def one(m):
         k = m.group(1)
@@ -397,10 +400,10 @@ def page_body(p: dict) -> str:
         head = "".join(f"<th>{E(h)}</th>" for _, h in T["columns"])
         def cell(x, c):
             v = x[c]
-            txt = E(str(v) if not isinstance(v, float) else f"{v:g}")
+            txt = E(str(v))                  # as recorded: 58.0 stays 58.0, like the other rows
             return _link(x[T["link"]], str(v)) if T["link"] and c == T["link_column"] else txt
         body = "".join("<tr>" + "".join(f"<td>{cell(x, c)}</td>" for c, _ in T["columns"]) + "</tr>" for x in T["rows"])
-        table = (f'<div class="tbl"><table><caption class="small muted">{E(T["caption"])}</caption>'
+        table = (f'<p class="tblhint">The table scrolls sideways for every column.</p><div class="tbl"><table><caption class="small muted">{E(T["caption"])}</caption>'
                  f'<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>')
     details = "".join(f'<details class="more"><summary>{E(d["title"])}</summary><p>{E(d["text"])}</p></details>'
                       for d in S.get("details", []))

@@ -457,7 +457,9 @@ def build(outdir: Path, d, check_numbers=True):
 def leftover_placeholders(page: str) -> list[str]:
     """``{name}`` tokens in a page's visible text or attributes (scripts and styles are left out)."""
     t = re.sub(r"(?s)<(script|style|pre|code)\b.*?</\1>", " ", page)
-    return re.findall(r"\{[A-Za-z_]\w*\}", html.unescape(t))
+    t = re.sub(r"(?s)<head>.*?</head>", " ", t)
+    # any short brace group: {name}, {runs.x}, { runs }, {{runs}} (review of brief 50A)
+    return re.findall(r"\{[^{}<>\n]{1,40}\}", html.unescape(t))
 
 
 def static_files(d):

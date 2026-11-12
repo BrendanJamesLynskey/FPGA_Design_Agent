@@ -411,3 +411,17 @@ def test_every_published_text_field_fills_its_placeholders(tmp_path):
     page = showcase.page_body(P)
     assert "{n}" not in page and "{n}" not in P["title"]
     assert build.leftover_placeholders('<p>build {build_id}</p><script>var a = {x};</script>') == ["{build_id}"]
+
+
+@pytest.mark.parametrize("text", ["{n.x} samples", "{ n } samples", "{{n}} samples", "a { stray brace", "stray } brace"])
+def test_malformed_placeholders_are_refused(tmp_path, text):
+    y = _demo()
+    y["one_line"] = text
+    with pytest.raises(showcase.ContractError, match="malformed placeholder"):
+        showcase.build(_write(tmp_path, y), allow_fixtures=True)
+
+
+@pytest.mark.parametrize("html_text, found", [("<p>{runs.x}</p>", ["{runs.x}"]), ("<p>{ runs }</p>", ["{ runs }"]),
+                                             ("<p>{{runs}}</p>", ["{runs}"]), ("<pre>{y}</pre><p>ok</p>", [])])
+def test_leftover_placeholder_scan_catches_malformed_forms(html_text, found):
+    assert build.leftover_placeholders(html_text) == found

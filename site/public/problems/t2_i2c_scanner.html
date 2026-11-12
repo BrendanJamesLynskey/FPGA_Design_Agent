@@ -412,8 +412,17 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 .sc-page th, .sc-page td { border-bottom: 1px solid var(--rule); padding: 4px 10px 4px 0; text-align: left; vertical-align: top; }
 .sc-page .tbl { overflow-x: auto; max-width: 100%; }
 .sc-page details.more p { margin: .5em 0; }
-/* phones: the scrolling page links fade at the right edge, a cue that the row scrolls (brief 50A page review) */
-@media (max-width: 640px) { .bar nav { -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); mask-image: linear-gradient(to right, #000 82%, transparent); padding-right: 18px; } }
+/* showcase drawers: a visible expander cue (+ closed, - open) and full-ink titles, so a closed drawer never looks empty */
+.sc-page details.more > summary { list-style: none; cursor: pointer; color: var(--ink); font-weight: 600; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.sc-page details.more > summary::-webkit-details-marker { display: none; }
+.sc-page details.more > summary::before { content: "+"; font: 700 1rem var(--f-mono); width: 1ch; }
+.sc-page details.more[open] > summary::before { content: "-"; }
+/* the run table: the first column never breaks inside a run name; on narrow screens it scrolls inside its box, with a hint */
+.sc-page td:first-child, .sc-page th:first-child { white-space: nowrap; }
+.sc-page .tblhint { display: none; font-size: .85rem; color: var(--ink-2); margin: 0 0 .3em; }
+@media (max-width: 900px) { .sc-page .tblhint { display: block; } .sc-page .tbl { border-right: 3px solid var(--rule); } }
+.sc-page caption { color: var(--ink-2); }
+
 .hres .hgrid { stroke: var(--rule); stroke-width: 1; }
 .hres .hzero { stroke: var(--ink); stroke-width: 1.5; }
 .hres .hbar30 { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 4; }
@@ -440,6 +449,19 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 .toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
 .toc a { color: var(--ink-2); }
 .chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
+/* header (brief 50A page review): up to 1000 px the page links are one row that scrolls sideways, fading at the right
+   edge as the cue; on phones that row sits under the brand and the theme button, so nothing overlaps it */
+@media (max-width: 1000px) {
+  .bar .wrap { flex-wrap: nowrap; }
+  .bar nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; flex: 1 1 auto; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); padding-right: 22px; }
+  .bar nav a { white-space: nowrap; }
+  .bar .brand { white-space: nowrap; flex: 0 0 auto; }
+}
+@media (max-width: 640px) {
+  .bar .wrap { flex-wrap: wrap; row-gap: 0; }
+  .bar .brand { flex: 1 1 auto; }
+  .bar nav { order: 3; flex: 1 0 100%; }
+}
 </style>
 </head>
 <body>
@@ -1578,7 +1600,7 @@ FIRST, LAST = 0x08, 0x77
     var staged = !!T.stages;
     /* the drawing is as wide as its box (360 to 720 units), so 13-unit text is about 12 to 13 px from a phone to a desktop */
     var n = T.x.length, LW = 64, W = Math.max(360, Math.min(720, Math.round(art.clientWidth || 360))), CW = (W - LW - 4) / n, RH = 44, AX = 26;
-    var H = AX + T.signals.length * RH + 30;
+    var H = AX + T.signals.length * RH + ((T.marks || []).length ? 44 : 10);   /* room for the mark labels, one row each */
     var frames = [];
     if (!staged) for (var q = 0; q < n; q++) frames.push({ stage: -1, show: q, cap: (T.captions && T.captions[q]) || null });
     (T.stages || []).forEach(function (st, si) {
@@ -1632,18 +1654,18 @@ FIRST, LAST = 0x08, 0x77
     });
     /* staged: the samples not yet captured are hidden; plain: a cursor band and line, nothing dimmed */
     var shade = staged ? sv("rect", { x: X(0), y: AX - 2, width: W, height: H, class: "future solid" })
-                       : sv("rect", { x: X(0), y: AX - 2, width: CW, height: H - AX - 26, class: "cursor" });
+                       : sv("rect", { x: X(0), y: AX - 2, width: CW, height: T.signals.length * RH + 2, class: "cursor" });
     s.appendChild(shade);
     var marks = (T.marks || []).map(function (m) {
       var k = T.x.indexOf(m.x), g = sv("g", { class: "kmarkg" });
       var r0 = m.signal ? 1 : 0, x = X(k) + (m.signal ? 0 : CW / 2), r = m.signal ? T.signals.map(function (q) { return q.name; }).indexOf(m.signal) : -1;
       if (r < 0) {
-        g.appendChild(sv("line", { x1: x, x2: x, y1: AX - 2, y2: H - 26, class: "kmark" }));
-        g.appendChild(sv("text", { x: x + 3, y: H - 14, class: "kt" }, m.label));
+        g.appendChild(sv("line", { x1: x, x2: x, y1: AX - 2, y2: H - 38, class: "kmark" }));
+        g.appendChild(sv("text", { x: x + 3, y: H - 24, class: "kt" }, m.label));
       } else {
         var y0 = AX + r * RH;
         g.appendChild(sv("rect", { x: x - 4, y: y0 + 3, width: 8, height: RH - 8, class: "kring" }));
-        g.appendChild(sv("text", { x: Math.min(x + 7, W - 4), y: H - 2, class: "kt", "text-anchor": x > W * 0.6 ? "end" : "start" }, m.label));
+        g.appendChild(sv("text", { x: Math.min(x + 7, W - 4), y: H - 5, class: "kt", "text-anchor": x > W * 0.6 ? "end" : "start" }, m.label));
       }
       s.appendChild(g); return { k: k, g: g };
     });

@@ -21,8 +21,8 @@ values:
   build_max: {source: results/50a_nl_debug/summary.json, expr: "get:build_max_minutes"}
   cap_lo: {source: results/50a_nl_debug/summary.json, expr: "get:capture_s_min"}
   cap_hi: {source: results/50a_nl_debug/summary.json, expr: "get:capture_s_max"}
-  cost_lo: {source: results/50a_nl_debug/summary.json, expr: "get:cost_usd_lo_rounded"}
-  cost_hi: {source: results/50a_nl_debug/summary.json, expr: "get:cost_usd_hi_rounded"}
+  cost_lo: {source: results/50a_nl_debug/summary.json, expr: "get:parse_cost_usd_min"}
+  cost_hi: {source: results/50a_nl_debug/summary.json, expr: "get:parse_cost_usd_max"}
   die_lo: {source: results/50a_nl_debug/summary.json, expr: "get:die_c_min"}
   die_hi: {source: results/50a_nl_debug/summary.json, expr: "get:die_c_max"}
   die_latched: {source: results/50a_nl_debug/summary.json, expr: "get:die_c_latched_max"}
@@ -66,7 +66,7 @@ story:
   results:
     - "{passed} of {runs} known-answer requests on one design passed: the answer matched the known result each time, and the value read back over the serial link in the {readback_runs} runs that read a register back. One run each, so no spread is stated. All five are in the table below."
     - "{builds} debug builds of {build_lo} to {build_hi} seconds each (about {build_min} to {build_max} minutes): {builds_used} served the requests and {builds_refused} was the OR layout that Vivado refused to arm, rebuilt with one port per OR term. {reused} of the {runs} requests needed no new build because an earlier build already held its signals. Every build met timing (worst setup slack at least {wns_lo} ns), at most {power_hi} W estimated by Vivado."
-    - "Programming and capture took {cap_lo} to {cap_hi} seconds per request. Reading each request cost ${cost_lo} to ${cost_hi}, as the model provider reported."
+    - "Programming and capture took {cap_lo} to {cap_hi} seconds per request. Reading each request cost ${cost_lo} to ${cost_hi} per request, as the model provider reported."
     - "All {inside} captures ran inside the recommended operating conditions: die {die_lo} to {die_hi} C at the readings (latched maximum {die_latched} C), core supply {vccint} V, {alarms} alarms."
   table:
     caption: "The known-answer requests: each links to its capture (common capture format, with the plan, the answer and the raw analyser export beside it)."
@@ -82,13 +82,13 @@ story:
     approvals: ["The owner asked for this capability, set the order (front end first) and the safety rules: board memory only, power and temperature limits, design checks never skipped. No approval was needed per run: each capture holds the board lock and programs board memory only."]
   details:
     - title: "When a name is ambiguous, the plan stops and asks"
-      text: "The resolver reads the RTL, not the model. Asked for '{amb_q}', it finds {amb_n} different registers with that name ({amb_c}) and refuses the plan with the list, instead of picking one. A phrase is the model's only job: '{phrase}' came back from the model as '{phrase_as}', which the resolver then traced to {phrase_to} (pins {phrase_pins}); a name it cannot trace is an error with suggestions, never a guess."
+      text: "The resolver reads the RTL, not the model. Asked for '{amb_q}', it finds {amb_n} different registers with that name ({amb_c}) and refuses the plan with the list, instead of picking one. The model's only job is to turn a phrase into a name: '{phrase}' came back from the model as '{phrase_as}', which the resolver then traced to {phrase_to} (pins {phrase_pins}); a name it cannot trace is an error with suggestions, never a guess."
     - title: "The answer check refuses a made-up number"
       text: "Every number in an answer must be a value, change, run or count of the signal its line names, inside the window asked for. '{check_good}' passes. Changing one value, '{check_bad}', is refused: {check_bad_refused} is not in the capture. The check reads line by line and does not understand sentences, so a true number of the right signal used for the wrong thing would still pass; the answers are written from the capture's facts by a template, which never does that."
     - title: "Who wrote what"
-      text: "The resolver, planner, build reuse, capture driver, answer writer and answer check are ordinary deterministic Python. They were written by an AI coding assistant (Claude, in Claude Code) to the owner's brief and checked by independent reviewers and the tests. At run time the only model call is reading the request, by {model} through a provider; nothing it says is trusted until the resolver has traced it in the RTL."
+      text: "The resolver, planner, build reuse, capture driver, answer writer and answer check are ordinary deterministic Python. They were written by an AI coding assistant to the owner's brief and checked by independent reviewers and the tests. At run time the only model call is reading the request, by {model} through a provider; nothing it says is trusted until the resolver has traced it in the RTL."
     - title: "Where the trigger is, and why the counter changes one clock later"
-      text: "Cycle {t_cycle} is the sample in which the trigger condition holds: there win_wr = {t_win_wr} and addr = {t_addr}. The counter still shows {c_before} in that sample and {c_after} one clock later, because the register loads on the clock edge that ends the write strobe. An earlier version of the plot labelled the left edge of each sample, which made the strobe look one cycle early."
+      text: "Cycle {t_cycle} is the sample in which the trigger condition holds: there win_wr = {t_win_wr} and addr = {t_addr}. The counter still shows {c_before} in that sample and {c_after} one clock later, because the register loads on the clock edge that ends the write strobe."
     - title: "What this saves, honestly"
       text: "Not measured: there is no timed comparison with a person setting up the analyser by hand. Qualitatively, the request replaces choosing post-synthesis register names, packing ports within the free tier's limits, writing per-bit trigger values and reading the waveform; the build itself takes the same Vivado time either way, and a request served by an existing build needs no build at all."
 evidence:

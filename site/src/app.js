@@ -767,7 +767,7 @@
     var staged = !!T.stages;
     /* the drawing is as wide as its box (360 to 720 units), so 13-unit text is about 12 to 13 px from a phone to a desktop */
     var n = T.x.length, LW = 64, W = Math.max(360, Math.min(720, Math.round(art.clientWidth || 360))), CW = (W - LW - 4) / n, RH = 44, AX = 26;
-    var H = AX + T.signals.length * RH + 30;
+    var H = AX + T.signals.length * RH + ((T.marks || []).length ? 44 : 10);   /* room for the mark labels, one row each */
     var frames = [];
     if (!staged) for (var q = 0; q < n; q++) frames.push({ stage: -1, show: q, cap: (T.captions && T.captions[q]) || null });
     (T.stages || []).forEach(function (st, si) {
@@ -821,18 +821,18 @@
     });
     /* staged: the samples not yet captured are hidden; plain: a cursor band and line, nothing dimmed */
     var shade = staged ? sv("rect", { x: X(0), y: AX - 2, width: W, height: H, class: "future solid" })
-                       : sv("rect", { x: X(0), y: AX - 2, width: CW, height: H - AX - 26, class: "cursor" });
+                       : sv("rect", { x: X(0), y: AX - 2, width: CW, height: T.signals.length * RH + 2, class: "cursor" });
     s.appendChild(shade);
     var marks = (T.marks || []).map(function (m) {
       var k = T.x.indexOf(m.x), g = sv("g", { class: "kmarkg" });
       var r0 = m.signal ? 1 : 0, x = X(k) + (m.signal ? 0 : CW / 2), r = m.signal ? T.signals.map(function (q) { return q.name; }).indexOf(m.signal) : -1;
       if (r < 0) {
-        g.appendChild(sv("line", { x1: x, x2: x, y1: AX - 2, y2: H - 26, class: "kmark" }));
-        g.appendChild(sv("text", { x: x + 3, y: H - 14, class: "kt" }, m.label));
+        g.appendChild(sv("line", { x1: x, x2: x, y1: AX - 2, y2: H - 38, class: "kmark" }));
+        g.appendChild(sv("text", { x: x + 3, y: H - 24, class: "kt" }, m.label));
       } else {
         var y0 = AX + r * RH;
         g.appendChild(sv("rect", { x: x - 4, y: y0 + 3, width: 8, height: RH - 8, class: "kring" }));
-        g.appendChild(sv("text", { x: Math.min(x + 7, W - 4), y: H - 2, class: "kt", "text-anchor": x > W * 0.6 ? "end" : "start" }, m.label));
+        g.appendChild(sv("text", { x: Math.min(x + 7, W - 4), y: H - 5, class: "kt", "text-anchor": x > W * 0.6 ? "end" : "start" }, m.label));
       }
       s.appendChild(g); return { k: k, g: g };
     });
