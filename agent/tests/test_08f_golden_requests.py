@@ -12,7 +12,11 @@ Goldens, oldest first:
   unchanged, and no role is offered the new tools. The tool registry hash differs, and the ``load_skill`` schema a role sees
   differs with it, so eval-1's hashes no longer cover a whole run: a new baseline (brief 34) re-records against this file.
 - ``b42_request_golden.json`` (brief 42 H9, 2026-11-11): the registry gained ``report_digest`` (schema 1.8.0). No role is offered
-  it unless ``--harness-arm H9`` is on, so every hash other than ``tool_registry`` still equals the brief 36 golden's."""
+  it unless ``--harness-arm H9`` is on, so every hash other than ``tool_registry`` still equals the brief 36 golden's.
+- ``b53_request_golden.json`` (brief 53, 2026-11-11): the clarify prompt asks for one checkable statement per requirement and
+  no vague words; the tests prompt asks for requirement tags on every test, property and formal job. An intended change to what
+  the clarify and tests roles are asked: ``prompts`` and the two formatted-prompt hashes differ from the brief 42 golden, nothing
+  else. Runs before this change belong to the earlier goldens."""
 
 from __future__ import annotations
 
@@ -23,9 +27,12 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b42_request_golden.json"           # the newest golden
+GOLDEN = FIXTURES / "b53_request_golden.json"           # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
-CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest"}
+CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest",
+                       "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests)",
+                       "prompts_formatted_noshell_False": "brief 53: as prompts",
+                       "prompts_formatted_noshell_True": "brief 53: as prompts"}
 
 
 def test_every_request_path_is_unchanged_from_the_golden() -> None:

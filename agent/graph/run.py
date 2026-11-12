@@ -256,15 +256,21 @@ def trace_record(design: Path, root: Path) -> dict:
     defer = tuple(m for m, f in (("analysis", gates), ("hardware", hw)) if not f.is_file())
     if not list(runs.glob("seed*/coverage*")):
         defer += ("coverage",)
+    prev = b / "trace" / "trace.json"                            # the last record is the baseline: the change list
+    try:
+        json.loads(prev.read_text())
+    except (OSError, ValueError):                                # absent or unreadable: no baseline this time
+        prev = b / "trace" / "none.json"
     try:
         t = tr.build(design, runs, coverage=runs, formal=root / "build" / "verif" / "formal", gates=gates if gates.is_file() else None,
-                     hw=hw if hw.is_file() else None, defer=defer)
+                     hw=hw if hw.is_file() else None, baseline=prev if prev.is_file() else None, defer=defer)
     except Exception as e:                                       # noqa: BLE001 (a record must never stop the run)
         return {"ok": False, "error": f"{type(e).__name__}: {e}"[:400]}
     (b / "trace").mkdir(parents=True, exist_ok=True)
     (b / "trace" / "trace.json").write_text(json.dumps(t, indent=1, default=str) + "\n")
     (b / "trace" / "trace.md").write_text(tr.to_markdown(t))
-    return {"ok": t["pass"], "gates": {k: v["pass"] for k, v in t["gates"].items()}, "defer": list(defer)}
+    return {"ok": t["pass"], "gates": {k: v["pass"] for k, v in t["gates"].items()}, "defer": list(defer),
+            "changed": {k: t["change"][k] for k in ("text_changed", "evidence_changed", "stale")}}
 
 
 def selfcheck_tests_role(rt: Runtime, repair_fn: Callable[[list[str]], Any], passes: int = SELF_CHECK_PASSES) -> list[str]:
