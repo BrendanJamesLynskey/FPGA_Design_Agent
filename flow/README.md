@@ -39,10 +39,11 @@ Python code only.
   `build.tcl` on its own uses 1; the first does not lower the second) and `chipscope.maxJobs 1` at every thread count
   (the ILA build otherwise synthesises its debug cores in parallel helper processes). On the shared PC,
   `eval "$(_handoff/take_heavy_slot.sh --env "<text>")"` takes a heavy slot and sets `FDA_VIVADO_THREADS`: 4 when the
-  other slot runs no Vivado job, 2 when it does. Brief 33 measured 1, 2 and 4 threads on three designs
-  ([results/33_vivado_speed](../results/33_vivado_speed/results.md)): the same placement, routing and WNS at every
-  count. Peak memory was flat on the small and mid designs (about 2.1 and 2.3 GB) but grew on the 36k-LUT CDC rig
-  (3.6, 5.1 and 8.2 GB at 1, 2 and 4 threads), so give a large design a larger `MEM_MAX`. The old pin of 1 dated from
+  other slot runs no Vivado job, 2 when it does. Brief 33's measurements, repeated on Vivado 2026.1
+  ([results/33_vivado_speed_2026_1](../results/33_vivado_speed_2026_1/results.md)): 1, 2 and 4 threads gave the same placement,
+  routing and WNS on the small and mid designs, with peak memory flat (about 2.1 and 2.3 GB); the 36k-LUT CDC rig took 3.9 GB at
+  1 thread and was not run at 2 or 4 within the 6 GB cap (memory grows with the thread count on a large design, so give it a larger
+  `MEM_MAX` and run it alone). The old pin of 1 dated from
   the 16 GB PC, where builds above one thread were OOM-killed at 5-6 GB.
 - **Build cache** (brief 33, `build_cache.py`): a build whose inputs (sources, XDC and data contents, build.yaml
   settings, every `flow/*.tcl`, the thread count, the Vivado binary, the FDA_XPROBE/FDA_RESULT_HASH/FDA_INCREMENTAL
@@ -50,7 +51,7 @@ Python code only.
   stage, Vivado is not run and only the gates re-run (`cache_hits` in run.json); if it reached an earlier stage, the
   new build opens its `post_synth.dcp` or `post_route.dcp` and copies that build's reports for the stages it skips.
   The ILA variant starts from the base build's `post_synth.dcp` when the synthesis inputs match. `FDA_BUILD_CACHE=0`
-  turns it off. The resumed builds gave the same placement, routing and WNS as fresh builds (results/33_vivado_speed).
+  turns it off. The resumed builds gave the same placement, routing and WNS as fresh builds (results/33_vivado_speed_2026_1).
 - `FDA_INCREMENTAL=1` (off by default) runs `read_checkpoint -incremental` against the previous build's
   `post_route.dcp` when the inputs changed; the gates' reference builds never use it.
 - `FDA_RESULT_HASH=1` writes `result_dump.txt` (`result_hash.tcl`) and the placement and routing hashes

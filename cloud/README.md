@@ -19,7 +19,7 @@ mocked EC2 (`cloud/tests/test_cloud.py`) and in `--dry-run` mode. **The owner ru
 | Market | Spot (one-time), on-demand only if `allow_on_demand: true` | batch work survives an interruption: `run-batch` skips finished jobs, so re-running the same batch finishes the rest |
 | Data | `sync`: `git archive HEAD` plus named extra paths over rsync/SSH; `fetch-results`: rsync back | only committed files leave the PC: no private knowledge packs, no held-out tasks, no keys |
 | Access | the owner's EC2 key pair; a security group that allows SSH from the owner's IP only | no open ports, no VPN, no link from the instance to the home network |
-| Licence | none needed for our parts (below) | the owner's node-locked licence is tied to the build PC's MAC address and does not move |
+| Licence | **2026.1 needs its free Basic licence on the instance** (below) | the owner's node-locked licence is tied to the build PC's MAC address and does not move |
 
 ### What stops the bill
 
@@ -41,9 +41,11 @@ $3-5 a month at London snapshot prices; to be read from the owner's bill).
 ### Licence and devices
 
 The build PC uses the owner's node-locked licence, which is tied to its MAC address. The parts this project builds
-for, xc7a100t (Nexys A7), xc7z020 (ZedBoard) and xck26 (KV260), are in the no-cost edition of Vivado. Brief 33
-checked this on the build PC with the licence hidden from Vivado: see `results/33_vivado_speed/README.md`. The
-cloud image therefore needs no licence file. Anything that needs a paid licence (a larger device, a licensed IP core)
+for, xc7a100t (Nexys A7), xc7z020 (ZedBoard) and xck26 (KV260), are in the no-cost edition of Vivado, which 2026.1 runs as
+the free **Basic** licence tier. **With every licence hidden, Vivado 2026.1 does not start** ("cannot be launched because a
+valid license was not found"; brief 49, `results/33_vivado_speed_2026_1/README.md`), so the cloud image needs a Basic
+licence of its own (the owner generates it from the AMD licensing site for the instance; a node-locked licence is tied to a
+host ID, so check how that works for a cloud instance before building the AMI). Anything that needs a paid licence (a larger device, a licensed IP core)
 stays on the build PC.
 
 ## Use (owner)
@@ -71,7 +73,7 @@ gates are the same as on the build PC.
 `_handoff/fpga_agent/cloud_trial_33.sh` (in the owner's hand-off folder) starts one instance, syncs, runs
 `cloud/trial_batch.txt` (the brief 33 small and mid designs at 1, 4 and 8 threads), fetches the results and stops.
 The cost per build hour then comes from the instance's billed hours and the measured build times, compared with the
-build PC's numbers in `results/33_vivado_speed/`.
+build PC's numbers in `results/33_vivado_speed_2026_1/`.
 
 ## Dependencies and licences
 

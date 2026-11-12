@@ -255,7 +255,7 @@ Vivado does not run in GitHub Actions (the install is about 100 GB); its results
 
 Faster Vivado (brief 33): the runner reuses an earlier build of the same inputs (a cache hit runs no Vivado; an earlier
 stage reached resumes from its checkpoint), takes its thread count from `FDA_VIVADO_THREADS`, and can hash a build's
-placement and routing. Measured on three designs in [results/33_vivado_speed](results/33_vivado_speed/results.md).
+placement and routing. Measured on Vivado 2026.1 in [results/33_vivado_speed_2026_1](results/33_vivado_speed_2026_1/results.md).
 For batches too big for the build PC, [cloud/](cloud/README.md) has a design and scripts for an AWS EC2 burst runner
 (owner-run; not yet run against AWS).
 

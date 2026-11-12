@@ -24,7 +24,7 @@ builder instance for about two hours, then the AMI's snapshot storage). Region e
      edition; the build PC runs 2026.1 on the free Basic licence tier, so check the edition names the installer offers), edit the generated `install_config.txt` so that only the families we use are selected
      (7 Series, Zynq-7000, Zynq UltraScale+ MPSoC / Kria), `Destination=/tools/Xilinx`, then
      `sudo installer/xsetup -b Install -a XilinxEULA,3rdPartyEULA -c install_config.txt`.
-   - check: `/tools/Xilinx/2026.1/Vivado/bin/vivado -version` prints `v2026.1`. No licence file is installed.
+   - check: `/tools/Xilinx/2026.1/Vivado/bin/vivado -version` prints `v2026.1`. **2026.1 does not start without a licence**, even the free Basic tier (brief 49: `results/33_vivado_speed_2026_1/README.md`): install the Basic licence the owner generates for this instance, and check `vivado -mode batch` starts before imaging.
    - remove the installer files and `~/.Xilinx` login tokens before imaging.
 5. **Make the AMI:** stop the builder, then
    `aws ec2 create-image --instance-id <id> --name fda-vivado-2026.1-<date> --description "Vivado 2026.1 no-cost edition, 7 series + Zynq + ZU+"`;

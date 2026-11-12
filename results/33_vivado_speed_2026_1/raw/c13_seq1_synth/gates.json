@@ -1,0 +1,311 @@
+{
+  "build_dir": "build/bench/c13_nexys_harris_vga/build/base",
+  "vivado_version": "2026.1",
+  "kb_measured_version": "2026.1",
+  "kb_version_match": true,
+  "top": "c13_nexys_harris_vga_top",
+  "variant": "base",
+  "pass": true,
+  "first_failed_stage": null,
+  "gates": {
+    "rtl_methodology_no_critical": true,
+    "post_synth_no_unconstrained_endpoints": true,
+    "post_synth_methodology_no_critical": true,
+    "post_synth_drc_clean": true,
+    "post_synth_cdc_no_critical": true,
+    "post_synth_cdc_structure_clean": true,
+    "post_synth_exceptions_clean": true,
+    "post_synth_io_constraints_clean": true,
+    "post_synth_resources_in_range": true
+  },
+  "warnings": [],
+  "stages": {
+    "rtl": {
+      "ran": true,
+      "gates": {
+        "rtl_methodology_no_critical": true
+      },
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 19,
+        "rules": [
+          {
+            "rule": "XDCH-2",
+            "severity": "Warning",
+            "description": "Same min and max delay values on IO port",
+            "count": 19
+          },
+          {
+            "rule": "RRRS-1",
+            "severity": "Advisory",
+            "description": "Found user attribute ram_style",
+            "count": 1
+          }
+        ]
+      },
+      "pass": true
+    },
+    "post_synth": {
+      "ran": true,
+      "gates": {
+        "post_synth_no_unconstrained_endpoints": true,
+        "post_synth_methodology_no_critical": true,
+        "post_synth_drc_clean": true,
+        "post_synth_cdc_no_critical": true,
+        "post_synth_cdc_structure_clean": true,
+        "post_synth_exceptions_clean": true,
+        "post_synth_io_constraints_clean": true,
+        "post_synth_resources_in_range": true
+      },
+      "warnings": [],
+      "timing": {
+        "wns_ns": 1.133,
+        "tns_ns": 0.0,
+        "tns_failing_endpoints": 0,
+        "tns_total_endpoints": 14446,
+        "whs_ns": 0.045,
+        "ths_ns": 0.0,
+        "ths_failing_endpoints": 0,
+        "ths_total_endpoints": 14446,
+        "wpws_ns": 3.75,
+        "tpws_ns": 0.0,
+        "tpws_failing_endpoints": 0,
+        "tpws_total_endpoints": 5910,
+        "timing_met": true
+      },
+      "check_timing": {
+        "no_clock": 0,
+        "constant_clock": 0,
+        "pulse_width_clock": 0,
+        "unconstrained_internal_endpoints": 0,
+        "no_input_delay": 0,
+        "no_output_delay": 0,
+        "multiple_clock": 0,
+        "generated_clocks": 0,
+        "loops": 0,
+        "partial_input_delay": 0,
+        "partial_output_delay": 0,
+        "latch_loops": 0
+      },
+      "unconstrained_ports": {},
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 33,
+        "rules": [
+          {
+            "rule": "SYNTH-6",
+            "severity": "Warning",
+            "description": "Timing of a RAM block might be sub-optimal",
+            "count": 14
+          },
+          {
+            "rule": "XDCH-2",
+            "severity": "Warning",
+            "description": "Same min and max delay values on IO port",
+            "count": 19
+          }
+        ]
+      },
+      "drc": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 18,
+        "rules": [
+          {
+            "rule": "DPIP-1",
+            "severity": "Warning",
+            "description": "Input pipelining",
+            "count": 6
+          },
+          {
+            "rule": "DPOP-1",
+            "severity": "Warning",
+            "description": "PREG Output pipelining",
+            "count": 3
+          },
+          {
+            "rule": "DPOP-2",
+            "severity": "Warning",
+            "description": "MREG Output pipelining",
+            "count": 9
+          }
+        ]
+      },
+      "qor_assessment": null,
+      "cdc": {
+        "safely_timed": true,
+        "rules": []
+      },
+      "cdc_structure": {
+        "crossings": [],
+        "summary": {},
+        "unsafe": [],
+        "n_crossings": 0,
+        "clocks": {
+          "sys_clk_pin": {
+            "period": 10.0,
+            "root": "sys_clk_pin"
+          }
+        },
+        "pass": true
+      },
+      "exceptions": {
+        "stage": "synth",
+        "pass": true,
+        "exceptions": 2,
+        "ignored": 0,
+        "info": [],
+        "covered": {
+          "3": 3,
+          "5": 17
+        },
+        "failures": []
+      },
+      "io_timing": {
+        "stage": "synth",
+        "pass": true,
+        "interfaces": [],
+        "failures": [],
+        "delays": 2,
+        "clocks": {
+          "sys_clk_pin": {
+            "period": 10.0,
+            "waveform": "0.000 5.000",
+            "virtual": false,
+            "generated": false,
+            "source": "CLK100MHZ",
+            "input_jitter": 0.0
+          }
+        },
+        "worst": {
+          "setup": {
+            "slack": 1.133,
+            "requirement": 10.0,
+            "start_clock": "sys_clk_pin",
+            "end_clock": "sys_clk_pin",
+            "corner": "Slow",
+            "uncertainty": 0.035,
+            "pessimism": 0.116,
+            "from": "u_regs/u_core/py_reg[5]/C",
+            "to": "u_regs/u_core/raddr_q_reg[2]/A[0]"
+          },
+          "hold": {
+            "slack": 0.045,
+            "requirement": 0.0,
+            "start_clock": "sys_clk_pin",
+            "end_clock": "sys_clk_pin",
+            "corner": "Fast",
+            "uncertainty": null,
+            "pessimism": -0.209,
+            "from": "u_rst/q_reg[0]/C",
+            "to": "u_rst/q_reg[1]/D"
+          }
+        }
+      },
+      "resource_sanity": {
+        "factor": 2.0,
+        "resources": {
+          "lut": {
+            "used": 11681,
+            "predicted": [
+              20.0,
+              20000.0
+            ],
+            "allowed": [
+              10.0,
+              40000.0
+            ],
+            "pass": true,
+            "direction": null
+          },
+          "ff": {
+            "used": 5019,
+            "predicted": [
+              20.0,
+              20000.0
+            ],
+            "allowed": [
+              10.0,
+              40000.0
+            ],
+            "pass": true,
+            "direction": null
+          },
+          "bram_tile": {
+            "used": 14,
+            "predicted": [
+              0.0,
+              8.0
+            ],
+            "allowed": [
+              0.0,
+              16.0
+            ],
+            "pass": true,
+            "direction": null
+          },
+          "dsp": {
+            "used": 9,
+            "predicted": [
+              0.0,
+              8.0
+            ],
+            "allowed": [
+              0.0,
+              16.0
+            ],
+            "pass": true,
+            "direction": null
+          }
+        },
+        "pass": true
+      },
+      "utilization": {
+        "lut": 11681,
+        "lut_available": 63400,
+        "lutram": 856,
+        "lutram_available": 19000,
+        "ff": 5019,
+        "ff_available": 126800,
+        "carry4": 1984,
+        "bram_tile": 14,
+        "bram_tile_available": 135,
+        "dsp": 9,
+        "dsp_available": 240,
+        "iob": 20,
+        "iob_available": 210,
+        "bufg": 1,
+        "bufg_available": 32
+      },
+      "pass": true
+    },
+    "post_place": {
+      "ran": false,
+      "gates": {},
+      "pass": null
+    },
+    "post_route": {
+      "ran": false,
+      "gates": {},
+      "pass": null
+    },
+    "bitstream": {
+      "ran": false,
+      "gates": {},
+      "pass": null
+    }
+  },
+  "timing": null,
+  "check_timing": null,
+  "utilization": null,
+  "drc": null,
+  "methodology": null,
+  "cdc": null,
+  "power": null,
+  "power_environment": null,
+  "bitstream": null,
+  "build_stamp": "9bf96b58",
+  "sources_sha256": "9bf96b582c8a67e62ac158f6cf67a0425730b80f3d7c268046f9e2d18002fff2"
+}

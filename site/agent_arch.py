@@ -160,7 +160,7 @@ HARNESS_FIXES = [
     {"name": "The debug core's own timing exceptions", "pr": 120, "files": ["flow/exceptions_check.py", "flow/tests/test_45_ila_exceptions.py"],
      "text": "The exceptions gate failed every build with a logic analyser in it, because the analyser core brings timing exceptions "
              "that Vivado ignores. The gate now reports those as information and still fails on the design's own."},
-    {"name": "A build cache for Vivado", "pr": 118, "files": ["flow/build_cache.py", "results/33_vivado_speed/summary.json"],
+    {"name": "A build cache for Vivado", "pr": 118, "files": ["flow/build_cache.py", "results/33_vivado_speed_2026_1/summary.json"],
      "text": "A repeated build of an unchanged design now comes from a cache, and a later stage resumes from the last checkpoint. "
              "One agent run's build sequence on the c10 task took {with_cache_s} s instead of a modelled {without_cache_model_s} s, with the same result."},
 ]
@@ -469,7 +469,7 @@ def harness(inner):
         res = ROOT / "results" / "42_workflows" / f'{a["id"]}.json'
         status = json.loads(res.read_text())["summary"] if res.exists() else "not yet measured"
         arms.append({**a, "status": status})
-    cache = json.loads((ROOT / "results/33_vivado_speed/summary.json").read_text())["cache"]["c10"]
+    cache = json.loads((ROOT / "results/33_vivado_speed_2026_1/summary.json").read_text())["cache"]["c10"]
     assert cache["same_result"]
     fixes = []
     for f in HARNESS_FIXES:
