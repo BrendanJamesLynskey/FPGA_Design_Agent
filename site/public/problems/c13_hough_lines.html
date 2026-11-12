@@ -527,7 +527,7 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
         .clk(clk), .rst(rst), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">hough.sv</span> <span class="muted small">reference RTL, 143 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/hough.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/ref/rtl/hough.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 13 lesson 8 reference solution: a Hough transform accumulator for straight lines, 16 angles, one angle per clock.</span>
+</code></pre></details><details class="code"><summary><span class="mono">hough.sv</span> <span class="muted small">reference RTL, 153 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/hough.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/ref/rtl/hough.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 13 lesson 8 reference solution: a Hough transform accumulator for straight lines, 16 angles, one angle per clock.</span>
 <span class="hc">//</span>
 <span class="hc">// A line is the set of points (x, y) with x*cos(t) + y*sin(t) = rho. For each edge point and each of the NT = 16 angles t_k = k * pi / 16 (k = 0 .. 15, in steps of</span>
 <span class="hc">// 11.25 degrees) the block computes   rho_k = ((x * ctab(k) + y * stab(k) + 64) &gt;&gt;&gt; 7) + ROFF   (cos and sin are in Q7: ctab(k) = round(128 cos t_k), given below;</span>
@@ -624,13 +624,15 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
     <span class="hk">integer</span> rho;
     <span class="hk">logic</span> start_q;
     <span class="hk">logic</span> <span class="hk">signed</span> [15:0] rho_r;  <span class="hk">logic</span> [3:0] k_r;  <span class="hk">logic</span> p_en;   <span class="hc">// stage P: the distance, registered</span>
+    <span class="hk">logic</span> <span class="hk">signed</span> [8:0]  c_q, s_q;  <span class="hk">logic</span> [3:0] k_q;  <span class="hk">logic</span> q_en;  <span class="hc">// stage Q: the table entries for this angle, registered</span>
+    <span class="hk">logic</span> <span class="hk">signed</span> [17:0] px_r, py_r;  <span class="hk">logic</span> [3:0] k_m;  <span class="hk">logic</span> m_en; <span class="hc">// stage M: the two products, registered</span>
     <span class="hk">logic</span>        s0_en, s0_vote, s1_en, s1_vote, vld_a, vld_b;   <span class="hc">// stage 0: index registered; stage 1: the vote&#x27;s RAM read is on q_a</span>
     <span class="hk">logic</span> [10:0] s0_idx, s1_idx;
     <span class="hk">logic</span> [15:0] q_a, q_b;
-    <span class="hk">assign</span> busy = (k != 0) || start_q || p_en || s0_en || s1_en;
+    <span class="hk">assign</span> busy = (k != 0) || start_q || q_en || m_en || p_en || s0_en || s1_en;
 
     <span class="hc">// stage 0 (the angle clock): the cell index of this angle&#x27;s vote</span>
-    <span class="hk">always_comb</span> rho = (($signed({1&#x27;b0, x}) * ctab(k[3:0]) + $signed({1&#x27;b0, y}) * stab(k[3:0]) + 64) &gt;&gt;&gt; 7) + ROFF;
+    <span class="hk">always_comb</span> rho = (((px_r + py_r + 64) &gt;&gt;&gt; 7) + ROFF);
     <span class="hk">wire</span>         vote0 = p_en &amp;&amp; rho_r &gt;= 0 &amp;&amp; rho_r &lt; NR;
     <span class="hk">wire</span>  [10:0] idx0  = 11&#x27;(k_r * NR + rho_r);
     <span class="hk">wire</span>  [10:0] ridx  = 11&#x27;(rd_theta * NR + rd_rho);
@@ -643,9 +645,17 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
     <span class="hk">always_ff</span> @(<span class="hk">posedge</span> clk) <span class="hk">begin</span>
         vld_b &lt;= vld[ridx];
         vld_a &lt;= vld[s0_idx];
-        p_en &lt;= start_q || k != 0;
+        q_en &lt;= start_q || k != 0;
+        c_q &lt;= ctab(k[3:0]);
+        s_q &lt;= stab(k[3:0]);
+        k_q &lt;= k[3:0];
+        m_en &lt;= q_en;
+        px_r &lt;= $signed({1&#x27;b0, x}) * c_q;
+        py_r &lt;= $signed({1&#x27;b0, y}) * s_q;
+        k_m &lt;= k_q;
+        p_en &lt;= m_en;
         rho_r &lt;= 16&#x27;(rho);
-        k_r &lt;= k[3:0];
+        k_r &lt;= k_m;
         s0_en &lt;= p_en;
         s0_vote &lt;= vote0;
         s0_idx &lt;= idx0;
@@ -653,7 +663,7 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
         s1_vote &lt;= s0_vote;
         s1_idx &lt;= s0_idx;
         <span class="hk">if</span> (!rst_n) <span class="hk">begin</span>
-            k &lt;= 5&#x27;d0; start_q &lt;= 1&#x27;b0; p_en &lt;= 1&#x27;b0; s0_en &lt;= 1&#x27;b0; s0_vote &lt;= 1&#x27;b0; s1_en &lt;= 1&#x27;b0; s1_vote &lt;= 1&#x27;b0;
+            k &lt;= 5&#x27;d0; start_q &lt;= 1&#x27;b0; q_en &lt;= 1&#x27;b0; m_en &lt;= 1&#x27;b0; p_en &lt;= 1&#x27;b0; s0_en &lt;= 1&#x27;b0; s0_vote &lt;= 1&#x27;b0; s1_en &lt;= 1&#x27;b0; s1_vote &lt;= 1&#x27;b0;
         <span class="hk">end</span> <span class="hk">else</span> <span class="hk">begin</span>
             start_q &lt;= 1&#x27;b0;
             <span class="hk">if</span> (clear &amp;&amp; !busy) <span class="hk">begin</span>

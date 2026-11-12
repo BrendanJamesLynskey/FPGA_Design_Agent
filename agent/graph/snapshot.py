@@ -18,6 +18,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+#: git variables that would point a snapshot command at the caller's repository, index or work tree instead of ``snap.git``
+_GIT_LOCATION_ENV = {"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_COMMON_DIR", "GIT_NAMESPACE"}
 SKIP_DIRS = {"__pycache__", "sim_build", ".pytest_cache"}
 #: build/ outputs are large and regenerable; the snapshot keeps the reports and gates the review pages cite,
 #: and the .dcp files separately. Bitstreams are kept too (a rewind past stage 9 must restore them).
@@ -52,7 +54,8 @@ class Snapshots:
         self.records: list[dict[str, Any]] = json.loads(self.index.read_text()) if self.index.is_file() else []
 
     def _git(self, *args: str, work: bool = True, author: str = "fda-agent") -> str:
-        env = {**os.environ, "GIT_AUTHOR_NAME": author, "GIT_AUTHOR_EMAIL": f"{author}@localhost",
+        env = {**{k: v for k, v in os.environ.items() if k not in _GIT_LOCATION_ENV},     # never inherit the caller's repository
+               "GIT_AUTHOR_NAME": author, "GIT_AUTHOR_EMAIL": f"{author}@localhost",
                "GIT_COMMITTER_NAME": author, "GIT_COMMITTER_EMAIL": f"{author}@localhost"}
         base = ["git", f"--git-dir={self.git_dir}", f"--work-tree={self.design}"] if work else ["git"]
         return subprocess.run([*base, *args], check=True, capture_output=True, text=True, env=env).stdout
