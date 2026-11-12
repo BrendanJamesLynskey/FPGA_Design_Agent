@@ -34,7 +34,7 @@ def main(task, seed, arm, rid, root):
     root = Path(root)
     run = root / "runs" / rid
     cfg = json.loads((run / "config.json").read_text())
-    assert cfg["name"] == task and (cfg.get("harness_arms") or "") in (driver.ARMS[arm], "") and (arm == "A0") == (not cfg.get("harness_arms")), cfg
+    assert cfg["name"] == task and (cfg.get("harness_arms") or "") in (driver.ARMS[arm], "", "A0") and (arm == "A0") == (cfg.get("harness_arms") in ("", "A0", None)), cfg
     with open(driver.LOG, "r+") as f:
         fcntl.flock(f, fcntl.LOCK_EX)
         rows = [json.loads(x) for x in f.read().splitlines() if x.strip()]

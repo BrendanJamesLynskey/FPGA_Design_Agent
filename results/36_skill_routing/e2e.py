@@ -64,7 +64,8 @@ def run_all() -> int:
                 before = set(p.name for p in (ROOT / "runs").iterdir()) if (ROOT / "runs").is_dir() else set()
                 t0 = time.time()
                 cmd = [sys.executable, "-m", "agent", "run", str(ROOT / tdir / "spec.md"), "--name", task,
-                       "--stop-after", "2", "--verif-level", "V1", "--max-usd", str(RUN_USD), "--skill-routing", arm]
+                       "--stop-after", "2", "--verif-level", "V1", "--max-usd", str(RUN_USD), "--skill-routing", arm,
+                       "--harness-arm", "A0"]     # frozen: baseline harness, as when measured (CLI default is H1 since 2026-11-12)
                 p = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, timeout=4 * 3600)
                 new = sorted(set(p.name for p in (ROOT / "runs").iterdir()) - before)
                 rid = new[-1] if new else None

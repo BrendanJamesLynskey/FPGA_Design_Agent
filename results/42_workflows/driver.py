@@ -188,7 +188,7 @@ def owns(runs: Path, n: str, task: str, arm: str, taken: set) -> bool:
         return False
     want = ARMS[arm]
     have = c.get("harness_arms")
-    return (have in ("", "None", None)) if not want else (have == want)
+    return (have in ("", "None", "A0", None)) if not want else (have == want)
 
 
 def one_run(root: Path, task: str, seed: int, arm: str, tag: str) -> dict:
@@ -196,8 +196,7 @@ def one_run(root: Path, task: str, seed: int, arm: str, tag: str) -> dict:
     runs = root / "runs"
     cmd = [sys.executable, "-m", "agent", "run", str(root / tdir / "spec.md"), "--name", task, "--stop-after", "2",
            "--verif-level", "V1", "--max-usd", str(RUN_USD), "--model", MODEL]
-    if ARMS[arm]:
-        cmd += ["--harness-arm", ARMS[arm]]
+    cmd += ["--harness-arm", ARMS[arm] or "A0"]     # A0 is pinned explicitly: the CLI default is now H1 (2026-11-12)
     t0 = time.time()
     with open(HERE / "launch.lock", "w") as lk:             # review fix: one launch at a time until its run directory exists,
         fcntl.flock(lk, fcntl.LOCK_EX)                      # so two workers never share a directory (any task, arm or seed)

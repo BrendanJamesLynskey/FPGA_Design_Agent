@@ -1,4 +1,4 @@
-"""Brief 42 harness arms H1 (context management) and H2 (hang protection). Off by default: the baseline is unchanged."""
+"""Brief 42 harness arms H1 (context management) and H2 (hang protection). H1 is the CLI default since 2026-11-12; A0 is the baseline."""
 
 from __future__ import annotations
 
@@ -19,6 +19,27 @@ from agent.graph.context import OFFLOAD_CHARS, offload_result
 from agent.graph.run import Config
 
 # ---- config ------------------------------------------------------------------------------------------------------
+
+
+class _Stop(Exception):
+    pass
+
+
+@pytest.mark.parametrize("extra, want", [([], "H1"), (["--harness-arm", "A0"], "A0"), (["--harness-arm", "H1,H2"], "H1,H2")])
+def test_cli_default_arm_is_h1_and_a0_is_baseline(monkeypatch, extra, want) -> None:
+    import agent.__main__ as m
+
+    seen = {}
+
+    def fake(**kw):
+        seen.update(kw)
+        raise _Stop
+
+    monkeypatch.setattr("agent.graph.run.Config", fake)
+    with pytest.raises(_Stop):
+        m.main(["run", "spec.md", *extra])
+    assert seen["harness_arms"] == want
+    assert Config(spec_md=Path("spec.md"), name="x", harness_arms=want).arms == (() if want == "A0" else tuple(want.split(",")))
 
 
 def test_arms_default_empty_and_parse() -> None:
