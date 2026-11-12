@@ -7,7 +7,15 @@ every ``hw`` test is skipped, so CI and a plain ``pytest`` never touch a serial 
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))      # importlib import mode does not add the root
+from tools.git_guard import describe_change, repo_state
+
+_GIT_BEFORE = {}
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -36,3 +44,14 @@ def _private_heavy_lock(tmp_path_factory: pytest.TempPathFactory, monkeypatch: p
     mutation and coverage tools take a lock; with ``$FDA_HEAVY_LOCK`` unset they would use the shared one and hang while
     a real job holds it. A test that needs its own path sets the variable again."""
     monkeypatch.setenv("FDA_HEAVY_LOCK", str(tmp_path_factory.mktemp("heavy") / "heavy_slot.lock"))
+
+
+def pytest_sessionstart(session: pytest.Session) -> None:
+    _GIT_BEFORE["state"] = repo_state()          # the checkout the tests run from: branch and HEAD (tools/git_guard.py)
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    msg = describe_change(_GIT_BEFORE.get("state"), repo_state())
+    if msg:
+        print(f"\nERROR: {msg}")
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
