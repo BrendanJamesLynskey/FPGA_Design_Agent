@@ -181,7 +181,8 @@ def test_runner_reuses_builds(tmp_path):
     if build.exists():                       # never lose a real build that is lying in the checkout
         shutil.move(str(build), keep)
     try:
-        env = dict(os.environ, VIVADO=str(fake), FAKE_LOG=str(log), MIN_AVAIL_GB="0", FDA_VIVADO_MAX="99",
+        env = dict(os.environ, VIVADO=str(fake), FAKE_LOG=str(log), MIN_AVAIL_GB="0", FDA_VIVADO_MAX="2",
+                   FDA_TEST_VIVADO_RUNNING="0",     # the fake Vivado runs whatever real jobs other sessions have going
                    FDA_VIVADO_THREADS="1")
         env.pop("FDA_BUILD_CACHE", None)
         seq = ["synth", "synth", "route", "route", "bitstream", "bitstream"]

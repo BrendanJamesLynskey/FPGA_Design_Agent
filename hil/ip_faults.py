@@ -2,6 +2,7 @@
 """Seeded-fault runner for the brief-30 instrument library.
 
     python3 hil/ip_faults.py [--only name,name] [--json results/b30/faults.json]
+    python3 hil/ip_faults.py --blocks fir --json results/b63a/faults.json      # other library entries
 
 Each ip_lib/<block>/faults.yaml entry replaces one exact string (it must occur once) in a copy of the block's rtl/;
 the block's tests (`test` = pytest node selection) are then run against the copy through HIL_RTL_<BLOCK>. A fault is
@@ -26,10 +27,10 @@ IP = ROOT / "ip_lib"
 BLOCKS = ["freq_duty_counter", "frame_crc", "dds_awg", "logic_analyser", "adc_histogram"]
 
 
-def faults():
+def faults(blocks=BLOCKS):
     for f in sorted(IP.glob("*/faults.yaml")):
         block = f.parent.name
-        if block not in BLOCKS:
+        if block not in blocks:
             continue
         for m in yaml.safe_load(f.read_text())["faults"]:
             yield block, m
@@ -60,11 +61,13 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="")
     ap.add_argument("--json", default="")
+    ap.add_argument("--blocks", default="", help="comma-separated ip_lib entries (default: the brief-30 instruments)")
     a = ap.parse_args()
+    blocks = [b for b in a.blocks.split(",") if b] or BLOCKS
     only = set(filter(None, a.only.split(",")))
     out = []
     with tempfile.TemporaryDirectory(prefix="b30faults_") as t:
-        for block, m in faults():
+        for block, m in faults(blocks):
             if only and m["name"] not in only:
                 continue
             res = run_one(block, m, Path(t))

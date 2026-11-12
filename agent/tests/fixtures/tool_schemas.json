@@ -1,5 +1,5 @@
 {
- "schema_version": "1.8.0",
+ "schema_version": "1.9.0",
  "tools": [
   {
    "name": "board_constraints",
@@ -36,7 +36,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "bringup",
@@ -47,7 +47,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "build",
@@ -75,7 +75,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "check_constraints",
@@ -86,7 +86,77 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
+  },
+  {
+   "name": "debug_capture",
+   "description": "Capture on the attached board with a plan from debug_plan: programs the plan's debug ILA build (SRAM only), sets up registers, arms, sends the stimulus, uploads, reads the XADC conditions, and answers in plain words from the capture. build=true makes the debug build first if none holds the probes (a Vivado run of several minutes). Needs stage configuration-and-debug, power_ok and hardware budget. Returns the answer, facts and the capture path, not raw samples.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "probeset": {
+      "type": "string",
+      "description": "the 12-character id debug_plan returned"
+     },
+     "build": {
+      "type": "boolean",
+      "description": "make the debug build first if none holds the probes (a Vivado run)"
+     }
+    },
+    "required": [
+     "probeset"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.9.0"
+  },
+  {
+   "name": "debug_plan",
+   "description": "Plan a logic-analyser capture on the board (vendor ILA, Basic licence tier: one clock domain, at most 5 probe ports, one comparator per port, so each OR term needs its own port; the planner arranges this). Give the request as structured intent; signal names are resolved against the RTL (registers by hierarchical name, e.g. u_dut.count, or a probes.yaml name); unknown names come back as errors with suggestions. Returns the plan in plain words and its probeset id. Builds nothing.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "intent": {
+      "type": "object",
+      "description": "the request in the intent schema: {probes: [names], trigger: {combine: AND|OR, conditions: [{signal, op (== != < <= > >= rise fall change), value}]}, pre, post, setup, stimulus, readback: [{op: write|read|wait_ms, register, value, ms}], question}"
+     },
+     "request": {
+      "type": "string",
+      "description": "the request in words, kept for the record"
+     }
+    },
+    "required": [
+     "intent"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.9.0"
+  },
+  {
+   "name": "debug_query",
+   "description": "Ask a question of a capture without reading its samples: op value_at {channel, cycle}; first {channel, cmp, value, from_cycle}; count {channel, cmp, value}; changes {channel, limit}; runs {channel, value}; summary; diverge (with other: a second capture of the same probes, e.g. simulation) -> the first cycle where they differ. Cycles are relative to the trigger (cycle 0).",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "capture": {
+      "type": "string",
+      "description": "the capture path under build/debug/ that debug_capture returned"
+     },
+     "query": {
+      "type": "object"
+     },
+     "other": {
+      "type": "string",
+      "description": "a second capture of the same probes, for op diverge"
+     }
+    },
+    "required": [
+     "capture",
+     "query"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.9.0"
   },
   {
    "name": "formal",
@@ -97,7 +167,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "gates",
@@ -126,7 +196,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "lint",
@@ -137,7 +207,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "list_files",
@@ -153,7 +223,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "load_skill",
@@ -181,7 +251,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "mutate",
@@ -208,7 +278,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "program",
@@ -230,7 +300,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "read_file",
@@ -257,7 +327,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "report",
@@ -291,7 +361,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "report_digest",
@@ -328,7 +398,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "search_docs",
@@ -359,7 +429,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "simulate",
@@ -382,7 +452,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "skill_excerpt",
@@ -405,7 +475,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "skill_index",
@@ -428,7 +498,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "spec_items",
@@ -439,7 +509,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "stage_note",
@@ -473,7 +543,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   },
   {
    "name": "write_file",
@@ -496,7 +566,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.8.0"
+   "version": "1.9.0"
   }
  ]
 }

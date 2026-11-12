@@ -1,31 +1,43 @@
 # FPGA_Design_Agent
 
-An open-source agent that turns a plain-English spec into verified RTL and a bitstream for AMD FPGAs, with every result measured.
-Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)); the home page draws the agent's feedback loop on the bench, with a recorded run replayed through it; [the agent](https://fpga-design-agent.vercel.app/agent) shows its architecture, LangGraph and [harness](https://fpga-design-agent.vercel.app/agent#harness).
+**An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board.**
+Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (built from [site/](site)).
 
-**What it does today.** Given a short request, the agent interviews the user (or, in an evaluation, a stand-in that
-answers only from a hidden full spec), plans the design, writes SystemVerilog and its tests, and drives Vivado 2026.1
-through synthesis and place and route to a bitstream, stage by stage in the order of AMD's UltraFast methodology. Each
-stage ends in a gate run by code, and the agent's own tests never count as a pass: hidden tests written against an
-independent model of the spec decide, and those tests are themselves checked by mutation testing. It targets a
-Digilent Nexys A7-100T (Artix-7) today. The development runs used Anthropic's Claude Sonnet (`claude-sonnet-5-5`)
-through Claude Code.
+**What it does.** Describe a block in plain English. Language-model agents interview you about what you left out, write
+the spec, a model of it, the tests and the SystemVerilog, then drive the simulators and Vivado 2026.1 through synthesis
+and place and route to a bitstream, stage by stage in the order of AMD's UltraFast design methodology, and test it on a
+Digilent Nexys A7-100T (Artix-7). Every stage ends in a gate run by code, not by a model; inside the loop the gates run
+the agent's own tests. On benchmark tasks a run is scored only by hidden tests written against an independent model of
+the spec and checked by mutation testing, never by the agent's own tests. A controller in code picks the next stage. The
+run always stops for a person before anything touches the board; review of each stage's result is opt-in (`--review on`,
+off in every recorded run), and otherwise the spec counts as signed off once no question is left open.
 
-**What has been measured.** On 11 development tasks, 13 of 21 agent runs passed every hidden test. In 6 more the
-agent's own checks passed and the hidden tests failed, each time because it read the spec differently from the test
-author; the fixes made since are not yet measured ([results](https://fpga-design-agent.vercel.app/results),
-from `results/course/*/run_*.json`). A hand-written reference design passes all its tests on the board
-([F0B](#bring-up-on-hardware-f0b)). One agent-built design (Deep Agents smoke run luna 7 on T1) has been programmed onto the
-board: UART tests 3 of 3 passed and the ILA captures failed ([record](results/f2/agent_luna_05c2_run7_bringup.json)), so no
-design the agent built has yet passed every test on the board.
+**What has been measured.** On 11 development tasks, 13 of 21 runs with Anthropic's Claude Sonnet (`claude-sonnet-5-5`,
+through Claude Code) passed every hidden test. In 6 more the agent's own checks passed and the hidden tests failed (an
+"escape"), each time because it read the spec differently from the test author; the fixes made since are not yet
+measured ([results](https://fpga-design-agent.vercel.app/results), from `results/course/*/run_*.json`). A hand-written
+reference design passes all its tests on the board ([bring-up on hardware](#bring-up-on-hardware)). One agent-built
+design, from a short trial run of the Deep Agents harness on the small LED-dimmer design, has been programmed onto the
+board: its serial-link tests passed (3 of 3) and its logic-analyser captures failed
+([record](results/f2/agent_luna_05c2_run7_bringup.json)), so no design the agent built has yet passed every test on the
+board.
 
 **What is not yet shown.** There is no held-out score. Development tasks are the ones used to find and fix faults,
 so their results are a record of the work, not a measure of how the agent does on new tasks. The first held-out
 evaluation (`eval-1`) was stopped on 2026-11-09 before any result was analysed and reports nothing; a baseline
 evaluation on a larger benchmark comes next.
 
-The flow itself was proven first, by hand on one small design (milestones **F0A** and **F0B**), with machine-checked
-gates, before any model touched it. Everything the agent produces has the same shape as `designs/t1_dimmer_counter/`.
+**Who designed what.** Designed by Brendan Lynskey: the staged flow and its gates, the split between the agents that
+write the design and those that write the tests, the hidden-test benchmark checked by mutation testing, the knowledge
+bank, the board shell and bench, and the pre-registered evaluation method. The models write the specs, tests and RTL
+inside it.
+
+The flow itself was proven first, by hand on one small design, with machine-checked gates, before any model touched
+it (the first two milestones, F0A for the build and F0B for the board). Everything the agent produces has the same
+shape as `designs/t1_dimmer_counter/`.
+
+Showcase pages for projects built with the agent follow one template: [docs/showcase_pages.md](docs/showcase_pages.md).
+A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
 ## The flow
 
@@ -84,8 +96,7 @@ The T1 build numbers on Vivado 2026.1 (timing, utilisation, ILA cost, run time a
 ([results/f0a_2026_1/README.md](results/f0a_2026_1/README.md) lists the files).
 Programming the board and testing on hardware is milestone F0B (below).
 
-## Bring-up on hardware (F0B)
-
+## Bring-up on hardware
 ```bash
 python3 flow/bringup.py designs/t1_dimmer_counter
 ```
@@ -109,8 +120,7 @@ Manual checks by the owner, made on the bitstreams of an earlier Vivado release 
 
 ![T1 running on the Nexys A7-100T: display 40 (brightness) and 0000 (count), DONE and POWER LEDs lit](docs/img/t1_on_nexys_a7.jpg)
 
-## Board onboarding (04c)
-
+## Board onboarding
 Before an agent designs for a board it must know what is on it. For the Nexys A7-100T:
 
 - [boards/nexys_a7_100t/inventory.yaml](boards/nexys_a7_100t/inventory.yaml): every peripheral a design can reach
@@ -126,13 +136,12 @@ Before an agent designs for a board it must know what is on it. For the Nexys A7
 - Four read-only self-check designs, each with its pass rule pre-registered and a device model in simulation,
   proven on the board 3 times each with `flow/board_check.py` (board outcomes in [results/board_v2](results/board_v2/README.md);
 their bitstreams were built on an earlier Vivado release; all four rebuild on 2026.1 with every gate passing, not yet
-programmed: [results/49_vivado_2026_1/b2_builds.json](results/49_vivado_2026_1/b2_builds.json)):
+programmed: [results/vivado_2026_1_remeasure/b2_builds.json](results/vivado_2026_1_remeasure/b2_builds.json)):
   [b2_tmp_adt7420](designs/b2_tmp_adt7420), [b2_acl_adxl362](designs/b2_acl_adxl362),
   [b2_qspi_jedec](designs/b2_qspi_jedec) (flash ID only: no write or erase opcode exists in its RTL, which a test
   checks) and [b2_mic_pdm](designs/b2_mic_pdm).
 
-## The UltraFast methodology as the backbone (04e)
-
+## The UltraFast methodology as the backbone
 The flow and the agent's stage machine follow AMD's UltraFast Design Methodology (UG949 v2026.1) stage by stage:
 board and device planning, RTL, constraints, synthesis, implementation, timing closure, power closure, DRC
 closure, configuration and debug. [docs/methodology.md](docs/methodology.md) maps UG949's chapters to the plan's
@@ -143,8 +152,7 @@ knowledge bank. T1 built through the staged flow on Vivado 2026.1 passes every s
 ([results/f0a_2026_1](results/f0a_2026_1/t1_dimmer_counter.md)); the post-route QoR-assessment gate is absent on the free
 Basic licence tier, not passed.
 
-## Knowledge packs (F1A)
-
+## Knowledge packs
 The agent's know-how is a set of frozen, hashed knowledge layers in Agent Skills format: generic RTL skills, an AMD
 vendor layer built from AMD's open Ross skills (as shipped, and distilled for this batch flow), an Artix-7 device
 layer, a Nexys A7 board layer, and an offline searchable library. Since F1A2 the generic layer is a pinned tag of a
@@ -177,16 +185,14 @@ baseline; and two of the four tasks are never passed by any arm
 [runs](results/42_workflows/runs.md), [pre-registration](results/42_workflows/prereg.md)); the audit script is
 [agent/tools/harness_audit.py](agent/tools/harness_audit.py).
 
-## The agent core (05a, F2 part 1)
-
+## The agent core
 The flow's tools as a harness-neutral core: typed functions with JSON schemas, the same tools as an MCP server
 (`python -m agent.mcp_server`), a security layer enforced in code (path jail, no free-form Tcl or shell, hardware
 policy, redaction, audit log), and one trace format with replayed-trace CI. No language model is called.
 [docs/agent_core.md](docs/agent_core.md) has the tool list, the security rules with their tests, the known gaps
 and the trace format; results of the real-tools smoke run are in [results/f2](results/f2).
 
-## The agent (05b, F2 part 2)
-
+## The agent
 A LangGraph + Deep Agents agent over the stage machine: gates decide every stage exit; the blind model, the test
 writer and the RTL writer are separate sub-agents whose inputs are enforced in code; a "grill me" spec interview
 (human, or a spec oracle that answers only from a hidden full spec); a review page at every stage end with approve /
@@ -201,8 +207,7 @@ home and config. `python -m agent run ... --harness claude_code --cc-model claud
 [docs/claude_code_arm.md](docs/claude_code_arm.md). The same release has four agent fixes from the 05b diagnosis (spec
 schema, model API contract, integer cycle-count timing parameters, superseded files).
 
-## The benchmark (06a, F3 part 1)
-
+## The benchmark
 Benchmark v1 for scoring the agent: 24 natural-language tasks for the Nexys A7 (12 T1 blocks, 12 T2 peripherals),
 each with a hidden full spec, an independent golden model, cocotb acceptance tests, deliberate mutants, a trap test
 where a textbook or demo twin exists, an on-board check and a reference design built through every flow gate. A
@@ -218,8 +223,7 @@ pass, outcome, escape level, tool runs, tokens, cost; 08a): [tools/run_record.py
 back-fills them, [results/course/summarise.py](results/course/summarise.py) prints per-task pass counts, pass@1/pass@k
 and escapes by level.
 
-## From one run to a design environment (brief 27)
-
+## From one run to a design environment
 [docs/design_environment.md](docs/design_environment.md) proposes how the single-spec run becomes the inner loop of a
 project of many modules: a `design.yaml` module graph with an interface contract per module, an interface-first spec
 session, parallel module loops under the machine's Vivado limits, a top generated from the contracts, natural-language
@@ -298,8 +302,13 @@ flow/ipgen/  external design tools driving AMD IP configuration (brief 19): the 
 flow/net/    packet-processing evidence (brief 40): scapy traffic, Python golden models, the bench runner (Icarus; xsim
              optional), seeded-fault runner, line-rate measurement, ip.yaml checker and README generator
 ip_lib/      the project's own IP library ([ip_lib/README.md](ip_lib/README.md)); first entries: the brief-40 networking
-             blocks (RMII MAC, parser, exact/LPM/ternary tables, rewrite, queues and schedulers, L2 switch) and the
+             blocks (RMII MAC, parser, exact/LPM/ternary tables, rewrite, queues and schedulers, L2 switch); entries can hold
+             several implementations, each with a measured cost ([docs/ip_variants.md](docs/ip_variants.md),
+             flow/ipvariants.py, flow/ipchar.py) and a FIR entry with four variants; the
              tri-mode RGMII MAC ([ip_lib/eth_mac_rgmii](ip_lib/eth_mac_rgmii/README.md))
+debug_core/  debug on the board from a plain-English request (brief 50A, [docs/debug.md](docs/debug.md)): the request parser,
+             the RTL-name resolver, the plan, debug builds per probe set, the instrument drivers (vendor ILA, mock),
+             the common capture format with VCD, the answer and queries, the static viewer; demo_t1.py (the board demo)
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T: board.yaml, master XDC, inventory.yaml, power_budget.md; KR260: board.yaml)
 tools/       inventory_check.py (board inventory against the master XDC); git_guard.py (the tests must not move the checkout they run from; checked at the end of every pytest session by conftest.py)
@@ -339,7 +348,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              fsm.md (brief 24: the reference controller, the FSM coverage check, the drills);
              vhdl.md (VHDL-2008 designs: how to ask for one, the language boundary with the SystemVerilog shell, what runs where);
              project_layer.md (brief 27 P0 and P1: the design.yaml and contract.yaml formats, status, the contract test, phase 0);
-             debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped);
+             debug_playbook.md (for humans: what each gate rule ID means); debug.md (brief 50A: plain-English debug requests on the board); img/ photos (metadata stripped);
              eval/eval1_preregistration.md (the eval-1 held-out evaluation, fixed before any scored run)
 ```
 
@@ -375,6 +384,8 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 20B | Timing constraints proved, part B: I/O delays, virtual clocks and clock uncertainty measured on one-fault Vivado tops (system- and source-synchronous, DDR, forwarded clock, virtual clocks, MMCM jitter, corners), an I/O gate after synthesis and routing (invented delays on slow ports, data-sheet values, -min/-max, reference clock, IOB), an implementation-only timing margin (`timing_margin_ns`) kept out of sign-off, FDA-CON-11/-12/-13, and an ADC drill with an I/O grader ([flow/io_check.py](flow/io_check.py), [flow/tests/fixtures/io_timing](flow/tests/fixtures/io_timing), [results/20_timing_exceptions_2026_1/io_table.md](results/20_timing_exceptions_2026_1/io_table.md), [uncertainty](results/20_timing_exceptions_2026_1/uncertainty.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
 | 54 | Reproducible builds: every build writes a manifest (input hashes, settings, tool, commit), and a build ID derived from it is written into the bitstream (USR_ACCESS register) and checked over JTAG before board tests; release bundles with a standalone checker. Measured on Vivado 2026.1: clean builds in different directories have identical configuration data (only the header's time bytes differ); the thread count does not change placement, routing or reports ([docs/reproducibility.md](docs/reproducibility.md), [results/54_reproducible](results/54_reproducible/README.md)) | PR open |
 | 55 | VHDL designs: set `--hdl vhdl` or `language: vhdl` and the flow lints the VHDL with GHDL, simulates it with the SystemVerilog test shell, builds it in Vivado, mutates it and checks it formally. A model's first VHDL translations failed all five board tasks on one naming clash; with that mistake written into its guidance (an exploratory, post-hoc arm), all five passed the same hidden tests and Vivado 2026.1 gates as the SystemVerilog references, and one ran on the board. Three block designs were checked by their own tests and out-of-context synthesis only (one fails as translated). The end-to-end agent passed 0 of 4 VHDL runs ([docs/vhdl.md](docs/vhdl.md), [results/55_vhdl](results/55_vhdl/README.md)) | PR open |
+| 50A | Debug from a plain-English request: a request becomes a checked plan (signals found by RTL name, a per-bit trigger, a window, packing into the Basic tier's 5 ILA probe ports, or what would fit when it cannot), a debug build, a capture on the board with supply and temperature readings, and an answer that quotes only the capture. Measured on a Nexys A7-100T with Vivado 2026.1: 5 plain-English requests on one design, all 5 answers matched the known answer and the shell's readback; the parser and name resolver were not tested on other designs or a held-out set. Agent tools `debug_plan`, `debug_capture`, `debug_query` exist but no agent role is offered them yet ([docs/debug.md](docs/debug.md), [results/50a_nl_debug](results/50a_nl_debug/README.md)) | PR open |
+| 63A | IP library variants: an entry can hold several implementations of one block (same ports, same bit-exact result), each measured out of context with Vivado 2026.1 on an Artix-7, so the planning stage can pick one ([docs/ip_variants.md](docs/ip_variants.md)). New FIR entry with four variants, checked against one model: at 16 taps the folded variant uses 4 DSP slices and 2 block RAM tiles, about 267 MHz (estimated, Artix-7 only, not on a board), and takes a new sample every 7 clocks; the fully parallel variant takes a sample every clock but uses 5377 LUTs, about 117 MHz (estimated). dds_awg and adc_histogram gained block RAM and LUT variants. Simulated and built only: no board run, power is vectorless ([ip_lib/README.md](ip_lib/README.md)) | PR open |
 | F2 | Agent v1: interview, plan, RTL, tests and the full Vivado flow (05a-05g above); 21 development runs on 11 course-tier tasks ([results/course](results/course), [site results](https://fpga-design-agent.vercel.app/results)) | built; development runs recorded |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |
 | F3 | Scored runs | `eval-1` stopped 2026-11-09 before analysis, no score ([pre-registration](docs/eval/eval1_preregistration.md)); baseline evaluation on a larger benchmark next |

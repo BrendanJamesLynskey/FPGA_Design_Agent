@@ -1,0 +1,22 @@
+$date 2026-11-12T13:04:18 $end
+$version FPGA_Design_Agent debug_core $end
+$comment After arming, write 0x0042 to COUNT. Capture count on the rising edge of win_wr, 4 cycles before and 8 after, then read COUNT back. $end
+$timescale 10000 ps $end
+$scope module capture $end
+$var wire 1 ! win_wr $end
+$var wire 16 " count $end
+$var wire 1 # TRIGGER $end
+$upscope $end
+$enddefinitions $end
+#0
+0!
+b0 "
+0#
+#4
+1!
+1#
+#5
+0!
+b1000010 "
+0#
+#1024

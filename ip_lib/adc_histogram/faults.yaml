@@ -1,4 +1,4 @@
-# Seeded faults (brief 30); run by hil/ip_faults.py: each must make the block's tests fail.
+# Seeded faults; run by hil/ip_faults.py: each must make the block's tests fail.
 faults:
 - name: no_forwarding
   file: adc_histogram.sv
@@ -21,3 +21,10 @@ faults:
   class: value
   why: the minimum is tracked the wrong way
   test: hil/tests/test_30_ip_rtl.py -k test_block and adc_histogram
+- name: bram_copy_not_written
+  file: adc_histogram.sv
+  old: 'if (we) begin mem_s[wa] <= wd; mem_r[wa] <= wd; end'
+  new: 'if (we) begin mem_s[wa] <= wd; end'
+  class: value
+  why: the host's copy of the bins is never updated (bram variant, added with the variants)
+  test: hil/tests/test_30_ip_rtl.py -k test_block and adc_histogram and bram

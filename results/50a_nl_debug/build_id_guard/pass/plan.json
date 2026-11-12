@@ -1,0 +1,157 @@
+{
+ "schema": "fda-debug-plan/1",
+ "design": "designs/t1_dimmer_counter",
+ "request": "After arming, write 0x0042 to COUNT. Capture count on the rising edge of win_wr, 4 cycles before and 8 after, then read COUNT back.",
+ "backend": "vendor_ila",
+ "clock": {
+  "domain": "CLK100MHZ",
+  "net": "CLK100MHZ_IBUF_BUFG",
+  "mhz": 100.0
+ },
+ "probes": [
+  {
+   "label": "win_wr",
+   "path": "u_shell.u_core.win_wr",
+   "width": 1,
+   "pins": "u_shell/u_core/win_wr_reg/Q",
+   "kind": "register",
+   "requested_as": "win_wr",
+   "clock": "CLK100MHZ",
+   "role": "trigger",
+   "notes": [
+    "the shell writes a design register"
+   ],
+   "group": "flags"
+  },
+  {
+   "label": "count",
+   "path": "u_dut.count",
+   "width": 16,
+   "pins": "u_dut/count_reg[*]/Q",
+   "kind": "register",
+   "requested_as": "count",
+   "clock": "CLK100MHZ",
+   "role": "data",
+   "notes": [
+    "the counter itself"
+   ],
+   "group": "data"
+  }
+ ],
+ "trigger": {
+  "combine": "AND",
+  "conditions": [
+   {
+    "probe": "win_wr",
+    "op": "rise",
+    "value": null,
+    "pattern": "R",
+    "text": "win_wr rises"
+   }
+  ]
+ },
+ "window": {
+  "pre": 4,
+  "post": 1019,
+  "depth": 1024,
+  "position": 4,
+  "requested": {
+   "pre": 4,
+   "post": 8
+  }
+ },
+ "ports": [
+  {
+   "port": 0,
+   "group": "flags",
+   "width": 1,
+   "slices": [
+    {
+     "label": "win_wr",
+     "offset": 0,
+     "width": 1
+    }
+   ]
+  },
+  {
+   "port": 1,
+   "group": "data",
+   "width": 16,
+   "slices": [
+    {
+     "label": "count",
+     "offset": 0,
+     "width": 16
+    }
+   ]
+  }
+ ],
+ "setup": [],
+ "stimulus": [
+  {
+   "op": "write",
+   "register": "COUNT",
+   "value": 66,
+   "address": 128
+  }
+ ],
+ "readback": [
+  {
+   "op": "read",
+   "register": "COUNT",
+   "address": 128
+  }
+ ],
+ "fit": {
+  "ok": true,
+  "max_ports": 5,
+  "bram_budget": 32,
+  "ports_used": 2,
+  "total_bits": 17,
+  "bram36_estimate": 1
+ },
+ "errors": [],
+ "warnings": [],
+ "question": "What is the value of count around the rising edge of win_wr, and what does COUNT read back afterward?",
+ "unclear": [],
+ "probeset": "597f16f6d572",
+ "intent": {
+  "probes": [
+   "count"
+  ],
+  "trigger": {
+   "combine": "OR",
+   "conditions": [
+    {
+     "signal": "win_wr",
+     "op": "rise"
+    }
+   ]
+  },
+  "pre": 4,
+  "post": 8,
+  "clock": null,
+  "stimulus": [
+   {
+    "op": "write",
+    "register": "COUNT",
+    "value": "0x0042"
+   }
+  ],
+  "readback": [
+   {
+    "op": "read",
+    "register": "COUNT"
+   }
+  ],
+  "question": "What is the value of count around the rising edge of win_wr, and what does COUNT read back afterward?"
+ },
+ "parse": {
+  "model": "openai/gpt-6-luna",
+  "cost": 9.8445e-05,
+  "prompt_tokens": 1446,
+  "completion_tokens": 158,
+  "attempts": 1,
+  "parser": "llm"
+ }
+}

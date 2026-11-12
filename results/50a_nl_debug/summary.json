@@ -1,0 +1,120 @@
+{
+ "runs_table": [
+  {
+   "run": "t1_count_write",
+   "capture": "results/50a_nl_debug/t1_count_write/capture.json",
+   "what": "a register write over the serial link",
+   "trigger": "win_wr == 1 AND addr == 0x80",
+   "build": "new, 418.1 s",
+   "capture_s": 64.7,
+   "readback": "COUNT 0x1234",
+   "result": "matched"
+  },
+  {
+   "run": "t1_pwm_period",
+   "capture": "results/50a_nl_debug/t1_pwm_period/capture.json",
+   "what": "one dimmer (PWM) period",
+   "trigger": "phase == 0x00",
+   "build": "new, 432.2 s",
+   "capture_s": 63.8,
+   "readback": "DUTY 0x40, COUNT 0x8421",
+   "result": "matched"
+  },
+  {
+   "run": "t1_sync_byte",
+   "capture": "results/50a_nl_debug/t1_sync_byte/capture.json",
+   "what": "the serial sync byte, on a rising edge",
+   "trigger": "rx_valid rises AND rx_data == 0xA5",
+   "build": "new, 444.2 s",
+   "capture_s": 48.3,
+   "readback": "none",
+   "result": "matched"
+  },
+  {
+   "run": "t1_or_flags",
+   "capture": "results/50a_nl_debug/t1_or_flags/capture.json",
+   "what": "either of two edges (OR)",
+   "trigger": "win_wr rises OR press_clear rises",
+   "build": "new (rebuilt), 505.1 s",
+   "capture_s": 62.1,
+   "readback": "none",
+   "result": "matched"
+  },
+  {
+   "run": "t1_reuse_rise",
+   "capture": "results/50a_nl_debug/t1_reuse_rise/capture.json",
+   "what": "a write, on a build made for another request",
+   "trigger": "win_wr rises",
+   "build": "reused",
+   "capture_s": 58.0,
+   "readback": "COUNT 0x42",
+   "result": "matched"
+  }
+ ],
+ "trust": {
+  "ambiguous_query": "cnt",
+  "ambiguous_kind": "ambiguous",
+  "ambiguous_candidates": "u_dut.u_db_clear.cnt, u_dut.u_db_down.cnt, u_dut.u_db_up.cnt, u_shell.u_rx.cnt, u_shell.u_tx.cnt",
+  "ambiguous_n": 5,
+  "phrase": "the shell's ADDR byte",
+  "phrase_parsed_as": "addr",
+  "phrase_resolved_to": "u_shell.u_core.frame[1]",
+  "phrase_pins": "u_shell/u_core/frame_reg[1][*]/Q",
+  "check_good": "count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
+  "check_good_refused": "none",
+  "check_bad": "count was 0x0003 from cycle -16 to 0, then 0x4321 from cycle 1 to 32.",
+  "check_bad_refused": "0x4321",
+  "trigger_win_wr": 1,
+  "trigger_addr": "0x80",
+  "count_before": "0x0003",
+  "count_after": "0x1234"
+ },
+ "die_c_latched_max": 27.68,
+ "power_w_min": 0.16,
+ "builds_used": 4,
+ "builds_refused": 1,
+ "cost_usd_lo_rounded": 0.0001,
+ "cost_usd_hi_rounded": 0.0003,
+ "readback_runs": 3,
+ "runs": 5,
+ "passed": 5,
+ "reused_runs": 1,
+ "builds": 5,
+ "build_s_min": 418.1,
+ "build_s_max": 531.8,
+ "build_min_minutes": 7,
+ "build_max_minutes": 9,
+ "peak_mib_max": 5263,
+ "wns_ns_min": 3.06,
+ "wns_ns_max": 3.947,
+ "power_w_max": 0.162,
+ "capture_s_min": 48.3,
+ "capture_s_max": 64.7,
+ "parse_cost_usd_min": 0.00011,
+ "parse_cost_usd_max": 0.00027,
+ "parse_model": "openai/gpt-6-luna",
+ "die_c_min": 24.7,
+ "die_c_max": 26.9,
+ "vccint_v": [
+  1.006
+ ],
+ "vccaux_v_min": 1.793,
+ "vccaux_v_max": 1.794,
+ "vccbram_v": [
+  1.006
+ ],
+ "inside_roc_runs": 5,
+ "alarms": 0,
+ "max_ports": 5,
+ "hero": {
+  "request": "First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.",
+  "build_id": "d2b75378",
+  "probeset": "ad3b58a920a1",
+  "build_s": 418.1,
+  "wns_ns": 3.06,
+  "ports_used": 2,
+  "pre": 16,
+  "post": 32,
+  "depth": 1024
+ }
+}

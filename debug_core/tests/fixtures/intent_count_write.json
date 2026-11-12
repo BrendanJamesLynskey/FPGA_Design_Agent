@@ -1,0 +1,43 @@
+{
+ "probes": [
+  "count"
+ ],
+ "trigger": {
+  "combine": "AND",
+  "conditions": [
+   {
+    "signal": "win_wr",
+    "op": "==",
+    "value": 1
+   },
+   {
+    "signal": "addr",
+    "op": "==",
+    "value": "0x80"
+   }
+  ]
+ },
+ "pre": 16,
+ "post": 32,
+ "setup": [
+  {
+   "op": "write",
+   "register": "COUNT",
+   "value": 3
+  }
+ ],
+ "stimulus": [
+  {
+   "op": "write",
+   "register": "COUNT",
+   "value": "0x1234"
+  }
+ ],
+ "readback": [
+  {
+   "op": "read",
+   "register": "COUNT"
+  }
+ ],
+ "question": "does count take the written value on the next clock?"
+}

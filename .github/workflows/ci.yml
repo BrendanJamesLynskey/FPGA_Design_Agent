@@ -85,7 +85,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y iverilog
-          # brief 55: GHDL for the VHDL path, pinned to the Ubuntu 24.04 package used locally and in fda-sim:2-ghdl (mcode; about 8.5 MB installed)
+          # GHDL for the VHDL path, pinned to the Ubuntu 24.04 package used locally and in fda-sim:2-ghdl (mcode; about 8.5 MB installed)
           sudo apt-get install -y --no-install-recommends ghdl=4.1.0+dfsg-0ubuntu2.1 ghdl-mcode=4.1.0+dfsg-0ubuntu2.1 ghdl-common=4.1.0+dfsg-0ubuntu2.1
           ghdl --version | head -1
           pip install pyyaml pyserial pytest cocotb==2.0.1 cocotb-coverage
@@ -101,6 +101,10 @@ jobs:
         run: |
           python -m pytest -q hil/tests/test_30_ip_rtl.py designs/b30_hil_audio/tests/test_hil_audio_rtl.py
           python hil/ip_faults.py
+      - name: IP variants - the FIR entry's four variants against one model, the differential test, seeded faults
+        run: |
+          python -m pytest -q ip_lib/fir/tb/test_fir_rtl.py
+          python hil/ip_faults.py --blocks fir
       - name: CDC soak rig (brief 11b) - checkers, host reader, the rig with metastability injection and reset storms (one copy a variant)
         run: CDC_SIM_QUICK=1 python -m pytest -q hil/cdc_soak/tests
       - name: CDC gate fixtures - the rig's mutants and correct variants, plain and with synchroniser-delay injection (brief 16)

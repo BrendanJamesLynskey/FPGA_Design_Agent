@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Beyond the standard flow | End-to-end FPGA Agent</title>
+<title>Beyond the standard flow | FPGA Design Agent</title>
 <meta name="description" content="Where the agent&#x27;s flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -51,7 +51,7 @@ p { margin: 0 0 1em; }
 /* top bar */
 .bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
   margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
-.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.bar .wrap { max-width: 1200px; display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
 .brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
 .bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
 .bar nav a { padding: 10px 6px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
@@ -61,7 +61,6 @@ button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
 /* sections, cards */
-.hero { padding: 36px 0 8px; }
 .eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
 .fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
@@ -119,20 +118,31 @@ svg .warn { stroke: var(--warn); fill: none; }
 @media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 
-/* Home hero: FPGA fabric backdrop (canvas, monochrome, drawn by app.js; still under reduced motion). */
-.hero { position: relative; isolation: isolate; padding: 72px 0 40px; }
-#fabric { position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%;
-  pointer-events: none;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
-  mask-composite: intersect; }
-@media (max-width: 640px) { #fabric { opacity: .55; } }
-.hero h1 { font-size: clamp(2.4rem, 1.2rem + 5.6vw, 4.6rem); letter-spacing: -.025em; margin: .15em 0 .2em; }
-.strap { font-size: clamp(1.15rem, .9rem + 1.2vw, 1.6rem); line-height: 1.3; font-weight: 600; margin: 0 0 .8em; max-width: 40ch; }
-.boards { font: .9rem/1.5 var(--f-mono); color: var(--ink-2); max-width: 70ch; }
-.boards span { background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
-.hero h1, .hero .strap { text-shadow: 0 0 12px var(--bg), 0 0 4px var(--bg); }
+
+.hero { padding: 40px 0 8px; }
+.hero h1 { font-size: clamp(1.9rem, 1.1rem + 3.4vw, 3.2rem); letter-spacing: -.02em; margin: .1em 0 .35em; max-width: 30ch; }
+.hero .lede { color: var(--ink); }
+.status { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 20px 0 8px; }
+.status .fact .n { font-size: 1.7rem; }
+.who { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 12px 0; }
+.who > div { border-top: 2px solid var(--ink); padding-top: 8px; }
+.who h3 { margin: 0 0 .3em; font-size: 1rem; }
+.who ul { margin: 0; padding-left: 1.1em; font-size: .94rem; }
+.who li { margin: .25em 0; }
+.byline { border-left: 3px solid var(--ink); padding: 4px 0 4px 14px; margin: 18px 0; }
+.next { margin-top: 2.4em; font-weight: 600; }
+/* every development run, by outcome (home and results) */
+.runs .lane { display: grid; grid-template-columns: minmax(0, 20ch) 1fr 3ch; gap: 8px; align-items: center; font-size: .88rem; margin: 4px 0; }
+.runs .marks { display: flex; flex-wrap: wrap; gap: 4px; min-height: 18px; }
+.runs .m { width: 16px; height: 16px; border: 1.5px solid var(--ink); display: inline-block; }
+.runs .m.pass { background: var(--ink); }
+.runs .m.caught_and_repaired { background: linear-gradient(135deg, var(--ink) 0 50%, var(--bg) 50%); }
+.runs .m.internal_stop_hidden_pass { background: var(--ink); border-style: dashed; border-color: var(--ink-3); }
+.runs .m.escape { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.runs .m.fail { border-color: var(--warn); }
+.runs .m.now { outline: 2px solid var(--accent); outline-offset: 2px; }
+.runs .cnt { font-family: var(--f-mono); text-align: right; }
+@media (max-width: 520px) { .runs .lane { grid-template-columns: 1fr 3ch; } .runs .lane .lab { grid-column: 1 / -1; } }
 
 /* problems: index and task pages */
 .dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
@@ -359,29 +369,122 @@ ul.variants p { margin: .3em 0 .5em; }
 ul.fixes { padding-left: 1.1em; }
 ul.fixes li { margin-bottom: .8em; }
 ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
+
+/* Showcase (brief 61): index cards, project pages and the graphics kit */
+.sc-grid { list-style: none; padding: 0; margin: 0 0 1em; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.sc-card { max-width: none; border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.sc-card.sc-in_progress { border-style: dashed; border-color: var(--ink-3); }
+.sc-card .vh { display: flex; gap: 8px 12px; align-items: baseline; flex-wrap: wrap; justify-content: space-between; }
+.sc-card h3 { margin: 0; }
+.sc-card p { margin: .5em 0 0; }
+.sc-plan li { margin: .4em 0; }
+.sc-headline { font-weight: 600; color: var(--ink); }
+.sc-results li { margin: .4em 0; }
+.sc-agent dt { font-weight: 600; margin-top: .8em; }
+.sc-agent dd { margin: .2em 0 0; max-width: var(--measure); }
+.kit .kitart { max-width: 640px; }
+.kitsvg .kbar { fill: var(--ink); }
+.kitsvg .kbar.now { fill: var(--accent); }
+.kitsvg .kmark { stroke: var(--warn); stroke-dasharray: 4 3; }
+.kitsvg .kcell { fill: none; stroke: var(--rule); }
+.kitsvg .kpass { fill: var(--ink); }
+.kitsvg .kfail { fill: var(--bg); stroke: var(--warn); stroke-width: 1.5; }
+.kitsvg .kcur { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.kitsvg .kcount { font-weight: 600; }
+/* wave with stages (showcase kit): the stage strip, the progressive reveal, marks; text at least 12 units in a 360-unit plot */
+.stagestrip { list-style: none; padding: 0; margin: 0 0 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 6px; }
+.stagestrip li { max-width: none; border: 1px solid var(--rule); padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; color: var(--ink-2); background: var(--panel); }
+.stagestrip .sn { font-weight: 600; font-size: .9rem; }
+.stagestrip .sf { font: .78rem/1.3 var(--f-mono); overflow-wrap: anywhere; }
+.stagestrip li.done { color: var(--ink); }
+.stagestrip li.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.stagedwave text { font-size: 13px; }
+.stagedwave .cursor { fill: var(--ink); opacity: .1; }
+.stagedwave .kl { fill: var(--ink); }
+.stagedwave .kv { fill: var(--ink); }
+.kitsvg .future.solid { fill: var(--panel); opacity: 1; }
+.kitsvg .kring { fill: none; stroke: var(--warn); stroke-width: 1.6; }
+.kit .kitart:has(.stagedwave) { max-width: none; }
+/* showcase pages: a wider text column; commands wrap rather than run off a phone screen */
+.sc-page p, .sc-page li, .sc-page dd, .sc-page figcaption { max-width: 74ch; }
+.sc-page pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sc-page table { border-collapse: collapse; font-size: .9rem; margin: .4em 0 1em; }
+.sc-page th, .sc-page td { border-bottom: 1px solid var(--rule); padding: 4px 10px 4px 0; text-align: left; vertical-align: top; }
+.sc-page .tbl { overflow-x: auto; max-width: 100%; }
+.sc-page details.more p { margin: .5em 0; }
+/* showcase drawers: a visible expander cue (+ closed, - open) and full-ink titles, so a closed drawer never looks empty */
+.sc-page details.more > summary { list-style: none; cursor: pointer; color: var(--ink); font-weight: 600; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.sc-page details.more > summary::-webkit-details-marker { display: none; }
+.sc-page details.more > summary::before { content: "+"; font: 700 1rem var(--f-mono); width: 1ch; }
+.sc-page details.more[open] > summary::before { content: "-"; }
+/* the run table: the first column never breaks inside a run name; on narrow screens it scrolls inside its box, with a hint */
+.sc-page td:first-child, .sc-page th:first-child { white-space: nowrap; }
+.sc-page .tblhint { display: none; font-size: .85rem; color: var(--ink-2); margin: 0 0 .3em; }
+@media (max-width: 900px) { .sc-page .tblhint { display: block; } .sc-page .tbl { border-right: 3px solid var(--rule); } }
+.sc-page caption { color: var(--ink-2); }
+
+.hres .hgrid { stroke: var(--rule); stroke-width: 1; }
+.hres .hzero { stroke: var(--ink); stroke-width: 1.5; }
+.hres .hbar30 { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.hres .hci { stroke: var(--ink); stroke-width: 3; }
+.hres .hci0 { stroke: var(--ink-3); stroke-width: 3; stroke-dasharray: 2 3; }
+.hres .hpt { fill: var(--ink); }
+.hres .hpt0 { fill: var(--panel); stroke: var(--ink); stroke-width: 1.5; }
+
+/* the loop replay's stage visits (home) */
+.visits { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 8px 0; }
+.visits .vlab { margin-right: 6px; }
+.visits .vb { min-width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--ink-3); font: 600 .75rem var(--f-mono); color: var(--ink-2); }
+.visits .vb.rep { border-color: var(--warn); background: repeating-linear-gradient(135deg, transparent 0 4px, var(--rule) 4px 5px); }
+.visits .vb.past { border-color: var(--ink); color: var(--ink); }
+.visits .vb.now { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* phones: the page links become one row that scrolls sideways, so the first screen starts with the page */
+@media (max-width: 640px) {
+  .bar .wrap { flex-wrap: nowrap; gap: 0 8px; }
+  .bar nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; min-width: 0; flex: 1 1 auto; }
+  .bar nav a { white-space: nowrap; }
+  .brand { margin-right: 4px; white-space: nowrap; }
+}
+.toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
+.toc a { color: var(--ink-2); }
+.chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
+/* header (brief 50A page review): up to 1000 px the page links are one row that scrolls sideways, fading at the right
+   edge as the cue; on phones that row sits under the brand and the theme button, so nothing overlaps it */
+@media (max-width: 1000px) {
+  .bar .wrap { flex-wrap: nowrap; }
+  .bar nav { flex-wrap: nowrap; overflow-x: auto; min-width: 0; flex: 1 1 auto; -webkit-mask-image: linear-gradient(to right, #000 85%, transparent); mask-image: linear-gradient(to right, #000 85%, transparent); padding-right: 22px; }
+  .bar nav a { white-space: nowrap; }
+  .bar .brand { white-space: nowrap; flex: 0 0 auto; }
+}
+@media (max-width: 640px) {
+  .bar .wrap { flex-wrap: wrap; row-gap: 0; }
+  .bar .brand { flex: 1 1 auto; }
+  .bar nav { order: 3; flex: 1 0 100%; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="index.html">Home</a><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="how.html">How it works</a><a href="flow-notes.html" aria-current="page">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="problems.html">Problems</a><a href="evaluation.html">How it is evaluated</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="how.html">How it works</a><a href="flow-notes.html" aria-current="page">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>Beyond the standard flow</h1>
 <p class="lede">The agent drives Vivado from scripts, with no GUI, and in that mode Vivado sometimes does less than a design needs. Each card tells one such story: what goes wrong, why, what the flow does, and what has been measured.</p>
 
 <div class="tablewrap" tabindex="0"><table class="index"><thead><tr><th>Card</th><th>What goes wrong</th><th>Status</th></tr></thead><tbody>
-<tr><td><a href="#xpm-cdc">1</a></td><td>AMD's crossing macros lose their timing exceptions</td><td>Built, verified on one probe design</td></tr>
-<tr><td><a href="#cdc-gate">2</a></td><td>Vivado's crossing report passes some unsafe crossings</td><td>Built, verified on test designs, no agent run yet</td></tr>
-<tr><td><a href="#exceptions">3</a></td><td>Over-broad timing exceptions hide real failures</td><td>Designed, not built</td></tr>
-<tr><td><a href="#gates">4</a></td><td>A missing report or a skipped test looks like a pass</td><td>Built, covered by unit tests</td></tr>
-<tr><td><a href="#pblock">5</a></td><td>Placement regions made after synthesis are only hints</td><td>Seen on the crossing test rig; not re-checked on 2026.1</td></tr>
+<tr><td><a href="#xpm-cdc">1</a></td><td>AMD's crossing macros lose their timing exceptions</td><td>Measured on one probe design</td></tr>
+<tr><td><a href="#cdc-gate">2</a></td><td>Vivado's crossing report passes some unsafe crossings</td><td>Measured on test designs; no agent run yet</td></tr>
+<tr><td><a href="#exceptions">3</a></td><td>Over-broad timing exceptions hide real failures</td><td>Gate measured on test designs; grading tasks not built</td></tr>
+<tr><td><a href="#gates">4</a></td><td>A missing report or a skipped test looks like a pass</td><td>Built; covered by unit tests</td></tr>
+<tr><td><a href="#pblock">5</a></td><td>Placement regions made after synthesis are only hints</td><td>Seen on the crossing test rig; not re-measured on 2026.1</td></tr>
 <tr><td><a href="#mig">6</a></td><td>Scripted DDR controller generation skips the pin check</td><td>Measured through placement; rule checker built</td></tr>
 <tr><td><a href="#ssn">7</a></td><td>The switching-noise report is missing on some parts</td><td>Measured; no substitute built</td></tr>
-<tr><td><a href="#xsim">8</a></td><td>AMD's IP models need a simulator the tests cannot drive</td><td>Planned</td></tr>
+<tr><td><a href="#xsim">8</a></td><td>AMD's IP models need a simulator the tests cannot drive</td><td>Not built (planned)</td></tr>
 </tbody></table></div>
 
 <article class="card" id="xpm-cdc">
 <h2>1. AMD's crossing macros lose their timing exceptions</h2>
-<p class="tags"><span class="tag built">Built and verified</span><span class="muted small">one probe design, two macros</span></p>
+<p class="tags"><span class="tag built">Measured</span><span class="muted small">one probe design, two macros</span></p>
 <p>AMD's ready-made <a href="how.html#term-cdc">clock-crossing</a> circuits, the XPM macros, rely on timing exceptions shipped in separate constraint files. In the scripted flow those files were not applied, so Vivado timed each crossing as an ordinary path between unrelated clocks and a correct design failed timing. Neither Vivado's crossing report nor the agent's crossing gate noticed, because neither reports an exception that is missing. The only sign was negative <a href="how.html#term-slack">slack</a>, and the easy cure, a blanket exception, is the one that hides real bugs (<a href="#exceptions">card 3</a>).</p>
 <p>The flow now re-applies AMD's rules by cell name straight after synthesis; a design without the macros gets no exception. On a probe design with a 10 ns and a 7 ns clock (Vivado 2026.1), setup slack on the crossing went from -1.364 ns, with 5 failing endpoints, to 8.891 ns.</p>
 <div class="fig"><svg viewBox="0 0 400 190" role="img" aria-labelledby="xp1t xp1d">
@@ -413,13 +516,13 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 <details class="more"><summary>Details: the rules, the report rows and the sources</summary>
 <p><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/flow/xpm_cdc.tcl"><code>flow/xpm_cdc.tcl</code></a> runs after <code>synth_design</code>: a false path to the first stage of each <code>xpm_cdc_single</code> and reset synchroniser; <code>set_max_delay -datapath_only</code> plus <code>set_bus_skew</code> for each <code>xpm_cdc_gray</code>; <code>set_max_delay -datapath_only</code> on the data of each <code>xpm_cdc_handshake</code>. The rules were first proven in the crossing soak rig. Before the fix (<code>read_verilog</code>, <code>synth_design</code>, xc7a100tcsg324-1) <code>report_cdc</code> showed Exception "None" on both crossings. Not covered: <code>xpm_cdc_pulse</code>, <code>xpm_cdc_async_rst</code>; not checked: <code>xpm_cdc_array_single</code>.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Measure</th><th>Without the fix</th><th>With xpm_cdc.tcl</th></tr></thead><tbody><tr><td>report_cdc, xpm_cdc_single row</td><td>None</td><td>False Path</td></tr><tr><td>report_cdc, xpm_cdc_gray row</td><td>None</td><td>Max Delay Datapath Only</td></tr><tr><td>clk_a to clk_b setup WNS (ns)</td><td>-1.364</td><td>+8.891</td></tr><tr><td>Failing endpoints on that path</td><td>5</td><td>0</td></tr></tbody></table></div>
-<p class="small">Sources: deviation 8 in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/methodology.md"><code>docs/methodology.md</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests/fixtures/xpm_probe"><code>flow/tests/fixtures/xpm_probe</code></a> (the probe and how to repeat it); <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/49_vivado_2026_1/xpm_probe.json"><code>results/49_vivado_2026_1/xpm_probe.json</code></a> (each number and where it was read).</p>
+<p class="small">Sources: deviation 8 in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/methodology.md"><code>docs/methodology.md</code></a>; <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/flow/tests/fixtures/xpm_probe"><code>flow/tests/fixtures/xpm_probe</code></a> (the probe and how to repeat it); <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/vivado_2026_1_remeasure/xpm_probe.json"><code>results/vivado_2026_1_remeasure/xpm_probe.json</code></a> (each number and where it was read).</p>
 </details>
 </article>
 
 <article class="card" id="cdc-gate">
 <h2>2. Vivado's crossing report passes some unsafe crossings</h2>
-<p class="tags"><span class="tag built">Built and verified</span><span class="muted small">on test designs; no agent run or board result yet</span></p>
+<p class="tags"><span class="tag built">Measured</span><span class="muted small">on test designs; no agent run or board result yet</span></p>
 <p>A crossing can be wrong while every synchroniser in it looks valid: a binary counter crossed bit by bit, a one-cycle pulse into a synchroniser meant for slow levels, two flags synchronised apart and then compared. Vivado's <code>report_cdc</code> checks structure and constraints; it does not run the design. The agent's crossing gate used to rest on that report alone.</p>
 <p>The gate now adds two checks. After synthesis it classifies every flip-flop fed from another clock, as a synchroniser chain, an AMD macro, a constrained Gray bus or handshake, a reset bridge, or unsafe. Then it reruns the design's own tests with each first synchroniser stage, and each AMD macro, sometimes holding its old value for an extra cycle, as a late-resolving flop would. A design that passes the plain run but fails this one fails the gate.</p>
 <p>On 10 broken crossings ported to the test set, the report alone flagged 5 and the new gate 10, and the gate passed all 12 correct variants. A FIFO or handshake reset on one side only is not covered: the rig catches those by disturbing a reset's release, which the gate's cycle-level model lacks.</p>
@@ -441,12 +544,13 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 
 <article class="card" id="exceptions">
 <h2>3. Over-broad timing exceptions hide real failures</h2>
-<p class="tags"><span class="tag plan">Designed, not built</span></p>
+<p class="tags"><span class="tag built">Gate measured</span><span class="muted small">grading tasks not built</span></p>
 <p>A model that cannot meet timing has an easy way out: declare the failing path a false path, a multicycle path or part of an asynchronous clock group. Vivado applies any exception it is given, and the timing summary reads clean. Its methodology checks catch some cases, but a passing slack figure alone cannot tell a real pass from a hidden failure.</p>
-<p>The planned grading tasks each seed a real violation: a slow synchronous path, a failing path between related clocks, or an unsynchronised crossing. A task passes only if the violation stays visible after the agent's constraints are applied, and a repaired twin of the design must meet timing with the same constraints.</p>
+<p>The flow now has a gate for this. After synthesis and after routing it fails a run with an exception that Vivado ignored or that covers no path, a constraint message from an XDC line, or a multicycle path whose registers do not share a real clock enable; a separate check before Vivado asks for a stated reason beside every false path. It was measured on small designs with one exception mistake each: the results are in <a href="expertise.html#constraints">Expertise, constraints</a>.</p>
+<p>What is still missing is the benchmark side. The planned grading tasks each seed a real violation: a slow synchronous path, a failing path between related clocks, or an unsynchronised crossing. A task passes only if the violation stays visible after the agent's constraints are applied, and a repaired twin of the design must meet timing with the same constraints.</p>
 <div class="cols"><div class="fig"><svg viewBox="0 0 400 124" role="img" aria-label="Without an exception: a path that fails setup" ><text x="6" y="16" class="big">Without an exception</text><rect class="boxink" x="14" y="36" width="64" height="30"/><text x="22" y="55">launch</text><rect class="box" x="132" y="36" width="116" height="30"/><text x="146" y="55">logic, too slow</text><rect class="boxink" x="302" y="36" width="64" height="30"/><text x="308" y="55">capture</text><line class="ink" x1="78" y1="51" x2="132" y2="51"/><line class="ink" x1="248" y1="51" x2="302" y2="51"/><text x="10" y="92">no exception on this path</text><text x="10" y="112">timing report: negative slack, violation listed</text></svg></div><div class="fig"><svg viewBox="0 0 400 124" role="img" aria-label="With a blanket false path: a path that fails setup" ><text x="6" y="16" class="big">With a blanket false path</text><rect class="boxink" x="14" y="36" width="64" height="30"/><text x="22" y="55">launch</text><rect class="box" x="132" y="36" width="116" height="30"/><text x="146" y="55">logic, too slow</text><rect class="boxink" x="302" y="36" width="64" height="30"/><text x="308" y="55">capture</text><line class="ink" x1="78" y1="51" x2="132" y2="51"/><line class="ink" x1="248" y1="51" x2="302" y2="51"/><rect class="dash" x="6" y="26" width="368" height="50"/><text x="10" y="92">set_false_path covers this path</text><text x="10" y="112">timing report: path not timed, no violation listed</text></svg></div></div>
 <p class="small muted">The check in outline: one failing path, with and without a false path over it. No measured values.</p>
-<p>The tasks are written down but not built or run, so there are no results. Among the methodology checks that catch some cases are TIMING-46 and TIMING-47.</p>
+<p>The grading tasks are written down but not built or run, so the agent has not yet been scored on this. Among the methodology checks that catch some cases are TIMING-46 and TIMING-47.</p>
 </article>
 
 <article class="card" id="gates">
@@ -480,13 +584,14 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 
 <article class="card" id="xsim">
 <h2>8. AMD's IP models need a simulator the tests cannot drive</h2>
-<p class="tags"><span class="tag plan">Planned</span></p>
+<p class="tags"><span class="tag plan">Not built</span></p>
 <p>AMD's DSP cores (FIR, FFT, DDS and others) ship encrypted simulation models that only AMD's xsim and licensed commercial simulators can run. The free simulators the agent uses cannot, and the cocotb test framework has no xsim back end. The plan is a harness that works through files: Python writes the stimulus and a seeded back-pressure pattern, a generic test bench replays it in xsim, and Python compares every output word with AMD's bit-accurate C model where one exists. A synthesis run at the target clock checks timing and resources. The harness is specified in the expertise survey but not built: no code or measurements yet.</p>
 </article>
+<p class="next">Next: <a href="expertise.html">Expertise</a> sets out what the agent knows and checks in each area of FPGA design, and how far the evidence goes.</p>
 
 <div class="pager"><a href="how.html">&larr; How it works</a><a href="expertise.html">Expertise &rarr;</a></div>
 </main>
-<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="flow_notes">{"counts":{"correct":12,"correct_pass":12,"gate_flags":10,"ported":10,"report_cdc_flags":5,"rig_mutants":12,"rig_sim_flags":9},"mutants":[{"gate":true,"gate_sim":false,"id":"M1","ported":true,"report_cdc":false,"rig_sim":false,"what":"two flops, no ASYNC_REG"},{"gate":true,"gate_sim":false,"id":"M1b","ported":true,"report_cdc":true,"rig_sim":false,"what":"one flop, no synchroniser"},{"gate":true,"gate_sim":false,"id":"M2","ported":true,"report_cdc":true,"rig_sim":true,"what":"one asynchronous bit into two flops, compared"},{"gate":true,"gate_sim":true,"id":"M3","ported":true,"report_cdc":false,"rig_sim":true,"what":"binary counter crossed bit by bit"},{"gate":true,"gate_sim":false,"id":"M4","ported":true,"report_cdc":true,"rig_sim":true,"what":"two toggles XORed before the synchroniser"},{"gate":true,"gate_sim":true,"id":"M5","ported":true,"report_cdc":false,"rig_sim":true,"what":"one-cycle pulse into a level synchroniser"},{"gate":true,"gate_sim":false,"id":"M6a","ported":true,"report_cdc":false,"rig_sim":false,"what":"Gray bus with no max-delay or bus-skew exception"},{"gate":true,"gate_sim":true,"id":"M7","ported":true,"report_cdc":false,"rig_sim":true,"what":"two flags synchronised separately, then compared"},{"gate":true,"gate_sim":false,"id":"M8","ported":true,"report_cdc":true,"rig_sim":true,"what":"source reset clears a destination register"},{"gate":null,"gate_sim":null,"id":"M9","ported":false,"report_cdc":null,"rig_sim":true,"what":"async FIFO reset on the write side only"},{"gate":true,"gate_sim":false,"id":"M10","ported":true,"report_cdc":true,"rig_sim":true,"what":"raw reset released asynchronously into destination flops"},{"gate":null,"gate_sim":null,"id":"M11","ported":false,"report_cdc":null,"rig_sim":true,"what":"2-phase handshake, source side reset alone"}],"tear":{"configs":{"binary_extra":[{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":0,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":1,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":2,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":3,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,1],"t":4,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":5,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":6,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":7,"torn":0},{"cur":2,"f1":[0,0,1,0],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":1,"seen":1,"src":[0,0,1,0],"t":8,"torn":0},{"cur":2,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,0],"t":9,"torn":0},{"cur":2,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,0],"t":10,"torn":0},{"cur":2,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,0],"t":11,"torn":0},{"cur":3,"f1":[0,0,1,1],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":2,"seen":2,"src":[0,0,1,1],"t":12,"torn":0},{"cur":3,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,1],"t":13,"torn":0},{"cur":3,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,1],"t":14,"torn":0},{"cur":3,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,1],"t":15,"torn":0},{"cur":4,"f1":[0,1,0,1],"f2":[0,0,1,1],"held":[0,0,0,1],"prev":3,"seen":3,"src":[0,1,0,0],"t":16,"torn":0},{"cur":4,"f1":[0,1,0,0],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":3,"seen":5,"src":[0,1,0,0],"t":17,"torn":1},{"cur":4,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,0,0],"t":18,"torn":0},{"cur":4,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,0,0],"t":19,"torn":0},{"cur":5,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,1],"prev":4,"seen":4,"src":[0,1,0,1],"t":20,"torn":0},{"cur":5,"f1":[0,1,0,1],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":4,"seen":4,"src":[0,1,0,1],"t":21,"torn":0},{"cur":5,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,0,1],"t":22,"torn":0},{"cur":5,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,0,1],"t":23,"torn":0},{"cur":6,"f1":[0,1,1,0],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":5,"seen":5,"src":[0,1,1,0],"t":24,"torn":0},{"cur":6,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,1,0],"t":25,"torn":0},{"cur":6,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,1,0],"t":26,"torn":0},{"cur":6,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,1,0],"t":27,"torn":0},{"cur":7,"f1":[0,1,1,1],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":6,"seen":6,"src":[0,1,1,1],"t":28,"torn":0},{"cur":7,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,1,1],"t":29,"torn":0},{"cur":7,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,1,1],"t":30,"torn":0},{"cur":7,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,1,1],"t":31,"torn":0},{"cur":8,"f1":[0,1,1,0],"f2":[0,1,1,1],"held":[1,1,1,0],"prev":7,"seen":7,"src":[1,0,0,0],"t":32,"torn":0},{"cur":8,"f1":[1,0,0,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":7,"seen":6,"src":[1,0,0,0],"t":33,"torn":1},{"cur":8,"f1":[1,0,0,0],"f2":[1,0,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,0,0,0],"t":34,"torn":0},{"cur":8,"f1":[1,0,0,0],"f2":[1,0,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,0,0,0],"t":35,"torn":0},{"cur":9,"f1":[1,0,0,1],"f2":[1,0,0,0],"held":[0,0,0,0],"prev":8,"seen":8,"src":[1,0,0,1],"t":36,"torn":0},{"cur":9,"f1":[1,0,0,1],"f2":[1,0,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,0,0,1],"t":37,"torn":0},{"cur":9,"f1":[1,0,0,1],"f2":[1,0,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,0,0,1],"t":38,"torn":0},{"cur":9,"f1":[1,0,0,1],"f2":[1,0,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,0,0,1],"t":39,"torn":0},{"cur":10,"f1":[1,0,0,1],"f2":[1,0,0,1],"held":[0,0,1,1],"prev":9,"seen":9,"src":[1,0,1,0],"t":40,"torn":0},{"cur":10,"f1":[1,0,1,0],"f2":[1,0,0,1],"held":[0,0,0,0],"prev":9,"seen":9,"src":[1,0,1,0],"t":41,"torn":0},{"cur":10,"f1":[1,0,1,0],"f2":[1,0,1,0],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,0,1,0],"t":42,"torn":0},{"cur":10,"f1":[1,0,1,0],"f2":[1,0,1,0],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,0,1,0],"t":43,"torn":0},{"cur":11,"f1":[1,0,1,0],"f2":[1,0,1,0],"held":[0,0,0,1],"prev":10,"seen":10,"src":[1,0,1,1],"t":44,"torn":0},{"cur":11,"f1":[1,0,1,1],"f2":[1,0,1,0],"held":[0,0,0,0],"prev":10,"seen":10,"src":[1,0,1,1],"t":45,"torn":0},{"cur":11,"f1":[1,0,1,1],"f2":[1,0,1,1],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,0,1,1],"t":46,"torn":0},{"cur":11,"f1":[1,0,1,1],"f2":[1,0,1,1],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,0,1,1],"t":47,"torn":0}],"binary_plain":[{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":0,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":1,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":2,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":3,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,1],"t":4,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":5,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":6,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":7,"torn":0},{"cur":2,"f1":[0,0,1,0],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":1,"seen":1,"src":[0,0,1,0],"t":8,"torn":0},{"cur":2,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,0],"t":9,"torn":0},{"cur":2,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,0],"t":10,"torn":0},{"cur":2,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,0],"t":11,"torn":0},{"cur":3,"f1":[0,0,1,1],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":2,"seen":2,"src":[0,0,1,1],"t":12,"torn":0},{"cur":3,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,1],"t":13,"torn":0},{"cur":3,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,1],"t":14,"torn":0},{"cur":3,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,1],"t":15,"torn":0},{"cur":4,"f1":[0,1,0,0],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":3,"seen":3,"src":[0,1,0,0],"t":16,"torn":0},{"cur":4,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,0,0],"t":17,"torn":0},{"cur":4,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,0,0],"t":18,"torn":0},{"cur":4,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,0,0],"t":19,"torn":0},{"cur":5,"f1":[0,1,0,1],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":4,"seen":4,"src":[0,1,0,1],"t":20,"torn":0},{"cur":5,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,0,1],"t":21,"torn":0},{"cur":5,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,0,1],"t":22,"torn":0},{"cur":5,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,0,1],"t":23,"torn":0},{"cur":6,"f1":[0,1,1,0],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":5,"seen":5,"src":[0,1,1,0],"t":24,"torn":0},{"cur":6,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,1,0],"t":25,"torn":0},{"cur":6,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,1,0],"t":26,"torn":0},{"cur":6,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,1,0],"t":27,"torn":0},{"cur":7,"f1":[0,1,1,1],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":6,"seen":6,"src":[0,1,1,1],"t":28,"torn":0},{"cur":7,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,1,1],"t":29,"torn":0},{"cur":7,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,1,1],"t":30,"torn":0},{"cur":7,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,1,1],"t":31,"torn":0},{"cur":8,"f1":[1,0,0,0],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":7,"seen":7,"src":[1,0,0,0],"t":32,"torn":0},{"cur":8,"f1":[1,0,0,0],"f2":[1,0,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,0,0,0],"t":33,"torn":0},{"cur":8,"f1":[1,0,0,0],"f2":[1,0,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,0,0,0],"t":34,"torn":0},{"cur":8,"f1":[1,0,0,0],"f2":[1,0,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,0,0,0],"t":35,"torn":0},{"cur":9,"f1":[1,0,0,1],"f2":[1,0,0,0],"held":[0,0,0,0],"prev":8,"seen":8,"src":[1,0,0,1],"t":36,"torn":0},{"cur":9,"f1":[1,0,0,1],"f2":[1,0,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,0,0,1],"t":37,"torn":0},{"cur":9,"f1":[1,0,0,1],"f2":[1,0,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,0,0,1],"t":38,"torn":0},{"cur":9,"f1":[1,0,0,1],"f2":[1,0,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,0,0,1],"t":39,"torn":0},{"cur":10,"f1":[1,0,1,0],"f2":[1,0,0,1],"held":[0,0,0,0],"prev":9,"seen":9,"src":[1,0,1,0],"t":40,"torn":0},{"cur":10,"f1":[1,0,1,0],"f2":[1,0,1,0],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,0,1,0],"t":41,"torn":0},{"cur":10,"f1":[1,0,1,0],"f2":[1,0,1,0],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,0,1,0],"t":42,"torn":0},{"cur":10,"f1":[1,0,1,0],"f2":[1,0,1,0],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,0,1,0],"t":43,"torn":0},{"cur":11,"f1":[1,0,1,1],"f2":[1,0,1,0],"held":[0,0,0,0],"prev":10,"seen":10,"src":[1,0,1,1],"t":44,"torn":0},{"cur":11,"f1":[1,0,1,1],"f2":[1,0,1,1],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,0,1,1],"t":45,"torn":0},{"cur":11,"f1":[1,0,1,1],"f2":[1,0,1,1],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,0,1,1],"t":46,"torn":0},{"cur":11,"f1":[1,0,1,1],"f2":[1,0,1,1],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,0,1,1],"t":47,"torn":0}],"gray_extra":[{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":0,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":1,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":2,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":3,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,1],"t":4,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":5,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":6,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":7,"torn":0},{"cur":2,"f1":[0,0,1,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":1,"seen":1,"src":[0,0,1,1],"t":8,"torn":0},{"cur":2,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,1],"t":9,"torn":0},{"cur":2,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,1],"t":10,"torn":0},{"cur":2,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,1],"t":11,"torn":0},{"cur":3,"f1":[0,0,1,0],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":2,"seen":2,"src":[0,0,1,0],"t":12,"torn":0},{"cur":3,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,0],"t":13,"torn":0},{"cur":3,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,0],"t":14,"torn":0},{"cur":3,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,0],"t":15,"torn":0},{"cur":4,"f1":[0,1,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":3,"seen":3,"src":[0,1,1,0],"t":16,"torn":0},{"cur":4,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,1,0],"t":17,"torn":0},{"cur":4,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,1,0],"t":18,"torn":0},{"cur":4,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,1,0],"t":19,"torn":0},{"cur":5,"f1":[0,1,1,1],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":4,"seen":4,"src":[0,1,1,1],"t":20,"torn":0},{"cur":5,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,1,1],"t":21,"torn":0},{"cur":5,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,1,1],"t":22,"torn":0},{"cur":5,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,1,1],"t":23,"torn":0},{"cur":6,"f1":[0,1,0,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":5,"seen":5,"src":[0,1,0,1],"t":24,"torn":0},{"cur":6,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,0,1],"t":25,"torn":0},{"cur":6,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,0,1],"t":26,"torn":0},{"cur":6,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,0,1],"t":27,"torn":0},{"cur":7,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,1],"prev":6,"seen":6,"src":[0,1,0,0],"t":28,"torn":0},{"cur":7,"f1":[0,1,0,0],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":6,"seen":6,"src":[0,1,0,0],"t":29,"torn":0},{"cur":7,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,0,0],"t":30,"torn":0},{"cur":7,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,0,0],"t":31,"torn":0},{"cur":8,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[1,0,0,0],"prev":7,"seen":7,"src":[1,1,0,0],"t":32,"torn":0},{"cur":8,"f1":[1,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":7,"seen":7,"src":[1,1,0,0],"t":33,"torn":0},{"cur":8,"f1":[1,1,0,0],"f2":[1,1,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,1,0,0],"t":34,"torn":0},{"cur":8,"f1":[1,1,0,0],"f2":[1,1,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,1,0,0],"t":35,"torn":0},{"cur":9,"f1":[1,1,0,1],"f2":[1,1,0,0],"held":[0,0,0,0],"prev":8,"seen":8,"src":[1,1,0,1],"t":36,"torn":0},{"cur":9,"f1":[1,1,0,1],"f2":[1,1,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,1,0,1],"t":37,"torn":0},{"cur":9,"f1":[1,1,0,1],"f2":[1,1,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,1,0,1],"t":38,"torn":0},{"cur":9,"f1":[1,1,0,1],"f2":[1,1,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,1,0,1],"t":39,"torn":0},{"cur":10,"f1":[1,1,1,1],"f2":[1,1,0,1],"held":[0,0,0,0],"prev":9,"seen":9,"src":[1,1,1,1],"t":40,"torn":0},{"cur":10,"f1":[1,1,1,1],"f2":[1,1,1,1],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,1,1,1],"t":41,"torn":0},{"cur":10,"f1":[1,1,1,1],"f2":[1,1,1,1],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,1,1,1],"t":42,"torn":0},{"cur":10,"f1":[1,1,1,1],"f2":[1,1,1,1],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,1,1,1],"t":43,"torn":0},{"cur":11,"f1":[1,1,1,0],"f2":[1,1,1,1],"held":[0,0,0,0],"prev":10,"seen":10,"src":[1,1,1,0],"t":44,"torn":0},{"cur":11,"f1":[1,1,1,0],"f2":[1,1,1,0],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,1,1,0],"t":45,"torn":0},{"cur":11,"f1":[1,1,1,0],"f2":[1,1,1,0],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,1,1,0],"t":46,"torn":0},{"cur":11,"f1":[1,1,1,0],"f2":[1,1,1,0],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,1,1,0],"t":47,"torn":0}],"gray_plain":[{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":0,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":1,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":2,"torn":0},{"cur":0,"f1":[0,0,0,0],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,0],"t":3,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,0],"held":[0,0,0,0],"prev":0,"seen":0,"src":[0,0,0,1],"t":4,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":5,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":6,"torn":0},{"cur":1,"f1":[0,0,0,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":0,"seen":1,"src":[0,0,0,1],"t":7,"torn":0},{"cur":2,"f1":[0,0,1,1],"f2":[0,0,0,1],"held":[0,0,0,0],"prev":1,"seen":1,"src":[0,0,1,1],"t":8,"torn":0},{"cur":2,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,1],"t":9,"torn":0},{"cur":2,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,1],"t":10,"torn":0},{"cur":2,"f1":[0,0,1,1],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":1,"seen":2,"src":[0,0,1,1],"t":11,"torn":0},{"cur":3,"f1":[0,0,1,0],"f2":[0,0,1,1],"held":[0,0,0,0],"prev":2,"seen":2,"src":[0,0,1,0],"t":12,"torn":0},{"cur":3,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,0],"t":13,"torn":0},{"cur":3,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,0],"t":14,"torn":0},{"cur":3,"f1":[0,0,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":2,"seen":3,"src":[0,0,1,0],"t":15,"torn":0},{"cur":4,"f1":[0,1,1,0],"f2":[0,0,1,0],"held":[0,0,0,0],"prev":3,"seen":3,"src":[0,1,1,0],"t":16,"torn":0},{"cur":4,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,1,0],"t":17,"torn":0},{"cur":4,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,1,0],"t":18,"torn":0},{"cur":4,"f1":[0,1,1,0],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":3,"seen":4,"src":[0,1,1,0],"t":19,"torn":0},{"cur":5,"f1":[0,1,1,1],"f2":[0,1,1,0],"held":[0,0,0,0],"prev":4,"seen":4,"src":[0,1,1,1],"t":20,"torn":0},{"cur":5,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,1,1],"t":21,"torn":0},{"cur":5,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,1,1],"t":22,"torn":0},{"cur":5,"f1":[0,1,1,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":4,"seen":5,"src":[0,1,1,1],"t":23,"torn":0},{"cur":6,"f1":[0,1,0,1],"f2":[0,1,1,1],"held":[0,0,0,0],"prev":5,"seen":5,"src":[0,1,0,1],"t":24,"torn":0},{"cur":6,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,0,1],"t":25,"torn":0},{"cur":6,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,0,1],"t":26,"torn":0},{"cur":6,"f1":[0,1,0,1],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":5,"seen":6,"src":[0,1,0,1],"t":27,"torn":0},{"cur":7,"f1":[0,1,0,0],"f2":[0,1,0,1],"held":[0,0,0,0],"prev":6,"seen":6,"src":[0,1,0,0],"t":28,"torn":0},{"cur":7,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,0,0],"t":29,"torn":0},{"cur":7,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,0,0],"t":30,"torn":0},{"cur":7,"f1":[0,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":6,"seen":7,"src":[0,1,0,0],"t":31,"torn":0},{"cur":8,"f1":[1,1,0,0],"f2":[0,1,0,0],"held":[0,0,0,0],"prev":7,"seen":7,"src":[1,1,0,0],"t":32,"torn":0},{"cur":8,"f1":[1,1,0,0],"f2":[1,1,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,1,0,0],"t":33,"torn":0},{"cur":8,"f1":[1,1,0,0],"f2":[1,1,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,1,0,0],"t":34,"torn":0},{"cur":8,"f1":[1,1,0,0],"f2":[1,1,0,0],"held":[0,0,0,0],"prev":7,"seen":8,"src":[1,1,0,0],"t":35,"torn":0},{"cur":9,"f1":[1,1,0,1],"f2":[1,1,0,0],"held":[0,0,0,0],"prev":8,"seen":8,"src":[1,1,0,1],"t":36,"torn":0},{"cur":9,"f1":[1,1,0,1],"f2":[1,1,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,1,0,1],"t":37,"torn":0},{"cur":9,"f1":[1,1,0,1],"f2":[1,1,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,1,0,1],"t":38,"torn":0},{"cur":9,"f1":[1,1,0,1],"f2":[1,1,0,1],"held":[0,0,0,0],"prev":8,"seen":9,"src":[1,1,0,1],"t":39,"torn":0},{"cur":10,"f1":[1,1,1,1],"f2":[1,1,0,1],"held":[0,0,0,0],"prev":9,"seen":9,"src":[1,1,1,1],"t":40,"torn":0},{"cur":10,"f1":[1,1,1,1],"f2":[1,1,1,1],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,1,1,1],"t":41,"torn":0},{"cur":10,"f1":[1,1,1,1],"f2":[1,1,1,1],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,1,1,1],"t":42,"torn":0},{"cur":10,"f1":[1,1,1,1],"f2":[1,1,1,1],"held":[0,0,0,0],"prev":9,"seen":10,"src":[1,1,1,1],"t":43,"torn":0},{"cur":11,"f1":[1,1,1,0],"f2":[1,1,1,1],"held":[0,0,0,0],"prev":10,"seen":10,"src":[1,1,1,0],"t":44,"torn":0},{"cur":11,"f1":[1,1,1,0],"f2":[1,1,1,0],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,1,1,0],"t":45,"torn":0},{"cur":11,"f1":[1,1,1,0],"f2":[1,1,1,0],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,1,1,0],"t":46,"torn":0},{"cur":11,"f1":[1,1,1,0],"f2":[1,1,1,0],"held":[0,0,0,0],"prev":10,"seen":11,"src":[1,1,1,0],"t":47,"torn":0}]},"frames":48,"hold":4,"seed":5,"stats":[{"bus":"binary","cycles":4000,"extra_cycle":false,"torn_cycles":0},{"bus":"binary","cycles":4000,"extra_cycle":true,"torn_cycles":313},{"bus":"gray","cycles":4000,"extra_cycle":false,"torn_cycles":0},{"bus":"gray","cycles":4000,"extra_cycle":true,"torn_cycles":0}],"width":4},"xpm":{"after":{"failing_endpoints":0,"report_cdc_exception":{"gray":"Max Delay Datapath Only","single":"False Path"},"tns_ns":0.0,"total_endpoints":4,"what":"FDA_STOP_AFTER=route flow/run_vivado.sh (with flow/xpm_cdc.tcl)","wns_ns":8.891},"before":{"failing_endpoints":5,"report_cdc_exception":{"gray":"None","single":"None"},"tns_ns":-6.222,"total_endpoints":5,"what":"FDA_XPM_CDC=0 FDA_STOP_AFTER=route flow/run_vivado.sh (without flow/xpm_cdc.tcl)","wns_ns":-1.364},"clk_a_period_ns":10,"clk_b_period_ns":7,"design":"flow/tests/fixtures/xpm_probe (two clocks, one xpm_cdc_single, one xpm_cdc_gray), built as designs/qr_xpm_probe","part":"xc7a100tcsg324-1","vivado":"2026.1"}}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -545,7 +650,7 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
     root.appendChild(ctl);
     if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
     function show() {
-      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      rng.value = i; pos.textContent = (i + 1) + " / " + n; rng.setAttribute("aria-valuetext", "step " + (i + 1) + " of " + n);
       var c = onFrame(i);
       if (live && c != null) live.textContent = c;
     }
@@ -1224,10 +1329,219 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
         if (on[p.dataset.p]) p.parentNode.insertBefore(p, p.parentNode.querySelector("[data-tok]")); });   /* lit paths drawn over the shared rail */
       all("[data-person]").forEach(function (g) { cls(g, "on", g.dataset.person === f.person); });
       move(f, !reduce);
+      if (strip) { var vi = vOf[i]; vbox.forEach(function (b, k) { cls(b, "now", k === vi); cls(b, "past", vi != null && k < vi); }); }
       return f.cap;
+    }
+    /* the run's stage visits in order, one box each; a repair (a visit to the same or an earlier stage, as loop.py counts it) is hatched */
+    var V = [], vOf = [], key = null;
+    F.forEach(function (f, i) {
+      if (f.stage == null) { vOf.push(V.length ? V.length - 1 : null); return; }
+      var k = f.stage + "/" + f.visit;
+      if (k !== key) { V.push({ stage: f.stage, visit: f.visit, visits: f.visits, rep: V.length > 0 && f.stage <= V[V.length - 1].stage }); key = k; }
+      vOf.push(V.length - 1);
+    });
+    var strip = null, vbox = [];
+    if (V.length > 1) {
+      var nrep = V.filter(function (v) { return v.rep; }).length;
+      strip = el("div", { class: "visits", role: "img", "aria-label": "Stage visits in this run: " + V.length + ", of them " + nrep + " repairs" });
+      strip.appendChild(el("span", { class: "vlab small muted", text: V.length + " stage visits by stage number; hatched, the " + nrep + " repairs:" }));
+      V.forEach(function (v) { var b = el("span", { class: "vb" + (v.rep ? " rep" : ""), text: String(v.stage), title: "stage " + v.stage + ", visit " + v.visit + " of " + v.visits + (v.rep ? ", a repair" : "") }); vbox.push(b); strip.appendChild(b); });
+      host.insertBefore(strip, host.querySelector(".cap"));
     }
     Player(host, F.length, frame, { autoplay: true, interval: 1150 });
   }
+  /* ---------- showcase graphics kit (brief 61): a hero replayed from a project's committed data ----------
+     Contract: docs/showcase_pages.md. Each kind returns {n, frame(i) -> caption}; the Player gives play, step, scrub,
+     speed and reset; under reduced motion nothing plays and the last frame (the whole result) is shown. */
+  /* wave with stages (docs/showcase_pages.md, "wave" options): a strip of the run's stages above the plot, the samples
+     revealed as the capture runs, marks (trigger, a change) that appear when the reveal reaches them. Frames: one per
+     stage caption before the capture, one per sample while the "during" stage is lit, one per caption after it. The last
+     frame shows everything, so reduced motion (which jumps to it) loses nothing. Text in the plot is at least 11 units in
+     a 360-unit-wide drawing, so it stays legible at 390 px. */
+  function stagedWave(art, T) {
+    var staged = !!T.stages;
+    /* the drawing is as wide as its box (360 to 720 units), so 13-unit text is about 12 to 13 px from a phone to a desktop */
+    var n = T.x.length, LW = 64, W = Math.max(360, Math.min(720, Math.round(art.clientWidth || 360))), CW = (W - LW - 4) / n, RH = 44, AX = 26;
+    var H = AX + T.signals.length * RH + ((T.marks || []).length ? 44 : 10);   /* room for the mark labels, one row each */
+    var frames = [];
+    if (!staged) for (var q = 0; q < n; q++) frames.push({ stage: -1, show: q, cap: (T.captions && T.captions[q]) || null });
+    (T.stages || []).forEach(function (st, si) {
+      var caps = st.captions || [];
+      if (st.phase === "before" || st.phase === "during") caps.forEach(function (c) { frames.push({ stage: si, show: -1, cap: c }); });
+      if (st.phase === "during") for (var k = 0; k < n; k++) frames.push({ stage: si, show: k, cap: (T.captions && T.captions[k]) || null });
+      if (st.phase === "after") caps.forEach(function (c) { frames.push({ stage: si, show: n - 1, cap: c }); });
+    });
+    var items = [];
+    if (staged) {
+      var strip = el("ol", { class: "stagestrip", "aria-label": "Stages of the run" });
+      items = T.stages.map(function (st) {
+        var li = el("li", {}, [el("span", { class: "sn", text: st.name }), el("span", { class: "sf", text: st.fact || "" })]);
+        strip.appendChild(li); return li;
+      });
+      art.appendChild(strip);
+    }
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "kitsvg stagedwave",
+      "aria-label": T.alt || ("Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s") });
+    function X(i) { return LW + i * CW; }
+    var step = T.tick || Math.max(1, Math.ceil(n / 6));
+    for (var i = 0; i < n; i++) if (T.x[i] % step === 0) {
+      s.appendChild(sv("line", { x1: X(i) + CW / 2, x2: X(i) + CW / 2, y1: AX - 6, y2: AX - 2, class: "rule" }));
+      s.appendChild(sv("text", { x: X(i) + CW / 2, y: AX - 9, "text-anchor": "middle", class: "kt" }, T.x[i]));
+    }
+    s.appendChild(sv("text", { x: 0, y: AX - 9, class: "kt" }, T.unit));
+    T.signals.forEach(function (g, r) {
+      var y0 = AX + r * RH, top = y0 + 8, bot = y0 + RH - 10, mid = (top + bot) / 2;
+      s.appendChild(sv("text", { x: 0, y: mid + 4, class: "kl" }, g.name.length > 8 ? g.name.slice(0, 7) + "." : g.name));
+      s.appendChild(sv("line", { x1: LW, x2: X(n), y1: y0 + RH - 1, y2: y0 + RH - 1, class: "rule" }));
+      if (g.kind === "bit") {
+        var d = "";
+        g.v.forEach(function (v, k) { var y = v ? top : bot; d += (k ? "L" : "M") + X(k).toFixed(1) + " " + y + " L" + X(k + 1).toFixed(1) + " " + y + " "; });
+        s.appendChild(sv("path", { d: d, class: "ink", "stroke-width": 1.6 }));
+      } else if (g.kind === "wave") {
+        var lo = g.lo != null ? g.lo : Math.min.apply(null, g.v), hi = g.hi != null ? g.hi : Math.max.apply(null, g.v); if (hi === lo) hi = lo + 1;
+        var dw = "";
+        g.v.forEach(function (v, k) { var y = bot - (bot - top) * (v - lo) / (hi - lo); dw += (k ? "L" : "M") + (X(k) + CW / 2).toFixed(1) + " " + y.toFixed(1) + " "; });
+        s.appendChild(sv("path", { d: dw, class: "ink", "stroke-width": 1.6 }));
+      } else {
+        var a = 0;
+        for (var k = 1; k <= n; k++) {
+          if (k === n || g.v[k] !== g.v[a]) {
+            var x1 = X(a), x2 = X(k), txt = g.kind === "text" ? String(g.v[a]) : fmtv(g, g.v[a]);
+            s.appendChild(sv("path", { d: "M" + x1.toFixed(1) + " " + mid + " L" + (x1 + 3).toFixed(1) + " " + top + " L" + (x2 - 3).toFixed(1) + " " + top + " L" + x2.toFixed(1) + " " + mid + " L" + (x2 - 3).toFixed(1) + " " + bot + " L" + (x1 + 3).toFixed(1) + " " + bot + " Z", class: "ink", "stroke-width": 1.2 }));
+            if (x2 - x1 > txt.length * 8 + 8) s.appendChild(sv("text", { x: x1 + 5, y: mid + 4, class: "kv" }, txt));
+            a = k;
+          }
+        }
+      }
+    });
+    /* staged: the samples not yet captured are hidden; plain: a cursor band and line, nothing dimmed */
+    var shade = staged ? sv("rect", { x: X(0), y: AX - 2, width: W, height: H, class: "future solid" })
+                       : sv("rect", { x: X(0), y: AX - 2, width: CW, height: T.signals.length * RH + 2, class: "cursor" });
+    s.appendChild(shade);
+    var marks = (T.marks || []).map(function (m) {
+      var k = T.x.indexOf(m.x), g = sv("g", { class: "kmarkg" });
+      var r0 = m.signal ? 1 : 0, x = X(k) + (m.signal ? 0 : CW / 2), r = m.signal ? T.signals.map(function (q) { return q.name; }).indexOf(m.signal) : -1;
+      if (r < 0) {
+        g.appendChild(sv("line", { x1: x, x2: x, y1: AX - 2, y2: H - 38, class: "kmark" }));
+        g.appendChild(sv("text", { x: x + 3, y: H - 24, class: "kt" }, m.label));
+      } else {
+        var y0 = AX + r * RH;
+        g.appendChild(sv("rect", { x: x - 4, y: y0 + 3, width: 8, height: RH - 8, class: "kring" }));
+        g.appendChild(sv("text", { x: Math.min(x + 7, W - 4), y: H - 5, class: "kt", "text-anchor": x > W * 0.6 ? "end" : "start" }, m.label));
+      }
+      s.appendChild(g); return { k: k, g: g };
+    });
+    art.appendChild(s);
+    if (T.alt) art.appendChild(el("p", { class: "visually-hidden", text: T.alt }));
+    return { n: frames.length, interval: 650, frame: function (i) {
+      var F = frames[i], k = F.show;
+      items.forEach(function (li, j) { li.classList.toggle("on", j === F.stage); li.classList.toggle("done", j < F.stage); });
+      shade.setAttribute("x", (staged ? (k < 0 ? X(0) : X(k + 1)) : X(k)).toFixed(1));
+      marks.forEach(function (m) { m.g.style.visibility = (!staged || k >= m.k) ? "visible" : "hidden"; });
+      if (F.cap) return F.cap;
+      var vals = T.signals.map(function (g) { return g.name + " " + fmtv(g, g.v[k]); }).join(", ");
+      return T.unit + " " + T.x[k] + ": " + vals + ".";
+    } };
+  }
+  function nf(v) { return Math.abs(v) >= 100 ? String(Math.round(v)) : String(+v.toPrecision(3)); }
+  var KIT = {
+    wave: function (art, T) {
+      return stagedWave(art, T);        /* with or without stages: the legible kit plot (docs/showcase_pages.md) */
+    },
+    hist: function (art, H) {
+      var xs = H.samples, N = xs.length, B = H.bins;
+      var lo = H.lo != null ? H.lo : Math.min.apply(null, xs), hi = H.hi != null ? H.hi : Math.max.apply(null, xs); if (hi === lo) hi = lo + 1;
+      function bin(v) { return Math.min(B - 1, Math.max(0, Math.floor((v - lo) / (hi - lo) * B))); }
+      var full = new Array(B).fill(0); xs.forEach(function (v) { full[bin(v)]++; });
+      var top = Math.max.apply(null, full);
+      var W = 360, Ht = 210, L = 34, R = 10, T0 = 26, Bo = 174, bw = (W - L - R) / B;
+      var s = sv("svg", { viewBox: "0 0 " + W + " " + Ht, width: "100%", role: "img", class: "kitsvg",
+        "aria-label": "Histogram of " + N + " " + (H.label || "samples") + " in " + H.unit + ", from " + nf(lo) + " to " + nf(hi) });
+      s.appendChild(sv("line", { x1: L, x2: W - R, y1: Bo, y2: Bo, class: "ink" }));
+      [lo, (lo + hi) / 2, hi].forEach(function (v, k) { s.appendChild(sv("text", { x: L + (W - L - R) * k / 2, y: Bo + 15, "text-anchor": ["start", "middle", "end"][k] }, nf(v))); });
+      s.appendChild(sv("text", { x: (W + L) / 2, y: Bo + 31, "text-anchor": "middle" }, (H.label || "value") + " (" + H.unit + ")"));
+      s.appendChild(sv("text", { x: L - 4, y: T0 + 4, "text-anchor": "end" }, String(top)));
+      s.appendChild(sv("text", { x: L - 4, y: Bo, "text-anchor": "end" }, "0"));
+      var bars = full.map(function (_, k) { var r = sv("rect", { x: (L + k * bw + .5).toFixed(1), width: Math.max(1, bw - 1).toFixed(1), y: Bo, height: 0, class: "kbar" }); s.appendChild(r); return r; });
+      (H.marks || []).forEach(function (m) {
+        var x = L + (W - L - R) * (m.v - lo) / (hi - lo);
+        s.appendChild(sv("line", { x1: x, x2: x, y1: T0 - 8, y2: Bo, class: "kmark" }));
+        s.appendChild(sv("text", { x: x + 3, y: T0 - 10 }, m.label));
+      });
+      var head = sv("text", { x: W - R, y: 12, "text-anchor": "end", class: "kcount" }, "");
+      s.appendChild(head); art.appendChild(s);
+      var steps = Math.min(N, 60);
+      return { n: steps, interval: 260, frame: function (i) {
+        var m = Math.ceil((i + 1) * N / steps), c = new Array(B).fill(0), seen = xs.slice(0, m);
+        seen.forEach(function (v) { c[bin(v)]++; });
+        c.forEach(function (v, k) { var h = (Bo - T0) * v / top; bars[k].setAttribute("y", (Bo - h).toFixed(1)); bars[k].setAttribute("height", h.toFixed(1)); });
+        var last = xs[m - 1]; bars.forEach(function (b, k) { b.classList.toggle("now", k === bin(last)); });
+        var srt = seen.slice().sort(function (a, b) { return a - b; });
+        head.textContent = m + " of " + N;
+        return m + " of " + N + " " + (H.label || "samples") + " so far; median " + nf(srt[Math.floor((m - 1) / 2)]) + " " + H.unit +
+          ", largest " + nf(srt[m - 1]) + " " + H.unit + "; latest " + nf(last) + " " + H.unit + ".";
+      } };
+    },
+    shmoo: function (art, S) {
+      var xv = S.x.values, yv = S.y.values, P = S.points, nx = xv.length, ny = yv.length;
+      var L = 58, T0 = 10, W = 360, cw = (W - L - 8) / nx, ch = Math.min(26, Math.max(12, 200 / ny)), Ht = T0 + ny * ch + 44;
+      var s = sv("svg", { viewBox: "0 0 " + W + " " + Ht, width: "100%", role: "img", class: "kitsvg",
+        "aria-label": "Shmoo plot: " + S.y.label + " against " + S.x.label + ", " + P.length + " points measured" });
+      function X(v) { return L + xv.indexOf(v) * cw; }
+      function Y(v) { return T0 + (ny - 1 - yv.indexOf(v)) * ch; }
+      for (var a = 0; a < nx; a++) for (var b = 0; b < ny; b++) s.appendChild(sv("rect", { x: L + a * cw + .5, y: T0 + b * ch + .5, width: cw - 1, height: ch - 1, class: "kcell" }));
+      var lab = Math.max(1, Math.ceil(nx / 6));
+      xv.forEach(function (v, k) { if (k % lab === 0 || k === nx - 1) s.appendChild(sv("text", { x: L + k * cw + cw / 2, y: T0 + ny * ch + 14, "text-anchor": "middle" }, String(v))); });
+      var laby = Math.max(1, Math.ceil(ny / 8));
+      yv.forEach(function (v, k) { if (k % laby === 0 || k === ny - 1) s.appendChild(sv("text", { x: L - 5, y: Y(v) + ch / 2 + 4, "text-anchor": "end" }, String(v))); });
+      s.appendChild(sv("text", { x: (W + L) / 2, y: T0 + ny * ch + 32, "text-anchor": "middle" }, S.x.label));
+      s.appendChild(sv("text", { x: 2, y: T0 - 0, class: "kaxis" }, S.y.label));
+      function pass(p) { return p.v === "pass" || p.v === 0; }
+      var cells = P.map(function (p) { var r = sv("rect", { x: X(p.x) + 1.5, y: Y(p.y) + 1.5, width: cw - 3, height: ch - 3, class: pass(p) ? "kpass" : "kfail" }); r.style.display = "none"; s.appendChild(r); return r; });
+      var cur = sv("rect", { x: 0, y: 0, width: cw, height: ch, class: "kcur" }); s.appendChild(cur); art.appendChild(s);
+      return { n: P.length, interval: 300, frame: function (i) {
+        cells.forEach(function (c, k) { c.style.display = k <= i ? "" : "none"; });
+        var p = P[i]; cur.setAttribute("x", X(p.x)); cur.setAttribute("y", Y(p.y));
+        var np = 0; for (var k = 0; k <= i; k++) if (pass(P[k])) np++;
+        return "Point " + (i + 1) + " of " + P.length + ": " + S.x.label + " " + p.x + ", " + S.y.label + " " + p.y + ": " +
+          (pass(p) ? "pass" : "fail" + (typeof p.v === "number" ? " (" + p.v + " " + (S.unit || "errors") + ")" : "")) + ". " + np + " passed so far.";
+      } };
+    }
+  };
+  function mountKit(root) {
+    var kind = root.getAttribute("data-kit"), d = D[root.getAttribute("data-key")], art = root.querySelector(".kitart");
+    if (!d || !KIT[kind] || !art) return;
+    var k = KIT[kind](art, d);
+    var pl = Player(root, k.n, k.frame, { autoplay: true, interval: k.interval });
+    if (reduce) pl.goto(k.n - 1);
+  }
+  document.querySelectorAll(".kit[data-kit]").forEach(mountKit);
+  /* ---------- every development run, by outcome (home): squares added in the order of the run records ---------- */
+  var LANES = [["pass", "passed"], ["caught_and_repaired", "gate failed, repaired, passed"], ["internal_stop_hidden_pass", "stopped early, hidden tests pass"],
+    ["escape", "escape: own checks passed, hidden failed"], ["fail", "failed"]];
+  function mountRuns(root) {
+    var d = D.dev, host = root.querySelector(".lanes"); if (!d || !host) return;
+    var R = d.runs_list, lanes = {};
+    LANES.forEach(function (l) {
+      var marks = el("div", { class: "marks" }), cnt = el("span", { class: "cnt" });
+      host.appendChild(el("div", { class: "lane" }, [el("span", { class: "lab", text: l[1] }), marks, cnt]));
+      lanes[l[0]] = { marks: marks, cnt: cnt };
+    });
+    var sq = R.map(function (r) {
+      var m = el("span", { class: "m " + r.outcome, title: r.task + " run " + r.run + ": hidden tests " + r.tests_passed + " of " + r.tests_total });
+      (lanes[r.outcome] || lanes.fail).marks.appendChild(m); return m;
+    });
+    function frame(i) {
+      var c = {};
+      sq.forEach(function (m, k) { m.style.visibility = k <= i ? "visible" : "hidden"; m.classList.toggle("now", k === i); if (k <= i) c[R[k].outcome] = (c[R[k].outcome] || 0) + 1; });
+      LANES.forEach(function (l) { lanes[l[0]].cnt.textContent = String(c[l[0]] || 0); });
+      var r = R[i];
+      return "Run " + (i + 1) + " of " + R.length + ": " + r.task + ", attempt " + r.run + ", hidden tests " + r.tests_passed + " of " + r.tests_total + ".";
+    }
+    var pl = Player(root, R.length, frame, { autoplay: true, interval: 450 });
+    if (reduce) pl.goto(R.length - 1);
+  }
+  var hr = document.getElementById("home-runs"); if (hr) mountRuns(hr);
   var lpr = document.getElementById("loop-player"); if (lpr) mountLoop(lpr);
   var agr = document.getElementById("agent-replay"); if (agr) mountAgent(agr);
   /* pipeline: a focused or clicked stage shows where its failures go back to */
@@ -1244,78 +1558,6 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
   mountDev(); mountEval1();
 })();
 
-/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
-   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
-(function () {
-  var cv = document.getElementById("fabric");
-  if (!cv || !cv.getContext) return;
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
-  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
-  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
-  function layout() {
-    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
-    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
-    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
-    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
-  }
-  function base() {
-    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
-    var hrow = Math.floor(rows / 2);
-    for (var c = 0; c < cols; c++) {
-      var x = c * T, k = kind[c];
-      for (var r = 0; r < rows; r++) {
-        var y = r * T;
-        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
-        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
-        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
-        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
-          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
-      }
-    }
-    ctx.globalAlpha = 1;
-  }
-  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
-  function net() {
-    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
-    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
-    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
-    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
-    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
-  }
-  function drawNet(n, alpha) {
-    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
-    for (var i = 1; i < n.p.length && left > 0; i++) {
-      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
-      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
-    }
-    ctx.stroke();
-    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
-    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
-    ctx.globalAlpha = 1;
-  }
-  function frame(now) {
-    if (!run) return;
-    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
-    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
-    nets = nets.filter(function (n) {
-      n.t += dt; var done = n.len / n.speed, a = .42;
-      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
-      if (a <= 0) return false; drawNet(n, a); return true;
-    });
-    requestAnimationFrame(frame);
-  }
-  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
-  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
-  start();
-  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
-  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
-  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
-  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
-
-})();
 
 /* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
 (function () {
