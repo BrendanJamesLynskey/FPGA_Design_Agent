@@ -1,5 +1,8 @@
-"""Reviewer's adversarial tests (not part of the PR): a bad trigger frame whose verdict arrives within a few clocks of
-the decision (frame truncated just after the price field), speculative and safe mode."""
+"""Adversarial regression tests from the independent review: a bad trigger frame whose verdict arrives within a few
+clocks of the decision (a frame cut short just after the price field, or a 74-76-byte frame with a wrong FCS), in
+speculative and safe mode, and good frames that make an order wait behind an ARP reply. Each test first puts a bid and
+an ask on the instruments it uses, because the price band is checked against the book before the triggering message
+(without that every order would be refused and the tests would pass for the wrong reason)."""
 from __future__ import annotations
 
 import os
@@ -9,7 +12,7 @@ import cocotb
 from designs.b58a_trigger.model import benchfeed as bf
 from designs.b58a_trigger.model import rules as rl
 from designs.b58a_trigger.model.ref_model import Config
-from designs.b58a_trigger.tests.b58a_cocotb import Bench, standard_rules
+from designs.b58a_trigger.tests.b58a_cocotb import Bench, prime, standard_rules
 
 SPEC = int(os.environ.get("REV_SPEC", "1"))
 
@@ -31,6 +34,8 @@ async def truncated_trigger_sweep(dut):
     cfg = Config(spec_en=bool(SPEC), bucket=1000, max_pos=100000)
     table = rl.table_words(rl.validate_table(standard_rules()))
     await b.config(cfg, table)
+    prime(b, None, insts=(3, 5))
+    await b.drain(100)
     trig = bf.Msg(bf.ADD, bf.ASK, 3, 9950, 10)
     quiet = bf.Msg(bf.ADD, bf.BID, 5, 9000, 1)
     seq = 1
@@ -60,6 +65,7 @@ async def truncated_trigger_sweep(dut):
         seq += 3
     hw = await b.counters()
     dut._log.info(f"counters { {k: v for k, v in hw.items() if v} }")
+    assert await slot_idle(b), "the order slot did not drain"
     assert not problems, "\n".join(problems)
 
 
@@ -71,6 +77,8 @@ async def non_runt_second_message(dut):
     await b.start()
     cfg = Config(spec_en=bool(SPEC), bucket=1000, max_pos=100000)
     await b.config(cfg, rl.table_words(rl.validate_table(standard_rules())))
+    prime(b, None, insts=(3, 5))
+    await b.drain(100)
     trig = bf.Msg(bf.ADD, bf.ASK, 3, 9950, 10)
     quiet = bf.Msg(bf.ADD, bf.BID, 5, 9000, 1)
     problems = []
@@ -97,6 +105,8 @@ async def good_frames_after_arp(dut):
     await b.start()
     cfg = Config(spec_en=bool(SPEC), bucket=100000, max_pos=10**7)
     await b.config(cfg, rl.table_words(rl.validate_table(standard_rules())))
+    prime(b, None, insts=(3,))
+    await b.drain(100)
     trig = bf.Msg(bf.ADD, bf.ASK, 3, 9950, 1)
     problems = []
     seq = 1
@@ -115,3 +125,9 @@ async def good_frames_after_arp(dut):
     hw = await b.counters()
     dut._log.info(f"counters { {k: v for k, v in hw.items() if v} }")
     assert not problems, problems
+
+
+async def slot_idle(b: Bench) -> bool:
+    """The order slot is empty and nothing is pending (register 0x009: active, cancel pending)."""
+    v = await b.rd(0x009)
+    return (v & 1) == 0 and ((v >> 7) & 1) == 0

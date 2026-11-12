@@ -1,4 +1,4 @@
-"""pytest entry: trigger_core (brief 58A) under cocotb + Icarus against the reference model.
+"""pytest entry: trigger_core under cocotb + Icarus against the reference model.
 
 B58A_RECORD=<dir> writes the latency, stale-parameter and loop results there (results/b58a when recorded)."""
 
@@ -39,12 +39,14 @@ def test_b58a_core() -> None:
                    extra_env=env)
 
 
-def test_b58a_assemble_then_send() -> None:
-    """The comparison build: the response frame is assembled after the decision, then sent."""
-    env = _env("_assemble") | {"B58A_BUILD_MODE": "1"}
-    cocotb_run.run("b58a_core_asm", "trigger_core", SOURCES, "b58a_cocotb", HERE,
-                   parameters={"BUILD_MODE": 1, "MDIO_DIV": 4}, testcase=["stage_latency", "speculative_undo_both_ways"],
-                   extra_env=env)
+@pytest.mark.parametrize("mode,tag", [(1, "_csum_after"), (2, "_assemble")])
+def test_b58a_build_modes(mode: int, tag: str) -> None:
+    """The comparison builds: 1 computes the IPv4 checksum after the decision (streamed as the MAC asks); 2 stores and
+    assembles the whole frame after the decision, then sends it."""
+    env = _env(tag) | {"B58A_BUILD_MODE": str(mode)}
+    cocotb_run.run(f"b58a_core_mode{mode}", "trigger_core", SOURCES, "b58a_cocotb", HERE,
+                   parameters={"BUILD_MODE": mode, "MDIO_DIV": 4},
+                   testcase=["stage_latency", "speculative_undo_both_ways"], extra_env=env)
 
 
 def test_b58a_pins() -> None:

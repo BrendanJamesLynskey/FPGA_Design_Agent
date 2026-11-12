@@ -1,4 +1,4 @@
-"""Mock venue: our own stand-in for a market on a bench (brief 58A). It publishes Bench Feed v1 market data and accepts
+"""Mock venue: our own stand-in for a market on a bench. It publishes Bench Feed v1 market data and accepts
 the board's mock orders. It models no real market, protocol or firm; prices and sizes are stimulus values.
 
 Two uses, one code path for the data:

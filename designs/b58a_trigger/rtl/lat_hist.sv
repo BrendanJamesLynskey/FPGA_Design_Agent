@@ -1,4 +1,4 @@
-// lat_hist.sv: a latency histogram in block RAM, with count, sum, minimum and maximum (brief 58A step 6).
+// lat_hist.sv: a latency histogram in block RAM, with count, sum, minimum and maximum.
 //
 // Each sample (s_v, s_val in clocks) adds one to bin s_val >> SHIFT; values beyond the last bin go to the last bin
 // (the overflow bin) and are still exact in min/max/sum. A sample takes two clocks (read, then write); samples closer

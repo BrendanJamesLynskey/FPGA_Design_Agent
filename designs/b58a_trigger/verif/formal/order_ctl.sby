@@ -1,0 +1,24 @@
+# SymbiYosys: the order slot of order_ctl.sv: an order from a bad frame is never started once that is known, is
+# poisoned or cancelled if it left, a cancel only follows a bad frame, safe mode never sends before a good verdict,
+# and the slot always drains (watchdog). Bounded check (not a proof) and cover.
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 30
+cover: mode cover
+cover: depth 30
+
+[engines]
+smtbmc --unroll z3
+
+[script]
+read_verilog -formal -sv order_ctl.sv
+read_verilog -formal -sv formal_order_ctl.sv
+prep -top formal_order_ctl
+
+[files]
+../../rtl/order_ctl.sv
+formal_order_ctl.sv

@@ -8,3 +8,5 @@ lint_off -rule PINCONNECTEMPTY
 lint_off -rule UNUSEDSIGNAL
 // Blocking temporaries declared inside always_ff blocks are deliberate.
 lint_off -rule BLKSEQ
+// RX_PHASE_DEG is used by the MMCMs that only exist in synthesis (the simulation branch has no MMCM).
+lint_off -rule UNUSEDPARAM -file "*kr260_top.sv"

@@ -1,8 +1,9 @@
-# Bench Feed v1: the mock message format of brief 58A
+# Bench Feed v1: a mock market-data and order format
 
 Our own small binary format for a **mock trading path on a bench**. It is not any exchange's protocol and
-carries no real market data. The prices and sizes are stimulus values made by our own traffic sources
-(`host/mock_venue.py`, `rtl/feed_gen.sv`).
+carries no real market data. It is used only on a bench loop between our own board and our own PC program; there is no
+real exchange, broker or data. The prices and sizes are stimulus values made by our own traffic sources (the mock venue
+`host/mock_venue.py`, our own program, and `rtl/feed_gen.sv`).
 
 Everything is big-endian. Prices are unsigned 32-bit numbers of hundredths (101.25 is 10125). One UDP datagram
 carries one packet.
@@ -40,9 +41,10 @@ The UDP payload must hold all N messages (8 + 16N bytes at least); bytes after t
 | 2 | 2 | instrument |
 | 4 | 4 | price |
 | 8 | 4 | size |
-| 12 | 4 | reference (the venue's own number; not used by the board) |
+| 12 | 4 | reference (the mock venue's own number; not used by the board) |
 
-The feed is a **top-of-book feed**: each message describes the best level of one side of one instrument.
+The feed is a **top-of-book feed**: each message gives the best bid or the best ask of one instrument; there is no
+deeper book.
 
 | Type | Effect on that side's best level |
 |---|---|
@@ -86,11 +88,12 @@ The board acts on a message before the frame's FCS has arrived. If the FCS then 
 - an order still on the wire has its FCS inverted, so the venue's network card discards it;
 - an order already sent is followed by a CANCEL_ORDER.
 
-In safe mode the board sends nothing until the FCS is good. Either way, the order is counted in the position
-(the worst case).
+An order whose frame is known to be bad before it starts is dropped. In safe mode the board sends nothing until the
+FCS is good (this adds the rest of the frame plus the 4-byte FCS to the latency). A dropped, cancelled or poisoned
+order still counts toward the position limit, so the limit is never understated.
 
 ## Where the design comes from
 
-No exchange specification was opened for this format. It covers the topics any market-data format has to cover
-(message types, sequence numbers and gaps, instrument identifiers, a price representation, several messages in one
-datagram), with a layout, names and values of our own.
+The format follows a general topic checklist, restated in our own words from a conference talk's list of topics:
+message types, sequence numbers and gaps, instrument identifiers, a price representation, several messages in one
+datagram. No exchange specification was read or copied; the layout, names and values are our own.

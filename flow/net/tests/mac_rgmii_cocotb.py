@@ -1,4 +1,4 @@
-"""cocotb bench for ip_lib/eth_mac_rgmii (brief 58A step 0, the tri-mode MAC entry).
+"""cocotb bench for ip_lib/eth_mac_rgmii (the tri-mode MAC entry).
 
 A Python RGMII PHY drives the receive pins (DDR at 1000 Mb/s, one nibble per RX_CLK at 100 and 10 Mb/s) and samples
 the transmit pins at TXC's edges. Expected results come from the standards (zlib's CRC-32 for the FCS), never from the

@@ -1,10 +1,11 @@
-// interlocks.sv: the safety checks every order passes on the fast path (brief 58A step 5).
+// interlocks.sv: the safety checks every order passes on the fast path.
 //
 // A request (req_v) is granted one clock later (grant) unless, checked in this order:
 //   kill      the kill register or the kill input is set (kill also blocks a grant in the clock it rises)
 //   halt      trading is halted (a sequence gap with halt-on-gap set, until the host clears it)
 //   qty       the quantity is zero or above max_qty (a fat-finger size)
-//   band      the order price is more than band from the reference price (a fat-finger price)
+//   band      the order price is more than band from the reference price, or there is no reference (a fat-finger
+//             price; the reference is the book before the triggering message, never the message itself)
 //   position  the position after the order would exceed max_pos in either direction
 //   rate      no token is left: a bucket of `bucket` tokens, one token back every `refill` clocks
 // A grant takes one token and moves the position by the quantity (buy +, sell -). The position counts every order
@@ -29,6 +30,7 @@ module interlocks (
     input  logic [31:0] req_qty,
     input  logic [31:0] req_px,
     input  logic [31:0] req_ref,
+    input  logic        req_noref,      // no band reference (the book had no price): refused as band
     output logic        grant,
     output logic        rej_v,
     output logic [2:0]  rej_why,        // 1 kill, 2 halt, 3 qty, 4 band, 5 position, 6 rate
@@ -59,7 +61,7 @@ module interlocks (
         if (kill_now)                                   why = 3'd1;
         else if (halt)                                  why = 3'd2;
         else if (req_qty == 0 || req_qty > {1'b0, mq})  why = 3'd3;
-        else if (dpx > {2'b00, bd})                     why = 3'd4;
+        else if (req_noref || dpx > {2'b00, bd})        why = 3'd4;
         else if (nabs > {3'b000, mp})                   why = 3'd5;
         else if (tokens == 0)                           why = 3'd6;
         else                                            why = 3'd0;

@@ -49,7 +49,8 @@ from typing import Any
 
 import yaml
 
-INTERFACE_KEYS = ("name", "kind", "direction", "ports", "clock", "clock_period_ns", "ddr", "iob", "data_sheet")
+INTERFACE_KEYS = ("name", "kind", "direction", "ports", "clock", "clock_period_ns", "ddr", "iob", "data_sheet",
+                  "forwarded_phase_deg")
 KINDS = ("system_synchronous", "source_synchronous", "forwarded_clock", "asynchronous")
 # board slow_ports default (when board.yaml has none): the Nexys A7 user I/O that has no timing relationship
 DEFAULT_SLOW = (r"BTN[CUDLR]", r"CPU_RESETN", r"SW\[\d+\]", r"LED\[\d+\]", r"LED1[67]_[RGB]", r"AN\[\d+\]",
@@ -250,13 +251,17 @@ def expected_delays(i: dict[str, Any]) -> dict[str, float] | None:
     """The -max and -min the interface's data sheet gives (None when it gives no numbers):
     input, SDR: max = tCO_max + trace_max, min = tCO_min + trace_min; output: max = tSU + trace_max, min = -tH + trace_min;
     input, DDR centre-aligned (data valid before/after each edge): max = T/2 - dv_before, min = dv_after;
-    input, DDR edge-aligned (skew before/after each edge): max = skew_after, min = -skew_before."""
+    input, DDR edge-aligned (skew before/after each edge): max = skew_after, min = -skew_before;
+    output, DDR edge-aligned with a forwarded clock: max = T/2 - skew_after, min = -skew_before."""
     ds = i.get("data_sheet") or {}
     if not ds:
         return None
     tr = float(ds.get("trace_ns", 0.0))
     tmin, tmax = float(ds.get("trace_min_ns", tr)), float(ds.get("trace_max_ns", tr))
     try:
+        if i.get("direction") == "out" and "skew_after_ns" in ds:      # edge-aligned DDR output (forwarded clock)
+            half = float(i["clock_period_ns"]) / 2
+            return {"max": half - float(ds["skew_after_ns"]), "min": -float(ds["skew_before_ns"])}
         if i.get("direction") == "out":
             return {"max": float(ds["tsu_ns"]) + tmax, "min": -float(ds["th_ns"]) + tmin}
         if "dv_before_ns" in ds:
@@ -267,6 +272,29 @@ def expected_delays(i: dict[str, Any]) -> dict[str, float] | None:
         return {"max": float(ds["tco_max_ns"]) + tmax, "min": float(ds["tco_min_ns"]) + tmin}
     except (KeyError, TypeError, ValueError):
         return None
+
+
+def ddr_requirements(i: dict[str, Any]) -> dict[str, float] | None:
+    """The setup (max) and hold (min) requirements Vivado must apply to a DDR interface's ports when its edges are
+    paired as intended (None when the interface declares nothing to check):
+    centre-aligned input (data_sheet dv_before/dv_after): each edge's data is captured by the next opposite edge, setup
+      requirement T/2, and must hold past the same edge it was launched around, hold requirement 0;
+    edge-aligned output (data_sheet skew_before/skew_after, the clock forwarded in phase): the same, T/2 and 0;
+    output with a forwarded clock forwarded_phase_deg later than the data clock: the same-edge forwarded clock captures,
+      setup requirement T * phase / 360, hold requirement that minus T/2.
+    A full-period setup requirement means the exceptions keep the wrong edge pairs (the flow's B3 finding)."""
+    if not i.get("ddr") or not i.get("clock_period_ns"):
+        return None
+    t = float(i["clock_period_ns"])
+    ds = i.get("data_sheet") or {}
+    if i.get("direction") != "out" and "dv_before_ns" in ds:
+        return {"max": t / 2, "min": 0.0}
+    if i.get("direction") == "out" and "skew_after_ns" in ds:       # edge-aligned output: the opposite edge sets up,
+        return {"max": t / 2, "min": 0.0}                           # the same edge holds
+    if i.get("direction") == "out" and i.get("forwarded_phase_deg") is not None:
+        ph = t * float(i["forwarded_phase_deg"]) / 360.0
+        return {"max": ph, "min": ph - t / 2}
+    return None
 
 
 def _iface_ports(i: dict[str, Any], names: list[str]) -> list[str]:
@@ -447,6 +475,17 @@ def evaluate(build_dir: Path | None, stage: str = "route", xdc_files: list[Path]
             s = [p["slack"] for p in setup if p and p["slack"] is not None]
             h = [p["slack"] for p in hold if p and p["slack"] is not None]
             entry.update({"setup_slack_ns": min(s) if s else None, "hold_slack_ns": min(h) if h else None})
+            req = ddr_requirements(i)
+            if req:
+                got = {"max": sorted({p["requirement"] for p in setup if p and p.get("requirement") is not None}),
+                       "min": sorted({p["requirement"] for p in hold if p and p.get("requirement") is not None})}
+                entry["requirements_ns"] = got
+                for k, want in req.items():
+                    off = [r for r in got[k] if abs(r - want) > 0.011]
+                    if off:
+                        fail("IO-DDR-REQUIREMENT", None, f"interface {name}: {'setup' if k == 'max' else 'hold'} "
+                             f"requirement {', '.join(f'{r:g}' for r in off)} ns, the intended edge pairing gives "
+                             f"{want:g} ns (a full-period setup requirement means the wrong edges are paired)")
             if i.get("iob"):
                 bad = [p for p in ps if p in io["ports"] and io["ports"][p]["iob"] != "1"]
                 entry["iob_packed"] = not bad

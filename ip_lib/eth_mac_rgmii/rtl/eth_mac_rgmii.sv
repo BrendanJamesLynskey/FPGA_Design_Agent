@@ -1,8 +1,8 @@
-// eth_mac_rgmii.sv: tri-mode (10/100/1000 Mb/s) Ethernet MAC for an RGMII PHY, our own (brief 58A step 0; ip_lib).
+// eth_mac_rgmii.sv: tri-mode (10/100/1000 Mb/s) Ethernet MAC for an RGMII PHY, our own (ip_lib).
 //
 // Receive: RGMII (rgmii_rx, in the RX_CLK domain) -> an asynchronous FIFO into clk (gmii_cdc) -> mac_rx.
 //   The cut-through view is always there: every frame byte leaves on rx_* one clock after it reaches mac_rx, before
-//   the FCS is known, and rx_end_* gives the verdict at the end (brief 58A's speculative path).
+//   the FCS is known, and rx_end_* gives the verdict at the end (the trading path's speculative path).
 //   CUT_THROUGH = 0 adds a store-and-forward buffer (eth_rx_sf): good frames only, FCS removed, on an AXI-Stream
 //   master with back-pressure. With CUT_THROUGH = 1 that buffer is not built and m_axis is idle.
 // Transmit: an AXI-Stream slave (tlast ends the frame; tuser on any beat, or poison, marks it bad) -> mac_tx ->

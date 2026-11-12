@@ -1,4 +1,4 @@
-"""Pin-level bench for kr260_top in simulation (brief 58A step 0): port B's RGMII transmit pins are looped into port A's
+"""Pin-level bench for kr260_top in simulation: port B's RGMII transmit pins are looped into port A's
 RGMII receive pins, with RX_CLK a quarter period (2 ns) after the transmit clock. Checks that every frame of the
 in-FPGA generator crosses RGMII TX -> RGMII RX -> the clock-crossing FIFO (the XPM simulation model) -> mac_rx with a
 good FCS, and measures the cycles each pin-side stage adds. In simulation the MMCM is absent (the core clock is the

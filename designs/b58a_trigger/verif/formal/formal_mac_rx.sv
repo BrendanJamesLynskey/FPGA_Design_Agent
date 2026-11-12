@@ -1,4 +1,4 @@
-// formal_mac_rx.sv: the receive frame FSM of rtl/mac_rx.sv (brief 58A step 0). The byte stream is free (any bytes,
+// formal_mac_rx.sv: the receive frame FSM of rtl/mac_rx.sv. The byte stream is free (any bytes,
 // errors, end tokens and gaps); MIN_FRAME 5 and MAX_FRAME 8 keep it shallow.
 module formal_mac_rx (
     input logic       clk,

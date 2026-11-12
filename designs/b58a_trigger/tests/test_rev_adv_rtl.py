@@ -1,3 +1,4 @@
+"""pytest entry: the adversarial regression tests (rev_adv_cocotb.py), speculative and safe mode."""
 import os
 import pytest
 from flow import cocotb_run

@@ -1,10 +1,10 @@
 # eth_mac_rgmii 0.1.0
 
-Tri-mode (10/100/1000 Mb/s) Ethernet MAC for an RGMII PHY: cut-through receive with the FCS verdict at the end, optional store-and-forward AXI-Stream receive, AXI-Stream transmit with padding, FCS and inter-frame gap; RX clock crossing inside.
+Tri-mode (10/100/1000 Mb/s) Ethernet MAC for a PHY with an RGMII (reduced gigabit media-independent interface) link: cut-through receive (bytes passed on as they arrive) with the FCS (frame check sequence, the CRC at the end of a frame) verdict at the end, optional store-and-forward AXI-Stream receive, AXI-Stream transmit with padding, FCS and inter-frame gap (IFG); the receive clock crossing inside.
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated (brief 58A); built inside the brief 58A KR260 design; OOC cost table pending; not yet on a board.
+Status: simulated; synthesised and routed inside the KR260 trading-path design; standalone out-of-context (OOC) cost table pending; not yet run on a board.
 
 ## Parameters
 
@@ -32,7 +32,7 @@ Clocks: `clk` (125 MHz at every speed), `clk90` (clk, 90 degrees later (forms TX
 
 ## Latency and throughput
 
-- rx: cut-through: a byte leaves rx_* one clock after it leaves the clock-crossing FIFO; loop simulation from the transmit MAC's first preamble byte to mac_rx's SFD: 17 clocks, 8 of them the preamble and SFD on the wire (results/b58a/pins_sim.json; the FIFO is its simulation model). Store-and-forward: the whole frame, then 2 clocks
+- rx: cut-through: a byte leaves rx_* one 8 ns clock after it leaves the clock-crossing FIFO. In a looped simulation the transmit MAC's first preamble byte reaches the receive MAC as its SFD (start-of-frame delimiter) 17 clocks (136 ns) later: 8 of them are the preamble and SFD themselves, the rest the RGMII pins and the clock-crossing FIFO, which is a simulation model, so its real latency is unmeasured (results/b58a/pins_sim.json). Store-and-forward: the whole frame, then 2 clocks
 - tx: first preamble byte on the MAC's output 2 clocks after s_axis_tvalid while idle; 2 more to TX_CTL at the pins (a register and the ODDRE1, simulation model; results/b58a/pins_sim.json)
 - throughput: line rate at 10, 100 and 1000 Mb/s; frames offered back to back leave IFG_BYTES + 1 idle byte times apart (flow/net/tests/mac_rgmii_cocotb.py)
 
@@ -60,12 +60,12 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 
 - Registered outputs: RGMII data and control through ODDRE1/IDDRE1 (behavioural models in simulation); rx_*, m_axis and the MAC's GMII side are registers.
 - Clock crossings: one crossing, RX_CLK to clk: an xpm_fifo_async (16 entries, 2 synchroniser stages), the receive reset by xpm_cdc_sync_rst and the speed setting by xpm_cdc_array_single; TXC's waveform moves from clk to clk90 through one register.
-- Part, board or pin: IDDRE1/ODDRE1 (UltraScale and UltraScale+) under `ifdef SYNTHESIS`; 7-series needs IDDR/ODDR instead (not yet written). Pins, IO standards, RGMII delay mode and the RX clock buffer are the board's (KB board/kr260/ethernet/kr260-four-gbe).
+- Part, board or pin: IDDRE1/ODDRE1 (UltraScale and UltraScale+) under `ifdef SYNTHESIS`; 7-series needs IDDR/ODDR instead (not yet written). Pins, IO standards, RGMII delay mode and the RX clock buffer are the board's (the project knowledge base, board/kr260/ethernet).
 - Depends on: eth_mac_rmii.
-- Limits: full duplex only; no MDIO (brief 58A has its own mdio_master), no pause frames, no VLAN handling, no statistics block; 10/100 nibble alignment needs the SFD; RGMII input timing is closed only for the PHY's internal RX delay mode (board XDC); measured only in simulation so far.
+- Limits: formal checks of the frame state machines are bounded (20 and 40 clocks), not proofs; full duplex only; no MDIO (the trading-path design has its own MDIO master), no pause frames, no VLAN handling, no statistics block; 10/100 nibble alignment needs the SFD; RGMII input timing is closed only for the PHY's internal RX delay mode (board XDC); measured only in simulation so far.
 
 ## Cost table
 
-pending: the OOC sweep is not run; the whole brief 58A design on the KR260 is in results/b58a.
+pending: the OOC sweep is not run; the whole trading-path design on the KR260 is in results/b58a.
 
 Licence: MIT (this repository).

@@ -8,9 +8,14 @@
 // and high for the second, so its rising edge is in the middle of the nibble. ce is high on the clock the MAC must
 // present its next byte (once in 10 or 100 clocks).
 // TXC's waveform is formed in the clk domain and moved to clk90 through one register before its ODDRE1.
+// TXC_CLK90 = 0 instead makes TXC from clk itself, through the same kind of ODDRE1 as the data, so TXC leaves
+// edge-aligned with the data and the PHY's internal TX delay must be on (RGMII "-ID" mode): data and clock then share
+// one clock and matched output paths, which leaves far more timing margin than a 90-degree clock on another buffer.
 // Simulation uses the equivalent behaviour.
 
-module rgmii_tx (
+module rgmii_tx #(
+    parameter int TXC_CLK90 = 1         // 1: TXC from clk90 (centred, PHY TX delay off); 0: from clk (edge-aligned)
+) (
     input  logic       clk,
     input  logic       clk90,
     input  logic       rst,
@@ -55,14 +60,20 @@ module rgmii_tx (
             end
         end
     end
-    logic k1_90, k2_90;
-    always_ff @(posedge clk90) begin k1_90 <= k1; k2_90 <= k2; end
+    logic k1_90, k2_90, tclk;
+    if (TXC_CLK90 != 0) begin : g_c90
+        always_ff @(posedge clk90) begin k1_90 <= k1; k2_90 <= k2; end
+        assign tclk = clk90;
+    end else begin : g_c0
+        assign k1_90 = k1; assign k2_90 = k2;
+        assign tclk = clk;
+    end
 `ifdef SYNTHESIS
     for (genvar i = 0; i < 4; i++) begin : g_oddr
         ODDRE1 #(.SRVAL(1'b0)) u_oddr (.Q(txd[i]), .C(clk), .D1(d1[i]), .D2(d2[i]), .SR(1'b0));
     end
     ODDRE1 #(.SRVAL(1'b0)) u_ctl (.Q(tx_ctl), .C(clk), .D1(c1), .D2(c2), .SR(1'b0));
-    ODDRE1 #(.SRVAL(1'b0)) u_txc (.Q(txc), .C(clk90), .D1(k1_90), .D2(k2_90), .SR(1'b0));
+    ODDRE1 #(.SRVAL(1'b0)) u_txc (.Q(txc), .C(tclk), .D1(k1_90), .D2(k2_90), .SR(1'b0));
 `else
     // ODDRE1 behaviour: D1 and D2 are taken at the rising edge; D1 drives the output from that edge, D2 from the
     // falling edge (registered, so the output never glitches at an edge)
@@ -72,8 +83,8 @@ module rgmii_tx (
         if (clk) begin txd <= d1; tx_ctl <= c1; d2h <= d2; c2h <= c2; end
         else     begin txd <= d2h; tx_ctl <= c2h; end
     end
-    always @(posedge clk90 or negedge clk90) begin
-        if (clk90) begin txc <= k1_90; k2h <= k2_90; end
+    always @(posedge tclk or negedge tclk) begin
+        if (tclk) begin txc <= k1_90; k2h <= k2_90; end
         else       txc <= k2h;
     end
 `endif

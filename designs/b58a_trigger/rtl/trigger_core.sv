@@ -1,4 +1,4 @@
-// trigger_core.sv: the mock trading path of brief 58A, in one clock domain (125 MHz, 8 ns a byte at 1 Gb/s).
+// trigger_core.sv: the mock trading path, in one clock domain (125 MHz, 8 ns a byte at 1 Gb/s).
 //
 // Port A (the trading port): receive MAC (cut-through) -> feed parser -> book and rules -> interlocks -> orders,
 // speculative undo, cancels and ARP replies -> transmit MAC.
@@ -152,12 +152,14 @@ module trigger_core #(
     logic [15:0] fire_ver, rules_ver, fire_inst;
     logic [31:0] fire_qty, fire_px, fire_ref, rules_rd;
     logic [31:0] fire_seq;
+    logic        fire_noref;
     rules #(.NR(8)) u_rules (.clk, .rst, .h_we(rules_we), .h_addr({2'b00, h_addr[5:0]}), .h_wdata(h_wdata),
         .h_commit(rules_commit), .version(rules_ver), .h_rdata(rules_rd),
         .msg_px_v(m_px_v), .msg_type(m_type), .msg_side(m_side), .msg_inst(m_inst), .msg_px(m_px),
         .bk_valid(bk_valid), .bk_bid_px(bk_bpx), .bk_bid_sz(bk_bsz), .bk_ask_px(bk_apx), .bk_ask_sz(bk_asz),
+        .bk_last(bk_last),
         .fire_v(fire_v), .fire_rule(fire_rule), .fire_ver(fire_ver), .fire_order(fire_order), .fire_side(fire_side),
-        .fire_qty(fire_qty), .fire_px(fire_px), .fire_ref_px(fire_ref), .fire_inst(fire_inst),
+        .fire_qty(fire_qty), .fire_px(fire_px), .fire_ref_px(fire_ref), .fire_noref(fire_noref), .fire_inst(fire_inst),
         .fire_pin_en(fire_pin_en), .fire_pin_idx(fire_pin_idx), .fire_log(fire_log), .ev_holdoff(ev_hold));
     always_ff @(posedge clk) if (m_px_v) fire_seq <= m_seq;
 
@@ -175,7 +177,7 @@ module trigger_core #(
     always_ff @(posedge clk) bucket_wr_q <= h_we && h_addr == 12'h023;   // the new size is in the register by then
     interlocks u_il (.clk, .rst, .kill_reg(kill_reg), .kill_in(kill_lat | kill_in), .halt(halted),
         .max_qty, .band, .max_pos, .bucket, .refill, .reload(bucket_wr_q),
-        .req_v, .req_side(fire_side), .req_qty(fire_qty), .req_px(fire_px), .req_ref(fire_ref),
+        .req_v, .req_side(fire_side), .req_qty(fire_qty), .req_px(fire_px), .req_ref(fire_ref), .req_noref(fire_noref),
         .grant, .rej_v, .rej_why, .pos, .tokens, .approved(), .tick());
     logic kill_now;
     assign kill_now = kill_reg | kill_lat | kill_in;
@@ -188,16 +190,21 @@ module trigger_core #(
     logic [1:0]  at_kind;
     logic [31:0] cur_oid;
     logic [8:0]  oev;
-    order_ctl #(.BUILD_MODE(BUILD_MODE)) u_ord (.clk, .rst, .spec_en, .kill_now,
+    logic        soft_rst;          // PULSE[7]: reset the order slot and what is pending (board-safe)
+    logic [7:0]  s_gen, fgen;
+    logic        s_act, s_gnt, s_vk, s_vg, s_start, s_sent, c_pend, ev_wdog;
+    order_ctl #(.BUILD_MODE(BUILD_MODE)) u_ord (.clk, .rst, .soft_rst, .spec_en, .kill_now,
         .my_mac, .my_ip, .my_port, .dst_mac, .dst_ip, .dst_port,
         .fire_v, .fire_order, .req_v, .grant, .rej_v,
         .o_side(fire_side), .o_inst(fire_inst), .o_px(fire_px), .o_qty(fire_qty),
         .frame_end_v(f_end), .frame_good(f_good), .frame_arp_req(f_arp), .arp_sha, .arp_spa,
         .tx_start(at_start), .tx_len(at_len), .tx_ready(at_ready), .tx_req_valid(at_reqv), .tx_req_idx(at_idx),
-.tx_data(at_data), .tx_last_byte(at_lastb), .tx_poison(at_poison), .tx_last(at_last), .tx_kind(at_kind), .cur_order_id(cur_oid),
+.tx_data(at_data), .tx_last_byte(at_lastb), .tx_poison(at_poison), .tx_last(at_last),
+        .tx_last_poisoned(at_lastp), .tx_kind(at_kind), .cur_order_id(cur_oid),
         .ev_suppress(oev[0]), .ev_busy(oev[1]), .ev_spec_drop(oev[2]), .ev_spec_poison(oev[3]),
         .ev_spec_cancel(oev[4]), .ev_kill_drop(oev[5]), .ev_order_sent(oev[6]), .ev_cancel_sent(oev[7]),
-        .ev_arp_sent(oev[8]));
+        .ev_arp_sent(oev[8]), .ev_wdog(ev_wdog), .s_act, .s_gnt, .s_vk, .s_vg, .s_start, .s_sent, .s_gen, .fgen,
+        .cancel_pend(c_pend));
     mac_tx u_atx (.clk, .rst, .ce(1'b1), .start(at_start), .ready(at_ready), .req_idx(at_idx),
         .req_valid(at_reqv), .in_data(at_data), .in_last(at_lastb), .poison(at_poison), .txd(a_txd), .tx_en(a_tx_en),
         .first_pulse(at_first), .sof_pulse(at_sof), .last_pulse(at_last), .last_poisoned(at_lastp), .busy(at_busy));
@@ -294,7 +301,7 @@ module trigger_core #(
     assign pins = {pin_t[1] != 0, pin_t[0] != 0};
 
     // ---- counters -------------------------------------------------------------------------------------------------------
-    localparam int NC = 52;
+    localparam int NC = 54;
     logic [NC-1:0] ev;
     logic [31:0]   cnt [NC];
     logic [31:0]   ar_len32;
@@ -313,7 +320,7 @@ module trigger_core #(
         ev[38] = oev[6]; ev[39] = oev[7]; ev[40] = oev[8]; ev[41] = at_last; ev[42] = at_last && at_lastp;
         ev[43] = a_rx_ovf;
         ev[44] = br_end; ev[45] = br_end && br_good; ev[46] = br_end && br_fcs; ev[47] = hb_v; ev[48] = bt_first;
-        ev[49] = bt_last; ev[50] = b_rx_ovf; ev[51] = log_full_ev;
+        ev[49] = bt_last; ev[50] = b_rx_ovf; ev[51] = log_full_ev; ev[52] = ev_wdog; ev[53] = soft_rst;
     end
     always_ff @(posedge clk) begin
         for (int j = 0; j < NC; j++) begin
@@ -346,7 +353,7 @@ module trigger_core #(
 
     // ---- register writes ----------------------------------------------------------------------------------------------------
     always_ff @(posedge clk) begin
-        {clr_cnt, clr_book, clr_hist, clr_halt, clr_kill_in, rules_commit, a_mdio_go, b_mdio_go, log_pop} <= '0;
+        {clr_cnt, clr_book, clr_hist, clr_halt, clr_kill_in, rules_commit, a_mdio_go, b_mdio_go, log_pop, soft_rst} <= '0;
         if (rst) begin
             core_en <= 1'b0; spec_en <= 1'b1; halt_on_gap <= 1'b0; kill_reg <= 1'b0; hist_metric <= 1'b0;
             phy_rst_force <= 1'b0;
@@ -369,6 +376,7 @@ module trigger_core #(
                     12'h003: begin
                         clr_cnt <= h_wdata[0]; clr_book <= h_wdata[1]; clr_hist <= h_wdata[2]; clr_halt <= h_wdata[3];
                         clr_kill_in <= h_wdata[4]; rules_commit <= h_wdata[5]; log_pop <= h_wdata[6];
+                        soft_rst <= h_wdata[7];
                     end
                     12'h010: my_mac[47:16] <= h_wdata;
                     12'h011: my_mac[15:0]  <= h_wdata[15:0];
@@ -425,6 +433,7 @@ module trigger_core #(
                 12'h006: rd = {16'd0, rules_ver};
                 12'h007: rd = commit_ts;
                 12'h008: rd = BUILD_MODE;
+                12'h009: rd = {fgen, s_gen, 8'd0, c_pend, s_sent, s_start, s_vg, s_vk, s_gnt, 1'b0, s_act};
                 12'h010: rd = my_mac[47:16];
                 12'h011: rd = {16'd0, my_mac[15:0]};
                 12'h012: rd = my_ip;

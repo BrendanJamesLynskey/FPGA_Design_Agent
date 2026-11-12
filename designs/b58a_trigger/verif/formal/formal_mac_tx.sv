@@ -1,4 +1,4 @@
-// formal_mac_tx.sv: the transmit frame FSM of rtl/mac_tx.sv (brief 58A step 0). Small parameters (MIN_DATA 4,
+// formal_mac_tx.sv: the transmit frame FSM of rtl/mac_tx.sv. Small parameters (MIN_DATA 4,
 // IFG 3) keep the proof shallow; the structure does not depend on them. Every input is free.
 module formal_mac_tx (
     input logic        clk,

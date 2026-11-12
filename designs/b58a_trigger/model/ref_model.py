@@ -1,9 +1,9 @@
-"""Reference model of the trading port (brief 58A): frames in, what must leave and every counter that must move.
+"""Reference model of the trading port: frames in, what must leave and every counter that must move.
 
 Written from docs/bench_feed_v1.md, docs/rule_table.md and docs/register_map.md, not from the RTL. It is untimed:
 it says which orders, undos, cancels and ARP replies leave and in what order, not when. Two things depend on time and
-are handled by the tests instead: whether an undone speculative order was poisoned on the wire or followed by a
-cancel (the model says "undo"; the bench accepts either form, never both, never neither), and the token-bucket
+are handled by the tests instead: how an order from a bad frame is undone (dropped before it starts, poisoned on the
+wire, or followed by a cancel: the model says "undo"; the bench accepts exactly one of the three), and the token-bucket
 refill (tests use a refill period longer than the test, so the bucket only empties) and rule hold-off (0, or longer
 than the test).
 """
@@ -24,6 +24,7 @@ COUNTERS = [
     "suppressed", "busy", "spec_drop", "spec_poison", "spec_cancel", "kill_drop", "orders_sent", "cancels_sent",
     "arp_sent", "tx_frames", "tx_poisoned", "rx_fifo_ovf",
     "b_rx_frames", "b_rx_good", "b_rx_fcs", "b_rx_orders", "b_feed_sent", "b_tx_frames", "b_rx_fifo_ovf", "log_dropped",
+    "wdog", "soft_resets",
 ]
 
 
@@ -103,14 +104,14 @@ class Model:
                 return False
         return True
 
-    def _interlock(self, side: int, qty: int, px: int, ref: int) -> str | None:
+    def _interlock(self, side: int, qty: int, px: int, ref: int | None) -> str | None:
         c = self.cfg
         mq, bd, mp = c.max_qty & 0x7FFFFFFF, c.band & 0x7FFFFFFF, c.max_pos & 0x7FFFFFFF
         npos = self.pos - qty if side else self.pos + qty
         if c.kill: return "kill"
         if self.halted: return "halt"
         if qty == 0 or qty > mq: return "qty"
-        if abs(px - ref) > bd: return "band"
+        if ref is None or abs(px - ref) > bd: return "band"
         if abs(npos) > mp: return "pos"
         if self.tokens == 0: return "rate"
         self.pos = npos
@@ -215,8 +216,8 @@ class Model:
                             inst = (fields[2] << 8) | fields[3]
                             px = int.from_bytes(fields[4:8], "big")
                             mseq = (seq + kmsg) & 0xFFFFFFFF
-                            slot = self._decide(ty, side, inst, px, bk, mseq, ordered, slot, out)
-                            ordered = ordered or slot is not None
+                            slot, asked = self._decide(ty, side, inst, px, bk, mseq, ordered, slot, out)
+                            ordered = ordered or asked      # one request per frame, whatever the interlocks answer
                         if off == 15:
                             self._update(fields, bk)
                             k["msgs"] += 1
@@ -227,11 +228,11 @@ class Model:
         # end of frame
         if slot is not None and not good:
             if c.spec_en:
-                slot.undo = True
+                slot.undo = True                 # dropped, poisoned or cancelled, depending on timing
             else:
-                out.remove(slot)
-                k["spec_drop"] += 1
+                out.remove(slot)                 # safe mode: never sent
                 k["orders_sent"] -= 1
+            k["undo_any"] = k.get("undo_any", 0) + 1
         if slot is not None and good and not c.spec_en and c.kill:
             out.remove(slot)
         if good and hdr_ok and alive and pend_seq is not None:
@@ -242,9 +243,6 @@ class Model:
             out.append(Out("arp", arp=(sha, spa)))
             k["arp_req"] += 1
             k["arp_sent"] += 1
-        for o in out:
-            if o.kind == "order" and o.undo:
-                k["spec_poison_or_cancel"] = k.get("spec_poison_or_cancel", 0) + 1
         return out
 
     def _decide(self, ty, side, inst, px, bk, mseq, ordered, slot, out):
@@ -254,7 +252,7 @@ class Model:
         if not cand:
             if any(m):
                 k["rule_holdoff"] += 1
-            return slot
+            return slot, False
         r = cand[0]
         w = self.table[r]
         c = w[0]
@@ -264,22 +262,35 @@ class Model:
         if (c >> 19) & 1:
             self.log.append((mseq, self.version, r, inst & 0xFFF, self._price(w, px)))
         if not (c >> 13) & 1:
-            return slot
+            return slot, False
         if ordered:
             k["suppressed"] += 1
-            return slot
+            return slot, False
         k["requests"] += 1
         oside, qty, opx = (c >> 14) & 1, w[3], self._price(w, px)
-        why = self._interlock(oside, qty, opx, px)
+        why = self._interlock(oside, qty, opx, self._reference(oside, bk))
         if why:
             k["rej_" + why] += 1
-            return slot
+            return slot, True
         k["grants"] += 1
         o = Out("order", bf.Order(bf.NEW_ORDER, oside, inst, opx, qty, self.next_id))
         self.next_id += 1
         k["orders_sent"] += 1
         out.append(o)
-        return o
+        return o, True
+
+    @staticmethod
+    def _reference(side: int, bk: list[int] | None) -> int | None:
+        """The price-band reference: the book before the triggering message (a buy against the best ask, a sell
+        against the best bid; the last trade if that side is empty), never the message itself; None if there is none."""
+        if bk is None:
+            return None
+        bpx, bsz, apx, asz, last = bk
+        if side == 0 and asz:
+            return apx
+        if side == 1 and bsz:
+            return bpx
+        return last or None
 
     @staticmethod
     def _price(w: list[int], px: int) -> int:

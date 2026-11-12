@@ -8,7 +8,7 @@
 // before the frame is known to be good. The FCS is checked over the whole frame (CRC residue, IEEE 802.3 clause
 // 3.2.9) and the verdict comes with the end token: end_valid with end_good = 1 only when the residue is right, the
 // frame is MIN_FRAME..MAX_FRAME bytes (FCS included) and no RX_ER was seen. Consumers act speculatively on the bytes
-// and undo on end_good = 0 (the speculative/safe split of brief 58A step 2).
+// and undo on end_good = 0 (the trading path's speculative/safe split).
 //
 // Start of frame: one or more preamble bytes 0x55, then the SFD 0xD5. A PHY may shorten the preamble, so one 0x55 is
 // enough; a frame whose first byte is the SFD is also accepted (counted the same). Anything else before the SFD

@@ -1,4 +1,4 @@
-"""pytest entry: ip_lib/eth_mac_rgmii (brief 58A step 0) under cocotb + Icarus at several parameter points, and its
+"""pytest entry: ip_lib/eth_mac_rgmii under cocotb + Icarus at several parameter points, and its
 elaboration guards. NET_RTL_ETH_MAC_RGMII points the tests at a seeded-fault copy (flow/net/faults.py)."""
 
 from __future__ import annotations

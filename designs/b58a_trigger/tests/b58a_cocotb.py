@@ -1,4 +1,4 @@
-"""cocotb bench for trigger_core (brief 58A): traffic from the mock venue and hostile frames in, against the reference
+"""cocotb bench for trigger_core: traffic from the mock venue and hostile frames in, against the reference
 model (model/ref_model.py); per-stage latencies out (results/b58a/latency_sim.json via $B58A_LAT_OUT)."""
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ class Bench:
         self.rxq: list[dict] = []
         self.sfd_cycles: list[int] = []
         self.byte_cycles: list[list[int]] = []
-        self.events: dict[str, list[int]] = {k: [] for k in ("px", "fire", "grant", "start", "first", "sof", "end")}
+        self.events: dict[str, list[int]] = {k: [] for k in ("sfd", "px", "fire", "grant", "start", "first", "sof", "end")}
         self.loop = False
         self.loop_delay = 6
 
@@ -64,6 +64,7 @@ class Bench:
             self.a_out.append((self.cyc, ae, ab))
             self.b_out.append((self.cyc, be, bb))
             ev = self.events
+            if int(d.u_arx.sof_pulse.value): ev["sfd"].append(self.cyc)
             if int(d.u_parse.msg_px_v.value): ev["px"].append(self.cyc)
             if int(d.u_rules.fire_v.value): ev["fire"].append(self.cyc)
             if int(d.u_il.grant.value): ev["grant"].append(self.cyc)
@@ -216,11 +217,21 @@ def check_outputs(b: Bench, expected: list, model: Model) -> dict:
     assert seqs == list(range(seqs[0], seqs[0] + len(seqs))) if seqs else True, f"order sequence numbers {seqs}"
     exp_orders = [x for x in expected if x.kind == "order"]
     exp_arps = [x for x in expected if x.kind == "arp"]
-    assert len(news) == len(exp_orders), f"{len(news)} orders on the wire, model {len(exp_orders)}"
-    undone = 0
+    undone = dropped = 0
     cancel_ids = [o.order_id for c, o, ok in cans]
-    for (c, o, ok), e in zip(news, exp_orders):
+    it = iter(news)
+    nxt = next(it, None)
+    for e in exp_orders:
         eo = e.order
+        if nxt is None or nxt[1].order_id != eo.order_id:
+            # not on the wire: only an order from a bad frame may be dropped before it starts
+            assert e.undo, f"order {eo.order_id} missing from the wire"
+            assert eo.order_id not in cancel_ids
+            undone += 1
+            dropped += 1
+            continue
+        c, o, ok = nxt
+        nxt = next(it, None)
         assert (o.side, o.inst, o.price, o.qty, o.order_id) == (eo.side, eo.inst, eo.price, eo.qty, eo.order_id), \
             f"order {o} != model {eo}"
         if e.undo:
@@ -230,26 +241,46 @@ def check_outputs(b: Bench, expected: list, model: Model) -> dict:
             assert poisoned != cancelled, f"order {o.order_id}: poisoned={poisoned} cancelled={cancelled}"
         else:
             assert ok and o.order_id not in cancel_ids, f"order {o.order_id} undone without cause"
+    assert nxt is None, f"an order on the wire the model did not expect: {nxt}"
     assert len(cancel_ids) == len(set(cancel_ids))
     assert len(arps) == len(exp_arps)
     for f, e in zip(arps, exp_arps):
         sha, spa = e.arp
         assert f == bf.arp_reply(model.cfg.my_mac, model.cfg.my_ip, sha, spa), "ARP reply content"
-    return {"orders": len(news), "undone": undone, "cancels": len(cancel_ids), "arps": len(arps)}
+    return {"orders": len(news), "undone": undone, "dropped": dropped, "cancels": len(cancel_ids), "arps": len(arps)}
 
 
 def compare_counters(hw: dict, model: Model, exact_tx: bool = True) -> None:
+    """Every counter equal to the model's, except those that depend on when an undo happened (dropped before start,
+    poisoned or cancelled), which must add up."""
     m = model.cnt
-    skip = {"spec_poison", "spec_cancel", "cancels_sent", "tx_frames", "tx_poisoned", "rx_bad_pre"} | \
-        {n for n in COUNTERS if n.startswith("b_")} | {"log_dropped", "rx_fifo_ovf"}
+    timing = {"spec_drop", "spec_poison", "spec_cancel", "orders_sent", "cancels_sent", "tx_frames", "tx_poisoned"}
+    skip = timing | {"rx_bad_pre", "log_dropped", "rx_fifo_ovf", "wdog", "soft_resets"} | \
+        {n for n in COUNTERS if n.startswith("b_")}
     bad = {n: (hw[n], m[n]) for n in COUNTERS if n not in skip and hw[n] != m[n]}
     assert not bad, f"counters differ (hw, model): {bad}"
-    undo = m.get("spec_poison_or_cancel", 0)
-    assert hw["spec_poison"] + hw["spec_cancel"] == undo, (hw["spec_poison"], hw["spec_cancel"], undo)
+    undo = m.get("undo_any", 0)
+    assert hw["spec_drop"] + hw["spec_poison"] + hw["spec_cancel"] == undo, \
+        (hw["spec_drop"], hw["spec_poison"], hw["spec_cancel"], undo)
+    assert hw["orders_sent"] == hw["grants"] - hw["spec_drop"] - hw["kill_drop"]
     assert hw["cancels_sent"] == hw["spec_cancel"]
     assert hw["tx_poisoned"] == hw["spec_poison"]
+    assert hw["wdog"] == 0
     if exact_tx:
         assert hw["tx_frames"] == hw["orders_sent"] + hw["cancels_sent"] + hw["arp_sent"]
+
+
+def prime(b: "Bench", model: Model | None, insts=range(8), seq: int = 900000, bid: int = 9900, ask: int = 10000) -> int:
+    """A good frame that puts a bid and an ask on each instrument, so the price band has a reference (the band is
+    checked against the book before the triggering message). Returns the next sequence number to use."""
+    msgs = []
+    for i in insts:
+        msgs += [bf.Msg(bf.ADD, bf.BID, i, bid, 10), bf.Msg(bf.ADD, bf.ASK, i, ask, 10)]
+    fr = bf.with_fcs(bf.feed_frame(seq, msgs))
+    if model is not None:
+        model.frame(fr)
+    b.send(fr, gap=300)
+    return seq + len(msgs)
 
 
 # ---- traffic -------------------------------------------------------------------------------------------------------
@@ -312,6 +343,7 @@ async def run_stream(dut, spec_en: bool, n: int, gap_lo: int, gap_hi: int, hosti
     m = Model(cfg=cfg)
     m.commit(table)
     await b.config(cfg, table)
+    prime(b, m)
     expected = []
     for _ in range(n):
         if rng.random() < hostile:
@@ -371,6 +403,7 @@ async def short_gaps_back_to_back(dut):
     m = Model(cfg=cfg)
     m.commit(table)
     await b.config(cfg, table)
+    prime(b, m)
     for _ in range(150):
         fr = bf.with_fcs(v.frame(rng.randint(1, 3)))
         m.frame(fr)
@@ -397,6 +430,7 @@ async def maximum_size_frames(dut):
     m = Model(cfg=cfg)
     m.commit(table)
     await b.config(cfg, table)
+    prime(b, m)
     exp = []
     for k in range(6):
         seq, msgs = v.packet_msgs(bf.MAX_MSGS)        # 91 messages and 8 trailing bytes: a 1518-byte frame
@@ -413,7 +447,7 @@ async def maximum_size_frames(dut):
     hw = await b.counters()
     compare_counters(hw, m)
     check_outputs(b, exp, m)
-    assert hw["rx_giant"] == 1 and hw["rx_runt"] == 1 and hw["msgs"] == 6 * bf.MAX_MSGS + bf.MAX_MSGS
+    assert hw["rx_giant"] == 1 and hw["rx_runt"] == 1 and hw["msgs"] == 16 + 6 * bf.MAX_MSGS + bf.MAX_MSGS   # 16: priming
 
 
 @cocotb.test()
@@ -429,6 +463,7 @@ async def speculative_undo_both_ways(dut):
     await b.config(cfg, table)
     trig = bf.Msg(bf.ADD, bf.ASK, 3, 9950, 10)
     filler = [bf.Msg(bf.ADD, bf.BID, 5, 9000 + k, 1) for k in range(20)]
+    prime(b, m)
     exp = []
     for seq, msgs in ((1, [trig]), (2, [trig] + filler)):
         fr = bf.with_fcs(bf.feed_frame(seq, msgs), bad=True)
@@ -463,7 +498,7 @@ async def interlocks_under_attack(dut):
     m.commit(table)
     await b.config(cfg, table)
     exp = []
-    seq = 1
+    seq = prime(b, m, insts=(3, 4, 5), seq=1, ask=9950)    # band references; continuous sequence (halt on gap is on)
     def send(msgs, gap=300, seq_override=None):
         nonlocal seq, exp
         s = seq if seq_override is None else seq_override
@@ -481,7 +516,8 @@ async def interlocks_under_attack(dut):
     hw1 = await b.counters()
     compare_counters(hw1, m)
     check_outputs(b, exp, m)
-    assert hw1["rej_pos"] >= 1 and hw1["rej_band"] == 1 and hw1["rej_qty"] == 1 and hw1["rej_halt"] >= 1
+    # band: the fat-finger rule, and the priming frame's own ADD on instrument 3 (no reference in the book yet)
+    assert hw1["rej_pos"] >= 1 and hw1["rej_band"] == 2 and hw1["rej_qty"] == 1 and hw1["rej_halt"] >= 1
     # clear the halt; reset the position by reloading the core (kill test with a fresh state)
     await b.wr(0x003, 1 << 3)
     m.halted = False
@@ -515,6 +551,7 @@ async def rate_limit_burst(dut):
     m = Model(cfg=cfg)
     m.commit(table)
     await b.config(cfg, table)
+    prime(b, m)
     exp = []
     for k in range(12):
         fr = bf.with_fcs(bf.feed_frame(1 + k, [bf.Msg(bf.ADD, bf.ASK, k % 8, 10000, 1)]))
@@ -537,13 +574,15 @@ async def kill_drops_a_held_order(dut):
               "price": {"mode": "message"}}}}]
     await b.config(cfg, rl.table_words(rl.validate_table(rules)))
     filler = [bf.Msg(bf.ADD, bf.BID, 5, 9000 + k, 1) for k in range(20)]
+    prime(b, None, insts=(3,))
+    await b.drain(100)
     b.send(bf.with_fcs(bf.feed_frame(1, [bf.Msg(bf.ADD, bf.ASK, 3, 10000, 1)] + filler)), gap=300)
     while not b.events["grant"]:
         await b.idle()
     await b.wr(0x002, 1 | 1 << 3)                        # kill while the order is held
     await b.drain(400)
     hw = await b.counters()
-    assert hw["grants"] == 1 and hw["kill_drop"] == 1 and hw["orders_sent"] == 0
+    assert hw["grants"] == 1 and hw["kill_drop"] == 1 and hw["orders_sent"] == 0, hw
     assert not b.a_frames()
 
 
@@ -555,24 +594,36 @@ async def stage_latency(dut):
     rules = [{"match": {"types": ["ADD"], "side": "ask", "instrument": 3, "price": {"op": "<", "value": "100.00"}},
               "action": {"order": {"side": "buy", "qty": 1, "price": {"mode": "message"}}}}]
     table = rl.table_words(rl.validate_table(rules))
-    res = {"build_mode": BUILD_MODE, "clock_ns": 8, "modes": {}}
+    res = {"build_mode": BUILD_MODE, "clock_ns": 8,
+           "points": {"sfd_in": "the clock mac_rx takes the SFD (its sof_pulse; the board's histogram A starts here)",
+                      "price_complete_in": "the clock the last price byte enters mac_rx (core side, after the RX clock "
+                                           "crossing)",
+                      "first_byte_out": "the clock mac_tx's first preamble byte is on its registered output (core "
+                                        "side, before rgmii_tx and the pins)",
+                      "resolution": "one clock, 8 ns"},
+           "modes": {}}
     for spec in (True, False):
         await b.config(Config(spec_en=spec, bucket=100, max_pos=100000), table)
+        if spec:                                          # after the core is enabled
+            prime(b, None, insts=(3,))
+            await b.drain(100)
         for nmsg in (1, 20):
             base = {k: len(v) for k, v in b.events.items()}
-            n0 = len(b.sfd_cycles)
+            n0 = len(b.sfd_cycles) - 1
             msgs = [bf.Msg(bf.ADD, bf.ASK, 3, 9950, 1)] + [bf.Msg(bf.ADD, bf.BID, 6, 9000, 1)] * (nmsg - 1)
             fr = bf.with_fcs(bf.feed_frame(100 + nmsg, msgs))
             b.send(fr, gap=400)
             await b.drain(600)
             ev = {k: b.events[k][base[k]] for k in b.events if len(b.events[k]) > base[k]}
-            sfd = b.sfd_cycles[n0]
-            bytes_c = b.byte_cycles[n0]
+            sfd = ev["sfd"]
+            bytes_c = b.byte_cycles[n0 + 1]
             px_last_in = bytes_c[8 + 57]              # wire index: 8 preamble/SFD bytes, then frame byte 57
             last_in = bytes_c[-1]                      # the last FCS byte
             r = {
                 "frame_bytes": len(fr), "messages": nmsg,
                 "sfd_in": 0, "price_complete_in": px_last_in - sfd, "fcs_last_in": last_in - sfd,
+                "decision_to_first_byte_ns": (ev["first"] - px_last_in) * 8,
+                "sfd_to_first_byte_ns": (ev["first"] - sfd) * 8,
                 "stages_cycles": {
                     "mac_rx + feed_rx (price byte in -> msg_px_v)": ev["px"] - px_last_in,
                     "rules (msg_px_v -> fire)": ev["fire"] - ev["px"],
@@ -590,8 +641,8 @@ async def stage_latency(dut):
     if out:
         with open(out, "w") as f:
             json.dump(res, f, indent=1)
-    hw_last = await b.rd(0x156)
-    assert hw_last == res["modes"]["safe_20msg"]["tick_to_trade_sfd_to_first_byte"] - 1 or hw_last > 0
+    hw_last = await b.rd(0x156)               # histogram A's last sample (metric 0): the same two points, measured in RTL
+    assert hw_last == res["modes"]["safe_20msg"]["tick_to_trade_sfd_to_first_byte"], (hw_last, res["modes"]["safe_20msg"])
 
 
 @cocotb.test()

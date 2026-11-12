@@ -29,54 +29,52 @@
     "ns": 16
    }
   ],
-  "price_complete_in_clocks": 58,
+  "price_complete_in_clocks": 57,
   "decision_to_first_byte_clocks": 8,
-  "sfd_to_first_byte_clocks": 66
+  "sfd_to_first_byte_clocks": 65
  },
  "modes": {
   "speculative_1msg": {
    "decision_to_first_byte_clocks": 8,
-   "sfd_to_first_byte_clocks": 66
+   "sfd_to_first_byte_clocks": 65
   },
   "speculative_20msg": {
    "decision_to_first_byte_clocks": 8,
-   "sfd_to_first_byte_clocks": 66
+   "sfd_to_first_byte_clocks": 65
   },
   "safe_1msg": {
-   "decision_to_first_byte_clocks": 19,
-   "sfd_to_first_byte_clocks": 77
+   "decision_to_first_byte_clocks": 18,
+   "sfd_to_first_byte_clocks": 75
   },
   "safe_20msg": {
-   "decision_to_first_byte_clocks": 323,
-   "sfd_to_first_byte_clocks": 381
+   "decision_to_first_byte_clocks": 322,
+   "sfd_to_first_byte_clocks": 379
   }
  },
- "assemble_then_send": {
-  "speculative_1msg": {
-   "decision_to_first_byte_clocks": 75
+ "headers": {
+  "note": "what computing the response headers before the decision saves: nothing at 1 Gb/s when the frame is streamed as the MAC asks (mode 1); storing and assembling the frame first costs the rest (mode 2)",
+  "checksum_after_decision": {
+   "speculative_1msg": 8,
+   "speculative_20msg": 8,
+   "safe_1msg": 18,
+   "safe_20msg": 322
   },
-  "speculative_20msg": {
-   "decision_to_first_byte_clocks": 75
-  },
-  "safe_1msg": {
-   "decision_to_first_byte_clocks": 86
-  },
-  "safe_20msg": {
-   "decision_to_first_byte_clocks": 390
+  "store_and_assemble": {
+   "speculative_1msg": 75,
+   "speculative_20msg": 75,
+   "safe_1msg": 85,
+   "safe_20msg": 389
   }
  },
  "hist": {
   "unit": "ns",
-  "label": "tick-to-trade in simulation (receive SFD to first byte out), port B loop",
+  "label": "simulation: SFD taken by the receive MAC to the order's first preamble byte leaving the transmit MAC (core side), port B loop",
   "bins": 8,
   "samples": [
    520,
    520,
    520,
    520,
-   520,
-   520,
-   648,
    648,
    648,
    648,

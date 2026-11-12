@@ -1,5 +1,6 @@
-"""SymbiYosys jobs of brief 58A (verif/formal): the interlocks (bounded, k-induction, cover) and the MAC frame FSMs
-(bounded and cover only: their k-induction needs invariants on internal state, not written yet).
+"""SymbiYosys jobs of the trading path (verif/formal): the interlocks (bounded, k-induction proof, cover), the order slot
+(an order from a bad frame is dropped, poisoned or cancelled; the slot drains) and the MAC frame state machines: bounded
+checks and covers, not proofs.
 Skipped where sby is not installed (CI: the verification job installs it)."""
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ import pytest
 FORMAL = Path(__file__).resolve().parents[1] / "verif" / "formal"
 JOBS = [("interlocks", "bmc"), ("interlocks", "prove"), ("interlocks", "cover"),
         ("mac_tx", "bmc"), ("mac_tx", "cover"),
-        ("mac_rx", "bmc"), ("mac_rx", "cover")]
+        ("mac_rx", "bmc"), ("mac_rx", "cover"), ("order_ctl", "bmc"), ("order_ctl", "cover")]
 
 
 @pytest.mark.skipif(shutil.which("sby") is None, reason="SymbiYosys not installed")

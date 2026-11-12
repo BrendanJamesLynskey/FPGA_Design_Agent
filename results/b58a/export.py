@@ -1,5 +1,5 @@
-"""Brief 58A: the showcase page's data, in the shapes of the site's graphics kit (docs/showcase_pages.md on brief 61's
-branch), from the committed simulation records in this folder. Re-run after any result changes:
+"""The showcase page's data for the mock trading path, in the shapes of the site's graphics kit (the site's
+docs/showcase_pages.md), from the committed simulation records in this folder. Re-run after any result changes:
 
     python3 results/b58a/export.py
 
@@ -20,7 +20,7 @@ def load(name: str) -> dict:
 
 
 def main() -> int:
-    lat, asm = load("latency_sim.json"), load("latency_sim_assemble.json")
+    lat, after, asm = load("latency_sim.json"), load("latency_sim_csum_after.json"), load("latency_sim_assemble.json")
     loop, stale = load("loop_sim.json"), load("stale_parameters_sim.json")
     spec = lat["modes"]["speculative_1msg"]
     # hero 1 (kit "wave"-like timeline, as a list of stages with clock counts): one trigger through the path
@@ -37,9 +37,13 @@ def main() -> int:
         "modes": {m: {"decision_to_first_byte_clocks": v["decision_to_first_byte"],
                       "sfd_to_first_byte_clocks": v["tick_to_trade_sfd_to_first_byte"]}
                   for m, v in lat["modes"].items()},
-        "assemble_then_send": {m: {"decision_to_first_byte_clocks": v["decision_to_first_byte"]}
-                               for m, v in asm["modes"].items()},
-        "hist": {"unit": "ns", "label": "tick-to-trade in simulation (receive SFD to first byte out), port B loop",
+        "headers": {"note": "what computing the response headers before the decision saves: nothing at 1 Gb/s when the "
+                            "frame is streamed as the MAC asks (mode 1); storing and assembling the frame first costs "
+                            "the rest (mode 2)",
+                    "checksum_after_decision": {m: v["decision_to_first_byte"] for m, v in after["modes"].items()},
+                    "store_and_assemble": {m: v["decision_to_first_byte"] for m, v in asm["modes"].items()}},
+        "hist": {"unit": "ns", "label": "simulation: SFD taken by the receive MAC to the order's first preamble byte "
+                                        "leaving the transmit MAC (core side), port B loop",
                  "bins": 8, "samples": samples},
         "stale": stale,
     }

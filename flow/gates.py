@@ -712,6 +712,10 @@ def main(argv: list[str] | None = None) -> int:
             continue
         print(f"  {name}: {'pass' if st['pass'] else 'FAIL'}")
         for g, ok in st["gates"].items():
+            ex = st.get("exceptions") or {}
+            if ok and g.endswith("exceptions_clean") and ex.get("waived"):      # a waiver is reported, never as a plain pass
+                print(f"    waiv {g}: {ex['waived']} {'/'.join(ex.get('waived_rules') or [])} (waivers.yaml)")
+                continue
             print(f"    {'ok  ' if ok else 'FAIL'} {g}")
             if not ok and "unconstrained" in g and st.get("unconstrained_ports"):
                 print(f"         check_timing: {unconstrained_text(st['unconstrained_ports'])}")

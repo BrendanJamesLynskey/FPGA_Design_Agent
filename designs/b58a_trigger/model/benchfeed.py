@@ -131,7 +131,7 @@ def order_frame(o: Order, *, src_mac: int = BOARD_MAC, dst_mac: int = VENUE_MAC,
     """The response frame the board sends for an order or a cancel (no FCS): one-message Bench Feed v1 packet."""
     body = struct.pack(">HBBI", MAGIC, VERSION, 1, o.seq) + struct.pack(">BBHIII", o.type, o.side, o.inst, o.price,
                                                                          o.qty, o.order_id)
-    return ethernet(dst_mac, src_mac, ETH_IPV4, ipv4_udp(src_ip, dst_ip, sport, dport, body))
+    return ethernet(dst_mac, src_mac, ETH_IPV4, ipv4_udp(src_ip, dst_ip, sport, dport, body, ident=o.seq & 0xFFFF))
 
 
 def parse_order(frame: bytes) -> Order | None:

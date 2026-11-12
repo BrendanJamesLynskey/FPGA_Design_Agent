@@ -1,4 +1,4 @@
-// formal_interlocks.sv: properties of rtl/interlocks.sv (brief 58A step 5), proved by SymbiYosys (interlocks.sby).
+// formal_interlocks.sv: properties of rtl/interlocks.sv, proved by SymbiYosys (interlocks.sby).
 // Every input is free (the solver plays the hostile traffic and the host); the configuration is held stable after
 // reset except the kill and halt inputs, which may change on any clock. A grant must never breach a limit.
 module formal_interlocks (
@@ -8,6 +8,7 @@ module formal_interlocks (
     input logic [15:0] bucket,
     input logic        req_v, req_side,
     input logic [31:0] req_qty, req_px, req_ref,
+    input logic        req_noref,
     input logic        reload
 );
     logic rst;
@@ -21,7 +22,7 @@ module formal_interlocks (
     logic signed [33:0] pos;
     logic [15:0] tokens;
     interlocks dut (.clk, .rst, .kill_reg, .kill_in, .halt, .max_qty, .band, .max_pos, .bucket, .refill, .reload,
-                    .req_v, .req_side, .req_qty, .req_px, .req_ref, .grant, .rej_v, .rej_why, .pos, .tokens,
+                    .req_v, .req_side, .req_qty, .req_px, .req_ref, .req_noref, .grant, .rej_v, .rej_why, .pos, .tokens,
                     .approved, .tick);
 
     // configuration stable after reset (the host does not reconfigure during a run); small values keep it shallow
@@ -38,12 +39,12 @@ module formal_interlocks (
     // the request seen by the clock that grants it
     logic        p_side;
     logic [31:0] p_qty, p_px, p_ref;
-    logic        p_kill, p_halt;
+    logic        p_kill, p_halt, p_noref;
     logic signed [33:0] p_pos;
     logic [15:0] p_tok;
     always_ff @(posedge clk) begin
         p_side <= req_side; p_qty <= req_qty; p_px <= req_px; p_ref <= req_ref;
-        p_kill <= kill_reg | kill_in; p_halt <= halt; p_pos <= pos; p_tok <= tokens;
+        p_kill <= kill_reg | kill_in; p_halt <= halt; p_noref <= req_noref; p_pos <= pos; p_tok <= tokens;
     end
     logic [32:0] p_d;
     assign p_d = (p_px >= p_ref) ? {1'b0, p_px} - {1'b0, p_ref} : {1'b0, p_ref} - {1'b0, p_px};
@@ -67,7 +68,7 @@ module formal_interlocks (
             assert (!(kill_reg | kill_in));                       // kill wins even in the grant clock
             assert (!p_kill && !p_halt);                          // not killed or halted when asked
             assert (p_qty != 0 && p_qty <= {1'b0, max_qty[30:0]});        // size
-            assert (p_d <= {2'b00, band[30:0]});                  // price band
+            assert (p_d <= {2'b00, band[30:0]} && !p_noref);      // price band, against a real reference
             assert (p_tok != 0);                                  // a token was there
         end
         // the position never leaves the limit, whatever the requests (it starts at 0 and only grants move it)

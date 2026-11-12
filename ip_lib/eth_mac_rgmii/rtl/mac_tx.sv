@@ -13,7 +13,7 @@
 // preamble byte, the SFD, the last FCS byte): the "first bit out" and timestamp points.
 //
 // poison: high on any clock up to the one that forms the last FCS byte makes the remaining FCS bytes go out
-// inverted, so the far end discards the frame (brief 58A's speculative undo, and an AXI-Stream underrun in
+// inverted, so the far end discards the frame (the trading path's speculative undo, and an AXI-Stream underrun in
 // eth_mac_rgmii). last_poisoned (with last_pulse) says whether any FCS byte was inverted.
 
 module mac_tx #(

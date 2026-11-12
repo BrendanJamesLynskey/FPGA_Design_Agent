@@ -1,4 +1,4 @@
-// rules.sv: the run-time programmable rule table (brief 58A step 4).
+// rules.sv: the run-time programmable rule table.
 //
 // NR rules, each six 32-bit words (docs/rule_table.md; the schema is rules/rule_schema.json):
 //   w0 control  [0] enable  [4:1] type mask (ADD, MODIFY, CANCEL, TRADE)  [6:5] side (0 any, 1 bid, 2 ask)
@@ -34,7 +34,7 @@ module rules #(
     input  logic [15:0] msg_inst,
     input  logic [31:0] msg_px,
     input  logic        bk_valid,
-    input  logic [31:0] bk_bid_px, bk_bid_sz, bk_ask_px, bk_ask_sz,
+    input  logic [31:0] bk_bid_px, bk_bid_sz, bk_ask_px, bk_ask_sz, bk_last,
     // decision
     output logic        fire_v,
     output logic [2:0]  fire_rule,
@@ -43,7 +43,8 @@ module rules #(
     output logic        fire_side,
     output logic [31:0] fire_qty,
     output logic [31:0] fire_px,
-    output logic [31:0] fire_ref_px,    // the message price (the fat-finger reference)
+    output logic [31:0] fire_ref_px,    // the price-band reference: the book before this message (see below)
+    output logic        fire_noref,     // no reference: the order is refused by the band check
     output logic [15:0] fire_inst,
     output logic        fire_pin_en,
     output logic        fire_pin_idx,
@@ -127,9 +128,9 @@ module rules #(
         if (rst) begin
             for (int r = 0; r < NR; r++) hold[r] <= '0;
             fire_rule <= '0; fire_ver <= '0; fire_order <= 1'b0; fire_side <= 1'b0; fire_qty <= '0; fire_px <= '0;
-            fire_ref_px <= '0; fire_inst <= '0; fire_pin_en <= 1'b0; fire_pin_idx <= 1'b0; fire_log <= 1'b0;
+            fire_ref_px <= '0; fire_noref <= 1'b1; fire_inst <= '0; fire_pin_en <= 1'b0; fire_pin_idx <= 1'b0; fire_log <= 1'b0;
         end else begin
-            for (int r = 0; r < NR; r++) if (hold[r] != 0) hold[r] <= hold[r] - 32'd1;
+            for (int r = 0; r < NR; r++) if (hold[r] != 0) hold[r] <= h_commit ? 32'd0 : hold[r] - 32'd1;
             if (msg_px_v && cand != 0) begin
                 logic [31:0] c, pw;
                 c  = act[win*6];
@@ -145,7 +146,17 @@ module rules #(
                     2'd1:    fire_px <= msg_px;
                     default: fire_px <= msg_px + pw;
                 endcase
-                fire_ref_px  <= msg_px;
+                // the band reference does not come from the triggering message: a buy is checked against the best ask
+                // before this message, a sell against the best bid; if that side is empty, the last trade; else none
+                if (!bk_valid) begin
+                    fire_ref_px <= '0; fire_noref <= 1'b1;
+                end else if (!c[14] && bk_ask_sz != 0) begin
+                    fire_ref_px <= bk_ask_px; fire_noref <= 1'b0;
+                end else if (c[14] && bk_bid_sz != 0) begin
+                    fire_ref_px <= bk_bid_px; fire_noref <= 1'b0;
+                end else begin
+                    fire_ref_px <= bk_last; fire_noref <= (bk_last == 0);
+                end
                 fire_inst    <= msg_inst;
                 fire_pin_en  <= c[17];
                 fire_pin_idx <= c[18];

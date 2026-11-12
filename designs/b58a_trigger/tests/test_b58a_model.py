@@ -1,4 +1,4 @@
-"""Brief 58A, no simulator: the reference model, the rule validator and schema, the recorded natural-language rule
+"""The trading path, no simulator: the reference model, the rule validator and schema, the recorded natural-language rule
 fixtures, and the mock venue's book against the model's."""
 
 from __future__ import annotations

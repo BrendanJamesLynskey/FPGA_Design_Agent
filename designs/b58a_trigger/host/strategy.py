@@ -1,4 +1,4 @@
-"""The slow path (brief 58A additions, "tick-to-config"): a strategy loop in software that recomputes rule parameters
+"""The slow path ("tick-to-config"): a strategy loop in software that recomputes rule parameters
 from the board's book and writes them into the rule table. The FPGA keeps judging every message on whatever table is
 committed; a message that arrives between a book change and the commit that follows it is judged on the old values.
 
