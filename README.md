@@ -167,8 +167,9 @@ conversation is summarised from 40,000 tokens instead of 170,000. H2 protects ag
 bench with an unbounded wait loop, `simulate` runs under a wall-clock watchdog derived from the bench's own simulation-time
 budget, and a hang comes back as a structured result naming the test and the simulation time. H9 replaces large build, gates,
 simulate and lint results with a deterministic typed digest (new tool `report_digest`). Measured on 4 tasks and 3 repeats with one
-low-cost model, no arm is adopted: H1 used about a third less cost and 18 % less wall time in the median, H9 and H2 did not separate
-from the baseline, and two of the four tasks are never passed by any arm
+low-cost model, no arm is adopted yet: H1 used about a third less cost (interval excludes 0) but its token saving is not separated from 0,
+and the pre-registered rule can be read either way; H9 saved 16 % of cost (below the 30 % bar); H2 did not separate from the
+baseline; and two of the four tasks are never passed by any arm
 ([results/42_workflows/README.md](results/42_workflows/README.md), [analysis](results/42_workflows/analysis.md),
 [runs](results/42_workflows/runs.md), [pre-registration](results/42_workflows/prereg.md)); the audit script is
 [agent/tools/harness_audit.py](agent/tools/harness_audit.py).

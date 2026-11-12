@@ -1,9 +1,12 @@
 # Brief 42: does changing the harness around the model change what the agent costs and achieves?
 
-**Result.** On 4 tasks, 3 repeats, 4 arms (A0 baseline, H1, H2, H9; 48 valid runs of 51, one low-cost model), no arm meets the
-pre-registered adopt rule. H1 (context management) used 33 % less cost (paired median, interval excludes 0) and 18 % less wall
-time than the baseline and 66 % fewer tokens (interval includes 0), with no loss of hidden-test passes. H9 (typed digests) saved
-16 % of cost, below the 30 % bar. H2 (hang protection) showed no difference. Two of the four tasks are never passed by any arm.
+**Result.** On 4 tasks, 3 repeats, 4 arms (A0 baseline, H1, H2, H9; 48 valid runs of 51, one low-cost model), no arm is
+adopted yet. The pre-registered rule asks for a 30 % saving in "tokens per run (and cost)" and does not fix how to read
+"(and cost)": H1 fails on tokens (66 % fewer, interval includes 0) and meets it on cost (33 % less, interval excludes 0), so
+the outcome depends on the reading ([analysis](analysis.md)). H1's 18 % less wall time does not hold once the two blocks with a
+hard-limit run are left out (interval includes 0). H1 passed as many hidden tests in total as the baseline (one task gained a
+pass, another lost one). H9 (typed digests) saved 16 % of cost with an interval that excludes 0, below the 30 % bar. H2 (hang
+protection) showed no difference. Two of the four tasks are never passed by any arm.
 
 ## The question and the arms
 
