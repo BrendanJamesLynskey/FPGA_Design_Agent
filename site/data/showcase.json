@@ -7,12 +7,18 @@
  "projects": [
   {
    "board": "Digilent Nexys A7-100T",
-   "description": "An on-chip AXI4-Lite and AXI4-Stream transactor, protocol checker and scoreboard on the Nexys A7: seeded bugs caught on the board, the same traffic cycle for cycle in simulation, the checker proved formally.",
+   "description": "An on-chip AXI4-Lite and AXI4-Stream traffic generator, protocol checker and scoreboard on the Nexys A7: seeded bugs caught on the board, the same traffic cycle for cycle in simulation, the checker checked formally to a bounded depth.",
    "evidence": [
     {
      "kind": "record",
      "label": "Board runs: verdicts, counters, captures and the simulation comparison",
      "path": "results/59a_axi_tx/board_run.json",
+     "text": ""
+    },
+    {
+     "kind": "record",
+     "label": "Earlier board attempts, and what changed after them",
+     "path": "results/59a_axi_tx/board_run_attempts.md",
      "text": ""
     },
     {
@@ -49,10 +55,10 @@
      "kind": "requirements",
      "label": "Requirements traced",
      "path": null,
-     "text": "Not traced yet: the transaction programs carry requirement tags, but the traceability matrix does not read them; that link is planned work."
+     "text": "Not done yet: the programs carry requirement tags, but nothing reads them yet."
     }
    ],
-   "headline": "A hardware checker that watches an AXI bus and names the rule a bug breaks: on the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) it caught each of the 6 protocol bugs we seeded, on the board, by the rule we expected; against our own peripheral and stream FIFO, the board's traffic matched simulation cycle for cycle in 13 of 13 runs.",
+   "headline": "A hardware checker that watches an AXI bus and names the rule a bug breaks. On the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) it flagged the expected rule in all 6 runs with a seeded protocol bug (8 faults), and against our own peripheral and stream FIFO the board's traffic matched simulation cycle for cycle in 13 of 13 runs.",
    "hero": {
     "caption": "One capture from the board, one seeded bug: our peripheral raises the write-response valid signal (BVALID) before any write data has arrived, and the checker flags it in that cycle.",
     "data": {
@@ -72,7 +78,7 @@
       "BVALID held; the master is not ready for the response yet",
       "BVALID held; the master is not ready for the response yet",
       "B accepted: the master takes the early response",
-      "Address held by the peripheral, waiting for its data"
+      "Write complete: the bus is quiet again"
      ],
      "signals": [
       {
@@ -264,12 +270,13 @@
     "not_measured": [
      "Coverage of real-world bugs: the bugs were planted by us to demonstrate the checker; this is not a measure of how many unknown bugs it would find.",
      "Full AXI4 (bursts, IDs, outstanding transactions), the slave side and a long soak: the next phase.",
-     "Runs against AMD's BRAM controller are checked against a model, not cycle for cycle with simulation: the free simulator we used cannot simulate AMD's BRAM controller.",
+     "Runs against the block-RAM controller IP core are checked against a model, not cycle for cycle with simulation: the free simulator we used cannot simulate that core.",
+     "One board, one clock: the stream path is a single width (the stand-alone stream checker was also synthesised at wider widths), and the bus runs at the board's single system clock.",
      "The proofs are bounded, and the property restatement shares its author with the checker; the AMD checker is the independent check."
     ],
     "nulls": []
    },
-   "one_line": "A block that sits on the chip beside the IP under test, drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time, and checks every protocol rule in hardware while the traffic runs.",
+   "one_line": "A block that sits on the chip beside the design under test, drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time, and checks a set of named protocol rules in hardware while the traffic runs.",
    "order": 2,
    "part": "xc7a100tcsg324-1",
    "status": "published",
@@ -277,17 +284,17 @@
    "story": {
     "agent": {
      "approvals": [
-      "The owner authorised hardware use for the day (volatile configuration only, wall power)",
-      "The planner reviews and merges; the executor merged nothing"
+      "The owner authorised hardware use (volatile configuration only, wall power)",
+      "Independent reviewers checked the work, and the owner merges it"
      ],
      "gates": [
       "Every rule checked quiet and firing, every broken copy of the checker caught",
       "Simulation of every program, seeded bug and memory fault",
       "Vivado 2026.1 gates: methodology, timing, design rule checks, power",
-      "The board plan fixed in advance, with die temperature and rails logged"
+      "The board plan written in advance, with die temperature and rails logged"
      ],
-     "plan": "The owner chose the project and set the rules; a planner session wrote the brief; an AI executor (a language-model coding agent) wrote the RTL, the rule monitors (from the specification, in its own words), the seeded bugs, the proofs, the simulation and the board runs. The bugs were seeded by the same executor that wrote the checker; the AMD checker is the part it did not write.",
-     "request": "The owner asked for an on-chip AMBA AXI transactor and analyser that exercises on-chip modules with transactions of any complexity while verifying protocol correctness."
+     "plan": "The owner chose the project and set the rules. A language-model coding agent wrote the RTL, the rule monitors (from the specification, in its own words), the seeded bugs, the proofs, the simulation and the board runs. The bugs were seeded by the same agent that wrote the checker; AMD's checker is the part it did not write.",
+     "request": "The owner asked for an on-chip AMBA AXI traffic generator and protocol checker that exercises on-chip modules with transactions of any complexity while verifying protocol correctness."
     },
     "architecture": {
      "blocks": [
@@ -349,16 +356,17 @@
       ]
      ]
     },
-    "how": "A transaction program, written in plain YAML and loaded over the serial link, drives AXI4-Lite traffic (a simple register-access bus) and AXI4-Stream traffic (a packet stream) with seeded random addresses, data and byte-enables (which bytes of a word to write), pauses by the sender and refusals by the receiver (back-pressure). Monitors that watch only the bus wires check 9 AXI4-Lite and 5 AXI4-Stream rules every cycle. A reference copy of the memory checks every read, counters record latency, stalls and which cases were covered, and the first violation starts a capture. The same program runs on the board and in simulation.",
-    "problem": "A bus interface that breaks the AXI handshake rules often passes a quick test and fails in a system: read data that is not held while the master stalls, or a write response sent before the data. Such bugs show only under the right timing, and a logic analyser shows the waveform but not which rule it breaks. The hard part is the checker, not the traffic: a wrong checker passes bad designs or flags good ones, so this one is checked formally, attacked with deliberately broken copies of itself, and compared with AMD's own checker. Making the board and the simulation see identical traffic is the other hard part: every random choice has to be seeded.",
+    "how": "A transaction program, written in plain YAML and loaded over the serial link, drives AXI4-Lite traffic (a simple register-access bus) and AXI4-Stream traffic (a packet stream) with seeded random addresses, data and byte-enables (which bytes of a word to write), pauses by the sender and refusals by the receiver (back-pressure). Monitors that watch only the bus wires check 10 AXI4-Lite and 5 AXI4-Stream rules every cycle. A reference copy of the memory checks reads of every word written in the run, counters record latency, stalls and which cases were covered, and the first violation starts a capture. The same program runs on the board and in simulation.",
+    "problem": "AXI is the standard on-chip bus of Arm and AMD designs. A bus interface that breaks its handshake rules often passes a quick test and fails in a system: read data that is not held while the master stalls, or a write response sent before the data. Such bugs show only under the right timing, and a logic analyser shows the waveform but not which rule it breaks.\n\nThe hard part is the checker, not the traffic. A wrong checker passes bad designs or flags good ones, so this one is checked formally, attacked with deliberately broken copies of itself, and compared on the board with AMD's own checker.\n\nThe other hard part is making the board and the simulation see identical traffic: every random choice has to be seeded, and every counter has to start with the run.",
     "results": [
-     "17 board runs, fixed in a written plan before the board was used: 6 with a seeded protocol bug, 2 with a seeded data bug, 9 clean. All 17 gave the expected verdict.",
-     "Each protocol bug was flagged by the rule we expected, in every run, and by no other rule. The data bugs (write byte-enables ignored, the end-of-packet marker TLAST lost) were caught by the reference memory or the stream receiver alone, and all 9 clean runs fired nothing. A demonstration on bugs we planted, not a measure of coverage.",
+     "17 board runs, written in a plan before the board was used: 6 with a seeded protocol bug (8 faults in all), 2 with a seeded data bug, 9 clean. All 17 gave the verdict the plan expected. Earlier attempts on earlier builds are listed in the evidence: after them the transaction model and the RTL were changed, and the whole plan was run again on the final build.",
+     "Each protocol-bug run was flagged by the rule we expected, and by no other rule. The data bugs (write byte-enables ignored, the end-of-packet marker TLAST lost) were caught by the reference memory or the stream receiver alone (2 of 2), and all 9 clean runs fired nothing. A demonstration on bugs we planted, not a measure of coverage.",
      "Board against simulation, for our own peripheral and stream FIFO (a first-in, first-out buffer): a checksum over every transaction, including its latency in cycles, and the run's length in cycles were identical in 13 of 13 runs; 0 of 936 logged transactions differed.",
-     "Independent check: AMD's AXI Protocol Checker, watching the same bus, raised its flag in exactly the 5 runs where ours flagged an AXI4-Lite rule; the two agree in 17 of 17 runs.",
-     "The checker is formally checked to a limited depth: 30 of 30 proofs over 20 clock cycles show each rule quiet on legal traffic and firing on its own seeded violation, and 34 of 34 deliberately broken copies of the checker were caught. The properties were written by the same author as the checker, which is why the AMD checker matters.",
-     "Against AMD's AXI BRAM Controller, under random back-pressure, write latency ran from 2 to 12 cycles and read latency from 1 to 8; 107 reads were checked against the reference memory with no mismatch.",
-     "The whole board design used 7089 LUTs and met timing with 0.188 ns of slack; Vivado estimated 0.189 W. Measured on the die: at most 27.32 C, core supply rail (VCCINT) from 1.0042 to 1.0071 V, inside the recommended operating conditions, 0 alarms latched."
+     "Independent check: AMD's AXI Protocol Checker, watching the same AXI4-Lite bus (not the stream), raised its flag in exactly the 5 runs where ours flagged an AXI4-Lite rule; on the AXI4-Lite bus the two agree in 17 of 17 runs.",
+     "The checker is checked formally to depth 20 (bounded): 32 of 32 proofs show each rule quiet on legal traffic and firing on its own seeded violation within that many clock cycles, and 53 of 53 deliberately broken copies of the checker were caught. The properties were written by the same author as the checker, which is why the AMD checker matters.",
+     "In one run against the board's block-RAM controller IP core, under random back-pressure, write latency ran from 2 to 12 cycles and read latency from 1 to 8; 107 reads of written words were checked against the reference memory with no mismatch.",
+     "Design size and timing: the whole board design used 7043 LUTs and met timing with 0.169 ns of slack; Vivado estimated 0.185 W.",
+     "Measured conditions: the die stayed at or below 26.45 C and the core supply rail (VCCINT) between 1.0042 and 1.0078 V, inside the recommended operating conditions, with 0 alarms latched."
     ]
    },
    "title": "An on-chip AXI traffic generator and protocol checker",
@@ -373,34 +381,37 @@
     "b_early_cycle": 1070,
     "bug_runs": 6,
     "bug_runs_right": 6,
-    "build_id": "05236f86",
+    "build_id": "44b780c9",
     "clean": 9,
     "clean_quiet": 9,
     "depth": 20,
+    "faults": 8,
+    "func_caught": 2,
     "func_runs": 2,
-    "lite_rules": 9,
-    "lut": 7089,
-    "mutants": 34,
-    "mutants_killed": 34,
+    "lite_rules": 10,
+    "lite_runs": 17,
+    "lut": 7043,
+    "mutants": 53,
+    "mutants_killed": 53,
     "parity": 13,
     "parity_eq": 13,
-    "power": 0.189,
-    "proofs": 30,
-    "proofs_pass": 30,
+    "power": 0.185,
+    "proofs": 32,
+    "proofs_pass": 32,
     "reads_checked": 107,
     "rlat_max": 8,
     "rlat_min": 1,
     "runs": 17,
     "runs_pass": 17,
     "stream_rules": 5,
-    "tj_max": 27.32,
+    "tj_max": 26.45,
     "txn_diff": 0,
     "txns": 936,
-    "vccint_max": 1.0071,
+    "vccint_max": 1.0078,
     "vccint_min": 1.0042,
     "wlat_max": 12,
     "wlat_min": 2,
-    "wns": 0.188
+    "wns": 0.169
    },
    "vivado": "2026.1"
   },

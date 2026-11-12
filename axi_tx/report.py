@@ -66,6 +66,8 @@ def collect() -> None:
         elif m:
             rows.append({"config": m.group(1), "top": m.group(2), "generics": m.group(3), "lut": int(m.group(4)),
                          "ff": int(m.group(5)), "bram_tiles": float(m.group(6))})
+    if excluded is None and (RES / "resources.json").is_file():       # keep the record of the withdrawn row
+        excluded = json.loads((RES / "resources.json").read_text()).get("excluded")
     (RES / "resources.json").write_text(json.dumps({"part": "xc7a100tcsg324-1", "mode": "synth_design -mode out_of_context",
                                                      "rows": rows, "excluded": excluded}, indent=1) + "\n")
 

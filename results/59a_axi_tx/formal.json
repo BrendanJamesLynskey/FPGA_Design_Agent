@@ -1,5 +1,6 @@
 {
  "depth": 20,
+ "mutant_depth": 12,
  "tool": "Yosys 0.33 (git sha1 2584903a060)",
  "units": {
   "axil": {
@@ -8,7 +9,7 @@
      "job": "axil_quiet",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 55.7,
+     "seconds": 59.7,
      "expect": "PASS",
      "ok": true
     },
@@ -16,7 +17,7 @@
      "job": "axil_seed0",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 56.4,
+     "seconds": 60.7,
      "expect": "PASS",
      "ok": true
     },
@@ -32,7 +33,7 @@
      "job": "axil_seed1",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 51.8,
+     "seconds": 71.8,
      "expect": "PASS",
      "ok": true
     },
@@ -48,7 +49,7 @@
      "job": "axil_seed2",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 59.0,
+     "seconds": 68.8,
      "expect": "PASS",
      "ok": true
     },
@@ -56,7 +57,7 @@
      "job": "axil_seed2_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 0.5,
+     "seconds": 0.8,
      "expect": "PASS",
      "ok": true
     },
@@ -64,7 +65,7 @@
      "job": "axil_seed3",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 64.5,
+     "seconds": 75.1,
      "expect": "PASS",
      "ok": true
     },
@@ -72,7 +73,7 @@
      "job": "axil_seed3_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 0.5,
+     "seconds": 0.7,
      "expect": "PASS",
      "ok": true
     },
@@ -80,7 +81,7 @@
      "job": "axil_seed4",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 53.3,
+     "seconds": 79.0,
      "expect": "PASS",
      "ok": true
     },
@@ -88,7 +89,7 @@
      "job": "axil_seed4_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 0.6,
+     "seconds": 0.7,
      "expect": "PASS",
      "ok": true
     },
@@ -96,7 +97,7 @@
      "job": "axil_seed5",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 95.5,
+     "seconds": 107.3,
      "expect": "PASS",
      "ok": true
     },
@@ -104,7 +105,7 @@
      "job": "axil_seed5_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 0.5,
+     "seconds": 0.8,
      "expect": "PASS",
      "ok": true
     },
@@ -112,7 +113,7 @@
      "job": "axil_seed6",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 96.0,
+     "seconds": 94.6,
      "expect": "PASS",
      "ok": true
     },
@@ -120,7 +121,7 @@
      "job": "axil_seed6_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 0.7,
+     "seconds": 0.5,
      "expect": "PASS",
      "ok": true
     },
@@ -128,7 +129,7 @@
      "job": "axil_seed7",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 90.9,
+     "seconds": 100.1,
      "expect": "PASS",
      "ok": true
     },
@@ -136,7 +137,7 @@
      "job": "axil_seed7_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 0.7,
+     "seconds": 0.8,
      "expect": "PASS",
      "ok": true
     },
@@ -144,7 +145,7 @@
      "job": "axil_seed8",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 69.0,
+     "seconds": 58.3,
      "expect": "PASS",
      "ok": true
     },
@@ -152,7 +153,23 @@
      "job": "axil_seed8_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 1.2,
+     "seconds": 0.9,
+     "expect": "PASS",
+     "ok": true
+    },
+    {
+     "job": "axil_seed9",
+     "mode": "bmc",
+     "status": "PASS",
+     "seconds": 61.3,
+     "expect": "PASS",
+     "ok": true
+    },
+    {
+     "job": "axil_seed9_cover",
+     "mode": "cover",
+     "status": "PASS",
+     "seconds": 0.5,
      "expect": "PASS",
      "ok": true
     }
@@ -160,263 +177,533 @@
    "mutants": [
     {
      "job": "axil_mut_off0",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 1.0,
      "kind": "off",
+     "mutant": "off",
      "rule": 0,
-     "proof": "seed0",
+     "killed_by": [
+      "seed0"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.2,
      "ok": true
     },
     {
      "job": "axil_mut_unguard0",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.8,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 0,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.6,
      "ok": true
     },
     {
      "job": "axil_mut_payload0",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.8,
      "kind": "payload",
+     "mutant": "payload",
      "rule": 0,
-     "proof": "seed0",
+     "killed_by": [
+      "seed0"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.4,
      "ok": true
     },
     {
      "job": "axil_mut_off1",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.8,
      "kind": "off",
+     "mutant": "off",
      "rule": 1,
-     "proof": "seed1",
+     "killed_by": [
+      "seed1"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 5.5,
      "ok": true
     },
     {
      "job": "axil_mut_unguard1",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.7,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 1,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 6.1,
      "ok": true
     },
     {
      "job": "axil_mut_payload1",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.9,
      "kind": "payload",
+     "mutant": "payload",
      "rule": 1,
-     "proof": "seed1",
+     "killed_by": [
+      "seed1"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.3,
      "ok": true
     },
     {
      "job": "axil_mut_off2",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.8,
      "kind": "off",
+     "mutant": "off",
      "rule": 2,
-     "proof": "seed2",
+     "killed_by": [
+      "seed2"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 5.7,
      "ok": true
     },
     {
      "job": "axil_mut_unguard2",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.8,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 2,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.4,
      "ok": true
     },
     {
      "job": "axil_mut_payload2",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.7,
      "kind": "payload",
+     "mutant": "payload",
      "rule": 2,
-     "proof": "seed2",
+     "killed_by": [
+      "seed2"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 6.3,
      "ok": true
     },
     {
      "job": "axil_mut_off3",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.9,
      "kind": "off",
+     "mutant": "off",
      "rule": 3,
-     "proof": "seed3",
+     "killed_by": [
+      "seed3"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.0,
      "ok": true
     },
     {
      "job": "axil_mut_unguard3",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.7,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 3,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.9,
      "ok": true
     },
     {
      "job": "axil_mut_payload3",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.7,
      "kind": "payload",
+     "mutant": "payload",
      "rule": 3,
-     "proof": "seed3",
+     "killed_by": [
+      "seed3"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.4,
      "ok": true
     },
     {
      "job": "axil_mut_off4",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.7,
      "kind": "off",
+     "mutant": "off",
      "rule": 4,
-     "proof": "seed4",
+     "killed_by": [
+      "seed4"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.6,
      "ok": true
     },
     {
      "job": "axil_mut_unguard4",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.7,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 4,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 5.2,
      "ok": true
     },
     {
      "job": "axil_mut_payload4",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.7,
      "kind": "payload",
+     "mutant": "payload",
      "rule": 4,
-     "proof": "seed4",
+     "killed_by": [
+      "seed4"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 5.6,
      "ok": true
     },
     {
      "job": "axil_mut_off5",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.5,
      "kind": "off",
+     "mutant": "off",
      "rule": 5,
-     "proof": "seed5",
+     "killed_by": [
+      "seed5"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.6,
      "ok": true
     },
     {
      "job": "axil_mut_unguard5",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.5,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 5,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 6.3,
      "ok": true
     },
     {
      "job": "axil_mut_off6",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.5,
      "kind": "off",
+     "mutant": "off",
      "rule": 6,
-     "proof": "seed6",
+     "killed_by": [
+      "seed6"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 3.1,
      "ok": true
     },
     {
      "job": "axil_mut_unguard6",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.5,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 6,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 5.5,
      "ok": true
     },
     {
      "job": "axil_mut_off7",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.5,
      "kind": "off",
+     "mutant": "off",
      "rule": 7,
-     "proof": "seed7",
+     "killed_by": [
+      "seed7"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 4.0,
      "ok": true
     },
     {
      "job": "axil_mut_unguard7",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.5,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 7,
-     "proof": "quiet",
+     "killed_by": [
+      "seed9"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 45.9,
      "ok": true
     },
     {
      "job": "axil_mut_off8",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.5,
      "kind": "off",
+     "mutant": "off",
      "rule": 8,
-     "proof": "seed8",
+     "killed_by": [
+      "seed8"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 5.5,
      "ok": true
     },
     {
      "job": "axil_mut_unguard8",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.5,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 8,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 3.9,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_off9",
+     "kind": "off",
+     "mutant": "off",
+     "rule": 9,
+     "killed_by": [
+      "seed9"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 3.9,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_unguard9",
+     "kind": "unguard",
+     "mutant": "unguard",
+     "rule": 9,
+     "killed_by": [
+      "seed5"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 30.6,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_b_early_aw_only",
+     "kind": "semantic",
+     "mutant": "b_early_aw_only",
+     "rule": 5,
+     "killed_by": [
+      "seed5"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 2.3,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_w_pend_counts_aw",
+     "kind": "semantic",
+     "mutant": "w_pend_counts_aw",
+     "rule": 5,
+     "killed_by": [
+      "seed5"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 2.6,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_ar_pend_dec_on_rvalid",
+     "kind": "semantic",
+     "mutant": "ar_pend_dec_on_rvalid",
+     "rule": 6,
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 4.2,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_exokay_wrong_code",
+     "kind": "semantic",
+     "mutant": "exokay_wrong_code",
+     "rule": 8,
+     "killed_by": [
+      "quiet",
+      "seed8"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 1.0,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_w_hold_no_wstrb",
+     "kind": "semantic",
+     "mutant": "w_hold_no_wstrb",
+     "rule": 1,
+     "killed_by": [
+      "seed1"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 5.2,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_aw_hold_no_prot",
+     "kind": "semantic",
+     "mutant": "aw_hold_no_prot",
+     "rule": 0,
+     "killed_by": [
+      "seed0"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 3.9,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_r_hold_no_resp",
+     "kind": "semantic",
+     "mutant": "r_hold_no_resp",
+     "rule": 4,
+     "killed_by": [
+      "seed4"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 3.9,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_b_hold_ignores_ready",
+     "kind": "semantic",
+     "mutant": "b_hold_ignores_ready",
+     "rule": 2,
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 4.5,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_reset_exit_never",
+     "kind": "semantic",
+     "mutant": "reset_exit_never",
+     "rule": 7,
+     "killed_by": [
+      "seed7"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 3.7,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_reset_exit_no_wvalid",
+     "kind": "semantic",
+     "mutant": "reset_exit_no_wvalid",
+     "rule": 7,
+     "killed_by": [
+      "seed7"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 4.2,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_in_reset_first_cycle",
+     "kind": "semantic",
+     "mutant": "in_reset_first_cycle",
+     "rule": 9,
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 5.1,
+     "ok": true
+    },
+    {
+     "job": "axil_mut_in_reset_no_bvalid",
+     "kind": "semantic",
+     "mutant": "in_reset_no_bvalid",
+     "rule": 9,
+     "killed_by": [
+      "seed9"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 4.7,
      "ok": true
     }
    ],
    "summary": {
-    "proofs_pass": 19,
-    "proofs": 19,
-    "mutants_killed": 23,
-    "mutants": 23
+    "proofs_pass": 21,
+    "proofs": 21,
+    "mutants_killed": 37,
+    "mutants": 37,
+    "semantic_killed": 12,
+    "semantic": 12,
+    "killed_by_quiet": 12,
+    "killed_by_own_seed": 24
    }
   },
   "axis": {
@@ -425,7 +712,7 @@
      "job": "axis_quiet",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 4.2,
+     "seconds": 5.0,
      "expect": "PASS",
      "ok": true
     },
@@ -433,7 +720,7 @@
      "job": "axis_seed0",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 3.8,
+     "seconds": 3.4,
      "expect": "PASS",
      "ok": true
     },
@@ -449,7 +736,7 @@
      "job": "axis_seed1",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 4.6,
+     "seconds": 4.5,
      "expect": "PASS",
      "ok": true
     },
@@ -457,7 +744,7 @@
      "job": "axis_seed1_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 0.5,
+     "seconds": 0.4,
      "expect": "PASS",
      "ok": true
     },
@@ -465,7 +752,7 @@
      "job": "axis_seed2",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 4.9,
+     "seconds": 5.8,
      "expect": "PASS",
      "ok": true
     },
@@ -481,7 +768,7 @@
      "job": "axis_seed3",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 4.3,
+     "seconds": 5.3,
      "expect": "PASS",
      "ok": true
     },
@@ -489,7 +776,7 @@
      "job": "axis_seed3_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 0.3,
+     "seconds": 0.4,
      "expect": "PASS",
      "ok": true
     },
@@ -497,7 +784,7 @@
      "job": "axis_seed4",
      "mode": "bmc",
      "status": "PASS",
-     "seconds": 3.2,
+     "seconds": 4.2,
      "expect": "PASS",
      "ok": true
     },
@@ -505,7 +792,7 @@
      "job": "axis_seed4_cover",
      "mode": "cover",
      "status": "PASS",
-     "seconds": 0.3,
+     "seconds": 0.4,
      "expect": "PASS",
      "ok": true
     }
@@ -513,131 +800,239 @@
    "mutants": [
     {
      "job": "axis_mut_off0",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.4,
      "kind": "off",
+     "mutant": "off",
      "rule": 0,
-     "proof": "seed0",
+     "killed_by": [
+      "seed0"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.1,
      "ok": true
     },
     {
      "job": "axis_mut_unguard0",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.3,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 0,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.6,
      "ok": true
     },
     {
      "job": "axis_mut_payload0",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.3,
      "kind": "payload",
+     "mutant": "payload",
      "rule": 0,
-     "proof": "seed0",
+     "killed_by": [
+      "seed0"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.2,
      "ok": true
     },
     {
      "job": "axis_mut_off1",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.4,
      "kind": "off",
+     "mutant": "off",
      "rule": 1,
-     "proof": "seed1",
+     "killed_by": [
+      "seed1"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.5,
      "ok": true
     },
     {
      "job": "axis_mut_unguard1",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.3,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 1,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.4,
      "ok": true
     },
     {
      "job": "axis_mut_off2",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.3,
      "kind": "off",
+     "mutant": "off",
      "rule": 2,
-     "proof": "seed2",
+     "killed_by": [
+      "seed2"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.4,
      "ok": true
     },
     {
      "job": "axis_mut_unguard2",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.3,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 2,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.8,
      "ok": true
     },
     {
      "job": "axis_mut_off3",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.3,
      "kind": "off",
+     "mutant": "off",
      "rule": 3,
-     "proof": "seed3",
+     "killed_by": [
+      "seed3"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 0.8,
      "ok": true
     },
     {
      "job": "axis_mut_unguard3",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.4,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 3,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.5,
      "ok": true
     },
     {
      "job": "axis_mut_off4",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.4,
      "kind": "off",
+     "mutant": "off",
      "rule": 4,
-     "proof": "seed4",
+     "killed_by": [
+      "seed4"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.2,
      "ok": true
     },
     {
      "job": "axis_mut_unguard4",
-     "mode": "bmc",
-     "status": "FAIL",
-     "seconds": 0.3,
      "kind": "unguard",
+     "mutant": "unguard",
      "rule": 4,
-     "proof": "quiet",
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
      "expect": "FAIL",
+     "seconds": 1.5,
+     "ok": true
+    },
+    {
+     "job": "axis_mut_hold_no_tlast",
+     "kind": "semantic",
+     "mutant": "hold_no_tlast",
+     "rule": 0,
+     "killed_by": [
+      "seed0"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 1.5,
+     "ok": true
+    },
+    {
+     "job": "axis_mut_keep_strb_inverted",
+     "kind": "semantic",
+     "mutant": "keep_strb_inverted",
+     "rule": 1,
+     "killed_by": [
+      "quiet",
+      "seed1"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 0.9,
+     "ok": true
+    },
+    {
+     "job": "axis_mut_maxlen_off_by_one",
+     "kind": "semantic",
+     "mutant": "maxlen_off_by_one",
+     "rule": 3,
+     "killed_by": [
+      "seed3"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 1.3,
+     "ok": true
+    },
+    {
+     "job": "axis_mut_beats_not_reset_by_tlast",
+     "kind": "semantic",
+     "mutant": "beats_not_reset_by_tlast",
+     "rule": 3,
+     "killed_by": [
+      "quiet"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 1.2,
+     "ok": true
+    },
+    {
+     "job": "axis_mut_packed_last_any_keep",
+     "kind": "semantic",
+     "mutant": "packed_last_any_keep",
+     "rule": 4,
+     "killed_by": [
+      "seed4"
+     ],
+     "errors": [],
+     "status": "FAIL",
+     "expect": "FAIL",
+     "seconds": 1.1,
      "ok": true
     }
    ],
    "summary": {
     "proofs_pass": 11,
     "proofs": 11,
-    "mutants_killed": 11,
-    "mutants": 11
+    "mutants_killed": 16,
+    "mutants": 16,
+    "semantic_killed": 5,
+    "semantic": 5,
+    "killed_by_quiet": 7,
+    "killed_by_own_seed": 10
    }
   }
  },

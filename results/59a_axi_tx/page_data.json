@@ -12,16 +12,24 @@
  ],
  "formal": {
   "axil": {
-   "proofs_pass": 19,
-   "proofs": 19,
-   "mutants_killed": 23,
-   "mutants": 23
+   "proofs_pass": 21,
+   "proofs": 21,
+   "mutants_killed": 37,
+   "mutants": 37,
+   "semantic_killed": 12,
+   "semantic": 12,
+   "killed_by_quiet": 12,
+   "killed_by_own_seed": 24
   },
   "axis": {
    "proofs_pass": 11,
    "proofs": 11,
-   "mutants_killed": 11,
-   "mutants": 11
+   "mutants_killed": 16,
+   "mutants": 16,
+   "semantic_killed": 5,
+   "semantic": 5,
+   "killed_by_quiet": 7,
+   "killed_by_own_seed": 10
   },
   "depth": 20
  },
@@ -30,40 +38,40 @@
    "config": "core_full_s32",
    "top": "axi_tx_core",
    "generics": "LCHK=1 SCHK=1 MON=1 SDATA_W=32",
-   "lut": 5291,
-   "ff": 5934,
+   "lut": 5307,
+   "ff": 5953,
    "bram_tiles": 3.0
   },
   {
    "config": "core_chk_nomon",
    "top": "axi_tx_core",
    "generics": "LCHK=1 SCHK=1 MON=0 SDATA_W=32",
-   "lut": 3021,
-   "ff": 2629,
+   "lut": 3038,
+   "ff": 2648,
    "bram_tiles": 3.0
   },
   {
    "config": "core_bare",
    "top": "axi_tx_core",
    "generics": "LCHK=0 SCHK=0 MON=0 SDATA_W=32",
-   "lut": 2520,
-   "ff": 1873,
+   "lut": 2513,
+   "ff": 1874,
    "bram_tiles": 3.0
   },
   {
    "config": "axil_checker_d32",
    "top": "axil_checker",
    "generics": "DATA_W=32",
-   "lut": 297,
-   "ff": 478,
+   "lut": 320,
+   "ff": 496,
    "bram_tiles": 0.0
   },
   {
    "config": "axil_checker_d64",
    "top": "axil_checker",
    "generics": "DATA_W=64",
-   "lut": 317,
-   "ff": 546,
+   "lut": 343,
+   "ff": 564,
    "bram_tiles": 0.0
   },
   {
@@ -171,31 +179,31 @@
   "vivado": "2026.1",
   "tier": "BASIC",
   "pass": true,
-  "build_stamp": "c3ed8fb8",
-  "build_id": "05236f86",
+  "build_stamp": "19a86593",
+  "build_id": "44b780c9",
   "timing": {
-   "wns_ns": 0.188,
+   "wns_ns": 0.169,
    "tns_ns": 0.0,
    "tns_failing_endpoints": 0,
-   "tns_total_endpoints": 27889,
-   "whs_ns": 0.03,
+   "tns_total_endpoints": 27974,
+   "whs_ns": 0.035,
    "ths_ns": 0.0,
    "ths_failing_endpoints": 0,
-   "ths_total_endpoints": 27889,
+   "ths_total_endpoints": 27974,
    "wpws_ns": 3.75,
    "tpws_ns": 0.0,
    "tpws_failing_endpoints": 0,
-   "tpws_total_endpoints": 8579,
+   "tpws_total_endpoints": 8602,
    "timing_met": true
   },
   "utilization": {
-   "lut": 7089,
+   "lut": 7043,
    "lut_available": 63400,
    "lutram": 1077,
    "lutram_available": 19000,
-   "ff": 7285,
+   "ff": 7308,
    "ff_available": 126800,
-   "carry4": 1128,
+   "carry4": 1132,
    "bram_tile": 5,
    "bram_tile_available": 135,
    "dsp": 0,
@@ -206,20 +214,20 @@
    "bufg_available": 32
   },
   "power": {
-   "total_w": 0.189,
-   "dynamic_w": 0.074,
+   "total_w": 0.185,
+   "dynamic_w": 0.07,
    "static_w": 0.115,
    "confidence": "Medium",
-   "clocks_w": 0.022,
-   "slice_logic_w": 0.018,
-   "signals_w": 0.019,
-   "io_w": 0.0005,
-   "core_w": 0.072
+   "clocks_w": 0.021,
+   "slice_logic_w": 0.017,
+   "signals_w": 0.018,
+   "io_w": 0.001,
+   "core_w": 0.069
   },
-  "wall_s": 723.7,
-  "vivado_peak_rss_mib": 3120,
-  "scope_anon_peak_mib": 2443,
-  "threads": 2,
+  "wall_s": 700.2,
+  "vivado_peak_rss_mib": 3100,
+  "scope_anon_peak_mib": 2424,
+  "threads": 1,
   "gates": {
    "rtl": true,
    "post_synth": true,
@@ -228,15 +236,15 @@
    "bitstream": true
   },
   "worst_setup_path": {
-   "slack": 0.188,
+   "slack": 0.169,
    "requirement": 10.0,
    "start_clock": "sys_clk_pin",
    "end_clock": "sys_clk_pin",
    "corner": "Slow",
    "uncertainty": 0.035,
-   "pessimism": 0.276,
-   "from": "u_sys/u_core/u_sink/rp_reg[1]/C",
-   "to": "u_sys/u_core/u_sink/data_mism_reg[4]/CE"
+   "pessimism": 0.187,
+   "from": "u_sys/u_core/u_src/n_reg[0]/C",
+   "to": "u_sys/u_core/g_schk.u_sl/total_reg[4]/CE"
   },
   "qor_assessment": {
    "available": false,
@@ -253,6 +261,13 @@
     "build": 2,
     "wns_ns": 0.024,
     "why": "passed; superseded because the peripheral's COUNT and stall LFSR ran from configuration, so runs were not repeatable"
+   },
+   {
+    "build": 3,
+    "build_stamp": "c3ed8fb8",
+    "build_id": "05236f86",
+    "wns_ns": 0.188,
+    "why": "passed and ran the whole plan (results/59a_axi_tx/board_run_build3.json); superseded after review: rule 9 (IN_RESET) added, rule 7 narrowed, elaboration-time width check"
    }
   ]
  },
@@ -261,7 +276,7 @@
    "tag": "bram_random_rw",
    "repeat": 0,
    "pass": true,
-   "seconds": 30.47,
+   "seconds": 30.5,
    "n_txn": 432,
    "digest": "70fe5a9a",
    "lite_rules": {},
@@ -316,7 +331,7 @@
    "tag": "bram_random_rw",
    "repeat": 1,
    "pass": true,
-   "seconds": 30.47,
+   "seconds": 30.5,
    "n_txn": 432,
    "digest": "df367dd4",
    "lite_rules": {},
@@ -371,7 +386,7 @@
    "tag": "bram_random_rw",
    "repeat": 2,
    "pass": true,
-   "seconds": 30.47,
+   "seconds": 30.51,
    "n_txn": 432,
    "digest": "df367dd4",
    "lite_rules": {},
@@ -426,7 +441,7 @@
    "tag": "bram_strobes",
    "repeat": 0,
    "pass": true,
-   "seconds": 10.32,
+   "seconds": 10.35,
    "n_txn": 48,
    "digest": "5503ae77",
    "lite_rules": {},
@@ -481,7 +496,7 @@
    "tag": "periph_regs",
    "repeat": 0,
    "pass": true,
-   "seconds": 16.1,
+   "seconds": 16.13,
    "n_txn": 105,
    "digest": "02abed03",
    "lite_rules": {},
@@ -517,7 +532,7 @@
    "tag": "periph_regs",
    "repeat": 1,
    "pass": true,
-   "seconds": 16.1,
+   "seconds": 16.14,
    "n_txn": 105,
    "digest": "02abed03",
    "lite_rules": {},
@@ -553,7 +568,7 @@
    "tag": "periph_regs",
    "repeat": 2,
    "pass": true,
-   "seconds": 16.1,
+   "seconds": 16.14,
    "n_txn": 105,
    "digest": "02abed03",
    "lite_rules": {},
@@ -589,7 +604,7 @@
    "tag": "periph_regs_b_early",
    "repeat": 0,
    "pass": true,
-   "seconds": 32.52,
+   "seconds": 32.55,
    "n_txn": 105,
    "digest": "979f6b2d",
    "lite_rules": {
@@ -627,7 +642,7 @@
    "tag": "periph_regs_r_live",
    "repeat": 0,
    "pass": true,
-   "seconds": 32.52,
+   "seconds": 32.56,
    "n_txn": 105,
    "digest": "839d4fe8",
    "lite_rules": {
@@ -665,7 +680,7 @@
    "tag": "periph_regs_r_glitch",
    "repeat": 0,
    "pass": true,
-   "seconds": 32.52,
+   "seconds": 32.55,
    "n_txn": 105,
    "digest": "77e72e0a",
    "lite_rules": {
@@ -703,7 +718,7 @@
    "tag": "periph_regs_exokay",
    "repeat": 0,
    "pass": true,
-   "seconds": 32.52,
+   "seconds": 32.55,
    "n_txn": 105,
    "digest": "8b932084",
    "lite_rules": {
@@ -741,7 +756,7 @@
    "tag": "periph_regs_no_strb",
    "repeat": 0,
    "pass": true,
-   "seconds": 16.1,
+   "seconds": 16.14,
    "n_txn": 105,
    "digest": "f5786d94",
    "lite_rules": {},
@@ -777,7 +792,7 @@
    "tag": "master_inject",
    "repeat": 0,
    "pass": true,
-   "seconds": 26.22,
+   "seconds": 26.25,
    "n_txn": 48,
    "digest": "35d12410",
    "lite_rules": {
@@ -817,7 +832,7 @@
    "tag": "stream_packets",
    "repeat": 0,
    "pass": true,
-   "seconds": 6.73,
+   "seconds": 6.76,
    "n_txn": 12,
    "digest": "12556460",
    "lite_rules": {},
@@ -853,7 +868,7 @@
    "tag": "stream_packets",
    "repeat": 1,
    "pass": true,
-   "seconds": 6.73,
+   "seconds": 6.76,
    "n_txn": 12,
    "digest": "12556460",
    "lite_rules": {},
@@ -889,7 +904,7 @@
    "tag": "stream_packets_lose_last",
    "repeat": 0,
    "pass": true,
-   "seconds": 6.73,
+   "seconds": 6.76,
    "n_txn": 12,
    "digest": "12556460",
    "lite_rules": {},
@@ -925,7 +940,7 @@
    "tag": "stream_packets_keep_wire",
    "repeat": 0,
    "pass": true,
-   "seconds": 23.15,
+   "seconds": 23.18,
    "n_txn": 12,
    "digest": "12556460",
    "lite_rules": {},
@@ -964,45 +979,45 @@
   "inside_roc": true,
   "jtag": [
    {
-    "time": "2026-11-12T11:50:04",
+    "time": "2026-11-12T15:10:02",
     "now": {
-     "TEMPERATURE": 26.1,
+     "TEMPERATURE": 25.5,
      "VCCINT": 1.006,
      "VCCAUX": 1.794,
      "VCCBRAM": 1.006
     },
     "max": {
-     "TEMPERATURE": 27.32,
-     "VCCINT": 1.0071,
-     "VCCAUX": 1.7959,
-     "VCCBRAM": 1.0071
+     "TEMPERATURE": 26.45,
+     "VCCINT": 1.0078,
+     "VCCAUX": 1.7966,
+     "VCCBRAM": 1.0078
     },
     "min": {
-     "TEMPERATURE": 24.49,
+     "TEMPERATURE": 24.61,
      "VCCINT": 1.0042,
-     "VCCAUX": 1.7812,
-     "VCCBRAM": 1.0049
+     "VCCAUX": 1.7805,
+     "VCCBRAM": 1.0042
     },
     "flags": "0000"
    },
    {
-    "time": "2026-11-12T12:16:15",
+    "time": "2026-11-12T15:17:02",
     "now": {
-     "TEMPERATURE": 26.2,
+     "TEMPERATURE": 25.6,
      "VCCINT": 1.006,
      "VCCAUX": 1.794,
      "VCCBRAM": 1.006
     },
     "max": {
-     "TEMPERATURE": 27.19,
+     "TEMPERATURE": 26.45,
      "VCCINT": 1.0071,
-     "VCCAUX": 1.7959,
+     "VCCAUX": 1.7952,
      "VCCBRAM": 1.0071
     },
     "min": {
-     "TEMPERATURE": 25.59,
+     "TEMPERATURE": 25.1,
      "VCCINT": 1.0042,
-     "VCCAUX": 1.7805,
+     "VCCAUX": 1.7812,
      "VCCBRAM": 1.0042
     },
     "flags": "0000"
@@ -1010,324 +1025,324 @@
   ],
   "fabric": [
    {
-    "time": "2026-11-12T11:50:27",
-    "temp": 26.7,
+    "time": "2026-11-12T15:10:30",
+    "temp": 25.84,
     "vccint": 1.0056,
-    "vccaux": 1.7937,
+    "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
-    "max_vccint": 1.0071,
+    "max_temp": 26.45,
+    "max_vccint": 1.0063,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
-    "min_vccint": 1.0049,
-    "min_vccaux": 1.7805,
+    "min_temp": 25.1,
+    "min_vccint": 1.0042,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "start"
    },
    {
-    "time": "2026-11-12T11:50:57",
-    "temp": 26.45,
+    "time": "2026-11-12T15:11:01",
+    "temp": 25.72,
     "vccint": 1.0056,
-    "vccaux": 1.7937,
-    "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "vccaux": 1.7944,
+    "vccbram": 1.0063,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after bram_random_rw #0"
    },
    {
-    "time": "2026-11-12T11:51:28",
-    "temp": 26.58,
+    "time": "2026-11-12T15:11:31",
+    "temp": 25.72,
     "vccint": 1.0056,
     "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after bram_random_rw #1"
    },
    {
-    "time": "2026-11-12T11:51:59",
-    "temp": 26.45,
+    "time": "2026-11-12T15:12:02",
+    "temp": 25.72,
     "vccint": 1.0056,
-    "vccaux": 1.7937,
-    "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "vccaux": 1.7944,
+    "vccbram": 1.0063,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after bram_random_rw #2"
    },
    {
-    "time": "2026-11-12T11:52:09",
-    "temp": 26.58,
+    "time": "2026-11-12T15:12:13",
+    "temp": 25.84,
     "vccint": 1.0056,
     "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after bram_strobes #0"
    },
    {
-    "time": "2026-11-12T11:52:26",
-    "temp": 26.58,
+    "time": "2026-11-12T15:12:29",
+    "temp": 25.59,
     "vccint": 1.0056,
-    "vccaux": 1.7937,
+    "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after periph_regs #0"
    },
    {
-    "time": "2026-11-12T11:52:42",
-    "temp": 26.7,
+    "time": "2026-11-12T15:12:46",
+    "temp": 25.72,
     "vccint": 1.0056,
     "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after periph_regs #1"
    },
    {
-    "time": "2026-11-12T11:52:58",
-    "temp": 26.58,
-    "vccint": 1.0056,
+    "time": "2026-11-12T15:13:02",
+    "temp": 25.72,
+    "vccint": 1.0063,
     "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after periph_regs #2"
    },
    {
-    "time": "2026-11-12T11:53:31",
-    "temp": 26.45,
+    "time": "2026-11-12T15:13:35",
+    "temp": 25.72,
     "vccint": 1.0056,
-    "vccaux": 1.7944,
+    "vccaux": 1.7937,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after periph_regs_b_early #0"
    },
    {
-    "time": "2026-11-12T11:54:04",
-    "temp": 26.58,
-    "vccint": 1.0063,
+    "time": "2026-11-12T15:14:07",
+    "temp": 25.59,
+    "vccint": 1.0049,
     "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after periph_regs_r_live #0"
    },
    {
-    "time": "2026-11-12T11:54:37",
-    "temp": 26.58,
+    "time": "2026-11-12T15:14:40",
+    "temp": 25.47,
     "vccint": 1.0056,
     "vccaux": 1.7937,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after periph_regs_r_glitch #0"
    },
    {
-    "time": "2026-11-12T11:55:09",
-    "temp": 26.45,
+    "time": "2026-11-12T15:15:13",
+    "temp": 25.72,
     "vccint": 1.0056,
-    "vccaux": 1.7937,
+    "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after periph_regs_exokay #0"
    },
    {
-    "time": "2026-11-12T11:55:26",
-    "temp": 26.33,
-    "vccint": 1.0049,
+    "time": "2026-11-12T15:15:29",
+    "temp": 25.72,
+    "vccint": 1.0056,
     "vccaux": 1.7937,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after periph_regs_no_strb #0"
    },
    {
-    "time": "2026-11-12T11:55:52",
-    "temp": 26.33,
+    "time": "2026-11-12T15:15:56",
+    "temp": 25.59,
     "vccint": 1.0056,
     "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after master_inject #0"
    },
    {
-    "time": "2026-11-12T11:55:59",
-    "temp": 26.45,
+    "time": "2026-11-12T15:16:03",
+    "temp": 25.59,
     "vccint": 1.0056,
     "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after stream_packets #0"
    },
    {
-    "time": "2026-11-12T11:56:06",
-    "temp": 26.33,
+    "time": "2026-11-12T15:16:10",
+    "temp": 25.47,
     "vccint": 1.0056,
     "vccaux": 1.7937,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after stream_packets #1"
    },
    {
-    "time": "2026-11-12T11:56:13",
-    "temp": 26.21,
+    "time": "2026-11-12T15:16:17",
+    "temp": 25.47,
     "vccint": 1.0056,
-    "vccaux": 1.7937,
-    "vccbram": 1.0063,
-    "max_temp": 27.19,
+    "vccaux": 1.7944,
+    "vccbram": 1.0056,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after stream_packets_lose_last #0"
    },
    {
-    "time": "2026-11-12T11:56:36",
-    "temp": 26.45,
-    "vccint": 1.0056,
-    "vccaux": 1.7944,
+    "time": "2026-11-12T15:16:40",
+    "temp": 25.59,
+    "vccint": 1.0063,
+    "vccaux": 1.7937,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "after stream_packets_keep_wire #0"
    },
    {
-    "time": "2026-11-12T11:56:37",
-    "temp": 26.09,
-    "vccint": 1.0056,
-    "vccaux": 1.7937,
+    "time": "2026-11-12T15:16:40",
+    "temp": 25.47,
+    "vccint": 1.0063,
+    "vccaux": 1.7944,
     "vccbram": 1.0056,
-    "max_temp": 27.19,
+    "max_temp": 26.45,
     "max_vccint": 1.0071,
     "max_vccaux": 1.7952,
     "max_vccbram": 1.0071,
-    "min_temp": 25.59,
+    "min_temp": 25.1,
     "min_vccint": 1.0042,
-    "min_vccaux": 1.7805,
+    "min_vccaux": 1.7812,
     "min_vccbram": 1.0042,
     "alarms_latched": [],
     "at": "end"
@@ -1353,8 +1368,8 @@
   },
   "note": "XADC: about 1 MSPS across channels; no nanosecond droop; alarms latched in fabric between reads"
  },
- "build_id": "05236f86",
- "build_stamp": "c3ed8fb8",
+ "build_id": "44b780c9",
+ "build_stamp": "19a86593",
  "hero": {
   "tag": "periph_regs_b_early",
   "rule": "B_EARLY",
@@ -1374,7 +1389,7 @@
    "rready",
    "bresp",
    "rresp",
-   "rdata7_0"
+   "rdata6_0"
   ],
   "rows": [
    {
@@ -1392,7 +1407,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 3,
-    "rdata7_0": 0
+    "rdata6_0": 0
    },
    {
     "trig": 0,
@@ -1409,7 +1424,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1426,7 +1441,7 @@
     "rready": 1,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1443,7 +1458,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1460,7 +1475,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1477,7 +1492,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1494,7 +1509,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1511,7 +1526,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1528,7 +1543,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1545,7 +1560,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1562,7 +1577,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1579,7 +1594,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1596,7 +1611,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1613,7 +1628,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1630,7 +1645,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1647,7 +1662,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1664,7 +1679,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1681,7 +1696,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1698,7 +1713,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1715,7 +1730,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1732,7 +1747,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1749,7 +1764,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1766,7 +1781,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1783,7 +1798,7 @@
     "rready": 0,
     "bresp": 3,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 1,
@@ -1800,7 +1815,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1817,7 +1832,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1834,7 +1849,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1851,7 +1866,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1868,7 +1883,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1885,7 +1900,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1902,7 +1917,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1919,7 +1934,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1936,7 +1951,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1953,7 +1968,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1970,7 +1985,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -1987,7 +2002,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2004,7 +2019,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2021,7 +2036,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2038,7 +2053,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2055,7 +2070,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2072,7 +2087,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2089,7 +2104,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2106,7 +2121,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2123,7 +2138,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2140,7 +2155,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2157,7 +2172,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2174,7 +2189,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    },
    {
     "trig": 0,
@@ -2191,7 +2206,7 @@
     "rready": 0,
     "bresp": 0,
     "rresp": 0,
-    "rdata7_0": 49
+    "rdata6_0": 49
    }
   ]
  },

@@ -1,19 +1,29 @@
-# Brief 59A: the on-chip AXI transactor, protocol checker and scoreboard
+# Results: the on-chip AXI transactor and protocol checker
 
-Design and method: [docs/axi_tx.md](../../docs/axi_tx.md). Every number below is read from a JSON file in this folder by
-[axi_tx/report.py](../../axi_tx/report.py); the showcase page (site/showcase/axi_transactor.yaml) reads [summary.json](summary.json) and [hero.json](hero.json).
+Measured results for the on-chip AXI transactor, protocol checker and scoreboard: board runs on a Nexys A7-100T, a
+bounded formal check of the checker, its resource cost, and a build test of the AMD AXI IP cores it was compared with.
+Method and terms: [docs/axi_tx.md](../../docs/axi_tx.md).
+
+Reproduce the simulation and formal parts (no board): `python -m pytest -q axi_tx/tests/test_59a_rtl.py && python axi_tx/formal/run_formal.py`.
+
+Rule names used below: B_EARLY = a write response sent before its write data arrived; R_HOLD = read data changed while
+the master was not ready; EXOKAY = an exclusive-access response, which AXI4-Lite does not allow; AW_HOLD, W_HOLD,
+AR_HOLD = a request dropped or changed before it was accepted; IN_RESET = a VALID high while reset is held; HOLD
+(stream) = stream data changed while the receiver was not ready.
 
 ## On the board (Nexys A7-100T, xc7a100tcsg324-1, Vivado 2026.1)
 
-17 of 17 pre-registered runs passed ([board_plan.yaml](../../axi_tx/programs/board_plan.yaml), [board_run.json](board_run.json)); build ID `05236f86`, build stamp `c3ed8fb8`.
+17 of 17 runs passed. The runs and what each must show were written in a plan before the board was used ([board_plan.yaml](../../axi_tx/programs/board_plan.yaml)); a run passes when its verdict is the one the plan expects ([board_run.json](board_run.json)). Build ID `44b780c9` (read back over JTAG before the runs: matched), build stamp `19a86593`.
 Operating conditions: inside the recommended operating conditions at every sample (JTAG XADC before and after, fabric XADC with its min/max and latched alarms after every run).
 
-| Run | Pass | Transactions | Rules fired (episodes) | Scoreboard checked / mismatched | Stream sink: packets, TLAST mismatches | AMD checker | Same digest and cycle count as simulation |
+Earlier attempts, before this plan's final run, are listed in [board_run_attempts.md](board_run_attempts.md): the model and the RTL were changed after them, and the whole plan was then run again on the final build.
+
+| Run | Pass | Transactions | Rules fired (episodes) | Scoreboard checked / mismatched | Stream receiver: packets, TLAST mismatches | AMD checker (AXI4-Lite) | Same digest and cycle count as simulation |
 |---|---|---|---|---|---|---|---|
-| bram_random_rw #0 | yes | 432 | none | 107 / 0 | 0, 0 | quiet | not compared (AMD core on the board) |
-| bram_random_rw #1 | yes | 432 | none | 107 / 0 | 0, 0 | quiet | not compared (AMD core on the board) |
-| bram_random_rw #2 | yes | 432 | none | 107 / 0 | 0, 0 | quiet | not compared (AMD core on the board) |
-| bram_strobes #0 | yes | 48 | none | 16 / 0 | 0, 0 | quiet | not compared (AMD core on the board) |
+| bram_random_rw #0 | yes | 432 | none | 107 / 0 | 0, 0 | quiet | not compared (vendor IP on the board) |
+| bram_random_rw #1 | yes | 432 | none | 107 / 0 | 0, 0 | quiet | not compared (vendor IP on the board) |
+| bram_random_rw #2 | yes | 432 | none | 107 / 0 | 0, 0 | quiet | not compared (vendor IP on the board) |
+| bram_strobes #0 | yes | 48 | none | 16 / 0 | 0, 0 | quiet | not compared (vendor IP on the board) |
 | periph_regs #0 | yes | 105 | none | 32 / 0 | 0, 0 | quiet | yes |
 | periph_regs #1 | yes | 105 | none | 32 / 0 | 0, 0 | quiet | yes |
 | periph_regs #2 | yes | 105 | none | 32 / 0 | 0, 0 | quiet | yes |
@@ -28,14 +38,19 @@ Operating conditions: inside the recommended operating conditions at every sampl
 | stream_packets_lose_last #0 | yes | 12 | none | 0 / 0 | 18, 12 | quiet | yes |
 | stream_packets_keep_wire #0 | yes | 12 | HOLD 22 | 0 / 0 | 30, 0 | quiet | yes |
 
-The digest is a CRC-32 over every transaction including its latency in cycles. Runs on target `periph` use the same RTL in simulation and on the board, so their digests must be equal; runs on target `bram` use AMD's AXI BRAM Controller on the board and a memory model in simulation, so only their transactions and verdicts are compared (with the model), not their timing.
+- Data bugs are caught by the data checks, not by a rule: `periph_regs_no_strb` by the scoreboard, `stream_packets_lose_last` by the stream receiver's TLAST check.
+- The digest covers the AXI4-Lite transactions, latency included. Runs against our own peripheral and FIFO use the same RTL in simulation and on the board, so their digests must be equal; the stream runs are also compared counter by counter. Runs on target `bram` use a vendor block-RAM controller IP core on the board and a memory model in simulation, so only their transactions and verdicts are compared (with the model), not their timing.
+- AMD's AXI Protocol Checker watches only the AXI4-Lite bus; on stream runs it can only stay quiet.
+- The latency figures on the showcase page come from one run (bram_random_rw #0).
 
-## Formal proof of the checker (SymbiYosys, bounded, depth 20)
+## Formal check of the checker (SymbiYosys, bounded to 20 clock cycles)
 
-| Unit | Proofs passed | Checker mutants killed |
-|---|---|---|
-| axil_rules | 19 of 19 | 23 of 23 |
-| axis_rules | 11 of 11 | 11 of 11 |
+A proof passes when no violation of its property is reachable within the depth; it says nothing about longer runs. A mutant (a copy of the checker with one deliberate fault) is killed when at least one proof fails on it.
+
+| Unit | Proofs passed | Mutants killed (structural and semantic) | Of which semantic |
+|---|---|---|---|
+| axil_rules | 21 of 21 | 37 of 37 | 12 of 12 |
+| axis_rules | 11 of 11 | 16 of 16 | 5 of 5 |
 
 Records: [formal.json](formal.json).
 
@@ -43,11 +58,11 @@ Records: [formal.json](formal.json).
 
 | Configuration | Top | Generics | LUT | FF | BRAM tiles |
 |---|---|---|---|---|---|
-| core_full_s32 | axi_tx_core | LCHK=1 SCHK=1 MON=1 SDATA_W=32 | 5291 | 5934 | 3 |
-| core_chk_nomon | axi_tx_core | LCHK=1 SCHK=1 MON=0 SDATA_W=32 | 3021 | 2629 | 3 |
-| core_bare | axi_tx_core | LCHK=0 SCHK=0 MON=0 SDATA_W=32 | 2520 | 1873 | 3 |
-| axil_checker_d32 | axil_checker | DATA_W=32 | 297 | 478 | 0 |
-| axil_checker_d64 | axil_checker | DATA_W=64 | 317 | 546 | 0 |
+| core_full_s32 | axi_tx_core | LCHK=1 SCHK=1 MON=1 SDATA_W=32 | 5307 | 5953 | 3 |
+| core_chk_nomon | axi_tx_core | LCHK=1 SCHK=1 MON=0 SDATA_W=32 | 3038 | 2648 | 3 |
+| core_bare | axi_tx_core | LCHK=0 SCHK=0 MON=0 SDATA_W=32 | 2513 | 1874 | 3 |
+| axil_checker_d32 | axil_checker | DATA_W=32 | 320 | 496 | 0 |
+| axil_checker_d64 | axil_checker | DATA_W=64 | 343 | 564 | 0 |
 | axis_checker_d32 | axis_checker | DATA_W=32 | 183 | 287 | 0 |
 | axis_checker_d64 | axis_checker | DATA_W=64 | 215 | 327 | 0 |
 | axis_checker_d128 | axis_checker | DATA_W=128 | 246 | 407 | 0 |
@@ -56,20 +71,23 @@ Records: [formal.json](formal.json).
 | axil_demo_periph | axil_demo_periph | - | 275 | 295 | 0 |
 | axis_demo_fifo | axis_demo_fifo | DATA_W=32 | 58 | 13 | 0 |
 
-Not in the table: `core_full_s64` (synthesis trimmed the sequencer at SDATA_W = 64 (not root-caused); 59A's core is 32-bit only; it synthesised to 1253 LUT, which is not a cost).
-The stand-alone stream checker is measured at 32, 64 and 128 bits.
+The full core is 5307 LUTs here; the whole board design used 7043 after implementation, because it adds the demo peripheral, the stream FIFO, the UART shell, the logic analyser, the XADC readout and the vendor IP cores.
+
+A 64-bit stream version is not in the table: synthesis removed part of the sequencer at that width (cause not investigated), so its 1253 LUTs would understate the cost. The core is 32-bit only, and refuses other widths at elaboration. The stand-alone stream checker is measured at 32, 64 and 128 bits.
 
 Records: [resources.json](resources.json).
 
-## AMD IP on Vivado 2026.1 (BASIC tier)
+## AMD AXI IP cores on Vivado 2026.1 (the free licence tier)
 
 | Core | Catalogue entry | Licence needed | Builds (create_ip, synth_ip) | LUT | FF | BRAM tiles |
 |---|---|---|---|---|---|---|
-| amd_axi_pc | xilinx.com:ip:axi_protocol_checker:2.0 | no | PASS | 545 | 691 | 0.0 |
-| amd_axis_pc | xilinx.com:ip:axis_protocol_checker:2.0 | no | PASS | 74 | 148 | 0.0 |
-| amd_atg | xilinx.com:ip:axi_traffic_gen:3.0 | no | PASS | 4929 | 4245 | 7.0 |
-| amd_bram_ctrl | xilinx.com:ip:axi_bram_ctrl:4.1 | no | PASS | 30 | 12 | 0.0 |
-| amd_bram | xilinx.com:ip:blk_mem_gen:8.4 | no | PASS | 4 | 6 | 2.0 |
+| amd_axi_pc | xilinx.com:ip:axi_protocol_checker:2.0 | no | PASS | 545 | 691 | 0 |
+| amd_axis_pc | xilinx.com:ip:axis_protocol_checker:2.0 | no | PASS | 74 | 148 | 0 |
+| amd_atg | xilinx.com:ip:axi_traffic_gen:3.0 | no | PASS | 4929 | 4245 | 7 |
+| amd_bram_ctrl | xilinx.com:ip:axi_bram_ctrl:4.1 | no | PASS | 30 | 12 | 0 |
+| amd_bram | xilinx.com:ip:blk_mem_gen:8.4 | no | PASS | 4 | 6 | 2 |
 
 Records: [amd_ip_probe.json](amd_ip_probe.json) from [amd_ip_probe.tcl](../../axi_tx/vivado/amd_ip_probe.tcl).
+
+Every number above is read from a JSON file in this folder by [axi_tx/report.py](../../axi_tx/report.py); the showcase page reads [summary.json](summary.json) and [hero.json](hero.json).
 
