@@ -125,8 +125,8 @@ Before an agent designs for a board it must know what is on it. For the Nexys A7
   temperature and rail currents too), and `report_power` is run for the board's real thermal environment.
 - Four read-only self-check designs, each with its pass rule pre-registered and a device model in simulation,
   proven on the board 3 times each with `flow/board_check.py` (board outcomes in [results/board_v2](results/board_v2/README.md);
-their bitstreams were built on an earlier Vivado release, and two of the four rebuild cleanly on 2026.1, see
-[results/49_vivado_2026_1](results/49_vivado_2026_1/README.md)):
+their bitstreams were built on an earlier Vivado release; all four rebuild on 2026.1 with every gate passing, not yet
+programmed: [results/49_vivado_2026_1/b2_builds.json](results/49_vivado_2026_1/b2_builds.json)):
   [b2_tmp_adt7420](designs/b2_tmp_adt7420), [b2_acl_adxl362](designs/b2_acl_adxl362),
   [b2_qspi_jedec](designs/b2_qspi_jedec) (flash ID only: no write or erase opcode exists in its RTL, which a test
   checks) and [b2_mic_pdm](designs/b2_mic_pdm).

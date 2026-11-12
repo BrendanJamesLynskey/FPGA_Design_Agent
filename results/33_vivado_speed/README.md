@@ -1,5 +1,7 @@
 # Brief 33: making the Vivado part of a run faster (measurements, 2026-11-11)
 
+Measured on 2025.2, superseded by `results/33_vivado_speed_2026_1`.
+
 Vivado 2025.2 on the build PC (i7-3770, 4 cores / 8 threads, 32 GB, SATA SSD), one build at a time in heavy slot 1
 ("Vivado impl"). Another session's simulation (Icarus, one core) ran throughout, so every number carries that load;
 `measure.sh` waits for any other Vivado to finish before each build (`waited ... s` lines in the logs).

@@ -9,6 +9,8 @@
 - xpm_probe.json: the QR1 probe (flow/tests/fixtures/xpm_probe) built to route with and without flow/xpm_cdc.tcl
   (`FDA_XPM_CDC=0`), clk_a -> clk_b from the Inter Clock Table, report_cdc's Exception column.
 - b30_hil_audio.json: designs/b30_hil_audio base, totals and the per-instance utilisation of report_utilization -hierarchical.
+- b2_builds.json: the four read-only board self-check designs (designs/b2_*) built base on 2026.1 (the board runs in
+  results/board_v2 used bitstreams from the earlier release; these builds were not programmed).
 """
 import json
 import re
@@ -87,7 +89,13 @@ def b30():
     (HERE / "b30_hil_audio.json").write_text(json.dumps(s, indent=1) + "\n")
 
 
+def b2():
+    out = {d.name: build_summary(d / "build/base") for d in sorted((ROOT / "designs").glob("b2_*")) if (d / "build/base/gates.json").exists()}
+    (HERE / "b2_builds.json").write_text(json.dumps({"vivado": "2026.1", "builds": out}, indent=1) + "\n")
+
+
 if __name__ == "__main__":
+    b2()
     dev()
     xpm(Path(sys.argv[1]), Path(sys.argv[2]))
     b30()

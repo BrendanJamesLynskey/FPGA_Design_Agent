@@ -97,7 +97,7 @@ areas:
   - {file: flow/cmt_check.tcl, enforced: false, what: "A VCO and phase-detector range checker, written and measured but not wired into a gate."}
   evidence:
   - kind: measured
-    source: results/project_parity/cmt_check/drc_*.rpt
+    source: results/project_parity_2026_1/cmt_check/drc_*.rpt
     values: [nfiles, "nmatch:AVAL-46"]
     text: "Of {0} probe designs (one legal, three with an MMCM setting outside its range), Vivado's design-rule check after synthesis flagged the setting as out of range on {1}."
   cards:
@@ -136,7 +136,7 @@ areas:
   - {file: flow/mig_impl_check.tcl, enforced: false, what: "Runs a MIG example design through implementation to see whether Vivado rejects a bad pin set."}
   evidence:
   - kind: measured
-    source: results/project_parity/mig_impl/*/drc_place.rpt
+    source: results/project_parity_2026_1/mig_impl/*/drc_place.rpt
     values: [nfiles, "nmatch:PLIO-3"]
     text: "{0} example designs of the memory controller (good pins, a byte-group fault, a duplicated pin) went through placement; the design-rule check after placement flagged {1}, the duplicated pin; the byte-group fault was not rejected."
   cards:
@@ -192,7 +192,7 @@ areas:
   evidence:
   - kind: measured
     contains: ["== Block Memory Generator", "== FIFO Generator"]
-    source: results/project_parity/wizards/wizards.txt
+    source: results/project_parity_2026_1/wizards/wizards.txt
     text: "Scripted generation was tried for the Block Memory, FIFO, XADC, Transceiver, PS7, Clocking and other wizards, and the probe output is committed."
   - kind: measured
     source: results/19_ipgen/bmg_sine/sim.json
@@ -418,7 +418,7 @@ areas:
   - {file: flow/xprobe.py, enforced: false, what: "Cross-probing: names the RTL file and line, clock region and nets of a failing or tight path."}
   evidence:
   - kind: measured
-    source: results/project_parity/xprobe/*.xprobe.json
+    source: results/project_parity_2026_1/xprobe/*.xprobe.json
     values: [n, "min:wns"]
     text: "Cross-probing was run on {0} routed designs; the tighter had {1} ns of setup slack, and the output names the source lines, locations and nets."
   - kind: agent

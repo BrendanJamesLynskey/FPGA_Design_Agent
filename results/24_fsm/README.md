@@ -1,5 +1,7 @@
 # Brief 24: FSMs as an area of expertise, measurements
 
+Measured on 2025.2. The controller variants (synthesis and routed) are superseded by `results/24_fsm_2026_1`; the I/O study, the family runs, the drills and the simulator survey were not re-run.
+
 Vivado 2025.2 (default), Icarus 12, Verilator 5.020 and 5.048, xsim 2025.2, SymbiYosys with z3. No board. One reference controller
 (`flow/tests/fixtures/fsm_discipline`, [docs/fsm.md](../../docs/fsm.md)): 11 states and a 4-bit counter, or the same behaviour as 23 states.
 The two forms are cycle-equivalent under 40,000 clocks of random inputs and resets (`equivalence.txt`).
