@@ -167,8 +167,8 @@ def index_body(C):
     return f"""<h1>Problems</h1>
 <p class="lede">Every task in the benchmark. Each development task has its own page with the request the agent is given, the hidden spec and tests, a hand-written solution, the planted bugs the tests must catch, its golden model running, and the agent's runs. Held-out tasks are kept private and listed here by id and tier only.</p>
 <div class="facts">
-<div class="fact"><div class="n">{n["dev_pages"]}</div><p>development tasks with a page: {n["v1_dev"]} from benchmark v1, {n["course_dev"]} from the course tier.</p></div>
-<div class="fact"><div class="n">{n["held_listed"]}</div><p>held-out tasks, listed by id and tier only (those ids are already public in the split files).</p></div>
+<div class="fact"><div class="n">{n["dev_pages"]}</div><p>development tasks with a page: {n["v1_dev"]} from benchmark v1, {n["course_dev"]} from the course tier. The agent has been run on {n["with_runs"]} of them so far.</p></div>
+<div class="fact"><div class="n">{n["held_listed"]}</div><p>held-out tasks, listed by id and tier only. The first held-out evaluation drew {n["held_listed"] + n["moved"]}: these and the {n["moved"]} moved to development after it.</p></div>
 <div class="fact"><div class="n">{n["mutants"]}</div><p>deliberate bugs (mutants) across the development tasks, each one failing the hidden tests.</p></div>
 </div>
 {hero}
@@ -214,8 +214,8 @@ def task_body(T, C, prev, nxt):
     else:
         anim = ('<figure><div class="player trace" id="trace" aria-label="Golden model replay">'
                 '<div class="wave"></div><p class="cap" aria-live="polite"></p></div>')
-    anim += (f'<figcaption>The task\'s own golden model (<code>hidden/model.py</code>) run on a fixed input when the site is built, so this is '
-             f'what the hidden tests check. {E(tr["stimulus"])} Space plays and pauses, arrow keys step.</figcaption></figure>')
+    anim += (f'<figcaption>What a correct design must do: the task\'s reference model, written from the hidden spec and run on a fixed input; '
+             f'the hidden tests compare against it (<code>hidden/model.py</code>). {E(tr["stimulus"])} Space plays and pauses, arrow keys step.</figcaption></figure>')
     # interface
     ports = table(["Port", "Direction", "Width", "Note"], [[f"<code>{E(p['name'])}</code>", E(p["dir"]), str(p["width"]), E(p["note"])] for p in I["ports"]], num=(2,))
     regs = ""
@@ -262,7 +262,7 @@ def task_body(T, C, prev, nxt):
         runs = (f'<p><span class="tag">Development, not the held-out score</span> {k} of {len(T["runs"])} committed development runs passed every hidden test '
                 f'({E(T["runs"][0]["model"])}). Partial credit is the hidden tests passed. WNS and the counts are the run\'s saved design rebuilt on Vivado 2026.1 (post-route at 100 MHz, test shell included); '
                 f'a blank means the run stopped before place and route or its design files were not kept.</p>' +
-                table(["Record", "Date", "Outcome", "Hidden tests", "WNS (ns)", "LUT", "FF", "DSP", "What went wrong"], rows, num=(3, 4, 5, 6, 7)) +
+                table(["Record", "Date", "Outcome", "Hidden tests", "Worst slack (ns)", "LUT", "FF", "DSP", "What went wrong"], rows, num=(3, 4, 5, 6, 7)) +
                 '<p class="small muted">Agent-written RTL is not committed per run, so only the reference RTL is shown above.</p>')
     else:
         runs = "<p>No development run of the agent on this task is committed yet.</p>"

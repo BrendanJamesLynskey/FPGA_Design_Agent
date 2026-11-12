@@ -103,3 +103,7 @@ No held-out unit was touched; the private manifest's matching entries (the share
 
 Re-recording amended public units in the private course manifest: `freeze.py refreeze UNIT... --private-manifest <private>/benchmark_private/course/MANIFEST_full.json [--dry-run]`
 (only the named public or `shared:` entries change, held-out ones never; the owner command with the 2026-11-10 unit ids is in [../FROZEN.md](../FROZEN.md)).
+
+## Amendment 2026-11-12
+
+`c13_hough_lines` reference pipelined for Vivado 2026.1 timing (owner-approved; no scored run affected); digest and details in [../AMENDMENTS.md](../AMENDMENTS.md).

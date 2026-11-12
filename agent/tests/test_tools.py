@@ -132,7 +132,7 @@ def test_program_policy(session, board_file) -> None:
     r = dispatch(session, "program", {"variant": "base"})
     assert r["ok"], r["output"]
     argv = session.runner.calls[-1][1]
-    assert argv[1].endswith("flow/program.py") and "--flash" not in argv and "210292AE3B73" not in argv
+    assert argv[1].endswith("flow/program.py") and "--flash" not in argv and "TESTCABLE001" not in argv
     assert session.hw.used == 1
 
 
@@ -158,9 +158,9 @@ def test_hardware_budget_is_enforced_in_dispatch(session, board_file) -> None:
 
 def test_cable_serial_is_redacted_from_output(session, board_file) -> None:
     stage_hw(session)
-    session.runner = FakeRunner({"program": RunResult(0, "target 210292AE3B73 programmed", "", 1.0)})
+    session.runner = FakeRunner({"program": RunResult(0, "target TESTCABLE001 programmed", "", 1.0)})
     r = dispatch(session, "program", {})
-    assert "210292AE3B73" not in json.dumps(r)
+    assert "TESTCABLE001" not in json.dumps(r)
 
 
 def test_qr1_sv_scan_refuses_parent_directory_reads():

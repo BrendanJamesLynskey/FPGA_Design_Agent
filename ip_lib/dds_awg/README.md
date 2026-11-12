@@ -50,6 +50,6 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py`):
 
 ## Cost table
 
-in-context cost (not an OOC sweep): 115 LUT, 48 FF, 1 RAMB18 at PHASE_W 32, LUT_W 8, OUT_W 16, inside b30_hil_audio (Vivado 2026.1, xc7a100t -1, timing met at 100 MHz; results/49_vivado_2026_1/b30_hil_audio.json); the OOC sweep over the parameter space is still to do.
+in-context cost (not an OOC sweep): 115 LUT, 48 FF, 1 RAMB18 at PHASE_W 32, LUT_W 8, OUT_W 16, inside b30_hil_audio (Vivado 2026.1, xc7a100t -1, timing met at 100 MHz; results/vivado_2026_1_remeasure/b30_hil_audio.json); the OOC sweep over the parameter space is still to do.
 
 Licence: MIT (this repository).
