@@ -61,7 +61,7 @@ def test_synth_scan():
     log = ("WARNING: [Synth 8-327] inferring latch for variable 'q_reg' [x.sv:3]\n"
            "WARNING: [Synth 8-4767] Trying to implement RAM 'mem_reg' in registers. Block RAM or DRAM implementation is not possible\n")
     s = synth.scan(log)
-    assert s == {"latches": ["q_reg"], "ram_in_registers": ["mem_reg"], "clean": False}
+    assert s["latches"] == ["q_reg"] and s["ram_in_registers"] == ["mem_reg"] and not s["clean"] and s["multi_driven"] == 0
     assert synth.scan("INFO: nothing")["clean"]
 
 
@@ -314,3 +314,21 @@ def test_closure_reports_a_build_that_did_not_finish(tmp_path):
                    build=lambda d: {"ran": False}, editor=_editor([]), contract="", log=lambda s: None)
     r = c.run()
     assert r["stop"].startswith("the first build did not finish") and r["final"]["G2"]["met"] is False
+
+
+def test_synthesis_disagreeing_with_simulation_fails_g1(dg, tmp_path):
+    log = ("CRITICAL WARNING: [Synth 8-6859] multi-driven net on pin Q with 1st driver pin 'u_regs/u_core/valid0_reg/Q'\n"
+           "WARNING: [Synth 8-13374] Removed Unreachable instance \\u_regs/u_core/u_a\n")
+    s = synth.scan(log)
+    assert s["multi_driven"] == 1 and s["removed_instances"] and not s["clean"]
+    d2 = copy.deepcopy(dg)
+    d2["synth"] = s
+    g = cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]})
+    v = cl.goal_vector({"pass": True, "tests": {"t": True}}, d2, g)
+    assert v["G1"]["met"] is False and "synthesis disagrees with simulation" in v["G1"]["detail"]
+    # the c13_orig_plan case: timing "met" on a design whose core was removed, and the plan's DSPs missing: reverted
+    before = cl.goal_vector({"pass": True}, dg, g)
+    d3 = copy.deepcopy(d2)
+    d3["timing"]["wns_ns"] = 3.5
+    after = cl.goal_vector({"pass": True}, d3, g, ["plan: the design has 0 DSP48E1 where the plan put 2"])
+    assert not after["G3"]["met"] and cl.judge(before, after)[0] == "revert"

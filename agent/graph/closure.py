@@ -80,7 +80,8 @@ def goals_from_spec(spec: dict[str, Any], board: str = "nexys_a7_100t") -> dict[
     }
 
 
-def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dict[str, Any]) -> dict[str, Any]:
+def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dict[str, Any],
+                plan_fails: list[str] | None = None) -> dict[str, Any]:
     """{goal: {met, value, target, shortfall, detail}}. ``shortfall`` is normalised (0 when met): G1 the failing share
     of tests, G2 the negative slack over the period, G3 the worst over-use ratio, G4 the power over-use ratio."""
     v: dict[str, Any] = {}
@@ -131,6 +132,15 @@ def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dic
         v["G4"] = {"met": tot is not None and sf4 == 0, "value": {"total_w": tot, "junction_c": tj},
                    "target": {"power_w": lim, "tj_max_c": goals["G4"]["tj_max_c"]}, "shortfall": round(sf4, 5),
                    "detail": f"vectorless estimate, confidence {p.get('confidence')}"}
+        if plan_fails:                                  # the design-time plan: a planned DSP/BRAM missing is an area failure
+            v["G3"] = {**v["G3"], "met": False, "shortfall": max(v["G3"]["shortfall"], 0.01),
+                       "detail": "; ".join(x for x in (v["G3"]["detail"], *plan_fails) if x)[:600]}
+        syn = dg.get("synth") or {}
+        if (syn.get("multi_driven") or syn.get("removed_instances")) and v["G1"]["met"]:
+            # the simulated design is not the built one: G1 cannot be claimed from simulation
+            v["G1"] = {**v["G1"], "met": False, "shortfall": 1.0,
+                       "detail": f"synthesis disagrees with simulation: {syn.get('multi_driven')} multi-driven net messages, "
+                                 f"removed instances {syn.get('removed_instances')[:3]}"}
     v["G5"] = {"met": None, "value": None, "target": "board checks", "shortfall": None, "detail": "not run in 62A"}
     return v
 
@@ -356,7 +366,7 @@ class Closure:
         snap = self.ws.read()
         g1 = self.g1(self.ws.rtl)
         dg = self.build(self.ws.root) if g1.get("pass") else None
-        vec = goal_vector(g1, dg, self.goals)
+        vec = goal_vector(g1, dg, self.goals, self._plan_fails(dg))
         start = {"vector": vec, "digest": _small(dg)}
         self.log(f"[closure] start: {vector_line(vec)}")
         self._rec({"iter": 0, "kind": "start", "vector": vec, "digest": _small(dg)})
@@ -386,7 +396,7 @@ class Closure:
             if goal is None:
                 stop = "no unmet goal this loop can act on"
                 break
-            plan_fails = self.plan_check(dg) if (self.plan_check and dg) else []
+            plan_fails = self._plan_fails(dg)
             cands = [(s, why) for s, why in pb.applicable(goal, dg or {}, vec, self.spec, plan_fails)
                      if s.phase == "62A" and tried.get((goal, s.cls), 0) < self.stall_n]
             if not cands:
@@ -432,9 +442,9 @@ class Closure:
                 summary = f"G1 failed after {retries} functional retr{'y' if retries == 1 else 'ies'}: {vec2['G1']['value']}"
             else:
                 dg2 = self.build(self.ws.root)
-                vec2 = goal_vector(g1n, dg2, self.goals)
+                vec2 = goal_vector(g1n, dg2, self.goals, self._plan_fails(dg2))
                 decision, imp, wor = judge(vec, vec2)
-                summary = vector_line(vec2)
+                summary = vector_line(vec2) + "".join(f"; {g}: {vec2[g]['detail'][:300]}" for g in wor if vec2[g].get("detail"))
             delta = _delta(vec, vec2)
             row = {"iter": it, "kind": "iteration", "goal": goal, "strategy": strat.id, "class": strat.cls, "why": why,
                    "note": res.note, "g1_retries": retries, "decision": decision, "improved": imp, "worsened": wor,
@@ -458,6 +468,14 @@ class Closure:
             (self.record / "summary.json").write_text(json.dumps(report, indent=1, default=str) + "\n")
         self.log(f"[closure] stop: {report['stop']}")
         return report
+
+    def _plan_fails(self, dg: dict[str, Any] | None) -> list[str]:
+        if not (self.plan_check and dg and dg.get("ran")):
+            return []
+        try:
+            return list(self.plan_check(dg))
+        except Exception as e:                       # noqa: BLE001 (a plan check must never stop the loop)
+            return [f"plan: check not run ({type(e).__name__})"]
 
     def _spend(self, r: EditResult) -> None:
         self.usd += r.usd
