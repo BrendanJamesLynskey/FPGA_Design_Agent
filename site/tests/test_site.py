@@ -476,7 +476,8 @@ def test_harness_results_are_the_analysis_file():
     assert "| H1 | cost_usd | 11 | 0.302 | -0.099 | -32.8 % | [-0.161, -0.013] | yes |" in src
     assert arms["H1"]["result"]["paired"]["cost_usd"]["rel_pct"] == -32.8
     assert arms["H1"]["result"]["verdict"] == {"reading_t": False, "reading_c": True}
-    assert "did not say which one counts" in arms["H1"]["status"]
+    assert "did not say whether cost alone counts" in arms["H1"]["status"]
+    assert "tokens fell 32.8 % but the interval includes 0; cost fell 16.1 %, under the 30 % bar" in arms["H9"]["status"]
     page = (SITE / "public" / "agent.html").read_text()
     assert page.count('class="ag hres"') == 2
     wide = page.split('class="ag hres"')[1].split("</svg>")[0]

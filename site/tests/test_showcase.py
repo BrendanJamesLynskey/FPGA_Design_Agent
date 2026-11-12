@@ -40,7 +40,7 @@ def test_unpublished_projects_carry_no_numbers_and_no_page():
 def _preview(tmp_path):
     out = tmp_path / "pub"
     d = build.load_data(None)
-    d["showcase"] = showcase.build(FIX)
+    d["showcase"] = showcase.build(FIX, allow_fixtures=True)
     pages, bad = build.build(out, d)
     return d, pages, bad
 
@@ -83,7 +83,7 @@ def test_contract_refuses(tmp_path, break_it, msg):
     y = _demo()
     break_it(y)
     with pytest.raises(showcase.ContractError, match=msg):
-        showcase.build(_write(tmp_path, y))
+        showcase.build(_write(tmp_path, y), allow_fixtures=True)
 
 
 def test_in_progress_with_a_number_is_refused(tmp_path):
@@ -103,7 +103,7 @@ def test_shmoo_point_off_the_grid_is_refused(tmp_path):
         y = yaml.safe_load((FIX / "demo_shmoo.yaml").read_text())
         y["hero"]["source"] = "build/b61_test_heroes.json"
         with pytest.raises(showcase.ContractError, match="off the grid"):
-            showcase.build(_write(tmp_path, y))
+            showcase.build(_write(tmp_path, y), allow_fixtures=True)
     finally:
         p.unlink()
 
@@ -128,6 +128,14 @@ def test_portfolio_pack_sources_resolve():
             assert f[key].startswith("site/data:"), f
             v = build.lookup(d, f[key].split(":", 1)[1])
             assert build.fmt(abs(v)) in f["text"], (f, v)
+    for f in P["facts"]:
+        for src in f.get("interval", []):
+            assert build.fmt(abs(build.lookup(d, src.split(":", 1)[1]))) in f["text"], (f, src)
+    killed = 0
+    for T in d["tasks"].values():
+        mk = (T.get("check") or {}).get("mutants", {})
+        killed += sum(1 for m in T["mutants"] if mk.get(m["name"], {}).get("killed"))
+    assert killed == d["catalogue"]["counts"]["mutants"]           # fact 2: "every one caught"
     ab = d["board"]["agent_board"]
     assert f'{ab["uart_passed"]} of {ab["uart_tests"]} serial-link tests' in P["status"] and not ab["pass"]
     for k in ("still_1200x630", "still_square", "animation"):
@@ -142,7 +150,7 @@ def test_portfolio_pack_sources_resolve():
 def test_e2e_pages_render_without_errors_or_overflow(tmp_path):
     out = tmp_path / "pub"
     d = build.load_data(None)
-    d["showcase"] = showcase.build(FIX)
+    d["showcase"] = showcase.build(FIX, allow_fixtures=True)
     pages, _ = build.build(out, d)
     for f, p in pages.items():
         (out / f).parent.mkdir(parents=True, exist_ok=True)
@@ -176,3 +184,93 @@ def test_home_runs_chart_has_every_outcome():
     for o in {r["outcome"] for r in d["runs_list"]}:
         assert f'"{o}"' in lanes, o
     assert 'id="home-runs"' in (SITE / "public" / "index.html").read_text()
+
+
+# The correctness review's probe (PR #133 review, 38 cases): every case but the baseline and the number words must be refused.
+def _setp(path, v):
+    def m(y):
+        o = y
+        for k in path[:-1]:
+            o = o[k]
+        o[path[-1]] = v
+    return m
+
+
+PROBE = [
+    ("baseline", lambda y: None, True),
+    ("typed num headline", _setp(["headline"], "Caught a bug in 3.2 s"), False),
+    ("typed num results", lambda y: y["story"]["results"].append("Latency 42 ns"), False),
+    ("typed num problem", _setp(["story", "problem"], "At 125 MHz it fails"), False),
+    ("typed num agent", _setp(["story", "agent", "plan"], "Run 3 seeds"), False),
+    ("typed num limits", _setp(["limits", "next"], ["Try 10 boards"]), False),
+    ("typed num evidence text", lambda y: y["evidence"][1].update(text="die 45 C"), False),
+    ("typed num title", _setp(["title"], "Checker caught bug in 3.2 s"), False),
+    ("typed num evidence label", lambda y: y["evidence"][1].update(label="die at 45 C, VCCINT 0.95 V"), False),
+    ("typed num arch block", lambda y: y["story"]["architecture"]["blocks"].append(["x", "FIFO 512 deep at 250 MHz"]), False),
+    ("typed num arch link label", lambda y: y["story"]["architecture"]["links"].append(["src", "chk", "1.6 Gb/s"]), False),
+    ("typed num agent key", lambda y: y["story"]["agent"].update({"took 37 minutes": "x"}), False),
+    ("vivado 2025.2", _setp(["vivado"], "2025.2"), False),
+    ("board with number", _setp(["board"], "Board rev 3 at 125 MHz"), False),
+    ("part arbitrary", _setp(["part"], "speed 99"), False),
+    ("try_it note num", lambda y: y["try_it"].update(note="Takes 12 s"), False),
+    ("caption num", lambda y: y["hero"].update(caption="42 samples"), False),
+    ("desc num", _setp(["description"], "3 of 3 passed"), False),
+    ("missing evidence record", lambda y: y.update(evidence=[e for e in y["evidence"] if e["kind"] != "record"]), False),
+    ("missing evidence conditions", lambda y: y.update(evidence=[e for e in y["evidence"] if e["kind"] != "conditions"]), False),
+    ("missing evidence versions", lambda y: y.update(evidence=[e for e in y["evidence"] if e["kind"] != "versions"]), False),
+    ("missing evidence requirements", lambda y: y.update(evidence=[e for e in y["evidence"] if e["kind"] != "requirements"]), False),
+    ("evidence bad path", lambda y: y["evidence"][0].update(path="results/nope.json"), False),
+    ("evidence record no path", lambda y: y["evidence"][0].pop("path"), False),
+    ("missing limits", lambda y: y.pop("limits"), False),
+    ("empty limits", _setp(["limits"], {}), False),
+    ("missing story.agent", lambda y: y["story"].pop("agent"), False),
+    ("empty agent", _setp(["story", "agent"], {}), False),
+    ("empty results", _setp(["story", "results"], []), False),
+    ("hero kind bad", lambda y: y["hero"].update(kind="eye"), False),
+    ("hero src missing", lambda y: y["hero"].update(source="results/none.json"), False),
+    ("value src missing", lambda y: y["values"]["n"].update(source="results/none.json"), False),
+    ("unknown placeholder", _setp(["headline"], "got {zz}"), False),
+    ("in_progress with number", lambda y: y.update(status="in_progress", what_it_will_show="3.2 s of traffic"), False),
+    ("in_progress num in part", lambda y: y.update(status="in_progress", what_it_will_show="x", part="3.2 s"), False),
+    ("in_progress with headline num", lambda y: y.update(status="in_progress", what_it_will_show="x", headline="3 of 3 passed"), False),
+    ("number words", _setp(["headline"], "three of three passed, twelve ns"), True),
+    ("percent word", _setp(["headline"], "Saved a third; 1e3 runs"), False),
+]
+
+
+@pytest.mark.parametrize("name, mut, ok", PROBE, ids=[p[0] for p in PROBE])
+def test_review_probe(tmp_path, name, mut, ok):
+    y = _demo()
+    mut(y)
+    d = _write(tmp_path, y)
+    if ok:
+        showcase.build(d, allow_fixtures=True)
+    else:
+        with pytest.raises(showcase.ContractError):
+            showcase.build(d, allow_fixtures=True)
+
+
+def test_fixture_and_hero_source_rules(tmp_path):
+    y = _demo()
+    with pytest.raises(showcase.ContractError, match="fixture page"):
+        showcase.build(_write(tmp_path, y))                      # the production build never takes a fixture
+    y.pop("fixture")
+    with pytest.raises(showcase.ContractError, match="under results/"):
+        showcase.build(_write(tmp_path, y))                      # a real page's hero comes from results/, not test data
+
+
+def test_showcase_number_check_is_not_circular(tmp_path):
+    """build.py checks a showcase page against shared data plus the project's values and hero, never its own text."""
+    import inspect
+    src = inspect.getsource(build.build)
+    assert '"values": P["values"], "hero": P["hero"]["data"]' in src and '"project": P' not in src
+
+
+def test_readme_headline_numbers_are_the_data():
+    """The README's measured paragraph (typed by hand) must match site/data."""
+    d = build.load_data(None)
+    t = " ".join((SITE.parent / "README.md").read_text().split())
+    dev, ab = d["dev"], d["board"]["agent_board"]
+    assert f'On {dev["tasks"]} development tasks, {dev["hidden_pass"]} of {dev["runs"]} runs with' in t
+    assert f'In {dev["escapes"]} more' in t
+    assert f'passed ({ab["uart_passed"]} of {ab["uart_tests"]}) and its logic-analyser captures failed' in t and not ab["pass"]

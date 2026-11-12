@@ -540,12 +540,15 @@ def harness_results(A, lay):
     interval (bar), as a percentage of the baseline's median; 0 and the pre-registered 30 % bar drawn as rules."""
     arms = [a for a in A["harness"]["arms"] if a.get("result")]
     mets = [("cost_usd", "cost"), ("tokens", "tokens"), ("wall_s", "wall time")]
-    lo, hi = -80, 40
+    import math
+    ends = [v for a in arms for k, _ in mets for v in (a["result"]["paired"][k]["lo_pct"], a["result"]["paired"][k]["hi_pct"])]
+    lo = min(-40, 20 * math.floor(min(ends) / 20))     # the axis always holds every interval: nothing is clamped
+    hi = max(20, 20 * math.ceil(max(ends) / 20))
     wide = lay == "wide"
     W = 940 if wide else 360
     L = 250 if wide else 92
     R = 20
-    X = lambda v: L + (W - L - R) * (max(lo, min(hi, v)) - lo) / (hi - lo)
+    X = lambda v: L + (W - L - R) * (v - lo) / (hi - lo)
     rh, gap, top = 22, 18, 40
     out = []
     y = top

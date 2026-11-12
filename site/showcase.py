@@ -32,7 +32,8 @@ E = html.escape
 STATUS = {"published": "Measured", "in_progress": "In progress", "planned": "Planned"}
 KINDS = ("wave", "hist", "shmoo")
 #: words a showcase's text may hold that look like numbers but are names (parts, boards, standards, releases)
-PROSE_OK = re.compile(expertise.PROSE_OK.pattern + r"|AXI4-Lite|AXI4-Stream|xc7a100tcsg324-1|A7-100T|Nexys A7|KR260|KV260|"
+PROSE_OK = re.compile(expertise.PROSE_OK.pattern.replace(r"|2025\.2", "").replace(r"Vivado \d+\.\d+", r"Vivado 2026\.1")
+                      + r"|xck?\w+(?:-\w+)+|AXI4-Lite|AXI4-Stream|xc7a100tcsg324-1|A7-100T|Nexys A7|KR260|KV260|"
                       r"64b/66b|8b/10b|1G|10G|25G|RGMII|SFP\+|VCCINT|VCCAUX|VCCBRAM|DDR\d|JTAG|UART|XADC|SYSMON")
 REQUIRED = {"published": ["id", "title", "one_line", "board", "part", "headline", "hero", "story", "evidence", "limits"],
             "in_progress": ["id", "title", "one_line", "board", "what_it_will_show"],
@@ -127,17 +128,60 @@ def load(directory: Path = DIR) -> list[dict]:
     return out
 
 
-def resolve(name: str, y: dict) -> dict:
+ALLOWED = {"planned": {"id", "order", "status", "title", "one_line"},
+           "in_progress": {"id", "order", "status", "title", "one_line", "board", "part", "what_it_will_show"},
+           "published": {"id", "order", "status", "title", "one_line", "board", "part", "vivado", "values", "headline", "description",
+                         "hero", "story", "evidence", "limits", "try_it", "fixture"}}
+#: published fields whose strings are not page text checked for typed numbers: value expressions, file paths, the command
+NOT_TEXT = {("values",), ("hero", "source"), ("hero", "path"), ("hero", "kind"), ("evidence", "path"), ("evidence", "kind"),
+            ("try_it", "command"), ("id",), ("status",), ("order",), ("vivado",), ("fixture",)}
+
+
+def _check_tree(name: str, node, path=()):
+    """Every string in a published entry (keys included) may hold a number only through a {name} placeholder."""
+    key = tuple(p for p in path if not isinstance(p, int))
+    if key[:1] == ("values",) or key in NOT_TEXT:
+        return
+    if isinstance(node, dict):
+        for k, v in node.items():
+            _no_typed_numbers(f"{name}: {'.'.join(map(str, key))} key", str(k))
+            _check_tree(name, v, path + (k,))
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            _check_tree(name, v, path + (i,))
+    elif isinstance(node, str):
+        _no_typed_numbers(f"{name}: {'.'.join(map(str, key))}", node)
+
+
+def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
     """One project, with every placeholder filled and the hero read; text fields of unpublished projects may hold no number."""
     st = y["status"]
+    extra = set(y) - ALLOWED[st]
+    if extra:
+        raise ContractError(f"{name}: fields {sorted(extra)} are not allowed for status {st}")
+    if st == "published":
+        _check_tree(name, y)
+        if str(y.get("vivado", "2026.1")) != "2026.1":
+            raise ContractError(f"{name}: vivado must be 2026.1, the only release published text may name")
+        if y.get("fixture") and not allow_fixtures:
+            raise ContractError(f"{name}: a fixture page cannot be published from site/showcase")
+        if not y.get("fixture") and not str(y["hero"].get("source", "")).startswith("results/"):
+            raise ContractError(f"{name}: hero.source must be a committed file under results/")
+        st_ = y.get("story") or {}
+        if not st_.get("results") or not st_.get("agent"):
+            raise ContractError(f"{name}: story.results and story.agent must not be empty")
+        lim = y.get("limits") or {}
+        if not (lim.get("not_measured") or lim.get("nulls")) or not lim.get("next"):
+            raise ContractError(f"{name}: limits need at least one item not measured (or a null) and one next step")
+        for e in y.get("evidence", []):
+            if e.get("kind") == "record" and not e.get("path"):
+                raise ContractError(f"{name}: an evidence record needs a path")
     r = {"id": y["id"], "title": y["title"], "status": st, "status_label": STATUS[st], "order": y.get("order", 99)}
     if st != "published":
-        for k in ("title", "one_line", "what_it_will_show", "board"):
+        for k in ("title", "one_line", "what_it_will_show", "board", "part"):
             if k in y:
                 _no_typed_numbers(f"{name}: {k}", y[k])
                 r[k] = y[k]
-        if "part" in y:
-            r["part"] = y["part"]
         return r
     vals = _values(y.get("values"), name)
     f = lambda k, t: _fill(f"{name}: {k}", t, vals)
@@ -177,8 +221,8 @@ def resolve(name: str, y: dict) -> dict:
     return r
 
 
-def build(directory: Path = DIR) -> dict:
-    projects = [resolve(n, y) for n, y in load(directory)]
+def build(directory: Path = DIR, allow_fixtures: bool = False) -> dict:
+    projects = [resolve(n, y, allow_fixtures) for n, y in load(directory)]
     projects.sort(key=lambda p: (list(STATUS).index(p["status"]), p["order"], p["title"]))
     return {"projects": projects, "counts": {s: sum(1 for p in projects if p["status"] == s) for s in STATUS}}
 

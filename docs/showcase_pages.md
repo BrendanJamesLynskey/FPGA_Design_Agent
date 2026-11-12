@@ -7,7 +7,8 @@ its YAML file and committing the result files it points at; it does not write HT
 ## A complete example
 
 The smallest published entry, `site/showcase/<id>.yaml` (a fuller one, with every field, is
-`site/tests/fixtures/showcase/demo_hist.yaml`):
+`site/tests/fixtures/showcase/demo_hist.yaml`, a synthetic fixture marked `fixture: true`). The paths below are
+illustrative:
 
 ```yaml
 id: debug_in_words
@@ -31,7 +32,7 @@ evidence:
   - {kind: conditions, label: Die temperature and rails, path: results/debug_in_words/xadc.json}
   - {kind: versions, label: Tool versions and build ID, text: "not recorded"}
   - {kind: requirements, label: Requirements traced, text: "not recorded"}
-limits: {not_measured: ["..."], nulls: [], next: ["..."]}
+limits: {not_measured: ["..."], nulls: [], next: ["..."]}       # at least one not_measured (or null) and one next
 ```
 
 Common value expressions: `get:a.b.0.c` (the value at a path in the first file), `n` (how many files match the
@@ -85,9 +86,30 @@ Every status: `id` (lower case, digits and `_`; the page name), `title`, `one_li
 | `limits` | `not_measured`, `nulls`, `next`: lists of sentences |
 | `try_it` | optional `{command, note}` |
 
-**No typed numbers.** In every text field, a number must come from a `{name}` placeholder. Names that look like numbers
-(parts, boards, standards, the release) are allowed by the `PROSE_OK` pattern in `site/showcase.py`. `build.py --check`
-then checks every number on the page against the project's data, as for every other page.
+**What `site/export.py` refuses** (each raises `showcase.ContractError`):
+
+- **Typed numbers anywhere in a published entry.** Every string, and every mapping key, is checked: title, one_line,
+  headline, description, board, part, the hero caption, every story field (including architecture block and link
+  labels and the agent mapping's keys and values), evidence labels and texts, limits and the try-it note. A number must
+  come from a `{name}` placeholder. Names that look like numbers (AMD part names, boards, standards, Vivado 2026.1) are
+  allowed by the `PROSE_OK` pattern in `site/showcase.py`. Not checked as text: `values`, `hero.source`, `hero.path`,
+  `evidence.path` and `try_it.command`.
+- **For `in_progress` and `planned`:** any field outside the status's list, and any number in title, one_line, board,
+  part or `what_it_will_show`.
+- **For `published`:**
+  - a `vivado` other than `2026.1`;
+  - a hero whose `source` is not under `results/`;
+  - empty `story.results` or `story.agent`;
+  - `limits` without at least one `not_measured` (or `nulls`) item and one `next` item;
+  - an evidence `record` without a path;
+  - a missing evidence kind;
+  - a path, value source or placeholder that does not resolve;
+  - a hero kind the kit cannot draw, or hero data that does not fit its kind.
+- **Synthetic fixtures** (`fixture: true`, hero data under `site/tests/`) are refused by the normal build. They build
+  only with `--showcase-fixture`.
+
+`build.py --check` then checks every number on a showcase page against the shared site data plus the project's
+resolved `values` and hero data. It never checks against the project's own text, which would make the check circular.
 
 ## Hero kinds (the shared graphics kit)
 
@@ -106,11 +128,23 @@ The project's own export (in its `results/` folder) writes this normalised JSON 
 
 ## Tests
 
-`site/tests/test_showcase.py` checks: the contract (typed numbers, missing evidence kinds and off-grid points are
-refused), that in-progress projects show no numbers, that the fixture pages render with their hero data inlined and
-pass the number check, and that the kit's code handles each kind. `site/tests/e2e_showcase.js` (puppeteer, run
-locally under a heavy slot) loads each fixture page at 390 and 1280 px, light and dark, and fails on a console error,
-horizontal overflow, or a hero that draws nothing.
+`site/tests/test_showcase.py` checks:
+- the contract: every refusal above, including the 38-case probe from the PR #133 review;
+- that in-progress projects show no numbers and get no page;
+- that the fixture pages render with their hero data inlined and pass the number check;
+- that the number check is not circular;
+- that the kit's code handles each kind;
+- the portfolio pack's sources;
+- that the README's headline numbers match `site/data`.
+
+`site/tests/e2e_render.js` (puppeteer) is run locally under a heavy slot. It sets `FDA_E2E=1` for
+`test_e2e_pages_render_without_errors_or_overflow`, and is skipped in CI. It loads the main pages and each fixture page
+at 390 and 1280 px, light and dark, with and without reduced motion. It fails on any of:
+- a console or page error;
+- horizontal overflow;
+- a hero that draws nothing;
+- a player without controls;
+- anything playing under reduced motion.
 
 ## Portfolio card
 

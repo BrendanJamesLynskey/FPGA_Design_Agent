@@ -6,10 +6,11 @@ Site: **[fpga-design-agent.vercel.app](https://fpga-design-agent.vercel.app)** (
 **What it does.** Describe a block in plain English. Language-model agents interview you about what you left out, write
 the spec, a model of it, the tests and the SystemVerilog, then drive the simulators and Vivado 2026.1 through synthesis
 and place and route to a bitstream, stage by stage in the order of AMD's UltraFast design methodology, and test it on a
-Digilent Nexys A7-100T (Artix-7). Every stage ends in a gate run by code, not by a model. The agent's own tests never
-count as a pass: hidden tests written against an independent model of the spec decide, and those tests are themselves
-checked by mutation testing. A controller in code picks the next stage; a person signs off the spec and approves anything
-that touches the board.
+Digilent Nexys A7-100T (Artix-7). Every stage ends in a gate run by code, not by a model; inside the loop the gates run
+the agent's own tests. On benchmark tasks a run is scored only by hidden tests written against an independent model of
+the spec and checked by mutation testing, never by the agent's own tests. A controller in code picks the next stage. The
+run always stops for a person before anything touches the board; review of each stage's result is opt-in (`--review on`,
+off in every recorded run), and otherwise the spec counts as signed off once no question is left open.
 
 **What has been measured.** On 11 development tasks, 13 of 21 runs with Anthropic's Claude Sonnet (`claude-sonnet-5-5`,
 through Claude Code) passed every hidden test. In 6 more the agent's own checks passed and the hidden tests failed (an

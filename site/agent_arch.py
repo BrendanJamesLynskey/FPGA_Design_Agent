@@ -157,6 +157,8 @@ HARNESS_ARMS = [
 ]
 #: brief 42 round 1 (results/42_workflows/analysis.md, written by analyze.py): the paired table is read from that file.
 HARNESS_RESULTS = "results/42_workflows/analysis.md"
+#: each arm's pre-registered primary metrics (results/42_workflows/prereg.md): H2 is judged on wall time, the others on tokens and cost
+PRIMARY = {"H2": ("wall_s",), "H1": ("tokens", "cost_usd"), "H9": ("tokens", "cost_usd")}
 #: fixes already made from harness findings, each with its evidence (repository paths and the pull request).
 HARNESS_FIXES = [
     {"name": "Whole skills from load_skill", "pr": 115, "files": ["agent/core/tools.py", "agent/tests/test_36_skill_routing.py"],
@@ -467,8 +469,9 @@ def harness_results():
     percentages of the interval ends."""
     src = (ROOT / HARNESS_RESULTS).read_text()
     lines = src.splitlines()
+    env = (ROOT / HARNESS_RESULTS).with_name("environment.txt").read_text()
     head = {"n_runs": int(re.search(r"Valid runs: (\d+)", src).group(1)), "blocks": int(re.search(r"(\d+) of \d+ started", src).group(1)),
-            "source": HARNESS_RESULTS}
+            "source": HARNESS_RESULTS, "model": re.search(r"^model: (\S+)", env, re.M).group(1)}
     totals, paired, verdict, sens = {}, {}, {}, {}
     for l in lines:
         c = _cells(l) if l.startswith("|") else []
@@ -496,12 +499,23 @@ def harness_results():
                 t += ", but the interval includes 0 once the blocks with a run stopped by the time limit are left out"
             parts.append(t)
         v = verdict[arm]
+        def why(k):        # one primary metric against the rule: at least 30 % lower AND an interval that excludes 0
+            x = m[k]
+            if x["rel_pct"] <= -30 and x["excludes_0"]:
+                return f'{words[k]} meets it ({abs(x["rel_pct"]):g} % lower, interval excludes 0)'
+            if x["rel_pct"] <= -30:
+                return f'{words[k]} fell {abs(x["rel_pct"]):g} % but the interval includes 0'
+            if x["excludes_0"]:
+                return f'{words[k]} fell {abs(x["rel_pct"]):g} %, under the 30 % bar'
+            return f'{words[k]} changed by {x["rel_pct"]:+g} % with an interval that includes 0'
+        prim = PRIMARY.get(arm, ("tokens", "cost_usd"))
         if v["reading_c"] and not v["reading_t"]:
-            rule = "Not adopted: it meets the 30 % bar on cost but not on tokens, and the pre-registered rule did not say which one counts"
+            rule = ("Not adopted: " + "; ".join(why(k) for k in prim) +
+                    "; the pre-registered rule did not say whether cost alone counts")
         elif v["reading_t"]:
             rule = "Meets the adopt rule"
         else:
-            rule = "Not adopted: no saving reaches the 30 % bar"
+            rule = "Not adopted against the rule (at least 30 % lower with an interval that excludes 0): " + "; ".join(why(k) for k in prim)
         status = ("; ".join(parts).capitalize() + f'. Hidden-test passes {totals[arm]["hidden_passes"]} of {totals[arm]["runs"]} '
                   f'(baseline {totals["A0"]["hidden_passes"]} of {totals["A0"]["runs"]}). ' + rule + ".")
         out[arm] = {"status": status, "paired": m, "verdict": v, "wall_without_censored": sens[arm],

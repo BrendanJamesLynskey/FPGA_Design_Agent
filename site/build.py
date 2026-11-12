@@ -33,7 +33,7 @@ PAGES = [  # file, nav label, title, description, data keys inlined
     ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
     ("expertise.html", "Expertise", "Areas of expertise", "What the agent knows, what its flow checks and what has been measured, area by area, in drawers; each area states how far its evidence goes.", []),
     ("examples.html", "Examples", "Examples", "Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.", ["board"]),
-    ("showcase.html", "Showcase", "Showcase", "Projects built with the agent and measured on the board, each with its hero replayed from the recorded data, the story, the evidence and its limits; projects still being built are listed without numbers.", []),
+    ("showcase.html", "Showcase", "Showcase", "Larger projects being built with the agent, each to be measured on the board; each published page will replay its recorded data and give the story, the evidence and its limits. Projects in progress are listed without numbers.", []),
     ("problems.html", "Problems", "Problems", "Every benchmark task: development tasks in full with spec, hidden tests, reference RTL, mutants and the golden model running; held-out tasks by id and tier only.", ["catalogue_index"]),
     ("evaluation.html", "Evaluation", "How it is evaluated", "The held-out evaluation in plain words: split, hidden grader, three runs per task, task-level bootstrap.", []),
     ("results.html", "Results", "Results", "Development results; held-out results come with the baseline evaluation.", ["dev", "eval1"]),
@@ -426,7 +426,7 @@ def build(outdir: Path, d, check_numbers=True):
         pages[fn] = layout("showcase.html", P["title"], P["description"], showcase.page_body(P), ["showcase_hero"], pd, css, js,
                            prefix="../", current="showcase.html",
                            pager='<div class="pager"><a href="../showcase.html">&larr; All showcase projects</a><span></span></div>')
-        page_data[fn] = {"shared": shared, "project": P}
+        page_data[fn] = {"shared": shared, "values": P["values"], "hero": P["hero"]["data"]}   # not the project's own text (that would make the check circular)
     bad = []
     if check_numbers:
         allow = allow_tokens()
@@ -461,7 +461,7 @@ def main():
     d = load_data(fixture)
     if "--showcase-fixture" in args:      # preview a showcase page from a fixture folder (tests only; never copied to site/data)
         import showcase
-        d["showcase"] = showcase.build(Path(args[args.index("--showcase-fixture") + 1]))
+        d["showcase"] = showcase.build(Path(args[args.index("--showcase-fixture") + 1]), allow_fixtures=True)
     pages, bad = build(out, d)
     if bad:
         print("numbers not found in site/data (add to the data, or to numbers_allow.txt with a reason):")
