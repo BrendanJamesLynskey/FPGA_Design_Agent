@@ -1,0 +1,10 @@
+# Deliberate master-side faults from the transactor itself (inject), to show the master-side rules fire on hardware.
+name: master_inject
+target: periph
+steps:
+  - set: {seed_lite: 0x42, valid_p: 100, ready_p: 255}
+  - loop: 16
+    body:
+      - write: {addr: 0x04, data: 0x11, inject: valid_drop}
+      - write: {addr: 0x08, data: 0x22, inject: data_change}
+      - read: {addr: 0x04, inject: valid_drop}

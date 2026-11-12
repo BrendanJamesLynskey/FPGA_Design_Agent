@@ -114,6 +114,8 @@ if {$resume_from eq ""} {
     # brief 55: VHDL sources are read as VHDL-2008 (prepare.py lists them after the SystemVerilog, in analysis order)
     foreach f $sources     { if {[string match -nocase *.vhd $f] || [string match -nocase *.vhdl $f]} { read_vhdl -vhdl2008 $f } else { read_verilog -sv $f } }
     foreach x $constraints { read_xdc $x }
+    # brief 59A: AMD IP the design instantiates, created in the in-memory project by the design's own Tcl (build.yaml ip_tcl)
+    if {[info exists ip_tcls]} { foreach t $ip_tcls { source $t } }
     stage read
     set gen_args {}
     foreach g $generics { lappend gen_args -generic $g }

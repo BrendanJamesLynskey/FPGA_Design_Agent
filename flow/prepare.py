@@ -204,7 +204,10 @@ def main(argv: list[str] | None = None) -> int:
     srcs = vhdl.order_sources(srcs)                     # brief 55: VHDL after the SystemVerilog, packages first
     data = srcorder.data_files(design)                  # 07a2-prep: the task's data files, for $readmemh
     xdcs = expand(cfg["constraints"])
-    stamp = sources_sha256(srcs + xdcs + data)
+    # brief 59A: Tcl that creates AMD IP in the in-memory project (create_ip, global synthesis), sourced by build.tcl
+    # after the sources are read; hashed with them, so a change to the IP configuration is a new build stamp
+    ip_tcls = expand(cfg.get("ip_tcl", []))
+    stamp = sources_sha256(srcs + xdcs + data + ip_tcls)
     out = a.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
     for f in data:       # Vivado runs in the build directory: $readmemh("x.hex") and $readmemh("data/x.hex") both open the copy
@@ -220,6 +223,7 @@ def main(argv: list[str] | None = None) -> int:
            f"set part {{{cfg['part']}}}",
            f"set sources {tcl_list([str(s) for s in srcs])}",
            f"set constraints {tcl_list([str(x) for x in xdcs])}",
+           f"set ip_tcls {tcl_list([str(t) for t in ip_tcls])}",
            f"set generics {tcl_list([f'{k}={v}' for k, v in generics.items()])}",
            f"set out {{{out}}}",
            f"set ila {int(ila)}",
@@ -232,7 +236,7 @@ def main(argv: list[str] | None = None) -> int:
     (out / "inputs.tcl").write_text("\n".join(tcl) + "\n")
     json.dump({"design": str(design.relative_to(ROOT)), "variant": a.variant, "top": cfg["top"],
                "part": cfg["part"], "sources_sha256": stamp, "build_stamp": stamp[:8],
-               "files": [str(f.relative_to(ROOT)) for f in srcs + xdcs + data],
+               "files": [str(f.relative_to(ROOT)) for f in srcs + xdcs + data + ip_tcls],
                "board": board_for(cfg), "timing_margin_ns": timing_margin(cfg, xdcs)}, sys.stdout)
     print()
     return 0

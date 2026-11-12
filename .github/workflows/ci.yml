@@ -189,6 +189,26 @@ jobs:
       - name: Verilator lint of the library entries
         run: flow/net/lint.sh
 
+  axi-transactor:
+    name: AXI transactor (brief 59A) - cocotb on Icarus, seeded bugs, scoreboard mutant, formal rule proofs and checker mutants
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys z3
+          pip install pyyaml pyserial pytest cocotb==2.0.1
+          git clone https://github.com/YosysHQ/sby.git /tmp/sby && cd /tmp/sby && git checkout 79fc9ed && sudo make install
+      - name: Transactor, checkers, scoreboard and capture in simulation (the board's programs and seeded bugs)
+        run: python -m pytest -q axi_tx/tests/test_59a_rtl.py axi_tx/tests/test_59a_host.py
+      - name: Formal - every rule quiet on legal traffic, fires on its seeded violation; every checker mutant killed
+        run: python axi_tx/formal/run_formal.py --depth 20 --json build/59a/formal.json
+
   lint:
     name: Verilator lint
     runs-on: ubuntu-24.04
