@@ -205,7 +205,7 @@ jobs:
           pip install pyyaml pyserial pytest cocotb==2.0.1
           git clone https://github.com/YosysHQ/sby.git /tmp/sby && cd /tmp/sby && git checkout 79fc9ed && sudo make install
       - name: Transactor, checkers, scoreboard and capture in simulation (the board's programs and seeded bugs)
-        run: python -m pytest -q axi_tx/tests/test_59a_rtl.py axi_tx/tests/test_59a_host.py
+        run: python -m pytest -q axi_tx/tests/test_59a_rtl.py     # the host and tool tests run in the Python job
       - name: Formal - every rule quiet on legal traffic, fires on its seeded violation; every checker mutant killed
         run: python axi_tx/formal/run_formal.py --depth 20 --json build/59a/formal.json
 
