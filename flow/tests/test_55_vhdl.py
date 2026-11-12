@@ -132,3 +132,20 @@ def test_netlist_keeps_the_shell_as_a_black_box(tmp_path):
     text = net.read_text()
     assert "module t1_gray_stepper_top #(parameter CLKS_PER_BIT = 8" in text
     assert "fpga_shell #(" in text and "module fpga_shell" not in text
+
+
+def test_integer_value_for_a_vector_generic_is_fitted(tmp_path):
+    """Mistake M3 (an agent run, brief 55): the bench passed BUILD_STAMP=0 and GHDL 4.1 synthesis crashed."""
+    f = tmp_path / "t.vhd"
+    f.write_text("library ieee; use ieee.std_logic_1164.all;\nentity t is\n  generic (N : integer := 4;\n"
+                 "    BUILD_STAMP : std_logic_vector(31 downto 0) := x\"00000000\");\n  port (q : out std_logic); end;\n"
+                 "architecture r of t is begin q <= BUILD_STAMP(0); end;\n")
+    assert vhdl.entity_generics(f.read_text(), "t") == {"n": "integer", "build_stamp": "std_logic_vector(31 downto 0)"}
+    assert vhdl.fit_generics([f], "t", {"BUILD_STAMP": 5, "N": 3}) == {"BUILD_STAMP": format(5, "032b"), "N": 3}
+
+
+@needs_ghdl
+def test_netlist_with_an_integer_build_stamp(tmp_path):
+    vh = sorted((B / "t1_gray_stepper" / "rtl").glob("*.vhd"))
+    net = vhdl.to_verilog(vh, "t1_gray_stepper_top", {"CLKS_PER_BIT": 8, "BUILD_STAMP": 0}, tmp_path)
+    assert "parameter BUILD_STAMP = 0" in net.read_text()

@@ -213,9 +213,10 @@ def make_runner(design: Path, mode: str = "auto"):
         mode = os.environ.get("FDA_MUTATE_SANDBOX", "auto")       # the unit tests of this file set it to "host"
     if mode == "host":
         return None
-    from agent.core.runner import ContainerRunner, container_available
-    if container_available():
-        return ContainerRunner(design, ROOT)
+    from agent.core.runner import SIM_IMAGE, SIM_IMAGE_VHDL, ContainerRunner, container_available
+    image = SIM_IMAGE_VHDL if vhdl.design_language(design) == "vhdl" else SIM_IMAGE     # brief 55: GHDL is in its own image
+    if container_available(image=image):
+        return ContainerRunner(design, ROOT, image=image)
     if mode == "container":
         raise RuntimeError("--sandbox container: the sandbox image is not present (docker build -t fda-sim:2 agent/container)")
     return None

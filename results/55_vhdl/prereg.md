@@ -39,3 +39,18 @@ Whether openai/gpt-6-luna (OpenRouter, `data_collection: deny`) writes VHDL-2008
 
 - Brief cap $10 by provider-reported cost; stop new runs at $9.
 - No re-run of a passing drill. A failure in B is reported as a failure.
+
+## Amendments (dated, before the runs they affect)
+
+1. **2026-11-12 00:05, after arm A, before arm B.** Arm A's prompt carried the boundary notes of `flow/vhdl.py` as they were then.
+   Arm B's prompt carries the notes as amended from A's mistakes (a bullet on the shell's `sync2`/`reset_sync` names, a bullet on
+   start values) **and** three skills of the new `vhdl-design` unit (`vhdl-mixed-language-boundary`, `vhdl-types-drivers-and-numeric-std`,
+   `vhdl-processes-resets-and-fsms`). So B measures "notes + skills" together, not the skills alone. B was run on all five board
+   drills (all failed in A) and on `cdcfx_c8` (failed in A); `cdcfx_c10` and `axil_regs` passed in A and were not re-run.
+2. **Diagnostic, not a scored arm.** `translations/A_diag/` holds arm A's board translations with the colliding entities renamed by a
+   script (`sync2` -> `sync2_vh`, `reset_sync` -> `reset_sync_vh`), scored to see whether anything beyond the name clash failed
+   (`scores/Adiag_*`). It is never counted as a pass.
+3. **Hand fix, not a scored arm.** `translations/hand_fix/cdcfx_c8/` is arm B's `cdcfx_c8` with start values added by hand to its two
+   output registers, used by the tests to show that rule M2 is the whole difference.
+4. **The lint feedback kept the tail of GHDL's output** in the A and B runs (a cascade of follow-on errors can hide the first one);
+   from 00:15 the tool keeps the head. Only B's `t1_elevator_fsm` needed a second round.
