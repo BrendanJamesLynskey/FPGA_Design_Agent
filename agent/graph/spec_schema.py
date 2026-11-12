@@ -121,6 +121,71 @@ def requirement_errors(spec: dict[str, Any], need_proof: bool = True) -> list[st
     return errs
 
 
+#: words that make a requirement unverifiable as written (brief 53): a check cannot measure "fast" or "should"
+VAGUE = ("should", "could", "might", "may", "fast", "quickly", "slow", "efficient", "efficiently", "robust", "robustly",
+         "user-friendly", "appropriate", "appropriately", "adequate", "adequately", "reasonable", "reasonably",
+         "sufficient", "properly", "suitable", "flexible", "easy", "easily", "optimal", "optimised", "optimized",
+         "minimal", "approximately", "approx", "roughly", "etc", "and/or", "as needed", "as appropriate", "if possible",
+         "where possible", "tbd", "tbc", "support", "supports", "handle", "handles")
+_VAGUE_RX = re.compile(r"(?<![\w/-])(" + "|".join(re.escape(w) for w in sorted(VAGUE, key=len, reverse=True)) + r")(?![\w/-])", re.I)
+#: words that make a clause a statement of its own: after "and"/"but" one of these means a second requirement
+_VERBS = set("""is are was be been has have must shall will can cannot never always stays holds returns reads writes counts
+sets clears makes wins drives goes runs takes gives shows lights closes uses wraps toggles asserts rises falls changes answers
+stops starts remains keeps sends receives appears produces outputs updates resets latches show drive hold stay return wrap
+toggle rise fall answer remain keep send receive appear produce""".split())
+
+
+def _compound(text: str) -> str | None:
+    """The join that makes ``text`` two requirements, or None. A ';', a second sentence (a trailing 'See ...' reference is
+    allowed), 'as well as' and 'and also' always count; 'and'/'but' count when the clause after them has its own verb,
+    except inside a condition (after when, while, if, unless or until in the same clause) and at the end of a list ('R, G, and B are driven ...': the item before 'and' is a short list item)."""
+    if ";" in text:
+        return ";"
+    for m in re.finditer(r"(?<=[a-z0-9)%])\.\s+([A-Z]\w*)", text):
+        if m.group(1).lower() not in ("see", "ref", "refer"):
+            return "a second sentence"
+    m = re.search(r"\b(as well as|and also)\b", text, re.I)
+    if m:
+        return m.group(1)
+    for m in re.finditer(r"(,\s*)?\b(and|but)\b", text):
+        right = re.split(r"[,;]", text[m.end():], maxsplit=1)[0]
+        if not _VERBS & {w.lower().strip(".()") for w in right.split()}:
+            continue
+        before = text[:m.start()]
+        cond = r"\b(when|while|if|unless|until|whenever)\b"
+        if not m.group(1) and re.search(cond, before.rsplit(",", 1)[-1], re.I) and not re.search(cond, right, re.I):
+            continue                                   # inside one condition: 'high when A is high and B is low'; but 'up
+                                                       # when UP ... and down when DOWN ...' (a second condition) still counts
+        item = before.rsplit(",", 1)[-1] if "," in before else None
+        if item is not None and len(item.split()) <= 3:
+            continue                                   # the last item of a list: 'X, Y, and Z are ...'
+        return (m.group(1) or "").strip() + (" " if m.group(1) else "") + m.group(2) if m.group(1) else m.group(2)
+    return None
+
+
+def requirement_quality_errors(spec: dict[str, Any]) -> list[str]:
+    """Applied by the clarify gate to the agent's spec (not part of :func:`validate`, which also checks the benchmark's
+    frozen hidden specs): each requirement is atomic (one checkable statement), verifiable (no vague word; at least three
+    words) and uniquely identified (requirement_errors checks the ids). Returns one message per problem, naming the id."""
+    errs = []
+    for r in spec.get("requirements") or []:
+        if not isinstance(r, dict) or not r.get("id") or not r.get("text"):
+            continue
+        rid, text = r["id"], " ".join(str(r["text"]).split())
+        v = sorted({m.group(1).lower() for m in _VAGUE_RX.finditer(text)
+                    if not (m.group(1).lower() == "may" and re.match(r"\s+not\b", text[m.end():]))})   # "may not" is a rule
+        if v:
+            errs.append(f"requirement {rid} is vague ({', '.join(repr(w) for w in v)}): say what a check can measure, "
+                        f"for example a value, a count of clocks or an exact behaviour")
+        c = _compound(text)
+        if c:
+            errs.append(f"requirement {rid} is compound ({c!r} joins two statements): split it into one "
+                        f"requirement per checkable statement, each with its own id and proof method")
+        if len(text.split()) < 3:
+            errs.append(f"requirement {rid} is too short to check ({text!r}): state the behaviour or the figure")
+    return errs
+
+
 def propose_proof(text: str) -> tuple[list[str], str]:
     """A default proof method for a requirement, from its wording (the interview offers it with its reason)."""
     low = text.lower()

@@ -2,6 +2,7 @@
 // the ones in Digilent's master XDC. The design (dimmer_counter) sits behind
 // the test shell's register window; DESIGN_ID is "T1DC".
 
+// req: REQ-06, REQ-07, REQ-08, REQ-11
 module t1_dimmer_counter_top #(
     parameter int          CLKS_PER_BIT    = 868,         // 115200 baud at 100 MHz
     parameter int          TIMEOUT_CYCLES  = 100_000,     // 1 ms

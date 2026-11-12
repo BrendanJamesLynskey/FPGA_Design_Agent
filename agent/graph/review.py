@@ -399,6 +399,32 @@ def _page(title: str, body: str) -> str:
             f"<body><main>{body}</main></body></html>\n")
 
 
+def trace_matrix_html(t: dict | None) -> str:
+    """Brief 53: the traceability matrix (build/trace/trace.json, flow/traceability.py): requirement -> design elements ->
+    method -> verifications -> result, then the gates with the ids each is missing."""
+    if not t or "requirements" not in t:
+        return '<p class="mut">No traceability matrix yet (flow/traceability.py writes build/trace/trace.json at stage 2).</p>'
+    res = lambda r: chip(True if r == "pass" else None if r in ("pending",) else False)
+    rows = []
+    for r in t["requirements"]:
+        for i, m in enumerate(r["methods"] or [{"method": "-", "status": "missing", "verifications": []}]):
+            ver = "; ".join(f"{v['artefact']} ({v['via']}): {v['result']}" for v in m["verifications"]) or "none"
+            rows.append([r["id"] if i == 0 else "", r.get("text", "") if i == 0 else "",
+                         ", ".join(r.get("design_elements") or []) or "-" if i == 0 else "", m["method"], ver, res(m["status"])])
+    s = t.get("artefact_summary") or {}
+    gates = [[n, chip(c["pass"]), c.get("why") or "none missing"] for n, c in (t.get("gates") or {}).items()]
+    cov = (t.get("coverage") or {}).get("summary") or {}
+    covtxt = "; ".join(f"{k} {v.get('hit')}/{v.get('points')}" for k, v in cov.items() if isinstance(v, dict) and v.get("points"))
+    holes = (t.get("coverage") or {}).get("holes") or []
+    return (_table(rows, ["requirement", "text", "design elements", "method", "verifications (how linked)", "result"])
+            + f'<p class="mut">{_e(t.get("note", ""))} Artefacts: {s.get("total", "-")} ({s.get("citing", "-")} cite a '
+              f'requirement, {s.get("robustness", 0)} robustness, {s.get("structural", 0)} structural, {s.get("untagged", 0)} '
+              f'untagged). Coverage: {_e(covtxt or "not measured")}; {len(holes)} hole(s), '
+              f'{sum(1 for h in holes if not h.get("justified_by"))} without a justification. Deferred: '
+              f'{_e(", ".join(t.get("defer") or []) or "none")}.</p>'
+            + "<h3>Traceability gates</h3>" + _table(gates, ["gate", "result", "detail"]))
+
+
 def write_index(design: Path, history: list[dict[str, Any]], role_models: dict | None = None) -> Path:
     """``history``: one dict per stage visit: n, stage, page, passed, approval {decision, by, note}."""
     rows = [[h["n"], Markup(f'<a href="{_e(Path(h["page"]).name)}">{_e(h["stage"])}</a>'), chip(h.get("passed")),
@@ -408,5 +434,6 @@ def write_index(design: Path, history: list[dict[str, Any]], role_models: dict |
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(_page("Review index", f"<h1>Review: {_e(design.name)}</h1>" +
                          _table(rows, ["#", "stage", "gates", "decision", "by", "note"])
+                         + "<h2>Traceability matrix</h2>" + trace_matrix_html(_json(design / "build" / "trace" / "trace.json"))
                          + ("<h2>Models by role</h2>" + roles_html(role_models) if role_models else "")))
     return out

@@ -16,7 +16,7 @@ def _alive(pid: int) -> bool:
         return False
     try:
         return Path(f"/proc/{pid}/stat").read_text().split()[2] != "Z"
-    except FileNotFoundError:
+    except (FileNotFoundError, ProcessLookupError):      # reaped between kill(0) and the read (seen in CI: ESRCH on read)
         return False
 
 

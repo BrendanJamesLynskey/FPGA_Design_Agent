@@ -1,0 +1,16 @@
+diff --git a/designs/t1_dimmer_counter/tests/t1_verif.py b/designs/t1_dimmer_counter/tests/t1_verif.py
+index 463d276..fa61c8f 100644
+--- a/designs/t1_dimmer_counter/tests/t1_verif.py
++++ b/designs/t1_dimmer_counter/tests/t1_verif.py
+@@ -169,3 +169,11 @@ async def constrained_random_operations(dut):
+ async def zz_dump_coverage(dut):
+     """Last test of a run: write the functional-coverage database for flow/verif_gates.py."""
+     t1_cov.dump()
++
++
++@cocotb.test()
++async def extra_identity_smoke(dut):
++    """brief 53 known-bad 2: a new test with no requirement tag."""
++    e = Env(dut)
++    await e.start()
++    assert await e.read(m.COUNT) == 0

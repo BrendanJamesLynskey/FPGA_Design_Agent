@@ -1,0 +1,1390 @@
+{
+ "schema": "fpga-design-agent/trace/v1",
+ "design": "c12_nexys_pwm_audio",
+ "generated": "2026-11-12T05:42:35Z",
+ "note": "DO-254-style evidence: a record of what was verified and how; not a claim of compliance with any standard.",
+ "defer": [
+  "hardware"
+ ],
+ "inputs": {
+  "source": "computed",
+  "note": "no build manifest (brief 54) found; inputs, tools, knowledge-bank pin and flow commit computed here",
+  "inputs": {
+   "build/b53/c12_nexys_pwm_audio/build.yaml": "ee5c9ac0fe3a0afcae2ab0b10f65f17b9fcd7be2ae691a0a265ca3f8e9d21471",
+   "build/b53/c12_nexys_pwm_audio/design.xdc": "d5a12423c2093e75c2beb8bf46f00f6babc574d0f15b3c6545934a06c1e4c64f",
+   "build/b53/c12_nexys_pwm_audio/model.py": "4dad883818e7baed77be838387a1febf8ea569ea05e9ac3f4b56a3308fc76c7c",
+   "build/b53/c12_nexys_pwm_audio/rtl/c12_nexys_pwm_audio_top.sv": "f27fed7d841a4edcfc1eb784b7a06ccab5d6dfce3c25265e8539f746d0ff3a61",
+   "build/b53/c12_nexys_pwm_audio/spec.yaml": "e8bd61e587c8b408e02c0dabee3313e7b4c3fe2edd11641f89e9e8ee407b6553",
+   "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py": "255214c57af1d0583a8df0dbf91ac7dbcfafbe79dcb6c0acd32b3d4753766403",
+   "build/b53/c12_nexys_pwm_audio/tests/c12_bench2.py": "db34567ee63afb85160621cf0c86936c88287810044ce4dd9e57dd47ce6905d5",
+   "build/b53/c12_nexys_pwm_audio/tests/test_c12_nexys_pwm_audio_hw.py": "9a4cf98b5f300f2704b1f8bc156c977503583e6057f6e95dc166a4c32c5215cf",
+   "build/b53/c12_nexys_pwm_audio/tests/test_c12_nexys_pwm_audio_rtl.py": "6986ca34986b24680877f8ecf8d2b8b1fadd1fe5f1b70d931da07385d100bdc9",
+   "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker.sv": "b6611cf939ff78e672b66b251a294d39368cd58b364472e0b4887110a90684cd",
+   "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker_bind.sv": "a0b9afec34e0e51ff5731c0def360052ad06e4c0e2949818273eb6d5e8d55d83",
+   "build/b53/c12_nexys_pwm_audio/verif/checkers/v_macros.svh": "013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083",
+   "build/b53/c12_nexys_pwm_audio/verif/testplan.yaml": "97443fbc86b1c516ffb5830779328e3ecf6ee3c69d332b5d19541a29d7251629",
+   "shell/rtl/fpga_shell.sv": "c1a5d9551c5c173b5dc65a1cc3c01a00b184d9d187e2a22e8c80b3a616b8bbb1",
+   "shell/rtl/reset_sync.sv": "1beca829ea724f3a4eb1e7cf3688d8e0f26706c8f89810730672306ba66e0815",
+   "shell/rtl/shell_core.sv": "4956b6380ebf052984d598942bea4e70c6c379b9683cae40f78076dd60093d39",
+   "shell/rtl/sync2.sv": "9103308bbb71cd224d958c434bddd7b3bd2647d49cc8e718df0c6acba49509ba",
+   "shell/rtl/uart_rx.sv": "df36889737e1714453c29b4efb1134e3bed54be50be3f31b18d51e929711df49",
+   "shell/rtl/uart_tx.sv": "ccc19a6bd09120d11b9258452eb93a9a0f8fd5852fd4badacce549ef6e38b358"
+  },
+  "tools": {
+   "python": "3.12.3",
+   "cocotb": "2.0.1",
+   "cocotb_coverage": "2.0",
+   "pyyaml": "6.0.3",
+   "icarus": "12.0",
+   "verilator": "5.048",
+   "yosys": null,
+   "sby": null,
+   "vivado_expected": "2026.1"
+  },
+  "kb_pin": "811b840",
+  "flow": {
+   "commit": "af6dea2494b5",
+   "dirty": true
+  }
+ },
+ "evidence_sources": {
+  "runs": "build/b53/c12_nexys_pwm_audio/build/verif/sim53",
+  "also": [
+   "build/b53/c12_nexys_pwm_audio/build/verif/icarus"
+  ],
+  "coverage": "build/b53/c12_nexys_pwm_audio/build/verif/sim53",
+  "formal": "build/b53/none",
+  "gates": "build/b53/c12_nexys_pwm_audio/build/base/gates.json",
+  "hw": null,
+  "baseline": null
+ },
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "text": "Reset sets gain to 2068 and clears the sample.",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_smoke_reset_defaults",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c12_bench.test_pin_safety_and_reset",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_smoke_reset_defaults",
+       "via": "replan formal->simulation",
+       "result": "pass",
+       "detail": "re-planned (SymbiYosys is not installed here, so the reset-default check is discharged by the cocotb test against the model.)"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "6ef33db016ef59977ac1ea379c782a4b0b16a261c1a960920f01440c7e26ce89",
+   "evidence_hash": "8bc359a82e32c6d962bf23fde0943f4699da3b436251eaf88143174454236f92",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-02",
+   "text": "Gain writes above 8192 are replaced by 8192; values up to 8192 are stored exactly (tests 65535, 4000, 8192, 8193).",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_gain_clamp",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_gain_clamp",
+       "via": "replan formal->simulation",
+       "result": "pass",
+       "detail": "re-planned (SymbiYosys is not installed here, so the clamp is checked by directed gain writes (65535, 4000, 8192, 8193) in simulation.)"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "99c359c5123bbac1d734c8cfc6ea22097210502527b5cab5f1bd4573f51da8ab",
+   "evidence_hash": "0baa55f37ec1a4ced1580ae351d41bd58dd8491ea3bc895be459d1767b394159",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-03",
+   "text": "sample_out = floor(sample*gain/2^15), combinational, readable over the shell.",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_sample_sout",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c12_bench.test_unmapped_and_ro",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c12_bench.test_random_traffic",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c12_bench2.test_random_pwm_sweep",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_sample_sout",
+       "via": "replan formal->simulation",
+       "result": "pass",
+       "detail": "re-planned (SymbiYosys is not installed here, so the multiply and shift are checked against the model on boundary and random samples in simulation.)"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "1654ca963e3423240423efc31418cd79d923bd268615748ff89d4b2c874bf4bd",
+   "evidence_hash": "dde0f6a3419662f0324fe626e8e80cef504e97493bb3a209b7c3044d0cd75aff",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-04",
+   "text": "Pin low count per period is 1024 - (512 + floor(sample_out/128)) for samples 0, +32767, -32768 and others.",
+   "proof": [
+    "simulation"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_pwm_low_counts",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c12_bench2.test_random_pwm_sweep",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "d0374e985cbbc032bc01675dbd44478f4aec77c861743cd90685a481729a8d13",
+   "evidence_hash": "606121c32a3f708be1117325c4eb73e92ae2da19f177492da89d56fa6851a157",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-05",
+   "text": "Free-running 10-bit counter gives a 1024-clock period; duty updated once per period only.",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_period_latching",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_period_latching",
+       "via": "replan formal->simulation",
+       "result": "pass",
+       "detail": "re-planned (SymbiYosys is not installed here, so period length and once-per-period duty update are checked in simulation.)"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "4a877149944d46f95633016237eb07cb1af0e486b596062086ae55575a195cec",
+   "evidence_hash": "518cbbbc2e8a4f03969338760697a41a7794d4c24a4ae7b44a9c2fa6c765183a",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-06",
+   "text": "AUD_PWM is never driven high (low or high-Z only).",
+   "proof": [
+    "simulation",
+    "formal",
+    "hardware"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_pin_safety_and_reset",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_pin_safety_and_reset",
+       "via": "replan formal->simulation",
+       "result": "pass",
+       "detail": "re-planned (SymbiYosys is not installed here, so the never-driven-high property is monitored on every clock of every test in simulation.)"
+      }
+     ]
+    },
+    {
+     "method": "hardware",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "ila_captures",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "1e1e735e8f282fd56a8ac8d23ecb0a564a4f485ad6c67914d091393a71927fa3",
+   "evidence_hash": "8ed7cd0c781245943c2bdd11271cf037edb58540346fc83b504c9e8417c1fa7e",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-07",
+   "text": "AUD_SD is always high.",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "design_elements": [
+    "c12_nexys_pwm_audio_top"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_pin_safety_and_reset",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "hardware",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "uart_tests",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "assertion",
+     "name": "A_aud_sd_high",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_rst_aud_sd",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "cover",
+     "name": "C_aud_sd_high",
+     "result": "pass",
+     "detail": "hit 1082929 time(s) over all seeds"
+    },
+    {
+     "kind": "cover",
+     "name": "C_reset_released",
+     "result": "pass",
+     "detail": "hit 1082929 time(s) over all seeds"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 2,
+    "cover_properties_hit": 2
+   },
+   "req_hash": "40b2b064552b7aa8924cbf96f4a4ef24bac4482cd61d5901d705d2e11757c94f",
+   "evidence_hash": "b337714a994a89bfbd91ee234e5e86994de6cd67f81a86984f455f07b625fa51",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-08",
+   "text": "Reset after a write restores default gain and clears the sample.",
+   "proof": [
+    "simulation"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_pin_safety_and_reset",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "1400b9b38b96ebb90485add736f06a9abe3a273e28bf6d91089ef8302581838c",
+   "evidence_hash": "c83ba05e09c2dc84bdc381592a73cdb91087afc766c1a9b20af8195e603577af",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-09",
+   "text": "Timing closes at 100 MHz.",
+   "proof": [
+    "analysis"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "analysis",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "post_route:setup",
+       "via": "testplan proof",
+       "result": "pass",
+       "detail": "gate post_route:setup = True"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "92ccfb577aaadb81ea84ec84777b0ffd0d9c30e41bd854f302a1fd2681e24d61",
+   "evidence_hash": "b2022a219c91b333bcb3d797e89ede9a7db42fc2a6201b9b5584ab892f502398",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-10",
+   "text": "Shell at 115200 baud returns design ID PWMA; LED outputs are off.",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "design_elements": [
+    "c12_nexys_pwm_audio_top"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c12_bench.test_smoke_reset_defaults",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c12_bench.test_shell_protocol",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "hardware",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "uart_tests",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "assertion",
+     "name": "A_led_off",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "cover",
+     "name": "C_led_off",
+     "result": "pass",
+     "detail": "hit 1082929 time(s) over all seeds"
+    },
+    {
+     "kind": "cover",
+     "name": "C_rx_active",
+     "result": "pass",
+     "detail": "hit 296310 time(s) over all seeds"
+    },
+    {
+     "kind": "cover",
+     "name": "C_tx_active",
+     "result": "pass",
+     "detail": "hit 253040 time(s) over all seeds"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 3,
+    "cover_properties_hit": 3
+   },
+   "req_hash": "202bc24c830853a217ef63a86be978d2b0b901995eccda3ec423baf5a071118c",
+   "evidence_hash": "62e001849499047946ac8c2327f300eafcb94758a8c952f96d027656ac8710b4",
+   "status": "pending"
+  }
+ ],
+ "artefacts": [
+  {
+   "kind": "test",
+   "name": "c12_bench.test_smoke_reset_defaults",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 380,
+   "cites": [
+    "REQ-01",
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "8b639898508df6683b4bfa6b1af501a93fa249382ba6c8cfab276f2bb51b0064",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench.test_gain_clamp",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 397,
+   "cites": [
+    "REQ-02"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "1cd0ba8679dcb3972f9de36ee83b3d16a4b8cf60db71bf711366c4beb60b072a",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench.test_sample_sout",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 418,
+   "cites": [
+    "REQ-03"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "d3890dcf18f4043a79af59ffc024e7825660c1fbe58469bd53129bfbda847a5f",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench.test_unmapped_and_ro",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 437,
+   "cites": [
+    "REQ-03"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "3f86857f931dcfb865926cc9147023e5dbaac1783b39af7e453ca3af39f36147",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench.test_pwm_low_counts",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 451,
+   "cites": [
+    "REQ-04",
+    "REQ-09"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "cf99f28352756d12a88b096d9d047b67886a6d4fbb8aa876bfae294b23ff7d66",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench.test_period_latching",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 466,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "e385138a7f495ec32450ad2c5dce3574467d4d72a6e659e5e6bc81c6b8f87004",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench.test_pin_safety_and_reset",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 487,
+   "cites": [
+    "REQ-06",
+    "REQ-07",
+    "REQ-08",
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "75ef3de262be7487ad5c85937c68e052d02bc2a7d87c5e28f3c9d9da948ab8fe",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench.test_shell_protocol",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 508,
+   "cites": [
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "4d4d349ca8e1d06e4d6a3602af77a461cdfa583d6f8f8c99e419a9a0165caaf2",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench.test_random_traffic",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 541,
+   "cites": [
+    "REQ-03"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "22415fba834c3aeb02d76fd121522138acf4d42b85f39027f854b0aa2bd97edf",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench.test_zz_coverage_export",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench.py",
+   "line": 569,
+   "cites": [],
+   "class": "structural",
+   "reason": "exports the functional-coverage database for the gates; checks nothing (brief 53 migration, by hand)",
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "803ea562586bb28fe1d743ab8347ffb64a4054a23cf47a3a92d6022bec3d344e",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c12_bench2.test_random_pwm_sweep",
+   "file": "build/b53/c12_nexys_pwm_audio/tests/c12_bench2.py",
+   "line": 17,
+   "cites": [
+    "REQ-03",
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "2eb5837a22b8330c01f7aa381fcc147aae9a5a8404da5e0cbf0aafdc7f27d57f",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "assertion",
+   "name": "A_aud_sd_high",
+   "file": "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker.sv",
+   "line": 20,
+   "cites": [
+    "REQ-07"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "aae0a2a388d8cecded1433583b8a36ff364859891a2f8a2fe0c8ee61e73b0751"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_led_off",
+   "file": "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker.sv",
+   "line": 22,
+   "cites": [
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "9ab862016b822e2c7b462205d43eb02d336f64e59b5fcc8998d3f9b0a62fe56d"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_rst_aud_sd",
+   "file": "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker.sv",
+   "line": 24,
+   "cites": [
+    "REQ-07"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "6f22919e87e01eed058b396a637bbefb4f89c26c3a1959b36deba0b0031a9bfa"
+  },
+  {
+   "kind": "cover",
+   "name": "C_aud_sd_high",
+   "file": "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker.sv",
+   "line": 27,
+   "cites": [
+    "REQ-07"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "hit 1082929 time(s) over all seeds",
+   "source_sha256": "dd7fc86524455e3157324c04c27ed02861d14b4c1554726b92dee3d072838105"
+  },
+  {
+   "kind": "cover",
+   "name": "C_led_off",
+   "file": "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker.sv",
+   "line": 29,
+   "cites": [
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "hit 1082929 time(s) over all seeds",
+   "source_sha256": "dec440caddf3a5b79955620f662f2f96e1f2e9f25e760bde5673f924e895e8ef"
+  },
+  {
+   "kind": "cover",
+   "name": "C_reset_released",
+   "file": "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker.sv",
+   "line": 31,
+   "cites": [
+    "REQ-07"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "hit 1082929 time(s) over all seeds",
+   "source_sha256": "5ec87cb940436fcab8fd59ed4f4fe4e905c20c270af1af39b633e5884fdf8224"
+  },
+  {
+   "kind": "cover",
+   "name": "C_rx_active",
+   "file": "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker.sv",
+   "line": 33,
+   "cites": [
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "hit 296310 time(s) over all seeds",
+   "source_sha256": "583426f85edce7ca035d3452f44a5b978bb4866258baac1e057bc4dde64f5b66"
+  },
+  {
+   "kind": "cover",
+   "name": "C_tx_active",
+   "file": "build/b53/c12_nexys_pwm_audio/verif/checkers/c12_checker.sv",
+   "line": 35,
+   "cites": [
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "hit 253040 time(s) over all seeds",
+   "source_sha256": "e13d8935dc2e0175b204e08900bf4bcb72229c7f3dc68342707d36921a739702"
+  }
+ ],
+ "artefact_summary": {
+  "total": 19,
+  "citing": 18,
+  "robustness": 0,
+  "structural": 1,
+  "untagged": 0
+ },
+ "coverage": {
+  "measured": true,
+  "summary": {
+   "line": {
+    "points": 8,
+    "hit": 8,
+    "pct": 100.0
+   },
+   "branch": {
+    "points": 16,
+    "hit": 16,
+    "pct": 100.0
+   },
+   "toggle": {
+    "points": 474,
+    "hit": 399,
+    "pct": 84.18
+   },
+   "bins": {
+    "points": 15,
+    "hit": 15,
+    "pct": 100.0
+   },
+   "cover": {
+    "points": 5,
+    "hit": 5,
+    "pct": 100.0
+   }
+  },
+  "holes": [
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:10 AUD_PWM:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:10 AUD_PWM:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:11 AUD_SD:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[0]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[0]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[10]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[10]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[11]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[11]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[12]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[12]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[13]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[13]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[14]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[14]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[15]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[15]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[1]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[1]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[2]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[2]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[3]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[3]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[4]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[4]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[5]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[5]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[6]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[6]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[7]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[7]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[8]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[8]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[9]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:14 LED[9]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:19 win_addr[3]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:19 win_addr[3]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:19 win_addr[4]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:19 win_addr[4]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:19 win_addr[5]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:19 win_addr[5]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:19 win_addr[6]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:19 win_addr[6]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[16]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[16]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[17]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[17]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[18]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[18]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[19]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[19]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[20]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[20]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[21]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[21]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[22]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[22]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[23]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[23]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[24]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[24]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[25]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[25]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[26]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[26]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[27]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[27]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[28]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[28]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[29]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[29]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[30]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[30]:1->0",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[31]:0->1",
+    "justified_by": null
+   },
+   {
+    "kind": "toggle",
+    "item": "c12_nexys_pwm_audio_top.sv:21 win_rdata[31]:1->0",
+    "justified_by": null
+   }
+  ]
+ },
+ "waivers": [],
+ "change": {
+  "baseline": null,
+  "added": [],
+  "removed": [],
+  "text_changed": [],
+  "evidence_changed": [],
+  "stale": []
+ },
+ "gates": {
+  "requirements_verified": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "artefacts_cite_requirements": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "coverage_holes_justified": {
+   "value": [
+    "toggle c12_nexys_pwm_audio_top.sv:10 AUD_PWM:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:10 AUD_PWM:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:11 AUD_SD:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[0]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[0]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[10]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[10]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[11]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[11]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[12]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[12]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[13]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[13]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[14]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[14]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[15]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[15]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[1]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[1]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[2]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[2]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[3]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[3]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[4]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[4]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[5]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[5]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[6]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[6]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[7]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[7]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[8]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[8]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[9]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:14 LED[9]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:19 win_addr[3]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:19 win_addr[3]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:19 win_addr[4]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:19 win_addr[4]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:19 win_addr[5]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:19 win_addr[5]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:19 win_addr[6]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:19 win_addr[6]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[16]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[16]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[17]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[17]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[18]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[18]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[19]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[19]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[20]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[20]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[21]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[21]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[22]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[22]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[23]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[23]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[24]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[24]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[25]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[25]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[26]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[26]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[27]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[27]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[28]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[28]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[29]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[29]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[30]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[30]:1->0",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[31]:0->1",
+    "toggle c12_nexys_pwm_audio_top.sv:21 win_rdata[31]:1->0"
+   ],
+   "threshold": [],
+   "pass": false,
+   "why": "75 coverage hole(s) neither closed nor justified: toggle c12_nexys_pwm_audio_top.sv:10 AUD_PWM:0->1, toggle c12_nexys_pwm_audio_top.sv:10 AUD_PWM:1->0, toggle c12_nexys_pwm_audio_top.sv:11 AUD_SD:1->0, toggle c12_nexys_pwm_audio_top.sv:14 LED[0]:0->1, toggle c12_nexys_pwm_audio_top.sv:14 LED[0]:1->0, toggle c12_nexys_pwm_audio_top.sv:14 LED[10]:0->1, toggle c12_nexys_pwm_audio_top.sv:14 LED[10]:1->0, toggle c12_nexys_pwm_audio_top.sv:14 LED[11]:0->1, toggle c12_nexys_pwm_audio_top.sv:14 LED[11]:1->0, toggle c12_nexys_pwm_audio_top.sv:14 LED[12]:0->1 (+65 more). Close each with a test, or justify it in verif/justifications.yaml (coverage: [{kind, item (a glob), reason, owner, date}])"
+  },
+  "waivers_complete": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "changed_requirements_reverified": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  }
+ },
+ "pass": false
+}

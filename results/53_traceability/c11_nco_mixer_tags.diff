@@ -1,0 +1,111 @@
+diff -ru '--exclude=build' '--exclude=__pycache__' '--exclude=sim_build' a/tests/c11_nco_mixer_bench.py c11_nco_mixer/tests/c11_nco_mixer_bench.py
+--- a/tests/c11_nco_mixer_bench.py	2026-11-11 23:59:25.613241433 +0000
++++ b/tests/c11_nco_mixer_bench.py	2026-11-11 23:59:32.136541712 +0000
+@@ -214,6 +214,7 @@
+ 
+ 
+ # ---------------------------------------------------------------- tests
++# req: REQ-11, REQ-06, REQ-07, REQ-12 (from testplan)
+ @cocotb.test()
+ async def test_smoke_id_and_regs(dut):
+     e = await Env.create(dut)
+@@ -253,6 +254,7 @@
+     assert await e.rd(4) == 0 and await e.rd(3) == 0 and await e.rd(0x20) == 0
+ 
+ 
++# req: REQ-11 (from testplan)
+ @cocotb.test()
+ async def test_shell_errors(dut):
+     e = await Env.create(dut)
+@@ -272,6 +274,7 @@
+     assert await e.sh_read(0x00) == DESIGN_ID
+ 
+ 
++# req: REQ-01, REQ-07, REQ-09 (from testplan)
+ @cocotb.test()
+ async def test_single_burst_directed(dut):
+     e = await Env.create(dut)
+@@ -289,6 +292,7 @@
+     await e.burst(mask=0x00A5_0F01, fw=0x0123, samples=[11, -22, 33, -44, 55, -66, 77, -88, 99, 0, 0, 0, 0, 0, 0, 0])
+ 
+ 
++# req: REQ-02, REQ-08 (from testplan)
+ @cocotb.test()
+ async def test_phase_continuity_and_hold(dut):
+     e = await Env.create(dut)
+@@ -306,6 +310,7 @@
+     await e.burst(mask=0xFF, fw=0x8001)
+ 
+ 
++# req: REQ-05 (from testplan)
+ @cocotb.test()
+ async def test_reset_clears(dut):
+     e = await Env.create(dut)
+@@ -324,6 +329,7 @@
+     await e.expect(0x20, "OUT0 after second reset")
+ 
+ 
++# req: REQ-01, REQ-08 (from testplan)
+ @cocotb.test()
+ async def test_tone_bursts(dut):
+     e = await Env.create(dut)
+@@ -333,6 +339,7 @@
+     await e.burst(mask=0xFFFF_0000, fw=0x0123, samples=[-1000] * 16)
+ 
+ 
++# req: REQ-04, REQ-02 (from testplan)
+ @cocotb.test()
+ async def test_full_scale(dut):
+     e = await Env.create(dut)
+@@ -343,6 +350,7 @@
+     await e.burst(mask=0xFFFF, samples=[-2048] * 16)
+ 
+ 
++# req: REQ-03, REQ-10 (from testplan)
+ @cocotb.test()
+ async def test_table_sweep(dut):
+     e = await Env.create(dut)
+@@ -355,6 +363,7 @@
+             await e.burst(samples=[x] * 16)
+ 
+ 
++# req: REQ-07, REQ-09, REQ-01 (from testplan)
+ @cocotb.test()
+ async def test_gap_patterns(dut):
+     e = await Env.create(dut)
+@@ -374,6 +383,7 @@
+     assert await e.rd(4) == 0x8000_0000
+ 
+ 
++# req: REQ-10, REQ-04 (from testplan)
+ @cocotb.test()
+ async def test_random_traffic(dut):
+     e = await Env.create(dut)
+@@ -383,6 +393,7 @@
+         await e.burst(mask=e.rand_mask(16), fw=fw, samples=samples)
+ 
+ 
++# req: REQ-10 (from testplan)
+ @cocotb.test()
+ async def test_random_dense_many_fw(dut):
+     e = await Env.create(dut)
+@@ -394,6 +405,7 @@
+     await e.burst(mask=e.rand_mask(32), fw=e.rng.randint(0, 0xFFFF))
+ 
+ 
++# structural: exports the functional-coverage database for the gates; checks nothing (brief 53 migration, by hand)
+ @cocotb.test()
+ async def test_zz_export_coverage(dut):
+     e = await Env.create(dut)
+diff -ru '--exclude=build' '--exclude=__pycache__' '--exclude=sim_build' a/verif/checkers/c11_nco_mixer_checker.sv c11_nco_mixer/verif/checkers/c11_nco_mixer_checker.sv
+--- a/verif/checkers/c11_nco_mixer_checker.sv	2026-11-11 23:59:25.613436124 +0000
++++ b/verif/checkers/c11_nco_mixer_checker.sv	2026-11-11 23:59:25.852785467 +0000
+@@ -14,6 +14,8 @@
+     if (rst) seen_rst <= 1'b1;
+   end
+ 
++  // req: REQ-01 (from testplan)
+   `V_COVER(C_rx_line_busy, !txd_in)
++  // req: REQ-01 (from testplan)
+   `V_COVER(C_tx_line_busy, !rxd_out)
+ endmodule
