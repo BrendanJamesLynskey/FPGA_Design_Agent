@@ -78,6 +78,13 @@ but normalises paths, because the cache's own key contains absolute paths. In th
 appended to `inputs.tcl` (`set build_id ...`) before the cache decides, so the cache key covers the build ID: a build
 whose identity changed is never served from the cache.
 
+**Incremental builds and the cache.** With `FDA_INCREMENTAL=1` the build ID includes the SHA-256 of the previous
+build's routed checkpoint, the reference the new build is placed and routed against. Every build therefore has a
+different identity from the one before it, so an incremental build is never a cache hit and never resumes from a cached
+checkpoint: it always runs, against the previous result. If the cache does resume anyway (the debug variant can start
+from the base build's synthesised checkpoint), the manifest records "reference hashed, not used" and `RELEASE.md` does
+not call the build incremental. Sign-off builds should be fresh (`FDA_INCREMENTAL` unset).
+
 ## The build ID in the bitstream
 
 - `flow/build.tcl` sets `BITSTREAM.CONFIG.USR_ACCESS 0x<build ID>` just before `write_bitstream`. The value is one

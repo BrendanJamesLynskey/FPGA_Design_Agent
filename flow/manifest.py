@@ -350,7 +350,13 @@ def finalise(out: Path) -> dict[str, Any]:
     # the reference the build actually used must be the one the build ID hashed
     hashed = (m.get("settings") or {}).get("incremental_ref_sha256")
     used_sha = (cache.get("incremental_ref") or {}).get("sha256")
-    m["incremental"] = {"hashed": hashed, "used": used_sha, "consistent": hashed == used_sha}
+    if hashed and not used_sha:
+        status = "reference hashed, not used"       # the cache resumed from a checkpoint instead (decided before it)
+    elif used_sha:
+        status = "used" if hashed == used_sha else "used a reference that was not hashed"
+    else:
+        status = "not incremental"
+    m["incremental"] = {"hashed": hashed, "used": used_sha, "consistent": hashed == used_sha, "status": status}
     m["finalised"] = _dt.datetime.now().astimezone().isoformat(timespec="seconds")
     mf.write_text(json.dumps(m, indent=1) + "\n")
     return m

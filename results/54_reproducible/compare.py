@@ -9,7 +9,7 @@ hashes (flow/result_hash.py), the routed timing summary and utilisation reports 
 listed, by their label, before anything is masked), and the gate numbers. Writes ``results.json`` and ``results.md``
 and copies each build's small records (no bitstreams, no reports) to ``raw/<label>/``. Every written file has the
 machine's details replaced: each ``--alias NAME=PATH`` (a tree or scratch folder) by ``$NAME``, the home directory by
-``$HOME`` and the host name by ``<host>``.
+``$HOME`` and the host name on report header lines by ``<host>``.
 """
 
 from __future__ import annotations
@@ -18,7 +18,6 @@ import argparse
 import json
 import re
 import shutil
-import socket
 import sys
 from pathlib import Path
 
@@ -178,12 +177,12 @@ def md(results: list[dict]) -> str:
 def scrubber(aliases: list[str]):
     pairs = sorted((tuple(x.split("=", 1)[::-1]) for x in aliases), key=lambda t: -len(t[0]))
     pairs += [(str(Path.home()), "HOME")]
-    host = socket.gethostname()
+    host_line = re.compile(r"^(\|\s*Host\s*:\s*)\S+", re.M)
 
     def scrub(text: str) -> str:
         for path, name in pairs:
             text = text.replace(path, f"${name}")
-        return text.replace(host, "<host>") if host else text
+        return host_line.sub(lambda m: m.group(1) + "<host>", text)
     return scrub
 
 

@@ -407,12 +407,34 @@ def test_check_compares_the_full_hash_and_the_crc(tmp_path: Path) -> None:
 
 
 def test_bundle_text_is_scrubbed_of_machine_details(tmp_path: Path) -> None:
-    import socket
     design = _fake_build(tmp_path / "src")
     rpt = design / "build" / "base" / "timing_summary.rpt"
-    rpt.write_text(f"| Host : {socket.gethostname()}\n| Command : report -file {design}/build/base/x.rpt\n"
-                   f"| home {Path.home()}/x\n")
+    rpt.write_text(f"| Host         : timing running 64-bit Ubuntu\n| Command : report -file {design}/build/base/x.rpt\n"
+                   f"| home {Path.home()}/x\nSetup timing is met\n")
     out = release.make(design, "base", tmp_path / "bundle")
     text = (out / "reports" / "timing_summary.rpt").read_text()
-    assert "<host>" in text and "$BUILD/x.rpt" in text and str(Path.home()) not in text
+    assert "| Host         : <host> running 64-bit Ubuntu" in text and "$BUILD/x.rpt" in text
+    assert str(Path.home()) not in text
+    assert "Setup timing is met" in text           # a host name that is a common word is replaced only on the Host line
     assert release.check(out)["pass"]
+
+
+def test_a_reference_hashed_but_not_used_is_reported_and_not_called_incremental(tmp_path: Path) -> None:
+    out = _prepared(tmp_path)
+    prev = out.parent / "base.prev"
+    prev.mkdir()
+    (prev / "post_route.dcp").write_bytes(b"reference")
+    m = manifest.compute(out, "/opt/Xilinx/2026.1/Vivado/bin/vivado", 2, env={"FDA_INCREMENTAL": "1"})
+    assert m["settings"]["incremental_ref_sha256"]
+    (out / "manifest.json").write_text(json.dumps(m))
+    # the cache resumed from a checkpoint (decided before the incremental branch): no reference used
+    (out / "cache.json").write_text(json.dumps({"action": "resume_synth", "resume_dir": str(prev)}))
+    fin = manifest.finalise(out)
+    assert fin["incremental"]["status"] == "reference hashed, not used"
+    md = release.release_md(fin, {"pass": True}, [])
+    assert "Incremental build" not in md and "hashed, not used" in md
+    # used: called incremental
+    (out / "manifest.json").write_text(json.dumps(m))
+    (out / "cache.json").write_text(json.dumps({"action": "fresh", "incremental_ref": str(prev / "post_route.dcp")}))
+    fin = manifest.finalise(out)
+    assert fin["incremental"]["status"] == "used" and "Incremental build" in release.release_md(fin, {"pass": True}, [])

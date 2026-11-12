@@ -20,7 +20,7 @@ A *bundle* is one folder holding a bitstream and the evidence for it, with a che
 It refuses a build whose gates failed, whose manifest is inconsistent or whose bitstream does not carry its build ID,
 one whose tree state is unknown, and (unless ``--allow-dirty``) one built from a tree with uncommitted changes. Text files
 are copied with the machine's details replaced: the repository root by ``$ROOT``, the build directory by ``$BUILD``, the
-home directory by ``$HOME`` and the host name by ``<host>``. The default output is
+home directory by ``$HOME`` and the host name on report header lines (``| Host :``) by ``<host>``. The default output is
 ``build/release/<design>_<variant>_<build ID>/``. An existing ``--out`` directory is replaced only if it is a previous
 bundle (it holds ``SHA256SUMS`` and ``RELEASE.md``) and ``--force`` is given; the checkout, any of its parents and the
 build directory are never used as ``--out``.
@@ -43,8 +43,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
-import socket
 import sys
 from pathlib import Path
 from typing import Any
@@ -90,16 +90,17 @@ def _summary(gates: dict) -> dict[str, Any]:
             "power_w": pw.get("total_w"), "tj_c": env.get("junction_c")}
 
 
+_HOST_LINE = re.compile(r"^(\|\s*Host\s*:\s*)\S+", re.M)
+
+
 def _scrub(text: str, root: Path, bdir: Path) -> str:
     """The machine's details out of a text file: build directory, repository root, home directory, host name."""
     for real, alias in ((str(bdir.resolve()), "$BUILD"), (str(bdir), "$BUILD"), (str(root.resolve()), "$ROOT"),
                         (str(root), "$ROOT"), (str(Path.home()), "$HOME")):
         if real and real != "/":
             text = text.replace(real, alias)
-    host = socket.gethostname()
-    if host:
-        text = text.replace(host, "<host>")
-    return text
+    # the host name only where a report header names it ("| Host : <name> running ..."), never elsewhere in the text
+    return _HOST_LINE.sub(lambda m: m.group(1) + "<host>", text)
 
 
 def _repo_root(start: Path) -> Path:
@@ -151,8 +152,11 @@ def release_md(m: dict, gates: dict, files: list[str]) -> str:
         f"- Power: {s['power_w']} W on chip, junction {s['tj_c']} C (estimated by report_power at the board's assumed "
         "ambient and airflow).",
         *([f"- **Incremental build**: placed and routed against a reference checkpoint (SHA-256 "
-           f"`{m['settings']['incremental_ref_sha256']}`), not from scratch."]
-          if (m.get("settings") or {}).get("incremental_ref_sha256") else []),
+           f"`{(m.get('incremental') or {}).get('used')}`), not from scratch."]
+          if (m.get("incremental") or {}).get("status") == "used" else []),
+        *([f"- Incremental reference hashed, not used: the build ID covers a reference checkpoint (SHA-256 "
+           f"`{m['settings']['incremental_ref_sha256']}`), but the build resumed from a cached checkpoint instead."]
+          if (m.get("incremental") or {}).get("status") == "reference hashed, not used" else []),
         "",
         "## Files", "",
         *[f"- `{f}`" for f in files],

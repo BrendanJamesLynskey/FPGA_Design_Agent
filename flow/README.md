@@ -55,7 +55,9 @@ Python code only.
   The ILA variant starts from the base build's `post_synth.dcp` when the synthesis inputs match. `FDA_BUILD_CACHE=0`
   turns it off. The resumed builds gave the same placement, routing and WNS as fresh builds (results/33_vivado_speed).
 - `FDA_INCREMENTAL=1` (off by default) runs `read_checkpoint -incremental` against the previous build's
-  `post_route.dcp` when the inputs changed; the gates' reference builds never use it.
+  `post_route.dcp` when the inputs changed; the gates' reference builds never use it. The build ID includes the hash of
+  that reference checkpoint, so with `FDA_INCREMENTAL=1` no build is a cache hit or resumes: each one differs from the
+  one before ([docs/reproducibility.md](../docs/reproducibility.md)).
 - `FDA_RESULT_HASH=1` writes `result_dump.txt` (`result_hash.tcl`) and the placement and routing hashes
   (`result_hash.py`) into run.json, for checking that two builds gave the same result.
 - Records in `run.json`: the wall time; the thread count; the cache decision; the scope unit; the largest Vivado
