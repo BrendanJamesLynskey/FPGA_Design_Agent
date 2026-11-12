@@ -8,7 +8,8 @@ Terms used here: *hidden tests* are tests written by a separate author against a
 which decide whether an agent run passed; the *V3 floor* is the minimum coverage the verification stage V3 accepts
 ([docs/verification.md](../../docs/verification.md)); a *spec-interpretation escape* is a run whose own checks pass
 while the hidden tests fail because the agent read the spec differently; *dev-set* tasks are the ones used for
-development, not for scoring.
+development, not for scoring. In the lint column, rule IDs come from Vivado's design-rule check (DRC: electrical and
+placement rules), methodology report and clock-domain-crossing report (CDC: signals passing between unrelated clocks).
 
 **What was and was not exercised.** The agent-side pieces (the clarify-stage quality check, the tagging prompt and
 self-check, the matrix in the review index, the fixed baseline) are covered by unit tests
@@ -32,18 +33,19 @@ them.
 Files per design: `<design>_trace.json` (the matrix, schema `fpga-design-agent/trace/v1`), `<design>_trace.md` (the
 table), `<design>_trace.txt` (the gate output), `<design>_lint.json` and `_lint.txt` (FDA-HDL v1.0).
 
-Evidence each matrix read (all made in this brief):
+Evidence each matrix read (all made in this work):
 
 - **Simulation:** Verilator 5.048 with the bound checkers and coverage, seeds 1-3; Icarus 12 as the cross-check
   (`--also`). T1 through `designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py`; c11 and c12 through their own
   `tests/test_*_rtl.py`. All seeds pass on both simulators for all three.
 - **Formal:** T1's two SymbiYosys jobs (`debounce`, `scan`), `bmc` and `cover` all PASS. c11 and c12 re-planned their
-  formal methods to simulation in the agent run (SymbiYosys was not installed there); the matrix shows those rows as
+  formal methods to simulation in the agent run (a *re-plan* is the testplan's recorded switch from a formal proof to
+  a named simulation test, with a reason) (SymbiYosys was not installed there); the matrix shows those rows as
   `replan formal->simulation`, judged by the replacement test, as `flow/verif_gates.py` does.
-- **Analysis:** a fresh Vivado 2026.1 base build of each (`flow/run_vivado.sh`, one heavy slot): T1 passes every gate;
+- **Analysis:** a fresh Vivado 2026.1 base build of each (`flow/run_vivado.sh`): T1 passes every gate;
   c12 passes every gate; c11 passes the gates its requirements name (`post_route:setup`,
   `post_synth:post_synth_resources_in_range`) but fails the I/O-constraint gates (`post_synth_io_constraints_clean`,
-  `io_timing_clean`) added by brief 20 part B after its run. No requirement of c11 names those gates, so the matrix does
+  `io_timing_clean`) added to the flow after that run. No requirement of c11 names those gates, so the matrix does
   not show the failure: a gap in that agent's requirements, not in the build record.
 - **Hardware:** T1 only, from the committed F0B bring-up (`results/f0b/t1_dimmer_counter_bringup.json`). That bitstream
   predates this work; the RTL has changed since only by comment lines, which this record cannot prove on its own (a
@@ -57,7 +59,8 @@ What the matrices say:
 - **T1:** complete. All 113 holes (111 toggle points and two cover properties) are justified in
   `designs/t1_dimmer_counter/verif/justifications.yaml`, in four classes: read bits constant by the register map, the
   blank digits 4 and 5, the prescaler's constant top bit, and one open gap (bits 7:4 of the 8-bit press counters: no
-  seed presses a button 16 times), justified by similarity and labelled as an open gap.
+  seed presses a button 16 times), justified by similarity (the low bits of the same
+  incrementer toggle, so the high bits are assumed to work, which is weaker than a test) and labelled as an open gap.
 - **c11:** complete apart from the board. Its hidden tests passed in that run (4 of 4, `results/course/c11_nco_mixer/run_2.json`).
 - **c12:** every requirement has passing evidence, yet 75 toggle holes in the top module have no justification: all 16
   `LED` bits, the read-data and address bits of the register window at the top, and both directions of `AUD_PWM` and
@@ -65,7 +68,8 @@ What the matrices say:
   them. Its hidden tests failed in that run (1 of 2, a spec-interpretation escape, `results/course/c12_nexys_pwm_audio/run_2.json`):
   a complete matrix does not show that the spec was read wrongly, because the tests and the RTL share the reading.
 - **Design-element column:** T1's modules carry `// req:` tags; the agent designs do not, so their column shows only the
-  modules their tagged checkers are bound into.
+  modules their tagged checkers are attached to by SystemVerilog `bind` (which inserts a checker into a module without
+  editing it).
 
 ## Migrating the agent designs
 
@@ -95,7 +99,7 @@ In each case every simulation still passes: only the matrix gate catches the cha
 ## Reproduce
 
 ```bash
-SIM=verilator T1_SEEDS=1,2,3 pytest designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py    # Verilator 5.036+ (heavy slot)
+SIM=verilator T1_SEEDS=1,2,3 pytest designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py    # Verilator 5.036+; the build needs a lot of memory
 SIM=icarus    T1_SEEDS=1,2,3 pytest designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
 flow/formal.sh designs/t1_dimmer_counter
 flow/run_vivado.sh designs/t1_dimmer_counter base                                              # Vivado 2026.1

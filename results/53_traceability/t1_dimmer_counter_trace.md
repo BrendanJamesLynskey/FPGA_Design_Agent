@@ -1,8 +1,8 @@
 # Traceability matrix: t1_dimmer_counter
 
-Generated 2026-11-12T04:19:22Z by `flow/traceability.py` (fpga-design-agent/trace/v1). DO-254-style evidence: a record of what was verified and how; not a claim of compliance with any standard.
+Generated 2026-11-12T05:42:32Z by `flow/traceability.py` (fpga-design-agent/trace/v1). DO-254-style evidence: a record of what was verified and how; not a claim of compliance with any standard.
 
-Inputs: computed record; flow commit `5aa14219b8c6` (dirty tree); knowledge-bank pin `811b840`; 36 input files hashed.
+Inputs: computed record; flow commit `af6dea2494b5` (dirty tree); knowledge-bank pin `811b840`; 36 input files hashed.
 
 | Requirement | Design elements | Method | Verification (how linked) | Result | Supporting properties |
 |---|---|---|---|---|---|
@@ -52,6 +52,7 @@ Coverage: line 36/36 (100.0 %); branch 28/28 (100.0 %); toggle 759/870 (87.24 %)
 | justifications.coverage | re:C_SC_DIGIT_[45]_LIT | complete |
 | justifications.reconfirmed | REQ-08 | complete |
 | justifications.reconfirmed | REQ-11 | complete |
+| justifications.reconfirmed | REQ-07 | complete |
 | lint/waivers.yaml | HDL-XDC-01 | complete |
 
 | Gate | Result | Detail |

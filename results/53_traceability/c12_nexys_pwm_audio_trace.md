@@ -1,8 +1,8 @@
 # Traceability matrix: c12_nexys_pwm_audio
 
-Generated 2026-11-12T04:19:25Z by `flow/traceability.py` (fpga-design-agent/trace/v1). DO-254-style evidence: a record of what was verified and how; not a claim of compliance with any standard.
+Generated 2026-11-12T05:42:35Z by `flow/traceability.py` (fpga-design-agent/trace/v1). DO-254-style evidence: a record of what was verified and how; not a claim of compliance with any standard.
 
-Inputs: computed record; flow commit `5aa14219b8c6` (dirty tree); knowledge-bank pin `811b840`; 19 input files hashed.
+Inputs: computed record; flow commit `af6dea2494b5` (dirty tree); knowledge-bank pin `811b840`; 19 input files hashed.
 
 | Requirement | Design elements | Method | Verification (how linked) | Result | Supporting properties |
 |---|---|---|---|---|---|

@@ -418,12 +418,12 @@ def sby_tasks(path: Path) -> list[str]:
 
 
 def formal_result(job: str, fr: dict[str, str], tasks_of: list[str] | None = None) -> dict[str, Any]:
-    names = tasks_of or ["bmc", "cover"]                 # exact names: jobs `scan` and `scan_ext` never share results
-    tasks = {t: fr[f"{job}_{t}"] for t in names if f"{job}_{t}" in fr}
+    """Every task the .sby lists must have run and passed: a missing cover task is a fail (the cover task is what shows
+    the proof is not vacuous). Exact names, so jobs `scan` and `scan_ext` never share results."""
+    names = tasks_of or ["bmc", "cover"]
     if not fr:
         return {"result": "pending", "detail": "no formal results"}
-    if not tasks:
-        return {"result": "fail", "detail": "no task of this job ran"}
+    tasks = {t: fr.get(f"{job}_{t}", "did not run") for t in names}
     ok = all(v == "PASS" for v in tasks.values())
     return {"result": "pass" if ok else "fail", "detail": ", ".join(f"{k}={v}" for k, v in sorted(tasks.items()))}
 

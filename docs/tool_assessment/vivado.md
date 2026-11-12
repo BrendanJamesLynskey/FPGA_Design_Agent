@@ -23,7 +23,7 @@ bitstream's function matches the RTL is checked only through the board tests bel
 **Known limits.**
 - The behaviour of the netlist is not simulated in the flow (no post-synthesis or post-route simulation step);
   board tests are the functional check after implementation.
-- A run is deterministic only for fixed inputs, options and thread count; brief 54 measures what changes.
+- A run is deterministic only for fixed inputs, options and thread count; the reproducible-build work measures what changes.
 - Memory: it needs `general.maxThreads`, `synth.maxThreads` and `chipscope.maxJobs` limits on the build PC
   (`flow/build.tcl`).
 - Licence edition: the edition in use limits some debug and IP features; a feature outside it fails the build rather

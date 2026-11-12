@@ -1,6 +1,6 @@
 # HDL coding standard: FDA-HDL v1.0
 
-**FDA-HDL v1.0** (2026-11-11) is the coding standard for the agent's RTL and for anything a person adds.
+**FDA-HDL v1.0** (2026-11-12, the first released version) is the coding standard for the agent's RTL and for anything a person adds.
 
 Each rule has a short rationale and maps to tool checks:
 

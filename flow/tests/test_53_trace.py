@@ -384,3 +384,23 @@ def test_formal_tasks_are_matched_by_exact_name(mini):
         (mini / "build" / "formal" / f"mini_ext_{task}" / "status").write_text("FAIL 1\n")
     t = build(mini)
     assert next(a for a in t["artefacts"] if a["kind"] == "formal")["detail"] == "bmc=PASS, cover=PASS"
+
+
+def test_a_listed_formal_task_that_did_not_run_fails(mini):
+    """Re-review N3: the .sby lists bmc and cover; with no cover result the formal method fails."""
+    make_run(mini)
+    shutil.rmtree(mini / "build" / "formal" / "mini_cover")
+    t = build(mini)
+    assert next(a for a in t["artefacts"] if a["kind"] == "formal")["detail"] == "bmc=PASS, cover=did not run"
+    assert "REQ-01:formal=fail" in t["gates"]["requirements_verified"]["value"]
+
+
+def test_t1_formal_without_debounce_cover_fails_req_02(tmp_path):
+    formal = tmp_path / "formal"
+    for job, task in (("debounce", "bmc"), ("scan", "bmc"), ("scan", "cover")):    # debounce_cover deleted
+        (formal / f"{job}_{task}").mkdir(parents=True)
+        (formal / f"{job}_{task}" / "status").write_text("PASS 0\n")
+    t = tr.build(T1, HERE / "data" / "ref_t1_sim", formal=formal, hw=ROOT / "results" / "f0b" / "t1_dimmer_counter_bringup.json",
+                 defer=("analysis",))
+    v = t["gates"]["requirements_verified"]["value"]
+    assert "REQ-02:formal=fail" in v and "REQ-10:formal=fail" in v and not any(x.startswith("REQ-04") for x in v)

@@ -138,7 +138,7 @@ toggle rise fall answer remain keep send receive appear produce""".split())
 def _compound(text: str) -> str | None:
     """The join that makes ``text`` two requirements, or None. A ';', a second sentence (a trailing 'See ...' reference is
     allowed), 'as well as' and 'and also' always count; 'and'/'but' count when the clause after them has its own verb,
-    except at the end of a list ('R, G, and B are driven ...': the item before 'and' is a short list item)."""
+    except inside a condition (after when, while, if, unless or until in the same clause) and at the end of a list ('R, G, and B are driven ...': the item before 'and' is a short list item)."""
     if ";" in text:
         return ";"
     for m in re.finditer(r"(?<=[a-z0-9)%])\.\s+([A-Z]\w*)", text):
@@ -152,6 +152,10 @@ def _compound(text: str) -> str | None:
         if not _VERBS & {w.lower().strip(".()") for w in right.split()}:
             continue
         before = text[:m.start()]
+        cond = r"\b(when|while|if|unless|until|whenever)\b"
+        if not m.group(1) and re.search(cond, before.rsplit(",", 1)[-1], re.I) and not re.search(cond, right, re.I):
+            continue                                   # inside one condition: 'high when A is high and B is low'; but 'up
+                                                       # when UP ... and down when DOWN ...' (a second condition) still counts
         item = before.rsplit(",", 1)[-1] if "," in before else None
         if item is not None and len(item.split()) <= 3:
             continue                                   # the last item of a list: 'X, Y, and Z are ...'

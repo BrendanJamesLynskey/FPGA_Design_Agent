@@ -22,5 +22,5 @@ formal qualification of any tool was done, and nothing here is a claim of compli
 | Our gates and checkers | verification tools (they decide pass or fail) | [gates.md](gates.md) |
 
 The exact version of every tool that produced a piece of evidence is recorded with it: in `trace.json`
-(`inputs.tools`, from brief 54's manifest when it exists, else computed) and in each build's `gates.json`
+(`inputs.tools`, from the build manifest (`manifest.json`, when the reproducible-build work provides one), else computed) and in each build's `gates.json`
 (`vivado_version`).

@@ -48,7 +48,15 @@ def test_good_requirements_pass_the_quality_check():
         "The core may not assert valid while reset is high",
         "LED0 mirrors SW0",
         "The window follows the register map per spec v1.2. See section 3",
-        "The display lights exactly one digit at a time, in order, showing COUNT and the duty in hex")) == []
+        "The display lights exactly one digit at a time, in order, showing COUNT and the duty in hex",
+        # re-review N1: a conjunction inside a condition is one requirement
+        "The output is high when A is high and B is low",
+        "GRANT goes to requester 0 only while REQ[0] is set and LOCK is clear",
+        "COUNT increments when UP is pressed and DOWN is not pressed",
+        "A press counts only if the button is held for 10 ms and is then released",
+        "The FIFO stops accepting data until the reader has drained it and EMPTY is high")) == []
+    # a condition does not hide a second statement after it
+    assert requirement_quality_errors(_spec("TX is idle when EN is low, and the LED is lit"))
 
 
 def test_the_clarify_gate_applies_the_quality_check_and_validate_does_not():
