@@ -49,7 +49,7 @@ module kr260_top #(
     // dedicated route). The buffer delays the capture edge by about 2 ns, so the data are delayed to match: rgmii_rx's
     // IDELAYE3 (RX_IDELAY_PS, calibrated by the IDELAYCTRL below) moves the PHY's centre-aligned data window onto the
     // capture edge.
-    logic a_rxc_g, b_rxc_g, a_lk, b_lk;
+    logic a_rxc_g, b_rxc_g;
     BUFG u_bga (.I(a_rxc), .O(a_rxc_g));
     BUFG u_bgb (.I(b_rxc), .O(b_rxc_g));
     // IDELAYCTRL: 333.33 MHz reference from the core MMCM (VCO 1000 MHz / 3), held in reset until the MMCM locks; its
@@ -60,22 +60,27 @@ module kr260_top #(
         .src_arst(!locked), .dest_clk(ref333), .dest_arst(rst_ref));
     (* IODELAY_GROUP = "rgmii_rx" *) IDELAYCTRL #(.SIM_DEVICE("ULTRASCALE_PLUS")) u_idc (.REFCLK(ref333), .RST(rst_ref),
         .RDY(dly_rdy));
-    // each receive path stays in reset until the delay lines are calibrated (IDELAYCTRL ready)
-    assign a_lk = dly_rdy; assign b_lk = dly_rdy;
 `else
     // simulation: no MMCM; the core runs on the input clock and "lock" rises after 16 clocks, as it does on silicon
     logic [4:0] lk = 5'd0;
     always_ff @(posedge clk_25) if (!lk[4]) lk <= lk + 5'd1;
     assign clk = clk_25; assign clk90 = clk_25; assign locked = lk[4];
-    logic a_rxc_g, b_rxc_g, a_lk, b_lk;
-    assign a_rxc_g = a_rxc; assign b_rxc_g = b_rxc; assign a_lk = 1'b1; assign b_lk = 1'b1;    // no delay lines
+    logic a_rxc_g, b_rxc_g, dly_rdy;
+    assign a_rxc_g = a_rxc; assign b_rxc_g = b_rxc; assign dly_rdy = 1'b1;                     // no delay lines
 `endif
     xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0)) u_rst (
         .src_rst(!locked), .dest_clk(clk), .dest_rst(rst));
+    // each receive path stays in reset until the delay lines are calibrated: IDELAYCTRL's RDY (asynchronous) is
+    // synchronised into the core clock, combined with the core reset in a flip-flop, and that registered reset is
+    // what each receive clock's reset synchroniser takes (no logic in front of a synchroniser)
+    logic rdy_c, rx_rst_q;
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_rdy (
+        .src_clk(1'b0), .src_in(dly_rdy), .dest_clk(clk), .dest_out(rdy_c));
+    always_ff @(posedge clk) rx_rst_q <= rst || !rdy_c;
     xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0)) u_rsta (
-        .src_rst(rst || !a_lk), .dest_clk(a_rxc_g), .dest_rst(rst_a));
+        .src_rst(rx_rst_q), .dest_clk(a_rxc_g), .dest_rst(rst_a));
     xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0)) u_rstb (
-        .src_rst(rst || !b_lk), .dest_clk(b_rxc_g), .dest_rst(rst_b));
+        .src_rst(rx_rst_q), .dest_clk(b_rxc_g), .dest_rst(rst_b));
 
     logic [21:0] prst;
     logic        phy_force;

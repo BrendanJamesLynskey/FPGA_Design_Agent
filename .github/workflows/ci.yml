@@ -208,11 +208,11 @@ jobs:
           sudo apt-get install -y iverilog
           pip install pyyaml pytest cocotb==2.0.1 jsonschema
       - name: Model, rule validator, recorded natural-language rules (no simulator)
-        run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_model.py
+        run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_model.py designs/b58a_trigger/tests/test_b58a_records.py
       - name: trigger_core against the model; assemble-then-send comparison; kr260_top RGMII loop
         run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_rtl.py
       - name: Review regression tests (bad-frame undo, slot drain, soft reset in flight, frame-counter wrap)
-        run: python -m pytest -q designs/b58a_trigger/tests/test_rev_adv_rtl.py designs/b58a_trigger/tests/test_rev2_rtl.py
+        run: python -m pytest -q designs/b58a_trigger/tests/test_rev_adv_rtl.py designs/b58a_trigger/tests/test_rev2_rtl.py designs/b58a_trigger/tests/test_rev3_rtl.py
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4

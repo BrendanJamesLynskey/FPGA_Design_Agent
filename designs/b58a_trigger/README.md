@@ -124,7 +124,9 @@ measurement.
 ## Build (Vivado 2026.1, xck26-sfvc784-2LV-c)
 
 Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): 7,231 LUTs (6.2 %), 10,313 flip-flops
-(4.4 %), 6.5 block RAM tiles, 0.50 W estimated on chip. **Timing is not met, on the transmit pins only.**
+(4.4 %), 6.5 block RAM tiles, 0.50 W estimated on chip. **Timing is not met, on the transmit pins only.** Gates this build fails (`summary.json`, generated from
+`gates.json`): `post_synth_cdc_no_critical`, `setup`, `hold`, `cdc_no_critical`. The two CDC gates are a reset
+synchroniser fed through logic (fixed in the RTL since; the next recorded build re-checks them).
 
 | RGMII worst slack (ns) | Port A setup | Port A hold | Port B setup | Port B hold |
 |---|---|---|---|---|
@@ -142,7 +144,8 @@ waived.
 
 - No board run; the JTAG register script has not run on a board; no KR260 programming path in the flow yet.
 - RGMII transmit timing is not met (up to 0.2 ns, see Build); it must close before a board run.
-- One order slot: at most one order request per received frame, none while the slot is busy.
+- One order slot: at most one order request per received frame, none while the slot is busy. A soft reset (PULSE
+  bit 7) forgets which frame last made a request, so that frame may make one more; it never removes an undo.
 - A bad frame's book updates are not rolled back: a bad frame becomes a sequence gap at the next packet, and with
   halt-on-gap set trading stops until the host clears it.
 - Rule hold-off counters restart when a rule table is committed; interlock limits are separate registers, not part of

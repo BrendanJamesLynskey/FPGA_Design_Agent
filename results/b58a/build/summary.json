@@ -44,13 +44,29 @@
   "build_id": "e121aa10"
  },
  "timing_post_route": {
-  "source": "timing_summary.rpt, Design Timing Summary",
+  "source": "gates.json timing (timing_summary.rpt)",
   "wns_ns": -0.198,
   "tns_ns": -1.397,
+  "tns_failing_endpoints": 10,
   "whs_ns": -0.184,
   "ths_ns": -1.501,
-  "all_constraints_met": false,
-  "failing_endpoints": "only the RGMII transmit ports (clk0_u to a_txc and b_txc, 10 per port)"
+  "ths_failing_endpoints": 10,
+  "all_constraints_met": false
+ },
+ "rgmii_io_slack_ns": {
+  "source": "io_paths_route.txt, worst per port, direction and check",
+  "a_rx_hold": 0.134,
+  "a_rx_setup": 0.668,
+  "a_tx_hold": -0.167,
+  "a_tx_setup": -0.198,
+  "b_rx_hold": 0.679,
+  "b_rx_setup": 0.42,
+  "b_tx_hold": -0.184,
+  "b_tx_setup": -0.163
+ },
+ "rgmii_constraints": {
+  "rx": "centre-aligned, PHY RX delay on; -max 2.8, -min 1.2 on both edges; IDELAYE3 1000 ps on each data input",
+  "tx": "edge-aligned forwarded TXC, PHY TX delay on; RGMII v2.0 skew 0.5 ns: -max 3.5, -min +0.5 on both edges"
  },
  "utilisation": {
   "CLB LUTs": {
@@ -69,9 +85,9 @@
    "pct": 4.51
   },
   "BUFGCE": {
-   "used": 7.0,
+   "used": 8.0,
    "available": 112.0,
-   "pct": 6.25
+   "pct": 7.14
   },
   "MMCM": {
    "used": 1.0,
@@ -84,24 +100,12 @@
   "junction_c": 43.7,
   "environment": "still air, no heat sink, 40 C ambient: the pessimistic bound (boards/kr260/board.yaml)"
  },
+ "first_failed_stage": "post_synth",
  "gates_failed": [
+  "post_synth_cdc_no_critical",
   "setup",
-  "hold"
+  "hold",
+  "cdc_no_critical"
  ],
- "note": "Receive meets setup and hold on both ports. Transmit fails setup and hold by up to 0.2 ns on both ports: the sum of setup and hold slack is about -0.36 ns, so no delay setting can close it under the 0.5 ns skew window; Vivado's corner spread between the TXC and data output paths is larger than the window. Not waived. No exceptions, no TIMING-47; DRC clean; bitstream written.",
- "rgmii_io_slack_ns": {
-  "source": "io_paths_route.txt, worst per port, direction and check",
-  "a_rx_hold": 0.134,
-  "a_rx_setup": 0.668,
-  "a_tx_hold": -0.167,
-  "a_tx_setup": -0.198,
-  "b_rx_hold": 0.679,
-  "b_rx_setup": 0.42,
-  "b_tx_hold": -0.184,
-  "b_tx_setup": -0.163
- },
- "rgmii_constraints": {
-  "rx": "centre-aligned, PHY RX delay on; -max 2.8, -min 1.2 on both edges; IDELAYE3 1000 ps on each data input",
-  "tx": "edge-aligned forwarded TXC, PHY TX delay on; RGMII v2.0 skew 0.5 ns: -max 3.5, -min +0.5 on both edges"
- }
+ "note": "4 gate(s) fail: post_synth_cdc_no_critical, setup, hold, cdc_no_critical. Setup and hold fail on the RGMII transmit pins only (edge-aligned TXC, RGMII v2.0 skew 0.5 ns); reported, not waived. A CDC gate fails: see cdc.rpt."
 }
