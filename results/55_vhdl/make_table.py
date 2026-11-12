@@ -43,23 +43,21 @@ def cell(v: dict | None) -> str:
 
 
 def main() -> None:
-    print("| Drill | Area | Arm A (no skills) | Arm B (notes + skills) | Vivado 2026.1, SystemVerilog reference | Vivado 2026.1, VHDL (arm B) |")
+    print("| Drill | Area | Arm A (no skills) | Arm B (notes + skills) | Vivado 2026.1, SystemVerilog reference | Vivado 2026.1, VHDL (board drills: arm B; blocks: arm A, c8 arm B) |")
     print("|---|---|---|---|---|---|")
     for t in BOARD:
         print(f"| `{t}` | {AREA[t]} | {bench('A', t)} | {bench('B', t)} | {cell(viv(t, 'sv'))} | {cell(viv(t, 'vhdl'))} |")
-    blocks = {r["drill"]: r for tag in ("A", "B") for r in (load(HERE / "scores" / f"{tag}_blocks.json") or [])
-              if not (tag == "A" and r["drill"] == "cdcfx_c8" and False)}
     a = {r["drill"]: r for r in (load(HERE / "scores" / "A_blocks.json") or [])}
     b = {r["drill"]: r for r in (load(HERE / "scores" / "B_blocks.json") or [])}
     bs = load(HERE / "blocks.json") or {}
     for d, area in (("cdcfx_c10", "CDC (async FIFO)"), ("cdcfx_c8", "CDC (handshake)"), ("axil_regs", "AXI4-Lite slave")):
         ra = "PASS" if a.get(d, {}).get("pass") else ("FAIL" if d in a else "not run")
         rb = "PASS" if b.get(d, {}).get("pass") else ("FAIL" if d in b else "not run")
-        sv, vh = bs.get(f"{d}__sv") or bs.get(f"{d}__v"), bs.get(f"{d}__vhdl") or bs.get(f"{d}__vhdl_fix")
+        sv = bs.get(f"{d}__sv") or bs.get(f"{d}__v")
+        vh = bs.get(f"{d}__vhdl") or bs.get(f"{d}__vhdl_B")
         f = lambda x: "not built" if not x else f"{x.get('lut')} LUT / {x.get('ff')} FF; WNS {x.get('wns_ns')}" + (
             f"; CDC gate {x['cdc_gate']}" if x.get("cdc_gate") else "")
         print(f"| `{d}` | {area} | {ra} | {rb} | {f(sv)} | {f(vh)} |")
-    del blocks
 
 
 if __name__ == "__main__":

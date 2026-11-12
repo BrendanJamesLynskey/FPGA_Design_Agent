@@ -1,0 +1,89 @@
+{
+  "design": "t1_sync_fifo_regs",
+  "mode": "generic",
+  "mutant_source": "generated",
+  "rng_seed": 55,
+  "baseline_seconds": 90.6,
+  "sim": "icarus",
+  "sim_note": null,
+  "sandbox": "host",
+  "caps": {
+    "max_mutants": 5,
+    "sample": 5,
+    "wall_s": 1500,
+    "wall_auto": true,
+    "mutant_timeout_s": 362,
+    "min_evaluated": 10
+  },
+  "candidates": 67,
+  "sampled": 5,
+  "evaluated": 5,
+  "killed": 4,
+  "survived": 1,
+  "timed_out": 0,
+  "skipped": 0,
+  "invalid": 0,
+  "score_pct": 80.0,
+  "survivors": [
+    "sync_fifo_regs_L65_bit1_to_0_24"
+  ],
+  "survivor_text": [
+    "rtl/sync_fifo_regs.vhd line 65: `if push_i = '1' and full_i = '0' then` became `if push_i = '0' and full_i = '0' then` (constant '1' replaced by '0')"
+  ],
+  "timed_out_text": [],
+  "skipped_text": [],
+  "note": "score = killed / (killed + survived + timed_out); invalid and skipped mutants are excluded and listed; an equivalent mutant (no visible behaviour change) shows as a survivor",
+  "wall_seconds": 232.5,
+  "rows": [
+    {
+      "name": "sync_fifo_regs_L56_eq_to_ne_49",
+      "file": "sync_fifo_regs.vhd",
+      "line": 56,
+      "class": "eq_to_ne",
+      "why": "'=' replaced by '/='",
+      "change": "rtl/sync_fifo_regs.vhd line 56: `push_i <= '1' when win_wr = '1' and win_addr = R_PUSH else '0';` became `push_i <= '1' when win_wr = '1' and win_addr /= R_PUSH else '0';` ('=' replaced by '/=')",
+      "status": "killed",
+      "seconds": 13.9
+    },
+    {
+      "name": "sync_fifo_regs_L56_and_to_or_36",
+      "file": "sync_fifo_regs.vhd",
+      "line": 56,
+      "class": "and_to_or",
+      "why": "'and' replaced by 'or'",
+      "change": "rtl/sync_fifo_regs.vhd line 56: `push_i <= '1' when win_wr = '1' and win_addr = R_PUSH else '0';` became `push_i <= '1' when win_wr = '1' or win_addr = R_PUSH else '0';` ('and' replaced by 'or')",
+      "status": "killed",
+      "seconds": 9.5
+    },
+    {
+      "name": "sync_fifo_regs_L57_bit1_to_0_14",
+      "file": "sync_fifo_regs.vhd",
+      "line": 57,
+      "class": "bit1_to_0",
+      "why": "constant '1' replaced by '0'",
+      "change": "rtl/sync_fifo_regs.vhd line 57: `pop_i  <= '1' when win_rd = '1' and win_addr = R_POP else '0';` became `pop_i  <= '0' when win_rd = '1' and win_addr = R_POP else '0';` (constant '1' replaced by '0')",
+      "status": "killed",
+      "seconds": 32.5
+    },
+    {
+      "name": "sync_fifo_regs_L65_bit1_to_0_24",
+      "file": "sync_fifo_regs.vhd",
+      "line": 65,
+      "class": "bit1_to_0",
+      "why": "constant '1' replaced by '0'",
+      "change": "rtl/sync_fifo_regs.vhd line 65: `if push_i = '1' and full_i = '0' then` became `if push_i = '0' and full_i = '0' then` (constant '1' replaced by '0')",
+      "status": "survived",
+      "seconds": 75.3
+    },
+    {
+      "name": "sync_fifo_regs_L91_bit1_to_0_27",
+      "file": "sync_fifo_regs.vhd",
+      "line": 91,
+      "class": "bit1_to_0",
+      "why": "constant '1' replaced by '0'",
+      "change": "rtl/sync_fifo_regs.vhd line 91: `if pop_i = '1' then` became `if pop_i = '0' then` (constant '1' replaced by '0')",
+      "status": "killed",
+      "seconds": 10.5
+    }
+  ]
+}

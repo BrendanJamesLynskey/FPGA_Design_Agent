@@ -341,6 +341,12 @@ class Check:
             self.vhdl_error = str(e)[:300]
             return []
         text = re.sub(r"^\s*initial\s*\n\s*[^;]*;\n", "", net.read_text(), flags=re.M)
+        # a VHDL signal with an initial value comes out as `reg x; always @* x = y; // (isignal)`: a plain alias, so it is
+        # written as `wire x; assign x = y;`, which the clock and reset rules follow (a clock alias is not a derived clock)
+        alias = re.findall(r"^\s*always @\*\s*\n\s*(\w+) = ([^;]+); // \(isignal\)", text, flags=re.M)
+        text = re.sub(r"^(\s*)always @\*\s*\n\s*(\w+) = ([^;]+); // \(isignal\)", r"\1assign \2 = \3;", text, flags=re.M)
+        for name, _ in alias:
+            text = re.sub(rf"^(\s*)reg((?:\s*\[[^\]]*\])?\s+{re.escape(name)};)", r"\1wire\2", text, flags=re.M)
         out = net.with_name(f"{top}_standards.v")
         out.write_text(text)
         self.notes["vhdl"] = f"VHDL design: the rules read the GHDL netlist {out.name}; line numbers are the netlist's"
