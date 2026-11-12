@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
-| Date         : Thu Nov 12 17:59:21 2026
+| Date         : Thu Nov 12 21:40:14 2026
 | Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
 | Command      : report_utilization -hierarchical -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b58a/designs/b58a_trigger/build/base/utilization_hier.rpt
 | Design       : kr260_top
@@ -22,23 +22,23 @@ Table of Contents
 +--------------------------------------------+--------------------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
 |                  Instance                  |                Module                | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | URAM | DSP Blocks |
 +--------------------------------------------+--------------------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
-| kr260_top                                  |                                (top) |       7219 |       7055 |     164 |    0 | 10318 |      6 |      1 |    0 |          0 |
+| kr260_top                                  |                                (top) |       7225 |       7061 |     164 |    0 | 10318 |      6 |      1 |    0 |          0 |
 |   (kr260_top)                              |                                (top) |          7 |          7 |       0 |    0 |   184 |      0 |      0 |    0 |          0 |
-|   u_acdc                                   |                             gmii_cdc |        139 |        131 |       8 |    0 |   250 |      0 |      0 |    0 |          0 |
-|     u_fifo                                 |                    xpm_fifo_async__1 |         55 |         47 |       8 |    0 |    82 |      0 |      0 |    0 |          0 |
-|       gnuram_async_fifo.xpm_fifo_base_inst |                     xpm_fifo_base__1 |         55 |         47 |       8 |    0 |    82 |      0 |      0 |    0 |          0 |
+|   u_acdc                                   |                             gmii_cdc |        138 |        130 |       8 |    0 |   250 |      0 |      0 |    0 |          0 |
+|     u_fifo                                 |                    xpm_fifo_async__1 |         53 |         45 |       8 |    0 |    82 |      0 |      0 |    0 |          0 |
+|       gnuram_async_fifo.xpm_fifo_base_inst |                     xpm_fifo_base__1 |         53 |         45 |       8 |    0 |    82 |      0 |      0 |    0 |          0 |
 |     u_cnt                                  |      xpm_cdc_gray__parameterized1__1 |         53 |         53 |       0 |    0 |   128 |      0 |      0 |    0 |          0 |
 |   u_bcdc                                   |                           gmii_cdc_0 |        145 |        137 |       8 |    0 |   250 |      0 |      0 |    0 |          0 |
 |     u_fifo                                 |                       xpm_fifo_async |         54 |         46 |       8 |    0 |    82 |      0 |      0 |    0 |          0 |
 |       gnuram_async_fifo.xpm_fifo_base_inst |                        xpm_fifo_base |         54 |         46 |       8 |    0 |    82 |      0 |      0 |    0 |          0 |
 |     u_cnt                                  |         xpm_cdc_gray__parameterized1 |         54 |         54 |       0 |    0 |   128 |      0 |      0 |    0 |          0 |
-|   u_core                                   |                         trigger_core |       6622 |       6474 |     148 |    0 |  9154 |      6 |      1 |    0 |          0 |
+|   u_core                                   |                         trigger_core |       6629 |       6481 |     148 |    0 |  9154 |      6 |      1 |    0 |          0 |
 |     (u_core)                               |                         trigger_core |        854 |        706 |     148 |    0 |  3089 |      0 |      0 |    0 |          0 |
 |     u_amd                                  |                          mdio_master |         98 |         98 |       0 |    0 |   162 |      0 |      0 |    0 |          0 |
 |     u_arx                                  |                               mac_rx |        200 |        200 |       0 |    0 |    86 |      0 |      0 |    0 |          0 |
 |       (u_arx)                              |                               mac_rx |        170 |        170 |       0 |    0 |    54 |      0 |      0 |    0 |          0 |
-|     u_atx                                  |                               mac_tx |        290 |        290 |       0 |    0 |    71 |      0 |      0 |    0 |          0 |
-|       (u_atx)                              |                               mac_tx |        238 |        238 |       0 |    0 |    39 |      0 |      0 |    0 |          0 |
+|     u_atx                                  |                               mac_tx |        292 |        292 |       0 |    0 |    71 |      0 |      0 |    0 |          0 |
+|       (u_atx)                              |                               mac_tx |        240 |        240 |       0 |    0 |    39 |      0 |      0 |    0 |          0 |
 |       u_crc                                |                          eth_crc32_8 |         53 |         53 |       0 |    0 |    32 |      0 |      0 |    0 |          0 |
 |     u_bmd                                  |                        mdio_master_3 |        115 |        115 |       0 |    0 |   162 |      0 |      0 |    0 |          0 |
 |     u_book                                 |                                 book |        587 |        587 |       0 |    0 |    23 |      4 |      1 |    0 |          0 |
@@ -46,13 +46,13 @@ Table of Contents
 |     u_btx                                  |                             mac_tx_5 |        323 |        323 |       0 |    0 |    70 |      0 |      0 |    0 |          0 |
 |       (u_btx)                              |                             mac_tx_5 |        270 |        270 |       0 |    0 |    38 |      0 |      0 |    0 |          0 |
 |       u_crc                                |                            eth_crc32 |         53 |         53 |       0 |    0 |    32 |      0 |      0 |    0 |          0 |
-|     u_gen                                  |                             feed_gen |        388 |        388 |       0 |    0 |   339 |      0 |      0 |    0 |          0 |
+|     u_gen                                  |                             feed_gen |        390 |        390 |       0 |    0 |   339 |      0 |      0 |    0 |          0 |
 |     u_ha                                   |                             lat_hist |        208 |        208 |       0 |    0 |   194 |      1 |      0 |    0 |          0 |
 |     u_hb                                   |                           lat_hist_6 |        226 |        226 |       0 |    0 |   194 |      1 |      0 |    0 |          0 |
 |     u_il                                   |                           interlocks |        131 |        131 |       0 |    0 |    87 |      0 |      0 |    0 |          0 |
 |     u_ord                                  |                            order_ctl |        354 |        354 |       0 |    0 |   617 |      0 |      0 |    0 |          0 |
 |     u_parse                                |                              feed_rx |        964 |        964 |       0 |    0 |   507 |      0 |      0 |    0 |          0 |
-|     u_rules                                |                                rules |       2145 |       2145 |       0 |    0 |  3483 |      0 |      0 |    0 |          0 |
+|     u_rules                                |                                rules |       2155 |       2155 |       0 |    0 |  3483 |      0 |      0 |    0 |          0 |
 |   u_jtag                                   |                             jtag_bus |        309 |        309 |       0 |    0 |   418 |      0 |      0 |    0 |          0 |
 |     (u_jtag)                               |                             jtag_bus |        309 |        309 |       0 |    0 |   205 |      0 |      0 |    0 |          0 |
 |     u_cmd                                  |                 xpm_cdc_array_single |          0 |          0 |       0 |    0 |    90 |      0 |      0 |    0 |          0 |

@@ -5,8 +5,8 @@
   "kb_version_match": true,
   "top": "kr260_top",
   "variant": "base",
-  "pass": false,
-  "first_failed_stage": "post_route",
+  "pass": true,
+  "first_failed_stage": null,
   "gates": {
     "rtl_methodology_no_critical": true,
     "post_synth_no_unconstrained_endpoints": true,
@@ -17,8 +17,8 @@
     "post_synth_exceptions_clean": true,
     "post_synth_io_constraints_clean": true,
     "post_place_hold": true,
-    "setup": false,
-    "hold": false,
+    "setup": true,
+    "hold": true,
     "pulse_width": true,
     "no_unconstrained_endpoints": true,
     "drc_clean": true,
@@ -88,13 +88,13 @@
       },
       "warnings": [],
       "timing": {
-        "wns_ns": -0.369,
-        "tns_ns": -3.042,
-        "tns_failing_endpoints": 10,
+        "wns_ns": -0.069,
+        "tns_ns": -0.181,
+        "tns_failing_endpoints": 5,
         "tns_total_endpoints": 30292,
         "whs_ns": -0.856,
-        "ths_ns": -171.121,
-        "ths_failing_endpoints": 6418,
+        "ths_ns": -167.975,
+        "ths_failing_endpoints": 6408,
         "ths_total_endpoints": 30192,
         "wpws_ns": 0.333,
         "tpws_ns": 0.0,
@@ -3399,7 +3399,7 @@
         },
         "worst": {
           "setup": {
-            "slack": -0.369,
+            "slack": -0.069,
             "requirement": 4.0,
             "start_clock": "clk0_u",
             "end_clock": "a_txc",
@@ -3443,13 +3443,13 @@
         "post_place_hold": true
       },
       "timing": {
-        "wns_ns": -0.198,
-        "tns_ns": -1.397,
-        "tns_failing_endpoints": 10,
+        "wns_ns": 0.102,
+        "tns_ns": 0.0,
+        "tns_failing_endpoints": 0,
         "tns_total_endpoints": 30229,
-        "whs_ns": -0.184,
-        "ths_ns": -3.596,
-        "ths_failing_endpoints": 127,
+        "whs_ns": -0.075,
+        "ths_ns": -1.919,
+        "ths_failing_endpoints": 107,
         "ths_total_endpoints": 30149,
         "wpws_ns": 0.333,
         "tpws_ns": 0.0,
@@ -3462,8 +3462,8 @@
     "post_route": {
       "ran": true,
       "gates": {
-        "setup": false,
-        "hold": false,
+        "setup": true,
+        "hold": true,
         "pulse_width": true,
         "no_unconstrained_endpoints": true,
         "drc_clean": true,
@@ -3560,8 +3560,8 @@
               "a_txd[3]"
             ],
             "clock": "a_txc",
-            "setup_slack_ns": -0.198,
-            "hold_slack_ns": -0.167,
+            "setup_slack_ns": 0.102,
+            "hold_slack_ns": 0.533,
             "requirements_ns": {
               "max": [
                 4.0
@@ -3582,8 +3582,8 @@
               "b_txd[3]"
             ],
             "clock": "b_txc",
-            "setup_slack_ns": -0.163,
-            "hold_slack_ns": -0.184,
+            "setup_slack_ns": 0.137,
+            "hold_slack_ns": 0.516,
             "requirements_ns": {
               "max": [
                 4.0
@@ -3688,26 +3688,26 @@
         },
         "worst": {
           "setup": {
-            "slack": -0.198,
+            "slack": 0.102,
             "requirement": 4.0,
             "start_clock": "clk0_u",
             "end_clock": "a_txc",
             "corner": "Slow",
             "uncertainty": 0.109,
-            "pessimism": -0.333,
+            "pessimism": -0.272,
             "from": "u_atx/g_oddr[0].u_oddr/CLK",
             "to": "a_txd[0]"
           },
           "hold": {
-            "slack": -0.184,
+            "slack": 0.01,
             "requirement": 0.0,
             "start_clock": "clk0_u",
-            "end_clock": "b_txc",
+            "end_clock": "clk0_u",
             "corner": "Slow",
             "uncertainty": null,
-            "pessimism": 0.338,
-            "from": "u_btx/u_ctl/CLK",
-            "to": "b_tx_ctl"
+            "pessimism": 0.294,
+            "from": "u_core/u_rules/sh_reg[6][9]/C",
+            "to": "u_core/u_rules/act_reg[6][9]/D"
           }
         },
         "uncertainty": {
@@ -3717,9 +3717,9 @@
             "tsj_ns": 0.071,
             "dj_ns": 0.205,
             "pe_ns": 0.0,
-            "pessimism_ns": -0.333,
+            "pessimism_ns": -0.272,
             "requirement_ns": 4.0,
-            "slack_ns": -0.198
+            "slack_ns": 0.102
           },
           "hold": null
         }
@@ -3733,7 +3733,7 @@
           "b_txc"
         ]
       },
-      "pass": false
+      "pass": true
     },
     "bitstream": {
       "ran": true,
@@ -3744,19 +3744,19 @@
     }
   },
   "timing": {
-    "wns_ns": -0.198,
-    "tns_ns": -1.397,
-    "tns_failing_endpoints": 10,
+    "wns_ns": 0.102,
+    "tns_ns": 0.0,
+    "tns_failing_endpoints": 0,
     "tns_total_endpoints": 30229,
-    "whs_ns": -0.184,
-    "ths_ns": -1.501,
-    "ths_failing_endpoints": 10,
+    "whs_ns": 0.01,
+    "ths_ns": 0.0,
+    "ths_failing_endpoints": 0,
     "ths_total_endpoints": 30149,
     "wpws_ns": 0.333,
     "tpws_ns": 0.0,
     "tpws_failing_endpoints": 0,
     "tpws_total_endpoints": 10557,
-    "timing_met": false
+    "timing_met": true
   },
   "check_timing": {
     "no_clock": 0,
@@ -3833,14 +3833,14 @@
     ]
   },
   "power": {
-    "total_w": 0.499,
-    "dynamic_w": 0.162,
+    "total_w": 0.501,
+    "dynamic_w": 0.164,
     "static_w": 0.337,
     "confidence": "Low",
-    "clocks_w": 0.021,
-    "signals_w": 0.01,
+    "clocks_w": 0.023,
+    "signals_w": 0.011,
     "io_w": 0.016,
-    "core_w": 0.144
+    "core_w": 0.147
   },
   "power_environment": {
     "junction_c": 43.7,
@@ -3856,6 +3856,6 @@
     "file": "kr260_top.bit",
     "bytes": 7797900
   },
-  "build_stamp": "dd0a22a2",
-  "sources_sha256": "dd0a22a246da29df01141fe61f3770cfc1203266d82b72a6efd47f1272ad4db9"
+  "build_stamp": "52a4c291",
+  "sources_sha256": "52a4c29151df55a85b2c724dd1f8538e3bea8f7ff503a075dd6e1b8c96075a0d"
 }

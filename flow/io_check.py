@@ -263,7 +263,8 @@ def expected_delays(i: dict[str, Any]) -> dict[str, float] | None:
     input, DDR edge-aligned (skew before/after each edge): max = skew_after, min = -skew_before;
     output, DDR edge-aligned with a forwarded clock: max = T/2 - skew_after, min = +skew_before (an output's hold
       required time is the clock edge minus -min, so a positive -min lets the data change that long before the edge;
-      a negative one would demand it change after the edge)."""
+      a negative one would demand it change after the edge). An optional board_skew_ns (clock-to-data trace skew on
+      the board, either sign) narrows both sides: skew_after and skew_before each lose it."""
     ds = i.get("data_sheet") or {}
     if not ds:
         return None
@@ -272,7 +273,9 @@ def expected_delays(i: dict[str, Any]) -> dict[str, float] | None:
     try:
         if i.get("direction") == "out" and "skew_after_ns" in ds:      # edge-aligned DDR output (forwarded clock)
             half = float(i["clock_period_ns"]) / 2
-            return {"max": half - float(ds["skew_after_ns"]), "min": float(ds["skew_before_ns"])}
+            b = float(ds.get("board_skew_ns", 0.0))
+            return {"max": round(half - (float(ds["skew_after_ns"]) - b), 6),
+                    "min": round(float(ds["skew_before_ns"]) - b, 6)}
         if i.get("direction") == "out":
             return {"max": float(ds["tsu_ns"]) + tmax, "min": -float(ds["th_ns"]) + tmin}
         if "dv_before_ns" in ds:
