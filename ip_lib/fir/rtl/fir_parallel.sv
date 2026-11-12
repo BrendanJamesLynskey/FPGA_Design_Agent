@@ -1,4 +1,4 @@
-// fir_parallel: the fully parallel FIR core behind the lut_mult variant (brief 63A). Direct form: the last TAPS samples
+// fir_parallel: the fully parallel FIR core behind the lut_mult variant. Direct form: the last TAPS samples
 // sit in a register delay line, every tap has its own multiplier, and a registered adder tree sums the products, so
 // one sample is taken every clock. The multipliers are built from LUTs and carry chains (use_dsp "no"): the variant for
 // a part, or a budget, with no DSP slices to spare. Coefficients sit in registers. (A transposed form would save the

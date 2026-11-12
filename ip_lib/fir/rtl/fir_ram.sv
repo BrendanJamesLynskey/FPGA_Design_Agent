@@ -1,4 +1,4 @@
-// fir_ram: simple dual-port RAM for the folded FIR variants (brief 63A). One write port, one read port, read latency 2
+// fir_ram: simple dual-port RAM for the folded FIR variants. One write port, one read port, read latency 2
 // (address to q1, q1 to q). The second register lets synthesis use the block RAM output register (or a fabric register
 // after LUT RAM), which keeps the RAM clock-to-out off the multiply path. STYLE picks the memory resource by inference
 // attribute (KB inference template: simple dual-port RAM, synchronous read): 0 leaves it to synthesis, 1 block RAM,

@@ -1,4 +1,4 @@
-// fir_mac: one multiply-accumulate engine of the folded FIR (brief 63A), written to the KB's multiply-accumulate
+// fir_mac: one multiply-accumulate engine of the folded FIR, written to the standard multiply-accumulate
 // inference template so that one DSP slice holds it all: operand registers (A, B) and the product register (M) run
 // every clock, the accumulator (P) has a clock enable and zeroes its feedback, not its sum, on the first product.
 // No use_dsp attribute: on the whole folded core "yes" pulled the adder tree, counters and comparators into DSP

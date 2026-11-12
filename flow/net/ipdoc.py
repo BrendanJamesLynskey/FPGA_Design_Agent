@@ -20,7 +20,7 @@ IP = ROOT / "ip_lib"
 NET = ["eth_mac_rmii", "pkt_parser", "match_exact", "match_lpm", "match_ternary", "axil_table_ctrl", "pkt_rewrite",
        "pkt_queue_sched", "l2_switch"]
 HIL = ["freq_duty_counter", "frame_crc", "dds_awg", "logic_analyser", "adc_histogram"]       # brief 30 instruments
-DSP = ["fir"]                                                                                # brief 63A
+DSP = ["fir"]                                                                                # library entries with variants
 FAULTS_JSON = {**{b: "b30" for b in HIL}, **{b: "b63a" for b in DSP}}                        # default: b40
 REQUIRED = ["name", "version", "summary", "top", "rtl", "depends", "interfaces", "clocks", "resets", "parameters",
             "constraints", "latency", "throughput", "guards", "sweep_tested", "evidence", "cost_table", "boundary",
@@ -56,7 +56,7 @@ def check(block: str) -> list[str]:
             s = yp.get(k)
             if s and "range" in s and not (s["range"][0] <= v <= s["range"][1]):
                 errs.append(f"{block}: sweep point {k}={v} outside {s['range']}")
-            if s and "set" in s and v not in s["set"]:
+            if s and "set" in s and not set(v if isinstance(v, list) else [v]) <= set(s["set"]):
                 errs.append(f"{block}: sweep point {k}={v} not in {s['set']}")
     for g in y.get("guards", []):
         inside = all((("range" in yp.get(k, {}) and yp[k]["range"][0] <= v <= yp[k]["range"][1]) or
@@ -70,7 +70,7 @@ def check(block: str) -> list[str]:
     for d in y["depends"]:
         if not (IP / d / "ip.yaml").exists():
             errs.append(f"{block}: dependency {d} has no ip.yaml")
-    if y.get("variants"):                                   # brief 63A: the variants schema and characterisation file
+    if y.get("variants"):                                   # the variants schema and characterisation file
         from flow import ipvariants
         errs += ipvariants.validate(block)
     return errs
@@ -129,32 +129,47 @@ def _fmt(v) -> str:
 
 
 def variants_section(block: str, y: dict) -> list[str]:
-    """Brief 63A: the variants and their measured out-of-context cost, from ip.yaml and char/<part>.json."""
+    """The variants and their measured out-of-context cost, from ip.yaml and char/<part>.json: one comparison at the
+    first characterised point, then every measured row in a collapsed section."""
     if not y.get("variants"):
         return []
     from flow import ipvariants
-    L = ["", "## Variants", "", f"Selected by `{y.get('variant_param')}`; every variant has the same ports, function and tests. "
-         "Latency and II are in clocks.", "", "| Variant | What | Latency | II | Use when |", "|---|---|---|---|---|"]
+    vp = y.get("variant_param")
+    L = ["", "## Variants", "", f"Selected by `{vp}`; every variant has the same ports, the same bit-exact result and the same "
+         "tests. Latency is clocks from an accepted input to its result; II (initiation interval) is clocks between accepted "
+         "inputs, 1 meaning a new input every clock.", "", "| Variant | What | Latency | II | Use when |", "|---|---|---|---|---|"]
     for k, v in y["variants"].items():
         L.append(f"| `{k}` | {v['summary']} | `{v['latency']}` | `{v['ii']}` | {v['when']} |")
     ch = y["characterisation"]
-    rows = ipvariants.measured(block, ch["part"])
-    L += ["", f"Out-of-context cost on the {ch['part']} at a {ch['clock_ns']} ns clock "
-          f"([char/{ch['part']}.json](char/{ch['part']}.json), `python3 -m flow.ipchar {block}`):", ""]
+    rows = [r for r in ipvariants.measured(block, ch["part"]) if r.get("status") == "ok"]
     if not rows:
-        return L + ["Not characterised yet."]
-    pk = [k for k in rows[0]["params"]]
-    L += ["| Variant | " + " | ".join(pk) + " | LUT | FF | LUT RAM | BRAM tiles | DSP | WNS ns | Fmax MHz | Dynamic W | Latency | II |",
+        return L + ["", "Not measured yet."]
+    pts = [{k: x for k, x in ipvariants.point(block, p).items() if k != vp} for p in ch["points"]]
+    order = list(y["variants"])
+    rows.sort(key=lambda r: (order.index(r["variant"]), pts.index(r["params"]) if r["params"] in pts else len(pts)))
+    first = pts[0]
+    pdesc = ", ".join(f"{k} {v}" for k, v in first.items())
+    L += ["", f"Measured at {pdesc}: built alone (out of context) on an Artix-7, {ch['part']}, for a {ch['clock_ns']} ns "
+          f"clock ({1000 / ch['clock_ns']:g} MHz), {rows[0]['tool']}. Not run on a board.", "",
+          "| Variant | DSP | Block RAM tiles | LUT | Fmax estimate (MHz) | II | Latency |", "|---|---|---|---|---|---|---|"]
+    for r in rows:
+        if r["params"] == first:
+            L.append(f"| `{r['variant']}` | {_fmt(r.get('dsp'))} | {_fmt(r.get('bram_tiles'))} | {_fmt(r.get('lut'))} | "
+                     f"{r['fmax_mhz']:.0f} | {_fmt(r.get('ii'))} | {_fmt(r.get('latency'))} |")
+    pk = list(rows[0]["params"])
+    L += ["", "Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); it is not a closure at that "
+          "frequency. WNS (worst slack against the clock) below zero means the target was missed.", "",
+          f"<details><summary>Every measured point ({len(rows)} rows; source: <a href=\"char/{ch['part']}.json\">char/{ch['part']}.json</a>)</summary>",
+          "", "| Variant | " + " | ".join(pk) + " | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) | Latency | II |",
           "|---|" + "---|" * len(pk) + "---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
-        if r.get("status") != "ok":
-            L.append(f"| `{r['variant']}` | " + " | ".join(_fmt(r["params"][k]) for k in pk) + f" | {r.get('status')} |" + " |" * 9)
-            continue
+        dyn = (r.get("power_w") or {}).get("dynamic")
         L.append(f"| `{r['variant']}` | " + " | ".join(_fmt(r["params"][k]) for k in pk) + " | " +
-                 " | ".join(_fmt(r.get(k)) for k in ("lut", "ff", "lutram", "bram_tiles", "dsp", "wns_ns", "fmax_mhz")) +
-                 f" | {_fmt((r.get('power_w') or {}).get('dynamic'))} | {_fmt(r.get('latency'))} | {_fmt(r.get('ii'))} |")
-    L += ["", f"Tool: {rows[0]['tool']}. Fmax is 1000 / (period - WNS) from one routed run at the target clock: an estimate, "
-          "not a closure at that frequency. Power is vectorless (default toggle rates)."]
+                 " | ".join(_fmt(r.get(k)) for k in ("lut", "ff", "lutram", "bram_tiles", "dsp")) +
+                 f" | {r['wns_ns']:.3f} | {r['fmax_mhz']:.1f} | {'-' if dyn is None else f'{dyn:.3f}'} | "
+                 f"{_fmt(r.get('latency'))} | {_fmt(r.get('ii'))} |")
+    L += ["", "Dynamic power is vectorless (default toggle rates, no simulation activity): use it to rank variants, not as a "
+          "measurement. Regenerate with `python3 -m flow.ipchar " + block + "` (Vivado, minutes per point).", "", "</details>"]
     return L
 
 

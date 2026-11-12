@@ -1,10 +1,10 @@
 # fir 0.1.0
 
-FIR filter, full precision, runtime-loadable coefficients, valid/ready streams; four implementation variants behind one contract: DSP and block RAM, DSP and LUT RAM, one time-shared DSP MAC, and a fully parallel LUT-multiplier form.
+FIR filter with runtime-loadable coefficients, full-precision output and valid/ready streams, in four implementations that trade multipliers for speed: multiply-accumulate (MAC) engines on DSP slices with block RAM or with LUT RAM, one time-shared DSP MAC, and a fully parallel form with one LUT-built multiplier per tap.
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated bit-exact against ip_lib/fir/model.py, every variant at four parameter points plus a differential test across all variants; characterised out of context on the xc7a100t (Vivado 2026.1); not yet run on a board.
+Status: simulated bit-exact against ip_lib/fir/model.py: every variant at four parameter points, a differential test across the variants, and an adversarial bench (coefficient beats between samples, reloads with results in flight, resets mid-stream); measured out of context on an Artix-7 (xc7a100t, Vivado 2026.1); not yet run on a board.
 
 ## Parameters
 
@@ -14,9 +14,9 @@ Status: simulated bit-exact against ip_lib/fir/model.py, every variant at four p
 | `TAPS` | 16 | 2..256 | number of taps (lut_mult up to 64) |
 | `DATA_W` | 16 | 4..24 | sample bits, signed |
 | `COEF_W` | 16 | 4..18 | coefficient bits, signed |
-| `FOLD` | 4 | 2..256 | taps per MAC engine for dsp_bram and dist_ram (at most TAPS); serial uses TAPS; lut_mult ignores it |
+| `FOLD` | 4 | 2..256 | taps per multiply-accumulate engine for dsp_bram and dist_ram (at most TAPS); serial and lut_mult ignore it |
 
-Constraints: `FOLD <= TAPS`; `DATA_W + COEF_W + clog2(TAPS) <= 48`; `TAPS <= 64 when IMPL is lut_mult`.
+Constraints: `DATA_W + COEF_W + clog2(TAPS) <= 48`.
 
 Out-of-space values fail at elaboration with `$error` (tested: `IMPL=fast`, `TAPS=1, FOLD=1`, `FOLD=32`, `DATA_W=25`, `COEF_W=19`, `DATA_W=24, COEF_W=18, TAPS=256, FOLD=8`, `IMPL=lut_mult, TAPS=65`).
 
@@ -37,8 +37,8 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Evidence
 
-Bit-exact against `ip_lib/fir/model.py` (plain Python written from the definition, not from the RTL); cocotb with Icarus Verilog 12. Every variant at four parameter points with random input gaps and output back-pressure, a coefficient reload mid-stream and the full-precision corner; the measured latency and II equal the declared ones; a differential test feeds every variant the same values and compares their outputs. Tests: `ip_lib/fir/tb/test_fir_rtl.py`.
-Parameter points simulated: `TAPS=16, DATA_W=16, COEF_W=16, FOLD=4`; `TAPS=7, DATA_W=12, COEF_W=10, FOLD=3`; `TAPS=33, DATA_W=18, COEF_W=18, FOLD=8`; `TAPS=2, DATA_W=4, COEF_W=4, FOLD=2`.
+Bit-exact against `ip_lib/fir/model.py` (plain Python written from the definition, not from the RTL); cocotb with Icarus Verilog 12. Every variant at four parameter points with random input gaps and output back-pressure, a coefficient reload mid-stream and the full-precision corner; the measured latency and II equal the declared ones; a differential test feeds every variant the same values and compares their outputs; an adversarial bench (written by an independent reviewer) interleaves coefficient beats with samples, reloads with results in flight and resets mid-stream, rebuilding the expected outputs from the handshakes. Tests: `ip_lib/fir/tb/test_fir_rtl.py`.
+Parameter points simulated: `IMPL=['dsp_bram', 'dist_ram', 'serial', 'lut_mult'], TAPS=16, DATA_W=16, COEF_W=16, FOLD=4`; `IMPL=['dsp_bram', 'dist_ram', 'serial', 'lut_mult'], TAPS=7, DATA_W=12, COEF_W=10, FOLD=3`; `IMPL=['dsp_bram', 'dist_ram', 'serial', 'lut_mult'], TAPS=33, DATA_W=18, COEF_W=18, FOLD=8`; `IMPL=['dsp_bram', 'dist_ram', 'serial', 'lut_mult'], TAPS=2, DATA_W=4, COEF_W=4, FOLD=2`.
 
 Seeded faults (`faults.yaml`, run by `hil/ip_faults.py --blocks fir`):
 
@@ -53,36 +53,50 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py --blocks fir`):
 | `product_unsigned` | the LUT multipliers treat negative samples as large positive ones | caught |
 | `delay_line_broadcast` | every tap sees the previous sample instead of its own delay | caught |
 | `latency_declared_short` | the declared LATENCY no longer matches the clocks the folded variants take, so a caller reading it would be wrong | caught |
+| `coef_while_products_form` | a coefficient can land while a sample's products are being formed, so that sample mixes old and new coefficients | not run |
 
 ## Variants
 
-Selected by `IMPL`; every variant has the same ports, function and tests. Latency and II are in clocks.
+Selected by `IMPL`; every variant has the same ports, the same bit-exact result and the same tests. Latency is clocks from an accepted input to its result; II (initiation interval) is clocks between accepted inputs, 1 meaning a new input every clock.
 
 | Variant | What | Latency | II | Use when |
 |---|---|---|---|---|
-| `dsp_bram` | ceil(TAPS/FOLD) multiply-accumulates on DSP slices (A/B, M and P registers), delay line and coefficients in block RAM | `FOLD + 8 + clog2(ceil(TAPS / FOLD))` | `FOLD + 3` | longer filters at sample rates well below the clock, with DSP slices and block RAM to spare |
-| `dist_ram` | the same folded core with the delay line and coefficients in LUT RAM | `FOLD + 8 + clog2(ceil(TAPS / FOLD))` | `FOLD + 3` | short coefficient sets, or block RAM already spoken for |
-| `serial` | one DSP multiply-accumulate time-shared over every tap (FOLD = TAPS); memory style left to synthesis | `TAPS + 8` | `TAPS + 3` | the lowest DSP count when the sample rate is at most clock / (TAPS + 3) |
-| `lut_mult` | fully parallel direct form, one multiplier per tap built from LUTs and carry chains, registered adder tree | `2 + clog2(TAPS)` | `1` | one sample per clock with no DSP slices to spare (or a part without them); costs LUTs and Fmax |
+| `dsp_bram` | ceil(TAPS/FOLD) MAC engines on DSP slices, each taking FOLD taps in turn; samples and coefficients in block RAM | `FOLD + 8 + clog2(ceil(TAPS / FOLD))` | `FOLD + 3` | guidance: longer filters at sample rates well below the clock, with DSP slices and block RAM to spare |
+| `dist_ram` | the same engines with the samples and coefficients in LUT RAM | `FOLD + 8 + clog2(ceil(TAPS / FOLD))` | `FOLD + 3` | guidance: short coefficient sets, or block RAM already spoken for |
+| `serial` | one DSP MAC engine time-shared over every tap; memory type left to synthesis | `TAPS + 8` | `TAPS + 3` | the fewest DSP slices, when a new sample every TAPS + 3 clocks is fast enough |
+| `lut_mult` | fully parallel: one multiplier per tap built from LUTs, all taps summed every clock (direct form) | `2 + clog2(TAPS)` | `1` | a sample every clock with no DSP slices to spare; measured: 15 to 42 times the LUTs of dsp_bram and under half its Fmax |
 
-Out-of-context cost on the xc7a100tcsg324-1 at a 4.0 ns clock ([char/xc7a100tcsg324-1.json](char/xc7a100tcsg324-1.json), `python3 -m flow.ipchar fir`):
+Measured at TAPS 16, DATA_W 16, COEF_W 16, FOLD 4: built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 4.0 ns clock (250 MHz), Vivado 2026.1 (build 6511674). Not run on a board.
 
-| Variant | TAPS | DATA_W | COEF_W | FOLD | LUT | FF | LUT RAM | BRAM tiles | DSP | WNS ns | Fmax MHz | Dynamic W | Latency | II |
+| Variant | DSP | Block RAM tiles | LUT | Fmax estimate (MHz) | II | Latency |
+|---|---|---|---|---|---|---|
+| `dsp_bram` | 4 | 2 | 363 | 267 | 7 | 14 |
+| `dist_ram` | 4 | 0 | 448 | 275 | 7 | 14 |
+| `serial` | 1 | 0 | 181 | 284 | 19 | 24 |
+| `lut_mult` | 0 | 0 | 5377 | 117 | 1 | 6 |
+
+Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); it is not a closure at that frequency. WNS (worst slack against the clock) below zero means the target was missed.
+
+<details><summary>Every measured point (12 rows; source: <a href="char/xc7a100tcsg324-1.json">char/xc7a100tcsg324-1.json</a>)</summary>
+
+| Variant | TAPS | DATA_W | COEF_W | FOLD | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) | Latency | II |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `dsp_bram` | 64 | 12 | 12 | 16 | 285 | 464 | 0 | 2 | 4 | 0.326 | 272.2 | 0.053 | 26 | 19 |
-| `dsp_bram` | 16 | 16 | 16 | 4 | 363 | 563 | 0 | 2 | 4 | 0.256 | 267.1 | 0.06 | 14 | 7 |
+| `dsp_bram` | 16 | 16 | 16 | 4 | 363 | 563 | 0 | 2 | 4 | 0.256 | 267.1 | 0.060 | 14 | 7 |
 | `dsp_bram` | 32 | 16 | 16 | 8 | 375 | 576 | 0 | 2 | 4 | 0.204 | 263.4 | 0.061 | 18 | 11 |
-| `dist_ram` | 64 | 12 | 12 | 16 | 349 | 464 | 64 | 0 | 4 | 0.287 | 269.3 | 0.033 | 26 | 19 |
+| `dsp_bram` | 64 | 12 | 12 | 16 | 285 | 464 | 0 | 2 | 4 | 0.326 | 272.2 | 0.053 | 26 | 19 |
 | `dist_ram` | 16 | 16 | 16 | 4 | 448 | 563 | 88 | 0 | 4 | 0.368 | 275.3 | 0.041 | 14 | 7 |
 | `dist_ram` | 32 | 16 | 16 | 8 | 468 | 576 | 88 | 0 | 4 | 0.289 | 269.5 | 0.043 | 18 | 11 |
-| `serial` | 64 | 12 | 12 | 16 | 193 | 237 | 32 | 0 | 1 | 0.748 | 307.5 | 0.011 | 72 | 67 |
+| `dist_ram` | 64 | 12 | 12 | 16 | 349 | 464 | 64 | 0 | 4 | 0.287 | 269.3 | 0.033 | 26 | 19 |
 | `serial` | 16 | 16 | 16 | 4 | 181 | 269 | 24 | 0 | 1 | 0.482 | 284.3 | 0.012 | 24 | 19 |
-| `serial` | 32 | 16 | 16 | 8 | 190 | 279 | 24 | 0 | 1 | 0.575 | 292 | 0.013 | 40 | 35 |
-| `lut_mult` | 64 | 12 | 12 | 16 | 12037 | 4818 | 0 | 0 | 0 | -3.905 | 126.5 | 0.143 | 8 | 1 |
+| `serial` | 32 | 16 | 16 | 8 | 190 | 279 | 24 | 0 | 1 | 0.575 | 292.0 | 0.013 | 40 | 35 |
+| `serial` | 64 | 12 | 12 | 16 | 193 | 237 | 32 | 0 | 1 | 0.748 | 307.5 | 0.011 | 72 | 67 |
 | `lut_mult` | 16 | 16 | 16 | 4 | 5377 | 1552 | 0 | 0 | 0 | -4.532 | 117.2 | 0.067 | 6 | 1 |
-| `lut_mult` | 32 | 16 | 16 | 8 | 10126 | 3145 | 0 | 0 | 0 | -5.49 | 105.4 | 0.123 | 7 | 1 |
+| `lut_mult` | 32 | 16 | 16 | 8 | 10126 | 3145 | 0 | 0 | 0 | -5.490 | 105.4 | 0.123 | 7 | 1 |
+| `lut_mult` | 64 | 12 | 12 | 16 | 12037 | 4818 | 0 | 0 | 0 | -3.905 | 126.5 | 0.143 | 8 | 1 |
 
-Tool: Vivado 2026.1 (build 6511674). Fmax is 1000 / (period - WNS) from one routed run at the target clock: an estimate, not a closure at that frequency. Power is vectorless (default toggle rates).
+Dynamic power is vectorless (default toggle rates, no simulation activity): use it to rank variants, not as a measurement. Regenerate with `python3 -m flow.ipchar fir` (Vivado, minutes per point).
+
+</details>
 
 ## Boundary and reuse
 
@@ -94,6 +108,6 @@ Tool: Vivado 2026.1 (build 6511674). Fmax is 1000 / (period - WNS) from one rout
 
 ## Cost table
 
-out-of-context, per variant and parameter point: see the Variants table (ip_lib/fir/char/xc7a100tcsg324-1.json).
+measured costs are in the Variants section above.
 
 Licence: MIT (this repository).

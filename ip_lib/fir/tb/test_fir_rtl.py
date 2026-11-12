@@ -1,4 +1,4 @@
-"""Brief 63A: ip_lib/fir under cocotb + Icarus Verilog 12 against ip_lib/fir/model.py, every variant at several points
+"""ip_lib/fir under cocotb + Icarus Verilog 12 against ip_lib/fir/model.py, every variant at several points
 of the parameter space, the differential test across all variants, and the elaboration guards. HIL_RTL_FIR points
 the tests at a seeded-fault copy of rtl/ (hil/ip_faults.py)."""
 from __future__ import annotations
@@ -30,14 +30,14 @@ def rtl_dir() -> Path:
     return Path(os.environ.get("HIL_RTL_FIR", FIR / "rtl"))
 
 
-def _run(top: str, testcase: str, params: dict, name: str, extra_src=(), env=None):
+def _run(top: str, testcase: str, params: dict, name: str, extra_src=(), env=None, module: str = "cocotb_fir"):
     build = BUILD / name
     r = get_runner("icarus")
     srcs = sorted(str(f) for f in rtl_dir().glob("*.sv")) + [str(s) for s in extra_src]
     r.build(sources=srcs, hdl_toplevel=top, parameters=params, build_dir=build, timescale=("1ns", "1ps"),
             always=True, build_args=["-g2012"])
     e = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(TB), os.environ.get("PYTHONPATH", "")]), **(env or {})}
-    res = r.test(test_module="cocotb_fir", hdl_toplevel=top, testcase=testcase, build_dir=build, test_dir=TB,
+    res = r.test(test_module=module, hdl_toplevel=top, testcase=testcase, build_dir=build, test_dir=TB,
                  parameters=params, extra_env=e, results_xml=str(build / "results.xml"), log_file=build / "sim.log",
                  timescale=("1ns", "1ps"))
     ran = [c for c in ET.parse(res).getroot().iter("testcase") if c.find("skipped") is None]
@@ -58,6 +58,22 @@ def test_variant(impl, params):
 @pytest.mark.parametrize("params", POINTS[:3], ids=[_id(p) for p in POINTS[:3]])
 def test_differential(params):
     _run("fir_diff_tb", "fir_diff", params, f"fir_diff_{_id(params)}", extra_src=[TB / "fir_diff_tb.sv"])
+
+
+ADV_POINTS = [
+    {"TAPS": 16, "DATA_W": 16, "COEF_W": 16, "FOLD": 4},
+    {"TAPS": 17, "DATA_W": 4, "COEF_W": 18, "FOLD": 2},     # nine engines
+    {"TAPS": 33, "DATA_W": 24, "COEF_W": 18, "FOLD": 32},   # two engines, the second mostly padding
+]
+ADV = [(i, p, m) for p in ADV_POINTS for i in IMPLS for m in ("mix", "reset")]
+
+
+@pytest.mark.parametrize("impl,params,mode", ADV, ids=[f"{i}-{_id(p)}-{m}" for i, p, m in ADV])
+def test_adversarial(impl, params, mode):
+    """Coefficient beats interleaved with samples, partial loads, reloads with results still in flight, output
+    back-pressure, and (mode "reset") resets in the middle of the stream; expected values rebuilt from the handshakes."""
+    _run("fir", "adv", {"IMPL": f'"{impl}"', **params}, f"fir_adv_{impl}_{_id(params)}_{mode}", module="cocotb_fir_adv",
+         env={"ADV_MODE": mode, "ADV_SEED": "1" if mode == "mix" else "2"})
 
 
 GUARDS = [

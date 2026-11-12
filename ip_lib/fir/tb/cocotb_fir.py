@@ -1,4 +1,4 @@
-"""cocotb benches for ip_lib/fir (brief 63A). The benches drive and sample only; every expected value comes from
+"""cocotb benches for ip_lib/fir. The benches drive and sample only; every expected value comes from
 ip_lib/fir/model.py. Two tests:
   fir_variant  one variant (toplevel `fir`): coefficient loads, random input gaps and output back-pressure, a reload
                mid-stream, extreme values; then the measured latency and initiation interval against LATENCY and II

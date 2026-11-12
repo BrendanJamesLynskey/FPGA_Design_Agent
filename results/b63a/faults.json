@@ -1,6 +1,6 @@
 {
- "caught": 9,
- "valid": 9,
+ "caught": 10,
+ "valid": 10,
  "faults": [
   {
    "name": "delay_no_shift",
@@ -8,8 +8,8 @@
    "class": "value",
    "why": "the sample leaving one engine's segment does not reach the next engine (folded variants with more than one MAC)",
    "status": "caught",
-   "seconds": 2.7,
-   "pytest": "1 failed, 10 deselected in 1.80s"
+   "seconds": 4.0,
+   "pytest": "1 failed, 34 deselected in 2.48s"
   },
   {
    "name": "acc_not_cleared",
@@ -17,8 +17,8 @@
    "class": "value",
    "why": "each output adds onto the last one's partial sums",
    "status": "caught",
-   "seconds": 2.6,
-   "pytest": "1 failed, 10 deselected in 1.65s"
+   "seconds": 2.9,
+   "pytest": "1 failed, 34 deselected in 1.86s"
   },
   {
    "name": "sweep_wrong_way",
@@ -26,8 +26,8 @@
    "class": "path",
    "why": "the delay line is read forwards, so the taps meet the wrong samples",
    "status": "caught",
-   "seconds": 2.8,
-   "pytest": "1 failed, 10 deselected in 1.82s"
+   "seconds": 3.0,
+   "pytest": "1 failed, 34 deselected in 1.97s"
   },
   {
    "name": "coef_wrong_field",
@@ -35,8 +35,8 @@
    "class": "value",
    "why": "a coefficient is written into the field of the wrong MAC engine",
    "status": "caught",
-   "seconds": 2.8,
-   "pytest": "1 failed, 10 deselected in 1.82s"
+   "seconds": 2.7,
+   "pytest": "1 failed, 34 deselected in 1.82s"
   },
   {
    "name": "sample_with_coef",
@@ -44,8 +44,8 @@
    "class": "protocol",
    "why": "a sample offered beside a coefficient beat is acknowledged and then dropped",
    "status": "caught",
-   "seconds": 3.0,
-   "pytest": "1 failed, 10 deselected in 2.12s"
+   "seconds": 3.3,
+   "pytest": "1 failed, 34 deselected in 2.36s"
   },
   {
    "name": "ram_one_read_register",
@@ -53,8 +53,8 @@
    "class": "timing",
    "why": "the RAM's read latency drops to one clock, so data and the MAC pipeline flags are a clock apart",
    "status": "caught",
-   "seconds": 2.7,
-   "pytest": "1 failed, 10 deselected in 1.76s"
+   "seconds": 2.9,
+   "pytest": "1 failed, 34 deselected in 1.90s"
   },
   {
    "name": "product_unsigned",
@@ -62,8 +62,8 @@
    "class": "value",
    "why": "the LUT multipliers treat negative samples as large positive ones",
    "status": "caught",
-   "seconds": 8.1,
-   "pytest": "1 failed, 3 passed, 10 deselected in 7.21s"
+   "seconds": 8.6,
+   "pytest": "1 failed, 3 passed, 34 deselected in 7.61s"
   },
   {
    "name": "delay_line_broadcast",
@@ -72,7 +72,7 @@
    "why": "every tap sees the previous sample instead of its own delay",
    "status": "caught",
    "seconds": 8.2,
-   "pytest": "1 failed, 3 passed, 10 deselected in 7.30s"
+   "pytest": "1 failed, 3 passed, 34 deselected in 7.27s"
   },
   {
    "name": "latency_declared_short",
@@ -80,8 +80,17 @@
    "class": "contract",
    "why": "the declared LATENCY no longer matches the clocks the folded variants take, so a caller reading it would be wrong",
    "status": "caught",
-   "seconds": 2.7,
-   "pytest": "1 failed, 10 deselected in 1.80s"
+   "seconds": 2.8,
+   "pytest": "1 failed, 34 deselected in 1.84s"
+  },
+  {
+   "name": "coef_while_products_form",
+   "block": "fir",
+   "class": "protocol",
+   "why": "a coefficient can land while a sample's products are being formed, so that sample mixes old and new coefficients",
+   "status": "caught",
+   "seconds": 2.9,
+   "pytest": "1 failed, 44 deselected in 1.98s"
   }
  ]
 }

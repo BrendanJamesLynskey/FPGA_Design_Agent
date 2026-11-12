@@ -1,4 +1,4 @@
-# Seeded faults (brief 30); run by hil/ip_faults.py: each must make the block's tests fail.
+# Seeded faults; run by hil/ip_faults.py: each must make the block's tests fail.
 faults:
 - name: sine_wrong_slice
   file: dds_awg.sv
@@ -12,7 +12,7 @@ faults:
   old: 'lut[phase[PHASE_W-1 -: LUT_W]]'
   new: 'lut[phase[PHASE_W-2 -: LUT_W]]'
   class: value
-  why: the same fault in the lut variant's table address (brief 63A)
+  why: the same fault in the lut variant's table address (added with the variants)
   test: hil/tests/test_30_ip_rtl.py -k test_block and dds_awg and lut
 - name: bram_next_entry
   file: dds_awg.sv

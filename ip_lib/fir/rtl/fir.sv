@@ -1,4 +1,4 @@
-// fir: a FIR filter with implementation variants behind one contract (brief 63A).
+// fir: a FIR filter with implementation variants behind one contract.
 //
 //   y[n] = sum_{k=0}^{TAPS-1} h[k] * x[n-k]      full precision, ACC_W = DATA_W + COEF_W + clog2(TAPS) bits, no rounding
 //
@@ -54,7 +54,8 @@ module fir #(
         if (TAPS < 2 || TAPS > 256) $error("fir: TAPS %0d outside 2..256", TAPS);
         if (DATA_W < 4 || DATA_W > 24) $error("fir: DATA_W %0d outside 4..24", DATA_W);
         if (COEF_W < 4 || COEF_W > 18) $error("fir: COEF_W %0d outside 4..18", COEF_W);
-        if (FOLD < 2 || FOLD > 256 || FOLD > TAPS) $error("fir: FOLD %0d outside 2..min(TAPS,256)", FOLD);
+        if (!(IMPL == "serial" || IS_PAR) && (FOLD < 2 || FOLD > 256 || FOLD > TAPS))   // FOLD is used by dsp_bram, dist_ram only
+            $error("fir: FOLD %0d outside 2..min(TAPS,256)", FOLD);
         if (ACC_W > 48) $error("fir: DATA_W + COEF_W + clog2(TAPS) = %0d exceeds 48", ACC_W);
         if (IS_PAR && TAPS > 64) $error("fir: lut_mult supports TAPS up to 64, not %0d", TAPS);
     end

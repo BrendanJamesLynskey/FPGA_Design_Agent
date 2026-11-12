@@ -1,6 +1,6 @@
-// adc_histogram: code-density histogram for converter tests (brief 26's linearity measurements; brief 30). Counts
+// adc_histogram: code-density histogram for converter linearity tests. Counts
 // samples by their top BIN_W bits; also min, max and the total. DNL and INL are computed on the host from the counts.
-// Implementation variants (brief 63A), same ports, function and latency, selected by IMPL:
+// Implementation variants, same ports, function and latency, selected by IMPL:
 //   "dist_ram"  one bin RAM in LUT RAM with two read ports (the sample path and the host readout)
 //   "bram"      two block RAM copies written together, one per read port (a block RAM has one write port and one
 //               read port in simple dual-port mode, so the third port costs a second copy)

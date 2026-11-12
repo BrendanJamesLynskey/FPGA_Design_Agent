@@ -1,8 +1,7 @@
-# ip.yaml for dds_awg: the declared parameter space and contract (brief 28 rules; brief 30 entry).
+# ip.yaml for dds_awg: the declared parameter space and contract (the library's reuse rules).
 name: dds_awg
 version: 0.2.0
-status: simulated bit-exact against hil/instruments/models.py; measured on the Nexys A7-100T inside b30_hil_audio (the 1 kHz sine read at the
-  audio jack at 999.99 Hz, THD 1.32 %)
+status: 'simulated bit-exact against hil/instruments/models.py in both variants and measured out of context on an Artix-7 (xc7a100t, Vivado 2026.1); the 0.1.0 design (one table, before the variants) was measured on the Nexys A7-100T inside b30_hil_audio (1 kHz sine at the audio jack, 999.99 Hz, THD 1.32 %); the 0.2.0 variants have not been run on a board'
 summary: 'DDS/AWG stimulus source: phase accumulator, sine table, triangle, saw and square, amplitude shift. f_out = f_tick * step / 2**PHASE_W.'
 top: dds_awg
 rtl:
@@ -67,8 +66,8 @@ sweep_tested:
 variant_param: IMPL
 variants:
   bram:
-    summary: sine table in block RAM, read one clock early at the next phase (phase + step) into the RAM's own register
-    when: large tables (LUT_W 10 and up) or LUTs scarce; a block RAM free
+    summary: sine table in block RAM, addressed one clock early so the RAM's output register delivers the sample on time
+    when: 'measured: at LUT_W 12, 113 LUTs against 871 and faster (187 against 148 MHz); at LUT_W 8 still the fewer LUTs (113 against 171) but slower (183 against 204 MHz)'
     uses:
       bram_tiles: 0.5 * ceil(2**LUT_W * OUT_W / 18432)
       dsp: 0
@@ -76,7 +75,7 @@ variants:
     ii: 1
   lut:
     summary: sine table as an asynchronous ROM in LUTs, read from the phase register
-    when: small tables, or no block RAM to spare
+    when: 'measured: the faster choice at LUT_W 8 (204 against 183 MHz) for 58 more LUTs; the crossover between LUT_W 8 and 12 was not measured'
     uses:
       bram_tiles: 0
       dsp: 0
@@ -111,6 +110,7 @@ evidence:
   simulator: Icarus Verilog 12 (local and CI)
   summary: Bit-exact against the Python models in `hil/instruments/models.py` (plain Python written from the definitions, not from the RTL); cocotb
     with Icarus Verilog 12.
-cost_table: 'out-of-context, per variant: see the Variants table (char/xc7a100tcsg324-1.json); in context inside b30_hil_audio the 0.1.0 design measured 115 LUT, 48 FF, 1 RAMB18 at PHASE_W 32, LUT_W 8, OUT_W 16 (Vivado 2026.1, xc7a100t -1, timing met at 100 MHz; results/vivado_2026_1_remeasure/b30_hil_audio.json)'
-constraints: []
+cost_table: 'measured costs are in the Variants section above; in context inside b30_hil_audio the 0.1.0 design measured 115 LUT, 48 FF, 1 RAMB18 at PHASE_W 32, LUT_W 8, OUT_W 16 (Vivado 2026.1, xc7a100t -1, timing met at 100 MHz; results/vivado_2026_1_remeasure/b30_hil_audio.json)'
+constraints:
+- LUT_W <= PHASE_W
 licence: MIT (this repository)

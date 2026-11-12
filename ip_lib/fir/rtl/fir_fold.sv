@@ -1,4 +1,4 @@
-// fir_fold: the folded (time-shared MAC) FIR core behind the dsp_bram, dist_ram and serial variants (brief 63A).
+// fir_fold: the folded (time-shared MAC) FIR core behind the dsp_bram, dist_ram and serial variants.
 //
 // MACS = ceil(TAPS / FOLD) multiply-accumulate engines each take FOLD taps in turn, so one output costs FOLD MAC cycles.
 // Engine e holds taps e*FOLD .. e*FOLD+FOLD-1. The delay line is one RAM of FOLD words, each word MACS samples wide

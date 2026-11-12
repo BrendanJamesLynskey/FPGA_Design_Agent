@@ -2,7 +2,7 @@
 """Seeded-fault runner for the brief-30 instrument library.
 
     python3 hil/ip_faults.py [--only name,name] [--json results/b30/faults.json]
-    python3 hil/ip_faults.py --blocks fir --json results/b63a/faults.json      # other library entries (brief 63A)
+    python3 hil/ip_faults.py --blocks fir --json results/b63a/faults.json      # other library entries
 
 Each ip_lib/<block>/faults.yaml entry replaces one exact string (it must occur once) in a copy of the block's rtl/;
 the block's tests (`test` = pytest node selection) are then run against the copy through HIL_RTL_<BLOCK>. A fault is

@@ -1,7 +1,7 @@
-// dds_awg: direct-digital-synthesis stimulus source (brief 30). A PHASE_W-bit accumulator advances by `step` on every
+// dds_awg: direct-digital-synthesis stimulus source. A PHASE_W-bit accumulator advances by `step` on every
 // `tick`; the wave is a sine from a 2^LUT_W-entry table, a triangle, a rising saw or a square. f_out = f_tick * step /
 // 2^PHASE_W. Output is signed OUT_W bits, scaled down by amp_shift (0 = full scale).
-// Implementation variants (brief 63A), same ports, function and latency, selected by IMPL:
+// Implementation variants, same ports, function and latency, selected by IMPL:
 //   "bram"  the sine table is a ROM with a registered read (block RAM): the read address is the next phase, phase + step,
 //           so the registered table output always belongs to the current phase
 //   "lut"   the sine table is an asynchronous ROM in LUTs, read straight from the phase register

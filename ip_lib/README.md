@@ -1,26 +1,28 @@
 # ip_lib: the project's own IP library
 
-Library modules that pass the reuse checks of brief 28: a declared parameter space (`ip.yaml`), elaboration guards,
+Library modules that pass the library's reuse checks: a declared parameter space (`ip.yaml`), elaboration guards,
 tests at several points of that space, standard interfaces at the boundary, no hidden clock crossing, nothing tied to a
 part or a pin. Each entry holds `rtl/`, `tb/`, `ip.yaml`, a generated `README.md` and a `CHANGELOG.md`. All of it is our
 own code under the repository's MIT licence.
 
-## Implementation variants (brief 63A)
+## Implementation variants
 
-An entry can hold several implementation variants behind one contract (same ports, parameters, model and tests); they
-differ in resources, latency, throughput and Fmax, and each is characterised out of context on Vivado 2026.1. The
-schema, the measured data format and the read API for the architecture stage are in
-[docs/ip_variants.md](../docs/ip_variants.md); `python3 -m flow.ipvariants fir --budget dsp=0` ranks one entry's
-variants against a plan's budget, and `python3 -m flow.ipchar <entry>` measures them (a heavy job).
+An entry can hold several implementations of one block (same ports, parameters, model and tests); they differ in
+resources, latency, throughput and Fmax. Each is measured built alone (out of context) with Vivado 2026.1 on an
+Artix-7 only, and none has run on a board yet.
+
+Try it: `python3 -m flow.ipvariants fir --budget dsp=0` ranks the FIR's variants against a plan that has no DSP slices
+left. `python3 -m flow.ipchar <entry>` measures an entry (runs Vivado; minutes per point). The format, the terms and the
+read API are in [docs/ip_variants.md](../docs/ip_variants.md).
 
 | Entry | Variants | Tests |
 |---|---|---|
-| [fir](fir/README.md) | `dsp_bram`, `dist_ram`, `serial`, `lut_mult`: folded DSP MACs with block RAM or LUT RAM, one time-shared DSP MAC, a fully parallel LUT-multiplier form | all four bit-exact against `fir/model.py` at four parameter points, measured latency and II equal the declared ones, a differential test across the variants, nine seeded faults |
-| [dds_awg](dds_awg/README.md) | `bram`, `lut`: the sine table in block RAM or in LUTs | the brief-30 tests at both variants |
-| [adc_histogram](adc_histogram/README.md) | `dist_ram`, `bram`: the bins in LUT RAM, or in two block RAM copies | the brief-30 tests at both variants |
+| [fir](fir/README.md) | `dsp_bram`, `dist_ram`, `serial`, `lut_mult`: folded DSP MACs with block RAM or LUT RAM, one time-shared DSP MAC, a fully parallel LUT-multiplier form | all four bit-exact against `fir/model.py` at four parameter points, measured latency and II equal the declared ones, a differential test across the variants, an adversarial bench (coefficient beats between samples, reloads with results in flight, resets mid-stream), ten seeded faults |
+| [dds_awg](dds_awg/README.md) | `bram`, `lut`: the sine table in block RAM or in LUTs | the existing tests at both variants |
+| [adc_histogram](adc_histogram/README.md) | `dist_ram`, `bram`: the bins in LUT RAM, or in two block RAM copies | the existing tests at both variants |
 
-Run: `python -m pytest ip_lib/fir/tb/test_fir_rtl.py flow/tests/test_63a_ipvariants.py` (Icarus Verilog 12, cocotb
-2.0.1); faults: `python hil/ip_faults.py --blocks fir`.
+Run: `python3 -m pytest ip_lib/fir/tb/test_fir_rtl.py flow/tests/test_63a_ipvariants.py` (Icarus Verilog 12, cocotb
+2.0.1); faults: `python3 hil/ip_faults.py --blocks fir`.
 
 ## Networking and packet processing (brief 40)
 

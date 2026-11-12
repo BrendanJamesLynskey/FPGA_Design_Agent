@@ -101,7 +101,7 @@ jobs:
         run: |
           python -m pytest -q hil/tests/test_30_ip_rtl.py designs/b30_hil_audio/tests/test_hil_audio_rtl.py
           python hil/ip_faults.py
-      - name: IP variants (brief 63A) - the FIR entry's four variants against one model, the differential test, seeded faults
+      - name: IP variants - the FIR entry's four variants against one model, the differential test, seeded faults
         run: |
           python -m pytest -q ip_lib/fir/tb/test_fir_rtl.py
           python hil/ip_faults.py --blocks fir

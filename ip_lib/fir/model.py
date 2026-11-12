@@ -1,4 +1,4 @@
-"""Golden model for ip_lib/fir (brief 63A): plain Python written from the definition of a FIR filter, not from the RTL.
+"""Golden model for ip_lib/fir: plain Python written from the definition of a FIR filter, not from the RTL.
 
     y[n] = sum_{k=0}^{TAPS-1} h[k] * x[n-k], with x[n] = 0 before the first sample after reset; full precision.
 

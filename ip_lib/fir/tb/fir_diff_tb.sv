@@ -1,4 +1,4 @@
-// fir_diff_tb: the differential bench for ip_lib/fir (brief 63A). One instance of every variant, each with its own
+// fir_diff_tb: the differential bench for ip_lib/fir. One instance of every variant, each with its own
 // handshakes; ip_lib/fir/tb/cocotb_fir.py fir_diff feeds them the same coefficients and samples and compares the outputs.
 module fir_diff_tb #(
     parameter int TAPS = 16, parameter int DATA_W = 16, parameter int COEF_W = 16, parameter int FOLD = 4,

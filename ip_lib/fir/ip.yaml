@@ -1,10 +1,8 @@
-# ip.yaml for fir: the declared parameter space, contract and implementation variants (brief 28 rules; brief 63A entry).
+# ip.yaml for fir: the declared parameter space, contract and implementation variants (the library's reuse rules).
 name: fir
 version: 0.1.0
-status: simulated bit-exact against ip_lib/fir/model.py, every variant at four parameter points plus a differential test across all
-  variants; characterised out of context on the xc7a100t (Vivado 2026.1); not yet run on a board
-summary: 'FIR filter, full precision, runtime-loadable coefficients, valid/ready streams; four implementation variants behind one contract:
-  DSP and block RAM, DSP and LUT RAM, one time-shared DSP MAC, and a fully parallel LUT-multiplier form.'
+status: 'simulated bit-exact against ip_lib/fir/model.py: every variant at four parameter points, a differential test across the variants, and an adversarial bench (coefficient beats between samples, reloads with results in flight, resets mid-stream); measured out of context on an Artix-7 (xc7a100t, Vivado 2026.1); not yet run on a board'
+summary: 'FIR filter with runtime-loadable coefficients, full-precision output and valid/ready streams, in four implementations that trade multipliers for speed: multiply-accumulate (MAC) engines on DSP slices with block RAM or with LUT RAM, one time-shared DSP MAC, and a fully parallel form with one LUT-built multiplier per tap.'
 top: fir
 rtl:
 - rtl/fir.sv
@@ -66,7 +64,7 @@ parameters:
     range:
     - 2
     - 256
-    note: taps per MAC engine for dsp_bram and dist_ram (at most TAPS); serial uses TAPS; lut_mult ignores it
+    note: taps per multiply-accumulate engine for dsp_bram and dist_ram (at most TAPS); serial and lut_mult ignore it
 latency:
   sample_to_result: the LATENCY localparam of fir (clocks from the accepting clock to m_valid, with m_ready high); per variant below
   after_reset: busy for FOLD clocks (folded variants) or one clock (lut_mult)
@@ -85,59 +83,67 @@ guards:
 - IMPL: lut_mult
   TAPS: 65
 sweep_tested:
-- TAPS: 16
+- IMPL: [dsp_bram, dist_ram, serial, lut_mult]
+  TAPS: 16
   DATA_W: 16
   COEF_W: 16
   FOLD: 4
-- TAPS: 7
+- IMPL: [dsp_bram, dist_ram, serial, lut_mult]
+  TAPS: 7
   DATA_W: 12
   COEF_W: 10
   FOLD: 3
-- TAPS: 33
+- IMPL: [dsp_bram, dist_ram, serial, lut_mult]
+  TAPS: 33
   DATA_W: 18
   COEF_W: 18
   FOLD: 8
-- TAPS: 2
+- IMPL: [dsp_bram, dist_ram, serial, lut_mult]
+  TAPS: 2
   DATA_W: 4
   COEF_W: 4
   FOLD: 2
 constraints:
-- FOLD <= TAPS
 - DATA_W + COEF_W + clog2(TAPS) <= 48
-- TAPS <= 64 when IMPL is lut_mult
 variant_param: IMPL
 variants:
   dsp_bram:
-    summary: ceil(TAPS/FOLD) multiply-accumulates on DSP slices (A/B, M and P registers), delay line and coefficients in block RAM
-    when: longer filters at sample rates well below the clock, with DSP slices and block RAM to spare
+    summary: ceil(TAPS/FOLD) MAC engines on DSP slices, each taking FOLD taps in turn; samples and coefficients in block RAM
+    when: 'guidance: longer filters at sample rates well below the clock, with DSP slices and block RAM to spare'
     uses:
       dsp: ceil(TAPS / FOLD)
       bram_tiles: 0.5 * (ceil(ceil(TAPS / FOLD) * DATA_W / 36) + ceil(ceil(TAPS / FOLD) * COEF_W / 36))
     latency: FOLD + 8 + clog2(ceil(TAPS / FOLD))
     ii: FOLD + 3
+    requires:
+    - FOLD <= TAPS
   dist_ram:
-    summary: the same folded core with the delay line and coefficients in LUT RAM
-    when: short coefficient sets, or block RAM already spoken for
+    summary: the same engines with the samples and coefficients in LUT RAM
+    when: 'guidance: short coefficient sets, or block RAM already spoken for'
     uses:
       dsp: ceil(TAPS / FOLD)
       bram_tiles: 0
     latency: FOLD + 8 + clog2(ceil(TAPS / FOLD))
     ii: FOLD + 3
+    requires:
+    - FOLD <= TAPS
   serial:
-    summary: one DSP multiply-accumulate time-shared over every tap (FOLD = TAPS); memory style left to synthesis
-    when: the lowest DSP count when the sample rate is at most clock / (TAPS + 3)
+    summary: one DSP MAC engine time-shared over every tap; memory type left to synthesis
+    when: the fewest DSP slices, when a new sample every TAPS + 3 clocks is fast enough
     uses:
       dsp: 1
     latency: TAPS + 8
     ii: TAPS + 3
   lut_mult:
-    summary: fully parallel direct form, one multiplier per tap built from LUTs and carry chains, registered adder tree
-    when: one sample per clock with no DSP slices to spare (or a part without them); costs LUTs and Fmax
+    summary: 'fully parallel: one multiplier per tap built from LUTs, all taps summed every clock (direct form)'
+    when: 'a sample every clock with no DSP slices to spare; measured: 15 to 42 times the LUTs of dsp_bram and under half its Fmax'
     uses:
       dsp: 0
       bram_tiles: 0
     latency: 2 + clog2(TAPS)
     ii: 1
+    requires:
+    - TAPS <= 64
 characterisation:
   part: xc7a100tcsg324-1
   clock_ns: 4.0
@@ -173,6 +179,7 @@ evidence:
   summary: Bit-exact against `ip_lib/fir/model.py` (plain Python written from the definition, not from the RTL); cocotb with Icarus Verilog 12.
     Every variant at four parameter points with random input gaps and output back-pressure, a coefficient reload mid-stream and the
     full-precision corner; the measured latency and II equal the declared ones; a differential test feeds every variant the same values
-    and compares their outputs.
-cost_table: 'out-of-context, per variant and parameter point: see the Variants table (ip_lib/fir/char/xc7a100tcsg324-1.json)'
+    and compares their outputs; an adversarial bench (written by an independent reviewer) interleaves coefficient beats with samples,
+    reloads with results in flight and resets mid-stream, rebuilding the expected outputs from the handshakes.
+cost_table: 'measured costs are in the Variants section above'
 licence: MIT (this repository)

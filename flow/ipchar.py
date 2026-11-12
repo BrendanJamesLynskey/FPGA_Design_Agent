@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Out-of-context characterisation of ip_lib implementation variants (brief 63A).
+"""Measure each implementation variant of an IP block with Vivado, built alone (out of context, no I/O constraints),
+and write the results to ip_lib/<block>/char/<part>.json.
 
     python3 -m flow.ipchar fir dds_awg adc_histogram [--part xc7a100tcsg324-1] [--only dsp_bram] [--dry-run]
     python3 -m flow.ipchar fir --parse-only          # rebuild the JSON from an earlier run's reports
 
-For each entry, every variant at every point of `characterisation.points` in its ip.yaml is synthesised out of
-context, placed and routed in one Vivado batch session (flow/ipchar.tcl), with a clock of `characterisation.clock_ns`
-on port `clk`. The results go to ip_lib/<block>/char/<part>.json (schema "ipchar/1", docs/ip_variants.md):
-LUT, FF, LUT RAM, SRL, block RAM, DSP, WNS at the target clock, an Fmax estimate (1000 / (period - WNS)), vectorless
-power, and the variant's latency and II from ip.yaml. Run directories: build/ipchar/<block>/<variant>_<point>/.
+For each entry, every variant at every point of `characterisation.points` in its ip.yaml is synthesised, placed and
+routed in one Vivado batch session (flow/ipchar.tcl), with a clock of `characterisation.clock_ns` on port `clk`. The
+JSON (schema "ipchar/1", docs/ip_variants.md) holds LUT, FF, LUT RAM, SRL, block RAM, DSP, WNS at the target clock, an
+Fmax estimate (1000 / (period - WNS)), vectorless power, and the variant's latency and II from ip.yaml. Run
+directories: build/ipchar/<block>/<variant>_<point>/.
 
-Vivado is a heavy job: take a slot first (_handoff/take_heavy_slot.sh, text naming "Vivado impl" and "peak <N>G").
-The run itself is capped with systemd-run --user --scope -p MemoryMax=6G under nice 15, one thread.
+Each point takes a few minutes and up to about 6 GB of memory: run one characterisation at a time. The Vivado session
+runs with one thread, under nice, in a memory-capped user scope (MemoryMax=6G).
 """
 from __future__ import annotations
 
@@ -79,9 +80,7 @@ def write_jobs(js: list[dict], part: str, path: Path) -> None:
                                                           j["clock_ns"], g]))
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n")
-    for j in js:                                  # a rerun must not inherit an earlier run's verdict
-        for marker in ("done.txt", "error.txt"):
-            (j["wd"] / marker).unlink(missing_ok=True)
+
 
 
 # ---- report parsing ------------------------------------------------------------------------------------------------
@@ -157,14 +156,17 @@ def run(blocks: list[str], part: str, only: set[str], dry: bool) -> int:
     js = [j for b in blocks for j in jobs(b, part, only)]
     batch = BUILD / ("batch_" + "_".join(blocks))
     write_jobs(js, part, batch / "jobs.tcl")
-    print(f"ipchar: {len(js)} jobs -> {batch / 'jobs.tcl'}")
+    print(f"ipchar: {len(js)} jobs ({', '.join(blocks)}) listed in {batch / 'jobs.tcl'}")
     if dry:
         return 0
+    for j in js:                                  # a rerun must not inherit an earlier run's verdict
+        for marker in ("done.txt", "error.txt"):
+            (j["wd"] / marker).unlink(missing_ok=True)
     unit = f"fda-ipchar-{os.getpid()}"
     cmd = ["systemd-run", "--user", "--scope", "--quiet", f"--unit={unit}", "-p", "MemoryMax=6G", "nice", "-n", "15",
            vivado(), "-mode", "batch", "-nojournal", "-log", str(batch / "vivado.log"),
            "-source", str(ROOT / "flow" / "ipchar.tcl"), "-tclargs", str(batch / "jobs.tcl")]
-    print("ipchar: scope", unit)
+    print(f"ipchar: running {len(js)} jobs in one Vivado session (memory-capped scope {unit})")
     rc = subprocess.run(cmd, cwd=batch).returncode
     for b in blocks:
         print("ipchar: wrote", record(b, part, [j for j in js if j["block"] == b]).relative_to(ROOT))
@@ -172,12 +174,15 @@ def run(blocks: list[str], part: str, only: set[str], dry: bool) -> int:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("blocks", nargs="+")
-    ap.add_argument("--part", default=iv.DEFAULT_PART)
-    ap.add_argument("--only", default="", help="comma-separated variant names")
-    ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--parse-only", action="store_true")
+    ap = argparse.ArgumentParser(
+        prog="python3 -m flow.ipchar",
+        description="Measure each implementation variant of an IP block with Vivado (built alone, no I/O constraints) "
+                    "and write ip_lib/<block>/char/<part>.json. Each point takes minutes: run one at a time.")
+    ap.add_argument("blocks", nargs="+", help="library entries to measure, e.g. fir dds_awg")
+    ap.add_argument("--part", default=iv.DEFAULT_PART, help=f"device part (default {iv.DEFAULT_PART})")
+    ap.add_argument("--only", default="", help="comma-separated variant names; rows of other variants are kept")
+    ap.add_argument("--dry-run", action="store_true", help="list the jobs, run nothing")
+    ap.add_argument("--parse-only", action="store_true", help="rebuild the JSON from earlier reports, run nothing")
     a = ap.parse_args(argv)
     only = set(filter(None, a.only.split(",")))
     if a.parse_only:

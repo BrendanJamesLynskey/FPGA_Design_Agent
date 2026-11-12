@@ -23,13 +23,13 @@ CASES = [
     ("frame_crc", {"PIX_W": 32}),
     ("dds_awg", {"PHASE_W": 32, "LUT_W": 8, "OUT_W": 16}),
     ("dds_awg", {"PHASE_W": 24, "LUT_W": 6, "OUT_W": 12}),
-    ("dds_awg", {"IMPL": '"lut"', "PHASE_W": 32, "LUT_W": 8, "OUT_W": 16}),     # brief 63A variants (default IMPL "bram")
+    ("dds_awg", {"IMPL": '"lut"', "PHASE_W": 32, "LUT_W": 8, "OUT_W": 16}),     # the lut variant (default IMPL "bram")
     ("dds_awg", {"IMPL": '"lut"', "PHASE_W": 24, "LUT_W": 6, "OUT_W": 12}),
     ("logic_analyser", {"WIDTH": 16, "ADDR_W": 6}),
     ("logic_analyser", {"WIDTH": 8, "ADDR_W": 4}),
     ("adc_histogram", {"SAMP_W": 12, "BIN_W": 6, "CNT_W": 16}),
     ("adc_histogram", {"SAMP_W": 8, "BIN_W": 8, "CNT_W": 12}),
-    ("adc_histogram", {"IMPL": '"bram"', "SAMP_W": 12, "BIN_W": 6, "CNT_W": 16}),   # brief 63A variant (default "dist_ram")
+    ("adc_histogram", {"IMPL": '"bram"', "SAMP_W": 12, "BIN_W": 6, "CNT_W": 16}),   # the bram variant (default "dist_ram")
     ("adc_histogram", {"IMPL": '"bram"', "SAMP_W": 8, "BIN_W": 8, "CNT_W": 12}),
 ]
 

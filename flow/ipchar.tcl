@@ -1,4 +1,4 @@
-# ipchar.tcl: out-of-context characterisation of ip_lib variants (brief 63A). Batch, no GUI, no project on disk.
+# ipchar.tcl: out-of-context characterisation of ip_lib variants. Batch, no GUI, no project on disk.
 #   vivado -mode batch -source flow/ipchar.tcl -tclargs <jobs.tcl>
 # <jobs.tcl> (written by flow/ipchar.py) sets ipchar(part), ipchar(sources) and ipchar(jobs): a list of
 #   {name top workdir clock_ns generics}
@@ -7,6 +7,7 @@
 # writes <workdir>/error.txt and the next job runs.
 set_param general.maxThreads 1
 set_param synth.maxThreads 1
+set_param chipscope.maxJobs 1
 source [lindex $argv 0]
 
 foreach job $ipchar(jobs) {
