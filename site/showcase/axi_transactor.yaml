@@ -43,7 +43,7 @@ values:
   rlat_min: {source: results/59a_axi_tx/summary.json, expr: "get:bram_read_latency_min"}
   rlat_max: {source: results/59a_axi_tx/summary.json, expr: "get:bram_read_latency_max"}
   reads_checked: {source: results/59a_axi_tx/summary.json, expr: "get:bram_reads_checked"}
-headline: "On the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) the on-chip checker caught each of the {bug_runs} protocol bugs we seeded, on the board, by the rule it breaks; against our own peripheral and stream FIFO, the board's traffic matched simulation cycle for cycle in {parity_eq} of {parity} runs."
+headline: "A hardware checker that watches an AXI bus and names the rule a bug breaks: on the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) it caught each of the {bug_runs} protocol bugs we seeded, on the board, by the rule we expected; against our own peripheral and stream FIFO, the board's traffic matched simulation cycle for cycle in {parity_eq} of {parity} runs."
 hero:
   kind: wave
   source: results/59a_axi_tx/hero.json
@@ -51,14 +51,14 @@ hero:
   caption: "One capture from the board, one seeded bug: our peripheral raises the write-response valid signal (BVALID) before any write data has arrived, and the checker flags it in that cycle."
 story:
   problem: "A bus interface that breaks the AXI handshake rules often passes a quick test and fails in a system: read data that is not held while the master stalls, or a write response sent before the data. Such bugs show only under the right timing, and a logic analyser shows the waveform but not which rule it breaks. The hard part is the checker, not the traffic: a wrong checker passes bad designs or flags good ones, so this one is checked formally, attacked with deliberately broken copies of itself, and compared with AMD's own checker. Making the board and the simulation see identical traffic is the other hard part: every random choice has to be seeded."
-  how: "A transaction program, written in plain YAML and loaded over the serial link, drives AXI4-Lite and AXI4-Stream traffic with seeded random addresses, data, byte-enables, pauses by the sender and refusals by the receiver. Monitors that watch only the bus wires check {lite_rules} AXI4-Lite and {stream_rules} AXI4-Stream rules every cycle. A reference copy of the memory checks every read, counters record latency, stalls and which cases were covered, and the first violation starts a capture. The same program runs on the board and in simulation."
+  how: "A transaction program, written in plain YAML and loaded over the serial link, drives AXI4-Lite traffic (a simple register-access bus) and AXI4-Stream traffic (a packet stream) with seeded random addresses, data and byte-enables (which bytes of a word to write), pauses by the sender and refusals by the receiver (back-pressure). Monitors that watch only the bus wires check {lite_rules} AXI4-Lite and {stream_rules} AXI4-Stream rules every cycle. A reference copy of the memory checks every read, counters record latency, stalls and which cases were covered, and the first violation starts a capture. The same program runs on the board and in simulation."
   architecture:
     blocks: [[host, Host (serial)], [seq, Sequencer], [eng, AXI masters], [dut, Targets], [chk, Checkers], [cap, Capture]]
     links: [[host, seq, YAML], [seq, eng, txns], [eng, dut, AXI], [dut, chk, bus], [chk, cap, trigger], [chk, host, verdicts]]
   results:
     - "{runs} board runs, fixed in a written plan before the board was used: {bug_runs} with a seeded protocol bug, {func_runs} with a seeded data bug, {clean} clean. All {runs_pass} gave the expected verdict."
-    - "Each protocol bug was flagged by exactly the rule it breaks. The data bugs (write byte-enables ignored, the end-of-packet marker TLAST lost) were caught by the reference memory or the stream receiver alone, and all {clean_quiet} clean runs fired nothing. A demonstration on bugs we planted, not a measure of coverage."
-    - "Board against simulation, for our own peripheral and stream FIFO: a checksum over every transaction, including its latency in cycles, and the run's length in cycles were identical in {parity_eq} of {parity} runs; {txn_diff} of {txns} logged transactions differed."
+    - "Each protocol bug was flagged by the rule we expected, in every run, and by no other rule. The data bugs (write byte-enables ignored, the end-of-packet marker TLAST lost) were caught by the reference memory or the stream receiver alone, and all {clean_quiet} clean runs fired nothing. A demonstration on bugs we planted, not a measure of coverage."
+    - "Board against simulation, for our own peripheral and stream FIFO (a first-in, first-out buffer): a checksum over every transaction, including its latency in cycles, and the run's length in cycles were identical in {parity_eq} of {parity} runs; {txn_diff} of {txns} logged transactions differed."
     - "Independent check: AMD's AXI Protocol Checker, watching the same bus, raised its flag in exactly the {amd_asserted} runs where ours flagged an AXI4-Lite rule; the two agree in {amd_agree} of {runs} runs."
     - "The checker is formally checked to a limited depth: {proofs_pass} of {proofs} proofs over {depth} clock cycles show each rule quiet on legal traffic and firing on its own seeded violation, and {mutants_killed} of {mutants} deliberately broken copies of the checker were caught. The properties were written by the same author as the checker, which is why the AMD checker matters."
     - "Against AMD's AXI BRAM Controller, under random back-pressure, write latency ran from {wlat_min} to {wlat_max} cycles and read latency from {rlat_min} to {rlat_max}; {reads_checked} reads were checked against the reference memory with no mismatch."
@@ -78,8 +78,9 @@ evidence:
   - {kind: requirements, label: "Requirements traced", text: "Not traced yet: the transaction programs carry requirement tags, but the traceability matrix does not read them; that link is planned work."}
 limits:
   not_measured:
+    - "Coverage of real-world bugs: the bugs were planted by us to demonstrate the checker; this is not a measure of how many unknown bugs it would find."
     - "Full AXI4 (bursts, IDs, outstanding transactions), the slave side and a long soak: the next phase."
-    - "Runs against AMD's BRAM controller are compared with the transaction model, not cycle for cycle with simulation: the simulator used cannot run the AMD core."
+    - "Runs against AMD's BRAM controller are checked against a model, not cycle for cycle with simulation: the free simulator we used cannot simulate AMD's BRAM controller."
     - "The proofs are bounded, and the property restatement shares its author with the checker; the AMD checker is the independent check."
   nulls: []
   next:
