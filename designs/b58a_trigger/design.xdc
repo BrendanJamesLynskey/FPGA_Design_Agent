@@ -101,11 +101,16 @@ set_false_path -hold  -fall_from [get_clocks -of_objects [get_pins u_mmcm/CLKOUT
 # ---- JTAG register front end: BSCANE2 (the clock is defined on INTERNAL_TCK, as AMD's own debug IP does) ----
 create_clock -name tck -period 33.333 [get_pins u_jtag/u_bscan/INTERNAL_TCK]
 create_generated_clock -name tck_out -source [get_pins u_jtag/u_bscan/INTERNAL_TCK] -divide_by 1 [get_pins u_jtag/u_bscan/TCK]
-# TDO is sampled by the TAP itself on the falling edge of TCK; the shift register drives it on the rising edge
-set_false_path -to [get_pins u_jtag/u_bscan/TDO]
+# TDO: the shift register (TCK) to the primitive's TDO, timed within the TCK clocks (no exception: a false path here
+# makes report_cdc call it a crossing into a non-FD primitive, CDC-13)
 
 # Clock-domain crossings (each RX_CLK, TCK and the core clock) are all inside XPM macros, which carry their own
 # constraints; there is no set_clock_groups, so any other crossing would show as a timing failure.
+# The one path XPM leaves timed as synchronous: each xpm_fifo_async (distributed RAM) is written on RX_CLK and read
+# into its output register on the core clock. The read address only reaches an entry after the write pointer has
+# crossed (two synchroniser stages), so the data path needs only to settle within one core clock period: 8 ns.
+set_max_delay -datapath_only 8.000 -from [get_clocks a_rxc] -to [get_cells -hierarchical -filter {NAME =~ u_acdc/u_fifo/*doutb_reg_reg*}]
+set_max_delay -datapath_only 8.000 -from [get_clocks b_rxc] -to [get_cells -hierarchical -filter {NAME =~ u_bcdc/u_fifo/*doutb_reg_reg*}]
 
 # ---- slow pins: PHY resets (held 16.8 ms), MDIO (1.95 MHz, the input synchronised by xpm_cdc_single), LEDs ----
 # No timing relationship to any clock: 0 ns placeholder delays and false paths (flow/io_check.py rules).
