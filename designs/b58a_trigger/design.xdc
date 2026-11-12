@@ -55,8 +55,9 @@ set_property -dict {PACKAGE_PIN E8 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_p
 # that captures it, so a nibble captured on the rising edge is launched on the virtual falling edge and vice versa.
 #   setup (max): arrival must be T/2 - tSU after the launch edge         -> -max = 4.0 - 1.2 = 2.8 ns
 #   hold  (min): the next nibble may change only tH after the capture edge -> -min = tH = 1.2 ns
-# The capture clock is RX_CLK through an MMCM in zero-hold-delay compensation (rtl/kr260_top.sv), so the IDDRE1 edge
-# lines up with the pin edge; through a plain BUFG the edge comes about 2 ns late and the hold check fails.
+# The capture clock is RX_CLK through a global buffer, which delays the IDDRE1 edge by about 2 ns; without more, the
+# hold check fails (routed: -0.74 ns). Each data input therefore goes through an IDELAYE3 (rtl/kr260_top.sv,
+# RX_IDELAY_PS) that moves the data window onto the delayed edge; the analysis below then checks both sides.
 # These are the intended checks: setup between opposite edges (requirement T/2 = 4 ns) and hold on the same edge
 # (requirement 0). They are also Vivado's most restrictive pairs, so no exception is needed: the other pairs (setup
 # over a full period, hold against the edge before) are looser and never the worst. flow/io_check.py checks the
@@ -87,8 +88,9 @@ set_input_delay -clock b_rxc_v -clock_fall -min 1.200 -add_delay [get_ports {b_r
 # confirmed. Vivado's model: the generated clock TXC captures each nibble on the opposite edge (requirement T/2):
 #   setup (max): the nibble must have settled skew_after after its own edge, i.e. T/2 - skew before the opposite edge
 #                -> -max = T/2 - skew = 4.0 - 0.5 = 3.5 ns
-#   hold  (min): it must not change earlier than skew_before before its own edge (requirement 0, the same edge)
-#                -> -min = -skew = -0.5 ns
+#   hold  (min): it must not change earlier than skew_before before its own edge (requirement 0, the same edge);
+#                an output's hold required time is the edge minus -min -> -min = +skew = +0.5 ns (Vivado's
+#                edge-aligned output template; a build with -min -0.5 demanded a change 0.5 ns after the edge)
 # These are Vivado's most restrictive pairs as well, so no exception is needed. (A TXC from a 90-degree MMCM output on a
 # second global buffer was tried first: with RGMII v2.0's 1.0 ns set-up and hold at a PHY without its delay, the
 # sum of set-up and hold slack was -16 ps: the two clock buffers' spread across corners leaves no window.)
@@ -96,14 +98,14 @@ create_generated_clock -name a_txc -source [get_pins u_atx/u_txc/C] -multiply_by
 create_generated_clock -name b_txc -source [get_pins u_btx/u_txc/C] -multiply_by 1 [get_ports b_txc]
 # port A, both edges: max = T/2 - skew = 3.5 ns, min = -skew = -0.5 ns
 set_output_delay -clock a_txc -max 3.500 [get_ports {a_txd[*] a_tx_ctl}]
-set_output_delay -clock a_txc -min -0.500 [get_ports {a_txd[*] a_tx_ctl}]
+set_output_delay -clock a_txc -min 0.500 [get_ports {a_txd[*] a_tx_ctl}]
 set_output_delay -clock a_txc -clock_fall -max 3.500 -add_delay [get_ports {a_txd[*] a_tx_ctl}]
-set_output_delay -clock a_txc -clock_fall -min -0.500 -add_delay [get_ports {a_txd[*] a_tx_ctl}]
+set_output_delay -clock a_txc -clock_fall -min 0.500 -add_delay [get_ports {a_txd[*] a_tx_ctl}]
 # port B, both edges: max = T/2 - skew = 3.5 ns, min = -skew = -0.5 ns
 set_output_delay -clock b_txc -max 3.500 [get_ports {b_txd[*] b_tx_ctl}]
-set_output_delay -clock b_txc -min -0.500 [get_ports {b_txd[*] b_tx_ctl}]
+set_output_delay -clock b_txc -min 0.500 [get_ports {b_txd[*] b_tx_ctl}]
 set_output_delay -clock b_txc -clock_fall -max 3.500 -add_delay [get_ports {b_txd[*] b_tx_ctl}]
-set_output_delay -clock b_txc -clock_fall -min -0.500 -add_delay [get_ports {b_txd[*] b_tx_ctl}]
+set_output_delay -clock b_txc -clock_fall -min 0.500 -add_delay [get_ports {b_txd[*] b_tx_ctl}]
 
 # ---- JTAG register front end: BSCANE2 (the clock is defined on INTERNAL_TCK, as AMD's own debug IP does) ----
 create_clock -name tck -period 33.333 [get_pins u_jtag/u_bscan/INTERNAL_TCK]
@@ -116,8 +118,8 @@ create_generated_clock -name tck_out -source [get_pins u_jtag/u_bscan/INTERNAL_T
 # The one path XPM leaves timed as synchronous: each xpm_fifo_async (distributed RAM) is written on RX_CLK and read
 # into its output register on the core clock. The read address only reaches an entry after the write pointer has
 # crossed (two synchroniser stages), so the data path needs only to settle within one core clock period: 8 ns.
-set_max_delay -datapath_only 8.000 -from [get_clocks -of_objects [get_pins u_ammcm/CLKOUT0]] -to [get_cells -hierarchical -filter {NAME =~ u_acdc/u_fifo/*doutb_reg_reg*}]
-set_max_delay -datapath_only 8.000 -from [get_clocks -of_objects [get_pins u_bmmcm/CLKOUT0]] -to [get_cells -hierarchical -filter {NAME =~ u_bcdc/u_fifo/*doutb_reg_reg*}]
+set_max_delay -datapath_only 8.000 -from [get_clocks a_rxc] -to [get_cells -hierarchical -filter {NAME =~ u_acdc/u_fifo/*doutb_reg_reg*}]
+set_max_delay -datapath_only 8.000 -from [get_clocks b_rxc] -to [get_cells -hierarchical -filter {NAME =~ u_bcdc/u_fifo/*doutb_reg_reg*}]
 
 # ---- slow pins: PHY resets (held 16.8 ms), MDIO (1.95 MHz, the input synchronised by xpm_cdc_single), LEDs ----
 # No timing relationship to any clock: 0 ns placeholder delays and false paths (flow/io_check.py rules).

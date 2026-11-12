@@ -10,7 +10,7 @@
 
 module kr260_top #(
     parameter logic [31:0] BUILD_STAMP = 32'h0,
-    parameter real         RX_PHASE_DEG = 0.0       // receive capture clock phase (MMCM, after ZHOLD compensation)
+    parameter int          RX_IDELAY_PS = 1000      // receive data delay (IDELAYE3, TIME mode), from the timing analysis
 ) (
     input  logic       clk_25,
     // port A: PHY2, J10B
@@ -39,44 +39,35 @@ module kr260_top #(
     logic clk, clk90, locked, fb, clk0_u, clk90_u, rst, rst_a, rst_b;
 `ifdef SYNTHESIS
     MMCME4_BASE #(.CLKIN1_PERIOD(40.0), .CLKFBOUT_MULT_F(40.0), .DIVCLK_DIVIDE(1),
-                  .CLKOUT0_DIVIDE_F(8.0), .CLKOUT1_DIVIDE(8), .CLKOUT1_PHASE(90.0)) u_mmcm (
+                  .CLKOUT0_DIVIDE_F(8.0), .CLKOUT1_DIVIDE(8), .CLKOUT1_PHASE(90.0), .CLKOUT2_DIVIDE(3)) u_mmcm (
         .CLKIN1(clk_25), .CLKFBIN(fb), .CLKFBOUT(fb), .CLKFBOUTB(), .CLKOUT0(clk0_u), .CLKOUT0B(), .CLKOUT1(clk90_u),
-        .CLKOUT1B(), .CLKOUT2(), .CLKOUT2B(), .CLKOUT3(), .CLKOUT3B(), .CLKOUT4(), .CLKOUT5(), .CLKOUT6(),
+        .CLKOUT1B(), .CLKOUT2(ref333_u), .CLKOUT2B(), .CLKOUT3(), .CLKOUT3B(), .CLKOUT4(), .CLKOUT5(), .CLKOUT6(),
         .LOCKED(locked), .PWRDWN(1'b0), .RST(1'b0));
     BUFG u_bg0 (.I(clk0_u), .O(clk));
     BUFG u_bg1 (.I(clk90_u), .O(clk90));
-    // Receive capture clocks. Each RX_CLK goes through its own MMCM in zero-hold-delay compensation (the MMCM
-    // cancels the global buffer's insertion delay), so the IDDRE1 capture edge lines up with the RX_CLK edge at the
-    // pin and the PHY's centre-aligned data window (internal RX delay on) holds it. A plain BUFG delays the capture
-    // edge by about 2 ns, which fails the hold check (the routed analysis before this change: hold slack -1.8 ns).
-    // RX_PHASE_DEG moves the capture edge if the analysis asks for it. The receive side needs the 1000 Mb/s link's
-    // 125 MHz RX_CLK: without it the MMCM is unlocked and its receive domain held in reset.
-    logic a_rxc_g, b_rxc_g, a_lk, b_lk, a_fb, b_fb, a_fbg, b_fbg, a_c0, b_c0;
-    MMCME4_ADV #(.CLKIN1_PERIOD(8.0), .CLKFBOUT_MULT_F(8.0), .DIVCLK_DIVIDE(1), .CLKOUT0_DIVIDE_F(8.0),
-                 .CLKOUT0_PHASE(RX_PHASE_DEG), .COMPENSATION("ZHOLD")) u_ammcm (
-        .CLKIN1(a_rxc), .CLKIN2(1'b0), .CLKINSEL(1'b1), .CLKFBIN(a_fbg), .CLKFBOUT(a_fb), .CLKFBOUTB(),
-        .CLKOUT0(a_c0), .CLKOUT0B(), .CLKOUT1(), .CLKOUT1B(), .CLKOUT2(), .CLKOUT2B(), .CLKOUT3(), .CLKOUT3B(),
-        .CLKOUT4(), .CLKOUT5(), .CLKOUT6(), .LOCKED(a_lk), .PWRDWN(1'b0), .RST(1'b0),
-        .DADDR(7'd0), .DCLK(1'b0), .DEN(1'b0), .DI(16'd0), .DWE(1'b0), .DO(), .DRDY(),
-        .PSCLK(1'b0), .PSEN(1'b0), .PSINCDEC(1'b0), .PSDONE(), .CDDCREQ(1'b0), .CDDCDONE(),
-        .CLKFBSTOPPED(), .CLKINSTOPPED());
-    MMCME4_ADV #(.CLKIN1_PERIOD(8.0), .CLKFBOUT_MULT_F(8.0), .DIVCLK_DIVIDE(1), .CLKOUT0_DIVIDE_F(8.0),
-                 .CLKOUT0_PHASE(RX_PHASE_DEG), .COMPENSATION("ZHOLD")) u_bmmcm (
-        .CLKIN1(b_rxc), .CLKIN2(1'b0), .CLKINSEL(1'b1), .CLKFBIN(b_fbg), .CLKFBOUT(b_fb), .CLKFBOUTB(),
-        .CLKOUT0(b_c0), .CLKOUT0B(), .CLKOUT1(), .CLKOUT1B(), .CLKOUT2(), .CLKOUT2B(), .CLKOUT3(), .CLKOUT3B(),
-        .CLKOUT4(), .CLKOUT5(), .CLKOUT6(), .LOCKED(b_lk), .PWRDWN(1'b0), .RST(1'b0),
-        .DADDR(7'd0), .DCLK(1'b0), .DEN(1'b0), .DI(16'd0), .DWE(1'b0), .DO(), .DRDY(),
-        .PSCLK(1'b0), .PSEN(1'b0), .PSINCDEC(1'b0), .PSDONE(), .CDDCREQ(1'b0), .CDDCDONE(),
-        .CLKFBSTOPPED(), .CLKINSTOPPED());
-    BUFG u_bgafb (.I(a_fb), .O(a_fbg));
-    BUFG u_bgbfb (.I(b_fb), .O(b_fbg));
-    BUFG u_bga (.I(a_c0), .O(a_rxc_g));
-    BUFG u_bgb (.I(b_c0), .O(b_rxc_g));
+    // Receive clocks: each RX_CLK through a global buffer (the KR260's RX_CLK pins cannot reach an MMCM on a
+    // dedicated route). The buffer delays the capture edge by about 2 ns, so the data are delayed to match: rgmii_rx's
+    // IDELAYE3 (RX_IDELAY_PS, calibrated by the IDELAYCTRL below) moves the PHY's centre-aligned data window onto the
+    // capture edge.
+    logic a_rxc_g, b_rxc_g, a_lk, b_lk;
+    BUFG u_bga (.I(a_rxc), .O(a_rxc_g));
+    BUFG u_bgb (.I(b_rxc), .O(b_rxc_g));
+    assign a_lk = 1'b1; assign b_lk = 1'b1;
+    // IDELAYCTRL: 333.33 MHz reference from the core MMCM (VCO 1000 MHz / 3), held in reset until the MMCM locks; its
+    // reset is asserted at once and released on a reference clock edge, from flip-flops clocked by the reference
+    logic ref333_u, ref333, dly_rdy, rst_ref;
+    BUFG u_bgref (.I(ref333_u), .O(ref333));
+    xpm_cdc_async_rst #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .RST_ACTIVE_HIGH(1)) u_rstref (
+        .src_arst(!locked), .dest_clk(ref333), .dest_arst(rst_ref));
+    (* IODELAY_GROUP = "rgmii_rx" *) IDELAYCTRL #(.SIM_DEVICE("ULTRASCALE_PLUS")) u_idc (.REFCLK(ref333), .RST(rst_ref),
+        .RDY(dly_rdy));
 `else
     // simulation: no MMCM; the core runs on the input clock and "lock" rises after 16 clocks, as it does on silicon
     logic [4:0] lk = 5'd0;
     always_ff @(posedge clk_25) if (!lk[4]) lk <= lk + 5'd1;
     assign clk = clk_25; assign clk90 = clk_25; assign locked = lk[4];
+    logic dly_rdy;
+    assign dly_rdy = 1'b1;
     logic a_rxc_g, b_rxc_g, a_lk, b_lk;
     assign a_rxc_g = a_rxc; assign b_rxc_g = b_rxc; assign a_lk = 1'b1; assign b_lk = 1'b1;
 `endif
@@ -98,9 +89,9 @@ module kr260_top #(
     logic       ag_dv, ag_er, bg_dv, bg_er, a_txen, b_txen;
     // ip_lib/eth_mac_rgmii blocks, at 1000 Mb/s only on this bench
     logic ag_v, bg_v;
-    rgmii_rx u_arx (.rx_clk(a_rxc_g), .speed(2'd2), .rxd(a_rxd), .rx_ctl(a_rx_ctl), .gmii_d(ag_d), .gmii_v(ag_v),
+    rgmii_rx #(.IDELAY_PS(RX_IDELAY_PS)) u_arx (.rx_clk(a_rxc_g), .speed(2'd2), .rxd(a_rxd), .rx_ctl(a_rx_ctl), .gmii_d(ag_d), .gmii_v(ag_v),
                     .gmii_dv(ag_dv), .gmii_er(ag_er));
-    rgmii_rx u_brx (.rx_clk(b_rxc_g), .speed(2'd2), .rxd(b_rxd), .rx_ctl(b_rx_ctl), .gmii_d(bg_d), .gmii_v(bg_v),
+    rgmii_rx #(.IDELAY_PS(RX_IDELAY_PS)) u_brx (.rx_clk(b_rxc_g), .speed(2'd2), .rxd(b_rxd), .rx_ctl(b_rx_ctl), .gmii_d(bg_d), .gmii_v(bg_v),
                     .gmii_dv(bg_dv), .gmii_er(bg_er));
     rgmii_tx #(.TXC_CLK90(0)) u_atx (.clk, .clk90, .rst, .speed(2'd2), .ce(), .gmii_d(a_txd8), .gmii_en(a_txen), .gmii_er(1'b0), .txd(a_txd), .tx_ctl(a_tx_ctl),
                     .txc(a_txc));

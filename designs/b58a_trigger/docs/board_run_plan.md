@@ -80,6 +80,7 @@ path, retransmission left to software. Any latency quoted will say whether it us
 
 ## Known gaps
 
+- The build does not meet RGMII transmit timing (up to 0.2 ns short of the 0.5 ns skew window, `results/b58a/build/summary.json`); no board run until it closes or the PHY data sheet shows a wider window.
 - The flow's programming script supports only a single-device JTAG chain; a KR260 path still has to be written.
 - `host/jtag_regs.tcl` has not run on a board; step 3 is its first test.
 - There is no PL push button for the kill switch on the KR260; the kill is a register.

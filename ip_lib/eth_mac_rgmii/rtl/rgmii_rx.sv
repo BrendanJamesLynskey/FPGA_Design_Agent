@@ -9,7 +9,10 @@
 // gmii_dv stays high for the whole frame (the clock-crossing FIFO writes its end token when it falls).
 // Synthesis uses IDDRE1 (SAME_EDGE_PIPELINED); simulation the equivalent behaviour.
 
-module rgmii_rx (
+module rgmii_rx #(
+    parameter int IDELAY_PS = 0         // 0: no input delay; else each RXD/RX_CTL input through an IDELAYE3 of this many
+                                        // ps (TIME mode, 0..1100; the design must have an IDELAYCTRL)
+) (
     input  logic       rx_clk,
     input  logic [1:0] speed,           // 2 = 1000, 1 = 100, 0 = 10 Mb/s (stable while frames arrive)
     input  logic [3:0] rxd,
@@ -20,10 +23,25 @@ module rgmii_rx (
     output logic       gmii_er
 );
     logic [4:0] q_r, q_f;
+    initial begin
+        if (IDELAY_PS < 0 || IDELAY_PS > 1100) $error("rgmii_rx: IDELAY_PS must be in 0..1100 (got %0d)", IDELAY_PS);
+    end
 `ifdef SYNTHESIS
     for (genvar i = 0; i < 5; i++) begin : g_iddr
+        logic d_in, d_dly;
+        assign d_in = (i == 4) ? rx_ctl : rxd[i];
+        if (IDELAY_PS > 0) begin : g_dly
+            (* IODELAY_GROUP = "rgmii_rx" *) IDELAYE3 #(.DELAY_SRC("IDATAIN"), .DELAY_TYPE("FIXED"), .DELAY_VALUE(IDELAY_PS),
+                .DELAY_FORMAT("TIME"), .REFCLK_FREQUENCY(333.333), .SIM_DEVICE("ULTRASCALE_PLUS"),
+                .UPDATE_MODE("ASYNC"), .CASCADE("NONE")) u_dly (
+                .IDATAIN(d_in), .DATAIN(1'b0), .DATAOUT(d_dly), .CLK(1'b0), .CE(1'b0), .INC(1'b0), .LOAD(1'b0),
+                .CNTVALUEIN(9'd0), .CNTVALUEOUT(), .EN_VTC(1'b1), .RST(1'b0), .CASC_IN(1'b0), .CASC_OUT(),
+                .CASC_RETURN(1'b0));
+        end else begin : g_nodly
+            assign d_dly = d_in;
+        end
         IDDRE1 #(.DDR_CLK_EDGE("SAME_EDGE_PIPELINED"), .IS_CB_INVERTED(1'b1), .IS_C_INVERTED(1'b0)) u_iddr (
-            .Q1(q_r[i]), .Q2(q_f[i]), .C(rx_clk), .CB(rx_clk), .D(i == 4 ? rx_ctl : rxd[i]), .R(1'b0));
+            .Q1(q_r[i]), .Q2(q_f[i]), .C(rx_clk), .CB(rx_clk), .D(d_dly), .R(1'b0));
     end
 `else
     logic [4:0] r0, f0;

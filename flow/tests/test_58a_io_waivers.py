@@ -140,3 +140,17 @@ def test_whole_clock_waiver_fails(tmp_path: Path) -> None:
                         "reason": "x"}]}
     r = ec.evaluate(_build(tmp_path, w), "route", [XDC])
     assert not r["pass"] and any(f["rule"] == "EXC-WAIVER" for f in r["failures"])
+
+
+def test_tx_output_delays_match_the_skew_window() -> None:
+    """The design's TX -max/-min equal what the interface's skew window gives: -min is +skew_before (an output's hold
+    required time is the edge minus -min). A build with -min -0.5 demanded each change 0.5 ns after the TXC edge and
+    reported 1 ns of false hold violation; the IO-VALUE check now flags that value."""
+    import re
+    tx = {i["name"]: i for i in interfaces()}
+    xdc = (ROOT / "designs" / "b58a_trigger" / "design.xdc").read_text()
+    for port, clk in (("rgmii_tx_a", "a_txc"), ("rgmii_tx_b", "b_txc")):
+        exp = io_check.expected_delays(tx[port])
+        assert exp == {"max": 3.5, "min": 0.5}
+        got = re.findall(rf"set_output_delay -clock {clk} (?:-clock_fall )?-(max|min) (-?[\d.]+)", xdc)
+        assert len(got) == 4 and all(float(v) == exp[k] for k, v in got), got

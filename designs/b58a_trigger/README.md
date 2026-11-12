@@ -118,11 +118,25 @@ measurement.
 
 ## Build (Vivado 2026.1, xck26-sfvc784-2LV-c)
 
-BUILD_TABLE
+Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): 7,178 LUTs (6.1 %), 10,322 flip-flops
+(4.4 %), 6.5 block RAM tiles, 0.50 W estimated on chip. **Timing is not met, on the transmit pins only.**
+
+| RGMII worst slack (ns) | Port A setup | Port A hold | Port B setup | Port B hold |
+|---|---|---|---|---|
+| Receive (centre-aligned, PHY RX delay on, 1000 ps IDELAY on each input) | +0.360 | +0.697 | +0.642 | +0.238 |
+| Transmit (TXC edge-aligned, PHY TX delay on, 0.5 ns skew window) | -0.198 | -0.167 | -0.163 | -0.184 |
+
+The constraints and their derivation are in `design.xdc`: no false paths or other exceptions on the RGMII ports, and
+no methodology warning about them. Every other path meets timing. On transmit, the setup and hold slacks add up to
+about -0.36 ns, so no delay setting can close both: in Vivado's corner analysis, the spread between the TXC and data
+output paths is larger than RGMII's 0.5 ns skew window. The ways forward are the PHY data sheet's own transmit window
+(if wider) or a centred TXC with the PHY TX delay off. Until one of them closes, the transmit timing is open: it is not
+waived.
 
 ## Limits
 
 - No board run; the JTAG register script has not run on a board; no KR260 programming path in the flow yet.
+- RGMII transmit timing is not met (up to 0.2 ns, see Build); it must close before a board run.
 - One order slot: at most one order request per received frame, none while the slot is busy.
 - A bad frame's book updates are not rolled back: a bad frame becomes a sequence gap at the next packet, and with
   halt-on-gap set trading stops until the host clears it.
