@@ -53,10 +53,9 @@ def summary() -> dict:
     failed = failed_gates(g)
     io = rgmii((HERE / "io_paths_route.txt").read_text())
     tx_fail = [k for k, v in io.items() if "_tx_" in k and v < 0]
-    note = [f"{len(failed)} gate(s) fail: {', '.join(failed) or 'none'}."]
+    note = [f"{len(failed)} gate(s) fail: {', '.join(failed)}." if failed else "Every gate passes."]
     if tx_fail:
-        note.append("Setup and hold fail on the RGMII transmit pins only (edge-aligned TXC, RGMII v2.0 skew 0.5 ns); "
-                    "reported, not waived.")
+        note.append("Setup or hold fails on the RGMII transmit pins; reported, not waived.")
     if any("cdc" in k for k in failed):
         note.append("A CDC gate fails: see cdc.rpt.")
     return {
@@ -70,8 +69,11 @@ def summary() -> dict:
                               "all_constraints_met": bool(t.get("timing_met"))},
         "rgmii_io_slack_ns": {"source": "io_paths_route.txt, worst per port, direction and check", **io},
         "rgmii_constraints": {
-            "rx": "centre-aligned, PHY RX delay on; -max 2.8, -min 1.2 on both edges; IDELAYE3 1000 ps on each data input",
-            "tx": "edge-aligned forwarded TXC, PHY TX delay on; RGMII v2.0 skew 0.5 ns: -max 3.5, -min +0.5 on both edges"},
+            "rx": "centre-aligned, PHY RX delay on (register 20.7 = 1; the 88E1111 datasheet's 1.2/1.2 ns); -max 2.8, "
+                  "-min 1.2 on both edges; IDELAYE3 1000 ps on each data input",
+            "tx": "edge-aligned forwarded TXC, PHY TX delay on (register 20.1 = 1); the 88E1111 datasheet window (a change "
+                  "up to 0.9 ns after its edge, no earlier than 1.3 ns before the next) less an assumed 0.1 ns board "
+                  "skew: -max 3.2, -min +1.2 on both edges"},
         "utilisation": util((HERE / "utilization.rpt").read_text()),
         "power": {"total_on_chip_w": g["power"]["total_w"], "junction_c": g["power_environment"]["junction_c"],
                   "environment": "still air, no heat sink, 40 C ambient: the pessimistic bound (boards/kr260/board.yaml)"},

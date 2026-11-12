@@ -123,27 +123,28 @@ measurement.
 
 ## Build (Vivado 2026.1, xck26-sfvc784-2LV-c)
 
-Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): 7,219 LUTs (6.2 %), 10,318 flip-flops
-(4.4 %), 6.5 block RAM tiles, 0.50 W estimated on chip. **Timing is not met, on the transmit pins only.** Gates this
-build fails (`summary.json`, generated from `gates.json`): `setup`, `hold`. Every other gate passes, the CDC gates
-included.
+Routed and written to a bitstream (`results/b58a/build/`, `summary.json`): 7,225 LUTs (6.2 %), 10,318 flip-flops
+(4.4 %), 6.5 block RAM tiles, 0.50 W estimated on chip. **Every gate passes** (`summary.json`, generated from
+`gates.json`): worst setup slack +0.102 ns, worst hold slack +0.010 ns.
 
 | RGMII worst slack (ns) | Port A setup | Port A hold | Port B setup | Port B hold |
 |---|---|---|---|---|
 | Receive (centre-aligned, PHY RX delay on, 1000 ps IDELAY on each input) | +0.360 | +0.697 | +0.642 | +0.238 |
-| Transmit (TXC edge-aligned, PHY TX delay on, 0.5 ns skew window) | -0.198 | -0.167 | -0.163 | -0.184 |
+| Transmit (TXC edge-aligned, PHY TX delay on, the PHY's own window less 0.1 ns assumed board skew) | +0.102 | +0.533 | +0.137 | +0.516 |
 
 The constraints and their derivation are in `design.xdc`: no false paths or other exceptions on the RGMII ports, and
-no methodology warning about them. Every other path meets timing. On transmit, the setup and hold slacks add up to
-about -0.36 ns, so no delay setting can close both: in Vivado's corner analysis, the spread between the TXC and data
-output paths is larger than RGMII's 0.5 ns skew window. The ways forward are the PHY data sheet's own transmit window
-(if wider) or a centred TXC with the PHY TX delay off. Until one of them closes, the transmit timing is open: it is not
-waived.
+no methodology warning about them. Both directions use the PHY's own timing from its datasheet (Marvell 88E1111,
+MV-S100649-00 Rev. M, section 4.12.2), with its internal delays on (register 20 bits 7 and 1). On transmit that
+window lets a data change come up to 0.9 ns after its TXC edge and no earlier than 1.3 ns before the next; RGMII
+v2.0's generic +/-0.5 ns, used by an earlier build, missed by up to 0.2 ns. The KR260's TXC-to-TXD trace skew is not
+in our notes: the constraints take an **assumed** 0.1 ns off both sides of the window. A centred TXC from a 90-degree
+MMCM output (PHY TX delay off) was also built and did not close (`results/b58a/build_tx_centred_trial/`).
 
 ## Limits
 
 - No board run; the JTAG register script has not run on a board; no KR260 programming path in the flow yet.
-- RGMII transmit timing is not met (up to 0.2 ns, see Build); it must close before a board run.
+- The transmit constraints assume at most 0.1 ns of TXC-to-TXD skew on the KR260 (not in our notes; the schematic or
+  the board's layout report would confirm it).
 - One order slot: at most one order request per received frame, none while the slot is busy. A soft reset (PULSE
   bit 7) forgets which frame last made a request, so that frame may make one more; it never removes an undo.
 - A bad frame's book updates are not rolled back: a bad frame becomes a sequence gap at the next packet, and with
