@@ -92,9 +92,8 @@ def applicable(goal: str, dg: dict[str, Any], vec: dict[str, Any], spec: dict[st
                plan_fails: list[str] | None = None) -> list[tuple[Strategy, str]]:
     """The strategies for ``goal`` that the reports support, best first, each with the reason it was chosen. A strategy
     whose predicted cost would break another goal's budget is left out (its reason says so in the controller's log)."""
-    if goal == "G3" and plan_fails:
-        # a planned DSP or block RAM that synthesis did not infer is a G3 failure that the plan's own mapping fixes
-        return [(BY_ID["t_plan_map"], "the post-synthesis plan check failed: " + "; ".join(plan_fails)[:300])]
+    # a plan failure is a G3 failure, but its repair (the plan's mapping) is offered under G2 only, so it has one stall
+    # counter; the controller skips G3 (no area strategy yet) and reaches G2 when the plan check is the only G3 problem
     if goal != "G2":
         return []
     f = dg.get("setup_features") or {}

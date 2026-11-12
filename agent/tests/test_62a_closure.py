@@ -441,3 +441,35 @@ def test_latency_record_matches_the_report():
     lat = json.loads((Path(__file__).parents[2] / "results" / "62a_closure" / "latency" / "latency.json").read_text())
     assert [lat[k]["added_clocks"] for k in ("hand fix (PR #134)", "closure, no plan", "closure, with plan")] == [2, 3, 4]
     assert all(r["same_counts_as_original"] for r in lat.values())
+
+
+def test_removed_instances_compare_on_stable_paths():
+    # review R1: synthesis numbers its generated levels (i_1, i_7) per run; the same removal must compare equal
+    a = synth.scan("[Synth 8-13373] Removed Macro Instance : \\u_regs/u_core /i_1/\\u_rom/mem_reg , of type : RAMB18E1 in constant propagation\n")
+    b = synth.scan("[Synth 8-13373] Removed Macro Instance : \\u_regs/u_core /i_7/\\u_rom/mem_reg , of type : RAMB18E1 in constant propagation\n")
+    assert a["removed_instances"] == b["removed_instances"] == ["u_regs/u_core/u_rom/mem_reg (RAMB18E1)"]
+    assert cl.synth_regressions(b, a) == (0, [])
+
+
+def test_plan_map_is_offered_under_one_goal_only(dg):
+    v = cl.goal_vector({"pass": True}, dg, cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), ["plan: x"])
+    assert pb.applicable("G3", dg, v, plan_fails=["plan: x"]) == []
+    assert pb.applicable("G2", dg, v, plan_fails=["plan: x"])[0][0].id == "t_plan_map"
+
+
+def test_plan_check_ignores_a_stale_hierarchy_report(tmp_path):
+    import os
+    import shutil
+    d = tmp_path / "design"
+    b = d / "build" / "base"
+    b.mkdir(parents=True)
+    (d / "architecture.yaml").write_text(yaml.safe_dump({**C13_ARCH, "datapaths": [{**C13_ARCH["datapaths"][0], "instance": "u_gone"}]}))
+    tp.plan_design(d, tp.load_model(path=MODEL))
+    shutil.copy(C13 / "utilization_hier.rpt", b / "utilization_hier.rpt")
+    (b / "gates.json").write_text("{}")
+    old = (b / "gates.json").stat().st_mtime - 100
+    os.utime(b / "utilization_hier.rpt", (old, old))                       # a previous build's report
+    fails = tp.post_synth_failures(d, {"utilization": {"dsp": 0}})
+    assert fails and not any("u_gone" in f for f in fails)                 # checked on the current totals instead
+    os.utime(b / "utilization_hier.rpt", None)                             # fresh: the per-instance check runs
+    assert any("names instance u_gone" in f for f in tp.post_synth_failures(d, {"utilization": {"dsp": 0}}))

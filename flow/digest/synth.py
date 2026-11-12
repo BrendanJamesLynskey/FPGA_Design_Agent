@@ -19,6 +19,19 @@ _RAM_REGS = re.compile(r"\[Synth 8-(?:4767|5858)\][^\n]*|implement(?:ed)? RAM [^
 _MULTI = re.compile(r"\[Synth 8-685[89]\][^\n]*|multi-driven net[^\n]*", re.I)
 _REMOVED = re.compile(r"\[Synth 8-1337[34]\][^\n]*|Removed (?:Unreachable|Macro) [Ii]nstance[^\n]*")
 _NAME = re.compile(r"'([^']+)'")
+_REMOVED_PATH = re.compile(r"(?:Instance\s*:|instance)\s+(.+?)(?:\s*,\s*of type\s*:\s*(\S+)|\s+containing|\s+in constant|$)")
+
+
+def instance_key(line: str) -> str:
+    """A removed instance as a stable name: the hierarchical path without Vivado's escapes and spaces, and without the
+    generated ``i_<n>`` levels synthesis numbers per run (``\\u_regs/u_core /i_1/\\u_a/mem_reg , of type : RAMB36E1``
+    -> ``u_regs/u_core/u_a/mem_reg (RAMB36E1)``), so two builds of the same design compare equal."""
+    m = _REMOVED_PATH.search(line)
+    if not m:
+        return line.strip()[:160]
+    path = m.group(1).replace("\\", "").replace(" ", "")
+    path = "/".join(p for p in path.split("/") if p and not re.fullmatch(r"i_\d+", p))
+    return f"{path} ({m.group(2)})" if m.group(2) else path
 
 
 def _names(lines: list[str]) -> list[str]:
@@ -35,7 +48,7 @@ def scan(log: str) -> dict[str, Any]:
     latches = _names(_LATCH.findall(log))
     rams = _names(_RAM_REGS.findall(log))
     multi = _MULTI.findall(log)
-    removed = sorted({l.strip()[:160] for l in _REMOVED.findall(log)})
+    removed = sorted({instance_key(l) for l in _REMOVED.findall(log)})
     # a multi-driven net or a removed instance means the netlist is not the simulated design (c13_orig_plan,
     # 2026-11-12: two always_ff blocks drove the same registers; Icarus passed, synthesis tied them to GND and removed the core)
     return {"latches": latches, "ram_in_registers": rams, "multi_driven": len(multi), "removed_instances": removed,

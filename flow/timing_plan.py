@@ -628,6 +628,10 @@ def post_synth_failures(design: Path, gates: dict[str, Any] | None) -> list[str]
     # the flow writes the hierarchical utilisation after routing (utilization_hier.rpt); a synthesis-only build has none
     b = Path(design) / "build" / "base"
     hier = next((f for f in (b / "utilization_hier_synth.rpt", b / "utilization_hier.rpt") if f.is_file()), None)
+    # a hierarchical report older than this build's synthesis is a previous build's: do not check against it
+    synth_mark = next((f for f in (b / "post_synth.dcp", b / "gates.json") if f.is_file()), None)
+    if hier and synth_mark and hier.stat().st_mtime < synth_mark.stat().st_mtime - 1:
+        hier = None
     rows = parse_hier(hier.read_text()) if hier else None
     return check_post_synth(p, util, rows)
 

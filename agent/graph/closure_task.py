@@ -9,9 +9,10 @@
 - **G1** is the task's hidden acceptance bench (``benchmark/tools/run_task.py``), never the writer's own test.
 - **The build** is ``flow/run_vivado.sh <design> base`` (it caps its own memory). On a shared machine, set
   ``FDA_BUILD_LOCK_CMD`` to a command that takes a build lock: it is called as ``<cmd> --env "<prefix>: <text>"``, must
-  exit 0 and print ``LOCK_FILE=<lock file>`` (``HEAVY_LOCK=`` is read too) (and optionally ``FDA_VIVADO_THREADS=<n>``) when the lock is taken, and is
+  exit 0 and print ``LOCK_FILE=<lock file>`` (and optionally ``FDA_VIVADO_THREADS=<n>``) when the lock is taken, and is
   retried every minute until then; the lock file is removed afterwards only if its text starts with the prefix
-  (``--lock-prefix``, default ``closure``). Unset, the build runs at once.
+  (``--lock-prefix``, default ``closure``). Without the variable the tool refuses to build, unless ``--no-lock`` says
+  the machine is not shared.
 - **The RTL writer** is one OpenRouter call per attempt (luna by default; Fable and Opus are refused by llm.py).
 
 Records ``history.jsonl``, ``summary.json``, ``llm_calls.jsonl`` and the final RTL in ``--out``.
@@ -149,7 +150,11 @@ def main(argv: list[str] | None = None) -> int:
                     help="text the build lock starts with (only a lock with this prefix is removed)")
     ap.add_argument("--build-only", action="store_true", help="stage, check G1 and build once; no edits")
     ap.add_argument("--clock-mhz", type=float, help="seeded timing miss: raise the board clock to this frequency")
+    ap.add_argument("--no-lock", action="store_true",
+                    help="build without a build lock (only on a machine no one else is building on)")
     a = ap.parse_args(argv)
+    if not LOCK_CMD and not a.no_lock:
+        ap.error("set FDA_BUILD_LOCK_CMD to the build-lock command, or pass --no-lock on a machine no one else builds on")
     task = a.task.resolve()
     out = (a.out or ROOT / "results" / "62a_closure" / a.case).resolve()
     out.mkdir(parents=True, exist_ok=True)

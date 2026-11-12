@@ -15,3 +15,5 @@ TIMING AND RESOURCE PLAN (computed from the 7series delay model, 70% of the peri
     stage 4 (~4.708 ns, register after it: fabric): x_times_cos|y_times_sin: P out to fabric; projection_sum: add level 1
     stage 5 (~5.704 ns, register after it: fabric): projection_sum: add level 2; fixed_point_rounding_shift: constant shift (wiring); bin_address_select: 2 LUT levels
     stage 6 (~5.131 ns, register after it: fabric): bin_count_memory: BRAM read (output register); saturating_increment: add level 1
+
+Why 5 x 8 here and 9 x 9 in the delay model: the plan sizes each multiply at the operand widths the architect wrote in architecture.yaml (5 and 8 bits), while 9 x 9 is only the size the calibration build measured; the DSP stages do not depend on the width up to 25 x 18.

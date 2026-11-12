@@ -216,7 +216,7 @@ slices, block RAM or logic and picks the pipeline depth from a measured delay mo
 
 On Vivado 2026.1, one run per case:
 - the c13_hough_lines reference, which misses 100 MHz, closed in one iteration with and without the plan;
-- seeded timing misses closed in 1 of 3 cases;
+- seeded timing misses closed in 1 of 3 cases (c16_montgomery_mult at 200 MHz);
 - the RTL writer working from the plan failed the hidden bench in all 6 attempts.
 
 How it works, terms and commands: [docs/closure_loop.md](docs/closure_loop.md). Results and caveats:

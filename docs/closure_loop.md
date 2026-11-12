@@ -9,7 +9,7 @@ stages each datapath needs, so the loop starts from a design that is already clo
 **What has been shown (Vivado 2026.1, Artix-7 xc7a100t, one run per case):**
 - **c13_hough_lines:** a course reference that misses 100 MHz by 0.17 to 0.23 ns. The loop closed it in one iteration,
   both with and without the plan.
-- **Seeded misses:** of three development designs built at a raised clock, 1 closed (c16 at 200 MHz). The other two
+- **Seeded misses:** of three development designs built at a raised clock, 1 closed: c16_montgomery_mult at 200 MHz. The other two
   improved but stopped at the 5-iteration limit.
 - **Nulls:** the RTL writer working from the plan failed the hidden bench 6 times out of 6. The first with-plan loop run
   accepted a design that synthesis had removed; it is not counted, and it led to the synthesis guard described below.
