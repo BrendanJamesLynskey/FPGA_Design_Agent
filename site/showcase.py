@@ -38,8 +38,10 @@ KINDS = ("wave", "hist", "shmoo")
 PROSE_OK = re.compile(
     r"\bVivado 2026\.1\b|\bxc[a-z0-9]+(?:-[a-z0-9]+)+\b|AXI4-Lite|AXI4-Stream|\bAXI[34]\b|\bDSP48(?:E[12])?\b|\b7-series\b|"
     r"\bZynq-7000\b|\bArtix-7\b|\bKintex-7\b|\bVirtex-7\b|\bV[0-3](?: to V[0-3])?\b|\bK26\b|\bKR260\b|\bKV260\b|"
-    r"\bNexys A7(?:-100T)?\b|\bA7-100T\b|\bI2C\b|\bPS[78]\b|\b64b/66b\b|\b8b/10b\b|\b(?:1|10|25)G\b|\bDDR[2-5]\b|\bIEEE-1735\b|\bIHI \d{4}[A-Z]?\b",
+    r"\bNexys A7(?:-100T)?\b|\bA7-100T\b|\bI2C\b|\bPS[78]\b|\b64b/66b\b|\b8b/10b\b|\b(?:1|10|25)G\b|\bDDR[2-5]\b|\bIEEE-1735\b",
     re.I)
+#: the two Arm document numbers the AXI page cites, exactly and case-sensitively (no other "IHI dddd" is exempt)
+PROSE_EXACT = re.compile(r"\bIHI 0022H\b|\bIHI 0051B\b")
 #: any run of digits is a number wherever it stands (after a letter, '#', '.' or a hyphen too); a leading minus counts
 NUM = re.compile(r"-?\d+(?:[.,]\d+)*")
 REQUIRED = {"published": ["id", "title", "one_line", "board", "part", "headline", "hero", "story", "evidence", "limits"],
@@ -58,7 +60,7 @@ class ContractError(ValueError):
 
 
 def _numbers(s: str) -> list[str]:
-    return [n for n in NUM.findall(PROSE_OK.sub(" ", str(s))) if any(c.isdigit() for c in n)]
+    return [n for n in NUM.findall(PROSE_OK.sub(" ", PROSE_EXACT.sub(" ", str(s)))) if any(c.isdigit() for c in n)]
 
 
 def _no_typed_numbers(where: str, s: str):
@@ -423,15 +425,16 @@ def page_body(p: dict) -> str:
             v = x[c]
             txt = E(cell_text(v))            # as recorded: 58.0 stays 58.0, like the other rows; yes/no, blank for none
             return _link(x[T["link"]], str(v)) if T["link"] and c == T["link_column"] else txt
-        body = "".join("<tr>" + "".join(f"<td>{cell(x, c)}</td>" for c, _ in T["columns"]) + "</tr>" for x in T["rows"])
-        table = (f'<div class="tbl"><table><caption class="small muted">{E(T["caption"])}</caption>'
+        body = "".join("<tr>" + "".join(f'<td data-label="{E(h)}">{cell(x, c)}</td>' for c, h in T["columns"]) + "</tr>" for x in T["rows"])
+        table = (f'<div class="tbl"><table class="sc-stack"><caption class="small muted">{E(T["caption"])}</caption>'
                  f'<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>')
     rtab = ""
     if S.get("results_table"):
         R = S["results_table"]
-        rtab = (f'<div class="tbl"><table class="sc-rtable"><caption class="small muted">{E(R["caption"])}</caption><thead><tr>'
+        rtab = (f'<div class="tbl"><table class="sc-rtable sc-stack"><caption class="small muted">{E(R["caption"])}</caption><thead><tr>'
                 + "".join(f"<th>{E(h)}</th>" for h in R["head"]) + "</tr></thead><tbody>"
-                + "".join("<tr>" + "".join(f"<td>{E(c)}</td>" for c in row) + "</tr>" for row in R["rows"]) + "</tbody></table></div>")
+                + "".join("<tr>" + "".join(f'<td data-label="{E(h)}">{E(c)}</td>' for h, c in zip(R["head"], row)) + "</tr>" for row in R["rows"])
+                + "</tbody></table></div>")
     details = "".join(f'<details class="more"><summary>{E(d["title"])}</summary><p>{E(d["text"])}</p></details>'
                       for d in S.get("details", []))
     return f"""<div class="sc-page"><p class="eyebrow"><a href="../showcase.html">Showcase</a> &middot; {E(p["board"])} ({E(p["part"])}) &middot; Vivado {E(p["vivado"])}</p>

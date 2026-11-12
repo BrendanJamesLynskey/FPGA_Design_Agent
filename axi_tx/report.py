@@ -171,7 +171,10 @@ def readme(d: dict[str, Any]) -> str:
               " board was used ([board_plan.yaml](../../axi_tx/programs/board_plan.yaml)); a run passes when its verdict is the"
               f" one the plan expects ([board_run.json](board_run.json)). Build ID `{d.get('build_id')}` (read back over JTAG"
               f" before the runs: {'matched' if (board.get('build_id_jtag') or {}).get('match') else 'not recorded'}), build"
-              f" stamp `{d.get('build_stamp')}`.",
+              f" stamp `{d.get('build_stamp')}`, built from commit `{build.get('built_from_commit', '?')}`."
+              + (f" A build of this pull request (checked at commit `{build['later_build']['commit']}`) gives build ID"
+                 f" `{build['later_build']['build_id']}`, because build inputs changed after the board run, though no logic did"
+                 " ([board_build.json](board_build.json), [earlier attempts](board_run_attempts.md))." if build.get("later_build") else ""),
               f"Operating conditions: {'inside' if d['conditions']['inside_roc'] else 'OUTSIDE'} the recommended operating conditions"
               " at every sample (JTAG XADC before and after, fabric XADC with its min/max and latched alarms after every run).", ""]
         att = RES / "board_run_attempts.md"

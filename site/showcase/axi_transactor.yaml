@@ -50,6 +50,9 @@ values:
   ff_fired: {source: results/59a_axi_tx/summary.json, expr: "get:false_fire_fired"}
   a1_pass: {source: results/59a_axi_tx/summary.json, expr: "get:first_attempt_pass"}
   solver_min: {source: results/59a_axi_tx/summary.json, expr: "get:formal_solver_minutes"}
+  board_commit: {source: results/59a_axi_tx/board_build.json, expr: "get:built_from_commit"}
+  later_commit: {source: results/59a_axi_tx/board_build.json, expr: "get:later_build.commit"}
+  later_id: {source: results/59a_axi_tx/board_build.json, expr: "get:later_build.build_id"}
   stream_bits: {source: axi_tx/rtl/axi_tx_core.sv, expr: "re:SDATA_W != (\\d+)"}
 headline: "A hardware checker that watches an AXI bus and names the rule a bug breaks. On the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) it flagged the expected rule in all {bug_runs} runs with a seeded protocol bug ({faults} faults), and against our own peripheral and stream FIFO the board's traffic matched simulation cycle for cycle in {parity_eq} of {parity} runs."
 hero:
@@ -101,7 +104,7 @@ evidence:
   - {kind: record, label: "Formal proofs and checker mutants", path: results/59a_axi_tx/formal.json}
   - {kind: record, label: "Resource cost per configuration and the AMD IP build test", path: results/59a_axi_tx/resources.json}
   - {kind: conditions, label: "Die temperature and rails before, during and after the runs, against the recommended operating conditions", path: results/59a_axi_tx/board_run.json}
-  - {kind: versions, label: "Vivado 2026.1, build ID {build_id}, timing, power and gate results", path: results/59a_axi_tx/board_build.json}
+  - {kind: versions, label: "Vivado 2026.1, build ID {build_id} (built from commit {board_commit}; a build of this pull request, checked at commit {later_commit}, gives build ID {later_id} because build inputs changed, though no logic did), timing, power and gate results", path: results/59a_axi_tx/board_build.json}
   - {kind: requirements, label: "Requirements traced", text: "Not done yet: the programs carry requirement tags, but nothing reads them yet."}
 limits:
   not_measured:

@@ -13,7 +13,7 @@ AR_HOLD = a request dropped or changed before it was accepted; IN_RESET = a VALI
 
 ## On the board (Nexys A7-100T, xc7a100tcsg324-1, Vivado 2026.1)
 
-17 of 17 runs passed. The runs and what each must show were written in a plan before the board was used ([board_plan.yaml](../../axi_tx/programs/board_plan.yaml)); a run passes when its verdict is the one the plan expects ([board_run.json](board_run.json)). Build ID `44b780c9` (read back over JTAG before the runs: matched), build stamp `19a86593`.
+17 of 17 runs passed. The runs and what each must show were written in a plan before the board was used ([board_plan.yaml](../../axi_tx/programs/board_plan.yaml)); a run passes when its verdict is the one the plan expects ([board_run.json](board_run.json)). Build ID `44b780c9` (read back over JTAG before the runs: matched), build stamp `19a86593`, built from commit `e562dd3`. A build of this pull request (checked at commit `ad99917`) gives build ID `94eca24c`, because build inputs changed after the board run, though no logic did ([board_build.json](board_build.json), [earlier attempts](board_run_attempts.md)).
 Operating conditions: inside the recommended operating conditions at every sample (JTAG XADC before and after, fabric XADC with its min/max and latched alarms after every run).
 
 Earlier attempts, before this plan's final run, are listed in [board_run_attempts.md](board_run_attempts.md): the model and the RTL were changed after them, and the whole plan was then run again on the final build.

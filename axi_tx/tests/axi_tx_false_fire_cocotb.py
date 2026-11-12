@@ -93,10 +93,25 @@ async def legal_unusual_traffic_fires_nothing(dut):
         total += len(cycles)
         res.append({"scenario": name, "cycles": len(cycles), "fired": fired})
         dut._log.info("%s: %s", name, "quiet" if not fired else fired)
+    # positive control: an illegal cycle (a write response with nothing outstanding) must fire B_EARLY, so a probe whose
+    # rule bits were disconnected could not pass by staying quiet
+    control_fired = []
+    for c in [w(bvalid=1), w(bvalid=0)]:
+        await Timer(1, unit="ns")
+        for k, v in c.items():
+            getattr(dut, k).value = v
+        await ReadOnly()
+        control_fired.append(int(dut.lviol.value))
+        await RisingEdge(dut.clk)
+    b_early = 1 << 5
+    control = {"scenario": "control: BVALID with no write outstanding (illegal)", "expect": "B_EARLY",
+               "fired": bool(control_fired[0] & b_early)}
     out = os.environ.get("AXI_TX_FF_OUT")
     if out:
         with open(out, "w") as f:
             json.dump({"scenarios": len(res), "cycles": total, "fired": sum(bool(r["fired"]) for r in res),
-                       "rules": "10 AXI4-Lite, 3 AXI4-Stream protocol rules (profile rules off)", "results": res}, f, indent=1)
+                       "rules": "10 AXI4-Lite, 3 AXI4-Stream protocol rules (profile rules off)", "results": res,
+                       "positive_control": control}, f, indent=1)
             f.write("\n")
     assert not any(r["fired"] for r in res), [r for r in res if r["fired"]]
+    assert control["fired"], control

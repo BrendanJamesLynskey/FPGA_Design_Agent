@@ -195,9 +195,11 @@ def test_e2e_published_showcase_pages_render(tmp_path):
         (out / f).write_text(p)
     pub = [f for f in pages if f.startswith("showcase/")]
     assert pub, "no published showcase page"
+    env = {**__import__("os").environ, "NODE_PATH": "/home/brendan/Claude_sandbox/node_modules"}
+    if env.get("FDA_E2E_RECORD"):          # the published pages' check, kept as a record (overlaps, text size, reduced motion)
+        env["E2E_RECORD"] = env["FDA_E2E_RECORD"]
     r = subprocess.run(["node", str(SITE / "tests" / "e2e_render.js"), str(out), ",".join(["showcase.html", *pub])],
-                       capture_output=True, text=True,
-                       env={**__import__("os").environ, "NODE_PATH": "/home/brendan/Claude_sandbox/node_modules"}, timeout=600)
+                       capture_output=True, text=True, env=env, timeout=900)
     assert r.returncode == 0, r.stdout + r.stderr
 
 def test_home_visit_strip_counts_match_the_record():
@@ -487,3 +489,20 @@ def test_cells_paragraphs_and_results_table(tmp_path):
     y["story"]["results_table"]["rows"] = [["one cell only"]]
     with pytest.raises(showcase.ContractError, match="same length"):
         showcase.build(_write(tmp_path, y), allow_fixtures=True)
+
+
+
+def _tmp():
+    import tempfile
+    return Path(tempfile.mkdtemp())
+
+
+def test_only_the_two_arm_document_numbers_are_exempt():
+    """The AXI page cites IHI 0022H and IHI 0051B; no other "IHI dddd" (or a different case) hides a typed number."""
+    assert showcase._numbers("AXI (IHI 0022H) and AXI4-Stream (IHI 0051B)") == []
+    assert showcase._numbers("IHI 4242 runs passed") == ["4242"]
+    assert showcase._numbers("ihi 0022h") != []
+    y = _demo()
+    y["story"]["problem"] = "IHI 4242 runs passed."
+    with pytest.raises(showcase.ContractError, match="typed number"):
+        showcase.build(_write(_tmp(), y), allow_fixtures=True)

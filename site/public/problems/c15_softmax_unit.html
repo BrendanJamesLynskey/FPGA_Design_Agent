@@ -405,9 +405,9 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 .kitsvg .future.solid { fill: var(--panel); opacity: 1; }
 .kitsvg .kring { fill: none; stroke: var(--warn); stroke-width: 1.6; }
 .kit .kitart:has(.stagedwave) { max-width: none; }
-.wavekey { margin: 4px 0 0; }
+.wavekey { margin: 4px 0 0; color: var(--ink-2); }
 .stagedwave .kml { font-weight: 600; }
-.stagedwave.narrow text { font-size: 14px; }   /* 14 units in a 360-unit drawing: about 13 px on a 390 px phone */
+.stagedwave.narrow text { font-size: 16px; }   /* 16 units in a 360-unit drawing: at least 12 px on a 390 px phone (the e2e measures it) */
 /* showcase pages: a wider text column; commands wrap rather than run off a phone screen */
 .sc-page p, .sc-page li, .sc-page dd, .sc-page figcaption { max-width: 74ch; }
 .sc-page pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -464,6 +464,18 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
   .bar .wrap { flex-wrap: wrap; row-gap: 0; }
   .bar .brand { flex: 1 1 auto; }
   .bar nav { order: 3; flex: 1 0 100%; }
+}
+
+/* showcase tables on phones: each row becomes a block of "header: value" lines, so no column is hidden behind a sideways
+   scroll and captions wrap (the header text comes from each cell's data-label) */
+@media (max-width: 640px) {
+  .sc-page table.sc-stack, .sc-page table.sc-stack tbody, .sc-page table.sc-stack tr, .sc-page table.sc-stack td { display: block; width: 100%; }
+  .sc-page table.sc-stack caption { display: block; white-space: normal; text-align: left; }
+  .sc-page table.sc-stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .sc-page table.sc-stack tr { border-top: 1px solid var(--rule); padding: 6px 0; }
+  .sc-page table.sc-stack td { border: 0; padding: 2px 0; }
+  .sc-page table.sc-stack td::before { content: attr(data-label) ": "; font-weight: 600; color: var(--ink-2); }
+  .sc-page table.sc-stack td:empty::before { content: attr(data-label) ": none"; }
 }
 </style>
 </head>
