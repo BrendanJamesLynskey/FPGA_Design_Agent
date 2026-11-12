@@ -75,6 +75,10 @@ different length (582,659 against 661,839 bytes). Gates passed on both.
   latched min/max since configuration 24.98-26.09 C, VCCINT 1.0049-1.0071 V, VCCAUX 1.7805-1.7952 V, VCCBRAM
   1.0042-1.0071 V; alarm flags 0000; **inside** the Artix-7 -1 recommended operating conditions (DS181 table 2) and the
   board's 85 C limit. The XADC samples at about 1 MSPS across channels, so it cannot see nanosecond droop.
+- Conditions again at 05:46 (`conditions_end.txt`), the same bitstream still loaded (programmed at 04:47; the first
+  end-of-run read was refused by the flow's one-Vivado guard while another session's build ran): 26.1 C, VCCINT
+  1.006 V, VCCAUX 1.794 V, VCCBRAM 1.006 V; min/max latched over the whole hour 24.73-26.45 C, VCCINT 1.0042-1.0071 V,
+  VCCAUX 1.7805-1.7966 V, VCCBRAM 1.0042-1.0078 V; flags 0000; inside ROC. USR_ACCESS still read `89315dac`.
 
 ## Sample release bundle
 
