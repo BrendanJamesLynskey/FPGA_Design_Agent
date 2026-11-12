@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Scrolling message on the eight 7-segment digits | End-to-end FPGA Agent</title>
+<title>Scrolling message on the eight 7-segment digits | FPGA Design Agent</title>
 <meta name="description" content="Scrolling message on the eight 7-segment digits: the spec, hidden tests, reference RTL, mutants and golden model of benchmark task t2_sevenseg_marquee.">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -51,7 +51,7 @@ p { margin: 0 0 1em; }
 /* top bar */
 .bar { position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid var(--rule);
   margin: 0 calc(-1 * max(16px, env(safe-area-inset-left))); padding: 0 max(16px, env(safe-area-inset-left)); }
-.bar .wrap { display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
+.bar .wrap { max-width: 1200px; display: flex; align-items: center; gap: 4px 14px; flex-wrap: wrap; min-height: 52px; }
 .brand { font-weight: 700; text-decoration: none; margin-right: auto; padding: 8px 0; }
 .bar nav { display: flex; flex-wrap: wrap; gap: 0 4px; }
 .bar nav a { padding: 10px 6px; text-decoration: none; color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; }
@@ -61,7 +61,6 @@ button:hover { border-color: var(--ink-3); }
 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
 /* sections, cards */
-.hero { padding: 36px 0 8px; }
 .eyebrow { font: 600 .8rem var(--f-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 22px 0; }
 .fact { border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
@@ -119,20 +118,31 @@ svg .warn { stroke: var(--warn); fill: none; }
 @media (max-width: 520px) { .strip { grid-template-columns: minmax(0, 1fr) auto; } .strip .k { display: none; } }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 
-/* Home hero: FPGA fabric backdrop (canvas, monochrome, drawn by app.js; still under reduced motion). */
-.hero { position: relative; isolation: isolate; padding: 72px 0 40px; }
-#fabric { position: absolute; z-index: -1; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%;
-  pointer-events: none;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
-  -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to bottom, #000 0%, #000 50%, transparent 100%), linear-gradient(to right, rgba(0,0,0,.4) 0%, rgba(0,0,0,.4) 50%, #000 78%);
-  mask-composite: intersect; }
-@media (max-width: 640px) { #fabric { opacity: .55; } }
-.hero h1 { font-size: clamp(2.4rem, 1.2rem + 5.6vw, 4.6rem); letter-spacing: -.025em; margin: .15em 0 .2em; }
-.strap { font-size: clamp(1.15rem, .9rem + 1.2vw, 1.6rem); line-height: 1.3; font-weight: 600; margin: 0 0 .8em; max-width: 40ch; }
-.boards { font: .9rem/1.5 var(--f-mono); color: var(--ink-2); max-width: 70ch; }
-.boards span { background: var(--bg); box-shadow: 0 0 0 3px var(--bg); }
-.hero h1, .hero .strap { text-shadow: 0 0 12px var(--bg), 0 0 4px var(--bg); }
+
+.hero { padding: 40px 0 8px; }
+.hero h1 { font-size: clamp(1.9rem, 1.1rem + 3.4vw, 3.2rem); letter-spacing: -.02em; margin: .1em 0 .35em; max-width: 30ch; }
+.hero .lede { color: var(--ink); }
+.status { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 20px 0 8px; }
+.status .fact .n { font-size: 1.7rem; }
+.who { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 12px 0; }
+.who > div { border-top: 2px solid var(--ink); padding-top: 8px; }
+.who h3 { margin: 0 0 .3em; font-size: 1rem; }
+.who ul { margin: 0; padding-left: 1.1em; font-size: .94rem; }
+.who li { margin: .25em 0; }
+.byline { border-left: 3px solid var(--ink); padding: 4px 0 4px 14px; margin: 18px 0; }
+.next { margin-top: 2.4em; font-weight: 600; }
+/* every development run, by outcome (home and results) */
+.runs .lane { display: grid; grid-template-columns: minmax(0, 20ch) 1fr 3ch; gap: 8px; align-items: center; font-size: .88rem; margin: 4px 0; }
+.runs .marks { display: flex; flex-wrap: wrap; gap: 4px; min-height: 18px; }
+.runs .m { width: 16px; height: 16px; border: 1.5px solid var(--ink); display: inline-block; }
+.runs .m.pass { background: var(--ink); }
+.runs .m.caught_and_repaired { background: linear-gradient(135deg, var(--ink) 0 50%, var(--bg) 50%); }
+.runs .m.internal_stop_hidden_pass { background: var(--ink); border-style: dashed; border-color: var(--ink-3); }
+.runs .m.escape { background: repeating-linear-gradient(135deg, var(--bg) 0 3px, var(--warn) 3px 4px); border-color: var(--warn); }
+.runs .m.fail { border-color: var(--warn); }
+.runs .m.now { outline: 2px solid var(--accent); outline-offset: 2px; }
+.runs .cnt { font-family: var(--f-mono); text-align: right; }
+@media (max-width: 520px) { .runs .lane { grid-template-columns: 1fr 3ch; } .runs .lane .lab { grid-column: 1 / -1; } }
 
 /* problems: index and task pages */
 .dombars { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
@@ -359,16 +369,64 @@ ul.variants p { margin: .3em 0 .5em; }
 ul.fixes { padding-left: 1.1em; }
 ul.fixes li { margin-bottom: .8em; }
 ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
+
+/* Showcase (brief 61): index cards, project pages and the graphics kit */
+.sc-grid { list-style: none; padding: 0; margin: 0 0 1em; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.sc-card { max-width: none; border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; }
+.sc-card.sc-in_progress { border-style: dashed; border-color: var(--ink-3); }
+.sc-card .vh { display: flex; gap: 8px 12px; align-items: baseline; flex-wrap: wrap; justify-content: space-between; }
+.sc-card h3 { margin: 0; }
+.sc-card p { margin: .5em 0 0; }
+.sc-plan li { margin: .4em 0; }
+.sc-headline { font-weight: 600; color: var(--ink); }
+.sc-results li { margin: .4em 0; }
+.sc-agent dt { font-weight: 600; margin-top: .8em; }
+.sc-agent dd { margin: .2em 0 0; max-width: var(--measure); }
+.kit .kitart { max-width: 640px; }
+.kitsvg .kbar { fill: var(--ink); }
+.kitsvg .kbar.now { fill: var(--accent); }
+.kitsvg .kmark { stroke: var(--warn); stroke-dasharray: 4 3; }
+.kitsvg .kcell { fill: none; stroke: var(--rule); }
+.kitsvg .kpass { fill: var(--ink); }
+.kitsvg .kfail { fill: var(--bg); stroke: var(--warn); stroke-width: 1.5; }
+.kitsvg .kcur { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.kitsvg .kcount { font-weight: 600; }
+.hres .hgrid { stroke: var(--rule); stroke-width: 1; }
+.hres .hzero { stroke: var(--ink); stroke-width: 1.5; }
+.hres .hbar30 { stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.hres .hci { stroke: var(--ink); stroke-width: 3; }
+.hres .hci0 { stroke: var(--ink-3); stroke-width: 3; stroke-dasharray: 2 3; }
+.hres .hpt { fill: var(--ink); }
+.hres .hpt0 { fill: var(--panel); stroke: var(--ink); stroke-width: 1.5; }
+
+/* the loop replay's stage visits (home) */
+.visits { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 8px 0; }
+.visits .vlab { margin-right: 6px; }
+.visits .vb { min-width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--ink-3); font: 600 .75rem var(--f-mono); color: var(--ink-2); }
+.visits .vb.rep { border-color: var(--warn); background: repeating-linear-gradient(135deg, transparent 0 4px, var(--rule) 4px 5px); }
+.visits .vb.past { border-color: var(--ink); color: var(--ink); }
+.visits .vb.now { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* phones: the page links become one row that scrolls sideways, so the first screen starts with the page */
+@media (max-width: 640px) {
+  .bar .wrap { flex-wrap: nowrap; gap: 0 8px; }
+  .bar nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; min-width: 0; flex: 1 1 auto; }
+  .bar nav a { white-space: nowrap; }
+  .brand { margin-right: 4px; white-space: nowrap; }
+}
+.toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
+.toc a { color: var(--ink-2); }
+.chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">End-to-end FPGA Agent</a><nav aria-label="Pages"><a href="../index.html">Home</a><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">How it is evaluated</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Scrolling message on the eight 7-segment digits</h1>
 <p class="tags"><code>t2_sevenseg_marquee</code> <span class="tag">Benchmark v1</span> <span class="tag">T2</span> <span class="tag">A Basic digital design drills</span> <span class="tag">Nexys A7-100T</span></p>
-<figure><div class="player trace" id="trace" aria-label="Golden model replay"><div class="wave"></div><p class="cap" aria-live="polite"></p></div><figcaption>The task's own golden model (<code>hidden/model.py</code>) run on a fixed input when the site is built, so this is what the hidden tests check. The message FPGA-7SEG- (10 characters, each written as a raw segment byte) is scrolled 12 steps left and then 8 steps right. The window text below is those bytes shown as the letters they draw. Space plays and pauses, arrow keys step.</figcaption></figure>
+<figure><div class="player trace" id="trace" aria-label="Golden model replay"><div class="wave"></div><p class="cap" aria-live="polite"></p></div><figcaption>What a correct design must do: the task's reference model, written from the hidden spec and run on a fixed input; the hidden tests compare against it (<code>hidden/model.py</code>). The message FPGA-7SEG- (10 characters, each written as a raw segment byte) is scrolled 12 steps left and then 8 steps right. The window text below is those bytes shown as the letters they draw. Space plays and pauses, arrow keys step.</figcaption></figure>
 <h2>The problem</h2>
 <p>A scrolling message on the eight seven-segment digits. Each character of the message is a raw pattern of segments that the user writes, so odd symbols are possible, and the digits show an eight-character window onto the message that wraps round. When scrolling is on, the window moves one character at a time in either direction, and a brightness setting dims the display by shortening how long each digit is lit.</p>
 <p><strong>Where it is used.</strong> Segment displays with time-shared digits appear in clocks, appliances, test equipment and price displays, and scrolling text is how a short message is fitted onto a display that is too narrow for it.</p>
@@ -780,7 +838,7 @@ SCROLL, DIR = 1, 2
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Step 0: Scrolling starts from the beginning of the message. Position 0; the eight digits show FPGA-7SE.","Step 1: The text moves one character left. Position 1; the eight digits show PGA-7SEG.","Step 2: The text moves one character left. Position 2; the eight digits show GA-7SEG-.","Step 3: The text moves one character left. Position 3; the eight digits show A-7SEG-F.","Step 4: The text moves one character left. Position 4; the eight digits show -7SEG-FP.","Step 5: The text moves one character left. Position 5; the eight digits show 7SEG-FPG.","Step 6: The text moves one character left. Position 6; the eight digits show SEG-FPGA.","Step 7: The text moves one character left. Position 7; the eight digits show EG-FPGA-.","Step 8: The text moves one character left. Position 8; the eight digits show G-FPGA-7.","Step 9: The text moves one character left. Position 9; the eight digits show -FPGA-7S.","Step 10: The text moves one character left. The message wraps round to its start. Position 0; the eight digits show FPGA-7SE.","Step 11: The text moves one character left. Position 1; the eight digits show PGA-7SEG.","Step 12: The text moves one character left. Position 2; the eight digits show GA-7SEG-.","Step 13: The direction is reversed, so the text moves right. Position 1; the eight digits show PGA-7SEG.","Step 14: The text moves one character right. Position 0; the eight digits show FPGA-7SE.","Step 15: The text moves one character right. The message wraps round to its end. Position 9; the eight digits show -FPGA-7S.","Step 16: The text moves one character right. Position 8; the eight digits show G-FPGA-7.","Step 17: The text moves one character right. Position 7; the eight digits show EG-FPGA-.","Step 18: The text moves one character right. Position 6; the eight digits show SEG-FPGA.","Step 19: The text moves one character right. Position 5; the eight digits show 7SEG-FPG.","Step 20: The text moves one character right. Position 4; the eight digits show -7SEG-FP."],"signals":[{"kind":"text","name":"window (left to right)","v":["FPGA-7SE","PGA-7SEG","GA-7SEG-","A-7SEG-F","-7SEG-FP","7SEG-FPG","SEG-FPGA","EG-FPGA-","G-FPGA-7","-FPGA-7S","FPGA-7SE","PGA-7SEG","GA-7SEG-","PGA-7SEG","FPGA-7SE","-FPGA-7S","G-FPGA-7","EG-FPGA-","SEG-FPGA","7SEG-FPG","-7SEG-FP"]},{"kind":"bus","name":"POS","radix":"dec","v":[0,1,2,3,4,5,6,7,8,9,0,1,2,1,0,9,8,7,6,5,4]},{"kind":"bus","name":"leftmost digit","radix":"hex","v":[113,115,61,119,64,7,109,121,61,64,113,115,61,115,113,64,61,121,109,7,64],"width":8},{"kind":"bus","name":"rightmost digit","radix":"hex","v":[121,61,64,113,115,61,119,64,7,109,121,61,64,61,121,109,7,64,119,61,115],"width":8},{"kind":"bit","name":"DIR","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1]}],"stimulus":"The message FPGA-7SEG- (10 characters, each written as a raw segment byte) is scrolled 12 steps left and then 8 steps right. The window text below is those bytes shown as the letters they draw.","unit":"scroll step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -839,7 +897,7 @@ SCROLL, DIR = 1, 2
     root.appendChild(ctl);
     if (!root.hasAttribute("tabindex")) root.setAttribute("tabindex", "0");
     function show() {
-      rng.value = i; pos.textContent = (i + 1) + " / " + n;
+      rng.value = i; pos.textContent = (i + 1) + " / " + n; rng.setAttribute("aria-valuetext", "step " + (i + 1) + " of " + n);
       var c = onFrame(i);
       if (live && c != null) live.textContent = c;
     }
@@ -1518,10 +1576,130 @@ SCROLL, DIR = 1, 2
         if (on[p.dataset.p]) p.parentNode.insertBefore(p, p.parentNode.querySelector("[data-tok]")); });   /* lit paths drawn over the shared rail */
       all("[data-person]").forEach(function (g) { cls(g, "on", g.dataset.person === f.person); });
       move(f, !reduce);
+      if (strip) { var vi = vOf[i]; vbox.forEach(function (b, k) { cls(b, "now", k === vi); cls(b, "past", vi != null && k < vi); }); }
       return f.cap;
+    }
+    /* the run's stage visits in order, one box each; a repair (a visit to the same or an earlier stage, as loop.py counts it) is hatched */
+    var V = [], vOf = [], key = null;
+    F.forEach(function (f, i) {
+      if (f.stage == null) { vOf.push(V.length ? V.length - 1 : null); return; }
+      var k = f.stage + "/" + f.visit;
+      if (k !== key) { V.push({ stage: f.stage, visit: f.visit, visits: f.visits, rep: V.length > 0 && f.stage <= V[V.length - 1].stage }); key = k; }
+      vOf.push(V.length - 1);
+    });
+    var strip = null, vbox = [];
+    if (V.length > 1) {
+      var nrep = V.filter(function (v) { return v.rep; }).length;
+      strip = el("div", { class: "visits", role: "img", "aria-label": "Stage visits in this run: " + V.length + ", of them " + nrep + " repairs" });
+      strip.appendChild(el("span", { class: "vlab small muted", text: V.length + " stage visits by stage number; hatched, the " + nrep + " repairs:" }));
+      V.forEach(function (v) { var b = el("span", { class: "vb" + (v.rep ? " rep" : ""), text: String(v.stage), title: "stage " + v.stage + ", visit " + v.visit + " of " + v.visits + (v.rep ? ", a repair" : "") }); vbox.push(b); strip.appendChild(b); });
+      host.insertBefore(strip, host.querySelector(".cap"));
     }
     Player(host, F.length, frame, { autoplay: true, interval: 1150 });
   }
+  /* ---------- showcase graphics kit (brief 61): a hero replayed from a project's committed data ----------
+     Contract: docs/showcase_pages.md. Each kind returns {n, frame(i) -> caption}; the Player gives play, step, scrub,
+     speed and reset; under reduced motion nothing plays and the last frame (the whole result) is shown. */
+  function nf(v) { return Math.abs(v) >= 100 ? String(Math.round(v)) : String(+v.toPrecision(3)); }
+  var KIT = {
+    wave: function (art, T) {
+      var f = mountWave(art, T);
+      return { n: T.x.length, interval: 700, frame: function (i) { f(i); return (T.captions && T.captions[i]) || (T.unit + " " + T.x[i]); } };
+    },
+    hist: function (art, H) {
+      var xs = H.samples, N = xs.length, B = H.bins;
+      var lo = H.lo != null ? H.lo : Math.min.apply(null, xs), hi = H.hi != null ? H.hi : Math.max.apply(null, xs); if (hi === lo) hi = lo + 1;
+      function bin(v) { return Math.min(B - 1, Math.max(0, Math.floor((v - lo) / (hi - lo) * B))); }
+      var full = new Array(B).fill(0); xs.forEach(function (v) { full[bin(v)]++; });
+      var top = Math.max.apply(null, full);
+      var W = 360, Ht = 210, L = 34, R = 10, T0 = 26, Bo = 174, bw = (W - L - R) / B;
+      var s = sv("svg", { viewBox: "0 0 " + W + " " + Ht, width: "100%", role: "img", class: "kitsvg",
+        "aria-label": "Histogram of " + N + " " + (H.label || "samples") + " in " + H.unit + ", from " + nf(lo) + " to " + nf(hi) });
+      s.appendChild(sv("line", { x1: L, x2: W - R, y1: Bo, y2: Bo, class: "ink" }));
+      [lo, (lo + hi) / 2, hi].forEach(function (v, k) { s.appendChild(sv("text", { x: L + (W - L - R) * k / 2, y: Bo + 15, "text-anchor": ["start", "middle", "end"][k] }, nf(v))); });
+      s.appendChild(sv("text", { x: (W + L) / 2, y: Bo + 31, "text-anchor": "middle" }, (H.label || "value") + " (" + H.unit + ")"));
+      s.appendChild(sv("text", { x: L - 4, y: T0 + 4, "text-anchor": "end" }, String(top)));
+      s.appendChild(sv("text", { x: L - 4, y: Bo, "text-anchor": "end" }, "0"));
+      var bars = full.map(function (_, k) { var r = sv("rect", { x: (L + k * bw + .5).toFixed(1), width: Math.max(1, bw - 1).toFixed(1), y: Bo, height: 0, class: "kbar" }); s.appendChild(r); return r; });
+      (H.marks || []).forEach(function (m) {
+        var x = L + (W - L - R) * (m.v - lo) / (hi - lo);
+        s.appendChild(sv("line", { x1: x, x2: x, y1: T0 - 8, y2: Bo, class: "kmark" }));
+        s.appendChild(sv("text", { x: x + 3, y: T0 - 10 }, m.label));
+      });
+      var head = sv("text", { x: W - R, y: 12, "text-anchor": "end", class: "kcount" }, "");
+      s.appendChild(head); art.appendChild(s);
+      var steps = Math.min(N, 60);
+      return { n: steps, interval: 260, frame: function (i) {
+        var m = Math.ceil((i + 1) * N / steps), c = new Array(B).fill(0), seen = xs.slice(0, m);
+        seen.forEach(function (v) { c[bin(v)]++; });
+        c.forEach(function (v, k) { var h = (Bo - T0) * v / top; bars[k].setAttribute("y", (Bo - h).toFixed(1)); bars[k].setAttribute("height", h.toFixed(1)); });
+        var last = xs[m - 1]; bars.forEach(function (b, k) { b.classList.toggle("now", k === bin(last)); });
+        var srt = seen.slice().sort(function (a, b) { return a - b; });
+        head.textContent = m + " of " + N;
+        return m + " of " + N + " " + (H.label || "samples") + " so far; median " + nf(srt[Math.floor((m - 1) / 2)]) + " " + H.unit +
+          ", largest " + nf(srt[m - 1]) + " " + H.unit + "; latest " + nf(last) + " " + H.unit + ".";
+      } };
+    },
+    shmoo: function (art, S) {
+      var xv = S.x.values, yv = S.y.values, P = S.points, nx = xv.length, ny = yv.length;
+      var L = 58, T0 = 10, W = 360, cw = (W - L - 8) / nx, ch = Math.min(26, Math.max(12, 200 / ny)), Ht = T0 + ny * ch + 44;
+      var s = sv("svg", { viewBox: "0 0 " + W + " " + Ht, width: "100%", role: "img", class: "kitsvg",
+        "aria-label": "Shmoo plot: " + S.y.label + " against " + S.x.label + ", " + P.length + " points measured" });
+      function X(v) { return L + xv.indexOf(v) * cw; }
+      function Y(v) { return T0 + (ny - 1 - yv.indexOf(v)) * ch; }
+      for (var a = 0; a < nx; a++) for (var b = 0; b < ny; b++) s.appendChild(sv("rect", { x: L + a * cw + .5, y: T0 + b * ch + .5, width: cw - 1, height: ch - 1, class: "kcell" }));
+      var lab = Math.max(1, Math.ceil(nx / 6));
+      xv.forEach(function (v, k) { if (k % lab === 0 || k === nx - 1) s.appendChild(sv("text", { x: L + k * cw + cw / 2, y: T0 + ny * ch + 14, "text-anchor": "middle" }, String(v))); });
+      var laby = Math.max(1, Math.ceil(ny / 8));
+      yv.forEach(function (v, k) { if (k % laby === 0 || k === ny - 1) s.appendChild(sv("text", { x: L - 5, y: Y(v) + ch / 2 + 4, "text-anchor": "end" }, String(v))); });
+      s.appendChild(sv("text", { x: (W + L) / 2, y: T0 + ny * ch + 32, "text-anchor": "middle" }, S.x.label));
+      s.appendChild(sv("text", { x: 2, y: T0 - 0, class: "kaxis" }, S.y.label));
+      function pass(p) { return p.v === "pass" || p.v === 0; }
+      var cells = P.map(function (p) { var r = sv("rect", { x: X(p.x) + 1.5, y: Y(p.y) + 1.5, width: cw - 3, height: ch - 3, class: pass(p) ? "kpass" : "kfail" }); r.style.display = "none"; s.appendChild(r); return r; });
+      var cur = sv("rect", { x: 0, y: 0, width: cw, height: ch, class: "kcur" }); s.appendChild(cur); art.appendChild(s);
+      return { n: P.length, interval: 300, frame: function (i) {
+        cells.forEach(function (c, k) { c.style.display = k <= i ? "" : "none"; });
+        var p = P[i]; cur.setAttribute("x", X(p.x)); cur.setAttribute("y", Y(p.y));
+        var np = 0; for (var k = 0; k <= i; k++) if (pass(P[k])) np++;
+        return "Point " + (i + 1) + " of " + P.length + ": " + S.x.label + " " + p.x + ", " + S.y.label + " " + p.y + ": " +
+          (pass(p) ? "pass" : "fail" + (typeof p.v === "number" ? " (" + p.v + " " + (S.unit || "errors") + ")" : "")) + ". " + np + " passed so far.";
+      } };
+    }
+  };
+  function mountKit(root) {
+    var kind = root.getAttribute("data-kit"), d = D[root.getAttribute("data-key")], art = root.querySelector(".kitart");
+    if (!d || !KIT[kind] || !art) return;
+    var k = KIT[kind](art, d);
+    var pl = Player(root, k.n, k.frame, { autoplay: true, interval: k.interval });
+    if (reduce) pl.goto(k.n - 1);
+  }
+  document.querySelectorAll(".kit[data-kit]").forEach(mountKit);
+  /* ---------- every development run, by outcome (home): squares added in the order of the run records ---------- */
+  var LANES = [["pass", "passed"], ["caught_and_repaired", "gate failed, repaired, passed"], ["internal_stop_hidden_pass", "stopped early, hidden tests pass"],
+    ["escape", "escape: own checks passed, hidden failed"], ["fail", "failed"]];
+  function mountRuns(root) {
+    var d = D.dev, host = root.querySelector(".lanes"); if (!d || !host) return;
+    var R = d.runs_list, lanes = {};
+    LANES.forEach(function (l) {
+      var marks = el("div", { class: "marks" }), cnt = el("span", { class: "cnt" });
+      host.appendChild(el("div", { class: "lane" }, [el("span", { class: "lab", text: l[1] }), marks, cnt]));
+      lanes[l[0]] = { marks: marks, cnt: cnt };
+    });
+    var sq = R.map(function (r) {
+      var m = el("span", { class: "m " + r.outcome, title: r.task + " run " + r.run + ": hidden tests " + r.tests_passed + " of " + r.tests_total });
+      (lanes[r.outcome] || lanes.fail).marks.appendChild(m); return m;
+    });
+    function frame(i) {
+      var c = {};
+      sq.forEach(function (m, k) { m.style.visibility = k <= i ? "visible" : "hidden"; m.classList.toggle("now", k === i); if (k <= i) c[R[k].outcome] = (c[R[k].outcome] || 0) + 1; });
+      LANES.forEach(function (l) { lanes[l[0]].cnt.textContent = String(c[l[0]] || 0); });
+      var r = R[i];
+      return "Run " + (i + 1) + " of " + R.length + ": " + r.task + ", attempt " + r.run + ", hidden tests " + r.tests_passed + " of " + r.tests_total + ".";
+    }
+    var pl = Player(root, R.length, frame, { autoplay: true, interval: 450 });
+    if (reduce) pl.goto(R.length - 1);
+  }
+  var hr = document.getElementById("home-runs"); if (hr) mountRuns(hr);
   var lpr = document.getElementById("loop-player"); if (lpr) mountLoop(lpr);
   var agr = document.getElementById("agent-replay"); if (agr) mountAgent(agr);
   /* pipeline: a focused or clicked stage shows where its failures go back to */
@@ -1538,78 +1716,6 @@ SCROLL, DIR = 1, 2
   mountDev(); mountEval1();
 })();
 
-/* FPGA fabric backdrop on the home hero: columns of logic tiles (CLB), block RAM and DSP columns, I/O at the edges,
-   a clock row, and nets routed tile to tile along the channels. Monochrome; static under reduced motion. */
-(function () {
-  var cv = document.getElementById("fabric");
-  if (!cv || !cv.getContext) return;
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var ctx = cv.getContext("2d"), T = 26, cols, rows, kind, nets = [], ink = "#000", W, H, run = true, last = 0, seed = 7;
-  function rnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
-  function colour() { ink = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim() || "#888"; }
-  function layout() {
-    var r = cv.getBoundingClientRect(), d = Math.min(window.devicePixelRatio || 1, 2);
-    W = r.width; H = r.height; cv.width = Math.round(W * d); cv.height = Math.round(H * d); ctx.setTransform(d, 0, 0, d, 0, 0);
-    cols = Math.ceil(W / T) + 1; rows = Math.ceil(H / T) + 1; kind = [];
-    for (var c = 0; c < cols; c++) kind.push(c === 0 || c === cols - 1 ? "io" : c % 11 === 5 ? "bram" : c % 11 === 9 ? "dsp" : "clb");
-  }
-  function base() {
-    ctx.clearRect(0, 0, W, H); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1;
-    var hrow = Math.floor(rows / 2);
-    for (var c = 0; c < cols; c++) {
-      var x = c * T, k = kind[c];
-      for (var r = 0; r < rows; r++) {
-        var y = r * T;
-        if (r === hrow) { ctx.globalAlpha = .10; ctx.fillRect(x, y + T / 2 - 1, T, 2); continue; }
-        if (k === "clb") { ctx.globalAlpha = .13; ctx.strokeRect(x + 3.5, y + 3.5, T - 12, T - 12); ctx.globalAlpha = .18; ctx.fillRect(x + T - 7, y + T - 7, 3, 3); }
-        else if (k === "io") { ctx.globalAlpha = .16; ctx.strokeRect(x + 6.5, y + 6.5, T - 13, T - 13); }
-        else if (r % 5 === 0 && r + 5 <= rows) { ctx.globalAlpha = .15; ctx.strokeRect(x + 2.5, y + 2.5, T - 5, 5 * T - 5);
-          if (k === "dsp") ctx.strokeRect(x + 2.5, y + 2.5 + 2.5 * T, T - 5, 0.01); }
-      }
-    }
-    ctx.globalAlpha = 1;
-  }
-  function tile(k) { for (var i = 0; i < 50; i++) { var c = 1 + Math.floor(rnd() * (cols - 2)); if (kind[c] === k || (!k && kind[c] === "clb")) return [c, Math.floor(rnd() * rows)]; } return [1, 1]; }
-  function net() {
-    var a = tile(rnd() < .15 ? "dsp" : rnd() < .2 ? "bram" : null), b = [Math.max(1, Math.min(cols - 2, a[0] + Math.round((rnd() - .5) * 14))), Math.max(0, Math.min(rows - 1, a[1] + Math.round((rnd() - .5) * 8)))];
-    var mid = a[0] + Math.round((b[0] - a[0]) * rnd()), pts = [], ch = function (c, r) { return [c * T + T - 5.5, r * T + T - 5.5]; };
-    pts.push(ch(a[0], a[1]), ch(mid, a[1]), ch(mid, b[1]), ch(b[0], b[1]));
-    var len = 0; for (var i = 1; i < pts.length; i++) len += Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]);
-    return { p: pts, a: a, b: b, len: Math.max(len, 1), t: 0, hold: 2.5 + rnd() * 3, speed: 90 + rnd() * 80 };
-  }
-  function drawNet(n, alpha) {
-    var left = Math.min(n.t * n.speed, n.len); ctx.globalAlpha = alpha; ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(n.p[0][0], n.p[0][1]);
-    for (var i = 1; i < n.p.length && left > 0; i++) {
-      var dx = n.p[i][0] - n.p[i - 1][0], dy = n.p[i][1] - n.p[i - 1][1], s = Math.abs(dx) + Math.abs(dy), f = s ? Math.min(1, left / s) : 1;
-      ctx.lineTo(n.p[i - 1][0] + dx * f, n.p[i - 1][1] + dy * f); left -= s;
-    }
-    ctx.stroke();
-    ctx.fillRect(n.a[0] * T + 3, n.a[1] * T + 3, T - 11, T - 11);
-    if (n.t * n.speed >= n.len) ctx.fillRect(n.b[0] * T + 3, n.b[1] * T + 3, T - 11, T - 11);
-    ctx.globalAlpha = 1;
-  }
-  function frame(now) {
-    if (!run) return;
-    var dt = Math.min(.05, (now - (last || now)) / 1000); last = now; base();
-    while (nets.length < Math.max(6, Math.round(cols * rows / 90))) nets.push(net());
-    nets = nets.filter(function (n) {
-      n.t += dt; var done = n.len / n.speed, a = .42;
-      if (n.t > done + n.hold) a = .42 * (1 - (n.t - done - n.hold) / 1.5);
-      if (a <= 0) return false; drawNet(n, a); return true;
-    });
-    requestAnimationFrame(frame);
-  }
-  function still() { base(); for (var i = 0; i < 14; i++) { var n = net(); n.t = 1e3; drawNet(n, .35); } }
-  function start() { colour(); layout(); nets = []; seed = 7; if (reduce) still(); else { run = true; last = 0; requestAnimationFrame(frame); } }
-  start();
-  var rt; window.addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(start, 150); });
-  new MutationObserver(function () { colour(); if (reduce) still(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-  if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () { colour(); if (reduce) still(); });
-  document.addEventListener("visibilitychange", function () { if (reduce) return; run = !document.hidden; if (run) { last = 0; requestAnimationFrame(frame); } });
-  if ("IntersectionObserver" in window && !reduce) new IntersectionObserver(function (e) { var v = e[0].isIntersecting; if (v && !run) { run = true; last = 0; requestAnimationFrame(frame); } else if (!v) run = false; }).observe(cv);
-
-})();
 
 /* expertise drawers: expand all / collapse all (shown only with script) and a hash link opens its drawer */
 (function () {

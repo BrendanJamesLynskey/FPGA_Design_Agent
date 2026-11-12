@@ -22,7 +22,7 @@
 
 <h3>Timing and area of the runs above whose designs were kept</h3>
 {{!qor_table}}
-<p class="small muted">All {{dev.runs}} development runs are on the results page. Each row is the run's saved design rebuilt on Vivado {{dev.rebuild_vivado}} (slack at 100 MHz; counts include the test shell). Runs whose design files were not kept have no row, because there is nothing to rebuild on 2026.1.</p>
+<p class="small muted">All {{dev.runs}} development runs are on the results page. Each row is the run's saved design rebuilt on Vivado {{dev.rebuild_vivado}} (worst setup slack after routing at 100 MHz, where positive means timing is met; LUT, FF, DSP and BRAM36 are the look-up tables, flip-flops, DSP slices and 36 Kb block RAMs used, counting the test shell). Runs whose design files were not kept have no row, because there is nothing to rebuild on 2026.1.</p>
 
 <h2>4. On the board: the hand-built reference design</h2>
 <p>Before the agent existed, one design was written by hand and taken through every step to a Nexys A7-100T: a push-button counter driving 16 LEDs through a dimmer. It proves the flow the agent drives; it is not agent output.</p>
@@ -44,3 +44,4 @@
 <p>One piece of the design, the push-button debouncer, as written:</p>
 {{!t1_rtl}}
 <p>{{board.board_v2_designs}} more small designs, reading the temperature sensor, accelerometer, flash ID and microphone, were also checked on the board: {{board.board_v2_passed}} of {{board.board_v2_runs}} runs passed (<code>results/board_v2</code>).</p>
+<p class="next">Next: <a href="showcase.html">Showcase</a> lists the projects being built with the agent and measured on the board.</p>

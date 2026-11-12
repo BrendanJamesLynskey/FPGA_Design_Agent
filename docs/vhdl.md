@@ -19,7 +19,7 @@ Or put `language: vhdl` in the design's `spec.yaml`; from the next stage on the 
 conventions in the prompts, the sandbox image with GHDL). For an existing VHDL design, run the `lint` tool first, or directly:
 
 ```
-python -c "from flow import vhdl; from pathlib import Path; print(vhdl.lint(sorted(Path('rtl').glob('*.vhd')), 'my_top'))"
+python -m flow.vhdl lint rtl --top my_top
 ```
 
 Score a VHDL design against a task's hidden tests: `python -m flow.vhdl_score <task_dir> --rtl <dir with *.vhd>`.

@@ -169,7 +169,7 @@ at `dce0fb9`. Fix the first error first: later ones often cascade.
 | lint RESET-1 / RESET-2 | several async resets / some registers not reset | one reset; reset all registers of the block or none |
 
 Version note: `synth_design -lint -file` writes a text table on Vivado 2026.1 too (checked on this PC, Basic licence tier:
-`results/49_vivado_2026_1/lint/`), although Ross reads a CSV, and UG835 v2026.1 lists only ASSIGN-1 to -7, QOR-1, INFER-1 to -3,
+`results/vivado_2026_1_remeasure/lint/`), although Ross reads a CSV, and UG835 v2026.1 lists only ASSIGN-1 to -7, QOR-1, INFER-1 to -3,
 CLOCK-1 and RESET-1/-2.
 
 Verilator (`flow/lint.sh`, `-Wall`) reports its own names for the same problems: `WIDTH*` (widths), `UNUSED*` and

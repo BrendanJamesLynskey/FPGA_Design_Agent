@@ -223,3 +223,11 @@ def test_spec_language_switches_the_run_to_vhdl(tmp_path):
     assert vhdl.design_language(d) == "vhdl"
     assert runner.image == (SIM_IMAGE_VHDL if container_available(image=SIM_IMAGE_VHDL) else SIM_IMAGE)
     assert not follow_spec_language(rt)                                  # once only
+
+
+def test_lint_command_line_reads_a_directory(tmp_path, monkeypatch, capsys):
+    (tmp_path / "a.vhd").write_text("entity a is end entity;\n")
+    seen = {}
+    monkeypatch.setattr(vhdl, "lint", lambda files, top: seen.update(files=files, top=top) or {"ok": True, "output": ""})
+    assert vhdl.main(["lint", str(tmp_path), "--top", "a"]) == 0
+    assert seen == {"files": [tmp_path / "a.vhd"], "top": "a"} and capsys.readouterr().out.strip() == "ok"
