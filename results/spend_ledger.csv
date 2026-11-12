@@ -145,3 +145,16 @@ date,brief,run_id,model,arm,usd_by_key_usage,usd_provider_reported,note
 2026-11-12,42_harness,20261112-042021-6e9f,openai/gpt-6-luna,d24_no_extra_latency_s3_A0,,0.316781,provider-reported; deny; stop: budget: run turns limit 300 reached (300); hard_limit False
 2026-11-12,42_harness,20261112-045251-6b9b,openai/gpt-6-luna,d24_no_extra_latency_s3_H1,,0.253677,provider-reported; deny; stop: budget: run turns limit 300 reached (300); hard_limit False
 2026-11-12,42_harness,TOTAL,,brief_total,,13.8479,"sum of the 51 per-run rows above, as charged: provider-reported for 46 complete runs (10.0979) plus the 0.75 ceiling for 5 runs whose summary was lost (3 infrastructure failures, 2 hard-limit kills; 3.75). The provider-reported-or-lower-bound figure from runs.jsonl is 10.7953 (the 5 runs count at recovered lower bounds 0.6974); the difference 3.0526 is the ceiling over-charge. Cap 60.00. Key usage not read (key_check.yml dispatch refused)."
+2026-11-12,62a_closure,20261112-112118-722b,openai/gpt-6-luna,stage0-1 design-plan,,0.026322,"graph stages 0-1 with --design-plan, oracle interview; 29 turns; provider-reported; deny"
+2026-11-12,62a_closure,c13_write_noplan,openai/gpt-6-luna,RTL writer no plan, first run,,0.004345,"reply not parsed (missing closing ===); folder overwritten by the rerun, cost from the run's printed summary; provider-reported; deny"
+2026-11-12,62a_closure,c13_write_noplan,openai/gpt-6-luna,RTL writer no plan,,0.001599,"G1 5/5 first attempt; provider-reported; deny"
+2026-11-12,62a_closure,c13_write_plan,openai/gpt-6-luna,RTL writer with plan,,0.01115,"2 attempts, G1 failed; provider-reported; deny"
+2026-11-12,62a_closure,c13_write_plan_r2,openai/gpt-6-luna,RTL writer with plan, retry,,0.023051,"4 attempts, G1 failed; provider-reported; deny"
+2026-11-12,62a_closure,c13_orig_noplan,openai/gpt-6-luna,closure no plan,,0.002511,"1 iteration, all goals met; provider-reported; deny"
+2026-11-12,62a_closure,c13_orig_noplan_killed,openai/gpt-6-luna,closure no plan, stopped,,,"first attempt stopped by me mid-iteration; one model call, record deleted; not provider-reported here; provider-reported; deny"
+2026-11-12,62a_closure,c13_orig_plan_unguarded,openai/gpt-6-luna,closure with plan, invalid,,0.003481,"accepted a design synthesis removed; invalid; provider-reported; deny"
+2026-11-12,62a_closure,c13_orig_plan,openai/gpt-6-luna,closure with plan,,0.00318,"1 iteration, all goals met; provider-reported; deny"
+2026-11-12,62a_closure,seed_c14_int8_dot_requant_150mhz,openai/gpt-6-luna,seed,,0.015101,"5 iterations, not closed; provider-reported; deny"
+2026-11-12,62a_closure,seed_c16_montgomery_mult_200mhz,openai/gpt-6-luna,seed,,0.001192,"1 iteration, closed; provider-reported; deny"
+2026-11-12,62a_closure,seed_c11_nco_mixer_200mhz,openai/gpt-6-luna,seed,,0.013398,"5 iterations, not closed; provider-reported; deny"
+2026-11-12,62a_closure,TOTAL,,brief_total,,0.105330,"sum of the rows above with a cost (0.101 in the results folders plus the 0.004345 overwritten writer run); one stopped call unrecorded (at most a few tenths of a cent at these call sizes). Cap 15.00. Key usage not read."
