@@ -71,7 +71,7 @@ Steps 1-8 were done by hand for F0A. Since F2 the agent does steps 1-8 itself, a
 
 | Piece | Where | Checked by |
 |---|---|---|
-| Memory-safe Vivado runner (refuses to start beside another Vivado or below 7 GB free; 6 GB cap; records time and peak memory) | [flow/run_vivado.sh](flow/run_vivado.sh) | local builds, [results/f0a](results/f0a) |
+| Memory-safe Vivado runner (refuses to start beside another Vivado or below 7 GB free; 6 GB cap; records time and peak memory) | [flow/run_vivado.sh](flow/run_vivado.sh) | local builds, [results/f0a_2026_1](results/f0a_2026_1) |
 | Non-project Tcl flow with the reports the gates need | [flow/build.tcl](flow/build.tcl) | local builds |
 | Gates over the reports, one JSON per build | [flow/gates.py](flow/gates.py) | CI: parser tests against real passing **and** deliberately failing Vivado reports |
 | ILA insertion from a probe list, built both ways, cost recorded | [flow/debug.tcl](flow/debug.tcl) | local builds |
@@ -79,9 +79,9 @@ Steps 1-8 were done by hand for F0A. Since F2 the agent does steps 1-8 itself, a
 | One hand-written T1 design from spec to bitstream | [designs/t1_dimmer_counter](designs/t1_dimmer_counter) | CI: cocotb against the model + mutants; local: gates |
 | Board files | [boards/nexys_a7_100t](boards/nexys_a7_100t) | Digilent master XDC (MIT) at a pinned commit |
 
-The T1 build numbers (timing, utilisation, ILA cost, run time and memory) are in
-[results/f0a/t1_dimmer_counter.md](results/f0a/t1_dimmer_counter.md); every one comes from the JSON next to it
-([results/f0a/README.md](results/f0a/README.md) lists the files).
+The T1 build numbers on Vivado 2026.1 (timing, utilisation, ILA cost, run time and memory) are in
+[results/f0a_2026_1/t1_dimmer_counter.md](results/f0a_2026_1/t1_dimmer_counter.md); every one comes from the JSON next to it
+([results/f0a_2026_1/README.md](results/f0a_2026_1/README.md) lists the files).
 Programming the board and testing on hardware is milestone F0B (below).
 
 ## Bring-up on hardware (F0B)
@@ -96,11 +96,12 @@ its UART, programs the base build into SRAM (never flash), runs 8 UART tests tha
 the shell and T1 models (identity and build stamp, 1,004 scratch loopbacks, error responses, timeouts, framing
 errors, the T1 registers), programs the ILA build, arms the ILA by Tcl in step with UART writes, and checks four
 captures cycle by cycle against the model (a COUNT write; the PWM at three dimmer levels). It writes
-[results/f0b/t1_dimmer_counter_bringup.json](results/f0b/t1_dimmer_counter_bringup.json).
+`results/<milestone>/t1_dimmer_counter_bringup.json`.
 
-Measured ([results/f0b](results/f0b/README.md)): three runs in a row all PASS in 110.7-114.6 s, with identical
-results: 8 of 8 UART tests, 4 of 4 ILA captures, LED on-time 32, 256 and 640 of 1024 clocks at DUTY 0x08, 0x40 and
-0xA0, exactly as the model predicts. The tests that need the board are marked `hw` and skipped in CI; CI re-checks
+Measured on Vivado 2026.1 builds ([results/f0b_2026_1](results/f0b_2026_1/README.md), wall power): the passing run took
+123.5 s: 8 of 8 UART tests, 4 of 4 ILA captures, LED on-time exactly as the model predicts at DUTY 0x08, 0x40 and 0xA0
+(the ILA build uses one ILA IP with packed probe ports, the route the free Basic licence tier allows). An earlier run
+failed at the ILA step on a probe-file fault the flow now repairs (`flow/ltx_fix.py`). The tests that need the board are marked `hw` and skipped in CI; CI re-checks
 the committed captures instead.
 
 Manual checks by the owner (buttons count as specified, three visibly different dimmer levels):
@@ -123,22 +124,24 @@ Before an agent designs for a board it must know what is on it. For the Nexys A7
   (`flow/hw.py` `power_ok`) now depends on how the board is powered (0.5 W on USB, 2.0 W on wall power, junction
   temperature and rail currents too), and `report_power` is run for the board's real thermal environment.
 - Four read-only self-check designs, each with its pass rule pre-registered and a device model in simulation,
-  proven on the board 3 times each with `flow/board_check.py` ([results/board_v2](results/board_v2/README.md)):
+  proven on the board 3 times each with `flow/board_check.py` (board outcomes in [results/board_v2](results/board_v2/README.md);
+their bitstreams were built on an earlier Vivado release, and two of the four rebuild cleanly on 2026.1, see
+[results/49_vivado_2026_1](results/49_vivado_2026_1/README.md)):
   [b2_tmp_adt7420](designs/b2_tmp_adt7420), [b2_acl_adxl362](designs/b2_acl_adxl362),
   [b2_qspi_jedec](designs/b2_qspi_jedec) (flash ID only: no write or erase opcode exists in its RTL, which a test
   checks) and [b2_mic_pdm](designs/b2_mic_pdm).
 
 ## The UltraFast methodology as the backbone (04e)
 
-The flow and the agent's stage machine follow AMD's UltraFast Design Methodology (UG949 v2025.2) stage by stage:
+The flow and the agent's stage machine follow AMD's UltraFast Design Methodology (UG949 v2026.1) stage by stage:
 board and device planning, RTL, constraints, synthesis, implementation, timing closure, power closure, DRC
 closure, configuration and debug. [docs/methodology.md](docs/methodology.md) maps UG949's chapters to the plan's
 flow steps, the reports `flow/build.tcl` writes and the gates `flow/gates.py` applies (with every threshold cited
 to UG949), says where the flow deviates from UG949 and why, and defines the agent's stage machine for F2. The
 per-stage procedures the agent reads (exact Tcl, thresholds, common failures) are nine skills in the private
-knowledge bank. T1 rebuilt through the staged flow passes every stage with timing and utilisation identical to F0A
-([results/ultrafast](results/ultrafast/README.md): +4 s and +168 MiB for the added reports; the power figures
-changed because `report_power` now uses the board's thermal environment).
+knowledge bank. T1 built through the staged flow on Vivado 2026.1 passes every stage
+([results/f0a_2026_1](results/f0a_2026_1/t1_dimmer_counter.md)); the post-route QoR-assessment gate is absent on the free
+Basic licence tier, not passed.
 
 ## Knowledge packs (F1A)
 

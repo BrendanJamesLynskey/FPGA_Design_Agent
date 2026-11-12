@@ -458,3 +458,31 @@ def test_harness_section_equals_the_code():
     how = (SITE / "public" / "how.html").read_text()
     for t in ("term-harness", "term-middleware", "term-eviction", "term-caching"):
         assert f'id="{t}"' in how
+
+
+# Brief 49 (owner, 2026-11-11: "all published material from now on should refer only to this Vivado release"): no built
+# page may name a Vivado release other than 2026.1. AMD's release tokens are YYYY.N (N 1-4), with or without a "v";
+# raw evidence (results/, run records, fixtures) keeps its own version but is never a built page, so nothing is allowed here.
+import re  # noqa: E402
+
+RELEASE = re.compile(r"(?<![\d.])v?((?:19|20)\d\d\.[1-4])(?![\d])")
+ALLOWED_RELEASES = {"2026.1"}
+
+
+def release_tokens(text):
+    return {m.group(1) for m in RELEASE.finditer(text)} - ALLOWED_RELEASES
+
+
+def test_built_pages_name_only_vivado_2026_1():
+    d = build.load_data(None)
+    pages, bad = build.build(SITE / "public", d)
+    found = {name: sorted(release_tokens(html)) for name, html in pages.items() if release_tokens(html)}
+    assert not found, f"pages name another Vivado release: {found}"
+    for p in (SITE / "public").rglob("*.html"):            # the committed pages too (what the owner deploys)
+        assert not release_tokens(p.read_text()), p
+
+
+def test_release_guard_catches_an_old_release():
+    assert release_tokens("built with Vivado 2025.2") == {"2025.2"}
+    assert release_tokens("UG901 v2025.2 (synthesis)") == {"2025.2"}
+    assert release_tokens("Vivado 2026.1, 2,026.1 ns, 12026.15, DS181 v1.27.1, 2026-02-06") == set()

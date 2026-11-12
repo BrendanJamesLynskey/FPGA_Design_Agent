@@ -49,7 +49,7 @@ TAG = "fda:burst"
 DEFAULTS: dict[str, Any] = {
     "profile": None,                  # the owner's AWS CLI profile (None: the default chain)
     "region": "eu-west-2",            # London
-    "ami_id": None,                   # our AMI with Vivado 2025.2 (cloud/BUILD_AMI.md); start refuses without it
+    "ami_id": None,                   # our AMI with Vivado 2026.1 (cloud/BUILD_AMI.md); start refuses without it
     "instance_type": "c7a.2xlarge",   # 8 vCPU = 8 physical cores (c7a has no SMT), 16 GiB, 3.7 GHz
     "spot": True,
     "allow_on_demand": False,         # fall back to on-demand when Spot has no capacity (owner's choice)
@@ -62,7 +62,7 @@ DEFAULTS: dict[str, Any] = {
     "ssh_user": "ubuntu",
     "security_group_id": None,        # SSH from the owner's IP only (cloud/README.md)
     "subnet_id": None,
-    "root_volume_gb": 160,            # the AMI's snapshot size or more: Vivado 2025.2 for our families is ~70-90 GB
+    "root_volume_gb": 160,            # the AMI's snapshot size or more: Vivado for our families was ~70-90 GB on the previous release; check the 2026.1 install
     "remote_dir": "/home/ubuntu/fda",
     "parallel_jobs": 2,               # Vivado jobs at once on the instance
     "threads_per_job": 4,             # FDA_VIVADO_THREADS for each

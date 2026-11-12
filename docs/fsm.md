@@ -1,8 +1,10 @@
 # FSMs as an area of expertise (brief 24)
 
 What the repo has for state machines beyond the code in `designs/`: a reference controller measured in variants, an FSM coverage
-check for the V2 stage, two agent drills, and the knowledge-bank skills and course lesson that go with them. The numbers are in
-[results/24_fsm](../results/24_fsm/README.md); this page says how to reproduce them and use the check.
+check for the V2 stage, two agent drills, and the knowledge-bank skills and course lesson that go with them. The synthesis and routed
+numbers of the controller variants on Vivado 2026.1 are in [results/24_fsm_2026_1](../results/24_fsm_2026_1/README.md)
+(brief 49); this page says how to reproduce them and use the check. Brief 24's other Vivado measurements (the I/O study on real
+pins and the runs on other families) were made on an earlier release and are not quoted here.
 
 ## The reference controller
 
@@ -25,13 +27,13 @@ decode of the next state, no added latency). Reset styles: 0 asynchronous, 1 syn
 with synchronous release, 4 synchronous reset gated by the enable.
 
 ```
-flow/tests/fixtures/fsm_discipline/run_all.sh <dir> 0 [variant ...]      # Vivado 2025.2, out of context, ~40 s a variant (heavy slot)
+flow/tests/fixtures/fsm_discipline/run_all.sh <dir> 0 [variant ...]      # Vivado 2026.1 (flow/version_pin.py), out of context, ~40 s a variant (heavy slot)
 python3 flow/tests/fixtures/fsm_discipline/make_table.py <dir> <out.md> <out.json>
 ```
 
 ## The FSM coverage check
 
-No free simulator reports FSM coverage (measured: `results/24_fsm/simprobe/survey.txt`). `flow/fsm_coverage.py` reads the value
+No free simulator reports FSM coverage (measured on Icarus, Verilator and the xsim of an earlier Vivado release: `results/24_fsm/simprobe/survey.txt`). `flow/fsm_coverage.py` reads the value
 changes of the state register and compares them with the state table `<design>/verif/fsm.yaml`:
 
 ```

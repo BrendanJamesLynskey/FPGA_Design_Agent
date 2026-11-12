@@ -1,0 +1,27 @@
+# brief 49: brief 33's thread-count and cache measurements on Vivado 2026.1, one build at a time, nothing else running.
+# The CDC rig only at 1 thread: at 2 and 4 threads it needed 5.1 and 8.2 GB on the earlier release, above the 6 GB cap.
+c10_t1_a build/bench/c10_dds_sine 1 bitstream FDA_BUILD_CACHE=0
+c10_t2_a build/bench/c10_dds_sine 2 bitstream FDA_BUILD_CACHE=0
+c10_t4_a build/bench/c10_dds_sine 4 bitstream FDA_BUILD_CACHE=0
+c10_t4_b build/bench/c10_dds_sine 4 bitstream FDA_BUILD_CACHE=0
+c10_t1_b build/bench/c10_dds_sine 1 bitstream FDA_BUILD_CACHE=0
+c10_seq1_synth build/bench/c10_dds_sine 4 synth
+c10_seq2_synth build/bench/c10_dds_sine 4 synth
+c10_seq3_route build/bench/c10_dds_sine 4 route
+c10_seq4_route build/bench/c10_dds_sine 4 route
+c10_seq5_route build/bench/c10_dds_sine 4 route
+c10_seq6_route build/bench/c10_dds_sine 4 route
+c10_seq7_bitstream build/bench/c10_dds_sine 4 bitstream
+c13_t4_a build/bench/c13_nexys_harris_vga 4 bitstream FDA_BUILD_CACHE=0
+c13_t1_a build/bench/c13_nexys_harris_vga 1 bitstream FDA_BUILD_CACHE=0
+c13_t2_a build/bench/c13_nexys_harris_vga 2 bitstream FDA_BUILD_CACHE=0
+c13_t4_b build/bench/c13_nexys_harris_vga 4 bitstream FDA_BUILD_CACHE=0
+c13_t1_b build/bench/c13_nexys_harris_vga 1 bitstream FDA_BUILD_CACHE=0
+c13_seq1_synth build/bench/c13_nexys_harris_vga 4 synth
+c13_seq2_synth build/bench/c13_nexys_harris_vga 4 synth
+c13_seq3_route build/bench/c13_nexys_harris_vga 4 route
+c13_seq4_route build/bench/c13_nexys_harris_vga 4 route
+c13_seq5_route build/bench/c13_nexys_harris_vga 4 route
+c13_seq6_route build/bench/c13_nexys_harris_vga 4 route
+c13_seq7_bitstream build/bench/c13_nexys_harris_vga 4 bitstream
+rig_t1 rig 1 bitstream

@@ -15,7 +15,7 @@ mocked EC2 (`cloud/tests/test_cloud.py`) and in `--dry-run` mode. **The owner ru
 |---|---|---|
 | Provider | AWS EC2, region eu-west-2 | the owner's account; Google Compute Engine is the fallback if AWS fails a requirement |
 | Instance | `c7a.2xlarge` (8 vCPU, 16 GiB; configurable) | c7a vCPUs are whole cores (no SMT), AMD EPYC 9R14 at 3.7 GHz; two 4-thread Vivado jobs fit |
-| Image | our own EBS-backed AMI with Vivado **2025.2** installed in `/tools/Xilinx/2025.2` | the same version as the build PC, so results compare; a VM starts in minutes with nothing to download. Not AMD's FPGA Developer AMI, whose Vivado version follows the F2 tools |
+| Image | our own EBS-backed AMI with Vivado **2026.1** installed in `/tools/Xilinx/2026.1` | the same version as the build PC, so results compare; a VM starts in minutes with nothing to download. Not AMD's FPGA Developer AMI, whose Vivado version follows the F2 tools |
 | Market | Spot (one-time), on-demand only if `allow_on_demand: true` | batch work survives an interruption: `run-batch` skips finished jobs, so re-running the same batch finishes the rest |
 | Data | `sync`: `git archive HEAD` plus named extra paths over rsync/SSH; `fetch-results`: rsync back | only committed files leave the PC: no private knowledge packs, no held-out tasks, no keys |
 | Access | the owner's EC2 key pair; a security group that allows SSH from the owner's IP only | no open ports, no VPN, no link from the instance to the home network |

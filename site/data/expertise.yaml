@@ -25,11 +25,11 @@ areas:
   - {file: agent/core/constraints.py, gate: FDA-CON-11, enforced: false, what: "Before Vivado: the same made-up, unexplained, swapped or replaced I/O delays, and a virtual clock used before it is defined."}
   evidence:
   - kind: measured
-    source: results/20_timing_exceptions/exceptions_table.json
+    source: results/20_timing_exceptions_2026_1/exceptions_table.json
     values: ["count@rows:expect_flag=true", "count@rows:expect_flag=true,vivado_flags=true", "count@rows:expect_flag=true,flow_flags=true", "count@rows:expect_flag=false", "count@rows:expect_flag=false,flow_flags=false"]
     text: "On {0} small designs with one timing-exception mistake each, Vivado itself said something about the exception in {1}; the flow's checks flagged {2}. They passed {4} of {3} correct designs."
   - kind: measured
-    source: results/20_timing_exceptions/io_table.json
+    source: results/20_timing_exceptions_2026_1/io_table.json
     values: ["count@rows:fault=true", "count@rows:fault=true,vivado_flags=true", "count@rows:fault=true,flow_flags=true"]
     text: "On {0} small designs with one I/O-delay or virtual-clock mistake each, Vivado itself said something in {1}; the flow's gates flagged {2}."
   - kind: measured
@@ -308,19 +308,19 @@ areas:
   - {file: flow/cdc_structure.py, gate: synchroniser, enforced: false, what: "An input launched by another clock must pass two synchroniser registers; a direct use or a single register is flagged."}
   evidence:
   - kind: measured
-    source: results/24_fsm/summary.json
+    source: results/24_fsm_2026_1/summary.json
     values: [get:separation.sep_states, get:separation.sep_lut, get:separation.mono_states, get:separation.mono_lut, get:separation.sep_transitions, get:separation.mono_transitions]
     text: "One controller built in Vivado two ways with the same behaviour: {0} states plus a counter ({1} LUTs) and {2} states with the counter folded in ({3} LUTs). Folding was the smaller; the split machine has {4} transitions to cover instead of {5}."
   - kind: measured
-    source: results/24_fsm/summary.json
+    source: results/24_fsm_2026_1/summary.json
     values: [get:outputs.comb_slack_ns, get:outputs.registered_slack_ns, get:outputs.lookahead_latency_extra_clocks, get:outputs.registered_latency_extra_clocks]
     text: "At the test clock the slack from the state flops to an output pin was {0} ns with a decoded output and {1} ns with a registered one. A registered decode adds {3} clock of latency; registering the decode of the next state adds {2}."
   - kind: measured
-    source: results/24_fsm/summary.json
+    source: results/24_fsm_2026_1/summary.json
     values: [get:ratio.none, get:ratio.n2, get:ratio.n4, get:ratio.n8]
     text: "A state machine on a one-in-N clock enable, constrained with the multicycle pair on its own registers: slack between its registers was {0} ns without the exception and {1}, {2} and {3} ns at three enable ratios."
   - kind: measured
-    source: results/24_fsm/summary.json
+    source: results/24_fsm_2026_1/summary.json
     values: [get:coverage.designs, get:coverage.mutants_caught, get:coverage.mutants]
     text: "The coverage check passed on {0} designs with their real tests, and failed, naming the missed state or transition, in {1} of {2} runs with one test removed."
   - kind: example

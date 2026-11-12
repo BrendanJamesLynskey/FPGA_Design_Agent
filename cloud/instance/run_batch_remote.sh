@@ -14,7 +14,7 @@ BATCH="$1"
 PARALLEL="${PARALLEL:-2}"; THREADS="${THREADS:-4}"; MEM_MAX="${MEM_MAX:-7G}"
 HERE="$(pwd)"
 BUSY="${FDA_BUSY_FILE:-/run/fda-busy}"
-VIVADO="${VIVADO:-/tools/Xilinx/2025.2/Vivado/bin/vivado}"
+VIVADO="${VIVADO:-/tools/Xilinx/2026.1/Vivado/bin/vivado}"   # the AMI (cloud/BUILD_AMI.md) installs under /tools, not /opt
 touch "$BUSY" 2>/dev/null || sudo touch "$BUSY"
 mkdir -p cloud_results work
 job() {
