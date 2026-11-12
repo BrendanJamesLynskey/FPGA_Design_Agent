@@ -416,6 +416,7 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 }
 .toc { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 1.2em; color: var(--ink-3); }
 .toc a { color: var(--ink-2); }
+.chip-status { display: inline-block; border: 1px solid var(--ink-3); padding: 6px 12px; font-size: .92rem; color: var(--ink); max-width: 72ch; margin: 0 0 1em; }
 </style>
 </head>
 <body>
@@ -425,12 +426,13 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
 <section class="hero">
 <p class="eyebrow">FPGA Design Agent</p>
 <h1>An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board</h1>
+<p class="chip-status">So far on the board: the hand-built reference design passes every test; the one agent-built design programmed passed 3 of 3 serial-link tests and failed its logic-analyser captures. No held-out score yet.</p>
 <p class="lede">Describe a block in plain English. Language-model agents interview you about what you left out, write the spec, a model of it, the tests and the SystemVerilog, then drive the simulators and Vivado 2026.1 to a bitstream and test it on a Digilent Nexys A7-100T. Every stage ends in a check run by code, not by a model, and a failed check sends the work back to the agent that owns it.</p>
 </section>
 
 <h2 id="today">Where it stands today</h2>
 <div class="facts status">
-<div class="fact"><div class="n">13 of 21</div><p>development runs passed every hidden test, on 11 tasks, with Anthropic's Claude Sonnet (<code>claude-sonnet-5-5</code>) through Claude Code.</p></div>
+<div class="fact"><div class="n">13 of 21</div><p>development runs passed every hidden test, on 11 tasks, with Anthropic's Claude Sonnet (<code>claude-sonnet-5-5</code>) through Claude Code. Not yet known: how a single model session without the controller does on the same tasks.</p></div>
 <div class="fact"><div class="n">6</div><p>more were <a href="how.html#term-escape">escapes</a>: the agent's own checks passed and the hidden tests failed, each time because it read the spec differently from the test author.</p></div>
 <div class="fact"><div class="n">$3.21, 2 h</div><p>mean cost and wall time per run (cost is Claude Code's own API-equivalent estimate).</p></div>
 <div class="fact"><div class="n">3 of 3</div><p>serial-link tests passed by the one agent-built design programmed so far; its logic-analyser captures failed. The hand-built reference passes every board test.</p></div>

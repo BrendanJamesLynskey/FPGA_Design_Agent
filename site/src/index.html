@@ -1,12 +1,13 @@
 <section class="hero">
 <p class="eyebrow">FPGA Design Agent</p>
 <h1>An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board</h1>
+<p class="chip-status">So far on the board: the hand-built reference design passes every test; the one agent-built design programmed passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its logic-analyser captures. No held-out score yet.</p>
 <p class="lede">Describe a block in plain English. Language-model agents interview you about what you left out, write the spec, a model of it, the tests and the SystemVerilog, then drive the simulators and Vivado {{board.vivado}} to a bitstream and test it on a Digilent Nexys A7-100T. Every stage ends in a check run by code, not by a model, and a failed check sends the work back to the agent that owns it.</p>
 </section>
 
 <h2 id="today">Where it stands today</h2>
 <div class="facts status">
-<div class="fact"><div class="n">{{dev.hidden_pass}} of {{dev.runs}}</div><p>development runs passed every hidden test, on {{dev.tasks}} tasks, with Anthropic's Claude Sonnet (<code>{{dev.model.0}}</code>) through Claude Code.</p></div>
+<div class="fact"><div class="n">{{dev.hidden_pass}} of {{dev.runs}}</div><p>development runs passed every hidden test, on {{dev.tasks}} tasks, with Anthropic's Claude Sonnet (<code>{{dev.model.0}}</code>) through Claude Code. Not yet known: how a single model session without the controller does on the same tasks.</p></div>
 <div class="fact"><div class="n">{{dev.escapes}}</div><p>more were <a href="how.html#term-escape">escapes</a>: the agent's own checks passed and the hidden tests failed, each time because it read the spec differently from the test author.</p></div>
 <div class="fact"><div class="n">${{dev.mean_plan_cost_usd}}, {{dev.mean_wall_h}} h</div><p>mean cost and wall time per run (cost is Claude Code's own API-equivalent estimate).</p></div>
 <div class="fact"><div class="n">{{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}}</div><p>serial-link tests passed by the one agent-built design programmed so far; its logic-analyser captures failed. The hand-built reference passes every board test.</p></div>
