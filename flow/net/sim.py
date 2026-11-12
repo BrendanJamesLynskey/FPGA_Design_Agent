@@ -4,7 +4,7 @@ Python writes stimulus files, a file-driven SystemVerilog bench (`ip_lib/<block>
 every output beat to a response file, and Python compares bit-exact against the golden model (`flow/net/model.py`).
 The bench never judges anything.
 
-Simulators: Icarus Verilog 12 (default; also what CI runs) and Vivado xsim 2025.2 (`SIM=xsim`, local only, under a
+Simulators: Icarus Verilog 12 (default; also what CI runs) and Vivado xsim of the installed release (`flow/version_pin.py`; `SIM=xsim`, local only, under a
 heavy slot). Parameters are passed with `-P` (Icarus) or `-generic_top` (xsim); fault copies of the RTL come from
 `flow/net/faults.py`.
 """
@@ -14,12 +14,16 @@ import hashlib
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 IP = ROOT / "ip_lib"
 BUILD = Path(os.environ.get("NET_BUILD", ROOT / "build" / "net")).resolve()
-XILINX_BIN = Path(os.environ.get("XILINX_BIN", "/opt/Xilinx/2025.2/Vivado/bin"))
+sys.path.insert(0, str(ROOT))
+from flow.version_pin import vivado_path  # noqa: E402  (the one source of the install path, brief 48)
+
+XILINX_BIN = Path(os.environ.get("XILINX_BIN", str(Path(vivado_path()).parent)))
 
 
 def sim_name() -> str:

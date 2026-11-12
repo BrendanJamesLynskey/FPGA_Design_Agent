@@ -1,0 +1,218 @@
+
+== Block Memory Generator
+OK set_property
+  CONFIG.BRAM_PORTA.MEM_ADDRESS_MODE = BYTE_ADDRESS
+  CONFIG.BRAM_PORTB.MEM_ADDRESS_MODE = BYTE_ADDRESS
+  CONFIG.Memory_Type = True_Dual_Port_RAM
+  CONFIG.Operating_Mode_A = WRITE_FIRST
+  CONFIG.Primitive = 8kx2
+  CONFIG.READ_LATENCY_A = 1
+  CONFIG.READ_LATENCY_B = 1
+  CONFIG.Register_PortA_Output_of_Memory_Core = false
+  CONFIG.Register_PortA_Output_of_Memory_Primitives = true
+  CONFIG.Register_PortB_Output_of_Memory_Primitives = true
+  CONFIG.Write_Depth_A = 4096
+  CONFIG.register_porta_input_of_softecc = false
+  CONFIG.use_bram_block = Stand_Alone
+OK generate_target; XDC files: results/project_parity_2026_1/wizards/ip_bmg/bmg/bmg_ooc.xdc
+
+== FIFO Generator
+OK set_property
+  CONFIG.Data_Count = false
+  CONFIG.Data_Count_Width = 10
+  CONFIG.Fifo_Implementation = Independent_Clocks_Block_RAM
+  CONFIG.Full_Threshold_Assert_Value = 1023
+  CONFIG.Full_Threshold_Assert_Value_axis = 1023
+  CONFIG.Full_Threshold_Assert_Value_rach = 1023
+  CONFIG.Full_Threshold_Assert_Value_rdch = 1023
+  CONFIG.Full_Threshold_Assert_Value_wach = 1023
+  CONFIG.Full_Threshold_Assert_Value_wdch = 1023
+  CONFIG.Full_Threshold_Assert_Value_wrch = 1023
+  CONFIG.Full_Threshold_Negate_Value = 1022
+  CONFIG.Output_Data_Width = 32
+  CONFIG.Output_Depth = 1024
+  CONFIG.Read_Data_Count_Width = 10
+  CONFIG.Reset_Type = Asynchronous_Reset
+  CONFIG.Write_Data_Count_Width = 10
+  CONFIG.synchronization_stages = 2
+  CONFIG.synchronization_stages_axi = 2
+OK generate_target; XDC files: results/project_parity_2026_1/wizards/ip_fifo/fg/fg_ooc.xdc results/project_parity_2026_1/wizards/ip_fifo/fg/fg.xdc results/project_parity_2026_1/wizards/ip_fifo/fg/fg_clocks.xdc
+  --- results/project_parity_2026_1/wizards/ip_fifo/fg/fg.xdc
+ 
+ 
+ 
+ 
+ 
+
+################################################################################
+# (c) Copyright 2009 - 2013 Advanced Micro Devices, Inc. All rights reserved.
+# 
+# This file contains confidential and proprietary information
+# of Advanced Micro Devices, Inc. and is protected under U.S. and
+# international copyright and other intellectual property
+# laws.
+# 
+# DISCLAIMER
+# This disclaimer is not a license and does not grant any
+# rights to the materials distributed herewith. Except as
+# otherwise provided in a valid license issued to you by
+# AMD, and to the maximum extent permitted by applicable
+# law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
+# WITH ALL FAULTS, AND AMD HEREBY DISCLAIMS ALL WARRANTIES
+# AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
+# BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
+# INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
+# (2) AMD shall not be liable (whether in contract or tort,
+# including negligence, or under any other theory of
+# liability) for any loss or damage of any kind or nature
+# related to, arising under or in connection with these
+# materials, including for any direct, or any indirect,
+# special, incidental, or consequential loss or damage
+# (including loss of data, profits, goodwill, or any type of
+# loss or damage suffered as a result of any action brought
+# by a third party) even if such damage or loss was
+# reasonably foreseeable or AMD had been advised of the
+# possibility of the same.
+#
+  --- results/project_parity_2026_1/wizards/ip_fifo/fg/fg_clocks.xdc
+################################################################################
+# (c) Copyright 2009 - 2013 Advanced Micro Devices, Inc. All rights reserved.
+# 
+# This file contains confidential and proprietary information
+# of Advanced Micro Devices, Inc. and is protected under U.S. and
+# international copyright and other intellectual property
+# laws.
+# 
+# DISCLAIMER
+# This disclaimer is not a license and does not grant any
+# rights to the materials distributed herewith. Except as
+# otherwise provided in a valid license issued to you by
+# AMD, and to the maximum extent permitted by applicable
+# law: (1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND
+# WITH ALL FAULTS, AND AMD HEREBY DISCLAIMS ALL WARRANTIES
+# AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY, INCLUDING
+# BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-
+# INFRINGEMENT, OR FITNESS FOR ANY PARTICULAR PURPOSE; and
+# (2) AMD shall not be liable (whether in contract or tort,
+# including negligence, or under any other theory of
+# liability) for any loss or damage of any kind or nature
+# related to, arising under or in connection with these
+# materials, including for any direct, or any indirect,
+# special, incidental, or consequential loss or damage
+# (including loss of data, profits, goodwill, or any type of
+# loss or damage suffered as a result of any action brought
+# by a third party) even if such damage or loss was
+# reasonably foreseeable or AMD had been advised of the
+# possibility of the same.
+# 
+# CRITICA
+
+== XADC Wizard
+OK set_property
+  CONFIG.ADC_CONVERSION_RATE = 1000
+  CONFIG.CHANNEL_ENABLE_CALIBRATION = false
+  CONFIG.CHANNEL_ENABLE_TEMPERATURE = false
+  CONFIG.CHANNEL_ENABLE_VAUXP0_VAUXN0 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP10_VAUXN10 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP11_VAUXN11 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP12_VAUXN12 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP13_VAUXN13 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP14_VAUXN14 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP15_VAUXN15 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP1_VAUXN1 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP2_VAUXN2 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP3_VAUXN3 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP4_VAUXN4 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP5_VAUXN5 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP6_VAUXN6 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP7_VAUXN7 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP8_VAUXN8 = false
+  CONFIG.CHANNEL_ENABLE_VAUXP9_VAUXN9 = false
+  CONFIG.CHANNEL_ENABLE_VBRAM = false
+  CONFIG.CHANNEL_ENABLE_VCCAUX = false
+  CONFIG.CHANNEL_ENABLE_VCCDDRO = false
+  CONFIG.CHANNEL_ENABLE_VCCINT = false
+  CONFIG.CHANNEL_ENABLE_VCCPAUX = false
+  CONFIG.CHANNEL_ENABLE_VCCPINT = false
+  CONFIG.CHANNEL_ENABLE_VP_VN = true
+  CONFIG.CHANNEL_ENABLE_VREFN = false
+  CONFIG.CHANNEL_ENABLE_VREFP = false
+  CONFIG.DCLK_FREQUENCY = 100
+  CONFIG.DCLK_IN.INSERT_VIP = 0
+  CONFIG.ENABLE_VBRAM_ALARM = false
+  CONFIG.ENABLE_VCCDDRO_ALARM = false
+  CONFIG.ENABLE_VCCPAUX_ALARM = false
+  CONFIG.ENABLE_VCCPINT_ALARM = false
+  CONFIG.OT_ALARM = true
+  CONFIG.SEQUENCER_MODE = Continuous
+  CONFIG.TEMPERATURE_ALARM_OT_RESET = 70.0
+  CONFIG.TEMPERATURE_ALARM_OT_TRIGGER = 125.0
+  CONFIG.TEMPERATURE_ALARM_RESET = 60.0
+  CONFIG.TEMPERATURE_ALARM_TRIGGER = 85.0
+  CONFIG.TIMING_MODE = Continuous
+  CONFIG.USER_TEMP_ALARM = true
+  CONFIG.VBRAM_ALARM_LOWER = 0.95
+  CONFIG.VBRAM_ALARM_UPPER = 1.05
+  CONFIG.VCCAUX_ALARM = true
+  CONFIG.VCCAUX_ALARM_LOWER = 1.75
+  CONFIG.VCCAUX_ALARM_UPPER = 1.89
+  CONFIG.VCCDDRO_ALARM_LOWER = 1.15
+  CONFIG.VCCDDRO_ALARM_UPPER = 1.25
+  CONFIG.VCCINT_ALARM = true
+  CONFIG.VCCINT_ALARM_LOWER = 0.97
+  CONFIG.VCCINT_ALARM_UPPER = 1.03
+  CONFIG.VCCPAUX_ALARM_LOWER = 1.71
+  CONFIG.VCCPAUX_ALARM_UPPER = 1.8
+  CONFIG.VCCPINT_ALARM_LOWER = 0.95
+  CONFIG.VCCPINT_ALARM_UPPER = 1.00
+  CONFIG.XADC_STARUP_SELECTION = channel_sequencer
+OK generate_target
+
+== Transceivers Wizard (Artix-7 GTP)
+gtwizard IPs in catalog: xilinx.com:ip:gtwizard:3.6 xilinx.com:ip:gtwizard_ultrascale:1.7
+gt (7 series) IPs: xilinx.com:ip:gtm_wizard_ultrascale:1.0 xilinx.com:ip:v_vid_gt_bridge:4.0 xilinx.com:ip:ibert_ultrascale_gty:1.3 xilinx.com:ip:ibert_ultrascale_gtm:1.0 xilinx.com:ip:ibert_ultrascale_gth:1.4 xilinx.com:ip:ibert_ultrascale_gtf:1.0 xilinx.com:ip:ibert_7series_gth:3.0 xilinx.com:ip:hdmi_gt_controller:2.0 xilinx.com:ip:gtwiz_versal:1.0 xilinx.com:ip:gt_bridge_ip:1.1 xilinx.com:ip:gt_quad_base:1.1 xilinx.com:ip:bufg_gt:1.0 xilinx.com:ip:uhdsdi_gt:2.2 xilinx.com:ip:ibert_7series_gtz:3.1 xilinx.com:ip:ibert_7series_gtx:3.0 xilinx.com:ip:ibert_7series_gtp:3.0 xilinx.com:ip:gtwizard:3.6 xilinx.com:ip:gtfwizard:1.0
+
+== Set Up Debug (ILA / VIO IP)
+OK ila IP set_property (the agent's flow/debug.tcl uses create_debug_core instead)
+  create_debug_core exists: 1; connect_debug_port: 1; implement_debug_core: 1
+
+== Timing Constraints Wizard (any Tcl command?)
+info commands *wizard*: 
+info commands *recommend*: 
+info commands *constraints*: copy_constraints save_constraints save_constraints_as write_aie_intf_constraints
+info commands create_timing*: 
+info commands *auto_constr*: 
+
+== I/O Planning
+place_ports: 1
+report_ssn: 1
+report_io: 1
+report_drc: 1
+open_io_design: 1
+create_property: 1
+get_package_pins: 1
+write_csv: 1
+read_csv: 1
+
+== Example design (Open Example Project)
+open_example_project: 1; list_example_designs: 1
+
+== Zynq PS7 configuration (IP, no block design)
+OK set_property
+  CONFIG.PCW_ACT_APU_PERIPHERAL_FREQMHZ = 666.666687
+  CONFIG.PCW_ACT_FPGA0_PERIPHERAL_FREQMHZ = 100.000000
+  CONFIG.PCW_UIPARAM_DDR_BUS_WIDTH = 32 Bit
+  CONFIG.PCW_UIPARAM_DDR_DEVICE_CAPACITY = 2048 MBits
+  CONFIG.PCW_UIPARAM_DDR_FREQ_MHZ = 533.333333
+  CONFIG.PCW_UIPARAM_DDR_PARTNO = MT41J256M8 HX-15E
+  CONFIG.PCW_UIPARAM_DDR_TRAIN_DATA_EYE = 1
+  CONFIG.PCW_UIPARAM_DDR_TRAIN_READ_GATE = 1
+  CONFIG.PCW_UIPARAM_DDR_TRAIN_WRITE_LEVEL = 1
+OK generate_target
+
+== Block automation and address editor (batch)
+OK processing_system7 block automation + AXI connection automation + assign_bd_address
+  cells: /gpio0 /ps7 /ps7_axi_periph /rst_ps7_50M
+  address segments: 2
+  segment gpio0: 0x41200000
+OK validate_bd_design

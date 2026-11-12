@@ -1,0 +1,12 @@
+# DDS example without a design margin (brief 19): the rule 6.02 dB/bit alone gives 15 bits for a 90 dB target; the core measures 90.2 dB.
+# (the primary example is ../dds, margin 3 dB)
+# DDS example (brief 19): an NCO from an SFDR and a frequency resolution, one tone for the spectrum check.
+name: nco_90db
+clock_hz: 100000000
+freq_resolution_hz: 0.01     # -> phase width 34 (clock / 2^34 = 0.0058 Hz)
+sfdr_db: 90                  # -> output width 15 (6.02 dB per bit)
+f_out_hz: 6221436.8411   # 1021 / 16411 of the clock: the 16411-point record holds 1021 periods to within 1e-6 bin, and every phase bit is in use
+sfdr_margin_db: 0
+noise_shaping: None     # Hardware_Parameters mode refuses Auto; PG141: SFDR ~ 6.02 x LUT address bits without dither
+n_samples: 16411
+seed: 19

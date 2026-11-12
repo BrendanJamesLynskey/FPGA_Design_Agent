@@ -46,13 +46,24 @@ def boot(per_task, seed=20261109, b=2000):
     return [round(100 * ms[int(0.025 * b)], 1), round(100 * ms[int(0.975 * b)], 1)]
 
 
+# Brief 49: the site shows only Vivado 2026.1 numbers. A run's timing, area and power come from a rebuild of that run's saved
+# design on 2026.1 (results/49_vivado_2026_1/dev_rebuilds.json); a run whose design files were not kept has none (withdrawn).
+# The run records themselves (results/course/*/run_*.json) keep the numbers their own Vivado reported.
+REBUILDS = ROOT / "results" / "49_vivado_2026_1" / "dev_rebuilds.json"
+
+
+def dev_rebuilds():
+    return jload(REBUILDS)["runs"] if REBUILDS.exists() else {}
+
+
 def dev_runs():
     runs = []
+    rebuilt = dev_rebuilds()
     for p in sorted(COURSE.glob("*/run_*.json")):
         r = jload(p)
         if r.get("split") != "dev":
             continue  # never include anything not labelled development
-        q = r.get("qor") or {}
+        q = rebuilt.get(f'{r["task"]}/run_{r["run"]}') or {}
         runs.append({
             "task": r["task"], "run": r["run"], "date": r["date"], "outcome": r["outcome"],
             "escape_level": r.get("escape_level"),
@@ -119,9 +130,10 @@ def replay(runs):
         "constraints": "Pin and clock constraints checked against the board's master XDC.",
         "synthesis": "Synthesis gates: " + g["stage_gates_post_route"].split(" (")[0] + " by the end of the run.",
         "implementation": "Place and route; bitstream built.",
-        "timing-closure": f"Post-route setup slack {qo['wns_ns_at_100MHz_post_route']:+.3f} ns, hold slack {qo['whs_ns']:+.3f} ns at 100 MHz.",
-        "power-closure": f"Vectorless power estimate {qo['power_w']:.3f} W.",
-        "drc-closure": f"{qo['lut']} LUT, {qo['ff']} FF, {qo['dsp']} DSP, {qo['bram36']} BRAM after place and route (test shell included).",
+        "timing-closure": f"The run's timing gates passed. Its saved design rebuilt on Vivado {qo['vivado']}: post-route setup slack {qo['wns_ns_at_100MHz_post_route']:+.3f} ns, hold slack {qo['whs_ns']:+.3f} ns at 100 MHz.",
+        "power-closure": f"The run's power gate passed. Rebuilt on Vivado {qo['vivado']}: vectorless power estimate {qo['power_w']:.3f} W.",
+        "drc-closure": f"The run's design-rule gates passed. Rebuilt on Vivado {qo['vivado']}: {qo['lut']} LUT, {qo['ff']} FF, {qo['dsp']} DSP, {qo['bram36']} BRAM after place and route (test shell included)"
+                       + (". The rebuild fails one gate added after the run: the I/O-constraint check, because the run's XDC gives slow pins invented input delays." if "io_timing_clean" in qo.get("gates_failed", []) else "."),
         "configuration-and-debug": "Stops here: " + r["stop"]["reason"] + ".",
     }
     steps = []
@@ -154,17 +166,17 @@ def examples(runs):
 
 
 def board():
-    f0a = jload(ROOT / "results/f0a/t1_dimmer_counter_base.json")
-    bring = jload(ROOT / "results/f0b/t1_dimmer_counter_bringup.json")
-    runs = [jload(p) for p in sorted((ROOT / "results/f0b/runs").glob("*.json"))]
-    base_md = (ROOT / "results/f0a/t1_dimmer_counter.md").read_text()
+    f0a = jload(ROOT / "results/f0a_2026_1/t1_dimmer_counter_base.json")
+    bring = jload(ROOT / "results/f0b_2026_1/t1_dimmer_counter_bringup.json")
+    runs = [jload(p) for p in sorted((ROOT / "results/f0b_2026_1/runs").glob("*.json"))]
+    base_md = (ROOT / "results/f0a_2026_1/t1_dimmer_counter.md").read_text()
     def row(label):
         m = re.search(r"^\| " + re.escape(label) + r" \| ([^|]+) \| ([^|]+) \|", base_md, re.M)
         return [m.group(1).strip(), m.group(2).strip()]
     cap = {}
     for n, duty in (("08", 8), ("40", 64), ("a0", 160)):
-        rows = list(csv.reader(open(ROOT / f"results/f0b/captures/t1_dimmer_counter_pwm_{n}.csv")))
-        i = [j for j, x in enumerate(rows[0]) if "led_reg" in x][0]
+        rows = list(csv.reader(open(ROOT / f"results/f0b_2026_1/captures/t1_dimmer_counter_pwm_{n}.csv")))
+        i = [j for j, x in enumerate(rows[0]) if "led_reg" in x or x.startswith("LED_OBUF")][0]   # 2026.1 IP-route captures name the LED bus LED_OBUF
         v = [int(r[i], 16) & 1 for r in rows[2:]]
         edges = [[0, v[0]]] + [[j, v[j]] for j in range(1, len(v)) if v[j] != v[j - 1]]
         cap[n] = {"duty": duty, "samples": len(v), "on": sum(v), "edges": edges}
@@ -191,8 +203,8 @@ def board():
         "wns": row("setup WNS (ns)"), "whs": row("hold WHS (ns)"), "lut": row("LUTs"), "ff": row("FFs"), "bram": row("BRAM tiles"),
         "dsp": row("DSP48E1"), "power": row("power, total on-chip (W, vectorless)"),
         "uart_tests": uart["tests"], "uart_failures": uart["failures"], "ila_captures": 4,
-        "board_runs": len(runs),
-        "run_totals_s": ts,
+        "board_runs": len(runs), "board_runs_passed": sum(1 for r in runs if r.get("pass") is True),
+        "run_totals_s": ts, "pass_total_s": round(sum(s.get("seconds", 0) for s in bring["steps"].values() if isinstance(s, dict)), 1),
         "captures": cap,
         "mutants": mut["mutants"], "mutants_killed": mut["killed_by_bench"], "mutation_first_run_pct": mut["first_run"]["score_pct"],
         "mutation_survivors_first": len(mut["first_run"]["survivors"]),
@@ -216,7 +228,7 @@ def evaldata():
         assert need in t, need
     return {"tasks": 19, "runs_per_task": 3, "runs": 57, "resamples": 2000, "planned_halfwidth": 17.5,
             "dev_runs_for_width": 21, "dev_tasks_for_width": 11, "seed": 20261109, "tag": "eval-1",
-            "tool_versions": {"claude_code": "2.1.319", "icarus": "12.0", "cocotb": "2.0.1", "vivado": "2025.2", "verilator": "5.048"},
+            "tool_versions": {"claude_code": "2.1.319", "icarus": "12.0", "cocotb": "2.0.1", "verilator": "5.048"},
             "model": "claude-sonnet-5-5", "oracle": "claude-haiku-5-5", "mutants_per_task": "5-8"}
 
 
@@ -407,13 +419,14 @@ def flow_notes():
     """Data for flow-notes.html: the XPM probe, the CDC mutant table (rig and gate) and the synchroniser-tearing model."""
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import flow_model
-    inp = jload(ROOT / "results" / "14_flow_notes" / "inputs.json")
-    gate = {r["fixture"].lower(): r for r in jload(ROOT / "results" / "16_cdc_gate" / "mutant_table.json")["rows"]}
+    inp = jload(ROOT / "results" / "49_vivado_2026_1" / "xpm_probe.json")     # brief 49: the QR1 probe re-measured on 2026.1
+    gate = {r["fixture"].lower(): r for r in jload(ROOT / "results" / "16_cdc_gate_2026_1" / "mutant_table.json")["rows"]}
     rig = jload(ROOT / "hil" / "cdc_soak" / "results" / "cdc_rig_sim.json")["variants"]
     rows = []
     for k, what in RIG_WHAT.items():
         g = gate.get(k.lower())
-        rep = g["report_cdc_alone_flags"] if g else inp["rig_report_cdc_alone"][k]
+        # brief 49: a rig-only mutant's report_cdc verdict came from the rig build on an earlier release: withdrawn (None)
+        rep = g["report_cdc_alone_flags"] if g else None
         rig_err = sum(c["errors"] for c in rig[k]["copies"])
         rows.append({"id": k, "what": what, "report_cdc": rep, "rig_sim": rig_err > 0,
                      "gate_sim": g["sim_flags"] if g else None, "gate": g["gate_flags"] if g else None, "ported": g is not None})
@@ -426,7 +439,6 @@ def flow_notes():
         "counts": {"ported": len(mut), "report_cdc_flags": sum(r["report_cdc_alone_flags"] for r in mut),
                    "gate_flags": sum(r["gate_flags"] for r in mut), "correct": len(cor),
                    "correct_pass": sum(not r["gate_flags"] for r in cor), "rig_mutants": len(rows),
-                   "rig_report_cdc_flags": sum(r["report_cdc"] for r in rows),
                    "rig_sim_flags": sum(r["rig_sim"] for r in rows)},
         "tear": flow_model.export(),
     }
@@ -441,6 +453,7 @@ def main():
     out = {"dev": build_dev(runs), "replay": replay(runs), "examples": examples(runs), "board": board(),
            "packs": packs(), "eval": evaldata(), "catalogue": cat, "flow_notes": flow_notes(),
            "skills": expertise.skills_doc(), "expertise": expertise.build()}
+    out["dev"]["rebuild_vivado"] = jload(REBUILDS)["vivado"] if REBUILDS.exists() else None   # the release the saved designs were rebuilt on
     out["agent_graph"] = agent_arch.build(out["replay"], out["skills"])     # brief 43: the agent's graph, roles and two replays, from the code
     import loop
     out["loop"] = loop.build(dict(out["agent_graph"], vivado=out["board"]["vivado"]))     # brief 47: the home page's feedback loop

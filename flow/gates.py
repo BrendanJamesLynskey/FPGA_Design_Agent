@@ -4,7 +4,7 @@
     python3 flow/gates.py designs/<name>/build/<variant> [--json gates.json]
 
 Exit status 0 = every gate passed. The checks are grouped by UltraFast stage
-(docs/methodology.md; AMD UG949 v2025.2), and the JSON names the first stage
+(docs/methodology.md; AMD UG949 v2026.1), and the JSON names the first stage
 that failed:
 
     rtl         report_methodology on the elaborated RTL: no critical warnings
@@ -247,7 +247,7 @@ def parse_cdc(text: str) -> dict[str, Any]:
     if "CDC Report" not in text:
         raise ValueError("not a report_cdc report")
     out: dict[str, Any] = {"safely_timed": "All paths are Safely Timed." in text, "rules": []}
-    # Summary rows (2025.2):  CDC-1  Critical      2  1-bit unknown CDC circuitry
+    # Summary rows (2025.2 and 2026.1 alike):  CDC-1  Critical      2  1-bit unknown CDC circuitry
     # (the per-crossing detail rows start with a row number, so they do not match)
     for rule, sev, n, desc in re.findall(r"^(CDC-\d+)\s+(Critical|Warning|Info)\s+(\d+)\s+(.*?)\s*$", text, re.M):
         out["rules"].append({"rule": rule, "severity": sev, "count": int(n), "description": desc})

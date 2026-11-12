@@ -1,0 +1,15 @@
+# Worked FIR example (brief 19): a decimate-by-4 low-pass for a 20 MS/s stream, from plain numbers.
+name: lp_dec4
+fs_in_hz: 20000000      # input sample rate
+pass_edge_hz: 1000000   # pass band 0 .. 1.0 MHz
+stop_edge_hz: 1500000   # stop band 1.5 MHz .. 10 MHz
+ripple_db: 0.1          # pass-band ripple, max deviation from the DC gain
+atten_db: 80            # stop-band attenuation
+design_margin_db: 2     # design to atten + margin, so quantisation does not decide the outcome
+decimation: 4
+data_width: 16
+coef_width: 16
+channels: 1
+clock_hz: 100000000     # the fabric clock the filter runs on
+back_pressure: true     # m_axis_data_tready present (exercised by the random gap schedule)
+seed: 1

@@ -49,6 +49,6 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py`):
 
 ## Cost table
 
-in-context cost (not an OOC sweep): 274 LUT, 257 FF at PIX_W 24 inside b30_hil_audio (Vivado 2025.2, xc7a100t -1, 100 MHz met); the OOC sweep is still to do.
+in-context cost (not an OOC sweep): 275 LUT, 257 FF at PIX_W 24 inside b30_hil_audio (Vivado 2026.1, xc7a100t -1, 100 MHz met; results/49_vivado_2026_1/b30_hil_audio.json); the OOC sweep is still to do.
 
 Licence: MIT (this repository).

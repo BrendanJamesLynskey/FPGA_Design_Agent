@@ -1,0 +1,24 @@
+CLOCK|sys_clk|10.000|0.000 5.000|0|0|CLK100MHZ|0.000
+CLOCK|fb|10.000|0.000 5.000|0|1|mmcm/CLKFBOUT|0.000
+CLOCK|c125|8.000|0.000 4.000|0|1|mmcm/CLKOUT0|0.000
+PORT|CLK100MHZ|in|0|mmcm|0
+IO|CLK100MHZ|in|max||||sys_clk||Slow|0.025
+IO|CLK100MHZ|in|min||||sys_clk||Fast|0.025
+PORT|LED[0]|out|0|par_reg|0
+IO|LED[0]|out|max|||0.0|c125|sys_clk|Slow|0.170
+IO|LED[0]|out|min|||0.0|c125|sys_clk|Fast|0.170
+PORT|din[0]|in|1|dq_reg[0]|0
+IO|din[0]|in|max|-4.088|2.000|3.0|sys_clk|c125|Slow|0.170
+IO|din[0]|in|min|1.796|0.000|1.0|sys_clk|c125|Fast|0.170
+PORT|din[1]|in|1|dq_reg[1]|0
+IO|din[1]|in|max|-4.103|2.000|3.0|sys_clk|c125|Slow|0.170
+IO|din[1]|in|min|1.811|0.000|1.0|sys_clk|c125|Fast|0.170
+PORT|din[2]|in|1|dq_reg[2]|0
+IO|din[2]|in|max|-4.089|2.000|3.0|sys_clk|c125|Slow|0.170
+IO|din[2]|in|min|1.797|0.000|1.0|sys_clk|c125|Fast|0.170
+PORT|din[3]|in|1|dq_reg[3]|0
+IO|din[3]|in|max|-4.116|2.000|3.0|sys_clk|c125|Slow|0.170
+IO|din[3]|in|min|1.824|0.000|1.0|sys_clk|c125|Fast|0.170
+WORST|setup|-4.116|2.000|sys_clk|c125|Slow|0.170|0.000|din[3]|dq_reg[3]/D
+WORST|hold|0.196|0.000|c125|c125|Fast||0.250|acc_reg[1]/C|par_reg/D
+# end

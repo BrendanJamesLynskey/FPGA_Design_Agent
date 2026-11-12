@@ -53,12 +53,12 @@ def sim(name: str, seed: int) -> tuple[bool, float]:
     return p.returncode == 0, time.time() - t0
 
 
-def build(seeds: int) -> list[dict]:
+def build(seeds: int, gdir: Path | None = None) -> list[dict]:
     rows = []
     for rtl in sorted(HERE.joinpath("rtl").glob("*.sv"), key=order):
         name = rtl.stem
         short = name.replace("cdcfx_", "")
-        g = HERE / "golden" / name
+        g = (gdir or HERE / "golden") / name
         cdc = gates.parse_cdc((g / "cdc_synth.rpt").read_text())
         crit = sum(r["count"] for r in cdc["rules"] if r["severity"] == "Critical")
         st = cdc_structure.evaluate(g / "cdc_paths_synth.rpt", g / "cdc_synth.rpt")
@@ -92,11 +92,13 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=3)
     ap.add_argument("--out", default="results/16_cdc_gate")
+    ap.add_argument("--golden", default=None, help="report directory (brief 49: the 2026.1 set lives under results/)")
+    ap.add_argument("--vivado", default="2025.2")
     a = ap.parse_args()
-    rows = build(a.seeds)
+    rows = build(a.seeds, ROOT / a.golden if a.golden else None)
     out = ROOT / a.out
     out.mkdir(parents=True, exist_ok=True)
-    (out / "mutant_table.json").write_text(json.dumps({"seeds": a.seeds, "rows": rows}, indent=1) + "\n")
+    (out / "mutant_table.json").write_text(json.dumps({"vivado": a.vivado, "seeds": a.seeds, "rows": rows}, indent=1) + "\n")
     (out / "mutant_table.md").write_text(md(rows, a.seeds))
     print(md(rows, a.seeds))
     bad_c = [r["fixture"] for r in rows if r["kind"] == "correct" and r["gate_flags"]]

@@ -54,7 +54,7 @@ gates, before any model touched it. Everything the agent produces has the same s
                      |  (memory-guarded: one job, 1 thread, 6 GB cap; optional ILA from probes.yaml)
                      v
   [7] gates ......... flow/gates.py, stage by stage: RTL methodology; post-synthesis coverage, DRC,
-                     |  methodology, QoR score; post-place hold; post-route slack, CDC, junction
+                     |  methodology, QoR score (absent on the 2026.1 Basic tier); post-place hold; post-route slack, CDC, junction
                      |  temperature; bitstream present. Names the first stage that failed
                      v
   [8] bring-up ...... BRINGUP.md for a tester who did not design it, plus the test shell:
@@ -71,7 +71,7 @@ Steps 1-8 were done by hand for F0A. Since F2 the agent does steps 1-8 itself, a
 
 | Piece | Where | Checked by |
 |---|---|---|
-| Memory-safe Vivado runner (refuses to start beside another Vivado or below 7 GB free; 6 GB cap; records time and peak memory) | [flow/run_vivado.sh](flow/run_vivado.sh) | local builds, [results/f0a](results/f0a) |
+| Memory-safe Vivado runner (refuses to start beside another Vivado or below 7 GB free; 6 GB cap; records time and peak memory) | [flow/run_vivado.sh](flow/run_vivado.sh) | local builds, [results/f0a_2026_1](results/f0a_2026_1) |
 | Non-project Tcl flow with the reports the gates need | [flow/build.tcl](flow/build.tcl) | local builds |
 | Gates over the reports, one JSON per build | [flow/gates.py](flow/gates.py) | CI: parser tests against real passing **and** deliberately failing Vivado reports |
 | ILA insertion from a probe list, built both ways, cost recorded | [flow/debug.tcl](flow/debug.tcl) | local builds |
@@ -79,9 +79,9 @@ Steps 1-8 were done by hand for F0A. Since F2 the agent does steps 1-8 itself, a
 | One hand-written T1 design from spec to bitstream | [designs/t1_dimmer_counter](designs/t1_dimmer_counter) | CI: cocotb against the model + mutants; local: gates |
 | Board files | [boards/nexys_a7_100t](boards/nexys_a7_100t) | Digilent master XDC (MIT) at a pinned commit |
 
-The T1 build numbers (timing, utilisation, ILA cost, run time and memory) are in
-[results/f0a/t1_dimmer_counter.md](results/f0a/t1_dimmer_counter.md); every one comes from the JSON next to it
-([results/f0a/README.md](results/f0a/README.md) lists the files).
+The T1 build numbers on Vivado 2026.1 (timing, utilisation, ILA cost, run time and memory) are in
+[results/f0a_2026_1/t1_dimmer_counter.md](results/f0a_2026_1/t1_dimmer_counter.md); every one comes from the JSON next to it
+([results/f0a_2026_1/README.md](results/f0a_2026_1/README.md) lists the files).
 Programming the board and testing on hardware is milestone F0B (below).
 
 ## Bring-up on hardware (F0B)
@@ -96,14 +96,15 @@ its UART, programs the base build into SRAM (never flash), runs 8 UART tests tha
 the shell and T1 models (identity and build stamp, 1,004 scratch loopbacks, error responses, timeouts, framing
 errors, the T1 registers), programs the ILA build, arms the ILA by Tcl in step with UART writes, and checks four
 captures cycle by cycle against the model (a COUNT write; the PWM at three dimmer levels). It writes
-[results/f0b/t1_dimmer_counter_bringup.json](results/f0b/t1_dimmer_counter_bringup.json).
+`results/<milestone>/t1_dimmer_counter_bringup.json`.
 
-Measured ([results/f0b](results/f0b/README.md)): three runs in a row all PASS in 110.7-114.6 s, with identical
-results: 8 of 8 UART tests, 4 of 4 ILA captures, LED on-time 32, 256 and 640 of 1024 clocks at DUTY 0x08, 0x40 and
-0xA0, exactly as the model predicts. The tests that need the board are marked `hw` and skipped in CI; CI re-checks
+Measured on Vivado 2026.1 builds ([results/f0b_2026_1](results/f0b_2026_1/README.md), wall power): the passing run's steps took
+123.5 s: 8 of 8 UART tests, 4 of 4 ILA captures, LED on-time exactly as the model predicts at DUTY 0x08, 0x40 and 0xA0
+(the ILA build uses one ILA IP with packed probe ports, the route the free Basic licence tier allows). An earlier run
+failed at the ILA step on a probe-file fault the flow now repairs (`flow/ltx_fix.py`). The tests that need the board are marked `hw` and skipped in CI; CI re-checks
 the committed captures instead.
 
-Manual checks by the owner (buttons count as specified, three visibly different dimmer levels):
+Manual checks by the owner, made on the bitstreams of an earlier Vivado release and not repeated on 2026.1 (buttons count as specified, three visibly different dimmer levels):
 [results/f0b/manual_checks.md](results/f0b/manual_checks.md).
 
 ![T1 running on the Nexys A7-100T: display 40 (brightness) and 0000 (count), DONE and POWER LEDs lit](docs/img/t1_on_nexys_a7.jpg)
@@ -123,22 +124,24 @@ Before an agent designs for a board it must know what is on it. For the Nexys A7
   (`flow/hw.py` `power_ok`) now depends on how the board is powered (0.5 W on USB, 2.0 W on wall power, junction
   temperature and rail currents too), and `report_power` is run for the board's real thermal environment.
 - Four read-only self-check designs, each with its pass rule pre-registered and a device model in simulation,
-  proven on the board 3 times each with `flow/board_check.py` ([results/board_v2](results/board_v2/README.md)):
+  proven on the board 3 times each with `flow/board_check.py` (board outcomes in [results/board_v2](results/board_v2/README.md);
+their bitstreams were built on an earlier Vivado release; all four rebuild on 2026.1 with every gate passing, not yet
+programmed: [results/49_vivado_2026_1/b2_builds.json](results/49_vivado_2026_1/b2_builds.json)):
   [b2_tmp_adt7420](designs/b2_tmp_adt7420), [b2_acl_adxl362](designs/b2_acl_adxl362),
   [b2_qspi_jedec](designs/b2_qspi_jedec) (flash ID only: no write or erase opcode exists in its RTL, which a test
   checks) and [b2_mic_pdm](designs/b2_mic_pdm).
 
 ## The UltraFast methodology as the backbone (04e)
 
-The flow and the agent's stage machine follow AMD's UltraFast Design Methodology (UG949 v2025.2) stage by stage:
+The flow and the agent's stage machine follow AMD's UltraFast Design Methodology (UG949 v2026.1) stage by stage:
 board and device planning, RTL, constraints, synthesis, implementation, timing closure, power closure, DRC
 closure, configuration and debug. [docs/methodology.md](docs/methodology.md) maps UG949's chapters to the plan's
 flow steps, the reports `flow/build.tcl` writes and the gates `flow/gates.py` applies (with every threshold cited
 to UG949), says where the flow deviates from UG949 and why, and defines the agent's stage machine for F2. The
 per-stage procedures the agent reads (exact Tcl, thresholds, common failures) are nine skills in the private
-knowledge bank. T1 rebuilt through the staged flow passes every stage with timing and utilisation identical to F0A
-([results/ultrafast](results/ultrafast/README.md): +4 s and +168 MiB for the added reports; the power figures
-changed because `report_power` now uses the board's thermal environment).
+knowledge bank. T1 built through the staged flow on Vivado 2026.1 passes every stage
+([results/f0a_2026_1](results/f0a_2026_1/t1_dimmer_counter.md)); the post-route QoR-assessment gate is absent on the free
+Basic licence tier, not passed.
 
 ## Knowledge packs (F1A)
 
@@ -273,14 +276,14 @@ with `systemd-run --user`):
 
 ```bash
 flow/run_vivado.sh designs/t1_dimmer_counter both     # base, then the ILA build; gates run after each
-python3 flow/summarise.py designs/t1_dimmer_counter --out results/f0a
+python3 flow/summarise.py designs/t1_dimmer_counter --out results/<new folder>   # never over a committed record
 ```
 
 Vivado does not run in GitHub Actions (the install is about 100 GB); its results are committed under `results/`.
 
 Faster Vivado (brief 33): the runner reuses an earlier build of the same inputs (a cache hit runs no Vivado; an earlier
 stage reached resumes from its checkpoint), takes its thread count from `FDA_VIVADO_THREADS`, and can hash a build's
-placement and routing. Measured on three designs in [results/33_vivado_speed](results/33_vivado_speed/results.md).
+placement and routing. Measured on Vivado 2026.1 in [results/33_vivado_speed_2026_1](results/33_vivado_speed_2026_1/results.md).
 For batches too big for the build PC, [cloud/](cloud/README.md) has a design and scripts for an AWS EC2 burst runner
 (owner-run; not yet run against AWS).
 
@@ -291,7 +294,7 @@ flow/        runner, Tcl flow, ILA insertion, gates, summaries, lint, cocotb hel
              programming, ILA capture and bringup.py (F0B); board_check.py (04c)
 flow/ipgen/  external design tools driving AMD IP configuration (brief 19): the xsim file-I/O harness, FIR and CIC adapters
              (scipy design -> .coe/CONFIG.* -> create_ip read-back -> bit-exact xsim check -> OOC synthesis), the signal-chain
-             model and diagram; worked examples in results/19_ipgen/
+             model and diagram; worked examples in results/19_ipgen_2026_1/
 flow/net/    packet-processing evidence (brief 40): scapy traffic, Python golden models, the bench runner (Icarus; xsim
              optional), seeded-fault runner, line-rate measurement, ip.yaml checker and README generator
 ip_lib/      the project's own IP library ([ip_lib/README.md](ip_lib/README.md)); first entries: the brief-40 networking
@@ -301,7 +304,7 @@ debug_core/  debug on the board from a plain-English request (brief 50A, [docs/d
              the common capture format with VCD, the answer and queries, the static viewer; demo_t1.py (the board demo)
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T): board.yaml, master XDC, inventory.yaml, power_budget.md
-tools/       inventory_check.py (board inventory against the master XDC)
+tools/       inventory_check.py (board inventory against the master XDC); git_guard.py (the tests must not move the checkout they run from; checked at the end of every pytest session by conftest.py)
 agent/       core/ (tools, security, trace, replay, smoke) and mcp_server/ (05a); tests/ with the replay fixture
 project/     the project layer (brief 27 P0): design.yaml and contract.yaml checkers, stage keys, status and dashboard,
              the contract-test generator; examples/video_median (pilot 1, described); tests/ with fixture RTL;
@@ -351,7 +354,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | F1A | Knowledge packs (generic, AMD vendor from Ross, Artix-7 family) and a search library, in a private repo; names and hashes in [knowledge/PACKS.md](knowledge/PACKS.md); human [debug playbook](docs/debug_playbook.md) | done |
 | F1B | Model screen on CVDP's 86 problems ([results/f1b/REPORT.md](results/f1b/REPORT.md)): no cheap candidate eligible (DeepSeek V4.1 Flash −12.4 points; GLM-5.3-Flash −4.1, not detectable, but 48.5 reliability failures per 86); pick luna | done |
 | 04c | Board onboarding: Nexys A7 inventory, power budget and source-aware power gate, four read-only peripheral self-checks on the board | done |
-| 04e | UltraFast (UG949) backbone: stage-grouped gates and reports in the flow ([docs/methodology.md](docs/methodology.md)), nine stage procedures in the knowledge bank, T1 rebuilt through the stages ([results/ultrafast](results/ultrafast/README.md)) | done |
+| 04e | UltraFast (UG949) backbone: stage-grouped gates and reports in the flow ([docs/methodology.md](docs/methodology.md)), nine stage procedures in the knowledge bank, T1 rebuilt through the stages ([results/f0a_2026_1](results/f0a_2026_1/t1_dimmer_counter.md)) | done |
 | 04f | Verification backbone: OpenTitan-style V0-V3 plus V-HW on a simulator-portable stack (cocotb bench, bound assertion checkers, SymbiYosys, Verilator coverage, mutation score); T1 reaches V3 ([docs/verification.md](docs/verification.md), [results/04f](results/04f/README.md)) | done |
 | 05a | F2 part 1: the harness-neutral core, MCP server, security layer and replayed-trace CI ([docs/agent_core.md](docs/agent_core.md)) | merged |
 | 05d | F2 part 4: proof method per requirement, architecture-first gate, design standards v1.0 and checker, resource sanity gate, upgraded review pages, owner-edit ledger ([docs/methodology.md](docs/methodology.md), [docs/design_standards.md](docs/design_standards.md), [results/f2](results/f2/README.md)); live luna runs null at stage 2 | merged |
@@ -359,18 +362,18 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 05g | F2 part 7: test-writer diagnosis and fixes (turn reserve, repair no longer deletes, shell fixtures, checklist, formal re-plan), per-role turn trace, knowledge-use log, QoR gate moved to after routing ([docs/test_writer.md](docs/test_writer.md)) | merged |
 | 08f | `eval-2` build: independent spec-only test role and gate after V2/V3 (`--spec-tests`, off by default), golden request test against `eval-1`, offline replay on saved designs ([docs/verification.md](docs/verification.md), [results/08f](results/08f/), [agent/graph/spectest.py](agent/graph/spectest.py), [tools/spectest_replay.py](tools/spectest_replay.py)) | merged |
 | 11b | CDC soak rig, phase 2a: the 13 correct variants and 11 mutant types (28 codes) on three clock domains, checkers, UART readout, Tj stop; simulated with metastability injection and reset storms, built in Vivado; no board run yet ([hil/cdc_soak](hil/cdc_soak/README.md)) | merged |
-| 16 | Stronger CDC gate: structural check of every asynchronous path in the netlist ([flow/cdc_structure.py](flow/cdc_structure.py), [flow/cdc_paths.tcl](flow/cdc_paths.tcl)) and the design's own tests with synchroniser-delay injection ([flow/cdc_inject.py](flow/cdc_inject.py), [flow/cdc_inject_run.py](flow/cdc_inject_run.py)), proved against the rig's mutants ([flow/tests/fixtures/cdc_mutants](flow/tests/fixtures/cdc_mutants), [results/16_cdc_gate](results/16_cdc_gate/mutant_table.md)) | merged |
+| 16 | Stronger CDC gate: structural check of every asynchronous path in the netlist ([flow/cdc_structure.py](flow/cdc_structure.py), [flow/cdc_paths.tcl](flow/cdc_paths.tcl)) and the design's own tests with synchroniser-delay injection ([flow/cdc_inject.py](flow/cdc_inject.py), [flow/cdc_inject_run.py](flow/cdc_inject_run.py)), proved against the rig's mutants ([flow/tests/fixtures/cdc_mutants](flow/tests/fixtures/cdc_mutants), [results/16_cdc_gate_2026_1](results/16_cdc_gate_2026_1/mutant_table.md)) | merged |
 | 27 P0 | Project layer: `design.yaml` and `contract.yaml` checkers, stage keys from input hashes, `project status` and a static dashboard, a contract-test generator proved on fixture RTL; pilot 1 described with hand-written evidence ([docs/project_layer.md](docs/project_layer.md), [project/](project/)) | merged (#98) |
 | 27 P1 | Phase 0, the spec session: requirements, `design.yaml` and contracts written and checked, one harness-made question per unstated contract field, unanswered questions kept as assumptions, a question log per pass; measured on pilot 1 and `c12_nexys_pwm_audio` ([project/phase0.py](project/phase0.py), [results/27b_p1](results/27b_p1/results.md)) | PR open |
-| 18 | Project-mode parity: inventory of what project mode and each wizard give, measured in batch (Clocking Wizard against the hand M/D/O search, MIG through implementation, FIFO/XADC/GT/PS7/block automation); machine-readable cross-probing (`xprobe.json`, SVG device map, evidence for the repair visit) ([docs/project_mode_parity.md](docs/project_mode_parity.md), [flow/xprobe.py](flow/xprobe.py), [results/project_parity](results/project_parity)) | merged (#89) |
-| 19 | External design tools driving AMD IP: xsim file-I/O harness, FIR and CIC adapters (spec to .coe to IP to bit-exact check), PDM-microphone signal chain with SINAD/ENOB per node ([docs/ipgen.md](docs/ipgen.md), [results/19_ipgen](results/19_ipgen)) | merged (#92) |
-| 20 | Timing exceptions proved, part A: 15 one-fault Vivado fixtures (multicycle, false path, max delay, clock groups, the slow-FSM clock-enable pattern), an exception gate after synthesis and routing (`report_exceptions -ignored/-coverage`, XDC messages, TIMING-24/29/47, XDCH-1, and our own clock-enable check because Vivado raised no TIMING-46 on tied CE), FDA-CON-5/-10, and a dev drill with a constraint grader ([flow/exceptions_check.py](flow/exceptions_check.py), [flow/tests/fixtures/timing_exceptions](flow/tests/fixtures/timing_exceptions), [results/20_timing_exceptions](results/20_timing_exceptions/exceptions_table.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
+| 18 | Project-mode parity: inventory of what project mode and each wizard give, measured in batch (Clocking Wizard against the hand M/D/O search, MIG through implementation, FIFO/XADC/GT/PS7/block automation); machine-readable cross-probing (`xprobe.json`, SVG device map, evidence for the repair visit) ([docs/project_mode_parity.md](docs/project_mode_parity.md), [flow/xprobe.py](flow/xprobe.py), [results/project_parity_2026_1](results/project_parity_2026_1)) | merged (#89) |
+| 19 | External design tools driving AMD IP: xsim file-I/O harness, FIR and CIC adapters (spec to .coe to IP to bit-exact check), PDM-microphone signal chain with SINAD/ENOB per node ([docs/ipgen.md](docs/ipgen.md), [results/19_ipgen_2026_1](results/19_ipgen_2026_1)) | merged (#92) |
+| 20 | Timing exceptions proved, part A: 15 one-fault Vivado fixtures (multicycle, false path, max delay, clock groups, the slow-FSM clock-enable pattern), an exception gate after synthesis and routing (`report_exceptions -ignored/-coverage`, XDC messages, TIMING-24/29/47, XDCH-1, and our own clock-enable check because Vivado raised no TIMING-46 on tied CE), FDA-CON-5/-10, and a dev drill with a constraint grader ([flow/exceptions_check.py](flow/exceptions_check.py), [flow/tests/fixtures/timing_exceptions](flow/tests/fixtures/timing_exceptions), [results/20_timing_exceptions_2026_1](results/20_timing_exceptions_2026_1/exceptions_table.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
 | 40 | Networking and packet processing, simulation phase: RMII MAC with FCS, streaming parser, exact/LPM/ternary match-action with AXI4-Lite updates under traffic, RFC 1624 rewrite, queues with RR/SP/DRR, a learning VLAN-aware 4-port switch; bit-exact against Python models with scapy traffic, 28 seeded faults, line rate and latency in simulation ([ip_lib/README.md](ip_lib/README.md), [results/b40](results/b40/README.md)); OOC cost tables, xsim cross-check and HIL to do | PR open |
 | 30 | Hardware-in-the-loop verification: sensing paths measured on the Nexys A7-100T (ILA in batch, XADC against JTAG, in-FPGA frame CRC, audio at the jack, library instruments read over the shell), five library instruments ([ip_lib](ip_lib/README.md)), the HIL stage ([flow/hil.py](flow/hil.py), `hil.yaml`), a seeded pin fault that passes simulation and fails at the jack; M2K, Pluto, Red Pitaya, video capture not connected, so those drivers are tested on synthetic data only ([hil/README.md](hil/README.md), [results/b30](results/b30/README.md)) | PR open |
-| 24 | FSMs as an area of expertise: a reference burst controller measured in variants (separated and 23-state monolithic, output and input registering, reset styles and a reset inside an enable, encodings, the one-in-N enable, an input from another clock) in Vivado, Icarus and SymbiYosys; an FSM state and transition coverage check from a trace of the state register (off by default, `--fsm-coverage` on the V2 gate) with test-removal mutants; two drills; a course lesson and two knowledge-bank skills ([docs/fsm.md](docs/fsm.md), [results/24_fsm](results/24_fsm/README.md)) | PRs open |
+| 24 | FSMs as an area of expertise: a reference burst controller measured in variants (separated and 23-state monolithic, output and input registering, reset styles and a reset inside an enable, encodings, the one-in-N enable, an input from another clock) in Vivado, Icarus and SymbiYosys; an FSM state and transition coverage check from a trace of the state register (off by default, `--fsm-coverage` on the V2 gate) with test-removal mutants; two drills; a course lesson and two knowledge-bank skills ([docs/fsm.md](docs/fsm.md), [results/24_fsm_2026_1](results/24_fsm_2026_1/README.md)) | PRs open |
 | 36 | Skill routing and retrieval behind a flag: router node with a names-and-descriptions shortlist, `skill_index` / `skill_excerpt` / `load_skill(name=)`, hybrid BM25 plus embeddings index (in process, or the container in [agent/skill_service](agent/skill_service)), cited notes instead of bodies in the state; recall, context and a small end-to-end run on dev tasks; golden requests regenerated ([docs/skill_routing.md](docs/skill_routing.md), [results/36_skill_routing](results/36_skill_routing/retrieval.md)) | PR open |
 | 42 | Harness engineering arms H1 (context management), H2 (hang protection) and H9 (typed report digests) behind flags; pre-registered, 3 repeats of 4 tasks x 4 arms (51 runs, 48 valid); no arm adopted, H1 the best candidate on cost and wall time ([results/42_workflows](results/42_workflows/README.md), [agent/tools/harness_audit.py](agent/tools/harness_audit.py)) | merged; repeats 2-3: PR open |
-| 20B | Timing constraints proved, part B: I/O delays, virtual clocks and clock uncertainty measured on one-fault Vivado tops (system- and source-synchronous, DDR, forwarded clock, virtual clocks, MMCM jitter, corners), an I/O gate after synthesis and routing (invented delays on slow ports, data-sheet values, -min/-max, reference clock, IOB), an implementation-only timing margin (`timing_margin_ns`) kept out of sign-off, FDA-CON-11/-12/-13, and an ADC drill with an I/O grader ([flow/io_check.py](flow/io_check.py), [flow/tests/fixtures/io_timing](flow/tests/fixtures/io_timing), [results/20_timing_exceptions/io_table.md](results/20_timing_exceptions/io_table.md), [uncertainty](results/20_timing_exceptions/uncertainty.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
+| 20B | Timing constraints proved, part B: I/O delays, virtual clocks and clock uncertainty measured on one-fault Vivado tops (system- and source-synchronous, DDR, forwarded clock, virtual clocks, MMCM jitter, corners), an I/O gate after synthesis and routing (invented delays on slow ports, data-sheet values, -min/-max, reference clock, IOB), an implementation-only timing margin (`timing_margin_ns`) kept out of sign-off, FDA-CON-11/-12/-13, and an ADC drill with an I/O grader ([flow/io_check.py](flow/io_check.py), [flow/tests/fixtures/io_timing](flow/tests/fixtures/io_timing), [results/20_timing_exceptions_2026_1/io_table.md](results/20_timing_exceptions_2026_1/io_table.md), [uncertainty](results/20_timing_exceptions_2026_1/uncertainty.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
 | 54 | Reproducible builds: every build writes a manifest (input hashes, settings, tool, commit), and a build ID derived from it is written into the bitstream (USR_ACCESS register) and checked over JTAG before board tests; release bundles with a standalone checker. Measured on Vivado 2026.1: clean builds in different directories have identical configuration data (only the header's time bytes differ); the thread count does not change placement, routing or reports ([docs/reproducibility.md](docs/reproducibility.md), [results/54_reproducible](results/54_reproducible/README.md)) | PR open |
 | 55 | VHDL designs: set `--hdl vhdl` or `language: vhdl` and the flow lints the VHDL with GHDL, simulates it with the SystemVerilog test shell, builds it in Vivado, mutates it and checks it formally. A model's first VHDL translations failed all five board tasks on one naming clash; with that mistake written into its guidance (an exploratory, post-hoc arm), all five passed the same hidden tests and Vivado 2026.1 gates as the SystemVerilog references, and one ran on the board. Three block designs were checked by their own tests and out-of-context synthesis only (one fails as translated). The end-to-end agent passed 0 of 4 VHDL runs ([docs/vhdl.md](docs/vhdl.md), [results/55_vhdl](results/55_vhdl/README.md)) | PR open |
 | 50A | Debug from a plain-English request: a request becomes a checked plan (probes resolved by RTL name with suggestions for unknown names, a per-bit trigger, the window, packing into the Basic tier's 5 ILA ports, the cut when it cannot fit), a debug build per probe set (reused when an earlier build holds the probes), a capture on the board with the XADC conditions, and an answer that quotes only the capture; capture JSON, VCD and a static viewer; agent tools `debug_plan`, `debug_capture`, `debug_query` (not offered to any role yet) ([docs/debug.md](docs/debug.md), [results/50a_nl_debug](results/50a_nl_debug/README.md)) | PR open |

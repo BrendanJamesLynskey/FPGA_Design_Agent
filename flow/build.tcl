@@ -6,7 +6,7 @@
 # applies the memory guard and records time and memory. Every report the
 # gates read (flow/gates.py) lands in the build directory, one group per
 # UltraFast stage (docs/methodology.md): rtl, post_synth, post_place,
-# post_route, bitstream. AMD UG949 v2025.2 places report_methodology at three
+# post_route, bitstream. AMD UG949 v2026.1 places report_methodology at three
 # stages (elaborated RTL, after synthesis, after implementation; ch. 1 "Using
 # the UltraFast Design Methodology DRCs"), check_timing and the timing summary
 # after synthesis and after each implementation step (ch. 6 "Evaluating Design
@@ -130,8 +130,9 @@ if {$resume_from eq ""} {
     # --- stage post_synth ----------------------------------------------------------
     synth_design -top $top -part $part {*}$gen_args
     stage synth
-    # AMD's scoped XPM constraints are not applied in this non-project flow (QR1, docs/methodology.md): apply them by cell name
-    apply_xpm_cdc_constraints
+    # AMD's scoped XPM constraints are not applied in this non-project flow (QR1, docs/methodology.md): apply them by cell name.
+    # FDA_XPM_CDC=0 skips this, only to measure the gap (brief 49 re-measured the QR1 probe both ways); never set it in a real build.
+    if {![info exists ::env(FDA_XPM_CDC)] || $::env(FDA_XPM_CDC) ne "0"} { apply_xpm_cdc_constraints }
     write_checkpoint -force $out/post_synth.dcp
     # UG949 ch. 5 "Moving Past Synthesis": DRCs, methodology, timing constraints,
     # QoR assessment, utilisation, clock trees; ch. 6 "Baselining and Timing
@@ -172,7 +173,7 @@ if {$ila} {
 
 if {$resume_from ne "route"} {
     # --- implementation ----------------------------------------------------------
-    # brief 20 part B: build.yaml timing_margin_ns, an implementation-only setup margin on every design clock (UG949 v2025.2
+    # brief 20 part B: build.yaml timing_margin_ns, an implementation-only setup margin on every design clock (UG949 v2026.1
     # ch. 6 "Overconstraining the Design": -setup only, reset to 0 before the router), taken off before routing
     set margin_clocks {}
     if {[info exists timing_margin_ns] && $timing_margin_ns > 0} {

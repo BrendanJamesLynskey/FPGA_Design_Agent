@@ -100,7 +100,7 @@ def block(name, d):
         e = d["eval"]; v = e["tool_versions"]
         return table(["Fixed before the first scored run", "Value"], [
             ["Agent under test", f'tag {e["tag"]}, model {e["model"]}, Claude Code {v["claude_code"]}'],
-            ["Tools", f'Vivado {v["vivado"]}, Icarus Verilog {v["icarus"]}, cocotb {v["cocotb"]}, Verilator {v["verilator"]}'],
+            ["Tools", f'Icarus Verilog {v["icarus"]}, cocotb {v["cocotb"]}, Verilator {v["verilator"]}, and the Vivado release the pre-registration pins (the next evaluation pins Vivado 2026.1)'],
             ["Tasks and runs", f'{e["tasks"]} tasks x {e["runs_per_task"]} runs = {e["runs"]} runs'],
             ["Interval", f'bootstrap over tasks, {e["resamples"]:,} resamples; planned half-width {e["planned_halfwidth"]} points'],
             ["Randomness", f'task order seed {e["seed"]}'],
@@ -124,9 +124,8 @@ def block(name, d):
         return table(["Check", "Result"], [[k, v] for k, v in g.items()])
     if name == "c10_runs":
         e = [x for x in d["examples"] if x["task"] == "c10_dds_sine"][0]
-        rows = [[r["run"], OUT_TEXT[r["outcome"]], f'{r["tests_passed"]} of {r["tests_total"]}', r["failure_class"] or "none",
-                 f'{r["wns_ns"]:+.3f}', r["lut"], r["ff"]] for r in e["runs"]]
-        return table(["Run", "Outcome", "Hidden tests", "What went wrong", "WNS (ns)", "LUT", "FF"], rows, num=(0, 4, 5, 6))
+        rows = [[r["run"], OUT_TEXT[r["outcome"]], f'{r["tests_passed"]} of {r["tests_total"]}', r["failure_class"] or "none"] for r in e["runs"]]
+        return table(["Run", "Outcome", "Hidden tests", "What went wrong"], rows, num=(0,))
     if name == "t1_rtl":
         return f'<pre tabindex="0"><code>{html.escape(d["board"]["rtl"])}</code></pre>'
     if name == "problems_index":
@@ -146,12 +145,12 @@ def block(name, d):
             ["report_cdc, xpm_cdc_single row", x["before"]["report_cdc_exception"]["single"], x["after"]["report_cdc_exception"]["single"]],
             ["report_cdc, xpm_cdc_gray row", x["before"]["report_cdc_exception"]["gray"], x["after"]["report_cdc_exception"]["gray"]],
             ["clk_a to clk_b setup WNS (ns)", f'{x["before"]["wns_ns"]:+.3f}', f'{x["after"]["wns_ns"]:+.3f}'],
-            ["Failing endpoints on that path", x["before"]["failing_endpoints"], "not recorded"],
+            ["Failing endpoints on that path", x["before"]["failing_endpoints"], x["after"].get("failing_endpoints", "not recorded")],
         ], num=())
     if name == "mutant_table":
         def yn(v):
             return "not covered" if v is None else ("yes" if v else "no")
-        rows = [[m["id"], m["what"], yn(m["report_cdc"]), yn(m["rig_sim"]), yn(m["gate_sim"]), yn(m["gate"])] for m in d["flow_notes"]["mutants"]]
+        rows = [[m["id"], m["what"], "not re-measured" if m["report_cdc"] is None else yn(m["report_cdc"]), yn(m["rig_sim"]), yn(m["gate_sim"]), yn(m["gate"])] for m in d["flow_notes"]["mutants"]]
         return table(["Mutant", "What is wrong", "report_cdc alone flags it", "Rig simulation with injection", "Gate's own injected simulation", "New gate flags it"], rows)
     if name == "tear_table":
         rows = [[("binary counter" if s["bus"] == "binary" else "Gray counter"), "on" if s["extra_cycle"] else "off", s["cycles"], s["torn_cycles"]]

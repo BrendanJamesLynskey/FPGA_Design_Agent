@@ -11,7 +11,7 @@
 # WORST|<setup/hold>|<slack>|<requirement>|<startpoint clock>|<endpoint clock>|<corner>|<uncertainty>|<pessimism>|<from>|<to>
 # ERROR|<what>|<message>
 # The file ends with "# end". Properties are the timing-path object's own (INPUT_DELAY, OUTPUT_DELAY, CORNER,
-# UNCERTAINTY, CLOCK_PESSIMISM; Vivado 2025.2). The uncertainty breakdown (TSJ, TIJ, DJ, PE) is only in report_timing's
+# UNCERTAINTY, CLOCK_PESSIMISM; Vivado 2026.1). The uncertainty breakdown (TSJ, TIJ, DJ, PE) is only in report_timing's
 # text: build.tcl writes timing_worst_setup.rpt and timing_worst_hold.rpt for it.
 
 proc io__v {x} { if {$x eq ""} { return "" }; return $x }

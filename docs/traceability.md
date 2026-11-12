@@ -28,7 +28,7 @@ decide that, for a whole programme.
 ```
 python3 flow/traceability.py designs/t1_dimmer_counter --runs build/verif/verilator --also build/verif/icarus \
     --formal build/verif/formal --gates designs/t1_dimmer_counter/build/base/gates.json \
-    --hw results/f0b/t1_dimmer_counter_bringup.json --json build/trace/t1.json --md build/trace/t1.md
+    --hw results/f0b_2026_1/t1_dimmer_counter_bringup.json --json build/trace/t1.json --md build/trace/t1.md
 ```
 
 It writes `trace.json` (schema `fpga-design-agent/trace/v1`) and a Markdown table. The agent writes both to

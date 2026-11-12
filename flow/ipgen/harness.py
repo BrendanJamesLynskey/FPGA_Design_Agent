@@ -18,7 +18,9 @@ import subprocess
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-VIVADO = os.environ.get("VIVADO", "/opt/Xilinx/2025.2/Vivado/bin/vivado")
+from flow.version_pin import vivado_path  # noqa: E402  (the one source of the install path, brief 48)
+
+VIVADO = vivado_path()
 TB_TEMPLATE = HERE / "tb" / "tb_axis_io.sv.tmpl"
 TB_MEM_TEMPLATE = HERE / "tb" / "tb_mem_read.sv.tmpl"
 
