@@ -270,7 +270,7 @@ module b63d_nexys_net_top #(
     logic u_st_busy;                                        // the payload has been handed over: wait for the frame
     assign st_addr = (v_st == V_SEND && v_need && port_free) ? (p_w - 5'd1) : (win_addr[4:0] - 5'h10);
     assign p_v = (v_st == V_SEND) && !v_need && !p_load && v_i < 7'd88 && !u_st_busy;
-    assign p_d = v_word[8 * (3 - v_i[1:0]) +: 8];
+    assign p_d = v_word[8 * (3 - int'(v_i[1:0])) +: 8];
     assign p_l = (v_i == 7'd87);
     always_ff @(posedge clk) begin
         if (rst || v_st != V_SEND) u_st_busy <= 1'b0;
@@ -311,7 +311,7 @@ module b63d_nexys_net_top #(
         end
     end
     assign j_v = inj_busy && inj_rdy;
-    assign j_d = inj_q[8 * (3 - inj_i[1:0]) +: 8];
+    assign j_d = inj_q[8 * (3 - int'(inj_i[1:0])) +: 8];
     assign j_l = (inj_i == inj_len - 11'd1);
 
     // ------------------------------------------------------------------ transmit arbiter: whole frames, in turn

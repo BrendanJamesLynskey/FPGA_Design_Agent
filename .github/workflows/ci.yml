@@ -171,9 +171,9 @@ jobs:
           exit $rc
 
   packet-processing:
-    name: Packet processing library (brief 40) - bit-exact sims, seeded faults, lint, ip.yaml
+    name: Packet processing library (briefs 40, 58A, 63D) - bit-exact sims, seeded faults, lint, ip.yaml
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -188,6 +188,8 @@ jobs:
         run: python flow/net/ipdoc.py --check
       - name: Bench runs against the golden models (Icarus)
         run: python -m pytest -q flow/net/tests
+      - name: Brief 63D network design for the Nexys A7 - the library blocks behind eth_mac_rmii, through the shell
+        run: python -m pytest -q designs/b63d_nexys_net/tests/test_b63d_nexys_net_rtl.py
       - name: Seeded faults - every one must be caught
         run: python flow/net/faults.py --json build/net/faults.json
       - name: Verilator lint of the library entries
@@ -272,7 +274,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y iverilog verilator yosys z3 flex bison autoconf g++ make perl help2man ccache libfl2 libfl-dev
+          sudo apt-get install -y iverilog verilator yosys z3 boolector flex bison autoconf g++ make perl help2man ccache libfl2 libfl-dev
           pip install pyyaml pyserial pytest click cocotb==2.0.1 cocotb-coverage pyslang
       - name: Verilator 5.048 from source (cocotb 2 needs 5.036+; the apt package is 5.020), cached
         id: vl
@@ -311,6 +313,8 @@ jobs:
         run: flow/formal.sh designs/t1_dimmer_counter
       - name: Formal, brief 58A - the trading interlocks (k-induction) and the MAC frame FSMs
         run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_formal.py
+      - name: Formal, brief 63D - MDIO frame (k-induction), network blocks' framing and AXI-Stream rules, the MAC address filter (bounded)
+        run: python -m pytest -q flow/net/tests/test_63d_formal.py
       - name: Reference FSM controller, separated and monolithic - bounded, cover and k-induction depth (brief 24)
         run: python -m pytest -q flow/tests/test_24_fsm_formal.py
       - name: Simulator support for FSM coverage constructs (Verilator 5.048, brief 24)

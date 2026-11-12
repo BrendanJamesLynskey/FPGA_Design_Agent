@@ -180,4 +180,10 @@ broken constraint, or a variant's own `requires`, such as `TAPS <= 64` for `lut_
 4. `python3 flow/net/ipdoc.py` regenerates the README's Variants table; bump the entry's version and CHANGELOG.
 
 Entries with variants so far: [fir](../ip_lib/fir/README.md) (four), [dds_awg](../ip_lib/dds_awg/README.md) (two),
-[adc_histogram](../ip_lib/adc_histogram/README.md) (two).
+[adc_histogram](../ip_lib/adc_histogram/README.md) (two), and from brief 63D the buffer memories of
+[eth_mac_rgmii](../ip_lib/eth_mac_rgmii/README.md) (`RX_RAM`), [icmp_echo](../ip_lib/icmp_echo/README.md) and
+[ipv4_udp_tx](../ip_lib/ipv4_udp_tx/README.md) (`RAM`), two each (block RAM, LUT RAM).
+
+Entries without variants can still be measured: `python3 -m flow.ipchar` writes their rows under the variant name
+`base` (brief 63D: mdio_master, arp_responder, ipv4_udp_rx, igmp_join), and `flow/net/ipdoc.py` shows them in a Cost
+section of the README. The runner also reads the RTL of the entries an entry depends on (`depends` in ip.yaml).
