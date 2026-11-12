@@ -16,7 +16,8 @@ through the USR_ACCESSE2 primitive (register 0x05). Because the line is in input
 
 **What the build ID covers** (``build_id_covers``): every input file's SHA-256 (RTL, XDC, data, IP, probes, build.yaml,
 every flow/*.tcl and the flow Python that writes the Tcl), the normalised ``inputs.tcl`` (the order of the sources, the
-generics, part, top, power environment, timing margin, stop stage; absolute paths replaced by ``$ROOT`` and ``$OUT``),
+generics, part, top, power environment, timing margin; absolute paths replaced by ``$ROOT`` and ``$OUT``; not the
+stop stage),
 the settings that change the result (thread count, implementation directives as build.tcl passes them, the incremental
 and ILA-insertion switches) and the Vivado version. ``build_id`` is the first 8 hex digits of the SHA-256 of that part of
 the manifest as canonical JSON (sorted keys, no spaces).
@@ -55,7 +56,9 @@ FLOW_PY = ("flow/prepare.py", "flow/srcorder.py", "flow/ltx_fix.py")
 # switches that change the result (in the build ID) and switches that only add reports (recorded)
 RESULT_SWITCHES = ("FDA_INCREMENTAL", "FDA_ILA_INSERT")
 REPORT_SWITCHES = ("FDA_XPROBE", "FDA_RESULT_HASH", "FDA_BUILD_CACHE")
-SKIP_TCL = ("set out ", "set resume_from ", "set resume_dir ", "set incremental_ref ", "set build_id ")
+# not hashed: where the build ran, how far it goes (a build stopped early has no bitstream; brief 33's cache resumes a
+# longer build from it, so the stage must not change the ID), and the cache's own resume lines
+SKIP_TCL = ("set out ", "set stop_after ", "set resume_from ", "set resume_dir ", "set incremental_ref ", "set build_id ")
 IMPL_COMMANDS = ("synth_design", "opt_design", "place_design", "phys_opt_design", "route_design", "write_bitstream")
 RTL_EXT = {".sv", ".v", ".svh", ".vh", ".vhd", ".vhdl"}
 
@@ -235,6 +238,7 @@ def compute(out: Path, vivado: str, threads: int | str, env: dict[str, str] | No
         "settings_recorded": {
             "commands": cmds,
             "report_switches": {k: (env.get(k) or "") for k in REPORT_SWITCHES},
+            "stop_after": env.get("FDA_STOP_AFTER") or "bitstream",
             "seeds_note": "flow/build.tcl sets no seed option on any command; the result is fixed by the inputs, "
                           "the settings and the tool",
         },

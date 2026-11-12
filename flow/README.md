@@ -26,6 +26,9 @@ Python code only.
 | `hw_discover.py`, `hw_list.tcl` | Find the one JTAG target (refuses if there are several), check it is an xc7a100t, find its UART (FT2232 interface 1, same USB serial); record both in `~/.config/fpga_design_agent/boards.yaml`, outside the repo |
 | `program.py`, `program.tcl` | Program a build into SRAM by cable serial, after the `power_ok` gate (report_power total and junction temperature within the limits for the board's power source) and a build-stamp check; flash requests are refused. Also `run_vivado.sh designs/<name> program\|program-ila` |
 | `ila_capture.tcl`, `ila.py` | Arm the ILA by Tcl, wait, upload, export CSV + VCD, in step with the UART stimulus; read the CSV back into probe values |
+| `manifest.py` | **Brief 54.** The build manifest (`build/<variant>/manifest.json`: every input's SHA-256, the normalised `inputs.tcl`, the settings that change the result, the Vivado version; recorded beside them the flow commit and dirty flag, the knowledge-bank pin, Python versions, Vivado's build number and licence tier, the cache keys) and the **build ID**, the first 8 hex digits of the hash of its identity part, which `build.tcl` writes into the bitstream's USR_ACCESS register. `show designs/<name>` computes it without Vivado; `check` verifies it. [docs/reproducibility.md](../docs/reproducibility.md) |
+| `bitstream.py` | **Brief 54.** A 7-series `.bit` read as data: header fields, every configuration register write, the USR_ACCESS value, the configuration CRC recomputed; `diff` names every difference between two bitstreams (header field, register, frame word) |
+| `release.py` | **Brief 54.** `make` puts one build's bitstream, manifest, gates, key reports, traceability matrix and review pages into a release bundle with `RELEASE.md` and `SHA256SUMS`; `check` verifies a bundle on its own (sums, gates, build ID in the manifest and in the bitstream, clean tree) |
 | `build_cache.py` | Brief 33: decides whether a build reuses the previous build of the same inputs (hit, resume from a checkpoint, or fresh) |
 | `result_hash.tcl`, `result_hash.py` | Brief 33: dump and hash a build's placement and routing, to compare builds |
 | `hw.py` | Shared hardware pieces: the Vivado hardware-manager runner (same guard rails), `hw_server`, the board file, the power gate, serial redaction |
@@ -62,11 +65,19 @@ Python code only.
   OOM-killed (`memory.events`).
 - Variants (`both`) run one after the other.
 
-## Build stamp
+## Build stamp and build ID
 
 `BUILD_STAMP` (shell register 0x02) is the first 8 hex digits of a SHA-256 over every source and constraint file
 (path and content). The same sources give the same stamp, and therefore the same netlist, in any clone; `run.json`
 also records the git commit and whether the tree was dirty.
+
+**Build ID** (brief 54): the first 8 hex digits of the SHA-256 of the build manifest's identity (`flow/manifest.py`:
+inputs, flow scripts, normalised `inputs.tcl`, thread count, directives, result-changing switches, Vivado version). It
+covers more than the stamp (the flow, the settings and the tool, not just the sources) and lives in the bitstream, not
+the netlist: `build.tcl` sets `BITSTREAM.CONFIG.USR_ACCESS` just before `write_bitstream`, the hardware manager reads it
+as `REGISTER.USR_ACCESS`, and the shell reads it through `USR_ACCESSE2` at register 0x05 (protocol 1.1). `program.py`
+compares the JTAG value with the manifest after programming and `board_check.py` / `bringup.py` the UART value; a
+mismatch stops the run before any board test. [docs/reproducibility.md](../docs/reproducibility.md)
 
 ## Gates (`gates.py`)
 
