@@ -4,8 +4,8 @@
  "variant": "base",
  "top": "kr260_top",
  "part": "xck26-sfvc784-2LV-c",
- "build_id": "8fd1e252",
- "build_id_sha256": "8fd1e252144fb6d4ff85d68da46d8c514c7095ad77111b2700fae0992c5baf1b",
+ "build_id": "566ae800",
+ "build_id_sha256": "566ae80077e9c0680912cf0ae356f8fa6bd55bf5e0c0d865043211dc51d06911",
  "build_id_covers": [
   "schema",
   "design",
@@ -35,9 +35,9 @@
   "designs/b58a_trigger/rtl/order_ctl.sv": "db91763b3f836681d93ae5c57c9722a51b07fd6d20c36e391c901aa97578ef44",
   "designs/b58a_trigger/rtl/rules.sv": "bf046cfda694711d6dee421864d365254fa64e3285e80ce3fc5d4800cb34cd14",
   "designs/b58a_trigger/rtl/trigger_core.sv": "a2574194eb16e945d8206f60cdd3505fea7c73b4db016fff507fae18d10a6382",
-  "designs/b58a_trigger/design.xdc": "6c9e6f4c19dbb271cb0b488fe1eaf007f73d71d246b74786cb4fe80c2b71f4c2",
-  "designs/b58a_trigger/build.yaml": "c7e143ed13ff206b53277e6ccde8b03efe46897b755291c9ac71183d7a9d4eb1",
-  "flow/build.tcl": "365e58acbca5ea4ff2feb4c128d326d11e12d76b56fada32af749086470d18c3",
+  "designs/b58a_trigger/design.xdc": "62c1e380c0978425e45040d2a86e7b743966eeb4f7d94f4c3a25cd980054117f",
+  "designs/b58a_trigger/build.yaml": "6f8f5777a340044a90a8ef5d77e16a2eb83c57dfef13e0e8ff42cce0fd78ca2e",
+  "flow/build.tcl": "5efc4931d25547ef59b447a958b422a001264936491ce5e5ac8ba1e1f9f8b3c3",
   "flow/xpm_cdc.tcl": "3cf82037b885b9191f44dfb9f45f6a9fe42e351cdc3f73b3387e6447317f9244",
   "flow/cdc_paths.tcl": "018799c6af7fd219551a3aa2b6d775cad5c31391a1e6c5acabc05458db4a8158",
   "flow/mcp_paths.tcl": "5e9fc71305b667e408afe8f1748522e2c3a0e022daebdb9e53a5c636372be8c1",
@@ -45,7 +45,7 @@
   "flow/result_hash.tcl": "b4b3f0a27564484176019800445c33c33e9ede1f1f0004d2b0c8e96a7b2b1fbe",
   "flow/debug.tcl": "1c9d12e51b5f302630a1cf211912b8bb7273c5395cb4124b4c21faf080dec2f5",
   "flow/xprobe.tcl": "171186ca700efc0e20f819186003cdbc30d9b2fc6be28490849de4e281192713",
-  "flow/prepare.py": "279784e104a655487e70edbbce4340e99002243cde03d0accd60de4f0348c210",
+  "flow/prepare.py": "67fab40618757944712ae8b03f73f5fbadc70b247ec2419c11984bf06e53bae5",
   "flow/srcorder.py": "4e584ef8bcc796a6e246b022a842fa73fff5b3d020bff6405f874302297a92b9",
   "flow/vhdl.py": "519fad66f47033bc95de310d98c31f25635567b4b88ab0c1d4bd66f53e5d725a",
   "flow/ltx_fix.py": "a85ffcbaae897bd3a8364cc7d10c416a5200a8c78a4a37f5bb7f41f0f2b330b9"
@@ -88,7 +88,8 @@
   "set part {xck26-sfvc784-2LV-c}",
   "set sources [list {$ROOT/ip_lib/eth_mac_rmii/rtl/eth_crc32.sv} {$ROOT/ip_lib/eth_mac_rgmii/rtl/mac_rx.sv} {$ROOT/ip_lib/eth_mac_rgmii/rtl/mac_tx.sv} {$ROOT/ip_lib/eth_mac_rgmii/rtl/rgmii_rx.sv} {$ROOT/ip_lib/eth_mac_rgmii/rtl/rgmii_tx.sv} {$ROOT/ip_lib/eth_mac_rgmii/rtl/gmii_cdc.sv} {$ROOT/designs/b58a_trigger/rtl/book.sv} {$ROOT/designs/b58a_trigger/rtl/feed_gen.sv} {$ROOT/designs/b58a_trigger/rtl/feed_rx.sv} {$ROOT/designs/b58a_trigger/rtl/interlocks.sv} {$ROOT/designs/b58a_trigger/rtl/jtag_bus.sv} {$ROOT/designs/b58a_trigger/rtl/kr260_top.sv} {$ROOT/designs/b58a_trigger/rtl/lat_hist.sv} {$ROOT/designs/b58a_trigger/rtl/mdio_master.sv} {$ROOT/designs/b58a_trigger/rtl/order_ctl.sv} {$ROOT/designs/b58a_trigger/rtl/rules.sv} {$ROOT/designs/b58a_trigger/rtl/trigger_core.sv}]",
   "set constraints [list {$ROOT/designs/b58a_trigger/design.xdc}]",
-  "set generics [list {BUILD_STAMP=32'hdd0a22a2}]",
+  "set ip_tcls [list ]",
+  "set generics [list {BUILD_STAMP=32'h52a4c291}]",
   "set ila 0",
   "set power_env {-airflow 0 -heatsink none -board medium -board_layers 8to11 -ambient_temp 40.0}",
   "set timing_margin_ns 0"
@@ -108,7 +109,7 @@
    "FDA_ILA_INSERT": "ip"
   },
   "incremental_ref_sha256": null,
-  "build_stamp": "dd0a22a2"
+  "build_stamp": "52a4c291"
  },
  "settings_recorded": {
   "commands": {
@@ -149,29 +150,32 @@
   "vivado_sw_build": "6511674",
   "vivado_licence_tier": "BASIC"
  },
- "kb_pin": "58ee00d",
+ "kb_pin": "c6f19ab",
  "flow": {
-  "commit": "8db15b35928c",
-  "commit_full": "8db15b35928c893c91913388929dd13483419138",
+  "commit": "ab24cda31537",
+  "commit_full": "ab24cda31537c1ad07ff28d72eed4ea964871de4",
   "dirty": true,
   "dirty_files": [
-   "designs/b58a_trigger/rtl/kr260_top.sv"
+   "designs/b58a_trigger/build.yaml",
+   "designs/b58a_trigger/design.xdc",
+   "flow/io_check.py",
+   "flow/tests/test_20b_io_timing.py"
   ],
   "inputs_untracked": []
  },
  "build_dir": "/tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b58a/designs/b58a_trigger/build/base",
- "created": "2026-11-12T17:37:53+00:00",
+ "created": "2026-11-12T21:18:59+00:00",
  "tools_consistent": true,
  "outputs": {
   "bit": {
    "file": "kr260_top.bit",
-   "sha256": "5be31e0444c08749752ced1e594608520b604ec26b87f9dea84f8db10b224b89",
-   "usr_access": "8FD1E252"
+   "sha256": "19ef6de506c7a3cfbf963ea330926d68ad1181c203a11ddee401519e1e264c3d",
+   "usr_access": "566AE800"
   }
  },
  "cache": {
-  "flow_key": "09e0dbeff6617f474d787f09b1660986f6acc899b02c60b8b42da5fd10d91924",
-  "synth_key": "330a9ff2f4c2a55118406b5f0aa0e4b9ddd83a9103466385ff4e8111c514f292",
+  "flow_key": "ec24e5bbccf362290139e38944535d7d9c3028dfbb12248cf88e71c885583086",
+  "synth_key": "fea1c6e7775ab70d719d153168601184a779429305f23003aa183d4ec1e84878",
   "action": "fresh"
  },
  "incremental": {
@@ -180,5 +184,5 @@
   "consistent": true,
   "status": "not incremental"
  },
- "finalised": "2026-11-12T18:00:59+00:00"
+ "finalised": "2026-11-12T21:41:51+00:00"
 }

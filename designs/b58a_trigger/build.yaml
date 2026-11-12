@@ -14,16 +14,21 @@ constraints:
   - designs/b58a_trigger/design.xdc
 generics: {}           # BUILD_STAMP is added by the flow
 # The RGMII interfaces (flow/io_check.py): the delays the XDC must carry and the edge pairing Vivado must apply.
-# Receive, PHY internal RX delay on (centre-aligned at the pins): RGMII v2.0 with the delay gives data valid at least
-# 1.2 ns before and after each RX_CLK edge. Transmit, PHY internal TX delay on, TXC forwarded edge-aligned: each data
-# change within 0.5 ns of its TXC edge (RGMII v2.0; the M88E1111 data sheet is not in our notes, so these are the
-# standard's values).
+# Source: Marvell 88E1111 datasheet, document MV-S100649-00 Rev. M (classified Public), section 4.12.2; our own
+# reading of its numbers, no text copied.
+# Receive, PHY register 20 bit 7 = 1 (the PHY delays RX_CLK; centre-aligned at the pins): the datasheet's RX_CLK
+# output table for that setting gives data valid at least 1.2 ns before and 1.2 ns after each RX_CLK edge.
+# Transmit, PHY register 20 bit 1 = 1 (the PHY delays GTX_CLK itself; TXC forwarded edge-aligned): the datasheet's
+# GTX_CLK input table for that setting needs the data at the PHY pins settled from 0.9 ns after each TXC edge until
+# 2.7 ns after it. So a data change may come up to 0.9 ns after its edge (skew_after) and no earlier than
+# 4.0 - 2.7 = 1.3 ns before the next edge (skew_before). board_skew_ns: the KR260's TXC-to-TXD trace skew is not in
+# our notes; 0.1 ns is an ASSUMED allowance, taken off both sides of the window.
 io_interfaces:
   - {name: rgmii_rx_a, kind: source_synchronous, direction: in, ports: ["a_rxd[*]", a_rx_ctl], clock: a_rxc_v,
      clock_period_ns: 8.0, ddr: true, data_sheet: {dv_before_ns: 1.2, dv_after_ns: 1.2}}
   - {name: rgmii_rx_b, kind: source_synchronous, direction: in, ports: ["b_rxd[*]", b_rx_ctl], clock: b_rxc_v,
      clock_period_ns: 8.0, ddr: true, data_sheet: {dv_before_ns: 1.2, dv_after_ns: 1.2}}
   - {name: rgmii_tx_a, kind: forwarded_clock, direction: out, ports: ["a_txd[*]", a_tx_ctl], clock: a_txc,
-     clock_period_ns: 8.0, ddr: true, data_sheet: {skew_before_ns: 0.5, skew_after_ns: 0.5}}
+     clock_period_ns: 8.0, ddr: true, data_sheet: {skew_before_ns: 1.3, skew_after_ns: 0.9, board_skew_ns: 0.1}}
   - {name: rgmii_tx_b, kind: forwarded_clock, direction: out, ports: ["b_txd[*]", b_tx_ctl], clock: b_txc,
-     clock_period_ns: 8.0, ddr: true, data_sheet: {skew_before_ns: 0.5, skew_after_ns: 0.5}}
+     clock_period_ns: 8.0, ddr: true, data_sheet: {skew_before_ns: 1.3, skew_after_ns: 0.9, board_skew_ns: 0.1}}

@@ -172,14 +172,16 @@ container. Measured on 12 labelled development tasks it did not beat today's sec
 cuts what a role reads from the knowledge tools ([docs/skill_routing.md](docs/skill_routing.md),
 [results/36_skill_routing](results/36_skill_routing/retrieval.md)).
 
-Brief 42 (harness engineering) adds three flags, all off by default (`--harness-arm H1`, `H2` and `H9`; the baseline graph is
-unchanged). H1 manages the role agents' context: large tool results go to a file with a head-and-tail preview, and the
+Brief 42 (harness engineering) adds three flags (`--harness-arm H1`, `H2` and `H9`). H1 is the default for development runs (owner decision,
+2026-11-12, made after the data and not pre-registered); the baseline is `--harness-arm A0`, and H2 and H9 stay off unless
+named. H1 manages the role agents' context: large tool results go to a file with a head-and-tail preview, and the
 conversation is summarised from 40,000 tokens instead of 170,000. H2 protects against hangs: a static check refuses a cocotb
 bench with an unbounded wait loop, `simulate` runs under a wall-clock watchdog derived from the bench's own simulation-time
 budget, and a hang comes back as a structured result naming the test and the simulation time. H9 replaces large build, gates,
 simulate and lint results with a deterministic typed digest (new tool `report_digest`). Measured on 4 tasks and 3 repeats with one
-low-cost model, no arm is adopted yet: H1 used about a third less cost (interval excludes 0) but its token saving is not separated from 0,
-and the pre-registered rule can be read either way; H9 saved 16 % of cost (below the 30 % bar); H2 did not separate from the
+low-cost model: H1 used 33 % less cost (interval excludes 0), but its token and wall-time savings were not separated from the
+baseline, and the pre-registered rule can be read either way, so the default is a decision rather than a pre-registered result;
+scored benchmark and eval runs record their arm (`config.json`, `summary.json` key `harness_arm`) and frozen configurations pin A0; H9 saved 16 % of cost (below the 30 % bar); H2 did not separate from the
 baseline; and two of the four tasks are never passed by any arm
 ([results/42_workflows/README.md](results/42_workflows/README.md), [analysis](results/42_workflows/analysis.md),
 [runs](results/42_workflows/runs.md), [pre-registration](results/42_workflows/prereg.md)); the audit script is
