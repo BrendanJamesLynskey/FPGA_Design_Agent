@@ -193,22 +193,121 @@
     "evidence": "Token totals are dominated by long repair visits: one 80-turn visit of the RTL writer used 6.6 M tokens.",
     "id": "H1",
     "name": "Context management",
+    "result": {
+     "hidden_passes": 5,
+     "paired": {
+      "cost_usd": {
+       "a0": 0.302,
+       "diff": -0.099,
+       "excludes_0": true,
+       "hi": -0.013,
+       "hi_pct": -4.3,
+       "lo": -0.161,
+       "lo_pct": -53.3,
+       "n": 11,
+       "rel_pct": -32.8
+      },
+      "tokens": {
+       "a0": 13286935.0,
+       "diff": -8714684.0,
+       "excludes_0": false,
+       "hi": 115681.0,
+       "hi_pct": 0.9,
+       "lo": -10571173.0,
+       "lo_pct": -79.6,
+       "n": 11,
+       "rel_pct": -65.6
+      },
+      "wall_s": {
+       "a0": 2767.3,
+       "diff": -501.3,
+       "excludes_0": true,
+       "hi": -291.25,
+       "hi_pct": -10.5,
+       "lo": -1088.1,
+       "lo_pct": -39.3,
+       "n": 12,
+       "rel_pct": -18.1
+      }
+     },
+     "runs": 12,
+     "status": "Cost 32.8 % lower (95 % interval 53.3 % lower to 4.3 % lower); tokens 65.6 % lower (95 % interval 79.6 % lower to 0.9 % higher); wall time 18.1 % lower (95 % interval 39.3 % lower to 10.5 % lower), but the interval includes 0 once the blocks with a run stopped by the time limit are left out. Hidden-test passes 5 of 12 (baseline 5 of 12). Not adopted: it meets the 30 % bar on cost but not on tokens, and the pre-registered rule did not say which one counts.",
+     "verdict": {
+      "reading_c": true,
+      "reading_t": false
+     },
+     "wall_without_censored": {
+      "diff": -396.7,
+      "excludes_0": false,
+      "n": 10
+     }
+    },
     "source": "results/36_skill_routing/e2e.md",
-    "status": "not yet measured"
+    "status": "Cost 32.8 % lower (95 % interval 53.3 % lower to 4.3 % lower); tokens 65.6 % lower (95 % interval 79.6 % lower to 0.9 % higher); wall time 18.1 % lower (95 % interval 39.3 % lower to 10.5 % lower), but the interval includes 0 once the blocks with a run stopped by the time limit are left out. Hidden-test passes 5 of 12 (baseline 5 of 12). Not adopted: it meets the 30 % bar on cost but not on tokens, and the pre-registered rule did not say which one counts."
    },
    {
     "change": "A per-test simulation limit from the test's own simulated-time budget, a result that says where a test hung, and a check that refuses tests with unbounded waits before they run.",
     "evidence": "In one drill run three simulate calls each ran to the 1800 s limit on the agent's own tests, which waited on conditions that never came.",
     "id": "H2",
     "name": "Hang protection",
+    "result": {
+     "hidden_passes": 6,
+     "paired": {
+      "cost_usd": {
+       "a0": 0.309,
+       "diff": -0.005,
+       "excludes_0": false,
+       "hi": 0.039,
+       "hi_pct": 12.6,
+       "lo": -0.097,
+       "lo_pct": -31.4,
+       "n": 10,
+       "rel_pct": -1.5
+      },
+      "tokens": {
+       "a0": 14888796.0,
+       "diff": -246356.0,
+       "excludes_0": false,
+       "hi": 5854917.0,
+       "hi_pct": 39.3,
+       "lo": -7206670.5,
+       "lo_pct": -48.4,
+       "n": 10,
+       "rel_pct": -1.7
+      },
+      "wall_s": {
+       "a0": 2767.3,
+       "diff": -58.0,
+       "excludes_0": false,
+       "hi": 748.9,
+       "hi_pct": 27.1,
+       "lo": -1325.95,
+       "lo_pct": -47.9,
+       "n": 12,
+       "rel_pct": -2.1
+      }
+     },
+     "runs": 12,
+     "status": "Cost 1.5 % lower (95 % interval 31.4 % lower to 12.6 % higher); tokens 1.7 % lower (95 % interval 48.4 % lower to 39.3 % higher); wall time 2.1 % lower (95 % interval 47.9 % lower to 27.1 % higher). Hidden-test passes 6 of 12 (baseline 5 of 12). Not adopted: no saving reaches the 30 % bar.",
+     "verdict": {
+      "reading_c": false,
+      "reading_t": false
+     },
+     "wall_without_censored": {
+      "diff": -58.0,
+      "excludes_0": false,
+      "n": 10
+     }
+    },
     "source": "results/24_fsm/drills/run_b1.meta.json",
-    "status": "not yet measured"
+    "status": "Cost 1.5 % lower (95 % interval 31.4 % lower to 12.6 % higher); tokens 1.7 % lower (95 % interval 48.4 % lower to 39.3 % higher); wall time 2.1 % lower (95 % interval 47.9 % lower to 27.1 % higher). Hidden-test passes 6 of 12 (baseline 5 of 12). Not adopted: no saving reaches the 30 % bar."
    },
    {
     "change": "Before each repair visit the role writes a short hypothesis, its evidence and the planned change; the repair visit receives it.",
     "evidence": "Repair visits that edit without stating what they think is wrong.",
     "id": "H3",
     "name": "Diagnose before repair",
+    "result": null,
     "source": null,
     "status": "not yet measured"
    },
@@ -217,6 +316,7 @@
     "evidence": "Repair loops whose cost has no limit but the visit count.",
     "id": "H4",
     "name": "Budget and stall rule",
+    "result": null,
     "source": null,
     "status": "not yet measured"
    },
@@ -225,6 +325,7 @@
     "evidence": "In the skill-routing runs the roles hardly used the new skill tools and kept loading whole sections.",
     "id": "H5",
     "name": "Prompts and tool descriptions",
+    "result": null,
     "source": "results/36_skill_routing/e2e.md",
     "status": "not yet measured"
    },
@@ -233,6 +334,7 @@
     "evidence": "Raw reports in the main transcript.",
     "id": "H6",
     "name": "Report reader",
+    "result": null,
     "source": null,
     "status": "not yet measured"
    },
@@ -241,6 +343,7 @@
     "evidence": "The caching in the stack today acts on Anthropic chat models only, and every turn resends the whole prompt.",
     "id": "H7",
     "name": "Prompt caching",
+    "result": null,
     "source": null,
     "status": "not yet measured"
    },
@@ -249,8 +352,66 @@
     "evidence": "Planning on long stages; the role agents are offered no to-do tool today.",
     "id": "H8",
     "name": "To-do list",
+    "result": null,
     "source": null,
     "status": "not yet measured"
+   },
+   {
+    "change": "A large build, gates, simulation or lint result is replaced by a short typed digest made by code from the gate parsers, plus the path of the full result.",
+    "evidence": "Raw logs and reports fill the transcript that every turn resends.",
+    "id": "H9",
+    "name": "Typed digests",
+    "result": {
+     "hidden_passes": 6,
+     "paired": {
+      "cost_usd": {
+       "a0": 0.302,
+       "diff": -0.049,
+       "excludes_0": true,
+       "hi": -0.008,
+       "hi_pct": -2.6,
+       "lo": -0.17,
+       "lo_pct": -56.3,
+       "n": 11,
+       "rel_pct": -16.1
+      },
+      "tokens": {
+       "a0": 13286935.0,
+       "diff": -4354750.0,
+       "excludes_0": false,
+       "hi": 635138.0,
+       "hi_pct": 4.8,
+       "lo": -7158234.0,
+       "lo_pct": -53.9,
+       "n": 11,
+       "rel_pct": -32.8
+      },
+      "wall_s": {
+       "a0": 2767.3,
+       "diff": -165.0,
+       "excludes_0": false,
+       "hi": 73.85,
+       "hi_pct": 2.7,
+       "lo": -1239.45,
+       "lo_pct": -44.8,
+       "n": 12,
+       "rel_pct": -6.0
+      }
+     },
+     "runs": 12,
+     "status": "Cost 16.1 % lower (95 % interval 56.3 % lower to 2.6 % lower); tokens 32.8 % lower (95 % interval 53.9 % lower to 4.8 % higher); wall time 6 % lower (95 % interval 44.8 % lower to 2.7 % higher). Hidden-test passes 6 of 12 (baseline 5 of 12). Not adopted: no saving reaches the 30 % bar.",
+     "verdict": {
+      "reading_c": false,
+      "reading_t": false
+     },
+     "wall_without_censored": {
+      "diff": -165.0,
+      "excludes_0": false,
+      "n": 10
+     }
+    },
+    "source": null,
+    "status": "Cost 16.1 % lower (95 % interval 56.3 % lower to 2.6 % lower); tokens 32.8 % lower (95 % interval 53.9 % lower to 4.8 % higher); wall time 6 % lower (95 % interval 44.8 % lower to 2.7 % higher). Hidden-test passes 6 of 12 (baseline 5 of 12). Not adopted: no saving reaches the 30 % bar."
    }
   ],
   "audit_date": "2026-11-11",
@@ -315,6 +476,13 @@
     "words": "replaces content the model cannot take, such as images"
    }
   ],
+  "round1": {
+   "a0_hidden_passes": 5,
+   "a0_runs": 12,
+   "blocks": 12,
+   "n_runs": 48,
+   "source": "results/42_workflows/analysis.md"
+  },
   "settings": {
    "evict_tool_result_chars": 80000,
    "model_profile": false,

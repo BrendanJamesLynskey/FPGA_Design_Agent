@@ -5,6 +5,7 @@
     python3 site/build.py         # write site/public/
     python3 site/build.py --check # exit 1 if public/ is stale, or if any number shown is not in site/data/*.json
     python3 site/build.py --fixture site/tests/fixtures/eval1_synthetic.json --out /tmp/x   # preview the eval-1 section
+    python3 site/build.py --showcase-fixture site/tests/fixtures/showcase --out /tmp/x      # preview the showcase template
 
 Number assertion: every numeric token in the visible text of the built pages must occur in the data files (or in
 site/numbers_allow.txt, each entry with a reason). The synthetic eval-1 fixture is only ever used with --fixture and
@@ -26,14 +27,15 @@ SRC = HERE / "src"
 REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 
 PAGES = [  # file, nav label, title, description, data keys inlined
-    ("index.html", "Home", "End-to-end FPGA Agent", "An open agent that turns a plain-English spec into a bitstream for AMD FPGA boards, measures its work on real hardware and uses what it measures to decide its next step.", ["loop"]),
+    ("index.html", "Home", "FPGA Design Agent", "An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board. Language-model agents write the spec, tests and RTL; code-run gates, hidden tests and the board judge them; every number is read from a committed result file.", ["loop", "dev"]),
     ("agent.html", "The agent", "The agent", "The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.", ["agent_graph"]),
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
     ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
     ("expertise.html", "Expertise", "Areas of expertise", "What the agent knows, what its flow checks and what has been measured, area by area, in drawers; each area states how far its evidence goes.", []),
     ("examples.html", "Examples", "Examples", "Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.", ["board"]),
+    ("showcase.html", "Showcase", "Showcase", "Projects built with the agent and measured on the board, each with its hero replayed from the recorded data, the story, the evidence and its limits; projects still being built are listed without numbers.", []),
     ("problems.html", "Problems", "Problems", "Every benchmark task: development tasks in full with spec, hidden tests, reference RTL, mutants and the golden model running; held-out tasks by id and tier only.", ["catalogue_index"]),
-    ("evaluation.html", "How it is evaluated", "How it is evaluated", "The held-out evaluation in plain words: split, hidden grader, three runs per task, task-level bootstrap.", []),
+    ("evaluation.html", "Evaluation", "How it is evaluated", "The held-out evaluation in plain words: split, hidden grader, three runs per task, task-level bootstrap.", []),
     ("results.html", "Results", "Results", "Development results; held-out results come with the baseline evaluation.", ["dev", "eval1"]),
 ]
 
@@ -82,6 +84,9 @@ OUT_TEXT = {"pass": "passed", "caught_and_repaired": "gate failed, repaired, pas
 
 def block(name, d):
     """Server-side blocks: {{!name}}."""
+    if name == "showcase_index":
+        import showcase
+        return showcase.index_body(d["showcase"])
     if name == "c14_table":
         ex = [e for e in d["examples"] if e["task"] == "c14_int8_dot_requant"][0]
         rows = []
@@ -95,7 +100,7 @@ def block(name, d):
                 if r["wns_ns"] is None:
                     continue
                 rows.append([e["task"], r["run"], f'{r["tests_passed"]} of {r["tests_total"]}', f'{r["wns_ns"]:+.3f}', r["lut"], r["ff"], r["dsp"], fmt(r["bram36"]), wh(r["wall_h"])])
-        return table(["Task", "Run", "Hidden tests", "WNS (ns)", "LUT", "FF", "DSP", "BRAM36", "Wall (h)"], rows, num=(1, 3, 4, 5, 6, 7, 8))
+        return table(["Task", "Run", "Hidden tests", "Worst slack (ns)", "LUT", "FF", "DSP", "BRAM36", "Wall (h)"], rows, num=(1, 3, 4, 5, 6, 7, 8))
     if name == "eval_table":
         e = d["eval"]; v = e["tool_versions"]
         return table(["Fixed before the first scored run", "Value"], [
@@ -134,7 +139,7 @@ def block(name, d):
     if name == "dev_table":
         rows = [[r["task"], r["run"], OUT_TEXT[r["outcome"]], f'{r["tests_passed"]} of {r["tests_total"]}',
                  "" if r["wns_ns"] is None else f'{r["wns_ns"]:+.3f}', "" if r["lut"] is None else r["lut"]] for r in d["dev"]["runs_list"]]
-        return table(["Task", "Run", "Outcome", "Hidden tests", "WNS (ns)", "LUT"], rows, num=(1, 4, 5))
+        return table(["Task", "Run", "Outcome", "Hidden tests", "Worst slack (ns)", "LUT"], rows, num=(1, 4, 5))
     if name == "repo":
         return REPO
     if name == "xpm_figure":
@@ -187,11 +192,13 @@ def agent_block(name, d):
     if name == "agent_roles":
         prof = A["defaults"]["profiles"]["cvdp"]
         st2 = {s["n"]: s for s in A["stages"]}[2]["tools"]
-        rows = [[r["label"], r["what"], ", ".join(r["reads"]), ", ".join(r["writes"]),
-                 f'Deep Agents: {A["defaults"]["model"]}; cvdp profile: {prof[r["id"]]["model"]}'] for r in A["roles"]]
-        t = table(["Role", "Job", "May read", "May write", "Model (default; cvdp profile)"], rows)
+        rows = [[r["label"], r["what"], ", ".join(r["reads"]), ", ".join(r["writes"])] for r in A["roles"]]
+        t = table(["Role", "Job", "May read", "May write"], rows)
+        tm = table(["Role", "Default (Deep Agents)", "Claude profile"], [[r["label"], A["defaults"]["model"], prof[r["id"]]["model"]] for r in A["roles"]])
         tl = table(["Role", "Tools in stage 2"], [[r["label"], ", ".join(st2.get(r["id"], []))] for r in A["roles"] if r["id"] in st2])
-        return t + '<details class="more"><summary>Details: the tools each role gets in stage 2</summary>' + tl + "</details>"
+        return (t + f'<p>By default every role runs on OpenAI <code>{html.escape(A["defaults"]["model"])}</code> through Deep Agents; a second profile '
+                'puts each role on an Anthropic Claude model instead.</p>'
+                '<details class="more"><summary>Details: the model and the stage-2 tools of each role</summary>' + tm + tl + "</details>")
     if name == "agent_runs":
         names = {"claude_code": "Claude Code", "deepagents": "Deep Agents", "mixed": "mixed"}
         return table(["Runs", "Harness", "Models", "Run records"], [[r["set"], names[r["harness"]], r["models"], r["records"]] for r in A["runs"]], num=(3,))
@@ -218,15 +225,21 @@ def agent_block(name, d):
             ["Prompt caching", "none in effect: the library's caching acts on Anthropic chat models only, and the role agents use OpenRouter models"],
             ["Limits", f'{s["recursion_limit"]["rtl"]} graph steps for the RTL writer, {s["recursion_limit"]["others"]} for the other roles; a simulation stops after four times its last passing run time plus two minutes, between {s["sim_timeout_s"]["min"]} s and {s["sim_timeout_s"]["max"]:,} s, and after {s["sim_timeout_s"]["default"]:,} s when there is no passing run yet'],
         ])
+    if name == "harness_results":
+        return ap.both(ap.harness_results(A, "wide"), ap.harness_results(A, "narrow"))
     if name == "harness_arms":
-        rows = [[a["id"], a["name"], a["change"], a["evidence"], a["status"]] for a in A["harness"]["arms"]]
-        return table(["Arm", "Change", "What it does", "Evidence that motivated it", "Result"], rows)
+        done = [a for a in A["harness"]["arms"] if a.get("result")]
+        todo = [a for a in A["harness"]["arms"] if not a.get("result")]
+        t1 = table(["Arm", "Change", "What it does", "Result (round 1)"], [[a["id"], a["name"], a["change"], a["status"]] for a in done])
+        t2 = table(["Arm", "Change", "What it does", "Evidence that motivated it"], [[a["id"], a["name"], a["change"], a["evidence"]] for a in todo])
+        return t1 + f'<details class="more"><summary>The {len(todo)} arms not yet measured</summary>{t2}</details>'
+
     if name == "harness_fixes":
         out = ['<ul class="fixes">']
         for f in A["harness"]["fixes"]:
             ev = " ".join(f'<a class="evsrc" href="{REPO}/blob/main/{html.escape(x)}">{html.escape(x.split("/")[-1])}</a>' for x in f["files"])
             out.append(f'<li><b>{html.escape(f["name"])}.</b> {html.escape(f["text"])} <span class="evl">Evidence: '
-                       f'<a class="evsrc" href="{REPO}/pull/{f["pr"]}">pull request {f["pr"]}</a> {ev}</span></li>')
+                       f'<a class="evsrc" href="{REPO}/pull/{f["pr"]}">the fix</a> {ev}</span></li>')
         return "".join(out) + "</ul>"
     raise KeyError(name)
 
@@ -303,7 +316,7 @@ def render_template(text, d):
 def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, pager=None):
     cur = current or fname
     nav = "".join(f'<a href="{prefix}{f}"{" aria-current=\"page\"" if f == cur else ""}>{html.escape(n)}</a>' +
-                  "".join(f'<a class="sub" href="{prefix}{h}">{html.escape(w)}</a>' for a, h, w in NAV_SUB if a == f) for f, n, *_ in PAGES)
+                  "".join(f'<a class="sub" href="{prefix}{h}">{html.escape(w)}</a>' for a, h, w in NAV_SUB if a == f) for f, n, *_ in PAGES if f != "index.html")
     scripts = "".join(f'<script type="application/json" data-key="{k}">{json.dumps(d[k], separators=(",", ":")).replace("</", "<\\/")}</script>'
                       for k in keys if k in d)
     if pager is None:
@@ -312,7 +325,7 @@ def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, 
         nxt = PAGES[idx + 1] if idx + 1 < len(PAGES) else None
         pager = '<div class="pager">' + (f'<a href="{prev[0]}">&larr; {html.escape(prev[1])}</a>' if prev else "<span></span>") + \
                 (f'<a href="{nxt[0]}">{html.escape(nxt[1])} &rarr;</a>' if nxt else "<span></span>") + "</div>"
-    full = title if fname == "index.html" else f"{title} | End-to-end FPGA Agent"
+    full = title if fname == "index.html" else f"{title} | FPGA Design Agent"
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -326,12 +339,12 @@ def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, 
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">End-to-end FPGA Agent</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="{prefix}index.html">FPGA Design Agent</a><nav aria-label="Pages">{nav}</nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 {body}
 {pager}
 </main>
-<footer><div class="wrap"><p>Code, results and the pre-registration: <a href="{REPO}">{REPO.split('//')[1]}</a>. Every number on these pages is read from a committed result file; the agent and the benchmark are from the repository at tag <a href="{REPO}/releases/tag/eval-1"><code>eval-1</code></a> or earlier. Development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="{REPO}">{REPO.split('//')[1]}</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 {scripts}
 <script>{js}</script>
 </body>
@@ -406,12 +419,20 @@ def build(outdir: Path, d, check_numbers=True):
             pages[fn] = layout("problems.html", T["heading"], desc, body, ["trace"], pd, css, js, prefix="../", current="problems.html",
                                pager='<div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>')
             page_data[fn] = {"shared": {k: v for k, v in shared.items() if k != "catalogue_index"}, "task": T}
+    import showcase
+    for P in [p for p in d.get("showcase", {}).get("projects", []) if p["status"] == "published"]:
+        fn = f'showcase/{P["id"]}.html'
+        pd = dict(shared); pd["showcase_hero"] = P["hero"]["data"]
+        pages[fn] = layout("showcase.html", P["title"], P["description"], showcase.page_body(P), ["showcase_hero"], pd, css, js,
+                           prefix="../", current="showcase.html",
+                           pager='<div class="pager"><a href="../showcase.html">&larr; All showcase projects</a><span></span></div>')
+        page_data[fn] = {"shared": shared, "project": P}
     bad = []
     if check_numbers:
         allow = allow_tokens()
         cache = {}
         for fname, page in pages.items():
-            key = fname if fname.startswith("problems/") else "_shared"
+            key = fname if fname.startswith(("problems/", "showcase/")) else "_shared"
             if key not in cache:
                 cache[key] = data_tokens(page_data[fname]) | allow
             ok = cache[key]
@@ -438,6 +459,9 @@ def main():
     fixture = Path(args[args.index("--fixture") + 1]) if "--fixture" in args else None
     out = Path(args[args.index("--out") + 1]) if "--out" in args else HERE / "public"
     d = load_data(fixture)
+    if "--showcase-fixture" in args:      # preview a showcase page from a fixture folder (tests only; never copied to site/data)
+        import showcase
+        d["showcase"] = showcase.build(Path(args[args.index("--showcase-fixture") + 1]))
     pages, bad = build(out, d)
     if bad:
         print("numbers not found in site/data (add to the data, or to numbers_allow.txt with a reason):")

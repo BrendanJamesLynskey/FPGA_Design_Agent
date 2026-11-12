@@ -1,0 +1,33 @@
+# SYNTHETIC fixture for the showcase template tests (site/tests). Never copied to site/showcase or site/data.
+id: demo_hist
+status: published
+title: Template preview with synthetic data (histogram hero)
+one_line: "A synthetic page that exercises every part of the showcase template; none of its data is measured."
+board: Digilent Nexys A7-100T
+part: xc7a100tcsg324-1
+values:
+  n: {source: site/tests/fixtures/showcase/synthetic_heroes.json, expr: "get:hist.summary.n"}
+  worst: {source: site/tests/fixtures/showcase/synthetic_heroes.json, expr: "get:hist.summary.max"}
+headline: "Synthetic: {n} made-up latencies, the largest {worst} ns (template preview, not a result)."
+hero: {kind: hist, source: site/tests/fixtures/showcase/synthetic_heroes.json, path: hist, caption: "Synthetic latencies accumulating one batch at a time."}
+story:
+  problem: "Placeholder problem statement for the template preview."
+  how: "Placeholder description of how the project works."
+  architecture:
+    blocks: [[src, Traffic source], [dut, Design under test], [chk, Checker], [host, Host report]]
+    links: [[src, dut, frames], [dut, chk, responses], [chk, host, verdicts], [chk, src, "stop on first error"]]
+  results: ["Synthetic: {n} samples, largest {worst} ns."]
+  agent:
+    request: "Placeholder plain-English request."
+    plan: "Placeholder plan."
+    gates: ["Placeholder gate passed."]
+    approvals: ["Placeholder human approval."]
+evidence:
+  - {kind: record, label: synthetic hero data, path: site/tests/fixtures/showcase/synthetic_heroes.json}
+  - {kind: conditions, label: "Operating conditions", text: "not recorded (synthetic)"}
+  - {kind: versions, label: "Tool versions and build ID", text: "not recorded (synthetic)"}
+  - {kind: requirements, label: "Requirements traced", text: "not recorded (synthetic)"}
+limits:
+  not_measured: ["Everything: this page is a template preview."]
+  next: ["Replace with a real project."]
+try_it: {command: "python3 site/build.py --showcase-fixture site/tests/fixtures/showcase --out /tmp/showcase_preview", note: "Builds this preview."}

@@ -1,0 +1,23 @@
+{
+ "title": "FPGA Design Agent",
+ "tagline": "An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board",
+ "description": "Language-model agents turn a plain-English request into a spec, tests and SystemVerilog, then drive the simulators and Vivado 2026.1 to a bitstream on a Digilent Nexys A7, with every stage judged by checks run in code, hidden tests and the board.",
+ "url": "https://fpga-design-agent.vercel.app",
+ "repo": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent",
+ "facts": [
+  {"text": "13 of 21 development runs passed every hidden test (Anthropic Claude Sonnet, claude-sonnet-5-5, through Claude Code; development tasks, not a held-out score).",
+   "source": "site/data:dev.hidden_pass", "of": "site/data:dev.runs"},
+  {"text": "282 deliberate bugs planted across the benchmark's development tasks, every one caught by the hidden tests.",
+   "source": "site/data:catalogue.counts.mutants"},
+  {"text": "A harness change that moves large tool results to a file cut cost per run by 32.8 % (95 % interval 4.3 % to 53.3 %) with the same hidden-test passes; not yet adopted, as the pre-registered rule was ambiguous.",
+   "source": "site/data:agent_graph.harness.arms.0.result.paired.cost_usd.rel_pct"}
+ ],
+ "media": {
+  "still_1200x630": "hero_1200x630.png",
+  "still_square": "hero_square.png",
+  "animation": "loop_replay.webm",
+  "animation_mp4": "loop_replay.mp4",
+  "alt": "The agent's feedback loop on the bench, replayed from a recorded run: role agents, simulators, Vivado 2026.1, the Nexys A7 board and the instruments, each returning a result to a gate."
+ },
+ "made_from": "site/public/index.html (the loop replay and the runs chart), captured by puppeteer; see README.md"
+}

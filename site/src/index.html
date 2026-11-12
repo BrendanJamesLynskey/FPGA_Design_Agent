@@ -1,16 +1,53 @@
 <section class="hero">
-<canvas id="fabric" aria-hidden="true"></canvas>
-<h1>End-to-end FPGA Agent</h1>
-<p class="strap">An agent that closes the loop: it builds a design, measures it on real hardware, and uses what it measures to decide its next step.</p>
-<p class="boards"><span>Built and measured on a Digilent Nexys A7-100T (Artix-7).</span> <span>Next: AMD Kria KR260 and ZedBoard (Zynq-7000).</span></p>
-<p class="lede">Describe a block in plain English. The agent asks about what you left out, writes the design and its tests, builds it with Vivado and programs the board. Everything that comes back, from a timing report to a test over the board's serial link, is read by code, and a failed check sends the work back to the part of the agent that can fix it.</p>
+<p class="eyebrow">FPGA Design Agent</p>
+<h1>An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board</h1>
+<p class="lede">Describe a block in plain English. Language-model agents interview you about what you left out, write the spec, a model of it, the tests and the SystemVerilog, then drive the simulators and Vivado {{board.vivado}} to a bitstream and test it on a Digilent Nexys A7-100T. Every stage ends in a check run by code, not by a model, and a failed check sends the work back to the agent that owns it.</p>
 </section>
 
+<h2 id="today">Where it stands today</h2>
+<div class="facts status">
+<div class="fact"><div class="n">{{dev.hidden_pass}} of {{dev.runs}}</div><p>development runs passed every hidden test, on {{dev.tasks}} tasks, with Anthropic's Claude Sonnet (<code>{{dev.model.0}}</code>) through Claude Code.</p></div>
+<div class="fact"><div class="n">{{dev.escapes}}</div><p>more were <a href="how.html#term-escape">escapes</a>: the agent's own checks passed and the hidden tests failed, each time because it read the spec differently from the test author.</p></div>
+<div class="fact"><div class="n">${{dev.mean_plan_cost_usd}}, {{dev.mean_wall_h}} h</div><p>mean cost and wall time per run (cost is Claude Code's own API-equivalent estimate).</p></div>
+<div class="fact"><div class="n">{{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}}</div><p>serial-link tests passed by the one agent-built design programmed so far; its logic-analyser captures failed. The hand-built reference passes every board test.</p></div>
+</div>
+<p>These are development results: the tasks used to find and fix the agent's faults, so they are a record of the work, not a score. There is no held-out score yet; the first attempt was stopped before any result was analysed (<a href="results.html">results</a>). So "proven on the board" is the aim the environment is built for, shown so far for the hand-built reference design.</p>
+<figure><div class="player runs" id="home-runs" aria-label="Every development run, by outcome">
+<div class="phost"><div class="lanes"></div><p class="cap" aria-live="polite">Every development run, sorted by what happened. With script on, the runs are added one at a time from their records.</p></div>
+</div><figcaption>One square per run, read from the run records. Filled: passed every hidden test (half-filled: a gate failed first and the agent repaired it; dashed: the run stopped early with every hidden test passing). Hatched: an escape. Outline: failed.</figcaption></figure>
+
+<h2 id="agentic">What is agentic about it, and what stops it</h2>
+<div class="who">
+<div><h3>The agents decide</h3><ul>
+<li>what to ask about a request before anything is written</li>
+<li>the spec, a model of it, the tests, the RTL and the constraints</li>
+<li>what to change after a failed check, within that stage's budget</li>
+<li>which tools to call: simulators, lint, Vivado reports and the knowledge bank</li>
+</ul></div>
+<div><h3>Code stops them</h3><ul>
+<li>a controller in code, not a model, picks the next stage</li>
+<li>gates read the tools' reports; a model cannot argue past them</li>
+<li>each agent may read and write only its own files</li>
+<li>visits per stage and {{agent_graph.run_limits.turns}} turns per run, then the run ends</li>
+<li>its own tests never decide: <a href="how.html#term-hidden">hidden tests</a>, checked by <a href="how.html#term-mutation">mutation testing</a>, do</li>
+</ul></div>
+<div><h3>A person approves</h3><ul>
+<li>the signed-off spec</li>
+<li>anything that touches the board</li>
+<li>wiring the instruments, and every merge</li>
+</ul></div>
+</div>
+
+<h2 id="hard">What is hard about it</h2>
+<p>A model that writes a design and its tests can make the same mistake in both, so a passing test proves little. The agent therefore splits the work: one agent writes a model of the spec without seeing the RTL, another writes the tests from the spec and that model, and the result is judged by hidden tests written in advance. Vivado run from a script also does less than a careful engineer would: it drops constraints, misses clock crossings and lets over-broad timing exceptions hide failures. <a href="flow-notes.html">Beyond the flow</a> shows where, and what the environment adds. And the board is where a design meets real pins and real time, so every result the board returns is read by code and can send the work back.</p>
+
+<div class="byline"><p><b>Designed by Brendan Lynskey.</b> The staged flow and its gates, the split between the agents that write the design and those that write the tests, the hidden-test benchmark checked by mutation testing, the knowledge bank, the board shell and the bench, and the pre-registered evaluation method. The models write the specs, tests and RTL inside it; about half of the benchmark tasks are adapted from projects in the author's own FPGA design course.</p></div>
+
 <h2 id="loop">The loop, on the bench</h2>
-<p>This is the classic agent loop of plan, act, observe and decide, drawn with the parts of the real set-up. The role agents plan and write. The design then goes through the simulators, Vivado and the board, and the instruments measure the board's pins. Each part returns something a program can read, which enters a gate. The controller sends a pass on to the next stage and a failure back to the role that owns it.</p>
+<p>This is the agent loop of plan, act, observe and decide, drawn with the parts of the real set-up. The agents plan and write; the design goes through the simulators, Vivado and the board; and each part returns something a program can read, which enters a gate. A pass moves on to the next stage, a failure goes back to the agent that owns it.</p>
 <figure>
 <div class="player loopplay" id="loop-player" aria-label="The feedback loop, replayed from a recorded run">
-<p class="runinfo small muted">Replayed: a Deep Agents run on the small T1 design with OpenAI <code>{{loop.tour_info.model}}</code>, from the interview to two bitstreams in {{loop.tour_info.visits}} stage visits, {{loop.tour_info.repairs}} of them repairs ({{loop.tour_info.wall_h}} h), then the board tests on its files as written.</p>
+<p class="runinfo small muted">Replayed: a recorded run on the small LED-dimmer design, from the interview to two bitstreams in {{loop.tour_info.visits}} stage visits, {{loop.tour_info.repairs}} of them repairs, in {{loop.tour_info.wall_h}} h, then the board tests on its files as written. Its model and harness are named in the details below.</p>
 <div class="phost">
 {{!loop_hero}}
 <p class="cap" aria-live="polite">The stations of the loop, what each returns and the gate it enters. With script on, a recorded run travels the loop.</p>
@@ -21,35 +58,21 @@
 <details class="more"><summary>Details: where each label comes from</summary>
 {{!loop_sources}}
 </details>
-
-<h2 id="automate">Can the whole loop run without a person?</h2>
-<p>Every leg of the loop is a measurement a program can read, so the whole loop can be automated. That is the project's aim and its potential, not yet its result. Most legs already run with no one at the bench; the rest are listed below with what still needs a person.</p>
-<div class="facts legsfacts">
-<div class="fact"><div class="n">{{loop.counts.automated}} of {{loop.counts.total}}</div><p>legs automated: they run today with no person.</p></div>
-<div class="fact"><div class="n">{{loop.counts.building}}</div><p>legs being built or measured: the instrument captures and a stage that feeds them back.</p></div>
-<div class="fact"><div class="n">{{loop.counts.person}}</div><p>legs that need a person: wiring, approvals, merges and buying.</p></div>
-</div>
+<p>Every leg of this loop is a measurement a program can read, so the whole loop can be automated; that is the aim, not yet the result. Today {{loop.counts.automated}} of {{loop.counts.total}} legs run with no one at the bench, {{loop.counts.building}} are being built (the instrument captures and the stage that feeds them back), and {{loop.counts.person}} need a person: wiring, approvals, merges and buying.</p>
+<details class="more"><summary>All {{loop.counts.total}} legs, with the run record or code that shows each</summary>
 {{!loop_legs}}
-<p class="small muted">Counted from <code>site/data/loop_legs.yaml</code>; each automated leg links to the run record or the code that shows it.</p>
+<p class="small muted">Counted from <code>site/data/loop_legs.yaml</code>.</p>
+</details>
 
-<h2>What it does</h2>
-<p>The agent follows the stages of AMD's UltraFast methodology: an interview to settle what the spec leaves open, a plan, the <a href="how.html#term-rtl">RTL</a> and its tests, then Vivado {{board.vivado}} through synthesis and place and route to a <a href="how.html#term-bitstream">bitstream</a>. The runs shown here used Anthropic's Claude Sonnet (<code>{{dev.model.0}}</code>) through Claude Code. <a href="agent.html">The agent</a> shows how it is built: a controller in code over a small team of model agents, each with a narrow job, inside a <a href="agent.html#harness">harness</a> that decides what each model sees and may do.</p>
-
-<h2>How it is checked</h2>
-<p>A model that writes a design and its tests can make the same mistake in both. So the agent's own tests never decide. Each task has hidden tests, written in advance against an independent model of the spec and themselves checked by <a href="how.html#term-mutation">mutation testing</a>. Timing must be met after routing, and the board has the last word.</p>
-
-<h2>What has been shown so far</h2>
-<p>On {{dev.tasks}} development tasks the agent passed every hidden test in {{dev.hidden_pass}} of {{dev.runs}} runs. In {{dev.escapes}} more its own checks passed and the hidden tests failed, each time because it read the spec differently from the test author. The fixes made since are not yet measured.</p>
-<p>Development tasks are the ones used to find faults, so these figures are a record of the work, not a score. The score will come from <a href="how.html#term-heldout">held-out</a> tasks; the first attempt was stopped before any result was analysed. A hand-built reference design passes all its tests on the board. One design the agent built, in a Deep Agents smoke run on the small T1 design, has been programmed onto the board: it passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its captures of internal signals, so no design the agent built has yet passed every test on the board.</p>
-
-<h2>What is here</h2>
+<h2>Where to go next</h2>
 <div class="cols">
+<div><h3><a href="examples.html">Examples</a></h3><p>Runs from spec to timing report, and the hand-built design on the board.</p></div>
+<div><h3><a href="showcase.html">Showcase</a></h3><p>Projects built with the agent and measured on the board.</p></div>
 <div><h3><a href="agent.html">The agent</a></h3><p>The controller, the role agents and a replayed run.</p></div>
-<div><h3><a href="agent.html#harness">Harness engineering</a></h3><p>What runs around each model, and the experiments to improve it.</p></div>
-<div><h3><a href="how.html">How it works</a></h3><p>The stages, the checks and the tools.</p></div>
+<div><h3><a href="agent.html#harness">Harness</a></h3><p>What runs around each model, and the first measured experiments to improve it.</p></div>
+<div><h3><a href="how.html">How it works</a></h3><p>The stages, the checks, the tools and a glossary.</p></div>
 <div><h3><a href="flow-notes.html">Beyond the flow</a></h3><p>Where scripted Vivado falls short, and the fixes.</p></div>
-<div><h3><a href="expertise.html">Areas of expertise</a></h3><p>What the agent knows and checks, area by area.</p></div>
-<div><h3><a href="examples.html">Examples</a></h3><p>Runs from spec to timing report, and the board.</p></div>
-<div><h3><a href="evaluation.html">How it is evaluated</a></h3><p>The held-out method, fixed before any scored run.</p></div>
-<div><h3><a href="results.html">Results</a></h3><p>Every development run so far.</p></div>
+<div><h3><a href="expertise.html">Expertise</a></h3><p>What the agent knows and checks, area by area.</p></div>
+<div><h3><a href="problems.html">Problems</a></h3><p>Every benchmark task, with its spec, hidden tests and reference design.</p></div>
+<div><h3><a href="evaluation.html">Evaluation</a> and <a href="results.html">results</a></h3><p>The held-out method, fixed before any scored run, and every development run so far.</p></div>
 </div>

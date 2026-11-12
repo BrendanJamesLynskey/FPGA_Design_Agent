@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 HERE = Path(__file__).resolve().parent
 
 PASS_RUN = "results/course/c14_int8_dot_requant/run_5.json"      # the development run whose numbers label the arrows
-REBUILDS = "results/49_vivado_2026_1/dev_rebuilds.json"                # brief 49: that run's design rebuilt on Vivado 2026.1
+REBUILDS = "results/vivado_2026_1_remeasure/dev_rebuilds.json"                # brief 49: that run's design rebuilt on Vivado 2026.1
 HIL_RUN = "results/b30/hil_runs/b30_hil_audio.hil.json"
 TOUR_RUN = "results/f2/agent_luna_05c2_run7.json"                  # interview to bitstream, visit order recorded
 TOUR_BOARD = "results/f2/agent_luna_05c2_run7_bringup.json"        # the board run on that run's files, as written
@@ -78,7 +78,7 @@ def stations(A):
     pass_src = {"record": PASS_RUN, "what": f'{r["task"]}, development run {r["run"]} ({r["date"]}): Claude Code {r["claude_code_version"]}, {r["model"]}'}
     tour = jload(TOUR_RUN)
     board_src = {"record": TOUR_BOARD, "what": f'the board run on the files of T1 Deep Agents run {tour["run"].split("run")[-1]} '
-                                               f'({tour["model"]}), as written; bitstream from an earlier Vivado release'}
+                                               f'({tour["model"]}), as written; bitstream built before the move to Vivado 2026.1'}
     return [
         {"id": "spec", "title": "Spec and interview", "desc": "the request in plain English, and questions on what it leaves open",
          "fb": {"kind": "answers to its questions", "values": [f'{q["asked"]} questions asked', f'{q["answered"]} answered, {q["defaulted"]} defaulted'],
@@ -108,7 +108,7 @@ def stations(A):
          "fb": {"kind": "waveforms, spectra, frames, audio",
                 "values": [f'audio {jack["freq_hz"]} Hz', f'THD {jack["thd_percent"]} %',
                            "caught a pin fault", "scope, SDR, video: next"],
-                "src": {"record": HIL_RUN, "what": f'the hardware-in-the-loop run on {hil["design"].split("/")[-1]} ({hil["started"][:10]}); bitstream from an earlier Vivado release'},
+                "src": {"record": HIL_RUN, "what": f'the hardware-in-the-loop run on {hil["design"].split("/")[-1]} ({hil["started"][:10]}); bitstream built before the move to Vivado 2026.1'},
                 "leg": "audio_capture"},
          "gate": {"title": "instrument tests", "line": "scripted, not in loop yet", "leg": "hil_gate"}},
     ]

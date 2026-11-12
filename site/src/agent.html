@@ -1,5 +1,7 @@
 <h1>The agent</h1>
 <p class="lede">This page shows the agent itself: a controller written in code that walks a design through fixed stages, and a small team of language-model agents that do the writing inside each stage. The diagrams are drawn from the agent's own code and its run records, and a recorded run plays through them at the end.</p>
+<p><b>What it cannot do yet.</b> It has no held-out score: the development runs are a record of the work, not a measure of how it does on new tasks. No design the agent built has yet passed every test on the board: the one programmed so far passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its internal signal captures. It designs one module at a time; the project layer for multi-module designs is not yet driven by the controller. And the Deep Agents harness has been run only on the small T1 design, with one model; how it compares with Claude Code on the benchmark has not been measured.</p>
+
 
 <h2>What "agent" means here</h2>
 <p>An <a href="how.html#term-agent">agent</a> is a language model that works in a loop: it reads, calls a tool, reads the result and decides what to do next. Left to itself, such a loop drifts, and a model that writes both a design and its tests can make the same mistake in both. So the agent here is two things. A controller, written in Python with <a href="how.html#term-langgraph">LangGraph</a>, decides which stage comes next and whether a stage has passed, from the tools' results alone. Inside each stage, one or more role agents, each a model with a narrow job and a narrow view of the files, do the work.</p>
@@ -48,9 +50,11 @@
 </div>
 </div>
 
-<h2>Workflow variants under test</h2>
+<h2>Workflow variants, planned</h2>
 <p>Several other shapes of workflow are planned as variants of this graph, each behind a flag, to be compared on the same development tasks with the same budgets. None has been run yet, so nothing is claimed for any of them.</p>
+<details class="more"><summary>The planned variants (none run yet)</summary>
 {{!agent_variants}}
+</details>
 
 <h2 id="harness">Harness engineering</h2>
 <p>A <a href="how.html#term-harness">harness</a> is everything around the model: the tools it is offered, how its context is kept as the work goes on, the prompts, the limits, the rules for when to stop, and the sandbox it works in. The model sees only what the harness passes it, and acts only through what the harness lets it call.</p>
@@ -64,12 +68,13 @@
 <p class="small muted">The first reading of this audit counted only the middleware that show as steps in the agent's graph and so missed the summarisation and caching middleware, which act inside each model call. Both are in the stack; the table says what each does for these models.</p>
 
 <h3>The experiments</h3>
-<p>Eight changes to the harness are planned, each behind a flag with the baseline left as it is, to be compared on the same development tasks with three seeds each. With three seeds only large effects can show. None has been run yet, so no result is claimed for any of them.</p>
+<p>Each change to the harness sits behind a flag, with the baseline left as it is. The first round ran three of them against the baseline: {{agent_graph.harness.round1.n_runs}} valid runs in {{agent_graph.harness.round1.blocks}} blocks, each block one task and one repeat with all four arms, on four small tasks, one low-cost model (OpenAI <code>gpt-6-luna</code>) for every role, stopping after RTL and simulation. The rule, fixed before any run, was to adopt an arm only if it saves at least 30 % with a 95 % interval that excludes zero and loses no hidden-test passes.</p>
+<figure>{{!harness_results}}
+<figcaption>Dots are the median paired change against the baseline; bars are 95 % bootstrap intervals over the blocks. A filled dot and solid bar exclude zero; a hollow dot and dotted bar include it. From <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/42_workflows/analysis.md"><code>results/42_workflows/analysis.md</code></a>.</figcaption></figure>
+<p>No arm is adopted yet. The clearest effect is H1, which moves large tool results to a file and summarises old turns earlier: it cut cost by about a third, with an interval that excludes zero, and passed as many hidden tests as the baseline. But the rule asked for a saving in "tokens per run (and cost)" without saying whether cost alone counts, and on tokens the interval includes zero; both readings are reported and neither is chosen after the fact. The typed digests of H9 saved cost too, but less than the bar. Hang protection (H2) showed no difference; the baseline hung only once, so this round could not test the protection itself. Two of the four tasks were never passed by any arm, so the pass counts rest on the other two. The other arms have not been run.</p>
 {{!harness_arms}}
 
 <h3>Fixes already made</h3>
-<p>Three findings about the harness have already been fixed, each with its evidence. Protection against hung simulations goes no further than the time limit in the table above; a better one is the second experiment.</p>
+<p>Three findings about the harness have already been fixed, each with its evidence. Protection against hung simulations is the time limit in the table above; a stronger one (H2) was tried in the first round of experiments.</p>
 {{!harness_fixes}}
-
-<h2>What the agent cannot do yet</h2>
-<p>It has no held-out score: the development runs are a record of the work, not a measure of how it does on new tasks. No design the agent built has yet passed every test on the board: the one programmed so far passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its internal signal captures. It designs one module at a time; the project layer for multi-module designs is not yet driven by the controller. And the Deep Agents harness has been run only on the small T1 design, with one model; how it compares with Claude Code on the benchmark has not been measured.</p>
+<p class="next">Next: <a href="how.html">How it works</a> follows a design through the stages and their checks, with a glossary of the terms used here.</p>

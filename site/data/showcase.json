@@ -1,0 +1,55 @@
+{
+ "counts": {
+  "in_progress": 2,
+  "planned": 3,
+  "published": 0
+ },
+ "projects": [
+  {
+   "board": "Digilent Nexys A7-100T",
+   "id": "nl_debug",
+   "one_line": "Ask for a capture in words, such as \"show me the UART byte when the FIFO overflows\": the agent picks the signals by their RTL names, sets the trigger, rebuilds with a logic analyser, captures on the board and answers in plain words beside the waveform.",
+   "order": 1,
+   "part": "xc7a100tcsg324-1",
+   "status": "in_progress",
+   "status_label": "In progress",
+   "title": "Debugging in plain English",
+   "what_it_will_show": "A real capture from the board answering a question asked in words, the waveform it rests on, and the capture handed back to the agent's repair loop."
+  },
+  {
+   "board": "Digilent Nexys A7-100T",
+   "id": "axi_transactor",
+   "one_line": "A block that sits on the chip beside the IP under test, drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time, and checks every protocol rule in hardware while the traffic runs.",
+   "order": 2,
+   "part": "xc7a100tcsg324-1",
+   "status": "in_progress",
+   "status_label": "In progress",
+   "title": "An on-chip AXI traffic generator and protocol checker",
+   "what_it_will_show": "The checker catching a bug seeded in a peripheral on the board, with the same traffic run in simulation so the first point where the two differ marks the bug."
+  },
+  {
+   "id": "device_margin",
+   "one_line": "How far one chip on the bench runs past its signed-off clock at a measured temperature and voltage, found by stepping the clock at run time; valid for that device only.",
+   "order": 3,
+   "status": "planned",
+   "status_label": "Planned",
+   "title": "Margin of one particular chip"
+  },
+  {
+   "id": "mock_trading_path",
+   "one_line": "Our own Ethernet processing parses a packet of a made-up market-data format while it is still arriving, a rule set at run time fires, and a reply leaves, with the time from first bit in to first bit out measured as a full distribution. Everything is a mock: no real exchange, market or broker.",
+   "order": 4,
+   "status": "planned",
+   "status_label": "Planned",
+   "title": "A mock low-latency trading path"
+  },
+  {
+   "id": "pdn_stepper",
+   "one_line": "Banks of logic switched on and off together to step the chip's supply current, with the rail disturbance measured on an oscilloscope.",
+   "order": 5,
+   "status": "planned",
+   "status_label": "Planned",
+   "title": "A load stepper for power integrity"
+  }
+ ]
+}
