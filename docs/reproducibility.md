@@ -149,5 +149,6 @@ commit in different directories ([results/54_reproducible](../results/54_reprodu
 - **One comment line changed:** the input hash, the build stamp, the build ID and the bitstream all changed; because the
   stamp is a netlist constant, so did placement, routing, LUT count and WNS.
 - **Board:** the T1 bitstream's USR_ACCESS read back over JTAG equalled its manifest's build ID, and the build stamp
-  over the UART equalled the manifest's stamp. Temperature and supply voltages from the on-chip sensor were inside the
+  over the UART equalled the manifest's stamp. With the 1.1 shell, the BUILD_ID register read over the UART, USR_ACCESS
+  over JTAG and the manifest all gave the same ID ([results/54_reproducible/board_shell11](../results/54_reproducible/board_shell11/README.md)). Temperature and supply voltages from the on-chip sensor were inside the
   data-sheet operating range.
