@@ -522,9 +522,13 @@ def build(design: Path, runs: Path | None, also: list[Path] | None = None, cover
     not_verified = [f"{row['id']}:{mm['method']}={mm['status']}" for row in rows for mm in row["methods"]
                     if mm["status"] != "pass" and not (mm["status"] == "pending" and mm["method"] in defer)]
     no_method = [row["id"] for row in rows if not row["methods"]]
+    reasons = [f"{row['id']}:{mm['method']}: " + ("; ".join(f"{v['artefact']} {v['detail']}" for v in mm["verifications"])
+                                                  or "nothing cites it")
+               for row in rows for mm in row["methods"]
+               if mm["status"] != "pass" and not (mm["status"] == "pending" and mm["method"] in defer)]
     g1 = vg.chk(not_verified + [f"{i}:no proof method" for i in no_method], [], not not_verified and not no_method and bool(rows),
                 ("requirements without a passing verification of their stated method: " + vg._more(not_verified + no_method, 12)
-                 + ". For each, add or fix a test or property that cites it (simulation: a test tagged with the id that passes "
+                 + (" (" + " | ".join(reasons[:6]) + ")" if reasons else "") + ". For each, add or fix a test or property that cites it (simulation: a test tagged with the id that passes "
                    "on every seed; formal: a .sby job tagged with it whose tasks PASS; analysis/hardware: a testplan proof "
                    "entry naming the flow gate or bring-up step)") if rows else "spec.yaml has no requirements")
     untagged = [f"{a['kind']} {a['name']} ({a['file']}:{a['line']})" for a in arts if not a["cites"] and not a["class"]]
