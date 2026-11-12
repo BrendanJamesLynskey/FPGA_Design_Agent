@@ -49,8 +49,9 @@ LITE_RULES = [
     ("R_HOLD", "RVALID held, RDATA/RRESP stable until RREADY", "IHI 0022H A3.2.1, A3.2.2"),
     ("B_EARLY", "BVALID only after both the AW and the W handshake", "IHI 0022H A3.3.1"),
     ("R_EARLY", "RVALID only after the AR handshake", "IHI 0022H A3.3.1"),
-    ("RESET", "every VALID low at the first edge out of reset", "IHI 0022H A3.1.2"),
+    ("RESET", "AWVALID, WVALID, ARVALID low at the first edge out of reset", "IHI 0022H A3.1.2"),
     ("EXOKAY", "no EXOKAY response on AXI4-Lite", "IHI 0022H B1.1"),
+    ("IN_RESET", "every VALID low while reset is held (from its second edge)", "IHI 0022H A3.1.2"),
 ]
 STREAM_RULES = [
     ("HOLD", "TVALID held, TDATA/TKEEP/TSTRB/TLAST stable until TREADY", "IHI 0051B 2.2"),
@@ -90,10 +91,10 @@ LOG_SEL = {"first": 32, "first_time": 33, "last": 34, "last_time": 35, "total": 
 SINK = ["beats", "packets", "data_mism", "keep_mism", "last_mism", "unexpected", "first_mism"]
 
 # ---- capture sample (axi_tx_sys.sv)
-CAPTURE_FIELDS = [("trig", 31, 31), ("lite_viol", 30, 22), ("awvalid", 21, 21), ("awready", 20, 20),
-                  ("wvalid", 19, 19), ("wready", 18, 18), ("bvalid", 17, 17), ("bready", 16, 16),
-                  ("arvalid", 15, 15), ("arready", 14, 14), ("rvalid", 13, 13), ("rready", 12, 12),
-                  ("bresp", 11, 10), ("rresp", 9, 8), ("rdata7_0", 7, 0)]
+CAPTURE_FIELDS = [("trig", 31, 31), ("lite_viol", 30, 21), ("awvalid", 20, 20), ("awready", 19, 19),
+                  ("wvalid", 18, 18), ("wready", 17, 17), ("bvalid", 16, 16), ("bready", 15, 15),
+                  ("arvalid", 14, 14), ("arready", 13, 13), ("rvalid", 12, 12), ("rready", 11, 11),
+                  ("bresp", 10, 9), ("rresp", 8, 7), ("rdata6_0", 6, 0)]
 
 
 def field(word: int, hi: int, lo: int) -> int:

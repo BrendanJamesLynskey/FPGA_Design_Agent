@@ -7,7 +7,7 @@ module axil_checker #(
     input  logic                aclk,
     input  logic                aresetn,
     input  logic                clear,
-    input  logic [8:0]          en,
+    input  logic [9:0]          en,
     input  logic [31:0]         now,
     input  logic [ADDR_W-1:0]   awaddr,
     input  logic [2:0]          awprot,
@@ -28,7 +28,7 @@ module axil_checker #(
     input  logic [1:0]          rresp,
     input  logic                rvalid,
     input  logic                rready,
-    output logic [8:0]          viol,
+    output logic [9:0]          viol,
     output logic                trig,
     output logic                any,
     input  logic [5:0]          rd_sel,
@@ -39,6 +39,6 @@ module axil_checker #(
         .wdata(wdata), .wstrb(wstrb), .wvalid(wvalid), .wready(wready), .bresp(bresp), .bvalid(bvalid), .bready(bready),
         .araddr(araddr), .arprot(arprot), .arvalid(arvalid), .arready(arready), .rdata(rdata), .rresp(rresp),
         .rvalid(rvalid), .rready(rready), .viol(viol));
-    axi_viol_log #(.NR(9)) u_log (.clk(aclk), .clear(clear), .en(en), .viol(viol), .now(now), .trig(trig), .any(any),
+    axi_viol_log #(.NR(10)) u_log (.clk(aclk), .clear(clear), .en(en), .viol(viol), .now(now), .trig(trig), .any(any),
                                   .rd_sel(rd_sel), .rd_data(rd_data));
 endmodule

@@ -72,7 +72,7 @@ module axi_tx_sys #(
     logic [31:0] st_d, sr_d;
     logic [3:0]  st_k, st_s, sr_k, sr_s;
     logic        st_l, st_v, st_r, sr_l, sr_v, sr_r;
-    logic [8:0]  lviol;
+    logic [9:0]  lviol;
     logic [4:0]  sviol;
     logic [31:0] core_q;
     axi_tx_core #(.SDATA_W(32), .LCHK(LCHK), .SCHK(SCHK), .MON(MON)) u_core (
@@ -125,13 +125,13 @@ module axi_tx_sys #(
     assign mon_rdata = rdata; assign mon_rresp = rresp; assign mon_rvalid = rvalid; assign mon_rready = rready;
 
     // ------------------------------------------------------------------ capture around a violation (logic_analyser, window 0x20-0x2F)
-    // sample bits: [31] trigger pulse, [30:22] Lite rule vector, [21:12] AWV AWR WV WR BV BR ARV ARR RV RR,
-    //              [11:10] BRESP, [9:8] RRESP, [7:0] RDATA[7:0]   (axi_tx/host/regs.py CAPTURE_FIELDS)
+    // sample bits: [31] trigger pulse, [30:21] Lite rule vector, [20:11] AWV AWR WV WR BV BR ARV ARR RV RR,
+    //              [10:9] BRESP, [8:7] RRESP, [6:0] RDATA[6:0]   (axi_tx/host/regs.py CAPTURE_FIELDS)
     // the bus bits are registered once so that they line up with the registered trigger pulse: the trigger sample
     // shows the cycle in which the rule broke
     logic [30:0] cap_q = '0;
     always_ff @(posedge clk) cap_q <= {lviol, awvalid, awready, wvalid, wready, bvalid, bready, arvalid, arready, rvalid,
-                                       rready, bresp, rresp, rdata[7:0]};
+                                       rready, bresp, rresp, rdata[6:0]};
     wire [31:0] cap = {chk_trig, cap_q};
     logic [31:0] la_q;
     logic_analyser #(.WIDTH(32), .ADDR_W(LA_ADDR_W)) u_la (

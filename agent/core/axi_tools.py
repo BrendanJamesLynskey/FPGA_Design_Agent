@@ -1,6 +1,7 @@
-"""Agent tools for the brief 59A on-chip AXI transactor (axi_tx/): check a transaction program, run it in simulation, run
-it on the board. The program is the format of axi_tx/host/program.py, given inline as a mapping (or YAML text). No tool
-here takes a path, a Tcl command or a cable serial; the board tool goes through the same hardware policy as program.
+"""Agent tools for the on-chip AXI transactor (axi_tx/): check a transaction program, run it in simulation, run it on
+the board. The program is the format of axi_tx/host/program.py, given inline as a mapping (or YAML text). No tool here
+takes a path, a Tcl command or a cable serial. The board tool needs the debug stage, a passing power check and hardware
+budget, programs volatile configuration only, and takes the board lock (it refuses while the board is in use).
 """
 from __future__ import annotations
 
@@ -88,8 +89,20 @@ def axi_board_run(s: Session, program: Any) -> dict:
     (d / "program.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
     plan = d / "plan.yaml"
     plan.write_text(yaml.safe_dump({"runs": [{"path": str(d / "program.yaml"), "tag": prog.name, "expect": {}}]}))
-    r = s.runner.run("axi_board_run", [PY, str(s.root / "axi_tx" / "host" / "run_board.py"), "--plan", str(plan),
-                                       "--json", str(d / "board_result.json")], s.root, timeout=1800)
+    # one board job at a time: the tool takes the board lock itself, and refuses while anyone else holds it
+    import time
+    from hil.instruments.board_lock import BoardBusy, BoardLock
+    lock = BoardLock(f"FPGA agent: axi_board_run {prog.name}, {time.strftime('%H:%M')}, expected end "
+                     f"{time.strftime('%H:%M', time.localtime(time.time() + 1800))}")
+    try:
+        lock.take()
+    except BoardBusy as e:
+        raise SecurityError("hardware-board-busy", f"the board is in use; not starting ({e})") from None
+    try:
+        r = s.runner.run("axi_board_run", [PY, str(s.root / "axi_tx" / "host" / "run_board.py"), "--plan", str(plan),
+                                           "--json", str(d / "board_result.json")], s.root, timeout=1800)
+    finally:
+        lock.release()
     res = json.loads((d / "board_result.json").read_text()) if (d / "board_result.json").is_file() else None
     return {"ok": r.returncode in (0, 1) and res is not None, "output": (r.stdout + r.stderr)[-4000:],
             "result": res and {"inside_roc": res.get("inside_roc"), "runs": [{k: x.get(k) for k in (

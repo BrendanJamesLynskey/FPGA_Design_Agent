@@ -31,6 +31,10 @@ try:
     from flow import vhdl
 except ImportError:
     import vhdl                         # type: ignore[no-redef]
+try:
+    from flow import ip_tcl_allow
+except ImportError:
+    import ip_tcl_allow                 # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -206,7 +210,11 @@ def main(argv: list[str] | None = None) -> int:
     xdcs = expand(cfg["constraints"])
     # brief 59A: Tcl that creates AMD IP in the in-memory project (create_ip, global synthesis), sourced by build.tcl
     # after the sources are read; hashed with them, so a change to the IP configuration is a new build stamp
-    ip_tcls = expand(cfg.get("ip_tcl", []))
+    # only Tcl listed with its SHA-256 in flow/ip_tcl_allow.yaml (maintainer-owned) may be sourced: no agent-written Tcl
+    try:
+        ip_tcls = ip_tcl_allow.check(cfg.get("ip_tcl", []) or [], ROOT)
+    except ip_tcl_allow.IpTclRefused as e:
+        raise SystemExit(f"prepare: {e}") from None
     stamp = sources_sha256(srcs + xdcs + data + ip_tcls)
     out = a.out.resolve()
     out.mkdir(parents=True, exist_ok=True)

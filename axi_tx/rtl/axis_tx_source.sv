@@ -1,6 +1,6 @@
-// axis_tx_source (and axis_tx_sink.sv): the transactor's AXI4-Stream ends (brief 59A).
+// axis_tx_source (and axis_tx_sink.sv): the transactor's AXI4-Stream ends, 32-bit TDATA in this version (axi_tx_core).
 //
-// Source: one packet per start. Beat k carries the 32-bit word first + k (replicated across wider TDATA); TKEEP (and TSTRB,
+// Source: one packet per start. Beat k carries the 32-bit word first + k; TKEEP (and TSTRB,
 // equal to it) is all ones except on the last beat, which carries keep_last; TLAST on the last beat unless no_last.
 // Before raising TVALID for each beat it waits another cycle while thr[7:0] < valid_p.
 //

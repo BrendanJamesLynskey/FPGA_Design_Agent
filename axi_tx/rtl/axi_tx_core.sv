@@ -39,7 +39,7 @@ module axi_tx_core #(
     output logic [31:0]             win_rdata,
     input  logic [7:0]              ev_in,         // events for WAITEV
     output logic                    chk_trig,      // one-cycle pulse: a Lite or Stream rule episode started (capture trigger)
-    output logic [8:0]              lite_viol,     // the rule vectors, for a capture probe
+    output logic [9:0]              lite_viol,     // the rule vectors, for a capture probe
     output logic [4:0]              strm_viol,
     output logic                    running,
     // AXI4-Lite master
@@ -77,9 +77,12 @@ module axi_tx_core #(
     output logic                    s_axis_tready
 );
     localparam int KW = SDATA_W / 8;
-    // 59A supports 32-bit stream ends only: an out-of-context synthesis at SDATA_W = 64 trimmed the sequencer (not
-    // root-caused; results/59a_axi_tx/resources.json "excluded"); the stand-alone axis_checker is measured at 32-128 bits
-    initial if (SDATA_W != 32) $error("axi_tx_core: SDATA_W must be 32 in this version");
+    // The stream ends are 32-bit only in this version: an out-of-context synthesis at SDATA_W = 64 removed part of the
+    // sequencer (cause not investigated; results/59a_axi_tx/resources.json "excluded"). An elaboration-time check, so
+    // synthesis and lint stop on any other width; the stand-alone axis_checker is measured at 32, 64 and 128 bits.
+    if (SDATA_W != 32) begin : g_width_check
+        $error("axi_tx_core: SDATA_W must be 32 in this version");
+    end
     localparam logic [31:0] VERSION = 32'h59A0_0100;
 
     // ------------------------------------------------------------------ host-side registers
@@ -89,7 +92,7 @@ module axi_tx_core #(
     logic [6:0]  lmon_sel = '0;
     logic [5:0]  smon_sel = '0, lchk_sel = '0, schk_sel = '0;
     logic [2:0]  sink_sel = '0;
-    logic [8:0]  lchk_en = 9'h1FF;
+    logic [9:0]  lchk_en = 10'h3FF;
     logic [4:0]  schk_en = 5'h07;
     logic [15:0] s_maxlen = '0;
     wire host_start = win_wr && win_addr == 7'h00 && win_wdata[0];
@@ -173,7 +176,7 @@ module axi_tx_core #(
                 .bresp(m_axil_bresp), .bvalid(m_axil_bvalid), .bready(m_axil_bready),
                 .araddr(m_axil_araddr), .arprot(m_axil_arprot), .arvalid(m_axil_arvalid), .arready(m_axil_arready),
                 .rdata(m_axil_rdata), .rresp(m_axil_rresp), .rvalid(m_axil_rvalid), .rready(m_axil_rready), .viol(lite_viol));
-            axi_viol_log #(.NR(9)) u_ll (.clk(clk), .clear(clr), .en(lchk_en), .viol(lite_viol), .now(now), .trig(l_trig),
+            axi_viol_log #(.NR(10)) u_ll (.clk(clk), .clear(clr), .en(lchk_en), .viol(lite_viol), .now(now), .trig(l_trig),
                                          .any(l_any), .rd_sel(lchk_sel), .rd_data(lchk_q));
         end else begin : g_no_lchk
             assign lite_viol = '0; assign l_trig = 1'b0; assign l_any = 1'b0; assign lchk_q = '0;
@@ -448,7 +451,7 @@ module axi_tx_core #(
     // ------------------------------------------------------------------ host registers and the read mux (valid the cycle after win_rd)
     always_ff @(posedge clk) begin
         if (rst) begin
-            prog_addr <= '0; lchk_en <= 9'h1FF; schk_en <= 5'h07; s_maxlen <= '0;
+            prog_addr <= '0; lchk_en <= 10'h3FF; schk_en <= 5'h07; s_maxlen <= '0;
         end else if (win_wr) case (win_addr)
             7'h02: prog_addr <= win_wdata[9:0];
             7'h03: prog_addr <= prog_addr + 1'b1;
@@ -457,7 +460,7 @@ module axi_tx_core #(
             7'h14: smon_sel <= win_wdata[5:0];
             7'h16: lchk_sel <= win_wdata[5:0];
             7'h18: schk_sel <= win_wdata[5:0];
-            7'h1A: lchk_en <= win_wdata[8:0];
+            7'h1A: lchk_en <= win_wdata[9:0];
             7'h1B: schk_en <= win_wdata[4:0];
             7'h1C: s_maxlen <= win_wdata[15:0];
             7'h1D: sink_sel <= win_wdata[2:0];
@@ -503,7 +506,7 @@ module axi_tx_core #(
             7'h17: win_rdata <= lchk_q;
             7'h18: win_rdata <= {26'b0, schk_sel};
             7'h19: win_rdata <= schk_q;
-            7'h1A: win_rdata <= {23'b0, lchk_en};
+            7'h1A: win_rdata <= {22'b0, lchk_en};
             7'h1B: win_rdata <= {27'b0, schk_en};
             7'h1C: win_rdata <= {16'b0, s_maxlen};
             7'h1D: win_rdata <= {29'b0, sink_sel};

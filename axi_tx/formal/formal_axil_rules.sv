@@ -29,7 +29,7 @@ module formal_axil_rules (
     input  logic        rvalid,
     input  logic        rready
 );
-    wire [8:0] viol;
+    wire [9:0] viol;
     axil_rules #(.ADDR_W(4), .DATA_W(8), .CW(6)) dut (
         .aclk(clk), .aresetn(aresetn), .awaddr(awaddr), .awprot(awprot), .awvalid(awvalid), .awready(awready),
         .wdata({4'b0, wdata}), .wstrb(wstrb), .wvalid(wvalid), .wready(wready), .bresp(bresp), .bvalid(bvalid),
@@ -50,7 +50,7 @@ module formal_axil_rules (
         end
     end
 
-    reg [8:0] ref_;
+    reg [9:0] ref_;
     reg       was_live;
     always @(posedge clk) begin
         was_live = f_past_valid && $past(aresetn);
@@ -61,16 +61,18 @@ module formal_axil_rules (
         ref_[4] = aresetn && was_live && $past(rvalid && !rready) && !(rvalid && $stable(rdata) && $stable(rresp));
         ref_[5] = aresetn && bvalid && (oa == 0 || ow == 0);
         ref_[6] = aresetn && rvalid && (orr == 0);
-        ref_[7] = aresetn && !was_live && (awvalid || wvalid || bvalid || arvalid || rvalid);
+        ref_[7] = aresetn && !was_live && (awvalid || wvalid || arvalid);
         ref_[8] = aresetn && ((bvalid && bresp == 2'b01) || (rvalid && rresp == 2'b01));
+        // reset held since the previous edge (the cycle before time 0 counts as reset)
+        ref_[9] = !aresetn && !(f_past_valid && $past(aresetn)) && (awvalid || wvalid || bvalid || arvalid || rvalid);
 `ifdef QUIET
-        assume(ref_ == 9'b0);
-        assert(viol == 9'b0);
+        assume(ref_ == 10'b0);
+        assert(viol == 10'b0);
 `endif
 `ifdef SEED
-        assume((ref_ & ~(9'b1 << `SEED)) == 9'b0);
+        assume((ref_ & ~(10'b1 << `SEED)) == 10'b0);
         if (ref_[`SEED]) assert(viol[`SEED]);
-        assert((viol & ~(9'b1 << `SEED)) == 9'b0);
+        assert((viol & ~(10'b1 << `SEED)) == 10'b0);
         cover(ref_[`SEED] && viol[`SEED]);
 `endif
     end

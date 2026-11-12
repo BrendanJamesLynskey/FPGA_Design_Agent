@@ -1,5 +1,7 @@
-"""The transaction program format of the brief 59A transactor: a YAML (or JSON, or Python) list of steps, assembled into
+"""The transaction program format of the on-chip AXI transactor: a YAML (or JSON, or Python) list of steps, assembled into
 4-word instructions for the on-chip sequencer (axi_tx/rtl/axi_tx_core.sv). Loading a new program needs no rebuild.
+Run one in simulation with the agent tool `axi_simulate` (or AXI_TX_PROGRAM=<file> pytest axi_tx/tests/test_59a_program_rtl.py),
+on the board with axi_tx/host/run_board.py and a plan that names it.
 
     name: bram_random_rw
     target: bram                      # bram | periph   (axi_tx_sys target select)
@@ -14,6 +16,10 @@
       - ssend: {len: 7, first: 0x100, keep_last: 0x3}
       - swait: {}
 
+Terms: AREG is an address register that steps by 4; sb is the scoreboard (the reference copy of memory); inject makes the
+transactor itself break a rule, to test the checker; waitev waits for an event input; keep_last is the TKEEP of a packet's
+last beat (0xF: all four bytes valid).
+
 Steps (every key is optional unless marked):
   write: addr*, data, strb (0xF), rand_addr (mask of random address bits), rand_data, rand_strb, areg (address from
          AREG, then AREG += 4), order (together | aw_first | w_first), gap (cycles, 0-255), inject (none | valid_drop |
@@ -23,8 +29,8 @@ Steps (every key is optional unless marked):
   wait: cycles      loop: count + body: [steps]      swait: {}      waitev: {mask, timeout}
   set: any of seed_data, seed_lite, seed_stream, valid_p, ready_p, s_valid_p, s_ready_p, areg, sb_base, watchdog
   ssend: len*, first, rand_first, keep_last (0xF), no_last, expect (true), block (false)
-valid_p is the chance (of 256) that a VALID waits one more cycle; ready_p + 1 is the chance (of 256) that the
-transactor's READY is high in a cycle (255: always).
+valid_p is the chance (of 256) that a VALID waits one more cycle (0: never waits); READY is high in a cycle when an
+8-bit draw is at most ready_p, so 255 means always ready and 0 means one cycle in 256.
 """
 from __future__ import annotations
 

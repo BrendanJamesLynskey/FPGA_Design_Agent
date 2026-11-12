@@ -1,7 +1,7 @@
-// Brief 59A portfolio media, recorded from the showcase page's own hero (a heavy job: run under a heavy slot).
+// Portfolio media for the AXI transactor card, recorded from the showcase page's own hero (puppeteer and Chrome).
 //   NODE_PATH=<dir with puppeteer> node axi_tx/portfolio_capture.js <built site dir> <out dir>
-// Writes still_1200x630.png (the hero at the trigger cycle, dark theme) and frames/fNNN.png (one per step of the replay)
-// for ffmpeg; also screenshots of the whole page at 390, 768 and 1280 px, light and dark, for review.
+// Writes frames/fNNN.png (one per step of the replay, dark theme) for ffmpeg, and screenshots of the whole page at 390,
+// 768 and 1280 px, light and dark, for review.
 const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');

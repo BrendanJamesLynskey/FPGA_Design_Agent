@@ -10,10 +10,14 @@
 //   4 R_HOLD    the same for RVALID with RDATA and RRESP                                                      (A3.2.1, A3.2.2)
 //   5 B_EARLY   BVALID only once both an AW and a W handshake have completed (at an earlier edge) for it      (A3.3.1)
 //   6 R_EARLY   RVALID only once an AR handshake has completed for it                                         (A3.3.1)
-//   7 RESET     every VALID is low at the first edge at which reset is seen released                          (A3.1.2)
+//   7 RESET     AWVALID, WVALID and ARVALID are low at the first edge at which reset is seen released          (A3.1.2)
+//               (BVALID and RVALID at that edge break rules 5 and 6, which fire instead: nothing is outstanding yet)
 //   8 EXOKAY    no EXOKAY response on AXI4-Lite (it has no exclusive access)                                   (B1.1)
-// All rules are ignored while ARESETn is low (signals are don't-care in reset, A3.1.2). Outstanding counts saturate at
-// 2**CW - 1 (an AXI4-Lite master with more outstanding transactions than that is outside this checker's scope).
+//   9 IN_RESET  every VALID is low while ARESETn is held low                                                   (A3.1.2)
+//               (from the second edge of a reset: a master or slave with a synchronous reset clears its VALID at the
+//               first edge at which it sees ARESETn low, so that edge is allowed)
+// Rules 0-8 are not evaluated while ARESETn is low; rule 9 is the only one that applies during reset. Outstanding counts
+// saturate at 2**CW - 1 (an AXI4-Lite master with more outstanding transactions than that is outside this checker's scope).
 module axil_rules #(
     parameter int ADDR_W = 32,
     parameter int DATA_W = 32,
@@ -40,7 +44,7 @@ module axil_rules #(
     input  logic [1:0]            rresp,
     input  logic                  rvalid,
     input  logic                  rready,
-    output logic [8:0]            viol
+    output logic [9:0]            viol
 );
     // one cycle of history (initial values: the cycle before time 0 counts as reset)
     logic                p_rstn = 1'b0;
@@ -90,7 +94,8 @@ module axil_rules #(
         viol[4] = live && p_rv  && !p_rr  && (!rvalid  || rdata  != p_rdata  || rresp  != p_rresp);
         viol[5] = aresetn && bvalid && (aw_pend == '0 || w_pend == '0);
         viol[6] = aresetn && rvalid && (ar_pend == '0);
-        viol[7] = aresetn && !p_rstn && (awvalid || wvalid || bvalid || arvalid || rvalid);
+        viol[7] = aresetn && !p_rstn && (awvalid || wvalid || arvalid);
         viol[8] = aresetn && ((bvalid && bresp == 2'b01) || (rvalid && rresp == 2'b01));
+        viol[9] = !aresetn && !p_rstn && (awvalid || wvalid || bvalid || arvalid || rvalid);
     end
 endmodule

@@ -117,12 +117,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--board", default="nexys_a7_100t")
     a = ap.parse_args(argv)
     plan = yaml.safe_load(a.plan.read_text())
+    from hil.instruments.board_lock import DEFAULT as BOARD_LOCK
+    if not BOARD_LOCK.exists():
+        raise SystemExit(f"run_board: take the board lock ({BOARD_LOCK}) first: one board job at a time")
     out = ROOT / "build" / "59a" / "board"
     out.mkdir(parents=True, exist_ok=True)
     res: dict[str, Any] = {"design": str(DESIGN.relative_to(ROOT)), "started": time.strftime("%Y-%m-%dT%H:%M:%S"),
                            "plan": a.plan.name, "runs": []}
     commit, dirty = hw.git_commit()
     res["git_commit"], res["git_dirty"] = commit, dirty
+    if dirty:   # name what was uncommitted, so the host code that ran can be identified
+        import subprocess
+        st = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, cwd=ROOT).stdout.splitlines()
+        res["git_dirty_files"] = sorted(l[3:] for l in st)[:200]
     pw = hw.power_ok(DESIGN / "build" / "base", a.board)
     res["power_ok"] = {k: pw.get(k) for k in ("pass", "total_w", "junction_c", "source", "why")}
     if not pw["pass"]:
@@ -133,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
     res["conditions_jtag"] = [conditions(out, "before")]
     pr = program.program(DESIGN, "base", board["name"], out / "program")
     res["build_stamp"], res["build_id"] = pr["build_stamp"], pr.get("build_id")
+    res["build_id_jtag"] = pr.get("build_id_jtag")            # the USR_ACCESS read-back over JTAG against the manifest
     fab: list[dict[str, Any]] = []
     ok = True
     with FpgaShell.open(board["uart"]) as sh:
