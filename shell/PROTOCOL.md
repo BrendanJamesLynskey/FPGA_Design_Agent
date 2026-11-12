@@ -4,6 +4,9 @@ Every design embeds the test shell (`shell/rtl/fpga_shell.sv`) so that a host ca
 USB-UART without a debugger. This file is the shell's specification: the RTL, the Python model
 (`shell/model/shell_model.py`) and the host driver (`shell/host/fpga_shell.py`) are all checked against it.
 
+**Versions.** 1.1 added BUILD_ID at 0x05; a 1.0 shell answers BAD_ADDRESS there (and counts a request error). A host
+reads SHELL_VERSION (0x01) first and reads 0x05 only on 1.1 or later.
+
 ## Line
 
 - UART, 8 data bits, no parity, 1 stop bit, LSB first, idle high.
@@ -64,7 +67,7 @@ STATUS). Errors return data 0.
 | `0x02` | BUILD_STAMP | RO | set at build time; the flow puts the first 8 hex digits of the SHA-256 of the design's source and constraint files here (`flow/prepare.py`; 0 in simulation) |
 | `0x03` | SCRATCH | RW | any 32-bit value; reset 0; for loopback tests |
 | `0x04` | STATUS | RO, write clears | `[7:0]` checksum errors, `[15:8]` request errors (bad command, bad address, read-only), `[23:16]` UART framing errors, `[31:24]` frame timeouts; each saturates at 255; any write sets all four to 0 |
-| `0x05` | BUILD_ID | RO | the bitstream's USR_ACCESS word, read from the configuration logic through the `USR_ACCESSE2` primitive (since 1.1, brief 54). The flow writes the build ID there (`flow/manifest.py`, `BITSTREAM.CONFIG.USR_ACCESS`), so this register reports the bitstream actually loaded; `SIM_BUILD_ID` in simulation |
+| `0x05` | BUILD_ID | RO | the bitstream's USR_ACCESS word, read from the configuration logic through the `USR_ACCESSE2` primitive (since 1.1). The flow writes the build ID there (`flow/manifest.py`, `BITSTREAM.CONFIG.USR_ACCESS`), so this register reports the bitstream actually loaded; `SIM_BUILD_ID` in simulation |
 | `0x06`-`0x7F` | reserved | | BAD_ADDRESS |
 | `0x80`-`0xFF` | window | design | the design under test's registers; never an error from the shell |
 

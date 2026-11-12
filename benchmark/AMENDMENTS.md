@@ -14,7 +14,8 @@ USR_ACCESS word read through the `USR_ACCESSE2` primitive (`SIM_BUILD_ID` in sim
 board flow can then check, over the UART, that the bitstream on the board is the one its build manifest describes. Files:
 `shell/rtl/fpga_shell.sv`, `shell/rtl/shell_core.sv`, `shell/host/protocol.py` (and, outside the fingerprint, the model, the
 host driver, PROTOCOL.md and the shell tests). The window (0x80-0xFF), the frames and the timing are unchanged, so no task's
-spec, reference RTL, test or mutant changed.
+spec, reference RTL, test or mutant changed. The task specs still cite PROTOCOL.md 1.0 on purpose: 1.1 only adds 0x05,
+outside the window, so they are unaffected.
 
 Re-recorded with the repository's tools:
 - `benchmark/GRADER_DEPS.json` and `benchmark/course/GRADER_DEPS.json` (`shell_freeze.py make`), and a new `shell_freeze`
@@ -23,8 +24,8 @@ Re-recorded with the repository's tools:
 - The request golden: `agent/tests/fixtures/b54b_request_golden.json`. The tests role reads the shell's PROTOCOL.md and
   host driver, so `plan_tests_*` and `cli_argv_tests_*` differ from the newest earlier golden (brief 59A); nothing else does.
 
-Not comparable: any result scored or graded with the 1.0 shell (fingerprint `80ef214e...`, everything recorded before this
-date, including the eval-1 runs) belongs to that shell; such results stay as they are and are from before this change.
+Not comparable: results graded with the 1.0 shell (fingerprint `80ef214e...`; everything recorded before 2026-11-12,
+including eval-1). They stay as recorded.
 To re-grade one exactly as it was, check out the earlier commit as a frozen shell (`--grader-shell`, see FROZEN.md).
 
 ## 2026-11-10: shell fingerprint, spec gaps, mutants (brief 15)

@@ -14,6 +14,7 @@ The T1 hardware tests then passed 8 of 8 (`hw_tests.txt`), including the protoco
 
 Operating conditions from the on-chip sensor at programming time (`program.json`, `conditions`): 26.7 C, VCCINT 1.006 V,
 VCCAUX 1.794 V, VCCBRAM 1.006 V, alarm flags 0000; inside the Artix-7 -1 recommended operating conditions (DS181 table 2)
-and the board's 85 C limit. The board run took under two minutes. A second sensor read after the run was not possible at
-once (the flow's hardware steps refuse to run beside a Vivado build); when it ran, the board held a different bitstream,
-so that read describes a different configuration and is not recorded here.
+and the board's 85 C limit. The latched minimum and maximum in `program.json` were read at programming time, so they
+cover the configuration up to then, not the test window that followed (the tests took 38 s). The end-of-run sensor read
+was refused while a Vivado build ran; by the time it ran, another session had reprogrammed the board, so it is not
+recorded.
