@@ -1,7 +1,13 @@
 # Brief 42: does changing the harness around the model change what the agent costs and achieves?
 
-**Result.** On 4 tasks, 3 repeats, 4 arms (A0 baseline, H1, H2, H9; 48 valid runs of 51, one low-cost model), no arm is
-adopted yet. The pre-registered rule asks for a 30 % saving in "tokens per run (and cost)" and does not fix how to read
+**Decision (owner, 2026-11-12).** H1 is now the default for development runs; the baseline stays available as
+`--harness-arm A0`, and the arm used is recorded in each run's `config.json` and `summary.json` (`harness_arm`). This was
+decided after seeing the data below, not pre-registered. Cost was 33 % lower with an interval that excludes 0; tokens and wall
+time were not separated from the baseline. Re-measure on a larger task set before quoting any saving publicly. The driver here
+now passes `--harness-arm A0` for the baseline arm, so a rerun still compares against A0.
+
+**Result.** On 4 tasks, 3 repeats, 4 arms (A0 baseline, H1, H2, H9; 48 valid runs of 51, one low-cost model), no arm was
+adopted by the pre-registered rule at the time of the round. The pre-registered rule asks for a 30 % saving in "tokens per run (and cost)" and does not fix how to read
 "(and cost)": H1 fails on tokens (66 % fewer, interval includes 0) and meets it on cost (33 % less, interval excludes 0), so
 the outcome depends on the reading ([analysis](analysis.md)). H1's 18 % less wall time does not hold once the two blocks with a
 hard-limit run are left out (interval includes 0). H1 passed as many hidden tests in total as the baseline (one task gained a
@@ -67,7 +73,7 @@ in analysis.md; nothing was adopted.
 
 1. A stall rule (the same failure or hang repeated ends the visit: arm H4) and removing the doubled limit for coverage runs.
 2. A drill that hangs on purpose, so H2 can be measured.
-3. A trial of H1 as a default on tasks a model can pass.
+3. Re-measuring H1, now the default, on tasks a model can pass and on a larger task set.
 4. The remaining arms of the brief.
 
 ## Files
