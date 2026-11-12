@@ -183,7 +183,11 @@ def diff(pa: Path, pb: Path) -> dict[str, Any]:
     for k in "abcde":
         va, vb = a["header"].get(k), b["header"].get(k)
         if va != vb:
-            hdr.append({"field": k, "a": va, "b": vb})
+            h = {"field": k, "a": va, "b": vb}
+            if k == "a":       # design name;COMPRESS=..;UserID=..;Version=..;SW_CRC=..;SW_HDR_SHA256=.. (2026.1)
+                pa, pb = _kv(va), _kv(vb)
+                h["keys"] = sorted(x for x in set(pa) | set(pb) if pa.get(x) != pb.get(x))
+            hdr.append(h)
     out["header"] = hdr
     regs = []
     sa = [(w["reg"], w["words"]) for w in a["writes"]]
@@ -200,6 +204,12 @@ def diff(pa: Path, pb: Path) -> dict[str, Any]:
                 regs.append({"index": n, "reg": wa["reg"], "a": wa["data"], "b": wb["data"],
                              "bytes_a": [wa["data_byte"] + 4 * k for k in words]})
     out["register_writes"] = regs
+    out["config_sha256"] = {"a": hashlib.sha256(ra[a["config_offset"]:]).hexdigest(),
+                            "b": hashlib.sha256(rb[b["config_offset"]:]).hexdigest()}
+    out["config_identical"] = out["config_sha256"]["a"] == out["config_sha256"]["b"]
+    out["register_write_counts"] = [len(a["writes"]), len(b["writes"])]
+    out["fdri_words"] = [sum(w["words"] for w in a["writes"] if w["addr"] == FDRI),
+                         sum(w["words"] for w in b["writes"] if w["addr"] == FDRI)]
     out["crc_recomputed_match"] = {"a": all(c["match"] for c in a["crc_checks"]),
                                    "b": all(c["match"] for c in b["crc_checks"])}
     # byte offsets that differ (same length only), grouped into the named places above
@@ -213,6 +223,15 @@ def diff(pa: Path, pb: Path) -> dict[str, Any]:
     explained = _explain(out, a, b)
     out["explained"] = explained
     return out
+
+
+def _kv(text: str | None) -> dict[str, str]:
+    parts = (text or "").split(";")
+    d = {"design": parts[0]}
+    for x in parts[1:]:
+        k, _, v = x.partition("=")
+        d[k] = v
+    return d
 
 
 def _ranges(offs: list[int]) -> list[list[int]]:
@@ -230,7 +249,12 @@ def _explain(d: dict[str, Any], a: dict[str, Any], b: dict[str, Any]) -> dict[st
     (the build ID), the CRC words (explained only when the recomputed CRC matches in both files), anything else."""
     kinds = []
     for h in d["header"]:
-        kinds.append({"c": "header-date", "d": "header-time"}.get(h["field"], f"header-{h['field']}"))
+        if h["field"] == "a" and set(h.get("keys", [])) <= {"SW_CRC", "SW_HDR_SHA256"}:
+            # write_bitstream's own digests of the file's content: they follow the configuration data (equal when it is
+            # equal, different when it differs); explained only together with a configuration difference
+            kinds.append("header-digests" if not d.get("config_identical", True) else "header-digests-unexplained")
+        else:
+            kinds.append({"c": "header-date", "d": "header-time"}.get(h["field"], f"header-{h['field']}"))
     for r in d["register_writes"]:
         if r["reg"] == "AXSS":
             kinds.append("usr-access")
@@ -238,7 +262,7 @@ def _explain(d: dict[str, Any], a: dict[str, Any], b: dict[str, Any]) -> dict[st
             kinds.append("crc" if d["crc_recomputed_match"]["a"] and d["crc_recomputed_match"]["b"] else "crc-unverified")
         else:
             kinds.append(f"register-{r['reg']}")
-    ok = {"header-date", "header-time", "usr-access", "crc"}
+    ok = {"header-date", "header-time", "usr-access", "crc", "header-digests"}
     return {"kinds": sorted(set(kinds)), "only_documented": d["same_packet_sequence"] and set(kinds) <= ok,
             "configuration_identical_except_usr_access": d["same_packet_sequence"]
             and set(kinds) <= ok}

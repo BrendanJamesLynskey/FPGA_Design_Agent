@@ -46,7 +46,13 @@ def report_diff(a: Path, b: Path) -> dict:
         y = lb[i] if i < len(lb) else None
         if x != y:
             m = HEADER.match(x or "") or HEADER.match(y or "")
-            diffs.append({"line": i + 1, "label": m.group(1) if m else "body", "a": x, "b": y})
+            if m:
+                label = m.group(1)
+            elif i < 15 and re.fullmatch(r"-+", x or "") and re.fullmatch(r"-+", y or ""):
+                label = "header border"     # the header box is as wide as its longest line (the Command line)
+            else:
+                label = "body"
+            diffs.append({"line": i + 1, "label": label, "a": x, "b": y})
     labels = sorted({d["label"] for d in diffs})
     return {"present": True, "lines_a": len(la), "lines_b": len(lb), "lines_differ": len(diffs), "labels": labels,
             "only_header": all(d["label"] != "body" for d in diffs), "first": diffs[:6]}
