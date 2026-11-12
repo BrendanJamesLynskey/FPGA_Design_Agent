@@ -269,6 +269,90 @@ def enable_problems(dump: dict[str, Any], limit: int = 20) -> list[dict[str, Any
     return out
 
 
+# --- TIMING-47 waivers (a design's waivers.yaml; reviewed with the design) ---------------------------------------------------
+# Vivado's TIMING-47 flags any false path between synchronous clocks. The one legitimate use in this flow is a DDR I/O
+# constraint that keeps only the intended edge pairs: an edge-qualified -setup or -hold exception between a virtual clock
+# and the port clock it models (inputs), or between a core clock and a generated clock forwarded on an output port
+# (outputs). A waiver names the exact XDC line and how many TIMING-47 instances it accounts for; anything else, a
+# whole-clock false path, set_clock_groups, or a count that differs, still fails. The gate then reports "waived".
+_EDGE_FROM = re.compile(r"-(rise|fall)_from\b")
+_EDGE_TO = re.compile(r"-(rise|fall)_to\b")
+_CLK_ARG = re.compile(r"-(?:rise_|fall_)?(from|to)\s+\[get_clocks\s+(?:-quiet\s+)?\{?([\w/\[\]*.]+)\}?\]")
+
+
+def waiver_shape_problem(text: str) -> str | None:
+    """Why an XDC line cannot be waived (None if its shape is allowed)."""
+    t = " ".join(text.split())
+    if not t.startswith("set_false_path"):
+        return "only set_false_path lines can be waived (never set_clock_groups or a max delay)"
+    if not re.search(r"\s-(setup|hold)\b", t):
+        return "the exception must name -setup or -hold"
+    if not (_EDGE_FROM.search(t) and _EDGE_TO.search(t)):
+        return "the exception must name both edges (-rise_from/-fall_from and -rise_to/-fall_to)"
+    if re.search(r"-through\b|get_cells|get_pins|get_ports|get_nets", t):
+        return "the exception must be between two clocks only"
+    return None
+
+
+def waiver_clock_problem(text: str, clocks: dict[str, dict[str, Any]], ports: dict[str, str]) -> str | None:
+    """The clocks of a waived line must be (a) a virtual clock to a clock created on an input port, or (b) a non-virtual
+    clock to a generated clock whose source is an output port. ``clocks``: name -> {virtual, generated, source};
+    ``ports``: port -> direction (flow/io_paths.tcl's dump)."""
+    arg = {k: v for k, v in _CLK_ARG.findall(" ".join(text.split()))}
+    fc, tc = arg.get("from"), arg.get("to")
+    if fc not in clocks or tc not in clocks:
+        return f"clocks {fc!r} and {tc!r} must both be defined clocks"
+    f, t = clocks[fc], clocks[tc]
+    if f["virtual"] and not t["virtual"] and not t["generated"] and ports.get(t["source"]) == "in":
+        return None
+    if not f["virtual"] and t["generated"] and ports.get(t["source"]) == "out":
+        return None
+    return (f"{fc} -> {tc} is neither a virtual clock to an input-port clock nor a core clock to a clock forwarded on "
+            f"an output port")
+
+
+def load_waivers(design_dir: Path | None) -> tuple[list[dict[str, Any]], str | None]:
+    """The TIMING-47 waivers of a design (``waivers.yaml``: ``timing_47: [{text, count, reason}]``)."""
+    if design_dir is None or not (Path(design_dir) / "waivers.yaml").is_file():
+        return [], None
+    import yaml
+    try:
+        y = yaml.safe_load((Path(design_dir) / "waivers.yaml").read_text()) or {}
+    except yaml.YAMLError as e:
+        return [], f"waivers.yaml: {e}"
+    w = y.get("timing_47") or []
+    if not isinstance(w, list) or not all(isinstance(x, dict) and x.get("text") and isinstance(x.get("count"), int)
+                                          and x.get("reason") for x in w):
+        return [], "waivers.yaml: timing_47 entries need text, count (an integer) and reason"
+    return w, None
+
+
+def apply_waivers(fails: list[dict[str, Any]], waivers: list[dict[str, Any]], clocks: dict[str, dict[str, Any]] | None,
+                  ports: dict[str, str] | None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Split the failures into (still failing, waived). A TIMING-47 is waived only by an entry whose text is the
+    flagged line, whose shape and clocks are allowed, and whose count equals the number of TIMING-47 on that line."""
+    norm = lambda x: " ".join((x or "").split())
+    t47 = [f for f in fails if f["rule"] == "TIMING-47"]
+    rest = [f for f in fails if f["rule"] != "TIMING-47"]
+    waived: list[dict[str, Any]] = []
+    for w in waivers:
+        mine = [f for f in t47 if norm(f.get("text")) == norm(w["text"])]
+        why = waiver_shape_problem(w["text"])
+        if why is None and clocks is not None:
+            why = waiver_clock_problem(w["text"], clocks, ports or {})
+        if why is None and clocks is None:
+            why = "no clock dump (io_paths) to check the waiver's clocks against"
+        if why is None and len(mine) != int(w["count"]):
+            why = f"waiver count {w['count']}, Vivado flagged {len(mine)} on this line"
+        if why:
+            rest.append({"rule": "EXC-WAIVER", "position": None, "file": None, "line": None, "text": w["text"],
+                         "vivado": {"message": why}})
+            continue
+        waived += [{**f, "waiver": w["reason"]} for f in mine]
+        t47 = [f for f in t47 if f not in mine]
+    return rest + t47, waived
+
+
 def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None = None,
              mcp_dump: Path | None = None) -> dict[str, Any]:
     """The exception check for one stage of a build. Missing reports raise FileNotFoundError (the caller decides
@@ -346,7 +430,29 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
         fails.append({"rule": r["rule"], "position": r["position"], "file": r["file"], "line": r["line"],
                       "text": line_text(r["file"], r["line"]),
                       "vivado": {"severity": r["severity"], "detail": r["detail"]}})
-    return {"stage": stage, "pass": not fails, "exceptions": len(exc), "ignored": len(ign) + len(debug_ip & {r["position"] for r in parse_exceptions((d / f"exceptions_ignored_{stage}.rpt").read_text(errors="replace"))}),
+    # TIMING-47 waivers: the design's waivers.yaml, checked against the clock dump of the same stage
+    root = Path(__file__).resolve().parents[1]
+    prep_d = json.loads((d / "prepare.json").read_text()) if (d / "prepare.json").exists() else {}
+    design_dir = root / prep_d["design"] if prep_d.get("design") else None
+    waivers, werr = load_waivers(design_dir)
+    if werr:
+        fails.append({"rule": "EXC-WAIVER", "position": None, "file": "waivers.yaml", "line": None, "text": None,
+                      "vivado": {"message": werr}})
+    waived: list[dict[str, Any]] = []
+    if waivers:
+        clocks = ports = None
+        dump_io = d / f"io_paths_{stage}.txt"
+        if dump_io.exists():
+            clocks, ports = {}, {}
+            for ln in dump_io.read_text(errors="replace").splitlines():
+                f_ = ln.split("|")
+                if f_[0] == "CLOCK" and len(f_) >= 7:
+                    clocks[f_[1]] = {"virtual": f_[4] == "1", "generated": f_[5] == "1", "source": f_[6]}
+                elif f_[0] == "PORT" and len(f_) >= 3:
+                    ports[f_[1]] = f_[2]
+        fails, waived = apply_waivers(fails, waivers, clocks, ports)
+    return {"stage": stage, "pass": not fails, "status": ("waived" if waived else "pass") if not fails else "fail",
+            "waived": len(waived), "waived_rules": sorted({f["rule"] for f in waived}), "exceptions": len(exc), "ignored": len(ign) + len(debug_ip & {r["position"] for r in parse_exceptions((d / f"exceptions_ignored_{stage}.rpt").read_text(errors="replace"))}),
             "info": info,
             "covered": {r["position"]: r["endpoints"] for r in cov}, "failures": fails}
 

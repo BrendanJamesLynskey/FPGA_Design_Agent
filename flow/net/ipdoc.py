@@ -17,7 +17,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 IP = ROOT / "ip_lib"
-NET = ["eth_mac_rmii", "pkt_parser", "match_exact", "match_lpm", "match_ternary", "axil_table_ctrl", "pkt_rewrite",
+NET = ["eth_mac_rmii", "eth_mac_rgmii", "pkt_parser", "match_exact", "match_lpm", "match_ternary", "axil_table_ctrl", "pkt_rewrite",
        "pkt_queue_sched", "l2_switch"]
 HIL = ["freq_duty_counter", "frame_crc", "dds_awg", "logic_analyser", "adc_histogram"]       # brief 30 instruments
 DSP = ["fir"]                                                                                # library entries with variants
@@ -109,7 +109,8 @@ def readme(block: str) -> str:
     if faults.exists():
         fl = yaml.safe_load(faults.read_text())["faults"]
         res = {}
-        fj = ROOT / "results" / FAULTS_JSON.get(block, "b40") / "faults.json"
+        fj = (ROOT / "results" / "b58a" / "mac_rgmii_faults.json" if block == "eth_mac_rgmii" else
+              ROOT / "results" / FAULTS_JSON.get(block, "b40") / "faults.json")
         if fj.exists():
             res = {f["name"]: f["status"] for f in json.loads(fj.read_text())["faults"]}
         L += ["", "Seeded faults (`faults.yaml`, run by `" + ("hil/ip_faults.py" if block in HIL else "hil/ip_faults.py --blocks " + block if block in DSP else "flow/net/faults.py") + "`):", "", "| Fault | What it breaks | Result |", "|---|---|---|"]

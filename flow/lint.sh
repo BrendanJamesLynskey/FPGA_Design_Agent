@@ -13,8 +13,9 @@ for d in designs/*/; do
   top="$(python3 -c "import yaml,sys; print(yaml.safe_load(open(sys.argv[1]))['top'])" "$d/build.yaml")"
   echo "lint: $d ($top)"
   stubs=(); for s in "$d"lint/*.sv; do [ -f "$s" ] && stubs+=("$s"); done    # lint-only stand-ins (lint/ may hold only waivers.yaml)
+  cfgs=(); for s in "$d"lint/*.vlt; do [ -f "$s" ] && cfgs+=("$s"); done     # brief 58A: Verilator configuration (waivers), read first
   # the sources are the ones the build uses (build.yaml): brief 30's designs also read ip_lib blocks and share RTL
   mapfile -t srcs < <(python3 -c "import yaml,sys,glob; [print(f) for g in yaml.safe_load(open(sys.argv[1]))['sources'] for f in sorted(glob.glob(g))]" "$d/build.yaml")
-  verilator --lint-only -Wall --top-module "$top" "${srcs[@]}" "${stubs[@]}"
+  verilator --lint-only -Wall --top-module "$top" "${cfgs[@]}" "${stubs[@]}" "${srcs[@]}"
 done
 echo "lint: clean"

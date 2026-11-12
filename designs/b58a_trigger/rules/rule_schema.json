@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "b58a/rule_schema.json",
+  "title": "Brief 58A trigger rule (one entry of the eight-rule table)",
+  "description": "Written by a person or by the agent from plain English, checked by model/rules.py validate() before it is loaded. Prices are in currency units with at most two decimals (the board works in hundredths). docs/rule_table.md has the register words.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["match", "action"],
+  "properties": {
+    "name": {"type": "string"},
+    "comment": {"type": "string"},
+    "enable": {"type": "boolean", "default": true},
+    "holdoff_cycles": {"type": "integer", "minimum": 0, "maximum": 4294967295, "default": 0,
+                       "description": "after firing, the rule is ignored for this many 8 ns clocks (a per-rule rate limit)"},
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["types"],
+      "properties": {
+        "types": {"type": "array", "minItems": 1, "uniqueItems": true,
+                  "items": {"enum": ["ADD", "MODIFY", "CANCEL", "TRADE"]}},
+        "side": {"enum": ["any", "bid", "ask"], "default": "any"},
+        "instrument": {"oneOf": [{"const": "any"}, {"type": "integer", "minimum": 0, "maximum": 65535}], "default": "any"},
+        "price": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["op", "value"],
+          "properties": {
+            "op": {"enum": ["<", "<=", ">", ">="]},
+            "value": {"type": ["number", "string"]}
+          }
+        },
+        "book": {"enum": ["none", "improves", "crosses"], "default": "none",
+                 "description": "improves: the message price beats its own side's best (or that side is empty); crosses: it reaches the other side's best"}
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "order": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["side", "qty", "price"],
+          "properties": {
+            "side": {"enum": ["buy", "sell"]},
+            "qty": {"type": "integer", "minimum": 1},
+            "price": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["mode"],
+              "properties": {
+                "mode": {"enum": ["fixed", "message", "offset"]},
+                "value": {"type": ["number", "string"]}
+              }
+            }
+          }
+        },
+        "pin": {"enum": [null, 0, 1]},
+        "log": {"type": "boolean", "default": false}
+      }
+    }
+  }
+}

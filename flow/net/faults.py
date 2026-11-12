@@ -4,8 +4,10 @@
     python3 flow/net/faults.py [--only name,name] [--json results/b40/faults.json]
 
 Each ip_lib/<block>/faults.yaml entry replaces one exact string (it must occur once) in a copy of the block's rtl/;
-the block's tests (`test` = pytest node selection) are then run against the copy through NET_RTL_<BLOCK>. A fault is
-caught when the tests fail. The real RTL is never touched. Needs scapy, Icarus and pytest, like the tests.
+the block's tests (`test` = pytest node selection, optionally followed by " -k <expression>") are then run against the
+copy through NET_RTL_<BLOCK>. A fault is caught when the tests fail. The real RTL is never touched. Needs scapy, Icarus
+and pytest, like the tests. Only blocks whose faults.yaml declares `runner: flow/net/faults.py` are run here; the others
+belong to their declared runner (hil/ip_faults.py), whose testbenches do not read NET_RTL_<BLOCK>.
 """
 from __future__ import annotations
 
@@ -25,11 +27,25 @@ ROOT = Path(__file__).resolve().parents[2]
 IP = ROOT / "ip_lib"
 
 
+RUNNER = "flow/net/faults.py"
+
+
 def faults():
     for f in sorted(IP.glob("*/faults.yaml")):
         block = f.parent.name
-        for m in yaml.safe_load(f.read_text())["faults"]:
+        y = yaml.safe_load(f.read_text())
+        if "runner" not in y:
+            raise SystemExit(f"{f}: no `runner:` field (flow/net/faults.py or hil/ip_faults.py)")
+        if y["runner"] != RUNNER:
+            continue
+        for m in y["faults"]:
             yield block, m
+
+
+def pytest_args(test: str) -> list[str]:
+    """`path[::node] ... [-k expression]`: the expression may contain spaces ("-k a and b")."""
+    paths, _, expr = test.partition(" -k ")
+    return paths.split() + (["-k", expr.strip()] if expr.strip() else [])
 
 
 def run_one(block: str, m: dict, tmp: Path) -> dict:
@@ -43,7 +59,7 @@ def run_one(block: str, m: dict, tmp: Path) -> dict:
     src.write_text(text.replace(m["old"], m["new"]))
     env = dict(os.environ, **{f"NET_RTL_{block.upper()}": str(d)}, NET_BUILD=str(tmp / "build"))
     t0 = time.time()
-    cmd = [sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *m["test"].split()]
+    cmd = [sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *pytest_args(m["test"])]
     r = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True, timeout=1800)
     tail = (r.stdout + r.stderr).strip().splitlines()[-1:] or [""]
     if "iverilog failed" in r.stdout:

@@ -130,6 +130,9 @@ def check(board_dir: Path, designs_dir: Path | None = None) -> list[str]:
     if designs_dir is not None:
         by_pin = {pin: (std, port) for port, (pin, std) in ports.items()}
         for xdc in sorted(designs_dir.glob("*/design.xdc")):
+            by = xdc.parent / "build.yaml"          # brief 58A: a design for another board (KR260) is not this board's
+            if by.exists() and (yaml.safe_load(by.read_text()) or {}).get("board", board_dir.name) != board_dir.name:
+                continue
             for m in filter(None, (XDC_LINE.match(l.strip()) for l in xdc.read_text().splitlines())):
                 pin, std, port = m.groups()
                 if pin in by_pin and by_pin[pin][0] != std:

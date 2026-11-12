@@ -1,0 +1,39 @@
+{
+ "id": "nl07",
+ "nl": "Buy 5000 of instrument 2 whenever anything trades.",
+ "model": "openai/gpt-6-luna",
+ "run_id": "20261112-104922",
+ "limits": {
+  "max_qty": 100,
+  "band": 500,
+  "max_pos": 1000
+ },
+ "turns": [
+  {
+   "reply": "{\"match\":{\"types\":[\"TRADE\"],\"side\":\"any\",\"instrument\":2},\"action\":{\"order\":{\"side\":\"buy\",\"qty\":5000,\"price\":{\"mode\":\"message\"}}}}",
+   "cost_usd": 0.0001576,
+   "prompt_tokens": 936,
+   "completion_tokens": 128,
+   "rule": {
+    "match": {
+     "types": [
+      "TRADE"
+     ],
+     "side": "any",
+     "instrument": 2
+    },
+    "action": {
+     "order": {
+      "side": "buy",
+      "qty": 5000,
+      "price": {
+       "mode": "message"
+      }
+     }
+    }
+   },
+   "validator": "refused: action.order.qty: 5000 is above the interlock's maximum order size 100: every order would be refused"
+  }
+ ],
+ "refuse": "qty"
+}

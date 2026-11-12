@@ -1,0 +1,10 @@
+`verilator_config
+// flow/lint.sh, designs/b58a_trigger: lint-only configuration (read with the XPM simulation models in this folder)
+// The XPM simulation models are linted where they are written (flow/cdc_models), not here.
+lint_off -file "*flow/cdc_models/*"
+// Unused outputs of library blocks and XPM macros are left open on purpose (as flow/net/lint.sh waives for ip_lib).
+lint_off -rule PINCONNECTEMPTY
+// Status fields read in part (counters, the book's 160-bit entry, command words).
+lint_off -rule UNUSEDSIGNAL
+// Blocking temporaries declared inside always_ff blocks are deliberate.
+lint_off -rule BLKSEQ

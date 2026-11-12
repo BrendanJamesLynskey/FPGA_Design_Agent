@@ -1,0 +1,96 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date              : Thu Nov 12 17:59:48 2026
+| Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -delay_type min -max_paths 1 -file /tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b58a/designs/b58a_trigger/build/base/timing_worst_hold.rpt
+| Design            : kr260_top
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
+| Design State      : Routed
+| Temperature Grade : C
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -0.184ns  (arrival time - required time)
+  Source:                 u_btx/u_ctl/CLK
+                            (falling edge-triggered cell OSERDESE3 clocked by clk0_u  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Destination:            b_tx_ctl
+                            (output port clocked by b_txc  {rise@0.000ns fall@4.000ns period=8.000ns})
+  Path Group:             b_txc
+  Path Type:              Min at Slow Process Corner
+  Requirement:            0.000ns  (b_txc fall@4.000ns - clk0_u fall@4.000ns)
+  Data Path Delay:        0.967ns  (logic 0.792ns (81.898%)  route 0.175ns (18.102%))
+  Logic Levels:           1  (OBUF=1)
+  Output Delay:           0.500ns
+  Clock Path Skew:        1.650ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    4.353ns = ( 8.353 - 4.000 ) 
+    Source Clock Delay      (SCD):    3.040ns = ( 7.040 - 4.000 ) 
+    Clock Pessimism Removal (CPR):    -0.338ns
+  Clock Net Delay (Source):      1.232ns (routing 0.220ns, distribution 1.012ns)
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk0_u fall edge)     4.000     4.000 f  <hidden>
+    C3                                                0.000     4.000 f  clk_25
+                         net (fo=0)                   0.000     4.000    clk_25_IBUF_inst/I
+    C3                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.287     4.287 f  clk_25_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     4.287    clk_25_IBUF_inst/OUT
+    C3                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     4.287 f  clk_25_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.436     4.723    clk_25_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT0)
+                                                      0.739     5.462 f  u_mmcm/CLKOUT0
+                         net (fo=1, routed)           0.307     5.769    clk0_u
+    BUFGCE_X0Y76         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.039     5.808 f  u_bg0/O
+    X1Y3 (CLOCK_ROOT)    net (fo=10053, routed)       1.232     7.040    u_btx/clk
+    BITSLICE_RX_TX_X0Y105
+                         OSERDESE3                                    f  u_btx/u_ctl/CLK
+  -------------------------------------------------------------------    -------------------
+    BITSLICE_RX_TX_X0Y105
+                         OSERDESE3 (Prop_OSERDES_BITSLICE_COMPONENT_RX_TX_CLK_OQ)
+                                                      0.302     7.342 r  u_btx/u_ctl/OQ
+                         net (fo=1, routed)           0.175     7.517    b_tx_ctl_OBUF
+    Y8                   OBUF (Prop_OUTBUF_HPIOB_S_I_O)
+                                                      0.490     8.007 r  b_tx_ctl_OBUF_inst/O
+                         net (fo=0)                   0.000     8.007    b_tx_ctl
+    Y8                                                                r  b_tx_ctl
+  -------------------------------------------------------------------    -------------------
+
+                         (clock b_txc fall edge)      4.000     4.000 r  <hidden>
+    C3                                                0.000     4.000 r  clk_25
+                         net (fo=0)                   0.000     4.000    clk_25_IBUF_inst/I
+    C3                   INBUF (Prop_INBUF_HPIOB_M_PAD_O)
+                                                      0.538     4.538 r  clk_25_IBUF_inst/INBUF_INST/O
+                         net (fo=1, routed)           0.000     4.538    clk_25_IBUF_inst/OUT
+    C3                   IBUFCTRL (Prop_IBUFCTRL_HPIOB_M_I_O)
+                                                      0.000     4.538 r  clk_25_IBUF_inst/IBUFCTRL_INST/O
+                         net (fo=1, routed)           0.551     5.089    clk_25_IBUF
+    MMCM_X0Y3            MMCME4_ADV (Prop_MMCM_CLKIN1_CLKOUT0)
+                                                     -0.103     4.986 r  u_mmcm/CLKOUT0
+                         net (fo=1, routed)           0.348     5.334    clk0_u
+    BUFGCE_X0Y76         BUFGCE (Prop_BUFCE_BUFGCE_I_O)
+                                                      0.044     5.378 r  u_bg0/O
+                         net (fo=10053, routed)       1.477     6.855    u_btx/clk
+    BITSLICE_RX_TX_X0Y119
+                         OSERDESE3 (Prop_OSERDES_BITSLICE_COMPONENT_RX_TX_CLK_OQ)
+                                                      0.522     7.377 f  u_btx/u_txc/OQ
+                         net (fo=1, routed)           0.285     7.662    b_txc_OBUF
+    J1                   OBUF (Prop_OUTBUF_HPIOB_M_I_O)
+                                                      0.691     8.353 f  b_txc_OBUF_inst/O
+                         net (fo=0)                   0.000     8.353    b_txc
+    J1                                                                f  b_txc
+                         clock pessimism              0.338     8.691    <hidden>
+                         output delay                -0.500     8.191    <hidden>
+  -------------------------------------------------------------------
+                         required time                         -8.191    <hidden>
+                         arrival time                           8.007    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -0.184    <hidden>
+
+
+
+
