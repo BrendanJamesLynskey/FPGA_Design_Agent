@@ -1,6 +1,6 @@
 {
  "note": "Names and one-line descriptions only, from the SKILL.md front matter at the pin; Ross-as-shipped is not listed.",
- "pin": "811b840",
+ "pin": "315c10e",
  "skills": [
   {
    "description": "A KR260 PL design needs a clock: the programmable Si5332 clock outputs on the HPA and HPB banks (25 MHz), the PS pl_clk, and the SFP+ reference; pins and standards.",
@@ -1191,6 +1191,36 @@
    "unit": "vendor/amd_ip_cores"
   },
   {
+   "description": "A request mentions DO-254, ED-80, IEC 61508, ISO 26262, a design assurance level (DAL A-E), a SIL or an ASIL, or safety-critical FPGA work: what each standard covers ...",
+   "name": "assurance-levels-and-standards",
+   "section": "assurance-traceability",
+   "unit": "vendor/assurance"
+  },
+  {
+   "description": "Setting up who verifies what (independence between author and verifier), recording what a build and its evidence were made from (configuration identification, baselines, hashes) ...",
+   "name": "independence-and-change-control",
+   "section": "assurance-traceability",
+   "unit": "vendor/assurance"
+  },
+  {
+   "description": "Writing or reviewing the requirements of an FPGA design (spec.yaml) and choosing how each is verified: atomic, verifiable, uniquely identified requirements ...",
+   "name": "requirement-quality-and-methods",
+   "section": "assurance-traceability",
+   "unit": "vendor/assurance"
+  },
+  {
+   "description": "Deciding what to do with coverage holes in HDL (unhit lines, branches, toggles, functional bins, cover properties): closing them with requirements-based tests or justifying them (dead ...",
+   "name": "structural-coverage-justification",
+   "section": "assurance-traceability",
+   "unit": "vendor/assurance"
+  },
+  {
+   "description": "Deciding how far a tool's output can be trusted in an evidence chain (Vivado, Icarus, Verilator, SymbiYosys, cocotb, the flow's own gates): design tools against verification tools ...",
+   "name": "tool-assessment-and-qualification",
+   "section": "assurance-traceability",
+   "unit": "vendor/assurance"
+  },
+  {
    "description": "A cocotb bench samples functional coverage with cocotb_coverage (CoverPoint, CoverCross, coverage_db), or a run dies at import with 'CoverPoint must have a parent'.",
    "name": "cocotb-coverage-usage",
    "section": "simulation",
@@ -1345,6 +1375,54 @@
    "name": "ultrafast-rtl-checklist",
    "section": "timing-methodology",
    "unit": "vendor/ross_distilled"
+  },
+  {
+   "description": "VHDL and SystemVerilog/Verilog meet: instantiating the SystemVerilog test shell or any Verilog module from VHDL (component, not entity), generic and port types across the boundary ...",
+   "name": "vhdl-mixed-language-boundary",
+   "section": "vhdl",
+   "unit": "vendor/vhdl_design"
+  },
+  {
+   "description": "Writing VHDL processes: clocked and combinational templates, sensitivity lists and process(all), latch traps, reset styles that follow the bank's reset rules, initial values ...",
+   "name": "vhdl-processes-resets-and-fsms",
+   "section": "vhdl",
+   "unit": "vendor/vhdl_design"
+  },
+  {
+   "description": "Structuring VHDL with records, arrays and packages, parameterising it with generics (including VHDL-2008 generic types and generic packages) ...",
+   "name": "vhdl-records-arrays-generics-generate",
+   "section": "vhdl",
+   "unit": "vendor/vhdl_design"
+  },
+  {
+   "description": "Choosing which VHDL-2008 constructs to use in a design for Vivado, or reading Vivado's messages on VHDL: which 2008 features Vivado 2026.1 synthesis accepts (each probed) ...",
+   "name": "vhdl-synthesisable-subset-vivado",
+   "section": "vhdl",
+   "unit": "vendor/vhdl_design"
+  },
+  {
+   "description": "Writing or reviewing VHDL types and arithmetic: std_logic against std_ulogic and what resolution hides, multiple drivers in simulation and in synthesis, numeric_std (never std_logic_arith) ...",
+   "name": "vhdl-types-drivers-and-numeric-std",
+   "section": "vhdl",
+   "unit": "vendor/vhdl_design"
+  },
+  {
+   "description": "Verifying a VHDL design with the flow's own tools: cocotb benches on GHDL or on the GHDL netlist, PSL assertions and covers in VHDL (simulated by GHDL with a report) ...",
+   "name": "vhdl-cocotb-psl-and-formal",
+   "section": "simulation",
+   "unit": "vendor/vhdl_verification"
+  },
+  {
+   "description": "Simulating or linting VHDL in the flow: GHDL as the free VHDL simulator and linter (versions, flags, what analysis, elaboration and --synth each catch) ...",
+   "name": "vhdl-ghdl-and-xsim",
+   "section": "simulation",
+   "unit": "vendor/vhdl_verification"
+  },
+  {
+   "description": "A VHDL testbench is wanted (a customer or team that keeps its benches in VHDL): VUnit's structure and Python runner, OSVVM scoreboards, functional coverage and constrained random ...",
+   "name": "vhdl-vunit-osvvm-uvvm",
+   "section": "simulation",
+   "unit": "vendor/vhdl_verification"
   },
   {
    "description": "Writing SystemVerilog that Vivado must map to a DSP48E1 (multiply, MAC, pre-adder, wide add), carry-chain arithmetic, MUXF7/F8 wide muxes ...",

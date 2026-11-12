@@ -1,0 +1,11 @@
+# FDA-HDL waivers for T1 (flow/lint_ruleset.py, docs/hdl_coding_standard.md). Each: rule, match (glob over the
+# finding key, brackets literal, or re:<regex>), reason, owner, date.
+waivers:
+  - rule: HDL-XDC-01
+    match: "vivado:XDCH-2@*"
+    reason: >-
+      The asynchronous inputs and slow outputs get a zero input or output delay so that check_timing counts them as
+      constrained, and a false path so that timing ignores them (design.xdc, the async_in and slow_out groups). Equal
+      min and max delays (XDCH-2, Warning) are the expected consequence of that pattern (docs/debug_playbook.md).
+    owner: flow maintainer (owner review pending)
+    date: 2026-11-11

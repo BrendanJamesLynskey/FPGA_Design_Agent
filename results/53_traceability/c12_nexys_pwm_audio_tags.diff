@@ -1,0 +1,119 @@
+diff -ru '--exclude=build' '--exclude=__pycache__' '--exclude=sim_build' a/tests/c12_bench2.py c12_nexys_pwm_audio/tests/c12_bench2.py
+--- a/tests/c12_bench2.py	2026-11-11 23:59:25.876269250 +0000
++++ b/tests/c12_bench2.py	2026-11-11 23:59:26.095098061 +0000
+@@ -12,6 +12,7 @@
+ from c12_bench import setup
+ 
+ 
++# req: REQ-03, REQ-04 (from testplan)
+ @cocotb.test()
+ async def test_random_pwm_sweep(dut):
+     """Constrained-random samples and gains; low count per period checked against the model formula."""
+diff -ru '--exclude=build' '--exclude=__pycache__' '--exclude=sim_build' a/tests/c12_bench.py c12_nexys_pwm_audio/tests/c12_bench.py
+--- a/tests/c12_bench.py	2026-11-11 23:59:25.876226211 +0000
++++ b/tests/c12_bench.py	2026-11-11 23:59:32.159076693 +0000
+@@ -375,6 +375,7 @@
+ 
+ 
+ # -------------------------------------------------------------------- tests
++# req: REQ-01, REQ-10 (from testplan)
+ @cocotb.test()
+ async def test_smoke_reset_defaults(dut):
+     """REQ-01/REQ-10: reset values, default gain, design ID, constant outputs."""
+@@ -391,6 +392,7 @@
+     await e.settle_check()
+ 
+ 
++# req: REQ-02 (from testplan)
+ @cocotb.test()
+ async def test_gain_clamp(dut):
+     """REQ-02: gain writes clamp at 8192 and are stored exactly up to it."""
+@@ -411,6 +413,7 @@
+     await e.settle_check()
+ 
+ 
++# req: REQ-03 (from testplan)
+ @cocotb.test()
+ async def test_sample_sout(dut):
+     """REQ-03: SOUT = floor(sample*gain/2^15), rounding of negatives, SAMPLE readback."""
+@@ -429,6 +432,7 @@
+     await e.read_sout_check()
+ 
+ 
++# req: REQ-03 (from testplan)
+ @cocotb.test()
+ async def test_unmapped_and_ro(dut):
+     """registers.unmapped: unmapped offsets read 0, writes to RO/unmapped are ignored."""
+@@ -442,6 +446,7 @@
+     assert await e.win_rd(0) == 0x2222
+ 
+ 
++# req: REQ-04, REQ-09 (from testplan)
+ @cocotb.test()
+ async def test_pwm_low_counts(dut):
+     """REQ-04: low count per period for sample 0, +32767, -32768 and others."""
+@@ -456,6 +461,7 @@
+             await e.settle_check()
+ 
+ 
++# req: REQ-05 (from testplan)
+ @cocotb.test()
+ async def test_period_latching(dut):
+     """REQ-05: 1024-clock period; duty only changes at a period boundary."""
+@@ -476,6 +482,7 @@
+     assert d[-2:] == [1024, 1024], d
+ 
+ 
++# req: REQ-06, REQ-07, REQ-08, REQ-01 (from testplan)
+ @cocotb.test()
+ async def test_pin_safety_and_reset(dut):
+     """REQ-06/07/08/10: pin never high, AUD_SD/LED constant, reset after writes restores defaults."""
+@@ -496,6 +503,7 @@
+     assert ival(dut.AUD_SD) == 1 and ival(dut.LED) == 0
+ 
+ 
++# req: REQ-10 (from testplan)
+ @cocotb.test()
+ async def test_shell_protocol(dut):
+     """REQ-10: shell registers, error statuses, status counters, framing, timeout."""
+@@ -528,6 +536,7 @@
+     await e.settle_check()
+ 
+ 
++# req: REQ-03 (from testplan)
+ @cocotb.test()
+ async def test_random_traffic(dut):
+     """Constrained-random register traffic against the model."""
+@@ -555,6 +564,7 @@
+     await e.settle_check()
+ 
+ 
++# structural: exports the functional-coverage database for the gates; checks nothing (brief 53 migration, by hand)
+ @cocotb.test()
+ async def test_zz_coverage_export(dut):
+     """Last test: export functional coverage."""
+diff -ru '--exclude=build' '--exclude=__pycache__' '--exclude=sim_build' a/verif/checkers/c12_checker.sv c12_nexys_pwm_audio/verif/checkers/c12_checker.sv
+--- a/verif/checkers/c12_checker.sv	2026-11-11 23:59:25.876411488 +0000
++++ b/verif/checkers/c12_checker.sv	2026-11-11 23:59:26.095260038 +0000
+@@ -16,13 +16,21 @@
+     past_ok <= 1'b1;
+   end
+ 
++  // req: REQ-07 (from testplan)
+   `V_SAME(A_aud_sd_high, 1'b1, AUD_SD == 1'b1)
++  // req: REQ-10 (from testplan)
+   `V_SAME(A_led_off, 1'b1, LED == 16'h0000)
++  // req: REQ-07 (from testplan)
+   `V_RST(A_rst_aud_sd, AUD_SD == 1'b1)
+ 
++  // req: REQ-07 (from testplan)
+   `V_COVER(C_aud_sd_high, AUD_SD)
++  // req: REQ-10 (from testplan)
+   `V_COVER(C_led_off, LED == 16'h0000)
++  // req: REQ-07 (from testplan)
+   `V_COVER(C_reset_released, CPU_RESETN)
++  // req: REQ-10 (from testplan)
+   `V_COVER(C_rx_active, !UART_TXD_IN)
++  // req: REQ-10 (from testplan)
+   `V_COVER(C_tx_active, !UART_RXD_OUT)
+ endmodule

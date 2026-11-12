@@ -1,0 +1,309 @@
+{
+ "standard": "FDA-HDL",
+ "version": "1.0",
+ "design": "t1_dimmer_counter",
+ "ran": {
+  "verilator": true,
+  "vivado": true,
+  "standards": true
+ },
+ "notes": {},
+ "rules": [
+  {
+   "id": "HDL-SYN-01",
+   "title": "No latches",
+   "status": "pass",
+   "tools": [
+    "verilator",
+    "standards"
+   ],
+   "ran": [
+    "verilator",
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-SYN-02",
+   "title": "No combinational loops",
+   "status": "pass",
+   "tools": [
+    "verilator",
+    "vivado",
+    "standards"
+   ],
+   "ran": [
+    "verilator",
+    "vivado",
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-SYN-03",
+   "title": "Complete, non-overlapping case statements",
+   "status": "pass",
+   "tools": [
+    "verilator"
+   ],
+   "ran": [
+    "verilator"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-SYN-04",
+   "title": "Blocking assignments in combinational logic, non-blocking in clocked logic",
+   "status": "pass",
+   "tools": [
+    "verilator"
+   ],
+   "ran": [
+    "verilator"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-SYN-05",
+   "title": "One driver per signal",
+   "status": "pass",
+   "tools": [
+    "verilator",
+    "vivado"
+   ],
+   "ran": [
+    "verilator",
+    "vivado"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-SYN-06",
+   "title": "No initial blocks except ROM initialisation",
+   "status": "pass",
+   "tools": [
+    "standards"
+   ],
+   "ran": [
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-WID-01",
+   "title": "Widths match",
+   "status": "pass",
+   "tools": [
+    "verilator"
+   ],
+   "ran": [
+    "verilator"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-SIG-01",
+   "title": "Every signal is driven and used, every port connected",
+   "status": "pass",
+   "tools": [
+    "verilator"
+   ],
+   "ran": [
+    "verilator"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-CLK-01",
+   "title": "Synchronous design on declared clocks; no derived or gated clocks",
+   "status": "pass",
+   "tools": [
+    "verilator",
+    "vivado",
+    "standards"
+   ],
+   "ran": [
+    "verilator",
+    "vivado",
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-RST-01",
+   "title": "Reset as the spec and the reset-strategy skill say; asynchronous inputs synchronised",
+   "status": "pass",
+   "tools": [
+    "verilator",
+    "vivado",
+    "standards"
+   ],
+   "ran": [
+    "verilator",
+    "vivado",
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-CDC-01",
+   "title": "Every clock-domain crossing through a named, declared primitive",
+   "status": "pass",
+   "tools": [
+    "vivado",
+    "standards"
+   ],
+   "ran": [
+    "vivado",
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-XDC-01",
+   "title": "Complete timing and I/O constraints",
+   "status": "waived",
+   "tools": [
+    "vivado"
+   ],
+   "ran": [
+    "vivado"
+   ],
+   "findings": [],
+   "waived": [
+    {
+     "key": "vivado:XDCH-2@rtl",
+     "reason": "The asynchronous inputs and slow outputs get a zero input or output delay so that check_timing counts them as constrained, and a false path so that timing ignores them (design.xdc, the async_in and slow_out groups). Equal min and max delays (XDCH-2, Warning) are the expected consequence of that pattern (docs/debug_playbook.md).",
+     "owner": "flow maintainer (owner review pending)",
+     "date": "2026-11-11"
+    },
+    {
+     "key": "vivado:XDCH-2@post_synth",
+     "reason": "The asynchronous inputs and slow outputs get a zero input or output delay so that check_timing counts them as constrained, and a false path so that timing ignores them (design.xdc, the async_in and slow_out groups). Equal min and max delays (XDCH-2, Warning) are the expected consequence of that pattern (docs/debug_playbook.md).",
+     "owner": "flow maintainer (owner review pending)",
+     "date": "2026-11-11"
+    },
+    {
+     "key": "vivado:XDCH-2@route",
+     "reason": "The asynchronous inputs and slow outputs get a zero input or output delay so that check_timing counts them as constrained, and a false path so that timing ignores them (design.xdc, the async_in and slow_out groups). Equal min and max delays (XDCH-2, Warning) are the expected consequence of that pattern (docs/debug_playbook.md).",
+     "owner": "flow maintainer (owner review pending)",
+     "date": "2026-11-11"
+    }
+   ]
+  },
+  {
+   "id": "HDL-METH-01",
+   "title": "Methodology findings on the synthesised and routed design fixed or waived",
+   "status": "pass",
+   "tools": [
+    "vivado",
+    "standards"
+   ],
+   "ran": [
+    "vivado",
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-DRC-01",
+   "title": "No design-rule violation",
+   "status": "pass",
+   "tools": [
+    "vivado"
+   ],
+   "ran": [
+    "vivado"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-IF-01",
+   "title": "Standard interfaces with AMBA names",
+   "status": "pass",
+   "tools": [
+    "standards"
+   ],
+   "ran": [
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-WAIVE-01",
+   "title": "Every waiver has a reason, an owner and a date",
+   "status": "pass",
+   "tools": [
+    "standards"
+   ],
+   "ran": [
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-LINT-00",
+   "title": "Verilator -Wall clean (any warning no other rule maps)",
+   "status": "pass",
+   "tools": [
+    "verilator"
+   ],
+   "ran": [
+    "verilator"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-VIV-00",
+   "title": "Vivado methodology, DRC and CDC clean (any finding no other rule maps)",
+   "status": "pass",
+   "tools": [
+    "vivado"
+   ],
+   "ran": [
+    "vivado"
+   ],
+   "findings": [],
+   "waived": []
+  },
+  {
+   "id": "HDL-STD-00",
+   "title": "Design-standards checker clean (any rule no other maps)",
+   "status": "pass",
+   "tools": [
+    "standards"
+   ],
+   "ran": [
+    "standards"
+   ],
+   "findings": [],
+   "waived": []
+  }
+ ],
+ "bad_waivers": [],
+ "unused_waivers": [],
+ "counts": {
+  "pass": 18,
+  "waived": 1,
+  "fail": 0,
+  "not_run": 0
+ },
+ "complete": true,
+ "pass": true
+}

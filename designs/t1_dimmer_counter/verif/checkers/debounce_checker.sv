@@ -27,18 +27,18 @@ module debounce_checker #(
     end
 
     // A_DB_PULSE: a press is a one-clock pulse
-    `V_NEXT(A_DB_PULSE, press, !press)
+    `V_NEXT(A_DB_PULSE, press, !press)   // req: REQ-01
     // A_DB_RISE: a press is exactly a 0 -> 1 change of the debounced level
-    `V_SAME(A_DB_RISE, press, level && !$past(level))
-    `V_SAME(A_DB_RISE_ONLY, level && !$past(level), press)
+    `V_SAME(A_DB_RISE, press, level && !$past(level))   // req: REQ-02
+    `V_SAME(A_DB_RISE_ONLY, level && !$past(level), press)   // req: REQ-02
     // A_DB_FALL_NO_PRESS: a release makes no press
-    `V_SAME(A_DB_FALL_NO_PRESS, !level && $past(level), !press)
+    `V_SAME(A_DB_FALL_NO_PRESS, !level && $past(level), !press)   // req: REQ-10
     // A_DB_HOLD: the level changes only after CYCLES consecutive differing clocks (a shorter glitch is ignored)
-    `V_SAME(A_DB_HOLD, level != $past(level), $past(run) == CYCLES - 1 && $past(s2) == level)
+    `V_SAME(A_DB_HOLD, level != $past(level), $past(run) == CYCLES - 1 && $past(s2) == level)   // req: REQ-02
     // A_DB_FLIP: and it does change on the clock the count reaches CYCLES
-    `V_NEXT(A_DB_FLIP, s2 != level && run == CYCLES - 1, level == $past(s2))
+    `V_NEXT(A_DB_FLIP, s2 != level && run == CYCLES - 1, level == $past(s2))   // req: REQ-02
 
-    `V_COVER(C_DB_PRESS, press)
-    `V_COVER(C_DB_RELEASE, !level && $past(level))
-    `V_COVER(C_DB_GLITCH_IGNORED, run == 0 && $past(run) > 0 && $past(run) < CYCLES - 1)
+    `V_COVER(C_DB_PRESS, press)   // req: REQ-01
+    `V_COVER(C_DB_RELEASE, !level && $past(level))   // req: REQ-10
+    `V_COVER(C_DB_GLITCH_IGNORED, run == 0 && $past(run) > 0 && $past(run) < CYCLES - 1)   // req: REQ-02
 endmodule

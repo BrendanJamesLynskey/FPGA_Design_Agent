@@ -1,0 +1,929 @@
+{
+ "schema": "fpga-design-agent/trace/v1",
+ "design": "c11_nco_mixer",
+ "generated": "2026-11-12T05:42:34Z",
+ "note": "DO-254-style evidence: a record of what was verified and how; not a claim of compliance with any standard.",
+ "defer": [
+  "hardware"
+ ],
+ "inputs": {
+  "source": "computed",
+  "note": "no build manifest (brief 54) found; inputs, tools, knowledge-bank pin and flow commit computed here",
+  "inputs": {
+   "build/b53/c11_nco_mixer/build.yaml": "65ae3e5740b6252946a551955e4d7c5dafabf1171815e31efda0b59eb89a77a7",
+   "build/b53/c11_nco_mixer/design.xdc": "41281cd9e56af95000b098a4b7e108aafb4978fa900839a39e48e5a904952772",
+   "build/b53/c11_nco_mixer/model.py": "dd969d2b3c022f000c36f36a9d08152a35a0ff49d9475d61251ce53c6eedf0a1",
+   "build/b53/c11_nco_mixer/rtl/burst_ctrl.sv": "746b98db6b59148c526b348be82b5f5c85701d0741335a038f287b1656a8dc9d",
+   "build/b53/c11_nco_mixer/rtl/c11_nco_mixer_top.sv": "a6a09a7f8ec75d3fa23597959ed17fc597888283baca4f153254c71298135b92",
+   "build/b53/c11_nco_mixer/rtl/nco_core.sv": "4df6caee4b3cd32fa40e81c5ad11ebda8065fb6adeedcdcb2b67985d1c772a18",
+   "build/b53/c11_nco_mixer/rtl/nco_regs.sv": "5c399a9409b19eb0c42a72fba51f515ce57f581527c9f702a0a424e87fe9cf29",
+   "build/b53/c11_nco_mixer/spec.yaml": "8fcafcb1922e21f3cae251ec63de2fc57e6a498804ed0598143bcd114a98709f",
+   "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py": "b05e91b926b6d0ad1444bb0a815a2e795db049321e7f82049560c6c0e97d769a",
+   "build/b53/c11_nco_mixer/tests/test_c11_nco_mixer_hw.py": "f1b81bc6e080d5c74780032793faa8fadc3ae54e1970336e19ce29a8af3a57ff",
+   "build/b53/c11_nco_mixer/tests/test_c11_nco_mixer_rtl.py": "f72588cbb4307f53ce55ecb1941ef58d4034a7affa0093d8513e549a0cba9de1",
+   "build/b53/c11_nco_mixer/verif/checkers/c11_nco_mixer_bind.sv": "d6266658e65ae6e1b956c86715db47c435e5e58d9d5bd51ab16c6fe997adee54",
+   "build/b53/c11_nco_mixer/verif/checkers/c11_nco_mixer_checker.sv": "69b50b7727de6f1821792b401369b23267386af306d6323d9c67f049f67461e2",
+   "build/b53/c11_nco_mixer/verif/checkers/v_macros.svh": "013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083",
+   "build/b53/c11_nco_mixer/verif/testplan.yaml": "7437b624f0acc962e502a7acc79d3dc74287e2a3ed4e031d592d1c807038f5b0",
+   "shell/rtl/fpga_shell.sv": "c1a5d9551c5c173b5dc65a1cc3c01a00b184d9d187e2a22e8c80b3a616b8bbb1",
+   "shell/rtl/reset_sync.sv": "1beca829ea724f3a4eb1e7cf3688d8e0f26706c8f89810730672306ba66e0815",
+   "shell/rtl/shell_core.sv": "4956b6380ebf052984d598942bea4e70c6c379b9683cae40f78076dd60093d39",
+   "shell/rtl/sync2.sv": "9103308bbb71cd224d958c434bddd7b3bd2647d49cc8e718df0c6acba49509ba",
+   "shell/rtl/uart_rx.sv": "df36889737e1714453c29b4efb1134e3bed54be50be3f31b18d51e929711df49",
+   "shell/rtl/uart_tx.sv": "ccc19a6bd09120d11b9258452eb93a9a0f8fd5852fd4badacce549ef6e38b358"
+  },
+  "tools": {
+   "python": "3.12.3",
+   "cocotb": "2.0.1",
+   "cocotb_coverage": "2.0",
+   "pyyaml": "6.0.3",
+   "icarus": "12.0",
+   "verilator": "5.048",
+   "yosys": null,
+   "sby": null,
+   "vivado_expected": "2026.1"
+  },
+  "kb_pin": "811b840",
+  "flow": {
+   "commit": "af6dea2494b5",
+   "dirty": true
+  }
+ },
+ "evidence_sources": {
+  "runs": "build/b53/c11_nco_mixer/build/verif/sim53",
+  "also": [
+   "build/b53/c11_nco_mixer/build/verif/icarus"
+  ],
+  "coverage": "build/b53/c11_nco_mixer/build/verif/sim53",
+  "formal": "build/b53/none",
+  "gates": "build/b53/c11_nco_mixer/build/base/gates.json",
+  "hw": null,
+  "baseline": null
+ },
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "text": "Result pair appears exactly one clock after each enabled clock and on no other clock",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "design_elements": [
+    "c11_nco_mixer_top"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_single_burst_directed",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_tone_bursts",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_gap_patterns",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_single_burst_directed",
+       "via": "replan formal->simulation",
+       "result": "pass",
+       "detail": "re-planned (SymbiYosys is not installed here so result timing is checked by model comparison in simulation)"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "cover",
+     "name": "C_rx_line_busy",
+     "result": "pass",
+     "detail": "hit 2607168 time(s) over all seeds"
+    },
+    {
+     "kind": "cover",
+     "name": "C_tx_line_busy",
+     "result": "pass",
+     "detail": "hit 2193136 time(s) over all seeds"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 2,
+    "cover_properties_hit": 2
+   },
+   "req_hash": "813b8669989c9616959c496425211ad72c93d86791861b41cad48d060cd3529b",
+   "evidence_hash": "f14fba90b4cd7231ace40a76b9837e455f072a7c565ada893fde3c509a5754c0",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-02",
+   "text": "Phase is 0 after reset, advances by fw on each enabled clock with wrap, and holds on other clocks",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_phase_continuity_and_hold",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_full_scale",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_phase_continuity_and_hold",
+       "via": "replan formal->simulation",
+       "result": "pass",
+       "detail": "re-planned (SymbiYosys is not installed here so phase advance and hold are checked by model comparison in simulation)"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "156d4f701f375000bb48bf823e97b9eda82d57f628e798470be30806ddec9218",
+   "evidence_hash": "934cc3b8b0d715ba1aac171b2b4c450adaede862d6df2617b21da7c37df3f8f4",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-03",
+   "text": "Table of 256 entries S[k]=floor(16383*sin(2*pi*k/256)+0.5), cosine S[(k+64) mod 256], index is top 8 bits of phase before the advance",
+   "proof": [
+    "simulation"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_table_sweep",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "f6956ee197ad9f3df91d1eed43019dfccffcc37790da59890779b8979ce80105",
+   "evidence_hash": "be738c771cba3076664cbedfaf097aaa5074040e3894dbbe07cba75233528d01",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-04",
+   "text": "i_out=floor(x*c/2^14) and q_out=floor(-x*s/2^14) as signed 12-bit",
+   "proof": [
+    "simulation"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_full_scale",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_random_traffic",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "571815a1ac3404a9f2fab4eb8862d48933fd2ae72e40285f349fc37f89c06ea8",
+   "evidence_hash": "31aeb39922a00553b6d0c14c2ee54f76c6287f8c5bcc216f5a7febfb835b345e",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-05",
+   "text": "CPU_RESETN clears phase and loaded values",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_reset_clears",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "hardware",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "uart_tests",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "a4698b95c3d816bfa2d4f7867780bbaefee06fd32c8614d29ae61ed9a20aefba",
+   "evidence_hash": "2a2ee45bcc87c153a3c04a3a75583d079f5436685b6cbdf1bc6dd77a26c4740a",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-06",
+   "text": "Design closes timing at 100 MHz",
+   "proof": [
+    "analysis"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "analysis",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "post_route:setup",
+       "via": "testplan proof",
+       "result": "pass",
+       "detail": "gate post_route:setup = True"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "963e52cc6e90da39388e75906857e1e60006d6119df3132eb0e7df22ad9d07c0",
+   "evidence_hash": "949d921d5af48b86ca1fb1bf4974685f55152fc001bf550cfeae96efe42db54c",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-07",
+   "text": "Shell can set fw, load up to 16 samples, set a 32-bit pattern and go; a 1 bit presents the next sample in order",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_smoke_id_and_regs",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_single_burst_directed",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_gap_patterns",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "hardware",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "uart_tests",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "18a93008f17f11218263e85198e9d0d14c880570588c2fccc47789066649dca3",
+   "evidence_hash": "20d6ba2cf02caf6ea01d2efd2234c8eb33587f30740444234b28697e5d31d58e",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-08",
+   "text": "Phase keeps running from one burst to the next",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_phase_continuity_and_hold",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_tone_bursts",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "hardware",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "uart_tests",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "86198cb3faea65afb3a98d7616f95c3578735313aad0a1a111ab30e1ecb9e066",
+   "evidence_hash": "3a7be566295d3fc539f35f4b94cece95e68bd1a46d02bc6192d304bc16521bbf",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-09",
+   "text": "Results readable in order, with result count and 32-bit record of clocks with a result",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_single_burst_directed",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_gap_patterns",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "hardware",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "uart_tests",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "e0d9c71e5e5c12efa86c994f5d3c90cf8e56ba7b3eca8f7446c5d769f366c1ef",
+   "evidence_hash": "3fc3d6a443ef967140461c8ced098811a7fde34da4a24525d803828e741e9484",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-10",
+   "text": "1500 samples (random, tone, full scale, with gaps, several fw) match the model on every pair",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_table_sweep",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_random_traffic",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_random_dense_many_fw",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "hardware",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "uart_tests",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "c596d4d2b7b24efc202c5d4566a1773842a8f672d7dac93ade9ff0a3e12a0b1d",
+   "evidence_hash": "0439f5cbc5f31e21e71af23f7fe41bf7a42a58381843b8a5f756fdf62ffcc5ad",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-11",
+   "text": "UART at 115200 baud (CLKS_PER_BIT 868) and design ID NCOM",
+   "proof": [
+    "simulation",
+    "hardware"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "c11_nco_mixer_bench.test_smoke_id_and_regs",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "c11_nco_mixer_bench.test_shell_errors",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "hardware",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "uart_tests",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no bring-up result"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "f55c082e53730ca12d0d59442a40250d12ae9ff9d6466ee1814ee651e3785167",
+   "evidence_hash": "c0ac58c1dbc5f0b1b8d4a98804dc2c27582de0d3cca2610b11c53145e767cf52",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-12",
+   "text": "Top c11_nco_mixer_top exposes CLKS_PER_BIT, TIMEOUT_CYCLES, BUILD_STAMP parameters and master-XDC port names",
+   "proof": [
+    "analysis"
+   ],
+   "design_elements": [],
+   "methods": [
+    {
+     "method": "analysis",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "post_synth:post_synth_resources_in_range",
+       "via": "testplan proof",
+       "result": "pass",
+       "detail": "gate post_synth:post_synth_resources_in_range = True"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "42ad8cc99e70c126d14d76236c47a5a3cb6cfefb151b07e0120cee13a6e2f90c",
+   "evidence_hash": "78b4090909a156311073f71de61af4c5607f3c7aebb13e7d22e0a61b2f37c074",
+   "status": "pass"
+  }
+ ],
+ "artefacts": [
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_smoke_id_and_regs",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 219,
+   "cites": [
+    "REQ-11",
+    "REQ-06",
+    "REQ-07",
+    "REQ-12"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "6ceda0bfd2bd45a7ebc1e28f2486b500dff5671e7b7ba508eaaaa7c8002ec9d1",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_shell_errors",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 259,
+   "cites": [
+    "REQ-11"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "1fdbddf7effe7be6d4162742032821fcd220c4cecc53be6346666b8b0db290ac",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_single_burst_directed",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 279,
+   "cites": [
+    "REQ-01",
+    "REQ-07",
+    "REQ-09"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "8e86285ecf3d7b297fb98ee08092c193b9385498c82561970e7aea7bc86b4fcf",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_phase_continuity_and_hold",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 297,
+   "cites": [
+    "REQ-02",
+    "REQ-08"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "7ee4ab9ec19efceba4140a96cd948014d86d29be9929534ed8328c17ba93925b",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_reset_clears",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 315,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "491679b3b686316061dfec22f0b4f090380c2f460ea881c7707b2dd389ff0b01",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_tone_bursts",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 334,
+   "cites": [
+    "REQ-01",
+    "REQ-08"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "e99c6e9aa8e63e3501594fc26f46b00efd07bf195af0156f21f899adf019cf10",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_full_scale",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 344,
+   "cites": [
+    "REQ-04",
+    "REQ-02"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "57c991b77f781e5408110867f76f5c71796c3847777f1bef285cf2d71bd9b986",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_table_sweep",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 355,
+   "cites": [
+    "REQ-03",
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "6db6205b93270c2d4ef4bfba14fc58beed52f257ac9db6c7117039461b722733",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_gap_patterns",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 368,
+   "cites": [
+    "REQ-07",
+    "REQ-09",
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "d4e3e8bb7b79dd656ae8677b6535a617ea095a8abf7135f0842ebca6be0d5e8d",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_random_traffic",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 388,
+   "cites": [
+    "REQ-10",
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "121a9a232db6d7d9eeb706444dda443e2ec04de15e197e6848375076769be936",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_random_dense_many_fw",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 398,
+   "cites": [
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "d516ad01eb5da87db54599c754363ac1234c1abbdf0bf7b11ba3b55b6986d7ab",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "test",
+   "name": "c11_nco_mixer_bench.test_zz_export_coverage",
+   "file": "build/b53/c11_nco_mixer/tests/c11_nco_mixer_bench.py",
+   "line": 410,
+   "cites": [],
+   "class": "structural",
+   "reason": "exports the functional-coverage database for the gates; checks nothing (brief 53 migration, by hand)",
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "6830d119cc2f95c819b5bebd3402b54fd863a9cb38c6021ae6780b77de33afa0",
+   "cross_check": {
+    "icarus": "pass"
+   }
+  },
+  {
+   "kind": "cover",
+   "name": "C_rx_line_busy",
+   "file": "build/b53/c11_nco_mixer/verif/checkers/c11_nco_mixer_checker.sv",
+   "line": 18,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "hit 2607168 time(s) over all seeds",
+   "source_sha256": "17fbb7906e196451b33ef4dbfd00b98782cab1b6e4c32301f678073bbc4d1fe0"
+  },
+  {
+   "kind": "cover",
+   "name": "C_tx_line_busy",
+   "file": "build/b53/c11_nco_mixer/verif/checkers/c11_nco_mixer_checker.sv",
+   "line": 20,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "hit 2193136 time(s) over all seeds",
+   "source_sha256": "21f37f3a4dd1e97da4fb9d4d7c08610e9d3465c9c40b6eb390e60d696aacccf3"
+  }
+ ],
+ "artefact_summary": {
+  "total": 14,
+  "citing": 13,
+  "robustness": 0,
+  "structural": 1,
+  "untagged": 0
+ },
+ "coverage": {
+  "measured": true,
+  "summary": {
+   "line": {
+    "points": 17,
+    "hit": 17,
+    "pct": 100.0
+   },
+   "branch": {
+    "points": 36,
+    "hit": 36,
+    "pct": 100.0
+   },
+   "toggle": {
+    "points": 2792,
+    "hit": 2792,
+    "pct": 100.0
+   },
+   "bins": {
+    "points": 13,
+    "hit": 13,
+    "pct": 100.0
+   },
+   "cover": {
+    "points": 2,
+    "hit": 2,
+    "pct": 100.0
+   }
+  },
+  "holes": []
+ },
+ "waivers": [],
+ "change": {
+  "baseline": null,
+  "added": [],
+  "removed": [],
+  "text_changed": [],
+  "evidence_changed": [],
+  "stale": []
+ },
+ "gates": {
+  "requirements_verified": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "artefacts_cite_requirements": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "coverage_holes_justified": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "waivers_complete": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "changed_requirements_reverified": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  }
+ },
+ "pass": true
+}

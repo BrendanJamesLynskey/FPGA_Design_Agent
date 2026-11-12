@@ -114,7 +114,7 @@ def test_signoff_table_pass_fail_and_pending():
 def test_signoff_stage_fails_until_all_evidence_passes(tmp_path):
     rep = G.evaluate(T1, tmp_path / "none", [], tmp_path / "nof", None, None)
     so = rep["stages"]["SIGNOFF"]
-    assert so["pass"] is False and len(rep["traceability"]) == 16
+    assert so["pass"] is False and len(rep["traceability"]) == 18          # brief 53: REQ-01, -02 and -08 split (REQ-09 to -11)
     assert "REQ-08:hardware=pending" in so["checks"]["every_method_has_passing_evidence"]["value"]
 
 

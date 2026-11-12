@@ -1,0 +1,28 @@
+diff --git a/designs/t1_dimmer_counter/rtl/dimmer_counter.sv b/designs/t1_dimmer_counter/rtl/dimmer_counter.sv
+index 972f5a6..ae273d9 100644
+--- a/designs/t1_dimmer_counter/rtl/dimmer_counter.sv
++++ b/designs/t1_dimmer_counter/rtl/dimmer_counter.sv
+@@ -46,6 +46,14 @@ module dimmer_counter #(
+     wire [7:0] duty_eff = ctrl[0] ? sw[7:0] : duty;
+ 
+     // counter, registers, press counts
++    // brief 53 known-bad 3: an added branch no test reaches (a write of 0xDEADBEEF to offset 0x7F sets a sticky
++    // bit that reads back in CTRL bit 2); it is neither tested nor justified, so the coverage gate must name it
++    logic sticky;
++    always_ff @(posedge clk) begin
++        if (rst) sticky <= 1'b0;
++        else if (win_wr && win_addr == 7'h7F && win_wdata == 32'hDEAD_BEEF) sticky <= 1'b1;
++    end
++
+     always_ff @(posedge clk) begin
+         if (rst) begin
+             count   <= '0;
+@@ -77,7 +85,7 @@ module dimmer_counter #(
+             case (win_addr)
+                 R_COUNT:   win_rdata <= {16'h0, count};
+                 R_DUTY:    win_rdata <= {24'h0, duty};
+-                R_CTRL:    win_rdata <= {30'h0, ctrl};
++                R_CTRL:    win_rdata <= {29'h0, sticky, ctrl};
+                 R_INPUTS:  win_rdata <= {13'h0, lv_clear, lv_down, lv_up, sw};
+                 R_PRESSES: win_rdata <= {8'h0, n_clear, n_down, n_up};
+                 default:   win_rdata <= '0;
