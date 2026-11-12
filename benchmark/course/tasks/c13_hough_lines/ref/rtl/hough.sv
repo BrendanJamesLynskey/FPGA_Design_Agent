@@ -95,13 +95,15 @@ module hough #(
     integer rho;
     logic start_q;
     logic signed [15:0] rho_r;  logic [3:0] k_r;  logic p_en;   // stage P: the distance, registered
+    logic signed [8:0]  c_q, s_q;  logic [3:0] k_q;  logic q_en;  // stage Q: the table entries for this angle, registered
+    logic signed [17:0] px_r, py_r;  logic [3:0] k_m;  logic m_en; // stage M: the two products, registered
     logic        s0_en, s0_vote, s1_en, s1_vote, vld_a, vld_b;   // stage 0: index registered; stage 1: the vote's RAM read is on q_a
     logic [10:0] s0_idx, s1_idx;
     logic [15:0] q_a, q_b;
-    assign busy = (k != 0) || start_q || p_en || s0_en || s1_en;
+    assign busy = (k != 0) || start_q || q_en || m_en || p_en || s0_en || s1_en;
 
     // stage 0 (the angle clock): the cell index of this angle's vote
-    always_comb rho = (($signed({1'b0, x}) * ctab(k[3:0]) + $signed({1'b0, y}) * stab(k[3:0]) + 64) >>> 7) + ROFF;
+    always_comb rho = (((px_r + py_r + 64) >>> 7) + ROFF);
     wire         vote0 = p_en && rho_r >= 0 && rho_r < NR;
     wire  [10:0] idx0  = 11'(k_r * NR + rho_r);
     wire  [10:0] ridx  = 11'(rd_theta * NR + rd_rho);
@@ -114,9 +116,17 @@ module hough #(
     always_ff @(posedge clk) begin
         vld_b <= vld[ridx];
         vld_a <= vld[s0_idx];
-        p_en <= start_q || k != 0;
+        q_en <= start_q || k != 0;
+        c_q <= ctab(k[3:0]);
+        s_q <= stab(k[3:0]);
+        k_q <= k[3:0];
+        m_en <= q_en;
+        px_r <= $signed({1'b0, x}) * c_q;
+        py_r <= $signed({1'b0, y}) * s_q;
+        k_m <= k_q;
+        p_en <= m_en;
         rho_r <= 16'(rho);
-        k_r <= k[3:0];
+        k_r <= k_m;
         s0_en <= p_en;
         s0_vote <= vote0;
         s0_idx <= idx0;
@@ -124,7 +134,7 @@ module hough #(
         s1_vote <= s0_vote;
         s1_idx <= s0_idx;
         if (!rst_n) begin
-            k <= 5'd0; start_q <= 1'b0; p_en <= 1'b0; s0_en <= 1'b0; s0_vote <= 1'b0; s1_en <= 1'b0; s1_vote <= 1'b0;
+            k <= 5'd0; start_q <= 1'b0; q_en <= 1'b0; m_en <= 1'b0; p_en <= 1'b0; s0_en <= 1'b0; s0_vote <= 1'b0; s1_en <= 1'b0; s1_vote <= 1'b0;
         end else begin
             start_q <= 1'b0;
             if (clear && !busy) begin
