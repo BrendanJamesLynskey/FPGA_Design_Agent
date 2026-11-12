@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Release bundles: everything that identifies and justifies one bitstream, in one checked folder (brief 54).
+"""Release bundles: everything that identifies and justifies one bitstream, in one checked folder.
 
-    python3 flow/release.py make designs/<name> [--variant base|ila] [--out <dir>] [--trace <trace.json>] [--allow-dirty]
+A *bundle* is one folder holding a bitstream and the evidence for it, with a checksum file over everything in it.
+
+    python3 flow/release.py make designs/<name> [--variant base|ila] [--out <dir>] [--force] [--trace <trace.json>] [--allow-dirty]
     python3 flow/release.py check <bundle dir> [--allow-dirty] [--json <file>]
 
 ``make`` collects, from ``designs/<name>/build/<variant>/`` (a build by flow/run_vivado.sh):
@@ -10,19 +12,30 @@
 - ``manifest.json`` (flow/manifest.py), ``gates.json`` and ``run.json``;
 - the key reports under ``reports/``: timing summary, check_timing, utilisation, power, DRC, methodology, CDC and the
   routed QoR assessment (or the note that the licence tier did not allow it);
-- the traceability matrix (brief 53's ``trace.json`` and ``trace.md``) when one is given or found beside the build;
-- the review pages (``build/review/*.html``, brief 05) when the design has them;
+- the traceability matrix (``trace.json`` and ``trace.md``) when one is given or found beside the build;
+- the review pages (``build/review/*.html``) when the design has them;
 - ``RELEASE.md`` (what it is, its build ID, the gates, timing, utilisation and power, and how to check it) and
   ``SHA256SUMS`` (``sha256sum -c`` format, every other file).
 
 It refuses a build whose gates failed, whose manifest is inconsistent or whose bitstream does not carry its build ID,
-and (unless ``--allow-dirty``) one built from a tree with uncommitted changes. The default output is
-``build/release/<design>_<variant>_<build ID>/``.
+one whose tree state is unknown, and (unless ``--allow-dirty``) one built from a tree with uncommitted changes. Text files
+are copied with the machine's details replaced: the repository root by ``$ROOT``, the build directory by ``$BUILD``, the
+home directory by ``$HOME`` and the host name by ``<host>``. The default output is
+``build/release/<design>_<variant>_<build ID>/``. An existing ``--out`` directory is replaced only if it is a previous
+bundle (it holds ``SHA256SUMS`` and ``RELEASE.md``) and ``--force`` is given; the checkout, any of its parents and the
+build directory are never used as ``--out``.
 
 ``check`` needs nothing but the bundle: every file in SHA256SUMS is present with that hash and no file is unlisted; the
 gates in gates.json passed; the manifest's build ID is the hash of its identity; the bitstream's USR_ACCESS word is that
-build ID and its SHA-256 is the manifest's; RELEASE.md names the same build ID; the tree was clean (unless
-``--allow-dirty``). It prints one line per check and exits 1 if any fails.
+build ID and its SHA-256 is the manifest's; the configuration CRC recomputed from the bitstream's packets matches its
+CRC words; RELEASE.md names the same build ID; the tree was clean (unless ``--allow-dirty``). It prints one line per check
+and exits 1 if any fails.
+
+**Integrity, not authenticity.** ``SHA256SUMS`` is inside the bundle, so anyone who edits a file and recomputes the sums
+gets a bundle that passes, as long as the edit does not touch the fields the build ID covers (for example the commit,
+the gate results or the dirty flag). The check shows that the bundle is complete and self-consistent and that the
+bitstream is the one the manifest identifies; it does not show who made it. A signature over ``SHA256SUMS``, kept
+outside the bundle, would add that.
 """
 
 from __future__ import annotations
@@ -31,6 +44,7 @@ import argparse
 import hashlib
 import json
 import shutil
+import socket
 import sys
 from pathlib import Path
 from typing import Any
@@ -76,6 +90,43 @@ def _summary(gates: dict) -> dict[str, Any]:
             "power_w": pw.get("total_w"), "tj_c": env.get("junction_c")}
 
 
+def _scrub(text: str, root: Path, bdir: Path) -> str:
+    """The machine's details out of a text file: build directory, repository root, home directory, host name."""
+    for real, alias in ((str(bdir.resolve()), "$BUILD"), (str(bdir), "$BUILD"), (str(root.resolve()), "$ROOT"),
+                        (str(root), "$ROOT"), (str(Path.home()), "$HOME")):
+        if real and real != "/":
+            text = text.replace(real, alias)
+    host = socket.gethostname()
+    if host:
+        text = text.replace(host, "<host>")
+    return text
+
+
+def _repo_root(start: Path) -> Path:
+    for d in [start, *start.parents]:
+        if (d / "flow" / "manifest.py").is_file():
+            return d
+    return ROOT
+
+
+def _prepare_out(out: Path, root: Path, bdir: Path, force: bool) -> None:
+    o = out.resolve()
+    protected = [root.resolve(), bdir.resolve()]
+    if any(o == p or o in p.parents for p in protected) or o == Path.home().resolve() or o == Path("/"):
+        raise ReleaseError(f"--out {out} is the checkout, a parent of it, or the build directory: choose another folder")
+    if o.exists():
+        if not o.is_dir():
+            raise ReleaseError(f"--out {out} exists and is not a directory")
+        if any(o.iterdir()):
+            previous = (o / SUMS).is_file() and (o / "RELEASE.md").is_file()
+            if not previous:
+                raise ReleaseError(f"--out {out} exists, is not empty and is not a release bundle: nothing was changed")
+            if not force:
+                raise ReleaseError(f"--out {out} holds a previous bundle; pass --force to replace it")
+            shutil.rmtree(o)
+    o.mkdir(parents=True, exist_ok=True)
+
+
 def release_md(m: dict, gates: dict, files: list[str]) -> str:
     s = _summary(gates)
     tools = m.get("tools") or {}
@@ -83,9 +134,12 @@ def release_md(m: dict, gates: dict, files: list[str]) -> str:
     failed = gates.get("first_failed_stage")
     lines = [
         f"# Release: {m['design'].split('/')[-1]} ({m['variant']}), build ID `{m['build_id']}`", "",
+        "The release record of one build. `SHA256SUMS` lists every other file; the check below verifies the bundle.", "",
         f"- Design `{m['design']}`, top `{m['top']}`, part `{m['part']}`.",
-        f"- **Build ID `{m['build_id']}`**: the first 8 hex digits of the SHA-256 of the manifest's identity "
-        f"(`{m['build_id_sha256']}`). The bitstream carries it in USR_ACCESS (read over JTAG as REGISTER.USR_ACCESS).",
+        f"- **Build ID `{m['build_id']}`**: the first 8 hex digits of the SHA-256 of the manifest's identity part (the "
+        "keys in `build_id_covers`). The bitstream carries it in its USR_ACCESS register (read over JTAG as "
+        "REGISTER.USR_ACCESS). Full hash:",
+        f"  `{m['build_id_sha256']}`",
         f"- Flow commit `{fl.get('commit')}`{' (**dirty tree**)' if fl.get('dirty') else ' (clean tree)'}; "
         f"knowledge-bank pin `{m.get('kb_pin')}`.",
         f"- Vivado {tools.get('vivado')} (ran {tools.get('vivado_ran')}, SW build {tools.get('vivado_sw_build')}, "
@@ -94,26 +148,34 @@ def release_md(m: dict, gates: dict, files: list[str]) -> str:
         f"- Gates: **{'pass' if gates.get('pass') else 'FAIL'}**" + (f" (first failed stage {failed})" if failed else "") + ".",
         f"- Timing: WNS {s['wns']} ns, TNS {s['tns']} ns, WHS {s['whs']} ns, THS {s['ths']} ns.",
         f"- Utilisation: {s['luts']} LUT, {s['ffs']} FF, {s['bram']} block RAM tiles, {s['dsp']} DSP.",
-        f"- Power: {s['power_w']} W on chip, junction {s['tj_c']} C (the board's thermal environment).",
+        f"- Power: {s['power_w']} W on chip, junction {s['tj_c']} C (estimated by report_power at the board's assumed "
+        "ambient and airflow).",
+        *([f"- **Incremental build**: placed and routed against a reference checkpoint (SHA-256 "
+           f"`{m['settings']['incremental_ref_sha256']}`), not from scratch."]
+          if (m.get("settings") or {}).get("incremental_ref_sha256") else []),
         "",
         "## Files", "",
         *[f"- `{f}`" for f in files],
         f"- `{SUMS}`", "",
         "## Check", "",
+        "From a clone of FPGA_Design_Agent:", "",
         "```",
         "sha256sum -c SHA256SUMS",
         "python3 flow/release.py check <this folder>     # sums, gates, build ID in the manifest and in the bitstream",
         "```", "",
+        "The check proves the bundle is complete and self-consistent (integrity), not who made it (authenticity): the "
+        "sums are inside the bundle.", "",
     ]
     return "\n".join(lines)
 
 
 def make(design: Path, variant: str = "base", out: Path | None = None, trace: Path | None = None,
-         allow_dirty: bool = False) -> Path:
+         allow_dirty: bool = False, force: bool = False) -> Path:
     bdir = design / "build" / variant
     mf = bdir / "manifest.json"
     if not mf.is_file():
-        raise ReleaseError(f"no manifest.json in {bdir}: build it with flow/run_vivado.sh (brief 54 or later)")
+        raise ReleaseError(f"no manifest.json in {bdir}: build it with flow/run_vivado.sh (builds made before manifests "
+                           "existed cannot be bundled)")
     m = json.loads(mf.read_text())
     bit = bdir / f"{m['top']}.bit"
     if not bit.is_file():
@@ -124,19 +186,24 @@ def make(design: Path, variant: str = "base", out: Path | None = None, trace: Pa
     gates = json.loads((bdir / "gates.json").read_text())
     if not gates.get("pass"):
         raise ReleaseError(f"the gates failed (first failed stage {gates.get('first_failed_stage')}): no release")
-    if (m.get("flow") or {}).get("dirty") and not allow_dirty:
+    dirty = (m.get("flow") or {}).get("dirty")
+    if dirty is None:
+        raise ReleaseError("the manifest does not say whether the tree was clean (git was not available at build time)")
+    if dirty and not allow_dirty:
         raise ReleaseError("built from a tree with uncommitted changes; commit, rebuild, or pass --allow-dirty")
     name = f"{design.name}_{variant}_{m['build_id']}"
+    root = _repo_root(bdir.resolve())
     out = out or (ROOT / "build" / "release" / name)
-    if out.exists():
-        shutil.rmtree(out)
-    out.mkdir(parents=True)
+    _prepare_out(out, root, bdir, force)
     files: list[str] = []
 
     def put(src: Path, rel: str) -> None:
         dst = out / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(src, dst)
+        if src.suffix in (".bit", ".ltx"):
+            shutil.copyfile(src, dst)
+        else:
+            dst.write_text(_scrub(src.read_text(errors="replace"), root, bdir))
         files.append(rel)
 
     put(bit, bit.name)
@@ -194,7 +261,9 @@ def check(bundle: Path, allow_dirty: bool = False) -> dict[str, Any]:
     rec("gates_pass", gates.get("pass") is True, f"first failed stage {gates.get('first_failed_stage')}")
     bit = bundle / f"{m.get('top')}.bit"
     bid, _ = manifest.build_id_of(m)
-    rec("build_id_is_manifest_hash", m.get("build_id") == bid, f"manifest {m.get('build_id')}, recomputed {bid}")
+    _, full = manifest.build_id_of(m)
+    rec("build_id_is_manifest_hash", m.get("build_id") == bid and m.get("build_id_sha256") == full,
+        f"manifest {m.get('build_id')} / {str(m.get('build_id_sha256'))[:16]}..., recomputed {bid} / {full[:16]}...")
     try:
         ua = bitstream.usr_access(bit) if bit.is_file() else None
     except bitstream.BitError as e:
@@ -202,6 +271,13 @@ def check(bundle: Path, allow_dirty: bool = False) -> dict[str, Any]:
         rec("bitstream_readable", False, str(e))
     rec("bitstream_usr_access_is_build_id", ua is not None and ua.lower() == str(m.get("build_id")).lower(),
         f"USR_ACCESS {ua}, build ID {m.get('build_id')}")
+    if bit.is_file():
+        try:
+            info = bitstream.info(bit)
+            rec("bitstream_crc", bool(info["crc_checks"]) and info["crc_all_match"],
+                f"{len(info['crc_checks'])} CRC words, recomputed from the packets")
+        except bitstream.BitError as e:
+            rec("bitstream_crc", False, str(e))
     rec_bit = ((m.get("outputs") or {}).get("bit") or {}).get("sha256")
     rec("bitstream_hash_in_manifest", bit.is_file() and rec_bit == _sha(bit), f"manifest {rec_bit}")
     rel = bundle / "RELEASE.md"
@@ -225,6 +301,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--out", type=Path)
     s.add_argument("--trace", type=Path)
     s.add_argument("--allow-dirty", action="store_true")
+    s.add_argument("--force", action="store_true", help="replace a previous bundle at --out")
     s = sub.add_parser("check")
     s.add_argument("bundle", type=Path)
     s.add_argument("--allow-dirty", action="store_true")
@@ -233,7 +310,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "make":
         design = a.design if a.design.is_absolute() else ROOT / a.design
         try:
-            out = make(design.resolve(), a.variant, a.out, a.trace, a.allow_dirty)
+            out = make(design.resolve(), a.variant, a.out, a.trace, a.allow_dirty, a.force)
         except (ReleaseError, OSError, ValueError, KeyError) as e:
             print(f"release.py: {e}", file=sys.stderr)
             return 2

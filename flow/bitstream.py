@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read a 7-series .bit file as data, and compare two of them field by field (brief 54).
+"""Read a 7-series .bit file as data, and compare two of them field by field.
 
     python3 flow/bitstream.py info <file.bit>                 header fields, USR_ACCESS, packet summary (JSON)
     python3 flow/bitstream.py diff <a.bit> <b.bit> [--json f] every difference, named: header field, register write, frame word

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# repro.sh: brief 54's reproducibility builds, one at a time (the caller holds a heavy slot marked "Vivado impl").
+# repro.sh: the reproducibility builds, one at a time (run it where nothing else is building).
 #
 #   results/54_reproducible/repro.sh <jobs file> <raw dir>
 #

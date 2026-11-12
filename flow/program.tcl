@@ -82,11 +82,11 @@ set ms [expr {[clock milliseconds] - $t0}]
 refresh_hw_device $dev
 set done ?
 catch {set done [get_property REGISTER.CONFIG_STATUS.BIT14_DONE_PIN $dev]}
-# brief 54: the USR_ACCESS register of the configured device (the build ID that flow/build.tcl wrote; AMD XAPP1232)
+# the USR_ACCESS register of the configured device (the build ID that flow/build.tcl wrote; AMD XAPP1232)
 set ua ?
 catch {set ua [get_property REGISTER.USR_ACCESS $dev]}
 puts "FDA-PROGRAMMED device=$dev part=[get_property PART $dev] done_pin=$done program_ms=$ms ilas=[llength [get_hw_ilas -quiet -of_objects $dev]] usr_access=$ua"
-# brief 54 (house rule, 2026-11-11): the operating conditions at programming time, from the XADC through JTAG, read-only:
+# the operating conditions at programming time, from the XADC through JTAG, read-only:
 # now, and the min/max registers the XADC latches in hardware since this configuration (UG480: 12-bit codes in bits 15:4;
 # temperature = code * 503.975 / 4096 - 273.15; supply = code / 4096 * 3 V; max 0x20-0x23, min 0x24-0x27, flags 0x3F)
 if {![catch {get_hw_sysmons -of_objects $dev} sm] && $sm ne ""} {

@@ -40,7 +40,7 @@ set flow_dir [file dirname [file normalize [info script]]]
 file mkdir $out
 set t0 [clock milliseconds]
 set stage_log [open $out/stages.txt w]
-# brief 54: the Vivado that runs and its licence tier, for flow/manifest.py post (get_vivado_tier is a 2026.1 command)
+# the Vivado that runs and its licence tier, for flow/manifest.py post (get_vivado_tier is a 2026.1 command)
 set tool_txt [open $out/tool.txt w]
 puts $tool_txt "version [version -short]"
 if {![catch {get_vivado_tier} fda_tier]} { puts $tool_txt "tier $fda_tier" }
@@ -259,7 +259,7 @@ if {$resume_from ne "route"} {
 if {$ila eq "0"} { stop_here route }
 
 # --- stage bitstream -----------------------------------------------------------
-# brief 54: the build ID (flow/manifest.py: the first 8 hex digits of the manifest's hash, appended to inputs.tcl as
+# the build ID (flow/manifest.py: the first 8 hex digits of the manifest's hash, appended to inputs.tcl as
 # build_id) goes into the USR_ACCESS register (AMD XAPP1232). The configuration logic holds it after loading, the hardware
 # manager reads it as REGISTER.USR_ACCESS (flow/program.tcl), and fabric logic could read it through USR_ACCESSE2. Set
 # here, not in the XDC, so the routed checkpoint is the same whatever the build ID.

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""The build manifest and build ID (brief 54).
+"""The build manifest and build ID.
+
+A *manifest* is a JSON record of everything that went into one build. The *build ID* is the first 8 hex digits of a
+SHA-256 over the part of the manifest that can change the bitstream; it is written into the bitstream's USR_ACCESS
+register (a 32-bit word in the configuration logic, readable over JTAG). The older *build stamp* (``BUILD_STAMP``) is a
+hash of the sources only, compiled into the design as a constant.
 
     python3 flow/manifest.py pre  <build dir> --vivado <path> --threads N      before Vivado (flow/run_vivado.sh)
     python3 flow/manifest.py post <build dir>                                   after Vivado, or on a cache hit
@@ -19,7 +24,9 @@ every flow/*.tcl and the flow Python that writes the Tcl), the normalised ``inpu
 generics, part, top, power environment, timing margin; absolute paths replaced by ``$ROOT`` and ``$OUT``; not the
 stop stage),
 the settings that change the result (thread count, implementation directives as build.tcl passes them, the incremental
-and ILA-insertion switches) and the Vivado version. ``build_id`` is the first 8 hex digits of the SHA-256 of that part of
+and ILA-insertion switches at their effective values, and the SHA-256 of the incremental reference checkpoint when one is
+used) and the Vivado version (from the install path ``.../<version>/Vivado/bin/vivado``; for any other layout, the
+SHA-256 of the binary, never its path). ``build_id`` is the first 8 hex digits of the SHA-256 of that part of
 the manifest as canonical JSON (sorted keys, no spaces).
 
 **What it records but does not hash:** the flow's git commit and whether the tree was dirty, the knowledge-bank pin,
@@ -27,8 +34,8 @@ Python and package versions, Vivado's build number and licence tier (read from t
 cache's keys (they contain absolute paths), the report-only switches, the build directory and the times. A commit that
 changes no input does not change the bitstream, so it does not change the build ID.
 
-The top-level ``inputs``, ``tools``, ``kb_pin`` and ``flow`` keys are the ones brief 53's traceability record reads
-(flow/change_record.py ``read_manifest``): ``inputs`` maps a repo-relative path to its SHA-256, ``tools`` a tool name to
+The top-level ``inputs``, ``tools``, ``kb_pin`` and ``flow`` keys have the shapes the traceability record reads:
+``inputs`` maps a repo-relative path to its SHA-256, ``tools`` a tool name to
 its version, ``kb_pin`` is the knowledge-bank commit, ``flow`` is ``{commit, dirty}``.
 """
 
@@ -52,12 +59,13 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "fda-build-manifest/1"
 COVERS = ("schema", "design", "variant", "top", "part", "inputs", "inputs_tcl", "settings", "tools.vivado")
 # flow Python whose output is part of the build (the Tcl it writes, or the .ltx it repairs)
-FLOW_PY = ("flow/prepare.py", "flow/srcorder.py", "flow/vhdl.py", "flow/ltx_fix.py")   # vhdl.py orders VHDL sources (brief 55)
+FLOW_PY = ("flow/prepare.py", "flow/srcorder.py", "flow/vhdl.py", "flow/ltx_fix.py")   # vhdl.py orders VHDL sources
 # switches that change the result (in the build ID) and switches that only add reports (recorded)
 RESULT_SWITCHES = ("FDA_INCREMENTAL", "FDA_ILA_INSERT")
 REPORT_SWITCHES = ("FDA_XPROBE", "FDA_RESULT_HASH", "FDA_BUILD_CACHE")
-# not hashed: where the build ran, how far it goes (a build stopped early has no bitstream; brief 33's cache resumes a
-# longer build from it, so the stage must not change the ID), and the cache's own resume lines
+# not hashed: where the build ran, how far it goes (a build stopped early has no bitstream, and the build cache resumes
+# a longer build from it, so the stage must not change the ID), and the cache's own resume lines (the incremental
+# reference is hashed by content in settings instead)
 SKIP_TCL = ("set out ", "set stop_after ", "set resume_from ", "set resume_dir ", "set incremental_ref ", "set build_id ")
 IMPL_COMMANDS = ("synth_design", "opt_design", "place_design", "phys_opt_design", "route_design", "write_bitstream")
 RTL_EXT = {".sv", ".v", ".svh", ".vh", ".vhd", ".vhdl"}
@@ -111,6 +119,32 @@ def role(rel: str) -> str:
 def vivado_version_from_path(vivado: str) -> str | None:
     m = re.search(r"/(\d{4}\.\d)/", vivado)
     return m.group(1) if m else None
+
+
+def vivado_identity(vivado: str) -> str:
+    """The Vivado version for the identity: ``2026.1`` from a standard install path; otherwise ``unknown-sha256:<hash>``
+    of the binary (or of the path's text if the binary is missing), so no absolute path is ever hashed."""
+    v = vivado_version_from_path(vivado)
+    if v:
+        return v
+    p = Path(vivado)
+    h = sha256_file(p) if p.is_file() else hashlib.sha256(Path(vivado).name.encode()).hexdigest()
+    return f"unknown-sha256:{h[:16]}"
+
+
+def effective_switches(env: dict[str, str]) -> dict[str, str]:
+    """The result-changing switches at their effective values (unset and the default value give the same ID)."""
+    return {"FDA_INCREMENTAL": "1" if (env.get("FDA_INCREMENTAL") or "0") == "1" else "0",
+            "FDA_ILA_INSERT": (env.get("FDA_ILA_INSERT") or "ip")}
+
+
+def incremental_reference(out: Path, env: dict[str, str]) -> Path | None:
+    """The checkpoint an incremental build will be placed and routed against, by the same rule as flow/build_cache.py:
+    FDA_INCREMENTAL=1, the cache not switched off, and a routed checkpoint in the previous build (``<out>.prev``)."""
+    if effective_switches(env)["FDA_INCREMENTAL"] != "1" or env.get("FDA_BUILD_CACHE", "1") == "0":
+        return None
+    ref = out.parent / f"{out.name}.prev" / "post_route.dcp"
+    return ref if ref.is_file() else None
 
 
 def normalise_tcl(text: str, root: Path, out: Path) -> list[str]:
@@ -177,7 +211,7 @@ def flow_record(root: Path, inputs: list[str] | None = None) -> dict[str, Any]:
 
 
 def kb_pin(root: Path) -> str | None:
-    """The knowledge-bank commit named in knowledge/PACKS.md (the same reading as brief 53's change record)."""
+    """The knowledge-bank commit named in knowledge/PACKS.md (the same reading as the traceability change record)."""
     try:
         m = re.search(r"Private repo commit:\s*`([0-9a-f]{7,40})`", (root / "knowledge" / "PACKS.md").read_text())
     except OSError:
@@ -220,7 +254,8 @@ def compute(out: Path, vivado: str, threads: int | str, env: dict[str, str] | No
     if probes_tcl.is_file():
         tcl_lines += ["# probes.tcl"] + normalise_tcl(probes_tcl.read_text(), root, out)
     cmds = impl_commands(root / "flow" / "build.tcl")
-    vver = vivado_version_from_path(vivado) or str(vivado)
+    vver = vivado_identity(vivado)
+    ref = incremental_reference(out, env)
     m: dict[str, Any] = {
         "schema": SCHEMA,
         "design": design, "variant": prep["variant"], "top": prep["top"], "part": prep["part"],
@@ -232,13 +267,15 @@ def compute(out: Path, vivado: str, threads: int | str, env: dict[str, str] | No
             "threads": int(threads),
             "directives": directives(cmds),
             "seeds": {},
-            "switches": {k: (env.get(k) or "") for k in RESULT_SWITCHES},
+            "switches": effective_switches(env),
+            "incremental_ref_sha256": sha256_file(ref) if ref else None,
             "build_stamp": prep.get("build_stamp"),
         },
         "settings_recorded": {
             "commands": cmds,
             "report_switches": {k: (env.get(k) or "") for k in REPORT_SWITCHES},
             "stop_after": env.get("FDA_STOP_AFTER") or "bitstream",
+            "incremental_ref": str(ref.relative_to(out.parent)) if ref else None,
             "seeds_note": "flow/build.tcl sets no seed option on any command; the result is fixed by the inputs, "
                           "the settings and the tool",
         },
@@ -283,7 +320,8 @@ def finalise(out: Path) -> dict[str, Any]:
     m["tools"]["vivado_sw_build"] = swb.group(1) if swb else None
     m["tools"]["vivado_licence_tier"] = tool.get("tier")
     ran = m["tools"]["vivado_ran"]
-    m["tools_consistent"] = None if not ran else ran.startswith(m["tools"]["vivado"])
+    named = str(m["tools"]["vivado"])
+    m["tools_consistent"] = None if (not ran or named.startswith("unknown")) else ran.startswith(named)
     outputs: dict[str, Any] = {}
     top = m["top"]
     bit = out / f"{top}.bit"
@@ -302,8 +340,17 @@ def finalise(out: Path) -> dict[str, Any]:
         if (out / name).is_file():
             cache[key] = (out / name).read_text().strip()
     if (out / "cache.json").is_file():
-        cache["action"] = json.loads((out / "cache.json").read_text()).get("action")
+        cj = json.loads((out / "cache.json").read_text())
+        cache["action"] = cj.get("action")
+        if cj.get("incremental_ref"):
+            used = Path(cj["incremental_ref"])
+            cache["incremental_ref"] = {"file": f"{used.parent.name}/{used.name}",
+                                        "sha256": sha256_file(used) if used.is_file() else None}
     m["cache"] = cache
+    # the reference the build actually used must be the one the build ID hashed
+    hashed = (m.get("settings") or {}).get("incremental_ref_sha256")
+    used_sha = (cache.get("incremental_ref") or {}).get("sha256")
+    m["incremental"] = {"hashed": hashed, "used": used_sha, "consistent": hashed == used_sha}
     m["finalised"] = _dt.datetime.now().astimezone().isoformat(timespec="seconds")
     mf.write_text(json.dumps(m, indent=1) + "\n")
     return m
@@ -316,6 +363,9 @@ def check(m: dict, bit: Path | None = None) -> list[str]:
     bid, full = build_id_of(m)
     if m.get("build_id") != bid or m.get("build_id_sha256") != full:
         errs.append(f"build_id {m.get('build_id')} is not the hash of the manifest's identity ({bid})")
+    inc = m.get("incremental") or {}
+    if inc.get("used") and not inc.get("consistent"):
+        errs.append("the build used an incremental reference checkpoint that is not the one its build ID hashed")
     if m.get("tools_consistent") is False:
         errs.append(f"Vivado {m['tools'].get('vivado_ran')} ran, but the manifest names {m['tools'].get('vivado')}")
     if bit is not None:

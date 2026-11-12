@@ -1,4 +1,4 @@
-"""Brief 54: the build manifest and build ID, the bitstream reader and comparison, the release bundle and its checker,
+"""The build manifest and build ID, the bitstream reader and comparison, the release bundle and its checker,
 and the build-ID checks of the board flow. No Vivado and no board: synthetic .bit files are built here packet by packet
 (AMD UG470 packet format), and the committed sample bundle (a real 2026.1 build) is checked as it stands."""
 
@@ -121,7 +121,7 @@ def _copy_tree(dst: Path) -> Path:
     return dst
 
 
-def test_manifest_has_the_keys_brief_53_reads() -> None:
+def test_manifest_has_the_keys_the_traceability_record_reads() -> None:
     m = _show(ROOT)
     for k in ("inputs", "tools", "kb_pin", "flow"):
         assert k in m
@@ -143,7 +143,7 @@ def test_build_id_is_the_same_in_another_directory_and_changes_with_one_line(tmp
     assert there["flow"]["commit"] is None                     # not a git checkout: recorded, never hashed
     # one source line changed: the input hash, the stamp and the build ID all change
     rtl = other / "designs" / "t1_dimmer_counter" / "rtl" / "dimmer_counter.sv"
-    rtl.write_text(rtl.read_text() + "\n// brief 54 mutation\n")
+    rtl.write_text(rtl.read_text() + "\n// one added comment line\n")
     mut = _show(other)
     assert mut["build_id"] != here["build_id"]
     key = "designs/t1_dimmer_counter/rtl/dimmer_counter.sv"
@@ -261,7 +261,7 @@ def test_make_refuses_failed_gates_and_dirty_trees(tmp_path: Path) -> None:
 
 
 def test_committed_sample_bundle_passes_the_checker() -> None:
-    """The CI job's second half: the sample bundle (a real Vivado 2026.1 build of T1, brief 54) checks on its own."""
+    """The CI job's second half: the sample bundle (a real Vivado 2026.1 build of T1) checks on its own."""
     assert SAMPLE.is_dir(), "results/54_reproducible/sample_bundle is missing"
     bundles = [d for d in SAMPLE.iterdir() if (d / "SHA256SUMS").is_file()]
     assert bundles
@@ -288,3 +288,131 @@ def test_build_id_comparison_and_conditions() -> None:
     c = program.parse_conditions(text.replace("VCCAUX=1.79 ", "VCCAUX=1.95 "))
     assert not c["inside_roc"] and c["outside"] == ["now VCCAUX 1.95"]
     assert program.parse_conditions("")["read"] is False
+
+
+# ---- review fixes: --out safety, incremental reference, switch normalisation, tool path, unknown tree state -------
+def _bundle_from_fake(tmp_path: Path, **kw) -> tuple[Path, Path]:
+    design = _fake_build(tmp_path / "src", **kw)
+    return design, release.make(design, "base", tmp_path / "bundle")
+
+
+def test_out_never_deletes_a_folder_it_did_not_make(tmp_path: Path) -> None:
+    design = _fake_build(tmp_path / "src")
+    victim = tmp_path / "victim"
+    victim.mkdir()
+    (victim / "important.txt").write_text("keep me")
+    with pytest.raises(release.ReleaseError, match="not a release bundle"):
+        release.make(design, "base", victim)
+    assert (victim / "important.txt").read_text() == "keep me"
+    # the checkout itself, a parent of it, and the build directory are refused outright
+    for bad in (release.ROOT, release.ROOT.parent, Path("."), design / "build" / "base"):
+        with pytest.raises(release.ReleaseError):
+            release.make(design, "base", bad, force=True)
+    assert (release.ROOT / "flow" / "release.py").is_file()
+    # an empty folder is fine; a previous bundle is replaced only with force
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert release.check(release.make(design, "base", empty))["pass"]
+    with pytest.raises(release.ReleaseError, match="--force"):
+        release.make(design, "base", empty)
+    assert release.check(release.make(design, "base", empty, force=True))["pass"]
+
+
+def test_main_refuses_out_dot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    design = _fake_build(tmp_path / "src")
+    monkeypatch.chdir(release.ROOT)
+    assert release.main(["make", str(design), "--out", ".", "--force"]) == 2
+    assert (release.ROOT / "flow" / "release.py").is_file()
+
+
+def _prepared(tmp_path: Path, name: str = "base") -> Path:
+    out = tmp_path / "d" / name
+    out.mkdir(parents=True)
+    r = subprocess.run([sys.executable, str(ROOT / "flow" / "prepare.py"), "designs/t1_dimmer_counter", "--variant",
+                        "base", "--out", str(out)], cwd=ROOT, capture_output=True, text=True, check=True)
+    (out / "prepare.json").write_text(r.stdout)
+    return out
+
+
+def test_incremental_reference_is_hashed_and_recorded(tmp_path: Path) -> None:
+    out = _prepared(tmp_path)
+    env = {"FDA_INCREMENTAL": "1"}
+    viv = "/opt/Xilinx/2026.1/Vivado/bin/vivado"
+    none = manifest.compute(out, viv, 2, env=env)                  # no previous build: nothing to be incremental against
+    assert none["settings"]["incremental_ref_sha256"] is None
+    prev = out.parent / "base.prev"
+    prev.mkdir()
+    (prev / "post_route.dcp").write_bytes(b"reference one")
+    one = manifest.compute(out, viv, 2, env=env)
+    (prev / "post_route.dcp").write_bytes(b"reference two")
+    two = manifest.compute(out, viv, 2, env=env)
+    assert one["build_id"] != two["build_id"] != none["build_id"]
+    assert one["settings_recorded"]["incremental_ref"] == "base.prev/post_route.dcp"
+    # the cache switched off means no reference, as in flow/build_cache.py
+    assert manifest.compute(out, viv, 2, env={**env, "FDA_BUILD_CACHE": "0"})["settings"]["incremental_ref_sha256"] is None
+    # finalise records the reference the build used and flags one that is not the hashed one
+    (out / "manifest.json").write_text(json.dumps(two))
+    (out / "cache.json").write_text(json.dumps({"action": "fresh", "incremental_ref": str(prev / "post_route.dcp")}))
+    fin = manifest.finalise(out)
+    assert fin["incremental"]["consistent"] and fin["cache"]["incremental_ref"]["sha256"] == two["settings"]["incremental_ref_sha256"]
+    (out / "manifest.json").write_text(json.dumps(one))
+    fin = manifest.finalise(out)
+    assert any("incremental reference" in e for e in manifest.check(fin))
+
+
+def test_equivalent_switch_values_give_the_same_id(tmp_path: Path) -> None:
+    out = _prepared(tmp_path)
+    viv = "/opt/Xilinx/2026.1/Vivado/bin/vivado"
+    base = manifest.compute(out, viv, 2, env={})["build_id"]
+    assert manifest.compute(out, viv, 2, env={"FDA_INCREMENTAL": "0"})["build_id"] == base
+    assert manifest.compute(out, viv, 2, env={"FDA_ILA_INSERT": "ip"})["build_id"] == base
+    assert manifest.compute(out, viv, 2, env={"FDA_ILA_INSERT": "core"})["build_id"] != base
+
+
+def test_an_unusual_vivado_path_is_not_hashed(tmp_path: Path) -> None:
+    out = _prepared(tmp_path)
+    fake = tmp_path / "somewhere" / "vivado"
+    fake.parent.mkdir()
+    fake.write_text("#!/bin/sh\n")
+    m = manifest.compute(out, str(fake), 2, env={})
+    assert m["tools"]["vivado"].startswith("unknown-sha256:")
+    assert str(tmp_path) not in json.dumps(manifest.identity(m))
+    other = tmp_path / "elsewhere" / "vivado"
+    other.parent.mkdir()
+    other.write_text("#!/bin/sh\n")
+    assert manifest.compute(out, str(other), 2, env={})["build_id"] == m["build_id"]
+
+
+def test_make_refuses_an_unknown_tree_state(tmp_path: Path) -> None:
+    design = _fake_build(tmp_path)
+    mf = design / "build" / "base" / "manifest.json"
+    m = json.loads(mf.read_text())
+    m["flow"]["dirty"] = None
+    mf.write_text(json.dumps(m))
+    with pytest.raises(release.ReleaseError, match="clean"):
+        release.make(design, "base", tmp_path / "b", allow_dirty=True)
+
+
+def test_check_compares_the_full_hash_and_the_crc(tmp_path: Path) -> None:
+    _, out = _bundle_from_fake(tmp_path)
+    r = release.check(out)
+    assert r["checks"]["bitstream_crc"]["pass"]
+    m = json.loads((out / "manifest.json").read_text())
+    m["build_id_sha256"] = m["build_id"] + "0" * 56          # same 8 digits, wrong full hash
+    (out / "manifest.json").write_text(json.dumps(m))
+    sums = "".join(f"{release._sha(out / f)}  {f}\n" for f in sorted(
+        str(q.relative_to(out)) for q in out.rglob("*") if q.is_file() and q.name != "SHA256SUMS"))
+    (out / "SHA256SUMS").write_text(sums)
+    assert not release.check(out)["checks"]["build_id_is_manifest_hash"]["pass"]
+
+
+def test_bundle_text_is_scrubbed_of_machine_details(tmp_path: Path) -> None:
+    import socket
+    design = _fake_build(tmp_path / "src")
+    rpt = design / "build" / "base" / "timing_summary.rpt"
+    rpt.write_text(f"| Host : {socket.gethostname()}\n| Command : report -file {design}/build/base/x.rpt\n"
+                   f"| home {Path.home()}/x\n")
+    out = release.make(design, "base", tmp_path / "bundle")
+    text = (out / "reports" / "timing_summary.rpt").read_text()
+    assert "<host>" in text and "$BUILD/x.rpt" in text and str(Path.home()) not in text
+    assert release.check(out)["pass"]

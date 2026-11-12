@@ -26,9 +26,9 @@ Python code only.
 | `hw_discover.py`, `hw_list.tcl` | Find the one JTAG target (refuses if there are several), check it is an xc7a100t, find its UART (FT2232 interface 1, same USB serial); record both in `~/.config/fpga_design_agent/boards.yaml`, outside the repo |
 | `program.py`, `program.tcl` | Program a build into SRAM by cable serial, after the `power_ok` gate (report_power total and junction temperature within the limits for the board's power source) and a build-stamp check; flash requests are refused. Also `run_vivado.sh designs/<name> program\|program-ila` |
 | `ila_capture.tcl`, `ila.py` | Arm the ILA by Tcl, wait, upload, export CSV + VCD, in step with the UART stimulus; read the CSV back into probe values |
-| `manifest.py` | **Brief 54.** The build manifest (`build/<variant>/manifest.json`: every input's SHA-256, the normalised `inputs.tcl`, the settings that change the result, the Vivado version; recorded beside them the flow commit and dirty flag, the knowledge-bank pin, Python versions, Vivado's build number and licence tier, the cache keys) and the **build ID**, the first 8 hex digits of the hash of its identity part, which `build.tcl` writes into the bitstream's USR_ACCESS register. `show designs/<name>` computes it without Vivado; `check` verifies it. [docs/reproducibility.md](../docs/reproducibility.md) |
-| `bitstream.py` | **Brief 54.** A 7-series `.bit` read as data: header fields, every configuration register write, the USR_ACCESS value, the configuration CRC recomputed; `diff` names every difference between two bitstreams (header field, register, frame word) |
-| `release.py` | **Brief 54.** `make` puts one build's bitstream, manifest, gates, key reports, traceability matrix and review pages into a release bundle with `RELEASE.md` and `SHA256SUMS`; `check` verifies a bundle on its own (sums, gates, build ID in the manifest and in the bitstream, clean tree) |
+| `manifest.py` | Writes the build manifest (a JSON record of the build's input hashes, settings, tool and commit) and the build ID (an 8-digit hash of the part that can change the bitstream, written into its USR_ACCESS register); `show designs/<name>` computes them without Vivado, `check` verifies them. [docs/reproducibility.md](../docs/reproducibility.md) |
+| `bitstream.py` | Reads a 7-series `.bit` as data (header fields, every configuration register write, the USR_ACCESS value, the configuration CRC recomputed); `diff` names every difference between two bitstreams |
+| `release.py` | `make` puts one build's bitstream and its evidence into a release bundle with `RELEASE.md` and `SHA256SUMS`; `check` verifies a bundle using only its own files (integrity, not authenticity) |
 | `build_cache.py` | Brief 33: decides whether a build reuses the previous build of the same inputs (hit, resume from a checkpoint, or fresh) |
 | `result_hash.tcl`, `result_hash.py` | Brief 33: dump and hash a build's placement and routing, to compare builds |
 | `hw.py` | Shared hardware pieces: the Vivado hardware-manager runner (same guard rails), `hw_server`, the board file, the power gate, serial redaction |
@@ -71,13 +71,14 @@ Python code only.
 (path and content). The same sources give the same stamp, and therefore the same netlist, in any clone; `run.json`
 also records the git commit and whether the tree was dirty.
 
-**Build ID** (brief 54): the first 8 hex digits of the SHA-256 of the build manifest's identity (`flow/manifest.py`:
-inputs, flow scripts, normalised `inputs.tcl`, thread count, directives, result-changing switches, Vivado version). It
-covers more than the stamp (the flow, the settings and the tool, not just the sources) and lives in the bitstream, not
-the netlist: `build.tcl` sets `BITSTREAM.CONFIG.USR_ACCESS` just before `write_bitstream`, the hardware manager reads it
-as `REGISTER.USR_ACCESS`. `program.py` compares the JTAG value with the manifest after programming, and
-`board_check.py` / `bringup.py` compare the shell's `BUILD_STAMP` with the manifest's stamp; a mismatch stops the run
-before any board test. (The shell has no build-ID register: it is frozen with the benchmark.) [docs/reproducibility.md](../docs/reproducibility.md)
+**Build ID**: the first 8 hex digits of the SHA-256 of the build manifest's identity part (`flow/manifest.py`: inputs,
+flow scripts, the Tcl settings file with paths normalised, thread count, directives, result-changing switches, Vivado
+version). It covers more than the build stamp (the flow, the settings and the tool, not only the sources) and lives in
+the bitstream, not the netlist: `build.tcl` sets `BITSTREAM.CONFIG.USR_ACCESS` just before `write_bitstream`, and the
+hardware manager reads it back as `REGISTER.USR_ACCESS`. `program.py` compares that value with the manifest after
+programming, and `board_check.py` / `bringup.py` compare the build stamp read over the UART with the manifest's stamp
+(the test shell is fixed, so the UART check uses the stamp); a mismatch stops the run before any board test.
+[docs/reproducibility.md](../docs/reproducibility.md)
 
 ## Gates (`gates.py`)
 

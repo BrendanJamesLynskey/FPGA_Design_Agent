@@ -84,8 +84,8 @@ run_variant() {
   local prep
   prep="$("$PY" "$ROOT/flow/prepare.py" "$DESIGN" --variant "$variant" --out "$out")"
   echo "$prep" >"$out/prepare.json"
-  # brief 54: the build manifest (flow/manifest.py) and the build ID, appended to inputs.tcl before the cache decision so
-  # that the flow key covers it; flow/build.tcl writes it into the bitstream's USR_ACCESS register
+  # the build manifest (flow/manifest.py) and the build ID, appended to inputs.tcl before the cache decision so that the
+  # flow key covers it; flow/build.tcl writes it into the bitstream's USR_ACCESS register
   "$PY" "$ROOT/flow/manifest.py" pre "$out" --vivado "$VIVADO" --threads "$THREADS" >/dev/null
   local decision action
   decision="$("$PY" "$ROOT/flow/build_cache.py" "$out" --prev "$prev" --base "$DESIGN/build/base" \
@@ -150,6 +150,12 @@ rj.write_text(json.dumps(run, indent=2) + "\n")' "$out" "$decision"
   local rc=0
   wait "$pid" || rc=$?
   t_end="$(date +%s.%N)"
+  # the manifest records the tool facts, the outputs and the incremental reference actually used (hashed here, before
+  # the earlier build that holds it is removed), and checks that the bitstream carries the build ID
+  local manifest_ok=1
+  if [ "$rc" -eq 0 ]; then
+    "$PY" "$ROOT/flow/manifest.py" post "$out" || manifest_ok=0
+  fi
   # the earlier build is no longer needed: a resumed build copied what it used, and an incremental one has finished
   rm -rf "$prev"
   if [ "${FDA_RESULT_HASH:-0}" = "1" ] && [ -f "$out/result_dump.txt" ]; then
@@ -204,9 +210,8 @@ EOF
     fi
     die "Vivado failed for $REL ($variant), exit $rc; see $out/vivado.log"
   fi
-  # brief 54: record the tool facts and outputs in the manifest, and check that the bitstream carries the build ID
-  if ! "$PY" "$ROOT/flow/manifest.py" post "$out"; then
-    die "the bitstream of $REL ($variant) does not carry its manifest's build ID; see $out/manifest.json"
+  if [ "$manifest_ok" -ne 1 ]; then
+    die "the build of $REL ($variant) does not match its manifest (build ID in the bitstream, or the incremental reference); see $out/manifest.json"
   fi
   "$PY" "$ROOT/flow/gates.py" "$out" --json "$out/gates.json"
 }

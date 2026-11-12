@@ -1,4 +1,4 @@
-# conditions.tcl (brief 54): the operating conditions of the attached 7-series device over JTAG, read-only, at the end
+# conditions.tcl: the operating conditions of the attached 7-series device over JTAG, read-only, at the end
 # of a board run (flow/program.tcl logs the same lines at programming time).
 #   vivado -mode batch -source results/54_reproducible/conditions.tcl -tclargs <cable serial>
 # Prints FDA-COND NOW/MAX/MIN lines (XADC status registers; MAX 0x20-0x23 and MIN 0x24-0x27 are latched in hardware

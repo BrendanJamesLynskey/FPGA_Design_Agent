@@ -132,7 +132,7 @@ class Run:
         if variant == "base":
             self.res["build_stamp"] = r["build_stamp"]
         if r.get("pass"):
-            # brief 54: the shell's BUILD_STAMP against the manifest (JTAG USR_ACCESS was checked in program()); a mismatch
+            # the shell's BUILD_STAMP against the manifest (JTAG USR_ACCESS was checked in program()); a mismatch
             # stops the run here
             with FpgaShell.open(self.board["uart"]) as sh:
                 r["build_id_uart"] = program.check_shell_build_id(sh.identify(), r.get("manifest_stamp"))

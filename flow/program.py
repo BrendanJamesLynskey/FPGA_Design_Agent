@@ -15,13 +15,13 @@ Before Vivado touches the board it checks, and refuses with the reason if any fa
 Then it runs ``flow/program.tcl`` (open the target by serial, check the device is an
 xc7a100t, program SRAM, attach the ``.ltx``) under the memory-safe Vivado settings.
 
-**Build ID (brief 54).** After programming, program.tcl reads the device's USR_ACCESS register over JTAG; it must equal
+**Build ID.** After programming, program.tcl reads the device's USR_ACCESS register over JTAG; it must equal
 the ``build_id`` of the build's ``manifest.json`` (flow/manifest.py), or the run stops (``HwError``) before any board
 test. Over the UART, :func:`check_shell_build_id` compares the shell's BUILD_STAMP register (0x02) with the stamp the
 manifest recorded (``settings.build_stamp``, which the build ID covers); flow/board_check.py and flow/bringup.py call it
-right after programming. The shell has no register for the build ID itself: its register map is frozen with the
-benchmark (benchmark/GRADER_DEPS.json shell fingerprint), so adding one needs a dated benchmark amendment. A build made
-before brief 54 has no manifest: it is programmed with a note, and nothing is compared. program.tcl also logs the
+right after programming. The test shell has no register for the build ID itself: its register map is fixed (the
+benchmark records its fingerprint), so the UART check uses the stamp. A build made before manifests existed is
+programmed with a note, and nothing is compared. program.tcl also logs the
 operating conditions (XADC temperature, VCCINT, VCCAUX, VCCBRAM, the latched min/max and the alarm flags), with a verdict
 against the Artix-7 -1 recommended operating conditions (AMD DS181 table 2) and the board's 85 C junction limit.
 """
@@ -97,9 +97,9 @@ def parse_conditions(text: str) -> dict[str, Any]:
 
 
 def check_build_id(expected: str | None, got: str | int | None, where: str) -> dict[str, Any]:
-    """Compare a read-back build ID with the manifest's. ``expected`` None: a build without a manifest (before brief 54)."""
+    """Compare a read-back build ID with the manifest's. ``expected`` None: a build without a manifest (an older build)."""
     if expected is None:
-        return {"checked": False, "where": where, "note": "no manifest.json: built before brief 54, nothing to compare"}
+        return {"checked": False, "where": where, "note": "no manifest.json: an older build, nothing to compare"}
     if isinstance(got, int):
         got = f"{got:08x}"
     g = (got or "").lower().removeprefix("0x")
@@ -116,7 +116,7 @@ def check_shell_build_id(ident: dict[str, Any], manifest_stamp: str | None) -> d
     r["register"] = "BUILD_STAMP (0x02)"
     if r["checked"] and not r["match"]:
         raise hw.HwError(f"build stamp mismatch over the UART shell: the board reports {r['read']}, the manifest says "
-                         f"{manifest_stamp}; stopping before any board test")
+                         f"{manifest_stamp}; rebuild or reprogram the matching bitstream; no board test was run")
     return r
 
 
@@ -156,7 +156,7 @@ def program(design: Path, variant: str, board: str | None = None, log_dir: Path 
         res["pass"] = False
     if res["build_id_jtag"]["checked"] and not res["build_id_jtag"]["match"]:
         raise hw.HwError(f"build ID mismatch over JTAG: USR_ACCESS reads {res['build_id_jtag']['read']}, the manifest "
-                         f"says {info['build_id']}; stopping before any board test")
+                         f"says {info['build_id']}; rebuild or reprogram the matching bitstream; no board test was run")
     return res
 
 
