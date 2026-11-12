@@ -19,13 +19,13 @@ faults:
   - name: rgmii_rx_crc_skips_first_byte
     file: mac_rx.sv
     old: "assign crc_en    = data_beat;"
-    new: "assign crc_en    = data_beat && n != 11'd0;"
+    new: "assign crc_en    = data_beat && n != '0;"
     class: off-by-one
     why: the FCS check is computed over one byte too few
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
   - name: rgmii_rx_runt_not_flagged
     file: mac_rx.sv
-    old: "end_runt    <= n < 11'(MIN_FRAME);"
+    old: "end_runt    <= n < LEN_W'(MIN_FRAME);"
     new: "end_runt    <= 1'b0;"
     class: missing check
     why: frames shorter than MIN_FRAME are not reported as runts
@@ -39,7 +39,7 @@ faults:
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
   - name: tx_no_padding
     file: mac_tx.sv
-    old: "assign data_done = (ended || cur_last) && (i + 11'd1 >= 11'(MIN_DATA));"
+    old: "assign data_done = (ended || cur_last) && (i + 1'b1 >= LEN_W'(MIN_DATA));"
     new: "assign data_done = (ended || cur_last);"
     class: missing check
     why: short frames are sent without padding to MIN_DATA
@@ -60,15 +60,15 @@ faults:
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
   - name: sf_commits_bad_frames
     file: eth_rx_sf.sv
-    old: "if (end_good && !full_frame"
-    new: "if (!full_frame"
+    old: "if (end_good && end_keep && !full_frame"
+    new: "if (end_keep && !full_frame"
     class: missing check
     why: the store-and-forward buffer passes frames with a bad FCS
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k sf_small
   - name: sf_keeps_fcs
     file: eth_rx_sf.sv
-    old: "lens[lw[FW-1:0]] <= end_len - 11'd4;"
-    new: "lens[lw[FW-1:0]] <= end_len;"
+    old: "assign keep_len = end_len - LEN_W'(vtag ? 8 : 4);"
+    new: "assign keep_len = end_len - LEN_W'(vtag ? 4 : 0);"
     class: off-by-one
     why: the store-and-forward output includes the FCS bytes
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k sf_small

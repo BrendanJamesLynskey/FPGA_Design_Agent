@@ -11,10 +11,12 @@
 // TXC_CLK90 = 0 instead makes TXC from clk itself, through the same kind of ODDRE1 as the data, so TXC leaves
 // edge-aligned with the data and the PHY's internal TX delay must be on (RGMII "-ID" mode): data and clock then share
 // one clock and matched output paths, which leaves far more timing margin than a 90-degree clock on another buffer.
-// Simulation uses the equivalent behaviour.
+// FAMILY selects the output registers: "ultrascale" (ODDRE1) or "7series" (ODDR, SAME_EDGE). Simulation uses the
+// equivalent behaviour.
 
 module rgmii_tx #(
-    parameter int TXC_CLK90 = 1         // 1: TXC from clk90 (centred, PHY TX delay off); 0: from clk (edge-aligned)
+    parameter int TXC_CLK90 = 1,        // 1: TXC from clk90 (centred, PHY TX delay off); 0: from clk (edge-aligned)
+    parameter     FAMILY    = "ultrascale"  // "ultrascale" (ODDRE1) or "7series" (ODDR)
 ) (
     input  logic       clk,
     input  logic       clk90,
@@ -28,6 +30,9 @@ module rgmii_tx #(
     output logic       tx_ctl,
     output logic       txc
 );
+    initial begin
+        if (FAMILY != "ultrascale" && FAMILY != "7series") $error("rgmii_tx: FAMILY must be \"ultrascale\" or \"7series\"");
+    end
     // nibble-time counter: n counts clocks within a nibble (0..N-1), hi selects the upper nibble
     logic [5:0] n;
     logic       hi;
@@ -69,11 +74,22 @@ module rgmii_tx #(
         assign tclk = clk;
     end
 `ifdef SYNTHESIS
-    for (genvar i = 0; i < 4; i++) begin : g_oddr
-        ODDRE1 #(.SRVAL(1'b0)) u_oddr (.Q(txd[i]), .C(clk), .D1(d1[i]), .D2(d2[i]), .SR(1'b0));
+    if (FAMILY == "7series") begin : g_7s
+        for (genvar i = 0; i < 4; i++) begin : g_oddr
+            ODDR #(.DDR_CLK_EDGE("SAME_EDGE"), .INIT(1'b0), .SRTYPE("SYNC")) u_oddr (.Q(txd[i]), .C(clk), .CE(1'b1),
+                .D1(d1[i]), .D2(d2[i]), .R(1'b0), .S(1'b0));
+        end
+        ODDR #(.DDR_CLK_EDGE("SAME_EDGE"), .INIT(1'b0), .SRTYPE("SYNC")) u_ctl (.Q(tx_ctl), .C(clk), .CE(1'b1), .D1(c1),
+            .D2(c2), .R(1'b0), .S(1'b0));
+        ODDR #(.DDR_CLK_EDGE("SAME_EDGE"), .INIT(1'b0), .SRTYPE("SYNC")) u_txc (.Q(txc), .C(tclk), .CE(1'b1), .D1(k1_90),
+            .D2(k2_90), .R(1'b0), .S(1'b0));
+    end else begin : g_us
+        for (genvar i = 0; i < 4; i++) begin : g_oddr
+            ODDRE1 #(.SRVAL(1'b0)) u_oddr (.Q(txd[i]), .C(clk), .D1(d1[i]), .D2(d2[i]), .SR(1'b0));
+        end
+        ODDRE1 #(.SRVAL(1'b0)) u_ctl (.Q(tx_ctl), .C(clk), .D1(c1), .D2(c2), .SR(1'b0));
+        ODDRE1 #(.SRVAL(1'b0)) u_txc (.Q(txc), .C(tclk), .D1(k1_90), .D2(k2_90), .SR(1'b0));
     end
-    ODDRE1 #(.SRVAL(1'b0)) u_ctl (.Q(tx_ctl), .C(clk), .D1(c1), .D2(c2), .SR(1'b0));
-    ODDRE1 #(.SRVAL(1'b0)) u_txc (.Q(txc), .C(tclk), .D1(k1_90), .D2(k2_90), .SR(1'b0));
 `else
     // ODDRE1 behaviour: D1 and D2 are taken at the rising edge; D1 drives the output from that edge, D2 from the
     // falling edge (registered, so the output never glitches at an edge)

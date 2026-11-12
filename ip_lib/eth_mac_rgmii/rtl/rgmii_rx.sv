@@ -7,11 +7,13 @@
 // 0x5 is the SFD's upper half; the SFD byte 0xD5 is passed on, then a byte every second nibble. Preamble nibbles
 // before it are not passed on (mac_rx accepts a frame that starts at its SFD).
 // gmii_dv stays high for the whole frame (the clock-crossing FIFO writes its end token when it falls).
-// Synthesis uses IDDRE1 (SAME_EDGE_PIPELINED); simulation the equivalent behaviour.
+// Synthesis uses IDDRE1 (FAMILY "ultrascale": UltraScale and UltraScale+) or IDDR (FAMILY "7series"), both in
+// SAME_EDGE_PIPELINED mode; simulation the equivalent behaviour. The input delay (IDELAY_PS) is UltraScale only.
 
 module rgmii_rx #(
-    parameter int IDELAY_PS = 0         // 0: no input delay; else each RXD/RX_CTL input through an IDELAYE3 of this many
+    parameter int IDELAY_PS = 0,        // 0: no input delay; else each RXD/RX_CTL input through an IDELAYE3 of this many
                                         // ps (TIME mode, 0..1100; the design must have an IDELAYCTRL)
+    parameter     FAMILY    = "ultrascale"  // "ultrascale" (IDDRE1) or "7series" (IDDR)
 ) (
     input  logic       rx_clk,
     input  logic [1:0] speed,           // 2 = 1000, 1 = 100, 0 = 10 Mb/s (stable while frames arrive)
@@ -25,6 +27,8 @@ module rgmii_rx #(
     logic [4:0] q_r, q_f;
     initial begin
         if (IDELAY_PS < 0 || IDELAY_PS > 1100) $error("rgmii_rx: IDELAY_PS must be in 0..1100 (got %0d)", IDELAY_PS);
+        if (FAMILY != "ultrascale" && FAMILY != "7series") $error("rgmii_rx: FAMILY must be \"ultrascale\" or \"7series\"");
+        if (FAMILY == "7series" && IDELAY_PS != 0) $error("rgmii_rx: IDELAY_PS is supported for FAMILY \"ultrascale\" only");
     end
 `ifdef SYNTHESIS
     for (genvar i = 0; i < 5; i++) begin : g_iddr
@@ -40,8 +44,13 @@ module rgmii_rx #(
         end else begin : g_nodly
             assign d_dly = d_in;
         end
-        IDDRE1 #(.DDR_CLK_EDGE("SAME_EDGE_PIPELINED"), .IS_CB_INVERTED(1'b1), .IS_C_INVERTED(1'b0)) u_iddr (
-            .Q1(q_r[i]), .Q2(q_f[i]), .C(rx_clk), .CB(rx_clk), .D(d_dly), .R(1'b0));
+        if (FAMILY == "7series") begin : g_7s
+            IDDR #(.DDR_CLK_EDGE("SAME_EDGE_PIPELINED"), .INIT_Q1(1'b0), .INIT_Q2(1'b0), .SRTYPE("SYNC")) u_iddr (
+                .Q1(q_r[i]), .Q2(q_f[i]), .C(rx_clk), .CE(1'b1), .D(d_dly), .R(1'b0), .S(1'b0));
+        end else begin : g_us
+            IDDRE1 #(.DDR_CLK_EDGE("SAME_EDGE_PIPELINED"), .IS_CB_INVERTED(1'b1), .IS_C_INVERTED(1'b0)) u_iddr (
+                .Q1(q_r[i]), .Q2(q_f[i]), .C(rx_clk), .CB(rx_clk), .D(d_dly), .R(1'b0));
+        end
     end
 `else
     logic [4:0] r0, f0;
