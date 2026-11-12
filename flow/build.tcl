@@ -106,7 +106,8 @@ if {$resume_from ni {"" synth route}} { error "build.tcl: resume_from must be sy
 
 if {$resume_from eq ""} {
     # --- read --------------------------------------------------------------------
-    foreach f $sources     { read_verilog -sv $f }
+    # brief 55: VHDL sources are read as VHDL-2008 (prepare.py lists them after the SystemVerilog, in analysis order)
+    foreach f $sources     { if {[string match -nocase *.vhd $f] || [string match -nocase *.vhdl $f]} { read_vhdl -vhdl2008 $f } else { read_verilog -sv $f } }
     foreach x $constraints { read_xdc $x }
     stage read
     set gen_args {}

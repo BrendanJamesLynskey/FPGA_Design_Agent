@@ -15,7 +15,7 @@ from pathlib import Path
 
 from cocotb_tools.runner import get_results, get_runner
 
-from flow import cdc_inject, fsm_coverage, srcorder
+from flow import cdc_inject, fsm_coverage, srcorder, vhdl
 
 ROOT = Path(__file__).resolve().parents[1]
 SHELL_RTL = sorted((ROOT / "shell" / "rtl").glob("*.sv"))
@@ -143,6 +143,9 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
         coverage = os.environ.get("FDA_COVERAGE") == "1"
     sources = swap_mutant_sources(sources)
     design = srcorder.design_of(test_dir)
+    if any(vhdl.is_vhdl(s) for s in sources):            # brief 55: VHDL sources (GHDL natively, or a GHDL netlist)
+        return _run_vhdl(name, toplevel, sources, test_module, test_dir, parameters, testcase, seed, build_root,
+                         extra_env, coverage, simname, design)
     # brief 16: stand-ins for the XPM macros a build instantiates (Icarus and Verilator have none) and, with
     # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
     inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
@@ -192,6 +195,75 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
         collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
         # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the
         # simulator log, which lives in a scratch directory the caller never sees. Say what they are.
+        raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
+                             + failure_excerpt(build_dir / "sim.log")) from None
+    collect_results(build_dir, seed)
+    n_tests, n_fail = get_results(results)
+    assert n_tests > 0, f"{name}: no cocotb tests ran"
+    assert n_fail == 0, f"{name}: {n_fail} of {n_tests} cocotb tests failed (see {build_dir / 'sim.log'})"
+
+
+def _run_vhdl(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
+              parameters: dict | None, testcase, seed: int | None, build_root: Path | None, extra_env: dict | None,
+              coverage: bool, simname: str, design: Path) -> None:
+    """Brief 55: a run whose sources include VHDL (see flow/vhdl.py).
+
+    - ``SIM=ghdl``: every source must be VHDL; GHDL simulates them natively (VHDL-2008), the parameters as generics.
+    - otherwise (Icarus, Verilator): the VHDL files are synthesised by GHDL into one Verilog netlist with the
+      parameters fixed (the test shell, SystemVerilog, stays a black-box instance in it), and the simulator builds
+      that netlist with the other sources. No CDC injection and no FSM trace on this path (both read SystemVerilog)."""
+    vh, other = vhdl.split(sources)
+    build_dir = (build_root or ROOT / "build" / "sim") / name
+    env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
+    env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
+    env.update(extra_env or {})
+    if srcorder.no_shell(design):
+        other = srcorder.drop_shell(other)
+    if simname == "ghdl":
+        if other:
+            raise AssertionError(f"{name}: SIM=ghdl simulates VHDL only, but the sources include "
+                                 f"{', '.join(Path(o).name for o in other)}; use SIM=icarus or SIM=verilator "
+                                 "(the VHDL is then simulated as its GHDL netlist beside them)")
+        sim = get_runner("ghdl")
+        ordered = vhdl.order_vhdl(vh)
+        sim.build(sources=[str(s) for s in ordered], hdl_toplevel=toplevel, build_dir=build_dir, always=True,
+                  build_args=[f"--std={vhdl.STD}", "-frelaxed"])
+        targs = [f"--std={vhdl.STD}", "-frelaxed", f"--workdir={build_dir}"]   # GHDL runs in test_dir: find the library
+        plus: list[str] = []
+    else:
+        top_v = vhdl.top_entity(vh, toplevel)
+        try:
+            net = vhdl.to_verilog(vh, top_v, parameters if top_v.lower() == toplevel.lower() else {},
+                                  build_dir.parent / f"{name}_ghdl")
+        except RuntimeError as e:
+            raise AssertionError(f"{name}: {e}") from None
+        srcs = srcorder.order_sv(other) + [net]
+        if simname == "verilator":
+            srcs = with_checkers(srcs, design)
+        sim = get_runner(simname)
+        if simname == "verilator":
+            args = ["--assert", "-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD", "-j", "1"]
+            if coverage:
+                args += ["--coverage-line", "--coverage-toggle", "--coverage-user"]
+        else:
+            args = ["-g2012"]
+        args += [f"-I{d}" for d in sorted({str(Path(s).parent) for s in srcs})]
+        sim.build(sources=[str(s) for s in srcs], hdl_toplevel=toplevel, parameters=parameters or {},
+                  build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)
+        targs = []
+        plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
+    try:
+        with srcorder.linked_data(design / "data", test_dir):
+            kw = dict(test_module=test_module, hdl_toplevel=toplevel, testcase=testcase, seed=seed, build_dir=build_dir,
+                      test_dir=test_dir, extra_env=env, parameters=parameters or {}, results_xml=str(build_dir / "results.xml"),
+                      log_file=build_dir / "sim.log", plusargs=plus)
+            if simname == "ghdl":
+                kw["test_args"] = targs
+            else:
+                kw["timescale"] = ("1ns", "1ps")
+            results = sim.test(**kw)
+    except SystemExit:
+        collect_results(build_dir, seed)
         raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
                              + failure_excerpt(build_dir / "sim.log")) from None
     collect_results(build_dir, seed)

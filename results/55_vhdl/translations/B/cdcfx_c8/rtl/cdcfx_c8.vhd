@@ -1,0 +1,65 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity cdcfx_c8 is
+    port (
+        clk_a  : in  std_logic;
+        clk_b  : in  std_logic;
+        send   : in  std_logic;
+        din    : in  std_logic_vector(15 downto 0);
+        busy   : out std_logic;
+        dvalid : out std_logic;
+        dout   : out std_logic_vector(15 downto 0)
+    );
+end entity cdcfx_c8;
+
+architecture rtl of cdcfx_c8 is
+    signal data  : std_logic_vector(15 downto 0) := (others => '0');
+    signal req   : std_logic := '0';
+    signal bsy   : std_logic := '0';
+    signal ack_s : std_logic_vector(1 downto 0) := (others => '0');
+    signal req_s : std_logic_vector(1 downto 0) := (others => '0');
+    signal ack   : std_logic := '0';
+
+    attribute ASYNC_REG : string;
+    attribute ASYNC_REG of ack_s : signal is "TRUE";
+    attribute ASYNC_REG of req_s : signal is "TRUE";
+begin
+    busy <= bsy;
+
+    process (clk_a)
+    begin
+        if rising_edge(clk_a) then
+            ack_s <= ack_s(0) & ack;
+
+            if bsy = '0' then
+                if send = '1' and ack_s(1) = '0' then
+                    data <= din;
+                    req  <= '1';
+                    bsy  <= '1';
+                end if;
+            elsif req = '1' and ack_s(1) = '1' then
+                req <= '0';
+            elsif req = '0' and ack_s(1) = '0' then
+                bsy <= '0';
+            end if;
+        end if;
+    end process;
+
+    process (clk_b)
+    begin
+        if rising_edge(clk_b) then
+            req_s  <= req_s(0) & req;
+            dvalid <= '0';
+
+            if req_s(1) = '1' and ack = '0' then
+                dout   <= data;
+                dvalid <= '1';
+                ack    <= '1';
+            elsif req_s(1) = '0' then
+                ack <= '0';
+            end if;
+        end if;
+    end process;
+end architecture rtl;

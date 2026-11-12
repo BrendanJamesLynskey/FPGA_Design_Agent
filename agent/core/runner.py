@@ -183,6 +183,8 @@ def _norm(a: str) -> str:
 
 #: Default image: Ubuntu 24.04, Python 3.12, cocotb 2.0.1, Icarus 12.0, Verilator 5.048 (agent/container/Dockerfile).
 SIM_IMAGE = "fda-sim:2"          # built from agent/container/Dockerfile (docker build -t fda-sim:2 agent/container)
+#: Brief 55: fda-sim:2 plus GHDL 4.1.0 (agent/container/Dockerfile.vhdl), for VHDL designs only; SystemVerilog runs keep fda-sim:2.
+SIM_IMAGE_VHDL = "fda-sim:2-ghdl"
 #: Unchanged from fda-sim:1: the T1 Verilator coverage run peaked at 0.8 GiB and 13 MB of build tmpfs (05m): see docs/agent_core.md.
 DEFAULT_MEMORY, DEFAULT_BUILD_TMPFS = "3g", "1g"
 
