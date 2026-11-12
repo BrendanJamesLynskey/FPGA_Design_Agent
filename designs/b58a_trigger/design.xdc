@@ -92,16 +92,17 @@ set_input_delay -clock b_rxc_v -clock_fall -min 1.200 -add_delay [get_ports {b_r
 #                an output's hold required time is the edge minus -min -> -min = +skew = +0.5 ns (Vivado's
 #                edge-aligned output template; a build with -min -0.5 demanded a change 0.5 ns after the edge)
 # These are Vivado's most restrictive pairs as well, so no exception is needed. (A TXC from a 90-degree MMCM output on a
-# second global buffer was tried first: with RGMII v2.0's 1.0 ns set-up and hold at a PHY without its delay, the
-# sum of set-up and hold slack was -16 ps: the two clock buffers' spread across corners leaves no window.)
+# second global buffer, PHY TX delay off, RGMII v2.0's 1.0 ns set-up and hold, was built and routed as well: hold
+# +0.40, set-up -0.43 (port A) and -0.39 (port B); the worst set-up and hold slacks of a port sum to -31 ps (A) and
+# +1 ps (B), and the MMCM's 125 ps phase steps cannot place TXC in either window: results/b58a/build_tx_centred_trial.)
 create_generated_clock -name a_txc -source [get_pins u_atx/u_txc/C] -multiply_by 1 [get_ports a_txc]
 create_generated_clock -name b_txc -source [get_pins u_btx/u_txc/C] -multiply_by 1 [get_ports b_txc]
-# port A, both edges: max = T/2 - skew = 3.5 ns, min = -skew = -0.5 ns
+# port A, both edges: max = T/2 - skew = 3.5 ns, min = +skew = +0.5 ns
 set_output_delay -clock a_txc -max 3.500 [get_ports {a_txd[*] a_tx_ctl}]
 set_output_delay -clock a_txc -min 0.500 [get_ports {a_txd[*] a_tx_ctl}]
 set_output_delay -clock a_txc -clock_fall -max 3.500 -add_delay [get_ports {a_txd[*] a_tx_ctl}]
 set_output_delay -clock a_txc -clock_fall -min 0.500 -add_delay [get_ports {a_txd[*] a_tx_ctl}]
-# port B, both edges: max = T/2 - skew = 3.5 ns, min = -skew = -0.5 ns
+# port B, both edges: max = T/2 - skew = 3.5 ns, min = +skew = +0.5 ns
 set_output_delay -clock b_txc -max 3.500 [get_ports {b_txd[*] b_tx_ctl}]
 set_output_delay -clock b_txc -min 0.500 [get_ports {b_txd[*] b_tx_ctl}]
 set_output_delay -clock b_txc -clock_fall -max 3.500 -add_delay [get_ports {b_txd[*] b_tx_ctl}]
