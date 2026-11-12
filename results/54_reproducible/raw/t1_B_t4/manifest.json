@@ -1,0 +1,158 @@
+{
+ "schema": "fda-build-manifest/1",
+ "design": "designs/t1_dimmer_counter",
+ "variant": "base",
+ "top": "t1_dimmer_counter_top",
+ "part": "xc7a100tcsg324-1",
+ "build_id": "dedb2bf7",
+ "build_id_sha256": "dedb2bf736ecbf316411d333ff9b535b7792d625ab206b00e1ec6db36da313e0",
+ "build_id_covers": [
+  "schema",
+  "design",
+  "variant",
+  "top",
+  "part",
+  "inputs",
+  "inputs_tcl",
+  "settings",
+  "tools.vivado"
+ ],
+ "inputs": {
+  "shell/rtl/fpga_shell.sv": "c1a5d9551c5c173b5dc65a1cc3c01a00b184d9d187e2a22e8c80b3a616b8bbb1",
+  "shell/rtl/reset_sync.sv": "1beca829ea724f3a4eb1e7cf3688d8e0f26706c8f89810730672306ba66e0815",
+  "shell/rtl/shell_core.sv": "4956b6380ebf052984d598942bea4e70c6c379b9683cae40f78076dd60093d39",
+  "shell/rtl/sync2.sv": "9103308bbb71cd224d958c434bddd7b3bd2647d49cc8e718df0c6acba49509ba",
+  "shell/rtl/uart_rx.sv": "df36889737e1714453c29b4efb1134e3bed54be50be3f31b18d51e929711df49",
+  "shell/rtl/uart_tx.sv": "ccc19a6bd09120d11b9258452eb93a9a0f8fd5852fd4badacce549ef6e38b358",
+  "designs/t1_dimmer_counter/rtl/debounce.sv": "77621ca03062239371eb0c3ea8e566e200f993c0a3d45a26be6ecc5c8d144289",
+  "designs/t1_dimmer_counter/rtl/dimmer_counter.sv": "fa3d9bed658b1003dffc93159f5582511f2ce7adca9efa1d81a9a7be9ccc52b6",
+  "designs/t1_dimmer_counter/rtl/sevenseg_scan.sv": "7f762021513fbe3139ccb615fad4e68ee40c0cdedf2cd4eae00d64d37097e134",
+  "designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv": "d877b5b8fe3cfc6b8b3446db35139d8a1dd3094ba506e8a79375811fc4ee9f19",
+  "designs/t1_dimmer_counter/design.xdc": "1efd57b95f261dd54cea826d8c02b1f1776d8c404f925a4e467268d72f9c247b",
+  "designs/t1_dimmer_counter/build.yaml": "d40ffa6a4704c30d18ae828b974cb6bd5542ed8154f9aadf38ffe21f21316cf5",
+  "flow/build.tcl": "344f245cda87793d4dc6a62272fe9ce5d74ee3de8f9de1475d901bf08f15300e",
+  "flow/xpm_cdc.tcl": "3cf82037b885b9191f44dfb9f45f6a9fe42e351cdc3f73b3387e6447317f9244",
+  "flow/cdc_paths.tcl": "018799c6af7fd219551a3aa2b6d775cad5c31391a1e6c5acabc05458db4a8158",
+  "flow/mcp_paths.tcl": "eacbebc54f209b11d03ba71188e9144e95cc44f591b64b0694c4110e27f81685",
+  "flow/io_paths.tcl": "7be1ac5dd0035c6946b609d90abba69bddc61d48b5002f11f3d291409c89c0a6",
+  "flow/result_hash.tcl": "b4b3f0a27564484176019800445c33c33e9ede1f1f0004d2b0c8e96a7b2b1fbe",
+  "flow/debug.tcl": "1c9d12e51b5f302630a1cf211912b8bb7273c5395cb4124b4c21faf080dec2f5",
+  "flow/xprobe.tcl": "171186ca700efc0e20f819186003cdbc30d9b2fc6be28490849de4e281192713",
+  "flow/prepare.py": "919cbab33eecd6fe5bc27b013ecf7595fbc70d09102adcdaa286b9832cb972c6",
+  "flow/srcorder.py": "4e584ef8bcc796a6e246b022a842fa73fff5b3d020bff6405f874302297a92b9",
+  "flow/ltx_fix.py": "a85ffcbaae897bd3a8364cc7d10c416a5200a8c78a4a37f5bb7f41f0f2b330b9"
+ },
+ "input_roles": {
+  "shell/rtl/fpga_shell.sv": "rtl",
+  "shell/rtl/reset_sync.sv": "rtl",
+  "shell/rtl/shell_core.sv": "rtl",
+  "shell/rtl/sync2.sv": "rtl",
+  "shell/rtl/uart_rx.sv": "rtl",
+  "shell/rtl/uart_tx.sv": "rtl",
+  "designs/t1_dimmer_counter/rtl/debounce.sv": "rtl",
+  "designs/t1_dimmer_counter/rtl/dimmer_counter.sv": "rtl",
+  "designs/t1_dimmer_counter/rtl/sevenseg_scan.sv": "rtl",
+  "designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv": "rtl",
+  "designs/t1_dimmer_counter/design.xdc": "xdc",
+  "designs/t1_dimmer_counter/build.yaml": "build_yaml",
+  "flow/build.tcl": "tcl",
+  "flow/xpm_cdc.tcl": "tcl",
+  "flow/cdc_paths.tcl": "tcl",
+  "flow/mcp_paths.tcl": "tcl",
+  "flow/io_paths.tcl": "tcl",
+  "flow/result_hash.tcl": "tcl",
+  "flow/debug.tcl": "tcl",
+  "flow/xprobe.tcl": "tcl",
+  "flow/prepare.py": "flow_py",
+  "flow/srcorder.py": "flow_py",
+  "flow/ltx_fix.py": "flow_py"
+ },
+ "inputs_tcl": [
+  "set top {t1_dimmer_counter_top}",
+  "set part {xc7a100tcsg324-1}",
+  "set sources [list {$ROOT/shell/rtl/fpga_shell.sv} {$ROOT/shell/rtl/reset_sync.sv} {$ROOT/shell/rtl/shell_core.sv} {$ROOT/shell/rtl/sync2.sv} {$ROOT/shell/rtl/uart_rx.sv} {$ROOT/shell/rtl/uart_tx.sv} {$ROOT/designs/t1_dimmer_counter/rtl/debounce.sv} {$ROOT/designs/t1_dimmer_counter/rtl/dimmer_counter.sv} {$ROOT/designs/t1_dimmer_counter/rtl/sevenseg_scan.sv} {$ROOT/designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv}]",
+  "set constraints [list {$ROOT/designs/t1_dimmer_counter/design.xdc}]",
+  "set generics [list {BUILD_STAMP=32'hdfd4624e}]",
+  "set ila 0",
+  "set power_env {-airflow 0 -heatsink none -board small -board_layers 4to7 -ambient_temp 40.0}",
+  "set timing_margin_ns 0"
+ ],
+ "settings": {
+  "threads": 4,
+  "directives": {
+   "synth_design": "Default",
+   "opt_design": "Default",
+   "place_design": "Default",
+   "phys_opt_design": "Default",
+   "route_design": "Default"
+  },
+  "seeds": {},
+  "switches": {
+   "FDA_INCREMENTAL": "",
+   "FDA_ILA_INSERT": ""
+  },
+  "build_stamp": "dfd4624e"
+ },
+ "settings_recorded": {
+  "commands": {
+   "synth_design": [
+    "synth_design -rtl -rtl_skip_ip -top $top -part $part {*}$gen_args",
+    "synth_design -top $top -part $part {*}$gen_args"
+   ],
+   "opt_design": [
+    "opt_design"
+   ],
+   "place_design": [
+    "place_design"
+   ],
+   "phys_opt_design": [
+    "phys_opt_design"
+   ],
+   "route_design": [
+    "route_design"
+   ],
+   "write_bitstream": [
+    "write_bitstream -force $out/$top.bit"
+   ]
+  },
+  "report_switches": {
+   "FDA_XPROBE": "",
+   "FDA_RESULT_HASH": "1",
+   "FDA_BUILD_CACHE": "0"
+  },
+  "stop_after": "bitstream",
+  "seeds_note": "flow/build.tcl sets no seed option on any command; the result is fixed by the inputs, the settings and the tool"
+ },
+ "tools": {
+  "vivado": "2026.1",
+  "python": "3.12.3",
+  "pyyaml": "6.0.1",
+  "vivado_ran": "2026.1",
+  "vivado_sw_build": "6511674",
+  "vivado_licence_tier": "BASIC"
+ },
+ "kb_pin": "811b840",
+ "flow": {
+  "commit": "41264bf12147",
+  "commit_full": "41264bf121471a679c26a90045536ae16e70d898",
+  "dirty": false,
+  "dirty_files": [],
+  "inputs_untracked": []
+ },
+ "build_dir": "/tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b54_B/second/copy/fda_tree/designs/t1_dimmer_counter/build/base",
+ "created": "2026-11-12T02:28:19+00:00",
+ "tools_consistent": true,
+ "outputs": {
+  "bit": {
+   "file": "t1_dimmer_counter_top.bit",
+   "sha256": "b686b2d7cb0272aadcf648c0949aff677ccd1b5ea672a485a852b88536fe05b3",
+   "usr_access": "DEDB2BF7"
+  }
+ },
+ "cache": {
+  "flow_key": "e574187a5acb502d1843af0402128dcf548dbc8b95b80b52ab648a38b44f5c4a",
+  "synth_key": "ce0d189512ff838bff97a4bec7f491c2c7cb4daccb50e17de8fd248b8084fd8d",
+  "action": "fresh"
+ },
+ "finalised": "2026-11-12T02:31:55+00:00"
+}

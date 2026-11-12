@@ -94,4 +94,15 @@ manifest of every committed design (Vivado never runs in CI).
 
 ## Measured
 
-See [results/54_reproducible/README.md](../results/54_reproducible/README.md).
+Vivado 2026.1, T1 (487 LUT) and the c13 course reference (11,281 LUT), fresh builds from clean checkouts of one commit
+in different directories ([results/54_reproducible](../results/54_reproducible/README.md)):
+
+- **Same inputs, different directories:** same build ID, same placement and routing, identical configuration data. The
+  bitstreams differ in 4 (T1) and 3 (c13) bytes, all in the `.bit` header's time field. Nothing else was masked.
+- **Thread count 1, 2, 4:** the same placement, routing, reports and frame data. The bitstreams differ only in the
+  USR_ACCESS word (the build ID includes the thread count), the configuration CRC that covers it (recomputed and
+  checked), two digests Vivado 2026.1 writes into the header (`SW_CRC`, `SW_HDR_SHA256`) and the time.
+- **One comment line changed:** the input hash, the build stamp, the build ID and the bitstream all changed; because the
+  stamp is a netlist constant, so did placement, routing, LUT count and WNS.
+- **Board:** the T1 bitstream's USR_ACCESS read back over JTAG equalled its manifest's build ID; the shell's stamp over
+  the UART equalled the manifest's stamp; conditions inside the recommended operating range.
