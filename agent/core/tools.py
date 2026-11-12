@@ -283,13 +283,19 @@ def _lint_vhdl(s: Session, cfg: dict) -> dict:
         r = s.runner.run("lint", argv, s.root, timeout=300)
         secs += r.seconds
         text = _text_out(r)
+        missing: list[str] = []
         if argv[1] == "--synth":                       # the netlist on stdout is not a message
-            text = "\n".join(l for l in text.splitlines() if re.match(r"^\S+:\d+:\d+:|^\S*ghdl\S*:", l)
-                             and "is not bound" not in l and "(in default configuration" not in l)
+            msgs = "\n".join(l for l in text.splitlines() if re.match(r"^\S+:\d+:\d+:|^\S*ghdl\S*:", l)
+                              or "GHDL Bug occurred" in l or l.startswith(("raised ", "Exception ")))
+            text, missing = vhdl.synth_messages(msgs)
+            if "GHDL Bug occurred" in text:
+                text = ("GHDL crashed (an internal error, not a message about the VHDL): check that each generic value "
+                        "suits its type.\n" + text)
         if text.strip():
             out.append(f"[ghdl {argv[1]}] " + text.strip()[:4000])   # the first errors are the cause
-        if r.returncode != 0:
-            ok, rc = False, r.returncode
+        out += [f"[vhdl unbound] {m}" for m in missing]
+        if r.returncode != 0 or missing:
+            ok, rc = False, r.returncode or 1
             break
     found = top_port_findings(s, cfg, xdc_check=False)
     if found:

@@ -39,6 +39,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y tcl          # prepare.py's Tcl is loaded by a real tclsh
+          # GHDL for the VHDL unit tests (flow/tests/test_55_vhdl.py), the same pinned package as the rtl-sim job
+          sudo apt-get install -y --no-install-recommends ghdl=4.1.0+dfsg-0ubuntu2.1 ghdl-mcode=4.1.0+dfsg-0ubuntu2.1 ghdl-common=4.1.0+dfsg-0ubuntu2.1
           pip install pyyaml pyserial pytest cocotb==2.0.1 mcp==2.3.0 jsonschema \
             langgraph==1.2.19 langgraph-checkpoint-sqlite==3.1.3 deepagents==0.7.32 langchain-openai==1.7.3 scipy \
             boto3==1.44.0 moto==5.2.5
@@ -101,7 +103,7 @@ jobs:
         run: python -m pytest -q flow/tests/test_24_fsm_rtl.py flow/tests/test_24_drills_rtl.py
       - name: Project layer (brief 27B P0) - generated contract tests on fixture RTL, the reference passes, each mutant fails
         run: python -m pytest -q project/tests/test_27b_contract_tests_rtl.py
-      - name: VHDL (brief 55) - a translation passes its hidden bench through the GHDL netlist, VHDL blocks under GHDL, the mistakes M1/M2
+      - name: VHDL - translations pass their hidden benches through the GHDL netlist; VHDL blocks under GHDL; the mutation check in a container where one exists
         run: python -m pytest -q flow/tests/test_55_vhdl_rtl.py
       - name: Mutants (each deliberate bug must fail the T1 tests)
         run: PYTHON=python designs/t1_dimmer_counter/tests/run_mutants.sh

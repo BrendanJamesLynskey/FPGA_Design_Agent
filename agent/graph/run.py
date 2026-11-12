@@ -856,6 +856,7 @@ def node_work(state: State) -> dict:
     rt.meter.start_stage(st.limits)
     rt.session.stage = st.name
     rt.visit, rt.budget_notes = visits[str(n)], []
+    follow_spec_language(rt)                 # brief 55: `language: vhdl` in spec.yaml works like --hdl vhdl
     fmt = {"board": rt.cfg.board, "name": rt.cfg.name, "stage": n, "stage_name": st.name,
            "allowed": ", ".join(st.tools), "fails": "; ".join(state.get("fails") or []) or "none",
            "note": state.get("note") or "none",
@@ -1493,6 +1494,29 @@ def install_data_files(design: Path, data_dir: Path) -> list[str]:
                       "`$readmemh(\"<name>\")` both open them, and the scoring run finds them the same way. A design may read "
                       "them with $readmemh/$readmemb or embed their values in the RTL.\n")
     return names
+
+
+def follow_spec_language(rt) -> bool:
+    """Brief 55: a run started without ``--hdl vhdl`` whose signed spec.yaml says ``language: vhdl`` switches to VHDL from the
+    next stage on: the VHDL conventions in the prompts, the design's language marker, and the sandbox image with GHDL.
+    Returns True when it switched. ``--hdl vhdl`` itself never switches back."""
+    from flow import vhdl as vh
+    if rt.cfg.hdl == "vhdl":
+        return False
+    spec = rt.design / "spec.yaml"
+    try:
+        lang = (yaml.safe_load(spec.read_text()) or {}).get("language") if spec.is_file() else None
+    except yaml.YAMLError:
+        return False
+    if not (isinstance(lang, str) and lang.strip().lower() in ("vhdl", "vhdl-2008", "vhdl2008")):
+        return False
+    rt.cfg.hdl = "vhdl"
+    (rt.design / vh.HDL_MARKER).write_text("vhdl\n")
+    from agent.core.runner import SIM_IMAGE_VHDL, ContainerRunner, container_available
+    runner = getattr(rt.session, "runner", None)
+    if isinstance(runner, ContainerRunner) and container_available(image=SIM_IMAGE_VHDL):
+        runner.image = SIM_IMAGE_VHDL
+    return True
 
 
 def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner=None,

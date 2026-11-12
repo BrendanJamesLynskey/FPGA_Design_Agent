@@ -56,7 +56,7 @@ def test_async_fifo_translation_native_ghdl(tmp_path, monkeypatch):
 
 
 def test_handshake_translation_needs_start_values(tmp_path, monkeypatch):
-    with pytest.raises(AssertionError, match="Logic\(.U.\) to int"):
+    with pytest.raises(AssertionError, match=r"Logic\(.U.\) to int"):
         _cdc("cdcfx_c8", T / "B" / "cdcfx_c8" / "rtl", tmp_path / "b", monkeypatch)
     _cdc("cdcfx_c8", T / "hand_fix" / "cdcfx_c8" / "rtl", tmp_path / "fix", monkeypatch)
 
@@ -97,3 +97,23 @@ def test_formal_on_vhdl_with_psl():
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+def test_mutation_compile_check_in_the_sandbox_container(tmp_path):
+    """Review fix B1: the VHDL compile check of flow/mutate.py inside fda-sim:2-ghdl (its work library must be in the mounted
+    design tree). Skipped where the image is absent."""
+    from agent.core.runner import SIM_IMAGE_VHDL, ContainerRunner, container_available
+    from flow import mutate
+    if not container_available(image=SIM_IMAGE_VHDL):
+        pytest.skip(f"docker image {SIM_IMAGE_VHDL} not present")
+    d = tmp_path / "des"
+    m = d / "build" / "mutants" / "m1"
+    m.mkdir(parents=True)
+    (m / "ok.vhd").write_text("library ieee; use ieee.std_logic_1164.all;\nentity ok is port (a : in std_logic; y : out std_logic); end;\n"
+                              "architecture r of ok is begin y <= not a; end;\n")
+    (m / "bad.vhd").write_text("entity bad is port (a : in bit); end;\narchitecture r of bad is begin y <= a; end;\n")
+    runner = ContainerRunner(d, ROOT, image=SIM_IMAGE_VHDL)
+    assert mutate.compile_ok([m / "ok.vhd"], runner) is True
+    assert mutate.compile_ok([m / "ok.vhd", m / "bad.vhd"], runner) is False
+    assert mutate.compile_ok([m / "ok.vhd"], None) is True
+    assert not (m / "_ghdl_work").exists()

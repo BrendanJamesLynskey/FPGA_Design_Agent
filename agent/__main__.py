@@ -175,7 +175,7 @@ def main(argv: list[str] | None = None) -> int:
                         "wall limit from the bench's sim-time budget, structured hang result)")
     r.add_argument("--router-k", type=int, default=8, help="brief 36: skills in the router's shortlist")
     r.add_argument("--hdl", choices=["sv", "vhdl"], default="sv",
-                   help="brief 55: the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
+                   help="the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
                         "read_vhdl -vhdl2008 in Vivado); the test shell stays SystemVerilog")
     for p in (r, sub.add_parser("resume")):
         p.add_argument("--replies", type=Path)

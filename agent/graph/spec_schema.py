@@ -134,7 +134,7 @@ def propose_proof(text: str) -> tuple[list[str], str]:
 
 
 #: brief 55: the values of the optional ``language`` key (absent = SystemVerilog)
-LANGUAGES = {"systemverilog", "sv", "vhdl", "vhdl-2008"}
+LANGUAGES = {"systemverilog", "sv", "vhdl", "vhdl-2008", "vhdl2008"}
 
 
 def validate(spec: dict[str, Any], allow_rates: bool = False, need_proof: bool = True) -> list[str]:

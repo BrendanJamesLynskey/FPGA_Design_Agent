@@ -41,7 +41,6 @@ import shutil
 import signal
 import subprocess
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -132,7 +131,9 @@ OPERATORS = [
     ("bit0_to_1", r"\b1'b0\b", "1'b1", "constant 1'b0 replaced by 1'b1"),
     ("bit1_to_0", r"\b1'b1\b", "1'b0", "constant 1'b1 replaced by 1'b0"),
 ]
-#: brief 55: the same operator classes on VHDL code lines (`--` comments; `/=` is VHDL's not-equal)
+#: brief 55: the same operator classes on VHDL code lines (`--` comments; `/=` is VHDL's not-equal). Lines with `=>` (port
+#: and generic maps, aggregates, single-line `when X =>` case arms) and declarations are skipped, so a VHDL design gets fewer
+#: candidate mutants per line of logic than the same SystemVerilog.
 OPERATORS_VHDL = [
     ("eq_to_ne", r"(?<![/<>=:?])=(?![=>])", "/=", "'=' replaced by '/='"),
     ("ne_to_eq", r"/=", "=", "'/=' replaced by '='"),
@@ -255,10 +256,17 @@ def compile_ok(files: list[Path], runner=None) -> bool | None:
         exe = vhdl.ghdl_exe()
         if exe is None and runner is None:
             return None
-        with tempfile.TemporaryDirectory() as wd:
-            argv = [exe or "ghdl", "-a", f"--std={vhdl.STD}", f"--workdir={wd}", *map(str, vhdl.order_vhdl(vh))]
+        # the work library goes next to the (mutated) sources: inside the design directory, which the sandbox container
+        # mounts read-write (a host temporary directory does not exist inside the container, and the repo root is read-only)
+        wd = Path(vh[0]).resolve().parent / "_ghdl_work"
+        wd.mkdir(parents=True, exist_ok=True)
+        try:
+            argv = [exe if runner is None else "ghdl", "-a", f"--std={vhdl.STD}", f"--workdir={wd}",
+                    *[str(Path(f).resolve()) for f in vhdl.order_vhdl(vh)]]
             ok = (runner.run("simulate", argv, ROOT, None, 120).returncode == 0) if runner is not None else \
                 subprocess.run(argv, capture_output=True, text=True).returncode == 0
+        finally:
+            shutil.rmtree(wd, ignore_errors=True)
         if not ok:
             return False
         if not [f for f in files if not srcorder.is_shell_source(f)]:
@@ -421,7 +429,7 @@ def main() -> int:
                     help="wall cap in seconds; default: baseline x (sample + 2), between 1500 s and 2 h (05n)")
     ap.add_argument("--mutant-timeout-s", type=int, default=0)
     ap.add_argument("--lock-wait-s", type=float, default=0)
-    ap.add_argument("--sim", choices=("auto", "icarus", "verilator"), default="auto",
+    ap.add_argument("--sim", choices=("auto", "icarus", "verilator", "ghdl"), default="auto",
                     help="simulator for the baseline and every mutant (07a2 fix 5 E): auto = Verilator when available "
                          "and the design builds in it, else Icarus")
     ap.add_argument("--sandbox", choices=("auto", "container", "host"), default="auto",

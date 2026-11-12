@@ -1,4 +1,17 @@
-# Brief 55 VHDL translations: pre-registration (written 2026-11-12 00:40, before the first model call)
+# VHDL translations: plan of the runs, and what was written when
+
+**Correction (added during review, 2026-11-12).** This file's first heading read "pre-registration (written 2026-11-12 00:40, before
+the first model call)". That time was wrong and the claim cannot be shown from the record:
+
+- The body below ("What is measured" to "Stopping rules") was written in the executor's session shortly before its first model
+  call, which the run records date 2026-11-11 23:54:26 (arm A, `t1_gray_stepper`); the "00:40" was a misread clock.
+- There is no record of the file before its first commit, `ffbd9c9` at 2026-11-12 00:21:34, by which time arm A (23:54-23:56) and
+  arm B (00:14-00:15) had both run. So treat the body as a plan written before the runs, not a verified pre-registration.
+- The "Amendments" section was written after both arms had run and was first committed in `c3885a0` (00:55:04); the times
+  given inside it ("00:05", "from 00:15") are not when it was written.
+- **Arm B is exploratory (post hoc).** Its prompt was built after arm A's mistakes were known and written into the guidance. Its
+  5 of 5 is a result after fixing a known failure, not a confirmation of a hypothesis fixed in advance.
+
 
 ## What is measured
 
@@ -42,7 +55,7 @@ Whether openai/gpt-6-luna (OpenRouter, `data_collection: deny`) writes VHDL-2008
 
 ## Amendments (dated, before the runs they affect)
 
-1. **2026-11-12 00:05, after arm A, before arm B.** Arm A's prompt carried the boundary notes of `flow/vhdl.py` as they were then.
+1. **Written after both arms ran (see the correction above).** Arm A's prompt carried the boundary notes of `flow/vhdl.py` as they were then.
    Arm B's prompt carries the notes as amended from A's mistakes (a bullet on the shell's `sync2`/`reset_sync` names, a bullet on
    start values) **and** three skills of the new `vhdl-design` unit (`vhdl-mixed-language-boundary`, `vhdl-types-drivers-and-numeric-std`,
    `vhdl-processes-resets-and-fsms`). So B measures "notes + skills" together, not the skills alone. B was run on all five board
@@ -53,4 +66,4 @@ Whether openai/gpt-6-luna (OpenRouter, `data_collection: deny`) writes VHDL-2008
 3. **Hand fix, not a scored arm.** `translations/hand_fix/cdcfx_c8/` is arm B's `cdcfx_c8` with start values added by hand to its two
    output registers, used by the tests to show that rule M2 is the whole difference.
 4. **The lint feedback kept the tail of GHDL's output** in the A and B runs (a cascade of follow-on errors can hide the first one);
-   from 00:15 the tool keeps the head. Only B's `t1_elevator_fsm` needed a second round.
+   after both arms the tool keeps the head. Only B's `t1_elevator_fsm` needed a second round.

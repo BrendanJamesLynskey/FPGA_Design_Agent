@@ -11,7 +11,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 BOARD = ["t1_gray_stepper", "t1_elevator_fsm", "d24_registered_outputs", "t1_sync_fifo_regs", "t1_debounce_bank"]
-AREA = {"t1_gray_stepper": "T1", "t1_elevator_fsm": "FSM", "d24_registered_outputs": "FSM drill (brief 24)",
+AREA = {"t1_gray_stepper": "T1", "t1_elevator_fsm": "FSM", "d24_registered_outputs": "FSM drill (registered outputs)",
         "t1_sync_fifo_regs": "memory (FIFO)", "t1_debounce_bank": "T1, asynchronous inputs"}
 
 
@@ -43,14 +43,14 @@ def cell(v: dict | None) -> str:
 
 
 def main() -> None:
-    print("| Drill | Area | Arm A (no skills) | Arm B (notes + skills) | Vivado 2026.1, SystemVerilog reference | Vivado 2026.1, VHDL (board drills: arm B; blocks: arm A, c8 arm B) |")
+    print("| Task | Area | Arm A | Arm B | Vivado 2026.1, SystemVerilog reference | Vivado 2026.1, VHDL |")
     print("|---|---|---|---|---|---|")
     for t in BOARD:
         print(f"| `{t}` | {AREA[t]} | {bench('A', t)} | {bench('B', t)} | {cell(viv(t, 'sv'))} | {cell(viv(t, 'vhdl'))} |")
     a = {r["drill"]: r for r in (load(HERE / "scores" / "A_blocks.json") or [])}
     b = {r["drill"]: r for r in (load(HERE / "scores" / "B_blocks.json") or [])}
     bs = load(HERE / "blocks.json") or {}
-    for d, area in (("cdcfx_c10", "CDC (async FIFO)"), ("cdcfx_c8", "CDC (handshake)"), ("axil_regs", "AXI4-Lite slave")):
+    for d, area in (("cdcfx_c10", "CDC (async FIFO), block"), ("cdcfx_c8", "CDC (handshake), block"), ("axil_regs", "AXI4-Lite slave, block")):
         ra = "PASS" if a.get(d, {}).get("pass") else ("FAIL" if d in a else "not run")
         rb = "PASS" if b.get(d, {}).get("pass") else ("FAIL" if d in b else "not run")
         sv = bs.get(f"{d}__sv") or bs.get(f"{d}__v")

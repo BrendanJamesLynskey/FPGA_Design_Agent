@@ -159,14 +159,43 @@ def lint_argv(files: list[Path], top: str | None, generics: dict | None = None, 
     wd = [f"--workdir={workdir}"] if workdir else []
     cmds = [[exe, "-a", f"--std={STD}", *wd, "-Wall", "-Wno-default-binding", *[str(f) for f in order_vhdl(files)]]]
     if top:
-        cmds.append([exe, "--synth", f"--std={STD}", *wd, *generic_args(generics), top])
+        cmds.append([exe, "--synth", f"--std={STD}", *wd, *generic_args(fit_generics(files, top, generics)), top])
     return cmds
+
+
+_UNBOUND = re.compile(r'instance "(\w+)" of component "(\w+)" is not bound', re.I)
+
+
+def synth_messages(stderr: str) -> tuple[str, list[str]]:
+    """The messages of ``ghdl --synth`` worth showing, and the unbound components that are NOT test-shell modules.
+
+    An unbound component is a black box in GHDL's synthesis. That is right for the shell (SystemVerilog, compiled beside the
+    netlist) and wrong for anything else: a component whose entity was never written would otherwise lint clean and fail
+    only later in the simulator or in Vivado. GHDL's crash banner ("GHDL Bug occurred") is kept in full."""
+    shell = shell_modules()
+    keep, missing, skip = [], [], 0
+    for l in stderr.strip().splitlines():
+        m = _UNBOUND.search(l)
+        if m:
+            if m.group(2).lower() not in shell:
+                missing.append(f"component {m.group(2)} (instance {m.group(1)}) is not bound to any entity: write the "
+                               f"entity {m.group(2)}, or instantiate an existing one; only the test shell's modules "
+                               f"({', '.join(sorted(shell))}) may stay unbound")
+            skip = 2
+            continue
+        if skip and (l.startswith(" ") or "(in default configuration of" in l):
+            skip -= 1
+            continue
+        skip = 0
+        if "(in default configuration of" not in l:
+            keep.append(l)
+    return "\n".join(keep).strip(), missing
 
 
 def lint(files: list[Path], top: str | None, generics: dict | None = None, workdir: Path | None = None,
          cwd: Path = ROOT) -> dict:
-    """``{"ok", "output", "returncode"}``: GHDL analysis then synthesis-elaboration of ``top``. A black box (an unbound
-    component, such as the test shell) is reported by GHDL as a warning and is allowed."""
+    """``{"ok", "output", "returncode"}``: GHDL analysis then synthesis-elaboration of ``top``. Only the test shell's
+    modules may stay unbound components (black boxes); any other unbound component fails the lint."""
     if not ghdl_exe():
         return {"ok": False, "output": "GHDL not found (FDA_GHDL, PATH or ~/.local/bin/ghdl)", "returncode": 127}
     clash = shell_name_clashes(files)
@@ -179,26 +208,16 @@ def lint(files: list[Path], top: str | None, generics: dict | None = None, workd
     out, rc = [], 0
     for argv in lint_argv(files, top, generics, wd):
         r = _run(argv, cwd)
+        missing: list[str] = []
         if argv[1] == "--synth":          # stdout is the synthesised netlist: only the messages count
-            lines = r.stderr.strip().splitlines()
-            keep, skip = [], 0
-            for l in lines:                 # an unbound component (the shell) is a warning plus its two context lines
-                if "is not bound" in l:
-                    skip = 2
-                    continue
-                if skip and (l.startswith(" ") or "(in default configuration of" in l):
-                    skip -= 1
-                    continue
-                skip = 0
-                if "(in default configuration of" not in l:
-                    keep.append(l)
-            text = "\n".join(keep).strip()
+            text, missing = synth_messages(r.stderr)
         else:
             text = (r.stdout + r.stderr).strip()
         if text:
             out.append(f"[ghdl {argv[1]}] " + text[:4000])   # the first errors are the cause; the rest cascade
-        if r.returncode != 0:
-            rc = r.returncode
+        out += [f"[vhdl unbound] {m}" for m in missing]
+        if r.returncode != 0 or missing:
+            rc = r.returncode or 1
             break
     return {"ok": rc == 0, "output": "\n".join(out), "returncode": rc}
 
@@ -358,7 +377,8 @@ BOUNDARY_NOTES = """VHDL designs (language: vhdl; brief 55):
   port names are spelled exactly as the master XDC spells them (CLK100MHZ, CPU_RESETN, LED, SW, BTNU, UART_TXD_IN,
   UART_RXD_OUT ...): VHDL ignores case, but the constraints, the netlist and the test bench do not.
 - The test shell stays SystemVerilog (shell/rtl/fpga_shell.sv). Instantiate it from VHDL through a COMPONENT
-  declaration (never `entity work.fpga_shell`, which does not exist as a VHDL entity):
+  declaration, not `entity work.fpga_shell`: there is no such VHDL entity for GHDL (lint and simulation fail; Vivado 2026.1
+  happens to accept it):
 {shell}
   The board top declares the generic `BUILD_STAMP : std_logic_vector(31 downto 0) := x"00000000"` and passes it on
   (BUILD_STAMP => BUILD_STAMP); the flow sets it per build. Other top-level parameters the spec names (CLKS_PER_BIT,
@@ -454,8 +474,12 @@ def fit_generics(files: list[Path], top: str, generics: dict | None) -> dict:
         if not m:
             continue
         n = int(m.group(1)) + 1
+        lit = _VLOG_LIT.match(v) if isinstance(v, str) else None
         if isinstance(v, int) and not isinstance(v, bool):
             out[k] = format(v & ((1 << n) - 1), f"0{n}b")
         elif isinstance(v, str) and re.fullmatch(r"\d+", v.strip()):
             out[k] = format(int(v) & ((1 << n) - 1), f"0{n}b")
+        elif lit:                         # a sized Verilog literal of another width (8'hFF for 32 bits) also crashes GHDL
+            val = int(lit.group(3).replace("_", ""), {"h": 16, "b": 2, "d": 10}[lit.group(2).lower()])
+            out[k] = format(val & ((1 << n) - 1), f"0{n}b")
     return out

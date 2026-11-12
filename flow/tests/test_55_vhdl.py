@@ -149,3 +149,77 @@ def test_netlist_with_an_integer_build_stamp(tmp_path):
     vh = sorted((B / "t1_gray_stepper" / "rtl").glob("*.vhd"))
     net = vhdl.to_verilog(vh, "t1_gray_stepper_top", {"CLKS_PER_BIT": 8, "BUILD_STAMP": 0}, tmp_path)
     assert "parameter BUILD_STAMP = 0" in net.read_text()
+
+
+@needs_ghdl
+def test_lint_refuses_an_unbound_component_that_is_not_the_shell(tmp_path):
+    """Review fix S4: only the test shell's modules may stay black boxes."""
+    f = tmp_path / "top.vhd"
+    f.write_text("library ieee; use ieee.std_logic_1164.all;\nentity top is port (a : in std_logic; y : out std_logic); end;\n"
+                 "architecture r of top is\n  component my_missing_blk is port (a : in std_logic; y : out std_logic); end component;\n"
+                 "begin\n  u : my_missing_blk port map (a => a, y => y);\nend;\n")
+    r = vhdl.lint([f], "top", workdir=tmp_path / "w")
+    assert not r["ok"] and "[vhdl unbound] component my_missing_blk" in r["output"]
+    vh = sorted((B / "t1_gray_stepper" / "rtl").glob("*.vhd"))     # the shell (and sync2) stay allowed
+    assert vhdl.lint(vh, "t1_gray_stepper_top", workdir=tmp_path / "w2")["ok"]
+
+
+@needs_ghdl
+def test_lint_fits_generic_values(tmp_path):
+    """Review fix S5: BUILD_STAMP=0 or a literal of another width no longer crashes GHDL in the lint."""
+    vh = sorted((B / "t1_gray_stepper" / "rtl").glob("*.vhd"))
+    for v in (0, "8'hFF", "4'd20"):
+        r = vhdl.lint(vh, "t1_gray_stepper_top", {"BUILD_STAMP": v, "CLKS_PER_BIT": 8}, workdir=tmp_path / "w")
+        assert r["ok"], (v, r["output"])
+    assert vhdl.fit_generics(vh, "t1_gray_stepper_top", {"BUILD_STAMP": "8'hFF"})["BUILD_STAMP"] == format(0xFF, "032b")
+
+
+@needs_ghdl
+def test_agent_lint_tool_on_vhdl(tmp_path):
+    """The agent's `lint` tool on a VHDL design: a translation passes; an unbound non-shell component and a BUILD_STAMP=0
+    generic are handled (review fixes S4, S5)."""
+    import shutil
+    from agent.core import tools as T
+    from agent.core.session import Session
+    d = ROOT / "runs" / f"_t55_{tmp_path.name}"
+    shutil.rmtree(d, ignore_errors=True)
+    try:
+        (d / "rtl").mkdir(parents=True)
+        for f in (B / "t1_gray_stepper" / "rtl").glob("*.vhd"):
+            shutil.copy(f, d / "rtl" / f.name)
+        (d / "design.xdc").write_text("# none\n")
+        rel = d.relative_to(ROOT)
+        (d / "build.yaml").write_text(f"top: t1_gray_stepper_top\npart: xc7a100tcsg324-1\nsources: [shell/rtl/*.sv, {rel}/rtl/*.vhd]\n"
+                                      f"constraints: [{rel}/design.xdc]\ngenerics: {{BUILD_STAMP: 0}}\n")
+        (d / ".hdl").write_text("vhdl\n")
+        r = T.lint(Session(design=d))
+        assert r["ok"], r["output"]
+        top = d / "rtl" / "t1_gray_stepper_top.vhd"
+        top.write_text(top.read_text().replace("architecture", "-- extra\narchitecture", 1).replace(
+            "begin", "  component nowhere is port (q : out std_logic); end component;\n  signal nq : std_logic;\nbegin\n"
+            "  u_nowhere : nowhere port map (q => nq);", 1))
+        r = T.lint(Session(design=d))
+        assert not r["ok"] and "[vhdl unbound] component nowhere" in r["output"], r["output"]
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
+def test_spec_language_switches_the_run_to_vhdl(tmp_path):
+    """Review fix S3: `language: vhdl` in spec.yaml without --hdl vhdl gives the VHDL conventions, the marker and the GHDL image."""
+    from types import SimpleNamespace
+    from agent.core.runner import SIM_IMAGE, SIM_IMAGE_VHDL, ContainerRunner, container_available
+    from agent.graph.run import Config, follow_spec_language
+    d = tmp_path / "des"
+    d.mkdir()
+    runner = ContainerRunner(d, ROOT, image=SIM_IMAGE)
+    rt = SimpleNamespace(cfg=Config(spec_md=d / "spec.md", name="des", board="nexys_a7_100t", interview="off",
+                                    review="off", model="m", hidden_spec=None, stop_after=None),
+                         design=d, session=SimpleNamespace(runner=runner))
+    assert not follow_spec_language(rt) and rt.cfg.hdl == "sv"           # no spec.yaml yet
+    (d / "spec.yaml").write_text("language: systemverilog\n")
+    assert not follow_spec_language(rt) and rt.cfg.hdl == "sv"
+    (d / "spec.yaml").write_text("language: VHDL\n")
+    assert follow_spec_language(rt) and rt.cfg.hdl == "vhdl"
+    assert vhdl.design_language(d) == "vhdl"
+    assert runner.image == (SIM_IMAGE_VHDL if container_available(image=SIM_IMAGE_VHDL) else SIM_IMAGE)
+    assert not follow_spec_language(rt)                                  # once only
