@@ -70,7 +70,7 @@ and so does the build stamp). The thread count is hashed because it is a setting
 Vivado implementation user guide, UG904, lists placement, routing and physical optimisation among the multithreaded
 tasks), so a flow that did not hash it could not show that it is harmless; [Measured](#measured) shows it was.
 
-The `inputs`, `tools`, `kb_pin` and `flow` keys have the shapes the traceability record reads: `inputs` a
+The `inputs`, `tools`, `kb_pin` and `flow` keys have the shapes the traceability record ([docs/traceability.md](traceability.md)) reads: `inputs` a
 path-to-hash map, `tools` a name-to-version map, `kb_pin` a commit, `flow` with `commit` and `dirty`.
 
 **The build cache.** The manifest reuses the cache's ingredients (the sources hash, the flow Tcl hashes, the switches)
