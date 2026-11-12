@@ -54,7 +54,7 @@ gates, before any model touched it. Everything the agent produces has the same s
                      |  (memory-guarded: one job, 1 thread, 6 GB cap; optional ILA from probes.yaml)
                      v
   [7] gates ......... flow/gates.py, stage by stage: RTL methodology; post-synthesis coverage, DRC,
-                     |  methodology, QoR score; post-place hold; post-route slack, CDC, junction
+                     |  methodology, QoR score (absent on the 2026.1 Basic tier); post-place hold; post-route slack, CDC, junction
                      |  temperature; bitstream present. Names the first stage that failed
                      v
   [8] bring-up ...... BRINGUP.md for a tester who did not design it, plus the test shell:
