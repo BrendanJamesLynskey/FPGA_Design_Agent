@@ -219,9 +219,10 @@ def digest(name: str, text: str, level: str = "summary", focus: str | None = Non
 COMPACT_CHARS = 4000
 
 
-def compact_result(res: dict[str, Any], tool: str, design: Path, seq: int, readable: bool) -> str:
+def compact_result(res: dict[str, Any], tool: str, design: Path, seq: int, readable: bool, digest_callable: bool = False) -> str:
     """H9: a flow tool's large result as its typed summary digest plus the path of the full result (written to
-    ``build/tool_results``; named only when the role can read it)."""
+    ``build/tool_results``; named only when the role can read it). The note names `report_digest` only when this role can call
+    it (``digest_callable``): in stage 2 no role can, so the note must not point at it (review fix)."""
     text = json.dumps(res)
     if len(text) <= COMPACT_CHARS:
         return text
@@ -239,4 +240,8 @@ def compact_result(res: dict[str, Any], tool: str, design: Path, seq: int, reada
                                  "failed_gates": [k for k, v in gg.items() if v is False][:40], "n_gates": len(gg)}
         small.pop("gates", None)
     return json.dumps({**small, "digest": dg["output"],
-                       "note": "Typed summary of the result; call report_digest (standard or detail) or read the path for more."})
+                       "note": ("Typed summary of the result; call report_digest (standard or detail) or read the path for more."
+                                if digest_callable else
+                                "Typed summary of the result; read the path for the full result." if readable else
+                                "Typed summary of the result; the full text is not readable by this role: run the tool again "
+                                "with a narrower scope for more.")})

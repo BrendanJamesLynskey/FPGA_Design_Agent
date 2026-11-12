@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -84,7 +85,7 @@ class OpenRouterClient:
                 break
             except json.JSONDecodeError as e:
                 self.malformed_retries = getattr(self, "malformed_retries", 0) + 1
-                print(f"FDA_MALFORMED attempt {attempt + 1}: {type(e).__name__}: {str(e)[:160]}", file=__import__('sys').stderr, flush=True)
+                print(f"FDA_MALFORMED attempt {attempt + 1}: {type(e).__name__}: {str(e)[:160]}", file=sys.stderr, flush=True)
                 if attempt == self.MALFORMED_RETRIES:
                     raise
         return Reply(text=(m.content if m else "") or "", tool_calls=calls,

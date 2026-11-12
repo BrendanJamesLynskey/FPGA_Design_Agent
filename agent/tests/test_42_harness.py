@@ -428,3 +428,36 @@ def test_malformed_response_is_retried_for_every_arm() -> None:
     c._c.chat.completions.n = 0
     with pytest.raises(json.JSONDecodeError):
         c([{"role": "user", "content": "hi"}], None)
+
+
+def test_h9_note_points_only_at_tools_the_role_can_call(session: Session) -> None:
+    from agent.core.report_digest import compact_result
+    res = {"ok": False, "tool": "simulate", "output": "x" * 9000}
+    callable_note = json.loads(compact_result(res, "simulate", session.design, 1, True, True))["note"]
+    readable_note = json.loads(compact_result(res, "simulate", session.design, 2, True, False))["note"]
+    blind_note = json.loads(compact_result(res, "simulate", session.design, 3, False, False))["note"]
+    assert "report_digest" in callable_note
+    assert "report_digest" not in readable_note and "read the path" in readable_note
+    assert "report_digest" not in blind_note and "narrower scope" in blind_note
+
+
+def test_malformed_body_from_the_sdk_is_retried_too() -> None:
+    """The failure actually seen: ``create()`` itself raised JSONDecodeError (a body that does not parse)."""
+    from types import SimpleNamespace as NS
+
+    from agent.graph.llm import OpenRouterClient
+    good = NS(usage=NS(prompt_tokens=1, completion_tokens=1, model_extra={"cost": 0.0}),
+              choices=[NS(message=NS(content="ok", tool_calls=[]))], model_extra={}, provider="p")
+
+    class Chat:
+        n = 0
+
+        def create(self, **kw):
+            self.n += 1
+            if self.n < 3:
+                raise json.JSONDecodeError("Expecting ':' delimiter", "{" * 10, 5)
+            return good
+
+    c = OpenRouterClient.__new__(OpenRouterClient)
+    c.model, c._c = "x/y", NS(chat=NS(completions=Chat()))
+    assert c([{"role": "user", "content": "hi"}], None).text == "ok" and c.malformed_retries == 2
