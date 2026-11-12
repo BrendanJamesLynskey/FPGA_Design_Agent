@@ -79,6 +79,9 @@ def write_jobs(js: list[dict], part: str, path: Path) -> None:
                                                           j["clock_ns"], g]))
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n")
+    for j in js:                                  # a rerun must not inherit an earlier run's verdict
+        for marker in ("done.txt", "error.txt"):
+            (j["wd"] / marker).unlink(missing_ok=True)
 
 
 # ---- report parsing ------------------------------------------------------------------------------------------------

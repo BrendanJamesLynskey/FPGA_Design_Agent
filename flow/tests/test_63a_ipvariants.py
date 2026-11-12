@@ -82,3 +82,16 @@ def test_char_files_have_the_schema_and_one_tool():
 def test_cli_validates(capsys):
     assert iv.main([]) == 0
     assert "0 problems" in capsys.readouterr().out
+
+
+def test_measured_dsp_and_bram_match_the_declared_use():
+    """The hard resources each variant declares are the ones synthesis actually used (brief 62's plan check, applied to
+    the library's own data): a planned DSP built in LUTs, or an adder tree pulled into DSP slices, fails here."""
+    bad = []
+    for b in iv.entries_with_variants():
+        for r in iv.measured(b):
+            pr = iv.predict(b, r["variant"], r["params"])["uses"]
+            for k in ("dsp", "bram_tiles"):
+                if k in pr and r.get(k) != pr[k]:
+                    bad.append((b, r["variant"], r["params"], k, r.get(k), pr[k]))
+    assert not bad, bad

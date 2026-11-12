@@ -171,12 +171,13 @@ module fir_fold #(
         return n;
     endfunction
     wire  signed [ACC_W-1:0] acc [0:M-1];
-    logic signed [ACC_W-1:0] tree [0:L][0:M-1];
+    (* use_dsp = "no" *) logic signed [ACC_W-1:0] tree [0:L][0:M-1];   // fabric adders: without this, synthesis put
+                                           // the tree into DSP slices at some widths (7 slices for 4 engines)
     logic [L:0] tv;
     always @(posedge clk) tv <= rst ? '0 : {tv, v[3] && l[3]};
     for (genvar e = 0; e < M; e++) begin : g_mac
         fir_mac #(.DATA_W(DATA_W), .COEF_W(COEF_W), .ACC_W(ACC_W)) u_mac (
-            .clk, .ld_ab(v[1]), .ld_m(v[2]), .ld_p(v[3]), .first(f[3]),
+            .clk, .ld_p(v[3]), .first(f[3]),
             .a_in(d_q[e*DATA_W +: DATA_W]), .b_in(c_q[e*COEF_W +: COEF_W]), .acc(acc[e]));
     end
     for (genvar lv = 0; lv < L; lv++) begin : g_lv

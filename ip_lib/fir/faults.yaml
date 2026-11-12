@@ -9,7 +9,7 @@ faults:
   test: ip_lib/fir/tb/test_fir_rtl.py -k test_variant
 - name: acc_not_cleared
   file: fir_mac.sv
-  old: "if (ld_p) acc <= first ? ACC_W'(m) : acc + ACC_W'(m);"
+  old: "if (ld_p) acc <= (first ? '0 : acc) + ACC_W'(m);"
   new: "if (ld_p) acc <= acc + ACC_W'(m);"
   class: value
   why: each output adds onto the last one's partial sums
