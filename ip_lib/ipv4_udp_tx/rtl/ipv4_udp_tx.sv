@@ -48,7 +48,7 @@ module ipv4_udp_tx #(
     function automatic logic [15:0] fold(input logic [31:0] s);
         logic [16:0] t;
         t = {1'b0, s[31:16]} + {1'b0, s[15:0]};
-        return t[15:0] + {15'd0, t[16]};
+        fold = t[15:0] + {15'd0, t[16]};
     endfunction
 
     // ---------------------------------------------------------------- take the payload

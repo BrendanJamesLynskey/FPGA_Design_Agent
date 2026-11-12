@@ -46,8 +46,8 @@ faults:
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
   - name: tx_underrun_not_poisoned
     file: eth_mac_rgmii.sv
-    old: ".poison(tx_poison || bad)"
-    new: ".poison(tx_poison)"
+    old: ".poison((tx_poison && !src_p) || bad)"
+    new: ".poison(tx_poison && !src_p)"
     class: protocol
     why: a frame cut short by an AXI-Stream underrun leaves with a good FCS
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
@@ -72,3 +72,74 @@ faults:
     class: off-by-one
     why: the store-and-forward output includes the FCS bytes
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k sf_small
+  # 0.2 features (brief 63D)
+  - name: filter_hash_wrong_bits
+    file: eth_rx_classify.sv
+    old: "mc_hash[hcrc[5:0]]"
+    new: "mc_hash[hcrc[6:1]]"
+    class: protocol
+    why: the multicast hash takes the wrong six bits of the CRC
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_ct_hash_pause
+  - name: filter_broadcast_always
+    file: eth_rx_classify.sv
+    old: "(d_bcast && bcast_en)"
+    new: "d_bcast"
+    class: missing check
+    why: broadcast frames pass the filter with bcast_en off
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: vlan_strip_leaves_tci
+    file: eth_rx_sf.sv
+    old: "assign skip = tpid || (vtag && (bi == LEN_W'(14) || bi == LEN_W'(15)));"
+    new: "assign skip = tpid;"
+    class: protocol
+    why: stripping removes the TPID but leaves the TCI bytes in the frame
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: pause_quanta_half
+    file: eth_mac_rgmii.sv
+    old: "ptimer <= {c_quanta, 6'd0};"
+    new: "ptimer <= {1'b0, c_quanta, 5'd0};"
+    class: off-by-one
+    why: a pause quantum is taken as 256 bit times instead of 512
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: pause_not_honoured
+    file: eth_mac_rgmii.sv
+    old: "assign want_u    = s_axis_tvalid && !bad && !tx_paused;"
+    new: "assign want_u    = s_axis_tvalid && !bad;"
+    class: missing check
+    why: a received pause does not hold transmit frames back
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: pause_frame_wrong_opcode
+    file: eth_mac_rgmii.sv
+    old: "15: pbyte = 8'h01;"
+    new: "15: pbyte = 8'h02;"
+    class: protocol
+    why: the pause frame sent carries opcode 0x0002 instead of 0x0001
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: control_frames_forwarded
+    file: eth_mac_rgmii.sv
+    old: "assign consumed        = (PAUSE != 0) && c_ctrl;"
+    new: "assign consumed        = 1'b0;"
+    class: protocol
+    why: MAC control frames reach the store-and-forward output instead of being consumed
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: stats_octets_without_fcs
+    file: eth_mac_stats.sv
+    old: "inc[1] = STAT_W'(rx_len);"
+    new: "inc[1] = STAT_W'(rx_len) - STAT_W'(4);"
+    class: off-by-one
+    why: the good-octet counter leaves out the FCS
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: stats_mcast_counts_broadcast
+    file: eth_mac_stats.sv
+    old: "inc[8] = STAT_W'(rx_mcast && !rx_bcast);"
+    new: "inc[8] = STAT_W'(rx_mcast);"
+    class: protocol
+    why: broadcast frames are also counted as multicast
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: jumbo_length_11_bits
+    file: eth_mac_rgmii.sv
+    old: "localparam int LW = (MAX_FRAME > 2000) ? 14 : 11;"
+    new: "localparam int LW = 11;"
+    class: width
+    why: with jumbo frames the length counters stay 11 bits wide and saturate at 2047
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_jumbo

@@ -53,7 +53,7 @@ module igmp_join #(
     function automatic logic [15:0] fold(input logic [31:0] s);
         logic [16:0] t;
         t = {1'b0, s[31:16]} + {1'b0, s[15:0]};
-        return t[15:0] + {15'd0, t[16]};
+        fold = t[15:0] + {15'd0, t[16]};
     endfunction
 
     // ---------------------------------------------------------------- ticks and a random source
@@ -71,7 +71,7 @@ module igmp_join #(
     function automatic logic [7:0] rnd(input logic [7:0] r, input logic [7:0] span);   // 1..span
         logic [15:0] p;
         p = {8'd0, r} * {8'd0, span};
-        return p[15:8] + 8'd1;
+        rnd = p[15:8] + 8'd1;
     endfunction
 
     // ---------------------------------------------------------------- receive: queries and other hosts' reports
@@ -151,7 +151,7 @@ module igmp_join #(
                         end
                     end else if (is_report && grp == groups[32*i +: 32] && run[i]) begin
                         run[i] <= 1'b0; last_rep[i] <= 1'b0; ev_suppressed <= 1'b1;
-                    end else if (run[i] && tick) begin
+                    end else if (run[i] && tick && !rep_p[i]) begin     // counts once no report waits
                         if (tmr[i] <= 8'd1) begin run[i] <= 1'b0; rep_p[i] <= 1'b1; end
                         else tmr[i] <= tmr[i] - 8'd1;
                     end

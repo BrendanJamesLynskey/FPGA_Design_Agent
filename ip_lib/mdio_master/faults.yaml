@@ -1,0 +1,32 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults (the other runner skips it)
+faults:
+  - name: mdio_preamble_31_ones
+    file: mdio_master.sv
+    old: "sh <= {32'hFFFF_FFFF, 2'b01,"
+    new: "sh <= {32'hFFFF_FFFE, 2'b01,"
+    class: protocol
+    why: the preamble has 31 ones before the start bits
+    test: flow/net/tests/test_63d_mdio_rtl.py
+  - name: mdio_turnaround_driven
+    file: mdio_master.sv
+    old: "rd ? 2'b00 : 2'b11, rd ? 16'h0 : 16'hFFFF};"
+    new: "rd ? 2'b01 : 2'b11, rd ? 16'h0 : 16'hFFFF};"
+    class: protocol
+    why: in a read the station drives the second turnaround bit that belongs to the PHY
+    test: flow/net/tests/test_63d_mdio_rtl.py
+  - name: mdio_read_lsb_first
+    file: mdio_master.sv
+    old: "if (r && nb <= 7'd16) rdata <= {rdata[14:0], mdio_i};"
+    new: "if (r && nb <= 7'd16) rdata <= {mdio_i, rdata[15:1]};"
+    class: protocol
+    why: the read value is assembled least significant bit first (clause 22 sends the most significant first)
+    test: flow/net/tests/test_63d_mdio_rtl.py
+  - name: mdio_release_without_hold
+    file: mdio_master.sv
+    old: "if (nb == 7'd1) begin busy <= 1'b0; mdc <= 1'b0; end"
+    new: "if (nb == 7'd1) begin busy <= 1'b0; mdc <= 1'b0; mdio_t <= 1'b1; end"
+    class: timing
+    why: the line is released one clock after the last rising edge of MDC, short of the hold time at small DIV
+    test: flow/net/tests/test_63d_mdio_rtl.py

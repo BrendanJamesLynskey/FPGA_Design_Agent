@@ -1,0 +1,39 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults (the other runner skips it)
+faults:
+  - name: igmp_no_router_alert
+    file: igmp_join.sv
+    old: "6'd34: fb = 8'h94;"
+    new: "6'd34: fb = 8'h00;"
+    class: protocol
+    why: the Router Alert option is missing from reports and leaves
+    test: flow/net/tests/test_63d_igmp_rtl.py -k g4
+  - name: igmp_no_suppression
+    file: igmp_join.sv
+    old: "run[i] <= 1'b0; last_rep[i] <= 1'b0; ev_suppressed <= 1'b1;"
+    new: "ev_suppressed <= 1'b1;"
+    class: protocol
+    why: another host's report does not cancel our pending report
+    test: flow/net/tests/test_63d_igmp_rtl.py -k g4
+  - name: igmp_leave_always
+    file: igmp_join.sv
+    old: "if (last_rep[i]) lv_p[i] <= 1'b1;"
+    new: "lv_p[i] <= 1'b1;"
+    class: protocol
+    why: a leave is sent even when another host sent the last report
+    test: flow/net/tests/test_63d_igmp_rtl.py -k g4
+  - name: igmp_timer_never_restarted
+    file: igmp_join.sv
+    old: "if (!run[i] || tmr[i] > q_mrt) begin"
+    new: "if (!run[i]) begin"
+    class: protocol
+    why: a query with a shorter Max Response Time does not shorten a running timer
+    test: flow/net/tests/test_63d_igmp_rtl.py -k g4
+  - name: igmp_ttl_two
+    file: igmp_join.sv
+    old: "6'd22: fb = 8'd1;"
+    new: "6'd22: fb = 8'd2;"
+    class: protocol
+    why: reports leave with TTL 2 instead of 1
+    test: flow/net/tests/test_63d_igmp_rtl.py -k g4

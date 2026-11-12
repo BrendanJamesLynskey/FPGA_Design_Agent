@@ -8,7 +8,7 @@ import random
 
 import cocotb
 from cocotb.clock import Clock
-from cocotb.triggers import ReadOnly, RisingEdge, Timer
+from cocotb.triggers import FallingEdge, ReadOnly, RisingEdge, Timer
 
 
 async def start(dut, period_ns: int = 8, reset_clocks: int = 5):
@@ -113,3 +113,30 @@ class Sink:
 async def clocks(dut, n: int):
     for _ in range(n):
         await RisingEdge(dut.clk)
+
+
+class Latency:
+    """Clocks from an input frame's last beat to the next m_axis tvalid: the rising edge that takes the last beat
+    (s_axis tvalid, tready and tlast) is clock 0, and the count is the number of rising edges until m_axis_tvalid is
+    first high (1: valid in the very next clock). Sampled at the falling edge, when the bench's own drives and the
+    design's outputs have both settled."""
+
+    def __init__(self, dut, start_sig: str = "s_axis_t"):
+        self.dut, self.p = dut, start_sig
+        self.t_in = self.t_out = None
+        self.task = cocotb.start_soon(self._run())
+
+    async def _run(self):
+        n = 0
+        while True:
+            await FallingEdge(self.dut.clk)
+            n += 1
+            if self.t_in is not None and self.t_out is None and int(self.dut.m_axis_tvalid.value):
+                self.t_out = n
+            if self.t_in is None and int(getattr(self.dut, self.p + "valid").value) and \
+                    int(getattr(self.dut, self.p + "ready").value) and int(getattr(self.dut, self.p + "last").value):
+                self.t_in = n
+
+    def clocks(self) -> int:
+        self.task.cancel()
+        return self.t_out - self.t_in

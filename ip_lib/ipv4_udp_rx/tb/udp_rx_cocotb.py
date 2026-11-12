@@ -60,8 +60,8 @@ def make(rng: random.Random, ports):
     fr = inet.eth(da, inet.mac_b("02:cc:00:00:00:05"), 0x0800, bytes(ip))
     if kind == "trunc":
         fr = fr[:len(fr) - 1 - rng.randrange(min(6, len(fr) - 36))]
-    if len(fr) < 60:
-        fr = fr.ljust(60, b"\x00")
+    if len(fr) < 60:                              # Ethernet padding: zeros or (allowed) anything
+        fr += bytes(rng.randrange(256) if rng.random() < 0.5 else 0 for _ in range(60 - len(fr)))
     return fr, kind == "bad", kind
 
 

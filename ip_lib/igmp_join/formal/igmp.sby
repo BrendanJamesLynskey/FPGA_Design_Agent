@@ -1,0 +1,25 @@
+# SymbiYosys: igmp_join's transmit framing and the AXI-Stream rules (axi_tx/rtl/axis_rules.sv, brief 59).
+# bmc: bounded, depth 60 (a join's report and the start of the next); cover: a report and a leave leave.
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 60
+cover: mode cover
+cover: depth 110
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal -sv axis_rules.sv
+read_verilog -formal -sv igmp_join.sv
+read_verilog -formal -sv formal_igmp.sv
+prep -top formal_igmp
+
+[files]
+../../../axi_tx/rtl/axis_rules.sv
+../rtl/igmp_join.sv
+formal_igmp.sv

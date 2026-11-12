@@ -65,4 +65,32 @@ module mdio_master #(
             end else t <= t + 11'd1;
         end
     end
+
+`ifdef FORMAL
+    // Properties for SymbiYosys (formal/mdio.sby; proved by k-induction there). The frame position is bit 64 - nb,
+    // clock t of it; the line changes only on t = 0 (visible from t = 1).
+    logic f_init = 1'b1;
+    logic f_busy_q = 1'b0;
+    always_ff @(posedge clk) begin f_init <= rst; f_busy_q <= busy; end
+    always_ff @(posedge clk) if (!f_init && !rst) begin
+        if (busy) begin
+            assert (t <= 11'(2 * DIV - 1) && nb >= 7'd1 && nb <= 7'd64);
+            assert (oe == ((r ? {46'h3FFF_FFFF_FFFF, 18'h0} : 64'hFFFF_FFFF_FFFF_FFFF) << (7'd64 - nb)));
+            // MDC low for the first DIV clocks of a bit time, high for the rest
+            assert (mdc == (t > 11'(DIV) || (t == 11'd0 && nb != 7'd64)));
+            // what is on the line is the current bit (from t = 1)
+            if (t != 11'd0) assert (mdio_t == !oe[63] && (mdio_t || mdio_o == sh[63]));
+            // a read releases the line from the turnaround on; a write drives it throughout
+            if (t != 11'd0 && r && nb <= 7'd18) assert (mdio_t);
+            if (t != 11'd0 && !r) assert (!mdio_t);
+        end else begin
+            assert (!mdc);
+            if (!f_busy_q) assert (mdio_t && mdio_o);
+        end
+        // setup and hold: the line is steady at a rising edge of MDC and one clock after it
+        if ($rose(mdc)) assert ($stable(mdio_o) && $stable(mdio_t));
+        if (busy && mdc && $past(mdc) && t == 11'(DIV + 2) % 11'(2 * DIV)) assert ($stable(mdio_o) && $stable(mdio_t));
+        cover (f_busy_q && !busy && r);
+    end
+`endif
 endmodule

@@ -16,6 +16,7 @@ from ip_lib.arp_responder import model
 
 SEED = int(os.environ.get("ARP_SEED", "1"))
 N = int(os.environ.get("ARP_N", "150"))
+LATENCY = 3                                         # ip.yaml latency.reply
 OWN_MAC = inet.mac_b("02:00:00:00:00:01")
 OWN_IP = inet.ip_b("192.168.10.2")
 
@@ -153,4 +154,14 @@ async def arp(dut):
     reqs = [f for f, _ in sink.frames[n0:]]
     want_n = 1 if holdoff > 61 else 2
     assert len(reqs) == want_n + 1 and all(r == model.request(OWN_MAC, OWN_IP, ip) for r in reqs), len(reqs)
+    # the reply's first byte after the request's last, output free
+    sink.ready = 1.0
+    await axis_tb.clocks(dut, 300)
+    lat = axis_tb.Latency(dut)
+    h = hosts[5]
+    await src.send(inet.eth(model.BCAST, h[0], 0x0806, inet.arp(1, h[0], h[1], b"\x00" * 6, OWN_IP)))
+    await axis_tb.clocks(dut, 100)
+    n = lat.clocks()
+    assert n == LATENCY, n
+    dut._log.info(f"latency: {n} clocks from the request's last byte to the reply's first")
     sink.stop()

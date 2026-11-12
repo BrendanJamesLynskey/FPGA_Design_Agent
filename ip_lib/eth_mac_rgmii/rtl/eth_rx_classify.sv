@@ -63,7 +63,7 @@ module eth_rx_classify #(
         x = c;
         for (int i = 0; i < 8; i++)
             x = (x[0] ^ b[i]) ? ((x >> 1) ^ 32'hEDB88320) : (x >> 1);
-        return x;
+        crc32_byte = x;
     endfunction
 
     logic [4:0]  k;                     // index of the next byte (saturates at 31)
@@ -76,7 +76,7 @@ module eth_rx_classify #(
 
     always_ff @(posedge clk) begin
         if (rst) begin
-            k <= '0; da <= '0; hcrc <= '1; da_done <= 1'b0; et <= '0; w14 <= '0; w16 <= '0;
+            k <= 5'd31; da <= '0; hcrc <= '1; da_done <= 1'b0; et <= '0; w14 <= '0; w16 <= '0;   // bytes before a first SOF are ignored
         end else if (in_valid) begin
             if (in_sof) begin
                 k <= 5'd1; da <= {40'd0, in_data}; hcrc <= crc32_byte(32'hFFFF_FFFF, in_data); da_done <= 1'b0;

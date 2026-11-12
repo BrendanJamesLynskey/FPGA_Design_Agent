@@ -1,0 +1,101 @@
+# ip.yaml for arp_responder: the declared parameter space and contract (the library's reuse rules; brief 63D).
+name: arp_responder
+version: 0.1.0
+status: simulated against an RFC 826 model with scapy as a second decoder; transmit framing checked by bounded model checking;
+  built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries
+  it behind eth_mac_rmii; built, the board run waits for the owner's cabling check)
+summary: 'ARP for one IPv4 address (RFC 826): answers requests for own_ip, learns senders into a small cache (round-robin
+  replacement, flush), and looks up next-hop MAC addresses for transmit, sending a rate-limited request on a miss.'
+top: arp_responder
+rtl:
+- rtl/arp_responder.sv
+depends: []
+interfaces:
+- name: s_axis
+  type: axis
+  dir: slave
+  tdata: 8
+  tuser: 1
+  tready: always 1
+  note: received Ethernet frames without FCS; tuser on tlast marks a bad frame
+- name: m_axis
+  type: axis
+  dir: master
+  tdata: 8
+  tready: true
+  note: 42-byte ARP frames (replies before requests); the MAC pads them
+- name: lookup
+  type: native
+  signals: lk_valid, lk_ip[31:0], lk_ready, lk_done, lk_hit, lk_mac[47:0], flush
+  note: one lookup a clock, answered the next clock
+- name: config
+  type: native
+  signals: own_mac[47:0], own_ip[31:0]
+  note: static
+- name: events
+  type: native
+  signals: ev_rx_request, ev_rx_reply, ev_tx_reply, ev_tx_request, ev_learn, ev_drop
+  note: one-clock pulses for counters
+clocks:
+- name: clk
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+parameters:
+  CACHE_N:
+    type: int
+    default: 4
+    range:
+    - 1
+    - 16
+    note: cache entries
+  HOLDOFF:
+    type: int
+    default: 1000
+    range:
+    - 1
+    - 16777215
+    note: clocks before a second request for the same address
+constraints: []
+latency:
+  reply: the first reply byte on m_axis 3 clocks after the request's last byte when idle (measured in the bench)
+  lookup: 1 clock
+throughput: one reply waiting while another is sent; requests in the receive stream at line rate are parsed without back-pressure
+guards:
+- CACHE_N: 0
+- CACHE_N: 17
+- HOLDOFF: 0
+- HOLDOFF: 16777216
+sweep_tested:
+- CACHE_N: 4
+  HOLDOFF: 100
+- CACHE_N: 1
+  HOLDOFF: 40
+- CACHE_N: 16
+  HOLDOFF: 200
+characterisation:
+  part: xc7a100tcsg324-1
+  clock_ns: 8.0
+  points:
+  - CACHE_N: 4
+  - CACHE_N: 16
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none
+limits: Ethernet and IPv4 only; one own address; entries never age (flush from outside); no gratuitous ARP or address-conflict
+  detection (RFC 5227); one reply waits while one is sent, a third request is not answered
+evidence:
+  summary: 'cocotb against ip_lib/arp_responder/model.py (RFC 826, plain Python) with scapy decoding every frame sent: random
+    requests, replies, probes, malformed packets, padded frames, bad and short frames, lookups and flushes under input gaps
+    and back-pressure, then a dropped third reply and the request holdoff; Icarus Verilog 12. Formal (bounded): every frame
+    42 bytes and the AXI-Stream rules of brief 59 on m_axis'
+  tests:
+  - flow/net/tests/test_63d_arp_rtl.py
+  - flow/net/tests/test_63d_formal.py
+  faults: ip_lib/arp_responder/faults.yaml
+  results: results/b63d/faults.json, results/b63d/formal.json, ip_lib/arp_responder/char/xc7a100tcsg324-1.json
+  simulator: Icarus Verilog 12, cocotb 2.0.1; SymbiYosys
+cost_table: 'measured out of context: see the Cost section above'
+licence: MIT (this repository)

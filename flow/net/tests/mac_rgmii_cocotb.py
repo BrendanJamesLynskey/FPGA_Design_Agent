@@ -344,8 +344,11 @@ async def configure(dut, c: M.FilterCfg, n_exact: int):
     dut.mc_we.value = 0
 
 
-def rand_da(rng: random.Random, c: M.FilterCfg) -> bytes:
-    k = rng.choice(["own", "bcast", "exact", "hash", "mcast", "other", "pause"])
+DA_KINDS = ["own", "bcast", "exact", "hash", "mcast", "other", "pause"]
+
+
+def rand_da(rng: random.Random, c: M.FilterCfg, k: str | None = None) -> bytes:
+    k = k or rng.choice(DA_KINDS)
     if k == "own":
         return c.own
     if k == "bcast":
@@ -361,9 +364,10 @@ def rand_da(rng: random.Random, c: M.FilterCfg) -> bytes:
     return bytes([0x02, 0x11, 0x22, rng.randrange(256), rng.randrange(256), 0x10])
 
 
-def rand_frame(rng: random.Random, c: M.FilterCfg, max_len: int = 300) -> bytes:
-    """A frame without FCS: a random destination, sometimes tagged, sometimes a MAC control (pause) frame."""
-    da = rand_da(rng, c)
+def rand_frame(rng: random.Random, c: M.FilterCfg, max_len: int = 300, kind: str | None = None) -> bytes:
+    """A frame without FCS: a random destination (or one of `kind`), sometimes tagged, sometimes a MAC control
+    (pause) frame."""
+    da = rand_da(rng, c, kind)
     sa = bytes([0x02, 0x33, 0x44, 0x55, 0x66, rng.randrange(256)])
     u = rng.random()
     if u < 0.15:
@@ -437,8 +441,8 @@ async def filter_rx(dut):
         await configure(dut, c, n_exact)
         frames, kinds = [], []
         for k in range(N if speed == 2 else max(6, N // 3)):
-            fr = rand_frame(rng, c)
-            kind = "good" if k % 7 else rng.choice(["fcs", "runt"])
+            fr = rand_frame(rng, c, kind=DA_KINDS[k - 1] if 1 <= k <= len(DA_KINDS) else None)   # each kind once
+            kind = "good" if k % 8 else rng.choice(["fcs", "runt"])
             if kind == "fcs":
                 f = bytearray(fr + M.fcs(fr)); f[-1] ^= 1; frames.append(bytes(f))
             elif kind == "runt":
@@ -467,6 +471,29 @@ async def filter_rx(dut):
         else:
             assert not axis
         dut._log.info(f"filter_rx setting {si}: {len(frames)} frames, {len(want_axis)} kept")
+    if ct == 0:                     # the store-and-forward latency: rx_end_valid to the first m_axis beat, buffer empty
+        await configure(dut, M.FilterCfg(own=OWN), n_exact)
+        fr = OWN + bytes(range(6, 64))
+        t = {}
+
+        async def lat():
+            n = 0
+            while True:
+                await RisingEdge(dut.clk)
+                await ReadOnly()
+                n += 1
+                if int(dut.rx_end_valid.value) and "end" not in t:
+                    t["end"] = n
+                if int(dut.m_axis_tvalid.value) and "end" in t and "out" not in t:
+                    t["out"] = n
+        lt = cocotb.start_soon(lat())
+        await phy.rx_frame(PRE + fr + M.fcs(fr))
+        await phy.rx_idle(80)
+        lt.cancel()
+        assert t["out"] - t["end"] == 4, t
+        dut._log.info(f"store-and-forward latency: {t['out'] - t['end']} clocks from rx_end_valid to m_axis_tvalid")
+        st["rx_frames_good"] += 1
+        st["rx_octets_good"] += len(fr) + 4
     if param(dut, "STATS"):
         got = await read_stats(dut)
         w = param(dut, "STAT_W")

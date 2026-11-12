@@ -1,0 +1,22 @@
+# SymbiYosys: the clause 22 frame of mdio_master.sv. prove: k-induction (holds for every frame); bmc/cover: bounded.
+[tasks]
+prove
+cover
+
+[options]
+prove: mode prove
+prove: depth 12
+cover: mode cover
+cover: depth 262
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal -sv mdio_master.sv
+read_verilog -formal -sv formal_mdio.sv
+prep -top formal_mdio
+
+[files]
+../rtl/mdio_master.sv
+formal_mdio.sv

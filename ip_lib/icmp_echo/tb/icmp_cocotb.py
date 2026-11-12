@@ -19,6 +19,7 @@ from ip_lib.icmp_echo import model
 
 SEED = int(os.environ.get("ICMP_SEED", "1"))
 N = int(os.environ.get("ICMP_N", "60"))
+LATENCY = 4                                         # ip.yaml latency.reply
 OWN_MAC = inet.mac_b("02:00:00:00:00:01")
 OWN_IP = inet.ip_b("192.168.10.2")
 try:
@@ -88,7 +89,8 @@ def make(rng: random.Random, buf: int):
         b = b[:len(b) - 1 - rng.randrange(min(5, len(b) - 40))]
     fr = bytes(b)
     if len(fr) < 60:
-        fr = fr.ljust(60, b"\x00") if rng.random() < 0.8 else fr          # Ethernet padding, mostly
+        if rng.random() < 0.8:                           # Ethernet padding, mostly; zeros or (allowed) anything
+            fr += bytes(rng.randrange(256) if rng.random() < 0.5 else 0 for _ in range(60 - len(fr)))
     return fr, kind == "bad", kind
 
 
@@ -134,4 +136,11 @@ async def echo(dut):
     await axis_tb.clocks(dut, 300)
     assert [f for f, _ in sink.frames[n0:]] == [model.reply(r1, OWN_MAC, OWN_IP, ttl, buf)[0]]
     assert ev.n["ev_busy"] == 1
+    # the declared latency: the request's last byte to the reply's first, output free
+    lat = axis_tb.Latency(dut)
+    await src.send(r2)
+    await axis_tb.clocks(dut, 200)
+    n = lat.clocks()
+    assert n == LATENCY, n
+    dut._log.info(f"latency: {n} clocks from the request's last byte to the reply's first")
     sink.stop()

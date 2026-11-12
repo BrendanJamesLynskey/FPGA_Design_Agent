@@ -17,6 +17,7 @@ from ip_lib.ipv4_udp_tx import model
 
 SEED = int(os.environ.get("UTX_SEED", "1"))
 N = int(os.environ.get("UTX_N", "40"))
+LATENCY = 4                                         # ip.yaml latency.frame
 OWN_MAC = inet.mac_b("02:00:00:00:00:01")
 OWN_IP = inet.ip_b("192.168.10.2")
 try:
@@ -88,10 +89,19 @@ async def udp_tx(dut):
             await axis_tb.clocks(dut, rng.randrange(1, 40))
     await axis_tb.clocks(dut, 2 * maxp + 2000)
     sink.stop()
+    await axis_tb.clocks(dut, 2)
     got = [f for f, _ in sink.frames]
     assert len(got) == len(want), (len(got), len(want))
     for k, (g, w) in enumerate(zip(got, want)):
         assert g == w, (k, len(g), len(w), g[:44].hex(), w[:44].hex())
         scapy_check(g, bool(cs))
     assert n_ev["ev_sent"] == len(want) and n_ev["ev_too_long"] == N - len(want), n_ev
+    sink2 = axis_tb.Sink(dut, rng, ready=1.0)
+    lat = axis_tb.Latency(dut)
+    await src.send(b"xyz", side={"s_dst_mac": 2, "s_dst_ip": 3, "s_src_port": 4, "s_dst_port": 5})
+    await axis_tb.clocks(dut, 200)
+    sink2.stop()
+    n = lat.clocks()
+    assert n == LATENCY, n
+    dut._log.info(f"latency: {n} clocks from the payload's last beat to the frame's first byte")
     dut._log.info(f"udp_tx: {N} payloads, {len(want)} sent, {zs} with a zero checksum sum, events {n_ev}")

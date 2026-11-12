@@ -1,0 +1,133 @@
+# ip.yaml for ipv4_udp_tx: the declared parameter space and contract (the library's reuse rules; brief 63D).
+name: ipv4_udp_tx
+version: 0.1.0
+status: simulated against an RFC 791/768 model with scapy recomputing both checksums; framing checked by bounded model checking;
+  built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries
+  it behind eth_mac_rmii; built, the board run waits for the owner's cabling check)
+summary: 'UDP over IPv4 transmit: stores one payload, then sends Ethernet, IPv4 (header checksum, counting identification)
+  and UDP headers (checksum over the pseudo-header, or none) followed by the payload.'
+top: ipv4_udp_tx
+rtl:
+- rtl/ipv4_udp_tx.sv
+depends: []
+interfaces:
+- name: s_axis
+  type: axis
+  dir: slave
+  tdata: 8
+  tready: true
+  note: one UDP payload per frame; s_dst_mac, s_dst_ip, s_src_port and s_dst_port are taken with the first beat
+- name: m_axis
+  type: axis
+  dir: master
+  tdata: 8
+  tready: true
+  note: Ethernet frames without FCS, 42 + payload bytes
+- name: config
+  type: native
+  signals: own_mac[47:0], own_ip[31:0]
+- name: events
+  type: native
+  signals: ev_sent, ev_too_long
+clocks:
+- name: clk
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+parameters:
+  MAX_PAYLOAD:
+    type: int
+    default: 1472
+    range:
+    - 1
+    - 8972
+    note: 'longest payload (1472: a 1500-byte MTU; 8972: a 9000-byte MTU)'
+  CSUM:
+    type: int
+    default: 1
+    set:
+    - 0
+    - 1
+    note: 1 = compute the UDP checksum; 0 = send 0
+  TTL:
+    type: int
+    default: 64
+    range:
+    - 1
+    - 255
+  RAM:
+    type: string
+    default: bram
+    set:
+    - bram
+    - lutram
+    note: 'the payload buffer: block RAM or LUT RAM (the implementation variants)'
+constraints: []
+variant_param: RAM
+variants:
+  bram:
+    summary: the payload buffer in block RAM
+    when: the default
+    uses:
+      dsp: 0
+      bram_tiles: max(0.5, ceil((MAX_PAYLOAD + 1) / 4096))
+    latency: 4
+    ii: 1
+  lutram:
+    summary: the payload buffer in LUT RAM
+    when: small buffers, or block RAM spoken for
+    uses:
+      dsp: 0
+      bram_tiles: 0
+    latency: 4
+    ii: 1
+latency:
+  frame: the first header byte on m_axis 4 clocks after the payload's last beat (store and forward; measured in the bench;
+    the variants' declared latency)
+throughput: 'one datagram at a time: the payload in at a byte a clock, then the frame out at a byte a clock'
+guards:
+- MAX_PAYLOAD: 0
+- MAX_PAYLOAD: 8973
+- CSUM: 2
+- TTL: 0
+- TTL: 256
+- RAM: uram
+sweep_tested:
+- MAX_PAYLOAD: 1472
+  CSUM: 1
+  TTL: 64
+  RAM: bram
+- MAX_PAYLOAD: 64
+  CSUM: 0
+  TTL: 1
+  RAM: lutram
+- MAX_PAYLOAD: 8972
+  CSUM: 1
+  TTL: 255
+  RAM: bram
+characterisation:
+  part: xc7a100tcsg324-1
+  clock_ns: 8.0
+  points:
+  - MAX_PAYLOAD: 1472
+  - MAX_PAYLOAD: 8972
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none (memories inferred; ram_style steers the variants)
+limits: no fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller's
+  (from arp_responder, or the multicast mapping)
+evidence:
+  summary: 'cocotb against ip_lib/ipv4_udp_tx/model.py (RFC 791, 768, 1071) with scapy recomputing both checksums of every
+    frame: random lengths up to and over MAX_PAYLOAD, payloads whose checksum computes to zero (sent as 0xFFFF), unicast and
+    multicast destinations, input gaps and back-pressure; Icarus Verilog 12. Formal (bounded): every frame 42 bytes plus its
+    payload, the AXI-Stream rules of brief 59 on m_axis, the input held while a frame is prepared or sent'
+  tests:
+  - flow/net/tests/test_63d_udp_tx_rtl.py
+  - flow/net/tests/test_63d_formal.py
+  faults: ip_lib/ipv4_udp_tx/faults.yaml
+  results: results/b63d/faults.json, results/b63d/formal.json, ip_lib/ipv4_udp_tx/char/xc7a100tcsg324-1.json
+  simulator: Icarus Verilog 12, cocotb 2.0.1; SymbiYosys
+cost_table: measured costs are in the Variants section above
+licence: MIT (this repository)

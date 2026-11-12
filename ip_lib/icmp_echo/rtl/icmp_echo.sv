@@ -46,12 +46,12 @@ module icmp_echo #(
     function automatic logic [15:0] oc_add(input logic [15:0] a, input logic [15:0] b);   // ones' complement sum
         logic [16:0] s;
         s = {1'b0, a} + {1'b0, b};
-        return s[15:0] + {15'd0, s[16]};
+        oc_add = s[15:0] + {15'd0, s[16]};
     endfunction
     function automatic logic [15:0] fold(input logic [31:0] s);
         logic [16:0] t;
         t = {1'b0, s[31:16]} + {1'b0, s[15:0]};
-        return t[15:0] + {15'd0, t[16]};
+        fold = t[15:0] + {15'd0, t[16]};
     endfunction
 
     // ---------------------------------------------------------------- receive and check

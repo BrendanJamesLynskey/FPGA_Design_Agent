@@ -1,0 +1,25 @@
+# SymbiYosys: icmp_echo's reply protocol (axi_tx/rtl/axis_rules.sv, brief 59). bmc: bounded, depth 40; cover: a
+# whole reply to a minimal echo request leaves (depth 90).
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 40
+cover: mode cover
+cover: depth 90
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal -sv axis_rules.sv
+read_verilog -formal -sv icmp_echo.sv
+read_verilog -formal -sv formal_icmp.sv
+prep -top formal_icmp
+
+[files]
+../../../axi_tx/rtl/axis_rules.sv
+../rtl/icmp_echo.sv
+formal_icmp.sv

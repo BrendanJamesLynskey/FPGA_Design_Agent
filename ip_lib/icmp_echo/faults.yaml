@@ -1,0 +1,39 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults (the other runner skips it)
+faults:
+  - name: icmp_ttl_kept
+    file: icmp_echo.sv
+    old: "16'd22: out_byte = 8'(TTL);"
+    new: "16'd22: out_byte = m;"
+    class: protocol
+    why: the reply keeps the request's TTL while its checksum assumes the new one
+    test: flow/net/tests/test_63d_icmp_rtl.py -k bram_2048
+  - name: icmp_checksum_not_updated
+    file: icmp_echo.sv
+    old: "r_csum <= ~oc_add(oc_add(~csum_rx, ~{typ, code}), {8'd0, code});"
+    new: "r_csum <= csum_rx;"
+    class: protocol
+    why: the ICMP checksum is not updated for the type change
+    test: flow/net/tests/test_63d_icmp_rtl.py -k bram_2048
+  - name: icmp_answers_fragments
+    file: icmp_echo.sv
+    old: "ff[13:0] == 14'd0"
+    new: "ff[12:0] == 13'd0"
+    class: missing check
+    why: a first fragment (MF set) is answered as if it were the whole request
+    test: flow/net/tests/test_63d_icmp_rtl.py -k bram_2048
+  - name: icmp_sum_over_padding
+    file: icmp_echo.sv
+    old: "if (k >= 16'd34 && {1'b0, k} < tl14) ic_acc"
+    new: "if (k >= 16'd34) ic_acc"
+    class: off-by-one
+    why: the ICMP checksum is checked over the Ethernet padding too
+    test: flow/net/tests/test_63d_icmp_rtl.py -k bram_2048
+  - name: icmp_addresses_not_swapped
+    file: icmp_echo.sv
+    old: "if (j >= 16'd26 && j <= 16'd29)      ra = AW'(j + 16'd4);"
+    new: "if (j >= 16'd26 && j <= 16'd29)      ra = AW'(j);"
+    class: protocol
+    why: the reply's IP source stays the requester's address
+    test: flow/net/tests/test_63d_icmp_rtl.py -k bram_2048

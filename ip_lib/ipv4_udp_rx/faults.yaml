@@ -1,0 +1,39 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults (the other runner skips it)
+faults:
+  - name: udp_rx_highest_port_wins
+    file: ipv4_udp_rx.sv
+    old: "for (int i = N_PORTS - 1; i >= 0; i--)"
+    new: "for (int i = 0; i < N_PORTS; i++)"
+    class: protocol
+    why: when two port entries match, the highest index wins instead of the lowest
+    test: flow/net/tests/test_63d_udp_rx_rtl.py -k p8
+  - name: udp_rx_no_pseudo_header_source
+    file: ipv4_udp_rx.sv
+    old: "assign u_tot = u_acc + {16'd0, src[31:16]} + {16'd0, src[15:0]} +"
+    new: "assign u_tot = u_acc + {16'd0, src[15:0]} +"
+    class: protocol
+    why: the UDP checksum leaves half of the source address out of the pseudo-header
+    test: flow/net/tests/test_63d_udp_rx_rtl.py -k p4
+  - name: udp_rx_padding_passed
+    file: ipv4_udp_rx.sv
+    old: "assign in_pay = k >= u0 + 16'd8 && {1'b0, k} < u_end;"
+    new: "assign in_pay = k >= u0 + 16'd8;"
+    class: off-by-one
+    why: bytes after the datagram (Ethernet padding) are passed on as payload
+    test: flow/net/tests/test_63d_udp_rx_rtl.py -k p4
+  - name: udp_rx_fragments_passed
+    file: ipv4_udp_rx.sv
+    old: "assign frag   = ff[13:0] != 14'd0;"
+    new: "assign frag   = 1'b0;"
+    class: missing check
+    why: fragments are taken as whole datagrams
+    test: flow/net/tests/test_63d_udp_rx_rtl.py -k p4
+  - name: udp_rx_options_not_skipped
+    file: ipv4_udp_rx.sv
+    old: "assign u0 = 16'd14 + {10'd0, vi[3:0], 2'b00};"
+    new: "assign u0 = 16'd34;"
+    class: protocol
+    why: IP options are read as the UDP header
+    test: flow/net/tests/test_63d_udp_rx_rtl.py -k p4

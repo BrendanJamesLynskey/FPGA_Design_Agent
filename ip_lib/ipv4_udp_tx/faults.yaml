@@ -1,0 +1,32 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults (the other runner skips it)
+faults:
+  - name: udp_tx_zero_checksum_sent
+    file: ipv4_udp_tx.sv
+    old: "((~fold(u_sum) == 16'h0000) ? 16'hFFFF : ~fold(u_sum))"
+    new: "~fold(u_sum)"
+    class: protocol
+    why: a computed checksum of 0 goes out as 0 (no checksum) instead of 0xFFFF
+    test: flow/net/tests/test_63d_udp_tx_rtl.py -k bram_1472
+  - name: udp_tx_ident_stuck
+    file: ipv4_udp_tx.sv
+    old: "st <= S_IN; n <= '0; p_acc <= '0; ident <= ident + 16'd1; ev_sent <= 1'b1;"
+    new: "st <= S_IN; n <= '0; p_acc <= '0; ev_sent <= 1'b1;"
+    class: state
+    why: every datagram carries the same IP identification
+    test: flow/net/tests/test_63d_udp_tx_rtl.py -k bram_1472
+  - name: udp_tx_length_plus_one
+    file: ipv4_udp_tx.sv
+    old: "assign ulen = n + 16'd8;"
+    new: "assign ulen = n + 16'd9;"
+    class: off-by-one
+    why: the UDP length counts one byte too many
+    test: flow/net/tests/test_63d_udp_tx_rtl.py -k bram_1472
+  - name: udp_tx_long_payload_sent
+    file: ipv4_udp_tx.sv
+    old: "if (over || n >= 16'(MAX_PAYLOAD)) begin"
+    new: "if (over) begin"
+    class: missing check
+    why: a payload one byte over MAX_PAYLOAD is sent cut short instead of dropped
+    test: flow/net/tests/test_63d_udp_tx_rtl.py -k bram_1472

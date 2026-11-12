@@ -1,0 +1,25 @@
+# SymbiYosys: arp_responder's transmit framing and the AXI-Stream rules (axi_tx/rtl/axis_rules.sv, brief 59).
+# bmc: bounded, depth 60 (more than a request in and its 42-byte reply out); cover: a reply and a request leave.
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 60
+cover: mode cover
+cover: depth 100
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal -sv axis_rules.sv
+read_verilog -formal -sv arp_responder.sv
+read_verilog -formal -sv formal_arp.sv
+prep -top formal_arp
+
+[files]
+../../../axi_tx/rtl/axis_rules.sv
+../rtl/arp_responder.sv
+formal_arp.sv
