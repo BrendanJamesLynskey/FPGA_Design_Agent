@@ -130,3 +130,27 @@ def test_tools_are_registered_and_check_a_program(tmp_path: Path) -> None:
     out = axi_program_check(None, {"name": "x", "target": "bram", "steps": [{"write": {"addr": 0, "data": 1, "sb": True}},
                                                                              {"read": {"addr": 0, "sb": True}}]})
     assert out["ok"] and out["predicted"]["sb_checked"] == 1 and out["instructions"] == 3
+
+
+def test_portfolio_card_numbers_are_the_site_values() -> None:
+    """site/portfolio/axi_transactor: every number in a fact is one of the values its sources point at in site/data."""
+    import json
+    card = json.loads((ROOT / "site" / "portfolio" / "axi_transactor" / "portfolio.json").read_text())
+    show = json.loads((ROOT / "site" / "data" / "showcase.json").read_text())
+
+    def at(ref: str):
+        f, path = ref.split(":", 1)
+        assert f == "site/data"
+        node = show
+        parts = path.split(".")
+        assert parts[0] == "showcase"
+        for p in parts[1:]:
+            node = node[int(p)] if isinstance(node, list) else node[p]
+        return node
+    assert at("site/data:showcase.projects.0.id") == "axi_transactor"
+    for fact in card["facts"]:
+        allowed = {str(at(r)) for r in [fact["source"], *fact.get("also", [])]}
+        nums = set(re.findall(r"\d+(?:\.\d+)?", re.sub(r"AXI4-Lite|AXI4-Stream|Nexys A7", "", fact["text"])))
+        assert nums <= allowed, (fact["text"], nums - allowed)
+    for k in ("still_1200x630", "animation", "animation_mp4"):
+        assert (ROOT / "site" / "portfolio" / "axi_transactor" / card["media"][k]).is_file()

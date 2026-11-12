@@ -144,6 +144,17 @@ def test_portfolio_pack_sources_resolve():
     assert (SITE / "portfolio" / P["media"]["animation"]).stat().st_size < 2_000_000
 
 
+def _static(out: Path) -> None:
+    """The built site's static files (scripts, styles, images) beside the test's pages: build.build writes HTML only, and a
+    missing file is a load error the browser check counts (brief 59A: both e2e tests failed on this alone)."""
+    pub = SITE / "public"
+    for f in pub.rglob("*"):
+        if f.is_file() and f.suffix != ".html":
+            dst = out / f.relative_to(pub)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(f, dst)
+
+
 @pytest.mark.skipif(shutil.which("node") is None or not Path("/home/brendan/Claude_sandbox/node_modules/puppeteer").exists()
                     or not Path("/usr/bin/google-chrome").exists(), reason="puppeteer and Chrome not installed (run locally)")
 @pytest.mark.skipif("FDA_E2E" not in __import__("os").environ, reason="browser test: set FDA_E2E=1 (a heavy job; take a slot)")
@@ -152,6 +163,7 @@ def test_e2e_pages_render_without_errors_or_overflow(tmp_path):
     d = build.load_data(None)
     d["showcase"] = showcase.build(FIX, allow_fixtures=True)
     pages, _ = build.build(out, d)
+    _static(out)
     for f, p in pages.items():
         (out / f).parent.mkdir(parents=True, exist_ok=True)
         (out / f).write_text(p)
@@ -160,6 +172,26 @@ def test_e2e_pages_render_without_errors_or_overflow(tmp_path):
                        env={**__import__("os").environ, "NODE_PATH": "/home/brendan/Claude_sandbox/node_modules"}, timeout=600)
     assert r.returncode == 0, r.stdout + r.stderr
 
+
+
+@pytest.mark.skipif(shutil.which("node") is None or not Path("/home/brendan/Claude_sandbox/node_modules/puppeteer").exists()
+                    or not Path("/usr/bin/google-chrome").exists(), reason="puppeteer and Chrome not installed (run locally)")
+@pytest.mark.skipif("FDA_E2E" not in __import__("os").environ, reason="browser test: set FDA_E2E=1 (a heavy job; take a slot)")
+def test_e2e_published_showcase_pages_render(tmp_path):
+    """Brief 59A: the same browser check on every published showcase page, built from the real data."""
+    out = tmp_path / "pub"
+    d = build.load_data(None)
+    pages, _ = build.build(out, d)
+    _static(out)
+    for f, p in pages.items():
+        (out / f).parent.mkdir(parents=True, exist_ok=True)
+        (out / f).write_text(p)
+    pub = [f for f in pages if f.startswith("showcase/")]
+    assert pub, "no published showcase page"
+    r = subprocess.run(["node", str(SITE / "tests" / "e2e_render.js"), str(out), ",".join(["showcase.html", *pub])],
+                       capture_output=True, text=True,
+                       env={**__import__("os").environ, "NODE_PATH": "/home/brendan/Claude_sandbox/node_modules"}, timeout=600)
+    assert r.returncode == 0, r.stdout + r.stderr
 
 def test_home_visit_strip_counts_match_the_record():
     """The loop replay's strip of stage visits (app.js, mountLoop) counts visits and repairs as loop.py does."""

@@ -8,25 +8,25 @@ Design and method: [docs/axi_tx.md](../../docs/axi_tx.md). Every number below is
 17 of 17 pre-registered runs passed ([board_plan.yaml](../../axi_tx/programs/board_plan.yaml), [board_run.json](board_run.json)); build ID `05236f86`, build stamp `c3ed8fb8`.
 Operating conditions: inside the recommended operating conditions at every sample (JTAG XADC before and after, fabric XADC with its min/max and latched alarms after every run).
 
-| Run | Pass | Transactions | Rules fired (episodes) | Scoreboard checked / mismatched | AMD checker | Same digest as simulation |
-|---|---|---|---|---|---|---|
-| bram_random_rw #0 | yes | 432 | none | 107 / 0 | quiet | not compared (AMD core on the board) |
-| bram_random_rw #1 | yes | 432 | none | 107 / 0 | quiet | not compared (AMD core on the board) |
-| bram_random_rw #2 | yes | 432 | none | 107 / 0 | quiet | not compared (AMD core on the board) |
-| bram_strobes #0 | yes | 48 | none | 16 / 0 | quiet | not compared (AMD core on the board) |
-| periph_regs #0 | yes | 105 | none | 32 / 0 | quiet | yes |
-| periph_regs #1 | yes | 105 | none | 32 / 0 | quiet | yes |
-| periph_regs #2 | yes | 105 | none | 32 / 0 | quiet | yes |
-| periph_regs_b_early #0 | yes | 105 | B_EARLY 8 | 32 / 0 | asserted | yes |
-| periph_regs_r_live #0 | yes | 105 | R_HOLD 4 | 32 / 0 | asserted | yes |
-| periph_regs_r_glitch #0 | yes | 105 | R_HOLD 31 | 32 / 0 | asserted | yes |
-| periph_regs_exokay #0 | yes | 105 | EXOKAY 8 | 24 / 0 | asserted | yes |
-| periph_regs_no_strb #0 | yes | 105 | none | 32 / 8 | quiet | yes |
-| master_inject #0 | yes | 48 | AW_HOLD 2, W_HOLD 2, AR_HOLD 2 | 0 / 0 | asserted | yes |
-| stream_packets #0 | yes | 12 | none | 0 / 0 | quiet | yes |
-| stream_packets #1 | yes | 12 | none | 0 / 0 | quiet | yes |
-| stream_packets_lose_last #0 | yes | 12 | none | 0 / 0 | quiet | yes |
-| stream_packets_keep_wire #0 | yes | 12 | HOLD 22 | 0 / 0 | quiet | yes |
+| Run | Pass | Transactions | Rules fired (episodes) | Scoreboard checked / mismatched | Stream sink: packets, TLAST mismatches | AMD checker | Same digest and cycle count as simulation |
+|---|---|---|---|---|---|---|---|
+| bram_random_rw #0 | yes | 432 | none | 107 / 0 | 0, 0 | quiet | not compared (AMD core on the board) |
+| bram_random_rw #1 | yes | 432 | none | 107 / 0 | 0, 0 | quiet | not compared (AMD core on the board) |
+| bram_random_rw #2 | yes | 432 | none | 107 / 0 | 0, 0 | quiet | not compared (AMD core on the board) |
+| bram_strobes #0 | yes | 48 | none | 16 / 0 | 0, 0 | quiet | not compared (AMD core on the board) |
+| periph_regs #0 | yes | 105 | none | 32 / 0 | 0, 0 | quiet | yes |
+| periph_regs #1 | yes | 105 | none | 32 / 0 | 0, 0 | quiet | yes |
+| periph_regs #2 | yes | 105 | none | 32 / 0 | 0, 0 | quiet | yes |
+| periph_regs_b_early #0 | yes | 105 | B_EARLY 8 | 32 / 0 | 0, 0 | asserted | yes |
+| periph_regs_r_live #0 | yes | 105 | R_HOLD 4 | 32 / 0 | 0, 0 | asserted | yes |
+| periph_regs_r_glitch #0 | yes | 105 | R_HOLD 31 | 32 / 0 | 0, 0 | asserted | yes |
+| periph_regs_exokay #0 | yes | 105 | EXOKAY 8 | 24 / 0 | 0, 0 | asserted | yes |
+| periph_regs_no_strb #0 | yes | 105 | none | 32 / 8 | 0, 0 | quiet | yes |
+| master_inject #0 | yes | 48 | AW_HOLD 2, W_HOLD 2, AR_HOLD 2 | 0 / 0 | 0, 0 | asserted | yes |
+| stream_packets #0 | yes | 12 | none | 0 / 0 | 30, 0 | quiet | yes |
+| stream_packets #1 | yes | 12 | none | 0 / 0 | 30, 0 | quiet | yes |
+| stream_packets_lose_last #0 | yes | 12 | none | 0 / 0 | 18, 12 | quiet | yes |
+| stream_packets_keep_wire #0 | yes | 12 | HOLD 22 | 0 / 0 | 30, 0 | quiet | yes |
 
 The digest is a CRC-32 over every transaction including its latency in cycles. Runs on target `periph` use the same RTL in simulation and on the board, so their digests must be equal; runs on target `bram` use AMD's AXI BRAM Controller on the board and a memory model in simulation, so only their transactions and verdicts are compared (with the model), not their timing.
 

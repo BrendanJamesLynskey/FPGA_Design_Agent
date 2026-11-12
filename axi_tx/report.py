@@ -144,15 +144,16 @@ def readme(d: dict[str, Any]) -> str:
               f" [board_run.json](board_run.json)); build ID `{d.get('build_id')}`, build stamp `{d.get('build_stamp')}`.",
               f"Operating conditions: {'inside' if d['conditions']['inside_roc'] else 'OUTSIDE'} the recommended operating conditions"
               " at every sample (JTAG XADC before and after, fabric XADC with its min/max and latched alarms after every run).", "",
-              "| Run | Pass | Transactions | Rules fired (episodes) | Scoreboard checked / mismatched | AMD checker | Same digest as simulation |",
-              "|---|---|---|---|---|---|---|"]
+              "| Run | Pass | Transactions | Rules fired (episodes) | Scoreboard checked / mismatched | Stream sink: packets, TLAST mismatches | AMD checker | Same digest and cycle count as simulation |",
+              "|---|---|---|---|---|---|---|---|"]
         for r in d["board_runs"]:
             rules = ", ".join(f"{k} {v}" for k, v in {**r["lite_rules"], **r["stream_rules"]}.items()) or "none"
             se = r["sim_equal"]
             same = "n/a" if se is None else ("not compared (AMD core on the board)" if r["target"] == "bram"
-                                             else ("yes" if se["digest"] else "no"))
+                                             else ("yes" if se["digest"] and se["cycles"] else "no"))
             L.append(f"| {r['tag']} #{r['repeat']} | {'yes' if r['pass'] else 'NO'} | {r['n_txn']} | {rules} | "
-                     f"{r['sb_checked']} / {r['sb_mism']} | {'asserted' if r['amd_pc_asserted'] else 'quiet'} | {same} |")
+                     f"{r['sb_checked']} / {r['sb_mism']} | {r['sink']['packets']}, {r['sink']['last_mism']} | "
+                     f"{'asserted' if r['amd_pc_asserted'] else 'quiet'} | {same} |")
         L += ["", "The digest is a CRC-32 over every transaction including its latency in cycles. Runs on target `periph` use the"
               " same RTL in simulation and on the board, so their digests must be equal; runs on target `bram` use AMD's AXI BRAM"
               " Controller on the board and a memory model in simulation, so only their transactions and verdicts are compared"
@@ -195,31 +196,36 @@ def showcase_files() -> None:
     hero_run = next(r for r in runs if r["tag"] == "periph_regs_b_early")
     cap = hero_run["capture"]
     t = cap["trigger_index"]
-    lo, hi = max(0, t - 16), min(len(cap["rows"]), t + 12)
-    rows = cap["rows"][lo:hi]
+    # the window opens just before the address handshake and closes after the master takes the early response
     rule_bit = [n for n, _, _ in regs.LITE_RULES].index("B_EARLY")
+    first = next(i for i in range(t, -1, -1) if cap["rows"][i]["awvalid"] and cap["rows"][i]["awready"])
+    last = next(i for i in range(t, len(cap["rows"])) if cap["rows"][i]["bvalid"] and cap["rows"][i]["bready"])
+    lo, hi = max(0, first - 3), min(len(cap["rows"]), last + 2)
+    rows = cap["rows"][lo:hi]
     sig = [("AWVALID", "awvalid"), ("AWREADY", "awready"), ("WVALID", "wvalid"), ("WREADY", "wready"),
            ("BVALID", "bvalid"), ("BREADY", "bready")]
     signals = [{"name": n, "kind": "bit", "v": [r[k] for r in rows]} for n, k in sig]
-    signals.append({"name": "B_EARLY rule", "kind": "bit", "v": [r["lite_viol"] >> rule_bit & 1 for r in rows]})
+    signals.append({"name": "checker: B_EARLY", "kind": "bit", "v": [r["lite_viol"] >> rule_bit & 1 for r in rows]})
     caps, aw_done, w_done = [], False, False
-    for i, r in enumerate(rows):
-        c = []
+    for r in rows:
+        viol = r["lite_viol"] >> rule_bit & 1
         if r["awvalid"] and r["awready"]:
-            c.append("AW handshake: the address is accepted")
-            aw_done = True
-        if r["wvalid"] and r["wready"]:
-            c.append("W handshake: the data arrives, after the response")
-            w_done = True
-        if r["lite_viol"] >> rule_bit & 1 and r["trig"]:
-            c.append("BVALID is high but no W handshake has happened: the checker flags B_EARLY and triggers this capture")
+            c, aw_done = "AW accepted: the address is taken; no write data yet", True
+        elif r["wvalid"] and r["wready"]:
+            c, w_done = "W accepted: the write data arrives, after the response was raised", True
+        elif viol and r["trig"]:
+            c = "Violation: BVALID rises before any W handshake; the checker flags B_EARLY and starts this capture"
         elif r["bvalid"] and r["bready"]:
-            c.append("B handshake: the master takes the early response")
-        elif r["lite_viol"] >> rule_bit & 1:
-            c.append("still flagged: BVALID waits while the write data has not arrived")
-        if not c:
-            c.append("idle" if not (aw_done or r["awvalid"] or r["bvalid"]) else "waiting")
-        caps.append("; ".join(c))
+            c = "B accepted: the master takes the early response"
+        elif viol:
+            c = "BVALID held, still no write data: B_EARLY stays flagged"
+        elif r["bvalid"]:
+            c = "BVALID held; the master is not ready for the response yet"
+        elif not aw_done:
+            c = "Bus quiet before the write"
+        else:
+            c = "Address held by the peripheral, waiting for its data"
+        caps.append(c)
     hero = {"wave": {"unit": "cycle", "x": [i + lo - t for i in range(len(rows))], "signals": signals, "captions": caps,
                      "source_run": hero_run["tag"], "trigger_at_x": 0}}
     (RES / "hero.json").write_text(json.dumps(hero, indent=1) + "\n")

@@ -1,0 +1,42 @@
+{
+ "id": "axi_transactor",
+ "title": "An on-chip AXI traffic generator and protocol checker",
+ "tagline": "A block beside the IP under test that drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time and checks every protocol rule in hardware",
+ "url": "https://fpga-design-agent.vercel.app/showcase/axi_transactor.html",
+ "facts": [
+  {
+   "text": "All 6 seeded protocol bugs were caught on the Nexys A7 by the rule each breaks; AMD's AXI Protocol Checker on the same bus agreed in 17 of 17 runs.",
+   "source": "site/data:showcase.projects.0.values.bug_runs",
+   "also": [
+    "site/data:showcase.projects.0.values.amd_agree",
+    "site/data:showcase.projects.0.values.runs"
+   ]
+  },
+  {
+   "text": "The board's traffic matched the cocotb simulation cycle for cycle in 13 of 13 runs, with 0 differences in 936 logged transactions.",
+   "source": "site/data:showcase.projects.0.values.parity_eq",
+   "also": [
+    "site/data:showcase.projects.0.values.parity",
+    "site/data:showcase.projects.0.values.txn_diff",
+    "site/data:showcase.projects.0.values.txns"
+   ]
+  },
+  {
+   "text": "The checker is proved: 30 of 30 bounded proofs and 34 of 34 deliberately broken checkers caught.",
+   "source": "site/data:showcase.projects.0.values.proofs_pass",
+   "also": [
+    "site/data:showcase.projects.0.values.proofs",
+    "site/data:showcase.projects.0.values.mutants_killed",
+    "site/data:showcase.projects.0.values.mutants"
+   ]
+  }
+ ],
+ "media": {
+  "still_1200x630": "hero_1200x630.png",
+  "animation": "replay.webm",
+  "animation_mp4": "replay.mp4",
+  "alt": "A waveform captured on the board, replayed cycle by cycle: after the address handshake the peripheral raises BVALID before any write data, the checker's B_EARLY rule goes high and the write data arrives only afterwards.",
+  "note": "Recorded from the showcase page's own hero (results/59a_axi_tx/hero.json) by axi_tx/portfolio_capture.js."
+ },
+ "status": "Measured on the board; full AXI4, the slave side and soak testing are the next phase."
+}
