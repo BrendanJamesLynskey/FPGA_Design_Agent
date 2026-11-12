@@ -78,7 +78,7 @@ def main() -> None:
                   f"{round(sum(frac(r) for r in rr) / len(rr), 3)} |")
     md += ["", "Paired differences, arm minus A0 (median for tokens, cost, wall, hangs, visits; mean for the tests-passed fraction), "
            "95 % percentile bootstrap over blocks; n = blocks used.", "",
-           "| Arm | Metric | n | Median A0 | Difference | 95 % interval | Interval excludes 0 |", "|---|---|---|---|---|---|---|"]
+           "| Arm | Metric | n | Median A0 | Difference | 95 % interval | Interval excludes 0 | Blocks lower / higher than A0 |", "|---|---|---|---|---|---|---|---|"]
     for a in ARMS[1:]:
         for m, (get, stat, _u) in METRICS.items():
             d, base = [], []
@@ -89,12 +89,13 @@ def main() -> None:
                 d.append(x - y)
                 base.append(y)
             if not d:
-                md.append(f"| {a} | {m} | 0 | - | - | - | - |")
+                md.append(f"| {a} | {m} | 0 | - | - | - | - | - |")
                 continue
             ci = boot(d, stat)
             point = stat(d)
+            lo, hi = sum(1 for x in d if x < 0), sum(1 for x in d if x > 0)
             md.append(f"| {a} | {m} | {len(d)} | {round(med(base), 3)} | {round(point, 3)} | [{round(ci[0], 3)}, {round(ci[1], 3)}] | "
-                      f"{'yes' if ci[0] > 0 or ci[1] < 0 else 'no'} |")
+                      f"{'yes' if ci[0] > 0 or ci[1] < 0 else 'no'} | {lo} / {hi} |")
     md += ["", "Discordant blocks for pass and for stage-2 gates (only the arm passed / only A0 passed):", "",
            "| Arm | Hidden bench: arm only / A0 only | Stage-2 gates: arm only / A0 only |", "|---|---|---|"]
     for a in ARMS[1:]:
