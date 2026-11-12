@@ -118,6 +118,8 @@ def main(argv: list[str] | None = None) -> int:
             r["ok"] = r["status"] == r["expect"]
             ok &= r["ok"]
             print(f"{r['job']:28s} {r['status']:6s} (expect {r['expect']}) {r['seconds']:6.1f}s {'ok' if r['ok'] else 'WRONG'}")
+            if r["status"] == "ERROR":
+                print("  " + (OUT / r["job"] / "sby.log").read_text()[-600:].replace("\n", "\n  "))
         u["summary"] = {"proofs_pass": sum(r["ok"] for r in u["proofs"]), "proofs": len(u["proofs"]),
                         "mutants_killed": sum(r["ok"] for r in u["mutants"]), "mutants": len(u["mutants"])}
         res["units"][uname] = u
