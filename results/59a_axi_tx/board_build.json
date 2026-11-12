@@ -1,0 +1,105 @@
+{
+ "design": "designs/b59a_axi_tx",
+ "vivado": "2026.1",
+ "tier": "BASIC",
+ "pass": true,
+ "build_stamp": "19a86593",
+ "build_id": "44b780c9",
+ "timing": {
+  "wns_ns": 0.169,
+  "tns_ns": 0.0,
+  "tns_failing_endpoints": 0,
+  "tns_total_endpoints": 27974,
+  "whs_ns": 0.035,
+  "ths_ns": 0.0,
+  "ths_failing_endpoints": 0,
+  "ths_total_endpoints": 27974,
+  "wpws_ns": 3.75,
+  "tpws_ns": 0.0,
+  "tpws_failing_endpoints": 0,
+  "tpws_total_endpoints": 8602,
+  "timing_met": true
+ },
+ "utilization": {
+  "lut": 7043,
+  "lut_available": 63400,
+  "lutram": 1077,
+  "lutram_available": 19000,
+  "ff": 7308,
+  "ff_available": 126800,
+  "carry4": 1132,
+  "bram_tile": 5,
+  "bram_tile_available": 135,
+  "dsp": 0,
+  "dsp_available": 240,
+  "iob": 6,
+  "iob_available": 210,
+  "bufg": 1,
+  "bufg_available": 32
+ },
+ "power": {
+  "total_w": 0.185,
+  "dynamic_w": 0.07,
+  "static_w": 0.115,
+  "confidence": "Medium",
+  "clocks_w": 0.021,
+  "slice_logic_w": 0.017,
+  "signals_w": 0.018,
+  "io_w": 0.001,
+  "core_w": 0.069
+ },
+ "wall_s": 700.2,
+ "vivado_peak_rss_mib": 3100,
+ "scope_anon_peak_mib": 2424,
+ "threads": 1,
+ "gates": {
+  "rtl": true,
+  "post_synth": true,
+  "post_place": true,
+  "post_route": true,
+  "bitstream": true
+ },
+ "worst_setup_path": {
+  "slack": 0.169,
+  "requirement": 10.0,
+  "start_clock": "sys_clk_pin",
+  "end_clock": "sys_clk_pin",
+  "corner": "Slow",
+  "uncertainty": 0.035,
+  "pessimism": 0.187,
+  "from": "u_sys/u_core/u_src/n_reg[0]/C",
+  "to": "u_sys/u_core/g_schk.u_sl/total_reg[4]/CE"
+ },
+ "qor_assessment": {
+  "available": false,
+  "reason": "report_qor_assessment needs a licence tier above Basic (Implflow 47-2944); the QoR gate is not judged"
+ },
+ "earlier_builds": [
+  {
+   "build": 1,
+   "wns_ns": -0.877,
+   "failing_endpoints": 301,
+   "why": "axil_mon latency binning in one cycle; fixed by registering the latency"
+  },
+  {
+   "build": 2,
+   "wns_ns": 0.024,
+   "why": "passed; superseded because the peripheral's COUNT and stall LFSR ran from configuration, so runs were not repeatable"
+  },
+  {
+   "build": 3,
+   "build_stamp": "c3ed8fb8",
+   "build_id": "05236f86",
+   "wns_ns": 0.188,
+   "why": "passed and ran the whole plan (results/59a_axi_tx/board_run_build3.json); superseded after review: rule 9 (IN_RESET) added, rule 7 narrowed, elaboration-time width check"
+  }
+ ],
+ "built_from_commit": "e562dd3",
+ "later_build": {
+  "commit": "ad99917",
+  "build_id": "94eca24c",
+  "threads": 1,
+  "how": "flow/manifest.py show (prepare.py, no Vivado) at that commit",
+  "why": "build inputs changed after the board run (a comment in axi_tx_core.sv; flow/prepare.py now sources a verified copy of the IP Tcl); no logic changed"
+ }
+}

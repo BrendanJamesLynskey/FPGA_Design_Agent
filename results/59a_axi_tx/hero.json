@@ -1,0 +1,240 @@
+{
+ "wave": {
+  "unit": "cycle",
+  "x": [
+   -5,
+   -4,
+   -3,
+   -2,
+   -1,
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "signals": [
+   {
+    "name": "AWVALID",
+    "kind": "bit",
+    "v": [
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "name": "AWREADY",
+    "kind": "bit",
+    "v": [
+     1,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   {
+    "name": "WVALID",
+    "kind": "bit",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "name": "WREADY",
+    "kind": "bit",
+    "v": [
+     1,
+     1,
+     1,
+     1,
+     0,
+     0,
+     1,
+     1,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ]
+   },
+   {
+    "name": "BVALID",
+    "kind": "bit",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     0
+    ]
+   },
+   {
+    "name": "BREADY",
+    "kind": "bit",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     0
+    ]
+   },
+   {
+    "name": "B_EARLY",
+    "kind": "bit",
+    "v": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     1,
+     1,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  ],
+  "captions": [
+   "Bus quiet before the write",
+   "Bus quiet before the write",
+   "Bus quiet before the write",
+   "AW accepted: the address is taken; no write data yet",
+   "Address held by the peripheral, waiting for its data",
+   "Violation: BVALID rises before any W handshake; the checker flags B_EARLY and starts this capture",
+   "BVALID held, still no write data: B_EARLY stays flagged",
+   "W accepted: the write data arrives, after the response was raised",
+   "BVALID held; the master is not ready for the response yet",
+   "BVALID held; the master is not ready for the response yet",
+   "BVALID held; the master is not ready for the response yet",
+   "BVALID held; the master is not ready for the response yet",
+   "BVALID held; the master is not ready for the response yet",
+   "BVALID held; the master is not ready for the response yet",
+   "B accepted: the master takes the early response",
+   "Write complete: the bus is quiet again"
+  ],
+  "stages": [
+   {
+    "name": "Run",
+    "fact": "build 44b780c9",
+    "phase": "before",
+    "captions": [
+     "The transactor runs a register program against our peripheral with its early-response bug switched on. The checker watches the bus wires and has armed a capture on its first violation."
+    ]
+   },
+   {
+    "name": "Capture",
+    "fact": "16 cycles",
+    "phase": "during",
+    "captions": [
+     "The capture from the board, replayed cycle by cycle around the trigger."
+    ]
+   },
+   {
+    "name": "Verdict",
+    "fact": "cycle 1070 of the run",
+    "phase": "after",
+    "captions": [
+     "The checker names the rule broken: B_EARLY, a write response raised before its write data had arrived. AMD's AXI Protocol Checker on the same bus also flagged this run."
+    ]
+   }
+  ],
+  "marks": [
+   {
+    "x": 0,
+    "label": "trigger: B_EARLY",
+    "signal": "BVALID"
+   },
+   {
+    "x": 2,
+    "label": "write data arrives",
+    "signal": "WVALID"
+   }
+  ],
+  "tick": 5,
+  "source_run": "periph_regs_b_early",
+  "trigger_at_x": 0,
+  "key": "VALID: the sender offers a transfer; READY: the receiver takes it. AW = write address, W = write data, B = write response. B_EARLY: the checker's rule for a response raised before its data.",
+  "alt": "A waveform captured on the board: after the address handshake the peripheral raises BVALID, its write response, before any write data; the checker's B_EARLY rule goes high in that cycle and the write data arrives afterwards."
+ }
+}
