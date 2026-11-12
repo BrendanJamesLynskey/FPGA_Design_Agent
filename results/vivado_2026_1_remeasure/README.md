@@ -1,4 +1,4 @@
-# results/49_vivado_2026_1: published numbers re-measured on Vivado 2026.1 (brief 49)
+# results/vivado_2026_1_remeasure: published numbers re-measured on Vivado 2026.1 (brief 49)
 
 The owner, 2026-11-11: "all published material from now on should refer only to this Vivado release" (2026.1). Brief 49
 re-measured on **Vivado 2026.1** (`/opt/Xilinx/2026.1`, free Basic licence tier) every Vivado number the site, the READMEs and
@@ -21,7 +21,7 @@ In this folder:
 
 | File | What |
 |---|---|
-| `collect.py` | writes the three JSON files below from the builds (`python3 results/49_vivado_2026_1/collect.py <xpm before dir> <xpm after dir>`) |
+| `collect.py` | writes the three JSON files below from the builds (`python3 results/vivado_2026_1_remeasure/collect.py <xpm before dir> <xpm after dir>`) |
 | `dev_rebuilds.json` | six development runs whose saved designs were kept (`runs/<run_id>/<task>`, not committed), rebuilt with today's flow and test shell (`FDA_BUILD_CACHE=0 flow/run_vivado.sh runs/<id>/<task> base`). The site shows these, not the run records' own figures. The other runs' designs were not kept, so their timing and area are withdrawn from the site |
 | `xpm_probe.json` | the QR1 probe (two clocks, `xpm_cdc_single`, `xpm_cdc_gray`) built to route with and without `flow/xpm_cdc.tcl` (`FDA_XPM_CDC=0`, a switch added for this measurement): -1.364 ns with 5 failing endpoints, then +8.891 ns, the same as the earlier release |
 | `b30_hil_audio.json` | `designs/b30_hil_audio` base build and the per-instance utilisation the `ip_lib` READMEs quote (frame_crc 275 LUT, was 274; the others identical) |
