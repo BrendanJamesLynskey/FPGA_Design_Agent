@@ -25,22 +25,21 @@ areas:
   - {file: agent/core/constraints.py, gate: FDA-CON-11, enforced: false, what: "Before Vivado: the same made-up, unexplained, swapped or replaced I/O delays, and a virtual clock used before it is defined."}
   evidence:
   - kind: measured
-    source: results/20_timing_exceptions/exceptions_table.json
+    source: results/20_timing_exceptions_2026_1/exceptions_table.json
     values: ["count@rows:expect_flag=true", "count@rows:expect_flag=true,vivado_flags=true", "count@rows:expect_flag=true,flow_flags=true", "count@rows:expect_flag=false", "count@rows:expect_flag=false,flow_flags=false"]
     text: "On {0} small designs with one timing-exception mistake each, Vivado itself said something about the exception in {1}; the flow's checks flagged {2}. They passed {4} of {3} correct designs."
   - kind: measured
-    source: results/20_timing_exceptions/io_table.json
+    source: results/20_timing_exceptions_2026_1/io_table.json
     values: ["count@rows:fault=true", "count@rows:fault=true,vivado_flags=true", "count@rows:fault=true,flow_flags=true"]
     text: "On {0} small designs with one I/O-delay or virtual-clock mistake each, Vivado itself said something in {1}; the flow's gates flagged {2}."
   - kind: measured
-    source: results/14_flow_notes/inputs.json
+    source: results/49_vivado_2026_1/xpm_probe.json
     values: [get:xpm_probe.before.wns_ns, get:xpm_probe.after.wns_ns]
-    text: "On a two-clock probe design, setup slack on the crossing was {0} ns without AMD's macro exceptions and {1} ns with them (Vivado 2025.2)."
+    text: "On a two-clock probe design, setup slack on the crossing was {0} ns without AMD's macro exceptions and {1} ns with them (Vivado 2026.1)."
   - kind: agent
-    source: results/course/*/run_*.json
-    where: split=dev,qor.wns_ns_at_100MHz_post_route?
-    values: [n, "count:qor.wns_ns_at_100MHz_post_route>0"]
-    text: "Of the development runs, {0} reached routing and recorded setup slack there; it was positive in {1}."
+    source: results/49_vivado_2026_1/dev_rebuilds.json
+    values: ["count@rows:wns_ns?", "count@rows:wns_ns>0"]
+    text: "Of the development runs whose saved designs were rebuilt on Vivado 2026.1, {0} reached routing; setup slack was positive in {1}."
   - kind: agent
     source: results/20_timing_exceptions/drills/run_*.constraints.json
     values: [n, "count:pass=true"]
@@ -70,14 +69,14 @@ areas:
   - {file: flow/xpm_cdc.tcl, enforced: false, what: "Exceptions for AMD's crossing macros."}
   evidence:
   - kind: measured
-    source: results/16_cdc_gate/mutant_table.json
+    source: results/16_cdc_gate_2026_1/mutant_table.json
     values: ["count@rows:kind=mutant", "count@rows:kind=mutant,report_cdc_alone_flags=true", "count@rows:kind=mutant,gate_flags=true", "count@rows:kind=correct", "count@rows:kind=correct,gate_flags=false"]
     text: "On {0} ported broken crossings, report_cdc alone flagged {1}; the flow's gate flagged {2}. It passed {4} of {3} correct variants."
   - kind: measured
     source: site/data/flow_notes.json
     link: [hil/cdc_soak/results/cdc_rig_sim.json]
-    values: ["get:counts.rig_mutants", "get:counts.rig_sim_flags", "get:counts.rig_report_cdc_flags"]
-    text: "On the {0} mutants of the soak rig, its simulation with injection flagged {1}; report_cdc alone flagged {2}."
+    values: ["get:counts.rig_mutants", "get:counts.rig_sim_flags"]
+    text: "On the {0} mutants of the soak rig, its simulation with injection flagged {1}."
   cards:
   - {href: "flow-notes.html#cdc-gate", label: "Beyond the flow: the crossing report passes some unsafe crossings"}
   - {href: "flow-notes.html#xpm-cdc", label: "Beyond the flow: AMD's crossing macros lose their exceptions"}
@@ -98,7 +97,7 @@ areas:
   - {file: flow/cmt_check.tcl, enforced: false, what: "A VCO and phase-detector range checker, written and measured but not wired into a gate."}
   evidence:
   - kind: measured
-    source: results/project_parity/cmt_check/drc_*.rpt
+    source: results/project_parity_2026_1/cmt_check/drc_*.rpt
     values: [nfiles, "nmatch:AVAL-46"]
     text: "Of {0} probe designs (one legal, three with an MMCM setting outside its range), Vivado's design-rule check after synthesis flagged the setting as out of range on {1}."
   cards:
@@ -137,7 +136,7 @@ areas:
   - {file: flow/mig_impl_check.tcl, enforced: false, what: "Runs a MIG example design through implementation to see whether Vivado rejects a bad pin set."}
   evidence:
   - kind: measured
-    source: results/project_parity/mig_impl/*/drc_place.rpt
+    source: results/project_parity_2026_1/mig_impl/*/drc_place.rpt
     values: [nfiles, "nmatch:PLIO-3"]
     text: "{0} example designs of the memory controller (good pins, a byte-group fault, a duplicated pin) went through placement; the design-rule check after placement flagged {1}, the duplicated pin; the byte-group fault was not rejected."
   cards:
@@ -193,10 +192,10 @@ areas:
   evidence:
   - kind: measured
     contains: ["== Block Memory Generator", "== FIFO Generator"]
-    source: results/project_parity/wizards/wizards.txt
+    source: results/project_parity_2026_1/wizards/wizards.txt
     text: "Scripted generation was tried for the Block Memory, FIFO, XADC, Transceiver, PS7, Clocking and other wizards, and the probe output is committed."
   - kind: measured
-    source: results/19_ipgen/bmg_sine/sim.json
+    source: results/19_ipgen_2026_1/bmg_sine/sim.json
     values: [get:sim.mem.n_words, get:sim.mem.n_mismatch, get:sim.mem.latency_cycles]
     text: "A generated block-memory sine table read back in AMD's simulator with {1} mismatches in {0} reads and a measured latency of {2} cycles."
   cards:
@@ -219,19 +218,19 @@ areas:
     values: [n, "count:hidden_pass=true", "count:outcome=escape"]
     text: "The sine generator and oscillator-mixer tasks had {0} development runs; {1} passed every hidden test and {2} ended in an escape."
   - kind: measured
-    source: results/19_ipgen/fir/design.json
+    source: results/19_ipgen_2026_1/fir/design.json
     values: [get:design.taps, get:design.attenuation_lost_db]
     text: "A decimating low-pass filter designed in Python came to {0} taps; rounding its coefficients to the core's word length cost {1} dB of stop-band attenuation, and the specification was still met."
   - kind: measured
-    source: results/19_ipgen/fir/sim.json
+    source: results/19_ipgen_2026_1/fir/sim.json
     values: [get:sim.continuous.n_got, get:sim.continuous.n_mismatch, get:sim.random.n_mismatch]
     text: "The generated filter core matched the integer model on all {0} outputs in AMD's simulator: {1} mismatches with continuous input and {2} with random gaps."
   - kind: measured
-    source: results/19_ipgen/fir/ooc.json
+    source: results/19_ipgen_2026_1/fir/ooc.json
     values: [get:luts, get:dsp, get:wns_ns]
     text: "Synthesised on its own, that core used {0} LUTs and {1} DSP slices, with {2} ns of setup slack at the target clock; that figure is before routing, so it is an upper bound."
   - kind: measured
-    source: results/19_ipgen/dds/sim.json
+    source: results/19_ipgen_2026_1/dds/sim.json
     values: [get:sim.continuous.sfdr_db, get:sim.continuous.sfdr_spec_db]
     text: "The generated sine-generator core measured {0} dB of spurious-free dynamic range against a target of {1} dB."
   cards: []
@@ -308,19 +307,19 @@ areas:
   - {file: flow/cdc_structure.py, gate: synchroniser, enforced: false, what: "An input launched by another clock must pass two synchroniser registers; a direct use or a single register is flagged."}
   evidence:
   - kind: measured
-    source: results/24_fsm/summary.json
+    source: results/24_fsm_2026_1/summary.json
     values: [get:separation.sep_states, get:separation.sep_lut, get:separation.mono_states, get:separation.mono_lut, get:separation.sep_transitions, get:separation.mono_transitions]
     text: "One controller built in Vivado two ways with the same behaviour: {0} states plus a counter ({1} LUTs) and {2} states with the counter folded in ({3} LUTs). Folding was the smaller; the split machine has {4} transitions to cover instead of {5}."
   - kind: measured
-    source: results/24_fsm/summary.json
+    source: results/24_fsm_2026_1/summary.json
     values: [get:outputs.comb_slack_ns, get:outputs.registered_slack_ns, get:outputs.lookahead_latency_extra_clocks, get:outputs.registered_latency_extra_clocks]
     text: "At the test clock the slack from the state flops to an output pin was {0} ns with a decoded output and {1} ns with a registered one. A registered decode adds {3} clock of latency; registering the decode of the next state adds {2}."
   - kind: measured
-    source: results/24_fsm/summary.json
+    source: results/24_fsm_2026_1/summary.json
     values: [get:ratio.none, get:ratio.n2, get:ratio.n4, get:ratio.n8]
     text: "A state machine on a one-in-N clock enable, constrained with the multicycle pair on its own registers: slack between its registers was {0} ns without the exception and {1}, {2} and {3} ns at three enable ratios."
   - kind: measured
-    source: results/24_fsm/summary.json
+    source: results/24_fsm_2026_1/summary.json
     values: [get:coverage.designs, get:coverage.mutants_caught, get:coverage.mutants]
     text: "The coverage check passed on {0} designs with their real tests, and failed, naming the missed state or transition, in {1} of {2} runs with one test removed."
   - kind: example
@@ -382,10 +381,6 @@ areas:
     source: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json
     values: ["get:checks.tone_at_the_jack.measured.level_dbfs_rms", "get:checks.tone_at_the_jack.measured.sinad_db"]
     text: "The same design with one output pin moved passes simulation and every check inside the chip, and fails at the jack: level {0} dBFS, signal-to-noise-and-distortion {1} dB."
-  - kind: measured
-    source: hil/cdc_soak/results/build_full.json
-    values: ["get:utilisation.lut.used", "get:timing.wns_ns", "get:power.total_w"]
-    text: "The full build of the crossing soak rig uses {0} LUTs, meets timing with {1} ns to spare and has a Vivado power estimate of {2} W."
   cards:
   - {href: "flow-notes.html#pblock", label: "Beyond the flow: placement regions on the crossing rig"}
   gaps:
@@ -403,10 +398,6 @@ areas:
   - {file: flow/gates.py, gate: power_junction_ok, enforced: true, what: "The junction temperature computed for the board's real cooling must fit the limit."}
   - {file: agent/graph/stages.py, gate: power_ok, enforced: true, what: "Part of the power-closure stage gate: total on-chip power and junction temperature must be within the limits for the board's power source, and the board tools refuse to program a build that fails."}
   evidence:
-  - kind: measured
-    source: results/board_v2/*.json
-    values: ["max@results:steps.power_ok.total_w", "max@results:steps.power_ok.junction_c"]
-    text: "Across the board checks, the highest on-chip power was {0} W and the highest junction temperature {1} C."
   - kind: agent
     source: results/course/*/run_*.json
     where: split=dev,qor.power_w?,gates.stage_gates_post_route=pass
@@ -427,7 +418,7 @@ areas:
   - {file: flow/xprobe.py, enforced: false, what: "Cross-probing: names the RTL file and line, clock region and nets of a failing or tight path."}
   evidence:
   - kind: measured
-    source: results/project_parity/xprobe/*.xprobe.json
+    source: results/project_parity_2026_1/xprobe/*.xprobe.json
     values: [n, "min:wns"]
     text: "Cross-probing was run on {0} routed designs; the tighter had {1} ns of setup slack, and the output names the source lines, locations and nets."
   - kind: agent
@@ -438,5 +429,5 @@ areas:
   cards: []
   gaps:
   - "No local design had a failing path to cross-probe, so it is shown on passing ones."
-  - "Everything is measured on Vivado 2025.2, and other versions are not tested."
+  - "Every Vivado number on this page is measured on Vivado 2026.1, and other versions are not tested here."
   - "The block-design and project-mode steps are measured in scripts but are not part of the flow."

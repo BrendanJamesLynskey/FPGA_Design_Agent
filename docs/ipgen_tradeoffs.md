@@ -5,7 +5,7 @@ available, and the consequent resource implications."
 
 ## What the user sees
 
-One page per signal chain (the YAML of [docs/ipgen.md](ipgen.md)). The chain diagram of `results/19_ipgen/chain/chain.svg` is
+One page per signal chain (the YAML of [docs/ipgen.md](ipgen.md)). The chain diagram of `results/19_ipgen_2026_1/chain/chain.svg` is
 the canvas: each IP block carries one drop-down per option the adapter exposes, and every drop-down choice moves the
 numbers on the diagram.
 

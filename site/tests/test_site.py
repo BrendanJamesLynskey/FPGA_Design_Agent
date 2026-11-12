@@ -458,3 +458,119 @@ def test_harness_section_equals_the_code():
     how = (SITE / "public" / "how.html").read_text()
     for t in ("term-harness", "term-middleware", "term-eviction", "term-caching"):
         assert f'id="{t}"' in how
+
+
+# Brief 49 (owner, 2026-11-11: "all published material from now on should refer only to this Vivado release"): no built
+# page may name a Vivado release other than 2026.1. AMD's release tokens are YYYY.N (N 1-4), with or without a "v";
+# raw evidence (results/, run records, fixtures) keeps its own version but is never a built page, so nothing is allowed here.
+import re  # noqa: E402
+
+RELEASE = re.compile(r"(?<![\d.])v?((?:19|20)\d\d\.[1-4])(?![\d])")
+ALLOWED_RELEASES = {"2026.1"}
+
+
+def release_tokens(text):
+    return {m.group(1) for m in RELEASE.finditer(text)} - ALLOWED_RELEASES
+
+
+def test_built_pages_name_only_vivado_2026_1():
+    d = build.load_data(None)
+    pages, bad = build.build(SITE / "public", d)
+    found = {name: sorted(release_tokens(html)) for name, html in pages.items() if release_tokens(html)}
+    assert not found, f"pages name another Vivado release: {found}"
+    for p in (SITE / "public").rglob("*.html"):            # the committed pages too (what the owner deploys)
+        assert not release_tokens(p.read_text()), p
+
+
+def test_release_guard_catches_an_old_release():
+    assert release_tokens("built with Vivado 2025.2") == {"2025.2"}
+    assert release_tokens("UG901 v2025.2 (synthesis)") == {"2025.2"}
+    assert release_tokens("Vivado 2026.1, 2,026.1 ns, 12026.15, DS181 v1.27.1, 2026-02-06") == set()
+
+
+# Brief 49 review (rule 3): published pages, README and docs link only 2026.1 records. A results folder whose README says
+# "superseded by" is a 2025.2 record; a link into it is allowed only to the entries its README lists as "Still current:".
+ROOT = SITE.parent
+# The folder name may hold dots but never ends in one, so "see results/f0a." is folder f0a; a trailing full stop or
+# colon after a path is stripped too (review R1).
+RESULT_REF = re.compile(r"results/([A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*)(/[^\s\"'`)\]<>|,;]*)?")
+
+
+def superseded_folders():
+    out = {}
+    for readme in (ROOT / "results").glob("*/README.md"):
+        t = readme.read_text()
+        if "superseded by" in t.split("\n## ", 1)[0]:
+            m = re.search(r"^Still current: (.*)$", t, re.M)
+            out[readme.parent.name] = re.findall(r"`([^`]+)`", m.group(1)) if m else []
+    return out
+
+
+PUBLISHED = ["README.md", "flow/README.md", "docs/**/*.md", "cloud/*.md", "ip_lib/*/README.md", "site/src/*.html",
+             "site/data/*.yaml", "site/*.py", "site/public/**/*.html", "knowledge/PACKS.md", "designs/**/*.md"]
+FROZEN_RECORDS = {"docs/eval/eval1_preregistration.md"}       # a pre-registration is a record, kept as written
+
+
+def published_files():
+    seen = set()
+    for g in PUBLISHED:
+        for p in ROOT.glob(g):
+            rel = p.relative_to(ROOT).as_posix()
+            if p.is_file() and rel not in FROZEN_RECORDS and rel not in seen:
+                seen.add(rel)
+                yield rel, p
+
+
+def stale_in(text, old):
+    bad = []
+    for m in RESULT_REF.finditer(text):
+        folder, rest = m.group(1), (m.group(2) or "").lstrip("/").rstrip(".:")
+        partly_current = bool(old.get(folder)) and rest in ("", "README.md")    # the folder of a partly superseded record
+        if folder in old and not partly_current and not any(rest.startswith(ok) or rest == ok.rstrip("/") for ok in old[folder]):
+            bad.append(f"results/{folder}/{rest}")
+    return bad
+
+
+def stale_links():
+    old = superseded_folders()
+    return [f"{rel}: {b}" for rel, p in published_files() for b in stale_in(p.read_text(errors="replace"), old)]
+
+
+def test_superseded_link_pattern_ignores_trailing_punctuation():
+    old = {"f0a": [], "f0b": ["manual_checks.md"]}
+    for text in ("built in results/f0a.", "(see results/f0a)", "results/f0a, then", "results/f0a/README.md.",
+                 "[x](results/f0a/t1.md).", "results/f0b/runs/x.json:"):
+        assert stale_in(text, old), text
+    for text in ("results/f0a_2026_1.", "(results/f0a_2026_1)", "results/f0b/manual_checks.md.", "results/f0b."):
+        assert not stale_in(text, old), text
+
+
+def test_published_material_links_no_superseded_result():
+    assert superseded_folders(), "no superseded folder found: the README marker changed?"
+    bad = stale_links()
+    assert not bad, "links into superseded 2025.2 records:\n" + "\n".join(sorted(set(bad)))
+
+
+# Sections that are deliberate historical records and may name the release they were written on (review R1). Each entry:
+# file -> heading of the one section exempted, and why.
+HISTORICAL_SECTIONS = {
+    # The guide editions each knowledge layer was written from: a provenance record, stated as such at the top of the
+    # section (their 2026.1 revisions were reviewed separately), so the edition numbers there stay as written.
+    "knowledge/PACKS.md": "## Sources, per unit",
+}
+
+
+def checked_text(rel, p):
+    t = p.read_text(errors="replace")
+    head = HISTORICAL_SECTIONS.get(rel)
+    if head:
+        assert head in t, f"{rel}: exempted section {head!r} is gone; update HISTORICAL_SECTIONS"
+        before, after = t.split(head, 1)
+        t = before + ("\n## " + after.split("\n## ", 1)[1] if "\n## " in after else "")
+    return t
+
+
+def test_readmes_and_docs_name_only_vivado_2026_1():
+    found = {rel: sorted(release_tokens(checked_text(rel, p))) for rel, p in published_files()
+             if not rel.startswith("site/") and release_tokens(checked_text(rel, p))}
+    assert not found, f"README/docs name another Vivado release: {found}"

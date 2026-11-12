@@ -1,5 +1,7 @@
 # results/ultrafast
 
+Measured on 2025.2, superseded by `results/f0a_2026_1`.
+
 Build results for brief 04e: T1 (`designs/t1_dimmer_counter`, **base** variant, the same sources as F0A, build
 stamp `dfd4624e`) rebuilt with `flow/run_vivado.sh designs/t1_dimmer_counter base` through the staged flow
 (`flow/build.tcl` with the UltraFast stage reports; `flow/gates.py` grouped by stage), then collected with

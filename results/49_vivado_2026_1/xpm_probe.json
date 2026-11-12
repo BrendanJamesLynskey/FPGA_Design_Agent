@@ -1,0 +1,31 @@
+{
+ "xpm_probe": {
+  "design": "flow/tests/fixtures/xpm_probe (two clocks, one xpm_cdc_single, one xpm_cdc_gray), built as designs/qr_xpm_probe",
+  "part": "xc7a100tcsg324-1",
+  "vivado": "2026.1",
+  "clk_a_period_ns": 10,
+  "clk_b_period_ns": 7,
+  "before": {
+   "what": "FDA_XPM_CDC=0 FDA_STOP_AFTER=route flow/run_vivado.sh (without flow/xpm_cdc.tcl)",
+   "wns_ns": -1.364,
+   "tns_ns": -6.222,
+   "failing_endpoints": 5,
+   "total_endpoints": 5,
+   "report_cdc_exception": {
+    "gray": "None",
+    "single": "None"
+   }
+  },
+  "after": {
+   "what": "FDA_STOP_AFTER=route flow/run_vivado.sh (with flow/xpm_cdc.tcl)",
+   "wns_ns": 8.891,
+   "tns_ns": 0.0,
+   "failing_endpoints": 0,
+   "total_endpoints": 4,
+   "report_cdc_exception": {
+    "gray": "Max Delay Datapath Only",
+    "single": "False Path"
+   }
+  }
+ }
+}

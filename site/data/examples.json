@@ -3,10 +3,10 @@
   "runs": [
    {
     "agent_turns": 157,
-    "bram36": 0,
-    "dsp": 0,
+    "bram36": null,
+    "dsp": null,
     "failure_class": null,
-    "ff": 1018,
+    "ff": null,
     "gates": {
      "V0": "pass",
      "V1": "pass",
@@ -15,7 +15,7 @@
      "bitstream": "built",
      "stage_gates_post_route": "all pass"
     },
-    "lut": 1060,
+    "lut": null,
     "outcome": "pass",
     "questions": {
      "oracle_calls": 5
@@ -30,7 +30,7 @@
     "tests_passed": 4,
     "tests_total": 4,
     "wall_h": 1.85,
-    "wns_ns": 0.698
+    "wns_ns": null
    }
   ],
   "spec": "# Median filter behind the test shell\n\nI want a block for the Nexys A7-100T's FPGA that takes a 3 x 3 window of 8-bit pixels and returns the median value of the nine (the fifth smallest), to remove speckle noise from a video stream, and I want to exercise it entirely from the test shell. Nine multipliers or a software sort are out of the question: it has to be pure logic and run at 100 MHz.\n\n- The order of the nine pixels in a window is irrelevant to a median.\n- A window presented to the block at one clock gives its median as a result exactly one clock later (one clock of latency); there is no result on a clock unless a window was presented one clock earlier. A window can be presented on any clock or on consecutive clocks. CPU_RESETN clears the block and the loaded values.\n- The block must close timing at 100 MHz.\n- Over the shell I load up to 8 windows, give a 32-bit pattern that says on which of the next 32 clocks a window is presented (a 1 bit presents the next window, in order), and a \"go\". Afterwards I read the medians in order, how many results came out, and a 32-bit record of the clocks on which a result appeared, so that I can check the latency and that there are no extra results. I will compare a couple of hundred windows (random pixels, equal pixels, runs of 0 and 255, single outliers), with gaps.\n- The shell runs at 115200 baud on the USB-UART. The design ID is \"MEDN\".\n\nTest hooks: top module `c9_median3x3_top`, ports named as in the board's master XDC, and the test shell's\n`CLKS_PER_BIT`, `TIMEOUT_CYCLES` and `BUILD_STAMP` parameters as top-level parameters. There are no other time\nconstants.",
@@ -41,10 +41,10 @@
   "runs": [
    {
     "agent_turns": 160,
-    "bram36": 1.5,
-    "dsp": 0,
+    "bram36": null,
+    "dsp": null,
     "failure_class": "harness gap (primary), model error (secondary)",
-    "ff": 357,
+    "ff": null,
     "gates": {
      "V0": "pass",
      "V1": "pass",
@@ -53,7 +53,7 @@
      "bitstream": "built",
      "stage_gates_post_route": "all pass"
     },
-    "lut": 471,
+    "lut": null,
     "outcome": "escape",
     "questions": {
      "note": "the question 'How is DATA packed' was recorded as defaulted although the oracle's reply was a correct, quoted answer (see failure)",
@@ -69,14 +69,14 @@
     "tests_passed": 1,
     "tests_total": 3,
     "wall_h": 1.26,
-    "wns_ns": 3.607
+    "wns_ns": null
    },
    {
     "agent_turns": 136,
-    "bram36": 0,
-    "dsp": 0,
+    "bram36": null,
+    "dsp": null,
     "failure_class": null,
-    "ff": 366,
+    "ff": null,
     "gates": {
      "V0": "pass",
      "V1": "pass",
@@ -85,7 +85,7 @@
      "bitstream": "built",
      "stage_gates_post_route": "all pass"
     },
-    "lut": 578,
+    "lut": null,
     "outcome": "pass",
     "questions": {
      "answered": [
@@ -109,7 +109,7 @@
     "tests_passed": 3,
     "tests_total": 3,
     "wall_h": 1.23,
-    "wns_ns": 0.775
+    "wns_ns": null
    }
   ],
   "spec": "# Sine-wave generator behind the test shell\n\nI want a numerically controlled sine oscillator for the Nexys A7-100T's FPGA, to drive a DAC test: a frequency word in, a sampled sine wave out, one sample per clock. I want to exercise it entirely from the test shell.",
@@ -166,7 +166,7 @@
      "bitstream": "built",
      "stage_gates_post_route": "all pass (setup, hold, pulse width, DRC, CDC, methodology, power)"
     },
-    "lut": 1290,
+    "lut": 1289,
     "outcome": "escape",
     "questions": {
      "answered": 5,
@@ -184,7 +184,7 @@
     "tests_passed": 5,
     "tests_total": 6,
     "wall_h": "unknown",
-    "wns_ns": 2.146
+    "wns_ns": 2.214
    },
    {
     "agent_turns": 158,
@@ -261,7 +261,7 @@
      "bitstream": "built",
      "stage_gates_post_route": "all pass (setup, hold, pulse width, DRC, CDC, methodology, power)"
     },
-    "lut": 737,
+    "lut": 774,
     "outcome": "caught_and_repaired",
     "questions": {
      "answered": 3,

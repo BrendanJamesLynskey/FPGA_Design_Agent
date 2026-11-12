@@ -42,7 +42,7 @@ REACHED = {"synth_reports": 1, "resumed_synth": 1, "place_reports": 2, "reports"
            "bitstream": 4}
 SYNTH_LINES = ("set top ", "set part ", "set sources ", "set constraints ", "set generics ")
 SKIP_LINES = ("set out ", "set stop_after ", "set resume_from ", "set resume_dir ", "set incremental_ref ")
-SWITCHES = ("FDA_XPROBE", "FDA_RESULT_HASH", "FDA_INCREMENTAL", "FDA_ILA_INSERT")
+SWITCHES = ("FDA_XPROBE", "FDA_RESULT_HASH", "FDA_INCREMENTAL", "FDA_ILA_INSERT", "FDA_XPM_CDC")
 
 
 def _lines(d: Path) -> list[str]:

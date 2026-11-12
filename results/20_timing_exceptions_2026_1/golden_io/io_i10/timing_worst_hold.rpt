@@ -1,0 +1,63 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Design       : io_adc
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -2.585ns  (arrival time - required time)
+  Source:                 BTNC
+                            (input port clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            btn_sync_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by sys_clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk
+  Path Type:              Hold (Min at Slow Process Corner)
+  Requirement:            0.000ns  (sys_clk rise@0.000ns - sys_clk rise@0.000ns)
+  Data Path Delay:        2.930ns  (logic 1.406ns (47.996%)  route 1.523ns (52.004%))
+  Logic Levels:           1  (IBUF=1)
+  Input Delay:            0.000ns
+  Clock Path Skew:        5.310ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    5.310ns
+    Source Clock Delay      (SCD):    0.000ns
+    Clock Pessimism Removal (CPR):    -0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk rise edge)    0.000     0.000 r  <hidden>
+                         input delay                  0.000     0.000    <hidden>
+    N17                                               0.000     0.000 r  BTNC
+                         net (fo=0)                   0.000     0.000    BTNC
+    N17                  IBUF (Prop_ibuf_I_O)         1.406     1.406 r  BTNC_IBUF_inst/O
+                         net (fo=1, routed)           1.523     2.930    BTNC_IBUF
+    SLICE_X0Y107         FDRE                                         r  btn_sync_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk rise edge)    0.000     0.000 r  <hidden>
+    E3                                                0.000     0.000 r  CLK100MHZ
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         1.482     1.482 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           2.025     3.506    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.096     3.602 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=20, routed)          1.708     5.310    CLK100MHZ_IBUF_BUFG
+    SLICE_X0Y107         FDRE                                         r  btn_sync_reg[0]/C
+                         clock pessimism              0.000     5.310    <hidden>
+                         clock uncertainty            0.035     5.346    <hidden>
+    SLICE_X0Y107         FDRE (Hold_fdre_C_D)         0.169     5.515    btn_sync_reg[0]
+  -------------------------------------------------------------------
+                         required time                         -5.515    <hidden>
+                         arrival time                           2.930    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -2.585    <hidden>
+
+
+
+

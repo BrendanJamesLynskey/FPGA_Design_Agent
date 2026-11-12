@@ -1,0 +1,682 @@
+{
+  "vivado": "2026.1",
+  "part": "xc7a100tcsg324-1",
+  "mode": "out_of_context",
+  "rows": [
+    {
+      "fixture": "tex_e1",
+      "what": "2-cycle enable multiply, -setup 2 and -hold 1",
+      "expect_flag": false,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [
+        32,
+        32
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 1.647,
+        "whs_ns": 0.293,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -4.615,
+        "whs_ns": 0.243,
+        "tns_failing_endpoints": 26,
+        "ths_failing_endpoints": 0
+      },
+      "route": {
+        "wns_ns": 0.385,
+        "whs_ns": 0.243
+      },
+      "exceptions_gate": {
+        "pass": true,
+        "rules": []
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": false,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e2",
+      "what": "same, -setup 2 with no -hold",
+      "expect_flag": true,
+      "methodology_rules": [
+        "XDCH-1"
+      ],
+      "methodology_detail": [
+        {
+          "rule": "XDCH-1",
+          "severity": "Warning",
+          "description": "Hold option missing in multicycle path constraint",
+          "count": 1
+        }
+      ],
+      "ignored": [],
+      "coverage_endpoints": [
+        32
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 1.647,
+        "whs_ns": -4.721,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 32
+      },
+      "synth_no_exception": {
+        "wns_ns": -3.353,
+        "whs_ns": 0.293,
+        "tns_failing_endpoints": 26,
+        "ths_failing_endpoints": 0
+      },
+      "route": null,
+      "exceptions_gate": {
+        "pass": false,
+        "rules": [
+          "XDCH-1"
+        ]
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": true,
+      "xdc_rules": [
+        "FDA-CON-10"
+      ],
+      "timing_ok": false,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e3",
+      "what": "multicycle on registers with CE tied high",
+      "expect_flag": true,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [
+        32,
+        32
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 1.647,
+        "whs_ns": 0.314,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -4.591,
+        "whs_ns": 0.364,
+        "tns_failing_endpoints": 26,
+        "ths_failing_endpoints": 0
+      },
+      "route": {
+        "wns_ns": 0.409,
+        "whs_ns": 0.364
+      },
+      "exceptions_gate": {
+        "pass": false,
+        "rules": [
+          "EXC-MCP-ENABLE"
+        ]
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e4",
+      "what": "false path between two MMCM outputs (synchronous)",
+      "expect_flag": true,
+      "methodology_rules": [
+        "TIMING-47"
+      ],
+      "methodology_detail": [
+        {
+          "rule": "TIMING-47",
+          "severity": "Warning",
+          "description": "False path, asynchronous clock group or max delay datapath only constraint between synchronous clocks",
+          "count": 1
+        }
+      ],
+      "ignored": [],
+      "coverage_endpoints": [
+        16
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 3.546,
+        "whs_ns": 0.132,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": 3.406,
+        "whs_ns": -0.011,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 16
+      },
+      "route": null,
+      "exceptions_gate": {
+        "pass": false,
+        "rules": [
+          "TIMING-47"
+        ]
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": true,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e5",
+      "what": "false path over an 8-bit binary bus crossing",
+      "expect_flag": true,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [
+        8
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 6.175,
+        "whs_ns": 0.164,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -0.121,
+        "whs_ns": 0.164,
+        "tns_failing_endpoints": 8,
+        "ths_failing_endpoints": 0
+      },
+      "route": null,
+      "exceptions_gate": {
+        "pass": true,
+        "rules": []
+      },
+      "cdc_structure": {
+        "pass": false,
+        "summary": {
+          "unsafe": 8
+        }
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e6",
+      "what": "multicycle whose -to has a typo (matches nothing)",
+      "expect_flag": true,
+      "methodology_rules": [
+        "TIMING-16"
+      ],
+      "methodology_detail": [
+        {
+          "rule": "TIMING-16",
+          "severity": "Warning",
+          "description": "Large setup violation",
+          "count": 23
+        }
+      ],
+      "ignored": [],
+      "coverage_endpoints": [],
+      "xdc_messages": [
+        "Vivado 12-4739",
+        "Vivado 12-4739"
+      ],
+      "synth": {
+        "wns_ns": -3.202,
+        "whs_ns": 0.293,
+        "tns_failing_endpoints": 26,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -3.202,
+        "whs_ns": 0.293,
+        "tns_failing_endpoints": 26,
+        "ths_failing_endpoints": 0
+      },
+      "route": null,
+      "exceptions_gate": {
+        "pass": false,
+        "rules": [
+          "EXC-XDC-MSG"
+        ]
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": true,
+      "xdc_rules": [],
+      "timing_ok": false,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e6b",
+      "what": "multicycle between registers with no path",
+      "expect_flag": true,
+      "methodology_rules": [
+        "TIMING-16"
+      ],
+      "methodology_detail": [
+        {
+          "rule": "TIMING-16",
+          "severity": "Warning",
+          "description": "Large setup violation",
+          "count": 23
+        }
+      ],
+      "ignored": [
+        "Non-existent path",
+        "Non-existent path"
+      ],
+      "coverage_endpoints": [
+        0,
+        0
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": -3.202,
+        "whs_ns": 0.293,
+        "tns_failing_endpoints": 26,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -3.202,
+        "whs_ns": 0.293,
+        "tns_failing_endpoints": 26,
+        "ths_failing_endpoints": 0
+      },
+      "route": null,
+      "exceptions_gate": {
+        "pass": false,
+        "rules": [
+          "EXC-IGNORED"
+        ]
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": true,
+      "xdc_rules": [],
+      "timing_ok": false,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e7",
+      "what": "datapath-only max delay overridden by a clock group",
+      "expect_flag": true,
+      "methodology_rules": [
+        "TIMING-24"
+      ],
+      "methodology_detail": [
+        {
+          "rule": "TIMING-24",
+          "severity": "Warning",
+          "description": "Overridden Max delay datapath only",
+          "count": 1
+        }
+      ],
+      "ignored": [
+        "Totally overridden path by CG 4"
+      ],
+      "coverage_endpoints": [
+        4
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 6.175,
+        "whs_ns": 0.164,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -0.101,
+        "whs_ns": 0.164,
+        "tns_failing_endpoints": 4,
+        "ths_failing_endpoints": 0
+      },
+      "route": null,
+      "exceptions_gate": {
+        "pass": false,
+        "rules": [
+          "EXC-IGNORED",
+          "TIMING-24"
+        ]
+      },
+      "cdc_structure": {
+        "pass": false,
+        "summary": {
+          "unsafe": 4
+        }
+      },
+      "vivado_flags": true,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e8",
+      "what": "100 -> 200 MHz multicycle, -setup 2 -end / -hold 1 -end",
+      "expect_flag": false,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [
+        16,
+        16
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 3.546,
+        "whs_ns": -0.011,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 16
+      },
+      "synth_no_exception": {
+        "wns_ns": 1.911,
+        "whs_ns": 0.145,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "route": {
+        "wns_ns": 3.364,
+        "whs_ns": 0.145
+      },
+      "exceptions_gate": {
+        "pass": true,
+        "rules": []
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": false,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e8b",
+      "what": "same crossing written with -start",
+      "expect_flag": true,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [
+        16,
+        16
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 3.546,
+        "whs_ns": -0.011,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 16
+      },
+      "synth_no_exception": {
+        "wns_ns": 1.911,
+        "whs_ns": 0.145,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "route": {
+        "wns_ns": 3.364,
+        "whs_ns": 0.145
+      },
+      "exceptions_gate": {
+        "pass": false,
+        "rules": [
+          "EXC-MCP-ENABLE"
+        ]
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e9",
+      "what": "quasi-static bit, 2-flop sync, commented false path",
+      "expect_flag": false,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [
+        1
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 5.639,
+        "whs_ns": 0.164,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -0.094,
+        "whs_ns": 0.164,
+        "tns_failing_endpoints": 1,
+        "ths_failing_endpoints": 0
+      },
+      "route": null,
+      "exceptions_gate": {
+        "pass": true,
+        "rules": []
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {
+          "synchroniser": 1
+        }
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": false,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e10",
+      "what": "slow FSM on 125 MHz, 1-in-8 enable, multicycle 8/7 on tagged registers",
+      "expect_flag": false,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [
+        64,
+        64
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 4.337,
+        "whs_ns": 0.189,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -5.709,
+        "whs_ns": 0.188,
+        "tns_failing_endpoints": 25,
+        "ths_failing_endpoints": 0
+      },
+      "route": {
+        "wns_ns": 4.11,
+        "whs_ns": 0.188
+      },
+      "exceptions_gate": {
+        "pass": true,
+        "rules": []
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": false,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e10b",
+      "what": "E10 with the consumer copying every clock (not qualified)",
+      "expect_flag": true,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [
+        64,
+        64
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 4.337,
+        "whs_ns": 0.189,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -6.807,
+        "whs_ns": 0.164,
+        "tns_failing_endpoints": 25,
+        "ths_failing_endpoints": 0
+      },
+      "route": {
+        "wns_ns": 3.864,
+        "whs_ns": 0.164
+      },
+      "exceptions_gate": {
+        "pass": false,
+        "rules": [
+          "EXC-MCP-ENABLE"
+        ]
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e10c",
+      "what": "E10 with the multicycle on all_registers",
+      "expect_flag": true,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [
+        214,
+        214
+      ],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 54.478,
+        "whs_ns": 0.189,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": -1.522,
+        "whs_ns": 0.189,
+        "tns_failing_endpoints": 16,
+        "ths_failing_endpoints": 0
+      },
+      "route": null,
+      "exceptions_gate": {
+        "pass": false,
+        "rules": [
+          "EXC-MCP-ENABLE"
+        ]
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": true,
+      "as_expected": true
+    },
+    {
+      "fixture": "tex_e10d",
+      "what": "E10 alternative: FSM on a fabric-divided clock (BUFG), no exception",
+      "expect_flag": null,
+      "methodology_rules": [],
+      "methodology_detail": [],
+      "ignored": [],
+      "coverage_endpoints": [],
+      "xdc_messages": [],
+      "synth": {
+        "wns_ns": 4.28,
+        "whs_ns": 0.07,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "synth_no_exception": {
+        "wns_ns": 3.964,
+        "whs_ns": 0.156,
+        "tns_failing_endpoints": 0,
+        "ths_failing_endpoints": 0
+      },
+      "route": {
+        "wns_ns": 3.964,
+        "whs_ns": 0.156
+      },
+      "exceptions_gate": {
+        "pass": true,
+        "rules": []
+      },
+      "cdc_structure": {
+        "pass": true,
+        "summary": {}
+      },
+      "vivado_flags": false,
+      "xdc_rules": [],
+      "timing_ok": true,
+      "flow_flags": false,
+      "as_expected": null
+    }
+  ]
+}

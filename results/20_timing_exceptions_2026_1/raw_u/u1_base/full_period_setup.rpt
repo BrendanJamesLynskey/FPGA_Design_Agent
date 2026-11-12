@@ -1,0 +1,92 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Design       : io_u
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             2.049ns  (required time - arrival time)
+  Source:                 b_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by c200  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            s_reg[23]/D
+                            (rising edge-triggered cell FDRE clocked by c200  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             c200
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (c200 rise@5.000ns - c200 rise@0.000ns)
+  Data Path Delay:        2.962ns  (logic 2.105ns (71.073%)  route 0.857ns (28.927%))
+  Logic Levels:           7  (CARRY4=6 LUT2=1)
+  Clock Path Skew:        -0.022ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    5.989ns = ( 10.989 - 5.000 ) 
+    Source Clock Delay      (SCD):    6.339ns
+    Clock Pessimism Removal (CPR):    0.328ns
+  Clock Uncertainty:      0.067ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.113ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock c200 rise edge)       0.000     0.000 r  <hidden>
+    E3                                                0.000     0.000 r  CLK100MHZ
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         1.482     1.482 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.233     2.715    CLK100MHZ_IBUF
+    MMCME2_ADV_X1Y2      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                      0.088     2.803 r  mmcm/CLKOUT0
+                         net (fo=1, routed)           1.719     4.522    c200
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.096     4.618 r  b0/O
+                         net (fo=75, routed)          1.720     6.339    clk200
+    SLICE_X6Y87          FDRE                                         r  b_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_fdre_C_Q)         0.478     6.817 r  b_reg[1]/Q
+                         net (fo=2, routed)           0.857     7.673    b[1]
+    SLICE_X6Y87          LUT2 (Prop_lut2_I1_O)        0.295     7.968 r  s[3]_i_4/O
+                         net (fo=1, routed)           0.000     7.968    s[3]_i_4_n_0
+    SLICE_X6Y87          CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.533     8.501 r  s_reg[3]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     8.501    s_reg[3]_i_1_n_0
+    SLICE_X6Y88          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     8.618 r  s_reg[7]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     8.618    s_reg[7]_i_1_n_0
+    SLICE_X6Y89          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     8.735 r  s_reg[19]_i_7/CO[3]
+                         net (fo=1, routed)           0.000     8.735    s_reg[19]_i_7_n_0
+    SLICE_X6Y90          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     8.852 r  s_reg[19]_i_2/CO[3]
+                         net (fo=1, routed)           0.000     8.852    s_reg[19]_i_2_n_0
+    SLICE_X6Y91          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.117     8.969 r  s_reg[19]_i_1/CO[3]
+                         net (fo=1, routed)           0.000     8.969    s_reg[19]_i_1_n_0
+    SLICE_X6Y92          CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.331     9.300 r  s_reg[23]_i_1/O[3]
+                         net (fo=2, routed)           0.000     9.300    p_0_in__0[23]
+    SLICE_X6Y92          FDRE                                         r  s_reg[23]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c200 rise edge)       5.000     5.000 r  <hidden>
+    E3                                                0.000     5.000 r  CLK100MHZ
+                         net (fo=0)                   0.000     5.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         1.411     6.411 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           1.162     7.573    CLK100MHZ_IBUF
+    MMCME2_ADV_X1Y2      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                      0.083     7.656 r  mmcm/CLKOUT0
+                         net (fo=1, routed)           1.639     9.295    c200
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.091     9.386 r  b0/O
+                         net (fo=75, routed)          1.602    10.989    clk200
+    SLICE_X6Y92          FDRE                                         r  s_reg[23]/C
+                         clock pessimism              0.328    11.317    <hidden>
+                         clock uncertainty           -0.067    11.250    <hidden>
+    SLICE_X6Y92          FDRE (Setup_fdre_C_D)        0.099    11.349    s_reg[23]
+  -------------------------------------------------------------------
+                         required time                         11.349    <hidden>
+                         arrival time                          -9.300    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  2.049    <hidden>
+
+
+
+

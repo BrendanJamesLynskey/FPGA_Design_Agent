@@ -1,0 +1,74 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Design       : io_u
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             1.874ns  (required time - arrival time)
+  Source:                 s_reg[3]/C
+                            (rising edge-triggered cell FDRE clocked by c200  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            hq_reg/D
+                            (falling edge-triggered cell FDRE clocked by c200  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             c200
+  Path Type:              Setup (Max at Fast Process Corner)
+  Requirement:            2.500ns  (c200 fall@2.500ns - c200 rise@0.000ns)
+  Data Path Delay:        0.564ns  (logic 0.260ns (46.076%)  route 0.304ns (53.924%))
+  Logic Levels:           1  (LUT2=1)
+  Clock Path Skew:        -0.013ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    1.866ns = ( 4.366 - 2.500 ) 
+    Source Clock Delay      (SCD):    2.413ns
+    Clock Pessimism Removal (CPR):    0.533ns
+  Clock Uncertainty:      0.067ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.113ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock c200 rise edge)       0.000     0.000 r  <hidden>
+    E3                                                0.000     0.000 r  CLK100MHZ
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         0.438     0.438 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.480     0.918    CLK100MHZ_IBUF
+    MMCME2_ADV_X1Y2      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                      0.053     0.971 r  mmcm/CLKOUT0
+                         net (fo=1, routed)           0.544     1.514    c200
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.543 r  b0/O
+                         net (fo=75, routed)          0.870     2.413    clk200
+    SLICE_X6Y87          FDRE                                         r  s_reg[3]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X6Y87          FDRE (Prop_fdre_C_Q)         0.204     2.617 r  s_reg[3]/Q
+                         net (fo=2, routed)           0.304     2.921    s[3]
+    SLICE_X4Y92          LUT2 (Prop_lut2_I0_O)        0.056     2.977 r  hq_i_1/O
+                         net (fo=1, routed)           0.000     2.977    hq_i_1_n_0
+    SLICE_X4Y92          FDRE                                         r  hq_reg/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c200 fall edge)       2.500     2.500 f  <hidden>
+    E3                                                0.000     2.500 f  CLK100MHZ
+                         net (fo=0)                   0.000     2.500    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         0.250     2.750 f  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.440     3.190    CLK100MHZ_IBUF
+    MMCME2_ADV_X1Y2      MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                      0.050     3.240 f  mmcm/CLKOUT0
+                         net (fo=1, routed)           0.499     3.739    c200
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     3.765 f  b0/O
+                         net (fo=75, routed)          0.602     4.366    clk200
+    SLICE_X4Y92          FDRE                                         r  hq_reg/C  (IS_INVERTED)
+                         clock pessimism              0.533     4.900    <hidden>
+                         clock uncertainty           -0.067     4.833    <hidden>
+    SLICE_X4Y92          FDRE (Setup_fdre_C_D)        0.018     4.851    hq_reg
+  -------------------------------------------------------------------
+                         required time                          4.851    <hidden>
+                         arrival time                          -2.977    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  1.874    <hidden>
+
+
+
+

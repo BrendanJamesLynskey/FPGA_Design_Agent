@@ -260,7 +260,8 @@ def task_body(T, C, prev, nxt):
                          E(r["failure_class"] or "none")])
         k = sum(1 for r in T["runs"] if r["hidden_pass"])
         runs = (f'<p><span class="tag">Development, not the held-out score</span> {k} of {len(T["runs"])} committed development runs passed every hidden test '
-                f'({E(T["runs"][0]["model"])}). Partial credit is the hidden tests passed; slack is post-route at 100 MHz and the counts include the test shell.</p>' +
+                f'({E(T["runs"][0]["model"])}). Partial credit is the hidden tests passed. WNS and the counts are the run\'s saved design rebuilt on Vivado 2026.1 (post-route at 100 MHz, test shell included); '
+                f'a blank means the run stopped before place and route or its design files were not kept.</p>' +
                 table(["Record", "Date", "Outcome", "Hidden tests", "WNS (ns)", "LUT", "FF", "DSP", "What went wrong"], rows, num=(3, 4, 5, 6, 7)) +
                 '<p class="small muted">Agent-written RTL is not committed per run, so only the reference RTL is shown above.</p>')
     else:

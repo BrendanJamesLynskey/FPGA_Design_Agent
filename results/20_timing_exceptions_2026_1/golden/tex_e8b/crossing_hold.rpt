@@ -1,0 +1,71 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Design       : tex_e8b
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Synthesized
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -0.011ns  (arrival time - required time)
+  Source:                 s_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by c0  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            acc_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by c1  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             c1
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (c1 rise@0.000ns - c0 rise@0.000ns)
+  Data Path Delay:        0.448ns  (logic 0.245ns (54.718%)  route 0.203ns (45.282%))
+  Logic Levels:           1  (LUT2=1)
+  Clock Path Skew:        0.166ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.129ns
+    Source Clock Delay      (SCD):    0.939ns
+    Clock Pessimism Removal (CPR):    0.025ns
+  Clock Uncertainty:      0.194ns  ((TSJ^2 + DJ^2)^1/2) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Discrete Jitter          (DJ):    0.129ns
+    Phase Error              (PE):    0.120ns
+  Timing Exception:       MultiCycle Path   Setup -start 2    Hold  -start 1
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock c0 rise edge)         0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_in
+                         net (fo=0)                   0.410     0.410    clk_in
+                         MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT0)
+                                                      0.050     0.460 r  mmcm/CLKOUT0
+                         net (fo=1, unplaced)         0.338     0.799    c0
+                         BUFG (Prop_bufg_I_O)         0.026     0.825 r  b0/O
+                         net (fo=16, unplaced)        0.114     0.939    clk0
+                         FDRE                                         r  s_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+                         FDRE (Prop_fdre_C_Q)         0.147     1.086 r  s_reg[0]/Q
+                         net (fo=2, unplaced)         0.203     1.288    s_reg[0]
+                         LUT2 (Prop_lut2_I0_O)        0.098     1.386 r  acc[0]_i_1/O
+                         net (fo=1, unplaced)         0.000     1.386    acc[0]_i_1_n_0
+                         FDRE                                         r  acc_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock c1 rise edge)         0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_in
+                         net (fo=0)                   0.432     0.432    clk_in
+                         MMCME2_ADV (Prop_mmcme2_adv_CLKIN1_CLKOUT1)
+                                                      0.053     0.485 r  mmcm/CLKOUT1
+                         net (fo=1, unplaced)         0.356     0.841    c1
+                         BUFG (Prop_bufg_I_O)         0.029     0.870 r  b1/O
+                         net (fo=17, unplaced)        0.259     1.129    clk1
+                         FDRE                                         r  acc_reg[0]/C
+                         clock pessimism             -0.025     1.104    <hidden>
+                         clock uncertainty            0.194     1.298    <hidden>
+                         FDRE (Hold_fdre_C_D)         0.099     1.397    acc_reg[0]
+  -------------------------------------------------------------------
+                         required time                         -1.397    <hidden>
+                         arrival time                           1.386    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -0.011    <hidden>
+
+
+
+

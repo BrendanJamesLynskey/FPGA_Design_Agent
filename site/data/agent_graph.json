@@ -74,7 +74,7 @@
     "skills": 15
    }
   ],
-  "pin": "edb6a88",
+  "pin": "58ee00d",
   "skills": 244,
   "units": 24
  },
@@ -201,7 +201,7 @@
     "evidence": "In one drill run three simulate calls each ran to the 1800 s limit on the agent's own tests, which waited on conditions that never came.",
     "id": "H2",
     "name": "Hang protection",
-    "source": "results/24_fsm/README.md",
+    "source": "results/24_fsm/drills/run_b1.meta.json",
     "status": "not yet measured"
    },
    {
@@ -276,11 +276,11 @@
    {
     "files": [
      "flow/build_cache.py",
-     "results/33_vivado_speed/summary.json"
+     "results/33_vivado_speed_2026_1/summary.json"
     ],
     "name": "A build cache for Vivado",
     "pr": 118,
-    "text": "A repeated build of an unchanged design now comes from a cache, and a later stage resumes from the last checkpoint. One agent run's build sequence on the c10 task took 207.5 s instead of a modelled 880.2 s, with the same result."
+    "text": "A repeated build of an unchanged design now comes from a cache, and a later stage resumes from the last checkpoint. One agent run's build sequence on the c10 task took 304.6 s instead of a modelled 1266.9 s, with the same result."
    }
   ],
   "middleware": [
@@ -811,7 +811,7 @@
     {
      "gate": {
       "pass": true,
-      "text": "Post-route setup slack +0.495 ns, hold slack +0.099 ns at 100 MHz."
+      "text": "The run's timing gates passed. Its saved design rebuilt on Vivado 2026.1: post-route setup slack +0.495 ns, hold slack +0.099 ns at 100 MHz."
      },
      "next": {
       "kind": "next",
@@ -842,7 +842,7 @@
     {
      "gate": {
       "pass": true,
-      "text": "Vectorless power estimate 0.118 W."
+      "text": "The run's power gate passed. Rebuilt on Vivado 2026.1: vectorless power estimate 0.118 W."
      },
      "next": {
       "kind": "next",
@@ -873,7 +873,7 @@
     {
      "gate": {
       "pass": true,
-      "text": "737 LUT, 753 FF, 12 DSP, 0 BRAM after place and route (test shell included)."
+      "text": "The run's design-rule gates passed. Rebuilt on Vivado 2026.1: 774 LUT, 753 FF, 12 DSP, 0 BRAM after place and route (test shell included). The rebuild fails one gate added after the run: the I/O-constraint check, because the run's XDC gives slow pins invented input delays."
      },
      "next": {
       "kind": "next",

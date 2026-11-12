@@ -21,7 +21,7 @@ and its UART), checks the USB-power gate, programs the base build into SRAM, run
 error responses and counters, sync hunting, frame timeout, framing error, the T1 registers against `model.py`),
 programs the ILA build, captures four ILA windows and checks them against the model (`hw_checks.py`: a COUNT
 write, and the PWM at three dimmer levels), and checks the design is still running. It writes
-`results/f0b/t1_dimmer_counter_bringup.json` and exits non-zero on any failure. Sections 1-6 are the same checks
+`t1_dimmer_counter_bringup.json` to its `--out` folder (default `results/f0b/`) and exits non-zero on any failure. Sections 1-6 are the same checks
 by hand, and what a person checks that the script cannot (buttons, what the display and LEDs look like).
 
 **Power.** Written when the board was powered from its PROG/UART USB cable. A bitstream is programmed only if
@@ -38,7 +38,7 @@ board resets, browns out or drops off USB, stop: fit an external supply before g
 |---|---|
 | Power | USB from the PC into the micro-USB port marked PROG/UART (J6, checked on the F0B photo); power switch on. JP3 (power select) on USB (checked on the photo). Total on-chip power must stay at or below 0.5 W (section 0). |
 | Programming mode | Leave JP1 (mode: QSPI / JTAG / USB/SD) where it is. JP1 only chooses what the FPGA loads at power-up; programming SRAM over JTAG works whatever it says. The F0B board had JP1 on QSPI (owner's statement), so at power-up it loads whatever is in its QSPI flash, and `flow/program.py` then replaces that in SRAM. Nothing here ever writes the QSPI flash; a power cycle erases the T1 design. |
-| PC | Vivado 2025.2 Hardware Manager (`hw_server`), AMD's cable udev rules installed once (root), the user in `plugdev` with a udev rule for the FTDI UART, Python 3 with `pyserial`. |
+| PC | Vivado 2026.1 Hardware Manager (`hw_server`), AMD's cable udev rules installed once (root), the user in `plugdev` with a udev rule for the FTDI UART, Python 3 with `pyserial`. |
 | Cable | One FTDI FT2232 (`lsusb`: `0403:6010`). Channel A (USB interface 0) is JTAG, channel B (interface 1) is the UART. `hw_server` names the target `Digilent/<USB serial>A`: the USB serial plus the channel letter A. |
 | Serial port | interface 1 of that FT2232: `/dev/serial/by-id/usb-Digilent_Digilent_USB_Device_<USB serial>-if01-port0` (on the F0B PC it was `/dev/ttyUSB1`; `ttyUSB0` is interface 0, the JTAG channel). `flow/hw_discover.py` finds it by serial and interface and records it in `~/.config/fpga_design_agent/boards.yaml`. 115200 baud, 8N1, no flow control. |
 | Switches | all 16 down (off) to start. |
@@ -80,7 +80,7 @@ Run the shell commands from the repo root; `P=` the UART from section 1 (for exa
 
 | # | Do | Pass if | Fail means |
 |---|---|---|---|
-| 1 | `$SH id` | `design_id T1DC`, `shell_version 1.0`, `build_stamp` = `build_stamp` in `results/f0a/t1_dimmer_counter_base.json` (`dfd4624e` on the F0B board) | wrong bitstream, or the UART is not working (see section 6) |
+| 1 | `$SH id` | `design_id T1DC`, `shell_version 1.0`, `build_stamp` = `build_stamp` in `results/f0a_2026_1/t1_dimmer_counter_base.json` (`dfd4624e` on the F0B board) | wrong bitstream, or the UART is not working (see section 6) |
 | 2 | `$SH scratch` | `scratch PASS` | UART bit errors (cable, baud) |
 | 3 | `$SH status` | all four counters 0 | errors on the line: note which counter |
 | 4 | Press **BTNU** (up) 3 times, slowly | display right digits `0003`; LD0 and LD1 lit; `$SH read 0x84` = `0x00000003` | 4+ or 1-2 counts: debounce problem; nothing: buttons or reset |

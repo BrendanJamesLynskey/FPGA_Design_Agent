@@ -1,0 +1,66 @@
+{
+  "spec": {
+    "name": "lp_dec4",
+    "fs_in_hz": 20000000,
+    "pass_edge_hz": 1000000,
+    "stop_edge_hz": 1500000,
+    "ripple_db": 0.1,
+    "atten_db": 80,
+    "design_margin_db": 2,
+    "decimation": 4,
+    "data_width": 16,
+    "coef_width": 16,
+    "channels": 1,
+    "clock_hz": 100000000,
+    "back_pressure": true,
+    "seed": 1
+  },
+  "design": {
+    "method": "remez",
+    "taps": 153,
+    "float_metrics": {
+      "passband_ripple_db": 0.0971000337460407,
+      "stopband_atten_db": 88.01484822286676
+    },
+    "requested_coef_width": 16,
+    "coef_width": 16,
+    "quantised_metrics": {
+      "passband_ripple_db": 0.0974626920979009,
+      "stopband_atten_db": 81.67466439111367
+    },
+    "attenuation_lost_db": 6.3401838317530945,
+    "width_search": [
+      {
+        "coef_width": 16,
+        "ok": true,
+        "passband_ripple_db": 0.0974626920979009,
+        "stopband_atten_db": 81.67466439111367
+      }
+    ],
+    "symmetric": true,
+    "dc_gain_int": 273397,
+    "candidates": [
+      {
+        "method": "remez",
+        "taps": 153,
+        "passband_ripple_db": 0.0971000337460407,
+        "stopband_atten_db": 88.01484822286676
+      },
+      {
+        "method": "kaiser",
+        "taps": 211,
+        "passband_ripple_db": 0.0006966763692344185,
+        "stopband_atten_db": 83.40670005634804
+      },
+      {
+        "method": "firls",
+        "taps": 213,
+        "passband_ripple_db": 0.002620184278220851,
+        "stopband_atten_db": 82.40849363682753
+      }
+    ],
+    "spec_attenuation_db": 80,
+    "spec_ripple_db": 0.1,
+    "coef_abs_sum": 480433
+  }
+}

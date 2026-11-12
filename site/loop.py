@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent.parent
 HERE = Path(__file__).resolve().parent
 
 PASS_RUN = "results/course/c14_int8_dot_requant/run_5.json"      # the development run whose numbers label the arrows
+REBUILDS = "results/49_vivado_2026_1/dev_rebuilds.json"                # brief 49: that run's design rebuilt on Vivado 2026.1
 HIL_RUN = "results/b30/hil_runs/b30_hil_audio.hil.json"
 TOUR_RUN = "results/f2/agent_luna_05c2_run7.json"                  # interview to bitstream, visit order recorded
 TOUR_BOARD = "results/f2/agent_luna_05c2_run7_bringup.json"        # the board run on that run's files, as written
@@ -63,7 +64,9 @@ def stations(A):
     """The bench, with what each station feeds back. Values read from the named records."""
     r = jload(PASS_RUN)
     b = jload(TOUR_BOARD)["run_as_written"]["steps"]
-    q, g, qo = r["questions"], r["gates"], r["qor"]
+    q, g = r["questions"], r["gates"]
+    # brief 49: the Vivado figures are the run's saved design rebuilt on 2026.1, not the run record's own (earlier release)
+    qo = jload(REBUILDS)["runs"][f'{r["task"]}/run_{r["run"]}']
     v3 = g["V3"]
     bins = re.search(r"functional bins [\d.]+% (\d+)/(\d+)", v3)
     mut = re.search(r"mutation score ([\d.]+)%", v3)
@@ -75,7 +78,7 @@ def stations(A):
     pass_src = {"record": PASS_RUN, "what": f'{r["task"]}, development run {r["run"]} ({r["date"]}): Claude Code {r["claude_code_version"]}, {r["model"]}'}
     tour = jload(TOUR_RUN)
     board_src = {"record": TOUR_BOARD, "what": f'the board run on the files of T1 Deep Agents run {tour["run"].split("run")[-1]} '
-                                               f'({tour["model"]}), as written'}
+                                               f'({tour["model"]}), as written; bitstream from an earlier Vivado release'}
     return [
         {"id": "spec", "title": "Spec and interview", "desc": "the request in plain English, and questions on what it leaves open",
          "fb": {"kind": "answers to its questions", "values": [f'{q["asked"]} questions asked', f'{q["answered"]} answered, {q["defaulted"]} defaulted'],
@@ -91,7 +94,8 @@ def stations(A):
         {"id": "vivado", "title": f"Vivado {vivado}", "desc": "synthesis, place and route, and the bitstream",
          "fb": {"kind": "timing, DRC, CDC, methodology and exception reports",
                 "values": [f'WNS {qo["wns_ns_at_100MHz_post_route"]:+.3f} ns', f'power {qo["power_w"]:.3f} W'],
-                "src": pass_src, "leg": "gates"},
+                "src": {"record": REBUILDS, "what": f'{r["task"]}, development run {r["run"]} ({r["model"]}): its saved design rebuilt on Vivado {qo["vivado"]}'},
+                "leg": "gates"},
          "gate": {"title": "stage gates", "line": "UltraFast stages", "leg": "gates"}},
         {"id": "board", "title": "Nexys A7 board", "desc": "Artix-7, programmed over JTAG into SRAM; UART shell, ILA, XADC",
          "fb": {"kind": "UART tests, ILA captures, XADC temperature and voltage",
@@ -104,7 +108,7 @@ def stations(A):
          "fb": {"kind": "waveforms, spectra, frames, audio",
                 "values": [f'audio {jack["freq_hz"]} Hz', f'THD {jack["thd_percent"]} %',
                            "caught a pin fault", "scope, SDR, video: next"],
-                "src": {"record": HIL_RUN, "what": f'the brief 30 hardware-in-the-loop run on {hil["design"].split("/")[-1]} ({hil["started"][:10]})'},
+                "src": {"record": HIL_RUN, "what": f'the hardware-in-the-loop run on {hil["design"].split("/")[-1]} ({hil["started"][:10]}); bitstream from an earlier Vivado release'},
                 "leg": "audio_capture"},
          "gate": {"title": "instrument tests", "line": "scripted, not in loop yet", "leg": "hil_gate"}},
     ]

@@ -50,7 +50,7 @@ Stage-limited builds: `flow/prepare.py` reads `FDA_STOP_AFTER` (`synth`, `place`
   isolation (a network and filesystem namespace) is not available here: unprivileged user namespaces are blocked
   on this PC (`bwrap` fails with "setting up uid map: Permission denied"). Until then, a human reads agent-written
   test files before a hardware run.
-- `bringup` writes under `designs/<name>/build/bringup/` (05b; before that it wrote `results/f0b/`).
+- `bringup` writes under `designs/<name>/build/bringup/` (05b; before that it wrote the F0B record folder).
 - The file tools can **read** the test shell under the virtual prefix `@shell/` (`@shell/rtl/...`,
   `@shell/PROTOCOL.md`, `@shell/host/protocol.py`; owner decision 2026-11-01); every write there is refused, and
   nothing else in the repo is visible.
@@ -107,7 +107,7 @@ Icarus 13, as in the CVDP image, rejects an implicit cast in
 `shell/rtl/uart_rx.sv:46`, which 12.0 accepts; this is why the image pins 12.0.
 
 **Results location (05b).** `bringup` runs `flow/bringup.py --results-dir designs/<name>/build/bringup`, so agent runs
-never overwrite another milestone's committed results (`results/f0b/` stays the F0B record).
+never overwrite another milestone's committed results (the F0B record stays as committed).
 
 Reused from the owner's HW Design Space Agent (BrendanJamesLynskey/HW_Design_Space_Agent @ 80415c6, MIT): the
 tracer's redaction approach and JSONL record shape (`agent/trace.py`) and the idea of scripted/replay fakes for

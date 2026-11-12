@@ -1,0 +1,865 @@
+{
+  "design": "designs/t1_dimmer_counter",
+  "variant": "ila",
+  "gates": {
+    "build_dir": "designs/t1_dimmer_counter/build/ila",
+    "vivado_version": "2026.1",
+    "kb_measured_version": "2026.1",
+    "kb_version_match": true,
+    "top": "t1_dimmer_counter_top",
+    "variant": "ila",
+    "pass": true,
+    "first_failed_stage": null,
+    "gates": {
+      "rtl_methodology_no_critical": true,
+      "post_synth_no_unconstrained_endpoints": true,
+      "post_synth_methodology_no_critical": true,
+      "post_synth_drc_clean": true,
+      "post_synth_cdc_no_critical": true,
+      "post_synth_cdc_structure_clean": true,
+      "post_synth_exceptions_clean": true,
+      "post_synth_io_constraints_clean": true,
+      "post_synth_resources_in_range": true,
+      "post_place_hold": true,
+      "setup": true,
+      "hold": true,
+      "pulse_width": true,
+      "no_unconstrained_endpoints": true,
+      "drc_clean": true,
+      "methodology_no_critical": true,
+      "cdc_no_critical": true,
+      "power_junction_ok": true,
+      "exceptions_clean": true,
+      "io_timing_clean": true,
+      "bitstream_present": true,
+      "debug_probes_present": true
+    },
+    "warnings": [],
+    "stages": {
+      "rtl": {
+        "ran": true,
+        "gates": {
+          "rtl_methodology_no_critical": true
+        },
+        "methodology": {
+          "errors": 0,
+          "critical_warnings": 0,
+          "warnings": 54,
+          "rules": [
+            {
+              "rule": "XDCH-2",
+              "severity": "Warning",
+              "description": "Same min and max delay values on IO port",
+              "count": 54
+            }
+          ]
+        },
+        "pass": true
+      },
+      "post_synth": {
+        "ran": true,
+        "gates": {
+          "post_synth_no_unconstrained_endpoints": true,
+          "post_synth_methodology_no_critical": true,
+          "post_synth_drc_clean": true,
+          "post_synth_cdc_no_critical": true,
+          "post_synth_cdc_structure_clean": true,
+          "post_synth_exceptions_clean": true,
+          "post_synth_io_constraints_clean": true,
+          "post_synth_resources_in_range": true
+        },
+        "warnings": [],
+        "timing": {
+          "wns_ns": 4.602,
+          "tns_ns": 0.0,
+          "tns_failing_endpoints": 0,
+          "tns_total_endpoints": 1232,
+          "whs_ns": 0.045,
+          "ths_ns": 0.0,
+          "ths_failing_endpoints": 0,
+          "ths_total_endpoints": 1232,
+          "wpws_ns": 4.5,
+          "tpws_ns": 0.0,
+          "tpws_failing_endpoints": 0,
+          "tpws_total_endpoints": 489,
+          "timing_met": true
+        },
+        "check_timing": {
+          "no_clock": 0,
+          "constant_clock": 0,
+          "pulse_width_clock": 0,
+          "unconstrained_internal_endpoints": 0,
+          "no_input_delay": 0,
+          "no_output_delay": 0,
+          "multiple_clock": 0,
+          "generated_clocks": 0,
+          "loops": 0,
+          "partial_input_delay": 0,
+          "partial_output_delay": 0,
+          "latch_loops": 0
+        },
+        "unconstrained_ports": {},
+        "methodology": {
+          "errors": 0,
+          "critical_warnings": 0,
+          "warnings": 54,
+          "rules": [
+            {
+              "rule": "XDCH-2",
+              "severity": "Warning",
+              "description": "Same min and max delay values on IO port",
+              "count": 54
+            }
+          ]
+        },
+        "drc": {
+          "errors": 0,
+          "critical_warnings": 0,
+          "warnings": 0,
+          "rules": []
+        },
+        "qor_assessment": null,
+        "cdc": {
+          "safely_timed": true,
+          "rules": []
+        },
+        "cdc_structure": {
+          "crossings": [],
+          "summary": {},
+          "unsafe": [],
+          "n_crossings": 0,
+          "clocks": {
+            "sys_clk_pin": {
+              "period": 10.0,
+              "root": "sys_clk_pin"
+            }
+          },
+          "pass": true
+        },
+        "exceptions": {
+          "stage": "synth",
+          "pass": true,
+          "exceptions": 2,
+          "ignored": 0,
+          "info": [
+            {
+              "rule": "EXC-XDC-DEBUG-HUB",
+              "count": 10,
+              "vivado": {
+                "files": [
+                  "xsdbm_cc_late_late.xdc"
+                ],
+                "ids": [
+                  "Common 17-1548",
+                  "Common 17-55"
+                ]
+              }
+            }
+          ],
+          "covered": {
+            "3": 22,
+            "5": 32
+          },
+          "failures": []
+        },
+        "io_timing": {
+          "stage": "synth",
+          "pass": true,
+          "interfaces": [],
+          "failures": [],
+          "delays": 2,
+          "clocks": {
+            "sys_clk_pin": {
+              "period": 10.0,
+              "waveform": "0.000 5.000",
+              "virtual": false,
+              "generated": false,
+              "source": "CLK100MHZ",
+              "input_jitter": 0.0
+            }
+          },
+          "worst": {
+            "setup": {
+              "slack": 4.602,
+              "requirement": 10.0,
+              "start_clock": "sys_clk_pin",
+              "end_clock": "sys_clk_pin",
+              "corner": "Slow",
+              "uncertainty": 0.035,
+              "pessimism": 0.116,
+              "from": "u_dut/u_sw_sync/s2_reg[3]/C",
+              "to": "u_dut/led_reg[0]/R"
+            },
+            "hold": {
+              "slack": 0.045,
+              "requirement": 0.0,
+              "start_clock": "sys_clk_pin",
+              "end_clock": "sys_clk_pin",
+              "corner": "Fast",
+              "uncertainty": null,
+              "pessimism": -0.209,
+              "from": "u_dut/u_db_clear/u_sync/s1_reg[0]/C",
+              "to": "u_dut/u_db_clear/u_sync/s2_reg[0]/D"
+            }
+          }
+        },
+        "resource_sanity": {
+          "factor": 2.0,
+          "resources": {
+            "lut": {
+              "used": 498,
+              "predicted": [
+                350.0,
+                700.0
+              ],
+              "allowed": [
+                175.0,
+                1400.0
+              ],
+              "pass": true,
+              "direction": null
+            },
+            "ff": {
+              "used": 488,
+              "predicted": [
+                350.0,
+                700.0
+              ],
+              "allowed": [
+                175.0,
+                1400.0
+              ],
+              "pass": true,
+              "direction": null
+            },
+            "bram_tile": {
+              "used": 0,
+              "predicted": [
+                0.0,
+                0.0
+              ],
+              "allowed": [
+                0.0,
+                0.0
+              ],
+              "pass": true,
+              "direction": null
+            },
+            "dsp": {
+              "used": 0,
+              "predicted": [
+                0.0,
+                0.0
+              ],
+              "allowed": [
+                0.0,
+                0.0
+              ],
+              "pass": true,
+              "direction": null
+            }
+          },
+          "pass": true
+        },
+        "utilization": {
+          "lut": 498,
+          "lut_available": 63400,
+          "lutram": 0,
+          "lutram_available": 19000,
+          "ff": 488,
+          "ff_available": 126800,
+          "carry4": 29,
+          "bram_tile": 0,
+          "bram_tile_available": 135,
+          "dsp": 0,
+          "dsp_available": 240,
+          "iob": 55,
+          "iob_available": 210,
+          "bufg": 1,
+          "bufg_available": 32
+        },
+        "pass": true
+      },
+      "post_place": {
+        "ran": true,
+        "gates": {
+          "post_place_hold": true
+        },
+        "timing": {
+          "wns_ns": 3.484,
+          "tns_ns": 0.0,
+          "tns_failing_endpoints": 0,
+          "tns_total_endpoints": 5284,
+          "whs_ns": -0.048,
+          "ths_ns": -0.089,
+          "ths_failing_endpoints": 3,
+          "ths_total_endpoints": 5268,
+          "wpws_ns": 3.75,
+          "tpws_ns": 0.0,
+          "tpws_failing_endpoints": 0,
+          "tpws_total_endpoints": 2829,
+          "timing_met": false
+        },
+        "pass": true
+      },
+      "post_route": {
+        "ran": true,
+        "gates": {
+          "setup": true,
+          "hold": true,
+          "pulse_width": true,
+          "no_unconstrained_endpoints": true,
+          "drc_clean": true,
+          "methodology_no_critical": true,
+          "cdc_no_critical": true,
+          "power_junction_ok": true,
+          "exceptions_clean": true,
+          "io_timing_clean": true
+        },
+        "qor_assessment": {
+          "available": false,
+          "reason": "report_qor_assessment needs a licence tier above Basic (Implflow 47-2944); the QoR gate is not judged"
+        },
+        "exceptions": {
+          "stage": "route",
+          "pass": true,
+          "exceptions": 73,
+          "ignored": 15,
+          "info": [
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 10,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/u_cap_ addrgen/u_cap_sample_counter/iscnt_reg*\" && IS_SEQUENTIAL }]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 11,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/u_cap_ addrgen/u_cap_window_counter/iwcnt_reg*\" && IS_SEQUENTIAL }]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 12,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/u_cap_ addrgen/u_cap_window_counter/u_wcnt_hcmp_q*\" && IS_SEQUENTIAL }]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 13,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/u_cap_ addrgen/u_cap_window_counter/u_wcnt_lcmp_q*\" && IS_SEQUENTIAL }]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 14,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/u_cap_ addrgen/u_cap_sample_counter/u_scnt_cmp_q*\" && IS_SEQUENTIAL }]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 18,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/U_CDON E/I_YESLUT6.I_YES_OREG.O_reg*\" && IS_SEQUENTIAL}]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 19,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/U_NS0/ I_YESLUT6.I_YES_OREG.O_reg*\" && IS_SEQUENTIAL}]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 20,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/U_NS1/ I_YESLUT6.I_YES_OREG.O_reg*\" && IS_SEQUENTIAL}]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 21,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/u_cap_ addrgen/icap_wr_en_reg*\" && IS_SEQUENTIAL}]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 22,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_1a/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_cap_ctrl/itrigg er_out_reg*\" && IS_SEQUENTIAL}]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 24,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_15/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/en_adv_trigger_2_reg* \" && IS_SEQUENTIAL}]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 31,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_ila_regs/reg_stream _ffd/I_EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL}]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_trig/U_TM/N_DDR_MOD E.G_NMU[*].U_M/allx_typeA_match_detection.ltlib_v1_0_4_allx_typeA_inst/probeDela y1_reg*\" && IS_SEQUENTIAL}]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 32,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_regs/reg_15/I_ EN_CTL_EQ1.U_CTL/xsdb_reg_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~ \"*ila_core_inst/u_trig/U_TM/N_DDR_MOD E.G_NMU[*].U_M/allx_typeA_match_detection.ltlib_v1_0_4_allx_typeA_inst/probeDela y1_reg*\" && IS_SEQUENTIAL}]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 34,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_cap_ctrl/u_cap _addrgen/*cfg_data_vec_reg*\" && IS_SEQUENTIAL }]",
+                "Through": "*",
+                "To": "[get_cells -hierarchical -filter { NAME =~  \"*ila_core_inst/u_ila_cap_ctrl/u_cap _addrgen/*icap_addr_reg*\" && IS_SEQUENTIAL }]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-IGNORED-DEBUG-IP",
+              "position": 42,
+              "status": "Non-existent path",
+              "vivado": {
+                "From": "[get_pins -hierarchical -filter {NAME =~ *ila_core_inst/u_trig/N_DDR_TC.N_DDR_TC _INST[*].U_TC/allx_typeA_match_detection.ltlib_v1_0_4_allx_typeA_inst/DUT/u_srl_ drive/CLK}]",
+                "Through": "*",
+                "To": "[get_pins -hierarchical -filter {NAME =~ *ila_core_inst/u_trig/N_DDR_TC.N_DDR_TC _INST[*].U_TC/yes_output_reg.dout_reg_reg/D}]",
+                "Setup": "false",
+                "Hold": "false"
+              }
+            },
+            {
+              "rule": "EXC-XDC-DEBUG-HUB",
+              "count": 10,
+              "vivado": {
+                "files": [
+                  "xsdbm_cc_late_late.xdc"
+                ],
+                "ids": [
+                  "Common 17-1548",
+                  "Common 17-55"
+                ]
+              }
+            }
+          ],
+          "covered": {
+            "1": 3,
+            "2": 1,
+            "3": 1,
+            "4": 1,
+            "5": 4,
+            "6": 1,
+            "7": 1,
+            "8": 1,
+            "9": 1,
+            "10": 0,
+            "11": 0,
+            "12": 0,
+            "13": 0,
+            "14": 0,
+            "15": 1,
+            "16": 1,
+            "17": 1,
+            "18": 0,
+            "19": 0,
+            "20": 0,
+            "21": 0,
+            "22": 0,
+            "23": 1,
+            "24": 0,
+            "25": 1,
+            "26": 2,
+            "27": 16,
+            "28": 10,
+            "29": 1,
+            "30": 1,
+            "31": 0,
+            "32": 0,
+            "33": 3,
+            "34": 0,
+            "35": 10,
+            "36": 1,
+            "37": 1,
+            "38": 2,
+            "39": 1,
+            "40": 1,
+            "41": 1,
+            "42": 0,
+            "43": 1,
+            "44": 1,
+            "45": 1,
+            "46": 1,
+            "47": 1,
+            "48": 1,
+            "49": 10,
+            "50": 1,
+            "51": 10,
+            "52": 10,
+            "53": 1,
+            "54": 1,
+            "55": 1,
+            "58": 24,
+            "60": 32,
+            "91": 16,
+            "92": 4,
+            "94": 4,
+            "96": 16,
+            "97": 4,
+            "99": 4,
+            "101": 1,
+            "102": 1,
+            "103": 1,
+            "104": 1,
+            "105": 1,
+            "106": 1,
+            "107": 1,
+            "108": 3,
+            "109": 1,
+            "110": 1,
+            "111": 1,
+            "112": 1,
+            "113": 28,
+            "114": 2,
+            "115": 18,
+            "116": 1,
+            "117": 4,
+            "118": 3,
+            "119": 3,
+            "120": 1,
+            "121": 1,
+            "122": 16,
+            "123": 28,
+            "124": 18,
+            "125": 3
+          },
+          "failures": []
+        },
+        "io_timing": {
+          "stage": "route",
+          "pass": true,
+          "interfaces": [],
+          "failures": [],
+          "delays": 2,
+          "clocks": {
+            "sys_clk_pin": {
+              "period": 10.0,
+              "waveform": "0.000 5.000",
+              "virtual": false,
+              "generated": false,
+              "source": "CLK100MHZ",
+              "input_jitter": 0.0
+            },
+            "dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_inst/SERIES7_BSCAN.bscan_inst/TCK": {
+              "period": 33.0,
+              "waveform": "0.000 16.500",
+              "virtual": false,
+              "generated": false,
+              "source": "dbg_hub/inst/BSCANID.u_xsdbm_id/SWITCH_N_EXT_BSCAN.bscan_inst/SERIES7_BSCAN.bscan_inst/TCK",
+              "input_jitter": 0.0
+            }
+          },
+          "worst": {
+            "setup": {
+              "slack": 3.866,
+              "requirement": 10.0,
+              "start_clock": "sys_clk_pin",
+              "end_clock": "sys_clk_pin",
+              "corner": "Slow",
+              "uncertainty": 0.035,
+              "pessimism": 0.259,
+              "from": "u_dut/u_sw_sync/s2_reg[7]/C",
+              "to": "u_dut/led_reg[10]/R"
+            },
+            "hold": {
+              "slack": 0.034,
+              "requirement": 0.0,
+              "start_clock": "sys_clk_pin",
+              "end_clock": "sys_clk_pin",
+              "corner": "Fast",
+              "uncertainty": null,
+              "pessimism": -0.25,
+              "from": "u_ila_0/inst/ila_core_inst/u_ila_regs/U_XSDB_SLAVE/reg_test_reg[14]/C",
+              "to": "u_ila_0/inst/ila_core_inst/u_ila_regs/U_XSDB_SLAVE/reg_do_reg[14]/D"
+            }
+          },
+          "uncertainty": {
+            "setup": {
+              "total_ns": 0.035,
+              "formula": "((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE",
+              "tsj_ns": 0.071,
+              "tij_ns": 0.0,
+              "dj_ns": 0.0,
+              "pe_ns": 0.0,
+              "pessimism_ns": 0.259,
+              "requirement_ns": 10.0,
+              "slack_ns": 3.866
+            },
+            "hold": null
+          }
+        },
+        "timing_margin": null,
+        "warnings": [],
+        "unconstrained_ports": {},
+        "pass": true
+      },
+      "bitstream": {
+        "ran": true,
+        "gates": {
+          "bitstream_present": true,
+          "debug_probes_present": true
+        },
+        "pass": true
+      }
+    },
+    "timing": {
+      "wns_ns": 3.866,
+      "tns_ns": 0.0,
+      "tns_failing_endpoints": 0,
+      "tns_total_endpoints": 5284,
+      "whs_ns": 0.034,
+      "ths_ns": 0.0,
+      "ths_failing_endpoints": 0,
+      "ths_total_endpoints": 5268,
+      "wpws_ns": 3.75,
+      "tpws_ns": 0.0,
+      "tpws_failing_endpoints": 0,
+      "tpws_total_endpoints": 2829,
+      "timing_met": true
+    },
+    "check_timing": {
+      "no_clock": 0,
+      "constant_clock": 0,
+      "pulse_width_clock": 0,
+      "unconstrained_internal_endpoints": 0,
+      "no_input_delay": 0,
+      "no_output_delay": 0,
+      "multiple_clock": 0,
+      "generated_clocks": 0,
+      "loops": 0,
+      "partial_input_delay": 0,
+      "partial_output_delay": 0,
+      "latch_loops": 0
+    },
+    "utilization": {
+      "lut": 1668,
+      "lut_available": 63400,
+      "lutram": 145,
+      "lutram_available": 19000,
+      "ff": 2562,
+      "ff_available": 126800,
+      "carry4": 62,
+      "bram_tile": 2,
+      "bram_tile_available": 135,
+      "dsp": 0,
+      "dsp_available": 240,
+      "iob": 55,
+      "iob_available": 210,
+      "bufg": 2,
+      "bufg_available": 32
+    },
+    "drc": {
+      "errors": 0,
+      "critical_warnings": 0,
+      "warnings": 4,
+      "rules": [
+        {
+          "rule": "PDCN-1569",
+          "severity": "Warning",
+          "description": "LUT equation term check",
+          "count": 3
+        },
+        {
+          "rule": "RTSTAT-10",
+          "severity": "Warning",
+          "description": "No routable loads",
+          "count": 1
+        }
+      ]
+    },
+    "methodology": {
+      "errors": 0,
+      "critical_warnings": 0,
+      "warnings": 60,
+      "rules": [
+        {
+          "rule": "LUTAR-1",
+          "severity": "Warning",
+          "description": "LUT drives async reset alert",
+          "count": 4
+        },
+        {
+          "rule": "XDCB-5",
+          "severity": "Warning",
+          "description": "Runtime inefficient way to find pin objects",
+          "count": 2
+        },
+        {
+          "rule": "XDCH-2",
+          "severity": "Warning",
+          "description": "Same min and max delay values on IO port",
+          "count": 54
+        }
+      ]
+    },
+    "cdc": {
+      "safely_timed": false,
+      "rules": [
+        {
+          "rule": "CDC-3",
+          "severity": "Info",
+          "count": 9,
+          "description": "1-bit synchronized with ASYNC_REG property"
+        },
+        {
+          "rule": "CDC-9",
+          "severity": "Info",
+          "count": 2,
+          "description": "Asynchronous reset synchronized with ASYNC_REG property"
+        }
+      ]
+    },
+    "power": {
+      "total_w": 0.161,
+      "dynamic_w": 0.047,
+      "static_w": 0.114,
+      "confidence": "Low",
+      "clocks_w": 0.01,
+      "slice_logic_w": 0.002,
+      "signals_w": 0.003,
+      "io_w": 0.031,
+      "core_w": 0.016
+    },
+    "power_environment": {
+      "junction_c": 42.9,
+      "max_ambient_c": 82.1,
+      "theta_ja_c_per_w": 18.2,
+      "ambient_c": 40.0,
+      "airflow_lfm": 0.0,
+      "heatsink": "none",
+      "board": "small (4\"x4\")",
+      "board_layers": "4to7 (4 to 7 Layers)"
+    },
+    "bitstream": {
+      "file": "t1_dimmer_counter_top.bit",
+      "bytes": 787963
+    },
+    "build_stamp": "dfd4624e",
+    "sources_sha256": "dfd4624ed4d00ad0da08aca9fa2928f684fb2f67011b99ea33c1395ca7863ee7"
+  },
+  "run": {
+    "design": "designs/t1_dimmer_counter",
+    "variant": "ila",
+    "exit_code": 0,
+    "wall_s": 424.1,
+    "vivado_peak_rss_mib": 3457,
+    "scope_memory_peak_mib": 5340,
+    "scope_anon_peak_mib": 5230,
+    "scope_swap_peak_mib": 0,
+    "scope_cap_hits": 0,
+    "scope_oom_kills": 0,
+    "memory_cap": "6G",
+    "max_threads": 2,
+    "nice": 15,
+    "scope_unit": "fda-vivado-4052214-ila",
+    "vivado_version": "2026.1",
+    "git_commit": "78600513c29d553996a65b1125a5b70ee322903d",
+    "git_dirty": false,
+    "build_stamp": "dfd4624e",
+    "sources_sha256": "dfd4624ed4d00ad0da08aca9fa2928f684fb2f67011b99ea33c1395ca7863ee7",
+    "stages_s": {
+      "read": 6.2,
+      "elaborate": 21.0,
+      "rtl_reports": 21.5,
+      "synth": 71.6,
+      "synth_reports": 78.1,
+      "ila_inserted": 236.7,
+      "opt": 316.8,
+      "place": 328.8,
+      "phys_opt": 329.8,
+      "place_reports": 331.3,
+      "route": 365.2,
+      "reports": 376.8,
+      "bitstream": 417.4
+    },
+    "cache": "fresh",
+    "flow_key": "29b9be9e2af3f82b7c7dd33a126f2dda21bbf0e5d2eccb0a897b92fddbf55a68"
+  }
+}
