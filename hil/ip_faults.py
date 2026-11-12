@@ -32,7 +32,10 @@ def faults(blocks=BLOCKS):
         block = f.parent.name
         if block not in blocks:
             continue
-        for m in yaml.safe_load(f.read_text())["faults"]:
+        y = yaml.safe_load(f.read_text())
+        if y.get("runner") != "hil/ip_faults.py":
+            raise SystemExit(f"{f}: declares runner {y.get('runner')!r}, not hil/ip_faults.py")
+        for m in y["faults"]:
             yield block, m
 
 
