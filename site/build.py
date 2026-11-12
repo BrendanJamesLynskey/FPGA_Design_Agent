@@ -445,7 +445,19 @@ def build(outdir: Path, d, check_numbers=True):
                 t = tok.lstrip("+-") if tok[0] in "+-" else tok
                 if tok not in ok and t not in ok and tok.rstrip(",") not in ok:
                     bad.append((fname, tok))
+    # a {name} placeholder left in a page is a field whose placeholders were never filled (brief 50A review): always an error
+    for fname, page in pages.items():
+        if not (fname == "showcase.html" or fname.startswith("showcase/")):
+            continue                       # only showcase text has placeholders; other pages show HDL such as {y}
+        for tok in leftover_placeholders(page):
+            bad.append((fname, tok))
     return pages, bad
+
+
+def leftover_placeholders(page: str) -> list[str]:
+    """``{name}`` tokens in a page's visible text or attributes (scripts and styles are left out)."""
+    t = re.sub(r"(?s)<(script|style|pre|code)\b.*?</\1>", " ", page)
+    return re.findall(r"\{[A-Za-z_]\w*\}", html.unescape(t))
 
 
 def static_files(d):
@@ -469,7 +481,7 @@ def main():
         d["showcase"] = showcase.build(Path(args[args.index("--showcase-fixture") + 1]), allow_fixtures=True)
     pages, bad = build(out, d)
     if bad:
-        print("numbers not found in site/data (add to the data, or to numbers_allow.txt with a reason):")
+        print("numbers not found in site/data (add to the data, or to numbers_allow.txt with a reason), or {placeholders} left unfilled:")
         for b in sorted(set(bad)):
             print("  ", b)
         sys.exit(1)

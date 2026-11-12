@@ -208,6 +208,7 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
         return r
     vals = _values(y.get("values"), name)
     f = lambda k, t: _fill(f"{name}: {k}", t, vals)
+    r["title"] = f("title", y["title"])
     r.update({"one_line": f("one_line", y["one_line"]), "board": y["board"], "part": y["part"], "headline": f("headline", y["headline"]),
               "vivado": y.get("vivado", "2026.1"), "values": vals})
     r["hero"] = hero_data(y["hero"], name)
@@ -242,7 +243,8 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
         for l in a.get("links", []):
             if l[0] not in ids or l[1] not in ids:
                 raise ContractError(f"{name}: architecture link {l} names an unknown block")
-        r["story"]["architecture"] = a
+        r["story"]["architecture"] = {"blocks": [[b[0], f("story.architecture", b[1])] for b in a["blocks"]],
+                                      "links": [[l[0], l[1]] + ([f("story.architecture", l[2])] if len(l) > 2 else []) for l in a.get("links", [])]}
     for e in y["evidence"]:
         if e.get("kind") not in EVIDENCE:
             raise ContractError(f"{name}: evidence kind must be one of {list(EVIDENCE)}")
@@ -251,7 +253,7 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
     miss = [k for k in EVIDENCE if k not in {e["kind"] for e in y["evidence"]}]
     if miss:
         raise ContractError(f"{name}: evidence lacks {miss} (say 'not recorded' in an item's text rather than leave a kind out)")
-    r["evidence"] = [{"kind": e["kind"], "label": e["label"], "path": e.get("path"), "text": f("evidence", e.get("text", ""))}
+    r["evidence"] = [{"kind": e["kind"], "label": f("evidence.label", e["label"]), "path": e.get("path"), "text": f("evidence", e.get("text", ""))}
                      for e in y["evidence"]]
     lim = y["limits"]
     r["limits"] = {k: [f(f"limits.{k}", t) for t in lim.get(k, [])] for k in ("not_measured", "nulls", "next")}

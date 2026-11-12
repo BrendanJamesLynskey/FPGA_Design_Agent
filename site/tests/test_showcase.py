@@ -398,3 +398,16 @@ def test_agent_section_follows_the_run_order_whatever_the_yaml_order(tmp_path):
     P = showcase.build(_write(tmp_path, y), allow_fixtures=True)["projects"][0]
     import re
     assert re.findall(r"<dt>([^<]+)</dt>", showcase.page_body(P)) == ["Request", "Plan", "Gates", "Approvals"]
+
+
+def test_every_published_text_field_fills_its_placeholders(tmp_path):
+    """Brief 59A editor finding: an evidence label rendered '{build_id}' literally. Every field is filled, and the build
+    refuses a page with a placeholder left in it."""
+    y = _demo()
+    y["evidence"][0]["label"] = "Synthetic hero data, {n} samples"
+    y["title"] = "Template preview ({n} samples)"
+    y["story"]["architecture"]["blocks"][0][1] = "Source of {n}"
+    P = showcase.build(_write(tmp_path, y), allow_fixtures=True)["projects"][0]
+    page = showcase.page_body(P)
+    assert "{n}" not in page and "{n}" not in P["title"]
+    assert build.leftover_placeholders('<p>build {build_id}</p><script>var a = {x};</script>') == ["{build_id}"]
