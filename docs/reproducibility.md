@@ -19,7 +19,7 @@ without Vivado.
 | Key | Content | In the build ID |
 |---|---|---|
 | `schema`, `design`, `variant`, `top`, `part` | what was built | yes |
-| `inputs` | repo-relative path to SHA-256, for every RTL, XDC, data and IP file, `build.yaml`, `probes.yaml` (ILA variant), `flow/build.tcl` and every flow script it sources, and the flow Python that writes the Tcl (`prepare.py`, `srcorder.py`, `ltx_fix.py`) | yes |
+| `inputs` | repo-relative path to SHA-256, for every RTL, XDC, data and IP file, `build.yaml`, `probes.yaml` (ILA variant), `flow/build.tcl` and every flow script it sources, and the flow Python that writes the Tcl (`prepare.py`, `srcorder.py`, `vhdl.py`, `ltx_fix.py`) | yes |
 | `input_roles` | each input's role (`rtl`, `xdc`, `data`, `ip`, `probes`, `build_yaml`, `tcl`, `flow_py`) | no (derived) |
 | `inputs_tcl` | `inputs.tcl` as Vivado reads it, with absolute paths replaced by `$ROOT` and `$OUT`: source order, generics, part, top, power environment, timing margin (not the stop stage: a build stopped after synthesis has no bitstream, and the cache resumes a longer build from it) | yes |
 | `settings` | thread count, the directive of each implementation command (as `build.tcl` passes it; today all `Default`), seeds (none are set), the result-changing switches (`FDA_INCREMENTAL`, `FDA_ILA_INSERT`), the build stamp | yes |

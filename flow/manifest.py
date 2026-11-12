@@ -52,7 +52,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "fda-build-manifest/1"
 COVERS = ("schema", "design", "variant", "top", "part", "inputs", "inputs_tcl", "settings", "tools.vivado")
 # flow Python whose output is part of the build (the Tcl it writes, or the .ltx it repairs)
-FLOW_PY = ("flow/prepare.py", "flow/srcorder.py", "flow/ltx_fix.py")
+FLOW_PY = ("flow/prepare.py", "flow/srcorder.py", "flow/vhdl.py", "flow/ltx_fix.py")   # vhdl.py orders VHDL sources (brief 55)
 # switches that change the result (in the build ID) and switches that only add reports (recorded)
 RESULT_SWITCHES = ("FDA_INCREMENTAL", "FDA_ILA_INSERT")
 REPORT_SWITCHES = ("FDA_XPROBE", "FDA_RESULT_HASH", "FDA_BUILD_CACHE")
