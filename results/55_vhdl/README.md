@@ -13,7 +13,11 @@ OpenRouter (`data_collection: deny`). Pre-registration and its dated amendments:
 - **The end-to-end agent runs did not pass.** Two runs of the full agent with `--hdl vhdl` (stage 0 to 2, luna) wrote VHDL that
   built and talked to the shell but failed every hidden test on register behaviour (for example the RATE register read 0 after
   reset where the spec says 250); both stopped at the stage-2 visit limit. This is the same failure class as luna's
-  SystemVerilog runs in brief 42, not a VHDL one. Two further runs with the VHDL skills loaded are in the report.
+  SystemVerilog runs in brief 42, not a VHDL one. Two further runs with the VHDL skills in the bank (both loaded `vhdl` skills
+  repeatedly; `t1_elevator_fsm`, `t1_debounce_bank`) were stopped at 04:20 in long stage-2 simulations; their VHDL built and failed
+  every hidden test on the register map (design ID at window 0, reset values), again not a VHDL failure
+  ([scores/agentkb_*](scores/)). Stage 2 could not pass that night in either language: its `stage_rtl` gate needs a Vivado build,
+  which `run_vivado.sh` refused while other Vivado jobs ran.
 - **One block translation fails as written**: the 4-phase handshake (`cdcfx_c8`) in arm A and again in arm B, on 'U' at time 0
   (mistake M2). The rule was in arm B's prompt; the model translated literally anyway.
 - Code coverage of VHDL is not available (GHDL's mcode back end has none). UVVM was not run.
@@ -82,4 +86,4 @@ error), and the standards checker read a VHDL signal with an initial value as a 
 ## Cost
 
 Translations: 14 runs, $0.0325 provider-reported. Agent runs: $0.2528 and $0.1558 (two full runs), two runs stopped at start with
-no cost recorded, and the two runs with the VHDL skills (see the report). Ledger: [../spend_ledger.csv](../spend_ledger.csv).
+no cost recorded, and the two runs with the VHDL skills $0.165 and $0.0812 (finished roles). Total $0.6873 provider-reported against the $10 cap. Ledger: [../spend_ledger.csv](../spend_ledger.csv).
