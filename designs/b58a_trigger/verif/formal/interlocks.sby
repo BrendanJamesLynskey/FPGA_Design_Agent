@@ -1,0 +1,25 @@
+# SymbiYosys: interlocks.sv. bmc to a depth past several refill periods; prove by k-induction.
+[tasks]
+bmc
+prove
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 30
+prove: mode prove
+prove: depth 30
+cover: mode cover
+cover: depth 30
+
+[engines]
+smtbmc z3
+
+[script]
+read_verilog -formal -sv interlocks.sv
+read_verilog -formal -sv formal_interlocks.sv
+prep -top formal_interlocks
+
+[files]
+../../rtl/interlocks.sv
+formal_interlocks.sv

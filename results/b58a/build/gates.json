@@ -1,0 +1,3861 @@
+{
+  "build_dir": "/tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b58a/designs/b58a_trigger/build/base",
+  "vivado_version": "2026.1",
+  "kb_measured_version": "2026.1",
+  "kb_version_match": true,
+  "top": "kr260_top",
+  "variant": "base",
+  "pass": false,
+  "first_failed_stage": "post_route",
+  "gates": {
+    "rtl_methodology_no_critical": true,
+    "post_synth_no_unconstrained_endpoints": true,
+    "post_synth_methodology_no_critical": true,
+    "post_synth_drc_clean": true,
+    "post_synth_cdc_no_critical": true,
+    "post_synth_cdc_structure_clean": true,
+    "post_synth_exceptions_clean": true,
+    "post_synth_io_constraints_clean": true,
+    "post_place_hold": true,
+    "setup": false,
+    "hold": false,
+    "pulse_width": true,
+    "no_unconstrained_endpoints": true,
+    "drc_clean": true,
+    "methodology_no_critical": true,
+    "cdc_no_critical": true,
+    "power_junction_ok": true,
+    "exceptions_clean": true,
+    "io_timing_clean": true,
+    "bitstream_present": true
+  },
+  "warnings": [],
+  "stages": {
+    "rtl": {
+      "ran": true,
+      "gates": {
+        "rtl_methodology_no_critical": true
+      },
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 10,
+        "rules": [
+          {
+            "rule": "XDCH-2",
+            "severity": "Warning",
+            "description": "Same min and max delay values on IO port",
+            "count": 10
+          },
+          {
+            "rule": "CLKC-32",
+            "severity": "Advisory",
+            "description": "MMCME4 CLKOUT with phase shift drives no IOs",
+            "count": 1
+          },
+          {
+            "rule": "RAKN-1",
+            "severity": "Advisory",
+            "description": "KEEP attribute will not alter place and route behavior",
+            "count": 6
+          },
+          {
+            "rule": "RFFH-1",
+            "severity": "Advisory",
+            "description": "The register driving a high fanout",
+            "count": 2
+          },
+          {
+            "rule": "RRRS-1",
+            "severity": "Advisory",
+            "description": "Found user attribute ram_style",
+            "count": 3
+          }
+        ]
+      },
+      "pass": true
+    },
+    "post_synth": {
+      "ran": true,
+      "gates": {
+        "post_synth_no_unconstrained_endpoints": true,
+        "post_synth_methodology_no_critical": true,
+        "post_synth_drc_clean": true,
+        "post_synth_cdc_no_critical": true,
+        "post_synth_cdc_structure_clean": true,
+        "post_synth_exceptions_clean": true,
+        "post_synth_io_constraints_clean": true
+      },
+      "warnings": [],
+      "timing": {
+        "wns_ns": -0.369,
+        "tns_ns": -3.042,
+        "tns_failing_endpoints": 10,
+        "tns_total_endpoints": 30292,
+        "whs_ns": -0.856,
+        "ths_ns": -171.121,
+        "ths_failing_endpoints": 6418,
+        "ths_total_endpoints": 30192,
+        "wpws_ns": 0.333,
+        "tpws_ns": 0.0,
+        "tpws_failing_endpoints": 0,
+        "tpws_total_endpoints": 10622,
+        "timing_met": false
+      },
+      "check_timing": {
+        "no_clock": 0,
+        "constant_clock": 0,
+        "pulse_width_clock": 0,
+        "unconstrained_internal_endpoints": 0,
+        "no_input_delay": 0,
+        "no_output_delay": 2,
+        "multiple_clock": 0,
+        "generated_clocks": 0,
+        "loops": 0,
+        "partial_input_delay": 0,
+        "partial_output_delay": 0,
+        "latch_loops": 0
+      },
+      "unconstrained_ports": {
+        "no_output_delay": [
+          "a_txc",
+          "b_txc"
+        ]
+      },
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 17,
+        "rules": [
+          {
+            "rule": "SYNTH-6",
+            "severity": "Warning",
+            "description": "Timing of a RAM block might be sub-optimal",
+            "count": 7
+          },
+          {
+            "rule": "XDCH-2",
+            "severity": "Warning",
+            "description": "Same min and max delay values on IO port",
+            "count": 10
+          },
+          {
+            "rule": "CLKC-32",
+            "severity": "Advisory",
+            "description": "MMCME4 CLKOUT with phase shift drives no IOs",
+            "count": 1
+          }
+        ]
+      },
+      "drc": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 1,
+        "rules": [
+          {
+            "rule": "REQP-1877",
+            "severity": "Warning",
+            "description": "BUFGCE_has_no_loads",
+            "count": 1
+          }
+        ]
+      },
+      "qor_assessment": null,
+      "cdc": {
+        "safely_timed": false,
+        "rules": [
+          {
+            "rule": "CDC-3",
+            "severity": "Info",
+            "count": 9,
+            "description": "1-bit synchronized with ASYNC_REG property"
+          },
+          {
+            "rule": "CDC-6",
+            "severity": "Warning",
+            "count": 12,
+            "description": "Multi-bit synchronized with ASYNC_REG property"
+          },
+          {
+            "rule": "CDC-15",
+            "severity": "Warning",
+            "count": 20,
+            "description": "Clock enable controlled CDC structure detected"
+          }
+        ]
+      },
+      "cdc_structure": {
+        "crossings": [
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[0]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][10]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[10]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][11]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[11]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][12]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[12]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][13]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[13]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][14]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[14]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][15]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[15]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][16]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[16]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][17]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[17]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][18]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[18]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][19]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[19]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[1]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][20]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[20]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][21]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[21]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][22]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[22]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][23]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[23]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][24]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[24]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][25]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[25]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][26]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[26]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][27]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[27]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][28]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[28]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][29]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[29]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[2]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][30]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[30]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][31]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[31]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[3]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][4]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[4]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][5]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[5]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][6]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[6]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][7]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[7]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][8]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[8]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_cnt/dest_graysync_ff_reg[0][9]",
+            "pin": "D",
+            "src": "u_acdc/u_cnt/src_gray_ff_reg[9]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[0]",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[1]",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[2]",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[3]",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][4]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[4]",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[0]",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[1]",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[2]",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[3]",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[0]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[1]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[2]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[3]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][4]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[4]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/src_gray_ff_reg[0]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/src_gray_ff_reg[1]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/src_gray_ff_reg[2]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/src_gray_ff_reg[3]",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[0]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMA",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[1]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMA_D1",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[2]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMB",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[3]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMB_D1",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[4]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMC",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[5]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMC_D1",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[6]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMD",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[7]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMD_D1",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[8]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAME",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[9]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAME_D1",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.rrst_wr_inst/syncstages_ff_reg[0]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_rd_rst_ic_reg",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-3"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.wrst_rd_inst/syncstages_ff_reg[0]",
+            "pin": "D",
+            "src": "u_acdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_wr_rst_ic_reg",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-3"
+            ]
+          },
+          {
+            "cell": "u_acdc/u_ovf/xpm_cdc_single_inst/syncstages_ff_reg[0]",
+            "pin": "D",
+            "src": "u_acdc/u_ovf/src_level_ff_reg",
+            "src_clock": "a_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-3"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[0]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][10]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[10]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][11]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[11]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][12]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[12]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][13]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[13]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][14]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[14]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][15]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[15]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][16]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[16]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][17]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[17]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][18]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[18]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][19]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[19]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[1]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][20]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[20]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][21]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[21]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][22]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[22]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][23]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[23]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][24]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[24]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][25]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[25]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][26]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[26]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][27]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[27]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][28]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[28]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][29]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[29]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[2]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][30]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[30]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][31]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[31]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[3]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][4]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[4]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][5]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[5]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][6]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[6]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][7]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[7]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][8]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[8]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_cnt/dest_graysync_ff_reg[0][9]",
+            "pin": "D",
+            "src": "u_bcdc/u_cnt/src_gray_ff_reg[9]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "gray",
+            "rule": "",
+            "why": "xpm_gray instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[0]",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[1]",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[2]",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[3]",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][4]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_dc_inst/src_gray_ff_reg[4]",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[0]",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[1]",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[2]",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.rd_pntr_cdc_inst/src_gray_ff_reg[3]",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[0]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[1]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[2]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[3]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/dest_graysync_ff_reg[0][4]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_dc_inst/src_gray_ff_reg[4]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/dest_graysync_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/src_gray_ff_reg[0]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/dest_graysync_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/src_gray_ff_reg[1]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/dest_graysync_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/src_gray_ff_reg[2]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/dest_graysync_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_cdc_pntr.wr_pntr_cdc_inst/src_gray_ff_reg[3]",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "fifo",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'Max Delay Datapath Only'",
+            "exception": "Max Delay Datapath Only",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[0]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMA",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[1]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMA_D1",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[2]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMB",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[3]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMB_D1",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[4]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMC",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[5]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMC_D1",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[6]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMD",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[7]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAMD_D1",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[8]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAME",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_rd_b.gen_rd_b_synth_template.gen_rf_narrow_reg.doutb_reg_reg[9]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_9/RAME_D1",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance",
+            "exception": "",
+            "report_cdc_rules": []
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.rrst_wr_inst/syncstages_ff_reg[0]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_rd_rst_ic_reg",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-3"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.wrst_rd_inst/syncstages_ff_reg[0]",
+            "pin": "D",
+            "src": "u_bcdc/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/xpm_fifo_rst_inst/gen_rst_ic.fifo_wr_rst_ic_reg",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_fifo instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-3"
+            ]
+          },
+          {
+            "cell": "u_bcdc/u_ovf/xpm_cdc_single_inst/syncstages_ff_reg[0]",
+            "pin": "D",
+            "src": "u_bcdc/u_ovf/src_level_ff_reg",
+            "src_clock": "b_rxc",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-3"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[0]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][10]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[10]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][11]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[11]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][12]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[12]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][13]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[13]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][14]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[14]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][15]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[15]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][16]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[16]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][17]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[17]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][18]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[18]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][19]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[19]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[1]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][20]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[20]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][21]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[21]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][22]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[22]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][23]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[23]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][24]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[24]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][25]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[25]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][26]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[26]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][27]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[27]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][28]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[28]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][29]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[29]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[2]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][30]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[30]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][31]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[31]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][32]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[32]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][33]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[33]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][34]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[34]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][35]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[35]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][36]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[36]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][37]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[37]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][38]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[38]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][39]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[39]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[3]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][40]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[40]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][41]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[41]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][42]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[42]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][43]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[43]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][44]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[44]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][45]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[45]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][4]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[4]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][5]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[5]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][6]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[6]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][7]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[7]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][8]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[8]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_cmd/syncstages_ff_reg[0][9]",
+            "pin": "D",
+            "src": "u_jtag/cmd_reg[9]",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_req/syncstages_ff_reg[0]",
+            "pin": "D",
+            "src": "u_jtag/req_t_reg",
+            "src_clock": "tck_out",
+            "dst_clock": "clk0_u",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-3"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][0]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[0]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][10]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[10]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][11]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[11]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][12]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[12]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][13]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[13]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][14]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[14]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][15]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[15]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][16]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[16]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][17]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[17]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][18]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[18]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][19]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[19]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][1]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[1]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][20]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[20]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][21]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[21]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][22]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[22]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][23]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[23]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][24]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[24]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][25]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[25]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][26]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[26]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][27]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[27]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][28]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[28]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][29]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[29]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][2]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[2]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][30]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[30]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][31]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[31]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][32]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[32]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][33]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[33]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][34]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[34]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][35]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[35]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][36]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[36]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][37]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[37]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][38]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[38]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][39]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[39]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][3]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[3]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][4]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[4]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][5]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[5]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][6]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[6]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][7]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[7]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][8]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[8]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_jtag/u_resp/syncstages_ff_reg[0][9]",
+            "pin": "D",
+            "src": "u_jtag/u_resp/src_ff_reg[9]",
+            "src_clock": "clk0_u",
+            "dst_clock": "tck_out",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-6"
+            ]
+          },
+          {
+            "cell": "u_rsta/syncstages_ff_reg[0]",
+            "pin": "D",
+            "src": "rx_rst_q_reg",
+            "src_clock": "clk0_u",
+            "dst_clock": "a_rxc",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-3"
+            ]
+          },
+          {
+            "cell": "u_rstb/syncstages_ff_reg[0]",
+            "pin": "D",
+            "src": "rx_rst_q_reg",
+            "src_clock": "clk0_u",
+            "dst_clock": "b_rxc",
+            "class": "xpm",
+            "rule": "",
+            "why": "xpm_single instance, exception 'False Path'",
+            "exception": "False Path",
+            "report_cdc_rules": [
+              "CDC-3"
+            ]
+          }
+        ],
+        "summary": {
+          "gray": 64,
+          "fifo": 36,
+          "xpm": 115
+        },
+        "unsafe": [],
+        "n_crossings": 215,
+        "clocks": {
+          "clk_25": {
+            "period": 40.0,
+            "root": "clk_25"
+          },
+          "a_rxc": {
+            "period": 8.0,
+            "root": "a_rxc"
+          },
+          "b_rxc": {
+            "period": 8.0,
+            "root": "b_rxc"
+          },
+          "a_rxc_v": {
+            "period": 8.0,
+            "root": "a_rxc_v"
+          },
+          "b_rxc_v": {
+            "period": 8.0,
+            "root": "b_rxc_v"
+          },
+          "a_txc": {
+            "period": 8.0,
+            "root": "clk_25"
+          },
+          "b_txc": {
+            "period": 8.0,
+            "root": "clk_25"
+          },
+          "tck": {
+            "period": 33.333,
+            "root": "tck"
+          },
+          "tck_out": {
+            "period": 33.333,
+            "root": "tck"
+          },
+          "clk0_u": {
+            "period": 8.0,
+            "root": "clk_25"
+          },
+          "clk90_u": {
+            "period": 8.0,
+            "root": "clk_25"
+          },
+          "ref333_u": {
+            "period": 3.0,
+            "root": "clk_25"
+          }
+        },
+        "pass": true
+      },
+      "exceptions": {
+        "stage": "synth",
+        "pass": true,
+        "status": "pass",
+        "waived": 0,
+        "waived_rules": [],
+        "exceptions": 11,
+        "ignored": 0,
+        "info": [],
+        "covered": {
+          "26": 10,
+          "27": 10,
+          "30": 8,
+          "31": 2,
+          "32": 98,
+          "33": 32,
+          "35": 5,
+          "37": 4,
+          "39": 5,
+          "41": 4,
+          "43": 32,
+          "45": 5,
+          "47": 4,
+          "49": 5,
+          "51": 4
+        },
+        "failures": []
+      },
+      "io_timing": {
+        "stage": "synth",
+        "pass": true,
+        "interfaces": [
+          {
+            "name": "rgmii_rx_a",
+            "kind": "source_synchronous",
+            "ports": [
+              "a_rx_ctl",
+              "a_rxd[0]",
+              "a_rxd[1]",
+              "a_rxd[2]",
+              "a_rxd[3]"
+            ],
+            "clock": "a_rxc_v"
+          },
+          {
+            "name": "rgmii_rx_b",
+            "kind": "source_synchronous",
+            "ports": [
+              "b_rx_ctl",
+              "b_rxd[0]",
+              "b_rxd[1]",
+              "b_rxd[2]",
+              "b_rxd[3]"
+            ],
+            "clock": "b_rxc_v"
+          },
+          {
+            "name": "rgmii_tx_a",
+            "kind": "forwarded_clock",
+            "ports": [
+              "a_tx_ctl",
+              "a_txd[0]",
+              "a_txd[1]",
+              "a_txd[2]",
+              "a_txd[3]"
+            ],
+            "clock": "a_txc"
+          },
+          {
+            "name": "rgmii_tx_b",
+            "kind": "forwarded_clock",
+            "ports": [
+              "b_tx_ctl",
+              "b_txd[0]",
+              "b_txd[1]",
+              "b_txd[2]",
+              "b_txd[3]"
+            ],
+            "clock": "b_txc"
+          }
+        ],
+        "failures": [],
+        "delays": 18,
+        "clocks": {
+          "clk_25": {
+            "period": 40.0,
+            "waveform": "0.000 20.000",
+            "virtual": false,
+            "generated": false,
+            "source": "clk_25",
+            "input_jitter": 0.0
+          },
+          "a_rxc": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": false,
+            "source": "a_rxc",
+            "input_jitter": 0.0
+          },
+          "b_rxc": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": false,
+            "source": "b_rxc",
+            "input_jitter": 0.0
+          },
+          "a_rxc_v": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": true,
+            "generated": false,
+            "source": "",
+            "input_jitter": 0.0
+          },
+          "b_rxc_v": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": true,
+            "generated": false,
+            "source": "",
+            "input_jitter": 0.0
+          },
+          "a_txc": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": true,
+            "source": "a_txc",
+            "input_jitter": 0.0
+          },
+          "b_txc": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": true,
+            "source": "b_txc",
+            "input_jitter": 0.0
+          },
+          "tck": {
+            "period": 33.333,
+            "waveform": "0.000 16.667",
+            "virtual": false,
+            "generated": false,
+            "source": "u_jtag/u_bscan/INTERNAL_TCK",
+            "input_jitter": 0.0
+          },
+          "tck_out": {
+            "period": 33.333,
+            "waveform": "0.000 16.667",
+            "virtual": false,
+            "generated": true,
+            "source": "u_jtag/u_bscan/TCK",
+            "input_jitter": 0.0
+          },
+          "clk0_u": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": true,
+            "source": "u_mmcm/CLKOUT0",
+            "input_jitter": 0.0
+          },
+          "clk90_u": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": true,
+            "source": "u_mmcm/CLKOUT1",
+            "input_jitter": 0.0
+          },
+          "ref333_u": {
+            "period": 3.0,
+            "waveform": "0.000 1.500",
+            "virtual": false,
+            "generated": true,
+            "source": "u_mmcm/CLKOUT2",
+            "input_jitter": 0.0
+          }
+        },
+        "worst": {
+          "setup": {
+            "slack": -0.369,
+            "requirement": 4.0,
+            "start_clock": "clk0_u",
+            "end_clock": "a_txc",
+            "corner": "Slow",
+            "uncertainty": 0.109,
+            "pessimism": -0.463,
+            "from": "u_atx/g_oddr[0].u_oddr/CLK",
+            "to": "a_txd[0]"
+          },
+          "hold": {
+            "slack": -0.856,
+            "requirement": 0.0,
+            "start_clock": "a_rxc_v",
+            "end_clock": "a_rxc",
+            "corner": "Slow",
+            "uncertainty": 0.025,
+            "pessimism": 0.0,
+            "from": "a_rxd[1]",
+            "to": "u_arx/g_iddr[1].u_iddr/D"
+          }
+        }
+      },
+      "resource_sanity": null,
+      "utilization": {
+        "lutram": 164,
+        "lutram_available": 57600,
+        "bram_tile": 6.5,
+        "bram_tile_available": 144,
+        "dsp": 0,
+        "dsp_available": 1248,
+        "iob": 33,
+        "iob_available": 189,
+        "bufg": 0,
+        "bufg_available": 32
+      },
+      "pass": true
+    },
+    "post_place": {
+      "ran": true,
+      "gates": {
+        "post_place_hold": true
+      },
+      "timing": {
+        "wns_ns": -0.198,
+        "tns_ns": -1.397,
+        "tns_failing_endpoints": 10,
+        "tns_total_endpoints": 30229,
+        "whs_ns": -0.184,
+        "ths_ns": -3.596,
+        "ths_failing_endpoints": 127,
+        "ths_total_endpoints": 30149,
+        "wpws_ns": 0.333,
+        "tpws_ns": 0.0,
+        "tpws_failing_endpoints": 0,
+        "tpws_total_endpoints": 10557,
+        "timing_met": false
+      },
+      "pass": true
+    },
+    "post_route": {
+      "ran": true,
+      "gates": {
+        "setup": false,
+        "hold": false,
+        "pulse_width": true,
+        "no_unconstrained_endpoints": true,
+        "drc_clean": true,
+        "methodology_no_critical": true,
+        "cdc_no_critical": true,
+        "power_junction_ok": true,
+        "exceptions_clean": true,
+        "io_timing_clean": true
+      },
+      "qor_assessment": {
+        "available": false,
+        "reason": "report_qor_assessment needs a licence tier above Basic (Implflow 47-2944); the QoR gate is not judged"
+      },
+      "exceptions": {
+        "stage": "route",
+        "pass": true,
+        "status": "pass",
+        "waived": 0,
+        "waived_rules": [],
+        "exceptions": 9,
+        "ignored": 0,
+        "info": [],
+        "covered": {
+          "26": 10,
+          "27": 10,
+          "30": 8,
+          "31": 2,
+          "32": 97,
+          "33": 32,
+          "37": 4,
+          "41": 4,
+          "43": 32,
+          "47": 4,
+          "51": 4
+        },
+        "failures": []
+      },
+      "io_timing": {
+        "stage": "route",
+        "pass": true,
+        "interfaces": [
+          {
+            "name": "rgmii_rx_a",
+            "kind": "source_synchronous",
+            "ports": [
+              "a_rx_ctl",
+              "a_rxd[0]",
+              "a_rxd[1]",
+              "a_rxd[2]",
+              "a_rxd[3]"
+            ],
+            "clock": "a_rxc_v",
+            "setup_slack_ns": 0.36,
+            "hold_slack_ns": 0.697,
+            "requirements_ns": {
+              "max": [
+                4.0
+              ],
+              "min": [
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "rgmii_rx_b",
+            "kind": "source_synchronous",
+            "ports": [
+              "b_rx_ctl",
+              "b_rxd[0]",
+              "b_rxd[1]",
+              "b_rxd[2]",
+              "b_rxd[3]"
+            ],
+            "clock": "b_rxc_v",
+            "setup_slack_ns": 0.642,
+            "hold_slack_ns": 0.238,
+            "requirements_ns": {
+              "max": [
+                4.0
+              ],
+              "min": [
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "rgmii_tx_a",
+            "kind": "forwarded_clock",
+            "ports": [
+              "a_tx_ctl",
+              "a_txd[0]",
+              "a_txd[1]",
+              "a_txd[2]",
+              "a_txd[3]"
+            ],
+            "clock": "a_txc",
+            "setup_slack_ns": -0.198,
+            "hold_slack_ns": -0.167,
+            "requirements_ns": {
+              "max": [
+                4.0
+              ],
+              "min": [
+                0.0
+              ]
+            }
+          },
+          {
+            "name": "rgmii_tx_b",
+            "kind": "forwarded_clock",
+            "ports": [
+              "b_tx_ctl",
+              "b_txd[0]",
+              "b_txd[1]",
+              "b_txd[2]",
+              "b_txd[3]"
+            ],
+            "clock": "b_txc",
+            "setup_slack_ns": -0.163,
+            "hold_slack_ns": -0.184,
+            "requirements_ns": {
+              "max": [
+                4.0
+              ],
+              "min": [
+                0.0
+              ]
+            }
+          }
+        ],
+        "failures": [],
+        "delays": 18,
+        "clocks": {
+          "clk_25": {
+            "period": 40.0,
+            "waveform": "0.000 20.000",
+            "virtual": false,
+            "generated": false,
+            "source": "clk_25",
+            "input_jitter": 0.0
+          },
+          "a_rxc": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": false,
+            "source": "a_rxc",
+            "input_jitter": 0.0
+          },
+          "b_rxc": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": false,
+            "source": "b_rxc",
+            "input_jitter": 0.0
+          },
+          "a_rxc_v": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": true,
+            "generated": false,
+            "source": "",
+            "input_jitter": 0.0
+          },
+          "b_rxc_v": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": true,
+            "generated": false,
+            "source": "",
+            "input_jitter": 0.0
+          },
+          "a_txc": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": true,
+            "source": "a_txc",
+            "input_jitter": 0.0
+          },
+          "b_txc": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": true,
+            "source": "b_txc",
+            "input_jitter": 0.0
+          },
+          "tck": {
+            "period": 33.333,
+            "waveform": "0.000 16.667",
+            "virtual": false,
+            "generated": false,
+            "source": "u_jtag/u_bscan/INTERNAL_TCK",
+            "input_jitter": 0.0
+          },
+          "tck_out": {
+            "period": 33.333,
+            "waveform": "0.000 16.667",
+            "virtual": false,
+            "generated": true,
+            "source": "u_jtag/u_bscan/TCK",
+            "input_jitter": 0.0
+          },
+          "clk0_u": {
+            "period": 8.0,
+            "waveform": "0.000 4.000",
+            "virtual": false,
+            "generated": true,
+            "source": "u_mmcm/CLKOUT0",
+            "input_jitter": 0.0
+          },
+          "ref333_u": {
+            "period": 3.0,
+            "waveform": "0.000 1.500",
+            "virtual": false,
+            "generated": true,
+            "source": "u_mmcm/CLKOUT2",
+            "input_jitter": 0.0
+          }
+        },
+        "worst": {
+          "setup": {
+            "slack": -0.198,
+            "requirement": 4.0,
+            "start_clock": "clk0_u",
+            "end_clock": "a_txc",
+            "corner": "Slow",
+            "uncertainty": 0.109,
+            "pessimism": -0.333,
+            "from": "u_atx/g_oddr[0].u_oddr/CLK",
+            "to": "a_txd[0]"
+          },
+          "hold": {
+            "slack": -0.184,
+            "requirement": 0.0,
+            "start_clock": "clk0_u",
+            "end_clock": "b_txc",
+            "corner": "Slow",
+            "uncertainty": null,
+            "pessimism": 0.338,
+            "from": "u_btx/u_ctl/CLK",
+            "to": "b_tx_ctl"
+          }
+        },
+        "uncertainty": {
+          "setup": {
+            "total_ns": 0.109,
+            "formula": "((TSJ^2 + DJ^2)^1/2) / 2 + PE",
+            "tsj_ns": 0.071,
+            "dj_ns": 0.205,
+            "pe_ns": 0.0,
+            "pessimism_ns": -0.333,
+            "requirement_ns": 4.0,
+            "slack_ns": -0.198
+          },
+          "hold": null
+        }
+      },
+      "timing_margin": null,
+      "ila_hub_crossing": null,
+      "warnings": [],
+      "unconstrained_ports": {
+        "no_output_delay": [
+          "a_txc",
+          "b_txc"
+        ]
+      },
+      "pass": false
+    },
+    "bitstream": {
+      "ran": true,
+      "gates": {
+        "bitstream_present": true
+      },
+      "pass": true
+    }
+  },
+  "timing": {
+    "wns_ns": -0.198,
+    "tns_ns": -1.397,
+    "tns_failing_endpoints": 10,
+    "tns_total_endpoints": 30229,
+    "whs_ns": -0.184,
+    "ths_ns": -1.501,
+    "ths_failing_endpoints": 10,
+    "ths_total_endpoints": 30149,
+    "wpws_ns": 0.333,
+    "tpws_ns": 0.0,
+    "tpws_failing_endpoints": 0,
+    "tpws_total_endpoints": 10557,
+    "timing_met": false
+  },
+  "check_timing": {
+    "no_clock": 0,
+    "constant_clock": 0,
+    "pulse_width_clock": 0,
+    "unconstrained_internal_endpoints": 0,
+    "no_input_delay": 0,
+    "no_output_delay": 2,
+    "multiple_clock": 0,
+    "generated_clocks": 0,
+    "loops": 0,
+    "partial_input_delay": 0,
+    "partial_output_delay": 0,
+    "latch_loops": 0
+  },
+  "utilization": {
+    "lutram": 164,
+    "lutram_available": 57600,
+    "bram_tile": 6.5,
+    "bram_tile_available": 144,
+    "dsp": 0,
+    "dsp_available": 1248,
+    "iob": 33,
+    "iob_available": 189,
+    "bufg": 0,
+    "bufg_available": 32
+  },
+  "drc": {
+    "errors": 0,
+    "critical_warnings": 0,
+    "warnings": 0,
+    "rules": []
+  },
+  "methodology": {
+    "errors": 0,
+    "critical_warnings": 0,
+    "warnings": 17,
+    "rules": [
+      {
+        "rule": "SYNTH-6",
+        "severity": "Warning",
+        "description": "Timing of a RAM block might be sub-optimal",
+        "count": 7
+      },
+      {
+        "rule": "XDCH-2",
+        "severity": "Warning",
+        "description": "Same min and max delay values on IO port",
+        "count": 10
+      }
+    ]
+  },
+  "cdc": {
+    "safely_timed": false,
+    "rules": [
+      {
+        "rule": "CDC-3",
+        "severity": "Info",
+        "count": 9,
+        "description": "1-bit synchronized with ASYNC_REG property"
+      },
+      {
+        "rule": "CDC-6",
+        "severity": "Warning",
+        "count": 8,
+        "description": "Multi-bit synchronized with ASYNC_REG property"
+      },
+      {
+        "rule": "CDC-15",
+        "severity": "Warning",
+        "count": 20,
+        "description": "Clock enable controlled CDC structure detected"
+      }
+    ]
+  },
+  "power": {
+    "total_w": 0.499,
+    "dynamic_w": 0.162,
+    "static_w": 0.337,
+    "confidence": "Low",
+    "clocks_w": 0.021,
+    "signals_w": 0.01,
+    "io_w": 0.016,
+    "core_w": 0.144
+  },
+  "power_environment": {
+    "junction_c": 43.7,
+    "max_ambient_c": 81.3,
+    "theta_ja_c_per_w": 7.4,
+    "ambient_c": 40.0,
+    "airflow_lfm": 0.0,
+    "heatsink": "none",
+    "board": "medium (10\"x10\")",
+    "board_layers": "8to11 (8 to 11 Layers)"
+  },
+  "bitstream": {
+    "file": "kr260_top.bit",
+    "bytes": 7797900
+  },
+  "build_stamp": "dd0a22a2",
+  "sources_sha256": "dd0a22a246da29df01141fe61f3770cfc1203266d82b72a6efd47f1272ad4db9"
+}

@@ -1,0 +1,109 @@
+{
+ "design": "designs/b58a_trigger",
+ "top": "kr260_top",
+ "part": "xck26-sfvc784-2LV-c",
+ "vivado": "2026.1 (Basic tier)",
+ "build_id": "8fd1e252",
+ "wall_s": 1372.6,
+ "run": {
+  "design": "designs/b58a_trigger",
+  "variant": "base",
+  "exit_code": 0,
+  "wall_s": 1372.6,
+  "vivado_peak_rss_mib": 4378,
+  "scope_memory_peak_mib": 3766,
+  "scope_anon_peak_mib": 3685,
+  "scope_swap_peak_mib": 0,
+  "scope_cap_hits": 0,
+  "scope_oom_kills": 0,
+  "memory_cap": "6G",
+  "max_threads": 2,
+  "nice": 15,
+  "scope_unit": "fda-vivado-2857442-base",
+  "vivado_version": "2026.1",
+  "git_commit": "dbd8551c0624c3ad5d5c871f2333b2d9461df54f",
+  "git_dirty": false,
+  "build_stamp": "dd0a22a2",
+  "sources_sha256": "dd0a22a246da29df01141fe61f3770cfc1203266d82b72a6efd47f1272ad4db9",
+  "stages_s": {
+   "read": 6.2,
+   "elaborate": 35.2,
+   "rtl_reports": 35.6,
+   "synth": 255.9,
+   "synth_reports": 994.2,
+   "opt": 1008.7,
+   "place": 1153.9,
+   "phys_opt": 1166.4,
+   "place_reports": 1169.3,
+   "route": 1274.1,
+   "reports": 1321.1,
+   "bitstream": 1366.1
+  },
+  "cache": "fresh",
+  "flow_key": "09e0dbeff6617f474d787f09b1660986f6acc899b02c60b8b42da5fd10d91924",
+  "build_id": "8fd1e252"
+ },
+ "timing_post_route": {
+  "source": "gates.json timing (timing_summary.rpt)",
+  "wns_ns": -0.198,
+  "tns_ns": -1.397,
+  "tns_failing_endpoints": 10,
+  "whs_ns": -0.184,
+  "ths_ns": -1.501,
+  "ths_failing_endpoints": 10,
+  "all_constraints_met": false
+ },
+ "rgmii_io_slack_ns": {
+  "source": "io_paths_route.txt, worst per port, direction and check",
+  "a_rx_hold": 0.697,
+  "a_rx_setup": 0.36,
+  "a_tx_hold": -0.167,
+  "a_tx_setup": -0.198,
+  "b_rx_hold": 0.238,
+  "b_rx_setup": 0.642,
+  "b_tx_hold": -0.184,
+  "b_tx_setup": -0.163
+ },
+ "rgmii_constraints": {
+  "rx": "centre-aligned, PHY RX delay on; -max 2.8, -min 1.2 on both edges; IDELAYE3 1000 ps on each data input",
+  "tx": "edge-aligned forwarded TXC, PHY TX delay on; RGMII v2.0 skew 0.5 ns: -max 3.5, -min +0.5 on both edges"
+ },
+ "utilisation": {
+  "CLB LUTs": {
+   "used": 7219.0,
+   "available": 117120.0,
+   "pct": 6.16
+  },
+  "CLB Registers": {
+   "used": 10318.0,
+   "available": 234240.0,
+   "pct": 4.4
+  },
+  "Block RAM Tile": {
+   "used": 6.5,
+   "available": 144.0,
+   "pct": 4.51
+  },
+  "BUFGCE": {
+   "used": 8.0,
+   "available": 112.0,
+   "pct": 7.14
+  },
+  "MMCM": {
+   "used": 1.0,
+   "available": 4.0,
+   "pct": 25.0
+  }
+ },
+ "power": {
+  "total_on_chip_w": 0.499,
+  "junction_c": 43.7,
+  "environment": "still air, no heat sink, 40 C ambient: the pessimistic bound (boards/kr260/board.yaml)"
+ },
+ "first_failed_stage": "post_route",
+ "gates_failed": [
+  "setup",
+  "hold"
+ ],
+ "note": "2 gate(s) fail: setup, hold. Setup and hold fail on the RGMII transmit pins only (edge-aligned TXC, RGMII v2.0 skew 0.5 ns); reported, not waived."
+}

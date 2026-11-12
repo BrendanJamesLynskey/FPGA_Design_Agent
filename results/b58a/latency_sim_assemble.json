@@ -1,0 +1,88 @@
+{
+ "build_mode": 2,
+ "clock_ns": 8,
+ "points": {
+  "sfd_in": "the clock mac_rx takes the SFD (its sof_pulse; the board's histogram A starts here)",
+  "price_complete_in": "the clock the last price byte enters mac_rx (core side, after the RX clock crossing)",
+  "first_byte_out": "the clock mac_tx's first preamble byte is on its registered output (core side, before rgmii_tx and the pins)",
+  "resolution": "one clock, 8 ns"
+ },
+ "modes": {
+  "speculative_1msg": {
+   "frame_bytes": 70,
+   "messages": 1,
+   "sfd_in": 0,
+   "price_complete_in": 57,
+   "fcs_last_in": 69,
+   "decision_to_first_byte_ns": 600,
+   "sfd_to_first_byte_ns": 1056,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> fire)": 1,
+    "interlocks (fire -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 69,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "decision_to_first_byte": 75,
+   "tick_to_trade_sfd_to_first_byte": 132,
+   "tick_to_trade_sfd_to_sfd": 139
+  },
+  "speculative_20msg": {
+   "frame_bytes": 374,
+   "messages": 20,
+   "sfd_in": 0,
+   "price_complete_in": 57,
+   "fcs_last_in": 373,
+   "decision_to_first_byte_ns": 600,
+   "sfd_to_first_byte_ns": 1056,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> fire)": 1,
+    "interlocks (fire -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 69,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "decision_to_first_byte": 75,
+   "tick_to_trade_sfd_to_first_byte": 132,
+   "tick_to_trade_sfd_to_sfd": 139
+  },
+  "safe_1msg": {
+   "frame_bytes": 70,
+   "messages": 1,
+   "sfd_in": 0,
+   "price_complete_in": 57,
+   "fcs_last_in": 69,
+   "decision_to_first_byte_ns": 680,
+   "sfd_to_first_byte_ns": 1136,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> fire)": 1,
+    "interlocks (fire -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 79,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "decision_to_first_byte": 85,
+   "tick_to_trade_sfd_to_first_byte": 142,
+   "tick_to_trade_sfd_to_sfd": 149
+  },
+  "safe_20msg": {
+   "frame_bytes": 374,
+   "messages": 20,
+   "sfd_in": 0,
+   "price_complete_in": 57,
+   "fcs_last_in": 373,
+   "decision_to_first_byte_ns": 3112,
+   "sfd_to_first_byte_ns": 3568,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> fire)": 1,
+    "interlocks (fire -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 383,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "decision_to_first_byte": 389,
+   "tick_to_trade_sfd_to_first_byte": 446,
+   "tick_to_trade_sfd_to_sfd": 453
+  }
+ }
+}

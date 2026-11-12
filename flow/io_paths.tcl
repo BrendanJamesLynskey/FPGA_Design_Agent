@@ -2,9 +2,10 @@
 # for flow/io_check.py (gates io_timing_clean and the uncertainty record in flow/gates.py).
 #   source flow/io_paths.tcl; io_dump_paths <out file>
 # CLOCK|<name>|<period>|<waveform>|<virtual 1/0>|<generated 1/0>|<source objects>|<input jitter>
-# PORT|<name>|<in/out>|<IOB-packed register 1/0/none>|<first register>|<synchroniser 1/0>
+# PORT|<name>|<in/out>|<IOB-packed register 1/0/none>|<first register>|<synchroniser 1/0>|<its primitive>
 #      IOB: the register the port drives (input) or is driven by (output) sits in an ILOGIC/OLOGIC site (none: no register
-#      next to the port). Synchroniser: an input's first register has ASYNC_REG and drives a second ASYNC_REG register.
+#      next to the port). The primitive is the register's REF_NAME (IDDRE1, OSERDESE3, FDRE, ...; empty if not one
+#      register): flow/io_check.py finds DDR ports by it. Synchroniser: an input's first register has ASYNC_REG and drives a second ASYNC_REG register.
 # IO|<port>|<in/out>|<max/min>|<slack>|<requirement>|<io delay>|<startpoint clock>|<endpoint clock>|<corner>|<uncertainty>
 #      the worst path from (input) or to (output) the port for that delay type; NOIO|<port>|<in/out>|<max/min> when
 #      Vivado has no such path (no delay of that type, a false path, a clock group)
@@ -49,9 +50,10 @@ proc io_dump_paths {out} {
                 set regs [get_cells -quiet -of_objects [all_fanin -quiet -flat -startpoints_only $port] \
                     -filter {IS_SEQUENTIAL}]
             }
-            set iob none; set first ""; set sync 0
+            set iob none; set first ""; set sync 0; set prim ""
             if {[llength $regs] == 1} {
                 set first [lindex $regs 0]
+                set prim [get_property -quiet REF_NAME $first]
                 set bel [get_property -quiet BEL $first]
                 set iob [expr {[regexp {^(I|O)LOGIC} $bel] ? 1 : 0}]
                 if {$dir eq "in" && [string is true -strict [get_property -quiet ASYNC_REG $first]]} {
@@ -63,7 +65,7 @@ proc io_dump_paths {out} {
             } elseif {[llength $regs] > 1} {
                 set first "[llength $regs] registers"
             }
-            puts $f [join [list PORT $port $dir $iob $first $sync] |]
+            puts $f [join [list PORT $port $dir $iob $first $sync $prim] |]
             foreach dt {max min} { io__path $f IO $port $dir $dt }
         }
         foreach {kind dt} {setup max hold min} {

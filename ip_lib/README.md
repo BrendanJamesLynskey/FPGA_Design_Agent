@@ -32,6 +32,7 @@ the OOC synthesis cost tables, the xsim cross-check and the hardware-in-the-loop
 | Entry | What | Tests |
 |---|---|---|
 | [eth_mac_rmii](eth_mac_rmii/README.md) | 10/100 MAC for an RMII PHY (Nexys A7 LAN8720A): preamble/SFD, FCS generate, check and strip, padding, inter-frame gap | RX and TX bit-exact at 10 and 100 Mb/s, loopback, underrun |
+| [eth_mac_rgmii](eth_mac_rgmii/README.md) | tri-mode 10/100/1000 MAC for an RGMII PHY (KR260 M88E1111): cut-through receive (bytes passed on as they arrive) with the FCS (frame check sequence) verdict at the end, or store-and-forward AXI-Stream; AXI-Stream transmit; RX clock crossing | 3 parameter points x 3 speeds, both directions, against a Python RGMII PHY (cocotb) |
 | [pkt_parser](pkt_parser/README.md) | streaming parser: Ethernet, 0-2 VLAN tags, IPv4 (checksum, options, fragments), IPv6, UDP/TCP ports; header word beside the stream | header words bit-exact, cross-checked with scapy |
 | [match_exact](match_exact/README.md) | exact match: two-way d-left hash in BRAM plus a CAM stash; insert, delete, age | lookups every clock during updates |
 | [match_lpm](match_lpm/README.md) | IPv4 longest-prefix match: 8-8-8-8 multibit trie; Python control plane | against brute-force LPM, incremental routes under traffic |
