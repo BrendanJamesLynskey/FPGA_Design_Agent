@@ -274,7 +274,7 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y iverilog verilator yosys z3 boolector flex bison autoconf g++ make perl help2man ccache libfl2 libfl-dev
+          sudo apt-get install -y iverilog verilator yosys z3 flex bison autoconf g++ make perl help2man ccache libfl2 libfl-dev
           pip install pyyaml pyserial pytest click cocotb==2.0.1 cocotb-coverage pyslang
       - name: Verilator 5.048 from source (cocotb 2 needs 5.036+; the apt package is 5.020), cached
         id: vl
@@ -314,7 +314,14 @@ jobs:
       - name: Formal, brief 58A - the trading interlocks (k-induction) and the MAC frame FSMs
         run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_formal.py
       - name: Formal, brief 63D - MDIO frame (k-induction), network blocks' framing and AXI-Stream rules, the MAC address filter (bounded)
-        run: python -m pytest -q flow/net/tests/test_63d_formal.py
+        # these jobs use the boolector engine; Ubuntu's boolector package (1.5, 2012) is too old for yosys-smtbmc, so this
+        # step uses the pinned OSS CAD Suite release the jobs were developed with (yosys, sby, boolector together)
+        run: |
+          curl -sL -o /tmp/oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          tar xzf /tmp/oss.tgz -C /tmp
+          export PATH=/tmp/oss-cad-suite/bin:$PATH
+          yosys -V; boolector --version
+          python -m pytest -q flow/net/tests/test_63d_formal.py
       - name: Reference FSM controller, separated and monolithic - bounded, cover and k-induction depth (brief 24)
         run: python -m pytest -q flow/tests/test_24_fsm_formal.py
       - name: Simulator support for FSM coverage constructs (Verilator 5.048, brief 24)

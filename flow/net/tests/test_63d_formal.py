@@ -37,16 +37,20 @@ JOBS = [
 ]
 
 
+LAST = {}
+
+
 def run(entry: str, sby: str, task: str, out: Path) -> str:
-    subprocess.run(["sby", "-f", "-d", str(out), sby, task], cwd=IP / entry / "formal", capture_output=True, text=True,
-                   timeout=3600)
+    r = subprocess.run(["sby", "-f", "-d", str(out), sby, task], cwd=IP / entry / "formal", capture_output=True,
+                       text=True, timeout=3600)
+    LAST["log"] = (r.stdout + r.stderr)[-3000:]
     return (out / "status").read_text().split()[0] if (out / "status").exists() else "ABSENT"
 
 
 @pytest.mark.skipif(shutil.which("sby") is None, reason="SymbiYosys not installed")
 @pytest.mark.parametrize("entry,sby,task", [j[:3] for j in JOBS], ids=[f"{j[0]}-{j[2]}" for j in JOBS])
 def test_formal(tmp_path, entry, sby, task):
-    assert run(entry, sby, task, tmp_path / f"{entry}_{task}") == "PASS"
+    assert run(entry, sby, task, tmp_path / f"{entry}_{task}") == "PASS", LAST["log"]
 
 
 if __name__ == "__main__":

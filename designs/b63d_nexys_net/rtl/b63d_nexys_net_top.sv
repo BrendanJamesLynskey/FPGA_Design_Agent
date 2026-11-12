@@ -72,8 +72,11 @@ module b63d_nexys_net_top #(
     assign locked = 1'b1;
     assign ETH_REFCLK = clk;
 `endif
-    logic rst;
-    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN && locked), .rst(rst));
+    // the button and the MMCM's lock each through their own synchroniser (no logic before either), then combined
+    logic rst, rst_btn, rst_lk;
+    reset_sync u_rst (.clk(clk), .rst_n_async(CPU_RESETN), .rst(rst_btn));
+    reset_sync u_rlk (.clk(clk), .rst_n_async(locked), .rst(rst_lk));
+    always_ff @(posedge clk) rst <= rst_btn || rst_lk;
 
     // ------------------------------------------------------------------ the test shell and its registers
     logic [6:0]  win_addr;
@@ -129,8 +132,13 @@ module b63d_nexys_net_top #(
     logic [7:0] rx_d, tx_d;
     logic       rx_v, rx_l, rx_u, tx_v, tx_r, tx_l;
     logic       ev_rx_ok, ev_rx_bad, ev_rx_fcs, ev_rx_runt, ev_tx_sent, ev_tx_underrun;
+    // transmit pins from falling-edge registers: half a clock of hold margin at the PHY, whose REF_CLK rises 2.5 ns
+    // after the logic clock (the RMII hold time is 2 ns; a rising-edge launch arrived about 2.6 ns after the edge)
+    logic       mac_txen;
+    logic [1:0] mac_txd;
+    always_ff @(negedge clk) begin ETH_TXEN <= mac_txen; ETH_TXD <= mac_txd; end
     eth_mac_rmii #(.MIN_FRAME(64), .MIN_DATA(60), .IFG_BYTES(12)) u_mac (.clk, .rst, .speed_100(speed_100),
-        .rmii_crs_dv(ETH_CRSDV), .rmii_rxd(ETH_RXD), .rmii_rx_er(ETH_RXERR), .rmii_tx_en(ETH_TXEN), .rmii_txd(ETH_TXD),
+        .rmii_crs_dv(ETH_CRSDV), .rmii_rxd(ETH_RXD), .rmii_rx_er(ETH_RXERR), .rmii_tx_en(mac_txen), .rmii_txd(mac_txd),
         .rx_axis_tdata(rx_d), .rx_axis_tvalid(rx_v), .rx_axis_tlast(rx_l), .rx_axis_tuser(rx_u),
         .tx_axis_tdata(tx_d), .tx_axis_tvalid(tx_v), .tx_axis_tready(tx_r), .tx_axis_tlast(tx_l), .tx_axis_tuser(1'b0),
         .ev_rx_ok(ev_rx_ok), .ev_rx_bad(ev_rx_bad), .ev_rx_fcs_err(ev_rx_fcs), .ev_rx_runt(ev_rx_runt),

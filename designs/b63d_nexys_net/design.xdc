@@ -37,7 +37,8 @@ set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design];
 ## RMII timing (RMII specification rev 1.2: the PHY's outputs change 2 to 14 ns after REF_CLK rises; its inputs need
 ## 4 ns setup and 2 ns hold). REF_CLK leaves the FPGA 45 degrees (2.5 ns) after the logic clock, so relative to the
 ## logic clock the receive data arrive 4.5 to 16.5 ns after its edge, and the PHY samples the transmit data 2.5 ns after
-## it. Board traces are short and left out. The receive and transmit registers sit in the IOBs.
+## it. Board traces are short and left out. The receive registers and the transmit registers (falling edge of the
+## logic clock, so the data change 10 ns after it and well clear of the PHY's 2 ns hold) sit in the IOBs.
 set clk50 [get_clocks -of_objects [get_pins u_mmcm/CLKOUT0]]
 set_input_delay -clock $clk50 -max 16.5 [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*]}]
 set_input_delay -clock $clk50 -min 4.5  [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*]}]
@@ -45,7 +46,9 @@ set_output_delay -clock $clk50 -max 1.5  [get_ports {ETH_TXEN ETH_TXD[*]}]
 set_output_delay -clock $clk50 -min -4.5 [get_ports {ETH_TXEN ETH_TXD[*]}]
 set_property IOB TRUE [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*] ETH_TXEN ETH_TXD[*]}]
 
-## Asynchronous or slow: reset button, UART, MDIO (2 MHz, synchronised in the design), PHY reset, LEDs, REF_CLK out
+## Asynchronous or slow: reset button, UART, MDIO (2 MHz, synchronised in the design), PHY reset, LEDs; REF_CLK is a
+## forwarded clock from an ODDR (its phase is set by the MMCM), declared as a clock on its pin, not a data output
+create_generated_clock -name eth_refclk -source [get_pins u_refclk/C] -divide_by 1 [get_ports ETH_REFCLK]
 set async_in [get_ports {CPU_RESETN UART_TXD_IN ETH_MDIO}]
 set_input_delay -clock sys_clk_pin 0.000 $async_in
 set_false_path -from $async_in
