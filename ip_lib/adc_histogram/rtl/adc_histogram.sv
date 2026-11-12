@@ -43,12 +43,10 @@ module adc_histogram #(
     logic             we, s_rd;
     logic [BIN_W-1:0] wa;
     logic [CNT_W-1:0] wd;
-    always_comb begin
-        we   = !rst && !clear && (!clr[BIN_W] || v1);
-        wa   = !clr[BIN_W] ? clr[BIN_W-1:0] : b1;
-        wd   = !clr[BIN_W] ? '0 : (cur == {CNT_W{1'b1}}) ? cur : cur + 1'b1;     // a full bin saturates
-        s_rd = !rst && !clear && clr[BIN_W] && s_valid;
-    end
+    assign we   = !rst && !clear && (!clr[BIN_W] || v1);
+    assign wa   = !clr[BIN_W] ? clr[BIN_W-1:0] : b1;
+    assign wd   = !clr[BIN_W] ? '0 : (cur == {CNT_W{1'b1}}) ? cur : cur + 1'b1;      // a full bin saturates
+    assign s_rd = !rst && !clear && clr[BIN_W] && s_valid;
     logic [CNT_W-1:0] c1_q;                // stage-1 read of the sample's bin
     generate
         if (IMPL == "bram") begin : g_bram

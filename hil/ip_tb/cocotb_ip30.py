@@ -186,8 +186,10 @@ async def logic_analyser(dut):
 @cocotb.test()
 async def adc_histogram(dut):
     sw, bw, cw = int(dut.SAMP_W.value), int(dut.BIN_W.value), int(dut.CNT_W.value)
-    await start(dut)
+    # inputs driven before reset ends (brief 63A: the bin RAM's write enable is now one combinational term, so a
+    # `clear` still undriven in the first clock after reset leaves bin 0 unknown in simulation)
     dut.clear.value = 0; dut.s_valid.value = 0; dut.s_data.value = 0; dut.rd_bin.value = 0
+    await start(dut)
     for _ in range((1 << bw) + 4):
         await RisingEdge(dut.clk)
     assert dut.busy.value == 0

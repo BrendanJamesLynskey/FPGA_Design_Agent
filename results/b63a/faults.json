@@ -1,0 +1,87 @@
+{
+ "caught": 9,
+ "valid": 9,
+ "faults": [
+  {
+   "name": "delay_no_shift",
+   "block": "fir",
+   "class": "value",
+   "why": "the sample leaving one engine's segment does not reach the next engine (folded variants with more than one MAC)",
+   "status": "caught",
+   "seconds": 2.9,
+   "pytest": "1 failed, 10 deselected in 1.93s"
+  },
+  {
+   "name": "acc_not_cleared",
+   "block": "fir",
+   "class": "value",
+   "why": "each output adds onto the last one's partial sums",
+   "status": "caught",
+   "seconds": 2.7,
+   "pytest": "1 failed, 10 deselected in 1.69s"
+  },
+  {
+   "name": "sweep_wrong_way",
+   "block": "fir",
+   "class": "path",
+   "why": "the delay line is read forwards, so the taps meet the wrong samples",
+   "status": "caught",
+   "seconds": 3.0,
+   "pytest": "1 failed, 10 deselected in 1.99s"
+  },
+  {
+   "name": "coef_wrong_field",
+   "block": "fir",
+   "class": "value",
+   "why": "a coefficient is written into the field of the wrong MAC engine",
+   "status": "caught",
+   "seconds": 2.9,
+   "pytest": "1 failed, 10 deselected in 1.96s"
+  },
+  {
+   "name": "sample_with_coef",
+   "block": "fir",
+   "class": "protocol",
+   "why": "a sample offered beside a coefficient beat is acknowledged and then dropped",
+   "status": "caught",
+   "seconds": 3.4,
+   "pytest": "1 failed, 10 deselected in 2.39s"
+  },
+  {
+   "name": "ram_one_read_register",
+   "block": "fir",
+   "class": "timing",
+   "why": "the RAM's read latency drops to one clock, so data and the MAC pipeline flags are a clock apart",
+   "status": "caught",
+   "seconds": 2.9,
+   "pytest": "1 failed, 10 deselected in 1.91s"
+  },
+  {
+   "name": "product_unsigned",
+   "block": "fir",
+   "class": "value",
+   "why": "the LUT multipliers treat negative samples as large positive ones",
+   "status": "caught",
+   "seconds": 8.8,
+   "pytest": "1 failed, 3 passed, 10 deselected in 7.77s"
+  },
+  {
+   "name": "delay_line_broadcast",
+   "block": "fir",
+   "class": "path",
+   "why": "every tap sees the previous sample instead of its own delay",
+   "status": "caught",
+   "seconds": 8.8,
+   "pytest": "1 failed, 3 passed, 10 deselected in 7.84s"
+  },
+  {
+   "name": "latency_declared_short",
+   "block": "fir",
+   "class": "contract",
+   "why": "the declared LATENCY no longer matches the clocks the folded variants take, so a caller reading it would be wrong",
+   "status": "caught",
+   "seconds": 3.0,
+   "pytest": "1 failed, 10 deselected in 2.01s"
+  }
+ ]
+}

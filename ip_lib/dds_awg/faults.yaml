@@ -14,12 +14,12 @@ faults:
   class: value
   why: the same fault in the lut variant's table address (brief 63A)
   test: hil/tests/test_30_ip_rtl.py -k test_block and dds_awg and lut
-- name: bram_reads_current_phase
+- name: bram_next_entry
   file: dds_awg.sv
-  old: 'else if (tick) sine <= rom[phase_next'
-  new: 'else if (tick) sine <= rom[phase'
-  class: timing
-  why: the registered table read uses the current phase, so the sine lags the other waves by one sample (bram variant)
+  old: 'else if (tick) sine <= rom[phase_next[PHASE_W-1 -: LUT_W]];'
+  new: 'else if (tick) sine <= rom[phase_next[PHASE_W-1 -: LUT_W] + 1''b1];'
+  class: value
+  why: the registered table read is one entry ahead of the phase (bram variant)
   test: hil/tests/test_30_ip_rtl.py -k test_block and dds_awg
 - name: triangle_no_fold
   file: dds_awg.sv
