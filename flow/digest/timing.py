@@ -9,8 +9,8 @@
 
 ``features(path)`` names what the path is made of, for the playbook: ``carry_chain`` (CARRY4 cells), ``lut_levels``,
 ``max_fanout`` (and its net), ``route_dominated`` (route share of the data path >= 60 %), ``dsp_on_path``,
-``bram_on_path``, ``lut_arith`` (a carry chain of 4 or more with no DSP on the path: an adder or a multiplier built in
-LUTs), ``same_instance`` (both ends in one RTL instance: the fix is local to one module).
+``bram_on_path``, ``carry_runs`` (carry runs separated by LUTs), ``lut_arith`` (4 or more CARRY4 in 3 or more runs and
+no DSP: the shape of a multiplier built in LUTs; one long run is an adder or comparator), ``same_instance`` (both ends in one RTL instance: the fix is local to one module).
 """
 
 from __future__ import annotations
@@ -106,11 +106,15 @@ def features(p: dict[str, Any]) -> dict[str, Any]:
     dsp = any(x.startswith("DSP48") for x in types)
     bram = any(x.startswith("RAMB") for x in types)
     s, d = p.get("source_reg") or {}, p.get("dest_reg") or {}
+    # carry runs separated by LUT logic: a multiply built in LUTs shows several (partial products, then their sum); a plain
+    # adder or comparator chain shows one long run (c16 montgomery at 200 MHz: 18 CARRY4 in one run, 2026-11-12)
+    seq = [c["type"] for c in (p.get("cells") or [])]
+    runs = sum(1 for i, x in enumerate(seq) if x.startswith("CARRY") and (i == 0 or not seq[i - 1].startswith("CARRY")))
     return {
-        "carry_chain": carry, "lut_levels": luts, "logic_levels": p.get("logic_levels"),
+        "carry_chain": carry, "carry_runs": runs, "lut_levels": luts, "logic_levels": p.get("logic_levels"),
         "max_fanout": fo["fanout"], "max_fanout_net": fo["name"], "high_fanout": fo["fanout"] >= HIGH_FANOUT,
         "route_pct": p.get("route_pct"), "route_dominated": (p.get("route_pct") or 0) >= 60.0,
-        "dsp_on_path": dsp, "bram_on_path": bram, "lut_arith": carry >= 4 and not dsp,
+        "dsp_on_path": dsp, "bram_on_path": bram, "lut_arith": carry >= 4 and not dsp and runs >= 3,
         "same_instance": bool(s.get("instance") is not None and s.get("instance") == d.get("instance")),
         "cross_clock": p.get("source_clock") != p.get("dest_clock"),
     }

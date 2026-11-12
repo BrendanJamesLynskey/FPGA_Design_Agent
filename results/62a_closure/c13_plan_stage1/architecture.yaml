@@ -1,0 +1,65 @@
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - name: fpga_shell
+    function: UART protocol, framing, and register-window bridge supplied by the test shell.
+  - name: hough_accumulator
+    function: Register-window control, fixed-point projection for one direction per iteration, and 16 by 96 saturating vote bins.
+interfaces:
+  - name: usb_uart
+    between: [host, fpga_shell]
+    protocol: uart
+    prefix: uart
+    module: fpga_shell
+  - name: register_window
+    between: [fpga_shell, hough_accumulator]
+    protocol: simple
+    prefix: win
+    module: c13_hough_lines_top
+clock_domains:
+  - name: CLK100MHZ
+    clock: CLK100MHZ
+    freq_mhz: 100
+reset:
+  synchronisers: []
+crossings:
+  - from: async
+    to: CLK100MHZ
+    signal: UART_TXD_IN
+    primitive: sync2
+    inline_in: u_shell/u_rx/u_sync
+predicted_resources:
+  lut: [250, 900]
+  ff: [250, 900]
+  bram_tile: [1, 2]
+  dsp: [2, 2]
+datapaths:
+  - name: hough_projection_and_bin_update
+    clock: CLK100MHZ
+    instance: u_hough
+    ops:
+      - name: x_times_cos
+        op: mul
+        a_bits: 5
+        b_bits: 8
+      - name: y_times_sin
+        op: mul
+        a_bits: 5
+        b_bits: 8
+        parallel: true
+      - name: projection_sum
+        op: add
+        bits: 15
+        inputs: 3
+      - name: fixed_point_rounding_shift
+        op: shift
+      - name: bin_address_select
+        op: logic
+        levels: 2
+      - name: bin_count_memory
+        op: memory
+        depth: 1536
+        width: 11
+      - name: saturating_increment
+        op: add
+        bits: 12
+        inputs: 2

@@ -332,3 +332,11 @@ def test_synthesis_disagreeing_with_simulation_fails_g1(dg, tmp_path):
     d3["timing"]["wns_ns"] = 3.5
     after = cl.goal_vector({"pass": True}, d3, g, ["plan: the design has 0 DSP48E1 where the plan put 2"])
     assert not after["G3"]["met"] and cl.judge(before, after)[0] == "revert"
+
+
+def test_lut_arith_tells_a_multiply_from_an_adder_chain(dg):
+    assert dg["setup_features"]["carry_runs"] >= 3 and dg["setup_features"]["lut_arith"]       # c13: multiply in LUTs
+    adder = {"levels_by_type": {"CARRY4": 18, "LUT3": 2}, "nets": [{"fanout": 3, "name": "n"}],
+             "cells": [{"type": "FDRE"}, {"type": "LUT3"}] + [{"type": "CARRY4"}] * 9 + [{"type": "LUT3"}] + [{"type": "CARRY4"}] * 9}
+    f = timing.features(adder)
+    assert f["carry_runs"] == 2 and not f["lut_arith"]                                          # c16: a 66-bit add chain
