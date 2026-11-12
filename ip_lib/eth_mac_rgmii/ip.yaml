@@ -167,9 +167,9 @@ parameters:
     note: 'DDR input and output registers: IDDRE1/ODDRE1 (UltraScale, UltraScale+) or IDDR/ODDR (7-series)'
 constraints:
 - MIN_FRAME <= MAX_FRAME
-- SF_DEPTH >= 2 * MAX_FRAME when CUT_THROUGH = 0
-- VLAN = 2 only with CUT_THROUGH = 0
-- MIN_DATA <= 60 when PAUSE = 1
+- SF_DEPTH >= 2 * MAX_FRAME or CUT_THROUGH == 1
+- VLAN != 2 or CUT_THROUGH == 0
+- MIN_DATA <= 60 or PAUSE == 0
 latency:
   rx: 'cut-through: a byte leaves rx_* one 8 ns clock after it leaves the clock-crossing FIFO. In a looped simulation the
     transmit MAC''s first preamble byte reaches the receive MAC as its SFD (start-of-frame delimiter) 17 clocks (136 ns) later:

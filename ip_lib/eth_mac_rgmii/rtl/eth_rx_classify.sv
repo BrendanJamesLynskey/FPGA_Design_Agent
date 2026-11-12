@@ -102,8 +102,9 @@ module eth_rx_classify #(
     always_ff @(posedge clk) begin
         if (rst) begin
             for (int i = 0; i < NE; i++) begin mc_v[i] <= 1'b0; mc_a[i] <= '0; end
-        end else if (mc_we && MC_EXACT > 0 && int'(mc_idx) < MC_EXACT) begin
-            mc_v[mc_idx] <= mc_en; mc_a[mc_idx] <= mc_addr;
+        end else if (mc_we) begin
+            for (int i = 0; i < MC_EXACT; i++)
+                if (int'(mc_idx) == i) begin mc_v[i] <= mc_en; mc_a[i] <= mc_addr; end
         end
     end
 

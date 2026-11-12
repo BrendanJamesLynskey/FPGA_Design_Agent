@@ -21,7 +21,8 @@ NET = ["eth_mac_rmii", "eth_mac_rgmii", "pkt_parser", "match_exact", "match_lpm"
        "pkt_queue_sched", "l2_switch"]
 HIL = ["freq_duty_counter", "frame_crc", "dds_awg", "logic_analyser", "adc_histogram"]       # brief 30 instruments
 DSP = ["fir"]                                                                                # library entries with variants
-FAULTS_JSON = {**{b: "b30" for b in HIL}, **{b: "b63a" for b in DSP}}                        # default: b40
+NET63 = ["mdio_master", "arp_responder", "icmp_echo", "ipv4_udp_rx", "ipv4_udp_tx", "igmp_join"]  # brief 63D
+FAULTS_JSON = {**{b: "b30" for b in HIL}, **{b: "b63a" for b in DSP}, **{b: "b63d" for b in NET63 + ["eth_mac_rgmii"]}}  # default: b40
 REQUIRED = ["name", "version", "summary", "top", "rtl", "depends", "interfaces", "clocks", "resets", "parameters",
             "constraints", "latency", "throughput", "guards", "sweep_tested", "evidence", "cost_table", "boundary",
             "limits", "licence"]
@@ -109,13 +110,12 @@ def readme(block: str) -> str:
     if faults.exists():
         fl = yaml.safe_load(faults.read_text())["faults"]
         res = {}
-        fj = (ROOT / "results" / "b58a" / "mac_rgmii_faults.json" if block == "eth_mac_rgmii" else
-              ROOT / "results" / FAULTS_JSON.get(block, "b40") / "faults.json")
+        fj = ROOT / "results" / FAULTS_JSON.get(block, "b40") / "faults.json"
         if fj.exists():
             res = {f["name"]: f["status"] for f in json.loads(fj.read_text())["faults"]}
         L += ["", "Seeded faults (`faults.yaml`, run by `" + ("hil/ip_faults.py" if block in HIL else "hil/ip_faults.py --blocks " + block if block in DSP else "flow/net/faults.py") + "`):", "", "| Fault | What it breaks | Result |", "|---|---|---|"]
         L += [f"| `{f['name']}` | {f['why']} | {res.get(f['name'], 'not run')} |" for f in fl]
-    L += variants_section(block, y)
+    L += variants_section(block, y) if y.get("variants") else cost_section(block, y)
     b = y["boundary"]
     L += ["", "## Boundary and reuse", "", f"- Registered outputs: {b['registered_outputs']}.", f"- Clock crossings: {b['cdc']}.",
           f"- Part, board or pin: {b['part_specific']}.", f"- Depends on: {', '.join(y['depends']) or 'nothing'}.",
@@ -174,10 +174,36 @@ def variants_section(block: str, y: dict) -> list[str]:
     return L
 
 
+def cost_section(block: str, y: dict) -> list[str]:
+    """An entry without variants that has an out-of-context characterisation (brief 63D): its measured rows."""
+    ch = y.get("characterisation")
+    if not ch:
+        return []
+    from flow import ipvariants
+    rows = [r for r in ipvariants.measured(block, ch["part"]) if r.get("status") == "ok"]
+    L = ["", "## Cost (out of context)", ""]
+    if not rows:
+        return L + ["Not measured yet."]
+    pk = list(rows[0]["params"])
+    L += [f"Built alone (out of context) on an Artix-7, {ch['part']}, for a {ch['clock_ns']} ns clock "
+          f"({1000 / ch['clock_ns']:g} MHz), {rows[0]['tool']}; source: [char/{ch['part']}.json](char/{ch['part']}.json). "
+          "Not run on a board.", "",
+          "| " + " | ".join(pk) + " | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) |",
+          "|" + "---|" * len(pk) + "---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        dyn = (r.get("power_w") or {}).get("dynamic")
+        L.append("| " + " | ".join(_fmt(r["params"][k]) for k in pk) + " | " +
+                 " | ".join(_fmt(r.get(k)) for k in ("lut", "ff", "lutram", "bram_tiles", "dsp")) +
+                 f" | {r['wns_ns']:.3f} | {r['fmax_mhz']:.1f} | {'-' if dyn is None else f'{dyn:.3f}'} |")
+    L += ["", "Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); dynamic power is vectorless "
+          "(default toggle rates). Regenerate with `python3 -m flow.ipchar " + block + "` (Vivado, minutes per point)."]
+    return L
+
+
 def main() -> int:
     chk = "--check" in sys.argv
     errs, stale = [], []
-    for b in NET + HIL + DSP:
+    for b in NET + NET63 + HIL + DSP:
         errs += check(b)
         text = readme(b)
         p = IP / b / "README.md"
