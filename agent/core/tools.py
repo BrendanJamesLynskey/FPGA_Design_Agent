@@ -34,7 +34,7 @@ from agent.core.artefacts import check_artefact
 from agent.core.registry import MAX_OUTPUT, clip, tool
 from agent.core.security import FLASH_WORDS, SecurityError
 from agent.core.session import STAGES, Session
-from flow import srcorder
+from flow import srcorder, vhdl
 
 PY = sys.executable
 _ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
@@ -133,6 +133,8 @@ def load_build_cfg(s: Session) -> dict[str, Any]:
 
 
 _SV_BAD = re.compile(r"\$system\b|\$fopen\b|\$fwrite\b|\$readmem[bh]\s*\(\s*\"(?:/|[^\"]*\.\.)|`include\s+\"(?:/|[^\"]*\.\.)|\$dumpfile\s*\(\s*\"/")
+#: brief 55: VHDL file I/O that reaches outside the design (an absolute or parent path in file_open or a file declaration)
+_VHD_BAD = re.compile(r"\bfile_open\s*\([^;]*\"(?:/|[^\"]*\.\.)|\bfile\s+\w+\s*:[^;]*\bis\s+(?:in\s+|out\s+)?\"(?:/|[^\"]*\.\.)", re.I)
 _PY_BAD = re.compile(r"\b(subprocess|os\.system|os\.popen|os\.exec\w*|os\.spawn\w*|socket|urllib|requests|http\.client|"
                      r"ctypes|shutil\.rmtree|importlib|__import__|pty|ftplib|smtplib|pickle)\b|\b(eval|exec|compile)\s*\(")
 
@@ -148,6 +150,10 @@ def scan_sources(s: Session, *, python: bool, hdl: bool) -> list[str]:
         if hdl and p.suffix in (".sv", ".v", ".svh", ".vh"):
             for n, line in enumerate(p.read_text(errors="replace").splitlines(), 1):
                 if _SV_BAD.search(line.split("//", 1)[0]):
+                    bad.append(f"{rel}:{n}: {line.strip()[:100]}")
+        if hdl and vhdl.is_vhdl(p):
+            for n, line in enumerate(p.read_text(errors="replace").splitlines(), 1):
+                if _VHD_BAD.search(line.split("--", 1)[0]):
                     bad.append(f"{rel}:{n}: {line.strip()[:100]}")
         if python and p.suffix == ".py":
             for n, line in enumerate(p.read_text(errors="replace").splitlines(), 1):
@@ -232,10 +238,12 @@ def list_files(s: Session, path: str = ".") -> dict:
 
 # --- the flow ---------------------------------------------------------------------------------------------------------
 
-@tool("lint", "Verilator --lint-only -Wall on the design (the build.yaml sources).", {})
+@tool("lint", "Verilator --lint-only -Wall on the design (the build.yaml sources).", {})   # brief 55: GHDL for a VHDL design (_lint_vhdl; the description is unchanged so the request golden holds)
 def lint(s: Session) -> dict:
     cfg = load_build_cfg(s)
     _refuse_on_scan(s, python=False, hdl=True)
+    if vhdl.design_language(s.design) == "vhdl":       # brief 55
+        return _lint_vhdl(s, cfg)
     srcs = sorted({p for pat in cfg["sources"] for p in glob.glob(str(s.root / pat))})
     if srcorder.no_shell(s.design):                    # 07a2-prep: a UART-subject design is linted without the test shell
         srcs = srcorder.drop_shell(srcs)
@@ -258,6 +266,38 @@ def lint(s: Session) -> dict:
             "seconds_run": r.seconds + (ic.seconds if ic else 0)}
 
 
+def _lint_vhdl(s: Session, cfg: dict) -> dict:
+    """Brief 55: GHDL lint of the design's VHDL (the build.yaml sources), run through the session's runner; the shell's
+    SystemVerilog is not linted here (it is fixed). Also: a VHDL entity named like a shell module, and FDA-CON-8/9."""
+    srcs = sorted({Path(p) for pat in cfg["sources"] for p in glob.glob(str(s.root / pat))})
+    vh = [p for p in srcs if vhdl.is_vhdl(p)]
+    if not vh:
+        return {"ok": False, "output": "build.yaml lists no VHDL sources (rtl/*.vhd) for this VHDL design", "returncode": 2}
+    clash = vhdl.shell_name_clashes(vh)
+    out, ok, rc, secs = [], not clash, 0, 0.0
+    out += [f"[vhdl boundary] {c}" for c in clash]
+    wd = s.design / "build" / "vhdl_lint"
+    shutil.rmtree(wd, ignore_errors=True)
+    wd.mkdir(parents=True, exist_ok=True)
+    for argv in vhdl.lint_argv(vh, cfg["top"], dict(cfg.get("generics") or {}), wd):
+        r = s.runner.run("lint", argv, s.root, timeout=300)
+        secs += r.seconds
+        text = _text_out(r)
+        if argv[1] == "--synth":                       # the netlist on stdout is not a message
+            text = "\n".join(l for l in text.splitlines() if re.match(r"^\S+:\d+:\d+:|^\S*ghdl\S*:", l)
+                             and "is not bound" not in l and "(in default configuration" not in l)
+        if text.strip():
+            out.append(f"[ghdl {argv[1]}] " + text.strip()[:4000])   # the first errors are the cause
+        if r.returncode != 0:
+            ok, rc = False, r.returncode
+            break
+    found = top_port_findings(s, cfg, xdc_check=False)
+    if found:
+        ok = False
+        out += [f"{x['rule']} {x['message']}" for x in found]
+    return {"ok": ok, "output": "\n".join(out), "returncode": rc or (0 if ok else 1), "seconds_run": secs}
+
+
 def top_port_findings(s: Session, cfg: dict, xdc_check: bool = True) -> list[dict]:
     """08a: FDA-CON-8 / FDA-CON-9 for the design's top module (see agent.core.constraints.check_top_ports). Nothing is
     reported while the top module's source does not exist yet (the early stages), or spec.yaml cannot be read."""
@@ -269,6 +309,11 @@ def top_port_findings(s: Session, cfg: dict, xdc_check: bool = True) -> list[dic
             if srcorder.is_shell_source(f):
                 continue
             try:
+                if vhdl.is_vhdl(f):                     # brief 55: the VHDL top entity's ports, spelled as declared
+                    ports = vhdl.entity_ports(Path(f).read_text(errors="replace"), top)
+                    if ports is not None:
+                        mods.append(type("VhdlTop", (), {"ports": ports})())
+                    continue
                 mods += [m for m in parse_modules(Path(f).read_text(), Path(f).name) if m.name == top]
             except OSError:
                 pass
@@ -542,8 +587,8 @@ def _verilator_could_not_build(r: dict) -> bool:
 def mutate(s: Session, max_mutants: int = 20, seed: int = 1, lock_wait_s: int = 60) -> dict:
     load_build_cfg(s)
     _refuse_on_scan(s, python=True, hdl=True)
-    if not list((s.design / "tests").glob("test_*_rtl.py")) or not list((s.design / "rtl").glob("*.sv")):
-        return {"ok": False, "output": "the design needs rtl/*.sv and tests/test_*_rtl.py to be mutated"}
+    if not list((s.design / "tests").glob("test_*_rtl.py")) or not vhdl.rtl_files(s.design):
+        return {"ok": False, "output": "the design needs rtl/*.sv (or rtl/*.vhd) and tests/test_*_rtl.py to be mutated"}
     out = s.design / "build" / "verif" / "mutation.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.unlink(missing_ok=True)          # never read an old result as the new one

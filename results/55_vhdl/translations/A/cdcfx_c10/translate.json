@@ -1,0 +1,28 @@
+{
+ "model": "openai/gpt-6-luna",
+ "sv": [
+  "flow/tests/fixtures/cdc_mutants/rtl/cdcfx_c10.sv"
+ ],
+ "spec": null,
+ "skills": [],
+ "block": true,
+ "ghdl": "GHDL 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]",
+ "rounds": [
+  {
+   "round": 1,
+   "files": [
+    "rtl/cdcfx_c10.vhd"
+   ],
+   "lint_ok": true,
+   "lint": "rising_edge (wrap_clk_b) then\n      n93_q <= rgray_next;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:59:9\n  process (wrap_clk_a)\n  begin\n    if rising_edge (wrap_clk_a) then\n      n94_q <= rptr;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:59:9\n  process (wrap_clk_a)\n  begin\n    if rising_edge (wrap_clk_a) then\n      n95_q <= wq1;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:67:9\n  process (wrap_clk_b)\n  begin\n    if rising_edge (wrap_clk_b) then\n      n96_q <= wptr;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:67:9\n  process (wrap_clk_b)\n  begin\n    if rising_edge (wrap_clk_b) then\n      n97_q <= rq1;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:75:9\n  process (wrap_clk_a)\n  begin\n    if rising_edge (wrap_clk_a) then\n      n98_q <= n52_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:93:9\n  process (wrap_clk_b)\n  begin\n    if rising_edge (wrap_clk_b) then\n      n99_q <= n73_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:93:9\n  n100_o <= rd_q when n75_o = '0' else n102_data;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:93:9\n  process (wrap_clk_b)\n  begin\n    if rising_edge (wrap_clk_b) then\n      n101_q <= n100_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:104:29\n  process (n76_o, wrap_clk_a) is\n    type mem_type is array (0 to 15)\n      of std_logic_vector (15 downto 0);\n    variable mem : mem_type;\n  begin\n    n102_data <= mem(to_integer (unsigned (n76_o)));\n    if rising_edge (wrap_clk_a) and (n54_o = '1') then\n      mem (to_integer (unsigned (n55_o))) := wrap_wdata;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:104:29\n  -- results/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:86:21\nend rtl;\nresults/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:47:15:warning: unhandled attribute \"async_reg\" [-Wunhandled-attribute]\n    attribute ASYNC_REG of rq2 : signal is \"TRUE\";\n              ^\nresults/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:46:15:warning: unhandled attribute \"async_reg\" [-Wunhandled-attribute]\n    attribute ASYNC_REG of rq1 : signal is \"TRUE\";\n              ^\nresults/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:45:15:warning: unhandled attribute \"async_reg\" [-Wunhandled-attribute]\n    attribute ASYNC_REG of wq2 : signal is \"TRUE\";\n              ^\nresults/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:44:15:warning: unhandled attribute \"async_reg\" [-Wunhandled-attribute]\n    attribute ASYNC_REG of wq1 : signal is \"TRUE\";\n              ^\nresults/55_vhdl/translations/A/cdcfx_c10/rtl/cdcfx_c10.vhd:21:12:note: found RAM \"mem\", width: 16 bits, depth: 16\n    signal mem : mem_t;\n           ^",
+   "cost": 0.0009703,
+   "answer_chars": 3531
+  }
+ ],
+ "cost_usd": 0.0009703,
+ "prompt_tokens": 868,
+ "completion_tokens": 1767,
+ "started": "2026-11-11T23:55:24",
+ "lint_ok": true,
+ "finished": "2026-11-11T23:55:36"
+}

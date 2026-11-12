@@ -112,6 +112,7 @@ class Config:
     router_model: str | None = None  # brief 36: the cheap classifier's OpenRouter model (None: rules only)
     router_k: int = 8               # brief 36: skills in the shortlist
     harness_arms: str = ""          # brief 42: comma-separated harness arms (H1 context management, H2 hang protection); "" = baseline
+    hdl: str = "sv"                 # brief 55: the design language, sv (SystemVerilog) | vhdl (VHDL-2008; the test shell stays SystemVerilog)
 
     @property
     def arms(self) -> tuple[str, ...]:
@@ -365,12 +366,32 @@ def no_shell_conventions(t: str) -> str:
     return "\n- ".join([head, *bullets])
 
 
+def vhdl_conventions(t: str) -> str:
+    """Brief 55: CONVENTIONS for a VHDL design (``--hdl vhdl``): VHDL file names in rtl/, the VHDL form of the shell
+    instance and BUILD_STAMP, the language-boundary bullet (flow/vhdl.py BOUNDARY_NOTES), VHDL sources in the tests."""
+    from flow.vhdl import BOUNDARY_NOTES
+    t = t.replace("for example rtl/top.sv; \"{design_rel}/rtl/top.sv\" and \"/rtl/top.sv\"",
+                  "for example rtl/top.vhd; \"{design_rel}/rtl/top.vhd\" and \"/rtl/top.vhd\"")
+    t = t.replace("{design_rel}/rtl/*.sv]", "{design_rel}/rtl/*.vhd]")
+    t = t.replace("sorted((design_dir / \"rtl\").glob(\"*.sv\"))", "sorted((design_dir / \"rtl\").glob(\"*.vhd\"))")
+    t = t.replace("The board top\n  declares `parameter logic [31:0] BUILD_STAMP = 32'h0` and passes it to fpga_shell (.BUILD_STAMP(BUILD_STAMP)); the\n  flow sets it per build, so never write a constant there.",
+                  "The board top\n  declares the generic `BUILD_STAMP : std_logic_vector(31 downto 0) := x\"00000000\"` and passes it to fpga_shell\n  (BUILD_STAMP => BUILD_STAMP); the flow sets it per build, so never write a constant there.")
+    t = t.replace("A design that only sends still declares UART_TXD_IN; mark an unused input with\n  `/* verilator lint_off UNUSEDSIGNAL */`, never delete the port.",
+                  "A design that only sends still declares UART_TXD_IN; leave an unused input unconnected, never delete the port.")
+    notes = BOUNDARY_NOTES.replace("{", "{{").replace("}", "}}")
+    head, *bullets = t.split("\n- ")
+    vhdl_bullet = "THIS DESIGN IS WRITTEN IN VHDL-2008. " + notes.split("\n", 1)[1].lstrip("- ").replace("\n- ", "\n  * ")
+    return "\n- ".join([head, vhdl_bullet, *bullets])
+
+
 def conventions_text(fmt: dict, template: str | None = None) -> str:
     """CONVENTIONS with this run's values; the one place that fills it (the Claude Code arm's tests use it too)."""
     from flow import architecture as am
     t = template or CONVENTIONS
     if fmt.get("no_shell"):
         t = no_shell_conventions(t)
+    if fmt.get("hdl") == "vhdl":
+        t = vhdl_conventions(t)
     return t.format(**{"cdc_prims": ", ".join(am.CDC_PRIMITIVES), "standards": _standards_summary(), **fmt})
 
 
@@ -838,7 +859,7 @@ def node_work(state: State) -> dict:
     fmt = {"board": rt.cfg.board, "name": rt.cfg.name, "stage": n, "stage_name": st.name,
            "allowed": ", ".join(st.tools), "fails": "; ".join(state.get("fails") or []) or "none",
            "note": state.get("note") or "none",
-           "design_rel": str(rt.design.relative_to(ROOT)), "no_shell": rt.cfg.no_shell}
+           "design_rel": str(rt.design.relative_to(ROOT)), "no_shell": rt.cfg.no_shell, "hdl": rt.cfg.hdl}
     conv0 = conventions_text(fmt)
     conv_tests = tests_conventions_text(fmt)
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
@@ -1486,6 +1507,9 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
         (design / "__init__.py").write_text("")
         if cfg.no_shell:
             (design / srcorder.NO_SHELL_MARKER).write_text("")
+        if cfg.hdl == "vhdl":                                # brief 55: flow.vhdl.design_language reads it
+            from flow.vhdl import HDL_MARKER
+            (design / HDL_MARKER).write_text("vhdl\n")
         if cfg.data_dir:
             install_data_files(design, Path(cfg.data_dir))
         from agent.graph.role_models import describe
@@ -1495,7 +1519,10 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
     from flow.verif_gates import seed_macros
     seed_macros(design)                      # 05i: the checker macro file the V1 gate reads, in every run (also on resume)
     if runner is None:
-        if container_available():
+        from agent.core.runner import SIM_IMAGE_VHDL
+        if cfg.hdl == "vhdl" and container_available(image=SIM_IMAGE_VHDL):    # brief 55: the image with GHDL
+            runner = ContainerRunner(design, ROOT, image=SIM_IMAGE_VHDL)
+        elif cfg.hdl != "vhdl" and container_available():
             runner = ContainerRunner(design, ROOT)
         elif cfg.hidden_spec is not None and not os.environ.get("FDA_ALLOW_HOST_SANDBOX"):
             # QR1: agent-written tests run as host code from the repo root, where benchmark/tasks/*/hidden lives: without

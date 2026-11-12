@@ -1,0 +1,1 @@
+Hand fix of arm B's cdcfx_c8 translation (not a model run): the output registers `dvalid` and `dout` get initial values through internal signals (rule M2). Used by flow/tests/test_55_vhdl_rtl.py to show that the rule is the whole difference.

@@ -41,6 +41,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -51,7 +52,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 PY = os.environ.get("MUTATE_PYTHON", sys.executable)
 
-from flow import srcorder  # noqa: E402
+from flow import srcorder, vhdl  # noqa: E402
 
 
 EX_BUSY = 75                                       # exit status: the heavy-slot lock is held (retry later)
@@ -131,6 +132,24 @@ OPERATORS = [
     ("bit0_to_1", r"\b1'b0\b", "1'b1", "constant 1'b0 replaced by 1'b1"),
     ("bit1_to_0", r"\b1'b1\b", "1'b0", "constant 1'b1 replaced by 1'b0"),
 ]
+#: brief 55: the same operator classes on VHDL code lines (`--` comments; `/=` is VHDL's not-equal)
+OPERATORS_VHDL = [
+    ("eq_to_ne", r"(?<![/<>=:?])=(?![=>])", "/=", "'=' replaced by '/='"),
+    ("ne_to_eq", r"/=", "=", "'/=' replaced by '='"),
+    ("and_to_or", r"(?i)\band\b", "or", "'and' replaced by 'or'"),
+    ("or_to_and", r"(?i)\bor\b", "and", "'or' replaced by 'and'"),
+    ("plus_to_minus", r" \+ ", " - ", "'+' replaced by '-'"),
+    ("minus_to_plus", r" - ", " + ", "'-' replaced by '+'"),
+    ("ge_to_lt", r" >= ", " < ", "'>=' replaced by '<'"),
+    ("lt_to_ge", r" < ", " >= ", "'<' replaced by '>='"),
+    ("gt_to_le", r" > ", " <= ", "'>' replaced by '<='"),
+    ("not_removed", r"(?i)\bnot\s+", "", "a 'not' removed"),
+    ("bit0_to_1", r"'0'", "'1'", "constant '0' replaced by '1'"),
+    ("bit1_to_0", r"'1'", "'0'", "constant '1' replaced by '0'"),
+]
+_SKIP_LINE_VHDL = re.compile(r"(?i)^\s*(--|library\b|use\b|entity\b|end\b|architecture\b|component\b|generic\b|port\b|signal\b|"
+                             r"constant\b|type\b|subtype\b|attribute\b|package\b|begin\b|process\b)|\bassert\b|\breport\b|"
+                             r"^\s*\w+\s*:\s*(in|out|inout)\b|=>|\bwhen\s+others\b|rising_edge|falling_edge")
 _SKIP_LINE = re.compile(r"^\s*(//|/\*|\*|`|import\b|parameter\b|localparam\b|module\b|endmodule\b|input\b|output\b|inout\b)"
                         r"|\bassert\b|\bassume\b|\bV_(SAME|NEXT|RST|COVER)\b|\$(display|error|fatal|info|finish)")
 
@@ -138,12 +157,14 @@ _SKIP_LINE = re.compile(r"^\s*(//|/\*|\*|`|import\b|parameter\b|localparam\b|mod
 def generate_candidates(rtl: Path) -> list[dict]:
     """Every operator mutation of the design's rtl/*.sv code lines, in a fixed order (file, line, operator, position)."""
     out: list[dict] = []
-    for f in sorted(rtl.glob("*.sv")):
+    for f in sorted(p for p in rtl.iterdir() if p.suffix == ".sv" or vhdl.is_vhdl(p)):
+        is_v = vhdl.is_vhdl(f)
+        ops, skip, cmt = (OPERATORS_VHDL, _SKIP_LINE_VHDL, "--") if is_v else (OPERATORS, _SKIP_LINE, "//")
         for n, raw in enumerate(f.read_text(errors="replace").splitlines(), 1):
-            code = raw.split("//", 1)[0]
-            if not code.strip() or _SKIP_LINE.search(code):
+            code = raw.split(cmt, 1)[0]
+            if not code.strip() or skip.search(code):
                 continue
-            for name, rx, rep, words in OPERATORS:
+            for name, rx, rep, words in ops:
                 for m in re.finditer(rx, code):
                     new = code[:m.start()] + rep + code[m.end():]
                     out.append({"name": f"{f.stem}_L{n}_{name}_{m.start()}", "file": f.name, "line": n,
@@ -170,11 +191,12 @@ def apply_mutant(m: dict, src: str) -> str | None:
         return src.replace(m["old_text"], m["new_text"]) if src.count(m["old_text"]) == 1 else None
     lines = src.splitlines(keepends=True)
     raw = lines[m["line"] - 1]
-    code, tail = raw.split("//", 1) if "//" in raw else (raw.rstrip("\n"), "")
+    cmt = "--" if vhdl.is_vhdl(m.get("file", "")) else "//"
+    code, tail = raw.split(cmt, 1) if cmt in raw else (raw.rstrip("\n"), "")
     if code[m["col"]:m["col"] + m["span"]] == "":
         return None
     new = code[:m["col"]] + m["rep"] + code[m["col"] + m["span"]:]
-    lines[m["line"] - 1] = new + (("//" + tail) if tail else ("\n" if raw.endswith("\n") else ""))
+    lines[m["line"] - 1] = new + ((cmt + tail) if tail else ("\n" if raw.endswith("\n") else ""))
     return "".join(lines)
 
 
@@ -226,7 +248,20 @@ def choose_sim(requested: str, runner=None) -> str:
 
 def compile_ok(files: list[Path], runner=None) -> bool | None:
     """Does Icarus accept these sources? None when it cannot tell (no iverilog), so the caller does not guess.
-    With a ``runner`` the compile runs in the sandbox like the tests do."""
+    With a ``runner`` the compile runs in the sandbox like the tests do. VHDL files (brief 55) are analysed by GHDL."""
+    vh, files = vhdl.split(files)
+    if vh:
+        exe = vhdl.ghdl_exe()
+        if exe is None and runner is None:
+            return None
+        with tempfile.TemporaryDirectory() as wd:
+            argv = [exe or "ghdl", "-a", f"--std={vhdl.STD}", f"--workdir={wd}", *map(str, vhdl.order_vhdl(vh))]
+            ok = (runner.run("simulate", argv, ROOT, None, 120).returncode == 0) if runner is not None else \
+                subprocess.run(argv, capture_output=True, text=True).returncode == 0
+        if not ok:
+            return False
+        if not [f for f in files if not srcorder.is_shell_source(f)]:
+            return True                     # only the fixed shell besides the VHDL: nothing more to compile
     inc = [f"-I{d}" for d in sorted({str(f.parent) for f in files})]
     argv = ["iverilog", "-g2012", "-t", "null", *inc, *map(str, files)]
     if runner is not None:
@@ -266,7 +301,7 @@ def generic(design: Path, a) -> int:
     if not out_json.is_absolute():
         out_json = ROOT / out_json
     rtl = design / "rtl"
-    if not list(design.glob("tests/test_*_rtl.py")) or not list(rtl.glob("*.sv")):
+    if not list(design.glob("tests/test_*_rtl.py")) or not vhdl.rtl_files(design):
         print(f"{design.name}: needs rtl/*.sv and tests/test_*_rtl.py", file=sys.stderr)
         return 2
     try:
@@ -322,14 +357,14 @@ def _generic_locked(design: Path, a, rtl: Path, out_json: Path, t_start: float, 
         d = mdir_root / m["name"]
         shutil.rmtree(d, ignore_errors=True)
         d.mkdir(parents=True)
-        for f in rtl.glob("*.sv"):
+        for f in vhdl.rtl_files(design):                    # brief 55: VHDL designs too
             shutil.copy(f, d / f.name)
         new = apply_mutant(m, (d / m["file"]).read_text())
         if new is None or new == (d / m["file"]).read_text():
             rows.append(row | {"status": "invalid", "note": "the text to change was not found exactly once"})
             continue
         (d / m["file"]).write_text(new)
-        files = srcorder.order_sv(shell + sorted(d.glob("*.sv")))
+        files = srcorder.order_sv(shell + sorted(p for p in d.iterdir() if p.suffix == ".sv" or vhdl.is_vhdl(p)))
         if compile_ok(files, runner) is False or (sim == "verilator" and compile_ok_verilator(files, top, runner) is False):
             rows.append(row | {"status": "invalid", "note": "the mutated RTL does not compile"})
             shutil.rmtree(d, ignore_errors=True)

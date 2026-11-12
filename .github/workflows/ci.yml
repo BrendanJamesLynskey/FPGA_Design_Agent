@@ -75,6 +75,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y iverilog
+          # brief 55: GHDL for the VHDL path, pinned to the Ubuntu 24.04 package used locally and in fda-sim:2-ghdl (mcode; about 8.5 MB installed)
+          sudo apt-get install -y --no-install-recommends ghdl=4.1.0+dfsg-0ubuntu2.1 ghdl-mcode=4.1.0+dfsg-0ubuntu2.1 ghdl-common=4.1.0+dfsg-0ubuntu2.1
+          ghdl --version | head -1
           pip install pyyaml pyserial pytest cocotb==2.0.1 cocotb-coverage
       - name: cocotb tests (shell at 8 clocks a bit and at 115200 baud; T1 against its model)
         run: python -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py
@@ -98,6 +101,8 @@ jobs:
         run: python -m pytest -q flow/tests/test_24_fsm_rtl.py flow/tests/test_24_drills_rtl.py
       - name: Project layer (brief 27B P0) - generated contract tests on fixture RTL, the reference passes, each mutant fails
         run: python -m pytest -q project/tests/test_27b_contract_tests_rtl.py
+      - name: VHDL (brief 55) - a translation passes its hidden bench through the GHDL netlist, VHDL blocks under GHDL, the mistakes M1/M2
+        run: python -m pytest -q flow/tests/test_55_vhdl_rtl.py
       - name: Mutants (each deliberate bug must fail the T1 tests)
         run: PYTHON=python designs/t1_dimmer_counter/tests/run_mutants.sh
       - name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (brief 06a)
