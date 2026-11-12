@@ -116,7 +116,10 @@ def check_architecture(data: Any) -> list[str]:
                 errs.append(f"predicted_resources has no {r!r}")
             elif _range(pr[r]) is None:
                 errs.append(f"predicted_resources.{r} must be a number or [low, high] with 0 <= low <= high")
-    from flow.timing_plan import check_datapaths        # brief 62A hook: the optional design-time datapaths (timing plan)
+    try:                                                 # brief 62A hook: the optional design-time datapaths (timing plan)
+        from flow.timing_plan import check_datapaths
+    except ModuleNotFoundError:                          # run as a script from flow/ (standards_check.py)
+        from timing_plan import check_datapaths
     errs += check_datapaths(data)
     return errs
 
