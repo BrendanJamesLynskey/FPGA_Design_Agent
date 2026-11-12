@@ -245,12 +245,16 @@ def _chain(ops: list[dict], maps: dict[str, tuple], m: dict) -> list[dict[str, A
 
 def pipeline(seq: list[dict[str, Any]], budget_ns: float, overhead_ns: float) -> list[dict[str, Any]]:
     """Greedy stage cut: add segments to the current stage while clock-to-out + logic + setup fits ``budget_ns``; a
-    register goes after the last segment that fits (free DSP/BRAM registers count like fabric ones but cost no FFs).
+    register goes after the last segment that fits. A free register (inside a DSP48E1 or a block RAM) is always used:
+    it costs no FFs and is what lets the primitive reach its own speed (the plan's DSP template is fully pipelined).
     Returns stages ``[{segments, est_ns, reg: free|fabric}]``; a single segment over the budget is its own stage
     (``over: True``)."""
     stages: list[dict[str, Any]] = []
     cur: list[dict] = []
     for s in seq:
+        if cur and cur[-1]["reg_after"] == "free":      # a DSP/BRAM internal register costs no FFs: always use it
+            stages.append(cur)
+            cur = []
         cand = cur + [s]
         if cur and overhead_ns + sum(x["ns"] for x in cand) > budget_ns:
             cut = max((i for i, x in enumerate(cur) if x["reg_after"] != "none"), default=None)

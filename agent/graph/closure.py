@@ -227,7 +227,7 @@ def edit_prompt(r: EditRequest) -> str:
     return "\n".join(parts)
 
 
-_BLOCK = re.compile(r"=== FILE: (\S+) ===\s*\n```[a-zA-Z]*\n(.*?)\n```", re.S)
+_BLOCK = re.compile(r"=== FILE: (\S+?)(?: ===)?[ \t]*\n```[a-zA-Z]*\n(.*?)\n```", re.S)     # the closing === is optional (models drop it)
 
 
 def parse_reply(text: str, allowed: set[str]) -> tuple[dict[str, str], str]:

@@ -200,6 +200,7 @@ def test_parse_reply():
     t = "x\n=== FILE: rtl/a.sv ===\n```systemverilog\nmodule a; endmodule\n```\n=== FILE: rtl/zz.sv ===\n```\nno\n```\nNOTE: one clock"
     files, note = cl.parse_reply(t, {"rtl/a.sv"})
     assert files == {"rtl/a.sv": "module a; endmodule\n"} and note == "one clock"
+    assert cl.parse_reply("=== FILE: rtl/a.sv\n```systemverilog\nmodule a; endmodule\n```", {"rtl/a.sv"})[0]   # no closing ===
 
 
 def test_contract_from_spec():

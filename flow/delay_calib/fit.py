@@ -42,7 +42,19 @@ def linfit(xs: list[float], ys: list[float]) -> dict:
     return {"a": round(my - b * mx, 4), "b": round(b, 5), "points": [[x, y] for x, y in zip(xs, ys)]}
 
 
-def fit(d: Path) -> tuple[dict, list[dict]]:
+def clk_to_out(text: str, prim: str) -> tuple[float, float] | None:
+    """(clock-to-out of the primitive's first output row, the route of the net after it) on the report's worst path."""
+    blk = text.split("Slack", 2)[1] if "Slack" in text else ""
+    m = re.search(rf"\(Prop_{prim}_CLK\w*_\w+(?:\[\d+\])?\)\s*\n?\s*(-?[0-9.]+)\s+[0-9.]+\s+[rf]?\s*\S+\s*\n\s+net \(fo=\d+[^)]*\)\s+([0-9.]+)", blk)
+    return (float(m.group(1)), float(m.group(2))) if m else None
+
+
+def min_period(text: str, prim: str) -> float | None:
+    v = [float(m.group(1)) for m in re.finditer(rf"Min Period\s+n/a\s+{prim}/CLK\w*\s+n/a\s+([0-9.]+)", text)]
+    return max(v) if v else None
+
+
+def fit(d: Path, d2: Path | None = None) -> tuple[dict, list[dict]]:
     rd = lambda n: parse_paths((d / n).read_text()) if (d / n).is_file() else []      # noqa: E731
     rows: list[dict] = []
 
@@ -78,25 +90,37 @@ def fit(d: Path) -> tuple[dict, list[dict]]:
                "fabric FF to a DSP48E1 A/B input register")
     internal = rd("path_dsp_internal.rpt")
     frm = rd("path_from_dsp.rpt")
-    mult = take("dsp_areg_to_mreg", worst(internal, None, None) if internal else None, "inside the DSP48E1: AREG/BREG to MREG (or to PREG)")
-    dout = take("dsp_preg_out", worst([p for p in frm if (p["destination"] or "").endswith("/D")]), "DSP48E1 PREG to a fabric FF")
-    bram = rd("path_from_bram.rpt")
-    b0 = take("bram_out_noreg", worst(bram, None, r"u_bram0/"), "block RAM read, no output register, to a fabric FF")
-    b1 = take("bram_out_reg", worst(bram, None, r"u_bram1/"), "block RAM read with the output register, to a fabric FF")
+    d2 = d2 or d
+    ts = (d2 / "timing_summary.rpt").read_text() if (d2 / "timing_summary.rpt").is_file() else ""
+    dsp_mp, bram_mp = min_period(ts, "DSP48E1"), min_period(ts, "RAMB18E1") or min_period(ts, "RAMB36E1")
+    # report_timing does not report the register-to-register stages inside a DSP48E1: a fully pipelined slice is limited
+    # by its minimum period (the pulse-width check), which is what an internal stage may use
+    rows.append({"name": "dsp_min_period", "what": "DSP48E1 minimum period, fully pipelined (pulse-width check)", "stage_ns": dsp_mp})
+    rows.append({"name": "bram_min_period", "what": "RAMB18E1 minimum period (pulse-width check)", "stage_ns": bram_mp})
+    p_out = clk_to_out((d2 / "path_from_dsp.rpt").read_text(), "dsp48e1") if (d2 / "path_from_dsp.rpt").is_file() else None
+    r_out = clk_to_out((d2 / "path_from_bram.rpt").read_text(), "ramb18e1") if (d2 / "path_from_bram.rpt").is_file() else None
+    rows.append({"name": "dsp_preg_clk_to_p", "what": "DSP48E1 PREG clock to P, and the route of the net after it", "pair_ns": p_out})
+    rows.append({"name": "bram_doreg_clk_to_do", "what": "RAMB18E1 with output register: clock to DO, and the route after it",
+                 "pair_ns": r_out})
+    mult = dsp_mp
+    dout = None
+    b0 = None
+    b1 = None
 
     seg = lambda s: round(max(0.0, s - over), 3) if s is not None else None    # noqa: E731
     model = {
         "schema": "fpga-design-agent/delay-model/v1",
         "uncertainty_ns": unc,
         "ff": {"clk_to_q_ns": clk_q, "setup_ns": setup, "overhead_ns": over},
-        "lut_level_ns": None,
+        "lut_level_ns": round(seg(mux) / 3, 3) if mux else None,      # mux16: LUT6 + MUXF7 + MUXF8, three levels
         "table_ns": seg(tab), "mux16_ns": seg(mux),
         "fit": {"add_by_bits": linfit([w for w, s in adds if s], [seg(s) for w, s in adds if s]),
                 "compare_by_bits": {"a": round(seg(cmp32) - 0.0, 4) if cmp32 else None, "b": 0.0,
                                     "points": [[32, seg(cmp32)]]},
                 "lut_mul_by_width": linfit([w for w, s in lm if s], [seg(s) for w, s in lm if s])},
-        "dsp48": {"comb_ns": seg(dsp0), "in_route_ns": seg(din), "mult_ns": seg(mult), "out_route_ns": seg(dout)},
-        "bram": {"clk_to_out_ns": seg(b0), "clk_to_out_reg_ns": seg(b1)},
+        "dsp48": {"comb_ns": seg(dsp0), "in_route_ns": seg(din), "mult_ns": seg(mult), "madd_ns": seg(mult),
+                  "out_route_ns": round(sum(p_out), 3) if p_out else None, "min_period_ns": dsp_mp},
+        "bram": {"clk_to_out_reg_ns": round(sum(r_out), 3) if r_out else None, "clk_to_out_ns": None, "min_period_ns": bram_mp},
     }
     return model, rows
 
@@ -104,9 +128,10 @@ def fit(d: Path) -> tuple[dict, list[dict]]:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("calib", type=Path)
+    ap.add_argument("calib2", type=Path, nargs="?", help="the second run (DSP/BRAM output paths, pulse-width checks)")
     ap.add_argument("--yaml", type=Path)
     a = ap.parse_args(argv)
-    m, rows = fit(a.calib)
+    m, rows = fit(a.calib, a.calib2)
     out = {"model": m, "measurements": rows}
     text = yaml.safe_dump(out, sort_keys=False)
     if a.yaml:
