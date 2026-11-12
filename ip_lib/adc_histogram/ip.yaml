@@ -1,8 +1,7 @@
-# ip.yaml for adc_histogram: the declared parameter space and contract (brief 28 rules; brief 30 entry).
+# ip.yaml for adc_histogram: the declared parameter space and contract (the library's reuse rules).
 name: adc_histogram
-version: 0.1.0
-status: 'simulated bit-exact against hil/instruments/models.py; not yet run on a board (needs a converter input: the XADC or the Pluto/Red Pitaya
-  link)'
+version: 0.2.0
+status: 'simulated bit-exact against hil/instruments/models.py in both variants and measured out of context on an Artix-7 (xc7a100t, Vivado 2026.1); not yet run on a board (needs an on-chip or external converter input)'
 summary: 'Code-density histogram for converter tests: counts samples by their top BIN_W bits with min, max and total; DNL and INL are computed
   on the host (hil/instruments/models.py dnl_inl).'
 top: adc_histogram
@@ -19,6 +18,13 @@ interfaces:
 clocks:
 - name: clk
 parameters:
+  IMPL:
+    type: string
+    default: dist_ram
+    set:
+    - dist_ram
+    - bram
+    note: implementation variant of the bin RAM (see variants)
   SAMP_W:
     type: int
     default: 12
@@ -46,6 +52,7 @@ latency:
 throughput: one sample per clock
 guards:
 - BIN_W: 1
+- IMPL: lutram
 sweep_tested:
 - SAMP_W: 12
   BIN_W: 6
@@ -53,12 +60,47 @@ sweep_tested:
 - SAMP_W: 8
   BIN_W: 8
   CNT_W: 12
+- IMPL: bram
+  SAMP_W: 12
+  BIN_W: 6
+  CNT_W: 16
+- IMPL: bram
+  SAMP_W: 8
+  BIN_W: 8
+  CNT_W: 12
+variant_param: IMPL
+variants:
+  dist_ram:
+    summary: one bin RAM in LUT RAM with two read ports (sample path and host readout)
+    when: 'measured: at BIN_W 6, 128 LUTs and 182 MHz against 81 LUTs plus one block RAM tile at 157 MHz; guidance: up to about BIN_W 8, or block RAM scarce'
+    uses:
+      bram_tiles: 0
+      dsp: 0
+    latency: 3
+    ii: 1
+  bram:
+    summary: two block RAM copies of the bins written together, one per read port
+    when: 'measured: at BIN_W 10, 91 LUTs and 2 block RAM tiles against 1184 LUTs for dist_ram; guidance: from about BIN_W 9, or LUTs scarce'
+    uses:
+      bram_tiles: 2 * 0.5 * ceil(pow2(BIN_W) * CNT_W / 18432)
+      dsp: 0
+    latency: 3
+    ii: 1
+characterisation:
+  part: xc7a100tcsg324-1
+  clock_ns: 4.0
+  points:
+  - SAMP_W: 12
+    BIN_W: 6
+    CNT_W: 16
+  - SAMP_W: 12
+    BIN_W: 10
+    CNT_W: 20
 boundary:
   registered_outputs: 'yes'
   cdc: none
-  part_specific: none (three read ports, so it maps to distributed RAM, not block RAM)
-limits: 'bin RAM is distributed RAM: use BIN_W <= 8 for a small cost; a converter with a transfer function that is not offset binary must be converted
-  first'
+  part_specific: none (the dist_ram variant has two read ports on one LUT RAM; the bram variant keeps a second block RAM copy for the third port)
+limits: 'the dist_ram variant grows fast with BIN_W (measured at BIN_W 10: 1184 LUTs, 896 of them LUT RAM); the bram variant keeps two block RAM copies, so twice the block RAM of the bin storage; a converter with a transfer function that is not offset binary must be converted first'
 resets:
 - name: rst
   polarity: high
@@ -71,6 +113,7 @@ evidence:
   simulator: Icarus Verilog 12 (local and CI)
   summary: Bit-exact against the Python models in `hil/instruments/models.py` (plain Python written from the definitions, not from the RTL); cocotb
     with Icarus Verilog 12.
-cost_table: 'pending: no OOC synthesis sweep yet, and the block is not in the b30_hil_audio build, so no Vivado cost is recorded'
-constraints: []
+cost_table: 'measured costs are in the Variants section above'
+constraints:
+- BIN_W <= SAMP_W
 licence: MIT (this repository)

@@ -1,0 +1,43 @@
+{
+ "id": "axi_transactor",
+ "title": "An on-chip AXI traffic generator and protocol checker",
+ "tagline": "A block beside the design under test that drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time and checks named protocol rules in hardware",
+ "url": "https://fpga-design-agent.vercel.app/showcase/axi_transactor.html",
+ "facts": [
+  {
+   "text": "A hardware checker flagged the expected rule in all 6 runs with a seeded protocol bug (8 faults) on the Nexys A7; AMD's own AXI Protocol Checker on the same AXI4-Lite bus gave the same verdict in all 17 runs.",
+   "source": "site/data:showcase.projects.id=axi_transactor.values.bug_runs",
+   "also": [
+    "site/data:showcase.projects.id=axi_transactor.values.faults",
+    "site/data:showcase.projects.id=axi_transactor.values.runs"
+   ]
+  },
+  {
+   "text": "On our own test peripheral and stream FIFO, the board's traffic matched the simulation cycle for cycle in 13 of 13 runs, with 0 differences in 936 logged transactions.",
+   "source": "site/data:showcase.projects.id=axi_transactor.values.parity_eq",
+   "also": [
+    "site/data:showcase.projects.id=axi_transactor.values.parity",
+    "site/data:showcase.projects.id=axi_transactor.values.txn_diff",
+    "site/data:showcase.projects.id=axi_transactor.values.txns"
+   ]
+  },
+  {
+   "text": "The checker is checked formally to 20 clock cycles (bounded): 32 of 32 properties hold, and 53 of 53 deliberately broken copies of it are caught.",
+   "source": "site/data:showcase.projects.id=axi_transactor.values.proofs_pass",
+   "also": [
+    "site/data:showcase.projects.id=axi_transactor.values.depth",
+    "site/data:showcase.projects.id=axi_transactor.values.proofs",
+    "site/data:showcase.projects.id=axi_transactor.values.mutants_killed",
+    "site/data:showcase.projects.id=axi_transactor.values.mutants"
+   ]
+  }
+ ],
+ "media": {
+  "still_1200x630": "hero_1200x630.png",
+  "animation": "replay.webm",
+  "animation_mp4": "replay.mp4",
+  "alt": "A waveform captured on the board, replayed cycle by cycle: after the address handshake the peripheral raises BVALID, its write response, before any write data; the checker's B_EARLY rule (a response before its data) goes high, and the write data arrives only afterwards.",
+  "note": "Recorded from the showcase page's own hero (results/59a_axi_tx/hero.json) by axi_tx/portfolio_capture.js."
+ },
+ "status": "Measured on the board; full AXI4, the slave side and long soak runs are planned next."
+}

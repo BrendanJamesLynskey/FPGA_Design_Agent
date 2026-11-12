@@ -1,0 +1,17 @@
+# Packets of many lengths and last-beat TKEEP patterns through the stream FIFO, with back-pressure on both ends,
+# overlapping AXI4-Lite traffic to the peripheral.
+name: stream_packets
+target: periph
+requirements: [AXT-REQ-05]
+steps:
+  - set: {seed_data: 0x5EED, seed_stream: 0x99, s_valid_p: 40, s_ready_p: 90}
+  - loop: 6
+    body:
+      - ssend: {len: 1, first: 0x1000, keep_last: 0x1}
+      - ssend: {len: 2, first: 0x2000, keep_last: 0x3}
+      - ssend: {len: 5, first: 0x3000, keep_last: 0x7}
+      - ssend: {len: 16, rand_first: true, keep_last: 0xF}
+      - write: {addr: 0x04, rand_data: true}
+      - ssend: {len: 17, first: 0x4000, keep_last: 0x1}
+      - read: {addr: 0x04}
+  - swait: {}

@@ -23,16 +23,20 @@ CASES = [
     ("frame_crc", {"PIX_W": 32}),
     ("dds_awg", {"PHASE_W": 32, "LUT_W": 8, "OUT_W": 16}),
     ("dds_awg", {"PHASE_W": 24, "LUT_W": 6, "OUT_W": 12}),
+    ("dds_awg", {"IMPL": '"lut"', "PHASE_W": 32, "LUT_W": 8, "OUT_W": 16}),     # the lut variant (default IMPL "bram")
+    ("dds_awg", {"IMPL": '"lut"', "PHASE_W": 24, "LUT_W": 6, "OUT_W": 12}),
     ("logic_analyser", {"WIDTH": 16, "ADDR_W": 6}),
     ("logic_analyser", {"WIDTH": 8, "ADDR_W": 4}),
     ("adc_histogram", {"SAMP_W": 12, "BIN_W": 6, "CNT_W": 16}),
     ("adc_histogram", {"SAMP_W": 8, "BIN_W": 8, "CNT_W": 12}),
+    ("adc_histogram", {"IMPL": '"bram"', "SAMP_W": 12, "BIN_W": 6, "CNT_W": 16}),   # the bram variant (default "dist_ram")
+    ("adc_histogram", {"IMPL": '"bram"', "SAMP_W": 8, "BIN_W": 8, "CNT_W": 12}),
 ]
 
 
 def run_case(block: str, params: dict, rtl_dir: Path | None = None, tag: str = "") -> None:
     d = rtl_dir or Path(os.environ.get(f"HIL_RTL_{block.upper()}", IP / block / "rtl"))
-    name = f"{block}_{'_'.join(f'{k}{v}' for k, v in params.items())}{tag}"
+    name = f"{block}_{'_'.join(f'{k}{v}' for k, v in params.items())}{tag}".replace('"', "")
     build = BUILD / name
     r = get_runner("icarus")
     r.build(sources=sorted(str(f) for f in d.glob("*.sv")), hdl_toplevel=block, parameters=params, build_dir=build,
@@ -48,7 +52,7 @@ def run_case(block: str, params: dict, rtl_dir: Path | None = None, tag: str = "
     assert not bad, f"{block} {params}: failed {bad}"
 
 
-@pytest.mark.parametrize("block,params", CASES, ids=[f"{b}-{'-'.join(f'{k}{v}' for k, v in p.items())}" for b, p in CASES])
+@pytest.mark.parametrize("block,params", CASES, ids=[f"{b}-{'-'.join(f'{k}{v}' for k, v in p.items())}".replace('"', "") for b, p in CASES])
 def test_block(block, params):
     run_case(block, params)
 
@@ -58,17 +62,19 @@ GUARDS = [
     ("freq_duty_counter", {"CNT_W": 40}),
     ("frame_crc", {"PIX_W": 12}),
     ("dds_awg", {"LUT_W": 2}),
+    ("dds_awg", {"IMPL": '"rom"'}),
     ("logic_analyser", {"ADDR_W": 1}),
     ("adc_histogram", {"BIN_W": 1}),
+    ("adc_histogram", {"IMPL": '"lutram"'}),
 ]
 
 
-@pytest.mark.parametrize("block,params", GUARDS, ids=[f"{b}-{'-'.join(f'{k}{v}' for k, v in p.items())}" for b, p in GUARDS])
+@pytest.mark.parametrize("block,params", GUARDS, ids=[f"{b}-{'-'.join(f'{k}{v}' for k, v in p.items())}".replace('"', "") for b, p in GUARDS])
 def test_guard_rejects_out_of_space(block, params):
     """An out-of-space parameter value must stop elaboration with the block's own $error."""
     import subprocess
     srcs = sorted(str(f) for f in (IP / block / "rtl").glob("*.sv"))
-    vvp = BUILD / f"guard_{block}_{'_'.join(f'{k}{v}' for k, v in params.items())}.vvp"
+    vvp = BUILD / f"guard_{block}_{'_'.join(f'{k}{v}' for k, v in params.items())}.vvp".replace('"', "")
     vvp.parent.mkdir(parents=True, exist_ok=True)
     cmd = ["iverilog", "-g2012", "-o", str(vvp), "-s", block, *[f"-P{block}.{k}={v}" for k, v in params.items()], *srcs]
     r = subprocess.run(cmd, capture_output=True, text=True)

@@ -180,7 +180,7 @@ def validate_args(schema: dict[str, Any], args: dict[str, Any]) -> None:
 # --- hardware policy -----------------------------------------------------------------------------------
 
 FLASH_WORDS = re.compile(r"flash|qspi|spi_?flash|write_cfgmem|program_hw_cfgmem|cfgmem|\.mcs|\.bin\b|sd\s*card", re.I)
-HW_COST = {"program": 1, "bringup": 2}
+HW_COST = {"program": 1, "bringup": 2, "debug_capture": 1, "axi_board_run": 1}   # brief 50A: debug_capture programs once and captures once
 
 
 class HardwarePolicy:

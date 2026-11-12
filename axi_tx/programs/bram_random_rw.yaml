@@ -1,0 +1,22 @@
+# Random reads and writes over one 4 KB window of the BRAM controller, every read checked against the scoreboard.
+name: bram_random_rw
+target: bram
+requirements: [AXT-REQ-01, AXT-REQ-03]
+steps:
+  - set: {seed_data: 0x59A1, seed_lite: 0x1234, valid_p: 64, ready_p: 160, sb_base: 0x0}
+  # a sequential fill with every write order, then a sequential check
+  - set: {areg: 0x0}
+  - loop: 32
+    body:
+      - write: {areg: true, rand_data: true, sb: true, order: together}
+      - write: {areg: true, rand_data: true, sb: true, order: aw_first, gap: 2}
+      - write: {areg: true, rand_data: true, sb: true, order: w_first, gap: 3}
+  - set: {areg: 0x0}
+  - loop: 96
+    body:
+      - read: {areg: true, sb: true, resp: OKAY}
+  # random addresses, random data and random strobes, then random reads
+  - loop: 120
+    body:
+      - write: {addr: 0x0, rand_addr: 0xFFC, rand_data: true, rand_strb: true, sb: true, resp: OKAY}
+      - read: {addr: 0x0, rand_addr: 0xFFC, sb: true, resp: OKAY}

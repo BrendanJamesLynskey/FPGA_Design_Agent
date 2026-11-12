@@ -105,6 +105,14 @@ def check_artefact(rel: str, content: str) -> str | None:
         if err:
             return err
         errs = [f"missing key {k!r}" for k in BUILD_KEYS if k not in data]
+        from agent.core.tools import BUILD_YAML_KEYS
+        errs += [f"unknown key {k!r}" for k in sorted(set(data) - BUILD_YAML_KEYS)]
+        if data.get("ip_tcl"):
+            from flow import ip_tcl_allow
+            try:
+                ip_tcl_allow.check(data["ip_tcl"])
+            except ip_tcl_allow.IpTclRefused as e:
+                errs.append(str(e))
         errs += [f"{k!r} must be a non-empty list" for k in ("sources", "constraints")
                  if k in data and not (isinstance(data[k], list) and data[k])]
         return f"{rel}: {'; '.join(errs)}" if errs else None

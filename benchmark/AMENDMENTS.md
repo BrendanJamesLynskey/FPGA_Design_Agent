@@ -21,7 +21,7 @@ Re-recorded with the repository's tools:
   entry in `v2/ledger.jsonl` (`split.py shell-freeze`): shell fingerprint `80ef214e...` -> **`b70ca608e445f8d567e2fb45fd1911e89d06d67ee1702b0c1f728ebaabc21f87`**,
   last changed in commit `8e971392667615a662b48fb4c86e6bc60769faaf`. The splits themselves are unchanged (`split.py verify` passes).
 - The request golden: `agent/tests/fixtures/b54b_request_golden.json`. The tests role reads the shell's PROTOCOL.md and
-  host driver, so `plan_tests_*` and `cli_argv_tests_*` differ from the brief 53 golden; nothing else does.
+  host driver, so `plan_tests_*` and `cli_argv_tests_*` differ from the newest earlier golden (brief 59A); nothing else does.
 
 Not comparable: any result scored or graded with the 1.0 shell (fingerprint `80ef214e...`, everything recorded before this
 date, including the eval-1 runs) belongs to that shell; such results stay as they are and are from before this change.

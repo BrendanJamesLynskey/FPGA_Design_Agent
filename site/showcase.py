@@ -40,12 +40,16 @@ PROSE_OK = re.compile(
     r"\bZynq-7000\b|\bArtix-7\b|\bKintex-7\b|\bVirtex-7\b|\bV[0-3](?: to V[0-3])?\b|\bK26\b|\bKR260\b|\bKV260\b|"
     r"\bNexys A7(?:-100T)?\b|\bA7-100T\b|\bI2C\b|\bPS[78]\b|\b64b/66b\b|\b8b/10b\b|\b(?:1|10|25)G\b|\bDDR[2-5]\b|\bIEEE-1735\b",
     re.I)
+#: the two Arm document numbers the AXI page cites, exactly and case-sensitively (no other "IHI dddd" is exempt)
+PROSE_EXACT = re.compile(r"\bIHI 0022H\b|\bIHI 0051B\b")
 #: any run of digits is a number wherever it stands (after a letter, '#', '.' or a hyphen too); a leading minus counts
 NUM = re.compile(r"-?\d+(?:[.,]\d+)*")
 REQUIRED = {"published": ["id", "title", "one_line", "board", "part", "headline", "hero", "story", "evidence", "limits"],
             "in_progress": ["id", "title", "one_line", "board", "what_it_will_show"],
             "planned": ["id", "title", "one_line"]}
 STORY = ["problem", "how", "results", "agent"]
+#: "What the agent did" reads in the order of the run: the request, the plan, the gates it passed, the human approvals
+AGENT_ORDER = ["request", "plan", "gates", "approvals"]
 #: the evidence drawer's groups, in order; a published page must have at least one item of each
 EVIDENCE = {"record": "Run records and raw captures", "conditions": "Operating conditions (die temperature and rails)",
             "versions": "Tool versions and build ID", "requirements": "Requirements traced"}
@@ -56,7 +60,7 @@ class ContractError(ValueError):
 
 
 def _numbers(s: str) -> list[str]:
-    return [n for n in NUM.findall(PROSE_OK.sub(" ", str(s))) if any(c.isdigit() for c in n)]
+    return [n for n in NUM.findall(PROSE_OK.sub(" ", PROSE_EXACT.sub(" ", str(s)))) if any(c.isdigit() for c in n)]
 
 
 def _no_typed_numbers(where: str, s: str):
@@ -66,6 +70,9 @@ def _no_typed_numbers(where: str, s: str):
 
 
 def _fill(where: str, text: str, values: dict) -> str:
+    bad = [m for m in re.findall(r"\{[^{}]*\}|\{|\}", re.sub(r"\{\w+\}", "", str(text)))]
+    if bad:
+        raise ContractError(f"{where}: malformed placeholder(s) {bad}; write {{name}} with letters, digits and _ only")
     _no_typed_numbers(where, text)
     def one(m):
         k = m.group(1)
@@ -106,6 +113,19 @@ def hero_data(h: dict, where: str) -> dict:
         for s in d["signals"]:
             if len(s["v"]) != n or s.get("kind", "bit") not in ("bit", "bus", "wave", "text"):
                 raise ContractError(f"{where}: wave signal {s.get('name')} has {len(s['v'])} values for {n} samples or a bad kind")
+        if "captions" in d and len(d["captions"]) != n:
+            raise ContractError(f"{where}: wave captions has {len(d['captions'])} entries for {n} samples")
+        if "stages" in d:      # the staged option (docs/showcase_pages.md): exactly one stage is lit while the samples are revealed
+            ph = [st.get("phase") for st in d["stages"]]
+            if not d["stages"] or any(x not in ("before", "during", "after") for x in ph) or ph.count("during") != 1 \
+                    or not all(st.get("name") for st in d["stages"]):
+                raise ContractError(f"{where}: wave stages need a name each and phases before/during/after with exactly one during")
+            if not any(st.get("captions") for st in d["stages"] if st["phase"] == "after"):
+                raise ContractError(f"{where}: wave stages need an 'after' stage with a caption (the answer is the last frame)")
+        names = [s["name"] for s in d["signals"]]
+        for m in d.get("marks", []):
+            if m.get("x") not in d["x"] or (m.get("signal") and m["signal"] not in names) or not m.get("label"):
+                raise ContractError(f"{where}: wave mark {m} is not on the x axis, names no signal of the hero, or has no label")
     if k == "hist":
         if not d["samples"] or not (isinstance(d["bins"], int) and d["bins"] > 1):
             raise ContractError(f"{where}: hist needs samples and an integer bins > 1")
@@ -140,7 +160,8 @@ ALLOWED = {"planned": {"id", "order", "status", "title", "one_line"},
            "published": {"id", "order", "status", "title", "one_line", "board", "part", "vivado", "values", "headline", "description",
                          "hero", "story", "evidence", "limits", "try_it", "fixture"}}
 #: published fields whose strings are not page text checked for typed numbers: value expressions, file paths, the command
-NOT_TEXT = {("values",), ("hero", "source"), ("hero", "path"), ("hero", "kind"), ("evidence", "path"), ("evidence", "kind"),
+NOT_TEXT = {("story", "table", "source"), ("story", "table", "path"), ("story", "table", "link"),
+            ("values",), ("hero", "source"), ("hero", "path"), ("hero", "kind"), ("evidence", "path"), ("evidence", "kind"),
             ("try_it", "command"), ("id",), ("status",), ("order",), ("vivado",), ("fixture",)}
 
 
@@ -192,6 +213,7 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
         return r
     vals = _values(y.get("values"), name)
     f = lambda k, t: _fill(f"{name}: {k}", t, vals)
+    r["title"] = f("title", y["title"])
     r.update({"one_line": f("one_line", y["one_line"]), "board": y["board"], "part": y["part"], "headline": f("headline", y["headline"]),
               "vivado": y.get("vivado", "2026.1"), "values": vals})
     r["hero"] = hero_data(y["hero"], name)
@@ -203,13 +225,38 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
     r["story"] = {"problem": f("story.problem", st_["problem"]), "how": f("story.how", st_["how"]),
                   "results": [f("story.results", t) for t in st_["results"]],
                   "agent": {k: ([f("story.agent", t) for t in v] if isinstance(v, list) else f("story.agent", v)) for k, v in st_["agent"].items()}}
+    if "results_table" in st_:
+        rt = st_["results_table"]
+        if not rt.get("head") or not rt.get("rows") or any(len(row) != len(rt["head"]) for row in rt["rows"]):
+            raise ContractError(f"{name}: story.results_table needs head and rows of the same length")
+        r["story"]["results_table"] = {"caption": f("story.results_table", rt.get("caption", "")),
+                                       "head": [f("story.results_table", h) for h in rt["head"]],
+                                       "rows": [[f("story.results_table", str(c)) for c in row] for row in rt["rows"]]}
+    if "details" in st_:
+        r["story"]["details"] = [{"title": f("story.details", d["title"]), "text": f("story.details", d["text"])} for d in st_["details"]]
+    if "table" in st_:
+        t = st_["table"]
+        if not str(t.get("source", "")).startswith("results/") or not (ROOT / t["source"]).is_file():
+            raise ContractError(f"{name}: story.table.source must be a committed file under results/")
+        rows = _get(json.loads((ROOT / t["source"]).read_text()), t.get("path"))
+        cols = [(c[0], c[1]) for c in t["columns"]]
+        if not isinstance(rows, list) or not all(isinstance(x, dict) and all(c in x for c, _ in cols) for x in rows):
+            raise ContractError(f"{name}: story.table rows must be objects with every column key")
+        lk = t.get("link")
+        if lk:
+            for x in rows:
+                if not glob.glob(str(ROOT / x[lk])):
+                    raise ContractError(f"{name}: story.table link {x[lk]} does not exist")
+        r["story"]["table"] = {"caption": f("story.table.caption", t.get("caption", "")), "columns": [[c, f("story.table", h)] for c, h in cols],
+                               "rows": rows, "link": lk, "link_column": t.get("link_column", cols[0][0])}
     if "architecture" in st_:
         a = st_["architecture"]
         ids = {b[0] for b in a["blocks"]}
         for l in a.get("links", []):
             if l[0] not in ids or l[1] not in ids:
                 raise ContractError(f"{name}: architecture link {l} names an unknown block")
-        r["story"]["architecture"] = a
+        r["story"]["architecture"] = {"blocks": [[b[0], f("story.architecture", b[1])] for b in a["blocks"]],
+                                      "links": [[l[0], l[1]] + ([f("story.architecture", l[2])] if len(l) > 2 else []) for l in a.get("links", [])]}
     for e in y["evidence"]:
         if e.get("kind") not in EVIDENCE:
             raise ContractError(f"{name}: evidence kind must be one of {list(EVIDENCE)}")
@@ -218,7 +265,7 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
     miss = [k for k in EVIDENCE if k not in {e["kind"] for e in y["evidence"]}]
     if miss:
         raise ContractError(f"{name}: evidence lacks {miss} (say 'not recorded' in an item's text rather than leave a kind out)")
-    r["evidence"] = [{"kind": e["kind"], "label": e["label"], "path": e.get("path"), "text": f("evidence", e.get("text", ""))}
+    r["evidence"] = [{"kind": e["kind"], "label": f("evidence.label", e["label"]), "path": e.get("path"), "text": f("evidence", e.get("text", ""))}
                      for e in y["evidence"]]
     lim = y["limits"]
     r["limits"] = {k: [f(f"limits.{k}", t) for t in lim.get(k, [])] for k in ("not_measured", "nulls", "next")}
@@ -287,7 +334,7 @@ def arch_svg(a: dict, pid: str) -> str:
             W, bw, bh, gap = 360, 220, 52, 56
             pos = {b[0]: (70, 16 + i * (bh + gap)) for i, b in enumerate(blocks)}
             H = 16 + n * (bh + gap)
-        body = []
+        body, under = [], []
         for b in blocks:
             x, y = pos[b[0]]
             body.append(ap.box(x, y, bw, bh))
@@ -320,12 +367,28 @@ def arch_svg(a: dict, pid: str) -> str:
                     xr = x1 + bw + 20 if idx[l[1]] < idx[l[0]] else x1 - 20
                     d = f"M{x1 + (bw if xr > x1 else 0):g} {y1 + bh / 2:g} L{xr:g} {y1 + bh / 2:g} L{xr:g} {y2 + bh / 2:g} L{x2 + (bw if xr > x1 else 0):g} {y2 + bh / 2:g}"
                     body.append(ap.edge(d, f"sc{pid}n"))
-                    if lab:
-                        for k, row in enumerate(ap.wrap(lab, 60, 11)):
-                            body.append(ap.text(xr + (4 if xr > x1 else -4), (y1 + y2 + bh) / 2 + k * 13, row, "s", "start" if xr > x1 else "end"))
+                    if lab:                # on a phone the side is too narrow: the label goes under the diagram
+                        under.append(lab)
+        for k, lab in enumerate(under):
+            body.append(ap.text(W / 2, H + 4 + k * 16, "Loop on the right: " + lab, "s", "middle"))
+        H += 16 * len(under)
         label = "Architecture: " + ", then ".join(b[1] for b in blocks)
         return ap.svg(f"sc{pid}{'w' if wide else 'n'}", W, H, "".join(body), label, "scarch")
     return ap.both(lay(True), lay(False))
+
+
+def cell_text(v) -> str:
+    """A table cell as a reader sees it: yes/no for a boolean, blank for none, otherwise the value as recorded."""
+    if v is None:
+        return ""
+    if isinstance(v, bool):
+        return "yes" if v else "no"
+    return str(v)
+
+
+def paras(text: str) -> str:
+    """Prose with blank-line paragraph breaks kept (a YAML string with \\n\\n)."""
+    return "".join(f"<p>{E(p.strip())}</p>" for p in str(text).split("\n\n") if p.strip())
 
 
 def page_body(p: dict) -> str:
@@ -333,9 +396,11 @@ def page_body(p: dict) -> str:
     h = p["hero"]
     hero = (f'<figure><div class="player kit" id="hero-{p["id"]}" data-kit="{h["kind"]}" data-key="showcase_hero" '
             f'aria-label="{E(p["title"])}: replay of the recorded data"><div class="phost"><div class="kitart"></div>'
-            f'<p class="cap" aria-live="polite">{E(h["caption"])}</p></div></div>'
-            f'<figcaption>{E(h["caption"])} Data: {_link(h["source"])}.</figcaption></figure>')
+            f'<p class="cap" aria-live="polite"></p></div></div>'
+            f'<figcaption>{E(h["caption"])} ({_link(h["source"], "replay data")})</figcaption></figure>')
     ag = S["agent"]
+    order = [k for k in AGENT_ORDER if k in ag] + [k for k in ag if k not in AGENT_ORDER]
+    ag = {k: ag[k] for k in order}
     agent_rows = "".join(f'<dt>{E(k.replace("_", " ").capitalize())}</dt><dd>' +
                          ("<ul>" + "".join(f"<li>{E(x)}</li>" for x in v) + "</ul>" if isinstance(v, list) else E(v)) + "</dd>"
                          for k, v in ag.items())
@@ -346,26 +411,49 @@ def page_body(p: dict) -> str:
             for e in p["evidence"] if e["kind"] == k) + "</ul>"
     lim = p["limits"]
     limits = "".join(f'<h3>{t}</h3><ul>' + "".join(f"<li>{E(x)}</li>" for x in lim[k]) + "</ul>"
-                     for k, t in (("not_measured", "Not measured"), ("nulls", "No effect found"), ("next", "Next")) if lim[k])
+                     for k, t in (("not_measured", "Not measured"), ("nulls", "Measured, no effect found"), ("next", "Next")) if lim[k])
     tri = ""
     if p.get("try_it"):
         tri = (f'<h2 id="try">Try it</h2><pre><code>{E(p["try_it"]["command"])}</code></pre>' +
                (f'<p>{E(p["try_it"]["note"])}</p>' if p["try_it"]["note"] else ""))
     arch = f'<figure>{arch_svg(S["architecture"], p["id"])}</figure>' if S.get("architecture") else ""
-    return f"""<p class="eyebrow"><a href="../showcase.html">Showcase</a> &middot; {E(p["board"])} ({E(p["part"])}) &middot; Vivado {E(p["vivado"])}</p>
+    table = ""
+    if S.get("table"):
+        T = S["table"]
+        head = "".join(f"<th>{E(h)}</th>" for _, h in T["columns"])
+        def cell(x, c):
+            v = x[c]
+            txt = E(cell_text(v))            # as recorded: 58.0 stays 58.0, like the other rows; yes/no, blank for none
+            return _link(x[T["link"]], str(v)) if T["link"] and c == T["link_column"] else txt
+        body = "".join("<tr>" + "".join(f'<td data-label="{E(h)}">{cell(x, c)}</td>' for c, h in T["columns"]) + "</tr>" for x in T["rows"])
+        table = (f'<div class="tbl"><table class="sc-stack"><caption class="small muted">{E(T["caption"])}</caption>'
+                 f'<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>')
+    rtab = ""
+    if S.get("results_table"):
+        R = S["results_table"]
+        rtab = (f'<div class="tbl"><table class="sc-rtable sc-stack"><caption class="small muted">{E(R["caption"])}</caption><thead><tr>'
+                + "".join(f"<th>{E(h)}</th>" for h in R["head"]) + "</tr></thead><tbody>"
+                + "".join("<tr>" + "".join(f'<td data-label="{E(h)}">{E(c)}</td>' for h, c in zip(R["head"], row)) + "</tr>" for row in R["rows"])
+                + "</tbody></table></div>")
+    details = "".join(f'<details class="more"><summary>{E(d["title"])}</summary><p>{E(d["text"])}</p></details>'
+                      for d in S.get("details", []))
+    return f"""<div class="sc-page"><p class="eyebrow"><a href="../showcase.html">Showcase</a> &middot; {E(p["board"])} ({E(p["part"])}) &middot; Vivado {E(p["vivado"])}</p>
 <h1>{E(p["title"])}</h1>
 <p class="lede sc-headline">{E(p["headline"])}</p>
 {hero}
 <h2 id="problem">The problem</h2>
-<p>{E(S["problem"])}</p>
+{paras(S["problem"])}
 <h2 id="how">How it works</h2>
-<p>{E(S["how"])}</p>
+{paras(S["how"])}
 {arch}
 <h2 id="results">Results</h2>
 <ul class="sc-results">{"".join(f"<li>{E(t)}</li>" for t in S["results"])}</ul>
+{rtab}
+{table}
 <h2 id="agent">What the agent did</h2>
 <dl class="sc-agent">{agent_rows}</dl>
+{details}
 <details class="more" id="evidence"><summary>Evidence: run records, captures, operating conditions, versions and requirements</summary>{ev}</details>
 <h2 id="limits">Limits</h2>
 {limits}
-{tri}"""
+{tri}</div>"""

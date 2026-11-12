@@ -22,9 +22,16 @@ def test_committed_data_is_the_yaml():
     assert json.loads((SITE / "data" / "showcase.json").read_text()) == showcase.build()
 
 
-def test_unpublished_projects_carry_no_numbers_and_no_page():
+#: an in-progress entry for the contract tests (the real projects may all be published by now)
+IN_PROGRESS = {"id": "probe_in_progress", "status": "in_progress", "title": "A project being built",
+               "one_line": "A sentence about what it does.", "board": "Digilent Nexys A7-100T", "part": "xc7a100tcsg324-1",
+               "what_it_will_show": "What the first board result will show."}
+
+
+def test_unpublished_projects_carry_no_numbers_and_no_page(tmp_path):
     S = showcase.build()
-    assert S["counts"]["in_progress"] >= 1
+    probe = showcase.build(_write(tmp_path, dict(IN_PROGRESS)))
+    assert probe["counts"]["in_progress"] == 1 and not any("values" in p for p in probe["projects"])
     for p in S["projects"]:
         if p["status"] != "published":
             assert "values" not in p and "headline" not in p
@@ -87,7 +94,7 @@ def test_contract_refuses(tmp_path, break_it, msg):
 
 
 def test_in_progress_with_a_number_is_refused(tmp_path):
-    y = yaml.safe_load((SITE / "showcase" / "nl_debug.yaml").read_text())
+    y = dict(IN_PROGRESS)
     y["what_it_will_show"] += " Capture depth 4096 samples."
     with pytest.raises(showcase.ContractError, match="typed number"):
         showcase.build(_write(tmp_path, y))
@@ -144,6 +151,17 @@ def test_portfolio_pack_sources_resolve():
     assert (SITE / "portfolio" / P["media"]["animation"]).stat().st_size < 2_000_000
 
 
+def _static(out: Path) -> None:
+    """The built site's static files (scripts, styles, images) beside the test's pages: build.build writes HTML only, and a
+    missing file is a load error the browser check counts (brief 59A: both e2e tests failed on this alone)."""
+    pub = SITE / "public"
+    for f in pub.rglob("*"):
+        if f.is_file() and f.suffix != ".html":
+            dst = out / f.relative_to(pub)
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(f, dst)
+
+
 @pytest.mark.skipif(shutil.which("node") is None or not Path("/home/brendan/Claude_sandbox/node_modules/puppeteer").exists()
                     or not Path("/usr/bin/google-chrome").exists(), reason="puppeteer and Chrome not installed (run locally)")
 @pytest.mark.skipif("FDA_E2E" not in __import__("os").environ, reason="browser test: set FDA_E2E=1 (a heavy job; take a slot)")
@@ -152,6 +170,7 @@ def test_e2e_pages_render_without_errors_or_overflow(tmp_path):
     d = build.load_data(None)
     d["showcase"] = showcase.build(FIX, allow_fixtures=True)
     pages, _ = build.build(out, d)
+    _static(out)
     for f, p in pages.items():
         (out / f).parent.mkdir(parents=True, exist_ok=True)
         (out / f).write_text(p)
@@ -160,6 +179,28 @@ def test_e2e_pages_render_without_errors_or_overflow(tmp_path):
                        env={**__import__("os").environ, "NODE_PATH": "/home/brendan/Claude_sandbox/node_modules"}, timeout=600)
     assert r.returncode == 0, r.stdout + r.stderr
 
+
+
+@pytest.mark.skipif(shutil.which("node") is None or not Path("/home/brendan/Claude_sandbox/node_modules/puppeteer").exists()
+                    or not Path("/usr/bin/google-chrome").exists(), reason="puppeteer and Chrome not installed (run locally)")
+@pytest.mark.skipif("FDA_E2E" not in __import__("os").environ, reason="browser test: set FDA_E2E=1 (a heavy job; take a slot)")
+def test_e2e_published_showcase_pages_render(tmp_path):
+    """Brief 59A: the same browser check on every published showcase page, built from the real data."""
+    out = tmp_path / "pub"
+    d = build.load_data(None)
+    pages, _ = build.build(out, d)
+    _static(out)
+    for f, p in pages.items():
+        (out / f).parent.mkdir(parents=True, exist_ok=True)
+        (out / f).write_text(p)
+    pub = [f for f in pages if f.startswith("showcase/")]
+    assert pub, "no published showcase page"
+    env = {**__import__("os").environ, "NODE_PATH": "/home/brendan/Claude_sandbox/node_modules"}
+    if env.get("FDA_E2E_RECORD"):          # the published pages' check, kept as a record (overlaps, text size, reduced motion)
+        env["E2E_RECORD"] = env["FDA_E2E_RECORD"]
+    r = subprocess.run(["node", str(SITE / "tests" / "e2e_render.js"), str(out), ",".join(["showcase.html", *pub])],
+                       capture_output=True, text=True, env=env, timeout=900)
+    assert r.returncode == 0, r.stdout + r.stderr
 
 def test_home_visit_strip_counts_match_the_record():
     """The loop replay's strip of stage visits (app.js, mountLoop) counts visits and repairs as loop.py does."""
@@ -314,3 +355,154 @@ def test_readme_headline_numbers_are_the_data():
     assert f'On {dev["tasks"]} development tasks, {dev["hidden_pass"]} of {dev["runs"]} runs with' in t
     assert f'In {dev["escapes"]} more' in t
     assert f'passed ({ab["uart_passed"]} of {ab["uart_tests"]}) and its logic-analyser captures failed' in t and not ab["pass"]
+
+
+def test_nl_debug_portfolio_card_sources_resolve():
+    """The showcase project 'Debugging in plain English' (brief 50A): every fact's number is the value at its source."""
+    P = json.loads((SITE / "portfolio" / "nl_debug" / "portfolio.json").read_text())
+    d = build.load_data(None)
+    assert P["url"].startswith("https://") and len(P["facts"]) == 3
+    for f in P["facts"]:
+        for key in ("source", "of"):
+            if key in f:
+                assert f[key].startswith("site/data:"), f
+                assert build.fmt(abs(build.lookup(d, f[key].split(":", 1)[1]))) in f["text"], (f, key)
+    for k in ("still_1200x630", "animation"):
+        assert (SITE / "portfolio" / "nl_debug" / P["media"][k]).exists(), k
+    assert (SITE / "portfolio" / "nl_debug" / P["media"]["animation"]).stat().st_size < 2_000_000
+
+
+# --- brief 50A page round: the staged wave option, the run table, the drawers, the agent order -----------------------
+
+def _staged_hero(tmp_name, mut=None):
+    """A copy of the nl_debug hero under build/ (hero sources may sit outside results/ only for fixtures)."""
+    src = json.loads((SITE.parent / "results" / "50a_nl_debug" / "hero.json").read_text())
+    if mut:
+        mut(src)
+    p = SITE.parent / "build" / tmp_name
+    p.parent.mkdir(exist_ok=True)
+    p.write_text(json.dumps(src))
+    return p
+
+
+@pytest.mark.parametrize("mut, msg", [
+    (lambda h: h["stages"][3].update(phase="before"), "exactly one during"),
+    (lambda h: h["stages"][4].update(captions=[]), "'after' stage with a caption"),
+    (lambda h: h["marks"].append({"x": 999, "label": "off"}), "not on the x axis"),
+    (lambda h: h["marks"].append({"x": 0, "signal": "nosuch", "label": "x"}), "names no signal"),
+    (lambda h: h["captions"].pop(), "captions has"),
+])
+def test_staged_wave_is_checked(tmp_path, mut, msg):
+    p = _staged_hero("b50a_test_hero.json", mut)
+    try:
+        y = yaml.safe_load((FIX / "demo_wave.yaml").read_text())
+        y["hero"] = {"kind": "wave", "source": "build/b50a_test_hero.json", "path": "", "caption": "x"}
+        with pytest.raises(showcase.ContractError, match=msg):
+            showcase.build(_write(tmp_path, y), allow_fixtures=True)
+    finally:
+        p.unlink()
+
+
+def test_kit_has_the_staged_wave_option():
+    js = (SITE / "src" / "app.js").read_text()
+    assert "return stagedWave(art, T);" in js.split("var KIT = {")[1].split("hist: function")[0]
+    sw = js.split("function stagedWave")[1].split("function nf(")[0]
+    # stage strip, marks with their label band, the faint whole capture before the reveal (no empty grid), the axis sized
+    # to the revealed samples, names above the traces on a phone, the SVG title and the one-line key
+    for k in ("stagestrip", "kmarkg", "visually-hidden", "aria-label", '"ghost"', "Math.max(m, MINV)", "narrow ? 0",
+              '"title"', "wavekey"):
+        assert k in sw, k
+
+
+def test_nl_debug_page_reads_in_order_with_its_table_and_drawers():
+    S = showcase.build(SITE / "showcase")
+    P = next(p for p in S["projects"] if p["id"] == "nl_debug")
+    page = showcase.page_body(P)
+    import re
+    assert re.findall(r"<dt>([^<]+)</dt>", page) == ["Request", "Plan", "Gates", "Approvals"]
+    rows = P["story"]["table"]["rows"]
+    assert len(rows) == P["values"]["runs"] and page.count("<tr>") == len(rows) + 1
+    for r in rows:
+        assert (SITE.parent / r["capture"]).is_file() and r["capture"] in page
+    assert page.count('<details class="more"><summary>') >= 5
+    assert "No effect found" not in page                   # the FIFO refusal is not a null result
+    assert P["values"]["readback_runs"] < P["values"]["runs"] and "where a register was read back" in P["headline"]
+
+
+def test_table_source_must_be_a_committed_result(tmp_path):
+    y = yaml.safe_load((SITE / "showcase" / "nl_debug.yaml").read_text())
+    y["story"]["table"]["source"] = "site/data/dev.json"
+    with pytest.raises(showcase.ContractError, match="story.table.source"):
+        showcase.build(_write(tmp_path, y))
+
+
+def test_agent_section_follows_the_run_order_whatever_the_yaml_order(tmp_path):
+    y = _demo()
+    y["story"]["agent"] = dict(reversed(list(y["story"]["agent"].items())))
+    P = showcase.build(_write(tmp_path, y), allow_fixtures=True)["projects"][0]
+    import re
+    assert re.findall(r"<dt>([^<]+)</dt>", showcase.page_body(P)) == ["Request", "Plan", "Gates", "Approvals"]
+
+
+def test_every_published_text_field_fills_its_placeholders(tmp_path):
+    """Brief 59A editor finding: an evidence label rendered '{build_id}' literally. Every field is filled, and the build
+    refuses a page with a placeholder left in it."""
+    y = _demo()
+    y["evidence"][0]["label"] = "Synthetic hero data, {n} samples"
+    y["title"] = "Template preview ({n} samples)"
+    y["story"]["architecture"]["blocks"][0][1] = "Source of {n}"
+    P = showcase.build(_write(tmp_path, y), allow_fixtures=True)["projects"][0]
+    page = showcase.page_body(P)
+    assert "{n}" not in page and "{n}" not in P["title"]
+    assert build.leftover_placeholders('<p>build {build_id}</p><script>var a = {x};</script>') == ["{build_id}"]
+
+
+@pytest.mark.parametrize("text", ["{n.x} samples", "{ n } samples", "{{n}} samples", "a { stray brace", "stray } brace"])
+def test_malformed_placeholders_are_refused(tmp_path, text):
+    y = _demo()
+    y["one_line"] = text
+    with pytest.raises(showcase.ContractError, match="malformed placeholder"):
+        showcase.build(_write(tmp_path, y), allow_fixtures=True)
+
+
+@pytest.mark.parametrize("html_text, found", [("<p>{runs.x}</p>", ["{runs.x}"]), ("<p>{ runs }</p>", ["{ runs }"]),
+                                             ("<p>{{runs}}</p>", ["{runs}"]), ("<pre>{y}</pre><p>ok</p>", [])])
+def test_leftover_placeholder_scan_catches_malformed_forms(html_text, found):
+    assert build.leftover_placeholders(html_text) == found
+
+
+
+def test_cells_paragraphs_and_results_table(tmp_path):
+    """Booleans read yes/no and none is blank in every table; blank lines make paragraphs; results_table cells are prose."""
+    assert showcase.cell_text(True) == "yes" and showcase.cell_text(False) == "no" and showcase.cell_text(None) == ""
+    assert showcase.cell_text(58.0) == "58.0"
+    assert build.cell(True) == "yes" and build.cell(None) == "" and build.fmt(None) == "" and build.fmt(False) == "no"
+    assert showcase.paras("one\n\ntwo") == "<p>one</p><p>two</p>"
+    y = _demo()
+    y["story"]["results_table"] = {"caption": "c", "head": ["a", "b"], "rows": [["{n} runs", "x"]]}
+    S = showcase.build(_write(tmp_path, y), allow_fixtures=True)
+    rt = S["projects"][0]["story"]["results_table"]
+    assert rt["rows"][0][0] != "{n} runs" and "{" not in rt["rows"][0][0]
+    y["story"]["results_table"]["rows"] = [["4096 typed", "x"]]
+    with pytest.raises(showcase.ContractError, match="typed number"):
+        showcase.build(_write(tmp_path, y), allow_fixtures=True)
+    y["story"]["results_table"]["rows"] = [["one cell only"]]
+    with pytest.raises(showcase.ContractError, match="same length"):
+        showcase.build(_write(tmp_path, y), allow_fixtures=True)
+
+
+
+def _tmp():
+    import tempfile
+    return Path(tempfile.mkdtemp())
+
+
+def test_only_the_two_arm_document_numbers_are_exempt():
+    """The AXI page cites IHI 0022H and IHI 0051B; no other "IHI dddd" (or a different case) hides a typed number."""
+    assert showcase._numbers("AXI (IHI 0022H) and AXI4-Stream (IHI 0051B)") == []
+    assert showcase._numbers("IHI 4242 runs passed") == ["4242"]
+    assert showcase._numbers("ihi 0022h") != []
+    y = _demo()
+    y["story"]["problem"] = "IHI 4242 runs passed."
+    with pytest.raises(showcase.ContractError, match="typed number"):
+        showcase.build(_write(_tmp(), y), allow_fixtures=True)

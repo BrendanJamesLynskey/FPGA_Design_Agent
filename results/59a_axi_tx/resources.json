@@ -1,0 +1,109 @@
+{
+ "part": "xc7a100tcsg324-1",
+ "mode": "synth_design -mode out_of_context",
+ "rows": [
+  {
+   "config": "core_full_s32",
+   "top": "axi_tx_core",
+   "generics": "LCHK=1 SCHK=1 MON=1 SDATA_W=32",
+   "lut": 5307,
+   "ff": 5953,
+   "bram_tiles": 3.0
+  },
+  {
+   "config": "core_chk_nomon",
+   "top": "axi_tx_core",
+   "generics": "LCHK=1 SCHK=1 MON=0 SDATA_W=32",
+   "lut": 3038,
+   "ff": 2648,
+   "bram_tiles": 3.0
+  },
+  {
+   "config": "core_bare",
+   "top": "axi_tx_core",
+   "generics": "LCHK=0 SCHK=0 MON=0 SDATA_W=32",
+   "lut": 2513,
+   "ff": 1874,
+   "bram_tiles": 3.0
+  },
+  {
+   "config": "axil_checker_d32",
+   "top": "axil_checker",
+   "generics": "DATA_W=32",
+   "lut": 320,
+   "ff": 496,
+   "bram_tiles": 0.0
+  },
+  {
+   "config": "axil_checker_d64",
+   "top": "axil_checker",
+   "generics": "DATA_W=64",
+   "lut": 343,
+   "ff": 564,
+   "bram_tiles": 0.0
+  },
+  {
+   "config": "axis_checker_d32",
+   "top": "axis_checker",
+   "generics": "DATA_W=32",
+   "lut": 183,
+   "ff": 287,
+   "bram_tiles": 0.0
+  },
+  {
+   "config": "axis_checker_d64",
+   "top": "axis_checker",
+   "generics": "DATA_W=64",
+   "lut": 215,
+   "ff": 327,
+   "bram_tiles": 0.0
+  },
+  {
+   "config": "axis_checker_d128",
+   "top": "axis_checker",
+   "generics": "DATA_W=128",
+   "lut": 246,
+   "ff": 407,
+   "bram_tiles": 0.0
+  },
+  {
+   "config": "axil_mon_d32",
+   "top": "axil_mon",
+   "generics": "DATA_W=32",
+   "lut": 1870,
+   "ff": 2587,
+   "bram_tiles": 0.0
+  },
+  {
+   "config": "axis_mon_d32",
+   "top": "axis_mon",
+   "generics": "DATA_W=32",
+   "lut": 427,
+   "ff": 709,
+   "bram_tiles": 0.0
+  },
+  {
+   "config": "axil_demo_periph",
+   "top": "axil_demo_periph",
+   "generics": "",
+   "lut": 275,
+   "ff": 295,
+   "bram_tiles": 0.0
+  },
+  {
+   "config": "axis_demo_fifo",
+   "top": "axis_demo_fifo",
+   "generics": "DATA_W=32",
+   "lut": 58,
+   "ff": 13,
+   "bram_tiles": 0.0
+  }
+ ],
+ "excluded": {
+  "config": "core_full_s64",
+  "lut": 1253,
+  "ff": 1851,
+  "bram_tiles": 2.0,
+  "why": "synthesis trimmed the sequencer at SDATA_W = 64 (not root-caused); 59A's core is 32-bit only"
+ }
+}

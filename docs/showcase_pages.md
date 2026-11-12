@@ -77,13 +77,16 @@ Every status: `id` (lower case, digits and `_`; the page name), `title`, `one_li
 | `headline` | the measured result in one plain sentence, naming the board and part, with `{name}` placeholders |
 | `description` | optional page description (defaults to `one_line`) |
 | `hero` | `{kind, source, path, caption}`: one of the graphics-kit kinds below, read from a committed JSON file at `path` inside it |
-| `story.problem` | the problem, in plain words |
+| `story.problem` | the problem, in plain words; a blank line (`\n\n`) starts a new paragraph, here and in `story.how` |
 | `story.how` | how it works |
 | `story.architecture` | optional diagram: `blocks: [[id, label], ...]` left to right, `links: [[from, to, label], ...]`; a link back or across two blocks is drawn under the row |
 | `story.results` | a list of result sentences, every number a placeholder, uncertainty stated |
-| `story.agent` | what the agent did: a mapping such as `request`, `plan`, `gates` (list), `approvals` (list) |
+| `story.agent` | what the agent did: a mapping such as `request`, `plan`, `gates` (list), `approvals` (list); the page shows these four in that order (the run's order), then any other keys |
+| `story.table` | optional table read from a committed file: `{caption, source: results/..., path, columns: [[key, header], ...], link?: key holding a repo path, link_column?}`; the rows' numbers are data, so the number check accepts them; a boolean shows as yes or no and a missing value (null) as a blank cell, here and in every table the site builds |
+| `story.results_table` | optional short table after the results list: `{caption, head: [...], rows: [[...], ...]}`; every cell is text with `{name}` placeholders, checked like the rest of the prose |
+| `story.details` | optional short drawers after "What the agent did": `[{title, text}]`, numbers through placeholders |
 | `evidence` | a list of `{kind, label, path?, text?}`; `kind` is `record` (run records, raw captures), `conditions` (die temperature and rails against the recommended operating conditions), `versions` (tool versions, build ID), `requirements` (requirements traced). Every kind must appear at least once: write "not recorded" in `text` rather than leave one out. Paths must exist. |
-| `limits` | `not_measured`, `nulls`, `next`: lists of sentences |
+| `limits` | `not_measured`, `nulls`, `next`: lists of sentences. `nulls` are measured results with no effect (shown as "Measured, no effect found"); a request refused by design belongs in `not_measured` |
 | `try_it` | optional `{command, note}` |
 
 **What `site/export.py` refuses** (each raises `showcase.ContractError`):
@@ -117,7 +120,7 @@ main guard. In that scan:
 - any run of digits counts as a number, wherever it stands: after a letter, `#`, `.` or a hyphen, with a leading minus
   counted;
 - only the names in `PROSE_OK` are exempt: AMD part names (`xc…`, matched as whole words), device families, boards,
-  standards and Vivado 2026.1;
+  standards, Arm document numbers (`IHI 0022H`) and Vivado 2026.1;
 - brief, PR, guide and rule numbers are not exempt.
 
 ## Hero kinds (the shared graphics kit)
@@ -132,6 +135,31 @@ it is legible at 390 px, and is capped at 640 px wide on desktop.
 | `wave` | `{unit, x: [...], signals: [{name, kind: bit\|bus\|wave\|text, v: [...], radix?, width?, lo?, hi?}], captions?: [...]}`; every `v` has `len(x)` values | a cursor steps through the capture; the values at the cursor are listed beside it |
 | `hist` | `{unit, label, bins, samples: [...], lo?, hi?, marks?: [{v, label}]}`; samples in the order recorded | the histogram accumulates the samples in order; the caption gives the count, median and largest so far |
 | `shmoo` | `{x: {label, values}, y: {label, values}, unit?, points: [{x, y, v}]}`; `v` is `"pass"`, `0` (pass) or an error count; points in the order measured | the grid fills point by point; pass is a filled cell, fail an outlined one (not colour alone) |
+
+**`wave` with stages (an option for any page).** Add `stages` to the wave data and the hero tells the run as a story:
+a strip of the run's stages above the plot (the current one inverted, the done ones in full ink), then the samples
+revealed one at a time while the `during` stage is lit, then the answer. Fields:
+
+- `stages`: `[{name, fact, phase, captions}]` in order. `phase` is `before` (one frame per caption, nothing drawn yet),
+  `during` (one frame per caption, then one frame per sample, revealed left to right; exactly one stage) or `after`
+  (one frame per caption with everything drawn; at least one, so the last frame is the answer). `fact` is the short
+  real number shown in the strip (for example the build time and ID).
+- `captions` (per sample, optional; `null` entries get "cycle k: values" from the data): captions for the samples.
+  Narrative steps go in the stages, not on sample cycles.
+- `marks`: `[{x, label, signal?}]`: a vertical line at sample `x` (a trigger), or, with `signal`, a ring round that
+  signal's change at `x`; each appears when the reveal reaches it, with its label under the plot.
+- `tick` (the axis label step, in x units; labels sit at the centre of their sample), `alt` (a text alternative read
+  by screen readers and the SVG's `<title>`: put the finding in it; the strip is a list and the caption is `aria-live`)
+  and `key` (one line under the plot that says what the signal names mean).
+
+Every `wave` hero, staged or not, is drawn as wide as its box (360 to 720 units) with text of 13 units, so its labels
+stay about 12 to 13 px from a 390 px phone to a desktop and the plot uses the page's width. Below 520 units the signal
+names sit above their traces, so the traces get the full width. A staged wave draws the whole capture faint while a
+`before` stage is lit (never an empty grid), and sizes its time axis to the samples revealed so far (at least six). Mark
+labels sit in a band above the axis, in two rows, with a vertical line down to the plot, so labels never overprint
+(the e2e check fails on overlapping SVG text). Without `stages` a cursor
+band steps through the samples and nothing is dimmed. Reduced motion shows the last frame (everything drawn, the answer stage lit). `site/showcase.py` checks the
+phases, the caption count and that every mark is on the axis and names a signal of the hero.
 
 The project's own export (in its `results/` folder) writes this normalised JSON from its raw captures and commits it.
 
