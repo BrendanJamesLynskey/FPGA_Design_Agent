@@ -1,0 +1,26 @@
+$date 2026-11-12T11:20:11 $end
+$version fda debug_core (brief 50A) $end
+$comment Capture count and duty when either win_wr or press_clear goes to 1, 8 cycles before and 64 after. To make it happen, wait 300 ms and then write 0x22 to DUTY. $end
+$timescale 10000 ps $end
+$scope module capture $end
+$var wire 1 ! win_wr $end
+$var wire 1 " press_clear $end
+$var wire 16 # count $end
+$var wire 8 $ duty $end
+$var wire 1 % TRIGGER $end
+$upscope $end
+$enddefinitions $end
+#0
+0!
+0"
+b0 #
+b1000000 $
+0%
+#8
+1!
+1%
+#9
+0!
+b100010 $
+0%
+#1024
