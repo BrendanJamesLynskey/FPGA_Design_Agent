@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fda-capture/1",
+  "title": "One capture in the common instrument format (brief 50: one format for every instrument)",
+  "description": "A single timeline with typed channels. Digital channels carry one integer per sample; sample i is at cycle i - timebase.trigger_sample. Analog channels (XADC, external boxes) carry values in their unit on the same timeline.",
+  "type": "object",
+  "required": ["schema", "instrument", "timebase", "channels", "trigger"],
+  "properties": {
+    "schema": {"const": "fda-capture/1"},
+    "instrument": {"type": "object", "required": ["kind", "driver"], "properties": {
+      "kind": {"type": "string"}, "driver": {"type": "string"}, "settings": {"type": "object"}, "mock": {"type": "boolean"}}},
+    "design": {"type": ["string", "null"]},
+    "build": {"type": "object"},
+    "request": {"type": ["string", "null"]},
+    "plan_probeset": {"type": ["string", "null"]},
+    "timebase": {"type": "object", "required": ["unit", "samples", "trigger_sample"], "properties": {
+      "unit": {"enum": ["cycle", "s"]}, "clock": {"type": ["string", "null"]}, "mhz": {"type": ["number", "null"]},
+      "samples": {"type": "integer", "minimum": 1}, "trigger_sample": {"type": "integer", "minimum": 0},
+      "alignment_uncertainty_cycles": {"type": "number"}}},
+    "channels": {"type": "array", "items": {"type": "object", "required": ["name", "kind", "width", "samples"], "properties": {
+      "name": {"type": "string"}, "path": {"type": "string"}, "kind": {"enum": ["digital", "analog"]},
+      "width": {"type": "integer", "minimum": 1}, "unit": {"type": "string"},
+      "samples": {"type": "array", "items": {"type": "number"}}}}},
+    "trigger": {"type": "object"},
+    "conditions": {"type": "object"},
+    "stimulus_log": {"type": "array"},
+    "readback": {"type": "object"},
+    "requirement": {"type": ["string", "null"]},
+    "created": {"type": "string"}
+  }
+}

@@ -296,6 +296,9 @@ flow/net/    packet-processing evidence (brief 40): scapy traffic, Python golden
              optional), seeded-fault runner, line-rate measurement, ip.yaml checker and README generator
 ip_lib/      the project's own IP library ([ip_lib/README.md](ip_lib/README.md)); first entries: the brief-40 networking
              blocks (RMII MAC, parser, exact/LPM/ternary tables, rewrite, queues and schedulers, L2 switch)
+debug_core/  debug on the board from a plain-English request (brief 50A, [docs/debug.md](docs/debug.md)): the request parser,
+             the RTL-name resolver, the plan (schemas/), debug builds per probe set, the instrument drivers (vendor ILA, mock),
+             the common capture format with VCD, the answer and queries, the static viewer; demo_t1.py (the board demo)
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T): board.yaml, master XDC, inventory.yaml, power_budget.md
 tools/       inventory_check.py (board inventory against the master XDC)
@@ -335,7 +338,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              fsm.md (brief 24: the reference controller, the FSM coverage check, the drills);
              vhdl.md (VHDL-2008 designs: how to ask for one, the language boundary with the SystemVerilog shell, what runs where);
              project_layer.md (brief 27 P0 and P1: the design.yaml and contract.yaml formats, status, the contract test, phase 0);
-             debug_playbook.md (for humans: what each gate rule ID means); img/ photos (metadata stripped);
+             debug_playbook.md (for humans: what each gate rule ID means); debug.md (brief 50A: plain-English debug requests on the board); img/ photos (metadata stripped);
              eval/eval1_preregistration.md (the eval-1 held-out evaluation, fixed before any scored run)
 ```
 
@@ -370,6 +373,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 20B | Timing constraints proved, part B: I/O delays, virtual clocks and clock uncertainty measured on one-fault Vivado tops (system- and source-synchronous, DDR, forwarded clock, virtual clocks, MMCM jitter, corners), an I/O gate after synthesis and routing (invented delays on slow ports, data-sheet values, -min/-max, reference clock, IOB), an implementation-only timing margin (`timing_margin_ns`) kept out of sign-off, FDA-CON-11/-12/-13, and an ADC drill with an I/O grader ([flow/io_check.py](flow/io_check.py), [flow/tests/fixtures/io_timing](flow/tests/fixtures/io_timing), [results/20_timing_exceptions/io_table.md](results/20_timing_exceptions/io_table.md), [uncertainty](results/20_timing_exceptions/uncertainty.md), [benchmark/drills](benchmark/drills/README.md)) | PR open |
 | 54 | Reproducible builds: every build writes a manifest (input hashes, settings, tool, commit), and a build ID derived from it is written into the bitstream (USR_ACCESS register) and checked over JTAG before board tests; release bundles with a standalone checker. Measured on Vivado 2026.1: clean builds in different directories have identical configuration data (only the header's time bytes differ); the thread count does not change placement, routing or reports ([docs/reproducibility.md](docs/reproducibility.md), [results/54_reproducible](results/54_reproducible/README.md)) | PR open |
 | 55 | VHDL designs: set `--hdl vhdl` or `language: vhdl` and the flow lints the VHDL with GHDL, simulates it with the SystemVerilog test shell, builds it in Vivado, mutates it and checks it formally. A model's first VHDL translations failed all five board tasks on one naming clash; with that mistake written into its guidance (an exploratory, post-hoc arm), all five passed the same hidden tests and Vivado 2026.1 gates as the SystemVerilog references, and one ran on the board. Three block designs were checked by their own tests and out-of-context synthesis only (one fails as translated). The end-to-end agent passed 0 of 4 VHDL runs ([docs/vhdl.md](docs/vhdl.md), [results/55_vhdl](results/55_vhdl/README.md)) | PR open |
+| 50A | Debug from a plain-English request: a request becomes a checked plan (probes resolved by RTL name with suggestions for unknown names, a per-bit trigger, the window, packing into the Basic tier's 5 ILA ports, the cut when it cannot fit), a debug build per probe set (reused when an earlier build holds the probes), a capture on the board with the XADC conditions, and an answer that quotes only the capture; capture JSON, VCD and a static viewer; agent tools `debug_plan`, `debug_capture`, `debug_query` (not offered to any role yet) ([docs/debug.md](docs/debug.md), [results/50a_nl_debug](results/50a_nl_debug/README.md)) | PR open |
 | F2 | Agent v1: interview, plan, RTL, tests and the full Vivado flow (05a-05g above); 21 development runs on 11 course-tier tasks ([results/course](results/course), [site results](https://fpga-design-agent.vercel.app/results)) | built; development runs recorded |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |
 | F3 | Scored runs | `eval-1` stopped 2026-11-09 before analysis, no score ([pre-registration](docs/eval/eval1_preregistration.md)); baseline evaluation on a larger benchmark next |

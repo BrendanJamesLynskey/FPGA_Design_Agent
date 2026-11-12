@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fda-debug-intent/1",
+  "title": "Debug request, parsed (the only thing the language model produces)",
+  "description": "What the user asked for, in the user's own signal words. Names are resolved against the RTL afterwards by debug_core/rtl_index.py; nothing here is trusted to exist.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["probes", "trigger"],
+  "properties": {
+    "probes": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "signals to record, as named in the request (or the closest identifier from the signal list)"},
+    "trigger": {
+      "type": "object", "additionalProperties": false, "required": ["combine", "conditions"],
+      "properties": {
+        "combine": {"enum": ["AND", "OR"]},
+        "conditions": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false, "required": ["signal", "op"],
+          "properties": {
+            "signal": {"type": "string", "minLength": 1},
+            "op": {"enum": ["==", "!=", "<", "<=", ">", ">=", "rise", "fall", "change"]},
+            "value": {"type": ["integer", "string", "null"], "description": "integer, or a string such as 0x41, 0b10x1, 'A'"}
+          }}}
+      }
+    },
+    "pre": {"type": ["integer", "null"], "minimum": 0, "description": "cycles to keep before the trigger"},
+    "post": {"type": ["integer", "null"], "minimum": 0, "description": "cycles to keep after the trigger"},
+    "clock": {"type": ["string", "null"], "description": "clock domain if the request names one"},
+    "setup": {"type": "array", "items": {"$ref": "#/$defs/op"}, "description": "register operations before arming"},
+    "stimulus": {"type": "array", "items": {"$ref": "#/$defs/op"}, "description": "register operations after arming (what makes the event happen)"},
+    "readback": {"type": "array", "items": {"$ref": "#/$defs/op"}, "description": "register reads after the capture, to compare with it"},
+    "question": {"type": ["string", "null"], "description": "what the user wants to know from the capture, in one sentence"},
+    "unclear": {"type": "array", "items": {"type": "string"}, "description": "parts of the request the parser could not map"}
+  },
+  "$defs": {
+    "op": {
+      "type": "object", "additionalProperties": false, "required": ["op"],
+      "properties": {
+        "op": {"enum": ["write", "read", "wait_ms"]},
+        "register": {"type": ["string", "integer"]},
+        "value": {"type": ["integer", "string", "null"]},
+        "ms": {"type": ["number", "null"]}
+      }
+    }
+  }
+}
