@@ -340,3 +340,29 @@ def test_lut_arith_tells_a_multiply_from_an_adder_chain(dg):
              "cells": [{"type": "FDRE"}, {"type": "LUT3"}] + [{"type": "CARRY4"}] * 9 + [{"type": "LUT3"}] + [{"type": "CARRY4"}] * 9}
     f = timing.features(adder)
     assert f["carry_runs"] == 2 and not f["lut_arith"]                                          # c16: a 66-bit add chain
+
+
+def _fir_arch(params, **extra):
+    return {"clock_domains": [{"name": "s", "freq_mhz": 250}], "datapaths": [{"name": "filt", "ops": [
+        {"name": "fir", "op": "ip", "block": "fir", "params": params, **extra}]}]}
+
+
+FIR16 = {"TAPS": 16, "DATA_W": 16, "COEF_W": 16, "FOLD": 4}
+
+
+def test_plan_uses_ipvariants_choose_for_an_ip_lib_entry():
+    p = tp.plan(_fir_arch(FIR16), tp.load_model(path=MODEL))
+    op = p["datapaths"][0]["ops"][0]
+    assert op["resource"].startswith("ip:") and "flow.ipvariants.choose" in op["reason"] and "measured at this point" in op["reason"]
+    assert p["datapaths"][0]["latency_cycles"] > 1                       # the variant's own pipeline latency is counted
+
+
+def test_plan_falls_back_to_the_delay_model_when_no_variant_is_known():
+    # TAPS 24 has no measured row: choose() will not borrow Fmax from a nearby point, so the fallback ops are planned
+    p = tp.plan(_fir_arch({**FIR16, "TAPS": 24}, fallback=[{"name": "mac", "op": "mul", "a_bits": 16, "b_bits": 16}]),
+                tp.load_model(path=MODEL))
+    op = p["datapaths"][0]["ops"][0]
+    assert op["name"] == "fir.mac" and op["resource"] == "dsp" and "ip_lib fallback" in op["reason"]
+    p2 = tp.plan(_fir_arch({**FIR16, "TAPS": 24}), tp.load_model(path=MODEL))
+    assert any("give the op 'fallback' ops" in x for x in p2["problems"])
+    assert tp.check_datapaths({"datapaths": [{"name": "a", "ops": [{"name": "f", "op": "ip"}]}]})

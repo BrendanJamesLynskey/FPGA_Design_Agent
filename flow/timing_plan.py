@@ -40,7 +40,7 @@ from typing import Any
 import yaml
 
 PLAN_SCHEMA = "fpga-design-agent/timing-plan/v1"
-OPS = ("mul", "add", "compare", "table", "mux", "memory", "delay", "fifo", "logic", "shift")
+OPS = ("mul", "add", "compare", "table", "mux", "memory", "delay", "fifo", "logic", "shift", "ip")
 TARGET_FRACTION = 0.70           # owner's example: aim for 70 % of the period before routing
 CAL_MISS = 0.25                  # a measured stage more than 25 % off its estimate is a calibration miss
 
@@ -68,6 +68,8 @@ TEMPLATES = {
                   "artix7-srl-lutram-bram-choice"),
     "xpm_fifo": ("FIFO from the XPM macro the KB recommends (xpm_fifo_sync / xpm_fifo_async)", "artix7-async-fifo-cdc"),
     "lut_logic": ("plain LUT logic", "artix7-design-for-lut6"),
+    "ip_variant": ("instantiate the ip_lib entry with the chosen variant parameter (its ports and result are the same for "
+                   "every variant; see ip_lib/<entry>/ip.yaml)", "ip_lib"),
 }
 
 # The parts the owner's boards carry (count of hard resources); the delay model names its family.
@@ -140,6 +142,8 @@ def op_delay(op: dict[str, Any], resource: str, m: dict[str, Any]) -> list[dict[
         return [{"ns": int(op.get("levels", 1)) * lut, "reg_after": "fabric", "what": f"{op.get('levels', 1)} LUT levels"}]
     if k == "shift":
         return [{"ns": 0.0, "reg_after": "none", "what": "constant shift (wiring)"}]
+    if k == "ip":                                       # a chosen ip_lib variant: its own registered pipeline
+        return [{"ns": 0.0, "reg_after": "fabric", "what": f"ip_lib {op.get('block')} (registered inside; latency from ip.yaml)"}]
     raise ValueError(f"unknown op {k!r}")
 
 
@@ -226,6 +230,58 @@ def _choose(op: dict[str, Any], part: dict[str, Any], left: dict[str, float]) ->
     return "lut", "lut_logic", "plain logic: no hard resource fits"
 
 
+# --- ip_lib entries with measured variants (brief 63A, flow/ipvariants.py) -----------------------------------------
+
+def ip_choice(op: dict[str, Any], period_ns: float, part_name: str, left: dict[str, float]) -> tuple[dict | None, str]:
+    """(the chosen variant row, why) for an ``ip`` op, from ``flow.ipvariants.choose`` at this parameter point, this clock
+    and what is left of the DSP/BRAM budget. None when no variant fits or a needed figure is not known at this point:
+    the caller then plans the op's ``fallback`` ops with the delay model (63A: a budget is never borrowed from a nearby
+    measured point)."""
+    try:
+        from flow import ipvariants as iv
+    except ModuleNotFoundError:                         # run as a script from flow/
+        import ipvariants as iv                         # type: ignore[no-redef]
+    try:
+        rows = iv.choose(op["block"], op.get("params") or {}, part=part_name,
+                         budget={"dsp": left.get("dsp", 0), "bram_tiles": left.get("bram_tile", 0)},
+                         clock_ns=period_ns, need_ii=op.get("need_ii"), objective=op.get("objective", "area"))
+    except Exception as e:                              # noqa: BLE001 (an unknown entry or a bad point: plan without it)
+        return None, f"ip_lib {op.get('block')}: {type(e).__name__}: {str(e)[:200]}"
+    fit = [r for r in rows if r.get("fits")]
+    if not fit:
+        why = "; ".join(f"{r['variant']}: {', '.join(r['reasons'])[:160]}" for r in rows[:4])
+        return None, f"ip_lib {op['block']}: no variant fits at this point ({why})"
+    r = fit[0]
+    c = r["cost"]
+    left["dsp"] = left.get("dsp", 0) - float(c.get("dsp") or 0)
+    left["bram_tile"] = left.get("bram_tile", 0) - float(c.get("bram_tiles") or 0)
+    meas = r.get("measured") or {}
+    return r, (f"ip_lib {op['block']} variant {r['variant']} chosen by flow.ipvariants.choose ({op.get('objective', 'area')}): "
+               f"LUT {c.get('lut')} FF {c.get('ff')} DSP {c.get('dsp')} BRAM {c.get('bram_tiles')}, latency "
+               f"{(r.get('predicted') or {}).get('latency')}, II {(r.get('predicted') or {}).get('ii')}, Fmax "
+               f"{c.get('fmax_mhz')} MHz ({'measured at this point' if meas.get('exact') else 'predicted'})")
+
+
+def _expand_ip(dp: dict[str, Any], period_ns: float, part_name: str, left: dict[str, float],
+               problems: list[str]) -> tuple[list[dict], dict[str, tuple]]:
+    """The datapath's ops with each ``ip`` op either kept (a variant fits) or replaced by its ``fallback`` ops."""
+    ops, chosen = [], {}
+    for op in dp["ops"]:
+        if op["op"] != "ip":
+            ops.append(op)
+            continue
+        row, why = ip_choice(op, period_ns, part_name, left)
+        if row:
+            chosen[op["name"]] = (row, why)
+            ops.append(op)
+        elif op.get("fallback"):
+            ops += [{**f, "name": f"{op['name']}.{f['name']}", "_from_ip": why} for f in op["fallback"]]
+        else:
+            problems.append(f"plan: datapath {dp['name']}: {why}; give the op 'fallback' ops so the delay model can plan it")
+            ops.append({**op, "op": "logic", "levels": 1, "_from_ip": why})
+    return ops, chosen
+
+
 # --- pipelining --------------------------------------------------------------------------------------------------
 
 def _chain(ops: list[dict], maps: dict[str, tuple], m: dict) -> list[dict[str, Any]]:
@@ -278,14 +334,25 @@ def pipeline(seq: list[dict[str, Any]], budget_ns: float, overhead_ns: float) ->
 
 
 def plan_datapath(dp: dict[str, Any], period_ns: float, m: dict[str, Any], part: dict[str, Any], left: dict[str, float],
-                  fraction: float = TARGET_FRACTION, variants=None) -> dict[str, Any]:
-    maps = {op["name"]: choose_resource(op, part, left, variants) for op in dp["ops"]}
+                  fraction: float = TARGET_FRACTION, variants=None, part_name: str = "xc7a100tcsg324-1") -> dict[str, Any]:
+    ip_problems: list[str] = []
+    ops, chosen = _expand_ip(dp, period_ns, part_name, left, ip_problems)
+    dp = {**dp, "ops": ops}
+    maps = {}
+    for op in dp["ops"]:
+        if op["name"] in chosen:
+            row, why = chosen[op["name"]]
+            maps[op["name"]] = (f"ip:{row['variant']}", "ip_variant", why)
+        else:
+            res = choose_resource(op, part, left, variants)
+            maps[op["name"]] = (res[0], res[1], res[2] + (f" [ip_lib fallback: {op['_from_ip']}]" if op.get("_from_ip") else ""))
     overhead = float(m["ff"]["clk_to_q_ns"]) + float(m["ff"]["setup_ns"]) + float(m.get("uncertainty_ns", 0.035))
     budget = round(period_ns * fraction, 3)
     seq = _chain(dp["ops"], maps, m)
     unpiped = round(overhead + sum(s["ns"] for s in seq), 3)
     stages = pipeline(seq, budget, overhead)
-    latency = len(stages)
+    ip_lat = sum(max(0, int((chosen[n][0].get("predicted") or {}).get("latency") or 1) - 1) for n in chosen)
+    latency = len(stages) + ip_lat                      # an ip_lib variant's own pipeline adds its latency less one stage
     fabric_regs = sum(1 for s in stages[:-1] if s["reg"] == "fabric")
     lat_fixed = dp.get("latency_fixed")
     forced = None
@@ -300,9 +367,11 @@ def plan_datapath(dp: dict[str, Any], period_ns: float, m: dict[str, Any], part:
                  "reason": maps[op["name"]][2]} for op in dp["ops"]],
         "period_ns": period_ns, "budget_ns": budget, "unpipelined_est_ns": unpiped,
         "stages": stages, "latency_cycles": latency, "fabric_pipeline_regs": fabric_regs,
-        "fits": all(not s["over"] for s in stages), "latency_forced": forced,
-        "planned": {"dsp": sum(1 for op in dp["ops"] if maps[op["name"]][0] == "dsp"),
-                    "bram": sum(1 for op in dp["ops"] if maps[op["name"]][0] == "bram")},
+        "fits": all(not s["over"] for s in stages), "latency_forced": forced, "ip_problems": ip_problems,
+        "planned": {"dsp": sum(1 for op in dp["ops"] if maps[op["name"]][0] == "dsp")
+                    + sum(int((chosen[n][0]["cost"] or {}).get("dsp") or 0) for n in chosen),
+                    "bram": sum(1 for op in dp["ops"] if maps[op["name"]][0] == "bram")
+                    + sum(1 for n in chosen if (chosen[n][0]["cost"] or {}).get("bram_tiles"))},
     }
 
 
@@ -335,6 +404,8 @@ def check_datapaths(arch: dict[str, Any]) -> list[str]:
         for j, op in enumerate(dp["ops"]):
             if not isinstance(op, dict) or op.get("op") not in OPS or not op.get("name"):
                 errs.append(f"datapaths[{dp['name']}].ops[{j}] needs a name and an op from {', '.join(OPS)}")
+            elif op["op"] == "ip" and not op.get("block"):
+                errs.append(f"datapaths[{dp['name']}].ops[{op['name']}]: an ip op names its ip_lib entry in 'block'")
             elif op.get("map") and not op.get("reason"):
                 errs.append(f"datapaths[{dp['name']}].ops[{op['name']}]: a map override needs a reason")
     return errs
@@ -347,7 +418,8 @@ def plan(arch: dict[str, Any], model: dict[str, Any], part_name: str = "xc7a100t
     architect's prediction is checked after synthesis instead)."""
     part = PARTS[part_name]
     left = {"dsp": float((budget or {}).get("dsp", part["dsp"])), "bram_tile": float((budget or {}).get("bram_tile", part["bram_tile"]))}
-    dps = [plan_datapath(dp, _period(arch, dp.get("clock")), model, part, left, fraction, variants) for dp in arch.get("datapaths") or []]
+    dps = [plan_datapath(dp, _period(arch, dp.get("clock")), model, part, left, fraction, variants, part_name)
+           for dp in arch.get("datapaths") or []]
     return {"schema": PLAN_SCHEMA, "family": part["family"], "part": part_name, "model": Path(model.get("_path", "")).name,
             "model_version": model.get("version"), "target_fraction": fraction, "datapaths": dps,
             "variant_costs": variants is not None,
@@ -364,6 +436,7 @@ def plan_problems(dps: list[dict[str, Any]]) -> list[str]:
                            f"over the {d['budget_ns']} ns stage budget even alone: split that operation or use a hard resource")
         if d["latency_forced"]:
             out.append(f"plan: datapath {d['name']}: {d['latency_forced']}")
+        out += d.get("ip_problems") or []
     return out
 
 
@@ -455,7 +528,9 @@ DATAPATHS_CONVENTION = """
   example u_regs/u_core), latency_fixed (cycles, only if the spec fixes it), ops: [...]}. Each op is {name, op, ...}
   with op one of mul {a_bits, b_bits} (signed operand widths), add {bits, inputs}, compare {bits},
   table {index_bits, width}, mux {inputs, width}, memory {depth, width}, delay {depth, width}, fifo {depth, width},
-  logic {levels}, shift; list them in order along the chain, and mark an op that runs beside the previous one with
+  logic {levels}, shift, or ip {block, params, need_ii, objective, fallback} for a function the IP library has with
+  measured variants (`python3 -m flow.ipvariants --search <words>`; the gate picks the variant with flow.ipvariants.choose
+  and plans `fallback`, a list of the ops above, when no variant is known to fit); list them in order along the chain, and mark an op that runs beside the previous one with
   `parallel: true`. Do not choose resources or pipeline depth yourself: the gate computes them from the device family's
   measured delay model (hard resources first: multiplies on DSP slices, memories in block RAM, short delays in SRLs)
   and writes TIMING_PLAN.md; to override a choice give the op `map: lut` (or bram, srl ...) and a `reason`. The RTL
