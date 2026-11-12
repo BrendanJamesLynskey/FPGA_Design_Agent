@@ -1,17 +1,17 @@
 {
  "title": "Debugging in plain English",
- "tagline": "Ask an FPGA on the board a question in words; get the waveform and a plain answer that quotes only the capture",
+ "tagline": "Ask a running FPGA a question in words and get a waveform and a plain answer that quotes only the capture",
  "description": "A plain-English request becomes a probe plan by RTL name, an on-chip logic analyser build in Vivado 2026.1 on the free licence tier, a capture on a Digilent Nexys A7 and an answer checked against the captured samples.",
  "url": "https://fpga-design-agent.vercel.app/showcase/nl_debug.html",
  "repo": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent",
  "facts": [
   {
-   "text": "5 of 5 plain-English requests answered from captures on the board, each matching the known result and the value read back over the serial link (one design, one run each).",
+   "text": "5 of 5 known-answer requests on one design, written in plain English, answered from captures on the board; each answer matched the known result, and the value read back over the serial link where a register was read back (one run each).",
    "source": "site/data:showcase.projects.0.values.passed",
    "of": "site/data:showcase.projects.0.values.runs"
   },
   {
-   "text": "1 of the requests needed no new build: an earlier debug build already held its signals (each new probe set otherwise took 7 to 9 minutes to build).",
+   "text": "1 of the 5 requests needed no new build: an earlier debug build already held its signals (each new probe set otherwise took 7 to 9 minutes to build).",
    "source": "site/data:showcase.projects.0.values.reused"
   },
   {
@@ -23,7 +23,7 @@
   "still_1200x630": "hero_1200x630.png",
   "animation": "hero_replay.webm",
   "animation_mp4": "hero_replay.mp4",
-  "alt": "A recorded capture from the Nexys A7 replayed cycle by cycle: the write strobe, the address byte and the counter changing from 0x0003 to 0x1234 on the clock after the write, with the request, plan, build and answer as captions.",
+  "alt": "A recorded capture from the Nexys A7 replayed: a strip of the run's stages (request, plan, build, arm and capture, answer) with their real numbers, then the write strobe, the address byte and the counter filling in sample by sample, the trigger line at cycle 0 and the counter's change from 0x0003 to 0x1234 marked.",
   "note": "Recorded frame by frame from the showcase page's own hero, which replays one real run."
  },
  "made_from": "site/public/showcase/nl_debug.html (the hero player), captured by puppeteer and encoded with ffmpeg"

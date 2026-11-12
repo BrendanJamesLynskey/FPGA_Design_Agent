@@ -69,6 +69,13 @@ at arming, but on the DUTY write 300 ms later, with the condition true at cycle 
 never reused for an OR plan. The rising-edge compare (`R`, a 0-to-1 edge, in the trigger pattern) worked in three runs:
 sync byte, OR and reuse.
 
+## The build-ID guard, checked on the board
+
+Before arming, a capture now reads the bitstream's build ID over JTAG and arms only if it is the debug build's own. On
+the board: a replayed capture armed on the expected build (d2b75378) and passed again, inside the recommended operating
+conditions; a capture with `--no-program` against a different build (ff89fe4c) was refused before arming. Record and
+conditions: [build_id_guard/](build_id_guard/README.md).
+
 ## Operating conditions
 
 The chip's own monitor (XADC) was read through JTAG at programming, when the logic analyser was armed and after the

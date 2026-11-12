@@ -46,6 +46,8 @@ REQUIRED = {"published": ["id", "title", "one_line", "board", "part", "headline"
             "in_progress": ["id", "title", "one_line", "board", "what_it_will_show"],
             "planned": ["id", "title", "one_line"]}
 STORY = ["problem", "how", "results", "agent"]
+#: "What the agent did" reads in the order of the run: the request, the plan, the gates it passed, the human approvals
+AGENT_ORDER = ["request", "plan", "gates", "approvals"]
 #: the evidence drawer's groups, in order; a published page must have at least one item of each
 EVIDENCE = {"record": "Run records and raw captures", "conditions": "Operating conditions (die temperature and rails)",
             "versions": "Tool versions and build ID", "requirements": "Requirements traced"}
@@ -106,6 +108,19 @@ def hero_data(h: dict, where: str) -> dict:
         for s in d["signals"]:
             if len(s["v"]) != n or s.get("kind", "bit") not in ("bit", "bus", "wave", "text"):
                 raise ContractError(f"{where}: wave signal {s.get('name')} has {len(s['v'])} values for {n} samples or a bad kind")
+        if "captions" in d and len(d["captions"]) != n:
+            raise ContractError(f"{where}: wave captions has {len(d['captions'])} entries for {n} samples")
+        if "stages" in d:      # the staged option (docs/showcase_pages.md): exactly one stage is lit while the samples are revealed
+            ph = [st.get("phase") for st in d["stages"]]
+            if not d["stages"] or any(x not in ("before", "during", "after") for x in ph) or ph.count("during") != 1 \
+                    or not all(st.get("name") for st in d["stages"]):
+                raise ContractError(f"{where}: wave stages need a name each and phases before/during/after with exactly one during")
+            if not any(st.get("captions") for st in d["stages"] if st["phase"] == "after"):
+                raise ContractError(f"{where}: wave stages need an 'after' stage with a caption (the answer is the last frame)")
+        names = [s["name"] for s in d["signals"]]
+        for m in d.get("marks", []):
+            if m.get("x") not in d["x"] or (m.get("signal") and m["signal"] not in names) or not m.get("label"):
+                raise ContractError(f"{where}: wave mark {m} is not on the x axis, names no signal of the hero, or has no label")
     if k == "hist":
         if not d["samples"] or not (isinstance(d["bins"], int) and d["bins"] > 1):
             raise ContractError(f"{where}: hist needs samples and an integer bins > 1")
@@ -140,7 +155,8 @@ ALLOWED = {"planned": {"id", "order", "status", "title", "one_line"},
            "published": {"id", "order", "status", "title", "one_line", "board", "part", "vivado", "values", "headline", "description",
                          "hero", "story", "evidence", "limits", "try_it", "fixture"}}
 #: published fields whose strings are not page text checked for typed numbers: value expressions, file paths, the command
-NOT_TEXT = {("values",), ("hero", "source"), ("hero", "path"), ("hero", "kind"), ("evidence", "path"), ("evidence", "kind"),
+NOT_TEXT = {("story", "table", "source"), ("story", "table", "path"), ("story", "table", "link"),
+            ("values",), ("hero", "source"), ("hero", "path"), ("hero", "kind"), ("evidence", "path"), ("evidence", "kind"),
             ("try_it", "command"), ("id",), ("status",), ("order",), ("vivado",), ("fixture",)}
 
 
@@ -203,6 +219,23 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
     r["story"] = {"problem": f("story.problem", st_["problem"]), "how": f("story.how", st_["how"]),
                   "results": [f("story.results", t) for t in st_["results"]],
                   "agent": {k: ([f("story.agent", t) for t in v] if isinstance(v, list) else f("story.agent", v)) for k, v in st_["agent"].items()}}
+    if "details" in st_:
+        r["story"]["details"] = [{"title": f("story.details", d["title"]), "text": f("story.details", d["text"])} for d in st_["details"]]
+    if "table" in st_:
+        t = st_["table"]
+        if not str(t.get("source", "")).startswith("results/") or not (ROOT / t["source"]).is_file():
+            raise ContractError(f"{name}: story.table.source must be a committed file under results/")
+        rows = _get(json.loads((ROOT / t["source"]).read_text()), t.get("path"))
+        cols = [(c[0], c[1]) for c in t["columns"]]
+        if not isinstance(rows, list) or not all(isinstance(x, dict) and all(c in x for c, _ in cols) for x in rows):
+            raise ContractError(f"{name}: story.table rows must be objects with every column key")
+        lk = t.get("link")
+        if lk:
+            for x in rows:
+                if not glob.glob(str(ROOT / x[lk])):
+                    raise ContractError(f"{name}: story.table link {x[lk]} does not exist")
+        r["story"]["table"] = {"caption": f("story.table.caption", t.get("caption", "")), "columns": [[c, f("story.table", h)] for c, h in cols],
+                               "rows": rows, "link": lk, "link_column": t.get("link_column", cols[0][0])}
     if "architecture" in st_:
         a = st_["architecture"]
         ids = {b[0] for b in a["blocks"]}
@@ -287,7 +320,7 @@ def arch_svg(a: dict, pid: str) -> str:
             W, bw, bh, gap = 360, 220, 52, 56
             pos = {b[0]: (70, 16 + i * (bh + gap)) for i, b in enumerate(blocks)}
             H = 16 + n * (bh + gap)
-        body = []
+        body, under = [], []
         for b in blocks:
             x, y = pos[b[0]]
             body.append(ap.box(x, y, bw, bh))
@@ -320,9 +353,11 @@ def arch_svg(a: dict, pid: str) -> str:
                     xr = x1 + bw + 20 if idx[l[1]] < idx[l[0]] else x1 - 20
                     d = f"M{x1 + (bw if xr > x1 else 0):g} {y1 + bh / 2:g} L{xr:g} {y1 + bh / 2:g} L{xr:g} {y2 + bh / 2:g} L{x2 + (bw if xr > x1 else 0):g} {y2 + bh / 2:g}"
                     body.append(ap.edge(d, f"sc{pid}n"))
-                    if lab:
-                        for k, row in enumerate(ap.wrap(lab, 60, 11)):
-                            body.append(ap.text(xr + (4 if xr > x1 else -4), (y1 + y2 + bh) / 2 + k * 13, row, "s", "start" if xr > x1 else "end"))
+                    if lab:                # on a phone the side is too narrow: the label goes under the diagram
+                        under.append(lab)
+        for k, lab in enumerate(under):
+            body.append(ap.text(W / 2, H + 4 + k * 16, "Loop on the right: " + lab, "s", "middle"))
+        H += 16 * len(under)
         label = "Architecture: " + ", then ".join(b[1] for b in blocks)
         return ap.svg(f"sc{pid}{'w' if wide else 'n'}", W, H, "".join(body), label, "scarch")
     return ap.both(lay(True), lay(False))
@@ -333,9 +368,11 @@ def page_body(p: dict) -> str:
     h = p["hero"]
     hero = (f'<figure><div class="player kit" id="hero-{p["id"]}" data-kit="{h["kind"]}" data-key="showcase_hero" '
             f'aria-label="{E(p["title"])}: replay of the recorded data"><div class="phost"><div class="kitart"></div>'
-            f'<p class="cap" aria-live="polite">{E(h["caption"])}</p></div></div>'
-            f'<figcaption>{E(h["caption"])} Data: {_link(h["source"])}.</figcaption></figure>')
+            f'<p class="cap" aria-live="polite"></p></div></div>'
+            f'<figcaption>{E(h["caption"])} ({_link(h["source"], "replay data")})</figcaption></figure>')
     ag = S["agent"]
+    order = [k for k in AGENT_ORDER if k in ag] + [k for k in ag if k not in AGENT_ORDER]
+    ag = {k: ag[k] for k in order}
     agent_rows = "".join(f'<dt>{E(k.replace("_", " ").capitalize())}</dt><dd>' +
                          ("<ul>" + "".join(f"<li>{E(x)}</li>" for x in v) + "</ul>" if isinstance(v, list) else E(v)) + "</dd>"
                          for k, v in ag.items())
@@ -346,13 +383,26 @@ def page_body(p: dict) -> str:
             for e in p["evidence"] if e["kind"] == k) + "</ul>"
     lim = p["limits"]
     limits = "".join(f'<h3>{t}</h3><ul>' + "".join(f"<li>{E(x)}</li>" for x in lim[k]) + "</ul>"
-                     for k, t in (("not_measured", "Not measured"), ("nulls", "No effect found"), ("next", "Next")) if lim[k])
+                     for k, t in (("not_measured", "Not measured"), ("nulls", "Measured, no effect found"), ("next", "Next")) if lim[k])
     tri = ""
     if p.get("try_it"):
         tri = (f'<h2 id="try">Try it</h2><pre><code>{E(p["try_it"]["command"])}</code></pre>' +
                (f'<p>{E(p["try_it"]["note"])}</p>' if p["try_it"]["note"] else ""))
     arch = f'<figure>{arch_svg(S["architecture"], p["id"])}</figure>' if S.get("architecture") else ""
-    return f"""<p class="eyebrow"><a href="../showcase.html">Showcase</a> &middot; {E(p["board"])} ({E(p["part"])}) &middot; Vivado {E(p["vivado"])}</p>
+    table = ""
+    if S.get("table"):
+        T = S["table"]
+        head = "".join(f"<th>{E(h)}</th>" for _, h in T["columns"])
+        def cell(x, c):
+            v = x[c]
+            txt = E(str(v) if not isinstance(v, float) else f"{v:g}")
+            return _link(x[T["link"]], str(v)) if T["link"] and c == T["link_column"] else txt
+        body = "".join("<tr>" + "".join(f"<td>{cell(x, c)}</td>" for c, _ in T["columns"]) + "</tr>" for x in T["rows"])
+        table = (f'<div class="tbl"><table><caption class="small muted">{E(T["caption"])}</caption>'
+                 f'<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>')
+    details = "".join(f'<details class="more"><summary>{E(d["title"])}</summary><p>{E(d["text"])}</p></details>'
+                      for d in S.get("details", []))
+    return f"""<div class="sc-page"><p class="eyebrow"><a href="../showcase.html">Showcase</a> &middot; {E(p["board"])} ({E(p["part"])}) &middot; Vivado {E(p["vivado"])}</p>
 <h1>{E(p["title"])}</h1>
 <p class="lede sc-headline">{E(p["headline"])}</p>
 {hero}
@@ -363,9 +413,11 @@ def page_body(p: dict) -> str:
 {arch}
 <h2 id="results">Results</h2>
 <ul class="sc-results">{"".join(f"<li>{E(t)}</li>" for t in S["results"])}</ul>
+{table}
 <h2 id="agent">What the agent did</h2>
 <dl class="sc-agent">{agent_rows}</dl>
+{details}
 <details class="more" id="evidence"><summary>Evidence: run records, captures, operating conditions, versions and requirements</summary>{ev}</details>
 <h2 id="limits">Limits</h2>
 {limits}
-{tri}"""
+{tri}</div>"""

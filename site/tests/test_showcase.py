@@ -329,3 +329,72 @@ def test_nl_debug_portfolio_card_sources_resolve():
     for k in ("still_1200x630", "animation"):
         assert (SITE / "portfolio" / "nl_debug" / P["media"][k]).exists(), k
     assert (SITE / "portfolio" / "nl_debug" / P["media"]["animation"]).stat().st_size < 2_000_000
+
+
+# --- brief 50A page round: the staged wave option, the run table, the drawers, the agent order -----------------------
+
+def _staged_hero(tmp_name, mut=None):
+    """A copy of the nl_debug hero under build/ (hero sources may sit outside results/ only for fixtures)."""
+    src = json.loads((SITE.parent / "results" / "50a_nl_debug" / "hero.json").read_text())
+    if mut:
+        mut(src)
+    p = SITE.parent / "build" / tmp_name
+    p.parent.mkdir(exist_ok=True)
+    p.write_text(json.dumps(src))
+    return p
+
+
+@pytest.mark.parametrize("mut, msg", [
+    (lambda h: h["stages"][3].update(phase="before"), "exactly one during"),
+    (lambda h: h["stages"][4].update(captions=[]), "'after' stage with a caption"),
+    (lambda h: h["marks"].append({"x": 999, "label": "off"}), "not on the x axis"),
+    (lambda h: h["marks"].append({"x": 0, "signal": "nosuch", "label": "x"}), "names no signal"),
+    (lambda h: h["captions"].pop(), "captions has"),
+])
+def test_staged_wave_is_checked(tmp_path, mut, msg):
+    p = _staged_hero("b50a_test_hero.json", mut)
+    try:
+        y = yaml.safe_load((FIX / "demo_wave.yaml").read_text())
+        y["hero"] = {"kind": "wave", "source": "build/b50a_test_hero.json", "path": "", "caption": "x"}
+        with pytest.raises(showcase.ContractError, match=msg):
+            showcase.build(_write(tmp_path, y), allow_fixtures=True)
+    finally:
+        p.unlink()
+
+
+def test_kit_has_the_staged_wave_option():
+    js = (SITE / "src" / "app.js").read_text()
+    assert "return stagedWave(art, T);" in js.split("var KIT = {")[1].split("hist: function")[0]
+    sw = js.split("function stagedWave")[1].split("function nf(")[0]
+    for k in ("stagestrip", "future solid", "kmarkg", "visually-hidden", "aria-label"):
+        assert k in sw, k
+
+
+def test_nl_debug_page_reads_in_order_with_its_table_and_drawers():
+    S = showcase.build(SITE / "showcase")
+    P = next(p for p in S["projects"] if p["id"] == "nl_debug")
+    page = showcase.page_body(P)
+    import re
+    assert re.findall(r"<dt>([^<]+)</dt>", page) == ["Request", "Plan", "Gates", "Approvals"]
+    rows = P["story"]["table"]["rows"]
+    assert len(rows) == P["values"]["runs"] and page.count("<tr>") == len(rows) + 1
+    for r in rows:
+        assert (SITE.parent / r["capture"]).is_file() and r["capture"] in page
+    assert page.count('<details class="more"><summary>') >= 5
+    assert "No effect found" not in page                   # the FIFO refusal is not a null result
+    assert P["values"]["readback_runs"] < P["values"]["runs"] and "where a register was read back" in P["headline"]
+
+
+def test_table_source_must_be_a_committed_result(tmp_path):
+    y = yaml.safe_load((SITE / "showcase" / "nl_debug.yaml").read_text())
+    y["story"]["table"]["source"] = "site/data/dev.json"
+    with pytest.raises(showcase.ContractError, match="story.table.source"):
+        showcase.build(_write(tmp_path, y))
+
+
+def test_agent_section_follows_the_run_order_whatever_the_yaml_order(tmp_path):
+    y = _demo()
+    y["story"]["agent"] = dict(reversed(list(y["story"]["agent"].items())))
+    P = showcase.build(_write(tmp_path, y), allow_fixtures=True)["projects"][0]
+    import re
+    assert re.findall(r"<dt>([^<]+)</dt>", showcase.page_body(P)) == ["Request", "Plan", "Gates", "Approvals"]

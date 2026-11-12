@@ -28,6 +28,12 @@
      "text": ""
     },
     {
+     "kind": "record",
+     "label": "The build-ID guard on the board: a capture that armed, and one refused before arming",
+     "path": "results/50a_nl_debug/build_id_guard/README.md",
+     "text": ""
+    },
+    {
      "kind": "conditions",
      "label": "Die temperature and supplies at programming, arming and after upload, per run",
      "path": "results/50a_nl_debug/summary.json",
@@ -52,60 +58,72 @@
      "text": ""
     }
    ],
-   "headline": "On the Digilent Nexys A7-100T (xc7a100tcsg324-1) with Vivado 2026.1, 5 of 5 requests written in plain English were answered from captures on the board, and every answer matched the known result and the value read back over the board's serial link.",
+   "headline": "Nexys A7-100T (xc7a100tcsg324-1), Vivado 2026.1: 5 of 5 known-answer requests on one design, written in plain English, were answered from captures on the board. Every answer matched the known result, and the value read back over the serial link where a register was read back.",
    "hero": {
-    "caption": "One real run replayed: the request, the plan, the build, then the captured signals cycle by cycle with the answer read from them.",
+    "caption": "One real run replayed: the request, the plan, the build, then the capture filling in sample by sample around the trigger, and the answer read from it.",
     "data": {
+     "alt": "Waveform of win_wr, addr and count from cycle -16 to 32 around the trigger: win_wr is 1 only at cycle 0, addr holds 0x80, count is 0x0003 up to cycle 0 and 0x1234 from cycle 1.",
      "captions": [
-      "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\" (cycle -16, before the trigger)",
-      "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\" (cycle -15, before the trigger)",
-      "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\" (cycle -14, before the trigger)",
-      "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\" (cycle -13, before the trigger)",
-      "Plan: probes win_wr (u_shell.u_core.win_wr), addr (u_shell.u_core.frame[1]), count (u_dut.count); trigger win_wr == 1 AND addr == 0x80; 16 cycles before and 32 after; 2 of the 5 allowed probe ports. (cycle -12, before the trigger)",
-      "Plan: probes win_wr (u_shell.u_core.win_wr), addr (u_shell.u_core.frame[1]), count (u_dut.count); trigger win_wr == 1 AND addr == 0x80; 16 cycles before and 32 after; 2 of the 5 allowed probe ports. (cycle -11, before the trigger)",
-      "Plan: probes win_wr (u_shell.u_core.win_wr), addr (u_shell.u_core.frame[1]), count (u_dut.count); trigger win_wr == 1 AND addr == 0x80; 16 cycles before and 32 after; 2 of the 5 allowed probe ports. (cycle -10, before the trigger)",
-      "Plan: probes win_wr (u_shell.u_core.win_wr), addr (u_shell.u_core.frame[1]), count (u_dut.count); trigger win_wr == 1 AND addr == 0x80; 16 cycles before and 32 after; 2 of the 5 allowed probe ports. (cycle -9, before the trigger)",
-      "Build: one logic analyser added to the design; Vivado 2026.1 build d2b75378, 418.1 s, every check passed; programmed into the board's SRAM. (cycle -8, before the trigger)",
-      "Build: one logic analyser added to the design; Vivado 2026.1 build d2b75378, 418.1 s, every check passed; programmed into the board's SRAM. (cycle -7, before the trigger)",
-      "Build: one logic analyser added to the design; Vivado 2026.1 build d2b75378, 418.1 s, every check passed; programmed into the board's SRAM. (cycle -6, before the trigger)",
-      "Build: one logic analyser added to the design; Vivado 2026.1 build d2b75378, 418.1 s, every check passed; programmed into the board's SRAM. (cycle -5, before the trigger)",
-      "Over the UART shell: before arming, COUNT written to 0x3; after arming, COUNT written to 0x1234. (cycle -4, before the trigger)",
-      "Over the UART shell: before arming, COUNT written to 0x3; after arming, COUNT written to 0x1234. (cycle -3, before the trigger)",
-      "Over the UART shell: before arming, COUNT written to 0x3; after arming, COUNT written to 0x1234. (cycle -2, before the trigger)",
-      "Over the UART shell: before arming, COUNT written to 0x3; after arming, COUNT written to 0x1234. (cycle -1, before the trigger)",
-      "Cycle 0, the trigger: win_wr == 1 AND addr == 0x80. At cycle 0: win_wr = 1, addr = 0x80, count = 0x0003.",
-      "Cycle 1. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 2. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 3. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 4. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 5. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 6. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 7. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 8. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 9. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 10. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 11. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 12. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 13. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 14. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 15. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 16. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 17. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 18. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 19. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 20. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 21. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 22. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 23. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 24. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 25. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 26. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 27. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 28. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 29. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-      "Cycle 30. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-      "Cycle 31. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-      "Cycle 32, the end of the asked window. Read back over the shell: COUNT = 0x00001234; inside the recommended operating conditions."
+      "Capture: the 16 cycles before the trigger come from the analyser's buffer, recorded before the trigger fired.",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "Cycle 0, the trigger sample: win_wr == 1 AND addr == 0x80 (win_wr = 1, addr = 0x80).",
+      "Cycle 1: count changes from 0x0003 to 0x1234, one clock after the write strobe: the register loads on the clock edge that ends it.",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ],
+     "marks": [
+      {
+       "label": "trigger, cycle 0",
+       "x": 0
+      },
+      {
+       "label": "0x0003 to 0x1234",
+       "signal": "count",
+       "x": 1
+      }
      ],
      "signals": [
       {
@@ -282,6 +300,50 @@
       "check_pass": true,
       "run": "results/50a_nl_debug/t1_count_write"
      },
+     "stages": [
+      {
+       "captions": [
+        "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\""
+       ],
+       "fact": "in words",
+       "name": "Request",
+       "phase": "before"
+      },
+      {
+       "captions": [
+        "Plan: win_wr is u_shell.u_core.win_wr; addr is u_shell.u_core.frame[1]; count is u_dut.count. Trigger: win_wr == 1 AND addr == 0x80. A 1024-sample window, the smallest that holds the 16 cycles before and 32 after that were asked for."
+       ],
+       "fact": "3 signals, 2 of 5 ports",
+       "name": "Plan",
+       "phase": "before"
+      },
+      {
+       "captions": [
+        "Build: the logic analyser added to the design, Vivado 2026.1, 418.1 s, every check passed (worst setup slack 3.06 ns). Programmed into the board's memory; build ID d2b75378 read back over JTAG before arming."
+       ],
+       "fact": "418.1 s, ID d2b75378",
+       "name": "Build",
+       "phase": "before"
+      },
+      {
+       "captions": [
+        "Armed. Over the serial link: before arming COUNT = 0x3; after arming COUNT = 0x1234, the write that fires the trigger."
+       ],
+       "fact": "win_wr == 1 AND addr == 0x80",
+       "name": "Arm and capture",
+       "phase": "during"
+      },
+      {
+       "captions": [
+        "Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
+        "Read back over the serial link: COUNT = 0x00001234, the value the capture shows. Programming and capture took 64.7 s, inside the recommended operating conditions."
+       ],
+       "fact": "matched; read back 0x1234",
+       "name": "Answer",
+       "phase": "after"
+      }
+     ],
+     "tick": 8,
      "unit": "cycle",
      "x": [
       -16,
@@ -348,11 +410,11 @@
     "not_measured": [
      "One design and a handful of requests: the parser and the name resolver were not measured on other designs or on requests the authors had not seen.",
      "No agent role is offered the debug tools yet; they were tested in CI, not used on the board by an agent.",
-     "Supply and temperature are read at programming, arming and after upload, not on the capture timeline."
+     "Supply and temperature are read at programming, arming and after upload, not on the capture timeline.",
+     "No timed comparison with setting up the analyser by hand.",
+     "Refused, as it should be: the example request \"capture the UART byte when the FIFO overflows\" cannot be built on this design, which has no FIFO; the plan says so instead of guessing a signal."
     ],
-    "nulls": [
-     "The example request \"capture the UART byte when the FIFO overflows\" cannot be built on this design: it has no FIFO, and the plan says so instead of guessing a signal."
-    ]
+    "nulls": []
    },
    "one_line": "Ask for a capture in words: the flow picks the signals by their RTL names, sets the trigger, builds an on-chip logic analyser, captures on the board and answers in plain words, quoting only the capture.",
    "order": 1,
@@ -362,7 +424,7 @@
    "story": {
     "agent": {
      "approvals": [
-      "The owner asked for this capability, set the order (front end first) and the safety rules: board memory only, power and temperature limits, design checks never skipped. No approval was needed per run."
+      "The owner asked for this capability, set the order (front end first) and the safety rules: board memory only, power and temperature limits, design checks never skipped. No approval was needed per run: each capture holds the board lock and programs board memory only."
      ],
      "gates": [
       "The plan matched its schema and the free tier's limits before any build.",
@@ -370,7 +432,7 @@
       "The build ID read back over JTAG matched before arming (d2b75378).",
       "Every number in the answer was checked against the capture."
      ],
-     "plan": "Three signals resolved by RTL name to register outputs, packed into 2 of the 5 ports; trigger on the write strobe and the address byte; a 1024-sample window holding the 16 cycles before and 32 after that were asked for.",
+     "plan": "Three signals resolved by RTL name to register outputs and packed into 2 of the 5 ports; the trigger on the write strobe and the address byte; a 1024-sample window, the smallest that holds the 16 cycles before and 32 after that were asked for (the answer covers only those).",
      "request": "First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back."
     },
     "architecture": {
@@ -424,15 +486,123 @@
       ]
      ]
     },
-    "how": "A language model only restates the request as structured JSON. Everything after it is deterministic: each signal name is resolved against the RTL to a register output, the trigger becomes per-bit compare values, the window and the analyser's ports are sized within the free tier's limits, and the plan is shown before anything is built. The build reuses the normal Vivado flow and all its checks; the capture runs over JTAG while the board is driven over its serial link; the answer is written from facts computed from the samples, and a check refuses any number that the capture does not support.",
-    "problem": "An on-chip logic analyser shows what a design really does on the board, but setting one up is slow: choosing signals that survive synthesis, packing them into the analyser's ports, writing the trigger, rebuilding and reading the waveform. On the free Vivado licence tier the analyser is also limited, so a request that does not fit fails late, after a long build.",
+    "details": [
+     {
+      "text": "The resolver reads the RTL, not the model. Asked for 'cnt', it finds 5 different registers with that name (u_dut.u_db_clear.cnt, u_dut.u_db_down.cnt, u_dut.u_db_up.cnt, u_shell.u_rx.cnt, u_shell.u_tx.cnt) and refuses the plan with the list, instead of picking one. A phrase is the model's only job: 'the shell's ADDR byte' came back from the model as 'addr', which the resolver then traced to u_shell.u_core.frame[1] (pins u_shell/u_core/frame_reg[1][*]/Q); a name it cannot trace is an error with suggestions, never a guess.",
+      "title": "When a name is ambiguous, the plan stops and asks"
+     },
+     {
+      "text": "Every number in an answer must be a value, change, run or count of the signal its line names, inside the window asked for. 'count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.' passes. Changing one value, 'count was 0x0003 from cycle -16 to 0, then 0x4321 from cycle 1 to 32.', is refused: 0x4321 is not in the capture. The check reads line by line and does not understand sentences, so a true number of the right signal used for the wrong thing would still pass; the answers are written from the capture's facts by a template, which never does that.",
+      "title": "The answer check refuses a made-up number"
+     },
+     {
+      "text": "The resolver, planner, build reuse, capture driver, answer writer and answer check are ordinary deterministic Python. They were written by an AI coding assistant (Claude, in Claude Code) to the owner's brief and checked by independent reviewers and the tests. At run time the only model call is reading the request, by openai/gpt-6-luna through a provider; nothing it says is trusted until the resolver has traced it in the RTL.",
+      "title": "Who wrote what"
+     },
+     {
+      "text": "Cycle 0 is the sample in which the trigger condition holds: there win_wr = 1 and addr = 0x80. The counter still shows 0x0003 in that sample and 0x1234 one clock later, because the register loads on the clock edge that ends the write strobe. An earlier version of the plot labelled the left edge of each sample, which made the strobe look one cycle early.",
+      "title": "Where the trigger is, and why the counter changes one clock later"
+     },
+     {
+      "text": "Not measured: there is no timed comparison with a person setting up the analyser by hand. Qualitatively, the request replaces choosing post-synthesis register names, packing ports within the free tier's limits, writing per-bit trigger values and reading the waveform; the build itself takes the same Vivado time either way, and a request served by an existing build needs no build at all.",
+      "title": "What this saves, honestly"
+     }
+    ],
+    "how": "A language model only restates the request as structured JSON. Everything after it is deterministic: each signal name is resolved against the RTL (the design's source code) to a register output, the trigger becomes per-bit compare values, the window and the analyser's ports are sized within the free tier's limits, and the plan is shown before anything is built. The build reuses the normal Vivado flow and all its checks and is programmed into the board's volatile memory (SRAM, never the flash). The capture runs over the board's programming cable (JTAG) while the design is driven over its serial link; the answer is written from facts computed from the samples, and a check refuses any number that the capture does not support.",
+    "problem": "An on-chip logic analyser (ILA: logic added to the design that records chosen signals into on-chip memory, one sample per clock) shows what a design really does on the board, but setting one up is slow: choosing signals that survive synthesis, packing them into the analyser's ports, writing the trigger, rebuilding and reading the waveform. On the free Basic licence tier of Vivado the analyser is also limited: one analyser per design, so one clock; at most 5 probe ports (groups of wires into the analyser); and one comparator per port (the hardware that tests a port against the trigger value). A request that does not fit fails late, after a long build.",
     "results": [
-     "5 of 5 known-answer requests passed: a register write, one dimmer period, the serial sync byte on a rising edge, an OR of two edges and a request served by an existing build. One design, one run each, so no spread is stated.",
-     "5 debug builds of 418.1 to 531.8 seconds each (about 7 to 9 minutes); 1 of the 5 requests needed no new build because an earlier build already held its signals. Every build met timing (worst setup slack at least 3.06 ns) and stayed under 0.162 W.",
-     "Programming and capture took 48.3 to 64.7 seconds per request. Reading each request cost 0.00011 to 0.00027 US dollars, as the model provider reported.",
-     "The free tier allows one analyser and at most 5 probe ports with one comparator each. On the board Vivado refused to arm two OR terms on one port, so the planner now gives each OR term its own port; that build triggered correctly.",
-     "All 5 captures ran inside the recommended operating conditions: die 24.7 to 26.9 C, core supply 1.006 V, 0 alarms."
-    ]
+     "5 of 5 known-answer requests on one design passed: the answer matched the known result each time, and the value read back over the serial link in the 3 runs that read a register back. One run each, so no spread is stated. All five are in the table below.",
+     "5 debug builds of 418.1 to 531.8 seconds each (about 7 to 9 minutes): 4 served the requests and 1 was the OR layout that Vivado refused to arm, rebuilt with one port per OR term. 1 of the 5 requests needed no new build because an earlier build already held its signals. Every build met timing (worst setup slack at least 3.06 ns), at most 0.162 W estimated by Vivado.",
+     "Programming and capture took 48.3 to 64.7 seconds per request. Reading each request cost $0.0001 to $0.0003, as the model provider reported.",
+     "All 5 captures ran inside the recommended operating conditions: die 24.7 to 26.9 C at the readings (latched maximum 27.68 C), core supply 1.006 V, 0 alarms."
+    ],
+    "table": {
+     "caption": "The known-answer requests: each links to its capture (common capture format, with the plan, the answer and the raw analyser export beside it).",
+     "columns": [
+      [
+       "run",
+       "Request"
+      ],
+      [
+       "what",
+       "What it checked"
+      ],
+      [
+       "trigger",
+       "Trigger as planned"
+      ],
+      [
+       "build",
+       "Build"
+      ],
+      [
+       "capture_s",
+       "Programming and capture (s)"
+      ],
+      [
+       "readback",
+       "Read back"
+      ],
+      [
+       "result",
+       "Answer"
+      ]
+     ],
+     "link": "capture",
+     "link_column": "run",
+     "rows": [
+      {
+       "build": "new, 418.1 s",
+       "capture": "results/50a_nl_debug/t1_count_write/capture.json",
+       "capture_s": 64.7,
+       "readback": "COUNT 0x1234",
+       "result": "matched",
+       "run": "t1_count_write",
+       "trigger": "win_wr == 1 AND addr == 0x80",
+       "what": "a register write over the serial link"
+      },
+      {
+       "build": "new, 432.2 s",
+       "capture": "results/50a_nl_debug/t1_pwm_period/capture.json",
+       "capture_s": 63.8,
+       "readback": "DUTY 0x40, COUNT 0x8421",
+       "result": "matched",
+       "run": "t1_pwm_period",
+       "trigger": "phase == 0x00",
+       "what": "one dimmer (PWM) period"
+      },
+      {
+       "build": "new, 444.2 s",
+       "capture": "results/50a_nl_debug/t1_sync_byte/capture.json",
+       "capture_s": 48.3,
+       "readback": "none",
+       "result": "matched",
+       "run": "t1_sync_byte",
+       "trigger": "rx_valid rises AND rx_data == 0xA5",
+       "what": "the serial sync byte, on a rising edge"
+      },
+      {
+       "build": "new, 505.1 s",
+       "capture": "results/50a_nl_debug/t1_or_flags/capture.json",
+       "capture_s": 62.1,
+       "readback": "none",
+       "result": "matched",
+       "run": "t1_or_flags",
+       "trigger": "win_wr rises OR press_clear rises",
+       "what": "either of two edges (OR)"
+      },
+      {
+       "build": "reused",
+       "capture": "results/50a_nl_debug/t1_reuse_rise/capture.json",
+       "capture_s": 58.0,
+       "readback": "COUNT 0x42",
+       "result": "matched",
+       "run": "t1_reuse_rise",
+       "trigger": "win_wr rises",
+       "what": "a write, on a build made for another request"
+      }
+     ]
+    }
    },
    "title": "Debugging in plain English",
    "try_it": {
@@ -441,16 +611,27 @@
    },
    "values": {
     "alarms": 0,
+    "amb_c": "u_dut.u_db_clear.cnt, u_dut.u_db_down.cnt, u_dut.u_db_up.cnt, u_shell.u_rx.cnt, u_shell.u_tx.cnt",
+    "amb_n": 5,
+    "amb_q": "cnt",
     "build_hi": 531.8,
     "build_lo": 418.1,
     "build_max": 9,
     "build_min": 7,
     "builds": 5,
+    "builds_refused": 1,
+    "builds_used": 4,
+    "c_after": "0x1234",
+    "c_before": "0x0003",
     "cap_hi": 64.7,
     "cap_lo": 48.3,
-    "cost_hi": 0.00027,
-    "cost_lo": 0.00011,
+    "check_bad": "count was 0x0003 from cycle -16 to 0, then 0x4321 from cycle 1 to 32.",
+    "check_bad_refused": "0x4321",
+    "check_good": "count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
+    "cost_hi": 0.0003,
+    "cost_lo": 0.0001,
     "die_hi": 26.9,
+    "die_latched": 27.68,
     "die_lo": 24.7,
     "hero_build": "d2b75378",
     "hero_depth": 1024,
@@ -459,11 +640,20 @@
     "hero_pre": 16,
     "hero_request": "First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.",
     "inside": 5,
+    "model": "openai/gpt-6-luna",
     "passed": 5,
+    "phrase": "the shell's ADDR byte",
+    "phrase_as": "addr",
+    "phrase_pins": "u_shell/u_core/frame_reg[1][*]/Q",
+    "phrase_to": "u_shell.u_core.frame[1]",
     "ports": 5,
     "power_hi": 0.162,
+    "readback_runs": 3,
     "reused": 1,
     "runs": 5,
+    "t_addr": "0x80",
+    "t_cycle": 0,
+    "t_win_wr": 1,
     "vccint": 1.006,
     "wns_lo": 3.06
    },

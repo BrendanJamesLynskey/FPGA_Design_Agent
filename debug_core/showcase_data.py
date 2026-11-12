@@ -48,7 +48,17 @@ def summary(res: Path) -> dict[str, Any]:
     cap_s = [demo[n]["seconds_program_capture"] for n in runs]
     plan0, cap0, _ = _load(res / HERO_RUN)
     b0 = builds[cap0["build"]["probeset"]]
+    latched = [((json.loads((res / n / "capture.json").read_text())["conditions"].get(w) or {}).get("max") or {}).get("TEMPERATURE")
+               for n in runs for w in ("programmed", "armed", "done")]
+    refused_builds = [k for k, b in builds.items() if k not in {json.loads((res / n / "capture.json").read_text())["build"]["probeset"] for n in runs}]
     return {
+        "runs_table": run_table(res, runs, demo, builds),
+        "trust": trust(res),
+        "die_c_latched_max": max(x for x in latched if x is not None),
+        "power_w_min": min(b["power_total_w"] for b in builds.values()),
+        "builds_used": len(builds) - len(refused_builds), "builds_refused": len(refused_builds),
+        "cost_usd_lo_rounded": math.floor(min(costs) * 1e4) / 1e4, "cost_usd_hi_rounded": math.ceil(max(costs) * 1e4) / 1e4,
+        "readback_runs": sum(1 for n in runs if json.loads((res / n / "capture.json").read_text()).get("readback")),
         "runs": len(runs), "passed": sum(1 for n in runs if demo[n]["pass"]),
         "reused_runs": sum(1 for n in runs if demo[n].get("reused_build")),
         "builds": len(builds), "build_s_min": min(walls), "build_s_max": max(walls),
@@ -71,7 +81,53 @@ def summary(res: Path) -> dict[str, Any]:
     }
 
 
+WHAT = {"t1_count_write": "a register write over the serial link", "t1_pwm_period": "one dimmer (PWM) period",
+        "t1_sync_byte": "the serial sync byte, on a rising edge", "t1_or_flags": "either of two edges (OR)",
+        "t1_reuse_rise": "a write, on a build made for another request"}
+
+
+def run_table(res: Path, runs: list[str], demo: dict, builds: dict) -> list[dict[str, Any]]:
+    out = []
+    for n in runs:
+        plan, cap, chk = _load(res / n)
+        b = builds[cap["build"]["probeset"]]
+        out.append({"run": n, "capture": f"results/50a_nl_debug/{n}/capture.json", "what": WHAT.get(n, n),
+                    "trigger": " AND ".join(c["text"] for c in plan["trigger"]["conditions"]) if plan["trigger"]["combine"] == "AND"
+                    else " OR ".join(c["text"] for c in plan["trigger"]["conditions"]),
+                    "build": "reused" if demo[n].get("reused_build") else f"new, {b['wall_s']} s",
+                    "capture_s": demo[n]["seconds_program_capture"],
+                    "readback": ", ".join(f"{k} 0x{v:X}" for k, v in (cap.get("readback") or {}).items()) or "none",
+                    "result": "matched" if chk["pass"] else "did not match"})
+    return out
+
+
+def trust(res: Path) -> dict[str, Any]:
+    """Examples computed now by the repository's own code from committed files (the T1 RTL and a committed capture)."""
+    from debug_core.answer import unquoted_numbers
+    from debug_core.rtl_index import RtlIndex
+    idx = RtlIndex.from_design(ROOT / "designs" / "t1_dimmer_counter")
+    amb = idx.resolve("cnt")
+    plan, cap, _ = _load(res / HERO_RUN)
+    req = plan["window"]["requested"]
+    asked = trim(cap, -int(req["pre"]), int(req["post"]))
+    good = "count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32."
+    bad = "count was 0x0003 from cycle -16 to 0, then 0x4321 from cycle 1 to 32."
+    addr = next(p for p in plan["probes"] if p["label"] == "addr")
+    k0 = cap["timebase"]["trigger_sample"]
+    ch = {c["name"]: c["samples"] for c in cap["channels"]}
+    return {"ambiguous_query": "cnt", "ambiguous_kind": amb.kind, "ambiguous_candidates": ", ".join(amb.candidates),
+            "ambiguous_n": len(amb.candidates),
+            "phrase": "the shell's ADDR byte", "phrase_parsed_as": addr["requested_as"], "phrase_resolved_to": addr["path"],
+            "phrase_pins": addr["pins"],
+            "check_good": good, "check_good_refused": ", ".join(unquoted_numbers(good, cap, asked)) or "none",
+            "check_bad": bad, "check_bad_refused": ", ".join(unquoted_numbers(bad, cap, asked)),
+            "trigger_win_wr": ch["win_wr"][k0], "trigger_addr": f"0x{ch['addr'][k0]:02X}",
+            "count_before": f"0x{ch['count'][k0]:04X}", "count_after": f"0x{ch['count'][k0 + 1]:04X}"}
+
+
 def hero(res: Path) -> dict[str, Any]:
+    """The kit's staged wave: five stages with their real numbers, the samples of the asked window revealed during the
+    capture stage, marks on the trigger sample and on the counter's change, captions for the narrative as stages."""
     plan, cap, chk = _load(res / HERO_RUN)
     req = plan["window"]["requested"]
     win = trim(cap, -int(req["pre"]), int(req["post"]))
@@ -84,38 +140,48 @@ def hero(res: Path) -> dict[str, Any]:
         if c["width"] > 1:
             sg.update({"radix": "hex", "width": c["width"]})
         sigs.append(sg)
+    ch = {c["name"]: c["samples"] for c in win["channels"]}
     builds = json.loads((res / "builds.json").read_text())["builds"]
     b = builds[cap["build"]["probeset"]]
-    probes = ", ".join(f"{p['label']} ({p['path']})" for p in plan["probes"])
     trig = " AND ".join(c["text"] for c in plan["trigger"]["conditions"])
     answer = (res / HERO_RUN / "answer.txt").read_text().strip().splitlines()
+    line = {nm: next((l for l in answer if l.startswith(nm + " ")), "") for nm in ch}
     rb = cap["readback"]
-    cond = cap["conditions"]
-    steps = [
-        f"Request, in plain English: \"{plan['request']}\"",
-        f"Plan: probes {probes}; trigger {trig}; {req['pre']} cycles before and {req['post']} after; "
-        f"{len(plan['ports'])} of the {plan['fit']['max_ports']} allowed probe ports.",
-        f"Build: one logic analyser added to the design; Vivado 2026.1 build {cap['build']['build_id']}, "
-        f"{b['wall_s']} s, every check passed; programmed into the board's SRAM.",
-        "Over the UART shell: " + "; ".join(
-            [f"before arming, {o['register']} written to 0x{o['value']:X}" for o in plan["setup"] if o["op"] == "write"]
-            + [f"after arming, {o['register']} written to 0x{o['value']:X}" for o in plan["stimulus"] if o["op"] == "write"]) + ".",
+    demo = json.loads((res / "demo.json").read_text())[HERO_RUN]
+    writes = lambda ops: ", ".join(f"{o['register']} = 0x{o['value']:X}" for o in ops if o["op"] == "write")
+    ci = next(k for k in range(t0, n - 1) if ch["count"][k + 1] != ch["count"][k]) + 1   # sample index of the change
+    stages = [
+        {"name": "Request", "fact": "in words", "phase": "before",
+         "captions": [f"Request, in plain English: \"{plan['request']}\""]},
+        {"name": "Plan", "fact": f"{len(plan['probes'])} signals, {len(plan['ports'])} of {plan['fit']['max_ports']} ports", "phase": "before",
+         "captions": ["Plan: " + "; ".join(f"{p['requested_as']} is {p['path']}" for p in plan["probes"]) + f". Trigger: {trig}. "
+                      f"A {plan['window']['depth']}-sample window, the smallest that holds the {req['pre']} cycles before and "
+                      f"{req['post']} after that were asked for."]},
+        {"name": "Build", "fact": f"{b['wall_s']} s, ID {cap['build']['build_id']}", "phase": "before",
+         "captions": [f"Build: the logic analyser added to the design, Vivado 2026.1, {b['wall_s']} s, every check passed "
+                      f"(worst setup slack {b['wns_ns']} ns). Programmed into the board's memory; build ID "
+                      f"{cap['build']['build_id']} read back over JTAG before arming."]},
+        {"name": "Arm and capture", "fact": trig, "phase": "during",
+         "captions": [f"Armed. Over the serial link: before arming {writes(plan['setup'])}; after arming {writes(plan['stimulus'])}, "
+                      "the write that fires the trigger."]},
+        {"name": "Answer", "fact": f"matched; read back 0x{rb['COUNT']:X}" if rb.get("COUNT") is not None else "matched", "phase": "after",
+         "captions": [f"Answer: {line['count']}", f"Read back over the serial link: COUNT = 0x{rb['COUNT']:08X}, the value the "
+                      f"capture shows. Programming and capture took {demo['seconds_program_capture']} s, inside the recommended "
+                      "operating conditions."]},
     ]
-    line = {name: next((l for l in answer if l.startswith(name + " ")), "") for name in (c["name"] for c in win["channels"])}
-    data_lines = [line[c["name"]] for c in win["channels"]]
-    caps = []
-    for x in xs:
-        if x < 0:
-            caps.append(steps[min(len(steps) - 1, (x + int(req["pre"])) * len(steps) // int(req["pre"]))]
-                        + f" (cycle {x}, before the trigger)")
-        elif x == 0:
-            caps.append(f"Cycle 0, the trigger: {trig}. " + answer[1])
-        elif x < int(req["post"]):
-            caps.append(f"Cycle {x}. Answer: " + data_lines[(x - 1) % len(data_lines)])
-        else:
-            caps.append(f"Cycle {x}, the end of the asked window. Read back over the shell: COUNT = 0x{rb['COUNT']:08X}; "
-                        f"{'inside the recommended operating conditions' if cond.get('verdict') == 'inside ROC' else cond.get('verdict')}.")
-    return {"unit": "cycle", "x": xs, "signals": sigs, "captions": caps,
+    caps: list[str | None] = [None] * n
+    caps[0] = f"Capture: the {req['pre']} cycles before the trigger come from the analyser's buffer, recorded before the trigger fired."
+    caps[t0] = f"Cycle 0, the trigger sample: {trig} (win_wr = {ch['win_wr'][t0]}, addr = 0x{ch['addr'][t0]:02X})."
+    caps[ci] = (f"Cycle {xs[ci]}: count changes from 0x{ch['count'][ci - 1]:04X} to "
+                         f"0x{ch['count'][ci]:04X}, one clock after the write strobe: the register loads on the clock "
+                         "edge that ends it.")
+    alt = (f"Waveform of win_wr, addr and count from cycle {xs[0]} to {xs[-1]} around the trigger: win_wr is 1 only at cycle 0, "
+           f"addr holds 0x{ch['addr'][t0]:02X}, count is 0x{ch['count'][0]:04X} up to cycle 0 and 0x{ch['count'][-1]:04X} from "
+           f"cycle {xs[ci]}.")
+    return {"unit": "cycle", "x": xs, "signals": sigs, "captions": caps, "stages": stages, "tick": 8, "alt": alt,
+            "marks": [{"x": 0, "label": "trigger, cycle 0"},
+                      {"x": xs[ci], "signal": "count",
+                       "label": f"0x{ch['count'][ci - 1]:04X} to 0x{ch['count'][ci]:04X}"}],
             "source": {"run": f"results/50a_nl_debug/{HERO_RUN}", "check_pass": chk["pass"]}}
 
 

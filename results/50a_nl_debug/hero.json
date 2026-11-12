@@ -223,55 +223,111 @@
   }
  ],
  "captions": [
-  "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\" (cycle -16, before the trigger)",
-  "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\" (cycle -15, before the trigger)",
-  "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\" (cycle -14, before the trigger)",
-  "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\" (cycle -13, before the trigger)",
-  "Plan: probes win_wr (u_shell.u_core.win_wr), addr (u_shell.u_core.frame[1]), count (u_dut.count); trigger win_wr == 1 AND addr == 0x80; 16 cycles before and 32 after; 2 of the 5 allowed probe ports. (cycle -12, before the trigger)",
-  "Plan: probes win_wr (u_shell.u_core.win_wr), addr (u_shell.u_core.frame[1]), count (u_dut.count); trigger win_wr == 1 AND addr == 0x80; 16 cycles before and 32 after; 2 of the 5 allowed probe ports. (cycle -11, before the trigger)",
-  "Plan: probes win_wr (u_shell.u_core.win_wr), addr (u_shell.u_core.frame[1]), count (u_dut.count); trigger win_wr == 1 AND addr == 0x80; 16 cycles before and 32 after; 2 of the 5 allowed probe ports. (cycle -10, before the trigger)",
-  "Plan: probes win_wr (u_shell.u_core.win_wr), addr (u_shell.u_core.frame[1]), count (u_dut.count); trigger win_wr == 1 AND addr == 0x80; 16 cycles before and 32 after; 2 of the 5 allowed probe ports. (cycle -9, before the trigger)",
-  "Build: one logic analyser added to the design; Vivado 2026.1 build d2b75378, 418.1 s, every check passed; programmed into the board's SRAM. (cycle -8, before the trigger)",
-  "Build: one logic analyser added to the design; Vivado 2026.1 build d2b75378, 418.1 s, every check passed; programmed into the board's SRAM. (cycle -7, before the trigger)",
-  "Build: one logic analyser added to the design; Vivado 2026.1 build d2b75378, 418.1 s, every check passed; programmed into the board's SRAM. (cycle -6, before the trigger)",
-  "Build: one logic analyser added to the design; Vivado 2026.1 build d2b75378, 418.1 s, every check passed; programmed into the board's SRAM. (cycle -5, before the trigger)",
-  "Over the UART shell: before arming, COUNT written to 0x3; after arming, COUNT written to 0x1234. (cycle -4, before the trigger)",
-  "Over the UART shell: before arming, COUNT written to 0x3; after arming, COUNT written to 0x1234. (cycle -3, before the trigger)",
-  "Over the UART shell: before arming, COUNT written to 0x3; after arming, COUNT written to 0x1234. (cycle -2, before the trigger)",
-  "Over the UART shell: before arming, COUNT written to 0x3; after arming, COUNT written to 0x1234. (cycle -1, before the trigger)",
-  "Cycle 0, the trigger: win_wr == 1 AND addr == 0x80. At cycle 0: win_wr = 1, addr = 0x80, count = 0x0003.",
-  "Cycle 1. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 2. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 3. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 4. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 5. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 6. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 7. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 8. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 9. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 10. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 11. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 12. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 13. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 14. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 15. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 16. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 17. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 18. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 19. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 20. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 21. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 22. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 23. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 24. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 25. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 26. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 27. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 28. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 29. Answer: addr held 0x80 for the whole window (cycles -16 to 32).",
-  "Cycle 30. Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
-  "Cycle 31. Answer: win_wr was 1 at the trigger; high for 1 cycle from cycle 0 (1 of 49 samples high).",
-  "Cycle 32, the end of the asked window. Read back over the shell: COUNT = 0x00001234; inside the recommended operating conditions."
+  "Capture: the 16 cycles before the trigger come from the analyser's buffer, recorded before the trigger fired.",
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  "Cycle 0, the trigger sample: win_wr == 1 AND addr == 0x80 (win_wr = 1, addr = 0x80).",
+  "Cycle 1: count changes from 0x0003 to 0x1234, one clock after the write strobe: the register loads on the clock edge that ends it.",
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null,
+  null
+ ],
+ "stages": [
+  {
+   "name": "Request",
+   "fact": "in words",
+   "phase": "before",
+   "captions": [
+    "Request, in plain English: \"First write 3 to COUNT. Then capture count, win_wr and the shell's ADDR byte when the shell writes the COUNT register (win_wr is 1 and addr is 0x80), 16 cycles before and 32 after. The write that triggers it puts 0x1234 in COUNT. Afterwards read COUNT back.\""
+   ]
+  },
+  {
+   "name": "Plan",
+   "fact": "3 signals, 2 of 5 ports",
+   "phase": "before",
+   "captions": [
+    "Plan: win_wr is u_shell.u_core.win_wr; addr is u_shell.u_core.frame[1]; count is u_dut.count. Trigger: win_wr == 1 AND addr == 0x80. A 1024-sample window, the smallest that holds the 16 cycles before and 32 after that were asked for."
+   ]
+  },
+  {
+   "name": "Build",
+   "fact": "418.1 s, ID d2b75378",
+   "phase": "before",
+   "captions": [
+    "Build: the logic analyser added to the design, Vivado 2026.1, 418.1 s, every check passed (worst setup slack 3.06 ns). Programmed into the board's memory; build ID d2b75378 read back over JTAG before arming."
+   ]
+  },
+  {
+   "name": "Arm and capture",
+   "fact": "win_wr == 1 AND addr == 0x80",
+   "phase": "during",
+   "captions": [
+    "Armed. Over the serial link: before arming COUNT = 0x3; after arming COUNT = 0x1234, the write that fires the trigger."
+   ]
+  },
+  {
+   "name": "Answer",
+   "fact": "matched; read back 0x1234",
+   "phase": "after",
+   "captions": [
+    "Answer: count was 0x0003 from cycle -16 to 0, then 0x1234 from cycle 1 to 32.",
+    "Read back over the serial link: COUNT = 0x00001234, the value the capture shows. Programming and capture took 64.7 s, inside the recommended operating conditions."
+   ]
+  }
+ ],
+ "tick": 8,
+ "alt": "Waveform of win_wr, addr and count from cycle -16 to 32 around the trigger: win_wr is 1 only at cycle 0, addr holds 0x80, count is 0x0003 up to cycle 0 and 0x1234 from cycle 1.",
+ "marks": [
+  {
+   "x": 0,
+   "label": "trigger, cycle 0"
+  },
+  {
+   "x": 1,
+   "signal": "count",
+   "label": "0x0003 to 0x1234"
+  }
  ],
  "source": {
   "run": "results/50a_nl_debug/t1_count_write",

@@ -430,7 +430,8 @@ def build(outdir: Path, d, check_numbers=True):
         pages[fn] = layout("showcase.html", P["title"], P["description"], showcase.page_body(P), ["showcase_hero"], pd, css, js,
                            prefix="../", current="showcase.html",
                            pager='<div class="pager"><a href="../showcase.html">&larr; All showcase projects</a><span></span></div>')
-        page_data[fn] = {"shared": shared, "values": P["values"], "hero": P["hero"]["data"]}   # not the project's own text (that would make the check circular)
+        page_data[fn] = {"shared": shared, "values": P["values"], "hero": P["hero"]["data"],   # not the project's own text (that would make the check circular)
+                         "table": (P["story"].get("table") or {}).get("rows")}
     bad = []
     if check_numbers:
         allow = allow_tokens()
