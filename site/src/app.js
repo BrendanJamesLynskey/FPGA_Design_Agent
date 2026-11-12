@@ -792,7 +792,7 @@
       art.appendChild(strip);
     }
     var label = T.alt || ("Waveform of " + T.signals.map(function (g) { return g.name; }).join(", ") + " over " + n + " " + T.unit + "s");
-    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "kitsvg stagedwave", "aria-label": label });
+    var s = sv("svg", { viewBox: "0 0 " + W + " " + H, width: "100%", role: "img", class: "kitsvg stagedwave" + (narrow ? " narrow" : ""), "aria-label": label });
     art.appendChild(s);
     if (T.key) art.appendChild(el("p", { class: "small muted wavekey", text: T.key }));
     if (T.alt) art.appendChild(el("p", { class: "visually-hidden", text: T.alt }));
@@ -879,7 +879,8 @@
       function bin(v) { return Math.min(B - 1, Math.max(0, Math.floor((v - lo) / (hi - lo) * B))); }
       var full = new Array(B).fill(0); xs.forEach(function (v) { full[bin(v)]++; });
       var top = Math.max.apply(null, full);
-      var W = 360, Ht = 210, L = 34, R = 10, T0 = 26, Bo = 174, bw = (W - L - R) / B;
+      /* the running count has its own row (y 12) above the mark labels (y T0 - 10), so the two never overprint */
+      var W = 360, Ht = 224, L = 34, R = 10, T0 = 40, Bo = 188, bw = (W - L - R) / B;
       var s = sv("svg", { viewBox: "0 0 " + W + " " + Ht, width: "100%", role: "img", class: "kitsvg",
         "aria-label": "Histogram of " + N + " " + (H.label || "samples") + " in " + H.unit + ", from " + nf(lo) + " to " + nf(hi) });
       s.appendChild(sv("line", { x1: L, x2: W - R, y1: Bo, y2: Bo, class: "ink" }));
