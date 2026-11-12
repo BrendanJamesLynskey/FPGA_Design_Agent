@@ -87,7 +87,7 @@ def test_contract_refuses(tmp_path, break_it, msg):
 
 
 def test_in_progress_with_a_number_is_refused(tmp_path):
-    y = yaml.safe_load((SITE / "showcase" / "nl_debug.yaml").read_text())
+    y = yaml.safe_load((SITE / "showcase" / "axi_transactor.yaml").read_text())
     y["what_it_will_show"] += " Capture depth 4096 samples."
     with pytest.raises(showcase.ContractError, match="typed number"):
         showcase.build(_write(tmp_path, y))
@@ -314,3 +314,18 @@ def test_readme_headline_numbers_are_the_data():
     assert f'On {dev["tasks"]} development tasks, {dev["hidden_pass"]} of {dev["runs"]} runs with' in t
     assert f'In {dev["escapes"]} more' in t
     assert f'passed ({ab["uart_passed"]} of {ab["uart_tests"]}) and its logic-analyser captures failed' in t and not ab["pass"]
+
+
+def test_nl_debug_portfolio_card_sources_resolve():
+    """The showcase project 'Debugging in plain English' (brief 50A): every fact's number is the value at its source."""
+    P = json.loads((SITE / "portfolio" / "nl_debug" / "portfolio.json").read_text())
+    d = build.load_data(None)
+    assert P["url"].startswith("https://") and len(P["facts"]) == 3
+    for f in P["facts"]:
+        for key in ("source", "of"):
+            if key in f:
+                assert f[key].startswith("site/data:"), f
+                assert build.fmt(abs(build.lookup(d, f[key].split(":", 1)[1]))) in f["text"], (f, key)
+    for k in ("still_1200x630", "animation"):
+        assert (SITE / "portfolio" / "nl_debug" / P["media"][k]).exists(), k
+    assert (SITE / "portfolio" / "nl_debug" / P["media"]["animation"]).stat().st_size < 2_000_000

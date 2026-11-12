@@ -1,110 +1,131 @@
-"""Page data for the brief 50A showcase page, from committed results only.
+"""Page data for the showcase page "Debugging in plain English" (site/showcase/nl_debug.yaml), from committed results only.
 
-    python -m debug_core.showcase_data [--results results/50a_nl_debug] [--out site/data/showcase_nl_debug.json]
+    python -m debug_core.showcase_data [--results results/50a_nl_debug]
 
-Every number in the output is copied from ``results/50a_nl_debug`` (demo.json, builds.json and each run's plan.json,
-capture.json, check.json); nothing is computed that is not also in those files except the trimmed sample windows for the
-hero replay (the cycles each request asked for, sliced from the capture) and simple sums stated as such.
+Writes two files into the results folder, both derived from files committed beside them (demo.json, builds.json and each
+run's plan.json, capture.json, check.json, answer.txt):
+
+- ``summary.json``: the values the page's ``{name}`` placeholders read (counts, ranges, costs, conditions);
+- ``hero.json``: the hero in the site kit's ``wave`` form: the COUNT-write capture over the cycles the request asked for,
+  with one caption per cycle that walks through the real run (request, plan, build, arming, trigger, answer).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 from typing import Any
 
 from debug_core.capture import trim
-from debug_core.plan import render
 from debug_core.rtl_index import ROOT
 
 ORDER = ["t1_count_write", "t1_pwm_period", "t1_sync_byte", "t1_or_flags", "t1_reuse_rise"]
+HERO_RUN = "t1_count_write"
 
 
-def run_entry(d: Path, demo: dict[str, Any], builds: dict[str, Any]) -> dict[str, Any]:
-    plan = json.loads((d / "plan.json").read_text())
-    cap = json.loads((d / "capture.json").read_text())
-    chk = json.loads((d / "check.json").read_text())
-    req = plan["window"].get("requested") or {}
-    full0 = -cap["timebase"]["trigger_sample"]
-    lo = -int(req["pre"]) if req.get("pre") is not None else full0
-    hi = int(req["post"]) if req.get("post") is not None else full0 + cap["timebase"]["samples"] - 1
-    win = trim(cap, lo, hi)
-    b = builds.get(cap["build"].get("probeset") or "", {})
-    rel = d.relative_to(ROOT)
+def _load(d: Path) -> tuple[dict, dict, dict]:
+    return (json.loads((d / "plan.json").read_text()), json.loads((d / "capture.json").read_text()),
+            json.loads((d / "check.json").read_text()))
+
+
+def summary(res: Path) -> dict[str, Any]:
+    demo = json.loads((res / "demo.json").read_text())
+    builds = json.loads((res / "builds.json").read_text())["builds"]
+    runs = [n for n in ORDER if (res / n / "capture.json").is_file()]
+    temps, vccint, vccaux, vccbram, alarms, verdicts = [], [], [], [], [], []
+    for n in runs:
+        cond = json.loads((res / n / "capture.json").read_text())["conditions"]
+        verdicts.append(cond.get("verdict"))
+        alarms += cond.get("alarms") or []
+        for w in ("programmed", "armed", "done"):
+            now = (cond.get(w) or {}).get("now") or {}
+            temps.append(now["TEMPERATURE"]); vccint.append(now["VCCINT"]); vccaux.append(now["VCCAUX"]); vccbram.append(now["VCCBRAM"])
+    costs = [demo[n]["parse"]["cost"] for n in runs]
+    walls = [b["wall_s"] for b in builds.values()]
+    wns = [b["wns_ns"] for b in builds.values()]
+    cap_s = [demo[n]["seconds_program_capture"] for n in runs]
+    plan0, cap0, _ = _load(res / HERO_RUN)
+    b0 = builds[cap0["build"]["probeset"]]
     return {
-        "name": d.name, "request": plan["request"], "pass": demo.get("pass"),
-        "parse": demo.get("parse"),
-        "intent": plan.get("intent"),
-        "plan_text": render(plan),
-        "plan": {"probes": [{k: p[k] for k in ("label", "path", "width", "pins", "requested_as", "role")} for p in plan["probes"]],
-                 "trigger": plan["trigger"], "window": plan["window"], "ports": plan["ports"], "fit": plan["fit"],
-                 "setup": plan["setup"], "stimulus": plan["stimulus"], "readback": plan["readback"],
-                 "probeset": plan["probeset"]},
-        "build": {"probeset": cap["build"].get("probeset"), "build_id": cap["build"].get("build_id"),
-                  "reused_other_probe_set": cap["build"].get("reused"), "vivado": cap["build"].get("vivado"),
-                  "wall_s": b.get("wall_s"), "wns_ns": b.get("wns_ns"), "utilization": b.get("utilization"),
-                  "gates_pass": b.get("gates_pass"), "program_seconds": cap["build"].get("program_seconds"),
-                  "power_ok": cap["build"].get("power_ok")},
-        "replay": {"first_cycle": lo if lo > full0 else full0, "trigger_sample": win["timebase"]["trigger_sample"],
-                   "mhz": cap["timebase"]["mhz"], "channels": [{k: c[k] for k in ("name", "path", "width", "samples")}
-                                                               for c in win["channels"]],
-                   "full_samples": cap["timebase"]["samples"]},
-        "answer": (d / "answer.txt").read_text().strip(),
-        "check": chk, "readback": cap.get("readback"),
-        "conditions": {k: cap["conditions"].get(k) for k in ("programmed", "armed", "done", "verdict", "alarms", "outside",
-                                                              "limits")},
-        "seconds": {"total": demo.get("seconds_total"), "program_and_capture": demo.get("seconds_program_capture")},
-        "files": {k: str(rel / f) for k, f in (("plan", "plan.json"), ("capture", "capture.json"), ("vcd", "capture.vcd"),
-                                              ("answer", "answer.txt"), ("view", "view.html"), ("ila_csv", "ila/cap.csv"))
-                  if (d / f).is_file()},
+        "runs": len(runs), "passed": sum(1 for n in runs if demo[n]["pass"]),
+        "reused_runs": sum(1 for n in runs if demo[n].get("reused_build")),
+        "builds": len(builds), "build_s_min": min(walls), "build_s_max": max(walls),
+        "build_min_minutes": round(min(walls) / 60), "build_max_minutes": int(-(-max(walls) // 60)),
+        "peak_mib_max": max(b["scope_anon_peak_mib"] for b in builds.values()),
+        "wns_ns_min": min(wns), "wns_ns_max": max(wns),
+        "power_w_max": max(b["power_total_w"] for b in builds.values()),
+        "capture_s_min": min(cap_s), "capture_s_max": max(cap_s),
+        # truncated, not rounded, to 5 decimals (0.000274675 is stated as 0.00027)
+        "parse_cost_usd_min": math.floor(min(costs) * 1e5) / 1e5, "parse_cost_usd_max": math.floor(max(costs) * 1e5) / 1e5,
+        "parse_model": demo[runs[0]]["parse"]["model"],
+        "die_c_min": min(temps), "die_c_max": max(temps), "vccint_v": sorted(set(vccint)), "vccaux_v_min": min(vccaux),
+        "vccaux_v_max": max(vccaux), "vccbram_v": sorted(set(vccbram)),
+        "inside_roc_runs": sum(1 for v in verdicts if v == "inside ROC"), "alarms": len(alarms),
+        "max_ports": plan0["fit"]["max_ports"],
+        "hero": {"request": plan0["request"], "build_id": cap0["build"]["build_id"], "probeset": cap0["build"]["probeset"],
+                 "build_s": b0["wall_s"], "wns_ns": b0["wns_ns"], "ports_used": len(plan0["ports"]),
+                 "pre": plan0["window"]["requested"]["pre"], "post": plan0["window"]["requested"]["post"],
+                 "depth": plan0["window"]["depth"]},
     }
+
+
+def hero(res: Path) -> dict[str, Any]:
+    plan, cap, chk = _load(res / HERO_RUN)
+    req = plan["window"]["requested"]
+    win = trim(cap, -int(req["pre"]), int(req["post"]))
+    t0 = win["timebase"]["trigger_sample"]
+    n = win["timebase"]["samples"]
+    xs = [k - t0 for k in range(n)]
+    sigs = []
+    for c in win["channels"]:
+        sg: dict[str, Any] = {"name": c["name"], "kind": "bit" if c["width"] == 1 else "bus", "v": c["samples"]}
+        if c["width"] > 1:
+            sg.update({"radix": "hex", "width": c["width"]})
+        sigs.append(sg)
+    builds = json.loads((res / "builds.json").read_text())["builds"]
+    b = builds[cap["build"]["probeset"]]
+    probes = ", ".join(f"{p['label']} ({p['path']})" for p in plan["probes"])
+    trig = " AND ".join(c["text"] for c in plan["trigger"]["conditions"])
+    answer = (res / HERO_RUN / "answer.txt").read_text().strip().splitlines()
+    rb = cap["readback"]
+    cond = cap["conditions"]
+    steps = [
+        f"Request, in plain English: \"{plan['request']}\"",
+        f"Plan: probes {probes}; trigger {trig}; {req['pre']} cycles before and {req['post']} after; "
+        f"{len(plan['ports'])} of the {plan['fit']['max_ports']} allowed probe ports.",
+        f"Build: one logic analyser added to the design; Vivado 2026.1 build {cap['build']['build_id']}, "
+        f"{b['wall_s']} s, every check passed; programmed into the board's SRAM.",
+        "Over the UART shell: " + "; ".join(
+            [f"before arming, {o['register']} written to 0x{o['value']:X}" for o in plan["setup"] if o["op"] == "write"]
+            + [f"after arming, {o['register']} written to 0x{o['value']:X}" for o in plan["stimulus"] if o["op"] == "write"]) + ".",
+    ]
+    line = {name: next((l for l in answer if l.startswith(name + " ")), "") for name in (c["name"] for c in win["channels"])}
+    data_lines = [line[c["name"]] for c in win["channels"]]
+    caps = []
+    for x in xs:
+        if x < 0:
+            caps.append(steps[min(len(steps) - 1, (x + int(req["pre"])) * len(steps) // int(req["pre"]))]
+                        + f" (cycle {x}, before the trigger)")
+        elif x == 0:
+            caps.append(f"Cycle 0, the trigger: {trig}. " + answer[1])
+        elif x < int(req["post"]):
+            caps.append(f"Cycle {x}. Answer: " + data_lines[(x - 1) % len(data_lines)])
+        else:
+            caps.append(f"Cycle {x}, the end of the asked window. Read back over the shell: COUNT = 0x{rb['COUNT']:08X}; "
+                        f"{'inside the recommended operating conditions' if cond.get('verdict') == 'inside ROC' else cond.get('verdict')}.")
+    return {"unit": "cycle", "x": xs, "signals": sigs, "captions": caps,
+            "source": {"run": f"results/50a_nl_debug/{HERO_RUN}", "check_pass": chk["pass"]}}
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("--results", type=Path, default=ROOT / "results" / "50a_nl_debug")
-    ap.add_argument("--out", type=Path, default=ROOT / "site" / "data" / "showcase_nl_debug.json")
     a = ap.parse_args(argv)
-    demo = json.loads((a.results / "demo.json").read_text())
-    builds = json.loads((a.results / "builds.json").read_text())
-    runs = [run_entry(a.results / n, demo[n], builds["builds"]) for n in ORDER if (a.results / n / "capture.json").is_file()]
-    passed = sum(1 for r in runs if r["pass"])
-    costs = [r["parse"].get("cost") for r in runs if r.get("parse") and r["parse"].get("cost") is not None]
-    rebuilds = [r for r in runs if r["build"]["reused_other_probe_set"]]
-    walls = [b["wall_s"] for b in builds["builds"].values()]
-    data = {
-        "id": "nl_debug", "brief": "50A", "title": "Debug on the board from a plain-English request",
-        "board": "Nexys A7-100T", "part": "xc7a100tcsg324-1", "vivado": "2026.1", "licence_tier": "Basic",
-        "headline": {"known_answer_runs": len(runs), "passed": passed,
-                     "parse_cost_usd_max": max(costs) if costs else None, "parse_model": runs[0]["parse"].get("model") if runs else None,
-                     "builds": len(builds["builds"]),
-                     "build_wall_s": sorted(b["wall_s"] for b in builds["builds"].values()),
-                     "runs_without_a_new_build": len(rebuilds),
-                     "conditions": sorted({r["conditions"]["verdict"] for r in runs})},
-        "runs": runs, "builds": builds["builds"],
-        "limits": [
-            "Vivado 2026.1 Basic licence tier: one ILA instance per design, so one clock domain per build, and at most 5 "
-            "probe ports, and each port has one comparator (measured).",
-            "Trigger compares are per bit (0, 1, X and rising/falling/either edge); != and magnitude compares on buses are "
-            "refused unless they reduce to a per-bit pattern; OR only across 1-bit terms.",
-            f"A new probe set is a new build ({min(walls):g} to {max(walls):g} s for these {len(walls)} T1 builds, one each); "
-            "trigger, window and stimulus are run-time settings.",
-            "One design (T1) and five requests; the parser was not measured on a held-out set of requests.",
-            "Clocks made inside the design (MMCM outputs) and signals inside generate blocks are not resolved yet.",
-            "XADC samples are read through JTAG at arm and after upload, not on the capture timeline.",
-            "No agent role is offered the debug tools yet: offering them needs its own pre-registered evaluation first."],
-        "agent_vs_owner": {"owner": "asked for the capability, the order (front end first) and the safety rules "
-                                    "(SRAM only, power and temperature limits, DRCs never skipped)",
-                           "agent": "wrote the front end, the tests and the docs, ran the builds and board runs; a language "
-                                    "model (the project's cheap default) only turned each request into the intent JSON"},
-        "try_it": ["python -m debug_core plan designs/t1_dimmer_counter \"<request>\"",
-                   "python -m debug_core view results/50a_nl_debug/t1_count_write/capture.json -o view.html"],
-        "sources": {"results": "results/50a_nl_debug", "docs": "docs/debug.md", "code": "debug_core/"},
-    }
-    a.out.parent.mkdir(parents=True, exist_ok=True)
-    a.out.write_text(json.dumps(data, indent=1) + "\n")
-    print(a.out, len(runs), "runs", passed, "passed")
+    (a.results / "summary.json").write_text(json.dumps(summary(a.results), indent=1) + "\n")
+    (a.results / "hero.json").write_text(json.dumps(hero(a.results), indent=1) + "\n")
+    print(a.results / "summary.json", a.results / "hero.json")
     return 0
 
 

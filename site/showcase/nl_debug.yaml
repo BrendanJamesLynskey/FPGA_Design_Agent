@@ -1,9 +1,69 @@
-# Showcase project (brief 50A). Contract: docs/showcase_pages.md. In progress: no numbers until a board result is committed.
+# Showcase project: debugging on the board from a plain-English request. Contract: docs/showcase_pages.md.
+# Every number comes from results/50a_nl_debug (summary.json and hero.json are written by python -m debug_core.showcase_data).
 id: nl_debug
 order: 1
-status: in_progress
+status: published
 title: Debugging in plain English
-one_line: "Ask for a capture in words, such as \"show me the UART byte when the FIFO overflows\": the agent picks the signals by their RTL names, sets the trigger, rebuilds with a logic analyser, captures on the board and answers in plain words beside the waveform."
+one_line: "Ask for a capture in words: the flow picks the signals by their RTL names, sets the trigger, builds an on-chip logic analyser, captures on the board and answers in plain words, quoting only the capture."
 board: Digilent Nexys A7-100T
 part: xc7a100tcsg324-1
-what_it_will_show: "A real capture from the board answering a question asked in words, the waveform it rests on, and the capture handed back to the agent's repair loop."
+values:
+  runs: {source: results/50a_nl_debug/summary.json, expr: "get:runs"}
+  passed: {source: results/50a_nl_debug/summary.json, expr: "get:passed"}
+  reused: {source: results/50a_nl_debug/summary.json, expr: "get:reused_runs"}
+  builds: {source: results/50a_nl_debug/summary.json, expr: "get:builds"}
+  build_lo: {source: results/50a_nl_debug/summary.json, expr: "get:build_s_min"}
+  build_hi: {source: results/50a_nl_debug/summary.json, expr: "get:build_s_max"}
+  build_min: {source: results/50a_nl_debug/summary.json, expr: "get:build_min_minutes"}
+  build_max: {source: results/50a_nl_debug/summary.json, expr: "get:build_max_minutes"}
+  cap_lo: {source: results/50a_nl_debug/summary.json, expr: "get:capture_s_min"}
+  cap_hi: {source: results/50a_nl_debug/summary.json, expr: "get:capture_s_max"}
+  cost_lo: {source: results/50a_nl_debug/summary.json, expr: "get:parse_cost_usd_min"}
+  cost_hi: {source: results/50a_nl_debug/summary.json, expr: "get:parse_cost_usd_max"}
+  die_lo: {source: results/50a_nl_debug/summary.json, expr: "get:die_c_min"}
+  die_hi: {source: results/50a_nl_debug/summary.json, expr: "get:die_c_max"}
+  vccint: {source: results/50a_nl_debug/summary.json, expr: "get:vccint_v.0"}
+  inside: {source: results/50a_nl_debug/summary.json, expr: "get:inside_roc_runs"}
+  alarms: {source: results/50a_nl_debug/summary.json, expr: "get:alarms"}
+  ports: {source: results/50a_nl_debug/summary.json, expr: "get:max_ports"}
+  wns_lo: {source: results/50a_nl_debug/summary.json, expr: "get:wns_ns_min"}
+  power_hi: {source: results/50a_nl_debug/summary.json, expr: "get:power_w_max"}
+  hero_build: {source: results/50a_nl_debug/summary.json, expr: "get:hero.build_id"}
+  hero_pre: {source: results/50a_nl_debug/summary.json, expr: "get:hero.pre"}
+  hero_post: {source: results/50a_nl_debug/summary.json, expr: "get:hero.post"}
+  hero_depth: {source: results/50a_nl_debug/summary.json, expr: "get:hero.depth"}
+  hero_ports: {source: results/50a_nl_debug/summary.json, expr: "get:hero.ports_used"}
+  hero_request: {source: results/50a_nl_debug/summary.json, expr: "get:hero.request"}
+headline: "On the Digilent Nexys A7-100T (xc7a100tcsg324-1) with Vivado 2026.1, {passed} of {runs} requests written in plain English were answered from captures on the board, and every answer matched the known result and the value read back over the board's serial link."
+description: "A plain-English request becomes a probe plan, an on-chip logic analyser build, a capture on the Nexys A7 and an answer that quotes only the capture: measured on one design with known answers."
+hero: {kind: wave, source: results/50a_nl_debug/hero.json, path: "", caption: "One real run replayed: the request, the plan, the build, then the captured signals cycle by cycle with the answer read from them."}
+story:
+  problem: "An on-chip logic analyser shows what a design really does on the board, but setting one up is slow: choosing signals that survive synthesis, packing them into the analyser's ports, writing the trigger, rebuilding and reading the waveform. On the free Vivado licence tier the analyser is also limited, so a request that does not fit fails late, after a long build."
+  how: "A language model only restates the request as structured JSON. Everything after it is deterministic: each signal name is resolved against the RTL to a register output, the trigger becomes per-bit compare values, the window and the analyser's ports are sized within the free tier's limits, and the plan is shown before anything is built. The build reuses the normal Vivado flow and all its checks; the capture runs over JTAG while the board is driven over its serial link; the answer is written from facts computed from the samples, and a check refuses any number that the capture does not support."
+  architecture:
+    blocks: [[req, Request in words], [plan, Plan by RTL name], [build, Logic analyser build], [board, Capture on the board], [ans, Answer from the capture]]
+    links: [[req, plan, JSON], [plan, build, probes], [build, board, SRAM], [board, ans, samples], [ans, plan, "the agent asks the next question"]]
+  results:
+    - "{passed} of {runs} known-answer requests passed: a register write, one dimmer period, the serial sync byte on a rising edge, an OR of two edges and a request served by an existing build. One design, one run each, so no spread is stated."
+    - "{builds} debug builds of {build_lo} to {build_hi} seconds each (about {build_min} to {build_max} minutes); {reused} of the {runs} requests needed no new build because an earlier build already held its signals. Every build met timing (worst setup slack at least {wns_lo} ns) and stayed under {power_hi} W."
+    - "Programming and capture took {cap_lo} to {cap_hi} seconds per request. Reading each request cost {cost_lo} to {cost_hi} US dollars, as the model provider reported."
+    - "The free tier allows one analyser and at most {ports} probe ports with one comparator each. On the board Vivado refused to arm two OR terms on one port, so the planner now gives each OR term its own port; that build triggered correctly."
+    - "All {inside} captures ran inside the recommended operating conditions: die {die_lo} to {die_hi} C, core supply {vccint} V, {alarms} alarms."
+  agent:
+    request: "{hero_request}"
+    plan: "Three signals resolved by RTL name to register outputs, packed into {hero_ports} of the {ports} ports; trigger on the write strobe and the address byte; a {hero_depth}-sample window holding the {hero_pre} cycles before and {hero_post} after that were asked for."
+    gates: ["The plan matched its schema and the free tier's limits before any build.", "The build passed every check of the normal flow, including timing and the debug hub's clock crossing.", "The build ID read back over JTAG matched before arming ({hero_build}).", "Every number in the answer was checked against the capture."]
+    approvals: ["The owner asked for this capability, set the order (front end first) and the safety rules: board memory only, power and temperature limits, design checks never skipped. No approval was needed per run."]
+evidence:
+  - {kind: record, label: "Results: requests, plans, captures, answers and checks", path: results/50a_nl_debug/README.md}
+  - {kind: record, label: "The replayed run: plan, capture, waveform file and raw analyser export", path: results/50a_nl_debug/t1_count_write}
+  - {kind: record, label: "The refused OR layout, with Vivado's message", path: results/50a_nl_debug/or_flags_same_port_refused/ila/ila_capture.stdout.txt}
+  - {kind: conditions, label: "Die temperature and supplies at programming, arming and after upload, per run", path: results/50a_nl_debug/summary.json}
+  - {kind: versions, label: "Build IDs, Vivado version, timing and resources per debug build", path: results/50a_nl_debug/builds.json}
+  - {kind: requirements, label: "Requirements traced", text: "not recorded: the debug runs check known answers from the design's specification but are not yet linked to its requirement IDs"}
+  - {kind: record, label: "How it works", path: docs/debug.md}
+limits:
+  not_measured: ["One design and a handful of requests: the parser and the name resolver were not measured on other designs or on requests the authors had not seen.", "No agent role is offered the debug tools yet; they were tested in CI, not used on the board by an agent.", "Supply and temperature are read at programming, arming and after upload, not on the capture timeline."]
+  nulls: ["The example request \"capture the UART byte when the FIFO overflows\" cannot be built on this design: it has no FIFO, and the plan says so instead of guessing a signal."]
+  next: ["Our own capture core behind the same front end: triggers changed without a rebuild, more than one clock domain, no port limit.", "Offer the tools to the agent's repair loop, measured in a pre-registered comparison.", "Supply and temperature samples on the same timeline as the digital signals."]
+try_it: {command: "python -m debug_core answer debug_core/tests/fixtures/golden/t1_count_write/capture.json", note: "Prints the plain-words answer for the replayed capture; no board, Vivado or model needed."}

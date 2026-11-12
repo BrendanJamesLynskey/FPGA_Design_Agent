@@ -253,7 +253,8 @@ class VendorIla(Instrument):
         f = self.work / "ila_capture.stdout.txt"
         lines = f.read_text(errors="replace").splitlines() if f.is_file() else []
         errs = [l.strip() for l in lines if l.startswith("ERROR")]
-        errs += [l.strip() for l in lines if "ila_capture.tcl:" in l and not l.lstrip().startswith("#")]
+        errs += [l.strip() for l in lines if l.startswith("ila_capture.tcl:")]
+        errs = list(dict.fromkeys(errs))
         return " | ".join(errs)[:1200] or "(no Vivado error line)"
 
     def capture(self) -> dict[str, Any]:
