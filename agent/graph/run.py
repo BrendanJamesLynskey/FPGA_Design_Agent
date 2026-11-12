@@ -46,7 +46,7 @@ from agent.graph.repair import stage2_owners
 from flow.verif_gates import MACROS_REL
 from agent.graph import ownership
 from agent.graph.snapshot import Snapshots
-from agent.graph.spec_schema import (PROOF_METHODS, SpecError, clock_hz, load_spec, propose_proof, rate_params,
+from agent.graph.spec_schema import (PROOF_METHODS, requirement_quality_errors, SpecError, clock_hz, load_spec, propose_proof, rate_params,
                                      validate)
 from agent.graph.stages import MACHINE, RUN_LIMITS, classify, exit_check, route_failure, visit_limit
 from flow import architecture as arch_mod
@@ -1188,7 +1188,7 @@ def node_gate(state: State) -> dict:
             else:
                 spec, summary = _interview(rt, spec, state)
                 out["interview"] = summary
-                errs = validate(spec) + register_map_errors(req, spec)
+                errs = validate(spec) + requirement_quality_errors(spec) + register_map_errors(req, spec)   # brief 53
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, not spec.get("open_questions"), errs
                 if errs:
                     detail.append("[spec.yaml] " + "; ".join(errs))

@@ -35,11 +35,14 @@ def test_compound_and_vague_requirements_are_rejected():
     assert "REQ-06 is compound" in text
 
 
-def test_validate_carries_the_quality_errors():
+def test_the_clarify_gate_applies_the_quality_check_and_validate_does_not():
+    """validate() also checks the benchmark's frozen hidden specs, so the quality check sits in the clarify gate only."""
+    import inspect
     spec = {"name": "x", "top": "x", "ports": [1], "clocks": [1], "reset": {"a": 1}, "behaviour": {"g": ["a"]},
             "registers": {"map": [{"name": "R"}]}, "timing": {"latency": {}}, "requirements": _spec(
                 "COUNT wraps; COUNT holds")["requirements"]}
-    assert any("REQ-01 is compound" in e for e in validate(spec))
+    assert not any("compound" in e for e in validate(spec))
+    assert "validate(spec) + requirement_quality_errors(spec)" in inspect.getsource(R)
 
 
 def test_role_prompts_ask_for_atomic_requirements_and_tags():

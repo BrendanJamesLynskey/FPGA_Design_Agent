@@ -133,7 +133,8 @@ _COMPOUND_RX = re.compile(r";|,\s*and\b|,\s*but\b|\band also\b|\bas well as\b|\.
 
 
 def requirement_quality_errors(spec: dict[str, Any]) -> list[str]:
-    """Brief 53: each requirement is atomic (one checkable statement), verifiable (no vague word; at least a few words)
+    """Brief 53, applied by the clarify gate to the agent's spec (not part of :func:`validate`, which also checks the
+    benchmark's frozen hidden specs): each requirement is atomic (one checkable statement), verifiable (no vague word; at least a few words)
     and uniquely identified (requirement_errors checks the ids). Returns one message per problem, naming the id."""
     errs = []
     for r in spec.get("requirements") or []:
@@ -172,7 +173,6 @@ def validate(spec: dict[str, Any], allow_rates: bool = False, need_proof: bool =
         return ["spec.yaml is empty"]
     errs = [f"spec.yaml has no {k!r} (required, non-empty)" for k in REQUIRED if not spec.get(k)]
     errs += requirement_errors(spec, need_proof)
-    errs += requirement_quality_errors(spec)                    # brief 53: atomic and verifiable
     for k in ("ports", "clocks"):
         if spec.get(k) and not isinstance(spec[k], (list, dict)):
             errs.append(f"{k!r} must be a list or mapping")
