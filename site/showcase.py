@@ -32,9 +32,16 @@ E = html.escape
 STATUS = {"published": "Measured", "in_progress": "In progress", "planned": "Planned"}
 KINDS = ("wave", "hist", "shmoo")
 #: words a showcase's text may hold that look like numbers but are names (parts, boards, standards, releases)
-PROSE_OK = re.compile(expertise.PROSE_OK.pattern.replace(r"|2025\.2", "").replace(r"Vivado \d+\.\d+", r"Vivado 2026\.1")
-                      + r"|xck?\w+(?:-\w+)+|AXI4-Lite|AXI4-Stream|xc7a100tcsg324-1|A7-100T|Nexys A7|KR260|KV260|"
-                      r"64b/66b|8b/10b|1G|10G|25G|RGMII|SFP\+|VCCINT|VCCAUX|VCCBRAM|DDR\d|JTAG|UART|XADC|SYSMON")
+#: names that contain digits but are not measurements: AMD part names, families, boards, standards and the one Vivado
+#: release published text may name. Deliberately not inherited from the expertise page: brief, PR and guide numbers
+#: (Brief 37, PR #37, UG37) and mutant or rule ids (M37, C85) are not allowed in showcase text.
+PROSE_OK = re.compile(
+    r"\bVivado 2026\.1\b|\bxc[a-z0-9]+(?:-[a-z0-9]+)+\b|AXI4-Lite|AXI4-Stream|\bAXI[34]\b|\bDSP48(?:E[12])?\b|\b7-series\b|"
+    r"\bZynq-7000\b|\bArtix-7\b|\bKintex-7\b|\bVirtex-7\b|\bV[0-3](?: to V[0-3])?\b|\bK26\b|\bKR260\b|\bKV260\b|"
+    r"\bNexys A7(?:-100T)?\b|\bA7-100T\b|\bI2C\b|\bPS[78]\b|\b64b/66b\b|\b8b/10b\b|\b(?:1|10|25)G\b|\bDDR[2-5]\b|\bIEEE-1735\b",
+    re.I)
+#: any run of digits is a number wherever it stands (after a letter, '#', '.' or a hyphen too); a leading minus counts
+NUM = re.compile(r"-?\d+(?:[.,]\d+)*")
 REQUIRED = {"published": ["id", "title", "one_line", "board", "part", "headline", "hero", "story", "evidence", "limits"],
             "in_progress": ["id", "title", "one_line", "board", "what_it_will_show"],
             "planned": ["id", "title", "one_line"]}
@@ -49,7 +56,7 @@ class ContractError(ValueError):
 
 
 def _numbers(s: str) -> list[str]:
-    return expertise.NUM.findall(PROSE_OK.sub(" ", str(s)))
+    return [n for n in NUM.findall(PROSE_OK.sub(" ", str(s))) if any(c.isdigit() for c in n)]
 
 
 def _no_typed_numbers(where: str, s: str):

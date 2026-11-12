@@ -92,7 +92,7 @@ Every status: `id` (lower case, digits and `_`; the page name), `title`, `one_li
   headline, description, board, part, the hero caption, every story field (including architecture block and link
   labels and the agent mapping's keys and values), evidence labels and texts, limits and the try-it note. A number must
   come from a `{name}` placeholder. Names that look like numbers (AMD part names, boards, standards, Vivado 2026.1) are
-  allowed by the `PROSE_OK` pattern in `site/showcase.py`. Not checked as text: `values`, `hero.source`, `hero.path`,
+  allowed by the `PROSE_OK` pattern in `site/showcase.py` (details below). Not checked as text: `values`, `hero.source`, `hero.path`,
   `evidence.path` and `try_it.command`.
 - **For `in_progress` and `planned`:** any field outside the status's list, and any number in title, one_line, board,
   part or `what_it_will_show`.
@@ -108,8 +108,17 @@ Every status: `id` (lower case, digits and `_`; the page name), `title`, `one_li
 - **Synthetic fixtures** (`fixture: true`, hero data under `site/tests/`) are refused by the normal build. They build
   only with `--showcase-fixture`.
 
-`build.py --check` then checks every number on a showcase page against the shared site data plus the project's
-resolved `values` and hero data. It never checks against the project's own text, which would make the check circular.
+`build.py --check` then checks every number visible on a showcase page, and on the Showcase index, against the shared
+site data (every `site/data/*.json` except the showcase data itself) plus the resolved `values` and hero data of the
+published projects. The projects' own text is not part of that data, so a number typed into the YAML, including one in
+the try-it command that the contract does not scan, fails the check unless the same number happens to occur elsewhere in
+the site data. That is a weak backstop, since the shared data holds many small numbers; the contract's scan above is the
+main guard. In that scan:
+- any run of digits counts as a number, wherever it stands: after a letter, `#`, `.` or a hyphen, with a leading minus
+  counted;
+- only the names in `PROSE_OK` are exempt: AMD part names (`xc…`, matched as whole words), device families, boards,
+  standards and Vivado 2026.1;
+- brief, PR, guide and rule numbers are not exempt.
 
 ## Hero kinds (the shared graphics kit)
 

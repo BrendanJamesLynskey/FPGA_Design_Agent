@@ -259,11 +259,51 @@ def test_fixture_and_hero_source_rules(tmp_path):
         showcase.build(_write(tmp_path, y))                      # a real page's hero comes from results/, not test data
 
 
-def test_showcase_number_check_is_not_circular(tmp_path):
-    """build.py checks a showcase page against shared data plus the project's values and hero, never its own text."""
-    import inspect
-    src = inspect.getsource(build.build)
-    assert '"values": P["values"], "hero": P["hero"]["data"]' in src and '"project": P' not in src
+def _typed_page(tmp_path, mut):
+    """Build the site with one fixture page whose YAML was changed by mut (bypassing the contract, to test build.py alone)."""
+    y = _demo()
+    mut(y)
+    d = build.load_data(None)
+    S = showcase.build(FIX, allow_fixtures=True)
+    P = showcase.resolve("t.yaml", _demo(), allow_fixtures=True)
+    P2 = dict(P)
+    if "try_it" in y:
+        P2["try_it"] = y["try_it"]
+    P2["story"] = dict(P["story"], problem=y["story"]["problem"])
+    S["projects"] = [p for p in S["projects"] if p["id"] != P["id"]] + [P2]
+    d["showcase"] = S
+    _, bad = build.build(tmp_path / "pub", d)
+    return {t for f, t in bad if f == f'showcase/{P["id"]}.html'}
+
+
+@pytest.mark.parametrize("mut, token", [
+    (lambda y: y["try_it"].update(command="python3 run.py --budget 61.73"), "61.73"),
+    (lambda y: y["story"].update(problem="Worst slack was -0.4377 ns."), "-0.4377"),
+    (lambda y: y["story"].update(problem="The FIFO holds 8191 words."), "8191"),
+])
+def test_showcase_number_check_is_not_circular(tmp_path, mut, token):
+    """A number that appears only in the project's own text (here slipped past the contract on purpose) must fail
+    build.py's number check: the project's text is never part of the data the check accepts."""
+    bad = _typed_page(tmp_path, mut)
+    assert token in bad or token.lstrip("-") in bad, bad
+
+
+@pytest.mark.parametrize("text", ["-0.4 ns", "x37", "#37", "{n}.5", "M37", "UG37", "PR #37", "Brief 37", "it exceeded-by-37-ns",
+                                  "Vivado 2025.2", "٣ items"])
+def test_typed_number_patterns_are_refused(tmp_path, text):
+    y = _demo()
+    y["story"]["problem"] = text
+    with pytest.raises(showcase.ContractError, match="typed number"):
+        showcase.build(_write(tmp_path, y), allow_fixtures=True)
+
+
+@pytest.mark.parametrize("text", ["Digilent Nexys A7-100T (xc7a100tcsg324-1)", "xck26-sfvc784-2LV-c on the KR260",
+                                  "AXI4-Lite and AXI4-Stream over UART", "Vivado 2026.1", "three of three, twelve ns"])
+def test_names_with_digits_are_allowed(tmp_path, text):
+    y = _demo()
+    y["story"]["problem"] = text
+    showcase.build(_write(tmp_path, y), allow_fixtures=True)
+
 
 
 def test_readme_headline_numbers_are_the_data():

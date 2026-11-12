@@ -516,6 +516,8 @@ def harness_results():
             rule = "Meets the adopt rule"
         else:
             rule = "Not adopted against the rule (at least 30 % lower with an interval that excludes 0): " + "; ".join(why(k) for k in prim)
+            if arm == "H2":
+                rule += "; hangs, its other primary measure, were too rare in this round to compare"
         status = ("; ".join(parts).capitalize() + f'. Hidden-test passes {totals[arm]["hidden_passes"]} of {totals[arm]["runs"]} '
                   f'(baseline {totals["A0"]["hidden_passes"]} of {totals["A0"]["runs"]}). ' + rule + ".")
         out[arm] = {"status": status, "paired": m, "verdict": v, "wall_without_censored": sens[arm],

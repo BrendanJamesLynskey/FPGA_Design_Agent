@@ -398,14 +398,18 @@ def build(outdir: Path, d, check_numbers=True):
     import catalogue_pages
     css = (SRC / "site.css").read_text()
     js = (SRC / "app.js").read_text()
-    shared = {k: v for k, v in d.items() if k != "tasks"}
+    # the showcase projects' own text never enters the number check (it would vouch for its own numbers); the showcase
+    # pages are checked against the shared data plus each project's resolved values and hero data
+    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase")}
+    sc_values = {P["id"]: {"values": P["values"], "hero": P["hero"]["data"]}
+                 for P in d.get("showcase", {}).get("projects", []) if P["status"] == "published"}
     if "catalogue" in d:
         shared["catalogue_index"] = {"domains": d["catalogue"]["domains"]}
     pages, page_data = {}, {}
     for fname, label, title, desc, keys in PAGES:
         body = render_template((SRC / fname).read_text(), d)
         pages[fname] = layout(fname, title, desc, body, keys, shared, css, js)
-        page_data[fname] = shared
+        page_data[fname] = {"shared": shared, "showcase_values": sc_values} if fname == "showcase.html" else shared
     if "catalogue" in d:
         order = task_order(d)
         for i, r in enumerate(order):
@@ -432,7 +436,7 @@ def build(outdir: Path, d, check_numbers=True):
         allow = allow_tokens()
         cache = {}
         for fname, page in pages.items():
-            key = fname if fname.startswith(("problems/", "showcase/")) else "_shared"
+            key = fname if fname.startswith(("problems/", "showcase/")) or fname == "showcase.html" else "_shared"
             if key not in cache:
                 cache[key] = data_tokens(page_data[fname]) | allow
             ok = cache[key]
