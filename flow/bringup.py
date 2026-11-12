@@ -131,6 +131,10 @@ class Run:
         r = program.program(self.design, variant, self.board["name"], self.log_dir / f"program_{variant}")
         if variant == "base":
             self.res["build_stamp"] = r["build_stamp"]
+        if r.get("pass"):
+            # brief 54: the shell's register 0x05 (the USR_ACCESS word) against the manifest; a mismatch stops the run here
+            with FpgaShell.open(self.board["uart"]) as sh:
+                r["build_id_uart"] = program.check_shell_build_id(sh.identify(), r.get("build_id"))
         return r
 
     def uart_tests(self) -> dict[str, Any]:

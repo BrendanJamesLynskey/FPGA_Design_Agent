@@ -44,6 +44,14 @@ jobs:
             boto3==1.44.0 moto==5.2.5
       - name: pytest (no simulator; agent core + the 05b agent graph - isolation, interview, review, rewind, T1 episode)
         run: python -m pytest -q --ignore-glob='*_rtl.py'
+      - name: Build manifests of the committed designs and the sample release bundle (brief 54; Vivado never runs here)
+        run: |
+          for y in designs/*/build.yaml; do
+            d=$(dirname "$y")
+            python flow/manifest.py show "$d" --json "build/manifest_$(basename "$d").json" >/dev/null
+            python -c 'import json, sys; m = json.load(open(sys.argv[1])); print(m["design"], "build ID", m["build_id"], len(m["inputs"]), "inputs")' "build/manifest_$(basename "$d").json"
+          done
+          for b in results/54_reproducible/sample_bundle/*/; do python flow/release.py check "$b"; done
       - name: Board inventory against the master XDC (brief 04c)
         run: python tools/inventory_check.py boards/nexys_a7_100t
       - name: Benchmark v1 training pool, model unit tests (brief 06a)

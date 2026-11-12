@@ -84,6 +84,9 @@ run_variant() {
   local prep
   prep="$("$PY" "$ROOT/flow/prepare.py" "$DESIGN" --variant "$variant" --out "$out")"
   echo "$prep" >"$out/prepare.json"
+  # brief 54: the build manifest (flow/manifest.py) and the build ID, appended to inputs.tcl before the cache decision so
+  # that the flow key covers it; flow/build.tcl writes it into the bitstream's USR_ACCESS register
+  "$PY" "$ROOT/flow/manifest.py" pre "$out" --vivado "$VIVADO" --threads "$THREADS" >/dev/null
   local decision action
   decision="$("$PY" "$ROOT/flow/build_cache.py" "$out" --prev "$prev" --base "$DESIGN/build/base" \
       --variant "$variant" --vivado "$VIVADO" --threads "$THREADS")"
@@ -184,6 +187,7 @@ run = {
                 if (out / "stages.txt").exists() else {},
     "cache": json.loads((out / "cache.json").read_text()).get("action") if (out / "cache.json").exists() else None,
     "flow_key": (out / "flow_key.txt").read_text().strip() if (out / "flow_key.txt").exists() else None,
+    "build_id": json.loads((out / "manifest.json").read_text()).get("build_id") if (out / "manifest.json").exists() else None,
 }
 if (out / "result_hash.json").exists():
     run["result_hash"] = json.loads((out / "result_hash.json").read_text())
@@ -199,6 +203,10 @@ EOF
       "$PY" "$ROOT/flow/gates.py" "$out" --json "$out/gates.json" || true
     fi
     die "Vivado failed for $REL ($variant), exit $rc; see $out/vivado.log"
+  fi
+  # brief 54: record the tool facts and outputs in the manifest, and check that the bitstream carries the build ID
+  if ! "$PY" "$ROOT/flow/manifest.py" post "$out"; then
+    die "the bitstream of $REL ($variant) does not carry its manifest's build ID; see $out/manifest.json"
   fi
   "$PY" "$ROOT/flow/gates.py" "$out" --json "$out/gates.json"
 }

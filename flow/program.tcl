@@ -82,6 +82,24 @@ set ms [expr {[clock milliseconds] - $t0}]
 refresh_hw_device $dev
 set done ?
 catch {set done [get_property REGISTER.CONFIG_STATUS.BIT14_DONE_PIN $dev]}
-puts "FDA-PROGRAMMED device=$dev part=[get_property PART $dev] done_pin=$done program_ms=$ms ilas=[llength [get_hw_ilas -quiet -of_objects $dev]]"
+# brief 54: the USR_ACCESS register of the configured device (the build ID that flow/build.tcl wrote; AMD XAPP1232)
+set ua ?
+catch {set ua [get_property REGISTER.USR_ACCESS $dev]}
+puts "FDA-PROGRAMMED device=$dev part=[get_property PART $dev] done_pin=$done program_ms=$ms ilas=[llength [get_hw_ilas -quiet -of_objects $dev]] usr_access=$ua"
+# brief 54 (house rule, 2026-11-11): the operating conditions at programming time, from the XADC through JTAG, read-only:
+# now, and the min/max registers the XADC latches in hardware since this configuration (UG480: 12-bit codes in bits 15:4;
+# temperature = code * 503.975 / 4096 - 273.15; supply = code / 4096 * 3 V; max 0x20-0x23, min 0x24-0x27, flags 0x3F)
+if {![catch {get_hw_sysmons -of_objects $dev} sm] && $sm ne ""} {
+    proc fda_code {sm addr} { return [expr {([scan [get_hw_sysmon_reg $sm $addr] %x] >> 4) & 0xFFF}] }
+    proc fda_t {c} { return [format %.2f [expr {$c * 503.975 / 4096.0 - 273.15}]] }
+    proc fda_v {c} { return [format %.4f [expr {$c * 3.0 / 4096.0}]] }
+    catch {
+        refresh_hw_sysmon $sm
+        puts "FDA-COND NOW TEMPERATURE=[get_property TEMPERATURE $sm] VCCINT=[get_property VCCINT $sm] VCCAUX=[get_property VCCAUX $sm] VCCBRAM=[get_property VCCBRAM $sm]"
+        puts "FDA-COND MAX TEMPERATURE=[fda_t [fda_code $sm 0x20]] VCCINT=[fda_v [fda_code $sm 0x21]] VCCAUX=[fda_v [fda_code $sm 0x22]] VCCBRAM=[fda_v [fda_code $sm 0x23]]"
+        puts "FDA-COND MIN TEMPERATURE=[fda_t [fda_code $sm 0x24]] VCCINT=[fda_v [fda_code $sm 0x25]] VCCAUX=[fda_v [fda_code $sm 0x26]] VCCBRAM=[fda_v [fda_code $sm 0x27]]"
+        puts "FDA-COND FLAGS [get_hw_sysmon_reg $sm 0x3F]"
+    }
+}
 close_hw_target
 disconnect_hw_server
