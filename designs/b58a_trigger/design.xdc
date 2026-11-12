@@ -49,8 +49,9 @@ set_property -dict {PACKAGE_PIN E8 IOSTANDARD LVCMOS18 SLEW SLOW DRIVE 8} [get_p
 # Derivation. The PHY launches a nibble on each edge of its own clock: the low nibble on the rising edge, the high
 # nibble on the falling edge. With the PHY's internal RX delay on (M88E1111 register 20 bit 7, set over MDIO before
 # use), the RX_CLK it drives is shifted by about T/4 so that each data nibble is centred on the RX_CLK edge that should
-# capture it: the low nibble on the rising edge, the high nibble on the falling edge. RGMII v2.0 (with the delay)
-# guarantees data valid at least tSU = 1.2 ns before and tH = 1.2 ns after that edge.
+# capture it: the low nibble on the rising edge, the high nibble on the falling edge. The PHY's datasheet (Marvell
+# 88E1111, MV-S100649-00 Rev. M, section 4.12.2, the RX_CLK output table for register 20 bit 7 = 1) gives data valid
+# at least tSU = 1.2 ns before and tH = 1.2 ns after that edge (the RGMII v2.0 figures with the delay are the same).
 # Vivado's model: a virtual clock in phase with RX_CLK at the pins launches each nibble half a period before the edge
 # that captures it, so a nibble captured on the rising edge is launched on the virtual falling edge and vice versa.
 #   setup (max): arrival must be T/2 - tSU after the launch edge         -> -max = 4.0 - 1.2 = 2.8 ns
@@ -82,31 +83,36 @@ set_input_delay -clock b_rxc_v -clock_fall -min 1.200 -add_delay [get_ports {b_r
 # ---- RGMII transmit: data on both edges of the core clock, TXC forwarded edge-aligned, PHY TX delay on ----
 # Derivation. ODDRE1 launches the low nibble on the rising edge of the core clock and the high nibble on its falling
 # edge. TXC comes from the same clock through the same kind of ODDRE1 (rtl/rgmii_tx.sv, TXC_CLK90 = 0), so it leaves
-# edge-aligned with the data, and the PHY's internal TX delay (M88E1111 register 20 bit 1, set over MDIO before use)
-# moves its own sampling point into the middle of each nibble. In that mode RGMII v2.0 asks the transmitter to keep
-# each data change within skew = 0.5 ns of the TXC edge (before or after); the PHY data sheet's figure is to be
-# confirmed. Vivado's model: the generated clock TXC captures each nibble on the opposite edge (requirement T/2):
-#   setup (max): the nibble must have settled skew_after after its own edge, i.e. T/2 - skew before the opposite edge
-#                -> -max = T/2 - skew = 4.0 - 0.5 = 3.5 ns
-#   hold  (min): it must not change earlier than skew_before before its own edge (requirement 0, the same edge);
-#                an output's hold required time is the edge minus -min -> -min = +skew = +0.5 ns (Vivado's
-#                edge-aligned output template; a build with -min -0.5 demanded a change 0.5 ns after the edge)
-# These are Vivado's most restrictive pairs as well, so no exception is needed. (A TXC from a 90-degree MMCM output on a
-# second global buffer, PHY TX delay off, RGMII v2.0's 1.0 ns set-up and hold, was built and routed as well: hold
-# +0.40, set-up -0.43 (port A) and -0.39 (port B); the worst set-up and hold slacks of a port sum to -31 ps (A) and
-# +1 ps (B), and the MMCM's 125 ps phase steps cannot place TXC in either window: results/b58a/build_tx_centred_trial.)
+# edge-aligned with the data, and the PHY delays GTX_CLK itself (M88E1111 register 20 bit 1 = 1, set over MDIO before
+# use). The PHY's own input requirement in that mode (Marvell 88E1111 datasheet, MV-S100649-00 Rev. M, section 4.12.2,
+# the GTX_CLK input table for register 20 bit 1 = 1), in our words: measured at the PHY pins from a TXC edge, the
+# data must have settled by 0.9 ns after the edge (its set-up figure is negative) and must stay until 2.7 ns after
+# it. So, around each TXC edge, a data change may come
+#   up to skew_after  = 0.9 ns after its own edge, and
+#   no earlier than skew_before = T/2 - 2.7 = 1.3 ns before the next edge.
+# (Wider than RGMII v2.0's generic +/-0.5 ns, which an earlier build used and missed by up to 0.2 ns.)
+# Board: the KR260's TXC-to-TXD trace skew is not in our notes, so an ASSUMED allowance of 0.1 ns (either sign) is taken
+# off both sides: skew_after = 0.8 ns, skew_before = 1.2 ns. Vivado's model: the generated clock TXC captures each
+# nibble on the opposite edge (requirement T/2) for set-up and on its own edge (requirement 0) for hold:
+#   setup (max): the nibble must have settled skew_after after its own edge -> -max = T/2 - skew_after = 4.0 - 0.8 = 3.2 ns
+#   hold  (min): it must not change earlier than skew_before before the next edge; an output's hold required time is
+#                the edge minus -min                                     -> -min = +skew_before = +1.2 ns
+# These are Vivado's most restrictive pairs as well, so no exception is needed. build.yaml carries the same numbers
+# (data_sheet skew_before_ns 1.3, skew_after_ns 0.9, board_skew_ns 0.1) and flow/io_check.py derives -max/-min from
+# them (IO-VALUE). (A TXC from a 90-degree MMCM output on a second global buffer, PHY TX delay off, was built and
+# routed as well and did not close: results/b58a/build_tx_centred_trial.)
 create_generated_clock -name a_txc -source [get_pins u_atx/u_txc/C] -multiply_by 1 [get_ports a_txc]
 create_generated_clock -name b_txc -source [get_pins u_btx/u_txc/C] -multiply_by 1 [get_ports b_txc]
-# port A, both edges: max = T/2 - skew = 3.5 ns, min = +skew = +0.5 ns
-set_output_delay -clock a_txc -max 3.500 [get_ports {a_txd[*] a_tx_ctl}]
-set_output_delay -clock a_txc -min 0.500 [get_ports {a_txd[*] a_tx_ctl}]
-set_output_delay -clock a_txc -clock_fall -max 3.500 -add_delay [get_ports {a_txd[*] a_tx_ctl}]
-set_output_delay -clock a_txc -clock_fall -min 0.500 -add_delay [get_ports {a_txd[*] a_tx_ctl}]
-# port B, both edges: max = T/2 - skew = 3.5 ns, min = +skew = +0.5 ns
-set_output_delay -clock b_txc -max 3.500 [get_ports {b_txd[*] b_tx_ctl}]
-set_output_delay -clock b_txc -min 0.500 [get_ports {b_txd[*] b_tx_ctl}]
-set_output_delay -clock b_txc -clock_fall -max 3.500 -add_delay [get_ports {b_txd[*] b_tx_ctl}]
-set_output_delay -clock b_txc -clock_fall -min 0.500 -add_delay [get_ports {b_txd[*] b_tx_ctl}]
+# port A, both edges: max = T/2 - skew_after = 3.2 ns, min = +skew_before = +1.2 ns
+set_output_delay -clock a_txc -max 3.200 [get_ports {a_txd[*] a_tx_ctl}]
+set_output_delay -clock a_txc -min 1.200 [get_ports {a_txd[*] a_tx_ctl}]
+set_output_delay -clock a_txc -clock_fall -max 3.200 -add_delay [get_ports {a_txd[*] a_tx_ctl}]
+set_output_delay -clock a_txc -clock_fall -min 1.200 -add_delay [get_ports {a_txd[*] a_tx_ctl}]
+# port B, both edges: max = T/2 - skew_after = 3.2 ns, min = +skew_before = +1.2 ns
+set_output_delay -clock b_txc -max 3.200 [get_ports {b_txd[*] b_tx_ctl}]
+set_output_delay -clock b_txc -min 1.200 [get_ports {b_txd[*] b_tx_ctl}]
+set_output_delay -clock b_txc -clock_fall -max 3.200 -add_delay [get_ports {b_txd[*] b_tx_ctl}]
+set_output_delay -clock b_txc -clock_fall -min 1.200 -add_delay [get_ports {b_txd[*] b_tx_ctl}]
 
 # ---- JTAG register front end: BSCANE2 (the clock is defined on INTERNAL_TCK, as AMD's own debug IP does) ----
 create_clock -name tck -period 33.333 [get_pins u_jtag/u_bscan/INTERNAL_TCK]

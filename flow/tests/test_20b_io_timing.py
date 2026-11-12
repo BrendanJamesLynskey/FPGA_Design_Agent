@@ -146,6 +146,9 @@ def test_expected_delays_formulas() -> None:
     # edge-aligned DDR output with a forwarded clock: -min is +skew_before (the b58a TX hold sign, review B3)
     assert e({"direction": "out", "clock_period_ns": 8.0, "data_sheet": {"skew_before_ns": 0.5, "skew_after_ns": 0.5}}) \
         == {"max": 3.5, "min": 0.5}
+    # with a board clock-to-data skew allowance: both sides of the window narrow by it (b58a TX, 88E1111 20.1 = 1)
+    assert e({"direction": "out", "clock_period_ns": 8.0,
+              "data_sheet": {"skew_before_ns": 1.3, "skew_after_ns": 0.9, "board_skew_ns": 0.1}}) == {"max": 3.2, "min": 1.2}
 
 
 def test_uncertainty_breakdown_parse() -> None:
