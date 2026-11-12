@@ -228,6 +228,8 @@ def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
                 if st.get("resource_sanity") and not st["resource_sanity"]["pass"]:
                     from flow.architecture import resource_failures
                     why = why + resource_failures(st["resource_sanity"])
+            if g == "stage_post_synth" and ev.get("plan_fails"):      # closure-loop hook: a planned DSP/BRAM not inferred
+                ok, why = False, why + list(ev["plan_fails"])
         else:
             raise KeyError(g)
         if not ok:
@@ -254,6 +256,8 @@ def classify(stage: Stage, fails: list[str]) -> str | None:
     text = " ".join(fails)
     if "architecture not approved" in text:
         return "arch"                    # an approval is the owner's (or auto): back to the architecture stage
+    if stage.n == 4 and "plan: " in text:
+        return "rtl"                     # closure loop: the RTL did not follow the design-time plan's templates
     if stage.n == 4 and "resources:" in text:
         return resource_cause(fails)
     if stage.n == 4 and "standards STD-" in text:

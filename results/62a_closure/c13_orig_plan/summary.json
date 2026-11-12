@@ -1,0 +1,155 @@
+{
+ "stop": "all goals met (G1-G4; G5 not run in 62A)",
+ "all_met": true,
+ "start": {
+  "G1": {
+   "met": true,
+   "value": "5/5",
+   "target": "all pass",
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G2": {
+   "met": false,
+   "value": {
+    "wns_ns": -0.177,
+    "whs_ns": 0.131,
+    "tns_ns": -0.207,
+    "failing_endpoints": 2
+   },
+   "target": {
+    "wns_ns": 0.0,
+    "whs_ns": 0.0,
+    "period_ns": 10.0
+   },
+   "shortfall": 0.0177,
+   "detail": ""
+  },
+  "G3": {
+   "met": false,
+   "value": {
+    "lut": 3062,
+    "ff": 1915,
+    "bram_tile": 2,
+    "dsp": 0,
+    "iob": 20
+   },
+   "target": {
+    "lut": 50720.0,
+    "ff": 101440.0,
+    "bram_tile": 108.0,
+    "dsp": 192.0,
+    "iob": 168.0
+   },
+   "shortfall": 0.01,
+   "detail": "plan: the design has 0 DSP48E1 where the plan put 2 multiplies on DSP slices (they were built in LUTs or optimised away): use the dsp_mul template, no asynchronous reset on its registers, operands within 25 x 18"
+  },
+  "G4": {
+   "met": true,
+   "value": {
+    "total_w": 0.148,
+    "junction_c": 42.7
+   },
+   "target": {
+    "power_w": 2.0,
+    "tj_max_c": 85.0
+   },
+   "shortfall": 0.0,
+   "detail": "vectorless estimate, confidence Medium"
+  },
+  "G5": {
+   "met": null,
+   "value": null,
+   "target": "board checks",
+   "shortfall": null,
+   "detail": "not run in 62A"
+  }
+ },
+ "final": {
+  "G1": {
+   "met": true,
+   "value": "5/5",
+   "target": "all pass",
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G2": {
+   "met": true,
+   "value": {
+    "wns_ns": 2.054,
+    "whs_ns": 0.113,
+    "tns_ns": 0.0,
+    "failing_endpoints": 0
+   },
+   "target": {
+    "wns_ns": 0.0,
+    "whs_ns": 0.0,
+    "period_ns": 10.0
+   },
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G3": {
+   "met": true,
+   "value": {
+    "lut": 2901,
+    "ff": 1944,
+    "bram_tile": 2,
+    "dsp": 2,
+    "iob": 20
+   },
+   "target": {
+    "lut": 50720.0,
+    "ff": 101440.0,
+    "bram_tile": 108.0,
+    "dsp": 192.0,
+    "iob": 168.0
+   },
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G4": {
+   "met": true,
+   "value": {
+    "total_w": 0.146,
+    "junction_c": 42.7
+   },
+   "target": {
+    "power_w": 2.0,
+    "tj_max_c": 85.0
+   },
+   "shortfall": 0.0,
+   "detail": "vectorless estimate, confidence Medium"
+  },
+  "G5": {
+   "met": null,
+   "value": null,
+   "target": "board checks",
+   "shortfall": null,
+   "detail": "not run in 62A"
+  }
+ },
+ "start_line": "G1 met (5/5); G2 NOT met (WNS -0.177 WHS 0.131); G3 NOT met (LUT 3062 FF 1915 BRAM 2 DSP 0); G4 met (0.148 W); G5 -",
+ "final_line": "G1 met (5/5); G2 met (WNS 2.054 WHS 0.113); G3 met (LUT 2901 FF 1944 BRAM 2 DSP 2); G4 met (0.146 W); G5 -",
+ "unmet": {},
+ "unmet_text": [],
+ "iterations": 1,
+ "accepted": 1,
+ "reverted": 0,
+ "strategies": [
+  [
+   "t_plan_map",
+   "accept"
+  ]
+ ],
+ "usd": 0.00318,
+ "tokens": 9201,
+ "llm_calls": 1,
+ "seconds": 674.3,
+ "case": "c13_orig_plan",
+ "task": "c13_hough_lines",
+ "model": "openai/gpt-6-luna",
+ "rtl_in": "agent/tests/fixtures/closure/c13_orig/rtl",
+ "plan": true,
+ "clock_mhz": 100
+}

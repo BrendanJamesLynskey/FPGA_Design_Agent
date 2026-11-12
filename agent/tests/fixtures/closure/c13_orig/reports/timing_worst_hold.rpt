@@ -1,0 +1,64 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Design       : c13_hough_lines_top
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.041ns  (arrival time - required time)
+  Source:                 u_regs/u_core/s0_idx_reg[7]/C
+                            (rising edge-triggered cell FDRE clocked by sys_clk_pin  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_regs/u_core/u_a/mem_reg/ADDRBWRADDR[11]
+                            (rising edge-triggered cell RAMB36E1 clocked by sys_clk_pin  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             sys_clk_pin
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (sys_clk_pin rise@0.000ns - sys_clk_pin rise@0.000ns)
+  Data Path Delay:        0.543ns  (logic 0.141ns (25.988%)  route 0.402ns (74.012%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.318ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    2.052ns
+    Source Clock Delay      (SCD):    1.488ns
+    Clock Pessimism Removal (CPR):    0.245ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock sys_clk_pin rise edge)
+                                                      0.000     0.000 r  <hidden>
+    E3                                                0.000     0.000 r  CLK100MHZ
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         0.250     0.250 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.644     0.894    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.920 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=1923, routed)        0.569     1.488    u_regs/u_core/CLK100MHZ_IBUF_BUFG
+    SLICE_X9Y103         FDRE                                         r  u_regs/u_core/s0_idx_reg[7]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X9Y103         FDRE (Prop_fdre_C_Q)         0.141     1.629 r  u_regs/u_core/s0_idx_reg[7]/Q
+                         net (fo=8, routed)           0.402     2.031    u_regs/u_core/u_a/D[7]
+    RAMB36_X0Y18         RAMB36E1                                     r  u_regs/u_core/u_a/mem_reg/ADDRBWRADDR[11]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock sys_clk_pin rise edge)
+                                                      0.000     0.000 r  <hidden>
+    E3                                                0.000     0.000 r  CLK100MHZ
+                         net (fo=0)                   0.000     0.000    CLK100MHZ
+    E3                   IBUF (Prop_ibuf_I_O)         0.438     0.438 r  CLK100MHZ_IBUF_inst/O
+                         net (fo=1, routed)           0.699     1.136    CLK100MHZ_IBUF
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     1.165 r  CLK100MHZ_IBUF_BUFG_inst/O
+                         net (fo=1923, routed)        0.887     2.052    u_regs/u_core/u_a/CLK100MHZ_IBUF_BUFG
+    RAMB36_X0Y18         RAMB36E1                                     r  u_regs/u_core/u_a/mem_reg/CLKBWRCLK
+                         clock pessimism             -0.245     1.807    <hidden>
+    RAMB36_X0Y18         RAMB36E1 (Hold_ramb36e1_CLKBWRCLK_ADDRBWRADDR[11])
+                                                      0.183     1.990    u_regs/u_core/u_a/mem_reg
+  -------------------------------------------------------------------
+                         required time                         -1.990    <hidden>
+                         arrival time                           2.031    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.041    <hidden>
+
+
+
+

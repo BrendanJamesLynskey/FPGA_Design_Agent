@@ -207,6 +207,21 @@ home and config. `python -m agent run ... --harness claude_code --cc-model claud
 [docs/claude_code_arm.md](docs/claude_code_arm.md). The same release has four agent fixes from the 05b diagnosis (spec
 schema, model API contract, integer cycle-count timing parameters, superseded files).
 
+## Closure loop and design-time plan
+
+When a design passes simulation but misses timing, area or power, the closure loop edits the RTL, re-checks simulation
+on an independent bench, rebuilds, and keeps a change only if it helped and broke nothing. It stops when every goal
+holds or with a report of what it tried. Before the first build, a design-time plan maps each arithmetic chain to DSP
+slices, block RAM or logic and picks the pipeline depth from a measured delay model.
+
+On Vivado 2026.1, one run per case:
+- the c13_hough_lines reference, which misses 100 MHz, closed in one iteration with and without the plan;
+- seeded timing misses closed in 1 of 3 cases (c16_montgomery_mult at 200 MHz);
+- the RTL writer working from the plan failed the hidden bench in all 6 attempts.
+
+How it works, terms and commands: [docs/closure_loop.md](docs/closure_loop.md). Results and caveats:
+[results/62a_closure](results/62a_closure/README.md). Both steps are off by default (`--design-plan`, `--closure on`).
+
 ## The benchmark
 Benchmark v1 for scoring the agent: 24 natural-language tasks for the Nexys A7 (12 T1 blocks, 12 T2 peripherals),
 each with a hidden full spec, an independent golden model, cocotb acceptance tests, deliberate mutants, a trap test
@@ -389,6 +404,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 55 | VHDL designs: set `--hdl vhdl` or `language: vhdl` and the flow lints the VHDL with GHDL, simulates it with the SystemVerilog test shell, builds it in Vivado, mutates it and checks it formally. A model's first VHDL translations failed all five board tasks on one naming clash; with that mistake written into its guidance (an exploratory, post-hoc arm), all five passed the same hidden tests and Vivado 2026.1 gates as the SystemVerilog references, and one ran on the board. Three block designs were checked by their own tests and out-of-context synthesis only (one fails as translated). The end-to-end agent passed 0 of 4 VHDL runs ([docs/vhdl.md](docs/vhdl.md), [results/55_vhdl](results/55_vhdl/README.md)) | PR open |
 | 59A | On-chip AXI transactor and protocol checker: a block that drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time (no rebuild) and checks 10 + 5 protocol rules and the data in hardware. Measured on a Nexys A7: every planned board run gave its expected verdict, the board matched simulation cycle for cycle, the rules are checked formally to depth 20 (bounded), and AMD's AXI Protocol Checker on the same AXI4-Lite bus agreed. Full AXI4 is not covered. Try it: `python -m pytest -q axi_tx/tests/test_59a_rtl.py && python axi_tx/formal/run_formal.py` ([docs/axi_tx.md](docs/axi_tx.md), [results/59a_axi_tx](results/59a_axi_tx/README.md)) | PR open |
 | 50A | Debug from a plain-English request: a request becomes a checked plan (signals found by RTL name, a per-bit trigger, a window, packing into the Basic tier's 5 ILA probe ports, or what would fit when it cannot), a debug build, a capture on the board with supply and temperature readings, and an answer that quotes only the capture. Measured on a Nexys A7-100T with Vivado 2026.1: 5 plain-English requests on one design, all 5 answers matched the known answer and the shell's readback; the parser and name resolver were not tested on other designs or a held-out set. Agent tools `debug_plan`, `debug_capture`, `debug_query` exist but no agent role is offered them yet ([docs/debug.md](docs/debug.md), [results/50a_nl_debug](results/50a_nl_debug/README.md)) | PR open |
+| 62A | Closure loop and design-time plan: goals G1-G5 from spec.yaml, a controller that keeps a change only if it improves an unmet goal and worsens none (simulation re-checked after every change, synthesis guard against designs that simulate but do not build as simulated), a timing playbook driven by report digests, and a plan that maps datapaths to DSP/BRAM/logic and pipelines them from a measured 7-series delay model. c13_hough_lines closed in one iteration with and without the plan; seeded misses closed 1 of 3; the RTL writer working from the plan failed 6 of 6 ([docs/closure_loop.md](docs/closure_loop.md), [results/62a_closure](results/62a_closure/README.md)) | PR open |
 | 63A | IP library variants: an entry can hold several implementations of one block (same ports, same bit-exact result), each measured out of context with Vivado 2026.1 on an Artix-7, so the planning stage can pick one ([docs/ip_variants.md](docs/ip_variants.md)). New FIR entry with four variants, checked against one model: at 16 taps the folded variant uses 4 DSP slices and 2 block RAM tiles, about 267 MHz (estimated, Artix-7 only, not on a board), and takes a new sample every 7 clocks; the fully parallel variant takes a sample every clock but uses 5377 LUTs, about 117 MHz (estimated). dds_awg and adc_histogram gained block RAM and LUT variants. Simulated and built only: no board run, power is vectorless ([ip_lib/README.md](ip_lib/README.md)) | PR open |
 | F2 | Agent v1: interview, plan, RTL, tests and the full Vivado flow (05a-05g above); 21 development runs on 11 course-tier tasks ([results/course](results/course), [site results](https://fpga-design-agent.vercel.app/results)) | built; development runs recorded |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |

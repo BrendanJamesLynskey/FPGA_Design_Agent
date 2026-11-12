@@ -1,0 +1,16 @@
+# TEST FIXTURE ONLY: round numbers in the shape of the knowledge bank's delay model, so CI can run the planner without the
+# private bank. Not measurements; the real model is FPGA_Design_Agent_Knowledge/family_matrix/delay_model/7series.yaml.
+schema: fpga-design-agent/delay-model/v1
+family: 7series
+version: test
+uncertainty_ns: 0.035
+ff: {clk_to_q_ns: 0.45, setup_ns: 0.06}
+lut_level_ns: 0.7
+table_ns: 1.5
+mux16_ns: 3.5
+fit:
+  add_by_bits: {a: 1.8, b: 0.04}
+  compare_by_bits: {a: 1.8, b: 0.03}
+  lut_mul_by_width: {a: 5.0, b: 0.25}
+dsp48: {in_route_ns: 1.5, mult_ns: 2.5, madd_ns: 1.5, out_route_ns: 1.4, comb_ns: 5.8}
+bram: {clk_to_out_ns: 2.5, clk_to_out_reg_ns: 1.2}

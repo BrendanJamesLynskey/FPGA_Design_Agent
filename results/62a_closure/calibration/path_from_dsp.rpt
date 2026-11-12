@@ -1,0 +1,614 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Design       : dm_calib
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             6.868ns  (required time - arrival time)
+  Source:                 u_mul18_dsp3/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[2]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        3.079ns  (logic 0.682ns (22.152%)  route 2.397ns (77.848%))
+  Logic Levels:           2  (LUT4=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp3/clk
+    DSP48_X0Y13          DSP48E1                                      r  u_mul18_dsp3/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y13          DSP48E1 (Prop_dsp48e1_CLK_P[2])
+                                                      0.434     1.407 r  u_mul18_dsp3/p_reg/P[2]
+                         net (fo=1, routed)           1.443     2.850    u_mul9_dsp0/dout_reg[15]_1[2]
+    SLICE_X18Y30         LUT6 (Prop_lut6_I5_O)        0.124     2.974 r  u_mul9_dsp0/dout[2]_i_2/O
+                         net (fo=1, routed)           0.953     3.928    u_mul9_dsp0/dout[2]_i_2_n_0
+    SLICE_X18Y34         LUT4 (Prop_lut4_I0_O)        0.124     4.052 r  u_mul9_dsp0/dout[2]_i_1/O
+                         net (fo=1, routed)           0.000     4.052    u_mul9_dsp0_n_8
+    SLICE_X18Y34         FDRE                                         r  dout_reg[2]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X18Y34         FDRE                                         r  dout_reg[2]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X18Y34         FDRE (Setup_fdre_C_D)        0.031    10.920    dout_reg[2]
+  -------------------------------------------------------------------
+                         required time                         10.920    <hidden>
+                         arrival time                          -4.052    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  6.868    <hidden>
+
+Slack (MET) :             6.980ns  (required time - arrival time)
+  Source:                 u_mul18_dsp2/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[9]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.967ns  (logic 0.682ns (22.987%)  route 2.285ns (77.013%))
+  Logic Levels:           2  (LUT6=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp2/clk
+    DSP48_X0Y12          DSP48E1                                      r  u_mul18_dsp2/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y12          DSP48E1 (Prop_dsp48e1_CLK_P[9])
+                                                      0.434     1.407 r  u_mul18_dsp2/p_reg/P[9]
+                         net (fo=1, routed)           1.478     2.885    u_mul9_dsp0/P[9]
+    SLICE_X22Y32         LUT6 (Prop_lut6_I4_O)        0.124     3.009 r  u_mul9_dsp0/dout[9]_i_2/O
+                         net (fo=1, routed)           0.807     3.816    u_bram1/dout_reg[9]
+    SLICE_X22Y34         LUT6 (Prop_lut6_I5_O)        0.124     3.940 r  u_bram1/dout[9]_i_1/O
+                         net (fo=1, routed)           0.000     3.940    u_bram1_n_8
+    SLICE_X22Y34         FDRE                                         r  dout_reg[9]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X22Y34         FDRE                                         r  dout_reg[9]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X22Y34         FDRE (Setup_fdre_C_D)        0.031    10.920    dout_reg[9]
+  -------------------------------------------------------------------
+                         required time                         10.920    <hidden>
+                         arrival time                          -3.940    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  6.980    <hidden>
+
+Slack (MET) :             7.023ns  (required time - arrival time)
+  Source:                 u_mul18_dsp3/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[0]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.922ns  (logic 0.682ns (23.338%)  route 2.240ns (76.662%))
+  Logic Levels:           2  (LUT5=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp3/clk
+    DSP48_X0Y13          DSP48E1                                      r  u_mul18_dsp3/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y13          DSP48E1 (Prop_dsp48e1_CLK_P[0])
+                                                      0.434     1.407 r  u_mul18_dsp3/p_reg/P[0]
+                         net (fo=1, routed)           1.336     2.743    u_mul9_dsp0/dout_reg[15]_1[0]
+    SLICE_X22Y30         LUT6 (Prop_lut6_I5_O)        0.124     2.867 r  u_mul9_dsp0/dout[0]_i_2/O
+                         net (fo=1, routed)           0.904     3.771    u_bram1/dout_reg[0]
+    SLICE_X19Y33         LUT5 (Prop_lut5_I1_O)        0.124     3.895 r  u_bram1/dout[0]_i_1/O
+                         net (fo=1, routed)           0.000     3.895    u_bram1_n_9
+    SLICE_X19Y33         FDRE                                         r  dout_reg[0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X19Y33         FDRE                                         r  dout_reg[0]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X19Y33         FDRE (Setup_fdre_C_D)        0.029    10.918    dout_reg[0]
+  -------------------------------------------------------------------
+                         required time                         10.918    <hidden>
+                         arrival time                          -3.895    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.023    <hidden>
+
+Slack (MET) :             7.030ns  (required time - arrival time)
+  Source:                 u_mul18_dsp3/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[12]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.917ns  (logic 0.682ns (23.378%)  route 2.235ns (76.622%))
+  Logic Levels:           2  (LUT6=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp3/clk
+    DSP48_X0Y13          DSP48E1                                      r  u_mul18_dsp3/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y13          DSP48E1 (Prop_dsp48e1_CLK_P[12])
+                                                      0.434     1.407 r  u_mul18_dsp3/p_reg/P[12]
+                         net (fo=1, routed)           1.370     2.777    u_mul9_dsp0/dout_reg[15]_1[12]
+    SLICE_X22Y33         LUT6 (Prop_lut6_I5_O)        0.124     2.901 r  u_mul9_dsp0/dout[12]_i_2/O
+                         net (fo=1, routed)           0.865     3.766    u_bram1/dout_reg[12]
+    SLICE_X16Y35         LUT6 (Prop_lut6_I5_O)        0.124     3.890 r  u_bram1/dout[12]_i_1/O
+                         net (fo=1, routed)           0.000     3.890    u_bram1_n_5
+    SLICE_X16Y35         FDRE                                         r  dout_reg[12]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X16Y35         FDRE                                         r  dout_reg[12]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X16Y35         FDRE (Setup_fdre_C_D)        0.031    10.920    dout_reg[12]
+  -------------------------------------------------------------------
+                         required time                         10.920    <hidden>
+                         arrival time                          -3.890    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.030    <hidden>
+
+Slack (MET) :             7.090ns  (required time - arrival time)
+  Source:                 u_mul18_dsp2/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[6]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.857ns  (logic 0.682ns (23.870%)  route 2.175ns (76.130%))
+  Logic Levels:           2  (LUT4=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp2/clk
+    DSP48_X0Y12          DSP48E1                                      r  u_mul18_dsp2/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y12          DSP48E1 (Prop_dsp48e1_CLK_P[6])
+                                                      0.434     1.407 r  u_mul18_dsp2/p_reg/P[6]
+                         net (fo=1, routed)           1.209     2.616    u_mul9_dsp0/P[6]
+    SLICE_X21Y31         LUT6 (Prop_lut6_I4_O)        0.124     2.740 r  u_mul9_dsp0/dout[6]_i_2/O
+                         net (fo=1, routed)           0.967     3.706    u_mul9_dsp0/dout[6]_i_2_n_0
+    SLICE_X17Y32         LUT4 (Prop_lut4_I0_O)        0.124     3.830 r  u_mul9_dsp0/dout[6]_i_1/O
+                         net (fo=1, routed)           0.000     3.830    u_mul9_dsp0_n_4
+    SLICE_X17Y32         FDRE                                         r  dout_reg[6]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X17Y32         FDRE                                         r  dout_reg[6]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X17Y32         FDRE (Setup_fdre_C_D)        0.031    10.920    dout_reg[6]
+  -------------------------------------------------------------------
+                         required time                         10.920    <hidden>
+                         arrival time                          -3.830    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.090    <hidden>
+
+Slack (MET) :             7.104ns  (required time - arrival time)
+  Source:                 u_mul18_dsp3/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[17]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.843ns  (logic 0.682ns (23.986%)  route 2.161ns (76.014%))
+  Logic Levels:           2  (LUT6=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp3/clk
+    DSP48_X0Y13          DSP48E1                                      r  u_mul18_dsp3/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y13          DSP48E1 (Prop_dsp48e1_CLK_P[17])
+                                                      0.434     1.407 r  u_mul18_dsp3/p_reg/P[17]
+                         net (fo=1, routed)           1.172     2.579    u_mul9_lut/P[1]
+    SLICE_X16Y34         LUT6 (Prop_lut6_I2_O)        0.124     2.703 r  u_mul9_lut/dout[17]_i_2/O
+                         net (fo=1, routed)           0.989     3.692    u_bram1/dout_reg[17]_0
+    SLICE_X11Y34         LUT6 (Prop_lut6_I5_O)        0.124     3.816 r  u_bram1/dout[17]_i_1/O
+                         net (fo=1, routed)           0.000     3.816    u_bram1_n_0
+    SLICE_X11Y34         FDRE                                         r  dout_reg[17]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X11Y34         FDRE                                         r  dout_reg[17]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X11Y34         FDRE (Setup_fdre_C_D)        0.031    10.920    dout_reg[17]
+  -------------------------------------------------------------------
+                         required time                         10.920    <hidden>
+                         arrival time                          -3.816    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.104    <hidden>
+
+Slack (MET) :             7.116ns  (required time - arrival time)
+  Source:                 u_mul18_dsp2/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[5]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.831ns  (logic 0.682ns (24.087%)  route 2.149ns (75.913%))
+  Logic Levels:           2  (LUT4=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp2/clk
+    DSP48_X0Y12          DSP48E1                                      r  u_mul18_dsp2/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y12          DSP48E1 (Prop_dsp48e1_CLK_P[5])
+                                                      0.434     1.407 r  u_mul18_dsp2/p_reg/P[5]
+                         net (fo=1, routed)           1.195     2.602    u_mul9_dsp0/P[5]
+    SLICE_X22Y31         LUT6 (Prop_lut6_I4_O)        0.124     2.726 r  u_mul9_dsp0/dout[5]_i_2/O
+                         net (fo=1, routed)           0.954     3.680    u_mul9_dsp0/dout[5]_i_2_n_0
+    SLICE_X18Y32         LUT4 (Prop_lut4_I0_O)        0.124     3.804 r  u_mul9_dsp0/dout[5]_i_1/O
+                         net (fo=1, routed)           0.000     3.804    u_mul9_dsp0_n_5
+    SLICE_X18Y32         FDRE                                         r  dout_reg[5]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X18Y32         FDRE                                         r  dout_reg[5]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X18Y32         FDRE (Setup_fdre_C_D)        0.031    10.920    dout_reg[5]
+  -------------------------------------------------------------------
+                         required time                         10.920    <hidden>
+                         arrival time                          -3.804    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.116    <hidden>
+
+Slack (MET) :             7.139ns  (required time - arrival time)
+  Source:                 u_mul18_dsp3/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[13]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.806ns  (logic 0.682ns (24.306%)  route 2.124ns (75.694%))
+  Logic Levels:           2  (LUT6=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp3/clk
+    DSP48_X0Y13          DSP48E1                                      r  u_mul18_dsp3/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y13          DSP48E1 (Prop_dsp48e1_CLK_P[13])
+                                                      0.434     1.407 r  u_mul18_dsp3/p_reg/P[13]
+                         net (fo=1, routed)           1.347     2.754    u_mul9_dsp0/dout_reg[15]_1[13]
+    SLICE_X22Y33         LUT6 (Prop_lut6_I5_O)        0.124     2.878 r  u_mul9_dsp0/dout[13]_i_2/O
+                         net (fo=1, routed)           0.777     3.655    u_bram1/dout_reg[13]
+    SLICE_X18Y36         LUT6 (Prop_lut6_I5_O)        0.124     3.779 r  u_bram1/dout[13]_i_1/O
+                         net (fo=1, routed)           0.000     3.779    u_bram1_n_4
+    SLICE_X18Y36         FDRE                                         r  dout_reg[13]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X18Y36         FDRE                                         r  dout_reg[13]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X18Y36         FDRE (Setup_fdre_C_D)        0.029    10.918    dout_reg[13]
+  -------------------------------------------------------------------
+                         required time                         10.918    <hidden>
+                         arrival time                          -3.779    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.139    <hidden>
+
+Slack (MET) :             7.142ns  (required time - arrival time)
+  Source:                 u_mul18_dsp2/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[10]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.803ns  (logic 0.682ns (24.331%)  route 2.121ns (75.669%))
+  Logic Levels:           2  (LUT6=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp2/clk
+    DSP48_X0Y12          DSP48E1                                      r  u_mul18_dsp2/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y12          DSP48E1 (Prop_dsp48e1_CLK_P[10])
+                                                      0.434     1.407 r  u_mul18_dsp2/p_reg/P[10]
+                         net (fo=1, routed)           1.199     2.606    u_mul9_dsp0/P[10]
+    SLICE_X22Y32         LUT6 (Prop_lut6_I4_O)        0.124     2.730 r  u_mul9_dsp0/dout[10]_i_2/O
+                         net (fo=1, routed)           0.922     3.652    u_bram1/dout_reg[10]
+    SLICE_X17Y35         LUT6 (Prop_lut6_I5_O)        0.124     3.776 r  u_bram1/dout[10]_i_1/O
+                         net (fo=1, routed)           0.000     3.776    u_bram1_n_7
+    SLICE_X17Y35         FDRE                                         r  dout_reg[10]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X17Y35         FDRE                                         r  dout_reg[10]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X17Y35         FDRE (Setup_fdre_C_D)        0.029    10.918    dout_reg[10]
+  -------------------------------------------------------------------
+                         required time                         10.918    <hidden>
+                         arrival time                          -3.776    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.142    <hidden>
+
+Slack (MET) :             7.154ns  (required time - arrival time)
+  Source:                 u_mul18_dsp3/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[15]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.793ns  (logic 0.682ns (24.415%)  route 2.111ns (75.585%))
+  Logic Levels:           2  (LUT6=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp3/clk
+    DSP48_X0Y13          DSP48E1                                      r  u_mul18_dsp3/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y13          DSP48E1 (Prop_dsp48e1_CLK_P[15])
+                                                      0.434     1.407 r  u_mul18_dsp3/p_reg/P[15]
+                         net (fo=1, routed)           1.337     2.744    u_mul9_dsp0/dout_reg[15]_1[15]
+    SLICE_X22Y33         LUT6 (Prop_lut6_I5_O)        0.124     2.868 r  u_mul9_dsp0/dout[15]_i_2/O
+                         net (fo=1, routed)           0.774     3.642    u_bram1/dout_reg[15]_0
+    SLICE_X19Y36         LUT6 (Prop_lut6_I5_O)        0.124     3.766 r  u_bram1/dout[15]_i_1/O
+                         net (fo=1, routed)           0.000     3.766    u_bram1_n_2
+    SLICE_X19Y36         FDRE                                         r  dout_reg[15]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X19Y36         FDRE                                         r  dout_reg[15]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X19Y36         FDRE (Setup_fdre_C_D)        0.031    10.920    dout_reg[15]
+  -------------------------------------------------------------------
+                         required time                         10.920    <hidden>
+                         arrival time                          -3.766    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.154    <hidden>
+
+Slack (MET) :             7.270ns  (required time - arrival time)
+  Source:                 u_mul18_dsp3/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[7]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.677ns  (logic 0.682ns (25.475%)  route 1.995ns (74.525%))
+  Logic Levels:           2  (LUT4=1 LUT6=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp3/clk
+    DSP48_X0Y13          DSP48E1                                      r  u_mul18_dsp3/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y13          DSP48E1 (Prop_dsp48e1_CLK_P[7])
+                                                      0.434     1.407 r  u_mul18_dsp3/p_reg/P[7]
+                         net (fo=1, routed)           1.187     2.594    u_mul9_dsp0/dout_reg[15]_1[7]
+    SLICE_X22Y31         LUT6 (Prop_lut6_I5_O)        0.124     2.718 r  u_mul9_dsp0/dout[7]_i_2/O
+                         net (fo=1, routed)           0.808     3.526    u_mul9_dsp0/dout[7]_i_2_n_0
+    SLICE_X18Y33         LUT4 (Prop_lut4_I0_O)        0.124     3.650 r  u_mul9_dsp0/dout[7]_i_1/O
+                         net (fo=1, routed)           0.000     3.650    u_mul9_dsp0_n_3
+    SLICE_X18Y33         FDRE                                         r  dout_reg[7]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X18Y33         FDRE                                         r  dout_reg[7]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X18Y33         FDRE (Setup_fdre_C_D)        0.031    10.920    dout_reg[7]
+  -------------------------------------------------------------------
+                         required time                         10.920    <hidden>
+                         arrival time                          -3.650    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.270    <hidden>
+
+Slack (MET) :             7.296ns  (required time - arrival time)
+  Source:                 u_mul18_dsp2/p_reg/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            dout_reg[16]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        2.651ns  (logic 0.682ns (25.725%)  route 1.969ns (74.275%))
+  Logic Levels:           2  (LUT6=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=1431, unset)         0.973     0.973    u_mul18_dsp2/clk
+    DSP48_X0Y12          DSP48E1                                      r  u_mul18_dsp2/p_reg/CLK
+  -------------------------------------------------------------------    -------------------
+    DSP48_X0Y12          DSP48E1 (Prop_dsp48e1_CLK_P[16])
+                                                      0.434     1.407 r  u_mul18_dsp2/p_reg/P[16]
+                         net (fo=1, routed)           0.934     2.341    u_mul9_lut/dout_reg[17]_1[0]
+    SLICE_X16Y34         LUT6 (Prop_lut6_I5_O)        0.124     2.465 r  u_mul9_lut/dout[16]_i_2/O
+                         net (fo=1, routed)           1.035     3.500    u_bram1/dout_reg[16]
+    SLICE_X15Y34         LUT6 (Prop_lut6_I5_O)        0.124     3.624 r  u_bram1/dout[16]_i_1/O
+                         net (fo=1, routed)           0.000     3.624    u_bram1_n_1
+    SLICE_X15Y34         FDRE                                         r  dout_reg[16]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                                                      0.000    10.000 r  clk
+                         net (fo=1431, unset)         0.924    10.924    clk
+    SLICE_X15Y34         FDRE                                         r  dout_reg[16]/C
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X15Y34         FDRE (Setup_fdre_C_D)        0.031    10.920    dout_reg[16]
+  -------------------------------------------------------------------
+                         required time                         10.920    <hidden>
+                         arrival time                          -3.624    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  7.296    <hidden>
+
+
+
+

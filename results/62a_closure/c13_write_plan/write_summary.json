@@ -1,0 +1,33 @@
+{
+ "task": "c13_hough_lines",
+ "plan": true,
+ "model": "openai/gpt-6-luna",
+ "attempts": 2,
+ "g1": {
+  "pass": false,
+  "tests": {
+   "test_identity_and_reset": true,
+   "test_diagonal_line": false,
+   "test_vertical_line": false,
+   "test_four_lines_then_clear": false,
+   "test_corners_and_registers": false
+  },
+  "detail": ":02X}: RTL 0x{got:08X}, model 0x{want:08X}\"\n                                                        AssertionError: vertical: count of direction 0, distance index 68 at window 0x03: RTL 0x00000000, model 0x00000020\n                                                        assert 0 == 32\n                                                         assert 0 == 32\n                                                             assert got == want, f\"{what or 'register'} at window 0x{off:02X}: RTL 0x{got:08X}, model 0x{want:08X}\"\n                                                         AssertionError: four_lines: count of direction 0, distance index 58 at window 0x03: RTL 0x00000000, model 0x00000020\n                                                         assert 0 == 32\n                                                         assert 0 == 2\n                                                             assert got == want, f\"{what or 'register'} at window 0x{off:02X}: RTL 0x{got:08X}, model 0x{want:08X}\"\n                                                         AssertionError: corners: direction 0, distance index 48 at window 0x03: RTL 0x00000000, model 0x00000002\n                                                         assert 0 == 2\n                                                         ** acceptance.test_diagonal_line           FAIL      168140.00           1.98      85111.62  **\n                                                         ** acceptance.test_vertical_line           FAIL      224120.00           2.64      84836.66  **\n                                                         ** acceptance.test_four_lines_then_clear   FAIL      690620.00           8.79      78544.78  **\n                                                         ** acceptance.test_corners_and_registers   FAIL       87320.00           1.35      64468.03  **\n                                                         ** TESTS=5 PASS=1 FAIL=4 SKIP=0                     1189050.00          15.01      79226.72  **"
+ },
+ "usd": 0.01115,
+ "tokens": 29071,
+ "calls": [
+  {
+   "cost": 0.005468925,
+   "prompt_tokens": 4064,
+   "completion_tokens": 9922,
+   "note": "Six pipeline stages from point launch to synchronous BRAM read; each point takes about 96 clocks to update all 16 bins, and CLEAR takes 1536 clocks. Expected resources: two DSP48E1s and one BRAM36-equivalent, plus control and carry-chain logic."
+  },
+  {
+   "cost": 0.005680925,
+   "prompt_tokens": 4964,
+   "completion_tokens": 10121,
+   "note": "Six pipeline clocks from a direction launch to the BRAM read, with the increment written on the following clock; busy is approximately 22 clocks per accepted point. Expected resources: two DSP48E1s, one RAMB36-class block RAM for the 1536 \u00d7 11-bit accumulator, and modest control/LUT logic."
+  }
+ ]
+}
