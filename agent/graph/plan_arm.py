@@ -1,4 +1,4 @@
-"""First-build comparison with and without the design-time plan (brief 62A, "Pre-empt at design time").
+"""First-build comparison with and without the design-time timing plan.
 
     python3 -m agent.graph.plan_arm <task_dir> --module-file hough.sv --spec-yaml <run's spec.yaml> --out <dir>
            [--plan <timing_plan.json>] [--model openai/gpt-6-luna]

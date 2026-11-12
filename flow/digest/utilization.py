@@ -1,4 +1,4 @@
-"""``report_utilization -hierarchical`` by instance (brief 62A).
+"""``report_utilization -hierarchical`` by instance.
 
 ``parse_hier(text)`` returns one row per table line: ``{instance, module, depth, own, lut, logic_lut, lutram, srl, ff,
 ramb36, ramb18, bram_tile, dsp}``. ``own`` is true for the ``(name)`` rows Vivado prints for a cell's own logic (not its

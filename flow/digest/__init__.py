@@ -1,4 +1,4 @@
-"""Brief 62A: deterministic report digests for the closure loop (agent/graph/closure.py). No model inside.
+"""Deterministic report digests for the closure loop (agent/graph/closure.py). No model inside.
 
 Each parser turns one Vivado report into a compact, typed record the closure controller and the repair prompt read:
 
@@ -10,7 +10,7 @@ Each parser turns one Vivado report into a compact, typed record the closure con
 - :mod:`flow.digest.synth`: the synthesis messages that break area closure (inferred latches, RAM implemented in registers).
 - :mod:`flow.digest.build`: all of the above for one build directory, as a dict and as a short text for the model.
 
-The existing H9 digests (``agent/core/report_digest.py``, brief 42) summarise a report for the agent's ``report_digest``
+The agent's existing report digests (``agent/core/report_digest.py``) summarise a report for the agent's ``report_digest``
 tool; these go one level deeper on the reports the closure playbook needs (cells and fanouts of the critical path,
 utilisation and power by hierarchy).
 """

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fit the per-family delay model (brief 62A) from the calibration build's reports (flow/delay_calib/calib.tcl).
+"""Fit the per-family delay model from the calibration build's reports (flow/delay_calib/calib.tcl).
 
     python3 flow/delay_calib/fit.py <calib out dir> [--extra timing_worst_setup.rpt ...] [--yaml out.yaml]
 

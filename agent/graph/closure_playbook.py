@@ -1,9 +1,10 @@
-"""The closure loop's repair playbook (brief 62A): strategy classes, when each applies, what it is predicted to cost on
+"""The closure loop's repair playbook: strategy classes, when each applies, what it is predicted to cost on
 the other goals, and the instructions the RTL writer gets. Deterministic: the reports pick the strategy, the model only
 writes the change, and the flow checks it.
 
-62A covers timing (G2). Area (G3) and power (G4) classes are listed so the controller can name them in a stop report,
-but they are marked ``phase: 62B`` and never chosen in 62A.
+Timing (G2) strategies are ready. Area (G3) and power (G4) classes are listed so the controller can name them in a stop
+report, but they are marked ``phase: later`` and never chosen yet (except the plan's own mapping, which fixes a G3 plan
+failure).
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ class Strategy:
     title: str
     instructions: str
     predicted: dict[str, str] = field(default_factory=dict)   # goal resource -> "+" / "-" / "0" (what it usually costs)
-    phase: str = "62A"
+    phase: str = "ready"                        # ready | gated (offered only with a stated reason) | later
 
 
 TIMING: tuple[Strategy, ...] = (
@@ -60,17 +61,17 @@ TIMING: tuple[Strategy, ...] = (
              "of every output the same.",
              {"ff": "+"}),
     Strategy("t_exception", "exception", "G2", "multicycle or false-path exception (only where the protocol proves it)",
-             "Not offered unless spec.yaml states a multicycle protocol for this path; any exception is audited (brief 20).",
-             {}, phase="62A-gated"),
+             "Not offered unless spec.yaml states a multicycle protocol for this path; any exception is audited by the flow's exception check.",
+             {}, phase="gated"),
     Strategy("t_impl", "implementation", "G2", "implementation directives or strategies",
-             "Not offered in 62A (brief 33 territory, a later phase).", {}, phase="later"),
+             "Not offered yet (a later phase).", {}, phase="later"),
 )
 
-AREA: tuple[Strategy, ...] = tuple(Strategy(i, c, "G3", t, "", {}, phase="62B") for i, c, t in (
+AREA: tuple[Strategy, ...] = tuple(Strategy(i, c, "G3", t, "", {}, phase="later") for i, c, t in (
     ("a_share", "share", "share a resource across cycles"), ("a_ram", "ram_infer", "infer RAM instead of registers"),
     ("a_narrow", "narrow", "narrow an over-wide datapath"), ("a_srl", "srl", "use SRL for delay lines"),
     ("a_unused", "unused", "remove logic synthesis reports unused")))
-POWER: tuple[Strategy, ...] = tuple(Strategy(i, c, "G4", t, "", {}, phase="62B") for i, c, t in (
+POWER: tuple[Strategy, ...] = tuple(Strategy(i, c, "G4", t, "", {}, phase="later") for i, c, t in (
     ("p_ce", "clock_enable", "clock enables instead of free-running logic"), ("p_gate", "toggle", "gate data on valid"),
     ("p_bram_en", "bram_enable", "BRAM enable control"), ("p_bus", "bus", "fewer high-toggle wide buses"),
     ("p_clock", "clock", "a lower clock, if the spec allows it")))
@@ -91,6 +92,9 @@ def applicable(goal: str, dg: dict[str, Any], vec: dict[str, Any], spec: dict[st
                plan_fails: list[str] | None = None) -> list[tuple[Strategy, str]]:
     """The strategies for ``goal`` that the reports support, best first, each with the reason it was chosen. A strategy
     whose predicted cost would break another goal's budget is left out (its reason says so in the controller's log)."""
+    if goal == "G3" and plan_fails:
+        # a planned DSP or block RAM that synthesis did not infer is a G3 failure that the plan's own mapping fixes
+        return [(BY_ID["t_plan_map"], "the post-synthesis plan check failed: " + "; ".join(plan_fails)[:300])]
     if goal != "G2":
         return []
     f = dg.get("setup_features") or {}

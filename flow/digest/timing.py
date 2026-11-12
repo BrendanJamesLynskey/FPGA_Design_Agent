@@ -1,4 +1,4 @@
-"""The critical path of a ``report_timing`` (``timing_worst_setup.rpt`` / ``timing_worst_hold.rpt``), parsed (brief 62A).
+"""The critical path of a ``report_timing`` (``timing_worst_setup.rpt`` / ``timing_worst_hold.rpt``), parsed.
 
 ``parse_paths(text)`` returns one record per path in the report, worst first::
 
@@ -22,7 +22,9 @@ _HDR = re.compile(r"^Slack \((MET|VIOLATED)\)\s*:\s*(-?[0-9.]+)ns", re.M)
 _CELL = re.compile(r"^\s+(?:\S+\s+)?([A-Z][A-Z0-9_]+) \((Prop|Setup|Hold)_[^)]*\)\s*(?:\n\s+)?(-?[0-9.]+)\s+(-?[0-9.]+)\s+[rf]?\s*(\S+)",
                    re.M)
 _NET = re.compile(r"^\s+net \(fo=(\d+)(?:, (?:routed|estimated|unplaced))?\)\s+(-?[0-9.]+)\s+(-?[0-9.]+)\s+(\S+)", re.M)
-_REG = re.compile(r"^(?P<inst>.*?)/?(?P<sig>[A-Za-z_][\w$]*?)(?:_reg)(?:\[(?P<bit>\d+)\])?(?:\[\d+\])*(?:_\w+)?/(?:C|D|Q|CE|R|S|CLR|PRE)$")
+# a register cell's pin: k_reg[2]/C, k_reg_rep[2]/C (a replica), s_reg[1]_replica/C, p_reg/CLK (a DSP or RAM register)
+_REG = re.compile(r"^(?P<inst>.*?)/?(?P<sig>[A-Za-z_][\w$]*?)(?:_reg)(?:_rep\w*)?(?:\[(?P<bit>\d+)\])?(?:\[\d+\])*(?:_\w+)?"
+                  r"/(?:C|D|Q|CE|R|S|CLR|PRE|CLK|CLKARDCLK|CLKBWRCLK|[ABCDP]\[\d+\]|[ABCDP])$")
 
 
 def _num(blk: str, key: str) -> float | None:

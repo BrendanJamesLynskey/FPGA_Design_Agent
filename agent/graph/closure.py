@@ -1,6 +1,9 @@
-"""The closure loop (brief 62A): iterate until every goal is met, or stop with an honest report.
+"""The closure loop: iterate until every goal is met, or stop with an honest report.
 
-Goals (all must hold to finish; brief 62, "The goals"):
+Terms: WNS / WHS are the worst setup / hold slack of the routed design (both must be 0 or more); the **goal vector** is
+the five goals' values and verdicts, recorded before and after every iteration.
+
+Goals (all must hold to finish):
 
 - **G1** functional correctness in simulation: the independent bench (the hidden acceptance bench of a benchmark task,
   or the V-gates in the agent graph) passes.
@@ -9,7 +12,7 @@ Goals (all must hold to finish; brief 62, "The goals"):
   inferred latch, no RAM built in registers.
 - **G4** power: Vivado's total on-chip power within ``budget.power_w`` (else the board limit, 2.0 W on the Nexys A7 on
   wall power) and junction temperature within 85 C.
-- **G5** hardware: not evaluated in 62A (``met: None``).
+- **G5** hardware: not evaluated yet (no board in this phase; ``met: None``).
 
 The controller (:class:`Closure`):
 
@@ -19,8 +22,8 @@ The controller (:class:`Closure`):
    (``agent.graph.closure_playbook``) that is not exhausted and whose predicted cost fits the other goals' headroom;
 4. asks the RTL writer for the change, re-runs G1 (one functional retry, then revert), rebuilds, and judges the new
    vector against the last accepted one: kept when it improves an unmet goal and worsens none, else reverted;
-5. counts iterations without progress per (goal, strategy class); after ``stall_n`` the class is exhausted (the H4
-   "stall rule" of brief 42); when every class for a goal is exhausted, or a limit is reached, it stops with
+5. counts iterations without progress per (goal, strategy class); after ``stall_n`` the class is exhausted (the
+   **stall rule**: a strategy class is given up after N tries without progress); when every class for a goal is exhausted, or a limit is reached, it stops with
    "goal X not met; best value Y; what was tried".
 
 Every iteration is recorded (vector before and after, strategy and why, the diff, the delta on every goal, cost).
@@ -76,12 +79,12 @@ def goals_from_spec(spec: dict[str, Any], board: str = "nexys_a7_100t") -> dict[
         "G4": {"power_w": float(pw) if pw is not None else BOARD_POWER_W.get(board, 2.0),
                "why": "spec.yaml budget" if pw is not None else f"no budget in spec.yaml: the board limit ({board})",
                "tj_max_c": TJ_MAX_C},
-        "G5": {"what": "board checks (62C)"},
+        "G5": {"what": "board checks (not run yet)"},
     }
 
 
 def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dict[str, Any],
-                plan_fails: list[str] | None = None) -> dict[str, Any]:
+                plan_fails: list[str] | None = None, baseline_synth: dict[str, Any] | None = None) -> dict[str, Any]:
     """{goal: {met, value, target, shortfall, detail}}. ``shortfall`` is normalised (0 when met): G1 the failing share
     of tests, G2 the negative slack over the period, G3 the worst over-use ratio, G4 the power over-use ratio."""
     v: dict[str, Any] = {}
@@ -135,14 +138,26 @@ def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dic
         if plan_fails:                                  # the design-time plan: a planned DSP/BRAM missing is an area failure
             v["G3"] = {**v["G3"], "met": False, "shortfall": max(v["G3"]["shortfall"], 0.01),
                        "detail": "; ".join(x for x in (v["G3"]["detail"], *plan_fails) if x)[:600]}
-        syn = dg.get("synth") or {}
-        if (syn.get("multi_driven") or syn.get("removed_instances")) and v["G1"]["met"]:
+        new_multi, new_removed = synth_regressions(dg.get("synth") or {}, baseline_synth)
+        if (new_multi or new_removed) and v["G1"]["met"]:
             # the simulated design is not the built one: G1 cannot be claimed from simulation
             v["G1"] = {**v["G1"], "met": False, "shortfall": 1.0,
-                       "detail": f"synthesis disagrees with simulation: {syn.get('multi_driven')} multi-driven net messages, "
-                                 f"removed instances {syn.get('removed_instances')[:3]}"}
-    v["G5"] = {"met": None, "value": None, "target": "board checks", "shortfall": None, "detail": "not run in 62A"}
+                       "detail": f"synthesis disagrees with simulation: {new_multi} new multi-driven net messages, "
+                                 f"newly removed instances {new_removed[:3]}"}
+    v["G5"] = {"met": None, "value": None, "target": "board checks", "shortfall": None, "detail": "not run yet (no board in this phase)"}
     return v
+
+
+def synth_regressions(syn: dict[str, Any], baseline: dict[str, Any] | None) -> tuple[int, list[str]]:
+    """(new multi-driven-net messages, newly removed instances) of a build against the loop's starting build. A RAM or ROM
+    that synthesis already removed from the starting design (a constant table, a disabled option) is the design as it
+    is, not a regression; one removed only after a change is logic the design needed. With no baseline (the start build
+    itself) nothing counts."""
+    if baseline is None:
+        return 0, []
+    multi = max(0, int(syn.get("multi_driven") or 0) - int(baseline.get("multi_driven") or 0))
+    gone = set(baseline.get("removed_instances") or [])
+    return multi, [r for r in (syn.get("removed_instances") or []) if r not in gone]
 
 
 def all_met(v: dict[str, Any]) -> bool:
@@ -150,7 +165,8 @@ def all_met(v: dict[str, Any]) -> bool:
 
 
 def choose_goal(v: dict[str, Any], skip: set[str] = frozenset()) -> str | None:
-    """G1 first when it fails; then the unmet goal with the largest normalised shortfall."""
+    """G1 first when it fails; then the unmet goal with the largest normalised shortfall (``skip``: goals with no
+    strategy left, so a goal the loop cannot act on never hides one it can)."""
     if v["G1"]["met"] is False:
         return "G1"
     unmet = [(v[g]["shortfall"] or 0, g) for g in ("G2", "G3", "G4") if v[g]["met"] is False and g not in skip]
@@ -254,10 +270,15 @@ def parse_reply(text: str, allowed: set[str]) -> tuple[dict[str, str], str]:
     return files, note
 
 
-def llm_editor(client: Callable, log: list | None = None) -> Callable[[EditRequest], EditResult]:
-    """The RTL writer as one model call through ``client`` (agent.graph.llm.OpenRouterClient or a Replay)."""
+def llm_editor(client: Callable, log: list | None = None, meter: Any = None) -> Callable[[EditRequest], EditResult]:
+    """The RTL writer as one model call through ``client`` (agent.graph.llm.OpenRouterClient or a Replay). With ``meter``
+    (the agent graph's Meter) every call is checked against, and counted in, the run's own turn and cost limits."""
     def edit(r: EditRequest) -> EditResult:
+        if meter is not None:
+            meter.check()                        # raises BudgetExceeded at the run's limit
         rep = client([{"role": "system", "content": SYSTEM}, {"role": "user", "content": edit_prompt(r)}])
+        if meter is not None:
+            meter.add(rep)
         files, note = parse_reply(rep.text, set(r.files) | {f for f in r.other_files if f.endswith((".sv", ".v"))})
         usd = rep.cost if rep.cost is not None else 0.05          # unreported cost counts at the ceiling (llm.py rule)
         if log is not None:
@@ -367,6 +388,7 @@ class Closure:
         g1 = self.g1(self.ws.rtl)
         dg = self.build(self.ws.root) if g1.get("pass") else None
         vec = goal_vector(g1, dg, self.goals, self._plan_fails(dg))
+        base_synth = (dg or {}).get("synth") or {}
         start = {"vector": vec, "digest": _small(dg)}
         self.log(f"[closure] start: {vector_line(vec)}")
         self._rec({"iter": 0, "kind": "start", "vector": vec, "digest": _small(dg)})
@@ -381,7 +403,7 @@ class Closure:
         it = 0
         while stop is None:
             if all_met(vec):
-                stop = "all goals met (G1-G4; G5 not run in 62A)"
+                stop = "all goals met (G1-G4; G5, the board, not run yet)"
                 break
             if it >= self.max_iter:
                 stop = f"iteration limit {self.max_iter} reached"
@@ -392,13 +414,24 @@ class Closure:
             if time.monotonic() - t0 > self.max_seconds:
                 stop = f"time limit {self.max_seconds} s reached"
                 break
-            goal = choose_goal(vec)
-            if goal is None:
-                stop = "no unmet goal this loop can act on"
-                break
             plan_fails = self._plan_fails(dg)
-            cands = [(s, why) for s, why in pb.applicable(goal, dg or {}, vec, self.spec, plan_fails)
-                     if s.phase == "62A" and tried.get((goal, s.cls), 0) < self.stall_n]
+            skip: set[str] = set()
+            goal, cands = None, []
+            while True:                          # the worst goal that still has a strategy; skip the ones that have none
+                g = choose_goal(vec, skip)
+                if g is None:
+                    break
+                cands = [(s, why) for s, why in pb.applicable(g, dg or {}, vec, self.spec, plan_fails)
+                         if s.phase == "ready" and tried.get((g, s.cls), 0) < self.stall_n]
+                if cands or g == "G1":
+                    goal = g
+                    break
+                skip.add(g)
+            if goal is None:
+                unmet = [g for g in ("G2", "G3", "G4") if vec[g]["met"] is False]
+                stop = (f"goal {', '.join(unmet)} not met; strategy classes exhausted" if unmet
+                        else "no unmet goal this loop can act on")
+                break
             if not cands:
                 stop = f"goal {goal} not met; strategy classes exhausted"
                 break
@@ -442,7 +475,7 @@ class Closure:
                 summary = f"G1 failed after {retries} functional retr{'y' if retries == 1 else 'ies'}: {vec2['G1']['value']}"
             else:
                 dg2 = self.build(self.ws.root)
-                vec2 = goal_vector(g1n, dg2, self.goals, self._plan_fails(dg2))
+                vec2 = goal_vector(g1n, dg2, self.goals, self._plan_fails(dg2), base_synth)
                 decision, imp, wor = judge(vec, vec2)
                 summary = vector_line(vec2) + "".join(f"; {g}: {vec2[g]['detail'][:300]}" for g in wor if vec2[g].get("detail"))
             delta = _delta(vec, vec2)
@@ -523,7 +556,11 @@ def _small(dg: dict[str, Any] | None) -> dict[str, Any] | None:
 def graph_stage(rt: Any, state: dict[str, Any]) -> dict[str, Any]:
     """Stage 6 with ``--closure on``: run the controller on the run's design. G1 is the stage-2 evidence the graph
     already trusts (lint, simulate, verification gates), re-run after every change; the build is the graph's own
-    ``_build(rt, "route")``. Returns a note for the stage's gate (the gate still decides)."""
+    ``_build(rt, "route")``. Returns a note for the stage's gate (the gate still decides).
+
+    Cost: the writer's calls count against the run's own turn and USD limits (``rt.meter``) as well as ``closure_usd``.
+    Builds: the stage's gate then calls ``_build(rt, "route")`` again; that is a cache hit when the loop's last build is
+    the design it leaves, and one more Vivado run when the last iteration was reverted (the cache keeps one key)."""
     from agent.core import dispatch
     from agent.graph import run as gr
     from agent.graph.llm import OpenRouterClient
@@ -547,13 +584,19 @@ def graph_stage(rt: Any, state: dict[str, Any]) -> dict[str, Any]:
     plan = timing_plan.load_plan(rt.design)
     client = rt.client if callable(rt.client) else OpenRouterClient(rt.cfg.model)
     c = Closure(ws=Workspace(rt.design), goals=goals_from_spec(spec, rt.cfg.board), g1=g1, build=build,
-                editor=llm_editor(client), contract=contract_from_spec(spec), spec=spec,
+                editor=llm_editor(client, meter=rt.meter), contract=contract_from_spec(spec), spec=spec,
                 plan_text=timing_plan.plan_text(plan) if plan else "",
                 plan_check=(lambda _dg: timing_plan.post_synth_failures(rt.design, json.loads((rt.design / "build" / "base" / "gates.json").read_text())))
                 if plan else None,
                 max_iter=int(rt.cfg.run_limits.get("closure_iter", 6)), max_usd=float(rt.cfg.run_limits.get("closure_usd", 1.0)),
                 record=rt.run_dir / "closure")
-    rep = c.run()
+    from agent.graph.llm import BudgetExceeded
+    try:
+        rep = c.run()
+    except BudgetExceeded as e:                      # the run's own limit: the graph's node_work handles it the same way
+        if str(e).startswith("run "):
+            return {"stop": f"budget: {e}"}
+        return {"note": "", "detail": f"[closure] stage visit ended: {e}"}
     return {"note": "", "detail": "[closure] " + rep["stop"] + "; " + rep["final_line"]}
 
 

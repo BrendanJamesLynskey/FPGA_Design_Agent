@@ -1,4 +1,10 @@
-"""Design-time timing and resource plan (brief 62A, "Pre-empt at design time"; owner, 2026-11-12).
+"""Design-time timing and resource plan.
+
+What this does: before any build, choose for each arithmetic chain the resource (DSP slice, block RAM, carry chain or
+LUTs) and the number of register stages, so each stage fits 70 % of the clock period. Terms: the **delay model** is a
+per-family table of measured delays (a LUT level, an adder per bit, the DSP and block RAM stages); **logic levels** are
+the LUTs and carry cells in series on a path; a DSP48E1's **A/B, M and P registers** are its operand, product and output
+registers, which cost no fabric flip-flops.
 
 The architecture stage declares its datapaths in ``architecture.yaml``; this module maps every operation to a resource
 (hard resource first), estimates each operation's delay from a per-family **delay model** kept in the knowledge bank
@@ -41,7 +47,7 @@ import yaml
 
 PLAN_SCHEMA = "fpga-design-agent/timing-plan/v1"
 OPS = ("mul", "add", "compare", "table", "mux", "memory", "delay", "fifo", "logic", "shift", "ip")
-TARGET_FRACTION = 0.70           # owner's example: aim for 70 % of the period before routing
+TARGET_FRACTION = 0.70           # aim for 70 % of the period before routing (margin for route)
 CAL_MISS = 0.25                  # a measured stage more than 25 % off its estimate is a calibration miss
 
 # Inference templates the RTL writer must follow (our own patterns; the KB skill each one comes from is named).
@@ -72,7 +78,7 @@ TEMPLATES = {
                    "every variant; see ip_lib/<entry>/ip.yaml)", "ip_lib"),
 }
 
-# The parts the owner's boards carry (count of hard resources); the delay model names its family.
+# The parts of the supported boards (count of hard resources); the delay model names its family.
 PARTS = {
     "xc7a100tcsg324-1": {"family": "7series", "dsp": 240, "bram_tile": 135, "lut": 63400, "ff": 126800,
                          "dsp_a_bits": 25, "dsp_b_bits": 18},
@@ -149,7 +155,7 @@ def op_delay(op: dict[str, Any], resource: str, m: dict[str, Any]) -> list[dict[
 
 # --- the resource plan ------------------------------------------------------------------------------------------
 
-#: A variant-cost source (brief 63A's flow/ipvariants.py when it lands, or a test stub): ``source(op) -> list of
+#: A variant-cost source (any callable, for example a test stub): ``source(op) -> list of
 #: {variant, resource, lut, ff, dsp, bram_tile, fmax_mhz?, source}`` measured for an operation of that kind and size,
 #: or ``[]``. When given, the planner records the measured cost of the variant it picks and of the plain-logic
 #: alternative in the reason, and refuses a hard-resource variant whose measured cost does not fit what is left.
@@ -174,6 +180,14 @@ def _variant_note(op: dict[str, Any], resource: str, source, left: dict[str, flo
         return False, note
     return True, note
 
+def dsp_slices(op: dict[str, Any], part: dict[str, Any]) -> int:
+    """DSP48E1 slices one multiply needs: 1 within 25 x 18 signed, else one per 25 x 18 tile (a 32 x 32 takes 4)."""
+    a, b = sorted((int(op.get("a_bits", 8)), int(op.get("b_bits", 8))))
+    if b > part["dsp_a_bits"] or a > part["dsp_b_bits"]:
+        return math.ceil(b / part["dsp_a_bits"]) * math.ceil(a / part["dsp_b_bits"])
+    return 1
+
+
 def choose_resource(op: dict[str, Any], part: dict[str, Any], left: dict[str, float], variants=None) -> tuple[str, str, str]:
     """(resource, template, reason): hard resource first when the part has it and the budget allows; with a
     variant-cost source, the measured costs are quoted and a variant that does not fit falls back to logic."""
@@ -196,14 +210,13 @@ def _choose(op: dict[str, Any], part: dict[str, Any], left: dict[str, float]) ->
         a, b = sorted((int(op.get("a_bits", 8)), int(op.get("b_bits", 8))))
         if a <= 4:
             return "lut", "lut_mul", f"operand of {a} bits: too small to be worth a DSP slice (a few LUTs)"
-        if b > part["dsp_a_bits"] or a > part["dsp_b_bits"]:
-            n = math.ceil(b / part["dsp_a_bits"]) * math.ceil(a / part["dsp_b_bits"])
-        else:
-            n = 1
+        n = dsp_slices(op, part)
         if left.get("dsp", 0) < n:
             return "lut", "lut_mul", f"DSP budget exhausted ({left.get('dsp', 0)} left, {n} needed)"
         left["dsp"] -= n
-        return "dsp", "dsp_mul_p2", f"{a} x {b} multiply: the part has DSP48E1 slices free ({n} slice{'s' if n > 1 else ''})"
+        near = (f"; the narrower operand ({a} bits) is close to the {4}-bit 'too small' limit: check the widths against "
+                "the spec (signed operands need their sign bit)") if a <= 6 else ""
+        return "dsp", "dsp_mul_p2", f"{a} x {b} multiply: the part has DSP48E1 slices free ({n} slice{'s' if n > 1 else ''}){near}"
     if k in ("memory", "fifo"):
         bits = int(op.get("depth", 0)) * int(op.get("width", 0))
         if k == "fifo":
@@ -230,12 +243,12 @@ def _choose(op: dict[str, Any], part: dict[str, Any], left: dict[str, float]) ->
     return "lut", "lut_logic", "plain logic: no hard resource fits"
 
 
-# --- ip_lib entries with measured variants (brief 63A, flow/ipvariants.py) -----------------------------------------
+# --- ip_lib entries with measured variants (flow/ipvariants.py) -----------------------------------------------------
 
 def ip_choice(op: dict[str, Any], period_ns: float, part_name: str, left: dict[str, float]) -> tuple[dict | None, str]:
     """(the chosen variant row, why) for an ``ip`` op, from ``flow.ipvariants.choose`` at this parameter point, this clock
     and what is left of the DSP/BRAM budget. None when no variant fits or a needed figure is not known at this point:
-    the caller then plans the op's ``fallback`` ops with the delay model (63A: a budget is never borrowed from a nearby
+    the caller then plans the op's ``fallback`` ops with the delay model (choose() never borrows a figure from a nearby
     measured point)."""
     try:
         from flow import ipvariants as iv
@@ -284,19 +297,38 @@ def _expand_ip(dp: dict[str, Any], period_ns: float, part_name: str, left: dict[
 
 # --- pipelining --------------------------------------------------------------------------------------------------
 
+_REG_RANK = {"none": 0, "fabric": 1, "free": 2}
+
+
+def _merge_seg(a: dict | None, b: dict | None) -> dict:
+    """Two segments that run side by side: the slower delay; a register may follow only where both allow one, and it is
+    free only if it is free for both (otherwise the faster path needs fabric FFs to stay aligned)."""
+    if a is None or b is None:
+        return dict(a or b)
+    reg = min((a["reg_after"], b["reg_after"]), key=lambda r: _REG_RANK[r])
+    # a DSP/BRAM internal register on one side is still used (the template is fully pipelined): cut here, and the
+    # other side pays fabric FFs to stay aligned
+    force = "free" in (a["reg_after"], b["reg_after"]) or a.get("force_cut") or b.get("force_cut")
+    return {"ns": max(a["ns"], b["ns"]), "reg_after": reg, "what": a["what"] if a["ns"] >= b["ns"] else b["what"],
+            "op": f"{a['op']}|{b['op']}", "force_cut": bool(force) and reg != "none"}
+
+
 def _chain(ops: list[dict], maps: dict[str, tuple], m: dict) -> list[dict[str, Any]]:
-    """The ops as one sequence of segments; a parallel op is merged with the previous one (the slower of each pair)."""
+    """The ops as one sequence of segments. A ``parallel`` op runs beside the previous op only: their segments are merged
+    pairwise and the shorter op is padded (never merged into an earlier op, never dropped)."""
     seq: list[dict[str, Any]] = []
+    last: tuple[int, int] = (0, 0)                      # [start, end) of the previous op's segments in seq
     for op in ops:
         segs = [dict(s, op=op["name"]) for s in op_delay(op, maps[op["name"]][0], m)]
         if op.get("parallel") and seq:
-            n = len(segs)
-            base = seq[-n:] if len(seq) >= n else seq
-            for a, b in zip(base, segs):
-                if b["ns"] > a["ns"]:
-                    a["ns"] = b["ns"]
-                a["op"] = f"{a['op']}|{b['op']}"
+            a0, a1 = last
+            prev = seq[a0:a1]
+            n = max(len(prev), len(segs))
+            merged = [_merge_seg(prev[i] if i < len(prev) else None, segs[i] if i < len(segs) else None) for i in range(n)]
+            seq[a0:a1] = merged
+            last = (a0, a0 + n)
             continue
+        last = (len(seq), len(seq) + len(segs))
         seq += segs
     return seq
 
@@ -310,7 +342,7 @@ def pipeline(seq: list[dict[str, Any]], budget_ns: float, overhead_ns: float) ->
     stages: list[dict[str, Any]] = []
     cur: list[dict] = []
     for s in seq:
-        if cur and cur[-1]["reg_after"] == "free":      # a DSP/BRAM internal register costs no FFs: always use it
+        if cur and (cur[-1]["reg_after"] == "free" or cur[-1].get("force_cut")):   # a DSP/BRAM register: always use it
             stages.append(cur)
             cur = []
         cand = cur + [s]
@@ -368,7 +400,7 @@ def plan_datapath(dp: dict[str, Any], period_ns: float, m: dict[str, Any], part:
         "period_ns": period_ns, "budget_ns": budget, "unpipelined_est_ns": unpiped,
         "stages": stages, "latency_cycles": latency, "fabric_pipeline_regs": fabric_regs,
         "fits": all(not s["over"] for s in stages), "latency_forced": forced, "ip_problems": ip_problems,
-        "planned": {"dsp": sum(1 for op in dp["ops"] if maps[op["name"]][0] == "dsp")
+        "planned": {"dsp": sum(dsp_slices(op, part) for op in dp["ops"] if maps[op["name"]][0] == "dsp")
                     + sum(int((chosen[n][0]["cost"] or {}).get("dsp") or 0) for n in chosen),
                     "bram": sum(1 for op in dp["ops"] if maps[op["name"]][0] == "bram")
                     + sum(1 for n in chosen if (chosen[n][0]["cost"] or {}).get("bram_tiles"))},
@@ -472,8 +504,17 @@ def check_post_synth(p: dict[str, Any], util: dict[str, Any], hier_rows: list[di
             for r in rows:
                 if not r["own"] and r["path"] == inst:
                     return float(r.get(key) or 0)
-            return None
+            return None                                  # an instance the design does not have: reported below
         return float(util.get(key) or 0)
+
+    if rows:
+        known = {r["path"] for r in rows if not r["own"]}
+        for d in p.get("datapaths") or []:
+            inst = d.get("instance")
+            if inst and inst not in known and (d["planned"]["dsp"] or d["planned"]["bram"]):
+                fails.append(f"plan: datapath {d['name']} names instance {inst}, which the design does not have "
+                             f"(instances: {', '.join(sorted(k for k in known if k)[:8])}); the plan cannot be checked "
+                             "against it: give the RTL instance path in architecture.yaml")
 
     by_inst: dict[str | None, dict[str, int]] = {}
     for d in p.get("datapaths") or []:
@@ -506,7 +547,9 @@ def compare_post_route(p: dict[str, Any], setup_path: dict[str, Any] | None) -> 
         if not inst or not (s.get("instance", "").startswith(inst) and d.get("instance", "").startswith(inst)):
             continue
         est = max(st["est_ns"] for st in dp["stages"])
-        meas = round((setup_path.get("data_path_ns") or 0) + 0.062 + 0.035, 3)      # setup + uncertainty, as the estimate has
+        # the stage time as the delay model defines it: requirement - slack (clock-to-out, logic, route, setup, skew and
+        # uncertainty all included), so it compares directly with the planned stage
+        meas = round((setup_path.get("requirement_ns") or 0) - (setup_path.get("slack_ns") or 0), 3)
         ratio = round(meas / est, 3) if est else None
         rows.append({"datapath": dp["name"], "est_worst_stage_ns": est, "measured_ns": meas, "ratio": ratio,
                      "miss": ratio is not None and abs(ratio - 1) > CAL_MISS, "path": f"{setup_path.get('source')} -> {setup_path.get('destination')}",
@@ -522,7 +565,7 @@ PLAN_MD = "TIMING_PLAN.md"
 #: the CONVENTIONS bullet the architecture stage gets with ``--design-plan`` (agent/graph/run.py hook; appended after
 #: CONVENTIONS is formatted, so single braces).
 DATAPATHS_CONVENTION = """
-- Design-time timing and resource plan (brief 62A): architecture.yaml also lists `datapaths`, one entry per registered
+- Design-time timing and resource plan: architecture.yaml also lists `datapaths`, one entry per registered
   chain of arithmetic or logic on the design's critical paths (multiplies, adder and comparator trees, table lookups,
   wide muxes, memories, delay lines, FIFOs): {name, clock (a clock_domains name), instance (the RTL instance path, for
   example u_regs/u_core), latency_fixed (cycles, only if the spec fixes it), ops: [...]}. Each op is {name, op, ...}
@@ -582,8 +625,10 @@ def post_synth_failures(design: Path, gates: dict[str, Any] | None) -> list[str]
     from flow.digest.utilization import parse_hier
     st = ((gates or {}).get("stages") or {}).get("post_synth") or {}
     util = (gates or {}).get("utilization") or st.get("utilization") or {}
-    hier = Path(design) / "build" / "base" / "utilization_hier_synth.rpt"
-    rows = parse_hier(hier.read_text()) if hier.is_file() else None
+    # the flow writes the hierarchical utilisation after routing (utilization_hier.rpt); a synthesis-only build has none
+    b = Path(design) / "build" / "base"
+    hier = next((f for f in (b / "utilization_hier_synth.rpt", b / "utilization_hier.rpt") if f.is_file()), None)
+    rows = parse_hier(hier.read_text()) if hier else None
     return check_post_synth(p, util, rows)
 
 

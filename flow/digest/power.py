@@ -1,4 +1,4 @@
-"""``report_power``: on-chip components by type and power by hierarchy (brief 62A).
+"""``report_power``: on-chip components by type and power by hierarchy.
 
 ``parse_components(text)`` -> ``{Clocks: 0.011, "Slice Logic": 0.010, Signals: ..., "Block RAM": ..., "I/O": ...,
 "Static Power": ..., Total: ...}`` (W; ``<0.001`` reads as 0.0005, as flow/gates.py does).

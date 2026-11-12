@@ -1,4 +1,4 @@
-# Brief 62A: out-of-context build of the delay-model calibration design (dm_calib.sv) and one report per block.
+# Out-of-context build of the delay-model calibration design (dm_calib.sv) and one report per block.
 #   vivado -mode batch -source flow/delay_calib/calib.tcl -tclargs <out_dir> [part]
 # Thread limits as flow/build.tcl (house rules): FDA_VIVADO_THREADS (default 2), synth.maxThreads, chipscope.maxJobs 1.
 set out  [lindex $argv 0]

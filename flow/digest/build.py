@@ -1,4 +1,4 @@
-"""One build directory (``<design>/build/base``) digested for the closure loop (brief 62A).
+"""One build directory (``<design>/build/base``) digested for the closure loop.
 
 ``digest_build(d)`` reads ``gates.json`` (the flow's own verdicts and numbers) and the routed reports, and returns::
 

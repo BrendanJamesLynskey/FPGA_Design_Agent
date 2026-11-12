@@ -1,4 +1,4 @@
-"""Synthesis messages that break area closure (goal G3, brief 62A): inferred latches and RAM implemented in registers.
+"""Synthesis messages that break area closure (goal G3): inferred latches and RAM implemented in registers.
 
 Matched on Vivado's own words as well as the message IDs, so a renumbered ID still counts:
 
@@ -36,7 +36,7 @@ def scan(log: str) -> dict[str, Any]:
     rams = _names(_RAM_REGS.findall(log))
     multi = _MULTI.findall(log)
     removed = sorted({l.strip()[:160] for l in _REMOVED.findall(log)})
-    # brief 62A: a multi-driven net or a removed instance means the netlist is not the simulated design (c13_orig_plan,
+    # a multi-driven net or a removed instance means the netlist is not the simulated design (c13_orig_plan,
     # 2026-11-12: two always_ff blocks drove the same registers; Icarus passed, synthesis tied them to GND and removed the core)
     return {"latches": latches, "ram_in_registers": rams, "multi_driven": len(multi), "removed_instances": removed,
             "clean": not latches and not rams and not multi and not removed}

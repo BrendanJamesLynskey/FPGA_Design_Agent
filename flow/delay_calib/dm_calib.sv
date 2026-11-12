@@ -1,6 +1,9 @@
-// Brief 62A: delay-model calibration design. Each block is registered on both sides (fabric FFs in, fabric FFs or the
+// Delay-model calibration design. Each block is registered on both sides (fabric FFs in, fabric FFs or the
 // DSP/BRAM's own registers out) so report_timing gives one operator's delay between two clock edges. Built out of
 // context by flow/delay_calib/calib.tcl; flow/delay_calib/fit.py turns the paths into the per-family delay model.
+// Every block's input registers carry dont_touch, so each measured path starts inside its own block (without it Vivado
+// merged operand registers that tap the same shift-register bits across blocks). The DSP variants with AREG/BREG keep
+// their operand registers free so synthesis can pull them into the slice.
 // Blocks:
 //   u_add16/u_add32/u_add64   adder between FFs (carry chain)
 //   u_cmp32                   a < b between FFs (carry chain)
@@ -12,17 +15,17 @@
 //   u_mul18_dsp3              A/B, M and P registers in the DSP (three-stage)
 //   u_bram0, u_bram1          1024 x 16 block RAM read without and with the output register
 module dm_add #(parameter int W = 32) (input logic clk, input logic [W-1:0] a, b, output logic [W-1:0] s);
-    logic [W-1:0] ar, br;
+    (* dont_touch = "true" *) logic [W-1:0] ar, br;
     always_ff @(posedge clk) begin ar <= a; br <= b; s <= ar + br; end
 endmodule
 
 module dm_cmp #(parameter int W = 32) (input logic clk, input logic [W-1:0] a, b, output logic lt);
-    logic [W-1:0] ar, br;
+    (* dont_touch = "true" *) logic [W-1:0] ar, br;
     always_ff @(posedge clk) begin ar <= a; br <= b; lt <= ar < br; end
 endmodule
 
 module dm_tab (input logic clk, input logic [3:0] k, output logic signed [8:0] c);
-    logic [3:0] kr;
+    (* dont_touch = "true" *) logic [3:0] kr;
     function automatic signed [8:0] ctab(input [3:0] i);
         case (i)
             4'd0: ctab = 128;  4'd1: ctab = 126;  4'd2: ctab = 118;  4'd3: ctab = 106;
@@ -35,12 +38,13 @@ module dm_tab (input logic clk, input logic [3:0] k, output logic signed [8:0] c
 endmodule
 
 module dm_mux16 (input logic clk, input logic [255:0] d, input logic [3:0] sel, output logic [15:0] y);
-    logic [255:0] dr; logic [3:0] sr;
+    (* dont_touch = "true" *) logic [255:0] dr;
+    (* dont_touch = "true" *) logic [3:0] sr;
     always_ff @(posedge clk) begin dr <= d; sr <= sel; y <= dr[sr*16 +: 16]; end
 endmodule
 
 module dm_mul_lut #(parameter int W = 9) (input logic clk, input logic signed [W-1:0] a, b, output logic signed [2*W-1:0] p);
-    logic signed [W-1:0] ar, br;
+    (* dont_touch = "true" *) logic signed [W-1:0] ar, br;
     (* use_dsp = "no" *) logic signed [2*W-1:0] m;
     assign m = ar * br;
     always_ff @(posedge clk) begin ar <= a; br <= b; p <= m; end

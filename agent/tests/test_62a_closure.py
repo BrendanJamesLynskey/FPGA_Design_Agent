@@ -270,7 +270,7 @@ def test_plan_check_after_synthesis_fails_c13_reference(tmp_path):
 def test_calibration_row(dg):
     p = tp.plan(C13_ARCH, tp.load_model(path=MODEL))
     rows = tp.compare_post_route(p, dg["setup_path"])
-    assert rows and rows[0]["datapath"] == "rho" and rows[0]["measured_ns"] == pytest.approx(10.262) and rows[0]["miss"]
+    assert rows and rows[0]["datapath"] == "rho" and rows[0]["measured_ns"] == pytest.approx(10.166) and rows[0]["miss"]
 
 
 def test_plan_design_writes_files(tmp_path):
@@ -324,13 +324,14 @@ def test_synthesis_disagreeing_with_simulation_fails_g1(dg, tmp_path):
     d2 = copy.deepcopy(dg)
     d2["synth"] = s
     g = cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]})
-    v = cl.goal_vector({"pass": True, "tests": {"t": True}}, d2, g)
+    v = cl.goal_vector({"pass": True, "tests": {"t": True}}, d2, g, baseline_synth={})      # the start build was clean
     assert v["G1"]["met"] is False and "synthesis disagrees with simulation" in v["G1"]["detail"]
+    assert cl.goal_vector({"pass": True}, d2, g)["G1"]["met"]                                 # no baseline: the start build
     # the c13_orig_plan case: timing "met" on a design whose core was removed, and the plan's DSPs missing: reverted
     before = cl.goal_vector({"pass": True}, dg, g)
     d3 = copy.deepcopy(d2)
     d3["timing"]["wns_ns"] = 3.5
-    after = cl.goal_vector({"pass": True}, d3, g, ["plan: the design has 0 DSP48E1 where the plan put 2"])
+    after = cl.goal_vector({"pass": True}, d3, g, ["plan: the design has 0 DSP48E1 where the plan put 2"], {})
     assert not after["G3"]["met"] and cl.judge(before, after)[0] == "revert"
 
 
@@ -366,3 +367,77 @@ def test_plan_falls_back_to_the_delay_model_when_no_variant_is_known():
     p2 = tp.plan(_fir_arch({**FIR16, "TAPS": 24}), tp.load_model(path=MODEL))
     assert any("give the op 'fallback' ops" in x for x in p2["problems"])
     assert tp.check_datapaths({"datapaths": [{"name": "a", "ops": [{"name": "f", "op": "ip"}]}]})
+
+
+def test_a_ram_removed_in_the_starting_design_does_not_fail_g1(dg):
+    rom = {"latches": [], "ram_in_registers": [], "multi_driven": 0, "clean": False,
+           "removed_instances": ["WARNING: [Synth 8-13374] Removed Unreachable instance \\u_core/u_unused_rom"]}
+    d2 = copy.deepcopy(dg)
+    d2["synth"] = rom
+    g = cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]})
+    assert cl.goal_vector({"pass": True}, d2, g, baseline_synth=rom)["G1"]["met"]         # removed before any change: fine
+    d3 = copy.deepcopy(d2)
+    d3["synth"] = {**rom, "removed_instances": rom["removed_instances"] + ["Removed Unreachable instance \\u_core/u_a"]}
+    v = cl.goal_vector({"pass": True}, d3, g, baseline_synth=rom)
+    assert v["G1"]["met"] is False and "u_a" in v["G1"]["detail"] and "u_unused_rom" not in v["G1"]["detail"]
+    assert cl.synth_regressions({"multi_driven": 2}, {"multi_driven": 2}) == (0, [])
+    assert cl.synth_regressions({"multi_driven": 1}, {}) == (1, [])                       # N1: no removed_instances key
+
+
+def test_plan_failure_with_a_small_timing_miss_tries_the_plan_mapping(tmp_path, dg):
+    # review S1: G3 (plan check, shortfall 0.01) outranks a WNS of -0.05 ns (shortfall 0.005) but G3 has no area strategy
+    # in this phase; the loop must still try the plan's mapping instead of stopping
+    d = copy.deepcopy(dg)
+    d["timing"]["wns_ns"] = -0.05
+    c = cl.Closure(ws=_ws(tmp_path), goals=cl.goals_from_spec({"clocks": [{"freq_mhz": 100}]}), g1=lambda r: {"pass": True},
+                   build=FakeBuild(d, [-0.05, 0.4]), editor=_editor([1]), contract="", log=lambda s: None, max_iter=1,
+                   plan_check=lambda _dg: ["plan: instance u_core has 0 DSP48E1 where the plan put 2 multiplies"])
+    r = c.run()
+    assert r["iterations"] >= 1 and r["strategies"][0][0] == "t_plan_map"
+
+
+def test_parallel_op_longer_than_the_previous_one_keeps_every_segment():
+    # review S10: a DSP multiply (4 segments) beside a one-segment add must not merge into the op before the add
+    arch = {"clock_domains": [{"name": "s", "freq_mhz": 100}], "datapaths": [{"name": "d", "ops": [
+        {"name": "t", "op": "table", "index_bits": 4, "width": 9},
+        {"name": "a", "op": "add", "bits": 16},
+        {"name": "m", "op": "mul", "a_bits": 9, "b_bits": 9, "parallel": True}]}]}
+    d = tp.plan(arch, tp.load_model(path=MODEL))["datapaths"][0]
+    segs = [s for st in d["stages"] for s in st["segments"]]
+    assert segs[0].startswith("t: ") and not any(s.startswith("t|") for s in segs)        # the table is untouched
+    assert sum("a|m" in s or s.startswith("m: ") for s in segs) == 4                       # all four DSP segments kept
+    assert d["latency_cycles"] >= 4
+
+
+def test_dsp_counted_in_slices_and_unknown_instance_fails_the_plan_check():
+    arch = {"clock_domains": [{"name": "s", "freq_mhz": 100}], "datapaths": [{"name": "d", "instance": "u_nowhere", "ops": [
+        {"name": "m", "op": "mul", "a_bits": 32, "b_bits": 32}]}]}
+    p = tp.plan(arch, tp.load_model(path=MODEL))
+    assert p["planned"]["dsp"] == 4                                                        # review N4: slices, not operations
+    rows = utilization.parse_hier((C13 / "utilization_hier.rpt").read_text())
+    fails = tp.check_post_synth(p, {"dsp": 4}, rows)
+    assert fails and "names instance u_nowhere, which the design does not have" in fails[0]  # review S5
+
+
+def test_calibration_row_uses_the_stage_time_definition(dg):
+    p = tp.plan(C13_ARCH, tp.load_model(path=MODEL))
+    r = tp.compare_post_route(p, dg["setup_path"])[0]
+    assert r["measured_ns"] == pytest.approx(10.166)                                       # requirement 10 - slack -0.166
+
+
+def test_reg_name_handles_replicas_and_dsp_pins():
+    assert timing.reg_name("u_regs/u_core/k_reg_rep[2]/C") == {"instance": "u_regs/u_core", "signal": "k", "bit": 2}
+    assert timing.reg_name("u_mul/p_reg/CLK")["signal"] == "p"
+
+
+def test_spend_ledger_rows_parse_to_the_header_width():
+    import csv
+    rows = list(csv.reader((Path(__file__).parents[2] / "results" / "spend_ledger.csv").open()))
+    bad = [(i + 1, len(r)) for i, r in enumerate(rows) if r and len(r) != len(rows[0])]
+    assert not bad, f"rows with the wrong number of fields (line, fields): {bad[:10]}"
+
+
+def test_latency_record_matches_the_report():
+    lat = json.loads((Path(__file__).parents[2] / "results" / "62a_closure" / "latency" / "latency.json").read_text())
+    assert [lat[k]["added_clocks"] for k in ("hand fix (PR #134)", "closure, no plan", "closure, with plan")] == [2, 3, 4]
+    assert all(r["same_counts_as_original"] for r in lat.values())

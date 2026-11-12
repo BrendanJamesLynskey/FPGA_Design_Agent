@@ -3,7 +3,7 @@
  "family": "7series",
  "part": "xc7a100tcsg324-1",
  "model": "7series.yaml",
- "model_version": "2026-11-12a",
+ "model_version": "2026-11-12b",
  "target_fraction": 0.7,
  "datapaths": [
   {
@@ -16,18 +16,18 @@
      "op": "mul",
      "resource": "dsp",
      "template": "dsp_mul_p2",
-     "template_text": "DSP48E1 multiply fully pipelined: registered operands, then `m <= a_r * b_r;`, then `p <= m (+ c);` (AREG/BREG, MREG, PREG; a following add of another product or a constant can go in the P stage); no asynchronous reset on any of them, or synthesis builds them in fabric",
+     "template_text": "DSP48E1 multiply fully pipelined: free-running registered operands, then `m <= a_r * b_r;`, then `p <= m (+ c);` (AREG/BREG, MREG, PREG; a following add of another product or a constant can go in the P stage; a MAC is `acc <= (first ? 0 : acc) + m`); no asynchronous reset on any of them, and no `use_dsp` attribute on the module (measured: it pulls other arithmetic into DSPs, 21 slices for 4 MACs; use it on the product signal only if inference fails)",
      "kb_skill": "artix7-dsp48e1",
-     "reason": "5 x 8 multiply: the part has DSP48E1 slices free (1 slice)"
+     "reason": "5 x 8 multiply: the part has DSP48E1 slices free (1 slice); the narrower operand (5 bits) is close to the 4-bit 'too small' limit: check the widths against the spec (signed operands need their sign bit)"
     },
     {
      "name": "y_times_sin",
      "op": "mul",
      "resource": "dsp",
      "template": "dsp_mul_p2",
-     "template_text": "DSP48E1 multiply fully pipelined: registered operands, then `m <= a_r * b_r;`, then `p <= m (+ c);` (AREG/BREG, MREG, PREG; a following add of another product or a constant can go in the P stage); no asynchronous reset on any of them, or synthesis builds them in fabric",
+     "template_text": "DSP48E1 multiply fully pipelined: free-running registered operands, then `m <= a_r * b_r;`, then `p <= m (+ c);` (AREG/BREG, MREG, PREG; a following add of another product or a constant can go in the P stage; a MAC is `acc <= (first ? 0 : acc) + m`); no asynchronous reset on any of them, and no `use_dsp` attribute on the module (measured: it pulls other arithmetic into DSPs, 21 slices for 4 MACs; use it on the product signal only if inference fails)",
      "kb_skill": "artix7-dsp48e1",
-     "reason": "5 x 8 multiply: the part has DSP48E1 slices free (1 slice)"
+     "reason": "5 x 8 multiply: the part has DSP48E1 slices free (1 slice); the narrower operand (5 bits) is close to the 4-bit 'too small' limit: check the widths against the spec (signed operands need their sign bit)"
     },
     {
      "name": "projection_sum",
@@ -77,13 +77,13 @@
    ],
    "period_ns": 10.0,
    "budget_ns": 7.0,
-   "unpipelined_est_ns": 20.356,
+   "unpipelined_est_ns": 19.63,
    "stages": [
     {
      "segments": [
       "x_times_cos|y_times_sin: operand into AREG/BREG"
      ],
-     "est_ns": 2.416,
+     "est_ns": 2.594,
      "reg": "free",
      "over": false
     },
@@ -106,28 +106,28 @@
     {
      "segments": [
       "x_times_cos|y_times_sin: P out to fabric",
-      "projection_sum: add level 1"
+      "projection_sum: add level 1",
+      "projection_sum: add level 2"
      ],
-     "est_ns": 4.708,
+     "est_ns": 6.897,
      "reg": "fabric",
      "over": false
     },
     {
      "segments": [
-      "projection_sum: add level 2",
       "fixed_point_rounding_shift: constant shift (wiring)",
-      "bin_address_select: 2 LUT levels"
+      "bin_address_select: 2 LUT levels",
+      "bin_count_memory: BRAM read (output register)"
      ],
-     "est_ns": 5.704,
+     "est_ns": 5.423,
      "reg": "fabric",
      "over": false
     },
     {
      "segments": [
-      "bin_count_memory: BRAM read (output register)",
       "saturating_increment: add level 1"
      ],
-     "est_ns": 5.131,
+     "est_ns": 2.663,
      "reg": "fabric",
      "over": false
     }
@@ -136,6 +136,7 @@
    "fabric_pipeline_regs": 2,
    "fits": true,
    "latency_forced": null,
+   "ip_problems": [],
    "planned": {
     "dsp": 2,
     "bram": 1
