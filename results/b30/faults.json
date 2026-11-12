@@ -1,6 +1,6 @@
 {
- "caught": 16,
- "valid": 16,
+ "caught": 19,
+ "valid": 19,
  "faults": [
   {
    "name": "no_forwarding",
@@ -8,8 +8,8 @@
    "class": "timing",
    "why": "back-to-back samples in one bin lose a count",
    "status": "caught",
-   "seconds": 1.2,
-   "pytest": "1 failed, 15 deselected in 0.99s"
+   "seconds": 3.3,
+   "pytest": "1 failed, 19 deselected in 2.28s"
   },
   {
    "name": "bin_from_low_bits",
@@ -17,8 +17,8 @@
    "class": "value",
    "why": "the bin index uses the low bits of the code",
    "status": "caught",
-   "seconds": 1.1,
-   "pytest": "1 failed, 15 deselected in 0.90s"
+   "seconds": 3.2,
+   "pytest": "1 failed, 19 deselected in 2.20s"
   },
   {
    "name": "min_wrong_way",
@@ -26,17 +26,44 @@
    "class": "value",
    "why": "the minimum is tracked the wrong way",
    "status": "caught",
-   "seconds": 1.1,
-   "pytest": "1 failed, 15 deselected in 0.91s"
+   "seconds": 3.2,
+   "pytest": "1 failed, 19 deselected in 2.23s"
+  },
+  {
+   "name": "bram_copy_not_written",
+   "block": "adc_histogram",
+   "class": "value",
+   "why": "the host's copy of the bins is never updated (bram variant, added with the variants)",
+   "status": "caught",
+   "seconds": 3.4,
+   "pytest": "1 failed, 21 deselected in 2.37s"
   },
   {
    "name": "sine_wrong_slice",
    "block": "dds_awg",
    "class": "value",
-   "why": "the table address skips the top phase bit, so the sine runs at twice the frequency",
+   "why": "the table address skips the top phase bit, so the sine runs at twice the frequency (bram variant)",
    "status": "caught",
-   "seconds": 0.7,
-   "pytest": "1 failed, 15 deselected in 0.42s"
+   "seconds": 3.2,
+   "pytest": "1 failed, 19 deselected in 2.18s"
+  },
+  {
+   "name": "lut_sine_wrong_slice",
+   "block": "dds_awg",
+   "class": "value",
+   "why": "the same fault in the lut variant's table address (added with the variants)",
+   "status": "caught",
+   "seconds": 6.4,
+   "pytest": "1 failed, 2 passed, 19 deselected in 5.13s"
+  },
+  {
+   "name": "bram_next_entry",
+   "block": "dds_awg",
+   "class": "value",
+   "why": "the registered table read is one entry ahead of the phase (bram variant)",
+   "status": "caught",
+   "seconds": 2.7,
+   "pytest": "1 failed, 19 deselected in 1.71s"
   },
   {
    "name": "triangle_no_fold",
@@ -44,8 +71,8 @@
    "class": "path",
    "why": "the triangle is a saw at twice the rate",
    "status": "caught",
-   "seconds": 0.7,
-   "pytest": "1 failed, 15 deselected in 0.47s"
+   "seconds": 2.7,
+   "pytest": "1 failed, 19 deselected in 1.74s"
   },
   {
    "name": "shift_logical",
@@ -53,8 +80,8 @@
    "class": "value",
    "why": "amplitude scaling shifts zeros into negative samples",
    "status": "caught",
-   "seconds": 0.7,
-   "pytest": "1 failed, 15 deselected in 0.44s"
+   "seconds": 2.6,
+   "pytest": "1 failed, 19 deselected in 1.67s"
   },
   {
    "name": "compare_unfinalised",
@@ -62,8 +89,8 @@
    "class": "value",
    "why": "the compare uses the CRC before the final inversion, so every good frame is flagged",
    "status": "caught",
-   "seconds": 0.7,
-   "pytest": "1 failed, 14 deselected in 0.45s"
+   "seconds": 2.7,
+   "pytest": "1 failed, 20 deselected in 1.72s"
   },
   {
    "name": "wrong_polynomial",
@@ -71,8 +98,8 @@
    "class": "value",
    "why": "one bit of the polynomial wrong",
    "status": "caught",
-   "seconds": 0.7,
-   "pytest": "1 failed, 14 deselected in 0.46s"
+   "seconds": 2.9,
+   "pytest": "1 failed, 20 deselected in 1.88s"
   },
   {
    "name": "sum_misses_first_pixel",
@@ -80,8 +107,8 @@
    "class": "path",
    "why": "the first pixel of a frame is left out of the sum",
    "status": "caught",
-   "seconds": 0.7,
-   "pytest": "1 failed, 14 deselected in 0.49s"
+   "seconds": 2.8,
+   "pytest": "1 failed, 20 deselected in 1.74s"
   },
   {
    "name": "mismatch_not_counted",
@@ -89,8 +116,8 @@
    "class": "path",
    "why": "a bad frame is never counted",
    "status": "caught",
-   "seconds": 0.7,
-   "pytest": "1 failed, 14 deselected in 0.46s"
+   "seconds": 2.7,
+   "pytest": "1 failed, 20 deselected in 1.76s"
   },
   {
    "name": "counts_both_edges",
@@ -98,8 +125,8 @@
    "class": "path",
    "why": "falling edges counted too, so the frequency reads double",
    "status": "caught",
-   "seconds": 1.2,
-   "pytest": "1 failed, 15 deselected in 0.95s"
+   "seconds": 3.3,
+   "pytest": "1 failed, 21 deselected in 2.27s"
   },
   {
    "name": "duty_counts_low",
@@ -107,8 +134,8 @@
    "class": "value",
    "why": "the duty counter counts the low clocks",
    "status": "caught",
-   "seconds": 1.2,
-   "pytest": "1 failed, 15 deselected in 0.94s"
+   "seconds": 3.4,
+   "pytest": "1 failed, 21 deselected in 2.32s"
   },
   {
    "name": "gate_half_length",
@@ -116,8 +143,8 @@
    "class": "timing",
    "why": "the gate is half as long as declared, so the duty and frequency scale are wrong",
    "status": "caught",
-   "seconds": 0.9,
-   "pytest": "1 failed, 15 deselected in 0.67s"
+   "seconds": 2.9,
+   "pytest": "1 failed, 21 deselected in 1.92s"
   },
   {
    "name": "pretrigger_off_by_one",
@@ -125,8 +152,8 @@
    "class": "value",
    "why": "capture sample 0 is one sample late",
    "status": "caught",
-   "seconds": 0.6,
-   "pytest": "1 failed, 15 deselected in 0.40s"
+   "seconds": 2.7,
+   "pytest": "1 failed, 21 deselected in 1.71s"
   },
   {
    "name": "edge_mode_both_edges",
@@ -134,8 +161,8 @@
    "class": "path",
    "why": "edge mode also triggers on falling edges",
    "status": "caught",
-   "seconds": 0.7,
-   "pytest": "1 failed, 15 deselected in 0.47s"
+   "seconds": 2.8,
+   "pytest": "1 failed, 21 deselected in 1.79s"
   },
   {
    "name": "post_trigger_short",
@@ -143,8 +170,8 @@
    "class": "timing",
    "why": "capture ends one sample early, so the last sample is stale",
    "status": "caught",
-   "seconds": 0.6,
-   "pytest": "1 failed, 15 deselected in 0.41s"
+   "seconds": 2.6,
+   "pytest": "1 failed, 21 deselected in 1.63s"
   }
  ]
 }
