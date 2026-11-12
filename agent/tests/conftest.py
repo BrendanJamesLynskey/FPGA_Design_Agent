@@ -53,7 +53,7 @@ def session(wd: Path) -> Session:
 @pytest.fixture()
 def board_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     f = tmp_path / "boards.yaml"
-    f.write_text("boards:\n  nexys_a7_100t:\n    cable_serial: 210292AE3B73\n    uart: /dev/null\n"
+    f.write_text("boards:\n  nexys_a7_100t:\n    cable_serial: TESTCABLE001\n    uart: /dev/null\n"
                  "    power_source: wall\n")
     from flow import hw
     monkeypatch.setattr(hw, "BOARDS_FILE", f)
