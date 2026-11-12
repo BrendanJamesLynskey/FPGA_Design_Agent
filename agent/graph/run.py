@@ -424,7 +424,8 @@ def _core_tools(rt: Runtime, sess: Session, allowed: tuple[str, ...]):
             if "H9" in rt.cfg.arms and _n in H9_COMPACT:
                 from agent.core.report_digest import compact_result     # brief 42 H9: the typed summary digest plus the path
                 rt.offload_seq += 1
-                return compact_result(res, _n, rt.design, rt.offload_seq, getattr(sess.jail, "role", None) == "rtl")[:20000]
+                return compact_result(res, _n, rt.design, rt.offload_seq, getattr(sess.jail, "role", None) == "rtl",
+                                      "report_digest" in allowed)[:20000]
             if "H1" in rt.cfg.arms and getattr(sess.jail, "role", None) == "rtl" and _n not in KNOWLEDGE_TOOLS:
                 from agent.graph.context import offload_result       # brief 42 H1
                 rt.offload_seq += 1

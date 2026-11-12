@@ -17,6 +17,19 @@ sys.path.insert(0, str(HERE))
 import driver  # noqa: E402
 
 
+def pick_row(rows, task, seed, arm, rid):
+    """The record to repair: the one for this slot that is not an infrastructure failure and was not repaired already. When the
+    record already carries `rid` it is chosen first (review fix S3: the first version took the first H9 row, an infrastructure
+    failure, and overwrote its metrics)."""
+    cand = [i for i, r in enumerate(rows) if (r["task"], r["seed"], r["arm"]) == (task, seed, arm)
+            and not r.get("infra_failure") and not r.get("repaired")]
+    same = [i for i in cand if rows[i].get("run_id") == rid]
+    pick = same or cand
+    if not pick:
+        raise SystemExit(f"no repairable record for {task} {seed} {arm}")
+    return pick[0]
+
+
 def main(task, seed, arm, rid, root):
     root = Path(root)
     run = root / "runs" / rid
@@ -25,7 +38,7 @@ def main(task, seed, arm, rid, root):
     with open(driver.LOG, "r+") as f:
         fcntl.flock(f, fcntl.LOCK_EX)
         rows = [json.loads(x) for x in f.read().splitlines() if x.strip()]
-        i = next(i for i, r in enumerate(rows) if (r["task"], r["seed"], r["arm"]) == (task, int(seed), arm) and not r.get("repaired"))
+        i = pick_row(rows, task, int(seed), arm, rid)
         rec = rows[i]
         for k in ("cost_usd", "tokens", "turns", "stop", "stage2_visits", "stage2_gates_passed", "unreported_cost_calls", "per_stage",
                   "error", "infra_failure", "cost_lower_bound"):

@@ -208,3 +208,25 @@ changed: the collision needs a same-second start, and workers are not restarted 
   net/uwire UART_RXD_OUT cannot have multiple drivers`: the design drives the port the test shell's `uart_tx` also drives), reproduced by
   hand with `iverilog` on both designs. They stay counted as fails (a design that does not build in the bench's simulator failed), now
   recorded as `built: false` and reported separately from 0 of N tests passing.
+
+## Amendment 7 (2026-11-12, after the independent review of PR #130; no run was repeated and no number changed)
+
+- **The adopt rule's wording is ambiguous for H1 and H9.** The registered text is "Primary metric per arm: H1: tokens per run (and cost)"
+  and "adopt an arm as default only if its primary metric improves by at least 30 % in the paired median with a bootstrap interval that
+  excludes 0 ...". It was not fixed in advance whether "(and cost)" means cost also, or cost instead. `analysis.md` now quotes the rule
+  and reports both readings (T: tokens, or tokens and cost together; C: tokens or cost). H1 fails on tokens (-65.6 %, interval includes 0)
+  and passes on cost (-32.8 %, interval excludes 0), so it meets the rule under reading C and not under reading T. No reading is
+  preferred after the fact, and nothing is adopted.
+- **The sign tests are post hoc**: not pre-registered, not corrected for the 9 arm-by-metric tests (tokens, cost, wall time for three arms;
+  Bonferroni 0.05 / 9 = 0.0056). They are labelled so in `analysis.md`; none passes that correction.
+- **The decision to run repeats 2 and 3 followed sight of repeat 1's results** (amendment 6 lifts amendment 4's time cut). It restores the
+  originally registered three repeats and changes neither the analysis nor the rule.
+- **Amendment 5:** the repaired H9 record's `rc` is 1 although its summary says it stopped at the 300-turn limit; the repair dropped its
+  `error` field, so the cause of the non-zero exit is not recorded. It is not a malformed-response failure (the worker log shows none), so
+  it stays valid.
+- **Amendment 4's wording** "no Verilator build of a large design" narrows the owner's exemption ("no Verilator build"). The agent's
+  `simulate` builds small Verilator models in these runs; whether that counts as sim-only is for the owner to confirm.
+- **Fixes made after the runs (code the runs did not use):** the run-directory race is closed by a launch lock (any task, arm or seed);
+  H9's compaction note no longer points at `report_digest` where no role can call it (all of stage 2); `repair_records.py` skips
+  infrastructure records; `build_error` keeps the compiler's first error. The retry still drops the usage of a discarded response, so
+  cost is slightly undercounted (mostly A0); it is noted in `analysis.md`, not changed.

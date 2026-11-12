@@ -134,8 +134,21 @@ def score(root: Path, tdir: str, rtl: Path, out: Path) -> dict:
     out = {"pass": bool(j.get("pass")), "tests_passed": sum(1 for v in tests.values() if v is True), "tests": len(tests)}
     if j.get("built") is False:                              # amendment 6: the design did not build under the bench's Icarus: not "0 tests ran"
         out["built"] = False
-        out["build_error_head"] = str(j.get("error", ""))[-300:]
+        out["build_error"] = first_build_error(root, tdir, rtl) or "iverilog error not reproduced"
     return out
+
+
+def first_build_error(root: Path, tdir: str, rtl: Path) -> str:
+    """The compiler's first error for a design that did not build (review fix: the scorer's own `error` is the command line):
+    iverilog on the design and the test shell, the way the bench builds it."""
+    srcs = sorted(str(x) for x in (root / "shell" / "rtl").glob("*.sv")) + sorted(str(x) for x in rtl.glob("*.sv"))
+    tops = [x.stem for x in rtl.glob("*_top.sv")] or [None]
+    cmd = ["iverilog", "-g2012", *(["-s", tops[0]] if tops[0] else []), "-o", os.devnull, *srcs]
+    p = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    for line in (p.stderr or "").splitlines():
+        if "error" in line.lower():
+            return line.replace(str(root) + "/", "")[:300]
+    return ""
 
 
 def audit_metrics(design: Path) -> dict:
@@ -164,16 +177,36 @@ def audit_metrics(design: Path) -> dict:
     return m
 
 
+def owns(runs: Path, n: str, task: str, arm: str, taken: set) -> bool:
+    """Amendment 6: a new run directory is this run's only when its config names this task and exactly this arm and no record has
+    it. A0 is the run with no harness arm."""
+    f = runs / n / "config.json"
+    if n in taken or not f.is_file():
+        return False
+    c = json.loads(f.read_text())
+    if c.get("name") != task:
+        return False
+    want = ARMS[arm]
+    have = c.get("harness_arms")
+    return (have in ("", "None", None)) if not want else (have == want)
+
+
 def one_run(root: Path, task: str, seed: int, arm: str, tag: str) -> dict:
     tdir = TASKS[task]
     runs = root / "runs"
-    before = {p.name for p in runs.iterdir()} if runs.is_dir() else set()
     cmd = [sys.executable, "-m", "agent", "run", str(root / tdir / "spec.md"), "--name", task, "--stop-after", "2",
            "--verif-level", "V1", "--max-usd", str(RUN_USD), "--model", MODEL]
     if ARMS[arm]:
         cmd += ["--harness-arm", ARMS[arm]]
     t0 = time.time()
-    p = subprocess.Popen(cmd, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True)
+    with open(HERE / "launch.lock", "w") as lk:             # review fix: one launch at a time until its run directory exists,
+        fcntl.flock(lk, fcntl.LOCK_EX)                      # so two workers never share a directory (any task, arm or seed)
+        before = {q.name for q in runs.iterdir()} if runs.is_dir() else set()
+        p = subprocess.Popen(cmd, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True)
+        for _ in range(180):
+            if runs.is_dir() and {q.name for q in runs.iterdir()} - before:
+                break
+            time.sleep(0.5)
     hard = False
     try:
         out, _ = p.communicate(timeout=RUN_WALL_S)
@@ -190,17 +223,7 @@ def one_run(root: Path, task: str, seed: int, arm: str, tag: str) -> dict:
             subprocess.run(["docker", "rm", "-f", n], capture_output=True, timeout=60)
     new = sorted({q.name for q in runs.iterdir()} - before) if runs.is_dir() else []
     taken = {r.get("run_id") for r in rows()}
-
-    def mine(n: str) -> bool:
-        """Amendment 6: a new run directory is this run's only when its config names this task and exactly this arm and no
-        record has it (two workers starting in the same second no longer share one)."""
-        f = runs / n / "config.json"
-        if n in taken or not f.is_file():
-            return False
-        c = json.loads(f.read_text())
-        return c.get("name") == task and (c.get("harness_arms") or "") in ("", "None") if not ARMS[arm] else (
-            c.get("name") == task and c.get("harness_arms") == ARMS[arm])
-    rid = next((n for n in new if mine(n)), None)
+    rid = next((n for n in new if owns(runs, n, task, arm, taken)), None)
     rec = {"task": task, "seed": seed, "arm": arm, "run_id": rid, "rc": p.returncode, "wall_s": wall, "hard_limit": hard,
            "worker": tag, "malformed_retries": (out or "").count("FDA_MALFORMED"), "code": FROZEN.read_text().strip()[:8]}
     summ = runs / str(rid) / "summary.json" if rid else None
@@ -214,7 +237,7 @@ def one_run(root: Path, task: str, seed: int, arm: str, tag: str) -> dict:
                               for k, v in (s.get("per_stage") or {}).items()})
     else:
         rec["error"] = (out or "")[-2500:]
-        if rid and p.returncode and "JSONDecodeError" in (out or ""):
+        if p.returncode and "JSONDecodeError" in (out or ""):
             rec["infra_failure"] = "malformed provider response (JSONDecodeError in the model client)"
         ru = runs / str(rid) / "role_usage.jsonl" if rid else None
         if ru and ru.is_file():                                  # no summary: the finished role visits' usage is a lower bound

@@ -8,7 +8,7 @@ Dev split and the two brief 24 drills, deepagents, every role on openai/gpt-6-lu
 | t1_gray_stepper | 1 | H1 | 20261111-114827-883c | 2695.6 |  | 3 | pass | fail 0/9 | 0 | 7755869 | 0.22324 | done |
 | t1_gray_stepper | 1 | H2 | 20261111-123329-0fc7 | 1443.1 |  | None | fail | fail 0/0 | 0 | 5042520 | 0.12435 | None |
 | t1_gray_stepper | 1 | H2 | 20261111-143201-9301 | 3361.9 |  | 5 | fail | fail 0/9 | 0 | 13998755 | 0.296983 | budget: run turns limit 300 reached (300) |
-| t1_gray_stepper | 1 | H9 | 20261111-125733-2f09 | 1983.3 |  | None | fail | fail 0/9 | None | 5195144 | 0.13418 | None |
+| t1_gray_stepper | 1 | H9 | 20261111-125733-2f09 | 1983.3 |  | None | fail | fail 0/9 | 0 | 5195144 | 0.13418 | None |
 | t1_gray_stepper | 1 | H9 | 20261111-143201-f218 | 3151.1 |  | 6 | fail | fail 0/0 | 0 | 9332423 | 0.241995 | budget: run turns limit 300 reached (300) |
 | d24_registered_outputs | 1 | A0 | 20261111-130544-dead | 1655.9 |  | None | fail | pass 3/3 | 0 | 4073524 | 0.11514 | None |
 | d24_registered_outputs | 1 | A0 | 20261111-152440-577f | 5400.1 | yes | None | fail | fail 0/3 | 1 | 9626105 | 0.243002 | None |
