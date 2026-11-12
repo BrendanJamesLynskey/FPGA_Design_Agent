@@ -298,7 +298,9 @@ flow/ipgen/  external design tools driving AMD IP configuration (brief 19): the 
 flow/net/    packet-processing evidence (brief 40): scapy traffic, Python golden models, the bench runner (Icarus; xsim
              optional), seeded-fault runner, line-rate measurement, ip.yaml checker and README generator
 ip_lib/      the project's own IP library ([ip_lib/README.md](ip_lib/README.md)); first entries: the brief-40 networking
-             blocks (RMII MAC, parser, exact/LPM/ternary tables, rewrite, queues and schedulers, L2 switch)
+             blocks (RMII MAC, parser, exact/LPM/ternary tables, rewrite, queues and schedulers, L2 switch); brief 63A adds
+             implementation variants with a measured cost per variant ([docs/ip_variants.md](docs/ip_variants.md),
+             flow/ipvariants.py, flow/ipchar.py) and a FIR entry with four variants
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T): board.yaml, master XDC, inventory.yaml, power_budget.md
 tools/       inventory_check.py (board inventory against the master XDC); git_guard.py (the tests must not move the checkout they run from; checked at the end of every pytest session by conftest.py)

@@ -5,6 +5,23 @@ tests at several points of that space, standard interfaces at the boundary, no h
 part or a pin. Each entry holds `rtl/`, `tb/`, `ip.yaml`, a generated `README.md` and a `CHANGELOG.md`. All of it is our
 own code under the repository's MIT licence.
 
+## Implementation variants (brief 63A)
+
+An entry can hold several implementation variants behind one contract (same ports, parameters, model and tests); they
+differ in resources, latency, throughput and Fmax, and each is characterised out of context on Vivado 2026.1. The
+schema, the measured data format and the read API for the architecture stage are in
+[docs/ip_variants.md](../docs/ip_variants.md); `python3 -m flow.ipvariants fir --budget dsp=0` ranks one entry's
+variants against a plan's budget, and `python3 -m flow.ipchar <entry>` measures them (a heavy job).
+
+| Entry | Variants | Tests |
+|---|---|---|
+| [fir](fir/README.md) | `dsp_bram`, `dist_ram`, `serial`, `lut_mult`: folded DSP MACs with block RAM or LUT RAM, one time-shared DSP MAC, a fully parallel LUT-multiplier form | all four bit-exact against `fir/model.py` at four parameter points, measured latency and II equal the declared ones, a differential test across the variants, nine seeded faults |
+| [dds_awg](dds_awg/README.md) | `bram`, `lut`: the sine table in block RAM or in LUTs | the brief-30 tests at both variants |
+| [adc_histogram](adc_histogram/README.md) | `dist_ram`, `bram`: the bins in LUT RAM, or in two block RAM copies | the brief-30 tests at both variants |
+
+Run: `python -m pytest ip_lib/fir/tb/test_fir_rtl.py flow/tests/test_63a_ipvariants.py` (Icarus Verilog 12, cocotb
+2.0.1); faults: `python hil/ip_faults.py --blocks fir`.
+
 ## Networking and packet processing (brief 40)
 
 Byte-wide AXI-Stream blocks, simulated bit-exact against Python golden models with pcap traffic. Status: simulated;

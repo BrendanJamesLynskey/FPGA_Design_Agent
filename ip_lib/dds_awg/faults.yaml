@@ -2,10 +2,24 @@
 faults:
 - name: sine_wrong_slice
   file: dds_awg.sv
+  old: 'rom[phase_next[PHASE_W-1 -: LUT_W]]'
+  new: 'rom[phase_next[PHASE_W-2 -: LUT_W]]'
+  class: value
+  why: the table address skips the top phase bit, so the sine runs at twice the frequency (bram variant)
+  test: hil/tests/test_30_ip_rtl.py -k test_block and dds_awg
+- name: lut_sine_wrong_slice
+  file: dds_awg.sv
   old: 'lut[phase[PHASE_W-1 -: LUT_W]]'
   new: 'lut[phase[PHASE_W-2 -: LUT_W]]'
   class: value
-  why: the table address skips the top phase bit, so the sine runs at twice the frequency
+  why: the same fault in the lut variant's table address (brief 63A)
+  test: hil/tests/test_30_ip_rtl.py -k test_block and dds_awg and lut
+- name: bram_reads_current_phase
+  file: dds_awg.sv
+  old: 'else if (tick) sine <= rom[phase_next'
+  new: 'else if (tick) sine <= rom[phase'
+  class: timing
+  why: the registered table read uses the current phase, so the sine lags the other waves by one sample (bram variant)
   test: hil/tests/test_30_ip_rtl.py -k test_block and dds_awg
 - name: triangle_no_fold
   file: dds_awg.sv

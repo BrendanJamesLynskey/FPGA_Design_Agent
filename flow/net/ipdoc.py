@@ -15,22 +15,27 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 IP = ROOT / "ip_lib"
 NET = ["eth_mac_rmii", "pkt_parser", "match_exact", "match_lpm", "match_ternary", "axil_table_ctrl", "pkt_rewrite",
        "pkt_queue_sched", "l2_switch"]
 HIL = ["freq_duty_counter", "frame_crc", "dds_awg", "logic_analyser", "adc_histogram"]       # brief 30 instruments
+DSP = ["fir"]                                                                                # brief 63A
+FAULTS_JSON = {**{b: "b30" for b in HIL}, **{b: "b63a" for b in DSP}}                        # default: b40
 REQUIRED = ["name", "version", "summary", "top", "rtl", "depends", "interfaces", "clocks", "resets", "parameters",
             "constraints", "latency", "throughput", "guards", "sweep_tested", "evidence", "cost_table", "boundary",
             "limits", "licence"]
 
 
 def rtl_params(block: str, top: str) -> dict:
-    """The top module's `parameter int NAME = value` list, read from its header."""
+    """The top module's `parameter int NAME = value` and string `parameter NAME = "value"` list, read from its header."""
     for f in (IP / block / "rtl").glob("*.sv"):
         t = f.read_text()
         m = re.search(rf"module\s+{top}\s*#\s*\((.*?)\)\s*\(", t, re.S)
         if m:
-            return {k: int(v.replace("_", "")) for k, v in re.findall(r"parameter\s+int\s+(\w+)\s*=\s*([\d_]+)", m.group(1))}
+            out = {k: int(v.replace("_", "")) for k, v in re.findall(r"parameter\s+int\s+(\w+)\s*=\s*([\d_]+)", m.group(1))}
+            out.update(re.findall(r"parameter\s+(?:string\s+)?(\w+)\s*=\s*\"([^\"]*)\"", m.group(1)))
+            return out
         if re.search(rf"module\s+{top}\s*\(", t):
             return {}
     raise ValueError(f"{block}: top {top} not found")
@@ -65,6 +70,9 @@ def check(block: str) -> list[str]:
     for d in y["depends"]:
         if not (IP / d / "ip.yaml").exists():
             errs.append(f"{block}: dependency {d} has no ip.yaml")
+    if y.get("variants"):                                   # brief 63A: the variants schema and characterisation file
+        from flow import ipvariants
+        errs += ipvariants.validate(block)
     return errs
 
 
@@ -101,11 +109,12 @@ def readme(block: str) -> str:
     if faults.exists():
         fl = yaml.safe_load(faults.read_text())["faults"]
         res = {}
-        fj = ROOT / "results" / ("b30" if block in HIL else "b40") / "faults.json"
+        fj = ROOT / "results" / FAULTS_JSON.get(block, "b40") / "faults.json"
         if fj.exists():
             res = {f["name"]: f["status"] for f in json.loads(fj.read_text())["faults"]}
-        L += ["", "Seeded faults (`faults.yaml`, run by `" + ("hil/ip_faults.py" if block in HIL else "flow/net/faults.py") + "`):", "", "| Fault | What it breaks | Result |", "|---|---|---|"]
+        L += ["", "Seeded faults (`faults.yaml`, run by `" + ("hil/ip_faults.py" if block in HIL else "hil/ip_faults.py --blocks " + block if block in DSP else "flow/net/faults.py") + "`):", "", "| Fault | What it breaks | Result |", "|---|---|---|"]
         L += [f"| `{f['name']}` | {f['why']} | {res.get(f['name'], 'not run')} |" for f in fl]
+    L += variants_section(block, y)
     b = y["boundary"]
     L += ["", "## Boundary and reuse", "", f"- Registered outputs: {b['registered_outputs']}.", f"- Clock crossings: {b['cdc']}.",
           f"- Part, board or pin: {b['part_specific']}.", f"- Depends on: {', '.join(y['depends']) or 'nothing'}.",
@@ -113,10 +122,46 @@ def readme(block: str) -> str:
     return "\n".join(L)
 
 
+def _fmt(v) -> str:
+    if v is None:
+        return "-"
+    return f"{v:g}" if isinstance(v, float) else str(v)
+
+
+def variants_section(block: str, y: dict) -> list[str]:
+    """Brief 63A: the variants and their measured out-of-context cost, from ip.yaml and char/<part>.json."""
+    if not y.get("variants"):
+        return []
+    from flow import ipvariants
+    L = ["", "## Variants", "", f"Selected by `{y.get('variant_param')}`; every variant has the same ports, function and tests. "
+         "Latency and II are in clocks.", "", "| Variant | What | Latency | II | Use when |", "|---|---|---|---|---|"]
+    for k, v in y["variants"].items():
+        L.append(f"| `{k}` | {v['summary']} | `{v['latency']}` | `{v['ii']}` | {v['when']} |")
+    ch = y["characterisation"]
+    rows = ipvariants.measured(block, ch["part"])
+    L += ["", f"Out-of-context cost on the {ch['part']} at a {ch['clock_ns']} ns clock "
+          f"([char/{ch['part']}.json](char/{ch['part']}.json), `python3 -m flow.ipchar {block}`):", ""]
+    if not rows:
+        return L + ["Not characterised yet."]
+    pk = [k for k in rows[0]["params"]]
+    L += ["| Variant | " + " | ".join(pk) + " | LUT | FF | LUT RAM | BRAM tiles | DSP | WNS ns | Fmax MHz | Dynamic W | Latency | II |",
+          "|---|" + "---|" * len(pk) + "---|---|---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        if r.get("status") != "ok":
+            L.append(f"| `{r['variant']}` | " + " | ".join(_fmt(r["params"][k]) for k in pk) + f" | {r.get('status')} |" + " |" * 9)
+            continue
+        L.append(f"| `{r['variant']}` | " + " | ".join(_fmt(r["params"][k]) for k in pk) + " | " +
+                 " | ".join(_fmt(r.get(k)) for k in ("lut", "ff", "lutram", "bram_tiles", "dsp", "wns_ns", "fmax_mhz")) +
+                 f" | {_fmt((r.get('power_w') or {}).get('dynamic'))} | {_fmt(r.get('latency'))} | {_fmt(r.get('ii'))} |")
+    L += ["", f"Tool: {rows[0]['tool']}. Fmax is 1000 / (period - WNS) from one routed run at the target clock: an estimate, "
+          "not a closure at that frequency. Power is vectorless (default toggle rates)."]
+    return L
+
+
 def main() -> int:
     chk = "--check" in sys.argv
     errs, stale = [], []
-    for b in NET + HIL:
+    for b in NET + HIL + DSP:
         errs += check(b)
         text = readme(b)
         p = IP / b / "README.md"

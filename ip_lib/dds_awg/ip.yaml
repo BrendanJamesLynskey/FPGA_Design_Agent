@@ -1,6 +1,6 @@
 # ip.yaml for dds_awg: the declared parameter space and contract (brief 28 rules; brief 30 entry).
 name: dds_awg
-version: 0.1.0
+version: 0.2.0
 status: simulated bit-exact against hil/instruments/models.py; measured on the Nexys A7-100T inside b30_hil_audio (the 1 kHz sine read at the
   audio jack at 999.99 Hz, THD 1.32 %)
 summary: 'DDS/AWG stimulus source: phase accumulator, sine table, triangle, saw and square, amplitude shift. f_out = f_tick * step / 2**PHASE_W.'
@@ -15,6 +15,13 @@ interfaces:
 clocks:
 - name: clk
 parameters:
+  IMPL:
+    type: string
+    default: bram
+    set:
+    - bram
+    - lut
+    note: implementation variant of the sine table (see variants)
   PHASE_W:
     type: int
     default: 32
@@ -41,6 +48,7 @@ latency:
 throughput: one sample per tick
 guards:
 - LUT_W: 2
+- IMPL: rom
 sweep_tested:
 - PHASE_W: 32
   LUT_W: 8
@@ -48,10 +56,46 @@ sweep_tested:
 - PHASE_W: 24
   LUT_W: 6
   OUT_W: 12
+- IMPL: lut
+  PHASE_W: 32
+  LUT_W: 8
+  OUT_W: 16
+- IMPL: lut
+  PHASE_W: 24
+  LUT_W: 6
+  OUT_W: 12
+variant_param: IMPL
+variants:
+  bram:
+    summary: sine table in block RAM, read one clock early at the next phase (phase + step) into the RAM's own register
+    when: large tables (LUT_W 10 and up) or LUTs scarce; a block RAM free
+    uses:
+      bram_tiles: 0.5 * ceil(2**LUT_W * OUT_W / 18432)
+      dsp: 0
+    latency: 1
+    ii: 1
+  lut:
+    summary: sine table as an asynchronous ROM in LUTs, read from the phase register
+    when: small tables, or no block RAM to spare
+    uses:
+      bram_tiles: 0
+      dsp: 0
+    latency: 1
+    ii: 1
+characterisation:
+  part: xc7a100tcsg324-1
+  clock_ns: 4.0
+  points:
+  - PHASE_W: 32
+    LUT_W: 8
+    OUT_W: 16
+  - PHASE_W: 32
+    LUT_W: 12
+    OUT_W: 16
 boundary:
   registered_outputs: 'yes'
   cdc: none
-  part_specific: none (the sine table is built in an initial block with $sin; Vivado 2026.1 synthesises it)
+  part_specific: none (the sine table is built in an initial block with $sin; Vivado 2026.1 synthesises it; rom_style attributes steer the variants)
 limits: 'no table interpolation: the sine''s spurs are set by LUT_W (about -6 dB per bit below the carrier, 8 bits: SFDR near 48 dB for the table
   alone); no phase offset input'
 resets:
