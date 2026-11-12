@@ -8,10 +8,9 @@
 // Padding taps past TAPS keep coefficient zero.
 //
 // Per sample: accept (read slot p), wait, write slot p, then FOLD read cycles; each read pair feeds the engines through
-// A/B, M and P registers (the DSP slice's own pipeline: use_dsp, KB inference template "multiply-accumulate with
-// pipeline registers"); a registered adder tree sums the MACS partial sums. Initiation interval FOLD + 3 clocks.
+// A/B, M and P registers (fir_mac: the DSP slice's own pipeline, use_dsp, KB inference template "multiply-accumulate
+// with pipeline registers"); a registered adder tree sums the MACS partial sums. Initiation interval FOLD + 3 clocks.
 // A small output queue lets the next samples start while earlier results wait for m_ready.
-(* use_dsp = "yes" *)
 module fir_fold #(
     parameter int TAPS      = 16,
     parameter int DATA_W    = 16,
@@ -164,40 +163,38 @@ module fir_fold #(
             l <= {l[2:0], issue && (j == AW'(F - 1))};
         end
     end
-    // tree[0][e] is engine e's accumulator (P); tree[k] is level k of a registered adder tree over the partial sums.
-    // tv[k] is high in the clock tree[k] holds a complete sample's values.
+    // acc[e] is engine e's accumulator (P); tree[k] (k >= 1) is level k of a registered adder tree over the partial
+    // sums. tv[k] is high in the clock level k holds a complete sample's values (tv[0]: the accumulators).
     function automatic int nodes(input int lev);
         int n = M;
         for (int i = 0; i < lev; i++) n = (n + 1) / 2;
         return n;
     endfunction
+    wire  signed [ACC_W-1:0] acc [0:M-1];
     logic signed [ACC_W-1:0] tree [0:L][0:M-1];
     logic [L:0] tv;
     always @(posedge clk) tv <= rst ? '0 : {tv, v[3] && l[3]};
     for (genvar e = 0; e < M; e++) begin : g_mac
-        logic signed [DATA_W-1:0]        a;
-        logic signed [COEF_W-1:0]        b;
-        logic signed [DATA_W+COEF_W-1:0] m;
-        always @(posedge clk) begin
-            if (v[1]) begin
-                a <= d_q[e*DATA_W +: DATA_W];
-                b <= c_q[e*COEF_W +: COEF_W];
-            end
-            if (v[2]) m <= a * b;
-            if (v[3]) tree[0][e] <= f[3] ? ACC_W'(m) : tree[0][e] + ACC_W'(m);
-        end
+        fir_mac #(.DATA_W(DATA_W), .COEF_W(COEF_W), .ACC_W(ACC_W)) u_mac (
+            .clk, .ld_ab(v[1]), .ld_m(v[2]), .ld_p(v[3]), .first(f[3]),
+            .a_in(d_q[e*DATA_W +: DATA_W]), .b_in(c_q[e*COEF_W +: COEF_W]), .acc(acc[e]));
     end
     for (genvar lv = 0; lv < L; lv++) begin : g_lv
         localparam int NI = nodes(lv);
         localparam int NO = nodes(lv + 1);
         for (genvar i = 0; i < NO; i++) begin : g_n
-            if (2 * i + 1 < NI) begin : g_add
+            if (lv == 0 && 2 * i + 1 < NI) begin : g_add0
+                always @(posedge clk) tree[1][i] <= acc[2*i] + acc[2*i+1];
+            end else if (lv == 0) begin : g_pass0
+                always @(posedge clk) tree[1][i] <= acc[2*i];
+            end else if (2 * i + 1 < NI) begin : g_add
                 always @(posedge clk) tree[lv+1][i] <= tree[lv][2*i] + tree[lv][2*i+1];
             end else begin : g_pass
                 always @(posedge clk) tree[lv+1][i] <= tree[lv][2*i];
             end
         end
     end
+    wire signed [ACC_W-1:0] root = (L == 0) ? acc[0] : tree[L][0];
 
     // ---- output queue ------------------------------------------------------------------------------------------------
     // Up to OQ samples are accepted and not yet taken (cnt): enough for back-to-back samples at the full rate when
@@ -210,14 +207,14 @@ module fir_fold #(
             if (qn != 0) begin
                 m_valid <= 1'b1; m_data <= q[0];
                 for (int i = 0; i < OQ - 1; i++) q[i] <= q[i+1];
-                if (tv[L]) q[qn-1] <= tree[L][0];
+                if (tv[L]) q[qn-1] <= root;
                 qn <= qn - (tv[L] ? 0 : 1);
             end else begin
                 m_valid <= tv[L];
-                if (tv[L]) m_data <= tree[L][0];
+                if (tv[L]) m_data <= root;
             end
         end else if (tv[L]) begin
-            q[qn] <= tree[L][0]; qn <= qn + 1'b1;
+            q[qn] <= root; qn <= qn + 1'b1;
         end
     end
 endmodule
