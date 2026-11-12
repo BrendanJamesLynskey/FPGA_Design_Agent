@@ -1,0 +1,31 @@
+{
+ "model": "openai/gpt-6-luna",
+ "sv": [
+  "benchmark/tasks/t1_sync_fifo_regs/ref/rtl/sync_fifo_regs.sv",
+  "benchmark/tasks/t1_sync_fifo_regs/ref/rtl/t1_sync_fifo_regs_top.sv"
+ ],
+ "spec": "benchmark/tasks/t1_sync_fifo_regs/spec.md",
+ "skills": [],
+ "block": false,
+ "ghdl": "GHDL 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]",
+ "rounds": [
+  {
+   "round": 1,
+   "files": [
+    "rtl/reset_sync.vhd",
+    "rtl/sync_fifo_regs.vhd",
+    "rtl/t1_sync_fifo_regs_top.vhd"
+   ],
+   "lint_ok": true,
+   "lint": "d_logic_vector (6 downto 0);\n  signal win_wdata : std_logic_vector (31 downto 0);\n  signal win_rdata : std_logic_vector (31 downto 0);\n  signal u_rst_c_rst : std_logic;\n  signal u_shell_c_uart_tx : std_logic;\n  signal u_shell_c_win_addr : std_logic_vector (6 downto 0);\n  signal u_shell_c_win_wr : std_logic;\n  signal u_shell_c_win_rd : std_logic;\n  signal u_shell_c_win_wdata : std_logic_vector (31 downto 0);\n  signal u_fifo_c_led : std_logic_vector (15 downto 0);\n  signal u_fifo_c_win_rdata : std_logic_vector (31 downto 0);\nbegin\n  wrap_clk100mhz <= clk100mhz;\n  wrap_cpu_resetn <= cpu_resetn;\n  wrap_uart_txd_in <= uart_txd_in;\n  led <= std_logic_vector(wrap_led);\n  uart_rxd_out <= wrap_uart_rxd_out;\n  wrap_LED <= u_fifo_c_led;\n  wrap_UART_RXD_OUT <= u_shell_c_uart_tx;\n  -- results/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/t1_sync_fifo_regs_top.vhd:41:12\n  rst <= u_rst_c_rst; -- (signal)\n  -- results/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/t1_sync_fifo_regs_top.vhd:42:12\n  win_wr <= u_shell_c_win_wr; -- (signal)\n  -- results/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/t1_sync_fifo_regs_top.vhd:43:12\n  win_rd <= u_shell_c_win_rd; -- (signal)\n  -- results/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/t1_sync_fifo_regs_top.vhd:44:12\n  win_addr <= u_shell_c_win_addr; -- (signal)\n  -- results/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/t1_sync_fifo_regs_top.vhd:45:12\n  win_wdata <= u_shell_c_win_wdata; -- (signal)\n  -- results/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/t1_sync_fifo_regs_top.vhd:46:12\n  win_rdata <= u_fifo_c_win_rdata; -- (signal)\n  -- results/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/t1_sync_fifo_regs_top.vhd:48:5\n  u_rst : entity work.reset_sync port map (\n    clk => wrap_CLK100MHZ,\n    rst_n_async => wrap_CPU_RESETN,\n    rst => u_rst_c_rst);\n  -- results/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/t1_sync_fifo_regs_top.vhd:55:5\n  u_shell : entity work.fpga_shell generic map (\n    CLKS_PER_BIT => \"00000000000000000000001101100100\",\n    TIMEOUT_CYCLES => \"00000000000000011000011010100000\",\n    DESIGN_ID => \"01000110010010010100011001001111\",\n    BUILD_STAMP => \"00000000000000000000000000000000\")\n    port map (\n    clk => wrap_CLK100MHZ,\n    rst => rst,\n    uart_rx => wrap_UART_TXD_IN,\n    win_rdata => win_rdata,\n    uart_tx => u_shell_c_uart_tx,\n    win_addr => u_shell_c_win_addr,\n    win_wr => u_shell_c_win_wr,\n    win_rd => u_shell_c_win_rd,\n    win_wdata => u_shell_c_win_wdata);\n  -- results/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/t1_sync_fifo_regs_top.vhd:74:5\n  u_fifo : entity work.sync_fifo_regs port map (\n    clk => wrap_CLK100MHZ,\n    rst => rst,\n    win_addr => win_addr,\n    win_wr => win_wr,\n    win_rd => win_rd,\n    win_wdata => win_wdata,\n    led => u_fifo_c_led,\n    win_rdata => u_fifo_c_win_rdata);\nend rtl;\n    u_shell : fpga_shell\n    ^\nresults/55_vhdl/translations/A/t1_sync_fifo_regs/rtl/sync_fifo_regs.vhd:27:12:note: found RAM \"mem\", width: 8 bits, depth: 16\n    signal mem : mem_array_t;\n           ^",
+   "cost": 0.002068925,
+   "answer_chars": 8708
+  }
+ ],
+ "cost_usd": 0.002068925,
+ "prompt_tokens": 2324,
+ "completion_tokens": 3557,
+ "started": "2026-11-11T23:55:24",
+ "lint_ok": true,
+ "finished": "2026-11-11T23:55:47"
+}

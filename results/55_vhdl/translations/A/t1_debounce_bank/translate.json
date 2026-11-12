@@ -1,0 +1,34 @@
+{
+ "model": "openai/gpt-6-luna",
+ "sv": [
+  "benchmark/tasks/t1_debounce_bank/ref/rtl/bm_debounce.sv",
+  "benchmark/tasks/t1_debounce_bank/ref/rtl/debounce_bank.sv",
+  "benchmark/tasks/t1_debounce_bank/ref/rtl/t1_debounce_bank_top.sv"
+ ],
+ "spec": "benchmark/tasks/t1_debounce_bank/spec.md",
+ "skills": [],
+ "block": false,
+ "ghdl": "GHDL 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]",
+ "rounds": [
+  {
+   "round": 1,
+   "files": [
+    "rtl/bm_debounce.vhd",
+    "rtl/debounce_bank.vhd",
+    "rtl/reset_sync.vhd",
+    "rtl/sync2.vhd",
+    "rtl/t1_debounce_bank_top.vhd"
+   ],
+   "lint_ok": true,
+   "lint": "RXD_OUT: std_logic;\n  signal rst : std_logic;\n  signal win_wr : std_logic;\n  signal win_rd : std_logic;\n  signal win_addr : std_logic_vector (6 downto 0);\n  signal win_wdata : std_logic_vector (31 downto 0);\n  signal win_rdata : std_logic_vector (31 downto 0);\n  signal u_rst_c_rst : std_logic;\n  signal u_shell_c_uart_tx : std_logic;\n  signal u_shell_c_win_addr : std_logic_vector (6 downto 0);\n  signal u_shell_c_win_wr : std_logic;\n  signal u_shell_c_win_rd : std_logic;\n  signal u_shell_c_win_wdata : std_logic_vector (31 downto 0);\n  signal u_bank_c_led : std_logic_vector (15 downto 0);\n  signal u_bank_c_win_rdata : std_logic_vector (31 downto 0);\nbegin\n  wrap_clk100mhz <= clk100mhz;\n  wrap_cpu_resetn <= cpu_resetn;\n  wrap_sw <= typwrap_sw(sw);\n  wrap_uart_txd_in <= uart_txd_in;\n  led <= std_logic_vector(wrap_led);\n  uart_rxd_out <= wrap_uart_rxd_out;\n  wrap_LED <= u_bank_c_led;\n  wrap_UART_RXD_OUT <= u_shell_c_uart_tx;\n  -- results/55_vhdl/translations/A/t1_debounce_bank/rtl/t1_debounce_bank_top.vhd:22:12\n  rst <= u_rst_c_rst; -- (signal)\n  -- results/55_vhdl/translations/A/t1_debounce_bank/rtl/t1_debounce_bank_top.vhd:23:12\n  win_wr <= u_shell_c_win_wr; -- (signal)\n  -- results/55_vhdl/translations/A/t1_debounce_bank/rtl/t1_debounce_bank_top.vhd:24:12\n  win_rd <= u_shell_c_win_rd; -- (signal)\n  -- results/55_vhdl/translations/A/t1_debounce_bank/rtl/t1_debounce_bank_top.vhd:25:12\n  win_addr <= u_shell_c_win_addr; -- (signal)\n  -- results/55_vhdl/translations/A/t1_debounce_bank/rtl/t1_debounce_bank_top.vhd:26:12\n  win_wdata <= u_shell_c_win_wdata; -- (signal)\n  -- results/55_vhdl/translations/A/t1_debounce_bank/rtl/t1_debounce_bank_top.vhd:27:12\n  win_rdata <= u_bank_c_win_rdata; -- (signal)\n  -- results/55_vhdl/translations/A/t1_debounce_bank/rtl/t1_debounce_bank_top.vhd:49:5\n  u_rst : entity work.reset_sync port map (\n    clk => wrap_CLK100MHZ,\n    rst_n_async => wrap_CPU_RESETN,\n    rst => u_rst_c_rst);\n  -- results/55_vhdl/translations/A/t1_debounce_bank/rtl/t1_debounce_bank_top.vhd:56:5\n  u_shell : entity work.fpga_shell generic map (\n    CLKS_PER_BIT => \"00000000000000000000001101100100\",\n    TIMEOUT_CYCLES => \"00000000000000011000011010100000\",\n    DESIGN_ID => \"01000100010000100100111001001011\",\n    BUILD_STAMP => \"00000000000000000000000000000000\")\n    port map (\n    clk => wrap_CLK100MHZ,\n    rst => rst,\n    uart_rx => wrap_UART_TXD_IN,\n    win_rdata => win_rdata,\n    uart_tx => u_shell_c_uart_tx,\n    win_addr => u_shell_c_win_addr,\n    win_wr => u_shell_c_win_wr,\n    win_rd => u_shell_c_win_rd,\n    win_wdata => u_shell_c_win_wdata);\n  -- results/55_vhdl/translations/A/t1_debounce_bank/rtl/t1_debounce_bank_top.vhd:75:5\n  u_bank : entity work.debounce_bank_2000000 port map (\n    clk => wrap_CLK100MHZ,\n    rst => rst,\n    sw_async => wrap_SW,\n    win_addr => win_addr,\n    win_wr => win_wr,\n    win_rd => win_rd,\n    win_wdata => win_wdata,\n    led => u_bank_c_led,\n    win_rdata => u_bank_c_win_rdata);\nend rtl;\n    u_shell : fpga_shell\n    ^",
+   "cost": 0.002463425,
+   "answer_chars": 11259
+  }
+ ],
+ "cost_usd": 0.002463425,
+ "prompt_tokens": 2728,
+ "completion_tokens": 4245,
+ "started": "2026-11-11T23:55:24",
+ "lint_ok": true,
+ "finished": "2026-11-11T23:55:51"
+}

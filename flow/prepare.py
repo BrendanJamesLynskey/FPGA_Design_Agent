@@ -27,6 +27,10 @@ try:
     from flow import srcorder
 except ImportError:                     # run as a script: flow/ itself is on sys.path
     import srcorder                     # type: ignore[no-redef]
+try:
+    from flow import vhdl
+except ImportError:
+    import vhdl                         # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -197,6 +201,7 @@ def main(argv: list[str] | None = None) -> int:
     if noshell:
         srcs = srcorder.drop_shell(srcs)
     srcs = srcorder.order_sv(srcs)                      # 07a2-prep: packages and interfaces first, not name order
+    srcs = vhdl.order_sources(srcs)                     # brief 55: VHDL after the SystemVerilog, packages first
     data = srcorder.data_files(design)                  # 07a2-prep: the task's data files, for $readmemh
     xdcs = expand(cfg["constraints"])
     stamp = sources_sha256(srcs + xdcs + data)

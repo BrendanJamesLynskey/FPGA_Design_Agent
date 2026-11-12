@@ -1,0 +1,28 @@
+{
+ "model": "openai/gpt-6-luna",
+ "sv": [
+  "flow/tests/fixtures/cdc_mutants/rtl/cdcfx_c8.sv"
+ ],
+ "spec": null,
+ "skills": [],
+ "block": true,
+ "ghdl": "GHDL 4.1.0 (Ubuntu 4.1.0+dfsg-0ubuntu2.1) [Dunoon edition]",
+ "rounds": [
+  {
+   "round": 1,
+   "files": [
+    "rtl/cdcfx_c8.vhd"
+   ],
+   "lint_ok": true,
+   "lint": " n45_o <= req_s (0);\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:53:32\n  n46_o <= n45_o & req;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:56:21\n  n47_o <= req_s (1);\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:56:39\n  n48_o <= not ack;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:56:31\n  n49_o <= n48_o and n47_o;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:60:24\n  n50_o <= req_s (1);\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:60:28\n  n51_o <= not n50_o;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:60:13\n  n53_o <= ack when n51_o = '0' else '0';\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:56:13\n  n56_o <= '0' when n49_o = '0' else '1';\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:56:13\n  n60_o <= n53_o when n49_o = '0' else '1';\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:33:9\n  n66_o <= data when n34_o = '0' else wrap_din;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:33:9\n  process (wrap_clk_a)\n  begin\n    if rising_edge (wrap_clk_a) then\n      n67_q <= n66_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:33:9\n  process (wrap_clk_a)\n  begin\n    if rising_edge (wrap_clk_a) then\n      n68_q <= n35_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:33:9\n  process (wrap_clk_a)\n  begin\n    if rising_edge (wrap_clk_a) then\n      n69_q <= n36_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:33:9\n  process (wrap_clk_a)\n  begin\n    if rising_edge (wrap_clk_a) then\n      n70_q <= n13_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:52:9\n  process (wrap_clk_b)\n  begin\n    if rising_edge (wrap_clk_b) then\n      n71_q <= n46_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:52:9\n  process (wrap_clk_b)\n  begin\n    if rising_edge (wrap_clk_b) then\n      n72_q <= n60_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:52:9\n  process (wrap_clk_b)\n  begin\n    if rising_edge (wrap_clk_b) then\n      n73_q <= n56_o;\n    end if;\n  end process;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:52:9\n  n74_o <= n75_q when n49_o = '0' else data;\n  -- results/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:52:9\n  process (wrap_clk_b)\n  begin\n    if rising_edge (wrap_clk_b) then\n      n75_q <= n74_o;\n    end if;\n  end process;\nend rtl;\nresults/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:27:15:warning: unhandled attribute \"async_reg\" [-Wunhandled-attribute]\n    attribute ASYNC_REG of req_s : signal is \"TRUE\";\n              ^\nresults/55_vhdl/translations/A/cdcfx_c8/rtl/cdcfx_c8.vhd:26:15:warning: unhandled attribute \"async_reg\" [-Wunhandled-attribute]\n    attribute ASYNC_REG of ack_s : signal is \"TRUE\";\n              ^",
+   "cost": 0.0004792,
+   "answer_chars": 1877
+  }
+ ],
+ "cost_usd": 0.0004792,
+ "prompt_tokens": 657,
+ "completion_tokens": 827,
+ "started": "2026-11-11T23:55:24",
+ "lint_ok": true,
+ "finished": "2026-11-11T23:55:30"
+}
