@@ -11,7 +11,7 @@ after the address (the histogram RAMs need the first). RO = read only; P = pulse
 | 0x000 | ID (RO) | 0x58A00001 |
 | 0x001 | BUILD_STAMP (RO) | first 8 hex digits of the sources' SHA-256 (the flow sets it) |
 | 0x002 | CTRL | [0] core enable, [1] speculative (1, default) or safe (0), [2] halt on sequence gap, [3] kill, [4] histogram A metric (0 RX SFD to first preamble byte, 1 decision to first preamble byte), [5] hold both PHYs in reset |
-| 0x003 | PULSE (P) | [0] clear counters, [1] clear book, [2] clear histograms, [3] clear halt, [4] clear the latched kill input, [5] commit the rule table, [6] pop the decision log, [7] reset the order slot and anything pending (board-safe: a frame already on the wire finishes as it is) |
+| 0x003 | PULSE (P) | [0] clear counters, [1] clear book, [2] clear histograms, [3] clear halt, [4] clear the latched kill input, [5] commit the rule table, [6] pop the decision log, [7] soft reset of the order slot (board-safe): drops an order that has not started and a pending ARP reply; never an undo: an order already started is still poisoned or cancelled if its frame turns out bad, and a pending cancel is still sent |
 | 0x004 | STATUS (RO) | [0] kill in force, [1] halted, [2] kill input latched, [3] DRP busy, [4] MDIO B busy, [5] MDIO A busy, [6] histogram clearing, [7] book clearing |
 | 0x005 | TS (RO) | the free-running 125 MHz counter (8 ns) |
 | 0x006 | RULES_VERSION (RO) | commits since reset |

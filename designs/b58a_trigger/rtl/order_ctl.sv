@@ -16,7 +16,11 @@
 //
 // The slot always drains: if the verdict has not arrived WDOG clocks after the request (a lost end token, for example),
 // the frame is treated as bad (ev_wdog), which drops, poisons or cancels the order as above. soft_rst (a register
-// pulse) clears the slot and anything pending; a frame already on the wire finishes as it is.
+// pulse) drops an order that has not started and a pending ARP reply, and forgets which frame last asked; it never
+// removes an undo: an order already started still waits for its verdict (or the watchdog) and is poisoned or
+// cancelled if its frame was bad, a pending cancel is still sent, and a frame being assembled or sent finishes.
+// The request record of a frame is cleared at that frame's verdict, so the frame counter's wrap cannot suppress a
+// later frame's request. GEN_W (the frame counter's width) is 8; the formal harness narrows it to reach the wrap.
 // One order slot: at most one order request per received frame (ev_suppress) and none while the slot is busy
 // (ev_busy). kill drops a granted order that has not started (ev_kill_drop). Priority on the wire: cancel, order,
 // ARP reply.
@@ -32,7 +36,8 @@
 
 module order_ctl #(
     parameter int BUILD_MODE = 0,
-    parameter int WDOG       = 4096     // clocks from request to verdict before the frame is treated as bad
+    parameter int WDOG       = 4096,    // clocks from request to verdict before the frame is treated as bad
+    parameter int GEN_W      = 8        // width of the frame counter (fgen, s_gen)
 ) (
     input  logic        clk,
     input  logic        rst,
@@ -92,8 +97,8 @@ module order_ctl #(
     output logic        s_vg,
     output logic        s_start,
     output logic        s_sent,
-    output logic [7:0]  s_gen,
-    output logic [7:0]  fgen,
+    output logic [GEN_W-1:0] s_gen,
+    output logic [GEN_W-1:0] fgen,
     output logic        cancel_pend
 );
     initial begin
@@ -111,7 +116,7 @@ module order_ctl #(
     logic [15:0] o_i;
     logic [31:0] o_p, o_q, o_id, next_id, out_seq;
     logic        rq_valid;              // a request was made in frame generation rq_gen
-    logic [7:0]  rq_gen;
+    logic [GEN_W-1:0] rq_gen;
     logic        c_s;
     logic [15:0] c_i;
     logic [31:0] c_p, c_q, c_id;
@@ -253,32 +258,27 @@ module order_ctl #(
 
     // ---- choose the next frame ------------------------------------------------------------------------------------------
     logic can_start, start_cancel, start_order, start_arp;
-    assign can_start    = !sending && !asm_busy && !asm_done && tx_ready && !tx_start && !soft_rst;
-    assign start_cancel = can_start && cancel_pend;
-    assign start_order  = can_start && !cancel_pend && order_ok;
-    assign start_arp    = can_start && !cancel_pend && !order_ok && arp_pend;
+    assign can_start    = !sending && !asm_busy && !asm_done && tx_ready && !tx_start;
+    assign start_cancel = can_start && cancel_pend;                         // an undo: a soft reset never holds it
+    assign start_order  = can_start && !cancel_pend && order_ok && !soft_rst;
+    assign start_arp    = can_start && !cancel_pend && !order_ok && arp_pend && !soft_rst;
 
     // ---- registers ------------------------------------------------------------------------------------------------------
     always_ff @(posedge clk) begin
         ev_suppress <= 1'b0; ev_busy <= 1'b0; ev_spec_drop <= 1'b0; ev_spec_poison <= 1'b0; ev_spec_cancel <= 1'b0;
         ev_kill_drop <= 1'b0; ev_order_sent <= 1'b0; ev_cancel_sent <= 1'b0; ev_arp_sent <= 1'b0; ev_wdog <= 1'b0;
         tx_start <= 1'b0;
-        if (rst || soft_rst) begin
+        if (rst) begin
             s_act <= 1'b0; s_wait <= 1'b0; s_gnt <= 1'b0; s_vk <= 1'b0; s_vg <= 1'b0; s_start <= 1'b0; s_sent <= 1'b0;
             s_clean <= 1'b0; s_age <= '0; s_gen <= '0;
             rq_valid <= 1'b0; rq_gen <= '0; cancel_pend <= 1'b0; arp_pend <= 1'b0;
             asm_busy <= 1'b0; asm_done <= 1'b0; asm_i <= '0;
-            if (rst) begin
-                fgen <= '0; next_id <= 32'd1; out_seq <= 32'd1; sending <= 1'b0; kind <= K_NONE;
-                o_s <= 1'b0; o_i <= '0; o_p <= '0; o_q <= '0; o_id <= '0; c_s <= 1'b0; c_i <= '0; c_p <= '0; c_q <= '0;
-                c_id <= '0; a_sha <= '0; a_spa <= '0; f_id <= '0; f_seq <= '0; f_p <= '0; f_q <= '0; f_s <= 1'b0;
-                f_i <= '0; f_cancel <= 1'b0; f_csum <= '0; cs_acc <= '0; cs_i <= '0; tx_len <= '0; cur_order_id <= '0;
-            end else begin
-                if (frame_end_v) fgen <= fgen + 8'd1;
-                if (tx_last && sending) sending <= 1'b0;   // a frame already on the wire finishes as it is
-            end
+            fgen <= '0; next_id <= 32'd1; out_seq <= 32'd1; sending <= 1'b0; kind <= K_NONE;
+            o_s <= 1'b0; o_i <= '0; o_p <= '0; o_q <= '0; o_id <= '0; c_s <= 1'b0; c_i <= '0; c_p <= '0; c_q <= '0;
+            c_id <= '0; a_sha <= '0; a_spa <= '0; f_id <= '0; f_seq <= '0; f_p <= '0; f_q <= '0; f_s <= 1'b0;
+            f_i <= '0; f_cancel <= 1'b0; f_csum <= '0; cs_acc <= '0; cs_i <= '0; tx_len <= '0; cur_order_id <= '0;
         end else begin
-            if (frame_end_v) fgen <= fgen + 8'd1;
+            if (frame_end_v) fgen <= fgen + 1'b1;
             // ---- requests
             if (fire_v && fire_order) begin
                 if (in_frame_done) ev_suppress <= 1'b1;
@@ -288,9 +288,12 @@ module order_ctl #(
                 s_act <= 1'b1; s_wait <= 1'b1; s_gnt <= 1'b0; s_start <= 1'b0; s_sent <= 1'b0; s_clean <= 1'b0;
                 s_age <= '0; s_gen <= fgen;
                 s_vk <= frame_end_v; s_vg <= frame_good;    // the frame's verdict may arrive in the request clock
-                rq_valid <= 1'b1; rq_gen <= fgen;
+                rq_valid <= !frame_end_v; rq_gen <= fgen;    // its verdict in this clock ends the record at once
                 o_s <= o_side; o_i <= o_inst; o_p <= o_px; o_q <= o_qty;
-            end else if (s_act) begin
+            end else begin
+                if (frame_end_v && rq_gen == fgen) rq_valid <= 1'b0;    // the requesting frame's verdict
+            end
+            if (!req_v && s_act) begin
                 if (v_now) begin s_vk <= 1'b1; s_vg <= frame_good; end
                 if (s_age != 16'hFFFF) s_age <= s_age + 16'd1;
                 if (wd_now) begin s_vk <= 1'b1; s_vg <= 1'b0; ev_wdog <= 1'b1; end
@@ -357,6 +360,13 @@ module order_ctl #(
             end
             if (asm_done) begin asm_done <= 1'b0; tx_start <= 1'b1; sending <= 1'b1; end
             if (tx_last && sending) sending <= 1'b0;
+            // soft reset: drop what has not started, never an undo (no order or ARP reply starts in this clock)
+            if (soft_rst) begin
+                rq_valid <= 1'b0; arp_pend <= 1'b0;
+                if (s_act && !s_start) begin
+                    s_act <= 1'b0; s_wait <= 1'b0; s_gnt <= 1'b0; s_vk <= 1'b0; s_vg <= 1'b0; s_age <= '0;
+                end
+            end
         end
     end
     assign tx_kind   = sending ? kind : K_NONE;

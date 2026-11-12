@@ -95,7 +95,9 @@ measurement.
 - **Adversarial regression tests** from the independent review (`tests/rev_adv_cocotb.py`): frames cut 0 to 9 bytes
   after the price field with a wrong FCS, 74 to 76-byte frames with a wrong FCS whose second message triggers, and
   orders waiting behind an ARP reply. Each order from a bad frame must be dropped, poisoned or cancelled, and the order
-  slot must drain.
+  slot must drain. A second round (`tests/rev2_cocotb.py`): a soft reset while a speculative order from a bad frame
+  is on the wire (it must still be poisoned or cancelled), and a trigger 253 to 256 frames after the last request (it
+  must fire whatever the frame counter's value).
 - **Formal** (SymbiYosys, `verif/formal`, `results/b58a/formal.json`):
   - `interlocks.sv`: **k-induction proof** that no order is granted while killed or halted, above the size limit,
     outside the price band or without a band reference, beyond the position limit, or beyond a bucketful of tokens
@@ -104,10 +106,13 @@ measurement.
     The proof covers `interlocks.sv` alone. If the host lowers the position limit at run time, the position can sit
     above the new limit; orders that would reduce it are then refused too. The position counts every order granted
     since reset (a cancelled or poisoned order still counts).
-  - `order_ctl.sv`: **bounded check (30 clocks), not a proof**, with every input free, an abstract MAC (3-clock frames)
-    and a watchdog of 8 clocks: an order whose frame turns out bad is never started once that is known, and if it left
-    with a good FCS a cancel for it follows within 12 clocks; a cancel only follows a bad frame (or the watchdog); safe
-    mode never sends before a good verdict; the order slot is never busy for more than 24 clocks.
+  - `order_ctl.sv`: **bounded check (30 clocks), not a proof**, with every input free (soft resets included), an
+    abstract MAC (3-clock frames), a watchdog of 8 clocks and a 2-bit frame counter (so its wrap is within reach): an
+    order whose frame turns out bad is never started once that is known, and if it left with a good FCS a cancel for
+    it follows within 12 clocks, across soft resets too; a cancel only follows a bad frame (or the watchdog); safe mode
+    never sends before a good verdict; one request per frame, and a trigger in a frame that has not asked always makes
+    one when the slot is free; the order slot is never busy for more than 24 clocks. Outside the bound: backlogs of
+    several orders, and the 16-bit age counter's saturation.
   - mac_rx and mac_tx frame state machines: **bounded checks (20 and 40 clocks), not proofs**, with reachability covers.
 - **The price band** is checked against the book **before** the triggering message (a buy against the best ask, a
   sell against the best bid, else the last trade), never against the message itself; with no price in the book the

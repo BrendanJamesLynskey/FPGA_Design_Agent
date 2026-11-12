@@ -40,7 +40,7 @@ Each line is confirmed once before the first board step (section 6). The first r
    model's expectation for the generated stream; histograms A and B read out.
 8. Fault injection from the generator: a bad FCS on every 7th packet (the speculative undo on hardware: dropped,
    poisoned or cancelled), sequence gaps with halt-on-gap, then the hostile set (`interlocks_under_attack`) from the PC
-   (second run). The order-slot status (`0x009`) must return to idle after each; PULSE bit 7 resets the slot if not.
+   (second run). The order-slot status (`0x009`) must return to idle after each; if not, PULSE bit 7 drops an order that has not started (it never removes an undo: a started order from a bad frame is still poisoned or cancelled).
 9. The measurement run: 10^6 orders (generator interval long enough that loops never overlap: about 1.1 us per loop,
    so 10 us is safe), histograms A and B, minimum, maximum and mean, and the operating conditions every minute. A
    claim of determinism only if the histogram shows it.

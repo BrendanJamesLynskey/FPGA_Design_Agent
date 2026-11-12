@@ -52,7 +52,6 @@ module kr260_top #(
     logic a_rxc_g, b_rxc_g, a_lk, b_lk;
     BUFG u_bga (.I(a_rxc), .O(a_rxc_g));
     BUFG u_bgb (.I(b_rxc), .O(b_rxc_g));
-    assign a_lk = 1'b1; assign b_lk = 1'b1;
     // IDELAYCTRL: 333.33 MHz reference from the core MMCM (VCO 1000 MHz / 3), held in reset until the MMCM locks; its
     // reset is asserted at once and released on a reference clock edge, from flip-flops clocked by the reference
     logic ref333_u, ref333, dly_rdy, rst_ref;
@@ -61,15 +60,15 @@ module kr260_top #(
         .src_arst(!locked), .dest_clk(ref333), .dest_arst(rst_ref));
     (* IODELAY_GROUP = "rgmii_rx" *) IDELAYCTRL #(.SIM_DEVICE("ULTRASCALE_PLUS")) u_idc (.REFCLK(ref333), .RST(rst_ref),
         .RDY(dly_rdy));
+    // each receive path stays in reset until the delay lines are calibrated (IDELAYCTRL ready)
+    assign a_lk = dly_rdy; assign b_lk = dly_rdy;
 `else
     // simulation: no MMCM; the core runs on the input clock and "lock" rises after 16 clocks, as it does on silicon
     logic [4:0] lk = 5'd0;
     always_ff @(posedge clk_25) if (!lk[4]) lk <= lk + 5'd1;
     assign clk = clk_25; assign clk90 = clk_25; assign locked = lk[4];
-    logic dly_rdy;
-    assign dly_rdy = 1'b1;
     logic a_rxc_g, b_rxc_g, a_lk, b_lk;
-    assign a_rxc_g = a_rxc; assign b_rxc_g = b_rxc; assign a_lk = 1'b1; assign b_lk = 1'b1;
+    assign a_rxc_g = a_rxc; assign b_rxc_g = b_rxc; assign a_lk = 1'b1; assign b_lk = 1'b1;    // no delay lines
 `endif
     xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0)) u_rst (
         .src_rst(!locked), .dest_clk(clk), .dest_rst(rst));

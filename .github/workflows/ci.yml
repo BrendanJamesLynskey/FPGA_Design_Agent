@@ -207,6 +207,8 @@ jobs:
         run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_model.py
       - name: trigger_core against the model; assemble-then-send comparison; kr260_top RGMII loop
         run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_rtl.py
+      - name: Review regression tests (bad-frame undo, slot drain, soft reset in flight, frame-counter wrap)
+        run: python -m pytest -q designs/b58a_trigger/tests/test_rev_adv_rtl.py designs/b58a_trigger/tests/test_rev2_rtl.py
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4

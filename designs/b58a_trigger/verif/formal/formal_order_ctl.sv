@@ -1,16 +1,18 @@
 // formal_order_ctl.sv: the order slot of rtl/order_ctl.sv. Every input is free (frames, verdicts, rule firings, the
 // interlocks' answers, kill, ARP requests); the MAC is an abstract one (a frame of L clocks, its last byte's FCS
 // inverted if poison came before that byte). One order, chosen by the solver (watch), is followed by ghost logic
-// that knows its frame's verdict independently of the slot's own bookkeeping.
+// that knows its frame's verdict independently of the slot's own bookkeeping. soft_rst (the host's register pulse)
+// is free too, and the frame counter is 2 bits wide here (GEN_W = 2), so its wrap is within the bound.
 module formal_order_ctl (
     input logic        clk,
-    input logic        fire_v, fire_order, grant_in, frame_end_v, frame_good, frame_arp_req, kill_now, spec_en
+    input logic        fire_v, fire_order, grant_in, frame_end_v, frame_good, frame_arp_req, kill_now, spec_en,
+    input logic        soft_rst
 );
     // the order's fields do not affect any property: held constant to keep the solver fast
     logic        o_side = 1'b0;
     logic [15:0] o_inst = 16'd0;
     logic [31:0] o_px = 32'd0, o_qty = 32'd0;
-    localparam int WDOG = 8, L = 3;
+    localparam int WDOG = 8, L = 3, GEN_W = 2;
     logic rst;
     logic f_past = 1'b0;
     logic [2:0] f_n = 3'd0;
@@ -47,8 +49,8 @@ module formal_order_ctl (
     logic [1:0] tx_kind;
     logic [31:0] cur_order_id;
     logic s_act, s_gnt, s_vk, s_vg, s_start, s_sent, cancel_pend;
-    logic [7:0] s_gen, fgen;
-    order_ctl #(.BUILD_MODE(0), .WDOG(WDOG)) dut (.clk, .rst, .soft_rst(1'b0), .spec_en, .kill_now,
+    logic [GEN_W-1:0] s_gen, fgen;
+    order_ctl #(.BUILD_MODE(0), .WDOG(WDOG), .GEN_W(GEN_W)) dut (.clk, .rst, .soft_rst, .spec_en, .kill_now,
         .my_mac(48'h0), .my_ip(32'h0), .my_port(16'h0), .dst_mac(48'h0), .dst_ip(32'h0), .dst_port(16'h0),
         .fire_v, .fire_order, .req_v, .grant, .rej_v, .o_side, .o_inst, .o_px, .o_qty,
         .frame_end_v, .frame_good, .frame_arp_req, .arp_sha(48'h0), .arp_spa(32'h0),
@@ -94,6 +96,19 @@ module formal_order_ctl (
     end
     logic g_bad_now;
     assign g_bad_now = g_vk && g_bad;
+    // one request per frame: has the frame now arriving already asked? (a request whose verdict comes in the same
+    // clock belongs to a frame that has ended; a soft reset forgets). n_v counts verdicts, sr_q remembers soft resets.
+    logic g_asked, sr_seen;
+    logic [2:0] n_v;
+    always_ff @(posedge clk) begin
+        if (rst || soft_rst || frame_end_v) g_asked <= 1'b0;
+        else if (req_v) g_asked <= 1'b1;
+        if (rst) begin n_v <= '0; sr_seen <= 1'b0; end
+        else begin
+            if (frame_end_v && n_v != 3'd7) n_v <= n_v + 3'd1;
+            if (soft_rst && tx_kind == 2'd1 && cur_order_id[7:0] == watch && g_mine) sr_seen <= 1'b1;
+        end
+    end
 
     // ---- properties --------------------------------------------------------------------------------------------------
     logic [7:0] act_run;                // consecutive clocks the slot has been busy
@@ -103,7 +118,12 @@ module formal_order_ctl (
         // before the order shows on tx_kind; a verdict arriving in that clock is already in g_bad_now here) ...
         if (tx_kind == 2'd1 && cur_order_id[7:0] == watch && g_mine && !g_started) assert (!g_bad_now);
         // ... and if it left with a good FCS, a cancel for it starts within 12 clocks (two 3-clock frames and gaps)
+        // (N1: with soft resets free, so no order from a bad frame leaves unpoisoned and uncancelled across one)
         assert (g_wait <= 8'd12);
+        // N2: a trigger in a frame that has not asked, with the slot free, always makes a request (whatever the
+        // frame counter's value: it wraps every 4 frames here), and never more than one per frame
+        if (fire_v && fire_order && !s_act && !soft_rst && !g_asked) assert (req_v);
+        if (req_v) assert (!g_asked);
         // a cancel only ever follows a bad frame (or no verdict within the watchdog's time)
         if (g_cancel) assert (g_vk && g_bad);
         // safe mode: an order never starts before its frame is known good
@@ -116,5 +136,7 @@ module formal_order_ctl (
         cover (g_cancel);                                // cancelled after a clean send
         cover (g_mine && g_bad && !g_started && !s_act); // dropped before it started
         cover (act_run == 8'(WDOG + 2));                 // the watchdog's reach
+        cover (sr_seen && g_sent && g_bad && !g_clean);  // soft reset with the order on the wire, still poisoned
+        cover (req_v && n_v >= 3'd5);                    // a request after the frame counter wrapped
     end
 endmodule
