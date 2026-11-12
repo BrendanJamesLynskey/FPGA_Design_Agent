@@ -6,7 +6,7 @@
 # applies the memory guard and records time and memory. Every report the
 # gates read (flow/gates.py) lands in the build directory, one group per
 # UltraFast stage (docs/methodology.md): rtl, post_synth, post_place,
-# post_route, bitstream. AMD UG949 v2025.2 places report_methodology at three
+# post_route, bitstream. AMD UG949 v2026.1 places report_methodology at three
 # stages (elaborated RTL, after synthesis, after implementation; ch. 1 "Using
 # the UltraFast Design Methodology DRCs"), check_timing and the timing summary
 # after synthesis and after each implementation step (ch. 6 "Evaluating Design
@@ -168,7 +168,7 @@ if {$ila} {
 
 if {$resume_from ne "route"} {
     # --- implementation ----------------------------------------------------------
-    # brief 20 part B: build.yaml timing_margin_ns, an implementation-only setup margin on every design clock (UG949 v2025.2
+    # brief 20 part B: build.yaml timing_margin_ns, an implementation-only setup margin on every design clock (UG949 v2026.1
     # ch. 6 "Overconstraining the Design": -setup only, reset to 0 before the router), taken off before routing
     set margin_clocks {}
     if {[info exists timing_margin_ns] && $timing_margin_ns > 0} {

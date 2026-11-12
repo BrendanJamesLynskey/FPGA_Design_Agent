@@ -130,7 +130,7 @@ HARNESS_ARMS = [
     {"id": "H1", "name": "Context management", "source": "results/36_skill_routing/e2e.md",
      "change": "Large tool results, such as Vivado reports and simulation logs, go to a file in the jail and the model gets a head, a tail and the path; older turns are summarised much earlier.",
      "evidence": "Token totals are dominated by long repair visits: one 80-turn visit of the RTL writer used 6.6 M tokens."},
-    {"id": "H2", "name": "Hang protection", "source": "results/24_fsm/README.md",
+    {"id": "H2", "name": "Hang protection", "source": "results/24_fsm/drills/run_b1.meta.json",
      "change": "A per-test simulation limit from the test's own simulated-time budget, a result that says where a test hung, and a check that refuses tests with unbounded waits before they run.",
      "evidence": "In one drill run three simulate calls each ran to the 1800 s limit on the agent's own tests, which waited on conditions that never came."},
     {"id": "H3", "name": "Diagnose before repair", "source": None,

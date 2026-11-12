@@ -21,13 +21,13 @@ log (``vivado.log``) for constraint messages raised while reading the XDC. It fa
                     exception: brief 20 E6, Vivado 12-4739)
     TIMING-29/46/47 the methodology rules for an inconsistent multicycle pair, a multicycle with tied CE pins, and a
                     false path / clock group / datapath-only max delay between synchronous clocks (Warnings in
-                    Vivado 2025.2; gate failures here)
+                    Vivado 2026.1; gate failures here)
     TIMING-24       a datapath-only max delay overridden (by a clock group: brief 20 E7; also EXC-IGNORED)
     EXC-MCP-ENABLE  a multicycle exception whose registers do not share a clock enable (mcp_paths_<stage>.txt from
                     flow/mcp_paths.tcl): on one clock, every register it names must have a CE that is not tied and one
                     register must be in the fan-in of all those CEs; between clocks, the registers on the faster clock
                     must have such a CE (UG903's slow-to-fast case), and -start/-end must count the faster
-                    clock's edges (brief 20 E8b: -start on a 100 -> 200 MHz path gave 15 ns, not 10). Vivado 2025.2 raised no TIMING-46 for a
+                    clock's edges (brief 20 E8b: -start on a 100 -> 200 MHz path gave 15 ns, not 10). Vivado 2026.1 raised no TIMING-46 for a
                     multicycle on tied-CE registers (brief 20 E3, after synthesis and after routing)
     XDCH-1          a -setup multicycle with no -hold multicycle (a Warning; brief 20 E2 measured it, and the hold check
                     then fails by about N-1 periods)
@@ -55,7 +55,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Timing constraint commands: each takes the next report_exceptions Position when read (Vivado 2025.2, measured on the
+# Timing constraint commands: each takes the next report_exceptions Position when read (Vivado 2026.1, measured on the
 # brief 20 fixtures: create_clock and create_generated_clock take positions too). Physical (set_property) lines do not.
 TIMING_COMMANDS = ("create_clock", "create_generated_clock", "set_input_delay", "set_output_delay", "set_false_path",
                    "set_multicycle_path", "set_max_delay", "set_min_delay", "set_clock_groups", "set_clock_latency",

@@ -2,9 +2,9 @@
 
 What the repo has for state machines beyond the code in `designs/`: a reference controller measured in variants, an FSM coverage
 check for the V2 stage, two agent drills, and the knowledge-bank skills and course lesson that go with them. The synthesis and routed
-numbers of the controller variants on Vivado 2026.1 are in [results/24_fsm_2026_1](../results/24_fsm_2026_1/README.md)
-(brief 49); this page says how to reproduce them and use the check. Brief 24's other Vivado measurements (the I/O study on real
-pins and the runs on other families) were made on an earlier release and are not quoted here.
+numbers of the controller variants on Vivado 2026.1 are in [results/24_fsm_2026_1](../results/24_fsm_2026_1/README.md); this page
+says how to reproduce them and use the check. The I/O study on real pins and the runs on other families have not been repeated on
+2026.1, so this page does not quote them.
 
 ## The reference controller
 
@@ -33,7 +33,7 @@ python3 flow/tests/fixtures/fsm_discipline/make_table.py <dir> <out.md> <out.jso
 
 ## The FSM coverage check
 
-No free simulator reports FSM coverage (measured on Icarus, Verilator and the xsim of an earlier Vivado release: `results/24_fsm/simprobe/survey.txt`). `flow/fsm_coverage.py` reads the value
+No free simulator reports FSM coverage (measured on Icarus and Verilator; on Vivado 2026.1's free Basic tier xsim runs the bench, but its coverage report tool `xcrg` stops for want of a simulator licence: `results/24_fsm_2026_1/simprobe/survey.txt`). `flow/fsm_coverage.py` reads the value
 changes of the state register and compares them with the state table `<design>/verif/fsm.yaml`:
 
 ```

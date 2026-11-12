@@ -43,21 +43,22 @@ as exact Tcl with thresholds, the common failures, and what is version-specific.
 | `post_route` | `route_design`; `write_checkpoint post_route.dcp`; `report_timing_summary`, `check_timing`, `report_utilization` (+ `-hierarchical`), `report_methodology`, `report_cdc -details`, `report_drc`, `report_qor_assessment`, `set_operating_conditions <board thermal>`, `report_power`, `report_io` | `timing_summary.rpt`, `check_timing.rpt`, `utilization*.rpt`, `methodology.rpt`, `cdc.rpt`, `drc.rpt`, `qor_assessment_route.rpt`, `power.rpt`, `io.rpt` | `qor_assessment_route.rpt` |
 | `bitstream` | `write_bitstream`; `write_debug_probes` (ILA) | `<top>.bit`, `<top>.ltx` | no |
 
-`report_qor_assessment` **is not available on Vivado 2026.1 with the free Basic licence tier** (it stops with Implflow
-47-2944; brief 48): `flow/build.tcl` writes `qor_unavailable_<stage>.txt`, `gates.json` records
-`qor_assessment: {available: false}`, and the QoR gates are absent on this tier, not passed (owner's decision, 2026-11-11).
+<a id="qor-on-basic"></a>**The QoR assessment on the free tier.** `report_qor_assessment` does not run on Vivado 2026.1's free Basic licence
+tier: it stops with Implflow 47-2944. `flow/build.tcl` then writes `qor_unavailable_<stage>.txt`, `gates.json` records
+`qor_assessment: {available: false}`, and the QoR gates are absent on this tier, not passed. The project stays on the free tier, so
+it publishes no QoR score.
 ML strategies are not supported for 7-series, and Intelligent Design Runs need project mode and UltraScale(+) (ch. 6 "Using Intelligent
 Design Runs"), so neither is used.
 
-`gates.py` marks a stage whose reports are missing (a build made before 04e, e.g. `results/f0a/`) as `ran: false`
+`gates.py` marks a stage whose reports are missing (a build made before 04e, such as the first T1 record) as `ran: false`
 and skips it; the F0A gate names are unchanged, so earlier results still parse. Its output names the **first stage
 that failed**, so the agent fixes the earliest problem first (ch. 1 "Maximizing Impact Early in the Development
 Cycle": RTL changes have 10x the leverage of placement and routing changes).
 
 **Cost of the reports.** On Vivado 2026.1 the T1 base build, with every stage's reports, took 168.9 s wall at 4 threads
 with a peak RSS of 2,806 MiB ([results/f0a_2026_1](../results/f0a_2026_1/t1_dimmer_counter.md); stage times are in the
-same table: synthesis reports about 6 s, route reports about 5 s). The paired before-and-after comparison of the added
-reports was made on an earlier release and has not been repeated on 2026.1, so its figures are withdrawn.
+same table: synthesis reports about 6 s, route reports about 5 s). A paired build
+without the added reports was not made on 2026.1, so no separate cost is claimed beyond those stage times.
 
 ## Where this flow deviates from UG949, and why
 

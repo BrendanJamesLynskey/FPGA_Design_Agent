@@ -14,6 +14,8 @@ Re-run on **Vivado 2026.1** (Basic licence tier), xc7a100tcsg324-1, on 2026-11-1
 |---|---|
 | `exceptions_table.md`, `.json`, `golden/` | the 15 one-fault exception fixtures (7 placed and routed) |
 | `io_table.md`, `.json`, `golden_io/` | the I/O-delay and virtual-clock fixtures, routed |
+| `vivado_stamps.txt` | the Tool Version line (Vivado v.2026.1, build 6511674) of the raw report each excerpt was cut from: the trimmed excerpts drop that header, and many are byte-identical to the 2025.2 goldens because the results are |
+| `raw_u/` | the untrimmed clock-uncertainty reports of the 2026.1 run (dates, hosts and paths removed), which carry the version header |
 | `uncertainty.md`, `.json`, `golden_u/` | the clock-uncertainty runs U1-U8 (`measure_u.tcl` on `io_u`) and the Clocking Wizard read-back (`flow/clkwiz_probe.tcl u:100:MMCM:200,100`) |
 
     FDA_IO_GOLDEN_U=results/20_timing_exceptions_2026_1/golden_u FDA_IO_OUT=... FDA_IO_VIVADO=2026.1 flow/tests/fixtures/io_timing/make_uncertainty.py --collect <measure_u out> <clkwiz.jsonl>

@@ -6,8 +6,8 @@ sources, IP and block designs, stored synthesis and implementation results, "cro
 source files", run strategies with standard reports, and multiple runs. The Vivado wizards are a second group of project-mode
 conveniences: several compute or check something that a scripted flow does not get unless it asks.
 
-This page is the inventory, measured first on an earlier release and re-measured by brief 49 on **Vivado 2026.1** (Basic licence tier; the owner's personal install, `xc7a100tcsg324-1`, Zynq-7020 for the PS7
-rows). Numbers come from the 2026.1 files under [results/project_parity_2026_1/](../results/project_parity_2026_1/); each section names its script. Every verdict below came out the same on 2026.1; where a number moved, the 2026.1 value is given.
+This page is the inventory, measured on **Vivado 2026.1** (free Basic licence tier; the owner's personal install, `xc7a100tcsg324-1`, Zynq-7020 for the PS7
+rows). Numbers come from the 2026.1 files under [results/project_parity_2026_1/](../results/project_parity_2026_1/); each section names its script.
 Nothing here needs the GUI. Where a result could not be got in batch it is marked **not measured** with the reason.
 
 Status words: **kept** (the flow already has it), **beaten** (the flow does it better for an agent), **added** (this brief),
@@ -26,7 +26,7 @@ Status words: **kept** (the flow already has it), **beaten** (the flow does it b
 | Block designs (IP Integrator, block automation, connection automation, address editor) | none | **Measured:** every step runs in batch on a Zynq-7020: `create_bd_design`, `apply_bd_automation -rule xilinx.com:bd_rule:processing_system7`, the AXI connection rule, `assign_bd_address` (GPIO at 0x41200000), `validate_bd_design` all succeed (section 3). Using it needs `build.yaml` support for a Tcl block-design script: **gap** | **gap** |
 | Wizard-only checks (MIG pin validation and others) | rule checker `mig_pin_rules.py` (13b); other wizards: section 3 | the MIG wizard's pin verification has no Tcl command; implementation did not reject a byte-group fault (section 2). Per-wizard results in section 3 | see sections 2 and 3 |
 | Cross-probing: RTL, elaborated and synthesised netlist, timing reports, device view | **added:** [flow/xprobe.tcl](../flow/xprobe.tcl), [flow/xprobe.py](../flow/xprobe.py): JSON per build and an SVG device map | section 4 | **added** |
-| ECO and debug-probe insertion (Set Up Debug, ECO Navigator) | debug cores by Tcl ([flow/debug.tcl](../flow/debug.tcl)): on Vivado 2026.1's free Basic tier `create_debug_core` is refused, so the flow adds one ILA IP to the netlist with the probes packed into at most 5 ports (brief 48); the `create_debug_core` route is kept for a tier that allows it | Set Up Debug runs `create_debug_core`, which the Basic tier refuses; the flow inserts the ILA from `probes.yaml` as IP instead. ECO (edit a routed checkpoint) is not used: **gap**, no use case yet | kept (debug), **gap** (ECO) |
+| ECO and debug-probe insertion (Set Up Debug, ECO Navigator) | debug cores by Tcl ([flow/debug.tcl](../flow/debug.tcl)): on Vivado 2026.1's free Basic tier `create_debug_core` is refused, so the flow adds one ILA IP to the netlist with the probes packed into at most 5 ports; the `create_debug_core` route is kept for a tier that allows it | Set Up Debug runs `create_debug_core`, which the Basic tier refuses; the flow inserts the ILA from `probes.yaml` as IP instead. ECO (edit a routed checkpoint) is not used: **gap**, no use case yet | kept (debug), **gap** (ECO) |
 | Source file management, out-of-date status, hierarchy view | `build.yaml` plus `sources_sha256` and `BUILD_STAMP` in every build | a build is reproducible from the sources by hash; project mode tracks time stamps | beaten |
 | Timing Constraints Wizard (missing clocks, I/O delays, clock groups) | `check_timing -verbose` after synthesis and routing, the XDC checker and the CDC gate | see section 3 | kept |
 
@@ -52,8 +52,8 @@ scripted generation (13b: `generate_target` accepts a swapped byte group and a d
 
 - The Vivado Tcl interpreter has no MIG command: `info commands *mig*` returns only `implement_mig_cores` and
   `migrate_pblock` (not pin validation); `*verify*` returns `platform_verify pr_verify tandem_verify`
-  ([results/project_parity_2026_1/wizards/wizards2.txt](../results/project_parity_2026_1/wizards/wizards2.txt)). New in 2026.1: a
-  `validate_ip` command exists (`info commands validate_*`). Whether it checks a MIG pinout was **not tested**: the batch generation
+  ([results/project_parity_2026_1/wizards/wizards2.txt](../results/project_parity_2026_1/wizards/wizards2.txt)). Vivado 2026.1 also has a
+  `validate_ip` command (`info commands validate_*`). Whether it checks a MIG pinout was **not tested**: the batch generation
   below still accepts both faulty pinouts without a message.
 - The MIG IP's Tcl (`data/ip/xilinx/mig_7series_v4_2/xgui/xgui.tcl`) only checks that the `.prj` file exists and is readable
   (`validate_XML_INPUT_FILE`); `updateAllModelParams` calls the native generator (`generateMig`).
@@ -161,7 +161,7 @@ from a 100 MHz input, plus two more; the wizard's own answer is from `generate_t
 draws the device map. Set `FDA_XPROBE=1` for `flow/run_vivado.sh` (or run `flow/xprobe_run.tcl` on a `post_route.dcp`): the
 step is off by default and changes no report or gate.
 
-What Vivado gives, from a routed checkpoint (written on the earlier release; the two examples below were re-run on 2026.1):
+What Vivado 2026.1 gives, from a routed checkpoint (the two examples below):
 
 | Wanted | Where it came from | Got it? |
 |---|---|---|
@@ -171,7 +171,7 @@ What Vivado gives, from a routed checkpoint (written on the earlier release; the
 | Worst setup and hold paths per clock group | `get_timing_paths -setup/-hold -nworst 1 -unique_pins`; properties `SLACK`, `DATAPATH_DELAY`, `DATAPATH_LOGIC_DELAY`, `DATAPATH_NET_DELAY`, `STARTPOINT_PIN`, `ENDPOINT_PIN`, `STARTPOINT_CLOCK`, `ENDPOINT_CLOCK` | yes. `LOGIC_LEVELS` is present (0 on the reset path of `b2_acl_adxl362`, 3 on the worst `b2_qspi_jedec` paths) |
 | Routed tiles of a path's nets | `get_nodes -of_objects <net>`, tile = prefix of the node name | only for nets with fanout up to 50 (whole net, not only the branch to one sink); a walk uphill from one sink node took minutes per path and was dropped; `ROUTE` is a list of node names without tile coordinates |
 | High-fanout nets | `FLAT_PIN_COUNT > 50`, one row per driver pin (`get_nets -hier` lists a net under every hierarchical alias); driver cell with file and line; loads counted by clock region | yes |
-| Congested cells | not collected. `report_design_analysis -congestion` is not parsed | **not available** in the release this was written on, and not re-checked on 2026.1; listed as follow-up |
+| Congested cells | not collected. `report_design_analysis -congestion` is not parsed | **not collected** yet; listed as follow-up |
 | Device map | clock-region slice extent from `get_sites -of_objects <region>`; each placed slice-level primitive as (module, X, Y) | yes (SVG) |
 
 Two examples on Vivado 2026.1, committed with the JSON and SVG ([results/project_parity_2026_1/xprobe/](../results/project_parity_2026_1/xprobe/)): from the

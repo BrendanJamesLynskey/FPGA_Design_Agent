@@ -12,10 +12,12 @@ xc7a100tcsg324-1, 2.5 ns clock, out of context, on 2026-11-11, each Vivado in it
 | `synth/*.kv`, `synth_table.json` | 37 variants, synthesis only |
 | `impl/*.kv`, `impl_table.json`, `impl_table.md` | 12 main variants, routed |
 | `summary.json` | the numbers the site's FSM drawer quotes |
+| `vivado_stamps.txt` | the version line of the Vivado log behind every `.kv` (all v2026.1; a `.kv` carries no version) |
+| `simprobe/` | the simulator survey re-run: Icarus and Verilator as before; xsim 2026.1 compiles the covergroup, and its report tool `xcrg` stops for want of a simulator licence on the Basic tier |
 
 Compared with the earlier release's record (`results/24_fsm`): all 37 synthesis results are identical (counts, encodings and
 slacks); 9 of the 12 routed variants are identical and 3 moved, by placement alone: `sep_base` (setup slack on the controller's own
-paths -1.286 to -0.660 ns, register-to-output -1.544 to -1.859 ns), `sep_in1` and `sep_out1` (a few tens of picoseconds). One
+paths -1.286 to -0.660 ns, register-to-output -1.544 to -1.859 ns), `sep_in1` and `sep_out1` (up to about 0.1 ns). One
 routed run each; such moves are run-to-run placement differences, not a trend. Of the summary numbers only the decoded-output slack
 changed (-1.544 to -1.859 ns). Coverage (simulation) and formal results are tool-independent and are read from `results/24_fsm`.
-The I/O study, the family runs, the drills and the simulator survey of brief 24 were not re-run.
+The I/O study, the family runs and the drills of brief 24 were not re-run.

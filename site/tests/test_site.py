@@ -486,3 +486,58 @@ def test_release_guard_catches_an_old_release():
     assert release_tokens("built with Vivado 2025.2") == {"2025.2"}
     assert release_tokens("UG901 v2025.2 (synthesis)") == {"2025.2"}
     assert release_tokens("Vivado 2026.1, 2,026.1 ns, 12026.15, DS181 v1.27.1, 2026-02-06") == set()
+
+
+# Brief 49 review (rule 3): published pages, README and docs link only 2026.1 records. A results folder whose README says
+# "superseded by" is a 2025.2 record; a link into it is allowed only to the entries its README lists as "Still current:".
+ROOT = SITE.parent
+RESULT_REF = re.compile(r"results/([A-Za-z0-9_.-]+)(/[^\s\"'`)\]<>|,;]*)?")
+
+
+def superseded_folders():
+    out = {}
+    for readme in (ROOT / "results").glob("*/README.md"):
+        t = readme.read_text()
+        if "superseded by" in t.split("\n## ", 1)[0]:
+            m = re.search(r"^Still current: (.*)$", t, re.M)
+            out[readme.parent.name] = re.findall(r"`([^`]+)`", m.group(1)) if m else []
+    return out
+
+
+PUBLISHED = ["README.md", "flow/README.md", "docs/**/*.md", "cloud/*.md", "ip_lib/*/README.md", "site/src/*.html",
+             "site/data/*.yaml", "site/*.py", "site/public/**/*.html"]
+FROZEN_RECORDS = {"docs/eval/eval1_preregistration.md"}       # a pre-registration is a record, kept as written
+
+
+def published_files():
+    seen = set()
+    for g in PUBLISHED:
+        for p in ROOT.glob(g):
+            rel = p.relative_to(ROOT).as_posix()
+            if p.is_file() and rel not in FROZEN_RECORDS and rel not in seen:
+                seen.add(rel)
+                yield rel, p
+
+
+def stale_links():
+    old = superseded_folders()
+    bad = []
+    for rel, p in published_files():
+        for m in RESULT_REF.finditer(p.read_text(errors="replace")):
+            folder, rest = m.group(1), (m.group(2) or "").lstrip("/")
+            partly_current = bool(old.get(folder)) and rest in ("", "README.md")    # the folder of a partly superseded record
+            if folder in old and not partly_current and not any(rest.startswith(ok) or rest == ok.rstrip("/") for ok in old[folder]):
+                bad.append(f"{rel}: results/{folder}/{rest}")
+    return bad
+
+
+def test_published_material_links_no_superseded_result():
+    assert superseded_folders(), "no superseded folder found: the README marker changed?"
+    bad = stale_links()
+    assert not bad, "links into superseded 2025.2 records:\n" + "\n".join(sorted(set(bad)))
+
+
+def test_readmes_and_docs_name_only_vivado_2026_1():
+    found = {rel: sorted(release_tokens(p.read_text(errors="replace"))) for rel, p in published_files()
+             if not rel.startswith("site/") and release_tokens(p.read_text(errors="replace"))}
+    assert not found, f"README/docs name another Vivado release: {found}"

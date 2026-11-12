@@ -38,7 +38,7 @@ board resets, browns out or drops off USB, stop: fit an external supply before g
 |---|---|
 | Power | USB from the PC into the micro-USB port marked PROG/UART (J6, checked on the F0B photo); power switch on. JP3 (power select) on USB (checked on the photo). Total on-chip power must stay at or below 0.5 W (section 0). |
 | Programming mode | Leave JP1 (mode: QSPI / JTAG / USB/SD) where it is. JP1 only chooses what the FPGA loads at power-up; programming SRAM over JTAG works whatever it says. The F0B board had JP1 on QSPI (owner's statement), so at power-up it loads whatever is in its QSPI flash, and `flow/program.py` then replaces that in SRAM. Nothing here ever writes the QSPI flash; a power cycle erases the T1 design. |
-| PC | Vivado 2025.2 Hardware Manager (`hw_server`), AMD's cable udev rules installed once (root), the user in `plugdev` with a udev rule for the FTDI UART, Python 3 with `pyserial`. |
+| PC | Vivado 2026.1 Hardware Manager (`hw_server`), AMD's cable udev rules installed once (root), the user in `plugdev` with a udev rule for the FTDI UART, Python 3 with `pyserial`. |
 | Cable | One FTDI FT2232 (`lsusb`: `0403:6010`). Channel A (USB interface 0) is JTAG, channel B (interface 1) is the UART. `hw_server` names the target `Digilent/<USB serial>A`: the USB serial plus the channel letter A. |
 | Serial port | interface 1 of that FT2232: `/dev/serial/by-id/usb-Digilent_Digilent_USB_Device_<USB serial>-if01-port0` (on the F0B PC it was `/dev/ttyUSB1`; `ttyUSB0` is interface 0, the JTAG channel). `flow/hw_discover.py` finds it by serial and interface and records it in `~/.config/fpga_design_agent/boards.yaml`. 115200 baud, 8N1, no flow control. |
 | Switches | all 16 down (off) to start. |

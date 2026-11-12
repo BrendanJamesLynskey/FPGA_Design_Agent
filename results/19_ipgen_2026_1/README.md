@@ -4,7 +4,9 @@ Every example of [results/19_ipgen](../19_ipgen/README.md) re-run on **Vivado 20
 the same specs (`python3 -m flow.ipgen.run <adapter> results/19_ipgen_2026_1/<example>/spec.yaml results/19_ipgen_2026_1/<example>`;
 `dds_no_margin` and `dds_coherent` with `--stages design,create,sim`, as before), and the chain model
 (`python3 -m flow.ipgen.chain results/19_ipgen_2026_1/chain/chain.yaml results/19_ipgen_2026_1/chain`, no Vivado). The Vivado
-work directory and the generated `*_cfg.tcl` are not committed. File meanings are as in the earlier folder's README.
+work directory and the generated `*_cfg.tcl` are not committed; its stamped OOC reports are, as `ooc_utilization.rpt`,
+`ooc_timing_path.rpt` and `ooc_timing_summary.rpt` beside each `ooc.json` (which carries no version and is byte-identical to the
+earlier record where nothing moved). File meanings are as in the earlier folder's README.
 
 Compared with the earlier release:
 

@@ -15,7 +15,7 @@ counts as a pass; the blind model, the formal checks and the hardware do.
 | V1 testplan | V1: testplan written and reviewed; testbench connected to the model; smoke test passes | `verif/testplan.yaml` generated from `spec.yaml`; every spec statement traced to tests, assertions, cover points, bins or formal tasks (a DO-254 style traceability matrix); the bench compares against the blind model | spec items traced / total (must be all); no unresolved name; no requirement without a check |
 | V2 tests complete | V2: directed and constrained-random tests written and passing; assertions in; FPV on control logic | every planned test passes on every seed; the constrained-random test ran; checkers are bound and no assertion fires; formal bounded proof and cover pass on the control logic | failing / missing tests; formal tasks not PASS |
 | V3 coverage closed | V3: coverage closed with waivers, all seeds passing, no open bugs | functional bins and cover properties all hit; line and toggle coverage at stated thresholds; every waiver carries a reason; at least `seeds_min` seeds, all passing; the bench's mutation score at its threshold | each percentage against its threshold; unhit bins and cover properties listed |
-| V-HW (ours) | none | the board bring-up against the model passes (`results/f0b/*_bringup.json`, `pass: true`, with its build stamp) | pass flag |
+| V-HW (ours) | none | the board bring-up against the model passes (`results/f0b_2026_1/*_bringup.json`, `pass: true`, with its build stamp) | pass flag |
 
 OpenTitan's V2S (security countermeasures) does not apply to these designs.
 
@@ -116,7 +116,7 @@ flow/formal.sh designs/t1_dimmer_counter
 python3 flow/portability.py designs/t1_dimmer_counter/verif/portability.yaml
 python3 flow/mutate.py designs/t1_dimmer_counter --json results/04f/mutation_t1.json   # local; about 30 minutes
 python3 flow/verif_gates.py designs/t1_dimmer_counter --also build/verif/icarus --mutation results/04f/mutation_t1.json \
-    --hw results/f0b/t1_dimmer_counter_bringup.json --json results/04f/t1_verif_gates.json
+    --hw results/f0b_2026_1/t1_dimmer_counter_bringup.json --json results/04f/t1_verif_gates.json
 ```
 
 The portability check compiles the checkers and bind file with Icarus, every Verilator in `$PORT_VERILATORS`, slang

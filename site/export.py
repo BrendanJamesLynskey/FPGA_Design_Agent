@@ -130,9 +130,10 @@ def replay(runs):
         "constraints": "Pin and clock constraints checked against the board's master XDC.",
         "synthesis": "Synthesis gates: " + g["stage_gates_post_route"].split(" (")[0] + " by the end of the run.",
         "implementation": "Place and route; bitstream built.",
-        "timing-closure": f"Gates passed. The saved design rebuilt on Vivado {qo['vivado']}: post-route setup slack {qo['wns_ns_at_100MHz_post_route']:+.3f} ns, hold slack {qo['whs_ns']:+.3f} ns at 100 MHz.",
-        "power-closure": f"Gates passed. Rebuilt on Vivado {qo['vivado']}: vectorless power estimate {qo['power_w']:.3f} W.",
-        "drc-closure": f"Gates passed. Rebuilt on Vivado {qo['vivado']}: {qo['lut']} LUT, {qo['ff']} FF, {qo['dsp']} DSP, {qo['bram36']} BRAM after place and route (today's test shell included).",
+        "timing-closure": f"The run's timing gates passed. Its saved design rebuilt on Vivado {qo['vivado']}: post-route setup slack {qo['wns_ns_at_100MHz_post_route']:+.3f} ns, hold slack {qo['whs_ns']:+.3f} ns at 100 MHz.",
+        "power-closure": f"The run's power gate passed. Rebuilt on Vivado {qo['vivado']}: vectorless power estimate {qo['power_w']:.3f} W.",
+        "drc-closure": f"The run's design-rule gates passed. Rebuilt on Vivado {qo['vivado']}: {qo['lut']} LUT, {qo['ff']} FF, {qo['dsp']} DSP, {qo['bram36']} BRAM after place and route (test shell included)"
+                       + (". The rebuild fails one gate added after the run: the I/O-constraint check, because the run's XDC gives slow pins invented input delays." if "io_timing_clean" in qo.get("gates_failed", []) else "."),
         "configuration-and-debug": "Stops here: " + r["stop"]["reason"] + ".",
     }
     steps = []

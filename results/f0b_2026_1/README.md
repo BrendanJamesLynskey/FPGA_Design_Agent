@@ -11,7 +11,7 @@ through `_handoff/board.lock`. The cable serial appears only as its last 4 chara
 | [t1_dimmer_counter.md](t1_dimmer_counter.md), `t1_dimmer_counter_base.json`, `t1_dimmer_counter_ila.json` | The builds that were programmed (`flow/summarise.py`; the same files as `results/f0a_2026_1`) |
 | `captures/` | The passing run's raw ILA captures (CSV and VCD), the probe maps, the capture plan and the UART test log |
 
-The passing run (123.5 s in all): power gate pass (base 0.150 W, ILA 0.161 W total on-chip, vectorless, wall-power limit
+The passing run (its steps 123.5 s in all; the record's wall time 124.0 s): power gate pass (base 0.150 W, ILA 0.161 W total on-chip, vectorless, wall-power limit
 2.0 W); 8 of 8 UART tests passed; 4 of 4 ILA captures passed (the COUNT write at sample 64, the trigger position; at DUTY
 0x08, 0x40 and 0xA0 each lit LED on for exactly `model.led_on_clocks()` samples, 0 violations); the design still answered
 with the same build stamp afterwards. One passing run on this release (the earlier release's record had three in a row).

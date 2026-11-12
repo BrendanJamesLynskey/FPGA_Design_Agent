@@ -78,9 +78,8 @@ What the runner provides: the Vivado `create`/`sim`/`synth` stages, the read-bac
 parameters parsed from the `.xci`), the port widths (parsed from the generated `sim/<ip>.vhd`), the schedules, the OOC
 numbers, and the JSON records.
 
-Facts worth knowing (measured first on an earlier release; brief 49 re-ran every example on Vivado 2026.1 and got the same
-read-backs and the same simulations, so the facts below hold on 2026.1 unless marked *, which marks a refusal seen on the earlier
-release and not provoked again):
+Facts worth knowing, measured on Vivado 2026.1 (the two marked * are refusals the adapters now avoid, so they were not provoked
+again on 2026.1):
 
 - `list_property $ip` shows no `CONFIG.*` until the IP has a `-dir`; use `[get_ips name]`, not the object `create_ip` returns.
 - The IP's output width and the generated parameters (`C_LATENCY`, `C_NUM_MADDS`, `C_OVERSAMPLING_RATE`) are in the `.xci`
@@ -120,7 +119,7 @@ list of unwired project-mode features). One KB note per adapter is in the privat
 The DDS adapter does not have a bit-accurate model of the sine and cosine tables (the core's C model was not built into
 the flow), so its sine and cosine are judged against the ideal curve and by SFDR, not word for word.
 
-## Measured facts that cost a rerun (re-checked on Vivado 2026.1 unless marked *)
+## Measured facts that cost a rerun (Vivado 2026.1; * as above)
 
 - **Test bench:** a beat offered and not accepted must stay offered; and a core with no output `tready` (the CIC, the DDS) must
   not have a ready schedule applied to its recorder, or beats are lost.
@@ -129,9 +128,9 @@ the flow), so its sine and cosine are judged against the ideal curve and by SFDR
   register on; the measured read latency was 2. 2026.1 also reads back a new `CONFIG.MEMORY_OPTIMIZATION` (true).
 - **DDS Compiler:** `Noise_Shaping Auto` is refused in `Hardware_Parameters` mode (use `None` or the dither choices)*; in the data word the
   cosine is the low half and the sine the high half; its `System_Parameters` mode sizes the core the way the Python rule does (34-bit phase and
-  15-bit output for 100 MHz, 0.01 Hz and 90 dB), but its read-back of the SFDR and resolution is not meaningful in hardware mode. On 2026.1 the read-back `C_PHASE_INCREMENT_VALUE` of `dds` and
-  `dds_no_margin` is one and the same value, unlike the earlier release; the simulated phase and sine outputs are identical to the earlier
-  release's, so the core uses the increment it is given at run time (not investigated further).
+  15-bit output for 100 MHz, 0.01 Hz and 90 dB), but its read-back of the SFDR and resolution is not meaningful in hardware mode. The read-back `C_PHASE_INCREMENT_VALUE` of `dds` and `dds_no_margin`
+  is one and the same value although their specs differ, and their simulated phase and sine outputs are still exact, so the core
+  uses the increment it is given at run time: do not read the increment back from the IP.
   A tone whose phase increment has its low bits zero (a coherent power-of-two record) has no phase-truncation error and measures a flattering SFDR
   (115.6 dB at 15 bits in `dds_coherent`); `dds` uses a record of 16411 points so that every phase bit is in use.
 - **FIR Compiler:** the read-back `C_NUM_MADDS` (4) is the multiplier-adds the schedule needs; synthesis used 5 DSP slices.

@@ -4,7 +4,7 @@ Python writes stimulus files, a file-driven SystemVerilog bench (`ip_lib/<block>
 every output beat to a response file, and Python compares bit-exact against the golden model (`flow/net/model.py`).
 The bench never judges anything.
 
-Simulators: Icarus Verilog 12 (default; also what CI runs) and Vivado xsim 2025.2 (`SIM=xsim`, local only, under a
+Simulators: Icarus Verilog 12 (default; also what CI runs) and Vivado xsim of the installed release (`flow/version_pin.py`; `SIM=xsim`, local only, under a
 heavy slot). Parameters are passed with `-P` (Icarus) or `-generic_top` (xsim); fault copies of the RTL come from
 `flow/net/faults.py`.
 """
