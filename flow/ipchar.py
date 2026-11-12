@@ -144,7 +144,7 @@ def record(block: str, part: str, js: list[dict]) -> Path:
                    "only (I/O paths unconstrained); Fmax = 1000 / (period - WNS) after routing, an estimate from one "
                    "run at the target clock; power: report_power, vectorless, default toggle rates",
            "results": sorted(rows.values(), key=lambda r: (list(y["variants"]).index(r["variant"]),
-                                                            json.dumps(r["params"], sort_keys=True)))}
+                                                            [r["params"][k] for k in sorted(r["params"])]))}
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(out, indent=1) + "\n")
     return f
