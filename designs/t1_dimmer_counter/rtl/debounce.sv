@@ -3,6 +3,7 @@
 // from it for CYCLES consecutive clocks; a shorter difference restarts the
 // count. press pulses for one clock on each 0 -> 1 change of the level.
 
+// req: REQ-01, REQ-02, REQ-10   (brief 53: the requirements this module implements)
 module debounce #(
     parameter int CYCLES = 1_000_000          // 10 ms at 100 MHz
 ) (

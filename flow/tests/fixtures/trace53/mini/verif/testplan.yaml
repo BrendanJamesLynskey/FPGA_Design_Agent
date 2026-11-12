@@ -1,0 +1,15 @@
+schema: fpga-design-agent/testplan/v0
+design: mini
+spec: spec.yaml
+model: model.py
+bench: {modules: [mini_bench], dir: tests}
+checkers: verif/checkers
+formal_dir: verif/formal
+thresholds: {seeds_min: 1, functional_bins_pct: 100, cover_properties_pct: 100, line_pct: 90, toggle_pct: 75, mutation_score_pct: 70}
+waivers: {code_coverage: [], functional_bins: [], cover_properties: []}
+requirements:
+  - {id: R1, spec: ["behaviour.count[0]", "behaviour.count[1]", registers.map.COUNT, timing.latency.count],
+     tests: [mini_bench.counts_and_wraps], bins: [mini.en]}
+proof:
+  - {requirement: REQ-01, method: formal, artefact: mini}
+  - {requirement: REQ-03, method: analysis, artefact: "post_route:setup"}

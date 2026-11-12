@@ -197,6 +197,15 @@ PROMPTS = {
            "not you; when you think your part is complete, stop and reply DONE. Failures so far: {fails}. "
            "Reviewer note: {note}",
 }
+# brief 53: requirement quality (the clarify gate rejects vague and compound requirements) and requirement tags
+PROMPTS["clarify"] += (" Each requirement is ONE checkable statement: no ';' or ', and' joining two statements (split them, "
+                       "each with its own id), and no vague word (should, fast, robust, appropriate, support, etc): state a "
+                       "value, a count of clocks or an exact behaviour.")
+PROMPTS["tests"] += ("\nTag every check with the spec.yaml requirement ids it verifies (brief 53, flow/trace.py): a "
+                     "`# req: REQ-01, REQ-02` comment directly above each @cocotb.test() (or @req(\"REQ-01\") from flow.req, "
+                     "above @cocotb.test()), `// req: REQ-01` on the line of each `V_*(...)` assertion or cover, and a "
+                     "`# req: REQ-01` line in each .sby job. A test that verifies no requirement says "
+                     "`# robustness: <why>` or `# structural: <why>` (for example the coverage-export test).\n")
 
 
 #: the bring-up file formats of stage 9, as a short schema (never the reference design's content): what
@@ -236,6 +245,28 @@ def repair_note(role: str, reasons: list[str]) -> str:
 SELF_CHECK_PASSES = 2          # 07a2 fix 7: repair passes the tests role gets inside one turn before it hands over
 
 
+def trace_record(design: Path, root: Path) -> dict:
+    """Brief 53: build the traceability matrix (flow/trace.py) from the evidence that exists now and write
+    build/trace/trace.json and trace.md (the review index shows it). Recorded, not a stage-exit gate; evidence a later
+    stage makes (analysis, hardware, coverage) is deferred while its file is absent. Never raises."""
+    from flow import trace as tr
+    b = design / "build"
+    gates, hw = b / "base" / "gates.json", b / "bringup" / f"{design.name}_bringup.json"
+    runs = b / "verif" / "sim"
+    defer = tuple(m for m, f in (("analysis", gates), ("hardware", hw)) if not f.is_file())
+    if not list(runs.glob("seed*/coverage*")):
+        defer += ("coverage",)
+    try:
+        t = tr.build(design, runs, coverage=runs, formal=root / "build" / "verif" / "formal", gates=gates if gates.is_file() else None,
+                     hw=hw if hw.is_file() else None, defer=defer)
+    except Exception as e:                                       # noqa: BLE001 (a record must never stop the run)
+        return {"ok": False, "error": f"{type(e).__name__}: {e}"[:400]}
+    (b / "trace").mkdir(parents=True, exist_ok=True)
+    (b / "trace" / "trace.json").write_text(json.dumps(t, indent=1, default=str) + "\n")
+    (b / "trace" / "trace.md").write_text(tr.to_markdown(t))
+    return {"ok": t["pass"], "gates": {k: v["pass"] for k, v in t["gates"].items()}, "defer": list(defer)}
+
+
 def selfcheck_tests_role(rt: Runtime, repair_fn: Callable[[list[str]], Any], passes: int = SELF_CHECK_PASSES) -> list[str]:
     """07a2 fix 7 (2): run the V0/V1 (and V2/V3 convention) checks of the gate code, no simulation, on the tests role's output
     and let the role repair what they find before the visit goes on, so convention misses (proof methods, the "random" test
@@ -247,6 +278,9 @@ def selfcheck_tests_role(rt: Runtime, repair_fn: Callable[[list[str]], Any], pas
     for i in range(passes + 1):
         try:
             left = static_check(rt.design, rt.cfg.verif_level)
+            if not left and rt.cfg.verif_level in ("V2", "V3"):   # brief 53: every test and property cites a requirement
+                from flow.trace import static_problems
+                left = static_problems(rt.design)
         except Exception as e:                                   # a self-check must never stop the run
             left = []
             problems_note = f"self-check not run: {type(e).__name__}: {e}"
@@ -1179,6 +1213,7 @@ def node_gate(state: State) -> dict:
                 ev["simulate"] = {"ok": False, "first_failure": cov.get("first_failure"), "text": cov["text"]}
                 detail.append("[simulate, verilator coverage run] " + cov["text"][-800:])
             ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
+        ev["trace"] = trace_record(rt.design, rt.session.root)  # brief 53: the traceability matrix, recorded
         std = dispatch(rt.session, "gates", {"kind": "standards"})
         ev["standards"] = std.get("gates")
         from agent.graph.stages import standards_stage
@@ -1304,6 +1339,8 @@ def node_review(state: State) -> dict:
     rv.write_page(rt.design, n, st.name, {**info, "approval": decision})
     hist.append({"n": n, "stage": st.name, "page": str(page), "passed": passed, "approval": decision,
                  "snapshot": snap["commit"], "visit": info["visits"], "used": dict(rt.meter.stage)})
+    if n >= 2:                                    # brief 53: refresh the matrix with this stage's evidence for the index
+        trace_record(rt.design, rt.session.root)
     rv.write_index(rt.design, hist, rt.cfg.role_models())
     with (rt.design / "BUILD_NOTE.md").open("a") as f:
         f.write(f"\n## review {n:02d} {st.name}\n\n{decision['decision']} by {decision['by']}"

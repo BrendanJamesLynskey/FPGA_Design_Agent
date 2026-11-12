@@ -121,6 +121,38 @@ def requirement_errors(spec: dict[str, Any], need_proof: bool = True) -> list[st
     return errs
 
 
+#: words that make a requirement unverifiable as written (brief 53): a check cannot measure "fast" or "should"
+VAGUE = ("should", "could", "might", "may", "fast", "quickly", "slow", "efficient", "efficiently", "robust", "robustly",
+         "user-friendly", "appropriate", "appropriately", "adequate", "adequately", "reasonable", "reasonably",
+         "sufficient", "properly", "suitable", "flexible", "easy", "easily", "optimal", "optimised", "optimized",
+         "minimal", "approximately", "roughly", "etc", "and/or", "as needed", "as appropriate", "if possible",
+         "where possible", "tbd", "tbc", "support", "supports", "handle", "handles")
+_VAGUE_RX = re.compile(r"(?<![\w/-])(" + "|".join(re.escape(w) for w in sorted(VAGUE, key=len, reverse=True)) + r")(?![\w/-])", re.I)
+#: joins of two statements in one requirement: split them so each can pass or fail on its own
+_COMPOUND_RX = re.compile(r";|,\s*and\b|,\s*but\b|\band also\b|\bas well as\b|\.\s+[A-Z]")
+
+
+def requirement_quality_errors(spec: dict[str, Any]) -> list[str]:
+    """Brief 53: each requirement is atomic (one checkable statement), verifiable (no vague word; at least a few words)
+    and uniquely identified (requirement_errors checks the ids). Returns one message per problem, naming the id."""
+    errs = []
+    for r in spec.get("requirements") or []:
+        if not isinstance(r, dict) or not r.get("id") or not r.get("text"):
+            continue
+        rid, text = r["id"], " ".join(str(r["text"]).split())
+        v = sorted({m.group(1).lower() for m in _VAGUE_RX.finditer(text)})
+        if v:
+            errs.append(f"requirement {rid} is vague ({', '.join(repr(w) for w in v)}): say what a check can measure, "
+                        f"for example a value, a count of clocks or an exact behaviour")
+        c = _COMPOUND_RX.search(text)
+        if c:
+            errs.append(f"requirement {rid} is compound ({c.group(0).strip()!r} joins two statements): split it into one "
+                        f"requirement per checkable statement, each with its own id and proof method")
+        if len(text.split()) < 4:
+            errs.append(f"requirement {rid} is too short to check ({text!r}): state the behaviour or the figure")
+    return errs
+
+
 def propose_proof(text: str) -> tuple[list[str], str]:
     """A default proof method for a requirement, from its wording (the interview offers it with its reason)."""
     low = text.lower()
@@ -140,6 +172,7 @@ def validate(spec: dict[str, Any], allow_rates: bool = False, need_proof: bool =
         return ["spec.yaml is empty"]
     errs = [f"spec.yaml has no {k!r} (required, non-empty)" for k in REQUIRED if not spec.get(k)]
     errs += requirement_errors(spec, need_proof)
+    errs += requirement_quality_errors(spec)                    # brief 53: atomic and verifiable
     for k in ("ports", "clocks"):
         if spec.get(k) and not isinstance(spec[k], (list, dict)):
             errs.append(f"{k!r} must be a list or mapping")

@@ -16,6 +16,7 @@ from cocotb.triggers import ClockCycles, ReadOnly, RisingEdge
 
 from designs.t1_dimmer_counter import model as m
 from designs.t1_dimmer_counter.tests import t1_cov
+from flow.req import req                 # brief 53: @req names the requirement ids a test verifies
 from shell.host import protocol as p
 from shell.model.shell_model import ShellModel
 from shell.tests.uart_bfm import UartBfm
@@ -81,6 +82,7 @@ class Env:
         t1_cov.sample_model(self)
 
 
+@req("REQ-05")
 @cocotb.test()
 async def identity_and_reset_values(dut):
     e = Env(dut)
@@ -91,6 +93,7 @@ async def identity_and_reset_values(dut):
     assert await e.read(m.DUTY) == 0x40 and await e.read(m.CTRL) == 0x2
 
 
+@req("REQ-02", "REQ-10")
 @cocotb.test()
 async def debounce_boundary_is_exact(dut):
     """A level held for DEBOUNCE_CYCLES - 1 clocks is ignored; DEBOUNCE_CYCLES clocks is a press."""
@@ -104,6 +107,7 @@ async def debounce_boundary_is_exact(dut):
     assert await e.read(m.PRESSES) == 1 and await e.read(m.COUNT) == 1
 
 
+@req("REQ-01", "REQ-02")
 @cocotb.test()
 async def bouncy_buttons_match_the_model(dut):
     e = Env(dut)
@@ -128,6 +132,7 @@ async def bouncy_buttons_match_the_model(dut):
     dut._log.info("30 bouncy sequences, %d presses predicted and seen", total)
 
 
+@req("REQ-01")
 @cocotb.test()
 async def count_wraps_both_ways(dut):
     e = Env(dut)
@@ -141,6 +146,7 @@ async def count_wraps_both_ways(dut):
     assert await e.read(m.COUNT) == 0
 
 
+@req("REQ-05")
 @cocotb.test()
 async def inputs_register_shows_levels(dut):
     e = Env(dut)
@@ -168,6 +174,7 @@ async def led_on_clocks(e: Env) -> list[int]:
     return on
 
 
+@req("REQ-03")
 @cocotb.test()
 async def pwm_on_time_matches_duty(dut):
     e = Env(dut)
@@ -209,6 +216,7 @@ async def scan(e: Env, frames: int = 2) -> tuple[dict[int, set[int]], list[int]]
     return seen, runs[1:]   # the first run is cut by where sampling started
 
 
+@req("REQ-04")
 @cocotb.test()
 async def display_shows_count_and_duty(dut):
     e = Env(dut)
@@ -233,6 +241,7 @@ async def display_shows_count_and_duty(dut):
     assert seen == {} and e.t1.display() == [None] * 8
 
 
+@req("REQ-01", "REQ-05")
 @cocotb.test()
 async def random_operations_match_the_model(dut):
     e = Env(dut)
@@ -262,6 +271,7 @@ async def clocks_until(clk, sig, limit: int) -> int:
     raise AssertionError(f"{sig._name} never rose within {limit} clocks")
 
 
+@req("REQ-09")
 @cocotb.test()
 async def register_write_and_press_on_the_same_clock(dut):
     """spec.yaml: a COUNT write and a debounced press on one clock: the write wins, the press is still counted.

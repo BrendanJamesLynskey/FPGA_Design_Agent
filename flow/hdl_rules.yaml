@@ -1,0 +1,91 @@
+# FDA-HDL: the HDL coding standard for the agent's output (brief 53). Human text: docs/hdl_coding_standard.md.
+# Checked by flow/lint_ruleset.py. A change to a rule bumps `version` (and the document's version line).
+#
+# Each rule: id, title, rationale (why the rule exists, in one or two sentences), and checks: the tool findings that
+# break it. Tool keys:
+#   verilator: Verilator --lint-only -Wall warning codes (the code after %Warning-)
+#   vivado:    rule-ID patterns (fnmatch) from report_methodology, report_drc and report_cdc in the build's gates.json;
+#              severities Error, Critical Warning and Warning count, Info and Advisory do not
+#   standards: rule ids of flow/standards_check.py (docs/design_standards.md), status fail or not_run
+# A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00), so nothing is lost.
+# Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
+standard: FDA-HDL
+version: "1.0"
+date: 2026-11-11
+rules:
+  - id: HDL-SYN-01
+    title: No latches
+    rationale: A latch is level-sensitive storage the timing tools treat as a loop of special cases; in a synchronous
+      FPGA design it is almost always an incomplete combinational assignment, and it hides as a simulation match.
+    checks: {verilator: [LATCH, NOLATCH], standards: [STD-LATCH-01]}
+  - id: HDL-SYN-02
+    title: No combinational loops
+    rationale: A loop through logic has no defined value; simulation may settle where silicon oscillates.
+    checks: {verilator: [UNOPTFLAT, ALWCOMBORDER], vivado: ["LUTLP-*"], standards: [STD-LOOP-01]}
+  - id: HDL-SYN-03
+    title: Complete, non-overlapping case statements
+    rationale: An incomplete case infers a latch or a priority the author did not mean; an overlapping or X case item
+      simulates differently from what synthesis builds.
+    checks: {verilator: [CASEINCOMPLETE, CASEOVERLAP, CASEX, CASEWITHX]}
+  - id: HDL-SYN-04
+    title: Blocking assignments in combinational logic, non-blocking in clocked logic
+    rationale: Mixing them gives race conditions between simulators and a mismatch between simulation and the netlist.
+    checks: {verilator: [BLKSEQ, COMBDLY, BLKANDNBLK, ASSIGNDLY, INITIALDLY]}
+  - id: HDL-SYN-05
+    title: One driver per signal
+    rationale: Two drivers is a short in hardware and an X or a last-writer-wins in simulation.
+    checks: {verilator: [MULTIDRIVEN, PROCASSWIRE, CONTASSREG], vivado: ["MDRV-*"]}
+  - id: HDL-SYN-06
+    title: No initial blocks except ROM initialisation
+    rationale: Initial values are not a reset; a design that relies on them cannot be reset back to a known state.
+    checks: {standards: [STD-INIT-01]}
+  - id: HDL-WID-01
+    title: Widths match
+    rationale: A silent extension or truncation is the commonest arithmetic bug; the reader of the code cannot see it.
+    checks: {verilator: [WIDTH, WIDTHEXPAND, WIDTHTRUNC, WIDTHXZEXPAND, WIDTHCONCAT, SELRANGE, ASCRANGE, LITENDIAN, CMPCONST, UNSIGNED]}
+  - id: HDL-SIG-01
+    title: Every signal is driven and used, every port connected
+    rationale: An undriven signal is a constant the author did not choose; an unused one is often a missed connection.
+    checks: {verilator: [UNDRIVEN, UNUSED, UNUSEDSIGNAL, UNUSEDPARAM, UNUSEDGENVAR, PINMISSING, PINCONNECTEMPTY, PINNOCONNECT, IMPLICIT]}
+  - id: HDL-CLK-01
+    title: Synchronous design on declared clocks; no derived or gated clocks
+    rationale: A clock made in logic has skew the tools cannot close; a clock enable on the declared clock does the
+      same job safely. Declared domains let the tools and the reviewer see every crossing.
+    checks: {verilator: [GENCLK], vivado: ["CLKC-*", "PLHOLDVIO-*"], standards: [STD-CLK-01, STD-CLK-02, STD-CLK-03]}
+  - id: HDL-RST-01
+    title: Reset as the spec and the reset-strategy skill say; asynchronous inputs synchronised
+    rationale: A reset released asynchronously can leave flip-flops in different states; logic driving an
+      asynchronous reset glitches.
+    checks: {verilator: [SYNCASYNCNET, CDCRSTLOGIC], vivado: ["LUTAR-*"], standards: [STD-RST-01]}
+  - id: HDL-CDC-01
+    title: Every clock-domain crossing through a named, declared primitive
+    rationale: An unsynchronised crossing fails rarely and randomly; only structure, not simulation, shows it.
+    checks: {vivado: ["CDC-*"], standards: [STD-CDC-01, STD-CDC-02]}
+  - id: HDL-XDC-01
+    title: Complete timing and I/O constraints
+    rationale: An unconstrained or wrongly constrained path is unchecked by timing analysis, so its slack means nothing.
+    checks: {vivado: ["TIMING-*", "XDCH-*", "XDCC-*", "XDCB-*", "XDCV-*"]}
+  - id: HDL-METH-01
+    title: Methodology findings on the synthesised and routed design fixed or waived
+    rationale: The vendor methodology checks are the tool's own list of constructs it handles badly.
+    checks: {vivado: ["SYNTH-*", "DPIP-*", "DPOP-*", "HPDR-*", "RTRES-*"], standards: [STD-METH-01]}
+  - id: HDL-DRC-01
+    title: No design-rule violation
+    rationale: A DRC error blocks the bitstream or describes an electrical problem on the board.
+    checks: {vivado: ["NSTD-*", "UCIO-*", "PDRC-*", "RTSTAT-*", "BIVC-*", "IOSTDTYPE-*", "REQP-*", "CFGBVS-*"]}
+  - id: HDL-IF-01
+    title: Standard interfaces with AMBA names
+    rationale: Standard interfaces make blocks reusable and checkable by protocol checkers.
+    checks: {standards: [STD-AXI-01, STD-AXI-02, STD-ARCH-00]}
+  - id: HDL-WAIVE-01
+    title: Every waiver has a reason, an owner and a date
+    rationale: A waiver is a decision; without who and why it cannot be reviewed or revisited.
+    checks: {standards: [STD-WAIVE-01]}
+  - id: HDL-LINT-00
+    title: Verilator -Wall clean (any warning no other rule maps)
+    rationale: Every lint warning is either fixed or a recorded decision.
+    checks: {verilator: ["*"]}
+  - id: HDL-VIV-00
+    title: Vivado methodology, DRC and CDC clean (any finding no other rule maps)
+    rationale: Every vendor finding at Warning or above is either fixed or a recorded decision.
+    checks: {vivado: ["*"]}
