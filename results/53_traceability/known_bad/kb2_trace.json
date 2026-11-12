@@ -1,0 +1,1755 @@
+{
+ "schema": "fpga-design-agent/trace/v1",
+ "design": "t1_dimmer_counter",
+ "generated": "2026-11-12T02:03:35Z",
+ "note": "DO-254-style evidence: a record of what was verified and how; not a claim of compliance with any standard.",
+ "defer": [
+  "coverage",
+  "analysis"
+ ],
+ "inputs": {
+  "source": "computed",
+  "note": "no build manifest (brief 54) found; inputs, tools, knowledge-bank pin and flow commit computed here",
+  "inputs": {
+   "designs/t1_dimmer_counter/build.yaml": "d40ffa6a4704c30d18ae828b974cb6bd5542ed8154f9aadf38ffe21f21316cf5",
+   "designs/t1_dimmer_counter/design.xdc": "1efd57b95f261dd54cea826d8c02b1f1776d8c404f925a4e467268d72f9c247b",
+   "designs/t1_dimmer_counter/model.py": "9557dc46981cf2040b36230afeb7ae56cb0518e95b5e922a928d9fa514ed7e01",
+   "designs/t1_dimmer_counter/rtl/debounce.sv": "a790df8e428e5647d561b539549b45732f9bd22ccba8237167a0f6a634864f2d",
+   "designs/t1_dimmer_counter/rtl/dimmer_counter.sv": "51ae62923d32f54f6b0c50ea446451eade0599b45e5bcad8b6eabca93f1ed6cd",
+   "designs/t1_dimmer_counter/rtl/sevenseg_scan.sv": "c680e6a757107e7652bdf5e74e398cb4c9aa4e9d1a8ea9d9a46da2dac638a330",
+   "designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv": "ebf19920cb094a4b5e99a09b5bc7cfa64452f64cb23cd81793a3f731383a41e5",
+   "designs/t1_dimmer_counter/spec.yaml": "c130cf8849981d64781337048d6285d4cdcd2c0922ecd4bb40c9a07380918d59",
+   "designs/t1_dimmer_counter/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "designs/t1_dimmer_counter/tests/t1_cocotb.py": "03737b567b0e6ae51f52aeed59f11cf9ebb6f0dd65eba827ea6e87f7393b774d",
+   "designs/t1_dimmer_counter/tests/t1_cov.py": "20cbc9326f4ea1f78a54673fdf72d639b3467546ac130a55a0b4729f21d6ef2d",
+   "designs/t1_dimmer_counter/tests/t1_verif.py": "93f460de071332a905b4eaefa43f0da141ecc9d286440af6ee4094e17b50ce31",
+   "designs/t1_dimmer_counter/tests/test_model.py": "de53a22d202d291ba214b74635d12b08e3a8f51be1753eeb33b8900d7f997cdf",
+   "designs/t1_dimmer_counter/tests/test_t1_hw.py": "7ee7254deb00c5595533f163ace0b6e592d107a0e4ce198dc9b547f7d89e62a7",
+   "designs/t1_dimmer_counter/tests/test_t1_rtl.py": "f65d4511adc5219529fb9305b08690dae4fe8f8a35e4816c518197ab10a3618f",
+   "designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py": "867a982673e8b7dc223d52c73bd9e0b8274d2c3e1163d721d28ba8d85c2ec908",
+   "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv": "59964c1f2c64520e5bdd8bcd2d9718e9aab49f6b876ef37e2153ad42e1b79fbd",
+   "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv": "98cb35c7b2a061abe25fc1f3580f979448532499d8852c6c376d92513a1ab606",
+   "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv": "548746c816f602e2ee205210493706dee90942fbef9b834b97ee14c97375ce7d",
+   "designs/t1_dimmer_counter/verif/checkers/t1_bind.sv": "817eaeab2bf29b9ccba235858370b53d5a8108c0e6cf847e7a2f69ded84652ab",
+   "designs/t1_dimmer_counter/verif/checkers/v_macros.svh": "013c1a5444e3dbd0eb2df54529d09272d8bf601d42ec066d54cadb9589d51083",
+   "designs/t1_dimmer_counter/verif/formal/debounce.sby": "4b801c29cb64c18af44fdec71c50d6350f78cd9474ad4dbfe92e71f72421651d",
+   "designs/t1_dimmer_counter/verif/formal/formal_debounce.sv": "3f1ca57a2c79f5093f5b19997df6ab2493a7b43b8a2fcd0cedd094374b140b17",
+   "designs/t1_dimmer_counter/verif/formal/formal_scan.sv": "e09d4c79ed6a3c7d913b4409de0177dc9ccf6634d04d7f57d80ff9de787588a2",
+   "designs/t1_dimmer_counter/verif/formal/scan.sby": "36cac2ddcf988ed53808392e3ab1c68ab21bca59d34fb368c2beb8a041cf4a77",
+   "designs/t1_dimmer_counter/verif/justifications.yaml": "22a75f45fec41805bd210b97a2d49a981dc4b19fccf91ce0275320359e1e0515",
+   "designs/t1_dimmer_counter/verif/mutants.yaml": "986758175b7ff1724a690fb9e199b6e59a07f32b23935895eb73064db346424e",
+   "designs/t1_dimmer_counter/verif/portability.yaml": "ded77d7e60421e3f9082e3062658b30cba1447f7ac00bf371f214efcc0db8abc",
+   "designs/t1_dimmer_counter/verif/testplan.yaml": "5f32751ff1a63e41b0f97850893098dceeba1d2c2552c898edfec9b059c0e618",
+   "shell/rtl/fpga_shell.sv": "c1a5d9551c5c173b5dc65a1cc3c01a00b184d9d187e2a22e8c80b3a616b8bbb1",
+   "shell/rtl/reset_sync.sv": "1beca829ea724f3a4eb1e7cf3688d8e0f26706c8f89810730672306ba66e0815",
+   "shell/rtl/shell_core.sv": "4956b6380ebf052984d598942bea4e70c6c379b9683cae40f78076dd60093d39",
+   "shell/rtl/sync2.sv": "9103308bbb71cd224d958c434bddd7b3bd2647d49cc8e718df0c6acba49509ba",
+   "shell/rtl/uart_rx.sv": "df36889737e1714453c29b4efb1134e3bed54be50be3f31b18d51e929711df49",
+   "shell/rtl/uart_tx.sv": "ccc19a6bd09120d11b9258452eb93a9a0f8fd5852fd4badacce549ef6e38b358"
+  },
+  "tools": {
+   "python": "3.12.3",
+   "cocotb": "2.0.1",
+   "cocotb_coverage": "2.0",
+   "pyyaml": "6.0.3",
+   "icarus": "12.0",
+   "verilator": "5.048",
+   "yosys": null,
+   "sby": null,
+   "vivado_expected": "2026.1"
+  },
+  "kb_pin": "811b840",
+  "flow": {
+   "commit": "1b41669c2971",
+   "dirty": true
+  }
+ },
+ "evidence_sources": {
+  "runs": "build/verif/icarus",
+  "also": [],
+  "coverage": "build/verif/icarus",
+  "formal": "<outside repo>/build/verif/formal",
+  "gates": null,
+  "hw": "<outside repo>/results/f0b/t1_dimmer_counter_bringup.json",
+  "baseline": null
+ },
+ "requirements": [
+  {
+   "id": "REQ-01",
+   "text": "Each debounced press steps COUNT up or down by one or clears it, wrapping modulo 65536",
+   "proof": [
+    "simulation"
+   ],
+   "design_elements": [
+    "debounce",
+    "dimmer_counter"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "t1_cocotb.bouncy_buttons_match_the_model",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_cocotb.count_wraps_both_ways",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_cocotb.random_operations_match_the_model",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_verif.simultaneous_presses_priority",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_verif.directed_closure_sweep",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_verif.constrained_random_operations",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "assertion",
+     "name": "A_CT_CLEAR",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_CT_UP",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_CT_DOWN",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_CT_HOLD",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "cover",
+     "name": "C_CT_WRAP_UP",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_CT_WRAP_DOWN",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_CT_SAME_CLOCK_PRESSES",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_DB_PULSE",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "cover",
+     "name": "C_DB_PRESS",
+     "result": "pending",
+     "detail": "no coverage data"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 4,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "b5f803c024a55a37c3ceff58fe212bbfa27b523ed3f98f858f40a5fef7855cf6",
+   "evidence_hash": "577ce0df2307430cc84dfde2e146cb32eb7cf3025abcca060a866dd642baf380",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-02",
+   "text": "A button change shorter than the debounce time never makes a press",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "design_elements": [
+    "debounce"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "t1_cocotb.debounce_boundary_is_exact",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_cocotb.bouncy_buttons_match_the_model",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_verif.short_glitches_are_ignored",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "debounce",
+       "via": "tag",
+       "result": "pass",
+       "detail": "bmc=PASS, cover=PASS"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "assertion",
+     "name": "A_DB_RISE",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_DB_RISE_ONLY",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_DB_HOLD",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_DB_FLIP",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "cover",
+     "name": "C_DB_GLITCH_IGNORED",
+     "result": "pending",
+     "detail": "no coverage data"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 1,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "898eb09ff46074d9c0339e9155aa6e4a0b6e395bb6a4dc3e124a30b6091e64bd",
+   "evidence_hash": "398c857cf5c3f1c9c1e30204876abd9ecbcc263720bb13904a3b8f253021032e",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-03",
+   "text": "LED brightness is linear in the effective duty over one PWM period",
+   "proof": [
+    "simulation"
+   ],
+   "design_elements": [
+    "dimmer_counter"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "t1_cocotb.pwm_on_time_matches_duty",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "assertion",
+     "name": "A_PWM_SUBSET",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_PWM_ZERO_OFF",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "cover",
+     "name": "C_CT_DUTY_FULL",
+     "result": "pending",
+     "detail": "no coverage data"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 1,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "9d585d11d48a897cfe1b62ff9ee4647329f9a1af0c1cd1f046201be08024480b",
+   "evidence_hash": "8b0e3f6f6e2e98d43bd65cd90519327dd8e390e1065662a793b1094bd36ffdd4",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-04",
+   "text": "The display lights exactly one digit at a time, in order, showing COUNT and the duty in hex",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "design_elements": [
+    "sevenseg_scan"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "t1_cocotb.display_shows_count_and_duty",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_verif.directed_closure_sweep",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "scan",
+       "via": "tag",
+       "result": "pass",
+       "detail": "bmc=PASS, cover=PASS"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "assertion",
+     "name": "A_SC_ONE_DIGIT",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_SC_BLANK",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_SC_DISABLED",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "cover",
+     "name": "C_SC_DIGIT_0_LIT",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_SC_DIGIT_1_LIT",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_SC_DIGIT_2_LIT",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_SC_DIGIT_3_LIT",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_SC_DIGIT_4_LIT",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_SC_DIGIT_5_LIT",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_SC_DIGIT_6_LIT",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_SC_DIGIT_7_LIT",
+     "result": "pending",
+     "detail": "no coverage data"
+    },
+    {
+     "kind": "cover",
+     "name": "C_SC_ALL_DARK_ENABLED",
+     "result": "pending",
+     "detail": "no coverage data"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 9,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "8b86c296cc7c20b5a693fafc3effa701ee69e0f02efc54b3971a5af69e7390db",
+   "evidence_hash": "b4c9f0403e57e3b7dfd69dedbe28fbd398ff5366f6aef08e601baf8365580973",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-05",
+   "text": "The register window has the listed map and reset values",
+   "proof": [
+    "simulation"
+   ],
+   "design_elements": [
+    "dimmer_counter"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "t1_cocotb.identity_and_reset_values",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_cocotb.inputs_register_shows_levels",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_cocotb.random_operations_match_the_model",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_verif.directed_closure_sweep",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_verif.reset_state_of_outputs",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_verif.constrained_random_operations",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "assertion",
+     "name": "A_CT_RESET",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_CT_PRESS_COUNTED_UP",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_CT_PRESS_COUNTED_DOWN",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_CT_PRESS_COUNTED_CLEAR",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_CT_DUTY_WRITE",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_CT_CTRL_WRITE",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "assertion",
+     "name": "A_CT_RO_IGNORED",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "ed15648d2584a93db995d2a59ab83977ee98c80fbb8df0e12155b1b86c3cd423",
+   "evidence_hash": "09d0c587ab701c1bfddf9b8de0fe3e5429fe96a5216813ba424853035c1ade12",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-06",
+   "text": "The design closes timing at 100 MHz with no unconstrained path",
+   "proof": [
+    "analysis"
+   ],
+   "design_elements": [
+    "t1_dimmer_counter_top"
+   ],
+   "methods": [
+    {
+     "method": "analysis",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "post_route:setup",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no flow gates result"
+      },
+      {
+       "artefact": "post_route:hold",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no flow gates result"
+      },
+      {
+       "artefact": "post_route:no_unconstrained_endpoints",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no flow gates result"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "30ab4e15d9b7cad4297ba0d3348482a714658ca5863c6fc0080c71e91c595b9d",
+   "evidence_hash": "d936030562f6c5cd9607f1676c18bb48617d0ff0fbc09317791750da1e8e0ba7",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-07",
+   "text": "The design stays within its predicted resources and uses no BRAM or DSP",
+   "proof": [
+    "analysis"
+   ],
+   "design_elements": [
+    "t1_dimmer_counter_top"
+   ],
+   "methods": [
+    {
+     "method": "analysis",
+     "status": "pending",
+     "verifications": [
+      {
+       "artefact": "post_synth:post_synth_resources_in_range",
+       "via": "testplan proof",
+       "result": "pending",
+       "detail": "no flow gates result"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "a7853653d30d45aff478d05f35e48403eb170c292ad429a7f80c95e69a08558e",
+   "evidence_hash": "8142cbda9bbc9197a39c75194bac8b9e368a127108feb8a839215ed926342d48",
+   "status": "pending"
+  },
+  {
+   "id": "REQ-08",
+   "text": "On the board the register window answers as the model predicts",
+   "proof": [
+    "hardware"
+   ],
+   "design_elements": [
+    "t1_dimmer_counter_top"
+   ],
+   "methods": [
+    {
+     "method": "hardware",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "uart_tests:test_t1_registers_against_the_model",
+       "via": "testplan proof",
+       "result": "pass",
+       "detail": "bring-up step passed"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "00505fbf1a4f8759434eef52b87392fa6aa86ec8ee4ddaf9a74621a96f6f0ca1",
+   "evidence_hash": "759f94005a4f36f0b541685bef80f9443218c09bb08bfbcee2d3e5f2a7a78919",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-09",
+   "text": "A shell write to COUNT on the same clock as a press wins over the press",
+   "proof": [
+    "simulation"
+   ],
+   "design_elements": [
+    "dimmer_counter"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "t1_cocotb.register_write_and_press_on_the_same_clock",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      },
+      {
+       "artefact": "t1_verif.constrained_random_operations",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "assertion",
+     "name": "A_CT_WRITE_WINS",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "cover",
+     "name": "C_CT_WRITE_AND_PRESS",
+     "result": "pending",
+     "detail": "no coverage data"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 1,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "70ea4a76550dfa686e965caaf215bbbdffb182dd3bc6e28062f6595dbdff53bb",
+   "evidence_hash": "ffd85dcb3ec4e9484e95674a08cbc9008e9fa21c7aa1d73af38012be27c60a1c",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-10",
+   "text": "Releasing a button never makes a press",
+   "proof": [
+    "simulation",
+    "formal"
+   ],
+   "design_elements": [
+    "debounce"
+   ],
+   "methods": [
+    {
+     "method": "simulation",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "t1_cocotb.debounce_boundary_is_exact",
+       "via": "tag",
+       "result": "pass",
+       "detail": "passed on 3 seed(s)"
+      }
+     ]
+    },
+    {
+     "method": "formal",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "debounce",
+       "via": "tag",
+       "result": "pass",
+       "detail": "bmc=PASS, cover=PASS"
+      }
+     ]
+    }
+   ],
+   "supporting": [
+    {
+     "kind": "assertion",
+     "name": "A_DB_FALL_NO_PRESS",
+     "result": "pass",
+     "detail": "bound in 3 seed(s), no failure"
+    },
+    {
+     "kind": "cover",
+     "name": "C_DB_RELEASE",
+     "result": "pending",
+     "detail": "no coverage data"
+    }
+   ],
+   "coverage": {
+    "cover_properties": 1,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "6f8d5983a106e3a25f8f75e419d91f4f22bb1363009a75af38fec9ade584f249",
+   "evidence_hash": "4dc87b3185c9443e85edee4ff0f25e13928f78b249329136f74625c274fd1b7a",
+   "status": "pass"
+  },
+  {
+   "id": "REQ-11",
+   "text": "On the board the ILA captures of the count write and the PWM agree with the model",
+   "proof": [
+    "hardware"
+   ],
+   "design_elements": [
+    "t1_dimmer_counter_top"
+   ],
+   "methods": [
+    {
+     "method": "hardware",
+     "status": "pass",
+     "verifications": [
+      {
+       "artefact": "ila_captures",
+       "via": "testplan proof",
+       "result": "pass",
+       "detail": "bring-up step passed"
+      }
+     ]
+    }
+   ],
+   "supporting": [],
+   "coverage": {
+    "cover_properties": 0,
+    "cover_properties_hit": 0
+   },
+   "req_hash": "709cc86f2fb7326616812106e3fa9be8a8332e9050dc4e0ef8ed8c783a079357",
+   "evidence_hash": "a8e85a5879036f2bef7e1ae73f20fc6ef57ac1dc4d7cf7a17120667add91f05d",
+   "status": "pass"
+  }
+ ],
+ "artefacts": [
+  {
+   "kind": "test",
+   "name": "t1_cocotb.identity_and_reset_values",
+   "file": "designs/t1_dimmer_counter/tests/t1_cocotb.py",
+   "line": 87,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "80257c923137eaa9640e0b9d41f490bad93fcd091ff50fb39a67d473aafe7763"
+  },
+  {
+   "kind": "test",
+   "name": "t1_cocotb.debounce_boundary_is_exact",
+   "file": "designs/t1_dimmer_counter/tests/t1_cocotb.py",
+   "line": 98,
+   "cites": [
+    "REQ-02",
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "88d595f9380030b5a9ce7a5ddf7a75bf281938f4ee4407f608e0a317f50f2e36"
+  },
+  {
+   "kind": "test",
+   "name": "t1_cocotb.bouncy_buttons_match_the_model",
+   "file": "designs/t1_dimmer_counter/tests/t1_cocotb.py",
+   "line": 112,
+   "cites": [
+    "REQ-01",
+    "REQ-02"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "7768285e2861549879d1d0ec9d1ebc6275a88995eac484f3a4a8af7ce575c4f8"
+  },
+  {
+   "kind": "test",
+   "name": "t1_cocotb.count_wraps_both_ways",
+   "file": "designs/t1_dimmer_counter/tests/t1_cocotb.py",
+   "line": 137,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "57f0c4bb31159aa8fdf04626f462db92d87b6ae94f4b709b5f9416d1e0b2cba2"
+  },
+  {
+   "kind": "test",
+   "name": "t1_cocotb.inputs_register_shows_levels",
+   "file": "designs/t1_dimmer_counter/tests/t1_cocotb.py",
+   "line": 151,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "08bbd93dea1eea37760be24b6fc92c29ad277542b444dd00c100e99101a0d5c7"
+  },
+  {
+   "kind": "test",
+   "name": "t1_cocotb.pwm_on_time_matches_duty",
+   "file": "designs/t1_dimmer_counter/tests/t1_cocotb.py",
+   "line": 179,
+   "cites": [
+    "REQ-03"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "adbf2a69df4ab9e4033803e9a1b2a4daa270a540deec846ed80dead891d7bd34"
+  },
+  {
+   "kind": "test",
+   "name": "t1_cocotb.display_shows_count_and_duty",
+   "file": "designs/t1_dimmer_counter/tests/t1_cocotb.py",
+   "line": 221,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "7a3c7cfdef87e3af5add2b7e255b45ff68cb16d001fa583292ccce223bd23098"
+  },
+  {
+   "kind": "test",
+   "name": "t1_cocotb.random_operations_match_the_model",
+   "file": "designs/t1_dimmer_counter/tests/t1_cocotb.py",
+   "line": 246,
+   "cites": [
+    "REQ-01",
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "f42ab3d1d37f2fbb2ecac232e411ed3ca18e95f1289aca986dc1536ddeff1b18"
+  },
+  {
+   "kind": "test",
+   "name": "t1_cocotb.register_write_and_press_on_the_same_clock",
+   "file": "designs/t1_dimmer_counter/tests/t1_cocotb.py",
+   "line": 276,
+   "cites": [
+    "REQ-09"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "0501a2e37706a9d9584c95eea37f167090a90c29bfaf913fc06c850c8072ccf7"
+  },
+  {
+   "kind": "test",
+   "name": "t1_verif.simultaneous_presses_priority",
+   "file": "designs/t1_dimmer_counter/tests/t1_verif.py",
+   "line": 36,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "efdf426ca48ca29fded116e76bb3dd8ce3a41a25e8e0c9aa2e2c466dcb3809be"
+  },
+  {
+   "kind": "test",
+   "name": "t1_verif.short_glitches_are_ignored",
+   "file": "designs/t1_dimmer_counter/tests/t1_verif.py",
+   "line": 50,
+   "cites": [
+    "REQ-02"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "0a7cbf0206f0ec8185ee0ef1dcd9422e71b46ded39879130ba945afe21405b86"
+  },
+  {
+   "kind": "test",
+   "name": "t1_verif.directed_closure_sweep",
+   "file": "designs/t1_dimmer_counter/tests/t1_verif.py",
+   "line": 62,
+   "cites": [
+    "REQ-01",
+    "REQ-04",
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "4e83e7ecfc08fd5c86e7339513886bf820536a9f148a708ec9299d3998184fe0"
+  },
+  {
+   "kind": "test",
+   "name": "t1_verif.reset_state_of_outputs",
+   "file": "designs/t1_dimmer_counter/tests/t1_verif.py",
+   "line": 88,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "647b130a79cbdebd74745a93fc421414402295597fb7e9b6c114316b8e3edf18"
+  },
+  {
+   "kind": "test",
+   "name": "t1_verif.constrained_random_operations",
+   "file": "designs/t1_dimmer_counter/tests/t1_verif.py",
+   "line": 154,
+   "cites": [
+    "REQ-01",
+    "REQ-05",
+    "REQ-09"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "d71ec1d3c68c52b8851616f75ecd32518ff5ccd959455e65f9e20e92c89148a3"
+  },
+  {
+   "kind": "test",
+   "name": "t1_verif.zz_dump_coverage",
+   "file": "designs/t1_dimmer_counter/tests/t1_verif.py",
+   "line": 169,
+   "cites": [],
+   "class": "structural",
+   "reason": "writes the functional-coverage database for the gates; it checks nothing itself",
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "4e910929423817a35ef66519959babad980c1e91db19be576812f09970c7c829"
+  },
+  {
+   "kind": "test",
+   "name": "t1_verif.extra_identity_smoke",
+   "file": "designs/t1_dimmer_counter/tests/t1_verif.py",
+   "line": 175,
+   "cites": [],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "passed on 3 seed(s)",
+   "source_sha256": "74013f03b0b256d701ca5325473b18006803f7152bc7cdc3b538799c679719a4"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_RESET",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 28,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "2fc4a092472a8c055ad37f528dcf6c3da0ed729413ec1ab85d92611140c51f03"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_CLEAR",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 29,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "d439746cb3a0162cdfcd62c67febfd91ccfec943faef6d01c1115704cdf033d7"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_UP",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 30,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "4e74d40e8b087541c7da0dcb2b0a4d60c6ebb9437ba38b49135d89bcd041ed86"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_DOWN",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 31,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "b56603812d9ab6f94746bf793247baf98e534b43890e52caaaca43d2c2fa219c"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_HOLD",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 32,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "252dad4cc8773485f583286a160c2faef51e7571e3150df559503ebb30a52269"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_WRITE_WINS",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 33,
+   "cites": [
+    "REQ-09"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "2e1faa7e60764a3d1da56cf3163e153a63688571a03a53b50b3b225fddd70ae3"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_PRESS_COUNTED_UP",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 34,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "998f48b30608bed0854ca1b0fefe1aece1ad081b639a23d763b65ebebf04483b"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_PRESS_COUNTED_DOWN",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 35,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "7b1e7fe80130442adbc4c87bb39503ee05f7f6c6248ec66641cc7831afaff2fc"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_PRESS_COUNTED_CLEAR",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 36,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "b4c5b8eb3a6dbd552d8a1b27e379f4b0b70f3394a3bd2b067252dada29116de0"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_DUTY_WRITE",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 37,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "0789f0cb05891c01d1fad12afe3a444928bc789c5da4d6cd8a38ccb8ca188368"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_CTRL_WRITE",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 38,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "99b46af0bdfcb8a63000086c1adb82a849c5f79a7a03d881485555332600fc03"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_CT_RO_IGNORED",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 39,
+   "cites": [
+    "REQ-05"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "a8d2e26871df65bdbabf383fba8a67f1d2dc00efaaee6d61ab33e046082d65ca"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_PWM_SUBSET",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 41,
+   "cites": [
+    "REQ-03"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "1b26fde956151b69510af17bcd4921bfd04eb9b8aaab9634d287285791ed89f1"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_PWM_ZERO_OFF",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 42,
+   "cites": [
+    "REQ-03"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "b246ed30a08642c9d58480157fe2da8d7342462721be82f367aa6d5b13a9e9ac"
+  },
+  {
+   "kind": "cover",
+   "name": "C_CT_WRAP_UP",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 44,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "952d274400d4ed41e2698db103690c38a8bf816f295bd68b01932bc133eeff61"
+  },
+  {
+   "kind": "cover",
+   "name": "C_CT_WRAP_DOWN",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 45,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "3af0ed22013acf749fb38a6ed9b79b6df530dfa2de6ca9ce0c5906d48081a449"
+  },
+  {
+   "kind": "cover",
+   "name": "C_CT_SAME_CLOCK_PRESSES",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 46,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "5a0a8aa45f7532ef31810b5158577a8cbb8392e9709f4ff8630faff83303a823"
+  },
+  {
+   "kind": "cover",
+   "name": "C_CT_WRITE_AND_PRESS",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 47,
+   "cites": [
+    "REQ-09"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "c65191f0f72ea5efe1edd470e4232a8173629a1b63890e68af77cbe6eca1f0d2"
+  },
+  {
+   "kind": "cover",
+   "name": "C_CT_DUTY_FULL",
+   "file": "designs/t1_dimmer_counter/verif/checkers/counter_checker.sv",
+   "line": 48,
+   "cites": [
+    "REQ-03"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "de43e750fcb893b05791a8a50205936a860937f61b9234a81c9245f91c396956"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_DB_PULSE",
+   "file": "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv",
+   "line": 30,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "0ec3e8d3f292f640126e8fbdacd88f4693948afd781929021079bb8c24cdfa04"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_DB_RISE",
+   "file": "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv",
+   "line": 32,
+   "cites": [
+    "REQ-02"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "c7775da95ef503dce5de8daa2c11e1dfe2389384c480ce48bdbf9f2571c6d168"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_DB_RISE_ONLY",
+   "file": "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv",
+   "line": 33,
+   "cites": [
+    "REQ-02"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "dc0037cee1721d7b3dbb6e67973bcce6c5ca8a304a3527c8bdbdc9ecf0b92a08"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_DB_FALL_NO_PRESS",
+   "file": "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv",
+   "line": 35,
+   "cites": [
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "593e06939ddd2daa7e3a576065e38e12635feeada592d3371171d4754adf0e53"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_DB_HOLD",
+   "file": "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv",
+   "line": 37,
+   "cites": [
+    "REQ-02"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "c66810a790f73ffdc01271cac391dca1b520fdac3130f8adacb2303f52a8565d"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_DB_FLIP",
+   "file": "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv",
+   "line": 39,
+   "cites": [
+    "REQ-02"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "e5e6e0040e7d2a538086199dadad7a6124fa65ef7e07c68fc34a457a955c63ce"
+  },
+  {
+   "kind": "cover",
+   "name": "C_DB_PRESS",
+   "file": "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv",
+   "line": 41,
+   "cites": [
+    "REQ-01"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "3cdcac4d6720cf57a4e9a61af11c997f07bc715aa60b73d8b90582628c5fa570"
+  },
+  {
+   "kind": "cover",
+   "name": "C_DB_RELEASE",
+   "file": "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv",
+   "line": 42,
+   "cites": [
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "517f20461310826132f33a77da0bde4e8bb9ece168d371efbe7dd9f6c0c4576c"
+  },
+  {
+   "kind": "cover",
+   "name": "C_DB_GLITCH_IGNORED",
+   "file": "designs/t1_dimmer_counter/verif/checkers/debounce_checker.sv",
+   "line": 43,
+   "cites": [
+    "REQ-02"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "95dcd84585351a200107902bbd1918dd99cc6f88eb99bc9146701632f372da13"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_SC_ONE_DIGIT",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 16,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "85e369263b0151185a6970b4d442bb85add04d34d8939947845e8ef419c55410"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_SC_BLANK",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 18,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "05d9b35f9c3bea64f67a708bfe22066e3d120f9118ff471fc18a7d7fbb55b43f"
+  },
+  {
+   "kind": "assertion",
+   "name": "A_SC_DISABLED",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 20,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bound in 3 seed(s), no failure",
+   "source_sha256": "178953c637068eae286ad942da22c0c547e4f1e6bc83b46f56d533e18c0117ed"
+  },
+  {
+   "kind": "cover",
+   "name": "C_SC_DIGIT_0_LIT",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 22,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "8426492f017b9f8c77d7979a16a1bb8255d62b337a0ff093fa1e65b570c9b600"
+  },
+  {
+   "kind": "cover",
+   "name": "C_SC_DIGIT_1_LIT",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 23,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "bf1e868f2213bc7c9622217cac7398acc2eb5f1217680f15372746c557939eb4"
+  },
+  {
+   "kind": "cover",
+   "name": "C_SC_DIGIT_2_LIT",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 24,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "4fda72ef8d2a2c171b38472110f534373060d56e7fb7c33a15cb3b671afb88e7"
+  },
+  {
+   "kind": "cover",
+   "name": "C_SC_DIGIT_3_LIT",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 25,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "cad79528ef6092f4f65253e83fca40fd0a91b84c9c0ec7f8977cd754208bfaed"
+  },
+  {
+   "kind": "cover",
+   "name": "C_SC_DIGIT_4_LIT",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 26,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "c1e05e128773c27874763b1f7d51c191f85921ca271f9d61b26f2e9fd62807a4"
+  },
+  {
+   "kind": "cover",
+   "name": "C_SC_DIGIT_5_LIT",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 27,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "6faee677426cce6cfbdefe42dd942b8759a869c5cee65694717208b093804404"
+  },
+  {
+   "kind": "cover",
+   "name": "C_SC_DIGIT_6_LIT",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 28,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "a0953c0f95dd6c05e6b3012b7a9512afdaf146046fa68c4ff064a5ca2ece3042"
+  },
+  {
+   "kind": "cover",
+   "name": "C_SC_DIGIT_7_LIT",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 29,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "29c31dec0488bccce404ff3bbc37333cf0997cdcf7a74ce96236ced5b155a9db"
+  },
+  {
+   "kind": "cover",
+   "name": "C_SC_ALL_DARK_ENABLED",
+   "file": "designs/t1_dimmer_counter/verif/checkers/scan_checker.sv",
+   "line": 30,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pending",
+   "detail": "no coverage data",
+   "source_sha256": "8720ca3687055eb17afac2e2f6d08e1e74d6c2865ac5a78122b6ab0b1c210abc"
+  },
+  {
+   "kind": "formal",
+   "name": "debounce",
+   "file": "designs/t1_dimmer_counter/verif/formal/debounce.sby",
+   "line": 1,
+   "cites": [
+    "REQ-02",
+    "REQ-10"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bmc=PASS, cover=PASS",
+   "source_sha256": "4b801c29cb64c18af44fdec71c50d6350f78cd9474ad4dbfe92e71f72421651d"
+  },
+  {
+   "kind": "formal",
+   "name": "scan",
+   "file": "designs/t1_dimmer_counter/verif/formal/scan.sby",
+   "line": 1,
+   "cites": [
+    "REQ-04"
+   ],
+   "class": null,
+   "reason": null,
+   "result": "pass",
+   "detail": "bmc=PASS, cover=PASS",
+   "source_sha256": "36cac2ddcf988ed53808392e3ab1c68ab21bca59d34fb368c2beb8a041cf4a77"
+  }
+ ],
+ "artefact_summary": {
+  "total": 58,
+  "citing": 56,
+  "robustness": 0,
+  "structural": 1,
+  "untagged": 1
+ },
+ "coverage": {
+  "measured": true,
+  "summary": {
+   "line": {
+    "points": null,
+    "hit": null,
+    "pct": null
+   },
+   "branch": {
+    "points": null,
+    "hit": null,
+    "pct": null
+   },
+   "toggle": {
+    "points": null,
+    "hit": null,
+    "pct": null
+   },
+   "bins": {
+    "points": 69,
+    "hit": 69,
+    "pct": 100.0
+   }
+  },
+  "holes": []
+ },
+ "waivers": [
+  {
+   "where": "justifications.coverage",
+   "item": "re:.*win_rdata\\[(2[4-9]|3[01])\\]:.*",
+   "problem": null
+  },
+  {
+   "where": "justifications.coverage",
+   "item": "re:dimmer_counter\\.sv:\\d+ n_(up|down|clear)\\[[4-7]\\]:.*",
+   "problem": null
+  },
+  {
+   "where": "justifications.coverage",
+   "item": "re:.*win_rdata\\[2[0-3]\\]:.*",
+   "problem": null
+  },
+  {
+   "where": "justifications.coverage",
+   "item": "dimmer_counter.sv:* pre[2]:*",
+   "problem": null
+  },
+  {
+   "where": "justifications.coverage",
+   "item": "re:sevenseg_scan\\.sv:\\d+ digits\\[(1[6-9])\\]:.*",
+   "problem": null
+  },
+  {
+   "where": "justifications.coverage",
+   "item": "re:sevenseg_scan\\.sv:\\d+ digits\\[(2[0-3])\\]:.*",
+   "problem": null
+  },
+  {
+   "where": "justifications.coverage",
+   "item": "sevenseg_scan.sv:* blank[*]:*",
+   "problem": null
+  },
+  {
+   "where": "justifications.coverage",
+   "item": "re:.* (an|AN)\\[[45]\\]:1->0",
+   "problem": null
+  },
+  {
+   "where": "justifications.coverage",
+   "item": "t1_dimmer_counter_top.sv:* DP:1->0",
+   "problem": null
+  },
+  {
+   "where": "justifications.coverage",
+   "item": "re:C_SC_DIGIT_[45]_LIT",
+   "problem": null
+  }
+ ],
+ "change": {
+  "baseline": null,
+  "added": [],
+  "removed": [],
+  "text_changed": [],
+  "evidence_changed": [],
+  "stale": []
+ },
+ "gates": {
+  "requirements_verified": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "artefacts_cite_requirements": {
+   "value": [
+    "test t1_verif.extra_identity_smoke (designs/t1_dimmer_counter/tests/t1_verif.py:175)"
+   ],
+   "threshold": [],
+   "pass": false,
+   "why": "untagged: test t1_verif.extra_identity_smoke (designs/t1_dimmer_counter/tests/t1_verif.py:175). Tag each test with @req(\"<id>\") or a `# req: <id>` comment, each property with `// req: <id>`, each .sby job with `# req: <id>`; a check that verifies no requirement says `robustness: <reason>` or `structural: <reason>`"
+  },
+  "coverage_holes_justified": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "waivers_complete": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  },
+  "changed_requirements_reverified": {
+   "value": [],
+   "threshold": [],
+   "pass": true
+  }
+ },
+ "pass": false
+}

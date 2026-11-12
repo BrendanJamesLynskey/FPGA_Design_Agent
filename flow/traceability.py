@@ -155,7 +155,7 @@ def bench_artefacts(bench_dir: Path, modules: list[str], known: set[str]) -> lis
                     if rd["class"]:
                         tag["class"], tag["reason"] = rd["class"], rd["reason"]
             body = "\n".join(lines[first:getattr(node, "end_lineno", node.lineno)])
-            out.append({"kind": "test", "name": f"{m}.{node.name}", "file": cr._rel(f), "line": node.lineno,
+            out.append({"kind": "test", "name": f"{m}.{node.name}", "file": cr._rel(f), "path": str(f), "line": node.lineno,
                         "source_sha256": cr.sha256_text(body), **tag})
     return out
 
@@ -178,7 +178,7 @@ def checker_artefacts(chk_dir: Path, known: set[str]) -> list[dict[str, Any]]:
                 if "//" in l:
                     texts.append(l.split("//", 1)[1])
                 kind = "cover" if m.group(1) == "COVER" else "assertion"
-                out.append({"kind": kind, "name": m.group(2), "file": cr._rel(f), "line": i + 1, "checker": module,
+                out.append({"kind": kind, "name": m.group(2), "file": cr._rel(f), "path": str(f), "line": i + 1, "checker": module,
                             "source_sha256": cr.sha256_text(l.strip()), **_parse_tag_text(texts, known)})
     return out
 
@@ -191,7 +191,7 @@ def formal_artefacts(formal_src: Path, known: set[str]) -> list[dict[str, Any]]:
         except OSError:
             continue
         texts = [l.strip()[1:].strip() for l in text.splitlines() if l.strip().startswith("#")]
-        out.append({"kind": "formal", "name": f.stem, "file": cr._rel(f), "line": 1,
+        out.append({"kind": "formal", "name": f.stem, "file": cr._rel(f), "path": str(f), "line": 1,
                     "source_sha256": cr.sha256_text(text), **_parse_tag_text(texts, known)})
     return out
 

@@ -48,8 +48,8 @@ def sha256_text(t: str) -> str:
 def _rel(p: Path) -> str:
     try:
         return p.resolve().relative_to(ROOT).as_posix()
-    except ValueError:
-        return str(p)
+    except ValueError:                     # outside the repository: never record a local absolute path
+        return "<outside repo>/" + "/".join(p.parts[-3:])
 
 
 def _version(cmd: list[str], pattern: str = r"(\d+\.\d+(?:\.\d+)?)") -> str | None:

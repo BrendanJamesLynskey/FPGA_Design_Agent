@@ -1,0 +1,29 @@
+diff --git a/designs/t1_dimmer_counter/tests/t1_cocotb.py b/designs/t1_dimmer_counter/tests/t1_cocotb.py
+index a8224b4..ef3d813 100644
+--- a/designs/t1_dimmer_counter/tests/t1_cocotb.py
++++ b/designs/t1_dimmer_counter/tests/t1_cocotb.py
+@@ -174,23 +174,7 @@ async def led_on_clocks(e: Env) -> list[int]:
+     return on
+ 
+ 
+-@req("REQ-03")
+-@cocotb.test()
+-async def pwm_on_time_matches_duty(dut):
+-    e = Env(dut)
+-    await e.start()
+-    rng = random.Random(int(cocotb.RANDOM_SEED) + 1)
+-    await e.write(m.COUNT, 0xB5A1)
+-    for duty in [0x00, 0x01, 0x40, 0x80, 0xFE, 0xFF] + [rng.randrange(256) for _ in range(4)]:
+-        await e.write(m.DUTY, duty)
+-        await ClockCycles(dut.CLK100MHZ, 4)
+-        assert await led_on_clocks(e) == e.t1.led_on_clocks(), f"duty 0x{duty:02X}"
+-    # brightness from the switches
+-    await e.write(m.CTRL, m.CTRL_DUTY_SRC | m.CTRL_DISPLAY_EN)
+-    for sw in (0x0000, 0xFF20, 0x00C0):
+-        await e.set_switches(sw)
+-        assert await led_on_clocks(e) == e.t1.led_on_clocks(), f"switches 0x{sw:04X}"
+-
++# brief 53 known-bad 1: the test pwm_on_time_matches_duty (REQ-03's only simulation evidence) was deleted here
+ 
+ async def scan(e: Env, frames: int = 2) -> tuple[dict[int, set[int]], list[int]]:
+     """Digits seen lit (with their segment patterns) and the run lengths of the AN bus."""

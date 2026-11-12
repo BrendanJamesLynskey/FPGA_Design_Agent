@@ -59,10 +59,12 @@ def propose(design: Path) -> tuple[list[dict], list[dict]]:
     """``(tags to insert, artefacts left untagged)``."""
     plan, spec = vg.load_inputs(design, design / "verif" / "testplan.yaml")
     known = {str(r["id"]) for r in spec.get("requirements") or [] if isinstance(r, dict) and r.get("id")}
-    t = tr.build(design, None)
+    arts = (tr.bench_artefacts(vg.plan_file(design, plan["bench"]["dir"]), plan["bench"]["modules"], known)
+            + tr.checker_artefacts(vg.plan_file(design, plan["checkers"]), known)
+            + tr.formal_artefacts(vg.plan_file(design, plan["formal_dir"]), known))
     mp = mapping(plan, known)
     todo, left = [], []
-    for a in t["artefacts"]:
+    for a in arts:
         if a["cites"] or a["class"]:
             continue
         ids = mp.get((a["kind"], a["name"]))
@@ -72,13 +74,12 @@ def propose(design: Path) -> tuple[list[dict], list[dict]]:
 
 def insert(design: Path, todo: list[dict]) -> int:
     """Write the comments; bottom-up per file so line numbers stay valid. Returns the number inserted."""
-    root = vg.ROOT
     by_file: dict[str, list[dict]] = {}
     for a in todo:
-        by_file.setdefault(a["file"], []).append(a)
+        by_file.setdefault(a["path"], []).append(a)
     n = 0
-    for rel, items in by_file.items():
-        p = Path(rel) if Path(rel).is_absolute() else root / rel
+    for path, items in by_file.items():
+        p = Path(path)
         lines = p.read_text().splitlines(keepends=True)
         for a in sorted(items, key=lambda x: -x["line"]):
             ids = ", ".join(a["ids"])
