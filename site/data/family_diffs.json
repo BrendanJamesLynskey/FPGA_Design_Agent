@@ -534,6 +534,11 @@
      "topic": "Debug cores and hardware manager",
      "summary": "ILA, VIO and JTAG-to-AXI work the same way on all families; on Zynq parts the debug hub clock must come from a running PL clock, which on the PS boards means after PS init.",
      "confirmed": "doc"
+    },
+    {
+     "topic": "Build ID in the bitstream (USR_ACCESS)",
+     "summary": "The USR_ACCESS bitstream setting and the USR_ACCESSE2 primitive exist on 7 series, UltraScale+ and both Zynq PLs (UG908 tables); measured on 7 series only.",
+     "confirmed": "doc"
     }
    ],
    "docs": {
@@ -544,13 +549,21 @@
      },
      {
       "doc": "UG908 v2025.2 (programming and debugging)",
-      "use": "JTAG programming"
+      "use": "JTAG programming; bitstream settings (USR_ACCESS)"
+     },
+     {
+      "doc": "XAPP1232 v1.0 (bitstream identification with USR_ACCESS)",
+      "use": "USR_ACCESS build identification, AXSS write in the bitstream"
      }
     ],
     "ultrascale_plus": [
      {
       "doc": "UG570 (UltraScale configuration, docs.amd.com 2025-03-04)",
       "use": "STARTUPE3, ICAPE3, DNA_PORTE2"
+     },
+     {
+      "doc": "UG974 v2026.1 (UltraScale libraries)",
+      "use": "USR_ACCESSE2 on UltraScale and UltraScale+"
      }
     ],
     "zynq7000_ps": [
@@ -1025,6 +1038,11 @@
      "topic": "Inference templates",
      "summary": "The same Vivado inference templates work on both families; what changes is the target (URAM only on ZU+, DSP48E2 pre-adder width, SRL and LUTRAM are the same).",
      "confirmed": "doc"
+    },
+    {
+     "topic": "VHDL-2008 acceptance and VHDL warnings in synthesis",
+     "summary": "No family difference found: 22 VHDL probes (2008 features, drivers, latches, resets, INIT, FSM, mixed language, port case) gave the same results on xc7a100t, xc7z020 and xck26 in Vivado 2026.1.",
+     "confirmed": "tool"
     }
    ],
    "docs": {
@@ -1136,6 +1154,11 @@
      "topic": "Formal and lint",
      "summary": "Formal checks and lint of plain RTL do not depend on family; only black-boxed primitives differ, so the stub set must match the target family.",
      "confirmed": "tool"
+    },
+    {
+     "topic": "Device-level functional-safety evidence",
+     "summary": "Only Zynq UltraScale+ has an AMD-published safety integrity statement per power domain; the 7-series and Zynq-7000 overviews carry only the safety disclaimer.",
+     "confirmed": "doc"
     }
    ],
    "docs": {

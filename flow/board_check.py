@@ -92,6 +92,8 @@ class Run:
     def program(self) -> dict[str, Any]:
         r = program.program(self.design, "base", self.board["name"], self.log_dir / "program")
         self.res["build_stamp"] = r["build_stamp"]
+        self.res["build_id"] = r.get("build_id")
+        self.res["manifest_stamp"] = r.get("manifest_stamp")
         return r
 
     @property
@@ -107,7 +109,9 @@ class Run:
             sh.write(p.REG_SCRATCH, SENTINEL)
             sh.write(p.REG_STATUS, 0)
         ok = ident["design_id"] == self.check.DESIGN_ID and f"{ident['build_stamp']:08x}" == self.res["build_stamp"]
-        return {"pass": ok, "design_id": design_id_text(ident["design_id"]),
+        # BUILD_STAMP against the manifest (raises, so the step fails, on a mismatch)
+        bid = program.check_shell_build_id(ident, self.res.get("manifest_stamp"))
+        return {"pass": ok, "design_id": design_id_text(ident["design_id"]), "build_id_uart": bid,
                 "build_stamp": f"{ident['build_stamp']:08x}", "shell_version": f"0x{ident['shell_version']:08X}",
                 **({} if ok else {"why": "wrong design or stale bitstream on the board"})}
 

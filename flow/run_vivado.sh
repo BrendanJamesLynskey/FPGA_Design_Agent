@@ -84,6 +84,9 @@ run_variant() {
   local prep
   prep="$("$PY" "$ROOT/flow/prepare.py" "$DESIGN" --variant "$variant" --out "$out")"
   echo "$prep" >"$out/prepare.json"
+  # the build manifest (flow/manifest.py) and the build ID, appended to inputs.tcl before the cache decision so that the
+  # flow key covers it; flow/build.tcl writes it into the bitstream's USR_ACCESS register
+  "$PY" "$ROOT/flow/manifest.py" pre "$out" --vivado "$VIVADO" --threads "$THREADS" >/dev/null
   local decision action
   decision="$("$PY" "$ROOT/flow/build_cache.py" "$out" --prev "$prev" --base "$DESIGN/build/base" \
       --variant "$variant" --vivado "$VIVADO" --threads "$THREADS")"
@@ -147,6 +150,12 @@ rj.write_text(json.dumps(run, indent=2) + "\n")' "$out" "$decision"
   local rc=0
   wait "$pid" || rc=$?
   t_end="$(date +%s.%N)"
+  # the manifest records the tool facts, the outputs and the incremental reference actually used (hashed here, before
+  # the earlier build that holds it is removed), and checks that the bitstream carries the build ID
+  local manifest_ok=1
+  if [ "$rc" -eq 0 ]; then
+    "$PY" "$ROOT/flow/manifest.py" post "$out" || manifest_ok=0
+  fi
   # the earlier build is no longer needed: a resumed build copied what it used, and an incremental one has finished
   rm -rf "$prev"
   if [ "${FDA_RESULT_HASH:-0}" = "1" ] && [ -f "$out/result_dump.txt" ]; then
@@ -184,6 +193,7 @@ run = {
                 if (out / "stages.txt").exists() else {},
     "cache": json.loads((out / "cache.json").read_text()).get("action") if (out / "cache.json").exists() else None,
     "flow_key": (out / "flow_key.txt").read_text().strip() if (out / "flow_key.txt").exists() else None,
+    "build_id": json.loads((out / "manifest.json").read_text()).get("build_id") if (out / "manifest.json").exists() else None,
 }
 if (out / "result_hash.json").exists():
     run["result_hash"] = json.loads((out / "result_hash.json").read_text())
@@ -199,6 +209,9 @@ EOF
       "$PY" "$ROOT/flow/gates.py" "$out" --json "$out/gates.json" || true
     fi
     die "Vivado failed for $REL ($variant), exit $rc; see $out/vivado.log"
+  fi
+  if [ "$manifest_ok" -ne 1 ]; then
+    die "the build of $REL ($variant) does not match its manifest (build ID in the bitstream, or the incremental reference); see $out/manifest.json"
   fi
   "$PY" "$ROOT/flow/gates.py" "$out" --json "$out/gates.json"
 }

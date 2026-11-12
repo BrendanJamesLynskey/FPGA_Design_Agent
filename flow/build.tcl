@@ -40,6 +40,11 @@ set flow_dir [file dirname [file normalize [info script]]]
 file mkdir $out
 set t0 [clock milliseconds]
 set stage_log [open $out/stages.txt w]
+# the Vivado that runs and its licence tier, for flow/manifest.py post (get_vivado_tier is a 2026.1 command)
+set tool_txt [open $out/tool.txt w]
+puts $tool_txt "version [version -short]"
+if {![catch {get_vivado_tier} fda_tier]} { puts $tool_txt "tier $fda_tier" }
+close $tool_txt
 proc stage {name} {
     global t0 stage_log
     set s [expr {([clock milliseconds] - $t0) / 1000.0}]
@@ -254,6 +259,15 @@ if {$resume_from ne "route"} {
 if {$ila eq "0"} { stop_here route }
 
 # --- stage bitstream -----------------------------------------------------------
+# the build ID (flow/manifest.py: the first 8 hex digits of the manifest's hash, appended to inputs.tcl as
+# build_id) goes into the USR_ACCESS register (AMD XAPP1232). The configuration logic holds it after loading, the hardware
+# manager reads it as REGISTER.USR_ACCESS (flow/program.tcl), and fabric logic could read it through USR_ACCESSE2. Set
+# here, not in the XDC, so the routed checkpoint is the same whatever the build ID.
+if {[info exists build_id] && $build_id ne ""} {
+    if {![regexp {^[0-9a-f]{8}$} $build_id]} { error "build.tcl: build_id must be 8 hex digits, not '$build_id'" }
+    set_property BITSTREAM.CONFIG.USR_ACCESS 0x$build_id [current_design]
+    puts "FLOW-BUILD-ID $build_id"
+}
 write_bitstream -force $out/$top.bit
 if {$ila} {
     write_debug_probes -force $out/$top.ltx
