@@ -53,7 +53,7 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py --blocks fir`):
 | `product_unsigned` | the LUT multipliers treat negative samples as large positive ones | caught |
 | `delay_line_broadcast` | every tap sees the previous sample instead of its own delay | caught |
 | `latency_declared_short` | the declared LATENCY no longer matches the clocks the folded variants take, so a caller reading it would be wrong | caught |
-| `coef_while_products_form` | a coefficient can land while a sample's products are being formed, so that sample mixes old and new coefficients | not run |
+| `coef_while_products_form` | a coefficient can land while a sample's products are being formed, so that sample mixes old and new coefficients | caught |
 
 ## Variants
 
