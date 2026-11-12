@@ -1,18 +1,55 @@
 # Showcase pages: the template and its data contract
 
 The site's **Showcase** section (`site/showcase.html` and one page per project at `showcase/<id>.html`) is built by
-`site/showcase.py` from one YAML file per project in `site/showcase/`. A showcase brief adds its page by adding (or
-promoting) its YAML file and committing the result files it points at; it does not write HTML or a new layout.
+`site/showcase.py` from one YAML file per project in `site/showcase/`. A project adds its page by adding (or promoting)
+its YAML file and committing the result files it points at; it does not write HTML or a new layout.
+
+## A complete example
+
+The smallest published entry, `site/showcase/<id>.yaml` (a fuller one, with every field, is
+`site/tests/fixtures/showcase/demo_hist.yaml`):
+
+```yaml
+id: debug_in_words
+status: published
+title: Debugging in plain English
+one_line: Ask for a capture in words and get the waveform and a plain answer back.
+board: Digilent Nexys A7-100T
+part: xc7a100tcsg324-1
+values:                                   # every number on the page comes from here
+  bytes: {source: results/debug_in_words/summary.json, expr: "get:capture.bytes"}
+  runs:  {source: results/debug_in_words/runs/*.json, expr: n}
+headline: "On the Digilent Nexys A7-100T (xc7a100tcsg324-1) the agent captured the {bytes} UART bytes asked for in words."
+hero: {kind: wave, source: results/debug_in_words/hero.json, path: wave, caption: "The capture, replayed cycle by cycle."}
+story:
+  problem: "Setting up a logic analyser by hand is slow and easy to get wrong."
+  how: "The request becomes signals chosen by RTL name and a trigger; the flow rebuilds, captures and reads the result."
+  results: ["{runs} runs, each answered from a capture on the board."]
+  agent: {request: "show me the UART byte when the FIFO overflows", plan: "...", gates: ["..."], approvals: ["..."]}
+evidence:
+  - {kind: record, label: Run records, path: results/debug_in_words/runs}
+  - {kind: conditions, label: Die temperature and rails, path: results/debug_in_words/xadc.json}
+  - {kind: versions, label: Tool versions and build ID, text: "not recorded"}
+  - {kind: requirements, label: Requirements traced, text: "not recorded"}
+limits: {not_measured: ["..."], nulls: [], next: ["..."]}
+```
+
+Common value expressions: `get:a.b.0.c` (the value at a path in the first file), `n` (how many files match the
+glob), `count@rows:pass=true` (items of the list `rows` meeting a condition), `max@rows:latency_ns` (the largest value
+at a path), `re:WNS=([-\d.]+)` (the first match in a text file). The full list: run
+`python3 -c "import expertise; print(expertise.EXPR)"` from `site/`.
 
 Build and check, as for every page:
 
 ```
-FDA_FAMILY_MATRIX_KB=<KB checkout at the PACKS.md pin> .venv/bin/python site/export.py   # writes site/data/showcase.json
+FDA_FAMILY_MATRIX_KB=<knowledge-bank checkout> .venv/bin/python site/export.py   # writes site/data/showcase.json (the variable is needed only for the expertise data; maintainers have the checkout)
 .venv/bin/python site/build.py && .venv/bin/python site/build.py --check
 .venv/bin/python site/build.py --showcase-fixture site/tests/fixtures/showcase --out /tmp/preview   # the template with synthetic data
 ```
 
-`site/export.py` refuses a file that breaks the contract (`showcase.ContractError` names the file and the field).
+`site/export.py` refuses a file that breaks the contract with a `showcase.ContractError` that names the file and the
+field, for example `x.yaml: headline: typed number(s) ['250']; use a {name} placeholder with a value expression`.
+Projects are listed by status, then by `order` (default 99), then by title.
 
 ## Status
 

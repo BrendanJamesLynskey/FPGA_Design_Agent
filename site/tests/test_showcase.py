@@ -128,6 +128,8 @@ def test_portfolio_pack_sources_resolve():
             assert f[key].startswith("site/data:"), f
             v = build.lookup(d, f[key].split(":", 1)[1])
             assert build.fmt(abs(v)) in f["text"], (f, v)
+    ab = d["board"]["agent_board"]
+    assert f'{ab["uart_passed"]} of {ab["uart_tests"]} serial-link tests' in P["status"] and not ab["pass"]
     for k in ("still_1200x630", "still_square", "animation"):
         p = SITE / "portfolio" / P["media"][k]
         assert p.exists(), k

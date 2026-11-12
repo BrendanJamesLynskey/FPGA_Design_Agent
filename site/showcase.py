@@ -206,12 +206,14 @@ def index_body(S: dict) -> str:
     prog = [p for p in S["projects"] if p["status"] == "in_progress"]
     plan = [p for p in S["projects"] if p["status"] == "planned"]
     out = []
+    if not pub:
+        out.append("<p>None has a committed board result yet, so this page lists the work in progress and shows no numbers; "
+                   "each project gets its page here when its first board result is committed.</p>")
     if pub:
         out.append('<h2 id="measured">Measured on the board</h2><ul class="sc-grid">' + "".join(card(p) for p in pub) + "</ul>")
     if prog:
-        out.append('<h2 id="in-progress">Being built now</h2><p>These have no measured result yet, so they show no numbers. '
-                   'Each gets its own page when its first board result is committed: the measured result in one line, a replay of the '
-                   'recorded data, the story in four parts, the evidence in a drawer and what was not measured.</p>'
+        out.append('<h2 id="in-progress">Being built now</h2><p>Each page will lead with the measured result in one line and a replay '
+                   'of the recorded data, then the problem, how it works, the results, what the agent did, the evidence and the limits.</p>'
                    '<ul class="sc-grid">' + "".join(card(p) for p in prog) + "</ul>")
     if plan:
         out.append('<details class="more"><summary>Planned next</summary><ul class="sc-plan">' +

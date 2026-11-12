@@ -1,23 +1,24 @@
 <h1>The agent</h1>
 <p class="lede">This page shows the agent itself: a controller written in code that walks a design through fixed stages, and a small team of language-model agents that do the writing inside each stage. The diagrams are drawn from the agent's own code and its run records, and a recorded run plays through them at the end.</p>
+<nav class="toc small" aria-label="On this page"><a href="#architecture">Architecture</a> · <a href="#controller">Controller loop</a> · <a href="#roles">Role agents</a> · <a href="#stages">Stages and gates</a> · <a href="#replay">A recorded run</a> · <a href="#harness">Harness and its experiments</a></nav>
 <p><b>What it cannot do yet.</b> It has no held-out score: the development runs are a record of the work, not a measure of how it does on new tasks. No design the agent built has yet passed every test on the board: the one programmed so far passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its internal signal captures. It designs one module at a time; the project layer for multi-module designs is not yet driven by the controller. And the Deep Agents harness has been run only on the small T1 design, with one model; how it compares with Claude Code on the benchmark has not been measured.</p>
 
 
 <h2>What "agent" means here</h2>
 <p>An <a href="how.html#term-agent">agent</a> is a language model that works in a loop: it reads, calls a tool, reads the result and decides what to do next. Left to itself, such a loop drifts, and a model that writes both a design and its tests can make the same mistake in both. So the agent here is two things. A controller, written in Python with <a href="how.html#term-langgraph">LangGraph</a>, decides which stage comes next and whether a stage has passed, from the tools' results alone. Inside each stage, one or more role agents, each a model with a narrow job and a narrow view of the files, do the work.</p>
 
-<h2>The architecture</h2>
+<h2 id="architecture">The architecture</h2>
 <p>A request comes in as plain English. The interview turns it into a signed-off spec. From then on the controller runs the stages; the role agents write files and call tools; the tools drive Vivado and the simulators; code turns the reports into gate results; and those results, not the models, decide what happens next. Beside the stack sit the private knowledge bank, which the agent reads through two tools, and the project layer for multi-module designs, which today has its own commands and is not yet called by the controller.</p>
 <figure>{{!agent_arch}}
 <figcaption>Labels on the arrows say what passes between the layers. The return path on the left carries the gate results and the failures each role owns back to the controller. Library versions are the ones pinned in <code>pyproject.toml</code>.</figcaption></figure>
 
-<h2>The controller loop</h2>
+<h2 id="controller">The controller loop</h2>
 <p>The controller is a LangGraph state graph with four steps that repeat once per stage visit. <b>Work</b> runs the stage's role agents. <b>Gate</b> runs the flow's own checks. <b>Review</b> takes a snapshot of the design, so any stage can be rewound, and, when review is on, lets a person approve, edit or rewind; it always pauses before anything touches the board. <b>Advance</b> picks the next stage in code: the next one if the gates passed, or the stage that owns the failure if they did not. A run ends when every stage has passed, or when a stage has used its visits and the run gives up.</p>
 <figure>{{!agent_langgraph}}
 <figcaption>Drawn from the graph the code compiles (<code>build_graph().get_graph()</code>, exported to <code>site/data/agent_graph.json</code>). Dashed edges are conditional: the code chooses one at run time. A site test fails if this drawing and the code's graph ever differ.</figcaption></figure>
 <p>The loop exists because language models are good at writing and poor at judging their own work. Putting the judgement in code means a model cannot talk its way past a failed check, and the same stages, limits and gates apply whichever model is doing the writing.</p>
 
-<h2>The role agents</h2>
+<h2 id="roles">The role agents</h2>
 <p>There are four roles. The clarify role turns the request into a spec. The blind model writes a short Python model of the design from the spec alone. The test writer writes the tests and the test plan from the spec and the model. The RTL writer writes the SystemVerilog and constraints and repairs whatever the later stages find. The blind model and the test writer never see the RTL, so a misreading of the spec in the RTL is not copied into the tests that judge it. Even so, the agent's own tests never decide a result: <a href="how.html#term-hidden">hidden tests</a>, written in advance and checked by <a href="how.html#term-mutation">mutation testing</a>, do.</p>
 {{!agent_roles}}
 <p class="small muted">What each role may read and write is enforced by a path jail in code (<code>agent/graph/roles.py</code>, <code>agent/core/security.py</code>); a write outside its list is refused and logged.</p>
@@ -34,12 +35,12 @@
 {{!agent_runs}}
 <p class="small muted">Counted from the committed run records (<code>results/course/*/run_*.json</code> and <code>results/f2/agent_*.json</code>; summary files that repeat a run are not counted again). Every development-task result on this site came from Claude Code with <code>claude-sonnet-5-5</code>. The Deep Agents runs are smoke runs on the hand-built T1 design.</p>
 
-<h2>The stages and their gates</h2>
+<h2 id="stages">The stages and their gates</h2>
 <p>Each stage ends in gates. Stage 2 holds the verification stages V0 to V3, from a test plan to closed coverage and a mutation score; stages 1 to 9 follow AMD's UltraFast methodology. Every stage visit has a turn budget, each stage a number of visits, and each failure a list of earlier stages it may go back to; all three come from <code>agent/graph/stages.py</code>. The whole run is capped at {{agent_graph.run_limits.turns}} turns.</p>
 <figure>{{!agent_pipeline}}
 <figcaption>Select a stage to show where its failures may go back to. A stage that has used its visits ends the run.</figcaption></figure>
 
-<h2>A recorded run, replayed</h2>
+<h2 id="replay">A recorded run, replayed</h2>
 <p>Choose a run. The first passed every hidden test and stopped at the board, as none was attached; its record keeps how often each stage was visited, not the order of the repeats, so repeats are shown back to back. The second is a Deep Agents run that recorded the order of its visits and every tool call of every role; it could not get stage 2 to pass and gave up.</p>
 <div class="player agplay" id="agent-replay" aria-label="Replay of a recorded run through the agent's diagrams">
 <div class="runsel" role="group" aria-label="Run"></div>

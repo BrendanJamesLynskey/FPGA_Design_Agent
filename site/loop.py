@@ -75,10 +75,10 @@ def stations(A):
     vivado = A["vivado"]
     hil = jload(HIL_RUN)
     jack = hil["checks"]["tone_at_the_jack"]["measured"]
-    pass_src = {"record": PASS_RUN, "what": f'{r["task"]}, development run {r["run"]} ({r["date"]}): Claude Code {r["claude_code_version"]}, {r["model"]}'}
+    pass_src = {"record": PASS_RUN, "what": f'{r["task"]}, attempt {r["run"]} ({r["date"]}), a development run with Claude Code {r["claude_code_version"]} and {r["model"]}'}
     tour = jload(TOUR_RUN)
-    board_src = {"record": TOUR_BOARD, "what": f'the board run on the files of T1 Deep Agents run {tour["run"].split("run")[-1]} '
-                                               f'({tour["model"]}), as written; bitstream built before the move to Vivado 2026.1'}
+    board_src = {"record": TOUR_BOARD, "what": f'the board run on the files of the replayed run (the LED-dimmer design, Deep Agents harness, '
+                                               f'{tour["model"]}), as written; bitstream built before the move to Vivado 2026.1'}
     return [
         {"id": "spec", "title": "Spec and interview", "desc": "the request in plain English, and questions on what it leaves open",
          "fb": {"kind": "answers to its questions", "values": [f'{q["asked"]} questions asked', f'{q["answered"]} answered, {q["defaulted"]} defaulted'],
