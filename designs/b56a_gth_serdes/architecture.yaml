@@ -1,0 +1,38 @@
+# b56a_gth_serdes architecture (hand-written; brief 56A): one GTH lane on the KR260 SFP+ cage, PRBS test source and checker.
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - {name: gth_wiz, function: "AMD UltraScale FPGAs Transceivers Wizard core: GTHE4 channel X0Y6, QPLL0, 10.3125 Gb/s, RAW 64-bit user data, reset helper and user clocks"}
+  - {name: prbs_gen64, function: "fabric PRBS-7/15/23/31 generator, one 64-bit word per clock, error injection"}
+  - {name: prbs_chk64, function: "fabric PRBS checker, exact bit-error counting, lock and loss of lock, 3-clock pipeline"}
+  - {name: gth_serdes_core, function: "register block, counter snapshot, DRP and SYSMON windows, SFP+ control pins, I2C bit-bang"}
+  - {name: jtag_bus, function: "host register bus over the JTAG cable (BSCANE2 USER4), reused from b58a_trigger"}
+interfaces:
+  - {name: host_regs, between: [jtag_bus, gth_serdes_core], protocol: simple}
+  - {name: user_data, between: [prbs_gen64, gth_wiz], protocol: simple}
+clock_domains:
+  - {name: sys, clock: clk_25, freq_mhz: 100}
+  - {name: txusr2, clock: "TXUSRCLK2 from the GT (BUFG_GT)", freq_mhz: 161.1328}
+  - {name: rxusr2, clock: "RXUSRCLK2 recovered by the CDR (BUFG_GT)", freq_mhz: 161.1328}
+  - {name: tck, clock: "JTAG TCK (BSCANE2)", freq_mhz: 30}
+reset:
+  synchronisers: [u_rst, u_rr]
+crossings:
+  - {from: txusr2, to: sys, signal: "tx_done, GT status levels", primitive: xpm_cdc_single}
+  - {from: rxusr2, to: sys, signal: "rx_done, lock flags", primitive: xpm_cdc_single}
+  - {from: rxusr2, to: sys, signal: "counter snapshot (304 bits)", primitive: xpm_cdc_handshake}
+  - {from: sys, to: txusr2, signal: "PRBS select, polarity, idle, PI ppm, fabric enable", primitive: xpm_cdc_array_single}
+  - {from: sys, to: rxusr2, signal: "PRBS select, polarity", primitive: xpm_cdc_array_single}
+  - {from: sys, to: txusr2, signal: "inject-error pulses", primitive: xpm_cdc_pulse}
+  - {from: sys, to: rxusr2, signal: "clear-counters pulse", primitive: xpm_cdc_pulse}
+  - {from: tck, to: sys, signal: "host command", primitive: xpm_cdc_handshake}
+  - {from: async, to: sys, signal: "SFP+ status and I2C pins", primitive: xpm_cdc_single}
+predicted_resources:
+  lut: [700, 2000]
+  ff: [2500, 5000]
+  bram_tile: 0
+  dsp: 0
+# Crossings inside AMD's GT Wizard (not our RTL): its reset helper's reset synchronisers (PG182 ch. 3, Reset State Machines).
+# The flow's structural check calls their last flop (rst_in_out_reg) "not an ASYNC_REG reset-bridge flop"; it is the final
+# stage of AMD's own three-flop asynchronous-assert, synchronous-release chain, clocked by the user clock it resets.
+cdc_waivers:
+  - {cell: 'gtwiz_reset_inst/reset_synchronizer_(rx|tx)_done_inst/rst_in_out_reg$', reason: "AMD GT Wizard reset helper (gtwizard_ultrascale 1.7): the final flop of its own reset synchroniser; not our logic"}
