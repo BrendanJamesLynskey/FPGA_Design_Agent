@@ -1,0 +1,336 @@
+{
+ "meta": {
+  "vivado": "2026.1",
+  "vlnv": "xilinx.com:ip:axi_timer:2.0",
+  "requires_license": "0",
+  "config": {
+   "CONFIG.COUNT_WIDTH": "32",
+   "CONFIG.Component_Name": "dut_timer",
+   "CONFIG.GEN0_ASSERT": "Active_High",
+   "CONFIG.GEN1_ASSERT": "Active_High",
+   "CONFIG.S_AXI.INSERT_VIP": "0",
+   "CONFIG.S_AXI_ACLK.FREQ_HZ": "100000000",
+   "CONFIG.S_AXI_ACLK.INSERT_VIP": "0",
+   "CONFIG.S_AXI_RST.INSERT_VIP": "0",
+   "CONFIG.TRIG0_ASSERT": "Active_High",
+   "CONFIG.TRIG1_ASSERT": "Active_High",
+   "CONFIG.enable_timer2": "1",
+   "CONFIG.mode_64bit": "0"
+  }
+ },
+ "probes": [
+  {
+   "probe": "reset_values_window_scan",
+   "text": "o00=0x00000000/OKAY o04=0x00000000/OKAY o08=0x00000000/OKAY o0c=0x00000000/OKAY o10=0x00000000/OKAY o14=0x00000000/OKAY o18=0x00000000/OKAY o1c=0x00000000/OKAY  chk=0x000",
+   "values": {
+    "o00": "0x00000000/OKAY",
+    "o04": "0x00000000/OKAY",
+    "o08": "0x00000000/OKAY",
+    "o0c": "0x00000000/OKAY",
+    "o10": "0x00000000/OKAY",
+    "o14": "0x00000000/OKAY",
+    "o18": "0x00000000/OKAY",
+    "o1c": "0x00000000/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "reserved_words_write",
+   "text": "write_0x0C=OKAY write_0x1C=OKAY after: o00=0x00000000 o04=0x00000000 o08=0x00000000 o0c=0x00000000 o10=0x00000000 o14=0x00000000 o18=0x00000000 o1c=0x00000000  chk=0x000",
+   "values": {
+    "write_0x0C": "OKAY",
+    "write_0x1C": "OKAY",
+    "o00": "0x00000000",
+    "o04": "0x00000000",
+    "o08": "0x00000000",
+    "o0c": "0x00000000",
+    "o10": "0x00000000",
+    "o14": "0x00000000",
+    "o18": "0x00000000",
+    "o1c": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "tcsr0_single_bit_writes",
+   "text": "bits31_12_that_read_back_nonzero=0 b0->0x00000001 b1->0x00000002 b2->0x00000004 b3->0x00000008 b4->0x00000010 b5->0x00000020 b6->0x00000040 b7->0x00000080 b8->0x00000000 b9->0x00000200 b10->0x00000480 b11->0x00000800  chk=0x000",
+   "values": {
+    "bits31_12_that_read_back_nonzero": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "tlr_tcr_write",
+   "text": "TLR0=0xffffffff TCR0_after_write=0x00000000 chk=0x000",
+   "values": {
+    "TLR0": "0xffffffff",
+    "TCR0_after_write": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "load_visible",
+   "text": "TLR0=0xFFFFFFC0 after LOAD TCR0=0xffffffc0 chk=0x000",
+   "values": {
+    "TLR0": "0xFFFFFFC0",
+    "TCR0": "0xffffffc0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "rollover_flag",
+   "text": "TCSR0=0x000001d0 irq=1 chk=0x000",
+   "values": {
+    "TCSR0": "0x000001d0",
+    "irq": "1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "t0int_write1_clears",
+   "text": "wrote_0x000001d0 TCSR0=0x000000d0 chk=0x000",
+   "values": {
+    "TCSR0": "0x000000d0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "t0int_sets_again_autoreload",
+   "text": "TCSR0=0x000001d0 chk=0x000",
+   "values": {
+    "TCSR0": "0x000001d0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "t0int_write0_no_change",
+   "text": "wrote_0_to_bit8 TCSR0=0x000001d0 chk=0x000",
+   "values": {
+    "TCSR0": "0x000001d0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_level",
+   "text": "irq_with_T0INT=1 after_read=1 ENIT0_cleared_T0INT_cleared=0 chk=0x000",
+   "values": {
+    "irq_with_T0INT": "1",
+    "after_read": "1",
+    "ENIT0_cleared_T0INT_cleared": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "rollover_timing",
+   "text": "K=50 irq_rise_minus_start_W_edge=55 flag=0x000001c0 chk=0x000",
+   "values": {
+    "K": "50",
+    "irq_rise_minus_start_W_edge": "55",
+    "flag": "0x000001c0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "race_clear_vs_rollover",
+   "text": "D = clear W edge minus start W edge: D50=  set D51=  set D52=  set D53=clear D54=clear D55=clear D56=clear D57=clear D58=clear D59=clear D60=clear D61=clear D62=clear D63=clear D64=clear  chk=0x000",
+   "values": {
+    "D53": "clear",
+    "D54": "clear",
+    "D55": "clear",
+    "D56": "clear",
+    "D57": "clear",
+    "D58": "clear",
+    "D59": "clear",
+    "D60": "clear",
+    "D61": "clear",
+    "D62": "clear",
+    "D63": "clear",
+    "D64": "clear",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "race_clear_irq_fall_lag",
+   "text": "clear_W_edge_to_irq_fall=2 coincident_D=53 (irq rise D=55; assumes the flag reaches the interrupt through the same path rising and falling) chk=0x000",
+   "values": {
+    "clear_W_edge_to_irq_fall": "2",
+    "coincident_D": "53",
+    "D": "55;",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "hold_mode",
+   "text": "after rollover TCSR0=0x00000180 TCR0=0x00000000,0x00000000 (equal means held) chk=0x000",
+   "values": {
+    "TCSR0": "0x00000180",
+    "TCR0": "0x00000000,0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "disable_halts",
+   "text": "TCR0 0x0000011c then 0x0000011c (equal means halted) chk=0x000",
+   "values": {
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "down_counter",
+   "text": "TCR0 0x00000049 then 0x0000002d chk=0x000",
+   "values": {
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "enall",
+   "text": "wrote_ENALL: TCSR0=0x00000480 TCSR1=0x00000480 chk=0x000",
+   "values": {
+    "TCSR0": "0x00000480",
+    "TCSR1": "0x00000480",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "enall_clear",
+   "text": "wrote_0: TCSR0=0x00000000 TCSR1=0x00000080 chk=0x000",
+   "values": {
+    "TCSR0": "0x00000000",
+    "TCSR1": "0x00000080",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_TLR0",
+   "text": "strb0000=0xffffffff strb0100=0xffffffff chk=0x000",
+   "values": {
+    "strb0000": "0xffffffff",
+    "strb0100": "0xffffffff",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_TCSR0",
+   "text": "write_0xC0_strb0000=0x000000c0 strb0010=0x000000c0 chk=0x000",
+   "values": {
+    "write_0xC0_strb0000": "0x000000c0",
+    "strb0010": "0x000000c0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "unaligned",
+   "text": "write_0x05 TLR0=0x12345678 read_0x07=0x12345678 chk=0x000",
+   "values": {
+    "TLR0": "0x12345678",
+    "read_0x07": "0x12345678",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "cascade_read_tear",
+   "text": "12_trials_x_40_pairs_low_then_high non_monotonic_samples=4 chk=0x000",
+   "values": {
+    "non_monotonic_samples": "4",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "cascade_read_tear_hi_first",
+   "text": "12_trials_x_40_pairs_high_then_low non_monotonic_samples=7 chk=0x000",
+   "values": {
+    "non_monotonic_samples": "7",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "latency",
+   "text": "write=5 read=5 chk=0x000",
+   "values": {
+    "write": "5",
+    "read": "5",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_w_order",
+   "text": "aw_first=0x00000011 w_first=0x00000022 chk=0x000",
+   "values": {
+    "aw_first": "0x00000011",
+    "w_first": "0x00000022",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_rd",
+   "text": "ar_accepted_while_rready_low=1 r_valid_while_low=1 first=0x00000022/OKAY second=0x00000000/OKAY chk=0x000",
+   "values": {
+    "ar_accepted_while_rready_low": "1",
+    "r_valid_while_low": "1",
+    "first": "0x00000022/OKAY",
+    "second": "0x00000000/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_wr",
+   "text": "aw_accepted_while_bready_low=1 w_accepted_while_bready_low=1 b_valid_while_low=1 b_total=2 TLR0=0x00000033 TLR1=0x00000044 chk=0x000",
+   "values": {
+    "aw_accepted_while_bready_low": "1",
+    "w_accepted_while_bready_low": "1",
+    "b_valid_while_low": "1",
+    "b_total": "2",
+    "TLR0": "0x00000033",
+    "TLR1": "0x00000044",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_alone",
+   "text": "aw_accepted=0 b_without_w=0 TLR0_after_completion=0x00000055 chk=0x000",
+   "values": {
+    "aw_accepted": "0",
+    "b_without_w": "0",
+    "TLR0_after_completion": "0x00000055",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "w_alone",
+   "text": "w_accepted=0 b_without_aw=0 TLR0_after_completion=0x00000066 chk=0x000",
+   "values": {
+    "w_accepted": "0",
+    "b_without_aw": "0",
+    "TLR0_after_completion": "0x00000066",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "reset_after_writes",
+   "text": "o00=0x00000000 o04=0x00000000 o08=0x00000000 o0c=0x00000000 o10=0x00000000 o14=0x00000000 o18=0x00000000 o1c=0x00000000  chk=0x000",
+   "values": {
+    "o00": "0x00000000",
+    "o04": "0x00000000",
+    "o08": "0x00000000",
+    "o0c": "0x00000000",
+    "o10": "0x00000000",
+    "o14": "0x00000000",
+    "o18": "0x00000000",
+    "o1c": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "done",
+   "text": "ok=1",
+   "values": {
+    "ok": "1"
+   }
+  }
+ ],
+ "ip": "timer",
+ "bench": "amd_ip_probe/tb/tb_timer.sv",
+ "bench_sha256": "3fe250def2375c11",
+ "returncode": 0,
+ "errors": []
+}
