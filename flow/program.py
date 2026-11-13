@@ -17,10 +17,10 @@ xc7a100t, program SRAM, attach the ``.ltx``) under the memory-safe Vivado settin
 
 **Build ID.** After programming, program.tcl reads the device's USR_ACCESS register over JTAG; it must equal
 the ``build_id`` of the build's ``manifest.json`` (flow/manifest.py), or the run stops (``HwError``) before any board
-test. Over the UART, :func:`check_shell_build_id` compares the shell's BUILD_STAMP register (0x02) with the stamp the
-manifest recorded (``settings.build_stamp``, which the build ID covers); flow/board_check.py and flow/bringup.py call it
-right after programming. The test shell has no register for the build ID itself: its register map is fixed (the
-benchmark records its fingerprint), so the UART check uses the stamp. A build made before manifests existed is
+test. Over the UART, :func:`check_shell_build_id` reads the shell's BUILD_ID register (0x05, shell protocol 1.1: the
+same USR_ACCESS word, read by the design through the USR_ACCESSE2 primitive) and compares it with the manifest's build
+ID; on a 1.0 shell (no register 0x05) it compares the BUILD_STAMP register (0x02) with the manifest's stamp instead.
+flow/board_check.py and flow/bringup.py call it right after programming. A build made before manifests existed is
 programmed with a note, and nothing is compared. program.tcl also logs the
 operating conditions (XADC temperature, VCCINT, VCCAUX, VCCBRAM, the latched min/max and the alarm flags), with a verdict
 against the Artix-7 -1 recommended operating conditions (AMD DS181 table 2) and the board's 85 C junction limit.
@@ -107,13 +107,26 @@ def check_build_id(expected: str | None, got: str | int | None, where: str) -> d
     return {"checked": True, "where": where, "expected": expected, "read": g or None, "match": ok}
 
 
-def check_shell_build_id(ident: dict[str, Any], manifest_stamp: str | None) -> dict[str, Any]:
-    """The shell's BUILD_STAMP (register 0x02) against the stamp in the manifest (``settings.build_stamp``, covered by
-    the build ID). Raises HwError on a mismatch: no board test runs."""
+def check_shell_build_id(ident: dict[str, Any], manifest_stamp: str | None,
+                         manifest_build_id: str | None = None) -> dict[str, Any]:
+    """The shell's identity against the manifest. Shell 1.1: BUILD_ID (register 0x05, the bitstream's USR_ACCESS word)
+    against ``build_id``, and BUILD_STAMP against ``settings.build_stamp``. Shell 1.0 (``build_id`` None in ``ident``):
+    the stamp only. Raises HwError on a mismatch: no board test runs."""
     if ident.get("build_stamp") is None:
         return {"checked": False, "where": "uart", "note": "no shell"}
+    if ident.get("build_id") is not None and manifest_build_id is not None:
+        r = check_build_id(manifest_build_id, ident["build_id"], "uart")
+        r["register"] = "BUILD_ID (0x05)"
+        r["stamp"] = check_build_id(manifest_stamp, ident["build_stamp"], "uart")
+        bad = (r["checked"] and not r["match"]) or (r["stamp"]["checked"] and not r["stamp"]["match"])
+        if bad:
+            raise hw.HwError(f"build ID mismatch over the UART shell: the board reports {r['read']} (stamp "
+                             f"{r['stamp']['read']}), the manifest says {manifest_build_id} (stamp {manifest_stamp}); "
+                             "rebuild or reprogram the matching bitstream; no board test was run")
+        return r
     r = check_build_id(manifest_stamp, ident["build_stamp"], "uart")
     r["register"] = "BUILD_STAMP (0x02)"
+    r["note"] = "shell 1.0: no BUILD_ID register, the stamp is compared" if ident.get("build_id") is None else ""
     if r["checked"] and not r["match"]:
         raise hw.HwError(f"build stamp mismatch over the UART shell: the board reports {r['read']}, the manifest says "
                          f"{manifest_stamp}; rebuild or reprogram the matching bitstream; no board test was run")
