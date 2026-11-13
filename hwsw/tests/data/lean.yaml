@@ -1,0 +1,19 @@
+# regmap/1 test map (brief 64A3): a small block with the okay setting (an option) and the error-capture registers at
+# their default place, the top two words of the window; no interrupt. Not a real block.
+regmap: 1
+name: lean
+version: 0.0.1
+summary: Small block with the okay setting and the default error capture, for the generator tests.
+addr_width: 5
+unmapped: okay
+registers:
+- name: CTRL
+  offset: 0x00
+  fields:
+  - {name: GO, lsb: 0, width: 1, access: RW, reset: 0}
+  - {name: DONE, lsb: 1, width: 1, access: W1C}
+- name: LEVEL
+  offset: 0x04
+  fields:
+  - {name: N, lsb: 0, width: 8, access: RO}
+  - {name: K, lsb: 8, width: 8, access: RO, const: 0x5A}

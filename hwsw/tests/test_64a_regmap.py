@@ -16,6 +16,9 @@ from hwsw import regmap
 ROOT = Path(__file__).resolve().parents[2]
 DEMO = ROOT / "hwsw" / "examples" / "demo_accel.yaml"
 STRESS = Path(__file__).parent / "data" / "stress.yaml"
+LEAN = Path(__file__).parent / "data" / "lean.yaml"
+LEAN_NOCAP = Path(__file__).parent / "data" / "lean_nocap.yaml"
+ALL_MAPS = [DEMO, STRESS, LEAN, LEAN_NOCAP]
 GEN = ROOT / "hwsw" / "examples" / "generated"
 needs_cc = pytest.mark.skipif(not (shutil.which("gcc") or shutil.which("cc")), reason="no C compiler")
 
@@ -26,7 +29,7 @@ def test_committed_example_outputs_are_current_and_agree() -> None:
 
 
 @needs_cc
-@pytest.mark.parametrize("y", [DEMO, STRESS], ids=["demo_accel", "stress"])
+@pytest.mark.parametrize("y", ALL_MAPS, ids=["demo_accel", "stress", "lean", "lean_nocap"])
 def test_round_trip_every_output_agrees(y: Path, tmp_path: Path) -> None:
     m = regmap.load(y)
     regmap.generate(m, tmp_path)
@@ -155,7 +158,20 @@ BREAKS = [
     ("irq bit without enable", lambda d: _reg(d, "IRQ_STATUS")["fields"].append(
         {"name": "LATE", "lsb": 5, "width": 1, "access": "W1C"}), "have no enable bit"),
     ("unknown key", lambda d: _reg(d, "CTRL")["fields"][0].update(acess="RW"), "unknown keys ['acess']"),
-    ("bad unmapped policy", lambda d: d.update(unmapped="decerr"), "must be okay or slverr"),
+    ("bad unmapped policy", lambda d: d.update(unmapped="decerr"), "must be one of split, okay, slverr"),
+    # the error-capture registers: reserved names, a clash with a user register (named, with the way out), bad settings
+    ("register named ERR_ADDR", lambda d: _reg(d, "SCRATCH").update(name="ERR_ADDR"), "reserved for the error-capture"),
+    ("register named ERR_STATUS", lambda d: _reg(d, "SCRATCH").update(name="ERR_STATUS"), "reserved for the error-capture"),
+    ("capture overlaps a register", lambda d: d.update(error_capture={"offset": 0x0F8}),
+     "would overlap register SCRATCH at 0xfc"),
+    ("capture at the default place meets a register", lambda d: _reg(d, "SCRATCH").update(offset=0xFF8),
+     "error_capture: {offset: 0x...}"),
+    ("capture offset misaligned", lambda d: d.update(error_capture={"offset": 0x0F2}), "must be a multiple of 4"),
+    ("capture offset outside the window", lambda d: d.update(error_capture={"offset": 0xFFC}),
+     "room for two words inside"),
+    ("capture unknown key", lambda d: d.update(error_capture={"offset": 0x0F4, "irq": True}), "must be true, false or"),
+    ("capture interrupt not a boolean", lambda d: d.update(error_capture={"offset": 0x0F4, "interrupt": 1}),
+     "must be true or false"),
     ("data width 64", lambda d: d.update(data_width=64), "only 32 is supported"),
     # names the generated block uses itself (wr_hit, wr_commit, rd_value), and text that would break an output
     ("register HIT", lambda d: _reg(d, "SCRATCH").update(name="HIT"), "rd_hit, wr_hit would meet one of its own"),
@@ -261,25 +277,54 @@ def test_check_compiles_the_systemverilog(tmp_path: Path) -> None:
 
 
 # ---- the datasheet: every behaviour a user could guess wrong, generated from a setting -------------------------------------
-def test_unmapped_defaults_to_okay_and_the_document_follows_the_setting(tmp_path: Path) -> None:
-    """Owner, 2026-11-13: holes inside a block answer OKAY with 0, provided the datasheet says so."""
+def test_unmapped_defaults_to_split_and_the_document_follows_the_setting(tmp_path: Path) -> None:
+    """Owner, 2026-11-13: a read of a hole answers SLVERR (read 0), a write OKAY and changes nothing (split), provided the
+    datasheet says so; okay and slverr stay as options."""
     d = _demo()
     d.pop("unmapped")
     m = regmap.from_dict(d)
-    assert m.unmapped == "okay"
-    ok = regmap.emit_md(m)
-    assert "Unmapped addresses answer OKAY and read 0." in ok and "answers OKAY and reads 0" in ok
-    assert "This block follows the house register conventions" in ok
+    assert m.unmapped == "split" and regmap.HOUSE.unmapped == "split"
+    sp = regmap.emit_md(m)
+    assert "Unmapped addresses: a read answers SLVERR with data 0 and a write answers OKAY and changes nothing." in sp
+    assert "a read answers SLVERR with data 0, and a write answers OKAY and changes nothing (split response)" in sp
+    assert "This block follows the house register conventions" in sp
+    ok = regmap.emit_md(regmap.from_dict(dict(d, unmapped="okay")))
+    assert "Unmapped addresses: OKAY and read 0." in ok and "answers OKAY and reads 0" in ok
+    assert "This block differs from the house register conventions (docs/hwsw.md) in 1 way: unmapped addresses" in ok
     sl = regmap.emit_md(regmap.from_dict(dict(d, unmapped="slverr")))
-    assert "Unmapped addresses answer SLVERR and read 0." in sl and "answers SLVERR and reads 0" in sl
-    assert "This block differs from the house register conventions (docs/hwsw.md) in 1 way: unmapped addresses" in sl
-    assert "RESP_UNMAPPED = 2'b00;" in regmap.emit_sv(m)
-    assert "RESP_UNMAPPED = 2'b10;" in regmap.emit_sv(regmap.from_dict(dict(d, unmapped="slverr")))
+    assert "Unmapped addresses: SLVERR and read 0." in sl and "answers SLVERR and reads 0, for a read and for a write" in sl
+    assert "differs from the house register conventions (docs/hwsw.md) in 1 way: unmapped addresses" in sl
+    sv = regmap.emit_sv(m)
+    assert "RESP_UNMAPPED_RD = 2'b10;" in sv and "RESP_UNMAPPED_WR = 2'b00;" in sv
+    sv = regmap.emit_sv(regmap.from_dict(dict(d, unmapped="okay")))
+    assert "RESP_UNMAPPED_RD = 2'b00;" in sv and "RESP_UNMAPPED_WR = 2'b00;" in sv
+    sv = regmap.emit_sv(regmap.from_dict(dict(d, unmapped="slverr")))
+    assert "RESP_UNMAPPED_RD = 2'b10;" in sv and "RESP_UNMAPPED_WR = 2'b10;" in sv
+    # an Arm behaviour is only ever stated as expected, never as measured (64B item 5 measures it)
+    assert "expected, not yet measured" in sp and "expected, not yet measured" in sl and "Arm" not in ok
 
 
-def _doc(**conv) -> dict:
+def test_error_capture_is_on_by_default_and_can_be_left_out() -> None:
+    d = _demo()
+    assert "error_capture" not in d                         # the example uses the default: the top two words
+    m = regmap.from_dict(d)
+    assert m.error_capture == {"offset": 0xFF8, "interrupt": False}
+    assert [(r.name, r.offset) for r in m.registers if r.internal] == [("ERR_ADDR", 0xFF8), ("ERR_STATUS", 0xFFC)]
+    assert [f.name for f in m.reg("ERR_STATUS").fields] == ["STICKY", "IS_WRITE", "COUNT"]
+    assert not any(p[1].startswith("err_") for p in regmap.ports(m)), "the capture registers have no hardware ports"
+    on = regmap.from_dict(dict(d, error_capture={"interrupt": True}))
+    assert [f.name for f in on.reg("ERR_STATUS").fields] == ["STICKY", "IS_WRITE", "IRQ_EN", "COUNT"]
+    off = regmap.from_dict(dict(d, error_capture=False))
+    assert off.error_capture is None and not any(r.internal for r in off.registers)
+    assert "ecap_" not in regmap.emit_sv(off) and "ecap_" in regmap.emit_sv(m)
+    assert dict(regmap.behaviour(off))["error_capture"].startswith("**Error capture.** None")
+    assert "it records no unmapped accesses" in regmap.convention_sentence(off)
+    assert len({m.sha256, on.sha256, off.sha256}) == 3, "each setting has its own hash"
+
+
+def _doc(unmapped: str = "okay", **conv) -> dict:
     """A documentation-only map (a hand-written block) with the given conventions."""
-    return {"regmap": 1, "name": "hand", "addr_width": 7, "conventions": conv, "registers": [
+    return {"regmap": 1, "name": "hand", "addr_width": 7, "unmapped": unmapped, "conventions": conv, "registers": [
         {"name": "DATA", "offset": 0, "count": 2, "fields": [{"name": "W", "lsb": 0, "width": 32, "access": "WO"}]},
         {"name": "CMD", "offset": 0x40, "fields": [{"name": "OP", "lsb": 0, "width": 4, "access": "WO"}]},
         {"name": "STATUS", "offset": 0x44, "fields": [{"name": "BUSY", "lsb": 0, "width": 1, "access": "RO", "reset": 0},
@@ -293,15 +338,26 @@ def _says(m, topic: str) -> str:
 
 # (topic, map a, map b, text in a's sentence, text in b's sentence): the same topic, one setting changed
 FOLLOWS = [
-    ("unmapped", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(dict(_demo(), unmapped="slverr")),
-     "answers OKAY and reads 0", "answers SLVERR and reads 0"),
+    ("unmapped", lambda: regmap.from_dict(dict(_demo(), unmapped="okay")),
+     lambda: regmap.from_dict(dict(_demo(), unmapped="slverr")), "answers OKAY and reads 0",
+     "answers SLVERR and reads 0, for a read and for a write"),
+    ("unmapped", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(dict(_demo(), unmapped="okay")),
+     "a read answers SLVERR with data 0, and a write answers OKAY and changes nothing (split response)",
+     "answers OKAY and reads 0"),
+    ("error_capture", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(dict(_demo(), error_capture=False)),
+     "ERR_STATUS.STICKY (0xffc) is set by the first one", "None: this block records nothing"),
+    ("error_capture", lambda: regmap.from_dict(dict(_demo(), error_capture={"interrupt": True})),
+     lambda: regmap.from_dict(_demo()), "`irq_o` is high while STICKY is 1 and IRQ_EN is 1",
+     "The capture raises no interrupt."),
+    ("error_capture", lambda: regmap.from_dict(dict(_demo(), error_capture={"offset": 0x0F0})),
+     lambda: regmap.from_dict(_demo()), "ERR_STATUS.STICKY (0x0f4)", "ERR_STATUS.STICKY (0xffc)"),
     ("reserved", lambda: regmap.from_dict(_doc(), doc_only=True),
      lambda: regmap.from_dict(_doc(reserved="undefined"), doc_only=True), "read 0 and ignore writes", "undefined value"),
     ("side_effects", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(_doc(), doc_only=True),
      "W1P bit: CMD.START, CMD.FLUSH. A snapshot is taken by writing 1 to its trigger: CMD.SNAP.",
      "Writes act on the hardware only through CMD."),
     ("priority", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(_doc(), doc_only=True),
-     "W1C bits (CTRL.OVERFLOW, IRQ_STATUS.DONE, IRQ_STATUS.ERROR): a hardware set", "no W1C or W1S bits"),
+     "W1C bits (CTRL.OVERFLOW, IRQ_STATUS.DONE, IRQ_STATUS.ERROR, ERR_STATUS.STICKY): a hardware set", "no W1C or W1S bits"),
     ("strobes", lambda: regmap.from_dict(_doc(), doc_only=True),
      lambda: regmap.from_dict(_doc(strobes="ignored"), doc_only=True), "are honoured on every register",
      "are ignored on every register"),
@@ -337,12 +393,15 @@ def test_each_behaviour_sentence_follows_its_setting(topic, a, b, in_a, in_b) ->
 
 
 def test_every_topic_is_stated_and_differences_lead_the_document() -> None:
-    topics = ["unmapped", "reserved", "side_effects", "priority", "strobes", "access", "multiword", "reset", "interrupt",
+    topics = ["unmapped", "error_capture", "reserved", "side_effects", "priority", "strobes", "access", "multiword", "reset", "interrupt",
               "clock"]
     assert [k for k, _ in regmap.behaviour(regmap.from_dict(_demo()))] == topics
-    m = regmap.from_dict(_doc(strobes="ignored", reset="rst", reset_active="high", clock="clk"), doc_only=True)
+    m = regmap.from_dict(_doc(unmapped="split", strobes="ignored", reset="rst", reset_active="high", clock="clk"),
+                         doc_only=True)
     first = regmap.convention_sentence(m)
-    assert first.startswith("This block differs from the house register conventions (docs/hwsw.md) in 2 ways: byte strobes")
+    assert first.startswith("This block differs from the house register conventions (docs/hwsw.md) in 3 ways: it "
+                            "records no unmapped accesses (house: the ERR_ADDR and ERR_STATUS error-capture registers); "
+                            "byte strobes")
     assert "the reset is `rst`, synchronous, active high" in first
     assert regmap.convention_sentence(regmap.from_dict(_demo())).startswith("This block follows the house register conventions")
 
@@ -362,7 +421,7 @@ def test_documentation_only_maps() -> None:
 def test_side_effect_sentence_names_doorbells_and_the_rmw_rule() -> None:
     """Review 64A2: a map whose only action is a W1S doorbell says so; a read-modify-write rule is stated wherever a
     register holds W1C, W1S or W1P bits."""
-    d = {"regmap": 1, "name": "bell", "addr_width": 6, "registers": [
+    d = {"regmap": 1, "name": "bell", "addr_width": 6, "error_capture": False, "registers": [
         {"name": "DB", "offset": 0, "fields": [{"name": "Q", "lsb": 0, "width": 2, "access": "W1S"}]}]}
     s = _says(regmap.from_dict(d), "side_effects")
     assert "Doorbells are W1S bits: DB.Q." in s and "no command" not in s

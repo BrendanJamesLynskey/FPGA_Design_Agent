@@ -137,8 +137,8 @@ def registers_section(block: str, y: dict) -> list[str]:
         return L + [f"None: {_sentence(y['register_map']['none'])}"]
     src = (f"`{y['register_map']['yaml']}`" if "yaml" in y["register_map"] else "`register_map` in `ip.yaml`")
     L += [f"{regmap.convention_sentence(m)} Generated from {src} by `hwsw/regmap.py`; the 0x{m.window_bytes:x}-byte "
-          f"window decodes address bits [{m.addr_width - 1}:2]. Unmapped addresses answer "
-          f"{'SLVERR' if m.unmapped == 'slverr' else 'OKAY'} and read 0.", ""]
+          f"window decodes address bits [{m.addr_width - 1}:2]. Unmapped addresses: "
+          f"{regmap._unmapped_short(m.unmapped)}.", ""]
     return L + regmap.datasheet(m, level=3)
 
 
