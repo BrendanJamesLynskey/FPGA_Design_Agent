@@ -12,9 +12,14 @@
   1024
  ],
  "cycles": "from BENCH_MARK(2k) retiring to BENCH_MARK(2k+1) retiring, caches warmed by a first call",
+ "styles": {
+  "ex": "the unit in EX, holding the pipeline for its latency (the divider's handshake)",
+  "mem": "issued as the instruction leaves EX, result taken in MEM like a multiply, a use hazard for a dependent next instruction, MEM held for latency - 1 clocks"
+ },
  "configs": {
   "baseline": {
    "variant": null,
+   "style": null,
    "latency_clocks": null,
    "result": "RESULT PASS 211381 cycles 200386 retired",
    "kernels": {
@@ -76,6 +81,7 @@
   },
   "cfu_word": {
    "variant": "word",
+   "style": "ex",
    "latency_clocks": 1,
    "result": "RESULT PASS 223985 cycles 209870 retired",
    "kernels": {
@@ -162,6 +168,7 @@
   },
   "cfu_byte": {
    "variant": "byte",
+   "style": "ex",
    "latency_clocks": 4,
    "result": "RESULT PASS 229129 cycles 209870 retired",
    "kernels": {
@@ -245,7 +252,177 @@
     },
     "starts_delayed_by_inflight": 0
    }
+  },
+  "cfu_word_mem": {
+   "variant": "word",
+   "style": "mem",
+   "latency_clocks": 1,
+   "result": "RESULT PASS 222272 cycles 209870 retired",
+   "kernels": {
+    "table": {
+     "16": {
+      "cycles": 208,
+      "cycles_per_byte": 13.0
+     },
+     "64": {
+      "cycles": 736,
+      "cycles_per_byte": 11.5
+     },
+     "256": {
+      "cycles": 2848,
+      "cycles_per_byte": 11.125
+     },
+     "1024": {
+      "cycles": 11296,
+      "cycles_per_byte": 11.031
+     }
+    },
+    "bitwise": {
+     "16": {
+      "cycles": 1042,
+      "cycles_per_byte": 65.125
+     },
+     "64": {
+      "cycles": 4066,
+      "cycles_per_byte": 63.531
+     },
+     "256": {
+      "cycles": 16175,
+      "cycles_per_byte": 63.184
+     },
+     "1024": {
+      "cycles": 64546,
+      "cycles_per_byte": 63.033
+     }
+    },
+    "clmul": {
+     "16": {
+      "cycles": 81,
+      "cycles_per_byte": 5.062
+     },
+     "64": {
+      "cycles": 201,
+      "cycles_per_byte": 3.141
+     },
+     "256": {
+      "cycles": 681,
+      "cycles_per_byte": 2.66
+     },
+     "1024": {
+      "cycles": 2602,
+      "cycles_per_byte": 2.541
+     }
+    },
+    "cfu": {
+     "16": {
+      "cycles": 58,
+      "cycles_per_byte": 3.625
+     },
+     "64": {
+      "cycles": 117,
+      "cycles_per_byte": 1.828
+     },
+     "256": {
+      "cycles": 358,
+      "cycles_per_byte": 1.398
+     },
+     "1024": {
+      "cycles": 1318,
+      "cycles_per_byte": 1.287
+     }
+    }
+   }
+  },
+  "cfu_byte_mem": {
+   "variant": "byte",
+   "style": "mem",
+   "latency_clocks": 4,
+   "result": "RESULT PASS 227390 cycles 209870 retired",
+   "kernels": {
+    "table": {
+     "16": {
+      "cycles": 208,
+      "cycles_per_byte": 13.0
+     },
+     "64": {
+      "cycles": 736,
+      "cycles_per_byte": 11.5
+     },
+     "256": {
+      "cycles": 2848,
+      "cycles_per_byte": 11.125
+     },
+     "1024": {
+      "cycles": 11296,
+      "cycles_per_byte": 11.031
+     }
+    },
+    "bitwise": {
+     "16": {
+      "cycles": 1042,
+      "cycles_per_byte": 65.125
+     },
+     "64": {
+      "cycles": 4066,
+      "cycles_per_byte": 63.531
+     },
+     "256": {
+      "cycles": 16175,
+      "cycles_per_byte": 63.184
+     },
+     "1024": {
+      "cycles": 64546,
+      "cycles_per_byte": 63.033
+     }
+    },
+    "clmul": {
+     "16": {
+      "cycles": 81,
+      "cycles_per_byte": 5.062
+     },
+     "64": {
+      "cycles": 201,
+      "cycles_per_byte": 3.141
+     },
+     "256": {
+      "cycles": 681,
+      "cycles_per_byte": 2.66
+     },
+     "1024": {
+      "cycles": 2602,
+      "cycles_per_byte": 2.541
+     }
+    },
+    "cfu": {
+     "16": {
+      "cycles": 70,
+      "cycles_per_byte": 4.375
+     },
+     "64": {
+      "cycles": 165,
+      "cycles_per_byte": 2.578
+     },
+     "256": {
+      "cycles": 550,
+      "cycles_per_byte": 2.148
+     },
+     "1024": {
+      "cycles": 2086,
+      "cycles_per_byte": 2.037
+     }
+    }
+   }
   }
  },
- "patch_is_transparent": "table, bitwise and clmul cycles equal in the baseline and every patched core"
+ "patch_is_transparent": "table, bitwise and clmul cycles equal in the baseline and every patched core",
+ "stale_btb": {
+  "program": "hwsw/cfu_core/bench/stale_btb.c",
+  "variant": "word",
+  "results": {
+   "cfu_word_pinned": "RESULT FAIL 458 cycles 108 retired test case 1",
+   "cfu_word_fixed": "RESULT PASS 456 cycles 107 retired",
+   "cfu_word_mem_pinned": "RESULT PASS 455 cycles 107 retired",
+   "cfu_word_mem_fixed": "RESULT PASS 455 cycles 107 retired"
+  }
+ }
 }

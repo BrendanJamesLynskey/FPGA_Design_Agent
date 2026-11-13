@@ -184,6 +184,7 @@ class Model:
     def __init__(self):
         self.st = {(r.name, f.name): f.reset for r in M.registers for f in r.fields if f.access in ("RW", "W1C", "W1S")}
         self.ro = {(r.name, f.name): 0 for r in M.registers for f in r.fields if f.hw_input}
+        self.shadow = {x: 0 for s in M.snapshots for x in s.fields}       # snapshot copies (reset to 0)
         self.pulses = {}
 
     def read(self, rn: str) -> int:
@@ -193,7 +194,8 @@ class Model:
             if f.access in ("RW", "W1C", "W1S"):
                 v |= self.st[(rn, f.name)] << f.lsb
             elif f.access == "RO":
-                v |= (f.reset if f.const else self.ro[(rn, f.name)]) << f.lsb
+                k = (rn, f.name)
+                v |= (f.reset if f.const else self.shadow[k] if k in self.shadow else self.ro[k]) << f.lsb
         return v
 
     def write(self, rn: str, value: int, strb: int):
@@ -217,6 +219,10 @@ class Model:
                 cnt = self.pulses.setdefault(p, [0] * f.width)
                 for b in range(f.width):
                     cnt[b] += (wv >> b) & 1
+                for s in M.snapshots:                        # a snapshot trigger copies its group in one clock
+                    if s.trigger == (rn, f.name) and wv & 1:
+                        for x in s.fields:
+                            self.shadow[x] = self.ro[x]
 
     def irq(self) -> int:
         if not M.interrupt:
@@ -270,6 +276,11 @@ async def field_access_types(dut):
                     if not f.const:
                         hw.set(f"{r.name}_{f.name}".lower() + "_i", val)
                         model.ro[(r.name, f.name)] = val
+                        s = M.snapshot_of(r.name, f.name)
+                        if s:                                    # its reads return the copy: take one first
+                            await drv.pulse(*s.trigger)
+                            tr = M.reg(s.trigger[0])
+                            model.write(tr.name, (model.read(tr.name) & tr.mask("RW")) | M.field(*s.trigger).mask, 0xF)
                     await drv.write(r.name, 0xFFFFFFFF ^ (r.mask("W1C") | r.mask("W1S") | r.mask("W1P")) )
                     model.write(r.name, 0xFFFFFFFF ^ (r.mask("W1C") | r.mask("W1S") | r.mask("W1P")), 0xF)
                     want = f.reset if f.const else val
@@ -472,6 +483,59 @@ async def interrupt_line(dut):
     chk.assert_quiet()
 
 
+@cocotb.test(timeout_time=4, timeout_unit="ms")
+async def snapshot_reads_across_a_carry(dut):
+    """Each snapshot group's inputs are driven as one counter that steps by 1 every clock, started just below the
+    carry out of its low part. After each snapshot the parts must form one value the counter really had between the
+    snapshot write and the last read (one instant, never HI from one clock and LO from another); the start sweeps
+    across the carry so some snapshot lands on the all-ones clock. A second read without a new snapshot must return
+    the same, stale, value while the counter runs on (the datasheet says reads without a snapshot are stale)."""
+    if not M.snapshots:
+        return
+    rng, bus, drv, hw, pulses, chk = await boot(dut, 12)
+    bus.max_gap, bus.p_ready, bus.order = 0, 1.0, "together"   # fixed timing: the sweep hits every clock near the carry
+    for s in M.snapshots:
+        widths = [M.field(*x).width for x in s.fields]
+        total = sum(widths)
+        cnt = {"v": 0}
+
+        def drive():
+            v = cnt["v"]
+            for (rn, fn), w in zip(s.fields, widths):
+                hw.set(f"{rn}_{fn}".lower() + "_i", v & ((1 << w) - 1))
+                v >>= w
+
+        async def run():
+            while True:
+                await FallingEdge(dut.aclk)
+                cnt["v"] = (cnt["v"] + 1) % (1 << total)
+                drive()
+        across, stale, on_carry = 0, 0, 0
+        for k in range(1, 40):
+            cnt["v"] = (rng.getrandbits(total - widths[0]) << widths[0]) + (1 << widths[0]) - k
+            drive()
+            t = cocotb.start_soon(run())
+            c0 = cnt["v"]
+            v = await drv.snapshot(s.name)
+            c1 = cnt["v"]
+            assert c0 <= v <= c1, (f"snapshot {s.name}: read {v:#x}, but the counter ran from {c0:#x} to {c1:#x} "
+                                   "(the parts come from different clocks)")
+            across += (c0 >> widths[0]) != (c1 >> widths[0])
+            on_carry += v & ((1 << widths[0]) - 1) == (1 << widths[0]) - 1     # taken in the clock before the carry
+            again = 0
+            sh = 0
+            for (rn, fn), w in zip(s.fields, widths):
+                again |= (await drv.get(rn, fn)) << sh
+                sh += w
+            assert again == v, f"snapshot {s.name}: a read without a new snapshot changed ({v:#x} -> {again:#x})"
+            stale += cnt["v"] != v
+            t.cancel()
+        assert across > 0 and stale > 0 and on_carry > 0, (across, stale, on_carry)
+        dut._log.info("snapshot %s: %d of 39 snapshots with the carry inside the access, %d taken in the all-ones "
+                      "clock; reads without a snapshot stale, as documented", s.name, across, on_carry)
+    chk.assert_quiet()
+
+
 @cocotb.test(timeout_time=2, timeout_unit="ms")
 async def driver_rmw_keeps_pending_events(dut):
     """The driver's set() on a register that also holds W1C bits writes them as 0, so a pending event survives;
@@ -550,6 +614,13 @@ async def c_driver_cosim(dut):
         return
     rng, bus, drv, hw, pulses, chk = await boot(dut, 8)
 
+    cycles = {"n": 0xFFFF_FFFE}                         # JOB_CYCLES 2 below a carry: any 2 busy clocks cross it
+
+    def put_cycles():
+        hw.set("job_cycles_lo_value_i", cycles["n"] & 0xFFFF_FFFF)
+        hw.set("job_cycles_hi_value_i", cycles["n"] >> 32)
+    put_cycles()
+
     async def accel():                                   # START -> BUSY for a while -> DONE event, LEVEL counts jobs
         jobs = 0
         while True:
@@ -559,7 +630,9 @@ async def c_driver_cosim(dut):
                 hw.set("status_busy_i", 1)
                 for _ in range(rng.randint(5, 40)):
                     await RisingEdge(dut.aclk)
-                await FallingEdge(dut.aclk)
+                    await FallingEdge(dut.aclk)
+                    cycles["n"] += 1                     # one count per busy clock
+                    put_cycles()
                 hw.set("status_busy_i", 0)
                 jobs += 1
                 hw.set("status_level_i", jobs & 0xFF)
@@ -584,6 +657,10 @@ async def c_driver_cosim(dut):
                 if hw_out(dut, "irq_o"):
                     break
             p.stdin.write(f"{hw_out(dut, 'irq_o')}\n")
+        elif t[0] == "V":                                # the C driver's snapshot of JOB_CYCLES (the jobs are over)
+            assert int(t[1], 16) == cycles["n"], f"C snapshot {t[1]}, the bench counted {cycles['n']:#x}"
+            assert cycles["n"] >> 32 == 1, "the count did not cross the carry"
+            p.stdin.write("y\n")
         elif t[0] == "DONE":
             rc = int(t[1])
             assert rc == 0, f"the C driver reported failure {rc}: {' '.join(t[2:])}"

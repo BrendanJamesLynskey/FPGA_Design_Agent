@@ -91,3 +91,8 @@ evidence:
 cost_table: 'in-context cost inside designs/b65a_axil_soc (one master, three slaves): see results/65a_blockdesign; the OOC sweep is still to do'
 constraints: []
 licence: MIT (this repository)
+# No registers of its own: it forwards each access to the slave whose range holds the address and answers DECERR (read
+# data 0) where no slave does (the block-design address map lists those holes; holes inside a slave are the slave's).
+register_map:
+  none: the crossbar has no registers; it forwards every access, and answers DECERR with read data 0 for an address
+    in no slave's range

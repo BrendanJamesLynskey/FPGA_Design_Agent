@@ -169,10 +169,19 @@ def markdown(E) -> str:
     if m["holes"]:
         L += ["", "Holes (an access gets DECERR from the crossbar): " +
               "; ".join(f"`0x{h['base']:08X}`-`0x{h['base'] + h['size'] - 1:08X}`" for h in m["holes"]) + "."]
+    L += ["", "Addresses between the blocks' ranges get DECERR from the crossbar. Inside a block's range, an address that "
+          "holds no register answers as that block's datasheet says (its README, or its generated register document); "
+          "each section below states it for the registers this generator makes."]
     for r in m["ranges"]:
         if not r["registers"]:
             continue
-        L += ["", f"## `{r['slave']}`", "", "| Offset | Name | Access | Reset | What |", "|---|---|---|---|---|"]
+        L += ["", f"## `{r['slave']}`", ""]
+        if r["registers"][0]["name"] != "WINDOW":
+            L += ["Register bank `bd_axil_regs` (flow/blockdesign/rtl): an offset that holds no register answers SLVERR "
+                  "with read data 0, and a write to a read-only register answers SLVERR. This differs from the house "
+                  "convention for generated register blocks (OKAY, read 0; docs/hwsw.md). Byte strobes are honoured on "
+                  "the control registers; reset is `rst`, synchronous, active high.", ""]
+        L += ["| Offset | Name | Access | Reset | What |", "|---|---|---|---|---|"]
         for g in r["registers"]:
             rst = "" if g["reset"] is None else f"`0x{g['reset']:08X}`"
             L.append(f"| `0x{g['offset']:03X}` | {g['name']} | {g['access']} | {rst} | {g['doc']} |")

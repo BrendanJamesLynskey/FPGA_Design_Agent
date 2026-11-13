@@ -79,9 +79,17 @@ int main(void)
     demo_accel_write(base, DEMO_ACCEL_SCRATCH_OFFSET, 0x64A0C0DEu);
     if (demo_accel_read(base, DEMO_ACCEL_SCRATCH_OFFSET) != 0x64A0C0DEu)
         return finish(7, "SCRATCH");
-    if (demo_accel_read(base, 0x0F8u) != 0u)           /* an unmapped word reads 0 (and answers SLVERR) */
+    if (demo_accel_read(base, 0x0F8u) != 0u)           /* an unmapped word inside the window reads 0, answers OKAY */
         return finish(8, "unmapped read");
-    if (bad_resp != 1u)                                /* exactly the one deliberate unmapped access was refused */
+    if (bad_resp != 0u)                                /* no access answered an error */
         return finish(9, "bus errors");
+    {                                                  /* the 64-bit job counter through the snapshot helper */
+        char ok[8];
+        unsigned long long cyc = (unsigned long long)demo_accel_snapshot_job_cycles(base);
+        printf("V %llx\n", cyc);                      /* the bench compares it with its own count */
+        fflush(stdout);
+        if (scanf("%7s", ok) != 1 || ok[0] != 'y')
+            return finish(10, "JOB_CYCLES snapshot");
+    }
     return finish(0, "ok");
 }

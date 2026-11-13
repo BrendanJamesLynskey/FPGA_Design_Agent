@@ -1,0 +1,125 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Fri Nov 13 14:47:40 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -max_paths 1 -nworst 1 -path_type full -file /tmp/claude-1000/-home-brendan-Claude-sandbox/a33f10a6-b2fd-499a-bb8d-a80193f95456/scratchpad/agent/build/64a/ooc/cfu_byte_mem/vivado/critical_path.rpt
+| Design       : brv32p_soc
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (VIOLATED) :        -6.448ns  (required time - arrival time)
+  Source:                 u_core/pc_if_reg[2]_rep__5/C
+                            (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Destination:            u_core/pc_if_reg[27]/D
+                            (rising edge-triggered cell FDCE clocked by clk  {rise@0.000ns fall@5.000ns period=10.000ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.000ns  (clk rise@10.000ns - clk rise@0.000ns)
+  Data Path Delay:        16.393ns  (logic 5.537ns (33.776%)  route 10.856ns (66.224%))
+  Logic Levels:           26  (CARRY4=11 LUT2=4 LUT4=1 LUT5=1 LUT6=7 RAMD64E=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 10.924 - 10.000 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                         propagated clock network latency
+                                                      0.973     0.973    <hidden>
+    SLICE_X24Y166        FDCE                         0.000     0.973 r  u_core/pc_if_reg[2]_rep__5/C
+    SLICE_X24Y166        FDCE (Prop_fdce_C_Q)         0.456     1.429 r  u_core/pc_if_reg[2]_rep__5/Q
+                         net (fo=97, routed)          0.620     2.049    u_core/pc_if_reg[2]_rep__5_n_0
+    SLICE_X28Y165        LUT2 (Prop_lut2_I0_O)        0.124     2.173 r  u_core/tag_mem_reg_r1_0_63_0_2_i_5/O
+                         net (fo=1, routed)           0.000     2.173    u_core/tag_mem_reg_r1_0_63_0_2_i_5_n_0
+    SLICE_X28Y165        CARRY4 (Prop_carry4_S[0]_CO[3])
+                                                      0.532     2.705 r  u_core/tag_mem_reg_r1_0_63_0_2_i_4/CO[3]
+                         net (fo=1, routed)           0.000     2.705    u_core/tag_mem_reg_r1_0_63_0_2_i_4_n_0
+    SLICE_X28Y166        CARRY4 (Prop_carry4_CI_O[0])
+                                                      0.235     2.940 r  u_core/tag_mem_reg_r1_0_63_0_2_i_3/O[0]
+                         net (fo=1743, routed)        1.263     4.203    u_icache/tag_mem_reg_r1_0_63_3_5/ADDRB3
+    SLICE_X30Y163        RAMD64E (Prop_ramd64e_RADR3_O)
+                                                      0.299     4.502 r  u_icache/tag_mem_reg_r1_0_63_3_5/RAMB/O
+                         net (fo=1, routed)           0.808     5.310    u_icache/tag_mem_reg_r1_0_63_3_5_n_1
+    SLICE_X31Y165        LUT4 (Prop_lut4_I0_O)        0.124     5.434 r  u_icache/fill_way_i_104/O
+                         net (fo=1, routed)           0.571     6.005    u_icache/fill_way_i_104_n_0
+    SLICE_X31Y166        LUT6 (Prop_lut6_I0_O)        0.124     6.129 r  u_icache/fill_way_i_66/O
+                         net (fo=1, routed)           0.000     6.129    u_icache/fill_way_i_66_n_0
+    SLICE_X31Y166        CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550     6.679 r  u_icache/fill_way_reg_i_17/CO[3]
+                         net (fo=1, routed)           0.000     6.679    u_icache/fill_way_reg_i_17_n_0
+    SLICE_X31Y167        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.793 f  u_icache/fill_way_reg_i_5/CO[3]
+                         net (fo=5, routed)           1.009     7.802    u_icache/hit_way00
+    SLICE_X31Y170        LUT2 (Prop_lut2_I1_O)        0.124     7.926 r  u_icache/data_mem_reg_r1_0_63_0_2_i_5/O
+                         net (fo=264, routed)         1.406     9.332    u_icache/data_mem_reg_r1_256_319_15_17/ADDRB2
+    SLICE_X34Y177        RAMD64E (Prop_ramd64e_RADR2_O)
+                                                      0.124     9.456 r  u_icache/data_mem_reg_r1_256_319_15_17/RAMB/O
+                         net (fo=1, routed)           0.726    10.182    u_icache/data_mem_reg_r1_256_319_15_17_n_1
+    SLICE_X33Y175        LUT6 (Prop_lut6_I5_O)        0.124    10.306 r  u_icache/half_buf[0]_i_2/O
+                         net (fo=1, routed)           0.566    10.872    u_icache/half_buf[0]_i_2_n_0
+    SLICE_X31Y175        LUT6 (Prop_lut6_I0_O)        0.124    10.996 r  u_icache/half_buf[0]_i_1/O
+                         net (fo=10, routed)          0.697    11.693    u_icache/FSM_onehot_state_reg[2]_0[1]
+    SLICE_X31Y174        LUT6 (Prop_lut6_I1_O)        0.124    11.817 f  u_icache/raw_id[31]_i_3/O
+                         net (fo=42, routed)          0.696    12.513    u_icache/raw_id[31]_i_3_n_0
+    SLICE_X29Y174        LUT6 (Prop_lut6_I0_O)        0.124    12.637 r  u_icache/raw_id[1]_i_2/O
+                         net (fo=39, routed)          0.356    12.993    u_core/instr_id_reg[31]_0[0]
+    SLICE_X29Y173        LUT2 (Prop_lut2_I1_O)        0.124    13.117 r  u_core/pc_inc_id[2]_i_5/O
+                         net (fo=25, routed)          0.720    13.837    u_core/half_buf_reg[0]_0
+    SLICE_X27Y169        LUT2 (Prop_lut2_I1_O)        0.124    13.961 r  u_core/pc_if[1]_i_6/O
+                         net (fo=1, routed)           0.000    13.961    u_core/pc_if[1]_i_6_n_0
+    SLICE_X27Y169        CARRY4 (Prop_carry4_S[1]_CO[3])
+                                                      0.550    14.511 r  u_core/pc_if_reg[1]_i_4/CO[3]
+                         net (fo=1, routed)           0.000    14.511    u_core/pc_if_reg[1]_i_4_n_0
+    SLICE_X27Y170        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.625 r  u_core/pc_if_reg[4]_i_4/CO[3]
+                         net (fo=1, routed)           0.000    14.625    u_core/pc_if_reg[4]_i_4_n_0
+    SLICE_X27Y171        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.739 r  u_core/pc_if_reg[11]_i_15/CO[3]
+                         net (fo=1, routed)           0.000    14.739    u_core/pc_if_reg[11]_i_15_n_0
+    SLICE_X27Y172        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.853 r  u_core/pc_if_reg[15]_i_15/CO[3]
+                         net (fo=1, routed)           0.000    14.853    u_core/pc_if_reg[15]_i_15_n_0
+    SLICE_X27Y173        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    14.967 r  u_core/pc_if_reg[19]_i_4/CO[3]
+                         net (fo=1, routed)           0.000    14.967    u_core/pc_if_reg[19]_i_4_n_0
+    SLICE_X27Y174        CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114    15.081 r  u_core/pc_if_reg[24]_i_6/CO[3]
+                         net (fo=1, routed)           0.009    15.090    u_core/pc_if_reg[24]_i_6_n_0
+    SLICE_X27Y175        CARRY4 (Prop_carry4_CI_O[3])
+                                                      0.313    15.403 r  u_core/pc_if_reg[24]_i_4/O[3]
+                         net (fo=1, routed)           0.617    16.021    u_core/u_bp/pc_if[27]_i_2[3]
+    SLICE_X29Y173        LUT6 (Prop_lut6_I2_O)        0.306    16.327 f  u_core/u_bp/pc_if[27]_i_3/O
+                         net (fo=1, routed)           0.348    16.674    u_core/u_muldiv/pc_if_reg[27]
+    SLICE_X28Y173        LUT6 (Prop_lut6_I0_O)        0.124    16.798 r  u_core/u_muldiv/pc_if[27]_i_2/O
+                         net (fo=1, routed)           0.444    17.242    u_core/u_csr/pc_if_reg[27]
+    SLICE_X28Y173        LUT5 (Prop_lut5_I4_O)        0.124    17.366 r  u_core/u_csr/pc_if[27]_i_1/O
+                         net (fo=1, routed)           0.000    17.366    u_core/u_csr_n_49
+    SLICE_X28Y173        FDCE                                         r  u_core/pc_if_reg[27]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.000    10.000 r  <hidden>
+                         propagated clock network latency
+                                                      0.924    10.924    <hidden>
+                         clock pessimism              0.000    10.924    <hidden>
+                         clock uncertainty           -0.035    10.889    <hidden>
+    SLICE_X28Y173        FDCE (Setup_fdce_C_D)        0.029    10.918    u_core/pc_if_reg[27]
+  -------------------------------------------------------------------
+                         required time                         10.918    <hidden>
+                         arrival time                         -17.366    <hidden>
+  -------------------------------------------------------------------
+                         slack                                 -6.448    <hidden>
+
+
+
+

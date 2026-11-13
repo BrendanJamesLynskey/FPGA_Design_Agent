@@ -4,7 +4,9 @@ and each patched configuration that run_bench.py prepared, one after the other, 
 side by side in results/64a_hwsw/core_ooc.json, with each run's raw reports in results/64a_hwsw/core_ooc/<config>/.
 
     python3 hwsw/cfu_core/run_bench.py            # first: prepares build/64a/cfu/<config>/
-    python3 hwsw/cfu_core/core_ooc.py [--configs baseline,cfu_word,cfu_byte,cfu_word_keep] [--period 10]
+    python3 hwsw/cfu_core/core_ooc.py [--configs baseline,cfu_word,cfu_byte] [--period 10]
+    python3 hwsw/cfu_core/core_ooc.py --configs cfu_word,cfu_byte,cfu_word_mem,cfu_byte_mem \
+        --out results/64a_hwsw/core_ooc_styles.json --raw results/64a_hwsw/core_ooc_styles    # brief 64A2: both styles
 
 A configuration name ending in _keep builds the same RTL as the name without it, with the library unit's hierarchy
 kept in synthesis (CFU_KEEP_UNIT): no logic can move across the unit's boundary, which separates the unit's own logic
@@ -40,7 +42,7 @@ def vivado() -> str:
                                                       capture_output=True, text=True, check=True).stdout.strip()
 
 
-def run_one(cfg: str, period: float) -> dict:
+def run_one(cfg: str, period: float, raw: Path = RAW) -> dict:
     keep = cfg.endswith("_keep")
     src = BUILD / (cfg[:-len("_keep")] if keep else cfg)
     if not (src / "rtl").is_dir():
@@ -60,9 +62,9 @@ def run_one(cfg: str, period: float) -> dict:
     subprocess.run(cmd, cwd=d)
     rec = parse(d)
     if rec["status"] == "ok":                                         # the raw reports the record is read from
-        (RAW / cfg).mkdir(parents=True, exist_ok=True)
+        (raw / cfg).mkdir(parents=True, exist_ok=True)
         for f in REPORTS:
-            shutil.copy(d / "vivado" / f, RAW / cfg / f)
+            shutil.copy(d / "vivado" / f, raw / cfg / f)
     return rec
 
 
@@ -98,6 +100,7 @@ def main(argv=None) -> int:
     ap.add_argument("--period", type=float, default=10.0)
     ap.add_argument("--out", default=str(ROOT / "results" / "64a_hwsw" / "core_ooc.json"))
     ap.add_argument("--parse-only", action="store_true", help="rebuild the record from earlier runs' reports")
+    ap.add_argument("--raw", default=str(RAW), help="where each run's raw reports are copied (<raw>/<config>/)")
     a = ap.parse_args(argv)
     out = Path(a.out)
     rec = json.loads(out.read_text()) if out.exists() else {"configs": {}}
@@ -105,10 +108,11 @@ def main(argv=None) -> int:
                 "flow": "out-of-context synth_design (the clock constraint read first, so synthesis is timing "
                         "driven), opt_design, place_design, route_design of the whole SoC (core, caches, 32 KB SRAM, "
                         "peripherals); one thread; one run per configuration; Fmax = 1000 / (period - WNS), an "
-                        "estimate from one routed run at the target clock; raw reports in results/64a_hwsw/core_ooc/",
+                        "estimate from one routed run at the target clock; raw reports in "
+                        f"{Path(os.path.relpath(Path(a.raw).resolve(), ROOT)).as_posix()}/",
                 "tcl": "hwsw/cfu_core/core_ooc.tcl"})
     for cfg in [c for c in a.configs.split(",") if c]:
-        rec["configs"][cfg] = parse(OOC / cfg) if a.parse_only else run_one(cfg, a.period)
+        rec["configs"][cfg] = parse(OOC / cfg) if a.parse_only else run_one(cfg, a.period, Path(a.raw))
         print(cfg, rec["configs"][cfg], flush=True)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(rec, indent=1) + "\n")

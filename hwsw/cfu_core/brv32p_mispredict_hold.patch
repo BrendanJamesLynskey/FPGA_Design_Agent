@@ -1,0 +1,16 @@
+diff -ruN a/rtl/core/brv32p_core.v b/rtl/core/brv32p_core.v
+--- a/rtl/core/brv32p_core.v
++++ b/rtl/core/brv32p_core.v
+@@ -504,7 +504,11 @@
+   // target fetch followed, pred_target_ex, differs from the real one). A taken
+   // prediction for an instruction that is not a branch or jump (a BTB alias,
+   // or a stale entry) is also a mispredict: fall through to pc+len.
+-  assign branch_mispredict_ex = !mem_stall && valid_ex &&
++  // Also held while EX is stalled (a division, or a custom instruction in
++  // the EX-stall style): acting then would flush the stalled instruction
++  // itself (flush_ex) and redirect past it, so it would never complete. It
++  // acts in the clock the instruction leaves EX (FPGA_Design_Agent brief 64A2).
++  assign branch_mispredict_ex = !mem_stall && !stall_ex && valid_ex &&
+     ((is_branch_or_jump &&
+       ((actual_taken != pred_taken_ex) ||
+        (actual_taken && (branch_target_computed != pred_target_ex)))) ||

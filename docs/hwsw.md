@@ -7,12 +7,17 @@ build the interface between the two, and check it.
 - A CRC-32 unit from the IP library, added to an RV32 5-stage core as one new instruction, runs 7.2 times faster than
   the usual table-driven C (1.54 against 11.0 clock cycles per byte at 1 KB), and 1.65 times faster than the same CRC
   done with the carry-less multiply instructions. It adds 371 LUTs to the core (4.3 % of its 8,663) with no measured loss of clock rate (one build each). Simulation and out-of-context builds only.
+- Completing that instruction in MEM, as the core's multiplier does, instead of holding the pipeline in EX saves one
+  clock per instruction: 1.29 cycles per byte against 1.54.
+- The core we pinned loses an instruction that holds the pipeline in EX when the branch predictor wrongly predicts it
+  taken. A directed test shows it; a one-line change in our copy fixes it.
 - On a Zynq-7000, with every input an assumption, the cost model cannot say whether a DMA-fed CRC block beats the Arm
   core. It names the one measurement to take first: the Arm's cycles per byte.
 - The register-map generator makes the hardware block, the C header, the Python driver and the document from one file,
-  and a check proves the four agree.
+  and a check proves the four agree. Every register block now has a datasheet that states, from the map's settings,
+  each behaviour a driver writer could guess wrong; unmapped addresses inside a block answer OKAY and read 0.
 
-Three tools for the boundary between a processor and the fabric (brief 64A and 64A+). Everything here was checked in
+Three tools for the boundary between a processor and the fabric (briefs 64A, 64A+ and 64A2). Everything here was checked in
 simulation; nothing has run on a board yet (that is brief 64B, on the ZedBoard).
 
 1. **Register-map single source** (`hwsw/regmap.py`): one YAML file generates the AXI4-Lite register block, the C header,
@@ -41,7 +46,7 @@ What success looks like (the last line of each):
 | `hwsw.regmap check` | `hwsw/examples/demo_accel.yaml: agree (demo_accel_regs.sv, demo_accel_regs.h, demo_accel_regs.py, demo_accel_regs.md)` |
 | `hwsw.partition` (Zynq example) | `Decision: measure`, then its two reasons (the accelerator's break-even is unsure; its gain straddles 1.1) |
 | `hwsw.cfu --check` | `1 entries with a function_unit contract, 0 problems` |
-| `run_bench.py` | `wrote .../results/64a_hwsw/cfu_crc32.json`, after `RESULT PASS` for the baseline and both variants |
+| `run_bench.py` | `wrote .../results/64a_hwsw/cfu_crc32.json`, after `RESULT PASS` for the baseline and the four patched cores, and the four `stale_btb` lines (one expected `RESULT FAIL`) |
 | `pytest` | `N passed` with no failures (the core bench and the formal tests are skipped without their tools) |
 
 ## Words used here
@@ -52,6 +57,12 @@ What success looks like (the last line of each):
 | AXI4-Lite | Arm's simple memory-mapped bus: one 32-bit read or write at a time, each with a response |
 | W1C, W1S, W1P | write 1 to clear, write 1 to set, write 1 to pulse: access types for events, doorbells and commands |
 | Doorbell | a register write that tells the hardware new work is ready |
+| MEM, WB | the memory and write-back stages, after EX; the core's multiplier completes in MEM, and WB writes the register file |
+| Mispredict, flush | the branch predictor guessed wrong; the core redirects fetch and discards (flushes) the wrong-path instructions |
+| OKAY, SLVERR, DECERR | AXI responses: success; an error from the addressed block; an error from the interconnect because no block owns the address |
+| Snapshot group | registers that together hold a value wider than 32 bits; a write to its trigger copies the whole value into shadow registers (copies) in one clock, and reads return the copy |
+| Use hazard | a clock the pipeline waits because the next instruction needs a result that is not ready yet (as after a load) |
+| BTB | branch target buffer: the branch predictor's table of addresses where a taken branch was seen, and where it went |
 | DMA | direct memory access: an engine that moves data between memory and the fabric without the CPU |
 | Coherent port | a fabric-to-memory port that sees the CPU's caches, so software needs no cache maintenance |
 | Custom instruction (CI) | a new CPU instruction executed by a unit added to the pipeline |
@@ -77,7 +88,7 @@ regmap: 1
 name: demo_accel            # lower case; the module is demo_accel_regs, the C prefix DEMO_ACCEL_
 version: 0.1.0
 addr_width: 12              # a 4 KB window (only address bits [11:2] are decoded)
-unmapped: slverr            # or okay: the answer to an address no register decodes
+unmapped: okay              # the default; or slverr: the answer to an address inside the window that no register decodes
 interrupt: {status: IRQ_STATUS, enable: IRQ_ENABLE}
 registers:
 - name: CTRL
@@ -89,6 +100,17 @@ registers:
   offset: 0x008
   fields:
   - {name: START, lsb: 0, width: 1, access: W1P}
+  - {name: SNAP, lsb: 2, width: 1, access: W1P}
+- name: JOB_CYCLES_LO
+  offset: 0x030
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO}
+- name: JOB_CYCLES_HI
+  offset: 0x034
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO}
+snapshot:                   # a value wider than the bus, read consistently
+- {name: JOB_CYCLES, trigger: CMD.SNAP, fields: [JOB_CYCLES_LO.VALUE, JOB_CYCLES_HI.VALUE]}   # low part first
 ```
 
 | Access | Software | Hardware port |
@@ -99,14 +121,54 @@ registers:
 | `W1S` | writing 1 sets a bit; it wins over a hardware clear in the same clock | `<reg>_<field>_clr_i` (pulse), `_o` (value) |
 | `W1P` | writing 1 gives a one-clock pulse; reads 0 | `<reg>_<field>_pulse_o` |
 
-There is no clear-on-read type, on purpose: a read with a side effect breaks debuggers, repeated reads and
-read-modify-write (the knowledge-bank skill `register-maps-for-software` gives the rules). The interrupt output `irq_o`
-is high while any status bit is set together with its enable bit, one clock after the cause.
+### House conventions (owner, 2026-11-13)
+
+Every generated block follows these, and its generated document states each one in a Behaviour section, written from
+the map's settings (`behaviour()` in `hwsw/regmap.py`; `hwsw/tests/test_64a_regmap.py` checks that each sentence
+follows its setting). A hand-written block's datasheet (the "Registers" section of an `ip_lib` README) states the same
+topics, and says in its first paragraph where the block differs from these conventions.
+
+- **Unmapped addresses inside a block answer OKAY and read 0** (`unmapped: okay`, the default); writes there are
+  ignored. `unmapped: slverr` remains an option: it makes a stray access visible at bring-up, but on an Arm CPU a SLVERR on a
+  load is an external abort. Addresses outside every block's range are the interconnect's:
+  `ip_lib/axil_xbar` answers DECERR there, and the block-design address map (`gen/address_map.md`) lists those holes.
+  The choice costs almost nothing: built alone with Vivado 2026.1 (xc7a100t, 10 ns, one run each), the example block
+  takes 180 LUTs and 241 flip-flops with `okay` and 181 and 243 with `slverr` (`python3 hwsw/regmap_ooc.py`,
+  [results/64a_hwsw/regmap_ooc.json](../results/64a_hwsw/regmap_ooc.json)). The response becomes a constant.
+- **Reads have no side effects.** There is no clear-on-read or pop-on-read type: the loader refuses an access type
+  that would change state on a read (`RC`, `RS`, `POP` and the like) and an `on_read:` key. To pop a FIFO or
+  acknowledge something, write 1 to a W1P bit. A read with a side effect breaks debuggers, repeated or speculative
+  reads, and read-modify-write (the knowledge-bank skill `register-maps-for-software` gives the rules).
+- **Same-clock priority:** a hardware set beats a software W1C clear in the same clock (the event is not lost), and a
+  software W1S set beats a hardware clear in the same clock (the doorbell is not lost). The bench checks both, timed
+  to the commit clock: `set_beats_clear_in_the_same_clock` in `hwsw/tests/regmap_cocotb.py`, with two seeded faults
+  (`clear_beats_set`, `w1s_lost`) that it catches.
+- **Values wider than the bus use a snapshot group.** A `snapshot:` entry names a one-bit W1P trigger and the RO
+  fields of the value, low part first (at most 64 bits). Writing the trigger copies every part into shadow registers in
+  the same clock; reads of those fields return the copy, so the parts always belong to one instant. A read without a
+  new snapshot returns the last copy (stale), and the document says so. The C header gets a helper
+  (`demo_accel_snapshot_job_cycles(base)`) and the Python driver `snapshot("JOB_CYCLES")`.
+- **Byte strobes are honoured; access is 32-bit**; address bits [1:0] are not decoded.
+- **Reset is `aresetn`, synchronous, active low**; every stored field has a reset value; RO fields read their input.
+- **The interrupt** `irq_o` is a level output from a register: high while any status bit is set together with its
+  enable bit, one clock after the cause; a W1C clear drops it one clock later.
+- **Every register block has a datasheet** that states all of the above, generated, not written by hand: the
+  generated `<name>_regs.md` for a generated block, and for a hand-written `ip_lib` entry with an AXI4-Lite slave port
+  a "Registers" section in its README, made by `flow/net/ipdoc.py` from a `register_map:` in its `ip.yaml` (a
+  documentation-only map: `WO` registers, `count:`, `conventions:` and `staging:` are allowed there and nowhere else).
+  A hand-written block's datasheet states every topic as the block behaves, with its differences first; the block-design
+  address map states only how the generated register banks differ. `ipdoc.py --check` fails for an entry with such a
+  port and no section; `register_map: {none: <why>}` covers a block
+  with no registers of its own (`axil_xbar`). `axil_table_ctrl`'s datasheet opens with its two differences: byte
+  strobes ignored, and the reset `rst`, active high. The test shell answers BAD_ADDRESS with data 0 for its reserved
+  addresses, which `shell/PROTOCOL.md` already states.
 
 The loader refuses, with every reason listed: overlapping registers or fields, offsets that are not word-aligned or
 fall outside the window, reset or constant values wider than their field, unknown access types or keys, a reset on a
-hardware input, a W1P reset other than 0, duplicate names, generated port names that collide, names that clash with
+hardware input, a W1P reset other than 0, a read side effect, duplicate names, generated port names that collide, names that clash with
 the generated register-level names, two registers whose C names would meet, an interrupt status register with non-W1C fields or bits without an enable,
+a snapshot whose trigger is not a one-bit W1P field, whose parts are not RO hardware inputs, are in another group, or
+exceed 64 bits,
 register names the block uses for its own signals (`HIT`, `COMMIT`, `VALUE`: `wr_hit`, `wr_commit`, `rd_value`), and
 text that would break an output: a newline or other control character, `*/`, `/*`, `"""`, a backslash or `|` in a
 summary, or a version that is not letters, digits and `. + _ -`. `gen` checks the text again before it writes.
@@ -115,10 +177,10 @@ summary, or a version that is not letters, digits and `. + _ -`. `gen` checks th
 
 | Output | What it holds |
 |---|---|
-| `<name>_regs.sv` | the AXI4-Lite slave (AW and W captured independently in either order, byte strobes honoured bit by bit, one outstanding read and write, synchronous active-low reset), the field storage and the read multiplexer, `ADDR_` and `RESET_` constants |
+| `<name>_regs.sv` | the AXI4-Lite slave (AW and W captured independently in either order, byte strobes honoured bit by bit, one outstanding read and write, synchronous active-low reset), the field storage, the snapshot copies and the read multiplexer, `ADDR_` and `RESET_` constants |
 | `<name>_regs.h` | per register `_OFFSET`, `_RESET` and a mask per access type (`_RW_MASK` is the read-modify-write mask); per field `_SHIFT`, `_WIDTH`, `_MASK`, `_RESET`, `_ACCESS`; `GET`/`PUT` macros and read and write functions whose bus access can be replaced before the header is included |
 | `<name>_regs.py` | the table, a blocking driver and the same driver for a bus whose calls are coroutines (a simulation bus), and a memory-mapped bus for a UIO device or `/dev/mem`; `set` keeps the other RW fields and writes W1C, W1S and W1P bits as 0, so it never clears an event by accident |
-| `<name>_regs.md` | the map, each register's fields, the access types and the hardware ports |
+| `<name>_regs.md` | the datasheet: the map, the access types, a Behaviour section (unmapped and reserved accesses, read side effects, same-clock priority, partial writes, access width and alignment, wide values, reset, the interrupt, clock domain and timing), each register's fields, the snapshot groups and the hardware ports |
 
 All four carry the SHA-256 of the map's content, so a stale output is easy to spot.
 
@@ -132,15 +194,16 @@ All four carry the SHA-256 of the map's content, so a stale output is easy to sp
   the SystemVerilog by its port list and its address and reset constants, and by compiling it with Icarus Verilog
   (`iverilog -g2012`) when that is installed.
 
-`hwsw/tests/test_64a_regmap.py` edits each output by hand in 13 ways (a mask, a reset, an access type, an offset, a port
-width) and checks that the agreement check names each one, and breaks 31 rules of the format and checks that the
-loader refuses each.
+`hwsw/tests/test_64a_regmap.py` edits each output by hand in 16 ways (a mask, a reset, an access type, an offset, a port
+width, a snapshot group) and checks that the agreement check names each one, and breaks 45 rules of the format and
+checks that the loader refuses each.
 
 ### How the generated RTL is verified
 
 `hwsw/tests/test_64a_regmap_rtl.py` simulates two maps under cocotb and Icarus Verilog 12: the example `demo_accel`
-(11 registers, every access type, an interrupt) and a map of awkward layouts (fields across byte lanes, a 32-bit field,
-multi-bit W1C, W1S and W1P fields, a register at the top of a 64-byte window, unmapped addresses answered OKAY). The
+(13 registers, every access type, an interrupt, a 64-bit snapshot group, unmapped addresses answered OKAY) and a map of
+awkward layouts (fields across byte lanes, a 32-bit field, multi-bit W1C, W1S and W1P fields, a register at the top of a
+64-byte window, unmapped addresses answered SLVERR), so both settings are simulated. The
 bench reaches the RTL only through the **generated Python driver** over an AXI4-Lite master with random VALID delays, a
 random order of AW and W, and random BREADY and RREADY back-pressure. The brief 59A AXI4-Lite protocol checker
 (`axi_tx/rtl/axil_checker.sv`) watches the same wires and fails the test on any rule. Tests:
@@ -152,6 +215,10 @@ random order of AW and W, and random BREADY and RREADY back-pressure. The brief 
   commit clock;
 - 8 random byte-strobe writes per register against a model built from the YAML alone;
 - unmapped addresses (all of them in the small map, 64 sampled in the 4 KB one): response, read value, no side effect;
+- the snapshot group: the bench drives JOB_CYCLES as a counter that steps every clock, starting just below the carry
+  out of the low half, and sweeps the start over 39 snapshots so that at least one lands on the all-ones clock; every
+  snapshot must read a value the counter really had during the access, and a second read without a snapshot must
+  return the same (stale) value;
 - the interrupt line over 30 random set, clear, enable and disable steps;
 - the driver's read-modify-write keeps a pending W1C event; a naive write-back of the read value clears it;
 - a second read address while the first read's response waits for RREADY: ARREADY stays low and R stays steady until
@@ -162,11 +229,13 @@ random order of AW and W, and random BREADY and RREADY back-pressure. The brief 
 - for `demo_accel`, a **C driver** (`hwsw/examples/demo_accel_driver.c`, written against the generated header) runs
   against the RTL: its bus accesses go over a pipe to the bench (`hwsw/tests/c_cosim_harness.c`), a small model of the
   accelerator answers START with BUSY and then DONE, and the driver completes three polled and three interrupt-driven
-  jobs. The same driver source compiles for the Cortex-A9 with `arm-none-eabi-gcc -mcpu=cortex-a9`.
+  jobs, then reads JOB_CYCLES (counted across a carry into the high half) through the generated snapshot helper. The
+  same driver source compiles for the Cortex-A9 with `arm-none-eabi-gcc -mcpu=cortex-a9`.
 
-Eight seeded faults in the generated RTL (a clear that beats a set, byte strobes ignored, OKAY for unmapped addresses,
-B before W, a lost doorbell, an interrupt that ignores its enable, a pulse that stays high, ARREADY high while a read
-response waits) must each fail the bench; all eight do. The B-before-W fault is caught by the protocol checker (rule 5, B_EARLY).
+Ten seeded faults in the generated RTL (a clear that beats a set, byte strobes ignored, SLVERR on the OKAY map and
+OKAY on the SLVERR map, B before W, a lost doorbell, an interrupt that ignores its enable, a pulse that stays high,
+ARREADY high while a read response waits, a snapshot whose high half loads one clock after its low half) must each fail
+the bench; all ten do. The B-before-W fault is caught by the protocol checker (rule 5, B_EARLY).
 
 `hwsw/tests/test_64a_regmap_formal_rtl.py` checks the AXI4-Lite handshake formally with SymbiYosys on both maps: every
 master-side signal and hardware input free, the master assumed to keep its side of the protocol, and the slave's rules
@@ -250,6 +319,12 @@ given, at most 4 clocks). `python3 -m hwsw.cfu crc32_step --variant word --out D
   instruction's first clock in EX and kept, because once EX is held the core's forwarding path may show a stale value;
   an operation killed in EX (by a trap or an interrupt) is left to finish inside the unit and its result dropped, and
   the next instruction waits for it, then starts on its own kept operands;
+- with `--style mem`, `cfu_crc32_step.sv` is instead the **MEM-completion** port, the way the BRV32P multiplier works:
+  `issue` (the instruction moves from EX to MEM this clock, operands on `a` and `b`), `in_mem` and `hold` in; `stall`
+  (hold MEM: the result is not ready) and `result` out. The core issues only in a clock in which EX moves on and no
+  trap flushes the instruction, so an issued instruction always completes and there is no kill; the core's hazard unit
+  holds a dependent next instruction for one clock, as after a load; a unit of latency L holds MEM for L - 1 clocks; a
+  result that arrives while MEM is held by a cache miss is kept until the instruction leaves;
 - `cfu_ops.vh`: the module name and the encodings the core's decoder accepts (anything else stays illegal);
 - `cfu_crc32_step.h`: `crc32_w(rs1, rs2)` for C, written with the GNU assembler's `.insn` directive (R-type, custom-2
   opcode `0x5b`), so no compiler change is needed.
@@ -260,8 +335,10 @@ given, at most 4 clocks). `python3 -m hwsw.cfu crc32_step --variant word --out D
 operands, one result, no state; the running CRC lives in a register between calls. Two variants: `word` (the whole
 update in one clock, latency 1) and `byte` (one byte per clock, latency 4). Both are bit-exact against `model.py` and
 against zlib over whole buffers, with latency and II measured; five seeded faults are each caught. Measured out of
-context with Vivado 2026.1 on the xc7a100t: `word` 95 LUTs and 33 flip-flops, `byte` 96 LUTs and 92 flip-flops, so at 32
-bits the byte-serial form saves nothing and costs three clocks more per word; it stays as the multi-cycle test case.
+context with Vivado 2026.1 on the xc7a100t: `word` 95 LUTs and 33 flip-flops, `byte` 96 LUTs and 92 flip-flops. Alone
+the two look the same size, but inside the core in the 64A run (below) `byte` grows it by 148 LUTs against 371 for
+`word` (one run each; 105 against 432 in the 64A2 rebuild), at 2.29
+against 1.54 cycles per byte: an area-for-speed option, kept for that.
 
 ### The wrapper on its own
 
@@ -274,21 +351,39 @@ before the unit starts, with the operation in flight and with a finished result 
 against the model. Three seeded faults in the wrapper are each caught: operands not kept, no wait for a killed
 operation, and a kill that leaves the unit active.
 
+The MEM-completion wrapper has its own bench (`hwsw/tests/cfu_mem_wrapper_cocotb.py`), which plays EX and MEM: an
+instruction leaves EX only in a clock in which MEM is not held, back to back or with gaps; other MEM stalls (`hold`)
+come at random, so results also arrive while MEM is held; operands are right only in the issue clock. The directed test
+checks that the unit holds MEM for exactly latency - 1 clocks per instruction (0 for `word`, 3 for `byte`), and a soak
+of 3000 instructions checks every result. Two seeded faults are each caught: a stall that never comes (the result taken
+early) and a kept result that is not cleared when the instruction leaves. A third (dropping the kept copy) cannot be
+seen with `crc32_step`, whose output register holds its value until the next issue; the copy is there for units whose
+result is valid only with the done pulse, which is all the function-unit contract promises.
+
 ### Measured in an RV32 core (simulation)
 
 The core is BRV32P (`RISCV_RV32IMC_5stage`, a 5-stage RV32IMC with caches, branch prediction and the Xbrvdsp, Zk, GF
 and mod-q extensions). That repository belongs to another project and is read-only here, so a copy pinned
 at commit `8d53700` lives in `hwsw/cfu_core/brv32p/` ([PINNED.md](../hwsw/cfu_core/PINNED.md), MIT), and the changes that
-wire a unit in are a patch applied to a copy in `build/` ([brv32p_cfu.patch](../hwsw/cfu_core/brv32p_cfu.patch): a
-custom-2 decode, the unit instance in EX, its result on the existing extension-unit path, and its `busy` into the
-divider's stall input). `python3 hwsw/cfu_core/run_bench.py` compiles one program
+wire a unit in are patches applied to a copy in `build/`, one per integration style (owner, 2026-11-13: "try both"):
+
+- **stall in EX** ([brv32p_cfu.patch](../hwsw/cfu_core/brv32p_cfu.patch)): a custom-2 decode, the unit instance in EX,
+  its result on the existing extension-unit path, and its `busy` into the divider's stall input;
+- **complete in MEM** ([brv32p_cfu_mem.patch](../hwsw/cfu_core/brv32p_cfu_mem.patch)): the same decode; the unit issued
+  as the instruction leaves EX and its result taken in MEM next to the multiplier's, its `stall` added to the memory
+  stall, and the custom instruction added to the hazard unit's multiply-use hazard, so a dependent next instruction
+  waits one clock and takes the value from WB;
+- both also get [brv32p_mispredict_hold.patch](../hwsw/cfu_core/brv32p_mispredict_hold.patch) (see "A mispredict
+  while EX is stalled", below).
+
+`python3 hwsw/cfu_core/run_bench.py` compiles one program
 ([crc_bench.c](../hwsw/cfu_core/bench/crc_bench.c), GCC 13.2, `-O2`) that computes zlib's CRC-32 four ways at four
-sizes and checks every result against zlib, and runs it on the pinned core and on the core with each variant, in the
-core's own test bench under Icarus Verilog 12. Cycles are counted between two marker instructions, with the caches warmed
+sizes and checks every result against zlib, and runs it on the pinned core and on the core with each variant in each
+style, in the core's own test bench under Icarus Verilog 12. Cycles are counted between two marker instructions, with the caches warmed
 by a first call. The baseline core runs the same binary with the custom-instruction calls switched off by one data word,
-so the software kernels are at the same addresses everywhere: their cycle counts are identical on all three cores (the
-patch changes nothing else). The program also checks two kinds of kill, and a simulation-only monitor in the wrapper
-(`CFU_MONITOR`) counts them in the record:
+so the software kernels are at the same addresses everywhere: their cycle counts are identical on all five cores (the
+patches change nothing else). The program also checks two kinds of kill, and in the EX style a simulation-only monitor
+in the wrapper (`CFU_MONITOR`) counts them in the record (the MEM style has no kill path, and passes the same program):
 
 - a misaligned load traps with the custom instruction right behind it in EX. The trap is taken in the instruction's
   first clock in EX, so the kill comes before the unit has started; the handler skips the load and the retried
@@ -306,23 +401,59 @@ the unit's 4-clock latency. That path is tested on the wrapper alone (above).
 | pinned core | table-driven C (1 KB table) | 208 | 736 | 2848 | 11296 | 11.03 |
 | pinned core | bitwise C (no table) | 1042 | 4066 | 16175 | 64546 | 63.03 |
 | pinned core | carry-less multiply (Zbkc, Zbkb) | 81 | 201 | 681 | 2602 | 2.54 |
-| with crc32_step `word` (latency 1) | custom instruction crc32.w | 62 | 133 | 422 | 1574 | 1.54 |
-| with crc32_step `byte` (latency 4) | custom instruction crc32.w | 74 | 181 | 614 | 2342 | 2.29 |
+| with crc32_step `word` (latency 1), stall in EX | custom instruction crc32.w | 62 | 133 | 422 | 1574 | 1.54 |
+| with crc32_step `byte` (latency 4), stall in EX | custom instruction crc32.w | 74 | 181 | 614 | 2342 | 2.29 |
+| with crc32_step `word` (latency 1), complete in MEM | custom instruction crc32.w | 58 | 117 | 358 | 1318 | 1.29 |
+| with crc32_step `byte` (latency 4), complete in MEM | custom instruction crc32.w | 70 | 165 | 550 | 2086 | 2.04 |
 
 Speed-up of the custom instruction (cycles of the software kernel / cycles with the instruction, same core):
 
 | Custom instruction | against | 16 B | 64 B | 256 B | 1024 B |
 |---|---|---|---|---|---|
-| `word` | table-driven C (1 KB table) | 3.35x | 5.53x | 6.75x | 7.18x |
-| `word` | carry-less multiply (Zbkc, Zbkb) | 1.31x | 1.51x | 1.61x | 1.65x |
-| `byte` | table-driven C (1 KB table) | 2.81x | 4.07x | 4.64x | 4.82x |
-| `byte` | carry-less multiply (Zbkc, Zbkb) | 1.09x | 1.11x | 1.11x | 1.11x |
+| `word`, stall in EX | table-driven C (1 KB table) | 3.35x | 5.53x | 6.75x | 7.18x |
+| `word`, stall in EX | carry-less multiply (Zbkc, Zbkb) | 1.31x | 1.51x | 1.61x | 1.65x |
+| `byte`, stall in EX | table-driven C (1 KB table) | 2.81x | 4.07x | 4.64x | 4.82x |
+| `byte`, stall in EX | carry-less multiply (Zbkc, Zbkb) | 1.09x | 1.11x | 1.11x | 1.11x |
+| `word`, complete in MEM | table-driven C (1 KB table) | 3.59x | 6.29x | 7.96x | 8.57x |
+| `word`, complete in MEM | carry-less multiply (Zbkc, Zbkb) | 1.40x | 1.72x | 1.90x | 1.97x |
+| `byte`, complete in MEM | table-driven C (1 KB table) | 2.97x | 4.46x | 5.18x | 5.42x |
+| `byte`, complete in MEM | carry-less multiply (Zbkc, Zbkb) | 1.16x | 1.22x | 1.24x | 1.25x |
 
 The cycle counts lie on straight lines in the size to within one cycle (fitted on 16 B and 1024 B; the 64 B point is
 one cycle under): the `word` instruction costs 38 + 1.5 cycles per byte, that is 6 cycles per word for 5 instructions
 (load, two adds, the instruction, the branch) plus one stall clock; `byte` costs 38 + 2.25 cycles per byte, three stall
-clocks more per word, exactly its extra latency. The table-driven C costs 32 + 11
-cycles per byte. So the low-latency variant is the one to wrap, as the decision skill says.
+clocks more per word, exactly its extra latency. Completing in MEM saves exactly one clock per instruction in both
+variants: 38 + 1.25 cycles per byte for `word` (5 cycles per word, no stall) and 38 + 2 for `byte` (three stall clocks
+per word, now in MEM). The use hazard never costs anything in this loop: the next `crc32.w` that reads the result is
+four instructions later, and the final inversion two. The table-driven C costs 32 + 11 cycles per byte. So the
+low-latency variant is the one to wrap, as the decision skill says, and completing in MEM is worth one clock per
+instruction whenever the next instruction does not need the result at once.
+
+### A mispredict while EX is stalled
+
+The pinned core acts on a branch mispredict in EX without checking whether EX is stalled (`branch_mispredict_ex` in
+`brv32p_core.v` at commit 8d53700). With a divider or an EX-stall custom instruction in EX that the branch
+predictor predicts taken (from a stale BTB entry: one left over from an earlier instruction at the same address), the
+mispredict fires in the instruction's first EX clock: it flushes that instruction itself
+(`flush_ex`, which also kills the unit) and redirects fetch past it, so the instruction never completes. A non-branch is
+predicted taken only through a stale BTB entry (the BTB has full tags), so ordinary code never meets it, and the CRC
+benchmark does not. A directed program does: [bench/stale_btb.c](../hwsw/cfu_core/bench/stale_btb.c) trains a taken
+branch at an address, writes a custom instruction over it, runs `fence.i` (the predictor keeps its entry) and checks
+the instruction's result. `run_bench.py` runs it on four cores (`word` variant):
+
+| Core | stale-prediction program |
+|---|---|
+| stall in EX, pinned core's mispredict logic | RESULT FAIL (the instruction is lost; its register keeps the old value) |
+| stall in EX, with the hold patch | RESULT PASS |
+| complete in MEM, pinned core's mispredict logic | RESULT PASS |
+| complete in MEM, with the hold patch | RESULT PASS |
+
+The fix, in our pinned copy only ([brv32p_mispredict_hold.patch](../hwsw/cfu_core/brv32p_mispredict_hold.patch)),
+gates the mispredict with `!stall_ex`, so it acts in the clock the instruction leaves EX, as the core already does for a
+memory stall. The MEM style never stalls EX, so it cannot meet the case. By reading the RTL the pinned core's own
+divider has the same exposure; that is not simulated, so unconfirmed. The patch covers it too in our patched copies, and
+it changes no cycle count on the CRC benchmark (the EX-style numbers above, 1.54 and 2.29, are with it, equal to 64A's); the core's own repository
+is another project's and is not changed here.
 
 ### What the unit costs the core (Vivado 2026.1)
 
@@ -350,13 +481,49 @@ synthesis, so synthesis is timing driven. The raw reports (`utilization_hier.rpt
   the unit) that synthesis merged into the unit's XOR network and counted under it, not a bigger unit. One run each.
   The lesson stands in a narrower form: read a function unit's cost as the growth of the whole core, not as the
   unit's line in the hierarchy report.
-- **The trade.** `byte` saves 223 LUTs in the core (2.6 %) and costs 0.75 cycles per byte, 49 % more time. The decision
+- **The trade (64A run).** `byte` saves 223 LUTs in the core (2.6 %) and costs 0.75 cycles per byte, 49 % more time. The decision
   skill's default, the lowest-latency variant, holds unless the core is short of logic.
+
+### The two integration styles side by side (Vivado 2026.1)
+
+The 64A table above was built before brief 64A2. For the comparison, all four patched cores were rebuilt with the
+mispredict hold patch (`python3 hwsw/cfu_core/core_ooc.py --configs cfu_word,cfu_byte,cfu_word_mem,cfu_byte_mem --out
+results/64a_hwsw/core_ooc_styles.json --raw results/64a_hwsw/core_ooc_styles`; the baseline is the 64A pinned core,
+without the hold patch, so each growth figure includes the patch's gate). Same flow, one place-and-route run each:
+
+| Core | SoC LUTs | SoC FFs | core LUTs | wrapper (LUTs / FFs) | library unit inside it (LUTs / FFs) | DSP | WNS at 10 ns (ns) | Fmax estimate (MHz) |
+|---|---|---|---|---|---|---|---|---|
+| pinned core | 11854 | 7917 | 8663 | - | - | 16 | -6.123 | 62.0 |
+| with crc32_step `word`, stall in EX | 12290 | 8107 | 9095 | 464 / 133 | 461 / 33 | 16 | -5.145 | 66.0 |
+| with crc32_step `byte`, stall in EX | 11962 | 8141 | 8768 | 181 / 192 | 178 / 92 | 16 | -5.987 | 62.6 |
+| with crc32_step `word`, complete in MEM | 12042 | 8031 | 8856 | 905 / 66 | 905 / 33 | 16 | -5.910 | 62.9 |
+| with crc32_step `byte`, complete in MEM | 11963 | 8139 | 8757 | 366 / 125 | 363 / 92 | 16 | -6.448 | 60.8 |
+
+| Variant | style | core LUTs (growth) | core FFs (growth) | Fmax estimate (MHz) | cycles per byte at 1 KB |
+|---|---|---|---|---|---|
+| `word` | stall in EX | 9095 (+432) | 6967 (+190) | 66.0 | 1.54 |
+| `byte` | stall in EX | 8768 (+105) | 7001 (+224) | 62.6 | 2.29 |
+| `word` | complete in MEM | 8856 (+193) | 6891 (+114) | 62.9 | 1.29 |
+| `byte` | complete in MEM | 8757 (+94) | 6999 (+222) | 60.8 | 2.04 |
+
+- **Speed:** completing in MEM is one clock per instruction faster in both variants (simulation, above).
+- **Logic:** with `word` the MEM style grew the core by 193 LUTs against 432 for the EX style in these runs. Part of
+  that is structural: the MEM style needs no operand latch (64 flip-flops fewer; it reads the operands the EX/MEM
+  register takes) and no EX stall path. The size of the saving is not settled: the EX-style `word` core grew by 371
+  LUTs in the 64A run and by 432 here; the two builds differ by the one-gate hold patch and by the run, and one build
+  each cannot separate the two. With `byte` the two styles are within 11 LUTs.
+- **Clock rate:** the Fmax estimates lie within the spread of single runs in both styles (60.8 to 66.0 MHz against
+  62.0 for the pinned core; the EX-style `word` core gave 65.6 and 66.0 in two builds), one run each; the MEM-style
+  `word` build is 3 MHz below the EX-style one, which one run each cannot call a loss or not. The critical path is in
+  the core's fetch logic in all four runs, never in the unit. The unit's hierarchy line (905 LUTs for `word`
+  in MEM style) again includes core logic that synthesis merged into it; read the cost as the core's growth.
+- **Verdict for this core:** complete in MEM. It is faster in cycles (simulation) and, in these builds, not larger;
+  its only cost, a one-clock use hazard for a dependent next instruction, is never paid in this kernel.
 
 ### What this does not show
 
 - No board run: the core with the unit has not been built for or run on the Nexys A7 or a Zynq.
 - One kernel, one compiler, one core. The cycle counts are for this core's caches and branch predictor at these sizes.
-- The stall-based port costs one clock per instruction for a 1-clock unit; completing in MEM, as the core's multiplier
-  does, would hide it for independent instructions. Not built.
+- The use hazard of the MEM style is never paid in this benchmark (the dependent instruction is four instructions
+  later); a kernel that uses each result at once would pay one clock per instruction, as the EX style does.
 - The decoder accepts one encoding per generated unit; several units on one opcode need a funct-based selector.

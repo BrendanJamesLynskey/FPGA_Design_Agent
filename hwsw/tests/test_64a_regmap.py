@@ -60,6 +60,13 @@ EDITS = [
      "CTRL.reset"),
     ("sv", "ADDR_RING_HEAD = 10'ha;", "ADDR_RING_HEAD = 10'hb;", "RING_HEAD.offset"),
     ("sv", "    output logic [2:0]   ctrl_mode_o,", "    output logic [3:0]   ctrl_mode_o,", "ports differ"),
+    # the snapshot group, in each output that states it
+    ("py", "{'trigger': ['CMD', 'SNAP']", "{'trigger': ['CMD', 'START']", "snapshot JOB_CYCLES"),
+    ("md", "| JOB_CYCLES | CMD.SNAP |", "| JOB_CYCLES | CMD.START |", "snapshot JOB_CYCLES"),
+    ("h", "#define DEMO_ACCEL_SNAP_JOB_CYCLES_WIDTH 64u", "#define DEMO_ACCEL_SNAP_JOB_CYCLES_WIDTH 32u",
+     "snapshot JOB_CYCLES"),
+    ("h", "DEMO_ACCEL_JOB_CYCLES_HI_OFFSET)) << 32;", "DEMO_ACCEL_JOB_CYCLES_HI_OFFSET)) << 31;",
+     "demo_accel_snapshot_job_cycles() on a test bus"),
 ]
 
 
@@ -102,7 +109,25 @@ BREAKS = [
     ("field past bit 31", lambda d: _reg(d, "CTRL")["fields"][3].update(lsb=24), "not inside [31:0]"),
     ("reset too wide", lambda d: _reg(d, "CTRL")["fields"][1].update(reset=8), "does not fit in 3 bits"),
     ("const too wide", lambda d: _reg(d, "ID")["fields"][0].update(const=0x1_0000), "does not fit in 16 bits"),
-    ("unknown access", lambda d: _reg(d, "CTRL")["fields"][0].update(access="RC"), "must be one of RW, RO, W1C, W1S, W1P"),
+    ("unknown access", lambda d: _reg(d, "CTRL")["fields"][0].update(access="XX"), "must be one of RW, RO, W1C, W1S, W1P"),
+    # no read side effects (owner, 2026-11-13): clear-on-read, pop-on-read and an on_read action are refused
+    ("clear on read", lambda d: _reg(d, "IRQ_STATUS")["fields"][0].update(access="RC"), "changes state on a read"),
+    ("pop on read", lambda d: _reg(d, "STATUS")["fields"][1].update(access="POP"), "pop or acknowledge with a W1P bit"),
+    ("on_read action", lambda d: _reg(d, "STATUS")["fields"][1].update(on_read="pop"), "a read must not change state"),
+    ("write-only outside a datasheet", lambda d: _reg(d, "SCRATCH")["fields"][0].update(access="WO"), "must be one of"),
+    # snapshot groups
+    ("snapshot trigger not W1P", lambda d: d["snapshot"][0].update(trigger="CTRL.ENABLE"), "must be a one-bit W1P field"),
+    ("snapshot of a RW field", lambda d: d["snapshot"][0]["fields"].append("SCRATCH.VALUE"),
+     "must be a RO field read from a hardware input"),
+    ("snapshot of a constant", lambda d: d["snapshot"][0]["fields"].append("ID.MAGIC"), "not a constant"),
+    ("snapshot unknown field", lambda d: d["snapshot"][0]["fields"].append("JOB_CYCLES_HI.NOPE"), "not a declared field"),
+    ("snapshot field twice", lambda d: d["snapshot"].append({"name": "AGAIN", "trigger": "CMD.FLUSH",
+                                                             "fields": ["JOB_CYCLES_LO.VALUE"]}), "already in snapshot"),
+    ("snapshot trigger twice", lambda d: d["snapshot"].append({"name": "AGAIN", "trigger": "CMD.SNAP",
+                                                               "fields": ["STATUS.LEVEL"]}), "already triggers"),
+    ("snapshot over 64 bits", lambda d: d["snapshot"][0]["fields"].append("STATUS.LEVEL"), "at most 64"),
+    ("conventions in a generated map", lambda d: d.update(conventions={"strobes": "ignored"}),
+     "conventions and staging are for documentation-only maps"),
     ("const on RW", lambda d: _reg(d, "CTRL")["fields"][0].update(const=1), "const is allowed only on a RO field"),
     ("reset on RO input", lambda d: _reg(d, "STATUS")["fields"][0].update(reset=1), "has no reset value"),
     ("W1P reset", lambda d: _reg(d, "CMD")["fields"][0].update(reset=1), "a W1P field reads 0"),
@@ -130,7 +155,7 @@ BREAKS = [
     ("irq bit without enable", lambda d: _reg(d, "IRQ_STATUS")["fields"].append(
         {"name": "LATE", "lsb": 5, "width": 1, "access": "W1C"}), "have no enable bit"),
     ("unknown key", lambda d: _reg(d, "CTRL")["fields"][0].update(acess="RW"), "unknown keys ['acess']"),
-    ("bad unmapped policy", lambda d: d.update(unmapped="decerr"), "must be slverr or okay"),
+    ("bad unmapped policy", lambda d: d.update(unmapped="decerr"), "must be okay or slverr"),
     ("data width 64", lambda d: d.update(data_width=64), "only 32 is supported"),
     # names the generated block uses itself (wr_hit, wr_commit, rd_value), and text that would break an output
     ("register HIT", lambda d: _reg(d, "SCRATCH").update(name="HIT"), "rd_hit, wr_hit would meet one of its own"),
@@ -183,6 +208,16 @@ def _driver():
     return mod
 
 
+def test_driver_snapshot_pulses_then_reads_low_part_first() -> None:
+    d = _driver()
+    bus = _Mem({0x030: 0x89AB_CDEF, 0x034: 0x0123_4567})
+    regs = d.DemoAccelRegs(bus)
+    assert regs.snapshot("JOB_CYCLES") == 0x0123_4567_89AB_CDEF
+    assert bus.log == [("W", 0x008, 0x4), ("R", 0x030), ("R", 0x034)]     # CMD.SNAP (no RW bits in CMD: no read)
+    with pytest.raises(d.RegisterError):
+        regs.snapshot("NOPE")
+
+
 def test_driver_writes_w1x_bits_as_zero_and_refuses_misuse() -> None:
     d = _driver()
     bus = _Mem({0x004: 0x0100_0121})                   # CTRL: SCALE 0x100, OVERFLOW pending, MODE 2, ENABLE 1
@@ -223,3 +258,123 @@ def test_check_compiles_the_systemverilog(tmp_path: Path) -> None:
     sv.write_text(t.replace("    logic [31:0] rd_value;", "    logic [31:0] rd_value;\n    logic rd_value;", 1))
     errs = regmap.agreement(m, tmp_path)
     assert any("does not compile" in e for e in errs), errs
+
+
+# ---- the datasheet: every behaviour a user could guess wrong, generated from a setting -------------------------------------
+def test_unmapped_defaults_to_okay_and_the_document_follows_the_setting(tmp_path: Path) -> None:
+    """Owner, 2026-11-13: holes inside a block answer OKAY with 0, provided the datasheet says so."""
+    d = _demo()
+    d.pop("unmapped")
+    m = regmap.from_dict(d)
+    assert m.unmapped == "okay"
+    ok = regmap.emit_md(m)
+    assert "Unmapped addresses answer OKAY and read 0." in ok and "answers OKAY and reads 0" in ok
+    assert "This block follows the house register conventions" in ok
+    sl = regmap.emit_md(regmap.from_dict(dict(d, unmapped="slverr")))
+    assert "Unmapped addresses answer SLVERR and read 0." in sl and "answers SLVERR and reads 0" in sl
+    assert "This block differs from the house register conventions (docs/hwsw.md) in 1 way: unmapped addresses" in sl
+    assert "RESP_UNMAPPED = 2'b00;" in regmap.emit_sv(m)
+    assert "RESP_UNMAPPED = 2'b10;" in regmap.emit_sv(regmap.from_dict(dict(d, unmapped="slverr")))
+
+
+def _doc(**conv) -> dict:
+    """A documentation-only map (a hand-written block) with the given conventions."""
+    return {"regmap": 1, "name": "hand", "addr_width": 7, "conventions": conv, "registers": [
+        {"name": "DATA", "offset": 0, "count": 2, "fields": [{"name": "W", "lsb": 0, "width": 32, "access": "WO"}]},
+        {"name": "CMD", "offset": 0x40, "fields": [{"name": "OP", "lsb": 0, "width": 4, "access": "WO"}]},
+        {"name": "STATUS", "offset": 0x44, "fields": [{"name": "BUSY", "lsb": 0, "width": 1, "access": "RO", "reset": 0},
+                                                      {"name": "RAW", "lsb": 4, "width": 4, "access": "RO"}]}],
+            "staging": [{"name": "DATA", "registers": ["DATA0", "DATA1"], "commit": "CMD"}]}
+
+
+def _says(m, topic: str) -> str:
+    return dict(regmap.behaviour(m))[topic]
+
+
+# (topic, map a, map b, text in a's sentence, text in b's sentence): the same topic, one setting changed
+FOLLOWS = [
+    ("unmapped", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(dict(_demo(), unmapped="slverr")),
+     "answers OKAY and reads 0", "answers SLVERR and reads 0"),
+    ("reserved", lambda: regmap.from_dict(_doc(), doc_only=True),
+     lambda: regmap.from_dict(_doc(reserved="undefined"), doc_only=True), "read 0 and ignore writes", "undefined value"),
+    ("side_effects", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(_doc(), doc_only=True),
+     "W1P bit: CMD.START, CMD.FLUSH. A snapshot is taken by writing 1 to its trigger: CMD.SNAP.",
+     "Writes act on the hardware only through CMD."),
+    ("priority", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(_doc(), doc_only=True),
+     "W1C bits (CTRL.OVERFLOW, IRQ_STATUS.DONE, IRQ_STATUS.ERROR): a hardware set", "no W1C or W1S bits"),
+    ("strobes", lambda: regmap.from_dict(_doc(), doc_only=True),
+     lambda: regmap.from_dict(_doc(strobes="ignored"), doc_only=True), "are honoured on every register",
+     "are ignored on every register"),
+    ("access", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(dict(_demo(), addr_width=13)),
+     "only bits [11:2] are decoded, so the window repeats every 0x1000 bytes",
+     "only bits [12:2] are decoded, so the window repeats every 0x2000 bytes"),
+    ("multiword", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict({k: v for k, v in _demo().items()
+                                                                               if k != "snapshot"}),
+     "write 1 to CMD.SNAP to copy the whole value", "No snapshot groups: every register is read on its own"),
+    ("multiword", lambda: regmap.from_dict(_doc(), doc_only=True), lambda: regmap.from_dict(_demo()),
+     "only for a command (a write to CMD)", "A read without a new snapshot returns the copy from the last one (stale)"),
+    ("reset", lambda: regmap.from_dict(_doc(), doc_only=True),
+     lambda: regmap.from_dict(_doc(reset="rst", reset_active="high"), doc_only=True),
+     "`aresetn`, synchronous, active low", "`rst`, synchronous, active high"),
+    ("reset", lambda: regmap.from_dict(_doc(reset_style="asynchronous"), doc_only=True), lambda: regmap.from_dict(_demo()),
+     "asynchronous, active low.", "Not reset by this block: the RO fields that read a hardware input (STATUS.BUSY"),
+    ("reset", lambda: regmap.from_dict(_doc(), doc_only=True), lambda: regmap.from_dict(_demo()),
+     "(STATUS.RAW)", "snapshot copies read 0"),
+    ("interrupt", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict({k: v for k, v in _demo().items()
+                                                                               if k != "interrupt"}),
+     "high while any bit of IRQ_STATUS (DONE, ERROR) is set together with the same bit of IRQ_ENABLE",
+     "None: this block has no interrupt output"),
+    ("clock", lambda: regmap.from_dict(_doc(), doc_only=True), lambda: regmap.from_dict(_doc(clock="clk"), doc_only=True),
+     "in the `aclk` domain", "in the `clk` domain"),
+]
+
+
+@pytest.mark.parametrize("topic,a,b,in_a,in_b", FOLLOWS, ids=[f"{f[0]}-{i}" for i, f in enumerate(FOLLOWS)])
+def test_each_behaviour_sentence_follows_its_setting(topic, a, b, in_a, in_b) -> None:
+    sa, sb = _says(a(), topic), _says(b(), topic)
+    assert in_a in sa and in_b not in sa, sa
+    assert in_b in sb and in_a not in sb, sb
+
+
+def test_every_topic_is_stated_and_differences_lead_the_document() -> None:
+    topics = ["unmapped", "reserved", "side_effects", "priority", "strobes", "access", "multiword", "reset", "interrupt",
+              "clock"]
+    assert [k for k, _ in regmap.behaviour(regmap.from_dict(_demo()))] == topics
+    m = regmap.from_dict(_doc(strobes="ignored", reset="rst", reset_active="high", clock="clk"), doc_only=True)
+    first = regmap.convention_sentence(m)
+    assert first.startswith("This block differs from the house register conventions (docs/hwsw.md) in 2 ways: byte strobes")
+    assert "the reset is `rst`, synchronous, active high" in first
+    assert regmap.convention_sentence(regmap.from_dict(_demo())).startswith("This block follows the house register conventions")
+
+
+def test_documentation_only_maps() -> None:
+    m = regmap.from_dict(_doc(), doc_only=True)
+    assert [r.name for r in m.registers] == ["DATA0", "DATA1", "CMD", "STATUS"]
+    assert m.reg("DATA1").offset == 4
+    text = "\n".join(regmap.datasheet(m))
+    assert "| WO | write-only" in text and "| W1C |" not in text            # only the access types it uses
+    with pytest.raises(regmap.RegmapError, match="documentation-only"):
+        regmap.generate(m, Path("/nonexistent"))
+    with pytest.raises(regmap.RegmapError, match="must be one of low, high"):
+        regmap.from_dict(_doc(reset_active="low-ish"), doc_only=True)
+
+
+def test_side_effect_sentence_names_doorbells_and_the_rmw_rule() -> None:
+    """Review 64A2: a map whose only action is a W1S doorbell says so; a read-modify-write rule is stated wherever a
+    register holds W1C, W1S or W1P bits."""
+    d = {"regmap": 1, "name": "bell", "addr_width": 6, "registers": [
+        {"name": "DB", "offset": 0, "fields": [{"name": "Q", "lsb": 0, "width": 2, "access": "W1S"}]}]}
+    s = _says(regmap.from_dict(d), "side_effects")
+    assert "Doorbells are W1S bits: DB.Q." in s and "no command" not in s
+    assert "A read-modify-write must write the W1C, W1S and W1P bits as 0 (here DB.Q)" in s
+    d["registers"][0]["fields"][0]["access"] = "RW"
+    s = _says(regmap.from_dict(d), "side_effects")
+    assert "a read-modify-write is safe" in s and "no command, doorbell or snapshot bits" in s
+
+
+def test_count_grouping_is_for_documentation_only_maps() -> None:
+    """Review 64A2: the grouping a count: expansion makes cannot be asked for from YAML in a generated map."""
+    d = _demo()
+    _reg(d, "CTRL")["_group"] = "X"
+    with pytest.raises(regmap.RegmapError, match="unknown keys"):
+        regmap.from_dict(d)
