@@ -18,7 +18,7 @@ Out of context on an Artix-7 (xc7a100tcsg324-1), Vivado 2026.1, one routed run p
 
 ## Seeded faults
 
-`faults.json`: 55 of 55 caught, run by `python3 flow/net/faults.py`.
+`faults.json`: 56 of 56 caught, run by `python3 flow/net/faults.py`.
 
 | Entry | Fault | Result |
 |---|---|---|
@@ -77,6 +77,7 @@ Out of context on an Artix-7 (xc7a100tcsg324-1), Vivado 2026.1, one routed run p
 | mdio_master | `mdio_turnaround_driven` | caught |
 | mdio_master | `mdio_read_lsb_first` | caught |
 | mdio_master | `mdio_release_without_hold` | caught |
+| icmp_echo | `icmp_tail_bytes_overwritten` | caught |
 
 ## Formal (SymbiYosys)
 
@@ -128,7 +129,7 @@ Not run on a board. The MAC points have FILTER, VLAN 2, PAUSE and STATS on, CUT_
 
 ## The Nexys A7 network design
 
-[designs/b63d_nexys_net](../../designs/b63d_nexys_net/README.md): simulated through the shell and built with Vivado 2026.1 ([nexys_build/b63d_nexys_net.md](nexys_build/b63d_nexys_net.md)). Every flow gate passes at 50 MHz: WNS 1.569 ns, WHS 0.012 ns (an internal path, `v_port_reg[2]` to `u_udptx/dp_reg[2]`), 4186 LUTs, 4344 FFs, 2 block RAM tiles, 0.250 W on chip (vectorless), Tj 44.6 C predicted. Not run on a board.
+[designs/b63d_nexys_net](../../designs/b63d_nexys_net/README.md): simulated through the shell and built with Vivado 2026.1 with the test shell's protocol 1.1 ([nexys_build/b63d_nexys_net.md](nexys_build/b63d_nexys_net.md)). Every flow gate passes at 50 MHz: WNS 1.569 ns, WHS 0.035 ns (an internal path, `u_arp/ho_ip_reg[15]` to `u_arp/cur_tpa_reg[15]`), 4188 LUTs, 4344 FFs, 2 block RAM tiles, 0.251 W on chip (vectorless), Tj 44.6 C predicted. Not run on a board.
 
 ### RMII pin timing
 

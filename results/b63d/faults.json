@@ -1,6 +1,6 @@
 {
- "caught": 55,
- "valid": 55,
+ "caught": 56,
+ "valid": 56,
  "faults": [
   {
    "name": "arp_reply_wrong_opcode",
@@ -496,6 +496,15 @@
    "status": "caught",
    "seconds": 8.3,
    "pytest": "1 failed, 1 passed in 7.98s"
+  },
+  {
+   "name": "icmp_tail_bytes_overwritten",
+   "block": "icmp_echo",
+   "class": "timing",
+   "why": "bytes after 13 of a frame arriving during a reply overwrite the stored request (the formal check watches byte 13 only; found by the independent review)",
+   "status": "caught",
+   "seconds": 4.0,
+   "pytest": "1 failed, 5 deselected in 3.48s"
   }
  ]
 }

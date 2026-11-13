@@ -50,6 +50,7 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 | `icmp_sum_over_padding` | the ICMP checksum is checked over the Ethernet padding too | caught |
 | `icmp_addresses_not_swapped` | the reply's IP source stays the requester's address | caught |
 | `icmp_back_to_back_overwrite` | a frame starting on the clock after a request's last byte is stored over the request (found by the independent review) | caught |
+| `icmp_tail_bytes_overwritten` | bytes after 13 of a frame arriving during a reply overwrite the stored request (the formal check watches byte 13 only; found by the independent review) | caught |
 
 ## Variants
 
@@ -88,7 +89,7 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: none.
 - Part, board or pin: none (memories inferred; ram_style steers the variants).
 - Depends on: nothing.
-- Limits: requests with IP options are not answered; one request held at a time; no other ICMP messages (no destination unreachable, no timestamp); measured Fmax estimates 89-116 MHz out of context: below the RGMII MAC's 125 MHz.
+- Limits: requests with IP options are not answered; one request held at a time; no other ICMP messages (no destination unreachable, no timestamp); measured Fmax estimates 89-116 MHz out of context: below the RGMII MAC's 125 MHz; the formal reply check follows one byte (13): a version that lets the solver choose the byte did not finish its passing run in reasonable time, so the other copied bytes are checked in simulation only.
 
 ## Cost table
 

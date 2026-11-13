@@ -111,7 +111,9 @@ boundary:
   cdc: none
   part_specific: none (memories inferred; ram_style steers the variants)
 limits: 'requests with IP options are not answered; one request held at a time; no other ICMP messages (no destination unreachable,
-  no timestamp); measured Fmax estimates 89-116 MHz out of context: below the RGMII MAC''s 125 MHz'
+  no timestamp); measured Fmax estimates 89-116 MHz out of context: below the RGMII MAC''s 125 MHz; the formal reply check
+  follows one byte (13): a version that lets the solver choose the byte did not finish its passing run in reasonable time,
+  so the other copied bytes are checked in simulation only'
 evidence:
   summary: 'cocotb against ip_lib/icmp_echo/model.py (RFC 792 and 791; the model recomputes both checksums from scratch while
     the RTL updates them incrementally, RFC 1624) with scapy re-deriving the checksums of every reply: random request lengths

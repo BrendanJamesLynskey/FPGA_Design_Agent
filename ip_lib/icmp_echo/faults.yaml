@@ -44,3 +44,10 @@ faults:
     class: timing
     why: a frame starting on the clock after a request's last byte is stored over the request (found by the independent review)
     test: flow/net/tests/test_63d_adversarial_rtl.py -k icmp
+  - name: icmp_tail_bytes_overwritten
+    file: icmp_echo.sv
+    old: "assign we = beat && (first ? !blocked : stored) && k < 16'(BUF_BYTES);"
+    new: "assign we = beat && (k > 16'd13 ? 1'b1 : (first ? !blocked : stored)) && k < 16'(BUF_BYTES);"
+    class: timing
+    why: bytes after 13 of a frame arriving during a reply overwrite the stored request (the formal check watches byte 13 only; found by the independent review)
+    test: flow/net/tests/test_63d_adversarial_rtl.py -k icmp
