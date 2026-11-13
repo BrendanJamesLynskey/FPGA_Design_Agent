@@ -1,0 +1,25 @@
+# SymbiYosys: ipv4_udp_rx's output protocol (axi_tx/rtl/axis_rules.sv, the AXI checker). bmc: bounded, depth 30; cover:
+# a whole datagram with a one-byte payload is parsed and passed on (depth 52).
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 30
+cover: mode cover
+cover: depth 52
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal -sv axis_rules.sv
+read_verilog -formal -sv ipv4_udp_rx.sv
+read_verilog -formal -sv formal_udp_rx.sv
+prep -top formal_udp_rx
+
+[files]
+../../../axi_tx/rtl/axis_rules.sv
+../rtl/ipv4_udp_rx.sv
+formal_udp_rx.sv

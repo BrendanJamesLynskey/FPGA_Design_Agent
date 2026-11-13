@@ -1,0 +1,107 @@
+# ip.yaml for arp_responder: the declared parameter space and contract (the library's reuse rules; brief 63D).
+name: arp_responder
+version: 0.1.0
+status: 'Meets 125 MHz out of context with 4 cache entries (128 MHz estimated) but not with 16 (116 MHz); simulated against
+  an RFC 826 model, with scapy as a second decoder and an independent adversarial bench; transmit framing checked by bounded
+  model checking; built alone on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries
+  it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
+summary: 'Address Resolution Protocol (ARP, RFC 826): answers ''who has this IPv4 address?'' for one address, caches other
+  hosts'' MAC addresses (round-robin replacement, flush), and looks up next-hop MAC addresses for transmit, sending a rate-limited
+  request on a miss. A packet from another station claiming its own address is reported as a conflict (RFC 5227) and never
+  cached.'
+top: arp_responder
+rtl:
+- rtl/arp_responder.sv
+depends: []
+interfaces:
+- name: s_axis
+  type: axis
+  dir: slave
+  tdata: 8
+  tuser: 1
+  tready: always 1
+  note: received Ethernet frames without FCS; tuser on tlast marks a bad frame
+- name: m_axis
+  type: axis
+  dir: master
+  tdata: 8
+  tready: true
+  note: 42-byte ARP frames (replies before requests); the MAC pads them
+- name: lookup
+  type: native
+  signals: lk_valid, lk_ip[31:0], lk_ready, lk_done, lk_hit, lk_mac[47:0], flush
+  note: one lookup a clock, answered the next clock
+- name: config
+  type: native
+  signals: own_mac[47:0], own_ip[31:0]
+  note: static
+- name: events
+  type: native
+  signals: ev_rx_request, ev_rx_reply, ev_tx_reply, ev_tx_request, ev_learn, ev_drop, ev_conflict
+  note: one-clock pulses for counters
+clocks:
+- name: clk
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+parameters:
+  CACHE_N:
+    type: int
+    default: 4
+    range:
+    - 1
+    - 16
+    note: cache entries
+  HOLDOFF:
+    type: int
+    default: 1000
+    range:
+    - 1
+    - 16777215
+    note: clocks before a second request for the same address
+constraints: []
+latency:
+  reply: the first reply byte on m_axis 3 clocks after the request's last byte when idle (measured in the bench)
+  lookup: 1 clock
+throughput: one reply waiting while another is sent; requests in the receive stream at line rate are parsed without back-pressure
+guards:
+- CACHE_N: 0
+- CACHE_N: 17
+- HOLDOFF: 0
+- HOLDOFF: 16777216
+sweep_tested:
+- CACHE_N: 4
+  HOLDOFF: 100
+- CACHE_N: 1
+  HOLDOFF: 40
+- CACHE_N: 16
+  HOLDOFF: 200
+characterisation:
+  part: xc7a100tcsg324-1
+  clock_ns: 8.0
+  points:
+  - CACHE_N: 4
+  - CACHE_N: 16
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none
+limits: Ethernet and IPv4 only; one own address; entries never age (flush from outside); address conflicts are reported (ev_conflict)
+  but not resolved (no RFC 5227 probing or announcing); one reply waits while one is sent, a third request is not answered;
+  meets 125 MHz with 4 cache entries (128 MHz estimated), misses it with 16 (116 MHz, the parallel compare)
+evidence:
+  summary: 'cocotb against ip_lib/arp_responder/model.py (RFC 826, plain Python) with scapy decoding every frame sent: random
+    requests, replies, probes, malformed packets, padded frames, bad and short frames, lookups and flushes under input gaps
+    and back-pressure, then a dropped third reply and the request holdoff; Icarus Verilog 12. Formal (bounded): every frame
+    42 bytes and the AXI-Stream protocol rules (valid held until ready, data steady while waiting) on m_axis; an independent
+    adversarial bench adds gratuitous ARPs from known and unknown hosts, probes, a full cache and an address conflict'
+  tests:
+  - flow/net/tests/test_63d_arp_rtl.py
+  - flow/net/tests/test_63d_adversarial_rtl.py
+  - flow/net/tests/test_63d_formal.py
+  faults: ip_lib/arp_responder/faults.yaml
+  results: results/b63d/faults.json, results/b63d/formal.json, ip_lib/arp_responder/char/xc7a100tcsg324-1.json
+  simulator: Icarus Verilog 12, cocotb 2.0.1; SymbiYosys
+cost_table: 'measured out of context: see the Cost section above'
+licence: MIT (this repository)

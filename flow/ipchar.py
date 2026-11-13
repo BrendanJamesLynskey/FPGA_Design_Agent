@@ -43,20 +43,32 @@ def point_id(p: dict) -> str:
     return "_".join(f"{k}{v}" for k, v in sorted(p.items()))
 
 
+BASE = "base"           # the one implementation of an entry without a variants block (brief 63D)
+
+
+def sources(y: dict) -> list[str]:
+    """The entry's RTL and the RTL of the entries it depends on (brief 63D: eth_mac_rgmii uses eth_mac_rmii's CRC)."""
+    out = []
+    for d in y.get("depends") or []:
+        dy = yaml.safe_load((iv.IP / d / "ip.yaml").read_text())
+        out += [str(iv.IP / d / f) for f in dy["rtl"]]
+    return out + [str(iv.IP / y["name"] / f) for f in y["rtl"]]
+
+
 def jobs(block: str, part: str, only: set[str]) -> list[dict]:
     y = yaml.safe_load((iv.IP / block / "ip.yaml").read_text())
     ch, vp = y["characterisation"], y.get("variant_param")
     out = []
-    for name in y["variants"]:
+    for name in (y.get("variants") or {BASE: {}}):
         if only and name not in only:
             continue
         for pt in ch["points"]:
-            full = iv.point(block, pt, name)
+            full = iv.point(block, pt, name if y.get("variants") else None)
             params = {k: v for k, v in full.items() if k != vp}
             gen = {k: (f'"{v}"' if isinstance(v, str) else v) for k, v in full.items()}
             out.append({"block": block, "variant": name, "params": params, "generics": gen, "top": y["top"],
                         "clock_ns": ch["clock_ns"], "wd": BUILD / block / f"{name}_{point_id(params)}",
-                        "sources": [str(iv.IP / block / f) for f in y["rtl"]]})
+                        "sources": sources(y)})
     return out
 
 
@@ -137,8 +149,9 @@ def record(block: str, part: str, js: list[dict]) -> Path:
     rows = {(r["variant"], json.dumps(r["params"], sort_keys=True)): r for r in old["results"]}
     for j in js:
         r = {"variant": j["variant"], "params": j["params"], **parse(j["wd"], j["clock_ns"])}
-        pr = iv.predict(block, j["variant"], j["params"])
-        r["latency"], r["ii"] = pr.get("latency"), pr.get("ii")
+        if y.get("variants"):
+            pr = iv.predict(block, j["variant"], j["params"])
+            r["latency"], r["ii"] = pr.get("latency"), pr.get("ii")
         if r["status"] != "not run":
             rows[(j["variant"], json.dumps(j["params"], sort_keys=True))] = r
     out = {"schema": iv.SCHEMA, "block": block, "version": y["version"], "part": part, "clock_ns": ch["clock_ns"],
@@ -147,7 +160,7 @@ def record(block: str, part: str, js: list[dict]) -> Path:
            "flow": "out-of-context synth_design, opt_design, place_design, route_design; one thread; clock on port clk "
                    "only (I/O paths unconstrained); Fmax = 1000 / (period - WNS) after routing, an estimate from one "
                    "run at the target clock; power: report_power, vectorless, default toggle rates",
-           "results": sorted(rows.values(), key=lambda r: (list(y["variants"]).index(r["variant"]),
+           "results": sorted(rows.values(), key=lambda r: (list(y.get("variants") or {BASE: {}}).index(r["variant"]),
                                                             [r["params"][k] for k in sorted(r["params"])]))}
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(json.dumps(out, indent=1) + "\n")
@@ -178,8 +191,9 @@ def run(blocks: list[str], part: str, only: set[str], dry: bool) -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="python3 -m flow.ipchar",
-        description="Measure each implementation variant of an IP block with Vivado (built alone, no I/O constraints) "
-                    "and write ip_lib/<block>/char/<part>.json. Each point takes minutes: run one at a time.")
+        description="Measure each implementation variant of an IP block with Vivado 2026.1 (built alone, no I/O "
+                    "constraints) and write ip_lib/<block>/char/<part>.json. Requires Vivado 2026.1 installed. Each point "
+                    "takes minutes: run one at a time. Example: python3 -m flow.ipchar icmp_echo arp_responder")
     ap.add_argument("blocks", nargs="+", help="library entries to measure, e.g. fir dds_awg")
     ap.add_argument("--part", default=iv.DEFAULT_PART, help=f"device part (default {iv.DEFAULT_PART})")
     ap.add_argument("--only", default="", help="comma-separated variant names; rows of other variants are kept")

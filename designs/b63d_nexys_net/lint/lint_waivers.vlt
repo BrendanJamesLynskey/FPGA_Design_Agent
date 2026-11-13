@@ -1,0 +1,8 @@
+`verilator_config
+// the library entries compare untyped string parameters (RAM) with longer literals; Icarus Verilog 12
+// needs them untyped (docs/ip_variants.md), so the width warning is expected there and nowhere else
+lint_off -rule WIDTHEXPAND -file "*ip_lib/*"
+// Unused outputs of library blocks are left open on purpose, and their status fields are read in part (as
+// flow/net/lint.sh waives for ip_lib).
+lint_off -rule PINCONNECTEMPTY
+lint_off -rule UNUSEDSIGNAL -file "*ip_lib/*"

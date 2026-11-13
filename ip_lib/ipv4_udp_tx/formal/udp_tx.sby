@@ -1,0 +1,25 @@
+# SymbiYosys: ipv4_udp_tx's framing and output protocol (axi_tx/rtl/axis_rules.sv, the AXI checker). bmc: bounded, depth
+# 60 (a short datagram in and its frame out); cover: a two-byte datagram leaves.
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 60
+cover: mode cover
+cover: depth 60
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal -sv axis_rules.sv
+read_verilog -formal -sv ipv4_udp_tx.sv
+read_verilog -formal -sv formal_udp_tx.sv
+prep -top formal_udp_tx
+
+[files]
+../../../axi_tx/rtl/axis_rules.sv
+../rtl/ipv4_udp_tx.sv
+formal_udp_tx.sv

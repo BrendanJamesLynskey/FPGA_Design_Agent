@@ -33,6 +33,9 @@ Clocks: `clk` (the 50 MHz RMII reference clock (the PHY's REF_CLK)). Reset: `rst
 ## Evidence
 
 Bit-exact against the Python golden model (`flow/net/model.py`), file-driven bench (the brief-19 harness method), Icarus Verilog 12. Tests: `flow/net/tests/test_40_mac_rtl.py`.
+
+Try it: `python3 -m pytest flow/net/tests/test_40_mac_rtl.py`.
+
 Parameter points simulated: `MIN_FRAME=64, MIN_DATA=60, IFG_BYTES=12`; `MIN_DATA=46, IFG_BYTES=16`; `MIN_DATA=1, IFG_BYTES=1`.
 
 Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):

@@ -1,0 +1,53 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults (the other runner skips it)
+faults:
+  - name: arp_reply_wrong_opcode
+    file: arp_responder.sv
+    old: "6'd21: arp_byte = rep ? 8'h02 : 8'h01;"
+    new: "6'd21: arp_byte = 8'h01;"
+    class: protocol
+    why: replies go out with the request opcode
+    test: flow/net/tests/test_63d_arp_rtl.py -k cache4
+  - name: arp_answers_any_address
+    file: arp_responder.sv
+    old: "assign for_me = arp_ok && tpa == own_ip;"
+    new: "assign for_me = arp_ok;"
+    class: missing check
+    why: requests for other hosts' addresses are answered
+    test: flow/net/tests/test_63d_arp_rtl.py -k cache4
+  - name: arp_round_robin_stuck
+    file: arp_responder.sv
+    old: "rr <= (int'(rr) == CACHE_N - 1) ? '0 : rr + 1'b1;"
+    new: "rr <= rr;"
+    class: state
+    why: a full cache always replaces the same slot
+    test: flow/net/tests/test_63d_arp_rtl.py -k cache4
+  - name: arp_bad_frames_accepted
+    file: arp_responder.sv
+    old: "assign arp_ok = !fin_bad && fin_long"
+    new: "assign arp_ok = fin_long"
+    class: missing check
+    why: frames that ended with tuser (bad FCS) are answered and learnt
+    test: flow/net/tests/test_63d_arp_rtl.py -k cache4
+  - name: arp_no_holdoff
+    file: arp_responder.sv
+    old: "assign ask = lk_valid && !lk_h && !req_pend && !(ho_t != '0 && ho_ip == lk_ip);"
+    new: "assign ask = lk_valid && !lk_h && !req_pend;"
+    class: missing check
+    why: repeated misses for one address send a request each time
+    test: flow/net/tests/test_63d_arp_rtl.py -k cache4
+  - name: arp_learns_gratuitous_unknown
+    file: arp_responder.sv
+    old: "assign learn = fin && arp_ok && spa != 32'd0 && spa != own_ip && (for_me || known);"
+    new: "assign learn = fin && arp_ok && spa != 32'd0 && spa != own_ip && (for_me || known || tpa == spa);"
+    class: protocol
+    why: a gratuitous ARP from an unknown host is learnt (RFC 826 merges only known senders; found by the independent review)
+    test: flow/net/tests/test_63d_adversarial_rtl.py -k arp
+  - name: arp_learns_own_ip_claim
+    file: arp_responder.sv
+    old: "assign learn = fin && arp_ok && spa != 32'd0 && spa != own_ip && (for_me || known);"
+    new: "assign learn = fin && arp_ok && spa != 32'd0 && (for_me || known);"
+    class: protocol
+    why: another station claiming own_ip is cached (RFC 5227 address conflict; found by the independent review)
+    test: flow/net/tests/test_63d_adversarial_rtl.py -k arp

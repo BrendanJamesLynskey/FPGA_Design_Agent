@@ -20,6 +20,8 @@ SPEEDS = [int(s) for s in os.environ.get("MAC_SPEEDS", "2").split(",")]
 N = int(os.environ.get("MAC_N", "24"))
 PERIOD_NS = {2: 8, 1: 40, 0: 400}
 PRE = bytes([0x55] * 7 + [0xD5])
+OWN = bytes.fromhex("020000000001")       # a locally administered address
+OWN_INT = int.from_bytes(OWN, "big")
 
 
 def fcs(b: bytes) -> bytes:
@@ -131,6 +133,10 @@ async def setup(dut, speed: int) -> Phy:
     dut.s_axis_tlast.value = 0
     dut.s_axis_tuser.value = 0
     dut.tx_poison.value = 0
+    for name, v in (("mac_addr", OWN_INT), ("promisc", 0), ("bcast_en", 1), ("mcast_all", 0), ("mc_hash", 0),
+                    ("mc_we", 0), ("mc_idx", 0), ("mc_addr", 0), ("mc_en", 0), ("pause_req", 0), ("pause_quanta", 0),
+                    ("stat_clear", 0), ("stat_addr", 0)):
+        getattr(dut, name).value = v
     dut.rst.value = 1
     phy = Phy(dut, speed)
     await phy.rx_idle(8)                                  # RX_CLK runs during reset (the RX reset is synchronised to it)
@@ -220,7 +226,7 @@ async def receive(dut):
         mon_task.cancel()
         assert len(seen) == len(cases), (len(seen), len(cases))
         for (fr, er, kind), got, e in zip(cases, seen, ends):
-            assert got == fr[:2047], f"{kind}: bytes differ"
+            assert got == fr[:2047 if maxf <= 2000 else 16383], f"{kind}: bytes differ"     # rx_idx saturates
             assert e["len"] == len(fr)
             assert e["good"] == (kind == "good"), (kind, e)
             assert e["fcs_err"] == (kind in ("fcs",)), (kind, e)
@@ -300,3 +306,343 @@ async def transmit(dut):
             assert min(phy.tx_gaps) == ifg + 1, (min(phy.tx_gaps), ifg)
         assert underruns == marks.count("underrun")
         dut._log.info(f"transmit speed {speed}: {n} frames, gaps min {min(phy.tx_gaps or [0])}")
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# 0.2 features: address filter, VLAN, pause, statistics, jumbo frames. Expected values from ip_lib/eth_mac_rgmii/model.py
+# (written from IEEE 802.3 and 802.1Q), never from the RTL.
+from ip_lib.eth_mac_rgmii import model as M  # noqa: E402
+
+EXACT = [bytes.fromhex("01005e000001"), bytes.fromhex("01005e7f0002"), bytes.fromhex("01005e0000fb")]
+HASHED = [bytes.fromhex("333300000001"), bytes.fromhex("01005e0a0b0c")]
+
+
+async def read_stats(dut) -> dict:
+    out = {}
+    for i, name in enumerate(M.STAT_NAMES):
+        dut.stat_addr.value = i
+        await RisingEdge(dut.clk)
+        await RisingEdge(dut.clk)
+        await ReadOnly()
+        out[name] = int(dut.stat_data.value)
+        await RisingEdge(dut.clk)
+    return out
+
+
+async def configure(dut, c: M.FilterCfg, n_exact: int):
+    dut.mac_addr.value = M.mac_int(c.own)
+    dut.promisc.value = int(c.promisc)
+    dut.bcast_en.value = int(c.bcast_en)
+    dut.mcast_all.value = int(c.mcast_all)
+    dut.mc_hash.value = c.hash_bits
+    for i in range(n_exact):
+        await RisingEdge(dut.clk)
+        dut.mc_we.value, dut.mc_idx.value = 1, i
+        dut.mc_addr.value = M.mac_int(c.exact[i]) if i < len(c.exact) else 0
+        dut.mc_en.value = int(i < len(c.exact))
+    await RisingEdge(dut.clk)
+    dut.mc_we.value = 0
+
+
+DA_KINDS = ["own", "bcast", "exact", "hash", "mcast", "other", "pause"]
+
+
+def rand_da(rng: random.Random, c: M.FilterCfg, k: str | None = None) -> bytes:
+    k = k or rng.choice(DA_KINDS)
+    if k == "own":
+        return c.own
+    if k == "bcast":
+        return M.BCAST
+    if k == "exact" and c.exact:
+        return rng.choice(c.exact)
+    if k == "hash":
+        return rng.choice(HASHED)
+    if k == "pause":
+        return M.PAUSE_DA
+    if k == "mcast":
+        return bytes([0x01, 0x00, 0x5E, rng.randrange(128), rng.randrange(256), rng.randrange(256)])
+    return bytes([0x02, 0x11, 0x22, rng.randrange(256), rng.randrange(256), 0x10])
+
+
+def rand_frame(rng: random.Random, c: M.FilterCfg, max_len: int = 300, kind: str | None = None) -> bytes:
+    """A frame without FCS: a random destination (or one of `kind`), sometimes tagged, sometimes a MAC control
+    (pause) frame."""
+    da = rand_da(rng, c, kind)
+    sa = bytes([0x02, 0x33, 0x44, 0x55, 0x66, rng.randrange(256)])
+    u = rng.random()
+    if u < 0.15:
+        body = b"\x88\x08\x00\x01" + struct.pack(">H", rng.randrange(1, 4))     # pause, short quanta
+    elif u < 0.2:
+        body = b"\x88\x08\x00\x02"                                              # another MAC control opcode
+    elif u < 0.45:
+        tpid = rng.choice([b"\x81\x00", b"\x88\xa8"])
+        body = tpid + struct.pack(">H", rng.randrange(65536)) + b"\x08\x00"
+    else:
+        body = b"\x08\x00"
+    n = rng.randrange(60, max_len)
+    return (da + sa + body + bytes(rng.randrange(256) for _ in range(n))).ljust(60, b"\x00")[:max(60, n)]
+
+
+async def rx_run(dut, phy, frames_fcs, rng, ct: int):
+    """Drive frames (with FCS) into the receive pins; return the cut-through verdicts and flags per frame and the
+    store-and-forward frames with their TCI."""
+    ends, axis = [], []
+
+    async def mon():
+        acur, atci = bytearray(), None
+        while True:
+            await RisingEdge(dut.clk)
+            await ReadOnly()
+            if int(dut.rx_end_valid.value):
+                ends.append({k: int(getattr(dut, "rx_end_" + k).value) for k in
+                             ("good", "len", "filtered", "bcast", "mcast", "vlan", "tci", "ctrl", "pause", "giant")})
+            tv = int(dut.m_axis_tvalid.value)
+            if tv:
+                td, tl = int(dut.m_axis_tdata.value), int(dut.m_axis_tlast.value)
+                tci = (int(dut.m_axis_tci.value), int(dut.m_axis_tagged.value))
+            await Timer(1, unit="ns")
+            ready = 1 if rng.random() < 0.8 else 0
+            dut.m_axis_tready.value = ready
+            if tv and ready:
+                if not acur:
+                    atci = tci
+                assert tci == atci, "m_axis_tci changed inside a frame"
+                acur.append(td)
+                if tl:
+                    axis.append((bytes(acur), atci[0] if atci[1] else None))
+                    acur = bytearray()
+
+    t = cocotb.start_soon(mon())
+    for fr in frames_fcs:
+        await phy.rx_frame(PRE + fr)
+        await phy.rx_idle(12)
+    await phy.rx_idle(64)
+    for _ in range(3000 + sum(len(f) for f in frames_fcs) // 2):
+        await RisingEdge(dut.clk)
+    t.cancel()
+    dut.m_axis_tready.value = 1
+    return ends, axis
+
+
+@cocotb.test()
+async def filter_rx(dut):
+    """Address filter, VLAN tag report and strip, MAC control frames consumed, statistics: three filter settings, each
+    against the model frame by frame, then every counter and a clear."""
+    ct, flt, vlan, pause = (param(dut, n) for n in ("CUT_THROUGH", "FILTER", "VLAN", "PAUSE"))
+    n_exact = param(dut, "MC_EXACT")
+    speed = SPEEDS[0]
+    phy = await setup(dut, speed)
+    rng = random.Random(SEED + 77)
+    st = M.new_stats()
+    settings = [M.FilterCfg(own=OWN, exact=EXACT[:min(n_exact, 2)], hash_bits=sum(1 << M.hash_index(h) for h in HASHED)),
+                M.FilterCfg(own=OWN, promisc=True),
+                M.FilterCfg(own=OWN, bcast_en=False, mcast_all=True)]
+    for si, c in enumerate(settings):
+        await configure(dut, c, n_exact)
+        frames, kinds = [], []
+        for k in range(N if speed == 2 else max(6, N // 3)):
+            fr = rand_frame(rng, c, kind=DA_KINDS[k - 1] if 1 <= k <= len(DA_KINDS) else None)   # each kind once
+            kind = "good" if k % 8 else rng.choice(["fcs", "runt"])
+            if kind == "fcs":
+                f = bytearray(fr + M.fcs(fr)); f[-1] ^= 1; frames.append(bytes(f))
+            elif kind == "runt":
+                fr = fr[:40]; frames.append(fr + M.fcs(fr))
+            else:
+                frames.append(fr + M.fcs(fr))
+            kinds.append(kind)
+        ends, axis = await rx_run(dut, phy, frames, rng, ct)
+        assert len(ends) == len(frames), (len(ends), len(frames))
+        want_axis = []
+        for fr, kind, e in zip(frames, kinds, ends):
+            f = M.classify(fr[:-4], c)
+            assert e["good"] == (kind == "good"), (si, kind, e)
+            assert e["len"] == len(fr)
+            if kind == "good":
+                assert e["filtered"] == (flt and not f["match"]), (si, fr[:6].hex(), e)
+                assert e["bcast"] == f["bcast"] and e["mcast"] == f["mcast"], (si, fr[:6].hex(), e)
+                assert e["ctrl"] == f["ctrl"]
+                assert e["pause"] == (pause and f["pause"]), (fr[:18].hex(), e)
+                assert e["vlan"] == (bool(vlan) and f["vlan"]) and e["tci"] == (f["tci"] if vlan else 0), (fr[:18].hex(), e)
+                if (not flt or f["match"]) and not (pause and f["ctrl"]):
+                    want_axis.append(M.sf_output(fr[:-4], vlan == 2))
+            M.count_rx(st, fr, kind, c, bool(flt), bool(vlan), bool(pause))
+        if ct == 0:
+            assert axis == want_axis, f"setting {si}: {len(axis)} frames out, {len(want_axis)} expected"
+        else:
+            assert not axis
+        dut._log.info(f"filter_rx setting {si}: {len(frames)} frames, {len(want_axis)} kept")
+    if ct == 0:                     # the store-and-forward latency: rx_end_valid to the first m_axis beat, buffer empty
+        await configure(dut, M.FilterCfg(own=OWN), n_exact)
+        fr = OWN + bytes(range(6, 64))
+        t = {}
+
+        async def lat():
+            n = 0
+            while True:
+                await RisingEdge(dut.clk)
+                await ReadOnly()
+                n += 1
+                if int(dut.rx_end_valid.value) and "end" not in t:
+                    t["end"] = n
+                if int(dut.m_axis_tvalid.value) and "end" in t and "out" not in t:
+                    t["out"] = n
+        lt = cocotb.start_soon(lat())
+        await phy.rx_frame(PRE + fr + M.fcs(fr))
+        await phy.rx_idle(80)
+        lt.cancel()
+        assert t["out"] - t["end"] == 4, t
+        dut._log.info(f"store-and-forward latency: {t['out'] - t['end']} clocks from rx_end_valid to m_axis_tvalid")
+        st["rx_frames_good"] += 1
+        st["rx_octets_good"] += len(fr) + 4
+    if param(dut, "STATS"):
+        got = await read_stats(dut)
+        w = param(dut, "STAT_W")
+        want = {k: v % (1 << w) for k, v in st.items()}
+        assert got == want, {k: (got[k], want[k]) for k in want if got[k] != want[k]}
+        dut.stat_clear.value = 1
+        await RisingEdge(dut.clk)
+        dut.stat_clear.value = 0
+        got = await read_stats(dut)
+        assert not any(got.values()), got
+        dut._log.info(f"statistics: {want}")
+
+
+async def send_frame(dut, data: bytes):
+    """Offer one frame on s_axis without gaps; return when its last beat is taken."""
+    i = 0
+    while i < len(data):
+        dut.s_axis_tvalid.value = 1
+        dut.s_axis_tdata.value = data[i]
+        dut.s_axis_tlast.value = int(i == len(data) - 1)
+        await ReadOnly()
+        took = int(dut.s_axis_tready.value)
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
+        if took:
+            i += 1
+    dut.s_axis_tvalid.value = 0
+    dut.s_axis_tlast.value = 0
+
+
+@cocotb.test()
+async def pause(dut):
+    """802.3x: a requested pause frame goes out ahead of waiting data, bytes and FCS exact; a received pause holds new
+    frames for quanta x 64 byte times, quanta 0 releases it at once; the counters agree."""
+    min_data = param(dut, "MIN_DATA")
+    for speed in SPEEDS:
+        phy = await setup(dut, speed)
+        bt = {2: 1, 1: 10, 0: 100}[speed]             # clocks per byte time
+        txmon = cocotb.start_soon(phy.tx_monitor())
+        st = M.new_stats()
+        # 1. pause_req and a user frame together: the pause frame first
+        user = bytes([0x02, 0x99, 0, 0, 0, 1]) + OWN + b"\x08\x00" + bytes(range(50))
+        dut.pause_quanta.value = 0x1234
+        dut.pause_req.value = 1
+        await RisingEdge(dut.clk)
+        dut.pause_req.value = 0
+        await send_frame(dut, user)
+        for _ in range(200 * bt):
+            await RisingEdge(dut.clk)
+        assert len(phy.tx_frames) == 2, len(phy.tx_frames)
+        w = phy.tx_frames[0]
+        assert w[:8] == PRE and w[8:-4] == M.pause_frame(OWN, 0x1234) and w[-4:] == M.fcs(w[8:-4]), w.hex()
+        assert phy.tx_frames[1][8:-4] == user + bytes(max(0, min_data - len(user)))
+        M.count_tx(st, M.pause_frame(OWN, 0x1234), True, min_data, pause=True)
+        M.count_tx(st, user, True, min_data)
+        # 1b. a second request while a pause frame is on the wire: that frame keeps its quanta, the next carries the new
+        n1 = len(phy.tx_frames)
+        dut.pause_quanta.value = 0x0101
+        dut.pause_req.value = 1
+        await RisingEdge(dut.clk)
+        dut.pause_req.value = 0
+        for _ in range(16 * bt):                          # into the first pause frame, before its quanta bytes
+            await RisingEdge(dut.clk)
+        dut.pause_quanta.value = 0x0202
+        dut.pause_req.value = 1
+        await RisingEdge(dut.clk)
+        dut.pause_req.value = 0
+        for _ in range(250 * bt):
+            await RisingEdge(dut.clk)
+        assert [f[8:-4] for f in phy.tx_frames[n1:]] == [M.pause_frame(OWN, 0x0101), M.pause_frame(OWN, 0x0202)], \
+            [f[8:28].hex() for f in phy.tx_frames[n1:]]
+        M.count_tx(st, M.pause_frame(OWN, 0x0101), True, min_data, pause=True)
+        M.count_tx(st, M.pause_frame(OWN, 0x0202), True, min_data, pause=True)
+        # 2. a received pause holds the next frame back for quanta x 64 byte times
+        for q in (3, 0):
+            pf = M.pause_frame(M.PAUSE_DA, q)[:6] + bytes.fromhex("021111111111") + M.pause_frame(OWN, q)[12:]
+            t_end = []
+
+            async def watch():
+                while True:
+                    await RisingEdge(dut.clk)
+                    await ReadOnly()
+                    if int(dut.rx_end_valid.value):
+                        t_end.append(cocotb.utils.get_sim_time("ns"))
+                        return
+            wt = cocotb.start_soon(watch())
+            await phy.rx_frame(PRE + pf + M.fcs(pf))
+            await phy.rx_idle(4)
+            while not t_end:
+                await RisingEdge(dut.clk)
+            await RisingEdge(dut.clk)
+            await RisingEdge(dut.clk)
+            await ReadOnly()
+            assert bool(int(dut.tx_paused.value)) == (q != 0)
+            await Timer(1, unit="ns")
+            n0 = len(phy.tx_frames)
+            firsts = []
+
+            async def first():
+                while True:
+                    await RisingEdge(dut.clk)
+                    await ReadOnly()
+                    if int(dut.tx_first_pulse.value):
+                        firsts.append(cocotb.utils.get_sim_time("ns"))
+            ft = cocotb.start_soon(first())
+            await send_frame(dut, user)
+            for _ in range(200 * bt):
+                await RisingEdge(dut.clk)
+            ft.cancel()
+            t_first = firsts[0] if firsts else None
+            wt.cancel()
+            assert t_first is not None and len(phy.tx_frames) == n0 + 1
+            held = (t_first - t_end[0]) / 8 / bt                 # byte times from the pause's end to the next frame
+            assert q * 64 <= held <= q * 64 + 40, (q, held)
+            M.count_rx(st, pf + M.fcs(pf), "good", M.FilterCfg(own=OWN), bool(param(dut, "FILTER")), False, True)
+            M.count_tx(st, user, True, min_data)
+            dut._log.info(f"pause speed {speed}: quanta {q}, next frame {held:.0f} byte times after the pause frame")
+        txmon.cancel()
+        if param(dut, "STATS"):
+            got = await read_stats(dut)
+            for k in ("rx_pause", "tx_pause", "tx_frames_good", "tx_octets_good", "tx_mcast", "rx_frames_good"):
+                assert got[k] == st[k], (k, got[k], st[k])
+
+
+@cocotb.test()
+async def jumbo(dut):
+    """Jumbo frames: 9000-byte MTU frames (tagged and not), MAX_FRAME exactly, one byte over (giant), through the
+    cut-through view and the store-and-forward buffer, and a 9014-byte frame transmitted."""
+    maxf = param(dut, "MAX_FRAME")
+    phy = await setup(dut, 2)
+    rng = random.Random(SEED + 99)
+    c = M.FilterCfg(own=OWN)
+
+    def mk(n, tag=False):
+        head = OWN + bytes.fromhex("023333333333") + ((b"\x81\x00\x00\x05") if tag else b"") + b"\x08\x00"
+        return head + bytes(rng.randrange(256) for _ in range(n - len(head)))
+    frames = [mk(14 + 9000), mk(18 + 9000, tag=True), mk(maxf - 4), mk(maxf - 3), mk(60)]
+    fcsd = [f + M.fcs(f) for f in frames]
+    ends, axis = await rx_run(dut, phy, fcsd, rng, 0)
+    assert [e["len"] for e in ends] == [len(f) for f in fcsd]
+    assert [e["good"] for e in ends] == [1, 1, 1, 0, 1], ends
+    assert ends[3]["giant"] == 1
+    if param(dut, "CUT_THROUGH") == 0:
+        assert axis == [M.sf_output(f, param(dut, "VLAN") == 2) for f in (frames[0], frames[1], frames[2], frames[4])]
+    txmon = cocotb.start_soon(phy.tx_monitor())
+    big = mk(9014)
+    await send_frame(dut, big)
+    for _ in range(300):
+        await RisingEdge(dut.clk)
+    txmon.cancel()
+    assert phy.tx_frames and phy.tx_frames[-1] == PRE + big + M.fcs(big)
+    dut._log.info(f"jumbo: received {[len(f) for f in fcsd]}, sent {len(big) + 4}")

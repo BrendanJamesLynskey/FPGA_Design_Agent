@@ -1,11 +1,17 @@
 # ip.yaml for eth_mac_rgmii: the declared parameter space and contract (the library's reuse rules).
 name: eth_mac_rgmii
-version: 0.1.0
-status: simulated; synthesised and routed inside the KR260 trading-path design; standalone out-of-context (OOC) cost table pending; not yet run on a board
-summary: 'Tri-mode (10/100/1000 Mb/s) Ethernet MAC for a PHY with an RGMII (reduced gigabit media-independent
-  interface) link: cut-through receive (bytes passed on as they arrive) with the FCS (frame check sequence, the CRC at
-  the end of a frame) verdict at the end, optional store-and-forward AXI-Stream receive, AXI-Stream transmit with
-  padding, FCS and inter-frame gap (IFG); the receive clock crossing inside.'
+version: 0.2.0
+status: Meets 125 MHz out of context with the block RAM buffer (139-141 MHz estimated); the LUT RAM buffer meets it only just
+  in one run at 32768 bytes (WNS 0.04 ns, within run-to-run noise). Simulated (0.1.0 and 0.2.0 features, with an independent
+  adversarial pause bench); formal checks of the frame FSMs (bounded) and the address filter; built alone on an Artix-7 with
+  Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not yet run on a board (its filter and
+  statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not yet run)
+summary: 'Tri-mode (10/100/1000 Mb/s) Ethernet MAC for a PHY with an RGMII (reduced gigabit media-independent interface) link:
+  cut-through receive (bytes passed on as they arrive) with the FCS (frame check sequence, the CRC at the end of a frame)
+  verdict at the end, optional store-and-forward AXI-Stream receive, AXI-Stream transmit with padding, FCS and inter-frame
+  gap (IFG); the receive clock crossing inside. Optional (off by default): receive address filter (own unicast, broadcast,
+  promiscuous, multicast by exact table and 64-bin hash), VLAN tag report and strip, IEEE 802.3x pause (honoured and sent),
+  statistics counters, jumbo frames up to 9216 bytes.'
 top: eth_mac_rgmii
 rtl:
 - rtl/rgmii_rx.sv
@@ -14,33 +20,43 @@ rtl:
 - rtl/mac_rx.sv
 - rtl/mac_tx.sv
 - rtl/eth_rx_sf.sv
+- rtl/eth_rx_classify.sv
+- rtl/eth_mac_stats.sv
 - rtl/eth_mac_rgmii.sv
 depends:
-- eth_mac_rmii            # its byte-wide CRC-32 block (eth_crc32.sv) only
+- eth_mac_rmii
 interfaces:
 - name: rgmii
   type: native
   signals: rgmii_rx_clk, rgmii_rxd[3:0], rgmii_rx_ctl, rgmii_txc, rgmii_txd[3:0], rgmii_tx_ctl
 - name: rx_ct
   type: native
-  signals: rx_sof_pulse, rx_valid, rx_sof, rx_data[7:0], rx_idx[10:0], rx_end_valid, rx_end_good, rx_end_fcs_err,
-    rx_end_runt, rx_end_giant, rx_end_er, rx_end_len[10:0]
-  note: 'cut-through view, always present: every frame byte (FCS included) one clock after mac_rx takes it, before
-    the frame is known good; the verdict follows the last byte. No back-pressure'
+  signals: rx_sof_pulse, rx_valid, rx_sof, rx_data[7:0], rx_idx, rx_end_valid, rx_end_good, rx_end_fcs_err, rx_end_runt, rx_end_giant,
+    rx_end_er, rx_end_len (11 bits; 14 when MAX_FRAME > 2000), rx_da_valid, rx_da_match, rx_end_filtered, rx_end_bcast, rx_end_mcast,
+    rx_end_vlan, rx_end_tci[15:0], rx_end_ctrl, rx_end_pause
+  note: 'cut-through view, always present: every frame byte (FCS included) one clock after mac_rx takes it, before the frame
+    is known good; the verdict follows the last byte. No back-pressure'
 - name: m_axis
   type: axis
   dir: master
   tdata: 8
   tready: true
-  note: store-and-forward, CUT_THROUGH = 0 only; good frames without their FCS; bad and overflowing frames dropped
-    and counted (rx_sf_dropped, rx_sf_overflow)
+  note: store-and-forward, CUT_THROUGH = 0 only; good frames without their FCS; bad and overflowing frames dropped and counted
+    (rx_sf_dropped, rx_sf_overflow); with FILTER = 1 rejected frames and with PAUSE = 1 MAC control frames are dropped too;
+    with VLAN = 2 a tag is removed and its TCI rides beside every byte (m_axis_tci, m_axis_tagged)
 - name: s_axis
   type: axis
   dir: slave
   tdata: 8
   tuser: 1
-  note: a frame must keep coming once started (an underrun ends it with a bad FCS, tx_underrun); tuser or tx_poison
-    marks the frame bad (inverted FCS)
+  note: a frame must keep coming once started (an underrun ends it with a bad FCS, tx_underrun); tuser or tx_poison marks
+    the frame bad (inverted FCS)
+- name: config
+  type: native
+  signals: mac_addr[47:0], promisc, bcast_en, mcast_all, mc_hash[63:0], mc_we, mc_idx[3:0], mc_addr[47:0], mc_en, pause_req,
+    pause_quanta[15:0], tx_paused, tx_pause_sent, stat_clear, stat_addr[4:0], stat_data[STAT_W-1:0]
+  note: static while frames pass (the exact table is written one entry per clock); tie them when the feature is off. The statistics
+    are 21 wrapping counters, listed in rtl/eth_mac_stats.sv, read one clock after stat_addr
 clocks:
 - name: clk
   note: 125 MHz at every speed
@@ -68,8 +84,8 @@ parameters:
     default: 1522
     range:
     - 64
-    - 2000
-    note: 'receive: longest good frame, FCS included'
+    - 9216
+    note: 'receive: longest good frame, FCS included; above 2000 (jumbo frames) rx_idx and rx_end_len widen to 14 bits'
   MIN_DATA:
     type: int
     default: 60
@@ -91,27 +107,100 @@ parameters:
     - 2048
     - 65536
     pow2: true
-    note: store-and-forward buffer in bytes (CUT_THROUGH = 0)
+    note: 'store-and-forward buffer in bytes (CUT_THROUGH = 0): at least two frames of MAX_FRAME (32768 for 9216-byte jumbo
+      frames)'
+  FILTER:
+    type: int
+    default: 0
+    set:
+    - 0
+    - 1
+    note: 1 = receive address filter (eth_rx_classify)
+  MC_EXACT:
+    type: int
+    default: 4
+    range:
+    - 0
+    - 16
+    note: exact-match multicast table entries (FILTER = 1)
+  VLAN:
+    type: int
+    default: 0
+    set:
+    - 0
+    - 1
+    - 2
+    note: 0 = none; 1 = report a tag (rx_end_vlan, rx_end_tci); 2 = also strip it from the store-and-forward output
+  PAUSE:
+    type: int
+    default: 0
+    set:
+    - 0
+    - 1
+    note: '1 = IEEE 802.3x pause: received pause frames honoured, pause_req sends one; MAC control frames consumed'
+  STATS:
+    type: int
+    default: 0
+    set:
+    - 0
+    - 1
+    note: 1 = statistics counters (eth_mac_stats)
+  STAT_W:
+    type: int
+    default: 32
+    range:
+    - 16
+    - 64
+    note: counter width (STATS = 1)
+  RX_RAM:
+    type: string
+    default: bram
+    set:
+    - bram
+    - lutram
+    note: 'the store-and-forward buffer: block RAM or LUT RAM (the implementation variants)'
+  IO_FAMILY:
+    type: string
+    default: ultrascale
+    set:
+    - ultrascale
+    - 7series
+    note: 'DDR input and output registers: IDDRE1/ODDRE1 (UltraScale, UltraScale+) or IDDR/ODDR (7-series)'
 constraints:
 - MIN_FRAME <= MAX_FRAME
-- SF_DEPTH >= 2 * MAX_FRAME when CUT_THROUGH = 0
+- SF_DEPTH >= 2 * MAX_FRAME or CUT_THROUGH == 1
+- VLAN != 2 or CUT_THROUGH == 0
+- MIN_DATA <= 60 or PAUSE == 0
 latency:
-  rx: 'cut-through: a byte leaves rx_* one 8 ns clock after it leaves the clock-crossing FIFO. In a looped simulation
-    the transmit MAC''s first preamble byte reaches the receive MAC as its SFD (start-of-frame delimiter) 17 clocks
-    (136 ns) later: 8 of them are the preamble and SFD themselves, the rest the RGMII pins and the clock-crossing FIFO,
-    which is a simulation model, so its real latency is unmeasured (results/b58a/pins_sim.json). Store-and-forward: the
-    whole frame, then 2 clocks'
-  tx: first preamble byte on the MAC's output 2 clocks after s_axis_tvalid while idle; 2 more to TX_CTL at the pins (a register and the ODDRE1, simulation model; results/b58a/pins_sim.json)
-throughput: 'line rate at 10, 100 and 1000 Mb/s; frames offered back to back leave IFG_BYTES + 1 idle byte times apart
-  (flow/net/tests/mac_rgmii_cocotb.py)'
+  rx: 'cut-through: a byte leaves rx_* one 8 ns clock after it leaves the clock-crossing FIFO. In a looped simulation the
+    transmit MAC''s first preamble byte reaches the receive MAC as its SFD (start-of-frame delimiter) 17 clocks (136 ns) later:
+    8 of them are the preamble and SFD themselves, the rest the RGMII pins and the clock-crossing FIFO, which is a simulation
+    model, so its real latency is unmeasured (results/b58a/pins_sim.json). Store-and-forward: the whole frame, then the first
+    byte on m_axis 4 clocks after rx_end_valid when the buffer was empty (the variants'' declared latency; measured in flow/net/tests/mac_rgmii_cocotb.py)'
+  tx: first preamble byte on the MAC's output 2 clocks after s_axis_tvalid while idle; 2 more to TX_CTL at the pins (a register
+    and the ODDRE1, simulation model; results/b58a/pins_sim.json)
+throughput: line rate at 10, 100 and 1000 Mb/s; frames offered back to back leave IFG_BYTES + 1 idle byte times apart (flow/net/tests/mac_rgmii_cocotb.py)
 guards:
 - CUT_THROUGH: 2
 - MIN_FRAME: 17
-- MAX_FRAME: 2001
+- MAX_FRAME: 9217
 - CUT_THROUGH: 0
   SF_DEPTH: 3000
 - MIN_DATA: 0
 - IFG_BYTES: 0
+- FILTER: 2
+- MC_EXACT: 17
+- VLAN: 3
+- VLAN: 2
+  CUT_THROUGH: 1
+- PAUSE: 2
+- STATS: 2
+- STAT_W: 15
+- RX_RAM: uram
+- IO_FAMILY: versal
+- CUT_THROUGH: 0
+  MAX_FRAME: 9216
+  SF_DEPTH: 16384
 sweep_tested:
 - CUT_THROUGH: 1
 - CUT_THROUGH: 0
@@ -122,29 +211,105 @@ sweep_tested:
   MAX_FRAME: 1000
   MIN_DATA: 46
   IFG_BYTES: 16
+- CUT_THROUGH: 0
+  FILTER: 1
+  VLAN: 2
+  PAUSE: 1
+  STATS: 1
+- CUT_THROUGH: 0
+  SF_DEPTH: 2048
+  MAX_FRAME: 1000
+  RX_RAM: lutram
+  FILTER: 1
+  MC_EXACT: 1
+  VLAN: 1
+  STATS: 1
+  STAT_W: 16
+- CUT_THROUGH: 1
+  FILTER: 1
+  MC_EXACT: 0
+  VLAN: 1
+  PAUSE: 1
+  STATS: 1
+- CUT_THROUGH: 0
+  MAX_FRAME: 9216
+  SF_DEPTH: 32768
+  VLAN: 2
+  STATS: 1
 boundary:
-  registered_outputs: RGMII data and control through ODDRE1/IDDRE1 (behavioural models in simulation); rx_*, m_axis
-    and the MAC's GMII side are registers
-  cdc: 'one crossing, RX_CLK to clk: an xpm_fifo_async (16 entries, 2 synchroniser stages), the receive reset by
-    xpm_cdc_sync_rst and the speed setting by xpm_cdc_array_single; TXC''s waveform moves from clk to clk90 through
-    one register'
-  part_specific: IDDRE1/ODDRE1 (UltraScale and UltraScale+) under `ifdef SYNTHESIS`; 7-series needs IDDR/ODDR
-    instead (not yet written). Pins, IO standards, RGMII delay mode and the RX clock buffer are the board's
-    (the project knowledge base, board/kr260/ethernet)
-limits: 'formal checks of the frame state machines are bounded (20 and 40 clocks), not proofs; full duplex only; no MDIO (the trading-path design has its own MDIO master), no pause frames, no VLAN handling, no
-  statistics block; 10/100 nibble alignment needs the SFD; RGMII input timing is closed only for the PHY''s internal
-  RX delay mode (board XDC); measured only in simulation so far'
+  registered_outputs: RGMII data and control through ODDRE1/IDDRE1 (behavioural models in simulation); rx_*, m_axis and the
+    MAC's GMII side are registers
+  cdc: 'one crossing, RX_CLK to clk: an xpm_fifo_async (16 entries, 2 synchroniser stages), the receive reset by xpm_cdc_sync_rst
+    and the speed setting by xpm_cdc_array_single; TXC''s waveform moves from clk to clk90 through one register'
+  part_specific: IDDRE1/ODDRE1 (IO_FAMILY ultrascale) or IDDR/ODDR (IO_FAMILY 7series) under `ifdef SYNTHESIS`; the input
+    delay (IDELAYE3) is UltraScale only. Pins, IO standards, RGMII delay mode and the RX clock buffer are the board's (the
+    project knowledge base, board/kr260/ethernet)
+limits: formal checks of the frame state machines are bounded (20 and 40 clocks), not proofs, and the address filter is checked
+  by bounded model checking against the rule restated in the harness; full duplex only; no half duplex, no priority flow control
+  (802.1Qbb), no IEEE 1588 timestamps beyond the SOF pulses; VLAN stripping removes one tag only and only from the store-and-forward
+  output; the MDIO master is a separate entry (mdio_master); 10/100 nibble alignment needs the SFD; RGMII input timing is
+  closed only for the PHY's internal RX delay mode (board XDC); not yet run on a board; the multicast hash bin is the 6 least
+  significant bits of the reflected CRC-32 register over the destination (ether_crc_le(6, addr) & 0x3f in Linux), not the
+  bit-reversed index some MACs use, so a driver filling mc_hash must use the same; VLAN = 2 strips only the outer tag of a
+  double-tagged frame (the inner tag stays in the frame; m_axis_tci is the outer TCI); a 64-byte tagged frame leaves the store-and-forward
+  output as 56 bytes, under the 60-byte Ethernet minimum (the consumer pads if it forwards it); with FILTER and PAUSE, consumed
+  pause frames are not counted as filtered
 resets:
 - name: rst
   polarity: high
   style: synchronous
 evidence:
-  summary: cocotb against a Python RGMII PHY model written from RGMII v2.0 and IEEE 802.3 (zlib's CRC-32 for the FCS),
-    Icarus Verilog 12; at 1000, 100 and 10 Mb/s in both directions
+  summary: cocotb against a Python RGMII PHY model written from RGMII v2.0 and IEEE 802.3 (zlib's CRC-32 for the FCS) and
+    a model of the 0.2 features written from IEEE 802.3 and 802.1Q (model.py), Icarus Verilog 12; 0.1.0's tests at 1000, 100
+    and 10 Mb/s in both directions with every new feature off; the filter under three settings with frame-by-frame flags,
+    the store-and-forward output with tags stripped, every statistics counter and a clear, pause honoured (hold time measured
+    in byte times at 1000 and 100 Mb/s) and sent ahead of waiting data, and 9000-byte MTU jumbo frames; an independent adversarial
+    bench adds a pause received mid-frame and a zero-quanta pause ending a long one, and a pause requested while a pause frame
+    is on the wire
   tests:
   - flow/net/tests/test_58_mac_rgmii_rtl.py
+  - flow/net/tests/test_63d_adversarial_rtl.py
+  - flow/net/tests/test_63d_formal.py
   faults: ip_lib/eth_mac_rgmii/faults.yaml
-  results: results/b58a/mac_rgmii_faults.json, results/b58a/pins_sim.json
-  simulator: Icarus Verilog 12, cocotb 2.0.1
-cost_table: 'pending: the OOC sweep is not run; the whole trading-path design on the KR260 is in results/b58a'
+  results: results/b58a/mac_rgmii_faults.json, results/b63d/faults.json, results/b58a/pins_sim.json, ip_lib/eth_mac_rgmii/char/xc7a100tcsg324-1.json
+  simulator: Icarus Verilog 12, cocotb 2.0.1; SymbiYosys for the formal checks
+cost_table: measured costs are in the Variants section above (the 0.1.0 trading-path build on the KR260 is in results/b58a)
 licence: MIT (this repository)
+variant_param: RX_RAM
+variants:
+  bram:
+    summary: the store-and-forward buffer in block RAM
+    when: 'the default; measured: 1 block RAM tile at SF_DEPTH 4096, 8 at 32768, about 139-141 MHz'
+    uses:
+      dsp: 0
+      bram_tiles: 0 if CUT_THROUGH == 1 else max(0.5, SF_DEPTH / 4096)
+    latency: 4
+    ii: 1
+  lutram:
+    summary: the store-and-forward buffer in LUT RAM
+    when: 'block RAM spoken for and small buffers; measured: 796 LUTs as RAM at 4096 (about 133 MHz), 6174 at 32768, where
+      it meets 125 MHz only just in one run (WNS 0.04 ns)'
+    uses:
+      dsp: 0
+      bram_tiles: 0
+    latency: 4
+    ii: 1
+characterisation:
+  part: xc7a100tcsg324-1
+  clock_ns: 8.0
+  points:
+  - CUT_THROUGH: 0
+    SF_DEPTH: 4096
+    FILTER: 1
+    VLAN: 2
+    PAUSE: 1
+    STATS: 1
+    IO_FAMILY: 7series
+  - CUT_THROUGH: 0
+    SF_DEPTH: 32768
+    MAX_FRAME: 9216
+    FILTER: 1
+    VLAN: 2
+    PAUSE: 1
+    STATS: 1
+    IO_FAMILY: 7series

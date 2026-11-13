@@ -32,6 +32,9 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 ## Evidence
 
 Python masters and slaves with random VALID gaps and READY stalls drive the crossbar at five parameter points; every write must reach exactly the owning slave with the same address, data, strobes and protection, every read must return the data and response the owning slave produced for it, unmapped addresses must get DECERR from the crossbar, and the AXI4-Lite protocol checker (axi_tx/rtl/axil_checker.sv) watches every master and slave link for rule violations. Round-robin fairness of reads and of writes under full contention, a reset with a write and a read in flight (nothing stale after it), and the parameter guards (misaligned or overlapping map; simulation only, synthesis ignores them) are tested too. Tests: `ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py`.
+
+Try it: `python3 -m pytest ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py`.
+
 Parameter points simulated: `N_M=1, N_S=1, ADDR_W=32`; `N_M=2, N_S=3, ADDR_W=32`; `N_M=3, N_S=4, ADDR_W=32`; `N_M=4, N_S=2, ADDR_W=16`; `N_M=2, N_S=5, ADDR_W=12`.
 
 Seeded faults (`faults.yaml`, run by `hil/ip_faults.py --blocks axil_xbar`):

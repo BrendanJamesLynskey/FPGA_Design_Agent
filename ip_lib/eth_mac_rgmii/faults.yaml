@@ -19,13 +19,13 @@ faults:
   - name: rgmii_rx_crc_skips_first_byte
     file: mac_rx.sv
     old: "assign crc_en    = data_beat;"
-    new: "assign crc_en    = data_beat && n != 11'd0;"
+    new: "assign crc_en    = data_beat && n != '0;"
     class: off-by-one
     why: the FCS check is computed over one byte too few
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
   - name: rgmii_rx_runt_not_flagged
     file: mac_rx.sv
-    old: "end_runt    <= n < 11'(MIN_FRAME);"
+    old: "end_runt    <= n < LEN_W'(MIN_FRAME);"
     new: "end_runt    <= 1'b0;"
     class: missing check
     why: frames shorter than MIN_FRAME are not reported as runts
@@ -39,15 +39,15 @@ faults:
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
   - name: tx_no_padding
     file: mac_tx.sv
-    old: "assign data_done = (ended || cur_last) && (i + 11'd1 >= 11'(MIN_DATA));"
+    old: "assign data_done = (ended || cur_last) && (i + 1'b1 >= LEN_W'(MIN_DATA));"
     new: "assign data_done = (ended || cur_last);"
     class: missing check
     why: short frames are sent without padding to MIN_DATA
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
   - name: tx_underrun_not_poisoned
     file: eth_mac_rgmii.sv
-    old: ".poison(tx_poison || bad)"
-    new: ".poison(tx_poison)"
+    old: ".poison((tx_poison && !src_p) || bad)"
+    new: ".poison(tx_poison && !src_p)"
     class: protocol
     why: a frame cut short by an AXI-Stream underrun leaves with a good FCS
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
@@ -60,15 +60,100 @@ faults:
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k ct_1000
   - name: sf_commits_bad_frames
     file: eth_rx_sf.sv
-    old: "if (end_good && !full_frame"
-    new: "if (!full_frame"
+    old: "if (end_good && end_keep && !full_frame"
+    new: "if (end_keep && !full_frame"
     class: missing check
     why: the store-and-forward buffer passes frames with a bad FCS
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k sf_small
   - name: sf_keeps_fcs
     file: eth_rx_sf.sv
-    old: "lens[lw[FW-1:0]] <= end_len - 11'd4;"
-    new: "lens[lw[FW-1:0]] <= end_len;"
+    old: "assign keep_len = end_len - LEN_W'(vtag ? 8 : 4);"
+    new: "assign keep_len = end_len - LEN_W'(vtag ? 4 : 0);"
     class: off-by-one
     why: the store-and-forward output includes the FCS bytes
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k sf_small
+  # 0.2 features (brief 63D)
+  - name: filter_hash_wrong_bits
+    file: eth_rx_classify.sv
+    old: "mc_hash[hcrc[5:0]]"
+    new: "mc_hash[hcrc[6:1]]"
+    class: protocol
+    why: the multicast hash takes the wrong six bits of the CRC
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_ct_hash_pause
+  - name: filter_broadcast_always
+    file: eth_rx_classify.sv
+    old: "(d_bcast && bcast_en)"
+    new: "d_bcast"
+    class: missing check
+    why: broadcast frames pass the filter with bcast_en off
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: vlan_strip_leaves_tci
+    file: eth_rx_sf.sv
+    old: "assign skip = tpid || (vtag && (bi == LEN_W'(14) || bi == LEN_W'(15)));"
+    new: "assign skip = tpid;"
+    class: protocol
+    why: stripping removes the TPID but leaves the TCI bytes in the frame
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: pause_quanta_half
+    file: eth_mac_rgmii.sv
+    old: "ptimer <= {c_quanta, 6'd0};"
+    new: "ptimer <= {1'b0, c_quanta, 5'd0};"
+    class: off-by-one
+    why: a pause quantum is taken as 256 bit times instead of 512
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: pause_not_honoured
+    file: eth_mac_rgmii.sv
+    old: "assign want_u    = s_axis_tvalid && !bad && !tx_paused;"
+    new: "assign want_u    = s_axis_tvalid && !bad;"
+    class: missing check
+    why: a received pause does not hold transmit frames back
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: pause_frame_wrong_opcode
+    file: eth_mac_rgmii.sv
+    old: "15: pbyte = 8'h01;"
+    new: "15: pbyte = 8'h02;"
+    class: protocol
+    why: the pause frame sent carries opcode 0x0002 instead of 0x0001
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: control_frames_forwarded
+    file: eth_mac_rgmii.sv
+    old: "assign consumed        = (PAUSE != 0) && c_ctrl;"
+    new: "assign consumed        = 1'b0;"
+    class: protocol
+    why: MAC control frames reach the store-and-forward output instead of being consumed
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: stats_octets_without_fcs
+    file: eth_mac_stats.sv
+    old: "inc[1] = STAT_W'(rx_len);"
+    new: "inc[1] = STAT_W'(rx_len) - STAT_W'(4);"
+    class: off-by-one
+    why: the good-octet counter leaves out the FCS
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: stats_mcast_counts_broadcast
+    file: eth_mac_stats.sv
+    old: "inc[8] = STAT_W'(rx_mcast && !rx_bcast);"
+    new: "inc[8] = STAT_W'(rx_mcast);"
+    class: protocol
+    why: broadcast frames are also counted as multicast
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full
+  - name: jumbo_length_11_bits
+    file: eth_mac_rgmii.sv
+    old: "localparam int LW = (MAX_FRAME > 2000) ? 14 : 11;"
+    new: "localparam int LW = 11;"
+    class: width
+    why: with jumbo frames the length counters stay 11 bits wide and saturate at 2047
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_jumbo
+  - name: pause_zero_quanta_ignored
+    file: eth_mac_rgmii.sv
+    old: "if (rx_end_valid && rx_end_good && c_pause) ptimer"
+    new: "if (rx_end_valid && rx_end_good && c_pause && c_quanta != 0) ptimer"
+    class: protocol
+    why: a pause of zero quanta does not end a pause in progress (found by the independent review)
+    test: flow/net/tests/test_63d_adversarial_rtl.py -k pause
+  - name: pause_quanta_not_latched
+    file: eth_mac_rgmii.sv
+    old: "t_d <= pbyte(req_idx, mac_addr, pq_cur);"
+    new: "t_d <= pbyte(req_idx, mac_addr, pq);"
+    class: state
+    why: a pause request arriving while a pause frame is sent changes that frame's quanta bytes mid-frame
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full

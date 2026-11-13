@@ -1,0 +1,134 @@
+# ip.yaml for icmp_echo: the declared parameter space and contract (the library's reuse rules; brief 63D).
+name: icmp_echo
+version: 0.1.0
+status: 'Misses 125 MHz out of context (89-116 MHz estimated); closes at 50 MHz. Simulated against a model that computes the
+  reply''s checksums from scratch, scapy as a second decoder; reply protocol checked by bounded model checking; built alone
+  out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii;
+  built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
+summary: 'Answers ping (ICMP echo, RFC 792) for one IPv4 address: stores the frame, checks both checksums, and sends the echo
+  reply with addresses swapped, a fresh TTL and incrementally updated checksums (RFC 1624).'
+top: icmp_echo
+rtl:
+- rtl/icmp_echo.sv
+depends: []
+interfaces:
+- name: s_axis
+  type: axis
+  dir: slave
+  tdata: 8
+  tuser: 1
+  tready: always 1
+  note: received Ethernet frames without FCS
+- name: m_axis
+  type: axis
+  dir: master
+  tdata: 8
+  tready: true
+  note: echo replies, 14 + IP total length bytes
+- name: config
+  type: native
+  signals: own_mac[47:0], own_ip[31:0]
+- name: events
+  type: native
+  signals: ev_request, ev_reply, ev_busy, ev_bad
+clocks:
+- name: clk
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+parameters:
+  BUF_BYTES:
+    type: int
+    default: 2048
+    range:
+    - 128
+    - 16384
+    pow2: true
+    note: the longest frame answered (without FCS)
+  TTL:
+    type: int
+    default: 64
+    range:
+    - 1
+    - 255
+    note: TTL of the replies
+  RAM:
+    type: string
+    default: bram
+    set:
+    - bram
+    - lutram
+    note: 'the frame buffer: block RAM or LUT RAM (the implementation variants)'
+constraints: []
+variant_param: RAM
+variants:
+  bram:
+    summary: the frame buffer in block RAM
+    when: 'the default; measured: one RAMB18 at BUF_BYTES 2048, 4 RAMB36 at 16384, about 114-116 MHz'
+    uses:
+      dsp: 0
+      bram_tiles: max(0.5, BUF_BYTES / 4096)
+    latency: 4
+    ii: 1
+  lutram:
+    summary: the frame buffer in LUT RAM
+    when: 'block RAM spoken for; measured: 384 LUTs as RAM at BUF_BYTES 2048 (3072 at 16384) and slower (106 and 89 MHz)'
+    uses:
+      dsp: 0
+      bram_tiles: 0
+    latency: 4
+    ii: 1
+latency:
+  reply: the first reply byte on m_axis 4 clocks after the request's last byte (measured in the bench; the variants' declared
+    latency)
+throughput: 'one request at a time: a request arriving while a reply waits or is sent is not answered (ev_busy)'
+guards:
+- BUF_BYTES: 100
+- BUF_BYTES: 64
+- BUF_BYTES: 32768
+- TTL: 0
+- TTL: 256
+- RAM: uram
+sweep_tested:
+- BUF_BYTES: 2048
+  TTL: 64
+  RAM: bram
+- BUF_BYTES: 128
+  TTL: 255
+  RAM: lutram
+- BUF_BYTES: 16384
+  TTL: 128
+  RAM: bram
+characterisation:
+  part: xc7a100tcsg324-1
+  clock_ns: 8.0
+  points:
+  - BUF_BYTES: 2048
+  - BUF_BYTES: 16384
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none (memories inferred; ram_style steers the variants)
+limits: 'requests with IP options are not answered; one request held at a time; no other ICMP messages (no destination unreachable,
+  no timestamp); measured Fmax estimates 89-116 MHz out of context: below the RGMII MAC''s 125 MHz; the formal reply check
+  follows one byte (13): a version that lets the solver choose the byte did not finish its passing run in reasonable time,
+  so the other copied bytes are checked in simulation only'
+evidence:
+  summary: 'cocotb against ip_lib/icmp_echo/model.py (RFC 792 and 791; the model recomputes both checksums from scratch while
+    the RTL updates them incrementally, RFC 1624) with scapy re-deriving the checksums of every reply: random request lengths
+    with zero and non-zero Ethernet padding, other addresses, bad checksums, fragments, options, other types and codes, bad
+    and truncated frames, frames too long for the buffer, then a request arriving while a reply is held; Icarus Verilog 12.
+    Formal (bounded): the AXI-Stream protocol rules (valid held until ready, data steady while waiting) on m_axis, no reply
+    without a request, the reply carrying the request it answers whatever frame follows it (fails with the back-to-back bug
+    restored), and a cover of a whole reply; an independent adversarial bench adds odd lengths, last and first fragments,
+    DF and a frame arriving on the clock after a request'
+  tests:
+  - flow/net/tests/test_63d_icmp_rtl.py
+  - flow/net/tests/test_63d_adversarial_rtl.py
+  - flow/net/tests/test_63d_formal.py
+  faults: ip_lib/icmp_echo/faults.yaml
+  results: results/b63d/faults.json, results/b63d/formal.json, ip_lib/icmp_echo/char/xc7a100tcsg324-1.json
+  simulator: Icarus Verilog 12, cocotb 2.0.1; SymbiYosys
+cost_table: measured costs are in the Variants section above
+licence: MIT (this repository)

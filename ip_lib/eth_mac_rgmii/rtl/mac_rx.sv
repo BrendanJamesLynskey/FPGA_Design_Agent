@@ -17,7 +17,8 @@
 
 module mac_rx #(
     parameter int MIN_FRAME = 64,       // bytes, FCS included
-    parameter int MAX_FRAME = 1522      // bytes, FCS included (one VLAN tag)
+    parameter int MAX_FRAME = 1522,     // bytes, FCS included (one VLAN tag)
+    parameter int LEN_W     = 11        // width of out_idx and end_len (14 for jumbo frames up to 9216 bytes)
 ) (
     input  logic        clk,
     input  logic        rst,
@@ -29,24 +30,25 @@ module mac_rx #(
     output logic        out_valid,
     output logic        out_sof,
     output logic [7:0]  out_data,
-    output logic [10:0] out_idx,        // byte index from the destination address (saturates at 2047)
+    output logic [LEN_W-1:0] out_idx,   // byte index from the destination address (saturates at 2**LEN_W - 1)
     output logic        end_valid,      // one clock: the frame ended (end token)
     output logic        end_good,
     output logic        end_fcs_err,
     output logic        end_runt,
     output logic        end_giant,
     output logic        end_er,
-    output logic [10:0] end_len,        // bytes, FCS included (saturating)
+    output logic [LEN_W-1:0] end_len,   // bytes, FCS included (saturating)
     output logic        ev_bad_pre      // one clock: bytes before an SFD that were not preamble
 );
     initial begin
         if (MIN_FRAME < 5 || MIN_FRAME > MAX_FRAME) $error("mac_rx: MIN_FRAME must be in 5..MAX_FRAME (got %0d)", MIN_FRAME);
-        if (MAX_FRAME > 2000) $error("mac_rx: MAX_FRAME must be at most 2000 (got %0d)", MAX_FRAME);
+        if (LEN_W < 11 || LEN_W > 16) $error("mac_rx: LEN_W must be in 11..16 (got %0d)", LEN_W);
+        if (MAX_FRAME > (1 << LEN_W) - 48) $error("mac_rx: MAX_FRAME must be at most 2**LEN_W - 48 (got %0d)", MAX_FRAME);
     end
 
     localparam logic [1:0] S_IDLE = 2'd0, S_DATA = 2'd1, S_DROP = 2'd2;
     logic [1:0]  st;
-    logic [10:0] n;                     // data bytes so far
+    logic [LEN_W-1:0] n;                // data bytes so far
     logic        err;
 
     logic        crc_init, crc_en, crc_ok;
@@ -86,16 +88,16 @@ module mac_rx #(
                         end_valid   <= 1'b1;
                         end_len     <= n;
                         end_fcs_err <= !crc_ok;
-                        end_runt    <= n < 11'(MIN_FRAME);
-                        end_giant   <= n > 11'(MAX_FRAME);
+                        end_runt    <= n < LEN_W'(MIN_FRAME);
+                        end_giant   <= n > LEN_W'(MAX_FRAME);
                         end_er      <= err;
-                        end_good    <= crc_ok && n >= 11'(MIN_FRAME) && n <= 11'(MAX_FRAME) && !err;
+                        end_good    <= crc_ok && n >= LEN_W'(MIN_FRAME) && n <= LEN_W'(MAX_FRAME) && !err;
                     end else begin
                         out_valid <= 1'b1;
-                        out_sof   <= (n == 11'd0);
+                        out_sof   <= (n == '0);
                         out_data  <= in_data;
                         out_idx   <= n;
-                        if (n != 11'h7FF) n <= n + 11'd1;
+                        if (n != '1) n <= n + 1'b1;
                         if (in_er) err <= 1'b1;
                     end
                 end

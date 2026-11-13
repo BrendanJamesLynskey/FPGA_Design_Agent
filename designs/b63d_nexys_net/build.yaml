@@ -1,0 +1,34 @@
+# How flow/run_vivado.sh builds this design (paths are relative to the repo root).
+top: b63d_nexys_net_top
+part: xc7a100tcsg324-1
+board: nexys_a7_100t    # report_power uses this board's thermal environment (boards/<board>/board.yaml)
+sources:
+  - shell/rtl/*.sv
+  - ip_lib/eth_mac_rmii/rtl/*.sv
+  - ip_lib/eth_mac_rgmii/rtl/eth_rx_classify.sv
+  - ip_lib/eth_mac_rgmii/rtl/eth_mac_stats.sv
+  - ip_lib/arp_responder/rtl/*.sv
+  - ip_lib/icmp_echo/rtl/*.sv
+  - ip_lib/igmp_join/rtl/*.sv
+  - ip_lib/ipv4_udp_rx/rtl/*.sv
+  - ip_lib/ipv4_udp_tx/rtl/*.sv
+  - ip_lib/mdio_master/rtl/*.sv
+  - designs/b63d_nexys_net/rtl/*.sv
+constraints:
+  - designs/b63d_nexys_net/design.xdc
+generics: {}            # board values are the RTL defaults; BUILD_STAMP is added by the flow
+# The RMII interfaces (flow/io_check.py): both are timed against eth_refclk, the clock the FPGA forwards to the PHY on
+# ETH_REFCLK, with the RMII rev 1.2 values. Declaring them makes IO-CLOCK fail a delay written against any other clock
+# (the first build referenced the MMCM output and so missed the forwarded clock's delay), IO-VALUE a wrong number and
+# IO-FWD-SOURCE a forwarded clock defined from the wrong pin or not defined. The RMII rev 1.2 figures are used as the
+# bound: the LAN8720A data sheet's own REF_CLK-in table is not in the knowledge bank yet and must be checked (and cited
+# here if it differs) before the board run.
+io_interfaces:
+  - {name: rmii_rx, kind: system_synchronous, direction: in, ports: [ETH_CRSDV, ETH_RXERR, "ETH_RXD[*]"],
+     clock: eth_refclk, clock_period_ns: 20.0, iob: true, forwarded_clock_source: u_refclk/C,
+     forwarded_clock_port: ETH_REFCLK,
+     data_sheet: {tco_min_ns: 2.0, tco_max_ns: 14.0}}
+  - {name: rmii_tx, kind: system_synchronous, direction: out, ports: [ETH_TXEN, "ETH_TXD[*]"],
+     clock: eth_refclk, clock_period_ns: 20.0, iob: true, forwarded_clock_source: u_refclk/C,
+     forwarded_clock_port: ETH_REFCLK,
+     data_sheet: {tsu_ns: 4.0, th_ns: 2.0}}

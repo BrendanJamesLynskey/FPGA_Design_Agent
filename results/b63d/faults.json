@@ -1,0 +1,510 @@
+{
+ "caught": 56,
+ "valid": 56,
+ "faults": [
+  {
+   "name": "arp_reply_wrong_opcode",
+   "block": "arp_responder",
+   "class": "protocol",
+   "why": "replies go out with the request opcode",
+   "status": "caught",
+   "seconds": 11.7,
+   "pytest": "1 failed, 6 deselected in 11.30s"
+  },
+  {
+   "name": "arp_answers_any_address",
+   "block": "arp_responder",
+   "class": "missing check",
+   "why": "requests for other hosts' addresses are answered",
+   "status": "caught",
+   "seconds": 5.0,
+   "pytest": "1 failed, 6 deselected in 4.49s"
+  },
+  {
+   "name": "arp_round_robin_stuck",
+   "block": "arp_responder",
+   "class": "state",
+   "why": "a full cache always replaces the same slot",
+   "status": "caught",
+   "seconds": 3.2,
+   "pytest": "1 failed, 6 deselected in 2.80s"
+  },
+  {
+   "name": "arp_bad_frames_accepted",
+   "block": "arp_responder",
+   "class": "missing check",
+   "why": "frames that ended with tuser (bad FCS) are answered and learnt",
+   "status": "caught",
+   "seconds": 5.2,
+   "pytest": "1 failed, 6 deselected in 4.72s"
+  },
+  {
+   "name": "arp_no_holdoff",
+   "block": "arp_responder",
+   "class": "missing check",
+   "why": "repeated misses for one address send a request each time",
+   "status": "caught",
+   "seconds": 11.9,
+   "pytest": "1 failed, 6 deselected in 11.43s"
+  },
+  {
+   "name": "arp_learns_gratuitous_unknown",
+   "block": "arp_responder",
+   "class": "protocol",
+   "why": "a gratuitous ARP from an unknown host is learnt (RFC 826 merges only known senders; found by the independent review)",
+   "status": "caught",
+   "seconds": 4.4,
+   "pytest": "1 failed, 5 deselected in 3.66s"
+  },
+  {
+   "name": "arp_learns_own_ip_claim",
+   "block": "arp_responder",
+   "class": "protocol",
+   "why": "another station claiming own_ip is cached (RFC 5227 address conflict; found by the independent review)",
+   "status": "caught",
+   "seconds": 4.0,
+   "pytest": "1 failed, 5 deselected in 3.40s"
+  },
+  {
+   "name": "rx_ddr_nibbles_swapped",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "at 1000 Mb/s the rising-edge nibble is taken as the upper half of the byte",
+   "status": "caught",
+   "seconds": 45.1,
+   "pytest": "1 failed, 22 deselected in 44.77s"
+  },
+  {
+   "name": "rx_nibble_alignment_ignores_sfd",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "at 10/100 Mb/s bytes are aligned on the preamble instead of the SFD",
+   "status": "caught",
+   "seconds": 52.9,
+   "pytest": "1 failed, 22 deselected in 52.59s"
+  },
+  {
+   "name": "rgmii_rx_crc_skips_first_byte",
+   "block": "eth_mac_rgmii",
+   "class": "off-by-one",
+   "why": "the FCS check is computed over one byte too few",
+   "status": "caught",
+   "seconds": 43.2,
+   "pytest": "1 failed, 22 deselected in 42.73s"
+  },
+  {
+   "name": "rgmii_rx_runt_not_flagged",
+   "block": "eth_mac_rgmii",
+   "class": "missing check",
+   "why": "frames shorter than MIN_FRAME are not reported as runts",
+   "status": "caught",
+   "seconds": 40.2,
+   "pytest": "1 failed, 22 deselected in 39.94s"
+  },
+  {
+   "name": "rgmii_tx_short_ifg",
+   "block": "eth_mac_rgmii",
+   "class": "off-by-one",
+   "why": "the inter-frame gap is one byte time short",
+   "status": "caught",
+   "seconds": 43.4,
+   "pytest": "1 failed, 22 deselected in 43.06s"
+  },
+  {
+   "name": "tx_no_padding",
+   "block": "eth_mac_rgmii",
+   "class": "missing check",
+   "why": "short frames are sent without padding to MIN_DATA",
+   "status": "caught",
+   "seconds": 54.1,
+   "pytest": "1 failed, 22 deselected in 53.76s"
+  },
+  {
+   "name": "tx_underrun_not_poisoned",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "a frame cut short by an AXI-Stream underrun leaves with a good FCS",
+   "status": "caught",
+   "seconds": 61.9,
+   "pytest": "1 failed, 22 deselected in 61.43s (0:01:01)"
+  },
+  {
+   "name": "tx_10_100_nibbles_swapped",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "at 10/100 Mb/s the upper nibble is sent first",
+   "status": "caught",
+   "seconds": 57.9,
+   "pytest": "1 failed, 22 deselected in 57.45s"
+  },
+  {
+   "name": "sf_commits_bad_frames",
+   "block": "eth_mac_rgmii",
+   "class": "missing check",
+   "why": "the store-and-forward buffer passes frames with a bad FCS",
+   "status": "caught",
+   "seconds": 11.6,
+   "pytest": "1 failed, 22 deselected in 11.26s"
+  },
+  {
+   "name": "sf_keeps_fcs",
+   "block": "eth_mac_rgmii",
+   "class": "off-by-one",
+   "why": "the store-and-forward output includes the FCS bytes",
+   "status": "caught",
+   "seconds": 14.5,
+   "pytest": "1 failed, 22 deselected in 14.12s"
+  },
+  {
+   "name": "filter_hash_wrong_bits",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "the multicast hash takes the wrong six bits of the CRC",
+   "status": "caught",
+   "seconds": 8.3,
+   "pytest": "1 failed, 22 deselected in 7.81s"
+  },
+  {
+   "name": "filter_broadcast_always",
+   "block": "eth_mac_rgmii",
+   "class": "missing check",
+   "why": "broadcast frames pass the filter with bcast_en off",
+   "status": "caught",
+   "seconds": 25.4,
+   "pytest": "1 failed, 22 deselected in 25.10s"
+  },
+  {
+   "name": "vlan_strip_leaves_tci",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "stripping removes the TPID but leaves the TCI bytes in the frame",
+   "status": "caught",
+   "seconds": 16.6,
+   "pytest": "1 failed, 22 deselected in 16.26s"
+  },
+  {
+   "name": "pause_quanta_half",
+   "block": "eth_mac_rgmii",
+   "class": "off-by-one",
+   "why": "a pause quantum is taken as 256 bit times instead of 512",
+   "status": "caught",
+   "seconds": 22.4,
+   "pytest": "1 failed, 22 deselected in 22.01s"
+  },
+  {
+   "name": "pause_not_honoured",
+   "block": "eth_mac_rgmii",
+   "class": "missing check",
+   "why": "a received pause does not hold transmit frames back",
+   "status": "caught",
+   "seconds": 16.5,
+   "pytest": "1 failed, 22 deselected in 16.17s"
+  },
+  {
+   "name": "pause_frame_wrong_opcode",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "the pause frame sent carries opcode 0x0002 instead of 0x0001",
+   "status": "caught",
+   "seconds": 18.0,
+   "pytest": "1 failed, 22 deselected in 17.64s"
+  },
+  {
+   "name": "control_frames_forwarded",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "MAC control frames reach the store-and-forward output instead of being consumed",
+   "status": "caught",
+   "seconds": 14.3,
+   "pytest": "1 failed, 22 deselected in 13.96s"
+  },
+  {
+   "name": "stats_octets_without_fcs",
+   "block": "eth_mac_rgmii",
+   "class": "off-by-one",
+   "why": "the good-octet counter leaves out the FCS",
+   "status": "caught",
+   "seconds": 25.8,
+   "pytest": "1 failed, 22 deselected in 25.44s"
+  },
+  {
+   "name": "stats_mcast_counts_broadcast",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "broadcast frames are also counted as multicast",
+   "status": "caught",
+   "seconds": 33.8,
+   "pytest": "1 failed, 22 deselected in 33.37s"
+  },
+  {
+   "name": "jumbo_length_11_bits",
+   "block": "eth_mac_rgmii",
+   "class": "width",
+   "why": "with jumbo frames the length counters stay 11 bits wide and saturate at 2047",
+   "status": "caught",
+   "seconds": 40.2,
+   "pytest": "1 failed, 22 deselected in 39.86s"
+  },
+  {
+   "name": "pause_zero_quanta_ignored",
+   "block": "eth_mac_rgmii",
+   "class": "protocol",
+   "why": "a pause of zero quanta does not end a pause in progress (found by the independent review)",
+   "status": "caught",
+   "seconds": 8.9,
+   "pytest": "1 failed, 5 deselected in 8.32s"
+  },
+  {
+   "name": "pause_quanta_not_latched",
+   "block": "eth_mac_rgmii",
+   "class": "state",
+   "why": "a pause request arriving while a pause frame is sent changes that frame's quanta bytes mid-frame",
+   "status": "caught",
+   "seconds": 16.5,
+   "pytest": "1 failed, 22 deselected in 16.17s"
+  },
+  {
+   "name": "icmp_ttl_kept",
+   "block": "icmp_echo",
+   "class": "protocol",
+   "why": "the reply keeps the request's TTL while its checksum assumes the new one",
+   "status": "caught",
+   "seconds": 15.4,
+   "pytest": "1 failed, 8 deselected in 15.15s"
+  },
+  {
+   "name": "icmp_checksum_not_updated",
+   "block": "icmp_echo",
+   "class": "protocol",
+   "why": "the ICMP checksum is not updated for the type change",
+   "status": "caught",
+   "seconds": 15.2,
+   "pytest": "1 failed, 8 deselected in 14.93s"
+  },
+  {
+   "name": "icmp_answers_fragments",
+   "block": "icmp_echo",
+   "class": "missing check",
+   "why": "a first fragment (MF set) is answered as if it were the whole request",
+   "status": "caught",
+   "seconds": 15.3,
+   "pytest": "1 failed, 8 deselected in 15.03s"
+  },
+  {
+   "name": "icmp_sum_over_padding",
+   "block": "icmp_echo",
+   "class": "off-by-one",
+   "why": "the ICMP checksum is checked over the Ethernet padding too",
+   "status": "caught",
+   "seconds": 16.3,
+   "pytest": "1 failed, 8 deselected in 16.04s"
+  },
+  {
+   "name": "icmp_addresses_not_swapped",
+   "block": "icmp_echo",
+   "class": "protocol",
+   "why": "the reply's IP source stays the requester's address",
+   "status": "caught",
+   "seconds": 15.3,
+   "pytest": "1 failed, 8 deselected in 15.02s"
+  },
+  {
+   "name": "icmp_back_to_back_overwrite",
+   "block": "icmp_echo",
+   "class": "timing",
+   "why": "a frame starting on the clock after a request's last byte is stored over the request (found by the independent review)",
+   "status": "caught",
+   "seconds": 4.5,
+   "pytest": "1 failed, 5 deselected in 3.95s"
+  },
+  {
+   "name": "igmp_no_router_alert",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "the Router Alert option is missing from reports and leaves",
+   "status": "caught",
+   "seconds": 1.6,
+   "pytest": "1 failed, 7 deselected in 1.33s"
+  },
+  {
+   "name": "igmp_no_suppression",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "another host's report does not cancel our pending report",
+   "status": "caught",
+   "seconds": 3.5,
+   "pytest": "1 failed, 7 deselected in 3.23s"
+  },
+  {
+   "name": "igmp_leave_always",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "a leave is sent even when another host sent the last report",
+   "status": "caught",
+   "seconds": 3.7,
+   "pytest": "1 failed, 7 deselected in 3.44s"
+  },
+  {
+   "name": "igmp_timer_never_restarted",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "a query with a shorter Max Response Time does not shorten a running timer",
+   "status": "caught",
+   "seconds": 2.3,
+   "pytest": "1 failed, 7 deselected in 1.99s"
+  },
+  {
+   "name": "igmp_ttl_two",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "reports leave with TTL 2 instead of 1",
+   "status": "caught",
+   "seconds": 1.6,
+   "pytest": "1 failed, 7 deselected in 1.33s"
+  },
+  {
+   "name": "igmp_timer_always_restarted",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "a query with a longer Max Response Time restarts a running timer (found by the independent review)",
+   "status": "caught",
+   "seconds": 2.5,
+   "pytest": "1 failed, 7 deselected in 2.21s"
+  },
+  {
+   "name": "udp_rx_highest_port_wins",
+   "block": "ipv4_udp_rx",
+   "class": "protocol",
+   "why": "when two port entries match, the highest index wins instead of the lowest",
+   "status": "caught",
+   "seconds": 23.3,
+   "pytest": "1 failed, 7 deselected in 22.98s"
+  },
+  {
+   "name": "udp_rx_no_pseudo_header_source",
+   "block": "ipv4_udp_rx",
+   "class": "protocol",
+   "why": "the UDP checksum leaves half of the source address out of the pseudo-header",
+   "status": "caught",
+   "seconds": 23.5,
+   "pytest": "1 failed, 7 deselected in 23.25s"
+  },
+  {
+   "name": "udp_rx_padding_passed",
+   "block": "ipv4_udp_rx",
+   "class": "off-by-one",
+   "why": "bytes after the datagram (Ethernet padding) are passed on as payload",
+   "status": "caught",
+   "seconds": 19.9,
+   "pytest": "1 failed, 7 deselected in 19.62s"
+  },
+  {
+   "name": "udp_rx_fragments_passed",
+   "block": "ipv4_udp_rx",
+   "class": "missing check",
+   "why": "fragments are taken as whole datagrams",
+   "status": "caught",
+   "seconds": 22.3,
+   "pytest": "1 failed, 7 deselected in 21.97s"
+  },
+  {
+   "name": "udp_rx_options_not_skipped",
+   "block": "ipv4_udp_rx",
+   "class": "protocol",
+   "why": "IP options are read as the UDP header",
+   "status": "caught",
+   "seconds": 23.5,
+   "pytest": "1 failed, 7 deselected in 23.21s"
+  },
+  {
+   "name": "udp_rx_last_fragment_passed",
+   "block": "ipv4_udp_rx",
+   "class": "missing check",
+   "why": "a last fragment (MF 0, offset not 0) is taken as a whole datagram (found by the independent review)",
+   "status": "caught",
+   "seconds": 22.0,
+   "pytest": "1 failed, 12 deselected in 21.35s"
+  },
+  {
+   "name": "udp_tx_zero_checksum_sent",
+   "block": "ipv4_udp_tx",
+   "class": "protocol",
+   "why": "a computed checksum of 0 goes out as 0 (no checksum) instead of 0xFFFF",
+   "status": "caught",
+   "seconds": 13.8,
+   "pytest": "1 failed, 8 deselected in 13.48s"
+  },
+  {
+   "name": "udp_tx_ident_stuck",
+   "block": "ipv4_udp_tx",
+   "class": "state",
+   "why": "every datagram carries the same IP identification",
+   "status": "caught",
+   "seconds": 13.7,
+   "pytest": "1 failed, 8 deselected in 13.39s"
+  },
+  {
+   "name": "udp_tx_length_plus_one",
+   "block": "ipv4_udp_tx",
+   "class": "off-by-one",
+   "why": "the UDP length counts one byte too many",
+   "status": "caught",
+   "seconds": 13.7,
+   "pytest": "1 failed, 8 deselected in 13.40s"
+  },
+  {
+   "name": "udp_tx_long_payload_sent",
+   "block": "ipv4_udp_tx",
+   "class": "missing check",
+   "why": "a payload one byte over MAX_PAYLOAD is sent cut short instead of dropped",
+   "status": "caught",
+   "seconds": 18.7,
+   "pytest": "1 failed, 8 deselected in 18.45s"
+  },
+  {
+   "name": "mdio_preamble_31_ones",
+   "block": "mdio_master",
+   "class": "protocol",
+   "why": "the preamble has 31 ones before the start bits",
+   "status": "caught",
+   "seconds": 1.4,
+   "pytest": "1 failed in 1.09s"
+  },
+  {
+   "name": "mdio_turnaround_driven",
+   "block": "mdio_master",
+   "class": "protocol",
+   "why": "in a read the station drives the second turnaround bit that belongs to the PHY",
+   "status": "caught",
+   "seconds": 5.0,
+   "pytest": "1 failed in 4.68s"
+  },
+  {
+   "name": "mdio_read_lsb_first",
+   "block": "mdio_master",
+   "class": "protocol",
+   "why": "the read value is assembled least significant bit first (clause 22 sends the most significant first)",
+   "status": "caught",
+   "seconds": 4.8,
+   "pytest": "1 failed in 4.51s"
+  },
+  {
+   "name": "mdio_release_without_hold",
+   "block": "mdio_master",
+   "class": "timing",
+   "why": "the line is released one clock after the last rising edge of MDC, short of the hold time at small DIV",
+   "status": "caught",
+   "seconds": 8.3,
+   "pytest": "1 failed, 1 passed in 7.98s"
+  },
+  {
+   "name": "icmp_tail_bytes_overwritten",
+   "block": "icmp_echo",
+   "class": "timing",
+   "why": "bytes after 13 of a frame arriving during a reply overwrite the stored request (the formal check watches byte 13 only; found by the independent review)",
+   "status": "caught",
+   "seconds": 4.0,
+   "pytest": "1 failed, 5 deselected in 3.48s"
+  }
+ ]
+}

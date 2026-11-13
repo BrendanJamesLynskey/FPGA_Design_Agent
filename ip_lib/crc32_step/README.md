@@ -28,6 +28,9 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 ## Evidence
 
 Bit-exact against `model.py` (written from the CRC definition, not from the RTL) and against zlib over whole buffers; latency and II measured; cocotb with Icarus Verilog 12. Tests: `ip_lib/crc32_step/tb/test_crc32_step_rtl.py`.
+
+Try it: `python3 -m pytest ip_lib/crc32_step/tb/test_crc32_step_rtl.py`.
+
 Parameter points simulated: `IMPL=['word', 'byte']`.
 
 Seeded faults (`faults.yaml`, run by `hil/ip_faults.py --blocks crc32_step`):
