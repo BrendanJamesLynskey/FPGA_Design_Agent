@@ -1,5 +1,5 @@
 """Brief 64A: bounded formal check of the generated blocks' AXI4-Lite slave rules (SymbiYosys, depth 20), the cover task
-that shows a write and a read can complete, and two seeded handshake faults the proof must find."""
+that shows a write and a read can complete, and three seeded handshake faults the proof must find."""
 from __future__ import annotations
 
 import shutil
@@ -29,6 +29,8 @@ FAULTS = [
      "assign wr_commit      = aw_got && !s_axil_bvalid;"),
     ("r_dropped_early", "end else if (s_axil_rvalid && s_axil_rready) begin\n            s_axil_rvalid <= 1'b0;",
      "end else if (s_axil_rvalid) begin\n            s_axil_rvalid <= 1'b0;"),
+    # a new read address taken while a response waits: the cocotb bench checks this directly as well
+    ("arready_while_rvalid", "assign s_axil_arready = !s_axil_rvalid;", "assign s_axil_arready = 1'b1;"),
 ]
 
 

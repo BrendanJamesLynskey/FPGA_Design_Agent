@@ -4,7 +4,8 @@ Source: https://github.com/BrendanJamesLynskey/RISCV_RV32IMC_5stage, commit 8d53
 (2026-11-09, "Merge pull request #36 from BrendanJamesLynskey/cache-sweeps"), copied with `git archive` on 2026-11-13.
 
 Licence: MIT, as the source repository's README states ("## Licence: MIT"); copyright the repository's author. The
-repository has no separate LICENSE file; this note records the licence statement it makes.
+source repository has no separate LICENSE file, so the copy carries the MIT notice in `brv32p/LICENSE` (the only file
+added to the copy; everything else is as `git archive` gave it).
 
 What is copied (`brv32p/`, unchanged): `rtl/` (the core, caches, bus, peripherals, SoC), `tests/isa/tb_isa.v` and
 `tests/isa/elf2hex.py` (the test bench and hex converter), and from `tests/bench/`: `crt.S`, `link.ld`, `bench.h`,

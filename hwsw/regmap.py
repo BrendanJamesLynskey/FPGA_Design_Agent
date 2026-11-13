@@ -50,6 +50,28 @@ C_RESERVED = {"OFFSET", "RESET", "RW_MASK", "RO_MASK", "W1C_MASK", "W1S_MASK", "
 MODEL_KEYS = {"regmap", "name", "version", "summary", "data_width", "addr_width", "unmapped", "interrupt", "registers"}
 REG_KEYS = {"name", "offset", "summary", "fields"}
 FIELD_KEYS = {"name", "lsb", "width", "access", "reset", "const", "summary"}
+# Names the generated block uses for its own signals. A register's per-register signals (wr_<reg>, rd_<reg>) and a
+# field's ports must not meet them: a register named HIT would declare wr_hit twice.
+SV_INTERNAL = {"aclk", "aresetn", "aw_got", "w_got", "aw_word", "w_data", "w_bits", "w_strb", "wr_commit", "wr_hit",
+               "rd_value", "rd_hit", "irq_o", "unused_ok"}
+# Text that would end a comment, a docstring or a table cell in one of the outputs: every summary and the version
+# go into SystemVerilog line comments, C block comments, a Python docstring and markdown tables.
+TEXT_FORBIDDEN = ("*/", "/*", '"""', "\\", "|")
+VERSION_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z.+_-]*$")
+
+
+def text_problems(what: str, text) -> list[str]:
+    """Why a summary cannot go into the generated outputs as it is ([] = fine)."""
+    if not isinstance(text, str):
+        return [f"{what}: must be text"]
+    errs = []
+    if any(ord(c) < 0x20 or ord(c) == 0x7F for c in text):
+        errs.append(f"{what}: a newline or other control character would break a comment line in the outputs")
+    bad = [t for t in TEXT_FORBIDDEN if t in text]
+    if bad:
+        errs.append(f"{what}: {', '.join(repr(t) for t in bad)} would end a comment, docstring or table cell in the "
+                    "outputs")
+    return errs
 
 
 class RegmapError(ValueError):
@@ -164,6 +186,9 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
         errs.append(f"unknown top-level keys {sorted(extra)}")
     if d.get("regmap") != 1:
         errs.append("regmap: must be 1 (the format version)")
+    errs += text_problems("summary", d.get("summary", ""))
+    if not VERSION_RE.match(str(d.get("version", "0.0.0"))):
+        errs.append(f"version: {d.get('version')!r} must be letters, digits and . + _ - (for example 1.2.0)")
     name = d.get("name")
     if not isinstance(name, str) or not NAME_RE.match(name):
         errs.append(f"name: {name!r} must be a lower-case identifier (letters, digits, _), starting with a letter")
@@ -197,6 +222,11 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
             rn = f"R{i}"
         if any(x.name == rn for x in regs):
             errs.append(f"{where}: duplicate register name")
+        clash = sorted({f"wr_{rn.lower()}", f"rd_{rn.lower()}"} & SV_INTERNAL)
+        if clash:
+            errs.append(f"{where}: the generated block's signal{'s' if len(clash) > 1 else ''} {', '.join(clash)} would meet one of its own "
+                        f"(reserved register names: {', '.join(sorted({x[3:].upper() for x in SV_INTERNAL if x[:3] in ('wr_', 'rd_')}))})")
+        errs += text_problems(f"{where}.summary", r.get("summary", ""))
         off = _int(r.get("offset"), f"{where}.offset", errs)
         if off is not None:
             if off % 4:
@@ -229,6 +259,7 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
                 errs.append(f"{fw}: name clashes with a generated register-level name ({', '.join(sorted(C_RESERVED))})")
             if any(x.name == fn for x in fields):
                 errs.append(f"{fw}: duplicate field name in the register")
+            errs += text_problems(f"{fw}.summary", f.get("summary", ""))
             lsb = _int(f.get("lsb"), f"{fw}.lsb", errs)
             width = _int(f.get("width"), f"{fw}.width", errs)
             acc = f.get("access")
@@ -266,6 +297,8 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
             if acc in ACCESS:
                 fields.append(Field(fn, lsb, width, acc, rv, is_const, str(f.get("summary", ""))))
                 port = f"{rn}_{fn}".lower()
+                if {port + s for s in ("_o", "_i", "_set_i", "_clr_i", "_pulse_o")} & SV_INTERNAL:
+                    errs.append(f"{fw}: port name {port}_* would meet one of the generated block's own signals")
                 if port in seen_port:
                     errs.append(f"{fw}: port name {port} is also made by {seen_port[port]}")
                 seen_port[port] = f"{rn}.{fn}"
@@ -841,6 +874,13 @@ EMIT = {"sv": emit_sv, "h": emit_c, "py": emit_py, "md": emit_md}
 
 
 def generate(m: RegMap, out: str | Path) -> dict[str, Path]:
+    # a RegMap built in code skips from_dict: check the text that goes into comments and docstrings again
+    errs = text_problems("summary", m.summary) + ([] if VERSION_RE.match(m.version) else [f"version {m.version!r}"])
+    for r in m.registers:
+        errs += text_problems(f"register {r.name}.summary", r.summary)
+        errs += [e for f in r.fields for e in text_problems(f"register {r.name} field {f.name}.summary", f.summary)]
+    if errs:
+        raise RegmapError("cannot generate:\n  " + "\n  ".join(errs))
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     paths = {}
@@ -964,6 +1004,20 @@ def read_sv(m: RegMap, sv: Path) -> dict:
     return got
 
 
+def compile_sv(sv: Path) -> list[str]:
+    """The block must compile: read_sv only reads its ports and constants. Icarus Verilog if it is on PATH (CI installs
+    it); without it the step is skipped and says so."""
+    iv = shutil.which("iverilog")
+    if not iv:
+        print(f"note: iverilog not on PATH: {sv.name} not compiled", file=sys.stderr)
+        return []
+    with tempfile.TemporaryDirectory() as td:
+        r = subprocess.run([iv, "-g2012", "-o", str(Path(td) / "a.vvp"), str(sv)], capture_output=True, text=True)
+    if r.returncode:
+        return [f"SystemVerilog: does not compile (iverilog -g2012): {(r.stderr or r.stdout).strip()[:400]}"]
+    return []
+
+
 def agreement(m: RegMap, out: Path) -> list[str]:
     """Problems where an output disagrees with the YAML (empty: all four agree)."""
     out = Path(out)
@@ -1017,6 +1071,7 @@ def agreement(m: RegMap, out: Path) -> list[str]:
     cmp("markdown", read_md(out / names["md"]))
     sv = read_sv(m, out / names["sv"])
     cmp("SystemVerilog", sv, fields=False)
+    errs += compile_sv(out / names["sv"])
     if sv["__ports__"] != ports(m):
         want, have = set(ports(m)), set(sv["__ports__"])
         errs.append(f"SystemVerilog: ports differ: missing {sorted(want - have)}, unexpected {sorted(have - want)}")

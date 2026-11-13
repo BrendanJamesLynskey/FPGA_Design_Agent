@@ -39,8 +39,8 @@ uint32_t crc32_cfu(const uint32_t *p, int len)
 }
 
 /* A custom instruction killed in EX by an older instruction's trap (a misaligned load in MEM) must leave no trace:
- * the handler skips the load and the same instruction runs again with the right result. For the multi-cycle variant
- * the killed operation is still inside the unit when the retry arrives (the wrapper's inflight case). */
+ * the handler skips the load and the same instruction runs again with the right result. The trap is taken in the
+ * instruction's first clock in EX, so the kill comes before the unit has started (the run's monitor shows it). */
 volatile uint32_t trap_count;
 
 __attribute__((naked, aligned(4))) void trap_skip(void)
@@ -64,6 +64,48 @@ uint32_t cfu_after_trap(uint32_t a, uint32_t b)
     return r;
 }
 
+/* A timer interrupt during a run of custom instructions. The core takes an interrupt only when EX is not stalled, so
+ * with a custom instruction in EX it is taken in the clock the unit delivers its result: the instruction is flushed
+ * with its operation still marked in flight in the wrapper, and runs again after mret. Each trial starts the timer a
+ * clock later; every CRC must still equal zlib's and each trial must take exactly one interrupt. The handler masks
+ * the timer interrupt (mie.MTIE) instead of writing the timer, so it cannot fire twice. */
+#define TIMER ((volatile uint32_t *)0x20000200)    /* control, prescaler, compare, count, match clear */
+#define IRQ_TRIALS 16
+volatile uint32_t irq_count;
+
+__attribute__((naked, aligned(4))) void irq_timer(void)
+{
+    __asm__ volatile("addi sp, sp, -8\n sw t0, 0(sp)\n sw t1, 4(sp)\n"
+                     "li t0, 128\n csrc mie, t0\n"
+                     "la t0, irq_count\n lw t1, 0(t0)\n addi t1, t1, 1\n sw t1, 0(t0)\n"
+                     "lw t0, 0(sp)\n lw t1, 4(sp)\n addi sp, sp, 8\n mret");
+}
+
+__attribute__((noipa))
+int cfu_under_irq(void)
+{
+    uint32_t old;
+    int bad = 0;
+    irq_count = 0;
+    __asm__ volatile("csrr %0, mtvec\n csrw mtvec, %1\n csrsi mstatus, 8" : "=&r" (old) : "r" (irq_timer));
+    for (int k = 0; k < IRQ_TRIALS; k++) {
+        TIMER[0] = 0;                                  /* stop */
+        TIMER[4] = 1;                                  /* clear the match */
+        TIMER[1] = 0;                                  /* a tick every clock */
+        TIMER[3] = 0;
+        TIMER[2] = 120 + 7 * k;                        /* compare: fires part-way through the call below */
+        __asm__ volatile("csrs mie, %0" :: "r" (128) : "memory");
+        TIMER[0] = 1;
+        bad |= crc32_cfu((const uint32_t *)crc_buf, 256) != crc_expect[2];
+        while (irq_count != (uint32_t)k + 1 && !bad)
+            ;
+    }
+    TIMER[0] = 0;
+    TIMER[4] = 1;
+    __asm__ volatile("csrci mstatus, 8\n csrw mtvec, %0" :: "r" (old));
+    return bad;
+}
+
 #define RUN(mark, call) do { (void)(call); BENCH_MARK(mark); r = (call); BENCH_MARK((mark) + 1); } while (0)
 #define RUN_CFU(S) if (have_cfu) { RUN(16 * (S) + 6, crc32_cfu((const uint32_t *)crc_buf, SIZES[S])); \
                                   fail |= (r != crc_expect[S]) << 3; }
@@ -85,5 +127,7 @@ int main(void)
     ONE_SIZE(3)
     if (have_cfu && (cfu_after_trap(0x12345678u, 0x9ABCDEF0u) != TRAP_EXPECT || trap_count != 1))
         return 99;
+    if (have_cfu && (cfu_under_irq() != 0 || irq_count != IRQ_TRIALS))
+        return 98;
     return 0;
 }

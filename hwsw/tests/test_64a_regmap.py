@@ -123,6 +123,17 @@ BREAKS = [
     ("unknown key", lambda d: _reg(d, "CTRL")["fields"][0].update(acess="RW"), "unknown keys ['acess']"),
     ("bad unmapped policy", lambda d: d.update(unmapped="decerr"), "must be slverr or okay"),
     ("data width 64", lambda d: d.update(data_width=64), "only 32 is supported"),
+    # names the generated block uses itself (wr_hit, wr_commit, rd_value), and text that would break an output
+    ("register HIT", lambda d: _reg(d, "SCRATCH").update(name="HIT"), "rd_hit, wr_hit would meet one of its own"),
+    ("register COMMIT", lambda d: _reg(d, "SCRATCH").update(name="COMMIT"), "wr_commit would meet"),
+    ("register VALUE", lambda d: _reg(d, "SCRATCH").update(name="VALUE"), "rd_value would meet"),
+    ("newline in summary", lambda d: d.update(summary="two\nlines"), "summary: a newline"),
+    ("comment end in register summary", lambda d: _reg(d, "CTRL").update(summary="x */ #define Y 1 /*"),
+     "'*/', '/*' would end a comment"),
+    ("docstring end in summary", lambda d: d.update(summary='a """ b'), "'\"\"\"' would end"),
+    ("backslash in field summary", lambda d: _reg(d, "CTRL")["fields"][0].update(summary="C:\\Name"), "would end"),
+    ("bar in field summary", lambda d: _reg(d, "CTRL")["fields"][0].update(summary="a | b"), "table cell"),
+    ("version with spaces", lambda d: d.update(version="1.0 */"), "version:"),
 ]
 
 
@@ -182,3 +193,24 @@ def test_driver_writes_w1x_bits_as_zero_and_refuses_misuse() -> None:
         regs.clear("CTRL", "MODE")                      # not W1C
     with pytest.raises(d.RegisterError):
         regs.read("NOPE")
+
+
+def test_generate_refuses_text_that_breaks_an_output(tmp_path: Path) -> None:
+    """A RegMap built in code skips from_dict; gen still refuses a summary that would end a comment or docstring."""
+    import dataclasses
+    m = regmap.load(DEMO)
+    bad = dataclasses.replace(m, summary='ends the docstring """ here')
+    with pytest.raises(regmap.RegmapError, match="cannot generate"):
+        regmap.generate(bad, tmp_path)
+
+
+@pytest.mark.skipif(not shutil.which("iverilog"), reason="needs Icarus Verilog")
+def test_check_compiles_the_systemverilog(tmp_path: Path) -> None:
+    """check reads the SV for ports and constants only; it also compiles it, so a broken block is not 'agree'."""
+    m = regmap.load(DEMO)
+    regmap.generate(m, tmp_path)
+    sv = tmp_path / regmap.file_names(m)["sv"]
+    t = sv.read_text()
+    sv.write_text(t.replace("    logic [31:0] rd_value;", "    logic [31:0] rd_value;\n    logic rd_value;", 1))
+    errs = regmap.agreement(m, tmp_path)
+    assert any("does not compile" in e for e in errs), errs

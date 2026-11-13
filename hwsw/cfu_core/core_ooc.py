@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""What the custom-instruction unit costs the core (brief 64A+): an out-of-context Vivado build of the BRV32P SoC for
-the baseline and each patched configuration that run_bench.py prepared, one after the other, and their LUT, FF and
-Fmax estimate side by side in results/64a_hwsw/core_ooc.json.
+"""What the custom-instruction unit costs the core: an out-of-context Vivado build of the BRV32P SoC for the baseline
+and each patched configuration that run_bench.py prepared, one after the other, and their LUT, FF and Fmax estimate
+side by side in results/64a_hwsw/core_ooc.json, with each run's raw reports in results/64a_hwsw/core_ooc/<config>/.
 
     python3 hwsw/cfu_core/run_bench.py            # first: prepares build/64a/cfu/<config>/
-    python3 hwsw/cfu_core/core_ooc.py [--configs baseline,cfu_word,cfu_byte] [--period 10]
+    python3 hwsw/cfu_core/core_ooc.py [--configs baseline,cfu_word,cfu_byte,cfu_word_keep] [--period 10]
 
-Vivado runs one thread, under nice, in a memory-capped user scope (MemoryMax=6G); take a heavy slot first
-(_handoff/take_heavy_slot.sh). Minutes per configuration. The Fmax figure is 1000 / (period - WNS) from one routed run
-at the target clock: an estimate, not a closure, and one place-and-route seed only.
+A configuration name ending in _keep builds the same RTL as the name without it, with the library unit's hierarchy
+kept in synthesis (CFU_KEEP_UNIT): no logic can move across the unit's boundary, which separates the unit's own logic
+from what synthesis merged into it from the core.
+
+Run it on an otherwise idle machine: Vivado runs one thread, under nice, in a memory-capped user scope (MemoryMax=6G),
+about 3 GB at peak and some 15 minutes per configuration. The Fmax figure is 1000 / (period - WNS) from one routed
+run at the target clock: an estimate, not a closure, and one place-and-route seed only.
 """
 from __future__ import annotations
 
@@ -26,6 +30,8 @@ ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 BUILD = Path(os.environ.get("CFU_BUILD", ROOT / "build" / "64a" / "cfu"))
 OOC = ROOT / "build" / "64a" / "ooc"
+RAW = ROOT / "results" / "64a_hwsw" / "core_ooc"
+REPORTS = ("summary.txt", "utilization_hier.rpt", "timing_summary.rpt", "critical_path.rpt", "clock.xdc")
 PART = "xc7a100tcsg324-1"
 
 
@@ -35,7 +41,8 @@ def vivado() -> str:
 
 
 def run_one(cfg: str, period: float) -> dict:
-    src = BUILD / cfg
+    keep = cfg.endswith("_keep")
+    src = BUILD / (cfg[:-len("_keep")] if keep else cfg)
     if not (src / "rtl").is_dir():
         raise SystemExit(f"{src} missing: run hwsw/cfu_core/run_bench.py first")
     d = OOC / cfg                                                    # a copy: run_bench.py may rebuild its folders meanwhile
@@ -48,10 +55,15 @@ def run_one(cfg: str, period: float) -> dict:
     unit = f"fda-64a-ooc-{cfg}-{os.getpid()}"
     cmd = ["systemd-run", "--user", "--scope", "--quiet", f"--unit={unit}", "-p", "MemoryMax=6G", "nice", "-n", "15",
            vivado(), "-mode", "batch", "-nojournal", "-log", str(d / "vivado.log"),
-           "-source", str(HERE / "core_ooc.tcl"), "-tclargs", str(d), PART, str(period)]
+           "-source", str(HERE / "core_ooc.tcl"), "-tclargs", str(d), PART, str(period), "CFU_KEEP_UNIT" if keep else ""]
     print(f"core_ooc: {cfg} in scope {unit}", flush=True)
-    rc = subprocess.run(cmd, cwd=d).returncode
-    return parse(d)
+    subprocess.run(cmd, cwd=d)
+    rec = parse(d)
+    if rec["status"] == "ok":                                         # the raw reports the record is read from
+        (RAW / cfg).mkdir(parents=True, exist_ok=True)
+        for f in REPORTS:
+            shutil.copy(d / "vivado" / f, RAW / cfg / f)
+    return rec
 
 
 def _hier(rpt: str) -> dict:
@@ -76,7 +88,8 @@ def parse(d: Path) -> dict:
     top = h["brv32p_soc"]
     return {"status": "ok", "tool": f"Vivado {m.group(1)} (build {m.group(2)})" if m else "Vivado (version not read)",
             "wns_ns": float(kv["wns_ns"]), "fmax_mhz": float(kv["fmax_mhz"]), "soc": top, "core": h["u_core"],
-            "cfu": h.get("u_cfu")}
+            "cfu": h.get("u_cfu"), "cfu_unit": h.get("u_unit"),
+            "synthesis_define": kv.get("define", "none")}
 
 
 def main(argv=None) -> int:
@@ -89,9 +102,11 @@ def main(argv=None) -> int:
     out = Path(a.out)
     rec = json.loads(out.read_text()) if out.exists() else {"configs": {}}
     rec.update({"schema": "core_ooc/1", "part": PART, "clock_ns": a.period, "date": datetime.date.today().isoformat(),
-                "flow": "out-of-context synth_design, opt_design, place_design, route_design of the whole SoC (core, "
-                        "caches, 32 KB SRAM, peripherals); one thread; one run per configuration; Fmax = 1000 / "
-                        "(period - WNS), an estimate from one routed run at the target clock"})
+                "flow": "out-of-context synth_design (the clock constraint read first, so synthesis is timing "
+                        "driven), opt_design, place_design, route_design of the whole SoC (core, caches, 32 KB SRAM, "
+                        "peripherals); one thread; one run per configuration; Fmax = 1000 / (period - WNS), an "
+                        "estimate from one routed run at the target clock; raw reports in results/64a_hwsw/core_ooc/",
+                "tcl": "hwsw/cfu_core/core_ooc.tcl"})
     for cfg in [c for c in a.configs.split(",") if c]:
         rec["configs"][cfg] = parse(OOC / cfg) if a.parse_only else run_one(cfg, a.period)
         print(cfg, rec["configs"][cfg], flush=True)

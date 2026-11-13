@@ -14,7 +14,9 @@ For each configuration:
      and Zbkc), the data and zlib's expected CRCs written here;
   5. simulate the SoC with the core's own test bench (tests/isa/tb_isa.v) and read the cycle of each BENCH_MARK.
 
-The program checks every CRC against zlib and returns 0 only if all match; a run that does not end in RESULT PASS is
+The program checks every CRC against zlib (also after a misaligned-load trap and under 16 timer interrupts that land
+on custom instructions) and returns 0 only if all match; the unit's simulation monitor (CFU_MONITOR) counts the kills
+by the wrapper's state at the kill, recorded per configuration; a run that does not end in RESULT PASS is
 an error. The baseline must give the same cycles as the patched core for the three software kernels (the patch must
 not change anything else), which this script checks.
 """
@@ -114,7 +116,7 @@ def simulate(d: Path, prog: Path, tohost: str, with_cfu: bool) -> dict:
     if with_cfu:
         files += [ROOT / "ip_lib" / "crc32_step" / "rtl" / "crc32_step.sv", d / "rtl" / "cfu" / "cfu_crc32_step.sv"]
     vvp = d / "tb.vvp"
-    sh(["iverilog", "-g2012", "-DTB_MEM_DEPTH=16384", "-o", vvp, "-I", d / "rtl" / "pkg", "-I", d / "rtl" / "core",
+    sh(["iverilog", "-g2012", "-DTB_MEM_DEPTH=16384", "-DCFU_MONITOR", "-o", vvp, "-I", d / "rtl" / "pkg", "-I", d / "rtl" / "core",
         "-I", d / "rtl" / "cfu", *files])
     marks = d / "marks.txt"
     out = sh(["vvp", "-n", vvp, f"+hex={prog / 'crc.hex'}", f"+tohost={tohost}", f"+marks={marks}", "+timeout=3000000"],
@@ -124,7 +126,27 @@ def simulate(d: Path, prog: Path, tohost: str, with_cfu: bool) -> dict:
     for ln in marks.read_text().splitlines() if marks.exists() else []:
         n, c = map(int, ln.split())
         m[n] = c
-    return {"result": res, "marks": m}
+    return {"result": res, "marks": m, "monitor": monitor(out)}
+
+
+def monitor(out: str) -> dict:
+    """The wrapper's CFU_MONITOR lines, counted: each kill of a custom instruction in EX by the unit's state at that
+    clock, and each start that had to wait for a killed operation still in the unit."""
+    kills: dict[str, int] = {}
+    waits = 0
+    for ln in out.splitlines():
+        if ln.startswith("CFU_MONITOR kill"):
+            f = dict(x.split("=") for x in ln.split()[2:])
+            if f["active"] == "0":
+                k = "before_start"                     # the trap came in the first EX clock: the unit never started
+            elif f["inflight"] == "1":
+                k = "in_flight"                        # started, operation still marked in flight in the wrapper
+            else:
+                k = "result_held"                      # the unit had finished; its result was waiting in the wrapper
+            kills[k] = kills.get(k, 0) + 1
+        elif ln.startswith("CFU_MONITOR wait"):
+            waits += 1
+    return {"kills": dict(sorted(kills.items())), "starts_delayed_by_inflight": waits}
 
 
 def kernels(marks: dict, with_cfu: bool) -> dict:
@@ -158,6 +180,8 @@ def run(variants: list[str], baseline: bool) -> dict:
             raise RuntimeError(f"{cfg}: {sim['result']} (a CRC differs from zlib, or the core trapped or hung)")
         rec["configs"][cfg] = {"variant": v, "latency_clocks": cfu.latency("crc32_step", v) if v else None,
                                "result": sim["result"], "kernels": kernels(sim["marks"], v is not None)}
+        if v:
+            rec["configs"][cfg]["monitor"] = sim["monitor"]
         print(f"{cfg}: {sim['result']}", flush=True)
     if baseline and variants:
         base = rec["configs"]["baseline"]["kernels"]

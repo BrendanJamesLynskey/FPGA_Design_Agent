@@ -19,9 +19,10 @@ Time per call for N items (an item is the kernel's unit of work: a byte, a word,
         t_setup  = mmio_writes * t_mmio_write + mmio_reads * t_mmio_read      (programming the job)
         t_cache  = (bytes_in * N) / flush_rate + (bytes_out * N) / invalidate_rate   (0 on a coherent port)
         t_body   = t_in + t_compute + t_out             (overlap: false; a store-and-forward job)
-                 = max(t_in, t_compute, t_out) + t_fill (overlap: true; a streaming pipeline)
+                 = max(t_in, t_stream, t_out) + t_fill (overlap: true; a streaming pipeline)
             t_in = bytes_in * N / dma_rate, t_out = bytes_out * N / dma_rate,
-            t_compute = (latency + ii * N) / f_fabric, t_fill = latency / f_fabric
+            t_compute = (latency + ii * N) / f_fabric, t_stream = ii * N / f_fabric, t_fill = latency / f_fabric
+            (so in a pipeline the fill is counted once: t_compute = t_stream + t_fill)
         t_done   = irq_latency (completion: irq) or poll_read * polls (completion: poll)
 
 Amdahl: a kernel that takes a fraction p of the application's time and runs s times faster gives an overall speed-up
@@ -48,6 +49,9 @@ INPUTS = {
               "coherent", "flush_bytes_per_s", "invalidate_bytes_per_s", "overlap", "power_w"},
 }
 NON_NUMERIC = {"completion", "coherent", "overlap"}
+# Inputs that divide (a clock, a rate) or set a per-item time: zero or negative is an input error, not a model result.
+POSITIVE = {"f_cpu_hz", "f_core_hz", "f_fabric_hz", "dma_bytes_per_s", "flush_bytes_per_s", "invalidate_bytes_per_s",
+            "ii_clocks", "cycles_per_item"}
 
 
 class ModelError(ValueError):
@@ -97,9 +101,15 @@ def check_inputs(d: dict, where: str = "<dict>") -> dict:
                 if not (isinstance(v, dict) and "source" in v):
                     errs.append(f"options.{o}.{k}: give {{value: ..., source: ...}} (where the number comes from)")
                 try:
-                    _val(v)
+                    x = _val(v)
                 except ModelError as ex:
                     errs.append(f"options.{o}.{k}: {ex}")
+                    continue
+                lo = x[0] if isinstance(x, tuple) else x
+                if k in POSITIVE and lo <= 0:
+                    errs.append(f"options.{o}.{k}: must be greater than 0 (got {lo:g})")
+                elif lo < 0:
+                    errs.append(f"options.{o}.{k}: must not be negative (got {lo:g})")
         need = {"sw": {"f_cpu_hz", "cycles_per_item"}, "ci": {"f_core_hz", "cycles_per_item"},
                 "accel": {"f_fabric_hz", "ii_clocks", "bytes_in_per_item", "dma_bytes_per_s", "completion"}}[o]
         for k in sorted(need - set(spec)):
@@ -173,8 +183,8 @@ def accel_parts(p: dict, n: float) -> dict:
     cache = 0.0 if p.get("coherent", False) else bi / p["flush_bytes_per_s"] + bo / p["invalidate_bytes_per_s"]
     t_in, t_out = bi / p["dma_bytes_per_s"], bo / p["dma_bytes_per_s"]
     t_comp = (p.get("latency_clocks", 0.0) + p["ii_clocks"] * n) / p["f_fabric_hz"]
-    if p.get("overlap", False):
-        body = max(t_in, t_comp, t_out) + p.get("latency_clocks", 0.0) / p["f_fabric_hz"]
+    if p.get("overlap", False):                     # the fill once, after the slowest of the three streams
+        body = max(t_in, p["ii_clocks"] * n / p["f_fabric_hz"], t_out) + p.get("latency_clocks", 0.0) / p["f_fabric_hz"]
     else:
         body = t_in + t_comp + t_out
     done = p["irq_latency_s"] if p["completion"] == "irq" else p.get("polls", 1) * p.get("mmio_read_s", 0.0)
@@ -315,8 +325,8 @@ def c_first(cs, o):
 
 
 # ---- the decision rules -------------------------------------------------------------------------------------------------
-# The rule set of the KB skill `custom-instruction-or-accelerator` in executable form. Thresholds are defaults the
-# owner may change (they are listed as questions in the brief 64A report), not laws.
+# The rule set of the KB skill `custom-instruction-or-accelerator` in executable form. The thresholds are defaults, not
+# laws; change them to suit the project (a `rules:` block in the input file).
 DEFAULTS = {
     "max_src_regs": 2,           # read ports of a classic RV32 register file
     "max_dst_regs": 1,
@@ -337,14 +347,20 @@ def decide(t: dict, rules: dict | None = None) -> dict:
       state_bits                   state kept between calls (accumulators, tables, configuration)
       streaming                    the kernel consumes a stream or a buffer with state across items (FFT, FIR, packets)
       unit_latency_clocks          latency of the function unit at the core's clock (from ip_lib's variant data)
-      unit_fmax_hz, core_fmax_hz   the unit's and the core's Fmax estimates
+      unit_fmax_hz, core_fmax_hz   the unit's own Fmax estimate (built alone) and the core's without the unit
+      core_fmax_with_unit_hz       the core's Fmax estimate with the unit built in (measured in context); when given,
+                                   the Fmax gate compares it with core_fmax_hz instead of using unit_fmax_hz
       memory_access                the operation itself must load or store (not just the program around it)
-      bytes_per_call, accel_break_even_bytes   data per call and the accelerator's break-even (from evaluate())
+      bytes_per_call               data per call
+      accel_break_even_bytes       the accelerator's break-even against software: a number, or [low, high] over the
+                                   corners with high = None (or inf) when some corners never break even (from run())
+      accel_never_break_even_corners  [corners where the accelerator never beats software, corners] (from run())
       app_speedup_ci, app_speedup_accel        whole-application speed-ups at the typical size, a number or
                                                [low, high] (from evaluate())
       toolchain                    'intrinsic' (compiler or .insn) | 'driver' | 'none'
       reuse_programs               how many programs would use the instruction
       assumed_inputs               per option, how many of its inputs are assumptions (from run())
+      options                      the options the platform offers (from run(): those in the input file); default all
     """
     r = dict(DEFAULTS, **(rules or {}))
     why: list[str] = []
@@ -378,16 +394,37 @@ def decide(t: dict, rules: dict | None = None) -> dict:
         ci_ok = False
         why.append(f"CI no: {lat}-clock latency stalls the pipeline (limit {r['max_stall_clocks']}) unless the core "
                    "scoreboards the result")
-    uf, cf = get("unit_fmax_hz"), get("core_fmax_hz")
-    if uf is not None and cf is not None and uf < cf * (1 - r["max_core_fmax_loss"]):
+    modelled = t.get("options") or ("sw", "ci", "accel")       # the options the platform offers (from run())
+    ci_modelled = "ci" in modelled
+    cf, cw = (get("core_fmax_hz") if ci_modelled else t.get("core_fmax_hz")), t.get("core_fmax_with_unit_hz")
+    uf = t.get("unit_fmax_hz")
+    if cw is None and uf is None and ci_modelled:
+        unknown.append("unit_fmax_hz or core_fmax_with_unit_hz")
+    if cw is not None and cf is not None:
+        if cw < cf * (1 - r["max_core_fmax_loss"]):
+            ci_ok = False
+            why.append(f"CI no as is: the core with the unit reaches {cw / 1e6:.1f} MHz against {cf / 1e6:.1f} MHz "
+                       "without it: pipeline the unit or keep it out of the core")
+    elif uf is not None and cf is not None and uf < cf * (1 - r["max_core_fmax_loss"]):
         ci_ok = False
         why.append(f"CI no as is: unit Fmax {uf / 1e6:.0f} MHz below the core's {cf / 1e6:.0f} MHz: pipeline it "
                    "(a lower-latency variant may not help) or keep it out of the core")
     bpc, be = get("bytes_per_call"), get("accel_break_even_bytes")
-    if bpc is not None and be is not None and bpc < be:
-        acc_ok = False
-        why.append(f"accelerator no: {bpc} bytes per call is below its break-even {be:.0f} bytes (transfer and "
-                   "setup dominate)")
+    acc_unsure = False
+    if bpc is not None and be is not None:
+        be_lo, be_hi = (be[0], be[1]) if isinstance(be, (list, tuple)) else (be, be)
+        be_hi = math.inf if be_hi is None else be_hi
+        if bpc < be_lo:
+            acc_ok = False
+            why.append(f"accelerator no: {bpc} bytes per call is below its break-even ({be_lo:.0f} bytes at best): "
+                       "transfer and setup dominate")
+        elif bpc < be_hi:
+            acc_unsure = True
+            nv = t.get("accel_never_break_even_corners")
+            hi_txt = (f"{be_hi:.0f} bytes at worst" if not math.isinf(be_hi) else
+                      f"it never breaks even in {nv[0]} of {nv[1]} corners" if nv else "it never breaks even in some corners")
+            why.append(f"accelerator unsure: {bpc} bytes per call is above its break-even at best ({be_lo:.0f} bytes) "
+                       f"but not at worst ({hi_txt}): it cannot be chosen until the inputs are measured")
     def rng(v):
         return None if v is None else (tuple(v) if isinstance(v, (list, tuple)) else (v, v))
     sci, sacc = rng(t.get("app_speedup_ci")), rng(t.get("app_speedup_accel"))
@@ -397,14 +434,15 @@ def decide(t: dict, rules: dict | None = None) -> dict:
     if (t.get("reuse_programs") or 0) <= 1 and ci_ok:
         why.append("CI cost: one program uses it; a core change is paid once for one user")
     cands = []
-    if ci_ok:
+    if ci_ok and "ci" in modelled:
         cands.append(("ci", sci))
-    if acc_ok:
+    if acc_ok and "accel" in modelled:
         cands.append(("accel", sacc))
     known = [(o, s) for o, s in cands if s is not None]
     th = r["min_app_speedup"]
-    sure = [(o, s) for o, s in known if s[0] >= th]
-    maybe = [(o, s) for o, s in known if s[0] < th <= s[1]]
+    sure = [(o, s) for o, s in known if s[0] >= th and not (o == "accel" and acc_unsure)]
+    maybe = [(o, s) for o, s in known if (s[0] < th or (o == "accel" and acc_unsure)) and th <= s[1]]
+    no_evidence = [o for o, s in cands if s is None]
     assumed = t.get("assumed_inputs") or {}
     if sure:
         sure.sort(key=lambda x: -x[1][0])
@@ -425,10 +463,17 @@ def decide(t: dict, rules: dict | None = None) -> dict:
                            "area, driver and toolchain cost as well")
         if assumed.get(choice):
             why.append(f"{choice} rests on {assumed[choice]} assumed inputs: confirm them by measurement before building")
-    elif maybe:
+        for o in no_evidence:
+            why.append(f"{o} passes its rules but has no speed-up figure, so it was not compared")
+    elif maybe or no_evidence:
         choice = "measure"
-        why.append("undecided: " + "; ".join(f"{o} gives {s[0]:.2f} .. {s[1]:.2f}" for o, s in maybe)
-                   + f", which straddles {th}: measure the uncertain inputs (the widest ranges) before choosing")
+        if maybe:
+            why.append("undecided: " + "; ".join(f"{o} gives {s[0]:.2f} .. {s[1]:.2f}" for o, s in maybe)
+                       + f", which straddles {th} or rests on an unsure break-even: measure the uncertain inputs (the "
+                       "widest ranges) before choosing")
+        if no_evidence:
+            why.append(f"no speed-up evidence for {', '.join(no_evidence)} (app_speedup_{no_evidence[0]} unknown): "
+                       "run the cost model or measure before choosing")
     else:
         choice = "sw"
         best = max(known, key=lambda x: x[1][1], default=None)
@@ -499,6 +544,20 @@ def assumed_inputs(d: dict) -> dict:
     return out
 
 
+def accel_break_even_bytes(d: dict, out: dict) -> tuple[list, list]:
+    """The accelerator's break-even against software in bytes, [best, worst] over the corners, and [corners that never
+    break even, corners]. worst is None when some corners never break even (no single size makes the accelerator win
+    there); [inf, None] when it is faster at large sizes in no corner."""
+    x = out["crossovers"].get("accel_beats_sw_from_n")
+    if not x:
+        return [math.inf, None], [out["corners"], out["corners"]]
+    bpi = _val(d["options"]["accel"]["bytes_in_per_item"])
+    lo_b, hi_b = bpi if isinstance(bpi, tuple) else (bpi, bpi)
+    lo_n = 1.0 if x["corners_always_faster"] else x["range"][0]
+    hi_n = None if x["corners_never_faster_at_large_n"] else (x["range"][1] if x["corners_crossing"] else 1.0)
+    return [lo_n * lo_b, None if hi_n is None else hi_n * hi_b], [x["corners_never_faster_at_large_n"], x["corners"]]
+
+
 def run(path: str | Path) -> tuple[dict, dict | None]:
     d = load(path)
     out = evaluate(d)
@@ -506,12 +565,9 @@ def run(path: str | Path) -> tuple[dict, dict | None]:
     if "traits" in d:
         t = dict(d["traits"])
         if "accel" in d["options"] and "sw" in d["options"] and "accel_break_even_bytes" not in t:
-            v = out["crossovers"].get("accel_beats_sw_from_n", {}).get("range")
-            if v:
-                bpi = _val(d["options"]["accel"]["bytes_in_per_item"])
-                bpi = bpi[1] if isinstance(bpi, tuple) else bpi
-                t["accel_break_even_bytes"] = v[1] * bpi            # the pessimistic end
+            t["accel_break_even_bytes"], t["accel_never_break_even_corners"] = accel_break_even_bytes(d, out)
         t.setdefault("assumed_inputs", assumed_inputs(d))
+        t.setdefault("options", [o for o in OPTIONS if o in d["options"]])
         for o in ("ci", "accel"):
             k = f"app_speedup_{o}_at_typical_n"
             if k in out and f"app_speedup_{o}" not in t:

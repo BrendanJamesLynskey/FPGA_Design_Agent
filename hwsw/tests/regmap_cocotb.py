@@ -391,6 +391,61 @@ async def unmapped_addresses(dut):
 
 
 @cocotb.test(timeout_time=2, timeout_unit="ms")
+async def read_while_response_pending_and_unaligned(dut):
+    """A second read address while the first read's response waits for RREADY is not taken (ARREADY low, R held
+    steady) until R is accepted; then it completes with its own data. An unaligned address reaches the word that
+    holds it: address bits [1:0] are not decoded (docs/hwsw.md), so a write at offset+2 and a read at offset+1 both
+    use the register at offset."""
+    rng, bus, drv, hw, pulses, chk = await boot(dut, 9)
+    model = Model()
+    d = dut
+    r1 = next(r for r in M.registers if r.mask("RW"))
+    v1 = 0xA5C3_5A3C & r1.mask("RW")
+    await bus.write32(r1.offset + 2, v1)                     # unaligned write: lands in r1
+    assert bus.last_bresp == OKAY
+    model.write(r1.name, v1, 0xF)
+    assert await bus.read32(r1.offset + 1) == model.read(r1.name), "unaligned read did not reach the word"
+    assert bus.last_rresp == OKAY
+    r2 = next(r for r in M.registers if r is not r1 and model.read(r.name) != model.read(r1.name))
+    await FallingEdge(d.aclk)
+    d.s_axil_rready.value = 0
+    d.s_axil_araddr.value = r1.offset
+    d.s_axil_arvalid.value = 1
+    while True:
+        await RisingEdge(d.aclk)
+        if int(d.s_axil_arready.value):
+            break
+    await FallingEdge(d.aclk)
+    d.s_axil_araddr.value = r2.offset                         # the second AR, while R of the first is pending
+    for _ in range(6):
+        await RisingEdge(d.aclk)
+        assert int(d.s_axil_rvalid.value) == 1
+        assert int(d.s_axil_arready.value) == 0, "ARREADY high while a read response is pending"
+        assert int(d.s_axil_rdata.value) == model.read(r1.name), "R data changed while RVALID waited for RREADY"
+    await FallingEdge(d.aclk)
+    d.s_axil_rready.value = 1                                 # take the first response
+    await RisingEdge(d.aclk)
+    await FallingEdge(d.aclk)
+    d.s_axil_rready.value = 0
+    while True:                                               # now the second AR is taken
+        await RisingEdge(d.aclk)
+        if int(d.s_axil_arready.value):
+            break
+    await FallingEdge(d.aclk)
+    d.s_axil_arvalid.value = 0
+    while not int(d.s_axil_rvalid.value):
+        await RisingEdge(d.aclk)
+    assert int(d.s_axil_rdata.value) == model.read(r2.name), "the second read returned the wrong register"
+    assert int(d.s_axil_rresp.value) == OKAY
+    await FallingEdge(d.aclk)
+    d.s_axil_rready.value = 1
+    await RisingEdge(d.aclk)
+    await FallingEdge(d.aclk)
+    d.s_axil_rready.value = 0
+    chk.assert_quiet()
+
+
+@cocotb.test(timeout_time=2, timeout_unit="ms")
 async def interrupt_line(dut):
     """irq_o is high exactly while an enabled status bit is set (registered: one clock after the cause)."""
     if not M.interrupt:

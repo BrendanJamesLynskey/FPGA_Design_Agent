@@ -30,8 +30,12 @@ def test_formulas_by_hand() -> None:
     assert parts["total"] == pytest.approx(7e-7 + 6e-6 + 2e-5 + 1.01e-5 + 2e-7)
     acc2 = dict(acc, overlap=True, coherent=True, completion="irq", irq_latency_s=5e-6)
     p2 = P.accel_parts(acc2, 1000)
-    assert p2["cache"] == 0 and p2["body"] == pytest.approx(max(1e-5, 1.01e-5, 1e-5) + 10 / 1e8)
+    # a pipeline: the slowest stream (here 1000 items at II 1, 100 MHz = 10 us) plus the fill (10 clocks) once
+    assert p2["cache"] == 0 and p2["body"] == pytest.approx(max(1e-5, 1000 / 1e8, 1e-5) + 10 / 1e8)
     assert p2["done"] == 5e-6
+    p3 = P.accel_parts(dict(acc2, ii_clocks=2), 1000)              # compute dominates: the fill is not counted twice
+    assert p3["body"] == pytest.approx(2000 / 1e8 + 10 / 1e8)
+    assert p3["compute"] == pytest.approx(2010 / 1e8)
 
 
 def test_amdahl() -> None:
@@ -83,7 +87,13 @@ def _zynq() -> dict:
     (lambda d: d["application"].update(kernel_fraction={"value": 1.0, "source": "x"}), "must be in [0, 1)"),
     (lambda d: d.update(sizes=[0, 4]), "positive integers"),
     (lambda d: d["options"].update(gpu={}), "give some of sw, ci, accel"),
-], ids=["no source", "bad range", "no maintenance", "irq latency", "unknown", "fraction", "sizes", "option"])
+    (lambda d: d["options"]["accel"].update(dma_bytes_per_s={"value": 0, "source": "x"}),
+     "dma_bytes_per_s: must be greater than 0"),
+    (lambda d: d["options"]["sw"].update(f_cpu_hz={"value": [-1e6, 1e9], "source": "x"}), "f_cpu_hz: must be greater than 0"),
+    (lambda d: d["options"]["accel"].update(f_fabric_hz={"value": 0, "source": "x"}), "f_fabric_hz: must be greater than 0"),
+    (lambda d: d["options"]["accel"].update(mmio_write_s={"value": -1e-7, "source": "x"}), "must not be negative"),
+], ids=["no source", "bad range", "no maintenance", "irq latency", "unknown", "fraction", "sizes", "option",
+        "zero DMA rate", "negative clock", "zero fabric clock", "negative latency"])
 def test_inputs_are_checked(edit, expect) -> None:
     d = copy.deepcopy(_zynq())
     edit(d)
@@ -116,6 +126,39 @@ def test_decision_rules(change, ci_ok, acc_ok, choice, why) -> None:
     dec = P.decide(dict(BASE, **change))
     assert (dec["ci_eligible"], dec["accel_eligible"], dec["choice"]) == (ci_ok, acc_ok, choice), dec
     assert any(why in r for r in dec["reasons"]), dec["reasons"]
+
+
+def test_no_speed_up_evidence_is_measure_not_software() -> None:
+    """Both options pass their rules but no speed-up figure is known: the verdict is measure, not software."""
+    dec = P.decide({"src_regs": 2, "dst_regs": 1, "state_bits": 0})
+    assert dec["choice"] == "measure", dec
+    assert any("no speed-up evidence" in r for r in dec["reasons"])
+    dec = P.decide(dict(BASE, app_speedup_ci=1.02, app_speedup_accel=None))      # one below, one unknown
+    assert dec["choice"] == "measure", dec
+    dec = P.decide(dict(BASE, app_speedup_accel=None, options=["sw", "ci"]))      # no accelerator on this platform
+    assert dec["choice"] == "ci" and not any("accel" in r for r in dec["reasons"]), dec
+
+
+def test_break_even_that_some_corners_never_reach_is_not_a_pass() -> None:
+    """An accelerator that never beats software in some corners cannot be chosen on its best-case break-even."""
+    t = dict(BASE, src_regs=3, app_speedup_accel=[1.5, 2.0], accel_break_even_bytes=[100, None],
+             accel_never_break_even_corners=[512, 1024])
+    dec = P.decide(t)
+    assert dec["choice"] == "measure" and dec["accel_eligible"], dec
+    assert any("never breaks even in 512 of 1024 corners" in r for r in dec["reasons"]), dec["reasons"]
+    assert P.decide(dict(t, bytes_per_call=300, accel_break_even_bytes=[100, 400]))["choice"] == "measure"
+    assert P.decide(dict(t, bytes_per_call=1500, accel_break_even_bytes=[100, 1000]))["choice"] == "accel"
+    assert P.decide(dict(t, accel_break_even_bytes=[2000, None]))["accel_eligible"] is False
+    out, dec = P.run(ROOT / "hwsw" / "examples" / "partition_crc32_zynq.yaml")     # 512 of 1024 corners never cross
+    x = out["crossovers"]["accel_beats_sw_from_n"]
+    assert x["corners_never_faster_at_large_n"] == 512 and x["corners"] == 1024
+    assert any("never breaks even in 512 of 1024 corners" in r for r in dec["reasons"]), dec["reasons"]
+
+
+def test_fmax_gate_uses_the_core_with_the_unit_when_measured() -> None:
+    assert P.decide(dict(BASE, unit_fmax_hz=None, core_fmax_with_unit_hz=99e6))["ci_eligible"] is True
+    dec = P.decide(dict(BASE, unit_fmax_hz=None, core_fmax_with_unit_hz=80e6))
+    assert dec["ci_eligible"] is False and any("with the unit reaches 80.0 MHz" in r for r in dec["reasons"])
 
 
 def test_missing_traits_are_reported_not_assumed() -> None:
@@ -160,6 +203,7 @@ def test_rv32_example_matches_the_measured_records() -> None:
     base, word = ooc["configs"]["baseline"]["fmax_mhz"], ooc["configs"]["cfu_word"]["fmax_mhz"]
     assert P._val(d["options"]["sw"]["f_cpu_hz"]) == pytest.approx(base * 1e6)
     assert P._val(d["options"]["ci"]["f_core_hz"]) == pytest.approx(min(base, word) * 1e6)
-    assert d["traits"]["unit_fmax_hz"] == pytest.approx(word * 1e6) and d["traits"]["core_fmax_hz"] == pytest.approx(base * 1e6)
+    assert d["traits"]["core_fmax_with_unit_hz"] == pytest.approx(word * 1e6)
+    assert d["traits"]["core_fmax_hz"] == pytest.approx(base * 1e6) and "unit_fmax_hz" not in d["traits"]
     out, dec = P.run(ROOT / "hwsw" / "examples" / "partition_crc32_rv32.yaml")
     assert dec["choice"] == "ci" and dec["ci_eligible"]

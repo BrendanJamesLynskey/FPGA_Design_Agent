@@ -1,27 +1,27 @@
 Kernel: CRC-32 (IEEE 802.3) over an N-byte buffer; item = one byte (1024 input corners)
 
 N | t_sw | t_accel | speed-up accel
-16 | 123 ns .. 540 ns | 1.41 us .. 3.83 us | 0.0321 .. 0.384
-64 | 267 ns .. 1.26 us | 1.55 us .. 4.13 us | 0.0647 .. 0.812
-256 | 843 ns .. 4.14 us | 2.13 us .. 5.47 us | 0.154 .. 1.95
-1024 | 3.15 us .. 15.7 us | 4.43 us .. 10.8 us | 0.29 .. 3.53
-1500 | 4.57 us .. 22.8 us | 5.86 us .. 14.2 us | 0.323 .. 3.89
-4096 | 12.4 us .. 61.7 us | 13.6 us .. 32.4 us | 0.382 .. 4.52
+16 | 123 ns .. 540 ns | 1.33 us .. 3.79 us | 0.0324 .. 0.407
+64 | 267 ns .. 1.26 us | 1.47 us .. 4.13 us | 0.0647 .. 0.856
+256 | 843 ns .. 4.14 us | 2.05 us .. 5.47 us | 0.154 .. 2.02
+1024 | 3.15 us .. 15.7 us | 4.35 us .. 10.8 us | 0.29 .. 3.6
+1500 | 4.57 us .. 22.8 us | 5.78 us .. 14.2 us | 0.323 .. 3.94
+4096 | 12.4 us .. 61.7 us | 13.6 us .. 32.4 us | 0.382 .. 4.55
 65536 | 197 us .. 983 us | 198 us .. 462 us | 0.425 .. 4.97
 1048576 | 3.15 ms .. 15.7 ms | 3.15 ms .. 7.34 ms | 0.428 .. 5
 
-accel faster than sw: from N = 88.3 .. 451 in 512 of 1024 corners; not at large N in 512 corners
+accel faster than sw: from N = 81.7 .. 451 in 512 of 1024 corners; not at large N in 512 corners
 sw faster than accel: at every N in 512 corners; not at large N in 512 corners
 Amdahl bound (kernel time to zero): 1.43 .. 2.5
-app_speedup_accel_at_typical_n: 0.443 .. 1.8
+app_speedup_accel_at_typical_n: 0.443 .. 1.81
 
 What moves the kernel speed-up at N = 1500 most (one input at each end, the others mid-range):
   accel: sw.cycles_per_item: 0.54 .. 2.61
-  accel: accel.dma_bytes_per_s: 1.22 .. 1.82
+  accel: accel.dma_bytes_per_s: 1.22 .. 1.84
   accel: accel.flush_bytes_per_s: 1.31 .. 1.66
   accel: accel.mmio_write_s: 1.69 .. 1.47
   accel: accel.mmio_read_s: 1.69 .. 1.47
 
 Decision: measure
-  - undecided: accel gives 0.44 .. 1.80, which straddles 1.1: measure the uncertain inputs (the widest ranges) before choosing
-  unknown traits (not assumed): unit_fmax_hz, core_fmax_hz
+  - accelerator unsure: 1500 bytes per call is above its break-even at best (82 bytes) but not at worst (it never breaks even in 512 of 1024 corners): it cannot be chosen until the inputs are measured
+  - undecided: accel gives 0.44 .. 1.81, which straddles 1.1 or rests on an unsure break-even: measure the uncertain inputs (the widest ranges) before choosing

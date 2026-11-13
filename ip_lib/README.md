@@ -24,7 +24,7 @@ read API are in [docs/ip_variants.md](../docs/ip_variants.md).
 Run: `python3 -m pytest ip_lib/fir/tb/test_fir_rtl.py flow/tests/test_63a_ipvariants.py` (Icarus Verilog 12, cocotb
 2.0.1); faults: `python3 hil/ip_faults.py --blocks fir`.
 
-## CPU function units (brief 64A+)
+## CPU function units
 
 An entry can also declare a `function_unit:` contract (two register operands, one result, no state, an issue pulse and
 a done pulse a fixed number of clocks later); `python3 -m hwsw.cfu <entry> --variant <v>` then wraps it as a custom

@@ -33,7 +33,7 @@ variant_param: IMPL
 variants:
   word:
     summary: the 32-bit update in one clock (an XOR network)
-    when: 'the lowest latency: the custom-instruction variant and the word-per-clock stream. Measured: 95 LUTs out of context, but 297 LUTs inside the BRV32P core, where its operand inputs are timed (results/64a_hwsw/core_ooc.json)'
+    when: 'the lowest latency: the custom-instruction variant and the word-per-clock stream. Measured: 95 LUTs out of context; inside the BRV32P core the core grows by 371 LUTs with it, and the hierarchy report shows the unit at 283 LUTs because synthesis merges the operand multiplexers into it (97 LUTs with its hierarchy kept; results/64a_hwsw/core_ooc.json)'
     uses:
       bram_tiles: 0
       dsp: 0
@@ -41,7 +41,7 @@ variants:
     ii: 1
   byte:
     summary: one byte per clock through an 8-bit update, four clocks per word
-    when: 'area before speed. Measured: out of context no saving (96 LUTs against 95), but inside the BRV32P core 165 LUTs against 297 for word; as a custom instruction it costs three more stall clocks per word (2.29 against 1.54 cycles per byte)'
+    when: 'area before speed. Measured: out of context no saving (96 LUTs against 95), but inside the BRV32P core it grows the core by 148 LUTs against 371 for word; as a custom instruction it costs three more stall clocks per word (2.29 against 1.54 cycles per byte)'
     uses:
       bram_tiles: 0
       dsp: 0
@@ -65,7 +65,7 @@ boundary:
   registered_outputs: 'yes'
   cdc: none
   part_specific: none
-limits: 'the word variant has a combinational XOR network from the operand inputs to the result register: out of context that path is not timed, so neither its Fmax nor its LUT count there is the in-context figure (95 LUTs out of context, 297 inside the BRV32P core: results/64a_hwsw/core_ooc.json)'
+limits: 'the word variant has a combinational XOR network from the operand inputs to the result register: out of context that path has no register before it, so no Fmax is recorded there. Inside a core, synthesis can merge the logic that drives the operands into the network, so the unit''s line in a hierarchy report overstates it (283 LUTs in the BRV32P core, 97 with its hierarchy kept, 95 out of context); read the cost as the whole core''s growth (371 LUTs: results/64a_hwsw/core_ooc.json)'
 resets:
 - name: rst
   polarity: high

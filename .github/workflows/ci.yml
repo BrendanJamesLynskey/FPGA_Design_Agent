@@ -241,7 +241,7 @@ jobs:
         run: python axi_tx/formal/run_formal.py --depth 20 --json build/59a/formal.json
 
   hwsw:
-    name: HW/SW interface (brief 64A) - register-map outputs agree, generated block under cocotb with the Python and C drivers and the AXI4-Lite checker, formal handshake, crc32_step as a custom instruction in the BRV32P core
+    name: HW/SW interface - register maps, generated block, formal handshake, crc32_step as a custom instruction
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -268,6 +268,8 @@ jobs:
         run: |
           python -m pytest -q ip_lib/crc32_step/tb/test_crc32_step_rtl.py
           python hil/ip_faults.py --blocks crc32_step
+      - name: The generated custom-instruction wrapper on its own (kill then a quick retry, stale operands, hold; seeded faults)
+        run: python -m pytest -q hwsw/tests/test_64a_cfu_wrapper_rtl.py
       - name: crc32_step as a custom instruction in the pinned BRV32P core against software (cycles compared with the committed record)
         run: python -m pytest -q hwsw/tests/test_64a_cfu_core_rtl.py
       - name: Upload simulation logs
@@ -277,6 +279,7 @@ jobs:
           name: hwsw-64a
           path: |
             build/sim/regmap_64a_*/sim.log
+            build/sim/cfu_wrapper_64a_*/sim.log
             build/64a/formal/*/*.log
             build/64a/cfu/*/marks.txt
 

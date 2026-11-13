@@ -73,6 +73,8 @@ MUTANTS = [
      ["interrupt_line"]),
     ("pulse_held", DEMO, "else cmd_start_pulse_o <= wr_cmd ? w_data[0:0] & w_bits[0:0] : 1'h0;",
      "else if (wr_cmd) cmd_start_pulse_o <= w_data[0:0] & w_bits[0:0];", ["field_access_types"]),
+    ("arready_while_rvalid", DEMO, "assign s_axil_arready = !s_axil_rvalid;", "assign s_axil_arready = 1'b1;",
+     ["read_while_response_pending_and_unaligned"]),
 ]
 
 
