@@ -32,6 +32,10 @@ are asynchronous or slow. Fails on:
     IO-DDR-REQUIREMENT a DDR interface whose setup or hold requirement in Vivado's analysis is not the intended edge
                       pairing's (a full-period setup requirement: the wrong edges are paired), or that declares nothing
                       to check it against
+    IO-FWD-SOURCE     an interface timed against a clock the FPGA forwards (``forwarded_clock_source``: the pin the
+                      generated clock must be defined from, e.g. the forwarding ODDR's C) whose create_generated_clock is
+                      missing or names another -source (brief 63D: a forwarded clock defined from the wrong pin passes
+                      the clock-name check while its latency is modelled wrongly)
     IO-DDR-UNDECLARED a DDR port (a DDR primitive next to the pin, or delays on both clock edges) that is not in a
                       declared DDR interface with data-sheet values: the pairing check would otherwise be skipped
     IO-VCLK-UNRELATED a virtual clock whose period is neither equal to nor an integer ratio of a design clock, with no
@@ -55,7 +59,7 @@ from typing import Any
 import yaml
 
 INTERFACE_KEYS = ("name", "kind", "direction", "ports", "clock", "clock_period_ns", "ddr", "iob", "data_sheet",
-                  "forwarded_phase_deg")
+                  "forwarded_phase_deg", "forwarded_clock_source")
 KINDS = ("system_synchronous", "source_synchronous", "forwarded_clock", "asynchronous")
 # board slow_ports default (when board.yaml has none): the Nexys A7 user I/O that has no timing relationship
 DEFAULT_SLOW = (r"BTN[CUDLR]", r"CPU_RESETN", r"SW\[\d+\]", r"LED\[\d+\]", r"LED1[67]_[RGB]", r"AN\[\d+\]",
@@ -383,6 +387,32 @@ def evaluate(build_dir: Path | None, stage: str = "route", xdc_files: list[Path]
     for i in interfaces:
         for n in _iface_ports(i, port_names or [p for x in xdc["delays"] for p in ports_of(x)]):
             iface_of[n] = i
+
+    # IO-FWD-SOURCE: the forwarded clock an interface is timed against is defined from the declared pin
+    gens: dict[str, list[tuple[str | None, dict[str, Any]]]] = {}
+    for f in xdc_files or []:
+        name_, text_ = (f[0], f[1]) if isinstance(f, tuple) else (str(f), Path(f).read_text(errors="replace"))
+        for n, raw in enumerate(text_.splitlines(), 1):
+            code = raw.split("#", 1)[0]
+            if re.match(r"\s*create_generated_clock\b", code):
+                nm = re.search(r"-name\s+(\S+)", code)
+                src = re.search(r"-source\s+\[\s*get_pins\s+(\{[^}]*\}|\S+?)\s*\]", code)
+                if nm:
+                    gens.setdefault(nm.group(1), []).append(
+                        (src.group(1).strip("{} ") if src else None,
+                         {"file": Path(name_).name, "line": n, "text": raw.strip()}))
+    for i in interfaces:
+        want = i.get("forwarded_clock_source")
+        if not want:
+            continue
+        got = gens.get(i.get("clock") or "")
+        if not got:
+            fail("IO-FWD-SOURCE", None, f"interface {i.get('name')}: no create_generated_clock defines {i.get('clock')}")
+            continue
+        for src, where in got:
+            if src != want:
+                fail("IO-FWD-SOURCE", where, f"interface {i.get('name')}: {i.get('clock')} is generated from {src}, "
+                     f"the interface declares {want}")
 
     # IO-DDR-UNDECLARED: every DDR data port must belong to a declared DDR interface with data-sheet values, so the
     # edge-pairing check (IO-DDR-REQUIREMENT) cannot be skipped by leaving the declaration out. A DDR port is one

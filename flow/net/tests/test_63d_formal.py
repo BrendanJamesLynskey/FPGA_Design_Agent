@@ -1,4 +1,4 @@
-"""SymbiYosys jobs of brief 63D (ip_lib/<entry>/formal): the MDIO frame proved by k-induction; the transmit framing
+"""SymbiYosys jobs of the network entries (ip_lib/<entry>/formal): the MDIO frame proved by k-induction; the transmit framing
 and AXI-Stream rules (the AXI checker's axis_rules) of arp_responder, icmp_echo, ipv4_udp_rx, ipv4_udp_tx and igmp_join, and
 the address filter of eth_mac_rgmii against the rule restated in the harness, by bounded model checking (not proofs);
 covers that each block can do its job. Skipped where sby is not installed (CI: the verification job installs it).
@@ -24,7 +24,7 @@ JOBS = [
     ("mdio_master", "mdio.sby", "cover", "a whole read frame completes"),
     ("arp_responder", "arp.sby", "bmc", "42-byte frames, AXI-Stream rules, lookups answered only when asked: bounded, 60 clocks"),
     ("arp_responder", "arp.sby", "cover", "a reply and a request leave"),
-    ("icmp_echo", "icmp.sby", "bmc", "AXI-Stream rules, no reply without a request, the stored request never written while it waits or is sent: bounded, 40 clocks"),
+    ("icmp_echo", "icmp.sby", "bmc", "AXI-Stream rules, no reply without a request, and the reply carries the request it answers (byte 13 equal) whatever frame follows it: bounded, 64 clocks; fails at step 60 with the round-1 back-to-back bug restored"),
     ("icmp_echo", "icmp.sby", "cover", "a whole reply to a minimal echo request"),
     ("ipv4_udp_rx", "udp_rx.sby", "bmc", "AXI-Stream rules with tuser, tdest and header fields; input held after a frame: bounded, 30 clocks"),
     ("ipv4_udp_rx", "udp_rx.sby", "cover", "a whole datagram parsed and passed on"),

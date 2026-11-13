@@ -2,10 +2,10 @@
 name: eth_mac_rgmii
 version: 0.2.0
 status: Meets 125 MHz out of context with the block RAM buffer (139-141 MHz estimated); the LUT RAM buffer meets it only just
-  at 32768 bytes (WNS 0.04 ns; an earlier build of the same design missed by 7 ps). Simulated (0.1.0 and 0.2.0 features, with
-  an independent adversarial pause bench); formal checks of the frame FSMs (bounded) and the address filter; built alone on
-  an Artix-7 with Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not yet run on a board
-  (its filter and statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not yet run)
+  in one run at 32768 bytes (WNS 0.04 ns, within run-to-run noise). Simulated (0.1.0 and 0.2.0 features, with an independent
+  adversarial pause bench); formal checks of the frame FSMs (bounded) and the address filter; built alone on an Artix-7 with
+  Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not yet run on a board (its filter and
+  statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not yet run)
 summary: 'Tri-mode (10/100/1000 Mb/s) Ethernet MAC for a PHY with an RGMII (reduced gigabit media-independent interface) link:
   cut-through receive (bytes passed on as they arrive) with the FCS (frame check sequence, the CRC at the end of a frame)
   verdict at the end, optional store-and-forward AXI-Stream receive, AXI-Stream transmit with padding, FCS and inter-frame
@@ -288,7 +288,7 @@ variants:
   lutram:
     summary: the store-and-forward buffer in LUT RAM
     when: 'block RAM spoken for and small buffers; measured: 796 LUTs as RAM at 4096 (about 133 MHz), 6174 at 32768, where
-      it meets 125 MHz only just (WNS 0.04 ns)'
+      it meets 125 MHz only just in one run (WNS 0.04 ns)'
     uses:
       dsp: 0
       bram_tiles: 0

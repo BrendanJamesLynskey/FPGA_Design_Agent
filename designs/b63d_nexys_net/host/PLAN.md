@@ -46,10 +46,13 @@ The cabling to confirm before this runs:
 - the PC interface set to 192.168.63.1/24, with no gateway and no DHCP on it (the board is 192.168.63.2, MAC
   02:00:00:00:00:63, both locally administered examples).
 
-The script checks this itself before sending anything and refuses to run if the interface has a default route or
-carries the default route, has any address but 192.168.63.1/24, would not carry the board's or the group's traffic, or
-if anything but the board answers on the subnet. Every socket is bound to the interface, and multicast leaves through
-it with TTL 1.
+The script checks what it can see before sending anything, and refuses to run if the interface is stacked on or
+enslaved to another interface (a VLAN, macvlan, bridge port or bond member, for example), has any IPv4 address but
+192.168.63.1/24 or any IPv6 address but a link-local one, has any route but 192.168.63.0/24 in any routing table (a
+default route included), carries the route to the home gateway, would not carry the board's or the group's traffic, or
+if any host other than the board (at its expected MAC) appears on the subnet. Every socket is bound to the interface,
+and multicast leaves through it with TTL 1. The check sees only this PC's interface and neighbour table. It cannot see
+past the cable, so the cabling confirmation is still needed.
 
 Then: `ping` the board (ICMP echo and the ARP exchange before it), read the PC's neighbour entry for the board, ask the
 UDP service on port 5000 for the counters, and send a datagram to 239.63.0.1:5000 before and after the board joins that

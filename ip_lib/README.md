@@ -61,7 +61,7 @@ design [designs/b63d_nexys_net](../designs/b63d_nexys_net/README.md), which is b
 
 Timing: at a 125 MHz target, `ipv4_udp_rx`, `ipv4_udp_tx`, `igmp_join` (71-82 MHz estimated) and `icmp_echo`
 (89-116 MHz) miss, as does `arp_responder` with 16 entries (116 MHz); the MAC with its LUT RAM buffer at 32768 bytes
-meets it only just (WNS 0.04 ns). They close at the Nexys design's 50 MHz; behind the 125 MHz RGMII MAC they need pipelining first.
+meets it only just in one run (WNS 0.04 ns). They close at the Nexys design's 50 MHz; behind the 125 MHz RGMII MAC they need pipelining first.
 
 | Entry | What | Tests |
 |---|---|---|
@@ -82,7 +82,7 @@ How the evidence is made:
   options and fragments, IPv6 with an extension header, UDP, TCP, ICMP, ARP, bad checksums, wrong versions, IHL < 5,
   truncated frames) and can write them as pcap.
 - **Golden models**: `flow/net/model.py`, plain Python written from the standards, not from the RTL.
-- **Benches**: file-driven, the brief-19 harness method (`flow/ipgen/harness.py` gap schedules and file format): Python
+- **Benches**: file-driven, the repository's harness method (`flow/ipgen/harness.py` gap schedules and file format): Python
   writes stimulus and a seeded valid/ready schedule, the bench writes what the design produced, Python compares.
 - **Faults**: each entry's `faults.yaml` lists seeded bugs; `python3 flow/net/faults.py` runs the tests against each
   ([results/b40/faults.json](../results/b40/faults.json)).
@@ -125,4 +125,7 @@ READMEs: `python flow/net/ipdoc.py`.
 - **Multicast hash:** a 64-bit table indexed by 6 bits of the destination address's CRC; a set bit accepts every address that falls in that bin.
 - **OOC (out of context):** a block synthesised, placed and routed on its own, without pins or the rest of a design.
 - **WNS (worst negative slack):** the timing margin at the target clock; below zero the target is missed.
+- **WHS (worst hold slack):** the same for hold: how long data stays steady after the capturing edge; below zero it changes too soon.
+- **Setup multicycle:** a constraint telling the timing tool that data are captured a stated number of clock edges after launch, not on the very next edge.
+- **IO-CLOCK, IO-VALUE, IO-FWD-SOURCE:** the flow's I/O-timing gate checks (`flow/io_check.py`): a pin delay referenced to a clock other than the interface's, a delay that differs from the data sheet, and a forwarded clock defined from the wrong pin.
 - **Fmax estimate:** 1000 / (period - WNS) from one routed run at the target clock; an estimate, not a closure.

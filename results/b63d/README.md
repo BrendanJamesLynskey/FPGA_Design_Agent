@@ -88,7 +88,7 @@ Out of context on an Artix-7 (xc7a100tcsg324-1), Vivado 2026.1, one routed run p
 | mdio_master | `mdio.sby cover` | a whole read frame completes | PASS |
 | arp_responder | `arp.sby bmc` | 42-byte frames, AXI-Stream rules, lookups answered only when asked: bounded, 60 clocks | PASS |
 | arp_responder | `arp.sby cover` | a reply and a request leave | PASS |
-| icmp_echo | `icmp.sby bmc` | AXI-Stream rules, no reply without a request, the stored request never written while it waits or is sent: bounded, 40 clocks | PASS |
+| icmp_echo | `icmp.sby bmc` | AXI-Stream rules, no reply without a request, and the reply carries the request it answers (byte 13 equal) whatever frame follows it: bounded, 64 clocks; fails at step 60 with the round-1 back-to-back bug restored | PASS |
 | icmp_echo | `icmp.sby cover` | a whole reply to a minimal echo request | PASS |
 | ipv4_udp_rx | `udp_rx.sby bmc` | AXI-Stream rules with tuser, tdest and header fields; input held after a frame: bounded, 30 clocks | PASS |
 | ipv4_udp_rx | `udp_rx.sby cover` | a whole datagram parsed and passed on | PASS |
@@ -130,11 +130,19 @@ Not run on a board. The MAC points have FILTER, VLAN 2, PAUSE and STATS on, CUT_
 
 [designs/b63d_nexys_net](../../designs/b63d_nexys_net/README.md): simulated through the shell and built with Vivado 2026.1 ([nexys_build/b63d_nexys_net.md](nexys_build/b63d_nexys_net.md)). Every flow gate passes at 50 MHz: WNS 1.569 ns, WHS 0.012 ns (an internal path, `v_port_reg[2]` to `u_udptx/dp_reg[2]`), 4186 LUTs, 4344 FFs, 2 block RAM tiles, 0.250 W on chip (vectorless), Tj 44.6 C predicted. Not run on a board.
 
-The RMII pins are timed against eth_refclk, the clock the FPGA forwards to the PHY, so the forwarded clock's own delay (MMCM, BUFG, ODDR, output buffer) is in the analysis. Slack at the pins, from `io_paths_route.txt`:
+### RMII pin timing
+
+On RMII the PHY sends and samples data on the 50 MHz clock the FPGA gives it, so the pin timing has to be measured from that forwarded clock as it arrives at the PHY, not from the FPGA's own internal clock. The forwarded clock reaches the PHY several nanoseconds late (it passes through the clock manager, a global buffer, an output register and an output buffer), and that delay decides whether receive works. Slack at the pins, from `io_paths_route.txt` (the RMII rev 1.2 figures are used as the bound; the PHY's own data sheet values are to be checked before the board run):
 
 | Path | Setup slack (ns) | Hold slack (ns) |
 |---|---|---|
 | receive (CRS_DV, RXD, RX_ER) | 1.569 | 1.603 |
 | transmit (TX_EN, TXD) | 3.702 | 8.733 |
 
-How it got there: referenced to the right clock at the board manual's 45-degree REF_CLK phase, receive missed setup by 2.306 ns with 5.5 ns of hold to spare. REF_CLK now leaves at 335.25 degrees (1.375 ns before the logic clock), and the receive capture moves to the next logic-clock edge (a setup multicycle of 2, with the hold check left on the edge 1.375 ns after launch); the transmit pins leave from falling-edge registers. The first build in this PR referenced the RMII delays to the MMCM output instead: it reported receive met, but that did not show receive works. The build's interface declaration now makes the IO-CLOCK gate fail such a constraint (designs/b63d_nexys_net/tests/test_b63d_io_constraints.py).
+What makes it work:
+
+- the pin delays are referenced to `eth_refclk`, the clock the FPGA forwards, so the analysis includes its delay (referenced to the internal clock instead, an earlier build reported receive as met when it was not: at the board manual's 45-degree phase receive misses setup by 2.306 ns);
+- the forwarded clock leaves at 335.25 degrees, 1.375 ns before the internal clock, which centres the receive window;
+- receive data are captured one internal-clock edge later than the tool's default pairing (a setup multicycle of 2; hold stays checked on the edge that really must see the previous data), and transmit data leave from falling-edge registers.
+
+The build declares both RMII interfaces against `eth_refclk` (`build.yaml` io_interfaces), so the I/O gate fails a delay referenced to another clock (IO-CLOCK), a delay that differs from the data sheet (IO-VALUE) and a forwarded clock defined from the wrong pin or not at all (IO-FWD-SOURCE); `designs/b63d_nexys_net/tests/test_b63d_io_constraints.py` checks all three. Terms: [ip_lib/README.md#terms](../../ip_lib/README.md#terms).

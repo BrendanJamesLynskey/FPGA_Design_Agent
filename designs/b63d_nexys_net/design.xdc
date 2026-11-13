@@ -1,4 +1,4 @@
-## design.xdc: brief 63D network design (b63d_nexys_net_top) on the Nexys A7-100T.
+## design.xdc: the network design (b63d_nexys_net_top) on the Nexys A7-100T.
 ## Pins and IOSTANDARDs are copied from Digilent's master XDC (boards/nexys_a7_100t/Nexys-A7-100T-Master.xdc, MIT).
 
 ## Clock: 100 MHz oscillator (the MMCM makes the 50 MHz logic clock and the PHY's reference clock from it)

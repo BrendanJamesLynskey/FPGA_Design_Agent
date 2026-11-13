@@ -33,9 +33,9 @@
   {
    "entry": "icmp_echo",
    "job": "icmp.sby bmc",
-   "what": "AXI-Stream rules, no reply without a request, the stored request never written while it waits or is sent: bounded, 40 clocks",
+   "what": "AXI-Stream rules, no reply without a request, and the reply carries the request it answers (byte 13 equal) whatever frame follows it: bounded, 64 clocks; fails at step 60 with the round-1 back-to-back bug restored",
    "status": "PASS",
-   "seconds": 7.7
+   "seconds": 1061.6
   },
   {
    "entry": "icmp_echo",

@@ -191,11 +191,4 @@ module icmp_echo #(
             if (m_axis_tvalid && m_axis_tready && m_axis_tlast) begin busy <= 1'b0; ev_reply <= 1'b1; end
         end
     end
-`ifdef FORMAL
-    // the stored request is not written while it waits or is being sent, nor on the clock it is accepted (checked by
-    // formal/icmp.sby; a frame starting right after the request's last byte must not overwrite it)
-    logic f_init = 1'b1;
-    always_ff @(posedge clk) f_init <= rst;
-    always_ff @(posedge clk) if (!f_init && !rst) assert (!(we && blocked));
-`endif
 endmodule

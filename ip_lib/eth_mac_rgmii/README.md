@@ -4,7 +4,7 @@ Tri-mode (10/100/1000 Mb/s) Ethernet MAC for a PHY with an RGMII (reduced gigabi
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: Meets 125 MHz out of context with the block RAM buffer (139-141 MHz estimated); the LUT RAM buffer meets it only just at 32768 bytes (WNS 0.04 ns; an earlier build of the same design missed by 7 ps). Simulated (0.1.0 and 0.2.0 features, with an independent adversarial pause bench); formal checks of the frame FSMs (bounded) and the address filter; built alone on an Artix-7 with Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not yet run on a board (its filter and statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not yet run).
+Status: Meets 125 MHz out of context with the block RAM buffer (139-141 MHz estimated); the LUT RAM buffer meets it only just in one run at 32768 bytes (WNS 0.04 ns, within run-to-run noise). Simulated (0.1.0 and 0.2.0 features, with an independent adversarial pause bench); formal checks of the frame FSMs (bounded) and the address filter; built alone on an Artix-7 with Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not yet run on a board (its filter and statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not yet run).
 
 ## Parameters
 
@@ -89,7 +89,7 @@ Selected by `RX_RAM`; every variant has the same ports, the same bit-exact resul
 | Variant | What | Latency | II | Use when |
 |---|---|---|---|---|
 | `bram` | the store-and-forward buffer in block RAM | `4` | `1` | the default; measured: 1 block RAM tile at SF_DEPTH 4096, 8 at 32768, about 139-141 MHz |
-| `lutram` | the store-and-forward buffer in LUT RAM | `4` | `1` | block RAM spoken for and small buffers; measured: 796 LUTs as RAM at 4096 (about 133 MHz), 6174 at 32768, where it meets 125 MHz only just (WNS 0.04 ns) |
+| `lutram` | the store-and-forward buffer in LUT RAM | `4` | `1` | block RAM spoken for and small buffers; measured: 796 LUTs as RAM at 4096 (about 133 MHz), 6174 at 32768, where it meets 125 MHz only just in one run (WNS 0.04 ns) |
 
 Measured at CUT_THROUGH 0, MIN_FRAME 64, MAX_FRAME 1522, MIN_DATA 60, IFG_BYTES 12, SF_DEPTH 4096, FILTER 1, MC_EXACT 4, VLAN 2, PAUSE 1, STATS 1, STAT_W 32, IO_FAMILY 7series: built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 8.0 ns clock (125 MHz), Vivado 2026.1 (build 6511674). Not run on a board.
 

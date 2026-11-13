@@ -139,22 +139,72 @@ def _run(*cmd: str) -> str:
     return subprocess.run(list(cmd), capture_output=True, text=True).stdout
 
 
+STACKED_KINDS = ("vlan", "macvlan", "macvtap", "ipvlan", "ipvtap", "bridge", "bridge_slave", "bond", "bond_slave",
+                 "team", "team_slave", "veth", "tun", "tap", "vxlan", "gre", "gretap", "ipip", "sit", "wireguard",
+                 "vrf", "vrf_slave", "dummy", "geneve")
+
+
 def isolation_check(iface: str, runner=_run) -> list[str]:
     """Reasons the interface is not an isolated link to the board (empty: isolated). Run before any traffic, and
     again after the first ping, when the neighbour table can show other hosts. `runner` runs a command and returns
-    its standard output (a stand-in in the tests)."""
+    its standard output (a stand-in in the tests). It sees only this PC's view of the interface: it cannot see past the
+    cable, so the cabling confirmation is still needed."""
     why = []
-    addrs = re.findall(r"inet (\d+\.\d+\.\d+\.\d+)/(\d+)", runner("ip", "-4", "-o", "addr", "show", "dev", iface))
-    if not addrs:
+    # the interface itself: a plain physical link, not stacked on or enslaved to another (a VLAN or macvlan on the home
+    # NIC would put every frame on the home LAN however it is addressed)
+    link = runner("ip", "-d", "-o", "link", "show", "dev", iface)
+    if not link.strip():
+        why.append(f"{iface} does not exist")
+    else:
+        head = link.split(":", 2)[1].strip() if link.count(":") >= 2 else ""
+        if "@" in head:
+            why.append(f"{iface} is stacked on another interface ({head})")
+        if re.search(r"\bmaster \S+", link):
+            why.append(f"{iface} is enslaved to another interface ({re.search(r'master (\S+)', link).group(1)})")
+        kinds = [k for k in STACKED_KINDS if re.search(rf"(?:^|\s){k}(?:\s|$)", link)]
+        if kinds:
+            why.append(f"{iface} is a {', '.join(kinds)} interface, not a plain physical link")
+    # IPv4: exactly 192.168.63.1/24, in the a.b.c.d/n form (a peer-form address is refused)
+    lines = [l for l in runner("ip", "-4", "-o", "addr", "show", "dev", iface).splitlines() if " inet " in f" {l} "]
+    if not lines:
         why.append(f"{iface} has no IPv4 address")
-    for a, n in addrs:
-        if ipaddress.ip_interface(f"{a}/{n}").network != SUBNET or a != PC_IP:
-            why.append(f"{iface} has {a}/{n}; only {PC_IP}/24 is allowed")
-    defaults = runner("ip", "-4", "route", "show", "default")
+    for l in lines:
+        m = re.search(r"\binet (\S+)", l)
+        tok = m.group(1) if m else ""
+        if not re.fullmatch(r"\d+\.\d+\.\d+\.\d+/\d+", tok) or " peer " in l:
+            why.append(f"{iface} has an address not in plain a.b.c.d/n form: {l.strip()}")
+            continue
+        a = ipaddress.ip_interface(tok)
+        if a.network != SUBNET or str(a.ip) != PC_IP:
+            why.append(f"{iface} has {tok}; only {PC_IP}/24 is allowed")
+    # IPv6: link-local only (a global or unique-local address means a router or another network is on the wire)
+    for l in runner("ip", "-6", "-o", "addr", "show", "dev", iface).splitlines():
+        m = re.search(r"\binet6 (\S+)", l)
+        if m and not ipaddress.ip_interface(m.group(1)).ip.is_link_local:
+            why.append(f"{iface} has the IPv6 address {m.group(1)}")
+    # routes: in every table, nothing on this interface but the subnet itself (no default, no 0/1 + 128/1 split, no
+    # other prefix)
+    for l in runner("ip", "-4", "route", "show", "table", "all", "dev", iface).splitlines():
+        t = l.split()
+        if not t:
+            continue
+        dst = t[1] if t[0] in ("local", "broadcast", "unicast", "multicast", "anycast", "blackhole", "unreachable",
+                              "prohibit", "throw", "nat") and len(t) > 1 else t[0]
+        try:
+            net = ipaddress.ip_network("0.0.0.0/0" if dst == "default" else dst, strict=False)
+        except ValueError:
+            why.append(f"a route on {iface} that does not parse: {l.strip()}")
+            continue
+        if not net.subnet_of(SUBNET):
+            why.append(f"{iface} carries a route other than {SUBNET}: {l.strip()}")
+    defaults = runner("ip", "-4", "route", "show", "table", "all", "default")
     if re.search(rf"\bdev {re.escape(iface)}\b", defaults):
         why.append(f"{iface} carries a default route")
-    if re.search(rf"\bdev {re.escape(iface)}\b", runner("ip", "-4", "route", "show", "table", "all", "default")):
-        why.append(f"{iface} has a default route in some routing table")
+    # the home gateway must not be reachable by this interface
+    for gw in sorted(set(re.findall(r"\bvia (\d+\.\d+\.\d+\.\d+)", defaults))):
+        m = re.search(r"\bdev (\S+)", runner("ip", "-4", "route", "get", gw))
+        if m and m.group(1) == iface:
+            why.append(f"{iface} carries the route to the gateway {gw}")
     for dst in (BOARD_IP, GROUP):
         m = re.search(r"\bdev (\S+)", runner("ip", "-4", "route", "get", dst, "oif", iface))
         if not m or m.group(1) != iface:
@@ -162,10 +212,16 @@ def isolation_check(iface: str, runner=_run) -> list[str]:
     m = re.search(r"\bdev (\S+)", runner("ip", "-4", "route", "get", BOARD_IP))
     if not m or m.group(1) != iface:
         why.append(f"the routing table sends {BOARD_IP} by {m.group(1) if m else 'nothing'}, not {iface}")
+    # neighbours: only the board, and the board's address only with the board's MAC
     for line in runner("ip", "-4", "neigh", "show", "dev", iface).splitlines():
-        ip = line.split()[0] if line.split() else ""
-        if ip and ip != BOARD_IP and "FAILED" not in line and "INCOMPLETE" not in line:
+        t = line.split()
+        if not t or "FAILED" in line or "INCOMPLETE" in line:
+            continue
+        mac = re.search(r"\blladdr (\S+)", line)
+        if t[0] != BOARD_IP:
             why.append(f"another host answers on {iface}: {line.strip()}")
+        elif mac and mac.group(1).lower() != BOARD_MAC:
+            why.append(f"{BOARD_IP} answers with {mac.group(1)}, not the board's {BOARD_MAC}")
     return why
 
 
@@ -243,11 +299,14 @@ def link(sh, out: dict, iface: str) -> bool:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--port", required=True, help="the test shell's UART device, e.g. /dev/ttyUSB1")
-    ap.add_argument("--phase", choices=["loopback", "link"], required=True)
-    ap.add_argument("--iface", default="", help="link phase: the PC's interface on the isolated link")
+    ap.add_argument("--phase", choices=["loopback", "link"], required=True,
+                    help="loopback: no cable in J4, the PHY loops frames back; link: one cable from J4 to an isolated "
+                         "PC interface")
+    ap.add_argument("--iface", default="", help="link phase: the PC's interface on the isolated link (for example enx1); "
+                                                "it must be a plain physical interface set to 192.168.63.1/24")
     ap.add_argument("--isolated-link-confirmed", action="store_true",
-                    help="you confirm the cable goes only from J4 to this PC's isolated interface (the script also "
-                         "checks the interface's addresses and routes before sending anything)")
+                    help="confirm the cable runs only from J4 to this isolated interface; the script also checks the "
+                         "interface's addresses and routes before sending")
     ap.add_argument("--out", required=True, help="JSON results file")
     a = ap.parse_args()
     if a.phase == "link" and not (a.isolated_link_confirmed and a.iface):

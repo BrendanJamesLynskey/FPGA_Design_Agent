@@ -25,7 +25,33 @@ module formal_icmp (
         else if (ev_request) f_req <= 1'b1;
         else if (ev_reply) f_req <= 1'b0;
     end
+    // observable behaviour: the reply carries the request it answers. Byte 13 (the EtherType's low byte, copied from
+    // the stored frame into the reply) of each accepted request is remembered, and the reply's byte 13 must equal it,
+    // whatever frames arrive meanwhile (a frame stored over the request would change it).
+    logic [15:0] f_ik, f_ok;            // index of the next input and output byte
+    logic [7:0]  f_bx;                 // byte 13 of the frame now arriving
+    logic        f_hasx;
+    logic [8:0]  f_p1, f_p2;            // {has byte 13, byte 13} of a frame that ended 1 and 2 clocks ago
+    logic [8:0]  f_rq;                  // ... of the request being answered
+    always_ff @(posedge clk) begin
+        if (rst) begin f_ik <= '0; f_ok <= '0; f_hasx <= 1'b0; f_bx <= '0; f_p1 <= '0; f_p2 <= '0; f_rq <= '0; end
+        else begin
+            f_p1 <= '0;
+            if (s_axis_tvalid) begin
+                if (f_ik == 16'd13) begin f_bx <= s_axis_tdata; f_hasx <= 1'b1; end
+                if (s_axis_tlast) begin
+                    f_p1 <= {f_hasx || f_ik == 16'd13, f_ik == 16'd13 ? s_axis_tdata : f_bx};
+                    f_ik <= '0; f_hasx <= 1'b0;
+                end else if (f_ik != 16'hFFFF) f_ik <= f_ik + 16'd1;
+            end
+            f_p2 <= f_p1;
+            if (ev_request) f_rq <= f_p2;
+            if (m_axis_tvalid && m_axis_tready) f_ok <= m_axis_tlast ? 16'd0 : f_ok + 16'd1;
+        end
+    end
     always_ff @(posedge clk) if (f_past && !rst) begin
+        if (m_axis_tvalid && f_ok == 16'd13 && f_rq[8]) assert (m_axis_tdata == f_rq[7:0]);
+        if (ev_request) assert (f_p2[8]);
         assert (viol[3:0] == 4'b0000);
         if (m_axis_tvalid) assert (f_req || ev_request);
         if (ev_reply) assert (f_req);

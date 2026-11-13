@@ -19,9 +19,14 @@ constraints:
 generics: {}            # board values are the RTL defaults; BUILD_STAMP is added by the flow
 # The RMII interfaces (flow/io_check.py): both are timed against eth_refclk, the clock the FPGA forwards to the PHY on
 # ETH_REFCLK, with the RMII rev 1.2 values. Declaring them makes IO-CLOCK fail a delay written against any other clock
-# (the first build referenced the MMCM output and so missed the forwarded clock's delay) and IO-VALUE a wrong number.
+# (the first build referenced the MMCM output and so missed the forwarded clock's delay), IO-VALUE a wrong number and
+# IO-FWD-SOURCE a forwarded clock defined from the wrong pin or not defined. The RMII rev 1.2 figures are used as the
+# bound: the LAN8720A data sheet's own REF_CLK-in table is not in the knowledge bank yet and must be checked (and cited
+# here if it differs) before the board run.
 io_interfaces:
   - {name: rmii_rx, kind: system_synchronous, direction: in, ports: [ETH_CRSDV, ETH_RXERR, "ETH_RXD[*]"],
-     clock: eth_refclk, clock_period_ns: 20.0, iob: true, data_sheet: {tco_min_ns: 2.0, tco_max_ns: 14.0}}
+     clock: eth_refclk, clock_period_ns: 20.0, iob: true, forwarded_clock_source: u_refclk/C,
+     data_sheet: {tco_min_ns: 2.0, tco_max_ns: 14.0}}
   - {name: rmii_tx, kind: system_synchronous, direction: out, ports: [ETH_TXEN, "ETH_TXD[*]"],
-     clock: eth_refclk, clock_period_ns: 20.0, iob: true, data_sheet: {tsu_ns: 4.0, th_ns: 2.0}}
+     clock: eth_refclk, clock_period_ns: 20.0, iob: true, forwarded_clock_source: u_refclk/C,
+     data_sheet: {tsu_ns: 4.0, th_ns: 2.0}}

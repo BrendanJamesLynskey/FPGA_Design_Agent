@@ -323,7 +323,7 @@ ip_lib/      the project's own IP library ([ip_lib/README.md](ip_lib/README.md))
              several implementations, each with a measured cost ([docs/ip_variants.md](docs/ip_variants.md),
              flow/ipvariants.py, flow/ipchar.py) and a FIR entry with four variants; the
              tri-mode RGMII MAC ([ip_lib/eth_mac_rgmii](ip_lib/eth_mac_rgmii/README.md)) with its 0.2 filter, VLAN,
-             pause, statistics and jumbo frames, and the brief-63D network blocks (MDIO, ARP, ICMP echo, IPv4/UDP
+             pause, statistics and jumbo frames, and the network blocks (MDIO, ARP, ICMP echo, IPv4/UDP
              receive and transmit, IGMPv2), run together in [designs/b63d_nexys_net](designs/b63d_nexys_net/README.md)
 debug_core/  debug on the board from a plain-English request (brief 50A, [docs/debug.md](docs/debug.md)): the request parser,
              the RTL-name resolver, the plan, debug builds per probe set, the instrument drivers (vendor ILA, mock),
