@@ -1,0 +1,175 @@
+{
+ "design": "b65a_axil_soc",
+ "ranges": [
+  {
+   "slave": "tone.s_dds",
+   "base": 1073741824,
+   "size": 4096,
+   "fixed": true,
+   "xbar": "xbar",
+   "registers": [
+    {
+     "name": "STEP",
+     "offset": 0,
+     "access": "RW",
+     "reset": 175921860,
+     "doc": "phase step; f = STEP x f_tick / 2^32",
+     "fields": [
+      {
+       "port": "step",
+       "lsb": 0,
+       "width": 32,
+       "signed": false
+      }
+     ]
+    },
+    {
+     "name": "WAVE",
+     "offset": 4,
+     "access": "RW",
+     "reset": 0,
+     "doc": "[1:0] 0 sine, 1 triangle, 2 saw, 3 square; [7:4] amplitude shift right",
+     "fields": [
+      {
+       "port": "wave",
+       "lsb": 0,
+       "width": 2,
+       "signed": false
+      },
+      {
+       "port": "amp_shift",
+       "lsb": 4,
+       "width": 4,
+       "signed": false
+      }
+     ]
+    },
+    {
+     "name": "TICKDIV",
+     "offset": 8,
+     "access": "RW",
+     "reset": 99,
+     "doc": "sample tick every TICKDIV + 1 clocks",
+     "fields": []
+    },
+    {
+     "name": "SAMPLE",
+     "offset": 12,
+     "access": "RO",
+     "reset": null,
+     "doc": "current sample, sign extended",
+     "fields": [
+      {
+       "port": "sample",
+       "lsb": 0,
+       "width": 16,
+       "signed": true
+      }
+     ]
+    },
+    {
+     "name": "PHASE",
+     "offset": 16,
+     "access": "RO",
+     "reset": null,
+     "doc": "phase accumulator",
+     "fields": [
+      {
+       "port": "phase_o",
+       "lsb": 0,
+       "width": 32,
+       "signed": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slave": "tone.s_fd",
+   "base": 1073745920,
+   "size": 4096,
+   "fixed": false,
+   "xbar": "xbar",
+   "registers": [
+    {
+     "name": "SCRATCH",
+     "offset": 0,
+     "access": "RW",
+     "reset": 0,
+     "doc": "scratch register (no block input)",
+     "fields": []
+    },
+    {
+     "name": "EDGES",
+     "offset": 4,
+     "access": "RO",
+     "reset": null,
+     "doc": "rising edges in the last gate",
+     "fields": [
+      {
+       "port": "edges",
+       "lsb": 0,
+       "width": 24,
+       "signed": false
+      }
+     ]
+    },
+    {
+     "name": "HIGH",
+     "offset": 8,
+     "access": "RO",
+     "reset": null,
+     "doc": "clocks high in the last gate",
+     "fields": [
+      {
+       "port": "high_clks",
+       "lsb": 0,
+       "width": 24,
+       "signed": false
+      }
+     ]
+    },
+    {
+     "name": "GATES",
+     "offset": 12,
+     "access": "RO",
+     "reset": null,
+     "doc": "gates completed since reset",
+     "fields": [
+      {
+       "port": "gates",
+       "lsb": 0,
+       "width": 32,
+       "signed": false
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "slave": "la.s_axil",
+   "base": 1073807360,
+   "size": 4096,
+   "fixed": true,
+   "xbar": "xbar",
+   "registers": [
+    {
+     "name": "WINDOW",
+     "offset": 0,
+     "access": "RW",
+     "reset": null,
+     "fields": [],
+     "words": 128,
+     "doc": "the logic_analyser register window: word w (0 to 127) at offset 4 x w, 0x000 to 0x1FC (see ip_lib/logic_analyser); 0x200 to the end of the range answer SLVERR"
+    }
+   ]
+  }
+ ],
+ "holes": [
+  {
+   "xbar": "xbar",
+   "base": 1073750016,
+   "size": 57344
+  }
+ ]
+}

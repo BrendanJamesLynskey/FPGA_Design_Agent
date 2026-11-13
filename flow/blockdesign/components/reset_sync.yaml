@@ -1,0 +1,9 @@
+# Asynchronous assert, synchronous release of an active-low board reset; one per clock domain (block automation).
+top: reset_sync
+rtl: [shell/rtl/reset_sync.sv]
+summary: Reset bridge, asynchronous assert and synchronous release, active-high output.
+version: "1.0"
+clocks: [clk]
+resets: {rst: high}
+async_inputs: [rst_n_async]
+cdc: true

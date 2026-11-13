@@ -21,7 +21,8 @@ NET = ["eth_mac_rmii", "eth_mac_rgmii", "pkt_parser", "match_exact", "match_lpm"
        "pkt_queue_sched", "l2_switch"]
 HIL = ["freq_duty_counter", "frame_crc", "dds_awg", "logic_analyser", "adc_histogram"]       # brief 30 instruments
 DSP = ["fir"]                                                                                # library entries with variants
-FAULTS_JSON = {**{b: "b30" for b in HIL}, **{b: "b63a" for b in DSP}}                        # default: b40
+INFRA = ["axil_xbar"]                                                                        # brief 65A: bus infrastructure
+FAULTS_JSON = {**{b: "b30" for b in HIL}, **{b: "b63a" for b in DSP}, **{b: "65a_blockdesign" for b in INFRA}}   # default: b40
 REQUIRED = ["name", "version", "summary", "top", "rtl", "depends", "interfaces", "clocks", "resets", "parameters",
             "constraints", "latency", "throughput", "guards", "sweep_tested", "evidence", "cost_table", "boundary",
             "limits", "licence"]
@@ -113,7 +114,7 @@ def readme(block: str) -> str:
               ROOT / "results" / FAULTS_JSON.get(block, "b40") / "faults.json")
         if fj.exists():
             res = {f["name"]: f["status"] for f in json.loads(fj.read_text())["faults"]}
-        L += ["", "Seeded faults (`faults.yaml`, run by `" + ("hil/ip_faults.py" if block in HIL else "hil/ip_faults.py --blocks " + block if block in DSP else "flow/net/faults.py") + "`):", "", "| Fault | What it breaks | Result |", "|---|---|---|"]
+        L += ["", "Seeded faults (`faults.yaml`, run by `" + ("hil/ip_faults.py" if block in HIL else "hil/ip_faults.py --blocks " + block if block in DSP + INFRA else "flow/net/faults.py") + "`):", "", "| Fault | What it breaks | Result |", "|---|---|---|"]
         L += [f"| `{f['name']}` | {f['why']} | {res.get(f['name'], 'not run')} |" for f in fl]
     L += variants_section(block, y)
     b = y["boundary"]
@@ -177,7 +178,7 @@ def variants_section(block: str, y: dict) -> list[str]:
 def main() -> int:
     chk = "--check" in sys.argv
     errs, stale = [], []
-    for b in NET + HIL + DSP:
+    for b in NET + HIL + DSP + INFRA:
         errs += check(b)
         text = readme(b)
         p = IP / b / "README.md"
