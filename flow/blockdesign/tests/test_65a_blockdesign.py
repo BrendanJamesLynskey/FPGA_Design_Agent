@@ -577,6 +577,14 @@ def _graph_and_record():
     return hiercheck, g, rec
 
 
+def test_build_record_is_for_this_graph():
+    """A regenerated graph makes the build record stale, and the viewer would then drop the build without a word."""
+    from flow.blockdesign import annotate
+    g = json.loads((SAMPLE / "gen" / "graph.json").read_text())
+    assert json.loads(RECORD.read_text())["graph_sha256"] == annotate.graph_sha(g), \
+        "results/blockdesign/b65a_axil_soc/build.json was made for another graph: rebuild and run flow.blockdesign annotate"
+
+
 def test_hiercheck_passes_on_the_committed_build():
     hc, g, rec = _graph_and_record()
     r = hc.check_record(SAMPLE, g, rec)
@@ -636,6 +644,68 @@ def _dropped_signal_link(g):
     g["levels"][""]["links"] = [L for L in g["levels"][""]["links"] if L["id"] != "tone->la"]
 
 
+def _link(g, i):
+    return next(L for L in g["levels"][""]["links"] if L["id"] == i)
+
+
+def _if_renamed(g):
+    _link(g, "xbar_m2")["from_if"] = "m3"
+
+
+def _slave_if_bogus(g):
+    _link(g, "xbar_m2")["to_if"] = "s_bogus"
+
+
+def _made_up_bus(g):
+    x = dict(_link(g, "xbar_m2"), id="fake", from_if="m0", to="shell", to_if="s_foo")
+    g["levels"][""]["links"].append(x)
+
+
+def _made_up_signal(g):
+    x = json.loads(json.dumps(_link(g, "tone->la")))
+    x.update(id="fake2", **{"from": "la", "to": "xbar"})
+    for s in x["signals"]:
+        s["from"], s["to"] = "nope", "nada"
+    g["levels"][""]["links"].append(x)
+
+
+def _tick_remapped(g):
+    for s in _link(g, "tone->la")["signals"]:
+        if s["from"] == "tick":
+            s["to"], s["to_bits"] = "sample", [0, 0]
+
+
+def _bits_shifted(g):
+    for s in _link(g, "tone->la")["signals"]:
+        if s["from"] == "sample":
+            s["bits"], s["width"] = [15, 1], 15
+
+
+def _false_invert(g):
+    for s in _link(g, "tone->la")["signals"]:
+        s["invert"] = True
+
+
+def _slave_dropped(g):
+    for b in g["levels"][""]["blocks"]:
+        if b["id"] == "xbar":
+            b["slaves"] = b["slaves"][:2]
+
+
+@pytest.mark.parametrize("wrong,expect", [
+    (_if_renamed, "does not exist in the netlist"), (_slave_if_bogus, "does not exist in the netlist"),
+    (_made_up_bus, "does not exist in the netlist"), (_made_up_signal, "has no port"),
+    (_tick_remapped, "do not connect as drawn"), (_bits_shifted, "do not connect as drawn"),
+    (_slave_dropped, "the built RTL has N_S=3"), (_false_invert, "drawn inverted but are one net")],
+    ids=["bus_iface_renamed", "slave_iface_bogus", "made_up_bus", "made_up_signal", "bit_remapped", "bits_shifted", "slave_dropped",
+         "false_invert"])
+def test_hiercheck_fails_on_a_wrong_graph_round2(wrong, expect):
+    hc, g, rec = _graph_and_record()
+    wrong(g)
+    r = hc.check_record(SAMPLE, g, rec)
+    assert not r["pass"] and any(expect in m for m in r["mismatches"]), r["mismatches"]
+
+
 @pytest.mark.parametrize("wrong,expect", [
     (_wrong_edges, "the diagram draws no link"), (_hidden_hierarchy, "inside the generated module b65a_axil_soc_tone"),
     (_hidden_wrapper, "inside the generated module b65a_axil_soc_la_wrap"), (_wrong_address, "the built RTL decodes"),
@@ -664,7 +734,7 @@ def test_cli_help_per_command(capsys):
         assert "Example: python3 -m flow.blockdesign " + c in out.replace("\n", " "), c
 
 
-@pytest.mark.skipif("FDA_E2E" not in __import__("os").environ, reason="browser test: set FDA_E2E=1 (a heavy job; take a slot)")
+@pytest.mark.skipif("FDA_E2E" not in __import__("os").environ, reason="browser test: set FDA_E2E=1 (a browser job: run it memory-capped)")
 def test_viewer_in_a_browser(tmp_path):
     import subprocess
     from flow.blockdesign import viewer

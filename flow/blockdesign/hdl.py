@@ -165,6 +165,8 @@ def eval_expr(expr: str, params: dict):
     if lit is not None:
         return lit
     t = expr.strip()
+    if re.search(r"\b0[xXoObB]", t):
+        raise HdlError(f"expression {expr!r}: write a Verilog literal (32'h10), not a C or Python one (0x10)")
     t = re.sub(r"\$clog2\s*\(", "clog2(", t)
     t = re.sub(r"(\d+)?'([hHdDbB])([0-9a-fA-F_]+)", lambda m: str(sv_int(m.group(0))), t)
     t = t.replace("/", "//")
@@ -175,6 +177,8 @@ def eval_expr(expr: str, params: dict):
     for n in ast.walk(tree):
         if not isinstance(n, _OK):
             raise HdlError(f"expression {expr!r}: {type(n).__name__} is not supported")
+        if isinstance(n, ast.Constant) and (not isinstance(n.value, int) or isinstance(n.value, bool)):
+            raise HdlError(f"expression {expr!r}: {n.value!r} is not an integer")
         if isinstance(n, ast.Name) and n.id not in params and n.id not in _FUNCS:
             raise HdlError(f"expression {expr!r}: unknown parameter {n.id}")
     vals = {k: v for k, v in params.items() if isinstance(v, int) and not isinstance(v, bool)}

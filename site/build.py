@@ -525,7 +525,13 @@ def main():
         stale += [f for f, b in static.items() if not (out / f).exists() or (out / f).read_bytes() != b]
         known = set(pages) | set(static)
         extra = [p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file() and p.relative_to(out).as_posix() not in known]
-        if stale or extra:
+        # a block design with a build record that is not on its page: the record was made for another graph
+        # (flow/blockdesign/viewer.py merges a build only when graph_sha256 matches), so re-annotate after regenerating
+        lost = [g["design"] for g in d.get("blockdesigns", {}).get("designs", [])
+                if (ROOT / "results" / "blockdesign" / g["design"] / "build.json").is_file() and not g.get("build")]
+        if lost:
+            print("block designs whose build record does not match the graph (run flow.blockdesign annotate):", lost)
+        if stale or extra or lost:
             print("stale:", stale, "unexpected:", extra)
             sys.exit(1)
         print("ok:", len(pages), "pages, numbers all in data")

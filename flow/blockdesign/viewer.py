@@ -523,6 +523,9 @@ def body(g: dict, key: str = "bd_graph", repo_links: bool = True) -> str:
     if chk:
         short = "RTL instances found in the synthesised netlist with the module the diagram names" + (
             f"; {chk.get('edges_matched', 0)} of {chk['edges_expected']} links found as nets" if chk.get("edges_expected") else "")
+        nv = chk.get("edges_not_visible") or []
+        nv = len(nv) if isinstance(nv, list) else int(nv)
+        short += f" ({nv} not compared)" if nv and chk.get("edges_expected") else ""
         facts.append(f'<div class="fact"><div class="n">{chk["matched"]} of {chk["expected"]}</div><p>{e(short)} '
                      '(<a href="#build">what was checked</a>)</p></div>')
     head.append(s + '<div class="facts">' + "".join(facts) + "</div>" + terms())

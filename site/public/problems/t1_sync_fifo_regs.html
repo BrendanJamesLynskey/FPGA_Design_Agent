@@ -2023,7 +2023,16 @@ DESIGN_ID = 0x4649464F          <span class="hc"># &quot;FIFO&quot;</span>
           ["Paths ending inside", bb.endpoints == null ? "" : bb.endpoints]]));
       }
       if (opt.open && !sheet() && !beside() && drawer.getBoundingClientRect().top > window.innerHeight * 0.85) drawer.scrollIntoView({block: "nearest"});
-      else if (opt.open && sheet()) drawer.scrollTop = 0;
+      else if (opt.open && sheet()) {
+        drawer.scrollTop = 0;
+        // keep the chosen block in the strip of diagram the sheet leaves visible
+        var bx = Array.prototype.find.call(sec.querySelectorAll('.bdblk[data-id="' + id + '"]'),
+                                           function (x) { return x.getBoundingClientRect().height > 0; });   // the drawn layout
+        if (bx) {
+          var r = bx.getBoundingClientRect(), free = window.innerHeight - drawer.getBoundingClientRect().height;
+          if (r.top < 8 || r.bottom > free - 8) window.scrollBy(0, r.top - Math.max(8, (free - r.height) / 2));
+        }
+      }
     }
     function focusBlock(id) { var x = sec.querySelector('.bdblk[data-id="' + id + '"]'); if (x && x.getBoundingClientRect().width) x.focus(); }
     function visibleBlocks() { return Array.prototype.filter.call(sec.querySelectorAll(".bdblk"), function (x) { return x.getBoundingClientRect().width > 0; }); }

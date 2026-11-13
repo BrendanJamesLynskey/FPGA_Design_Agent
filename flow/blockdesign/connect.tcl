@@ -3,7 +3,8 @@
 # become D[0], Q[0]) and moves logic across them. So this synthesises the same sources again with the hierarchy kept
 # (synth_design -flatten_hierarchy none), and writes, for each hierarchical cell directly inside the top or inside a
 # generated module (the names in <genmods>, one per line), each of its pins with its direction and the net it meets one
-# level up (two pins on the same net are wired to each other there), and every hierarchical cell (path and module).
+# level up (two pins on the same net are wired to each other there; "" for a pin left unconnected or tied to a
+# constant), and every hierarchical cell (path and module).
 #   vivado -mode batch -source flow/blockdesign/connect.tcl -tclargs <build>/inputs.tcl <out.json> <genmods.txt>
 set inputs [lindex $argv 0]
 set outj [lindex $argv 1]
@@ -38,9 +39,12 @@ foreach c [get_cells -hierarchical -filter {IS_PRIMITIVE == 0}] {
     if {!$open} { continue }
     foreach p [get_pins -quiet -of_objects $c] {
         set n [get_nets -quiet -boundary_type upper -of_objects $p]
-        if {![llength $n]} { continue }
-        set n [lindex $n 0]
-        if {[get_property TYPE $n] in {GROUND POWER}} { continue } ;# a constant: not a connection between blocks
+        if {![llength $n]} {
+            set n ""                                                     ;# the port exists but nothing connects to it here
+        } else {
+            set n [lindex $n 0]
+            if {[get_property TYPE $n] in {GROUND POWER}} { set n "" }   ;# a constant: not a connection between blocks
+        }
         lappend rows "  \{\"pin\": [jstr $p], \"dir\": [jstr [get_property DIRECTION $p]], \"net\": [jstr $n]\}"
     }
 }

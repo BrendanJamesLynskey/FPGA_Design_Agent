@@ -88,8 +88,13 @@ def _pin_index(pins: list[dict]) -> tuple[dict, dict]:
     for r in pins:
         cell, pn = r["pin"].rsplit("/", 1)
         by_pin[(cell, pn)] = (r["dir"], r["net"])
-        by_net.setdefault(r["net"], []).append((cell, pn, r["dir"]))
+        if r["net"]:                                  # "" = the pin exists but nothing is connected to it there
+            by_net.setdefault(r["net"], []).append((cell, pn, r["dir"]))
     return by_pin, by_net
+
+
+def _has_port(by_pin: dict, cell: str, port: str) -> bool:
+    return any(c == cell and (pn == port or pn.startswith(port + "[")) for (c, pn) in by_pin)
 
 
 def _bit_pin(by_pin: dict, cell: str, port: str, bit: int) -> str | None:
@@ -127,35 +132,48 @@ def check_links(g: dict, hier: list[dict], pins: list[dict]) -> dict:
                 pa = _bus_pin(found, blocks[L["from"]], L["from_if"], L["kind"])
                 pb = _bus_pin(found, blocks[L["to"]], L["to_if"], L["kind"])
                 ra, rb = by_pin.get((a, pa)), by_pin.get((b, pb))
-                if ra is None or rb is None:
-                    unseen.append(f"{name}: {a}/{pa} or {b}/{pb} is not in the netlist")
-                elif ra[1] == rb[1] and ra[0] == "OUT" and rb[0] == "IN":
+                if ra is None or rb is None:                  # a used bus interface keeps its pins when the hierarchy is kept
+                    mism.append(f"{name}: " + " and ".join(f"{c}/{q} does not exist in the netlist" for c, q, r in
+                                                          ((a, pa, ra), (b, pb, rb)) if r is None))
+                elif ra[1] and ra[1] == rb[1] and ra[0] == "OUT" and rb[0] == "IN":
                     matched += 1
                 else:
                     mism.append(f"{name}: the diagram has {L['from']} as the master, but in the netlist {a}/{pa} ({ra[0]}) "
                                 f"and {b}/{pb} ({rb[0]}) are " + ("not on one net" if ra[1] != rb[1] else "the other way round"))
                 continue
-            pairs, through = [], False
+            pairs, through, missing = [], False, []
             for s in L.get("signals") or []:
-                if s.get("invert"):
-                    through = True
-                    continue
+                for c, port in ((a, s["from"]), (b, s["to"])):
+                    if not _has_port(by_pin, c, port):
+                        missing.append(f"{c} has no port {port}")
                 slo = (s.get("bits") or [0, 0])[1]
                 dlo = (s.get("to_bits") or [0, 0])[1]
                 for i in range(s["width"]):
                     pa, pb = _bit_pin(by_pin, a, s["from"], slo + i), _bit_pin(by_pin, b, s["to"], dlo + i)
-                    if pa and pb:
-                        pairs.append((by_pin[(a, pa)], by_pin[(b, pb)], f"{a}/{pa}", f"{b}/{pb}"))
-            good = [p for p in pairs if p[0][1] == p[1][1] and p[0][0] == "OUT" and p[1][0] == "IN"]
-            if good:
-                matched += 1
+                    if pa is None or pb is None:
+                        missing.append(f"bit {slo + i} of {a}/{s['from']} or bit {dlo + i} of {b}/{s['to']} does not exist")
+                        continue
+                    ra, rb = by_pin[(a, pa)], by_pin[(b, pb)]
+                    if s.get("invert"):                       # through an inverter: never one net (a claim that hides a wire fails)
+                        through = True
+                        if ra[1] and ra[1] == rb[1]:
+                            missing.append(f"{a}/{pa} and {b}/{pb} are drawn inverted but are one net")
+                        continue
+                    if ra[1] and rb[1]:                       # both connected: they must be one net, source out, sink in
+                        pairs.append((ra, rb, f"{a}/{pa}", f"{b}/{pb}"))
+            bad = [p for p in pairs if not (p[0][1] == p[1][1] and p[0][0] == "OUT" and p[1][0] == "IN")]
+            if missing:
+                ms = sorted(set(missing), key=lambda m: ("has no port" not in m, m))     # a missing port first, then bits
+                mism.append(f"{name}: {ms[0]}" + (f" (and {len(ms) - 1} more)" if len(ms) > 1 else ""))
+            elif bad:
+                ra, rb, na, nb = bad[0]
+                mism.append(f"{name}: {len(bad)} of {len(pairs)} bits do not connect as drawn (for example {na} is {ra[0]}, "
+                            f"{nb} is {rb[0]}" + (", on different nets" if ra[1] != rb[1] else ", on one net") + ")")
             elif pairs:
-                ra, rb, na, nb = pairs[0]
-                mism.append(f"{name}: no source bit drives its sink on one net (for example {na} is {ra[0]}, {nb} is {rb[0]}"
-                            + (", on different nets" if ra[1] != rb[1] else "") + ")")
+                matched += 1
             else:
                 unseen.append(f"{name}: " + ("through logic (inverted), not a direct net" if through
-                                              else "its pins were removed by synthesis (constant or unused)"))
+                                              else "its pins exist but synthesis left them unconnected (constant or unused)"))
     # every net between two blocks' cells must be drawn
     block_cells = set(cell_of.values())
     undrawn = set()
@@ -190,6 +208,9 @@ def check_addrmap(g: dict, top_rtl: str) -> dict:
                 continue
             ps = dict(re.findall(r"\.(\w+)\(([^()]*)\)", hdr.group(1)))
             aw = int(ps["ADDR_W"])
+            n_s = int(ps["N_S"])
+            if n_s != len(b["slaves"]):
+                mism.append(f"{b['id']}: the diagram lists {len(b['slaves'])} slaves, the built RTL has N_S={n_s}")
             sbase = int(ps["S_BASE"].split("'h")[1].replace("_", ""), 16)
             sbits = int(ps["S_BITS"].split("'h")[1].replace("_", ""), 16)
             ranges = {r["slave"]: r for r in g["address_map"]["ranges"] if r.get("xbar") in (None, b["id"].rsplit("/", 1)[-1])}

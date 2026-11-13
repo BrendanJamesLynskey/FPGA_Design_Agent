@@ -421,3 +421,12 @@ def test_unlinked_window_partly_tied_reports_the_rest():
     with tempfile.TemporaryDirectory() as t:
         E = run(Path(t), d)
     assert "la2.win_addr" in msgs(E, "BD-UNCONN-01") and "BD-UNCONN-02" not in codes(E)
+
+
+@pytest.mark.parametrize("text", ["8.5", "3.99", "0x10", "1e1"])
+def test_param_python_syntax_is_refused(tmp_path, text):
+    """A parameter string must be Verilog: a real number or a C-style 0x10 is refused, not truncated or converted."""
+    d = base()
+    d["instances"]["la"]["params"] = {"ADDR_W": text}
+    E = run(tmp_path, d)
+    assert codes(E) == ["BD-PARAM-01"] and "not an integer" in msgs(E, "BD-PARAM-01"), show(E)

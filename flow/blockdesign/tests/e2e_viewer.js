@@ -1,4 +1,4 @@
-// Browser check for the block-design viewer. A heavy job: run under a heavy slot, memory-capped.
+// Browser check for the block-design viewer. A browser job: run it memory-capped.
 //   NODE_PATH=<dir with puppeteer> node flow/blockdesign/tests/e2e_viewer.js <page.html>[,<page.html>...] [<screenshot dir>]
 // Each page at 390 and 1280 px, light and dark: no page or console error, no horizontal overflow, no two visible SVG
 // text boxes overlapping (every level of the diagram, both layouts as shown at that width, and the address map), every
