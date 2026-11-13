@@ -65,6 +65,10 @@ TIMING_COMMANDS = ("create_clock", "create_generated_clock", "set_input_delay", 
 EXCEPTION_COMMANDS = ("set_false_path", "set_multicycle_path", "set_max_delay", "set_min_delay", "set_clock_groups")
 # Cell-name fragments of AMD's debug cores. ILA/dbg_hub measured (brief 45); VIO taken from the core's naming, not measured.
 DEBUG_CORE_TOKENS = ("ila_core_inst", "u_ila_", "dbg_hub", "ltlib_v", "u_vio", "vio_inst")
+# brief 56A: cells inside AMD's UltraScale Transceivers Wizard (gtwizard_ultrascale 1.7): its reset helper and bit synchronisers.
+# The wizard's own scoped XDC has a false path to the reset synchronisers' first flops whose pattern does not resolve in a
+# global-synthesis build ("Invalid endpoint"); its Position is numbered from 1 in the IP's own file, so it collides with ours.
+GT_WIZARD_TOKENS = ("reset_synchronizer", "bit_synchronizer", "gtwiz_reset_inst", "gtwizard_ultrascale")
 METHODOLOGY_RULES = ("TIMING-24", "TIMING-29", "TIMING-46", "TIMING-47", "XDCH-1")
 
 
@@ -154,6 +158,14 @@ def is_debug_ip_exception(row: dict[str, Any], last_own_position: int) -> bool:
         return False
     pats = _name_patterns(row)
     return bool(pats) and all(any(t in p for t in DEBUG_CORE_TOKENS) for p in pats)
+
+
+def is_gt_wizard_exception(row: dict[str, Any]) -> bool:
+    """Brief 56A: an ignored exception from the GT Wizard's own scoped constraints: every ``NAME =~`` pattern of its From,
+    Through and To text names a wizard internal (GT_WIZARD_TOKENS). Not decided by Position (it collides with ours); a row
+    with no ``NAME =~`` pattern is never classified here."""
+    pats = _name_patterns(row)
+    return bool(pats) and all(any(t in p for t in GT_WIZARD_TOKENS) for p in pats)
 
 
 # "CRITICAL WARNING: [Vivado 12-4739] set_multicycle_path:No valid object(s) found for '-to [get_cells p_rgx[*]]'.
@@ -385,10 +397,20 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
             info.append({"rule": "EXC-IGNORED-DEBUG-IP", "position": r["position"], "status": r.get("Status"),
                          "vivado": {k: v for k, v in r.items() if k in ("From", "Through", "To", "Setup", "Hold")}})
     ign = [r for r in ign if r["position"] not in debug_ip]
-    for r in ign:
+    has_wiz = any("gtwizard_ultrascale" in x.read_text(errors="replace")[:20000] for x in sorted((d / "ip").glob("*/*.xci"))) if (d / "ip").is_dir() else False
+    gt_rows = [r for r in ign if has_wiz and is_gt_wizard_exception(r)]       # only in a build that has a GT Wizard core
+    for r in gt_rows:
+        info.append({"rule": "EXC-IGNORED-GT-WIZARD", "position": r["position"], "status": r.get("Status"),
+                     "vivado": {k: v for k, v in r.items() if k in ("From", "Through", "To", "Setup", "Hold")}})
+    ign_gt = [r for r in ign if r not in gt_rows]
+    for r in ign_gt:
         fails.append({"rule": "EXC-IGNORED", "position": r["position"], **at(r["position"]),
                       "vivado": {k: v for k, v in r.items() if k not in ("position",)}})
-    ignored = {r["position"] for r in ign} | debug_ip
+    ignored = {r["position"] for r in ign_gt} | debug_ip
+    # a wizard row's Position is numbered in the IP's own file and collides with ours: its exception covers no path, which is the
+    # wizard's own business unless OUR line at that position is itself a path exception (then the coverage check still applies)
+    _exc_cmd = ("set_false_path", "set_max_delay", "set_min_delay", "set_multicycle_path", "set_clock_groups")
+    ignored |= {r["position"] for r in gt_rows if not (at(r["position"])["text"] or "").lstrip().startswith(_exc_cmd)}
     for r in cov:
         if r["endpoints"] == 0 and r["position"] not in ignored:
             fails.append({"rule": "EXC-NO-PATH", "position": r["position"], **at(r["position"]),

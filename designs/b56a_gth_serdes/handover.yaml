@@ -1,0 +1,215 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b56a_gth_serdes
+title: One GTH transceiver at 10.3125 Gb/s with PRBS testing on the KR260 SFP+ cage
+kind: example
+produced_by: human
+summary: A Kria KR260 design that drives one UltraScale+ GTH transceiver (quad 224, channel 2, the SFP+ cage J24) at 10.3125
+  Gb/s with PRBS test patterns, checks them in fabric (exact bit errors) and in the transceiver (error cycles), and reports
+  everything over the JTAG cable through a documented register block. It is the base for the board work of brief 56. Built
+  with Vivado 2026.1 on the free Basic licence; not yet run on a board.
+scope_not:
+- a protocol or a link layer (RAW data, PRBS only); no Aurora or Ethernet core (10G/25G Ethernet is refused by the Basic
+  licence)
+- multi-lane work, meaning channel bonding, lane deskew, PCIe x4 and 40G are simulation-only on this one-lane board
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260
+  top: kr260_gth_top
+  tool: Vivado 2026.1
+  note: GTHE4_CHANNEL_X0Y6 of quad 224; the SFP+ lane RX T2/T1, TX R4/R3; reference MGTREFCLK0 (Y6/Y5)
+clocks:
+- name: clk_25
+  mhz: 25
+  source: designs/b56a_gth_serdes/design.xdc
+  note: input C3, an open-source example's figure, unconfirmed against the schematic; an MMCM makes the 100 MHz free-running
+    clock
+- name: sfp_mgt_refclk
+  mhz: 156.25
+  source: designs/b56a_gth_serdes/design.xdc
+  note: MGTREFCLK0 of quad 224, source and frequency unconfirmed (open-source example)
+resets:
+- name: reset helper
+  active: high
+  note: the register block is reset while the MMCM is unlocked; the GT Wizard's reset-all is held with it and its sequence
+    starts when it is released
+interfaces:
+- name: Host register block
+  type: 32-bit register bus over JTAG (BSCANE2 USER4, jtag_bus)
+  doc: designs/b56a_gth_serdes/docs/register_map.md
+  note: generated from regmap.py; unmapped reads return 0, no read side effects, counters read from a snapshot
+- name: SFP+ lane and control pins
+  type: one GTH lane at 10.3125 Gb/s; tx_disable, mod_abs, rx_los, tx_fault, I2C
+  doc: designs/b56a_gth_serdes/docs/board_run_plan.md
+  note: the laser is disabled at reset (tx_disable = 1; polarity unconfirmed until the first board run)
+parameters:
+- name: line rate
+  value: 10.3125 Gb/s
+  legal: 0.5 to 12.5 Gb/s on this part (-2LV), subject to the PLL windows in flow/gt_data.py
+  note: QPLL0, divider 1
+- name: user data width
+  value: 64 bits on a 32-bit internal path
+  legal: 32/64 pairs allowed by DS925 table 104
+  note: user clocks 161.133 MHz
+files:
+- path: designs/b56a_gth_serdes/rtl/gth_serdes_core.sv
+  what: GT Wizard wrapper, registers, snapshot, DRP and SYSMON windows
+  sha256: 1c0fe7acf1b2bd71d070f3fe336d209775add88d16b4cc2a2a880f581bc6741a
+- path: designs/b56a_gth_serdes/rtl/prbs64.sv
+  what: fabric PRBS generator and checker
+  sha256: 9b8dfb6fd156e6fcb4fa2b07d1b0238af6ade0951785bfa8382cec8ee47870da
+- path: designs/b56a_gth_serdes/rtl/kr260_gth_top.sv
+  what: board top (MMCM, SYSMON, pins)
+  sha256: b69b051f3a7e3c16935bbc0f9b576b4103de516400b48a25e08466e7473e33f0
+- path: designs/b56a_gth_serdes/design.xdc
+  what: pins, clocks, slow-pin constraints
+  sha256: 60018c8f19a591db5614f65869d5c01d5bedd8f8790d598528a9fca95dba7e44
+- path: designs/b56a_gth_serdes/ip/amd_ip.tcl
+  what: creates the GT Wizard core (hash-listed in flow/ip_tcl_allow.yaml)
+  sha256: 66d54de6a5fc2bf6ffc7b2cebd9992f1c60b53ad13d007c9dfbe1626d722090d
+- path: designs/b56a_gth_serdes/regmap.py
+  what: the register map as data; generates docs/register_map.md
+  sha256: 34a85543ace35b065f4969e96aae8a4580e922555c27578d1621d222bf8e85d8
+- path: designs/b56a_gth_serdes/docs/register_map.md
+  what: interface datasheet
+  sha256: cf312ad0e3e180e7da5337fea6a057ad8d538667024bf54d5dd222b84e6ed129
+- path: designs/b56a_gth_serdes/docs/board_run_plan.md
+  what: the board plan for brief 56B
+  sha256: 129e5775d09baed68a84eb3f44d53ff3addaa817f49952291e45a0aca0d62a39
+commands:
+- what: simulate the PRBS blocks and the core against the Wizard stand-in
+  cmd: python -m pytest -q designs/b56a_gth_serdes/tests
+  heavy: false
+  minutes: 1
+  needs: Icarus Verilog and cocotb 2.0.1
+- what: build the design and run all gates
+  cmd: flow/run_vivado.sh designs/b56a_gth_serdes base
+  heavy: true
+  minutes: 7
+  needs: local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=8G
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: fabric PRBS generator and checker against an independent model (exact error counting, lock, loss of lock); register
+    block, bring-up, counting, injection, snapshots, I2C, SYSMON and DRP windows against a behavioural stand-in of the Wizard
+  record: designs/b56a_gth_serdes/tests/test_b56a_core_sim_rtl.py
+  sha256: d7bd3da6613ef1af2928e363df9263af781e5560f6b31ca82278d361c247d2bc
+- id: E2
+  activity: build
+  result: pass
+  what: synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes
+  record: results/56a_serdes/gt_build/gates.json
+  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+- id: E3
+  activity: review
+  result: pass
+  what: one independent correctness review (Sonnet) and one fix round
+  record: results/56a_serdes/README.md
+  sha256: 6f5635a12ac523821aec0bc500169e6ba4eeeac11de69ec569df3ed86b8bc3fd
+measurements:
+- id: M1
+  what: LUTs
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/56a_serdes/gt_build/gates.json
+  field: utilization.lut
+  conditions: routed, Vivado 2026.1
+  value: 973
+  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+- id: M2
+  what: registers
+  category: resources
+  key: ff
+  unit: FF
+  record: results/56a_serdes/gt_build/gates.json
+  field: utilization.ff
+  conditions: as M1
+  value: 3106
+  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+- id: M3
+  what: worst setup slack
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/56a_serdes/gt_build/gates.json
+  field: timing.wns_ns
+  conditions: routed, user clocks 161.133 MHz and 100 MHz
+  value: 2.156
+  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+- id: M4
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/56a_serdes/gt_build/gates.json
+  field: timing.whs_ns
+  conditions: as M3
+  value: 0.016
+  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+- id: M5
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/56a_serdes/gt_build/gates.json
+  field: power.total_w
+  conditions: report_power after routing, vectorless, confidence Medium
+  value: 0.764
+  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+- id: M6
+  what: Vivado peak resident memory of the first GT build
+  category: other
+  unit: MiB
+  record: results/56a_serdes/gt_build/run.json
+  field: vivado_peak_rss_mib
+  conditions: 2 threads, MemoryMax=8G, alone on the machine, one run
+  value: 4235
+  sha256: 4bc1a348be4dc46fac1baa91bf108d11578821c50d4e951e90a8f07d5a396b96
+gaps:
+- about: latency
+  text: Not measured; the design has no data path latency requirement and the stand-in has no transceiver latency. Board
+    work (56B) is the first chance.
+- about: throughput
+  text: The line rate is 10.3125 Gb/s by configuration; no throughput or error-rate measurement exists because nothing ran
+    on a board.
+- about: hardware
+  text: Nothing has run on a board. The reference clock source and frequency, the 25 MHz input, the SFP+ control pin functions
+    and the TX_DISABLE polarity are unconfirmed (open-source example, not the schematic).
+- about: simulation
+  text: AMD's Wizard simulation model is refused by the free Vivado Simulator (54716 instances against 50000); the register-level
+    bench uses a behavioural stand-in, so the transceiver itself is untested.
+- about: counters
+  text: The hard PRBS checker counts cycles with an error, not bits; TXPRBSFORCEERR may inject two errors per pulse with
+    these clock ratios (UG576); the DRP window hangs if used while the transceiver is in reset (no timeout).
+- about: behaviour
+  text: 'Guessable wrongly (docs/register_map.md): unmapped reads return 0 and writes are ignored; PULSE bits are strobes
+    and read 0; counters change only on a snapshot; DRP_DATA reads the last read, not the last write; reads have no side
+    effects.'
+- about: review
+  text: One review round; STATUS bits 6 and 7 are reserved; the planner does not check that a rate is reachable from the
+    reference by an integer divider; SYSMON conversion to physical units is not implemented.
+next_steps:
+- Run docs/board_run_plan.md on the KR260 (laser polarity first, then near-end loopback BER, then the optical loop).
+- Confirm the reference clock and the control pins against the carrier schematic.
+- Build an I2C master for the module's SFF-8472 diagnostics.
+open_questions:
+- Does the PL load over JTAG with the PS idle on the new SD card state? (board_run_plan.md section 1)
+history:
+- date: '2026-11-13'
+  brief: 56A
+  note: design, gates, probe and knowledge written; one independent review round
+numbers_allow:
+- token: 10G/25G
+  reason: the name of AMD's Ethernet subsystem (PG210), refused by the Basic licence in results/56a_serdes/licences.md
+state:
+  stage: built
+  gates:
+    build_2026_1: pass
+  vivado: '2026.1'
+  kb_pin: 1fc7ed8
+  build_id: cdb9eeef

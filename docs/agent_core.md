@@ -17,6 +17,7 @@ are `additionalProperties: false`; they are snapshot-tested in `agent/tests/fixt
 | `lint` | `verilator --lint-only -Wall` over the `build.yaml` sources | none |
 | `simulate` | the design's `tests/test_*_rtl.py` (cocotb) under `icarus` or `verilator` | sim |
 | `formal` | `flow/formal.sh` (SymbiYosys bounded proof and cover) | none |
+| `gt_plan` | `flow/gt_plan.py` (brief 56A: the transceiver link planned from spec.yaml `link:` and the board's `gt:`; read-only, registered but not yet offered to any stage, [docs/gt_links.md](gt_links.md)) | none |
 | `build` | `flow/run_vivado.sh` (memory-capped) up to `synth`, `place`, `route` or `bitstream`, then the gates | until, variant |
 | `gates` | `flow/gates.py` (stage results) or `flow/verif_gates.py` (V-stages), raw | kind, variant |
 | `report` | one named report or log from `build/<variant>/` | name, variant, offset, max_bytes |
