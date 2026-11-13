@@ -162,6 +162,21 @@ does not slow the core; an accelerator needs calls above its break-even size; ei
 at least 1.1 at every corner, and when the interval straddles that the verdict is **measure**, not a choice. Missing
 traits are reported as unknown, never assumed.
 
+When two options both pass and their worst-case gains are within 5 %, the one with fewer assumed inputs is chosen and
+the near tie is stated; a chosen option that rests on assumptions carries a reason saying they must be measured first.
+
+Two worked inputs, with their outputs in [results/64a_hwsw](../results/64a_hwsw/README.md):
+
+- `hwsw/examples/partition_crc32_zynq.yaml`: CRC-32 on a Zynq-7000, the A9 against a fabric CRC behind AXI DMA. Every
+  input is an assumption with a wide range. The accelerator is faster from 88 to 451 bytes in half of the input corners
+  and never in the other half (where the A9 at 2 cycles per byte outruns a 32-bit DMA port). The application speed-up at
+  1500 bytes is 0.44 to 1.80 against a ceiling of 1.43 to 2.5. Verdict: **measure**, the A9's cycles per byte first.
+- `hwsw/examples/partition_crc32_rv32.yaml`: the three options on the BRV32P core. Software and the custom instruction use
+  the measured cycles and Fmax of section 3; the accelerator (the SoC has no DMA yet) is all assumptions. The custom
+  instruction is 3.35 to 7.33 times the table-driven C over the sizes. The application gain at 256 bytes is 1.34 to 2.05
+  with the custom instruction and 1.37 to 2.37 with the accelerator, both capped by Amdahl's limit of 1.43 to 2.5.
+  Verdict: **custom instruction**. The accelerator is a near tie on the worst case, but 7 of its inputs are assumptions.
+
 ## 3. An IP library entry as a custom instruction
 
 ### The contract
@@ -240,7 +255,27 @@ cycles per word for 5 instructions (load, two adds, the instruction, the branch)
 2.25 cycles per byte, three stall clocks more per word, exactly its extra latency. The table-driven C costs 32 + 11
 cycles per byte. So the low-latency variant is the one to wrap, as the decision skill says.
 
-OOC_SECTION
+### What the unit costs the core (Vivado 2026.1)
+
+`python3 hwsw/cfu_core/core_ooc.py` builds the whole SoC (core, caches, 32 KB SRAM, peripherals) out of context on the
+xc7a100t at a 10 ns target, once per core, with one place-and-route run each:
+
+| Core | SoC LUTs | SoC FFs | core LUTs | the unit (LUTs / FFs) | DSP | WNS at 10 ns (ns) | Fmax estimate (MHz) |
+|---|---|---|---|---|---|---|---|
+| pinned core | 11832 | 7976 | 8625 | - | 16 | -5.914 | 62.8 |
+| with crc32_step `word` | 12265 | 8031 | 9057 | 297 / 68 | 16 | -5.471 | 64.6 |
+| with crc32_step `byte` | 11955 | 8099 | 8771 | 165 / 127 | 16 | -5.294 | 65.4 |
+
+- **Logic.** The `word` unit costs 297 LUTs and 68 flip-flops inside the core. The core grows by 432 LUTs: the rest is the
+  decode, the wider result multiplexer and the stall logic. The `byte` unit costs 165 LUTs; the core grows by 146.
+- **Clock rate.** No Fmax loss. The three estimates (62.8, 64.6 and 65.4 MHz) differ by run-to-run placement, and the
+  critical path is in the core's fetch or modular-arithmetic logic, not in the unit. The core misses 100 MHz either way:
+  that is the pinned core's own figure.
+- **Out-of-context LUT counts of a function unit mislead.** Out of context, `word` took 95 LUTs, because its input path was
+  untimed; in the core, where the operands arrive through the forwarding logic, it took 297. The byte-serial `byte` saves
+  132 LUTs in the core, against an out-of-context difference of one LUT.
+- **The trade.** `byte` saves 132 LUTs (1.5 % of the core) and costs 0.75 cycles per byte, 49 % more time. The decision
+  skill's default, the lowest-latency variant, holds unless the core is short of logic.
 
 ### What this does not show
 

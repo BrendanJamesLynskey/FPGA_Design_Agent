@@ -324,6 +324,7 @@ DEFAULTS = {
     "max_stall_clocks": 4,       # a multi-cycle unit that stalls EX longer than this hurts every instruction behind it
     "min_app_speedup": 1.10,     # below this whole-application gain, keep the software
     "max_core_fmax_loss": 0.05,  # a unit that costs more than 5 % of the core's Fmax must be pipelined or moved out
+    "tie_fraction": 0.05,        # two options whose worst-case gains are this close are a tie on speed
 }
 
 
@@ -343,6 +344,7 @@ def decide(t: dict, rules: dict | None = None) -> dict:
                                                [low, high] (from evaluate())
       toolchain                    'intrinsic' (compiler or .insn) | 'driver' | 'none'
       reuse_programs               how many programs would use the instruction
+      assumed_inputs               per option, how many of its inputs are assumptions (from run())
     """
     r = dict(DEFAULTS, **(rules or {}))
     why: list[str] = []
@@ -403,10 +405,26 @@ def decide(t: dict, rules: dict | None = None) -> dict:
     th = r["min_app_speedup"]
     sure = [(o, s) for o, s in known if s[0] >= th]
     maybe = [(o, s) for o, s in known if s[0] < th <= s[1]]
+    assumed = t.get("assumed_inputs") or {}
     if sure:
-        choice, s = max(sure, key=lambda x: x[1][0])
-        why.append(f"choose {choice}: whole-application speed-up {s[0]:.2f} .. {s[1]:.2f} at the typical size, "
-                   f"at least {th} at every corner")
+        sure.sort(key=lambda x: -x[1][0])
+        choice, s = sure[0]
+        tie = len(sure) > 1 and sure[1][1][0] >= s[0] * (1 - r["tie_fraction"])
+        if tie and assumed.get(sure[1][0], 0) < assumed.get(choice, 0):
+            first = choice
+            choice, s = sure[1]
+            why.append(f"choose {choice}: whole-application speed-up {s[0]:.2f} .. {s[1]:.2f} at the typical size, at "
+                       f"least {th} at every corner; {first} is a near tie on speed (lower ends within "
+                       f"{r['tie_fraction']:.0%}) but rests on {assumed.get(first, 0)} assumed inputs against "
+                       f"{assumed.get(choice, 0)}")
+        else:
+            why.append(f"choose {choice}: whole-application speed-up {s[0]:.2f} .. {s[1]:.2f} at the typical size, "
+                       f"at least {th} at every corner")
+            if tie:
+                why.append(f"near tie on speed with {sure[1][0]} (lower ends within {r['tie_fraction']:.0%}): weigh "
+                           "area, driver and toolchain cost as well")
+        if assumed.get(choice):
+            why.append(f"{choice} rests on {assumed[choice]} assumed inputs: confirm them by measurement before building")
     elif maybe:
         choice = "measure"
         why.append("undecided: " + "; ".join(f"{o} gives {s[0]:.2f} .. {s[1]:.2f}" for o, s in maybe)
@@ -472,6 +490,15 @@ def report(d: dict, out: dict, dec: dict | None) -> str:
     return "\n".join(L)
 
 
+def assumed_inputs(d: dict) -> dict:
+    """Per option, how many of its numeric inputs give "assumption" as their source."""
+    out = {}
+    for o, spec in d["options"].items():
+        out[o] = sum(1 for k, v in spec.items() if k in INPUTS.get(o, ()) and isinstance(v, dict)
+                     and str(v.get("source", "")).lower().startswith("assumption"))
+    return out
+
+
 def run(path: str | Path) -> tuple[dict, dict | None]:
     d = load(path)
     out = evaluate(d)
@@ -484,6 +511,7 @@ def run(path: str | Path) -> tuple[dict, dict | None]:
                 bpi = _val(d["options"]["accel"]["bytes_in_per_item"])
                 bpi = bpi[1] if isinstance(bpi, tuple) else bpi
                 t["accel_break_even_bytes"] = v[1] * bpi            # the pessimistic end
+        t.setdefault("assumed_inputs", assumed_inputs(d))
         for o in ("ci", "accel"):
             k = f"app_speedup_{o}_at_typical_n"
             if k in out and f"app_speedup_{o}" not in t:

@@ -51,15 +51,32 @@ def run_one(cfg: str, period: float) -> dict:
            "-source", str(HERE / "core_ooc.tcl"), "-tclargs", str(d), PART, str(period)]
     print(f"core_ooc: {cfg} in scope {unit}", flush=True)
     rc = subprocess.run(cmd, cwd=d).returncode
+    return parse(d)
+
+
+def _hier(rpt: str) -> dict:
+    """Rows of report_utilization -hierarchical: instance -> {lut, lutram, ff, ramb36, ramb18, dsp}."""
+    out = {}
+    for ln in rpt.splitlines():
+        c = [x.strip() for x in ln.strip().strip("|").split("|")]
+        if len(c) == 10 and c[2].isdigit():
+            out[c[0]] = {"lut": int(c[2]), "lutram": int(c[4]), "ff": int(c[6]), "ramb36": int(c[7]),
+                         "ramb18": int(c[8]), "dsp": int(c[9])}
+    return out
+
+
+def parse(d: Path) -> dict:
     s = d / "vivado" / "summary.txt"
-    if rc or not s.exists():
-        return {"status": f"error: Vivado exit {rc}, see {d / 'vivado.log'}"}
+    if not s.exists():
+        return {"status": f"error: no summary, see {d / 'vivado.log'}"}
     kv = dict(ln.split(None, 1) for ln in s.read_text().splitlines() if ln.strip())
+    h = _hier((d / "vivado" / "utilization_hier.rpt").read_text())
     log = (d / "vivado.log").read_text()
     m = re.search(r"Vivado v(\S+) \(64-bit\)\s*\n#?\s*SW Build (\d+)", log)
+    top = h["brv32p_soc"]
     return {"status": "ok", "tool": f"Vivado {m.group(1)} (build {m.group(2)})" if m else "Vivado (version not read)",
-            "wns_ns": float(kv["wns_ns"]), "fmax_mhz": float(kv["fmax_mhz"]), "lut": int(kv["lut"]), "ff": int(kv["ff"]),
-            "dsp": int(kv["dsp"]), "cfu_lut": int(kv["cfu_lut"]), "cfu_ff": int(kv["cfu_ff"])}
+            "wns_ns": float(kv["wns_ns"]), "fmax_mhz": float(kv["fmax_mhz"]), "soc": top, "core": h["u_core"],
+            "cfu": h.get("u_cfu")}
 
 
 def main(argv=None) -> int:
@@ -67,6 +84,7 @@ def main(argv=None) -> int:
     ap.add_argument("--configs", default="baseline,cfu_word,cfu_byte")
     ap.add_argument("--period", type=float, default=10.0)
     ap.add_argument("--out", default=str(ROOT / "results" / "64a_hwsw" / "core_ooc.json"))
+    ap.add_argument("--parse-only", action="store_true", help="rebuild the record from earlier runs' reports")
     a = ap.parse_args(argv)
     out = Path(a.out)
     rec = json.loads(out.read_text()) if out.exists() else {"configs": {}}
@@ -75,7 +93,7 @@ def main(argv=None) -> int:
                         "caches, 32 KB SRAM, peripherals); one thread; one run per configuration; Fmax = 1000 / "
                         "(period - WNS), an estimate from one routed run at the target clock"})
     for cfg in [c for c in a.configs.split(",") if c]:
-        rec["configs"][cfg] = run_one(cfg, a.period)
+        rec["configs"][cfg] = parse(OOC / cfg) if a.parse_only else run_one(cfg, a.period)
         print(cfg, rec["configs"][cfg], flush=True)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(rec, indent=1) + "\n")

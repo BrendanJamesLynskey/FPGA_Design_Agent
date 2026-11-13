@@ -1,0 +1,50 @@
+# Cost-model input (brief 64A+): CRC-32 over an N-byte buffer on the BRV32P RV32 core (Nexys A7 class, Artix-7), the
+# three options of brief 64 on one platform. Software and the custom instruction are MEASURED (simulation cycles, an
+# out-of-context Fmax estimate); the accelerator is ILLUSTRATIVE (the SoC has no DMA engine yet: every input of it is
+# an assumption). hwsw/tests/test_64a_partition.py checks the measured numbers here against results/64a_hwsw/.
+#   python3 -m hwsw.partition hwsw/examples/partition_crc32_rv32.yaml
+partition: 1
+kernel: CRC-32 (IEEE 802.3) over an N-byte buffer on the BRV32P core; item = one byte
+sizes: [16, 64, 256, 1024, 4096, 65536]
+application:
+  kernel_fraction: {value: [0.3, 0.6], source: assumption (a packet application that checks every payload)}
+  typical_n: 256
+options:
+  sw:
+    label: table-driven C on the pinned core
+    f_cpu_hz: {value: 62.8e+6, source: "results/64a_hwsw/core_ooc.json, baseline, Fmax estimate (Vivado 2026.1, one run)"}
+    cycles_per_item: {value: 11.0, source: "results/64a_hwsw/cfu_crc32.json, baseline table: exact fit of 16 B and 1024 B"}
+    cycles_per_call: {value: 32, source: "results/64a_hwsw/cfu_crc32.json, baseline table: exact fit of 16 B and 1024 B"}
+  ci:
+    label: crc32.w (crc32_step word, latency 1) in the same core
+    f_core_hz: {value: 62.8e+6, source: "the lower of the two cores' Fmax estimates (64.6 MHz with the unit is within run-to-run variation; its critical path is not in the unit)"}
+    cycles_per_item: {value: 1.5, source: "results/64a_hwsw/cfu_crc32.json, cfu_word: exact fit of 16 B and 1024 B"}
+    cycles_per_call: {value: 38, source: "results/64a_hwsw/cfu_crc32.json, cfu_word: exact fit of 16 B and 1024 B"}
+  accel:
+    label: a stream CRC block on the SoC's AXI fed by a DMA engine, polled (not built)
+    f_fabric_hz: {value: 62.8e+6, source: assumption (the core's clock)}
+    ii_clocks: {value: 0.25, source: a 32-bit stream, one word per clock}
+    latency_clocks: {value: 4, source: assumption}
+    bytes_in_per_item: {value: 1, source: one byte read per byte}
+    bytes_out_per_item: {value: 0, source: the result is one register read}
+    dma_bytes_per_s: {value: [100e+6, 250e+6], source: "assumption: a 32-bit AXI port at 62.8 MHz carries 251 MB/s at most"}
+    mmio_writes: {value: 4, source: assumption (address, length, start, mode)}
+    mmio_reads: {value: 2, source: assumption (status, result)}
+    mmio_write_s: {value: [80e-9, 240e-9], source: "assumption: 5 to 15 core clocks per uncached peripheral write"}
+    mmio_read_s: {value: [80e-9, 240e-9], source: "assumption: 5 to 15 core clocks per uncached peripheral read"}
+    completion: poll
+    polls: {value: 1, source: the spin overlaps the transfer; one final read is extra}
+    coherent: true                   # assumption: the buffer sits in a region the D-cache does not cache
+    overlap: true
+traits:
+  src_regs: 2
+  dst_regs: 1
+  state_bits: 0
+  streaming: false
+  memory_access: false
+  unit_latency_clocks: 1
+  unit_fmax_hz: 64.6e+6              # results/64a_hwsw/core_ooc.json, cfu_word
+  core_fmax_hz: 62.8e+6              # results/64a_hwsw/core_ooc.json, baseline
+  bytes_per_call: 256
+  toolchain: intrinsic
+  reuse_programs: 2

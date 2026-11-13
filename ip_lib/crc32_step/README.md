@@ -46,8 +46,8 @@ Selected by `IMPL`; every variant has the same ports, the same bit-exact result 
 
 | Variant | What | Latency | II | Use when |
 |---|---|---|---|---|
-| `word` | the 32-bit update in one clock (an XOR network) | `1` | `1` | measured: 95 LUTs and 33 flip-flops out of context; the lowest latency, so the custom-instruction variant and the word-per-clock stream |
-| `byte` | one byte per clock through an 8-bit update, four clocks per word | `4` | `4` | measured: no saving at 32 bits (96 LUTs and 92 flip-flops against 95 and 33 for word), so word is better on every count here; kept as the multi-cycle case of the custom-instruction wrapper (a 4-clock stall per instruction) |
+| `word` | the 32-bit update in one clock (an XOR network) | `1` | `1` | the lowest latency: the custom-instruction variant and the word-per-clock stream. Measured: 95 LUTs out of context, but 297 LUTs inside the BRV32P core, where its operand inputs are timed (results/64a_hwsw/core_ooc.json) |
+| `byte` | one byte per clock through an 8-bit update, four clocks per word | `4` | `4` | area before speed. Measured: out of context no saving (96 LUTs against 95), but inside the BRV32P core 165 LUTs against 297 for word; as a custom instruction it costs three more stall clocks per word (2.29 against 1.54 cycles per byte) |
 
 Measured at : built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 4.0 ns clock (250 MHz), Vivado 2026.1 (build 6511674). Not run on a board.
 
@@ -75,7 +75,7 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: none.
 - Part, board or pin: none.
 - Depends on: nothing.
-- Limits: the word variant has a combinational XOR network from the operand inputs to the result register: out of context the input path is not timed, so its Fmax must be judged where the inputs come from registers (inside a CPU: results/64a_hwsw).
+- Limits: the word variant has a combinational XOR network from the operand inputs to the result register: out of context that path is not timed, so neither its Fmax nor its LUT count there is the in-context figure (95 LUTs out of context, 297 inside the BRV32P core: results/64a_hwsw/core_ooc.json).
 
 ## Cost table
 

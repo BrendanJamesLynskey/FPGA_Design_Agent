@@ -43,13 +43,16 @@ def speedups(rec: dict) -> str:
 
 
 def ooc_table(o: dict) -> str:
-    L = ["| Core | LUT | FF | of which in the unit (LUT / FF) | WNS at " + f"{o['clock_ns']:g} ns | Fmax estimate (MHz) |",
-         "|---|---|---|---|---|---|"]
+    L = ["| Core | SoC LUTs | SoC FFs | core LUTs | the unit (LUTs / FFs) | DSP | WNS at " + f"{o['clock_ns']:g} ns (ns) | Fmax estimate (MHz) |",
+         "|---|---|---|---|---|---|---|---|"]
     for cfg, c in o["configs"].items():
         if c.get("status") != "ok":
-            L.append(f"| {cfg} | {c.get('status')} | | | | |")
+            L.append(f"| {cfg} | {c.get('status')} | | | | | | |")
             continue
-        L.append(f"| {cfg} | {c['lut']} | {c['ff']} | {c['cfu_lut']} / {c['cfu_ff']} | {c['wns_ns']:.3f} | {c['fmax_mhz']:.1f} |")
+        u = c.get("cfu")
+        name = "pinned core" if cfg == "baseline" else f"with crc32_step `{cfg.split('_', 1)[1]}`"
+        L.append(f"| {name} | {c['soc']['lut']} | {c['soc']['ff']} | {c['core']['lut']} | "
+                 f"{'-' if not u else str(u['lut']) + ' / ' + str(u['ff'])} | {c['soc']['dsp']} | {c['wns_ns']:.3f} | {c['fmax_mhz']:.1f} |")
     return "\n".join(L)
 
 

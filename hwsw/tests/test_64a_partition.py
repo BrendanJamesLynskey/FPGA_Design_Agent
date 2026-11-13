@@ -130,3 +130,36 @@ def test_corners_cover_both_ends() -> None:
     vals = {c["sw"]["cycles_per_item"] for c in cs}
     assert vals == {2.0, 10.0}
     assert not any(math.isnan(c["accel"]["dma_bytes_per_s"]) for c in cs)
+
+
+def test_near_tie_prefers_the_option_with_fewer_assumptions() -> None:
+    t = dict(BASE, app_speedup_ci=[1.34, 2.0], app_speedup_accel=[1.37, 2.4], assumed_inputs={"ci": 0, "accel": 7})
+    dec = P.decide(t)
+    assert dec["choice"] == "ci" and any("near tie" in r for r in dec["reasons"])
+    dec = P.decide(dict(t, app_speedup_accel=[1.6, 2.4]))          # not a tie: the faster one, with a warning
+    assert dec["choice"] == "accel" and any("7 assumed inputs" in r for r in dec["reasons"])
+
+
+def test_rv32_example_matches_the_measured_records() -> None:
+    """The measured inputs of partition_crc32_rv32.yaml are the exact fits of results/64a_hwsw/cfu_crc32.json and the
+    Fmax estimates of core_ooc.json."""
+    import json
+    d = yaml.safe_load((ROOT / "hwsw" / "examples" / "partition_crc32_rv32.yaml").read_text())
+    rec = json.loads((ROOT / "results" / "64a_hwsw" / "cfu_crc32.json").read_text())
+    ooc = json.loads((ROOT / "results" / "64a_hwsw" / "core_ooc.json").read_text())
+
+    def fit(cfg, k):
+        c16 = rec["configs"][cfg]["kernels"][k]["16"]["cycles"]
+        c1k = rec["configs"][cfg]["kernels"][k]["1024"]["cycles"]
+        ci = (c1k - c16) / (1024 - 16)
+        return ci, c16 - 16 * ci
+    for opt, cfg, k in (("sw", "baseline", "table"), ("ci", "cfu_word", "cfu")):
+        ci, cc = fit(cfg, k)
+        assert P._val(d["options"][opt]["cycles_per_item"]) == pytest.approx(ci)
+        assert P._val(d["options"][opt]["cycles_per_call"]) == pytest.approx(cc)
+    base, word = ooc["configs"]["baseline"]["fmax_mhz"], ooc["configs"]["cfu_word"]["fmax_mhz"]
+    assert P._val(d["options"]["sw"]["f_cpu_hz"]) == pytest.approx(base * 1e6)
+    assert P._val(d["options"]["ci"]["f_core_hz"]) == pytest.approx(min(base, word) * 1e6)
+    assert d["traits"]["unit_fmax_hz"] == pytest.approx(word * 1e6) and d["traits"]["core_fmax_hz"] == pytest.approx(base * 1e6)
+    out, dec = P.run(ROOT / "hwsw" / "examples" / "partition_crc32_rv32.yaml")
+    assert dec["choice"] == "ci" and dec["ci_eligible"]
