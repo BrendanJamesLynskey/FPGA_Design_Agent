@@ -26,10 +26,13 @@ Goldens, oldest first:
 - ``b54b_request_golden.json`` (2026-11-12): the test shell's protocol 1.1 adds the BUILD_ID register at 0x05 (recorded in
   benchmark/AMENDMENTS.md). The tests role reads the shell's PROTOCOL.md and host driver, so its plan and Claude Code argv
   hashes (``plan_tests_*``, ``cli_argv_tests_*``) differ from the brief 59A golden; nothing else does.
+- ``b56a_request_golden.json`` (brief 56A, 2026-11-13): the registry gained ``gt_plan`` (the transceiver link planner). No stage or role
+  is offered it yet (exposing it to the Designer is a follow-up that needs its own golden), so every hash other than ``tool_registry``
+  equals the brief 54B golden's.
 - ``b68_request_golden.json`` (brief 68 C, 2026-11-13, one deliberate re-pin; benchmark/AMENDMENTS.md): the text sent to models
   names the roles as the site and docs do since brief 67 (the Modeller, the Verifier, the Designer, the Clarifier; "reference
   model" for "blind model"; never "implementer"), in PROMPTS, CONVENTIONS ("Tests (Verifier)"), HW_FORMAT, MODEL_CONTRACT, the
-  ``bringup`` tool description (schema 1.10.1) and the spec-test prompts (not hashed). The DOC step's prompt is new
+  ``bringup`` tool description (schema 1.11.1) and the spec-test prompts (not hashed). The DOC step's prompt is new
   (``doc_system``). Eval-1 was stopped with no score, so no comparison is lost; runs before this belong to the earlier goldens."""
 
 from __future__ import annotations
@@ -44,7 +47,7 @@ EVAL1 = FIXTURES / "eval1_request_golden.json"
 GOLDEN = FIXTURES / "b68_request_golden.json"           # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
-                                        "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; "
+                                        "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; brief 56A: gt_plan; "
                                         "brief 68: bringup description (reference model)",
                        "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests); brief 68: role names",
                        "conventions": "brief 68: role names (Tests (Verifier))",

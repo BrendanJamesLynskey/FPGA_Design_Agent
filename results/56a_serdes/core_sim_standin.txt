@@ -1,0 +1,30 @@
+CHECK id PASS 56a00001
+CHECK build_stamp PASS 56a05eed
+CHECK ctrl_reset_value PASS 00053008
+CHECK laser_disabled_at_reset PASS sfp_tx_disable=1
+CHECK unmapped_read_zero PASS 00000000
+CHECK tx_reset_done PASS STATUS[0]
+CHECK rx_reset_done PASS STATUS[1]
+RESULT status_after_bringup 0000033f
+CHECK fabric_prbs_locked PASS STATUS[9]
+RESULT fab_words_60us 10092
+RESULT fab_errbits 0
+CHECK fabric_words_counted PASS 10092 words
+CHECK fabric_no_errors PASS errbits=0 errwords=0
+CHECK fabric_injected_error_counted PASS errbits=1 errwords=1
+CHECK fabric_relock_prbs23 PASS STATUS=0000033f
+CHECK prbs23_no_errors PASS errbits=0 words=6742
+CHECK hard_prbs_locked PASS STATUS=0000073f
+RESULT hard_cycles 5111
+RESULT hard_err 0
+CHECK hard_cycles_counted PASS 5111 cycles
+CHECK hard_no_errors PASS 0 error cycles
+CHECK hard_injected_error_counted PASS 1 error cycles
+CHECK sticky_fab_lock_lost PASS STICKY=0c
+CHECK sticky_w1c PASS STICKY=00
+CHECK i2c_scl_low PASS 00000201
+CHECK i2c_released PASS 00000300
+CHECK sysmon_read PASS 0001abcd
+CHECK gt_drp_read_done PASS DRP_CTRL=00000002
+RESULT drp_addr0_data 5a00
+TB-DONE 0

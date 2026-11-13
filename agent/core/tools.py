@@ -649,6 +649,25 @@ def formal(s: Session) -> dict:
             "output": out, "returncode": r.returncode}
 
 
+@tool("gt_plan", "Plan the design's transceiver link (brief 56A): reads the `link:` section of spec.yaml and the board's gt: section "
+                 "and returns the GT Wizard configuration, PLL and divider, user-clock frequency, reference-clock and lane "
+                 "constraints, the 2026.1 licence status of the IP, and every reason the link cannot be built (rate outside "
+                 "the speed grade's window, more lanes than the board has, a reference the board does not provide). "
+                 "Read-only; the RTL and constraints are yours to write, then `build` runs the GT gates.", {})
+def gt_plan_tool(s: Session) -> dict:
+    from agent.graph.spec_schema import SpecError, load_spec
+    from flow import gt_plan as gp
+    try:
+        spec = load_spec(s.design / "spec.yaml")
+    except SpecError as e:
+        return {"ok": False, "output": str(e)}
+    if "link" not in spec:
+        return {"ok": False, "output": "spec.yaml has no link: section (protocol, line_rate_gbps, lanes); this design has no transceiver link"}
+    board = yaml.safe_load((s.root / "boards" / s.board / "board.yaml").read_text())
+    r = gp.plan(spec["link"], board, board.get("part"))
+    return {"ok": r["ok"], "output": json.dumps(r, indent=2), "plan": r}
+
+
 STOPS = ["synth", "place", "route", "bitstream"]
 
 

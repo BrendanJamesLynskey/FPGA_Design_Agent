@@ -11,7 +11,7 @@ Reviews: `reports/12_quality_review_area2.md` (planner repository), items R2, R5
 score, so no comparison is lost).** What: the text sent to models names the roles as the site and docs have since brief 67:
 the Modeller, the Verifier, the Designer and the Clarifier, "reference model" for "blind model", and never "implementer".
 Changed: `agent/graph/run.py` PROMPTS, CONVENTIONS ("Tests (Verifier)") and HW_FORMAT; `agent/graph/contract.py`
-MODEL_CONTRACT; the `bringup` tool description in `agent/core/tools.py` (registry schema 1.10.1,
+MODEL_CONTRACT; the `bringup` tool description in `agent/core/tools.py` (registry schema 1.11.1,
 `agent/tests/fixtures/tool_schemas.json` regenerated); `agent/graph/spectest.py` ROLE_SYSTEM and TRIAGE_SYSTEM. New: the DOC
 step's prompt (`agent/graph/document.py` DOC_SYSTEM, hashed as `doc_system`). No task spec, reference RTL, test, mutant,
 grader or split changed.

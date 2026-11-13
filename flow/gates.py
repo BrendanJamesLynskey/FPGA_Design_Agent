@@ -70,6 +70,9 @@ except ImportError:      # run as a script: flow/ is on sys.path, not the repo
 _UTIL_ROWS = {
     "Slice LUTs": "lut", "LUT as Memory": "lutram", "Slice Registers": "ff", "CARRY4": "carry4",
     "Block RAM Tile": "bram_tile", "DSPs": "dsp", "Bonded IOB": "iob", "BUFGCTRL": "bufg",
+    # brief 56A: UltraScale+ reports (the K26) name the logic rows "CLB LUTs" and "CLB Registers"; before this their LUT and FF
+    # counts read as missing and the resource-sanity gate compared 0 with the prediction
+    "CLB LUTs": "lut", "CLB Registers": "ff", "CARRY8": "carry8",
 }
 
 
@@ -397,6 +400,24 @@ def _cdc_structure(d: Path, architecture: Path | None) -> dict[str, Any]:
     return cdc_structure.evaluate(d / "cdc_paths_synth.rpt", d / "cdc_synth.rpt", waivers)
 
 
+def _gt(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
+    """Brief 56A: flow/gt_gates.py's gates (reference-clock pin and quad, lane pins, line-rate window, user-clock limit, reset
+    sequence, timed user clocks, transceiver DRCs) when the build has a gtwizard_ultrascale core; None otherwise. A gate whose data is
+    missing for the part is listed under ``not_applicable`` in the result and is not counted."""
+    try:
+        from flow import gt_gates
+    except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+        import gt_gates
+    try:
+        r = gt_gates.evaluate(d)
+    except (OSError, ValueError, KeyError) as e:
+        g["post_synth_gt_evaluated"] = False
+        return {"pass": False, "error": f"{type(e).__name__}: {e}"}
+    if r is not None:
+        g.update(r["gates"])
+    return r
+
+
 def _exceptions(d: Path, stage: str, strict: bool, g: dict[str, bool], name: str) -> dict[str, Any] | None:
     """Brief 20: flow/exceptions_check.py for one stage (``synth`` or ``route``) into gate ``name``. A build of this flow
     version (``strict``) that lacks the reports fails it; an older build without them skips it."""
@@ -536,6 +557,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             g["post_synth_cdc_structure_clean"] = False
         exc_s = _exceptions(d, "synth", strict, g, "post_synth_exceptions_clean")
         io_s = _io(d, "synth", strict, g, "post_synth_io_constraints_clean")
+        gt_s = _gt(d, g)                   # brief 56A: the GT gates, only for a design with a GT Wizard core
         util_s = parse_utilization(_read(d, "utilization_synth.rpt")) if (d / "utilization_synth.rpt").exists() else {}
         arch = _architecture_for(d, architecture)
         sanity = None
@@ -550,7 +572,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
                                 "unconstrained_ports": parse_check_timing_ports(c_s_text),
                                 "methodology": _rule_summary(m_s), "drc": _rule_summary(d_s), "qor_assessment": q_s,
                                 "cdc": cdc_s, "cdc_structure": cdc_struct, "exceptions": exc_s, "io_timing": io_s,
-                                "resource_sanity": sanity,
+                                "gt": gt_s, "resource_sanity": sanity,
                                 "utilization": util_s}
     else:
         stages["post_synth"] = {"ran": False, "gates": {}}
@@ -719,6 +741,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"    {'ok  ' if ok else 'FAIL'} {g}")
             if not ok and "unconstrained" in g and st.get("unconstrained_ports"):
                 print(f"         check_timing: {unconstrained_text(st['unconstrained_ports'])}")
+            if not ok and "_gt_" in g and (st.get("gt") or {}).get("checks", {}).get(g, {}).get("why"):
+                print(f"         {st['gt']['checks'][g]['why']}")
         for w in st.get("warnings", []):
             print(f"    warn {w['name']}: " + (f"score {w['score']} < {w['min']}" if "score" in w else w.get("note", ""))
                   + " (recorded, not a gate)")
