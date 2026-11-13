@@ -18,6 +18,8 @@ ROOT = HERE.parents[1]
 BUILD = ROOT / "build" / "64a"
 DEMO = ROOT / "hwsw" / "examples" / "demo_accel.yaml"
 STRESS = HERE / "data" / "stress.yaml"
+LEAN = HERE / "data" / "lean.yaml"
+LEAN_NOCAP = HERE / "data" / "lean_nocap.yaml"
 
 
 def _prepare(yaml_path: Path, tag: str, sv_text: str | None = None) -> tuple[regmap.RegMap, dict, list[Path]]:
@@ -52,6 +54,14 @@ def test_stress_layouts() -> None:
     cocotb_run.run("regmap_64a_stress", f"{m.name}_regs_tb", src, "regmap_cocotb", HERE, seed=1, extra_env=env)
 
 
+@pytest.mark.parametrize("y", [LEAN, LEAN_NOCAP], ids=["lean", "lean_nocap"])
+def test_okay_setting_with_and_without_the_capture(y: Path) -> None:
+    """The okay setting (a read and a write to a hole both answer OKAY), once with the capture at its default place and
+    once with it left out; demo_accel simulates split, stress slverr."""
+    m, env, src = _prepare(y, y.stem)
+    cocotb_run.run(f"regmap_64a_{y.stem}", f"{m.name}_regs_tb", src, "regmap_cocotb", HERE, seed=1, extra_env=env)
+
+
 # Seeded faults in the generated RTL: (id, map, text to replace, replacement, the tests that must catch it).
 MUTANTS = [
     ("clear_beats_set", DEMO,
@@ -61,11 +71,38 @@ MUTANTS = [
     ("strobes_ignored", STRESS,
      "assign w_bits = {{8{w_strb[3]}}, {8{w_strb[2]}}, {8{w_strb[1]}}, {8{w_strb[0]}}};",
      "assign w_bits = 32'hffffffff;", ["byte_strobes"]),
-    # both unmapped settings are tested: OKAY (demo_accel, the default) and SLVERR (stress, the option)
-    ("unmapped_slverr_on_okay_map", DEMO, "localparam logic [1:0] RESP_UNMAPPED = 2'b00;",
-     "localparam logic [1:0] RESP_UNMAPPED = 2'b10;", ["unmapped_addresses"]),
-    ("unmapped_okay_on_slverr_map", STRESS, "localparam logic [1:0] RESP_UNMAPPED = 2'b10;",
-     "localparam logic [1:0] RESP_UNMAPPED = 2'b00;", ["unmapped_addresses"]),
+    # all three unmapped settings are tested: split (demo_accel, the default), okay (lean) and slverr (stress); each
+    # response, read and write, has a fault of its own
+    ("split_write_answers_slverr", DEMO, "RESP_UNMAPPED_WR = 2'b00;", "RESP_UNMAPPED_WR = 2'b10;",
+     ["unmapped_addresses"]),
+    ("split_read_answers_okay", DEMO, "RESP_UNMAPPED_RD = 2'b10;", "RESP_UNMAPPED_RD = 2'b00;", ["unmapped_addresses"]),
+    ("okay_read_answers_slverr", LEAN, "RESP_UNMAPPED_RD = 2'b00;", "RESP_UNMAPPED_RD = 2'b10;", ["unmapped_addresses"]),
+    ("okay_write_answers_slverr", LEAN, "RESP_UNMAPPED_WR = 2'b00;", "RESP_UNMAPPED_WR = 2'b10;",
+     ["unmapped_addresses"]),
+    ("slverr_read_answers_okay", STRESS, "RESP_UNMAPPED_RD = 2'b10;", "RESP_UNMAPPED_RD = 2'b00;",
+     ["unmapped_addresses"]),
+    ("slverr_write_answers_okay", STRESS, "RESP_UNMAPPED_WR = 2'b10;", "RESP_UNMAPPED_WR = 2'b00;",
+     ["unmapped_addresses"]),
+    # the error capture: it keeps the last bad access instead of the first, a clear in the clock of a bad access loses
+    # that access, the count wraps instead of saturating, a bad write is not recorded as a write, the interrupt ignores
+    # its enable
+    ("capture_keeps_the_last", DEMO, "            if (ecap_first) begin", "            if (1'b1) begin",
+     ["error_capture_records_the_first_and_counts"]),
+    ("capture_clear_beats_a_new_access", DEMO, "end else if (ecap_bad_rd || ecap_bad_wr) begin",
+     "end else if ((ecap_bad_rd || ecap_bad_wr) && !ecap_clr) begin", ["error_capture_same_clock_races"]),
+    ("capture_count_wraps", DEMO, "ecap_count <= ecap_sum[8] ? {8{1'b1}} : ecap_sum[7:0];",
+     "ecap_count <= ecap_sum[7:0];", ["error_capture_records_the_first_and_counts"]),
+    ("capture_write_recorded_as_read", DEMO, "ecap_is_write <= !ecap_bad_rd;", "ecap_is_write <= 1'b0;",
+     ["error_capture_records_the_first_and_counts"]),
+    ("capture_write_wins_the_same_clock", DEMO,
+     "ecap_addr <= ecap_bad_rd ? {s_axil_araddr[11:2], 2'b00} : {aw_word, 2'b00};",
+     "ecap_addr <= ecap_bad_wr ? {aw_word, 2'b00} : {s_axil_araddr[11:2], 2'b00};", ["error_capture_same_clock_races"]),
+    ("capture_clear_ignores_strobe", DEMO, "assign ecap_clr    = wr_err_status && w_data[0] && w_bits[0];",
+     "assign ecap_clr    = wr_err_status && w_data[0];", ["error_capture_records_the_first_and_counts"]),
+    ("capture_clear_keeps_the_count", DEMO, "        end else if (ecap_clr) begin\n            ecap_sticky <= 1'b0;\n            ecap_count <= 8'h0;",
+     "        end else if (ecap_clr) begin\n            ecap_sticky <= 1'b0;", ["error_capture_records_the_first_and_counts"]),
+    ("capture_irq_ignores_enable", STRESS, "else irq_o <= (ecap_sticky & ecap_irq_en);",
+     "else irq_o <= ecap_sticky;", ["error_capture_interrupt"]),
     # the snapshot's high part loaded one clock after the low part: the halves of a 64-bit counter disagree at a carry
     ("snapshot_halves_apart", DEMO,
      "        else if (snap_job_cycles) job_cycles_hi_value_shadow <= job_cycles_hi_value_i;",

@@ -26,9 +26,9 @@ param dds=PHASE_W 32, LUT_W 8, OUT_W 16, variant bram legal=per ip_lib/dds_awg
 ## files
 designs/b65a_axil_soc/blockdesign.yaml 336ec09a35: the source; instances, connections, interconnect, address map
 designs/b65a_axil_soc/tone.yaml ae1887c1f9: the tone hierarchy; DDS and frequency counter with their register definitions
-designs/b65a_axil_soc/gen/address_map.md eb433bdfb0: generated address map and register tables
+designs/b65a_axil_soc/gen/address_map.md 598c086cd3: generated address map and register tables
 designs/b65a_axil_soc/gen/graph.json f235b29f94: generated graph that the viewer draws
-designs/b65a_axil_soc/gen/manifest.json 37f1d568bb: generated; input and output hashes, components, diagnostics
+designs/b65a_axil_soc/gen/manifest.json 810abcec95: generated; input and output hashes, components, diagnostics
 designs/b65a_axil_soc/design.xdc a0619232b1: pins and the 100 MHz clock
 designs/b65a_axil_soc/tests/test_b65a_rtl.py c69ba5a936: generated design simulated end to end through the UART shell
 docs/blockdesign.md 500c66d77b: user guide to the format, validation and generator
@@ -77,15 +77,14 @@ M9 verification -=10 faults R3#caught: crossbar seeded faults caught | of 10, th
 [E5] The graph check compares 6 of the 7 links; the inverted sample bit that feeds the frequency counter goes through logic and is not compared.
 [build identity] The recorded build was made from a tree with uncommitted changes (git_dirty is true in run.json), at 2 threads; the build ID covers the thread count and the inputs, so it changes when either does.
 [scope] Generation covers AXI4-Lite with 32-bit data and a single clock domain; AXI4 and AXI4-Stream links are checked and wired point to point only; no interrupt concatenation and no debug-core automation.
-[behaviour] From the generated gen/address_map.md: addresses between the blocks' ranges (0x40002000 to 0x4000FFFF) get DECERR from the crossbar; inside the register-bank blocks an offset with no register, and a write to a read-only register, answer SLVERR with read data 0, which that file says differs from the house convention (OKAY, read 0); la.s_axil answers SLVERR from offset 0x200. Byte strobes are honoured on control registers. fd offset 0x000 is a SCRATCH register with no block input. The master keeps one write and one read in flight.
+[behaviour] From the generated gen/address_map.md: addresses between the blocks' ranges (0x40002000 to 0x4000FFFF) get DECERR from the crossbar; inside the register-bank blocks an offset with no register, and a write to a read-only register, answer SLVERR with read data 0, which that file says agrees with the house convention for a read of a hole (split response: SLVERR, read 0) and differs for a write, which the house convention answers with OKAY and ignores; the banks have no error-capture registers; la.s_axil answers SLVERR from offset 0x200. Byte strobes are honoured on control registers. fd offset 0x000 is a SCRATCH register with no block input. The master keeps one write and one read in flight.
 
 ## next_actions
 1. Add a board smoke run over the UART that reads the three blocks and checks the reset values, and record it with its operating conditions.
-2. Decide the response for an unmapped offset inside a generated register bank, then regenerate gen/ and the docs.
+2. Bring the hand-written register banks (flow/blockdesign/rtl/bd_axil_regs.sv, bd_axil_win.sv) in line with the house split response (a write to an unmapped offset answers OKAY) and give them the error-capture registers, or generate them with hwsw/regmap.py; until then gen/address_map.md states how they differ. Then regenerate gen/ and the docs.
 3. Use the viewer as the how-it-works diagram on other showcase pages, and add the remaining items in docs/blockdesign.md under Not yet.
 
 ## open_questions
-- Should an unmapped offset inside a block answer SLVERR as the generated bank does now, or OKAY with read 0 as the house convention does? The owner has not decided; gen/address_map.md states the current generated behaviour only.
 - The register-map format is 65A's own; should brief 64A's single source consume or replace it?
 
 ## history

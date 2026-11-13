@@ -1,13 +1,15 @@
 # regmap/1 test map (brief 64A): odd layouts the generator must get right. Not a real block.
-# Small window, unmapped answers SLVERR (the option; demo_accel has the default OKAY), fields across byte lanes, a
+# Small window, unmapped answers SLVERR (an option; demo_accel has the default split), error capture with its
+# interrupt (demo_accel has none), fields across byte lanes, a
 # full-width field at bit 0, a register at the top of the window, multi-bit W1C/W1S/W1P fields, a RO constant beside RW
-# bits, no interrupt.
+# bits, no regular interrupt (the capture has its own).
 regmap: 1
 name: stress
 version: 0.0.1
 summary: Layout corner cases for the generator tests.
 addr_width: 6
 unmapped: slverr
+error_capture: {offset: 0x30, interrupt: true}     # the capture's own interrupt (irq_o) and a non-default place
 registers:
 - name: WIDE
   offset: 0x00
