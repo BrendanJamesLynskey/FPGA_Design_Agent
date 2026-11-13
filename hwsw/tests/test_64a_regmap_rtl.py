@@ -97,6 +97,10 @@ MUTANTS = [
     ("capture_write_wins_the_same_clock", DEMO,
      "ecap_addr <= ecap_bad_rd ? {s_axil_araddr[11:2], 2'b00} : {aw_word, 2'b00};",
      "ecap_addr <= ecap_bad_wr ? {aw_word, 2'b00} : {s_axil_araddr[11:2], 2'b00};", ["error_capture_same_clock_races"]),
+    ("capture_clear_ignores_strobe", DEMO, "assign ecap_clr    = wr_err_status && w_data[0] && w_bits[0];",
+     "assign ecap_clr    = wr_err_status && w_data[0];", ["error_capture_records_the_first_and_counts"]),
+    ("capture_clear_keeps_the_count", DEMO, "        end else if (ecap_clr) begin\n            ecap_sticky <= 1'b0;\n            ecap_count <= 8'h0;",
+     "        end else if (ecap_clr) begin\n            ecap_sticky <= 1'b0;", ["error_capture_records_the_first_and_counts"]),
     ("capture_irq_ignores_enable", STRESS, "else irq_o <= (ecap_sticky & ecap_irq_en);",
      "else irq_o <= ecap_sticky;", ["error_capture_interrupt"]),
     # the snapshot's high part loaded one clock after the low part: the halves of a 64-bit counter disagree at a carry

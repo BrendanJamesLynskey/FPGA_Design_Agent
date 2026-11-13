@@ -266,11 +266,11 @@ random order of AW and W, and random BREADY and RREADY back-pressure. The brief 
   jobs, then reads JOB_CYCLES (counted across a carry into the high half) through the generated snapshot helper. The
   same driver source compiles for the Cortex-A9 with `arm-none-eabi-gcc -mcpu=cortex-a9`.
 
-Twenty seeded faults in the generated RTL must each fail the bench; all twenty do. Eight are earlier: a clear that beats
+Twenty-two seeded faults in the generated RTL must each fail the bench; all twenty-two do. Eight are earlier: a clear that beats
 a set, byte strobes ignored, B before W, a lost doorbell, an interrupt that ignores its enable, a pulse that stays high,
 ARREADY high while a read response waits, a snapshot whose high half loads one clock after its low half. Six give the
 wrong response to an unmapped address: for each of the split, okay and slverr maps, one fault on the read response and
-one on the write response. Six are in the error capture: it keeps the last bad access instead of the first, a clear in
+one on the write response. Eight are in the error capture: a clear that ignores the byte-0 strobe, a clear that keeps the count, it keeps the last bad access instead of the first, a clear in
 the clock of a bad access loses that access, the count wraps instead of saturating, a bad write is recorded as a read,
 a bad write beats a bad read in the same clock, and the capture's interrupt ignores its enable. The B-before-W fault is caught by the protocol checker (rule 5, B_EARLY).
 
