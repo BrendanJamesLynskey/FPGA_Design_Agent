@@ -60,12 +60,28 @@ def ooc_table(o: dict) -> str:
     return "\n".join(L)
 
 
+def growth_table(base: dict, cfgs: dict) -> str:
+    """Core LUT and FF growth over the pinned core, per style and variant."""
+    L = ["| Variant | style | core LUTs (growth) | core FFs (growth) | Fmax estimate (MHz) |", "|---|---|---|---|---|"]
+    for cfg, c in cfgs.items():
+        parts = cfg.split("_")
+        L.append(f"| `{parts[1]}` | {'complete in MEM' if 'mem' in parts else 'stall in EX'} | {c['core']['lut']} "
+                 f"(+{c['core']['lut'] - base['core']['lut']}) | {c['core']['ff']} (+{c['core']['ff'] - base['core']['ff']}) | "
+                 f"{c['fmax_mhz']:.1f} |")
+    return "\n".join(L)
+
+
 if __name__ == "__main__":
     rec = json.loads((RES / "cfu_crc32.json").read_text())
     print(cycles_table(rec), "\n")
     print(speedups(rec), "\n")
     if (RES / "core_ooc.json").exists():
         print(ooc_table(json.loads((RES / "core_ooc.json").read_text())), "\n")
+    if (RES / "core_ooc_styles.json").exists():                    # brief 64A2: both styles, baseline from 64A
+        st = json.loads((RES / "core_ooc_styles.json").read_text())
+        base = json.loads((RES / "core_ooc.json").read_text())["configs"]["baseline"]
+        print(ooc_table({**st, "configs": {"baseline": base, **st["configs"]}}), "\n")
+        print(growth_table(base, st["configs"]), "\n")
     if "stale_btb" in rec:
         print("| Configuration | stale-prediction program |\n|---|---|")
         for k, v in rec["stale_btb"]["results"].items():

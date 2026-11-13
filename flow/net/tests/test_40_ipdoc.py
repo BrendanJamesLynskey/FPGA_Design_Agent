@@ -26,7 +26,7 @@ def test_every_register_interface_has_a_registers_section():
     t = (ipdoc.IP / "axil_table_ctrl" / "README.md").read_text()
     reg = t.split("## Registers\n\n", 1)[1]
     first = reg.split("\n\n", 1)[0]
-    assert first.startswith("It differs from the house register conventions (docs/hwsw.md) in 2 ways: byte strobes")
+    assert first.startswith("This block differs from the house register conventions (docs/hwsw.md) in 2 ways: byte strobes")
     assert "Unmapped addresses answer OKAY and read 0." in first
     for topic in ("**Unmapped addresses.**", "**Reserved bits.**", "**Reads have no side effects.**",
                   "**Partial writes.** Byte strobes (WSTRB) are ignored", "**Reset.** `rst`, synchronous, active high",

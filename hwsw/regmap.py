@@ -80,6 +80,7 @@ MODEL_KEYS = {"regmap", "name", "version", "summary", "data_width", "addr_width"
 DOC_MODEL_KEYS = MODEL_KEYS | {"conventions", "staging"}       # documentation-only maps (an ip.yaml register_map)
 REG_KEYS = {"name", "offset", "summary", "fields"}
 SNAP_KEYS = {"name", "trigger", "fields", "summary"}
+GROUP_KEY = object()          # set only by the count: expansion of a documentation-only map; no YAML key can equal it
 STAGING_KEYS = {"name", "registers", "commit", "summary"}
 FIELD_KEYS = {"name", "lsb", "width", "access", "reset", "const", "summary"}
 # Names the generated block uses for its own signals. A register's per-register signals (wr_<reg>, rd_<reg>) and a
@@ -306,8 +307,8 @@ def from_dict(d, source: str = "<dict>", doc_only: bool = False) -> RegMap:
                     continue
                 base = {k: v for k, v in r.items() if k != "count"}
                 off = r.get("offset") if isinstance(r.get("offset"), int) else 0
-                grown += [dict(base, name=f"{r.get('name')}{i}", offset=off + 4 * i, _group=r.get("name"),
-                               summary=str(r.get("summary", "")).replace("{n}", str(i))) for i in range(n)]
+                grown += [{**base, "name": f"{r.get('name')}{i}", "offset": off + 4 * i, GROUP_KEY: r.get("name"),
+                               "summary": str(r.get("summary", "")).replace("{n}", str(i))} for i in range(n)]
             else:
                 grown.append(r)
         regs_in = grown
@@ -321,7 +322,7 @@ def from_dict(d, source: str = "<dict>", doc_only: bool = False) -> RegMap:
             continue
         rn = r.get("name")
         where = f"register {rn or i}"
-        extra = set(r) - REG_KEYS - {"_group"}
+        extra = set(r) - REG_KEYS - ({GROUP_KEY} if doc_only else set())
         if extra:
             errs.append(f"{where}: unknown keys {sorted(extra)}")
         if not isinstance(rn, str) or not REG_RE.match(rn):
@@ -422,7 +423,7 @@ def from_dict(d, source: str = "<dict>", doc_only: bool = False) -> RegMap:
                     full_port.setdefault(port + s, f"{rn}.{fn}")
         if off is not None:
             regs.append(Register(rn, off, tuple(sorted(fields, key=lambda x: x.lsb)), str(r.get("summary", "")),
-                                 str(r.get("_group", ""))))
+                                 str(r.get(GROUP_KEY, "")) if doc_only else ""))
     # a register's own signals (wr_<reg>, rd_<reg>) against every field's full port name (register A_O makes wr_a_o,
     # and register WR field A makes the port wr_a_o)
     for r in regs:
@@ -1147,8 +1148,8 @@ def differences(m: RegMap) -> list[str]:
 def convention_sentence(m: RegMap) -> str:
     d = differences(m)
     if not d:
-        return "It follows the house register conventions (docs/hwsw.md); the Behaviour section states each one."
-    return ("It differs from the house register conventions (docs/hwsw.md) in " + str(len(d)) + " way" +
+        return "This block follows the house register conventions (docs/hwsw.md); the Behaviour section states each one."
+    return ("This block differs from the house register conventions (docs/hwsw.md) in " + str(len(d)) + " way" +
             ("s" if len(d) > 1 else "") + ": " + "; ".join(d) + ".")
 
 
@@ -1166,7 +1167,7 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
                     "interconnect (an AXI crossbar answers DECERR there)."))
     else:
         out.append(("unmapped", f"**Unmapped addresses.** An address inside this block's {win} that holds no register "
-                    "answers SLVERR and reads 0; a write there is ignored. On a Cortex-A9 or Cortex-A53 a SLVERR on a "
+                    "answers SLVERR and reads 0; a write there is ignored. On an Arm CPU a SLVERR on a "
                     "load is an external abort, so a stray access stops the program. Addresses outside the window "
                     "belong to the interconnect (an AXI crossbar answers DECERR there)."))
     if c.reserved == "zero":
@@ -1177,12 +1178,26 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
                     "off after a read, and write them as 0."))
     staged = {x for g in m.staging for x in g.registers}
     pops = by_acc("W1P")
+    trig = {".".join(s.trigger) for s in m.snapshots}
+    cmds = [x for x in pops if x not in trig]
+    bells = by_acc("W1S")
     wo = [r.name for r in m.registers if any(f.access == "WO" for f in r.fields) and r.name not in staged]
-    act = (f"To start, pop or acknowledge something, write 1 to its W1P bit: {_names(pops)}." if pops else
-           f"Actions happen on writes only: a write to {_names(wo)}." if wo else
-           "This block has no command bits.")
-    out.append(("side_effects", "**Reads have no side effects.** Reading any register changes nothing, so a debugger, "
-                "a retried read or a read-modify-write is safe. " + act))
+    acts = []
+    if cmds:
+        acts.append(f"To start, pop or acknowledge something, write 1 to its W1P bit: {_names(cmds)}.")
+    if trig:
+        acts.append(f"A snapshot is taken by writing 1 to its trigger: {_names(sorted(trig))}.")
+    if bells:
+        acts.append(f"Doorbells are W1S bits: {_names(bells)}.")
+    if wo:
+        acts.append(f"Writes act on the hardware only through {_names(wo)}.")
+    act = " ".join(acts) or "This block has no command, doorbell or snapshot bits."
+    rmw = by_acc("W1C") + bells + pops
+    safe = ("so a debugger or a retried read is safe. A read-modify-write must write the W1C, W1S and W1P bits as 0 "
+            f"(here {_names(rmw)}), or it clears, sets or pulses them: write back only the RW bits of what was read. "
+            if rmw else "so a debugger, a retried read or a read-modify-write is safe. ")
+    out.append(("side_effects", "**Reads have no side effects.** Reading any register changes nothing, " + safe + act +
+                " A write to a read-only register is answered OKAY and ignored."))
     w1c, w1s = by_acc("W1C"), by_acc("W1S")
     pri = []
     if w1c:
@@ -1210,7 +1225,8 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
     for s in m.snapshots:
         parts = ", then ".join(".".join(x) for x in s.fields)
         mw.append(f"Snapshot group {s.name} ({m.snapshot_width(s)} bits: {parts}, low part first): write 1 to "
-                  f"{'.'.join(s.trigger)} to copy the whole value into shadow registers in one clock, then read the "
+                  f"{'.'.join(s.trigger)} to copy the whole value into shadow registers in one clock (the hardware's "
+                  "values as they are in the clock the write takes effect; see Clock domain and timing), then read the "
                   "parts in any order; they belong to the same instant. A read without a new snapshot returns the copy "
                   "from the last one (stale), not the live value; the copies read 0 after reset.")
     for g in m.staging:
@@ -1277,6 +1293,8 @@ def datasheet(m: RegMap, level: int = 2) -> list[str]:
     for a, t in {**ACCESS_TEXT, **DOC_ACCESS}.items():
         if a in used or (a in ACCESS and not m.doc_only):
             L.append(f"| {a} | {t} |")
+    if any(f.const for r in m.registers for f in r.fields):
+        L.append("| RO const | read-only constant, fixed when the block is built |")
     L += ["", f"{h} Behaviour", ""] + [f"- {s}" for _, s in behaviour(m)] + [""]
     done = set()
     for r in m.registers:
@@ -1356,7 +1374,15 @@ def read_c(m: RegMap, header: Path, cc: str | None = None) -> dict:
     if not cc:
         raise RuntimeError("no C compiler (gcc or cc) on PATH: the header cannot be probed")
     P = m.name.upper()
-    lines = ["#include <stdio.h>", f'#include "{header.name}"', "int main(void) {"]
+    lines = ["#include <stdio.h>"]
+    if m.snapshots:                       # a fake bus, so the snapshot helpers can be run and their result checked
+        lines += ["#include <stdint.h>",
+                  "static uint32_t probe_rd(uintptr_t a) { return (uint32_t)(a * 2654435761u) ^ 0xA5A5A5A5u; }",
+                  "static uintptr_t probe_wa; static uint32_t probe_wv;",
+                  "static void probe_wr(uintptr_t a, uint32_t v) { probe_wa = a; probe_wv = v; }",
+                  f"#define {P}_IO_READ32(addr) probe_rd((uintptr_t)(addr))",
+                  f"#define {P}_IO_WRITE32(addr, v) probe_wr((uintptr_t)(addr), (uint32_t)(v))"]
+    lines += [f'#include "{header.name}"', "int main(void) {"]
     for r in m.registers:
         R = f"{P}_{r.name}"
         lines.append(f'  printf("R {r.name} %u %u\\n", (unsigned){R}_OFFSET, (unsigned){R}_RESET);')
@@ -1370,6 +1396,8 @@ def read_c(m: RegMap, header: Path, cc: str | None = None) -> dict:
         S = f"{P}_SNAP_{s.name}"
         lines.append(f'  printf("S {s.name} %u %u %u\\n", (unsigned){S}_TRIGGER_OFFSET, (unsigned){S}_TRIGGER_MASK, '
                      f'(unsigned){S}_WIDTH);')
+        lines.append(f'  {{ unsigned long long v = {m.name}_snapshot_{s.name.lower()}(0); printf("V {s.name} %llx %lu %u\\n", '
+                     'v, (unsigned long)probe_wa, (unsigned)probe_wv); }')
     lines += [f'  printf("W %u\\n", (unsigned){P}_WINDOW_BYTES);', "  return 0;", "}"]
     with tempfile.TemporaryDirectory() as td:
         src = Path(td) / "probe.c"
@@ -1395,6 +1423,8 @@ def read_c(m: RegMap, header: Path, cc: str | None = None) -> dict:
                 got[t[1]]["fields"][t[2]]["mask_mismatch"] = mk
         elif t[0] == "W":
             got["__window__"] = int(t[1])
+        elif t[0] == "V":
+            got.setdefault("__snapcall__", {})[t[1]] = (int(t[2], 16), int(t[3]), int(t[4]))
         elif t[0] == "S":
             got.setdefault("__snap__", {})[t[1]] = {"offset": int(t[2]), "mask": int(t[3]), "width": int(t[4])}
     for rn, ms in masks.items():
@@ -1524,7 +1554,7 @@ def agreement(m: RegMap, out: Path) -> list[str]:
     try:
         c = read_c(m, out / names["h"])
         cmp("C header", c)
-        errs += snapshot_agreement(m, {"C header": c.get("__snap__", {})})
+        errs += snapshot_agreement(m, {"C header": c.get("__snap__", {}), "C helper": c.get("__snapcall__", {})})
     except (RuntimeError, KeyError, ValueError, IndexError) as ex:
         errs.append(f"C header: cannot be read back: {ex}")
     try:
@@ -1552,6 +1582,20 @@ def snapshot_agreement(m: RegMap, got: dict[str, dict]) -> list[str]:
     offset and mask), and the width."""
     errs = []
     for kind, g in got.items():
+        if kind == "C helper":                   # the helper run on a fake bus: trigger write and assembled value
+            for s in m.snapshots:
+                rd = lambda a: ((a * 2654435761) & 0xFFFFFFFF) ^ 0xA5A5A5A5      # noqa: E731 (the probe's bus)
+                tr = m.reg(s.trigger[0])
+                wv = (rd(tr.offset) & tr.mask("RW") if tr.mask("RW") else 0) | m.field(*s.trigger).mask
+                v, sh = 0, 0
+                for rn, fn in s.fields:
+                    f = m.field(rn, fn)
+                    v |= ((rd(m.reg(rn).offset) >> f.lsb) & ((1 << f.width) - 1)) << sh
+                    sh += f.width
+                if g.get(s.name) != (v, tr.offset, wv):
+                    errs.append(f"C header: {m.name}_snapshot_{s.name.lower()}() on a test bus gives {g.get(s.name)}, "
+                                f"the YAML says (value, trigger offset, trigger write) {(v, tr.offset, wv)}")
+            continue
         if set(g) != {s.name for s in m.snapshots}:
             errs.append(f"{kind}: snapshot groups {sorted(g)}, the YAML says {sorted(s.name for s in m.snapshots)}")
             continue

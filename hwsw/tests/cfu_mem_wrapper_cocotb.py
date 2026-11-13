@@ -50,7 +50,7 @@ async def run(dut, rng: random.Random, n_ins: int, p_new: float, p_hold: float) 
         mem_held = mem is not None and (stall or hold)
         leaving = mem is not None and not mem_held
         new = None
-        if issued < n_ins and not mem_held and rng.random() < p_new:     # EX moves on: issue the next one
+        if issued < n_ins and not stall and not hold and rng.random() < p_new:   # EX moves on only without a MEM stall
             a, b = rng.getrandbits(32), rng.getrandbits(32)
             dut.issue.value, dut.a.value, dut.b.value = 1, a, b
             new = crc32_word(a, b)

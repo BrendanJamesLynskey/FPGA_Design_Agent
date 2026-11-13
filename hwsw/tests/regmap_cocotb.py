@@ -614,7 +614,7 @@ async def c_driver_cosim(dut):
         return
     rng, bus, drv, hw, pulses, chk = await boot(dut, 8)
 
-    cycles = {"n": 0xFFFF_FFF0}                         # JOB_CYCLES starts just below a carry into the high half
+    cycles = {"n": 0xFFFF_FFFE}                         # JOB_CYCLES 2 below a carry: any 2 busy clocks cross it
 
     def put_cycles():
         hw.set("job_cycles_lo_value_i", cycles["n"] & 0xFFFF_FFFF)

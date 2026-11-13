@@ -23,7 +23,7 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Registers
 
-It differs from the house register conventions (docs/hwsw.md) in 2 ways: byte strobes are ignored, so every write changes the whole word (house: strobes honoured); the reset is `rst`, synchronous, active high (house: `aresetn`, synchronous, active low). Generated from `register_map` in `ip.yaml` by `hwsw/regmap.py`; the 0x80-byte window decodes address bits [6:2]. Unmapped addresses answer OKAY and read 0.
+This block differs from the house register conventions (docs/hwsw.md) in 2 ways: byte strobes are ignored, so every write changes the whole word (house: strobes honoured); the reset is `rst`, synchronous, active high (house: `aresetn`, synchronous, active low). Generated from `register_map` in `ip.yaml` by `hwsw/regmap.py`; the 0x80-byte window decodes address bits [6:2]. Unmapped addresses answer OKAY and read 0.
 
 ### Register map
 
@@ -57,12 +57,13 @@ Reset is what a read returns after reset with every hardware input low.
 |---|---|
 | RO | read-only: the value comes from a hardware input (or is a constant); writes are ignored |
 | WO | write-only: the hardware uses the value written; reads return 0 |
+| RO const | read-only constant, fixed when the block is built |
 
 ### Behaviour
 
 - **Unmapped addresses.** An address inside this block's 0x80-byte window that holds no register answers OKAY and reads 0; a write there is ignored. Addresses outside the window belong to the interconnect (an AXI crossbar answers DECERR there).
 - **Reserved bits.** Bits that belong to no field read 0 and ignore writes. Write them as 0, so that a later version can give them a meaning.
-- **Reads have no side effects.** Reading any register changes nothing, so a debugger, a retried read or a read-modify-write is safe. Actions happen on writes only: a write to CMD.
+- **Reads have no side effects.** Reading any register changes nothing, so a debugger, a retried read or a read-modify-write is safe. Writes act on the hardware only through CMD. A write to a read-only register is answered OKAY and ignored.
 - **Same-clock priority (the house convention).** None applies: this block has no W1C or W1S bits.
 - **Partial writes.** Byte strobes (WSTRB) are ignored on every register: every write changes the whole 32-bit word, so a CPU's byte or halfword store overwrites the other bytes. Use 32-bit stores only.
 - **Access width and alignment.** 32-bit registers on a 32-bit AXI4-Lite bus. AXI4-Lite has no transfer size: a CPU's byte or halfword load reads the whole word, and its store arrives as a word write with fewer strobes (see Partial writes). Address bits [1:0] are not decoded, so an unaligned address reaches the word that holds it; only bits [6:2] are decoded, so the window repeats every 0x80 bytes. Use aligned 32-bit accesses.

@@ -65,6 +65,8 @@ EDITS = [
     ("md", "| JOB_CYCLES | CMD.SNAP |", "| JOB_CYCLES | CMD.START |", "snapshot JOB_CYCLES"),
     ("h", "#define DEMO_ACCEL_SNAP_JOB_CYCLES_WIDTH 64u", "#define DEMO_ACCEL_SNAP_JOB_CYCLES_WIDTH 32u",
      "snapshot JOB_CYCLES"),
+    ("h", "DEMO_ACCEL_JOB_CYCLES_HI_OFFSET)) << 32;", "DEMO_ACCEL_JOB_CYCLES_HI_OFFSET)) << 31;",
+     "demo_accel_snapshot_job_cycles() on a test bus"),
 ]
 
 
@@ -267,10 +269,10 @@ def test_unmapped_defaults_to_okay_and_the_document_follows_the_setting(tmp_path
     assert m.unmapped == "okay"
     ok = regmap.emit_md(m)
     assert "Unmapped addresses answer OKAY and read 0." in ok and "answers OKAY and reads 0" in ok
-    assert "follows the house register conventions" in ok
+    assert "This block follows the house register conventions" in ok
     sl = regmap.emit_md(regmap.from_dict(dict(d, unmapped="slverr")))
     assert "Unmapped addresses answer SLVERR and read 0." in sl and "answers SLVERR and reads 0" in sl
-    assert "differs from the house register conventions (docs/hwsw.md) in 1 way: unmapped addresses" in sl
+    assert "This block differs from the house register conventions (docs/hwsw.md) in 1 way: unmapped addresses" in sl
     assert "RESP_UNMAPPED = 2'b00;" in regmap.emit_sv(m)
     assert "RESP_UNMAPPED = 2'b10;" in regmap.emit_sv(regmap.from_dict(dict(d, unmapped="slverr")))
 
@@ -296,7 +298,8 @@ FOLLOWS = [
     ("reserved", lambda: regmap.from_dict(_doc(), doc_only=True),
      lambda: regmap.from_dict(_doc(reserved="undefined"), doc_only=True), "read 0 and ignore writes", "undefined value"),
     ("side_effects", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(_doc(), doc_only=True),
-     "W1P bit: CMD.START, CMD.FLUSH, CMD.SNAP", "Actions happen on writes only: a write to CMD."),
+     "W1P bit: CMD.START, CMD.FLUSH. A snapshot is taken by writing 1 to its trigger: CMD.SNAP.",
+     "Writes act on the hardware only through CMD."),
     ("priority", lambda: regmap.from_dict(_demo()), lambda: regmap.from_dict(_doc(), doc_only=True),
      "W1C bits (CTRL.OVERFLOW, IRQ_STATUS.DONE, IRQ_STATUS.ERROR): a hardware set", "no W1C or W1S bits"),
     ("strobes", lambda: regmap.from_dict(_doc(), doc_only=True),
@@ -339,9 +342,9 @@ def test_every_topic_is_stated_and_differences_lead_the_document() -> None:
     assert [k for k, _ in regmap.behaviour(regmap.from_dict(_demo()))] == topics
     m = regmap.from_dict(_doc(strobes="ignored", reset="rst", reset_active="high", clock="clk"), doc_only=True)
     first = regmap.convention_sentence(m)
-    assert first.startswith("It differs from the house register conventions (docs/hwsw.md) in 2 ways: byte strobes")
+    assert first.startswith("This block differs from the house register conventions (docs/hwsw.md) in 2 ways: byte strobes")
     assert "the reset is `rst`, synchronous, active high" in first
-    assert regmap.convention_sentence(regmap.from_dict(_demo())).startswith("It follows the house register conventions")
+    assert regmap.convention_sentence(regmap.from_dict(_demo())).startswith("This block follows the house register conventions")
 
 
 def test_documentation_only_maps() -> None:
@@ -354,3 +357,24 @@ def test_documentation_only_maps() -> None:
         regmap.generate(m, Path("/nonexistent"))
     with pytest.raises(regmap.RegmapError, match="must be one of low, high"):
         regmap.from_dict(_doc(reset_active="low-ish"), doc_only=True)
+
+
+def test_side_effect_sentence_names_doorbells_and_the_rmw_rule() -> None:
+    """Review 64A2: a map whose only action is a W1S doorbell says so; a read-modify-write rule is stated wherever a
+    register holds W1C, W1S or W1P bits."""
+    d = {"regmap": 1, "name": "bell", "addr_width": 6, "registers": [
+        {"name": "DB", "offset": 0, "fields": [{"name": "Q", "lsb": 0, "width": 2, "access": "W1S"}]}]}
+    s = _says(regmap.from_dict(d), "side_effects")
+    assert "Doorbells are W1S bits: DB.Q." in s and "no command" not in s
+    assert "A read-modify-write must write the W1C, W1S and W1P bits as 0 (here DB.Q)" in s
+    d["registers"][0]["fields"][0]["access"] = "RW"
+    s = _says(regmap.from_dict(d), "side_effects")
+    assert "a read-modify-write is safe" in s and "no command, doorbell or snapshot bits" in s
+
+
+def test_count_grouping_is_for_documentation_only_maps() -> None:
+    """Review 64A2: the grouping a count: expansion makes cannot be asked for from YAML in a generated map."""
+    d = _demo()
+    _reg(d, "CTRL")["_group"] = "X"
+    with pytest.raises(regmap.RegmapError, match="unknown keys"):
+        regmap.from_dict(d)
