@@ -86,10 +86,25 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: none.
 - Part, board or pin: none (the dist_ram variant has two read ports on one LUT RAM; the bram variant keeps a second block RAM copy for the third port).
 - Depends on: nothing.
-- Limits: the dist_ram variant grows fast with BIN_W (measured at BIN_W 10: 1184 LUTs, 896 of them LUT RAM); the bram variant keeps two block RAM copies, so twice the block RAM of the bin storage; a converter with a transfer function that is not offset binary must be converted first.
 
 ## Cost table
 
 measured costs are in the Variants section above.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Limits: the dist_ram variant grows fast with BIN_W (measured at BIN_W 10: 1184 LUTs, 896 of them LUT RAM); the bram variant keeps two block RAM copies, so twice the block RAM of the bin storage; a converter with a transfer function that is not offset binary must be converted first.
+- Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
+
+## Next steps
+
+1. Run it on a board with a real converter input (the XADC or an external ADC) and compare the histogram with the model.
+
+## History
+
+- 0.2.0 (2026-11-12): Implementation variants: `IMPL = "dist_ram"` (default; the 0.1.0 design) and `IMPL = "bram"` (two block RAM copies, one per read port). Same ports, function and latency; both bit-exact against the model; measured out of context (built alone, no I/O constraints) on the xc7a100t. The bin RAM's write port is now one combinational write enable, address and data, so both variants share it.
+- 0.1.0 (2026-11-11): First version: simulated against the Python models, seeded faults caught, measured on the Nexys A7-100T inside designs/b30_hil_audio where noted in README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

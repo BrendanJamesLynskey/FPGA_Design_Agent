@@ -37,6 +37,10 @@ it (the first two milestones, F0A for the build and F0B for the board). Everythi
 shape as `designs/t1_dimmer_counter/`.
 
 Showcase pages for projects built with the agent follow one template: [docs/showcase_pages.md](docs/showcase_pages.md).
+Every design, `ip_lib` entry and results folder is documented for the next engineer to
+[docs/documentation_standard.md](docs/documentation_standard.md) (brief 68): each design has one `handover.yaml` (the facts,
+numbers filled from the records by code) rendered as `README.md` for people and a compact `AGENT.md` for the agent;
+`flow/doccheck.py --check` enforces it in CI.
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
 ## The flow
@@ -331,6 +335,7 @@ flow/blockdesign/  block designs (brief 65A, [docs/blockdesign.md](docs/blockdes
 debug_core/  debug on the board from a plain-English request (brief 50A, [docs/debug.md](docs/debug.md)): the request parser,
              the RTL-name resolver, the plan, debug builds per probe set, the instrument drivers (vendor ILA, mock),
              the common capture format with VCD, the answer and queries, the static viewer; demo_t1.py (the board demo)
+flow/handover.py, flow/doccheck.py  documentation (brief 68): handover.yaml to README.md and AGENT.md, and the checker
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T: board.yaml, master XDC, inventory.yaml, power_budget.md; KR260: board.yaml)
 tools/       inventory_check.py (board inventory against the master XDC); git_guard.py (the tests must not move the checkout they run from; checked at the end of every pytest session by conftest.py)

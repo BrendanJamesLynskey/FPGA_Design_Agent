@@ -52,3 +52,24 @@ M2K logic analyser and scope, Pluto spectrum analyser and tracking generator, RT
 UGREEN video pixel compare, I2S2 audio paths, external analogue input on JXADC. The drivers for these exist
 (`hil/instruments/{m2k,pluto_sa,redpitaya,logic_decode}.py`) and are tested on synthetic data or a fake SCPI server only; none
 has run against an instrument. The purchase verdict therefore rests on specifications, not on a measured gap: see the report.
+
+## Records
+
+| Path | What |
+|---|---|
+| `hil_runs/b30_hil_audio.hil.json`, `hil_runs/b30_hil_audio_pinfault.hil.json` | The board runs of the audio design and its pin-fault twin: each check's measured value against its expected value and tolerance |
+| `builds.json` | The Vivado build records of the two designs (gates, timing, utilisation, power); superseded for the base build, see the note at the top |
+| `faults.json` | The instrument library's seeded faults, each caught or not |
+| `ila_t1/` | The ILA bring-up record of T1 and its raw captures |
+
+## Reproduce
+
+- Board runs (need the Nexys A7-100T, the board lock and the cabled audio input): `python3 flow/hil.py designs/b30_hil_audio` and `python3 flow/hil.py designs/b30_hil_audio_pinfault`.
+- Faults (simulation only): `python3 hil/ip_faults.py --json results/b30/faults.json`.
+- ILA batch check: `flow/bringup.py` on T1, which needs the board.
+- The builds are `flow/run_vivado.sh designs/<name>` under a heavy slot. The instruments the "Not measured" list names cannot be reproduced until they are connected.
+
+## Known gaps and limits
+
+The "Not measured (no hardware connected)" section above is the list of unmeasured instruments. Also: the hardware-in-the-loop stage is
+not wired into the agent's repair loop or gates; one audio path and one board were used, and the audio level pass rule is a floor (-75 dBFS rms), not a calibrated level.

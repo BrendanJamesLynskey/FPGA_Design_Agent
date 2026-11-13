@@ -54,10 +54,26 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 - Clock crossings: none.
 - Part, board or pin: none (ram_style block).
 - Depends on: nothing.
-- Limits: placement is left-first (not least-loaded); no cuckoo moves, so the stash absorbs double collisions.
 
 ## Cost table
 
 pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11).
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Limits: placement is left-first (not least-loaded); no cuckoo moves, so the stash absorbs double collisions.
+- Board: no board run of this entry is recorded; its evidence is simulation.
+- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
+
+## Next steps
+
+1. Measure the out-of-context cost with python -m flow.ipchar match_exact after adding a characterisation entry.
+2. Compare least-loaded placement with left-first placement on the bench's key sets.
+
+## History
+
+- 0.1.0 (2026-11-11): First version (brief 40): simulated bit-exact against the Python golden model; see README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

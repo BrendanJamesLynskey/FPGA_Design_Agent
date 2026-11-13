@@ -107,10 +107,25 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: none.
 - Part, board or pin: none (memories and multipliers are inferred; use_dsp and ram_style attributes steer the variants; no primitive is instantiated).
 - Depends on: nothing.
-- Limits: no rounding or saturation: the output carries every bit; no symmetric-coefficient or polyphase (decimating, interpolating) forms yet; coefficients are loaded one at a time (the folded variants take three clocks per coefficient).
 
 ## Cost table
 
 measured costs are in the Variants section above.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Limits: no rounding or saturation: the output carries every bit; no symmetric-coefficient or polyphase (decimating, interpolating) forms yet; coefficients are loaded one at a time (the folded variants take three clocks per coefficient).
+- Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
+
+## Next steps
+
+1. Run a variant on a board (for example behind the b30 audio path) and compare its output with model.py.
+2. Add rounding and saturation options, then symmetric-coefficient and polyphase forms, each with its own tests.
+
+## History
+
+- 0.1.0 (2026-11-12): First version: four implementation variants (`dsp_bram`, `dist_ram`, `serial`, `lut_mult`) behind one contract, bit-exact against `model.py` at four parameter points, a differential test across the variants, seeded faults, and an out-of-context characterisation on the xc7a100t.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

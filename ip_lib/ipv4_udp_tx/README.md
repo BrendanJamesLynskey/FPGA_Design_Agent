@@ -87,10 +87,25 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: none.
 - Part, board or pin: none (memories inferred; ram_style steers the variants).
 - Depends on: nothing.
-- Limits: no fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller's (from arp_responder, or the multicast mapping); measured Fmax estimates are 74-82 MHz out of context: it closes at the 50 MHz of the RMII MAC but not at the 125 MHz of the RGMII MAC (the checksum adders are not pipelined).
 
 ## Cost table
 
 measured costs are in the Variants section above.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Limits: no fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller's (from arp_responder, or the multicast mapping); measured Fmax estimates are 74-82 MHz out of context: it closes at the 50 MHz of the RMII MAC but not at the 125 MHz of the RGMII MAC (the checksum adders are not pipelined).
+- Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
+
+## Next steps
+
+1. Pipeline the checksum path so the block meets 125 MHz behind the RGMII MAC.
+2. Run designs/b63d_nexys_net on the board with a host capturing the datagrams.
+
+## History
+
+- 0.1.0 (2026-11-12): Initial version: simulated against a Python model, seeded faults caught, formal checks (bounded except where the README says proved), out-of-context cost on an Artix-7 (Vivado 2026.1); not run on a board. See README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

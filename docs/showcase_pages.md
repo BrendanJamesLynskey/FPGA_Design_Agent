@@ -88,6 +88,7 @@ Every status: `id` (lower case, digits and `_`; the page name), `title`, `one_li
 | `evidence` | a list of `{kind, label, path?, text?}`; `kind` is `record` (run records, raw captures), `conditions` (die temperature and rails against the recommended operating conditions), `versions` (tool versions, build ID), `requirements` (requirements traced). Every kind must appear at least once: write "not recorded" in `text` rather than leave one out. Paths must exist. |
 | `limits` | `not_measured`, `nulls`, `next`: lists of sentences. `nulls` are measured results with no effect (shown as "Measured, no effect found"); a request refused by design belongs in `not_measured` |
 | `try_it` | optional `{command, note}` |
+| `docs` | required when published (showcase standard item 7, brief 68): the project's `README.md` written to [documentation_standard.md](documentation_standard.md); the page links it under Limits as the hand-over document |
 
 **What `site/export.py` refuses** (each raises `showcase.ContractError`):
 

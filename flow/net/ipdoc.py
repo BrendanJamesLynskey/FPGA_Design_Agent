@@ -24,11 +24,12 @@ DSP = ["fir"]                                                                   
 NET63 = ["mdio_master", "arp_responder", "icmp_echo", "ipv4_udp_rx", "ipv4_udp_tx", "igmp_join"]  # brief 63D
 CPU = ["crc32_step"]                                                                         # brief 64A+: function units (custom instructions)
 INFRA = ["axil_xbar"]                                                                        # brief 65A: bus infrastructure
+ALL = NET + NET63 + HIL + DSP + CPU + INFRA
 FAULTS_JSON = {**{b: "b30" for b in HIL}, **{b: "b63a" for b in DSP}, **{b: "b64a" for b in CPU},
                **{b: "65a_blockdesign" for b in INFRA}, **{b: "b63d" for b in NET63 + ["eth_mac_rgmii"]}}   # default: b40
 REQUIRED = ["name", "version", "summary", "top", "rtl", "depends", "interfaces", "clocks", "resets", "parameters",
             "constraints", "latency", "throughput", "guards", "sweep_tested", "evidence", "cost_table", "boundary",
-            "limits", "licence"]
+            "limits", "licence", "next_steps"]
 
 
 def rtl_params(block: str, top: str) -> dict:
@@ -185,8 +186,46 @@ def readme(block: str) -> str:
     b = y["boundary"]
     L += ["", "## Boundary and reuse", "", f"- Registered outputs: {b['registered_outputs']}.", f"- Clock crossings: {b['cdc']}.",
           f"- Part, board or pin: {b['part_specific']}.", f"- Depends on: {', '.join(y['depends']) or 'nothing'}.",
-          f"- Limits: {y['limits']}.", "", "## Cost table", "", y["cost_table"] + ".", "", f"Licence: {y['licence']}.", ""]
+          "", "## Cost table", "", y["cost_table"] + ".", "", f"Licence: {y['licence']}."]
+    L += gaps_section(block, y) + ["", "## Next steps", ""] + [f"{i}. {s}" for i, s in enumerate(y["next_steps"], 1)]
+    L += history_section(block) + [""]
     return "\n".join(L)
+
+
+BOARD_RUN = re.compile(r"measured on the Nexys|on the Nexys A7-100T inside|on the board \(|KR260 bench", re.I)
+
+
+def gaps_section(block: str, y: dict) -> list[str]:
+    """Known gaps and limits (docs/documentation_standard.md, IP template): the declared limits, whether a board run
+    is recorded, whether the out-of-context cost is measured, seeded faults not run, and any extra `gaps:` in ip.yaml."""
+    L = ["", "## Known gaps and limits", "", f"- Limits: {_sentence(y['limits'])}"]
+    if not BOARD_RUN.search(y["status"]):
+        L.append("- Board: no board run of this entry is recorded; its evidence is simulation"
+                 + (" and out-of-context builds." if y.get("characterisation") else "."))
+    if not y.get("characterisation"):
+        L.append("- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and "
+                 "power are not measured for this entry.")
+    faults = IP / block / "faults.yaml"
+    if faults.exists():
+        fj = ROOT / "results" / FAULTS_JSON.get(block, "b40") / "faults.json"
+        res = {f["name"]: f["status"] for f in json.loads(fj.read_text())["faults"]} if fj.exists() else {}
+        nr = [f["name"] for f in yaml.safe_load(faults.read_text())["faults"] if f["name"] not in res]
+        if nr:
+            L.append("- Seeded faults not run: " + ", ".join(f"`{n}`" for n in nr) + ".")
+    L += [f"- {_sentence(g)}" for g in y.get("gaps") or []]
+    return L
+
+
+def history_section(block: str) -> list[str]:
+    """History from the entry's CHANGELOG.md: each version heading and the first line under it."""
+    p = IP / block / "CHANGELOG.md"
+    L = ["", "## History", ""]
+    if not p.exists():
+        return L + ["No CHANGELOG.md yet."]
+    for ver, body in re.findall(r"(?m)^## +(.+?)\s*\n(.*?)(?=^## |\Z)", p.read_text(), re.S):
+        para = re.split(r"\n\s*\n|\n(?=[-*] )", body.strip() + "\n")[0]
+        L.append(f"- {ver}: {' '.join(para.lstrip('-* ').split())}")
+    return L + ["", "Full entries: [CHANGELOG.md](CHANGELOG.md)."]
 
 
 def _sentence(t: str) -> str:
@@ -282,7 +321,7 @@ def cost_section(block: str, y: dict) -> list[str]:
 def main() -> int:
     chk = "--check" in sys.argv
     errs, stale = [], []
-    for b in NET + NET63 + HIL + DSP + CPU + INFRA:
+    for b in ALL:
         errs += check(b)
         text = readme(b)
         p = IP / b / "README.md"

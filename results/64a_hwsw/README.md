@@ -16,6 +16,8 @@ In plain words:
 Simulation and out-of-context Vivado 2026.1 builds only; nothing here has run on a board. How each was made:
 [docs/hwsw.md](../../docs/hwsw.md).
 
+## Records
+
 | File | What | Made by |
 |---|---|---|
 | `cfu_crc32.json` | the wrapper monitor's count of kills by the unit's state (the trap and the timer interrupts; EX style), cycles of zlib's CRC-32 on the BRV32P RV32 core at 16, 64, 256 and 1024 bytes: table-driven C, bitwise C, carry-less multiply (Zbkc), and the custom instruction `crc32.w` from `ip_lib/crc32_step` (both variants, both integration styles: stall in EX, complete in MEM); the check that the software kernels' cycles are identical on all five cores; and the stale-prediction program's result on four cores (`stale_btb`) | `python3 hwsw/cfu_core/run_bench.py` (Icarus Verilog 12, riscv64-unknown-elf-gcc 13.2) |
@@ -89,3 +91,18 @@ The same EX-style `word` core grew by 371 LUTs in the 64A run and by 432 here: t
 
 The generated register blocks' checks (simulation, mutants, formal) are tests, not records: `hwsw/tests/` and the CI job
 `hwsw`.
+
+## Reproduce
+
+The command for each record is in the "Made by" column above. In short: `python3 hwsw/cfu_core/run_bench.py` (simulation: Icarus Verilog
+and the RISC-V cross compiler, no Vivado); `python3 hwsw/cfu_core/core_ooc.py` and `python3 hwsw/regmap_ooc.py` (Vivado 2026.1, heavy
+slot, one run per configuration); `python3 -m hwsw.partition <example yaml> --json ...` (cost model, no tools). No board is involved.
+
+## Known gaps and limits
+
+- Simulation and out-of-context builds only; nothing here has run on a board.
+- One Vivado run per configuration: the spread between the two EX-style builds of the same variant (371 and 432 LUTs) is not separated from run-to-run placement.
+- Every core variant misses 100 MHz out of context (WNS negative at 10 ns); the Fmax figures are estimates, not timing closure.
+- The Zynq cost model has only assumed inputs and returns "measure"; the Arm core's cycles per byte were not measured.
+- The stale-prediction defect is shown by a directed test; the fix is a one-line patch in our pinned copy of the core, not an upstream change.
+- The register-block checks (simulation, mutants, formal) are tests, not records, so they are not repeated here.

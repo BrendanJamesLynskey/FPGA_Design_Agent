@@ -84,14 +84,41 @@ upload, for every run (in each `capture.json` under `conditions`). Over all five
 flag; all inside the recommended operating conditions (VCCINT and VCCBRAM 0.95 to 1.05 V, VCCAUX 1.71 to 1.89 V, junction
 at most 85 C on this board). The monitor samples at about 1 MSPS, so it cannot see nanosecond supply droop.
 
-## What is not shown here
+## Records
+
+| Path | What |
+|---|---|
+| `t1_count_write/`, `t1_pwm_period/`, `t1_sync_byte/`, `t1_or_flags/`, `t1_reuse_rise/` | one request each, with the files listed under the table (`answer.txt`, `check.json`, `plan.txt`, `capture.json`, `capture.vcd`, `view.html`, `ila/`) |
+| `or_flags_same_port_refused/` | the OR build that Vivado refused to arm (the ILA capture log) |
+| `build_id_guard/` | the build-ID guard check on the board (`pass`, `refused`, `guard.json`, its own README) |
+| `builds.json` | the five debug builds: probe set, build ID, wall time, memory, slack and utilisation |
+| `demo.json` | the five requests, the parse, the plan and the check, as the site demo reads them |
+| `hero.json` | the capture the site's hero animation plots |
+| `page_checks.json` | measured contrast ratios and layout checks of the site page at the phone and desktop widths |
+| `summary.json` | the runs table and numbers the site page quotes |
+
+## Known gaps and limits
 
 - One design and five requests: the parser and resolver were not measured on other designs or on requests the authors
   had not seen.
 - No agent role is offered the debug tools yet; the tools were tested in CI only, not used on the board by an agent.
 - No supply or temperature samples on the capture timeline (read at programming, arm and after upload only).
 - One run each; captures were not repeated for variance.
+- The debug builds are on the Basic licence tier: the quality-of-results check is not available, and the Vivado and hw_server logs are not kept (they name the programming cable).
+- The first build used 4 Vivado threads and the rest 2, so build times are not a speed comparison.
+- The XADC samples at about 1 MSPS and cannot see nanosecond supply droop.
 
-Reproduce on a machine with the board attached and no other board job running: `python -m debug_core.demo_t1` (the model
-reads each request) or `--replay` (the recorded replies), after making the debug builds with
-`python -m debug_core build <plan.json>`.
+## Reproduce
+
+Needs the Nexys A7-100T attached, wall power, no other board job, Vivado 2026.1 and a heavy slot (a debug build takes 7 to 9
+minutes). Without a board, the answer can be regenerated from a committed capture:
+
+    python -m debug_core answer results/50a_nl_debug/t1_count_write/capture.json
+
+With the board:
+
+    python -m debug_core build <plan.json>        # one debug build per probe set
+    python -m debug_core.demo_t1                  # the model reads each request (paid OpenRouter calls)
+    python -m debug_core.demo_t1 --replay         # the recorded replies, no model call
+
+The exact arguments used for the committed runs are not recorded here; `debug_core/demo_t1.py` has the options.

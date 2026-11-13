@@ -91,3 +91,34 @@ Records: [amd_ip_probe.json](amd_ip_probe.json) from [amd_ip_probe.tcl](../../ax
 
 Every number above is read from a JSON file in this folder by [axi_tx/report.py](../../axi_tx/report.py); the showcase page reads [summary.json](summary.json) and [hero.json](hero.json).
 
+
+## Records
+
+| File | What |
+|---|---|
+| `board_run.json` | The final 17-run board plan on the Nexys A7-100T: verdicts, rules fired, scoreboard and stream counters, operating conditions |
+| `board_run_build3.json`, `board_run_build2_attempt.log`, `board_run_attempts.md` | The earlier attempts, kept and explained |
+| `board_build.json` | The Vivado 2026.1 build record of the board design |
+| `sim/` | The simulation record of each program (one JSON per program, including a memory mutant) the board runs are compared with |
+| `formal.json` | SymbiYosys proofs and mutant kills for the two checker units |
+| `resources.json` | Out-of-context synthesis of the transactor, checkers, monitors and demo blocks |
+| `amd_ip_probe.json` | Build test of the AMD AXI IP cores |
+| `false_fire.json` | Legal-but-unusual traffic scenarios the checker must stay quiet on (none fired) |
+| `e2e_showcase.json` | Browser checks of the showcase page (layout, overlaps, animation start) |
+| `summary.json`, `hero.json`, `page_data.json` | The numbers the showcase page reads, derived by `axi_tx/report.py` |
+
+## Reproduce
+
+- Simulation and formal (no board): `python -m pytest -q axi_tx/tests/test_59a_rtl.py && python axi_tx/formal/run_formal.py`.
+- Board run (needs the Nexys A7-100T, the board lock and a built bitstream, SRAM only):
+  `python3 axi_tx/host/run_board.py --plan axi_tx/programs/board_plan.yaml --json results/59a_axi_tx/board_run.json`.
+- The Vivado builds and the AMD IP probe (`axi_tx/vivado/amd_ip_probe.tcl`) need a heavy slot; the page numbers are derived from these records by `axi_tx/report.py`.
+
+## Known gaps and limits
+
+- One board, one build per plan run; the plan was written before the board was used, but earlier attempts led to model and RTL changes and the whole plan was re-run.
+- The board design has the build ID `44b780c9`; a rebuild at the commit of this folder gives another ID because build inputs changed, not logic.
+- Digests and cycle counts are compared with simulation only where the RTL is the same on both sides; `bram` runs use vendor IP on the board and a memory model in simulation.
+- AMD's checker watches only AXI4-Lite; which of its status bits fired was not recorded.
+- The formal checks are bounded to 20 cycles. The 64-bit stream core is not in the resource table (cause of the removed sequencer not investigated); the core is 32-bit only.
+- The latency figures on the showcase page come from one run.

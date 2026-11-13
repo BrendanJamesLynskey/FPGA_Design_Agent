@@ -37,6 +37,7 @@ Python code only.
 | `build_cache.py` | Brief 33: decides whether a build reuses the previous build of the same inputs (hit, resume from a checkpoint, or fresh) |
 | `result_hash.tcl`, `result_hash.py` | Brief 33: dump and hash a build's placement and routing, to compare builds |
 | `hw.py` | Shared hardware pieces: the Vivado hardware-manager runner (same guard rails), `hw_server`, the board file, the power gate, serial redaction |
+| `handover.py`, `handover.schema.json`, `doccheck.py` | **Brief 68.** The documentation standard ([docs/documentation_standard.md](../docs/documentation_standard.md)): `handover.yaml` per design (facts; measurement values and record hashes filled from the records by `fill`), rendered as `README.md` (prose blocks kept) and `AGENT.md` (compact, for the agent) with SVG graphics; `doccheck.py --check` checks every design, `ip_lib` entry and results folder (CI). `freshness()` lists stale records and changed files for resume |
 
 ## The runner's guard rails (32 GB build PC since 2026-11-04)
 

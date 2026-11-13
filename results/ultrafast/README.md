@@ -8,6 +8,8 @@ stamp `dfd4624e`) rebuilt with `flow/run_vivado.sh designs/t1_dimmer_counter bas
 `flow/summarise.py designs/t1_dimmer_counter --out results/ultrafast`. Vivado 2025.2, local build PC, working tree
 of branch `ultrafast-gates` on top of `20e0aeb`.
 
+## Records
+
 | File | What |
 |---|---|
 | [t1_dimmer_counter.md](t1_dimmer_counter.md) | The summary table: every stage and gate, timing, utilisation, power with its environment, run time per stage, memory |
@@ -50,3 +52,14 @@ air, no heat sink, a small 4-7 layer board, 40 C ambient) before `report_power`,
 report made with the defaults. Static power rises with junction temperature (UG949 ch. 2 "Static Power"), so the
 same netlist now reports 0.114 W static instead of 0.097 W, 0.150 W total instead of 0.133 W, and a junction of
 42.7 C. Dynamic power (0.036 W, vectorless) is unchanged. Both are far inside the 2.0 W / 85 C wall-power limits.
+
+## Reproduce
+
+`flow/run_vivado.sh designs/t1_dimmer_counter base`, then `flow/summarise.py designs/t1_dimmer_counter --out results/ultrafast`.
+They need Vivado and a heavy slot; on the current install they write Vivado 2026.1 records, so these cannot be regenerated as they are.
+
+## Known gaps and limits
+
+- Superseded by [results/f0a_2026_1](../f0a_2026_1/README.md): the figures here came from an earlier Vivado release and the paired cost of the UltraFast reports was withdrawn, not re-measured.
+- One build each of the compared builds; the usual run-to-run variation of a few seconds applies to the timings.
+- The power comparison changes the thermal environment, not the design, as the section above explains.

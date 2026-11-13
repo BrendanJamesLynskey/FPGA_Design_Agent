@@ -56,10 +56,25 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 - Clock crossings: none.
 - Part, board or pin: none; CHUNK_W 5 suits 32-deep and 6 suits 64-deep LUT RAM (7-series and UltraScale+ both have 64x1 LUT RAM).
 - Depends on: nothing.
-- Limits: a rule being rewritten is absent for 2**CHUNK_W + 2 clocks; for make-before-break write a free entry, then delete.
 
 ## Cost table
 
 pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11).
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Limits: a rule being rewritten is absent for 2**CHUNK_W + 2 clocks; for make-before-break write a free entry, then delete.
+- Board: no board run of this entry is recorded; its evidence is simulation.
+- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
+
+## Next steps
+
+1. Measure the out-of-context cost with python -m flow.ipchar match_ternary after adding a characterisation entry.
+
+## History
+
+- 0.1.0 (2026-11-11): First version (brief 40): simulated bit-exact against the Python golden model; see README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

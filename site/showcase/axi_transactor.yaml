@@ -55,6 +55,7 @@ values:
   later_id: {source: results/59a_axi_tx/board_build.json, expr: "get:later_build.build_id"}
   stream_bits: {source: axi_tx/rtl/axi_tx_core.sv, expr: "re:SDATA_W != (\\d+)"}
 headline: "A hardware checker that watches an AXI bus and names the rule a bug breaks. On the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) it flagged the expected rule in all {bug_runs} runs with a seeded protocol bug ({faults} faults), and against our own peripheral and stream FIFO the board's traffic matched simulation cycle for cycle in {parity_eq} of {parity} runs."
+docs: designs/b59a_axi_tx/README.md
 hero:
   kind: wave
   source: results/59a_axi_tx/hero.json

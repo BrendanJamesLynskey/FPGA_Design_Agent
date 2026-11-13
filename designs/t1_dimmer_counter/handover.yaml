@@ -1,0 +1,346 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: t1_dimmer_counter
+title: T1, LED dimmer and push-button counter
+kind: example
+produced_by: human
+summary: A 16-bit up/down/clear counter on the Nexys A7-100T. Debounced buttons step it, the LEDs show it under PWM brightness
+  (register or switches), the 7-segment display shows count and brightness in hex, and every register is reachable over
+  the USB-UART through the test shell. The hand-written reference design for task T1.
+scope_not:
+- an agent run; the RTL, model and tests were written by hand
+- a gamma-corrected or auto-repeating dimmer; brightness is linear in the duty and one press is one step
+- a claim of compliance with any standard; the traceability record is DO-254-style evidence only
+target:
+  part: xc7a100tcsg324-1
+  board: Nexys A7-100T
+  top: t1_dimmer_counter_top
+  tool: Vivado 2026.1
+  note: also builds an ILA variant for debugging; the base build is the design
+clocks:
+- name: CLK100MHZ
+  mhz: 100
+  source: designs/t1_dimmer_counter/design.xdc
+  note: the only clock; no MMCM
+resets:
+- name: CPU_RESETN
+  active: low
+  note: the board's reset button, through the shell's reset synchroniser
+interfaces:
+- name: UART register window
+  type: test shell, 8N1 UART at 115200 baud
+  doc: shell/PROTOCOL.md
+  note: COUNT 0x00 RW, DUTY 0x01 RW (reset 0x40), CTRL 0x02 RW (reset 0x2; bit 0 DUTY_SRC, bit 1 DISPLAY_EN), INPUTS 0x03
+    RO, PRESSES 0x04 RO; offsets 0x05 to 0x7F read 0; design ID T1DC
+- name: buttons and switches
+  type: BTNU, BTND, BTNC, SW[15:0] in; asynchronous, LVCMOS33 (SW[8] and SW[9] are LVCMOS18, bank 34)
+  doc: designs/t1_dimmer_counter/spec.yaml
+  note: synchronised and debounced; a press is a 0 to 1 change; clear beats up beats down; a shell write to COUNT beats
+    a press
+- name: LEDs and display
+  type: LED[15:0], 7-segment CA to CG with AN[7:0], active low segments and anodes
+  doc: designs/t1_dimmer_counter/spec.yaml
+  note: LEDs show COUNT gated by the PWM; digits 0 to 3 show COUNT, 6 and 7 the effective duty, 4 and 5 blank
+parameters:
+- name: DEBOUNCE_CYCLES
+  value: 1000000
+  legal: tests shrink it; the board value is 10 ms at 100 MHz
+  note: clocks the synchronised input must differ from the debounced level before it changes
+- name: PWM_PRESCALE
+  value: 4
+  legal: positive integer
+  note: the 8-bit phase counter advances every PWM_PRESCALE clocks, so a PWM period is 256 times this many clocks
+- name: REFRESH_BITS
+  value: 17
+  legal: tests shrink it
+  note: each display digit is lit for 2^REFRESH_BITS clocks, 8 digits per scan
+- name: CLKS_PER_BIT
+  value: 868
+  legal: shell parameter
+  note: UART 115200 baud at 100 MHz
+files:
+- path: designs/t1_dimmer_counter/spec.md
+  what: the natural-language spec
+  sha256: 27829433c209cc34c4196ce9d2c1f3e268142802df9e2e750b69c83dd9406d94
+- path: designs/t1_dimmer_counter/spec.yaml
+  what: structured spec with assumptions, register map and REQ-01 to REQ-11
+  sha256: 89f4fcc7db0e56e6a2f4570de1d12289e185d471edc1460516fa7d39faba720e
+- path: designs/t1_dimmer_counter/architecture.yaml
+  what: blocks, crossings, predicted resources
+  sha256: 7ba0324624fb26a7c4a4dd654341fec92f74bffc5bec6d197acd5111ce48224e
+- path: designs/t1_dimmer_counter/BRINGUP.md
+  what: bring-up guide for a tester
+  sha256: e55b2a9427504fe78a3541b58259ac58e1a24885a7dc15cd81f5a41ae3b8453e
+- path: designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv
+  what: board top (shell plus design)
+  sha256: 4ee0684c27aa952c2f6751f943fafc2fb4704544db7c6a57bf1be9b7e1ce28be
+- path: designs/t1_dimmer_counter/rtl/dimmer_counter.sv
+  what: counter, PWM, display scan, registers
+  sha256: 2b37e3497cbf4e60982c3f5b231930d7a5ff6fced475616528cef00e020c0795
+- path: designs/t1_dimmer_counter/rtl/debounce.sv
+  what: synchroniser and debounce per button
+  sha256: e7dd140726b542c3be05aa2494e332d7d2ee7bdb6d617c100001a3f651e8fbb3
+- path: designs/t1_dimmer_counter/rtl/sevenseg_scan.sv
+  what: display scanner
+  sha256: 406b05c7a2475ba2570736df2b575311c917fe04cf87c7aefc9538d446111168
+- path: designs/t1_dimmer_counter/design.xdc
+  what: pins, clock, async-input false paths
+  sha256: 1efd57b95f261dd54cea826d8c02b1f1776d8c404f925a4e467268d72f9c247b
+- path: designs/t1_dimmer_counter/build.yaml
+  what: build recipe for flow/run_vivado.sh
+  sha256: d40ffa6a4704c30d18ae828b974cb6bd5542ed8154f9aadf38ffe21f21316cf5
+- path: designs/t1_dimmer_counter/probes.yaml
+  what: ILA probes
+  sha256: 3f3110901c576d8cc8c9b462a7d4515a2139ea3260ecd1b5afda6b5ab5486b4d
+- path: designs/t1_dimmer_counter/lint/waivers.yaml
+  what: the one FDA-HDL waiver (XDCH-2) with its reason
+  sha256: e4690d029ba350e367b7f6efc63f82e4f4f9877efc41f2586eaf7f2570b32ea7
+- path: designs/t1_dimmer_counter/model.py
+  what: golden model written from spec.yaml alone
+  sha256: 9557dc46981cf2040b36230afeb7ae56cb0518e95b5e922a928d9fa514ed7e01
+- path: designs/t1_dimmer_counter/hw_checks.py
+  what: ILA captures against the model
+  sha256: 0a3b051d8c2cd9f7ccd234517e0d5492bf942cd4f639ef5e25e1f3d609fdea50
+- path: designs/t1_dimmer_counter/tests/test_t1_rtl.py
+  what: cocotb tests of the RTL against the model
+  sha256: f65d4511adc5219529fb9305b08690dae4fe8f8a35e4816c518197ab10a3618f
+- path: designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
+  what: verification bench with bound checkers and coverage
+  sha256: 867a982673e8b7dc223d52c73bd9e0b8274d2c3e1163d721d28ba8d85c2ec908
+- path: designs/t1_dimmer_counter/tests/test_t1_hw.py
+  what: on-board UART tests
+  sha256: 45ade635373102fee40622cfbbf5d2dc10f304432ce2ff2708b8aeab35047388
+- path: designs/t1_dimmer_counter/tests/run_mutants.sh
+  what: sed mutants the tests must fail
+  sha256: 578c194e3db4fb91a098db4e7e6fa5364e09c58039e3564976b150cf6a369936
+- path: designs/t1_dimmer_counter/verif/testplan.yaml
+  what: requirements traced to checks
+  sha256: 5f32751ff1a63e41b0f97850893098dceeba1d2c2552c898edfec9b059c0e618
+- path: designs/t1_dimmer_counter/verif/checkers/t1_bind.sv
+  what: bound assertion checkers
+  sha256: 817eaeab2bf29b9ccba235858370b53d5a8108c0e6cf847e7a2f69ded84652ab
+- path: designs/t1_dimmer_counter/verif/formal/debounce.sby
+  what: SymbiYosys proof of the debouncer (scan.sby does the display scanner)
+  sha256: f866b08ab4e633be2b6ad783e137bab571aca8ed8786fd0b356a9ed98eb1d6ed
+commands:
+- what: simulate the RTL against the model
+  cmd: python3 -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py
+  heavy: false
+  minutes: 2
+  needs: Icarus Verilog 12 and cocotb 2.0.1
+- what: verification bench with bound checkers, three seeds
+  cmd: SIM=verilator T1_SEEDS=1,2,3 python3 -m pytest -q designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
+  heavy: false
+  minutes: 5
+  needs: Verilator 5.048 (SIM=icarus also works)
+- what: formal proofs of the debouncer and the display scanner
+  cmd: flow/formal.sh designs/t1_dimmer_counter
+  heavy: false
+  minutes: 2
+  needs: SymbiYosys and z3
+- what: hand-written mutants must each fail the tests
+  cmd: PYTHON=python3 designs/t1_dimmer_counter/tests/run_mutants.sh
+  heavy: false
+  minutes: 5
+  needs: the simulation tools above
+- what: build the base and the ILA bitstreams
+  cmd: flow/run_vivado.sh designs/t1_dimmer_counter both
+  heavy: true
+  minutes: 10
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+- what: board bring-up, UART tests and ILA captures against the model
+  cmd: python3 flow/bringup.py designs/t1_dimmer_counter
+  heavy: false
+  minutes: 3
+  needs: the Nexys A7-100T on wall power, both builds present and the board lock
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: cocotb tests of the RTL against the golden model (registers, debounce, PWM on-time, display)
+  record: designs/t1_dimmer_counter/tests/test_t1_rtl.py
+  sha256: f65d4511adc5219529fb9305b08690dae4fe8f8a35e4816c518197ab10a3618f
+- id: E2
+  activity: simulation
+  result: pass
+  how: ci
+  what: verification bench with 23 bound assertions on seeds 1, 2 and 3 under Verilator 5.048 and under Icarus 12
+  record: designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py
+  sha256: 867a982673e8b7dc223d52c73bd9e0b8274d2c3e1163d721d28ba8d85c2ec908
+- id: E3
+  activity: formal
+  result: pass
+  what: SymbiYosys bounded proof and cover of the debouncer and display scanner, rerun in CI by flow/formal.sh
+  record: results/04f/README.md
+  sha256: d7cc186f734850b0e9d3fa1e9b099ba37b7c5e6bc02e90a2ba423346f4f9a0d2
+- id: E4
+  activity: faults
+  result: pass
+  what: 21 mutants; the bench kills all 21 in the final run, 19 of 21 in the first (see gap E4)
+  record: results/04f/mutation_t1.json
+  sha256: 34ba91997266fe89d5fd306bc015629694d61a29bba596c8fc3bd1e9e28338ae
+- id: E5
+  activity: review
+  result: pass
+  what: traceability matrix, all 11 requirements evidenced and every coverage hole justified; FDA-HDL lint passes with one
+    waiver
+  record: results/53_traceability/t1_dimmer_counter_trace.json
+  sha256: 9050d0b59e5719c364b39109bb5bbc09778b631c81e10581ac8e2288c6d93070
+- id: E6
+  activity: build
+  result: pass
+  what: base build on Vivado 2026.1; every gate passes through bitstream
+  record: results/f0a_2026_1/t1_dimmer_counter_base.json
+  sha256: 71c1c9218c33ae9a66cf80a56e6d54f0c4810252dda048012549b670110fec90
+- id: E7
+  activity: board
+  result: pass
+  runs: 1
+  what: board bring-up on the 2026.1 builds; power gate, 8 of 8 UART tests and 4 of 4 ILA captures agree with the model
+  record: results/f0b_2026_1/t1_dimmer_counter_bringup.json
+  conditions: wall power; power gate passed before programming (2.0 W and 85 C limits); XADC rails and die temperature were
+    not read
+  sha256: 8e7ad647b894cc71b0e88a3de9e599f7eaf50208b640ee15f6c770e457aa0034
+measurements:
+- id: M1
+  what: LUTs, base build
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/f0a_2026_1/t1_dimmer_counter_base.json
+  field: gates.utilization.lut
+  conditions: routed base build, Vivado 2026.1, xc7a100tcsg324-1, including the test shell; the predicted range is 350 to
+    700
+  value: 487
+  sha256: 71c1c9218c33ae9a66cf80a56e6d54f0c4810252dda048012549b670110fec90
+- id: M2
+  what: flip-flops, base build
+  category: resources
+  key: ff
+  unit: FF
+  record: results/f0a_2026_1/t1_dimmer_counter_base.json
+  field: gates.utilization.ff
+  conditions: as M1
+  value: 488
+  sha256: 71c1c9218c33ae9a66cf80a56e6d54f0c4810252dda048012549b670110fec90
+- id: M3
+  what: BRAM tiles, base build
+  category: resources
+  key: bram_tile
+  unit: tile
+  record: results/f0a_2026_1/t1_dimmer_counter_base.json
+  field: gates.utilization.bram_tile
+  conditions: as M1; DSP48E1 is 0 too
+  value: 0
+  sha256: 71c1c9218c33ae9a66cf80a56e6d54f0c4810252dda048012549b670110fec90
+- id: M4
+  what: LUTs, ILA build
+  category: resources
+  key: lut_ila
+  unit: LUT
+  record: results/f0a_2026_1/t1_dimmer_counter_ila.json
+  field: gates.utilization.lut
+  conditions: routed ILA build, Vivado 2026.1; the debug core costs the difference from M1
+  value: 1668
+  sha256: 902a57cf65fc326aea48113f545f8172911e258d7393720241af976718d5a27c
+- id: M5
+  what: worst setup slack, base build
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/f0a_2026_1/t1_dimmer_counter_base.json
+  field: gates.timing.wns_ns
+  conditions: routed, at the 100 MHz board clock; one build, not a trend
+  value: 3.609
+  sha256: 71c1c9218c33ae9a66cf80a56e6d54f0c4810252dda048012549b670110fec90
+- id: M6
+  what: worst hold slack, base build
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/f0a_2026_1/t1_dimmer_counter_base.json
+  field: gates.timing.whs_ns
+  conditions: routed, at the 100 MHz board clock
+  value: 0.064
+  sha256: 71c1c9218c33ae9a66cf80a56e6d54f0c4810252dda048012549b670110fec90
+- id: M7
+  what: total on-chip power estimate, base build
+  category: power
+  key: power_w
+  unit: W
+  record: results/f0a_2026_1/t1_dimmer_counter_base.json
+  field: gates.power.total_w
+  conditions: report_power after routing, vectorless (default toggle rates), confidence Low; not a board measurement
+  value: 0.15
+  sha256: 71c1c9218c33ae9a66cf80a56e6d54f0c4810252dda048012549b670110fec90
+- id: M8
+  what: LED on-time per 1,024-sample capture at DUTY 0x40, measured on the board by the ILA
+  category: board
+  key: led_on_clocks_pwm_40
+  unit: clocks
+  record: results/f0b_2026_1/t1_dimmer_counter_bringup.json
+  field: steps.ila_captures.captures.pwm_40.led_on_clocks_measured[0]
+  conditions: ILA build; the model predicts the same value, and DUTY 0x08 and 0xA0 also match
+  value: 256
+  sha256: 8e7ad647b894cc71b0e88a3de9e599f7eaf50208b640ee15f6c770e457aa0034
+- id: M9
+  what: UART tests passed on the board
+  category: verification
+  key: uart_tests
+  unit: tests
+  record: results/f0b_2026_1/t1_dimmer_counter_bringup.json
+  field: steps.uart_tests.tests
+  conditions: tests/test_t1_hw.py on the base bitstream, 0 failures
+  value: 8
+  sha256: 8e7ad647b894cc71b0e88a3de9e599f7eaf50208b640ee15f6c770e457aa0034
+gaps:
+- about: latency
+  text: Button to count is 2 + DEBOUNCE_CYCLES + 1 clocks by design (10.00 ms at the board parameters); no record times
+    it on the board.
+- about: throughput
+  text: Not applicable; a control design with no data path.
+- about: E4
+  text: The 100 percent is after fixing the bench for two survivors. The unbiased first-run score was 19 of 21.
+- about: E7
+  text: One passing bring-up run on 2026.1; the earlier release had three in a row.
+- about: manual checks
+  text: Buttons, display glyphs and three brightness levels were checked by a person on the earlier release's bitstream
+    (results/f0b/manual_checks.md), not on 2026.1.
+- about: operating conditions
+  text: XADC rails and die temperature were not read, so the runs cannot be shown inside the recommended operating conditions.
+- about: behaviour
+  text: No auto-repeat or gamma curve exists. Reads of undefined window addresses return 0 with no error.
+next_steps:
+- Repeat the manual button, display and brightness checks on the 2026.1 bitstream and record them.
+- Add a button-press ILA capture so a record times the button-to-count latency on the board.
+- Read the XADC rails and die temperature during bring-up.
+open_questions:
+- Should brightness follow a gamma curve so equal steps look equal (the spec default is linear)?
+- Should holding a button auto-repeat (the spec default is no)?
+history:
+- date: '2026-10-30'
+  brief: '02'
+  note: first bring-up on the board with the earlier release's builds
+- date: '2026-11-01'
+  brief: 04f
+  note: verification backbone applied; V3 reached, 21 mutants, formal proofs
+- date: '2026-11-11'
+  brief: '48'
+  note: rebuilt and brought up on Vivado 2026.1; the first bring-up run failed at the ILA step and was fixed
+- date: '2026-11-12'
+  brief: '53'
+  note: traceability matrix and HDL coding standard lint
+- date: '2026-11-13'
+  brief: '68'
+  note: handover written to the documentation standard
+state:
+  stage: board-verified
+  gates:
+    build_2026_1: pass
+    board_bringup: pass
+  vivado: '2026.1'
+  kb_pin: 1fc7ed8
+  build_id: 595c2767

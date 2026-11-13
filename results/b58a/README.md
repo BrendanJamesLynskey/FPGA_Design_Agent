@@ -7,6 +7,8 @@ run has happened.**
 
 A clock count here is one 8 ns period of the 125 MHz design clock; each file states its start and end points.
 
+## Records
+
 | File | What | Made by |
 |---|---|---|
 | `latency_sim.json` | per-stage clocks for one trigger, speculative and safe, one- and twenty-message frames: from the SFD (and from the last price byte) entering the receive MAC to the first preamble byte leaving the transmit MAC, core side; checksum computed before the decision | `B58A_RECORD=results/b58a pytest designs/b58a_trigger/tests/test_b58a_rtl.py` (`stage_latency`) |
@@ -19,3 +21,20 @@ A clock count here is one 8 ns period of the 125 MHz design clock; each file sta
 | `nl_rules.json` | the natural-language rule fixtures checked offline (which meant what was asked, which were refused) | `python3 -m designs.b58a_trigger.host.nl_rule --check` |
 | `build/` | the KR260 build: `summary.json` (timing, resources, power, gates), the timing summary, utilisation, power, CDC and methodology reports, gates, the run record (time, peak memory) | `flow/run_vivado.sh designs/b58a_trigger` |
 | `showcase_sim.json` | data for the showcase page, simulation values only | `python3 results/b58a/export.py` |
+| `build_summary.py`, `build_tx_centred_trial/` | The script that writes `build/summary.json` from the build's own records (`--check` compares the committed file), and a trial build with the transmit clock from a 90-degree output, recorded and not adopted | `python3 results/b58a/build_summary.py` |
+
+## Reproduce
+
+- The simulation records: `B58A_RECORD=results/b58a pytest designs/b58a_trigger/tests/test_b58a_rtl.py` (Icarus Verilog, cocotb; no Vivado). Formal: `designs/b58a_trigger/tests/test_b58a_formal.py` (SymbiYosys). The other commands are in the table above.
+- The build needs Vivado 2026.1 under a heavy slot: `flow/run_vivado.sh designs/b58a_trigger`, then `python3 results/b58a/build_summary.py`.
+- There is nothing to run on a board: no board run has happened.
+
+## Known gaps and limits
+
+- Every latency figure is simulation; the PHYs, the cable and the real RGMII timing are absent, and the clock-domain FIFO is its simulation model.
+- No board run, and no KR260 programming path in the flow yet.
+- The software time in the tick-to-config record is an assumed 2,000 clocks, not a measurement.
+- The formal checks of the MAC state machines are bounded checks, not proofs.
+- The natural-language rule fixtures are one offline check, not a score.
+- Design limits: one order slot per frame, no rollback of speculative book updates (a bad frame becomes a sequence gap), and no UDP checksum check, VLAN, IPv4 options or fragments.
+- The message format is our own and there is no real market.

@@ -81,3 +81,23 @@ in analysis.md; nothing was adopted.
 [prereg.md](prereg.md) (amendments 1 to 7) · [analysis.md](analysis.md) (written by [analyze.py](analyze.py)) · [runs.md](runs.md) and
 [runs.jsonl](runs.jsonl) (one record per run) · [driver.py](driver.py) · [repair_records.py](repair_records.py) · [scores/](scores/) ·
 [environment.txt](environment.txt) · the spend is in [../spend_ledger.csv](../spend_ledger.csv) (brief `42_harness`).
+
+## Reproduce
+
+    python3 results/42_workflows/driver.py run --code <frozen worktree> [--tag w1]   # paid agent runs, one worker per heavy slot
+    python3 results/42_workflows/driver.py table                                      # runs.md from runs.jsonl
+    python3 results/42_workflows/analyze.py                                           # analysis.md
+
+`<frozen worktree>` is the repository at the commit in `FROZEN_SHA`, with `FDA_KNOWLEDGE` pointing to a checkout of the knowledge
+bank at the pinned commit. `driver.py run` makes paid model calls (`openai/gpt-6-luna` through OpenRouter, a per-run USD cap, a hard
+5,400 s wall limit, no Vivado) and cannot reproduce the same runs, since the model is stochastic; `table` and `analyze.py` rebuild
+`runs.md` and `analysis.md` from the committed `runs.jsonl` with no network.
+
+## Known gaps and limits
+
+- The "Caveats" above apply: few blocks (12), two of the four tasks never passed by any arm, post hoc sign tests, cost slightly undercounted, and H2 not measured against a real hang.
+- Only the first round was run: three repeats of 4 tasks and 4 arms. Arms H3 to H8, A1 to A6 and the four extension tasks were not run.
+- The default change to H1 was decided after seeing the data and was not pre-registered; the saving should be re-measured on a larger task set before it is quoted.
+- Summarisation events are not counted per run, so how often H1's summarisation trigger fired is unknown; the `report_digest` tool and the Vivado digesters have no end-to-end measurement.
+- The cause of the malformed provider responses is unconfirmed; three runs lost to them were excluded and re-run.
+- Single model, stage 2 only at V1, so nothing here speaks to synthesis, implementation or other models.

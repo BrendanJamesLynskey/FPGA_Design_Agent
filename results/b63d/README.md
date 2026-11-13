@@ -147,3 +147,26 @@ What makes it work:
 - receive data are captured one internal-clock edge later than the tool's default pairing (a setup multicycle of 2; hold stays checked on the edge that really must see the previous data), and transmit data leave from falling-edge registers.
 
 The build declares both RMII interfaces against `eth_refclk` (`build.yaml` io_interfaces), so the I/O gate fails a delay referenced to another clock (IO-CLOCK), a delay that differs from the data sheet (IO-VALUE) and a forwarded clock defined from the wrong pin or not at all (IO-FWD-SOURCE); `designs/b63d_nexys_net/tests/test_b63d_io_constraints.py` checks all three. Terms: [ip_lib/README.md#terms](../../ip_lib/README.md#terms).
+
+## Records
+
+| Path | What |
+|---|---|
+| `faults.json` | The seeded faults of the network blocks (including the MAC and the later cases) and whether each was caught |
+| `formal.json` | The SymbiYosys jobs (bounded checks, one proof and covers) with status, depth and the tool version |
+| `nexys_build/` | The Vivado 2026.1 build record and summary of `designs/b63d_nexys_net` |
+| the out-of-context cost tables | Read from each entry's `char/xc7a100tcsg324-1.json` under `ip_lib/<entry>/` (not in this folder) |
+
+## Reproduce
+
+- Faults (simulation only): `python3 flow/net/faults.py --json results/b63d/faults.json`.
+- Formal: the jobs listed in the Formal table, one `.sby` file per entry under `ip_lib/<entry>/formal/`, run with SymbiYosys.
+- Out-of-context points: `python3 -m flow.ipchar <entry>` (Vivado 2026.1, heavy slot); the build of the design: `flow/run_vivado.sh designs/b63d_nexys_net`.
+- No board run is involved or possible from these records.
+
+## Known gaps and limits
+
+- Not run on a board: the Nexys A7 design was simulated and built only, and the RMII bounds use the RMII rev 1.2 figures; the PHY's own data sheet values were still to be checked before a board run.
+- One routed run per point; most of the application blocks (`icmp_echo`, `ipv4_udp_rx`, `ipv4_udp_tx`, `igmp_join`) do not reach 125 MHz out of context, and `arp_responder` only at some points.
+- The formal checks are bounded to the stated depths, apart from the MDIO proof; they are not proofs of the whole behaviour.
+- A fault counts as caught when the entry's tests fail on it; the list is what was seeded.

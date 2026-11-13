@@ -42,3 +42,31 @@ T1 reaches **V3** (V0, V1, V2, V3 pass); V-HW passes from the committed bring-up
 | xsim | 2025.2 | local only (`XSIM_SETTINGS`); skipped in CI |
 
 The OSS CAD Suite tarball in `~/.local/opt/oss-cad-suite-dl` was truncated (unexpected end of archive) and was not used.
+
+## Records
+
+The four files in the table at the top are the whole folder: the gate result, the mutation run, the portability check
+and the covergroup demonstration. All four are for `designs/t1_dimmer_counter`.
+
+## Reproduce
+
+From the repository root (commands as in [docs/verification.md](../../docs/verification.md)):
+
+    python3 flow/portability.py designs/t1_dimmer_counter/verif/portability.yaml
+    python3 flow/mutate.py designs/t1_dimmer_counter --json results/04f/mutation_t1.json   # local, about 30 minutes
+    python3 flow/verif_gates.py designs/t1_dimmer_counter --also build/verif/icarus --mutation results/04f/mutation_t1.json \
+        --hw results/f0b_2026_1/t1_dimmer_counter_bringup.json --json results/04f/t1_verif_gates.json
+
+The gate step needs the simulation outputs under `build/verif` (cocotb runs on seeds 1, 2, 3) and, for V2, the
+SymbiYosys runs; the mutation run is a heavy local job and is not in CI. No Vivado, board or paid agent run is needed.
+The tool versions used are in the table above (xsim only as the portability compile, local only).
+
+## Known gaps and limits
+
+- One design (T1), one mutation seed, and 21 hand-written mutants; equivalent mutants are not detected automatically.
+- The thresholds (95 % line, 80 % toggle, 85 % mutation, 3 seeds) were set after seeing the first run, so they are
+  defaults for the agent's later benches, not a calibrated standard.
+- Functional bins are event counts the bench caused: they show what was exercised, not what was checked.
+- xsim ran the portability compile only, not the cocotb bench.
+- The 100 % mutation figure is after a test was added for the two first-run survivors; the first-run figure is 90.48 %.
+- Mutation is not in CI: CI gates read the committed `mutation_t1.json`.

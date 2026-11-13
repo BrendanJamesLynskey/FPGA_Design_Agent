@@ -78,8 +78,19 @@ Through AXI4-Lite (staging writes, CMD, STATUS poll) an exact-table command took
 - Icarus 12: an `always_comb` that calls a function on an X input looped forever at time 0 in `match_exact`; the
   hash is now a continuous assignment.
 
-## Files
+## Records
 
 - `measure.json`, `faults.json`: the numbers above.
 - `pcap/`: the sample traffic and the expected rewrite output (`flow/net/make_pcaps.py`); tests check the RTL against
   both.
+
+## Reproduce
+
+Simulation only (Icarus Verilog 12, cocotb; no Vivado, no board): `python3 -m flow.net.measure` writes `measure.json`;
+`python3 flow/net/faults.py --json results/b40/faults.json` writes `faults.json`; `python3 flow/net/make_pcaps.py` writes `pcap/`.
+
+## Known gaps and limits
+
+- Simulation phase only: clock counts are converted to packets per second at stated clocks, not at a measured Fmax; out-of-context synthesis was still to do when these were recorded.
+- No board run and no physical PHY; the line-rate figures are properties of the RTL in simulation.
+- A fault counts as caught when the block's own tests fail on it; the fault list is what the authors seeded, not a coverage measure.

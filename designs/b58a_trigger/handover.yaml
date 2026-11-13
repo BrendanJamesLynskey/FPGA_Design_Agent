@@ -1,0 +1,372 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b58a_trigger
+title: Mock low-latency trading path on the Kria KR260
+kind: showcase
+produced_by: human+agent
+summary: A bench model of a low-latency trading path. A packet arrives on a PL Ethernet port, its fields are parsed while
+  it is still arriving, a rule loaded at run time decides, hardware interlocks check the order, and in speculative mode
+  the response leaves before the incoming frame has finished (undone by a poisoned frame check sequence if the frame was
+  bad). Simulated, formally checked in part, and built with Vivado 2026.1; never run on a board.
+scope_not:
+- 'a real market path: a mock. The message format is our own (docs/bench_feed_v1.md), the traffic sources are our own, and
+  there is no exchange, broker or market data'
+- a board result; no latency figure here was measured on hardware, and the PHYs, the cable and the real RGMII timing are
+  outside every number
+- a proof of the whole design; only interlocks.sv has a k-induction proof, and the order slot and the MAC state machines
+  have bounded checks
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260
+  top: kr260_top
+  tool: Vivado 2026.1
+  note: the PS is unused; the host reaches the registers over the JTAG cable
+clocks:
+- name: clk_25
+  mhz: 25
+  source: designs/b58a_trigger/design.xdc
+  note: board oscillator; an MMCM makes the 125 MHz core clock (one byte time at 1 Gb/s, 8 ns)
+- name: a_rxc
+  mhz: 125
+  source: designs/b58a_trigger/design.xdc
+  note: port A receive clock from the PHY; crossed into the core clock by gmii_cdc
+- name: b_rxc
+  mhz: 125
+  source: designs/b58a_trigger/design.xdc
+  note: port B receive clock from the PHY
+resets:
+- name: core reset
+  active: high
+  note: held until the MMCM locks and the receive delay lines are calibrated (IDELAYCTRL ready), through reset synchronisers;
+    the PHYs have a register bit that holds them in reset
+interfaces:
+- name: RGMII ports A and B
+  type: RGMII at 1000 Mb/s, LVCMOS18; port A (PHY2, J10B) is the trading port, port B (PHY3, J10A) the generator and loop
+    timer
+  doc: ip_lib/eth_mac_rgmii/README.md
+  note: receive is centre-aligned with the PHY's RX delay on and a 1000 ps IDELAY on each input; transmit is edge-aligned
+    with the PHY's TX delay on. Constraints come from the PHY datasheet and are in design.xdc
+- name: host register bus
+  type: 32-bit registers over the JTAG cable (BSCANE2), word addresses 0x000 to 0xFFF
+  doc: designs/b58a_trigger/docs/register_map.md
+  note: control, addresses, interlock limits, rule table, counters, order log, book and two latency histograms; a read returns
+    data two clocks after the address. The JTAG script has not run on a board
+- name: message format
+  type: Bench Feed v1 over UDP, Ethernet and IPv4
+  doc: designs/b58a_trigger/docs/bench_feed_v1.md
+  note: our own format; UDP checksums are not checked or generated, and IPv4 options, VLAN tags and fragments are rejected
+parameters:
+- name: BUILD_MODE
+  value: 0
+  legal: 0, 1 or 2
+  note: 0 computes the response's IPv4 checksum before the decision, 1 after it, 2 stores and assembles the frame before
+    sending
+- name: RX_IDELAY_PS
+  value: 1000
+  legal: from the timing analysis
+  note: receive data delay on each RGMII input
+- name: NINST
+  value: 256
+  legal: instrument count
+  note: number of instruments the book holds
+files:
+- path: designs/b58a_trigger/rtl/kr260_top.sv
+  what: board top (RGMII ports, clocks, JTAG bus, port B generator and loop timer)
+  sha256: d57f5f9d6e023bf16306ea18cc216334ba2949a3d34072b4eb099129c4808ef6
+- path: designs/b58a_trigger/rtl/trigger_core.sv
+  what: the path from frame parser to order control
+  sha256: a2574194eb16e945d8206f60cdd3505fea7c73b4db016fff507fae18d10a6382
+- path: designs/b58a_trigger/rtl/feed_rx.sv
+  what: Ethernet, IPv4, UDP and Bench Feed parser, field by field
+  sha256: ccc1c62f8b710bf480a435f66fbd5e54b7b9d6c81928bf013330a35b0618670a
+- path: designs/b58a_trigger/rtl/book.sv
+  what: best bid and ask per instrument in block RAM
+  sha256: 216116a0a865b79554d425b6bca939a9f15dab8a833391c7403d1467e7285aa4
+- path: designs/b58a_trigger/rtl/rules.sv
+  what: 8 run-time rules checked at once
+  sha256: bf046cfda694711d6dee421864d365254fa64e3285e80ce3fc5d4800cb34cd14
+- path: designs/b58a_trigger/rtl/interlocks.sv
+  what: kill, halt, size, price band, position and rate checks
+  sha256: 37a99e59c69e5e2976afcfb9f3466f72a850456daef4569716b37fb6f1d10e89
+- path: designs/b58a_trigger/rtl/order_ctl.sv
+  what: binds each order to its frame's verdict; drop, poison or cancel
+  sha256: db91763b3f836681d93ae5c57c9722a51b07fd6d20c36e391c901aa97578ef44
+- path: designs/b58a_trigger/rtl/jtag_bus.sv
+  what: register bus over the JTAG cable
+  sha256: c56593b3f63925965c62cb79260ffbe068df0b28fd0c10b1ed30de6763c20215
+- path: designs/b58a_trigger/design.xdc
+  what: pins, clocks and the RGMII timing constraints
+  sha256: 62c1e380c0978425e45040d2a86e7b743966eeb4f7d94f4c3a25cd980054117f
+- path: designs/b58a_trigger/build.yaml
+  what: build recipe, including the RGMII timing data from the PHY datasheet
+  sha256: 6f8f5777a340044a90a8ef5d77e16a2eb83c57dfef13e0e8ff42cce0fd78ca2e
+- path: designs/b58a_trigger/model/ref_model.py
+  what: Python reference model written from the docs, not the RTL
+  sha256: bf2f0369fc3cdc828efe3156298d75bb7c3cb4cd022b291d30e793ae14d730d4
+- path: designs/b58a_trigger/tests/test_b58a_rtl.py
+  what: cocotb tests against the model, with hostile frames
+  sha256: 85faa7d8258c2fc819155f226ad53111295ad0b053141ea5f293ef728c14b670
+- path: designs/b58a_trigger/tests/test_rev_adv_rtl.py
+  what: adversarial regression tests from the independent review
+  sha256: d3c1ce109d6da370a7321b9fd7977cc2cedd9c1f5d8d569c931badb2c5313472
+- path: designs/b58a_trigger/tests/test_b58a_formal.py
+  what: runs the SymbiYosys jobs
+  sha256: ed84d82687e33055a8ae62e13a6e45f16b48ad27ce01efa51554bc5a0e3af0a9
+- path: designs/b58a_trigger/host/nl_rule.py
+  what: turns a sentence into a rule through a hosted language model, validated by model/rules.py
+  sha256: 933decf496486e4b646fe4fbaa1417172eafb0f2074e2f497a69524156dd526a
+- path: designs/b58a_trigger/docs/board_run_plan.md
+  what: the board run plan; no step has been run
+  sha256: f7c240f3ce2ff75a4fe4a0cd853ef6ae9bfcf6792b9a12f1f45ad08bfb2569f1
+- path: designs/b58a_trigger/showcase/trading_path.yaml
+  what: the showcase entry, in progress, no numbers until a board result
+  sha256: a9ef8b6cc27899554abfd8aa80222255882024b886ca3b46bb56af780335a6eb
+commands:
+- what: simulation tests against the reference model
+  cmd: python3 -m pytest -q designs/b58a_trigger/tests/test_b58a_model.py designs/b58a_trigger/tests/test_b58a_records.py
+    designs/b58a_trigger/tests/test_b58a_rtl.py
+  heavy: false
+  minutes: 10
+  needs: Icarus Verilog 12 and cocotb 2.0.1
+- what: regenerate the simulation records
+  cmd: B58A_RECORD=results/b58a python3 -m pytest -q designs/b58a_trigger/tests/test_b58a_rtl.py
+  heavy: false
+  minutes: 10
+  needs: as above
+- what: formal checks
+  cmd: python3 -m pytest -q designs/b58a_trigger/tests/test_b58a_formal.py
+  heavy: false
+  minutes: 30
+  needs: SymbiYosys, yosys and z3
+- what: build the KR260 bitstream
+  cmd: flow/run_vivado.sh designs/b58a_trigger
+  heavy: true
+  minutes: 23
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: cocotb tests against the Python reference model, random streams with hostile frames in speculative and safe mode
+  record: designs/b58a_trigger/tests/test_b58a_rtl.py
+  sha256: 85faa7d8258c2fc819155f226ad53111295ad0b053141ea5f293ef728c14b670
+- id: E2
+  activity: simulation
+  result: pass
+  how: ci
+  what: adversarial regression tests from the independent review; every order from a bad frame is dropped, poisoned or cancelled
+  record: designs/b58a_trigger/tests/test_rev_adv_rtl.py
+  sha256: d3c1ce109d6da370a7321b9fd7977cc2cedd9c1f5d8d569c931badb2c5313472
+- id: E3
+  activity: formal
+  result: partial
+  what: interlocks.sv has a k-induction proof; the order slot and the MAC receive and transmit state machines have bounded
+    checks, not proofs
+  record: results/b58a/formal.json
+  sha256: a1d4d11567a58562e831bed2085ade3f3ef6feda41f78ae3e1751524a1d6da42
+- id: E4
+  activity: faults
+  result: pass
+  what: 10 deliberately injected bugs in the Ethernet MAC library block, each detected by its test suite
+  record: results/b58a/mac_rgmii_faults.json
+  sha256: 1ec1e53e3e422b31ff3912c37beba3196ca68436ac4731addb9311da2e617c6d
+- id: E5
+  activity: simulation
+  result: pass
+  what: kr260_top with RGMII looped from port B to port A in simulation; all frames arrive intact (the clock-crossing FIFO
+    is its simulation model)
+  record: results/b58a/pins_sim.json
+  sha256: ac8a706f112514effc70817f4c99ce9b7f7a222f278f356b11d40350b70b6c3f
+- id: E6
+  activity: review
+  result: pass
+  what: ten recorded sentences for the natural-language rule step, checked offline against meanings written by hand; one
+    expectation was changed after the model's reply was seen (recorded in the file)
+  record: results/b58a/nl_rules.json
+  sha256: 0e81038cbe2d6aadcad8fa5e26771e90eb42eda3939cc370c7d6ccdaa42497e1
+- id: E7
+  activity: build
+  result: pass
+  what: KR260 build on Vivado 2026.1; every gate passes through bitstream (built, not programmed)
+  record: results/b58a/build/summary.json
+  sha256: dde54251b4f6d5a5d5e863af0c0219e3f823cfba2368007559df58d5851ae6af
+measurements:
+- id: M1
+  what: LUTs
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/b58a/build/summary.json
+  field: utilisation.CLB LUTs.used
+  conditions: routed build, Vivado 2026.1, xck26-sfvc784-2LV-c, whole design
+  value: 7225.0
+  sha256: dde54251b4f6d5a5d5e863af0c0219e3f823cfba2368007559df58d5851ae6af
+- id: M2
+  what: flip-flops
+  category: resources
+  key: ff
+  unit: FF
+  record: results/b58a/build/summary.json
+  field: utilisation.CLB Registers.used
+  conditions: as M1
+  value: 10318.0
+  sha256: dde54251b4f6d5a5d5e863af0c0219e3f823cfba2368007559df58d5851ae6af
+- id: M3
+  what: block RAM tiles
+  category: resources
+  key: bram_tile
+  unit: tile
+  record: results/b58a/build/summary.json
+  field: utilisation.Block RAM Tile.used
+  conditions: as M1
+  value: 6.5
+  sha256: dde54251b4f6d5a5d5e863af0c0219e3f823cfba2368007559df58d5851ae6af
+- id: M4
+  what: worst setup slack
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/b58a/build/summary.json
+  field: timing_post_route.wns_ns
+  conditions: routed, all clocks including the RGMII source-synchronous paths; the transmit window assumes 0.1 ns of board
+    skew
+  value: 0.102
+  sha256: dde54251b4f6d5a5d5e863af0c0219e3f823cfba2368007559df58d5851ae6af
+- id: M5
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/b58a/build/summary.json
+  field: timing_post_route.whs_ns
+  conditions: as M4
+  value: 0.01
+  sha256: dde54251b4f6d5a5d5e863af0c0219e3f823cfba2368007559df58d5851ae6af
+- id: M6
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/b58a/build/summary.json
+  field: power.total_on_chip_w
+  conditions: report_power after routing, vectorless, still air with no heat sink at 40 C ambient (the pessimistic bound);
+    not a measurement
+  value: 0.501
+  sha256: dde54251b4f6d5a5d5e863af0c0219e3f823cfba2368007559df58d5851ae6af
+- id: M7
+  what: decision latency, speculative, price field complete to first response byte
+  category: latency
+  key: decision_clocks_speculative
+  unit: clocks
+  record: results/b58a/latency_sim.json
+  field: modes.speculative_1msg.decision_to_first_byte
+  conditions: simulation, core side at 125 MHz (8 ns a clock), checksum computed before the decision; before the RGMII registers
+    and the pins
+  value: 8
+  sha256: 3e6bded690fb903f4a6bec98e0f759eb06ea01e70c6030c5382c7af93b766707
+- id: M8
+  what: decision latency, safe mode, one-message frame
+  category: latency
+  key: decision_clocks_safe
+  unit: clocks
+  record: results/b58a/latency_sim.json
+  field: modes.safe_1msg.decision_to_first_byte
+  conditions: as M7; safe mode waits for the good frame check sequence
+  value: 18
+  sha256: 3e6bded690fb903f4a6bec98e0f759eb06ea01e70c6030c5382c7af93b766707
+- id: M9
+  what: frame-start latency, speculative, SFD in to first response byte
+  category: latency
+  key: sfd_to_first_byte_clocks
+  unit: clocks
+  record: results/b58a/latency_sim.json
+  field: modes.speculative_1msg.tick_to_trade_sfd_to_first_byte
+  conditions: as M7; 57 of these clocks are the header bytes before the price field
+  value: 65
+  sha256: 3e6bded690fb903f4a6bec98e0f759eb06ea01e70c6030c5382c7af93b766707
+- id: M10
+  what: decision latency when the whole frame is stored and assembled after the decision (BUILD_MODE 2)
+  category: latency
+  key: decision_clocks_assemble
+  unit: clocks
+  record: results/b58a/latency_sim_assemble.json
+  field: modes.speculative_1msg.decision_to_first_byte
+  conditions: as M7
+  value: 75
+  sha256: 6b7d0bbd164cbfd48ffb889dce313ba8a04745bcb4d69bdb7ca12f45f5b69795
+- id: M11
+  what: histogram A, minimum, port B loop in simulation
+  category: latency
+  key: hist_a_min_clocks
+  unit: clocks
+  record: results/b58a/loop_sim.json
+  field: hist_a.min
+  conditions: simulation of the generator, trading port and back, with bad-FCS and gap injection; not a board measurement
+  value: 65
+  sha256: 1a99b954a5748d053f274c4c7d47bddd9cf14ddb0e0f4a30e90038248f30cca0
+gaps:
+- about: board_run
+  text: No board run has happened and no KR260 programming path exists in the flow yet. The JTAG register script has not
+    run on a board. docs/board_run_plan.md lists the steps.
+- about: throughput
+  text: Not measured. Only latency was recorded; no record states a sustained order or frame rate.
+- about: E3
+  text: Only interlocks.sv is proved (k-induction). order_ctl.sv (30 clocks) and the MAC receive and transmit state machines
+    (20 and 40 clocks) are bounded checks; order backlogs and the saturation of its 16-bit age counter are outside the bound.
+- about: latency
+  text: Every latency figure is simulation. The receive clock crossing, the RGMII registers, the pins, the PHY chips and
+    the cable are outside it, and the crossing FIFO is a simulation model of the Xilinx XPM macro, so its real latency is
+    unmeasured.
+- about: operating conditions
+  text: No SYSMON temperature or rail readings exist because nothing ran on a board; the board run plan reads them.
+- about: build
+  text: The transmit window assumes 0.1 ns of TXC-to-TXD skew on the KR260, which is not in our notes; the schematic or
+    the layout report would confirm it. Worst transmit setup slack is the smallest margin in the build.
+- about: behaviour
+  text: One order slot, at most one request per frame. A bad frame's book updates are not rolled back. No UDP checksum checks.
+    The kill is a register only because the KR260 has no PL push button.
+- about: tick-to-config
+  text: The 2,125-clock tick-to-config figure includes 2,000 clocks of software time that is assumed, not measured; it shows
+    the mechanism.
+next_steps:
+- Run the board run plan, starting with the bench loop between the two PL ports, and read SYSMON during each run.
+- Add a KR260 programming path to the flow.
+- Confirm the TXC-to-TXD skew from the schematic or the layout report and re-derive the transmit constraints.
+open_questions:
+- Should the order slot be widened so that several orders can be outstanding?
+history:
+- date: '2026-11-12'
+  brief: 58a
+  note: built, simulated and formally checked; Vivado 2026.1 build closes with all gates passing; not run on a board
+- date: '2026-11-13'
+  brief: '68'
+  note: handover written to the documentation standard
+numbers_allow:
+- token: '0.360'
+  reason: port A receive setup slack in results/b58a/build/summary.json (rgmii_io_slack_ns), printed there as 0.36
+- token: '-0.433'
+  reason: worst setup slack of the centred-TXC trial, results/b58a/build_tx_centred_trial/summary.json (wns_ns); the trial
+    was not adopted
+- token: '4.12'
+  reason: the PHY datasheet section number cited for the RGMII timing window (a section number, not a measurement)
+- token: '1518'
+  reason: maximum frame length in bytes used as a test parameter in tests/b58a_cocotb.py
+- token: '74'
+  reason: lower frame length in bytes of the adversarial wrong-FCS test, tests/rev_adv_cocotb.py
+- token: '76'
+  reason: upper frame length in bytes of the adversarial wrong-FCS test, tests/rev_adv_cocotb.py
+- token: '253'
+  reason: lower bound of the frames-since-last-request test, tests/rev2_cocotb.py
+- token: '00'
+  reason: the revision suffix of the PHY datasheet document number MV-S100649-00 (an identifier, not a measurement)
+state:
+  stage: built
+  gates:
+    build_2026_1: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 1fc7ed8
+  build_id: a4aa23de

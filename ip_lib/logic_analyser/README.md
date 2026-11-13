@@ -49,10 +49,24 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py`):
 - Clock crossings: none (the probes must be in the capture clock domain).
 - Part, board or pin: none (inferred RAM).
 - Depends on: nothing.
-- Limits: one trigger stage (no sequencer); depth is fixed at build time; compare with the ILA in ip.yaml limits of ila-in-batch for the full-rate, multi-probe case.
 
 ## Cost table
 
 in-context cost (not an OOC sweep): 132 LUT plus 88 LUTRAM, 142 FF, no block RAM at WIDTH 16, ADDR_W 8 inside b30_hil_audio (Vivado 2026.1, xc7a100t -1; results/vivado_2026_1_remeasure/b30_hil_audio.json); the OOC sweep is still to do. For comparison the AMD ILA on T1 on Vivado 2026.1 (one ILA IP, 13 probes packed into 2 ports, 1024 deep) cost 1181 LUT, 2074 FF and 2 block RAM tiles (results/f0a_2026_1).
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Limits: one trigger stage (no sequencer); depth is fixed at build time; compare with the ILA in ip.yaml limits of ila-in-batch for the full-rate, multi-probe case.
+- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
+
+## Next steps
+
+1. Add a trigger sequencer stage if captures need more than one trigger condition.
+
+## History
+
+- 0.1.0 (2026-11-11): First version (brief 30): simulated against the Python models, seeded faults caught, measured on the Nexys A7-100T inside designs/b30_hil_audio where noted in README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

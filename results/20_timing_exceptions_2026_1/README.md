@@ -24,3 +24,21 @@ Re-run on **Vivado 2026.1** (Basic licence tier), xc7a100tcsg324-1, on 2026-11-1
 status, coverage count, slack before and after routing, and every flow verdict. 2026.1 also raised no TIMING-46 for a multicycle on
 registers with a tied clock enable, after synthesis or after placement (followup.tcl, E3, E10B, E10C). The agent drill runs (agent
 outcomes, not Vivado measurements) were not re-run.
+
+## Records
+
+The files and directories are listed in the table above: the exception table and `golden/` (7 placed and routed, 15 in all),
+the I/O table and `golden_io/`, the uncertainty table, `golden_u/` and `raw_u/`, and `vivado_stamps.txt`.
+
+## Reproduce
+
+The commands above (Vivado 2026.1, a heavy slot, one Vivado per fixture in its own memory scope). No board or paid agent run.
+`<out>` and `<out_io>` are scratch directories. The drill runs are not regenerated here.
+
+## Known gaps and limits
+
+- Fixtures are out of context (no board clock tree): only routed numbers support claims about hold, not the synthesis estimates on clock crossings.
+- Basic licence tier; one run per fixture, so small placement-dependent moves would not show as a trend.
+- The agent drill runs were not re-run on 2026.1; their records are in `results/20_timing_exceptions/drills`.
+- The multicycle-with-tied-enable check is structural: an enable in the data cone is accepted without proving the register holds.
+- Measured on Artix-7 (xc7a100t) only.

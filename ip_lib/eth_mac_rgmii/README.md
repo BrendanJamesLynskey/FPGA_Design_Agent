@@ -119,10 +119,26 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: one crossing, RX_CLK to clk: an xpm_fifo_async (16 entries, 2 synchroniser stages), the receive reset by xpm_cdc_sync_rst and the speed setting by xpm_cdc_array_single; TXC's waveform moves from clk to clk90 through one register.
 - Part, board or pin: IDDRE1/ODDRE1 (IO_FAMILY ultrascale) or IDDR/ODDR (IO_FAMILY 7series) under `ifdef SYNTHESIS`; the input delay (IDELAYE3) is UltraScale only. Pins, IO standards, RGMII delay mode and the RX clock buffer are the board's (the project knowledge base, board/kr260/ethernet).
 - Depends on: eth_mac_rmii.
-- Limits: formal checks of the frame state machines are bounded (20 and 40 clocks), not proofs, and the address filter is checked by bounded model checking against the rule restated in the harness; full duplex only; no half duplex, no priority flow control (802.1Qbb), no IEEE 1588 timestamps beyond the SOF pulses; VLAN stripping removes one tag only and only from the store-and-forward output; the MDIO master is a separate entry (mdio_master); 10/100 nibble alignment needs the SFD; RGMII input timing is closed only for the PHY's internal RX delay mode (board XDC); not yet run on a board; the multicast hash bin is the 6 least significant bits of the reflected CRC-32 register over the destination (ether_crc_le(6, addr) & 0x3f in Linux), not the bit-reversed index some MACs use, so a driver filling mc_hash must use the same; VLAN = 2 strips only the outer tag of a double-tagged frame (the inner tag stays in the frame; m_axis_tci is the outer TCI); a 64-byte tagged frame leaves the store-and-forward output as 56 bytes, under the 60-byte Ethernet minimum (the consumer pads if it forwards it); with FILTER and PAUSE, consumed pause frames are not counted as filtered.
 
 ## Cost table
 
 measured costs are in the Variants section above (the 0.1.0 trading-path build on the KR260 is in results/b58a).
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Limits: formal checks of the frame state machines are bounded (20 and 40 clocks), not proofs, and the address filter is checked by bounded model checking against the rule restated in the harness; full duplex only; no half duplex, no priority flow control (802.1Qbb), no IEEE 1588 timestamps beyond the SOF pulses; VLAN stripping removes one tag only and only from the store-and-forward output; the MDIO master is a separate entry (mdio_master); 10/100 nibble alignment needs the SFD; RGMII input timing is closed only for the PHY's internal RX delay mode (board XDC); not yet run on a board; the multicast hash bin is the 6 least significant bits of the reflected CRC-32 register over the destination (ether_crc_le(6, addr) & 0x3f in Linux), not the bit-reversed index some MACs use, so a driver filling mc_hash must use the same; VLAN = 2 strips only the outer tag of a double-tagged frame (the inner tag stays in the frame; m_axis_tci is the outer TCI); a 64-byte tagged frame leaves the store-and-forward output as 56 bytes, under the 60-byte Ethernet minimum (the consumer pads if it forwards it); with FILTER and PAUSE, consumed pause frames are not counted as filtered.
+- Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
+
+## Next steps
+
+1. Run the MAC on the Kria KR260 bench with a link partner and record frame counts and errors.
+2. Repeat the LUT RAM buffer runs at 32768 bytes to see whether its slack is above run-to-run noise.
+
+## History
+
+- 0.2.0 (2026-11-12): All new features are off by default, so existing users are unaffected: at the defaults the entry behaves as 0.1.0 (0.1.0's three test points pass unchanged; designs/b58a_trigger's tests pass; an independent clock-by-clock comparison with 0.1.0 found no difference).
+- 0.1.0 (2026-11-12): Initial version: tri-mode RGMII MAC with cut-through receive and an optional store-and-forward buffer; simulated at three parameter points and three speeds; see README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

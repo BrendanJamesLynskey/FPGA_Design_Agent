@@ -71,10 +71,25 @@ Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)
 - Clock crossings: none.
 - Part, board or pin: none.
 - Depends on: nothing.
-- Limits: no reassembly (fragments are counted and dropped); no VLAN tags (strip them in the MAC); a datagram with no payload produces no output; the UDP checksum verdict comes on tlast, so a consumer acting on the bytes early must undo on tuser; measured Fmax estimates 75-81 MHz out of context: it closes at the RMII MAC's 50 MHz but not at the RGMII MAC's 125 MHz (header index compares and checksum folds are not pipelined).
 
 ## Cost table
 
 measured out of context: see the Cost section above.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Limits: no reassembly (fragments are counted and dropped); no VLAN tags (strip them in the MAC); a datagram with no payload produces no output; the UDP checksum verdict comes on tlast, so a consumer acting on the bytes early must undo on tuser; measured Fmax estimates 75-81 MHz out of context: it closes at the RMII MAC's 50 MHz but not at the RGMII MAC's 125 MHz (header index compares and checksum folds are not pipelined).
+- Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
+
+## Next steps
+
+1. Pipeline the header checks so the block meets 125 MHz behind the RGMII MAC.
+2. Run designs/b63d_nexys_net on the board with a host sending datagrams.
+
+## History
+
+- 0.1.0 (2026-11-12): Initial version: simulated against a Python model, seeded faults caught, formal checks (bounded except where the README says proved), out-of-context cost on an Artix-7 (Vivado 2026.1); not run on a board. See README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

@@ -72,10 +72,25 @@ Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)
 - Clock crossings: none.
 - Part, board or pin: none.
 - Depends on: nothing.
-- Limits: Ethernet and IPv4 only; one own address; entries never age (flush from outside); address conflicts are reported (ev_conflict) but not resolved (no RFC 5227 probing or announcing); one reply waits while one is sent, a third request is not answered; meets 125 MHz with 4 cache entries (128 MHz estimated), misses it with 16 (116 MHz, the parallel compare).
 
 ## Cost table
 
 measured out of context: see the Cost section above.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Limits: Ethernet and IPv4 only; one own address; entries never age (flush from outside); address conflicts are reported (ev_conflict) but not resolved (no RFC 5227 probing or announcing); one reply waits while one is sent, a third request is not answered; meets 125 MHz with 4 cache entries (128 MHz estimated), misses it with 16 (116 MHz, the parallel compare).
+- Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
+
+## Next steps
+
+1. Run the Nexys A7 network design (designs/b63d_nexys_net) on the board with a cable to a host and record the ARP replies.
+2. Pipeline the cache lookup if 16 entries must meet 125 MHz behind the RGMII MAC.
+
+## History
+
+- 0.1.0 (2026-11-12): Initial version: simulated against a Python model, seeded faults caught, formal checks (bounded except where the README says proved), out-of-context cost on an Artix-7 (Vivado 2026.1); not run on a board. See README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).
