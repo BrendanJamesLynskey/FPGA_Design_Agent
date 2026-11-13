@@ -870,7 +870,7 @@
     "enforced": 0,
     "evidence": 0,
     "sections": 15,
-    "skills": 28
+    "skills": 35
    },
    "evidence": [],
    "family": {
@@ -915,6 +915,22 @@
       {
        "doc": "UG974 v2026.1 (UltraScale libraries)",
        "use": "IDELAYE3/ISERDESE3/BITSLICE ports and attributes"
+      },
+      {
+       "doc": "UG576 v1.7.1 (UltraScale GTH Transceivers)",
+       "use": "GTH channel and common primitives, CPLL/QPLL, resets, loopback, PRBS, equalisation and eye scan"
+      },
+      {
+       "doc": "PG182 v1.7 (UltraScale Transceivers Wizard)",
+       "use": "the Transceivers Wizard (ports, reset helper, example design)"
+      },
+      {
+       "doc": "PG074 v13.0 (Aurora 64B/66B)",
+       "use": "Aurora 64B/66B protocol core over GTH"
+      },
+      {
+       "doc": "PG210 v5.1 (10G/25G Ethernet Subsystem)",
+       "use": "10G/25G Ethernet subsystem over GTH"
       }
      ],
      "zynq7000_ps": [
@@ -952,7 +968,7 @@
       "topic": "Differential and termination standards"
      },
      {
-      "confirmed": "tool",
+      "confirmed": "doc",
       "summary": "Artix-7 has GTP transceivers (none on the Nexys A7 part) and the Zynq-7020 has none; the K26 has GTH transceivers with different wizards and reference-clock buffers.",
       "topic": "Transceivers"
      },
@@ -1154,7 +1170,35 @@
     {
      "items": [
       {
-       "description": "Using a GTH transceiver on a Zynq UltraScale+ (K26: quad 224): refclk pins, channels, PLLs, line rates and where the detail lives (UG576).",
+       "description": "Choosing the reference clock, CPLL or QPLL, dividers and line rate of a GTH link, or checking the TXUSRCLK2/RXUSRCLK2 frequency; K26 (-2LV) numbers.",
+       "name": "gth-clocking-plls-and-line-rates"
+      },
+      {
+       "description": "Writing or repairing RTL and constraints around a GTH transceiver on the K26 and a GT gate fails, or before building: what each gate checks, the usual cause and fix ...",
+       "name": "gth-design-gates-for-the-agent"
+      },
+      {
+       "description": "Choosing a transceiver-based AMD IP (GT Wizard, IBERT, Aurora, 10G/25G Ethernet, JESD204, PCIe/XDMA) for the K26 on the free Vivado 2026.1 Basic tier ...",
+       "name": "gth-ip-licences-2026-1"
+      },
+      {
+       "description": "Choosing RAW, 8b/10b or 64b/66b on a GTH, aligning words (comma, sync header), clock correction or channel bonding, or deciding what the transceiver does and what the fabric must.",
+       "name": "gth-line-coding-alignment-and-bonding"
+      },
+      {
+       "description": "Testing or tuning a GTH link: LPM against DFE, TX swing and pre/post-cursor, the four loopback modes, the PRBS generator and checker (and their reset rules), eye scan ...",
+       "name": "gth-loopback-prbs-and-eye-scan"
+      },
+      {
+       "description": "Deciding which protocol layer to put on a GTH: PCIe (endpoint, XDMA, AXI bridge), Aurora 8b/10b or 64b/66b, 10G/25G Ethernet, JESD204B/C, or a raw link layer of our own ...",
+       "name": "gth-protocol-ips-above-the-transceiver"
+      },
+      {
+       "description": "Bringing up a GTH link or debugging one that does not reach reset-done: the Wizard's reset helper, its ports, the order of PLL lock, CDR and user-clock steps ...",
+       "name": "gth-reset-and-initialisation"
+      },
+      {
+       "description": "Using a GTH transceiver on a Zynq UltraScale+ (K26: quad 224): channel and site names, reference-clock pins, which PLL, line-rate limit of the -2LV part, the Wizard ...",
        "name": "zynqmp-gth-basics"
       }
      ],
@@ -4198,7 +4242,7 @@
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
   }
  ],
- "pin": "1fc7ed8",
- "skills_total": 250,
- "skills_used": 193
+ "pin": "bd26415",
+ "skills_total": 257,
+ "skills_used": 200
 }
