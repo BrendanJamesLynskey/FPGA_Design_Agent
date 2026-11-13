@@ -33,7 +33,7 @@ FORBIDDEN_OPENROUTER = ("anthropic/", "fable", "opus")      # owner rule: never 
 #: ``effort`` None: the flag is omitted and the CLI default applies (the CVDP ladder's "effort low").
 PROFILES: dict[str, dict[str, dict[str, Any]]] = {
     "single": {},
-    # CVDP evidence (cvdp_rtl_recommendation.md): Opus 5.5 writes RTL; the Modeller is a *different* model from the
+    # CVDP evidence (cvdp_rtl_recommendation.md): Opus 5.5 writes RTL; the Modeller runs a *different* LLM from the
     # Designer, so a same-model misreading of the spec is not shared; tests and clarify on Sonnet.
     "cvdp": {
         "rtl": {"harness": "claude_code", "model": "claude-opus-5-5", "effort": None},

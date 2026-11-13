@@ -31,7 +31,7 @@ ACT_PATH = {"spec": [["f-spec", 1]], "agents": [], "sim": [["f-sim", 0]], "vivad
             "board": [["f-board", 0]]}
 ACTS = {"spec": "the Clarifier's questions go to the person who asked, or in a development run to an oracle model.",
         "sim": "they run lint and their own tests on the simulators{verif}.",
-        "vivado": "they run Vivado on the design."}
+        "vivado": "the flow runs Vivado on the design."}
 OBSERVES = {"spec": "the answers come back, and code checks that no question is left open.",
             "sim": "lint and test results come back; code reads them, and no model judges them.",
             "vivado": "Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them."}
@@ -125,7 +125,7 @@ def tour(A):
     F, count = [], {}
 
     def low(s):
-        return s if s[:3].isupper() else s[0].lower() + s[1:]
+        return s
     for i, n in enumerate(order):
         count[n] = count.get(n, 0) + 1
         k, K = count[n], order.count(n)

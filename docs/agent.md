@@ -88,7 +88,7 @@ Four gaps found by the course-tier port are closed; each has a test in `flow/tes
 `agent/tests/test_07a2_prep.py`.
 
 - **Task data.** A `data/` directory next to `spec.md` (or `--data-dir`) is copied to `<design>/data`, read-only for the agent
-  (`data` is in the path jail's write-deny list; the clarify, model, tests and rtl roles may read it), and listed at the end of
+  (`data` is in the path jail's write-deny list; the Clarifier, Modeller, Verifier and Designer roles may read it), and listed at the end of
   the design's `spec.md`. The simulators find it: `flow.cocotb_run.run` links the files into the simulator's working directory
   (`test_dir`) for the length of a run as `data/<name>` and `<name>`, so `$readmemh("x.hex")` and `$readmemh("data/x.hex")` both
   open it; `flow/prepare.py` copies them into the Vivado build directory (and into the build stamp); the course scoring tool

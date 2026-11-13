@@ -196,7 +196,7 @@ misreading (c10 DDS run 1, tiny CNN: the model, the RTL and the bench agreed, an
    `spec.yaml`. It returns `spectest/spec_ref.py` (its own model) and `spectest/spec_bench.py` (a cocotb bench).
 2. **Gate.** When V2/V3 pass, the harness writes the pytest entry itself and runs the bench against the RTL (Icarus, results
    from `results.xml`). A pass is recorded. A failure goes to a **triage** call that sees the spec, the interview and both benches
-   (never the RTL) and answers `design_wrong` (the failing check goes to the RTL role as a `[spec test]` repair; Vivado is
+   (never the RTL) and answers `design_wrong` (the failing check goes to the Designer as a `[spec test]` repair; Vivado is
    skipped that visit) or `bench_wrong` (the spec-test role repairs its bench once, then the bench runs again; bench_wrong a
    second time is `unresolved`). An unreadable verdict counts as bench_wrong: a design is never failed on a guess.
    `--spectest-max-loops` (default 2) limits design_wrong round trips per run; past it the result is `unresolved` and does not

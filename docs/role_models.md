@@ -22,7 +22,7 @@ python -m agent run <spec.md> --profile single|cvdp [--roles '<json>']
 | Profile | Map |
 |---|---|
 | `single` (default) | One harness and model for every role: today's behaviour (`--harness`, `--model`, `--cc-model`, `--cc-effort`). Existing runs and replays are unchanged. |
-| `cvdp` | `rtl`: Claude Code + `claude-opus-5-5`, CLI-default effort (the `--effort` flag is omitted); `model`, `tests`, `clarify`: Claude Code + `claude-sonnet-5-5`, effort medium. The reference model is a different model from the Designer on purpose: CVDP found same-model self-tests share the writer's misreadings. Claude Code runs the lean profile the arm already uses (our role prompt as `--system-prompt`, only our MCP tools, no settings, no slash commands). |
+| `cvdp` | `rtl`: Claude Code + `claude-opus-5-5`, CLI-default effort (the `--effort` flag is omitted); `model`, `tests`, `clarify`: Claude Code + `claude-sonnet-5-5`, effort medium. The Modeller runs on a different LLM from the Designer on purpose: CVDP found same-model self-tests share the writer's misreadings. Claude Code runs the lean profile the arm already uses (our role prompt as `--system-prompt`, only our MCP tools, no settings, no slash commands). |
 
 Mixed harnesses work in one run: the role's harness is chosen at dispatch, so a luna (Deep Agents, OpenRouter) role can sit
 beside Claude Code roles. A Deep Agents role on a model other than `--model` gets its own OpenRouter client; models
