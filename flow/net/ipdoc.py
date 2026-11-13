@@ -77,7 +77,61 @@ def check(block: str) -> list[str]:
     if y.get("variants"):                                   # the variants schema and characterisation file
         from flow import ipvariants
         errs += ipvariants.validate(block)
+    errs += register_problems(block, y)
     return errs
+
+
+def has_register_port(y: dict) -> bool:
+    """An AXI4-Lite slave interface: software reads and writes this block, so its README needs a Registers section."""
+    return any(i.get("type") == "axi4-lite" and i.get("dir") == "slave" for i in y.get("interfaces") or [])
+
+
+def register_map(block: str, y: dict):
+    """The entry's register map (hwsw/regmap.py): from a regmap YAML (register_map: {yaml: path}) or a
+    documentation-only map written in ip.yaml for a hand-written block; None for register_map: {none: why}."""
+    from hwsw import regmap
+    rm = y["register_map"]
+    if "none" in rm:
+        return None
+    if "yaml" in rm:
+        return regmap.load(IP / block / rm["yaml"])
+    return regmap.from_dict(rm, source=f"{block}/ip.yaml register_map", doc_only=True)
+
+
+def register_problems(block: str, y: dict) -> list[str]:
+    """Owner, 2026-11-13: every register block has a datasheet. An entry with a register interface must have a
+    Registers section (register_map: in ip.yaml), or say why it has no registers."""
+    from hwsw import regmap
+    rm = y.get("register_map")
+    if rm is None:
+        return [f"{block}: has an AXI4-Lite slave interface but no Registers section (add register_map: to ip.yaml: a "
+                "regmap YAML, a documentation-only map, or none: <why>)"] if has_register_port(y) else []
+    if not isinstance(rm, dict) or not (set(rm) == {"none"} or set(rm) == {"yaml"} or "registers" in rm):
+        return [f"{block}: register_map must be {{yaml: <file>}}, {{none: <why>}} or a documentation-only map"]
+    if "none" in rm:
+        return [] if isinstance(rm["none"], str) and rm["none"].strip() else [f"{block}: register_map.none needs a reason"]
+    try:
+        m = register_map(block, y)
+    except (regmap.RegmapError, OSError) as ex:
+        return [f"{block}: register_map: {ex}"]
+    return [] if m.name == block else [f"{block}: register_map name {m.name!r} is not the entry's"]
+
+
+def registers_section(block: str, y: dict) -> list[str]:
+    """The README's Registers section: the convention sentence first (where the block differs from the house
+    conventions it says so), then the register map, access types, Behaviour and fields, all generated from the map."""
+    if "register_map" not in y:
+        return []
+    from hwsw import regmap
+    m = register_map(block, y)
+    L = ["", "## Registers", ""]
+    if m is None:
+        return L + [f"None: {_sentence(y['register_map']['none'])}"]
+    src = (f"`{y['register_map']['yaml']}`" if "yaml" in y["register_map"] else "`register_map` in `ip.yaml`")
+    L += [f"{regmap.convention_sentence(m)} Generated from {src} by `hwsw/regmap.py`; the 0x{m.window_bytes:x}-byte "
+          f"window decodes address bits [{m.addr_width - 1}:2]. Unmapped addresses answer "
+          f"{'SLVERR' if m.unmapped == 'slverr' else 'OKAY'} and read 0.", ""]
+    return L + regmap.datasheet(m, level=3)
 
 
 def readme(block: str) -> str:
@@ -103,7 +157,9 @@ def readme(block: str) -> str:
         L.append(f"- `{i['name']}`: {i['type']}" + (f" ({extra})" if extra else "") +
                  (f"; {i['signals']}" if i.get("signals") else "") + (f". {i['note']}" if i.get("note") else ""))
     L += ["", "Clocks: " + ", ".join(f"`{c['name']}`" + (f" ({c['note']})" if c.get("note") else "") for c in y["clocks"]) +
-          ". Reset: `rst`, active high, synchronous.", "", "## Latency and throughput", ""]
+          ". Reset: `rst`, active high, synchronous."]
+    L += registers_section(block, y)
+    L += ["", "## Latency and throughput", ""]
     L += [f"- {k}: {v}" for k, v in y["latency"].items()] + [f"- throughput: {y['throughput']}", "",
           "## Evidence", "",
           _sentence(y['evidence'].get('summary') or "Bit-exact against the Python golden model (`flow/net/model.py`), "

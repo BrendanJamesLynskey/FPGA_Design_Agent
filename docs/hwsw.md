@@ -77,7 +77,7 @@ regmap: 1
 name: demo_accel            # lower case; the module is demo_accel_regs, the C prefix DEMO_ACCEL_
 version: 0.1.0
 addr_width: 12              # a 4 KB window (only address bits [11:2] are decoded)
-unmapped: slverr            # or okay: the answer to an address no register decodes
+unmapped: okay              # the default; or slverr: the answer to an address inside the window that no register decodes
 interrupt: {status: IRQ_STATUS, enable: IRQ_ENABLE}
 registers:
 - name: CTRL
@@ -89,6 +89,17 @@ registers:
   offset: 0x008
   fields:
   - {name: START, lsb: 0, width: 1, access: W1P}
+  - {name: SNAP, lsb: 2, width: 1, access: W1P}
+- name: JOB_CYCLES_LO
+  offset: 0x030
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO}
+- name: JOB_CYCLES_HI
+  offset: 0x034
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO}
+snapshot:                   # a value wider than the bus, read consistently
+- {name: JOB_CYCLES, trigger: CMD.SNAP, fields: [JOB_CYCLES_LO.VALUE, JOB_CYCLES_HI.VALUE]}   # low part first
 ```
 
 | Access | Software | Hardware port |
@@ -99,14 +110,42 @@ registers:
 | `W1S` | writing 1 sets a bit; it wins over a hardware clear in the same clock | `<reg>_<field>_clr_i` (pulse), `_o` (value) |
 | `W1P` | writing 1 gives a one-clock pulse; reads 0 | `<reg>_<field>_pulse_o` |
 
-There is no clear-on-read type, on purpose: a read with a side effect breaks debuggers, repeated reads and
-read-modify-write (the knowledge-bank skill `register-maps-for-software` gives the rules). The interrupt output `irq_o`
-is high while any status bit is set together with its enable bit, one clock after the cause.
+### House conventions (owner, 2026-11-13)
+
+Every generated block follows these, and its generated document states each one in a Behaviour section, written from
+the map's settings (`behaviour()` in `hwsw/regmap.py`; `hwsw/tests/test_64a_regmap.py` checks that each sentence
+follows its setting). A hand-written block's datasheet (the "Registers" section of an `ip_lib` README) states the same
+topics, and says in its first paragraph where the block differs from these conventions.
+
+- **Unmapped addresses inside a block answer OKAY and read 0** (`unmapped: okay`, the default); writes there are
+  ignored. `unmapped: slverr` remains an option: it makes a stray access visible at bring-up, but on a Cortex-A9 or
+  Cortex-A53 a SLVERR on a load is an external abort. Addresses outside every block's range are the interconnect's:
+  `ip_lib/axil_xbar` answers DECERR there, and the block-design address map (`gen/address_map.md`) lists those holes.
+  Measured cost of the choice, below: a few LUTs.
+- **Reads have no side effects.** There is no clear-on-read or pop-on-read type: the loader refuses an access type
+  that would change state on a read (`RC`, `RS`, `POP` and the like) and an `on_read:` key. To pop a FIFO or
+  acknowledge something, write 1 to a W1P bit. A read with a side effect breaks debuggers, repeated or speculative
+  reads, and read-modify-write (the knowledge-bank skill `register-maps-for-software` gives the rules).
+- **Same-clock priority:** a hardware set beats a software W1C clear in the same clock (the event is not lost), and a
+  software W1S set beats a hardware clear in the same clock (the doorbell is not lost). The bench checks both, timed
+  to the commit clock: `set_beats_clear_in_the_same_clock` in `hwsw/tests/regmap_cocotb.py`, with two seeded faults
+  (`clear_beats_set`, `w1s_lost`) that it catches.
+- **Values wider than the bus use a snapshot group.** A `snapshot:` entry names a one-bit W1P trigger and the RO
+  fields of the value, low part first (at most 64 bits). Writing the trigger copies every part into shadow registers in
+  the same clock; reads of those fields return the copy, so the parts always belong to one instant. A read without a
+  new snapshot returns the last copy (stale), and the document says so. The C header gets a helper
+  (`demo_accel_snapshot_job_cycles(base)`) and the Python driver `snapshot("JOB_CYCLES")`.
+- **Byte strobes are honoured; access is 32-bit**; address bits [1:0] are not decoded.
+- **Reset is `aresetn`, synchronous, active low**; every stored field has a reset value; RO fields read their input.
+- **The interrupt** `irq_o` is a level output from a register: high while any status bit is set together with its
+  enable bit, one clock after the cause; a W1C clear drops it one clock later.
 
 The loader refuses, with every reason listed: overlapping registers or fields, offsets that are not word-aligned or
 fall outside the window, reset or constant values wider than their field, unknown access types or keys, a reset on a
-hardware input, a W1P reset other than 0, duplicate names, generated port names that collide, names that clash with
+hardware input, a W1P reset other than 0, a read side effect, duplicate names, generated port names that collide, names that clash with
 the generated register-level names, two registers whose C names would meet, an interrupt status register with non-W1C fields or bits without an enable,
+a snapshot whose trigger is not a one-bit W1P field, whose parts are not RO hardware inputs, are in another group, or
+exceed 64 bits,
 register names the block uses for its own signals (`HIT`, `COMMIT`, `VALUE`: `wr_hit`, `wr_commit`, `rd_value`), and
 text that would break an output: a newline or other control character, `*/`, `/*`, `"""`, a backslash or `|` in a
 summary, or a version that is not letters, digits and `. + _ -`. `gen` checks the text again before it writes.
@@ -115,10 +154,10 @@ summary, or a version that is not letters, digits and `. + _ -`. `gen` checks th
 
 | Output | What it holds |
 |---|---|
-| `<name>_regs.sv` | the AXI4-Lite slave (AW and W captured independently in either order, byte strobes honoured bit by bit, one outstanding read and write, synchronous active-low reset), the field storage and the read multiplexer, `ADDR_` and `RESET_` constants |
+| `<name>_regs.sv` | the AXI4-Lite slave (AW and W captured independently in either order, byte strobes honoured bit by bit, one outstanding read and write, synchronous active-low reset), the field storage, the snapshot copies and the read multiplexer, `ADDR_` and `RESET_` constants |
 | `<name>_regs.h` | per register `_OFFSET`, `_RESET` and a mask per access type (`_RW_MASK` is the read-modify-write mask); per field `_SHIFT`, `_WIDTH`, `_MASK`, `_RESET`, `_ACCESS`; `GET`/`PUT` macros and read and write functions whose bus access can be replaced before the header is included |
 | `<name>_regs.py` | the table, a blocking driver and the same driver for a bus whose calls are coroutines (a simulation bus), and a memory-mapped bus for a UIO device or `/dev/mem`; `set` keeps the other RW fields and writes W1C, W1S and W1P bits as 0, so it never clears an event by accident |
-| `<name>_regs.md` | the map, each register's fields, the access types and the hardware ports |
+| `<name>_regs.md` | the datasheet: the map, the access types, a Behaviour section (unmapped and reserved accesses, read side effects, same-clock priority, partial writes, access width and alignment, wide values, reset, the interrupt, clock domain and timing), each register's fields, the snapshot groups and the hardware ports |
 
 All four carry the SHA-256 of the map's content, so a stale output is easy to spot.
 
@@ -132,15 +171,16 @@ All four carry the SHA-256 of the map's content, so a stale output is easy to sp
   the SystemVerilog by its port list and its address and reset constants, and by compiling it with Icarus Verilog
   (`iverilog -g2012`) when that is installed.
 
-`hwsw/tests/test_64a_regmap.py` edits each output by hand in 13 ways (a mask, a reset, an access type, an offset, a port
-width) and checks that the agreement check names each one, and breaks 31 rules of the format and checks that the
-loader refuses each.
+`hwsw/tests/test_64a_regmap.py` edits each output by hand in 16 ways (a mask, a reset, an access type, an offset, a port
+width, a snapshot group) and checks that the agreement check names each one, and breaks 45 rules of the format and
+checks that the loader refuses each.
 
 ### How the generated RTL is verified
 
 `hwsw/tests/test_64a_regmap_rtl.py` simulates two maps under cocotb and Icarus Verilog 12: the example `demo_accel`
-(11 registers, every access type, an interrupt) and a map of awkward layouts (fields across byte lanes, a 32-bit field,
-multi-bit W1C, W1S and W1P fields, a register at the top of a 64-byte window, unmapped addresses answered OKAY). The
+(13 registers, every access type, an interrupt, a 64-bit snapshot group, unmapped addresses answered OKAY) and a map of
+awkward layouts (fields across byte lanes, a 32-bit field, multi-bit W1C, W1S and W1P fields, a register at the top of a
+64-byte window, unmapped addresses answered SLVERR), so both settings are simulated. The
 bench reaches the RTL only through the **generated Python driver** over an AXI4-Lite master with random VALID delays, a
 random order of AW and W, and random BREADY and RREADY back-pressure. The brief 59A AXI4-Lite protocol checker
 (`axi_tx/rtl/axil_checker.sv`) watches the same wires and fails the test on any rule. Tests:
@@ -152,6 +192,10 @@ random order of AW and W, and random BREADY and RREADY back-pressure. The brief 
   commit clock;
 - 8 random byte-strobe writes per register against a model built from the YAML alone;
 - unmapped addresses (all of them in the small map, 64 sampled in the 4 KB one): response, read value, no side effect;
+- the snapshot group: the bench drives JOB_CYCLES as a counter that steps every clock, starting just below the carry
+  out of the low half, and sweeps the start over 39 snapshots so that at least one lands on the all-ones clock; every
+  snapshot must read a value the counter really had during the access, and a second read without a snapshot must
+  return the same (stale) value;
 - the interrupt line over 30 random set, clear, enable and disable steps;
 - the driver's read-modify-write keeps a pending W1C event; a naive write-back of the read value clears it;
 - a second read address while the first read's response waits for RREADY: ARREADY stays low and R stays steady until
@@ -162,11 +206,13 @@ random order of AW and W, and random BREADY and RREADY back-pressure. The brief 
 - for `demo_accel`, a **C driver** (`hwsw/examples/demo_accel_driver.c`, written against the generated header) runs
   against the RTL: its bus accesses go over a pipe to the bench (`hwsw/tests/c_cosim_harness.c`), a small model of the
   accelerator answers START with BUSY and then DONE, and the driver completes three polled and three interrupt-driven
-  jobs. The same driver source compiles for the Cortex-A9 with `arm-none-eabi-gcc -mcpu=cortex-a9`.
+  jobs, then reads JOB_CYCLES (counted across a carry into the high half) through the generated snapshot helper. The
+  same driver source compiles for the Cortex-A9 with `arm-none-eabi-gcc -mcpu=cortex-a9`.
 
-Eight seeded faults in the generated RTL (a clear that beats a set, byte strobes ignored, OKAY for unmapped addresses,
-B before W, a lost doorbell, an interrupt that ignores its enable, a pulse that stays high, ARREADY high while a read
-response waits) must each fail the bench; all eight do. The B-before-W fault is caught by the protocol checker (rule 5, B_EARLY).
+Ten seeded faults in the generated RTL (a clear that beats a set, byte strobes ignored, SLVERR on the OKAY map and
+OKAY on the SLVERR map, B before W, a lost doorbell, an interrupt that ignores its enable, a pulse that stays high,
+ARREADY high while a read response waits, a snapshot whose high half loads one clock after its low half) must each fail
+the bench; all ten do. The B-before-W fault is caught by the protocol checker (rule 5, B_EARLY).
 
 `hwsw/tests/test_64a_regmap_formal_rtl.py` checks the AXI4-Lite handshake formally with SymbiYosys on both maps: every
 master-side signal and hardware input free, the master assumed to keep its side of the protocol, and the slave's rules
@@ -260,8 +306,9 @@ given, at most 4 clocks). `python3 -m hwsw.cfu crc32_step --variant word --out D
 operands, one result, no state; the running CRC lives in a register between calls. Two variants: `word` (the whole
 update in one clock, latency 1) and `byte` (one byte per clock, latency 4). Both are bit-exact against `model.py` and
 against zlib over whole buffers, with latency and II measured; five seeded faults are each caught. Measured out of
-context with Vivado 2026.1 on the xc7a100t: `word` 95 LUTs and 33 flip-flops, `byte` 96 LUTs and 92 flip-flops, so at 32
-bits the byte-serial form saves nothing and costs three clocks more per word; it stays as the multi-cycle test case.
+context with Vivado 2026.1 on the xc7a100t: `word` 95 LUTs and 33 flip-flops, `byte` 96 LUTs and 92 flip-flops. Alone
+the two look the same size, but inside the core (below) `byte` grows it by 148 LUTs against 371 for `word`, at 2.29
+against 1.54 cycles per byte: an area-for-speed option, kept for that.
 
 ### The wrapper on its own
 

@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 RES = ROOT / "results" / "64a_hwsw"
+STYLE = {"ex": "stall in EX", "mem": "complete in MEM"}
 NAMES = {"table": "table-driven C (1 KB table)", "bitwise": "bitwise C (no table)",
          "clmul": "carry-less multiply (Zbkc, Zbkb)", "cfu": "custom instruction crc32.w"}
 
@@ -23,7 +24,8 @@ def cycles_table(rec: dict) -> str:
         for k, by in c["kernels"].items():
             if cfg != "baseline" and k != "cfu":
                 continue                                   # the software kernels are the same on every core
-            core = "pinned core" if cfg == "baseline" else f"with crc32_step `{c['variant']}` (latency {c['latency_clocks']})"
+            core = "pinned core" if cfg == "baseline" else (f"with crc32_step `{c['variant']}` (latency "
+                                                            f"{c['latency_clocks']}), {STYLE[c.get('style') or 'ex']}")
             L.append(f"| {core} | {NAMES[k]} | " + " | ".join(str(by[n]["cycles"]) for n in sizes) +
                      f" | {by[sizes[-1]]['cycles_per_byte']:.2f} |")
     return "\n".join(L)
@@ -37,22 +39,24 @@ def speedups(rec: dict) -> str:
         if cfg == "baseline":
             continue
         for ref in ("table", "clmul"):
-            L.append(f"| `{c['variant']}` | {NAMES[ref]} | " + " | ".join(
+            L.append(f"| `{c['variant']}`, {STYLE[c.get('style') or 'ex']} | {NAMES[ref]} | " + " | ".join(
                 f"{base[ref][n]['cycles'] / c['kernels']['cfu'][n]['cycles']:.2f}x" for n in sizes) + " |")
     return "\n".join(L)
 
 
 def ooc_table(o: dict) -> str:
-    L = ["| Core | SoC LUTs | SoC FFs | core LUTs | the unit (LUTs / FFs) | DSP | WNS at " + f"{o['clock_ns']:g} ns (ns) | Fmax estimate (MHz) |",
-         "|---|---|---|---|---|---|---|---|"]
+    L = ["| Core | SoC LUTs | SoC FFs | core LUTs | wrapper (LUTs / FFs) | library unit inside it (LUTs / FFs) | DSP | WNS at "
+         f"{o['clock_ns']:g} ns (ns) | Fmax estimate (MHz) |", "|---|---|---|---|---|---|---|---|---|"]
+    lf = lambda u: "-" if not u else f"{u['lut']} / {u['ff']}"                       # noqa: E731
     for cfg, c in o["configs"].items():
         if c.get("status") != "ok":
-            L.append(f"| {cfg} | {c.get('status')} | | | | | | |")
+            L.append(f"| {cfg} | {c.get('status')} | | | | | | | |")
             continue
-        u = c.get("cfu")
-        name = "pinned core" if cfg == "baseline" else f"with crc32_step `{cfg.split('_', 1)[1]}`"
-        L.append(f"| {name} | {c['soc']['lut']} | {c['soc']['ff']} | {c['core']['lut']} | "
-                 f"{'-' if not u else str(u['lut']) + ' / ' + str(u['ff'])} | {c['soc']['dsp']} | {c['wns_ns']:.3f} | {c['fmax_mhz']:.1f} |")
+        parts = cfg.split("_")
+        name = ("pinned core" if cfg == "baseline" else f"with crc32_step `{parts[1]}`, " +
+                ("complete in MEM" if "mem" in parts else "stall in EX") + (", hierarchy kept" if "keep" in parts else ""))
+        L.append(f"| {name} | {c['soc']['lut']} | {c['soc']['ff']} | {c['core']['lut']} | {lf(c.get('cfu'))} | "
+                 f"{lf(c.get('cfu_unit'))} | {c['soc']['dsp']} | {c['wns_ns']:.3f} | {c['fmax_mhz']:.1f} |")
     return "\n".join(L)
 
 
@@ -61,4 +65,8 @@ if __name__ == "__main__":
     print(cycles_table(rec), "\n")
     print(speedups(rec), "\n")
     if (RES / "core_ooc.json").exists():
-        print(ooc_table(json.loads((RES / "core_ooc.json").read_text())))
+        print(ooc_table(json.loads((RES / "core_ooc.json").read_text())), "\n")
+    if "stale_btb" in rec:
+        print("| Configuration | stale-prediction program |\n|---|---|")
+        for k, v in rec["stale_btb"]["results"].items():
+            print(f"| {k} | {' '.join(v.split()[:2])} |")

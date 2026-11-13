@@ -6,7 +6,7 @@ name: demo_accel
 version: 0.1.0
 summary: Control and status of a stream accelerator with a descriptor ring and one interrupt.
 addr_width: 12            # a 4 KB window: one page, so a UIO map or a page-granular MMU entry covers exactly this block
-unmapped: slverr
+unmapped: okay            # holes inside this window answer OKAY and read 0 (the house default; slverr is the option)
 interrupt: {status: IRQ_STATUS, enable: IRQ_ENABLE}
 registers:
 - name: ID
@@ -29,6 +29,7 @@ registers:
   fields:
   - {name: START, lsb: 0, width: 1, access: W1P, summary: start one job}
   - {name: FLUSH, lsb: 1, width: 1, access: W1P, summary: drop buffered data}
+  - {name: SNAP, lsb: 2, width: 1, access: W1P, summary: copy JOB_CYCLES (both halves) into its shadow registers}
 - name: STATUS
   offset: 0x00C
   summary: Live state, read from the hardware.
@@ -67,8 +68,23 @@ registers:
   summary: Per-queue doorbells; software rings, the hardware clears when it has seen the new tail.
   fields:
   - {name: QUEUE, lsb: 0, width: 4, access: W1S}
+- name: JOB_CYCLES_LO
+  offset: 0x030
+  summary: Clocks spent on jobs since reset, bits 31-0 (snapshot JOB_CYCLES).
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO}
+- name: JOB_CYCLES_HI
+  offset: 0x034
+  summary: Clocks spent on jobs since reset, bits 63-32 (snapshot JOB_CYCLES).
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO}
 - name: SCRATCH
   offset: 0x0FC
   summary: Free read/write word for bus tests.
   fields:
   - {name: VALUE, lsb: 0, width: 32, access: RW, reset: 0}
+snapshot:
+- name: JOB_CYCLES
+  trigger: CMD.SNAP
+  fields: [JOB_CYCLES_LO.VALUE, JOB_CYCLES_HI.VALUE]
+  summary: a 64-bit counter read as two registers; take a snapshot first so the halves agree

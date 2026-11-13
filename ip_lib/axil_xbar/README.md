@@ -23,6 +23,10 @@ Out-of-space values fail at elaboration with `$error` (tested: `N_M=17`, `N_S=33
 
 Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
+## Registers
+
+None: the crossbar has no registers; it forwards every access, and answers DECERR with read data 0 for an address in no slave's range.
+
 ## Latency and throughput
 
 - write: 4 clocks from AWVALID and WVALID to BVALID at the master when the slave is free and answers at once (accept, forward, slave B, hand back)

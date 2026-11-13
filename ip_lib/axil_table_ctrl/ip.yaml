@@ -43,3 +43,40 @@ evidence:
 cost_table: 'pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11)'
 licence: MIT (this repository)
 constraints: []
+# The register interface, for the README's Registers section (flow/net/ipdoc.py, hwsw/regmap.py documentation-only
+# map). The block is written by hand (rtl/axil_table_ctrl.sv); this states what that RTL does, including where it
+# differs from the house register conventions (docs/hwsw.md).
+register_map:
+  regmap: 1
+  name: axil_table_ctrl
+  addr_width: 7
+  unmapped: okay
+  conventions: {strobes: ignored, reset: rst, reset_active: high, clock: clk}
+  registers:
+  - name: DATA
+    offset: 0x00
+    count: 16
+    summary: Staging data for the next command; DATAn holds bits 32n+31 to 32n of 512 (its use is the table core's).
+    fields:
+    - {name: WORD, lsb: 0, width: 32, access: WO, reset: 0}
+  - name: CMD
+    offset: 0x40
+    summary: A write issues one command to the table core. A write while STATUS.BUSY is 1 is accepted (OKAY) and ignored.
+    fields:
+    - {name: OP, lsb: 0, width: 4, access: WO, summary: the table operation (see the table core)}
+    - {name: ADDR, lsb: 16, width: 16, access: WO, summary: the table address}
+  - name: STATUS
+    offset: 0x44
+    summary: Command state; software polls BUSY after writing CMD.
+    fields:
+    - {name: BUSY, lsb: 0, width: 1, access: RO, reset: 0, summary: a command is running}
+    - {name: LAST, lsb: 4, width: 4, access: RO, reset: 0, summary: the status code of the last command to finish}
+    - {name: DONE, lsb: 16, width: 16, access: RO, reset: 0, summary: commands finished since reset (wraps)}
+  - name: ID
+    offset: 0x48
+    summary: Block identity.
+    fields:
+    - {name: VALUE, lsb: 0, width: 32, access: RO, const: 0x7AB10001}
+  staging:
+  - {name: DATA, registers: [DATA0, DATA1, DATA2, DATA3, DATA4, DATA5, DATA6, DATA7, DATA8, DATA9, DATA10, DATA11, DATA12,
+                             DATA13, DATA14, DATA15], commit: CMD}

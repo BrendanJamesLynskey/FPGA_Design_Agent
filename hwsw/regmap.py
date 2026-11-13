@@ -19,6 +19,7 @@ a C compiler (gcc or cc) for the header probe.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import hashlib
 import importlib.util
 import json
@@ -44,17 +45,49 @@ ACCESS_TEXT = {
            "set and a clear in the same clock leave the bit set",
     "W1P": "write 1 to pulse: each bit written as 1 gives a one-clock pulse on an output; reads return 0",
 }
+# Documentation only (an ip_lib entry whose register block is written by hand, described in its ip.yaml): a register
+# that holds what software writes for the hardware and reads as 0. The generator does not make it.
+DOC_ACCESS = {"WO": "write-only: the hardware uses the value written; reads return 0"}
+# Access types that would change state on a read. Refused: a read must never have a side effect (a debugger, a
+# speculative or retried read, or a driver's read-modify-write would then change the block). Pop or acknowledge with
+# a W1P bit instead (owner, 2026-11-13).
+READ_SIDE_EFFECT = {"RC": "clear on read", "RS": "set on read", "RCLR": "clear on read", "ROC": "clear on read",
+                    "RSET": "set on read", "W1CRC": "clear on read", "POP": "pop on read", "RPOP": "pop on read"}
+
+
+@dataclass(frozen=True)
+class Conventions:
+    """What a register block does in the cases a driver writer could guess wrong. The generated blocks have the house
+    values except `unmapped` (the map's own setting); a hand-written block (an ip_lib entry) states its own in ip.yaml.
+    The datasheet sentences are generated from these values (behaviour())."""
+    unmapped: str = "okay"             # okay | slverr: the response to an unmapped address inside the block's window
+    reserved: str = "zero"             # zero (read 0, writes ignored) | undefined (read undefined; write 0)
+    strobes: str = "honoured"          # honoured | ignored (WSTRB)
+    reset: str = "aresetn"             # the reset input's name
+    reset_active: str = "low"          # low | high
+    reset_style: str = "synchronous"   # synchronous | asynchronous
+    clock: str = "aclk"                # the clock every field is in
+
+
+HOUSE = Conventions()
+CONV_CHOICES = {"unmapped": ("okay", "slverr"), "reserved": ("zero", "undefined"), "strobes": ("honoured", "ignored"),
+                "reset_active": ("low", "high"), "reset_style": ("synchronous", "asynchronous")}
 NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 REG_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 C_RESERVED = {"OFFSET", "RESET", "RW_MASK", "RO_MASK", "W1C_MASK", "W1S_MASK", "W1P_MASK"}   # register-level suffixes
-MODEL_KEYS = {"regmap", "name", "version", "summary", "data_width", "addr_width", "unmapped", "interrupt", "registers"}
+MODEL_KEYS = {"regmap", "name", "version", "summary", "data_width", "addr_width", "unmapped", "interrupt", "registers",
+              "snapshot"}
+DOC_MODEL_KEYS = MODEL_KEYS | {"conventions", "staging"}       # documentation-only maps (an ip.yaml register_map)
 REG_KEYS = {"name", "offset", "summary", "fields"}
+SNAP_KEYS = {"name", "trigger", "fields", "summary"}
+STAGING_KEYS = {"name", "registers", "commit", "summary"}
 FIELD_KEYS = {"name", "lsb", "width", "access", "reset", "const", "summary"}
 # Names the generated block uses for its own signals. A register's per-register signals (wr_<reg>, rd_<reg>) and a
 # field's ports must not meet them: a register named HIT would declare wr_hit twice.
 PORT_SUFFIXES = ("_o", "_i", "_set_i", "_clr_i", "_pulse_o")
 SV_INTERNAL = {"aclk", "aresetn", "aw_got", "w_got", "aw_word", "w_data", "w_bits", "w_strb", "wr_commit", "wr_hit",
                "rd_value", "rd_hit", "irq_o", "unused_ok"}
+SNAP_SUFFIX = "_shadow"           # a snapshot field's copy: <register>_<field>_shadow; the group's load strobe: snap_<group>
 # Text that would end a comment, a docstring or a table cell in one of the outputs: every summary and the version
 # go into SystemVerilog line comments, C block comments, a Python docstring and markdown tables.
 TEXT_FORBIDDEN = ("*/", "/*", '"""', "\\", "|")
@@ -88,6 +121,7 @@ class Field:
     reset: int = 0            # value after reset (RW, W1C, W1S); the constant for a RO constant; 0 otherwise
     const: bool = False       # RO only: the value is the constant `reset`, not a hardware input
     summary: str = ""
+    hw_reset: bool = False    # documentation-only maps: a RO field whose hardware state resets to `reset`
 
     @property
     def mask(self) -> int:
@@ -108,6 +142,7 @@ class Register:
     offset: int
     fields: tuple[Field, ...]
     summary: str = ""
+    group: str = ""           # documentation-only maps: the name a `count:` register was expanded from
 
     def mask(self, access: str) -> int:
         m = 0
@@ -121,9 +156,28 @@ class Register:
         """What a read returns after reset with every hardware input low: RW/W1C/W1S reset values and RO constants."""
         v = 0
         for f in self.fields:
-            if f.access in ("RW", "W1C", "W1S") or (f.access == "RO" and f.const):
+            if f.access in ("RW", "W1C", "W1S") or (f.access == "RO" and (f.const or f.hw_reset)):
                 v |= f.reset << f.lsb
         return v
+
+
+@dataclass(frozen=True)
+class Snapshot:
+    """A value wider than one register, read consistently: writing 1 to the trigger (a W1P bit) copies every field of
+    the group into shadow registers in one clock; reads of those fields return the copy. Fields low part first."""
+    name: str
+    trigger: tuple[str, str]
+    fields: tuple[tuple[str, str], ...]
+    summary: str = ""
+
+
+@dataclass(frozen=True)
+class Staging:
+    """Documentation-only maps: registers the hardware reads only when a command register is written."""
+    name: str
+    registers: tuple[str, ...]
+    commit: str
+    summary: str = ""
 
 
 @dataclass(frozen=True)
@@ -137,6 +191,10 @@ class RegMap:
     interrupt: dict | None = None
     data_width: int = 32
     sha256: str = field(default="", compare=False)
+    snapshots: tuple[Snapshot, ...] = ()
+    staging: tuple[Staging, ...] = ()
+    doc_only: bool = False
+    conventions: Conventions = HOUSE
 
     @property
     def window_bytes(self) -> int:
@@ -148,6 +206,16 @@ class RegMap:
                 return r
         raise KeyError(name)
 
+    def field(self, reg: str, name: str) -> Field:
+        return next(f for f in self.reg(reg).fields if f.name == name)
+
+    def snapshot_of(self, reg: str, fname: str) -> Snapshot | None:
+        """The snapshot group a field belongs to (its reads return the group's copy), or None."""
+        return next((s for s in self.snapshots if (reg, fname) in s.fields), None)
+
+    def snapshot_width(self, s: Snapshot) -> int:
+        return sum(self.field(r, f).width for r, f in s.fields)
+
     def canonical(self) -> dict:
         """The model as plain data, in a fixed order: what the hash covers and what every output must agree with."""
         return {
@@ -157,6 +225,8 @@ class RegMap:
                            "fields": [{"name": f.name, "lsb": f.lsb, "width": f.width, "access": f.access,
                                        "reset": f.reset, "const": f.const} for f in r.fields]}
                           for r in self.registers],
+            **({"snapshot": [{"name": s.name, "trigger": ".".join(s.trigger), "fields": [".".join(x) for x in s.fields]}
+                             for s in self.snapshots]} if self.snapshots else {}),
         }
 
 
@@ -178,13 +248,19 @@ def load(path: str | Path) -> RegMap:
     return from_dict(d, source=str(p))
 
 
-def from_dict(d, source: str = "<dict>") -> RegMap:
+def from_dict(d, source: str = "<dict>", doc_only: bool = False) -> RegMap:
+    """Validate a regmap. doc_only: the map documents a hand-written block (an ip_lib entry's ip.yaml register_map),
+    so it may also use WO registers, `count:` (DATA0..DATAn-1), RO fields with a known hardware reset, `conventions:`
+    and `staging:`; nothing is generated from it but the datasheet."""
     errs: list[str] = []
     if not isinstance(d, dict):
         raise RegmapError(f"{source}: the top level must be a mapping")
-    extra = set(d) - MODEL_KEYS
+    extra = set(d) - (DOC_MODEL_KEYS if doc_only else MODEL_KEYS)
     if extra:
-        errs.append(f"unknown top-level keys {sorted(extra)}")
+        errs.append(f"unknown top-level keys {sorted(extra)}" +
+                    (" (conventions and staging are for documentation-only maps; a generated block has the house "
+                     "conventions, docs/hwsw.md)" if extra & {"conventions", "staging"} else ""))
+    access_ok = ACCESS + tuple(DOC_ACCESS) if doc_only else ACCESS
     if d.get("regmap") != 1:
         errs.append("regmap: must be 1 (the format version)")
     errs += text_problems("summary", d.get("summary", ""))
@@ -199,13 +275,42 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
     aw = _int(d.get("addr_width"), "addr_width", errs)
     if aw is not None and not 4 <= aw <= 32:
         errs.append(f"addr_width: {aw} must be 4..32 (the window is 2**addr_width bytes)")
-    unmapped = d.get("unmapped", "slverr")
+    unmapped = d.get("unmapped", "okay")
     if unmapped not in ("slverr", "okay"):
-        errs.append(f"unmapped: {unmapped!r} must be slverr or okay")
+        errs.append(f"unmapped: {unmapped!r} must be okay or slverr")
+    conv = {"unmapped": unmapped}
+    if doc_only and d.get("conventions") is not None:
+        c = d["conventions"]
+        if not isinstance(c, dict) or set(c) - set(Conventions.__dataclass_fields__) - {"unmapped"}:
+            errs.append(f"conventions: keys must be among {sorted(Conventions.__dataclass_fields__)}")
+        else:
+            for k, v in c.items():
+                if k == "unmapped":
+                    errs.append("conventions: give unmapped at the top level")
+                elif k in CONV_CHOICES and v not in CONV_CHOICES[k]:
+                    errs.append(f"conventions.{k}: {v!r} must be one of {', '.join(CONV_CHOICES[k])}")
+                elif not isinstance(v, str) or not NAME_RE.match(v) and k in ("reset", "clock"):
+                    errs.append(f"conventions.{k}: {v!r} must be a signal name")
+            conv.update({k: v for k, v in c.items() if k != "unmapped"})
     regs_in = d.get("registers")
     if not isinstance(regs_in, list) or not regs_in:
         errs.append("registers: must be a non-empty list")
         regs_in = []
+    if doc_only:                                   # count: N -> NAME0..NAME<N-1>, 4 bytes apart
+        grown = []
+        for r in regs_in:
+            if isinstance(r, dict) and "count" in r:
+                n = r["count"]
+                if not isinstance(n, int) or isinstance(n, bool) or not 2 <= n <= 256:
+                    errs.append(f"register {r.get('name')}: count {n!r} must be 2..256")
+                    continue
+                base = {k: v for k, v in r.items() if k != "count"}
+                off = r.get("offset") if isinstance(r.get("offset"), int) else 0
+                grown += [dict(base, name=f"{r.get('name')}{i}", offset=off + 4 * i, _group=r.get("name"),
+                               summary=str(r.get("summary", "")).replace("{n}", str(i))) for i in range(n)]
+            else:
+                grown.append(r)
+        regs_in = grown
     regs: list[Register] = []
     seen_off: dict[int, str] = {}
     seen_port: dict[str, str] = {}
@@ -216,7 +321,7 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
             continue
         rn = r.get("name")
         where = f"register {rn or i}"
-        extra = set(r) - REG_KEYS
+        extra = set(r) - REG_KEYS - {"_group"}
         if extra:
             errs.append(f"{where}: unknown keys {sorted(extra)}")
         if not isinstance(rn, str) or not REG_RE.match(rn):
@@ -251,7 +356,7 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
                 continue
             fn = f.get("name")
             fw = f"{where} field {fn or j}"
-            extra = set(f) - FIELD_KEYS
+            extra = set(f) - FIELD_KEYS - {"on_read"}
             if extra:
                 errs.append(f"{fw}: unknown keys {sorted(extra)}")
             if not isinstance(fn, str) or not REG_RE.match(fn):
@@ -265,8 +370,14 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
             lsb = _int(f.get("lsb"), f"{fw}.lsb", errs)
             width = _int(f.get("width"), f"{fw}.width", errs)
             acc = f.get("access")
-            if acc not in ACCESS:
-                errs.append(f"{fw}: access {acc!r} must be one of {', '.join(ACCESS)}")
+            if isinstance(acc, str) and acc.upper() in READ_SIDE_EFFECT:
+                errs.append(f"{fw}: access {acc!r} ({READ_SIDE_EFFECT[acc.upper()]}) changes state on a read; reads "
+                            "have no side effects in this format: pop or acknowledge with a W1P bit (docs/hwsw.md)")
+            elif acc not in access_ok:
+                errs.append(f"{fw}: access {acc!r} must be one of {', '.join(access_ok)}")
+            if "on_read" in f:
+                errs.append(f"{fw}: on_read: a read must not change state; pop or acknowledge with a W1P bit "
+                            "(docs/hwsw.md)")
             const = f.get("const")
             if lsb is None or width is None:
                 continue
@@ -280,13 +391,14 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
             used |= m
             reset = f.get("reset", 0)
             is_const = False
+            hw_reset = doc_only and acc == "RO" and "reset" in f and const is None
             if const is not None:
                 if acc != "RO":
                     errs.append(f"{fw}: const is allowed only on a RO field")
                 if "reset" in f:
                     errs.append(f"{fw}: give const or reset, not both (a constant's value is its reset)")
                 reset, is_const = const, True
-            elif acc == "RO" and "reset" in f:
+            elif acc == "RO" and "reset" in f and not doc_only:
                 errs.append(f"{fw}: a RO field without const reads a hardware input; it has no reset value")
             if acc == "W1P" and f.get("reset", 0) != 0:
                 errs.append(f"{fw}: a W1P field reads 0; its reset must be 0")
@@ -296,8 +408,8 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
             if not 0 <= rv < (1 << width):
                 errs.append(f"{fw}: value 0x{rv:x} does not fit in {width} bit{'s' if width > 1 else ''}")
                 continue
-            if acc in ACCESS:
-                fields.append(Field(fn, lsb, width, acc, rv, is_const, str(f.get("summary", ""))))
+            if acc in access_ok:
+                fields.append(Field(fn, lsb, width, acc, rv, is_const, str(f.get("summary", "")), hw_reset))
                 port = f"{rn}_{fn}".lower()
                 if {port + s for s in PORT_SUFFIXES} & SV_INTERNAL:
                     errs.append(f"{fw}: port name {port}_* would meet one of the generated block's own signals")
@@ -309,7 +421,8 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
                         errs.append(f"{fw}: port {port}{s} is also made by {full_port[port + s]}")
                     full_port.setdefault(port + s, f"{rn}.{fn}")
         if off is not None:
-            regs.append(Register(rn, off, tuple(sorted(fields, key=lambda x: x.lsb)), str(r.get("summary", ""))))
+            regs.append(Register(rn, off, tuple(sorted(fields, key=lambda x: x.lsb)), str(r.get("summary", "")),
+                                 str(r.get("_group", ""))))
     # a register's own signals (wr_<reg>, rd_<reg>) against every field's full port name (register A_O makes wr_a_o,
     # and register WR field A makes the port wr_a_o)
     for r in regs:
@@ -345,12 +458,108 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
                     errs.append(f"interrupt: status bits 0x{st.mask('W1C') & ~en.mask('RW'):08x} of {st.name} have no "
                                 f"enable bit in {en.name} (the same bit positions)")
             irq = {"status": irq["status"], "enable": irq["enable"]}
+    snaps = _snapshots(d.get("snapshot"), regs, cnames, name, errs)
+    stag = _staging(d.get("staging"), regs, errs) if doc_only else ()
     if errs:
         raise RegmapError(f"{source}:\n  " + "\n  ".join(errs))
     m = RegMap(name, str(d.get("version", "0.0.0")), str(d.get("summary", "")), aw, unmapped,
-               tuple(sorted(regs, key=lambda x: x.offset)), irq)
+               tuple(sorted(regs, key=lambda x: x.offset)), irq, snapshots=snaps, staging=stag, doc_only=doc_only,
+               conventions=Conventions(**conv))
     h = hashlib.sha256(json.dumps(m.canonical(), sort_keys=True).encode()).hexdigest()
-    return RegMap(m.name, m.version, m.summary, m.addr_width, m.unmapped, m.registers, m.interrupt, 32, h)
+    return dataclasses.replace(m, sha256=h)
+
+
+def _ref(text, regs: list[Register], what: str, errs: list[str]) -> tuple[str, str] | None:
+    """'REG.FIELD' -> (reg, field) if both exist."""
+    if not isinstance(text, str) or text.count(".") != 1:
+        errs.append(f"{what}: {text!r} must be REGISTER.FIELD")
+        return None
+    rn, fn = text.split(".")
+    r = next((x for x in regs if x.name == rn), None)
+    if r is None or not any(f.name == fn for f in r.fields):
+        errs.append(f"{what}: {text} is not a declared field")
+        return None
+    return rn, fn
+
+
+def _snapshots(raw, regs: list[Register], cnames: dict, mname: str, errs: list[str]) -> tuple[Snapshot, ...]:
+    if raw is None:
+        return ()
+    if not isinstance(raw, list) or not raw:
+        errs.append("snapshot: must be a non-empty list of groups")
+        return ()
+    out, used, trig_used = [], {}, {}
+    for i, s in enumerate(raw):
+        if not isinstance(s, dict):
+            errs.append(f"snapshot[{i}]: not a mapping")
+            continue
+        sn = s.get("name")
+        where = f"snapshot {sn or i}"
+        if set(s) - SNAP_KEYS:
+            errs.append(f"{where}: unknown keys {sorted(set(s) - SNAP_KEYS)}")
+        if not isinstance(sn, str) or not REG_RE.match(sn):
+            errs.append(f"{where}: name must be upper-case (letters, digits, _), starting with a letter")
+            continue
+        if any(x.name == sn for x in out):
+            errs.append(f"{where}: duplicate snapshot name")
+        errs += text_problems(f"{where}.summary", s.get("summary", ""))
+        tr = _ref(s.get("trigger"), regs, f"{where}.trigger", errs)
+        if tr:
+            tf = next(f for r in regs if r.name == tr[0] for f in r.fields if f.name == tr[1])
+            if tf.access != "W1P" or tf.width != 1:
+                errs.append(f"{where}.trigger: {'.'.join(tr)} must be a one-bit W1P field (writing 1 takes the copy)")
+            if tr in trig_used:
+                errs.append(f"{where}.trigger: {'.'.join(tr)} already triggers snapshot {trig_used[tr]}")
+            trig_used[tr] = sn
+        fl = s.get("fields")
+        if not isinstance(fl, list) or not fl:
+            errs.append(f"{where}.fields: must be a non-empty list of REGISTER.FIELD, low part first")
+            continue
+        refs, width = [], 0
+        for x in fl:
+            ref = _ref(x, regs, f"{where}.fields", errs)
+            if not ref:
+                continue
+            f = next(f for r in regs if r.name == ref[0] for f in r.fields if f.name == ref[1])
+            if f.access != "RO" or f.const:
+                errs.append(f"{where}.fields: {x} must be a RO field read from a hardware input (not a constant)")
+            if ref in used:
+                errs.append(f"{where}.fields: {x} is already in snapshot {used[ref]}")
+            used[ref] = sn
+            refs.append(ref)
+            width += f.width
+        if width > 64:
+            errs.append(f"{where}: {width} bits; at most 64 (the C helper returns a uint64_t)")
+        own = [f"SNAP_{sn}_{k}" for k in ("TRIGGER_OFFSET", "TRIGGER_MASK", "WIDTH")]
+        for n in own:
+            if n in cnames:
+                errs.append(f"{where}: the C name {m_name(mname)}_{n} is also made by register {cnames[n]}")
+        if tr and refs:
+            out.append(Snapshot(sn, tr, tuple(refs), str(s.get("summary", ""))))
+    # the generated block's internal names must not meet (snap_<group>, <register>_<field>_shadow)
+    names = [f"snap_{s.name.lower()}" for s in out] + [f"{r}_{f}".lower() + SNAP_SUFFIX for s in out for r, f in s.fields]
+    dup = sorted({n for n in names if names.count(n) > 1} | (set(names) & SV_INTERNAL))
+    if dup:
+        errs.append(f"snapshot: generated signal names meet: {', '.join(dup)}")
+    return tuple(out)
+
+
+def _staging(raw, regs: list[Register], errs: list[str]) -> tuple[Staging, ...]:
+    if raw is None:
+        return ()
+    out = []
+    for i, s in enumerate(raw if isinstance(raw, list) else [None]):
+        if not isinstance(s, dict) or set(s) - STAGING_KEYS or not {"name", "registers", "commit"} <= set(s):
+            errs.append(f"staging[{i}]: must be {{name, registers: [..], commit: REGISTER, summary}}")
+            continue
+        names = {r.name for r in regs}
+        missing = [x for x in list(s["registers"]) + [s["commit"]] if x not in names]
+        if missing:
+            errs.append(f"staging {s['name']}: registers not declared: {missing}")
+            continue
+        errs += text_problems(f"staging {s['name']}.summary", s.get("summary", ""))
+        out.append(Staging(str(s["name"]), tuple(s["registers"]), s["commit"], str(s.get("summary", ""))))
+    return tuple(out)
 
 
 # ---- names ---------------------------------------------------------------------------------------------------------
@@ -410,7 +619,8 @@ def emit_sv(m: RegMap) -> str:
          "// AXI4-Lite slave, 32-bit data, one outstanding read and one outstanding write. AW and W are captured",
          "// independently (either may come first); the write commits when both are held, then BVALID stays high until",
          "// BREADY. Byte strobes (WSTRB) are honoured bit by bit. Read data is registered at the AR handshake.",
-         f"// Unmapped addresses: {'SLVERR' if m.unmapped == 'slverr' else 'OKAY'} on both channels, reads return 0.",
+         f"// Unmapped addresses: {'SLVERR' if m.unmapped == 'slverr' else 'OKAY'} on both channels, reads return 0. Reads have",
+         "// no side effects. A hardware set beats a same-clock W1C clear; a W1S set beats a same-clock hardware clear.",
          f"// Only address bits [{aw - 1}:2] are decoded: the window repeats every 0x{m.window_bytes:x} bytes.",
          "// Writes to read-only bits are ignored with OKAY. Reset: synchronous, active low (aresetn).",
          "",
@@ -545,6 +755,23 @@ def emit_sv(m: RegMap) -> str:
                       f"        else {base}_pulse_o <= {wr} ? w_data{sl} & w_bits{sl} : {f.width}'h0;",
                       f"    end"]
     L.append("")
+    if m.snapshots:
+        L.append("    // ---- snapshot groups: writing 1 to the trigger copies every field of the group in the same clock;")
+        L.append("    // ---- reads of those fields return the copy (shadow), so the parts of a wide value agree ----")
+    for s in m.snapshots:
+        tr = m.field(*s.trigger)
+        g = f"snap_{s.name.lower()}"
+        L += [f"    logic {g};",
+              f"    assign {g} = wr_{s.trigger[0].lower()} && w_data[{tr.lsb}] && w_bits[{tr.lsb}];   // {'.'.join(s.trigger)}"]
+        for rn, fn in s.fields:
+            f = m.field(rn, fn)
+            base = f"{rn}_{fn}".lower()
+            L += [f"    logic {_w(f.width)}{base}{SNAP_SUFFIX};",
+                  f"    always_ff @(posedge aclk) begin",
+                  f"        if (!aresetn) {base}{SNAP_SUFFIX} <= {f.width}'h0;",
+                  f"        else if ({g}) {base}{SNAP_SUFFIX} <= {base}_i;",
+                  f"    end"]
+        L.append("")
     # read values
     L.append("    // ---- read path: the value of each register as software sees it ----")
     for r in m.registers:
@@ -552,7 +779,8 @@ def emit_sv(m: RegMap) -> str:
         for f in r.fields:
             base = f"{r.name}_{f.name}".lower()
             if f.access == "RO":
-                src = f"{f.width}'h{f.reset:x}" if f.const else f"{base}_i"
+                src = (f"{f.width}'h{f.reset:x}" if f.const else
+                       f"{base}{SNAP_SUFFIX}" if m.snapshot_of(r.name, f.name) else f"{base}_i")
             elif f.access == "W1P":
                 continue
             else:
@@ -614,6 +842,7 @@ def emit_c(m: RegMap) -> str:
          f" * Register masks by access type: {P}_R_RW_MASK, _RO_MASK, _W1C_MASK, _W1S_MASK, _W1P_MASK.",
          " * Read-modify-write rule: write back only the RW bits of what you read (value & R_RW_MASK), then OR in the",
          " * W1C/W1S/W1P bits you mean to act on; writing back a W1C bit read as 1 clears an event you have not handled.",
+         " * Reads have no side effects; commands, pops and acknowledgements are W1P bits.",
          f" * Bus access goes through {P}_IO_READ32/{P}_IO_WRITE32 (volatile 32-bit loads and stores unless defined",
          " * before this header is included, e.g. by a co-simulation harness).",
          " */",
@@ -637,6 +866,24 @@ def emit_c(m: RegMap) -> str:
             L.append(f"#define {F}_RESET 0x{f.reset:x}u")
             L.append(f"#define {F}_ACCESS {P}_ACCESS_{f.access}")
         L.append("")
+    snap_c = []
+    for s in m.snapshots:
+        tr = m.reg(s.trigger[0])
+        S = f"{P}_SNAP_{s.name}"
+        snap_c += [f"/* snapshot {s.name}: write 1 to {'.'.join(s.trigger)}, then read the parts (low part first); they "
+                   "agree with each other. Without a new snapshot the parts read the last copy (stale). */",
+                   f"#define {S}_TRIGGER_OFFSET {P}_{tr.name}_OFFSET",
+                   f"#define {S}_TRIGGER_MASK {P}_{s.trigger[0]}_{s.trigger[1]}_MASK",
+                   f"#define {S}_WIDTH {m.snapshot_width(s)}u",
+                   f"static inline uint64_t {m.name}_snapshot_{s.name.lower()}(uintptr_t base)", "{",
+                   "    uint64_t v = 0;"]
+        keep = f"({P}_IO_READ32(base + {S}_TRIGGER_OFFSET) & {P}_{tr.name}_RW_MASK) | " if tr.mask("RW") else ""
+        snap_c.append(f"    {P}_IO_WRITE32(base + {S}_TRIGGER_OFFSET, {keep}{S}_TRIGGER_MASK);")
+        sh = 0
+        for rn, fn in s.fields:
+            snap_c.append(f"    v |= (uint64_t){P}_GET({rn}, {fn}, {P}_IO_READ32(base + {P}_{rn}_OFFSET)) << {sh};")
+            sh += m.field(rn, fn).width
+        snap_c += ["    return v;", "}", ""]
     L += [f"/* field helpers: {P}_GET(R, F, word) extracts a field; {P}_PUT(R, F, v) places v in a field */",
           f"#define {P}_GET(R, F, word) (((uint32_t)(word) & {P}_##R##_##F##_MASK) >> {P}_##R##_##F##_SHIFT)",
           f"#define {P}_PUT(R, F, v) (((uint32_t)(v) << {P}_##R##_##F##_SHIFT) & {P}_##R##_##F##_MASK)",
@@ -652,7 +899,7 @@ def emit_c(m: RegMap) -> str:
           f"{{ return {P}_IO_READ32(base + offset); }}",
           f"static inline void {m.name}_write(uintptr_t base, uint32_t offset, uint32_t value)",
           f"{{ {P}_IO_WRITE32(base + offset, value); }}",
-          "",
+          "", *snap_c,
           f"#endif /* {g} */", ""]
     return "\n".join(L)
 
@@ -663,6 +910,7 @@ def emit_py(m: RegMap) -> str:
                       "fields": {f.name: {"lsb": f.lsb, "width": f.width, "access": f.access, "reset": f.reset,
                                           "const": f.const} for f in r.fields}} for r in m.registers}
     cls = "".join(w.capitalize() for w in m.name.split("_")) + "Regs"
+    snaps = {s.name: {"trigger": list(s.trigger), "fields": [list(x) for x in s.fields]} for s in m.snapshots}
     body = f'''{_banner(m, "#")}"""Host driver for {m.name}: {m.summary}
 
 Self-contained (standard library only), so it can be copied to the board. A bus is any object with
@@ -672,6 +920,7 @@ MmapBus maps a UIO device or /dev/mem window.
 
 Access rules (the same in the RTL, the C header and the documentation):
 {chr(10).join(f"  {a:4} {t}" for a, t in ACCESS_TEXT.items())}
+Reads have no side effects. snapshot(group) writes the group's W1P trigger, then reads its parts (low part first).
 """
 from __future__ import annotations
 
@@ -681,6 +930,7 @@ WINDOW_BYTES = 0x{m.window_bytes:x}
 UNMAPPED = {m.unmapped!r}
 INTERRUPT = {m.interrupt!r}
 REGISTERS = {pprint.pformat(table, sort_dicts=False, width=110)}
+SNAPSHOTS = {pprint.pformat(snaps, sort_dicts=False, width=110)}
 
 
 class RegisterError(Exception):
@@ -727,6 +977,13 @@ def _field(reg: str, field: str) -> dict:
         return _reg(reg)["fields"][field]
     except KeyError:
         raise RegisterError(f"{{NAME}}.{{reg}} has no field {{field!r}}") from None
+
+
+def _snap(group: str) -> dict:
+    try:
+        return SNAPSHOTS[group]
+    except KeyError:
+        raise RegisterError(f"{{NAME}} has no snapshot group {{group!r}}") from None
 
 
 def _plan(reg: str, field: str, value: int, want: str) -> tuple[bool, int]:
@@ -779,6 +1036,16 @@ class {cls}:
         """W1P: one-clock pulse on the given bits of the field."""
         self._w1(reg, field, bits, "W1P")
 
+    def snapshot(self, group: str) -> int:
+        """A value wider than one register, consistent: take a snapshot, then read the parts (low part first)."""
+        s = _snap(group)
+        self.pulse(*s["trigger"])
+        v, sh = 0, 0
+        for reg, field in s["fields"]:
+            v |= self.get(reg, field) << sh
+            sh += _field(reg, field)["width"]
+        return v
+
 
 class Async{cls}:
     """The same driver over a bus whose read32/write32 are coroutines (for example a cocotb AXI4-Lite master)."""
@@ -815,6 +1082,15 @@ class Async{cls}:
     async def pulse(self, reg: str, field: str, bits: int | None = None) -> None:
         await self._w1(reg, field, bits, "W1P")
 
+    async def snapshot(self, group: str) -> int:
+        s = _snap(group)
+        await self.pulse(*s["trigger"])
+        v, sh = 0, 0
+        for reg, field in s["fields"]:
+            v |= (await self.get(reg, field)) << sh
+            sh += _field(reg, field)["width"]
+        return v
+
 
 class MmapBus:
     """32-bit accesses to a mapped window: a UIO device (/dev/uioN, map 0) or /dev/mem at a physical base.
@@ -844,38 +1120,196 @@ class MmapBus:
     return body
 
 
-# ---- markdown ------------------------------------------------------------------------------------------------------
-def emit_md(m: RegMap) -> str:
-    L = [f"# {m.name} registers", "", f"<!-- {_banner(m, '').strip()} -->".replace("\n", " "), "",
-         m.summary, "",
-         f"AXI4-Lite, 32-bit registers, a 0x{m.window_bytes:x}-byte window (address bits [{m.addr_width - 1}:2] "
-         f"decoded). Unmapped addresses answer {'SLVERR' if m.unmapped == 'slverr' else 'OKAY'} and read 0. "
-         f"Version {m.version}; model sha256 `{m.sha256[:16]}`.", "",
-         "## Register map", "",
-         "| Offset | Register | Reset | Summary |", "|---|---|---|---|"]
+# ---- the datasheet: what a driver writer could guess wrong, from the map's settings ---------------------------------
+def _names(xs) -> str:
+    return ", ".join(xs)
+
+
+def _resp(u: str) -> str:
+    return "SLVERR" if u == "slverr" else "OKAY"
+
+
+def differences(m: RegMap) -> list[str]:
+    """Where this block's behaviour differs from the house register conventions (docs/hwsw.md), in plain words."""
+    c, h, out = m.conventions, HOUSE, []
+    if c.unmapped != h.unmapped:
+        out.append(f"unmapped addresses inside the block answer {_resp(c.unmapped)} (house: {_resp(h.unmapped)}, reading 0)")
+    if c.reserved != h.reserved:
+        out.append("reserved bits read an undefined value (house: they read 0)")
+    if c.strobes != h.strobes:
+        out.append("byte strobes are ignored, so every write changes the whole word (house: strobes honoured)")
+    if (c.reset, c.reset_active, c.reset_style) != (h.reset, h.reset_active, h.reset_style):
+        out.append(f"the reset is `{c.reset}`, {c.reset_style}, active {c.reset_active} (house: `{h.reset}`, "
+                   f"{h.reset_style}, active {h.reset_active})")
+    return out
+
+
+def convention_sentence(m: RegMap) -> str:
+    d = differences(m)
+    if not d:
+        return "It follows the house register conventions (docs/hwsw.md); the Behaviour section states each one."
+    return ("It differs from the house register conventions (docs/hwsw.md) in " + str(len(d)) + " way" +
+            ("s" if len(d) > 1 else "") + ": " + "; ".join(d) + ".")
+
+
+def behaviour(m: RegMap) -> list[tuple[str, str]]:
+    """(topic, sentence) for every behaviour a user could reasonably guess wrong, each generated from a setting of the
+    map (or of its conventions). hwsw/tests/test_64a_regmap.py checks that each sentence follows its setting."""
+    c = m.conventions
+    ref = lambda r, f: f"{r.name}.{f.name}"                                    # noqa: E731
+    by_acc = lambda a: [ref(r, f) for r in m.registers for f in r.fields if f.access == a]   # noqa: E731
+    out = []
+    win = f"0x{m.window_bytes:x}-byte window"
+    if c.unmapped == "okay":
+        out.append(("unmapped", f"**Unmapped addresses.** An address inside this block's {win} that holds no register "
+                    "answers OKAY and reads 0; a write there is ignored. Addresses outside the window belong to the "
+                    "interconnect (an AXI crossbar answers DECERR there)."))
+    else:
+        out.append(("unmapped", f"**Unmapped addresses.** An address inside this block's {win} that holds no register "
+                    "answers SLVERR and reads 0; a write there is ignored. On a Cortex-A9 or Cortex-A53 a SLVERR on a "
+                    "load is an external abort, so a stray access stops the program. Addresses outside the window "
+                    "belong to the interconnect (an AXI crossbar answers DECERR there)."))
+    if c.reserved == "zero":
+        out.append(("reserved", "**Reserved bits.** Bits that belong to no field read 0 and ignore writes. Write them "
+                    "as 0, so that a later version can give them a meaning."))
+    else:
+        out.append(("reserved", "**Reserved bits.** Bits that belong to no field read an undefined value: mask them "
+                    "off after a read, and write them as 0."))
+    staged = {x for g in m.staging for x in g.registers}
+    pops = by_acc("W1P")
+    wo = [r.name for r in m.registers if any(f.access == "WO" for f in r.fields) and r.name not in staged]
+    act = (f"To start, pop or acknowledge something, write 1 to its W1P bit: {_names(pops)}." if pops else
+           f"Actions happen on writes only: a write to {_names(wo)}." if wo else
+           "This block has no command bits.")
+    out.append(("side_effects", "**Reads have no side effects.** Reading any register changes nothing, so a debugger, "
+                "a retried read or a read-modify-write is safe. " + act))
+    w1c, w1s = by_acc("W1C"), by_acc("W1S")
+    pri = []
+    if w1c:
+        pri.append(f"W1C bits ({_names(w1c)}): a hardware set in the same clock as a software clear wins, so the bit "
+                   "stays set and no event is lost.")
+    if w1s:
+        pri.append(f"W1S bits ({_names(w1s)}): a software set in the same clock as a hardware clear wins, so the set "
+                   "is not lost.")
+    out.append(("priority", "**Same-clock priority (the house convention).** " + (" ".join(pri) if pri else
+                "None applies: this block has no W1C or W1S bits.")))
+    if c.strobes == "honoured":
+        out.append(("strobes", "**Partial writes.** Byte strobes (WSTRB) are honoured on every register: a byte whose "
+                    "strobe is 0 keeps its value, and in it W1C, W1S and W1P bits count as 0 (nothing is cleared, set "
+                    "or pulsed)."))
+    else:
+        out.append(("strobes", "**Partial writes.** Byte strobes (WSTRB) are ignored on every register: every write "
+                    "changes the whole 32-bit word, so a CPU's byte or halfword store overwrites the other bytes. Use "
+                    "32-bit stores only."))
+    out.append(("access", f"**Access width and alignment.** 32-bit registers on a {m.data_width}-bit AXI4-Lite bus. "
+                "AXI4-Lite has no transfer size: a CPU's byte or halfword load reads the whole word, and its store "
+                "arrives as a word write with fewer strobes (see Partial writes). Address bits [1:0] are not decoded, "
+                f"so an unaligned address reaches the word that holds it; only bits [{m.addr_width - 1}:2] are "
+                f"decoded, so the window repeats every 0x{m.window_bytes:x} bytes. Use aligned 32-bit accesses."))
+    mw = []
+    for s in m.snapshots:
+        parts = ", then ".join(".".join(x) for x in s.fields)
+        mw.append(f"Snapshot group {s.name} ({m.snapshot_width(s)} bits: {parts}, low part first): write 1 to "
+                  f"{'.'.join(s.trigger)} to copy the whole value into shadow registers in one clock, then read the "
+                  "parts in any order; they belong to the same instant. A read without a new snapshot returns the copy "
+                  "from the last one (stale), not the live value; the copies read 0 after reset.")
+    for g in m.staging:
+        mw.append(f"Staging group {g.name} ({g.registers[0]} to {g.registers[-1]}, {32 * len(g.registers)} bits): "
+                  f"the hardware uses these registers only for a command (a write to {g.commit}). Write them in any "
+                  f"order before writing {g.commit}, and leave them unchanged until that command has finished.")
+    if m.snapshots:
+        mw.append("Every other register is read on its own, so a value split across two of them can tear.")
+    elif not m.staging:
+        mw.append("No snapshot groups: every register is read on its own, so a value split across two registers (a "
+                  "HI and a LO) can tear if it changes between the two reads. Give such a value a snapshot group.")
+    out.append(("multiword", "**Values wider than 32 bits.** " + " ".join(mw)))
+    hw = [ref(r, f) for r in m.registers for f in r.fields if f.hw_input and not f.hw_reset and not
+          m.snapshot_of(r.name, f.name)]
+    rs = (f"**Reset.** `{c.reset}`, {c.reset_style}, active {c.reset_active}" +
+          (f" (sampled on the rising edge of `{c.clock}`)" if c.reset_style == "synchronous" else "") + ". Every "
+          "stored field takes the reset value in its table" + ("; W1P bits read 0" if pops else "") +
+          ("; snapshot copies read 0" if m.snapshots else "") + ". ")
+    rs += (f"Not reset by this block: the RO fields that read a hardware input ({_names(hw)}); they show their "
+           "input's value." if hw else "Every register is reset.")
+    out.append(("reset", rs))
+    if m.interrupt:
+        st, en = m.interrupt["status"], m.interrupt["enable"]
+        bits = _names(f.name for f in m.reg(st).fields)
+        out.append(("interrupt", f"**Interrupt.** `irq_o` is a level output from a register: high while any bit of {st} "
+                    f"({bits}) is set together with the same bit of {en}. Clear the cause by writing 1 to its {st} bit "
+                    "(W1C); the line falls one clock after the clear takes effect. A clear never loses a new event (a "
+                    "hardware set in the same clock wins), but events of the same cause between the handler's read and "
+                    "its clear merge into one: count them elsewhere if each one matters. Clear the cause before "
+                    "unmasking the line at the interrupt controller."))
+    else:
+        out.append(("interrupt", "**Interrupt.** None: this block has no interrupt output; software polls its status."))
+    out.append(("clock", f"**Clock domain and timing.** Every field is in the `{c.clock}` domain; hardware inputs must "
+                f"be synchronous to `{c.clock}` (the block has no synchronisers). A write takes effect on the hardware "
+                "in the clock its write response (BVALID) is raised" + (", and a W1P pulse is high for exactly that "
+                "clock" if pops else "") + ". A read returns the hardware's values as they were in the clock the read "
+                "address was accepted."))
+    return out
+
+
+def _field_rows(m: RegMap, r: Register) -> list[str]:
+    L = ["| Bits | Field | Access | Reset | Summary |", "|---|---|---|---|---|"]
+    for f in sorted(r.fields, key=lambda x: -x.lsb):
+        bits = f"{f.msb}" if f.width == 1 else f"{f.msb}:{f.lsb}"
+        s = m.snapshot_of(r.name, f.name)
+        rst = ("0" if s or f.access in ("W1P", "WO") and not f.reset else
+               "hw" if f.hw_input and not f.hw_reset else f"0x{f.reset:x}")
+        acc = "RO const" if f.const else f.access
+        summ = f.summary + (f" (snapshot {s.name}: reads the copy taken by {'.'.join(s.trigger)})" if s else "")
+        L.append(f"| {bits} | {f.name} | {acc} | {rst} | {summ.strip()} |")
+    return L
+
+
+def datasheet(m: RegMap, level: int = 2) -> list[str]:
+    """Register table, access types, Behaviour, each register's fields and the snapshot groups: the generated
+    register document's body, and the "Registers" section of an ip_lib README (flow/net/ipdoc.py)."""
+    h = "#" * level
+    L = [f"{h} Register map", "", "| Offset | Register | Reset | Summary |", "|---|---|---|---|"]
     for r in m.registers:
         L.append(f"| 0x{r.offset:03x} | {r.name} | 0x{r.reset:08x} | {r.summary} |")
     L += ["", "Reset is what a read returns after reset with every hardware input low.", "",
-          "## Access types", "", "| Access | Meaning |", "|---|---|"]
-    for a, t in ACCESS_TEXT.items():
-        L.append(f"| {a} | {t} |")
-    L.append("")
+          f"{h} Access types", "", "| Access | Meaning |", "|---|---|"]
+    used = {f.access for r in m.registers for f in r.fields}
+    for a, t in {**ACCESS_TEXT, **DOC_ACCESS}.items():
+        if a in used or (a in ACCESS and not m.doc_only):
+            L.append(f"| {a} | {t} |")
+    L += ["", f"{h} Behaviour", ""] + [f"- {s}" for _, s in behaviour(m)] + [""]
+    done = set()
     for r in m.registers:
-        L += [f"## {r.name} (0x{r.offset:03x})", ""]
+        if r.group:                                   # a count: register: one section for the whole run
+            if r.group in done:
+                continue
+            done.add(r.group)
+            run = [x for x in m.registers if x.group == r.group]
+            L += [f"{h} {run[0].name} to {run[-1].name} (0x{run[0].offset:03x} to 0x{run[-1].offset:03x}, "
+                  f"{len(run)} registers, the same fields)", ""]
+        else:
+            L += [f"{h} {r.name} (0x{r.offset:03x})", ""]
         if r.summary:
             L += [r.summary, ""]
-        L += ["| Bits | Field | Access | Reset | Summary |", "|---|---|---|---|---|"]
-        for f in sorted(r.fields, key=lambda x: -x.lsb):
-            bits = f"{f.msb}" if f.width == 1 else f"{f.msb}:{f.lsb}"
-            rst = "hw" if f.hw_input else ("0" if f.access == "W1P" else f"0x{f.reset:x}")
-            acc = "RO const" if f.const else f.access
-            L.append(f"| {bits} | {f.name} | {acc} | {rst} | {f.summary} |")
+        L += _field_rows(m, r) + [""]
+    if m.snapshots:
+        L += [f"{h} Snapshot groups", "", "| Group | Trigger | Fields, low part first | Bits | Summary |",
+              "|---|---|---|---|---|"]
+        for s in m.snapshots:
+            L.append(f"| {s.name} | {'.'.join(s.trigger)} | {', '.join('.'.join(x) for x in s.fields)} | "
+                     f"{m.snapshot_width(s)} | {s.summary} |")
         L.append("")
-    if m.interrupt:
-        L += ["## Interrupt", "",
-              f"`irq_o` is a level output, registered: high while any bit of {m.interrupt['status']} is set and the "
-              f"same bit of {m.interrupt['enable']} is set. Clear the cause by writing 1 to the {m.interrupt['status']} "
-              "bit (W1C); the line drops one clock after the clear.", ""]
+    return L
+
+
+# ---- markdown ------------------------------------------------------------------------------------------------------
+def emit_md(m: RegMap) -> str:
+    L = [f"# {m.name} registers", "", f"<!-- {_banner(m, '').strip()} -->".replace("\n", " "), "",
+         f"{m.summary} {convention_sentence(m)}".strip(), "",
+         f"AXI4-Lite, 32-bit registers, a 0x{m.window_bytes:x}-byte window (address bits [{m.addr_width - 1}:2] "
+         f"decoded). Unmapped addresses answer {_resp(m.unmapped)} and read 0. "
+         f"Version {m.version}; model sha256 `{m.sha256[:16]}`.", ""]
+    L += datasheet(m)
     L += ["## Hardware ports", "", "| Port | Direction | Width |", "|---|---|---|"]
     for d, n, w in ports(m):
         L.append(f"| `{n}` | {d} | {w} |")
@@ -892,6 +1326,10 @@ def generate(m: RegMap, out: str | Path) -> dict[str, Path]:
     for r in m.registers:
         errs += text_problems(f"register {r.name}.summary", r.summary)
         errs += [e for f in r.fields for e in text_problems(f"register {r.name} field {f.name}.summary", f.summary)]
+    for s in m.snapshots:
+        errs += text_problems(f"snapshot {s.name}.summary", s.summary)
+    if m.doc_only:
+        errs.append(f"{m.name} is a documentation-only map (a hand-written block): nothing to generate but the datasheet")
     if errs:
         raise RegmapError("cannot generate:\n  " + "\n  ".join(errs))
     out = Path(out)
@@ -928,6 +1366,10 @@ def read_c(m: RegMap, header: Path, cc: str | None = None) -> dict:
             F = f"{R}_{f.name}"
             lines.append(f'  printf("F {r.name} {f.name} %u %u %u %u %u\\n", (unsigned){F}_SHIFT, (unsigned){F}_WIDTH, '
                          f'(unsigned){F}_MASK, (unsigned){F}_RESET, (unsigned){F}_ACCESS);')
+    for s in m.snapshots:
+        S = f"{P}_SNAP_{s.name}"
+        lines.append(f'  printf("S {s.name} %u %u %u\\n", (unsigned){S}_TRIGGER_OFFSET, (unsigned){S}_TRIGGER_MASK, '
+                     f'(unsigned){S}_WIDTH);')
     lines += [f'  printf("W %u\\n", (unsigned){P}_WINDOW_BYTES);', "  return 0;", "}"]
     with tempfile.TemporaryDirectory() as td:
         src = Path(td) / "probe.c"
@@ -953,6 +1395,8 @@ def read_c(m: RegMap, header: Path, cc: str | None = None) -> dict:
                 got[t[1]]["fields"][t[2]]["mask_mismatch"] = mk
         elif t[0] == "W":
             got["__window__"] = int(t[1])
+        elif t[0] == "S":
+            got.setdefault("__snap__", {})[t[1]] = {"offset": int(t[2]), "mask": int(t[3]), "width": int(t[4])}
     for rn, ms in masks.items():
         for a, v in ms.items():
             calc = 0
@@ -972,6 +1416,8 @@ def read_py(m: RegMap, module: Path) -> dict:
                "fields": {fn: {k: f[k] for k in ("lsb", "width", "access", "reset")} for fn, f in r["fields"].items()}}
            for n, r in mod.REGISTERS.items()}
     got["__window__"] = mod.WINDOW_BYTES
+    got["__snap__"] = {n: {"trigger": ".".join(s["trigger"]), "fields": [".".join(x) for x in s["fields"]]}
+                       for n, s in getattr(mod, "SNAPSHOTS", {}).items()}
     if mod.REGMAP_SHA256 != m.sha256:
         got["__sha__"] = mod.REGMAP_SHA256
     return got
@@ -988,6 +1434,11 @@ def read_md(md: Path) -> dict:
         mh = re.match(r"^## ([A-Z][A-Z0-9_]*) \(0x([0-9a-f]+)\)$", ln)
         if mh:
             cur = mh.group(1)
+            continue
+        ms = re.match(r"^\| ([A-Z][A-Z0-9_]*) \| ([A-Z][A-Z0-9_]*\.[A-Z][A-Z0-9_]*) \| ([A-Z0-9_., ]+) \| (\d+) \|", ln)
+        if ms:
+            got.setdefault("__snap__", {})[ms.group(1)] = {"trigger": ms.group(2), "fields": ms.group(3).split(", "),
+                                                           "width": int(ms.group(4))}
             continue
         mf = re.match(r"^\| (\d+)(?::(\d+))? \| ([A-Z][A-Z0-9_]*) \| (RW|RO|RO const|W1C|W1S|W1P) \| (hw|0|0x[0-9a-f]+) \|", ln)
         if mf and cur:
@@ -1071,7 +1522,9 @@ def agreement(m: RegMap, out: Path) -> list[str]:
             errs.append(f"{kind}: window {got['__window__']} bytes, the YAML says {m.window_bytes}")
 
     try:
-        cmp("C header", read_c(m, out / names["h"]))
+        c = read_c(m, out / names["h"])
+        cmp("C header", c)
+        errs += snapshot_agreement(m, {"C header": c.get("__snap__", {})})
     except (RuntimeError, KeyError, ValueError, IndexError) as ex:
         errs.append(f"C header: cannot be read back: {ex}")
     try:
@@ -1079,15 +1532,40 @@ def agreement(m: RegMap, out: Path) -> list[str]:
         if "__sha__" in g:
             errs.append(f"Python driver: model hash {g['__sha__'][:16]} is not the YAML's {m.sha256[:16]}")
         cmp("Python driver", g)
+        errs += snapshot_agreement(m, {"Python driver": g["__snap__"]})
     except Exception as ex:  # noqa: BLE001 (a broken generated module is a finding, not a crash)
         errs.append(f"Python driver: cannot be imported: {type(ex).__name__}: {ex}")
-    cmp("markdown", read_md(out / names["md"]))
+    md = read_md(out / names["md"])
+    cmp("markdown", md)
+    errs += snapshot_agreement(m, {"markdown": md.get("__snap__", {})})
     sv = read_sv(m, out / names["sv"])
     cmp("SystemVerilog", sv, fields=False)
     errs += compile_sv(out / names["sv"])
     if sv["__ports__"] != ports(m):
         want, have = set(ports(m)), set(sv["__ports__"])
         errs.append(f"SystemVerilog: ports differ: missing {sorted(want - have)}, unexpected {sorted(have - want)}")
+    return errs
+
+
+def snapshot_agreement(m: RegMap, got: dict[str, dict]) -> list[str]:
+    """Each output's snapshot groups against the YAML: the trigger and the parts (or, for the C header, the trigger's
+    offset and mask), and the width."""
+    errs = []
+    for kind, g in got.items():
+        if set(g) != {s.name for s in m.snapshots}:
+            errs.append(f"{kind}: snapshot groups {sorted(g)}, the YAML says {sorted(s.name for s in m.snapshots)}")
+            continue
+        for s in m.snapshots:
+            x = g[s.name]
+            if "offset" in x:
+                tr = m.reg(s.trigger[0])
+                want = {"offset": tr.offset, "mask": m.field(*s.trigger).mask, "width": m.snapshot_width(s)}
+            else:
+                want = {"trigger": ".".join(s.trigger), "fields": [".".join(f) for f in s.fields]}
+                if "width" in x:
+                    want["width"] = m.snapshot_width(s)
+            if x != want:
+                errs.append(f"{kind}: snapshot {s.name} is {x}, the YAML says {want}")
     return errs
 
 

@@ -61,8 +61,17 @@ MUTANTS = [
     ("strobes_ignored", STRESS,
      "assign w_bits = {{8{w_strb[3]}}, {8{w_strb[2]}}, {8{w_strb[1]}}, {8{w_strb[0]}}};",
      "assign w_bits = 32'hffffffff;", ["byte_strobes"]),
-    ("unmapped_okay", DEMO, "localparam logic [1:0] RESP_UNMAPPED = 2'b10;", "localparam logic [1:0] RESP_UNMAPPED = 2'b00;",
-     ["unmapped_addresses"]),
+    # both unmapped settings are tested: OKAY (demo_accel, the default) and SLVERR (stress, the option)
+    ("unmapped_slverr_on_okay_map", DEMO, "localparam logic [1:0] RESP_UNMAPPED = 2'b00;",
+     "localparam logic [1:0] RESP_UNMAPPED = 2'b10;", ["unmapped_addresses"]),
+    ("unmapped_okay_on_slverr_map", STRESS, "localparam logic [1:0] RESP_UNMAPPED = 2'b10;",
+     "localparam logic [1:0] RESP_UNMAPPED = 2'b00;", ["unmapped_addresses"]),
+    # the snapshot's high part loaded one clock after the low part: the halves of a 64-bit counter disagree at a carry
+    ("snapshot_halves_apart", DEMO,
+     "        else if (snap_job_cycles) job_cycles_hi_value_shadow <= job_cycles_hi_value_i;",
+     "        else if (snap_late) job_cycles_hi_value_shadow <= job_cycles_hi_value_i;\n"
+     "    end\n    logic snap_late;\n    always_ff @(posedge aclk) begin\n        snap_late <= snap_job_cycles;",
+     ["snapshot_reads_across_a_carry"]),
     ("b_before_w", DEMO, "assign wr_commit      = aw_got && w_got && !s_axil_bvalid;",
      "assign wr_commit      = aw_got && !s_axil_bvalid;", ["random_soak_against_model"]),
     ("w1s_lost", STRESS,

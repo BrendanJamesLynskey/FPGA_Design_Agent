@@ -4,7 +4,7 @@ and each patched configuration that run_bench.py prepared, one after the other, 
 side by side in results/64a_hwsw/core_ooc.json, with each run's raw reports in results/64a_hwsw/core_ooc/<config>/.
 
     python3 hwsw/cfu_core/run_bench.py            # first: prepares build/64a/cfu/<config>/
-    python3 hwsw/cfu_core/core_ooc.py [--configs baseline,cfu_word,cfu_byte,cfu_word_keep] [--period 10]
+    python3 hwsw/cfu_core/core_ooc.py [--configs baseline,cfu_word,cfu_byte,cfu_word_mem,cfu_byte_mem] [--period 10]
 
 A configuration name ending in _keep builds the same RTL as the name without it, with the library unit's hierarchy
 kept in synthesis (CFU_KEEP_UNIT): no logic can move across the unit's boundary, which separates the unit's own logic
@@ -94,7 +94,7 @@ def parse(d: Path) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python3 hwsw/cfu_core/core_ooc.py", description=__doc__.split("\n\n")[0])
-    ap.add_argument("--configs", default="baseline,cfu_word,cfu_byte")
+    ap.add_argument("--configs", default="baseline,cfu_word,cfu_byte,cfu_word_mem,cfu_byte_mem")
     ap.add_argument("--period", type=float, default=10.0)
     ap.add_argument("--out", default=str(ROOT / "results" / "64a_hwsw" / "core_ooc.json"))
     ap.add_argument("--parse-only", action="store_true", help="rebuild the record from earlier runs' reports")

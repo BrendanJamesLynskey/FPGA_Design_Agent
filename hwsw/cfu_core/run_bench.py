@@ -2,8 +2,16 @@
 """Build an ip_lib entry into the BRV32P RV32 core as a custom instruction and measure it against pure software
 (brief 64A+). Simulation only (Icarus Verilog 12); nothing is changed in the core's own repository.
 
-    python3 hwsw/cfu_core/run_bench.py                       # baseline + both crc32_step variants -> results/64a_hwsw/
-    python3 hwsw/cfu_core/run_bench.py --variants word --no-baseline --out build/64a/cfu_quick.json
+    python3 hwsw/cfu_core/run_bench.py                       # baseline + both variants in both styles -> results/64a_hwsw/
+    python3 hwsw/cfu_core/run_bench.py --variants word --styles mem --no-baseline --out build/64a/cfu_quick.json
+
+Two integration styles (hwsw/cfu.py): `ex` (configurations cfu_word, cfu_byte) stalls EX for the unit's latency, with
+the divider's handshake (brv32p_cfu.patch); `mem` (cfu_word_mem, cfu_byte_mem) issues the unit as the instruction
+leaves EX and takes its result in MEM like the multiplier, with a use hazard for a dependent next instruction
+(brv32p_cfu_mem.patch). Both also get brv32p_mispredict_hold.patch: the pinned core acts on a branch mispredict even
+while EX is stalled, which flushes the stalled instruction; the patch holds it until EX moves on. A directed program
+(bench/stale_btb.c: a custom instruction written over a trained taken branch, so the predictor still predicts it taken)
+shows the EX style loses the instruction without that patch; it runs on every configuration and is recorded.
 
 For each configuration:
   1. copy the pinned core (hwsw/cfu_core/brv32p, see PINNED.md) to build/64a/cfu/<config>/;
@@ -40,6 +48,9 @@ from ip_lib.crc32_step.model import crc32_word  # noqa: E402
 HERE = Path(__file__).resolve().parent
 PINNED = HERE / "brv32p"
 PATCH = HERE / "brv32p_cfu.patch"
+PATCH_MEM = HERE / "brv32p_cfu_mem.patch"
+PATCH_HOLD = HERE / "brv32p_mispredict_hold.patch"
+STYLES = ("ex", "mem")
 BUILD = ROOT / "build" / "64a" / "cfu"
 SIZES = [16, 64, 256, 1024]
 KERNELS = ["table", "bitwise", "clmul", "cfu"]
@@ -77,15 +88,21 @@ def bench_data(path: Path) -> None:
     path.write_text("\n".join(L) + "\n")
 
 
-def prepare(cfg: str, variant: str | None) -> Path:
+def cfg_name(variant: str, style: str) -> str:
+    return f"cfu_{variant}" + ("" if style == "ex" else f"_{style}")
+
+
+def prepare(cfg: str, variant: str | None, style: str = "ex", hold_fix: bool = True) -> Path:
     d = BUILD / cfg
     if d.exists():
         shutil.rmtree(d)
     shutil.copytree(PINNED, d)
     (d / "rtl" / "cfu").mkdir()
     if variant:
-        sh(["patch", "-p1", "-s", "-i", PATCH], cwd=d)
-        cfu.generate("crc32_step", variant, d / "rtl" / "cfu")
+        sh(["patch", "-p1", "-s", "-i", PATCH if style == "ex" else PATCH_MEM], cwd=d)
+        if hold_fix:
+            sh(["patch", "-p1", "-s", "-i", PATCH_HOLD], cwd=d)
+        cfu.generate("crc32_step", variant, d / "rtl" / "cfu", style=style)
     return d
 
 
@@ -107,6 +124,28 @@ def build_program(d: Path, with_cfu: bool) -> tuple[Path, str]:
     (b / "crc.dis").write_text(sh([f"{CROSS}objdump", "-d", b / "crc.elf"]))
     tohost = next(ln.split()[0] for ln in sh([f"{CROSS}nm", b / "crc.elf"]).splitlines() if ln.endswith(" tohost"))
     return b, tohost
+
+
+def build_stale_btb(d: Path) -> tuple[Path, str]:
+    """bench/stale_btb.c for this configuration: the custom instruction over a trained taken branch."""
+    b = d / "stale"
+    b.mkdir(exist_ok=True)
+    tb = d / "tests" / "bench"
+    a, bb = 0x12345678, 0x9ABCDEF0
+    defs = [f"-DSTALE_A=0x{a:08x}u", f"-DSTALE_B=0x{bb:08x}u", f"-DSTALE_EXPECT=0x{crc32_word(a, bb):08x}u"]
+    sh([f"{CROSS}gcc", *CFLAGS, f"-march={MARCH}", *defs, "-I", tb, "-static", "-nostdlib", "-nostartfiles",
+        "-T", tb / "link.ld", tb / "crt.S", HERE / "bench" / "stale_btb.c", "-o", b / "crc.elf"])
+    sh([f"{CROSS}objcopy", "-O", "binary", b / "crc.elf", b / "crc.bin"])
+    sh([sys.executable, d / "tests" / "isa" / "elf2hex.py", b / "crc.bin", b / "crc.hex"])
+    tohost = next(ln.split()[0] for ln in sh([f"{CROSS}nm", b / "crc.elf"]).splitlines() if ln.endswith(" tohost"))
+    return b, tohost
+
+
+def stale_btb(variant: str, style: str, hold_fix: bool) -> str:
+    """Run the directed stale-prediction program on one configuration; returns its RESULT line."""
+    d = prepare(f"stale_{cfg_name(variant, style)}_{'fixed' if hold_fix else 'pinned'}", variant, style, hold_fix)
+    prog, tohost = build_stale_btb(d)
+    return simulate(d, prog, tohost, True)["result"]
 
 
 def simulate(d: Path, prog: Path, tohost: str, with_cfu: bool) -> dict:
@@ -162,7 +201,7 @@ def kernels(marks: dict, with_cfu: bool) -> dict:
     return out
 
 
-def run(variants: list[str], baseline: bool) -> dict:
+def run(variants: list[str], baseline: bool, styles: tuple[str, ...] = STYLES, stale: bool = True) -> dict:
     tool = {"gcc": sh([f"{CROSS}gcc", "--version"]).splitlines()[0], "iverilog": sh(["iverilog", "-V"]).splitlines()[0]}
     pinned = (HERE / "PINNED.md").read_text().split("commit ")[1].split()[0] if (HERE / "PINNED.md").exists() else "?"
     rec = {"schema": "cfu_bench/1", "core": f"BRV32P (RISCV_RV32IMC_5stage) at {pinned}, pinned copy in hwsw/cfu_core/brv32p",
@@ -170,36 +209,53 @@ def run(variants: list[str], baseline: bool) -> dict:
            "program": "hwsw/cfu_core/bench/crc_bench.c, -O2, rv32imc_zicsr (clmul kernel: + zbkb_zbkc)",
            "simulator": tool["iverilog"], "compiler": tool["gcc"], "sizes_bytes": SIZES,
            "cycles": "from BENCH_MARK(2k) retiring to BENCH_MARK(2k+1) retiring, caches warmed by a first call",
+           "styles": {"ex": "the unit in EX, holding the pipeline for its latency (the divider's handshake)",
+                      "mem": "issued as the instruction leaves EX, result taken in MEM like a multiply, a use hazard "
+                             "for a dependent next instruction, MEM held for latency - 1 clocks"},
            "configs": {}}
-    cfgs = ([("baseline", None)] if baseline else []) + [(f"cfu_{v}", v) for v in variants]
-    for cfg, v in cfgs:
-        d = prepare(cfg, v)
+    cfgs = ([("baseline", None, None)] if baseline else []) + [(cfg_name(v, s), v, s) for s in styles for v in variants]
+    for cfg, v, s in cfgs:
+        d = prepare(cfg, v, s or "ex")
         prog, tohost = build_program(d, v is not None)
         sim = simulate(d, prog, tohost, v is not None)
         if not sim["result"].startswith("RESULT PASS"):
             raise RuntimeError(f"{cfg}: {sim['result']} (a CRC differs from zlib, or the core trapped or hung)")
-        rec["configs"][cfg] = {"variant": v, "latency_clocks": cfu.latency("crc32_step", v) if v else None,
+        rec["configs"][cfg] = {"variant": v, "style": s, "latency_clocks": cfu.latency("crc32_step", v) if v else None,
                                "result": sim["result"], "kernels": kernels(sim["marks"], v is not None)}
-        if v:
+        if v and s == "ex":
             rec["configs"][cfg]["monitor"] = sim["monitor"]
         print(f"{cfg}: {sim['result']}", flush=True)
     if baseline and variants:
         base = rec["configs"]["baseline"]["kernels"]
-        for cfg, v in cfgs[1:]:
+        for cfg, v, s in cfgs[1:]:
             for k in ("table", "bitwise", "clmul"):
                 if rec["configs"][cfg]["kernels"][k] != base[k]:
                     raise RuntimeError(f"{cfg}: the patch changed the cycles of the software kernel {k}")
         rec["patch_is_transparent"] = "table, bitwise and clmul cycles equal in the baseline and every patched core"
+    if stale and variants:
+        # the mispredict-while-stalled check: the EX style without the hold patch (the pinned core's behaviour) must
+        # lose the instruction, so the program can reach the case; every patched configuration must pass
+        v = variants[0]
+        res = {f"{cfg_name(v, s)}_{'fixed' if f else 'pinned'}": stale_btb(v, s, f) for s in styles for f in (False, True)}
+        rec["stale_btb"] = {"program": "hwsw/cfu_core/bench/stale_btb.c", "variant": v, "results": res}
+        for k, r in res.items():
+            want = "FAIL" if k == f"{cfg_name(v, 'ex')}_pinned" else "PASS"
+            if not r.startswith(f"RESULT {want}"):
+                raise RuntimeError(f"stale_btb {k}: {r}, expected RESULT {want}")
+            print(f"stale_btb {k}: {r}", flush=True)
     return rec
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python3 hwsw/cfu_core/run_bench.py", description=__doc__.split("\n\n")[0])
     ap.add_argument("--variants", default="word,byte")
+    ap.add_argument("--styles", default="ex,mem")
+    ap.add_argument("--no-stale", action="store_true", help="skip the directed stale-prediction program")
     ap.add_argument("--no-baseline", action="store_true")
     ap.add_argument("--out", default=str(ROOT / "results" / "64a_hwsw" / "cfu_crc32.json"))
     a = ap.parse_args(argv)
-    rec = run([v for v in a.variants.split(",") if v], not a.no_baseline)
+    rec = run([v for v in a.variants.split(",") if v], not a.no_baseline, tuple(s for s in a.styles.split(",") if s),
+              not a.no_stale)
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(rec, indent=1) + "\n")
     for cfg, c in rec["configs"].items():

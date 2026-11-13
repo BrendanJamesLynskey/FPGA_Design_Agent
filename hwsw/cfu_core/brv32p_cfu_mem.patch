@@ -1,0 +1,110 @@
+diff -ruN a/rtl/core/brv32p_core.v b/rtl/core/brv32p_core.v
+--- a/rtl/core/brv32p_core.v
++++ b/rtl/core/brv32p_core.v
+@@ -3,6 +3,7 @@
+ // ============================================================================
+ 
+ `include "brv32p_bp.vh"
++`include "cfu_ops.vh"          // the generated unit's module name and encodings (hwsw/cfu.py)
+ 
+ module brv32p_core #(
+   parameter [31:0] RESET_PC = 32'h0000_0000,
+@@ -66,10 +67,11 @@
+   assign dmem_stall = (dmem_rd | dmem_wr) & ~dmem_ready;
+   assign imem_stall = imem_rd & ~imem_ready;
+   wire mq_stall;      // mqmul2's first cycle in MEM (mq_unit.v)
+-  assign mem_stall  = dmem_stall | imem_stall | mq_stall;
++  wire cfu_stall;     // a custom instruction in MEM waiting for its unit (MEM-completion style)
++  assign mem_stall  = dmem_stall | imem_stall | mq_stall | cfu_stall;
+   // The D-cache needs this for uncached (peripheral) accesses: a finished
+   // access must not be repeated while the instruction is still held in MEM
+-  assign dmem_hold  = imem_stall | mq_stall;
++  assign dmem_hold  = imem_stall | mq_stall | cfu_stall;
+ 
+   // ════════════════════════════════════════════════════════════════════
+   // IF — Instruction Fetch
+@@ -647,11 +649,34 @@
+     .stall      (mq_stall)
+   );
+ 
++  // A generated custom-instruction unit (custom-2, hwsw/cfu.py), MEM-completion style: issued as the instruction
++  // leaves EX (its operands from the forwarding path, the values the EX/MEM register takes in the same clock), its
++  // result taken here in MEM like a multiply's. The hazard unit holds a dependent next instruction for one clock (as
++  // after a load); a unit of latency L holds MEM for L - 1 clocks (cfu_stall). An instruction issued always reaches
++  // MEM and completes: the issue waits for a clock in which EX moves on and no trap flushes it.
++  wire        cfu_ex  = valid_ex && (raw_ex[6:0] == OP_CUSTOM2) && !ctrl_ex[`CTRL_ILLEGAL];
++  wire        cfu_mem = valid_mem && (raw_mem[6:0] == OP_CUSTOM2) && !ctrl_mem[`CTRL_ILLEGAL];
++  wire [31:0] cfu_result;
++  `CFU_MODULE u_cfu (
++    .clk    (clk),
++    .rst_n  (rst_n),
++    .issue  (cfu_ex && !mem_stall && !stall_ex && !flush_mem),
++    .in_mem (cfu_mem),
++    .hold   (dmem_stall | imem_stall | mq_stall),
++    .funct3 (raw_ex[14:12]),
++    .funct7 (raw_ex[31:25]),
++    .a      (rs1_fwd),
++    .b      (rs2_fwd),
++    .result (cfu_result),
++    .stall  (cfu_stall)
++  );
++
+   // MEM result
+   wire [31:0] mem_result;
+   assign mem_result = ctrl_mem[`CTRL_MEM_RD] ? dmem_rdata :
+                       mul_mem                ? mul_result :
+-                      mq_mem                 ? mq_result  : ex_result_mem;
++                      mq_mem                 ? mq_result  :
++                      cfu_mem                ? cfu_result : ex_result_mem;
+ 
+   // Trap logic
+   wire        irq_pending;
+@@ -798,7 +823,7 @@
+     .ex_rd            (rd_addr_ex),
+     .ex_reg_wr        (ctrl_ex[`CTRL_REG_WR]),
+     .ex_mem_rd        (ctrl_ex[`CTRL_MEM_RD]),
+-    .ex_mul           (mul_ex || mq_wr_ex),
++    .ex_mul           (mul_ex || mq_wr_ex || cfu_ex),
+     .ex_csr           (ctrl_ex[`CTRL_CSR_EN] && ctrl_ex[`CTRL_REG_WR]),
+     .ex_wb_sel        (ctrl_ex[`CTRL_WB_SEL]),
+     .mem_rd           (rd_addr_mem),
+diff -ruN a/rtl/core/decoder.v b/rtl/core/decoder.v
+--- a/rtl/core/decoder.v
++++ b/rtl/core/decoder.v
+@@ -5,6 +5,8 @@
+ // bundle plus register addresses and immediate value.
+ // ============================================================================
+ 
++`include "cfu_ops.vh"
++
+ module decoder (
+   input  wire [31:0]          instr,
+   output wire [4:0]           rs1_addr,
+@@ -247,6 +249,16 @@
+         end else
+           ctrl[`CTRL_ILLEGAL] = 1'b1;
+       end
++
++
++      // A generated custom-instruction unit (cfu_*.sv): R-type, writes rd; the encodings it decodes are in cfu_ops.vh
++      OP_CUSTOM2: begin
++        if (`CFU_LEGAL(funct3, funct7)) begin
++          ctrl[`CTRL_REG_WR] = 1'b1;
++          ctrl[`CTRL_WB_SEL] = WB_DSP;
++        end else
++          ctrl[`CTRL_ILLEGAL] = 1'b1;
++      end
+ 
+       default: begin
+         ctrl[`CTRL_ILLEGAL] = 1'b1;
+diff -ruN a/rtl/pkg/brv32p_defs.vh b/rtl/pkg/brv32p_defs.vh
+--- a/rtl/pkg/brv32p_defs.vh
++++ b/rtl/pkg/brv32p_defs.vh
+@@ -46,6 +46,7 @@
+ localparam [6:0] OP_SYSTEM = 7'b1110011;
+ localparam [6:0] OP_CUSTOM0 = 7'b0001011;   // Xbrvdsp (dsp_unit.v)
+ localparam [6:0] OP_CUSTOM1 = 7'b0101011;   // Xbrvdsp address generators (agu.v)
++localparam [6:0] OP_CUSTOM2 = 7'b1011011;   // a generated custom-instruction unit (FPGA_Design_Agent hwsw/cfu.py)
+ 
+ // ── ALU Operations ───────────────────────────────────────────────────
+ localparam [3:0] ALU_ADD    = 4'b0000;
