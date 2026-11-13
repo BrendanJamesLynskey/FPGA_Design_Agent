@@ -1,8 +1,11 @@
-# Test shell protocol (version 1.0)
+# Test shell protocol (version 1.1)
 
 Every design embeds the test shell (`shell/rtl/fpga_shell.sv`) so that a host can test it over the board's
 USB-UART without a debugger. This file is the shell's specification: the RTL, the Python model
 (`shell/model/shell_model.py`) and the host driver (`shell/host/fpga_shell.py`) are all checked against it.
+
+**Versions.** 1.1 added BUILD_ID at 0x05; a 1.0 shell answers BAD_ADDRESS there (and counts a request error). A host
+reads SHELL_VERSION (0x01) first and reads 0x05 only on 1.1 or later.
 
 ## Line
 
@@ -40,8 +43,8 @@ STATUS). Errors return data 0.
 | `0x00` | OK | |
 | `0x01` | BAD_CHECKSUM | CHK does not match (checked first) |
 | `0x02` | BAD_COMMAND | CMD is not 0x01 or 0x02 |
-| `0x03` | BAD_ADDRESS | ADDR is 0x05-0x7F |
-| `0x04` | READ_ONLY | a write to 0x00-0x02 |
+| `0x03` | BAD_ADDRESS | ADDR is 0x06-0x7F |
+| `0x04` | READ_ONLY | a write to 0x00-0x02 or 0x05 |
 
 ## Framing and recovery rules
 
@@ -60,11 +63,12 @@ STATUS). Errors return data 0.
 | ADDR | Name | Access | Value |
 |---|---|---|---|
 | `0x00` | DESIGN_ID | RO | four ASCII characters chosen by the design, MSB first (the T1 design is `"T1DC"` = `0x54314443`) |
-| `0x01` | SHELL_VERSION | RO | `0x00010000` (major 1, minor 0) |
+| `0x01` | SHELL_VERSION | RO | `0x00010001` (major 1, minor 1) |
 | `0x02` | BUILD_STAMP | RO | set at build time; the flow puts the first 8 hex digits of the SHA-256 of the design's source and constraint files here (`flow/prepare.py`; 0 in simulation) |
 | `0x03` | SCRATCH | RW | any 32-bit value; reset 0; for loopback tests |
 | `0x04` | STATUS | RO, write clears | `[7:0]` checksum errors, `[15:8]` request errors (bad command, bad address, read-only), `[23:16]` UART framing errors, `[31:24]` frame timeouts; each saturates at 255; any write sets all four to 0 |
-| `0x05`-`0x7F` | reserved | | BAD_ADDRESS |
+| `0x05` | BUILD_ID | RO | the bitstream's USR_ACCESS word, read from the configuration logic through the `USR_ACCESSE2` primitive (since 1.1). The flow writes the build ID there (`flow/manifest.py`, `BITSTREAM.CONFIG.USR_ACCESS`), so this register reports the bitstream actually loaded; `SIM_BUILD_ID` in simulation |
+| `0x06`-`0x7F` | reserved | | BAD_ADDRESS |
 | `0x80`-`0xFF` | window | design | the design under test's registers; never an error from the shell |
 
 ## The window interface (shell to design)

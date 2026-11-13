@@ -276,10 +276,18 @@ def test_build_id_comparison_and_conditions() -> None:
     assert program.check_build_id("ae066748", "0xAE066748", "jtag")["match"]
     assert not program.check_build_id("ae066748", "0x00000000", "jtag")["match"]
     assert program.check_build_id(None, "0x1", "jtag")["checked"] is False
-    assert program.check_shell_build_id({"build_stamp": 0xDFD4624E}, "dfd4624e")["match"]
+    # shell 1.0 (no BUILD_ID register): the stamp is compared
+    assert program.check_shell_build_id({"build_stamp": 0xDFD4624E, "build_id": None}, "dfd4624e", "89315dac")["match"]
     with pytest.raises(program.hw.HwError, match="mismatch"):
         program.check_shell_build_id({"build_stamp": 0x1}, "dfd4624e")
     assert program.check_shell_build_id({"build_stamp": 0x1}, None)["checked"] is False
+    # shell 1.1: BUILD_ID (0x05) against the manifest's build ID, and the stamp too
+    r = program.check_shell_build_id({"build_stamp": 0xDFD4624E, "build_id": 0x89315DAC}, "dfd4624e", "89315dac")
+    assert r["match"] and r["register"] == "BUILD_ID (0x05)" and r["stamp"]["match"]
+    with pytest.raises(program.hw.HwError, match="build ID mismatch"):
+        program.check_shell_build_id({"build_stamp": 0xDFD4624E, "build_id": 0x1}, "dfd4624e", "89315dac")
+    with pytest.raises(program.hw.HwError, match="build ID mismatch"):
+        program.check_shell_build_id({"build_stamp": 0x2, "build_id": 0x89315DAC}, "dfd4624e", "89315dac")
     text = ("FDA-COND NOW TEMPERATURE=41.2 VCCINT=0.998 VCCAUX=1.79 VCCBRAM=0.999\n"
             "FDA-COND MAX TEMPERATURE=41.5 VCCINT=1.0011 VCCAUX=1.7988 VCCBRAM=1.0005\n"
             "FDA-COND MIN TEMPERATURE=40.9 VCCINT=0.9961 VCCAUX=1.7871 VCCBRAM=0.9968\nFDA-COND FLAGS 0000\n")
@@ -438,3 +446,35 @@ def test_a_reference_hashed_but_not_used_is_reported_and_not_called_incremental(
     (out / "cache.json").write_text(json.dumps({"action": "fresh", "incremental_ref": str(prev / "post_route.dcp")}))
     fin = manifest.finalise(out)
     assert fin["incremental"]["status"] == "used" and "Incremental build" in release.release_md(fin, {"pass": True}, [])
+
+
+def test_shell_model_build_id_register() -> None:
+    from shell.host import protocol as p
+    from shell.model.shell_model import ShellModel
+    m = ShellModel(0x54314443, 0x1234, build_id=0x89315DAC)
+    r = p.decode_response(m.feed(p.encode_request(p.CMD_READ, p.REG_BUILD_ID)))
+    assert r.ok and r.data == 0x89315DAC
+    assert p.decode_response(m.feed(p.encode_request(p.CMD_WRITE, p.REG_BUILD_ID, 5))).status == p.ST_READ_ONLY
+    assert p.decode_response(m.feed(p.encode_request(p.CMD_READ, 0x06))).status == p.ST_BAD_ADDR
+    assert p.decode_response(m.feed(p.encode_request(p.CMD_READ, p.REG_SHELL_VERSION))).data == 0x0001_0001
+
+
+def test_host_identify_works_on_a_1_0_shell() -> None:
+    """A board still holding a protocol 1.0 bitstream answers BAD_ADDRESS at 0x05: identify() must not ask for it."""
+    from shell.host import protocol as p
+    from shell.host.fpga_shell import FpgaShell
+
+    class Old(FpgaShell):
+        def __init__(self) -> None:                       # no serial port
+            self.asked: list[int] = []
+
+        def read(self, addr: int) -> int:
+            self.asked.append(addr)
+            if addr == p.REG_BUILD_ID:
+                raise AssertionError("0x05 read on a 1.0 shell")
+            return {p.REG_DESIGN_ID: 0x54314443, p.REG_SHELL_VERSION: 0x0001_0000, p.REG_BUILD_STAMP: 0xDFD4624E}[addr]
+
+    sh = Old()
+    ident = sh.identify()
+    assert ident["build_id"] is None and ident["build_stamp"] == 0xDFD4624E and p.REG_BUILD_ID not in sh.asked
+    assert program.check_shell_build_id(ident, "dfd4624e", "89315dac")["register"] == "BUILD_STAMP (0x02)"
