@@ -1,0 +1,9 @@
+`verilator_config
+// flow/lint.sh, designs/b56a_gth_serdes: lint-only configuration (read with the XPM simulation models and the GT Wizard stub in this folder)
+lint_off -file "*flow/cdc_models/*"
+// one-file-per-module naming: the GT Wizard stub and the PRBS package share files with their modules
+lint_off -rule DECLFILENAME
+// Unused outputs of the GT Wizard core and XPM macros are left open on purpose.
+lint_off -rule PINCONNECTEMPTY
+// Status vectors read in part (the counter snapshot, GT status bits).
+lint_off -rule UNUSEDSIGNAL

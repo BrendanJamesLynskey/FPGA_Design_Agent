@@ -12,6 +12,14 @@ clock:
 pl_ethernet:                      # Marvell M88E1111 PHYs, RGMII, 1.8 V HP banks
   port_a: {connector: J10B, name: Ethernet 2, phy: PHY2, rx_clk: D4, tx_clk: A2, reset_n: B1, mdio: F3, mdc: G3}
   port_b: {connector: J10A, name: Ethernet 3, phy: PHY3, rx_clk: K4, tx_clk: J1, reset_n: K1, mdio: T8, mdc: R8}
+gt:                               # GTH transceivers on the PL (brief 56A; flow/gt_plan.py, flow/gt_gates.py)
+  sfp:                            # SFP+ cage J24 (UG1092); pins and sites resolved on Vivado 2026.1 (results/56a_serdes/gt_sites.txt)
+    lanes: 1
+    channel: X0Y6                 # GTHE4_CHANNEL_X0Y6, quad 224 (GTHE4_COMMON_X0Y1), channel 2
+    rx: {p: T2, n: T1}
+    tx: {p: R4, n: R3}
+    refclk: {source: "X0Y6 clk0", mhz: 156.25, p: Y6, n: Y5, status: "frequency and source unconfirmed: an open-source example's figure, schematic not read"}
+    control: {tx_disable: Y10, mod_abs: W10, rx_los: J12, tx_fault: A10, i2c_scl: AB11, i2c_sda: AC11, level: LVCMOS33, status: "pin functions unconfirmed (open-source example, not the schematic)"}
 user_leds: [F8, E8]               # LVCMOS18
 host_access: JTAG cable (BSCANE2 USER4 register bus, designs/b58a_trigger/rtl/jtag_bus.sv); no PL UART pins
 slow_ports:

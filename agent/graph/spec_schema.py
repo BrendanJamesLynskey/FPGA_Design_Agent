@@ -216,6 +216,12 @@ def validate(spec: dict[str, Any], allow_rates: bool = False, need_proof: bool =
     lang = spec.get("language")                      # brief 55: optional design language
     if lang is not None and str(lang).strip().lower() not in LANGUAGES:
         errs.append(f"'language' must be one of {', '.join(sorted(LANGUAGES))} (or absent: SystemVerilog), not {lang!r}")
+    if "link" in spec:                               # brief 56A: an optional transceiver link (flow/gt_plan.py)
+        try:
+            from flow.gt_plan import link_errors
+        except ImportError:
+            from gt_plan import link_errors      # run as a script: flow/ is on sys.path
+        errs += [f"spec.yaml {e}" for e in link_errors(spec["link"])]
     params = spec.get("parameters") or {}
     if not isinstance(params, dict):
         errs.append("'parameters' must be a mapping")
