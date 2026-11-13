@@ -450,7 +450,7 @@ def live(A, lay):
 # ---------------------------------------------------------------- 6. workflow variants (brief 42)
 
 VARIANT_BASE = ["interview", "plan", "work", "gate", "advance"]
-VARIANT_AT = {"before work": (2, "skill shortlist"), "after the interview": (1, "spec reviewer"), "the RTL writer": (3, None),
+VARIANT_AT = {"before work": (2, "skill shortlist"), "after the interview": (1, "spec reviewer"), "the Designer": (3, None),
               "the plan": (2, "modules in parallel"), "the constraints stage": (4, "constraints critic")}
 
 
@@ -498,7 +498,7 @@ def harness_layers(A, lay):
          + ("no to-do list" if not h["todo_tool"] else "a to-do list") + ", " + ("no sub-agents" if not h["subagent_tool"] else "sub-agents")),
         ("tools", "Tools the model is offered", [("built-in: " + ", ".join(A["inner"]["builtin_tools"]), "chip")] + [(g, "chip") for g in groups],
          "the stage decides which of ours a role gets"),
-        ("fs", "Jailed filesystem", [("RTL writer: the design folder", "chip"), ("other roles: an in-memory copy of their inputs", "chip")],
+        ("fs", "Jailed filesystem", [("Designer: the design folder", "chip"), ("other roles: an in-memory copy of their inputs", "chip")],
          "every path checked against the role's read and write lists; a write outside them is refused and logged"),
         ("ours", "Our tool layer and gates", [("argument check", "chip"), (f'output clipped at {s["registry_clip_chars"]:,} characters', "chip"),
                                                ("audit log", "chip"), ("gates in code", "chip")],

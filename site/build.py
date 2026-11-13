@@ -244,7 +244,7 @@ def agent_block(name, d):
             ["File contents in older turns", f'once there are more than {s["truncate_args_after_messages"]} messages, anything over {s["truncate_args_over_chars"]:,} characters that the model wrote with write_file or edit_file is cut from all but the last {s["truncate_args_keep_messages"]} messages'],
             ["Large tool results", f'our tool layer clips every result at {s["registry_clip_chars"]:,} characters (the full text stays in the build folder), so the library\'s move to a file at {s["evict_tool_result_chars"]:,} characters never happens'],
             ["Prompt caching", "none in effect: the library's caching acts on Anthropic chat models only, and the role agents use OpenRouter models"],
-            ["Limits", f'{s["recursion_limit"]["rtl"]} graph steps for the RTL writer, {s["recursion_limit"]["others"]} for the other roles; a simulation stops after four times its last passing run time plus two minutes, between {s["sim_timeout_s"]["min"]} s and {s["sim_timeout_s"]["max"]:,} s, and after {s["sim_timeout_s"]["default"]:,} s when there is no passing run yet'],
+            ["Limits", f'{s["recursion_limit"]["rtl"]} graph steps for the Designer, {s["recursion_limit"]["others"]} for the other roles; a simulation stops after four times its last passing run time plus two minutes, between {s["sim_timeout_s"]["min"]} s and {s["sim_timeout_s"]["max"]:,} s, and after {s["sim_timeout_s"]["default"]:,} s when there is no passing run yet'],
         ])
     if name == "harness_results":
         return ap.both(ap.harness_results(A, "wide"), ap.harness_results(A, "narrow"))

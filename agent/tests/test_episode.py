@@ -181,7 +181,7 @@ def _episode(tmp_path, runs):
     assert s["stages_visited"][-1] == 9 and s["bringup"] is True and s["stop"] == "done"
     assert (9, True) in reviews                                  # hardware always pauses for approval
     assert s["questions"]["asked"] == 2 and s["questions"]["defaulted"] == 2
-    # sub-agent isolation: the blind model's prompt carried only spec.yaml; the test writer never the RTL
+    # sub-agent isolation: the Modeller's prompt carried only spec.yaml; the Verifier never the RTL
     model_prompt = next(x["user"] for x in seen if x["role"] == "model")
     assert "--- spec.yaml ---" in model_prompt and "--- model.py ---" not in model_prompt
     tests_prompt = next(x["user"] for x in seen if x["role"] == "tests")

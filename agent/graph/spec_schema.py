@@ -3,7 +3,7 @@
 ``load_spec`` never turns a parse error into an empty spec: it raises :class:`SpecError` carrying the parser's
 message (line and column), which the clarify gate feeds back to the work agent. ``validate`` lists what a spec
 must have before it can be signed off (ports, clocks, reset, registers, timing, a name and a top), and rejects
-timing parameters given as rates or fractions: they must be integer cycle counts, so the blind model and the RTL
+timing parameters given as rates or fractions: they must be integer cycle counts, so the reference model and the RTL
 cannot round a divider differently (05b diagnosis, run 1: ``an: rtl=0xfd model=0xfe``).
 
 ``rate_params`` finds rate-style parameters (``PWM_HZ``, ``DEBOUNCE_MS``...) with the integer cycle count the
@@ -19,7 +19,7 @@ from typing import Any
 import yaml
 
 REQUIRED = ("name", "top", "ports", "clocks", "reset", "behaviour", "registers", "timing", "requirements")
-#: how a requirement can be shown to hold (brief 05d, Taylor addition 1): a cocotb test against the blind model, a
+#: how a requirement can be shown to hold (brief 05d, Taylor addition 1): a cocotb test against the reference model, a
 #: formal property, a check on the board, or an analysis (a flow gate or a report)
 PROOF_METHODS = ("simulation", "formal", "hardware", "analysis")
 #: parameter-name suffix -> seconds per unit (a rate is a frequency: 1/value)
@@ -195,7 +195,7 @@ def propose_proof(text: str) -> tuple[list[str], str]:
         return ["analysis"], "a timing, resource or power figure is read from the flow's reports, not simulated"
     if re.search(r"\b(board|led|button|switch|display|uart|pin|visible)\b", low) and "simulat" in low:
         return ["simulation", "hardware"], "board-visible behaviour: simulated, then checked on the board"
-    return ["simulation"], "behaviour of the design: a cocotb test against the blind model"
+    return ["simulation"], "behaviour of the design: a cocotb test against the reference model"
 
 
 #: brief 55: the values of the optional ``language`` key (absent = SystemVerilog)

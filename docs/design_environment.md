@@ -47,7 +47,7 @@ multi-module design, waits for the owner's approval of this page. Words used bel
 | Stage review and rewind | a review page at each stage end; approve, edit (a prompt to one role), rewind, or supply the architecture | `agent/graph/review.py`, `node_review` in `agent/graph/run.py`, `resume --reply` in `agent/__main__.py` | review of a change across several modules |
 | Snapshots | each stage end is a commit in a per-run bare repo `<run_dir>/snap.git`, with a SHA-256 manifest; `.dcp` files are copied; rewind is hash-checked | `agent/graph/snapshot.py` | the commits live outside the design; there are no branches and no merge |
 | Owner edits | a change made while the run is paused is found against the manifest, committed with author `owner`, gated again and listed in `build/who_did_what.json` | `agent/graph/ownership.py` (`hand_edits`, `record`) | detection only while paused; files only, not regions; no rule against later overwriting |
-| Roles and jails | clarify, blind model, test writer and RTL writer each work in a path jail; per-role models | `agent/graph/roles.py` (`ROLES`, `RoleJail`), `agent/graph/role_models.py` | none for this design |
+| Roles and jails | the Clarifier, Modeller, Verifier and Designer each work in a path jail; per-role models | `agent/graph/roles.py` (`ROLES`, `RoleJail`), `agent/graph/role_models.py` | none for this design |
 | Repair, not regeneration | a failure is traced to the role that wrote the failing artefact; other artefacts stay frozen | `agent/graph/repair.py` (`stage2_owners`) | tracing to a *module* |
 | Architecture as data | blocks, interfaces (protocol from `axi4-lite`, `axi4-stream`, `simple`, `uart`, `gpio`, `other`), clock domains, crossings, predicted resources; hash-pinned approval | `flow/architecture.py` (`PROTOCOLS`, `CDC_PRIMITIVES`, `write_approval`) | the blocks are inside one design; nothing checks a block against another design's contract |
 | Build cache | a build is skipped when the hash of its sources matches a cached build that went at least as far | `_build` / `_sources_hash` in `agent/graph/run.py` (`build_cache_<variant>.json` in the run directory) | per run only; no key for tool versions or the knowledge bank |
@@ -78,7 +78,7 @@ my_design/                         a git repository; the user owns main
     <module>/                      the same shape as designs/<name>/ today:
       spec.md  spec.yaml           (M-<module>-1 ... requirements, each traced to an S- requirement)
       contract.yaml                NEW: the interface contract (below)
-      model.py  tests/  verif/     blind model and tests, from spec.yaml and the contract only
+      model.py  tests/  verif/     reference model and tests, from spec.yaml and the contract only
       rtl/  build.yaml
       ooc.xdc                      NEW: module-boundary constraints (clocks from the contract; I/O budgets; brief 20 rules)
       architecture.yaml  ARCHITECTURE.md
@@ -135,7 +135,7 @@ One per module, approved by the user in phase 0 and hash-pinned the way the arch
 | `latency`, `throughput` | cycles from input to output (a number, a range or a formula in the parameters); beats per cycle, and the duty cycle the source may use | the system model needs them to line up module outputs |
 | `parameters` | the module's parameters with their allowed values | brief 28's declared parameter space |
 
-The contract is the interface the blind model, the tests and the RTL writer all read. A contract test (new) is
+The contract is the interface the reference model, the tests and the Designer all read. A contract test (new) is
 generated from it mechanically, not by a model: port list and widths at elaboration, register reset values and access,
 the AXI handshake rules under random `tvalid`/`tready`. It runs before any role-written test.
 
@@ -178,7 +178,7 @@ evidence (section 6). Rewind stays as it is: check out the stage's commit and ve
 The interview (`agent/graph/interview.py`) becomes a structured spec session in four passes. Each pass ends with a
 review the user approves (the existing `node_review` interrupt).
 
-1. **Requirements with IDs.** The clarify role turns `system/spec.md` into `requirements.yaml`: S-ids, text, a proof
+1. **Requirements with IDs.** The Clarifier turns `system/spec.md` into `requirements.yaml`: S-ids, text, a proof
    method each (`spec_schema.PROOF_METHODS`, defaulted by `propose_proof` as now). Every question it asks names the
    S-id it settles.
 2. **Interface-first decomposition.** The role proposes modules, connections and a `contract.yaml` each, before any
@@ -237,7 +237,7 @@ for each module, in dependency order where needed, else in parallel:
    else  python -m agent run modules/<m>/spec.md  in module mode:
             stage 0  takes the approved spec.yaml and contract (no new interview unless a field is missing)
             stage 1  architecture inside the module
-            stage 2  contract test first; then blind model, tests and RTL; V0..V3 (unchanged)
+            stage 2  contract test first; then reference model, tests and RTL; V0..V3 (unchanged)
             stage 3  ooc.xdc instead of pins: clocks from the contract, I/O budgets at the boundary (brief 20 rules)
             stages 4-8  OOC synthesis and implementation; gates as now, minus the board-only ones
             stage 9  HIL behind the shell when the contract allows (below), else skipped and recorded
@@ -329,7 +329,7 @@ of the roles.
 
 A change request is handled in two steps, and only the first uses a model.
 
-1. **Proposal.** The clarify role turns the request into edits to `requirements.yaml`, contracts, `design.yaml` or a
+1. **Proposal.** The Clarifier turns the request into edits to `requirements.yaml`, contracts, `design.yaml` or a
    module `spec.yaml`, with a list of the questions it raises (phase 0 rules). The user approves the edits.
 2. **Impact, computed.** From the approved edits the project layer computes the impact itself: which requirements,
    contracts, modules, tests and constraints change, and the earliest stage that must run again in each affected

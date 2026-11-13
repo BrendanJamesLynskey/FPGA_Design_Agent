@@ -65,7 +65,7 @@ def formal_installed() -> bool:
 
 
 def replan_entries(plan: dict, spec_reqs: list[dict]) -> tuple[list[dict], list[str]]:
-    """Brief 05g. When a requirement's proof method cannot be carried out the test writer re-plans it in the testplan:
+    """Brief 05g. When a requirement's proof method cannot be carried out the Verifier re-plans it in the testplan:
     ``replan: [{requirement, method, replaced_by, artefact, why}]``. Only ``formal`` may be re-planned, and only when
     SymbiYosys is not installed; it needs a ``why`` and a replacement artefact of another method. Returns the
     equivalent proof entries (carrying ``replan``) and the problems; a proof is never marked discharged without its

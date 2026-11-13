@@ -136,7 +136,7 @@ python -m project status project/examples/video_median --html build/project_dash
 
 `python -m project spec <dir>` ([project/phase0.py](../project/phase0.py)) reads the user's words in
 `<dir>/system/spec.md` and writes `system/requirements.yaml`, `design.yaml`, and `modules/<m>/contract.yaml` and
-`modules/<m>/spec.md` per module. The drafter is a model (the clarify role); every file it proposes goes through
+`modules/<m>/spec.md` per module. The drafter is a model (the Clarifier); every file it proposes goes through
 `check_project`, and the checker's messages go back to it as repair notes (at most three repairs per step).
 
 | Pass | The drafter does | The questions | Log |

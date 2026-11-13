@@ -1,5 +1,5 @@
 """The closure loop's repair playbook: strategy classes, when each applies, what it is predicted to cost on
-the other goals, and the instructions the RTL writer gets. Deterministic: the reports pick the strategy, the model only
+the other goals, and the instructions the Designer gets. Deterministic: the reports pick the strategy, the model only
 writes the change, and the flow checks it.
 
 Timing (G2) strategies are ready. Area (G3) and power (G4) classes are listed so the controller can name them in a stop

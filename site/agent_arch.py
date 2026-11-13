@@ -80,10 +80,10 @@ GATE_WORDS = {
 #: stage 9 rtl then tests for the bring-up files; every other stage rtl). Checked against the recorded turn traces.
 ROLE_STAGES = {0: ["clarify"], 2: ["model", "tests", "rtl"], 9: ["rtl", "tests"]}
 ROLE_WORDS = {
-    "clarify": ("Clarify", "Turns the plain-English request into a structured spec, asking about what it leaves open."),
-    "model": ("Blind model", "Writes a short Python model of the design from the spec alone. Never sees the RTL."),
-    "tests": ("Test writer", "Writes the tests and the test plan from the spec and the model. Never sees the RTL."),
-    "rtl": ("RTL writer", "Writes the SystemVerilog and constraints, and repairs what the later stages find."),
+    "clarify": ("Clarifier", "Turns the plain-English request into a structured spec, asking about what it leaves open."),
+    "model": ("Modeller", "Writes a short Python reference model of the design from the spec alone. Blind to the RTL: never sees it."),
+    "tests": ("Verifier", "Writes the tests and the test plan from the spec and the model. Never sees the RTL. Its own tests never decide a result; the hidden tests do."),
+    "rtl": ("Designer", "Writes the architecture, SystemVerilog, constraints and probes, and does every repair. Vivado implementation is run by the deterministic flow, not by this role."),
 }
 TOOL_GROUPS = [
     ("Files", ["read_file", "write_file", "list_files"]),
@@ -107,11 +107,11 @@ ARMS = [
     {"id": "A2", "name": "Independent spec reviewer", "adds": "a second agent, on another model, that challenges the signed-off spec before any RTL",
      "at": "after the interview", "status": "not yet measured"},
     {"id": "A3", "name": "Best of N", "adds": "several RTL candidates in parallel; the agent's own gates pick one (hidden tests never)",
-     "at": "the RTL writer", "status": "not yet measured"},
+     "at": "the Designer", "status": "not yet measured"},
     {"id": "A4", "name": "Plan and decompose", "adds": "a split into modules with contracts, built in parallel and then integrated",
      "at": "the plan", "status": "not yet measured"},
     {"id": "A5", "name": "Retrieve, then adapt", "adds": "a search for the closest verified component, which is adapted instead of writing from nothing",
-     "at": "the RTL writer", "status": "not yet measured"},
+     "at": "the Designer", "status": "not yet measured"},
     {"id": "A6", "name": "Constraints critic", "adds": "a narrow agent that reviews timing exceptions against known rules",
      "at": "the constraints stage", "status": "not yet measured"},
 ]
@@ -129,7 +129,7 @@ MIDDLEWARE_WORDS = {
 HARNESS_ARMS = [
     {"id": "H1", "name": "Context management", "source": "results/36_skill_routing/e2e.md",
      "change": "Large tool results, such as Vivado reports and simulation logs, go to a file in the jail and the model gets a head, a tail and the path; older turns are summarised much earlier.",
-     "evidence": "Token totals are dominated by long repair visits: one 80-turn visit of the RTL writer used 6.6 M tokens."},
+     "evidence": "Token totals are dominated by long repair visits: one 80-turn visit of the Designer used 6.6 M tokens."},
     {"id": "H2", "name": "Hang protection", "source": "results/24_fsm/drills/run_b1.meta.json",
      "change": "A per-test simulation limit from the test's own simulated-time budget, a result that says where a test hung, and a check that refuses tests with unbounded waits before they run.",
      "evidence": "In one drill run three simulate calls each ran to the 1800 s limit on the agent's own tests, which waited on conditions that never came."},
@@ -149,7 +149,7 @@ HARNESS_ARMS = [
      "change": "Prompt caching on the OpenRouter models that support it.",
      "evidence": "The caching in the stack today acts on Anthropic chat models only, and every turn resends the whole prompt."},
     {"id": "H8", "name": "To-do list", "source": None,
-     "change": "A to-do list tool for the RTL writer.",
+     "change": "A to-do list tool for the Designer.",
      "evidence": "Planning on long stages; the role agents are offered no to-do tool today."},
     {"id": "H9", "name": "Typed digests", "source": None,
      "change": "A large build, gates, simulation or lint result is replaced by a short typed digest made by code from the gate parsers, plus the path of the full result.",
@@ -343,8 +343,8 @@ def _tools_list():
 
 
 def _low(label):
-    """'Test writer' -> 'test writer'; 'RTL writer' stays."""
-    return label if label[:2].isupper() else label[0].lower() + label[1:]
+    """The role names are proper nouns ('Verifier', 'Designer'): kept as they are inside a sentence."""
+    return label
 
 
 def _plain_fail(text):
@@ -411,7 +411,7 @@ def replay_giveup(MACHINE, run):
             last = not any(t["stage"] == name and t["visit"] == v + 1 for t in r["turn_trace"])
             gate = {"pass": False, "text": (_plain_fail(r["first_failing_gate_last_visit"]) + "." if last else
                                             "Stage gates failed; the next visit repairs the " +
-                                            " and ".join(_low(ROLE_WORDS[x][0]) for x in nxt_roles) + "'s work.")}
+                                            " and the ".join(_low(ROLE_WORDS[x][0]) + "'s" for x in nxt_roles) + " work.")}
             nxt = {"kind": "repair", "to": nxt_n, "text": "repair"}
         visits.append({"stage": n, "visit": v, "visits": sum(1 for x in order if x == n), "roles": roles, "gate": gate,
                        "next": nxt, "review": "snapshot taken; approved automatically (review off)"})

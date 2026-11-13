@@ -9,7 +9,7 @@ The clarify stage asks **one question at a time**, each with a proposed default 
 - nobody (``--interview off``): every question is defaulted.
 
 Every question is recorded (asked / answered / defaulted, by whom), and the record goes into the build note and
-``results/f2/``. The asker is the clarify sub-agent; this module holds only the bookkeeping and the oracle, so the
+``results/f2/``. The asker is the Clarifier sub-agent; this module holds only the bookkeeping and the oracle, so the
 rules are tested without a model.
 """
 
@@ -143,7 +143,7 @@ def request_needs_register_map(request: str) -> bool:
 
 
 def proposed_register_default(spec: dict[str, Any]) -> str:
-    """The clarify role's own register map as the default of the question: "NAME: offset 0xNN, ACC, reset R" lines
+    """The Clarifier's own register map as the default of the question: "NAME: offset 0xNN, ACC, reset R" lines
     (the form ``answer_register_rows`` reads), or a plain sentence when the spec has none."""
     regs = spec.get("registers") if isinstance(spec.get("registers"), dict) else {}
     rows = []
@@ -158,7 +158,7 @@ def proposed_register_default(spec: dict[str, Any]) -> str:
 def ensure_register_question(request: str, spec: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     """07a2 fix 7 (1): the harness asks for the register map itself. Whenever the request has a host-visible interface (UART
     command set, bus, "register", "address") and does not give the map, the spec gets an open question asking for it, unless
-    the clarify role already asked one (open or resolved). Softmax run 2 and c14 tiny CNN: the model left the question out,
+    the Clarifier already asked one (open or resolved). Softmax run 2 and c14 tiny CNN: the model left the question out,
     so the oracle was never asked and the role's own map reached the hidden bench. Returns (spec, added)."""
     if not request_needs_register_map(request):
         return spec, False
@@ -243,7 +243,7 @@ def answer_register_rows(answer: str) -> list[dict[str, Any]]:
 
 
 def apply_register_answer(spec: dict[str, Any]) -> dict[str, Any]:
-    """07a2 fix 5 C + fix 6: a register map supplied in an answer overrides what the clarify role proposed. Every line of the
+    """07a2 fix 5 C + fix 6: a register map supplied in an answer overrides what the Clarifier proposed. Every line of the
     answered register-map question that reads "NAME: offset 0xNN, ACC, reset R: bits" (ranges expanded, see
     ``answer_register_rows``) replaces the name, access, reset and bits of the spec's entry at that offset; an offset the
     spec lacks is added. When the oracle gave the answer (the whole map of the hidden spec) the role's registers at other

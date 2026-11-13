@@ -3,7 +3,7 @@
 Nodes, in a loop over ``agent.graph.stages.MACHINE``:
 
 ``work``   the stage's sub-agent(s) act, each through its role view (``agent.graph.roles``); stage 2 runs three
-           separate sub-agents in order: blind model (sees only spec.yaml), test writer (spec.yaml + model), RTL
+           separate sub-agents in order: Modeller (sees only spec.yaml), Verifier (spec.yaml + model), RTL
            writer (never the hidden spec). Restricted roles run on an in-memory file backend seeded with only
            their inputs; the graph copies their outputs into the design through the role jail.
 ``gate``   the flow's own checks for the stage, run by the graph (never by the model): lint, simulate (in the
@@ -445,7 +445,7 @@ def conventions_text(fmt: dict, template: str | None = None) -> str:
 
 def tests_conventions_text(fmt: dict) -> str:
     """05l: the part of ``CONVENTIONS`` that concerns the tests role: where file paths are rooted, the test entry, and the
-    verification stages. The rest (constraints, probes, architecture files, standards) is addressed to the RTL writer and
+    verification stages. The rest (constraints, probes, architecture files, standards) is addressed to the Designer and
     names tools (board_constraints, gates) the tests role does not have, so it is not shown to the tests role."""
     head, *bullets = CONVENTIONS.split("\n- ")
     keep = [b for b in bullets if b.startswith(("File tool paths", "Tests (test writer)", "Stage 2 ends only"))]
@@ -666,7 +666,7 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
                "tools": tools, "refused": refused,
                # every tool the model asked for, built-ins of the Deep Agents harness included (the audit sees only ours)
                "model_tool_calls": dict(sorted(Counter(n for e in rt.llm_log[l0:] for n in e.get("tools", [])).items())), "files_written": sorted(written) if isinstance(written, dict) else [],
-               # what changed in the design (the Deep Agents RTL writer writes through its backend and returns nothing)
+               # what changed in the design (the Deep Agents Designer writes through its backend and returns nothing)
                "files_changed": sorted(k for k, v in _design_mtimes(rt.design).items() if before.get(k) != v),
                "cost_usd": None if spec["harness"] == "claude_code" else round(rt.meter.run["usd"] - m0["usd"], 6),
                "plan_cost_estimate_usd": round(sum(c.get("plan_cost_estimate_usd") or 0 for c in new_cc), 4)
@@ -676,7 +676,7 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
 
 
 #: Turns held back while a role runs, for the roles that follow it in the same stage visit (brief 05g). Before this,
-#: the stage-9 RTL writer used the whole stage budget and the tests role never got a turn (luna run f7ba, visits 1-2).
+#: the stage-9 Designer used the whole stage budget and the tests role never got a turn (luna run f7ba, visits 1-2).
 ROLE_TURN_RESERVE = {2: {"model": 35, "tests": 25}, 9: {"rtl": 15}}
 
 
@@ -1303,7 +1303,7 @@ def node_gate(state: State) -> dict:
                                                   "why": str(br.get("output", ""))[:300]}
             ev["signoff"] = dispatch(rt.session, "gates", {"kind": "verif"}).get("gates")      # traceability with the board result
     if rt.last_build_output:
-        ev["build_output"] = rt.last_build_output           # the repair visit's RTL writer is shown it (05d live run 3)
+        ev["build_output"] = rt.last_build_output           # the repair visit's Designer is shown it (05d live run 3)
         detail.append("[build] " + rt.last_build_output)
         rt.last_build_output = ""
     if n == 9 and not state.get("hw_approved"):
@@ -1657,7 +1657,7 @@ def _cc_calls(rt: Runtime) -> list[dict]:
 
 def knowledge_use(rt: Runtime) -> dict:
     """Which knowledge tools each role called in each stage, from the audit log (05f): call counts per tool, and for
-    ``load_skill`` the section names and the skill files returned (so the device layers' use by the RTL writer shows)."""
+    ``load_skill`` the section names and the skill files returned (so the device layers' use by the Designer shows)."""
     f = rt.design / "build" / "audit.jsonl"
     out: dict[str, dict] = {}
     for line in (f.read_text().splitlines() if f.exists() else []):

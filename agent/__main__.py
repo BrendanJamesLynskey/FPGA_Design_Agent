@@ -148,7 +148,7 @@ def main(argv: list[str] | None = None) -> int:
                         "The interview oracle always runs on --model.")
     r.add_argument("--roles", help='JSON of role overrides on top of the profile, for example '
                                    '\'{"rtl": {"harness": "claude_code", "model": "claude-opus-5-5", "effort": null}}\'; '
-                                   "roles: clarify, model, tests, rtl")
+                                   "roles (record keys): clarify (Clarifier), model (Modeller), tests (Verifier), rtl (Designer)")
     r.add_argument("--no-shell", action="store_true",
                    help="the subject is the USB-UART itself: build, lint and simulate without the test shell "
                         "(07a2-prep; also set when --hidden-spec sits next to a bench.yaml with no_shell: true)")

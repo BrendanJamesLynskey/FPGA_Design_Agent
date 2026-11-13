@@ -20,14 +20,14 @@ The controller (:class:`Closure`):
 2. builds once and computes the goal vector;
 3. picks the unmet goal with the largest normalised shortfall, and the best strategy for it from the playbook
    (``agent.graph.closure_playbook``) that is not exhausted and whose predicted cost fits the other goals' headroom;
-4. asks the RTL writer for the change, re-runs G1 (one functional retry, then revert), rebuilds, and judges the new
+4. asks the Designer for the change, re-runs G1 (one functional retry, then revert), rebuilds, and judges the new
    vector against the last accepted one: kept when it improves an unmet goal and worsens none, else reverted;
 5. counts iterations without progress per (goal, strategy class); after ``stall_n`` the class is exhausted (the
    **stall rule**: a strategy class is given up after N tries without progress); when every class for a goal is exhausted, or a limit is reached, it stops with
    "goal X not met; best value Y; what was tried".
 
 Every iteration is recorded (vector before and after, strategy and why, the diff, the delta on every goal, cost).
-The build, the G1 check and the RTL writer are passed in, so CI tests the controller with fakes and recorded reports.
+The build, the G1 check and the Designer are passed in, so CI tests the controller with fakes and recorded reports.
 """
 
 from __future__ import annotations
@@ -209,7 +209,7 @@ def vector_line(v: dict[str, Any]) -> str:
     return "; ".join(f(g) for g in GOALS)
 
 
-# --- the RTL writer -----------------------------------------------------------------------------------------------
+# --- the Designer -----------------------------------------------------------------------------------------------
 
 @dataclass
 class EditRequest:
@@ -271,7 +271,7 @@ def parse_reply(text: str, allowed: set[str]) -> tuple[dict[str, str], str]:
 
 
 def llm_editor(client: Callable, log: list | None = None, meter: Any = None) -> Callable[[EditRequest], EditResult]:
-    """The RTL writer as one model call through ``client`` (agent.graph.llm.OpenRouterClient or a Replay). With ``meter``
+    """The Designer as one model call through ``client`` (agent.graph.llm.OpenRouterClient or a Replay). With ``meter``
     (the agent graph's Meter) every call is checked against, and counted in, the run's own turn and cost limits."""
     def edit(r: EditRequest) -> EditResult:
         if meter is not None:

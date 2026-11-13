@@ -2,11 +2,11 @@
 
 Each sub-agent works through a :class:`RoleJail`, a path jail that narrows what the design-directory jail allows:
 
-- ``model`` (the **blind golden model**): reads only ``spec.yaml``; writes only ``model.py``. No RTL, no tests.
-- ``tests`` (the **test writer**): reads ``spec.yaml`` and ``model.py``; writes ``tests/`` and ``verif/``. No RTL.
-- ``rtl`` (the **RTL writer** and the later implementation stages): reads the design (and ``@shell/``); never the
+- ``model`` (the **Modeller**, blind golden model): reads only ``spec.yaml``; writes only ``model.py``. No RTL, no tests.
+- ``tests`` (the **Verifier**): reads ``spec.yaml`` and ``model.py``; writes ``tests/`` and ``verif/``. No RTL.
+- ``rtl`` (the **Designer**, every later stage and every repair): reads the design (and ``@shell/``); never the
   hidden full spec or the oracle's material, which live outside the design directory and are never mounted.
-- ``clarify``: reads ``spec.md``; writes ``spec.yaml``.
+- ``clarify`` (the **Clarifier**): reads ``spec.md``; writes ``spec.yaml``.
 
 The role's prompt is built from files read through the same jail (:func:`role_inputs`), so a test can prove
 exactly what each sub-agent was given.
@@ -36,7 +36,7 @@ ROLE_TOOLS = {"clarify": {"read_file", "write_file", "list_files", "search_docs"
               "rtl": None}                                      # None: whatever the stage allows
 
 
-#: what the test writer may read of ``@shell/`` (read-only): the frame protocol and the host classes it must import
+#: what the Verifier may read of ``@shell/`` (read-only): the frame protocol and the host classes it must import
 TESTS_SHELL_VIEW = ("PROTOCOL.md", "host/protocol.py", "host/fpga_shell.py")
 
 
@@ -75,8 +75,8 @@ def role_session(s: Session, role: str) -> Session:
 
 def role_inputs(s: Session, role: str, previous: bool = False) -> dict[str, str]:
     """The files a sub-agent's first prompt carries, read through its own jail. ``previous`` (a repair visit) adds
-    the role's own earlier output, which it edits: ``model.py`` for the model writer, ``tests/`` and ``verif/``
-    for the test writer. Never anything the role may not read."""
+    the role's own earlier output, which it edits: ``model.py`` for the Modeller, ``tests/`` and ``verif/``
+    for the Verifier. Never anything the role may not read."""
     want = {"clarify": ["spec.md", "spec.yaml"], "model": ["spec.yaml"], "tests": ["spec.yaml", "model.py"],
             "rtl": ["spec.yaml", "ARCHITECTURE.md"]}[role]
     j = RoleJail(s.jail, role)

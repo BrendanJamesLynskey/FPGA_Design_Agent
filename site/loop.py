@@ -29,15 +29,15 @@ STATUS = ("automated", "building", "person")
 STATION_OF = {0: "spec", 1: "agents", 2: "sim"}                    # every later stage measures with Vivado (3-9)
 ACT_PATH = {"spec": [["f-spec", 1]], "agents": [], "sim": [["f-sim", 0]], "vivado": [["f-sim", 0], ["f-viv", 0]],
             "board": [["f-board", 0]]}
-ACTS = {"spec": "the clarify role's questions go to the person who asked, or in a development run to an oracle model.",
+ACTS = {"spec": "the Clarifier's questions go to the person who asked, or in a development run to an oracle model.",
         "sim": "they run lint and their own tests on the simulators{verif}.",
         "vivado": "they run Vivado on the design."}
 OBSERVES = {"spec": "the answers come back, and code checks that no question is left open.",
             "sim": "lint and test results come back; code reads them, and no model judges them.",
             "vivado": "Vivado's reports come back (timing, design rules, clock crossings, methodology, exceptions); code reads them."}
-WORKS = {0: "the clarify role turns the request into a spec and asks about what it leaves open",
-         1: "the RTL writer plans the architecture, clocks and resources",
-         9: "the RTL writer and the test writer prepare the bring-up files"}
+WORKS = {0: "the Clarifier turns the request into a spec and asks about what it leaves open",
+         1: "the Designer plans the architecture, clocks and resources",
+         9: "the Designer and the Verifier prepare the bring-up files"}
 
 
 def jload(rel):
