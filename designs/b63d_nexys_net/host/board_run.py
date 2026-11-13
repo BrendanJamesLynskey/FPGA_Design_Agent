@@ -5,12 +5,14 @@
             14) is expected to return every frame the design sends. The host injects an ARP request, an echo request
             and a UDP datagram from an invented PC address and reads back the design's answers with the frame capture,
             each checked against the library models.
-  link      one cable from J4 straight to a PC interface that is on no other network. Before any traffic the script
-            checks the isolation itself (isolation_check) and refuses if the interface has a default route, carries the
-            default route, has any address but 192.168.63.1/24, or if anything but the board answers on the subnet.
-            Every socket is bound to that interface (SO_BINDTODEVICE when allowed, else its source address), and the
-            multicast socket sends through it with TTL 1. Then: ping, the board's neighbour entry, the UDP statistics
-            service, and a datagram to a multicast group before and after the board joins it.
+  link      one cable from J4 straight to a PC interface that is on no other network. Before any traffic, and again
+            before each step that sends, the script checks what it can see (isolation_check: a physical PCI or USB
+            interface with carrier, not stacked or enslaved; only 192.168.63.1/24 and link-local IPv6; no route but the
+            subnet in any table; no IPv4 forwarding or proxy ARP on it; no host but the board, at its MAC; a query that
+            fails stops the run), then listens for 10 s and refuses if any frame arrives (the idle board sends none, a
+            home LAN does). Every socket is bound to the interface with SO_BINDTODEVICE, and multicast leaves through it
+            with TTL 1. Then: ping, the board's neighbour entry, the UDP statistics service, and a datagram to a
+            multicast group before and after the board joins it.
 
 Operating conditions (XADC Tj, VCCINT, VCCAUX, VCCBRAM and the alarms the design latches between polls) are read at
 the start, between steps and at the end, and written with the results. Example:
@@ -139,12 +141,17 @@ def _run(*cmd: str) -> str:
     return subprocess.run(list(cmd), capture_output=True, text=True).stdout
 
 
+def _query(*cmd: str) -> str:
+    """isolation_check's runner: a query that fails (or a missing `ip`) raises, so an unanswered question refuses."""
+    return subprocess.run(list(cmd), capture_output=True, text=True, check=True).stdout
+
+
 STACKED_KINDS = ("vlan", "macvlan", "macvtap", "ipvlan", "ipvtap", "bridge", "bridge_slave", "bond", "bond_slave",
                  "team", "team_slave", "veth", "tun", "tap", "vxlan", "gre", "gretap", "ipip", "sit", "wireguard",
                  "vrf", "vrf_slave", "dummy", "geneve")
 
 
-def isolation_check(iface: str, runner=_run) -> list[str]:
+def isolation_check(iface: str, runner=_query) -> list[str]:
     """Reasons the interface is not an isolated link to the board (empty: isolated). Run before any traffic, and
     again after the first ping, when the neighbour table can show other hosts. `runner` runs a command and returns
     its standard output (a stand-in in the tests). It sees only this PC's view of the interface: it cannot see past the
@@ -161,6 +168,12 @@ def isolation_check(iface: str, runner=_run) -> list[str]:
             why.append(f"{iface} is stacked on another interface ({head})")
         if re.search(r"\bmaster \S+", link):
             why.append(f"{iface} is enslaved to another interface ({re.search(r'master (\S+)', link).group(1)})")
+        flags = re.search(r"<([^>]*)>", link)
+        if not flags or "LOWER_UP" not in flags.group(1).split(","):
+            why.append(f"{iface} has no carrier (LOWER_UP): plug the cable in first, so the state checked is the live one")
+        if not re.search(r"\bparentbus (?:pci|usb)\b", link):
+            why.append(f"{iface} is not a PCI or USB network device (ip -d link shows no parentbus): a virtual or "
+                       "unknown kind of interface")
         kinds = [k for k in STACKED_KINDS if re.search(rf"(?:^|\s){k}(?:\s|$)", link)]
         if kinds:
             why.append(f"{iface} is a {', '.join(kinds)} interface, not a plain physical link")
@@ -184,9 +197,10 @@ def isolation_check(iface: str, runner=_run) -> list[str]:
             why.append(f"{iface} has the IPv6 address {m.group(1)}")
     # routes: in every table, nothing on this interface but the subnet itself (no default, no 0/1 + 128/1 split, no
     # other prefix)
-    for l in runner("ip", "-4", "route", "show", "table", "all", "dev", iface).splitlines():
+    # (no dev filter: `ip route show dev X` leaves out multipath routes; -o keeps a route's nexthops on its line)
+    for l in runner("ip", "-4", "-o", "route", "show", "table", "all").splitlines():
         t = l.split()
-        if not t:
+        if not t or not re.search(rf"\bdev {re.escape(iface)}\b", l):
             continue
         dst = t[1] if t[0] in ("local", "broadcast", "unicast", "multicast", "anycast", "blackhole", "unreachable",
                               "prohibit", "throw", "nat") and len(t) > 1 else t[0]
@@ -212,6 +226,18 @@ def isolation_check(iface: str, runner=_run) -> list[str]:
     m = re.search(r"\bdev (\S+)", runner("ip", "-4", "route", "get", BOARD_IP))
     if not m or m.group(1) != iface:
         why.append(f"the routing table sends {BOARD_IP} by {m.group(1) if m else 'nothing'}, not {iface}")
+    # IPv6 on the wire: the board has no IPv6, so any IPv6 neighbour or an IPv6 default route here is another host
+    if any(l.strip() and "FAILED" not in l and "INCOMPLETE" not in l
+           for l in runner("ip", "-6", "neigh", "show", "dev", iface).splitlines()):
+        why.append(f"an IPv6 host is on {iface} (the board has no IPv6)")
+    if re.search(rf"\bdev {re.escape(iface)}\b", runner("ip", "-6", "-o", "route", "show", "table", "all", "default")):
+        why.append(f"{iface} carries an IPv6 default route (a router is on the wire)")
+    # the PC must not pass the board's frames on (Docker sets net.ipv4.ip_forward=1, and new interfaces inherit it)
+    for knob in ("forwarding", "proxy_arp"):
+        v = runner("cat", f"/proc/sys/net/ipv4/conf/{iface}/{knob}").strip()
+        if v != "0":
+            why.append(f"net.ipv4.conf.{iface}.{knob} is {v or 'unreadable'}, not 0: the PC could route the board's "
+                       f"frames to another network (sudo sysctl -w net.ipv4.conf.{iface}.{knob}=0)")
     # neighbours: only the board, and the board's address only with the board's MAC
     for line in runner("ip", "-4", "neigh", "show", "dev", iface).splitlines():
         t = line.split()
@@ -233,14 +259,12 @@ def ping_ok(text: str, count: int) -> bool:
 
 
 def bound_socket(iface: str, multicast: bool = False) -> socket.socket:
-    """A UDP socket that can only use `iface`: SO_BINDTODEVICE when the kernel allows it, and in any case bound to
-    the PC's address on that interface (isolation_check has made sure no other interface has it); multicast leaves by
-    that interface with TTL 1 and no loopback."""
+    """A UDP socket that can only use `iface`: SO_BINDTODEVICE (unprivileged since Linux 5.7; if the kernel refuses,
+    the run stops rather than fall back to an unbound socket that ip rules could send elsewhere), bound to the PC's
+    address on that interface; multicast leaves by that interface with TTL 1 and no loopback."""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.setsockopt(socket.SOL_SOCKET, SO_BINDTODEVICE, iface.encode() + b"\0")
-    except PermissionError:
-        pass
+    s.setsockopt(socket.SOL_SOCKET, SO_BINDTODEVICE, iface.encode() + b"\0")   # no fallback: an unbound socket
+    # follows ip rules, which can send 192.168.63.1's traffic out of another interface (unprivileged since Linux 5.7)
     s.bind((PC_IP, 0))
     if multicast:
         s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(PC_IP))
@@ -250,11 +274,24 @@ def bound_socket(iface: str, multicast: bool = False) -> socket.socket:
     return s
 
 
+def quiet_link(iface: str, seconds: float = 10.0, sysfs: str = "/sys/class/net") -> int:
+    """Frames received on `iface` while the PC and the board send nothing: 0 on a cable to the idle board; a home LAN
+    delivers broadcasts (ARP, mDNS, SSDP, DHCP) every few seconds. The one check that sees past the cable."""
+    f = Path(sysfs) / iface / "statistics" / "rx_packets"
+    n0 = int(f.read_text())
+    time.sleep(seconds)
+    return int(f.read_text()) - n0
+
+
 def link(sh, out: dict, iface: str) -> bool:
     """On an isolated link with the PC at 192.168.63.1/24 on `iface`."""
     why = isolation_check(iface)
     if why:
         out["refused"] = why
+        return False
+    n = quiet_link(iface)
+    if n:
+        out["refused"] = [f"{n} frames arrived on {iface} in 10 s with the board idle: something else is on the wire"]
         return False
     broadcast = _run("ping", "-b", "-c", "2", "-W", "1", "-I", iface, str(SUBNET.broadcast_address))
     if re.search(r"bytes from (?!" + re.escape(BOARD_IP) + r"\b)", broadcast):
@@ -268,6 +305,10 @@ def link(sh, out: dict, iface: str) -> bool:
         out["refused"] = why
         return False
     out["conditions"].append(conditions(sh, "after ping"))
+    why = isolation_check(iface)                # again before each step that sends: the live state, not the first one
+    if why:
+        out["refused"] = why
+        return False
     out["arp"] = _run("ip", "neigh", "show", BOARD_IP, "dev", iface).strip()
     s = bound_socket(iface)
     s.sendto(b"stats", (BOARD_IP, 5000))
@@ -278,6 +319,10 @@ def link(sh, out: dict, iface: str) -> bool:
     except socket.timeout:
         out["udp_service"] = None
     out["conditions"].append(conditions(sh, "after udp service"))
+    why = isolation_check(iface)
+    if why:
+        out["refused"] = why
+        return False
     m = bound_socket(iface, multicast=True)
     res = {}
     for joined in (False, True):

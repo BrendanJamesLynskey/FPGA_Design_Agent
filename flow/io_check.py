@@ -34,8 +34,10 @@ are asynchronous or slow. Fails on:
                       to check it against
     IO-FWD-SOURCE     an interface timed against a clock the FPGA forwards (``forwarded_clock_source``: the pin the
                       generated clock must be defined from, e.g. the forwarding ODDR's C) whose create_generated_clock is
-                      missing or names another -source (brief 63D: a forwarded clock defined from the wrong pin passes
-                      the clock-name check while its latency is modelled wrongly)
+                      missing or names another -source, is not placed on the declared output port
+                      (``forwarded_clock_port``; a clock on an internal pin leaves the output buffer's delay out), or
+                      is inverted or divided or multiplied (-invert, -divide_by or -multiply_by other than 1): each
+                      models the forwarded clock's latency or edges wrongly while its name still matches
     IO-DDR-UNDECLARED a DDR port (a DDR primitive next to the pin, or delays on both clock edges) that is not in a
                       declared DDR interface with data-sheet values: the pairing check would otherwise be skipped
     IO-VCLK-UNRELATED a virtual clock whose period is neither equal to nor an integer ratio of a design clock, with no
@@ -59,7 +61,7 @@ from typing import Any
 import yaml
 
 INTERFACE_KEYS = ("name", "kind", "direction", "ports", "clock", "clock_period_ns", "ddr", "iob", "data_sheet",
-                  "forwarded_phase_deg", "forwarded_clock_source")
+                  "forwarded_phase_deg", "forwarded_clock_source", "forwarded_clock_port")
 KINDS = ("system_synchronous", "source_synchronous", "forwarded_clock", "asynchronous")
 # board slow_ports default (when board.yaml has none): the Nexys A7 user I/O that has no timing relationship
 DEFAULT_SLOW = (r"BTN[CUDLR]", r"CPU_RESETN", r"SW\[\d+\]", r"LED\[\d+\]", r"LED1[67]_[RGB]", r"AN\[\d+\]",
@@ -397,10 +399,17 @@ def evaluate(build_dir: Path | None, stage: str = "route", xdc_files: list[Path]
             if re.match(r"\s*create_generated_clock\b", code):
                 nm = re.search(r"-name\s+(\S+)", code)
                 src = re.search(r"-source\s+\[\s*get_pins\s+(\{[^}]*\}|\S+?)\s*\]", code)
+                rest = re.sub(r"-source\s+\[[^\]]*\]", " ", code)
+                tgt = re.search(r"\[\s*(get_ports|get_pins|get_nets|get_cells)\s+(\{[^}]*\}|\S+?)\s*\]\s*;?\s*$", rest)
+                div = re.search(r"-divide_by\s+(\S+)", code)
+                mul = re.search(r"-multiply_by\s+(\S+)", code)
                 if nm:
                     gens.setdefault(nm.group(1), []).append(
                         (src.group(1).strip("{} ") if src else None,
-                         {"file": Path(name_).name, "line": n, "text": raw.strip()}))
+                         {"file": Path(name_).name, "line": n, "text": raw.strip(),
+                          "target": (tgt.group(1), tgt.group(2).strip("{} ")) if tgt else None,
+                          "invert": bool(re.search(r"(^|\s)-invert\b", code)),
+                          "divide": div.group(1) if div else "1", "multiply": mul.group(1) if mul else "1"}))
     for i in interfaces:
         want = i.get("forwarded_clock_source")
         if not want:
@@ -409,10 +418,24 @@ def evaluate(build_dir: Path | None, stage: str = "route", xdc_files: list[Path]
         if not got:
             fail("IO-FWD-SOURCE", None, f"interface {i.get('name')}: no create_generated_clock defines {i.get('clock')}")
             continue
+        port = i.get("forwarded_clock_port")
         for src, where in got:
             if src != want:
                 fail("IO-FWD-SOURCE", where, f"interface {i.get('name')}: {i.get('clock')} is generated from {src}, "
                      f"the interface declares {want}")
+            if port and where.get("target") != ("get_ports", port):
+                fail("IO-FWD-SOURCE", where, f"interface {i.get('name')}: {i.get('clock')} is placed on "
+                     f"{where.get('target')}, not the output port {port}")
+            if where.get("invert"):
+                fail("IO-FWD-SOURCE", where, f"interface {i.get('name')}: {i.get('clock')} is inverted (-invert)")
+            for k in ("divide", "multiply"):
+                try:
+                    ok = float(where.get(k)) == 1.0
+                except (TypeError, ValueError):
+                    ok = False
+                if not ok:
+                    fail("IO-FWD-SOURCE", where, f"interface {i.get('name')}: {i.get('clock')} has -{k}_by "
+                         f"{where.get(k)}, not 1")
 
     # IO-DDR-UNDECLARED: every DDR data port must belong to a declared DDR interface with data-sheet values, so the
     # edge-pairing check (IO-DDR-REQUIREMENT) cannot be skipped by leaving the declaration out. A DDR port is one

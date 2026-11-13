@@ -26,7 +26,9 @@ generics: {}            # board values are the RTL defaults; BUILD_STAMP is adde
 io_interfaces:
   - {name: rmii_rx, kind: system_synchronous, direction: in, ports: [ETH_CRSDV, ETH_RXERR, "ETH_RXD[*]"],
      clock: eth_refclk, clock_period_ns: 20.0, iob: true, forwarded_clock_source: u_refclk/C,
+     forwarded_clock_port: ETH_REFCLK,
      data_sheet: {tco_min_ns: 2.0, tco_max_ns: 14.0}}
   - {name: rmii_tx, kind: system_synchronous, direction: out, ports: [ETH_TXEN, "ETH_TXD[*]"],
      clock: eth_refclk, clock_period_ns: 20.0, iob: true, forwarded_clock_source: u_refclk/C,
+     forwarded_clock_port: ETH_REFCLK,
      data_sheet: {tsu_ns: 4.0, th_ns: 2.0}}

@@ -38,3 +38,23 @@ def test_forwarded_clock_from_the_wrong_pin_is_caught():
 def test_forwarded_clock_missing_is_caught():
     lines = [l for l in XDC.splitlines() if not l.startswith("create_generated_clock")]
     assert "IO-FWD-SOURCE" in rules("\n".join(lines))
+
+
+GEN = "create_generated_clock -name eth_refclk -source [get_pins u_refclk/C] -divide_by 1 [get_ports ETH_REFCLK]"
+
+
+def test_forwarded_clock_on_a_pin_is_caught():
+    assert GEN in XDC
+    assert "IO-FWD-SOURCE" in rules(XDC.replace(GEN, GEN.replace("[get_ports ETH_REFCLK]", "[get_pins u_refclk/Q]")))
+
+
+def test_forwarded_clock_divided_is_caught():
+    assert "IO-FWD-SOURCE" in rules(XDC.replace(GEN, GEN.replace("-divide_by 1", "-divide_by 2")))
+
+
+def test_forwarded_clock_multiplied_is_caught():
+    assert "IO-FWD-SOURCE" in rules(XDC.replace(GEN, GEN.replace("-divide_by 1", "-multiply_by 2")))
+
+
+def test_forwarded_clock_inverted_is_caught():
+    assert "IO-FWD-SOURCE" in rules(XDC.replace(GEN, GEN.replace("-divide_by 1", "-divide_by 1 -invert")))

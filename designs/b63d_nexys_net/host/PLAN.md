@@ -44,15 +44,22 @@ The cabling to confirm before this runs:
   any other network (a spare USB Ethernet adapter, or a built-in port with no other link);
 - no switch, router or other host on that cable;
 - the PC interface set to 192.168.63.1/24, with no gateway and no DHCP on it (the board is 192.168.63.2, MAC
-  02:00:00:00:00:63, both locally administered examples).
+  02:00:00:00:00:63, both locally administered examples);
+- IPv4 forwarding and proxy ARP off on that interface (Docker turns forwarding on for every new interface):
+  `sudo sysctl -w net.ipv4.conf.<interface>.forwarding=0 net.ipv4.conf.<interface>.proxy_arp=0`;
+- the cable plugged in before the run (the check needs carrier).
 
-The script checks what it can see before sending anything, and refuses to run if the interface is stacked on or
-enslaved to another interface (a VLAN, macvlan, bridge port or bond member, for example), has any IPv4 address but
-192.168.63.1/24 or any IPv6 address but a link-local one, has any route but 192.168.63.0/24 in any routing table (a
-default route included), carries the route to the home gateway, would not carry the board's or the group's traffic, or
-if any host other than the board (at its expected MAC) appears on the subnet. Every socket is bound to the interface,
-and multicast leaves through it with TTL 1. The check sees only this PC's interface and neighbour table. It cannot see
-past the cable, so the cabling confirmation is still needed.
+The script checks what it can see before sending anything, and again before each step that sends. It refuses if the
+interface is not a physical PCI or USB network device with carrier, is stacked on or enslaved to another interface (a
+VLAN, macvlan, bridge port or bond member, for example), has any IPv4 address but 192.168.63.1/24 or any IPv6 address
+but a link-local one, has any route but 192.168.63.0/24 in any routing table (a default or a split default, multipath
+included) or an IPv6 default route, has IPv4 forwarding or proxy ARP on, carries the route to the home gateway, would
+not carry the board's or the group's traffic, or if any host other than the board (at its expected MAC) appears on the
+subnet, IPv6 neighbours included. A query that fails stops the run. It then listens for 10 seconds and refuses if any
+frame arrives: the idle board sends nothing unsolicited (by the design's RTL: IGMP reports only after a join, ARP
+requests only after a UDP request), while a home network delivers broadcasts every few seconds. That is the one check
+that sees past the cable; it would not notice a quiet network, so the cabling confirmation is still needed. Every
+socket is bound to the interface, and multicast leaves through it with TTL 1.
 
 Then: `ping` the board (ICMP echo and the ARP exchange before it), read the PC's neighbour entry for the board, ask the
 UDP service on port 5000 for the counters, and send a datagram to 239.63.0.1:5000 before and after the board joins that
