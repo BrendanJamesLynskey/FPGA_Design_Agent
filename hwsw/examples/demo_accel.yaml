@@ -1,0 +1,74 @@
+# regmap/1 example (brief 64A): the control block of a small stream accelerator fed by a DMA engine.
+# python3 -m hwsw.regmap gen hwsw/examples/demo_accel.yaml   writes hwsw/examples/generated/demo_accel_regs.{sv,h,py,md}
+# python3 -m hwsw.regmap check hwsw/examples/demo_accel.yaml checks they are current and agree with this file.
+regmap: 1
+name: demo_accel
+version: 0.1.0
+summary: Control and status of a stream accelerator with a descriptor ring and one interrupt.
+addr_width: 12            # a 4 KB window: one page, so a UIO map or a page-granular MMU entry covers exactly this block
+unmapped: slverr
+interrupt: {status: IRQ_STATUS, enable: IRQ_ENABLE}
+registers:
+- name: ID
+  offset: 0x000
+  summary: Block identity; software checks it before touching anything else.
+  fields:
+  - {name: MAGIC, lsb: 16, width: 16, access: RO, const: 0x64A0, summary: fixed pattern 0x64A0}
+  - {name: VERSION, lsb: 0, width: 16, access: RO, const: 0x0100, summary: register-map version 1.0}
+- name: CTRL
+  offset: 0x004
+  summary: Configuration; written while the block is idle.
+  fields:
+  - {name: ENABLE, lsb: 0, width: 1, access: RW, reset: 0, summary: 1 lets the block accept stream data}
+  - {name: MODE, lsb: 4, width: 3, access: RW, reset: 2, summary: kernel select}
+  - {name: OVERFLOW, lsb: 8, width: 1, access: W1C, summary: an input beat arrived while the block was disabled}
+  - {name: SCALE, lsb: 16, width: 12, access: RW, reset: 0x100, summary: "output gain, unsigned 4.8 fixed point"}
+- name: CMD
+  offset: 0x008
+  summary: Commands; reading returns 0.
+  fields:
+  - {name: START, lsb: 0, width: 1, access: W1P, summary: start one job}
+  - {name: FLUSH, lsb: 1, width: 1, access: W1P, summary: drop buffered data}
+- name: STATUS
+  offset: 0x00C
+  summary: Live state, read from the hardware.
+  fields:
+  - {name: BUSY, lsb: 0, width: 1, access: RO, summary: a job is running}
+  - {name: LEVEL, lsb: 8, width: 8, access: RO, summary: input FIFO fill in beats}
+- name: IRQ_STATUS
+  offset: 0x010
+  summary: Interrupt causes; write 1 to clear.
+  fields:
+  - {name: DONE, lsb: 0, width: 1, access: W1C, summary: a job finished}
+  - {name: ERROR, lsb: 1, width: 1, access: W1C, summary: a descriptor was malformed}
+- name: IRQ_ENABLE
+  offset: 0x014
+  summary: Interrupt enables, bit for bit with IRQ_STATUS.
+  fields:
+  - {name: DONE, lsb: 0, width: 1, access: RW, reset: 0}
+  - {name: ERROR, lsb: 1, width: 1, access: RW, reset: 0}
+- name: RING_BASE
+  offset: 0x020
+  summary: Physical address of the descriptor ring (64-byte aligned).
+  fields:
+  - {name: ADDR, lsb: 6, width: 26, access: RW, reset: 0}
+- name: RING_TAIL
+  offset: 0x024
+  summary: Producer index, written by software after it fills descriptors.
+  fields:
+  - {name: INDEX, lsb: 0, width: 8, access: RW, reset: 0}
+- name: RING_HEAD
+  offset: 0x028
+  summary: Consumer index, advanced by the hardware.
+  fields:
+  - {name: INDEX, lsb: 0, width: 8, access: RO}
+- name: DOORBELL
+  offset: 0x02C
+  summary: Per-queue doorbells; software rings, the hardware clears when it has seen the new tail.
+  fields:
+  - {name: QUEUE, lsb: 0, width: 4, access: W1S}
+- name: SCRATCH
+  offset: 0x0FC
+  summary: Free read/write word for bus tests.
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RW, reset: 0}

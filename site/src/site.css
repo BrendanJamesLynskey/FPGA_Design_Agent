@@ -468,3 +468,83 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
   .sc-page table.sc-stack td::before { content: attr(data-label) ": "; font-weight: 600; color: var(--ink-2); }
   .sc-page table.sc-stack td:empty::before { content: attr(data-label) ": none"; }
 }
+
+/* block-design viewer: blocks drawn from gen/graph.json; a click fills the details panel */
+.bdtabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+/* the diagram has its own layouts: left to right from 1100 px, top to bottom below */
+.bd .agfig .lay-w { display: none; }
+.bd .agfig .lay-n { display: block; max-width: 480px; }
+@media (min-width: 1100px) { .bd .agfig .lay-w { display: block; } .bd .agfig .lay-n { display: none; } }
+@media (min-width: 1100px) { .wrap:has(.bdpage) { max-width: 1500px; } }
+@media (min-width: 1900px) { .wrap:has(.bdpage) { max-width: 1760px; } }
+svg.bdsvg { display: block; width: 100%; height: auto; overflow: visible; }
+svg.bdsvg text { font: 12.5px var(--f-mono); }
+svg .bdb { fill: var(--panel); stroke: var(--ink); stroke-width: 1.2; }
+svg .bdb.bdgen { stroke-dasharray: 5 3; }
+svg .bdb.bdport, svg .bdb.bdpin { fill: var(--bg); stroke: var(--ink-2); }
+svg .bdb.bdpin { stroke-width: 1.6; }
+svg .bdb.bdx { stroke-width: 2; }
+svg .bdh2 { fill: none; stroke: var(--ink-3); }
+svg text.bdn { fill: var(--ink); font-weight: 700; }
+svg text.bdp { fill: var(--ink-2); }
+svg text.bda { fill: var(--ink); }
+svg text.bdu { fill: var(--ink); }
+svg text.bdw { fill: var(--ink); font-size: 12.5px; }
+svg .bdl-bus { stroke: var(--ink); stroke-width: 3; fill: none; }
+svg .bdl-win { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 6 3; fill: none; }
+svg .bdl-sig { stroke: var(--ink-2); stroke-width: 1.4; fill: none; }
+svg .bdl-clk { stroke: var(--ink-2); stroke-width: 1.2; fill: none; }
+svg .bdl-rst { stroke: var(--ink-2); stroke-width: 1.2; stroke-dasharray: 2 3; fill: none; }
+svg .bda-bus { fill: var(--ink); } svg .bda-sig { fill: var(--ink-2); } svg .bddot { fill: var(--ink-2); }
+svg .bdfocus { fill: none; stroke: none; }
+.bdblk { cursor: pointer; }
+.bdblk:focus { outline: none; }
+.bdblk:focus-visible rect.bdfocus { stroke: var(--ink); stroke-width: 2; }
+.bdblk:focus-visible rect.bdb { stroke-width: 2.5; }
+.bdblk.sel rect.bdb { fill: var(--accent-bg); stroke: var(--accent); stroke-width: 2.5; }
+.bdkey { width: 30px; height: 12px; vertical-align: middle; margin-right: 4px; }
+.bdkey path { stroke: var(--ink); } .bdkey .bdl-sig, .bdkey .bdl-clk, .bdkey .bdl-rst { stroke: var(--ink-2); }
+.bdlegend { color: var(--ink-2); }
+svg.bdaddr { display: block; width: 100%; max-width: 560px; height: auto; }
+svg.bdaddr text { font-size: 12.5px; fill: var(--ink); }
+svg .bdrange { fill: var(--ink); }
+svg .bdhole { fill: var(--bg); stroke: var(--ink-3); stroke-dasharray: 3 3; }
+svg .bdtick { stroke: var(--ink-3); }
+.scope { margin: 0 0 1em; color: var(--ink-2); }
+.bdterms { display: grid; gap: 6px 24px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin: 0 0 1em; max-width: 90ch; }
+.bdterms div { margin: 0; } .bdterms dt { font-weight: 700; display: inline; margin-right: .4em; } .bdterms dd { display: inline; margin: 0; color: var(--ink-2); }
+/* the figure and its details panel: beside each other on a wide screen (sticky), below on a laptop, a bottom sheet on a phone */
+.bdmain { display: block; }
+.bdfig { min-width: 0; }
+.bddrawer { margin-top: 14px; scroll-margin-top: 70px; min-width: 0; }
+.bddrawer h3 { margin: 0 0 .3em; }
+.bddrawer .kv { display: grid; grid-template-columns: minmax(0, 14ch) minmax(0, 1fr); gap: 4px 12px; margin: 8px 0 12px; }
+.bddrawer .kv dt { color: var(--ink-2); }
+.bddrawer .kv dd { margin: 0; overflow-wrap: anywhere; }
+.bddrawer p, .bddrawer td { overflow-wrap: anywhere; }
+.bddrawer .bdback { display: none; margin: 0 0 8px; }
+.bdpage td code { white-space: nowrap; overflow-wrap: normal; }
+.bdparams td.nm, .bdparams td.vl { font-family: var(--f-mono); }
+.bdparams td.nm { white-space: nowrap; }
+.bdparams td.og { width: 34%; }
+@media (min-width: 1900px) {
+  .bdmain { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
+  .bddrawer { position: sticky; top: 64px; max-height: calc(100vh - 84px); overflow: auto; margin-top: 0; }
+  .bddrawer .bdback { display: none; }
+}
+@media (max-width: 640px) {
+  .bddrawer .kv { grid-template-columns: minmax(0, 1fr); } .bddrawer .kv dd { margin-bottom: 8px; }
+  .bddrawer { display: none; position: fixed; left: 0; right: 0; bottom: 0; margin: 0; z-index: 20; max-height: 62vh; overflow: auto;
+    border-width: 2px 0 0; border-color: var(--ink); padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  .bddrawer.open { display: block; }
+  .bddrawer .bdback { display: block; position: sticky; top: 0; z-index: 1; width: 100%; margin: 0 0 10px; background: var(--ink); color: var(--bg); }
+  .bdparams thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .bdparams, .bdparams tbody { display: block; width: 100%; }
+  .bdparams tr { display: block; padding: 8px 10px; border-bottom: 1px solid var(--rule); }
+  .bdparams tr:last-child { border-bottom: 0; }
+  .bdparams td { display: block; border: 0; padding: 0; }
+  .bdparams td.nm { font-weight: 700; }
+  .bdparams td.og { color: var(--ink-2); font-size: .88rem; overflow-wrap: anywhere; }
+  .bdparams td.og::before { content: "Source: "; }
+  .bdparams td.vl { overflow-wrap: anywhere; }
+}

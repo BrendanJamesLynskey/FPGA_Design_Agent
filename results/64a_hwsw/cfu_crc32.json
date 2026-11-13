@@ -1,0 +1,251 @@
+{
+ "schema": "cfu_bench/1",
+ "core": "BRV32P (RISCV_RV32IMC_5stage) at 8d5370039e93b0e07943a20146170eb6bb189018, pinned copy in hwsw/cfu_core/brv32p",
+ "unit": "ip_lib/crc32_step via hwsw/cfu.py, custom-2 opcode, funct3 0, funct7 0",
+ "program": "hwsw/cfu_core/bench/crc_bench.c, -O2, rv32imc_zicsr (clmul kernel: + zbkb_zbkc)",
+ "simulator": "Icarus Verilog version 12.0 (stable) ()",
+ "compiler": "riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0",
+ "sizes_bytes": [
+  16,
+  64,
+  256,
+  1024
+ ],
+ "cycles": "from BENCH_MARK(2k) retiring to BENCH_MARK(2k+1) retiring, caches warmed by a first call",
+ "configs": {
+  "baseline": {
+   "variant": null,
+   "latency_clocks": null,
+   "result": "RESULT PASS 211381 cycles 200386 retired",
+   "kernels": {
+    "table": {
+     "16": {
+      "cycles": 208,
+      "cycles_per_byte": 13.0
+     },
+     "64": {
+      "cycles": 736,
+      "cycles_per_byte": 11.5
+     },
+     "256": {
+      "cycles": 2848,
+      "cycles_per_byte": 11.125
+     },
+     "1024": {
+      "cycles": 11296,
+      "cycles_per_byte": 11.031
+     }
+    },
+    "bitwise": {
+     "16": {
+      "cycles": 1042,
+      "cycles_per_byte": 65.125
+     },
+     "64": {
+      "cycles": 4066,
+      "cycles_per_byte": 63.531
+     },
+     "256": {
+      "cycles": 16175,
+      "cycles_per_byte": 63.184
+     },
+     "1024": {
+      "cycles": 64546,
+      "cycles_per_byte": 63.033
+     }
+    },
+    "clmul": {
+     "16": {
+      "cycles": 81,
+      "cycles_per_byte": 5.062
+     },
+     "64": {
+      "cycles": 201,
+      "cycles_per_byte": 3.141
+     },
+     "256": {
+      "cycles": 681,
+      "cycles_per_byte": 2.66
+     },
+     "1024": {
+      "cycles": 2602,
+      "cycles_per_byte": 2.541
+     }
+    }
+   }
+  },
+  "cfu_word": {
+   "variant": "word",
+   "latency_clocks": 1,
+   "result": "RESULT PASS 223985 cycles 209870 retired",
+   "kernels": {
+    "table": {
+     "16": {
+      "cycles": 208,
+      "cycles_per_byte": 13.0
+     },
+     "64": {
+      "cycles": 736,
+      "cycles_per_byte": 11.5
+     },
+     "256": {
+      "cycles": 2848,
+      "cycles_per_byte": 11.125
+     },
+     "1024": {
+      "cycles": 11296,
+      "cycles_per_byte": 11.031
+     }
+    },
+    "bitwise": {
+     "16": {
+      "cycles": 1042,
+      "cycles_per_byte": 65.125
+     },
+     "64": {
+      "cycles": 4066,
+      "cycles_per_byte": 63.531
+     },
+     "256": {
+      "cycles": 16175,
+      "cycles_per_byte": 63.184
+     },
+     "1024": {
+      "cycles": 64546,
+      "cycles_per_byte": 63.033
+     }
+    },
+    "clmul": {
+     "16": {
+      "cycles": 81,
+      "cycles_per_byte": 5.062
+     },
+     "64": {
+      "cycles": 201,
+      "cycles_per_byte": 3.141
+     },
+     "256": {
+      "cycles": 681,
+      "cycles_per_byte": 2.66
+     },
+     "1024": {
+      "cycles": 2602,
+      "cycles_per_byte": 2.541
+     }
+    },
+    "cfu": {
+     "16": {
+      "cycles": 62,
+      "cycles_per_byte": 3.875
+     },
+     "64": {
+      "cycles": 133,
+      "cycles_per_byte": 2.078
+     },
+     "256": {
+      "cycles": 422,
+      "cycles_per_byte": 1.648
+     },
+     "1024": {
+      "cycles": 1574,
+      "cycles_per_byte": 1.537
+     }
+    }
+   },
+   "monitor": {
+    "kills": {
+     "before_start": 1,
+     "in_flight": 6
+    },
+    "starts_delayed_by_inflight": 0
+   }
+  },
+  "cfu_byte": {
+   "variant": "byte",
+   "latency_clocks": 4,
+   "result": "RESULT PASS 229129 cycles 209870 retired",
+   "kernels": {
+    "table": {
+     "16": {
+      "cycles": 208,
+      "cycles_per_byte": 13.0
+     },
+     "64": {
+      "cycles": 736,
+      "cycles_per_byte": 11.5
+     },
+     "256": {
+      "cycles": 2848,
+      "cycles_per_byte": 11.125
+     },
+     "1024": {
+      "cycles": 11296,
+      "cycles_per_byte": 11.031
+     }
+    },
+    "bitwise": {
+     "16": {
+      "cycles": 1042,
+      "cycles_per_byte": 65.125
+     },
+     "64": {
+      "cycles": 4066,
+      "cycles_per_byte": 63.531
+     },
+     "256": {
+      "cycles": 16175,
+      "cycles_per_byte": 63.184
+     },
+     "1024": {
+      "cycles": 64546,
+      "cycles_per_byte": 63.033
+     }
+    },
+    "clmul": {
+     "16": {
+      "cycles": 81,
+      "cycles_per_byte": 5.062
+     },
+     "64": {
+      "cycles": 201,
+      "cycles_per_byte": 3.141
+     },
+     "256": {
+      "cycles": 681,
+      "cycles_per_byte": 2.66
+     },
+     "1024": {
+      "cycles": 2602,
+      "cycles_per_byte": 2.541
+     }
+    },
+    "cfu": {
+     "16": {
+      "cycles": 74,
+      "cycles_per_byte": 4.625
+     },
+     "64": {
+      "cycles": 181,
+      "cycles_per_byte": 2.828
+     },
+     "256": {
+      "cycles": 614,
+      "cycles_per_byte": 2.398
+     },
+     "1024": {
+      "cycles": 2342,
+      "cycles_per_byte": 2.287
+     }
+    }
+   },
+   "monitor": {
+    "kills": {
+     "before_start": 1,
+     "in_flight": 9
+    },
+    "starts_delayed_by_inflight": 0
+   }
+  }
+ },
+ "patch_is_transparent": "table, bitwise and clmul cycles equal in the baseline and every patched core"
+}

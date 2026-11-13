@@ -180,10 +180,18 @@ broken constraint, or a variant's own `requires`, such as `TAPS <= 64` for `lut_
 4. `python3 flow/net/ipdoc.py` regenerates the README's Variants table; bump the entry's version and CHANGELOG.
 
 Entries with variants so far: [fir](../ip_lib/fir/README.md) (four), [dds_awg](../ip_lib/dds_awg/README.md) (two),
-[adc_histogram](../ip_lib/adc_histogram/README.md) (two), and from brief 63D the buffer memories of
+[adc_histogram](../ip_lib/adc_histogram/README.md) (two), [crc32_step](../ip_lib/crc32_step/README.md) (two; a CPU
+function unit, docs/hwsw.md), and from brief 63D the buffer memories of
 [eth_mac_rgmii](../ip_lib/eth_mac_rgmii/README.md) (`RX_RAM`), [icmp_echo](../ip_lib/icmp_echo/README.md) and
 [ipv4_udp_tx](../ip_lib/ipv4_udp_tx/README.md) (`RAM`), two each (block RAM, LUT RAM).
 
 Entries without variants can still be measured: `python3 -m flow.ipchar` writes their rows under the variant name
 `base` (brief 63D: mdio_master, arp_responder, ipv4_udp_rx, igmp_join), and `flow/net/ipdoc.py` shows them in a Cost
 section of the README. The runner also reads the RTL of the entries an entry depends on (`depends` in ip.yaml).
+
+An entry whose logic sits only between its input ports and its output registers has no
+register-to-register path out of context: its row records no WNS and no Fmax estimate. Inside a design its line in
+the hierarchy report can be far above the out-of-context count, because synthesis merges the logic that drives it into
+it (`crc32_step` `word`: 95 LUTs out of context, 283 in the BRV32P core's report, 97 there with its hierarchy kept;
+the core grows by 371 (387 with the hierarchy kept): results/64a_hwsw/core_ooc.json). Measure such a block by the growth of the design
+around it.

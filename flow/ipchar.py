@@ -116,8 +116,10 @@ def parse(wd: Path, clock_ns: float) -> dict:
          "bram_tiles": _row(u, "Block RAM Tile"), "ramb36": _row(u, "RAMB36/FIFO"), "ramb18": _row(u, "RAMB18"),
          "dsp": _row(u, "DSPs")}
     t = (wd / "timing_summary.rpt").read_text()
-    m = re.search(r"WNS\(ns\)\s+TNS\(ns\).*?\n\s*-+.*?\n\s*(-?\d+\.\d+)", t, re.S)
-    r["wns_ns"] = float(m.group(1)) if m else None
+    m = re.search(r"WNS\(ns\)\s+TNS\(ns\).*?\n\s*-+.*?\n\s*(-?\d+\.\d+|inf|NA)", t, re.S)
+    # "inf"/"NA": no constrained register-to-register path (logic only between input ports and output registers,
+    # which an out-of-context run does not time): no Fmax estimate, recorded as None
+    r["wns_ns"] = float(m.group(1)) if m and m.group(1) not in ("inf", "NA") else None
     r["fmax_mhz"] = round(1000.0 / (clock_ns - r["wns_ns"]), 1) if r["wns_ns"] is not None else None
     p = (wd / "power.rpt").read_text()
     pw = {}

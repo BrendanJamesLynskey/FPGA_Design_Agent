@@ -1,0 +1,51 @@
+{
+ "caught": 5,
+ "valid": 5,
+ "faults": [
+  {
+   "name": "wrong_polynomial",
+   "block": "crc32_step",
+   "class": "value",
+   "why": "the normal (unreflected) polynomial in a reflected update",
+   "status": "caught",
+   "seconds": 2.7,
+   "pytest": "1 failed, 1 deselected in 1.66s"
+  },
+  {
+   "name": "msb_first",
+   "block": "crc32_step",
+   "class": "value",
+   "why": "the word variant drops the last bit of the update",
+   "status": "caught",
+   "seconds": 2.7,
+   "pytest": "1 failed, 2 deselected in 1.65s"
+  },
+  {
+   "name": "byte_order",
+   "block": "crc32_step",
+   "class": "value",
+   "why": "the byte variant starts from the most significant byte",
+   "status": "caught",
+   "seconds": 2.6,
+   "pytest": "1 failed, 2 deselected in 1.64s"
+  },
+  {
+   "name": "accepts_while_busy",
+   "block": "crc32_step",
+   "class": "protocol",
+   "why": "an operation offered while the byte variant is busy restarts it (the II contract)",
+   "status": "caught",
+   "seconds": 15.3,
+   "pytest": "1 failed, 2 deselected in 14.38s"
+  },
+  {
+   "name": "valid_early",
+   "block": "crc32_step",
+   "class": "timing",
+   "why": "the byte variant reports after three bytes (latency 3, wrong result)",
+   "status": "caught",
+   "seconds": 2.7,
+   "pytest": "1 failed, 2 deselected in 1.74s"
+  }
+ ]
+}

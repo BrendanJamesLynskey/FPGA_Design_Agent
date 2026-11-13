@@ -27,6 +27,16 @@ read API are in [docs/ip_variants.md](../docs/ip_variants.md).
 Run: `python3 -m pytest ip_lib/fir/tb/test_fir_rtl.py flow/tests/test_63a_ipvariants.py` (Icarus Verilog 12, cocotb
 2.0.1); faults: `python3 hil/ip_faults.py --blocks fir`.
 
+## CPU function units
+
+An entry can also declare a `function_unit:` contract (two register operands, one result, no state, an issue pulse and
+a done pulse a fixed number of clocks later); `python3 -m hwsw.cfu <entry> --variant <v>` then wraps it as a custom
+instruction for a simple in-order CPU pipeline ([docs/hwsw.md](../docs/hwsw.md#3-an-ip-library-entry-as-a-custom-instruction)).
+
+| Entry | Variants | Tests |
+|---|---|---|
+| [crc32_step](crc32_step/README.md) | `word`, `byte`: one CRC-32 update by a 32-bit word in one clock, or a byte per clock | both bit-exact against `crc32_step/model.py` and zlib, latency and II measured, the guard, five seeded faults; built into the BRV32P RV32 core as `crc32.w` and run there in simulation |
+
 ## Networking and packet processing
 
 Byte-wide AXI-Stream blocks, simulated bit-exact against Python golden models with pcap traffic. Status: simulated
@@ -111,6 +121,14 @@ Simulated against Python models with seeded faults; measured on the Nexys A7-100
 
 Run: `python -m pytest hil/tests/test_30_ip_rtl.py` (Icarus Verilog 12, cocotb 2.0.1); faults: `python hil/ip_faults.py`;
 READMEs: `python flow/net/ipdoc.py`.
+
+## Bus infrastructure
+
+| Entry | What | Tests |
+|---|---|---|
+| [axil_xbar](axil_xbar/README.md) | AXI4-Lite crossbar, N masters to M slaves, round robin per slave, DECERR for unmapped addresses; the interconnect that the block-design generator ([docs/blockdesign.md](../docs/blockdesign.md)) inserts | random traffic with stalls at five parameter points against Python masters and slaves, the AXI4-Lite protocol checker on every link, read and write fairness, a reset with transfers in flight, map guards, ten seeded faults |
+
+Run: `python3 -m pytest ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py`; faults: `python3 hil/ip_faults.py --blocks axil_xbar`.
 
 ## Terms
 

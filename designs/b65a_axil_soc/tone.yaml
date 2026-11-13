@@ -1,0 +1,45 @@
+# tone: a reusable hierarchy. A DDS tone (ip_lib/dds_awg, block RAM sine table) with a sample-rate tick, and a frequency
+# and duty counter (ip_lib/freq_duty_counter) on the tone's sign bit. Each block gets a generated AXI4-Lite register
+# wrapper; both wrappers are exported as the hierarchy's slave interfaces.
+schema: fpga-design-agent/blockdesign/v1
+name: tone
+kind: hierarchy
+
+ports:
+  - {name: sample, dir: out, width: 16}
+  - {name: tick, dir: out}
+
+interfaces:                              # the hierarchy's boundary interfaces, exported from inside
+  - {name: s_dds, export: dds.s_axil}
+  - {name: s_fd, export: fd.s_axil}
+
+instances:
+  dds:
+    component: dds_awg
+    variant: bram
+    params: {PHASE_W: 32, LUT_W: 8, OUT_W: 16}
+    axi_lite:
+      registers:
+        control:
+          - {name: STEP, port: step, reset: 0x0A7C5AC4, doc: "phase step; f = STEP x f_tick / 2^32"}
+          - {name: WAVE, fields: [{port: wave, lsb: 0}, {port: amp_shift, lsb: 4}], reset: 0x00000000,
+             doc: "[1:0] 0 sine, 1 triangle, 2 saw, 3 square; [7:4] amplitude shift right"}
+          - {name: TICKDIV, reset: 0x00000063, doc: "sample tick every TICKDIV + 1 clocks"}
+        status:
+          - {name: SAMPLE, port: sample, doc: "current sample, sign extended"}
+          - {name: PHASE, port: phase_o, doc: "phase accumulator"}
+        tick: {div_reg: TICKDIV, to: tick}        # a generated sample-rate divider drives the block's tick input
+  fd:
+    component: freq_duty_counter
+    params: {GATE_CLKS: 1000000, CNT_W: 24}
+    axi_lite:
+      registers:
+        status:
+          - {name: EDGES, port: edges, doc: rising edges in the last gate}
+          - {name: HIGH, port: high_clks, doc: clocks high in the last gate}
+          - {name: GATES, port: gates, doc: gates completed since reset}
+
+connections:
+  - {from: dds.sample, to: sample}
+  - {from: dds.sample, bits: [15, 15], to: fd.sig, invert: true}     # the sign bit inverted: high for the positive half
+  - {from: dds.tick, to: tick}

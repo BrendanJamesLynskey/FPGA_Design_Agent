@@ -1,0 +1,38 @@
+# Seeded faults; run by hil/ip_faults.py --blocks crc32_step: each must make the block's tests fail.
+runner: hil/ip_faults.py          # the fault runner that owns this block's faults (the other runner skips it)
+faults:
+- name: wrong_polynomial
+  file: crc32_step.sv
+  old: "localparam logic [31:0] POLY = 32'hEDB88320;"
+  new: "localparam logic [31:0] POLY = 32'h04C11DB7;"
+  class: value
+  why: the normal (unreflected) polynomial in a reflected update
+  test: ip_lib/crc32_step/tb/test_crc32_step_rtl.py -k test_variant
+- name: msb_first
+  file: crc32_step.sv
+  old: "for (int i = 0; i < 32; i++) x = x[0] ? ((x >> 1) ^ POLY) : (x >> 1);"
+  new: "for (int i = 0; i < 31; i++) x = x[0] ? ((x >> 1) ^ POLY) : (x >> 1);"
+  class: value
+  why: the word variant drops the last bit of the update
+  test: ip_lib/crc32_step/tb/test_crc32_step_rtl.py -k word
+- name: byte_order
+  file: crc32_step.sv
+  old: "acc <= upd8(crc_in, data_in[7:0]);"
+  new: "acc <= upd8(crc_in, data_in[31:24]);"
+  class: value
+  why: the byte variant starts from the most significant byte
+  test: ip_lib/crc32_step/tb/test_crc32_step_rtl.py -k byte
+- name: accepts_while_busy
+  file: crc32_step.sv
+  old: "end else if (!busy) begin"
+  new: "end else if (!busy || in_valid) begin"
+  class: protocol
+  why: an operation offered while the byte variant is busy restarts it (the II contract)
+  test: ip_lib/crc32_step/tb/test_crc32_step_rtl.py -k byte
+- name: valid_early
+  file: crc32_step.sv
+  old: "if (n == 2'd3) begin"
+  new: "if (n == 2'd2) begin"
+  class: timing
+  why: the byte variant reports after three bytes (latency 3, wrong result)
+  test: ip_lib/crc32_step/tb/test_crc32_step_rtl.py -k byte

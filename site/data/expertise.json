@@ -1784,6 +1784,16 @@
       "confirmed": "doc",
       "summary": "Zynq UltraScale+ has separate LPD, FPD and PL power domains with PS-PL isolation that must be released; Zynq-7000 has no such isolation.",
       "topic": "PS-PL isolation and power domains"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "Zynq-7000: one I/O-coherent port (ACP), 32-byte lines; Zynq UltraScale+: HPC0/1 coherent only when the master marks its transfers and CCI snooping is on, 64-byte lines, a line-only ACP.",
+      "topic": "Cache coherency of PL DMA buffers"
+     },
+     {
+      "confirmed": "doc",
+      "summary": "The PL interrupt lines reach the GIC at different IDs: Zynq-7000 IRQ_F2P[7:0] are 61-68 and [15:8] are 84-91; Zynq UltraScale+ pl_ps_irq0 is 121-128 and pl_ps_irq1 136-143 (device-tree SPI number = ID - 32).",
+      "topic": "PL-to-PS interrupt numbers"
      }
     ]
    },
@@ -4183,7 +4193,7 @@
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
   }
  ],
- "pin": "c6f19ab",
- "skills_total": 244,
+ "pin": "d2ef56e",
+ "skills_total": 250,
  "skills_used": 193
 }

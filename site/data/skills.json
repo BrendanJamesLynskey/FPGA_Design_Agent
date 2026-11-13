@@ -1,6 +1,6 @@
 {
  "note": "Names and one-line descriptions only, from the SKILL.md front matter at the pin; Ross-as-shipped is not listed.",
- "pin": "c6f19ab",
+ "pin": "d2ef56e",
  "skills": [
   {
    "description": "A KR260 PL design needs a clock: the programmable Si5332 clock outputs on the HPA and HPB banks (25 MHz), the PS pl_clk, and the SFP+ reference; pins and standards.",
@@ -1285,6 +1285,42 @@
    "name": "instruments-m2k-redpitaya",
    "section": "hardware-in-the-loop",
    "unit": "vendor/hil_verification"
+  },
+  {
+   "description": "Choosing, for one kernel, between pure software, a custom instruction in a soft CPU and a separate accelerator behind DMA: the eligibility gates (operands, state, memory access, stall ...",
+   "name": "custom-instruction-or-accelerator",
+   "section": "hw-sw-codesign",
+   "unit": "vendor/hw_sw_codesign"
+  },
+  {
+   "description": "Deciding whether a kernel should stay in software or move into the fabric: profile first, the Amdahl ceiling, transfer and setup cost both ways ...",
+   "name": "hw-sw-partitioning-cost-model",
+   "section": "hw-sw-codesign",
+   "unit": "vendor/hw_sw_codesign"
+  },
+  {
+   "description": "Giving Linux on a Zynq-7000 or Zynq UltraScale+ (ZedBoard, KR260) access to a PL block: a UIO device (generic-uio, mmap of the register window, interrupts by read and write) ...",
+   "name": "linux-uio-drivers-and-dt-overlays",
+   "section": "hw-sw-codesign",
+   "unit": "vendor/hw_sw_codesign"
+  },
+  {
+   "description": "Designing the AXI4-Lite register map a driver will use: one source generating RTL, C header, host driver and documentation, ID and scratch registers, access types (RW, RO, W1C, W1S ...",
+   "name": "register-maps-for-software",
+   "section": "hw-sw-codesign",
+   "unit": "vendor/hw_sw_codesign"
+  },
+  {
+   "description": "Moving data between a CPU and a fabric block: AXI-Stream with simple or scatter-gather DMA, descriptor rings with producer and consumer indices, doorbells, the publish-then-ring ordering ...",
+   "name": "stream-dma-doorbells-and-interrupts",
+   "section": "hw-sw-codesign",
+   "unit": "vendor/hw_sw_codesign"
+  },
+  {
+   "description": "A PL master (DMA or accelerator) shares buffers with the Arm cores of a Zynq-7000 or Zynq UltraScale+: which port (HP, HPC, ACP, ACE) is coherent and on what conditions ...",
+   "name": "zynq-cache-coherency-for-dma",
+   "section": "hw-sw-codesign",
+   "unit": "vendor/hw_sw_codesign"
   },
   {
    "description": "Writing or checking a 10/100 Ethernet MAC for an RMII PHY, or any FCS (CRC-32) generator or checker: dibit order, preamble and SFD, CRS_DV toggling at frame end, 10 Mb/s sampling, padding ...",

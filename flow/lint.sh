@@ -8,6 +8,14 @@ cd "$ROOT"
 verilator --version
 echo "lint: shell (fpga_shell)"
 verilator --lint-only -Wall --top-module fpga_shell shell/rtl/*.sv
+# the block-design crossbar on its own at a many-to-many point (a design's top lints it only at that design's point),
+# and the block-design support RTL at its default parameters; the generated tops are linted below with each design
+echo "lint: ip_lib/axil_xbar (3 masters, 4 slaves)"
+verilator --lint-only -Wall --top-module axil_xbar -GN_M=3 -GN_S=4 -GADDR_W=32 \
+  "-GS_BASE=128'h00008000_00002000_00001000_00000000" "-GS_BITS=32'h0f0c0c0c" ip_lib/axil_xbar/rtl/axil_xbar.sv
+for t in bd_axil_regs bd_axil_win bd_win_axil_master; do
+  echo "lint: flow/blockdesign/rtl/$t"; verilator --lint-only -Wall --top-module "$t" "flow/blockdesign/rtl/$t.sv"
+done
 for d in designs/*/; do
   [ -f "$d/build.yaml" ] || continue
   top="$(python3 -c "import yaml,sys; print(yaml.safe_load(open(sys.argv[1]))['top'])" "$d/build.yaml")"

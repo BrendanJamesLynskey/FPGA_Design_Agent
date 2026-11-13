@@ -1,0 +1,61 @@
+# b65a_axil_soc: the brief 65A sample block design. Three ip_lib blocks behind an AXI4-Lite crossbar, reached from the
+# host through the test shell. Written by hand here; it is the format the agent writes. Everything under gen/ is
+# generated from this file by `python3 -m flow.blockdesign generate designs/b65a_axil_soc`.
+schema: fpga-design-agent/blockdesign/v1
+name: b65a_axil_soc
+top: b65a_axil_soc_top
+part: xc7a100tcsg324-1
+board: Digilent Nexys A7-100T
+summary: A tone generator, a frequency and duty counter and a logic analyser from ip_lib, on one AXI4-Lite crossbar
+  that the host reaches through the UART test shell.
+constraints: [designs/b65a_axil_soc/design.xdc]
+
+ports:                                   # the board pins this design uses (names from Digilent's master XDC)
+  - {name: CLK100MHZ, dir: in, kind: clock, freq_mhz: 100}
+  - {name: CPU_RESETN, dir: in, kind: reset, polarity: low, async: true}
+  - {name: UART_TXD_IN, dir: in, async: true}
+  - {name: UART_RXD_OUT, dir: out}
+  - {name: LED, dir: out, width: 16}
+
+clocks:                                  # clock domains; block automation adds one reset synchroniser per domain
+  - {name: sys, port: CLK100MHZ, reset: CPU_RESETN}
+
+instances:
+  shell:
+    component: test_shell
+    params: {DESIGN_ID: 0x42363541}      # "B65A"; CLKS_PER_BIT and TIMEOUT_CYCLES follow the clock (derived)
+  host:
+    component: bd_win_axil_master        # the shell window as an AXI4-Lite master
+  tone:
+    design: tone.yaml                    # a hierarchy: the DDS and its frequency counter
+  la:
+    component: logic_analyser
+    params: {ADDR_W: 8}                  # 256 samples; WIDTH follows the sample it is connected to
+    axi_lite: {window: window}           # bd_axil_win in front of its register window
+
+connections:
+  - {from: UART_TXD_IN, to: shell.uart_rx}
+  - {from: shell.uart_tx, to: UART_RXD_OUT}
+  - {from: shell.window, to: host.window}
+  - {from: tone.sample, to: [la.sample]}
+  - {from: tone.tick, to: la.sample_en}
+  - {from: tone.sample, bits: [15, 8], to: LED, to_bits: [15, 8]}
+  - {const: 0, to: LED, to_bits: [7, 0]}
+
+interconnect:                            # connection automation: one crossbar, the address map from the address editor
+  - name: xbar
+    masters: [host.m_axil]
+    slaves: [tone.s_dds, tone.s_fd, la.s_axil]
+
+address_map:                             # the address editor: fixed bases are kept, the rest are assigned
+  base: 0x40000000
+  min_size: 4096
+  ranges:
+    - {slave: tone.s_dds, base: 0x40000000}
+    - {slave: tone.s_fd}
+    - {slave: la.s_axil, base: 0x40010000}
+
+top_params:                              # raised to top-module parameters, so the simulation can shorten them
+  - shell.CLKS_PER_BIT
+  - shell.TIMEOUT_CYCLES
+  - tone.fd.GATE_CLKS

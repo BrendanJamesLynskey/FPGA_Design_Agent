@@ -1,0 +1,47 @@
+# Cost-model input (brief 64A): CRC-32 over an N-byte buffer on a Zynq-7000 (ZedBoard), software on the Cortex-A9
+# against a CRC block in the fabric fed by AXI DMA through an HP port. ILLUSTRATIVE: every number below is an
+# assumption with a wide range until brief 64B measures it on the board; the point is the shape of the answer
+# (a break-even size, the Amdahl ceiling), not the numbers.
+#   python3 -m hwsw.partition hwsw/examples/partition_crc32_zynq.yaml
+partition: 1
+kernel: CRC-32 (IEEE 802.3) over an N-byte buffer; item = one byte
+sizes: [16, 64, 256, 1024, 1500, 4096, 65536, 1048576]
+application:
+  kernel_fraction: {value: [0.3, 0.6], source: assumption (a packet application that checks every frame)}
+  typical_n: 1500
+options:
+  sw:
+    label: Cortex-A9, table-driven CRC in C
+    f_cpu_hz: {value: 666.67e6, source: "ZedBoard PS clock setting (assumption: the default 667 MHz CPU clock)"}
+    cycles_per_item: {value: [2, 10], source: "assumption: slice-by-8 to byte-wise table; 64B measures it"}
+    cycles_per_call: {value: [50, 200], source: assumption (call, loop set-up, final XOR)}
+    power_w: {value: [0.3, 0.6], source: assumption (one A9 core busy, increment over idle)}
+  accel:
+    label: CRC block in the PL, AXI-Stream from AXI DMA (simple mode) on S_AXI_HP0, polled
+    f_fabric_hz: {value: 100e6, source: assumption (FCLK_CLK0 at 100 MHz)}
+    ii_clocks: {value: 0.25, source: "a 32-bit stream, one word per clock: 0.25 clock per byte"}
+    latency_clocks: {value: 8, source: assumption (DMA read latency is in dma_bytes_per_s; this is the CRC pipeline)}
+    bytes_in_per_item: {value: 1, source: one byte read per byte}
+    bytes_out_per_item: {value: 0, source: the result is one register read}
+    dma_bytes_per_s: {value: [200e6, 400e6], source: "assumption: 32-bit HP port at 100 MHz is 400 MB/s at most"}
+    mmio_writes: {value: 6, source: "DMA control, source address, length; block mode and start (regmap demo_accel style)"}
+    mmio_reads: {value: 2, source: DMA status and the CRC result}
+    mmio_write_s: {value: [0.1e-6, 0.3e-6], source: assumption (GP port write from the A9)}
+    mmio_read_s: {value: [0.2e-6, 0.6e-6], source: assumption (GP port read, uncached, the CPU waits)}
+    completion: poll
+    polls: {value: 1, source: the spin overlaps the transfer; one final read is extra}
+    coherent: false
+    flush_bytes_per_s: {value: [0.5e9, 2e9], source: "assumption: clean the buffer's lines to DDR before the DMA reads"}
+    invalidate_bytes_per_s: {value: [1e9, 4e9], source: assumption (nothing to invalidate here; output is 0 bytes)}
+    overlap: true
+    power_w: {value: [0.4, 0.9], source: assumption (PL block, DMA, HP port and the A9 spinning)}
+traits:
+  src_regs: 2                 # the running CRC and one data word
+  dst_regs: 1
+  state_bits: 0               # the running CRC lives in a general register between calls
+  streaming: false
+  memory_access: false
+  unit_latency_clocks: 1
+  bytes_per_call: 1500
+  toolchain: intrinsic        # a .insn wrapper in a header
+  reuse_programs: 2
