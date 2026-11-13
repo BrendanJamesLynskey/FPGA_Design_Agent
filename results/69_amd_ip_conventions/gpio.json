@@ -1,0 +1,459 @@
+{
+ "meta": {
+  "vivado": "2026.1",
+  "vlnv": "xilinx.com:ip:axi_gpio:2.0",
+  "requires_license": "0",
+  "config": {
+   "CONFIG.C_ALL_INPUTS": "0",
+   "CONFIG.C_ALL_INPUTS_2": "0",
+   "CONFIG.C_ALL_OUTPUTS": "0",
+   "CONFIG.C_ALL_OUTPUTS_2": "0",
+   "CONFIG.C_DOUT_DEFAULT": "0x000000A5",
+   "CONFIG.C_DOUT_DEFAULT_2": "0x00000005",
+   "CONFIG.C_GPIO2_WIDTH": "4",
+   "CONFIG.C_GPIO_WIDTH": "8",
+   "CONFIG.C_INTERRUPT_PRESENT": "1",
+   "CONFIG.C_IS_DUAL": "1",
+   "CONFIG.C_TRI_DEFAULT": "0x000000F0",
+   "CONFIG.C_TRI_DEFAULT_2": "0x0000000F",
+   "CONFIG.Component_Name": "dut_gpio",
+   "CONFIG.GPIO2_BOARD_INTERFACE": "Custom",
+   "CONFIG.GPIO_BOARD_INTERFACE": "Custom",
+   "CONFIG.S_AXI.INSERT_VIP": "0",
+   "CONFIG.S_AXI_ACLK.INSERT_VIP": "0",
+   "CONFIG.S_AXI_ARESETN.INSERT_VIP": "0",
+   "CONFIG.USE_BOARD_FLOW": "false"
+  }
+ },
+ "probes": [
+  {
+   "probe": "reset_values",
+   "text": "DATA1=0x00000055 TRI1=0x000000f0 DATA2=0x00000006 TRI2=0x0000000f GIER=0x00000000 ISR=0x00000000 IER=0x00000000  chk=0x000",
+   "values": {
+    "DATA1": "0x00000055",
+    "TRI1": "0x000000f0",
+    "DATA2": "0x00000006",
+    "TRI2": "0x0000000f",
+    "GIER": "0x00000000",
+    "ISR": "0x00000000",
+    "IER": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "reserved_bits",
+   "text": "TRI1=0x000000ff TRI2=0x0000000f GIER=0x80000000 IER=0x00000003 ISR=0x00000000 DATA1=0x0000005a DATA2=0x00000006  chk=0x000",
+   "values": {
+    "TRI1": "0x000000ff",
+    "TRI2": "0x0000000f",
+    "GIER": "0x80000000",
+    "IER": "0x00000003",
+    "ISR": "0x00000000",
+    "DATA1": "0x0000005a",
+    "DATA2": "0x00000006",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "data_in_out",
+   "text": "tri=0xF0 wrote=0xFFFFFFFF pins=0x5A read=0x0000005f out_pins=0xff chk=0x000",
+   "values": {
+    "tri": "0xF0",
+    "wrote": "0xFFFFFFFF",
+    "pins": "0x5A",
+    "read": "0x0000005f",
+    "out_pins": "0xff",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "data_in_out_zero",
+   "text": "wrote=0x0 read=0x00000050 out_pins=0x00 chk=0x000",
+   "values": {
+    "wrote": "0x0",
+    "read": "0x00000050",
+    "out_pins": "0x00",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "data_all_out",
+   "text": "tri=0 wrote=0xC3 read=0x000000c3 out_pins=0xc3 tri_pins=0x00 chk=0x000",
+   "values": {
+    "tri": "0",
+    "wrote": "0xC3",
+    "read": "0x000000c3",
+    "out_pins": "0xc3",
+    "tri_pins": "0x00",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "window_read_scan",
+   "text": "zero_okay_words=112 o000=0x0000005a/OKAY o004=0x000000ff/OKAY o008=0x00000006/OKAY o00c=0x0000000f/OKAY o11c=0x80000000/OKAY o120=0x00000003/OKAY o128=0x00000003/OKAY o15c=0x80000000/OKAY o160=0x00000003/OKAY o168=0x00000003/OKAY o19c=0x80000000/OKAY o1a0=0x00000003/OKAY o1a8=0x00000003/OKAY o1dc=0x80000000/OKAY o1e0=0x00000003/OKAY o1e8=0x00000003/OKAY  chk=0x000",
+   "values": {
+    "zero_okay_words": "112",
+    "o000": "0x0000005a/OKAY",
+    "o004": "0x000000ff/OKAY",
+    "o008": "0x00000006/OKAY",
+    "o00c": "0x0000000f/OKAY",
+    "o11c": "0x80000000/OKAY",
+    "o120": "0x00000003/OKAY",
+    "o128": "0x00000003/OKAY",
+    "o15c": "0x80000000/OKAY",
+    "o160": "0x00000003/OKAY",
+    "o168": "0x00000003/OKAY",
+    "o19c": "0x80000000/OKAY",
+    "o1a0": "0x00000003/OKAY",
+    "o1a8": "0x00000003/OKAY",
+    "o1dc": "0x80000000/OKAY",
+    "o1e0": "0x00000003/OKAY",
+    "o1e8": "0x00000003/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "baseline_values",
+   "text": "DATA1=0x0000005a TRI1=0x000000ff DATA2=0x00000006 TRI2=0x0000000f GIER=0x80000000 ISR=0x00000003 IER=0x00000003  chk=0x000",
+   "values": {
+    "DATA1": "0x0000005a",
+    "TRI1": "0x000000ff",
+    "DATA2": "0x00000006",
+    "TRI2": "0x0000000f",
+    "GIER": "0x80000000",
+    "ISR": "0x00000003",
+    "IER": "0x00000003",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "window_write_scan",
+   "text": "baseline=all_zero pattern=0xFFFFFFFF changed_real_registers: o15c->GIER o160->ISR o168->IER o19c->GIER o1a0->ISR o1a8->IER o1dc->GIER o1e0->ISR o1e8->IER  chk=0x000",
+   "values": {
+    "baseline": "all_zero",
+    "pattern": "0xFFFFFFFF",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_TRI1",
+   "text": "write_0xFF_strb0000=0x000000ff strb0010=0x000000ff strb0001=0x000000ff (from 0) chk=0x000",
+   "values": {
+    "write_0xFF_strb0000": "0x000000ff",
+    "strb0010": "0x000000ff",
+    "strb0001": "0x000000ff",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_TRI1_other",
+   "text": "write_0xFF_strb1110=0x000000ff write_0x00FFFF00_strb0001=0x00000000 chk=0x000",
+   "values": {
+    "write_0xFF_strb1110": "0x000000ff",
+    "write_0x00FFFF00_strb0001": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_GIER",
+   "text": "write_bit31_strb0001=0x80000000 strb1000=0x80000000 (from 0) chk=0x000",
+   "values": {
+    "write_bit31_strb0001": "0x80000000",
+    "strb1000": "0x80000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_IER",
+   "text": "write_3_strb1110=0x00000003 strb0001=0x00000003 (from 0) chk=0x000",
+   "values": {
+    "write_3_strb1110": "0x00000003",
+    "strb0001": "0x00000003",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_ISR",
+   "text": "write_1_strb0000 from ISR=0: isr=0x00000001 chk=0x000",
+   "values": {
+    "ISR": "0:",
+    "isr": "0x00000001",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "unaligned",
+   "text": "write_to_0x005_data_0x55: TRI1=0x00000055 read_0x005=0x00000055 read_0x007=0x00000055 resp=OKAY chk=0x000",
+   "values": {
+    "TRI1": "0x00000055",
+    "read_0x005": "0x00000055",
+    "read_0x007": "0x00000055",
+    "resp": "OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "unaligned_write2",
+   "text": "write_to_0x006: TRI1=0x000000aa chk=0x000",
+   "values": {
+    "TRI1": "0x000000aa",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "read_side_effect",
+   "text": "isr_read1=0x00000001 read2=0x00000001 read3=0x00000001 data1=0x000000a5 chk=0x000",
+   "values": {
+    "isr_read1": "0x00000001",
+    "read2": "0x00000001",
+    "read3": "0x00000001",
+    "data1": "0x000000a5",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "isr_after_pin_change",
+   "text": "isr=0x00000001 irq=1 chk=0x000",
+   "values": {
+    "isr": "0x00000001",
+    "irq": "1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "isr_write1_to_set_bit",
+   "text": "isr=0x00000000 irq=0 chk=0x000",
+   "values": {
+    "isr": "0x00000000",
+    "irq": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "isr_write1_again",
+   "text": "isr=0x00000001 irq=1 chk=0x000",
+   "values": {
+    "isr": "0x00000001",
+    "irq": "1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "isr_write0",
+   "text": "isr=0x00000001 chk=0x000",
+   "values": {
+    "isr": "0x00000001",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "isr_write_ones_after_bit1",
+   "text": "isr=0x00000000 chk=0x000",
+   "values": {
+    "isr": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_gier_off",
+   "text": "irq=0 isr=0x00000001 chk=0x000",
+   "values": {
+    "irq": "0",
+    "isr": "0x00000001",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_gier_on_after",
+   "text": "irq=1 chk=0x000",
+   "values": {
+    "irq": "1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_level_hold",
+   "text": "after_20_clocks=1 after_isr_read=1 chk=0x000",
+   "values": {
+    "after_20_clocks": "1",
+    "after_isr_read": "1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_after_clear",
+   "text": "irq=0 isr=0x00000000 chk=0x000",
+   "values": {
+    "irq": "0",
+    "isr": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_ier_off",
+   "text": "irq=0 isr=0x00000001 chk=0x000",
+   "values": {
+    "irq": "0",
+    "isr": "0x00000001",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "pulse_1clk",
+   "text": "isr=0x00000001 chk=0x000",
+   "values": {
+    "isr": "0x00000001",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_delays",
+   "text": "pin_edge_to_irq=9 write_handshake_to_irq=0 coincident_rel=-9 aw_edge=31709 w_edge=31709 b_edge=31710 irq_edge=31709 chk=0x000",
+   "values": {
+    "pin_edge_to_irq": "9",
+    "write_handshake_to_irq": "0",
+    "coincident_rel": "-9",
+    "aw_edge": "31709",
+    "w_edge": "31709",
+    "b_edge": "31710",
+    "irq_edge": "31709",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "race_scenarioA_clear_vs_event",
+   "text": "rel-13=0x00000000 rel-12=0x00000000 rel-11=0x00000000 rel-10=0x00000000 rel-9=0x00000001 rel-8=0x00000001 rel-7=0x00000001 rel-6=0x00000001 rel-5=0x00000001 rel-4=0x00000001 rel-3=0x00000001 rel-2=0x00000001 rel-1=0x00000001 rel0=0x00000001 rel1=0x00000001  chk=0x000",
+   "values": {
+    "13": "0x00000000",
+    "12": "0x00000000",
+    "11": "0x00000000",
+    "10": "0x00000000",
+    "9": "0x00000001",
+    "8": "0x00000001",
+    "7": "0x00000001",
+    "6": "0x00000001",
+    "5": "0x00000001",
+    "4": "0x00000001",
+    "3": "0x00000001",
+    "2": "0x00000001",
+    "1": "0x00000001",
+    "rel0": "0x00000001",
+    "rel1": "0x00000001",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "race_scenarioB_toggle_vs_event",
+   "text": "rel-13=0x00000000 rel-12=0x00000000 rel-11=0x00000000 rel-10=0x00000000 rel-9=0x00000001 rel-8=0x00000001 rel-7=0x00000001 rel-6=0x00000001 rel-5=0x00000001 rel-4=0x00000001 rel-3=0x00000001 rel-2=0x00000001 rel-1=0x00000001 rel0=0x00000001 rel1=0x00000001  chk=0x000",
+   "values": {
+    "13": "0x00000000",
+    "12": "0x00000000",
+    "11": "0x00000000",
+    "10": "0x00000000",
+    "9": "0x00000001",
+    "8": "0x00000001",
+    "7": "0x00000001",
+    "6": "0x00000001",
+    "5": "0x00000001",
+    "4": "0x00000001",
+    "3": "0x00000001",
+    "2": "0x00000001",
+    "1": "0x00000001",
+    "rel0": "0x00000001",
+    "rel1": "0x00000001",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "latency",
+   "text": "write=7 read=7 chk=0x000",
+   "values": {
+    "write": "7",
+    "read": "7",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_w_order",
+   "text": "aw_first=0x00000011 w_first=0x00000022 hung=0 chk=0x000",
+   "values": {
+    "aw_first": "0x00000011",
+    "w_first": "0x00000022",
+    "hung": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_rd",
+   "text": "ar_accepted_while_rready_low=1 r_valid_while_low=1 first=0x000000ff/OKAY second=0x0000000f/OKAY chk=0x000",
+   "values": {
+    "ar_accepted_while_rready_low": "1",
+    "r_valid_while_low": "1",
+    "first": "0x000000ff/OKAY",
+    "second": "0x0000000f/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_wr",
+   "text": "aw_accepted_while_bready_low=1 w_accepted_while_bready_low=1 b_valid_while_low=1 b_total=2 b0=OKAY b1=OKAY TRI1=0x00000033 TRI2=0x0000000c chk=0x000",
+   "values": {
+    "aw_accepted_while_bready_low": "1",
+    "w_accepted_while_bready_low": "1",
+    "b_valid_while_low": "1",
+    "b_total": "2",
+    "b0": "OKAY",
+    "b1": "OKAY",
+    "TRI1": "0x00000033",
+    "TRI2": "0x0000000c",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_alone",
+   "text": "aw_accepted=0 b_without_w=0 tri1_after_completion=0x00000044 chk=0x000",
+   "values": {
+    "aw_accepted": "0",
+    "b_without_w": "0",
+    "tri1_after_completion": "0x00000044",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "w_alone",
+   "text": "w_accepted=0 b_without_aw=0 tri1_after_completion=0x00000066 chk=0x000",
+   "values": {
+    "w_accepted": "0",
+    "b_without_aw": "0",
+    "tri1_after_completion": "0x00000066",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "reset_after_writes",
+   "text": "DATA1=0x00000055 TRI1=0x000000f0 DATA2=0x00000006 TRI2=0x0000000f GIER=0x00000000 ISR=0x00000000 IER=0x00000000  chk=0x000",
+   "values": {
+    "DATA1": "0x00000055",
+    "TRI1": "0x000000f0",
+    "DATA2": "0x00000006",
+    "TRI2": "0x0000000f",
+    "GIER": "0x00000000",
+    "ISR": "0x00000000",
+    "IER": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "done",
+   "text": "ok=1",
+   "values": {
+    "ok": "1"
+   }
+  }
+ ],
+ "ip": "gpio",
+ "bench": "amd_ip_probe/tb/tb_gpio.sv",
+ "bench_sha256": "f92106e86aa16e09",
+ "returncode": 0,
+ "errors": []
+}

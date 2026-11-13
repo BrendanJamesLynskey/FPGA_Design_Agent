@@ -1,0 +1,379 @@
+{
+ "meta": {
+  "vivado": "2026.1",
+  "vlnv": "xilinx.com:ip:axi_uartlite:2.0",
+  "requires_license": "0",
+  "config": {
+   "CONFIG.ACLK.FREQ_HZ": "100000000",
+   "CONFIG.ACLK.INSERT_VIP": "0",
+   "CONFIG.ARESETN.INSERT_VIP": "0",
+   "CONFIG.C_BAUDRATE": "230400",
+   "CONFIG.C_DATA_BITS": "8",
+   "CONFIG.C_ODD_PARITY": "0",
+   "CONFIG.C_S_AXI_ACLK_FREQ_HZ": "100000000",
+   "CONFIG.C_S_AXI_ACLK_FREQ_HZ_d": "100",
+   "CONFIG.C_USE_PARITY": "0",
+   "CONFIG.Component_Name": "dut_uart",
+   "CONFIG.PARITY": "No_Parity",
+   "CONFIG.S_AXI.INSERT_VIP": "0",
+   "CONFIG.UARTLITE_BOARD_INTERFACE": "Custom",
+   "CONFIG.USE_BOARD_FLOW": "false"
+  }
+ },
+ "probes": [
+  {
+   "probe": "reset_values",
+   "text": "STAT=0x00000004 TXF_read=0x00000000 CTRL_read=0x00000000 ctrl_resp=OKAY chk=0x000",
+   "values": {
+    "STAT": "0x00000004",
+    "TXF_read": "0x00000000",
+    "CTRL_read": "0x00000000",
+    "ctrl_resp": "OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "rx_empty_read",
+   "text": "resp=SLVERR data=0x000000xx hung=0 chk=0x000",
+   "values": {
+    "resp": "SLVERR",
+    "data": "0x000000xx",
+    "hung": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "txf_read",
+   "text": "resp=OKAY data=0x00000000 chk=0x000",
+   "values": {
+    "resp": "OKAY",
+    "data": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "write_stat_ro",
+   "text": "resp=OKAY chk=0x000",
+   "values": {
+    "resp": "OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "write_rxf_ro",
+   "text": "resp=OKAY stat_after=0x00000004 chk=0x000",
+   "values": {
+    "resp": "OKAY",
+    "stat_after": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "rx_pop_on_read",
+   "text": "stat_with_char=0x00000005 first_read=0x00000041 stat_after_read=0x00000004 second_read=0x000000xx/SLVERR chk=0x000",
+   "values": {
+    "stat_with_char": "0x00000005",
+    "first_read": "0x00000041",
+    "stat_after_read": "0x00000004",
+    "second_read": "0x000000xx/SLVERR",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "rx_fifo_order",
+   "text": "stat=0x00000005 reads=0x00000042,0x00000043 stat_after=0x00000004 chk=0x000",
+   "values": {
+    "stat": "0x00000005",
+    "reads": "0x00000042,0x00000043",
+    "stat_after": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "tx_full",
+   "text": "writes=24 first_non_okay_write_index=16 non_okay_writes=8 stat_after=0x00000008 chk=0x000",
+   "values": {
+    "writes": "24",
+    "first_non_okay_write_index": "16",
+    "non_okay_writes": "8",
+    "stat_after": "0x00000008",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "rx_full_no_overrun_yet",
+   "text": "16 chars received, none read: stat=0x00000007 stat_again=0x00000007 chk=0x000",
+   "values": {
+    "stat": "0x00000007",
+    "stat_again": "0x00000007",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "rx_overrun",
+   "text": "3 more chars into a full RX FIFO: stat=0x00000027 stat_again=0x00000007 chk=0x000",
+   "values": {
+    "stat": "0x00000027",
+    "stat_again": "0x00000007",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "rx_drain",
+   "text": "okay_reads=16 stat_after=0x00000004 chk=0x000",
+   "values": {
+    "okay_reads": "16",
+    "stat_after": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "ctrl_reset_rx",
+   "text": "stat_before=0x00000005 stat_after_rst_rx=0x00000004 chk=0x000",
+   "values": {
+    "stat_before": "0x00000005",
+    "stat_after_rst_rx": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "ctrl_reset_tx",
+   "text": "stat_before=0x00000000 stat_after_rst_tx=0x00000004 chk=0x000",
+   "values": {
+    "stat_before": "0x00000000",
+    "stat_after_rst_tx": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "ctrl_ones_then_zero",
+   "text": "stat_after_ones=0x00000014 stat_after_zero=0x00000004 chk=0x000",
+   "values": {
+    "stat_after_ones": "0x00000014",
+    "stat_after_zero": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_zero_tx",
+   "text": "wrote_0x55_strb0000: stat=0x00000005 chk=0x000",
+   "values": {
+    "stat": "0x00000005",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_zero_tx_data",
+   "text": "rx=0x00000055 resp=OKAY chk=0x000",
+   "values": {
+    "rx": "0x00000055",
+    "resp": "OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_byte1_tx",
+   "text": "wrote_0x66_strb0010 rx=0x00000066 resp=OKAY chk=0x000",
+   "values": {
+    "rx": "0x00000066",
+    "resp": "OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wide_wdata_tx",
+   "text": "wrote_0xAB000077 rx=0x00000077 chk=0x000",
+   "values": {
+    "rx": "0x00000077",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "unaligned_rx_read",
+   "text": "stat=0x00000005 read_0x1=0x0000005a stat_after=0x00000004 chk=0x000",
+   "values": {
+    "stat": "0x00000005",
+    "read_0x1": "0x0000005a",
+    "stat_after": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "unaligned_tx_write",
+   "text": "write_0x5 then rx=0x00000044 chk=0x000",
+   "values": {
+    "rx": "0x00000044",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "unaligned_stat_write",
+   "text": "write_0xA stat=0x00000004 chk=0x000",
+   "values": {
+    "stat": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "frame_error",
+   "text": "stat=0x00000044 stat_again=0x00000004 rxf_read=0x00000037/SLVERR chk=0x000",
+   "values": {
+    "stat": "0x00000044",
+    "stat_again": "0x00000004",
+    "rxf_read": "0x00000037/SLVERR",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_idle",
+   "text": "irq_before_enable=0 chk=0x000",
+   "values": {
+    "irq_before_enable": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_enabled_tx_empty",
+   "text": "rises=0 high_clocks=0 first_rise_after=-1 irq_now=0 stat=0x00000014 chk=0x000",
+   "values": {
+    "rises": "0",
+    "high_clocks": "0",
+    "first_rise_after": "-1",
+    "irq_now": "0",
+    "stat": "0x00000014",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_after_char",
+   "text": "rises=2 high_clocks=2 first_rise_after=4123 irq_now=0 stat=0x00000015 (char sent and received by loopback) chk=0x000",
+   "values": {
+    "rises": "2",
+    "high_clocks": "2",
+    "first_rise_after": "4123",
+    "irq_now": "0",
+    "stat": "0x00000015",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_with_rx_data_waiting",
+   "text": "rises=0 high_clocks=0 first_rise_after=-1 irq_now=0 stat=0x00000015 chk=0x000",
+   "values": {
+    "rises": "0",
+    "high_clocks": "0",
+    "first_rise_after": "-1",
+    "irq_now": "0",
+    "stat": "0x00000015",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_after_pop",
+   "text": "rises=0 high_clocks=0 first_rise_after=-1 chk=0x000",
+   "values": {
+    "rises": "0",
+    "high_clocks": "0",
+    "first_rise_after": "-1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_disable_write0",
+   "text": "rises=0 high_clocks=0 first_rise_after=-1 stat=0x00000004 chk=0x000",
+   "values": {
+    "rises": "0",
+    "high_clocks": "0",
+    "first_rise_after": "-1",
+    "stat": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_enable_bit_after_rx_reset_write",
+   "text": "stat=0x00000004 chk=0x000",
+   "values": {
+    "stat": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "latency",
+   "text": "read=5 write=5 chk=0x000",
+   "values": {
+    "read": "5",
+    "write": "5",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_w_order",
+   "text": "aw_first_then_w_first rx=0x00000021,0x00000022 chk=0x000",
+   "values": {
+    "rx": "0x00000021,0x00000022",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_rd",
+   "text": "ar_accepted_while_rready_low=1 r_valid_while_low=1 first=0x00000004/OKAY second=0x00000004/OKAY chk=0x000",
+   "values": {
+    "ar_accepted_while_rready_low": "1",
+    "r_valid_while_low": "1",
+    "first": "0x00000004/OKAY",
+    "second": "0x00000004/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_wr",
+   "text": "aw_accepted_while_bready_low=1 w_accepted_while_bready_low=1 b_valid_while_low=1 b_total=2 chk=0x000",
+   "values": {
+    "aw_accepted_while_bready_low": "1",
+    "w_accepted_while_bready_low": "1",
+    "b_valid_while_low": "1",
+    "b_total": "2",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_alone",
+   "text": "aw_accepted=0 b_without_w=0 chk=0x000",
+   "values": {
+    "aw_accepted": "0",
+    "b_without_w": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "w_alone",
+   "text": "w_accepted=0 b_without_aw=0 chk=0x000",
+   "values": {
+    "w_accepted": "0",
+    "b_without_aw": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "reset_after_activity",
+   "text": "stat=0x00000004 irq=0 chk=0x000",
+   "values": {
+    "stat": "0x00000004",
+    "irq": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "done",
+   "text": "ok=1",
+   "values": {
+    "ok": "1"
+   }
+  }
+ ],
+ "ip": "uartlite",
+ "bench": "amd_ip_probe/tb/tb_uartlite.sv",
+ "bench_sha256": "266c04700cec71a4",
+ "returncode": 0,
+ "errors": []
+}
