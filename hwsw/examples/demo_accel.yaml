@@ -6,7 +6,8 @@ name: demo_accel
 version: 0.1.0
 summary: Control and status of a stream accelerator with a descriptor ring and one interrupt.
 addr_width: 12            # a 4 KB window: one page, so a UIO map or a page-granular MMU entry covers exactly this block
-unmapped: okay            # holes inside this window answer OKAY and read 0 (the house default; slverr is the option)
+unmapped: split           # the house default: a hole inside this window answers SLVERR to a read and OKAY to a write (okay and slverr are the options)
+# error_capture is on by default: ERR_ADDR 0xFF8 and ERR_STATUS 0xFFC, the top two words of the window, record unmapped accesses
 interrupt: {status: IRQ_STATUS, enable: IRQ_ENABLE}
 registers:
 - name: ID

@@ -12,6 +12,10 @@ In plain words:
   core; it names the Arm's cycles per byte as the first thing to measure.
 - Answering OKAY instead of SLVERR to unmapped addresses inside a register block costs nothing measurable: one LUT and
   two flip-flops fewer in the example block (one build each).
+- The split response (a read of an unmapped address answers SLVERR, a write OKAY) costs 3 LUTs and 1 flip-flop over
+  OKAY in the example block; the error-capture registers that record each unmapped access cost 65 LUTs and 20
+  flip-flops more (one build each). That is not a few LUTs: about a third more than the 183-LUT block, so the capture
+  can be left out with `error_capture: false`.
 
 Simulation and out-of-context Vivado 2026.1 builds only; nothing here has run on a board. How each was made:
 [docs/hwsw.md](../../docs/hwsw.md).
@@ -25,6 +29,7 @@ Simulation and out-of-context Vivado 2026.1 builds only; nothing here has run on
 | `core_ooc/<config>/` | the raw Vivado reports each `core_ooc.json` entry is read from: `utilization_hier.rpt`, `timing_summary.rpt`, `critical_path.rpt`, `summary.txt`, and the clock constraint `clock.xdc` | the same run, made with the committed `hwsw/cfu_core/core_ooc.tcl` |
 | `core_ooc_styles.json`, `core_ooc_styles/<config>/` | the four patched cores of brief 64A2 (both variants, both styles, all with the mispredict hold patch): the same fields as `core_ooc.json` | `python3 hwsw/cfu_core/core_ooc.py --configs cfu_word,cfu_byte,cfu_word_mem,cfu_byte_mem --out results/64a_hwsw/core_ooc_styles.json --raw results/64a_hwsw/core_ooc_styles` (Vivado 2026.1, one run each) |
 | `regmap_ooc.json`, `regmap_ooc/<setting>/` | the example register map `demo_accel` built alone with `unmapped: okay` and with `unmapped: slverr`: LUTs, flip-flops, WNS at 10 ns, and the raw reports | `python3 hwsw/regmap_ooc.py` (Vivado 2026.1, xc7a100tcsg324-1, out of context, one run each) |
+| `regmap_ooc_split.json`, `regmap_ooc_split/<setting>/` | brief 64A3: the same example map built alone with `okay`, `slverr` and `split` (each without the error-capture registers) and with `split` plus the capture registers (the new default): LUTs, flip-flops, WNS at 10 ns, the differences, and the raw reports. `okay` and `slverr` reproduce the 64A2 numbers (180/241 and 181/243) | `python3 hwsw/regmap_ooc.py --series 64a3` (Vivado 2026.1, xc7a100tcsg324-1, out of context, one run each) |
 | `partition_crc32_zynq.{json,txt}` | the cost model on a Zynq-7000 CRC example whose inputs are all assumptions (verdict: measure) | `python3 -m hwsw.partition hwsw/examples/partition_crc32_zynq.yaml --json ...` |
 | `partition_crc32_rv32.{json,txt}` | the cost model on the RV32 core, software against the custom instruction, from the measured cycles and Fmax above | `python3 -m hwsw.partition hwsw/examples/partition_crc32_rv32.yaml --json ...` |
 | `../b64a/faults.json` | the five seeded faults of `ip_lib/crc32_step`, each caught | `python3 hil/ip_faults.py --blocks crc32_step --json results/b64a/faults.json` |
@@ -95,7 +100,7 @@ The generated register blocks' checks (simulation, mutants, formal) are tests, n
 ## Reproduce
 
 The command for each record is in the "Made by" column above. In short: `python3 hwsw/cfu_core/run_bench.py` (simulation: Icarus Verilog
-and the RISC-V cross compiler, no Vivado); `python3 hwsw/cfu_core/core_ooc.py` and `python3 hwsw/regmap_ooc.py` (Vivado 2026.1, heavy
+and the RISC-V cross compiler, no Vivado); `python3 hwsw/cfu_core/core_ooc.py` and `python3 hwsw/regmap_ooc.py [--series 64a2|64a3]` (Vivado 2026.1, heavy
 slot, one run per configuration); `python3 -m hwsw.partition <example yaml> --json ...` (cost model, no tools). No board is involved.
 
 ## Known gaps and limits
@@ -106,3 +111,4 @@ slot, one run per configuration); `python3 -m hwsw.partition <example yaml> --js
 - The Zynq cost model has only assumed inputs and returns "measure"; the Arm core's cycles per byte were not measured.
 - The stale-prediction defect is shown by a directed test; the fix is a one-line patch in our pinned copy of the core, not an upstream change.
 - The register-block checks (simulation, mutants, formal) are tests, not records, so they are not repeated here.
+- What an Arm CPU does with a SLVERR on a load and on a posted write is expected from Arm documentation, not measured here (brief 64B item 5); the datasheets say "expected". The hand-written block-design register banks (`flow/blockdesign/rtl`) still answer SLVERR to unmapped writes and have no error capture.
