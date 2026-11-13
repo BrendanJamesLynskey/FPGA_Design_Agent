@@ -106,7 +106,7 @@ def scripted_client(seen, where):
 
     def client(messages, tools=None):
         system = messages[0]["content"]
-        role = ("clarify" if "turn a short design request" in system else "model" if "blind golden model" in system
+        role = ("clarify" if "turn a short design request" in system else "model" if "You are the Modeller" in system
                 else "tests" if ("cocotb tests" in system or "bring-up tests" in system) else "rtl")
         seen.append({"role": role, "user": messages[1]["content"] if len(messages) > 1 else ""})
         if messages[-1]["role"] == "tool":

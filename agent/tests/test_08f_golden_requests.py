@@ -28,7 +28,12 @@ Goldens, oldest first:
   hashes (``plan_tests_*``, ``cli_argv_tests_*``) differ from the brief 59A golden; nothing else does.
 - ``b56a_request_golden.json`` (brief 56A, 2026-11-13): the registry gained ``gt_plan`` (the transceiver link planner). No stage or role
   is offered it yet (exposing it to the Designer is a follow-up that needs its own golden), so every hash other than ``tool_registry``
-  equals the brief 54B golden's."""
+  equals the brief 54B golden's.
+- ``b68_request_golden.json`` (brief 68 C, 2026-11-13, one deliberate re-pin; benchmark/AMENDMENTS.md): the text sent to models
+  names the roles as the site and docs do since brief 67 (the Modeller, the Verifier, the Designer, the Clarifier; "reference
+  model" for "blind model"; never "implementer"), in PROMPTS, CONVENTIONS ("Tests (Verifier)"), HW_FORMAT, MODEL_CONTRACT, the
+  ``bringup`` tool description (schema 1.11.1) and the spec-test prompts (not hashed). The DOC step's prompt is new
+  (``doc_system``). Eval-1 was stopped with no score, so no comparison is lost; runs before this belong to the earlier goldens."""
 
 from __future__ import annotations
 
@@ -39,17 +44,27 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b56a_request_golden.json"          # the newest golden
+GOLDEN = FIXTURES / "b68_request_golden.json"           # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
-                                        "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; brief 56A: gt_plan",
-                       "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests)",
+                                        "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; brief 56A: gt_plan; "
+                                        "brief 68: bringup description (reference model)",
+                       "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests); brief 68: role names",
+                       "conventions": "brief 68: role names (Tests (Verifier))",
+                       "conventions_text_noshell_False": "brief 68: as conventions",
+                       "conventions_text_noshell_True": "brief 68: as conventions",
+                       "tests_conventions_text_noshell_False": "brief 68: as conventions",
+                       "tests_conventions_text_noshell_True": "brief 68: as conventions",
+                       "hw_format": "brief 68: reference model for blind model",
+                       "model_contract": "brief 68: the Modeller and the Verifier",
                        "prompts_formatted_noshell_False": "brief 53: as prompts",
                        "prompts_formatted_noshell_True": "brief 53: as prompts",
                        "plan_tests_False": "shell 1.1 (BUILD_ID at 0x05): the tests role reads the shell's protocol and driver",
                        "plan_tests_True": "shell 1.1: as plan_tests_False",
                        "cli_argv_tests_False": "shell 1.1: as plan_tests_False",
                        "cli_argv_tests_True": "shell 1.1: as plan_tests_False"}
+#: request paths added since eval-1 (absent from its golden), and the brief that added each
+NEW_SINCE_EVAL1 = {"doc_system": "brief 68 C: the DOC step at the end of a run (agent.graph.document)"}
 
 
 def test_every_request_path_is_unchanged_from_the_golden() -> None:
@@ -68,7 +83,7 @@ def test_only_the_listed_hashes_differ_from_eval_1() -> None:
     now = collect()
     changed = {k for k in old["hashes"] if now.get(k) != old["hashes"][k]}
     assert changed == set(CHANGED_SINCE_EVAL1), f"differs from eval-1: {sorted(changed)}"
-    assert not set(now) - set(old["hashes"])
+    assert set(now) - set(old["hashes"]) == set(NEW_SINCE_EVAL1)
 
 
 def test_spec_tests_are_off_by_default() -> None:

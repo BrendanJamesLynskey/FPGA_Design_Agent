@@ -1,0 +1,51 @@
+schema: fpga-design-agent/architecture/v1
+design: c14_int8_dot_requant
+blocks:
+- name: c14_int8_dot_requant_top
+  function: Board top; synchronises CPU_RESETN, instantiates fpga_shell and register block, drives LED0 with ready.
+- name: fpga_shell
+  function: Test shell, UART 115200 8N1 to register window.
+- name: dotq_regs
+  function: Register map 0x00-0x0A, operand storage, GO one-clock pulse, result hold, READY flag.
+- name: dotq_core
+  function: Pipelined 8-way int8 dot product plus bias, multiply by mult, round shift, clamp; result within 8 clocks of GO.
+- name: reset_sync
+  function: Two-flop synchroniser for active-low CPU_RESETN into the CLK100MHZ domain.
+interfaces:
+- name: shell_window
+  between: [fpga_shell, dotq_regs]
+  protocol: simple
+  prefix: win
+  module: fpga_shell
+- name: uart
+  between: [c14_int8_dot_requant_top, fpga_shell]
+  protocol: uart
+  prefix: uart
+  module: fpga_shell
+- name: core_operands
+  between: [dotq_regs, dotq_core]
+  protocol: simple
+  prefix: core
+  module: dotq_core
+clock_domains:
+- name: sys
+  clock: CLK100MHZ
+  freq_mhz: 100
+reset:
+  synchronisers: [reset_sync]
+crossings:
+- from: async
+  to: sys
+  signal: CPU_RESETN
+  primitive: reset_sync
+  inline_in: reset_sync
+- from: async
+  to: sys
+  signal: UART_TXD_IN
+  primitive: sync_2ff
+  inline_in: fpga_shell
+predicted_resources:
+  lut: [300, 1400]
+  ff: [350, 1300]
+  bram_tile: 0
+  dsp: [0, 12]

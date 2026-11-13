@@ -1,0 +1,191 @@
+schema: fpga-design-agent/testplan/v0
+design: c14_int8_dot_requant
+spec: results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/spec.yaml
+model: results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/model.py
+bench:
+  modules: [c14_bench]
+  dir: results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/tests
+checkers: results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/verif/checkers
+formal_dir: results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/verif/formal
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 100
+  line_pct: 90
+  toggle_pct: 75
+  mutation_score_pct: 70
+waivers:
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+requirements:
+  - id: REQ-01
+    spec:
+      - behaviour.inputs[0]
+      - behaviour.arithmetic[0]
+      - registers.map.A_LO
+      - registers.map.A_HI
+      - registers.map.W_LO
+      - registers.map.W_HI
+      - registers.map.BIAS
+    tests:
+      - c14_bench.test_arith_a
+      - c14_bench.test_arith_b
+      - c14_bench.test_arith_random
+      - c14_bench.test_regs_rw
+    assertions: []
+    cover_props: []
+    bins: [top.acc_class]
+    formal: []
+  - id: REQ-02
+    spec:
+      - behaviour.arithmetic[1]
+      - behaviour.arithmetic[2]
+      - registers.map.MULT
+      - registers.map.CTRL
+    tests:
+      - c14_bench.test_arith_b
+      - c14_bench.test_shift_sweep
+      - c14_bench.test_arith_random
+      - c14_bench.test_regs_rw
+    assertions: []
+    cover_props: []
+    bins: [top.round_class, top.shift_class, top.mult_class]
+    formal: []
+  - id: REQ-03
+    spec:
+      - behaviour.arithmetic[3]
+    tests:
+      - c14_bench.test_arith_a
+      - c14_bench.test_arith_b
+    assertions: []
+    cover_props: []
+    bins: [top.clamp_class, top.relu]
+    formal: []
+  - id: REQ-04
+    spec:
+      - behaviour.outputs[0]
+      - behaviour.outputs[2]
+      - registers.map.Y
+      - registers.map.ACC
+      - registers.map.STATUS
+    tests:
+      - c14_bench.test_smoke
+      - c14_bench.test_arith_a
+      - c14_bench.test_go_timing
+    assertions: []
+    cover_props: []
+    bins: [top.reg_access]
+    formal: []
+  - id: REQ-05
+    spec:
+      - behaviour.inputs[1]
+      - behaviour.outputs[1]
+      - behaviour.outputs[3]
+      - registers.map.GO
+      - timing.latency.go_to_ready
+    tests:
+      - c14_bench.test_go_timing
+      - c14_bench.test_reset
+    assertions: [A_led_boolean]
+    cover_props: [C_led_fall, C_led_rise]
+    bins: [top.go_class]
+    formal: []
+  - id: REQ-06
+    spec:
+      - behaviour.reset[0]
+      - reset
+      - timing.latency.reset
+    tests:
+      - c14_bench.test_reset
+    assertions: []
+    cover_props: []
+    bins: [top.rst_class]
+    formal: []
+  - id: REQ-07
+    spec:
+      - behaviour.outputs[4]
+    tests:
+      - c14_bench.test_go_timing
+      - c14_bench.test_reset
+      - c14_bench.test_smoke
+    assertions: [A_led_boolean]
+    cover_props: [C_led_high]
+    bins: []
+    formal: []
+  - id: REQ-08
+    spec:
+      - behaviour.shell[0]
+    tests:
+      - c14_bench.test_baud
+      - c14_bench.test_shell_protocol
+    assertions: [A_tx_boolean]
+    cover_props: [C_tx_start, C_rx_start]
+    bins: []
+    formal: []
+  - id: REQ-09
+    spec:
+      - behaviour.shell[0]
+    tests:
+      - c14_bench.test_smoke
+      - c14_bench.test_shell_protocol
+    assertions: []
+    cover_props: []
+    bins: []
+    formal: []
+  - id: REQ-12
+    spec:
+      - behaviour.shell[1]
+      - registers.unmapped
+    tests:
+      - c14_bench.test_alias_unmapped
+      - c14_bench.test_regs_rw
+      - c14_bench.test_smoke
+    assertions: []
+    cover_props: []
+    bins: [top.reg_access]
+    formal: []
+proof:
+  - {requirement: REQ-01, method: simulation, artefact: c14_bench.test_arith_random}
+  - {requirement: REQ-02, method: simulation, artefact: c14_bench.test_shift_sweep}
+  - {requirement: REQ-03, method: simulation, artefact: c14_bench.test_arith_a}
+  - {requirement: REQ-04, method: simulation, artefact: c14_bench.test_arith_a}
+  - {requirement: REQ-04, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-05, method: simulation, artefact: c14_bench.test_go_timing}
+  - {requirement: REQ-06, method: simulation, artefact: c14_bench.test_reset}
+  - {requirement: REQ-06, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-07, method: simulation, artefact: c14_bench.test_go_timing}
+  - {requirement: REQ-07, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-08, method: simulation, artefact: c14_bench.test_baud}
+  - {requirement: REQ-08, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-09, method: simulation, artefact: c14_bench.test_smoke}
+  - {requirement: REQ-09, method: hardware, artefact: uart_tests}
+  - {requirement: REQ-10, method: analysis, artefact: "post_synth:post_synth_resources_in_range"}
+  - {requirement: REQ-11, method: analysis, artefact: "post_route:setup"}
+  - {requirement: REQ-12, method: simulation, artefact: c14_bench.test_alias_unmapped}
+replan:
+  - requirement: REQ-01
+    method: formal
+    replaced_by: simulation
+    artefact: c14_bench.test_arith_random
+    why: SymbiYosys is not installed here, so exactness of acc is checked by directed extremes and random cases against the model.
+  - requirement: REQ-02
+    method: formal
+    replaced_by: simulation
+    artefact: c14_bench.test_shift_sweep
+    why: SymbiYosys is not installed here, so rounding for every shift 1..31 is swept in simulation with exact-half cases.
+  - requirement: REQ-03
+    method: formal
+    replaced_by: simulation
+    artefact: c14_bench.test_arith_b
+    why: SymbiYosys is not installed here, so both clamp ends and relu are covered by directed simulation cases.
+  - requirement: REQ-05
+    method: formal
+    replaced_by: simulation
+    artefact: c14_bench.test_go_timing
+    why: SymbiYosys is not installed here, so the GO-to-READY latency of at most 8 clocks is measured on LED0 in simulation.
+  - requirement: REQ-06
+    method: formal
+    replaced_by: simulation
+    artefact: c14_bench.test_reset
+    why: SymbiYosys is not installed here, so reset clearing, including reset in mid-computation, is checked in simulation.

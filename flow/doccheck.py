@@ -12,6 +12,8 @@ What it checks, by kind:
   Stale record hashes are printed as warnings, not failures (`--strict` fails on them too).
 - ip_lib/<entry>/: README.md equals flow/net/ipdoc.py's rendering, and has the IP template's sections, each with
   content.
+- results/**/<d>/handover.yaml (brief 68 C: a design an agent run produced, kept as a record): the same checks as
+  designs/<d>/, and an agent run's measurements cite only the run's own records (flow.handover.in_run_records).
 - results/<folder>/: README.md with a lead paragraph and the results template's sections (Records, Reproduce,
   Known gaps and limits), each with content and no placeholder; every number in an optional "Measured" section
   appears in a file of that folder. Pure-data folders are listed, each with a reason, in docs/doccheck_allow.yaml.
@@ -49,6 +51,11 @@ def results_folders() -> list[Path]:
     return sorted(p for p in (ROOT / "results").iterdir() if p.is_dir() and not p.name.startswith(("_", ".")))
 
 
+def agent_designs() -> list[Path]:
+    """Designs produced by agent runs and kept under results/ (each with its handover.yaml)."""
+    return sorted(p.parent for p in (ROOT / "results").rglob("handover.yaml"))
+
+
 def allow_list() -> dict:
     y = yaml.safe_load(ALLOW.read_text()) if ALLOW.exists() else {}
     return {k: v for k, v in (y or {}).get("allow", {}).items()}
@@ -83,7 +90,9 @@ def check_design(d: Path) -> tuple[list[str], list[str]]:
     miss = [f for f in ("handover.yaml", "README.md", "AGENT.md") if not (d / f).exists()]
     if miss:
         return [f"missing {', '.join(miss)}"], []
-    return H.problems(d)
+    errs, stale = H.problems(d)
+    from agent.graph.document import recheck          # brief 68 C: an agent's handover is re-derived from its run's records
+    return errs + recheck(d), stale
 
 
 def check_ip(d: Path) -> list[str]:
@@ -153,7 +162,7 @@ def run(strict: bool = False) -> tuple[list[str], list[str], dict]:
             errs.append(f"docs/doccheck_allow.yaml: {k} is not a directory")
         elif not isinstance(allow[k], str) or H._words(allow[k]) < 4:
             errs.append(f"docs/doccheck_allow.yaml: {k} needs a reason")
-    rows = {"designs": designs(), "ip_lib": ip_entries(), "results": results_folders()}
+    rows = {"designs": designs(), "agent runs": agent_designs(), "ip_lib": ip_entries(), "results": results_folders()}
     for kind, dirs in rows.items():
         ok = readme = allowed = 0
         for d in dirs:
@@ -162,7 +171,7 @@ def run(strict: bool = False) -> tuple[list[str], list[str], dict]:
                 allowed += 1
                 continue
             readme += (d / "README.md").exists()
-            if kind == "designs":
+            if kind in ("designs", "agent runs"):
                 e, s = check_design(d)
             elif kind == "ip_lib":
                 e, s = check_ip(d), []
@@ -186,7 +195,7 @@ def coverage_table(cov: dict) -> str:
 def main(argv: list[str] | None = None) -> int:
     a = argv if argv is not None else sys.argv[1:]
     if "--write" in a:
-        for d in designs():
+        for d in designs() + agent_designs():
             if (d / "handover.yaml").exists():
                 print(str(d.relative_to(ROOT)) + ":", ", ".join(H.write(d)))
         return 0

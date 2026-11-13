@@ -68,11 +68,11 @@ PROSE = re.compile(r"<!-- prose:(\w+) -->\n(.*?)<!-- /prose:\1 -->", re.S)
 BANNED = [(re.compile(r"\bVivado[\s-]+v?(?!2026\.1\b)20\d\d\.\d", re.I), "names a Vivado release other than 2026.1"),
           (re.compile(r"\bImplementer\b"), "uses the retired role name for the Designer"),
           (re.compile(r"AI coding assistant", re.I), "uses the phrase 'AI coding assistant'")]
-RECORD_DIRS = ("results/", "ip_lib/<entry>/char/")
+RECORD_DIRS = ("results/", "ip_lib/<entry>/char/")   # plus, for an agent run, its own records (in_run_records)
 MIN_WORDS = {"summary": 12, "gap": 4, "next": 4, "evidence": 4, "scope": 3, "board_conditions": 8}
 # free-text fields of handover.yaml: their numbers are checked like prose, and they never vouch for a number
-FREE = re.compile(r"^(title|summary|scope_not\[\d+\]|target\.note|clocks\[\d+\]\.note|resets\[\d+\]\.note|"
-                  r"interfaces\[\d+\]\.(note|type)|parameters\[\d+\]\.note|files\[\d+\]\.what|commands\[\d+\]\.(what|needs)|"
+FREE = re.compile(r"^(title|summary|scope_not\[\d+\]|target\.note|clocks\[\d+\]\.note|resets\[\d+\]\.(note|name)|"
+                  r"interfaces\[\d+\]\.(note|type|name)|parameters\[\d+\]\.(note|legal)|gaps\[\d+\]\.about|files\[\d+\]\.what|commands\[\d+\]\.(what|needs)|"
                   r"evidence\[\d+\]\.(what|conditions)|measurements\[\d+\]\.(what|conditions|unit)|gaps\[\d+\]\.text|"
                   r"next_steps\[\d+\]|open_questions\[\d+\]|history\[\d+\]\.note|agent_run\.note|numbers_allow\[\d+\]\.reason)$")
 NO_VOUCH = re.compile(r"(sha256|build_id|kb_pin)$")
@@ -347,6 +347,25 @@ def _validate(h: dict) -> list[str]:
     return [f"schema: {'/'.join(map(str, e.absolute_path)) or '(top)'}: {e.message}" for e in v.iter_errors(h)]
 
 
+def agent_run_dir(h: dict, ddir: Path) -> Path | None:
+    """The run directory of an agent-produced handover (brief 68 C): the directory of ``agent_run.record``, and only when
+    the design directory is inside it (the design is that run's own). None otherwise."""
+    ar = h.get("agent_run") or {}
+    if h.get("produced_by") == "human" or not ar.get("record"):
+        return None
+    rd = (ROOT / ar["record"]).resolve().parent
+    return rd if rd != ROOT and rd in ddir.resolve().parents else None
+
+
+def in_run_records(p: Path, run_dir: Path, ddir: Path) -> bool:
+    """A record the flow wrote for the run: a file of the run directory outside the design directory, or a file under the
+    design's ``build/`` (write-denied to every role by the path jail). Files the roles write are never records."""
+    p, d = p.resolve(), ddir.resolve()
+    if run_dir not in p.parents:
+        return False
+    return d not in p.parents or (d / "build") in p.parents
+
+
 def _record_rule(rec: str, ddir: Path) -> str | None:
     p = ROOT / rec
     if p.resolve().parent == ddir.resolve() and p.name in ("README.md", "AGENT.md", "handover.yaml"):
@@ -427,13 +446,27 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
         errs.append("state.stage board-verified needs a passing board evidence entry")
     if stage == "signed-off" and (not gates or any(r != "pass" for r in gates.values())):
         errs.append("state.stage signed-off needs every gate in state.gates to pass")
+    # requirements without passing evidence (brief 68 C): a cited verif_gates record's traceability rows that did not pass
+    for e in h["evidence"]:
+        if Path(e["record"]).name == "verif_gates.json" and (ROOT / e["record"]).is_file():
+            try:
+                rows = json.loads((ROOT / e["record"]).read_text()).get("traceability") or []
+            except (ValueError, AttributeError):
+                rows = []
+            for r in rows:
+                if isinstance(r, dict) and r.get("result") != "pass" and r.get("requirement") not in about:
+                    errs.append(f"requirement {r.get('requirement')}: {r.get('method')} evidence is {r.get('result')} in "
+                                f"{e['record']}; it needs a gap with about: {r.get('requirement')}")
     # measurements: the value must be the record's
+    run_dir = agent_run_dir(h, ddir)
     for m in h["measurements"]:
         p = ROOT / m["record"]
-        if not (m["record"].startswith("results/") or (m["record"].startswith("ip_lib/") and "/char/" in m["record"])) \
-                or p.name in ("README.md", "AGENT.md", "handover.yaml"):
-            errs.append(f"{m['id']}: a measurement's record must be a results file under {', '.join(RECORD_DIRS)} "
-                        "(not a README, AGENT.md or handover.yaml)")
+        ok_dir = (in_run_records(p, run_dir, ddir) if run_dir is not None else          # an agent run: its own records only
+                  m["record"].startswith("results/") or (m["record"].startswith("ip_lib/") and "/char/" in m["record"]))
+        if not ok_dir or p.name in ("README.md", "AGENT.md", "handover.yaml"):
+            errs.append(f"{m['id']}: a measurement's record must be a results file under {', '.join(RECORD_DIRS)}, or for "
+                        "an agent run a record the flow wrote in the run's own directory (not a README, AGENT.md or "
+                        "handover.yaml)")
             continue
         if not p.is_file():
             errs.append(f"{m['id']}: record {m['record']} does not exist")

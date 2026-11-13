@@ -1,0 +1,876 @@
+{
+  "design": "c14_int8_dot_requant",
+  "stages": {
+    "V0": {
+      "checks": {
+        "testplan_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "model_present": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "bench_modules_present": {
+          "value": [
+            "c14_bench"
+          ],
+          "threshold": "all files exist",
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V1": {
+      "checks": {
+        "requirements_have_proof_method": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_methods_discharged": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "proof_references_resolve": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "spec_items_traced": {
+          "value": "29/29",
+          "threshold": "all",
+          "pass": true
+        },
+        "untraced_items": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unknown_spec_refs": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "requirements_without_a_check": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "unresolved_references": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "bench_uses_blind_model": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V2": {
+      "checks": {
+        "seeds_run": {
+          "value": [
+            1,
+            2,
+            3
+          ],
+          "threshold": ">=1",
+          "pass": true
+        },
+        "planned_tests_missing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "failing_tests": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "constrained_random_test_ran": {
+          "value": true,
+          "threshold": true,
+          "pass": true
+        },
+        "assertions_bound_zero_failures": {
+          "value": [
+            "A_led_boolean",
+            "A_tx_boolean"
+          ],
+          "threshold": "bound in the run; no failure",
+          "pass": true
+        },
+        "other_simulators_failing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "formal_tasks_not_passing": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        }
+      },
+      "pass": true
+    },
+    "V3": {
+      "checks": {
+        "seeds_run": {
+          "value": 3,
+          "threshold": ">=3",
+          "pass": true
+        },
+        "all_seeds_pass": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "functional_bins_pct": {
+          "value": "100.0 (50/50)",
+          "threshold": 100,
+          "pass": true
+        },
+        "functional_bins_unhit": {
+          "value": [],
+          "threshold": [],
+          "pass": true
+        },
+        "cover_properties_pct": {
+          "value": "0.0",
+          "threshold": 100,
+          "pass": false,
+          "why": "cover properties not hit: C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start: add or extend a test that drives the design into each, or correct the `V_COVER` expression if it can never be true"
+        },
+        "cover_properties_unhit": {
+          "value": [
+            "C_led_fall",
+            "C_led_high",
+            "C_led_rise",
+            "C_rx_start",
+            "C_tx_start"
+          ],
+          "threshold": [],
+          "pass": false,
+          "why": "cover properties not hit: C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start: add or extend a test that drives the design into each, or correct the `V_COVER` expression if it can never be true"
+        },
+        "line_pct": {
+          "value": 100.0,
+          "threshold": 90,
+          "pass": true
+        },
+        "toggle_pct": {
+          "value": 100.0,
+          "threshold": 75,
+          "pass": true
+        },
+        "waivers_without_reason": {
+          "value": 0,
+          "threshold": 0,
+          "pass": true
+        },
+        "mutation_score_pct": {
+          "value": 100.0,
+          "threshold": 70,
+          "pass": true
+        }
+      },
+      "pass": false
+    },
+    "SIGNOFF": {
+      "checks": {
+        "every_method_has_passing_evidence": {
+          "value": [
+            "REQ-04:hardware=pending",
+            "REQ-06:hardware=pending",
+            "REQ-07:hardware=pending",
+            "REQ-08:hardware=pending",
+            "REQ-09:hardware=pending",
+            "REQ-11:analysis=fail"
+          ],
+          "threshold": [],
+          "pass": false
+        }
+      },
+      "pass": false
+    },
+    "V-HW": {
+      "checks": {
+        "bringup_result_present": {
+          "value": false,
+          "threshold": true,
+          "pass": false
+        }
+      },
+      "pass": false
+    }
+  },
+  "code_coverage": {
+    "line": {
+      "points": 32,
+      "hit": 32,
+      "pct": 100.0
+    },
+    "toggle": {
+      "points": 3180,
+      "hit": 3180,
+      "pct": 100.0
+    },
+    "branch": {
+      "points": 18,
+      "hit": 18,
+      "pct": 100.0
+    }
+  },
+  "code_coverage_unhit": {
+    "line": [],
+    "toggle": [],
+    "branch": []
+  },
+  "mutation": {
+    "design": "c14_int8_dot_requant",
+    "mode": "generic",
+    "mutant_source": "generated",
+    "rng_seed": 1,
+    "baseline_seconds": 364.2,
+    "sandbox": "container",
+    "caps": {
+      "max_mutants": 20,
+      "sample": 17,
+      "wall_s": 6919,
+      "wall_auto": true,
+      "mutant_timeout_s": 600,
+      "min_evaluated": 10
+    },
+    "candidates": 32,
+    "sampled": 17,
+    "evaluated": 17,
+    "killed": 17,
+    "survived": 0,
+    "timed_out": 0,
+    "skipped": 0,
+    "invalid": 0,
+    "score_pct": 100.0,
+    "survivors": [],
+    "survivor_text": [],
+    "timed_out_text": [],
+    "skipped_text": [],
+    "note": "score = killed / (killed + survived + timed_out); invalid and skipped mutants are excluded and listed; an equivalent mutant (no visible behaviour change) shows as a survivor",
+    "wall_seconds": 1261.7,
+    "rows": [
+      {
+        "name": "dotq_core_L47_ne_to_eq_19",
+        "file": "dotq_core.sv",
+        "line": 47,
+        "class": "ne_to_eq",
+        "why": "'!=' replaced by '=='",
+        "change": "rtl/dotq_core.sv line 47: `if (shift4 != 5'd0) rounded = rounded + (50'sd1 <<< (shift4 - 5'd1));` became `if (shift4 == 5'd0) rounded = rounded + (50'sd1 <<< (shift4 - 5'd1));` ('!=' replaced by '==')",
+        "status": "killed",
+        "seconds": 76.7
+      },
+      {
+        "name": "dotq_core_L47_minus_to_plus_67",
+        "file": "dotq_core.sv",
+        "line": 47,
+        "class": "minus_to_plus",
+        "why": "'-' replaced by '+'",
+        "change": "rtl/dotq_core.sv line 47: `if (shift4 != 5'd0) rounded = rounded + (50'sd1 <<< (shift4 - 5'd1));` became `if (shift4 != 5'd0) rounded = rounded + (50'sd1 <<< (shift4 + 5'd1));` ('-' replaced by '+')",
+        "status": "killed",
+        "seconds": 65.4
+      },
+      {
+        "name": "dotq_core_L52_lt_to_ge_25",
+        "file": "dotq_core.sv",
+        "line": 52,
+        "class": "lt_to_ge",
+        "why": "'<' replaced by '>='",
+        "change": "rtl/dotq_core.sv line 52: `for (int i = 0; i < 8; i++) begin` became `for (int i = 0; i >= 8; i++) begin` ('<' replaced by '>=')",
+        "status": "killed",
+        "seconds": 32.3
+      },
+      {
+        "name": "dotq_core_L68_plus_to_minus_29",
+        "file": "dotq_core.sv",
+        "line": 68,
+        "class": "plus_to_minus",
+        "why": "'+' replaced by '-'",
+        "change": "rtl/dotq_core.sv line 68: `acc3   <= ((32'(s[0]) + 32'(s[1])) + (32'(s[2]) + 32'(s[3]))) + bias2;` became `acc3   <= ((32'(s[0]) - 32'(s[1])) + (32'(s[2]) + 32'(s[3]))) + bias2;` ('+' replaced by '-')",
+        "status": "killed",
+        "seconds": 71.2
+      },
+      {
+        "name": "dotq_core_L68_plus_to_minus_55",
+        "file": "dotq_core.sv",
+        "line": 68,
+        "class": "plus_to_minus",
+        "why": "'+' replaced by '-'",
+        "change": "rtl/dotq_core.sv line 68: `acc3   <= ((32'(s[0]) + 32'(s[1])) + (32'(s[2]) + 32'(s[3]))) + bias2;` became `acc3   <= ((32'(s[0]) + 32'(s[1])) + (32'(s[2]) - 32'(s[3]))) + bias2;` ('+' replaced by '-')",
+        "status": "killed",
+        "seconds": 77.8
+      },
+      {
+        "name": "dotq_core_L85_bit0_to_1_30",
+        "file": "dotq_core.sv",
+        "line": 85,
+        "class": "bit0_to_1",
+        "why": "constant 1'b0 replaced by 1'b1",
+        "change": "rtl/dotq_core.sv line 85: `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b0;` became `v1 <= 1'b0; v2 <= 1'b1; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b0;` (constant 1'b0 replaced by 1'b1)",
+        "status": "killed",
+        "seconds": 7.5
+      },
+      {
+        "name": "dotq_core_L85_bit0_to_1_54",
+        "file": "dotq_core.sv",
+        "line": 85,
+        "class": "bit0_to_1",
+        "why": "constant 1'b0 replaced by 1'b1",
+        "change": "rtl/dotq_core.sv line 85: `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b0;` became `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b1; v5 <= 1'b0;` (constant 1'b0 replaced by 1'b1)",
+        "status": "killed",
+        "seconds": 7.7
+      },
+      {
+        "name": "dotq_core_L85_bit0_to_1_66",
+        "file": "dotq_core.sv",
+        "line": 85,
+        "class": "bit0_to_1",
+        "why": "constant 1'b0 replaced by 1'b1",
+        "change": "rtl/dotq_core.sv line 85: `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b0;` became `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+        "status": "killed",
+        "seconds": 7.2
+      },
+      {
+        "name": "dotq_core_L96_not_removed_22",
+        "file": "dotq_core.sv",
+        "line": 96,
+        "class": "not_removed",
+        "why": "a logical negation '!' removed",
+        "change": "rtl/dotq_core.sv line 96: `if (v5 && !go) begin` became `if (v5 && go) begin` (a logical negation '!' removed)",
+        "status": "killed",
+        "seconds": 34.0
+      },
+      {
+        "name": "dotq_core_L100_and_to_or_31",
+        "file": "dotq_core.sv",
+        "line": 100,
+        "class": "and_to_or",
+        "why": "'&&' replaced by '||'",
+        "change": "rtl/dotq_core.sv line 100: `else if (relu5 && scaled5 < 49'sd0)` became `else if (relu5 || scaled5 < 49'sd0)` ('&&' replaced by '||')",
+        "status": "killed",
+        "seconds": 76.9
+      },
+      {
+        "name": "dotq_core_L100_lt_to_ge_41",
+        "file": "dotq_core.sv",
+        "line": 100,
+        "class": "lt_to_ge",
+        "why": "'<' replaced by '>='",
+        "change": "rtl/dotq_core.sv line 100: `else if (relu5 && scaled5 < 49'sd0)` became `else if (relu5 && scaled5 >= 49'sd0)` ('<' replaced by '>=')",
+        "status": "killed",
+        "seconds": 79.5
+      },
+      {
+        "name": "dotq_core_L102_lt_to_ge_42",
+        "file": "dotq_core.sv",
+        "line": 102,
+        "class": "lt_to_ge",
+        "why": "'<' replaced by '>='",
+        "change": "rtl/dotq_core.sv line 102: `else if (!relu5 && scaled5 < -49'sd128)` became `else if (!relu5 && scaled5 >= -49'sd128)` ('<' replaced by '>=')",
+        "status": "killed",
+        "seconds": 51.0
+      },
+      {
+        "name": "dotq_core_L102_not_removed_25",
+        "file": "dotq_core.sv",
+        "line": 102,
+        "class": "not_removed",
+        "why": "a logical negation '!' removed",
+        "change": "rtl/dotq_core.sv line 102: `else if (!relu5 && scaled5 < -49'sd128)` became `else if (relu5 && scaled5 < -49'sd128)` (a logical negation '!' removed)",
+        "status": "killed",
+        "seconds": 81.2
+      },
+      {
+        "name": "dotq_regs_L37_bit0_to_1_21",
+        "file": "dotq_regs.sv",
+        "line": 37,
+        "class": "bit0_to_1",
+        "why": "constant 1'b0 replaced by 1'b1",
+        "change": "rtl/dotq_regs.sv line 37: `relu  <= 1'b0;` became `relu  <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+        "status": "killed",
+        "seconds": 86.4
+      },
+      {
+        "name": "dotq_regs_L39_bit0_to_1_21",
+        "file": "dotq_regs.sv",
+        "line": 39,
+        "class": "bit0_to_1",
+        "why": "constant 1'b0 replaced by 1'b1",
+        "change": "rtl/dotq_regs.sv line 39: `ready <= 1'b0;` became `ready <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+        "status": "killed",
+        "seconds": 7.3
+      },
+      {
+        "name": "dotq_regs_L42_bit1_to_0_31",
+        "file": "dotq_regs.sv",
+        "line": 42,
+        "class": "bit1_to_0",
+        "why": "constant 1'b1 replaced by 1'b0",
+        "change": "rtl/dotq_regs.sv line 42: `if (done) ready <= 1'b1;` became `if (done) ready <= 1'b0;` (constant 1'b1 replaced by 1'b0)",
+        "status": "killed",
+        "seconds": 33.0
+      },
+      {
+        "name": "dotq_regs_L57_bit0_to_1_33",
+        "file": "dotq_regs.sv",
+        "line": 57,
+        "class": "bit0_to_1",
+        "why": "constant 1'b0 replaced by 1'b1",
+        "change": "rtl/dotq_regs.sv line 57: `ready <= 1'b0;` became `ready <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+        "status": "killed",
+        "seconds": 51.0
+      }
+    ]
+  },
+  "traceability": [
+    {
+      "requirement": "REQ-01",
+      "text": "acc equals the exact sum of the eight act*wgt products plus bias, for all legal inputs including extremes.",
+      "method": "simulation",
+      "artefact": "c14_bench.test_arith_random",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-01",
+      "text": "acc equals the exact sum of the eight act*wgt products plus bias, for all legal inputs including extremes.",
+      "method": "formal",
+      "artefact": "c14_bench.test_arith_random",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so exactness of acc is checked by directed extremes and random cases against the model.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "Scaling by mult/2^shift rounds to nearest with exact halves towards plus infinity for shift 1..31 and mult 0..65535.",
+      "method": "simulation",
+      "artefact": "c14_bench.test_shift_sweep",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-02",
+      "text": "Scaling by mult/2^shift rounds to nearest with exact halves towards plus infinity for shift 1..31 and mult 0..65535.",
+      "method": "formal",
+      "artefact": "c14_bench.test_shift_sweep",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so rounding for every shift 1..31 is swept in simulation with exact-half cases.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "y is clamped to -128..127, and to 0..127 when relu = 1, with both ends exercised.",
+      "method": "simulation",
+      "artefact": "c14_bench.test_arith_a",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-03",
+      "text": "y is clamped to -128..127, and to 0..127 when relu = 1, with both ends exercised.",
+      "method": "formal",
+      "artefact": "c14_bench.test_arith_b",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so both clamp ends and relu are covered by directed simulation cases.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "y, acc and READY are readable over the shell after GO; READY is set only when y and acc are valid; Y and ACC read 0 while READY is 0.",
+      "method": "simulation",
+      "artefact": "c14_bench.test_arith_a",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-04",
+      "text": "y, acc and READY are readable over the shell after GO; READY is set only when y and acc are valid; Y and ACC read 0 while READY is 0.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "GO presents the loaded operands to the block for exactly one clock cycle, clears READY, and READY rises within 8 clocks.",
+      "method": "simulation",
+      "artefact": "c14_bench.test_go_timing",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-05",
+      "text": "GO presents the loaded operands to the block for exactly one clock cycle, clears READY, and READY rises within 8 clocks.",
+      "method": "formal",
+      "artefact": "c14_bench.test_go_timing",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so the GO-to-READY latency of at most 8 clocks is measured on LED0 in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "CPU_RESETN clears the loaded operands and the ready flag.",
+      "method": "simulation",
+      "artefact": "c14_bench.test_reset",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "CPU_RESETN clears the loaded operands and the ready flag.",
+      "method": "formal",
+      "artefact": "c14_bench.test_reset",
+      "result": "pass",
+      "detail": "re-planned from formal to simulation (SymbiYosys is not installed here, so reset clearing, including reset in mid-computation, is checked in simulation.): passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-06",
+      "text": "CPU_RESETN clears the loaded operands and the ready flag.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-07",
+      "text": "LED0 shows the ready flag.",
+      "method": "simulation",
+      "artefact": "c14_bench.test_go_timing",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-07",
+      "text": "LED0 shows the ready flag.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "Shell communicates at 115200 baud on the USB-UART (CLKS_PER_BIT = 868 at 100 MHz).",
+      "method": "simulation",
+      "artefact": "c14_bench.test_baud",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-08",
+      "text": "Shell communicates at 115200 baud on the USB-UART (CLKS_PER_BIT = 868 at 100 MHz).",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-09",
+      "text": "Design ID reads back as DOTQ.",
+      "method": "simulation",
+      "artefact": "c14_bench.test_smoke",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    },
+    {
+      "requirement": "REQ-09",
+      "text": "Design ID reads back as DOTQ.",
+      "method": "hardware",
+      "artefact": "uart_tests",
+      "result": "pending",
+      "detail": "no bring-up result"
+    },
+    {
+      "requirement": "REQ-10",
+      "text": "Top module is c14_int8_dot_requant_top with ports named as in the master XDC and CLKS_PER_BIT, TIMEOUT_CYCLES, BUILD_STAMP as top-level parameters; no other time constants.",
+      "method": "analysis",
+      "artefact": "post_synth:post_synth_resources_in_range",
+      "result": "pass",
+      "detail": "gate post_synth:post_synth_resources_in_range = True"
+    },
+    {
+      "requirement": "REQ-11",
+      "text": "Design meets timing at 100 MHz and fits the xc7a100t.",
+      "method": "analysis",
+      "artefact": "post_route:setup",
+      "result": "fail",
+      "detail": "gate post_route:setup = None"
+    },
+    {
+      "requirement": "REQ-12",
+      "text": "Register map follows the answered map (offsets 0x00-0x0A); unmapped offsets read 0 and writes to them and to RO registers are ignored.",
+      "method": "simulation",
+      "artefact": "c14_bench.test_alias_unmapped",
+      "result": "pass",
+      "detail": "passed on 3 seed(s)"
+    }
+  ],
+  "coverage_detail": {
+    "bins": {
+      "top.acc_class": {
+        "max": 4,
+        "min": 3,
+        "neg": 53,
+        "pos": 69,
+        "zero": 3
+      },
+      "top.clamp_class": {
+        "edge_hi": 3,
+        "edge_lo": 6,
+        "in_range": 67,
+        "neg_sat": 18,
+        "pos_sat": 29,
+        "relu_floor": 9
+      },
+      "top.go_class": {
+        "first": 33,
+        "restart": 216
+      },
+      "top.mult_class": {
+        "max": 17,
+        "one": 80,
+        "other": 24,
+        "zero": 11
+      },
+      "top.reg_access": {
+        "rd_0": 24,
+        "rd_1": 18,
+        "rd_10": 39,
+        "rd_2": 18,
+        "rd_3": 18,
+        "rd_4": 21,
+        "rd_5": 18,
+        "rd_6": 36,
+        "rd_7": 18,
+        "rd_8": 297,
+        "rd_9": 204,
+        "rd_unmapped": 30,
+        "wr_0": 114,
+        "wr_1": 91,
+        "wr_2": 96,
+        "wr_3": 86,
+        "wr_4": 226,
+        "wr_5": 103,
+        "wr_6": 206,
+        "wr_7": 252,
+        "wr_ro": 18,
+        "wr_unmapped": 72
+      },
+      "top.relu": {
+        "0": 102,
+        "1": 30
+      },
+      "top.round_class": {
+        "half": 19,
+        "neg_half": 17,
+        "nonhalf": 96
+      },
+      "top.rst_class": {
+        "idle": 3,
+        "mid_compute": 3,
+        "with_result": 3
+      },
+      "top.shift_class": {
+        "mid": 47,
+        "s1": 65,
+        "s31": 20
+      }
+    },
+    "requirements": [
+      {
+        "id": "REQ-01",
+        "spec": [
+          "behaviour.inputs[0]",
+          "behaviour.arithmetic[0]",
+          "registers.map.A_LO",
+          "registers.map.A_HI",
+          "registers.map.W_LO",
+          "registers.map.W_HI",
+          "registers.map.BIAS"
+        ],
+        "tests": [
+          "c14_bench.test_arith_a",
+          "c14_bench.test_arith_b",
+          "c14_bench.test_arith_random",
+          "c14_bench.test_regs_rw"
+        ],
+        "bins": {
+          "top.acc_class": {
+            "hit": 5,
+            "total": 5
+          }
+        }
+      },
+      {
+        "id": "REQ-02",
+        "spec": [
+          "behaviour.arithmetic[1]",
+          "behaviour.arithmetic[2]",
+          "registers.map.MULT",
+          "registers.map.CTRL"
+        ],
+        "tests": [
+          "c14_bench.test_arith_b",
+          "c14_bench.test_shift_sweep",
+          "c14_bench.test_arith_random",
+          "c14_bench.test_regs_rw"
+        ],
+        "bins": {
+          "top.round_class": {
+            "hit": 3,
+            "total": 3
+          },
+          "top.shift_class": {
+            "hit": 3,
+            "total": 3
+          },
+          "top.mult_class": {
+            "hit": 4,
+            "total": 4
+          }
+        }
+      },
+      {
+        "id": "REQ-03",
+        "spec": [
+          "behaviour.arithmetic[3]"
+        ],
+        "tests": [
+          "c14_bench.test_arith_a",
+          "c14_bench.test_arith_b"
+        ],
+        "bins": {
+          "top.clamp_class": {
+            "hit": 6,
+            "total": 6
+          },
+          "top.relu": {
+            "hit": 2,
+            "total": 2
+          }
+        }
+      },
+      {
+        "id": "REQ-04",
+        "spec": [
+          "behaviour.outputs[0]",
+          "behaviour.outputs[2]",
+          "registers.map.Y",
+          "registers.map.ACC",
+          "registers.map.STATUS"
+        ],
+        "tests": [
+          "c14_bench.test_smoke",
+          "c14_bench.test_arith_a",
+          "c14_bench.test_go_timing"
+        ],
+        "bins": {
+          "top.reg_access": {
+            "hit": 22,
+            "total": 22
+          }
+        }
+      },
+      {
+        "id": "REQ-05",
+        "spec": [
+          "behaviour.inputs[1]",
+          "behaviour.outputs[1]",
+          "behaviour.outputs[3]",
+          "registers.map.GO",
+          "timing.latency.go_to_ready"
+        ],
+        "tests": [
+          "c14_bench.test_go_timing",
+          "c14_bench.test_reset"
+        ],
+        "bins": {
+          "top.go_class": {
+            "hit": 2,
+            "total": 2
+          }
+        }
+      },
+      {
+        "id": "REQ-06",
+        "spec": [
+          "behaviour.reset[0]",
+          "reset",
+          "timing.latency.reset"
+        ],
+        "tests": [
+          "c14_bench.test_reset"
+        ],
+        "bins": {
+          "top.rst_class": {
+            "hit": 3,
+            "total": 3
+          }
+        }
+      },
+      {
+        "id": "REQ-07",
+        "spec": [
+          "behaviour.outputs[4]"
+        ],
+        "tests": [
+          "c14_bench.test_go_timing",
+          "c14_bench.test_reset",
+          "c14_bench.test_smoke"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-08",
+        "spec": [
+          "behaviour.shell[0]"
+        ],
+        "tests": [
+          "c14_bench.test_baud",
+          "c14_bench.test_shell_protocol"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-09",
+        "spec": [
+          "behaviour.shell[0]"
+        ],
+        "tests": [
+          "c14_bench.test_smoke",
+          "c14_bench.test_shell_protocol"
+        ],
+        "bins": {}
+      },
+      {
+        "id": "REQ-12",
+        "spec": [
+          "behaviour.shell[1]",
+          "registers.unmapped"
+        ],
+        "tests": [
+          "c14_bench.test_alias_unmapped",
+          "c14_bench.test_regs_rw",
+          "c14_bench.test_smoke"
+        ],
+        "bins": {
+          "top.reg_access": {
+            "hit": 22,
+            "total": 22
+          }
+        }
+      }
+    ]
+  },
+  "reached": "V2",
+  "first_failed": "V3"
+}

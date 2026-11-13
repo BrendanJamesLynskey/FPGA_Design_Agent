@@ -132,11 +132,34 @@ Folders that are pure data read by a tool (for example a `faults.json` that `ipd
 
 ## Agent-produced designs
 
-The same `handover.yaml` and renderings as any design, with `produced_by: agent` and `agent_run` naming the run record.
-Brief 68 part C adds a sign-off step: the Designer role writes `handover.yaml` (prose and structure), code fills every
-number from the run's records (spec, `gates.json`, test and fault results, closure and traceability records), and a
-`DOC` gate runs this checker. Every failed, waived or skipped gate and every requirement without passing evidence must
-appear under Known gaps.
+The same `handover.yaml` and renderings as any design, with `produced_by: agent` and `agent_run` naming the run record
+(`summary.json`). The agent writes them itself at the end of every run (brief 68 part C, `agent/graph/document.py`):
+
+- **Who writes what.** Code drafts the facts from the run's records: target, clocks (from the XDC's `create_clock`), the
+  file map, commands, evidence (`summary.json`, `build/verif/verif_gates.json`, `build/verif/mutation.json`,
+  `build/<variant>/gates.json`, the bring-up record), measurements as record + field, `state.gates` (one entry per stage:
+  pass, fail or not-run) and `state.stage`. The Designer writes only the prose fields (title, summary, scope, resets,
+  interfaces, parameter ranges and notes, extra gaps, next steps, open questions); whatever else its reply says, the
+  code's facts are kept.
+- **Required gaps.** Code adds a gap for every stage that did not pass, every evidence entry that did not pass, every
+  requirement with a non-passing row in the traceability table of `verif_gates.json`, and every one of resources,
+  timing, power, latency and throughput that was not measured. The Designer cannot remove or reword them; it adds
+  its own (behaviour a user could guess wrong, assumptions).
+- **Vivado release.** Build numbers (timing, resources, power) are published only from a build made with the release
+  the flow pins (2026.1). A recorded build from an earlier release is a `partial` evidence entry with a gap, its numbers
+  are withdrawn, and `state.evidence_vivado: earlier` makes a resume rebuild it.
+- **Where records may live.** For an agent run a measurement's record must be one the flow wrote for that run
+  (`flow.handover.in_run_records`): a file of the run directory (the directory of `agent_run.record`) outside the design
+  directory, or a file under the design's `build/`, which the path jail denies to every role. The design directory must be
+  inside that run directory. A file a role writes (RTL, tests, spec) is never a measurement record.
+- **The DOC gate.** `flow.handover.problems` returns nothing, every required gap is present and no field still holds
+  the draft's `WRITE` marker. A failing gate goes back to the Designer with the problems, at most three passes. The run is
+  signed off (`doc.json` `signed_off`) only when stage 9 passed and the DOC gate passed.
+- **In CI.** Agent-produced designs kept as records (`results/**/handover.yaml`, for example `results/68_agent_docs/`)
+  are checked like `designs/`, and `doccheck` re-derives their code-owned facts from the run's records
+  (`document.recheck`): a hand edit that turns a failed gate into a pass, or drops a required gap, fails.
+- **Limit.** The Designer's prose is checked for numbers, placeholders and length, not for truth: a behavioural claim in
+  a gap or summary that no record shows is the reviewer's to catch.
 
 ## Commands
 

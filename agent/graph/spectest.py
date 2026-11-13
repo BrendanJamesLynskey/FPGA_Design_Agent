@@ -123,22 +123,22 @@ def data_text(design: Path) -> str:
     return "\n".join(out) or "(no data files)"
 
 
-ROLE_SYSTEM = """You are the independent spec-test writer for an FPGA design on a Xilinx board. You work from the request alone.
-You have not seen, and must not ask for, the design's RTL, the implementer's reference model or the implementer's tests: those
+ROLE_SYSTEM = """You write the independent spec tests for an FPGA design on a Xilinx board. You work from the request alone.
+You have not seen, and must not ask for, the design's RTL, the Modeller's reference model or the Verifier's tests: those
 may share a misreading of the request, and your job is to be the second reading.
 
 Write two Python files:
 1. spectest/spec_ref.py: your own reference model of the design's externally observable behaviour, from the request. Pure Python.
 2. spectest/spec_bench.py: a cocotb acceptance bench that drives the top module's ports and compares with spec_ref.py.
 
-Aim at what an implementer can misread and a self-written test would repeat: bit encodings and field positions, widths,
+Aim at what the Designer can misread and a self-written test would repeat: bit encodings and field positions, widths,
 signedness (two's complement against unsigned, which bit is the sign, sign extension, truncation), rounding and saturation
 rules, register offsets, reset values and access, byte and bit order on serial lines, and timing promises (latency, periods) in
 clock cycles. Work every expected value out from the request's own rules, and from the data files read at run time; never
 paste numbers you cannot justify from the request.
 
 Rules.
-- Test only what the request or an ANSWERED question states. A question marked NOT CONFIRMED is the implementer's guess: do not
+- Test only what the request or an ANSWERED question states. A question marked NOT CONFIRMED is the Clarifier's guess: do not
   test it unless the request says the same. If the request is silent on a point, do not test it.
 - Read an ambiguous sentence the way a careful engineer reading the request cold would, and say in a comment which sentence
   each check comes from.
@@ -199,7 +199,7 @@ def parse_files(text: str) -> dict[str, str]:
 
 def static_problems(design: Path) -> list[str]:
     """Cheap checks before the bench ever sees the RTL: the files exist, compile, and the bench has tests and no import of the
-    implementer's files."""
+    Designer's, Modeller's or Verifier's files."""
     d = design / SPEC_DIR
     bad = []
     for n in ("spec_ref.py", "spec_bench.py"):
@@ -309,7 +309,7 @@ def failing_checks_text(res: dict[str, Any]) -> str:
 # --- the triage step --------------------------------------------------------------------------------------------------
 
 TRIAGE_SYSTEM = """You settle a disagreement between two test benches for an FPGA design, from the written request alone. Bench A
-(the implementer's own) passes against the design. Bench B (written independently from the request) fails. You see the request,
+(the Verifier's, the agent's own) passes against the design. Bench B (written independently from the request) fails. You see the request,
 the requester's answers, and both benches; you never see the RTL.
 
 Decide who misread the request. Reply with one JSON object and nothing else:
@@ -332,7 +332,7 @@ def triage_prompt(design: Path, failing: str, limit: int = 20_000) -> str:
     b = "".join(f"--- {n} ---\n{(design / SPEC_DIR / n).read_text()}\n" for n in ("spec_bench.py",) if (design / SPEC_DIR / n).is_file())
     spec_md = (design / "spec.md").read_text() if (design / "spec.md").is_file() else ""
     return (f"REQUEST (spec.md):\n{spec_md}\n\nTHE REQUESTER'S ANSWERS:\n{interview_text(design)}\n\n"
-            f"BENCH A (the implementer's; all of its checks pass):\n{a[:limit]}\n\nBENCH B (independent):\n{b[:limit]}\n"
+            f"BENCH A (the Verifier's; all of its checks pass):\n{a[:limit]}\n\nBENCH B (independent):\n{b[:limit]}\n"
             f"BENCH B'S FAILING CHECKS:\n{failing[:3500]}\n")
 
 

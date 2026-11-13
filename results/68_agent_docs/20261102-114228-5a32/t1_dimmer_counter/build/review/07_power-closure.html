@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>07 power-closure</title><style>
+:root{--bg:#fff;--fg:#111;--mut:#555;--line:#ccc;--pass:#111;--fail:#111;--chip:#eee}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--mut:#aaa;--line:#444;--chip:#222}}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:16px}
+main{max-width:980px;margin:auto}h1{font-size:1.4em;margin:.2em 0}h2{font-size:1.1em;border-bottom:1px solid var(--line);
+padding-bottom:4px;margin-top:1.6em}table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border:1px solid var(--line);
+padding:4px 6px;text-align:left;vertical-align:top}pre{background:var(--chip);padding:8px;overflow-x:auto;font-size:.85em}
+.mut{color:var(--mut)}.chip{display:inline-block;padding:0 6px;border:1px solid var(--fg);border-radius:3px;font-size:.85em}
+.fail{background:var(--fg);color:var(--bg)}svg{max-width:100%;height:auto}svg text{fill:var(--fg);font:11px monospace}
+svg .w{stroke:var(--fg);fill:none;stroke-width:1.2}a{color:var(--fg)}.wrap{overflow-x:auto}
+</style></head><body><main><h1>Stage 7: power-closure</h1><p class="mut">t1_dimmer_counter; visit 4; 2026-11-02 12:45:27</p><h2>Exit gates</h2><div class="wrap"><table><tr><th>gate</th><th>result</th><th>detail</th></tr><tr><td>power</td><td><span class="chip">PASS</span></td><td></td></tr></table></div><h2>Inputs and outputs</h2><div class="wrap"><table><tr><td>inputs</td><td>*</td></tr><tr><td>outputs</td><td>ARCHITECTURE.md, BUILD_NOTE.md, __init__.py, __pycache__/model.cpython-312.pyc, build.yaml, design.xdc, model.py, rtl/t1_led_dimmer_counter.sv, runs/20261102-114228-5a32/t1_dimmer_counter/ARCHITECTURE.md, runs/20261102-114228-5a32/t1_dimmer_counter/build.yaml, runs/20261102-114228-5a32/t1_dimmer_counter/probes.yaml, spec.md, spec.yaml, tests/test_t1_dimmer_counter_rtl.py, verif/testplan.yaml</td></tr></table></div><h2>Spec summary</h2><div class="wrap"><table><tr><td>title</td><td>T1 LED dimmer and push-button counter</td></tr><tr><td>top</td><td>t1_led_dimmer_counter</td></tr><tr><td>clocks</td><td>clk </td></tr><tr><td>ports</td><td>11</td></tr><tr><td>open questions</td><td>0</td></tr><tr><td>resolved questions</td><td>10</td></tr></table></div><h2>Block diagram</h2><pre> Nexys A7-100T
+ ┌─────────────────────────┐
+ │ clk100 (100 MHz)         │──────┬──────────────┬───────────────────────┐
+ │ CPU_RESETN (active low)  │──┐   │              │                       │
+ │ BTNU / BTND / BTNC       │──┼───┼──&gt; sync +    │                       │
+ │ SW[7:0]                  │──┼───┼──&gt; debounce  │                       │
+ │ USB-UART RX/TX           │──┼───┼──&gt; fpga_shell│                       │
+ │                          │  │   │       │       │                       │
+ │ LEDs[15:0] &lt;─────────────┼──┼───┼───────┼──&gt; counter + PWM            │
+ │ AN[7:0], CA..CG, DP &lt;────┼──┼───┼───────┼──&gt; display scan/hex encoder  │
+ └─────────────────────────┘  │   │       │       │                       │
+                              └──&gt; reset sync    └──&gt; UART register window │
+                                      │                    │              │
+                                      └────── clk/rst ─────┴──────────────┘
+</pre><h2>Testplan and coverage</h2><div class="wrap"><table><tr><td>testplan items</td><td>1</td></tr></table></div><h2>Waveform</h2><p class="mut">No waveform for this stage.</p><h2>Timing, utilisation, power</h2><div class="wrap"><table><tr><td>WNS / TNS (ns)</td><td>0.698 / 0.0</td></tr><tr><td>WHS / THS (ns)</td><td>0.158 / 0.0</td></tr><tr><td>LUT / FF</td><td>531 of 63400 / 568 of 126800</td></tr><tr><td>BRAM / DSP</td><td>0 / 0</td></tr><tr><td>power total (W)</td><td>0.128 (confidence Low)</td></tr><tr><td>junction (C)</td><td>42.3 at 40.0 C ambient</td></tr></table></div><p class="mut">From build/base/gates.json (flow/gates.py on the Vivado reports).</p><h2>Budget</h2><div class="wrap"><table><tr><th></th><th>used</th><th>limit</th></tr><tr><td>turns</td><td>6</td><td>30</td></tr><tr><td>seconds</td><td>17.7</td><td>1800</td></tr><tr><td>usd</td><td>0.003615</td><td>0.4</td></tr></table></div><h2>Review</h2><div class="wrap"><table><tr><td>decision</td><td>approve</td></tr><tr><td>by</td><td>auto</td></tr><tr><td>note</td><td>-</td></tr></table></div></main></body></html>

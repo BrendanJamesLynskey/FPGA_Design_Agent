@@ -5,6 +5,21 @@ finding), the change and the new hash. Only **development** tasks are amended; n
 v1 and course units are re-recorded with `freeze.py refreeze`; v2 development tasks through a hash-chained `amend` entry in `v2/ledger.jsonl`.
 Reviews: `reports/12_quality_review_area2.md` (planner repository), items R2, R5-R9, B2, Q2.
 
+## 2026-11-13: role names in the text sent to models (request golden re-pin, brief 68 C)
+
+**Amended 2026-11-13 (planner decision in brief 68 under "Benchmarks do not block improvements"; eval-1 was stopped with no
+score, so no comparison is lost).** What: the text sent to models names the roles as the site and docs have since brief 67:
+the Modeller, the Verifier, the Designer and the Clarifier, "reference model" for "blind model", and never "implementer".
+Changed: `agent/graph/run.py` PROMPTS, CONVENTIONS ("Tests (Verifier)") and HW_FORMAT; `agent/graph/contract.py`
+MODEL_CONTRACT; the `bringup` tool description in `agent/core/tools.py` (registry schema 1.11.1,
+`agent/tests/fixtures/tool_schemas.json` regenerated); `agent/graph/spectest.py` ROLE_SYSTEM and TRIAGE_SYSTEM. New: the DOC
+step's prompt (`agent/graph/document.py` DOC_SYSTEM, hashed as `doc_system`). No task spec, reference RTL, test, mutant,
+grader or split changed.
+
+Re-recorded: the request golden `agent/tests/fixtures/b68_request_golden.json` (one deliberate re-pin; the earlier goldens
+stay as history). Not comparable on request text: agent runs recorded before 2026-11-13 (they belong to the earlier goldens).
+Historical fixtures (`flow/tests/data/run_*`, `flow/tests/fixtures/trace53`) are unchanged.
+
 ## 2026-11-12: shell protocol 1.1, the BUILD_ID register
 
 **Amended 2026-11-12 (owner: "don't be held back by benchmarks" at this stage; house rules, "Benchmarks do not block

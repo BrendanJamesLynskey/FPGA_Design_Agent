@@ -178,7 +178,7 @@ def test_off_graph_is_the_eval1_graph_and_on_adds_one_node() -> None:
     from agent.graph import run as gr
     off = gr.build_graph(None)
     on = gr.build_graph(None, routing=True)
-    assert set(off.get_graph().nodes) == {"__start__", "work", "gate", "review", "advance", "__end__"}
+    assert set(off.get_graph().nodes) == {"__start__", "work", "gate", "review", "advance", "document", "__end__"}
     assert set(on.get_graph().nodes) - set(off.get_graph().nodes) == {"route_skills"}
 
 

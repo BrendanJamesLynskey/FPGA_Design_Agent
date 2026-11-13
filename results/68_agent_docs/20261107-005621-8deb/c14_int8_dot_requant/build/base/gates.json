@@ -1,0 +1,232 @@
+{
+  "build_dir": "/home/brendan/Claude_sandbox/FPGA_Design_Agent/runs/20261107-005621-8deb/c14_int8_dot_requant/build/base",
+  "top": "c14_int8_dot_requant_top",
+  "variant": "base",
+  "pass": true,
+  "first_failed_stage": null,
+  "gates": {
+    "rtl_methodology_no_critical": true,
+    "post_synth_no_unconstrained_endpoints": true,
+    "post_synth_methodology_no_critical": true,
+    "post_synth_drc_clean": true,
+    "post_synth_cdc_no_critical": true,
+    "post_synth_resources_in_range": true
+  },
+  "warnings": [],
+  "stages": {
+    "rtl": {
+      "ran": true,
+      "gates": {
+        "rtl_methodology_no_critical": true
+      },
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 0,
+        "rules": [
+          {
+            "rule": "RFFH-1",
+            "severity": "Advisory",
+            "description": "The register driving a high fanout",
+            "count": 1
+          }
+        ]
+      },
+      "pass": true
+    },
+    "post_synth": {
+      "ran": true,
+      "gates": {
+        "post_synth_no_unconstrained_endpoints": true,
+        "post_synth_methodology_no_critical": true,
+        "post_synth_drc_clean": true,
+        "post_synth_cdc_no_critical": true,
+        "post_synth_resources_in_range": true
+      },
+      "warnings": [],
+      "timing": {
+        "wns_ns": -0.011,
+        "tns_ns": -0.011,
+        "tns_failing_endpoints": 1,
+        "tns_total_endpoints": 2008,
+        "whs_ns": -1.033,
+        "ths_ns": -1.246,
+        "ths_failing_endpoints": 3,
+        "ths_total_endpoints": 2008,
+        "wpws_ns": 4.02,
+        "tpws_ns": 0.0,
+        "tpws_failing_endpoints": 0,
+        "tpws_total_endpoints": 909,
+        "timing_met": false
+      },
+      "check_timing": {
+        "no_clock": 0,
+        "constant_clock": 0,
+        "pulse_width_clock": 0,
+        "unconstrained_internal_endpoints": 0,
+        "no_input_delay": 0,
+        "no_output_delay": 0,
+        "multiple_clock": 0,
+        "generated_clocks": 0,
+        "loops": 0,
+        "partial_input_delay": 0,
+        "partial_output_delay": 0,
+        "latch_loops": 0
+      },
+      "unconstrained_ports": {},
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 1,
+        "rules": [
+          {
+            "rule": "TIMING-15",
+            "severity": "Warning",
+            "description": "Large hold violation",
+            "count": 1
+          }
+        ]
+      },
+      "drc": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 4,
+        "rules": [
+          {
+            "rule": "CFGBVS-1",
+            "severity": "Warning",
+            "description": "Missing CFGBVS and CONFIG_VOLTAGE Design Properties",
+            "count": 1
+          },
+          {
+            "rule": "DPOP-1",
+            "severity": "Warning",
+            "description": "PREG Output pipelining",
+            "count": 1
+          },
+          {
+            "rule": "DPOP-2",
+            "severity": "Warning",
+            "description": "MREG Output pipelining",
+            "count": 2
+          }
+        ]
+      },
+      "qor_assessment": {
+        "score": 4,
+        "meaning": "Design runs have a good chance of success",
+        "flow_guidance": [
+          "Run report_methodology and fix or waive warnings",
+          "To see critical timing paths examine the CSV file containing timing paths."
+        ],
+        "review": []
+      },
+      "cdc": {
+        "safely_timed": true,
+        "rules": []
+      },
+      "resource_sanity": {
+        "factor": 2.0,
+        "resources": {
+          "lut": {
+            "used": 1337,
+            "predicted": [
+              300.0,
+              1400.0
+            ],
+            "allowed": [
+              150.0,
+              2800.0
+            ],
+            "pass": true,
+            "direction": null
+          },
+          "ff": {
+            "used": 868,
+            "predicted": [
+              350.0,
+              1300.0
+            ],
+            "allowed": [
+              175.0,
+              2600.0
+            ],
+            "pass": true,
+            "direction": null
+          },
+          "bram_tile": {
+            "used": 0,
+            "predicted": [
+              0.0,
+              0.0
+            ],
+            "allowed": [
+              0.0,
+              0.0
+            ],
+            "pass": true,
+            "direction": null
+          },
+          "dsp": {
+            "used": 2,
+            "predicted": [
+              0.0,
+              12.0
+            ],
+            "allowed": [
+              0.0,
+              24.0
+            ],
+            "pass": true,
+            "direction": null
+          }
+        },
+        "pass": true
+      },
+      "utilization": {
+        "lut": 1337,
+        "lut_available": 63400,
+        "lutram": 38,
+        "lutram_available": 19000,
+        "ff": 868,
+        "ff_available": 126800,
+        "carry4": 164,
+        "bram_tile": 0,
+        "bram_tile_available": 135,
+        "dsp": 2,
+        "dsp_available": 240,
+        "iob": 5,
+        "iob_available": 210,
+        "bufg": 1,
+        "bufg_available": 32
+      },
+      "pass": true
+    },
+    "post_place": {
+      "ran": false,
+      "gates": {},
+      "pass": null
+    },
+    "post_route": {
+      "ran": false,
+      "gates": {},
+      "pass": null
+    },
+    "bitstream": {
+      "ran": false,
+      "gates": {},
+      "pass": null
+    }
+  },
+  "timing": null,
+  "check_timing": null,
+  "utilization": null,
+  "drc": null,
+  "methodology": null,
+  "cdc": null,
+  "power": null,
+  "power_environment": null,
+  "bitstream": null,
+  "build_stamp": "1e9b1e25",
+  "sources_sha256": "1e9b1e2546da641c9c23099bc101035e570cf09cf79dee164e3576c5795e975d"
+}

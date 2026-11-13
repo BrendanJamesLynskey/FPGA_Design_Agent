@@ -122,7 +122,7 @@
     "key": "end",
     "label": "done, or give up",
     "source": "advance",
-    "target": "__end__"
+    "target": "document"
    },
    {
     "conditional": true,
@@ -130,6 +130,13 @@
     "label": "next stage, or repair",
     "source": "advance",
     "target": "work"
+   },
+   {
+    "conditional": false,
+    "key": null,
+    "label": "handover, DOC gate",
+    "source": "document",
+    "target": "__end__"
    },
    {
     "conditional": false,
@@ -178,6 +185,11 @@
     "id": "advance",
     "label": "advance",
     "what": "Code picks the next stage from the gate result: the next stage, or the stage that owns the failure."
+   },
+   {
+    "id": "document",
+    "label": "document",
+    "what": "The Designer writes the handover's prose; code fills every number from the run's records and renders README.md and AGENT.md. The DOC gate must pass for the run to be signed off."
    },
    {
     "id": "__end__",

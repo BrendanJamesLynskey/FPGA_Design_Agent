@@ -33,6 +33,8 @@ NODE_WORDS = {
     "gate": ("gate", "The flow's own checks run: lint, simulation, Vivado reports, the stage gates. No model decides."),
     "review": ("review", "A snapshot of the design is taken; a person may approve, edit or rewind. Always pauses before the board."),
     "advance": ("advance", "Code picks the next stage from the gate result: the next stage, or the stage that owns the failure."),
+    "document": ("document", "The Designer writes the handover's prose; code fills every number from the run's records and "
+                             "renders README.md and AGENT.md. The DOC gate must pass for the run to be signed off."),
     "__end__": ("end", "The run stops: every stage passed, or a limit was reached."),
 }
 EDGE_WORDS = {
@@ -41,7 +43,8 @@ EDGE_WORDS = {
     ("gate", "review"): "gate JSON",
     ("review", "advance"): "snapshot, approval",
     ("advance", "work"): "next stage, or repair",
-    ("advance", "__end__"): "done, or give up",
+    ("advance", "document"): "done, or give up",
+    ("document", "__end__"): "handover, DOC gate",
 }
 INNER_WORDS = {
     "__start__": "the role's prompt and files", "PatchToolCallsMiddleware.before_agent": "tidy unanswered tool calls",

@@ -1,0 +1,122 @@
+schema: fpga-design-agent/testplan/v0
+design: results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter
+spec: results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/spec.yaml
+model: results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/model.py
+bench:
+  modules:
+    - t1_dimmer_counter_bench
+  dir: results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/tests
+checkers: results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/verif/checkers
+formal_dir: results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/verif/formal
+thresholds:
+  seeds_min: 3
+  functional_bins_pct: 100
+  cover_properties_pct: 100
+  line_pct: 95
+  toggle_pct: 80
+  mutation_score_pct: 80
+waivers:
+  code_coverage: []
+  functional_bins: []
+  cover_properties: []
+requirements:
+  - id: reset_and_counter_behavior
+    spec:
+      - behaviour.counter[0]
+      - behaviour.counter[1]
+      - behaviour.counter[2]
+      - behaviour.counter[3]
+      - behaviour.counter[4]
+      - behaviour.counter[5]
+      - reset
+      - timing.latency.button_to_counter
+    tests:
+      - t1_dimmer_counter_bench.counter_reset_buttons_and_outputs_match_model
+    assertions: []
+    cover_props: []
+    bins:
+      - reset_released
+      - up_press_and_hold
+      - down_press_and_hold
+      - centre_press_and_hold
+      - simultaneous_buttons
+    formal: []
+  - id: brightness_pwm_led_behavior
+    spec:
+      - behaviour.brightness_and_leds[0]
+      - behaviour.brightness_and_leds[1]
+      - behaviour.brightness_and_leds[2]
+      - behaviour.brightness_and_leds[3]
+      - timing.latency.pwm_output
+    tests:
+      - t1_dimmer_counter_bench.counter_reset_buttons_and_outputs_match_model
+    assertions: []
+    cover_props: []
+    bins:
+      - default_brightness
+      - switch_brightness_zero
+      - switch_brightness_intermediate
+      - switch_brightness_full
+      - pwm_multiple_phases
+    formal: []
+  - id: seven_segment_display
+    spec:
+      - behaviour.seven_segment_display[0]
+      - behaviour.seven_segment_display[1]
+      - behaviour.seven_segment_display[2]
+      - behaviour.seven_segment_display[3]
+      - behaviour.seven_segment_display[4]
+      - behaviour.seven_segment_display[5]
+      - timing.latency.display_update
+    tests:
+      - t1_dimmer_counter_bench.counter_reset_buttons_and_outputs_match_model
+    assertions: []
+    cover_props: []
+    bins:
+      - counter_display_digits
+      - brightness_display_digits
+      - middle_digits_off
+      - digit_scan_slots
+      - decimal_point_inactive
+    formal: []
+  - id: uart_and_register_map
+    spec:
+      - behaviour.uart_and_register_access[0]
+      - behaviour.uart_and_register_access[1]
+      - behaviour.uart_and_register_access[2]
+      - behaviour.uart_and_register_access[3]
+      - timing.latency.uart_read
+      - registers.map.COUNTER
+      - registers.map.BRIGHTNESS
+      - registers.map.CONTROL
+      - registers.map.INPUT_STATUS
+      - registers.map.UP_PRESS_COUNT
+      - registers.map.DOWN_PRESS_COUNT
+      - registers.map.CENTRE_PRESS_COUNT
+      - registers.map.DESIGN_ID
+      - registers.unmapped
+    tests:
+      - t1_dimmer_counter_bench.counter_reset_buttons_and_outputs_match_model
+    assertions: []
+    cover_props: []
+    bins:
+      - register_map_reset_values
+      - rw_register_access
+      - ro_register_access
+      - unmapped_register_access
+    formal: []
+  - id: button_press_counters
+    spec:
+      - behaviour.button_press_counters[0]
+      - behaviour.button_press_counters[1]
+      - behaviour.button_press_counters[2]
+    tests:
+      - t1_dimmer_counter_bench.counter_reset_buttons_and_outputs_match_model
+    assertions: []
+    cover_props: []
+    bins:
+      - up_press_count
+      - down_press_count
+      - centre_press_count
+      - press_count_reset
+    formal: []

@@ -1,0 +1,117 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>00 clarify</title><style>
+:root{--bg:#fff;--fg:#111;--mut:#555;--line:#ccc;--pass:#111;--fail:#111;--chip:#eee}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--mut:#aaa;--line:#444;--chip:#222}}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:16px}
+main{max-width:980px;margin:auto}h1{font-size:1.4em;margin:.2em 0}h2{font-size:1.1em;border-bottom:1px solid var(--line);
+padding-bottom:4px;margin-top:1.6em}table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border:1px solid var(--line);
+padding:4px 6px;text-align:left;vertical-align:top}pre{background:var(--chip);padding:8px;overflow-x:auto;font-size:.85em}
+.mut{color:var(--mut)}.chip{display:inline-block;padding:0 6px;border:1px solid var(--fg);border-radius:3px;font-size:.85em}
+.fail{background:var(--fg);color:var(--bg)}svg{max-width:100%;height:auto}svg text{fill:var(--fg);font:11px monospace}
+svg .w{stroke:var(--fg);fill:none;stroke-width:1.2}a{color:var(--fg)}.wrap{overflow-x:auto}
+</style></head><body><main><h1>Stage 0: clarify</h1><p class="mut">t1_dimmer_counter; visit 1; 2026-11-02 11:44:51</p><h2>Exit gates</h2><div class="wrap"><table><tr><th>gate</th><th>result</th><th>detail</th></tr><tr><td>spec_signed</td><td><span class="chip">PASS</span></td><td></td></tr></table></div><h2>Inputs and outputs</h2><div class="wrap"><table><tr><td>inputs</td><td>spec.md</td></tr><tr><td>outputs</td><td>__init__.py, spec.md, spec.yaml</td></tr></table></div><h2>Spec summary</h2><div class="wrap"><table><tr><td>title</td><td>T1 LED dimmer and push-button counter</td></tr><tr><td>top</td><td>t1_led_dimmer_counter</td></tr><tr><td>clocks</td><td>clk </td></tr><tr><td>ports</td><td>11</td></tr><tr><td>open questions</td><td>0</td></tr><tr><td>resolved questions</td><td>10</td></tr></table></div><h2>Block diagram</h2><p class="mut">No ARCHITECTURE.md yet.</p><h2>Testplan and coverage</h2><div class="wrap"><table><tr><td>testplan items</td><td>-</td></tr></table></div><h2>Waveform</h2><p class="mut">No waveform for this stage.</p><h2>Budget</h2><div class="wrap"><table><tr><th></th><th>used</th><th>limit</th></tr><tr><td>turns</td><td>6</td><td>20</td></tr><tr><td>seconds</td><td>85.3</td><td>900</td></tr><tr><td>usd</td><td>0.005505</td><td>0.2</td></tr></table></div><h2>Review</h2><div class="wrap"><table><tr><td>decision</td><td>approve</td></tr><tr><td>by</td><td>auto</td></tr><tr><td>note</td><td>-</td></tr></table></div><h2>Notes</h2><pre>{
+ &quot;asked&quot;: 10,
+ &quot;answered&quot;: 4,
+ &quot;defaulted&quot;: 6,
+ &quot;questions&quot;: [
+  {
+   &quot;id&quot;: &quot;q1&quot;,
+   &quot;text&quot;: &quot;What framing, commands, and register transaction format does the standard test shell require?&quot;,
+   &quot;default&quot;: &quot;Use the repository-standard test shell at 115200 baud with the register map in this specification.&quot;,
+   &quot;reason&quot;: &quot;No protocol details are given; the repository convention is the natural interoperable default.&quot;,
+   &quot;answer&quot;: &quot;Use the repository-standard test shell at 115200 baud with the register map in this specification.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q2&quot;,
+   &quot;text&quot;: &quot;What addresses, data width, and button-counter widths should UART register accesses use?&quot;,
+   &quot;default&quot;: &quot;Use aligned 32-bit byte offsets, low-bit placement for narrow fields, and 32-bit wrapping button counters.&quot;,
+   &quot;reason&quot;: &quot;These details are unspecified; an aligned 32-bit map is a simple conventional interface.&quot;,
+   &quot;answer&quot;: &quot;Use aligned 32-bit byte offsets, low-bit placement for narrow fields, and 32-bit wrapping button counters.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q3&quot;,
+   &quot;text&quot;: &quot;Should a held button repeat, and how should simultaneous presses be arbitrated?&quot;,
+   &quot;default&quot;: &quot;One event per debounced rising edge; centre clear has priority and simultaneous up/down cancel.&quot;,
+   &quot;reason&quot;: &quot;The request says one press changes the count once but does not define repeat or simultaneous-event behavior.&quot;,
+   &quot;answer&quot;: &quot;One event per debounced rising edge; centre clear has priority and simultaneous up/down cancel.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q4&quot;,
+   &quot;text&quot;: &quot;What debounce interval should be used?&quot;,
+   &quot;default&quot;: &quot;DEBOUNCE_CYCLES = 1000000 on the 100 MHz clock, approximately 10 ms.&quot;,
+   &quot;reason&quot;: &quot;Bounce rejection is required but no interval is specified; 10 ms is a practical default.&quot;,
+   &quot;answer&quot;: &quot;Use DEBOUNCE_CYCLES = 1000000, approximately 10 ms at 100 MHz.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;  DEBOUNCE_CYCLES: 1000000     # 10 ms&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q5&quot;,
+   &quot;text&quot;: &quot;What brightness transfer function and PWM frequency should be used?&quot;,
+   &quot;default&quot;: &quot;Use linear 8-bit duty scaling and PWM_PERIOD_CYCLES = 256.&quot;,
+   &quot;reason&quot;: &quot;The request does not define scaling or frequency; 8-bit linear scaling matches the switch width and the short period avoids visible flicker.&quot;,
+   &quot;answer&quot;: &quot;Use linear 8-bit duty scaling. The PWM phase period is 256 counts, or 1024 system-clock cycles with the specified prescale, giving approximately 97.7 kHz.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;  - assumption: PWM at about 98 kHz (1024 clocks a period), 8-bit linear duty.&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q6&quot;,
+   &quot;text&quot;: &quot;In switch mode, should the two brightness digits show switch-selected brightness or the stored UART setting?&quot;,
+   &quot;default&quot;: &quot;Show the active brightness, while retaining the UART setting in its register.&quot;,
+   &quot;reason&quot;: &quot;The display is described as showing current brightness, and preserving the stored setting avoids losing a UART value.&quot;,
+   &quot;answer&quot;: &quot;The digits show the switch-selected brightness in switch mode. Whether UART writes to DUTY are retained while switch mode is selected is not specified.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;Digits 6 and 7 show DUTY_EFF[3:0] and DUTY_EFF[7:4] in hex.&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q7&quot;,
+   &quot;text&quot;: &quot;Should hexadecimal output use leading zeroes and which way should nibbles be ordered?&quot;,
+   &quot;default&quot;: &quot;Use uppercase hexadecimal with leading zeroes, most significant digit at AN3 for the counter and AN7 for brightness.&quot;,
+   &quot;reason&quot;: &quot;The requested digit counts are clear but formatting and ordering are not.&quot;,
+   &quot;answer&quot;: &quot;Use uppercase hexadecimal with leading zeroes, most significant digit at AN3 for the counter and AN7 for brightness.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q8&quot;,
+   &quot;text&quot;: &quot;What reset values should brightness and display/source controls use?&quot;,
+   &quot;default&quot;: &quot;Reset brightness and source control to zero, and leave the display enabled.&quot;,
+   &quot;reason&quot;: &quot;Only a general reset is requested; this gives a deterministic value and a visible display.&quot;,
+   &quot;answer&quot;: &quot;Brightness (DUTY) resets to 0x40. CTRL resets to 0x2, which sets DUTY_SRC=0 and DISPLAY_EN=1. Thus the proposed zero brightness reset is not the specified reset value.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;    - {offset: 0x01, name: DUTY,    access: RW, reset: 0x40,   bits: \&quot;[7:0] PWM duty when DUTY_SRC = 0; [31:8] read 0\&quot;}\n    - {offset: 0x02, name: CTRL,    access: RW, reset: 0x2,    bits: \&quot;[0] DUTY_SRC (1 = switches SW[7:0]); [1] DISPLAY_EN; [31:2] read 0\&quot;}&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q9&quot;,
+   &quot;text&quot;: &quot;How should the T1DC design ID be encoded in a register?&quot;,
+   &quot;default&quot;: &quot;Return ASCII T1DC in 0x54314443 with T in the most-significant byte.&quot;,
+   &quot;reason&quot;: &quot;The text ID is given, but byte order and register representation are unspecified.&quot;,
+   &quot;answer&quot;: &quot;Return ASCII T1DC in 0x54314443 with T in the most-significant byte.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q10&quot;,
+   &quot;text&quot;: &quot;What display refresh interval and digit polarity should be used?&quot;,
+   &quot;default&quot;: &quot;Use active-low outputs and DISPLAY_SCAN_CYCLES = 100000 per digit on the 100 MHz clock.&quot;,
+   &quot;reason&quot;: &quot;The board determines output polarity, while scan timing is not specified; this gives approximately 125 Hz per full frame.&quot;,
+   &quot;answer&quot;: &quot;Use active-low outputs and DISPLAY_SCAN_CYCLES = 100000 per digit on the 100 MHz clock.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  }
+ ]
+}</pre></main></body></html>
