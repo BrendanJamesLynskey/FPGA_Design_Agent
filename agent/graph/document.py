@@ -45,8 +45,8 @@ STAGE_NAMES = ("clarify", "board-and-device-planning", "rtl-design-creation", "c
 MODEL_KEYS = ("title", "summary", "scope_not", "resets", "interfaces", "next_steps", "open_questions")
 #: design files listed in the handover, with what each is (globs relative to the design directory)
 FILE_KINDS = (("spec.md", "the request the run started from"),
-              ("spec.yaml", "the signed-off specification written by the Clarifier"),
-              ("ARCHITECTURE.md", "the architecture note approved before any RTL"),
+              ("spec.yaml", "the specification the Clarifier wrote, accepted automatically by a model (no human review)"),
+              ("ARCHITECTURE.md", "the architecture note, accepted automatically before any RTL (no human review)"),
               ("architecture.yaml", "the machine-checked architecture: blocks, clocks, predicted resources"),
               ("rtl/*", "RTL written by the Designer"),
               ("design.xdc", "pin, I/O standard and timing constraints"),
@@ -81,8 +81,14 @@ the flow keeps its own copy of them whatever you write. You write the prose fiel
   State the rates the spec gives for the parameters (its timing section) in the parameter notes.
 - If cover properties are unhit while functional bins are hit, the draft says the two disagree: say so too, and put "compare
   the cover results with the functional coverage" before any new stimulus in next_steps.
-- If a build was made under an earlier Vivado release, the first next_steps entry is to re-measure with python -m agent
-  resume; publish no number from that build and never name the earlier release.
+- The first next_steps entry addresses the earliest stage that failed or did not reach its level (for example verification,
+  before any rebuild). If a build was made under an earlier Vivado release, one later step re-measures it with python -m agent
+  resume when the flow reaches the build again; publish no number from that build and never name the earlier release.
+- Approval: the draft says the specification and architecture were approved automatically by a model with no human review. Never
+  write "signed off" or "approved" without saying that. If the draft says no debug build was attempted or recorded, do not write
+  that it failed or did not complete.
+- For a seven-segment or other multi-pin output, check the RTL's bit order against design.xdc (which pin each bit drives). If
+  they disagree, or the files cannot settle it, say so as a gap or an open question with the file and line.
 - gaps: keep every gap listed. Add a gap (about: a short key) for each behaviour a user could guess wrong that spec.yaml or the
   RTL settles and the draft does not state: reset values, unmapped or reserved register accesses, read side effects, partial
   writes, same-cycle priorities, latency. Also add any assumption the run made.
@@ -158,7 +164,8 @@ def reconcile(design: Path, stage: str, why: str) -> str:
             return ""
         out = [f"{RECON} build/base/gates.json shows the base build's bitstream stage ran and its bitstream_present gate is true"]
         if not ila["present"]:
-            out.append("there is no build/ila record, so the debug build with the ILA left no result")
+            out.append("there is no build/ila record" + (" and no probes.yaml" if not (design / "probes.yaml").is_file() else "")
+                       + ", so the records show no debug build with the ILA was attempted or recorded")
         elif ila["error"] and not ila["ran"]:
             out.append(f"build/ila/gates.json is an error stub ({str(ila['error'])[:120]}) with no flow stages"
                        + (" and there is no build/ila/run.json" if not ila["run_json"] else ""))
@@ -166,12 +173,97 @@ def reconcile(design: Path, stage: str, why: str) -> str:
             out.append("the debug build with the ILA did not reach its bitstream stage")
         else:
             return ""
-        return "; ".join(out) + ". The build that did not complete is the debug build with the ILA, not the base build."
+        return "; ".join(out) + ". " + ("The base build is not the one that failed." if not ila["present"] else "The failing build is the debug build with the ILA, not the base build.")
     if STAGE_BASE_GATES.get(stage) and records_verdict(design, stage) is True:
         return (f"{RECON} the detail names a bitstream gate, which stage {stage} does not check; build/base/gates.json shows "
                 f"the gates of this stage ({', '.join(STAGE_BASE_GATES[stage])}) passing. The detail is a stale copy of "
                 "another stage's failure.")
     return ""
+
+
+def approval_text(S: dict, design: Path | None = None) -> str:
+    """What approved the spec and the architecture, from the run summary (68F): never just "signed off"."""
+    ap = [a for a in S.get("approvals") or [] if isinstance(a, dict)]
+    q = S.get("questions") if isinstance(S.get("questions"), dict) else {}
+    auto = S.get("review") == "off" and all(a.get("by") == "auto" for a in ap)
+    oracle = S.get("oracle_model")
+    if not oracle and design is not None:
+        try:
+            m = re.search(r"Interview oracle: ([^\s(.]+(?:/[^\s(.]+)?)", (design / "BUILD_NOTE.md").read_text(errors="replace"))
+            oracle = f"{m.group(1)}, per BUILD_NOTE.md" if m else None
+        except OSError:
+            pass
+    who = (f"approved automatically by a model, with no human review (review off; interview oracle "
+           f"{oracle or 'not recorded'})" if auto else "reviewed by a person (see the run summary)")
+    return (f"the specification and the architecture were {who}; the interview asked {q.get('asked')} questions, "
+            f"{q.get('answered')} answered and {q.get('defaulted')} defaulted") if auto else \
+        f"spec.yaml was {who}; the questions asked, answered and defaulted are in the run summary"
+
+
+def oracle_conflict(design: Path, run_dir: Path, S: dict) -> str:
+    """The interview oracle named differently by BUILD_NOTE.md and summary.json: '' or the sentence saying so."""
+    try:
+        note = (design / "BUILD_NOTE.md").read_text(errors="replace")
+    except OSError:
+        return ""
+    m = re.search(r"Interview oracle: ([^\s(.]+(?:/[^\s(.]+)?)", note)
+    if m and S.get("oracle_model") and m.group(1).strip() != str(S["oracle_model"]).strip():
+        return (f"BUILD_NOTE.md names the interview oracle as {m.group(1)}, while summary.json names {S['oracle_model']}; the two "
+                "records disagree and neither is confirmed, so the specification's provenance is uncertain")
+    return ""
+
+
+def formal_gap(design: Path) -> str:
+    """Formal checks planned and replaced by simulation (testplan replan), with the recorded reason."""
+    try:
+        tp = yaml.safe_load((design / "verif" / "testplan.yaml").read_text()) or {}
+    except (OSError, yaml.YAMLError):
+        return ""
+    rows = [r for r in tp.get("replan") or [] if isinstance(r, dict) and r.get("method") == "formal"]
+    if not rows:
+        return ""
+    return (f"formal checks were planned for {', '.join(str(r.get('requirement')) for r in rows)} and did not run; each was replaced "
+            f"by a simulation check (verif/testplan.yaml replan). Reason recorded: {' '.join(str(rows[0].get('why', '')).split())}")
+
+
+def tautologies(design: Path) -> list[str]:
+    """Assertions in the bound checkers that cannot fail: a signal compared with both of its values ``(x == 1'b0) || (x == 1'b1)``."""
+    out = []
+    for chk in sorted((design / "verif" / "checkers").glob("*.sv")):
+        for n, line in enumerate(chk.read_text(errors="replace").splitlines(), 1):
+            m = re.search(r"`V_\w+\((\w+),.*\((\w+)\s*==\s*1'b0\)\s*\|\|\s*\(\2\s*==\s*1'b1\)", line)
+            if m:
+                out.append(f"{m.group(1)} ({chk.name}:{n}) asserts that {m.group(2)} is 0 or 1, which is always true")
+    return out
+
+
+def registers_from_spec(spec: dict) -> list[dict]:
+    reg = spec.get("registers")
+    rows = reg.get("map") if isinstance(reg, dict) else reg
+    out = []
+    for r in rows or []:
+        if isinstance(r, dict) and r.get("name") is not None and r.get("offset") is not None:
+            out.append({k: r[k] for k in ("offset", "name", "access", "reset", "bits") if r.get(k) is not None}
+                       | ({} if r.get("access") is not None else {"access": "-"}))
+    return out
+
+
+def prose_claims(design: Path, h: dict) -> list[str]:
+    """Prose that says a stage or the design was approved or signed off with no human, or that a build failed that the
+    records show was never attempted (68F)."""
+    out = []
+    auto = any("approved automatically" in str(e.get("what")) for e in h.get("evidence") or [])
+    ila = build_state(design, "ila")
+    for path, t in H._strings({k: h.get(k) for k in ("title", "summary", "scope_not", "next_steps", "open_questions",
+                                                     "interfaces", "resets", "target")}):
+        for sent in re.split(r"(?<=[.;])\s+", t):
+            if auto and re.search(r"\b(signed[- ]off|approved)\b", sent, re.I) and not re.search(
+                    r"automatic|no human|by a model|\bnot\b|\bnor\b|\bnever\b|before|until", sent, re.I):
+                out.append(f"{path}: says approved or signed off without saying it was automatic, by a model, with no human review")
+            if (not ila["present"] and not (design / "probes.yaml").is_file()
+                    and re.search(r"(debug|ILA)[^.;]{0,80}(did not complete|failed to build|build failed|failed)", sent, re.I)):
+                out.append(f"{path}: says the debug build failed or did not complete, but the records show none was attempted or recorded")
+    return out
 
 
 def contradictions(design: Path, h: dict) -> list[str]:
@@ -406,7 +498,7 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
             res[s] = "pass"
     summ = run_dir / "summary.json"
     S = _json(summ) or {}
-    ungated_note = ""
+    ungated_note, gate_notes = "", {}
     m_stop = re.match(r"stage (\d+) visited more than", str(stop or ""))
     if m_stop and int(m_stop.group(1)) < len(STAGE_NAMES):
         sn = STAGE_NAMES[int(m_stop.group(1))]
@@ -414,6 +506,8 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
             # a run recorded before 68F: the visit limit refused the final entry into this stage before any gate ran, and
             # the old summary wrote that entry as a failure; the build records show this stage's gates passing
             res[sn] = "pass"
+            gate_notes[sn] = (f"{RECON} summary.json records this stage as failed only because the visit limit refused its final "
+                              "entry before any gate ran; build/base/gates.json shows its gates passing")
             ungated_note = (f"; the final entry into stage {sn} was refused by the visit limit before any gate ran (summary "
                             f"stop), and the build records show its gates passing, so it is counted as passed")
     ev, ms, gaps = [], [], []
@@ -436,9 +530,10 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
                    "unit": unit, "record": H.rel(rec), "field": field, "conditions": cond})
 
     if summ.is_file():
-        e("review", res["clarify"], ("spec.yaml carried from the handover of the earlier run (stage clarify passed there and "
-          "its inputs had not changed)") if "clarify" in (carried or ()) else ("spec.yaml was signed off after the "
-          "interview; the questions asked, answered and defaulted are in the run summary"), summ)
+        auto = "automatically" in approval_text(S, design)
+        e("review", "partial" if auto and "clarify" not in (carried or ()) else res["clarify"],
+          ("spec.yaml carried from the handover of the earlier run (stage clarify passed there and "
+           "its inputs had not changed)") if "clarify" in (carried or ()) else approval_text(S, design), summ)
     vg_p = design / "build" / "verif" / "verif_gates.json"
     vg = _json(vg_p)
     if vg:
@@ -504,7 +599,7 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
                   f"re-measured on Vivado {rel_now} without a rebuild), so none is published", gp)
         if not current:
             gap(i, f"the {label} was made under an earlier Vivado release than {rel_now}: its result is not current and no "
-                f"number from it is published. Re-measure first, with the resume command in How to build (python -m agent "
+                f"number from it is published. Re-measure it, when the flow reaches the build again, with the resume command in How to build (python -m agent "
                 f"resume), and only then rely on its gates")
         if variant == "base" and current:
             if (g.get("timing") or {}).get("wns_ns") is not None:
@@ -537,6 +632,12 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
                    if resumed_from and STAGE_NAMES.index(s) < _first_visited(gates_last) else
                    "the run stopped before this stage" + (f" ({stop})" if stop else ""))
             gap(s, f"stage {s} was not run: {why}")
+    if (oc := oracle_conflict(design, run_dir, S)):
+        gap("oracle_record", oc)
+    if (fg := formal_gap(design)):
+        gap("formal", fg)
+    if (tl := tautologies(design)):
+        gap("assertions", "assertions that cannot fail: " + "; ".join(tl) + ". They show only that the signal exists, not that the design behaves")
     cats = {x["category"] for x in ms}
     for c, why in (("resources", "no current Vivado build of this design has been recorded"),
                    ("timing", "no current Vivado build of this design has been recorded"),
@@ -565,7 +666,8 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
          "summary": "WRITE", "scope_not": ["WRITE"],
          "target": {"part": bld.get("part") or spec.get("part") or "unknown", "board": board, "tool": f"Vivado {rel_now}",
                     "top": bld.get("top") or spec.get("top") or "unknown"},
-         "clocks": _clocks(design), "resets": [], "interfaces": [],
+         "clocks": _clocks(design), "resets": [], "interfaces": [], **({"registers": registers_from_spec(spec)}
+                                                                      if registers_from_spec(spec) else {}),
          "parameters": [{"name": str(k), "value": v, "legal": "WRITE", "note": "WRITE",
                          **({"_spec_timing": t} if (t := _spec_timing(spec, str(k))) else {})}
                         for k, v in (spec.get("parameters") or {}).items()] if isinstance(spec.get("parameters"), dict) else [],
@@ -589,7 +691,8 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
                       + (f"; carried from the handover: {', '.join(carried)}" if carried else "") + ungated_note}],
          "agent_run": {"run_id": run_id, "record": H.rel(summ if summ.is_file() else run_dir / "config.json"), **agent_facts(S)},
          "state": {"stage": stage, "gates": res, "vivado": rel_now, "kb_pin": None, "build_id": None,
-                   "evidence_vivado": ("none" if not evv else "current" if evv == {rel_now} else "earlier")}}
+                   "evidence_vivado": ("none" if not evv else "current" if evv == {rel_now} else "earlier"),
+                   **({"gate_notes": gate_notes} if gate_notes else {})}}
     return h, required
 
 
@@ -717,7 +820,11 @@ def recheck(ddir: Path) -> list[str]:
     for k in ("model", "harness", "loops", "turns", "wall_s", "tokens", "cost_usd", "plan_cost_estimate_usd", "stop"):
         if (h.get("agent_run") or {}).get(k) != d["agent_run"].get(k):
             errs.append(f"agent_run.{k}: {(h.get('agent_run') or {}).get(k)!r} is not the run record's {d['agent_run'].get(k)!r}")
-    return errs + overclaims(h) + contradictions(ddir, h)
+    errs += [f"state.gate_notes: {(h.get('state') or {}).get('gate_notes')!r} is not the run's {d['state'].get('gate_notes')!r}"] \
+        if (h.get('state') or {}).get('gate_notes') != d['state'].get('gate_notes') else []
+    if (h.get('registers') or None) != (d.get('registers') or None):
+        errs.append('registers: not the spec.yaml register map')
+    return errs + overclaims(h) + contradictions(ddir, h) + prose_claims(ddir, h)
 
 
 SUCCESS = re.compile(r"\b((the |this )?(design|run|project|work) (is|was|has been) signed[ -]off|all (the )?(stages|gates|checks|tests) (passed|pass)|fully verified|timing (is )?(met|closed)|"
@@ -759,17 +866,17 @@ def doc_gate(design: Path, required: list[str]) -> list[str]:
     have = {g.get("about") for g in h.get("gaps") or []}
     errs += [f"gap about {r!r} is required (a stage, evidence entry, requirement or quantity without a pass) and missing"
              for r in required if r not in have]
-    return errs + stale + unwritten(h) + overclaims(h) + contradictions(design, h) + remeasure_first(h)
+    return errs + stale + unwritten(h) + overclaims(h) + contradictions(design, h) + remeasure_first(h) + prose_claims(design, h)
 
 
 def remeasure_first(h: dict) -> list[str]:
-    """Builds made under an earlier Vivado release: re-measuring (resume) is the first next step (68F)."""
+    """Builds made under an earlier Vivado release: re-measuring (python -m agent resume) is a required next step (68F). It
+    comes when the flow reaches the build again, so it need not be first: the first step is the earliest failing stage."""
     if (h.get("state") or {}).get("evidence_vivado") != "earlier":
         return []
-    ns = h.get("next_steps") or []
-    if not ns or "resume" not in str(ns[0]).lower():
-        return ["next_steps: a build was made under an earlier Vivado release, so the first next step must be to re-measure it "
-                "with python -m agent resume"]
+    if not any(re.search(r"re-?measur|agent resume", str(x), re.I) for x in h.get("next_steps") or []):
+        return ["next_steps: a build was made under an earlier Vivado release, so one next step must re-measure it "
+                "(python -m agent resume); it need not be first"]
     return []
 
 

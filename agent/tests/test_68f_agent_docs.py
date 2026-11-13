@@ -50,7 +50,7 @@ def test_stage9_detail_is_reconciled_with_the_build_records() -> None:
     assert "base build's bitstream stage ran" in gap and "error stub" in gap and "debug build with the ILA" in gap
     h5, _ = _draft(S5A32)
     gap5 = next(g for g in h5["gaps"] if g["about"] == "configuration-and-debug")["text"]
-    assert "no build/ila record" in gap5 and "not the base build" in gap5
+    assert "no build/ila record" in gap5 and "no debug build with the ILA was attempted or recorded" in gap5
 
 
 def test_gap_quoting_a_contradicted_detail_without_saying_so_is_flagged() -> None:
@@ -205,8 +205,8 @@ def test_earlier_release_builds_publish_no_number_and_make_remeasuring_the_first
         assert not H.BANNED[0][0].search(text)
     h["next_steps"] = ["Fix the debounce width."]
     assert D.remeasure_first(h)
-    h["next_steps"] = ["Re-measure the build with python -m agent resume, then ..."]
-    assert D.remeasure_first(h) == []
+    h["next_steps"] = ["Run the Verifier's tests.", "Later, re-measure the build with python -m agent resume."]
+    assert D.remeasure_first(h) == []                       # required, but not necessarily first
 
 
 # --- finding 6: covers against functional coverage ---------------------------------------------------------------------
@@ -219,3 +219,47 @@ def test_cover_properties_at_zero_with_all_bins_hit_are_diagnosed() -> None:
     assert "cover_properties" in req
     h2, _ = _draft(A8F2)
     assert not any(g["about"] == "cover_properties" for g in h2["gaps"])          # nothing ran: no diagnosis to make
+
+
+# --- round two (planner, 2026-11-13) ----------------------------------------------------------------------------------
+
+def test_approval_is_stated_as_automatic_and_prose_may_not_say_signed_off() -> None:
+    h, req = _draft(C14)
+    e1 = next(e for e in h["evidence"] if e["activity"] == "review")
+    assert e1["result"] == "partial" and "approved automatically by a model, with no human review" in e1["what"]
+    assert "E1" in req
+    d = REC / C14 / DESIGN[C14]
+    bad = copy.deepcopy(h)
+    bad["summary"] = "The specification was signed off and the design is documented here."
+    assert any("without saying it was automatic" in x for x in D.prose_claims(d, bad))
+    bad["summary"] = "The specification was approved automatically by a model, with no human review."
+    assert D.prose_claims(d, bad) == []
+
+
+def test_oracle_records_that_disagree_are_a_gap() -> None:
+    h, req = _draft(C14)
+    g = next(g for g in h["gaps"] if g["about"] == "oracle_record")["text"]
+    assert "BUILD_NOTE.md names the interview oracle" in g and "summary.json names" in g and "oracle_record" in req
+
+
+def test_formal_assertions_and_register_map_come_from_the_records() -> None:
+    h, _ = _draft(C14)
+    gaps = {g["about"]: g["text"] for g in h["gaps"]}
+    assert "SymbiYosys is not installed" in gaps["formal"] and "REQ-01" in gaps["formal"]
+    assert "A_led_boolean (c14_int8_dot_requant_checker.sv:20)" in gaps["assertions"]
+    assert {r["name"] for r in h["registers"]} >= {"A_LO", "GO", "STATUS"}
+    md = H.render_readme(copy.deepcopy(h) | {"state": {**h["state"], "build_id": None, "kb_pin": None}}, REC / C14 / DESIGN[C14], {}, {})
+    assert "| 0x07 | `GO` | WO |" in md
+
+
+def test_a_gate_the_summary_calls_failed_is_reconciled_on_its_own_line() -> None:
+    h, _ = _draft(S5A32)
+    note = h["state"]["gate_notes"]["timing-closure"]
+    assert note.startswith(D.RECON) and "visit limit" in note
+    md = H.render_readme(copy.deepcopy(h) | {"state": {**h["state"], "build_id": None, "kb_pin": None}}, REC / S5A32 / DESIGN[S5A32], {}, {})
+    line = next(l for l in md.splitlines() if l.startswith("Gates at handover"))
+    assert "`timing-closure` pass (Build records:" in line
+    d = REC / S5A32 / DESIGN[S5A32]
+    bad = copy.deepcopy(h)
+    bad["summary"] = "The ILA debug build did not complete in this run and the stage failed."
+    assert any("none was attempted" in x for x in D.prose_claims(d, bad))

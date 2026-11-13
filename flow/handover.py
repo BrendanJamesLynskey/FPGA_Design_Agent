@@ -192,7 +192,7 @@ def fill(h: dict, ddir: Path, build_id: bool = False) -> dict:
 
 def dump(h: dict) -> str:
     order = ["schema", "id", "title", "kind", "produced_by", "summary", "scope_not", "target", "clocks", "resets",
-             "interfaces", "parameters", "files", "commands", "evidence", "measurements", "gaps", "next_steps",
+             "interfaces", "registers", "parameters", "files", "commands", "evidence", "measurements", "gaps", "next_steps",
              "open_questions", "history", "agent_run", "numbers_allow", "state"]
     out = {k: h[k] for k in order if k in h}
     out.update({k: v for k, v in h.items() if k not in out})
@@ -628,6 +628,11 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
         doc = i.get("doc")
         dl = (f" ([datasheet]({doc if doc.startswith('http') else _link(doc, ddir)}))" if doc else "")
         L.append(f"- `{i['name']}` ({i['type']}){dl}: {i['note']}")
+    if h.get("registers"):
+        L += ["", "Registers (from spec.yaml; where the RTL differs, the gaps say so):", "",
+              "| Offset | Name | Access | Reset | Bits |", "|---|---|---|---|---|"]
+        L += [f"| {_cell(r['offset'])} | `{r['name']}` | {_cell(r['access'])} | {_cell(r.get('reset', '-'))} | "
+              f"{_cell(r.get('bits', '-'))} |" for r in h["registers"]]
     if h["parameters"]:
         L += ["", "| Parameter | Value | Legal range | Note |", "|---|---|---|---|"]
         L += [f"| `{p['name']}` | {_cell(fmt(p['value']))} | {_cell(p['legal'])} | {_cell(p['note'])} |" for p in h["parameters"]]
@@ -672,7 +677,9 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
         L.append(f"| {e['id']} | {e['activity']} | {e['result']}{runs} | {_cell(e['what'])} | "
                  f"[`{e['record']}`]({_link(e['record'], ddir)}){how} | {_cell(e.get('conditions') or '-')} |")
     if st.get("gates"):
-        L += ["", "Gates at handover: " + ", ".join(f"`{k}` {v}" for k, v in st["gates"].items()) + "."]
+        notes = st.get("gate_notes") or {}
+        L += ["", "Gates at handover: " + ", ".join(f"`{k}` {v}" + (f" ({notes[k]})" if k in notes else "")
+                                                    for k, v in st["gates"].items()) + "."]
     L += _block("verified", prose)
     # measured
     L += ["", "## Measured", ""]
@@ -716,11 +723,14 @@ def render_agent(h: dict, ddir: Path) -> str:
     L += ["", "## summary", " ".join(h["summary"].split()), "not: " + "; ".join(h["scope_not"]),
           "", "## state", f"stage={st['stage']} vivado={st['vivado']} kb_pin={st.get('kb_pin')} build_id={st.get('build_id')}"]
     if st.get("gates"):
-        L.append("gates: " + " ".join(f"{k}={v}" for k, v in st["gates"].items()))
+        L.append("gates: " + " ".join(f"{k}={v}" + (f" ({(st.get('gate_notes') or {})[k]})" if k in (st.get("gate_notes") or {}) else "")
+                                      for k, v in st["gates"].items()))
     L += ["", "## interface"]
     L += [f"clk {c['name']} {fmt(c['mhz'])}MHz" for c in h["clocks"]]
     L += [f"rst {r['name']} active-{r['active']}: {r['note']}" for r in h["resets"]]
     L += [f"if {i['name']} {i['type']}: {i['note']}" + (f" doc={i['doc']}" if i.get("doc") else "") for i in h["interfaces"]]
+    L += [f"reg {r['offset']} {r['name']} {r['access']} reset={r.get('reset', '-')} {r.get('bits', '')}".rstrip()
+          for r in h.get("registers") or []]
     L += [f"param {p['name']}={fmt(p['value'])} legal={p['legal']}" for p in h["parameters"]]
     compact = h.get("produced_by") == "agent"        # 68F: agent-produced handovers only (hand-written ones keep their rendering)
     short = (lambda p: p[len(rid) + 1:] if p.startswith(rid + "/") else p) if compact else (lambda p: p)

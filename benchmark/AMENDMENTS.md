@@ -11,7 +11,7 @@ Reviews: `reports/12_quality_review_area2.md` (planner repository), items R2, R5
 stopped with no score, so no comparison is lost).** What: `agent/graph/document.py` DOC_SYSTEM now tells the Designer to answer
 from the files before it writes an open question (the build's full source list, shared shell files included, is in its prompt),
 to count latencies and rates from the RTL, to state masking and priorities, to say when cover properties and functional bins
-disagree, and to make re-measuring the first next step for a build from an earlier Vivado release. Only the DOC step's request
+disagree, and to make re-measuring a required (not necessarily first) next step for a build from an earlier Vivado release, and to state automatic approval, a debug build never attempted, and seven-segment bit order. (Re-pinned a second time on the same date, brief 68F round two.) Only the DOC step's request
 changed (`doc_system`); no role prompt, tool, task, grader, test or split changed, and no eval-1 request path differs.
 
 Re-recorded: the request golden `agent/tests/fixtures/b68f_request_golden.json` (one deliberate re-pin; `b68_request_golden.json`
