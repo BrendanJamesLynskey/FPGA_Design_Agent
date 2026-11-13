@@ -89,7 +89,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `cdb9eeef` (`python flo
 | ID | Activity | Result | What | Evidence | Conditions |
 |---|---|---|---|---|---|
 | E1 | simulation | pass | fabric PRBS generator and checker against an independent model (exact error counting, lock, loss of lock); register block, bring-up, counting, injection, snapshots, I2C, SYSMON and DRP windows against a behavioural stand-in of the Wizard | [`designs/b56a_gth_serdes/tests/test_b56a_core_sim_rtl.py`](tests/test_b56a_core_sim_rtl.py) (run in CI) | - |
-| E2 | build | pass | synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes | [`results/56a_serdes/build/gates.json`](../../results/56a_serdes/build/gates.json) | - |
+| E2 | build | pass | synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) | - |
 | E3 | review | pass | one independent correctness review (Sonnet) and one fix round | [`results/56a_serdes/README.md`](../../results/56a_serdes/README.md) | - |
 
 Gates at handover: `build_2026_1` pass.
@@ -103,12 +103,12 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 
 | ID | What | Value | Runs | Source | Conditions |
 |---|---|---|---|---|---|
-| M1 | LUTs | 973 LUT | 1 | [`results/56a_serdes/build/gates.json`](../../results/56a_serdes/build/gates.json) `utilization.lut` | routed, Vivado 2026.1 |
-| M2 | registers | 3106 FF | 1 | [`results/56a_serdes/build/gates.json`](../../results/56a_serdes/build/gates.json) `utilization.ff` | as M1 |
-| M3 | worst setup slack | 2.156 ns | 1 | [`results/56a_serdes/build/gates.json`](../../results/56a_serdes/build/gates.json) `timing.wns_ns` | routed, user clocks 161.133 MHz and 100 MHz |
-| M4 | worst hold slack | 0.016 ns | 1 | [`results/56a_serdes/build/gates.json`](../../results/56a_serdes/build/gates.json) `timing.whs_ns` | as M3 |
-| M5 | total on-chip power estimate | 0.764 W | 1 | [`results/56a_serdes/build/gates.json`](../../results/56a_serdes/build/gates.json) `power.total_w` | report_power after routing, vectorless, confidence Medium |
-| M6 | Vivado peak resident memory of the first GT build | 4235 MiB | 1 | [`results/56a_serdes/build/run.json`](../../results/56a_serdes/build/run.json) `vivado_peak_rss_mib` | 2 threads, MemoryMax=8G, alone on the machine, one run |
+| M1 | LUTs | 973 LUT | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `utilization.lut` | routed, Vivado 2026.1 |
+| M2 | registers | 3106 FF | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `utilization.ff` | as M1 |
+| M3 | worst setup slack | 2.156 ns | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `timing.wns_ns` | routed, user clocks 161.133 MHz and 100 MHz |
+| M4 | worst hold slack | 0.016 ns | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `timing.whs_ns` | as M3 |
+| M5 | total on-chip power estimate | 0.764 W | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `power.total_w` | report_power after routing, vectorless, confidence Medium |
+| M6 | Vivado peak resident memory of the first GT build | 4235 MiB | 1 | [`results/56a_serdes/gt_build/run.json`](../../results/56a_serdes/gt_build/run.json) `vivado_peak_rss_mib` | 2 threads, MemoryMax=8G, alone on the machine, one run |
 
 <!-- prose:measured -->
 <!-- /prose:measured -->

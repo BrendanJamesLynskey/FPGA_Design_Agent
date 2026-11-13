@@ -102,21 +102,21 @@ evidence:
   activity: build
   result: pass
   what: synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes
-  record: results/56a_serdes/build/gates.json
+  record: results/56a_serdes/gt_build/gates.json
   sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
 - id: E3
   activity: review
   result: pass
   what: one independent correctness review (Sonnet) and one fix round
   record: results/56a_serdes/README.md
-  sha256: ff6e3c1dbd5dad3209ab0d7c65e61f431036deece57bece92d2de0d7d35841b2
+  sha256: 6f5635a12ac523821aec0bc500169e6ba4eeeac11de69ec569df3ed86b8bc3fd
 measurements:
 - id: M1
   what: LUTs
   category: resources
   key: lut
   unit: LUT
-  record: results/56a_serdes/build/gates.json
+  record: results/56a_serdes/gt_build/gates.json
   field: utilization.lut
   conditions: routed, Vivado 2026.1
   value: 973
@@ -126,7 +126,7 @@ measurements:
   category: resources
   key: ff
   unit: FF
-  record: results/56a_serdes/build/gates.json
+  record: results/56a_serdes/gt_build/gates.json
   field: utilization.ff
   conditions: as M1
   value: 3106
@@ -136,7 +136,7 @@ measurements:
   category: timing
   key: wns_ns
   unit: ns
-  record: results/56a_serdes/build/gates.json
+  record: results/56a_serdes/gt_build/gates.json
   field: timing.wns_ns
   conditions: routed, user clocks 161.133 MHz and 100 MHz
   value: 2.156
@@ -146,7 +146,7 @@ measurements:
   category: timing
   key: whs_ns
   unit: ns
-  record: results/56a_serdes/build/gates.json
+  record: results/56a_serdes/gt_build/gates.json
   field: timing.whs_ns
   conditions: as M3
   value: 0.016
@@ -156,7 +156,7 @@ measurements:
   category: power
   key: power_w
   unit: W
-  record: results/56a_serdes/build/gates.json
+  record: results/56a_serdes/gt_build/gates.json
   field: power.total_w
   conditions: report_power after routing, vectorless, confidence Medium
   value: 0.764
@@ -165,7 +165,7 @@ measurements:
   what: Vivado peak resident memory of the first GT build
   category: other
   unit: MiB
-  record: results/56a_serdes/build/run.json
+  record: results/56a_serdes/gt_build/run.json
   field: vivado_peak_rss_mib
   conditions: 2 threads, MemoryMax=8G, alone on the machine, one run
   value: 4235

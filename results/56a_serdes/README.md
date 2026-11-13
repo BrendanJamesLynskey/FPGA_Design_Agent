@@ -9,8 +9,8 @@ a stand-in. Nothing here was run on a board. The design is [designs/b56a_gth_ser
 | File | What it is |
 |---|---|
 | `gt_sites.txt`, `gt_sites.json` | package pins, functions and GT sites of the part (quad 224 = `GTHE4_CHANNEL_X0Y4` to `X0Y7`; the SFP+ lane is `X0Y6`); the JSON is `flow/gt_parts/xck26.json` |
-| `build/run.json`, `build/gates.json`, `build/manifest.json` | the b56a design's build: time, memory peaks, every flow and GT gate, build ID |
-| `build/utilization.rpt`, `build/timing_summary.rpt`, `build/power.rpt`, `build/tool.txt`, `build/stages.txt` | the build's Vivado reports and stage times |
+| `gt_build/run.json`, `gt_build/gates.json`, `gt_build/manifest.json` | the b56a design's build: time, memory peaks, every flow and GT gate, build ID |
+| `gt_build/utilization.rpt`, `gt_build/timing_summary.rpt`, `gt_build/power.rpt`, `gt_build/tool.txt`, `gt_build/stages.txt` | the build's Vivado reports and stage times |
 | `licences.md` | the licence table with exact error texts, per IP and stage |
 | `probe/probe_results.json` | the RESULT lines of each probe (stage, status, text, peak memory) |
 | `xsim_refusal.txt`, `xxv_licence_refusal.txt` | the exact refusal texts of the simulator and of `xxv_ethernet` |
@@ -18,8 +18,8 @@ a stand-in. Nothing here was run on a board. The design is [designs/b56a_gth_ser
 
 ## Measured
 
-- Build of `designs/b56a_gth_serdes` (one run, 2 threads, `MemoryMax=8G`, nothing else running): 341.7 s wall; **Vivado peak resident memory 4235 MiB, the scope's anonymous peak 3538 MiB**, no cap hits (`build/run.json`). The first GT build alone, as the brief asked.
-- Timing at the 161.133 MHz user clocks and the 100 MHz clock: WNS 2.156 ns, WHS 0.016 ns, 0 failing endpoints; 973 LUTs, 3106 registers, 0 BRAM, 0 DSP; total on-chip power 0.764 W, vectorless, confidence Medium (`build/gates.json`).
+- Build of `designs/b56a_gth_serdes` (one run, 2 threads, `MemoryMax=8G`, nothing else running): 341.7 s wall; **Vivado peak resident memory 4235 MiB, the scope's anonymous peak 3538 MiB**, no cap hits (`gt_build/run.json`). The first GT build alone, as the brief asked.
+- Timing at the 161.133 MHz user clocks and the 100 MHz clock: WNS 2.156 ns, WHS 0.016 ns, 0 failing endpoints; 973 LUTs, 3106 registers, 0 BRAM, 0 DSP; total on-chip power 0.764 W, vectorless, confidence Medium (`gt_build/gates.json`).
 - The free Vivado Simulator refuses the Wizard model: 54716 instances against a limit of 50000 (`xsim_refusal.txt`).
 - `xxv_ethernet` is refused at synthesis; the Wizard builds to a bitstream (`licences.md`).
 

@@ -37,9 +37,9 @@ simulate the PRBS blocks and the core against the Wizard stand-in (~1min): pytho
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b56a_gth_serdes/tests/test_b56a_core_sim_rtl.py d7bd3da661
-R2 results/56a_serdes/build/gates.json 6e3accd275
-R3 results/56a_serdes/README.md ff6e3c1dbd
-R4 results/56a_serdes/build/run.json 4bc1a348be
+R2 results/56a_serdes/gt_build/gates.json 6e3accd275
+R3 results/56a_serdes/README.md 6f5635a12a
+R4 results/56a_serdes/gt_build/run.json 4bc1a348be
 
 ## evidence
 E1 simulation pass R1 ci: fabric PRBS generator and checker against an independent model (exact error counting, lock, loss of lock); register block, bring-up, counting, injection, snapshots, I2C, SYSMON and DRP windows against a behavioural stand-in of the Wizard
