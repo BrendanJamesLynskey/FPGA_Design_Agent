@@ -182,4 +182,6 @@ broken constraint, or a variant's own `requires`, such as `TAPS <= 64` for `lut_
 Entries with variants so far: [fir](../ip_lib/fir/README.md) (four), [dds_awg](../ip_lib/dds_awg/README.md) (two),
 [adc_histogram](../ip_lib/adc_histogram/README.md) (two), [crc32_step](../ip_lib/crc32_step/README.md) (two; a CPU
 function unit, docs/hwsw.md). An entry whose logic sits only between its input ports and its output registers has no
-register-to-register path out of context: its row records no WNS and no Fmax estimate (`crc32_step` `word`).
+register-to-register path out of context: its row records no WNS and no Fmax estimate, and its LUT count can be far
+below the in-context one, because the untimed input path is optimised for area (`crc32_step` `word`: 95 LUTs out of
+context, 297 inside the BRV32P core, results/64a_hwsw/core_ooc.json).
