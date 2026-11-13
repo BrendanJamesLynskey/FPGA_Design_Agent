@@ -178,9 +178,12 @@ def markdown(E) -> str:
         L += ["", f"## `{r['slave']}`", ""]
         if r["registers"][0]["name"] != "WINDOW":
             L += ["Register bank `bd_axil_regs` (flow/blockdesign/rtl): an offset that holds no register answers SLVERR "
-                  "with read data 0, and a write to a read-only register answers SLVERR. This differs from the house "
-                  "convention for generated register blocks (OKAY, read 0; docs/hwsw.md). Byte strobes are honoured on "
-                  "the control registers; reset is `rst`, synchronous, active high.", ""]
+                  "with read data 0, and a write to a read-only register answers SLVERR. A read of an unmapped offset "
+                  "agrees with the house convention for generated register blocks (split response: a read of a hole "
+                  "answers SLVERR with data 0, docs/hwsw.md); a write to an unmapped offset or to a read-only register "
+                  "differs, because the house convention answers OKAY and changes nothing. The bank has no "
+                  "error-capture registers (the house default records the first unmapped access). Byte strobes are "
+                  "honoured on the control registers; reset is `rst`, synchronous, active high.", ""]
         L += ["| Offset | Name | Access | Reset | What |", "|---|---|---|---|---|"]
         for g in r["registers"]:
             rst = "" if g["reset"] is None else f"`0x{g['reset']:08X}`"

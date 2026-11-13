@@ -28,7 +28,11 @@ DRV = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(DRV)
 CLS = getattr(DRV, "Async" + "".join(w.capitalize() for w in M.name.split("_")) + "Regs")
 OKAY, SLVERR = 0, 2
-UNMAPPED_RESP = SLVERR if M.unmapped == "slverr" else OKAY
+# the response to an unmapped address: split = a read answers SLVERR, a write OKAY (the house default)
+UNMAPPED_RD = SLVERR if M.unmapped in ("slverr", "split") else OKAY
+UNMAPPED_WR = SLVERR if M.unmapped == "slverr" else OKAY
+USER = [r for r in M.registers if not r.internal]       # the map's own registers (the error capture has its own tests)
+CAP = M.error_capture
 
 
 # ---- the bus ---------------------------------------------------------------------------------------------------------
@@ -182,8 +186,8 @@ class Model:
     """What each register should read, from the YAML alone (the stored fields; RO from the bench's inputs)."""
 
     def __init__(self):
-        self.st = {(r.name, f.name): f.reset for r in M.registers for f in r.fields if f.access in ("RW", "W1C", "W1S")}
-        self.ro = {(r.name, f.name): 0 for r in M.registers for f in r.fields if f.hw_input}
+        self.st = {(r.name, f.name): f.reset for r in USER for f in r.fields if f.access in ("RW", "W1C", "W1S")}
+        self.ro = {(r.name, f.name): 0 for r in USER for f in r.fields if f.hw_input}
         self.shadow = {x: 0 for s in M.snapshots for x in s.fields}       # snapshot copies (reset to 0)
         self.pulses = {}
 
@@ -235,7 +239,7 @@ def mapped_offsets():
 
 
 def check_outputs(dut, model: Model, where: str):
-    for r in M.registers:
+    for r in USER:
         for f in r.fields:
             if f.access in ("RW", "W1C", "W1S"):
                 p = f"{r.name}_{f.name}".lower() + "_o"
@@ -264,7 +268,7 @@ async def field_access_types(dut):
     """Directed: each access type behaves as documented, one field at a time, through the driver's own calls."""
     rng, bus, drv, hw, pulses, chk = await boot(dut, 2)
     model = Model()
-    for r in M.registers:
+    for r in USER:
         for f in r.fields:
             for _ in range(3):
                 val = rng.getrandbits(f.width)
@@ -319,7 +323,7 @@ async def field_access_types(dut):
 async def set_beats_clear_in_the_same_clock(dut):
     """A hardware set (W1C) or a software set (W1S) in the clock of a clear leaves the bit set: no event is lost."""
     rng, bus, drv, hw, pulses, chk = await boot(dut, 3)
-    for r in M.registers:
+    for r in USER:
         for f in r.fields:
             if f.access not in ("W1C", "W1S"):
                 continue
@@ -364,7 +368,7 @@ async def byte_strobes(dut):
     """Partial-strobe writes change only the enabled bytes, for every access type that stores or acts."""
     rng, bus, drv, hw, pulses, chk = await boot(dut, 4)
     model = Model()
-    for r in M.registers:
+    for r in USER:
         for _ in range(8):
             strb = rng.getrandbits(4)
             v = rng.getrandbits(32)
@@ -385,19 +389,146 @@ async def byte_strobes(dut):
 
 @cocotb.test(timeout_time=2, timeout_unit="ms")
 async def unmapped_addresses(dut):
-    """Every unmapped word answers the map's unmapped response and reads 0; mapped registers are untouched."""
+    """Every unmapped word answers the map's unmapped response (split: a read SLVERR, a write OKAY) and reads 0;
+    mapped registers are untouched; the error capture holds the first access and counts them all."""
     rng, bus, drv, hw, pulses, chk = await boot(dut, 5)
     model = Model()
     holes = [o for o in range(0, M.window_bytes, 4) if o not in mapped_offsets()]
     sample = holes if len(holes) <= 64 else rng.sample(holes, 64)
     for o in sample:
         assert await bus.read32(o) == 0
-        assert bus.last_rresp == UNMAPPED_RESP, f"read 0x{o:x}: resp {bus.last_rresp}"
+        assert bus.last_rresp == UNMAPPED_RD, f"read 0x{o:x}: resp {bus.last_rresp}"
         await bus.write32(o, 0xFFFFFFFF)
-        assert bus.last_bresp == UNMAPPED_RESP, f"write 0x{o:x}: resp {bus.last_bresp}"
-    for r in M.registers:
+        assert bus.last_bresp == UNMAPPED_WR, f"write 0x{o:x}: resp {bus.last_bresp}"
+    if CAP:
+        assert await drv.get("ERR_STATUS", "STICKY") == 1
+        assert await drv.get("ERR_ADDR", "ADDR") == sample[0], "the capture does not hold the first bad access"
+        assert await drv.get("ERR_STATUS", "IS_WRITE") == 0
+        want = min(2 * len(sample), 255)
+        assert await drv.get("ERR_STATUS", "COUNT") == want, "the capture does not count every bad access"
+    for r in USER:
         assert await drv.read(r.name) == model.read(r.name), f"{r.name} changed by a write to an unmapped address"
         assert bus.last_rresp == OKAY
+    chk.assert_quiet()
+
+
+def _holes() -> list[int]:
+    return [o for o in range(0, M.window_bytes, 4) if o not in mapped_offsets()]
+
+
+async def _capture(drv) -> tuple[int, int, int, int]:
+    """(STICKY, ADDR, IS_WRITE, COUNT)"""
+    return (await drv.get("ERR_STATUS", "STICKY"), await drv.get("ERR_ADDR", "ADDR"),
+            await drv.get("ERR_STATUS", "IS_WRITE"), await drv.get("ERR_STATUS", "COUNT"))
+
+
+@cocotb.test(timeout_time=4, timeout_unit="ms")
+async def error_capture_records_the_first_and_counts(dut):
+    """The first unmapped access since the last clear is kept (address, read or write), every one is counted, the count
+    saturates, a clear needs the strobe of byte 0, and neither reading the capture nor a write to its read-only
+    registers changes it."""
+    if not CAP:
+        return
+    rng, bus, drv, hw, pulses, chk = await boot(dut, 13)
+    hl = _holes()
+    h1, h2 = rng.sample(hl, 2) if len(hl) > 1 else (hl[0], hl[0])
+    assert await _capture(drv) == (0, 0, 0, 0), "the capture is not clear after reset"
+    assert await bus.read32(h1 + 3) == 0                                  # an unaligned address: recorded word-aligned
+    assert await _capture(drv) == (1, h1, 0, 1)
+    await bus.write32(h2, 0x1234)                                        # a second one: counted, not recorded
+    assert await _capture(drv) == (1, h1, 0, 2), "the first bad access was overwritten"
+    for _ in range(3):                                                    # reads have no side effect
+        assert await _capture(drv) == (1, h1, 0, 2)
+    await bus.write32(M.reg("ERR_ADDR").offset, 0xFFFFFFFF)               # read-only registers: OKAY, ignored
+    assert bus.last_bresp == OKAY
+    stt = M.reg("ERR_STATUS")
+    await bus.write32(stt.offset, 0xFFFFFFFF & ~(stt.mask("W1C") | stt.mask("RW")))   # only its read-only bits
+    assert bus.last_bresp == OKAY
+    assert await _capture(drv) == (1, h1, 0, 2), "a write to the read-only capture bits changed the record"
+    await bus.write32(M.reg("ERR_STATUS").offset, 0xFFFFFFFF, strb=0b1110)  # byte 0 not written: no clear
+    assert (await _capture(drv))[0] == 1
+    await drv.clear("ERR_STATUS", "STICKY")
+    assert (await drv.get("ERR_STATUS", "STICKY"), await drv.get("ERR_STATUS", "COUNT")) == (0, 0)
+    await bus.write32(h2, 0)                                              # the next first is a write
+    assert await _capture(drv) == (1, h2, 1, 1)
+    for _ in range(300):                                                  # saturation
+        await bus.read32(rng.choice(hl))
+    assert (await drv.get("ERR_STATUS", "COUNT")) == 255, "the count does not saturate at 255"
+    assert (await drv.get("ERR_STATUS", "STICKY")) == 1 and await drv.get("ERR_ADDR", "ADDR") == h2
+    for r in USER:                                                        # a bad access never touches a real register
+        assert await drv.read(r.name) == Model().read(r.name)
+    chk.assert_quiet()
+
+
+async def _bad_read_when_a_write_commits(dut, addr: int):
+    """Drive a read of `addr` so its address is accepted in the clock in which a write commits."""
+    d = dut
+    while True:
+        await FallingEdge(d.aclk)
+        if int(d.u_dut.wr_commit.value) == 1:
+            break
+    d.s_axil_araddr.value = addr
+    d.s_axil_arvalid.value = 1
+    await FallingEdge(d.aclk)
+    d.s_axil_arvalid.value = 0
+    d.s_axil_rready.value = 1
+    for _ in range(3):
+        await RisingEdge(d.aclk)
+    await FallingEdge(d.aclk)
+    d.s_axil_rready.value = 0
+
+
+@cocotb.test(timeout_time=2, timeout_unit="ms")
+async def error_capture_same_clock_races(dut):
+    """A bad read in the very clock of the clear is not lost (it starts the new record); a bad read and a bad write in
+    one clock count 2 and the read is the one recorded."""
+    if not CAP:
+        return
+    rng, bus, drv, hw, pulses, chk = await boot(dut, 14)
+    hl = _holes()
+    h1, h2 = (hl[0], hl[-1])
+    await bus.write32(h1, 1)
+    assert await _capture(drv) == (1, h1, 1, 1)
+    t = cocotb.start_soon(_bad_read_when_a_write_commits(dut, h2))
+    await drv.clear("ERR_STATUS", "STICKY")                               # the commit clock of this write has a bad read
+    await t
+    assert await _capture(drv) == (1, h2, 0, 1), "a bad access in the clock of the clear was lost or mis-recorded"
+    await drv.clear("ERR_STATUS", "STICKY")
+    assert (await drv.get("ERR_STATUS", "STICKY")) == 0
+    t = cocotb.start_soon(_bad_read_when_a_write_commits(dut, h2))
+    await bus.write32(h1, 0xA5)                                           # a bad write whose commit clock has a bad read
+    await t
+    assert await _capture(drv) == (1, h2, 0, 2), "a bad read and a bad write in one clock: count 2, the read recorded"
+    chk.assert_quiet()
+
+
+@cocotb.test(timeout_time=2, timeout_unit="ms")
+async def error_capture_interrupt(dut):
+    """With the capture's interrupt (IRQ_EN): irq_o is high exactly while STICKY and IRQ_EN are both 1."""
+    if not CAP or not CAP["interrupt"]:
+        return
+    rng, bus, drv, hw, pulses, chk = await boot(dut, 15)
+    h = _holes()[0]
+
+    async def irq() -> int:
+        await RisingEdge(dut.aclk)
+        await RisingEdge(dut.aclk)
+        await FallingEdge(dut.aclk)
+        return hw_out(dut, "irq_o")
+    assert await irq() == 0
+    await bus.read32(h)
+    assert await irq() == 0, "irq_o high with IRQ_EN at its reset value 0"
+    await drv.set("ERR_STATUS", "IRQ_EN", 1)
+    assert await irq() == 1
+    assert (await drv.get("ERR_STATUS", "STICKY")) == 1, "setting IRQ_EN cleared STICKY"
+    await drv.clear("ERR_STATUS", "STICKY")
+    assert await irq() == 0
+    assert (await drv.get("ERR_STATUS", "IRQ_EN")) == 1, "a clear wrote IRQ_EN back as 0"
+    await bus.write32(h, 0)
+    assert await irq() == 1
+    await drv.set("ERR_STATUS", "IRQ_EN", 0)
+    assert await irq() == 0
+    assert (await drv.get("ERR_STATUS", "STICKY")) == 1, "STICKY lost when IRQ_EN was cleared"
     chk.assert_quiet()
 
 
@@ -410,14 +541,14 @@ async def read_while_response_pending_and_unaligned(dut):
     rng, bus, drv, hw, pulses, chk = await boot(dut, 9)
     model = Model()
     d = dut
-    r1 = next(r for r in M.registers if r.mask("RW"))
+    r1 = next(r for r in USER if r.mask("RW"))
     v1 = 0xA5C3_5A3C & r1.mask("RW")
     await bus.write32(r1.offset + 2, v1)                     # unaligned write: lands in r1
     assert bus.last_bresp == OKAY
     model.write(r1.name, v1, 0xF)
     assert await bus.read32(r1.offset + 1) == model.read(r1.name), "unaligned read did not reach the word"
     assert bus.last_rresp == OKAY
-    r2 = next(r for r in M.registers if r is not r1 and model.read(r.name) != model.read(r1.name))
+    r2 = next(r for r in USER if r is not r1 and model.read(r.name) != model.read(r1.name))
     await FallingEdge(d.aclk)
     d.s_axil_rready.value = 0
     d.s_axil_araddr.value = r1.offset
@@ -541,7 +672,7 @@ async def driver_rmw_keeps_pending_events(dut):
     """The driver's set() on a register that also holds W1C bits writes them as 0, so a pending event survives;
     a naive read-modify-write (write back what was read) clears it. This is the C header's RMW rule."""
     rng, bus, drv, hw, pulses, chk = await boot(dut, 7)
-    mixed = [r for r in M.registers if r.mask("RW") and r.mask("W1C")]
+    mixed = [r for r in USER if r.mask("RW") and r.mask("W1C")]
     for r in mixed:
         rw = next(f for f in r.fields if f.access == "RW")
         ev = next(f for f in r.fields if f.access == "W1C")
@@ -565,7 +696,7 @@ async def random_soak_against_model(dut):
     ops = int(os.environ.get("REGMAP_OPS", "400"))
     for i in range(ops):
         bus.p_ready = rng.choice([0.15, 0.5, 1.0])
-        r = rng.choice(M.registers)
+        r = rng.choice(USER)
         k = rng.random()
         if k < 0.35:
             got = await drv.read(r.name)
@@ -576,7 +707,7 @@ async def random_soak_against_model(dut):
             model.write(r.name, v, strb)
             check_outputs(dut, model, f"op {i} write {r.name}")
         elif k < 0.85:
-            ins = [(rr, f) for rr in M.registers for f in rr.fields if f.access in ("W1C", "W1S")]
+            ins = [(rr, f) for rr in USER for f in rr.fields if f.access in ("W1C", "W1S")]
             if ins:
                 rr, f = rng.choice(ins)
                 b = rng.getrandbits(f.width)
@@ -587,7 +718,7 @@ async def random_soak_against_model(dut):
                 else:
                     model.st[(rr.name, f.name)] &= ~b
         else:
-            ins = [(rr, f) for rr in M.registers for f in rr.fields if f.hw_input]
+            ins = [(rr, f) for rr in USER for f in rr.fields if f.hw_input]
             if ins:
                 rr, f = rng.choice(ins)
                 b = rng.getrandbits(f.width)

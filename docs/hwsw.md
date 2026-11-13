@@ -15,7 +15,9 @@ build the interface between the two, and check it.
   core. It names the one measurement to take first: the Arm's cycles per byte.
 - The register-map generator makes the hardware block, the C header, the Python driver and the document from one file,
   and a check proves the four agree. Every register block now has a datasheet that states, from the map's settings,
-  each behaviour a driver writer could guess wrong; unmapped addresses inside a block answer OKAY and read 0.
+  each behaviour a driver writer could guess wrong. A read of an unmapped address inside a block answers SLVERR with data
+  0 and a write answers OKAY and changes nothing (the split response), and every such access is recorded by two generated
+  error-capture registers: the address of the first, a saturating count and a sticky flag.
 
 Three tools for the boundary between a processor and the fabric (briefs 64A, 64A+ and 64A2). Everything here was checked in
 simulation; nothing has run on a board yet (that is brief 64B, on the ZedBoard).
@@ -88,7 +90,8 @@ regmap: 1
 name: demo_accel            # lower case; the module is demo_accel_regs, the C prefix DEMO_ACCEL_
 version: 0.1.0
 addr_width: 12              # a 4 KB window (only address bits [11:2] are decoded)
-unmapped: okay              # the default; or slverr: the answer to an address inside the window that no register decodes
+unmapped: split             # the default: a read of a hole answers SLVERR, a write OKAY; or okay, or slverr (both channels)
+error_capture: true         # the default: ERR_ADDR and ERR_STATUS in the top two words; false leaves them out
 interrupt: {status: IRQ_STATUS, enable: IRQ_ENABLE}
 registers:
 - name: CTRL
@@ -128,13 +131,34 @@ the map's settings (`behaviour()` in `hwsw/regmap.py`; `hwsw/tests/test_64a_regm
 follows its setting). A hand-written block's datasheet (the "Registers" section of an `ip_lib` README) states the same
 topics, and says in its first paragraph where the block differs from these conventions.
 
-- **Unmapped addresses inside a block answer OKAY and read 0** (`unmapped: okay`, the default); writes there are
-  ignored. `unmapped: slverr` remains an option: it makes a stray access visible at bring-up, but on an Arm CPU a SLVERR on a
-  load is an external abort. Addresses outside every block's range are the interconnect's:
-  `ip_lib/axil_xbar` answers DECERR there, and the block-design address map (`gen/address_map.md`) lists those holes.
-  The choice costs almost nothing: built alone with Vivado 2026.1 (xc7a100t, 10 ns, one run each), the example block
-  takes 180 LUTs and 241 flip-flops with `okay` and 181 and 243 with `slverr` (`python3 hwsw/regmap_ooc.py`,
-  [results/64a_hwsw/regmap_ooc.json](../results/64a_hwsw/regmap_ooc.json)). The response becomes a constant.
+- **Unmapped addresses inside a block use the split response** (`unmapped: split`, the default; owner, 2026-11-13): a
+  read of a hole answers SLVERR with data 0, and a write to a hole answers OKAY and changes nothing. The owner's reasons,
+  as decided: a stray read shows up at bring-up (on an Arm CPU a SLVERR on a load is expected to be reported at the load
+  itself, as a synchronous external abort), while a write is posted, and a SLVERR on a posted write is expected to reach
+  the CPU late and imprecisely, which is hard to attribute. **Both statements are expectations from Arm documentation;
+  the behaviour of the project's Arm platforms has not been measured yet**: brief 64B item 5 measures it, and until
+  then the generated datasheets say "expected", not "does". `unmapped: okay` (OKAY and read 0 for both) and
+  `unmapped: slverr` (SLVERR for both) stay as options, so every choice remains available. Addresses outside every
+  block's range are the interconnect's: `ip_lib/axil_xbar` answers DECERR there, and the block-design address map
+  (`gen/address_map.md`) lists those holes. In the generated RTL the response is two constants,
+  `RESP_UNMAPPED_RD` and `RESP_UNMAPPED_WR`.
+- **Error capture** (`error_capture:`, on by default): because the write is quiet, the block records every access to an
+  unmapped address, whatever the response setting. Two registers, by default the top two words of the window (give
+  `error_capture: {offset: 0x...}` for another place; the offset is ERR_ADDR's and ERR_STATUS is the next word; the loader
+  refuses a map whose registers overlap them, and refuses user registers named `ERR_ADDR` or `ERR_STATUS`):
+  - `ERR_ADDR.ADDR`: the word-aligned address, inside the window, of the first bad access since the last clear;
+  - `ERR_STATUS.STICKY` (W1C): set by a bad access; write 1 to clear the record; `IS_WRITE` (RO): the recorded access
+    was a write; `COUNT` (RO, bits 15:8): bad accesses since the last clear, saturating at 255; `IRQ_EN` (RW, bit 2,
+    only with `error_capture: {interrupt: true}`): `irq_o` is high while STICKY and IRQ_EN are both 1 (ORed with the
+    block's own interrupt, if it has one). The interrupt is off by default.
+  - Later bad accesses do not replace the recorded one. A clear (STICKY and COUNT go to 0) leaves ERR_ADDR and IS_WRITE
+    as they were; they mean something only while STICKY is 1. Same-clock priority is the house convention: a bad access in
+    the very clock of the clear wins and starts the new record (STICKY 1, COUNT 1); a bad read and a bad write in the
+    same clock count 2 and the read is the one recorded. A clear needs the strobe of byte 0. Reads of the capture registers
+    have no side effect, and a write to their read-only bits is ignored with OKAY.
+  - `error_capture: false` leaves the registers out, and the datasheet then says so in its first paragraph, as a
+    difference from the house conventions.
+  The cost is in [results/64a_hwsw/regmap_ooc_split.json](../results/64a_hwsw/regmap_ooc_split.json) (Vivado 2026.1, xc7a100t, 10 ns, one run each, the example block alone with its registers: `okay` 180 LUTs and 241 flip-flops, `slverr` 181 and 243, `split` 183 and 242, and `split` with the error capture 248 and 262. The split response costs 3 LUTs and 1 flip-flop over `okay`; the capture is not a few LUTs: it adds 65 LUTs and 20 flip-flops, about a third more than the rest of this small block, which is why `error_capture: false` exists. Re-run with `python3 hwsw/regmap_ooc.py`).
 - **Reads have no side effects.** There is no clear-on-read or pop-on-read type: the loader refuses an access type
   that would change state on a read (`RC`, `RS`, `POP` and the like) and an `on_read:` key. To pop a FIFO or
   acknowledge something, write 1 to a W1P bit. A read with a side effect breaks debuggers, repeated or speculative
@@ -159,8 +183,9 @@ topics, and says in its first paragraph where the block differs from these conve
   A hand-written block's datasheet states every topic as the block behaves, with its differences first; the block-design
   address map states only how the generated register banks differ. `ipdoc.py --check` fails for an entry with such a
   port and no section; `register_map: {none: <why>}` covers a block
-  with no registers of its own (`axil_xbar`). `axil_table_ctrl`'s datasheet opens with its two differences: byte
-  strobes ignored, and the reset `rst`, active high. The test shell answers BAD_ADDRESS with data 0 for its reserved
+  with no registers of its own (`axil_xbar`). `axil_table_ctrl`'s datasheet opens with its four differences: unmapped
+  addresses answer OKAY and read 0 (house: the split response), no error capture, byte strobes ignored, and the reset
+  `rst`, active high. The test shell answers BAD_ADDRESS with data 0 for its reserved
   addresses, which `shell/PROTOCOL.md` already states.
 
 The loader refuses, with every reason listed: overlapping registers or fields, offsets that are not word-aligned or
@@ -194,16 +219,18 @@ All four carry the SHA-256 of the map's content, so a stale output is easy to sp
   the SystemVerilog by its port list and its address and reset constants, and by compiling it with Icarus Verilog
   (`iverilog -g2012`) when that is installed.
 
-`hwsw/tests/test_64a_regmap.py` edits each output by hand in 16 ways (a mask, a reset, an access type, an offset, a port
-width, a snapshot group) and checks that the agreement check names each one, and breaks 45 rules of the format and
+`hwsw/tests/test_64a_regmap.py` edits each output by hand in 17 ways (a mask, a reset, an access type, an offset, a port
+width, a snapshot group) and checks that the agreement check names each one, and breaks 53 rules of the format (among them the error-capture clash, reserved names and bad settings) and
 checks that the loader refuses each.
 
 ### How the generated RTL is verified
 
-`hwsw/tests/test_64a_regmap_rtl.py` simulates two maps under cocotb and Icarus Verilog 12: the example `demo_accel`
-(13 registers, every access type, an interrupt, a 64-bit snapshot group, unmapped addresses answered OKAY) and a map of
-awkward layouts (fields across byte lanes, a 32-bit field, multi-bit W1C, W1S and W1P fields, a register at the top of a
-64-byte window, unmapped addresses answered SLVERR), so both settings are simulated. The
+`hwsw/tests/test_64a_regmap_rtl.py` simulates four maps under cocotb and Icarus Verilog 12: the example `demo_accel`
+(13 registers of its own, every access type, an interrupt, a 64-bit snapshot group, the split response, the error capture
+at its default place), a map of awkward layouts (fields across byte lanes, a 32-bit field, multi-bit W1C, W1S and W1P
+fields, a register at the top of a 64-byte window, SLVERR for both channels, the error capture with its interrupt at an
+explicit offset), and two small blocks with the okay setting, one with the error capture at the default place of a
+32-byte window and one with it left out; so all three unmapped settings are simulated. The
 bench reaches the RTL only through the **generated Python driver** over an AXI4-Lite master with random VALID delays, a
 random order of AW and W, and random BREADY and RREADY back-pressure. The brief 59A AXI4-Lite protocol checker
 (`axi_tx/rtl/axil_checker.sv`) watches the same wires and fails the test on any rule. Tests:
@@ -214,7 +241,14 @@ random order of AW and W, and random BREADY and RREADY back-pressure. The brief 
 - the same-clock races: a hardware set during a W1C clear, and a hardware clear during a W1S ring, both timed to the
   commit clock;
 - 8 random byte-strobe writes per register against a model built from the YAML alone;
-- unmapped addresses (all of them in the small map, 64 sampled in the 4 KB one): response, read value, no side effect;
+- unmapped addresses (all of them in the small maps, 64 sampled in the 4 KB one): the response of a read and of a write
+  separately, read value, no side effect, and the capture registers afterwards (first address, read or write, count);
+- the error capture: the first bad access is kept and a later one only counted, an unaligned address is recorded
+  word-aligned, the count saturates at 255 (300 bad reads), reads of the capture have no side effect, writes to its
+  read-only bits and a clear without byte 0's strobe change nothing, a clear leaves the next bad write recorded as a
+  write, and the capture's interrupt follows STICKY and IRQ_EN;
+- the capture's same-clock races, timed to the commit clock of the clearing write: a bad read in that clock starts the
+  new record instead of being lost, and a bad read plus a bad write in one clock count 2 with the read recorded;
 - the snapshot group: the bench drives JOB_CYCLES as a counter that steps every clock, starting just below the carry
   out of the low half, and sweeps the start over 39 snapshots so that at least one lands on the all-ones clock; every
   snapshot must read a value the counter really had during the access, and a second read without a snapshot must
@@ -232,10 +266,13 @@ random order of AW and W, and random BREADY and RREADY back-pressure. The brief 
   jobs, then reads JOB_CYCLES (counted across a carry into the high half) through the generated snapshot helper. The
   same driver source compiles for the Cortex-A9 with `arm-none-eabi-gcc -mcpu=cortex-a9`.
 
-Ten seeded faults in the generated RTL (a clear that beats a set, byte strobes ignored, SLVERR on the OKAY map and
-OKAY on the SLVERR map, B before W, a lost doorbell, an interrupt that ignores its enable, a pulse that stays high,
-ARREADY high while a read response waits, a snapshot whose high half loads one clock after its low half) must each fail
-the bench; all ten do. The B-before-W fault is caught by the protocol checker (rule 5, B_EARLY).
+Twenty seeded faults in the generated RTL must each fail the bench; all twenty do. Eight are earlier: a clear that beats
+a set, byte strobes ignored, B before W, a lost doorbell, an interrupt that ignores its enable, a pulse that stays high,
+ARREADY high while a read response waits, a snapshot whose high half loads one clock after its low half. Six give the
+wrong response to an unmapped address: for each of the split, okay and slverr maps, one fault on the read response and
+one on the write response. Six are in the error capture: it keeps the last bad access instead of the first, a clear in
+the clock of a bad access loses that access, the count wraps instead of saturating, a bad write is recorded as a read,
+a bad write beats a bad read in the same clock, and the capture's interrupt ignores its enable. The B-before-W fault is caught by the protocol checker (rule 5, B_EARLY).
 
 `hwsw/tests/test_64a_regmap_formal_rtl.py` checks the AXI4-Lite handshake formally with SymbiYosys on both maps: every
 master-side signal and hardware input free, the master assumed to keep its side of the protocol, and the slave's rules

@@ -79,10 +79,26 @@ int main(void)
     demo_accel_write(base, DEMO_ACCEL_SCRATCH_OFFSET, 0x64A0C0DEu);
     if (demo_accel_read(base, DEMO_ACCEL_SCRATCH_OFFSET) != 0x64A0C0DEu)
         return finish(7, "SCRATCH");
-    if (demo_accel_read(base, 0x0F8u) != 0u)           /* an unmapped word inside the window reads 0, answers OKAY */
-        return finish(8, "unmapped read");
-    if (bad_resp != 0u)                                /* no access answered an error */
+    if (bad_resp != 0u)                                /* no access so far answered an error */
         return finish(9, "bus errors");
+    {                                                  /* the split response and the error capture (docs/hwsw.md) */
+        uint32_t es;
+        if (demo_accel_read(base, 0x0ECu) != 0u || bad_resp != 1u)     /* a hole: reads 0 and answers SLVERR */
+            return finish(8, "unmapped read");
+        demo_accel_write(base, 0x0E8u, 0xFFFFFFFFu);   /* a hole: a write answers OKAY, changes nothing */
+        if (bad_resp != 1u)
+            return finish(8, "unmapped write answered an error");
+        es = demo_accel_read(base, DEMO_ACCEL_ERR_STATUS_OFFSET);
+        if (!DEMO_ACCEL_GET(ERR_STATUS, STICKY, es) || DEMO_ACCEL_GET(ERR_STATUS, COUNT, es) != 2u ||
+            DEMO_ACCEL_GET(ERR_STATUS, IS_WRITE, es) ||
+            DEMO_ACCEL_GET(ERR_ADDR, ADDR, demo_accel_read(base, DEMO_ACCEL_ERR_ADDR_OFFSET)) != 0x0ECu)
+            return finish(8, "error capture");
+        demo_accel_write(base, DEMO_ACCEL_ERR_STATUS_OFFSET, DEMO_ACCEL_ERR_STATUS_STICKY_MASK);   /* W1C clear */
+        es = demo_accel_read(base, DEMO_ACCEL_ERR_STATUS_OFFSET);
+        if (DEMO_ACCEL_GET(ERR_STATUS, STICKY, es) || DEMO_ACCEL_GET(ERR_STATUS, COUNT, es) != 0u)
+            return finish(8, "error capture clear");
+        bad_resp = 0u;                                 /* the one expected SLVERR is accounted for */
+    }
     {                                                  /* the 64-bit job counter through the snapshot helper */
         char ok[8];
         unsigned long long cyc = (unsigned long long)demo_accel_snapshot_job_cycles(base);
