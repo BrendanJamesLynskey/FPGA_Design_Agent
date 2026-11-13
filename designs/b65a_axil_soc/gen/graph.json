@@ -1,0 +1,1178 @@
+{
+ "schema": "fpga-design-agent/blockdesign-graph/v1",
+ "design": "b65a_axil_soc",
+ "top": "b65a_axil_soc_top",
+ "part": "xc7a100tcsg324-1",
+ "board": "Digilent Nexys A7-100T",
+ "summary": "A tone generator, a frequency and duty counter and a logic analyser from ip_lib, on one AXI4-Lite crossbar that the host reaches through the UART test shell.",
+ "domains": [
+  {
+   "name": "sys",
+   "freq_mhz": 100,
+   "clock_port": "CLK100MHZ",
+   "reset_port": "CPU_RESETN",
+   "reset_sync": "rst_sync_sys"
+  }
+ ],
+ "levels": {
+  "": {
+   "name": "b65a_axil_soc",
+   "kind": "top",
+   "blocks": [
+    {
+     "id": "shell",
+     "name": "shell",
+     "kind": "block",
+     "component": "test_shell",
+     "component_top": "fpga_shell",
+     "source": "flow",
+     "summary": "UART test shell (115200 baud, 8N1); fixed registers 0x00-0x04 and the design's register window 0x80-0xFF.",
+     "variant": null,
+     "variants": [],
+     "module": "fpga_shell",
+     "rtl_path": "u_shell",
+     "domain": "sys",
+     "freq_mhz": 100,
+     "generated": false,
+     "note": "",
+     "params": [
+      {
+       "name": "CLKS_PER_BIT",
+       "value": 868,
+       "origin": "derived from the sys clock (100 MHz): round(clk_hz / 115200)"
+      },
+      {
+       "name": "TIMEOUT_CYCLES",
+       "value": 100000,
+       "origin": "derived from the sys clock (100 MHz): clk_hz // 1000"
+      },
+      {
+       "name": "DESIGN_ID",
+       "value": 1110848833,
+       "origin": "given"
+      },
+      {
+       "name": "BUILD_STAMP",
+       "value": 0,
+       "origin": "default"
+      }
+     ],
+     "ports": [
+      {
+       "name": "clk",
+       "dir": "in",
+       "width": 1,
+       "kind": "clock"
+      },
+      {
+       "name": "rst",
+       "dir": "in",
+       "width": 1,
+       "kind": "reset"
+      },
+      {
+       "name": "uart_rx",
+       "dir": "in",
+       "width": 1,
+       "kind": "data",
+       "async_ok": true
+      },
+      {
+       "name": "uart_tx",
+       "dir": "out",
+       "width": 1,
+       "kind": "data"
+      }
+     ],
+     "ifaces": [
+      {
+       "name": "window",
+       "kind": "window",
+       "role": "master",
+       "addr_w": 0,
+       "data_w": 0
+      }
+     ],
+     "cost": null,
+     "build": null
+    },
+    {
+     "id": "host",
+     "name": "host",
+     "kind": "block",
+     "component": "bd_win_axil_master",
+     "component_top": "bd_win_axil_master",
+     "source": "flow",
+     "summary": "Shell window to AXI4-Lite master; ADDR, WDATA, CTRL, STATUS and RDATA registers in the window.",
+     "variant": null,
+     "variants": [],
+     "module": "bd_win_axil_master",
+     "rtl_path": "u_host",
+     "domain": "sys",
+     "freq_mhz": 100,
+     "generated": false,
+     "note": "",
+     "params": [
+      {
+       "name": "ADDR_W",
+       "value": 32,
+       "origin": "default"
+      }
+     ],
+     "ports": [
+      {
+       "name": "clk",
+       "dir": "in",
+       "width": 1,
+       "kind": "clock"
+      },
+      {
+       "name": "rst",
+       "dir": "in",
+       "width": 1,
+       "kind": "reset"
+      }
+     ],
+     "ifaces": [
+      {
+       "name": "m_axil",
+       "kind": "axi4lite",
+       "role": "master",
+       "addr_w": 32,
+       "data_w": 32
+      },
+      {
+       "name": "window",
+       "kind": "window",
+       "role": "slave",
+       "addr_w": 0,
+       "data_w": 0
+      }
+     ],
+     "cost": null,
+     "build": null
+    },
+    {
+     "id": "tone",
+     "name": "tone",
+     "kind": "hierarchy",
+     "component": "tone",
+     "component_top": null,
+     "source": "hierarchy",
+     "summary": "",
+     "variant": null,
+     "variants": [],
+     "module": "b65a_axil_soc_tone",
+     "rtl_path": "u_tone",
+     "domain": "sys",
+     "freq_mhz": 100,
+     "generated": false,
+     "note": "",
+     "params": [],
+     "ports": [
+      {
+       "name": "sample",
+       "dir": "out",
+       "width": 16,
+       "kind": "data"
+      },
+      {
+       "name": "tick",
+       "dir": "out",
+       "width": 1,
+       "kind": "data"
+      },
+      {
+       "name": "clk",
+       "dir": "in",
+       "width": 1,
+       "kind": "clock"
+      },
+      {
+       "name": "rst",
+       "dir": "in",
+       "width": 1,
+       "kind": "reset"
+      }
+     ],
+     "ifaces": [
+      {
+       "name": "s_dds",
+       "kind": "axi4lite",
+       "role": "slave",
+       "addr_w": 12,
+       "data_w": 32
+      },
+      {
+       "name": "s_fd",
+       "kind": "axi4lite",
+       "role": "slave",
+       "addr_w": 12,
+       "data_w": 32
+      }
+     ],
+     "cost": null,
+     "build": null
+    },
+    {
+     "id": "la",
+     "name": "la",
+     "kind": "block",
+     "component": "logic_analyser",
+     "component_top": "logic_analyser",
+     "source": "ip_lib",
+     "summary": "Register-mapped logic analyser: captures WIDTH internal signals into RAM at the sample rate, with a level or edge trigger and a pre-trigger depth, and reads the buffer back through the test shell window.",
+     "variant": null,
+     "variants": [],
+     "module": "b65a_axil_soc_la_wrap",
+     "rtl_path": "u_la",
+     "domain": "sys",
+     "freq_mhz": 100,
+     "generated": false,
+     "note": "",
+     "params": [
+      {
+       "name": "WIDTH",
+       "value": 16,
+       "origin": "default"
+      },
+      {
+       "name": "ADDR_W",
+       "value": 8,
+       "origin": "given"
+      }
+     ],
+     "ports": [
+      {
+       "name": "clk",
+       "dir": "in",
+       "width": 1,
+       "kind": "clock"
+      },
+      {
+       "name": "rst",
+       "dir": "in",
+       "width": 1,
+       "kind": "reset"
+      },
+      {
+       "name": "sample",
+       "dir": "in",
+       "width": 16,
+       "kind": "data"
+      },
+      {
+       "name": "sample_en",
+       "dir": "in",
+       "width": 1,
+       "kind": "data"
+      }
+     ],
+     "ifaces": [
+      {
+       "name": "s_axil",
+       "kind": "axi4lite",
+       "role": "slave",
+       "addr_w": 12,
+       "data_w": 32
+      }
+     ],
+     "cost": {
+      "note": "in-context cost (not an OOC sweep): 132 LUT plus 88 LUTRAM, 142 FF, no block RAM at WIDTH 16, ADDR_W 8 inside b30_hil_audio (Vivado 2026.1, xc7a100t -1; results/vivado_2026_1_remeasure/b30_hil_audio.json); the OOC sweep is still to do. For comparison the AMD ILA on T1 on Vivado 2026.1 (one ILA IP, 13 probes packed into 2 ports, 1024 deep) cost 1181 LUT, 2074 FF and 2 block RAM tiles (results/f0a_2026_1)",
+      "variant": null,
+      "predicted": null,
+      "measured": null
+     },
+     "build": null,
+     "wrapper": {
+      "kind": "window",
+      "module": "b65a_axil_soc_la_wrap",
+      "inner": [
+       "u_la/u_ip",
+       "u_la/u_win"
+      ]
+     }
+    },
+    {
+     "id": "xbar",
+     "name": "xbar",
+     "kind": "interconnect",
+     "component": "axil_xbar",
+     "component_top": "axil_xbar",
+     "source": "ip_lib",
+     "summary": "AXI4-Lite crossbar, N_M masters to N_S slaves: a write and a read arbiter per slave (round robin), so transfers to different slaves overlap; one write and one read in flight per master; DECERR from the crossbar for unmapped addresses.",
+     "variant": null,
+     "variants": [],
+     "module": "axil_xbar",
+     "rtl_path": "u_xbar",
+     "domain": "sys",
+     "freq_mhz": 100,
+     "generated": true,
+     "note": "connection automation: AXI4-Lite crossbar",
+     "params": [
+      {
+       "name": "N_M",
+       "value": 1,
+       "origin": "1 masters"
+      },
+      {
+       "name": "N_S",
+       "value": 3,
+       "origin": "3 slaves"
+      },
+      {
+       "name": "ADDR_W",
+       "value": 32,
+       "origin": "propagated from the masters"
+      },
+      {
+       "name": "S_BASE",
+       "value": 19808249558997402639247867904,
+       "origin": "the address editor"
+      },
+      {
+       "name": "S_BITS",
+       "value": 789516,
+       "origin": "the address editor"
+      }
+     ],
+     "ports": [
+      {
+       "name": "clk",
+       "dir": "in",
+       "width": 1,
+       "kind": "clock"
+      },
+      {
+       "name": "rst",
+       "dir": "in",
+       "width": 1,
+       "kind": "reset"
+      }
+     ],
+     "ifaces": [
+      {
+       "name": "s0",
+       "kind": "axi4lite",
+       "role": "slave",
+       "addr_w": 32,
+       "data_w": 32
+      },
+      {
+       "name": "m0",
+       "kind": "axi4lite",
+       "role": "master",
+       "addr_w": 32,
+       "data_w": 32
+      },
+      {
+       "name": "m1",
+       "kind": "axi4lite",
+       "role": "master",
+       "addr_w": 32,
+       "data_w": 32
+      },
+      {
+       "name": "m2",
+       "kind": "axi4lite",
+       "role": "master",
+       "addr_w": 32,
+       "data_w": 32
+      }
+     ],
+     "cost": {
+      "note": "in-context cost inside designs/b65a_axil_soc (one master, three slaves): see results/65a_blockdesign; the OOC sweep is still to do",
+      "variant": null,
+      "predicted": null,
+      "measured": null
+     },
+     "build": null,
+     "masters": [
+      "host.m_axil"
+     ],
+     "slaves": [
+      "tone.s_dds",
+      "tone.s_fd",
+      "la.s_axil"
+     ]
+    },
+    {
+     "id": "rst_sync_sys",
+     "name": "rst_sync_sys",
+     "kind": "reset",
+     "component": "reset_sync",
+     "component_top": "reset_sync",
+     "source": "flow",
+     "summary": "Reset bridge, asynchronous assert and synchronous release, active-high output.",
+     "variant": null,
+     "variants": [],
+     "module": "reset_sync",
+     "rtl_path": "u_rst_sync_sys",
+     "domain": "sys",
+     "freq_mhz": 100,
+     "generated": true,
+     "note": "block automation: reset synchroniser for the sys domain",
+     "params": [],
+     "ports": [
+      {
+       "name": "clk",
+       "dir": "in",
+       "width": 1,
+       "kind": "clock"
+      },
+      {
+       "name": "rst_n_async",
+       "dir": "in",
+       "width": 1,
+       "kind": "data",
+       "async_ok": true
+      },
+      {
+       "name": "rst",
+       "dir": "out",
+       "width": 1,
+       "kind": "reset"
+      }
+     ],
+     "ifaces": [],
+     "cost": null,
+     "build": null
+    }
+   ],
+   "links": [
+    {
+     "id": "shell_window",
+     "kind": "window",
+     "from": "shell",
+     "from_if": "window",
+     "to": "host",
+     "to_if": "window",
+     "label": "register window",
+     "data_w": 0,
+     "addr_w": 0,
+     "slave_addr_w": 0
+    },
+    {
+     "id": "xbar_s0",
+     "kind": "axi4lite",
+     "from": "host",
+     "from_if": "m_axil",
+     "to": "xbar",
+     "to_if": "s0",
+     "label": "AXI4-Lite, 32-bit data, 32-bit address",
+     "data_w": 32,
+     "addr_w": 32,
+     "slave_addr_w": 32
+    },
+    {
+     "id": "xbar_m0",
+     "kind": "axi4lite",
+     "from": "xbar",
+     "from_if": "m0",
+     "to": "tone",
+     "to_if": "s_dds",
+     "label": "AXI4-Lite, 32-bit data, 32-bit address",
+     "data_w": 32,
+     "addr_w": 32,
+     "slave_addr_w": 12
+    },
+    {
+     "id": "xbar_m1",
+     "kind": "axi4lite",
+     "from": "xbar",
+     "from_if": "m1",
+     "to": "tone",
+     "to_if": "s_fd",
+     "label": "AXI4-Lite, 32-bit data, 32-bit address",
+     "data_w": 32,
+     "addr_w": 32,
+     "slave_addr_w": 12
+    },
+    {
+     "id": "xbar_m2",
+     "kind": "axi4lite",
+     "from": "xbar",
+     "from_if": "m2",
+     "to": "la",
+     "to_if": "s_axil",
+     "label": "AXI4-Lite, 32-bit data, 32-bit address",
+     "data_w": 32,
+     "addr_w": 32,
+     "slave_addr_w": 12
+    },
+    {
+     "id": "UART_TXD_IN->shell",
+     "kind": "conduit",
+     "from": "port:UART_TXD_IN",
+     "to": "shell",
+     "signals": [
+      {
+       "from": "UART_TXD_IN",
+       "to": "uart_rx",
+       "width": 1
+      }
+     ],
+     "width": 1,
+     "label": "UART_TXD_IN -> uart_rx (1 bit)"
+    },
+    {
+     "id": "shell->UART_RXD_OUT",
+     "kind": "conduit",
+     "from": "shell",
+     "to": "port:UART_RXD_OUT",
+     "signals": [
+      {
+       "from": "uart_tx",
+       "to": "UART_RXD_OUT",
+       "width": 1
+      }
+     ],
+     "width": 1,
+     "label": "uart_tx -> UART_RXD_OUT (1 bit)"
+    },
+    {
+     "id": "tone->la",
+     "kind": "conduit",
+     "from": "tone",
+     "to": "la",
+     "signals": [
+      {
+       "from": "sample",
+       "to": "sample",
+       "width": 16
+      },
+      {
+       "from": "tick",
+       "to": "sample_en",
+       "width": 1
+      }
+     ],
+     "width": 17,
+     "label": "sample -> sample; tick -> sample_en (17 bits)"
+    },
+    {
+     "id": "tone->LED",
+     "kind": "conduit",
+     "from": "tone",
+     "to": "port:LED",
+     "signals": [
+      {
+       "from": "sample",
+       "to": "LED",
+       "width": 8,
+       "bits": [
+        15,
+        8
+       ],
+       "to_bits": [
+        15,
+        8
+       ]
+      }
+     ],
+     "width": 8,
+     "label": "sample -> LED (8 bits)"
+    },
+    {
+     "id": "const->LED",
+     "kind": "conduit",
+     "from": "const",
+     "to": "port:LED",
+     "signals": [
+      {
+       "from": "0",
+       "to": "LED",
+       "width": 8,
+       "to_bits": [
+        7,
+        0
+       ]
+      }
+     ],
+     "width": 8,
+     "label": "0 -> LED (8 bits)"
+    }
+   ],
+   "ports": [
+    {
+     "name": "CLK100MHZ",
+     "dir": "in",
+     "width": 1,
+     "kind": "clock"
+    },
+    {
+     "name": "CPU_RESETN",
+     "dir": "in",
+     "width": 1,
+     "kind": "reset",
+     "async": true
+    },
+    {
+     "name": "UART_TXD_IN",
+     "dir": "in",
+     "width": 1,
+     "kind": "data",
+     "async": true
+    },
+    {
+     "name": "UART_RXD_OUT",
+     "dir": "out",
+     "width": 1,
+     "kind": "data"
+    },
+    {
+     "name": "LED",
+     "dir": "out",
+     "width": 16,
+     "kind": "data"
+    }
+   ],
+   "exports": [],
+   "file": "designs/b65a_axil_soc/blockdesign.yaml"
+  },
+  "tone": {
+   "name": "tone",
+   "kind": "hierarchy",
+   "blocks": [
+    {
+     "id": "tone/dds",
+     "name": "dds",
+     "kind": "block",
+     "component": "dds_awg",
+     "component_top": "dds_awg",
+     "source": "ip_lib",
+     "summary": "DDS/AWG stimulus source: phase accumulator, sine table, triangle, saw and square, amplitude shift. f_out = f_tick * step / 2**PHASE_W.",
+     "variant": "bram",
+     "variants": [
+      "bram",
+      "lut"
+     ],
+     "module": "b65a_axil_soc_tone_dds_wrap",
+     "rtl_path": "u_tone/u_dds",
+     "domain": "clk",
+     "freq_mhz": 100,
+     "generated": false,
+     "note": "",
+     "params": [
+      {
+       "name": "IMPL",
+       "value": "bram",
+       "origin": "variant"
+      },
+      {
+       "name": "PHASE_W",
+       "value": 32,
+       "origin": "given"
+      },
+      {
+       "name": "LUT_W",
+       "value": 8,
+       "origin": "given"
+      },
+      {
+       "name": "OUT_W",
+       "value": 16,
+       "origin": "given"
+      }
+     ],
+     "ports": [
+      {
+       "name": "clk",
+       "dir": "in",
+       "width": 1,
+       "kind": "clock"
+      },
+      {
+       "name": "rst",
+       "dir": "in",
+       "width": 1,
+       "kind": "reset"
+      },
+      {
+       "name": "sample",
+       "dir": "out",
+       "width": 16,
+       "kind": "data"
+      },
+      {
+       "name": "phase_o",
+       "dir": "out",
+       "width": 32,
+       "kind": "data"
+      },
+      {
+       "name": "tick",
+       "dir": "out",
+       "width": 1,
+       "kind": "data"
+      }
+     ],
+     "ifaces": [
+      {
+       "name": "s_axil",
+       "kind": "axi4lite",
+       "role": "slave",
+       "addr_w": 12,
+       "data_w": 32
+      }
+     ],
+     "cost": {
+      "note": "measured out of context at this parameter point",
+      "variant": "bram",
+      "predicted": {
+       "bram_tiles": 0.5,
+       "dsp": 0
+      },
+      "measured": {
+       "lut": 113,
+       "ff": 48,
+       "lutram": 0,
+       "bram_tiles": 0.5,
+       "dsp": 0,
+       "wns_ns": -1.452,
+       "fmax_mhz": 183.4,
+       "clock_ns": 4.0,
+       "exact": true,
+       "power_w": 0.094,
+       "tool": "Vivado 2026.1 (build 6511674)"
+      },
+      "alternatives": [
+       {
+        "variant": "bram",
+        "summary": "sine table in block RAM, addressed one clock early so the RAM's output register delivers the sample on time",
+        "valid": true,
+        "cost": {
+         "bram_tiles": 0.5,
+         "dsp": 0,
+         "lut": 113,
+         "ff": 48,
+         "lutram": 0,
+         "fmax_mhz": 183.4
+        }
+       },
+       {
+        "variant": "lut",
+        "summary": "sine table as an asynchronous ROM in LUTs, read from the phase register",
+        "valid": true,
+        "cost": {
+         "bram_tiles": 0,
+         "dsp": 0,
+         "lut": 171,
+         "ff": 56,
+         "lutram": 0,
+         "fmax_mhz": 203.6
+        }
+       }
+      ]
+     },
+     "build": null,
+     "wrapper": {
+      "kind": "registers",
+      "module": "b65a_axil_soc_tone_dds_wrap",
+      "inner": [
+       "u_tone/u_dds/u_ip",
+       "u_tone/u_dds/u_regs"
+      ]
+     }
+    },
+    {
+     "id": "tone/fd",
+     "name": "fd",
+     "kind": "block",
+     "component": "freq_duty_counter",
+     "component_top": "freq_duty_counter",
+     "source": "ip_lib",
+     "summary": "Frequency and duty counter: edges and high clocks of an asynchronous input over a fixed gate; two-flop synchroniser inside. frequency = edges / gate time, duty = high clocks / gate clocks.",
+     "variant": null,
+     "variants": [],
+     "module": "b65a_axil_soc_tone_fd_wrap",
+     "rtl_path": "u_tone/u_fd",
+     "domain": "clk",
+     "freq_mhz": 100,
+     "generated": false,
+     "note": "",
+     "params": [
+      {
+       "name": "GATE_CLKS",
+       "value": 1000000,
+       "origin": "given"
+      },
+      {
+       "name": "CNT_W",
+       "value": 24,
+       "origin": "given"
+      }
+     ],
+     "ports": [
+      {
+       "name": "clk",
+       "dir": "in",
+       "width": 1,
+       "kind": "clock"
+      },
+      {
+       "name": "rst",
+       "dir": "in",
+       "width": 1,
+       "kind": "reset"
+      },
+      {
+       "name": "sig",
+       "dir": "in",
+       "width": 1,
+       "kind": "data",
+       "async_ok": true
+      },
+      {
+       "name": "valid",
+       "dir": "out",
+       "width": 1,
+       "kind": "data"
+      },
+      {
+       "name": "edges",
+       "dir": "out",
+       "width": 24,
+       "kind": "data"
+      },
+      {
+       "name": "high_clks",
+       "dir": "out",
+       "width": 24,
+       "kind": "data"
+      },
+      {
+       "name": "gates",
+       "dir": "out",
+       "width": 32,
+       "kind": "data"
+      }
+     ],
+     "ifaces": [
+      {
+       "name": "s_axil",
+       "kind": "axi4lite",
+       "role": "slave",
+       "addr_w": 12,
+       "data_w": 32
+      }
+     ],
+     "cost": {
+      "note": "in-context cost (not an OOC sweep): 12 LUT, 165 FF at GATE_CLKS 50 000 000, CNT_W 26 inside b30_hil_audio (Vivado 2026.1, xc7a100t -1; results/vivado_2026_1_remeasure/b30_hil_audio.json); the OOC sweep is still to do",
+      "variant": null,
+      "predicted": null,
+      "measured": null
+     },
+     "build": null,
+     "wrapper": {
+      "kind": "registers",
+      "module": "b65a_axil_soc_tone_fd_wrap",
+      "inner": [
+       "u_tone/u_fd/u_ip",
+       "u_tone/u_fd/u_regs"
+      ]
+     }
+    }
+   ],
+   "links": [
+    {
+     "id": "tone/tone/dds->sample",
+     "kind": "conduit",
+     "from": "tone/dds",
+     "to": "port:sample",
+     "signals": [
+      {
+       "from": "sample",
+       "to": "sample",
+       "width": 16
+      }
+     ],
+     "width": 16,
+     "label": "sample -> sample (16 bits)"
+    },
+    {
+     "id": "tone/tone/dds->tone/fd",
+     "kind": "conduit",
+     "from": "tone/dds",
+     "to": "tone/fd",
+     "signals": [
+      {
+       "from": "sample",
+       "to": "sig",
+       "width": 1,
+       "bits": [
+        15,
+        15
+       ],
+       "invert": true
+      }
+     ],
+     "width": 1,
+     "label": "sample -> sig (1 bit)"
+    },
+    {
+     "id": "tone/tone/dds->tick",
+     "kind": "conduit",
+     "from": "tone/dds",
+     "to": "port:tick",
+     "signals": [
+      {
+       "from": "tick",
+       "to": "tick",
+       "width": 1
+      }
+     ],
+     "width": 1,
+     "label": "tick -> tick (1 bit)"
+    }
+   ],
+   "ports": [
+    {
+     "name": "sample",
+     "dir": "out",
+     "width": 16,
+     "kind": "data"
+    },
+    {
+     "name": "tick",
+     "dir": "out",
+     "width": 1,
+     "kind": "data"
+    },
+    {
+     "name": "clk",
+     "dir": "in",
+     "width": 1,
+     "kind": "clock"
+    },
+    {
+     "name": "rst",
+     "dir": "in",
+     "width": 1,
+     "kind": "reset"
+    }
+   ],
+   "exports": [
+    {
+     "name": "s_dds",
+     "inst": "tone/dds",
+     "iface": "s_axil"
+    },
+    {
+     "name": "s_fd",
+     "inst": "tone/fd",
+     "iface": "s_axil"
+    }
+   ],
+   "file": "designs/b65a_axil_soc/tone.yaml"
+  }
+ },
+ "crossings": [
+  {
+   "from": "UART_TXD_IN",
+   "to": "shell.uart_rx",
+   "from_domain": "async",
+   "to_domain": "sys",
+   "synchroniser": "test_shell (its uart_rx input has its own synchroniser)",
+   "safe": true
+  },
+  {
+   "from": "CPU_RESETN",
+   "to": "rst_sync_sys.rst_n_async",
+   "from_domain": "async",
+   "to_domain": "sys",
+   "synchroniser": "reset_sync (asynchronous assert, synchronous release)",
+   "safe": true
+  }
+ ],
+ "address_map": {
+  "ranges": [
+   {
+    "slave": "tone.s_dds",
+    "base": 1073741824,
+    "size": 4096,
+    "fixed": true,
+    "xbar": "xbar",
+    "registers": [
+     {
+      "name": "STEP",
+      "offset": 0,
+      "access": "RW",
+      "reset": 175921860,
+      "doc": "phase step; f = STEP x f_tick / 2^32",
+      "fields": [
+       {
+        "port": "step",
+        "lsb": 0,
+        "width": 32,
+        "signed": false
+       }
+      ]
+     },
+     {
+      "name": "WAVE",
+      "offset": 4,
+      "access": "RW",
+      "reset": 0,
+      "doc": "[1:0] 0 sine, 1 triangle, 2 saw, 3 square; [7:4] amplitude shift right",
+      "fields": [
+       {
+        "port": "wave",
+        "lsb": 0,
+        "width": 2,
+        "signed": false
+       },
+       {
+        "port": "amp_shift",
+        "lsb": 4,
+        "width": 4,
+        "signed": false
+       }
+      ]
+     },
+     {
+      "name": "TICKDIV",
+      "offset": 8,
+      "access": "RW",
+      "reset": 99,
+      "doc": "sample tick every TICKDIV + 1 clocks",
+      "fields": []
+     },
+     {
+      "name": "SAMPLE",
+      "offset": 12,
+      "access": "RO",
+      "reset": null,
+      "doc": "current sample, sign extended",
+      "fields": [
+       {
+        "port": "sample",
+        "lsb": 0,
+        "width": 16,
+        "signed": true
+       }
+      ]
+     },
+     {
+      "name": "PHASE",
+      "offset": 16,
+      "access": "RO",
+      "reset": null,
+      "doc": "phase accumulator",
+      "fields": [
+       {
+        "port": "phase_o",
+        "lsb": 0,
+        "width": 32,
+        "signed": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "slave": "tone.s_fd",
+    "base": 1073745920,
+    "size": 4096,
+    "fixed": false,
+    "xbar": "xbar",
+    "registers": [
+     {
+      "name": "SCRATCH",
+      "offset": 0,
+      "access": "RW",
+      "reset": 0,
+      "doc": "scratch register (no block input)",
+      "fields": []
+     },
+     {
+      "name": "EDGES",
+      "offset": 4,
+      "access": "RO",
+      "reset": null,
+      "doc": "rising edges in the last gate",
+      "fields": [
+       {
+        "port": "edges",
+        "lsb": 0,
+        "width": 24,
+        "signed": false
+       }
+      ]
+     },
+     {
+      "name": "HIGH",
+      "offset": 8,
+      "access": "RO",
+      "reset": null,
+      "doc": "clocks high in the last gate",
+      "fields": [
+       {
+        "port": "high_clks",
+        "lsb": 0,
+        "width": 24,
+        "signed": false
+       }
+      ]
+     },
+     {
+      "name": "GATES",
+      "offset": 12,
+      "access": "RO",
+      "reset": null,
+      "doc": "gates completed since reset",
+      "fields": [
+       {
+        "port": "gates",
+        "lsb": 0,
+        "width": 32,
+        "signed": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "slave": "la.s_axil",
+    "base": 1073807360,
+    "size": 4096,
+    "fixed": true,
+    "xbar": "xbar",
+    "registers": [
+     {
+      "name": "WINDOW",
+      "offset": 0,
+      "access": "RW",
+      "reset": null,
+      "fields": [],
+      "doc": "the logic_analyser register window: word w at offset 4 x w (see ip_lib/logic_analyser)"
+     }
+    ]
+   }
+  ],
+  "holes": [
+   {
+    "xbar": "xbar",
+    "base": 1073750016,
+    "size": 57344
+   }
+  ],
+  "addr_w": 32
+ },
+ "diagnostics": [
+  {
+   "code": "BD-ADDR-02",
+   "severity": "warning",
+   "where": "address_map (xbar)",
+   "msg": "hole [0x40002000, 0x4000ffff] between tone.s_fd and la.s_axil: an access there gets DECERR from the crossbar"
+  },
+  {
+   "code": "BD-OPEN-01",
+   "severity": "info",
+   "where": "tone/instances/fd",
+   "msg": "output fd.valid is left open"
+  }
+ ],
+ "build": null,
+ "check": null
+}

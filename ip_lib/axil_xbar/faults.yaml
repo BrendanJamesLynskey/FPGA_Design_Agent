@@ -1,0 +1,59 @@
+# Seeded faults (brief 65A); run by hil/ip_faults.py: each must make the block's tests fail.
+runner: hil/ip_faults.py
+faults:
+- name: decode_double_range
+  file: axil_xbar.sv
+  old: 'mask_of = {ADDR_W{1''b1}} << S_BITS[s*8 +: 8];'
+  new: 'mask_of = {ADDR_W{1''b1}} << (S_BITS[s*8 +: 8] + 8''d1);'
+  class: path
+  why: every slave decodes twice its range, so part of a hole (or a neighbour) is sent to it
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_traffic and stalls
+- name: round_robin_stuck
+  file: axil_xbar.sv
+  old: if (rs_g[s]) begin rs_busy[s] <= 1'b1; rs_own[s] <= rs_gm[s]; rs_rr[s] <= rs_gm[s]; end
+  new: if (rs_g[s]) begin rs_busy[s] <= 1'b1; rs_own[s] <= rs_gm[s]; end
+  class: arbitration
+  why: the read arbiter never moves on, so the lowest-numbered master wins every contest
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_fairness
+- name: bresp_dropped
+  file: axil_xbar.sv
+  old: 'w_resp[ws_own[s]] <= m_axil_bresp[s*2 +: 2];'
+  new: w_resp[ws_own[s]] <= 2'b00;
+  class: value
+  why: a slave's SLVERR is passed back as OKAY
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_traffic and busy
+- name: rdata_from_slave0
+  file: axil_xbar.sv
+  old: 'r_data[rs_own[s]] <= m_axil_rdata[s*32 +: 32];'
+  new: r_data[rs_own[s]] <= m_axil_rdata[31:0];
+  class: path
+  why: every read returns slave 0's data
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_traffic and busy
+- name: decerr_stale_data
+  file: axil_xbar.sv
+  old: if (r_dec[m] == TW'(N_S)) begin r_st[m] <= ST_RESP; r_resp[m] <= DECERR; r_data[m] <= '0; end
+  new: if (r_dec[m] == TW'(N_S)) begin r_st[m] <= ST_RESP; r_resp[m] <= DECERR; end
+  class: value
+  why: a read of an unmapped address returns the previous read's data with DECERR
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_traffic and busy
+- name: awvalid_waits_for_wready
+  file: axil_xbar.sv
+  old: m_axil_awvalid[s] = ws_busy[s] && !w_awdone[ws_own[s]];
+  new: m_axil_awvalid[s] = ws_busy[s] && !w_awdone[ws_own[s]] && m_axil_wready[s];
+  class: protocol
+  why: AWVALID depends on the slave's WREADY and drops when it falls (IHI 0022H A3.2.1, A3.3.1)
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_traffic and stalls
+- name: b_before_slave_response
+  file: axil_xbar.sv
+  old: s_axil_bvalid[m]         = (w_st[m] == ST_RESP);
+  new: s_axil_bvalid[m]         = (w_st[m] != ST_IDLE);
+  class: protocol
+  why: the master sees BVALID while the write is still being forwarded
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_traffic and busy
+- name: wstrb_forced
+  file: axil_xbar.sv
+  old: 'm_axil_wstrb[s*4 +: 4]            = w_strb[ws_own[s]];'
+  new: 'm_axil_wstrb[s*4 +: 4]            = 4''hF;'
+  class: value
+  why: byte strobes are lost, so a partial write becomes a full-word write
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_traffic and busy

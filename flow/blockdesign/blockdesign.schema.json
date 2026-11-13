@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/flow/blockdesign/blockdesign.schema.json",
+  "title": "Block design (fpga-design-agent/blockdesign/v1)",
+  "description": "A top-level or hierarchical block design: instances of ip_lib entries and flow components, their connections, AXI4-Lite interconnects, the address map and clock/reset domains. Read by flow/blockdesign; the meaning of each field is in docs/blockdesign.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "name", "instances"],
+  "properties": {
+    "schema": {"const": "fpga-design-agent/blockdesign/v1"},
+    "name": {"$ref": "#/$defs/ident"},
+    "kind": {"enum": ["top", "hierarchy"], "default": "top"},
+    "top": {"$ref": "#/$defs/ident", "description": "top module name (a top design); default <name>_top"},
+    "part": {"type": "string"},
+    "board": {"type": "string"},
+    "summary": {"type": "string"},
+    "constraints": {"type": "array", "items": {"type": "string"}},
+    "ports": {"type": "array", "items": {"$ref": "#/$defs/port"}},
+    "clocks": {"type": "array", "items": {"$ref": "#/$defs/clock"}},
+    "interfaces": {
+      "description": "a hierarchy's boundary interfaces, each exported from an inner instance's interface",
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["name", "export"],
+        "properties": {"name": {"$ref": "#/$defs/ident"}, "export": {"$ref": "#/$defs/endpoint"}}
+      }
+    },
+    "instances": {
+      "type": "object", "minProperties": 1,
+      "propertyNames": {"$ref": "#/$defs/ident"},
+      "additionalProperties": {"$ref": "#/$defs/instance"}
+    },
+    "connections": {"type": "array", "items": {"$ref": "#/$defs/connection"}},
+    "interconnect": {"type": "array", "items": {"$ref": "#/$defs/interconnect"}},
+    "address_map": {
+      "type": "object", "additionalProperties": false, "required": ["ranges"],
+      "properties": {
+        "base": {"$ref": "#/$defs/uint", "description": "where auto-assigned ranges start (default 0)"},
+        "min_size": {"$ref": "#/$defs/uint", "description": "smallest range the editor assigns (default 4096 bytes)"},
+        "ranges": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["slave"],
+            "properties": {
+              "slave": {"$ref": "#/$defs/endpoint"},
+              "base": {"$ref": "#/$defs/uint"},
+              "size": {"$ref": "#/$defs/uint"}
+            }
+          }
+        }
+      }
+    },
+    "top_params": {
+      "description": "instance parameters raised to top-module parameters (a simulation can shorten them): inst.PARAM or hier.inst.PARAM",
+      "type": "array", "items": {"type": "string", "pattern": "^[A-Za-z_]\\w*(\\.[A-Za-z_]\\w*)+$"}
+    }
+  },
+  "$defs": {
+    "ident": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+    "uint": {"type": "integer", "minimum": 0},
+    "endpoint": {"type": "string", "pattern": "^[A-Za-z_]\\w*(\\.[A-Za-z_]\\w*)?$",
+                 "description": "inst.port, inst.interface, or a port of this design"},
+    "bits": {"type": "array", "items": {"$ref": "#/$defs/uint"}, "minItems": 2, "maxItems": 2,
+             "description": "[msb, lsb]"},
+    "port": {
+      "type": "object", "additionalProperties": false, "required": ["name", "dir"],
+      "properties": {
+        "name": {"$ref": "#/$defs/ident"},
+        "dir": {"enum": ["in", "out"]},
+        "width": {"type": "integer", "minimum": 1, "default": 1},
+        "kind": {"enum": ["data", "clock", "reset", "interrupt"], "default": "data"},
+        "freq_mhz": {"type": "number", "exclusiveMinimum": 0},
+        "polarity": {"enum": ["high", "low"]},
+        "async": {"type": "boolean", "description": "an input with no relation to any clock of the design"},
+        "domain": {"$ref": "#/$defs/ident", "description": "the clock domain an input is synchronous to"}
+      }
+    },
+    "clock": {
+      "type": "object", "additionalProperties": false, "required": ["name", "port"],
+      "properties": {
+        "name": {"$ref": "#/$defs/ident"},
+        "port": {"$ref": "#/$defs/ident", "description": "the clock input port of this design"},
+        "freq_mhz": {"type": "number", "exclusiveMinimum": 0, "description": "default: the port's freq_mhz"},
+        "reset": {"$ref": "#/$defs/ident", "description": "reset input port; block automation adds a reset synchroniser"}
+      }
+    },
+    "register": {
+      "type": "object", "additionalProperties": false, "required": ["name"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
+        "port": {"$ref": "#/$defs/ident"},
+        "fields": {
+          "type": "array", "minItems": 1,
+          "items": {"type": "object", "additionalProperties": false, "required": ["port", "lsb"],
+                    "properties": {"port": {"$ref": "#/$defs/ident"}, "lsb": {"type": "integer", "minimum": 0, "maximum": 31}}}
+        },
+        "reset": {"$ref": "#/$defs/uint"},
+        "doc": {"type": "string"}
+      },
+      "oneOf": [{"required": ["port"]}, {"required": ["fields"]}, {"not": {"anyOf": [{"required": ["port"]}, {"required": ["fields"]}]}}]
+    },
+    "instance": {
+      "type": "object", "additionalProperties": false,
+      "oneOf": [{"required": ["component"]}, {"required": ["design"]}],
+      "properties": {
+        "component": {"$ref": "#/$defs/ident", "description": "an ip_lib entry or a flow component"},
+        "design": {"type": "string", "description": "a hierarchy: a block-design file, relative to this one"},
+        "variant": {"type": "string", "description": "the ip_lib variant (sets the entry's variant parameter)"},
+        "params": {"type": "object", "additionalProperties": {"type": ["integer", "string"]}},
+        "domain": {"$ref": "#/$defs/ident"},
+        "axi_lite": {
+          "description": "a generated AXI4-Lite wrapper: a register bank over plain ports, or an adapter in front of a register window",
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "window": {"$ref": "#/$defs/ident"},
+            "registers": {
+              "type": "object", "additionalProperties": false,
+              "properties": {
+                "control": {"type": "array", "items": {"$ref": "#/$defs/register"}},
+                "status": {"type": "array", "items": {"$ref": "#/$defs/register"}},
+                "tick": {"type": "object", "additionalProperties": false, "required": ["div_reg", "to"],
+                         "properties": {"div_reg": {"type": "string"}, "to": {"$ref": "#/$defs/ident"}}}
+              }
+            }
+          },
+          "oneOf": [{"required": ["window"]}, {"required": ["registers"]}]
+        }
+      }
+    },
+    "connection": {
+      "type": "object", "additionalProperties": false, "required": ["to"],
+      "oneOf": [{"required": ["from"]}, {"required": ["const"]}],
+      "properties": {
+        "from": {"$ref": "#/$defs/endpoint"},
+        "const": {"$ref": "#/$defs/uint"},
+        "bits": {"$ref": "#/$defs/bits"},
+        "to": {"oneOf": [{"$ref": "#/$defs/endpoint"}, {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/endpoint"}}]},
+        "to_bits": {"$ref": "#/$defs/bits"},
+        "invert": {"type": "boolean"}
+      }
+    },
+    "interconnect": {
+      "type": "object", "additionalProperties": false, "required": ["name", "masters", "slaves"],
+      "properties": {
+        "name": {"$ref": "#/$defs/ident"},
+        "masters": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/endpoint"}},
+        "slaves": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/endpoint"}}
+      }
+    }
+  }
+}

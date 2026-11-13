@@ -468,3 +468,37 @@ ul.fixes .evl { display: block; font-size: .82rem; color: var(--ink-3); }
   .sc-page table.sc-stack td::before { content: attr(data-label) ": "; font-weight: 600; color: var(--ink-2); }
   .sc-page table.sc-stack td:empty::before { content: attr(data-label) ": none"; }
 }
+
+/* block-design viewer (brief 65A): blocks drawn from gen/graph.json; a click opens the drawer below the diagram */
+.bdtabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+.bd .agfig .lay-n { max-width: 400px; }
+svg.bdsvg { display: block; width: 100%; height: auto; overflow: visible; }
+svg .bdb { fill: var(--panel); stroke: var(--ink); stroke-width: 1.2; }
+svg .bdb.bdgen { stroke-dasharray: 5 3; }
+svg .bdb.bdport { fill: var(--bg); stroke: var(--ink-3); }
+svg .bdb.bdx { stroke-width: 2; }
+svg .bdh2 { fill: none; stroke: var(--ink-3); }
+svg text.bdn { fill: var(--ink); font-weight: 700; font-size: 12px; }
+svg text.bdp { fill: var(--ink-3); }
+svg text.bdu { fill: var(--ink); }
+svg text.bdw { fill: var(--ink); font-size: 10px; }
+svg .bdl-bus { stroke: var(--ink); stroke-width: 3; fill: none; }
+svg .bdl-win { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 6 3; fill: none; }
+svg .bdl-sig { stroke: var(--ink-2); stroke-width: 1.2; fill: none; }
+.bdblk { cursor: pointer; }
+.bdblk:focus { outline: none; }
+.bdblk:focus-visible rect.bdb { stroke-width: 3; }
+.bdblk.sel rect.bdb { fill: var(--accent-bg); stroke-width: 2.5; }
+.bdkey { width: 30px; height: 12px; vertical-align: middle; margin-right: 4px; }
+svg.bdaddr { display: block; width: 100%; max-width: 560px; height: auto; }
+svg .bdrange { fill: var(--ink); }
+svg .bdhole { fill: var(--bg); stroke: var(--ink-3); stroke-dasharray: 3 3; }
+svg .bdtick { stroke: var(--ink-3); }
+.bddrawer { margin-top: 14px; scroll-margin-top: 70px; }
+.bddrawer h3 { margin: 0 0 .3em; }
+.bddrawer .kv { display: grid; grid-template-columns: minmax(0, 14ch) minmax(0, 1fr); gap: 4px 12px; margin: 8px 0 12px; }
+.bddrawer .kv dt { color: var(--ink-3); }
+.bddrawer .kv dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) { .bddrawer .kv { grid-template-columns: minmax(0, 1fr); } .bddrawer .kv dd { margin-bottom: 8px; } }
+.bddrawer p, .bddrawer td { overflow-wrap: anywhere; }
+.bdpage td code { white-space: nowrap; overflow-wrap: normal; }

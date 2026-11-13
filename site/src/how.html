@@ -48,6 +48,9 @@
 <h2>What the model may touch</h2>
 <p>In the development runs the model ran as headless Claude Code, one call per turn, with every built-in tool off; the Deep Agents harness offers the same tools through its own loop. Either way the model reaches only our MCP server, which gives each role just the tools its stage needs (lint, simulate, mutate, formal, build, gates, document search, skill loading, and files in its own directories). The board is never offered to the model: the harness programs it after a human approves. The same stages run with other models, so harness and model can be compared. Development runs here used <code>{{dev.model.0}}</code>. They ran before the move to Vivado {{board.vivado}}; every timing, area and power figure this site shows for them is a rebuild of the run's saved design on Vivado {{board.vivado}}, and a run whose design files were not kept shows none.</p>
 
+<h2 id="block-designs">Block designs</h2>
+<p>When a design joins several blocks on a bus, the agent writes the top level as a block design: a text file of instances, connections and an address map, which the flow validates, completes (the interconnect, clocks and resets, the address map) and turns into the top-level RTL. Each one has a diagram drawn from the same data, checked against the synthesised netlist.</p>
+{{!blockdesign_index}}
 <h2 id="glossary">Glossary</h2>
 <dl class="gloss">
 <dt id="term-agent">Agent</dt><dd>A language model working in a loop: it reads, calls a tool, reads the result and decides what to do next.</dd>

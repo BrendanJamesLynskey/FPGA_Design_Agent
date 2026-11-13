@@ -1,0 +1,198 @@
+{
+ "schema": "fpga-design-agent/blockdesign-build/v1",
+ "design": "b65a_axil_soc",
+ "graph_sha256": "2036ed9bca5a93a91c2d6281be349b79386a5882aed4479beefcadd7f00e512b",
+ "tool": "2026.1",
+ "build_id": "cf30a039",
+ "gates_pass": true,
+ "first_failed_stage": null,
+ "wns_ns": 2.076,
+ "blocks": {
+  "shell": {
+   "lut": 386,
+   "ff": 246,
+   "bram": 0.0,
+   "dsp": 0,
+   "lutram": 0,
+   "srl": 0,
+   "source": "report_utilization -hierarchical",
+   "wns_ns": 3.149,
+   "endpoints": 738
+  },
+  "host": {
+   "lut": 41,
+   "ff": 156,
+   "bram": 0.0,
+   "dsp": 0,
+   "lutram": 0,
+   "srl": 0,
+   "source": "report_utilization -hierarchical",
+   "wns_ns": 2.551,
+   "endpoints": 468
+  },
+  "tone": {
+   "lut": 235,
+   "ff": 440,
+   "bram": 0.5,
+   "dsp": 0,
+   "lutram": 0,
+   "srl": 0,
+   "source": "report_utilization -hierarchical",
+   "wns_ns": 2.261,
+   "endpoints": 1390
+  },
+  "la": {
+   "lut": 287,
+   "ff": 200,
+   "bram": 0.0,
+   "dsp": 0,
+   "lutram": 88,
+   "srl": 0,
+   "source": "report_utilization -hierarchical",
+   "wns_ns": 2.076,
+   "endpoints": 688
+  },
+  "xbar": {
+   "lut": 104,
+   "ff": 105,
+   "bram": 0.0,
+   "dsp": 0,
+   "lutram": 0,
+   "srl": 0,
+   "source": "report_utilization -hierarchical",
+   "wns_ns": 3.151,
+   "endpoints": 315
+  },
+  "rst_sync_sys": {
+   "lut": 5,
+   "ff": 2,
+   "bram": 0.0,
+   "dsp": 0,
+   "lutram": null,
+   "srl": null,
+   "source": "cell count",
+   "wns_ns": 9.262,
+   "endpoints": 4
+  },
+  "tone/dds": {
+   "lut": 198,
+   "ff": 221,
+   "bram": 0.5,
+   "dsp": 0,
+   "lutram": 0,
+   "srl": 0,
+   "source": "report_utilization -hierarchical",
+   "wns_ns": 2.261,
+   "endpoints": 733
+  },
+  "tone/fd": {
+   "lut": 38,
+   "ff": 219,
+   "bram": 0.0,
+   "dsp": 0,
+   "lutram": 0,
+   "srl": 0,
+   "source": "report_utilization -hierarchical",
+   "wns_ns": 2.263,
+   "endpoints": 657
+  }
+ },
+ "hier": [
+  {
+   "path": "u_host",
+   "module": "bd_win_axil_master",
+   "ref": "bd_win_axil_master"
+  },
+  {
+   "path": "u_la",
+   "module": "b65a_axil_soc_la_wrap",
+   "ref": "b65a_axil_soc_la_wrap"
+  },
+  {
+   "path": "u_rst_sync_sys",
+   "module": "reset_sync",
+   "ref": "reset_sync"
+  },
+  {
+   "path": "u_shell",
+   "module": "fpga_shell",
+   "ref": "fpga_shell"
+  },
+  {
+   "path": "u_tone",
+   "module": "b65a_axil_soc_tone",
+   "ref": "b65a_axil_soc_tone"
+  },
+  {
+   "path": "u_xbar",
+   "module": "axil_xbar",
+   "ref": "axil_xbar"
+  },
+  {
+   "path": "u_la/u_ip",
+   "module": "logic_analyser",
+   "ref": "logic_analyser"
+  },
+  {
+   "path": "u_la/u_win",
+   "module": "bd_axil_win",
+   "ref": "bd_axil_win"
+  },
+  {
+   "path": "u_shell/u_core",
+   "module": "shell_core",
+   "ref": "shell_core"
+  },
+  {
+   "path": "u_shell/u_rx",
+   "module": "uart_rx",
+   "ref": "uart_rx"
+  },
+  {
+   "path": "u_shell/u_tx",
+   "module": "uart_tx",
+   "ref": "uart_tx"
+  },
+  {
+   "path": "u_shell/u_rx/u_sync",
+   "module": "sync2",
+   "ref": "sync2"
+  },
+  {
+   "path": "u_tone/u_dds",
+   "module": "b65a_axil_soc_tone_dds_wrap",
+   "ref": "b65a_axil_soc_tone_dds_wrap"
+  },
+  {
+   "path": "u_tone/u_fd",
+   "module": "b65a_axil_soc_tone_fd_wrap",
+   "ref": "b65a_axil_soc_tone_fd_wrap"
+  },
+  {
+   "path": "u_tone/u_dds/u_ip",
+   "module": "dds_awg",
+   "ref": "dds_awg"
+  },
+  {
+   "path": "u_tone/u_dds/u_regs",
+   "module": "bd_axil_regs",
+   "ref": "bd_axil_regs"
+  },
+  {
+   "path": "u_tone/u_fd/u_ip",
+   "module": "freq_duty_counter",
+   "ref": "freq_duty_counter"
+  },
+  {
+   "path": "u_tone/u_fd/u_regs",
+   "module": "bd_axil_regs",
+   "ref": "bd_axil_regs__parameterized0"
+  }
+ ],
+ "check": {
+  "pass": true,
+  "matched": 14,
+  "expected": 14,
+  "mismatches": []
+ }
+}

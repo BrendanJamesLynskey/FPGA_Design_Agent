@@ -1,0 +1,11 @@
+# The on-board test shell (shell/README.md) as a block-design component: UART on one side, the register window on the other.
+top: fpga_shell
+rtl: [shell/rtl/fpga_shell.sv, shell/rtl/shell_core.sv, shell/rtl/uart_rx.sv, shell/rtl/uart_tx.sv, shell/rtl/sync2.sv]
+summary: UART test shell (115200 baud, 8N1); fixed registers 0x00-0x04 and the design's register window 0x80-0xFF.
+version: "1.0"
+clocks: [clk]
+resets: {rst: high}
+async_inputs: [uart_rx]             # through sync2 inside uart_rx
+derive:                             # parameter propagation: from the clock frequency of the shell's domain
+  CLKS_PER_BIT: round(clk_hz / 115200)
+  TIMEOUT_CYCLES: clk_hz // 1000

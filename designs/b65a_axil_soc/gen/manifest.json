@@ -1,0 +1,143 @@
+{
+ "schema": "fpga-design-agent/blockdesign-manifest/v1",
+ "design": "b65a_axil_soc",
+ "top": "b65a_axil_soc_top",
+ "generator": "65A.1",
+ "inputs": {
+  "designs/b65a_axil_soc/blockdesign.yaml": "336ec09a35dc06d7eac8aa3c9acd446be0d3e350becd2ff1cf65264cf2e0429d",
+  "designs/b65a_axil_soc/tone.yaml": "ae1887c1f955a5e3f16c4a19104987a66a4086594d77b3ff297f8efd6443f571"
+ },
+ "components": [
+  {
+   "path": "shell",
+   "component": "test_shell",
+   "source": "flow",
+   "version": "1.0",
+   "variant": null,
+   "module": "fpga_shell",
+   "params": {
+    "CLKS_PER_BIT": 868,
+    "TIMEOUT_CYCLES": 100000,
+    "DESIGN_ID": 1110848833,
+    "BUILD_STAMP": 0
+   },
+   "generated": false
+  },
+  {
+   "path": "host",
+   "component": "bd_win_axil_master",
+   "source": "flow",
+   "version": "1.0",
+   "variant": null,
+   "module": "bd_win_axil_master",
+   "params": {
+    "ADDR_W": 32
+   },
+   "generated": false
+  },
+  {
+   "path": "tone/dds",
+   "component": "dds_awg",
+   "source": "ip_lib",
+   "version": "0.2.0",
+   "variant": "bram",
+   "module": "b65a_axil_soc_tone_dds_wrap",
+   "params": {
+    "IMPL": "bram",
+    "PHASE_W": 32,
+    "LUT_W": 8,
+    "OUT_W": 16
+   },
+   "generated": false
+  },
+  {
+   "path": "tone/fd",
+   "component": "freq_duty_counter",
+   "source": "ip_lib",
+   "version": "0.1.0",
+   "variant": null,
+   "module": "b65a_axil_soc_tone_fd_wrap",
+   "params": {
+    "GATE_CLKS": 1000000,
+    "CNT_W": 24
+   },
+   "generated": false
+  },
+  {
+   "path": "la",
+   "component": "logic_analyser",
+   "source": "ip_lib",
+   "version": "0.1.0",
+   "variant": null,
+   "module": "b65a_axil_soc_la_wrap",
+   "params": {
+    "WIDTH": 16,
+    "ADDR_W": 8
+   },
+   "generated": false
+  },
+  {
+   "path": "xbar",
+   "component": "axil_xbar",
+   "source": "ip_lib",
+   "version": "0.1.0",
+   "variant": null,
+   "module": "axil_xbar",
+   "params": {
+    "N_M": 1,
+    "N_S": 3,
+    "ADDR_W": 32,
+    "S_BASE": 19808249558997402639247867904,
+    "S_BITS": 789516
+   },
+   "generated": true
+  },
+  {
+   "path": "rst_sync_sys",
+   "component": "reset_sync",
+   "source": "flow",
+   "version": "1.0",
+   "variant": null,
+   "module": "reset_sync",
+   "params": {},
+   "generated": true
+  }
+ ],
+ "outputs": {
+  "designs/b65a_axil_soc/build.yaml": "42fe7f8e47dab8eccbbb18f100adbbd027d7b734131c8bc91cc1ee7c2ea2d3b8",
+  "designs/b65a_axil_soc/gen/address_map.json": "21153fa202bb3875a19c1a24f886472c700bac144e7ea4182e12c30414515536",
+  "designs/b65a_axil_soc/gen/address_map.md": "bcf7246bb9afb5e942d6451b9bea90f076c796b64b01eb0e63fd27ce1dc1fc85",
+  "designs/b65a_axil_soc/gen/addrmap.h": "74ff2e4ea1783734983e6127c3434834b5921ddc47ee8078056e57659ad0c024",
+  "designs/b65a_axil_soc/gen/graph.json": "d62a8dca861c38753d3d855d7eba76023f4af9bb91a4bfd56e0a032d9ee2ec09",
+  "designs/b65a_axil_soc/gen/rtl/b65a_axil_soc_la_wrap.sv": "b9ef0ab15056094cf649d06d28f5641850faa90317b06e1c87cbba9e223ef9f1",
+  "designs/b65a_axil_soc/gen/rtl/b65a_axil_soc_tone.sv": "2748cb7aa7d07b6bf9cb95579746579493a5f54d447c2773d9de350b9fb81d3b",
+  "designs/b65a_axil_soc/gen/rtl/b65a_axil_soc_tone_dds_wrap.sv": "5ce486b6d7ff4fe612cb0f9c9a44e9dbbd4e7aa96e75b25a9545c35414838e7f",
+  "designs/b65a_axil_soc/gen/rtl/b65a_axil_soc_tone_fd_wrap.sv": "4c4d9dc36de7ee5da0ac31e5b9b3cb38dffea5f80f0b20334b09d51a014a44d1",
+  "designs/b65a_axil_soc/gen/rtl/b65a_axil_soc_top.sv": "b91585fc35e6d364d91b2dc0aaf4a99f21a09143d72630357c0e9c5edf6cf66e"
+ },
+ "sources": [
+  "flow/blockdesign/rtl/bd_axil_regs.sv",
+  "flow/blockdesign/rtl/bd_axil_win.sv",
+  "flow/blockdesign/rtl/bd_win_axil_master.sv",
+  "ip_lib/axil_xbar/rtl/axil_xbar.sv",
+  "ip_lib/dds_awg/rtl/dds_awg.sv",
+  "ip_lib/freq_duty_counter/rtl/freq_duty_counter.sv",
+  "ip_lib/logic_analyser/rtl/logic_analyser.sv",
+  "shell/rtl/fpga_shell.sv",
+  "shell/rtl/reset_sync.sv",
+  "shell/rtl/shell_core.sv",
+  "shell/rtl/sync2.sv",
+  "shell/rtl/uart_rx.sv",
+  "shell/rtl/uart_tx.sv",
+  "designs/b65a_axil_soc/gen/rtl/*.sv"
+ ],
+ "diagnostics": [
+  "WARNING BD-ADDR-02 address_map (xbar): hole [0x40002000, 0x4000ffff] between tone.s_fd and la.s_axil: an access there gets DECERR from the crossbar",
+  "INFO BD-OPEN-01 tone/instances/fd: output fd.valid is left open"
+ ],
+ "summary": {
+  "errors": 0,
+  "warnings": 1,
+  "info": 1
+ }
+}

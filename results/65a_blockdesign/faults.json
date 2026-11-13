@@ -1,0 +1,78 @@
+{
+ "caught": 8,
+ "valid": 8,
+ "faults": [
+  {
+   "name": "decode_double_range",
+   "block": "axil_xbar",
+   "class": "path",
+   "why": "every slave decodes twice its range, so part of a hole (or a neighbour) is sent to it",
+   "status": "caught",
+   "seconds": 6.2,
+   "pytest": "1 failed, 2 passed, 19 deselected in 5.29s"
+  },
+  {
+   "name": "round_robin_stuck",
+   "block": "axil_xbar",
+   "class": "arbitration",
+   "why": "the read arbiter never moves on, so the lowest-numbered master wins every contest",
+   "status": "caught",
+   "seconds": 4.1,
+   "pytest": "1 failed, 1 passed, 26 deselected in 3.18s"
+  },
+  {
+   "name": "bresp_dropped",
+   "block": "axil_xbar",
+   "class": "value",
+   "why": "a slave's SLVERR is passed back as OKAY",
+   "status": "caught",
+   "seconds": 2.6,
+   "pytest": "1 failed, 19 deselected in 1.66s"
+  },
+  {
+   "name": "rdata_from_slave0",
+   "block": "axil_xbar",
+   "class": "path",
+   "why": "every read returns slave 0's data",
+   "status": "caught",
+   "seconds": 5.8,
+   "pytest": "1 failed, 2 passed, 19 deselected in 4.86s"
+  },
+  {
+   "name": "decerr_stale_data",
+   "block": "axil_xbar",
+   "class": "value",
+   "why": "a read of an unmapped address returns the previous read's data with DECERR",
+   "status": "caught",
+   "seconds": 2.5,
+   "pytest": "1 failed, 19 deselected in 1.64s"
+  },
+  {
+   "name": "awvalid_waits_for_wready",
+   "block": "axil_xbar",
+   "class": "protocol",
+   "why": "AWVALID depends on the slave's WREADY and drops when it falls (IHI 0022H A3.2.1, A3.3.1)",
+   "status": "caught",
+   "seconds": 4.8,
+   "pytest": "1 failed, 19 deselected in 3.95s"
+  },
+  {
+   "name": "b_before_slave_response",
+   "block": "axil_xbar",
+   "class": "protocol",
+   "why": "the master sees BVALID while the write is still being forwarded",
+   "status": "caught",
+   "seconds": 2.4,
+   "pytest": "1 failed, 19 deselected in 1.56s"
+  },
+  {
+   "name": "wstrb_forced",
+   "block": "axil_xbar",
+   "class": "value",
+   "why": "byte strobes are lost, so a partial write becomes a full-word write",
+   "status": "caught",
+   "seconds": 2.6,
+   "pytest": "1 failed, 19 deselected in 1.66s"
+  }
+ ]
+}
