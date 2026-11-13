@@ -305,7 +305,7 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
               "minutes": None, "needs": f"Vivado {rel_now} and a heavy slot"}],
          "evidence": ev, "measurements": ms, "gaps": gaps, "next_steps": ["WRITE"], "open_questions": [],
          "history": [{"date": _date(run_id), "brief": "agent run",
-                      "note": (f"resumed from the handover of {resumed_from}; " if resumed_from else "")
+                      "note": ("resumed from an earlier handover (summary.json resumed_from names it); " if resumed_from else "")
                       + "produced by the agent graph; stages that passed: " + (", ".join(passed) or "none")
                       + (f"; carried from the handover: {', '.join(carried)}" if carried else "")}],
          "agent_run": {"run_id": run_id, "record": H.rel(summ if summ.is_file() else run_dir / "config.json")},
