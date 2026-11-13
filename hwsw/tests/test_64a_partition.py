@@ -155,6 +155,14 @@ def test_break_even_that_some_corners_never_reach_is_not_a_pass() -> None:
     assert any("never breaks even in 512 of 1024 corners" in r for r in dec["reasons"]), dec["reasons"]
 
 
+def test_reasons_never_print_inf_and_name_every_option_without_evidence() -> None:
+    dec = P.decide(dict(BASE, bytes_per_call=10, accel_break_even_bytes=[math.inf, None]))
+    text = " ".join(dec["reasons"])
+    assert "inf" not in text and "never breaks even in any corner" in text, dec["reasons"]
+    dec = P.decide(dict(BASE, app_speedup_ci=None, app_speedup_accel=None))
+    assert any("app_speedup_ci, app_speedup_accel unknown" in r for r in dec["reasons"]), dec["reasons"]
+
+
 def test_fmax_gate_uses_the_core_with_the_unit_when_measured() -> None:
     assert P.decide(dict(BASE, unit_fmax_hz=None, core_fmax_with_unit_hz=99e6))["ci_eligible"] is True
     dec = P.decide(dict(BASE, unit_fmax_hz=None, core_fmax_with_unit_hz=80e6))

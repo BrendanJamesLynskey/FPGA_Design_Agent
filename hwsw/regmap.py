@@ -52,6 +52,7 @@ REG_KEYS = {"name", "offset", "summary", "fields"}
 FIELD_KEYS = {"name", "lsb", "width", "access", "reset", "const", "summary"}
 # Names the generated block uses for its own signals. A register's per-register signals (wr_<reg>, rd_<reg>) and a
 # field's ports must not meet them: a register named HIT would declare wr_hit twice.
+PORT_SUFFIXES = ("_o", "_i", "_set_i", "_clr_i", "_pulse_o")
 SV_INTERNAL = {"aclk", "aresetn", "aw_got", "w_got", "aw_word", "w_data", "w_bits", "w_strb", "wr_commit", "wr_hit",
                "rd_value", "rd_hit", "irq_o", "unused_ok"}
 # Text that would end a comment, a docstring or a table cell in one of the outputs: every summary and the version
@@ -208,6 +209,7 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
     regs: list[Register] = []
     seen_off: dict[int, str] = {}
     seen_port: dict[str, str] = {}
+    full_port: dict[str, str] = {}
     for i, r in enumerate(regs_in):
         if not isinstance(r, dict):
             errs.append(f"registers[{i}]: not a mapping")
@@ -297,13 +299,24 @@ def from_dict(d, source: str = "<dict>") -> RegMap:
             if acc in ACCESS:
                 fields.append(Field(fn, lsb, width, acc, rv, is_const, str(f.get("summary", ""))))
                 port = f"{rn}_{fn}".lower()
-                if {port + s for s in ("_o", "_i", "_set_i", "_clr_i", "_pulse_o")} & SV_INTERNAL:
+                if {port + s for s in PORT_SUFFIXES} & SV_INTERNAL:
                     errs.append(f"{fw}: port name {port}_* would meet one of the generated block's own signals")
                 if port in seen_port:
                     errs.append(f"{fw}: port name {port} is also made by {seen_port[port]}")
                 seen_port[port] = f"{rn}.{fn}"
+                for s in PORT_SUFFIXES:   # compare the full names: field B's `_set_i` meets field B_SET's `_i`
+                    if port + s in full_port and full_port[port + s] != f"{rn}.{fn}":
+                        errs.append(f"{fw}: port {port}{s} is also made by {full_port[port + s]}")
+                    full_port.setdefault(port + s, f"{rn}.{fn}")
         if off is not None:
             regs.append(Register(rn, off, tuple(sorted(fields, key=lambda x: x.lsb)), str(r.get("summary", ""))))
+    # a register's own signals (wr_<reg>, rd_<reg>) against every field's full port name (register A_O makes wr_a_o,
+    # and register WR field A makes the port wr_a_o)
+    for r in regs:
+        for p in ("wr", "rd"):
+            sig = f"{p}_{r.name.lower()}"
+            if sig in full_port:
+                errs.append(f"register {r.name}: its signal {sig} is also the port made by {full_port[sig]}")
     # the C header's names: a register's and a field's names must not meet (register A_B field C, register A field B_C)
     cnames: dict[str, str] = {}
     for r in regs:

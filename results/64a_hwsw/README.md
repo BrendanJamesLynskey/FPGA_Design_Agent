@@ -48,7 +48,7 @@ Cost in the core (Vivado 2026.1, out of context, one run each):
 | `word`, the unit's hierarchy kept (an experiment) | 12273 | 8043 | 9050 | 295 / 133 | 97 / 33 | 16 | -5.413 | 64.9 |
 
 With the unit's hierarchy kept it takes 97 LUTs (95 out of context) and the core grows by about the same (387 against
-371): the 283 is core logic merged into the unit by synthesis. Read the cost as the core's growth.
+371): the 283 includes logic from outside the unit, most likely the operand multiplexers, merged into it (one run each). Read the cost as the core's growth.
 
 The generated register blocks' checks (simulation, mutants, formal) are tests, not records: `hwsw/tests/` and the CI job
 `hwsw`.

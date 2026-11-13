@@ -46,7 +46,7 @@ Selected by `IMPL`; every variant has the same ports, the same bit-exact result 
 
 | Variant | What | Latency | II | Use when |
 |---|---|---|---|---|
-| `word` | the 32-bit update in one clock (an XOR network) | `1` | `1` | the lowest latency: the custom-instruction variant and the word-per-clock stream. Measured: 95 LUTs out of context; inside the BRV32P core the core grows by 371 LUTs with it, and the hierarchy report shows the unit at 283 LUTs because synthesis merges the operand multiplexers into it (97 LUTs with its hierarchy kept; results/64a_hwsw/core_ooc.json) |
+| `word` | the 32-bit update in one clock (an XOR network) | `1` | `1` | the lowest latency: the custom-instruction variant and the word-per-clock stream. Measured: 95 LUTs out of context; inside the BRV32P core the core grows by 371 LUTs with it, and the hierarchy report shows the unit at 283 LUTs because synthesis merges logic in front of it into it, most likely the operand multiplexers (one run each; 97 LUTs with its hierarchy kept; results/64a_hwsw/core_ooc.json) |
 | `byte` | one byte per clock through an 8-bit update, four clocks per word | `4` | `4` | area before speed. Measured: out of context no saving (96 LUTs against 95), but inside the BRV32P core it grows the core by 148 LUTs against 371 for word; as a custom instruction it costs three more stall clocks per word (2.29 against 1.54 cycles per byte) |
 
 Measured at : built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 4.0 ns clock (250 MHz), Vivado 2026.1 (build 6511674). Not run on a board.

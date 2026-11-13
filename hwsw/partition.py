@@ -416,8 +416,9 @@ def decide(t: dict, rules: dict | None = None) -> dict:
         be_hi = math.inf if be_hi is None else be_hi
         if bpc < be_lo:
             acc_ok = False
-            why.append(f"accelerator no: {bpc} bytes per call is below its break-even ({be_lo:.0f} bytes at best): "
-                       "transfer and setup dominate")
+            lo_txt = ("it never breaks even in any corner" if math.isinf(be_lo)
+                      else f"below its break-even ({be_lo:.0f} bytes at best)")
+            why.append(f"accelerator no: {bpc} bytes per call: {lo_txt}: transfer and setup dominate")
         elif bpc < be_hi:
             acc_unsure = True
             nv = t.get("accel_never_break_even_corners")
@@ -472,7 +473,7 @@ def decide(t: dict, rules: dict | None = None) -> dict:
                        + f", which straddles {th} or rests on an unsure break-even: measure the uncertain inputs (the "
                        "widest ranges) before choosing")
         if no_evidence:
-            why.append(f"no speed-up evidence for {', '.join(no_evidence)} (app_speedup_{no_evidence[0]} unknown): "
+            why.append(f"no speed-up evidence for {', '.join(no_evidence)} ({', '.join(f'app_speedup_{o}' for o in no_evidence)} unknown): "
                        "run the cost model or measure before choosing")
     else:
         choice = "sw"
