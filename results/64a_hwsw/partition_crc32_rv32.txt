@@ -1,0 +1,24 @@
+Kernel: CRC-32 (IEEE 802.3) over an N-byte buffer on the BRV32P core; item = one byte (16 input corners)
+
+N | t_sw | t_ci | t_accel | speed-up ci | speed-up accel
+16 | 3.35 us | 1 us | 689 ns .. 1.9 us | 3.35 | 1.76 .. 4.87
+64 | 11.9 us | 2.16 us | 883 ns .. 2.38 us | 5.49 | 4.98 .. 13.5
+256 | 45.9 us | 6.81 us | 1.66 us .. 4.3 us | 6.75 | 10.7 .. 27.7
+1024 | 182 us | 25.4 us | 4.75 us .. 12 us | 7.18 | 15.2 .. 38.3
+4096 | 727 us | 99.7 us | 17.1 us .. 42.7 us | 7.29 | 17 .. 42.4
+65536 | 11.6 ms | 1.59 ms | 265 us .. 657 us | 7.33 | 17.7 .. 43.9
+
+ci faster than sw: at every N in 16 corners
+accel faster than sw: from N = 3.39 .. 7.34 in 12 of 16 corners; at every N in 4 corners
+accel faster than ci: from N = 24.4 .. 79.7 in 12 of 16 corners; at every N in 4 corners
+Amdahl bound (kernel time to zero): 1.43 .. 2.5
+app_speedup_ci_at_typical_n: 1.34 .. 2.05
+app_speedup_accel_at_typical_n: 1.37 .. 2.37
+
+What moves the kernel speed-up at N = 256 most (one input at each end, the others mid-range):
+  accel: accel.dma_bytes_per_s: 12.3 .. 20.7
+  accel: accel.mmio_write_s: 19.7 .. 15.4
+  accel: accel.mmio_read_s: 19 .. 15.9
+
+Decision: ci
+  - choose ci: whole-application speed-up 1.34 .. 2.05 at the typical size, at least 1.1 at every corner; accel is a near tie on speed (lower ends within 5%) but rests on 7 assumed inputs against 0

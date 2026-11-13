@@ -346,6 +346,11 @@ cloud/       the AWS EC2 burst runner for Vivado batches (brief 33): fda_cloud.p
 axi_tx/      the on-chip AXI transactor: rtl/ (sequencer, AXI4-Lite master, stream source and sink, rule monitors,
              counters, scoreboard, demo targets), host/ (program format, model, host, board runner), programs/, tests/,
              formal/ (rule proofs and checker mutants), vivado/ (AMD IP probe, resource table); board design designs/b59a_axi_tx
+hwsw/        the HW/SW interface (brief 64A, [docs/hwsw.md](docs/hwsw.md)): regmap.py (one YAML -> AXI4-Lite register block,
+             C header, Python driver, markdown, and the check that they agree), partition.py (the cost model: software,
+             custom instruction, accelerator; break-even, Amdahl, decision), cfu.py (an ip_lib entry with a function-unit
+             contract -> a CPU custom-instruction unit), cfu_core/ (a pinned copy of the BRV32P RV32 core, the patch
+             that wires a unit in, the benchmark), examples/, tests/
 hil/         hardware-in-the-loop ([hil/README.md](hil/README.md)): cdc_soak/ (the CDC soak rig, brief 11b: RTL, simulation, Vivado builds, run plan);
              instruments/ (drivers: board lock, shell instruments, audio, sysmon, M2K, Pluto analyser, Red Pitaya, decode, models), ip tests
 site/        the showcase site (static, Vercel): export.py (results -> data), build.py (pages, number check),
@@ -371,6 +376,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              fsm.md (brief 24: the reference controller, the FSM coverage check, the drills);
              vhdl.md (VHDL-2008 designs: how to ask for one, the language boundary with the SystemVerilog shell, what runs where);
              project_layer.md (brief 27 P0 and P1: the design.yaml and contract.yaml formats, status, the contract test, phase 0);
+             hwsw.md (brief 64A: the register-map single source, the partitioning cost model, IP library entries as custom instructions);
              debug_playbook.md (for humans: what each gate rule ID means); debug.md (brief 50A: plain-English debug requests on the board); img/ photos (metadata stripped);
              eval/eval1_preregistration.md (the eval-1 held-out evaluation, fixed before any scored run)
 ```
@@ -414,6 +420,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 65A | Block designs, text first: a YAML top level of `ip_lib` blocks that the flow validates (unconnected ports, interface and width mismatches with parameter propagation, address overlaps and holes, clock and reset crossings with no synchroniser, multiple drivers; each rule has its own code and an adversarial test), completes (a generated AXI4-Lite crossbar, `ip_lib/axil_xbar`, verified with brief 59's checker on every link and 10 of 10 seeded faults caught; reset synchronisers; the address map and C header) and turns into the top-level RTL. The sample, three `ip_lib` blocks behind the crossbar under the test shell, passes its end-to-end simulation and builds on Vivado 2026.1 for the Nexys A7 with every gate passing. The viewer's graph is checked against the build: all 14 RTL instances it names are in the synthesised netlist with those modules, 6 of its 7 links between blocks are nets in the direction drawn in a synthesis that keeps the hierarchy (the 7th goes through an inverter and is not compared), and its address map equals the built RTL's. AXI4-Lite only, one clock domain; not run on the board ([docs/blockdesign.md](docs/blockdesign.md), [results/65a_blockdesign](results/65a_blockdesign/README.md)) | PR open |
 | F2 | Agent v1: interview, plan, RTL, tests and the full Vivado flow (05a-05g above); 21 development runs on 11 course-tier tasks ([results/course](results/course), [site results](https://fpga-design-agent.vercel.app/results)) | built; development runs recorded |
 | 06a | F3 part 1: benchmark v1 (T1-T2) authored and frozen, held-out split, training pool, contamination probe ([benchmark/](benchmark/README.md)) | merged |
+| 64A | HW/SW interface. One YAML register map generates four outputs, and CI checks that they agree: the AXI4-Lite register block, a C header, a Python driver and the document. The generated block is driven in simulation through its own Python driver and a C driver under random back-pressure, with the brief 59A protocol checker watching. The seeded faults are all caught (8 of 8), and the handshake is checked formally (bounded). A cost model compares software, a custom instruction and an accelerator over a range of sizes. An IP library entry (`crc32_step`) becomes a custom instruction in a pinned copy of an RV32 5-stage core. In simulation it runs zlib's CRC-32 at 1.54 cycles per byte, against 11.0 for table-driven C and 2.54 with the Zbkc carry-less multiply. Out of context on Vivado 2026.1 it adds 371 LUTs to the core with no measured Fmax loss (one run each). Simulation and out-of-context builds only, no board run ([docs/hwsw.md](docs/hwsw.md), with commands to try in its first section; [results/64a_hwsw](results/64a_hwsw/README.md)) | PR open |
 | F3 | Scored runs | `eval-1` stopped 2026-11-09 before analysis, no score ([pre-registration](docs/eval/eval1_preregistration.md)); baseline evaluation on a larger benchmark next |
 
 ## Licence

@@ -245,6 +245,49 @@ jobs:
       - name: Formal - every rule quiet on legal traffic, fires on its seeded violation; every checker mutant killed
         run: python axi_tx/formal/run_formal.py --depth 20 --json build/59a/formal.json
 
+  hwsw:
+    name: HW/SW interface - register maps, generated block, formal handshake, crc32_step as a custom instruction
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys z3 gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf
+          pip install pyyaml pyserial pytest cocotb==2.0.1 click    # click: SymbiYosys needs it
+          git clone https://github.com/YosysHQ/sby.git /tmp/sby && cd /tmp/sby && git checkout 79fc9ed && sudo make install
+      - name: Register maps - outputs current and the four agree; the cost model and decision rules; the function-unit contracts
+        run: |
+          python -m hwsw.regmap check hwsw/examples/demo_accel.yaml
+          python -m hwsw.cfu --check
+          python -m pytest -q hwsw/tests/test_64a_regmap.py hwsw/tests/test_64a_partition.py
+      - name: Generated register blocks in simulation (Python and C drivers, AXI4-Lite checker, seeded RTL faults)
+        run: python -m pytest -q hwsw/tests/test_64a_regmap_rtl.py
+      - name: Formal - AXI4-Lite slave rules on the generated blocks (bounded, depth 20), cover, seeded handshake faults
+        run: python -m pytest -q hwsw/tests/test_64a_regmap_formal_rtl.py
+      - name: crc32_step library entry - both variants against the model and zlib, the guard, seeded faults
+        run: |
+          python -m pytest -q ip_lib/crc32_step/tb/test_crc32_step_rtl.py
+          python hil/ip_faults.py --blocks crc32_step
+      - name: The generated custom-instruction wrapper on its own (kill then a quick retry, stale operands, hold; seeded faults)
+        run: python -m pytest -q hwsw/tests/test_64a_cfu_wrapper_rtl.py
+      - name: crc32_step as a custom instruction in the pinned BRV32P core against software (cycles compared with the committed record)
+        run: python -m pytest -q hwsw/tests/test_64a_cfu_core_rtl.py
+      - name: Upload simulation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hwsw-64a
+          path: |
+            build/sim/regmap_64a_*/sim.log
+            build/sim/cfu_wrapper_64a_*/sim.log
+            build/64a/formal/*/*.log
+            build/64a/cfu/*/marks.txt
+
   lint:
     name: Verilator lint
     runs-on: ubuntu-24.04

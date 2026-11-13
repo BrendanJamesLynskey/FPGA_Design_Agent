@@ -1,0 +1,36 @@
+# regmap/1 test map (brief 64A): odd layouts the generator must get right. Not a real block.
+# Small window, unmapped answers OKAY, fields across byte lanes, a full-width field at bit 0, a register at the top of
+# the window, multi-bit W1C/W1S/W1P fields, a RO constant beside RW bits, no interrupt.
+regmap: 1
+name: stress
+version: 0.0.1
+summary: Layout corner cases for the generator tests.
+addr_width: 6
+unmapped: okay
+registers:
+- name: WIDE
+  offset: 0x00
+  fields:
+  - {name: ALL, lsb: 0, width: 32, access: RW, reset: 0xDEADBEEF}
+- name: SPAN
+  offset: 0x04
+  fields:
+  - {name: LOW, lsb: 0, width: 3, access: RW, reset: 5}
+  - {name: MID, lsb: 6, width: 12, access: RW, reset: 0xA5C}
+  - {name: TAG, lsb: 20, width: 4, access: RO, const: 0x9}
+  - {name: HI, lsb: 28, width: 4, access: RO}
+- name: EVENTS
+  offset: 0x08
+  fields:
+  - {name: EV, lsb: 4, width: 8, access: W1C, reset: 0x81}
+  - {name: KEEP, lsb: 12, width: 8, access: RW, reset: 0x3C}
+  - {name: SET, lsb: 24, width: 6, access: W1S, reset: 0x2}
+- name: GO
+  offset: 0x0C
+  fields:
+  - {name: P, lsb: 7, width: 10, access: W1P}
+  - {name: Q, lsb: 31, width: 1, access: RW, reset: 1}
+- name: TOP
+  offset: 0x3C
+  fields:
+  - {name: BITS, lsb: 1, width: 30, access: RO}
