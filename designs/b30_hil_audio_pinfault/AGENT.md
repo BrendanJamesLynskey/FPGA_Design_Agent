@@ -2,7 +2,7 @@
 source: designs/b30_hil_audio_pinfault/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b30_hil_audio_pinfault
 
 ## identity
-kind=demonstration produced_by=human+agent part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
+kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
 
 ## summary
 The seeded-fault twin of b30_hil_audio. It builds from the same RTL, but its constraint file puts the audio output AUD_PWM on the pin of LED 0, so the tone never reaches the audio jack. It passes simulation and every check made inside the FPGA, and only the measurement at the jack fails, which is the point of the demonstration. The hardware-in-the-loop run of this design therefore reports a failure by intent.
@@ -34,12 +34,12 @@ program the SRAM and run the hardware-in-the-loop checks (expected overall resul
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b30_hil_audio/tests/test_hil_audio_rtl.py 074480dd34
-R2 results/b30/builds.json 9d6f7e51be
+R2 designs/b30_hil_audio_pinfault/build.yaml 3268f3bc4a
 R3 results/b30/hil_runs/b30_hil_audio_pinfault.hil.json 6434637459
 
 ## evidence
 E1 simulation pass R1 ci: the shared RTL passes its simulation against the golden models; the seeded fault is in the constraint file, which simulation does not read
-E2 build not-run R2: not rebuilt on Vivado 2026.1; the build on the earlier release passed its gates (the record is that release's; its numbers are not quoted)
+E2 build not-run R2: not rebuilt on Vivado 2026.1 (an earlier-release build is not cited); the build inputs are listed here
 E3 board pass x1 R3: one hardware-in-the-loop run; the seeded fault is caught, since the audio check fails on level, distortion and SINAD while the other seven checks pass; the run's overall result is fail by design | cond: wall power; power gate passed before programming; die temperature and rails read by the XADC and by JTAG sysmon agreed within tolerance; audio captured by a USB interface at gain about 50 percent, uncalibrated; ambient not recorded
 
 ## measured

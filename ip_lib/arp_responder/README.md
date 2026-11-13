@@ -81,7 +81,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: Ethernet and IPv4 only; one own address; entries never age (flush from outside); address conflicts are reported (ev_conflict) but not resolved (no RFC 5227 probing or announcing); one reply waits while one is sent, a third request is not answered; meets 125 MHz with 4 cache entries (128 MHz estimated), misses it with 16 (116 MHz, the parallel compare).
+- Ethernet and IPv4 only; one own address; entries never age (flush from outside); address conflicts are reported (ev_conflict) but not resolved (no RFC 5227 probing or announcing); one reply waits while one is sent, a third request is not answered; meets 125 MHz with 4 cache entries (128 MHz estimated), misses it with 16 (116 MHz, the parallel compare).
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps

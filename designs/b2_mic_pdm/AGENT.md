@@ -55,8 +55,8 @@ M7 board -=0.7377 R3#results[0].steps.selfcheck.windows[0].change_fraction: frac
 ## gaps
 [latency] Not measured. A window takes its length in M_CLK periods (1,048,576 bits is about 0.44 s at 2.381 MHz) by design; no record times it.
 [throughput] Not applicable as a data path; the block reports two counts per window and has no streaming output.
-[E3] The board runs used bitstreams built on the earlier Vivado release; the 2026.1 build (E2) has the same build stamp but was not programmed. Re-run the board check on a 2026.1 bitstream to close this.
-[operating conditions] The board runs predate the 2026-11-11 rule; die temperature and the VCCINT, VCCAUX and VCCBRAM rails were not read from the XADC, so the runs cannot be shown to be inside the recommended operating conditions.
+[E3] The board runs used bitstreams built on the earlier Vivado release; the 2026.1 build (E2) has the same build stamp (the hash of the RTL and XDC the flow writes into the bitstream) but was not programmed. Re-run the board check on a 2026.1 bitstream to close this.
+[operating conditions] The board runs predate the house rule of 2026-11-11 that every board run records its operating conditions from the XADC; die temperature and the VCCINT, VCCAUX and VCCBRAM rails were not read from the XADC, so the runs cannot be shown to be inside the recommended operating conditions.
 [behaviour] GO written while a window runs is ignored (pdm_stats.sv starts a window only when idle), but no test covers it; NBITS of 0 is taken as 1; reset clears the counts and DONE; reads of undefined window addresses return 0 with no error.
 [audio] No decimation or audio measurement; the check proves the microphone and its pins are alive, not sound quality.
 

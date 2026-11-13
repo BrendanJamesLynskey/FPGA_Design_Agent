@@ -61,7 +61,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: IPv6 extension headers are not walked (l4 flag 0); IPv4 total length is not checked against the frame.
+- IPv6 extension headers are not walked (l4 flag 0); IPv4 total length is not checked against the frame.
 - Board: no board run of this entry is recorded; its evidence is simulation.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 

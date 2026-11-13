@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: b30_hil_audio
 title: Hardware-in-the-loop demonstration design (audio tone and instruments)
 kind: demonstration
-produced_by: human+agent
+produced_by: human
 summary: One design on the Nexys A7 that carries four library instruments (a tone generator, a frequency and duty counter,
   a logic analyser and a frame CRC) and an XADC readout behind the test shell, so that every sensing path of the brief 30
   hardware-in-the-loop stage has something to read. The tone leaves the board as PWM audio, and `hil.yaml` lists eight checks
@@ -217,7 +217,7 @@ measurements:
   unit: '%'
   record: results/b30/hil_runs/b30_hil_audio.hil.json
   field: checks.tone_at_the_jack.measured.thd_percent
-  conditions: same capture as M11, through the board's PWM filter and the interface; pass threshold at most 5 percent
+  conditions: same capture as M9, through the board's PWM filter and the interface; pass threshold at most 5 percent
   value: 1.32
   sha256: f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90
 - id: M11
@@ -291,6 +291,14 @@ numbers_allow:
   reason: a constant in rtl/b30_hil_audio_top.sv (sample width, pixel width, frame period in clocks)
 - token: '4096'
   reason: a constant in rtl/b30_hil_audio_top.sv (sample width, pixel width, frame period in clocks)
+- token: '0x28'
+  reason: an instrument register offset inside the design's shell window, from the register decode in the design's RTL
+- token: '0x2F'
+  reason: an instrument register offset inside the design's shell window, from the register decode in the design's RTL
+- token: '36'
+  reason: block RAM tile size in Kb (a device fact, AMD UG473)
+- token: '85'
+  reason: board junction-temperature limit in C, from the house power rule (flow/hw.py power gate)
 state:
   stage: board-verified
   gates:

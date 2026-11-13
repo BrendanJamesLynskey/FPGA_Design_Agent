@@ -87,7 +87,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: the word variant has a combinational XOR network from the operand inputs to the result register: out of context that path has no register before it, so no Fmax is recorded there. Inside a core, synthesis can merge the logic that drives the operands into the network, so the unit's line in a hierarchy report overstates it (283 LUTs in the BRV32P core, 97 with its hierarchy kept, 95 out of context); read the cost as the whole core's growth (371 LUTs: results/64a_hwsw/core_ooc.json).
+- The word variant has a combinational XOR network from the operand inputs to the result register: out of context that path has no register before it, so no Fmax is recorded there. Inside a core, synthesis can merge the logic that drives the operands into the network, so the unit's line in a hierarchy report overstates it (283 LUTs in the BRV32P core, 97 with its hierarchy kept, 95 out of context); read the cost as the whole core's growth (371 LUTs: results/64a_hwsw/core_ooc.json).
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps

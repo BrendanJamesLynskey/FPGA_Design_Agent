@@ -2,7 +2,7 @@
 source: designs/b63d_nexys_net/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b63d_nexys_net
 
 ## identity
-kind=demonstration produced_by=agent part=xc7a100tcsg324-1 board=Nexys A7-100T top=b63d_nexys_net_top tool=Vivado 2026.1
+kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b63d_nexys_net_top tool=Vivado 2026.1
 
 ## summary
 Answers ARP and ping, receives and sends UDP, joins IGMP multicast groups and counts frames on the Nexys A7's 10/100 Ethernet PHY (LAN8720A, RMII). A UDP service on port 5000 replies with the tag N63D and 21 statistics counters. A frame injector and capture let the host check the stack through the PHY's loopback with no cable. Built and simulated; it has not been run on a board.
@@ -62,7 +62,7 @@ M7 power power_w=0.251 W R3#gates.power.total_w: total on-chip power estimate | 
 M8 verification -=56 faults R4#caught: seeded faults caught | of 56, in the library blocks and MAC
 
 ## gaps
-[board_run] No board run exists. The PHY loopback phase needs no cable but must not start with a cable in J4. The link phase needs one cable from J4 to an isolated PC interface at 192.168.63.1/24, and the owner's confirmation of the cabling (host/PLAN.md). Everything about the PHY, the pin timing in practice and the stack against a real host is unobserved.
+[board_run] No board run exists. The PHY loopback phase needs no cable but must not start with a cable in J4. The link phase needs one cable from J4 to an isolated PC interface at 192.168.63.1/24, and the board owner's confirmation of the cabling (host/PLAN.md). Everything about the PHY, the pin timing in practice and the stack against a real host is unobserved.
 [latency] Not measured on the design. The block benches declare latencies (ARP 3, ICMP 4, UDP transmit 4 clocks) but no record times the design end to end.
 [throughput] Not measured; the design counts frames, and no record gives a frame rate or a bit rate.
 [timing] The pin timing uses RMII rev 1.2 figures (output change 2 to 14 ns after the clock, input setup 4 ns and hold 2 ns), not the LAN8720A data sheet's REF_CLK-in table, which is not in the knowledge bank and must be checked before the board run. Board traces are ignored. The forwarded clock phase (335.25 degrees) was chosen from the tool's timing, not from a measurement.

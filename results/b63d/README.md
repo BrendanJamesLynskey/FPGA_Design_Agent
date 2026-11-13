@@ -1,6 +1,6 @@
 # Results for the Ethernet MAC 0.2 and the network blocks
 
-Every number below is copied from the files in this folder or from the entries' `char/xc7a100tcsg324-1.json`.
+Brief 63D's records for the Ethernet MAC 0.2 and the network blocks (MDIO, ARP, ICMP echo, IPv4/UDP receive and transmit, IGMPv2): out-of-context timing and cost, seeded faults, formal jobs and the Nexys A7 network design build. Every number below is copied from the files in this folder or from the entries' `char/xc7a100tcsg324-1.json`.
 
 ## Timing at a glance
 

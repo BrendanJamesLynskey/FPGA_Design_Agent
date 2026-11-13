@@ -116,7 +116,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: no rounding or saturation: the output carries every bit; no symmetric-coefficient or polyphase (decimating, interpolating) forms yet; coefficients are loaded one at a time (the folded variants take three clocks per coefficient).
+- No rounding or saturation: the output carries every bit; no symmetric-coefficient or polyphase (decimating, interpolating) forms yet; coefficients are loaded one at a time (the folded variants take three clocks per coefficient).
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps

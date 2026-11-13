@@ -71,7 +71,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: AXI4-Lite only (no bursts or IDs); 32-bit data; waits for both AWVALID and WVALID before it accepts a write; no register slices or timeouts (a slave that never answers stalls its master); fixed round robin, no priorities or QoS.
+- AXI4-Lite only (no bursts or IDs); 32-bit data; waits for both AWVALID and WVALID before it accepts a write; no register slices or timeouts (a slave that never answers stalls its master); fixed round robin, no priorities or QoS.
 - Board: no board run of this entry is recorded; its evidence is simulation.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 

@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: b58a_trigger
 title: Mock low-latency trading path on the Kria KR260
 kind: showcase
-produced_by: human+agent
+produced_by: human
 summary: A bench model of a low-latency trading path. A packet arrives on a PL Ethernet port, its fields are parsed while
   it is still arriving, a rule loaded at run time decides, hardware interlocks check the order, and in speculative mode
   the response leaves before the incoming frame has finished (undone by a poisoned frame check sequence if the frame was
@@ -362,6 +362,8 @@ numbers_allow:
   reason: lower bound of the frames-since-last-request test, tests/rev2_cocotb.py
 - token: '00'
   reason: the revision suffix of the PHY datasheet document number MV-S100649-00 (an identifier, not a measurement)
+- token: '2125'
+  reason: tick-to-config clocks from results/b58a/showcase_sim.json (2,000 of them an assumed software time)
 state:
   stage: built
   gates:

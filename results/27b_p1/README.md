@@ -28,9 +28,9 @@ are in `project/cli.py`. The oracle files written by `prepare.py` are not commit
 
 ## Known gaps and limits
 
-- Each row is one run of a stochastic drafter; the decomposition changed from run to run (3, 7 and 5 modules for the same pilot spec), so counts are per run, not a rate.
+- Each row is one run of a stochastic drafter; the decomposition changed from run to run (the Modules column of results.md: 3 modules in pilot1_run1, 7 in pilot1_run2), so counts are per run, not a rate.
 - The oracle answers only from the hidden specs, which do not state many contract-level fields, so most assumptions are "not specified"; a person would answer more.
 - The harness was changed between runs after reading a run (`results.md` lists the changes), so the runs are not of one harness version; `pilot1` and `c12_pwm_audio` ran with the final harness, and the last column re-checks every run's files with today's checker.
-- Owner choice 2 (the median latency) was lost in the oracle set-up in run 6, and in run 7 choice 1 held on one of two stream links only.
+- Owner choice 2 (the median latency) was lost in the oracle set-up in pilot1_run6, and in pilot1 ("run 7" in results.md) choice 1 held on one of two stream links only.
 - A quote proves the words are in the spec, not that the value matches; no review step for quoted fields, no review of the decomposition, no test-plan pass and no interactive approval of each pass were built.
 - Development-split subjects only; nothing measures changes the contracts would have prevented.

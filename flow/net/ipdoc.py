@@ -79,6 +79,13 @@ def check(block: str) -> list[str]:
         from flow import ipvariants
         errs += ipvariants.validate(block)
     errs += register_problems(block, y)
+    from flow import handover as H                      # brief 68: the hand-over fields have content
+    for k, v in [("limits", y.get("limits"))] + [(f"next_steps[{i}]", s) for i, s in enumerate(y.get("next_steps") or [])] \
+            + [(f"gaps[{i}]", s) for i, s in enumerate(y.get("gaps") or [])]:
+        if not isinstance(v, str) or H.PLACEHOLDER.search(v) or H.meaningful(v) < 4:
+            errs.append(f"{block}: {k} is empty, a placeholder or under 4 distinct meaningful words")
+    if not isinstance(y.get("next_steps"), list) or not y["next_steps"]:
+        errs.append(f"{block}: next_steps must be a non-empty list")
     return errs
 
 
@@ -198,7 +205,7 @@ BOARD_RUN = re.compile(r"measured on the Nexys|on the Nexys A7-100T inside|on th
 def gaps_section(block: str, y: dict) -> list[str]:
     """Known gaps and limits (docs/documentation_standard.md, IP template): the declared limits, whether a board run
     is recorded, whether the out-of-context cost is measured, seeded faults not run, and any extra `gaps:` in ip.yaml."""
-    L = ["", "## Known gaps and limits", "", f"- Limits: {_sentence(y['limits'])}"]
+    L = ["", "## Known gaps and limits", "", f"- {_sentence(y['limits'][:1].upper() + y['limits'][1:])}"]
     if not BOARD_RUN.search(y["status"]):
         L.append("- Board: no board run of this entry is recorded; its evidence is simulation"
                  + (" and out-of-context builds." if y.get("characterisation") else "."))
@@ -209,10 +216,14 @@ def gaps_section(block: str, y: dict) -> list[str]:
     if faults.exists():
         fj = ROOT / "results" / FAULTS_JSON.get(block, "b40") / "faults.json"
         res = {f["name"]: f["status"] for f in json.loads(fj.read_text())["faults"]} if fj.exists() else {}
-        nr = [f["name"] for f in yaml.safe_load(faults.read_text())["faults"] if f["name"] not in res]
+        names = [f["name"] for f in yaml.safe_load(faults.read_text())["faults"]]
+        nr = [n for n in names if n not in res]
+        missed = [n for n in names if n in res and res[n] != "caught"]
         if nr:
             L.append("- Seeded faults not run: " + ", ".join(f"`{n}`" for n in nr) + ".")
-    L += [f"- {_sentence(g)}" for g in y.get("gaps") or []]
+        if missed:
+            L.append("- Seeded faults not caught: " + ", ".join(f"`{n}` ({res[n]})" for n in missed) + ".")
+    L += [f"- {_sentence(g[:1].upper() + g[1:])}" for g in y.get("gaps") or []]
     return L
 
 

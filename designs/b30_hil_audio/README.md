@@ -10,7 +10,7 @@ Not in scope:
 - a test of the instruments' own correctness; the library blocks are tested in ip_lib and hil/tests
 - the video, analogue-input, M2K, Pluto, RTL-SDR and Red Pitaya paths, which no run covered
 
-Kind: demonstration; written by hand with agent runs. State: board-verified. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by hand. State: board-verified. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 ### How it is built
@@ -97,7 +97,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `efa287bc` (`python flo
 |---|---|---|---|---|---|
 | E1 | simulation | pass | every instrument's registers read through the shell in simulation and compared with the Python golden models | [`designs/b30_hil_audio/tests/test_hil_audio_rtl.py`](tests/test_hil_audio_rtl.py) (run in CI) | - |
 | E2 | build | pass | whole-board build on Vivado 2026.1; every gate passes (built, not programmed) | [`results/vivado_2026_1_remeasure/b30_hil_audio.json`](../../results/vivado_2026_1_remeasure/b30_hil_audio.json) | - |
-| E3 | board | pass (1 runs) | one hardware-in-the-loop run; all eight checks pass (design ID, frame CRC known answer, seeded pixel fault seen, tone frequency in the FPGA, logic analyser against the DDS model, pre-trigger, XADC against JTAG sysmon, tone at the audio jack) | [`results/b30/hil_runs/b30_hil_audio.hil.json`](../../results/b30/hil_runs/b30_hil_audio.hil.json) | wall power; power gate passed before programming; die temperature and rails read by the XADC and by JTAG sysmon agreed within tolerance (M11, M12); audio captured by a USB interface at gain about 50 percent, uncalibrated; ambient not recorded |
+| E3 | board | pass (1 run) | one hardware-in-the-loop run; all eight checks pass (design ID, frame CRC known answer, seeded pixel fault seen, tone frequency in the FPGA, logic analyser against the DDS model, pre-trigger, XADC against JTAG sysmon, tone at the audio jack) | [`results/b30/hil_runs/b30_hil_audio.hil.json`](../../results/b30/hil_runs/b30_hil_audio.hil.json) | wall power; power gate passed before programming; die temperature and rails read by the XADC and by JTAG sysmon agreed within tolerance (M11, M12); audio captured by a USB interface at gain about 50 percent, uncalibrated; ambient not recorded |
 
 Gates at handover: `build_2026_1` pass, `hil_board` pass.
 
@@ -120,7 +120,7 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 | M7 | CRC-32 of the generated 128-pixel frame, read from the board | 93c30c48 | 1 | [`results/b30/hil_runs/b30_hil_audio.hil.json`](../../results/b30/hil_runs/b30_hil_audio.hil.json) `checks.frame_crc_known_answer.measured.crc` | equals the golden model's CRC; the pass rule is exact equality with no new mismatches |
 | M8 | tone frequency measured inside the FPGA | 1000 Hz | 1 | [`results/b30/hil_runs/b30_hil_audio.hil.json`](../../results/b30/hil_runs/b30_hil_audio.hil.json) `checks.tone_frequency_in_fpga.measured` | 0.5 s gate on the sample sign bit, resolution 2 Hz; pass range 1000 Hz plus or minus 4 Hz |
 | M9 | tone level at the audio jack, relative to full scale of the capture interface | -29.27 dBFS | 1 | [`results/b30/hil_runs/b30_hil_audio.hil.json`](../../results/b30/hil_runs/b30_hil_audio.hil.json) `checks.tone_at_the_jack.measured.level_dbfs_rms` | USB audio capture of the right channel; gain about 50 percent, not calibrated; pass threshold at least -75 dBFS |
-| M10 | total harmonic distortion of the tone at the audio jack | 1.32 % | 1 | [`results/b30/hil_runs/b30_hil_audio.hil.json`](../../results/b30/hil_runs/b30_hil_audio.hil.json) `checks.tone_at_the_jack.measured.thd_percent` | same capture as M11, through the board's PWM filter and the interface; pass threshold at most 5 percent |
+| M10 | total harmonic distortion of the tone at the audio jack | 1.32 % | 1 | [`results/b30/hil_runs/b30_hil_audio.hil.json`](../../results/b30/hil_runs/b30_hil_audio.hil.json) `checks.tone_at_the_jack.measured.thd_percent` | same capture as M9, through the board's PWM filter and the interface; pass threshold at most 5 percent |
 | M11 | die temperature read by the in-design XADC | 25.716 C | 1 | [`results/b30/hil_runs/b30_hil_audio.hil.json`](../../results/b30/hil_runs/b30_hil_audio.hil.json) `checks.xadc_vs_jtag.measured.tj_c` | fabric DRP readout; the JTAG sysmon read 25.6 C in the same run; pass tolerance 2 C and at most 85 C |
 | M12 | VCCINT read by the in-design XADC | 1.0063 V | 1 | [`results/b30/hil_runs/b30_hil_audio.hil.json`](../../results/b30/hil_runs/b30_hil_audio.hil.json) `checks.xadc_vs_jtag.measured.vccint_v` | fabric DRP readout against JTAG sysmon, tolerance 0.02 V |
 

@@ -2,7 +2,7 @@
 source: designs/b30_hil_audio/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/b30_hil_audio
 
 ## identity
-kind=demonstration produced_by=human+agent part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
+kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
 
 ## summary
 One design on the Nexys A7 that carries four library instruments (a tone generator, a frequency and duty counter, a logic analyser and a frame CRC) and an XADC readout behind the test shell, so that every sensing path of the brief 30 hardware-in-the-loop stage has something to read. The tone leaves the board as PWM audio, and `hil.yaml` lists eight checks that compare the board with Python golden models, including a measurement of the tone at the audio jack.
@@ -55,7 +55,7 @@ M6 power power_w=0.128 W R2#power_w: total on-chip power estimate | report_power
 M7 board -=93c30c48 R3#checks.frame_crc_known_answer.measured.crc: CRC-32 of the generated 128-pixel frame, read from the board | equals the golden model's CRC; the pass rule is exact equality with no new mismatches
 M8 board -=1000 Hz R3#checks.tone_frequency_in_fpga.measured: tone frequency measured inside the FPGA | 0.5 s gate on the sample sign bit, resolution 2 Hz; pass range 1000 Hz plus or minus 4 Hz
 M9 board -=-29.27 dBFS R3#checks.tone_at_the_jack.measured.level_dbfs_rms: tone level at the audio jack, relative to full scale of the capture interface | USB audio capture of the right channel; gain about 50 percent, not calibrated; pass threshold at least -75 dBFS
-M10 board -=1.32 % R3#checks.tone_at_the_jack.measured.thd_percent: total harmonic distortion of the tone at the audio jack | same capture as M11, through the board's PWM filter and the interface; pass threshold at most 5 percent
+M10 board -=1.32 % R3#checks.tone_at_the_jack.measured.thd_percent: total harmonic distortion of the tone at the audio jack | same capture as M9, through the board's PWM filter and the interface; pass threshold at most 5 percent
 M11 board -=25.716 C R3#checks.xadc_vs_jtag.measured.tj_c: die temperature read by the in-design XADC | fabric DRP readout; the JTAG sysmon read 25.6 C in the same run; pass tolerance 2 C and at most 85 C
 M12 board -=1.0063 V R3#checks.xadc_vs_jtag.measured.vccint_v: VCCINT read by the in-design XADC | fabric DRP readout against JTAG sysmon, tolerance 0.02 V
 

@@ -58,7 +58,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: frequency resolution is f_clk / GATE_CLKS; input edges closer than two clocks are missed; no hysteresis or glitch filter.
+- Frequency resolution is f_clk / GATE_CLKS; input edges closer than two clocks are missed; no hysteresis or glitch filter.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 
 ## Next steps

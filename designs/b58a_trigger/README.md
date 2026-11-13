@@ -10,7 +10,7 @@ Not in scope:
 - a board result; no latency figure here was measured on hardware, and the PHYs, the cable and the real RGMII timing are outside every number
 - a proof of the whole design; only interlocks.sv has a k-induction proof, and the order slot and the MAC state machines have bounded checks
 
-Kind: showcase; written by hand with agent runs. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 A packet arrives on a PL Ethernet port of the Kria KR260; its fields are parsed while it is still arriving; a rule

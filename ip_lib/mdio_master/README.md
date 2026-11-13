@@ -73,7 +73,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: clause 22 only (no clause 45 indirect access); no preamble suppression; one access at a time; the line changes DIV clocks after each rising edge of MDC, so the hold time is DIV clock periods (at least 10 ns asks DIV >= 2 at 125 MHz).
+- Clause 22 only (no clause 45 indirect access); no preamble suppression; one access at a time; the line changes DIV clocks after each rising edge of MDC, so the hold time is DIV clock periods (at least 10 ns asks DIV >= 2 at 125 MHz).
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps

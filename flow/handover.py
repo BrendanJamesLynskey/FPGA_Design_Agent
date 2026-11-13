@@ -53,15 +53,29 @@ SECTIONS = [("what", None), ("parameters", "Technical parameters"), ("build", "H
 # Device capacity for the utilisation chart (AMD DS180 7-series overview; DS987 Zynq UltraScale+ for the K26 SOM part)
 CAPACITY = {"xc7a100tcsg324-1": {"lut": 63400, "ff": 126800, "bram36": 135, "dsp": 240},
             "xck26-sfvc784-2LV-c": {"lut": 117120, "ff": 234240, "bram36": 144, "dsp": 1248}}
-PLACEHOLDER = re.compile(r"\b(TODO|TBD|FIXME|XXX+|lorem ipsum|placeholder|fill (this )?in|to be written|coming soon)\b"
+PLACEHOLDER = re.compile(r"\b(TODO|TBD|FIXME|XXX+|lorem ipsum|to be written|coming soon)\b"
                          r"|^\s*(-+|n/?a|none|nothing|\.\.\.|\?+|tbc)\s*\.?\s*$", re.I)
+JUNK_WORDS = {"n", "a", "na", "none", "nothing", "tbd", "tbc", "todo", "fixme", "xxx", "known", "gap", "gaps", "x", "the",
+              "and", "of", "to", "is", "it", "in", "yet", "not", "applicable"}
 NUM = re.compile(r"(?<![\w.])[+-]?\d[\d,]*(?:\.\d+)?")
+# a "number word": starts with a digit (or a sign and a digit) and runs to the next space or bracket: 4999, -0.433,
+# 1,048,576, 0x80, 16-bit, 1e9, 12_345. Words that start with a letter (ADXL362, b30, x4999) are identifiers and are
+# not checked (a documented limit).
+NUMWORD = re.compile(r"(?<![\w.])[+-]?\d[\w.,+\-/%]*")
+LEAD = re.compile(r"[+-]?\d[\d,]*(?:\.\d+)?")
+HEXISH = re.compile(r"^[0-9a-f]{8,}$")
 PROSE = re.compile(r"<!-- prose:(\w+) -->\n(.*?)<!-- /prose:\1 -->", re.S)
-BANNED = [(re.compile(r"\bVivado\s+(?!2026\.1\b)20\d\d\.\d"), "names a Vivado release other than 2026.1"),
-          (re.compile(r"\bImplementer\b"), "uses the retired role name 'Implementer'"),
+BANNED = [(re.compile(r"\bVivado[\s-]+v?(?!2026\.1\b)20\d\d\.\d", re.I), "names a Vivado release other than 2026.1"),
+          (re.compile(r"\bImplementer\b"), "uses the retired role name for the Designer"),
           (re.compile(r"AI coding assistant", re.I), "uses the phrase 'AI coding assistant'")]
 RECORD_DIRS = ("results/", "ip_lib/<entry>/char/")
-MIN_WORDS = {"summary": 20, "gap": 5, "next": 4, "evidence": 4, "measurement": 2}
+MIN_WORDS = {"summary": 12, "gap": 4, "next": 4, "evidence": 4, "scope": 3, "board_conditions": 8}
+# free-text fields of handover.yaml: their numbers are checked like prose, and they never vouch for a number
+FREE = re.compile(r"^(title|summary|scope_not\[\d+\]|target\.note|clocks\[\d+\]\.note|resets\[\d+\]\.note|"
+                  r"interfaces\[\d+\]\.(note|type)|parameters\[\d+\]\.note|files\[\d+\]\.what|commands\[\d+\]\.(what|needs)|"
+                  r"evidence\[\d+\]\.(what|conditions)|measurements\[\d+\]\.(what|conditions|unit)|gaps\[\d+\]\.text|"
+                  r"next_steps\[\d+\]|open_questions\[\d+\]|history\[\d+\]\.note|agent_run\.note|numbers_allow\[\d+\]\.reason)$")
+NO_VOUCH = re.compile(r"(sha256|build_id|kb_pin)$")
 
 
 # ------------------------------------------------------------------------------------------------------ helpers
@@ -98,6 +112,9 @@ def lookup(obj, path: str):
     return obj
 
 
+READ_ERRORS = (KeyError, IndexError, TypeError, ValueError, OSError, yaml.YAMLError, re.error)
+
+
 def record_value(m: dict, root: Path = ROOT):
     """The value a measurement cites, read from its record now."""
     p = root / m["record"]
@@ -128,6 +145,8 @@ def same(a, b) -> bool:
 
 
 def fmt(v) -> str:
+    if v is None:
+        return "(not filled)"
     if isinstance(v, bool):
         return "yes" if v else "no"
     if isinstance(v, float):
@@ -139,15 +158,29 @@ def fmt(v) -> str:
 
 # ------------------------------------------------------------------------------------------------------ fill
 def fill(h: dict, ddir: Path, build_id: bool = False) -> dict:
-    """Values and hashes from the records (the only way a number gets into handover.yaml)."""
+    """Values and hashes from the records (the only way a number gets into handover.yaml). Raises ValueError listing
+    every record it could not read (Part C's sign-off step reports these to the Designer)."""
+    bad = []
     for m in h.get("measurements") or []:
-        m["value"] = record_value(m)
-        m["sha256"] = sha256(ROOT / m["record"])
+        try:
+            m["value"] = record_value(m)
+            m["sha256"] = sha256(ROOT / m["record"])
+        except READ_ERRORS as ex:
+            bad.append(f"{m.get('id')}: {m.get('record')}: {ex}")
     for e in h.get("evidence") or []:
-        e["sha256"] = sha256(ROOT / e["record"])
+        p = ROOT / e["record"]
+        if p.is_file():
+            e["sha256"] = sha256(p)
+        else:
+            bad.append(f"{e.get('id')}: {e['record']} is not a file")
     for f in h.get("files") or []:
         p = ROOT / f["path"]
-        f["sha256"] = sha256(p) if p.is_file() else None
+        if p.is_file():
+            f["sha256"] = sha256(p)
+        else:
+            bad.append(f"files: {f['path']} is not a file")
+    if bad:
+        raise ValueError("fill: " + "; ".join(bad))
     st = h.setdefault("state", {})
     st["vivado"] = VIVADO
     from flow import manifest
@@ -174,6 +207,12 @@ def _words(s: str) -> int:
     return len(re.findall(r"[A-Za-z0-9]+", s or ""))
 
 
+def meaningful(s: str) -> int:
+    """Distinct words that are not placeholder filler, with link targets and URLs removed."""
+    s = re.sub(r"\]\([^)]*\)|https?://\S+", " ", s or "")
+    return len({w.lower() for w in re.findall(r"[A-Za-z0-9]+", s)} - JUNK_WORDS)
+
+
 def _strings(v, path=""):
     if isinstance(v, str):
         yield path, v
@@ -185,49 +224,118 @@ def _strings(v, path=""):
             yield from _strings(x, f"{path}.{k}" if path else k)
 
 
+def visible(text: str) -> str:
+    """Markdown/HTML as a reader sees it: comments and tags removed, entities decoded."""
+    t = re.sub(r"<!--.*?-->", "", text, flags=re.S)
+    t = re.sub(r"<[^>]*>", "", t)
+    return re.sub(r"<[^>]*>", "", html.unescape(t))
+
+
+def _norm(w: str) -> str:
+    return w.rstrip(".,:;-/%").lstrip("+").replace(",", "")
+
+
+def _canon(lead: str) -> str:
+    """One spelling per number: 1000, 1000.0 and +1000 are the same; 0.10 and 0.1 too."""
+    try:
+        return f"{float(lead):g}" if len(lead.replace("-", "").replace(".", "")) <= 15 else lead
+    except ValueError:
+        return lead
+
+
 def _tokens_of_text(t: str) -> set:
-    return {x.lstrip("+").replace(",", "") for x in NUM.findall(t)} | {x.replace(",", "") for x in
-                                                                    re.findall(r"\d[\d,]*(?:\.\d+)?", t)}
-
-
-def _num_tokens(v) -> set:
+    """What a text vouches for: each number word whole, and its leading number."""
     out = set()
-    if isinstance(v, bool) or v is None:
-        return out
-    if isinstance(v, (int, float)):
-        f = float(v)
-        out |= {str(v), fmt(v).replace(",", ""), f"{f:g}", f"{abs(f):g}", f"{f:.1f}", f"{f:.2f}", f"{f:.3f}"}
-        if f == int(f):
-            out.add(str(int(f)))
-        return out
-    if isinstance(v, str):
-        return _tokens_of_text(v)
-    for x in (v.values() if isinstance(v, dict) else v):
-        out |= _num_tokens(x)
+    for w in NUMWORD.findall(t):
+        n = _norm(w)
+        if HEXISH.match(n):
+            continue
+        out.add(n)
+        m = LEAD.match(n)
+        if m:
+            lead = m.group(0).replace(",", "").lstrip("+")
+            out |= {lead, _canon(lead)}
     return out
 
 
-def allowed_numbers(h: dict) -> set:
-    """Numbers a prose block may use: anything in handover.yaml (other than numbers_allow itself, which is added by
-    token), anything in a cited record whose hash still matches, and the allow-list."""
-    toks = _num_tokens({k: v for k, v in h.items() if k != "numbers_allow"})
-    for c in (h.get("evidence") or []) + (h.get("measurements") or []):
-        p = ROOT / c["record"]
-        if p.is_file() and p.stat().st_size < 8_000_000 and c.get("sha256") == sha256(p):
+def unvouched(text: str, ok: set) -> list[str]:
+    """Number words in `text` not vouched for by `ok`: the leading number must be in `ok`; a word with more digits
+    after it (0x1F40, 1e9, 12_345) must be in `ok` whole."""
+    bad = []
+    for w in NUMWORD.findall(visible(text)):
+        n = _norm(w)
+        if not n or HEXISH.match(n.lower()):         # a hash or build ID is an identifier, not a quantity
+            continue
+        lead = LEAD.match(n).group(0).replace(",", "").lstrip("+")
+        rest = n[LEAD.match(n).end():]
+        if n in ok or (lead in ok or lead.lstrip("-") in ok or _canon(lead) in ok) and not re.search(r"\d", rest):
+            continue
+        bad.append(w)
+    return bad
+
+
+def _value_tokens(v) -> set:
+    if isinstance(v, bool) or v is None:
+        return set()
+    if isinstance(v, (int, float)):
+        f = float(v)
+        out = {str(v), fmt(v).replace(",", ""), f"{f:g}", f"{abs(f):g}", f"{f:.1f}", f"{f:.2f}", f"{f:.3f}",
+               _canon(f"{f:.1f}"), _canon(f"{f:.2f}"), _canon(f"{f:.3f}")}
+        if f == int(f):
+            out.add(str(int(f)))
+        return out
+    return _tokens_of_text(str(v))
+
+
+def allowed_numbers(h: dict, ddir: Path | None = None) -> set:
+    """Numbers text may use: the structured fields of handover.yaml (never its free text, hashes or IDs), the text of
+    every cited record, design file and local interface document whose hash still matches, and numbers_allow."""
+    toks = set()
+    for path, s in _strings(h):
+        if not FREE.match(path) and not NO_VOUCH.search(path) and not path.startswith("numbers_allow"):
+            toks |= _tokens_of_text(s)
+    for m in h.get("measurements") or []:
+        toks |= _value_tokens(m.get("value"))
+    for x in (h.get("clocks") or []):
+        toks |= _value_tokens(x.get("mhz"))
+    for x in (h.get("parameters") or []):
+        toks |= _value_tokens(x.get("value"))
+    for x in (h.get("evidence") or []):
+        toks |= _value_tokens(x.get("runs"))
+    for x in (h.get("history") or []):
+        toks |= _value_tokens(x.get("pr"))
+    srcs = [(c["record"], c.get("sha256")) for c in (h.get("evidence") or []) + (h.get("measurements") or [])]
+    srcs += [(f["path"], f.get("sha256")) for f in h.get("files") or []]
+    for p_, sh in srcs:
+        p = ROOT / p_
+        if p.is_file() and p.stat().st_size < 8_000_000 and sh == sha256(p):
             toks |= _tokens_of_text(p.read_text(errors="replace"))
-    toks |= {a["token"].replace(",", "") for a in h.get("numbers_allow") or []}
+    for i in h.get("interfaces") or []:
+        d = i.get("doc")
+        if d and not d.startswith("http") and (ROOT / d.split("#")[0]).is_file():
+            toks |= _tokens_of_text((ROOT / d.split("#")[0]).read_text(errors="replace"))
+    toks |= _tokens_of_text((ROOT / ".github" / "workflows" / "ci.yml").read_text())   # pinned tool versions
+    toks |= {_norm(a["token"]) for a in h.get("numbers_allow") or []}
     return toks
 
 
 def _clock_ok(c: dict) -> bool:
+    """An XDC/SDC source must have a create_clock on a port of this name (or with -name) whose period gives the
+    frequency; any other source must be a results record with the frequency as a value."""
     p = ROOT / c["source"]
     if not p.is_file():
         return False
     t = p.read_text(errors="replace")
-    periods = re.findall(r"-period\s+([\d.]+)", t)
-    if any(abs(1000.0 / float(x) - c["mhz"]) < 0.01 for x in periods if float(x) > 0):
-        return True
-    return f"{c['mhz']:g}" in _tokens_of_text(t)
+    if p.suffix in (".xdc", ".sdc"):
+        for line in re.findall(r"(?m)^\s*create_clock\b.*$", t):
+            per = re.search(r"-period\s+([\d.]+)", line)
+            named = re.search(rf"get_ports\s+\{{?\s*{re.escape(c['name'])}\s*\}}?\]|-name\s+{re.escape(c['name'])}\b", line)
+            if per and named and float(per.group(1)) > 0 and abs(1000.0 / float(per.group(1)) - c["mhz"]) <= 1e-4 * c["mhz"]:
+                return True
+        return False
+    if c["source"].startswith("results/"):
+        return f"{c['mhz']:g}" in _tokens_of_text(t)
+    return False
 
 
 def _validate(h: dict) -> list[str]:
@@ -239,9 +347,18 @@ def _validate(h: dict) -> list[str]:
     return [f"schema: {'/'.join(map(str, e.absolute_path)) or '(top)'}: {e.message}" for e in v.iter_errors(h)]
 
 
+def _record_rule(rec: str, ddir: Path) -> str | None:
+    p = ROOT / rec
+    if p.resolve().parent == ddir.resolve() and p.name in ("README.md", "AGENT.md", "handover.yaml"):
+        return f"{rec} is a rendering of this handover and cannot be its own evidence"
+    if not p.is_file():
+        return f"{rec} is not a file" if p.exists() else f"{rec} does not exist"
+    return None
+
+
 def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tuple[list[str], list[str]]:
-    """(problems, stale): problems fail the check; stale claims are warnings (the record changed after the handover).
-    `h` and `readme` default to the files on disk (tests pass edited copies)."""
+    """(problems, stale): problems fail the check; stale claims are warnings (the record changed after the handover;
+    `doccheck --strict`, which CI runs, fails on them too). `h` and `readme` default to the files on disk."""
     errs, stale = [], []
     try:
         h = h if h is not None else load(ddir)
@@ -254,48 +371,67 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
         errs.append(f"id {h['id']!r} is not the directory name {ddir.name!r}")
     if h["target"]["tool"] not in (f"Vivado {VIVADO}", "none"):
         errs.append(f"target.tool must be 'Vivado {VIVADO}' or 'none' (published text names only {VIVADO})")
-    # placeholders and minimum lengths
-    for path, s in _strings({k: v for k, v in h.items() if k not in ("commands", "files", "state", "numbers_allow")}):
-        if PLACEHOLDER.search(s) and not path.endswith((".field", ".match", ".record", ".path", ".doc", ".source")):
+    if h["target"]["tool"] != "none" and not h["clocks"]:
+        errs.append("clocks: a design built with Vivado has at least one clock")
+    if h["produced_by"] != "human" and not h.get("agent_run"):
+        errs.append(f"produced_by {h['produced_by']} needs agent_run (the run record)")
+    # placeholders and minimum lengths (meaningful words: distinct, not filler)
+    for path, s in _strings(h):
+        if FREE.match(path) and PLACEHOLDER.search(s):
             errs.append(f"{path}: placeholder text {s!r}")
-    if _words(h["summary"]) < MIN_WORDS["summary"]:
-        errs.append(f"summary: under {MIN_WORDS['summary']} words")
+    if meaningful(h["summary"]) < MIN_WORDS["summary"]:
+        errs.append(f"summary: under {MIN_WORDS['summary']} distinct meaningful words")
+    for i, s in enumerate(h["scope_not"]):
+        if meaningful(s) < MIN_WORDS["scope"]:
+            errs.append(f"scope_not[{i}]: under {MIN_WORDS['scope']} distinct meaningful words")
     for i, g in enumerate(h["gaps"]):
-        if _words(g["text"]) < MIN_WORDS["gap"]:
-            errs.append(f"gaps[{i}]: under {MIN_WORDS['gap']} words")
+        if meaningful(g["text"]) < MIN_WORDS["gap"]:
+            errs.append(f"gaps[{i}]: under {MIN_WORDS['gap']} distinct meaningful words")
     for i, s in enumerate(h["next_steps"]):
-        if _words(s) < MIN_WORDS["next"]:
-            errs.append(f"next_steps[{i}]: under {MIN_WORDS['next']} words")
+        if meaningful(s) < MIN_WORDS["next"]:
+            errs.append(f"next_steps[{i}]: under {MIN_WORDS['next']} distinct meaningful words")
     for e in h["evidence"]:
-        if _words(e["what"]) < MIN_WORDS["evidence"]:
-            errs.append(f"{e['id']}: what is under {MIN_WORDS['evidence']} words")
+        if meaningful(e["what"]) < MIN_WORDS["evidence"]:
+            errs.append(f"{e['id']}: what is under {MIN_WORDS['evidence']} distinct meaningful words")
     ids = [x["id"] for x in h["evidence"] + h["measurements"]]
     if len(ids) != len(set(ids)):
         errs.append("evidence and measurement ids must be unique")
     about = {g["about"] for g in h["gaps"]}
     # evidence
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    ci_words = set(re.findall(r"[\w./-]+", ci))
     for e in h["evidence"]:
-        p = ROOT / e["record"]
-        if not p.exists():
-            errs.append(f"{e['id']}: record {e['record']} does not exist")
+        why = _record_rule(e["record"], ddir)
+        if why:
+            errs.append(f"{e['id']}: record {why}")
             continue
-        if p.is_file() and e.get("sha256") != sha256(p):
+        if not e.get("sha256"):
+            errs.append(f"{e['id']}: no sha256 (run: python -m flow.handover fill {rel(ddir)})")
+        elif e["sha256"] != sha256(ROOT / e["record"]):
             stale.append(f"{e['id']}: {e['record']} changed since the handover (sha256)")
         if e["result"] != "pass" and e["id"] not in about:
             errs.append(f"{e['id']}: result {e['result']} needs a gap with about: {e['id']}")
-        if e["activity"] == "board" and _words(e.get("conditions", "")) < 3:
-            errs.append(f"{e['id']}: board evidence must state its operating conditions")
-        if e.get("how") == "ci" and not (e["record"] in ci or (Path(e["record"]).name.startswith("test_")
-                                                                and not e["record"].endswith("_rtl.py"))):
-            errs.append(f"{e['id']}: how: ci, but {e['record']} is not run by .github/workflows/ci.yml")
-    for gname, r in (h["state"].get("gates") or {}).items():
+        if e["activity"] == "board" and meaningful(e.get("conditions", "")) < MIN_WORDS["board_conditions"]:
+            errs.append(f"{e['id']}: hardware evidence must state its operating conditions (power, temperature, rails, "
+                        "or that they were not read)")
+        if e.get("how") == "ci":
+            name = Path(e["record"]).name
+            if not (re.fullmatch(r"test_\w+\.py", name) and (e["record"] in ci_words or not name.endswith("_rtl.py"))):
+                errs.append(f"{e['id']}: how: ci, but CI does not run {e['record']} as a test")
+    gates = h["state"].get("gates") or {}
+    for gname, r in gates.items():
         if r != "pass" and gname not in about:
             errs.append(f"state.gates.{gname}: {r} needs a gap with about: {gname}")
+    stage = h["state"]["stage"]
+    if stage == "board-verified" and not any(e["activity"] == "board" and e["result"] == "pass" for e in h["evidence"]):
+        errs.append("state.stage board-verified needs a passing board evidence entry")
+    if stage == "signed-off" and (not gates or any(r != "pass" for r in gates.values())):
+        errs.append("state.stage signed-off needs every gate in state.gates to pass")
     # measurements: the value must be the record's
     for m in h["measurements"]:
         p = ROOT / m["record"]
-        if not (m["record"].startswith("results/") or (m["record"].startswith("ip_lib/") and "/char/" in m["record"])) or p.name in ("README.md", "AGENT.md", "handover.yaml"):
+        if not (m["record"].startswith("results/") or (m["record"].startswith("ip_lib/") and "/char/" in m["record"])) \
+                or p.name in ("README.md", "AGENT.md", "handover.yaml"):
             errs.append(f"{m['id']}: a measurement's record must be a results file under {', '.join(RECORD_DIRS)} "
                         "(not a README, AGENT.md or handover.yaml)")
             continue
@@ -304,28 +440,32 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
             continue
         try:
             now = record_value(m)
-        except (KeyError, IndexError, TypeError, ValueError) as ex:
+        except READ_ERRORS as ex:
             errs.append(f"{m['id']}: cannot read {m['record']} at {m.get('field') or m.get('match')}: {ex}")
             continue
-        if m.get("sha256") != sha256(p):
+        if "value" not in m or not m.get("sha256"):
+            errs.append(f"{m['id']}: value or sha256 not filled (run: python -m flow.handover fill {rel(ddir)})")
+        elif m["sha256"] != sha256(p):
             stale.append(f"{m['id']}: {m['record']} changed since the handover (sha256); value {m.get('value')!r}, "
                          f"record now {now!r}")
         elif not same(m.get("value"), now):
             errs.append(f"{m['id']}: value {m.get('value')!r} is not the record's {now!r} "
                         f"({m['record']}#{m.get('field') or m.get('match')})")
+        if m["category"] in CATEGORIES_REQUIRED and not (isinstance(now, (int, float)) and not isinstance(now, bool)):
+            errs.append(f"{m['id']}: a {m['category']} measurement must be a number (record has {now!r}); "
+                        "a missing quantity is a gap")
     cats = {m["category"] for m in h["measurements"]}
     for c in CATEGORIES_REQUIRED:
         if c not in cats and c not in about:
             errs.append(f"technical parameter {c!r}: no measurement and no gap with about: {c}")
     # files, interfaces, clocks
     for f in h["files"]:
-        p = ROOT / f["path"]
-        if p.parent == ddir.resolve() and p.name in ("README.md", "AGENT.md", "handover.yaml"):
-            errs.append(f"files: {f['path']} is a rendering of this handover; list source files only")
-            continue
-        if not (p.exists() or list(ROOT.glob(f["path"]))):
-            errs.append(f"files: {f['path']} does not exist")
-        elif p.is_file() and f.get("sha256") and f["sha256"] != sha256(p):
+        why = _record_rule(f["path"], ddir)
+        if why:
+            errs.append(f"files: {why}")
+        elif not f.get("sha256"):
+            errs.append(f"files: {f['path']} has no sha256 (run fill)")
+        elif f["sha256"] != sha256(ROOT / f["path"]):
             stale.append(f"files: {f['path']} changed since the handover")
     for i in h["interfaces"]:
         d = i.get("doc")
@@ -333,7 +473,8 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
             errs.append(f"interface {i['name']}: doc {d} does not exist")
     for c in h["clocks"]:
         if not _clock_ok(c):
-            errs.append(f"clock {c['name']}: {c['mhz']} MHz does not agree with {c['source']}")
+            errs.append(f"clock {c['name']}: {c['mhz']} MHz does not agree with {c['source']} (an XDC create_clock "
+                        "on that port, or a results record)")
     if h.get("agent_run") and not (ROOT / h["agent_run"]["record"]).exists():
         errs.append(f"agent_run: {h['agent_run']['record']} does not exist")
     # renderings
@@ -346,12 +487,18 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
         p = ddir / name
         if not p.exists() or (readme if name == "README.md" else p.read_text()) != text:
             errs.append(f"{name} is not current (run: python -m flow.handover write {rel(ddir)})")
-    okn = allowed_numbers(h)
+    # numbers: free text in handover.yaml and the prose blocks may use only vouched-for numbers
+    okn = allowed_numbers(h, ddir)
+    for path, s in _strings(h):
+        if FREE.match(path) and not path.startswith("numbers_allow"):
+            for w in unvouched(s, okn):
+                errs.append(f"{path}: number {w} is not in a cited record, a design file, a structured field or numbers_allow")
     for k, body in prose.items():
-        for tok in NUM.findall(re.sub(r"\]\([^)]*\)|<!--.*?-->", " ", body)):
-            t = tok.lstrip("+").replace(",", "")
-            if t not in okn and t.lstrip("-") not in okn:
-                errs.append(f"README prose:{k}: number {tok} is not in handover.yaml, a cited record or numbers_allow")
+        for w in unvouched(body, okn):
+            errs.append(f"README prose:{k}: number {w} is not in a cited record, a design file, a structured field or "
+                        "numbers_allow")
+        if re.search(r"\b(TODO|TBD|FIXME)\b", visible(body)):
+            errs.append(f"README prose:{k}: placeholder (TODO/TBD/FIXME)")
     for name, text in want.items():
         for rx, why in BANNED:
             if rx.search(text):
@@ -360,18 +507,20 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
 
 
 def freshness(ddir: Path, deep: bool = False) -> dict:
-    """For resume (Part D): what changed since the handover. deep=True also recomputes the build ID (prepare.py)."""
+    """For resume (Part D): what changed since the handover. `errors` lists problems (a missing record, an invalid
+    file): a resume must not trust a handover with errors. deep=True also recomputes the build ID (prepare.py)."""
     h = load(ddir)
-    _, stale = problems(ddir, h)
+    errs, stale = problems(ddir, h)
     from flow import manifest
-    out = {"design": rel(ddir), "stage": h["state"]["stage"], "stale": stale,
-           "changed_files": [f["path"] for f in h["files"] if (ROOT / f["path"]).is_file() and f.get("sha256")
-                             and f["sha256"] != sha256(ROOT / f["path"])],
-           "kb_pin": {"handover": h["state"]["kb_pin"], "now": manifest.kb_pin(ROOT)},
-           "vivado": {"handover": h["state"]["vivado"], "now": VIVADO}}
+    st = h.get("state") or {}
+    out = {"design": rel(ddir), "errors": errs, "stage": st.get("stage"), "stale": stale,
+           "changed_files": [f["path"] for f in h.get("files") or []
+                             if not (ROOT / f["path"]).is_file() or f.get("sha256") != sha256(ROOT / f["path"])],
+           "kb_pin": {"handover": st.get("kb_pin"), "now": manifest.kb_pin(ROOT)},
+           "vivado": {"handover": st.get("vivado"), "now": VIVADO}}
     if deep and (ddir / "build.yaml").exists():
-        out["build_id"] = {"handover": h["state"]["build_id"],
-                           "now": manifest.show(ddir, h["state"].get("variant", "base"), VIVADO, 2)["build_id"]}
+        out["build_id"] = {"handover": st.get("build_id"),
+                           "now": manifest.show(ddir, st.get("variant", "base"), VIVADO, 2)["build_id"]}
     return out
 
 
@@ -435,7 +584,7 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     for c in CATEGORIES_REQUIRED:
         ms = [m for m in h["measurements"] if m["category"] == c]
         if ms:
-            L.append(f"| {c.capitalize()} | " + "; ".join((f"{_cell(m['what'])}: {fmt(m['value'])} {m['unit']}").rstrip()
+            L.append(f"| {c.capitalize()} | " + "; ".join((f"{_cell(m['what'])}: {fmt(m.get('value'))} {m['unit']}").rstrip()
                                                           for m in ms) + " | " + ", ".join(m["id"] for m in ms) + " |")
         else:
             L.append(f"| {c.capitalize()} | not measured | [Known gaps](#known-gaps-and-limits) |")
@@ -464,7 +613,7 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
         L += ["![Verification matrix: each activity and its result](docs/handover/verification.svg)", ""]
     L += ["| ID | Activity | Result | What | Evidence | Conditions |", "|---|---|---|---|---|---|"]
     for e in h["evidence"]:
-        runs = f" ({e['runs']} runs)" if e.get("runs") else ""
+        runs = f" ({e['runs']} run{'s' if e['runs'] != 1 else ''})" if e.get("runs") else ""
         how = " (run in CI)" if e.get("how") == "ci" else ""
         L.append(f"| {e['id']} | {e['activity']} | {e['result']}{runs} | {_cell(e['what'])} | "
                  f"[`{e['record']}`]({_link(e['record'], ddir)}){how} | {_cell(e.get('conditions') or '-')} |")
@@ -478,7 +627,7 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
               "| ID | What | Value | Runs | Source | Conditions |", "|---|---|---|---|---|---|"]
         for m in h["measurements"]:
             where = m.get("field") or "matched text"
-            L.append(f"| {m['id']} | {_cell(m['what'])} | {(fmt(m['value']) + ' ' + m['unit']).rstrip()} | {m.get('runs', 1)} | "
+            L.append(f"| {m['id']} | {_cell(m['what'])} | {(fmt(m.get('value')) + ' ' + m['unit']).rstrip()} | {m.get('runs', 1)} | "
                      f"[`{m['record']}`]({_link(m['record'], ddir)}) `{_cell(where)}` | {_cell(m['conditions'])} |")
     else:
         L += ["Nothing measured; see Known gaps."]
@@ -532,7 +681,7 @@ def render_agent(h: dict, ddir: Path) -> str:
     for m in h["measurements"]:                 # conditions repeated from the line above are written as "ditto"
         cond = "ditto" if m["conditions"] == prev else m["conditions"]
         prev = m["conditions"]
-        ms.append(f"{m['id']} {m['category']} {m.get('key') or '-'}={fmt(m['value'])}{m['unit'] and ' ' + m['unit']}"
+        ms.append(f"{m['id']} {m['category']} {m.get('key') or '-'}={fmt(m.get('value'))}{m['unit'] and ' ' + m['unit']}"
                   f" {recs[m['record']][0]}#{m.get('field') or 're'}: {m['what']} | {cond}")
     L += ["", "## measured"] + (ms or ["none"])
     L += ["", "## gaps"] + [f"[{g['about']}] {g['text']}" for g in h["gaps"]]
@@ -583,7 +732,7 @@ def svg_verification(h: dict) -> str:
 def svg_resources(h: dict) -> str | None:
     cap = CAPACITY.get(h["target"]["part"])
     byk = {m.get("key"): m for m in h["measurements"] if m.get("key")}
-    res = [(k, byk[k]) for k in ("lut", "ff", "bram36", "dsp") if k in byk and isinstance(byk[k]["value"], (int, float))]
+    res = [(k, byk[k]) for k in ("lut", "ff", "bram36", "dsp") if k in byk and isinstance(byk[k].get("value"), (int, float))]
     if not cap or not res:
         return None
     tim = [(k, byk[k]) for k in ("wns_ns", "whs_ns") if k in byk]
@@ -594,17 +743,17 @@ def svg_resources(h: dict) -> str | None:
     names = {"lut": "LUT", "ff": "Flip-flops", "bram36": "Block RAM (36 Kb)", "dsp": "DSP slices"}
     for i, (k, m) in enumerate(res):
         y = 30 + i * 24
-        frac = min(1.0, float(m["value"]) / cap[k])
+        frac = min(1.0, float(m.get("value")) / cap[k])
         out.append(f'<text x="8" y="{y + 13}">{names[k]}</text>')
         out.append(f'<rect x="150" y="{y + 2}" width="{bw}" height="14" fill="#fff" stroke="#000"/>')
         out.append(f'<rect x="150" y="{y + 2}" width="{max(frac * bw, 1):.1f}" height="14" fill="#000"/>')
-        out.append(f'<text x="{150 + bw + 8}" y="{y + 13}">{_x(fmt(m["value"]))} of {cap[k]:,} ({100 * frac:.1f} %)</text>')
+        out.append(f'<text x="{150 + bw + 8}" y="{y + 13}">{_x(fmt(m.get("value")))} of {cap[k]:,} ({100 * frac:.1f} %)</text>')
     y = 34 + 24 * len(res)
     if tim:
         out.append(f'<text x="8" y="{y + 10}" font-weight="bold">Timing slack (positive: met)</text>')
         for i, (k, m) in enumerate(tim):
             out.append(f'<text x="8" y="{y + 30 + i * 20}">{"Setup (WNS)" if k == "wns_ns" else "Hold (WHS)"}: '
-                       f'{_x(fmt(m["value"]))} ns</text>')
+                       f'{_x(fmt(m.get("value")))} ns</text>')
     out.append("</svg>")
     return "".join(out) + "\n"
 
@@ -675,7 +824,10 @@ def write(ddir: Path, build_id: bool = True) -> list[str]:
     bad = _validate(h)
     if bad:                                     # never render (or re-dump) a file the schema rejects
         raise SystemExit(f"{rel(ddir)}/handover.yaml: " + "; ".join(bad))
-    h = fill(h, ddir, build_id=build_id)
+    try:
+        h = fill(h, ddir, build_id=build_id)
+    except ValueError as ex:
+        raise SystemExit(f"{rel(ddir)}: {ex}")
     (ddir / "handover.yaml").write_text(dump(h))
     rd = ddir / "README.md"
     prose = prose_blocks(rd.read_text()) if rd.exists() else {}

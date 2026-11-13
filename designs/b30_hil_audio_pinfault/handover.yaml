@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: b30_hil_audio_pinfault
 title: Hardware-in-the-loop seeded pin fault (audio on the wrong pin)
 kind: demonstration
-produced_by: human+agent
+produced_by: human
 summary: The seeded-fault twin of b30_hil_audio. It builds from the same RTL, but its constraint file puts the audio output
   AUD_PWM on the pin of LED 0, so the tone never reaches the audio jack. It passes simulation and every check made inside
   the FPGA, and only the measurement at the jack fails, which is the point of the demonstration. The hardware-in-the-loop
@@ -92,10 +92,9 @@ evidence:
 - id: E2
   activity: build
   result: not-run
-  what: not rebuilt on Vivado 2026.1; the build on the earlier release passed its gates (the record is that release's; its
-    numbers are not quoted)
-  record: results/b30/builds.json
-  sha256: 9d6f7e51be12d55dd4f391daa3c45bd03fbed07a5ae77f7f370c6a6f9bcd420a
+  what: not rebuilt on Vivado 2026.1 (an earlier-release build is not cited); the build inputs are listed here
+  record: designs/b30_hil_audio_pinfault/build.yaml
+  sha256: 3268f3bc4a58f14b48113cfae67d00cfd82cf31d122b8c52e4aa8f56c1b43e29
 - id: E3
   activity: board
   result: pass

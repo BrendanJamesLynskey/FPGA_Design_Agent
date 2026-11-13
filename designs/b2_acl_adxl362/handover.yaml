@@ -196,8 +196,9 @@ gaps:
   text: The board runs used bitstreams built on the earlier Vivado release; the 2026.1 build (E2) was not programmed. Re-run
     the board check on a 2026.1 bitstream to close this.
 - about: operating conditions
-  text: The board runs predate the 2026-11-11 rule; die temperature and the VCCINT, VCCAUX and VCCBRAM rails were not read
-    from the XADC, so the runs cannot be shown to be inside the recommended operating conditions.
+  text: The board runs predate the house rule of 2026-11-11 that every board run records its operating conditions from the
+    XADC; die temperature and the VCCINT, VCCAUX and VCCBRAM rails were not read from the XADC, so the runs cannot be shown
+    to be inside the recommended operating conditions.
 - about: accuracy
   text: The pass range for the magnitude is wide (0.57 to 1.43 g) because it must hold at any board tilt with worst-case
     offsets; the check does not calibrate or test offsets, noise, other ranges, the FIFO or the interrupt pins.
@@ -230,6 +231,11 @@ history:
 - date: '2026-11-13'
   brief: '68'
   note: handover written to the documentation standard
+numbers_allow:
+- token: '0x86'
+  reason: 'shell window address: base 0x80 (shell/PROTOCOL.md) plus the register offset in rtl/*_regs.sv'
+- token: '85'
+  reason: board junction-temperature limit in C, from the house power rule (flow/hw.py power gate)
 state:
   stage: board-verified
   gates:

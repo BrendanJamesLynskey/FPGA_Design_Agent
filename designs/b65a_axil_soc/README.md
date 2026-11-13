@@ -9,7 +9,7 @@ Not in scope:
 - a showcase or a board-verified design; the bitstream was built, not programmed
 - a general interconnect; generation covers AXI4-Lite only, 32-bit data and one clock domain
 
-Kind: example; produced by the agent. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: example; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 

@@ -95,7 +95,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: the dist_ram variant grows fast with BIN_W (measured at BIN_W 10: 1184 LUTs, 896 of them LUT RAM); the bram variant keeps two block RAM copies, so twice the block RAM of the bin storage; a converter with a transfer function that is not offset binary must be converted first.
+- The dist_ram variant grows fast with BIN_W (measured at BIN_W 10: 1184 LUTs, 896 of them LUT RAM); the bram variant keeps two block RAM copies, so twice the block RAM of the bin storage; a converter with a transfer function that is not offset binary must be converted first.
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps

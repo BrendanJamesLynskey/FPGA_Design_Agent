@@ -58,7 +58,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: one trigger stage (no sequencer); depth is fixed at build time; compare with the ILA in ip.yaml limits of ila-in-batch for the full-rate, multi-probe case.
+- One trigger stage (no sequencer); depth is fixed at build time; compare with the ILA in ip.yaml limits of ila-in-batch for the full-rate, multi-probe case.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 
 ## Next steps

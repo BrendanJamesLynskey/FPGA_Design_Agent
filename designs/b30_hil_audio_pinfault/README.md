@@ -9,7 +9,7 @@ Not in scope:
 - a working design; the audio output is deliberately miswired and the design is not meant to pass the check at the jack
 - a general fault library; it seeds one fault, a wrong pin, to show the class of defect that simulation and in-FPGA self-checks cannot see
 
-Kind: demonstration; written by hand with agent runs. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 ### What the fault is
@@ -86,8 +86,8 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `d2f00de4` (`python flo
 | ID | Activity | Result | What | Evidence | Conditions |
 |---|---|---|---|---|---|
 | E1 | simulation | pass | the shared RTL passes its simulation against the golden models; the seeded fault is in the constraint file, which simulation does not read | [`designs/b30_hil_audio/tests/test_hil_audio_rtl.py`](../b30_hil_audio/tests/test_hil_audio_rtl.py) (run in CI) | - |
-| E2 | build | not-run | not rebuilt on Vivado 2026.1; the build on the earlier release passed its gates (the record is that release's; its numbers are not quoted) | [`results/b30/builds.json`](../../results/b30/builds.json) | - |
-| E3 | board | pass (1 runs) | one hardware-in-the-loop run; the seeded fault is caught, since the audio check fails on level, distortion and SINAD while the other seven checks pass; the run's overall result is fail by design | [`results/b30/hil_runs/b30_hil_audio_pinfault.hil.json`](../../results/b30/hil_runs/b30_hil_audio_pinfault.hil.json) | wall power; power gate passed before programming; die temperature and rails read by the XADC and by JTAG sysmon agreed within tolerance; audio captured by a USB interface at gain about 50 percent, uncalibrated; ambient not recorded |
+| E2 | build | not-run | not rebuilt on Vivado 2026.1 (an earlier-release build is not cited); the build inputs are listed here | [`designs/b30_hil_audio_pinfault/build.yaml`](build.yaml) | - |
+| E3 | board | pass (1 run) | one hardware-in-the-loop run; the seeded fault is caught, since the audio check fails on level, distortion and SINAD while the other seven checks pass; the run's overall result is fail by design | [`results/b30/hil_runs/b30_hil_audio_pinfault.hil.json`](../../results/b30/hil_runs/b30_hil_audio_pinfault.hil.json) | wall power; power gate passed before programming; die temperature and rails read by the XADC and by JTAG sysmon agreed within tolerance; audio captured by a USB interface at gain about 50 percent, uncalibrated; ambient not recorded |
 
 Gates at handover: `build_2026_1` not-run, `hil_fault_caught` pass.
 

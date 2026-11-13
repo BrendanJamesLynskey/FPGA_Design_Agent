@@ -43,15 +43,110 @@ def test_empty_gaps_fail(h):
     assert has(errs(h), r"schema: gaps")
 
 
-@pytest.mark.parametrize("text", ["TBD", "n/a", "none", "...", "TODO: write the gaps", "-", "Nothing."])
+@pytest.mark.parametrize("text", ["TBD", "n/a", "none", "...", "TODO: write the gaps", "-", "Nothing.",
+                                  "n/a n/a n/a n/a n/a", "gap gap gap gap gap", "None known. None known. None."])
 def test_placeholder_gap_fails(h, text):
     h["gaps"][0]["text"] = text
-    assert has(errs(h), r"placeholder|under 5 words|schema")
+    assert has(errs(h), r"placeholder|gaps\[0\]: under|schema")
 
 
 def test_short_gap_fails(h):
     h["gaps"][0]["text"] = "not measured yet"
     assert has(errs(h), r"gaps\[0\]: under")
+
+
+# --- the review's defeats (brief 68 adversarial pass), kept as regressions
+def test_missing_hash_is_an_error_not_stale(h):
+    h["measurements"][0]["value"] = 1
+    del h["measurements"][0]["sha256"]
+    assert has(errs(h), r"M1: value or sha256 not filled")
+
+
+def test_unfilled_value_does_not_crash(h):
+    del h["measurements"][0]["value"]
+    assert has(errs(h), r"M1: value or sha256 not filled")
+
+
+@pytest.mark.parametrize("field,where", [("summary", "summary"), ("gap", "gaps[0].text"), ("cond", "evidence[2].conditions")])
+def test_invented_number_in_free_text_fails(h, field, where):
+    if field == "summary":
+        h["summary"] += " It runs at 733 MHz."
+    elif field == "gap":
+        h["gaps"][0]["text"] += " Exactly 4271 clocks."
+    else:
+        h["evidence"][2]["conditions"] += " Worst case 9999 runs."
+    assert has(errs(h), re.escape(where) + r": number (733|4271|9999)")
+
+
+@pytest.mark.parametrize("hidden", ["&#52;&#57;&#57;&#57;", "49<b>99</b>", "49<!-- -->99", "0x1F4F", "1e9", "12_345",
+                                    "a ]( b 4999 c ) d"])
+def test_hidden_numbers_in_prose_fail(h, hidden):
+    rd = (EX / "README.md").read_text().replace("<!-- prose:gaps -->\n", f"<!-- prose:gaps -->\nCost {hidden} LUT.\n")
+    assert has(errs(h, rd), r"prose:gaps: number")
+
+
+def test_prose_placeholder_fails(h):
+    rd = (EX / "README.md").read_text().replace("<!-- prose:next -->\n", "<!-- prose:next -->\nTODO: say more.\n")
+    assert has(errs(h, rd), r"prose:next: placeholder")
+
+
+def test_clock_must_be_a_create_clock_on_that_port(h):
+    h["clocks"][0]["mhz"] = 33                       # appears in LVCMOS33, not a clock
+    assert has(errs(h), r"clock CLK100MHZ: 33 MHz")
+
+
+def test_clock_from_own_handover_fails(h):
+    h["clocks"][0]["source"] = "designs/b2_mic_pdm/handover.yaml"
+    assert has(errs(h), r"clock CLK100MHZ")
+
+
+def test_evidence_cannot_be_its_own_readme(h):
+    h["evidence"][1]["record"] = "designs/b2_mic_pdm/README.md"
+    assert has(errs(h), r"E2: record .* rendering of this handover")
+
+
+def test_evidence_record_must_be_a_file(h):
+    h["evidence"][1]["record"] = "results/board_v2"
+    assert has(errs(h), r"E2: record results/board_v2 is not a file")
+
+
+def test_short_board_conditions_fail(h):
+    h["evidence"][2]["conditions"] = "a b c"
+    assert has(errs(h), r"E3: hardware evidence must state")
+
+
+def test_ci_claim_needs_a_test_file(h):
+    h["evidence"][1]["how"] = "ci"
+    h["evidence"][1]["record"] = "results/04f/mutation_t1.json"     # named in ci.yml as an argument, not a test
+    assert has(errs(h), r"E2: how: ci")
+
+
+def test_required_category_must_be_numeric(h):
+    h["measurements"][0]["field"] = "builds.b2_mic_pdm.vivado"
+    h["measurements"][0]["value"] = "2026.1"
+    assert has(errs(h), r"M1: a resources measurement must be a number")
+
+
+def test_stage_needs_its_evidence(h):
+    h["evidence"][2]["activity"] = "build"
+    h["evidence"][2]["conditions"] = ""
+    assert has(errs(h), r"board-verified needs a passing board")
+
+
+def test_agent_needs_agent_run(h):
+    h["produced_by"] = "agent"
+    assert has(errs(h), r"needs agent_run")
+
+
+@pytest.mark.parametrize("spelling", ["vivado 2025.2", "Vivado v2025.2", "Vivado-2025.2"])
+def test_vivado_spellings(h, spelling):
+    h["summary"] += f" Once built with {spelling} here."
+    assert has(errs(h), r"names a Vivado release other than 2026.1")
+
+
+def test_freshness_reports_errors(h):
+    f = H.freshness(EX)
+    assert f["errors"] == [] and f["stale"] == [] and f["changed_files"] == []
 
 
 def test_invented_measurement_value_fails(h):
@@ -96,7 +191,7 @@ def test_failed_gate_needs_a_gap(h):
 
 def test_board_evidence_needs_conditions(h):
     h["evidence"][2]["conditions"] = ""
-    assert has(errs(h), r"E3: board evidence must state")
+    assert has(errs(h), r"E3: hardware evidence must state")
 
 
 def test_ci_claim_must_be_true(h):
@@ -190,7 +285,8 @@ def test_results_good(tmp_path):
     assert D.check_results(_results(tmp_path, GOOD)) == []
 
 
-@pytest.mark.parametrize("gaps", ["", "- none", "- n/a", "- TBD", "TODO"])
+@pytest.mark.parametrize("gaps", ["", "- none", "- n/a", "- TBD", "TODO", "None. None. None. None. None.", "x x x x x",
+                                  "[a](b.c.d.e.f)"])
 def test_results_empty_or_placeholder_gaps_fail(tmp_path, gaps):
     rd = GOOD.split("## Known gaps and limits")[0] + "## Known gaps and limits\n\n" + gaps + "\n"
     assert has(D.check_results(_results(tmp_path, rd)), r"Known gaps and limits'?: ")
@@ -211,6 +307,21 @@ def test_results_measured_cannot_vouch_for_itself(tmp_path):
     rd = GOOD + "\n## Measured\n\n77.7\n"
     d = _results(tmp_path, rd)
     assert has(D.check_results(d), r"number 77.7")    # the README itself is not a record
+
+
+def test_results_fenced_headings_do_not_count(tmp_path):
+    rd = GOOD.split("## Records")[0] + "```\n## Records\nfiles here and there\n## Reproduce\nrun it now please ok\n" \
+        "## Known gaps and limits\nsome gaps exist right here\n```\n"
+    assert has(D.check_results(_results(tmp_path, rd)), r"no '## Records'")
+
+
+def test_results_measured_variants_checked(tmp_path):
+    rd = GOOD + "\n## Measured results\n\nLUTs 99999.\n"
+    assert has(D.check_results(_results(tmp_path, rd)), r"number 99999")
+
+
+def test_results_repeated_heading_fails(tmp_path):
+    assert has(D.check_results(_results(tmp_path, GOOD + "\n## Records\n\nanother list of the files here.\n")), r"repeats")
 
 
 def test_whole_tree_check_runs():

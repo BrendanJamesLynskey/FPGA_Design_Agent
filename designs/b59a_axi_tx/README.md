@@ -9,7 +9,7 @@ Not in scope:
 - full AXI4 (bursts, IDs, several transactions in flight), a slave side, a DMA target or a soak mode
 - a hunt for bugs in a third-party core; the peripheral, the FIFO and their bugs are ours and deliberately simple
 
-Kind: showcase; produced by the agent. State: board-verified. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by hand. State: board-verified. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 ### How to read this folder

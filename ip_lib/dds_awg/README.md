@@ -94,8 +94,8 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: no table interpolation: the sine's spurs are set by LUT_W (about -6 dB per bit below the carrier, 8 bits: SFDR near 48 dB for the table alone); no phase offset input.
-- the 0.2.0 variants have not been run on a board; the board measurement is of the 0.1.0 single-table design.
+- No table interpolation: the sine's spurs are set by LUT_W (about -6 dB per bit below the carrier, 8 bits: SFDR near 48 dB for the table alone); no phase offset input.
+- The 0.2.0 variants have not been run on a board; the board measurement is of the 0.1.0 single-table design.
 
 ## Next steps
 

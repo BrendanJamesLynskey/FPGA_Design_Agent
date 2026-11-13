@@ -100,7 +100,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `595c2767` (`python flo
 | [`designs/t1_dimmer_counter/verif/formal/debounce.sby`](verif/formal/debounce.sby) | SymbiYosys proof of the debouncer (scan.sby does the display scanner) |
 
 <!-- prose:build -->
-The ILA build uses the IP route (one ILA IP, the probes packed into two ports) because `create_debug_core` is refused on the Basic licence tier; the post-route QoR assessment gate is absent on that tier, not passed. Resource, timing and power figures here are from Vivado 2026.1. The `results/ultrafast` and `results/f0a` records are from an earlier Vivado release and are not quoted.
+The ILA build uses the IP route (one ILA IP, the probes packed into two ports) because `create_debug_core` is refused on the Basic licence tier; the post-route QoR assessment gate is absent on that tier, not passed. Resource, timing and power figures here are from Vivado 2026.1. Records made on the earlier Vivado release are not quoted.
 <!-- /prose:build -->
 
 ## Verified
@@ -115,7 +115,7 @@ The ILA build uses the IP route (one ILA IP, the probes packed into two ports) b
 | E4 | faults | pass | 21 mutants; the bench kills all 21 in the final run, 19 of 21 in the first (see gap E4) | [`results/04f/mutation_t1.json`](../../results/04f/mutation_t1.json) | - |
 | E5 | review | pass | traceability matrix, all 11 requirements evidenced and every coverage hole justified; FDA-HDL lint passes with one waiver | [`results/53_traceability/t1_dimmer_counter_trace.json`](../../results/53_traceability/t1_dimmer_counter_trace.json) | - |
 | E6 | build | pass | base build on Vivado 2026.1; every gate passes through bitstream | [`results/f0a_2026_1/t1_dimmer_counter_base.json`](../../results/f0a_2026_1/t1_dimmer_counter_base.json) | - |
-| E7 | board | pass (1 runs) | board bring-up on the 2026.1 builds; power gate, 8 of 8 UART tests and 4 of 4 ILA captures agree with the model | [`results/f0b_2026_1/t1_dimmer_counter_bringup.json`](../../results/f0b_2026_1/t1_dimmer_counter_bringup.json) | wall power; power gate passed before programming (2.0 W and 85 C limits); XADC rails and die temperature were not read |
+| E7 | board | pass (1 run) | board bring-up on the 2026.1 builds; power gate, 8 of 8 UART tests and 4 of 4 ILA captures agree with the model | [`results/f0b_2026_1/t1_dimmer_counter_bringup.json`](../../results/f0b_2026_1/t1_dimmer_counter_bringup.json) | wall power; power gate passed before programming (2.0 W and 85 C limits); XADC rails and die temperature were not read |
 
 Gates at handover: `build_2026_1` pass, `board_bringup` pass.
 

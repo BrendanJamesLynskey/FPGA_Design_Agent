@@ -57,7 +57,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: the CRC is bitwise per word (a combinational loop of PIX_W steps), fine to about 150 MHz at PIX_W 24 on a -1 part; frame_start must precede the first pixel by at least zero clocks.
+- The CRC is bitwise per word (a combinational loop of PIX_W steps), fine to about 150 MHz at PIX_W 24 on a -1 part; frame_start must precede the first pixel by at least zero clocks.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 
 ## Next steps

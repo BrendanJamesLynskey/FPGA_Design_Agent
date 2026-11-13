@@ -183,10 +183,12 @@ gaps:
   text: Not applicable as a data path; the block reports two counts per window and has no streaming output.
 - about: E3
   text: The board runs used bitstreams built on the earlier Vivado release; the 2026.1 build (E2) has the same build stamp
-    but was not programmed. Re-run the board check on a 2026.1 bitstream to close this.
+    (the hash of the RTL and XDC the flow writes into the bitstream) but was not programmed. Re-run the board check on a
+    2026.1 bitstream to close this.
 - about: operating conditions
-  text: The board runs predate the 2026-11-11 rule; die temperature and the VCCINT, VCCAUX and VCCBRAM rails were not read
-    from the XADC, so the runs cannot be shown to be inside the recommended operating conditions.
+  text: The board runs predate the house rule of 2026-11-11 that every board run records its operating conditions from the
+    XADC; die temperature and the VCCINT, VCCAUX and VCCBRAM rails were not read from the XADC, so the runs cannot be shown
+    to be inside the recommended operating conditions.
 - about: behaviour
   text: GO written while a window runs is ignored (pdm_stats.sv starts a window only when idle), but no test covers it;
     NBITS of 0 is taken as 1; reset clears the counts and DONE; reads of undefined window addresses return 0 with no error.
@@ -208,6 +210,11 @@ history:
 - date: '2026-11-13'
   brief: '68'
   note: handover written to the documentation standard
+numbers_allow:
+- token: '0x85'
+  reason: 'shell window address: base 0x80 (shell/PROTOCOL.md) plus the register offset in rtl/mic_regs.sv'
+- token: '85'
+  reason: board junction-temperature limit in C, from the house power rule (flow/hw.py power gate)
 state:
   stage: board-verified
   gates:

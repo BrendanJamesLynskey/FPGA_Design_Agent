@@ -98,7 +98,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: requests with IP options are not answered; one request held at a time; no other ICMP messages (no destination unreachable, no timestamp); measured Fmax estimates 89-116 MHz out of context: below the RGMII MAC's 125 MHz; the formal reply check follows one byte (13): a version that lets the solver choose the byte did not finish its passing run in reasonable time, so the other copied bytes are checked in simulation only.
+- Requests with IP options are not answered; one request held at a time; no other ICMP messages (no destination unreachable, no timestamp); measured Fmax estimates 89-116 MHz out of context: below the RGMII MAC's 125 MHz; the formal reply check follows one byte (13): a version that lets the solver choose the byte did not finish its passing run in reasonable time, so the other copied bytes are checked in simulation only.
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps

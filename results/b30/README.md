@@ -26,25 +26,26 @@ All from committed files: [hil_runs/b30_hil_audio.hil.json](hil_runs/b30_hil_aud
 | Frequency in FPGA | 1000 Hz +-4 Hz | 1000.0 Hz | |
 | Logic analyser (library IP) | 256 samples are a contiguous run of the DDS model (start tick unknown) | pass | |
 | Pre-trigger | rising sign-bit edge at buffer index 8 | pass | |
-| XADC (fabric DRP) against JTAG sysmon | Tj +-2 C, VCCINT/VCCBRAM +-20 mV, VCCAUX +-30 mV, Tj <= 85 C | Tj 25.72 vs 25.60 C, VCCINT 1.0063 vs 1.006 V, VCCAUX 1.7944 vs 1.794 V | |
+| XADC (fabric DRP) against JTAG sysmon | Tj +-2 C, VCCINT/VCCBRAM +-20 mV, VCCAUX +-0.03 V, Tj <= 85 C | Tj 25.72 vs 25.60 C, VCCINT 1.0063 vs 1.006 V, VCCAUX 1.7944 vs 1.794 V | |
 | Audio at the jack (UMC22 input 2) | frequency +-2 Hz, level >= -75 dBFS rms, THD <= 5 %, SINAD >= 15 dB | 999.99 Hz, -29.27 dBFS rms, THD 1.32 %, SINAD 32.65 dB | pin fault below |
 | ILA in batch (T1, `flow/bringup.py`) | T1's own rules on four 1024-sample captures | 4 of 4 pass | the same rules fail on five seeded capture or expectation faults ([hil/tests/test_30_ila_known_answer.py](../../hil/tests/test_30_ila_known_answer.py)) |
 
 **Seeded fault that passes simulation and fails at the pins.** `designs/b30_hil_audio_pinfault` has the same RTL as
 `b30_hil_audio`; only the constraint file differs (AUD_PWM on the LED0 pin, H17). Simulation passes (the RTL is the same
-source), every in-FPGA check passes (7 of 7), and the audio check at the jack fails: level -90.5 dBFS rms, THD 72 %,
+source), every in-FPGA check passes (7 of 7), and the audio check at the jack fails: level -90.5 dBFS rms, THD 72.36 %,
 SINAD -2.9 dB. A simulation-only flow, or one that trusts the design's own self-checks, ships this.
 
-**ILA limits (T1, 14 probes, depth 1024).** One trigger stage (the flow uses BASIC_ONLY, no storage qualification); the
-tool-inserted core costs +1583 LUT, +2582 FF and +2 block RAM tiles on a 495-LUT design (utilisation `base` against `ila`);
-capture of 1024 clocks at 100 MHz is 10.24 us; arm, upload and export through `hw_server` took about 20 s for four captures.
-Probes are register output pins found after synthesis (names survive there, net names do not); one probe port can split
-over several hardware probes, so the capture reader joins them by their MAP.
+## ILA and instrument cost
 
-**Library instruments in context** (Vivado 2025.2, xc7a100t -1, 100 MHz, WNS +3.19 ns, 1228 LUT, 1158 FF, 0.5 block RAM tile,
-0.128 W, predicted Tj 42.3 C): dds_awg 115 LUT, 48 FF, 1 RAMB18; frame_crc 274 LUT, 257 FF; freq_duty_counter 12 LUT, 165 FF;
-logic_analyser 132 LUT + 88 LUTRAM, 142 FF; shell 564 LUT, 245 FF. Library simulation: 17 tests, 16 seeded faults all caught
-([faults.json](faults.json)).
+**ILA limits (T1, 14 probes, depth 1024).** One trigger stage (the flow uses BASIC_ONLY, no storage qualification).
+Probes are register output pins found after synthesis (names survive there, net names do not); one probe port can split
+over several hardware probes, so the capture reader joins them by their MAP. The ILA's resource cost on Vivado 2026.1 is in
+[../f0a_2026_1](../f0a_2026_1/); the figures first written here came from the earlier release and are withdrawn (brief 49).
+
+**Library instruments in context.** The design's whole-board and per-instance cost on Vivado 2026.1 is in
+[../vivado_2026_1_remeasure/b30_hil_audio.json](../vivado_2026_1_remeasure/b30_hil_audio.json) (and in each `ip_lib`
+entry's README); the figures first written here came from the earlier release and are withdrawn (brief 49). Library
+simulation and seeded faults: [faults.json](faults.json).
 
 ## Not measured (no hardware connected)
 

@@ -65,7 +65,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: a rule being rewritten is absent for 2**CHUNK_W + 2 clocks; for make-before-break write a free entry, then delete.
+- A rule being rewritten is absent for 2**CHUNK_W + 2 clocks; for make-before-break write a free entry, then delete.
 - Board: no board run of this entry is recorded; its evidence is simulation.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 

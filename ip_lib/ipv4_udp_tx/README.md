@@ -96,7 +96,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: no fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller's (from arp_responder, or the multicast mapping); measured Fmax estimates are 74-82 MHz out of context: it closes at the 50 MHz of the RMII MAC but not at the 125 MHz of the RGMII MAC (the checksum adders are not pipelined).
+- No fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller's (from arp_responder, or the multicast mapping); measured Fmax estimates are 74-82 MHz out of context: it closes at the 50 MHz of the RMII MAC but not at the 125 MHz of the RGMII MAC (the checksum adders are not pipelined).
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps

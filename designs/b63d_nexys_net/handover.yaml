@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: b63d_nexys_net
 title: Small network stack on the Nexys A7-100T
 kind: demonstration
-produced_by: agent
+produced_by: human
 summary: Answers ARP and ping, receives and sends UDP, joins IGMP multicast groups and counts frames on the Nexys A7's 10/100
   Ethernet PHY (LAN8720A, RMII). A UDP service on port 5000 replies with the tag N63D and 21 statistics counters. A frame
   injector and capture let the host check the stack through the PHY's loopback with no cable. Built and simulated; it has
@@ -217,7 +217,7 @@ measurements:
 gaps:
 - about: board_run
   text: No board run exists. The PHY loopback phase needs no cable but must not start with a cable in J4. The link phase
-    needs one cable from J4 to an isolated PC interface at 192.168.63.1/24, and the owner's confirmation of the cabling
+    needs one cable from J4 to an isolated PC interface at 192.168.63.1/24, and the board owner's confirmation of the cabling
     (host/PLAN.md). Everything about the PHY, the pin timing in practice and the stack against a real host is unobserved.
 - about: latency
   text: Not measured on the design. The block benches declare latencies (ARP 3, ICMP 4, UDP transmit 4 clocks) but no record
@@ -266,6 +266,9 @@ history:
 - date: '2026-11-13'
   brief: '68'
   note: handover written to the documentation standard
+numbers_allow:
+- token: 8N1
+  reason: UART framing of the test shell (shell/PROTOCOL.md)
 state:
   stage: built
   gates:

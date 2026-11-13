@@ -58,7 +58,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: no IPv6 address rewrite; the action word is 160 bits (tables usually store an index into an action RAM).
+- No IPv6 address rewrite; the action word is 160 bits (tables usually store an index into an action RAM).
 - Board: no board run of this entry is recorded; its evidence is simulation.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 

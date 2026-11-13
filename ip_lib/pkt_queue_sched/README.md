@@ -63,7 +63,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: static per-queue regions (no shared buffer); no cut-through.
+- Static per-queue regions (no shared buffer); no cut-through.
 - Board: no board run of this entry is recorded; its evidence is simulation.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 

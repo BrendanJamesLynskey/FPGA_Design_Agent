@@ -79,7 +79,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: IGMPv2 host side only: no IGMPv3 reports or source filtering (a version 3 query is answered as a version 2 query, RFC 3376 7.2.1); no version 1 router compatibility timer; the random delay comes from a 16-bit LFSR; measured Fmax estimates 71-80 MHz out of context: below the RGMII MAC's 125 MHz (the frame's checksums are summed in one clock).
+- IGMPv2 host side only: no IGMPv3 reports or source filtering (a version 3 query is answered as a version 2 query, RFC 3376 7.2.1); no version 1 router compatibility timer; the random delay comes from a 16-bit LFSR; measured Fmax estimates 71-80 MHz out of context: below the RGMII MAC's 125 MHz (the frame's checksums are summed in one clock).
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps

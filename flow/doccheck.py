@@ -57,16 +57,21 @@ def allow_list() -> dict:
 def sections(md: str) -> tuple[str, dict]:
     """(lead text before the first '## ', {heading: body}) with HTML comments removed."""
     md = re.sub(r"<!--.*?-->", "", md, flags=re.S)
+    md = re.sub(r"(?ms)^(```|~~~).*?^\1[^\n]*$", "", md)          # headings inside a fenced block are not sections
     parts = re.split(r"(?m)^## +(.+?)\s*$", md)
     lead = re.sub(r"(?m)^# .*$", "", parts[0])
-    return lead, {parts[i].strip(): parts[i + 1] for i in range(1, len(parts), 2)}
+    out = {}
+    for i in range(1, len(parts), 2):
+        k = parts[i].strip()
+        out[k + " (repeated)" if k in out else k] = parts[i + 1]
+    return lead, out
 
 
 def _content_problem(body: str) -> str | None:
     lines = [l for l in body.strip().splitlines() if l.strip() and not re.fullmatch(r"\s*[|:\- ]+\s*", l)]
-    text = " ".join(lines)
-    if H._words(text) < MIN_SECTION_WORDS:
-        return "empty or too short"
+    text = H.visible(" ".join(lines))
+    if H.meaningful(text) < MIN_SECTION_WORDS:
+        return "empty, too short or filler (fewer than 5 distinct meaningful words)"
     if all(H.PLACEHOLDER.search(re.sub(r"^[-*\d.\s]+", "", l)) for l in lines):
         return "placeholder only"
     if re.search(r"\b(TODO|TBD|FIXME|lorem ipsum)\b", text):
@@ -90,6 +95,8 @@ def check_ip(d: Path) -> list[str]:
     if d.name in ipdoc.ALL and p.read_text() != ipdoc.readme(d.name):
         errs.append("README.md is not current (run: python3 flow/net/ipdoc.py)")
     _, secs = sections(p.read_text())
+    if "## History" in p.read_text() and not re.search(r"(?m)^- \S.*\d", sections(p.read_text())[1].get("History", "")):
+        errs.append("'## History': no version entry (add a '## <version> (<date>)' entry to CHANGELOG.md)")
     for s in IP_SECTIONS:
         if s not in secs:
             errs.append(f"README.md has no '## {s}' section")
@@ -117,7 +124,9 @@ def check_results(d: Path) -> list[str]:
         return ["missing README.md (or list the folder in docs/doccheck_allow.yaml with a reason)"]
     lead, secs = sections(p.read_text())
     errs = []
-    if H._words(lead) < MIN_LEAD_WORDS:
+    if any(k.endswith(" (repeated)") for k in secs):
+        errs.append("README.md repeats a '## ' heading")
+    if H.meaningful(lead) < MIN_LEAD_WORDS:
         errs.append(f"README.md needs a lead paragraph of at least {MIN_LEAD_WORDS} words saying what the folder is")
     for name, alts in RESULTS_SECTIONS:
         hit = next((a for a in alts if a in secs), None)
@@ -125,13 +134,12 @@ def check_results(d: Path) -> list[str]:
             errs.append(f"README.md has no '## {name}' section")
         elif (why := _content_problem(secs[hit])):
             errs.append(f"'## {hit}': {why}")
-    if "Measured" in secs:
-        toks = _folder_tokens(d)
-        body = re.sub(r"\]\([^)]*\)", " ", secs["Measured"])
-        for tok in H.NUM.findall(body):
-            t = tok.lstrip("+").replace(",", "")
-            if t not in toks and t.lstrip("-") not in toks:
-                errs.append(f"'## Measured': number {tok} is in no file of {d.name}/")
+    toks = None
+    for k, body in secs.items():
+        if k.startswith("Measured"):
+            toks = toks if toks is not None else _folder_tokens(d)
+            for w in H.unvouched(body, toks):
+                errs.append(f"'## {k}': number {w} is in no file of {d.name}/")
     return errs
 
 
@@ -139,7 +147,9 @@ def run(strict: bool = False) -> tuple[list[str], list[str], dict]:
     errs, warns, cov = [], [], {}
     allow = allow_list()
     for k in allow:
-        if not (ROOT / k).is_dir():
+        if not re.fullmatch(r"results/[\w.-]+", k) or list((ROOT / k).glob("*.md")):
+            errs.append(f"docs/doccheck_allow.yaml: {k}: only a results folder of pure data (no .md) may be allow-listed")
+        elif not (ROOT / k).is_dir():
             errs.append(f"docs/doccheck_allow.yaml: {k} is not a directory")
         elif not isinstance(allow[k], str) or H._words(allow[k]) < 4:
             errs.append(f"docs/doccheck_allow.yaml: {k} needs a reason")

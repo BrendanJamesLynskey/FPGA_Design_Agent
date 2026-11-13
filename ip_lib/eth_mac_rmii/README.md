@@ -63,7 +63,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: full duplex only; no pause frames, no MDIO, no half-duplex collision handling.
+- Full duplex only; no pause frames, no MDIO, no half-duplex collision handling.
 - Board: no board run of this entry is recorded; its evidence is simulation.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 

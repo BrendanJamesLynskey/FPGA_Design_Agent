@@ -6,7 +6,8 @@ produces should be as thorough as a human engineer would be expected to be. The 
 pick up the work."
 
 This page says what each kind of folder must document, and how `flow/doccheck.py` checks it. CI runs
-`python3 flow/doccheck.py --check` on every push and pull request.
+`python3 flow/doccheck.py --check --strict` on every push and pull request (strict: a record or source file that changed
+after its handover fails too; refresh with `python3 flow/doccheck.py --write`).
 
 ## The rule for every number and every claim
 
@@ -38,8 +39,10 @@ The README's sections, in this order (the generator writes them; you add narrati
 2. **Technical parameters**: part and board, top, tool; clocks (each checked against its XDC period) and resets;
    interfaces with links to their datasheets; parameters and their legal ranges; then a table with resources, timing
    (WNS and WHS at which clock), power (and whether vectorless), latency and throughput. Each of these five has a
-   measurement or a gap that says why not. A resource and timing chart is drawn from the measurements; a block diagram
-   from the brief 65A viewer where a block design exists (`gen/graph.json`), else from `architecture.yaml`.
+   measurement or a gap that says why not ("not applicable" is allowed only with the reason, as a gap). A resource and
+   timing chart is drawn from the measurements; a block diagram from the brief 65A viewer where a block design exists
+   (`gen/graph.json`), else from `architecture.yaml`. A design with neither has no diagram yet: adding an
+   `architecture.yaml` (the agent's format, `flow/architecture.py`) is the way to get one.
 3. **How to build, run and reproduce**: exact commands, whether each needs a heavy slot, expected time, the tool
    (Vivado 2026.1), the build ID at handover (`flow/manifest.py show`, brief 54) and the file map.
 4. **Verified**: each activity (simulation, formal, seeded faults, CDC, lint, build, board, review) with its result,
@@ -49,35 +52,53 @@ The README's sections, in this order (the generator writes them; you add narrati
    behaviour a user could guess wrong.
 7. **Next steps**: what the next engineer should do first; open questions.
 8. **History**: dates, briefs, PRs, and the agent run when the agent produced the design (`agent_run`).
+   `produced_by: agent` (or `human+agent`) means this repository's agent produced it and needs `agent_run`; a design
+   written by an engineer in a planned brief session is `human`.
 
 `AGENT.md` has the same facts without prose: `identity`, `summary`, `state` (stage, gates, Vivado version,
 knowledge-bank pin, build ID), `interface`, `files` (with hash prefixes), `commands`, `records` (path and hash prefix,
 numbered R1, R2, ...), `evidence`, `measured`, `gaps`, `next_actions`, `open_questions`, `history`. Its size target is
-under 2,000 tokens (characters / 4) for a typical design.
+under 2,000 tokens (characters / 4) for a typical design; it is measured and reported, not enforced (the backfilled designs are about 1,700 to 2,700).
 
 ### What `doccheck` (through `flow/handover.py`) fails a design for
 
 - missing `handover.yaml`, `README.md` or `AGENT.md`; a schema error; an `id` that is not the directory name;
-- placeholder text (TODO, TBD, FIXME, "n/a", "none", "...") or too-short text in the summary (20 words), a gap (5),
-  a next step (4) or an evidence entry (4);
+- placeholder text (TODO, TBD, FIXME, "n/a", "none", "...") or too little text, counted as distinct words that are
+  not filler ("n/a n/a n/a" counts as none): summary 12, a scope item 3, a gap 4, a next step 4, an evidence entry 4,
+  board conditions 8;
+- a missing `sha256` or measurement `value` (run `fill`); a record that is a directory, or the design's own README,
+  AGENT.md or handover.yaml; a measurement in resources, timing, power, latency or throughput that is not a number;
 - a measurement whose value is not its record's value at `field` (or `match`), while the record's sha256 is unchanged;
   a measurement whose record is not a results file (a README, AGENT.md or handover.yaml cannot vouch for a number);
 - a record, file or interface document that does not exist; a clock that disagrees with its source;
 - any of resources, timing, power, latency, throughput with neither a measurement nor a gap `about` it;
 - an evidence entry that did not pass, or a gate in `state.gates` that did not pass, with no gap `about` its id;
 - hardware evidence without conditions; evidence marked `how: ci` that CI does not run;
-- a number in a README prose block that is not in `handover.yaml`, in a cited record, or in `numbers_allow` (each
-  with a reason);
+- a number in a README prose block or in a free-text field of `handover.yaml` (summary, notes, `what`, conditions,
+  gaps, next steps, history notes) that is not vouched for: it must occur in a cited record, a listed design file, a
+  local interface document, a structured field (parameters, clocks, measured values, history dates, paths, commands),
+  the CI workflow (pinned tool versions), or `numbers_allow` with a reason. Free text never vouches for a number.
+  HTML tags and entities are removed first; 1000 and 1000.0 are the same number; a word such as 0x1F40 or 1e9 must be
+  vouched for whole; hashes and build IDs are identifiers, not numbers;
+- `stage: board-verified` without a passing board evidence entry, `stage: signed-off` with a gate that did not pass,
+  `produced_by: agent` without `agent_run`, no clock on a design built with Vivado; a clock whose frequency is not the
+  period of an XDC `create_clock` on that port (or a value in a results record);
 - `README.md`, `AGENT.md` or a `docs/handover/*.svg` that differs from a fresh rendering; a Vivado release other than
-  2026.1 named; the retired role name "Implementer".
+  2026.1 named; the retired name for the Designer role.
 
 A record whose sha256 changed since the handover makes its claims **stale**: `doccheck` prints a warning (and fails
 under `--strict`). Stale is not wrong: re-run the evidence, then `fill`. Resume (brief 68 part D) reads the same list
 through `flow.handover.freshness()`.
 
-Limits of the checks, so nobody over-trusts them: a gap's text is checked for length and placeholders, not for being
-true; a prose number passes if it occurs anywhere in a cited record, so small integers almost always pass; the
-checker cannot tell that a list of gaps is complete. Review still matters.
+Limits of the checks, so nobody over-trusts them (brief 68's adversarial review):
+- a gap's text is checked for length and placeholders, not for being true or for covering what its `about` names;
+  the checker cannot tell that a list of gaps is complete, or that an evidence entry's `result` matches its record;
+- a number passes if it occurs anywhere in a vouching file, so small integers almost always pass;
+- numbers written as words, and identifiers that start with a letter (x4999, ADXL362), are not checked;
+- a record is trusted by its path: a hand-written file placed under `results/` can vouch for a number (review the
+  records a PR adds);
+- `activity` labels are not checked against the record (a board run labelled as simulation escapes the conditions
+  rule). Review still matters.
 
 ## IP library entries (`ip_lib/<entry>/`)
 
@@ -85,8 +106,9 @@ Generated from `ip.yaml` by `flow/net/ipdoc.py` (do not edit the README by hand)
 **Parameters**, **Interfaces**, **Registers** (for a register interface; brief 64A2), **Latency and throughput**,
 **Evidence** (tests, simulated points, seeded faults), the measured cost (**Variants** or **Cost (out of context)**),
 **Boundary and reuse**, **Cost table**, **Known gaps and limits** (the declared limits; whether a board run is
-recorded; whether the cost was measured; seeded faults not run; extra `gaps:` from `ip.yaml`), **Next steps**
-(`next_steps:` in `ip.yaml`, required) and **History** (from `CHANGELOG.md`). `doccheck` checks that each README is
+recorded; whether the cost was measured; seeded faults not run or not caught; extra `gaps:` from `ip.yaml`),
+**Next steps** (`next_steps:` in `ip.yaml`, required, each with content) and **History** (from `CHANGELOG.md`; at
+least one version entry). `doccheck` checks that each README is
 current and that each of these sections has content. `ip.yaml` itself is the agent's view of an entry; there is no
 separate AGENT.md.
 
@@ -99,10 +121,14 @@ A hand-written `README.md` with:
 - **Reproduce**: the commands that regenerate the records, with heavy-slot and hardware needs; when a record cannot be
   regenerated (a board run, a paid agent run) say so;
 - **Known gaps and limits**: what the records do not show, nulls, and the conditions they hold under;
-- optionally **Measured**: every number in that section must occur in a file of the folder (checked).
+- optionally **Measured** (any `## ` heading that starts with "Measured"): every number in it must occur in a file of
+  the folder other than README.md (checked as above).
+
+Section headings inside fenced code blocks do not count, and a repeated `## ` heading is an error.
 
 Folders that are pure data read by a tool (for example a `faults.json` that `ipdoc.py` reads) may be listed in
-`docs/doccheck_allow.yaml`, each with a reason, instead of having a README.
+`docs/doccheck_allow.yaml`, each with a reason, instead of having a README; only `results/<folder>` entries with no
+`.md` file are accepted.
 
 ## Agent-produced designs
 

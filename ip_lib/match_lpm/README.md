@@ -61,7 +61,7 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Limits: no route delete in the compiler yet (CLEAR and reload); node indices must stay stable across incremental compiles (found in this brief).
+- No route delete in the compiler yet (CLEAR and reload); node indices must stay stable across incremental compiles (found in this brief).
 - Board: no board run of this entry is recorded; its evidence is simulation.
 - Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
 

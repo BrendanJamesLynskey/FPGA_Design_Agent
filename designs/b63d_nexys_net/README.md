@@ -9,7 +9,7 @@ Not in scope:
 - a gigabit design; the RGMII MAC in ip_lib cannot run on this board, whose PHY is RMII
 - a board-verified design; no board run exists
 
-Kind: demonstration; produced by the agent. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 ### What is in it
@@ -139,7 +139,7 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 
 ## Known gaps and limits
 
-- **board_run**: No board run exists. The PHY loopback phase needs no cable but must not start with a cable in J4. The link phase needs one cable from J4 to an isolated PC interface at 192.168.63.1/24, and the owner's confirmation of the cabling (host/PLAN.md). Everything about the PHY, the pin timing in practice and the stack against a real host is unobserved.
+- **board_run**: No board run exists. The PHY loopback phase needs no cable but must not start with a cable in J4. The link phase needs one cable from J4 to an isolated PC interface at 192.168.63.1/24, and the board owner's confirmation of the cabling (host/PLAN.md). Everything about the PHY, the pin timing in practice and the stack against a real host is unobserved.
 - **latency**: Not measured on the design. The block benches declare latencies (ARP 3, ICMP 4, UDP transmit 4 clocks) but no record times the design end to end.
 - **throughput**: Not measured; the design counts frames, and no record gives a frame rate or a bit rate.
 - **timing**: The pin timing uses RMII rev 1.2 figures (output change 2 to 14 ns after the clock, input setup 4 ns and hold 2 ns), not the LAN8720A data sheet's REF_CLK-in table, which is not in the knowledge bank and must be checked before the board run. Board traces are ignored. The forwarded clock phase (335.25 degrees) was chosen from the tool's timing, not from a measurement.

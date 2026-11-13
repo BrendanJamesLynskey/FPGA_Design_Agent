@@ -207,7 +207,7 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
         # showcase standard item 7 (owner, 2026-11-13): the page links the project's engineering documentation, the README
         # written to docs/documentation_standard.md (brief 68)
         d = str(y.get("docs", ""))
-        if not y.get("fixture") and not (d.endswith("README.md") and (ROOT / d).is_file()):
+        if not y.get("fixture") and not (re.fullmatch(r"(designs|results)/[\w.-]+/README\.md", d) and (ROOT / d).is_file()):
             raise ContractError(f"{name}: docs must name the project's README.md (docs/documentation_standard.md)")
     r = {"id": y["id"], "title": y["title"], "status": st, "status_label": STATUS[st], "order": y.get("order", 99)}
     if st != "published":

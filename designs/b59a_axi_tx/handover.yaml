@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: b59a_axi_tx
 title: AXI transactor, protocol checker and scoreboard on the Nexys A7
 kind: showcase
-produced_by: agent
+produced_by: human
 summary: Board demonstration of an on-chip AXI4-Lite and AXI4-Stream traffic generator, protocol checker and scoreboard.
   A program loaded over the UART shell drives a vendor block-RAM controller or our own peripheral and stream FIFO, which
   carry run-time seeded bugs. Ten AXI4-Lite and five AXI4-Stream rules are watched and counted, a capture records the bus
@@ -331,6 +331,15 @@ history:
 - date: '2026-11-13'
   brief: '68'
   note: handover written to the documentation standard
+numbers_allow:
+- token: 8N1
+  reason: UART framing of the test shell (shell/PROTOCOL.md)
+- token: 0x40-0x4C
+  reason: register offsets from docs/axi_tx.md
+- token: 0x50-0x55
+  reason: register offsets from docs/axi_tx.md
+- token: '0x20'
+  reason: first unmapped peripheral offset, from docs/axi_tx.md
 state:
   stage: board-verified
   gates:
