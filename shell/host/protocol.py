@@ -33,8 +33,9 @@ REG_SHELL_VERSION = 0x01
 REG_BUILD_STAMP = 0x02
 REG_SCRATCH = 0x03
 REG_STATUS = 0x04
+REG_BUILD_ID = 0x05   # protocol 1.1 (brief 54): the bitstream's USR_ACCESS word
 WINDOW_BASE = 0x80   # 0x80-0xFF belong to the design under test
-SHELL_VERSION = 0x0001_0000
+SHELL_VERSION = 0x0001_0001   # 1.1
 
 
 def xor8(data: bytes) -> int:

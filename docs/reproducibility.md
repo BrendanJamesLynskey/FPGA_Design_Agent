@@ -6,7 +6,8 @@ Three things a hardware team expects of a build flow, and how this repository pr
    the same commit in different directories have identical configuration data; their `.bit` files differ only in 3 to 4
    bytes of the file header (the time of day the bitstream was written). See [Measured](#measured).
 2. **A bitstream on a board can be traced back to its exact sources.** Every build writes a manifest; a short hash of
-   it, the build ID, is written into the bitstream and read back over JTAG before any board test.
+   it, the build ID, is written into the bitstream and read back over JTAG and over the UART shell before any board
+   test.
 3. **Every release is a complete, checked bundle.** `flow/release.py make` collects one build into a folder with
    `RELEASE.md` and `SHA256SUMS`; `flow/release.py check` verifies a bundle using nothing but the bundle.
 
@@ -93,13 +94,12 @@ not call the build incremental. Sign-off builds should be fresh (`FDA_INCREMENTA
   it is not the manifest's build ID.
 - **JTAG:** `flow/program.tcl` reads `REGISTER.USR_ACCESS` of the configured device after programming;
   `flow/program.py` compares it with the manifest and stops before any test if they differ.
-- **UART:** `flow/board_check.py` and `flow/bringup.py` read the build stamp (shell register 0x02) right after
-  programming and compare it with the stamp in the manifest (`settings.build_stamp`, which the build ID covers). A change
-  only to settings or flow scripts is therefore caught over JTAG, not over the UART.
-- **Why the shell has no build-ID register.** The shell has free addresses, and a register fed by the `USR_ACCESSE2`
-  primitive would let the design report the configuration word itself. Such a register was built and passed the shell's
-  tests and a full Vivado build, then withdrawn: the test shell is fixed (the benchmark records its fingerprint), so
-  changing it is a deliberate, dated change to the benchmark, not part of this work.
+- **UART:** the test shell (protocol 1.1) has a read-only BUILD_ID register at 0x05, driven by the `USR_ACCESSE2`
+  primitive, so the design reports the configuration word itself, not a constant compiled into the netlist.
+  `flow/board_check.py` and `flow/bringup.py` read it, and the build stamp (register 0x02), right after programming and
+  compare both with the manifest; a mismatch stops the run. In simulation (no `SYNTHESIS` macro) the register returns the
+  shell's `SIM_BUILD_ID` parameter. A 1.0 shell answers BAD_ADDRESS at 0x05; the host driver then reports `build_id`
+  as None and only the stamp is compared. The change to the shell is recorded in `benchmark/AMENDMENTS.md`.
 - A build made before manifests existed has none: it is programmed with a note and nothing is compared.
 
 ## Release bundles
@@ -149,5 +149,6 @@ commit in different directories ([results/54_reproducible](../results/54_reprodu
 - **One comment line changed:** the input hash, the build stamp, the build ID and the bitstream all changed; because the
   stamp is a netlist constant, so did placement, routing, LUT count and WNS.
 - **Board:** the T1 bitstream's USR_ACCESS read back over JTAG equalled its manifest's build ID, and the build stamp
-  over the UART equalled the manifest's stamp. Temperature and supply voltages from the on-chip sensor were inside the
+  over the UART equalled the manifest's stamp. With the 1.1 shell, the BUILD_ID register read over the UART, USR_ACCESS
+  over JTAG and the manifest all gave the same ID ([results/54_reproducible/board_shell11](../results/54_reproducible/board_shell11/README.md)). Temperature and supply voltages from the on-chip sensor were inside the
   data-sheet operating range.

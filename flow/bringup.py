@@ -135,7 +135,7 @@ class Run:
             # the shell's BUILD_STAMP against the manifest (JTAG USR_ACCESS was checked in program()); a mismatch
             # stops the run here
             with FpgaShell.open(self.board["uart"]) as sh:
-                r["build_id_uart"] = program.check_shell_build_id(sh.identify(), r.get("manifest_stamp"))
+                r["build_id_uart"] = program.check_shell_build_id(sh.identify(), r.get("manifest_stamp"), r.get("build_id"))
         return r
 
     def uart_tests(self) -> dict[str, Any]:
