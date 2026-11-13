@@ -1,4 +1,4 @@
-"""Brief 05g, offline: the test writer's diagnosed failures (turn starvation, repair deleting its own output, the
+"""Brief 05g, offline: the Verifier's diagnosed failures (turn starvation, repair deleting its own output, the
 shell fixtures it could not read), the turn trace, the QoR warning on the review page, and the knowledge-use log."""
 
 import json
@@ -111,7 +111,7 @@ def test_the_real_run_limit_still_stops_the_run(rt, monkeypatch):
 
 
 def test_stage_budgets_leave_room(rt):
-    assert MACHINE[9].limits["turns"] - gr.ROLE_TURN_RESERVE[9]["rtl"] >= 30         # the RTL writer keeps what it had
+    assert MACHINE[9].limits["turns"] - gr.ROLE_TURN_RESERVE[9]["rtl"] >= 30         # the Designer keeps what it had
     assert MACHINE[2].limits["turns"] - gr.ROLE_TURN_RESERVE[2]["tests"] >= 45 and MACHINE[2].limits["turns"] >= 60
 
 
@@ -171,7 +171,7 @@ def test_the_tests_role_reads_the_shell_protocol_and_host_classes_but_not_its_rt
         j.resolve("@shell/host/fpga_shell.py", write=True)
     r = RoleJail(rt.session.jail, "rtl")
     with pytest.raises(SecurityError):
-        r.resolve("@shell/host/fpga_shell.py")                       # the RTL writer's view is unchanged
+        r.resolve("@shell/host/fpga_shell.py")                       # the Designer's view is unchanged
 
 
 def test_tests_inputs_carry_the_shell_reference_files(rt):

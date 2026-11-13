@@ -1,4 +1,4 @@
-"""Brief 07a2 fix 5, group C: an answered register map overrides the clarify role's proposed default."""
+"""Brief 07a2 fix 5, group C: an answered register map overrides the Clarifier's proposed default."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ REQUEST = "Expose the oscillator over the test shell registers. LED0 shows done.
 
 
 def role_spec() -> dict:
-    """What batch 1 run 2's clarify role wrote: right offsets, its own DATA packing ([15:0] sign-extended)."""
+    """What batch 1 run 2's Clarifier wrote: right offsets, its own DATA packing ([15:0] sign-extended)."""
     return {"registers": {"map": [
         {"offset": 0, "name": "FW", "access": "RW", "reset": 0, "bits": "[23:0] frequency word"},
         {"offset": 4, "name": "DATA", "access": "RO", "reset": 0, "bits": "[15:0] sample 2m sign-extended to 16 bits"}]},

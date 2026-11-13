@@ -19,7 +19,7 @@ Vivado checkpoints of each stage end), `checkpoints.sqlite` (LangGraph), `summar
 
 | Node | Does | Decided by |
 |---|---|---|
-| work | the stage's sub-agent(s) act; stage 2 runs the blind model, the test writer and the RTL writer as separate sub-agents | the model, inside its role's view and the stage's tool list |
+| work | the stage's sub-agent(s) act; stage 2 runs the Modeller, the Verifier and the Designer as separate sub-agents | the model, inside its role's view and the stage's tool list |
 | gate | runs the flow's checks (lint, simulate in the container, build, gates, verif gates, bring-up) and `exit_check` | the flow's gate output only (`agent/graph/stages.py`) |
 | review | writes `build/review/<nn>_<stage>.html` and `review_index.html`, snapshots files + `.dcp`, pauses for approve / edit / rewind when `--review on` | the reviewer (human, planner script, or `auto`), recorded in `BUILD_NOTE.md` |
 | advance | next stage on pass; on a failure, the stage that owns the cause (`route_failure`) | the stage machine |
@@ -32,12 +32,12 @@ Vivado builds are reused when the sources are unchanged and the earlier build we
 
 | Sub-agent | Reads | Writes |
 |---|---|---|
-| clarify | spec.md | spec.yaml |
-| blind model | spec.yaml only | model.py |
-| test writer | spec.yaml, model.py, its own tests | tests/, verif/ |
-| RTL writer and later stages | the design, `@shell/` (read-only) | RTL, build.yaml, XDC, probes, notes |
+| Clarifier (key `clarify`) | spec.md | spec.yaml |
+| Modeller (key `model`) | spec.yaml only | model.py |
+| Verifier (key `tests`) | spec.yaml, model.py, its own tests | tests/, verif/ |
+| Designer (key `rtl`), in every later stage | the design, `@shell/` (read-only) | RTL, build.yaml, XDC, probes, notes |
 
-The blind model and the test writer run on an in-memory file backend that holds only their inputs (so `ls`, `grep`
+The Modeller and the Verifier run on an in-memory file backend that holds only their inputs (so `ls`, `grep`
 and `glob` cannot reach anything else); the graph copies their outputs in through the role jail. The hidden full
 spec is outside every design directory and is read only by the spec oracle. `agent/tests/test_roles.py` and
 `test_episode.py` check each sub-agent's inputs.
@@ -88,7 +88,7 @@ Four gaps found by the course-tier port are closed; each has a test in `flow/tes
 `agent/tests/test_07a2_prep.py`.
 
 - **Task data.** A `data/` directory next to `spec.md` (or `--data-dir`) is copied to `<design>/data`, read-only for the agent
-  (`data` is in the path jail's write-deny list; the clarify, model, tests and rtl roles may read it), and listed at the end of
+  (`data` is in the path jail's write-deny list; the Clarifier, Modeller, Verifier and Designer roles may read it), and listed at the end of
   the design's `spec.md`. The simulators find it: `flow.cocotb_run.run` links the files into the simulator's working directory
   (`test_dir`) for the length of a run as `data/<name>` and `<name>`, so `$readmemh("x.hex")` and `$readmemh("data/x.hex")` both
   open it; `flow/prepare.py` copies them into the Vivado build directory (and into the build stamp); the course scoring tool

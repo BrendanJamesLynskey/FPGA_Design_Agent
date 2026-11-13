@@ -15,7 +15,7 @@ decide that, for a whole programme.
 | Term | Meaning here |
 |---|---|
 | requirement | one checkable statement in `spec.yaml` `requirements: [{id, text, proof}]`, with the methods that prove it |
-| proof method | `simulation` (a cocotb test against the blind model), `formal` (a SymbiYosys job), `analysis` (a flow gate on the Vivado reports), `hardware` (a step of the board bring-up) |
+| proof method | `simulation` (a cocotb test against the reference model), `formal` (a SymbiYosys job), `analysis` (a flow gate on the Vivado reports), `hardware` (a step of the board bring-up) |
 | blind golden model, V0-V3, mutation testing | see [verification.md](verification.md) |
 | tag | a comment or decorator in the source naming the requirement ids a test or property verifies |
 | artefact | anything that can carry a tag: a cocotb test, an assertion or cover property (SVA), a formal job |

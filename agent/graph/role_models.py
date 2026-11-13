@@ -1,8 +1,8 @@
 """Per-role model routing (brief 05f).
 
 Which harness, model and effort runs each sub-agent role. The roles are the four of :mod:`agent.graph.roles`:
-``clarify``, ``model`` (blind golden model), ``tests`` (test writer, including the stage-9 bring-up files) and ``rtl``
-(RTL writer and every repair it owns). The stage machine that decides which role runs when is plain code (the
+the Clarifier (``clarify``), the Modeller (``model``, blind golden model), the Verifier (``tests``, including the stage-9 bring-up files) and the Designer (``rtl``,
+every repair it owns included). The stage machine that decides which role runs when is plain code (the
 "orchestration"); no model drives it, so there is no orchestrator role to route.
 
 The interview **oracle** (the user simulator) is not a role: it always runs on ``Config.model`` (luna by default),
@@ -33,8 +33,8 @@ FORBIDDEN_OPENROUTER = ("anthropic/", "fable", "opus")      # owner rule: never 
 #: ``effort`` None: the flag is omitted and the CLI default applies (the CVDP ladder's "effort low").
 PROFILES: dict[str, dict[str, dict[str, Any]]] = {
     "single": {},
-    # CVDP evidence (cvdp_rtl_recommendation.md): Opus 5.5 writes RTL; the blind model is a *different* model from the
-    # RTL writer, so a same-model misreading of the spec is not shared; tests and clarify on Sonnet.
+    # CVDP evidence (cvdp_rtl_recommendation.md): Opus 5.5 writes RTL; the Modeller runs a *different* LLM from the
+    # Designer, so a same-model misreading of the spec is not shared; tests and clarify on Sonnet.
     "cvdp": {
         "rtl": {"harness": "claude_code", "model": "claude-opus-5-5", "effort": None},
         "model": {"harness": "claude_code", "model": "claude-sonnet-5-5", "effort": "medium"},

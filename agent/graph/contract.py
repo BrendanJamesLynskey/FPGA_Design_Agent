@@ -1,6 +1,6 @@
-"""The one model API shared by the blind-model and test-writer roles, and the contract-check gate (brief 05c, fix 2).
+"""The one model API shared by the Modeller and Verifier roles, and the contract-check gate (brief 05c, fix 2).
 
-05b run 1 failed at 0 ns because the test writer called ``Model(clk_hz=...)`` on a model that took
+05b run 1 failed at 0 ns because the Verifier called ``Model(clk_hz=...)`` on a model that took
 ``Model(CLK_HZ=...)``. The API is now fixed text, put in both prompts, and the graph checks it (import the model,
 instantiate it with the spec's parameters, ``reset()``, ``step({})``) before the expensive simulate step.
 """

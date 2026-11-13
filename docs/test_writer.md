@@ -1,16 +1,16 @@
-# The test writer, the turn trace and the QoR gate (brief 05g, F2 part 7)
+# The Verifier, the turn trace and the QoR gate (brief 05g, F2 part 7)
 
 Plain code throughout: the stage machine, the gates and the budgets stay deterministic. No memory, self-check or
 spec-vector feature was added (the CVDP nulls stand).
 
-## Diagnosis: why the test writer failed (from the run records)
+## Diagnosis: why the Verifier failed (from the run records)
 
 | Failure | Cause | Evidence | Fix |
 |---|---|---|---|
-| luna run `20261103-004742-f7ba`, stage 9: "no tests/test_*_hw.py" four times, then the 300-turn stop | **ran out of turns, twice the role never got a turn.** The stage-9 RTL writer ran first and used the whole 30-turn stage budget (checkpoint detail: "stage turns limit 30 reached" at visits 1 and 2); the budget error left `node_work`, so the tests role was skipped. In visit 3 it got turns (its `gates`/`search_docs` calls are the last audit rows) and the run limit (300) ended it before it wrote anything. | checkpoints.sqlite detail per visit; `build/audit.jsonl` has no stage-9 `write_file` | `ROLE_TURN_RESERVE` holds 15 turns of the stage and run budgets back while the stage-9 RTL writer runs; a role that ends on its budget no longer ends the visit; stage 9 limit 30 -> 45 (the RTL writer keeps 30) |
-| same run: the role was also pointed at `shell.host.fpga_shell` it could not read | **a tool refused it.** The RTL writer asked for `@shell/host/fpga_shell.py` four times (path-jail: not in the read-only view); the tests role had no shell view at all and, under Deep Agents, no file tool for it. The stage-9 prompt tells it to import `FpgaShell`. | audit rows 234, 284, 326 | tests role: read-only view of `@shell/PROTOCOL.md`, `host/protocol.py`, `host/fpga_shell.py` (not the shell RTL, not the design RTL); the same files are seeded in its prompt as `shell_ref/...` so both harnesses have them |
+| luna run `20261103-004742-f7ba`, stage 9: "no tests/test_*_hw.py" four times, then the 300-turn stop | **ran out of turns, twice the role never got a turn.** The stage-9 Designer ran first and used the whole 30-turn stage budget (checkpoint detail: "stage turns limit 30 reached" at visits 1 and 2); the budget error left `node_work`, so the tests role was skipped. In visit 3 it got turns (its `gates`/`search_docs` calls are the last audit rows) and the run limit (300) ended it before it wrote anything. | checkpoints.sqlite detail per visit; `build/audit.jsonl` has no stage-9 `write_file` | `ROLE_TURN_RESERVE` holds 15 turns of the stage and run budgets back while the stage-9 Designer runs; a role that ends on its budget no longer ends the visit; stage 9 limit 30 -> 45 (the Designer keeps 30) |
+| same run: the role was also pointed at `shell.host.fpga_shell` it could not read | **a tool refused it.** The Designer asked for `@shell/host/fpga_shell.py` four times (path-jail: not in the read-only view); the tests role had no shell view at all and, under Deep Agents, no file tool for it. The stage-9 prompt tells it to import `FpgaShell`. | audit rows 234, 284, 326 | tests role: read-only view of `@shell/PROTOCOL.md`, `host/protocol.py`, `host/fpga_shell.py` (not the shell RTL, not the design RTL); the same files are seeded in its prompt as `shell_ref/...` so both harnesses have them |
 | 05f cvdp run 1 `0d63`: last gate V0 `testplan_present` | **the arm's repair visit deleted the role's own output.** `run_subagent_cc` collected "files of an earlier attempt" for every tests-role call and dropped the ones not rewritten; Deep Agents guards this with `not repair`, the arm did not. The last repair wrote only `verif/formal/*` and removed `tests/` and `verif/testplan.yaml`. | final tree: `tests/` empty, `verif/` only `formal/`; trace seq: repair writes 4 formal files | `tests_before` only when `not repair` |
-| 05f cvdp run 2 `9b4d`: V1 `proof_methods_discharged` REQ-03, REQ-04 `formal` | **the artefact was never produced, and the role could not produce it.** The same deletion made the next visit a fresh one; the tests role has no `formal` tool, SymbiYosys was not on the agent's PATH, the RTL writer's formal writes were refused (`verif/` is the tests role's), and the prompt gave no way out. No `proof:` entry for the two requirements existed. | final testplan has no formal entries; `verif/formal` absent | tests role gets the `formal` tool and a checklist: write the job and run it, or (when `sby` is absent) `replan:` the method with a reason; `verif_gates` accepts only that, never an unevidenced proof |
+| 05f cvdp run 2 `9b4d`: V1 `proof_methods_discharged` REQ-03, REQ-04 `formal` | **the artefact was never produced, and the role could not produce it.** The same deletion made the next visit a fresh one; the tests role has no `formal` tool, SymbiYosys was not on the agent's PATH, the Designer's formal writes were refused (`verif/` is the tests role's), and the prompt gave no way out. No `proof:` entry for the two requirements existed. | final testplan has no formal entries; `verif/formal` absent | tests role gets the `formal` tool and a checklist: write the job and run it, or (when `sby` is absent) `replan:` the method with a reason; `verif_gates` accepts only that, never an unevidenced proof |
 
 Not the cause in any of the three: the prompt did ask for the testplan (it is in `PROMPTS["tests"]`), and the files
 were written where the gates look. Two smaller defects went with them: `load_skill(["verification-stages"])` (the
@@ -48,8 +48,8 @@ item scored below the routed score (benchmark 06a); this cannot be re-checked on
 
 ## Live checks (T1, oracle, review off, V1; records in `results/f2/`)
 
-- luna `single`: null at stage 2 (RTL writer; lint then simulate). Not a test-writer failure: V0 and V1 passed.
-- `cvdp` profile: **stage 2 passed at visit 2** (05f: 0 of 2). The test writer's visit-1 failure (formal methods named as bench
+- luna `single`: null at stage 2 (Designer; lint then simulate). Not a Verifier failure: V0 and V1 passed.
+- `cvdp` profile: **stage 2 passed at visit 2** (05f: 0 of 2). The Verifier's visit-1 failure (formal methods named as bench
   tests, no SymbiYosys) was repaired in 2 turns by a `replan:` with reasons, and its other files survived the repair. Null at
   stage 3 (`post_synth_no_unconstrained_endpoints`, the stage-3 writer's `design.xdc`), outside this brief.
 - Stage 9, by resuming the recorded luna run from the end of stage 8: the tests role now gets its turns (visit 1: reserved 15,

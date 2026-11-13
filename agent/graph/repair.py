@@ -9,10 +9,10 @@ re-breaks parts that passed (Opus run 2), and hands the model no signal about wh
    between the RTL and the model -> ``rtl``;
 2. runs only those roles, each handed the failures that are its own and its previous output to edit;
 3. freezes every other artefact (it is not rewritten by anyone this visit);
-4. escalates when a repair did not change the failure: the same signature twice adds the test writer to a
-   behavioural mismatch (the bench may be wrong), three times adds the model writer.
+4. escalates when a repair did not change the failure: the same signature twice adds the Verifier to a
+   behavioural mismatch (the bench may be wrong), three times adds the Modeller.
 
-The blind-model separation holds: the model writer is shown its own contract or traceback text, or - on the third
+The Modeller's blindness to the RTL holds: the Modeller is shown its own contract or traceback text, or - on the third
 repeat - only the NAME of the test that disagrees, never RTL, RTL output or the other artefacts.
 
 Pure functions over tool results: CI tests them with recorded evidence.
@@ -115,8 +115,8 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0) -> tuple[dict[str, list[s
     need = ev.get("verif_level") or "V3"
     if not (v.get("reached") and v["reached"] >= need):
         fails = verif_failures(v, need)
-        # the sim failure already covers `failing_tests`; everything the plan or bench lacks is the test writer's
-        # (a missing model is the model writer's)
+        # the sim failure already covers `failing_tests`; everything the plan or bench lacks is the Verifier's
+        # (a missing model is the Modeller's)
         covered = sim.get("ok") is False
         plan = [f for f in fails if not (covered and ("failing_tests" in f or "planned_tests_missing" in f))]
         if any("model_present" in f for f in plan):

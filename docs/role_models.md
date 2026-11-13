@@ -5,8 +5,9 @@ Which harness, model and effort runs each sub-agent role. Code: `agent/graph/rol
 
 ## Roles, orchestration and the oracle
 
-- Roles: `clarify`, `model` (blind golden model), `tests` (test writer, including the stage-9 bring-up files) and `rtl`
-  (RTL writer and every repair it owns).
+- Roles (display name, record key): the Clarifier (`clarify`), the Modeller (`model`, a blind golden model), the Verifier
+  (`tests`, including the stage-9 bring-up files) and the Designer (`rtl`; it writes architecture, RTL, constraints and
+  probes and does every repair; Vivado implementation is run by the deterministic flow, not by this role).
 - The **stage machine is plain code** (the "orchestration"): which role runs when, the gates, routing of failures to an
   owner role, review pages, rewind. No model drives it, so there is no orchestrator role to route.
 - The interview **oracle** (user simulator) is not a role. It always runs on `--model` (luna by default), whatever the
@@ -21,7 +22,7 @@ python -m agent run <spec.md> --profile single|cvdp [--roles '<json>']
 | Profile | Map |
 |---|---|
 | `single` (default) | One harness and model for every role: today's behaviour (`--harness`, `--model`, `--cc-model`, `--cc-effort`). Existing runs and replays are unchanged. |
-| `cvdp` | `rtl`: Claude Code + `claude-opus-5-5`, CLI-default effort (the `--effort` flag is omitted); `model`, `tests`, `clarify`: Claude Code + `claude-sonnet-5-5`, effort medium. The blind model is a different model from the RTL writer on purpose: CVDP found same-model self-tests share the writer's misreadings. Claude Code runs the lean profile the arm already uses (our role prompt as `--system-prompt`, only our MCP tools, no settings, no slash commands). |
+| `cvdp` | `rtl`: Claude Code + `claude-opus-5-5`, CLI-default effort (the `--effort` flag is omitted); `model`, `tests`, `clarify`: Claude Code + `claude-sonnet-5-5`, effort medium. The Modeller runs on a different LLM from the Designer on purpose: CVDP found same-model self-tests share the writer's misreadings. Claude Code runs the lean profile the arm already uses (our role prompt as `--system-prompt`, only our MCP tools, no settings, no slash commands). |
 
 Mixed harnesses work in one run: the role's harness is chosen at dispatch, so a luna (Deep Agents, OpenRouter) role can sit
 beside Claude Code roles. A Deep Agents role on a model other than `--model` gets its own OpenRouter client; models
@@ -55,7 +56,7 @@ overrides, verbatim), and the resolved `role_models`; `resume` rebuilds the map 
   starts with it.
 - `summary.json` `knowledge_use`: per role and stage, the calls to `load_skill`, `search_docs` and `board_constraints`,
   and for `load_skill` the section names and skill files returned (from `build/audit.jsonl`, whose records now carry
-  the role), so you can see whether the RTL writer uses the family and device layers.
+  the role), so you can see whether the Designer uses the family and device layers.
 
 ## What this deliberately does not copy from CVDP
 

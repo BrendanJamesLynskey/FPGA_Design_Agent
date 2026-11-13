@@ -3,7 +3,7 @@
     python3 -m agent.graph.plan_arm <task_dir> --module-file hough.sv --spec-yaml <run's spec.yaml> --out <dir>
            [--plan <timing_plan.json>] [--model openai/gpt-6-luna]
 
-One RTL-writer call writes the task's core module from the clarified spec.yaml and the module's port list (taken from the
+One Designer call writes the task's core module from the clarified spec.yaml and the module's port list (taken from the
 reference file's header; the body is never shown), with or without TIMING_PLAN.md. The other reference files (register
 block, board top) are kept, so the two arms differ only in the core. G1 is the task's hidden acceptance bench; a failure
 gets one repair call with the bench's failure text. The result is an RTL directory for ``agent.graph.closure_task``.
@@ -25,7 +25,7 @@ from agent.graph import closure as cl  # noqa: E402
 from agent.graph.closure_task import acceptance_g1  # noqa: E402
 from flow import timing_plan  # noqa: E402
 
-SYSTEM = ("You are the RTL writer of an FPGA design agent (SystemVerilog, Vivado 2026.1, Artix-7 -1, 100 MHz unless the spec "
+SYSTEM = ("You are the Designer of an FPGA design agent (SystemVerilog, Vivado 2026.1, Artix-7 -1, 100 MHz unless the spec "
           "says otherwise). Write the one module asked for, synthesisable, with exactly the given header (module name, "
           "parameters, ports). Reply with the whole file as\n=== FILE: rtl/<name> ===\n```systemverilog\n<file>\n```\n"
           "then one line starting NOTE: with the latency in clocks and the resources you expect.")

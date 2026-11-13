@@ -1,4 +1,4 @@
-"""Sub-agent input isolation (05b): the blind model sees only spec.yaml, the test writer never the RTL, the RTL
+"""Sub-agent input isolation (05b): the Modeller sees only spec.yaml, the Verifier never the RTL, the RTL
 writer never the hidden spec."""
 
 import pytest

@@ -352,7 +352,7 @@ def _layer_tables() -> str:
     return m.group(1) if m else ""
 
 
-SYSTEM = """You are the clarify role of an FPGA design agent, running phase 0 (the spec session) of a multi-module design.
+SYSTEM = """You are the Clarifier of an FPGA design agent, running phase 0 (the spec session) of a multi-module design.
 You turn the user's specification into files the project checker reads. Never invent a requirement: when the
 specification does not settle something, propose a value and say why, and it will be asked. Reply with ONE fenced
 ```yaml block and nothing else."""
@@ -444,7 +444,7 @@ def repair_prompt(errors: list[str]) -> str:
 
 
 class Drafter:
-    """The clarify role: ``client(messages) -> Reply`` (agent.graph.llm), with a USD cap on provider-reported cost."""
+    """The Clarifier: ``client(messages) -> Reply`` (agent.graph.llm), with a USD cap on provider-reported cost."""
 
     def __init__(self, client: Callable, calls: Calls, usd_cap: float):
         self.client, self.calls, self.usd_cap = client, calls, usd_cap

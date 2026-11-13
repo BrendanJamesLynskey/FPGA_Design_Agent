@@ -11,7 +11,7 @@ stages each datapath needs, so the loop starts from a design that is already clo
   both with and without the plan.
 - **Seeded misses:** of three development designs built at a raised clock, 1 closed: c16_montgomery_mult at 200 MHz. The other two
   improved but stopped at the 5-iteration limit.
-- **Nulls:** the RTL writer working from the plan failed the hidden bench 6 times out of 6. The first with-plan loop run
+- **Nulls:** the Designer working from the plan failed the hidden bench 6 times out of 6. The first with-plan loop run
   accepted a design that synthesis had removed; it is not counted, and it led to the synthesis guard described below.
 
 The numbers and caveats are in [results/62a_closure/README.md](../results/62a_closure/README.md).
@@ -105,7 +105,7 @@ starting design kept. A RAM or ROM that synthesis already removed from the start
    `fallback` operations instead.
 3. **Pipeline depth.** It estimates each piece's delay from the delay model and places registers so each stage fits
    70 % of the period. A DSP slice's own registers are always used.
-4. **Output.** It writes `TIMING_PLAN.md`: the instructions the RTL writer follows, with the inference template for
+4. **Output.** It writes `TIMING_PLAN.md`: the instructions the Designer follows, with the inference template for
    each primitive.
 
 After synthesis, a planned DSP slice or block RAM that did not appear fails the gate. After routing, the planned stage

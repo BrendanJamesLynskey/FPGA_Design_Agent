@@ -13,7 +13,7 @@
   retried every minute until then; the lock file is removed afterwards only if its text starts with the prefix
   (``--lock-prefix``, default ``closure``). Without the variable the tool refuses to build, unless ``--no-lock`` says
   the machine is not shared.
-- **The RTL writer** is one OpenRouter call per attempt (luna by default; Fable and Opus are refused by llm.py).
+- **The Designer** is one OpenRouter call per attempt (luna by default; Fable and Opus are refused by llm.py).
 
 Records ``history.jsonl``, ``summary.json``, ``llm_calls.jsonl`` and the final RTL in ``--out``.
 """

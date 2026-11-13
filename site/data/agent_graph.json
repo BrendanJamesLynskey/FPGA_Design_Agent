@@ -16,7 +16,7 @@
   },
   {
    "adds": "several RTL candidates in parallel; the agent's own gates pick one (hidden tests never)",
-   "at": "the RTL writer",
+   "at": "the Designer",
    "id": "A3",
    "name": "Best of N",
    "status": "not yet measured"
@@ -30,7 +30,7 @@
   },
   {
    "adds": "a search for the closest verified component, which is adapted instead of writing from nothing",
-   "at": "the RTL writer",
+   "at": "the Designer",
    "id": "A5",
    "name": "Retrieve, then adapt",
    "status": "not yet measured"
@@ -190,7 +190,7 @@
   "arms": [
    {
     "change": "Large tool results, such as Vivado reports and simulation logs, go to a file in the jail and the model gets a head, a tail and the path; older turns are summarised much earlier.",
-    "evidence": "Token totals are dominated by long repair visits: one 80-turn visit of the RTL writer used 6.6 M tokens.",
+    "evidence": "Token totals are dominated by long repair visits: one 80-turn visit of the Designer used 6.6 M tokens.",
     "id": "H1",
     "name": "Context management",
     "result": {
@@ -348,7 +348,7 @@
     "status": "not yet measured"
    },
    {
-    "change": "A to-do list tool for the RTL writer.",
+    "change": "A to-do list tool for the Designer.",
     "evidence": "Planning on long stages; the role agents are offered no to-do tool today.",
     "id": "H8",
     "name": "To-do list",
@@ -1264,7 +1264,7 @@
     {
      "gate": {
       "pass": false,
-      "text": "Stage gates failed; the next visit repairs the RTL writer's work."
+      "text": "Stage gates failed; the next visit repairs the Designer's work."
      },
      "next": {
       "kind": "repair",
@@ -1359,7 +1359,7 @@
     {
      "gate": {
       "pass": false,
-      "text": "Stage gates failed; the next visit repairs the RTL writer's work."
+      "text": "Stage gates failed; the next visit repairs the Designer's work."
      },
      "next": {
       "kind": "repair",
@@ -1403,7 +1403,7 @@
     {
      "gate": {
       "pass": false,
-      "text": "Stage gates failed; the next visit repairs the test writer and RTL writer's work."
+      "text": "Stage gates failed; the next visit repairs the Verifier's and the Designer's work."
      },
      "next": {
       "kind": "repair",
@@ -1448,7 +1448,7 @@
     {
      "gate": {
       "pass": false,
-      "text": "lint and the tests against the model failed; the RTL writer owns the fix."
+      "text": "lint and the tests against the model failed; the Designer owns the fix."
      },
      "next": {
       "kind": "repair",
@@ -1537,7 +1537,7 @@
   {
    "backend": "an in-memory folder seeded with only the role's inputs; outputs copied in through the jail",
    "id": "clarify",
-   "label": "Clarify",
+   "label": "Clarifier",
    "reads": [
     "spec.md",
     "spec.yaml",
@@ -1551,13 +1551,13 @@
   {
    "backend": "an in-memory folder seeded with only the role's inputs; outputs copied in through the jail",
    "id": "model",
-   "label": "Blind model",
+   "label": "Modeller",
    "reads": [
     "spec.yaml",
     "model.py",
     "data/*"
    ],
-   "what": "Writes a short Python model of the design from the spec alone. Never sees the RTL.",
+   "what": "Writes a short Python reference model of the design from the spec alone. Blind to the RTL: never sees it.",
    "writes": [
     "model.py"
    ]
@@ -1565,7 +1565,7 @@
   {
    "backend": "an in-memory folder seeded with only the role's inputs; outputs copied in through the jail",
    "id": "tests",
-   "label": "Test writer",
+   "label": "Verifier",
    "reads": [
     "spec.yaml",
     "model.py",
@@ -1576,7 +1576,7 @@
     "BRINGUP.md",
     "hw_checks.py"
    ],
-   "what": "Writes the tests and the test plan from the spec and the model. Never sees the RTL.",
+   "what": "Writes the tests and the test plan from the spec and the model. Never sees the RTL. Its own tests never decide a result; the hidden tests do.",
    "writes": [
     "tests/*",
     "verif/*",
@@ -1586,11 +1586,11 @@
   {
    "backend": "the real design folder, every path checked by the role's jail",
    "id": "rtl",
-   "label": "RTL writer",
+   "label": "Designer",
    "reads": [
     "*"
    ],
-   "what": "Writes the SystemVerilog and constraints, and repairs what the later stages find.",
+   "what": "Writes the architecture, SystemVerilog, constraints and probes, and does every repair. Vivado implementation is run by the deterministic flow, not by this role.",
    "writes": [
     "rtl/*",
     "build.yaml",

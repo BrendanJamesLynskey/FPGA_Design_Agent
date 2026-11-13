@@ -2,7 +2,7 @@
 
 **Kind.** Verification tool: event-driven four-state simulator, used with cocotb.
 
-**Used for.** Running the cocotb benches against the RTL and the blind model: the agent's own iterations (the fast
+**Used for.** Running the cocotb benches against the RTL and the reference model: the agent's own iterations (the fast
 simulator) and the cross-check run of every bench.
 
 **How its output is checked independently.**

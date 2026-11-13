@@ -69,7 +69,7 @@ def hero(L, lay):
             out.append(f'<g class="{cls}" data-s="{sid}" data-ax="{x + cw / 2:g}" data-ay="{sy + sh / 2:g}">{box(x, sy, cw, sh, "nd")}{"".join(body)}</g>')
             if sid in FWD:
                 pid, leg = FWD[sid]
-                if sid == "spec":               # the interview: from the role agents' clarify role back to the person
+                if sid == "spec":               # the interview: from the role agents' Clarifier back to the person
                     d = f"M{X['agents'] - 1} {ay} L{x + cw + 2} {ay}"
                     out.append(_path(pid, f"M{x + cw + 1} {ay} L{X['agents'] - 2} {ay}", leg, L, p))
                 else:

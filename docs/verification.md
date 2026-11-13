@@ -5,14 +5,14 @@ closest open equivalent of a staged verification sign-off is OpenTitan's (Apache
 DV methodology's V0-V3 checklist (docs.opentitan.org, "Hardware Development Stages" and "Design Verification
 Methodology" / "Checklists", read 2026-11-01). This repo adopts their structure, and replaces the parts that need
 a paid simulator. The independent-checking rule of the house rules still applies: the agent's own testbench never
-counts as a pass; the blind model, the formal checks and the hardware do.
+counts as a pass; the hidden tests, the formal checks and the hardware do.
 
 ## The stages
 
 | Stage | OpenTitan | What it requires here | Exit checks (`flow/verif_gates.py`, raw numbers) |
 |---|---|---|---|
-| V0 plan | V0: testbench and testplan started | a testplan file, the blind model and the bench modules exist | files present |
-| V1 testplan | V1: testplan written and reviewed; testbench connected to the model; smoke test passes | `verif/testplan.yaml` generated from `spec.yaml`; every spec statement traced to tests, assertions, cover points, bins or formal tasks (a DO-254 style traceability matrix); the bench compares against the blind model | spec items traced / total (must be all); no unresolved name; no requirement without a check |
+| V0 plan | V0: testbench and testplan started | a testplan file, the reference model and the bench modules exist | files present |
+| V1 testplan | V1: testplan written and reviewed; testbench connected to the model; smoke test passes | `verif/testplan.yaml` generated from `spec.yaml`; every spec statement traced to tests, assertions, cover points, bins or formal tasks (a DO-254 style traceability matrix); the bench compares against the reference model | spec items traced / total (must be all); no unresolved name; no requirement without a check |
 | V2 tests complete | V2: directed and constrained-random tests written and passing; assertions in; FPV on control logic | every planned test passes on every seed; the constrained-random test ran; checkers are bound and no assertion fires; formal bounded proof and cover pass on the control logic | failing / missing tests; formal tasks not PASS |
 | V3 coverage closed | V3: coverage closed with waivers, all seeds passing, no open bugs | functional bins and cover properties all hit; line and toggle coverage at stated thresholds; every waiver carries a reason; at least `seeds_min` seeds, all passing; the bench's mutation score at its threshold | each percentage against its threshold; unhit bins and cover properties listed |
 | V-HW (ours) | none | the board bring-up against the model passes (`results/f0b_2026_1/*_bringup.json`, `pass: true`, with its build stamp) | pass flag |
@@ -22,7 +22,7 @@ OpenTitan's V2S (security countermeasures) does not apply to these designs.
 ### Where the V-stages join the UltraFast stages
 
 The agent's stage machine ([methodology.md](methodology.md)) has nine stages. V0 and V1 start when the spec is
-signed off (stage 0) and the blind model is written; V2 and V3 sit **inside stage 2** (`rtl-design-creation`):
+signed off (stage 0) and the reference model is written; V2 and V3 sit **inside stage 2** (`rtl-design-creation`):
 stage 2 now ends only when `verif_gates` reports V3 (replacing "every mutant fails the tests" with a measured
 mutation score) as well as `flow/lint.sh` clean. **V-HW is stage 9** (`configuration-and-debug`): its exit check
 is the bring-up gate. A V-stage failure loops back to stage 2 (RTL or bench) or stage 0 (the model and the RTL
@@ -36,7 +36,7 @@ each entry `{id, text, proof}` with `proof` a non-empty list from four methods:
 
 | Method | What discharges it | Evidence the sign-off reads |
 |---|---|---|
-| `simulation` | a cocotb test (`module.test`) compared with the blind model | the test passed on every seed (`results.xml`) |
+| `simulation` | a cocotb test (`module.test`) compared with the reference model | the test passed on every seed (`results.xml`) |
 | `formal` | a SymbiYosys job in `verif/formal` | both its `bmc` and `cover` tasks `PASS` |
 | `hardware` | a bring-up step or `step:case` (`uart_tests`, `uart_tests:test_x`, `ila_captures`) | that step passed in the bring-up JSON |
 | `analysis` | a flow gate, `stage:gate` (`post_route:setup`, `post_synth:post_synth_resources_in_range`) | the gate in `gates.json` is true |
@@ -44,7 +44,7 @@ each entry `{id, text, proof}` with `proof` a non-empty list from four methods:
 V2's formal check covers the formal tasks the testplan names (`formal:` of each requirement): each must have both its `bmc` and `cover` tasks `PASS`. A plan that names none (every formal method re-planned because SymbiYosys is absent, or no requirement uses it) passes the check; whether a requirement needs formal is decided by its `proof` list in `spec.yaml`, which V1 and the sign-off table enforce. When no `seed*/results.xml` exists the gate says so in one line (the directory read, the file expected, how `flow.cocotb_run.run(..., seed=N)` under `simulate` produces it) and shows the checks that depend on it as `not evaluated (no seeded results)`.
 
 The clarify stage proposes a method per requirement; where it does not, the interview asks one question per
-requirement with a default (`agent.graph.spec_schema.propose_proof`) and the reason for it. The test writer then
+requirement with a default (`agent.graph.spec_schema.propose_proof`) and the reason for it. The Verifier then
 adds a top-level `proof:` list to `verif/testplan.yaml`, `{requirement, method, artefact}`, giving every method of
 every requirement at least one artefact. Two places enforce it:
 
@@ -66,7 +66,7 @@ has not been re-checked on 2026.1 as a whole; the covergroup row has ([results/2
 
 | Need | Matrix says | Decision |
 |---|---|---|
-| Constrained random, covergroups | `rand`: only xsim runs it among the free tools; Questa Starter needs a paid licence. `cov`: Icarus no, Verilator 5.020 "Unsupported: covergroup", xsim partly; Questa Starter paid. xsim cannot run in CI. | **The bench is Python (cocotb).** Stimulus, constrained random (cocotb-coverage `crv`, BSD), the scoreboard against the blind model, and functional coverage (cocotb-coverage `CoverPoint`/`CoverCross`) all run unchanged in Icarus, Verilator and xsim. SystemVerilog classes, `randomize()` and covergroups are **not** used in the agent's benches. |
+| Constrained random, covergroups | `rand`: only xsim runs it among the free tools; Questa Starter needs a paid licence. `cov`: Icarus no, Verilator 5.020 "Unsupported: covergroup", xsim partly; Questa Starter paid. xsim cannot run in CI. | **The bench is Python (cocotb).** Stimulus, constrained random (cocotb-coverage `crv`, BSD), the scoreboard against the reference model, and functional coverage (cocotb-coverage `CoverPoint`/`CoverCross`) all run unchanged in Icarus, Verilator and xsim. SystemVerilog classes, `randomize()` and covergroups are **not** used in the agent's benches. |
 | Assertions | `sva`: Icarus "concurrent_assertion_item not supported"; Verilator and xsim run `\|=>` with `$past`. `seq`: Verilator 5.020 "Unsupported: ## in sequence". `pastact`: explicit-clock `$past` fails in Verilator. | **A subset both accept:** immediate assertions; concurrent `\|->` and `\|=>` with `$past` in the implicit-clock form inside `assert property (@(posedge clk) ...)`; no `##` sequences while CI is on Verilator 5.020. Written in a checker module attached by `bind`. |
 | Formal | not in the matrix | SymbiYosys with open Yosys 0.33 and z3, on control logic only (bounded proofs and cover). |
 | Code coverage | n/a | Verilator `--coverage-line --coverage-toggle --coverage-user` in CI; bin counts from `coverage.dat`. |
@@ -196,7 +196,7 @@ misreading (c10 DDS run 1, tiny CNN: the model, the RTL and the bench agreed, an
    `spec.yaml`. It returns `spectest/spec_ref.py` (its own model) and `spectest/spec_bench.py` (a cocotb bench).
 2. **Gate.** When V2/V3 pass, the harness writes the pytest entry itself and runs the bench against the RTL (Icarus, results
    from `results.xml`). A pass is recorded. A failure goes to a **triage** call that sees the spec, the interview and both benches
-   (never the RTL) and answers `design_wrong` (the failing check goes to the RTL role as a `[spec test]` repair; Vivado is
+   (never the RTL) and answers `design_wrong` (the failing check goes to the Designer as a `[spec test]` repair; Vivado is
    skipped that visit) or `bench_wrong` (the spec-test role repairs its bench once, then the bench runs again; bench_wrong a
    second time is `unresolved`). An unreadable verdict counts as bench_wrong: a design is never failed on a guess.
    `--spectest-max-loops` (default 2) limits design_wrong round trips per run; past it the result is `unresolved` and does not

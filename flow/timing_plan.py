@@ -50,7 +50,7 @@ OPS = ("mul", "add", "compare", "table", "mux", "memory", "delay", "fifo", "logi
 TARGET_FRACTION = 0.70           # aim for 70 % of the period before routing (margin for route)
 CAL_MISS = 0.25                  # a measured stage more than 25 % off its estimate is a calibration miss
 
-# Inference templates the RTL writer must follow (our own patterns; the KB skill each one comes from is named).
+# Inference templates the Designer must follow (our own patterns; the KB skill each one comes from is named).
 TEMPLATES = {
     "dsp_mul_p0": ("DSP48E1 multiply, no internal register: `p_r <= a_r * b_r;` with a_r, b_r, p_r plain registers "
                    "(synthesis pulls them into AREG/BREG/PREG when it can)", "artix7-dsp48e1"),
@@ -473,7 +473,7 @@ def plan_problems(dps: list[dict[str, Any]]) -> list[str]:
 
 
 def plan_text(p: dict[str, Any]) -> str:
-    """The plan as the RTL writer's instructions (compact)."""
+    """The plan as the Designer's instructions (compact)."""
     lines = [f"TIMING AND RESOURCE PLAN (computed from the {p['family']} delay model, {p['target_fraction']:.0%} of the period per stage). "
              "Write the RTL to this plan: use each named template so synthesis infers the planned primitive; after synthesis a "
              "planned DSP or BRAM that comes out as LUTs or registers fails the gate."]
